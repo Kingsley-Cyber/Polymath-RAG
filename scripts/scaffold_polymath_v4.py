@@ -599,6 +599,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/adapter/hypotheses.py", "py", None),
     ("tests/determinism/test_hypothesis_state_machine.py", "py", None),
     ("tests/determinism/test_adapter_harness_action.py", "py", None),
+    ("tests/determinism/test_adapter_r5_audit.py", "py", None),
     ("contracts/adapter/v1/harness_action.schema.json", "json", None),
     ("contracts/adapter/v1/harness_action.example.json", "json", None),
     ("contracts/adapter/v1/harness_receipt.schema.json", "json", None),

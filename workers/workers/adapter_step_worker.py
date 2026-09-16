@@ -235,20 +235,31 @@ def _newest_output_with(state: RunState, key: str) -> dict[str, Any] | None:
     return None
 
 
+def _ordered_outputs(state: RunState) -> list[dict[str, Any]]:
+    """Step outputs in the run's authoritative ACCEPTANCE order. JSONB does not preserve dict order, so any selection that depends
+    on order (chronological gap accumulation, market_delta-before-supply qualifications, `latest`/`[-N:]`) must read them this way,
+    never `state.outputs.values()`."""
+    return [state.outputs[sid] for sid in (state.output_order or tuple(state.outputs)) if isinstance(state.outputs.get(sid), dict)]
+
+
 def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str, Any]) -> dict[str, Any]:
     """The typed payload of a bounded Trail operation, assembled from generic engine state only (live hypotheses, admitted
     evidence ids, the latest research receipt, physical jobs, qualifications) — never from a source or harness name."""
     ctx = step.get("context") or {}
     hyps = list(ctx.get("hypotheses") or [])
-    admitted = [r["id"] for r in ctx.get("evidence_refs") or [] if r.get("kind") == "field_evidence"]
+    # admitted_evidence_ids = the COMPLETE admitted set the service threaded into the step context (store accumulator, never the
+    # display cap). The service includes every admitted observation in evidence_refs — across all bounded-loop passes — precisely so
+    # the qualify/score hard gates, which count independent groups over exactly these ids, always see the full set (see _context_refs).
+    # the COMPLETE gate-facing admitted set the service threaded into the context from the store accumulator (never the display cap,
+    # never state.outputs which loses bounded-loop passes). The qualify/score hard gates count independent groups over exactly these ids.
+    admitted = list(ctx.get("admitted_evidence_ids") or [])
     payload: dict[str, Any] = {"stage": cfg.get("stage"), "hypotheses": hyps, "admitted_evidence_ids": admitted}
     if kind == "registry.project":
         payload["max_priors_per_hypothesis"] = int(cfg.get("max_priors_per_hypothesis", 12))
     elif kind == "gaps.compile":
         gaps = []
-        for out in state.outputs.values():
-            if isinstance(out, dict):
-                gaps += [g for g in (out.get("knowledge_gaps") or []) if isinstance(g, dict)]
+        for out in _ordered_outputs(state):
+            gaps += [g for g in (out.get("knowledge_gaps") or []) if isinstance(g, dict)]
         payload["knowledge_gaps"] = gaps[-100:]
         payload["open_gaps"] = list((_newest_output_with(state, "open_gaps") or {}).get("open_gaps") or [])[:100]
     elif kind == "evidence.admit":
@@ -265,7 +276,7 @@ def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str
     elif kind == "opportunity.qualify":
         payload["latest_admission_id"] = ((_newest_output_with(state, "evidence_admission") or {}).get("evidence_admission") or {}).get("admission_id")
     elif kind == "opportunity.score":
-        payload["qualifications"] = [o["qualification"] for o in state.outputs.values() if isinstance(o, dict) and isinstance(o.get("qualification"), dict)]
+        payload["qualifications"] = [o["qualification"] for o in _ordered_outputs(state) if isinstance(o.get("qualification"), dict)]
     return payload
 
 
@@ -296,6 +307,17 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
         return {"gap": {"code": "TRAIL_REFUSED", "message": f"{kind}: {exc}"}}
     except (TC.TrailTransportError, TC.TrailProtocolError) as exc:
         raise RuntimeError(f"trail transport: {exc}") from exc              # typed STEP_EXECUTOR_ERROR (retryable by re-run)
+    # Trail response identity: the answer must belong to the request we sent, checked BEFORE we relabel or persist anything.
+    # A wrong operation_kind, a result computed against a different registry snapshot, or an admission echoing another run's
+    # run_ref is a typed refusal, never silently relabelled onto this run. (Same-key/different-payload is refused server-side.)
+    expected_run_ref = req["run_ref"]
+    if resp.get("operation_kind") != kind:
+        return {"gap": {"code": "TRAIL_RESPONSE_MISMATCH", "message": f"{kind}: Trail answered operation_kind {resp.get('operation_kind')!r}"}}
+    if resp.get("operation_id") in (None, ""):
+        return {"gap": {"code": "TRAIL_RESPONSE_MISMATCH", "message": f"{kind}: Trail answer carries no operation_id"}}
+    _resp_snap = (resp.get("registry_snapshot") or {}).get("snapshot_id")
+    if req.get("registry_snapshot_id") and _resp_snap and _resp_snap != req["registry_snapshot_id"]:
+        return {"gap": {"code": "TRAIL_RESPONSE_MISMATCH", "message": f"{kind}: Trail answered against snapshot {_resp_snap!r}, not {req['registry_snapshot_id']!r}"}}
     result = dict(resp.get("result") or {})
     output: dict[str, Any] = {"trail_operation_id": resp.get("operation_id"), "operation_kind": kind}
     refs: list[dict[str, Any]] = []
@@ -334,8 +356,10 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
         output[k] = v
     adm = output.get("evidence_admission")
     if isinstance(adm, dict):
-        # Trail echoes the wire run_ref (`run:<slug>`, the identifier this client sent); Polymath's admission projection is keyed by
-        # Polymath's own run id (contracts/adapter/v1/evidence_admission: `adr_…`). The Trail operation id stays the cross-system link.
+        # Validate the admission's echoed run identity corresponds to THIS run's wire run_ref before relabelling it to Polymath's
+        # own run id (contracts/adapter/v1/evidence_admission uses `adr_…`; the Trail operation id stays the cross-system link).
+        if adm.get("run_id") not in (None, "", expected_run_ref):
+            return {"gap": {"code": "TRAIL_RESPONSE_MISMATCH", "message": f"evidence.admit: admission run_id {adm.get('run_id')!r} does not correspond to {expected_run_ref!r}"}}
         adm = {**adm, "run_id": state.run_id}; output["evidence_admission"] = adm
         record_ids += [a.get("trail_admission_record_id") for a in adm.get("admitted") or [] if a.get("trail_admission_record_id")]
     ts = output.get("trail_score")

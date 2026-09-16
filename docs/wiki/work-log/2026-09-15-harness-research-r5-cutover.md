@@ -47,6 +47,31 @@ harness receipts, so a live run can traverse Trail's seven bounded research oper
 - "HR3 is WORKING in Trail": not until the HR3 chain records VERIFIED and the owner merges the stacked PRs; the local proof is a smoke on the HR3 tip.
 - "The old research path is retired": `research/` and the Hermes symlink (O6) are removed only after the live acceptance passes.
 
+## R5-AUDIT-FIX (2026-09-15, independent audit)
+An independent adversarial audit found real defects the builder tests missed. Fixed before declaring R5 green:
+- **Balanced deterministic context budget** (`_context_refs`): reserved per-class floors (field_evidence 80, chunk 50, graph_fact 40, other 30 of MAX_CONTEXT_REFS=200) with deterministic spillover and stable emit order. No valid amount of one evidence class can evict another; a large corpus can no longer starve admitted field evidence, and abundant admitted evidence cannot starve the knowledge a θ step must cite. Adversarial tests: 80 field + 150 chunk + 60 fact, 200 field + 150 chunk, spillover, near-boundary; plus a full-loop scale test (190 knowledge refs/step through admit→judge→territory→qualify→score).
+- **Trail response identity validation** (`exec_external`): the answer's `operation_kind`, `operation_id`, `registry_snapshot`, and (for admit) the echoed run_ref are validated against the request BEFORE any normalization or persistence; a mismatch is a typed `TRAIL_RESPONSE_MISMATCH` refusal. Poison tests: wrong operation_kind, wrong snapshot, admission from another run.
+- **Authoritative output ordering** (`_ordered_outputs`): payload construction (gap accumulation, market_delta-before-supply qualifications) reads outputs in acceptance order, never `dict.values()`. Shuffle test proves byte-identical output.
+- **Wire-faithful primary stub**: the product-discovery loop StubTrail now echoes the wire run_ref, every-envelope registry snapshot, and φ verdicts as `kind` + `polymath_transition` (incl. a `REQUIRE_EVIDENCE`→null dropped case). The bare-`kind` fallback keeps a dedicated compatibility test.
+
+- **Round 4 (decoupled, final):** the complete gate-facing admitted set travels as a NEW additive `adapter_step.context.admitted_evidence_ids` field the service fills from the store accumulator (uncapped, across every bounded-loop pass); `_context_refs` is re-capped at MAX_CONTEXT_REFS as a display-only citation list (so it can never breach the schema's `evidence_refs` maxItems:500 and crash `issue_step`); the worker reads the dedicated field. Rounds 1–3 had, in turn: floors-as-caps starving admitted; a `state.outputs` source that lost bounded-loop passes; and an uncapped `_context_refs` that could exceed the contract limit and crash. Adversarial tests cover the capped display, the complete/schema-legal 1000-id admitted set, >80/>200 to the gate, and loop re-entry.
+
+## Independent audit outcome (R5-AUDIT-FIX)
+An independent adversarial auditor gated this work across four rounds; it found four distinct real defects the builder's tests missed, each verified independently (the builder did not grade its own repair):
+1. context-budget floors doubled as caps and the qualify/score gate read the capped set → >80-observation runs lost gate-critical evidence;
+2. the fix sourced admitted ids from `state.outputs`, which the bounded gap loop overwrites → earlier loop passes lost;
+3. removing the cap let `_context_refs` exceed the `adapter_step` `evidence_refs maxItems:500` → an unhandled `ContractViolation` at `issue_step` (reachable up to ~1000 admitted per run);
+4. final decoupling: the complete gate-facing admitted set travels in the additive `context.admitted_evidence_ids` field (store accumulator, uncapped, loop-safe), display `evidence_refs` re-capped at 200. **Verdict: PASS** (72 adapter tests + independent probes).
+
+### LOW residual hardening (non-blocking; tracked, do NOT let disappear)
+- **RH-1** `advance()` wraps `issue_step` only in `except BudgetExhausted`; a future `ContractViolation` (e.g. a schema-cap breach) would propagate and wedge the run instead of ending in a typed gap. Unreachable for the shipped manifest (5000 admitted-id cap ≫ ~1000 manifest ceiling); harden by converting an `issue_step` `ContractViolation` into a typed terminal gap.
+- **RH-2** `context.admitted_evidence_ids` is threaded into every issued step including AGENT_REASON/HARNESS_ACTION (not citable there); could be scoped to EXTERNAL_OPERATION steps.
+- **RH-3** the θ field-evidence DISPLAY surface is the oldest 80 by `admitted_at`; immaterial to the gate (which uses the complete set) but a minor citation-surface quirk.
+
+## R5 vs HR4 scope
+- **R5 (this cutover):** single-hypothesis production cutover — one hypothesis, real Trail, complete deterministic score.
+- **HR4 (REQUIRED behavioural canary):** multiple hypotheses with different evidence attached to each, weaken/kill/strengthen, the CORRECT hypothesis qualified/scored, and NO cross-hypothesis leakage. This is required because the audit found a real defect here: when multiple hypotheses survive, evidence is tagged to one but `opportunity.qualify`/`opportunity.score` target `hypotheses[0]`, which can be a different, evidence-less hypothesis → `NO_DEFENSIBLE_BRIDGE` on a run with ample evidence. The single-hypothesis R5 harness sidesteps this; HR4 must exercise and fix it. Do not let this disappear.
+
 ## Open contract gaps
 - Root cause of the CI flake was the hash-ordered harness action (fixed above); the `httpx2<2.13` CI pin is therefore precautionary and can be dropped once CI is green twice on the fixed ordering.
 - (Superseded below by the ordering fix; kept for the record.) CI drift, not this slice: on a pure `origin/main` (599eef8, green on 2026-09-14) the CI `test` job now fails `tests/determinism/test_adapter_harness_action.py::test_harness_action_pauses_durably_and_a_receipt_resumes_the_same_run_with_lineage` (`revised` instead of `proposed`). Bisected locally in CI-equivalent environments: the only package that moved between the green and failing runs is `httpx2`/`httpcore2` 2.12.0 → 2.13.0, and downgrading exactly those two restores the pass; the fleet lock stays at 2.12.0. `.github/workflows/determinism.yml` pins `httpx2<2.13` / `httpcore2<2.13` until the mechanism (no first-party module imports httpx2) is identified.

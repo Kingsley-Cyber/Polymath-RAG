@@ -1,261 +1,271 @@
 {
- "$schema": "https://json-schema.org/draft/2020-12/schema",
- "$id": "polymath/contracts/adapter/v1/adapter_step.schema.json",
- "title": "AdapterStepV1",
- "description": "One issued step. For AGENT_REASON it carries the exact objective, bounded evidence refs (Polymath knowledge + Trail-admitted field_evidence; trail_prior refs are coordinates and may never be cited as evidence), the current hypotheses, constraints, the required output schema and acceptance rules; the connected agent answers with an AdapterSubmissionV1. For HARNESS_ACTION it carries a HarnessActionV1 and the harness answers with a HarnessResearchReceiptV1 (submission kind=receipt).",
- "type": "object",
- "required": [
-  "run_id",
-  "step_id",
-  "step_type",
-  "sequence",
-  "issued_at",
-  "objective",
-  "context",
-  "output_schema"
- ],
- "properties": {
-  "run_id": {
-   "type": "string",
-   "pattern": "^adr_[0-9a-f]{16,64}$"
-  },
-  "step_id": {
-   "type": "string",
-   "minLength": 1,
-   "maxLength": 200
-  },
-  "step_type": {
-   "enum": [
-    "POLYMATH_RETRIEVE",
-    "POLYMATH_COMPILE_PLAN",
-    "POLYMATH_GRAPH_EXPAND",
-    "EXTERNAL_OPERATION",
-    "AGENT_REASON",
-    "HARNESS_ACTION",
-    "VALIDATE",
-    "BRANCH",
-    "COMPILE_RESULT"
-   ]
-  },
-  "sequence": {
-   "type": "integer",
-   "minimum": 1
-  },
-  "issued_at": {
-   "type": "string",
-   "format": "date-time"
-  },
-  "objective": {
-   "type": "string",
-   "maxLength": 4000
-  },
-  "context": {
-   "type": "object",
-   "additionalProperties": false,
-   "properties": {
-    "evidence_refs": {
-     "type": "array",
-     "items": {
-      "type": "object",
-      "required": [
-       "kind",
-       "id"
-      ],
-      "additionalProperties": false,
-      "properties": {
-       "kind": {
-        "enum": [
-         "chunk",
-         "document",
-         "graph_fact",
-         "graph_hop",
-         "parent_map",
-         "query_receipt",
-         "step_output",
-         "field_evidence",
-         "trail_prior"
-        ]
-       },
-       "id": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 200
-       },
-       "corpus_id": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 200
-       },
-       "doc_id": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 200
-       },
-       "score": {
-        "type": "number"
-       },
-       "note": {
-        "type": "string",
-        "maxLength": 500
-       }
-      }
-     },
-     "maxItems": 500
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "polymath/contracts/adapter/v1/adapter_step.schema.json",
+  "title": "AdapterStepV1",
+  "description": "One issued step. For AGENT_REASON it carries the exact objective, bounded evidence refs (Polymath knowledge + Trail-admitted field_evidence; trail_prior refs are coordinates and may never be cited as evidence), the current hypotheses, constraints, the required output schema and acceptance rules; the connected agent answers with an AdapterSubmissionV1. For HARNESS_ACTION it carries a HarnessActionV1 and the harness answers with a HarnessResearchReceiptV1 (submission kind=receipt).",
+  "type": "object",
+  "required": [
+    "run_id",
+    "step_id",
+    "step_type",
+    "sequence",
+    "issued_at",
+    "objective",
+    "context",
+    "output_schema"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "pattern": "^adr_[0-9a-f]{16,64}$"
     },
-    "inputs": {
-     "type": "object"
-    },
-    "prior_step_ids": {
-     "type": "array",
-     "items": {
+    "step_id": {
       "type": "string",
       "minLength": 1,
       "maxLength": 200
-     }
     },
-    "hypotheses": {
-     "type": "array",
-     "items": {
+    "step_type": {
+      "enum": [
+        "POLYMATH_RETRIEVE",
+        "POLYMATH_COMPILE_PLAN",
+        "POLYMATH_GRAPH_EXPAND",
+        "EXTERNAL_OPERATION",
+        "AGENT_REASON",
+        "HARNESS_ACTION",
+        "VALIDATE",
+        "BRANCH",
+        "COMPILE_RESULT"
+      ]
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "objective": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "context": {
       "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "kind",
+              "id"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "enum": [
+                  "chunk",
+                  "document",
+                  "graph_fact",
+                  "graph_hop",
+                  "parent_map",
+                  "query_receipt",
+                  "step_output",
+                  "field_evidence",
+                  "trail_prior"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "corpus_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "doc_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "score": {
+                "type": "number"
+              },
+              "note": {
+                "type": "string",
+                "maxLength": 500
+              }
+            }
+          },
+          "maxItems": 500
+        },
+        "inputs": {
+          "type": "object"
+        },
+        "prior_step_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "hypothesis_id",
+              "revision",
+              "status",
+              "statement"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "hypothesis_id": {
+                "type": "string",
+                "pattern": "^hyp_[0-9a-f]{8,64}$"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "status": {
+                "enum": [
+                  "proposed",
+                  "filtered",
+                  "retained",
+                  "revised",
+                  "split",
+                  "merged",
+                  "weakened",
+                  "strengthened",
+                  "contradicted",
+                  "killed",
+                  "promoted"
+                ]
+              },
+              "statement": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            }
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "registry_snapshot": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "required": [
+            "snapshot_id",
+            "content_hash"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "snapshot_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "content_hash": {
+              "type": "string",
+              "pattern": "^(sha256:)?[0-9a-f]{64}$"
+            }
+          }
+        },
+        "admitted_evidence_ids": {
+          "type": "array",
+          "description": "Complete set of TrailSignal-admitted observation ids for the run (store accumulator, across every bounded-loop pass) \u2014 the gate-facing admitted set the qualify/score operations count over; distinct from and unbounded by the display-capped evidence_refs.",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "maxItems": 5000
+        }
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500
+      }
+    },
+    "output_schema": {
+      "type": "object"
+    },
+    "acceptance_rules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500
+      }
+    },
+    "external": {
+      "type": [
+        "object",
+        "null"
+      ],
       "required": [
-       "hypothesis_id",
-       "revision",
-       "status",
-       "statement"
+        "system",
+        "operation_kind"
       ],
       "additionalProperties": false,
       "properties": {
-       "hypothesis_id": {
-        "type": "string",
-        "pattern": "^hyp_[0-9a-f]{8,64}$"
-       },
-       "revision": {
-        "type": "integer",
-        "minimum": 0
-       },
-       "status": {
-        "enum": [
-         "proposed",
-         "filtered",
-         "retained",
-         "revised",
-         "split",
-         "merged",
-         "weakened",
-         "strengthened",
-         "contradicted",
-         "killed",
-         "promoted"
-        ]
-       },
-       "statement": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 2000
-       }
+        "system": {
+          "enum": [
+            "trailsignal"
+          ]
+        },
+        "operation_kind": {
+          "type": "string"
+        },
+        "request": {
+          "type": "object"
+        }
       }
-     },
-     "minItems": 0,
-     "maxItems": 64
     },
-    "registry_snapshot": {
-     "type": [
-      "object",
-      "null"
-     ],
-     "required": [
-      "snapshot_id",
-      "content_hash"
-     ],
-     "additionalProperties": false,
-     "properties": {
-      "snapshot_id": {
-       "type": "string",
-       "minLength": 1,
-       "maxLength": 200
-      },
-      "content_hash": {
-       "type": "string",
-       "pattern": "^(sha256:)?[0-9a-f]{64}$"
-      }
-     }
+    "expires_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "cognitive_op": {
+      "enum": [
+        "theta",
+        "phi",
+        null
+      ]
+    },
+    "theta_op": {
+      "enum": [
+        "generate_hypotheses",
+        "derive_mechanisms",
+        "cross_map_frictions",
+        "derive_physical_jobs",
+        "derive_analogies",
+        "split_hypotheses",
+        "generate_product_mechanisms",
+        null
+      ]
+    },
+    "harness_action": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "HarnessActionV1 for HARNESS_ACTION steps (validated against harness_action.schema.json by the runtime); null otherwise."
     }
-   }
   },
-  "constraints": {
-   "type": "array",
-   "items": {
-    "type": "string",
-    "maxLength": 500
-   }
-  },
-  "output_schema": {
-   "type": "object"
-  },
-  "acceptance_rules": {
-   "type": "array",
-   "items": {
-    "type": "string",
-    "maxLength": 500
-   }
-  },
-  "external": {
-   "type": [
-    "object",
-    "null"
-   ],
-   "required": [
-    "system",
-    "operation_kind"
-   ],
-   "additionalProperties": false,
-   "properties": {
-    "system": {
-     "enum": [
-      "trailsignal"
-     ]
-    },
-    "operation_kind": {
-     "type": "string"
-    },
-    "request": {
-     "type": "object"
-    }
-   }
-  },
-  "expires_at": {
-   "type": [
-    "string",
-    "null"
-   ],
-   "format": "date-time"
-  },
-  "cognitive_op": {
-   "enum": [
-    "theta",
-    "phi",
-    null
-   ]
-  },
-  "theta_op": {
-   "enum": [
-    "generate_hypotheses",
-    "derive_mechanisms",
-    "cross_map_frictions",
-    "derive_physical_jobs",
-    "derive_analogies",
-    "split_hypotheses",
-    "generate_product_mechanisms",
-    null
-   ]
-  },
-  "harness_action": {
-   "type": [
-    "object",
-    "null"
-   ],
-   "description": "HarnessActionV1 for HARNESS_ACTION steps (validated against harness_action.schema.json by the runtime); null otherwise."
-  }
- },
- "additionalProperties": false
+  "additionalProperties": false
 }

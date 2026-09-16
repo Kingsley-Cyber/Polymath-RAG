@@ -122,7 +122,8 @@ def start_run(manifest: Manifest, run_id: str, input_payload: dict[str, Any], op
 
 def issue_step(manifest: Manifest, state: RunState, *, issued_at: str, evidence_refs: list[dict[str, Any]] | None = None,
                inputs: dict[str, Any] | None = None, hypotheses: list[dict[str, Any]] | None = None,
-               registry_snapshot: dict[str, Any] | None = None, harness_action: dict[str, Any] | None = None) -> tuple[RunState, dict[str, Any]]:
+               registry_snapshot: dict[str, Any] | None = None, harness_action: dict[str, Any] | None = None,
+               admitted_evidence_ids: list[str] | None = None) -> tuple[RunState, dict[str, Any]]:
     """Advance to the next step and build its AdapterStepV1 dict (validated). Returns (new_state, step).
     Terminal runs never issue; budget exhaustion raises BudgetExhausted for the caller to record as a typed gap."""
     if state.terminal:
@@ -139,7 +140,8 @@ def issue_step(manifest: Manifest, state: RunState, *, issued_at: str, evidence_
         if not harness_action:
             raise RuntimeError(f"{sid}: HARNESS_ACTION needs a compiled harness action (no research directive available)")
         assert_valid("harness_action", harness_action)
-    context = {"evidence_refs": list(evidence_refs or []), "inputs": dict(inputs or {}), "prior_step_ids": list(state.outputs.keys())}
+    context = {"evidence_refs": list(evidence_refs or []), "inputs": dict(inputs or {}), "prior_step_ids": list(state.outputs.keys()),
+               "admitted_evidence_ids": list(admitted_evidence_ids or [])}
     if hypotheses:
         context["hypotheses"] = list(hypotheses)
     if registry_snapshot:
