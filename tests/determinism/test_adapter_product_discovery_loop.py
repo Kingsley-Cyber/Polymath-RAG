@@ -48,7 +48,7 @@ class StubTrail:
         self.calls.append(name)
         assert req.headers["authorization"].startswith("Bearer ") and "mcp-session-id" not in req.headers
         r = args.get("request") or {}; payload = r.get("payload") or {}; self.n += 1
-        env = {"operation_id": f"op-{name.replace('.', '-')}-{self.n}", "operation_kind": name, "status_revision": 1}
+        env = {"operation_id": f"op-{name.replace('.', '-')}-{self.n}", "operation_kind": name, "status_revision": 1, "registry_snapshot": SNAP}
         hyps = payload.get("hypotheses") or []
         ids = [h["hypothesis_id"] for h in hyps]
         def ok(result, **extra):
@@ -61,11 +61,12 @@ class StubTrail:
         assert r["registry_snapshot_id"] == SNAP["snapshot_id"], name
         if name == "hypotheses.judge":
             if payload["stage"] == "filter":
-                verdicts = [{"hypothesis_id": ids[1], "kind": "WEAKEN", "cause_refs": [{"kind": "trail_prior", "id": "fr-03"}], "reason_code": "WEAK_PRIOR_SUPPORT"}] if len(ids) > 1 else []
+                verdicts = ([{"hypothesis_id": ids[1], "kind": "WEAKEN", "polymath_transition": "WEAKEN", "cause_refs": [{"kind": "trail_prior", "id": "fr-03"}], "reason_code": "WEAK_PRIOR_SUPPORT"}] if len(ids) > 1 else []) + \
+                           [{"hypothesis_id": ids[0], "kind": "REQUIRE_EVIDENCE", "polymath_transition": None, "cause_refs": [], "reason_code": "INSUFFICIENT_EVIDENCE"}]  # null transition: keep gathering, dropped by the worker
                 return ok({"verdicts": verdicts, "open_gaps": []})
             self.judged += 1
             adm = payload.get("latest_admission_id")
-            verdicts = [{"hypothesis_id": ids[0], "kind": "STRENGTHEN", "cause_refs": [{"kind": "evidence_admission", "id": adm}], "reason_code": "INDEPENDENT_SUPPORT"}] if adm else []
+            verdicts = [{"hypothesis_id": ids[0], "kind": "STRENGTHEN", "polymath_transition": "STRENGTHEN", "cause_refs": [{"kind": "evidence_admission", "id": adm}], "reason_code": "INDEPENDENT_SUPPORT"}] if adm else []
             return ok({"verdicts": verdicts, "open_gaps": [{"gap_id": "g-demand", "evidence_role": "demand"}] if self.judged == 1 else []})
         if name == "gaps.compile":
             gaps = [{"gap_id": f"gap_{i}", "hypothesis_id": g.get("hypothesis_id") or ids[0], "question": g["question"], "evidence_role": g.get("evidence_role", "friction")}
@@ -82,7 +83,7 @@ class StubTrail:
                          "source_id": o["source_id"], "evidence_role": role, "source_class": "community_discussion" if stage == "field_evidence" else ("product_review" if stage == "product_reality" else "supplier_listing"),
                          "source_suitability": "suitable", "freshness": "fresh", "provenance": "recorded", "independence_group": o["source_id"], "duplicate_of": None,
                          "polarity": "supporting", "hypothesis_ids": ids[:1], "stage_relevance": stage, "limitations": [], "trail_admission_record_id": f"adm-{self.n}-{o['observation_id']}"} for o in rec["observations"]]
-            return ok({"evidence_admission": {"admission_id": adm_id, "run_id": rec["run_id"], "action_id": payload["action_id"], "registry_snapshot": SNAP, "trail_operation_id": env["operation_id"],
+            return ok({"evidence_admission": {"admission_id": adm_id, "run_id": r["run_ref"], "action_id": payload["action_id"], "registry_snapshot": SNAP, "trail_operation_id": env["operation_id"],
                                               "admitted": admitted, "rejected": [], "evaluated_at": "2026-09-13T21:00:00Z"}, "verdicts": []})
         if name == "territory.project":
             return ok({"territories": [{"territory_id": "pt-02", "territory": "body_mounted_access", "hypothesis_ids": ids[:1]}],
@@ -220,6 +221,34 @@ def test_active_config_reaches_trail_at_the_first_operation(rig):
         assert all(s["external"]["availability"] == "working" and "planned_node" not in s["external"] for s in m["steps"] if s["type"] == "EXTERNAL_OPERATION")
         with tx() as conn:
             assert len(store.current_hypotheses(conn, rid)) == 2   # θ state is durable across the Trail projection
+    finally:
+        with tx() as conn:
+            store.delete_run(conn, rid)
+
+
+def _scale_knowledge(step, state, m):
+    # a production-scale knowledge return: 120 chunks + 60 graph facts + 10 documents (190 refs) on every retrieval step, so every
+    # issued step's context is dominated by knowledge — the exact condition under which the pre-fix builder starved admitted evidence.
+    refs = (FAKE_REFS                                                # the ids the scripted θ cites, kept first so they survive the chunk/graph-fact budget floors
+            + [{"kind": "chunk", "id": f"c_{i:03d}", "doc_id": "d", "corpus_id": "probe"} for i in range(120)]
+            + [{"kind": "graph_fact", "id": f"g_{i:03d}"} for i in range(60)]
+            + [{"kind": "document", "id": f"doc_{i:03d}"} for i in range(10)])
+    return {"output": {"rows": len(refs)}, "evidence_refs": refs}
+
+
+def test_full_loop_survives_a_large_knowledge_corpus(rig, tmp_path):
+    stub, _ = rig
+    execs = {**W.EXECUTORS, "POLYMATH_RETRIEVE": _scale_knowledge, "POLYMATH_COMPILE_PLAN": _scale_knowledge, "POLYMATH_GRAPH_EXPAND": _scale_knowledge}
+    d = _working_copy(tmp_path)
+    rid, st, used = _run_loop(d, execs, ["hermes", "claude-code"])
+    try:
+        # the whole pipeline (admit → judge → territory → qualify → score) completes with 190 knowledge refs per step; the pre-fix
+        # context builder truncated admitted field evidence out and Trail refused the score with NO_ADMITTED_EVIDENCE / HARD_GATE_UNMET.
+        assert st.status == "completed", (st.status, st.gap, st.failure, st.current_step_id)
+        with tx() as conn:
+            res = service.result(conn, rid)
+        assert res["lineage"]["trail_score_record_ids"] == ["score-1"]
+        assert len(res["lineage"]["admitted_evidence_ids"]) >= 4, "admitted field evidence must survive a large-knowledge context and reach qualify/score"
     finally:
         with tx() as conn:
             store.delete_run(conn, rid)
