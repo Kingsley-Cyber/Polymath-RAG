@@ -21,13 +21,14 @@ Executor = Callable[[dict[str, Any], RunState, Manifest], ExecOutcome]
 
 KNOWLEDGE_KINDS = ("chunk", "document", "graph_fact", "graph_hop", "parent_map")
 MAX_CONTEXT_REFS = 200
-KNOWLEDGE_CLASS_ORDER = ("chunk", "graph_fact", "other")
-#: floors per KNOWLEDGE class within the slots left after admitted evidence; admitted field evidence is never budgeted (see _context_refs)
-KNOWLEDGE_BUDGET = {"chunk": 50, "graph_fact": 40, "other": 30}
+CONTEXT_CLASS_ORDER = ("field_evidence", "chunk", "graph_fact", "other")
+#: reserved DISPLAY floor per class (floors sum to MAX_CONTEXT_REFS, unused spills over); this budgets ONLY what an issued step shows
+#: for citation, never the gate-facing admitted set (context.admitted_evidence_ids carries that complete, uncapped from the store).
+CONTEXT_BUDGET = {"field_evidence": 80, "chunk": 50, "graph_fact": 40, "other": 30}
 
 
-def _knowledge_class(kind: str) -> str:
-    return kind if kind in ("chunk", "graph_fact") else "other"
+def _context_class(kind: str) -> str:
+    return kind if kind in ("field_evidence", "chunk", "graph_fact") else "other"
 
 
 class UnknownAdapter(KeyError):
@@ -343,6 +344,7 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
                     break
             try:
                 state, step = T.issue_step(m, state, issued_at=now_iso(), evidence_refs=_context_refs(conn, state), inputs=state.input,
+                    admitted_evidence_ids=[r["id"] for r in store.admitted_evidence_refs(conn, state.run_id)],
                                            hypotheses=H.context_view(hyps), registry_snapshot=snapshot, harness_action=harness_action)
             except BudgetExhausted as exc:
                 state = T.terminal_gap(state, "BUDGET_EXHAUSTED", str(exc), step_id=state.current_step_id)
@@ -437,41 +439,38 @@ def _cited(payload: Any) -> set[str]:
 
 
 def _context_refs(conn, state: RunState) -> list[dict[str, Any]]:
-    """What an issued step may carry: knowledge refs and registry priors produced by executed steps, plus TrailSignal-ADMITTED field
-    evidence from the store (raw harness observations never appear here, ADR-0019 §5). The COMPLETE admitted set is always included —
-    it is the authoritative signal the qualify/score hard gates count over (across every bounded-loop pass; the store is the accumulator,
-    `state.outputs` keeps only the last output per step id), so it is never subject to a display cap. Only KNOWLEDGE is budgeted: it
-    fills the slots left after admitted evidence, with per-class floors and deterministic spillover, so no knowledge class evicts another."""
-    admitted = [dict(r) for r in store.admitted_evidence_refs(conn, state.run_id)]   # complete accumulator, ORDER BY admitted_at, evidence_id
-    seen: set[str] = {str(r["id"]) for r in admitted}
-    buckets: dict[str, list[dict[str, Any]]] = {c: [] for c in KNOWLEDGE_BUDGET}
+    """The DISPLAY context an issued step carries FOR CITATION, capped at MAX_CONTEXT_REFS: admitted field evidence and knowledge
+    refs, balanced per class (reserved floors + deterministic spillover + stable order) so no class starves another. This is NOT the
+    gate-facing admitted set — the complete admitted_evidence_ids the qualify/score gates count over travel as their own context field
+    (advance → issue_step), sourced from the store accumulator and never capped."""
+    buckets: dict[str, list[dict[str, Any]]] = {c: [] for c in CONTEXT_BUDGET}
+    seen: set[str] = set()
+
+    def _add(ref: dict[str, Any]) -> None:
+        rid = str(ref["id"])
+        if rid in seen:
+            return
+        seen.add(rid)
+        buckets[_context_class(str(ref.get("kind", "")))].append(ref)
+
+    for ref in store.admitted_evidence_refs(conn, state.run_id):   # admitted field evidence for citation (ORDER BY admitted_at, evidence_id)
+        _add(ref)
     for sid in state.output_order or tuple(state.outputs):
         for ref in (state.outputs.get(sid) or {}).get("_evidence_refs") or []:
-            rid = str(ref["id"])
-            if rid in seen:
-                continue
-            seen.add(rid)
-            buckets[_knowledge_class(str(ref.get("kind", "")))].append(ref)
+            _add(ref)
 
-    remaining = max(0, MAX_CONTEXT_REFS - len(admitted))            # knowledge shares only what admitted evidence leaves
-    take = {c: min(len(buckets[c]), KNOWLEDGE_BUDGET[c]) for c in KNOWLEDGE_BUDGET}
-    while sum(take.values()) > remaining:                           # floors exceed the remaining budget → trim least-critical first
-        for c in ("other", "graph_fact", "chunk"):
-            if sum(take.values()) <= remaining:
-                break
-            if take[c] > 0:
-                take[c] -= 1
-    spare = remaining - sum(take.values())
-    for c in KNOWLEDGE_CLASS_ORDER:                                 # redistribute unused slots deterministically
+    take = {c: min(len(buckets[c]), CONTEXT_BUDGET[c]) for c in CONTEXT_BUDGET}
+    spare = MAX_CONTEXT_REFS - sum(take.values())
+    for c in CONTEXT_CLASS_ORDER:
         if spare <= 0:
             break
         extra = min(spare, len(buckets[c]) - take[c])
         take[c] += extra
         spare -= extra
-    out = list(admitted)
-    for c in KNOWLEDGE_CLASS_ORDER:                                 # stable emit order
+    out: list[dict[str, Any]] = []
+    for c in CONTEXT_CLASS_ORDER:
         out.extend(buckets[c][: take[c]])
-    return out
+    return out[:MAX_CONTEXT_REFS]
 
 
 def _apply_phi_outputs(conn, run_id: str, step: dict[str, Any], m: Manifest, state: RunState, output: dict[str, Any], now: str) -> dict[str, Any] | None:

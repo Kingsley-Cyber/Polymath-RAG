@@ -50,46 +50,47 @@ def _knowledge(chunks=0, graph_facts=0, other=0):
     return refs
 
 
-def test_context_budget_never_evicts_admitted_field_evidence(monkeypatch):
-    # 80 admitted field observations + 150 chunks + 60 graph facts (a realistic large corpus): admitted evidence MUST survive
-    out = _run_context(monkeypatch, _fev(80), _knowledge(chunks=150, graph_facts=60))
+def test_display_context_is_capped_and_balanced(monkeypatch):
+    # _context_refs is the CITATION display list, capped at MAX_CONTEXT_REFS with per-class floors so no class starves another.
+    out = _run_context(monkeypatch, _fev(200), _knowledge(chunks=150, graph_facts=60))
     kinds = [r["kind"] for r in out]
-    assert kinds.count("field_evidence") == 80, kinds.count("field_evidence")   # every admitted observation is retained
-    assert kinds.count("chunk") >= 50 and kinds.count("graph_fact") >= 40        # knowledge floors honoured
-    assert len(out) == service.MAX_CONTEXT_REFS
+    assert len(out) == service.MAX_CONTEXT_REFS, "display context never exceeds the cap (so it can never breach the adapter_step maxItems)"
+    assert kinds.count("field_evidence") >= 80 and kinds.count("chunk") >= 50 and kinds.count("graph_fact") >= 40
 
 
-def test_admitted_evidence_is_complete_even_when_abundant(monkeypatch):
-    out = _run_context(monkeypatch, _fev(200), _knowledge(chunks=150))
-    kinds = [r["kind"] for r in out]
-    assert kinds.count("field_evidence") == 200, "every admitted observation must be present"
-    assert kinds.count("chunk") == 0, "with admitted filling the budget, knowledge is legitimately squeezed (admitted wins)"
-    out2 = _run_context(monkeypatch, _fev(100), _knowledge(chunks=150))
-    k2 = [r["kind"] for r in out2]
-    assert k2.count("field_evidence") == 100 and k2.count("chunk") == 100 and len(out2) == service.MAX_CONTEXT_REFS
+def test_display_context_stays_capped_under_huge_admitted(monkeypatch):
+    # even 600 admitted observations produce a display list <= the cap, so issue-time adapter_step validation (evidence_refs maxItems:500) never breaks.
+    out = _run_context(monkeypatch, _fev(600), _knowledge(chunks=150))
+    assert len(out) == service.MAX_CONTEXT_REFS <= 500
+    assert [r["kind"] for r in out].count("field_evidence") >= 80
 
 
-def test_context_budget_spillover_and_determinism(monkeypatch):
-    a = _run_context(monkeypatch, _fev(500), _knowledge(chunks=5))
-    b = _run_context(monkeypatch, _fev(500), _knowledge(chunks=5))
-    assert a == b, "context selection must be deterministic"
+def test_display_context_spillover_and_determinism(monkeypatch):
+    a = _run_context(monkeypatch, _fev(5), _knowledge(chunks=400))       # scarce admitted -> its unused slots spill to knowledge
+    b = _run_context(monkeypatch, _fev(5), _knowledge(chunks=400))
+    assert a == b, "display selection must be deterministic"
     ka = [r["kind"] for r in a]
-    assert ka.count("field_evidence") == 500 and ka.count("chunk") == 0
+    assert ka.count("field_evidence") == 5 and ka.count("chunk") == service.MAX_CONTEXT_REFS - 5
     small = _run_context(monkeypatch, _fev(3), _knowledge(chunks=4, graph_facts=2, other=1))
     assert len(small) == 10 and {r["kind"] for r in small} == {"field_evidence", "chunk", "graph_fact", "document"}
 
 
-def test_context_refs_uses_the_store_accumulator_not_state_outputs(monkeypatch):
-    store_admitted = _fev(8)
-    monkeypatch.setattr(service.store, "admitted_evidence_refs", lambda conn, rid: list(store_admitted))
-    st = _state(outputs={"J_admit": {"evidence_admission": {"admitted": [{"admitted_evidence_id": "fev_0006"}, {"admitted_evidence_id": "fev_0007"}]}, "_evidence_refs": []}}, order=("J_admit",))
-    fev_ids = [r["id"] for r in service._context_refs(None, st) if r["kind"] == "field_evidence"]
-    assert fev_ids == [r["id"] for r in store_admitted], "all 8 store-admitted observations must be in the context, not just the surviving loop output"
+def test_gate_facing_admitted_set_is_complete_and_schema_legal():
+    # the COMPLETE admitted set travels as context.admitted_evidence_ids (gate-facing), decoupled from and unbounded by the display
+    # evidence_refs. The adapter_step contract must accept a large admitted set alongside a capped display, and reject an over-cap display.
+    from polymath_shared.adapter.contracts import validate
+    step = {"run_id": "adr_" + "a" * 32, "step_id": "R_qualify", "step_type": "EXTERNAL_OPERATION", "sequence": 9, "issued_at": "2026-09-15T00:00:00Z",
+            "objective": "qualify the opportunity", "output_schema": {"type": "object"},
+            "context": {"evidence_refs": [{"kind": "field_evidence", "id": f"fev_{i:04d}"} for i in range(service.MAX_CONTEXT_REFS)],
+                        "inputs": {}, "prior_step_ids": [], "admitted_evidence_ids": [f"fev_{i:04d}" for i in range(1000)]}}
+    assert validate("adapter_step", step) == [], "a capped display + a complete 1000-id admitted set must be a valid adapter_step"
+    over = {**step, "context": {**step["context"], "evidence_refs": [{"kind": "field_evidence", "id": f"x_{i:04d}"} for i in range(501)]}}
+    assert validate("adapter_step", over) != [], "an over-cap display (>500) must be rejected — the cap is what keeps _context_refs legal"
 
 
 def _score_payload(outputs, order):
     st = _state(outputs=outputs, order=order)
-    return W._payload_for("opportunity.score", {"context": {"hypotheses": []}, "config": {"stage": "score"}}, st, {"stage": "score"})
+    return W._payload_for("opportunity.score", {"context": {"hypotheses": [], "admitted_evidence_ids": []}, "config": {"stage": "score"}}, st, {"stage": "score"})
 
 
 def test_score_qualifications_follow_acceptance_order_not_dict_order():
@@ -182,23 +183,22 @@ def _admit_output(stage, ids):
     return {"evidence_admission": {"admission_id": f"hadm_{stage}", "admitted": [{"admitted_evidence_id": i} for i in ids]}}
 
 
-def _payload(kind, outputs, order, context_field_refs=()):
+def _payload(kind, admitted_ids=()):
     ctx = {"hypotheses": [{"hypothesis_id": "hyp_x", "revision": 0, "status": "proposed", "statement": "s"}],
-           "evidence_refs": [{"kind": "field_evidence", "id": i} for i in context_field_refs]}
-    st = _state(outputs=outputs, order=order)
-    return W._payload_for(kind, {"context": ctx, "config": {"stage": "market_delta"}}, st, {"stage": "market_delta"})
+           "evidence_refs": [], "admitted_evidence_ids": list(admitted_ids)}
+    return W._payload_for(kind, {"context": ctx, "config": {"stage": "market_delta"}}, _state(), {"stage": "market_delta"})
 
 
 def test_qualify_receives_every_admitted_id_from_the_context():
+    # >80 (and >200) admitted ids all reach the gate via context.admitted_evidence_ids — never touched by the display budget.
     ids = [f"fev_{i:03d}" for i in range(130)]
     for kind in ("opportunity.qualify", "opportunity.score"):
-        got = _payload(kind, {}, (), context_field_refs=ids)
+        got = _payload(kind, admitted_ids=ids)
         assert got["admitted_evidence_ids"] == ids and len(got["admitted_evidence_ids"]) == 130, (kind, len(got["admitted_evidence_ids"]))
 
 
 def test_admitted_ids_preserve_context_order():
     ids = ["x1", "x2", "x3", "x4"]
-    got = _payload("opportunity.score", {}, (), context_field_refs=ids)
-    assert got["admitted_evidence_ids"] == ids
+    assert _payload("opportunity.score", admitted_ids=ids)["admitted_evidence_ids"] == ids
 
 

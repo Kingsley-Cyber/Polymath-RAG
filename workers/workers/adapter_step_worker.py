@@ -250,7 +250,9 @@ def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str
     # admitted_evidence_ids = the COMPLETE admitted set the service threaded into the step context (store accumulator, never the
     # display cap). The service includes every admitted observation in evidence_refs — across all bounded-loop passes — precisely so
     # the qualify/score hard gates, which count independent groups over exactly these ids, always see the full set (see _context_refs).
-    admitted = [r["id"] for r in ctx.get("evidence_refs") or [] if r.get("kind") == "field_evidence"]
+    # the COMPLETE gate-facing admitted set the service threaded into the context from the store accumulator (never the display cap,
+    # never state.outputs which loses bounded-loop passes). The qualify/score hard gates count independent groups over exactly these ids.
+    admitted = list(ctx.get("admitted_evidence_ids") or [])
     payload: dict[str, Any] = {"stage": cfg.get("stage"), "hypotheses": hyps, "admitted_evidence_ids": admitted}
     if kind == "registry.project":
         payload["max_priors_per_hypothesis"] = int(cfg.get("max_priors_per_hypothesis", 12))
