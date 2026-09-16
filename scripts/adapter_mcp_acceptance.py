@@ -98,7 +98,12 @@ def answer_product_discovery(step: dict[str, Any]) -> dict[str, Any]:
         return {"hypotheses": [
             {"statement": "audiences read a screen hit from the reaction shot and framing, not from physical contact", "mechanism": "eyeline and shot scale hide the miss and sell the reaction",
              "population": "film students staging fights", "activity": "staging screen fights", "task": "sell a punch to camera", "context": "coverage and editing", "suspected_friction": "legibility versus realism",
-             "supporting_evidence_ids": knowledge[:2], "knowledge_gaps": [{"question": "do practitioners describe the trade-off in the field?", "evidence_role": "behavior"}]}]}  # ONE hypothesis end to end (as in the Trail HR3 e2e); multi-hypothesis convergence is an HR4 concern
+             "supporting_evidence_ids": knowledge[:2], "knowledge_gaps": [{"question": "do practitioners describe the trade-off in the field?", "evidence_role": "behavior"}]},
+            # HR4 (ADR-064) portfolio canary: a SECOND live hypothesis. The scripted harness tags every field observation to the
+            # non-first hypothesis (see load_receipt), so a correct portfolio scores this one and records a typed refusal for the first.
+            {"statement": "stunt coordinators lose the hit's legibility in wide coverage because the camera cannot hide the miss", "mechanism": "wide shot scale exposes the gap the reaction shot would have hidden",
+             "population": "stunt coordinators rehearsing screen fights", "activity": "rehearsing wide-shot fight coverage", "task": "keep the hit legible in one wide shot", "context": "single-camera wide coverage", "suspected_friction": "legibility collapses at wide shot scale",
+             "supporting_evidence_ids": (knowledge[2:4] or knowledge[:2]), "knowledge_gaps": [{"question": "do coordinators report re-blocking wide shots for legibility?", "evidence_role": "friction"}]}]}
     if sid in ("G_mechanisms", "K_revise"):
         cause = ([{"kind": "field_evidence", "id": field[0]}] if field
                  else [{"kind": "chunk", "id": knowledge[0]}] if knowledge and any(r["kind"] == "chunk" and r["id"] == knowledge[0] for r in ctx.get("evidence_refs") or [])
@@ -107,12 +112,12 @@ def answer_product_discovery(step: dict[str, Any]) -> dict[str, Any]:
                 **({"knowledge_gaps": [{"hypothesis_id": live[0], "question": "how often do practitioners lose legibility in wide coverage?", "evidence_role": "behavior"}]} if sid == "G_mechanisms" and live else {}),
                 **({"open_gaps": []} if sid == "K_revise" else {})}
     if sid == "N_jobs":
-        return {"transitions": [], "physical_jobs": [{"hypothesis_id": h, "job": "make the hit legible in one wide shot", "mechanism": "blocking to the lens with a hidden miss"} for h in live[:1]]}
+        return {"transitions": [], "physical_jobs": [{"hypothesis_id": h, "job": "make the hit legible in one wide shot", "mechanism": "blocking to the lens with a hidden miss"} for h in live]}
     if sid == "W_interpret":
         score_refs = [str(x) for x in (step["context"].get("inputs") or {}).get("trail_score_refs", [])]
         return {"product_opportunity": {"product_concept": {"title": "lens-first fight blocking guide", "mechanism_explanation": "framing carries the hit", "population": "film students", "activity": "staging screen fights",
                                                             "context": "coverage and editing", "problem": "legibility versus realism"},
-                                        "evidence_chain": [{"hypothesis_id": h, "supporting_evidence_ids": knowledge[:2]} for h in live[:1]], "field_evidence_ids": field[:2], "contradictions": [], "competing_products": [], "product_delta": None, "supply": None,
+                                        "evidence_chain": [{"hypothesis_id": h, "supporting_evidence_ids": knowledge[:2]} for h in live], "field_evidence_ids": field[:2], "contradictions": [], "competing_products": [], "product_delta": None, "supply": None,
                                         "trail_score_refs": score_refs, "remaining_uncertainty": ["field population size"], "cheapest_falsification_experiment": "interview ten fight coordinators"}}
     raise SystemExit(f"no scripted answer for step {sid}")
 
@@ -127,6 +132,9 @@ ADAPTERS = {
 }
 
 
+TAGGED_HYPOTHESES: set[str] = set()   # hypothesis ids the scripted receipts tagged their observations to (HR4 portfolio proof)
+
+
 def load_receipt(receipts_dir: str, action: dict[str, Any]) -> dict[str, Any]:
     """A scripted harness: `<receipts_dir>/<action_kind>.json` is a HarnessResearchReceiptV1 whose action/run ids are filled in here."""
     path = os.path.join(receipts_dir, f"{action['action_kind']}.json")
@@ -135,8 +143,13 @@ def load_receipt(receipts_dir: str, action: dict[str, Any]) -> dict[str, Any]:
     with open(path) as f:
         rec = json.load(f)
     rec.update({"action_id": action["action_id"], "run_id": action["run_id"]})
+    # HR4 (ADR-064) portfolio canary: observations are tagged to the SECOND live hypothesis whenever the action carries two or more,
+    # so the evidence-free first hypothesis must come back as a typed refusal and the non-first one as the deterministic score.
+    targets = [str(h) for h in action["hypothesis_ids"]]
+    tagged = targets[1:2] or targets[:1]
+    TAGGED_HYPOTHESES.update(tagged)
     for o in rec.get("observations") or []:
-        o.setdefault("hypothesis_ids", list(action["hypothesis_ids"][:1]))
+        o.setdefault("hypothesis_ids", list(tagged))
     return rec
 
 
@@ -240,6 +253,23 @@ async def run(adapter_id: str, corpus: str, mcp_url: str, key: str, restart: boo
                 receipts["result"]["cited_ids_in_lineage"] = len(cited)
                 if not cited:
                     raise SystemExit("the output cites no evidence id present in the lineage")
+                if adapter_id == "trail.product_discovery":
+                    # HR4 (ADR-064) portfolio proof: at least two live hypotheses; the hypothesis the receipts tagged carries the
+                    # deterministic Trail score; when two or more were still live at scoring, an untagged one carries a typed refusal.
+                    lin, out = res["lineage"], res["output"]
+                    scores = [s for s in (out.get("trail_scores") or []) if isinstance(s, dict)]
+                    refusals = [r for r in (out.get("score_refusals") or []) if isinstance(r, dict)]
+                    receipts["portfolio"] = {"hypotheses": len(lin["hypothesis_ids"]), "tagged": sorted(TAGGED_HYPOTHESES), "scored": [s.get("hypothesis_id") for s in scores],
+                                             "refused": [(r.get("hypothesis_id"), r.get("reason_code")) for r in refusals], "trail_score_record_ids": lin["trail_score_record_ids"],
+                                             "qualifications": len(out.get("qualifications") or [])}
+                    if len(lin["hypothesis_ids"]) < 2:
+                        raise SystemExit(f"portfolio proof needs two live hypotheses: {receipts['portfolio']}")
+                    if not lin["trail_score_record_ids"] or not scores:
+                        raise SystemExit(f"no Trail score record reached the result: {receipts['portfolio']}")
+                    if not any(s.get("hypothesis_id") in TAGGED_HYPOTHESES for s in scores):
+                        raise SystemExit(f"the hypothesis carrying the field evidence was not the one scored: {receipts['portfolio']}")
+                    if len(scores) + len(refusals) >= 2 and not any(r.get("hypothesis_id") not in TAGGED_HYPOTHESES for r in refusals):
+                        raise SystemExit(f"the evidence-free hypothesis was not refused: {receipts['portfolio']}")
     return receipts
 
 
