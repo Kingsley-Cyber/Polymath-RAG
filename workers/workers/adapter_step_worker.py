@@ -276,7 +276,15 @@ def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str
     elif kind == "opportunity.qualify":
         payload["latest_admission_id"] = ((_newest_output_with(state, "evidence_admission") or {}).get("evidence_admission") or {}).get("admission_id")
     elif kind == "opportunity.score":
-        payload["qualifications"] = [o["qualification"] for o in _ordered_outputs(state) if isinstance(o.get("qualification"), dict)]
+        # HR4 (ADR-064) portfolio: each qualify step returns `qualifications` (one record per live hypothesis, hypothesis_ids set);
+        # Trail filters them per hypothesis, so the caller forwards EVERY record of every stage in acceptance order and never
+        # selects a winner. The pre-HR4 singular `qualification` is still forwarded when present.
+        quals: list[dict[str, Any]] = []
+        for o in _ordered_outputs(state):
+            if isinstance(o.get("qualification"), dict):
+                quals.append(o["qualification"])
+            quals += [q for q in (o.get("qualifications") or []) if isinstance(q, dict)]
+        payload["qualifications"] = quals
     return payload
 
 
@@ -366,6 +374,16 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
     if isinstance(ts, dict) and ts.get("record_id"):
         output["trail_score_record_ids"] = [str(ts["record_id"])]
         record_ids.append(str(ts["record_id"]))
+    # HR4 (ADR-064) portfolio: one deterministic score per hypothesis whose gates passed and one typed refusal per hypothesis that
+    # did not; every record id is Trail's and joins the cross-system lineage (LAW 1: Polymath never reads or ranks the score value).
+    plural = [str(s["record_id"]) for s in (output.get("trail_scores") or []) if isinstance(s, dict) and s.get("record_id")]
+    if plural:
+        output["trail_score_record_ids"] = list(output.get("trail_score_record_ids") or []) + plural
+        record_ids += plural
+    refused = [str(r["record_id"]) for r in (output.get("score_refusals") or []) if isinstance(r, dict) and r.get("record_id")]
+    if refused:
+        output["trail_score_refusal_record_ids"] = refused
+        record_ids += refused
     rc = TC.bounded_receipt(state.run_id, step["step_id"], kind, resp, idempotency_key=req["idempotency_key"], principal=principal, record_ids=record_ids)
     return {"output": output, "external": rc, "evidence_refs": refs}
 

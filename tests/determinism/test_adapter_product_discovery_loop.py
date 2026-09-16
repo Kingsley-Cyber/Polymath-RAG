@@ -91,15 +91,19 @@ class StubTrail:
                                               "search_intents": [{"intent_id": "si_skus", "intent": "find current competing SKUs", "evidence_goal": "competition", "evidence_roles": ["competition", "price"]}],
                                               "success_condition": "3 comparable products with prices", "falsification_condition": "a dominant incumbent already solves it"}})
         if name == "opportunity.qualify":
+            # HR4 (ADR-064) portfolio wire: one qualification record per live hypothesis, in the caller's hypothesis order
             if payload["stage"] == "market_delta":
-                return ok({"qualification": {"record_id": "qual-market-1", "stage": "market_delta", "state": "PROVISIONAL", "hypothesis_ids": ids[:1]}, "open_gaps": [],
+                return ok({"qualifications": [{"record_id": f"qual-market-{i + 1}", "stage": "market_delta", "state": "PROVISIONAL" if i == 0 else "UNPROVEN", "hypothesis_ids": [hid]} for i, hid in enumerate(ids)], "open_gaps": [],
                            "research_directive": {"objective": "find supply feasibility", "evidence_gaps": [], "geography": None, "language": "en",
                                                   "search_intents": [{"intent_id": "si_supply", "intent": "find supplier MOQ and unit economics", "evidence_goal": "supply", "evidence_roles": ["supply", "price"]}],
                                                   "success_condition": "2 suppliers with price and MOQ", "falsification_condition": "no supplier under the target landed cost"}})
-            return ok({"qualification": {"record_id": "qual-supply-1", "stage": "supply", "state": "PROMOTED", "hypothesis_ids": ids[:1]}})
+            return ok({"qualifications": [{"record_id": f"qual-supply-{i + 1}", "stage": "supply", "state": "PROMOTED" if i == 0 else "UNPROVEN", "hypothesis_ids": [hid]} for i, hid in enumerate(ids)]})
         if name == "opportunity.score":
-            assert [q["stage"] for q in payload["qualifications"]] == ["market_delta", "supply"]
-            return ok({"trail_score": {"record_id": "score-1", "score": 0.61, "subscores": {"demand": 0.6, "pain": 0.7}, "confidence": 0.58, "provenance": {"scoring_version": "score-1.0.0", "registry_snapshot_id": SNAP["snapshot_id"]}}})
+            # the caller forwards EVERY qualification record of every stage in acceptance order (market_delta before supply) and never selects a winner
+            assert [q["stage"] for q in payload["qualifications"]] == ["market_delta"] * len(ids) + ["supply"] * len(ids), payload["qualifications"]
+            assert [q["hypothesis_ids"] for q in payload["qualifications"]] == [[h] for h in ids] * 2
+            return ok({"trail_scores": [{"record_id": "score-1", "hypothesis_id": ids[0], "score": 0.61, "subscores": {"demand": 0.6, "pain": 0.7}, "confidence": 0.58, "provenance": {"scoring_version": "score-1.0.0", "registry_snapshot_id": SNAP["snapshot_id"]}}],
+                       "score_refusals": [{"record_id": f"score-{i + 2}", "hypothesis_id": hid, "reason_code": "HARD_GATE_UNMET", "detail": "HARD_GATE_UNMET: no admitted evidence for this hypothesis", "authority_class": "SCORE_REFUSAL"} for i, hid in enumerate(ids[1:])]})
         return httpx.Response(200, json={"jsonrpc": "2.0", "id": body["id"], "result": {"content": [{"type": "text", "text": f"unknown tool {name}"}], "isError": True}})
 
 
@@ -185,6 +189,10 @@ def test_product_discovery_2_0_0_runs_the_owner_loop_end_to_end_with_two_harness
         assert not {"discover.submit", "scrape.submit", "extract.submit", "crawl.submit"} & set(stub.calls)
         assert stub.calls.count("evidence.admit") == 4 and stub.calls.count("opportunity.score") == 1 and stub.calls.count("hypotheses.judge") == 3
         assert res["lineage"]["trail_score_record_ids"] == ["score-1"] and res["output"]["product_opportunity"]["trail_score_refs"] == ["score-1"]
+        # HR4 portfolio: per-hypothesis records reach the terminal output; the refusal's record id joins the external-operation lineage, never the score ids
+        assert [s["record_id"] for s in res["output"]["trail_scores"]] == ["score-1"] and [r["reason_code"] for r in res["output"]["score_refusals"]] == ["HARD_GATE_UNMET"]
+        assert len(res["output"]["qualifications"]) == 2 and {q["stage"] for q in res["output"]["qualifications"]} == {"supply"}
+        assert any("score-2" in e["record_ids"] and "score-1" in e["record_ids"] for e in res["lineage"]["external_operations"] if e["operation_kind"] == "opportunity.score")
         assert res["lineage"]["registry_snapshot_ids"] == [SNAP["snapshot_id"]] and len(res["lineage"]["admitted_evidence_ids"]) == 8
         ext = res["lineage"]["external_operations"]
         assert len(ext) == 14 and {e["operation_kind"] for e in ext} == set(TC.BOUNDED_OPERATIONS) and all(e["operation_id"].startswith("op-") for e in ext)
