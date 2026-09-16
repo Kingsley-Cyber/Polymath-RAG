@@ -59,27 +59,34 @@ def test_context_budget_never_evicts_admitted_field_evidence(monkeypatch):
     assert len(out) == service.MAX_CONTEXT_REFS
 
 
-def test_context_budget_never_evicts_knowledge(monkeypatch):
-    # the inverse: 200 admitted field observations must not starve the chunks a θ generation step has to cite
+def test_admitted_evidence_is_complete_even_when_abundant(monkeypatch):
     out = _run_context(monkeypatch, _fev(200), _knowledge(chunks=150))
     kinds = [r["kind"] for r in out]
-    assert kinds.count("chunk") >= 50, "knowledge floor must survive abundant admitted evidence"
-    assert kinds.count("field_evidence") >= 80
-    assert len(out) == service.MAX_CONTEXT_REFS
+    assert kinds.count("field_evidence") == 200, "every admitted observation must be present"
+    assert kinds.count("chunk") == 0, "with admitted filling the budget, knowledge is legitimately squeezed (admitted wins)"
+    out2 = _run_context(monkeypatch, _fev(100), _knowledge(chunks=150))
+    k2 = [r["kind"] for r in out2]
+    assert k2.count("field_evidence") == 100 and k2.count("chunk") == 100 and len(out2) == service.MAX_CONTEXT_REFS
 
 
 def test_context_budget_spillover_and_determinism(monkeypatch):
-    # scarce knowledge → its unused slots spill over to admitted evidence; identical inputs → byte-identical output
     a = _run_context(monkeypatch, _fev(500), _knowledge(chunks=5))
     b = _run_context(monkeypatch, _fev(500), _knowledge(chunks=5))
     assert a == b, "context selection must be deterministic"
-    kinds = [r["kind"] for r in a]
-    assert kinds.count("chunk") == 5 and kinds.count("field_evidence") == service.MAX_CONTEXT_REFS - 5
+    ka = [r["kind"] for r in a]
+    assert ka.count("field_evidence") == 500 and ka.count("chunk") == 0
     small = _run_context(monkeypatch, _fev(3), _knowledge(chunks=4, graph_facts=2, other=1))
     assert len(small) == 10 and {r["kind"] for r in small} == {"field_evidence", "chunk", "graph_fact", "document"}
 
 
-# ─────────────────────────────────────────── FIX 3: authoritative ordering, not dict order
+def test_context_refs_uses_the_store_accumulator_not_state_outputs(monkeypatch):
+    store_admitted = _fev(8)
+    monkeypatch.setattr(service.store, "admitted_evidence_refs", lambda conn, rid: list(store_admitted))
+    st = _state(outputs={"J_admit": {"evidence_admission": {"admitted": [{"admitted_evidence_id": "fev_0006"}, {"admitted_evidence_id": "fev_0007"}]}, "_evidence_refs": []}}, order=("J_admit",))
+    fev_ids = [r["id"] for r in service._context_refs(None, st) if r["kind"] == "field_evidence"]
+    assert fev_ids == [r["id"] for r in store_admitted], "all 8 store-admitted observations must be in the context, not just the surviving loop output"
+
+
 def _score_payload(outputs, order):
     st = _state(outputs=outputs, order=order)
     return W._payload_for("opportunity.score", {"context": {"hypotheses": []}, "config": {"stage": "score"}}, st, {"stage": "score"})
@@ -182,27 +189,16 @@ def _payload(kind, outputs, order, context_field_refs=()):
     return W._payload_for(kind, {"context": ctx, "config": {"stage": "market_delta"}}, st, {"stage": "market_delta"})
 
 
-def test_qualify_receives_every_admitted_id_past_the_display_budget():
-    # 130 admitted observations across three admit stages; the display context carries only its 80-field budget. The gate must
-    # see ALL 130 — the pre-fix worker derived admitted_evidence_ids from the capped context and lost the newest (supply/price/risk).
-    field = [f"fev_field_{i:03d}" for i in range(90)]
-    reality = [f"fev_reality_{i:03d}" for i in range(25)]
-    supply = [f"fev_supply_{i:03d}" for i in range(15)]
-    outputs = {"J": _admit_output("field", field), "Q": _admit_output("reality", reality), "T": _admit_output("supply", supply)}
-    order = ("J", "Q", "T")
+def test_qualify_receives_every_admitted_id_from_the_context():
+    ids = [f"fev_{i:03d}" for i in range(130)]
     for kind in ("opportunity.qualify", "opportunity.score"):
-        got = _payload(kind, outputs, order, context_field_refs=field[:80])   # display context capped at 80, as _context_refs would
-        assert got["admitted_evidence_ids"] == field + reality + supply, (kind, len(got["admitted_evidence_ids"]))
-        assert len(got["admitted_evidence_ids"]) == 130                        # nothing lost to the display budget
-        # the newest-stage evidence the supply/price gate needs is present
-        assert all(sid in got["admitted_evidence_ids"] for sid in supply + reality)
+        got = _payload(kind, {}, (), context_field_refs=ids)
+        assert got["admitted_evidence_ids"] == ids and len(got["admitted_evidence_ids"]) == 130, (kind, len(got["admitted_evidence_ids"]))
 
 
-def test_admitted_ids_are_deduped_and_in_acceptance_order():
-    a = _admit_output("field", ["x1", "x2", "x3"])
-    b = _admit_output("reality", ["x3", "x4"])           # x3 repeats (same observation re-cited); must appear once, first position kept
-    got = _payload("opportunity.score", {"A": a, "B": b}, ("A", "B"))
-    assert got["admitted_evidence_ids"] == ["x1", "x2", "x3", "x4"]
-    # reversed dict insertion, same acceptance order → identical
-    got2 = _payload("opportunity.score", {"B": b, "A": a}, ("A", "B"))
-    assert got2["admitted_evidence_ids"] == got["admitted_evidence_ids"]
+def test_admitted_ids_preserve_context_order():
+    ids = ["x1", "x2", "x3", "x4"]
+    got = _payload("opportunity.score", {}, (), context_field_refs=ids)
+    assert got["admitted_evidence_ids"] == ids
+
+

@@ -21,13 +21,13 @@ Executor = Callable[[dict[str, Any], RunState, Manifest], ExecOutcome]
 
 KNOWLEDGE_KINDS = ("chunk", "document", "graph_fact", "graph_hop", "parent_map")
 MAX_CONTEXT_REFS = 200
-CONTEXT_CLASS_ORDER = ("field_evidence", "chunk", "graph_fact", "other")
-#: reserved floor of context slots per evidence class; floors sum to MAX_CONTEXT_REFS and unused capacity spills over (see _context_refs)
-CONTEXT_BUDGET = {"field_evidence": 80, "chunk": 50, "graph_fact": 40, "other": 30}
+KNOWLEDGE_CLASS_ORDER = ("chunk", "graph_fact", "other")
+#: floors per KNOWLEDGE class within the slots left after admitted evidence; admitted field evidence is never budgeted (see _context_refs)
+KNOWLEDGE_BUDGET = {"chunk": 50, "graph_fact": 40, "other": 30}
 
 
-def _context_class(kind: str) -> str:
-    return kind if kind in ("field_evidence", "chunk", "graph_fact") else "other"
+def _knowledge_class(kind: str) -> str:
+    return kind if kind in ("chunk", "graph_fact") else "other"
 
 
 class UnknownAdapter(KeyError):
@@ -438,39 +438,40 @@ def _cited(payload: Any) -> set[str]:
 
 def _context_refs(conn, state: RunState) -> list[dict[str, Any]]:
     """What an issued step may carry: knowledge refs and registry priors produced by executed steps, plus TrailSignal-ADMITTED field
-    evidence from the store (raw harness observations never appear here, ADR-0019 §5). Selection is a RESERVED-MINIMUM MIXED BUDGET:
-    each evidence class is guaranteed at least its floor of the MAX_CONTEXT_REFS slots, unused capacity spills over deterministically,
-    and the result is emitted in a stable class order. No valid amount of one class can evict another required class (a large corpus's
-    knowledge cannot starve admitted field evidence, and abundant admitted evidence cannot starve the knowledge a θ step must cite)."""
-    buckets: dict[str, list[dict[str, Any]]] = {c: [] for c in CONTEXT_BUDGET}
-    seen: set[str] = set()
-
-    def _add(ref: dict[str, Any]) -> None:
-        rid = str(ref["id"])
-        if rid in seen:
-            return
-        seen.add(rid)
-        buckets[_context_class(str(ref.get("kind", "")))].append(ref)
-
-    # deterministic input order: admitted field evidence (store: ORDER BY admitted_at, evidence_id), then step outputs in acceptance order
-    for ref in store.admitted_evidence_refs(conn, state.run_id):
-        _add(ref)
+    evidence from the store (raw harness observations never appear here, ADR-0019 §5). The COMPLETE admitted set is always included —
+    it is the authoritative signal the qualify/score hard gates count over (across every bounded-loop pass; the store is the accumulator,
+    `state.outputs` keeps only the last output per step id), so it is never subject to a display cap. Only KNOWLEDGE is budgeted: it
+    fills the slots left after admitted evidence, with per-class floors and deterministic spillover, so no knowledge class evicts another."""
+    admitted = [dict(r) for r in store.admitted_evidence_refs(conn, state.run_id)]   # complete accumulator, ORDER BY admitted_at, evidence_id
+    seen: set[str] = {str(r["id"]) for r in admitted}
+    buckets: dict[str, list[dict[str, Any]]] = {c: [] for c in KNOWLEDGE_BUDGET}
     for sid in state.output_order or tuple(state.outputs):
         for ref in (state.outputs.get(sid) or {}).get("_evidence_refs") or []:
-            _add(ref)
+            rid = str(ref["id"])
+            if rid in seen:
+                continue
+            seen.add(rid)
+            buckets[_knowledge_class(str(ref.get("kind", "")))].append(ref)
 
-    take = {c: min(len(buckets[c]), CONTEXT_BUDGET[c]) for c in CONTEXT_BUDGET}
-    spare = MAX_CONTEXT_REFS - sum(take.values())
-    for c in CONTEXT_CLASS_ORDER:                                  # redistribute unused slots deterministically
+    remaining = max(0, MAX_CONTEXT_REFS - len(admitted))            # knowledge shares only what admitted evidence leaves
+    take = {c: min(len(buckets[c]), KNOWLEDGE_BUDGET[c]) for c in KNOWLEDGE_BUDGET}
+    while sum(take.values()) > remaining:                           # floors exceed the remaining budget → trim least-critical first
+        for c in ("other", "graph_fact", "chunk"):
+            if sum(take.values()) <= remaining:
+                break
+            if take[c] > 0:
+                take[c] -= 1
+    spare = remaining - sum(take.values())
+    for c in KNOWLEDGE_CLASS_ORDER:                                 # redistribute unused slots deterministically
         if spare <= 0:
             break
         extra = min(spare, len(buckets[c]) - take[c])
         take[c] += extra
         spare -= extra
-    out: list[dict[str, Any]] = []
-    for c in CONTEXT_CLASS_ORDER:                                  # stable emit order
+    out = list(admitted)
+    for c in KNOWLEDGE_CLASS_ORDER:                                 # stable emit order
         out.extend(buckets[c][: take[c]])
-    return out[:MAX_CONTEXT_REFS]
+    return out
 
 
 def _apply_phi_outputs(conn, run_id: str, step: dict[str, Any], m: Manifest, state: RunState, output: dict[str, Any], now: str) -> dict[str, Any] | None:
