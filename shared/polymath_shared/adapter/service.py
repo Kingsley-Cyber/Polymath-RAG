@@ -527,7 +527,12 @@ def _gather(outputs: dict[str, Any], key: str, order: tuple[str, ...] = ()) -> A
     return None
 
 
-def _collect_lists(outputs: dict[str, Any], key: str) -> list[Any]:
+def _ordered_step_outputs(state: RunState) -> list[Any]:
+    """Step outputs in the run's authoritative acceptance order (JSONB does not preserve dict order; output_order is stored separately)."""
+    return [state.outputs[sid] for sid in (state.output_order or tuple(state.outputs)) if sid in state.outputs]
+
+
+def _collect_lists(state: RunState, key: str) -> list[Any]:
     found: list[Any] = []
     def walk(node: Any) -> None:
         if isinstance(node, dict):
@@ -539,7 +544,7 @@ def _collect_lists(outputs: dict[str, Any], key: str) -> list[Any]:
         elif isinstance(node, list):
             for v in node:
                 walk(v)
-    for out in outputs.values():
+    for out in _ordered_step_outputs(state):                      # acceptance order, never dict/JSONB iteration order
         walk(out)
     return found
 
@@ -564,7 +569,7 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
     hyps = store.current_hypotheses(conn, run_id)
     snapshots = sorted({str((_gather({sid: o}, "registry_snapshot") or {}).get("snapshot_id")) for sid, o in state.outputs.items()
                         if isinstance(_gather({sid: o}, "registry_snapshot"), dict)} - {"None"})
-    score_ids = [str(x) for x in _collect_lists(state.outputs, "trail_score_record_ids") if isinstance(x, str)]
+    score_ids = [str(x) for x in _collect_lists(state, "trail_score_record_ids") if isinstance(x, str)]
     ts = _gather(state.outputs, "trail_score", state.output_order)
     if isinstance(ts, dict) and ts.get("record_id"):
         score_ids.append(str(ts["record_id"]))
@@ -574,7 +579,7 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
             ext_ops.append({"external_system": e["external_system"], "operation_kind": e.get("operation_kind"), "operation_id": e["operation_id"],
                             "record_ids": list(e.get("record_ids") or [])})
     # composite steps (e.g. batch acquire + per-artifact extraction) report their sub-operations on the step output
-    for out in state.outputs.values():
+    for out in _ordered_step_outputs(state):                      # external-operation lineage in acceptance order
         for e in (out or {}).get("_external_operations") or []:
             if e.get("operation_id") and e["operation_id"] not in {x["operation_id"] for x in ext_ops}:
                 ext_ops.append({"external_system": e.get("external_system", "trailsignal"), "operation_kind": e.get("operation_kind"),
@@ -589,8 +594,8 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
                        "harness_action_ids": [a["action_id"] for a in actions],
                        "harness_ids": sorted({(a["receipt"] or {}).get("harness_id") for a in actions if a.get("receipt")} - {None}),
                        "registry_snapshot_ids": snapshots, "trail_score_record_ids": sorted(set(score_ids))},
-           "contradictions": [c for c in _collect_lists(state.outputs, "contradictions") if isinstance(c, dict)],
-           "unknowns": [({"about": u} if isinstance(u, str) else u) for u in _collect_lists(state.outputs, "unknowns")],
+           "contradictions": [c for c in _collect_lists(state, "contradictions") if isinstance(c, dict)],
+           "unknowns": [({"about": u} if isinstance(u, str) else u) for u in _collect_lists(state, "unknowns")],
            "gap": state.gap, "agent_identity": meta.get("agent_identity")}
     assert_valid("adapter_result", res)
     if persist:

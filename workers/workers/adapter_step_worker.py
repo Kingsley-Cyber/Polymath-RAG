@@ -247,7 +247,17 @@ def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str
     evidence ids, the latest research receipt, physical jobs, qualifications) — never from a source or harness name."""
     ctx = step.get("context") or {}
     hyps = list(ctx.get("hypotheses") or [])
-    admitted = [r["id"] for r in ctx.get("evidence_refs") or [] if r.get("kind") == "field_evidence"]
+    # admitted_evidence_ids is the COMPLETE set of Trail-admitted observation ids from every prior evidence.admit output, in
+    # acceptance order and deduped — NEVER the display context, whose per-class budget caps how many refs an issued step carries
+    # for citation. The qualify/score hard gates count independent groups over exactly these ids, so a display cap must not reach them.
+    admitted: list[str] = []
+    _seen_adm: set[str] = set()
+    for _out in _ordered_outputs(state):
+        for _a in (_out.get("evidence_admission") or {}).get("admitted") or []:
+            _aid = _a.get("admitted_evidence_id")
+            if _aid and _aid not in _seen_adm:
+                _seen_adm.add(_aid)
+                admitted.append(_aid)
     payload: dict[str, Any] = {"stage": cfg.get("stage"), "hypotheses": hyps, "admitted_evidence_ids": admitted}
     if kind == "registry.project":
         payload["max_priors_per_hypothesis"] = int(cfg.get("max_priors_per_hypothesis", 12))

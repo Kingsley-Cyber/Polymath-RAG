@@ -168,3 +168,41 @@ def test_bare_kind_verdict_is_still_accepted_for_compatibility(monkeypatch):
         return _envelope(body, "hypotheses.judge", {"verdicts": [{"hypothesis_id": "hyp_x", "kind": "WEAKEN", "cause_refs": [], "reason_code": "R"}], "open_gaps": []})
     out = _exec(monkeypatch, "hypotheses.judge", h)
     assert [v["kind"] for v in out["output"]["hypothesis_verdicts"]] == ["WEAKEN"]
+
+
+# ─────────────────────────────────────────── BLOCKER regression: admitted ids reach the gate regardless of the display budget
+def _admit_output(stage, ids):
+    return {"evidence_admission": {"admission_id": f"hadm_{stage}", "admitted": [{"admitted_evidence_id": i} for i in ids]}}
+
+
+def _payload(kind, outputs, order, context_field_refs=()):
+    ctx = {"hypotheses": [{"hypothesis_id": "hyp_x", "revision": 0, "status": "proposed", "statement": "s"}],
+           "evidence_refs": [{"kind": "field_evidence", "id": i} for i in context_field_refs]}
+    st = _state(outputs=outputs, order=order)
+    return W._payload_for(kind, {"context": ctx, "config": {"stage": "market_delta"}}, st, {"stage": "market_delta"})
+
+
+def test_qualify_receives_every_admitted_id_past_the_display_budget():
+    # 130 admitted observations across three admit stages; the display context carries only its 80-field budget. The gate must
+    # see ALL 130 — the pre-fix worker derived admitted_evidence_ids from the capped context and lost the newest (supply/price/risk).
+    field = [f"fev_field_{i:03d}" for i in range(90)]
+    reality = [f"fev_reality_{i:03d}" for i in range(25)]
+    supply = [f"fev_supply_{i:03d}" for i in range(15)]
+    outputs = {"J": _admit_output("field", field), "Q": _admit_output("reality", reality), "T": _admit_output("supply", supply)}
+    order = ("J", "Q", "T")
+    for kind in ("opportunity.qualify", "opportunity.score"):
+        got = _payload(kind, outputs, order, context_field_refs=field[:80])   # display context capped at 80, as _context_refs would
+        assert got["admitted_evidence_ids"] == field + reality + supply, (kind, len(got["admitted_evidence_ids"]))
+        assert len(got["admitted_evidence_ids"]) == 130                        # nothing lost to the display budget
+        # the newest-stage evidence the supply/price gate needs is present
+        assert all(sid in got["admitted_evidence_ids"] for sid in supply + reality)
+
+
+def test_admitted_ids_are_deduped_and_in_acceptance_order():
+    a = _admit_output("field", ["x1", "x2", "x3"])
+    b = _admit_output("reality", ["x3", "x4"])           # x3 repeats (same observation re-cited); must appear once, first position kept
+    got = _payload("opportunity.score", {"A": a, "B": b}, ("A", "B"))
+    assert got["admitted_evidence_ids"] == ["x1", "x2", "x3", "x4"]
+    # reversed dict insertion, same acceptance order → identical
+    got2 = _payload("opportunity.score", {"B": b, "A": a}, ("A", "B"))
+    assert got2["admitted_evidence_ids"] == got["admitted_evidence_ids"]
