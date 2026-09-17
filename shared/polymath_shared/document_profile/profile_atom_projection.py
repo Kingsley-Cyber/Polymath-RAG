@@ -109,6 +109,40 @@ def purge(client, embedding_contract_id: str, corpus_id: str) -> int:
     return before
 
 
+def purge_doc(client, embedding_contract_id: str, doc_id: str) -> int:
+    """Delete ONE document's projected atom points (the per-doc analogue of `purge`, for the
+    ingest DAG: a fresh profile supersedes a doc's atoms, so drop its old points before
+    projecting the new set → the collection stays == the doc's ACTIVE rows). Returns removed."""
+    from qdrant_client.http import models as qm
+    name = collection_name(embedding_contract_id)
+    if not client.collection_exists(name):
+        return 0
+    flt = qm.Filter(must=[qm.FieldCondition(key="doc_id", match=qm.MatchValue(value=doc_id))])
+    before = client.count(name, count_filter=flt, exact=True).count
+    client.delete(collection_name=name, points_selector=qm.FilterSelector(filter=flt), wait=True)
+    return before
+
+
+def ingest_document_atoms(conn, client, *, embed, embedding_contract_id: str, dim: int,
+                          doc_id: str, corpus_id: str | None, compiled: dict, profile_contract: str) -> dict:
+    """PROFILE-ATOM ingest (P4a DAG wiring) — lift a compiled profile's atom surfaces into the
+    live architecture instead of a canary: extract → persist as durable rows (Postgres authority,
+    supersede the doc's prior atoms) → purge the doc's stale atom points → project the new set.
+    Per-doc rebuild keeps the atom collection == the doc's ACTIVE rows. Additive: touches only
+    `document_profile_atoms` + the atom collection, never the global profile point or chunks."""
+    from polymath_shared.document_profile.profile_atom import extract_atoms, persist_atoms
+    atoms = extract_atoms(compiled, doc_id=doc_id, corpus_id=corpus_id, profile_contract=profile_contract)
+    persisted = persist_atoms(conn, doc_id=doc_id, profile_contract=profile_contract, atoms=atoms)
+    purged = purge_doc(client, embedding_contract_id, doc_id)
+    proj = project_atoms(client, embed=embed, embedding_contract_id=embedding_contract_id, dim=dim, atoms=atoms)
+    by_kind: dict[str, int] = {}
+    for a in atoms:
+        by_kind[a.kind] = by_kind.get(a.kind, 0) + 1
+    return {"ok": True, "active": len(atoms), "persisted": persisted, "purged_points": purged,
+            "projected_points": proj["points"], "collection": proj["collection"],
+            "by_kind": by_kind, "profile_contract": profile_contract}
+
+
 def search_atoms(client, collection: str, query_vec, kinds: Sequence[str], k: int = 12) -> list[dict]:
     """Search the atom collection by the query vector, filtered to the given atom kinds →
     [{doc_id, atom_kind, text, atom_id, score}] desc. Read-only routing lookup."""
