@@ -12,9 +12,10 @@ Before modifying this repository, read `AGENTS.md` — it is the mandatory
 entrypoint. It directs you to the single session bootstrap:
 [docs/wiki/plans/CONTINUITY-REPORT.md](docs/wiki/plans/CONTINUITY-REPORT.md)
 (state, fleet, golden-run baseline, traps, ranked next work — updated in
-place every session). It points to the current dated handoff snapshot,
-[docs/wiki/reports/2026-09-07/README.md](docs/wiki/reports/2026-09-07/README.md)
-(successor bootstrap, be-aware rules, unfinished work, dependency map).
+place every session). It points to the current dated handoff snapshot under
+[docs/wiki/reports/](docs/wiki/reports/) — CONTINUITY-REPORT's read order
+always names the newest one (successor bootstrap, be-aware rules,
+unfinished work, dependency map).
 
 ## Quickstart
 
@@ -24,6 +25,31 @@ python3 scripts/agent_preflight.py             # every agent runs this
 python3 scripts/repo_guard.py                   # architecture and repo rules
 python3 scripts/wiki_worm.py --check           # see what needs review
 ```
+
+## Run the stack
+
+The runnable system is a **local fleet** — a FastAPI intake/read surface, durable
+stage workers, an independent desired-state controller, and host-native model
+sidecars over Postgres/Redis/Qdrant/Neo4j — run under macOS `launchd` supervision.
+
+```bash
+cp .env.example .env     # fill in secrets locally; .env is gitignored
+make setup               # uv venv (Python 3.11) + editable workspace installs
+make db-up               # Postgres, Redis, Qdrant, Neo4j via compose.yaml
+make migrate             # apply the schema
+make dev                 # dev tmux session: api + control + workers + gliner
+```
+
+For supervised operation, `make install-launchd` (LaunchAgents from
+`deployment/launchd/`) or `scripts/boot_polymath.sh` (integrity gate → supervisor).
+The fleet then runs from this checkout; config and code changes are inert until a
+supervisor bounce.
+
+**Surfaces once it is up**
+
+- API readiness — `curl 127.0.0.1:7200/ready` → `{"ready": true, ...}`
+- MCP (Bearer-gated streamable-http) — `https://mcp.kingsleylab.xyz/mcp` (a `401`
+  without a token is expected)
 
 ## Layout
 
