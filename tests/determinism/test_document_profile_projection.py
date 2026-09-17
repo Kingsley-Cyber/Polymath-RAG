@@ -79,3 +79,52 @@ def test_readiness_needs_identity_theme_and_a_query_hook_vector():
     with pytest.raises(ValueError):
         PJ.project_profile(FakeQdrant(), embed=stub_embed, embedding_contract_id="e", dim=5, doc_id="d", corpus_id="c", title="",
                            representations={}, source_doc_hash="x", schema_version="s", prompt_version="p", compiled_hash="h")
+
+
+class FakeQdrantWithRetrieve(FakeQdrant):
+    """Adds the read side the canonical-selection guard uses to fetch the active point."""
+    class _Pt:
+        def __init__(self, payload): self.payload = payload
+    def __init__(self, exists=False, existing_payload=None):
+        super().__init__(exists=exists); self.existing_payload = existing_payload
+    def retrieve(self, collection_name, ids, with_payload=None, with_vectors=False):
+        return [self._Pt(self.existing_payload)] if self.existing_payload is not None else []
+
+
+def _kw(**over):
+    kw = dict(embed=stub_embed, embedding_contract_id="embed_abc", dim=5, doc_id="doc_1", corpus_id="cinema",
+              title="Stage Combat Arts", representations=REPS, source_doc_hash="sha_doc", schema_version="rag-profile-v3",
+              prompt_version="doc-profile-v3", compiled_hash="sha_compiled")
+    kw.update(over); return kw
+
+
+def test_guard_refuses_a_thin_profile_over_a_richer_active_one():
+    q = FakeQdrant(exists=True)
+    rich = {"identity": 1, "theme": 1, "questions": 15, "searches": 15, "theories": 10, "concepts": 10, "seealso": 10}
+    r = PJ.project_profile(q, **_kw(existing_surfaces=rich))   # REPS is thin (direct=5) vs rich (direct=30)
+    assert r["kept_last_known_good"] is True and r["selection"]["reason"] == "regression_direct_thinned"
+    assert q.upserts == []                                     # the rich projection is left untouched
+
+
+def test_guard_replaces_when_forced_or_when_incoming_is_richer():
+    rich = {"identity": 1, "theme": 1, "questions": 15, "searches": 15}
+    forced = PJ.project_profile(FakeQdrant(exists=True), **_kw(existing_surfaces=rich, force=True))
+    assert forced["kept_last_known_good"] is False and len(forced.get("vectors")) > 0
+    thin_existing = {"identity": 1, "theme": 1, "questions": 1, "searches": 1}
+    q = FakeQdrant(exists=True)
+    improved = PJ.project_profile(q, **_kw(existing_surfaces=thin_existing))   # REPS richer than the thin active
+    assert improved["kept_last_known_good"] is False and len(q.upserts) == 1
+
+
+def test_guard_defaults_to_projecting_when_no_active_point():
+    q = FakeQdrant()
+    r = PJ.project_profile(q, **_kw())                          # existing_surfaces defaults to None
+    assert r["kept_last_known_good"] is False and len(q.upserts) == 1 and r["selection"]["reason"] == "first_projection"
+
+
+def test_fetch_existing_surfaces_reads_the_active_points_counts_defensively():
+    payload = {"surfaces": {"questions": 15, "searches": 15, "identity": 1, "theme": 1}}
+    q = FakeQdrantWithRetrieve(exists=True, existing_payload=payload)
+    assert PJ.fetch_existing_surfaces(q, "embed_abc", "doc_1") == {"questions": 15, "searches": 15, "identity": 1, "theme": 1}
+    assert PJ.fetch_existing_surfaces(FakeQdrantWithRetrieve(exists=True, existing_payload=None), "e", "d") is None
+    assert PJ.fetch_existing_surfaces(FakeQdrant(exists=False), "e", "d") is None   # collection absent → None
