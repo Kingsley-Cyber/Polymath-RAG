@@ -135,9 +135,9 @@ class IntentPolicy:
     seealso_fanout: bool = False              # P5 fan-out (lane G): probe RELATIONAL atom texts as children (§20–§23)
 
 
-#: canonical atom-kind groupings (mirror profile_atom.py; inlined to avoid an import cycle).
-_MECH = ("THEORY", "CONCEPT", "LATENT_PATTERN", "BOUNDARY")
-_ALL_ATOMS = _MECH + ("SEEALSO", "BRIDGE", "ANCHOR", "TENSION", "INVERSION", "RECALLQ")
+#: atom-kind groupings — sourced from the canonical SurfaceRegistry (single source, P4a);
+#: the leaf registry removes the import cycle that previously forced these to be inlined.
+from polymath_shared.surface_registry import ATOM_KINDS as _ALL_ATOMS, MECHANISM_KINDS as _MECH
 
 #: FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1 §33 intent matrix, one row per intent.
 INTENT_POLICY: dict[str, IntentPolicy] = {

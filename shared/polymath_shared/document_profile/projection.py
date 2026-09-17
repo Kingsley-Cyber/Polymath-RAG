@@ -19,11 +19,10 @@ from collections.abc import Callable
 from typing import Any
 
 from .selection import SELECTION_VERSION, select as _select
+from polymath_shared.surface_registry import DENSE_SURFACES, MULTI_SURFACES  # single source (P4a)
 
 PROJECTION_VERSION = "doc-profile-projection-v1"
 COLLECTION_PREFIX = "polymath_document_profiles"
-DENSE_SURFACES = ("title", "identity", "theme")
-MULTI_SURFACES = ("questions", "searches", "theories", "concepts", "seealso")
 #: normal answer retrieval prefetches these; `seealso` (and by default theories / concepts) belong to exploration
 ANSWER_SURFACES = ("identity", "theme", "questions", "searches", "title")
 EXPLORATION_SURFACES = ("seealso", "theories", "concepts")

@@ -20,23 +20,11 @@ import hashlib
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 
+from polymath_shared.surface_registry import (  # single source of the atom taxonomy (P4a)
+    ATOM_KINDS, ATTR_TO_KIND as _ATTR_TO_KIND, MECHANISM_KINDS, REDISCOVERY_KINDS, RELATIONAL_KINDS,
+)
+
 PROFILE_ATOM_VERSION = "profile-atom-v1"
-
-#: canonical (hyphen-free) atom kinds — match the migration CHECK + the compiler Record attrs.
-ATOM_KINDS = ("THEORY", "CONCEPT", "LATENT_PATTERN", "BOUNDARY", "SEEALSO",
-              "BRIDGE", "ANCHOR", "TENSION", "INVERSION", "RECALLQ")
-
-#: mechanism vs relational families (§8.3 / §8.4) — the atom lane selects by these per intent.
-MECHANISM_KINDS = ("THEORY", "CONCEPT", "LATENT_PATTERN", "BOUNDARY")
-RELATIONAL_KINDS = ("SEEALSO", "BRIDGE", "ANCHOR", "TENSION", "INVERSION")
-REDISCOVERY_KINDS = ("RECALLQ",)
-
-#: compiled-profile Record attribute → canonical kind.
-_ATTR_TO_KIND = {
-    "theories": "THEORY", "concepts": "CONCEPT", "latent_pattern": "LATENT_PATTERN",
-    "boundary": "BOUNDARY", "seealso": "SEEALSO", "bridge": "BRIDGE", "anchor": "ANCHOR",
-    "tension": "TENSION", "inversion": "INVERSION", "recallq": "RECALLQ",
-}
 
 
 def _norm(text: str) -> str:
