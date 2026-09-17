@@ -18,6 +18,22 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.274**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
+## Latest checkpoint (2026-09-17T02:45 — HARNESS-RESEARCH-MIGRATION-V1 COMPLETE: final merged-main multi-hypothesis product-discovery proof PASSES; register 11.276; hand to owner for product testing)
+
+**Read first:** `docs/wiki/work-log/2026-09-17-harness-research-migration-complete.md`.
+
+**STATUS: COMPLETE.** The governing intent (owner 2026-09-13, ADR-0019 / HARNESS-RESEARCH-MIGRATION-V1) is fully realized and proven live on authoritative merged code. Polymath is the composition root and drives TrailSignal's seven bounded synchronous research operations through TrailSignal's public MCP; TrailSignal alone owns evidence admission, qualification, and the LAW-1 deterministic score; the host harness executes live-world actions. HR4 made `opportunity.qualify`/`opportunity.score` a per-hypothesis portfolio (qualify every live hypothesis, score every one whose hard gates pass, typed `OpportunityScoreRefusalV1` for the rest, no implicit hypotheses[0] winner). HR5 fixed the durable admitted read-model JSONB decode the live proof surfaced.
+
+**Final proof (2026-09-17, the completion gate):** `set -a; . ./.env; set +a; .venv/bin/python scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery --corpus cinema --harness receipts --harness-receipts tests/fixtures/harness_receipts` against the Trail daemon on merged Trail main `de64d84` (HR5 fix present), fleet `production` 7f232e0. EXIT 0; `completed`, 42/42 steps, 2 branch loops; all seven bounded Trail ops; TWO live hypotheses — the non-first (evidence-bearing) one scored `score:bf42e37bc7b7020212c604ee88d22004`, the evidence-free one refused `HARD_GATE_UNMET`, no cross-hypothesis contamination; supervised worker restart mid-run (1828→86504) reloaded admitted evidence and resumed; zero `invalid tool input`; no retired path; no planned placeholder.
+
+**Authority:** Trail PRs #15/#16 (A41), #17 (HR4), #18 (A42), #19 (A43), #20 (A44), #21 (A45), #22 (HR5) — ADR-063 through ADR-068, all VERIFIED and merged to Trail `main`. Polymath consumer PR #29 (register 11.275, adapter 2.1.0 per-hypothesis wire). O6 old-path retirement complete (11.274); no retired research path remains.
+
+**LOW backlog (do NOT reopen the migration):** the terminal `AdapterResultV1` envelope surfaces `qualifications: []` while per-hypothesis score/refusal is populated and correct (output schema allows an empty array; no evidence/lineage/authority loss).
+
+**NEXT SESSION:** the migration is done — hand to the owner for product-quality testing. New engineering requires evidence from real product use, not migration cleanup. Do NOT create A46/HR6, reopen the migration, or start another governance/audit phase.
+
+---
+
 ## Latest checkpoint (2026-09-15T08:30 — O6 OLD-PATH RETIREMENT: research/ package + research_* MCP tools + research-harness workflow removed; Hermes skill preserved STANDALONE; register 11.274; next = HR4)
 
 **Read first:** `docs/wiki/work-log/2026-09-15-o6-research-retirement.md`, then this NEXT SESSION block.
