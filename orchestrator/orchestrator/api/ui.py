@@ -1668,23 +1668,24 @@ def _compiler_attempt_order(endpoints: list, key: str, *, failed_at: dict | None
     return order[:max_attempts]
 
 
-def _profile_scout(message: str, corpus_ids) -> tuple[list[str], dict]:
+def _profile_scout(message: str, corpus_ids) -> tuple[list[str], object | None, dict]:
     """PROFILE-SCOUT-V1 (P5b) - pre-plan corpus reconnaissance that REPLACES the retired B16 title
     injection. Flag POLYMATH_PROFILE_SCOUT (default off). Embeds the message once, runs the two
     existing profile projections (profile_nominate -> doc_ids, search_atoms -> atom hits) per
     corpus, normalizes into ScoutHits and fuses them (deterministic RRF, P5a), then returns the
     nominated documents' source_names as the compiler's corpus conditioning (the same titles=
-    channel) plus a receipt. Fail-open: any failure returns [] and the compiler runs without
-    conditioning. Never raises. The scout informs the planner; it never gates. Live qual = L1-L5."""
+    channel), the fused `ProfileScoutResult` (for P6 subquery-provenance annotation; None when
+    off/failed), plus a receipt. Fail-open: any failure returns [], None and the compiler runs
+    without conditioning. Never raises. The scout informs the planner; it never gates. Live=L1-L5."""
     import time as _t
     enabled = os.environ.get("POLYMATH_PROFILE_SCOUT", "0") == "1"
     rec: dict = {"contract": "profile-scout-v1", "enabled": enabled}
     if not enabled:
-        return [], rec
+        return [], None, rec
     corpora = [c for c in (corpus_ids or []) if c]
     if not corpora:
         rec["reason"] = "no_corpus"
-        return [], rec
+        return [], None, rec
     t0 = _t.perf_counter()
     try:
         from polymath_shared.document_profile import profile_atom_projection as _pap
@@ -1719,11 +1720,11 @@ def _profile_scout(message: str, corpus_ids) -> tuple[list[str], dict]:
         names = _scout_source_names([n.doc_id for n in result.nominations], corpora)
         rec.update({"nominations": len(result.nominations), "n_injected": len(names),
                     "ms": round((_t.perf_counter() - t0) * 1000, 1)})
-        return names, rec
+        return names, result, rec
     except Exception as exc:  # noqa: BLE001 - reconnaissance is optional; the compiler runs without it
         rec.update({"reason": f"scout:{type(exc).__name__}", "error": str(exc)[:120],
                     "ms": round((_t.perf_counter() - t0) * 1000, 1)})
-        return [], rec
+        return [], None, rec
 
 
 def _scout_source_names(doc_ids, corpora) -> list[str]:
@@ -1752,9 +1753,20 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
     compiler when POLYMATH_PROFILE_SCOUT is on (B16 title injection retired)."""
     from polymath_shared.chat_plan import COMPILER_STAGE, compile_plan, fallback_plan
     try:
-        titles, scout_rec = _profile_scout(message, corpus_ids)
+        titles, scout_result, scout_rec = _profile_scout(message, corpus_ids)
     except Exception as exc:  # noqa: BLE001
-        titles, scout_rec = [], {"contract": "profile-scout-v1", "reason": f"scout:{type(exc).__name__}"}
+        titles, scout_result, scout_rec = [], None, {"contract": "profile-scout-v1", "reason": f"scout:{type(exc).__name__}"}
+
+    def _finish(plan):
+        """P6: annotate every subquery with deterministic provenance (q0 authority, scout links
+        validated against real nominations) before the plan leaves the compiler. Fail-open —
+        provenance is annotation, never a turn breaker."""
+        try:
+            from polymath_shared.subquery_provenance import annotate_subquery_provenance
+            annotate_subquery_provenance(plan, scout_result)
+        except Exception:  # noqa: BLE001
+            pass
+        return plan
     try:
         from polymath_shared.llm_extraction.client import LLMExtractionClient
         from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
@@ -1764,7 +1776,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         if not endpoints:
             plan = fallback_plan(message, reason="compiler_unavailable:no_active_lane")
             plan.compiler["scout"] = scout_rec
-            return plan
+            return _finish(plan)
         last = None
         # COMPILER-LANE-FAILOVER-V1 + COMPILER-LANE-ORDER-V1: a transport
         # failure (429/503/timeout) walks to the next attempt — home lane,
@@ -1787,14 +1799,14 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
             if last is not None:
                 plan.compiler["first_failure"] = last
             if not plan.fallback or not str(plan.compiler.get("reason", "")).startswith("transport:"):
-                return plan
+                return _finish(plan)
             _COMPILER_LANE_FAILED_AT[ep.name] = time.time()
             last = f"{ep.name}:{plan.compiler.get('reason')}"
-        return plan
+        return _finish(plan)
     except Exception as exc:  # noqa: BLE001 — a missing pin / dark lane is a receipted fallback
         plan = fallback_plan(message, reason=f"compiler_unavailable:{type(exc).__name__}")
         plan.compiler["scout"] = scout_rec
-        return plan
+        return _finish(plan)
 
 
 RUNTIME_CONTRACT = "chat-runtime-v1"          # CHAT-RUNTIME-V1 (plan §3.7 / §4 P1.f)

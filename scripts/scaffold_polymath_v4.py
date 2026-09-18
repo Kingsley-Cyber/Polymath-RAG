@@ -619,6 +619,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-18-p6-subquery-provenance.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-p10-evidence-resolution.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-p11-profile-yield.md", "md", None),
+    ("docs/wiki/work-log/2026-09-18-prelive-wiring-p6-annotate.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-schema.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-writer.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-reconcile.md", "md", None),
