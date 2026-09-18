@@ -1744,6 +1744,57 @@ def _scout_source_names(doc_ids, corpora) -> list[str]:
     return [by_id[d] for d in ids if by_id.get(d)]
 
 
+def _compute_profile_yield(plan, aspects) -> dict | None:
+    """P11 (PROFILE-YIELD-RECEIPT-V1): of the PROFILE-origin subqueries the profile expansion added,
+    how many surfaced FINAL evidence (the aspect trace's `final` > 0)? Distinguishes profile
+    expansion OCCURRING from it actually PRODUCING source evidence. None when no PROFILE subquery
+    ran (profile-expansion flag off)."""
+    prof = [q for q in (plan.queries if plan is not None else []) if getattr(q, "origin", "USER") == "PROFILE"]
+    if not prof:
+        return None
+    yielded = [q.id for q in prof if int(((aspects or {}).get(q.id) or {}).get("final") or 0) > 0]
+    denom = len(prof)
+    return {"contract": "profile-yield-v1", "profile_subqueries": denom,
+            "profile_subqueries_with_evidence": len(yielded),
+            "profile_expansion_evidence_yield": round(len(yielded) / denom, 3) if denom else 0.0,
+            "expansion_occurred": denom > 0, "expansion_yielded_evidence": len(yielded) > 0,
+            "yielded_query_ids": yielded}
+
+
+def _add_profile_expansion(plan, scout_result) -> None:
+    """PROFILE-EXPANSION-V1 (librarian P11): turn the top scout nominations into a bounded number of
+    PROFILE-origin subqueries so the corpus profile can DISCOVER documents q0's literal terms would
+    miss. Additive — q0 and its aspect subqueries are untouched; the scout INFORMS, never gates.
+    Flag `POLYMATH_CHAT_PROFILE_EXPANSION` (default off), fail-open. Each added subquery searches a
+    verbatim matched surface of a nominated document; whether it yields FINAL evidence is the P11
+    `profile_expansion_evidence_yield` metric (computed post-retrieval from the aspect trace)."""
+    if os.environ.get("POLYMATH_CHAT_PROFILE_EXPANSION", "0") != "1":
+        return
+    noms = list(getattr(scout_result, "nominations", None) or ())
+    if not noms:
+        return
+    from polymath_shared.chat_plan import MAX_QUERY_WORDS, CompiledQuery
+    max_add = int(os.environ.get("POLYMATH_CHAT_PROFILE_EXPANSION_MAX", "2"))
+    existing = {(q.query or "").strip().lower() for q in plan.queries}
+    added = 0
+    for nom in noms:
+        if added >= max_add:
+            break
+        text = (getattr(nom, "representative_text", None) or "").strip()
+        if not text:
+            continue
+        q = " ".join(text.split()[:MAX_QUERY_WORDS]).strip()
+        if not q or q.lower() in existing:
+            continue
+        plan.queries.append(CompiledQuery(
+            id=f"p{added}", type="ENTITY", query=q, weight=0.6, role="bridge", origin="PROFILE",
+            inspired_by_profile=[nom.doc_id], profile_surface=getattr(nom, "representative_surface", None),
+            target=nom.doc_id))
+        existing.add(q.lower())
+        added += 1
+    plan.compiler["profile_expansion"] = {"added": added, "flag": True}
+
+
 def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | None = None,
                        titles_rank: str | None = None):
     """CHAT-INTENT-PLAN-V1 through the `chat_compiler` stage pin (plan §3.2):
@@ -1758,10 +1809,12 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         titles, scout_result, scout_rec = [], None, {"contract": "profile-scout-v1", "reason": f"scout:{type(exc).__name__}"}
 
     def _finish(plan):
-        """P6: annotate every subquery with deterministic provenance (q0 authority, scout links
-        validated against real nominations) before the plan leaves the compiler. Fail-open —
-        provenance is annotation, never a turn breaker."""
+        """P6/P11: (1) optionally add bounded PROFILE-origin subqueries from the scout's
+        nominations (profile-driven discovery), then (2) annotate every subquery with
+        deterministic provenance (q0 authority, scout links validated). Fail-open — never a turn
+        breaker; q0 and its aspects are untouched."""
         try:
+            _add_profile_expansion(plan, scout_result)
             from polymath_shared.subquery_provenance import annotate_subquery_provenance
             annotate_subquery_provenance(plan, scout_result)
         except Exception:  # noqa: BLE001
@@ -3147,6 +3200,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 # P1.b aspect coverage: per compiled query, candidates in union / final; weak = none in final
                 "aspects": _aspects,
                 "weak_aspects": _weak,
+                # P11 profile_expansion_evidence_yield: of the PROFILE-origin subqueries, how many
+                # surfaced FINAL evidence (aspect final > 0). None unless profile-expansion is on.
+                "profile_yield": _compute_profile_yield(_plan, _aspects),
                 "final_detail": (fast.get("meta") or {}).get("final_detail"),
                 # P1.c EVIDENCE-COMPOSER-V1: slot fills, per-document counts, dominance flag
                 "composition": (fast.get("meta") or {}).get("composition"),
