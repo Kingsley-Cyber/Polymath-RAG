@@ -92,6 +92,7 @@ TREE: list[tuple[str, str, str | None]] = [
     (".gitignore", "gitignore", "GITIGNORE"),
     (".env.example", "env", "ENV_EXAMPLE"),
     ("architecture/dependencies.json", "json", "ARCHITECTURE_DEPENDENCIES"),
+    ("architecture/contract-dependencies.yaml", "yaml", None),
 
     # ── Docs / wiki ─────────────────────────────────────────────────────────
     ("docs/README.md", "md", "DOCS_README"),
@@ -214,6 +215,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/wiki_worm.py", "py", "_WIKI_WORM"),
     ("scripts/agent_preflight.py", "py", "_AGENT_PREFLIGHT"),
     ("scripts/repo_guard.py", "py", "_REPO_GUARD"),
+    ("scripts/contract_impact.py", "py", None),
 
     # ── CI ────────────────────────────────────────────────────────────────
     (".github/workflows/contracts.yml", "yaml", "_CI_CONTRACTS"),
@@ -607,6 +609,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-18-profile-scout-design.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-profile-scout-contract-refine.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-profile-scout-p5a.md", "md", None),
+    ("docs/wiki/work-log/2026-09-18-agent-safety-impact-tooling.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-schema.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-writer.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-reconcile.md", "md", None),
@@ -2126,6 +2129,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_profile_selection.py", "py", None),
     ("tests/determinism/test_surface_registry.py", "py", None),
     ("tests/determinism/test_profile_scout.py", "py", None),
+    ("tests/determinism/test_contract_impact.py", "py", None),
     ("tests/determinism/test_profile_atom_ingest.py", "py", None),
     ("tests/determinism/test_projection_lifecycle.py", "py", None),
     ("tests/determinism/test_projection_lifecycle_migration.py", "py", None),

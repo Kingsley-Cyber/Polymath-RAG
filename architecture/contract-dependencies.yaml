@@ -1,0 +1,212 @@
+# Semantic contract dependency map (Librarian / RAG retrieval).
+#
+# Complements architecture/dependencies.json (STRUCTURAL: layer/import rules). This file is
+# the SEMANTIC layer: the architecture-level contracts that structural code graphs cannot see
+# (a producer's output shape a downstream consumer assumes, a projection's lifecycle a receipt
+# reader assumes). scripts/contract_impact.py reads it to answer "what contracts does this diff
+# touch, and transitively affect?" — deterministically, no LLM.
+#
+# Keep it SMALL: architecture-level contracts only, not every function. `paths` maps changed
+# files to a contract; `depends_on`/`consumed_by` give the transitive edges; `tests` are the
+# owner path's proof; `status` is live | pending (not yet wired) | deferred.
+version: v1
+
+contracts:
+  SURFACE_REGISTRY:
+    owner: shared
+    spec: shared/polymath_shared/surface_registry.py
+    paths: [shared/polymath_shared/surface_registry.py]
+    depends_on: []
+    consumed_by: [PROFILE_ATOM, PROFILE_PROJECTION, PROFILE_SCOUT_INPUT, QUERY_INTENT]
+    tests: [tests/determinism/test_surface_registry.py]
+    migration: null
+    status: live
+
+  QUERY_INTENT:
+    owner: shared
+    spec: shared/polymath_shared/query_intent.py
+    paths: [shared/polymath_shared/query_intent.py]
+    depends_on: [SURFACE_REGISTRY]
+    consumed_by: [QUERY_PLANNER, CANDIDATE_ENGINE]
+    tests: [tests/determinism/test_u1_intent_routing_contract.py]
+    migration: null
+    status: live
+
+  PROFILE_COMPILER:
+    owner: shared
+    spec: shared/polymath_shared/document_profile/selection.py
+    paths: [shared/polymath_shared/document_profile/selection.py]
+    depends_on: [SURFACE_REGISTRY]
+    consumed_by: [PROFILE_PROJECTION]
+    tests: [tests/determinism/test_profile_selection.py]
+    migration: null
+    status: live
+
+  PROFILE_PROJECTION:
+    owner: shared
+    spec: shared/polymath_shared/document_profile/projection.py
+    paths: [shared/polymath_shared/document_profile/projection.py]
+    depends_on: [SURFACE_REGISTRY, PROFILE_COMPILER, PROJECTION_LIFECYCLE]
+    consumed_by: [PROFILE_SCOUT_INPUT, CANDIDATE_ENGINE]
+    tests: [tests/determinism/test_document_profile_projection.py]
+    migration: null
+    status: live
+
+  PROFILE_ATOM:
+    owner: shared
+    spec: shared/polymath_shared/document_profile/profile_atom_projection.py
+    paths:
+      - shared/polymath_shared/document_profile/profile_atom.py
+      - shared/polymath_shared/document_profile/profile_atom_projection.py
+    depends_on: [SURFACE_REGISTRY]
+    consumed_by: [PROFILE_SCOUT_INPUT, CANDIDATE_ENGINE]
+    tests:
+      - tests/determinism/test_profile_atom.py
+      - tests/determinism/test_profile_atom_ingest.py
+    migration: stores/postgres/migrations/0055_document_profile_atoms.sql
+    status: live
+
+  PROFILE_SCOUT_INPUT:
+    owner: orchestrator
+    spec: docs/wiki/plans/PROFILE-SCOUT-V1.md
+    paths: []                      # normalization lives in P5b wiring (not yet written)
+    depends_on: [PROFILE_PROJECTION, PROFILE_ATOM, SURFACE_REGISTRY]
+    consumed_by: [PROFILE_SCOUT_FUSION]
+    tests: []
+    migration: null
+    status: pending                # P5b normalizes profile_nominate + search_atoms into ScoutHit
+
+  PROFILE_SCOUT_FUSION:
+    owner: shared
+    spec: docs/wiki/plans/PROFILE-SCOUT-V1.md
+    paths: [shared/polymath_shared/document_profile/profile_scout.py]
+    depends_on: [PROFILE_SCOUT_INPUT]
+    consumed_by: [PROFILE_SCOUT_OUTPUT]
+    tests: [tests/determinism/test_profile_scout.py]
+    migration: null
+    status: live                   # P5a — pure fuse_profile_scout_hits
+
+  PROFILE_SCOUT_OUTPUT:
+    owner: shared
+    spec: docs/wiki/plans/PROFILE-SCOUT-V1.md
+    paths: [shared/polymath_shared/document_profile/profile_scout.py]
+    depends_on: [PROFILE_SCOUT_FUSION]
+    consumed_by: [PROFILE_SCOUT_WIRING, QUERY_PLANNER, SUBQUERY_PROVENANCE, PROFILE_YIELD_RECEIPT]
+    tests: [tests/determinism/test_profile_scout.py]
+    migration: null
+    status: live                   # ProfileScoutResult / ProfileNomination schema (P6 depends on it)
+
+  PROFILE_SCOUT_WIRING:
+    owner: orchestrator
+    spec: docs/wiki/plans/PROFILE-SCOUT-V1.md
+    paths: [orchestrator/orchestrator/api/ui.py]   # pre-plan wiring + _compiler_titles retirement
+    depends_on: [PROFILE_SCOUT_OUTPUT, PROFILE_PROJECTION, PROFILE_ATOM, QUERY_PLANNER]
+    consumed_by: [QUERY_PLANNER]
+    tests: []
+    migration: null
+    status: pending                # P5b — flagged POLYMATH_PROFILE_SCOUT, retires B16 title injection
+
+  QUERY_PLANNER:
+    owner: shared
+    spec: shared/polymath_shared/chat_plan.py
+    paths: [shared/polymath_shared/chat_plan.py]
+    depends_on: [QUERY_INTENT]
+    consumed_by: [CANDIDATE_ENGINE, SUBQUERY_PROVENANCE]
+    tests: [tests/determinism/test_chat_funnel.py]
+    migration: null
+    status: live
+
+  SUBQUERY_PROVENANCE:
+    owner: shared
+    spec: docs/wiki/plans/PROFILE-SCOUT-V1.md
+    paths: []
+    depends_on: [QUERY_PLANNER, PROFILE_SCOUT_OUTPUT]
+    consumed_by: [CANDIDATE_ENGINE, RETRIEVAL_RECEIPT]
+    tests: []
+    migration: null
+    status: pending                # P6 — typed provenance-carrying subqueries
+
+  CANDIDATE_ENGINE:
+    owner: shared
+    spec: shared/polymath_shared/candidate_engine.py
+    paths: [shared/polymath_shared/candidate_engine.py]
+    depends_on: [PROFILE_PROJECTION, PROFILE_ATOM, QUERY_PLANNER]
+    consumed_by: [RETRIEVAL_RECEIPT]
+    tests: [tests/determinism/test_candidate_engine.py, tests/determinism/test_chat_retrieval_v2.py]
+    migration: null
+    status: live
+
+  RETRIEVAL_RECEIPT:
+    owner: shared
+    spec: shared/polymath_shared/receipts.py
+    paths: [shared/polymath_shared/receipts.py]
+    depends_on: [CANDIDATE_ENGINE, PROJECTION_LIFECYCLE]
+    consumed_by: [RESOLUTION_STATE, PROFILE_YIELD_RECEIPT, ACCEPTANCE]
+    tests: [tests/determinism/test_projection_manifest_writer.py]
+    migration: null
+    status: live
+
+  RESOLUTION_STATE:
+    owner: shared
+    spec: docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md
+    paths: []
+    depends_on: [RETRIEVAL_RECEIPT]
+    consumed_by: [ACCEPTANCE]
+    tests: []
+    migration: null
+    status: deferred               # P10 — evidence-driven resolution loop (ClaimPlan)
+
+  PROFILE_YIELD_RECEIPT:
+    owner: shared
+    spec: docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md
+    paths: []
+    depends_on: [RETRIEVAL_RECEIPT, PROFILE_SCOUT_OUTPUT]
+    consumed_by: [ACCEPTANCE]
+    tests: []
+    migration: null
+    status: pending                # P11 — profile_expansion_evidence_yield metric
+
+  PROJECTION_LIFECYCLE:
+    owner: shared
+    spec: shared/polymath_shared/projection_lifecycle.py
+    paths:
+      - shared/polymath_shared/projection_lifecycle.py
+      - shared/polymath_shared/projection_reconcile.py
+    depends_on: []
+    consumed_by: [PROFILE_PROJECTION, QDRANT_PROJECTION, NEO4J_PROJECTION, RETRIEVAL_RECEIPT]
+    tests:
+      - tests/determinism/test_projection_lifecycle.py
+      - tests/determinism/test_projection_lifecycle_migration.py
+      - tests/determinism/test_projection_reconcile.py
+    migration: stores/postgres/migrations/0065_projection_lifecycle.sql
+    status: live                   # migration 0065 AUTHORED but UNAPPLIED (queue L3)
+
+  QDRANT_PROJECTION:
+    owner: worker
+    spec: workers/workers/project_qdrant_worker.py
+    paths: [workers/workers/project_qdrant_worker.py]
+    depends_on: [PROJECTION_LIFECYCLE, SURFACE_REGISTRY]
+    consumed_by: [CANDIDATE_ENGINE]
+    tests: []
+    migration: null
+    status: live
+
+  NEO4J_PROJECTION:
+    owner: worker
+    spec: workers/workers/project_neo4j_worker.py
+    paths: [workers/workers/project_neo4j_worker.py]
+    depends_on: [PROJECTION_LIFECYCLE]
+    consumed_by: [CANDIDATE_ENGINE]
+    tests: []
+    migration: null
+    status: live
+
+  ACCEPTANCE:
+    owner: governance
+    spec: docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md
+    paths: [tests/integration/test_cross_domain_routing.py]
+    depends_on: [RETRIEVAL_RECEIPT, RESOLUTION_STATE, PROFILE_YIELD_RECEIPT]
+    consumed_by: []
+    tests: [tests/integration/test_cross_domain_routing.py]
+    migration: null
+    status: live
