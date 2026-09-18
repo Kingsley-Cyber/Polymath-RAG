@@ -2471,6 +2471,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/plans/CHAT-QUERY-COMPILER-PLAN.md", "md", None),
     ("docs/wiki/plans/NAMED-SOURCE-CONSTRAINT-DIAGNOSIS-V1.md", "md", None),
     ("docs/wiki/plans/SEMANTIC-ALIGNMENT-CONTEXT-ANCHOR-V1.md", "md", None),
+    ("docs/wiki/plans/CONSTRAINT-AWARE-RETRIEVAL-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-04-document-scoped-retrieve.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-provider-pool-campaign.md", "md", None),
     ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
