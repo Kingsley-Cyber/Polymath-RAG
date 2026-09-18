@@ -45,9 +45,25 @@ the blink theory" a PROFILE subquery surfaced FINAL evidence → **profile_expan
 This also improves the pmap-localization gap (the scout nominates the named doc → its evidence
 surfaces). q0 + its aspects are untouched (additive, fail-open).
 
-### Four modes (LIVE, functional)
-FAST/HYBRID qualified above. GRAPH: 20 source-attested Neo4j facts attached, fail-open. WILDCARD:
-bounded divergent bridges (3), never displaces direct evidence. Full 64×4 artifact: <run 118xxx>.
+### Full 64×4 (all modes, scout+expansion on) — run 122459, then repaired + re-run
+- **success@10: FAST 1.00, HYBRID 1.00, GRAPH 0.967, WILDCARD 0.983** (≥0.90 ✓ all modes).
+- **profile_expansion_evidence_yield > 0 on 70–81% of queries** (mean ~0.51–0.59) — §16 broadly
+  demonstrated, not a single case.
+- 23/24 categories ≥ 0.875; `resolution_trigger` 0.50 (the P10 gap, `res_shutter_motion`).
+- **Regression FOUND by the run + REPAIRED (§25):** with profile-expansion on, the 4 out-of-domain
+  queries (nitrogen/taxes/chess/python) — which the compiler CORRECTLY plans as no-retrieval (no
+  PRIMARY) — gained PROFILE subqueries from the scout's fail-open nominations, which (a) dropped
+  `q0_preserved` to 0.92–0.95 (a plan with only PROFILE queries, no PRIMARY) and (b) fabricated
+  evidence on 2 unsupported queries (hallucination 0.25 on HYBRID/WILDCARD, §23). **ROOT CAUSE:**
+  `_add_profile_expansion` created retrieval where the compiler declined. **FIX (`1bc2389`):**
+  profile-expansion SUPPLEMENTS an existing q0 retrieval — guard on PRIMARY presence; a
+  no-retrieval plan never gains fabricated retrieval. **Verified post-fix:** all 4 unsupported ×
+  all 4 modes → `hallucinated_evidence=False, q0_preserved=True, ranked=0, no PROFILE subqueries`.
+  The fix is targeted (guards on PRIMARY), so the 60 supported queries are unaffected. Authoritative
+  clean 64×4 re-run committed as the final artifact.
+- GRAPH: 1/64 `UnresolvedEvidenceError` (`para_disorient`) — a graph fact with no resolvable
+  supporting chunk errored instead of failing open. Pre-existing GRAPH edge case (not P11); a
+  fail-open on unresolved graph facts is the fix. Recorded, not repaired this slice.
 
 ## Rejected claims
 - Change gold to turn misses green (rejected in general; the ONE gold correction — sens_faceA —
