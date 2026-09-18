@@ -14,7 +14,7 @@ docs/wiki/plans/PROFILE-SCOUT-V1.md.
 """
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 PROFILE = "profile"
@@ -118,3 +118,30 @@ def fuse_profile_scout_hits(
         in enumerate(scored[:max_documents], start=1)
     )
     return ProfileScoutResult(nominations=nominations)
+
+
+# --- pure normalization: real producer outputs → ScoutHit lists (P5b calls these; still no I/O) ---
+
+def profile_hits_from_doc_ids(doc_ids: Sequence[str]) -> list[ScoutHit]:
+    """Normalize DOCUMENT_PROFILE nominations — ``profile_nominate``'s ordered ``doc_id``s — into
+    thin ScoutHits: ``rank`` is the 1-based position, and surface/text/score stay ``None`` because
+    ``profile_nominate`` exposes none of them (it RRF-fuses the surfaces away internally)."""
+    return [ScoutHit(doc_id=d, source=PROFILE, rank=i)
+            for i, d in enumerate(doc_ids or (), start=1) if d]
+
+
+def atom_hits_from_search(rows: Sequence[dict], *, group_of: Callable[[str], str | None]) -> list[ScoutHit]:
+    """Normalize PROFILE_ATOM ``search_atoms`` rows — ``{doc_id, atom_kind, text, score}`` — into
+    rich ScoutHits: ``rank`` is the 1-based position, ``surface`` the atom kind, ``surface_type``
+    the SurfaceRegistry group via the injected ``group_of`` (so this module keeps no registry
+    dependency). Rows without a ``doc_id`` are dropped."""
+    out: list[ScoutHit] = []
+    for i, r in enumerate(rows or (), start=1):
+        doc_id = r.get("doc_id")
+        if not doc_id:
+            continue
+        kind = r.get("atom_kind")
+        out.append(ScoutHit(doc_id=doc_id, source=ATOM, rank=i, surface=kind,
+                            surface_type=group_of(kind) if kind else None,
+                            text=r.get("text"), score=r.get("score")))
+    return out

@@ -614,6 +614,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-18-agent-safety-impact-tooling.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-agent-safety-automation.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-librarian-audit.md", "md", None),
+    ("docs/wiki/work-log/2026-09-18-profile-scout-p5b-normalization.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-schema.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-writer.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-reconcile.md", "md", None),

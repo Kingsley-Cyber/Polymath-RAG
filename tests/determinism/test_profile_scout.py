@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT / "shared"))
 from pytest import approx  # noqa: E402
 from polymath_shared.document_profile.profile_scout import (  # noqa: E402
     ScoutHit, ProfileNomination, ProfileScoutResult, fuse_profile_scout_hits,
+    profile_hits_from_doc_ids, atom_hits_from_search,
 )
 
 
@@ -111,3 +112,30 @@ def test_result_carries_no_planner_answer_or_gate_fields():
                  "intent_override", "answer_strategy", "answer", "mode", "gate"}
     assert set(ProfileNomination.__dataclass_fields__) & forbidden == set()
     assert set(ProfileScoutResult.__dataclass_fields__) == {"nominations"}
+
+
+# --- P5b normalization (pure) ---
+
+def test_profile_hits_from_doc_ids_are_thin_and_ranked_by_position():
+    hits = profile_hits_from_doc_ids(["doc_a", "doc_b", "", None])
+    assert [(h.doc_id, h.source, h.rank) for h in hits] == [("doc_a", "profile", 1), ("doc_b", "profile", 2)]
+    assert all(h.surface is None and h.surface_type is None and h.text is None and h.score is None for h in hits)
+
+
+def test_atom_hits_from_search_are_rich_with_injected_group():
+    rows = [{"doc_id": "doc_a", "atom_kind": "BRIDGE", "text": "t", "score": 0.7}, {"doc_id": None}]
+    hits = atom_hits_from_search(rows, group_of=lambda k: {"BRIDGE": "discovery"}.get(k))
+    assert len(hits) == 1  # the doc_id-less row is dropped
+    h = hits[0]
+    assert (h.doc_id, h.source, h.rank, h.surface, h.surface_type, h.text, h.score) == \
+        ("doc_a", "atom", 1, "BRIDGE", "discovery", "t", 0.7)
+
+
+def test_normalized_hits_fuse_end_to_end():
+    p = profile_hits_from_doc_ids(["doc_a"])
+    a = atom_hits_from_search([{"doc_id": "doc_a", "atom_kind": "THEORY", "text": "x", "score": 0.5}],
+                              group_of=lambda k: "semantic")
+    nom = fuse_profile_scout_hits(p, a).nominations[0]
+    assert nom.doc_id == "doc_a"
+    assert {c.source for c in nom.contributions} == {"profile", "atom"}
+    assert nom.representative_text == "x"  # the only text-bearing hit
