@@ -2,7 +2,7 @@
 title: "CONSTRAINT-AWARE-RETRIEVAL-V1 — implementation plan for explicit-constraint satisfaction as a first-class ranking dimension"
 date: 2026-09-18
 last_reviewed: 2026-09-18
-status: "PROPOSED — awaiting owner sanction of the flagged decisions + admission; NO code until admitted"
+status: "ADMITTED 2026-09-18 with owner amendments (see ## ADMISSION); executing CA0→CA5 under slice discipline"
 owner: "@king"
 scope: "Phased plan to make explicit query-constraint satisfaction (named source/scope) a first-class ranking + evidence-grade dimension distinct from semantic relevance, extending existing contracts. Grounded in NAMED-SOURCE-CONSTRAINT-DIAGNOSIS-V1 + SEMANTIC-ALIGNMENT-CONTEXT-ANCHOR-V1."
 ---
@@ -11,8 +11,82 @@ scope: "Phased plan to make explicit query-constraint satisfaction (named source
 
 Authoritative inputs: [SEMANTIC-ALIGNMENT-CONTEXT-ANCHOR-V1.md](SEMANTIC-ALIGNMENT-CONTEXT-ANCHOR-V1.md)
 and [NAMED-SOURCE-CONSTRAINT-DIAGNOSIS-V1.md](NAMED-SOURCE-CONSTRAINT-DIAGNOSIS-V1.md) (both `588198b`/`4ba2dbb`).
-**This plan is PROPOSED.** No production code is written until the owner sanctions the DECISIONS below and
-the plan is admitted. Base checkout: `production` @ `588198b`.
+**ADMITTED 2026-09-18** with owner amendments (## ADMISSION). Base checkout: `production` @ `04113a9`.
+The ADMISSION section is the BINDING spec where it refines the original decisions below.
+
+## ADMISSION — owner decisions + amendments (BINDING)
+
+**Governing invariant.** Semantic relevance tells us how *useful* the evidence is; constraint satisfaction
+tells us whether it *answers the question the user actually asked*. **Neither signal may erase the other.**
+
+**Key architectural rule.** Retrieval mode determines *discovery strategy*; semantic alignment determines
+*evidentiary meaning*. **No retrieval mode may redefine or erase an explicit query constraint.** There is
+ONE SemanticFrame, ONE constraint model, ONE evidence-role model, ONE synthesis contract across all four
+modes (FAST/HYBRID/GRAPH/WILDCARD).
+
+**D3 (source resolution) — APPROVED.** Deterministic corpus title/author/source index owns source identity
+resolution, with Scout nomination as confirmation/fallback. A miss is fail-open and must not block ordinary
+retrieval; Scout is never a hard retrieval gate.
+
+**D4 (strength) — APPROVED WITH CORRECTION.** Strength comes from the RELATIONSHIP expressed in q0, not the
+mere presence of a proper noun.
+- HARD = explicit attribution / source-scoped truth ("What does X say…", "According to X…", "In X's book…").
+  Direct-answer evidence must prioritize constraint-satisfying evidence.
+- SOFT = framing/lens ("Using X as a lens…", "From X's perspective…", "Consider X alongside…"). Strong
+  preference, but semantically superior supplemental evidence stays important.
+- EXPLORATORY = deliberate expansion ("Starting from X…", "What ideas connect…", "Use X's idea to explore…").
+  Anchor only; must not dominate discovery.
+- **CORRECTION:** a bare author/source mention is NOT automatically HARD ("Murch, editing rhythm, and
+  attention" → default SOFT/neutral). Default ambiguous bare mentions to SOFT/neutral unless the relation
+  clearly establishes attribution.
+
+**D2 (detection) — deterministic HARD, planner may enrich SOFT/EXPLORATORY.** Deterministic patterns detect
+high-confidence HARD ("according to X", "what does X say", "in X's book", "from X's work") — protected from
+planner nondeterminism. The existing semantic planner output MAY suggest SOFT/EXPLORATORY framing but MUST
+NOT promote a source to HARD on its own. Resolved source identity is confirmed by the deterministic resolver
+/ Scout. **No new LLM call**; reuse existing planner output.
+
+**D5 (integration) — APPROVED IN MODIFIED FORM: portfolio partition, not a numeric boost.** Pipeline:
+`semantic rerank → constraint alignment → evidence-role partition/order`. NO `rerank_score + source_bonus`,
+no weight tuning. The cross-encoder stays the semantic-relevance authority.
+- **HARD:** after rerank, partition candidates → constraint-satisfying = **DIRECT/PRIMARY portfolio**;
+  non-satisfying-but-relevant = **RELATED/SUPPLEMENTAL portfolio**. **Preserve the reranker's ordering
+  WITHIN each portfolio.** A highly relevant non-source passage (Rabiger/Ed Hooks) stays valuable but
+  cannot displace valid source (Murch) evidence as the primary answer source when it exists. This is
+  query-role / constraint preservation, not a Murch boost.
+- **SOFT:** bounded preference / interleaving; do not force all source-matching evidence ahead of
+  dramatically stronger evidence.
+- **EXPLORATORY:** source is an anchor; broad semantic ranking may dominate supplemental discovery.
+
+**CA4 (evidence role) — MODIFIED: role is multi-signal, not rerank-score bands.** Role principally reflects
+information-need satisfaction + constraint satisfaction + semantic relevance + coverage (the semantic score
+is ONE signal, not the definition):
+- DIRECT = directly addresses a required information need AND satisfies all material explicit constraints.
+- PARTIAL = supports a required need but leaves material elements unsupported.
+- RELATED = grounded and semantically useful but does not directly establish the requested proposition.
+RELATED is usable, not failed. When DIRECT is absent but RELATED exists, synthesis states what could not be
+established, retains the grounded RELATED material, and may produce an interpretation **explicitly marked
+`SYNTHETIC_INSIGHT`** (a reasoning product, never a source-supported claim). Unsupported / direct-not-found
+is NOT automatically "return nothing".
+
+**V1 scope — APPROVED: SOURCE constraints only** (representation stays extensible; DOCUMENT/SECTION/CHAPTER = V2).
+
+**Performance — no new inference stage.** Constraint resolution/alignment is metadata/index work. Hot path:
+planning → Scout → retrieval → fusion → cross-encoder → deterministic constraint alignment → evidence
+portfolio → synthesis. Benchmark before/after latency and report the delta.
+
+**Added acceptance cases (prove in CA5, beyond the plan's gates):** (1) explicit attribution → correct
+source leads primary evidence; (2) no explicit source → behavior effectively unchanged; (3) legitimate
+supplemental source stays available as RELATED, not discarded; (4) soft framing → preference without a hard
+filter; (5) exploratory framing → source anchors, broad discovery effective; (6) missing direct + useful
+related → states the gap, retains RELATED, may synthesize a clearly-distinguished interpretation.
+
+**Non-negotiable.** No Murch-specific rule; no arbitrary numeric boosts for MRR; no gold change; no
+cross-encoder removal; no second planner/retrieval engine; no extra LLM pass; no Graph multi-hop; abstraction
+or semantic similarity may not erase an explicit HARD constraint.
+
+---
+_The original PROPOSED decisions below stand where the ADMISSION does not refine them._
 
 ## Problem (proven)
 Explicit query constraints ("in Murch's book", "according to X", "in document Y", section scope) are
