@@ -1668,89 +1668,79 @@ def _compiler_attempt_order(endpoints: list, key: str, *, failed_at: dict | None
     return order[:max_attempts]
 
 
-def _compiler_titles(message: str, corpus_ids, *, rank_override: str | None = None) -> tuple[list[str], dict]:
-    """COMPILER-CORPUS-CONTEXT-V1 (backlog B16, owner design 2026-09-07): the library's TITLES for this message,
-    ranked by CONTENT — the top section summaries (and the document-summary vote) backward-mapped to documents
-    through lane A's own RRF (`compiler_context.rank_documents`) — then the rest of the library alphabetically up
-    to `top_n`. Default ranker is dense (one message embedding; ranks by meaning — the only ranker that put the Laban
-    Workbook in front of the compiler for a camera question, measured 2026-09-07); `POLYMATH_CHAT_COMPILER_TITLES_RANK=sparse`
-    is the ~80 ms BM25 route with no embedder on the compile path. Fail-open: any failure degrades to
-    question-word overlap on the titles, then to nothing; the receipt says which. Never raises."""
+def _profile_scout(message: str, corpus_ids) -> tuple[list[str], dict]:
+    """PROFILE-SCOUT-V1 (P5b) - pre-plan corpus reconnaissance that REPLACES the retired B16 title
+    injection. Flag POLYMATH_PROFILE_SCOUT (default off). Embeds the message once, runs the two
+    existing profile projections (profile_nominate -> doc_ids, search_atoms -> atom hits) per
+    corpus, normalizes into ScoutHits and fuses them (deterministic RRF, P5a), then returns the
+    nominated documents' source_names as the compiler's corpus conditioning (the same titles=
+    channel) plus a receipt. Fail-open: any failure returns [] and the compiler runs without
+    conditioning. Never raises. The scout informs the planner; it never gates. Live qual = L1-L5."""
     import time as _t
-    from polymath_shared.compiler_context import (
-        RANK_DENSE, RANK_OVERLAP, TitlesKnobs, overlap_rank, rank_documents, select_titles, titles_knobs)
-    t0 = _t.perf_counter()
-    knobs = titles_knobs()
-    ov = (rank_override or "").strip().lower()
-    if ov == "off":
-        knobs = TitlesKnobs(top_n=0, rank=knobs.rank)
-    elif ov in ("sparse", "dense"):
-        knobs = TitlesKnobs(top_n=knobs.top_n or 40, rank=ov, section_hits=knobs.section_hits, document_hits=knobs.document_hits)
-    rec: dict = {"contract": "compiler-corpus-context-v1", "enabled": knobs.enabled, "rank": knobs.rank, "top_n": knobs.top_n,
-                 **({"override": ov} if ov else {})}
-    if not knobs.enabled:
+    enabled = os.environ.get("POLYMATH_PROFILE_SCOUT", "0") == "1"
+    rec: dict = {"contract": "profile-scout-v1", "enabled": enabled}
+    if not enabled:
         return [], rec
     corpora = [c for c in (corpus_ids or []) if c]
     if not corpora:
         rec["reason"] = "no_corpus"
         return [], rec
+    t0 = _t.perf_counter()
     try:
-        with tx() as conn:
-            catalog = conn.execute(
-                "SELECT doc_id, source_name FROM documents WHERE corpus_id = ANY(%s) ORDER BY source_name",
-                (corpora,)).fetchall()
-    except Exception as exc:  # noqa: BLE001 — the catalog is a read; never breaks the compile
-        rec.update({"reason": f"catalog:{type(exc).__name__}", "ms": round((_t.perf_counter() - t0) * 1000, 1)})
-        return [], rec
-    ranked: list[str] = []
-    used = knobs.rank
-    try:
-        from polymath_shared.candidate_engine import sparse_vector_for
-        from polymath_shared.pass1 import (REPRESENTATION_KIND_CHILD, REPRESENTATION_KIND_DOCUMENT_SUMMARY,
-                                           REPRESENTATION_KIND_SECTION_SUMMARY)
-        from orchestrator.api.fast import FastSearcher, _corpus_collections, _embed_queries
+        from polymath_shared.document_profile import profile_atom_projection as _pap
+        from polymath_shared.document_profile import projection as _pj
+        from polymath_shared.document_profile.profile_scout import (
+            atom_hits_from_search, fuse_profile_scout_hits, profile_hits_from_doc_ids)
+        from polymath_shared.embedding_contracts import active_contract
         from polymath_shared.settings import get_settings as _gs
+        from polymath_shared.surface_registry import ATOM_KINDS, BY_KIND
+        from orchestrator.api.fast import _embed_queries
         from qdrant_client import QdrantClient as _QC
-        collections = _corpus_collections(corpora)
+
+        contract_id = active_contract().contract_id
+        qv = list(_embed_queries([message])[0])
+
+        def _group_of(kind):
+            pol = BY_KIND.get(kind)
+            return pol.group if pol else None
+
         client = _QC(url=_gs().stores.qdrant_url, timeout=10)
+        profile_hits: list = []
+        atom_hits: list = []
         try:
-            searcher = FastSearcher(client, collections)
-            vec = list(_embed_queries([message])[0]) if knobs.rank == RANK_DENSE else None
-            sq = None
-            if vec is None:
-                sq, _rule = sparse_vector_for(message, ())
-            for cid in corpora:
-                coll = collections.get(cid)
-                if not coll:
-                    continue
-                sec_f = {"representation_kind": REPRESENTATION_KIND_SECTION_SUMMARY, "corpus_id": cid}
-                doc_f = {"representation_kind": REPRESENTATION_KIND_DOCUMENT_SUMMARY, "corpus_id": cid}
-                kid_f = {"representation_kind": REPRESENTATION_KIND_CHILD, "corpus_id": cid}
-                if vec is not None:
-                    sec = searcher._search(coll, vec, sec_f, limit=knobs.section_limit)
-                    docs = searcher._search(coll, vec, doc_f, limit=knobs.document_limit)
-                    kids = searcher._search(coll, vec, kid_f, limit=knobs.section_limit)
-                elif sq is not None:
-                    sec = searcher.sparse_search(coll, sq, sec_f, limit=knobs.section_limit)
-                    docs = searcher.sparse_search(coll, sq, doc_f, limit=knobs.document_limit)
-                    kids = searcher.sparse_search(coll, sq, kid_f, limit=knobs.section_limit)
-                else:
-                    sec, docs, kids = [], [], []
-                ranked.extend(rank_documents(sec, docs, corpus_id=cid, k=knobs.top_n, child_rows=kids,
-                                             section_limit=knobs.section_limit, document_limit=knobs.document_limit))
+            for corpus_id in corpora:
+                doc_ids = _pj.profile_nominate(client, _pj.collection_name(contract_id), qv, corpus_id, k=8)
+                profile_hits.extend(profile_hits_from_doc_ids(doc_ids))
+                rows = _pap.search_atoms(client, _pap.collection_name(contract_id), qv, ATOM_KINDS, k=12)
+                atom_hits.extend(atom_hits_from_search(rows, group_of=_group_of))
         finally:
             client.close()
-    except Exception as exc:  # noqa: BLE001 — the index is optional here; titles still go in by overlap
-        rec["rank_error"] = f"{type(exc).__name__}: {str(exc)[:120]}"
-        used = RANK_OVERLAP
-        ranked = overlap_rank(message, catalog)
-    if not ranked and used != RANK_OVERLAP:
-        used = f"{used}+overlap"
-        ranked = overlap_rank(message, catalog)
-    titles, sel = select_titles(ranked, catalog, top_n=knobs.top_n)
-    rec.update(sel)
-    rec.update({"rank": used, "ms": round((_t.perf_counter() - t0) * 1000, 1)})
-    return titles, rec
+        result = fuse_profile_scout_hits(profile_hits, atom_hits)
+        names = _scout_source_names([n.doc_id for n in result.nominations], corpora)
+        rec.update({"nominations": len(result.nominations), "n_injected": len(names),
+                    "ms": round((_t.perf_counter() - t0) * 1000, 1)})
+        return names, rec
+    except Exception as exc:  # noqa: BLE001 - reconnaissance is optional; the compiler runs without it
+        rec.update({"reason": f"scout:{type(exc).__name__}", "error": str(exc)[:120],
+                    "ms": round((_t.perf_counter() - t0) * 1000, 1)})
+        return [], rec
+
+
+def _scout_source_names(doc_ids, corpora) -> list[str]:
+    """Map the scout's nominated doc_ids to their source_name (the compiler's title channel),
+    preserving nomination order. A read; never breaks the compile."""
+    ids = [d for d in doc_ids if d]
+    if not ids:
+        return []
+    try:
+        with tx() as conn:
+            rows = conn.execute(
+                "SELECT doc_id, source_name FROM documents WHERE doc_id = ANY(%s) AND corpus_id = ANY(%s)",
+                (ids, corpora)).fetchall()
+    except Exception:  # noqa: BLE001 - the catalog is a read; never breaks the compile
+        return []
+    by_id = {r[0]: r[1] for r in rows}
+    return [by_id[d] for d in ids if by_id.get(d)]
 
 
 def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | None = None,
@@ -1758,12 +1748,13 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
     """CHAT-INTENT-PLAN-V1 through the `chat_compiler` stage pin (plan §3.2):
     one cheap lane, one call, strict local validation, deterministic fallback.
     The lane is chosen per session key (ring), each lane self-gates through
-    its own limiter. Never raises. B16: the library's titles ride along."""
+    its own limiter. Never raises. PROFILE-SCOUT-V1: profile reconnaissance conditions the
+    compiler when POLYMATH_PROFILE_SCOUT is on (B16 title injection retired)."""
     from polymath_shared.chat_plan import COMPILER_STAGE, compile_plan, fallback_plan
     try:
-        titles, titles_rec = _compiler_titles(message, corpus_ids, rank_override=titles_rank)
+        titles, scout_rec = _profile_scout(message, corpus_ids)
     except Exception as exc:  # noqa: BLE001
-        titles, titles_rec = [], {"contract": "compiler-corpus-context-v1", "reason": f"titles:{type(exc).__name__}"}
+        titles, scout_rec = [], {"contract": "profile-scout-v1", "reason": f"scout:{type(exc).__name__}"}
     try:
         from polymath_shared.llm_extraction.client import LLMExtractionClient
         from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
@@ -1772,7 +1763,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         endpoints = [e for e in cloud_endpoints() if e.name in pin]
         if not endpoints:
             plan = fallback_plan(message, reason="compiler_unavailable:no_active_lane")
-            plan.compiler["titles"] = titles_rec
+            plan.compiler["scout"] = scout_rec
             return plan
         last = None
         # COMPILER-LANE-FAILOVER-V1 + COMPILER-LANE-ORDER-V1: a transport
@@ -1791,7 +1782,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
                 return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
             plan = compile_plan(message, history, corpus_ids, _complete, model=f"{ep.name}:{ep.model}", titles=titles)
             plan.compiler["lane"] = ep.name
-            plan.compiler["titles"] = titles_rec
+            plan.compiler["scout"] = scout_rec
             plan.compiler["attempt"] = attempt_no
             if last is not None:
                 plan.compiler["first_failure"] = last
@@ -1802,7 +1793,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         return plan
     except Exception as exc:  # noqa: BLE001 — a missing pin / dark lane is a receipted fallback
         plan = fallback_plan(message, reason=f"compiler_unavailable:{type(exc).__name__}")
-        plan.compiler["titles"] = titles_rec
+        plan.compiler["scout"] = scout_rec
         return plan
 
 
@@ -2779,7 +2770,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                                  task_type=_plan.task_type, retrieval_required=_plan.retrieval_required,
                                  queries=len(_plan.queries), fallback=_plan.fallback,
                                  mode=_flag, wall_ms=_plan.compiler.get("wall_ms"),
-                                 titles=(_plan.compiler.get("titles") or {}).get("n_injected"),
+                                 scout=(_plan.compiler.get("scout") or {}).get("n_injected"),
                                  retrieval_query=(None if _skip_retrieval else _retrieval_text[:160]))
 
             def _join_plan():

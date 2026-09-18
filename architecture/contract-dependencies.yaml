@@ -69,12 +69,12 @@ contracts:
   PROFILE_SCOUT_INPUT:
     owner: orchestrator
     spec: docs/wiki/plans/PROFILE-SCOUT-V1.md
-    paths: []                      # normalization lives in P5b wiring (not yet written)
+    paths: [shared/polymath_shared/document_profile/profile_scout.py]   # pure normalization (P5b-a)
     depends_on: [PROFILE_PROJECTION, PROFILE_ATOM, SURFACE_REGISTRY]
     consumed_by: [PROFILE_SCOUT_FUSION]
-    tests: []
+    tests: [tests/determinism/test_profile_scout.py]
     migration: null
-    status: pending                # P5b normalizes profile_nominate + search_atoms into ScoutHit
+    status: live                   # P5b-a: profile_hits_from_doc_ids + atom_hits_from_search
 
   PROFILE_SCOUT_FUSION:
     owner: shared
@@ -104,7 +104,7 @@ contracts:
     consumed_by: [QUERY_PLANNER]
     tests: []
     migration: null
-    status: pending                # P5b — flagged POLYMATH_PROFILE_SCOUT, retires B16 title injection
+    status: live                   # P5b-b: _profile_scout wired (flag POLYMATH_PROFILE_SCOUT, default off), B16 retired
 
   QUERY_PLANNER:
     owner: shared
