@@ -301,23 +301,53 @@ def process_event(conn: Connection, event: dict) -> None:
             from polymath_shared.settings import get_settings
             from qdrant_client import QdrantClient
             client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)
+        atom_receipt = None
         try:
+            # CANONICAL-PROFILE-SELECTION-V1 (checklist P4): fetch the active point's surface
+            # counts so the projector can refuse a thinner overwrite of a richer last-known-good.
+            existing_surfaces = PJ.fetch_existing_surfaces(client, contract_obj.contract_id, doc_id)
             receipt = PJ.project_profile(
                 client, embed=embed, embedding_contract_id=contract_obj.contract_id, dim=contract_obj.dimension,
                 doc_id=doc_id, corpus_id=corpus_id, title=title, representations=emitted["representations"],
                 payload_extra={"topics": rec.topics, "terms": rec.terms, "quality": round(result.quality, 3),
                                "source_name": document.get("source_name")},
+                existing_surfaces=existing_surfaces,
                 source_doc_hash=document.get("content_hash") or "", schema_version=C.SCHEMA_VERSION,
                 prompt_version=prompt_ver, compiled_hash=compiled_hash)
+            if not receipt.get("kept_last_known_good"):
+                # PROFILE-ATOM ingest wiring (checklist P4a): the addressable atom lane is now
+                # pipeline-maintained (not canary). Atoms track the projected profile; skip on a
+                # kept last-known-good (the richer atoms stand). Additive + best-effort — a
+                # transient atom failure must never fail the already-projected profile.
+                try:
+                    from polymath_shared.document_profile import profile_atom_projection as PAP
+                    atom_receipt = PAP.ingest_document_atoms(
+                        conn, client, embed=embed, embedding_contract_id=contract_obj.contract_id,
+                        dim=contract_obj.dimension, doc_id=doc_id, corpus_id=corpus_id,
+                        compiled=artifact, profile_contract=C.SCHEMA_VERSION)
+                except Exception as _atom_err:
+                    atom_receipt = {"ok": False, "error": str(_atom_err)[:200]}
+                    log.warning("doc_profile atom ingest failed run=%s doc=%s err=%s",
+                                run_id[:16], doc_id[:16], _atom_err)
         finally:
             if owned:
                 client.close()
+        if receipt.get("kept_last_known_good"):
+            # The incoming profile was thinner than the active last-known-good projection; the
+            # richer point stands. This is a success, not a failure — do not run the vector gate.
+            writer.artifact({"doc_profile_qdrant": {**receipt, "compiled_hash": compiled_hash}})
+            sel = receipt.get("selection") or {}
+            log.info("doc_profile kept last-known-good run=%s doc=%s reason=%s existing=%s incoming=%s",
+                     run_id[:16], doc_id[:16], sel.get("reason"), sel.get("existing"), sel.get("incoming"))
+            return
         vec_ok, vmissing = PJ.has_required_vectors(receipt)
         writer.artifact({"doc_profile_qdrant": {**receipt, "valid": vec_ok, "missing": vmissing, "compiled_hash": compiled_hash}})
+        if atom_receipt is not None:
+            writer.artifact({"doc_profile_atoms": {**atom_receipt, "compiled_hash": compiled_hash}})
         if not vec_ok:
             raise RuntimeError(f"DOC_PROFILE_VECTORS_INCOMPLETE: {vmissing}")
-        log.info("doc_profile done run=%s doc=%s quality=%.2f vectors=%s lane=%s", run_id[:16], doc_id[:16],
-                 result.quality, receipt.get("vectors"), pool_rec.get("lane"))
+        log.info("doc_profile done run=%s doc=%s quality=%.2f vectors=%s atoms=%s lane=%s", run_id[:16], doc_id[:16],
+                 result.quality, receipt.get("vectors"), (atom_receipt or {}).get("active"), pool_rec.get("lane"))
 
 
 def main() -> None:

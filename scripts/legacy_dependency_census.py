@@ -64,8 +64,8 @@ SYMBOL_GROUPS: dict[str, dict] = {
         "symbols": ["compile_objects", "concept_artifacts", "procedure_artifacts"],
     },
     "compiler_title_context": {
-        "classification": "KEEP initially (query-compiler corpus title context; GAP-02 ablation)",
-        "symbols": ["POLYMATH_CHAT_COMPILER_TITLES_RANK", "_compiler_titles"],
+        "classification": "RETIRED 2026-09-18 (B16 title injection removed; replaced by PROFILE-SCOUT-V1 / _profile_scout, flag POLYMATH_PROFILE_SCOUT)",
+        "symbols": ["POLYMATH_PROFILE_SCOUT", "_profile_scout"],
     },
 }
 

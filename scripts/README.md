@@ -18,6 +18,12 @@ state, and a work-log entry.
 | `scripts/adapter_mcp_acceptance.py` | verification | one REAL adapter run through the official `mcp` client connected only to Polymath (adapter_list/start/next/submit/status/result), a supervised adapter_step worker restart mid-run, one invented submission that must be refused | the run's rows in adapter_runs/adapter_steps/adapter_results (kept as receipts) | `set -a; . ./.env; set +a; .venv/bin/python scripts/adapter_mcp_acceptance.py --adapter polymath.knowledge_brief --corpus cinema` |
 | `scripts/repo_guard.py` | governance | declared paths, dependency map, work logs, optional Git diff | nothing | `python3 scripts/repo_guard.py` |
 | `scripts/wiki_worm.py` | governance | `docs/wiki/` metadata | nothing | `python3 scripts/wiki_worm.py --check` |
+| `scripts/contract_impact.py` | governance | git diff → changed + transitively-impacted architecture contracts (deterministic, no LLM) | nothing | `python3 scripts/contract_impact.py --staged` |
+
+`scripts/hooks/pre-commit.sh` — installed by `make hooks` into `.git/hooks/pre-commit`; runs
+`contract_impact.py` (prints the change blast-radius, blocks an out-of-scope deferred-contract
+touch) and advisory `ruff --select S` on staged Python. Dev/CI only; set `POLYMATH_PY` when there
+is no local `.venv` (e.g. in a worktree).
 | `scripts/quality_sample_dump.py` | governance | chunks, retrieval_summaries, parent_summaries, mentions, raw ledger, extract digests | a markdown dump at the given path (outside the repo unless you choose `eval/quality/`) | `.venv/bin/python scripts/quality_sample_dump.py "<source_name>" 20260830 /tmp/sample.md` |
 | `scripts/read_extract_artifact.py` | governance | extract artifacts, mentions, evidence, facts | nothing | `.venv/bin/python scripts/read_extract_artifact.py "CompTIA%" eval/quality/2026-08-30-session3/baseline_cysa-study-v1.json` |
 | `scripts/check_install.sh` | control | loopback health endpoints, typed local-LLM settings, Ollama local model catalog | nothing | `bash scripts/check_install.sh` |

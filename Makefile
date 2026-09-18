@@ -8,7 +8,7 @@ PY     ?= .venv/bin/python
 UV     ?= uv
 COMPOSE = docker compose
 
-.PHONY: setup db-up db-down db-migrate migrate dev test guards install-launchd uninstall-launchd clean
+.PHONY: setup db-up db-down db-migrate migrate dev test guards impact lint-security hooks install-launchd uninstall-launchd clean
 
 ## setup — create the venv and install the workspace (editable)
 setup:
@@ -84,6 +84,19 @@ guards:
 	$(PY) scripts/agent_preflight.py
 	$(PY) scripts/repo_guard.py
 	$(PY) scripts/wiki_worm.py --check
+
+## impact — contract blast-radius of staged changes (deterministic, no LLM)
+impact:
+	$(PY) scripts/contract_impact.py --staged
+
+## lint-security — changed-scope static security (ruff bandit S rules)
+lint-security:
+	$(PY) -m ruff check --select S --ignore S101,S404,S603,S607 shared orchestrator workers control scripts
+
+## hooks — install the pre-commit hook (contract impact + static security)
+hooks:
+	@install -m 0755 scripts/hooks/pre-commit.sh "$$(git rev-parse --git-common-dir)/hooks/pre-commit"
+	@echo "installed .git/hooks/pre-commit"
 
 ## install-launchd — install host-native supervision units
 install-launchd:

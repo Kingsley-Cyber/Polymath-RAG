@@ -18,10 +18,11 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
+from .selection import SELECTION_VERSION, select as _select
+from polymath_shared.surface_registry import DENSE_SURFACES, MULTI_SURFACES  # single source (P4a)
+
 PROJECTION_VERSION = "doc-profile-projection-v1"
 COLLECTION_PREFIX = "polymath_document_profiles"
-DENSE_SURFACES = ("title", "identity", "theme")
-MULTI_SURFACES = ("questions", "searches", "theories", "concepts", "seealso")
 #: normal answer retrieval prefetches these; `seealso` (and by default theories / concepts) belong to exploration
 ANSWER_SURFACES = ("identity", "theme", "questions", "searches", "title")
 EXPLORATION_SURFACES = ("seealso", "theories", "concepts")
@@ -116,6 +117,7 @@ def build_point_vectors(batch: list[tuple[str, int | None, str]], vectors: list[
 
 def project_profile(client, *, embed: Callable[[list[str]], list[list[float]]], embedding_contract_id: str, dim: int,
                     doc_id: str, corpus_id: str, title: str, representations: dict[str, Any], payload_extra: dict | None = None,
+                    existing_surfaces: dict[str, int] | None = None, force: bool = False,
                     source_doc_hash: str, schema_version: str, prompt_version: str, compiled_hash: str) -> dict[str, Any]:
     """Embed every atomic unit once and upsert the document's single multi-representation point. Returns the
     projection receipt (no vectors inside — counts, hashes, collection, point id)."""
@@ -127,20 +129,34 @@ def project_profile(client, *, embed: Callable[[list[str]], list[list[float]]], 
         raise ValueError("nothing to project: the profile has no embeddable surface")
     vectors = embed([t for _, _, t in batch])
     named = build_point_vectors(batch, vectors)
+    new_counts = {s: (len(v) if isinstance(v, list) and v and isinstance(v[0], list) else 1) for s, v in named.items()}
     pkey = projection_key(source_doc_hash=source_doc_hash, schema_version=schema_version,
                           prompt_version=prompt_version, embedding_contract_id=embedding_contract_id)
+    # CANONICAL-PROFILE-SELECTION-V1: never let a thinner profile silently overwrite a richer
+    # last-known-good projection (checklist P4). `existing_surfaces` is the active point's counts
+    # (the worker fetches them); default None preserves first-projection / caller behaviour.
+    decision = _select(existing_surfaces, new_counts, force=force)
+    if not decision.replace:
+        return {"projection": PROJECTION_VERSION, "collection": name, "created_collection": created,
+                "point_id": point_id(doc_id), "projection_key": pkey, "projection_hash": None,
+                "embedding_contract": embedding_contract_id, "dim": dim, "vectors": {}, "texts_embedded": len(batch),
+                "kept_last_known_good": True,
+                "selection": {"reason": decision.reason, "existing": decision.existing,
+                              "incoming": decision.incoming, "version": SELECTION_VERSION}}
     payload = {"doc_id": doc_id, "corpus_id": corpus_id, "title": title, "schema_version": schema_version,
                "prompt_version": prompt_version, "embedding_contract": embedding_contract_id,
                "projection_key": pkey, "compiled_hash": compiled_hash, "source_doc_hash": source_doc_hash,
-               "surfaces": {s: (len(v) if isinstance(v, list) and v and isinstance(v[0], list) else 1) for s, v in named.items()},
+               "surfaces": new_counts,
                **(payload_extra or {})}
     client.upsert(collection_name=name, points=[qm.PointStruct(id=point_id(doc_id), vector=named, payload=payload)], wait=True)
-    counts = {s: (len(v) if isinstance(v[0], list) else 1) for s, v in named.items()}
+    counts = new_counts
     projection_hash = hashlib.sha256(json.dumps({"key": pkey, "point": point_id(doc_id), "counts": counts,
                                                  "texts": [t for _, _, t in batch]}, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     return {"projection": PROJECTION_VERSION, "collection": name, "created_collection": created, "point_id": point_id(doc_id),
             "projection_key": pkey, "projection_hash": projection_hash, "embedding_contract": embedding_contract_id,
-            "dim": dim, "vectors": counts, "texts_embedded": len(batch)}
+            "dim": dim, "vectors": counts, "texts_embedded": len(batch), "kept_last_known_good": False,
+            "selection": {"reason": decision.reason, "existing": decision.existing,
+                          "incoming": decision.incoming, "version": SELECTION_VERSION}}
 
 
 def has_required_vectors(receipt: dict[str, Any]) -> tuple[bool, list[str]]:
@@ -154,3 +170,21 @@ def has_required_vectors(receipt: dict[str, Any]) -> tuple[bool, list[str]]:
     if not (v.get("questions") or v.get("searches")):
         missing.append("query_hook_vector")
     return (not missing), missing
+
+
+def fetch_existing_surfaces(client, embedding_contract_id: str, doc_id: str) -> dict[str, int] | None:
+    """The active profile point's per-surface counts (for the CANONICAL-PROFILE-SELECTION guard),
+    or None when there is no active point. Defensive: any store/transport error → None (treated as
+    "no existing" → the new profile projects), so the guard can never wedge ingestion."""
+    try:
+        name = collection_name(embedding_contract_id)
+        if not client.collection_exists(name):
+            return None
+        pts = client.retrieve(collection_name=name, ids=[point_id(doc_id)], with_payload=["surfaces"], with_vectors=False)
+        if not pts:
+            return None
+        payload = getattr(pts[0], "payload", None) or {}
+        surfaces = payload.get("surfaces")
+        return {str(k): int(v) for k, v in surfaces.items()} if isinstance(surfaces, dict) else None
+    except Exception:
+        return None

@@ -246,12 +246,23 @@ def record_projection_attempt(
     entity_id: str,
     receipt_hash: str,
     contract: str = "",
+    state: str | None = None,
+    artifact_hash: str | None = None,
+    observed_ref: str | None = None,
+    projection_version: str | None = None,
 ) -> None:
     """Append the immutable attempt AND (re)claim the projection.
 
     The attempt row is history — never deleted. The claim row is the
     active belief that the artifact is currently present; re-projection
-    after a verified store loss re-activates it."""
+    after a verified store loss re-activates it.
+
+    PROJECTION-LIFECYCLE-V1 (checklist P1/P2): when ANY lifecycle field is supplied
+    (`state` / `artifact_hash` / `observed_ref` / `projection_version`) the claim is written
+    with the extended manifest columns (migration 0065) and `active` follows the lifecycle
+    (TRUE only for PROJECTED). With NO lifecycle field the LEGACY claim is written — no
+    reference to the new columns — so this stays safe to deploy AHEAD of migration 0065 and
+    every existing caller is byte-for-byte unchanged."""
     conn.execute(
         """
         INSERT INTO projection_attempts (projection, entity_kind, entity_id, receipt_hash, contract)
@@ -259,14 +270,32 @@ def record_projection_attempt(
         """,
         (projection, entity_kind, entity_id, receipt_hash, contract),
     )
+    if state is None and artifact_hash is None and observed_ref is None and projection_version is None:
+        conn.execute(
+            """
+            INSERT INTO projection_receipts (projection, entity_kind, entity_id, receipt_hash, active)
+            VALUES (%s, %s, %s, %s, TRUE)
+            ON CONFLICT (projection, entity_kind, entity_id) DO UPDATE
+               SET active = TRUE, receipt_hash = EXCLUDED.receipt_hash, written_at = now()
+            """,
+            (projection, entity_kind, entity_id, receipt_hash),
+        )
+        return
+    st = state or "PROJECTED"
     conn.execute(
         """
-        INSERT INTO projection_receipts (projection, entity_kind, entity_id, receipt_hash, active)
-        VALUES (%s, %s, %s, %s, TRUE)
+        INSERT INTO projection_receipts
+            (projection, entity_kind, entity_id, receipt_hash, active,
+             state, artifact_hash, projection_version, observed_ref, error, updated_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, now())
         ON CONFLICT (projection, entity_kind, entity_id) DO UPDATE
-           SET active = TRUE, receipt_hash = EXCLUDED.receipt_hash, written_at = now()
+           SET active = EXCLUDED.active, receipt_hash = EXCLUDED.receipt_hash, written_at = now(),
+               state = EXCLUDED.state, artifact_hash = EXCLUDED.artifact_hash,
+               projection_version = EXCLUDED.projection_version, observed_ref = EXCLUDED.observed_ref,
+               error = NULL, updated_at = now()
         """,
-        (projection, entity_kind, entity_id, receipt_hash),
+        (projection, entity_kind, entity_id, receipt_hash, st == "PROJECTED",
+         st, artifact_hash, projection_version, observed_ref),
     )
 
 
@@ -300,6 +329,52 @@ def supersede_projection_claims(
             """,
             (projection, entity_ids),
         )
+
+
+def mark_projection_failed(
+    conn: Connection,
+    *,
+    projection: str,
+    entity_kind: str,
+    entity_id: str,
+    error: str,
+    projection_version: str | None = None,
+) -> None:
+    """PROJECTION-LIFECYCLE-V1: record a FAILED projection attempt (state=FAILED, active=FALSE),
+    preserving any prior receipt_hash/artifact_hash. Requires migration 0065."""
+    conn.execute(
+        """
+        INSERT INTO projection_receipts
+            (projection, entity_kind, entity_id, receipt_hash, active, state, projection_version, error, updated_at)
+        VALUES (%s, %s, %s, '', FALSE, 'FAILED', %s, %s, now())
+        ON CONFLICT (projection, entity_kind, entity_id) DO UPDATE
+           SET active = FALSE, state = 'FAILED', error = EXCLUDED.error,
+               projection_version = COALESCE(EXCLUDED.projection_version, projection_receipts.projection_version),
+               updated_at = now()
+        """,
+        (projection, entity_kind, entity_id, projection_version, str(error)[:500]),
+    )
+
+
+def projection_manifest_row(
+    conn: Connection, *, projection: str, entity_kind: str, entity_id: str,
+) -> dict | None:
+    """PROJECTION-LIFECYCLE-V1: the current manifest row (or None) — state + observed identity +
+    canonical linkage — for reconciliation. Requires migration 0065."""
+    row = conn.execute(
+        """
+        SELECT projection, entity_kind, entity_id, receipt_hash, artifact_hash,
+               projection_version, observed_ref, state, active, error, updated_at
+          FROM projection_receipts
+         WHERE projection = %s AND entity_kind = %s AND entity_id = %s
+        """,
+        (projection, entity_kind, entity_id),
+    ).fetchone()
+    if row is None:
+        return None
+    cols = ["projection", "entity_kind", "entity_id", "receipt_hash", "artifact_hash",
+            "projection_version", "observed_ref", "state", "active", "error", "updated_at"]
+    return dict(zip(cols, row))
 
 
 # ---------------------------------------------------------------------------

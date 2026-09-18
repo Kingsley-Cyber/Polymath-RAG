@@ -1,0 +1,20 @@
+name: contract-impact
+on: [pull_request]
+jobs:
+  impact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python3 -m pip install --quiet pyyaml ruff
+      - name: Contract impact — print blast radius + out-of-scope (deferred) guard
+        run: python3 scripts/contract_impact.py --check --range "origin/${{ github.base_ref }}..HEAD"
+      - name: Changed-scope static security (advisory)
+        run: |
+          FILES=$(git diff --name-only "origin/${{ github.base_ref }}..HEAD" -- '*.py' | tr '\n' ' ')
+          if [ -z "$FILES" ]; then echo "no python changes"; exit 0; fi
+          python3 -m ruff check --select S --ignore S101,S404,S603,S607 $FILES || true
