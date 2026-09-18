@@ -16,6 +16,13 @@ retrieval against corpus-grounded gold DOCUMENTS with deterministic IR metrics. 
 (§14/§28): success@10 (gold_hit) ≥ 0.90, no major class < 0.80, single-target MRR ≥ 0.80,
 0 unsupported hallucination, 100% provenance completeness + q0 preservation, yield>0 demonstrated.
 
+## Changes
+Evidence layer only — no production code change in this slice. Adds the qualification harness +
+gold set + summary under `eval/librarian_qualification/` (`harness.py`, `build_gold.py`,
+`summarize.py`, `gold_queries.json`, `cinema_docmap.json`). The repairs it drove (P11 q0-authority
+`1bc2389`, GRAPH fail-open `70015b4`) and the P10 wiring (`b23529b`/`38d9b1f`) are their own slices
+(registers 11.302–304).
+
 ## Environment (live)
 Production HEAD `66003ef`+ (merge `a167a5e`, P6 JSON fix `66003ef`, P11 wiring `56a7c52`). Fleet
 bounced (port-gated) on bundle `c0b3a66b`, `/ready` stable. Migration 0065 applied. Flags:
@@ -23,7 +30,7 @@ bounced (port-gated) on bundle `c0b3a66b`, `/ready` stable. Migration 0065 appli
 profiles=80, atoms=639, parent-maps=12121, children=163419). Synthesizer
 `deterministic-template-v3` (deterministic, no LLM spend — retrieval is under test).
 
-## Results
+## Proof
 ### Baseline (64 queries, FAST+HYBRID, scout on, expansion off) — artifact 111554
 - **success@10: FAST 1.00, HYBRID 0.967** (≥0.90 ✓). **22 of 24 categories at 1.00** incl.
   low_lexical, profile_discovery, cross_doc_synthesis, relational, wildcard_discovery, distractor.
