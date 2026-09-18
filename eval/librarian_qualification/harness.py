@@ -109,6 +109,20 @@ def mrr(gold: set[str], ranked: list[str]) -> float:
     return 0.0
 
 
+#: decline / abstention phrases. EVALUATOR MEASUREMENT-ONLY — recognizes the system's own decline
+#: responses (incl. answer_synthesis.ABSTENTION_MESSAGE, "I don't have enough grounded evidence…")
+#: so a CA4 gate-abstention that still retrieved docs is counted as a DECLINE, not a hallucination.
+#: This changes NO gold, threshold, or retrieval/gate behavior.
+_DECLINE_PHRASES = ("insufficient", "cannot answer", "not establish", "no evidence",
+                    "does not contain", "unable to", "enough grounded evidence")
+
+
+def declined(answer: str, ranked: list) -> bool:
+    """True when the answer is a decline/abstention (states it cannot ground an answer)."""
+    a = (answer or "").lower()
+    return any(s in a for s in _DECLINE_PHRASES) or (not ranked and not (answer or "").strip())
+
+
 def evaluate_query(q: dict, corpus: str, modes: list[str], k: int = 10) -> dict:
     gold = set(q.get("gold_doc_ids") or [])
     unsupported = bool(q.get("unsupported"))
@@ -121,9 +135,7 @@ def evaluate_query(q: dict, corpus: str, modes: list[str], k: int = 10) -> dict:
         plan = retr.get("chat_plan") or {}
         comp = plan.get("compiler") or {}
         answer = (rec.get("answer") or "")
-        insufficient = any(s in answer.lower() for s in
-                           ("insufficient", "cannot answer", "not establish", "no evidence",
-                            "does not contain", "unable to")) or (not ranked and not answer.strip())
+        insufficient = declined(answer, ranked)
         per_mode[mode] = {
             "error": rec["error"], "latency_s": rec["latency_s"], "phases": rec["phases"],
             "n_legend": len(retr.get("legend") or []), "evidence_count": retr.get("evidence_count"),
