@@ -2971,6 +2971,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             _aspects: dict = {}
             _weak: list = []
             _resolution: dict | None = None   # P10 evidence-resolution receipt (bounded round 2)
+            _constraint_align: dict | None = None   # CA3 constraint-alignment receipt (post-rerank partition)
             # CHAT-RETRIEVAL-V2 / P1.e MODE-COMPOSITION-V1: every mode is a composition on the v2 engine
             # (VECTOR = A+B, HYBRID = A+B+C, GRAPH = HYBRID → bounded G, WILDCARD = HYBRID ∥ W) owned by
             # chat_retrieve_mode; the v1 engines stay behind `retrieval: v1` or `latent` (rollback boundary).
@@ -3166,6 +3167,26 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     for r in rows
                 ]
 
+            # CONSTRAINT-AWARE-RETRIEVAL-V1 CA3: post-rerank portfolio partition. The cross-encoder
+            # stays the semantic authority; when q0 carries a RESOLVED explicit constraint, reorder
+            # the (already reranked) evidence so constraint-satisfying evidence leads per strength —
+            # semantic order preserved WITHIN each portfolio, no score added/tuned. Flag-gated,
+            # default-off ⇒ byte-identical; only reorders when a resolved constraint is present.
+            if (os.environ.get("POLYMATH_CHAT_CONSTRAINT_ALIGN", "0") == "1"
+                    and _plan is not None and evidence_rows
+                    and any(getattr(c, "resolved_targets", None) for c in (getattr(_plan, "explicit_constraints", None) or []))):
+                from polymath_shared.query_constraints import align_evidence_for_constraints
+                _before = [c["doc_id"] for c in evidence_rows]
+                evidence_rows = align_evidence_for_constraints(evidence_rows, _plan.explicit_constraints)
+                _after = [c["doc_id"] for c in evidence_rows]
+                _gov = next((c for s in ("HARD", "SOFT", "EXPLORATORY")
+                             for c in _plan.explicit_constraints
+                             if c.kind == "SOURCE" and c.resolved_targets and c.strength == s), None)
+                _constraint_align = {"applied": _before != _after,
+                                     "strength": getattr(_gov, "strength", None),
+                                     "targets": getattr(_gov, "resolved_targets", []),
+                                     "value": getattr(_gov, "value", None)}
+
             yield _phase("assemble", "Assembling the evidence bundle…")
             stale: list[dict] = []
             try:
@@ -3296,6 +3317,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                      "resolved_targets": c.resolved_targets, "confidence": c.confidence,
                      "reason": c.reason}
                     for c in (getattr(_plan, "explicit_constraints", None) or [])] if _plan else [],
+                # CA3: whether the post-rerank portfolio partition reordered the evidence (flag-gated).
+                "constraint_alignment": _constraint_align,
                 # P11 profile_expansion_evidence_yield: of the PROFILE-origin subqueries, how many
                 # surfaced FINAL evidence (aspect final > 0). None unless profile-expansion is on.
                 "profile_yield": _compute_profile_yield(_plan, _aspects),

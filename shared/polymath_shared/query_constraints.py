@@ -202,3 +202,57 @@ def resolve_constraint_targets(constraints: list[Constraint], source_index: Mapp
             # tie at the top OR weak-and-unconfirmed ⇒ unresolved (prefer [] over a wrong guess)
         out.append(replace(c, resolved_targets=targets, confidence=round(conf, 2)))
     return out
+
+
+# ---------------------------------------------------------------------------
+# CA3 — post-rerank constraint alignment (portfolio partition, NOT a numeric boost)
+# ---------------------------------------------------------------------------
+# The cross-encoder stays the semantic-relevance authority; alignment runs AFTER it and only
+# REORDERS the already-reranked evidence when the query carries an explicit, resolved constraint.
+# Semantic order is PRESERVED WITHIN each portfolio — no score is ever added or tuned.
+#   HARD        constraint-satisfying evidence leads (DIRECT/primary portfolio); everything else
+#               follows (RELATED/supplemental). The source cannot be displaced as the primary
+#               answer source when valid source evidence exists — but rerank order is kept inside
+#               each portfolio (a highly-relevant non-source passage is still first among the rest).
+#   SOFT        bounded preference: the source's best chunk is lifted to just behind the single top
+#               result (never below rank 2), the rest of the rerank order is untouched. A
+#               dramatically stronger non-source result keeps rank 1.
+#   EXPLORATORY the source is an anchor only (already retained by retrieval); semantic order rules.
+
+def align_by_constraint(evidence: list[dict], targets: set[str] | list[str], strength: str) -> list[dict]:
+    """Reorder already-reranked `evidence` (dicts carrying `doc_id`) by constraint satisfaction,
+    per `strength`. Pure + deterministic; identity when there is nothing to do (no targets, unknown
+    strength, or no source evidence present). Never adds/removes an item — only reorders."""
+    ev = list(evidence)
+    tset = {t for t in (targets or ()) if t}
+    if not tset or strength not in CONSTRAINT_STRENGTHS:
+        return ev
+    sat = [e for e in ev if e.get("doc_id") in tset]
+    if not sat:
+        return ev                                        # source not in the evidence → fail-open identity
+    if strength == "HARD":
+        other = [e for e in ev if e.get("doc_id") not in tset]
+        return sat + other                               # DIRECT portfolio leads; order preserved within each
+    if strength == "SOFT":
+        best = sat[0]                                    # sat is in rerank order → best source chunk
+        pos = next(i for i, e in enumerate(ev) if e is best)
+        if pos > 1:                                      # bounded: lift only if below rank 2, never demote
+            rest = [e for e in ev if e is not best]
+            return rest[:1] + [best] + rest[1:]
+        return ev
+    return ev                                            # EXPLORATORY: anchor only
+
+
+def align_evidence_for_constraints(evidence: list[dict], constraints: list[Constraint]) -> list[dict]:
+    """Apply `align_by_constraint` using the governing resolved SOURCE constraint(s). Only resolved
+    constraints act; the strongest present tier governs (HARD > SOFT > EXPLORATORY), unioning that
+    tier's targets. Identity when nothing is resolved."""
+    resolved = [c for c in (constraints or []) if c.kind == "SOURCE" and c.resolved_targets]
+    if not resolved or not evidence:
+        return list(evidence)
+    for strength in ("HARD", "SOFT", "EXPLORATORY"):
+        group = [c for c in resolved if c.strength == strength]
+        if group:
+            targets = set().union(*(set(c.resolved_targets) for c in group))
+            return align_by_constraint(evidence, targets, strength)
+    return list(evidence)
