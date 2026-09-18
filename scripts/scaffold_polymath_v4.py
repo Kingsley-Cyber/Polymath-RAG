@@ -603,6 +603,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-17-canonical-profile-selection.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-surface-registry.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-profile-atom-dag-wiring.md", "md", None),
+    ("docs/wiki/plans/PROFILE-SCOUT-V1.md", "md", None),
+    ("docs/wiki/work-log/2026-09-18-profile-scout-design.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-schema.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-writer.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-reconcile.md", "md", None),
