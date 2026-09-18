@@ -173,6 +173,13 @@ def assemble_evidence_bundle(
             raise UnresolvedFactError(fact_id)
         evidence_rows = sorted(resolve_evidence(fact_id), key=lambda r: r.get("evidence_id") or "")
         if not evidence_rows:
+            # GRAPH-FAIL-OPEN-V1 (§19): a graph fact with NO supporting evidence chunk cannot be
+            # source-attested, so it is DROPPED (not surfaced) rather than erroring the whole turn —
+            # the same tolerance TEXT-lane items already get. Strict contract (unresolved=None) still
+            # raises. The normal answer path survives on the remaining source-backed evidence.
+            if unresolved is not None:
+                _skip(unresolved, {"kind": "graph_fact", "fact_id": fact_id, "reason": "no_supporting_evidence"})
+                continue
             raise UnresolvedEvidenceError(fact_id)
         provenance = fact.get("provenance") or {}
         if not provenance:

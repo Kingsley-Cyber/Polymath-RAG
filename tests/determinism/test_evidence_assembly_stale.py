@@ -77,3 +77,28 @@ def test_graph_lane_never_tolerant() -> None:
             resolve_entity=lambda eid: {"entity_id": eid, "core_type": "Concept", "normalized_surface": eid},
             resolve_document=_resolve_document, resolve_chunk=_resolve_chunk,
             unresolved=stale)
+
+
+def test_graph_fact_no_supporting_evidence_fails_open(pytestconfig=None) -> None:
+    # GRAPH-FAIL-OPEN-V1 (§19): a graph fact with NO supporting evidence chunk cannot be
+    # source-attested, so with a sink it is DROPPED (recorded), not raised — the normal answer
+    # path survives on the remaining source-backed evidence. Strict default (no sink) still raises.
+    from polymath_shared.evidence_assembly import UnresolvedEvidenceError
+    fact = [{"fact_id": "f1", "predicate": "uses", "subject": "a", "object": "b"}]
+    kw = dict(resolve_fact=lambda fid: {"fact_id": "f1", "predicate": "uses", "subject_id": "e1",
+                                        "object_id": "e2", "qualifiers": {}, "decision": "ACCEPT",
+                                        "rule_id": "uses-rule", "rule_version": "1.0.1",
+                                        "provenance": {"extractor": "test", "run_id": "r1"}},
+              resolve_evidence=lambda fid: [],          # NO supporting evidence
+              resolve_entity=lambda eid: {"entity_id": eid, "core_type": "Concept", "normalized_surface": eid},
+              resolve_document=_resolve_document, resolve_chunk=_resolve_chunk)
+    # strict default: raises
+    with pytest.raises(UnresolvedEvidenceError):
+        assemble_evidence_bundle("q", fact, [], **kw)
+    # with a sink: fails open — the fact is dropped + recorded, no raise, the turn survives
+    stale: list[dict] = []
+    bundle = assemble_evidence_bundle("q", fact, [
+        {"chunk_id": "live-c1", "doc_id": LIVE, "parent_id": "p1", "contract_ids": []}],
+        unresolved=stale, **kw)
+    assert any(e.get("kind") == "graph_fact" and e.get("fact_id") == "f1" for e in stale)
+    assert bundle["evidence_bundle"]                     # the child evidence still assembles
