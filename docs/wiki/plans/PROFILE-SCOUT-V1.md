@@ -1,3 +1,12 @@
+---
+title: "PROFILE-SCOUT-V1 — the frozen P5 Profile Scout semantic contract"
+date: 2026-09-18
+last_reviewed: 2026-09-18
+status: "FROZEN CONTRACT"
+owner: "@king"
+scope: "P5 Profile Scout — deterministic dual-projection fusion; the output schema P6 depends on"
+---
+
 # PROFILE-SCOUT-V1 — the frozen P5 semantic contract
 
 Owner-frozen 2026-09-18 (librarian checklist **P5**, critical-path slice 3). This is the
