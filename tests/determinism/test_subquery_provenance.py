@@ -75,7 +75,7 @@ def test_post_init_derives_role_and_reason_on_bare_query():
     assert q2.role == "complement" and q2.reason.startswith("aspect:mechanism")
     # inspired_by given as a list is normalized to a tuple
     q3 = CompiledQuery(id="q2", type="ENTITY", query="z", inspired_by_profile=["d1", "d2"])
-    assert q3.inspired_by_profile == ("d1", "d2")
+    assert q3.inspired_by_profile == ["d1", "d2"]
 
 
 def test_explicit_role_is_preserved_over_derivation():
@@ -100,7 +100,7 @@ def test_validate_plan_reads_supplied_provenance():
     plan, err = validate_plan(raw, "compare A and B")
     assert err is None and plan is not None
     q1 = plan.queries[1]
-    assert q1.inspired_by_profile == ("docB",) and q1.profile_surface == "theme"
+    assert q1.inspired_by_profile == ["docB"] and q1.profile_surface == "theme"
     assert q1.target == "entity:B" and q1.reason == "mechanism of B"
 
 
@@ -143,7 +143,7 @@ def test_annotate_preserves_q0_and_ignores_claimed_scout_link_on_primary():
     plan = _plan([q0])
     block = annotate_subquery_provenance(plan, _scout(_nom("docX")))
     assert plan.queries[0].role == "direct"
-    assert plan.queries[0].inspired_by_profile == () and plan.queries[0].profile_surface is None
+    assert plan.queries[0].inspired_by_profile == [] and plan.queries[0].profile_surface is None
     assert plan.queries[0].query == "the user question"   # text untouched
     assert block["q0_preserved"] is True
 
@@ -154,7 +154,7 @@ def test_annotate_keeps_only_real_nominations():
                        inspired_by_profile=["docReal", "docFake"], profile_surface="theme")
     plan = _plan([q0, q1])
     annotate_subquery_provenance(plan, _scout(_nom("docReal", surfaces=("theme",))))
-    assert plan.queries[1].inspired_by_profile == ("docReal",)   # docFake dropped
+    assert plan.queries[1].inspired_by_profile == ["docReal"]   # docFake dropped
     assert plan.queries[1].profile_surface == "theme"
 
 
@@ -164,7 +164,7 @@ def test_annotate_drops_surface_not_in_matched():
     plan = _plan([CompiledQuery(id="q0", type="PRIMARY", query="p"), q1])
     annotate_subquery_provenance(plan, _scout(_nom("docReal", surfaces=("theme", "concepts"))))
     # 'questions' is not among the kept nomination's matched surfaces → dropped
-    assert plan.queries[1].inspired_by_profile == ("docReal",)
+    assert plan.queries[1].inspired_by_profile == ["docReal"]
     assert plan.queries[1].profile_surface is None
 
 
@@ -197,7 +197,7 @@ def test_annotate_with_no_scout_degrades_cleanly():
     plan = _plan([q0, q1])
     block = annotate_subquery_provenance(plan, None)
     assert block["scout_present"] is False and block["scout_nominations"] == []
-    assert plan.queries[1].inspired_by_profile == ()   # nothing to link against
+    assert plan.queries[1].inspired_by_profile == []   # nothing to link against
     assert provenance_complete(plan) and block["q0_preserved"] is True
 
 
@@ -226,6 +226,18 @@ def test_fallback_plan_is_q0_preserved_and_complete():
 
 
 # --- receipt carries lineage -------------------------------------------------------------
+
+def test_provenance_fields_are_json_stable():
+    # inspired_by_profile must be a LIST, not a tuple — plan receipts round-trip through JSON,
+    # and a tuple () would deserialize to [] and break equality of the two receipt copies.
+    import json
+    q = CompiledQuery(id="q1", type="MECHANISM", query="x", inspired_by_profile=("docA", "docB"))
+    assert isinstance(q.inspired_by_profile, list)
+    plan = _plan([CompiledQuery(id="q0", type="PRIMARY", query="p"), q])
+    annotate_subquery_provenance(plan, _scout(_nom("docA"), _nom("docB")))
+    rec = plan_receipt(plan)
+    assert rec == json.loads(json.dumps(rec))     # JSON round-trip is identity (no tuples anywhere)
+
 
 def test_plan_receipt_carries_subquery_lineage():
     plan = _plan([CompiledQuery(id="q0", type="PRIMARY", query="p"),

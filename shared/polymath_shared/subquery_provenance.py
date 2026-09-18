@@ -46,14 +46,14 @@ def annotate_subquery_provenance(plan: ChatPlan, scout: ProfileScoutResult | Non
         if q.type == "PRIMARY":
             # q0 is authoritative and never scout-derived.
             q.role = "direct"
-            q.inspired_by_profile = ()
+            q.inspired_by_profile = []
             q.profile_surface = None
             q.origin = "USER"
             if not q.reason:
                 q.reason = default_reason("PRIMARY", "direct")
         else:
             # keep only links the scout actually produced (reject fabricated provenance)
-            kept = tuple(d for d in q.inspired_by_profile if d in noms)
+            kept = [d for d in q.inspired_by_profile if d in noms]
             q.inspired_by_profile = kept
             if not kept:
                 q.profile_surface = None

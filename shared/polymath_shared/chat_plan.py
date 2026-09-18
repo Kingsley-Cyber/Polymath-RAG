@@ -124,14 +124,14 @@ class CompiledQuery:
     #: information need this subquery localizes (planner-supplied; never fabricated).
     role: str = ""
     reason: str = ""
-    inspired_by_profile: tuple[str, ...] = ()
+    inspired_by_profile: list[str] = field(default_factory=list)   # JSON-native (never a tuple: receipts round-trip through JSON)
     profile_surface: str | None = None
     target: str | None = None
     origin: str = "USER"
 
     def __post_init__(self) -> None:
-        if isinstance(self.inspired_by_profile, list):
-            self.inspired_by_profile = tuple(self.inspired_by_profile)
+        if not isinstance(self.inspired_by_profile, list):
+            self.inspired_by_profile = list(self.inspired_by_profile)
         if not self.role:
             self.role = derive_role(self.type)
         if not self.reason:
@@ -423,7 +423,7 @@ def validate_plan(raw: dict, message: str) -> tuple[ChatPlan | None, str | None]
         role_in = role_in if role_in in ROLE_TYPES else ""
         reason_in = str(q.get("reason") or "").strip()[:200]
         ib = q.get("inspired_by") if isinstance(q.get("inspired_by"), (list, tuple)) else q.get("inspired_by_profile")
-        inspired = tuple(str(x).strip() for x in ib if str(x).strip())[:8] if isinstance(ib, (list, tuple)) else ()
+        inspired = [str(x).strip() for x in ib if str(x).strip()][:8] if isinstance(ib, (list, tuple)) else []
         surface_in = q.get("profile_surface")
         target_in = q.get("target")
         origin_in = str(q.get("origin") or "").strip().upper()
