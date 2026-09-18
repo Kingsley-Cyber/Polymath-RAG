@@ -216,12 +216,14 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/agent_preflight.py", "py", "_AGENT_PREFLIGHT"),
     ("scripts/repo_guard.py", "py", "_REPO_GUARD"),
     ("scripts/contract_impact.py", "py", None),
+    ("scripts/hooks/pre-commit.sh", "sh", None),
 
     # ── CI ────────────────────────────────────────────────────────────────
     (".github/workflows/contracts.yml", "yaml", "_CI_CONTRACTS"),
     (".github/workflows/determinism.yml", "yaml", "_CI_DETERMINISM"),
     (".github/workflows/agent-preflight.yml", "yaml", "_CI_AGENT_PREFLIGHT"),
     (".github/workflows/repo-governance.yml", "yaml", "_CI_REPO_GOVERNANCE"),
+    (".github/workflows/contract-impact.yml", "yaml", None),
 
     # ── Phase B production additions (2026-08-13) ─────────────────────────
     ("pyproject.toml", "toml", None),
@@ -610,6 +612,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-18-profile-scout-contract-refine.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-profile-scout-p5a.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-agent-safety-impact-tooling.md", "md", None),
+    ("docs/wiki/work-log/2026-09-18-agent-safety-automation.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-schema.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-writer.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-reconcile.md", "md", None),

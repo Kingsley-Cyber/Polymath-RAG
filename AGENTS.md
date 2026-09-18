@@ -301,6 +301,26 @@ Providers do not own state. Orchestrator code does not import worker or
 control internals. Workers do not import sidecar implementations. Calls cross
 those boundaries through schemas and typed clients.
 
+### 5.3 Change-impact workflow (deterministic, from disk — never chat memory)
+
+Do not rely on previous-chat memory for downstream impact. The repository carries the impact map.
+
+- **Before** changing an existing interface, schema, or contract, inspect its dependents:
+  `graft callers <symbol>` (`$0`, no LLM) for code, and `architecture/contract-dependencies.yaml`
+  for the architecture contract it belongs to.
+- **After** the change, compute changed-scope impact:
+  `python3 scripts/contract_impact.py --staged` (or `--range A..B`). It prints the CHANGED
+  contracts and their TRANSITIVE downstream consumers, plus the tests to run.
+- **Before** declaring the change complete, every impacted contract must receive one disposition
+  in the work log (`## Open contract gaps`, or a dedicated impact list):
+  **UPDATED · TESTED_UNCHANGED · NOT_AFFECTED · DEFERRED · BLOCKED**. An impacted contract may
+  not silently disappear from consideration.
+
+`make hooks` installs a pre-commit hook that prints the impact set and blocks an out-of-scope
+DEFERRED-contract change; `contract-impact.yml` gates it in CI; `make lint-security` runs the
+changed-scope static-security check (ruff bandit `S` rules). These are development/CI tools —
+Polymath runtime never depends on them, and they are removable.
+
 ## 6. Refactor triggers
 
 Changes propagate by dependency, not by guesswork.
