@@ -13,7 +13,8 @@ Resolution to doc_ids is CA1 (`resolve_constraint_targets`); ranking use is CA3.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from collections.abc import Mapping
+from dataclasses import dataclass, field, replace
 
 CONSTRAINT_KINDS = ("SOURCE", "DOCUMENT", "SCOPE")
 CONSTRAINT_STRENGTHS = ("HARD", "SOFT", "EXPLORATORY")
@@ -112,3 +113,92 @@ def detect_explicit_constraints(q0: str) -> list[Constraint]:
         if found:
             return list(found.values())                  # first (strongest) tier that matches wins
     return []
+
+
+# ---------------------------------------------------------------------------
+# CA1 — deterministic SOURCE-identity resolution (NOT semantic search)
+# ---------------------------------------------------------------------------
+# Resolve a SOURCE constraint's surface value to the corpus doc_id it names, by IDENTITY:
+# exact normalized title/author, then bounded author-name / title-fragment containment, then
+# (only for a single weakly-matched candidate) Scout confirmation. Ambiguity (a tie at the top
+# tier) resolves to NOTHING — prefer unresolved over confidently wrong. Scout rank alone never
+# breaks an identity tie. The caller passes a source index already scoped to the active corpus
+# (shared/ does no I/O); resolution never occurs against a global document universe.
+_EXT = re.compile(r"\.(?:md|markdown|txt|html?|pdf|docx?|epub|rst)$", re.I)
+_YEAR = re.compile(r"\s*[\(\[]\s*(?:19|20)\d{2}\s*[\)\]]\s*")
+_NONWORD = re.compile(r"[^\w\s]")
+_SPLIT = re.compile(r"\s[-–—:]\s")                       # author - title | title: subtitle
+#: identity-resolution confidence bands (NOT semantic relevance)
+_CONF_EXACT = 0.95        # exact normalized title / author / full identity
+_CONF_CONTAINS = 0.85     # unique author-name or title containment
+_CONF_SCOUT = 0.5         # weak lexical identity confirmed by a Scout nomination
+_IDENTITY_FLOOR = 0.9     # a "convincing" identity match (exact or containment)
+_WEAK_FLOOR = 0.6         # a title-fragment match (mention-like) — needs Scout to resolve
+_SCOUT_CONFIRM_K = 3      # a weak candidate must sit in the Scout's top-K to be confirmed
+
+
+def _norm(s: str) -> str:
+    s = _YEAR.sub(" ", (s or "").lower())
+    s = _NONWORD.sub(" ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _source_identity(source_name: str) -> tuple[str, str, str]:
+    """(author_norm, title_norm, full_norm) parsed deterministically from a corpus source name
+    like 'Walter Murch - In the Blink of an Eye (2001).md'. No " - " ⇒ the whole name is the title."""
+    name = _EXT.sub("", source_name or "")
+    name = _YEAR.sub(" ", name).strip()
+    author, title = "", name
+    parts = _SPLIT.split(name, maxsplit=1)
+    if len(parts) == 2 and parts[0].strip():
+        author, title = parts[0].strip(), parts[1].strip()
+    return _norm(author), _norm(title), _norm(name)
+
+
+def _identity_score(value: str, author_n: str, title_n: str, full_n: str) -> float:
+    """Lexical IDENTITY score in [0,1] — exact match, then bounded containment. Never embeddings."""
+    c = _norm(value)
+    if not c:
+        return 0.0
+    if c == title_n or c == full_n or (author_n and c == author_n):
+        return 1.0                                       # exact identity
+    ct = set(c.split())
+    if author_n and ct and ct <= set(author_n.split()):
+        return 0.92                                      # author-name containment ("Murch" ⊂ "walter murch")
+    if ct and ct <= set(title_n.split()):
+        return 0.6                                       # title fragment (mention-like) — weak
+    return 0.0
+
+
+def resolve_constraint_targets(constraints: list[Constraint], source_index: Mapping[str, str],
+                               *, scout_nominations: list[str] | None = None,
+                               corpus_id: str | None = None) -> list[Constraint]:
+    """Return the constraints with `resolved_targets` (doc_ids) + identity-resolution `confidence`
+    filled; `kind`/`value`/`strength`/`reason` are preserved (CA1 resolves identity, never
+    reinterprets the relationship). `source_index` = {doc_id: source_name} for the ACTIVE corpus.
+    Fail-open: an unresolved / ambiguous source yields `resolved_targets=[]`, never an exception."""
+    scout = [d for d in (scout_nominations or []) if d]
+    out: list[Constraint] = []
+    for c in constraints:
+        if c.kind != "SOURCE":
+            out.append(c)
+            continue
+        scored = sorted(                                  # deterministic: strongest first, doc_id tiebreak
+            ((_identity_score(c.value, *_source_identity(sn)), did)
+             for did, sn in source_index.items()),
+            key=lambda x: (-x[0], x[1]))
+        scored = [(s, d) for s, d in scored if s > 0.0]
+        targets: list[str] = []
+        conf = 0.0
+        if scored:
+            top = scored[0][0]
+            tied = [d for s, d in scored if abs(s - top) < 1e-9]
+            if len(tied) == 1 and top >= _IDENTITY_FLOOR:
+                targets = [tied[0]]
+                conf = _CONF_EXACT if top >= 1.0 else _CONF_CONTAINS
+            elif len(tied) == 1 and top >= _WEAK_FLOOR and tied[0] in scout[:_SCOUT_CONFIRM_K]:
+                targets = [tied[0]]                       # weak identity, Scout-confirmed
+                conf = _CONF_SCOUT
+            # tie at the top OR weak-and-unconfirmed ⇒ unresolved (prefer [] over a wrong guess)
+        out.append(replace(c, resolved_targets=targets, confidence=round(conf, 2)))
+    return out
