@@ -29,6 +29,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from typing import Callable, Iterable
 
+from polymath_shared.query_constraints import Constraint, detect_explicit_constraints
 from polymath_shared.query_intent import intent_of_plan
 
 CONTRACT = "chat-intent-plan-v1"
@@ -162,6 +163,10 @@ class ChatPlan:
     #: deterministically from the fields above (no new classifier LLM). Set at construction.
     intent: str = ""
     compiler: dict = field(default_factory=dict)
+    #: CONSTRAINT-AWARE-RETRIEVAL-V1 (CA0): explicit source constraints stated in q0
+    #: (deterministic detection; SOURCE-only in V1). Additive — defaults empty so every
+    #: construction site keeps working; populated after construction from original_request.
+    explicit_constraints: list[Constraint] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -222,6 +227,7 @@ def fallback_plan(message: str, *, reason: str, history_turns: int = 0, wall_ms:
         compiler={"fallback": True, "reason": reason, "model": model, "wall_ms": round(wall_ms, 1),
                   "history_turns": history_turns})
     plan.intent = intent_of_plan(plan)
+    plan.explicit_constraints = detect_explicit_constraints(msg)
     return plan
 
 
@@ -487,6 +493,7 @@ def validate_plan(raw: dict, message: str) -> tuple[ChatPlan | None, str | None]
                     entities=_strs("entities"), must_answer=_strs("must_answer", 8), user_constraints=_strs("user_constraints", 8),
                     response_type=resp, antecedent=ant, graph_useful=bool(raw.get("graph_useful", False)))
     plan.intent = intent_of_plan(plan)
+    plan.explicit_constraints = detect_explicit_constraints(message or "")
     return plan, None
 
 
