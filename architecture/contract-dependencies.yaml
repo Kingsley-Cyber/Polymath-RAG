@@ -161,12 +161,12 @@ contracts:
   PROFILE_YIELD_RECEIPT:
     owner: shared
     spec: docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md
-    paths: []
-    depends_on: [RETRIEVAL_RECEIPT, PROFILE_SCOUT_OUTPUT]
+    paths: [shared/polymath_shared/profile_yield.py]
+    depends_on: [RETRIEVAL_RECEIPT, PROFILE_SCOUT_OUTPUT, QUERY_PLANNER, RESOLUTION_STATE]
     consumed_by: [ACCEPTANCE]
-    tests: []
+    tests: [tests/determinism/test_profile_yield.py]
     migration: null
-    status: pending                # P11 — profile_expansion_evidence_yield metric
+    status: live                   # P11 — profile_expansion_evidence_yield + librarian_receipt (unit-proven); receipt assembly wiring is L1-L5
 
   PROJECTION_LIFECYCLE:
     owner: shared
