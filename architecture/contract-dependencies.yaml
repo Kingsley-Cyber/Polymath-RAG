@@ -119,12 +119,14 @@ contracts:
   SUBQUERY_PROVENANCE:
     owner: shared
     spec: docs/wiki/plans/PROFILE-SCOUT-V1.md
-    paths: []
+    paths:
+      - shared/polymath_shared/subquery_provenance.py
+      - shared/polymath_shared/chat_plan.py
     depends_on: [QUERY_PLANNER, PROFILE_SCOUT_OUTPUT]
     consumed_by: [CANDIDATE_ENGINE, RETRIEVAL_RECEIPT]
-    tests: []
+    tests: [tests/determinism/test_subquery_provenance.py]
     migration: null
-    status: pending                # P6 — typed provenance-carrying subqueries
+    status: live                   # P6 — CompiledQuery provenance fields + pure annotate_subquery_provenance (unit-proven); ui.py wiring is L1-L5
 
   CANDIDATE_ENGINE:
     owner: shared

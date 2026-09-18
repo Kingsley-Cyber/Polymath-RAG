@@ -53,6 +53,32 @@ ADJACENT_TASKS = ("GROUNDED_SYNTHESIS", "CREATE_FROM_KNOWLEDGE")   # never for i
 RESPONSE_TYPES = ("answer", "artifact")
 NO_RETRIEVAL_TASKS = ("TRANSFORM_USER_CONTENT", "CONTINUE_PRIOR_ARTIFACT", "GENERAL_CONVERSATION")
 
+#: SUBQUERY-PROVENANCE-V1 (librarian P6). Every subquery carries a `role` — WHY it exists
+#: relative to q0 — drawn from this closed vocabulary. `direct` is q0 itself; `resolution` is
+#: reserved for a subquery a P10 evidence-resolution round generates. The role is a
+#: deterministic function of the query `type` (below) unless the planner supplies one explicitly.
+ROLE_TYPES = ("direct", "prerequisite", "complement", "bridge", "contrast", "inversion", "resolution")
+_TYPE_ROLE = {
+    "PRIMARY": "direct", "DEFINITION": "prerequisite", "MECHANISM": "complement",
+    "CAUSAL": "complement", "PROCEDURE": "complement", "EXAMPLE": "complement",
+    "ENTITY": "complement", "COMPARISON": "contrast", "COUNTERPOINT": "inversion",
+    "BRIDGE": "bridge", "ADJACENT": "bridge",
+}
+
+
+def derive_role(qtype: str) -> str:
+    """Deterministic query-type → provenance role. Unknown types are `complement`
+    (a supplementary aspect), never `direct` — only a PRIMARY query is q0."""
+    return _TYPE_ROLE.get((qtype or "").strip().upper(), "complement")
+
+
+def default_reason(qtype: str, role: str) -> str:
+    """Deterministic default lineage reason for a subquery of this type/role."""
+    qt = (qtype or "PRIMARY").strip().upper()
+    if qt == "PRIMARY":
+        return "q0: authoritative user query"
+    return f"aspect:{qt.lower()} ({role})"
+
 #: instruction vocabulary that must never appear in a search query
 _INSTRUCTION_TOKENS = ("tone", "format", "markdown", "bullet", "json", "respond", "output", "word count",
                        "words long", "paragraphs", "headings", "table of", "step 1", "step 2", "you are an",
@@ -86,6 +112,25 @@ class CompiledQuery:
     type: str
     query: str
     weight: float = 1.0
+    #: SUBQUERY-PROVENANCE-V1 (P6) — additive lineage; every field defaults so all existing
+    #: construction sites keep working. `role`/`reason` are DERIVED from `type` at construction
+    #: when not supplied. `inspired_by_profile` (scouted doc_ids) / `profile_surface` are
+    #: populated ONLY by subquery_provenance.annotate_subquery_provenance, which validates every
+    #: link against the scout's real nominations and never touches q0. `target` = the
+    #: information need this subquery localizes (planner-supplied; never fabricated).
+    role: str = ""
+    reason: str = ""
+    inspired_by_profile: tuple[str, ...] = ()
+    profile_surface: str | None = None
+    target: str | None = None
+
+    def __post_init__(self) -> None:
+        if isinstance(self.inspired_by_profile, list):
+            self.inspired_by_profile = tuple(self.inspired_by_profile)
+        if not self.role:
+            self.role = derive_role(self.type)
+        if not self.reason:
+            self.reason = default_reason(self.type, self.role)
 
 
 @dataclass
@@ -350,6 +395,8 @@ def validate_plan(raw: dict, message: str) -> tuple[ChatPlan | None, str | None]
     if task in ("GROUNDED_QA", "GROUNDED_SYNTHESIS", "CREATE_FROM_KNOWLEDGE"):
         rr = True
     queries: list[CompiledQuery] = []
+    explicit_roles: set[int] = set()               # P6: id()s whose role the planner set explicitly
+    explicit_reasons: set[int] = set()             # P6: id()s whose reason the planner set explicitly
     for i, q in enumerate(raw.get("queries") or []):
         if not isinstance(q, dict):
             continue
@@ -363,7 +410,25 @@ def validate_plan(raw: dict, message: str) -> tuple[ChatPlan | None, str | None]
             weight = float(q.get("weight", 1.0))
         except (TypeError, ValueError):
             weight = 1.0
-        queries.append(CompiledQuery(id=f"q{len(queries)}", type=qtype, query=text, weight=max(0.1, min(1.0, weight))))
+        # P6: the planner MAY supply provenance when scout context was injected; validated here,
+        # trusted only after annotate_subquery_provenance checks links against real nominations.
+        role_in = str(q.get("role") or "").strip().lower()
+        role_in = role_in if role_in in ROLE_TYPES else ""
+        reason_in = str(q.get("reason") or "").strip()[:200]
+        ib = q.get("inspired_by") if isinstance(q.get("inspired_by"), (list, tuple)) else q.get("inspired_by_profile")
+        inspired = tuple(str(x).strip() for x in ib if str(x).strip())[:8] if isinstance(ib, (list, tuple)) else ()
+        surface_in = q.get("profile_surface")
+        target_in = q.get("target")
+        cq = CompiledQuery(
+            id=f"q{len(queries)}", type=qtype, query=text, weight=max(0.1, min(1.0, weight)),
+            role=role_in, reason=reason_in, inspired_by_profile=inspired,
+            profile_surface=(str(surface_in).strip()[:80] or None) if surface_in else None,
+            target=(str(target_in).strip()[:160] or None) if target_in else None)
+        queries.append(cq)
+        if role_in:
+            explicit_roles.add(id(cq))
+        if reason_in:
+            explicit_reasons.add(id(cq))
         if len(queries) >= MAX_QUERIES:
             break
     if rr:
@@ -380,6 +445,13 @@ def validate_plan(raw: dict, message: str) -> tuple[ChatPlan | None, str | None]
             for q in queries[1:]:
                 if q.type == "PRIMARY":
                     q.type = "MECHANISM"
+        # P6: role/reason follow the FINAL type after the normalization above, unless the
+        # planner set them explicitly (a type flip must not leave a stale role).
+        for q in queries:
+            if id(q) not in explicit_roles:
+                q.role = derive_role(q.type)
+            if id(q) not in explicit_reasons:
+                q.reason = default_reason(q.type, q.role)
     else:
         queries = []
     # law 1: the task class of the original survives in the resolved request
@@ -556,6 +628,8 @@ def plan_receipt(plan: ChatPlan) -> dict:
         "semantic_queries": plan.semantic_queries, "exact_terms": plan.exact_terms,
         "must_answer": plan.must_answer, "antecedent": plan.antecedent, "graph_useful": plan.graph_useful,
         "intent": plan.intent, "compiler": plan.compiler,
+        # P6: subquery lineage, first-class for receipt readers (present once annotated).
+        "subquery_provenance": plan.compiler.get("subquery_provenance"),
     }
 
 
