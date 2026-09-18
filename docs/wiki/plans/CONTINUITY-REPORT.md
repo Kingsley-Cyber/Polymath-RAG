@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-14
+last_reviewed: 2026-09-18
 ---
 
 # CONTINUITY REPORT — the single bootstrap (golden-run edition)
@@ -16,9 +16,32 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.274**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs. See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-17T02:45 — HARNESS-RESEARCH-MIGRATION-V1 COMPLETE: final merged-main multi-hypothesis product-discovery proof PASSES; register 11.276; hand to owner for product testing)
+## Latest checkpoint (2026-09-18 — LIBRARIAN RETRIEVAL ARCHITECTURE: six foundation slices UNIT-PROVEN on a worktree branch (registers 11.277–11.282), UNMERGED; live untouched; a controlled execution-order deviation recorded; the retrieval-flow layer (P5/P6/P10/P11) gated on the concurrent ELITE-MODE stream settling)
+
+**Read first:** `Polymath_librarian_architecture_checklist.md` (repo ROOT — the implementation contract + a ground-truth capability ledger + the "Execution-order deviation (recorded)" section + the L1–L5 live-qualification queue), then this NEXT SESSION block. Work-logs: `docs/wiki/work-log/2026-09-17-canonical-profile-selection.md`, `-surface-registry.md`, `-profile-atom-dag-wiring.md`, `-projection-lifecycle-schema.md`, `-projection-lifecycle-writer.md`, `-projection-reconcile.md`. Memory: `project_polymath_librarian_architecture`.
+
+**⚠ THE WORK IS NOT ON `production` — RUN `git worktree list`.** Six commits live on branch **`librarian/retrieval-architecture`** (worktree `/Users/king/Documents/polymath-rebuild/pmv4-librarian`, head **db7d4e4**), branched off `production` cf1ee4f. They are UNMERGED and `git log` on `production` does NOT show them.
+
+**STATUS: foundation implemented + UNIT-PROVEN in an isolated worktree; nothing merged, nothing live, the shared DB unchanged.** Owner goal (`/goal` 2026-09-17): implement + qualify the Polymath Librarian Retrieval Architecture (the corpus-aware profile→pMAP→child librarian). Grounded first by a four-agent read-only audit (ledger in the checklist). Delivered slices:
+- **11.277 P4** canonical-selection guard — `shared/polymath_shared/document_profile/selection.py`: a thin profile can no longer silently overwrite a richer active point (retrieval fitness by family).
+- **11.278 P4a** `shared/polymath_shared/surface_registry.py` — single deterministic source for typed-surface treatment (kills the 3-way taxonomy duplication + the import cycle; declares the graph-resolution policy).
+- **11.279 P4a** `profile_atom` wired into the doc_profile ingest DAG (`profile_atom_projection.ingest_document_atoms`, called by `doc_profile_worker`) — no longer canary-only.
+- **11.280 P1/P2** projection lifecycle SCHEMA — migration **`0065_projection_lifecycle.sql` (AUTHORED, NOT APPLIED)** extends `projection_receipts` with `state` (PENDING/PROJECTED/STALE/FAILED) + `artifact_hash`/`projection_version`/`observed_ref`/`error`/`updated_at`; pure `shared/polymath_shared/projection_lifecycle.py`.
+- **11.281 P1/P2** lifecycle-aware `receipts.record_projection_attempt` + `mark_projection_failed` + `projection_manifest_row` (legacy path byte-for-byte unchanged, migration-safe).
+- **11.282 P1/P2** `shared/polymath_shared/projection_reconcile.py` — deterministic expected-vs-observed reconciliation.
+Each slice: work-log + register row + scaffold declaration; guards GREEN in the worktree (repo_guard / wiki_worm / bundle READY); tests via the main `.venv` + `PYTHONPATH`. DEFERRED by owner boundary: the per-candidate RETRIEVAL provenance table (needs the unsettled P6 role contract).
+
+**CONCURRENT UNCOMMITTED WORK IN THE MAIN CHECKOUT — DO NOT CLOBBER, DO NOT `git add -A`.** The `production` worktree is DIRTY with another stream's uncommitted work — the **ELITE-MODE-RETRIEVAL-SYNTHESIS-V1** slice: `orchestrator/orchestrator/api/{chat_retrieval.py, ui.py}`, `scripts/verify_final_state.py`, `tests/determinism/{test_chat_synthesis.py, test_wildcard_finish.py}`, plus uncommitted edits to `scripts/scaffold_polymath_v4.py` + `PLAN-AUTHORITY-REGISTER.md`, and untracked `docs/wiki/plans/ELITE-MODE-RETRIEVAL-SYNTHESIS-V1.md` + `docs/wiki/reports/2026-09-17/` + `docs/wiki/work-log/2026-09-17-elite-mode-*.md` / `-wiring-gap-*.md`. Also uncommitted (MINE, earlier this session): the frontend-v2 UI fix + old-UI port — `frontend-v2/src/{App.tsx, lib/chat.ts, screens/Chat.tsx, styles/app.css, components/AnswerBody.tsx, components/ProcessRail.tsx}` — and the root checklist. Never commit files you did not author. `repo_guard` is consequently RED on `production` from these untracked files — PRE-EXISTING, not caused by this checkpoint.
+
+**EXECUTION-ORDER DEVIATION (controlled, NOT architectural).** P1/P2 was done BEFORE P5/P6 because P5/P6 edit the same retrieval owner (`chat_retrieval.py`) as the ELITE-MODE stream; building them off cf1ee4f would diverge. GUARDRAIL (owner 2026-09-17): the six commits are SUPPORT work, not a mini-deployment project — do NOT merge to production, apply 0065, bounce the fleet, refactor Graph, or create planner/graph abstractions before ELITE settles. Full classification table + intact architecture in the checklist's "Execution-order deviation (recorded)" section.
+
+**OPEN GATES.** (1) ELITE-MODE stream settle/commit — gates P5/P6. (2) Migration 0065 AUTHORED but UNAPPLIED — gate before any lifecycle-writer live path. (3) The coordinated live-qualification window (L1–L5) — apply 0065, wire the projectors, bounce, run the adversarial acceptance — is what promotes the six slices from IMPLEMENTED_NOT_PROVEN to DONE_AND_PROVEN. (4) Forensic hold on cinema still in force. **(5) REGISTER-NUMBER COLLISION (found by the 2026-09-18 bootstrap): the librarian branch numbered its six slices `11.277–11.282` off cf1ee4f's `11.276`, but the ELITE-MODE stream CONCURRENTLY consumed `11.277–11.280` in the production register (11.277 admit, 11.278 slices D–F, 11.279 wiring-gap close-out, 11.280 bounce). On rebase, RENUMBER the librarian rows `11.277–11.282 → 11.281–11.286` to follow ELITE's last, and re-point the slice register references.** Fleet: healthy (~24 fresh workers, ONE bundle hash, `/ready` ok); the running ORCHESTRATOR is on ELITE-MODE's bounced-but-uncommitted retrieval code + `.env` flags (live≠committed) — UNAFFECTED by the librarian work, which never touched it.
+
+**NEXT SESSION:** do NOT merge, apply 0065, or bounce. HOLD the six commits on `librarian/retrieval-architecture`. When the ELITE-MODE stream is committed/settled: rebase the librarian branch onto it (RENUMBERING its register rows `11.277–282 → 11.281–286`, since ELITE consumed `11.277–280`), then resume the real unfinished core IN ORDER — `P5 Profile Scout → P6 subquery provenance → P10 evidence-driven resolution → P11 profile-yield receipt → final integration → ONE live E2E qualification (L1–L5)`. Run `git worktree list` first; the work is not on `production`.
+
+## Prior checkpoint (2026-09-17T02:45 — HARNESS-RESEARCH-MIGRATION-V1 COMPLETE: final merged-main multi-hypothesis product-discovery proof PASSES; register 11.276; hand to owner for product testing)
 
 **Read first:** `docs/wiki/work-log/2026-09-17-harness-research-migration-complete.md`.
 
@@ -34,7 +57,7 @@ Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (t
 
 ---
 
-## Latest checkpoint (2026-09-15T08:30 — O6 OLD-PATH RETIREMENT: research/ package + research_* MCP tools + research-harness workflow removed; Hermes skill preserved STANDALONE; register 11.274; next = HR4)
+## Prior checkpoint (2026-09-15T08:30 — O6 OLD-PATH RETIREMENT: research/ package + research_* MCP tools + research-harness workflow removed; Hermes skill preserved STANDALONE; register 11.274; next = HR4)
 
 **Read first:** `docs/wiki/work-log/2026-09-15-o6-research-retirement.md`, then this NEXT SESSION block.
 
