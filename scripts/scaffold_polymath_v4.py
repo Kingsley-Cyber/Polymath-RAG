@@ -2468,6 +2468,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/profile-atom-cinema-2026-09-08.json", "json", None),
     ("eval/fixtures/chat_conversations/video_prompt_final.json", "json", None),
     ("docs/wiki/plans/CHAT-QUERY-COMPILER-PLAN.md", "md", None),
+    ("docs/wiki/plans/NAMED-SOURCE-CONSTRAINT-DIAGNOSIS-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-04-document-scoped-retrieve.md", "md", None),
     ("docs/wiki/work-log/2026-09-01-provider-pool-campaign.md", "md", None),
     ("tests/determinism/test_fleet_autopilot_demand.py", "py", None),
