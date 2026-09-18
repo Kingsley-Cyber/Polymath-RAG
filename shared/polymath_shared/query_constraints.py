@@ -256,3 +256,54 @@ def align_evidence_for_constraints(evidence: list[dict], constraints: list[Const
             targets = set().union(*(set(c.resolved_targets) for c in group))
             return align_by_constraint(evidence, targets, strength)
     return list(evidence)
+
+
+# ---------------------------------------------------------------------------
+# CA4 — evidence support-role grading (DIRECT / PARTIAL / RELATED) + query epistemic state
+# ---------------------------------------------------------------------------
+# Role is MULTI-SIGNAL (not a rerank-score band): need satisfaction (retrieved by a USER-origin
+# subquery — q0 or a required aspect, NOT only a PROFILE bridge) + constraint satisfaction (the
+# doc is the resolved HARD source) + semantic relevance (the cross-encoder judged it relevant,
+# rerank_score > 0). SYNTHETIC_INSIGHT is a reasoning product, never graded here.
+#   DIRECT   answers a required need, is relevant, AND satisfies every material HARD constraint.
+#   PARTIAL  answers a required need and is relevant, but is NOT the named source (supports the
+#            topic while leaving the "from the named source" element unmet).
+#   RELATED  grounded but does not establish the requested proposition (a profile-bridge-only
+#            chunk, or one the cross-encoder judged not relevant). RELATED is usable, not failed.
+EVIDENCE_ROLES = ("DIRECT", "PARTIAL", "RELATED")
+
+
+def grade_evidence(evidence: list[dict], plan) -> tuple[dict[str, str], dict]:
+    """Return ({chunk_id: support_role}, epistemic). `evidence` items carry `chunk_id`, `doc_id`,
+    `query_ids` (the subqueries that retrieved the chunk) and `rerank_score`. Deterministic; the
+    epistemic state drives the answerability gate (an answer must be grounded in ≥1 DIRECT/PARTIAL
+    chunk — otherwise only adjacent RELATED material exists and the answer must state the gap)."""
+    user_ids = {q.id for q in (getattr(plan, "queries", None) or [])
+                if getattr(q, "origin", "USER") == "USER"}
+    hard: set[str] = set()
+    for c in (getattr(plan, "explicit_constraints", None) or []):
+        if c.kind == "SOURCE" and c.strength == "HARD" and c.resolved_targets:
+            hard |= set(c.resolved_targets)
+    has_hard = bool(hard)
+    by_chunk: dict[str, str] = {}
+    counts = {"DIRECT": 0, "PARTIAL": 0, "RELATED": 0}
+    for e in evidence:
+        qids = set(e.get("query_ids") or [])
+        by_user = bool(qids & user_ids) if user_ids else True   # no plan ids ⇒ treat as user need
+        relevant = (e.get("rerank_score") or 0) > 0             # cross-encoder sign, not a tuned band
+        satisfies = (not has_hard) or (e.get("doc_id") in hard)
+        if by_user and relevant and satisfies:
+            role = "DIRECT"
+        elif by_user and relevant and has_hard and not satisfies:
+            role = "PARTIAL"
+        else:
+            role = "RELATED"
+        counts[role] += 1
+        cid = e.get("chunk_id")
+        if cid:
+            by_chunk[cid] = role
+    epistemic = {"directly_established": counts["DIRECT"] > 0,
+                 "establishes_need": counts["DIRECT"] > 0 or counts["PARTIAL"] > 0,
+                 "n_direct": counts["DIRECT"], "n_partial": counts["PARTIAL"],
+                 "n_related": counts["RELATED"]}
+    return by_chunk, epistemic

@@ -449,7 +449,15 @@ def render_answer(bundle: dict, query: str, validation: dict) -> dict:
     coverage_ok = len(uncovered) <= len(required_terms) // 4
 
     has_conflict = any(c.get("conflicts_with") for c in validation["supported"])
-    if (sentences or passages) and coverage_ok:
+    # CONSTRAINT-AWARE-RETRIEVAL-V1 CA4: the answerability gate is multi-signal. Lexical coverage
+    # is necessary but not sufficient — an answer must also be grounded in ≥1 DIRECT or PARTIAL
+    # chunk (the cross-encoder judged real, need-answering evidence). When the bundle carries an
+    # epistemic verdict (flag-on) and NOTHING establishes the need (only adjacent RELATED material,
+    # e.g. semantic bleed on an out-of-domain query), the answer states the gap instead of
+    # fabricating a source-supported claim. Absent (flag-off) ⇒ byte-identical.
+    _ep = bundle.get("epistemic") or {}
+    _ep_blocks = bool(_ep) and (_ep.get("establishes_need") is False)
+    if (sentences or passages) and coverage_ok and not _ep_blocks:
         answer = " ".join(sentences + passages)
         if has_conflict:
             answer += CONFLICT_NOTE

@@ -2972,6 +2972,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             _weak: list = []
             _resolution: dict | None = None   # P10 evidence-resolution receipt (bounded round 2)
             _constraint_align: dict | None = None   # CA3 constraint-alignment receipt (post-rerank partition)
+            _grades_by_chunk: dict = {}              # CA4 per-chunk support_role (DIRECT/PARTIAL/RELATED)
+            _epistemic: dict | None = None           # CA4 query epistemic state (drives the answerability gate)
             # CHAT-RETRIEVAL-V2 / P1.e MODE-COMPOSITION-V1: every mode is a composition on the v2 engine
             # (VECTOR = A+B, HYBRID = A+B+C, GRAPH = HYBRID → bounded G, WILDCARD = HYBRID ∥ W) owned by
             # chat_retrieve_mode; the v1 engines stay behind `retrieval: v1` or `latent` (rollback boundary).
@@ -3187,6 +3189,16 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                                      "targets": getattr(_gov, "resolved_targets", []),
                                      "value": getattr(_gov, "value", None)}
 
+            # CONSTRAINT-AWARE-RETRIEVAL-V1 CA4: deterministic evidence-role grading (DIRECT/PARTIAL/
+            # RELATED) + a query epistemic state, from the reranked evidence + the plan's needs and
+            # resolved constraints. Flag-gated; the epistemic state rides the bundle so the synthesis
+            # answerability gate requires ≥1 DIRECT/PARTIAL chunk (else it states the gap, not a
+            # fabricated claim). Default-off ⇒ no grades, byte-identical.
+            if (os.environ.get("POLYMATH_CHAT_EVIDENCE_ROLES", "0") == "1"
+                    and _plan is not None and (fast.get("evidence"))):
+                from polymath_shared.query_constraints import grade_evidence
+                _grades_by_chunk, _epistemic = grade_evidence(fast.get("evidence") or [], _plan)
+
             yield _phase("assemble", "Assembling the evidence bundle…")
             stale: list[dict] = []
             try:
@@ -3214,6 +3226,11 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             # default-off ⇒ the grounded prompt is byte-identical. assemble_evidence_bundle is untouched.
             bundle["evidence_roles"] = {c.get("chunk_id"): c.get("role") for c in evidence_rows
                                         if c.get("chunk_id") and c.get("role")}
+            # CA4: per-chunk support grades + the epistemic verdict ride the bundle. `epistemic`
+            # drives render_answer's multi-signal answerability gate (grounded in ≥1 DIRECT/PARTIAL).
+            if _epistemic is not None:
+                bundle["support_roles"] = _grades_by_chunk
+                bundle["epistemic"] = _epistemic
             bundle["orientation"] = orientation
             bundle["derived_insights"] = list(wildcard_lane or [])
             # CARRY-V2: admitted carried evidence joins the bundle (tags, legend, used_evidence)
@@ -3319,6 +3336,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     for c in (getattr(_plan, "explicit_constraints", None) or [])] if _plan else [],
                 # CA3: whether the post-rerank portfolio partition reordered the evidence (flag-gated).
                 "constraint_alignment": _constraint_align,
+                # CA4: query epistemic state (DIRECT/PARTIAL/RELATED counts + whether the corpus
+                # directly establishes the need). None when the grading flag is off.
+                "epistemic": _epistemic,
                 # P11 profile_expansion_evidence_yield: of the PROFILE-origin subqueries, how many
                 # surfaced FINAL evidence (aspect final > 0). None unless profile-expansion is on.
                 "profile_yield": _compute_profile_yield(_plan, _aspects),
