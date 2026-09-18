@@ -2,13 +2,15 @@
 
 Owner-frozen 2026-09-18 (librarian checklist **P5**, critical-path slice 3). This is the
 authority the P5a/P5b/P6 slices implement against. The scout's **output schema is itself a
-semantic contract** that P6 depends on, so it is frozen here before any code.
+semantic contract** that P6 depends on, so it is frozen here before any code. Refined
+2026-09-18 with the owner's fusion/purity constraints (this file is the additive follow-on to
+the frozen design commit; the design commit is left historically frozen, not rewritten).
 
 ## The one question this contract answers
 **What may the scout contribute to interpretation, and what is it forbidden from changing?**
 The scout contributes *reconnaissance context* ("what can this corpus contribute to
 understanding this question?"). It never changes the meaning of the query, never plans,
-never retrieves evidence.
+never retrieves evidence, never labels what a match *means*.
 
 ## Position in the flow
 ```
@@ -32,53 +34,78 @@ USER QUERY q0
 - **dualread** — *post-plan* — "given this information need, which documents/parents do I search?" → retrieval mechanism.
 They keep different jobs and different positions. dualread is untouched by P5.
 
-## One logical scout over TWO existing projections (no new projection)
+## One logical scout over TWO existing projections (grounded producers)
 The scout is **one logical reconnaissance** fusing nominations from two projections that
 already exist and are already searchable. Atoms are **not** duplicated into the
-document-profile point (that would reverse the deliberate decision to make atoms
-independently addressable). `SurfaceRegistry` declares which surface family lives where.
+document-profile point. The two real producers expose **different amounts** — proven against
+the code, not assumed:
 
-| Projection | Surfaces (SurfaceRegistry) | Search reuse |
+| Projection | Real search primitive (grounded) | What a hit exposes |
 |---|---|---|
-| `DOCUMENT_PROFILE` (dense/multi point) | identity, theme (dense); questions, searches, theories, concepts, seealso (multi) | injected profile-projection search fn |
-| `PROFILE_ATOM` (`polymath_document_profile_atoms_<contract>`, one dense vector per atom) | THEORY, CONCEPT, LATENT_PATTERN, BOUNDARY, SEEALSO, BRIDGE, ANCHOR, TENSION, INVERSION, RECALLQ | `profile_atom_projection.search_atoms(client, collection, qvec, kinds, k)` |
+| `DOCUMENT_PROFILE` | `projection.profile_nominate(client, collection, qvec, corpus_id, k)` — RRF-fuses the answer surfaces (identity/theme/title + questions/searches multivectors) **internally** and returns **ordered `doc_id`s only** | `{doc_id, rank}` — **thin**: no per-surface attribution, no text, no per-doc score (surfaces are fused away inside Qdrant) |
+| `PROFILE_ATOM` | `profile_atom_projection.search_atoms(client, collection, qvec, kinds, k)` | `{doc_id, atom_kind, text, score, rank}` — **rich**: per-atom surface + verbatim snippet + score |
 
-This gives BRIDGE + the discovery surfaces from **v1**, with no atom→profile projection work.
+**Producer asymmetry (do not paper over it).** The normalized `ScoutHit` makes the atom-only
+fields optional; a profile hit is honestly just `{doc_id, rank}`. This still gives BRIDGE + the
+discovery surfaces at **v1** (through the atom lane) with no atom→profile projection work.
 
 ## Output schema (frozen)
+The normalized input hit — **P5b** produces these from the two real searches; **P5a** fuses them:
+```
+ScoutHit:                                     # one normalized hit from one projection
+  doc_id: str
+  source: "profile" | "atom"
+  rank:   int                                 # 1-based rank within its projection's ranked list
+  surface:      str | None                    # atom_kind for atom hits; None for profile
+  surface_type: str | None                    # SurfaceRegistry group for atom hits; None for profile
+  text:         str | None                    # verbatim stored snippet for atom hits; None for profile
+  score:        float | None                  # raw projection score for atom hits; None for profile
+```
+The fused result — what the planner receives:
 ```
 ProfileScoutResult:
-  nominations: list[ProfileNomination]        # bounded, top-K by fused score; NOTHING else
+  nominations: list[ProfileNomination]        # bounded, top-K by fused_score; NOTHING else
 ProfileNomination:
   doc_id: str
-  matched_surfaces: list[str]                 # e.g. ["questions", "THEORY", "BRIDGE"]
-  surface_types:    list[str]                 # groups: direct | semantic | discovery | lexical | identity
-  provenance:       list[{projection, surface, atom_kind|null, rank, score}]  # exact origin per hit
-  score: float                                # fused score
-  rank:  int
-  capability: str                             # SHORT text from EXISTING profile surfaces (SUMMARY if present,
-                                              #   else the top matched surface's stored text) — NEVER a new LLM summary
+  fused_score: float                          # Σ of the per-projection RRF contributions
+  rank:  int                                  # 1-based rank in the fused result
+  matched_surfaces: list[str]                 # every surface/atom_kind that matched (from provenance)
+  surface_types:    list[str]                 # SurfaceRegistry groups present
+  representative_surface: str | None          # the best hit's surface (verbatim pointer; None if profile-only)
+  representative_text:    str | None          # the best hit's stored snippet (verbatim; NO synthesis, NO LLM)
+  contributions: list[ProjectionContribution] # AT MOST ONE per projection (see the RRF rule)
+  provenance:    list[ScoutHit]               # EVERY contributing hit, verbatim (all surfaces/atoms kept)
+ProjectionContribution:
+  source: "profile" | "atom"
+  best_rank: int                              # the doc's best (lowest) rank in that projection
+  rrf_contribution: float                     # 1/(rrf_k + best_rank)
 ```
+**No `capability`.** The scout exposes verbatim pointers (`representative_text` /
+`representative_surface`) and full provenance; the adaptive **planner** decides what those
+matches *mean* for the request. The deterministic scout never derives or labels a semantic
+capability — that would smuggle interpretation into the fusion layer.
 **Forbidden fields** (they would make the scout a hidden planner): `recommended_mode`,
 `required_subquery`, `must_use_graph`, `intent_override`, `answer_strategy`.
 
-## Determinism (K-bound, not wall-clock)
-Same `q0` + same projection snapshot ⇒ **identical** `ProfileScoutResult`. Bounded by **K**
-(top-K docs), never by a wall-clock cutoff that could truncate the candidate set mid-result.
-Fusion order: fused `score desc`, tie-break `doc_id asc`. `capability` is stored-surface
-content. **No LLM anywhere in the scout.**
-
 ## RRF fuses candidates — it does not interpret the query (owner tightening 2026-09-18)
-Fusion uses **RRF** (reciprocal-rank fusion): each doc's fused score is `Σ 1/(rrf_k + rank)`
-over the ranked lists it appears in — rank-based, so the two projections' score scales
-(dense-profile cosine vs atom cosine) never have to be calibrated. Critically, RRF decides
-only **how already-produced ranked candidates are combined**; it is deterministic *fusion*,
-**not** deterministic *interpretation*. The scout does **not** decide what `q0` means, does
-**not** select a retrieval recipe, and is **not** a gate: its nominations *inform* the
-adaptive planner about what the corpus can contribute, while `q0` and the planner stay
-authoritative. A scout miss (a doc the profiles did not nominate) must **never** prevent
-normal direct child retrieval from finding it — the scout only *adds* context, it never
-subtracts candidates.
+Fusion uses **RRF** (reciprocal-rank fusion) at the **projection-level document ranking**:
+each projection contributes **at most ONE** RRF vote per document — its raw hits are first
+collapsed to the doc's **best (lowest) rank**, so a document with many atom rows cannot gain
+artificial fusion weight from row count. A doc's `fused_score = Σ 1/(rrf_k + best_rank)` over
+the projections it appears in. Rank-based, so the two score scales (dense-profile vs atom
+cosine) are never compared — raw `score`s survive **only as provenance**, never as
+cross-projection authority. Critically, RRF decides only **how already-produced ranked
+candidates are combined**; it is deterministic *fusion*, **not** deterministic
+*interpretation*. The scout does **not** decide what `q0` means, does **not** select a
+retrieval recipe, and is **not** a gate: its nominations *inform* the adaptive planner while
+`q0` and the planner stay authoritative. A scout miss must **never** prevent normal direct
+child retrieval — the scout only *adds* context, it never subtracts candidates.
+
+## Determinism (K-bound, not wall-clock)
+Same normalized `ScoutHit` inputs ⇒ **identical** `ProfileScoutResult`. Bounded by
+`max_documents` (top-K), never by a wall-clock cutoff that could truncate the set. Order:
+`fused_score desc`, tie-break `doc_id asc`. `representative_text` is a verbatim stored snippet.
+**No LLM anywhere in the scout.**
 
 ## Invariants (owner-frozen)
 1. `q0` is immutable and always searched.
@@ -93,23 +120,28 @@ subtracts candidates.
 10. If the scout returns nothing, behavior degrades to the current post-ELITE path.
 
 ## Build sequence
-- **P5a — `document_profile/profile_scout.py` (pure, unit-proven).** Deterministic fusion of
-  injected `profile_search` + `atom_search` results into `ProfileScoutResult`, with full
-  per-hit provenance. No live wiring. Families to query are taken from `SurfaceRegistry`.
-- **P5b — pre-plan wiring + retire the title injection (flagged, reversible).** Build the
-  real search closures, run the scout before `compile_plan`, thread `PrePlanContext` in, and
-  **retire `_compiler_titles`** (`ui.py:1671` / `:1764`, B16 register 11.122) — the scout
-  replaces the title concept injection, atomic with the wiring so there is no pre-plan-recon
-  gap. Default-off-in-code / on-in-`.env` `POLYMATH_PROFILE_SCOUT` (P12). Fleet-bounce-gated;
-  dualread untouched.
+- **P5a — `document_profile/profile_scout.py` (GENUINELY pure, unit-proven).** The normalized
+  `ScoutHit` / `ProfileScoutResult` types and the pure
+  `fuse_profile_scout_hits(profile_hits, atom_hits, *, rrf_k, max_documents)` — deterministic
+  RRF fusion over already-normalized ranked hits, full provenance retained. **No retrieval
+  backend, no I/O, no injected search callables** (a callable that hits Qdrant is still I/O).
+  `SurfaceRegistry` supplies the surface→group map only.
+- **P5b — search + normalize + pre-plan wiring + retire the title injection (flagged, reversible).**
+  Run the two real searches (`projection.profile_nominate` → ordered doc_ids; `search_atoms`
+  → atom hits), **normalize** them into `ScoutHit`s, call the pure P5a fusion, run it before
+  `compile_plan`, thread `PrePlanContext` in, and **retire `_compiler_titles`**
+  (`ui.py:1671`/`:1764`, B16 register 11.122) atomic with the wiring so there is no
+  pre-plan-recon gap. Default-off-in-code / on-in-`.env` `POLYMATH_PROFILE_SCOUT` (P12).
+  Fleet-bounce-gated; dualread untouched.
 - **P6 — typed subquery provenance.** `compile_plan` consumes nominations; each subquery
   carries `inspired_by_profile` / `profile_surface` / `reason` / role / `target`.
 
 ## Non-goals for v1
-No atom→profile projection duplication. No mode/intent decisions inside the scout.
+No atom→profile projection duplication. No mode/intent decisions inside the scout. No injected
+search backend inside the pure P5a primitive. No derived semantic `capability` in deterministic
+scout code.
 
-**Title injection retired (owner 2026-09-18).** The scout is the SOLE pre-plan
-reconnaissance: `_compiler_titles` / the title concept injection (B16, register 11.122) is
-RETIRED, not kept alongside — the scout's profile/atom nomination replaces it. The retirement
-lands in P5b (the `ui.py` edit), atomic with the scout wiring so there is no pre-plan-recon
-gap. dualread (post-plan) is untouched.
+**Title injection retired (owner 2026-09-18).** The scout is the SOLE pre-plan reconnaissance:
+`_compiler_titles` / the title concept injection (B16, register 11.122) is RETIRED, not kept
+alongside — the scout's profile/atom nomination replaces it. The retirement lands in P5b (the
+`ui.py` edit), atomic with the scout wiring. dualread (post-plan) is untouched.
