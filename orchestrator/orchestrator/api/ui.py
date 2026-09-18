@@ -1744,6 +1744,37 @@ def _scout_source_names(doc_ids, corpora) -> list[str]:
     return [by_id[d] for d in ids if by_id.get(d)]
 
 
+def _corpus_source_index(corpora) -> dict[str, str]:
+    """CA1/CA2 identity index: {doc_id: source_name} for the active corpus/corpora. A cheap
+    metadata read, called ONLY when the plan carries an explicit constraint (no cost on the common
+    path). Never breaks the compile."""
+    try:
+        with tx() as conn:
+            rows = conn.execute(
+                "SELECT doc_id, source_name FROM documents WHERE corpus_id = ANY(%s)",
+                (list(corpora),)).fetchall()
+    except Exception:  # noqa: BLE001 - a read; never breaks the compile
+        return {}
+    return {r[0]: r[1] for r in rows if r[0] and r[1]}
+
+
+def _resolve_plan_constraints(plan, scout_result, corpora) -> None:
+    """CONSTRAINT-AWARE-RETRIEVAL-V1 CA2 — resolve the plan's explicit SOURCE constraints to corpus
+    doc_ids (deterministic identity, corpus-scoped; Scout as bounded confirmation). Populates
+    `plan.explicit_constraints[*].resolved_targets` for the receipt. NO ranking effect — CA2 only
+    enriches the plan; ranking use is CA3. Fail-open; only touches the corpus index when a
+    constraint is present."""
+    cons = getattr(plan, "explicit_constraints", None)
+    if not cons:
+        return
+    from polymath_shared.query_constraints import resolve_constraint_targets
+    src_index = _corpus_source_index(corpora)
+    noms = [getattr(n, "doc_id", "") for n in (getattr(scout_result, "nominations", None) or [])]
+    plan.explicit_constraints = resolve_constraint_targets(
+        cons, src_index, scout_nominations=noms,
+        corpus_id=(list(corpora)[0] if corpora else None))
+
+
 def _maybe_resolve(plan, fast, aspects, weak, retrieve_fn) -> dict | None:
     """EVIDENCE-RESOLUTION-V1 (librarian P10) — bounded, evidence-driven resolution round on the
     LIVE path. After round 1, the weak aspects (subqueries that reached NO final evidence) are the
@@ -1861,6 +1892,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
             _add_profile_expansion(plan, scout_result)
             from polymath_shared.subquery_provenance import annotate_subquery_provenance
             annotate_subquery_provenance(plan, scout_result)
+            _resolve_plan_constraints(plan, scout_result, corpus_ids)   # CA2: identity resolution, no ranking effect
         except Exception:  # noqa: BLE001
             pass
         return plan
@@ -3256,6 +3288,14 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 # P1.b aspect coverage: per compiled query, candidates in union / final; weak = none in final
                 "aspects": _aspects,
                 "weak_aspects": _weak,
+                # CONSTRAINT-AWARE-RETRIEVAL-V1 CA2: explicit SOURCE constraints detected in q0 +
+                # their deterministically resolved corpus doc_ids. RECEIPT ONLY — no ranking effect
+                # until CA3. Empty for the common (unconstrained) query.
+                "explicit_constraints": [
+                    {"kind": c.kind, "value": c.value, "strength": c.strength,
+                     "resolved_targets": c.resolved_targets, "confidence": c.confidence,
+                     "reason": c.reason}
+                    for c in (getattr(_plan, "explicit_constraints", None) or [])] if _plan else [],
                 # P11 profile_expansion_evidence_yield: of the PROFILE-origin subqueries, how many
                 # surfaced FINAL evidence (aspect final > 0). None unless profile-expansion is on.
                 "profile_yield": _compute_profile_yield(_plan, _aspects),
