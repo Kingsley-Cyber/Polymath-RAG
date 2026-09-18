@@ -259,9 +259,9 @@ def test_evidence_diet_prompt_carries_passages_only_with_breadcrumbs():
 
 
 def test_graph_hygiene_claims_are_not_evidence_rows_and_tags_are_unique_per_chunk():
-    """Backlog B8 (GRAPH-EVIDENCE-HYGIENE-V1): a fact's provenance passage is not an [S#] row (it was never judged);
-    the fact itself still reaches the prompt in the tagless facts block; a chunk gets one tag even when the bundle
-    lists it twice (judged text item + claim provenance, or two claims on one passage)."""
+    """Backlog B8 + ELITE-MODE D: a fact's provenance passage is not an [S#] row (it was never judged);
+    the fact itself rides RELATIONS as [G#], bound to a proving [S#] when that child was judged;
+    a chunk gets one tag even when the bundle lists it twice."""
     claim = {"kind": "claim", "lane": "graph", "text_kind": None, "fact_id": "f1",
              "source_span": {"locator": "chunk:chunk_prov1", "text": "Other famous point fighters of the era included …", "chunk_id": "chunk_prov1"},
              "source_document_id": "doc_x", "presentation": {"human_locator": "Fight Choreography › History"}, "applicability": {"source_name": "Fight Choreography.md"}}
@@ -277,8 +277,24 @@ def test_graph_hygiene_claims_are_not_evidence_rows_and_tags_are_unique_per_chun
     facts = [{"fact_id": "f1", "subject": "Billy Blanks", "predicate": "competed_in", "object": "point fighting"}]
     user = ui._grounded_messages("q", bundle, facts, [], [])[-1]["content"]
     assert "point fighters of the era" not in user                                          # the provenance passage is not evidence
-    assert "[fact:f1] Billy Blanks —competed_in→ point fighting" in user                    # the fact itself still rides, tagless
+    assert "[fact:f1]" not in user                                                          # tagless fact block retired
+    assert "[G1] Billy Blanks —competed_in→ point fighting" in user
+    assert "proves: [S1]" in user                                                            # bound to the judged child, not chunk_prov1
+    assert "RELATIONS (attested, not evidence rows):" in user
+    assert user.index("EVIDENCE (this turn)") < user.index("RELATIONS")
     assert user.count("Camera shudder on hits") == 1 and "[S3]" not in user
+
+
+def test_unbound_graph_fact_is_labelled_not_source_backed():
+    """ELITE-MODE D: a fact with no judged proving child still appears as [G#] but must not be treated as source-backed."""
+    bundle = {"evidence_bundle": [
+        _item("child_chunk", "chunk:chunk_b2", "Distance from the fight …", human="Fight Choreography › Distance", chunk_id="chunk_b2"),
+    ]}
+    facts = [{"fact_id": "f9", "subject": "X", "predicate": "REQUIRES", "object": "Y"}]
+    user = ui._grounded_messages("q", bundle, facts, [], [])[-1]["content"]
+    assert "[G1] X —REQUIRES→ Y" in user
+    assert "proves: none — do not treat as source-backed this turn" in user
+    assert "[fact:" not in user
 
 
 def test_carry_artifact_mode_keeps_the_previous_answers_evidence_without_a_relevance_gate():
@@ -319,3 +335,33 @@ def test_p8b_role_aware_presentation_is_flag_gated_and_groups_by_role(monkeypatc
     assert "(DIRECT)" in on and "(RELATIONAL)" in on and "(LATENT)" in on
     assert on.index("(DIRECT)") < on.index("(RELATIONAL)") < on.index("(LATENT)")   # grouped by role
     assert "[S1] = " in on and "[S2] = " in on and "[S3] = " in on            # tag->locator legend intact
+
+
+def test_orientation_and_derived_blocks_are_additive_and_default_absent():
+    """ELITE-MODE slice C: empty bundle stays byte-identical; orientation/derived only appear when supplied."""
+    bundle = {"evidence_bundle": [
+        _item("child_chunk", "chunk:chunk_a1", "Camera shudder on hits",
+              human="Screen Combat › Camera", chunk_id="chunk_a1"),
+    ]}
+    base = ui._grounded_messages("q", bundle, [], [], [])[-1]["content"]
+    assert "ORIENTATION" not in base and "DERIVED INSIGHTS" not in base and "[A1]" not in base
+    bundle["orientation"] = {
+        "docs": [{"title": "In the Blink of an Eye", "one": "A book on film editing.", "summary": "Cuts and emotion."}],
+        "maps": [{"signature": "Explanation of Rule of Six emphasizing emotion and story",
+                  "hooks": ["Rule of Six", "emotion", "story"]}],
+    }
+    bundle["derived_insights"] = [{
+        "principle": "Preserve emotion before continuity",
+        "why_it_may_transfer": "A priority list that survives when you must sacrifice.",
+        "source_evidence": {"chunk_id": "chunk_a1", "text": "Camera shudder on hits"},
+        "verified": True,
+    }]
+    on = ui._grounded_messages("q", bundle, [], [], [])[-1]["content"]
+    assert "ORIENTATION (not citable):" in on
+    assert "ONE: A book on film editing." in on
+    assert "MAP: Explanation of Rule of Six emphasizing emotion and story · hooks: Rule of Six; emotion; story" in on
+    assert "[A1] PRINCIPLE: Preserve emotion before continuity" in on
+    assert "GROUNDS IN: [S1]" in on
+    assert on.index("ORIENTATION") < on.index("EVIDENCE (this turn)") < on.index("DERIVED INSIGHTS")
+    assert "[S1] Screen Combat › Camera" in on
+

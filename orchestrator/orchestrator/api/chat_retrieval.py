@@ -72,6 +72,101 @@ from polymath_shared.divergent import DIVERGENT_DEFAULT_PLAN, divergent_finish, 
 #: P1.e: the finish stops STARTING validations at the frontier deadline; a validation already in flight may overrun by
 #: at most one reranker call — the route waits this bounded grace for the partial result instead of abandoning it.
 WILDCARD_FINISH_GRACE_S = 1.5
+#: P12 WILDCARD atom-frontier — every canonical atom kind nominates parents (never evidence).
+_WILDCARD_ATOM_KINDS = (
+    "THEORY", "CONCEPT", "LATENT_PATTERN", "BOUNDARY", "SEEALSO",
+    "BRIDGE", "ANCHOR", "TENSION", "INVERSION", "RECALLQ",
+)
+
+
+def merge_atom_frontier(parents: dict, atoms: list, maps: list) -> dict:
+    """ELITE-MODE slice E / P12: fold profile-atom hits into the WILDCARD sweep.
+
+    Atoms nominate docs; parent maps open the door to parents. Existing latent
+    slots keep precedence (`hop1` is max'd; `abstraction` fills only when empty).
+    Fail-open: empty atoms/maps leave `parents` unchanged."""
+    out = dict(parents or {})
+    by_doc: dict[str, dict] = {}
+    for a in atoms or []:
+        if not isinstance(a, dict):
+            continue
+        did = a.get("doc_id")
+        if did and did not in by_doc:
+            by_doc[did] = a
+    if not by_doc:
+        return out
+    for m in maps or []:
+        if not isinstance(m, dict):
+            continue
+        pid, did = m.get("parent_id"), m.get("doc_id")
+        if not pid or did not in by_doc:
+            continue
+        atom = by_doc[did]
+        slot = out.setdefault(pid, {
+            "parent_id": pid, "doc_id": did, "source_name": "",
+            "hop1": 0.0, "channels": [], "abstraction": "", "transfer": ""})
+        slot["hop1"] = max(float(slot.get("hop1") or 0.0), float(atom.get("score") or 0.0))
+        chans = list(slot.get("channels") or [])
+        kind = str(atom.get("atom_kind") or "atom").lower()
+        if kind not in chans:
+            chans.append(kind)
+        slot["channels"] = chans
+        if not str(slot.get("abstraction") or "").strip():
+            slot["abstraction"] = str(atom.get("text") or "")
+        if not slot.get("doc_id"):
+            slot["doc_id"] = did
+    return out
+
+
+def graph_dest_parents_from_maps(maps: list, dest_docs: list[str], k: int) -> list[tuple[str, str]]:
+    """ELITE-MODE slice D / P7 residue: parent-map hits whose `doc_id` is a graph
+    destination, unique `parent_id`, cap `k`. Empty maps ⇒ empty list (caller fail-opens)."""
+    allowed = {d for d in dest_docs if d}
+    seen: set[str] = set()
+    out: list[tuple[str, str]] = []
+    for m in maps or []:
+        if not isinstance(m, dict):
+            continue
+        did, pid = m.get("doc_id"), m.get("parent_id")
+        if not pid or pid in seen:
+            continue
+        if allowed and did not in allowed:
+            continue
+        seen.add(pid)
+        out.append((str(did or ""), str(pid)))
+        if len(out) >= max(0, int(k)):
+            break
+    return out
+
+
+def bind_graph_fact_chunks(facts: list[dict], preferred_chunk_ids: list[str]) -> list[dict]:
+    """Attach a proving `chunk_id` to each graph fact (prefer judged evidence chunks).
+    Fail-open: a missing evidence table / empty rows leave facts unchanged."""
+    ids = [f.get("fact_id") for f in facts if isinstance(f, dict) and f.get("fact_id")]
+    if not ids:
+        return facts
+    prefer = list(preferred_chunk_ids or [])
+    try:
+        from polymath_shared.db import tx as _tx
+        with _tx() as conn:
+            rows = conn.execute(
+                """SELECT DISTINCT ON (fact_id) fact_id, chunk_id
+                     FROM evidence
+                    WHERE fact_id = ANY(%s) AND chunk_id IS NOT NULL AND chunk_id <> ''
+                    ORDER BY fact_id, (chunk_id = ANY(%s)) DESC, chunk_id""",
+                (ids, prefer),
+            ).fetchall()
+    except Exception:  # noqa: BLE001 — proving-child bind is additive
+        return facts
+    by = {r[0]: r[1] for r in rows}
+    out = []
+    for f in facts:
+        g = dict(f)
+        cid = by.get(g.get("fact_id"))
+        if cid:
+            g["chunk_id"] = cid
+        out.append(g)
+    return out
 from polymath_shared.retrieval_modes import (
     GRAPH_DEFINITIONAL_MAX_SEEDS,
     GRAPH_MAX_FACTS,
@@ -299,11 +394,10 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             return rows
 
         def graph_dest_search(qv) -> list[dict]:
-            # P7 graph destination (§39): query entities (entity-card seeds on the primary vector) →
-            # Neo4j hop-1 (the SAME `graph_expand` P6 uses) → destination entities → their DOCUMENTS
-            # (`mentions`) → ORIGINAL children (global dense child search, filtered per destination
-            # doc). Neo4j supplies the source-attested relationship ROUTE; source children PROVE; the
-            # cross-encoder judges. Routing-inferred, never evidence itself. Fail-open, zero cost off.
+            # P7 graph destination (§39) + ELITE-MODE D: query entities → Neo4j hop-1 → dest
+            # entities → their DOCUMENTS (`mentions`) → parent MAP inside those docs → ORIGINAL
+            # children. Fail-open to doc-filtered child search when maps miss. Neo4j routes;
+            # children prove; the cross-encoder judges. Zero cost when the lane is off.
             from polymath_shared.db import tx as _tx
             try:
                 cards = entity_card_probe(client, collections, corpus_id, query, list(qv), limit=budget.entity_card_k)
@@ -332,8 +426,37 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                                              (dest_ids[:32], corpus_id)).fetchall()
             except Exception:  # noqa: BLE001
                 return []
+            dest_docs = [str(r[0]) for r in doc_rows if r and r[0]]
+            if not dest_docs:
+                return []
+            # P7 residue / ELITE-MODE D: dest docs → parent map (one search) → ORIGINAL children.
+            # Fail-open to the prior doc-filtered child search when maps miss.
+            parents: list[tuple[str, str]] = []
+            try:
+                from polymath_shared.document_profile import parent_map_projection as _pmp
+                from polymath_shared.embedding_contracts import active_contract as _ac
+                cid = _ac().contract_id
+                maps = _pmp.search_parent_maps(
+                    client, _pmp.collection_name(cid), qv, dest_docs,
+                    k=max(8, int(budget.graph_dest_children) * 3))
+                parents = graph_dest_parents_from_maps(maps, dest_docs, budget.graph_dest_children)
+            except Exception:  # noqa: BLE001 — map miss must not kill lane H
+                parents = []
             rows: list[dict] = []
-            for (did,) in doc_rows[: budget.graph_dest_children]:
+            for did, pid in parents:
+                extra = {"representation_kind": "routing_child", "corpus_id": corpus_id, "parent_id": pid}
+                if did:
+                    extra["doc_id"] = did
+                for r in searcher._search(collection, list(qv), extra, limit=2):
+                    r = dict(r)
+                    r["dest_entity"] = did
+                    r["dest_parent"] = pid
+                    rows.append(r)
+                if len(rows) >= int(budget.graph_dest_children):
+                    break
+            if rows:
+                return rows
+            for did in dest_docs[: budget.graph_dest_children]:
                 for r in searcher._search(collection, list(qv),
                                           {"representation_kind": "routing_child", "corpus_id": corpus_id, "doc_id": did},
                                           limit=2):
@@ -590,10 +713,10 @@ def _attach_graph(out: dict, query: str, corpus_id: str, *, qvec, graph_useful: 
     except Exception as exc:  # noqa: BLE001 — the graph is a bounded optional stage, never the answer
         degraded_reason = f"{type(exc).__name__}: {str(exc)[:160]}"
     graph_ms = round((time.perf_counter() - t0) * 1000, 1)
-    out["graph_relationships"] = [
+    out["graph_relationships"] = bind_graph_fact_chunks([
         {"fact_id": f["fact_id"], "predicate": f["predicate"], "subject_id": f.get("subject_id"), "subject": f["subject"],
          "object_id": f.get("object_id"), "object": f["object"]}
-        for f in facts]
+        for f in facts], [c["chunk_id"] for c in evidence if c.get("chunk_id")])
     meta["graph_bounds"] = {"max_seeds": seeds_max, "max_facts": GRAPH_MAX_FACTS, "graph_useful": bool(graph_useful),
                             "hops": 1, "contract": MODE_COMPOSITION_CONTRACT}
     meta["graph_fact_count"] = len(facts)
@@ -684,6 +807,19 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
                 sweep["started_ms"] = round((time.perf_counter() - t_turn) * 1000, 1)
                 t0 = time.perf_counter()
                 parents = divergent_sweep(qvec, _latent_search, plan)
+                # P12 / ELITE-MODE E: atoms nominate extra parents through the same map door.
+                try:
+                    from polymath_shared.document_profile import parent_map_projection as _pmp
+                    from polymath_shared.document_profile import profile_atom_projection as _pap
+                    from polymath_shared.embedding_contracts import active_contract as _ac
+                    cid = _ac().contract_id
+                    atoms = _pap.search_atoms(client, _pap.collection_name(cid), qvec, _WILDCARD_ATOM_KINDS, k=12)
+                    docs = list(dict.fromkeys(a.get("doc_id") for a in atoms if a.get("doc_id")))
+                    maps = (_pmp.search_parent_maps(client, _pmp.collection_name(cid), qvec, docs, k=16)
+                            if docs else [])
+                    parents = merge_atom_frontier(parents, atoms, maps)
+                except Exception:  # noqa: BLE001 — atom frontier is optional
+                    pass
                 return parents, round((time.perf_counter() - t0) * 1000, 1)
 
             sweep["searcher"], sweep["qvec"] = searcher, qvec

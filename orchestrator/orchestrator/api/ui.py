@@ -1531,12 +1531,10 @@ def _evidence_legend(bundle: dict) -> list[dict]:
         # deterministic synthesizer and /retrieve keep their summaries).
         if item.get("text_kind") in _SUMMARY_TEXT_KINDS:
             continue
-        # GRAPH-EVIDENCE-HYGIENE-V1 (backlog B8, measured 2026-09-06 on the owner's GRAPH turn): the assembler
-        # turns every graph fact into a `claim` item carrying its provenance passage and sorts claims FIRST —
-        # 20 of 35 legend rows were such passages, never judged, chosen by entity adjacency (a preface line and
-        # a list of 1980s point fighters were S1 / S2 and got cited). Facts stay in the prompt as the tagless
-        # `[fact:…] subject —predicate→ object` block; their passages are [S#] evidence only when the judge
-        # selected them, in which case the judged text item already carries the chunk.
+        # GRAPH-EVIDENCE-HYGIENE-V1 (backlog B8): the assembler turns every graph fact into a `claim`
+        # item carrying its provenance passage and sorts claims FIRST. Those passages were never judged.
+        # Facts now ride the labelled RELATIONS `[G#]` block (ELITE-MODE D), bound to a proving `[S#]`
+        # only when that child is already in the judged legend. Unjudged provenance is never an [S#].
         if item.get("kind") == "claim":
             continue
         span = item.get("source_span") or {}
@@ -1957,6 +1955,179 @@ def _synth_roles_enabled() -> bool:
     return os.environ.get("POLYMATH_CHAT_SYNTH_ROLES", "").strip().lower() in ("1", "true", "yes", "on")
 
 
+#: ELITE-MODE-RETRIEVAL-SYNTHESIS-V1 — orientation (profile/map) and derived (wildcard)
+#: blocks. Absent keys ⇒ the grounded prompt is byte-identical to pre-slice C.
+_ORIENTATION_MAX_DOCS = 3
+_ORIENTATION_MAX_MAPS = 6
+_DERIVED_MAX = 3
+_RELATIONS_MAX = 20
+_ORIENTATION_GUIDANCE = (
+    "ORIENTATION is routing metadata compiled from the document profile and parent map. "
+    "It is NOT a source quote. Do not cite it as [S#]. Use it only to know which book and "
+    "section you are in before reading EVIDENCE.")
+_DERIVED_GUIDANCE = (
+    "DERIVED INSIGHTS come from the abstract/latent layer (enrichment abstraction, transfer, or profile atom). "
+    "They are NOT book quotes. Cite them as [A#] and say they are derived. Each insight GROUNDS IN "
+    "a proving [S#] when that child is in EVIDENCE. Never replace a missing DIRECT answer with [A#]. "
+    "Lead with EVIDENCE; then use [A#] for analogical or cross-domain argument.")
+_RELATIONS_GUIDANCE = (
+    "RELATIONS are source-attested graph facts. Cite them as [G#]. "
+    "A [G#] that names proves: [S#] is grounded in that child. "
+    "Do not assert a [G#] that has no proving child. "
+    "Use [G#] to structure how entities relate, then prove it with [S#].")
+
+
+def _load_orientation(conn, doc_ids: list[str], parent_ids: list[str]) -> dict:
+    """Postgres-backed orientation for the synthesizer: compiled profile ONE/SUMMARY
+    (prefer doc-profile-v3.2 when both generations exist) plus active parent maps.
+    Fail-open: a missing row is omitted, never invented."""
+    docs: list[dict] = []
+    maps: list[dict] = []
+    ids = [d for d in dict.fromkeys(doc_ids or ()) if d][:_ORIENTATION_MAX_DOCS]
+    pids = [p for p in dict.fromkeys(parent_ids or ()) if p][:_ORIENTATION_MAX_MAPS]
+    if ids:
+        rows = conn.execute(
+            """SELECT DISTINCT ON (a.payload->'doc_profile'->>'doc_id')
+                      a.payload->'doc_profile'->>'doc_id',
+                      a.payload->'doc_profile'->>'prompt_version',
+                      a.payload->'doc_profile'->'compiled',
+                      d.source_name
+                 FROM artifacts a
+                 JOIN runs r ON r.run_id = a.run_id
+                 JOIN documents d ON d.doc_id = (a.payload->'doc_profile'->>'doc_id')
+                WHERE a.stage = 'doc_profile'
+                  AND a.payload->'doc_profile'->>'doc_id' = ANY(%s)
+                ORDER BY a.payload->'doc_profile'->>'doc_id',
+                         (a.payload->'doc_profile'->>'prompt_version' = 'doc-profile-v3.2') DESC,
+                         a.created_at DESC""",
+            (ids,),
+        ).fetchall()
+        by_id = {str(r[0]): r for r in rows}
+        for did in ids:
+            r = by_id.get(did)
+            if not r:
+                continue
+            compiled = r[2] or {}
+            docs.append({
+                "doc_id": did,
+                "title": (r[3] or "").rsplit(".", 1)[0],
+                "one": (compiled.get("one") or compiled.get("one_liner") or "")[:240],
+                "summary": (compiled.get("summary") or "")[:400],
+                "prompt_version": r[1],
+            })
+    if pids:
+        for r in conn.execute(
+            """SELECT parent_id, routing_signature, semantic_hooks
+                 FROM document_parent_maps
+                WHERE parent_id = ANY(%s) AND active
+                ORDER BY parent_id""",
+            (pids,),
+        ).fetchall():
+            hooks = r[2] if isinstance(r[2], list) else []
+            maps.append({
+                "parent_id": r[0],
+                "signature": (r[1] or "")[:160],
+                "hooks": [str(h) for h in hooks[:3]],
+            })
+    return {"docs": docs, "maps": maps}
+
+
+def _render_orientation(orientation: dict | None) -> str:
+    if not orientation:
+        return ""
+    docs = orientation.get("docs") or []
+    maps = orientation.get("maps") or []
+    if not docs and not maps:
+        return ""
+    lines = [_ORIENTATION_GUIDANCE, "", "ORIENTATION (not citable):"]
+    for d in docs:
+        title = (d.get("title") or d.get("doc_id") or "document").strip()
+        lines.append(f"DOC: {title}")
+        if d.get("one"):
+            lines.append(f"ONE: {d['one']}")
+        if d.get("summary"):
+            lines.append(f"SUMMARY: {d['summary']}")
+    for m in maps:
+        hooks = "; ".join(m.get("hooks") or [])
+        sig = (m.get("signature") or "").strip()
+        if sig:
+            extra = f" · hooks: {hooks}" if hooks else ""
+            lines.append(f"MAP: {sig}{extra}")
+    return "\n".join(lines)
+
+
+def _render_derived(wildcard_lane, tag_by_chunk: dict[str, str]) -> tuple[str, int]:
+    if not wildcard_lane:
+        return "", 0
+    blocks: list[str] = []
+    for i, br in enumerate(list(wildcard_lane)[:_DERIVED_MAX], 1):
+        if not isinstance(br, dict):
+            continue
+        principle = (br.get("principle") or "").strip()
+        transfer = (br.get("why_it_may_transfer") or "").strip()
+        ev = br.get("source_evidence") or {}
+        cid = ev.get("chunk_id") or ""
+        tag = tag_by_chunk.get(cid) if cid else None
+        if not principle and not transfer:
+            continue
+        lines = [f"[A{i}] PRINCIPLE: {principle or '(unspecified)'}"]
+        if transfer:
+            lines.append(f"     TRANSFER: {transfer}")
+        if tag:
+            lines.append(f"     GROUNDS IN: [{tag}]")
+        elif (ev.get("text") or "").strip():
+            lines.append(f"     GROUNDS IN (attached child, not an [S#]): {(ev.get('text') or '')[:320]}")
+        verified = br.get("verified")
+        if verified is False:
+            lines.append("     SUPPORT: unverified")
+        blocks.append("\n".join(lines))
+    if not blocks:
+        return "", 0
+    return _DERIVED_GUIDANCE + "\n\nDERIVED INSIGHTS (not source quotes):\n" + "\n\n".join(blocks), len(blocks)
+
+
+def _proving_tag(fact: dict, tag_by_chunk: dict[str, str], bundle: dict | None) -> str | None:
+    cid = str(fact.get("chunk_id") or "")
+    if cid and cid in tag_by_chunk:
+        return tag_by_chunk[cid]
+    fid = fact.get("fact_id")
+    if not fid or not isinstance(bundle, dict):
+        return None
+    for item in bundle.get("evidence_bundle") or []:
+        if item.get("kind") != "claim" or item.get("fact_id") != fid:
+            continue
+        span = item.get("source_span") or {}
+        pcid = str(span.get("chunk_id") or "")
+        if pcid and pcid in tag_by_chunk:
+            return tag_by_chunk[pcid]
+    return None
+
+
+def _render_relations(graph_facts: list, tag_by_chunk: dict[str, str],
+                      bundle: dict | None = None) -> tuple[str, int]:
+    if not graph_facts:
+        return "", 0
+    blocks: list[str] = []
+    n = 0
+    for f in list(graph_facts)[:_RELATIONS_MAX]:
+        if not isinstance(f, dict):
+            continue
+        sub, pred, obj = f.get("subject"), f.get("predicate"), f.get("object")
+        if not (sub and pred and obj):
+            continue
+        n += 1
+        lines = [f"[G{n}] {sub} —{pred}→ {obj}"]
+        prove = _proving_tag(f, tag_by_chunk, bundle)
+        if prove:
+            lines.append(f"     proves: [{prove}]")
+        else:
+            lines.append("     proves: none — do not treat as source-backed this turn")
+        blocks.append("\n".join(lines))
+    if not blocks:
+        return "", 0
+    return _RELATIONS_GUIDANCE + "\n\nRELATIONS (attested, not evidence rows):\n" + "\n".join(blocks), n
+
+
 def _grounded_messages(query: str, bundle: dict, graph_facts: list,
                        history, carry_context,
                        reasoning: str | None = None,
@@ -1990,10 +2161,6 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
         # breadcrumb (the raw locator stays on the answer event and the receipt for the UI and traces)
         ev_lines.append(f"[{e['tag']}]{_lbl} {crumb}\n{e['text']}" if crumb else f"[{e['tag']}]{_lbl}\n{e['text']}")
         legend.append(f"[{e['tag']}] = {crumb or e['locator']}")
-    for f in graph_facts[:20]:
-        ev_lines.append(
-            f"[fact:{f.get('fact_id', '')[:24]}] "
-            f"{f.get('subject')} —{f.get('predicate')}→ {f.get('object')}")
     carried = [
         f"[{c.locator}]\n{c.preview}" for c in (carry_context or [])[:30]
         if c.preview
@@ -2011,6 +2178,13 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
         context_block = "EVIDENCE: none retrieved for this turn" + (
             " (by design: this request is answered from the conversation and the user's own text)."
             if plan is not None and not plan.retrieval_required else ".")
+    orient = _render_orientation(bundle.get("orientation") if isinstance(bundle, dict) else None)
+    tag_by_chunk = {str(e.get("chunk_id")): e["tag"] for e in _entries if e.get("chunk_id") and e.get("tag")}
+    derived, _ = _render_derived(
+        (bundle.get("derived_insights") if isinstance(bundle, dict) else None), tag_by_chunk)
+    relations, _ = _render_relations(graph_facts, tag_by_chunk, bundle if isinstance(bundle, dict) else None)
+    # ELITE-MODE D/F: ORIENTATION → EVIDENCE (DIRECT) → RELATIONS [G#] → DERIVED [A#].
+    context_block = "\n\n".join(p for p in (orient, context_block, relations, derived) if p)
     messages = [{"role": "system", "content": _llm_system_prompt(style)}]
     for turn in (history or [])[-12:]:
         if turn.role in ("user", "assistant") and turn.content:
@@ -2660,6 +2834,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             graph_facts: list = []
             latent_meta = None
             wildcard_lane = None
+            orientation: dict = {"docs": [], "maps": []}
             _arrivals: dict = {}
             _aspects: dict = {}
             _weak: list = []
@@ -2715,7 +2890,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                                       "graph (hop-1)…")
                 graph_facts = [
                     {"fact_id": f["fact_id"], "predicate": f["predicate"],
-                     "subject": f["subject"], "object": f["object"]}
+                     "subject": f["subject"], "object": f["object"],
+                     "chunk_id": f.get("chunk_id")}
                     for f in g["graph_relationships"]
                 ]
                 yield _phase("graph_done",
@@ -2769,7 +2945,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     if ui_mode == "GRAPH" or fast.get("graph_relationships"):   # P6: surface graph-assist facts too
                         graph_facts = [
                             {"fact_id": f["fact_id"], "predicate": f["predicate"],
-                             "subject": f["subject"], "object": f["object"]}
+                             "subject": f["subject"], "object": f["object"],
+                             "chunk_id": f.get("chunk_id")}
                             for f in (fast.get("graph_relationships") or [])
                         ]
                 elif ui_mode == "FAST":
@@ -2833,6 +3010,13 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         "SELECT chunk_id, doc_id, summary FROM chunks "
                         "WHERE chunk_id = ANY(%s)", (parent_ids,),
                     ).fetchall()
+                    doc_ids = [d["doc_id"] for d in (fast.get("selected_documents") or []) if d.get("doc_id")]
+                    if not doc_ids:
+                        doc_ids = [c.get("doc_id") for c in (fast.get("evidence") or []) if c.get("doc_id")]
+                    try:
+                        orientation = _load_orientation(conn, doc_ids, parent_ids)
+                    except Exception:  # noqa: BLE001 — orientation is additive; never break the turn
+                        orientation = {"docs": [], "maps": []}
                 section_summaries = [
                     {"chunk_id": r[0], "doc_id": r[1], "summary": r[2] or ""}
                     for r in rows
@@ -2865,6 +3049,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             # default-off ⇒ the grounded prompt is byte-identical. assemble_evidence_bundle is untouched.
             bundle["evidence_roles"] = {c.get("chunk_id"): c.get("role") for c in evidence_rows
                                         if c.get("chunk_id") and c.get("role")}
+            bundle["orientation"] = orientation
+            bundle["derived_insights"] = list(wildcard_lane or [])
             # CARRY-V2: admitted carried evidence joins the bundle (tags, legend, used_evidence)
             _carry_meta: dict = {"in": len(req.carry_context), "admitted": 0}
             if req.carry_context:
@@ -2889,6 +3075,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                              **{k: v for k, v in _carry_meta.items() if k not in ("scores", "admitted_ids")})
             _mark("carry")
             _legend = _evidence_legend(bundle)
+            _tag_by_chunk = {str(e.get("chunk_id")): e["tag"] for e in _legend if e.get("chunk_id") and e.get("tag")}
+            _, _derived_n = _render_derived(wildcard_lane, _tag_by_chunk)
+            _, _relations_n = _render_relations(graph_facts, _tag_by_chunk, bundle)
             yield _phase("assemble_done", "Bundle assembled",
                          items=len(bundle.get("evidence_bundle", [])))
 
@@ -2938,6 +3127,10 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 # §0b carve-out) — never part of `chunks` evidence.
                 "wildcard": (wildcard_lane
                              if ui_mode == "WILDCARD" else None),
+                "orientation_docs": len((orientation or {}).get("docs") or []),
+                "maps_in_prompt": len((orientation or {}).get("maps") or []),
+                "derived_in_prompt": _derived_n,
+                "relations_in_prompt": _relations_n,
                 "chunks": chunk_inventory,
                 # CARRY-V2 accounting (plan §3.5): in / hydrated / admitted / dropped_* / floor / scores
                 "carry": _carry_meta,

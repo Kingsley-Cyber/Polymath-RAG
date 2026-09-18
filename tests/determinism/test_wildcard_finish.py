@@ -54,3 +54,28 @@ def test_unverified_bridges_are_built_from_skipped_parents_without_the_judge_and
     assert out[1]["source_evidence"]["chunk_id"] == "a-k"                                    # the evidence chunk was skipped
     assert out[0]["principle"] == "principle B" and out[1]["why_it_may_transfer"] == "why A"
     assert _unverified_bridges(slots, children_of=children_of, baseline={}, quota=0, fill_deadline=time.perf_counter() + 5, plan=DivergentPlan(), qtoks=set()) == []
+
+
+def test_merge_atom_frontier_nominates_parents_through_maps_without_clobbering_latent():
+    """ELITE-MODE E / P12: atoms + maps add parents; existing latent hop1/abstraction win."""
+    from orchestrator.api.chat_retrieval import merge_atom_frontier
+    latent = {"pKeep": {"parent_id": "pKeep", "doc_id": "d1", "source_name": "A.md",
+                        "hop1": 0.9, "channels": ["abstraction"], "abstraction": "latent principle", "transfer": ""}}
+    atoms = [{"doc_id": "d1", "atom_kind": "THEORY", "text": "atom text", "score": 0.4},
+             {"doc_id": "d2", "atom_kind": "BRIDGE", "text": "look over here", "score": 0.7}]
+    maps = [{"doc_id": "d1", "parent_id": "pKeep"}, {"doc_id": "d2", "parent_id": "pNew"}]
+    out = merge_atom_frontier(latent, atoms, maps)
+    assert out["pKeep"]["abstraction"] == "latent principle" and out["pKeep"]["hop1"] == 0.9
+    assert "theory" in out["pKeep"]["channels"]
+    assert out["pNew"]["parent_id"] == "pNew" and out["pNew"]["abstraction"] == "look over here"
+    assert out["pNew"]["hop1"] == 0.7 and "bridge" in out["pNew"]["channels"]
+    assert merge_atom_frontier(latent, [], []) == latent
+
+
+def test_graph_dest_parents_from_maps_keeps_only_destination_docs():
+    from orchestrator.api.chat_retrieval import graph_dest_parents_from_maps
+    maps = [{"doc_id": "destA", "parent_id": "pA"}, {"doc_id": "other", "parent_id": "pX"},
+            {"doc_id": "destA", "parent_id": "pA"}, {"doc_id": "destB", "parent_id": "pB"}]
+    assert graph_dest_parents_from_maps(maps, ["destA", "destB"], k=8) == [("destA", "pA"), ("destB", "pB")]
+    assert graph_dest_parents_from_maps(maps, ["destA"], k=1) == [("destA", "pA")]
+    assert graph_dest_parents_from_maps([], ["destA"], k=8) == []
