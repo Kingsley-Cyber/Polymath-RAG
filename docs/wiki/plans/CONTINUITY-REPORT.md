@@ -18,7 +18,21 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-18 — Librarian QUALIFIED-WITH-KNOWN-GAPS; named-source ranking DIAGNOSED; Semantic-Alignment context ANCHORED (next = plan, NOT implement)
+## CURRENT — 2026-09-18 — CONSTRAINT-AWARE-RETRIEVAL-V1 CA0–CA2 DEPLOYED + LIVE (ranking still no-op); next = CA3 (first ranking change, owner-gated)
+
+**Repository State** — branch `production`, HEAD **e659aa6**, tree CLEAN. Worktree `pmv4-constraint` (branch `constraint/aware-retrieval`) == production (FF-merged). Stash `49f57e0c` (frontend/ELITE) still HELD. Fleet BOUNCED on the CA bundle (supervisor 64004, 22 workers healthy/one bundle, `/ready` embedder+reranker true). Flags unchanged (scout/expansion/resolution/intent-policy on).
+
+**Active Mission** — CONSTRAINT-AWARE-RETRIEVAL-V1 (admitted `9d89dd8`, binding ADMISSION in `docs/wiki/plans/CONSTRAINT-AWARE-RETRIEVAL-V1.md`). CA0/CA1/CA2 DONE + deployed; **CA3 (post-rerank portfolio partition — the FIRST ranking change) NOT started, owner-gated.**
+
+**Completed (registers 11.305–307)** — CA0 detection (`query_constraints.py`: `Constraint`+`detect_explicit_constraints`, deterministic HARD/SOFT/EXPLORATORY, `ChatPlan.explicit_constraints`); CA1 resolution (`resolve_constraint_targets`: identity, corpus-scoped, scout-confirmed, prefer-unresolved-over-wrong); CA2 live plumbing (`ui.py` `_resolve_plan_constraints` in `_compile_chat_plan._finish`; `retrieval.explicit_constraints` receipt). **LIVE-PROVEN:** "In Murch's book…" → `SOURCE/HARD` resolved to In-the-Blink doc (conf 0.95); "Using Murch as a lens" → `SOURCE/SOFT` resolved (0.85); "What is depth of field?" → `[]`. **Ranking UNCHANGED** (Murch still #2/#4 — CA2 is a strict no-op; `resolved_targets` not consumed by retrieval).
+
+**Proof Status** — CA0/CA1 UNIT_PROVEN; CA2 LIVE_PATH_PROVEN. Named-source ranking loss remains (CA3 target). Librarian qualification still QUALIFIED-WITH-KNOWN-GAPS (3 open gates; single-target MRR is the CA3 target). Baseline: `eval/librarian_qualification/BASELINE-cinema-2026-09-18.summary.json`.
+
+**Next Action** — CA3 (owner-gated): a pure `shared/` `align_by_constraint(ranked, targets, strength)` (portfolio partition — HARD: constraint-satisfying = DIRECT/PRIMARY, others = RELATED/SUPPLEMENTAL, semantic order preserved WITHIN each; SOFT bounded; EXPLORATORY anchor) + post-rerank wiring in `ui.py`, flag `POLYMATH_CHAT_CONSTRAINT_ALIGN` default-off → byte-identical. Unit-prove the helper in the worktree → merge+bounce → live qual vs the baseline + the 6 admission acceptance cases. NO numeric boost / weight tuning / gold change.
+
+**Do Not Do** — start CA3 ranking code before owner "go"; numeric source boost; RRF/rerank weight tuning; gold change; second engine; remove cross-encoder; Graph multi-hop; `git push`; restore the stash yet.
+
+## PRIOR — 2026-09-18 — Librarian QUALIFIED-WITH-KNOWN-GAPS; named-source ranking DIAGNOSED; Semantic-Alignment context ANCHORED (next = plan, NOT implement)
 
 **Repository State** — branch `production`, HEAD **4ba2dbb**, tree CLEAN. Stash `49f57e0c` (frontend/ELITE) still HELD (restore LAST, never force). Fleet live on this checkout; flags scout/expansion/resolution/intent-policy/hierarchy/doc-parent-map all on.
 
