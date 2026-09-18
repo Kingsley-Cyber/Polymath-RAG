@@ -1753,8 +1753,14 @@ def _maybe_resolve(plan, fast, aspects, weak, retrieve_fn) -> dict | None:
     Reuses the planner/engine — no second RAG pipeline. Flag `POLYMATH_CHAT_RESOLUTION`, fail-open."""
     from polymath_shared.evidence_resolution import (ClaimState, RetrievalState,
                                                      plan_resolution_round, resolution_receipt)
+    # A material need is a REQUIRED (q0-derived, origin=USER) aspect that reached NO final evidence.
+    # Exploratory PROFILE-expansion probes (origin=PROFILE) are NOT required needs — a profile probe
+    # finding nothing is not an evidence gap, so it must not trigger a resolution round.
+    origin_of = {q.id: getattr(q, "origin", "USER") for q in (plan.queries or [])}
     claims = []
     for i, qid in enumerate(weak or []):
+        if origin_of.get(str(qid), "USER") != "USER":
+            continue
         need = ((aspects.get(qid) or {}).get("query")) or ""
         if not need:
             continue
