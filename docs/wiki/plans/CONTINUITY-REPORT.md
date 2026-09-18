@@ -18,7 +18,35 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## Latest checkpoint (2026-09-18 — AGENT-SAFETY STACK installed + Librarian audited CLEAN; ELITE settled, librarian rebased/renumbered, P5 COMPLETE (contract + P5a + P5b); NEXT = P6 subquery provenance)
+## BOOTSTRAP HANDOFF — 2026-09-18 (structured; repo-truth, no chronology)
+
+**Repository State** — branch `librarian/retrieval-architecture` (worktree `pmv4-librarian`) · HEAD **bc6eeb3** · production(main) **557389d** (does NOT contain the librarian work — UNMERGED) · worktree **CLEAN**, guards green · production dirty with PRE-EXISTING non-ours leftovers (`verify_final_state.py`, `frontend-v2/*` UI, root checklist).
+
+**Active Mission** — project: Polymath Librarian Retrieval Architecture · phase: **P5 Profile Scout COMPLETE → P6 next** · last slice: P5b-b (reg 11.294) · next dependency: `shared/polymath_shared/chat_plan.py` (`CompiledQuery`/`ChatPlan`) consuming `PROFILE_SCOUT_OUTPUT`.
+
+**Completed Since Last Bootstrap** (register 11.287–11.294) — 11.287–288 PROFILE-SCOUT-V1 contract frozen · 11.289 P5a `fuse_profile_scout_hits` (pure) · 11.290–291 agent-safety stack (contract map + `contract_impact.py` + hooks/CI + AGENTS §5.3) · 11.292 Librarian audit (clean + drift guard) · 11.293 P5b-a normalization · 11.294 P5b-b `ui.py` scout wiring + B16 `_compiler_titles` retirement · (+ `1e6a682` wiki_worm front-matter fix; CONTINUITY updates).
+
+**Current Contract State (producer interfaces — do not rediscover)** — `profile_nominate` → `list[str]` ordered doc_ids (surfaces fused internally = THIN); `search_atoms` → `[{doc_id, atom_kind, text, score}]` (RICH); `ScoutHit` (profile thin `{doc_id,source,rank}`, atom rich); `fuse_profile_scout_hits` → `ProfileScoutResult` (≤1 RRF vote per doc per projection, verbatim `representative_*`, NO capability); `_profile_scout` feeds the existing `compile_plan(titles=…)` channel (no planner signature change).
+
+**Active Impact Closure** (`4d95da2..bc6eeb3`, via `contract_impact.py`) — changed: 11 (SURFACE_REGISTRY, QUERY_INTENT, PROFILE_COMPILER/PROJECTION/ATOM, PROFILE_SCOUT_INPUT/FUSION/OUTPUT/WIRING, PROJECTION_LIFECYCLE, RETRIEVAL_RECEIPT) · affected: CANDIDATE_ENGINE, QUERY_PLANNER, QDRANT/NEO4J_PROJECTION, ACCEPTANCE + pending SUBQUERY_PROVENANCE/PROFILE_YIELD_RECEIPT + deferred RESOLUTION_STATE · resolved: UPDATED + `shared/` tests green · deferred: SUBQUERY_PROVENANCE (P6), PROFILE_YIELD_RECEIPT (P11), RESOLUTION_STATE (P10) · **blocked: none · unresolved: none**.
+
+**Proof Status** — P4/P4a/P1-P2 six slices → UNIT_PROVEN (39/39) · P5a fusion → UNIT_PROVEN (14/14) · P5b-a normalization → UNIT_PROVEN · agent-safety + audit → UNIT_PROVEN (140 impacted tests, guards green) · **P5b-b `_profile_scout` (ui.py) → IMPLEMENTED; runtime proof INVALIDATED** (editable `.pth` resolves `orchestrator` from MAIN, not the worktree — flag-off inert, `LIVE_PATH_PROVEN` pending L1–L5).
+
+**Runtime / Test Resolution** — `polymath_shared` → WORKTREE (conftest inserts `shared/` + per-file `sys.path`); `orchestrator`/`workers`/`control` → MAIN (editable `.pth`) → **NOT worktree-testable**; never claim ui.py TESTED from the worktree.
+
+**Working Tree** — worktree `pmv4-librarian`: CLEAN. production: dirty (NOT ours) — my frontend-v2 UI + `AnswerBody/ProcessRail` (uncommitted), `verify_final_state.py` (unattributed), root checklist. Scratch (deletable, outside repo): `scratchpad/{p5b_edit,resolve_conflict,msg_stdin}.py`.
+
+**Tooling State** — structural: `graft` ($0) · semantic: `architecture/contract-dependencies.yaml` + `scripts/contract_impact.py` · agent-context: graft (+graphify optional) · static: `ruff --select S` (`make lint-security`) · hooks/CI: `make hooks` (`scripts/hooks/pre-commit.sh`) + `.github/workflows/contract-impact.yml`. Dev/CI only; app-independent; removable.
+
+**Next Action** — 1) P6 in `chat_plan.py`: extend `CompiledQuery`/`ChatPlan` with per-subquery `inspired_by_profile`/`profile_surface`/`reason`/role(direct/prerequisite/complement/bridge/contrast/inversion/resolution)/`target`, consuming `PROFILE_SCOUT_OUTPUT`. 2) `graft callers compile_plan` + `contract_impact --staged` before/after; one disposition per impacted contract. 3) UNIT_PROVEN in `shared/` (chat_plan is shared → worktree-testable). 4) Then the L1–L5 live window (set `POLYMATH_PROFILE_SCOUT=1`, apply `0065`, bounce, qualify scout+P6).
+
+**Do Not Do** — graph multi-hop/traversal; apply `0065` outside a coordinated window; bounce the fleet for librarian; `git push` the local branch; second retrieval engine; reintroduce `_compiler_titles`; treat the Scout as a gate.
+
+**Live Qualification Queue** — L1 canonical-selection guard blocks a thin overwrite · L2 atom reconcile · L3 apply `0065` + reconcile receipts · L4 wire projectors' lifecycle transitions · L5 live reconcile + `POLYMATH_PROFILE_SCOUT=1` proves the scout conditions the compiler (a miss never regresses).
+
+**Deferred Architecture** — Graph traversal / bounded multi-hop refactor deferred until Librarian DONE_AND_PROVEN.
+
+## Prior checkpoint (2026-09-18 — AGENT-SAFETY STACK installed + Librarian audited CLEAN; ELITE settled, librarian rebased/renumbered, P5 COMPLETE (contract + P5a + P5b); NEXT = P6 subquery provenance)
 
 **Branch:** `librarian/retrieval-architecture` (worktree `pmv4-librarian`), tip **290cc34**, off the ELITE base `4d95da2`. UNMERGED. Register runs to **11.294**. Production is `557389d` and its CONTINUITY names the older librarian tip `8f044b2` — THIS branch's checkpoint is authoritative for the active work. Read `docs/wiki/plans/PROFILE-SCOUT-V1.md` (the P5 contract) + `architecture/contract-dependencies.yaml` (the contract map), then this block.
 
