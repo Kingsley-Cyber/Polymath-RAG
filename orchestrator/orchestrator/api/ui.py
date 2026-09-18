@@ -1773,6 +1773,11 @@ def _add_profile_expansion(plan, scout_result) -> None:
     noms = list(getattr(scout_result, "nominations", None) or ())
     if not noms:
         return
+    # q0 AUTHORITY: profile-expansion SUPPLEMENTS an existing q0 retrieval — it must never CREATE
+    # retrieval where the compiler decided none. A no-retrieval / general-knowledge / corpus-absent
+    # query (no PRIMARY) must NOT gain fabricated evidence from the scout's fail-open nominations.
+    if not any(q.type == "PRIMARY" for q in plan.queries):
+        return
     from polymath_shared.chat_plan import MAX_QUERY_WORDS, CompiledQuery
     max_add = int(os.environ.get("POLYMATH_CHAT_PROFILE_EXPANSION_MAX", "2"))
     existing = {(q.query or "").strip().lower() for q in plan.queries}
