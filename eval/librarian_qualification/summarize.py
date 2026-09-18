@@ -45,6 +45,9 @@ def summarize(art: dict) -> dict:
         q0_pres = [(r["per_mode"][m].get("subquery_provenance") or {}).get("q0_preserved")
                    for r in results if m in r["per_mode"]]
         scout_on = [bool((r["per_mode"][m].get("scout") or {}).get("enabled")) for r in results if m in r["per_mode"]]
+        yields = [(r["per_mode"][m].get("profile_yield") or {}).get("profile_expansion_evidence_yield")
+                  for r in results if m in r["per_mode"] and r["per_mode"][m].get("profile_yield")]
+        yield_pos = [1.0 if (y and y > 0) else 0.0 for y in yields]
         out["per_mode"][m] = {
             "success_at_10": mean([1.0 if h else 0.0 for h in hits]),
             "mrr": mean(mrrs), "coverage_mean": mean(covs), "precision_mean": mean(precs),
@@ -56,6 +59,9 @@ def summarize(art: dict) -> dict:
             "provenance_complete_rate": mean([1.0 if p else 0.0 for p in prov_complete]),
             "q0_preserved_rate": mean([1.0 if p else 0.0 for p in q0_pres]),
             "scout_enabled_rate": mean([1.0 if s else 0.0 for s in scout_on]),
+            "profile_expansion_queries": len(yields),
+            "profile_yield_gt0_rate": mean(yield_pos),
+            "profile_yield_mean": mean([y for y in yields if y is not None]),
         }
 
     # per-category success (for "no major class < 0.80")
@@ -130,6 +136,7 @@ def main() -> int:
               f"prec={pm['precision_mean']} lat_p50={pm['latency_p50']}s errors={pm['errors']}")
         print(f"     unsupported: halluc={pm['unsupported_hallucination_rate']} declined={pm['unsupported_declined_rate']} "
               f"| provenance_complete={pm['provenance_complete_rate']} q0_preserved={pm['q0_preserved_rate']} scout={pm['scout_enabled_rate']}")
+        print(f"     P11 yield: expansion_queries={pm['profile_expansion_queries']} yield>0_rate={pm['profile_yield_gt0_rate']} yield_mean={pm['profile_yield_mean']}")
     print("\n## per-category success@10")
     for c, d in s["per_category"].items():
         mark = "  " if (d["success_at_10"] or 0) >= 0.80 else "!!"

@@ -148,7 +148,7 @@ Q = [
 PAIRS = [
     ("sens_light_broad", "Tell me about lighting in film.", "sensitivity_broad", ["Lighting for Cinematography", "Cinematography - Theory"]),
     ("sens_light_specific", "How do I light a face with soft key and fill for a portrait?", "sensitivity_specific", ["Lighting for Cinematography"]),
-    ("sens_faceA", "What does Paul Ekman's work say about facial expressions of emotion?", "sensitivity_entityA", ["Facial Action Coding System", "What the Face Reveals"]),
+    ("sens_faceA", "What does Paul Ekman's work say about facial expressions of emotion?", "sensitivity_entityA", ["Facial Action", "What the Face Reveals"]),
     ("sens_faceB", "What does Rudolf Laban's work say about the expression of movement?", "sensitivity_entityB", ["Laban", "Your Move", "Bartenieff"]),
     ("sens_edit_direct", "What is a jump cut?", "sensitivity_direct", ["Grammar of the Edit", "technique of film", "In the Blink of an Eye"]),
     ("sens_edit_rel", "How does a jump cut relate to the viewer's sense of continuity and time?", "sensitivity_relational", ["In the Blink of an Eye", "Grammar of the Edit"]),

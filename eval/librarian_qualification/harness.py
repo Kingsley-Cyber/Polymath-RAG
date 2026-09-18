@@ -135,6 +135,7 @@ def evaluate_query(q: dict, corpus: str, modes: list[str], k: int = 10) -> dict:
             "gold_hit": bool(gold & set(ranked)) if not unsupported else None,
             "scout": comp.get("scout"),
             "subquery_provenance": plan.get("subquery_provenance"),
+            "profile_yield": retr.get("profile_yield"),
             "queries": [{"id": x.get("id"), "type": x.get("type"), "role": x.get("role"),
                          "origin": x.get("origin"), "query": x.get("query")} for x in plan.get("queries") or []],
             "graph_fact_count": retr.get("graph_fact_count"), "wildcard": retr.get("wildcard"),

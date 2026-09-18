@@ -831,12 +831,14 @@
    "query": "What does Paul Ekman's work say about facial expressions of emotion?",
    "category": "sensitivity_entityA",
    "gold_source_substrings": [
-    "Facial Action Coding System",
+    "Facial Action",
     "What the Face Reveals"
    ],
    "gold_doc_ids": [
     "doc_0c9cded11e26fd11f398b54595307220925fce38f13dffd530d84bf3e05d7c2b",
+    "doc_1107fd8fac613c4e6cee06bc0c6913cdc9a52853c60ec7f4c6af0963e414f163",
     "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15",
+    "doc_3a5f1728b3a1f3f749ad82c1c3178e381cf2dbcd0aaa9795ea83023c085733bd",
     "doc_9fd65077f00b9b97a0717d2ae785bbd3cd297a30a1ffc391f6826ac05e1adf2e"
    ],
    "modes": null,
