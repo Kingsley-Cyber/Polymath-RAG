@@ -1744,6 +1744,39 @@ def _scout_source_names(doc_ids, corpora) -> list[str]:
     return [by_id[d] for d in ids if by_id.get(d)]
 
 
+def _maybe_resolve(plan, fast, aspects, weak, retrieve_fn) -> dict | None:
+    """EVIDENCE-RESOLUTION-V1 (librarian P10) — bounded, evidence-driven resolution round on the
+    LIVE path. After round 1, the weak aspects (subqueries that reached NO final evidence) are the
+    unresolved needs; if a material one remains, fire ONE targeted round 2 through the SAME
+    retrieval machinery (`retrieve_fn`) and MERGE its new source children into `fast["evidence"]`
+    (so synthesis uses the new evidence). Explicit stop: at most one round; no gap ⇒ no round 2.
+    Reuses the planner/engine — no second RAG pipeline. Flag `POLYMATH_CHAT_RESOLUTION`, fail-open."""
+    from polymath_shared.evidence_resolution import (ClaimState, RetrievalState,
+                                                     plan_resolution_round, resolution_receipt)
+    claims = []
+    for i, qid in enumerate(weak or []):
+        need = ((aspects.get(qid) or {}).get("query")) or ""
+        if not need:
+            continue
+        claims.append(ClaimState(claim_id=str(qid), importance=max(0.5, 0.9 - 0.1 * i),
+                                 evidence_state="UNSUPPORTED", next_information_need=need))
+    state = RetrievalState(original_query=plan.original_request, round=1, unresolved_needs=tuple(claims),
+                           evidence_chunks=tuple(c.get("chunk_id") for c in (fast.get("evidence") or [])))
+    decision = plan_resolution_round(state)
+    rec = resolution_receipt(state, decision)
+    if not decision.should_resolve or decision.query is None:
+        return rec                                   # round 1 sufficient — explicit stop, no round 2
+    fast2 = retrieve_fn(decision.query.query)         # ONE bounded round 2, existing machinery
+    have = {c.get("chunk_id") for c in (fast.get("evidence") or [])}
+    new_ev = [c for c in (fast2.get("evidence") or []) if c.get("chunk_id") and c.get("chunk_id") not in have][:6]
+    if new_ev:
+        fast["evidence"] = (fast.get("evidence") or []) + new_ev   # merge → evidence_rows → synthesis
+    rec["round2"] = {"query": decision.query.query, "claim": decision.claim.claim_id if decision.claim else None,
+                     "new_evidence": len(new_ev),
+                     "new_docs": sorted({c.get("doc_id") for c in new_ev if c.get("doc_id")})}
+    return rec
+
+
 def _compute_profile_yield(plan, aspects) -> dict | None:
     """P11 (PROFILE-YIELD-RECEIPT-V1): of the PROFILE-origin subqueries the profile expansion added,
     how many surfaced FINAL evidence (the aspect trace's `final` > 0)? Distinguishes profile
@@ -2899,6 +2932,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             _arrivals: dict = {}
             _aspects: dict = {}
             _weak: list = []
+            _resolution: dict | None = None   # P10 evidence-resolution receipt (bounded round 2)
             # CHAT-RETRIEVAL-V2 / P1.e MODE-COMPOSITION-V1: every mode is a composition on the v2 engine
             # (VECTOR = A+B, HYBRID = A+B+C, GRAPH = HYBRID → bounded G, WILDCARD = HYBRID ∥ W) owned by
             # chat_retrieve_mode; the v1 engines stay behind `retrieval: v1` or `latent` (rollback boundary).
@@ -3026,6 +3060,17 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                                                 latent=req.latent, utility=req.utility)
                 latent_meta = (fast.get("meta") or {}).get("latent")
                 _trace = fast.get("trace") or {}
+                # P10 EVIDENCE-RESOLUTION: a bounded round 2 for a still-unsupported need, merged
+                # into fast["evidence"] BEFORE the bundle is built so synthesis uses it. Flag-gated,
+                # fail-open, at most one round (uses the same engine; never a second RAG pipeline).
+                try:
+                    if (os.environ.get("POLYMATH_CHAT_RESOLUTION", "0") == "1"
+                            and _plan is not None and ui_mode in ("FAST", "HYBRID") and _aspects):
+                        def _resolve_retrieve(_q: str):
+                            return chat_retrieve_mode("VECTOR" if ui_mode == "FAST" else ui_mode, _q, corpus_id)
+                        _resolution = _maybe_resolve(_plan, fast, _aspects, _weak, _resolve_retrieve)
+                except Exception:  # noqa: BLE001 — resolution is additive; never break the turn
+                    _resolution = None
                 evidence_rows = [
                     {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"],
                      "parent_id": c["parent_id"]}
@@ -3208,6 +3253,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 # P11 profile_expansion_evidence_yield: of the PROFILE-origin subqueries, how many
                 # surfaced FINAL evidence (aspect final > 0). None unless profile-expansion is on.
                 "profile_yield": _compute_profile_yield(_plan, _aspects),
+                "resolution": _resolution,   # P10: bounded round-2 receipt (hop_2_fired, reason, round2)
                 "final_detail": (fast.get("meta") or {}).get("final_detail"),
                 # P1.c EVIDENCE-COMPOSER-V1: slot fills, per-document counts, dominance flag
                 "composition": (fast.get("meta") or {}).get("composition"),
