@@ -1,0 +1,1125 @@
+{
+ "corpus": "cinema",
+ "n_queries": 64,
+ "sensitivity_pairs": [
+  [
+   "sens_light_broad",
+   "sens_light_specific"
+  ],
+  [
+   "sens_faceA",
+   "sens_faceB"
+  ],
+  [
+   "sens_edit_direct",
+   "sens_edit_rel"
+  ],
+  [
+   "sens_term_a",
+   "sens_term_b"
+  ],
+  [
+   "sens_story_broad",
+   "sens_story_constrained"
+  ],
+  [
+   "sens_compose_broad",
+   "sens_compose_concept"
+  ],
+  [
+   "sens_advA",
+   "sens_advB"
+  ],
+  [
+   "sens_keylight_direct",
+   "sens_keylight_rel"
+  ],
+  [
+   "sens_storyboard_term",
+   "sens_storyboard_para"
+  ],
+  [
+   "sens_vfx_broad",
+   "sens_vfx_specific"
+  ]
+ ],
+ "queries": [
+  {
+   "id": "direct_180",
+   "query": "What is the 180-degree rule in filming a scene?",
+   "category": "direct_factual",
+   "gold_source_substrings": [
+    "Grammar of the Shot",
+    "Five C's",
+    "Grammar of the Edit",
+    "Cinematography - Theory"
+   ],
+   "gold_doc_ids": [
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "direct_thirds",
+   "query": "What is the rule of thirds in visual composition?",
+   "category": "direct_factual",
+   "gold_source_substrings": [
+    "Cinematography - Theory",
+    "Five C's",
+    "Filmmaker",
+    "Visual Story"
+   ],
+   "gold_doc_ids": [
+    "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "direct_facs",
+   "query": "What is the Facial Action Coding System and what does it measure?",
+   "category": "definition",
+   "gold_source_substrings": [
+    "Facial Action Coding System",
+    "Facial Action coding",
+    "What the Face Reveals"
+   ],
+   "gold_doc_ids": [
+    "doc_0c9cded11e26fd11f398b54595307220925fce38f13dffd530d84bf3e05d7c2b",
+    "doc_1107fd8fac613c4e6cee06bc0c6913cdc9a52853c60ec7f4c6af0963e414f163",
+    "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15",
+    "doc_9fd65077f00b9b97a0717d2ae785bbd3cd297a30a1ffc391f6826ac05e1adf2e"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "direct_actionunit",
+   "query": "What is an action unit in facial expression coding?",
+   "category": "definition",
+   "gold_source_substrings": [
+    "Facial Action Coding System",
+    "Facial Action coding",
+    "Classifying Facial Action"
+   ],
+   "gold_doc_ids": [
+    "doc_1107fd8fac613c4e6cee06bc0c6913cdc9a52853c60ec7f4c6af0963e414f163",
+    "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15",
+    "doc_3a5f1728b3a1f3f749ad82c1c3178e381cf2dbcd0aaa9795ea83023c085733bd",
+    "doc_9fd65077f00b9b97a0717d2ae785bbd3cd297a30a1ffc391f6826ac05e1adf2e"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "direct_laban_effort",
+   "query": "What are the Effort qualities in Laban Movement Analysis?",
+   "category": "definition",
+   "gold_source_substrings": [
+    "Laban",
+    "Bartenieff",
+    "Your Move"
+   ],
+   "gold_doc_ids": [
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_40ea46ad28c5482bfdde720f7eb3ebf5b083397d27ac7852d99104ac11be0174",
+    "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87",
+    "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+    "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743",
+    "doc_d27eace5b84028c90337d5b277f53d8f360f9a65ac5d8484edab8fbab63d58a4"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "direct_depthoffield",
+   "query": "What is depth of field and what controls it?",
+   "category": "direct_factual",
+   "gold_source_substrings": [
+    "Cinematography - Theory",
+    "Lighting for Cinematography",
+    "Filmmaker"
+   ],
+   "gold_doc_ids": [
+    "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "direct_matchcut",
+   "query": "What is a match cut in film editing?",
+   "category": "direct_factual",
+   "gold_source_substrings": [
+    "Grammar of the Edit",
+    "In the Blink of an Eye",
+    "technique of film"
+   ],
+   "gold_doc_ids": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "direct_chromakey",
+   "query": "How does chroma key green-screen compositing work?",
+   "category": "direct_factual",
+   "gold_source_substrings": [
+    "Digital Compositing",
+    "Art and Science",
+    "Art And Science",
+    "VES Handbook",
+    "Fusion"
+   ],
+   "gold_doc_ids": [
+    "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "exact_rapo",
+   "query": "What is RAPO retrieval-augmented prompt optimization?",
+   "category": "exact_terminology",
+   "gold_source_substrings": [
+    "Retrieval-Augmented Prompt"
+   ],
+   "gold_doc_ids": [
+    "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "exact_ves",
+   "query": "What does the VES Handbook cover about visual effects?",
+   "category": "exact_terminology",
+   "gold_source_substrings": [
+    "VES Handbook"
+   ],
+   "gold_doc_ids": [
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "direct_storybeat",
+   "query": "What is the beat sheet in screenwriting?",
+   "category": "direct_factual",
+   "gold_source_substrings": [
+    "Save the Cat",
+    "Anatomy of Story"
+   ],
+   "gold_doc_ids": [
+    "doc_92531b09c0ad2942c9a4b903bfe2a30359d8b52847303d0a09d14d99ff839027",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "direct_threepoint",
+   "query": "What is three-point lighting and what does each light do?",
+   "category": "multi_evidence",
+   "gold_source_substrings": [
+    "Lighting for Cinematography",
+    "Cinematography - Theory"
+   ],
+   "gold_doc_ids": [
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "para_disorient",
+   "query": "How do filmmakers keep viewers from getting confused about where characters are positioned relative to each other?",
+   "category": "paraphrase",
+   "gold_source_substrings": [
+    "Grammar of the Shot",
+    "Five C's",
+    "Grammar of the Edit"
+   ],
+   "gold_doc_ids": [
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "para_sticky",
+   "query": "What makes an idea memorable so that people remember and repeat it?",
+   "category": "low_lexical",
+   "gold_source_substrings": [
+    "Made to Stick"
+   ],
+   "gold_doc_ids": [
+    "doc_1c74cbfdb7737177bb775c6a8f9a55161e76a9c220d5ce9d11b57718b2a16921"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "para_evenlight",
+   "query": "How do you illuminate a large flat backdrop evenly without hotspots?",
+   "category": "low_lexical",
+   "gold_source_substrings": [
+    "Lighting for Cinematography",
+    "Digital Compositing",
+    "VES Handbook"
+   ],
+   "gold_doc_ids": [
+    "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+    "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "para_bodyintent",
+   "query": "How does a performer's body communicate force, weight and intention to an audience?",
+   "category": "low_lexical",
+   "gold_source_substrings": [
+    "Laban",
+    "Bartenieff",
+    "Fight Choreography",
+    "Acting for Animators"
+   ],
+   "gold_doc_ids": [
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_40ea46ad28c5482bfdde720f7eb3ebf5b083397d27ac7852d99104ac11be0174",
+    "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87",
+    "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+    "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743",
+    "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "para_persuade",
+   "query": "What techniques make written advertising copy persuasive?",
+   "category": "paraphrase",
+   "gold_source_substrings": [
+    "Ogilvy",
+    "Breakthrough Advertising",
+    "Whipple",
+    "Copywriting"
+   ],
+   "gold_doc_ids": [
+    "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e",
+    "doc_efca6a91d4d05b4f71ddd147e301584cbc612b7dfc2edbc02601f5c46094eeb6",
+    "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc",
+    "doc_fddb8380b192aedb102483172cbae4ec5a0d0e52654459286cc2d7999e1a1fb1"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "synth_edit_music",
+   "query": "How do the rhythm of film editing and the timing of music relate?",
+   "category": "cross_doc_synthesis",
+   "gold_source_substrings": [
+    "In the Blink of an Eye",
+    "Sound Design",
+    "Grammar of the Edit",
+    "technique of film"
+   ],
+   "gold_doc_ids": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "synth_light_color",
+   "query": "How do lighting and color grading work together to establish mood?",
+   "category": "cross_doc_synthesis",
+   "gold_source_substrings": [
+    "Lighting for Cinematography",
+    "Cinematography - Theory",
+    "DaVinci",
+    "Fusion"
+   ],
+   "gold_doc_ids": [
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "synth_compose_comic",
+   "query": "What composition principles are shared between film framing and comics?",
+   "category": "cross_doc_synthesis",
+   "gold_source_substrings": [
+    "Framed Ink",
+    "Comics and Sequential Art",
+    "Visual Story",
+    "Filmmaker"
+   ],
+   "gold_doc_ids": [
+    "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c",
+    "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd",
+    "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "cmp_edit",
+   "query": "Compare continuity editing with montage in film.",
+   "category": "comparison",
+   "gold_source_substrings": [
+    "Grammar of the Edit",
+    "technique of film",
+    "In the Blink of an Eye"
+   ],
+   "gold_doc_ids": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "cmp_advertising",
+   "query": "How do classic and modern advertising approaches treat long copy?",
+   "category": "comparison",
+   "gold_source_substrings": [
+    "Ogilvy",
+    "Breakthrough Advertising",
+    "Copywriting",
+    "Whipple"
+   ],
+   "gold_doc_ids": [
+    "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e",
+    "doc_efca6a91d4d05b4f71ddd147e301584cbc612b7dfc2edbc02601f5c46094eeb6",
+    "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc",
+    "doc_fddb8380b192aedb102483172cbae4ec5a0d0e52654459286cc2d7999e1a1fb1"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "rel_cine_edit",
+   "query": "How are cinematography and film editing related in filmmaking?",
+   "category": "relational",
+   "gold_source_substrings": [
+    "Cinematography - Theory",
+    "Grammar of the Edit",
+    "technique of film",
+    "Five C's"
+   ],
+   "gold_doc_ids": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "rel_face_acting",
+   "query": "How does facial expression coding connect to acting and animation performance?",
+   "category": "relational",
+   "gold_source_substrings": [
+    "Facial Action Coding System",
+    "What the Face Reveals",
+    "Acting for Animators"
+   ],
+   "gold_doc_ids": [
+    "doc_0c9cded11e26fd11f398b54595307220925fce38f13dffd530d84bf3e05d7c2b",
+    "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15",
+    "doc_9fd65077f00b9b97a0717d2ae785bbd3cd297a30a1ffc391f6826ac05e1adf2e",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "disc_personality",
+   "query": "What does the corpus say about human personality types and temperament?",
+   "category": "profile_discovery",
+   "gold_source_substrings": [
+    "Please Understand Me",
+    "Gifts differing"
+   ],
+   "gold_doc_ids": [
+    "doc_0661e39c4ec6c9d461b27f089e07c832a47774cea4f9f74285da732d1a886cae",
+    "doc_aef933432d47f07a79a1eff5585d61805a9a2f6ccabc017903ca51beb54bd88b"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "disc_motion_ml",
+   "query": "How is human movement modeled or generated computationally?",
+   "category": "profile_discovery",
+   "gold_source_substrings": [
+    "Laban Movement-Guided Diffusion",
+    "Bayesian reasoning for Laban",
+    "Making Meaning with Machines",
+    "Affective Movement"
+   ],
+   "gold_doc_ids": [
+    "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87",
+    "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+    "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "disc_neuroarch",
+   "query": "How does architecture affect the human mind and perception?",
+   "category": "profile_discovery",
+   "gold_source_substrings": [
+    "Neuroarchitecture"
+   ],
+   "gold_doc_ids": [
+    "doc_d7510ba66b3cd614f927a7872f9c78e16c34d7909d5e968925e367aec892306f"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "pmap_murch_blink",
+   "query": "In Walter Murch's book, what is the blink theory of editing?",
+   "category": "pmap_localization",
+   "gold_source_substrings": [
+    "In the Blink of an Eye"
+   ],
+   "gold_doc_ids": [
+    "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "pmap_savecat",
+   "query": "What are the fifteen beats in the Save the Cat story structure?",
+   "category": "pmap_localization",
+   "gold_source_substrings": [
+    "Save the Cat"
+   ],
+   "gold_doc_ids": [
+    "doc_92531b09c0ad2942c9a4b903bfe2a30359d8b52847303d0a09d14d99ff839027"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "pmap_lumet",
+   "query": "What does Sidney Lumet say about making movies and working with actors?",
+   "category": "pmap_localization",
+   "gold_source_substrings": [
+    "Making Movies"
+   ],
+   "gold_doc_ids": [
+    "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "bridge_combat_movement",
+   "query": "How does movement analysis inform staged fight choreography on screen?",
+   "category": "relational",
+   "gold_source_substrings": [
+    "Fight Choreography",
+    "Stage Combat",
+    "Screen Combat",
+    "Laban"
+   ],
+   "gold_doc_ids": [
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87",
+    "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+    "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743",
+    "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "wild_dance_film",
+   "query": "What non-obvious connections exist between dance notation and filmmaking?",
+   "category": "wildcard_discovery",
+   "gold_source_substrings": [
+    "Benesh",
+    "Laban",
+    "In the Blink of an Eye",
+    "Your Move"
+   ],
+   "gold_doc_ids": [
+    "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87",
+    "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+    "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743",
+    "doc_c967daa374b6dad1c7ee9c0b90cf12bd79bc9ba5344dd665004847d0b6abf8fa",
+    "doc_d27eace5b84028c90337d5b277f53d8f360f9a65ac5d8484edab8fbab63d58a4"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "wild_ad_story",
+   "query": "How might advertising persuasion ideas apply to visual storytelling in film?",
+   "category": "wildcard_discovery",
+   "gold_source_substrings": [
+    "Made to Stick",
+    "StoryBrand",
+    "Anatomy of Story",
+    "Ogilvy"
+   ],
+   "gold_doc_ids": [
+    "doc_1c74cbfdb7737177bb775c6a8f9a55161e76a9c220d5ce9d11b57718b2a16921",
+    "doc_2ce79e8ebec9d33e88458fc12308f6d1eff0416517c0c1685f3e20008b725013",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+    "doc_efca6a91d4d05b4f71ddd147e301584cbc612b7dfc2edbc02601f5c46094eeb6"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "multi_exposure",
+   "query": "What is the exposure triangle and how does aperture, shutter and ISO each affect the image?",
+   "category": "multi_evidence",
+   "gold_source_substrings": [
+    "Cinematography - Theory",
+    "Lighting for Cinematography",
+    "Five C's"
+   ],
+   "gold_doc_ids": [
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "multi_storyarc",
+   "query": "What are the main stages of a dramatic story arc?",
+   "category": "multi_evidence",
+   "gold_source_substrings": [
+    "Anatomy of Story",
+    "Save the Cat",
+    "Directing the Story"
+   ],
+   "gold_doc_ids": [
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_92531b09c0ad2942c9a4b903bfe2a30359d8b52847303d0a09d14d99ff839027",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "distract_shape",
+   "query": "What does 'shape' mean in Laban movement terms?",
+   "category": "distractor",
+   "gold_source_substrings": [
+    "Laban",
+    "Bartenieff",
+    "Your Move"
+   ],
+   "gold_doc_ids": [
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_40ea46ad28c5482bfdde720f7eb3ebf5b083397d27ac7852d99104ac11be0174",
+    "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87",
+    "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+    "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743",
+    "doc_d27eace5b84028c90337d5b277f53d8f360f9a65ac5d8484edab8fbab63d58a4"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "distract_weight",
+   "query": "What is 'weight' as a movement quality in movement analysis?",
+   "category": "distractor",
+   "gold_source_substrings": [
+    "Laban",
+    "Bartenieff",
+    "Your Move"
+   ],
+   "gold_doc_ids": [
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_40ea46ad28c5482bfdde720f7eb3ebf5b083397d27ac7852d99104ac11be0174",
+    "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87",
+    "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+    "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743",
+    "doc_d27eace5b84028c90337d5b277f53d8f360f9a65ac5d8484edab8fbab63d58a4"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "distract_frame",
+   "query": "What is 'framing' in cinematography composition?",
+   "category": "distractor",
+   "gold_source_substrings": [
+    "Cinematography - Theory",
+    "Five C's",
+    "Filmmaker",
+    "Grammar of the Shot"
+   ],
+   "gold_doc_ids": [
+    "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "res_shutter_motion",
+   "query": "How does shutter angle affect motion blur when filming fast action?",
+   "category": "resolution_trigger",
+   "gold_source_substrings": [
+    "Cinematography - Theory",
+    "Five C's",
+    "Lighting for Cinematography"
+   ],
+   "gold_doc_ids": [
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "direct_gesture",
+   "query": "What is gesture drawing and how does it capture force and motion?",
+   "category": "direct_factual",
+   "gold_source_substrings": [
+    "Force",
+    "Framed Ink",
+    "Anatomy for Sculptors"
+   ],
+   "gold_doc_ids": [
+    "doc_5f06d211c3b25fe63f5bb7ef5b815a18ce597260cba4d8785c32e44fab5d2ab0",
+    "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+    "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "unsup_nitrogen",
+   "query": "What is the boiling point of liquid nitrogen in kelvin?",
+   "category": "unsupported",
+   "gold_source_substrings": [],
+   "gold_doc_ids": [],
+   "modes": null,
+   "unsupported": true
+  },
+  {
+   "id": "unsup_taxes",
+   "query": "How do I file my federal income tax return?",
+   "category": "unsupported",
+   "gold_source_substrings": [],
+   "gold_doc_ids": [],
+   "modes": null,
+   "unsupported": true
+  },
+  {
+   "id": "unsup_chess",
+   "query": "What are the official rules for castling in chess?",
+   "category": "unsupported",
+   "gold_source_substrings": [],
+   "gold_doc_ids": [],
+   "modes": null,
+   "unsupported": true
+  },
+  {
+   "id": "unsup_python",
+   "query": "How do I reverse a linked list in Python?",
+   "category": "unsupported",
+   "gold_source_substrings": [],
+   "gold_doc_ids": [],
+   "modes": null,
+   "unsupported": true
+  },
+  {
+   "id": "sens_light_broad",
+   "query": "Tell me about lighting in film.",
+   "category": "sensitivity_broad",
+   "gold_source_substrings": [
+    "Lighting for Cinematography",
+    "Cinematography - Theory"
+   ],
+   "gold_doc_ids": [
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_light_specific",
+   "query": "How do I light a face with soft key and fill for a portrait?",
+   "category": "sensitivity_specific",
+   "gold_source_substrings": [
+    "Lighting for Cinematography"
+   ],
+   "gold_doc_ids": [
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_faceA",
+   "query": "What does Paul Ekman's work say about facial expressions of emotion?",
+   "category": "sensitivity_entityA",
+   "gold_source_substrings": [
+    "Facial Action Coding System",
+    "What the Face Reveals"
+   ],
+   "gold_doc_ids": [
+    "doc_0c9cded11e26fd11f398b54595307220925fce38f13dffd530d84bf3e05d7c2b",
+    "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15",
+    "doc_9fd65077f00b9b97a0717d2ae785bbd3cd297a30a1ffc391f6826ac05e1adf2e"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_faceB",
+   "query": "What does Rudolf Laban's work say about the expression of movement?",
+   "category": "sensitivity_entityB",
+   "gold_source_substrings": [
+    "Laban",
+    "Your Move",
+    "Bartenieff"
+   ],
+   "gold_doc_ids": [
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_40ea46ad28c5482bfdde720f7eb3ebf5b083397d27ac7852d99104ac11be0174",
+    "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87",
+    "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+    "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743",
+    "doc_d27eace5b84028c90337d5b277f53d8f360f9a65ac5d8484edab8fbab63d58a4"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_edit_direct",
+   "query": "What is a jump cut?",
+   "category": "sensitivity_direct",
+   "gold_source_substrings": [
+    "Grammar of the Edit",
+    "technique of film",
+    "In the Blink of an Eye"
+   ],
+   "gold_doc_ids": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_edit_rel",
+   "query": "How does a jump cut relate to the viewer's sense of continuity and time?",
+   "category": "sensitivity_relational",
+   "gold_source_substrings": [
+    "In the Blink of an Eye",
+    "Grammar of the Edit"
+   ],
+   "gold_doc_ids": [
+    "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_term_a",
+   "query": "What is a foley sound effect?",
+   "category": "sensitivity_termA",
+   "gold_source_substrings": [
+    "Sound Design"
+   ],
+   "gold_doc_ids": [
+    "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_term_b",
+   "query": "What is a sound effect created by a performer mimicking real-world noises for a film?",
+   "category": "sensitivity_termB",
+   "gold_source_substrings": [
+    "Sound Design"
+   ],
+   "gold_doc_ids": [
+    "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_story_broad",
+   "query": "How do you structure a story?",
+   "category": "sensitivity_broad",
+   "gold_source_substrings": [
+    "Anatomy of Story",
+    "Save the Cat",
+    "Directing the Story"
+   ],
+   "gold_doc_ids": [
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_92531b09c0ad2942c9a4b903bfe2a30359d8b52847303d0a09d14d99ff839027",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_story_constrained",
+   "query": "How does the Save the Cat method structure a screenplay's second act?",
+   "category": "sensitivity_constrained",
+   "gold_source_substrings": [
+    "Save the Cat"
+   ],
+   "gold_doc_ids": [
+    "doc_92531b09c0ad2942c9a4b903bfe2a30359d8b52847303d0a09d14d99ff839027"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_compose_broad",
+   "query": "How do you compose a film shot?",
+   "category": "sensitivity_broad",
+   "gold_source_substrings": [
+    "Cinematography - Theory",
+    "Five C's",
+    "Filmmaker",
+    "Visual Story"
+   ],
+   "gold_doc_ids": [
+    "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_compose_concept",
+   "query": "How do leading lines guide the viewer's eye within a composition?",
+   "category": "sensitivity_concept",
+   "gold_source_substrings": [
+    "Framed Ink",
+    "Cinematography - Theory",
+    "Filmmaker"
+   ],
+   "gold_doc_ids": [
+    "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_advA",
+   "query": "What does David Ogilvy advise about effective advertising?",
+   "category": "sensitivity_entityA",
+   "gold_source_substrings": [
+    "Ogilvy"
+   ],
+   "gold_doc_ids": [
+    "doc_efca6a91d4d05b4f71ddd147e301584cbc612b7dfc2edbc02601f5c46094eeb6"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_advB",
+   "query": "What does Eugene Schwartz say about market sophistication and desire in advertising?",
+   "category": "sensitivity_entityB",
+   "gold_source_substrings": [
+    "Breakthrough Advertising"
+   ],
+   "gold_doc_ids": [
+    "doc_fddb8380b192aedb102483172cbae4ec5a0d0e52654459286cc2d7999e1a1fb1"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_keylight_direct",
+   "query": "What is a key light?",
+   "category": "sensitivity_direct",
+   "gold_source_substrings": [
+    "Lighting for Cinematography",
+    "Cinematography - Theory"
+   ],
+   "gold_doc_ids": [
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_keylight_rel",
+   "query": "How does the key-to-fill lighting ratio shape the mood on a face?",
+   "category": "sensitivity_relational",
+   "gold_source_substrings": [
+    "Lighting for Cinematography"
+   ],
+   "gold_doc_ids": [
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_storyboard_term",
+   "query": "What is a storyboard?",
+   "category": "sensitivity_termA",
+   "gold_source_substrings": [
+    "Framed Ink",
+    "Directing the Story",
+    "Cinematic Motion",
+    "Directing - Film Techniques"
+   ],
+   "gold_doc_ids": [
+    "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_storyboard_para",
+   "query": "What is a shot-by-shot drawn plan of a film's visuals before shooting?",
+   "category": "sensitivity_termB",
+   "gold_source_substrings": [
+    "Framed Ink",
+    "Directing the Story",
+    "Cinematic Motion",
+    "Directing - Film Techniques"
+   ],
+   "gold_doc_ids": [
+    "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_vfx_broad",
+   "query": "What is visual effects compositing?",
+   "category": "sensitivity_broad",
+   "gold_source_substrings": [
+    "Digital Compositing",
+    "Art and Science",
+    "Art And Science",
+    "VES Handbook"
+   ],
+   "gold_doc_ids": [
+    "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+    "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a"
+   ],
+   "modes": null,
+   "unsupported": false
+  },
+  {
+   "id": "sens_vfx_specific",
+   "query": "How do you composite a CG element over a live-action plate with correct edge blending and color match?",
+   "category": "sensitivity_specific",
+   "gold_source_substrings": [
+    "Digital Compositing",
+    "Art and Science",
+    "Art And Science",
+    "VES Handbook",
+    "Fusion"
+   ],
+   "gold_doc_ids": [
+    "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680"
+   ],
+   "modes": null,
+   "unsupported": false
+  }
+ ]
+}
