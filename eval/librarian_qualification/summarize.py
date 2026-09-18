@@ -30,6 +30,9 @@ def summarize(art: dict) -> dict:
            "n_supported": len(supported), "n_unsupported": len(unsupported),
            "wall_s": art.get("wall_s"), "per_mode": {}, "per_category": {}, "flags": []}
 
+    # single-target = exactly ONE acceptable gold doc (the case the MRR floor is written for)
+    single = [r for r in supported if len(r.get("gold_doc_ids") or []) == 1]
+    multi = [r for r in supported if len(r.get("gold_doc_ids") or []) > 1]
     for m in modes:
         hits = [r["per_mode"][m]["gold_hit"] for r in supported if m in r["per_mode"]]
         mrrs = [r["per_mode"][m]["mrr"] for r in supported if m in r["per_mode"]]
@@ -48,9 +51,14 @@ def summarize(art: dict) -> dict:
         yields = [(r["per_mode"][m].get("profile_yield") or {}).get("profile_expansion_evidence_yield")
                   for r in results if m in r["per_mode"] and r["per_mode"][m].get("profile_yield")]
         yield_pos = [1.0 if (y and y > 0) else 0.0 for y in yields]
+        st_mrr = [r["per_mode"][m]["mrr"] for r in single if m in r["per_mode"]]
+        mu_cov = [r["per_mode"][m]["recall_at_k"] for r in multi if m in r["per_mode"]]
+        mu_hit = [1.0 if r["per_mode"][m]["gold_hit"] else 0.0 for r in multi if m in r["per_mode"]]
         out["per_mode"][m] = {
             "success_at_10": mean([1.0 if h else 0.0 for h in hits]),
             "mrr": mean(mrrs), "coverage_mean": mean(covs), "precision_mean": mean(precs),
+            "single_target_mrr": mean(st_mrr), "single_target_n": len(st_mrr),
+            "multi_source_success_at_10": mean(mu_hit), "multi_source_coverage": mean(mu_cov),
             "latency_p50": round(statistics.median(lats), 2) if lats else None,
             "latency_max": round(max(lats), 2) if lats else None,
             "errors": len(errs),
@@ -95,8 +103,8 @@ def summarize(art: dict) -> dict:
         pm = out["per_mode"][m]
         if pm["success_at_10"] is not None and pm["success_at_10"] < 0.90:
             out["flags"].append(f"{m}: success@10 {pm['success_at_10']} < 0.90")
-        if pm["mrr"] is not None and pm["mrr"] < 0.80:
-            out["flags"].append(f"{m}: MRR {pm['mrr']} < 0.80")
+        if pm["single_target_mrr"] is not None and pm["single_target_mrr"] < 0.80:
+            out["flags"].append(f"{m}: single-target MRR {pm['single_target_mrr']} < 0.80 (n={pm['single_target_n']})")
         if pm["unsupported_hallucination_rate"]:
             out["flags"].append(f"{m}: unsupported hallucination rate {pm['unsupported_hallucination_rate']} != 0")
         if pm["errors"]:
@@ -132,7 +140,8 @@ def main() -> int:
     print(f"# QUALIFICATION SUMMARY — {art_path.name}")
     print(f"queries={s['n_queries']} supported={s['n_supported']} unsupported={s['n_unsupported']} wall={s['wall_s']}s")
     for m, pm in s["per_mode"].items():
-        print(f"\n[{m}] success@10={pm['success_at_10']} MRR={pm['mrr']} coverage={pm['coverage_mean']} "
+        print(f"\n[{m}] success@10={pm['success_at_10']} single_target_MRR={pm['single_target_mrr']}(n={pm['single_target_n']}) "
+              f"multi_source_success@10={pm['multi_source_success_at_10']} coverage={pm['coverage_mean']} "
               f"prec={pm['precision_mean']} lat_p50={pm['latency_p50']}s errors={pm['errors']}")
         print(f"     unsupported: halluc={pm['unsupported_hallucination_rate']} declined={pm['unsupported_declined_rate']} "
               f"| provenance_complete={pm['provenance_complete_rate']} q0_preserved={pm['q0_preserved_rate']} scout={pm['scout_enabled_rate']}")
