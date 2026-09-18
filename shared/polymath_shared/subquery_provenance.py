@@ -48,6 +48,7 @@ def annotate_subquery_provenance(plan: ChatPlan, scout: ProfileScoutResult | Non
             q.role = "direct"
             q.inspired_by_profile = ()
             q.profile_surface = None
+            q.origin = "USER"
             if not q.reason:
                 q.reason = default_reason("PRIMARY", "direct")
         else:
@@ -62,6 +63,10 @@ def annotate_subquery_provenance(plan: ChatPlan, scout: ProfileScoutResult | Non
                     allowed.update(noms[d].matched_surfaces)
                 if q.profile_surface not in allowed:
                     q.profile_surface = None
+            # a surviving scout link makes the subquery PROFILE-originated (unless already
+            # a graph/evidence-gap origin the planner declared).
+            if kept and q.origin == "USER":
+                q.origin = "PROFILE"
             if not q.role:
                 q.role = derive_role(q.type)
             if not q.reason:
@@ -69,7 +74,7 @@ def annotate_subquery_provenance(plan: ChatPlan, scout: ProfileScoutResult | Non
         rows.append({
             "id": q.id, "type": q.type, "role": q.role, "reason": q.reason,
             "inspired_by_profile": list(q.inspired_by_profile),
-            "profile_surface": q.profile_surface, "target": q.target,
+            "profile_surface": q.profile_surface, "target": q.target, "origin": q.origin,
         })
     block = {
         "contract": "subquery-provenance-v1",

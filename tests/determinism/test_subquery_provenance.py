@@ -18,7 +18,7 @@ sys.path.insert(0, str(ROOT / "shared"))
 
 from pytest import approx  # noqa: E402
 from polymath_shared.chat_plan import (  # noqa: E402
-    ROLE_TYPES, QUERY_TYPES, ChatPlan, CompiledQuery, default_reason, derive_role,
+    ORIGIN_TYPES, ROLE_TYPES, QUERY_TYPES, ChatPlan, CompiledQuery, default_reason, derive_role,
     fallback_plan, plan_receipt, validate_plan,
 )
 from polymath_shared.document_profile.profile_scout import (  # noqa: E402
@@ -166,6 +166,29 @@ def test_annotate_drops_surface_not_in_matched():
     # 'questions' is not among the kept nomination's matched surfaces → dropped
     assert plan.queries[1].inspired_by_profile == ("docReal",)
     assert plan.queries[1].profile_surface is None
+
+
+def test_annotate_stamps_profile_origin_on_kept_link():
+    q0 = CompiledQuery(id="q0", type="PRIMARY", query="primary")
+    q1 = CompiledQuery(id="q1", type="MECHANISM", query="aspect", inspired_by_profile=["docReal"])
+    plan = _plan([q0, q1])
+    annotate_subquery_provenance(plan, _scout(_nom("docReal", surfaces=("theme",))))
+    assert plan.queries[0].origin == "USER" and plan.queries[0].origin in ORIGIN_TYPES
+    assert plan.queries[1].origin == "PROFILE"          # a surviving scout link ⇒ PROFILE-originated
+    # dropped link ⇒ stays USER
+    q2 = CompiledQuery(id="q1", type="MECHANISM", query="aspect", inspired_by_profile=["ghost"])
+    plan2 = _plan([CompiledQuery(id="q0", type="PRIMARY", query="p"), q2])
+    annotate_subquery_provenance(plan2, _scout(_nom("docReal")))
+    assert plan2.queries[1].origin == "USER"
+
+
+def test_validate_plan_reads_origin():
+    raw = {"resolved_request": "explain the mechanism here", "task_type": "GROUNDED_QA",
+           "retrieval_required": True,
+           "queries": [{"id": "q0", "type": "PRIMARY", "query": "explain the thing",
+                        "origin": "graph"}]}
+    plan, err = validate_plan(raw, "explain the thing")
+    assert err is None and plan.queries[0].origin == "GRAPH"
 
 
 def test_annotate_with_no_scout_degrades_cleanly():

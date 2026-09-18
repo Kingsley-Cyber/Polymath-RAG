@@ -151,12 +151,12 @@ contracts:
   RESOLUTION_STATE:
     owner: shared
     spec: docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md
-    paths: []
-    depends_on: [RETRIEVAL_RECEIPT]
-    consumed_by: [ACCEPTANCE]
-    tests: []
+    paths: [shared/polymath_shared/evidence_resolution.py]
+    depends_on: [RETRIEVAL_RECEIPT, QUERY_PLANNER]
+    consumed_by: [ACCEPTANCE, PROFILE_YIELD_RECEIPT]
+    tests: [tests/determinism/test_evidence_resolution.py]
     migration: null
-    status: deferred               # P10 — evidence-driven resolution loop (ClaimPlan)
+    status: live                   # P10 — RetrievalState + ClaimState + bounded plan_resolution_round (unit-proven); driver wiring is L1-L5
 
   PROFILE_YIELD_RECEIPT:
     owner: shared

@@ -58,6 +58,10 @@ NO_RETRIEVAL_TASKS = ("TRANSFORM_USER_CONTENT", "CONTINUE_PRIOR_ARTIFACT", "GENE
 #: reserved for a subquery a P10 evidence-resolution round generates. The role is a
 #: deterministic function of the query `type` (below) unless the planner supplies one explicitly.
 ROLE_TYPES = ("direct", "prerequisite", "complement", "bridge", "contrast", "inversion", "resolution")
+#: SUBQUERY-PROVENANCE-V1 / P10 — where a subquery CAME FROM (checklist retrieval-trace row).
+#: q0 and its aspect decomposition are USER; a scout-inspired subquery is PROFILE; a graph-derived
+#: target is GRAPH; a claim-gap resolution query (P10) is EVIDENCE_GAP.
+ORIGIN_TYPES = ("USER", "PROFILE", "GRAPH", "EVIDENCE_GAP")
 _TYPE_ROLE = {
     "PRIMARY": "direct", "DEFINITION": "prerequisite", "MECHANISM": "complement",
     "CAUSAL": "complement", "PROCEDURE": "complement", "EXAMPLE": "complement",
@@ -123,6 +127,7 @@ class CompiledQuery:
     inspired_by_profile: tuple[str, ...] = ()
     profile_surface: str | None = None
     target: str | None = None
+    origin: str = "USER"
 
     def __post_init__(self) -> None:
         if isinstance(self.inspired_by_profile, list):
@@ -131,6 +136,8 @@ class CompiledQuery:
             self.role = derive_role(self.type)
         if not self.reason:
             self.reason = default_reason(self.type, self.role)
+        if self.origin not in ORIGIN_TYPES:
+            self.origin = "USER"
 
 
 @dataclass
@@ -419,11 +426,13 @@ def validate_plan(raw: dict, message: str) -> tuple[ChatPlan | None, str | None]
         inspired = tuple(str(x).strip() for x in ib if str(x).strip())[:8] if isinstance(ib, (list, tuple)) else ()
         surface_in = q.get("profile_surface")
         target_in = q.get("target")
+        origin_in = str(q.get("origin") or "").strip().upper()
         cq = CompiledQuery(
             id=f"q{len(queries)}", type=qtype, query=text, weight=max(0.1, min(1.0, weight)),
             role=role_in, reason=reason_in, inspired_by_profile=inspired,
             profile_surface=(str(surface_in).strip()[:80] or None) if surface_in else None,
-            target=(str(target_in).strip()[:160] or None) if target_in else None)
+            target=(str(target_in).strip()[:160] or None) if target_in else None,
+            origin=origin_in if origin_in in ORIGIN_TYPES else "USER")
         queries.append(cq)
         if role_in:
             explicit_roles.add(id(cq))
