@@ -1870,6 +1870,66 @@ def _add_profile_expansion(plan, scout_result) -> None:
     plan.compiler["profile_expansion"] = {"added": added, "flag": True}
 
 
+#: WLK2C C3-live — the bounded concept-bridge model (the WILDCARD cloud-Gemma path via the local Ollama
+#: daemon). One call, low temperature, capped tokens, bounded timeout. Configurable; defaults to the
+#: free-tier gemma the synthesizer catalog already uses.
+_BRIDGE_MODEL = (os.environ.get("POLYMATH_BRIDGE_MODEL", "gemma4:31b-cloud") or "gemma4:31b-cloud").split("ollama:")[-1]
+_BRIDGE_TIMEOUT_S = float(os.environ.get("POLYMATH_BRIDGE_TIMEOUT_S", "12"))
+_BRIDGE_NUM_PREDICT = int(os.environ.get("POLYMATH_BRIDGE_NUM_PREDICT", "700"))
+
+
+def _add_bridge_expansion(plan, scout_result) -> None:
+    """WLK2C C3-live (bounded concept-bridge compiler). Flag `POLYMATH_CHAT_BRIDGE_COMPILER` (default
+    off). ACTIVATION of grounded scout-nominated concepts, never invention. Runs AFTER Scout (it needs
+    the nominations) and after profile-expansion (so tier-1 reuse sees existing subqueries). q0 authority:
+    no PRIMARY ⇒ no expansion. FAIL-OPEN — a timeout, provider error, malformed/empty output, or zero
+    admitted bridges leaves the pre-WLK2C plan untouched; bridge generation NEVER blocks the answer. ONE
+    bounded Gemma call, ≤4 bridges. C3 only adds structurally-valid BRIDGE_CANDIDATE subqueries with full
+    lineage; C4 owns the decisive bridge↔q0 semantic rejection. Records the C6 observability metrics
+    (attempted/succeeded/generated/admitted/rejected/fallback_reason/latency_ms) on plan.compiler."""
+    if os.environ.get("POLYMATH_CHAT_BRIDGE_COMPILER", "0") != "1":
+        return
+    if not any(q.type == "PRIMARY" for q in plan.queries):
+        return
+    noms = list(getattr(scout_result, "nominations", None) or ())
+    if not noms:
+        return
+    import time as _t
+    diag = {"attempted": False, "succeeded": False, "generated": 0, "admitted": 0, "rejected": 0,
+            "fallback_reason": None, "latency_ms": 0.0}
+    t0 = _t.perf_counter()
+    try:
+        from polymath_shared.bridge_integration import plan_bridge_expansion
+
+        def _bridge_generate(prompt: str) -> str:
+            import httpx
+            r = httpx.post(f"{OLLAMA_URL}/api/chat",
+                           json={"model": _BRIDGE_MODEL, "stream": False, "think": False,
+                                 "messages": [{"role": "user", "content": prompt}],
+                                 "options": {"temperature": 0.1, "num_predict": _BRIDGE_NUM_PREDICT}},
+                           timeout=httpx.Timeout(_BRIDGE_TIMEOUT_S, connect=5))
+            r.raise_for_status()
+            return ((r.json() or {}).get("message") or {}).get("content") or ""
+
+        diag["attempted"] = True
+        res = plan_bridge_expansion(plan, noms, generate=_bridge_generate)
+        diag["generated"] = res.get("generated") or 0
+        diag["admitted"] = res.get("admitted") or 0
+        diag["rejected"] = max(0, (res.get("generated") or 0) - (res.get("admitted") or 0))
+        diag["succeeded"] = (res.get("added") or 0) > 0
+        if not res.get("eligible", False):
+            diag["fallback_reason"] = res.get("reason")
+        elif (res.get("added") or 0) == 0:
+            diag["fallback_reason"] = "no_valid_bridges"
+    except Exception as exc:  # noqa: BLE001 — FAIL-OPEN: the optional bridge layer never blocks the answer
+        diag["fallback_reason"] = f"error:{type(exc).__name__}"
+    diag["latency_ms"] = round((_t.perf_counter() - t0) * 1000, 1)
+    try:
+        plan.compiler["bridge_expansion"] = {**(plan.compiler.get("bridge_expansion") or {}), **diag}
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | None = None,
                        titles_rank: str | None = None):
     """CHAT-INTENT-PLAN-V1 through the `chat_compiler` stage pin (plan §3.2):
@@ -1890,6 +1950,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         breaker; q0 and its aspects are untouched."""
         try:
             _add_profile_expansion(plan, scout_result)
+            _add_bridge_expansion(plan, scout_result)                   # WLK2C C3: bounded concept-bridge compiler (flag-gated, fail-open)
             from polymath_shared.subquery_provenance import annotate_subquery_provenance
             annotate_subquery_provenance(plan, scout_result)
             _resolve_plan_constraints(plan, scout_result, corpus_ids)   # CA2: identity resolution, no ranking effect

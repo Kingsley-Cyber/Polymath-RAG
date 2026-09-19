@@ -638,6 +638,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-18-wlk2c-c1-bridge-admissibility.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-wlk2c-c2-bridge-compiler.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-wlk2c-c3-bridge-integration.md", "md", None),
+    ("docs/wiki/work-log/2026-09-18-wlk2c-c3-live-wiring.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-prelive-wiring-p10-resolution.md", "md", None),
     ("eval/librarian_qualification/harness.py", "py", None),
     ("eval/librarian_qualification/build_gold.py", "py", None),
