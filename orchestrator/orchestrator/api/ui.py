@@ -1930,6 +1930,93 @@ def _add_bridge_expansion(plan, scout_result) -> None:
         pass
 
 
+def _bridge_role(q) -> str:
+    """The C2 proposed role of a BRIDGE subquery (encoded in its reason `bridge/<role> <- …`)."""
+    reason = str(getattr(q, "reason", "") or "")
+    if reason.startswith("bridge/"):
+        r = reason[7:].split()[0].strip().upper()
+        if r in ("COMPLEMENTARY", "DIVERGENT"):
+            return r
+    return "COMPLEMENTARY"
+
+
+def _selected_lineage(elig: dict, bridges: dict) -> dict | None:
+    """The WINNING bridge lineage for a seated latent chunk (persisted on the final evidence — not just
+    a seat_role). Picks the first admissible path (they are evaluated best-first)."""
+    for lr in (elig.get("lineage_results") or []):
+        if lr.get("state") in ("COMPLEMENTARY_ELIGIBLE", "DIVERGENT_ELIGIBLE"):
+            bid = lr.get("bridge_id")
+            return {"bridge_id": bid, "origin_query": (bridges.get(bid) or {}).get("query"),
+                    "proposed_role": lr.get("proposed_role"), "c4_state": lr.get("state"),
+                    "scores": lr.get("scores")}
+    return None
+
+
+def _apply_latent_selection(fast, plan, q0_text) -> dict | None:
+    """WLK2C C4-live/C5-live — an ADDITIVE second portfolio pass. Grades the BOUNDED bridge pool
+    (`fast['latent_pool']`) with C4 and re-seats [q0 evidence + latent] with C5, gated by the q0
+    grounding, WITHOUT mutating the q0 rows in place: it reassigns `fast['evidence']` to a NEW list.
+    Flag `POLYMATH_CHAT_LATENT_SELECTION` (default off) / no bridges / no pool ⇒ returns None and leaves
+    `fast['evidence']` untouched (byte-identical, trivial rollback). q0 stays primary; the FINAL CA4
+    grade + answerability gate still run downstream on the result (C5 never bypasses CA4). Fail-open:
+    any error leaves the pre-WLK2C evidence intact. Returns the C6 calibration receipt."""
+    if os.environ.get("POLYMATH_CHAT_LATENT_SELECTION", "0") != "1":
+        return None
+    pool_extra = fast.get("latent_pool")
+    if not pool_extra or plan is None:
+        return None
+    bridges = {q.id: {"query": q.query, "proposed_role": _bridge_role(q)}
+               for q in plan.queries if getattr(q, "origin", "") == "BRIDGE"}
+    if not bridges:
+        return None
+    import time as _t
+    try:
+        from orchestrator.api.fast import _rerank_children
+        from polymath_shared.latent_selection import grade_and_seat_latent
+        from polymath_shared.query_constraints import grade_evidence
+        q0_ev = list(fast.get("evidence") or [])
+        try:
+            _g, epi = grade_evidence(q0_ev, plan)                      # q0 grounding (preliminary CA4)
+            establishes_need = bool(epi.get("establishes_need", True)); n_direct = int(epi.get("n_direct", 0))
+        except Exception:  # noqa: BLE001
+            establishes_need, n_direct = True, 0
+
+        def _row(r, orig):
+            return {"chunk_id": r.get("chunk_id"), "doc_id": r.get("doc_id"), "parent_id": r.get("parent_id"),
+                    "text": r.get("text", ""), "query_ids": r.get("query_ids") or [],
+                    "q0_score": (r.get("g3_score") if orig else r.get("q0_score")),
+                    "source_name": r.get("source_name", ""), "_orig": (r if orig else None)}
+        combined = [_row(r, True) for r in q0_ev] + [_row(r, False) for r in pool_extra]
+        t0 = _t.perf_counter()
+        seated, tr = grade_and_seat_latent(q0_text=q0_text, pool=combined, bridges=bridges,
+                                           rerank=_rerank_children, capacity=max(1, len(q0_ev)),
+                                           establishes_need=establishes_need, has_direct_grounding=(n_direct >= 1))
+        seat_ms = round((_t.perf_counter() - t0) * 1000, 1)
+
+        new_ev = []
+        for s in seated:
+            c = s["cand"]; orig = c.get("_orig")
+            row = dict(orig) if orig else {
+                "chunk_id": c["chunk_id"], "doc_id": c.get("doc_id"), "parent_id": c.get("parent_id"),
+                "text": c.get("text", ""), "source_name": c.get("source_name", ""),
+                "query_ids": c.get("query_ids") or [], "g3_score": c.get("q0_score"),
+                "arrival": "LATENT_BRIDGE", "role": "LATENT"}
+            row["latent_role"] = s["seat_role"]
+            if s["seat_role"] in ("COMPLEMENTARY", "DIVERGENT"):
+                sl = _selected_lineage(s.get("eligibility") or {}, bridges)
+                if sl:
+                    row["latent_lineage"] = sl
+            new_ev.append(row)
+        fast["evidence"] = new_ev                                     # additive second pass — q0 rows copied, not mutated
+        return {"enabled": True, "n_bridges": tr.get("n_bridges"), "establishes_need": establishes_need,
+                "n_direct": n_direct, "divergent_allowed": tr.get("divergent_allowed"),
+                "counts": {k: tr.get(k) for k in ("direct", "complementary", "divergent", "fill")},
+                "bridge_q0": tr.get("bridge_q0"), "graded": tr.get("graded"),
+                "latency_ms": {"portfolio_seating": seat_ms}}
+    except Exception as exc:  # noqa: BLE001 — FAIL-OPEN: never break the turn on the latent layer
+        return {"enabled": True, "error": f"{type(exc).__name__}"}
+
+
 def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | None = None,
                        titles_rank: str | None = None):
     """CHAT-INTENT-PLAN-V1 through the `chat_compiler` stage pin (plan §3.2):
@@ -3035,6 +3122,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             _constraint_align: dict | None = None   # CA3 constraint-alignment receipt (post-rerank partition)
             _grades_by_chunk: dict = {}              # CA4 per-chunk support_role (DIRECT/PARTIAL/RELATED)
             _epistemic: dict | None = None           # CA4 query epistemic state (drives the answerability gate)
+            _latent_receipt: dict | None = None      # WLK2C C6 latent-selection calibration receipt
             # CHAT-RETRIEVAL-V2 / P1.e MODE-COMPOSITION-V1: every mode is a composition on the v2 engine
             # (VECTOR = A+B, HYBRID = A+B+C, GRAPH = HYBRID → bounded G, WILDCARD = HYBRID ∥ W) owned by
             # chat_retrieve_mode; the v1 engines stay behind `retrieval: v1` or `latent` (rollback boundary).
@@ -3173,6 +3261,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         _resolution = _maybe_resolve(_plan, fast, _aspects, _weak, _resolve_retrieve)
                 except Exception:  # noqa: BLE001 — resolution is additive; never break the turn
                     _resolution = None
+                # WLK2C C4-live/C5-live: the additive latent second pass (flag-gated, fail-open). Runs
+                # BEFORE CA3/CA4 so they grade + gate the latent-aware evidence; reassigns fast["evidence"].
+                _latent_receipt = _apply_latent_selection(fast, _plan, _retrieval_text)
                 evidence_rows = [
                     {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"],
                      "parent_id": c["parent_id"]}
@@ -3400,6 +3491,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 # CA4: query epistemic state (DIRECT/PARTIAL/RELATED counts + whether the corpus
                 # directly establishes the need). None when the grading flag is off.
                 "epistemic": _epistemic,
+                "latent_selection": _latent_receipt,     # WLK2C C6: bridge/eligibility/seat calibration (incl. rejects)
                 # P11 profile_expansion_evidence_yield: of the PROFILE-origin subqueries, how many
                 # surfaced FINAL evidence (aspect final > 0). None unless profile-expansion is on.
                 "profile_yield": _compute_profile_yield(_plan, _aspects),

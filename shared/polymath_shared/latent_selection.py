@@ -90,4 +90,7 @@ def grade_and_seat_latent(*, q0_text, pool, bridges, rerank, capacity,
                                     max_divergent=max_divergent, min_adequate_direct=min_adequate_direct,
                                     complementary_cap=complementary_cap, establishes_need=establishes_need,
                                     has_direct_grounding=has_direct_grounding)
-    return seated, {"bridge_q0": bridge_q0, "n_bridges": len(bridge_ids), **ptrace}
+    # C6: expose EVERY graded candidate (incl. rejected — bridge_invalid / local_subfloor) for calibration.
+    graded_receipt = [{"chunk_id": g["chunk_id"], "c4_state": g["role"], "eligibility": g["eligibility"]}
+                      for g in graded if g["role"] != "DIRECT_ELIGIBLE" or g["eligibility"]["lineage_results"]]
+    return seated, {"bridge_q0": bridge_q0, "n_bridges": len(bridge_ids), "graded": graded_receipt, **ptrace}

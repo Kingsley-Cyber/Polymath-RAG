@@ -558,6 +558,19 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
     })
     _p = _presentation_joins([c.chunk_id for c in final], [c.doc_id for c in final])
     trace = {**result.trace, **sel, "latency_ms": latency_ms}
+    # WLK2C C4-live: expose a BOUNDED latent pool — the JUDGED-prefix candidates that q0-only selection
+    # dropped (not in `final`), with their q0 rerank score. Flag-gated (no cost when off); this is a
+    # small slice (the judged prefix minus final), never the whole union. The orchestrator filters to
+    # BRIDGE-lineage candidates (it holds the plan) and does a second, additive portfolio pass.
+    latent_pool = None
+    if os.environ.get("POLYMATH_CHAT_LATENT_SELECTION", "0") == "1":
+        _final_ids = {c.chunk_id for c in final}
+        _pre = set(trace.get("pre_g3_order") or [])
+        latent_pool = [
+            {"chunk_id": c.chunk_id, "doc_id": c.doc_id, "parent_id": c.parent_id,
+             "source_name": c.source_name, "text": c.text, "query_ids": list(c.query_ids),
+             "q0_score": c.rerank_score}
+            for c in result.union if c.chunk_id in _pre and c.chunk_id not in _final_ids]
     rows = []
     for c in final:
         r = c.to_row()
@@ -612,6 +625,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
              "best_section_rank": s["best_section_rank"], "from": sorted(set(s["from"]))}
             for s in result.selected_sections],
         "evidence": rows,
+        "latent_pool": latent_pool,          # WLK2C C4-live: bounded judged-prefix bridge candidates (flag-gated; None when off)
         "trace": trace,
     }
 
