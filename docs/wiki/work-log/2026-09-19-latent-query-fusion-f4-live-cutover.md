@@ -84,23 +84,30 @@ preserve_top_n 5) already deliver the gain and are UNFITTED — tuning to these 
 `FusionWeights.from_env()` (`POLYMATH_FUSION_W_<CLASS>`) + `POLYMATH_FUSION_PRESERVE_TOP_N`, all
 defaulting to the validated values. Global K untouched. UNIT_PROVEN (`test_fusion_weights_from_env` +
 60 fusion/seam/engine tests green); deployed at the step-7 bounce.
-STEP 7 (CA5 safety gate) — PASSED. Owner scoped it down ("15-20 questions is good enough"): a
-STRATIFIED 18-query subset (`gold_subset_f4_ca5.json` — all 4 unsupported + named-source/pmap/multi-
-source/sensitivity/definition/relational/profile/low-lexical/distractor) × 4 modes = 72 live
-`/chat/stream` turns through V2 (flags on). Result (`CA5-V2-FUSION-cinema-2026-09-19-subset.summary.json`):
-every mode FAST/HYBRID/GRAPH/WILDCARD → **success@10 1.0, single-target MRR 1.0 (n=4), unsupported
-hallucination 0.0, declined 1.0, q0_preserved 1.0, provenance_complete 1.0, 0 errors, FLAGS(0), 0 gold
-misses, per-category success@10 1.0 across all 11**. The A/B's chunk-level q0 0.990 resolves to
-ANSWER-level q0_preserved 1.0 (no regression). Subset (not the full 64) per owner scope; the invariants
-are absolute and hold. resolution_trigger (the known 0.25 P10 limitation) is untouched by V2 and out of
-this subset.
+STEP 7 (safety gate) — **CA5-SENTINEL-18: PASS · FULL CA5-64×4: NOT RUN.** Owner scoped it down ("15-20
+questions is good enough"). This is a CA5-DERIVED STRATIFIED SENTINEL, not the authoritative full CA5,
+and must not be reported as "CA5 passed". A STRATIFIED 18-query subset (`CA5-SENTINEL-18-gold.json` — all
+4 unsupported + named-source/pmap/multi-source/sensitivity/definition/relational/profile/low-lexical/
+distractor) × 4 modes = 72 live `/chat/stream` turns through V2 (flags on). Result
+(`CA5-SENTINEL-18-cinema-2026-09-19.summary.json`): every mode FAST/HYBRID/GRAPH/WILDCARD → **success@10
+1.0, single-target MRR 1.0 (n=4), unsupported hallucination 0.0, declined 1.0, answer-level q0_preserved
+1.0, provenance_complete 1.0, 0 errors, FLAGS(0), 0 gold misses, per-category success@10 1.0 across all
+11**. Two DISTINCT q0 measurements, both kept: A/B evidence/chunk-level q0 preservation ≈ 0.990 vs
+sentinel ANSWER-level q0_preserved = 1.0 — i.e. **no answer-level q0-preservation failure was observed
+in the sentinel despite the small evidence-selection difference** (the architecture can select slightly
+different evidence while still preserving the user's actual question in the answer; 1.0 does not erase
+0.990). Subset per owner scope; the invariants are absolute and hold on it. resolution_trigger (known
+0.25 P10 limitation) is untouched by V2 and out of this subset. FULL CA5-64×4 remains the milestone/
+release regression authority, available if tighter MRR CIs are wanted (n=4 named-source here is a light read).
 
-## VERDICT — V2 QUALIFIED (live, flags on)
-The structural correction became librarian behavior AND the system stayed CA5-safe:
+## VERDICT — V2 QUALIFIED for live product testing (live, flags on)
+The structural correction became librarian behavior AND the system stayed sentinel-safe:
 subquery/bridge local competition (ranked lanes) → genuine winner survives premature truncation
-(A/B deep_final_reach 0.667 vs V1 0.467; wc01 FACS bridge local-rank-0 preserved) → lineage intact
-(many-to-one contributions) → C4 validates (wc01 COMPLEMENTARY_ELIGIBLE) → C5 seats only when useful
-(deep_latent_seated 0.067, selective) → q0 stays primary (CA5 q0_preserved 1.0). V2 remains LIVE.
+(A/B deep_final_reach 0.667 vs V1 0.467, end-to-end — supports deployment but does not by itself isolate
+fusion causally; the fixed-upstream replay does) → lineage intact (many-to-one contributions) → C4
+validates (wc01 COMPLEMENTARY_ELIGIBLE) → C5 seats only when useful (deep_latent_seated 0.067, selective)
+→ q0 stays primary (sentinel answer-level q0_preserved 1.0). V2 remains LIVE. Qualified under the scoped
+sentinel gate, NOT the full 64×4 CA5.
 
 ## Rejected claims
 - STEP 1 does NOT infer or invent roles; it carries the plan's existing origin only.

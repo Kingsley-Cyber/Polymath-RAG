@@ -1,0 +1,3295 @@
+{
+ "experiment": "fixed-upstream V1-flatten vs V2-fusion; identical fused/RankedLane[]/arrivals/local ranks; one HYBRID retrieval, both policies from the same call",
+ "counterfactual": "V1 = _latent_fused_union `fallback` arg = fused[:merged_candidate_max]; proven == flag-off union on a deterministic fixture",
+ "aggregate": {
+  "n": 10,
+  "ambiguous": 0,
+  "queries_identical_capset": 1,
+  "queries_with_v2_only_admissions": 9,
+  "queries_with_v1_only_admissions": 9,
+  "total_v2_only_admissions": 68,
+  "total_v1_only_admissions": 68,
+  "queries_deep_admission_v2_gain": 1,
+  "queries_deep_admission_v1_gain": 1,
+  "queries_v2_only_reached_final": 1
+ },
+ "cases": {
+  "wc01_fake_smile": {
+   "cap": 120,
+   "fused_total": 194,
+   "v1_n": 120,
+   "v2_n": 120,
+   "identical_cap_set": false,
+   "n_intersection": 114,
+   "n_v1_only": 6,
+   "n_v2_only": 6,
+   "admission_deep_v1_only": [],
+   "admission_deep_v2_only": [],
+   "v2_only": [
+    {
+     "chunk_id": "chunk_0cb7795e3eb3d67f3996981012b2a7e45176a1390f39ae0d3cfeafb149832e74",
+     "doc": "Retrieval-Augmented Prompt Optimization for.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 110,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_7c0876b0c28e3b25eedcc113715017b13908d38994a9065b0e659be2ddf3e7de",
+     "doc": "Grammar of the Edit.md",
+     "query_ids": [
+      "br0"
+     ],
+     "lineage": [
+      {
+       "query_id": "br0",
+       "origin": "BRIDGE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 116,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_82e591004aa5ff5b7d7a4b2b6ac4a791a4b54bdc515d165e1501edbfdc061c33",
+     "doc": "Ed Hooks - Acting for Animators (2017).md",
+     "query_ids": [
+      "p1"
+     ],
+     "lineage": [
+      {
+       "query_id": "p1",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 111,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_b0410194bff5a0b3c99e637b132a237d12830dc286bc4b422bd29a093352118a",
+     "doc": "Ed Hooks - Acting for Animators (2017).md",
+     "query_ids": [
+      "br0"
+     ],
+     "lineage": [
+      {
+       "query_id": "br0",
+       "origin": "BRIDGE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 117,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_d12391faa1c17a53f98d14d29b28dba3a9f644de9f8d59806d1d08c4d5d5fd7a",
+     "doc": "Ed Hooks - Acting for Animators (2017).md",
+     "query_ids": [
+      "p1"
+     ],
+     "lineage": [
+      {
+       "query_id": "p1",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 113,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_e6f3e3ab08333a02d8dbf004ffa371ded7204d553a474ec3ddba4c5fee032319",
+     "doc": "Retrieval-Augmented Prompt Optimization for.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 17
+      },
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 9
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 20,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "v1_only": [
+    {
+     "chunk_id": "chunk_0710e5727126b64459ce0ecbe703bed7ef64832c64f39fb80c9662f6ae2f8f0f",
+     "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 45
+      }
+     ],
+     "v1_pos": 115,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_1a3b6a778f97c6666b8e72117476b7b6ca6d825cb0b38b618cc00d0406e7d9d7",
+     "doc": "Elemental Magic Volume 2.md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 43
+      }
+     ],
+     "v1_pos": 113,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_72143b626e71b7e355525575d1bb333f8158ac34a713cf289d191d0cd27e70ab",
+     "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "query_ids": [
+      "p1"
+     ],
+     "lineage": [
+      {
+       "query_id": "p1",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 3
+      }
+     ],
+     "v1_pos": 116,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_73c453dae2b2ef40cf1b635d23aa16f272d585b6c3b40b9555706e8b33717f08",
+     "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+     "query_ids": [
+      "p1"
+     ],
+     "lineage": [
+      {
+       "query_id": "p1",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 4
+      }
+     ],
+     "v1_pos": 117,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_8eec29440444ef134c0993a64059d826e864614c68dfbcad6ca103c63bf6f9aa",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 42
+      }
+     ],
+     "v1_pos": 111,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_a240b4fc3c24a1d9d88baef897c333c6c9f6d88390f8aa1a790a84be2dc8628d",
+     "doc": "The Laban Workbook for Actors.md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 44
+      }
+     ],
+     "v1_pos": 114,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "n_v2_only_reached_final": 0,
+   "deep_family_reached_final_docs": []
+  },
+  "wc02_sword_weight": {
+   "cap": 120,
+   "fused_total": 168,
+   "v1_n": 120,
+   "v2_n": 120,
+   "identical_cap_set": true,
+   "n_intersection": 120,
+   "n_v1_only": 0,
+   "n_v2_only": 0,
+   "admission_deep_v1_only": [],
+   "admission_deep_v2_only": [],
+   "v2_only": [],
+   "v1_only": [],
+   "n_v2_only_reached_final": 0,
+   "deep_family_reached_final_docs": []
+  },
+  "wc03_villain_won": {
+   "cap": 120,
+   "fused_total": 200,
+   "v1_n": 120,
+   "v2_n": 120,
+   "identical_cap_set": false,
+   "n_intersection": 112,
+   "n_v1_only": 8,
+   "n_v2_only": 8,
+   "admission_deep_v1_only": [
+    "Ekman"
+   ],
+   "admission_deep_v2_only": [],
+   "v2_only": [
+    {
+     "chunk_id": "chunk_14e092e348817ecbe954dc85c29657eba39745a2399403a77e0af39627b21d20",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 115,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_15cb8ee1d25a963408c0fd1ca6408c2026e7b9eff34d3870210f09d58bfc768d",
+     "doc": "Stage Combat Arts.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 116,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_24fe6b3d8a62d0c661aade482de9f92ca2c6fe496ea124d48021c58168e7f7f5",
+     "doc": "Making Meaning with Machines.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 111,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_52e19690747ad575a2bd1bed8e5f1bfff0945a3bab068cbe76027967fcd90a61",
+     "doc": "Damian Allen et al - Fusion Visual Effects with DaVinci Resolve 16 (2020).md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 112,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_7b1073bbb930d05a6ac7d24023c64cc44e62e22a6989463b18169622dff1b32a",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 108,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_7f6cb56b3186595dce760af7a1d62743b355e24ab94aed84754d7a721073e591",
+     "doc": "Ed Hooks - Acting for Animators (2017).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 109,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_c25c452ab046f2cb324ffe2311870efe964c0ef0521ba73a6341e0514cc62c83",
+     "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 113,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_ee62525c76558a737ad8da558ffaa14351b3461e978ba1a49dca9d13de32f579",
+     "doc": "Bruce Block - The Visual Story (2007).md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 114,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "v1_only": [
+    {
+     "chunk_id": "chunk_2f074b54ce3179a394dd2e8dcc7f76616a67f9734a1395519e329329877cfdcd",
+     "doc": "Paul Ekman - Facial Action Coding System Manual (0).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 11
+      }
+     ],
+     "v1_pos": 89,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_4790e7725ecf16b59a9bc01a1362ee5f7b3dc79fabefa9539eeb7051d4aebf65",
+     "doc": "The Laban Workbook for Actors.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 19
+      }
+     ],
+     "v1_pos": 115,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_6ca658745d81a7ebf7b37383fe89fb511b4357ba310503755d661da51395bbd8",
+     "doc": "Comics and Sequential Art.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 11
+      }
+     ],
+     "v1_pos": 90,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_82061e665153d76d40bcb429bff202392dab50f99259c47ef29b29cbd77e9991",
+     "doc": "Your Move - A New Approach to the Study of Movement and Dance.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 8
+      }
+     ],
+     "v1_pos": 80,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_8808d40ff5582908c093cd1ab47277a4319b9ae6772cb5a6a6e1ae8d563caf36",
+     "doc": "What the Face Reveals.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 10
+      }
+     ],
+     "v1_pos": 85,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_9b636efea0ba4edebb76a8193d5bb14bc06aabbd55f1e03610dda6934878eecc",
+     "doc": "Stage Combat Arts.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 14
+      }
+     ],
+     "v1_pos": 103,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_9e16145697bd2b53dd0a6e8f6f33ed221d08d1a44f1fb2f29e03a688d49061c2",
+     "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 7
+      }
+     ],
+     "v1_pos": 76,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_ebf121a7beafabe5ed477eff31b64dee9ef73ce535ce882817fefac574cebd77",
+     "doc": "Donald Miller - Building a StoryBrand (2017).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 5
+      }
+     ],
+     "v1_pos": 67,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "n_v2_only_reached_final": 0,
+   "deep_family_reached_final_docs": []
+  },
+  "wc04_hallway_oppress": {
+   "cap": 120,
+   "fused_total": 195,
+   "v1_n": 120,
+   "v2_n": 120,
+   "identical_cap_set": false,
+   "n_intersection": 107,
+   "n_v1_only": 13,
+   "n_v2_only": 13,
+   "admission_deep_v1_only": [],
+   "admission_deep_v2_only": [],
+   "v2_only": [
+    {
+     "chunk_id": "chunk_00439b5e48ee5dd2049d1b8d9ffea7b1ccaac8adb2bc21b796831444ece5df86",
+     "doc": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 105,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_1a4f5836b8a16460d79381d38a2be9ef516a5f66ef7738c2f4ead5282a20ddc1",
+     "doc": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 12
+      },
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 9
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 19,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_1b127758d716623897d232766bbb1eff782612093cd0d145291ca3a79889e0b9",
+     "doc": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 106,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_1c4e33c0ee5b2804d1318b8e4db3fff56e36933461f842980ed8857120deb723",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 107,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_2a8ac8fa67a9f1d255585c9ecd725476c00be5299fdbe8cc83b852282fa8bc27",
+     "doc": "Bruce Block - The Visual Story (2007).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 112,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_3152b8df4aeb54e8564aca14789dfec06dc6afaa667a7603c79039e3976188e2",
+     "doc": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 3
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 119,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_36ea6c630514240fad8d9b4cad3d64f2f7611c473818cffc712b5c202f15c059",
+     "doc": "Bruce Block - The Visual Story (2007).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 97,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_39f227b99b8a73d69be7dbb4ded161e22682b11a584e7ddda8caef447015ce2f",
+     "doc": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 98,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_667e6be0e5570d1ae7d60123a6e221c1da0ca8528a56e90c116b338417f8ae0c",
+     "doc": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 5
+      },
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 13
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 16,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_7136f66dba67fc4dff5198d90ed2eeaa4379878a3c7d677cc0067adcb91ca019",
+     "doc": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 11
+      },
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 7
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 17,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_770918bc691fbb06915a63f99a48cc3d51b0f26e5ac0cad6668dcd4b68daca52",
+     "doc": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 13
+      },
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 8
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 18,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_bb8452aa2de45ea4407dfe7f2268f3239cadf70a150137c19531fdd755ed5db8",
+     "doc": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 116,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_dd2495c96ebcdf3ab2b5c3d9abb377818ee1ec83ed611005bf31ee4a22469cc2",
+     "doc": "Bruce Block - The Visual Story (2007).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 108,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "v1_only": [
+    {
+     "chunk_id": "chunk_0dc0e4f0c4b035d836bd0263f711a0bb19ab601cb732dc9d31e8200f4d48c1ae",
+     "doc": "David Landau - Lighting for Cinematography (2014).md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 46
+      }
+     ],
+     "v1_pos": 113,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_20b95219c0d9b95ae050203e4dbed750637775a60b0d17bb5432faa709e1d580",
+     "doc": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 6
+      }
+     ],
+     "v1_pos": 119,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_4f369acd3add3b7c02b8fd2692e8de49358ca433cff1bf6d1123ecad82d0c55a",
+     "doc": "The Art and Science of Digital Compositing.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 3
+      }
+     ],
+     "v1_pos": 55,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_5903fa4fdc7857c80d560a73e4de6e52fdfbce8a81b2f7e9689828ec0eee9d5e",
+     "doc": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 48
+      }
+     ],
+     "v1_pos": 116,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_7a57a1caa29c79b0793546a6bcff9ee06673e12b8a63e92a58008da97630b92c",
+     "doc": "Making Connections Bartenieff Fundamentals.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 6
+      }
+     ],
+     "v1_pos": 66,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_855f0cb586581a42a10becc38bfd5cd8cf4b98e3b23947dce2c2df9e5e21f66d",
+     "doc": "Making Meaning with Machines.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 9
+      }
+     ],
+     "v1_pos": 74,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_8da46af2d997dc6d9cb8e53bdfa4128f73ddd7b2366a35072b9b3de798746b17",
+     "doc": "VES Handbook of Visual Effects.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 4
+      }
+     ],
+     "v1_pos": 115,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_91b9c399ee4ede54770cf4d4cc83f6f40f224497a53d6781456c5265cfb68819",
+     "doc": "David Landau - Lighting for Cinematography (2014).md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 47
+      }
+     ],
+     "v1_pos": 114,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_ace22046f4940513d1fff85385616202a0051a3fe9a43e40699282f1d39abe4b",
+     "doc": "Francis Glebas - Directing the Story (2008).md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 49
+      }
+     ],
+     "v1_pos": 117,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_d6cf76a30ff213383751421bcbae1079a75696d6249f6562ee602df6bf36641a",
+     "doc": "Making Meaning with Machines.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 5
+      }
+     ],
+     "v1_pos": 118,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_d87f163d2066466ff9bfed79fffa481cccc37ee398fdbf84e404f695aba42ba6",
+     "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 12
+      }
+     ],
+     "v1_pos": 83,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_eb797512f56047b12a6906beeec0dbbc1a7c875bd5922242ceada24ee3731ae3",
+     "doc": "Francis Glebas - Directing the Story (2008).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 14
+      }
+     ],
+     "v1_pos": 88,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_f052620dc7d18e8ceaca5c8111175a5a5d6774273cd61fdeda7e05a18a11746e",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 5
+      }
+     ],
+     "v1_pos": 63,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "n_v2_only_reached_final": 0,
+   "deep_family_reached_final_docs": []
+  },
+  "wc05_ordinary_fast": {
+   "cap": 120,
+   "fused_total": 171,
+   "v1_n": 120,
+   "v2_n": 120,
+   "identical_cap_set": false,
+   "n_intersection": 114,
+   "n_v1_only": 6,
+   "n_v2_only": 6,
+   "admission_deep_v1_only": [],
+   "admission_deep_v2_only": [
+    "Timing for Animation"
+   ],
+   "v2_only": [
+    {
+     "chunk_id": "chunk_066e7c2bb83a46b817222cdcb014a3403aa9c5a2b8bb90c2ce96740e6edf568c",
+     "doc": "Timing for Animation.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 3
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 108,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_415dfc459142c7e8ab426ff79cc67abaeb50fdff9eaea1abf2196bed89392aa3",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 99,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_69c10f4d23639d6830d74f73eca7bb1e95b6b1486865c908acf70845a0079721",
+     "doc": "Timing for Animation.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 10
+      },
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 10
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 27,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_ad9d318d84b106067fd3abec3ee8c5b65850bd53178d57b9c000cc293a259b3a",
+     "doc": "VES Handbook of Visual Effects.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 104,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_e208e8729f24c95811b1593d3b3a2a236fcc24b229413a93f2d99a993fec9c18",
+     "doc": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "query_ids": [
+      "q1",
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 15
+      },
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 24,
+     "downstream": {
+      "in_final_evidence": true,
+      "latent_seat": null,
+      "ca4_support": "DIRECT"
+     }
+    },
+    {
+     "chunk_id": "chunk_fa181eba97207bc5b3709c65d13104a4a08040e0357ad7fd57a2274508f6cc54",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 105,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "v1_only": [
+    {
+     "chunk_id": "chunk_0eab0c8cf40da10d1dd49873ccb503cad2d56aaba8cb198c96acc7b043e574c1",
+     "doc": "Walter Murch - In the Blink of an Eye (2001).md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 5
+      }
+     ],
+     "v1_pos": 115,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_3d3cfb2bdf9ae8461b1f29462994ffa43e25f231a27e706379b8de1ec4c7cad0",
+     "doc": "Bruce Block - The Visual Story (2007).md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 8
+      }
+     ],
+     "v1_pos": 118,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_731271e86bd69151ad9e42223cd66f3b6c5dddda5a577f2817d592791d0fc616",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 48
+      }
+     ],
+     "v1_pos": 114,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_8237f6fad834ddca6ea1a0ccf7af363b84f33db47aeaf482aacc667edd11e77f",
+     "doc": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 6
+      }
+     ],
+     "v1_pos": 117,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_a3f1375b6eca74ee5517606b63828247a8fb633af1a5e3b50aa926ac768e9265",
+     "doc": "Grammar of the Edit.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 8
+      }
+     ],
+     "v1_pos": 119,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_c544d8fb5fd7372568d8b703ecd2ea5e694a7f4f1e060ca50250caa94229eacd",
+     "doc": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 49
+      }
+     ],
+     "v1_pos": 116,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "n_v2_only_reached_final": 1,
+   "deep_family_reached_final_docs": []
+  },
+  "wc06_unpredictable_fighter": {
+   "cap": 120,
+   "fused_total": 187,
+   "v1_n": 120,
+   "v2_n": 120,
+   "identical_cap_set": false,
+   "n_intersection": 112,
+   "n_v1_only": 8,
+   "n_v2_only": 8,
+   "admission_deep_v1_only": [],
+   "admission_deep_v2_only": [],
+   "v2_only": [
+    {
+     "chunk_id": "chunk_026ad99140b9c7c8d3fa0fad9c102e2fbe6522983c7f0cb13c26659aab210628",
+     "doc": "Making Meaning with Machines.md",
+     "query_ids": [
+      "q3"
+     ],
+     "lineage": [
+      {
+       "query_id": "q3",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 100,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_0d69a3f9b0fc8244d0ce1f38d19c8026b5f48a375482abf9a1461bf5057d621c",
+     "doc": "Bruce Block - The Visual Story (2007).md",
+     "query_ids": [
+      "q3"
+     ],
+     "lineage": [
+      {
+       "query_id": "q3",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 106,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_293230eef5c52e617c57402c80220da58e8932f855fe6b044f044224692795e5",
+     "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 108,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_49229c22060b42eea51c428786e3b47f38f0e07762e8e9b8709f3f11c73bf41b",
+     "doc": "Making Meaning with Machines.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 3
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 114,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_6dd3f53bc19865a08df7fe9a7de4f6b4dbcb5f9c57b8f4f173ea3e06a1c19f05",
+     "doc": "Bruce Block - The Visual Story (2007).md",
+     "query_ids": [
+      "q3"
+     ],
+     "lineage": [
+      {
+       "query_id": "q3",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 95,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_751891a8a669a60336999dd8b4ef3485b425f1cbe9a52ffe8854e9d8d7286b06",
+     "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 97,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_9b78df780e5c1f459a1909249cc54d01cee6ca7b7e590a81d642339570fbcc4d",
+     "doc": "Making Meaning with Machines.md",
+     "query_ids": [
+      "q3"
+     ],
+     "lineage": [
+      {
+       "query_id": "q3",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 109,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_c29731c70661cee892d7ccbc0a4080cee4c35a70ba0785cfc5711d4c20b63258",
+     "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 103,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "v1_only": [
+    {
+     "chunk_id": "chunk_04eed6e03669eb4f71562aabcd50cbdfcf0ae6902ee7e44de9f03d9f737936c4",
+     "doc": "The Laban Workbook for Actors.md",
+     "query_ids": [
+      "q3"
+     ],
+     "lineage": [
+      {
+       "query_id": "q3",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 7
+      }
+     ],
+     "v1_pos": 115,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_099cd037dc0b8c42eb48ff28f0a801c10f8963163cf78d1b4fa0990be2c7517a",
+     "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+     "query_ids": [
+      "q3"
+     ],
+     "lineage": [
+      {
+       "query_id": "q3",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 9
+      }
+     ],
+     "v1_pos": 117,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_1b0cc463985e6cce788808a94f1f0b1f71a04869d7061fa0c43995d2468c4a43",
+     "doc": "Laban Movement-Guided Diffusion for Text-to-Motion Generation.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 16
+      }
+     ],
+     "v1_pos": 96,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_9e55b8c5678449a6ee609a359cb9405d2a157f140be88a9f41769d7a3262d8f0",
+     "doc": "Force Dynamic Life Drawing.md",
+     "query_ids": [
+      "q3"
+     ],
+     "lineage": [
+      {
+       "query_id": "q3",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 14
+      }
+     ],
+     "v1_pos": 118,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_e31eece9de6c7f931fa893e152c1c7d7606b05278b9562e14b21869118be4d25",
+     "doc": "Bruce Block - The Visual Story (2007).md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 8
+      }
+     ],
+     "v1_pos": 101,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_e43bb076500526efcf285217c203ec52e504a16fbc5768fe56fd64637eaa9a2d",
+     "doc": "Stage Combat Arts.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 6
+      }
+     ],
+     "v1_pos": 93,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_e546c9a2b49284237c401f6767e1c0c7cf6522a51b92c4137280b2cc7f8c4717",
+     "doc": "Film Directing Cinematic Motion.md",
+     "query_ids": [
+      "q3"
+     ],
+     "lineage": [
+      {
+       "query_id": "q3",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 4
+      }
+     ],
+     "v1_pos": 114,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_fc9fecfcfc223549631c78d3c55693a31379ec4770576f6e5b58140bba5749af",
+     "doc": "The Anatomy of Story.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 10
+      }
+     ],
+     "v1_pos": 107,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "n_v2_only_reached_final": 0,
+   "deep_family_reached_final_docs": []
+  },
+  "wc07_silent_authority": {
+   "cap": 120,
+   "fused_total": 194,
+   "v1_n": 120,
+   "v2_n": 120,
+   "identical_cap_set": false,
+   "n_intersection": 119,
+   "n_v1_only": 1,
+   "n_v2_only": 1,
+   "admission_deep_v1_only": [],
+   "admission_deep_v2_only": [],
+   "v2_only": [
+    {
+     "chunk_id": "chunk_7baa2cf752b9f9430f986db9b2ae13969ecba9c511142608ef006e4e87b683b4",
+     "doc": "Making Connections Bartenieff Fundamentals.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 110,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "v1_only": [
+    {
+     "chunk_id": "chunk_39e84e49ac05ec442027fb0f07ec290d46f31c7bab013ec2da62bba02ca8b979",
+     "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 44
+      }
+     ],
+     "v1_pos": 117,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "n_v2_only_reached_final": 0,
+   "deep_family_reached_final_docs": []
+  },
+  "wc08_giant_creature": {
+   "cap": 120,
+   "fused_total": 184,
+   "v1_n": 120,
+   "v2_n": 120,
+   "identical_cap_set": false,
+   "n_intersection": 111,
+   "n_v1_only": 9,
+   "n_v2_only": 9,
+   "admission_deep_v1_only": [],
+   "admission_deep_v2_only": [],
+   "v2_only": [
+    {
+     "chunk_id": "chunk_021c019e7610404a6b3c3a4d32d1adab4d6e062d6bdfe02ed145cf3c9fa546a9",
+     "doc": "VES Handbook of Visual Effects.md",
+     "query_ids": [
+      "q1",
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 13
+      },
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 14
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 20,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_0c5f9418eff0d96464e3ee2131461213e9393c3070f5293ba8d871a3eea517be",
+     "doc": "Paul Ekman - Facial Action Coding System Manual (0).md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 109,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_14e092e348817ecbe954dc85c29657eba39745a2399403a77e0af39627b21d20",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 3
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 112,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_2e96b1a483b40c843f73af532795c88db3223d91c5de0ec797b75407393ab514",
+     "doc": "Ed Hooks - Acting for Animators (2017).md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 3
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 114,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_5a0576c4536364b2f7a765951a21099a246d23a8e7e0e2b26d228c94a2646dd2",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q1",
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 15
+      },
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 14
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 22,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_baee257b1d88b9e87b4f44f6efe24e250496baff8bd9eb7e7b5283078768eda8",
+     "doc": "Making Meaning with Machines.md",
+     "query_ids": [
+      "q1",
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 10
+      },
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 11
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 18,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_d1a972bd590c26e0552a60b4ce02bc5353877a6627c1dea9b10644aef14c169d",
+     "doc": "Timing for Animation.md",
+     "query_ids": [
+      "q1",
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 3
+      },
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 3
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 15,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_e82dc343ee856213731a6bb6c11955fd176f92427b3285301ae9cb583132d1a5",
+     "doc": "Ed Hooks - Acting for Animators (2017).md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 104,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_ff523262e9890c27474463202a729e3240ff10ca83385c4ab205119247223bda",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q1",
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 11
+      },
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 9
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 17,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "v1_only": [
+    {
+     "chunk_id": "chunk_151a547305de6880ccbc980d62f992e041b22b70e23d267b6733fffe0ac97e65",
+     "doc": "VES Handbook of Visual Effects.md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 46
+      }
+     ],
+     "v1_pos": 110,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_157205fdfe03528b84af8cdec64e9904a10cdccfd77743e9c7abfb0e0ee516c6",
+     "doc": "Manga in Theory and Practice.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 6
+      }
+     ],
+     "v1_pos": 116,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_3ccc095a7b6ce9d615a78bdb1f741f774c64f754de1aad33f3e3bb67c7b9c843",
+     "doc": "Complete Guide to Drawing Dynamic Manga Sword Fighters.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 5
+      }
+     ],
+     "v1_pos": 114,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_9c5a556a8844a485de762c4733391891d69bc3f749072aa63d939f41d2ae7c62",
+     "doc": "VES Handbook of Visual Effects.md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 49
+      }
+     ],
+     "v1_pos": 115,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_afae317a537b8601f061282feec8026380ead66408c67834c9ba9d31bf8a21ce",
+     "doc": "Making Meaning with Machines.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 6
+      }
+     ],
+     "v1_pos": 117,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_d16b71da4bf5b0fd82b15fc795d50e1af821fbe46a28adfbef8227379eb915f5",
+     "doc": "Francis Glebas - Directing the Story (2008).md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 47
+      }
+     ],
+     "v1_pos": 111,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_e8a58eaec633bf2b6a3e0e88181226d802c189096788fdc45645f580fc10ac4e",
+     "doc": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 48
+      }
+     ],
+     "v1_pos": 113,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_ec21b68daab71eca35166e329219db7f2e761fcbb1b5e683ebe5af444507d194",
+     "doc": "Force Dynamic Life Drawing.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 4
+      }
+     ],
+     "v1_pos": 112,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_edbcca5049e776e3631b668140b583f59a64bfbdff8d05d2f4e22c6dc8b7ec99",
+     "doc": "Facial Action coding 3.0.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 8
+      }
+     ],
+     "v1_pos": 119,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "n_v2_only_reached_final": 0,
+   "deep_family_reached_final_docs": []
+  },
+  "wc09_pen_desire": {
+   "cap": 120,
+   "fused_total": 187,
+   "v1_n": 120,
+   "v2_n": 120,
+   "identical_cap_set": false,
+   "n_intersection": 110,
+   "n_v1_only": 10,
+   "n_v2_only": 10,
+   "admission_deep_v1_only": [],
+   "admission_deep_v2_only": [],
+   "v2_only": [
+    {
+     "chunk_id": "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+     "doc": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 112,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_30101efd0387c06eacc658e0fd23b98f7550fd0694a0e08fcbb4fadaf8ba0b63",
+     "doc": "Breakthrough Advertising.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 18
+      },
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 3
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 26,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_34939e8f87cf465a0859577dedd1c76043046d81dfdcf0bd30781bf45f7c5612",
+     "doc": "Breakthrough Advertising.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 2
+      },
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 7
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 20,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_4eac567b392f111fc28fde3be59aaa9258e738e133f786c6054a73359cca8d9c",
+     "doc": "Breakthrough Advertising.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 113,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_65e63b2c8bd0868dc7af47bb4f45e0820b882088269122a9217015c6e2ce6f0a",
+     "doc": "Breakthrough Advertising.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 117,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_7cf37eca7a2599f2bfceba6cfe007221159ce4476ed4ebcfec3913a19aac6994",
+     "doc": "Breakthrough Advertising.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 108,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_80b9e27257824f5893f015327474def6fcb3223c515a7b998e02407ffbb8a86d",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q1",
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 11
+      },
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 4
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 22,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_8d440c8bc4e4dea7fc0abc2913fa20f606ccda4d4f1d0a7997677336f31bcb5d",
+     "doc": "The Adweek Copywriting Handbook.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 5
+      },
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 5
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 21,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a",
+     "doc": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 111,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_f8062a534123db5e80702460200258f2ffef8b47eb4dd42e3700bbe547860bc8",
+     "doc": "The Adweek Copywriting Handbook.md",
+     "query_ids": [
+      "q2"
+     ],
+     "lineage": [
+      {
+       "query_id": "q2",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 115,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "v1_only": [
+    {
+     "chunk_id": "chunk_240599ed1597bd7b0087f758f576dc22daee2efe15f1bdd69ab7746fa541131f",
+     "doc": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 19
+      }
+     ],
+     "v1_pos": 110,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_3d24982aeffcff089633a1f58f122f5f472966a0d5391209db02fa70c1643227",
+     "doc": "The Adweek Copywriting Handbook.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 8
+      }
+     ],
+     "v1_pos": 81,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_4661622a630bbf1f1f2f4df9b32d9c5efc2ab643897989febcc1386f318aa39e",
+     "doc": "Framed Ink.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 14
+      }
+     ],
+     "v1_pos": 97,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_6aceb72312610f818b94840b9342572b73757afd31ae05294f3e0f959238276d",
+     "doc": "The Adweek Copywriting Handbook.md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 46
+      }
+     ],
+     "v1_pos": 117,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_6f3de743b36a84475de75622806080e924576137071d93d5b9d62c4654a74ba5",
+     "doc": "Bruce Block - The Visual Story (2007).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 11
+      }
+     ],
+     "v1_pos": 91,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_70a1de2e1e985da05fe11f8ddc265685bbd365c26aface5d287c0e1cd3c03425",
+     "doc": "Hey Whipple Squeeze This.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 3
+      }
+     ],
+     "v1_pos": 116,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_74e347c2036c57ec26e05ab55049694de668e12334623b655722cf2d8e6f47d8",
+     "doc": "Francis Glebas - Directing the Story (2008).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 16
+      }
+     ],
+     "v1_pos": 104,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_91b578fbe662bb6c80092a2c1c02b6eb8977f39c95854a4476d12c2167990ea4",
+     "doc": "Breakthrough Advertising.md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 47
+      }
+     ],
+     "v1_pos": 118,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_e6fded0127c7debc32439f7ef93934c91c1144545df7fbf01560bf6c15493b9b",
+     "doc": "The Anatomy of Story.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 9
+      }
+     ],
+     "v1_pos": 86,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_eb573ba78046436af2c7f2f3fad31332d358f820d5a257b010f6af34f1f85ef0",
+     "doc": "The Anatomy of Story.md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 48
+      }
+     ],
+     "v1_pos": 119,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "n_v2_only_reached_final": 0,
+   "deep_family_reached_final_docs": []
+  },
+  "wc10_suppressed_grief": {
+   "cap": 120,
+   "fused_total": 201,
+   "v1_n": 120,
+   "v2_n": 120,
+   "identical_cap_set": false,
+   "n_intersection": 113,
+   "n_v1_only": 7,
+   "n_v2_only": 7,
+   "admission_deep_v1_only": [],
+   "admission_deep_v2_only": [],
+   "v2_only": [
+    {
+     "chunk_id": "chunk_1fdee3fd6fe4161d5788d495ac4bb160dcad9b2ec783e4e30f4188349935df17",
+     "doc": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 115,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_673d5df29ec22bf05d09384b609a41ec33910eca8f69131d154f47a7176e84ad",
+     "doc": "handbook.html",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 110,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_7645cade37e7938c3761ca3c82a5c95165f33ee89c88599a80fcee209b832198",
+     "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 111,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_8f01484bcb22245eaa84323e8a10774c304e602cfb7b1b1ac3a4c1ca1a39dad7",
+     "doc": "Grammar of the Edit.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 1
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 112,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_c25c452ab046f2cb324ffe2311870efe964c0ef0521ba73a6341e0514cc62c83",
+     "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 0
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 105,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_dcd56f72d3980351dfed56918add4fe6417ab57a99b2a3c106636888f09a4c14",
+     "doc": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 117,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_f30f70d0e63a476f85c86316774a8299b9e7c18f4271a41c92ec17dafcd5cc71",
+     "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+     "query_ids": [
+      "p0"
+     ],
+     "lineage": [
+      {
+       "query_id": "p0",
+       "origin": "PROFILE",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 2
+      }
+     ],
+     "v1_pos": null,
+     "v2_pos": 118,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "v1_only": [
+    {
+     "chunk_id": "chunk_49229c22060b42eea51c428786e3b47f38f0e07762e8e9b8709f3f11c73bf41b",
+     "doc": "Making Meaning with Machines.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 5
+      }
+     ],
+     "v1_pos": 70,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_6381a85278ea952750e5d3dbe9c3076f9d1e721a8a784823d31dbb8956ef32c4",
+     "doc": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 11
+      }
+     ],
+     "v1_pos": 91,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_6e378a19e62c9fad6eb3982c0ff02b91719cc94966fd79ca9e67851075a302e6",
+     "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 14
+      }
+     ],
+     "v1_pos": 99,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_704e0fb674e924ce655151be1f6e37d369c817c374c5e11e3df611949f39969c",
+     "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "query_ids": [
+      "q0"
+     ],
+     "lineage": [
+      {
+       "query_id": "q0",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 44
+      }
+     ],
+     "v1_pos": 118,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_903be7d54a58eb3930c20748b2ffbafa401c1457a810f2a3103d84eb1e720487",
+     "doc": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_SPARSE_CHILD",
+       "local_rank": 10
+      }
+     ],
+     "v1_pos": 86,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_c69fcdc5d9c519567e45d0e594e012a61579d77c52fbc4bac63e42b346b34050",
+     "doc": "Francis Glebas - Directing the Story (2008).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 19
+      }
+     ],
+     "v1_pos": 108,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    },
+    {
+     "chunk_id": "chunk_ff5451b08876918d3a27e4d444161a5f3ad4436adc826e5d6c54f05ccd533e95",
+     "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "query_ids": [
+      "q1"
+     ],
+     "lineage": [
+      {
+       "query_id": "q1",
+       "origin": "USER",
+       "lane": "GLOBAL_DENSE_CHILD",
+       "local_rank": 6
+      }
+     ],
+     "v1_pos": 73,
+     "v2_pos": null,
+     "downstream": {
+      "in_final_evidence": false,
+      "latent_seat": null,
+      "ca4_support": null
+     }
+    }
+   ],
+   "n_v2_only_reached_final": 0,
+   "deep_family_reached_final_docs": []
+  }
+ }
+}

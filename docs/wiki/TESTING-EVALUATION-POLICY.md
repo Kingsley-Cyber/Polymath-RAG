@@ -13,6 +13,44 @@ When creating, modifying, qualifying, or debugging Polymath, testing must be **h
 
 The objective is not to maximize the number of test turns. The objective is to obtain the **smallest amount of high-quality evidence sufficient to answer the engineering question being asked**.
 
+## 0. Classify the question first
+
+Before choosing a test, name which question you are answering — the class dictates the experiment:
+
+```text
+1. IMPLEMENTATION   "Does the code work?"
+                    → unit / synthetic tests
+
+2. MECHANISM        "Did the mechanism CAUSE the intended behavior?"
+                    → fixed-input PAIRED test (freeze upstream, vary only the mechanism)
+
+3. QUALITY          "Does this improve representative behavior?"
+                    → 15–20 stratified cases
+
+4. SAFETY           "Did anything important regress?"
+                    → 15–20 risk-stratified sentinel
+
+5. RELEASE          "Do we need authoritative benchmark regeneration?"
+                    → full regression only when justified
+```
+
+An end-to-end A/B (class 3) answers "is it better on representative behavior", NOT "did the mechanism
+cause it". Only a class-2 fixed-input paired test isolates causation. Do not report an end-to-end
+improvement as causal proof of a specific mechanism.
+
+**Control before volume.**
+
+```text
+DO NOT substitute additional sample volume for experimental control.
+
+Before increasing N, ask whether the current uncertainty is caused by:
+  - too few observations   → increase N selectively
+  - confounded inputs      → CONTROL THE VARIABLES FIRST
+```
+
+If two conditions receive different upstream inputs (plan, bridges, retrieval, RankedLane[]), more runs
+will not turn a confounded comparison into a clean causal one — freezing the upstream will.
+
 ## 1. Start with the decision, not the benchmark
 
 Before running a test, explicitly state:
