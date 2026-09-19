@@ -650,6 +650,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-19-latent-query-fusion-f1-ranked-lane.md", "md", None),
     ("docs/wiki/work-log/2026-09-19-latent-query-fusion-f2-weighted-rrf.md", "md", None),
     ("docs/wiki/work-log/2026-09-19-latent-query-fusion-f3-selection-seam.md", "md", None),
+    ("docs/wiki/work-log/2026-09-19-latent-query-fusion-f4-live-cutover.md", "md", None),
     ("docs/wiki/work-log/2026-09-18-prelive-wiring-p10-resolution.md", "md", None),
     ("eval/librarian_qualification/harness.py", "py", None),
     ("eval/librarian_qualification/build_gold.py", "py", None),
