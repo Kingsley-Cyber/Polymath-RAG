@@ -61,8 +61,9 @@ NO_RETRIEVAL_TASKS = ("TRANSFORM_USER_CONTENT", "CONTINUE_PRIOR_ARTIFACT", "GENE
 ROLE_TYPES = ("direct", "prerequisite", "complement", "bridge", "contrast", "inversion", "resolution")
 #: SUBQUERY-PROVENANCE-V1 / P10 — where a subquery CAME FROM (checklist retrieval-trace row).
 #: q0 and its aspect decomposition are USER; a scout-inspired subquery is PROFILE; a graph-derived
-#: target is GRAPH; a claim-gap resolution query (P10) is EVIDENCE_GAP.
-ORIGIN_TYPES = ("USER", "PROFILE", "GRAPH", "EVIDENCE_GAP")
+#: target is GRAPH; a claim-gap resolution query (P10) is EVIDENCE_GAP; a WLK2C concept-bridge
+#: (bounded compiler) is BRIDGE; a wildcard-frontier bridge is WILDCARD.
+ORIGIN_TYPES = ("USER", "PROFILE", "GRAPH", "EVIDENCE_GAP", "BRIDGE", "WILDCARD")
 _TYPE_ROLE = {
     "PRIMARY": "direct", "DEFINITION": "prerequisite", "MECHANISM": "complement",
     "CAUSAL": "complement", "PROCEDURE": "complement", "EXAMPLE": "complement",

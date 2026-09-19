@@ -23,7 +23,7 @@ CONCEPTS = [Concept(key="docFACS", label="Facial Action Coding", source="docFACS
 
 
 def _inp(**kw):
-    base = dict(q0=Q0, intent="CREATIVE", concepts=CONCEPTS,
+    base = dict(q0=Q0, intent="APPLICATION", concepts=CONCEPTS,
                 existing_subqueries=["expression timing beats"], graph_relations=[])
     base.update(kw)
     return BridgeCompilerInput(**base)
@@ -32,10 +32,12 @@ def _inp(**kw):
 # ---- eligibility ----
 
 def test_eligibility():
-    assert compiler_eligible("CREATIVE", CONCEPTS, [])[0] is True
-    assert compiler_eligible("FAST", CONCEPTS, [])[0] is False          # not a latent intent
-    assert compiler_eligible("CREATIVE", [], [])[0] is False            # no concepts
-    ok, reason = compiler_eligible("CREATIVE", CONCEPTS, ["docFACS", "docHooks"])
+    assert compiler_eligible("APPLICATION", CONCEPTS, [])[0] is True    # creative intent
+    assert compiler_eligible("SYNTHESIS", CONCEPTS, [])[0] is True
+    assert compiler_eligible("DEFINITION", CONCEPTS, [])[0] is False    # factual/direct-lookup intent
+    assert compiler_eligible("MECHANISM", CONCEPTS, [])[0] is False
+    assert compiler_eligible("APPLICATION", [], [])[0] is False         # no concepts
+    ok, reason = compiler_eligible("APPLICATION", CONCEPTS, ["docFACS", "docHooks"])
     assert ok is False and reason == "all_concepts_have_admissible_bridge"
 
 

@@ -27,8 +27,11 @@ from polymath_shared.bridge_admission import structural_bridge_admissibility
 from polymath_shared.retrieval_lineage import DiscoveryPath
 
 PROPOSED_ROLES = ("COMPLEMENTARY", "DIVERGENT")
-#: intents that permit latent expansion (the compiler never runs for a simple factual/FAST turn).
-LATENT_INTENTS = ("CREATIVE", "SYNTHESIS", "EXPLORE", "IDEATE", "DESIGN", "TRANSFORM")
+#: intents (a subset of query_intent.INTENTS) that PERMIT latent expansion — creative/synthesis/
+#: exploratory/knowledge-construction. INTENT-based, never mode-based (a creative FAST query is
+#: eligible; a factual WILDCARD query is not). The factual/direct-lookup intents (EXACT, DEFINITION,
+#: MECHANISM, COMPARISON, PROCEDURE, RECALL) are deliberately excluded — q0 retrieval suffices there.
+LATENT_INTENTS = ("SYNTHESIS", "APPLICATION", "EXPLORATORY", "RELATIONSHIP")
 MAX_BRIDGES = 4
 
 
