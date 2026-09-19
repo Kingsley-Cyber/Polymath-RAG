@@ -97,6 +97,7 @@ TREE: list[tuple[str, str, str | None]] = [
     # ── Docs / wiki ─────────────────────────────────────────────────────────
     ("docs/README.md", "md", "DOCS_README"),
     ("docs/wiki/README.md", "md", "WIKI_README"),
+    ("docs/wiki/TESTING-EVALUATION-POLICY.md", "md", None),
     ("docs/wiki/decisions/0000-template.md", "md", "ADR_TEMPLATE"),
     ("docs/wiki/decisions/0001-use-gliner-2pass.md", "md", "ADR_0001"),
     ("docs/wiki/decisions/0002-postgres-not-mongo.md", "md", "ADR_0002"),

@@ -27,6 +27,11 @@ Before making any code, schema, data, architecture, or evaluation change:
 5. Run the bootstrap command block from the CONTINUITY-REPORT §0
    (guards + bundle integrity + fleet-truth query).
 6. Do not modify anything until repository state and bootstrap state agree.
+7. For any test, evaluation, qualification, or debug run, follow
+   `docs/wiki/TESTING-EVALUATION-POLICY.md` — hypothesis-driven and
+   decision-oriented, smallest sufficient stratified test, control confounds
+   before adding runs, reuse frozen baselines, and emit the §11 mini-plan
+   before launching. A scoped gate is a SENTINEL, never reported as full CA5.
 
 ## Current Repository State (dated handoff — read before architectural work)
 
@@ -53,6 +58,9 @@ Never assume:
 - never treat experimental findings as production defaults;
 - never silently change frozen architecture;
 - never modify evaluation corpora after freeze;
+- never inflate a test beyond the smallest sufficient stratified set without a
+  stated reason (per `docs/wiki/TESTING-EVALUATION-POLICY.md`); never silently
+  turn N questions into N×modes; never report a scoped sentinel as full CA5;
 - never continue from stale documentation without verifying it against
   git and artifacts.
 
