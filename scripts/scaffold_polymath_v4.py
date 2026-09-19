@@ -644,6 +644,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/wildcard_latent_knowledge/README.md", "md", None),
     ("eval/wildcard_latent_knowledge/BASELINE-2026-09-18.json", "json", None),
     ("eval/wildcard_latent_knowledge/mode_survival.py", "py", None),
+    ("eval/wildcard_latent_knowledge/SURVIVAL-2026-09-18.json", "json", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-schema.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-lifecycle-writer.md", "md", None),
     ("docs/wiki/work-log/2026-09-17-projection-reconcile.md", "md", None),

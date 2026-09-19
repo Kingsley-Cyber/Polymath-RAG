@@ -14,13 +14,22 @@ must not be trained to hit a title; it must be able to *discover the concept fam
   locates the stage-of-loss, and computes the six metrics. `.venv/bin/python eval/wildcard_latent_knowledge/harness.py <out.json>`.
 - `BASELINE-2026-09-18.json` — the frozen baseline (this run), recorded BEFORE any WLK1/2/3 change.
 
-## The six metrics
-1. **Routing Success** — did retrieval actually run when knowledge was needed?
-2. **Specialized Discovery Rate** — % queries with ≥1 useful specialized corpus concept.
-3. **Transformative Discovery Rate** — % queries where a *deeper*-family source reaches final evidence.
-4. **Deep-Target Reach** — of queries with a known deeper family, did retrieval reach it?
-5. **Wildcard Value-Add** — % queries where WILDCARD surfaced a specialized concept FAST did not.
-6. **Synthesis Spend** — % of specialized discoveries actually cited/used in the final answer.
+## The metrics — a clean funnel (DISCOVERED → CANDIDATE → SURVIVED RERANK → FINAL → SPENT)
+Frozen definitions (no overlap between "reach" and "survival"):
+1. **Routing Success** — did the query correctly enter retrieval?
+2. **Specialized Discovery** — did an *acceptable* specialized family enter the **CANDIDATE** pool?
+3. **Deep-Target Reach** — did a *deeper* family enter the **CANDIDATE** pool?
+4. **Deep Survival** — did a *deeper* family survive into **FINAL** evidence? (Reach ≠ Survival.)
+5. **Synthesis Spend** — did synthesis actually use/cite that surviving specialized/deep evidence?
+6. **Wildcard Value-Add** — did WILDCARD introduce a specialized/deep family absent from **FAST candidate**?
+
+Per mode the survival trace also records **rerank survival** (final ∩ candidate / candidate) and, for
+HYBRID/GRAPH/WILDCARD, the **discovery delta** (families the mode's candidate pool has that FAST's lacks)
+and whether that delta **survived** rerank — so a mode that discovers well but is flattened downstream
+is distinguishable from a mode that never discovered. Each family carries **origin provenance** (which
+modes hold it at candidate/final + whether nominated). Detection is currently **source-family** (title/
+author aliases); **content-family** (concept aliases — e.g. FACS: "action unit", "AU6", "Duchenne",
+"zygomatic") is deferred to v2 so a chunk that explains a family without the title string still counts.
 
 ## Stage-of-loss (per case)
 `ROUTING · NOMINATION · LOCALIZATION · CANDIDATE · RERANK · PORTFOLIO · SYNTHESIS · NONE` — the last
@@ -47,9 +56,17 @@ Because routing/nomination/candidate/rerank/synthesis are substantially shared, 
 here means the fix is a **shared downstream** one (helps every mode), not per-strategy tuning. Written
 to `SURVIVAL-2026-09-18.json`.
 
-## Improvement slices (each MUST rerun this benchmark; one fix must not degrade another)
-- **WLK1** — imperative creative-rewrite routing (fix #2 ROUTING).
-- **WLK2** — survival of high-value Scout-nominated deep material through rerank (fix #1; helps #3).
-- **WLK3** — synthesis spending of valuable PARTIAL/RELATED evidence (fix #4).
+## Improvement slices (each MUST rerun this benchmark vs the FROZEN baseline; one fix must not degrade another)
+A nomination failure and a rerank failure are DIFFERENT interventions — do not combine them:
+- **WLK1** — imperative creative-rewrite routing → fixes **#2** (ROUTING).
+- **WLK2A** — nomination depth/coverage → investigates **#3** (Murch/FACS never nominated). May need NO
+  production change; do not fold it into WLK2B.
+- **WLK2B** — survival of high-value *Scout-nominated* deep material through candidate/rerank → fixes
+  **#1**; likely helps ALL modes (shared downstream).
+- **WLK3** — synthesis spending of valuable surviving PARTIAL/RELATED evidence → fixes **#4**.
 
-Do not redesign ingestion or the Wildcard architecture at this stage.
+## Baseline immutability
+`BASELINE-2026-09-18.json` and `SURVIVAL-2026-09-18.json` are the **frozen originals** — never
+regenerate them after a fix. Each slice writes a NEW artifact (`WLK1-<date>.json`, `WLK2A-…`, `WLK2B-…`,
+`WLK3-…`) and is compared against the original baseline so we see exactly which metric moved and confirm
+no cross-mode regression. Do not redesign ingestion or the Wildcard architecture at this stage.

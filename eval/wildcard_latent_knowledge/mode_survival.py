@@ -97,10 +97,27 @@ def run():
                 row[label] = {"candidate": fam in (m.get("candidate_deep") or []),
                               "final": fam in (m.get("final_deep") or [])}
             deep_survival[fam] = row
+        # per-mode DISCOVERY DELTA: specialized families a mode's CANDIDATE pool has that FAST's lacks
+        fast_cand = set((per_mode.get("FAST") or {}).get("candidate_spec") or [])
+        discovery_delta = {lab: sorted(set((per_mode.get(lab) or {}).get("candidate_spec") or []) - fast_cand)
+                           for lab, _ in MODES if lab != "FAST"}
+        # did each mode's own discovery survive into its FINAL evidence?
+        delta_survival = {lab: sorted(set(discovery_delta.get(lab, [])) &
+                                      set((per_mode.get(lab) or {}).get("final_spec") or []))
+                          for lab in discovery_delta}
+        # ORIGIN PROVENANCE per specialized family: which modes carry it at candidate / final + nominated
+        origin = {}
+        allf = sorted(set().union(*[set((per_mode.get(l) or {}).get("candidate_spec") or []) for l, _ in MODES])) if per_mode else []
+        for fam in allf:
+            origin[fam] = {"nominated": fam in nom_spec,
+                           "candidate_modes": [l for l, _ in MODES if fam in ((per_mode.get(l) or {}).get("candidate_spec") or [])],
+                           "final_modes": [l for l, _ in MODES if fam in ((per_mode.get(l) or {}).get("final_spec") or [])]}
         cases.append({"id": spq["id"], "retrieval_required": plan.retrieval_required,
                       "scout_spec": nom_spec, "scout_deep": nom_deep, "per_mode": per_mode,
                       "candidate_family_union": cand_union, "final_family_union": final_union,
                       "candidate_vs_final_shrink": len(cand_union) - len(final_union),
+                      "discovery_delta": discovery_delta, "delta_survival": delta_survival,
+                      "origin_provenance": origin,
                       "deep_family_survival": deep_survival, "expected_weakness": spq.get("baseline_weakness")})
         # print a compact survival line for the deep family
         dl = []
@@ -110,18 +127,46 @@ def run():
                 f"{lab[0]}[c{int(r[lab]['candidate'])}/f{int(r[lab]['final'])}]" for lab, _ in MODES))
         print(f"  {spq['id']:24s} route={plan.retrieval_required!s:5} | " + " ; ".join(dl), flush=True)
 
-    # aggregate: rerank survival per mode (final_spec / candidate_spec), candidate>final shrink
-    agg = {}
+    # ---- clean funnel metrics (owner definitions): DISCOVERED -> CANDIDATE -> SURVIVED -> FINAL ----
+    routed = [c for c in cases if c["retrieval_required"]]
+    n = len(cases)
+
+    def _any_deep(c, stage):
+        return any(any(r[l][stage] for l, _ in MODES) for r in c["deep_family_survival"].values())
+    funnel = {
+        "routing_success": round(len(routed) / n, 3),
+        "specialized_discovery_at_candidate": round(sum(1 for c in routed if c["candidate_family_union"]) / n, 3),
+        "deep_target_reach_at_candidate": round(sum(1 for c in routed if _any_deep(c, "candidate")) / n, 3),
+        "deep_survival_at_final": round(sum(1 for c in routed if _any_deep(c, "final")) / n, 3),
+        "wildcard_value_add": round(sum(1 for c in routed if c["discovery_delta"].get("WILDCARD")) / n, 3),
+    }
+    # per-mode: rerank survival (spec + deep) + discovery-delta survival
+    per_mode_agg = {}
     for label, _ in MODES:
-        surv, tot = 0, 0
-        for c in cases:
+        cs_tot = fs_tot = dcand = dsurv = dd = dds = 0
+        for c in routed:
             m = c["per_mode"].get(label, {})
             cs, fs = set(m.get("candidate_spec") or []), set(m.get("final_spec") or [])
-            tot += len(cs); surv += len(cs & fs)
-        agg[label] = {"rerank_survival_spec": round(surv / tot, 3) if tot else None,
-                      "candidate_spec_families": tot, "survived_families": surv}
+            cs_tot += len(cs); fs_tot += len(cs & fs)
+            dcand += len(set(m.get("candidate_deep") or []))
+            dsurv += len(set(m.get("candidate_deep") or []) & set(m.get("final_deep") or []))
+            if label != "FAST":
+                delta = set(c["discovery_delta"].get(label, []))
+                dd += len(delta); dds += len(delta & fs)
+        per_mode_agg[label] = {
+            "rerank_survival_spec": round(fs_tot / cs_tot, 3) if cs_tot else None,
+            "deep_candidate_families": dcand, "deep_survived_rerank": dsurv,
+            "discovery_delta_families": (dd if label != "FAST" else None),
+            "discovery_delta_survived_rerank": (dds if label != "FAST" else None)}
+    cand_fams = len({f for c in routed for f in c["candidate_family_union"]})
+    final_fams = len({f for c in routed for f in c["final_family_union"]})
     return {"benchmark": "LATENT-KNOWLEDGE-10", "modes": [m[0] for m in MODES],
-            "wall_s": round(time.time() - t0, 1), "rerank_survival_by_mode": agg, "cases": cases}
+            "wall_s": round(time.time() - t0, 1),
+            "funnel_metrics": funnel, "per_mode": per_mode_agg,
+            "candidate_family_diversity": cand_fams, "final_family_diversity": final_fams,
+            "candidate_to_final_shrink": cand_fams - final_fams,
+            "note": "source-family detection (title/author). content-family (concept aliases in chunk text) deferred to v2.",
+            "cases": cases}
 
 
 def main() -> int:
@@ -129,11 +174,16 @@ def main() -> int:
     stamp = time.strftime("%Y-%m-%d")
     path = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else (HERE / f"survival-{stamp}.json")
     path.write_text(json.dumps(out, indent=1))
-    print("\n== RERANK SURVIVAL (final specialized families / candidate specialized families) ==")
-    for lab, v in out["rerank_survival_by_mode"].items():
-        print(f"  {lab:9s} survival={v['rerank_survival_spec']}  ({v['survived_families']}/{v['candidate_spec_families']})")
-    shrink = sum(c["candidate_vs_final_shrink"] for c in out["cases"])
-    print(f"  candidate→final family shrink (sum across cases): {shrink}")
+    print("\n== FUNNEL METRICS ==")
+    for k, v in out["funnel_metrics"].items():
+        print(f"  {k:36s} {v}")
+    print("== PER-MODE (rerank survival / deep cand->survived / discovery-delta survived) ==")
+    for lab, v in out["per_mode"].items():
+        print(f"  {lab:9s} rerank_survival={v['rerank_survival_spec']}  "
+              f"deep={v['deep_survived_rerank']}/{v['deep_candidate_families']}  "
+              f"delta_surv={v['discovery_delta_survived_rerank']}/{v['discovery_delta_families']}")
+    print(f"  candidate family diversity={out['candidate_family_diversity']} -> final={out['final_family_diversity']}"
+          f"  (shrink {out['candidate_to_final_shrink']})")
     print(f"\nWROTE {path}")
     return 0
 

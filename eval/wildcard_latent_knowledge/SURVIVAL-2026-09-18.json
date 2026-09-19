@@ -1,0 +1,2526 @@
+{
+ "benchmark": "LATENT-KNOWLEDGE-10",
+ "modes": [
+  "FAST",
+  "HYBRID",
+  "GRAPH",
+  "WILDCARD"
+ ],
+ "wall_s": 192.9,
+ "funnel_metrics": {
+  "routing_success": 0.9,
+  "specialized_discovery_at_candidate": 0.9,
+  "deep_target_reach_at_candidate": 0.9,
+  "deep_survival_at_final": 0.7,
+  "wildcard_value_add": 0.2
+ },
+ "per_mode": {
+  "FAST": {
+   "rerank_survival_spec": 0.703,
+   "deep_candidate_families": 14,
+   "deep_survived_rerank": 10,
+   "discovery_delta_families": null,
+   "discovery_delta_survived_rerank": null
+  },
+  "HYBRID": {
+   "rerank_survival_spec": 0.763,
+   "deep_candidate_families": 14,
+   "deep_survived_rerank": 10,
+   "discovery_delta_families": 3,
+   "discovery_delta_survived_rerank": 3
+  },
+  "GRAPH": {
+   "rerank_survival_spec": 0.763,
+   "deep_candidate_families": 14,
+   "deep_survived_rerank": 10,
+   "discovery_delta_families": 3,
+   "discovery_delta_survived_rerank": 3
+  },
+  "WILDCARD": {
+   "rerank_survival_spec": 0.763,
+   "deep_candidate_families": 14,
+   "deep_survived_rerank": 10,
+   "discovery_delta_families": 3,
+   "discovery_delta_survived_rerank": 3
+  }
+ },
+ "candidate_family_diversity": 31,
+ "final_family_diversity": 26,
+ "candidate_to_final_shrink": 5,
+ "note": "source-family detection (title/author). content-family (concept aliases in chunk text) deferred to v2.",
+ "cases": [
+  {
+   "id": "wc01_fake_smile",
+   "retrieval_required": true,
+   "scout_spec": [
+    "Acting for Animators",
+    "Classifying Facial",
+    "Ed Hooks",
+    "Ekman",
+    "Facial Action"
+   ],
+   "scout_deep": [
+    "Classifying Facial",
+    "Ekman",
+    "Facial Action"
+   ],
+   "per_mode": {
+    "FAST": {
+     "candidate_spec": [
+      "Acting for Animators",
+      "Classifying Facial",
+      "Ed Hooks",
+      "Ekman",
+      "Facial Action"
+     ],
+     "candidate_deep": [
+      "Classifying Facial",
+      "Ekman",
+      "Facial Action"
+     ],
+     "final_spec": [
+      "Acting for Animators",
+      "Ed Hooks",
+      "Facial Action"
+     ],
+     "final_deep": [
+      "Facial Action"
+     ],
+     "grades": {
+      "DIRECT": 13,
+      "PARTIAL": 0,
+      "RELATED": 2
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 6
+    },
+    "HYBRID": {
+     "candidate_spec": [
+      "Acting for Animators",
+      "Classifying Facial",
+      "Ed Hooks",
+      "Ekman",
+      "Facial Action"
+     ],
+     "candidate_deep": [
+      "Classifying Facial",
+      "Ekman",
+      "Facial Action"
+     ],
+     "final_spec": [
+      "Acting for Animators",
+      "Ed Hooks",
+      "Facial Action"
+     ],
+     "final_deep": [
+      "Facial Action"
+     ],
+     "grades": {
+      "DIRECT": 8,
+      "PARTIAL": 0,
+      "RELATED": 7
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 8
+    },
+    "GRAPH": {
+     "candidate_spec": [
+      "Acting for Animators",
+      "Classifying Facial",
+      "Ed Hooks",
+      "Ekman",
+      "Facial Action"
+     ],
+     "candidate_deep": [
+      "Classifying Facial",
+      "Ekman",
+      "Facial Action"
+     ],
+     "final_spec": [
+      "Acting for Animators",
+      "Ed Hooks",
+      "Facial Action"
+     ],
+     "final_deep": [
+      "Facial Action"
+     ],
+     "grades": {
+      "DIRECT": 8,
+      "PARTIAL": 0,
+      "RELATED": 7
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 8
+    },
+    "WILDCARD": {
+     "candidate_spec": [
+      "Acting for Animators",
+      "Classifying Facial",
+      "Ed Hooks",
+      "Ekman",
+      "Facial Action"
+     ],
+     "candidate_deep": [
+      "Classifying Facial",
+      "Ekman",
+      "Facial Action"
+     ],
+     "final_spec": [
+      "Acting for Animators",
+      "Ed Hooks",
+      "Facial Action"
+     ],
+     "final_deep": [
+      "Facial Action"
+     ],
+     "grades": {
+      "DIRECT": 8,
+      "PARTIAL": 0,
+      "RELATED": 7
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 8
+    }
+   },
+   "candidate_family_union": [
+    "Acting for Animators",
+    "Classifying Facial",
+    "Ed Hooks",
+    "Ekman",
+    "Facial Action"
+   ],
+   "final_family_union": [
+    "Acting for Animators",
+    "Ed Hooks",
+    "Facial Action"
+   ],
+   "candidate_vs_final_shrink": 2,
+   "discovery_delta": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "delta_survival": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "origin_provenance": {
+    "Acting for Animators": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Classifying Facial": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": []
+    },
+    "Ed Hooks": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Ekman": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": []
+    },
+    "Facial Action": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    }
+   },
+   "deep_family_survival": {
+    "Ekman": {
+     "nominated": true,
+     "FAST": {
+      "candidate": true,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": false
+     }
+    },
+    "Facial Action": {
+     "nominated": true,
+     "FAST": {
+      "candidate": true,
+      "final": true
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": true
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": true
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": true
+     }
+    },
+    "Face Reveals": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    },
+    "Classifying Facial": {
+     "nominated": true,
+     "FAST": {
+      "candidate": true,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": false
+     }
+    }
+   },
+   "expected_weakness": "RERANK_after_nomination"
+  },
+  {
+   "id": "wc02_sword_weight",
+   "retrieval_required": false,
+   "scout_spec": [
+    "Fight Choreography",
+    "Manga",
+    "Screen Combat",
+    "Stage Combat"
+   ],
+   "scout_deep": [],
+   "per_mode": {},
+   "candidate_family_union": [],
+   "final_family_union": [],
+   "candidate_vs_final_shrink": 0,
+   "discovery_delta": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "delta_survival": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "origin_provenance": {},
+   "deep_family_survival": {
+    "Laban": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    },
+    "Bartenieff": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    },
+    "Making Connections": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    }
+   },
+   "expected_weakness": "ROUTING"
+  },
+  {
+   "id": "wc03_villain_won",
+   "retrieval_required": true,
+   "scout_spec": [
+    "Ed Hooks",
+    "Fight Choreography"
+   ],
+   "scout_deep": [],
+   "per_mode": {
+    "FAST": {
+     "candidate_spec": [
+      "Ed Hooks",
+      "Fight Choreography"
+     ],
+     "candidate_deep": [],
+     "final_spec": [
+      "Ed Hooks",
+      "Fight Choreography"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 14,
+      "PARTIAL": 0,
+      "RELATED": 1
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 10
+    },
+    "HYBRID": {
+     "candidate_spec": [
+      "Blink of an Eye",
+      "Ed Hooks",
+      "Fight Choreography",
+      "Murch"
+     ],
+     "candidate_deep": [
+      "Blink of an Eye",
+      "Murch"
+     ],
+     "final_spec": [
+      "Blink of an Eye",
+      "Ed Hooks",
+      "Fight Choreography",
+      "Murch"
+     ],
+     "final_deep": [
+      "Blink of an Eye",
+      "Murch"
+     ],
+     "grades": {
+      "DIRECT": 9,
+      "PARTIAL": 0,
+      "RELATED": 6
+     },
+     "n_candidate_docs": 24,
+     "n_final_docs": 9
+    },
+    "GRAPH": {
+     "candidate_spec": [
+      "Blink of an Eye",
+      "Ed Hooks",
+      "Fight Choreography",
+      "Murch"
+     ],
+     "candidate_deep": [
+      "Blink of an Eye",
+      "Murch"
+     ],
+     "final_spec": [
+      "Blink of an Eye",
+      "Ed Hooks",
+      "Fight Choreography",
+      "Murch"
+     ],
+     "final_deep": [
+      "Blink of an Eye",
+      "Murch"
+     ],
+     "grades": {
+      "DIRECT": 9,
+      "PARTIAL": 0,
+      "RELATED": 6
+     },
+     "n_candidate_docs": 24,
+     "n_final_docs": 9
+    },
+    "WILDCARD": {
+     "candidate_spec": [
+      "Blink of an Eye",
+      "Ed Hooks",
+      "Fight Choreography",
+      "Murch"
+     ],
+     "candidate_deep": [
+      "Blink of an Eye",
+      "Murch"
+     ],
+     "final_spec": [
+      "Blink of an Eye",
+      "Ed Hooks",
+      "Fight Choreography",
+      "Murch"
+     ],
+     "final_deep": [
+      "Blink of an Eye",
+      "Murch"
+     ],
+     "grades": {
+      "DIRECT": 9,
+      "PARTIAL": 0,
+      "RELATED": 6
+     },
+     "n_candidate_docs": 24,
+     "n_final_docs": 9
+    }
+   },
+   "candidate_family_union": [
+    "Blink of an Eye",
+    "Ed Hooks",
+    "Fight Choreography",
+    "Murch"
+   ],
+   "final_family_union": [
+    "Blink of an Eye",
+    "Ed Hooks",
+    "Fight Choreography",
+    "Murch"
+   ],
+   "candidate_vs_final_shrink": 0,
+   "discovery_delta": {
+    "HYBRID": [
+     "Blink of an Eye",
+     "Murch"
+    ],
+    "GRAPH": [
+     "Blink of an Eye",
+     "Murch"
+    ],
+    "WILDCARD": [
+     "Blink of an Eye",
+     "Murch"
+    ]
+   },
+   "delta_survival": {
+    "HYBRID": [
+     "Blink of an Eye",
+     "Murch"
+    ],
+    "GRAPH": [
+     "Blink of an Eye",
+     "Murch"
+    ],
+    "WILDCARD": [
+     "Blink of an Eye",
+     "Murch"
+    ]
+   },
+   "origin_provenance": {
+    "Blink of an Eye": {
+     "nominated": false,
+     "candidate_modes": [
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Ed Hooks": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Fight Choreography": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Murch": {
+     "nominated": false,
+     "candidate_modes": [
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    }
+   },
+   "deep_family_survival": {
+    "Murch": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": true
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": true
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": true
+     }
+    },
+    "Blink of an Eye": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": true
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": true
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": true
+     }
+    },
+    "Ekman": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    },
+    "Facial Action": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    }
+   },
+   "expected_weakness": "NOMINATION"
+  },
+  {
+   "id": "wc04_hallway_oppress",
+   "retrieval_required": true,
+   "scout_spec": [
+    "Filmmaker",
+    "Lighting for Cinematography",
+    "Neuroarchitecture",
+    "Ritchie",
+    "Visual Story"
+   ],
+   "scout_deep": [
+    "Neuroarchitecture",
+    "Ritchie"
+   ],
+   "per_mode": {
+    "FAST": {
+     "candidate_spec": [
+      "Filmmaker",
+      "Framed Ink",
+      "Lighting for Cinematography",
+      "Neuroarchitecture",
+      "Ritchie",
+      "Visual Story"
+     ],
+     "candidate_deep": [
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "final_spec": [
+      "Framed Ink",
+      "Lighting for Cinematography",
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "final_deep": [
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "grades": {
+      "DIRECT": 2,
+      "PARTIAL": 0,
+      "RELATED": 13
+     },
+     "n_candidate_docs": 20,
+     "n_final_docs": 7
+    },
+    "HYBRID": {
+     "candidate_spec": [
+      "Filmmaker",
+      "Framed Ink",
+      "Lighting for Cinematography",
+      "Neuroarchitecture",
+      "Ritchie",
+      "Visual Story"
+     ],
+     "candidate_deep": [
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "final_spec": [
+      "Filmmaker",
+      "Framed Ink",
+      "Lighting for Cinematography",
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "final_deep": [
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "grades": {
+      "DIRECT": 3,
+      "PARTIAL": 0,
+      "RELATED": 12
+     },
+     "n_candidate_docs": 21,
+     "n_final_docs": 7
+    },
+    "GRAPH": {
+     "candidate_spec": [
+      "Filmmaker",
+      "Framed Ink",
+      "Lighting for Cinematography",
+      "Neuroarchitecture",
+      "Ritchie",
+      "Visual Story"
+     ],
+     "candidate_deep": [
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "final_spec": [
+      "Filmmaker",
+      "Framed Ink",
+      "Lighting for Cinematography",
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "final_deep": [
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "grades": {
+      "DIRECT": 3,
+      "PARTIAL": 0,
+      "RELATED": 12
+     },
+     "n_candidate_docs": 21,
+     "n_final_docs": 7
+    },
+    "WILDCARD": {
+     "candidate_spec": [
+      "Filmmaker",
+      "Framed Ink",
+      "Lighting for Cinematography",
+      "Neuroarchitecture",
+      "Ritchie",
+      "Visual Story"
+     ],
+     "candidate_deep": [
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "final_spec": [
+      "Filmmaker",
+      "Framed Ink",
+      "Lighting for Cinematography",
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "final_deep": [
+      "Neuroarchitecture",
+      "Ritchie"
+     ],
+     "grades": {
+      "DIRECT": 3,
+      "PARTIAL": 0,
+      "RELATED": 12
+     },
+     "n_candidate_docs": 21,
+     "n_final_docs": 7
+    }
+   },
+   "candidate_family_union": [
+    "Filmmaker",
+    "Framed Ink",
+    "Lighting for Cinematography",
+    "Neuroarchitecture",
+    "Ritchie",
+    "Visual Story"
+   ],
+   "final_family_union": [
+    "Filmmaker",
+    "Framed Ink",
+    "Lighting for Cinematography",
+    "Neuroarchitecture",
+    "Ritchie"
+   ],
+   "candidate_vs_final_shrink": 1,
+   "discovery_delta": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "delta_survival": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "origin_provenance": {
+    "Filmmaker": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Framed Ink": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Lighting for Cinematography": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Neuroarchitecture": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Ritchie": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Visual Story": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": []
+    }
+   },
+   "deep_family_survival": {
+    "Neuroarchitecture": {
+     "nominated": true,
+     "FAST": {
+      "candidate": true,
+      "final": true
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": true
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": true
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": true
+     }
+    },
+    "Ritchie": {
+     "nominated": true,
+     "FAST": {
+      "candidate": true,
+      "final": true
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": true
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": true
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": true
+     }
+    }
+   },
+   "expected_weakness": "SYNTHESIS_underspend"
+  },
+  {
+   "id": "wc05_ordinary_fast",
+   "retrieval_required": true,
+   "scout_spec": [
+    "Filmmaker",
+    "Timing for Animation"
+   ],
+   "scout_deep": [
+    "Timing for Animation"
+   ],
+   "per_mode": {
+    "FAST": {
+     "candidate_spec": [
+      "Cinematic Motion",
+      "Dancyger",
+      "Filmmaker",
+      "Timing for Animation",
+      "Visual Story"
+     ],
+     "candidate_deep": [
+      "Timing for Animation"
+     ],
+     "final_spec": [
+      "Filmmaker",
+      "Visual Story"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 15,
+      "PARTIAL": 0,
+      "RELATED": 0
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 9
+    },
+    "HYBRID": {
+     "candidate_spec": [
+      "Cinematic Motion",
+      "Dancyger",
+      "Filmmaker",
+      "Timing for Animation",
+      "Visual Story"
+     ],
+     "candidate_deep": [
+      "Timing for Animation"
+     ],
+     "final_spec": [
+      "Filmmaker",
+      "Visual Story"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 15,
+      "PARTIAL": 0,
+      "RELATED": 0
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 10
+    },
+    "GRAPH": {
+     "candidate_spec": [
+      "Cinematic Motion",
+      "Dancyger",
+      "Filmmaker",
+      "Timing for Animation",
+      "Visual Story"
+     ],
+     "candidate_deep": [
+      "Timing for Animation"
+     ],
+     "final_spec": [
+      "Filmmaker",
+      "Visual Story"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 15,
+      "PARTIAL": 0,
+      "RELATED": 0
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 10
+    },
+    "WILDCARD": {
+     "candidate_spec": [
+      "Cinematic Motion",
+      "Dancyger",
+      "Filmmaker",
+      "Timing for Animation",
+      "Visual Story"
+     ],
+     "candidate_deep": [
+      "Timing for Animation"
+     ],
+     "final_spec": [
+      "Filmmaker",
+      "Visual Story"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 15,
+      "PARTIAL": 0,
+      "RELATED": 0
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 10
+    }
+   },
+   "candidate_family_union": [
+    "Cinematic Motion",
+    "Dancyger",
+    "Filmmaker",
+    "Timing for Animation",
+    "Visual Story"
+   ],
+   "final_family_union": [
+    "Filmmaker",
+    "Visual Story"
+   ],
+   "candidate_vs_final_shrink": 3,
+   "discovery_delta": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "delta_survival": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "origin_provenance": {
+    "Cinematic Motion": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": []
+    },
+    "Dancyger": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": []
+    },
+    "Filmmaker": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Timing for Animation": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": []
+    },
+    "Visual Story": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    }
+   },
+   "deep_family_survival": {
+    "Laban": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    },
+    "Timing for Animation": {
+     "nominated": true,
+     "FAST": {
+      "candidate": true,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": false
+     }
+    }
+   },
+   "expected_weakness": null
+  },
+  {
+   "id": "wc06_unpredictable_fighter",
+   "retrieval_required": true,
+   "scout_spec": [
+    "Fight Choreography",
+    "Laban",
+    "Stage Combat"
+   ],
+   "scout_deep": [
+    "Laban"
+   ],
+   "per_mode": {
+    "FAST": {
+     "candidate_spec": [
+      "Bartenieff",
+      "Fight Choreography",
+      "Making Connections",
+      "Stage Combat"
+     ],
+     "candidate_deep": [
+      "Bartenieff",
+      "Making Connections"
+     ],
+     "final_spec": [
+      "Bartenieff",
+      "Fight Choreography",
+      "Making Connections",
+      "Stage Combat"
+     ],
+     "final_deep": [
+      "Bartenieff",
+      "Making Connections"
+     ],
+     "grades": {
+      "DIRECT": 10,
+      "PARTIAL": 0,
+      "RELATED": 5
+     },
+     "n_candidate_docs": 18,
+     "n_final_docs": 5
+    },
+    "HYBRID": {
+     "candidate_spec": [
+      "Fight Choreography",
+      "Stage Combat"
+     ],
+     "candidate_deep": [],
+     "final_spec": [
+      "Fight Choreography",
+      "Stage Combat"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 7,
+      "PARTIAL": 0,
+      "RELATED": 8
+     },
+     "n_candidate_docs": 17,
+     "n_final_docs": 5
+    },
+    "GRAPH": {
+     "candidate_spec": [
+      "Fight Choreography",
+      "Stage Combat"
+     ],
+     "candidate_deep": [],
+     "final_spec": [
+      "Fight Choreography",
+      "Stage Combat"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 7,
+      "PARTIAL": 0,
+      "RELATED": 8
+     },
+     "n_candidate_docs": 17,
+     "n_final_docs": 5
+    },
+    "WILDCARD": {
+     "candidate_spec": [
+      "Fight Choreography",
+      "Stage Combat"
+     ],
+     "candidate_deep": [],
+     "final_spec": [
+      "Fight Choreography",
+      "Stage Combat"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 7,
+      "PARTIAL": 0,
+      "RELATED": 8
+     },
+     "n_candidate_docs": 17,
+     "n_final_docs": 5
+    }
+   },
+   "candidate_family_union": [
+    "Bartenieff",
+    "Fight Choreography",
+    "Making Connections",
+    "Stage Combat"
+   ],
+   "final_family_union": [
+    "Bartenieff",
+    "Fight Choreography",
+    "Making Connections",
+    "Stage Combat"
+   ],
+   "candidate_vs_final_shrink": 0,
+   "discovery_delta": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "delta_survival": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "origin_provenance": {
+    "Bartenieff": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST"
+     ],
+     "final_modes": [
+      "FAST"
+     ]
+    },
+    "Fight Choreography": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Making Connections": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST"
+     ],
+     "final_modes": [
+      "FAST"
+     ]
+    },
+    "Stage Combat": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    }
+   },
+   "deep_family_survival": {
+    "Laban": {
+     "nominated": true,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    },
+    "Bartenieff": {
+     "nominated": false,
+     "FAST": {
+      "candidate": true,
+      "final": true
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    },
+    "Making Connections": {
+     "nominated": false,
+     "FAST": {
+      "candidate": true,
+      "final": true
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    }
+   },
+   "expected_weakness": null
+  },
+  {
+   "id": "wc07_silent_authority",
+   "retrieval_required": true,
+   "scout_spec": [
+    "Directing",
+    "Laban"
+   ],
+   "scout_deep": [
+    "Laban"
+   ],
+   "per_mode": {
+    "FAST": {
+     "candidate_spec": [
+      "Directing",
+      "Ed Hooks",
+      "Laban"
+     ],
+     "candidate_deep": [
+      "Laban"
+     ],
+     "final_spec": [
+      "Directing",
+      "Ed Hooks"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 13,
+      "PARTIAL": 0,
+      "RELATED": 2
+     },
+     "n_candidate_docs": 25,
+     "n_final_docs": 10
+    },
+    "HYBRID": {
+     "candidate_spec": [
+      "Directing",
+      "Ed Hooks",
+      "Laban"
+     ],
+     "candidate_deep": [
+      "Laban"
+     ],
+     "final_spec": [
+      "Directing",
+      "Ed Hooks"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 9,
+      "PARTIAL": 0,
+      "RELATED": 6
+     },
+     "n_candidate_docs": 25,
+     "n_final_docs": 9
+    },
+    "GRAPH": {
+     "candidate_spec": [
+      "Directing",
+      "Ed Hooks",
+      "Laban"
+     ],
+     "candidate_deep": [
+      "Laban"
+     ],
+     "final_spec": [
+      "Directing",
+      "Ed Hooks"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 9,
+      "PARTIAL": 0,
+      "RELATED": 6
+     },
+     "n_candidate_docs": 25,
+     "n_final_docs": 9
+    },
+    "WILDCARD": {
+     "candidate_spec": [
+      "Directing",
+      "Ed Hooks",
+      "Laban"
+     ],
+     "candidate_deep": [
+      "Laban"
+     ],
+     "final_spec": [
+      "Directing",
+      "Ed Hooks"
+     ],
+     "final_deep": [],
+     "grades": {
+      "DIRECT": 9,
+      "PARTIAL": 0,
+      "RELATED": 6
+     },
+     "n_candidate_docs": 25,
+     "n_final_docs": 9
+    }
+   },
+   "candidate_family_union": [
+    "Directing",
+    "Ed Hooks",
+    "Laban"
+   ],
+   "final_family_union": [
+    "Directing",
+    "Ed Hooks"
+   ],
+   "candidate_vs_final_shrink": 1,
+   "discovery_delta": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "delta_survival": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "origin_provenance": {
+    "Directing": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Ed Hooks": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Laban": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": []
+    }
+   },
+   "deep_family_survival": {
+    "Laban": {
+     "nominated": true,
+     "FAST": {
+      "candidate": true,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": false
+     }
+    },
+    "Bartenieff": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    },
+    "Making Connections": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    }
+   },
+   "expected_weakness": "WILDCARD_below_FAST"
+  },
+  {
+   "id": "wc08_giant_creature",
+   "retrieval_required": true,
+   "scout_spec": [
+    "Timing for Animation"
+   ],
+   "scout_deep": [],
+   "per_mode": {
+    "FAST": {
+     "candidate_spec": [
+      "Filmmaker",
+      "Timing for Animation",
+      "VES"
+     ],
+     "candidate_deep": [
+      "VES"
+     ],
+     "final_spec": [
+      "Timing for Animation",
+      "VES"
+     ],
+     "final_deep": [
+      "VES"
+     ],
+     "grades": {
+      "DIRECT": 13,
+      "PARTIAL": 0,
+      "RELATED": 2
+     },
+     "n_candidate_docs": 27,
+     "n_final_docs": 11
+    },
+    "HYBRID": {
+     "candidate_spec": [
+      "Digital Compositing",
+      "Filmmaker",
+      "Timing for Animation",
+      "VES"
+     ],
+     "candidate_deep": [
+      "VES"
+     ],
+     "final_spec": [
+      "Digital Compositing",
+      "Timing for Animation",
+      "VES"
+     ],
+     "final_deep": [
+      "VES"
+     ],
+     "grades": {
+      "DIRECT": 7,
+      "PARTIAL": 0,
+      "RELATED": 8
+     },
+     "n_candidate_docs": 28,
+     "n_final_docs": 14
+    },
+    "GRAPH": {
+     "candidate_spec": [
+      "Digital Compositing",
+      "Filmmaker",
+      "Timing for Animation",
+      "VES"
+     ],
+     "candidate_deep": [
+      "VES"
+     ],
+     "final_spec": [
+      "Digital Compositing",
+      "Timing for Animation",
+      "VES"
+     ],
+     "final_deep": [
+      "VES"
+     ],
+     "grades": {
+      "DIRECT": 7,
+      "PARTIAL": 0,
+      "RELATED": 8
+     },
+     "n_candidate_docs": 28,
+     "n_final_docs": 14
+    },
+    "WILDCARD": {
+     "candidate_spec": [
+      "Digital Compositing",
+      "Filmmaker",
+      "Timing for Animation",
+      "VES"
+     ],
+     "candidate_deep": [
+      "VES"
+     ],
+     "final_spec": [
+      "Digital Compositing",
+      "Timing for Animation",
+      "VES"
+     ],
+     "final_deep": [
+      "VES"
+     ],
+     "grades": {
+      "DIRECT": 7,
+      "PARTIAL": 0,
+      "RELATED": 8
+     },
+     "n_candidate_docs": 28,
+     "n_final_docs": 14
+    }
+   },
+   "candidate_family_union": [
+    "Digital Compositing",
+    "Filmmaker",
+    "Timing for Animation",
+    "VES"
+   ],
+   "final_family_union": [
+    "Digital Compositing",
+    "Timing for Animation",
+    "VES"
+   ],
+   "candidate_vs_final_shrink": 1,
+   "discovery_delta": {
+    "HYBRID": [
+     "Digital Compositing"
+    ],
+    "GRAPH": [
+     "Digital Compositing"
+    ],
+    "WILDCARD": [
+     "Digital Compositing"
+    ]
+   },
+   "delta_survival": {
+    "HYBRID": [
+     "Digital Compositing"
+    ],
+    "GRAPH": [
+     "Digital Compositing"
+    ],
+    "WILDCARD": [
+     "Digital Compositing"
+    ]
+   },
+   "origin_provenance": {
+    "Digital Compositing": {
+     "nominated": false,
+     "candidate_modes": [
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Filmmaker": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": []
+    },
+    "Timing for Animation": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "VES": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    }
+   },
+   "deep_family_survival": {
+    "VES": {
+     "nominated": false,
+     "FAST": {
+      "candidate": true,
+      "final": true
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": true
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": true
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": true
+     }
+    }
+   },
+   "expected_weakness": null
+  },
+  {
+   "id": "wc09_pen_desire",
+   "retrieval_required": true,
+   "scout_spec": [
+    "Breakthrough Advertising",
+    "Made to Stick"
+   ],
+   "scout_deep": [
+    "Breakthrough Advertising"
+   ],
+   "per_mode": {
+    "FAST": {
+     "candidate_spec": [
+      "Adweek",
+      "Breakthrough Advertising",
+      "Hey Whipple",
+      "Made to Stick",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "candidate_deep": [
+      "Breakthrough Advertising",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "final_spec": [
+      "Adweek",
+      "Breakthrough Advertising",
+      "Hey Whipple",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "final_deep": [
+      "Breakthrough Advertising",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "grades": {
+      "DIRECT": 11,
+      "PARTIAL": 0,
+      "RELATED": 4
+     },
+     "n_candidate_docs": 18,
+     "n_final_docs": 6
+    },
+    "HYBRID": {
+     "candidate_spec": [
+      "Adweek",
+      "Breakthrough Advertising",
+      "Hey Whipple",
+      "Made to Stick",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "candidate_deep": [
+      "Breakthrough Advertising",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "final_spec": [
+      "Adweek",
+      "Breakthrough Advertising",
+      "Hey Whipple",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "final_deep": [
+      "Breakthrough Advertising",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "grades": {
+      "DIRECT": 6,
+      "PARTIAL": 0,
+      "RELATED": 9
+     },
+     "n_candidate_docs": 20,
+     "n_final_docs": 8
+    },
+    "GRAPH": {
+     "candidate_spec": [
+      "Adweek",
+      "Breakthrough Advertising",
+      "Hey Whipple",
+      "Made to Stick",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "candidate_deep": [
+      "Breakthrough Advertising",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "final_spec": [
+      "Adweek",
+      "Breakthrough Advertising",
+      "Hey Whipple",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "final_deep": [
+      "Breakthrough Advertising",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "grades": {
+      "DIRECT": 6,
+      "PARTIAL": 0,
+      "RELATED": 9
+     },
+     "n_candidate_docs": 20,
+     "n_final_docs": 8
+    },
+    "WILDCARD": {
+     "candidate_spec": [
+      "Adweek",
+      "Breakthrough Advertising",
+      "Hey Whipple",
+      "Made to Stick",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "candidate_deep": [
+      "Breakthrough Advertising",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "final_spec": [
+      "Adweek",
+      "Breakthrough Advertising",
+      "Hey Whipple",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "final_deep": [
+      "Breakthrough Advertising",
+      "Ogilvy",
+      "StoryBrand"
+     ],
+     "grades": {
+      "DIRECT": 6,
+      "PARTIAL": 0,
+      "RELATED": 9
+     },
+     "n_candidate_docs": 20,
+     "n_final_docs": 8
+    }
+   },
+   "candidate_family_union": [
+    "Adweek",
+    "Breakthrough Advertising",
+    "Hey Whipple",
+    "Made to Stick",
+    "Ogilvy",
+    "StoryBrand"
+   ],
+   "final_family_union": [
+    "Adweek",
+    "Breakthrough Advertising",
+    "Hey Whipple",
+    "Ogilvy",
+    "StoryBrand"
+   ],
+   "candidate_vs_final_shrink": 1,
+   "discovery_delta": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "delta_survival": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "origin_provenance": {
+    "Adweek": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Breakthrough Advertising": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Hey Whipple": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Made to Stick": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": []
+    },
+    "Ogilvy": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "StoryBrand": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    }
+   },
+   "deep_family_survival": {
+    "Breakthrough Advertising": {
+     "nominated": true,
+     "FAST": {
+      "candidate": true,
+      "final": true
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": true
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": true
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": true
+     }
+    },
+    "Ogilvy": {
+     "nominated": false,
+     "FAST": {
+      "candidate": true,
+      "final": true
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": true
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": true
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": true
+     }
+    },
+    "StoryBrand": {
+     "nominated": false,
+     "FAST": {
+      "candidate": true,
+      "final": true
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": true
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": true
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": true
+     }
+    }
+   },
+   "expected_weakness": null
+  },
+  {
+   "id": "wc10_suppressed_grief",
+   "retrieval_required": true,
+   "scout_spec": [
+    "Laban"
+   ],
+   "scout_deep": [
+    "Laban"
+   ],
+   "per_mode": {
+    "FAST": {
+     "candidate_spec": [
+      "Laban",
+      "Murch",
+      "Sound Design"
+     ],
+     "candidate_deep": [
+      "Laban"
+     ],
+     "final_spec": [
+      "Laban",
+      "Murch"
+     ],
+     "final_deep": [
+      "Laban"
+     ],
+     "grades": {
+      "DIRECT": 15,
+      "PARTIAL": 0,
+      "RELATED": 0
+     },
+     "n_candidate_docs": 24,
+     "n_final_docs": 11
+    },
+    "HYBRID": {
+     "candidate_spec": [
+      "Laban",
+      "Murch",
+      "Sound Design"
+     ],
+     "candidate_deep": [
+      "Laban"
+     ],
+     "final_spec": [
+      "Laban",
+      "Murch",
+      "Sound Design"
+     ],
+     "final_deep": [
+      "Laban"
+     ],
+     "grades": {
+      "DIRECT": 15,
+      "PARTIAL": 0,
+      "RELATED": 0
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 14
+    },
+    "GRAPH": {
+     "candidate_spec": [
+      "Laban",
+      "Murch",
+      "Sound Design"
+     ],
+     "candidate_deep": [
+      "Laban"
+     ],
+     "final_spec": [
+      "Laban",
+      "Murch",
+      "Sound Design"
+     ],
+     "final_deep": [
+      "Laban"
+     ],
+     "grades": {
+      "DIRECT": 15,
+      "PARTIAL": 0,
+      "RELATED": 0
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 14
+    },
+    "WILDCARD": {
+     "candidate_spec": [
+      "Laban",
+      "Murch",
+      "Sound Design"
+     ],
+     "candidate_deep": [
+      "Laban"
+     ],
+     "final_spec": [
+      "Laban",
+      "Murch",
+      "Sound Design"
+     ],
+     "final_deep": [
+      "Laban"
+     ],
+     "grades": {
+      "DIRECT": 15,
+      "PARTIAL": 0,
+      "RELATED": 0
+     },
+     "n_candidate_docs": 23,
+     "n_final_docs": 14
+    }
+   },
+   "candidate_family_union": [
+    "Laban",
+    "Murch",
+    "Sound Design"
+   ],
+   "final_family_union": [
+    "Laban",
+    "Murch",
+    "Sound Design"
+   ],
+   "candidate_vs_final_shrink": 0,
+   "discovery_delta": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "delta_survival": {
+    "HYBRID": [],
+    "GRAPH": [],
+    "WILDCARD": []
+   },
+   "origin_provenance": {
+    "Laban": {
+     "nominated": true,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Murch": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    },
+    "Sound Design": {
+     "nominated": false,
+     "candidate_modes": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ],
+     "final_modes": [
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD"
+     ]
+    }
+   },
+   "deep_family_survival": {
+    "Ekman": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    },
+    "Facial Action": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    },
+    "Laban": {
+     "nominated": true,
+     "FAST": {
+      "candidate": true,
+      "final": true
+     },
+     "HYBRID": {
+      "candidate": true,
+      "final": true
+     },
+     "GRAPH": {
+      "candidate": true,
+      "final": true
+     },
+     "WILDCARD": {
+      "candidate": true,
+      "final": true
+     }
+    },
+    "Bartenieff": {
+     "nominated": false,
+     "FAST": {
+      "candidate": false,
+      "final": false
+     },
+     "HYBRID": {
+      "candidate": false,
+      "final": false
+     },
+     "GRAPH": {
+      "candidate": false,
+      "final": false
+     },
+     "WILDCARD": {
+      "candidate": false,
+      "final": false
+     }
+    }
+   },
+   "expected_weakness": null
+  }
+ ]
+}
