@@ -1,0 +1,148 @@
+{
+ "corpus": "cinema",
+ "modes": [
+  "FAST",
+  "HYBRID",
+  "GRAPH",
+  "WILDCARD"
+ ],
+ "n_queries": 18,
+ "n_supported": 14,
+ "n_unsupported": 4,
+ "wall_s": 718.0,
+ "per_mode": {
+  "FAST": {
+   "success_at_10": 1.0,
+   "mrr": 0.786,
+   "coverage_mean": 0.828,
+   "precision_mean": 0.379,
+   "single_target_mrr": 1.0,
+   "single_target_n": 4,
+   "multi_source_success_at_10": 1.0,
+   "multi_source_coverage": 0.759,
+   "latency_p50": 9.65,
+   "latency_max": 25.88,
+   "errors": 0,
+   "unsupported_hallucination_rate": 0.0,
+   "unsupported_declined_rate": 1.0,
+   "provenance_complete_rate": 1.0,
+   "q0_preserved_rate": 1.0,
+   "scout_enabled_rate": 1.0,
+   "profile_expansion_queries": 14,
+   "profile_yield_gt0_rate": 0.786,
+   "profile_yield_mean": 0.607
+  },
+  "HYBRID": {
+   "success_at_10": 1.0,
+   "mrr": 0.871,
+   "coverage_mean": 0.805,
+   "precision_mean": 0.351,
+   "single_target_mrr": 1.0,
+   "single_target_n": 4,
+   "multi_source_success_at_10": 1.0,
+   "multi_source_coverage": 0.727,
+   "latency_p50": 10.86,
+   "latency_max": 34.32,
+   "errors": 0,
+   "unsupported_hallucination_rate": 0.0,
+   "unsupported_declined_rate": 1.0,
+   "provenance_complete_rate": 1.0,
+   "q0_preserved_rate": 1.0,
+   "scout_enabled_rate": 1.0,
+   "profile_expansion_queries": 14,
+   "profile_yield_gt0_rate": 0.857,
+   "profile_yield_mean": 0.679
+  },
+  "GRAPH": {
+   "success_at_10": 1.0,
+   "mrr": 0.854,
+   "coverage_mean": 0.832,
+   "precision_mean": 0.374,
+   "single_target_mrr": 1.0,
+   "single_target_n": 4,
+   "multi_source_success_at_10": 1.0,
+   "multi_source_coverage": 0.764,
+   "latency_p50": 8.73,
+   "latency_max": 17.31,
+   "errors": 0,
+   "unsupported_hallucination_rate": 0.0,
+   "unsupported_declined_rate": 1.0,
+   "provenance_complete_rate": 1.0,
+   "q0_preserved_rate": 1.0,
+   "scout_enabled_rate": 1.0,
+   "profile_expansion_queries": 14,
+   "profile_yield_gt0_rate": 0.786,
+   "profile_yield_mean": 0.643
+  },
+  "WILDCARD": {
+   "success_at_10": 1.0,
+   "mrr": 0.875,
+   "coverage_mean": 0.823,
+   "precision_mean": 0.37,
+   "single_target_mrr": 1.0,
+   "single_target_n": 4,
+   "multi_source_success_at_10": 1.0,
+   "multi_source_coverage": 0.752,
+   "latency_p50": 11.01,
+   "latency_max": 20.39,
+   "errors": 0,
+   "unsupported_hallucination_rate": 0.0,
+   "unsupported_declined_rate": 1.0,
+   "provenance_complete_rate": 1.0,
+   "q0_preserved_rate": 1.0,
+   "scout_enabled_rate": 1.0,
+   "profile_expansion_queries": 14,
+   "profile_yield_gt0_rate": 0.857,
+   "profile_yield_mean": 0.714
+  }
+ },
+ "per_category": {
+  "cross_doc_synthesis": {
+   "success_at_10": 1.0,
+   "n": 4
+  },
+  "definition": {
+   "success_at_10": 1.0,
+   "n": 4
+  },
+  "direct_factual": {
+   "success_at_10": 1.0,
+   "n": 8
+  },
+  "distractor": {
+   "success_at_10": 1.0,
+   "n": 4
+  },
+  "low_lexical": {
+   "success_at_10": 1.0,
+   "n": 4
+  },
+  "multi_evidence": {
+   "success_at_10": 1.0,
+   "n": 8
+  },
+  "pmap_localization": {
+   "success_at_10": 1.0,
+   "n": 8
+  },
+  "profile_discovery": {
+   "success_at_10": 1.0,
+   "n": 4
+  },
+  "relational": {
+   "success_at_10": 1.0,
+   "n": 4
+  },
+  "sensitivity_broad": {
+   "success_at_10": 1.0,
+   "n": 4
+  },
+  "sensitivity_specific": {
+   "success_at_10": 1.0,
+   "n": 4
+  }
+ },
+ "flags": [],
+ "sensitivity": [],
+ "gold_misses": []
+}

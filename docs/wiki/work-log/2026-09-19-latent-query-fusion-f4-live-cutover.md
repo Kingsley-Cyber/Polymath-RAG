@@ -2,7 +2,7 @@
 change_id: LATENT-QUERY-FUSION-V2-F4
 owner: wildcard-investigation
 date: 2026-09-19
-status: in_progress
+status: complete
 architecture_impact: "LATENT-QUERY-FUSION-V2 F4 — live cutover + A/B qualification (owner-authorized 2026-09-19). Step 1 (orchestrator provenance wiring): `ui.py` carries the plan's EXISTING per-query origin into the subquery spec (now a 5-tuple id/type/text/weight/origin); `chat_retrieval.py` pads legacy 4-tuples, threads origin into `SubQuery.origin` → the RankedLane lineage class. No inference/new roles. Live-only (orchestrator resolves to MAIN under the editable-.pth); proven from receipts at step 4. Steps 2–7 (merge + port-gated bounce + flag-off smoke + targeted wc01/05/07 seam proof + A/B vs WLK2C V1 vs pre-WLK2C + calibration + one CA5 64×4) recorded here as they complete."
 last_reviewed: 2026-09-19
 ---
@@ -32,10 +32,11 @@ provenance_complete 1, no material named-source / success@10 regression, all CA 
 - STEPS 2–7: appended below as executed.
 
 ## Proof
-STEP 1 = `IMPLEMENTED` (live-only; orchestrator resolves to MAIN under pytest, so not worktree-unit-
-testable). The shared half — `SubQuery.origin` → RankedLane lineage class → fusion weight — is already
-WORKTREE_INTEGRATION_PROVEN (F3, `test_subquery_origin_flows_into_lane_provenance`). Live receipt proof
-of q0→USER / subquery→origin / BRIDGE→BRIDGE / WILDCARD→WILDCARD is STEP 4 (before any A/B spend).
+`LIVE_PATH_PROVEN` + **QUALIFIED**. Steps 1–7 complete (details above): merged+bounced (fleet on new
+bundle), flag-off live no-op, step-4 seam proof (origin flows + wc01 full chain), A/B (V2 materially
+healthier, 3 repeats), config-driven no-tuning, CA5 subset gate CLEAN (0 flags, all invariants hold).
+V2 is LIVE (`.env` FUSION+SELECTION+BRIDGE=1). Orchestrator edits were not worktree-unit-testable
+(editable-.pth → MAIN); they were validated on the merged checkout (124 tests) + proven live.
 
 STEP 2 (merge + bounce) — DONE. Merged `fusion/latent-query` (`0a6b1b2`) → production `ae10f5a`
 (no-ff, clean; only overlapping file was none). 124 impacted+V2 determinism tests green on the merged
@@ -83,15 +84,35 @@ preserve_top_n 5) already deliver the gain and are UNFITTED — tuning to these 
 `FusionWeights.from_env()` (`POLYMATH_FUSION_W_<CLASS>`) + `POLYMATH_FUSION_PRESERVE_TOP_N`, all
 defaulting to the validated values. Global K untouched. UNIT_PROVEN (`test_fusion_weights_from_env` +
 60 fusion/seam/engine tests green); deployed at the step-7 bounce.
-<!-- STEP 7 CA5 64×4: TBD -->
+STEP 7 (CA5 safety gate) — PASSED. Owner scoped it down ("15-20 questions is good enough"): a
+STRATIFIED 18-query subset (`gold_subset_f4_ca5.json` — all 4 unsupported + named-source/pmap/multi-
+source/sensitivity/definition/relational/profile/low-lexical/distractor) × 4 modes = 72 live
+`/chat/stream` turns through V2 (flags on). Result (`CA5-V2-FUSION-cinema-2026-09-19-subset.summary.json`):
+every mode FAST/HYBRID/GRAPH/WILDCARD → **success@10 1.0, single-target MRR 1.0 (n=4), unsupported
+hallucination 0.0, declined 1.0, q0_preserved 1.0, provenance_complete 1.0, 0 errors, FLAGS(0), 0 gold
+misses, per-category success@10 1.0 across all 11**. The A/B's chunk-level q0 0.990 resolves to
+ANSWER-level q0_preserved 1.0 (no regression). Subset (not the full 64) per owner scope; the invariants
+are absolute and hold. resolution_trigger (the known 0.25 P10 limitation) is untouched by V2 and out of
+this subset.
+
+## VERDICT — V2 QUALIFIED (live, flags on)
+The structural correction became librarian behavior AND the system stayed CA5-safe:
+subquery/bridge local competition (ranked lanes) → genuine winner survives premature truncation
+(A/B deep_final_reach 0.667 vs V1 0.467; wc01 FACS bridge local-rank-0 preserved) → lineage intact
+(many-to-one contributions) → C4 validates (wc01 COMPLEMENTARY_ELIGIBLE) → C5 seats only when useful
+(deep_latent_seated 0.067, selective) → q0 stays primary (CA5 q0_preserved 1.0). V2 remains LIVE.
 
 ## Rejected claims
 - STEP 1 does NOT infer or invent roles; it carries the plan's existing origin only.
 - NOT proven live yet — no A/B, no bounce at step 1. No calibration until A/B data (step 6).
 
 ## Open contract gaps
-`contract_impact` — CHAT_RETRIEVAL (orchestrator) gains an additive origin field on the subquery spec;
-default-off flag path unchanged (the v2 subqueries are only built when `_flag==on and _rflag==v2`, and
-`SubQuery.origin` only affects fusion when `POLYMATH_CHAT_LATENT_FUSION=1`). CANDIDATE_ENGINE selection
-change is F3 (11.330). Full live disposition (ACCEPTANCE / RETRIEVAL_RECEIPT / CA5 safety) resolves at
-steps 4–7 below.
+None blocking. Dispositions: CHAT_RETRIEVAL (orchestrator) — UPDATED (additive origin on the subquery
+spec; only affects fusion when `POLYMATH_CHAT_LATENT_FUSION=1`). CANDIDATE_ENGINE — UPDATED (F3 seam +
+step-6 config-driven weights). ACCEPTANCE / RETRIEVAL_RECEIPT — TESTED live (CA5 subset clean, 0 flags).
+Follow-ups (non-blocking, owner's call): (a) V2 is LIVE with `LATENT_SELECTION`+`BRIDGE_COMPILER` now
+also ON — the whole WLK2C+V2 latent stack is the live default (previously flagged off); (b) the CA5
+gate was an 18-query subset per owner scope, not the full 64×4 — a full CA5 can be run later for
+tighter MRR CIs but is not required to qualify; (c) `pmv4-fusion` worktree can be pruned; (d) weights/
+preserve_top_n are config-driven (`POLYMATH_FUSION_*`) and untuned — future calibration is config-only.
+REVERT path if a regression surfaces later: set the 3 `.env` flags to 0 + bounce (V2 → flagged-off).

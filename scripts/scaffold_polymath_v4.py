@@ -660,6 +660,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/librarian_qualification/BASELINE-cinema-2026-09-18.summary.json", "json", None),
     ("eval/librarian_qualification/CA5-cinema-2026-09-18.summary.json", "json", None),
     ("eval/wildcard_latent_knowledge/WILDCARD-LATENT-KNOWLEDGE-10.json", "json", None),
+    ("eval/librarian_qualification/CA5-V2-FUSION-cinema-2026-09-19-subset.summary.json", "json", None),
+    ("eval/librarian_qualification/gold_subset_f4_ca5.json", "json", None),
     ("eval/wildcard_latent_knowledge/harness.py", "py", None),
     ("eval/wildcard_latent_knowledge/README.md", "md", None),
     ("eval/wildcard_latent_knowledge/BASELINE-2026-09-18.json", "json", None),
