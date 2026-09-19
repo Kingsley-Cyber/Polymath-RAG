@@ -22,17 +22,39 @@ strongly-positive, final-seated evidence (wc01 final 0→10, wc05 1→5, wc07 2�
 - **No lowered global rerank floor.** WLK2B is closed (null); do not reopen it.
 - **A bridge must be grounded + explainable + distinct** — motivated by corpus/runtime signals, an
   explicit relation to q0, a distinct information need, not a paraphrase of q0. No free-association.
+- **Many-to-one lineage until admission (owner-locked).** A candidate can be discovered through several
+  legitimate paths (PROFILE bridge, GRAPH path, WILDCARD bridge, primary q0). C0 records EVERY path and
+  never collapses to a single winner; C4 picks the best ADMISSIBLE path at evidence admission. Collapsing
+  early would lose exactly the evidence we mean to preserve.
+- **Lineage existence ≠ bridge validity (owner-locked).** Recording HOW a candidate was found says
+  nothing about whether that path is strong enough to rescue it. Provenance is always retained; a bridge
+  earns COMPLEMENTARY/DIVERGENT admission only through the admissibility checks (C1 deterministic gate +
+  C4 semantic gate), never merely because it has provenance. WLK2A proved some existing PROFILE
+  expansions are misdirected ("Augmenting prompts for text-to-video generation" for a fake-smile q0).
 - **No per-candidate model call.** At most ONE bounded structured bridge call per eligible query; FAST/
   simple factual queries skip it. Prefer existing lineage signals + the existing reranker.
 - **No hard-coded concepts** (FACS/Laban/Murch/Timing/cinema/benchmark families/titles). Generalize.
 - **CA0–CA5 epistemic contracts unchanged.** WLK2C extends the role vocabulary additively; the CA4
   DIRECT/PARTIAL/RELATED grading + answerability gate stay intact.
 
-## Tiered bridge-source policy (cheapest first; the compiler is the last resort)
-1. **Reuse an existing good subquery / retrieval query** with real lineage → use directly (no model).
-2. **GRAPH path with a clear relationship** → derive the bridge deterministically from the path (no model).
-3. **Bounded concept-bridge compiler** (ONE structured LLM call) over q0 + nominated corpus concepts.
-4. **No defensible bridge** → no latent expansion (the query answers on q0/DIRECT alone).
+## Tiered bridge-source policy (cheapest first; the compiler is the last resort, run only when warranted)
+Every existing subquery/path passes a **bridge-admissibility check** before it may act as a bridge —
+lineage existence ≠ bridge validity. The compiler is NOT run once per request; it runs only for a
+nominated/retrieved concept that has **no** admissible existing bridge and a task that permits latent
+expansion.
+1. **Reuse an existing subquery/retrieval query that PASSES admissibility** → use directly (no model).
+2. **GRAPH path with an explicit semantic relationship** → derive the bridge deterministically (no model).
+3. **Bounded concept-bridge compiler** (ONE structured LLM call) — only when tiers 1–2 yield no
+   admissible bridge for a nominated concept AND the task permits latent expansion.
+4. **No defensible/admissible bridge** → no latent expansion (the query answers on q0/DIRECT alone).
+
+**C1 bridge-admissibility gate (deterministic; no model):** an existing subquery/path is a reusable
+bridge only if it is **grounded** (has provenance — a nominated profile/concept or a graph relation),
+**distinct** (introduces content beyond q0), **not a q0 paraphrase** (token-overlap with q0 below a
+paraphrase ceiling), and **relates to q0** (shares a content signal with q0, or carries an explicit
+graph relation). Failing any → provenance retained, admission NOT granted, the concept becomes eligible
+for the C2 compiler. The **semantic** rejection of a misdirected-but-grounded bridge (bridge↔q0
+irrelevant) is the C4 gate (cross-encoder), not C1.
 
 ## Bounded bridge compiler contract
 - **One structured call per ELIGIBLE query** (creative/synthesis intent; not FAST/simple factual).
@@ -53,15 +75,18 @@ COMPLEMENTARY chunk↔origin_query clears the normal floor AND bridge↔q0 is va
 DIVERGENT    chunk↔origin_query clears a STRICTER floor AND bridge is explicitly exploratory
              AND bounded divergent capacity remains
 ```
-Bounded portfolio: DIRECT dominates; COMPLEMENTARY capped; DIVERGENT tightly capped. Reranking scores
-a latent candidate against BOTH q0 and its `origin_query` (existing cross-encoder, extra pairs only for
-the bounded latent set — never per-candidate model generation).
+**Many-to-one → C4 selects.** A candidate carries every discovery path (C0). C4 evaluates each
+ADMISSIBLE path and admits the candidate under the STRONGEST role any path earns — a candidate with a
+weak q0 path but a strong valid bridge path is admitted COMPLEMENTARY, not dropped for lacking a literal
+q0 match. Bounded portfolio: DIRECT dominates; COMPLEMENTARY capped; DIVERGENT tightly capped. Reranking
+scores a latent candidate against BOTH q0 and its admissible `origin_query` (existing cross-encoder,
+extra pairs only for the bounded latent set — never per-candidate model generation).
 
 ## Phase slices (execute narrowly, one at a time, on `wlk2c/retrieval-lineage`)
 | slice | what | primary files | proof |
 |---|---|---|---|
-| **C0** | Lineage fields end-to-end: candidate keeps `root_query`/`origin_query`/`origin`/`discovered_by`/`bridge_id`/`inspired_by_*`. Derive from existing `query_ids`→plan today. | `shared/polymath_shared/candidate_engine.py` (CandidateEvidence + fusion), `retrieval_lineage.py` (new, pure) | UNIT (shared/, worktree) |
-| **C1** | Bridge registry + reuse existing good subqueries / GRAPH paths as bridges (tiers 1–2, deterministic, no model). | `retrieval_lineage.py`, `chat_plan.py` | UNIT |
+| **C0** | Lineage fields, **many-to-one**: candidate keeps ALL discovery paths (`DiscoveryPath{origin_query, origin, query_id, bridge_id, inspired_by_profile, weight, score}`) under `Lineage{root_query, paths[], discovered_by}` — never collapsed; a pure-q0 path is DIRECT-eligible. Derived from existing `query_ids`/`arrivals`/`query_scores`. | `shared/polymath_shared/retrieval_lineage.py` (new, pure); wiring into `candidate_engine`/`ui.py` later | UNIT (shared/, worktree) — **DONE 11.316** |
+| **C1** | Bridge-admissibility gate (deterministic; no model) + reuse admissible existing subqueries + derive GRAPH-path bridges (tiers 1–2). Lineage existence ≠ bridge validity: retain provenance always, grant reusable-bridge status only on grounded+distinct+not-paraphrase+relates-to-q0. | `retrieval_lineage.py` (or new `bridge_admission.py`) | UNIT |
 | **C2** | Bounded bridge compiler (tier 3): one structured call, admission rules, ≤4 bridges. Flag-gated, default-off. | new `bridge_compiler.py` (shared/ pure builder + a thin orchestrator call), `ui.py` | UNIT (builder) + LIVE (call) |
 | **C3** | Retrieve/deepen using `origin_query` (bridge-driven deepening of nominated docs). | `chat_retrieval.py` | LIVE |
 | **C4** | Rerank latent candidates against `origin_query` while retaining q0 authority (bounded extra pairs). | `candidate_engine.py` select/compose, `chat_retrieval.py` | UNIT + LIVE |
