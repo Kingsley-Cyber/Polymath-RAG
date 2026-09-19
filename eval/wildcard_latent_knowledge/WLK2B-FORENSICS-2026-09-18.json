@@ -1,0 +1,4117 @@
+{
+ "wc01_fake_smile": {
+  "query": "Write a video-generation prompt for a man pretending to be happy when someone he hates walks into the room. I want the audience to realize the smile is fake before the other character does.",
+  "deep_keywords": [
+   "Ekman",
+   "Facial Action",
+   "Face Reveals",
+   "Classifying Facial"
+  ],
+  "scout_docs": [
+   "Retrieval-Augmented Prompt Optimization for.md",
+   "Ed Hooks - Acting for Animators (2017).md",
+   "A Multistage Pipeline for Character-Stable.md",
+   "Fight Choreography The Art of Non-Verbal Dialogue.md",
+   "Hey Whipple Squeeze This.md",
+   "Classifying Facial Action.md",
+   "Facial Action Coding System_ Facial action coding system _ -- Paul Ekman_ Wallace V_ Friesen_ Joseph C_ Hager -- Salt Lake City, UT, cop_ 2002 -- isbn13 9780931835018 -- b4af95ca86cb926c6c000d109b27ec66 -- Anna\u2019s A.md",
+   "Affective Movement Generation using Laban Effort and Shape and.md"
+  ],
+  "scout_deep_nominated": [
+   "Classifying Facial",
+   "Ekman",
+   "Facial Action"
+  ],
+  "retrieval_required": true,
+  "modes": {
+   "FAST": {
+    "union_size": 111,
+    "union_docs": 23,
+    "prefix_size": 34,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 11,
+    "judge": "live",
+    "deep_in_union": 0,
+    "deep_in_prefix": 0,
+    "deep_in_final": 0,
+    "deep_detail": [],
+    "final_winners": [
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_cec8",
+      "rerank_score": 5.921875,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "A Duchenne-pattern smile uses AU6 + AU12, but even that visible pattern is not proof of ge"
+     },
+     {
+      "doc": "Elemental Magic Volume 2.md",
+      "chunk_id": "chunk_4976",
+      "rerank_score": 5.9375,
+      "fused_rank": 35,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "\u201cAdam,\u201d Hanai said, rising with a grin. He clapped Adam on the back in a one-armed embrace"
+     },
+     {
+      "doc": "Grammar of the Shot.md",
+      "chunk_id": "chunk_1775",
+      "rerank_score": 4.234375,
+      "fused_rank": 27,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "5.  An audience is supposed to be watching the human face at this point in the framing"
+     },
+     {
+      "doc": "Sidney Lumet - Making Movies (1994).md",
+      "chunk_id": "chunk_cb2e",
+      "rerank_score": 3.46875,
+      "fused_rank": 18,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Slowly, the actors come wandering in. A false joviality hides their nervousness. Did you h"
+     },
+     {
+      "doc": "Elemental Magic.md",
+      "chunk_id": "chunk_5c67",
+      "rerank_score": 2.367188,
+      "fused_rank": 6,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Humor raced across his face with a roguish smile. \u201cNothing is for certain. Now come, I wil"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_7a49",
+      "rerank_score": 2.195312,
+      "fused_rank": 7,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Provide the audience with a fake scare that reveals it to be something innocent, like a ca"
+     },
+     {
+      "doc": "Hey Whipple Squeeze This.md",
+      "chunk_id": "chunk_3b7c",
+      "rerank_score": 0.75,
+      "fused_rank": 31,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Hey, little Billy, c\u2019mere. Go back and tell your copywriter that a strange man in the park"
+     },
+     {
+      "doc": "A Multistage Pipeline for Character-Stable.md",
+      "chunk_id": "chunk_e341",
+      "rerank_score": 0.460938,
+      "fused_rank": 80,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Susung Hong, Junyoung Seo, Heeseong Shin, Sungh-\nwan Hong, and Seungryong Kim. 2024. Direc"
+     },
+     {
+      "doc": "Comics and Sequential Art.md",
+      "chunk_id": "chunk_c0b2",
+      "rerank_score": 0.09375,
+      "fused_rank": 34,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "[Phillip stands and look at camera, smiling. Pantomimes brushing crumbs off shirt for 12 s"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_0b32",
+      "rerank_score": -0.367188,
+      "fused_rank": 15,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "The next time that I saw him in the hall I made a promise to him: \u201cI won\u2019t be satisfied un"
+     },
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_bd42",
+      "rerank_score": -0.453125,
+      "fused_rank": 9,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Your task thereafter is to gauge their temperament and whether it fits the scene or scenes"
+     },
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_6b55",
+      "rerank_score": -2.46875,
+      "fused_rank": 10,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "That an actor is very nervous is not necessarily negative since it means they attach great"
+     },
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_1fc0",
+      "rerank_score": -4.375,
+      "fused_rank": 1,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "The actor can now be shown into the audition space where he or she will perform. Most are "
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_f14d",
+      "rerank_score": -3.46875,
+      "fused_rank": 14,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "You can show people laughing but that won\u2019t necessarily make an audience think it\u2019s funny."
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_df51",
+      "rerank_score": -4.71875,
+      "fused_rank": 4,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": null,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Humor is a defining characteristic of us humans. We are social creatures who are constantl"
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 1,
+      "sparse": 0,
+      "aspect": 0,
+      "fill": 6
+     },
+     "doc_counts": {
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 3,
+      "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 3,
+      "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 1,
+      "doc_832446a863bb46d68c5823d026a4094a102b29bc1677a109c2e986118582ae7e": 1,
+      "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+      "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048": 1,
+      "doc_2780d9bb55cf555b3d8f496c6fd2d7a1ac5c2ad9165104a63a92a1e5cb34b4c8": 1,
+      "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc": 1,
+      "doc_3d35616670f223135165ad22295e80420b23d4d9214751b2ff50ff76bb692815": 1,
+      "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1,
+      "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.2,
+     "docs_within_gap": 4
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 2,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 6,
+     "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 2,
+     "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 1,
+     "doc_2780d9bb55cf555b3d8f496c6fd2d7a1ac5c2ad9165104a63a92a1e5cb34b4c8": 1,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 3,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048": 1,
+     "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16": 1,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 1,
+     "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+     "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc": 1,
+     "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1,
+     "doc_832446a863bb46d68c5823d026a4094a102b29bc1677a109c2e986118582ae7e": 1,
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1,
+     "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3": 1,
+     "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e": 1,
+     "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937": 1,
+     "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba": 1,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_3d35616670f223135165ad22295e80420b23d4d9214751b2ff50ff76bb692815": 1,
+     "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a": 1,
+     "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e": 1
+    }
+   },
+   "HYBRID": {
+    "union_size": 120,
+    "union_docs": 28,
+    "prefix_size": 35,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 12,
+    "judge": "live",
+    "deep_in_union": 2,
+    "deep_in_prefix": 2,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "Paul Ekman - Facial Action Coding System Manual (0).md",
+      "families": [
+       "Ekman",
+       "Facial Action"
+      ],
+      "fused_rank": 11,
+      "fused_score": 0.0169,
+      "in_prefix": true,
+      "rerank_score": -8.203125,
+      "post_rank": 31,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0",
+       "p0"
+      ],
+      "text_head": "Facial Action Coding System\n377\nAppendix I: Index to Video Examples\nAUs and combinations that are illustrated "
+     },
+     {
+      "doc": "Facial Action coding 3.0.md",
+      "families": [
+       "Facial Action"
+      ],
+      "fused_rank": 71,
+      "fused_score": 0.0118,
+      "in_prefix": true,
+      "rerank_score": -4.164062,
+      "post_rank": 14,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": ".Duchenne smiles\n\n.Duchenne smile +surprise\n\n.Duchenne smile + sadness\n\n.Non-Duchenne smile\n\n.Contempt\n\n.Disgu"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_cec8",
+      "rerank_score": 5.921875,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "A Duchenne-pattern smile uses AU6 + AU12, but even that visible pattern is not proof of ge"
+     },
+     {
+      "doc": "Elemental Magic Volume 2.md",
+      "chunk_id": "chunk_4976",
+      "rerank_score": 5.9375,
+      "fused_rank": 56,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "\u201cAdam,\u201d Hanai said, rising with a grin. He clapped Adam on the back in a one-armed embrace"
+     },
+     {
+      "doc": "Grammar of the Shot.md",
+      "chunk_id": "chunk_1775",
+      "rerank_score": 4.234375,
+      "fused_rank": 44,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "5.  An audience is supposed to be watching the human face at this point in the framing"
+     },
+     {
+      "doc": "Sidney Lumet - Making Movies (1994).md",
+      "chunk_id": "chunk_cb2e",
+      "rerank_score": 3.46875,
+      "fused_rank": 32,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Slowly, the actors come wandering in. A false joviality hides their nervousness. Did you h"
+     },
+     {
+      "doc": "Elemental Magic.md",
+      "chunk_id": "chunk_5c67",
+      "rerank_score": 2.367188,
+      "fused_rank": 16,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Humor raced across his face with a roguish smile. \u201cNothing is for certain. Now come, I wil"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_7a49",
+      "rerank_score": 2.195312,
+      "fused_rank": 17,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Provide the audience with a fake scare that reveals it to be something innocent, like a ca"
+     },
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_44de",
+      "rerank_score": 0.515625,
+      "fused_rank": 8,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Cover at least these generation modes:\n\n```\ntext-to-video\nimage-to-video\nfirst-frame-condi"
+     },
+     {
+      "doc": "Comics and Sequential Art.md",
+      "chunk_id": "chunk_c0b2",
+      "rerank_score": 0.09375,
+      "fused_rank": 54,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "[Phillip stands and look at camera, smiling. Pantomimes brushing crumbs off shirt for 12 s"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_612d",
+      "rerank_score": -0.804688,
+      "fused_rank": 111,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "With animation we need to show the expressions of the acting. Showing a change of expressi"
+     },
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_cbdc",
+      "rerank_score": -1.429688,
+      "fused_rank": 5,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "| OpenAI Sora 2 API was marked deprecated with shutdown on 2026-09-24. | OpenAI Video Gene"
+     },
+     {
+      "doc": "A Multistage Pipeline for Character-Stable.md",
+      "chunk_id": "chunk_e177",
+      "rerank_score": -1.703125,
+      "fused_rank": 10,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Haoyuan Shi, Yunxin Li, Xinyu Chen, Longyue\nWang, Baotian Hu, and Min Zhang. 2025.\nAni-\nMa"
+     },
+     {
+      "doc": "Retrieval-Augmented Prompt Optimization for.md",
+      "chunk_id": "chunk_e914",
+      "rerank_score": -3.507812,
+      "fused_rank": 12,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.002,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "4.1. Experimental Setup\nEvaluation and Metrics.\nWe utilize the VBench [21],\nEvalCrafter [2"
+     },
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_1fc0",
+      "rerank_score": -4.375,
+      "fused_rank": 1,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "The actor can now be shown into the audition space where he or she will perform. Most are "
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_df51",
+      "rerank_score": -4.71875,
+      "fused_rank": 7,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Humor is a defining characteristic of us humans. We are social creatures who are constantl"
+     },
+     {
+      "doc": "Ken Dancyger - The technique of film & video editing (2019).md",
+      "chunk_id": "chunk_d4be",
+      "rerank_score": -4.773438,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This story about mistaken identity and sexual attitudes has a happy conclusion. The \nhumor"
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 0,
+      "sparse": 0,
+      "aspect": 0,
+      "fill": 7
+     },
+     "doc_counts": {
+      "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 3,
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 2,
+      "doc_832446a863bb46d68c5823d026a4094a102b29bc1677a109c2e986118582ae7e": 1,
+      "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+      "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048": 1,
+      "doc_2780d9bb55cf555b3d8f496c6fd2d7a1ac5c2ad9165104a63a92a1e5cb34b4c8": 1,
+      "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1,
+      "doc_3d35616670f223135165ad22295e80420b23d4d9214751b2ff50ff76bb692815": 1,
+      "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba": 1,
+      "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 1,
+      "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 1,
+      "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.2,
+     "docs_within_gap": 4
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 4,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 1,
+     "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 2,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 1,
+     "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 1,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 1,
+     "doc_3d35616670f223135165ad22295e80420b23d4d9214751b2ff50ff76bb692815": 1,
+     "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15": 1,
+     "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba": 1,
+     "doc_2780d9bb55cf555b3d8f496c6fd2d7a1ac5c2ad9165104a63a92a1e5cb34b4c8": 1,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64": 1,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16": 1,
+     "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc": 1,
+     "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+     "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1,
+     "doc_832446a863bb46d68c5823d026a4094a102b29bc1677a109c2e986118582ae7e": 1,
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1,
+     "doc_1107fd8fac613c4e6cee06bc0c6913cdc9a52853c60ec7f4c6af0963e414f163": 1,
+     "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3": 1,
+     "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7": 1,
+     "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e": 1,
+     "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937": 1,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680": 1
+    }
+   },
+   "GRAPH": {
+    "union_size": 120,
+    "union_docs": 28,
+    "prefix_size": 35,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 12,
+    "judge": "live",
+    "deep_in_union": 2,
+    "deep_in_prefix": 2,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "Paul Ekman - Facial Action Coding System Manual (0).md",
+      "families": [
+       "Ekman",
+       "Facial Action"
+      ],
+      "fused_rank": 11,
+      "fused_score": 0.0169,
+      "in_prefix": true,
+      "rerank_score": -8.203125,
+      "post_rank": 31,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0",
+       "p0"
+      ],
+      "text_head": "Facial Action Coding System\n377\nAppendix I: Index to Video Examples\nAUs and combinations that are illustrated "
+     },
+     {
+      "doc": "Facial Action coding 3.0.md",
+      "families": [
+       "Facial Action"
+      ],
+      "fused_rank": 71,
+      "fused_score": 0.0118,
+      "in_prefix": true,
+      "rerank_score": -4.164062,
+      "post_rank": 14,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": ".Duchenne smiles\n\n.Duchenne smile +surprise\n\n.Duchenne smile + sadness\n\n.Non-Duchenne smile\n\n.Contempt\n\n.Disgu"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_cec8",
+      "rerank_score": 5.921875,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "A Duchenne-pattern smile uses AU6 + AU12, but even that visible pattern is not proof of ge"
+     },
+     {
+      "doc": "Elemental Magic Volume 2.md",
+      "chunk_id": "chunk_4976",
+      "rerank_score": 5.9375,
+      "fused_rank": 56,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "\u201cAdam,\u201d Hanai said, rising with a grin. He clapped Adam on the back in a one-armed embrace"
+     },
+     {
+      "doc": "Grammar of the Shot.md",
+      "chunk_id": "chunk_1775",
+      "rerank_score": 4.234375,
+      "fused_rank": 44,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "5.  An audience is supposed to be watching the human face at this point in the framing"
+     },
+     {
+      "doc": "Sidney Lumet - Making Movies (1994).md",
+      "chunk_id": "chunk_cb2e",
+      "rerank_score": 3.46875,
+      "fused_rank": 32,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Slowly, the actors come wandering in. A false joviality hides their nervousness. Did you h"
+     },
+     {
+      "doc": "Elemental Magic.md",
+      "chunk_id": "chunk_5c67",
+      "rerank_score": 2.367188,
+      "fused_rank": 16,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Humor raced across his face with a roguish smile. \u201cNothing is for certain. Now come, I wil"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_7a49",
+      "rerank_score": 2.195312,
+      "fused_rank": 17,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Provide the audience with a fake scare that reveals it to be something innocent, like a ca"
+     },
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_44de",
+      "rerank_score": 0.515625,
+      "fused_rank": 8,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Cover at least these generation modes:\n\n```\ntext-to-video\nimage-to-video\nfirst-frame-condi"
+     },
+     {
+      "doc": "Comics and Sequential Art.md",
+      "chunk_id": "chunk_c0b2",
+      "rerank_score": 0.09375,
+      "fused_rank": 54,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "[Phillip stands and look at camera, smiling. Pantomimes brushing crumbs off shirt for 12 s"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_612d",
+      "rerank_score": -0.804688,
+      "fused_rank": 111,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "With animation we need to show the expressions of the acting. Showing a change of expressi"
+     },
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_cbdc",
+      "rerank_score": -1.429688,
+      "fused_rank": 5,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "| OpenAI Sora 2 API was marked deprecated with shutdown on 2026-09-24. | OpenAI Video Gene"
+     },
+     {
+      "doc": "A Multistage Pipeline for Character-Stable.md",
+      "chunk_id": "chunk_e177",
+      "rerank_score": -1.703125,
+      "fused_rank": 10,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Haoyuan Shi, Yunxin Li, Xinyu Chen, Longyue\nWang, Baotian Hu, and Min Zhang. 2025.\nAni-\nMa"
+     },
+     {
+      "doc": "Retrieval-Augmented Prompt Optimization for.md",
+      "chunk_id": "chunk_e914",
+      "rerank_score": -3.507812,
+      "fused_rank": 12,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.002,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "4.1. Experimental Setup\nEvaluation and Metrics.\nWe utilize the VBench [21],\nEvalCrafter [2"
+     },
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_1fc0",
+      "rerank_score": -4.375,
+      "fused_rank": 1,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "The actor can now be shown into the audition space where he or she will perform. Most are "
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_df51",
+      "rerank_score": -4.71875,
+      "fused_rank": 7,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Humor is a defining characteristic of us humans. We are social creatures who are constantl"
+     },
+     {
+      "doc": "Ken Dancyger - The technique of film & video editing (2019).md",
+      "chunk_id": "chunk_d4be",
+      "rerank_score": -4.773438,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This story about mistaken identity and sexual attitudes has a happy conclusion. The \nhumor"
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 0,
+      "sparse": 0,
+      "aspect": 0,
+      "fill": 7
+     },
+     "doc_counts": {
+      "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 3,
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 2,
+      "doc_832446a863bb46d68c5823d026a4094a102b29bc1677a109c2e986118582ae7e": 1,
+      "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+      "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048": 1,
+      "doc_2780d9bb55cf555b3d8f496c6fd2d7a1ac5c2ad9165104a63a92a1e5cb34b4c8": 1,
+      "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1,
+      "doc_3d35616670f223135165ad22295e80420b23d4d9214751b2ff50ff76bb692815": 1,
+      "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba": 1,
+      "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 1,
+      "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 1,
+      "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.2,
+     "docs_within_gap": 4
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 4,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 1,
+     "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 2,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 1,
+     "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 1,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 1,
+     "doc_3d35616670f223135165ad22295e80420b23d4d9214751b2ff50ff76bb692815": 1,
+     "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15": 1,
+     "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba": 1,
+     "doc_2780d9bb55cf555b3d8f496c6fd2d7a1ac5c2ad9165104a63a92a1e5cb34b4c8": 1,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64": 1,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16": 1,
+     "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc": 1,
+     "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+     "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1,
+     "doc_832446a863bb46d68c5823d026a4094a102b29bc1677a109c2e986118582ae7e": 1,
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1,
+     "doc_1107fd8fac613c4e6cee06bc0c6913cdc9a52853c60ec7f4c6af0963e414f163": 1,
+     "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3": 1,
+     "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7": 1,
+     "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e": 1,
+     "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937": 1,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680": 1
+    }
+   },
+   "WILDCARD": {
+    "union_size": 120,
+    "union_docs": 28,
+    "prefix_size": 35,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 12,
+    "judge": "live",
+    "deep_in_union": 2,
+    "deep_in_prefix": 2,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "Paul Ekman - Facial Action Coding System Manual (0).md",
+      "families": [
+       "Ekman",
+       "Facial Action"
+      ],
+      "fused_rank": 11,
+      "fused_score": 0.0169,
+      "in_prefix": true,
+      "rerank_score": -8.203125,
+      "post_rank": 31,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0",
+       "p0"
+      ],
+      "text_head": "Facial Action Coding System\n377\nAppendix I: Index to Video Examples\nAUs and combinations that are illustrated "
+     },
+     {
+      "doc": "Facial Action coding 3.0.md",
+      "families": [
+       "Facial Action"
+      ],
+      "fused_rank": 71,
+      "fused_score": 0.0118,
+      "in_prefix": true,
+      "rerank_score": -4.164062,
+      "post_rank": 14,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": ".Duchenne smiles\n\n.Duchenne smile +surprise\n\n.Duchenne smile + sadness\n\n.Non-Duchenne smile\n\n.Contempt\n\n.Disgu"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_cec8",
+      "rerank_score": 5.921875,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "A Duchenne-pattern smile uses AU6 + AU12, but even that visible pattern is not proof of ge"
+     },
+     {
+      "doc": "Elemental Magic Volume 2.md",
+      "chunk_id": "chunk_4976",
+      "rerank_score": 5.9375,
+      "fused_rank": 56,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "\u201cAdam,\u201d Hanai said, rising with a grin. He clapped Adam on the back in a one-armed embrace"
+     },
+     {
+      "doc": "Grammar of the Shot.md",
+      "chunk_id": "chunk_1775",
+      "rerank_score": 4.234375,
+      "fused_rank": 44,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "5.  An audience is supposed to be watching the human face at this point in the framing"
+     },
+     {
+      "doc": "Sidney Lumet - Making Movies (1994).md",
+      "chunk_id": "chunk_cb2e",
+      "rerank_score": 3.46875,
+      "fused_rank": 32,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Slowly, the actors come wandering in. A false joviality hides their nervousness. Did you h"
+     },
+     {
+      "doc": "Elemental Magic.md",
+      "chunk_id": "chunk_5c67",
+      "rerank_score": 2.367188,
+      "fused_rank": 16,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Humor raced across his face with a roguish smile. \u201cNothing is for certain. Now come, I wil"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_7a49",
+      "rerank_score": 2.195312,
+      "fused_rank": 17,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Provide the audience with a fake scare that reveals it to be something innocent, like a ca"
+     },
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_44de",
+      "rerank_score": 0.515625,
+      "fused_rank": 8,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Cover at least these generation modes:\n\n```\ntext-to-video\nimage-to-video\nfirst-frame-condi"
+     },
+     {
+      "doc": "Comics and Sequential Art.md",
+      "chunk_id": "chunk_c0b2",
+      "rerank_score": 0.09375,
+      "fused_rank": 54,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "[Phillip stands and look at camera, smiling. Pantomimes brushing crumbs off shirt for 12 s"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_612d",
+      "rerank_score": -0.804688,
+      "fused_rank": 111,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "With animation we need to show the expressions of the acting. Showing a change of expressi"
+     },
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_cbdc",
+      "rerank_score": -1.429688,
+      "fused_rank": 5,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "| OpenAI Sora 2 API was marked deprecated with shutdown on 2026-09-24. | OpenAI Video Gene"
+     },
+     {
+      "doc": "A Multistage Pipeline for Character-Stable.md",
+      "chunk_id": "chunk_e177",
+      "rerank_score": -1.703125,
+      "fused_rank": 10,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Haoyuan Shi, Yunxin Li, Xinyu Chen, Longyue\nWang, Baotian Hu, and Min Zhang. 2025.\nAni-\nMa"
+     },
+     {
+      "doc": "Retrieval-Augmented Prompt Optimization for.md",
+      "chunk_id": "chunk_e914",
+      "rerank_score": -3.507812,
+      "fused_rank": 12,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.002,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "4.1. Experimental Setup\nEvaluation and Metrics.\nWe utilize the VBench [21],\nEvalCrafter [2"
+     },
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_1fc0",
+      "rerank_score": -4.375,
+      "fused_rank": 1,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "The actor can now be shown into the audition space where he or she will perform. Most are "
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_df51",
+      "rerank_score": -4.71875,
+      "fused_rank": 7,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Humor is a defining characteristic of us humans. We are social creatures who are constantl"
+     },
+     {
+      "doc": "Ken Dancyger - The technique of film & video editing (2019).md",
+      "chunk_id": "chunk_d4be",
+      "rerank_score": -4.773438,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This story about mistaken identity and sexual attitudes has a happy conclusion. The \nhumor"
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 0,
+      "sparse": 0,
+      "aspect": 0,
+      "fill": 7
+     },
+     "doc_counts": {
+      "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 3,
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 2,
+      "doc_832446a863bb46d68c5823d026a4094a102b29bc1677a109c2e986118582ae7e": 1,
+      "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+      "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048": 1,
+      "doc_2780d9bb55cf555b3d8f496c6fd2d7a1ac5c2ad9165104a63a92a1e5cb34b4c8": 1,
+      "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1,
+      "doc_3d35616670f223135165ad22295e80420b23d4d9214751b2ff50ff76bb692815": 1,
+      "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba": 1,
+      "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 1,
+      "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 1,
+      "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.2,
+     "docs_within_gap": 4
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 4,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 1,
+     "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 2,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 1,
+     "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 1,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 1,
+     "doc_3d35616670f223135165ad22295e80420b23d4d9214751b2ff50ff76bb692815": 1,
+     "doc_17b69e1d403309f257f6ac8972a60389e4601693d140c07834e4f903958e2e15": 1,
+     "doc_b239c387522687054c671a46b1d660b025a18dc2ba981eb00a3da39b501629ba": 1,
+     "doc_2780d9bb55cf555b3d8f496c6fd2d7a1ac5c2ad9165104a63a92a1e5cb34b4c8": 1,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64": 1,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16": 1,
+     "doc_f1b9df2cac2683b0d7ee52dbea7f0cf0bbd8168cfb8d101e468fa13feead2cfc": 1,
+     "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+     "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1,
+     "doc_832446a863bb46d68c5823d026a4094a102b29bc1677a109c2e986118582ae7e": 1,
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1,
+     "doc_1107fd8fac613c4e6cee06bc0c6913cdc9a52853c60ec7f4c6af0963e414f163": 1,
+     "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3": 1,
+     "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7": 1,
+     "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e": 1,
+     "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937": 1,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680": 1
+    }
+   }
+  }
+ },
+ "wc05_ordinary_fast": {
+  "query": "Create a 12-second chase shot where a character running at an ordinary human speed feels incredibly fast. No superpowers and no impossible camera movement.",
+  "deep_keywords": [
+   "Laban",
+   "Timing for Animation"
+  ],
+  "scout_docs": [
+   "Timing for Animation.md",
+   "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+   "How to Draw Manga Martial Arts and Combat Sports.md",
+   "Fight Choreography The Art of Non-Verbal Dialogue.md",
+   "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+   "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+   "Grammar of the Shot.md",
+   "Francis Glebas - Directing the Story (2008).md"
+  ],
+  "scout_deep_nominated": [
+   "Timing for Animation"
+  ],
+  "retrieval_required": true,
+  "modes": {
+   "FAST": {
+    "union_size": 110,
+    "union_docs": 22,
+    "prefix_size": 34,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 9,
+    "judge": "live",
+    "deep_in_union": 14,
+    "deep_in_prefix": 3,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 89,
+      "fused_score": 0.0047,
+      "in_prefix": true,
+      "rerank_score": -3.460938,
+      "post_rank": 26,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "After many years in animation making films and commercials, I can now confess that I\u2019m a fully-fledged animati"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 91,
+      "fused_score": 0.0046,
+      "in_prefix": true,
+      "rerank_score": -2.914062,
+      "post_rank": 25,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "In this book we attempt to look at the laws of movement in nature. What do movements mean? What do they expres"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 93,
+      "fused_score": 0.0045,
+      "in_prefix": true,
+      "rerank_score": -6.234375,
+      "post_rank": 29,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "Nevertheless, we hope to provide a basic understanding of how timing in animation is ultimately based on timin"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 94,
+      "fused_score": 0.0045,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "It is not the exaggeration of the weight of the object which is at the center of animation, but the exaggerati"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 96,
+      "fused_score": 0.0043,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "For these reasons the features of characters must be kept simple, allowing for maximum facial expression (Fig."
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 97,
+      "fused_score": 0.0042,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "Timing is the part of animation which gives _meaning_ to movement. Movement can easily be achieved by drawing "
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 98,
+      "fused_score": 0.0042,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "In terms of animation, the idea of film time is one of the most vital concepts to understand and to use. It is"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 100,
+      "fused_score": 0.0041,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "As explained above, the basis of timing is the established film speed of 24 frames per second. If, therefore, "
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 101,
+      "fused_score": 0.004,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "A live actor faced with these problems moves his muscles and limbs and deals with gravity automatically from h"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 103,
+      "fused_score": 0.0039,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "I was flattered by the warm reception accorded to the Second Edition in 2009. Hopefully, despite my fingerprin"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 105,
+      "fused_score": 0.0039,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "Timing in animation is an elusive subject. It only exists while the film is being projected, in the same way t"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 106,
+      "fused_score": 0.0038,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "Throughout my career I have dipped in and out of the _Timing for Animation_ , looking for hints and tips but a"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 107,
+      "fused_score": 0.0038,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "Therefore, for an animator, the timing of an action is the same as deciding the number and spacing of the draw"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "families": [
+       "Timing for Animation"
+      ],
+      "fused_rank": 108,
+      "fused_score": 0.0037,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "p0"
+      ],
+      "text_head": "It is usually a good idea in animation to have a time lag between the movements of different parts of the figu"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_12f6",
+      "rerank_score": 7.523438,
+      "fused_rank": 4,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This technique can also be applied to instances where the camera remains stationary and a "
+     },
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_ab1f",
+      "rerank_score": 6.820312,
+      "fused_rank": 14,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "In addition to altering movement in a seemingly physical, objective way, these techniques "
+     },
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_4f65",
+      "rerank_score": 6.390625,
+      "fused_rank": 8,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This effect is reversed with movement across the x-axis, which appears faster because the "
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_4098",
+      "rerank_score": 6.054688,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This is a stylistic choice that probably isn\u2019t the coordinator\u2019s prerogative, but if it\u2019s "
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_63ee",
+      "rerank_score": 5.695312,
+      "fused_rank": 2,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Speed-ramped avoids similarly let you do things that would be too risky at full speed, lik"
+     },
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_2249",
+      "rerank_score": 4.804688,
+      "fused_rank": 6,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "A subject\u2019s apparent speed moving along the z-axis of the frame can be increased through t"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_c09b",
+      "rerank_score": 4.59375,
+      "fused_rank": 1,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Once cameras are rolling, go as fast as you can without either of you losing accuracy, con"
+     },
+     {
+      "doc": "Grammar of the Edit.md",
+      "chunk_id": "chunk_f429",
+      "rerank_score": 4.257812,
+      "fused_rank": 12,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Shot 1 is a medium long shot of a woman picking up a book. Shot 2 is a close-up highlighti"
+     },
+     {
+      "doc": "Bruce Block - The Visual Story (2007).md",
+      "chunk_id": "chunk_ea54",
+      "rerank_score": 6.640625,
+      "fused_rank": 35,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Sped-up movement is created when the camera runs slower than 24 fps (under-cranking). If t"
+     },
+     {
+      "doc": "David Landau - Lighting for Cinematography (2014).md",
+      "chunk_id": "chunk_db67",
+      "rerank_score": 6.320312,
+      "fused_rank": 17,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "traveling any distance. In one of the last scenes in The Graduate\n(1967), director Mike Ni"
+     },
+     {
+      "doc": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+      "chunk_id": "chunk_e208",
+      "rerank_score": 6.070312,
+      "fused_rank": 22,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "movement down, our perceptual conditioning tells us that the people or objects are\nactuall"
+     },
+     {
+      "doc": "Grammar of the Edit.md",
+      "chunk_id": "chunk_df03",
+      "rerank_score": 3.742188,
+      "fused_rank": 10,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "You hope that the production team understood this phenomenon and got some of the close-up "
+     },
+     {
+      "doc": "How to Draw Manga Martial Arts and Combat Sports.md",
+      "chunk_id": "chunk_a9bc",
+      "rerank_score": 5.273438,
+      "fused_rank": 29,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Ditferent parts of the flesh move\nat different speeds the instant an\nopponent is felled.\nT"
+     },
+     {
+      "doc": "Framed Ink.md",
+      "chunk_id": "chunk_43d4",
+      "rerank_score": 5.164062,
+      "fused_rank": 66,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Same in this case where the three characters involved in this street chase are\nsimultaneou"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_1294",
+      "rerank_score": 5.039062,
+      "fused_rank": 19,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "To Create Cleaner Techniques\nIn some Kung Fu movies, you can see that the combatants are t"
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 4,
+      "sparse": 0,
+      "aspect": 0,
+      "fill": 3
+     },
+     "doc_counts": {
+      "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852": 4,
+      "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 3,
+      "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 2,
+      "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1,
+      "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+      "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+      "doc_b86bc56a5e4b9ef951a152b8ae2becdf8d51d9ce2adf5786a3d168e380538e1a": 1,
+      "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd": 1,
+      "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.267,
+     "docs_within_gap": 14
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 3,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 4,
+     "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852": 4,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 3,
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 1,
+     "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a": 1,
+     "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16": 1,
+     "doc_b86bc56a5e4b9ef951a152b8ae2becdf8d51d9ce2adf5786a3d168e380538e1a": 1,
+     "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1,
+     "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+     "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34": 1,
+     "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd": 1,
+     "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed": 1,
+     "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1,
+     "doc_d7510ba66b3cd614f927a7872f9c78e16c34d7909d5e968925e367aec892306f": 1,
+     "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937": 1,
+     "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e": 1
+    }
+   },
+   "HYBRID": {
+    "union_size": 120,
+    "union_docs": 27,
+    "prefix_size": 35,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 10,
+    "judge": "live",
+    "deep_in_union": 4,
+    "deep_in_prefix": 4,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 53,
+      "fused_score": 0.013,
+      "in_prefix": true,
+      "rerank_score": -5.398438,
+      "post_rank": 26,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": "174\t\nTHE LABAN WORKBOOK FOR ACTORS \nM\nM\nObserve the different ways the same movement is performed.\nM\nM\nPerform"
+     },
+     {
+      "doc": "Bayesian reasoning for Laban Movement Analysis.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 66,
+      "fused_score": 0.0119,
+      "in_prefix": true,
+      "rerank_score": -6.109375,
+      "post_rank": 29,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "target we can assume a straight trajectory of the hand. This \nsuggests taking the curvature into consideration"
+     },
+     {
+      "doc": "Affective Movement Generation using Laban Effort and Shape and.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 72,
+      "fused_score": 0.0116,
+      "in_prefix": true,
+      "rerank_score": -5.585938,
+      "post_rank": 27,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Fig. 7.\nAn illustration of the velocity changes (magnitude and direction)\nwhen converting from sadness to ange"
+     },
+     {
+      "doc": "Laban-Bartenieff Movement Studies for Neonatal Movements.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 91,
+      "fused_score": 0.0105,
+      "in_prefix": true,
+      "rerank_score": -1.203125,
+      "post_rank": 22,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": "M. Rahman, K. Raja, Laban/Bartenieff Movement Studies for neonatal movements\nHUMAN MOVEMENT\n99\nHuman Movement,"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_4f65",
+      "rerank_score": 6.390625,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This effect is reversed with movement across the x-axis, which appears faster because the "
+     },
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_12f6",
+      "rerank_score": 7.523438,
+      "fused_rank": 5,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This technique can also be applied to instances where the camera remains stationary and a "
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_4098",
+      "rerank_score": 6.054688,
+      "fused_rank": 4,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This is a stylistic choice that probably isn\u2019t the coordinator\u2019s prerogative, but if it\u2019s "
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_63ee",
+      "rerank_score": 5.695312,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Speed-ramped avoids similarly let you do things that would be too risky at full speed, lik"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_13bb",
+      "rerank_score": 5.039062,
+      "fused_rank": 7,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "As discussed in the coordination chapter, there may be times when you can use speed-rampin"
+     },
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_2249",
+      "rerank_score": 4.804688,
+      "fused_rank": 8,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "A subject\u2019s apparent speed moving along the z-axis of the frame can be increased through t"
+     },
+     {
+      "doc": "Digital Compositing for Film and Video.md",
+      "chunk_id": "chunk_91c3",
+      "rerank_score": 4.757812,
+      "fused_rank": 19,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Let\u2019s say we want to do that classic speed change gag where the action pauses at a key poi"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_c09b",
+      "rerank_score": 4.59375,
+      "fused_rank": 2,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Once cameras are rolling, go as fast as you can without either of you losing accuracy, con"
+     },
+     {
+      "doc": "Bruce Block - The Visual Story (2007).md",
+      "chunk_id": "chunk_ea54",
+      "rerank_score": 6.640625,
+      "fused_rank": 42,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Sped-up movement is created when the camera runs slower than 24 fps (under-cranking). If t"
+     },
+     {
+      "doc": "David Landau - Lighting for Cinematography (2014).md",
+      "chunk_id": "chunk_db67",
+      "rerank_score": 6.320312,
+      "fused_rank": 18,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "traveling any distance. In one of the last scenes in The Graduate\n(1967), director Mike Ni"
+     },
+     {
+      "doc": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+      "chunk_id": "chunk_e208",
+      "rerank_score": 6.070312,
+      "fused_rank": 60,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "movement down, our perceptual conditioning tells us that the people or objects are\nactuall"
+     },
+     {
+      "doc": "How to Draw Manga Martial Arts and Combat Sports.md",
+      "chunk_id": "chunk_a9bc",
+      "rerank_score": 5.273438,
+      "fused_rank": 33,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Ditferent parts of the flesh move\nat different speeds the instant an\nopponent is felled.\nT"
+     },
+     {
+      "doc": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+      "chunk_id": "chunk_5b59",
+      "rerank_score": 4.023438,
+      "fused_rank": 49,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Walking and Running Characters\u2003\n213\nA Stationary Shot Becomes a Subjective Moving\nShot\nA c"
+     },
+     {
+      "doc": "Framed Ink.md",
+      "chunk_id": "chunk_43d4",
+      "rerank_score": 5.164062,
+      "fused_rank": 104,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Same in this case where the three characters involved in this street chase are\nsimultaneou"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_1294",
+      "rerank_score": 5.039062,
+      "fused_rank": 21,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "To Create Cleaner Techniques\nIn some Kung Fu movies, you can see that the combatants are t"
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 4,
+      "sparse": 1,
+      "aspect": 0,
+      "fill": 2
+     },
+     "doc_counts": {
+      "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 4,
+      "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852": 3,
+      "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34": 1,
+      "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1,
+      "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+      "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+      "doc_b86bc56a5e4b9ef951a152b8ae2becdf8d51d9ce2adf5786a3d168e380538e1a": 1,
+      "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+      "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd": 1,
+      "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.267,
+     "docs_within_gap": 13
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852": 2,
+     "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 1,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 5,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 1,
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 1,
+     "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a": 1,
+     "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+     "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34": 1,
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 1,
+     "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16": 1,
+     "doc_b86bc56a5e4b9ef951a152b8ae2becdf8d51d9ce2adf5786a3d168e380538e1a": 1,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1,
+     "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a": 1,
+     "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a": 1,
+     "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7": 1,
+     "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed": 1,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_c967daa374b6dad1c7ee9c0b90cf12bd79bc9ba5344dd665004847d0b6abf8fa": 1,
+     "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743": 1,
+     "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd": 1,
+     "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1
+    }
+   },
+   "GRAPH": {
+    "union_size": 120,
+    "union_docs": 27,
+    "prefix_size": 35,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 10,
+    "judge": "live",
+    "deep_in_union": 4,
+    "deep_in_prefix": 4,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 53,
+      "fused_score": 0.013,
+      "in_prefix": true,
+      "rerank_score": -5.398438,
+      "post_rank": 26,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": "174\t\nTHE LABAN WORKBOOK FOR ACTORS \nM\nM\nObserve the different ways the same movement is performed.\nM\nM\nPerform"
+     },
+     {
+      "doc": "Bayesian reasoning for Laban Movement Analysis.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 66,
+      "fused_score": 0.0119,
+      "in_prefix": true,
+      "rerank_score": -6.109375,
+      "post_rank": 29,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "target we can assume a straight trajectory of the hand. This \nsuggests taking the curvature into consideration"
+     },
+     {
+      "doc": "Affective Movement Generation using Laban Effort and Shape and.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 72,
+      "fused_score": 0.0116,
+      "in_prefix": true,
+      "rerank_score": -5.585938,
+      "post_rank": 27,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Fig. 7.\nAn illustration of the velocity changes (magnitude and direction)\nwhen converting from sadness to ange"
+     },
+     {
+      "doc": "Laban-Bartenieff Movement Studies for Neonatal Movements.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 91,
+      "fused_score": 0.0105,
+      "in_prefix": true,
+      "rerank_score": -1.203125,
+      "post_rank": 22,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": "M. Rahman, K. Raja, Laban/Bartenieff Movement Studies for neonatal movements\nHUMAN MOVEMENT\n99\nHuman Movement,"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_4f65",
+      "rerank_score": 6.390625,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This effect is reversed with movement across the x-axis, which appears faster because the "
+     },
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_12f6",
+      "rerank_score": 7.523438,
+      "fused_rank": 5,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This technique can also be applied to instances where the camera remains stationary and a "
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_4098",
+      "rerank_score": 6.054688,
+      "fused_rank": 4,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This is a stylistic choice that probably isn\u2019t the coordinator\u2019s prerogative, but if it\u2019s "
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_63ee",
+      "rerank_score": 5.695312,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Speed-ramped avoids similarly let you do things that would be too risky at full speed, lik"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_13bb",
+      "rerank_score": 5.039062,
+      "fused_rank": 7,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "As discussed in the coordination chapter, there may be times when you can use speed-rampin"
+     },
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_2249",
+      "rerank_score": 4.804688,
+      "fused_rank": 8,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "A subject\u2019s apparent speed moving along the z-axis of the frame can be increased through t"
+     },
+     {
+      "doc": "Digital Compositing for Film and Video.md",
+      "chunk_id": "chunk_91c3",
+      "rerank_score": 4.757812,
+      "fused_rank": 19,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Let\u2019s say we want to do that classic speed change gag where the action pauses at a key poi"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_c09b",
+      "rerank_score": 4.59375,
+      "fused_rank": 2,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Once cameras are rolling, go as fast as you can without either of you losing accuracy, con"
+     },
+     {
+      "doc": "Bruce Block - The Visual Story (2007).md",
+      "chunk_id": "chunk_ea54",
+      "rerank_score": 6.640625,
+      "fused_rank": 42,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Sped-up movement is created when the camera runs slower than 24 fps (under-cranking). If t"
+     },
+     {
+      "doc": "David Landau - Lighting for Cinematography (2014).md",
+      "chunk_id": "chunk_db67",
+      "rerank_score": 6.320312,
+      "fused_rank": 18,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "traveling any distance. In one of the last scenes in The Graduate\n(1967), director Mike Ni"
+     },
+     {
+      "doc": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+      "chunk_id": "chunk_e208",
+      "rerank_score": 6.070312,
+      "fused_rank": 60,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "movement down, our perceptual conditioning tells us that the people or objects are\nactuall"
+     },
+     {
+      "doc": "How to Draw Manga Martial Arts and Combat Sports.md",
+      "chunk_id": "chunk_a9bc",
+      "rerank_score": 5.273438,
+      "fused_rank": 33,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Ditferent parts of the flesh move\nat different speeds the instant an\nopponent is felled.\nT"
+     },
+     {
+      "doc": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+      "chunk_id": "chunk_5b59",
+      "rerank_score": 4.023438,
+      "fused_rank": 49,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Walking and Running Characters\u2003\n213\nA Stationary Shot Becomes a Subjective Moving\nShot\nA c"
+     },
+     {
+      "doc": "Framed Ink.md",
+      "chunk_id": "chunk_43d4",
+      "rerank_score": 5.164062,
+      "fused_rank": 104,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Same in this case where the three characters involved in this street chase are\nsimultaneou"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_1294",
+      "rerank_score": 5.039062,
+      "fused_rank": 21,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "To Create Cleaner Techniques\nIn some Kung Fu movies, you can see that the combatants are t"
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 4,
+      "sparse": 1,
+      "aspect": 0,
+      "fill": 2
+     },
+     "doc_counts": {
+      "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 4,
+      "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852": 3,
+      "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34": 1,
+      "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1,
+      "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+      "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+      "doc_b86bc56a5e4b9ef951a152b8ae2becdf8d51d9ce2adf5786a3d168e380538e1a": 1,
+      "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+      "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd": 1,
+      "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.267,
+     "docs_within_gap": 13
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852": 2,
+     "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 1,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 5,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 1,
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 1,
+     "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a": 1,
+     "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+     "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34": 1,
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 1,
+     "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16": 1,
+     "doc_b86bc56a5e4b9ef951a152b8ae2becdf8d51d9ce2adf5786a3d168e380538e1a": 1,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1,
+     "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a": 1,
+     "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a": 1,
+     "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7": 1,
+     "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed": 1,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_c967daa374b6dad1c7ee9c0b90cf12bd79bc9ba5344dd665004847d0b6abf8fa": 1,
+     "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743": 1,
+     "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd": 1,
+     "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1
+    }
+   },
+   "WILDCARD": {
+    "union_size": 120,
+    "union_docs": 27,
+    "prefix_size": 35,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 10,
+    "judge": "live",
+    "deep_in_union": 4,
+    "deep_in_prefix": 4,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 53,
+      "fused_score": 0.013,
+      "in_prefix": true,
+      "rerank_score": -5.398438,
+      "post_rank": 26,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": "174\t\nTHE LABAN WORKBOOK FOR ACTORS \nM\nM\nObserve the different ways the same movement is performed.\nM\nM\nPerform"
+     },
+     {
+      "doc": "Bayesian reasoning for Laban Movement Analysis.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 66,
+      "fused_score": 0.0119,
+      "in_prefix": true,
+      "rerank_score": -6.109375,
+      "post_rank": 29,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "target we can assume a straight trajectory of the hand. This \nsuggests taking the curvature into consideration"
+     },
+     {
+      "doc": "Affective Movement Generation using Laban Effort and Shape and.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 72,
+      "fused_score": 0.0116,
+      "in_prefix": true,
+      "rerank_score": -5.585938,
+      "post_rank": 27,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Fig. 7.\nAn illustration of the velocity changes (magnitude and direction)\nwhen converting from sadness to ange"
+     },
+     {
+      "doc": "Laban-Bartenieff Movement Studies for Neonatal Movements.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 91,
+      "fused_score": 0.0105,
+      "in_prefix": true,
+      "rerank_score": -1.203125,
+      "post_rank": 22,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": "M. Rahman, K. Raja, Laban/Bartenieff Movement Studies for neonatal movements\nHUMAN MOVEMENT\n99\nHuman Movement,"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_4f65",
+      "rerank_score": 6.390625,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This effect is reversed with movement across the x-axis, which appears faster because the "
+     },
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_12f6",
+      "rerank_score": 7.523438,
+      "fused_rank": 5,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This technique can also be applied to instances where the camera remains stationary and a "
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_4098",
+      "rerank_score": 6.054688,
+      "fused_rank": 4,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This is a stylistic choice that probably isn\u2019t the coordinator\u2019s prerogative, but if it\u2019s "
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_63ee",
+      "rerank_score": 5.695312,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Speed-ramped avoids similarly let you do things that would be too risky at full speed, lik"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_13bb",
+      "rerank_score": 5.039062,
+      "fused_rank": 7,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "As discussed in the coordination chapter, there may be times when you can use speed-rampin"
+     },
+     {
+      "doc": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+      "chunk_id": "chunk_2249",
+      "rerank_score": 4.804688,
+      "fused_rank": 8,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "A subject\u2019s apparent speed moving along the z-axis of the frame can be increased through t"
+     },
+     {
+      "doc": "Digital Compositing for Film and Video.md",
+      "chunk_id": "chunk_91c3",
+      "rerank_score": 4.757812,
+      "fused_rank": 19,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Let\u2019s say we want to do that classic speed change gag where the action pauses at a key poi"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_c09b",
+      "rerank_score": 4.59375,
+      "fused_rank": 2,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Once cameras are rolling, go as fast as you can without either of you losing accuracy, con"
+     },
+     {
+      "doc": "Bruce Block - The Visual Story (2007).md",
+      "chunk_id": "chunk_ea54",
+      "rerank_score": 6.640625,
+      "fused_rank": 42,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Sped-up movement is created when the camera runs slower than 24 fps (under-cranking). If t"
+     },
+     {
+      "doc": "David Landau - Lighting for Cinematography (2014).md",
+      "chunk_id": "chunk_db67",
+      "rerank_score": 6.320312,
+      "fused_rank": 18,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "traveling any distance. In one of the last scenes in The Graduate\n(1967), director Mike Ni"
+     },
+     {
+      "doc": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+      "chunk_id": "chunk_e208",
+      "rerank_score": 6.070312,
+      "fused_rank": 60,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "movement down, our perceptual conditioning tells us that the people or objects are\nactuall"
+     },
+     {
+      "doc": "How to Draw Manga Martial Arts and Combat Sports.md",
+      "chunk_id": "chunk_a9bc",
+      "rerank_score": 5.273438,
+      "fused_rank": 33,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Ditferent parts of the flesh move\nat different speeds the instant an\nopponent is felled.\nT"
+     },
+     {
+      "doc": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+      "chunk_id": "chunk_5b59",
+      "rerank_score": 4.023438,
+      "fused_rank": 49,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Walking and Running Characters\u2003\n213\nA Stationary Shot Becomes a Subjective Moving\nShot\nA c"
+     },
+     {
+      "doc": "Framed Ink.md",
+      "chunk_id": "chunk_43d4",
+      "rerank_score": 5.164062,
+      "fused_rank": 104,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Same in this case where the three characters involved in this street chase are\nsimultaneou"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_1294",
+      "rerank_score": 5.039062,
+      "fused_rank": 21,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "To Create Cleaner Techniques\nIn some Kung Fu movies, you can see that the combatants are t"
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 4,
+      "sparse": 1,
+      "aspect": 0,
+      "fill": 2
+     },
+     "doc_counts": {
+      "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 4,
+      "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852": 3,
+      "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34": 1,
+      "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1,
+      "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+      "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+      "doc_b86bc56a5e4b9ef951a152b8ae2becdf8d51d9ce2adf5786a3d168e380538e1a": 1,
+      "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+      "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd": 1,
+      "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.267,
+     "docs_within_gap": 13
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852": 2,
+     "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 1,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 5,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 1,
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 1,
+     "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a": 1,
+     "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+     "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34": 1,
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 1,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 1,
+     "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16": 1,
+     "doc_b86bc56a5e4b9ef951a152b8ae2becdf8d51d9ce2adf5786a3d168e380538e1a": 1,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1,
+     "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a": 1,
+     "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a": 1,
+     "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7": 1,
+     "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed": 1,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_c967daa374b6dad1c7ee9c0b90cf12bd79bc9ba5344dd665004847d0b6abf8fa": 1,
+     "doc_6a5301e0043db44f0aed09800e82362afa2e74eec45f5f971f0dbe925c0f2743": 1,
+     "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd": 1,
+     "doc_16c77321ead95c542ae1cedfd050807dc4264bb42ca52ba46f1f6aa46379825c": 1
+    }
+   }
+  }
+ },
+ "wc07_silent_authority": {
+  "query": "Design a scene where a woman walks into a room and everyone immediately understands she has more authority than everyone else, but she cannot speak, threaten anyone, or do anything obviously dominant.",
+  "deep_keywords": [
+   "Laban",
+   "Bartenieff",
+   "Making Connections"
+  ],
+  "scout_docs": [
+   "Fight Choreography The Art of Non-Verbal Dialogue.md",
+   "The Laban Workbook for Actors.md",
+   "Film Directing Cinematic Motion.md",
+   "Stage Combat Arts.md",
+   "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+   "Francis Glebas - Directing the Story (2008).md",
+   "Elemental Magic.md",
+   "Making Meaning with Machines.md"
+  ],
+  "scout_deep_nominated": [
+   "Laban"
+  ],
+  "retrieval_required": true,
+  "modes": {
+   "FAST": {
+    "union_size": 120,
+    "union_docs": 23,
+    "prefix_size": 33,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 10,
+    "judge": "live",
+    "deep_in_union": 13,
+    "deep_in_prefix": 5,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "Laban Movement-Guided Diffusion for Text-to-Motion Generation.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 27,
+      "fused_score": 0.0131,
+      "in_prefix": true,
+      "rerank_score": -11.28125,
+      "post_rank": 32,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "2016) formulated Laban Efforts as a cost function within"
+     },
+     {
+      "doc": "Making Connections Bartenieff Fundamentals.md",
+      "families": [
+       "Bartenieff",
+       "Making Connections"
+      ],
+      "fused_rank": 31,
+      "fused_score": 0.0129,
+      "in_prefix": true,
+      "rerank_score": -5.234375,
+      "post_rank": 27,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "32. The questions which follow are based on the Effort Qualities from Laban Movement"
+     },
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 34,
+      "fused_score": 0.0127,
+      "in_prefix": true,
+      "rerank_score": -7.84375,
+      "post_rank": 29,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "132 (Strauss) 80\nLaban, Rudolf 1\u20132, 7, 50, 64, 65, \n159\u201360, 212 see also LMA \n(Laban Movement Analysis); \nStat"
+     },
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 56,
+      "fused_score": 0.0112,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": "sound off\nM\nM\nWatch news anchors, interviewers, political figures on TV with \nthe sound off. Notice their nonv"
+     },
+     {
+      "doc": "[International Journal of Reasoning-based Intelligent Systems vol. 2 iss. 1] Bayesian reasoning for Laban Movement Analysis used in human-machine interaction{Rett, Jorg_ Dias, Jorge_ Ahuactzin, Juan Manuel}(2010)[1.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 71,
+      "fused_score": 0.0104,
+      "in_prefix": true,
+      "rerank_score": -8.734375,
+      "post_rank": 30,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Bayesian reasoning for Laban Movement Analysis used in human-machine interaction \n21 \nThe Space quality is con"
+     },
+     {
+      "doc": "Bayesian reasoning for Laban Movement Analysis.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 73,
+      "fused_score": 0.0103,
+      "in_prefix": true,
+      "rerank_score": -8.734375,
+      "post_rank": 31,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Bayesian reasoning for Laban Movement Analysis used in human-machine interaction \n21 \nThe Space quality is con"
+     },
+     {
+      "doc": "Making Connections Bartenieff Fundamentals.md",
+      "families": [
+       "Bartenieff",
+       "Making Connections"
+      ],
+      "fused_rank": 85,
+      "fused_score": 0.0094,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q2"
+      ],
+      "text_head": "reader, and of course meaning in movement is derived from many layers or information,\nincluding how the person"
+     },
+     {
+      "doc": "[International Journal of Reasoning-based Intelligent Systems vol. 2 iss. 1] Bayesian reasoning for Laban Movement Analysis used in human-machine interaction{Rett, Jorg_ Dias, Jorge_ Ahuactzin, Juan Manuel}(2010)[1.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 94,
+      "fused_score": 0.0085,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q2"
+      ],
+      "text_head": "1 \nIntroduction \nHuman body movement is essentially the process of moving \none or more body parts to a specifi"
+     },
+     {
+      "doc": "Bayesian reasoning for Laban Movement Analysis.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 95,
+      "fused_score": 0.0083,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q2"
+      ],
+      "text_head": "1 \nIntroduction \nHuman body movement is essentially the process of moving \none or more body parts to a specifi"
+     },
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 102,
+      "fused_score": 0.0057,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "APPENDIX A\u0003: GENERAL \nOVERVIEW OF LABAN \nMOVEMENT ANALYSIS \nVOCABULARY\nBESS (Body, Effort, Shape, Space)\nBody,"
+     },
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 103,
+      "fused_score": 0.0056,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "It might be a good idea to \nmake some notes afterward to remind you of your various experiences \nand your asso"
+     },
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 108,
+      "fused_score": 0.0051,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "There, I outline Laban\u2019s Effort Theory in \ndetail and offer exercises for using his ideas and frameworks to cr"
+     },
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 109,
+      "fused_score": 0.005,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "258\t\nTHE LABAN WORKBOOK FOR ACTORS \nThese qualities of movement may be seen or experienced as follows:\nM\nM\nSin"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_c25d",
+      "rerank_score": 6.195312,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Actors\u2019 interactions must be contained and purposeful, not florid and \u201cactory.\u201d You know t"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_af97",
+      "rerank_score": 5.601562,
+      "fused_rank": 2,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "FIG 66The important elements of emphasis: mouth and eyes should express the meaning of the"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_b56e",
+      "rerank_score": 5.460938,
+      "fused_rank": 4,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "As already mentioned, in mass-produced TV series the dialogue carries the central interest"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_6b2a",
+      "rerank_score": 4.648438,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "To Emphasize or Build Up a Dramatic Moment\nThis should be done sparingly, with a certain a"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_2359",
+      "rerank_score": 4.578125,
+      "fused_rank": 5,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Firstly, listen carefully to the soundtrack and in particular to the feeling behind the wa"
+     },
+     {
+      "doc": "handbook.html",
+      "chunk_id": "chunk_9452",
+      "rerank_score": 5.773438,
+      "fused_rank": 26,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "- Fight Choreography: The Art of Non-Verbal Dialogue by John Kreng"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_d4dd",
+      "rerank_score": 3.53125,
+      "fused_rank": 9,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Here\u2019s where subtext shows through your actions. John McClane in _Die Hard_ inwardly screa"
+     },
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_93c6",
+      "rerank_score": 3.273438,
+      "fused_rank": 12,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "The characters in the _dialogue-driven film_ pursue their objectives through language and "
+     },
+     {
+      "doc": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+      "chunk_id": "chunk_fa8f",
+      "rerank_score": 2.765625,
+      "fused_rank": 58,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "e camera can lead two characters as they walk and talk:\u001fthis creates continuous \nand attra"
+     },
+     {
+      "doc": "Film Directing Cinematic Motion.md",
+      "chunk_id": "chunk_7733",
+      "rerank_score": 2.695312,
+      "fused_rank": 76,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Boston - First Pass\nMy first notes for the scene are the following:\nTension revolves aroun"
+     },
+     {
+      "doc": "David Landau - Lighting for Cinematography (2014).md",
+      "chunk_id": "chunk_f4e0",
+      "rerank_score": 2.195312,
+      "fused_rank": 69,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Never shout on set. Directors need to talk to the talent, and that\ntakes priority over eve"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_f30f",
+      "rerank_score": 1.898438,
+      "fused_rank": 28,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "You will be better\nable to see angles and edits with the sound off. You can also clearly s"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_af40",
+      "rerank_score": -0.5,
+      "fused_rank": 1,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Fight Choreography: The Art of Non-Verbal Dialogue\n370\nFigure 9.1\nCenterline front view.\nF"
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_e9ea",
+      "rerank_score": -0.601562,
+      "fused_rank": 17,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "A character\u2019s gestures do not always have to be illustrations of the spoken word. A gestur"
+     },
+     {
+      "doc": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema.md",
+      "chunk_id": "chunk_432b",
+      "rerank_score": -1.148438,
+      "fused_rank": 70,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "CHAPTER 6\nTHE HUMAN VOICE\n\nBesides vocalizing the dialogue in a film, how can the voice co"
+     }
+    ],
+    "winner_dup_pairs": [
+     {
+      "a": "handbook.html",
+      "b": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "jac": 0.192
+     }
+    ],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 4,
+      "sparse": 0,
+      "aspect": 0,
+      "fill": 3
+     },
+     "doc_counts": {
+      "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e": 3,
+      "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 3,
+      "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 2,
+      "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 1,
+      "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 1,
+      "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+      "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+      "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+      "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 1,
+      "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.2,
+     "docs_within_gap": 7
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 2,
+     "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e": 3,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 2,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 6,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 1,
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 1,
+     "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c": 1,
+     "doc_40ea46ad28c5482bfdde720f7eb3ebf5b083397d27ac7852d99104ac11be0174": 1,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64": 1,
+     "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a": 1,
+     "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+     "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+     "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3": 1,
+     "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87": 1,
+     "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a": 1,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a": 1,
+     "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3": 1,
+     "doc_2ce79e8ebec9d33e88458fc12308f6d1eff0416517c0c1685f3e20008b725013": 1,
+     "doc_f2e29f98369f7632bd096e9f35b45715c8c30f46e063dac7d675f7551d318048": 1,
+     "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937": 1
+    }
+   },
+   "HYBRID": {
+    "union_size": 120,
+    "union_docs": 26,
+    "prefix_size": 32,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 10,
+    "judge": "live",
+    "deep_in_union": 6,
+    "deep_in_prefix": 5,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 8,
+      "fused_score": 0.0241,
+      "in_prefix": true,
+      "rerank_score": -6.265625,
+      "post_rank": 19,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD",
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "APPENDIX A\u0003: GENERAL \nOVERVIEW OF LABAN \nMOVEMENT ANALYSIS \nVOCABULARY\nBESS (Body, Effort, Shape, Space)\nBody,"
+     },
+     {
+      "doc": "Laban Movement-Guided Diffusion for Text-to-Motion Generation.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 48,
+      "fused_score": 0.0131,
+      "in_prefix": true,
+      "rerank_score": -11.28125,
+      "post_rank": 31,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "2016) formulated Laban Efforts as a cost function within"
+     },
+     {
+      "doc": "Making Connections Bartenieff Fundamentals.md",
+      "families": [
+       "Bartenieff",
+       "Making Connections"
+      ],
+      "fused_rank": 54,
+      "fused_score": 0.0129,
+      "in_prefix": true,
+      "rerank_score": -5.234375,
+      "post_rank": 17,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "32. The questions which follow are based on the Effort Qualities from Laban Movement"
+     },
+     {
+      "doc": "[International Journal of Reasoning-based Intelligent Systems vol. 2 iss. 1] Bayesian reasoning for Laban Movement Analysis used in human-machine interaction{Rett, Jorg_ Dias, Jorge_ Ahuactzin, Juan Manuel}(2010)[1.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 65,
+      "fused_score": 0.0123,
+      "in_prefix": true,
+      "rerank_score": -8.726562,
+      "post_rank": 26,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Notes: Space model (left side): the vector symbols are \npart of both, the Laban space and the Physical \nspace."
+     },
+     {
+      "doc": "Bayesian reasoning for Laban Movement Analysis.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 80,
+      "fused_score": 0.0114,
+      "in_prefix": true,
+      "rerank_score": -8.726562,
+      "post_rank": 27,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Notes: Space model (left side): the vector symbols are \npart of both, the Laban space and the Physical \nspace."
+     },
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 83,
+      "fused_score": 0.0112,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": "sound off\nM\nM\nWatch news anchors, interviewers, political figures on TV with \nthe sound off. Notice their nonv"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_c25d",
+      "rerank_score": 6.195312,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Actors\u2019 interactions must be contained and purposeful, not florid and \u201cactory.\u201d You know t"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_af97",
+      "rerank_score": 5.601562,
+      "fused_rank": 2,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "FIG 66The important elements of emphasis: mouth and eyes should express the meaning of the"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_b56e",
+      "rerank_score": 5.460938,
+      "fused_rank": 4,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "As already mentioned, in mass-produced TV series the dialogue carries the central interest"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_6b2a",
+      "rerank_score": 4.648438,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "To Emphasize or Build Up a Dramatic Moment\nThis should be done sparingly, with a certain a"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_2359",
+      "rerank_score": 4.578125,
+      "fused_rank": 5,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Firstly, listen carefully to the soundtrack and in particular to the feeling behind the wa"
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_3b55",
+      "rerank_score": 4.28125,
+      "fused_rank": 9,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Much of the acting in the movie works because of status negotiations. We negotiate status "
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_af21",
+      "rerank_score": 3.640625,
+      "fused_rank": 10,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "We negotiate status all the time, but we don\u2019t often think about it. Eye contact is a stat"
+     },
+     {
+      "doc": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+      "chunk_id": "chunk_fa8f",
+      "rerank_score": 2.765625,
+      "fused_rank": 86,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "e camera can lead two characters as they walk and talk:\u001fthis creates continuous \nand attra"
+     },
+     {
+      "doc": "Film Directing Cinematic Motion.md",
+      "chunk_id": "chunk_7733",
+      "rerank_score": 2.695312,
+      "fused_rank": 110,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Boston - First Pass\nMy first notes for the scene are the following:\nTension revolves aroun"
+     },
+     {
+      "doc": "David Landau - Lighting for Cinematography (2014).md",
+      "chunk_id": "chunk_f4e0",
+      "rerank_score": 2.195312,
+      "fused_rank": 100,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Never shout on set. Directors need to talk to the talent, and that\ntakes priority over eve"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_af40",
+      "rerank_score": -0.5,
+      "fused_rank": 1,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Fight Choreography: The Art of Non-Verbal Dialogue\n370\nFigure 9.1\nCenterline front view.\nF"
+     },
+     {
+      "doc": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema.md",
+      "chunk_id": "chunk_432b",
+      "rerank_score": -1.148438,
+      "fused_rank": 102,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "CHAPTER 6\nTHE HUMAN VOICE\n\nBesides vocalizing the dialogue in a film, how can the voice co"
+     },
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_c5f7",
+      "rerank_score": -1.539062,
+      "fused_rank": 7,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "The best dialogue is **verbal action** because the speaker _uses words to get or accomplis"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_75db",
+      "rerank_score": -2.71875,
+      "fused_rank": 6,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This also brings up the point of vocalizations. Non-verbals are essential elements in figh"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_73a4",
+      "rerank_score": -3.164062,
+      "fused_rank": 11,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Once a director has mastered how to tell a story with pictures clearly and directly, then "
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 2,
+      "sparse": 0,
+      "aspect": 0,
+      "fill": 5
+     },
+     "doc_counts": {
+      "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e": 3,
+      "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 2,
+      "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 2,
+      "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 2,
+      "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+      "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+      "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+      "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3": 1,
+      "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 1,
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.2,
+     "docs_within_gap": 6
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 2,
+     "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e": 3,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 2,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 2,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 2,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 1,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 1,
+     "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f": 1,
+     "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a": 1,
+     "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c": 1,
+     "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a": 1,
+     "doc_40ea46ad28c5482bfdde720f7eb3ebf5b083397d27ac7852d99104ac11be0174": 1,
+     "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64": 1,
+     "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87": 1,
+     "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34": 1,
+     "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a": 1,
+     "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+     "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+     "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e": 1,
+     "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3": 1,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_0661e39c4ec6c9d461b27f089e07c832a47774cea4f9f74285da732d1a886cae": 1,
+     "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1
+    }
+   },
+   "GRAPH": {
+    "union_size": 120,
+    "union_docs": 26,
+    "prefix_size": 32,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 10,
+    "judge": "live",
+    "deep_in_union": 6,
+    "deep_in_prefix": 5,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 8,
+      "fused_score": 0.0241,
+      "in_prefix": true,
+      "rerank_score": -6.265625,
+      "post_rank": 19,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD",
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "APPENDIX A\u0003: GENERAL \nOVERVIEW OF LABAN \nMOVEMENT ANALYSIS \nVOCABULARY\nBESS (Body, Effort, Shape, Space)\nBody,"
+     },
+     {
+      "doc": "Laban Movement-Guided Diffusion for Text-to-Motion Generation.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 48,
+      "fused_score": 0.0131,
+      "in_prefix": true,
+      "rerank_score": -11.28125,
+      "post_rank": 31,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "2016) formulated Laban Efforts as a cost function within"
+     },
+     {
+      "doc": "Making Connections Bartenieff Fundamentals.md",
+      "families": [
+       "Bartenieff",
+       "Making Connections"
+      ],
+      "fused_rank": 54,
+      "fused_score": 0.0129,
+      "in_prefix": true,
+      "rerank_score": -5.234375,
+      "post_rank": 17,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "32. The questions which follow are based on the Effort Qualities from Laban Movement"
+     },
+     {
+      "doc": "[International Journal of Reasoning-based Intelligent Systems vol. 2 iss. 1] Bayesian reasoning for Laban Movement Analysis used in human-machine interaction{Rett, Jorg_ Dias, Jorge_ Ahuactzin, Juan Manuel}(2010)[1.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 65,
+      "fused_score": 0.0123,
+      "in_prefix": true,
+      "rerank_score": -8.726562,
+      "post_rank": 26,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Notes: Space model (left side): the vector symbols are \npart of both, the Laban space and the Physical \nspace."
+     },
+     {
+      "doc": "Bayesian reasoning for Laban Movement Analysis.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 80,
+      "fused_score": 0.0114,
+      "in_prefix": true,
+      "rerank_score": -8.726562,
+      "post_rank": 27,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Notes: Space model (left side): the vector symbols are \npart of both, the Laban space and the Physical \nspace."
+     },
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 83,
+      "fused_score": 0.0112,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": "sound off\nM\nM\nWatch news anchors, interviewers, political figures on TV with \nthe sound off. Notice their nonv"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_c25d",
+      "rerank_score": 6.195312,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Actors\u2019 interactions must be contained and purposeful, not florid and \u201cactory.\u201d You know t"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_af97",
+      "rerank_score": 5.601562,
+      "fused_rank": 2,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "FIG 66The important elements of emphasis: mouth and eyes should express the meaning of the"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_b56e",
+      "rerank_score": 5.460938,
+      "fused_rank": 4,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "As already mentioned, in mass-produced TV series the dialogue carries the central interest"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_6b2a",
+      "rerank_score": 4.648438,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "To Emphasize or Build Up a Dramatic Moment\nThis should be done sparingly, with a certain a"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_2359",
+      "rerank_score": 4.578125,
+      "fused_rank": 5,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Firstly, listen carefully to the soundtrack and in particular to the feeling behind the wa"
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_3b55",
+      "rerank_score": 4.28125,
+      "fused_rank": 9,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Much of the acting in the movie works because of status negotiations. We negotiate status "
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_af21",
+      "rerank_score": 3.640625,
+      "fused_rank": 10,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "We negotiate status all the time, but we don\u2019t often think about it. Eye contact is a stat"
+     },
+     {
+      "doc": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+      "chunk_id": "chunk_fa8f",
+      "rerank_score": 2.765625,
+      "fused_rank": 86,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "e camera can lead two characters as they walk and talk:\u001fthis creates continuous \nand attra"
+     },
+     {
+      "doc": "Film Directing Cinematic Motion.md",
+      "chunk_id": "chunk_7733",
+      "rerank_score": 2.695312,
+      "fused_rank": 110,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Boston - First Pass\nMy first notes for the scene are the following:\nTension revolves aroun"
+     },
+     {
+      "doc": "David Landau - Lighting for Cinematography (2014).md",
+      "chunk_id": "chunk_f4e0",
+      "rerank_score": 2.195312,
+      "fused_rank": 100,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Never shout on set. Directors need to talk to the talent, and that\ntakes priority over eve"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_af40",
+      "rerank_score": -0.5,
+      "fused_rank": 1,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Fight Choreography: The Art of Non-Verbal Dialogue\n370\nFigure 9.1\nCenterline front view.\nF"
+     },
+     {
+      "doc": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema.md",
+      "chunk_id": "chunk_432b",
+      "rerank_score": -1.148438,
+      "fused_rank": 102,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "CHAPTER 6\nTHE HUMAN VOICE\n\nBesides vocalizing the dialogue in a film, how can the voice co"
+     },
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_c5f7",
+      "rerank_score": -1.539062,
+      "fused_rank": 7,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "The best dialogue is **verbal action** because the speaker _uses words to get or accomplis"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_75db",
+      "rerank_score": -2.71875,
+      "fused_rank": 6,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This also brings up the point of vocalizations. Non-verbals are essential elements in figh"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_73a4",
+      "rerank_score": -3.164062,
+      "fused_rank": 11,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Once a director has mastered how to tell a story with pictures clearly and directly, then "
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 2,
+      "sparse": 0,
+      "aspect": 0,
+      "fill": 5
+     },
+     "doc_counts": {
+      "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e": 3,
+      "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 2,
+      "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 2,
+      "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 2,
+      "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+      "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+      "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+      "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3": 1,
+      "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 1,
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.2,
+     "docs_within_gap": 6
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 2,
+     "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e": 3,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 2,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 2,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 2,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 1,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 1,
+     "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f": 1,
+     "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a": 1,
+     "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c": 1,
+     "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a": 1,
+     "doc_40ea46ad28c5482bfdde720f7eb3ebf5b083397d27ac7852d99104ac11be0174": 1,
+     "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64": 1,
+     "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87": 1,
+     "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34": 1,
+     "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a": 1,
+     "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+     "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+     "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e": 1,
+     "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3": 1,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_0661e39c4ec6c9d461b27f089e07c832a47774cea4f9f74285da732d1a886cae": 1,
+     "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1
+    }
+   },
+   "WILDCARD": {
+    "union_size": 120,
+    "union_docs": 26,
+    "prefix_size": 32,
+    "synthesis_max": 15,
+    "final_size": 15,
+    "final_docs": 10,
+    "judge": "live",
+    "deep_in_union": 6,
+    "deep_in_prefix": 5,
+    "deep_in_final": 0,
+    "deep_detail": [
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 8,
+      "fused_score": 0.0241,
+      "in_prefix": true,
+      "rerank_score": -6.265625,
+      "post_rank": 19,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD",
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "APPENDIX A\u0003: GENERAL \nOVERVIEW OF LABAN \nMOVEMENT ANALYSIS \nVOCABULARY\nBESS (Body, Effort, Shape, Space)\nBody,"
+     },
+     {
+      "doc": "Laban Movement-Guided Diffusion for Text-to-Motion Generation.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 48,
+      "fused_score": 0.0131,
+      "in_prefix": true,
+      "rerank_score": -11.28125,
+      "post_rank": 31,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "2016) formulated Laban Efforts as a cost function within"
+     },
+     {
+      "doc": "Making Connections Bartenieff Fundamentals.md",
+      "families": [
+       "Bartenieff",
+       "Making Connections"
+      ],
+      "fused_rank": 54,
+      "fused_score": 0.0129,
+      "in_prefix": true,
+      "rerank_score": -5.234375,
+      "post_rank": 17,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "32. The questions which follow are based on the Effort Qualities from Laban Movement"
+     },
+     {
+      "doc": "[International Journal of Reasoning-based Intelligent Systems vol. 2 iss. 1] Bayesian reasoning for Laban Movement Analysis used in human-machine interaction{Rett, Jorg_ Dias, Jorge_ Ahuactzin, Juan Manuel}(2010)[1.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 65,
+      "fused_score": 0.0123,
+      "in_prefix": true,
+      "rerank_score": -8.726562,
+      "post_rank": 26,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Notes: Space model (left side): the vector symbols are \npart of both, the Laban space and the Physical \nspace."
+     },
+     {
+      "doc": "Bayesian reasoning for Laban Movement Analysis.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 80,
+      "fused_score": 0.0114,
+      "in_prefix": true,
+      "rerank_score": -8.726562,
+      "post_rank": 27,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_SPARSE_CHILD"
+      ],
+      "query_ids": [
+       "q1"
+      ],
+      "text_head": "Notes: Space model (left side): the vector symbols are \npart of both, the Laban space and the Physical \nspace."
+     },
+     {
+      "doc": "The Laban Workbook for Actors.md",
+      "families": [
+       "Laban"
+      ],
+      "fused_rank": 83,
+      "fused_score": 0.0112,
+      "in_prefix": false,
+      "rerank_score": null,
+      "post_rank": null,
+      "in_final": false,
+      "arrivals": [
+       "GLOBAL_DENSE_CHILD"
+      ],
+      "query_ids": [
+       "q0"
+      ],
+      "text_head": "sound off\nM\nM\nWatch news anchors, interviewers, political figures on TV with \nthe sound off. Notice their nonv"
+     }
+    ],
+    "final_winners": [
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_c25d",
+      "rerank_score": 6.195312,
+      "fused_rank": 3,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Actors\u2019 interactions must be contained and purposeful, not florid and \u201cactory.\u201d You know t"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_af97",
+      "rerank_score": 5.601562,
+      "fused_rank": 2,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "FIG 66The important elements of emphasis: mouth and eyes should express the meaning of the"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_b56e",
+      "rerank_score": 5.460938,
+      "fused_rank": 4,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "As already mentioned, in mass-produced TV series the dialogue carries the central interest"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_6b2a",
+      "rerank_score": 4.648438,
+      "fused_rank": 0,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "To Emphasize or Build Up a Dramatic Moment\nThis should be done sparingly, with a certain a"
+     },
+     {
+      "doc": "Timing for Animation.md",
+      "chunk_id": "chunk_2359",
+      "rerank_score": 4.578125,
+      "fused_rank": 5,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Firstly, listen carefully to the soundtrack and in particular to the feeling behind the wa"
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_3b55",
+      "rerank_score": 4.28125,
+      "fused_rank": 9,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Much of the acting in the movie works because of status negotiations. We negotiate status "
+     },
+     {
+      "doc": "Ed Hooks - Acting for Animators (2017).md",
+      "chunk_id": "chunk_af21",
+      "rerank_score": 3.640625,
+      "fused_rank": 10,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "We negotiate status all the time, but we don\u2019t often think about it. Eye contact is a stat"
+     },
+     {
+      "doc": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+      "chunk_id": "chunk_fa8f",
+      "rerank_score": 2.765625,
+      "fused_rank": 86,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "e camera can lead two characters as they walk and talk:\u001fthis creates continuous \nand attra"
+     },
+     {
+      "doc": "Film Directing Cinematic Motion.md",
+      "chunk_id": "chunk_7733",
+      "rerank_score": 2.695312,
+      "fused_rank": 110,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Boston - First Pass\nMy first notes for the scene are the following:\nTension revolves aroun"
+     },
+     {
+      "doc": "David Landau - Lighting for Cinematography (2014).md",
+      "chunk_id": "chunk_f4e0",
+      "rerank_score": 2.195312,
+      "fused_rank": 100,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Never shout on set. Directors need to talk to the talent, and that\ntakes priority over eve"
+     },
+     {
+      "doc": "Fight Choreography The Art of Non-Verbal Dialogue.md",
+      "chunk_id": "chunk_af40",
+      "rerank_score": -0.5,
+      "fused_rank": 1,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Fight Choreography: The Art of Non-Verbal Dialogue\n370\nFigure 9.1\nCenterline front view.\nF"
+     },
+     {
+      "doc": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema.md",
+      "chunk_id": "chunk_432b",
+      "rerank_score": -1.148438,
+      "fused_rank": 102,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "CHAPTER 6\nTHE HUMAN VOICE\n\nBesides vocalizing the dialogue in a film, how can the voice co"
+     },
+     {
+      "doc": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+      "chunk_id": "chunk_c5f7",
+      "rerank_score": -1.539062,
+      "fused_rank": 7,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "The best dialogue is **verbal action** because the speaker _uses words to get or accomplis"
+     },
+     {
+      "doc": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+      "chunk_id": "chunk_75db",
+      "rerank_score": -2.71875,
+      "fused_rank": 6,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "This also brings up the point of vocalizations. Non-verbals are essential elements in figh"
+     },
+     {
+      "doc": "Francis Glebas - Directing the Story (2008).md",
+      "chunk_id": "chunk_73a4",
+      "rerank_score": -3.164062,
+      "fused_rank": 11,
+      "is_deep": false,
+      "redundancy_vs_best_lost_deep": 0.0,
+      "same_doc_as_lost": false,
+      "same_parent_as_lost": false,
+      "text_head": "Once a director has mastered how to tell a story with pictures clearly and directly, then "
+     }
+    ],
+    "winner_dup_pairs": [],
+    "composition": {
+     "slots": {
+      "relevance": 8,
+      "diversity": 2,
+      "sparse": 0,
+      "aspect": 0,
+      "fill": 5
+     },
+     "doc_counts": {
+      "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e": 3,
+      "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 2,
+      "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 2,
+      "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 2,
+      "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+      "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+      "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+      "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3": 1,
+      "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 1,
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1
+     },
+     "dominance": false,
+     "doc_share_top": 0.2,
+     "docs_within_gap": 6
+    },
+    "capped_out": 0,
+    "prefix_docs": {
+     "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45": 2,
+     "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e": 3,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 2,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 2,
+     "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f": 1,
+     "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510": 2,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 1,
+     "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab": 1,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 1,
+     "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f": 1,
+     "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a": 1,
+     "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c": 1,
+     "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a": 1,
+     "doc_40ea46ad28c5482bfdde720f7eb3ebf5b083397d27ac7852d99104ac11be0174": 1,
+     "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64": 1,
+     "doc_609d972e5fe0e1039810db8918621326f894f3123aa006b7ad31834821018b87": 1,
+     "doc_6f89105b1845c0b595ab8e04b6cb107b9a6e2b7f1617a89f50bdbebd0f4aad34": 1,
+     "doc_3abd20d49066ef7568bb1cae65d6fe224b57acedd6b37b398349944dbe21d11a": 1,
+     "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497": 1,
+     "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d": 1,
+     "doc_554b59358b768884ec87225e887b895a66b14f607f3bd96f2c0a2364ece2a23e": 1,
+     "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3": 1,
+     "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_0661e39c4ec6c9d461b27f089e07c832a47774cea4f9f74285da732d1a886cae": 1,
+     "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1
+    }
+   }
+  }
+ }
+}
