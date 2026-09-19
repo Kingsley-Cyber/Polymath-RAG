@@ -374,6 +374,11 @@ class SubQuery:
     qvec: tuple[float, ...]
     sparse_query: Optional[tuple[tuple[int, ...], tuple[float, ...]]] = None
     sparse_rule: str = "topical"
+    #: LATENT-QUERY-FUSION-V2: lineage provenance (USER|PROFILE|GRAPH|BRIDGE|WILDCARD) from the plan.
+    #: Descriptive only — it sets this query's fusion weight class (F2), never a selection gate. Default
+    #: "" ⇒ the lane classifies by qtype/modality (the orchestrator populates it from existing plan
+    #: provenance at F4; unset here keeps behavior unchanged).
+    origin: str = ""
 
 
 @dataclass
@@ -973,7 +978,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     ranked_lanes = None
     if os.environ.get("POLYMATH_CHAT_LATENT_FUSION", "0") == "1":
         from polymath_shared.ranked_lane import build_ranked_lanes
-        _qmeta = {sq.query_id: {"text": sq.text, "role": sq.qtype} for sq in subqueries}
+        _qmeta = {sq.query_id: {"text": sq.text, "role": sq.qtype, "origin": getattr(sq, "origin", "")} for sq in subqueries}
         ranked_lanes = build_ranked_lanes(
             [c for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e, lane_f, lane_g, lane_h)
              for c in lane_items],
@@ -1064,6 +1069,8 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     fused = kept
     union_ids_uncapped = [c.chunk_id for c in fused]
     union = fused[:budget.merged_candidate_max]
+    if ranked_lanes is not None:   # LATENT-QUERY-FUSION-V2 · F3: query-stratified fusion decides cap survival (flag-gated)
+        union = _latent_fused_union(fused, ranked_lanes, budget, union)
     timings["union"] = round((time.perf_counter() - t_union) * 1000, 1)
     timings["core_wall"] = round((time.perf_counter() - t_turn) * 1000, 1)
 
@@ -1278,6 +1285,36 @@ def structural_noise_reason(text: str) -> Optional[str]:
         if numeric / len(tokens) >= 0.45:
             return "number_list"
     return None
+
+
+def _latent_fused_union(fused: list, ranked_lanes: list, budget: CandidateBudget, fallback: list) -> list:
+    """LATENT-QUERY-FUSION-V2 F3 (flag-gated): let the query-stratified fused ordering decide WHO
+    survives ``merged_candidate_max``, instead of the flatten's best-single-query truncation that drops
+    a bridge's local winner. Reuses the existing noise-filtered ``CandidateEvidence`` (one physical
+    candidate per chunk, provenance intact); NEVER expands the cap (V2 changes who survives, not the
+    ceiling); backfills by fused score so the union stays as full as the flatten's. Fail-open — any
+    error (e.g. malformed lanes) returns the existing ``fallback`` union unchanged."""
+    try:
+        from polymath_shared.ranked_fusion import fuse_ranked_lanes
+        cap = budget.merged_candidate_max
+        fr = fuse_ranked_lanes(ranked_lanes, k=budget.rrf_k, cap=cap)   # F2 defaults (weights/preserve_top_n)
+        survivors = {c.chunk_id: c for c in fused}                      # noise survivors = physical candidates
+        ordered = [survivors[cid] for cid in fr.ids() if cid in survivors]
+        if not ordered:
+            return fallback
+        fscore = {fc.chunk_id: fc.fused_score for fc in fr.ordered}
+        for c in ordered:                                              # coherent fused_score on survivors
+            c.fused_score = fscore.get(c.chunk_id, c.fused_score)
+        chosen = {c.chunk_id for c in ordered}
+        for c in fused:                                                # backfill by fused score → union stays full
+            if len(ordered) >= cap:
+                break
+            if c.chunk_id not in chosen:
+                ordered.append(c)
+                chosen.add(c.chunk_id)
+        return ordered
+    except Exception:                                                  # noqa: BLE001 — fail-open to the flatten
+        return fallback
 
 
 def judged_prefix(union: list, budget: CandidateBudget) -> tuple[list, dict]:

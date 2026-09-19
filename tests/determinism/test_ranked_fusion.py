@@ -125,3 +125,13 @@ def test_deterministic_and_tie_break():
 def test_empty():
     res = fuse_ranked_lanes([], cap=10)
     assert res.ordered == [] and res.preserved_ids == set() and res.trace["n_chunks"] == 0
+
+
+# ── 9. STRICT ceiling: preservation changes who survives, never expands the cap ──────────────────
+def test_cap_is_a_strict_ceiling_even_when_preserved_exceeds_it():
+    # 5 distinct queries, each contributing 3 chunks; preserve_top_n=3 ⇒ 15 preserved chunks.
+    lanes = [_lane(f"q{i}", ("q0" if i == 0 else "MECH"), ("USER"),
+                   "GLOBAL_DENSE_CHILD", "DENSE", [(f"q{i}c{j}", f"d{i}") for j in range(3)]) for i in range(5)]
+    res = fuse_ranked_lanes(lanes, preserve_top_n=3, cap=8)
+    assert len(res.ordered) == 8                               # 15 preserved cannot expand an 8 cap
+    assert res.trace["preserved_survived_cap"] <= 8

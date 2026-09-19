@@ -988,20 +988,21 @@ def test_ranked_lanes_receipt_absent_by_default(monkeypatch):
     assert "ranked_lanes" not in res.trace          # default-off ⇒ no capture, no receipt
 
 
-def test_ranked_lanes_receipt_captures_local_ranks_without_changing_selection(monkeypatch):
+def test_ranked_lanes_receipt_and_fused_reorder_when_flagged(monkeypatch):
     subs = [_subq("q1", "mechanism of chroma keying"), _subq("q2", "keyer hardware", vec=(0.2, 0.8), sparse=((8,), (1.0,)))]
     # flag OFF — the baseline union (what selection sees)
     monkeypatch.delenv("POLYMATH_CHAT_LATENT_FUSION", raising=False)
     off = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=FakeMulti().dense, sparse_search=FakeMulti().sparse, subqueries=subs)
-    off_union = [(c.chunk_id, round(c.fused_score, 6)) for c in off.union]
+    off_union = [c.chunk_id for c in off.union]
     # flag ON — same fakes, same plan
     monkeypatch.setenv("POLYMATH_CHAT_LATENT_FUSION", "1")
     on = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=FakeMulti().dense, sparse_search=FakeMulti().sparse, subqueries=subs)
-    on_union = [(c.chunk_id, round(c.fused_score, 6)) for c in on.union]
+    on_union = [c.chunk_id for c in on.union]
 
-    # (1) selection is UNCHANGED: identical union ids, order and fused scores
-    assert on_union == off_union
-    # (2) the receipt exists and is well-formed
+    # (1) F3: at a non-truncating cap the candidate SET is unchanged (nothing dropped) — V2 reorders who
+    #     survives, it does not add/remove when the cap isn't binding. (Order MAY differ; that is F3.)
+    assert set(on_union) == set(off_union)
+    # (2) the F1 receipt exists and is well-formed
     rl = on.trace["ranked_lanes"]
     assert rl["contract"] == "ranked-lanes-v1" and rl["n_lanes"] >= 3
     # (3) each subquery is its OWN lane with local ranks starting at 0 (not flattened into q0)
@@ -1010,3 +1011,66 @@ def test_ranked_lanes_receipt_captures_local_ranks_without_changing_selection(mo
     assert any(l["role"] == "MECHANISM" for l in q1_lanes)          # subquery qtype carried as descriptive role
     # (4) a chunk found by q0 AND both subqueries is recorded in multiple lanes (membership preserved)
     assert rl["multi_lane_chunks"] >= 1
+
+
+# ── LATENT-QUERY-FUSION-V2 · F3: the fused ordering decides who survives the cap (live selection seam) ──
+def test_flag_off_union_is_exactly_the_flatten_prefix(monkeypatch):
+    monkeypatch.delenv("POLYMATH_CHAT_LATENT_FUSION", raising=False)
+    fake = FakeMulti()
+    subs = [_subq("q1", "mechanism of chroma keying"), _subq("q2", "keyer hardware", vec=(0.2, 0.8), sparse=((8,), (1.0,)))]
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(merged_candidate_max=3), dense_search=fake.dense, sparse_search=fake.sparse, subqueries=subs)
+    # flag OFF ⇒ the adapter never runs ⇒ union is exactly the old fused-order prefix
+    assert [c.chunk_id for c in res.union] == res.trace["funnel_union"][:3]
+    assert "ranked_lanes" not in res.trace
+
+
+class FakeFlood(Fake):
+    """q0 floods 8 two-lane children (dense+sparse, one doc); a bridge subquery finds ONE distinct expert
+    chunk. The bridge chunk is single-lane and low-scored, so the flatten truncates it under a small cap."""
+    N = 8
+
+    def dense(self, kind, top_k, extra=None, qvec=None):
+        if qvec is not None:                                              # subquery vector → the bridge's expert chunk
+            self.calls.append(("dense", kind, top_k, dict(extra or {}), qvec))
+            if kind == CHILD and not extra:
+                return [_row(CHILD, 0, "dB", parent="dB-p0", chunk="EXPERT")][:top_k]
+            return []
+        if kind == CHILD and not (extra and extra.get("parent_id")):      # primary global dense children
+            return [_row(CHILD, i, "dQ", parent=f"dQ-p{i}", chunk=f"q0c{i}") for i in range(self.N)][:top_k]
+        return []                                                         # no doc/section/card lanes → clean candidate set
+
+    def sparse(self, top_k, sparse_query=None):
+        self.calls.append(("sparse", top_k, sparse_query))
+        if sparse_query is None:                                          # primary sparse: the SAME q0 chunks ⇒ 2-lane q0
+            return [_row(CHILD, i, "dQ", parent=f"dQ-p{i}", chunk=f"q0c{i}", score=5.0 - i * 0.1) for i in range(self.N)][:top_k]
+        return []
+
+
+def test_flag_on_preserves_a_truncated_bridge_winner_end_to_end(monkeypatch):
+    subs = [_subq("bA", "the expert bridge topic", vec=(0.9, 0.1), sparse=None)]   # a bridge subquery, dense-only
+    CAP = 6
+    # flag OFF — the bridge's expert chunk is truncated by the q0 flood
+    monkeypatch.delenv("POLYMATH_CHAT_LATENT_FUSION", raising=False)
+    off = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(merged_candidate_max=CAP), dense_search=FakeFlood().dense, sparse_search=FakeFlood().sparse, subqueries=subs)
+    off_ids = [c.chunk_id for c in off.union]
+    assert "EXPERT" not in off_ids and len(off_ids) == CAP                # flatten truncates the bridge winner
+    # flag ON — V2 preserves it inside the SAME cap
+    monkeypatch.setenv("POLYMATH_CHAT_LATENT_FUSION", "1")
+    on = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(merged_candidate_max=CAP), dense_search=FakeFlood().dense, sparse_search=FakeFlood().sparse, subqueries=subs)
+    on_ids = [c.chunk_id for c in on.union]
+    assert "EXPERT" in on_ids                                             # bridge local winner survives
+    assert len(on_ids) == CAP                                            # cap UNCHANGED (who survives changed)
+    expert = next(c for c in on.union if c.chunk_id == "EXPERT")
+    assert expert.query_ids == ["bA"]                                    # lineage attached, still one physical candidate
+    assert on_ids.count("EXPERT") == 1
+
+
+def test_subquery_origin_flows_into_lane_provenance(monkeypatch):
+    # F3 origin-readiness: a plan-provided origin on a SubQuery reaches the RankedLane (the fusion weight
+    # class). The orchestrator populates origin from existing provenance at F4; here we prove the seam.
+    monkeypatch.setenv("POLYMATH_CHAT_LATENT_FUSION", "1")
+    bridge = ce.SubQuery(query_id="bA", qtype="BRIDGE_CANDIDATE", text="a bridge topic", weight=1.0,
+                         qvec=(0.9, 0.1), sparse_query=None, origin="BRIDGE")
+    on = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=FakeFlood().dense, sparse_search=FakeFlood().sparse, subqueries=[bridge])
+    bA_lanes = [l for l in on.trace["ranked_lanes"]["lanes"] if l["query_id"] == "bA"]
+    assert bA_lanes and all(l["origin"] == "BRIDGE" for l in bA_lanes)   # provenance carried, not inferred

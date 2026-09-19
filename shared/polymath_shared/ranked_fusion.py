@@ -155,19 +155,20 @@ def preserved_winners(lanes: Iterable[RankedLane], *, k: int = 60, top_n: int = 
 
 
 def _apply_cap(ranked: list[FusedChunk], *, cap: int) -> list[FusedChunk]:
-    """Truncate to ``cap`` by fused score, but every PRESERVED chunk survives (bounded local-winner
-    preservation). If preserved chunks alone exceed the cap they are all kept (a query's top-N is never
-    dropped); otherwise preserved chunks are kept and the remaining slots fill by fused score."""
+    """Truncate to a STRICT ceiling of ``cap`` candidates (V2 changes WHO survives the cut, never
+    expands it). PRESERVED chunks take seats first — so a query's local winner survives even when its
+    fused score ranks below the cap — and the remaining seats fill by fused score. The output is never
+    longer than ``cap``; if preserved chunks alone exceed ``cap``, the top-``cap`` preserved (by fused
+    score) are kept."""
     if cap <= 0 or len(ranked) <= cap:
         return ranked
-    keep: list[FusedChunk] = [fc for fc in ranked if fc.preserved]        # all preserved, in fused order
-    keep_ids = {fc.chunk_id for fc in keep}
-    for fc in ranked:                                                     # fill remaining slots by score
+    preserved = [fc for fc in ranked if fc.preserved]        # both already in fused (desc score) order
+    others = [fc for fc in ranked if not fc.preserved]
+    keep: list[FusedChunk] = preserved[:cap]                 # preserved reserve seats, up to the ceiling
+    for fc in others:                                        # fill the rest by fused score
         if len(keep) >= cap:
             break
-        if fc.chunk_id not in keep_ids:
-            keep.append(fc)
-            keep_ids.add(fc.chunk_id)
+        keep.append(fc)
     return sorted(keep, key=lambda fc: (-fc.fused_score, fc.chunk_id))
 
 
