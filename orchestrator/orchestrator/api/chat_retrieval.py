@@ -285,8 +285,10 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
         # lane C is the one sparse search of the turn.
         searcher = FastSearcher(client, collections)
         hidden = tuple(searcher._hidden_for(corpus_id) or ())      # warm the generation cache ONCE, before any lane thread reads it
-        sub_specs = [tuple(x) for x in (subqueries or ())][: budget.max_subqueries]
-        texts = [query] + [t for (_, _, t, _) in sub_specs if t and t != query]
+        # LATENT-QUERY-FUSION-V2 F4: specs may carry a 5th field (origin, from the plan's existing
+        # provenance); pad legacy 4-tuples so unpacking stays uniform. origin is descriptive only.
+        sub_specs = [((tuple(x) + ("",) * 5)[:5]) for x in (subqueries or ())][: budget.max_subqueries]
+        texts = [query] + [t for (_, _, t, _, _) in sub_specs if t and t != query]
         distinct = list(dict.fromkeys(texts))
         sparse_q, sparse_rule = None, "raw"
         try:
@@ -294,7 +296,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
         except Exception:  # noqa: BLE001 — lane C degrades in the engine
             sparse_q = None
         sub_sparse: dict[str, tuple] = {}                                    # subquery sparse queries need no vector either
-        for (sid, _stype, stext, _sweight) in sub_specs:
+        for (sid, _stype, stext, _sweight, _sorigin) in sub_specs:
             if stext and stext != query:
                 sub_sparse[str(sid)] = sparse_vector_for(stext, ())
 
@@ -497,12 +499,12 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                                    "effect": "dense lanes started late (the embedding is a hard dependency; the turn waited for it)",
                                    "reason": f"embedding took {embed_ms:.0f} ms; embed_deadline_s={budget.embed_deadline_s:g}"})
         subs: list[SubQuery] = []
-        for (sid, stype, stext, sweight) in sub_specs:
+        for (sid, stype, stext, sweight, sorigin) in sub_specs:
             if not stext or stext == query:
                 continue
             sv, srule = sub_sparse[str(sid)]
             subs.append(SubQuery(query_id=str(sid), qtype=str(stype), text=str(stext), weight=float(sweight or 1.0),
-                                 qvec=tuple(vecs[stext]), sparse_query=sv, sparse_rule=srule))
+                                 qvec=tuple(vecs[stext]), sparse_query=sv, sparse_rule=srule, origin=str(sorigin or "")))
         ctx = SearchContext(query=query, corpus_id=corpus_id, collection=collection, qvec=tuple(qvec),
                             sparse_query=sparse_q, exact_terms=tuple(exact_terms or ()),
                             hidden_generations=hidden, query_id=query_id, sparse_rule=sparse_rule)
