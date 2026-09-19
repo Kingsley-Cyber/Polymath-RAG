@@ -1,0 +1,806 @@
+{
+ "benchmark": "WILDCARD-LATENT-KNOWLEDGE-10",
+ "version": "v1",
+ "wall_s": 441.6,
+ "metrics": {
+  "routing_success": 0.9,
+  "specialized_discovery_rate": 0.9,
+  "transformative_discovery_rate": 0.4,
+  "deep_target_reach": 0.444,
+  "wildcard_value_add": 0.4,
+  "synthesis_spend_rate": 0.889
+ },
+ "stage_of_loss_histogram": {
+  "RERANK": 4,
+  "ROUTING": 1,
+  "NOMINATION": 1,
+  "NONE": 4
+ },
+ "cases": [
+  {
+   "id": "wc01_fake_smile",
+   "query": "Write a video-generation prompt for a man pretending to be happy when someone he hates walks into the room. I want the audience to realize the smile is fake before the other character does.",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "scout_nominations": [
+    "Retrieval-Augmented Prompt Optimization for.md",
+    "Ed Hooks - Acting for Animators (2017).md",
+    "A Multistage Pipeline for Character-Stable.md",
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "Hey Whipple Squeeze This.md",
+    "Classifying Facial Action.md",
+    "Facial Action Coding System_ Facial action coding system _ -- Paul Ekman_ Wallace V_ Friesen_ Joseph C_ Hager -- Salt Lake City, UT, cop_ 2002 -- isbn13 9780931835018 -- b4af95ca86cb926c6c000d109b27ec66 -- Anna\u2019s A.md",
+    "Affective Movement Generation using Laban Effort and Shape and.md"
+   ],
+   "scout_deep_family": [
+    "Classifying Facial",
+    "Ekman",
+    "Facial Action"
+   ],
+   "final_evidence_fast": [
+    "handbook.html",
+    "Elemental Magic Volume 2.md",
+    "Grammar of the Shot.md",
+    "Sidney Lumet - Making Movies (1994).md",
+    "Elemental Magic.md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Hey Whipple Squeeze This.md",
+    "A Multistage Pipeline for Character-Stable.md"
+   ],
+   "final_evidence_wildcard": [
+    "handbook.html",
+    "Elemental Magic Volume 2.md",
+    "Grammar of the Shot.md",
+    "Sidney Lumet - Making Movies (1994).md",
+    "Elemental Magic.md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Comics and Sequential Art.md",
+    "A Multistage Pipeline for Character-Stable.md"
+   ],
+   "grades_fast": {
+    "DIRECT": 8,
+    "PARTIAL": 0,
+    "RELATED": 7
+   },
+   "grades_wildcard": {
+    "DIRECT": 8,
+    "PARTIAL": 0,
+    "RELATED": 7
+   },
+   "fast_specialized": [
+    "Acting for Animators",
+    "Ed Hooks"
+   ],
+   "wildcard_specialized": [
+    "Acting for Animators",
+    "Ed Hooks"
+   ],
+   "wildcard_only": [],
+   "fast_only": [],
+   "deep_target_reached": false,
+   "final_deep_family": [],
+   "specialized_discovery": true,
+   "transformative_discovery": false,
+   "synthesis_spend": true,
+   "cited_docs": [
+    "Ed Hooks - Acting for Animators (2017).md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Making Meaning with Machines.md",
+    "handbook.html"
+   ],
+   "epistemic": {
+    "directly_established": true,
+    "establishes_need": true,
+    "n_direct": 2,
+    "n_partial": 0,
+    "n_related": 13
+   },
+   "stage_of_loss": "RERANK",
+   "expected_weakness": "RERANK_after_nomination"
+  },
+  {
+   "id": "wc02_sword_weight",
+   "query": "I have an anime sword fight that looks flashy but weightless. Rewrite the sequence so every attack feels dangerous, physically committed, and like the fighters are actually trying not to die.",
+   "task_type": "TRANSFORM_USER_CONTENT",
+   "retrieval_required": false,
+   "scout_nominations": [
+    "Complete Guide to Drawing Dynamic Manga Sword Fighters.md",
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "How to Draw Manga Martial Arts and Combat Sports.md",
+    "How to Draw Manga Illustrating Battles.md",
+    "Stage Combat Arts.md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "Force Dynamic Life Drawing.md",
+    "handbook.html"
+   ],
+   "scout_deep_family": [],
+   "final_evidence_fast": [],
+   "final_evidence_wildcard": [],
+   "grades_fast": {
+    "DIRECT": 0,
+    "PARTIAL": 0,
+    "RELATED": 0
+   },
+   "grades_wildcard": {
+    "DIRECT": 0,
+    "PARTIAL": 0,
+    "RELATED": 0
+   },
+   "fast_specialized": [],
+   "wildcard_specialized": [],
+   "wildcard_only": [],
+   "fast_only": [],
+   "deep_target_reached": false,
+   "final_deep_family": [],
+   "specialized_discovery": false,
+   "transformative_discovery": false,
+   "synthesis_spend": false,
+   "cited_docs": [],
+   "epistemic": null,
+   "stage_of_loss": "ROUTING",
+   "expected_weakness": "ROUTING"
+  },
+  {
+   "id": "wc03_villain_won",
+   "query": "A villain realizes halfway through a conversation that he has already won. I don't want dialogue explaining it and I don't want a cliche evil grin. Design the 8-second shot.",
+   "task_type": "CREATE_FROM_KNOWLEDGE",
+   "retrieval_required": true,
+   "scout_nominations": [
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "Save the Cat.md",
+    "Timing for Animation.md",
+    "The Anatomy of Story.md",
+    "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+    "Ed Hooks - Acting for Animators (2017).md",
+    "Elemental Magic.md",
+    "Hey Whipple Squeeze This.md"
+   ],
+   "scout_deep_family": [],
+   "final_evidence_fast": [
+    "handbook.html",
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Ed Hooks - Acting for Animators (2017).md",
+    "Stage Combat Arts.md"
+   ],
+   "final_evidence_wildcard": [
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "handbook.html",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "Ed Hooks - Acting for Animators (2017).md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "Stage Combat Arts.md",
+    "Making Connections Bartenieff Fundamentals.md"
+   ],
+   "grades_fast": {
+    "DIRECT": 10,
+    "PARTIAL": 0,
+    "RELATED": 5
+   },
+   "grades_wildcard": {
+    "DIRECT": 11,
+    "PARTIAL": 0,
+    "RELATED": 4
+   },
+   "fast_specialized": [
+    "Ed Hooks",
+    "Fight Choreography"
+   ],
+   "wildcard_specialized": [
+    "Ed Hooks",
+    "Fight Choreography"
+   ],
+   "wildcard_only": [],
+   "fast_only": [],
+   "deep_target_reached": false,
+   "final_deep_family": [],
+   "specialized_discovery": true,
+   "transformative_discovery": false,
+   "synthesis_spend": true,
+   "cited_docs": [
+    "Ed Hooks - Acting for Animators (2017).md",
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md"
+   ],
+   "epistemic": {
+    "directly_established": true,
+    "establishes_need": true,
+    "n_direct": 6,
+    "n_partial": 0,
+    "n_related": 9
+   },
+   "stage_of_loss": "NOMINATION",
+   "expected_weakness": "NOMINATION"
+  },
+  {
+   "id": "wc04_hallway_oppress",
+   "query": "Make a normal office hallway feel psychologically oppressive without changing it into a horror set. The architecture should remain believable and almost boring.",
+   "task_type": "CREATE_FROM_KNOWLEDGE",
+   "retrieval_required": true,
+   "scout_nominations": [
+    "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+    "David Landau - Lighting for Cinematography (2014).md",
+    "Bruce Block - The Visual Story (2007).md",
+    "Framed Environment Design.md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+    "How to Draw Manga Martial Arts and Combat Sports.md",
+    "The Anatomy of Story.md"
+   ],
+   "scout_deep_family": [
+    "Neuroarchitecture",
+    "Ritchie"
+   ],
+   "final_evidence_fast": [
+    "David Landau - Lighting for Cinematography (2014).md",
+    "Elemental Magic.md",
+    "Framed Ink.md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Ken Dancyger - The technique of film & video editing (2019).md",
+    "Blain Brown - Cinematography - Theory and Practice (2016).md",
+    "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+    "Hey Whipple Squeeze This.md"
+   ],
+   "final_evidence_wildcard": [
+    "David Landau - Lighting for Cinematography (2014).md",
+    "Elemental Magic.md",
+    "Framed Ink.md",
+    "Ken Dancyger - The technique of film & video editing (2019).md",
+    "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind (2020, Wiley) - libgen.li.md",
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+    "Hey Whipple Squeeze This.md",
+    "Bruce Block - The Visual Story (2007).md"
+   ],
+   "grades_fast": {
+    "DIRECT": 2,
+    "PARTIAL": 0,
+    "RELATED": 13
+   },
+   "grades_wildcard": {
+    "DIRECT": 2,
+    "PARTIAL": 0,
+    "RELATED": 13
+   },
+   "fast_specialized": [
+    "Framed Ink",
+    "Lighting for Cinematography",
+    "Neuroarchitecture",
+    "Ritchie"
+   ],
+   "wildcard_specialized": [
+    "Filmmaker",
+    "Framed Ink",
+    "Lighting for Cinematography",
+    "Neuroarchitecture",
+    "Ritchie",
+    "Visual Story"
+   ],
+   "wildcard_only": [
+    "Filmmaker",
+    "Visual Story"
+   ],
+   "fast_only": [],
+   "deep_target_reached": true,
+   "final_deep_family": [
+    "Neuroarchitecture",
+    "Ritchie"
+   ],
+   "specialized_discovery": true,
+   "transformative_discovery": true,
+   "synthesis_spend": true,
+   "cited_docs": [
+    "Bruce Block - The Visual Story (2007).md",
+    "David Landau - Lighting for Cinematography (2014).md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Grammar of the Edit.md",
+    "The Anatomy of Story.md",
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md"
+   ],
+   "epistemic": {
+    "directly_established": true,
+    "establishes_need": true,
+    "n_direct": 7,
+    "n_partial": 0,
+    "n_related": 8
+   },
+   "stage_of_loss": "NONE",
+   "expected_weakness": "SYNTHESIS_underspend"
+  },
+  {
+   "id": "wc05_ordinary_fast",
+   "query": "Create a 12-second chase shot where a character running at an ordinary human speed feels incredibly fast. No superpowers and no impossible camera movement.",
+   "task_type": "CREATE_FROM_KNOWLEDGE",
+   "retrieval_required": true,
+   "scout_nominations": [
+    "Timing for Animation.md",
+    "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+    "How to Draw Manga Martial Arts and Combat Sports.md",
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "Grammar of the Shot.md",
+    "Francis Glebas - Directing the Story (2008).md"
+   ],
+   "scout_deep_family": [
+    "Timing for Animation"
+   ],
+   "final_evidence_fast": [
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "Grammar of the Edit.md",
+    "Bruce Block - The Visual Story (2007).md",
+    "David Landau - Lighting for Cinematography (2014).md",
+    "Blain Brown - Cinematography - Theory and Practice (2016).md",
+    "How to Draw Manga Martial Arts and Combat Sports.md",
+    "Framed Ink.md"
+   ],
+   "final_evidence_wildcard": [
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "Digital Compositing for Film and Video.md",
+    "Bruce Block - The Visual Story (2007).md",
+    "David Landau - Lighting for Cinematography (2014).md",
+    "Blain Brown - Cinematography - Theory and Practice (2016).md",
+    "How to Draw Manga Martial Arts and Combat Sports.md",
+    "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md"
+   ],
+   "grades_fast": {
+    "DIRECT": 15,
+    "PARTIAL": 0,
+    "RELATED": 0
+   },
+   "grades_wildcard": {
+    "DIRECT": 15,
+    "PARTIAL": 0,
+    "RELATED": 0
+   },
+   "fast_specialized": [
+    "Filmmaker",
+    "Visual Story"
+   ],
+   "wildcard_specialized": [
+    "Filmmaker",
+    "Visual Story"
+   ],
+   "wildcard_only": [],
+   "fast_only": [],
+   "deep_target_reached": false,
+   "final_deep_family": [],
+   "specialized_discovery": true,
+   "transformative_discovery": false,
+   "synthesis_spend": true,
+   "cited_docs": [
+    "David Landau - Lighting for Cinematography (2014).md",
+    "Ken Dancyger - The technique of film & video editing (2019).md",
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md"
+   ],
+   "epistemic": {
+    "directly_established": true,
+    "establishes_need": true,
+    "n_direct": 15,
+    "n_partial": 0,
+    "n_related": 0
+   },
+   "stage_of_loss": "RERANK",
+   "expected_weakness": null
+  },
+  {
+   "id": "wc06_unpredictable_fighter",
+   "query": "Two expert fighters duel. One is technically better, but the other is terrifying because his movement is unpredictable. Show me how their movement should look different before either one lands a hit.",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "scout_nominations": [
+    "Stage Combat Arts.md",
+    "Complete Guide to Drawing Dynamic Manga Sword Fighters.md",
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "How to Draw Manga Martial Arts and Combat Sports.md",
+    "How to Draw Manga Illustrating Battles.md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "Your Move - A New Approach to the Study of Movement and Dance.md",
+    "The Laban Workbook for Actors.md"
+   ],
+   "scout_deep_family": [
+    "Laban"
+   ],
+   "final_evidence_fast": [
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "handbook.html",
+    "How to Draw Manga Martial Arts and Combat Sports.md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "How to Draw Manga Illustrating Battles.md"
+   ],
+   "final_evidence_wildcard": [
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "handbook.html",
+    "How to Draw Manga Martial Arts and Combat Sports.md",
+    "Bruce Block - The Visual Story (2007).md",
+    "How to Draw Manga Illustrating Battles.md",
+    "Complete Guide to Drawing Dynamic Manga Sword Fighters.md",
+    "Stage Combat Arts.md",
+    "Elemental Magic.md"
+   ],
+   "grades_fast": {
+    "DIRECT": 6,
+    "PARTIAL": 0,
+    "RELATED": 9
+   },
+   "grades_wildcard": {
+    "DIRECT": 6,
+    "PARTIAL": 0,
+    "RELATED": 9
+   },
+   "fast_specialized": [
+    "Fight Choreography"
+   ],
+   "wildcard_specialized": [
+    "Fight Choreography",
+    "Stage Combat"
+   ],
+   "wildcard_only": [
+    "Stage Combat"
+   ],
+   "fast_only": [],
+   "deep_target_reached": false,
+   "final_deep_family": [],
+   "specialized_discovery": true,
+   "transformative_discovery": false,
+   "synthesis_spend": true,
+   "cited_docs": [
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "Stage Combat Arts.md",
+    "handbook.html"
+   ],
+   "epistemic": {
+    "directly_established": true,
+    "establishes_need": true,
+    "n_direct": 8,
+    "n_partial": 0,
+    "n_related": 7
+   },
+   "stage_of_loss": "RERANK",
+   "expected_weakness": null
+  },
+  {
+   "id": "wc07_silent_authority",
+   "query": "Design a scene where a woman walks into a room and everyone immediately understands she has more authority than everyone else, but she cannot speak, threaten anyone, or do anything obviously dominant.",
+   "task_type": "CREATE_FROM_KNOWLEDGE",
+   "retrieval_required": true,
+   "scout_nominations": [
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "The Laban Workbook for Actors.md",
+    "Film Directing Cinematic Motion.md",
+    "Stage Combat Arts.md",
+    "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Elemental Magic.md",
+    "Making Meaning with Machines.md"
+   ],
+   "scout_deep_family": [
+    "Laban"
+   ],
+   "final_evidence_fast": [
+    "Ed Hooks - Acting for Animators (2017).md",
+    "Walter Murch - In the Blink of an Eye (2001).md",
+    "Film Directing Cinematic Motion.md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Timing for Animation.md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "What the Face Reveals.md",
+    "David Keirsey - Please Understand Me II (1998, Prometheus Nemesis Book Company) - libgen.li.md"
+   ],
+   "final_evidence_wildcard": [
+    "Ed Hooks - Acting for Animators (2017).md",
+    "Walter Murch - In the Blink of an Eye (2001).md",
+    "Film Directing Cinematic Motion.md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Timing for Animation.md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "What the Face Reveals.md",
+    "David Keirsey - Please Understand Me II (1998, Prometheus Nemesis Book Company) - libgen.li.md"
+   ],
+   "grades_fast": {
+    "DIRECT": 8,
+    "PARTIAL": 0,
+    "RELATED": 7
+   },
+   "grades_wildcard": {
+    "DIRECT": 8,
+    "PARTIAL": 0,
+    "RELATED": 7
+   },
+   "fast_specialized": [
+    "Directing",
+    "Ed Hooks"
+   ],
+   "wildcard_specialized": [
+    "Bartenieff",
+    "Directing",
+    "Ed Hooks",
+    "Making Connections"
+   ],
+   "wildcard_only": [
+    "Bartenieff",
+    "Making Connections"
+   ],
+   "fast_only": [],
+   "deep_target_reached": true,
+   "final_deep_family": [
+    "Bartenieff",
+    "Making Connections"
+   ],
+   "specialized_discovery": true,
+   "transformative_discovery": true,
+   "synthesis_spend": true,
+   "cited_docs": [
+    "Ed Hooks - Acting for Animators (2017).md",
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "Ken Dancyger - The technique of film & video editing (2019).md",
+    "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md"
+   ],
+   "epistemic": {
+    "directly_established": true,
+    "establishes_need": true,
+    "n_direct": 9,
+    "n_partial": 0,
+    "n_related": 6
+   },
+   "stage_of_loss": "NONE",
+   "expected_weakness": "WILDCARD_below_FAST"
+  },
+  {
+   "id": "wc08_giant_creature",
+   "query": "I have a shot of a giant creature stepping onto a street, but it still feels like a person in a costume. Make the creature feel genuinely enormous without simply making it bigger in frame.",
+   "task_type": "CREATE_FROM_KNOWLEDGE",
+   "retrieval_required": true,
+   "scout_nominations": [
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "The Laban Workbook for Actors.md",
+    "How to Draw Manga Illustrating Battles.md",
+    "How to Draw Manga Martial Arts and Combat Sports.md",
+    "Complete Guide to Drawing Dynamic Manga Sword Fighters.md",
+    "Stage Combat Arts.md",
+    "Timing for Animation.md",
+    "Ed Hooks - Acting for Animators (2017).md"
+   ],
+   "scout_deep_family": [],
+   "final_evidence_fast": [
+    "Timing for Animation.md",
+    "VES Handbook of Visual Effects.md",
+    "Elemental Magic.md",
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "The Anatomy of Story.md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Framed Ink.md",
+    "Force Dynamic Life Drawing.md"
+   ],
+   "final_evidence_wildcard": [
+    "VES Handbook of Visual Effects.md",
+    "Timing for Animation.md",
+    "Elemental Magic.md",
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "The Anatomy of Story.md",
+    "Framed Ink.md",
+    "Force Dynamic Life Drawing.md",
+    "Joseph V. Mascelli - The Five C's of Cinematography (1998).md"
+   ],
+   "grades_fast": {
+    "DIRECT": 15,
+    "PARTIAL": 0,
+    "RELATED": 0
+   },
+   "grades_wildcard": {
+    "DIRECT": 8,
+    "PARTIAL": 0,
+    "RELATED": 7
+   },
+   "fast_specialized": [
+    "Timing for Animation",
+    "VES"
+   ],
+   "wildcard_specialized": [
+    "Digital Compositing",
+    "Timing for Animation",
+    "VES"
+   ],
+   "wildcard_only": [
+    "Digital Compositing"
+   ],
+   "fast_only": [],
+   "deep_target_reached": true,
+   "final_deep_family": [
+    "VES"
+   ],
+   "specialized_discovery": true,
+   "transformative_discovery": true,
+   "synthesis_spend": true,
+   "cited_docs": [
+    "Complete Guide to Drawing Dynamic Manga Sword Fighters.md",
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "Timing for Animation.md",
+    "VES Handbook of Visual Effects.md",
+    "handbook.html"
+   ],
+   "epistemic": {
+    "directly_established": true,
+    "establishes_need": true,
+    "n_direct": 10,
+    "n_partial": 0,
+    "n_related": 5
+   },
+   "stage_of_loss": "NONE",
+   "expected_weakness": null
+  },
+  {
+   "id": "wc09_pen_desire",
+   "query": "Create a product video for an ordinary black pen that makes it feel like something people urgently want, without saying it is premium, revolutionary, the best, or better than competitors.",
+   "task_type": "CREATE_FROM_KNOWLEDGE",
+   "retrieval_required": true,
+   "scout_nominations": [
+    "Breakthrough Advertising.md",
+    "Chip Heath & Dan Heath - Made to Stick (2007).md",
+    "Timing for Animation.md",
+    "Framed Ink.md",
+    "Bruce Block - The Visual Story (2007).md",
+    "Retrieval-Augmented Prompt Optimization for.md",
+    "Sidney Lumet - Making Movies (1994).md",
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md"
+   ],
+   "scout_deep_family": [
+    "Breakthrough Advertising"
+   ],
+   "final_evidence_fast": [
+    "Hey Whipple Squeeze This.md",
+    "The Adweek Copywriting Handbook.md",
+    "Breakthrough Advertising.md",
+    "Ogilvy on Advertising.md",
+    "The Anatomy of Story.md",
+    "Donald Miller - Building a StoryBrand (2017).md"
+   ],
+   "final_evidence_wildcard": [
+    "Hey Whipple Squeeze This.md",
+    "The Adweek Copywriting Handbook.md",
+    "Breakthrough Advertising.md",
+    "The Anatomy of Story.md",
+    "Donald Miller - Building a StoryBrand (2017).md",
+    "Ogilvy on Advertising.md",
+    "Manga in Theory and Practice.md"
+   ],
+   "grades_fast": {
+    "DIRECT": 11,
+    "PARTIAL": 0,
+    "RELATED": 4
+   },
+   "grades_wildcard": {
+    "DIRECT": 5,
+    "PARTIAL": 0,
+    "RELATED": 10
+   },
+   "fast_specialized": [
+    "Adweek",
+    "Breakthrough Advertising",
+    "Hey Whipple",
+    "Ogilvy",
+    "StoryBrand"
+   ],
+   "wildcard_specialized": [
+    "Adweek",
+    "Breakthrough Advertising",
+    "Hey Whipple",
+    "Ogilvy",
+    "StoryBrand"
+   ],
+   "wildcard_only": [],
+   "fast_only": [],
+   "deep_target_reached": true,
+   "final_deep_family": [
+    "Breakthrough Advertising",
+    "Ogilvy",
+    "StoryBrand"
+   ],
+   "specialized_discovery": true,
+   "transformative_discovery": true,
+   "synthesis_spend": true,
+   "cited_docs": [
+    "Breakthrough Advertising.md",
+    "Donald Miller - Building a StoryBrand (2017).md",
+    "The Adweek Copywriting Handbook.md"
+   ],
+   "epistemic": {
+    "directly_established": true,
+    "establishes_need": true,
+    "n_direct": 3,
+    "n_partial": 0,
+    "n_related": 12
+   },
+   "stage_of_loss": "NONE",
+   "expected_weakness": null
+  },
+  {
+   "id": "wc10_suppressed_grief",
+   "query": "A character has just received devastating news but is trying very hard not to react because other people are watching. Give me a cinematic video prompt where the emotion is obvious even though almost nothing happens.",
+   "task_type": "GROUNDED_QA",
+   "retrieval_required": true,
+   "scout_nominations": [
+    "Fight Choreography The Art of Non-Verbal Dialogue.md",
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+    "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+    "Bruce Block - The Visual Story (2007).md",
+    "The Laban Workbook for Actors.md",
+    "Ken Dancyger - The technique of film & video editing (2019).md",
+    "A Multistage Pipeline for Character-Stable.md",
+    "Francis Glebas - Directing the Story (2008).md"
+   ],
+   "scout_deep_family": [
+    "Laban"
+   ],
+   "final_evidence_fast": [
+    "handbook.html",
+    "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press).md",
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+    "Ed Hooks - Acting for Animators (2017).md",
+    "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema.md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "Elemental Magic Volume 2.md"
+   ],
+   "final_evidence_wildcard": [
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+    "Ed Hooks - Acting for Animators (2017).md",
+    "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema.md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "Elemental Magic Volume 2.md",
+    "Elemental Magic.md",
+    "Grammar of the Edit.md"
+   ],
+   "grades_fast": {
+    "DIRECT": 11,
+    "PARTIAL": 0,
+    "RELATED": 4
+   },
+   "grades_wildcard": {
+    "DIRECT": 7,
+    "PARTIAL": 0,
+    "RELATED": 8
+   },
+   "fast_specialized": [
+    "Sound Design"
+   ],
+   "wildcard_specialized": [
+    "Sound Design"
+   ],
+   "wildcard_only": [],
+   "fast_only": [],
+   "deep_target_reached": false,
+   "final_deep_family": [],
+   "specialized_discovery": true,
+   "transformative_discovery": false,
+   "synthesis_spend": false,
+   "cited_docs": [
+    "Blain Brown - Cinematography - Theory and Practice (2016).md",
+    "Bruce Block - The Visual Story (2007).md",
+    "Francis Glebas - Directing the Story (2008).md",
+    "Grammar of the Edit.md",
+    "Ken Dancyger - The technique of film & video editing (2019).md",
+    "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "The Anatomy of Story.md",
+    "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+    "Timing for Animation.md"
+   ],
+   "epistemic": {
+    "directly_established": true,
+    "establishes_need": true,
+    "n_direct": 10,
+    "n_partial": 0,
+    "n_related": 5
+   },
+   "stage_of_loss": "RERANK",
+   "expected_weakness": null
+  }
+ ]
+}
