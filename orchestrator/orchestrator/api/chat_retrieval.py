@@ -242,6 +242,7 @@ def intent_policy_enabled() -> bool:
 def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...] = (),
                      budget: Optional[CandidateBudget] = None, query_id: str = "q0",
                      subqueries: tuple = (), lanes: Optional[tuple] = None,
+                     latent_bridge_ids: tuple = (),
                      on_context: Optional[Callable[[SearchContext, Executor], None]] = None) -> dict:
     """`subqueries`: (id, type, text, weight) tuples from the compiled plan (non-PRIMARY);
     they run lanes B + C on their own vectors (one batched embedding call for all texts).
@@ -558,19 +559,34 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
     })
     _p = _presentation_joins([c.chunk_id for c in final], [c.doc_id for c in final])
     trace = {**result.trace, **sel, "latency_ms": latency_ms}
-    # WLK2C C4-live: expose a BOUNDED latent pool — the JUDGED-prefix candidates that q0-only selection
-    # dropped (not in `final`), with their q0 rerank score. Flag-gated (no cost when off); this is a
-    # small slice (the judged prefix minus final), never the whole union. The orchestrator filters to
-    # BRIDGE-lineage candidates (it holds the plan) and does a second, additive portfolio pass.
+    # WLK2C C4-live: expose a BOUNDED latent pool — the fused-union candidates that q0-only selection
+    # dropped (not in `final`) that were retrieved by a NON-PRIMARY subquery (aspect/profile/BRIDGE),
+    # with their q0 rerank score (None if never judged). Bridge candidates rarely survive the doc-fair
+    # judged prefix, so the pool must come from the UNION, not the prefix — but it is capped (fused
+    # order, best first) and excludes pure-q0 drops, so it is a small slice, never the whole universe.
+    # The orchestrator filters to BRIDGE-lineage candidates (it holds the plan) for the second pass.
     latent_pool = None
     if os.environ.get("POLYMATH_CHAT_LATENT_SELECTION", "0") == "1":
         _final_ids = {c.chunk_id for c in final}
-        _pre = set(trace.get("pre_g3_order") or [])
-        latent_pool = [
-            {"chunk_id": c.chunk_id, "doc_id": c.doc_id, "parent_id": c.parent_id,
-             "source_name": c.source_name, "text": c.text, "query_ids": list(c.query_ids),
-             "q0_score": c.rerank_score}
-            for c in result.union if c.chunk_id in _pre and c.chunk_id not in _final_ids]
+        _primary = str(result.context.query_id)
+        _bids = {str(b) for b in (latent_bridge_ids or ())}
+        _cap = int(os.environ.get("POLYMATH_LATENT_POOL_MAX", "60"))
+        latent_pool = []
+        for c in result.union:                       # fused order (best first)
+            if c.chunk_id in _final_ids:
+                continue
+            qids = {str(q) for q in (c.query_ids or [])}
+            # prefer the specific BRIDGE candidates (included regardless of fused rank); else any
+            # subquery-retrieved drop. Pure-q0 drops are never latent candidates.
+            keep = (qids & _bids) if _bids else any(q != _primary for q in qids)
+            if not keep:
+                continue
+            latent_pool.append(
+                {"chunk_id": c.chunk_id, "doc_id": c.doc_id, "parent_id": c.parent_id,
+                 "source_name": c.source_name, "text": c.text, "query_ids": list(c.query_ids),
+                 "q0_score": c.rerank_score})
+            if not _bids and len(latent_pool) >= _cap:   # bridge-id mode is naturally bounded; cap only the fallback
+                break
     rows = []
     for c in final:
         r = c.to_row()

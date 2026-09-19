@@ -3222,7 +3222,11 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         exact_terms=tuple(_plan.exact_terms) if (_flag == "on" and _plan is not None) else (),
                         # P1.b: typed subqueries run lanes B + C on their own vectors (v2-single = A/B without them)
                         subqueries=tuple((q.id, q.type, q.query, q.weight) for q in _plan.queries if q.type != "PRIMARY")
-                        if (_flag == "on" and _plan is not None and _rflag == "v2") else ())
+                        if (_flag == "on" and _plan is not None and _rflag == "v2") else (),
+                        # WLK2C: the BRIDGE subquery ids, so chat_retrieve_v2 exposes their candidates in the
+                        # latent pool regardless of fused rank (bridge candidates rarely top the q0-dominated union).
+                        latent_bridge_ids=tuple(q.id for q in _plan.queries if getattr(q, "origin", "") == "BRIDGE")
+                        if (_flag == "on" and _plan is not None) else ())
                     _aspects = (fast.get("meta") or {}).get("aspects") or {}
                     _weak = (fast.get("meta") or {}).get("weak_aspects") or []
                     if ui_mode == "WILDCARD":
