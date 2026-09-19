@@ -1,0 +1,71 @@
+[
+ {
+  "case": "wc01_fake_smile",
+  "q0_primary": {
+   "rerank_query": "acting techniques for portraying fake happiness in response to an unwelcome pers",
+   "expert_in_union": 2,
+   "expert_judged": 2,
+   "best_expert_rerank": -6.578125,
+   "expert_in_final": 0,
+   "best_expert_doc": "Facial Action coding 3.0.md",
+   "best_expert_text_head": "The example of embarrassment, like others, requires such a supplement of emotion"
+  },
+  "bridge_primary": {
+   "rerank_query": "observable facial muscle actions distinguishing genuine spontaneous smile from f",
+   "expert_in_union": 91,
+   "expert_judged": 20,
+   "best_expert_rerank": 5.523438,
+   "expert_in_final": 10,
+   "best_expert_doc": "Facial Action coding 3.0.md",
+   "best_expert_text_head": "This Code of annotation and codification of facial action deserves broad scienti"
+  },
+  "bridge_surfaces_floor_clearing_expert": true,
+  "bridge_expert_reaches_final": true
+ },
+ {
+  "case": "wc05_ordinary_fast",
+  "q0_primary": {
+   "rerank_query": "creating a sense of speed in a chase shot without superpowers",
+   "expert_in_union": 7,
+   "expert_judged": 4,
+   "best_expert_rerank": 3.828125,
+   "expert_in_final": 1,
+   "best_expert_doc": "Timing for Animation.md",
+   "best_expert_text_head": "Fast rather than slow action suits animation best. It gives the animator an oppo"
+  },
+  "bridge_primary": {
+   "rerank_query": "principles of movement timing spacing and cadence for fast urgent action on scre",
+   "expert_in_union": 29,
+   "expert_judged": 10,
+   "best_expert_rerank": 5.867188,
+   "expert_in_final": 5,
+   "best_expert_doc": "Timing for Animation.md",
+   "best_expert_text_head": "As explained above, the basis of timing is the established film speed of 24 fram"
+  },
+  "bridge_surfaces_floor_clearing_expert": true,
+  "bridge_expert_reaches_final": true
+ },
+ {
+  "case": "wc07_silent_authority",
+  "q0_primary": {
+   "rerank_query": "conveying authority and status through non-verbal cues and presence",
+   "expert_in_union": 16,
+   "expert_judged": 5,
+   "best_expert_rerank": -2.429688,
+   "expert_in_final": 2,
+   "best_expert_doc": "Bayesian reasoning for Laban Movement Analysis.md",
+   "best_expert_text_head": "1 \nIntroduction \nHuman body movement is essentially the process of moving \none o"
+  },
+  "bridge_primary": {
+   "rerank_query": "posture spatial occupation and effort quality communicating status dominance and",
+   "expert_in_union": 46,
+   "expert_judged": 12,
+   "best_expert_rerank": 6.070312,
+   "expert_in_final": 8,
+   "best_expert_doc": "The Laban Workbook for Actors.md",
+   "best_expert_text_head": "The two polarities of Space Effort are Indirect and Direct. Space Effort \nengage"
+  },
+  "bridge_surfaces_floor_clearing_expert": true,
+  "bridge_expert_reaches_final": true
+ }
+]

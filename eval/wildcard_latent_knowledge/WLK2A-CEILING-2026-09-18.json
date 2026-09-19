@@ -1,0 +1,29 @@
+[
+ {
+  "case": "wc01_fake_smile",
+  "deep_doc": "Facial Action Coding System_ Facial action coding system _ -- Paul Ekman_ Wallace V_ Friesen_ Joseph C_ Hager -- Salt Lake City, UT, cop_ 2002 -- isbn13 9780931835018 -- b4af95ca86cb926c6c000d109b27ec66 -- Anna\u2019s A.md",
+  "q0_score": -2.63,
+  "best_profile_bridge_score": -6.7,
+  "ideal_bridge_score": -4.9,
+  "ideal_bridge_text": "what observable facial muscle actions distinguish a genuine spontaneous smile from a deliberately performed or faked smile, around the eyes and mouth",
+  "ceiling_is_bridge_quality": false
+ },
+ {
+  "case": "wc05_ordinary_fast",
+  "deep_doc": "The Laban Workbook for Actors.md",
+  "q0_score": -5.4,
+  "best_profile_bridge_score": -8.8,
+  "ideal_bridge_score": -4.7,
+  "ideal_bridge_text": "principles of movement timing, spacing and cadence that make an ordinary-speed action read as fast and urgent on screen",
+  "ceiling_is_bridge_quality": false
+ },
+ {
+  "case": "wc07_silent_authority",
+  "deep_doc": "The Laban Workbook for Actors.md",
+  "q0_score": -6.5,
+  "best_profile_bridge_score": -1.33,
+  "ideal_bridge_score": 4.25,
+  "ideal_bridge_text": "how posture, spatial occupation and the effort quality of body movement communicate status, dominance and authority without speech",
+  "ceiling_is_bridge_quality": true
+ }
+]
