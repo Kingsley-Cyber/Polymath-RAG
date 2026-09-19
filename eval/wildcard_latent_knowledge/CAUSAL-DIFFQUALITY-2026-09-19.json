@@ -1,0 +1,339 @@
+{
+ "HYBRID": {
+  "mode": "CAUSAL-REPLAY-HYBRID-2026-09-19",
+  "aggregate": {
+   "n": 10,
+   "v2_better": 1,
+   "v1_better": 0,
+   "equivalent": 1,
+   "churn_no_utility": 8,
+   "v2_only_winners_preserved": 12,
+   "v1_only_winners_displaced": 0,
+   "v2_only_useful": 1,
+   "v2_only_useful_winners": 1,
+   "v1_only_direct_displaced": 19,
+   "v2_only_seated": 0
+  },
+  "per_query": {
+   "wc01_fake_smile": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 6,
+    "n_v1_only": 6,
+    "v2_only_lane_winners": 2,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 4,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc02_sword_weight": {
+    "verdict": "equivalent",
+    "n_v2_only": 0,
+    "n_v1_only": 0,
+    "v2_only_lane_winners": 0,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 0,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc03_villain_won": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 8,
+    "n_v1_only": 8,
+    "v2_only_lane_winners": 2,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 0,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc04_hallway_oppress": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 13,
+    "n_v1_only": 13,
+    "v2_only_lane_winners": 2,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 4,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc05_ordinary_fast": {
+    "verdict": "V2 better",
+    "n_v2_only": 6,
+    "n_v1_only": 6,
+    "v2_only_lane_winners": 1,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 1,
+    "v2_only_useful_winners": 1,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 2,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [
+     "Blain Brown - Cinematography - Theory and Practice (2016).md"
+    ],
+    "v2_useful_origins": [
+     "USER"
+    ]
+   },
+   "wc06_unpredictable_fighter": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 8,
+    "n_v1_only": 8,
+    "v2_only_lane_winners": 2,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 0,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc07_silent_authority": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 1,
+    "n_v1_only": 1,
+    "v2_only_lane_winners": 0,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 1,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc08_giant_creature": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 9,
+    "n_v1_only": 9,
+    "v2_only_lane_winners": 0,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 4,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc09_pen_desire": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 10,
+    "n_v1_only": 10,
+    "v2_only_lane_winners": 2,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 3,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc10_suppressed_grief": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 7,
+    "n_v1_only": 7,
+    "v2_only_lane_winners": 1,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 1,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   }
+  }
+ },
+ "WILDCARD": {
+  "mode": "CAUSAL-REPLAY-WILDCARD-2026-09-19",
+  "aggregate": {
+   "n": 10,
+   "v2_better": 4,
+   "v1_better": 0,
+   "equivalent": 1,
+   "churn_no_utility": 5,
+   "v2_only_winners_preserved": 11,
+   "v1_only_winners_displaced": 0,
+   "v2_only_useful": 5,
+   "v2_only_useful_winners": 1,
+   "v1_only_direct_displaced": 24,
+   "v2_only_seated": 3
+  },
+  "per_query": {
+   "wc01_fake_smile": {
+    "verdict": "V2 better",
+    "n_v2_only": 9,
+    "n_v1_only": 9,
+    "v2_only_lane_winners": 3,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 2,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 2,
+    "v1_only_direct_q0_displaced": 6,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [
+     "handbook.html"
+    ],
+    "v2_useful_origins": [
+     "BRIDGE",
+     "PROFILE"
+    ]
+   },
+   "wc02_sword_weight": {
+    "verdict": "equivalent",
+    "n_v2_only": 0,
+    "n_v1_only": 0,
+    "v2_only_lane_winners": 0,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 0,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc03_villain_won": {
+    "verdict": "V2 better",
+    "n_v2_only": 8,
+    "n_v1_only": 8,
+    "v2_only_lane_winners": 2,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 1,
+    "v2_only_useful_winners": 1,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 0,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [
+     "Making Connections Bartenieff Fundamentals.md"
+    ],
+    "v2_useful_origins": [
+     "USER"
+    ]
+   },
+   "wc04_hallway_oppress": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 13,
+    "n_v1_only": 13,
+    "v2_only_lane_winners": 2,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 4,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc05_ordinary_fast": {
+    "verdict": "V2 better",
+    "n_v2_only": 6,
+    "n_v1_only": 6,
+    "v2_only_lane_winners": 0,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 1,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 2,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [
+     "Blain Brown - Cinematography - Theory and Practice (2016).md"
+    ],
+    "v2_useful_origins": [
+     "USER"
+    ]
+   },
+   "wc06_unpredictable_fighter": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 11,
+    "n_v1_only": 11,
+    "v2_only_lane_winners": 0,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 0,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc07_silent_authority": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 1,
+    "n_v1_only": 1,
+    "v2_only_lane_winners": 0,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 1,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc08_giant_creature": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 12,
+    "n_v1_only": 12,
+    "v2_only_lane_winners": 1,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 2,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc09_pen_desire": {
+    "verdict": "composition changed, no utility difference",
+    "n_v2_only": 12,
+    "n_v1_only": 12,
+    "v2_only_lane_winners": 2,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 0,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 0,
+    "v1_only_direct_q0_displaced": 5,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [],
+    "v2_useful_origins": []
+   },
+   "wc10_suppressed_grief": {
+    "verdict": "V2 better",
+    "n_v2_only": 6,
+    "n_v1_only": 6,
+    "v2_only_lane_winners": 1,
+    "v1_only_lane_winners": 0,
+    "v2_only_useful": 1,
+    "v2_only_useful_winners": 0,
+    "v2_only_seated_C5": 1,
+    "v1_only_direct_q0_displaced": 4,
+    "v2_only_direct_q0": 0,
+    "v2_useful_docs": [
+     "The Laban Workbook for Actors.md"
+    ],
+    "v2_useful_origins": [
+     "BRIDGE"
+    ]
+   }
+  }
+ }
+}

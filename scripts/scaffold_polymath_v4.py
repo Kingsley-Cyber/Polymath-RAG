@@ -666,6 +666,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/librarian_qualification/CA5-SENTINEL-18-gold.json", "json", None),
     ("eval/wildcard_latent_knowledge/CAUSAL-REPLAY-HYBRID-2026-09-19.json", "json", None),
     ("eval/wildcard_latent_knowledge/CAUSAL-REPLAY-WILDCARD-2026-09-19.json", "json", None),
+    ("eval/wildcard_latent_knowledge/CAUSAL-DIFFQUALITY-2026-09-19.json", "json", None),
+    ("eval/wildcard_latent_knowledge/causal_diffquality.py", "py", None),
     ("eval/wildcard_latent_knowledge/harness.py", "py", None),
     ("eval/wildcard_latent_knowledge/README.md", "md", None),
     ("eval/wildcard_latent_knowledge/BASELINE-2026-09-18.json", "json", None),

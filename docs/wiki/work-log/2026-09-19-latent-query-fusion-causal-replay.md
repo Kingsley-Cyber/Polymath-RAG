@@ -3,7 +3,7 @@ change_id: LATENT-QUERY-FUSION-V2-CAUSAL
 owner: wildcard-investigation
 date: 2026-09-19
 status: complete
-architecture_impact: "LATENT-QUERY-FUSION-V2 LEVEL-3 CAUSAL experiment (no code change; eval artifacts only). Fixed-upstream V1-flatten vs V2-fusion replay isolates the fusion/truncation policy by deriving BOTH cap-sets from ONE real retrieval per query (identical fused list / RankedLane[] / arrivals / local rankings). RESULT = NULL: given identical inputs, V2 fusion reshuffles the cap heavily (68/78 chunks swapped each way) but does NOT net-improve deep-family admission (exactly 1 gain / 1 loss per mode, both modes). The mechanism WORKS (it does admit a deep winner the flatten truncates — wc05 Timing HYBRID, wc10 Laban WILDCARD→final) but its NET causal effect is zero. Therefore the end-to-end A/B gain (deep_final_reach 0.667 vs 0.467) is CONFOUNDED (upstream variance / mode / C5 seating), NOT causally isolated to fusion. V2 stays SAFE (sentinel) + LIVE per owner; its specific fusion benefit is causally UNPROVEN."
+architecture_impact: "LATENT-QUERY-FUSION-V2 LEVEL-3 CAUSAL experiment + differential-quality analysis (no code change; eval artifacts only). Fixed-upstream V1-flatten vs V2-fusion, both cap-sets from ONE real retrieval per query (identical fused list / RankedLane[] / arrivals / local rankings). TWO-LEVEL result: (1) DEEP-FAMILY ADMISSION (document count) = NULL on WLK-10 (1 V2 gain / 1 V2 loss per mode) — a narrow metric; equal-sized V1-only/V2-only swaps are a fixed-cap artifact (composition churn), NOT evidence of neutrality. (2) ARCHITECTURAL UTILITY (differential-quality, offline over the captured artifacts) = POSITIVE + asymmetric: V2 preserved 11–12 lane-winners/mode (local_rank 0) that the flatten truncates and displaced ZERO lane-winners V1 kept; per-query V2-better 1 (HYBRID)/4 (WILDCARD), V1-better 0 (both); WILDCARD 5 V2-only useful downstream evidence (3 C5-seated latent). Tradeoff = only the weakest q0-cap tail displaced (v1_pos 105–119 of 120, 0 lane-winners), answer-level q0_preserved 1.0. So V2 DELIVERS its designed behavior (preserve locally-important lane candidates for downstream judgment) safely; it does NOT raise deep-family doc count. The end-to-end A/B favored V2 but, upstream having varied, cannot causally attribute that gain to fusion. V2 SAFE + LIVE."
 last_reviewed: 2026-09-19
 ---
 
@@ -31,47 +31,65 @@ No production code. Method + eval artifacts:
   `CAUSAL-REPLAY-WILDCARD-2026-09-19.json`.
 
 ## Proof
-`LIVE_PATH_PROVEN` (real retrievals, live sidecars) — the experiment itself; the RESULT is a NULL.
+`LIVE_PATH_PROVEN` (real retrievals, live sidecars) — the experiment; interpreted at TWO levels.
+`CAUSAL-DIFFQUALITY-2026-09-19.json` is the offline differential-quality analysis (no new retrieval).
 
-(A) ADMISSION effect (identical upstream):
-| mode | swap each way | deep-admission gain / loss | net | v2-only→final |
-|---|---|---|---|---|
-| HYBRID | 68 / 68 | 1 (wc05 Timing) / 1 (wc03 Ekman) | **0** | 1 |
-| WILDCARD | 78 / 78 | 1 (wc10 Laban→final) / 1 (wc03 Ekman) | **0** | 4 (1 deep) |
+**(A) DEEP-FAMILY ADMISSION (document count) — NULL on WLK-10.** deep-family gain/loss = 1/1 in each mode
+(HYBRID wc05 Timing / wc03 Ekman; WILDCARD wc10 Laban→final / wc03 Ekman). NOTE: the equal-sized
+V1-only/V2-only swaps (HYBRID 68/68, WILDCARD 78/78) are a FIXED-CAP artifact — both policies pick
+exactly N, so `|V1_only| == |V2_only|` by construction. Those counts are COMPOSITION CHURN, not utility;
+they are NOT evidence of neutrality. The narrow, valid finding is only: no net deep-family document-count
+gain on WLK-10.
 
-Fusion changes WHO survives the cap substantially and symmetrically, but deep-family admission is a
-wash — one clean win and one clean loss in EACH mode (different queries by margin non-determinism;
-wc03 loses Ekman in both). 9/10 queries have a cap-set delta; the deep family sits in the intersection
-(safely in) or outside (safely out) for most — the policy only bites at the truncation margin, where
-it nets zero. `merged_candidate_max` binds (fused_total 171–200 > 120), so this is not a "cap didn't
-bind" artifact.
+**(B) ARCHITECTURAL UTILITY (differential-quality) — POSITIVE + asymmetric.** For every V1-only / V2-only
+candidate, derived from the captured artifacts: lane-winner status (local_rank 0), origin, C5 seat,
+CA4 grade, final membership, q0/DIRECT status.
+| metric (fixed upstream) | HYBRID | WILDCARD |
+|---|---|---|
+| lane-winners V2 preserved (flatten truncated) | 12 | 11 |
+| lane-winners V2 displaced (V1 kept) | **0** | **0** |
+| V2-only useful downstream (final/seat/grade) | 1 | 5 |
+| V2-only C5-seated latent (COMPLEMENTARY/DIVERGENT) | 0 | 3 |
+| per-query: V2 better / V1 better / churn+equiv | 1 / **0** / 9 | 4 / **0** / 6 |
+| DIRECT/q0 displaced — all marginal tail (v1_pos 105–119/120, 0 winners) | 19 | 24 |
 
-(B) DOWNSTREAM utility of the differential: the mechanism WORKS where it fires — wc10 (WILDCARD) V2
-admitted a Laban chunk the flatten truncated and it reached final evidence; wc05 (HYBRID) V2 admitted
-Timing (v1_pos None → v2_pos 27/108) though those chunks did not reach final. But these are offset by
-the wc03 Ekman loss, so no NET downstream deep-family gain.
+V2 does what it was DESIGNED to do: it preserves locally-important lane-winners (subquery/bridge #1s the
+q0-dominated flatten truncates) so they reach downstream C4/C5 judgment — preserving 11–12/mode and
+displacing ZERO lane-winners V1 kept. It costs only the weakest q0-cap tail (positions 105–119, never a
+lane-winner), and the answer keeps q0 (sentinel answer-level q0_preserved 1.0). Those preserved winners
+get a fair trial; occasionally it pays off (WILDCARD: 5 V2-only useful, 3 C5-seated, across 4 queries).
+**No query was made worse (V1-better = 0 in both modes).** The magnitude is modest (mostly churn), but
+the direction is one-sided in V2's favor and matches the architecture's intent.
 
 ## The evidence stack (honest)
 ```
-LEVEL 1 MECHANISM (synthetic seam, unit)          PASS  — fusion preserves a synthetic bridge winner
-LEVEL 2 LIVE EXEMPLAR (wc01/05/07 receipts)       PASS  — origin flows; ranked lanes; wc01 chain fires
-LEVEL 3 CAUSAL (fixed-upstream, HYBRID+WILDCARD)   NULL  — net-neutral deep admission (1 gain/1 loss each)
-LEVEL 4 END-TO-END A/B (3 repeats, WILDCARD)       V2>V1 but CONFOUNDED (upstream varies; not isolated)
-LEVEL 5 SAFETY (CA5-SENTINEL-18, 18×4)             PASS  — halluc 0 / q0 1.0 / provenance 1.0 / 0 flags
-LEVEL 6 PRODUCTION (fleet)                          HEALTHY — flags on, one bundle, /ready
+LEVEL 1 MECHANISM (synthetic seam, unit)          PASS   — fusion preserves a synthetic bridge winner
+LEVEL 2 LIVE EXEMPLAR (wc01/05/07 receipts)       PASS   — origin flows; ranked lanes; wc01 chain fires
+LEVEL 3a CAUSAL deep-family ADMISSION (fixed-up)  NULL   — no net deep-family doc-count gain on WLK-10
+LEVEL 3b CAUSAL architectural UTILITY (fixed-up)  POSITIVE (asymmetric, modest) — lane-winners +11/+12,
+                                                          displaced 0; V2-better 1–4, V1-better 0
+LEVEL 4 END-TO-END A/B (3 repeats, WILDCARD)      V2>V1, but cannot be causally attributed to fusion
+                                                          (upstream state varied between conditions)
+LEVEL 5 SAFETY (CA5-SENTINEL-18, 18×4)            PASS   — halluc 0 / answer-level q0 1.0 / prov 1.0 / 0 flags
+LEVEL 6 PRODUCTION (fleet)                         HEALTHY — flags on, one bundle, /ready
 ```
 
 ## Rejected claims
-- REJECTED: "V2 fusion causally improves deep-family reach." The controlled experiment is a NULL.
-- REJECTED: the A/B gain as causal proof of the fusion mechanism — it is end-to-end and confounded.
-- NOT claimed harm: the swaps are balanced, the wc03 Ekman drop never reached final, and the sentinel
-  shows no safety regression. Net effect = neutral + safe.
+- REJECTED (my own earlier overclaim): "fusion causal benefit = zero." FALSE — that generalized a narrow
+  deep-family DOC-COUNT null. The fixed-upstream utility analysis shows a real, asymmetric benefit
+  (lane-winner preservation for downstream judgment; V1-better = 0).
+- REJECTED: reading equal V1-only/V2-only swap counts as neutrality — they are a fixed-cap artifact.
+- REJECTED: "the A/B gain was caused by upstream variance." The correct statement is weaker: the A/B
+  favored V2 but, because upstream state varied, that experiment CANNOT causally attribute the gain to
+  fusion (neither confirms nor denies causation).
+- NOT claimed: a large deep-family reach win — deep-family doc-count admission is a NULL on WLK-10.
 - No tuning of weights / preserve_top_n / K on these 10 probes (owner rule).
 
 ## Open contract gaps
-Decision for the owner: V2 is SAFE and its mechanism WORKS occasionally, but its NET causal benefit on
-these probes is a NULL. Keeping a safe-but-net-neutral mechanism as the live default is the owner's
-call. Current state: LEFT LIVE per prior owner instruction ("leave V2 live"); the honest null is
-recorded so it is not sold as a proven improvement. REVERT is one step (3 `.env` flags → 0 + bounce) if
-the owner decides an unproven-benefit mechanism should not be the default. A larger benchmark would NOT
-change the causal conclusion (it is a control problem, not a sample-size problem).
+Decision for the owner: V2 is SAFE and, at fixed upstream, DELIVERS its designed behavior (preserves
+lane-winners for downstream judgment, never displaces one V1 kept, never makes a query worse, occasional
+useful complementary evidence) — while NOT increasing deep-family document count. Magnitude is modest.
+Current state: LEFT LIVE per prior owner instruction; the honest two-level result is recorded. REVERT
+remains one step (3 `.env` flags → 0 + bounce) if the owner prefers to wait for a larger-magnitude
+signal. A bigger benchmark would sharpen magnitude but not the direction (a control question, already
+answered by the fixed-upstream design).
