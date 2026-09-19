@@ -48,11 +48,21 @@ def seat_portfolio(candidates: list, *, capacity: int,
                    direct_per_rep_cap: int = DEFAULT_DIRECT_PER_REP_CAP,
                    max_divergent: int = DEFAULT_MAX_DIVERGENT,
                    min_adequate_direct: int = DEFAULT_MIN_ADEQUATE_DIRECT,
-                   complementary_cap: int | None = None) -> tuple[list, dict]:
+                   complementary_cap: int | None = None,
+                   establishes_need: bool = True,
+                   has_direct_grounding: bool | None = None) -> tuple[list, dict]:
     """Seat up to `capacity` chunks by the 5-step librarian policy. `candidates` = rerank-ordered dicts
     each carrying at least `chunk_id`, a representation key (`rep_key`/`parent_id`/`doc_id`) and `role`
     (a C4 eligibility state). Returns `(seated, trace)`; `seated` = the input dicts + `seat_role`,
-    in the order seated. Deterministic; never raises; `capacity ≤ 0` ⇒ ([], trace)."""
+    in the order seated. Deterministic; never raises; `capacity ≤ 0` ⇒ ([], trace).
+
+    Grounding gates (owner split policy — the librarian expands a grounded answer, never substitutes for
+    one): COMPLEMENTARY is admitted only when the answer HAS grounding (`establishes_need`, the CA4
+    signal — DIRECT or PARTIAL). DIVERGENT is admitted only when there is ACTUAL DIRECT grounding
+    (`has_direct_grounding`, i.e. CA4 n_direct ≥ 1) — never on PARTIAL alone and never absent; if
+    `has_direct_grounding` is not supplied it falls back to seated C4-DIRECT ≥ `min_adequate_direct`.
+    So `establishes_need is False` ⇒ no COMPLEMENTARY and no DIVERGENT; PARTIAL-only ⇒ COMPLEMENTARY may
+    seat but DIVERGENT capacity is 0."""
     capacity = max(0, int(capacity))
     direct = [c for c in candidates if c.get("role") == DIRECT_ELIGIBLE]
     comp = [c for c in candidates if c.get("role") == COMPLEMENTARY_ELIGIBLE]
@@ -66,7 +76,8 @@ def seat_portfolio(candidates: list, *, capacity: int,
     redundant_direct: list = []
     redundant_comp: list = []
     trace = {"capacity": capacity, "direct": 0, "complementary": 0, "divergent": 0, "fill": 0,
-             "adequate_direct": False, "redundant_direct_yielded": 0, "complementary_yielded": 0}
+             "establishes_need": bool(establishes_need), "direct_grounded": False, "divergent_allowed": False,
+             "redundant_direct_yielded": 0, "complementary_yielded": 0}
 
     def _seat(c: dict, role: str) -> bool:
         cid = c.get("chunk_id")
@@ -83,18 +94,26 @@ def seat_portfolio(candidates: list, *, capacity: int,
             trace["direct"] += 1
         else:
             redundant_direct.append(c)
-    # STEP 2 — adequate DIRECT grounding?
-    trace["adequate_direct"] = trace["direct"] >= min_adequate_direct
-    # STEP 3 — DISTINCT COMPLEMENTARY (a representation not already seated), before any redundant DIRECT
+    # STEP 2 — grounding: COMPLEMENTARY needs establishes_need (DIRECT|PARTIAL); DIVERGENT needs ACTUAL
+    #          DIRECT (has_direct_grounding, i.e. CA4 n_direct ≥ 1) — never PARTIAL-only, never absent.
+    direct_grounded = (has_direct_grounding if has_direct_grounding is not None
+                       else trace["direct"] >= min_adequate_direct)
+    trace["direct_grounded"] = bool(direct_grounded)
+    trace["divergent_allowed"] = bool(establishes_need and direct_grounded)
+    # STEP 3 — DISTINCT COMPLEMENTARY (grounded answer + a representation not already seated), before
+    #          any redundant DIRECT. No grounding (establishes_need False) ⇒ no COMPLEMENTARY seats.
     for c in comp:
-        if (complementary_cap is not None and trace["complementary"] >= complementary_cap) or _key(c) in reps:
+        blocked = (not establishes_need
+                   or (complementary_cap is not None and trace["complementary"] >= complementary_cap)
+                   or _key(c) in reps)
+        if blocked:
             redundant_comp.append(c)
         elif _seat(c, SEAT_COMPLEMENTARY):
             trace["complementary"] += 1
         else:
             redundant_comp.append(c)
-    # STEP 4 — DIVERGENT (only atop adequate DIRECT; capped; a new representation)
-    if trace["adequate_direct"]:
+    # STEP 4 — DIVERGENT (bounded enrichment, ONLY atop actual DIRECT grounding; capped; new representation)
+    if trace["divergent_allowed"]:
         for c in div:
             if trace["divergent"] >= max_divergent or _key(c) in reps:
                 continue

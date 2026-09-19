@@ -47,13 +47,34 @@ def test_direct_does_not_monopolize_via_per_rep_cap():
     assert tr["complementary"] == 1 and tr["direct"] == 3     # 3 required (cap) + fill; complementary seated
 
 
-def test_divergent_requires_adequate_direct():
+def test_divergent_requires_direct_grounding():
     only_div = [_c("V1", "pv", DIVERGENT_ELIGIBLE)]
     seated, tr = seat_portfolio(only_div, capacity=4, min_adequate_direct=1)
-    assert seated == [] and tr["adequate_direct"] is False    # capacity 0 without DIRECT grounding
+    assert seated == [] and tr["divergent_allowed"] is False  # no DIRECT grounding ⇒ 0 divergent
     with_direct = [_c("D1", "p1", DIRECT_ELIGIBLE)] + only_div
     seated2, tr2 = seat_portfolio(with_direct, capacity=4)
-    assert tr2["adequate_direct"] and "V1" in _ids(seated2, "DIVERGENT")
+    assert tr2["divergent_allowed"] and "V1" in _ids(seated2, "DIVERGENT")
+
+
+def test_DIVERGENT_never_compensates_for_absent_direct_grounding():
+    # the owner invariant: even with a C4-DIRECT-looking candidate present, if CA4 says there is no true
+    # DIRECT grounding (PARTIAL-only, has_direct_grounding=False), DIVERGENT capacity is 0.
+    cands = [_c("D1", "p1", DIRECT_ELIGIBLE), _c("V1", "pv", DIVERGENT_ELIGIBLE)]
+    seated, tr = seat_portfolio(cands, capacity=5, establishes_need=True, has_direct_grounding=False)
+    assert tr["divergent_allowed"] is False and "V1" not in _ids(seated, "DIVERGENT")
+
+
+def test_complementary_blocked_without_establishes_need():
+    # an ungrounded answer (establishes_need False) gets NO complementary latent evidence.
+    cands = [_c("D1", "p1", DIRECT_ELIGIBLE), _c("C1", "p9", COMPLEMENTARY_ELIGIBLE)]
+    _, tr = seat_portfolio(cands, capacity=5, establishes_need=False)
+    assert tr["complementary"] == 0                            # C1 may be RELATED fill, never COMPLEMENTARY
+
+
+def test_partial_only_allows_complementary_but_not_divergent():
+    cands = [_c("C1", "p9", COMPLEMENTARY_ELIGIBLE), _c("V1", "pv", DIVERGENT_ELIGIBLE)]
+    _, tr = seat_portfolio(cands, capacity=5, establishes_need=True, has_direct_grounding=False)
+    assert tr["complementary"] == 1 and tr["divergent"] == 0   # PARTIAL grounding: complementary yes, divergent no
 
 
 def test_divergent_capped_at_two():

@@ -46,7 +46,9 @@ def grade_and_seat_latent(*, q0_text, pool, bridges, rerank, capacity,
                           direct_per_rep_cap: int = DEFAULT_DIRECT_PER_REP_CAP,
                           max_divergent: int = DEFAULT_MAX_DIVERGENT,
                           min_adequate_direct: int = DEFAULT_MIN_ADEQUATE_DIRECT,
-                          complementary_cap: int | None = None) -> tuple[list, dict]:
+                          complementary_cap: int | None = None,
+                          establishes_need: bool = True,
+                          has_direct_grounding: bool | None = None) -> tuple[list, dict]:
     """Grade (C4) + seat (C5) the judged pool into a bounded latent-aware portfolio.
 
     `pool`  = the judged candidates, rerank-ordered, each `{chunk_id, doc_id, parent_id, text, query_ids,
@@ -86,5 +88,6 @@ def grade_and_seat_latent(*, q0_text, pool, bridges, rerank, capacity,
 
     seated, ptrace = seat_portfolio(graded, capacity=capacity, direct_per_rep_cap=direct_per_rep_cap,
                                     max_divergent=max_divergent, min_adequate_direct=min_adequate_direct,
-                                    complementary_cap=complementary_cap)
+                                    complementary_cap=complementary_cap, establishes_need=establishes_need,
+                                    has_direct_grounding=has_direct_grounding)
     return seated, {"bridge_q0": bridge_q0, "n_bridges": len(bridge_ids), **ptrace}
