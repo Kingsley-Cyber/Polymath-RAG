@@ -60,6 +60,24 @@ class FusionWeights:
             CLASS_OTHER: self.other,
         }.get(cls, self.other)
 
+    @classmethod
+    def from_env(cls, env: Optional[dict] = None) -> "FusionWeights":
+        """Config-driven weights via `POLYMATH_FUSION_W_<CLASS>` (F4 step-6 calibration surface). The
+        defaults ARE the A/B-validated values — unfitted, never tuned to a specific benchmark query
+        (owner: values must generalize). An unset/invalid var falls back to its default."""
+        import os
+        e = env if env is not None else os.environ
+
+        def g(name: str, default: float) -> float:
+            try:
+                return float(e.get(name, default))
+            except (TypeError, ValueError):
+                return default
+
+        return cls(q0=g("POLYMATH_FUSION_W_Q0", 1.0), subquery=g("POLYMATH_FUSION_W_SUBQUERY", 0.6),
+                   bridge=g("POLYMATH_FUSION_W_BRIDGE", 0.5), profile=g("POLYMATH_FUSION_W_PROFILE", 0.6),
+                   graph=g("POLYMATH_FUSION_W_GRAPH", 0.5), other=g("POLYMATH_FUSION_W_OTHER", 0.4))
+
 
 def lineage_class(lane: RankedLane) -> str:
     """Classify a lane by its query's provenance. ``role == q0`` dominates (q0's OWN graph lane is still

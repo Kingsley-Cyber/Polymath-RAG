@@ -65,7 +65,24 @@ STEP 5 (A/B pre-WLK2C / V1 / V2) — IN PROGRESS. Full-path deep-survival harnes
 3 flag conditions, end-to-end retrieval→C4/C5→CA4) measuring deep lane-winner / retrieval reach /
 latent-seat / FINAL reach / q0 preservation / latency; plus the owner-named `harness.py` (WLK-10) and
 4-mode survival, run sequentially (Metal GPU is shared — no parallel rerank). Results appended here.
-<!-- STEP 6 calibration (from A/B only, generalizing, config-driven): TBD -->
+STEP 5 (A/B) — RESULT: V2 materially healthier than V1. 10 WLK queries × 3 conditions × **3 repeats**
+(retrieval non-determinism ⇒ single runs are noisy; aggregated). Means:
+- deep_final_reach (end-to-end): pre 0.433 / V1 0.467 / **V2 0.667** — V2 ≥ V1 in ALL 3 runs
+  (V2 [.6,.5,.9] vs V1 [.5,.5,.4]); +0.20 over V1.
+- deep_retrieval_reach: pre 0.433 / V1 0.467 / **V2 0.600** (V2 ≥ V1 every run) — the candidate-engine
+  preservation lifts reach, not only the latent seat.
+- deep_latent_seated_rate: V2 0.067 (a deep family C5-seated that V1 never seats).
+- q0_preservation: V1 0.983 / **V2 0.990** (no extra q0 cost; both < pre 1.0 from the additive latent pass).
+- latency_ms: V1 15214 / **V2 12896** (faster; no regression).
+Per-query pattern is churny (non-determinism) but the DIRECTION is consistent (V2 ≥ V1 both reach
+metrics, every run). Combined with the step-4 mechanism proof ⇒ material, generalizing improvement.
+
+STEP 6 (calibration) — DECISION: **do NOT tune.** The F2 defaults (weights 1.0/0.6/0.5/0.6/0.5/0.4,
+preserve_top_n 5) already deliver the gain and are UNFITTED — tuning to these 10 queries is forbidden
+(owner) and would not generalize. Made the values CONFIG-DRIVEN so future adjustment needs no code:
+`FusionWeights.from_env()` (`POLYMATH_FUSION_W_<CLASS>`) + `POLYMATH_FUSION_PRESERVE_TOP_N`, all
+defaulting to the validated values. Global K untouched. UNIT_PROVEN (`test_fusion_weights_from_env` +
+60 fusion/seam/engine tests green); deployed at the step-7 bounce.
 <!-- STEP 7 CA5 64×4: TBD -->
 
 ## Rejected claims

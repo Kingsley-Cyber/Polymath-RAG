@@ -14,6 +14,7 @@ from polymath_shared.ranked_lane import LaneResult, RankedLane
 from polymath_shared.ranked_fusion import (
     CLASS_BRIDGE,
     CLASS_Q0,
+    CLASS_PROFILE,
     FusionWeights,
     fuse_ranked_lanes,
     lineage_class,
@@ -125,6 +126,16 @@ def test_deterministic_and_tie_break():
 def test_empty():
     res = fuse_ranked_lanes([], cap=10)
     assert res.ordered == [] and res.preserved_ids == set() and res.trace["n_chunks"] == 0
+
+
+# ── F4 step-6: config-driven weights; defaults are the A/B-validated values ───────────────────────
+def test_fusion_weights_from_env():
+    # unset env → the A/B-validated defaults
+    d = FusionWeights.from_env({})
+    assert (d.q0, d.subquery, d.bridge, d.profile, d.graph, d.other) == (1.0, 0.6, 0.5, 0.6, 0.5, 0.4)
+    # override a class; invalid values fall back to the default
+    o = FusionWeights.from_env({"POLYMATH_FUSION_W_BRIDGE": "0.9", "POLYMATH_FUSION_W_PROFILE": "notanum"})
+    assert o.weight_for(CLASS_BRIDGE) == 0.9 and o.weight_for(CLASS_PROFILE) == 0.6 and o.weight_for(CLASS_Q0) == 1.0
 
 
 # ── 9. STRICT ceiling: preservation changes who survives, never expands the cap ──────────────────

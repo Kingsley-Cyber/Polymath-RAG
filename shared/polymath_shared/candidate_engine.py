@@ -1295,9 +1295,13 @@ def _latent_fused_union(fused: list, ranked_lanes: list, budget: CandidateBudget
     ceiling); backfills by fused score so the union stays as full as the flatten's. Fail-open — any
     error (e.g. malformed lanes) returns the existing ``fallback`` union unchanged."""
     try:
-        from polymath_shared.ranked_fusion import fuse_ranked_lanes
+        from polymath_shared.ranked_fusion import FusionWeights, fuse_ranked_lanes
         cap = budget.merged_candidate_max
-        fr = fuse_ranked_lanes(ranked_lanes, k=budget.rrf_k, cap=cap)   # F2 defaults (weights/preserve_top_n)
+        try:                                                           # F4 step-6 config-driven calibration
+            ptn = int(os.environ.get("POLYMATH_FUSION_PRESERVE_TOP_N", "5"))
+        except (TypeError, ValueError):
+            ptn = 5
+        fr = fuse_ranked_lanes(ranked_lanes, weights=FusionWeights.from_env(), k=budget.rrf_k, cap=cap, preserve_top_n=ptn)
         survivors = {c.chunk_id: c for c in fused}                      # noise survivors = physical candidates
         ordered = [survivors[cid] for cid in fr.ids() if cid in survivors]
         if not ordered:
