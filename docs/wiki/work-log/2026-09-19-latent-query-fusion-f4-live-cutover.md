@@ -37,10 +37,34 @@ testable). The shared half — `SubQuery.origin` → RankedLane lineage class �
 WORKTREE_INTEGRATION_PROVEN (F3, `test_subquery_origin_flows_into_lane_provenance`). Live receipt proof
 of q0→USER / subquery→origin / BRIDGE→BRIDGE / WILDCARD→WILDCARD is STEP 4 (before any A/B spend).
 
-<!-- STEP 2 merge+bounce: TBD -->
-<!-- STEP 3 flag-off smoke: TBD -->
-<!-- STEP 4 targeted wc01/05/07 receipt proof (incl. Laban expert V1-vs-V2 survival trace): TBD -->
-<!-- STEP 5 A/B (pre-WLK2C / V1 / V2): TBD -->
+STEP 2 (merge + bounce) — DONE. Merged `fusion/latent-query` (`0a6b1b2`) → production `ae10f5a`
+(no-ff, clean; only overlapping file was none). 124 impacted+V2 determinism tests green on the merged
+checkout (the orchestrator wiring, unprovable in the worktree, validated at MAIN). `bundle_integrity
+--strict` READY on merged code. Port-gated bounce (SIGTERM supervisor → ports 7200/8742/8743/8755 free
+→ boot autopilot): fleet back **10 worker types healthy, ONE bundle `7694e627a7bb`** (was
+`0702df186a4b` → confirms the fleet runs the merged lineage), `/ready` true, embedder+reranker up.
+
+STEP 3 (flag-off smoke) — DONE. `POLYMATH_CHAT_LATENT_FUSION=0`: wc01/05/07 in-process retrieval →
+`has_ranked_lanes=false` (V2 receipt absent), 15 evidence each, deep families where expected (wc01
+Facial Action, wc07 Laban Workbook). Flag-off is a live no-op; the deploy did not break retrieval.
+
+STEP 4 (targeted seam proof, BEFORE spend) — DONE, wiring HEALTHY. Full in-process path on wc01/05/07
+(V2 vs V1), 5-tuple origin + latent_bridge_ids, live sidecars + gemma. Proven:
+- **origin flows live**: lanes carry BRIDGE/PROFILE/USER (step-1 wiring works).
+- **wc01 = full-chain proof**: `br0` (BRIDGE) ranks *Facial Action coding 3.0* at LOCAL RANK 0 → V2
+  preserves it → latent pool → **C5 COMPLEMENTARY seat** → **CA4 RELATED** → reaches FINAL evidence
+  (absent from the plain retrieval evidence). The bridge's local winner became librarian behavior.
+- **wc07**: `q1` (USER subquery) ranks Laban docs at local rank 0/1/2; under V2 Laban reaches FINAL
+  evidence, under V1 (one run) it did not — SUGGESTIVE but confounded by retrieval non-determinism.
+- **wc05**: deep family (*Timing*) is local-rank-0 in the PROFILE lane but dies at the reranker
+  (sub-floor relevance), NOT a preservation break (matches WLK2B).
+Gate PASSED: neither origin population nor lane preservation is broken. Caveat recorded: single-run
+per-query traces are noisy (non-deterministic retrieval); the A/B aggregates to compensate.
+
+STEP 5 (A/B pre-WLK2C / V1 / V2) — IN PROGRESS. Full-path deep-survival harness (all 10 WLK queries ×
+3 flag conditions, end-to-end retrieval→C4/C5→CA4) measuring deep lane-winner / retrieval reach /
+latent-seat / FINAL reach / q0 preservation / latency; plus the owner-named `harness.py` (WLK-10) and
+4-mode survival, run sequentially (Metal GPU is shared — no parallel rerank). Results appended here.
 <!-- STEP 6 calibration (from A/B only, generalizing, config-driven): TBD -->
 <!-- STEP 7 CA5 64×4: TBD -->
 
