@@ -977,3 +977,36 @@ def test_graph_dest_lane_h_adds_relational_children_and_is_off_by_default():
                                   graph_dest_search=lambda qv: (called2.append(qv) or [_row(CHILD, 0, "d3", chunk="d3-graphdest")]))
     assert called2 == [] and "d3-graphdest" not in [c.chunk_id for c in res2.union]
     assert res2.trace["graph_dest"] == {"enabled": False} and res2.trace["lane_sizes"]["graph_dest"] == 0
+
+
+# ── LATENT-QUERY-FUSION-V2 · F1: the RankedLanes receipt is flag-gated, observability-only ──────────
+def test_ranked_lanes_receipt_absent_by_default(monkeypatch):
+    monkeypatch.delenv("POLYMATH_CHAT_LATENT_FUSION", raising=False)
+    fake = FakeMulti()
+    subs = [_subq("q1", "mechanism of chroma keying")]
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=fake.dense, sparse_search=fake.sparse, subqueries=subs)
+    assert "ranked_lanes" not in res.trace          # default-off ⇒ no capture, no receipt
+
+
+def test_ranked_lanes_receipt_captures_local_ranks_without_changing_selection(monkeypatch):
+    subs = [_subq("q1", "mechanism of chroma keying"), _subq("q2", "keyer hardware", vec=(0.2, 0.8), sparse=((8,), (1.0,)))]
+    # flag OFF — the baseline union (what selection sees)
+    monkeypatch.delenv("POLYMATH_CHAT_LATENT_FUSION", raising=False)
+    off = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=FakeMulti().dense, sparse_search=FakeMulti().sparse, subqueries=subs)
+    off_union = [(c.chunk_id, round(c.fused_score, 6)) for c in off.union]
+    # flag ON — same fakes, same plan
+    monkeypatch.setenv("POLYMATH_CHAT_LATENT_FUSION", "1")
+    on = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=FakeMulti().dense, sparse_search=FakeMulti().sparse, subqueries=subs)
+    on_union = [(c.chunk_id, round(c.fused_score, 6)) for c in on.union]
+
+    # (1) selection is UNCHANGED: identical union ids, order and fused scores
+    assert on_union == off_union
+    # (2) the receipt exists and is well-formed
+    rl = on.trace["ranked_lanes"]
+    assert rl["contract"] == "ranked-lanes-v1" and rl["n_lanes"] >= 3
+    # (3) each subquery is its OWN lane with local ranks starting at 0 (not flattened into q0)
+    q1_lanes = [l for l in rl["lanes"] if l["query_id"] == "q1"]
+    assert q1_lanes and all(l["top"][0]["local_rank"] == 0 for l in q1_lanes)
+    assert any(l["role"] == "MECHANISM" for l in q1_lanes)          # subquery qtype carried as descriptive role
+    # (4) a chunk found by q0 AND both subqueries is recorded in multiple lanes (membership preserved)
+    assert rl["multi_lane_chunks"] >= 1

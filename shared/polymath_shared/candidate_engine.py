@@ -39,6 +39,7 @@ deadline lives in the route (one rerank call per turn, `rerank_deadline_s`).
 """
 from __future__ import annotations
 
+import os
 import re
 import time
 from collections import Counter
@@ -965,6 +966,20 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
             sub_items.extend(items)
             break
 
+    # ---- LATENT-QUERY-FUSION-V2 · F1: capture each query's LOCAL ranked list BEFORE the flatten -------
+    # Observability only (flag-gated, default-off ⇒ this block never runs ⇒ union byte-identical). The
+    # per-lane lists are still pristine + in retrieval-rank order here; the union below collapses them into
+    # one q0-dominated RRF (the flatten V2 will fuse-with-preservation instead). No selection change.
+    ranked_lanes = None
+    if os.environ.get("POLYMATH_CHAT_LATENT_FUSION", "0") == "1":
+        from polymath_shared.ranked_lane import build_ranked_lanes
+        _qmeta = {sq.query_id: {"text": sq.text, "role": sq.qtype} for sq in subqueries}
+        ranked_lanes = build_ranked_lanes(
+            [c for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e, lane_f, lane_g, lane_h)
+             for c in lane_items],
+            primary_query_id=ctx.query_id, primary_query_text=ctx.query, query_meta=_qmeta,
+        )
+
     # ---- union + dedupe + provenance-preserving fusion (fixed lane order: A, B, C, subqueries) --------
     t_union = time.perf_counter()
     by_id: dict[str, CandidateEvidence] = {}
@@ -1089,6 +1104,9 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     trace["noise_dropped"] = len(noise_dropped)
     trace["noise_reasons"] = dict(Counter(w for _, w in noise_dropped))
     trace["noise_sample"] = [cid for cid, _ in noise_dropped[:5]]
+    if ranked_lanes is not None:   # LATENT-QUERY-FUSION-V2 · F1 observability receipt (flag-gated)
+        from polymath_shared.ranked_lane import ranked_lanes_receipt
+        trace["ranked_lanes"] = ranked_lanes_receipt(ranked_lanes)
     return CandidateResult(context=ctx, budget=budget, documents=documents, selected_documents=selected_documents,
                            selected_sections=selected_sections, lane_a=lane_a, lane_b=lane_b, lane_c=lane_c,
                            union=union, union_ids_uncapped=union_ids_uncapped, degraded=degraded, timings_ms=timings, trace=trace)
