@@ -154,23 +154,33 @@ def activate_corpus(
     max_activations: int = DEFAULT_MAX_ACTIVATIONS,
     min_grounding: int = DEFAULT_MIN_GROUNDING,
     rrf_k: int = DEFAULT_RRF_K,
+    diag: dict | None = None,
 ) -> list[ActivationCandidate]:
     """Thin, FAIL-OPEN orchestration for the live path: gather CONCEPT/THEORY atom hits per corpus via the
     injected `fetch_atoms(corpus_id) -> [rows]` closure (the live caller binds it to client/collection/
     q0-vector via `search_atoms`), then aggregate. A per-corpus failure is skipped, never raised — the
-    turn's normal retrieval must never break because activation failed."""
+    turn's normal retrieval must never break because activation failed.
+
+    `diag` (optional out-param, CORPUS-EXPLORE-FIRING-V1): filled with `n_hits`, `fetch_errors` (the
+    swallowed per-corpus failures, by type name) and `n_candidates`, so a skipped failure is COUNTED, not
+    silent. Observability only — the returned candidates are identical with or without it."""
     hits: list = []
+    errors: list[str] = []
     for cid in (corpus_ids or ()):
         if not cid:
             continue
         try:
             rows = fetch_atoms(cid)
-        except Exception:  # noqa: BLE001 — additive; a fetch failure must never break the turn
+        except Exception as exc:  # noqa: BLE001 — additive; a fetch failure must never break the turn
+            errors.append(type(exc).__name__)
             continue
         hits.extend(rows or [])
-    return build_activation_candidates(
+    out = build_activation_candidates(
         hits, scout_nominations=scout_nominations,
         max_activations=max_activations, min_grounding=min_grounding, rrf_k=rrf_k)
+    if diag is not None:
+        diag.update({"n_hits": len(hits), "fetch_errors": errors, "n_candidates": len(out)})
+    return out
 
 
 def activation_receipt(candidates, *, top_n: int = 8) -> dict:

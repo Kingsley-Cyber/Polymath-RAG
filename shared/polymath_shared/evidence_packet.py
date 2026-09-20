@@ -133,7 +133,7 @@ def build_evidence_packet(
     `evidence_rows`: the pre-synthesis evidence dicts (chunk_id/doc_id/source_name/text/query_ids/role/
     latent_role/latent_lineage/...). `ca4_grades`: {chunk_id: DIRECT|PARTIAL|RELATED} from `grade_evidence`.
     `plan_queries`: the compiled plan queries (for origin/lineage/provenance joins). `receipts`: the bounded
-    compiler receipts {activation, bridges, corpus_explore, fusion}. Deterministic; row-, text- and
+    compiler receipts {activation, bridges, corpus_explore, fusion, firing}. Deterministic; row-, text- and
     receipt-bounded; `synthesis_performed` is always False (this is evidence, not an answer).
     """
     ca4_grades = ca4_grades or {}
@@ -179,6 +179,6 @@ def build_evidence_packet(
         "corpus_explorer_used": bool(corpus_explorer_used),
     }
     receipts = {k: _bound_receipt(v) for k, v in (receipts or {}).items()
-                if k in ("activation", "bridges", "corpus_explore", "fusion")}
+                if k in ("activation", "bridges", "corpus_explore", "fusion", "firing")}
     return EvidencePacket(q0=q0, retrieval_mode=retrieval_mode, plan=plan,
                           evidence=tuple(items), receipts=receipts)

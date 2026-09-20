@@ -78,16 +78,21 @@ def plan_corpus_explore_expansion(plan, activations, *, generate,
                                   origin=CORPUS_EXPLORE_ORIGIN, id_prefix="ce")
     existing_lower = {(getattr(q, "query", "") or "").strip().lower() for q in queries}
     added = 0
+    deduped_existing = 0
     for sq in subqs:
         low = (sq.query or "").strip().lower()
         if low in existing_lower:
+            deduped_existing += 1
             continue
         plan.queries.append(sq)
         existing_lower.add(low)
         added += 1
     diag = {"added": added, "eligible": True, "reason": reason, "intent": intent, "origin": CORPUS_EXPLORE_ORIGIN,
             "concepts": len(concepts), "generated": cdiag.get("generated"), "admitted": cdiag.get("admitted"),
-            "dropped_invented": cdiag.get("dropped_invented"), "dropped_structural": cdiag.get("dropped_structural")}
+            "dropped_invented": cdiag.get("dropped_invented"), "dropped_structural": cdiag.get("dropped_structural"),
+            # CORPUS-EXPLORE-FIRING-V1: why generation produced nothing (model raised / garbage / declined)
+            "json_status": cdiag.get("json_status"), "generate_error": cdiag.get("error"),
+            "deduped_existing": deduped_existing}
     _stash(plan, diag)
     return diag
 
