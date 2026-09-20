@@ -72,9 +72,14 @@ mcp = MCPServer(
         "or upload_text(...) to ingest; poll document_status(corpus_id, "
         "source_name=...) every ~30 s until query_ready is true (a 300 KB "
         "book takes ~5 minutes; 'stalls' lists anything the control plane "
-        "sees stuck, with a diagnosis); then ask(question, corpus_id) for a "
-        "grounded, cited answer or retrieve(query, corpus_id) for raw "
-        "evidence. corpus_id is REQUIRED for ask/retrieve. Modes: FAST "
+        "sees stuck, with a diagnosis). To query: submit the ORIGINAL "
+        "information need — do NOT pre-decompose it into subqueries; Polymath "
+        "owns retrieval planning + grounded expansion. Pick a tool: "
+        "polymath_search = quick q0-only evidence; polymath_explore = full "
+        "planning + Corpus Explore returning validated EVIDENCE (no answer) "
+        "that you reason over yourself; polymath_answer = Polymath writes the "
+        "grounded, cited answer (humans/UI). Prefer search/explore for agent "
+        "work and synthesize yourself. corpus_id is REQUIRED. Modes: FAST "
         "(cheap baseline), HYBRID (default; includes the latent cross-domain "
         "lane), GRAPH (adds fact relationships)."),
 )
@@ -333,6 +338,55 @@ async def ask(question: str, corpus_id: str, mode: str = "HYBRID",
     return slim
 
 
+# REASONING-BOUNDARY-V1 canonical surface (search / explore / answer) — mirrors Server B.
+@mcp.tool()
+async def polymath_search(query: str, corpus_id: str, max_evidence: int = 12) -> dict:
+    """Canonical EVIDENCE search: q0-only contract evidence rows (no planning, no Corpus Explore, no
+    answer). Pass the ORIGINAL question; do NOT pre-decompose it — Polymath owns retrieval planning."""
+    out = await _orch("POST", "/retrieve", json={"query": query, "corpus_id": corpus_id,
+                                                 "limit": max_evidence, "evidence": True})
+    if "error" in out:
+        return out
+    return {"evidence_rows": _trim_rows(out.get("evidence_rows")),
+            "evidence_contract": out.get("evidence_contract"),
+            "graph_facts": len(out.get("graph_facts") or [])}
+
+
+@mcp.tool()
+async def polymath_explore(query: str, corpus_id: str, corpus_explorer: bool = True,
+                           mode: str = "HYBRID") -> dict:
+    """Full retrieval PLANNING + grounded expansion (+ optional Corpus Explore) -> a versioned
+    EvidencePacket (evidence with roles DIRECT/COMPLEMENTARY/DIVERGENT, CA4 grades, provenance, receipts)
+    with NO Polymath answer (synthesis_performed=false). Discover hidden/adjacent corpus knowledge, then do
+    your OWN final reasoning over the evidence. Do NOT pre-decompose — Polymath owns retrieval planning; you
+    own the answer. corpus_explorer=true runs the concept-activation explorer."""
+    out = await _orch("POST", "/chat/evidence",
+                      json={"message": query, "corpus_id": corpus_id, "mode": mode,
+                            "corpus_explorer": bool(corpus_explorer)})
+    return out
+
+
+@mcp.tool()
+async def polymath_answer(question: str, corpus_id: str, mode: str = "HYBRID",
+                          latent: Optional[bool] = None) -> dict:
+    """Polymath's OWN grounded, cited answer (humans/UI, or when you explicitly want Polymath's answer
+    rather than raw evidence). For agent work prefer polymath_search / polymath_explore and synthesize
+    yourself (avoids a nested synthesis pass). verdict=insufficient_evidence means the corpus cannot support
+    the question — relay it, do not fill the gap."""
+    body: dict[str, Any] = {"message": question, "mode": mode, "corpus_id": corpus_id}
+    if latent is not None:
+        body["latent"] = latent
+    out = await _orch("POST", "/chat", json=body)
+    if "error" in out:
+        return out
+    slim = dict(out)
+    for key in ("evidence", "chunks", "bundle"):
+        val = slim.get(key)
+        if isinstance(val, list):
+            slim[key] = [_trim_hit(h, 600) if isinstance(h, dict) else h for h in val[:12]]
+    return slim
+
+
 # -------------------------------------------------------------------- app
 
 @mcp.tool()
@@ -465,6 +519,7 @@ _TOOL_NAMES = ("adapter_list", "adapter_start", "adapter_next", "adapter_submit"
                "document_status", "corpus_status", "retrieve", "ask",
                "recent_queries",
     "capabilities", "compile_plan", "retrieve_evidence",
+    "polymath_search", "polymath_explore", "polymath_answer",
 )
 
 

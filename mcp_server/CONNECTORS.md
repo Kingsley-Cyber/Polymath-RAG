@@ -1,8 +1,15 @@
 # Polymath MCP — agents and connectors
 
-One MCP server, three consumption shapes. All tools (9): list_corpora,
-query, retrieve, list_documents, upload_file, upload_text, readiness,
-delete_corpus, delete_document.
+Two MCP servers share one canonical tool surface (REASONING-BOUNDARY-V1):
+- **Server B** (`mcp_server/polymath_mcp.py`, stdio / `--http`) — the one local Claude Code + Hermes use.
+- **Server A** (`orchestrator/orchestrator/mcp_server.py`, streamable-http, public `mcp.kingsleylab.xyz`).
+
+Canonical query tools (prefer these): **polymath_search** (q0-only evidence rows), **polymath_explore**
+(full planning + Corpus Explore → EvidencePacket, NO answer — you reason over it yourself), **polymath_answer**
+(Polymath writes the grounded answer; humans/UI). Submit the ORIGINAL question — do NOT pre-decompose it;
+Polymath owns retrieval planning. `polymath_query`/`polymath_retrieve` are DEPRECATED aliases (kept working).
+Plus corpus ops: list_corpora, list_documents, upload_file, upload_text, readiness, delete_corpus,
+delete_document (Server A also: capabilities, compile_plan, retrieve_evidence, adapter_*).
 
 ## 1. Local agents over stdio (Claude Code, Hermes on this machine)
 

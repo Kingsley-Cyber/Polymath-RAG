@@ -42,6 +42,13 @@ ui.py/mcp_server/compare_review/client are live-only (editable-.pth).
   (REVIEWER; the deepseek `thinking:disabled` stays as an UNGATED correctness baseline, policy overlays on
   top), and the chat-compiler via `client.reasoning_role="STRUCTURED_COMPILER"` read by `client._chat`
   (extraction clients never set it). Each logs a sanitized `reasoning_policy {...}` line (Slice-2 wire proof).
+- **RB3 (MCP surface + docs; live-only/docs).** Canonical `polymath_search` (→`/retrieve` evidence=true) /
+  `polymath_explore` (→`/chat/evidence`, corpus_explorer) / `polymath_answer` (→`/chat`) added to BOTH
+  servers (`mcp_server/polymath_mcp.py` stdio + `orchestrator/mcp_server.py` streamable-http); `polymath_query`
+  + `polymath_retrieve` DEPRECATED in description (kept working). Server instructions carry the
+  retrieval-authority / don't-pre-decompose contract. `capabilities.py`: `evidence-packet:v1` + `/chat/evidence`
+  + the 3 tool names. `CONNECTORS.md` refreshed (two servers, canonical surface). `.env.example`:
+  `POLYMATH_REASONING_POLICY=0`.
 
 ## Proof
 - **RB1/RB2 shared UNIT_PROVEN** (executed path = worktree; import sources verified `pmv4-reasoning`).
