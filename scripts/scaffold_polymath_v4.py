@@ -682,6 +682,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/governed_convergence/TG4-SKILL-HARNESS-RECEIPT-2026-09-20.json", "json", None),
     ("docs/wiki/work-log/2026-09-20-governed-convergence-tg4.md", "md", None),
     ("docs/wiki/work-log/2026-09-20-ecom-meta-dropped-from-plan.md", "md", None),
+    ("eval/governed_convergence/GC1-FIRST-REAL-RUN-2026-09-20.json", "json", None),
+    ("docs/wiki/work-log/2026-09-20-governed-convergence-tg5-r2a.md", "md", None),
     ("tests/determinism/test_evidence_packet_text_excerpt.py", "py", None),
     ("eval/reasoning_boundary/rb5_packet_text_excerpt.py", "py", None),
     ("eval/reasoning_boundary/RB5-PACKET-TEXT-EXCERPT-2026-09-20.json", "json", None),

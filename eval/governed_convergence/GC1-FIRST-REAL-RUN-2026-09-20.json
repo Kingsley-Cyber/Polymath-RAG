@@ -1,0 +1,379 @@
+{
+ "artifact": "GC1-FIRST-REAL-RUN (R2a — cinema MECHANICAL smoke)",
+ "date": "2026-09-20",
+ "plan": "docs/wiki/plans/GOVERNED-CONVERGENCE-V1.md#TG5 / #TG6",
+ "owner_rule": "cinema = integration / mechanical smoke ONLY. Nothing here is a product-discovery quality result.",
+ "question": "Can a real agent and a real harness drive the governed Polymath -> Trail architecture end to end with actual evidence and actual tools?",
+ "classification": {
+  "owner_rubric": [
+   "CHAIN_PASS",
+   "CHAIN_PASS_WITH_TYPED_REFUSAL",
+   "PARTIAL",
+   "FAIL"
+  ],
+  "result": "FAIL",
+  "why": "runtime / lineage defect in the Polymath adapter at L_judge (third loop pass) AFTER the full TG4 harness path had run live three times; not a transport failure, not a lawful evidence refusal",
+  "tg4_segment": "LIVE_PATH_PROVEN (HarnessActionV1 -> skill tools -> adapter_receipt.py -> HarnessResearchReceiptV1 -> adapter_submit, 3/3 accepted)"
+ },
+ "run": {
+  "run_id": "adr_d96032aef165a999774bd4bbabb37b1d",
+  "adapter": "trail.product_discovery 2.2.0",
+  "corpus": "cinema",
+  "seed": "fight choreography: the camera, not the punch, decides what the audience believes",
+  "agent": "claude-code (claude-fable-5-1)",
+  "harness_id": "claude-code",
+  "transport": "MCP Server B over stdio via the official `mcp` python client, one tool call per invocation (the native Claude Code MCP connector was not attached to the session)",
+  "started_at": "2026-09-20T18:11:21Z",
+  "terminal_at": "2026-09-20T18:34:29Z",
+  "status": "terminal_gap",
+  "gap": {
+   "code": "PHI_VERDICT_INVALID",
+   "message": "transition 0: cause evidence_admission:hadm_5b24774f31c8 is not an allowed cause in this step",
+   "step_id": "L_judge"
+  },
+  "fleet_bundle": "9cb421b4eeed",
+  "trail_tree": "A41 de64d84 (untouched)",
+  "external_spend": "Exa searches/fetches via the owner's mcporter config (5 searches, 2 fetches); Reddit / YouTube read-only through the owner's Chrome session; no credential entered or printed"
+ },
+ "checklist": {
+  "adapter_start_over_server_b": true,
+  "real_agent_reason_steps_accepted": 7,
+  "agent_submissions_rejected": 0,
+  "readable_evidence_consumed": true,
+  "harness_actions_executed": 3,
+  "receipts_built_by_adapter_receipt_py": 3,
+  "receipts_accepted_by_adapter_submit": 3,
+  "trail_admission_ran": 3,
+  "trail_judge_ran": 2,
+  "trail_judge_verdict_refused_by_adapter": 1,
+  "qualification_reached": false,
+  "score_or_refusal_reached": false,
+  "adapter_result": "terminal_gap, output empty",
+  "html_dossier": {
+   "rendered": true,
+   "verdict": [
+    "GOVERNED GAP — PHI_VERDICT_INVALID"
+   ],
+   "field_observations_shown": 0,
+   "evidence_score_mentions": 0
+  },
+  "polymath_synthesis_receipts_in_run_window": 0,
+  "lineage_harness_ids": [
+   "claude-code"
+  ]
+ },
+ "persisted_step_ledger": [
+  "1:A_understand:executed",
+  "2:B_plan:executed",
+  "3:B_retrieve:executed",
+  "4:B_graph:executed",
+  "5:C_hypotheses:accepted",
+  "6:D_project:executed",
+  "7:E_filter:executed",
+  "8:F_plan:executed",
+  "9:F_retrieve:executed",
+  "10:F_graph:executed",
+  "11:G_mechanisms:accepted",
+  "12:H_gaps:executed",
+  "13:I_research:accepted",
+  "14:J_admit:executed",
+  "15:K_revise:accepted",
+  "16:L_judge:executed",
+  "17:M_loop:executed",
+  "18:G_mechanisms:accepted",
+  "19:H_gaps:executed",
+  "20:I_research:accepted",
+  "21:J_admit:executed",
+  "22:K_revise:accepted",
+  "23:L_judge:executed",
+  "24:M_loop:executed",
+  "25:G_mechanisms:accepted",
+  "26:H_gaps:executed",
+  "27:I_research:accepted",
+  "28:J_admit:executed",
+  "29:K_revise:accepted",
+  "30:L_judge:skipped"
+ ],
+ "note_on_polling": "the client poll never saw B_graph; the persisted ledger shows it executed at sequence 4 — absence from a poll is not absence from the run",
+ "query_receipts": [
+  {
+   "kind": "chat",
+   "verdict": "evidence_only",
+   "n": 8,
+   "wall_ms": 70327
+  },
+  {
+   "kind": "retrieve",
+   "verdict": null,
+   "n": 2,
+   "wall_ms": 19424
+  }
+ ],
+ "hypothesis_transitions": [
+  {
+   "kind": "GENERATE",
+   "actor": "theta",
+   "reason_code": "THETA_GENERATED",
+   "n": 4
+  },
+  {
+   "kind": "REVISE",
+   "actor": "theta",
+   "reason_code": "FIELD_EVIDENCE_REFINED",
+   "n": 2
+  },
+  {
+   "kind": "REVISE",
+   "actor": "theta",
+   "reason_code": "MECHANISM_REFINED",
+   "n": 4
+  },
+  {
+   "kind": "WEAKEN",
+   "actor": "phi",
+   "reason_code": "NO_KNOWLEDGE_SUPPORT",
+   "n": 4
+  },
+  {
+   "kind": "WEAKEN",
+   "actor": "phi",
+   "reason_code": "SINGLE_INDEPENDENCE_GROUP",
+   "n": 2
+  }
+ ],
+ "harness": {
+  "per_action": {
+   "action_1": {
+    "queries_run": 8,
+    "source_fetches": 2,
+    "failed_tool_calls": [
+     {
+      "tool": "opencli.reddit.search",
+      "exit": 69
+     },
+     {
+      "tool": "opencli.youtube.search",
+      "exit": 1
+     }
+    ],
+    "tools": [
+     "exa.fetch",
+     "exa.search",
+     "opencli.reddit.read",
+     "opencli.reddit.search",
+     "opencli.youtube.search"
+    ],
+    "tool_seconds": 188.3
+   },
+   "action_2": {
+    "queries_run": 4,
+    "source_fetches": 1,
+    "failed_tool_calls": [
+     {
+      "tool": "opencli.reddit.read",
+      "exit": 1
+     }
+    ],
+    "tools": [
+     "exa.search",
+     "opencli.reddit.read",
+     "opencli.reddit.search"
+    ],
+    "tool_seconds": 86.1
+   },
+   "action_3": {
+    "queries_run": 3,
+    "source_fetches": 2,
+    "failed_tool_calls": [],
+    "tools": [
+     "exa.fetch",
+     "exa.search",
+     "opencli.youtube.comments",
+     "opencli.youtube.search"
+    ],
+    "tool_seconds": 33.1
+   }
+  },
+  "observations_submitted": 15,
+  "items_omitted_by_builder": [
+   {},
+   {},
+   {
+    "unknown source class (unregistered domain and no platform / family recorded)": 1
+   }
+  ],
+  "queries_total": 15,
+  "owner_cap_per_action": 12,
+  "sources_by_class": {
+   "community_discussion": 5
+  }
+ },
+ "admission_table": [
+  {
+   "admission_id": "hadm_5142e6e40c61",
+   "action_id": "hact_222bc862c133815977f78e84",
+   "admitted": 6,
+   "rejected": 5,
+   "admitted_freshness": {
+    "fresh": 6
+   },
+   "admitted_roles": {
+    "friction": 2,
+    "workaround": 3,
+    "contradiction": 1
+   },
+   "independence_groups": [
+    "reddit"
+   ],
+   "rejected_by_reason": {
+    "STALE_BEYOND_POLICY": 5
+   },
+   "rejection_details": [
+    "2293 days old against a 14-day policy",
+    "3308 days old against a 365-day policy"
+   ]
+  },
+  {
+   "admission_id": "hadm_dea4a6961e54",
+   "action_id": "hact_eb9ff87bb6ce8985f6e40ff0",
+   "admitted": 2,
+   "rejected": 0,
+   "admitted_freshness": {
+    "stale_within_policy": 2
+   },
+   "admitted_roles": {
+    "friction": 1,
+    "behavior": 1
+   },
+   "independence_groups": [
+    "reddit"
+   ],
+   "rejected_by_reason": {},
+   "rejection_details": []
+  },
+  {
+   "admission_id": "hadm_5b24774f31c8",
+   "action_id": "hact_2d5199876991f99b7507c463",
+   "admitted": 0,
+   "rejected": 2,
+   "admitted_freshness": {},
+   "admitted_roles": {},
+   "independence_groups": [],
+   "rejected_by_reason": {
+    "STALE_BEYOND_POLICY": 2
+   },
+   "rejection_details": [
+    "204 days old against a 14-day policy"
+   ]
+  }
+ ],
+ "step_seconds": {
+  "C_hypotheses": [
+   94
+  ],
+  "G_mechanisms": [
+   102,
+   43,
+   50
+  ],
+  "I_research": [
+   495,
+   168,
+   140
+  ],
+  "K_revise": [
+   47,
+   26,
+   19
+  ]
+ },
+ "defects_and_frictions": [
+  {
+   "id": "D1",
+   "severity": "BLOCKING",
+   "where": "polymath-v4 shared/polymath_shared/adapter/store.py::admission_ids (used by service._allowed_causes)",
+   "what": "admission ids are read from adapter_admitted_evidence rows, so an admission that admits ZERO observations is not an allowed cause; Trail's judge lawfully cites it and the adapter answers PHI_VERDICT_INVALID -> terminal gap",
+   "evidence": "J_admit seq 28: hadm_5b24774f31c8 admitted 0 / rejected 2 (STALE_BEYOND_POLICY); adapter_admitted_evidence holds rows only for hadm_5142e6e40c61 (6) and hadm_dea4a6961e54 (2); L_judge seq 30 verdict cites evidence_admission:hadm_5b24774f31c8",
+   "consequence": "ANY harness action whose observations are all rejected kills the run at the next judge step. Fixtures never hit it (they always admit something).",
+   "fix_not_applied": "read admission ids from adapter_harness_actions.admission (every admission) + a unit pin; needs the owner's word (shared/ + bounce)"
+  },
+  {
+   "id": "D2",
+   "severity": "HIGH",
+   "where": "Polymath /chat/evidence (query compiler intent gate)",
+   "what": "declarative hypothesis statements are classified GENERAL_CONVERSATION -> retrieval_required=false -> the evidence boundary returns 0 rows",
+   "evidence": "F_retrieve seq 9: 3/3 calls n_evidence=0, firing cause OTHER detail no_primary:retrieval_not_required:GENERAL_CONVERSATION; F_graph boundary calls 0 rows (only its legacy union returned rows)",
+   "consequence": "a real agent's hypotheses get NO hypothesis-specific corpus evidence; R1's fixture statements did not show this"
+  },
+  {
+   "id": "D3",
+   "severity": "MEDIUM",
+   "where": "adapter readable-evidence view (hydrate budget)",
+   "what": "G_mechanisms and K_revise showed 0 new knowledge rows versus C_hypotheses: the 60-row cap is filled by the first-phase rows; 43 readable chunk refs were never shown to the agent"
+  },
+  {
+   "id": "D4",
+   "severity": "MEDIUM",
+   "where": "Trail hypotheses.judge payload",
+   "what": "all 4 hypotheses WEAKEN NO_KNOWLEDGE_SUPPORT immediately after generation although each cites 4-5 DIRECT corpus chunks (the plan's known knowledge_support_count = 0 item, now confirmed with a real agent)"
+  },
+  {
+   "id": "D5",
+   "severity": "MEDIUM",
+   "where": "skill report bridge + AdapterResultV1 on a terminal gap",
+   "what": "the result of a terminal-gap run has an empty output, so the journal summary and the dossier show admitted 0 / rejected 0 although Trail admitted 8 and rejected 7; rejected observations and their reason codes are never visible to the agent (J_admit is automatic and adapter_next shows admitted rows only)"
+  },
+  {
+   "id": "D6",
+   "severity": "LOW",
+   "where": "research directive",
+   "what": "search-intent templates are generic physical-product templates (gloves / wet hands / 3D print) and the first action carried evidence_gaps = [] ; from the second pass on, the agent's knowledge_gaps did flow into evidence_gaps"
+  },
+  {
+   "id": "D7",
+   "severity": "LOW",
+   "where": "evidence boundary max_calls",
+   "what": "max_calls = 3 truncates the 4th hypothesis need at F_retrieve / F_graph (recorded as truncated: max_calls)"
+  },
+  {
+   "id": "F1",
+   "severity": "MEASURED",
+   "where": "Trail registry",
+   "what": "Reddit = ONE independence group with social-14d (a 20-day-old thread was admitted as stale_within_policy; 204-day and 2020 threads rejected); forums 365d (a 2017 thread rejected); every admitted observation is Reddit -> WEAKEN SINGLE_INDEPENDENCE_GROUP twice. A press interview has no source class: the builder omitted it with the reason recorded."
+  },
+  {
+   "id": "F2",
+   "severity": "MEASURED",
+   "where": "acquisition tooling",
+   "what": "opencli needs Chrome running for its browser bridge (first call exit 69; Chrome was opened in the background); YouTube navigation was rejected once and worked on a later pass; one Reddit read detached. 3 failed tool calls, none counted as a query."
+  },
+  {
+   "id": "N1",
+   "severity": "NOTE",
+   "what": "Corpus Explore FIRED on the seed need in this run (R1: PLAN_FALLBACK on the same seed) — planner non-determinism, not judged here"
+  }
+ ],
+ "not_judged": [
+  "product quality",
+  "cinema as a product corpus",
+  "Trail's scoring model",
+  "GRAPH latency",
+  "Corpus Explore quality",
+  "source coverage"
+ ],
+ "files": {
+  "run_dir": "/Users/king/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH/candidates/r2a_cinema_smoke (gitignored)",
+  "journal": "journal.governed.json",
+  "dossier": "r2a_dossier.html",
+  "receipts": [
+   "receipt_I_research.json",
+   "receipt_I_research_2.json",
+   "receipt_I_research_3.json"
+  ],
+  "receipt_sha256": [
+   "a4a335513bc0f40a",
+   "0f8ffc382e59183c",
+   "f5bcc64e79e7eea2"
+  ]
+ }
+}
