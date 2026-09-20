@@ -68,6 +68,7 @@ untouched.
 - NEW `eval/governed_convergence/TG4-SKILL-HARNESS-RECEIPT-2026-09-20.json` (written with hard assertions).
 - NEW `docs/wiki/reports/2026-09-20/ECOM-CORPUS-INGESTIBILITY.md` — the READ-ONLY determination the owner asked for
   with the TG4 word; the plan's TG5 section records the owner's corpus amendment and points at it. Nothing ingested.
+  **REMOVED later the same day on the owner's word (register 11.359, work-log `2026-09-20-ecom-meta-dropped-from-plan`).**
 
 ## Proof
 | Slice | Level | Evidence |
@@ -104,6 +105,7 @@ NOT_AFFECTED.
   Determination: the old `ecom-meta-v1` material is INGESTIBLE WITH PREP — source bytes intact in the v4 spool (11
   blobs) and in the v3.3 `ecommerce_meta` library (117 `.md`, 71 MB); its old indexes are gone, so there is nothing to
   copy. Open owner decisions: 10 docs vs 117, the commerce ontology profile, a staged 3–5 book cost probe.
+  **CLOSED by the owner 2026-09-20: `ecom-meta-v1` is not part of the current corpus and is dropped from the plan (11.359).**
 - Harvest provenance is now REQUIRED for a receipt observation. Records harvested before v2.3.0 carry no
   `retrieved_at` and are omitted by design — the first real run will show how much of a normal harvest survives.
 - Role table and source-class tables are static and conservative: an unknown domain with no declared platform/family
