@@ -43,6 +43,24 @@ closeout commit; feature merge `99d12cc`; branch `reasoning-boundary/agent-evide
 `POLYMATH_REASONING_POLICY=1` + `POLYMATH_CORPUS_EXPLORER=1`. **REVERSIBLE:** `POLYMATH_REASONING_POLICY=0` +
 bounce restores pre-RB reasoning (evidence boundary + MCP stay); `evidence_only` unset = normal `/chat`.
 
+**REMOTE RECOVERY (owner-authorized tag push 2026-09-19, register 11.345) — checkout by TAG, never by a
+`production` branch.** `production` is intentionally NOT pushed: `origin/production` does not exist, and
+`origin/main` (`cf1ee4f`) is ~100 commits BEHIND — neither is authoritative. The shipped milestones are
+recoverable from `origin` (`Kingsley-Cyber/Polymath-RAG`) via annotated tags, each verified remote == local:
+
+| Tag | Commit | Milestone |
+|---|---|---|
+| `v4-latent-query-fusion-v2` | `4500c20` | LATENT-QUERY-FUSION-V2 |
+| `v4-corpus-explorer-v1` | `3e88b06` | CORPUS-EXPLORER-V1 |
+| `v4-reasoning-boundary-slice1` | `062f4fa` | REASONING-BOUNDARY Slice 1 (evidence boundary, policy OFF) |
+| `v4-reasoning-boundary-v1` | `12e907b` | **CURRENT authoritative recovery checkpoint** |
+
+Recover: `git fetch origin --tags && git checkout -b production v4-reasoning-boundary-v1`. Local `production`
+HEAD may sit docs-only commits AHEAD of the newest tag (ledger notes like this one) — the tag is the code
+checkpoint. `.env` is gitignored and NOT in any tag: live flags (`POLYMATH_REASONING_POLICY=1`,
+`POLYMATH_CORPUS_EXPLORER=1`, fusion/bridge =1) must be re-set by hand after a recovery (`.env.example`
+defaults are 0). When later work ships, cut + push a new tag and move the CURRENT marker here.
+
 **Next Action** — REASONING-BOUNDARY-V1 CLOSED OUT (LIVE, both slices proven). Optional follow-ups (not
 started, not blockers): unify the two MCP servers (owner deferred); the suppressed INFO `polymath.reasoning`
 logger (superseded by the JSONL receipt — could wire a proper handler). Do NOT touch extraction/bridge
