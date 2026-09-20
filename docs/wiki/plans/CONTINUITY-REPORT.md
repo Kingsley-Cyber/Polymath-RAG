@@ -18,22 +18,138 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-20 — **GOVERNED-CONVERGENCE-V1 ADMITTED, NOT STARTED (register 11.351). Execute from `docs/wiki/plans/GOVERNED-CONVERGENCE-V1.md`. NEXT ACTION = TG0.**
+## CURRENT — 2026-09-20 — **GOVERNED-CONVERGENCE-V1: TG0 + TG1 + TG2 DONE, MERGED, LIVE-PROVEN (registers 11.352–11.355). NEXT ACTION = TG3 (a SEPARATE goal — do not start it without the owner's word).**
 
-**Repository State** — branch `production`; HEAD = the GOVERNED-CONVERGENCE-V1 admission commit (docs only);
-tree clean. Remote recovery checkpoint (CODE) = tag `v4-corpus-explore-firing-v1` → `db2785a`, ON ORIGIN; every
-commit above it is docs/ledger only. `origin/main` = `cf1ee4f` (far behind; PR-squash-only). No push of any ref
-without the owner's per-push word.
+**Repository State** — branch `production`; HEAD = the TG0–TG2 closeout commit, above merge `f206c33` (TG1 `797caea` +
+TG2 `7f9ae50`; worktree `pmv4-governed` / branch `governed/convergence-tg1-tg2`, merged). Local annotated tag
+**`v4-governed-convergence-tg2` — UNPUSHED**. Remote recovery checkpoint (CODE) is still tag
+`v4-corpus-explore-firing-v1` → `db2785a` ON ORIGIN; everything above it (incl. all TG1/TG2 code) exists ONLY locally.
+`origin/main` = `cf1ee4f` (far behind; PR-squash-only); no `origin/production`. Tree clean. No push of any ref without
+the owner's per-push word.
 
-**Active Mission** — **GOVERNED-CONVERGENCE-V1**: connect the REAL product-research system (the Hermes
-opportunity-research controller) to the GOVERNED one (Polymath adapter `trail.product_discovery` → Trail v2's
-seven deterministic ops), without moving reasoning or retrieval into Trail. MULTI-REPO — read the plan's
-"Where things live" header FIRST. First milestone: a Claude Code session drives ONE real governed
-product-discovery run and the EXISTING renderer produces the HTML dossier. Ground truth:
-`docs/wiki/reports/2026-09-20/TRAIL-GROUND-TRUTH-DOSSIER.md`.
+**Active Mission** — GOVERNED-CONVERGENCE-V1 (plan of record `docs/wiki/plans/GOVERNED-CONVERGENCE-V1.md`; read its
+"Where things live" header FIRST; ground truth `docs/wiki/reports/2026-09-20/TRAIL-GROUND-TRUTH-DOSSIER.md`).
+Session 1 (Polymath side: TG0 baseline, TG1 Server B adapter tools, TG2 readable evidence + evidence-boundary surface)
+is COMPLETE. Next dependency = **TG3** in the SKILL repo (`/Users/king/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH`):
+the evidence-only corpus lane. Live-run budget spent so far: R0 + R1 (fixtures, $0 external). R2 (the ONE real Claude
+Code run) and R3 (Hermes repeat) are NOT yet authorized to start — they belong to TG5 / TG8.
 
-**Completed Since Last Bootstrap** — 11.349 Item 1 owner acceptance + freeze · 11.350 firing tag pushed ·
-11.351 this admission (read-only Trail discovery + the approved plan).
+**Completed Since Last Bootstrap** — 11.352 TG0 baseline + R0 PASS · 11.353 TG1 seven `adapter_*` proxies on MCP
+Server B + A/B parity · 11.354 TG2a readable `adapter_next` evidence + TG2b opt-in evidence-boundary surface
+(manifest 2.2.0 / retrieval policy 2.0.0) · 11.355 deploy (ONE bounce) + R1 PASS + boundary proof + closeout.
+
+**Current Contract State (NEW producer/consumer interfaces — do not rediscover)**
+- `adapter_next` (both MCP servers, `GET /adapter/{run}/next`) → `{kind:"step", step, status, evidence}`. `evidence` =
+  `{rows, receipts, coverage}`: READABLE rows for exactly the ids in `step.context.evidence_refs`, hydrated from the
+  STORED step outputs (every loop pass), cap 60 rows × 600 chars, class floors field_evidence 24 / chunk 20 /
+  graph_fact 10 / other 6 with spillover, graded first inside a class. Field-evidence rows are rebuilt from the Trail
+  admission ⋈ its harness receipt (claim — excerpt, url, role, polarity, hypothesis_ids, metric). A hydration failure
+  comes back as `evidence.error` — never an exception. `AdapterStepV1` is UNCHANGED: ids stay the citation contract.
+- Knowledge surface is per manifest STEP: `config.surface: evidence_boundary` (default in code = legacy `retrieve`).
+  Only `trail.product_discovery` 2.2.0 opts in (`B_retrieve`/`F_retrieve` WILDCARD + Corpus Explore; `B_graph`/`F_graph`
+  GRAPH ∪ legacy graph facts). `mode` then means the BOUNDARY mode; the pre-boundary lane is `legacy_mode`.
+  **Kill switch: `POLYMATH_ADAPTER_KNOWLEDGE_SURFACE=retrieve` in the live `.env` + a bounce** → legacy on every step,
+  recorded `degraded_reasons: ["surface_forced_by_env"]`. The env can NOT switch the boundary on.
+- Boundary rules (pure `shared/polymath_shared/adapter/evidence_boundary.py`): the worker may POST ONLY to
+  `{/chat/evidence, /retrieve, /retrieve/plan}`; the need is the ORIGINAL seed or ONE need per live hypothesis (never a
+  `B_plan`/`F_plan` reformulation); ONE corpus per call, `max_calls` 3, skips in `output.truncated`; body is exactly
+  `{message, corpus_id, mode, corpus_explorer}`; a packet that is not `evidence-packet-v1` / `synthesis_performed=false`
+  / schema-valid = TERMINAL gap `EVIDENCE_CONTRACT_MISMATCH` (never a fallback); unreachable → legacy fallback
+  (`degraded`), else `EVIDENCE_SURFACE_UNAVAILABLE` gap or `continue` via `unknowns` (never `knowledge_gaps`); a 4xx is
+  a caller defect (`OrchRejected` → `STEP_EXECUTOR_ERROR`), not an outage; empty evidence = success.
+- Every adapter-worker orchestrator call carries `User-Agent: polymath-adapter-step/<run>/<step>/<seq>` =
+  `query_receipts.client`. Boundary receipts are `kind=chat, verdict=evidence_only`.
+- Evidence refs on the wire MAY carry `utility_role` (DIRECT/COMPLEMENTARY/DIVERGENT/RELATED), `ca4_grade`
+  (DIRECT/PARTIAL/RELATED), `c4_valid`, `origin` — all OPTIONAL; out-of-vocabulary values stay on the stored row only.
+- `AdapterResultV1.output.evidence_admissions` = EVERY `evidence.admit` projection in sequence order (admitted AND
+  rejected with reason codes), via the generic include form `{"collect_all": <key>, "as": <name>}`.
+- The EvidencePacket now has a JSON Schema (`contracts/evidence/v1/`), enforced CONSUMER-side, pinned to the real
+  producer by `tests/contracts/test_evidence_packet_contract.py`.
+- ASYMMETRY: Server A tools are async + bearer-gated; Server B tools are sync + credential-free; names, parameters and
+  docstrings are identical (parity test). Server B is stdio — a client must RECONNECT to see new tools.
+
+**Active Impact Closure** (`contract_impact --range 94dbd57..HEAD`) — changed `ADAPTER_RUNTIME`, `EVIDENCE_PACKET`,
+`MCP_SURFACE` → **UPDATED**; transitive `EVIDENCE_BOUNDARY_API` → **TESTED_UNCHANGED** (no orchestrator route changed;
+exercised live 6× in R1); `SUBQUERY_PROVENANCE` → **NOT_AFFECTED** (new `consumed_by` edge only). Deferred / blocked /
+unresolved: none. DEBT on `EVIDENCE_BOUNDARY_API`: two PRE-EXISTING stale pins (below).
+
+**Proof Status**
+- TG0 R0: **LIVE_PATH_PROVEN** (`adr_1a357ee4…` completed 42/42).
+- TG1: parity **UNIT_PROVEN**; Server B **LIVE_PATH_PROVEN** over real stdio for list / status / next / result /
+  cancel + error mapping. `adapter_start` / `adapter_submit` on Server B: **IMPLEMENTED + parity-proven, NOT
+  live-exercised** (a start is a new live run; TG5 exercises them).
+- TG2 pure module / service seams / manifest / packet contract: **UNIT_PROVEN** (executed path asserted).
+- TG2 worker: file-level UNIT_PROVEN (loaded BY FILE PATH) → **MERGED + DEPLOYED** → **LIVE_PATH_PROVEN** by R1
+  (`adr_12ddda16…`: exit 0 with `--require-evidence-text --require-surface evidence_boundary`; proof script exit 0:
+  6/6 boundary receipts `evidence_only`, 0 synthesis receipts, 715 refs with `utility_role`, 5 admissions in the result).
+- NOT PROVEN (do not inherit false confidence): the contract-mismatch gap, the unavailable fallback and the kill
+  switch are UNIT-proven only — none occurred or was exercised live. Corpus Explore on the SEED did not fire in R1
+  (`PLAN_FALLBACK`, backlog B19); it fired 2/2 on hypothesis needs.
+- INVALIDATED: none this session.
+- PRE-EXISTING RED (fail identically on untouched `94dbd57`; tests are immutable without the owner's word):
+  `test_query_receipts::test_all_three_query_handlers_and_read_surfaces_are_wired` and
+  `test_chat_runtime::test_compiler_on_drives_the_same_retrieval_decision_on_both_routes`.
+
+**Runtime / Test Resolution** — unchanged: `.venv` editable `.pth` resolves `orchestrator`/`workers`/`control` to MAIN;
+`shared/` resolves to the current worktree under pytest. Tests that must exercise a worktree's `workers/` or
+`orchestrator/` FILE load it by file path and assert `__file__` (see the parity + worker-surface tests). DB-writing
+adapter tests (`test_adapter_service_store.py`) commit `running` runs the LIVE worker can claim — do not run them
+while the fleet is up.
+
+**Working Tree** — clean. Worktree `pmv4-governed` is merged (safe to remove). Scratch (session scratchpad, not in
+repo): R0/R1 raw outputs.
+
+**Tooling State** — unchanged, plus: `contract_impact.py` now SEES the adapter / evidence / MCP surfaces (four new
+rows). The pre-commit hook's ruff `S110` note on `capabilities.py:69` is pre-existing and advisory.
+
+**Fleet (live)** — UP since 2026-09-20 09:06 local: bundle `c0d86509ad39`, 13 worker types healthy, one bundle, `/ready`
+true (embedder + reranker). Trail daemon :8767 from `A41` (`de64d84`). Orchestrator flags unchanged
+(`POLYMATH_CORPUS_EXPLORER=1`, `…_FALLBACK_OPEN=1`, `POLYMATH_REASONING_POLICY=1`, `POLYMATH_CHAT_LATENT_FUSION=1`,
+`POLYMATH_CHAT_LATENT_SELECTION=1`, `POLYMATH_CHAT_BRIDGE_COMPILER=1`); `POLYMATH_ADAPTER_KNOWLEDGE_SURFACE` UNSET.
+The fleet still does NOT survive a reboot (`com.polymath.v5` autoboot fails) and `/private/tmp/polymath_fleet` is wiped.
+
+**Next Action — TG3 (SEPARATE GOAL; needs the owner's word to start):**
+1. Re-read the plan's TG3 section from disk. Work in `/Users/king/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH`
+   (its own gate: `python3 tests/run_all.py`, `python/controller.py doctor`, `WORKLOG.md`, version 2.2.0).
+2. `python/corpus_polymath.py`: delete `ask_corpus` / `chat_question` / `answer_record`; add `explore_corpus()` →
+   `POST /chat/evidence {message, corpus_id, mode:"WILDCARD", corpus_explorer:true}` + `rows_from_packet()` +
+   fail-closed packet validation. The consumer rules to mirror are in
+   `shared/polymath_shared/adapter/evidence_boundary.py`; the schema is `contracts/evidence/v1/`.
+3. If the fleet is down: `scripts/boot_polymath.sh` (ONE supervisor), then
+   `zsh /Users/king/Documents/polymath-rebuild/handoff-drafts/trail_stack_up.sh /Users/king/trail-signal-os-worktrees/A41`
+   (**zsh, not bash** — under bash the script silently skips compose / health / migrations).
+4. Owner step still open from TG1: add the Codex entry (report lines below); Claude Code needs only an MCP reconnect.
+   ```toml
+   [mcp_servers.polymath]
+   command = "/Users/king/Documents/polymath-rebuild/polymath-v4/.venv/bin/python"
+   args = ["/Users/king/Documents/polymath-rebuild/polymath-v4/mcp_server/polymath_mcp.py"]
+   ```
+
+**Do Not Do**
+- Do NOT start TG3+ without the owner's word (session 1's goal ended at TG2). Do NOT start R2 / any real-world run;
+  do NOT widen the ≤12 queries per harness action cap. Any live run beyond R0 + R1 needs the owner's word first.
+- Do NOT start finish-line Item 2 now — the owner sequenced GOVERNED-CONVERGENCE-V1 first. Item 2 (coverage +
+  `search_atoms` corpus isolation) remains the HARD prerequisite for any SECOND Polymath corpus.
+- Do NOT move reasoning, retrieval, scraping or a Polymath client into Trail; do NOT touch ANY Trail tree before TG7
+  (owner word + owner-accepted ADR); never plan or run against `/Users/king/trail-signal-os` local `main` (stale, dirty).
+- Do NOT ingest Reddit / web / product evidence into Polymath (owner: not in v1).
+- Do NOT build a second research system or a second HTML/report system — reuse the controller's.
+- Do NOT let the controller's `evidence_score`, or any LLM, rank / blend with / replace a Trail score (LAW 1).
+- Do NOT pre-decompose queries into `polymath_explore`; do NOT use `/chat` synthesis for agent work; do NOT add an
+  orchestrator path to the adapter worker's allow-list.
+- Do NOT tune Trail's registry, gates or freshness — or a Polymath test, fixture or threshold — to make a run pass.
+- Do NOT remove or rename a manifest step id (in-flight runs break); do NOT flip the default surface in code.
+- Do NOT hand-edit `~/.hermes/config.yaml` / `models.json` or `~/.codex`; do NOT enter or print any credential.
+- Item 1 stays FROZEN. No push of any ref without the owner's per-push word.
+
+**Live Qualification Queue** — R0 ✅ · R1 ✅ · R2 (TG5, not authorized yet) · R3 (TG8). Unexercised-live, unit-proven
+only: contract-mismatch gap, unavailable fallback, kill switch, `adapter_start`/`adapter_submit` via Server B.
+**Deferred Architecture** — graph traversal / multi-hop; toggle-vs-routing (B20); compiler provider reliability (B19 —
+now also the reason Corpus Explore skipped R1's seed); the adapter step lease + terminal-only gaps; executors run
+inside the run-row transaction (a boundary step holds the row ~12–35 s per call); product-portfolio output on the
+governed path; source expansion; a durable home for the firing ledger; the failing `com.polymath.v5` autoboot.
+
+## PRIOR — 2026-09-20 — GOVERNED-CONVERGENCE-V1 ADMISSION (register 11.351; superseded by CURRENT above — the discovery facts below still hold)
 
 **Current Contract State (what the discovery established — do not re-derive)**
 - Trail v2 = a deterministic JUDGE: seven bounded ops, zero LLM, zero outbound Polymath client. ADR-063 +
@@ -51,53 +167,6 @@ product-discovery run and the EXISTING renderer produces the HTML dossier. Groun
 - Trail admission frictions a real run WILL hit — measure, never tune around: all of Reddit = ONE independence
   group with a 14-day freshness window; a URL must route to an enabled registry row; a role must be one the
   source supports; the supply gate's `risk` only from manufacturer sites.
-
-**Active Impact Closure** — this slice: docs only → `contract_impact` none. The plan's future slices touch the
-adapter wire schema (additive), the EvidencePacket (first consumer + JSON Schema), both MCP surfaces, and add
-four rows to `architecture/contract-dependencies.yaml` (today `contract_impact.py` is blind to all of them).
-
-**Proof Status** — dossier = measured, read-only, `path:line` evidence. Plan = ADMITTED, nothing implemented.
-
-**Runtime / Test Resolution** — unchanged: `.venv` editable `.pth` resolves `orchestrator`/`workers`/`control`
-to MAIN; `shared/` resolves to the current worktree under pytest. A single-file pytest that inserts
-`ROOT/"workers"` on `sys.path` DOES resolve to the worktree — such a run is NOT `UNIT_PROVEN` for `workers/`.
-The skill repo has its own dependency-free harness (`python3 tests/run_all.py`, `python/controller.py doctor`).
-
-**Fleet (live) — DOWN.** The Mac rebooted 2026-09-20 06:20. Docker stores are up (Polymath Postgres / Qdrant /
-Neo4j / Redis; Trail Postgres :15433 / Temporal :7233 / object store :7070). DOWN: orchestrator :7200, MCP
-Server A :8930, `adapter_step` worker, embedder / reranker, Trail daemon :8767. The `com.polymath.v5` autoboot
-fails, so the fleet does not survive a reboot. `/private/tmp/polymath_fleet` is wiped by a reboot — the Corpus
-Explore firing ledger that lived there is gone (needs a durable home; backlog).
-
-**Next Action — TG0 (no code):**
-1. `scripts/boot_polymath.sh` (ONE supervisor; never boot over a live one) → verify one bundle, `/ready`,
-   slots `mcp` (:8930) and `adapter_step` registered, flags from the LIVE `.env`.
-2. `bash /Users/king/Documents/polymath-rebuild/handoff-drafts/trail_stack_up.sh /Users/king/trail-signal-os-worktrees/A41`
-   → Trail daemon on :8767 (the script `pkill`s any running daemon; secrets stay in `~/.config/trail-signal/`).
-3. Baseline R0 ($0 external): `.venv/bin/python scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery
-   --corpus cinema --harness receipts --harness-receipts tests/fixtures/harness_receipts` must complete.
-4. Then TG1 (seven `adapter_*` proxies on `mcp_server/polymath_mcp.py` + A/B parity test) in a NEW worktree.
-
-**Do Not Do**
-- Do NOT start finish-line Item 2 now — the owner sequenced GOVERNED-CONVERGENCE-V1 first. Item 2 (coverage +
-  `search_atoms` corpus isolation) remains the HARD prerequisite for any SECOND Polymath corpus.
-- Do NOT move reasoning, retrieval, scraping or a Polymath client into Trail; do NOT touch ANY Trail tree
-  before TG7 (owner word + owner-accepted ADR); never plan or run against `/Users/king/trail-signal-os` local
-  `main` (114 commits stale, dirty).
-- Do NOT ingest Reddit / web / product evidence into Polymath (owner: not in v1).
-- Do NOT build a second research system or a second HTML/report system — reuse the controller's.
-- Do NOT let the controller's `evidence_score`, or any LLM, rank / blend with / replace a Trail score (LAW 1).
-- Do NOT pre-decompose queries into `polymath_explore`; do NOT use `/chat` synthesis for agent work.
-- Do NOT tune Trail's registry, gates or freshness to make a run pass; never drop a known publish date; never
-  re-submit a rejected observation under a different role.
-- Do NOT hand-edit `~/.hermes/config.yaml` or `models.json`; do NOT enter or print any credential.
-- Live runs are STAGED: R0 fixture → R1 fixture on the evidence surface → R2 ONE real Claude Code run (≤12
-  queries per harness action) → R3 Hermes repeat. Anything beyond needs the owner's word.
-- Item 1 stays FROZEN (below). No push of any ref without the owner's per-push word.
-
-**Live Qualification Queue** — R0, R1, R2, R3 as above (none run yet).
-**Deferred Architecture** — graph traversal / multi-hop; toggle-vs-routing (B20); compiler provider reliability
-(B19); the adapter step lease; product-portfolio output on the governed path; source expansion.
 
 ## PRIOR — 2026-09-20 — **CORPUS-EXPLORE-FIRING-V1 COMPLETE + LIVE (registers 11.346–348; v1-finish-line item 1).**
 

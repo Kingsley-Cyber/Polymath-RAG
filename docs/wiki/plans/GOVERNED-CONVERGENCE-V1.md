@@ -2,7 +2,7 @@
 title: "GOVERNED-CONVERGENCE-V1 — connect the real product-research controller to the governed Polymath → Trail adapter path"
 date: 2026-09-20
 last_reviewed: 2026-09-20
-status: "ADMITTED — owner-approved 2026-09-20 (plan mode, four decision rounds). NOT STARTED: TG0 is the next action. Executes across four repos; Trail stays untouched until TG7."
+status: "ADMITTED — owner-approved 2026-09-20 (plan mode, four decision rounds). IN PROGRESS: TG0 + TG1 + TG2 DONE, merged and live-proven 2026-09-20 (registers 11.352–11.355, local tag v4-governed-convergence-tg2, R0 + R1 PASS). NEXT = TG3 (skill repo) — a separate goal that needs the owner's word. Executes across four repos; Trail stays untouched until TG7."
 owner: "@king"
 scope: "Converge two existing systems instead of building a third: the governed adapter path (lawful, never driven by a real agent or the real world) and the Hermes opportunity-research controller (works in the real world, ungoverned, nests Polymath synthesis). Trail remains exactly what ADR-063 says. First milestone: a Claude Code session drives ONE real governed product-discovery run and the existing renderer produces the HTML dossier."
 ---
@@ -13,6 +13,8 @@ scope: "Converge two existing systems instead of building a third: the governed 
 > Runtime: Polymath fleet = `scripts/boot_polymath.sh` (orchestrator :7200, MCP Server A :8930 = supervisor slot `mcp`, `adapter_step` worker slot). Trail stack = `/Users/king/Documents/polymath-rebuild/handoff-drafts/trail_stack_up.sh <A41 path>` (daemon :8767, Trail Postgres :15433, Temporal :7233; it `pkill`s any running daemon; LOCAL secrets in `~/.config/trail-signal/local.env`). The fleet does NOT survive a reboot (the `com.polymath.v5` autoboot fails).
 
 # GOVERNED-CONVERGENCE-V1 — Plan of Record
+
+> **Execution ledger.** TG0 ✅ R0 PASS (11.352) · TG1 ✅ (11.353) · TG2a + TG2b ✅ (11.354) · deploy + R1 PASS + boundary proof (11.355) — work-log `docs/wiki/work-log/2026-09-20-governed-convergence-tg0-tg2.md`, evidence `eval/governed_convergence/`. TG3–TG8 NOT STARTED. Run the Trail stack script with **zsh** (under `bash` it silently skips compose / health / migrations).
 
 ## Context
 

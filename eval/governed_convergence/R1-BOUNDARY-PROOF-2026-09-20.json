@@ -1,0 +1,284 @@
+{
+ "artifact": "GOVERNED-CONVERGENCE-V1 R1 \u2014 scripts/adapter_evidence_boundary_proof.py verdict (read-only)",
+ "date": "2026-09-20",
+ "command": ".venv/bin/python scripts/adapter_evidence_boundary_proof.py --run-id adr_12ddda16f9b589fbdf7dfab9f31efedf",
+ "exit_code": 0,
+ "negative_control": {
+  "run_id": "adr_1a357ee43e9c2e6750d756d9f2136761",
+  "surface": "legacy (R0)",
+  "exit_code": 1,
+  "failures": [
+   "no step ran on the evidence_boundary surface",
+   "no issued evidence ref carries utility_role",
+   "result.output.evidence_admissions has 0 entries for 5 evidence.admit step(s)"
+  ]
+ },
+ "verdict": {
+  "run_id": "adr_12ddda16f9b589fbdf7dfab9f31efedf",
+  "adapter_id": "trail.product_discovery",
+  "adapter_version": "2.2.0",
+  "retrieval_policy_version": "2.0.0",
+  "status": "completed",
+  "steps": 42,
+  "boundary_steps": [
+   {
+    "step_id": "B_retrieve",
+    "sequence": 3,
+    "mode": "WILDCARD",
+    "calls": 1,
+    "rows": 15,
+    "graph_rows": 0,
+    "retrieval_completed": true,
+    "degraded_reasons": [],
+    "truncated": [],
+    "boundary_receipts": 1,
+    "verdicts": [
+     "evidence_only"
+    ],
+    "grades": {
+     "DIRECT": 14,
+     "RELATED": 1
+    },
+    "corpus_explorer_used": 0
+   },
+   {
+    "step_id": "B_graph",
+    "sequence": 4,
+    "mode": "GRAPH",
+    "calls": 1,
+    "rows": 15,
+    "graph_rows": 24,
+    "retrieval_completed": true,
+    "degraded_reasons": [],
+    "truncated": [],
+    "boundary_receipts": 1,
+    "verdicts": [
+     "evidence_only"
+    ],
+    "grades": {
+     "DIRECT": 14,
+     "RELATED": 1
+    },
+    "corpus_explorer_used": 0
+   },
+   {
+    "step_id": "F_retrieve",
+    "sequence": 9,
+    "mode": "WILDCARD",
+    "calls": 2,
+    "rows": 30,
+    "graph_rows": 0,
+    "retrieval_completed": true,
+    "degraded_reasons": [],
+    "truncated": [],
+    "boundary_receipts": 2,
+    "verdicts": [
+     "evidence_only"
+    ],
+    "grades": {
+     "DIRECT": 17,
+     "RELATED": 13
+    },
+    "corpus_explorer_used": 2
+   },
+   {
+    "step_id": "F_graph",
+    "sequence": 10,
+    "mode": "GRAPH",
+    "calls": 2,
+    "rows": 30,
+    "graph_rows": 27,
+    "retrieval_completed": true,
+    "degraded_reasons": [],
+    "truncated": [],
+    "boundary_receipts": 2,
+    "verdicts": [
+     "evidence_only"
+    ],
+    "grades": {
+     "DIRECT": 20,
+     "RELATED": 10
+    },
+    "corpus_explorer_used": 0
+   }
+  ],
+  "boundary_calls": 6,
+  "run_receipts": [
+   {
+    "kind": "chat",
+    "verdict": "evidence_only",
+    "n": 6
+   },
+   {
+    "kind": "retrieve",
+    "verdict": null,
+    "n": 2
+   }
+  ],
+  "synthesis_receipts": 0,
+  "degraded": [],
+  "issued_refs_with_utility_role": 715,
+  "adapter_next_views": [
+   {
+    "step_id": "C_hypotheses",
+    "sequence": 5,
+    "refs": 131,
+    "knowledge_refs": 131,
+    "rows": 60,
+    "rows_with_text": 60,
+    "text_chars": 21232,
+    "rows_with_utility_role": 22,
+    "kinds": [
+     "chunk",
+     "document",
+     "graph_fact"
+    ],
+    "unresolved": 0
+   },
+   {
+    "step_id": "G_mechanisms",
+    "sequence": 11,
+    "refs": 200,
+    "knowledge_refs": 195,
+    "rows": 60,
+    "rows_with_text": 60,
+    "text_chars": 18354,
+    "rows_with_utility_role": 31,
+    "kinds": [
+     "chunk",
+     "document",
+     "graph_fact"
+    ],
+    "unresolved": 5
+   },
+   {
+    "step_id": "K_revise",
+    "sequence": 15,
+    "refs": 200,
+    "knowledge_refs": 187,
+    "rows": 60,
+    "rows_with_text": 60,
+    "text_chars": 15393,
+    "rows_with_utility_role": 27,
+    "kinds": [
+     "chunk",
+     "document",
+     "field_evidence",
+     "graph_fact"
+    ],
+    "unresolved": 5
+   },
+   {
+    "step_id": "G_mechanisms",
+    "sequence": 18,
+    "refs": 200,
+    "knowledge_refs": 187,
+    "rows": 60,
+    "rows_with_text": 60,
+    "text_chars": 15393,
+    "rows_with_utility_role": 27,
+    "kinds": [
+     "chunk",
+     "document",
+     "field_evidence",
+     "graph_fact"
+    ],
+    "unresolved": 5
+   },
+   {
+    "step_id": "K_revise",
+    "sequence": 22,
+    "refs": 200,
+    "knowledge_refs": 179,
+    "rows": 60,
+    "rows_with_text": 60,
+    "text_chars": 11516,
+    "rows_with_utility_role": 27,
+    "kinds": [
+     "chunk",
+     "document",
+     "field_evidence",
+     "graph_fact"
+    ],
+    "unresolved": 5
+   },
+   {
+    "step_id": "G_mechanisms",
+    "sequence": 25,
+    "refs": 200,
+    "knowledge_refs": 179,
+    "rows": 60,
+    "rows_with_text": 60,
+    "text_chars": 11516,
+    "rows_with_utility_role": 27,
+    "kinds": [
+     "chunk",
+     "document",
+     "field_evidence",
+     "graph_fact"
+    ],
+    "unresolved": 5
+   },
+   {
+    "step_id": "K_revise",
+    "sequence": 29,
+    "refs": 200,
+    "knowledge_refs": 171,
+    "rows": 60,
+    "rows_with_text": 60,
+    "text_chars": 9762,
+    "rows_with_utility_role": 20,
+    "kinds": [
+     "chunk",
+     "document",
+     "field_evidence",
+     "graph_fact"
+    ],
+    "unresolved": 5
+   },
+   {
+    "step_id": "N_jobs",
+    "sequence": 32,
+    "refs": 200,
+    "knowledge_refs": 171,
+    "rows": 60,
+    "rows_with_text": 60,
+    "text_chars": 9762,
+    "rows_with_utility_role": 20,
+    "kinds": [
+     "chunk",
+     "document",
+     "field_evidence",
+     "graph_fact"
+    ],
+    "unresolved": 5
+   },
+   {
+    "step_id": "W_interpret",
+    "sequence": 41,
+    "refs": 200,
+    "knowledge_refs": 162,
+    "rows": 60,
+    "rows_with_text": 60,
+    "text_chars": 9762,
+    "rows_with_utility_role": 20,
+    "kinds": [
+     "chunk",
+     "document",
+     "field_evidence",
+     "graph_fact"
+    ],
+    "unresolved": 5
+   }
+  ],
+  "admissions": {
+   "admit_steps": 5,
+   "in_result": 5,
+   "admitted": 33,
+   "rejected": 0,
+   "rejection_reason_codes": []
+  },
+  "failures": [],
+  "ok": true
+ }
+}

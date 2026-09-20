@@ -673,6 +673,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_adapter_worker_evidence_surface.py", "py", None),
     ("tests/determinism/test_adapter_evidence_boundary.py", "py", None),
     ("eval/governed_convergence/R0-FIXTURE-BASELINE-2026-09-20.json", "json", None),
+    ("eval/governed_convergence/R1-FIXTURE-EVIDENCE-SURFACE-2026-09-20.json", "json", None),
+    ("eval/governed_convergence/R1-BOUNDARY-PROOF-2026-09-20.json", "json", None),
     ("docs/wiki/work-log/2026-09-18-prelive-wiring-p10-resolution.md", "md", None),
     ("eval/librarian_qualification/harness.py", "py", None),
     ("eval/librarian_qualification/build_gold.py", "py", None),

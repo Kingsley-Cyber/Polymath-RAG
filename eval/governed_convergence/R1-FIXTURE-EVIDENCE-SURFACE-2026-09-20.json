@@ -1,0 +1,779 @@
+{
+ "artifact": "GOVERNED-CONVERGENCE-V1 R1 \u2014 the SAME fixture run on the evidence-boundary surface (manifest trail.product_discovery 2.2.0)",
+ "date": "2026-09-20",
+ "production_head": "f206c33",
+ "fleet_bundle": "c0d86509ad39",
+ "trail_tree": "A41 == origin/main == de64d84",
+ "command": ".venv/bin/python scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery --corpus cinema --harness receipts --harness-receipts tests/fixtures/harness_receipts --require-evidence-text --require-surface evidence_boundary",
+ "exit_code": 0,
+ "external_spend_usd": 0,
+ "observations": {
+  "run_wall_s": 315,
+  "r0_run_wall_s": 181,
+  "boundary_calls": 6,
+  "boundary_call_wall_ms": [
+   29956,
+   22734,
+   24170,
+   33508,
+   11604,
+   24251
+  ],
+  "corpus_explorer": {
+   "B_retrieve_seed": {
+    "requested": true,
+    "fired": false,
+    "cause": "PLAN_FALLBACK"
+   },
+   "F_retrieve_hypotheses": {
+    "requested": true,
+    "fired": "2/2"
+   },
+   "graph_steps": "not requested (REQUEST_OFF by manifest)"
+  }
+ },
+ "receipt": {
+  "adapter_id": "trail.product_discovery",
+  "mcp_url": "http://127.0.0.1:8930/mcp",
+  "client": "mcp python client (streamable-http)",
+  "trail_calls_by_client": 0,
+  "supervised_worker_pid": 28101,
+  "adapter_tools_present": [
+   "adapter_cancel",
+   "adapter_list",
+   "adapter_next",
+   "adapter_result",
+   "adapter_start",
+   "adapter_status",
+   "adapter_submit"
+  ],
+  "adapters": [
+   "polymath.knowledge_brief",
+   "substack.article_development",
+   "trail.product_discovery"
+  ],
+  "run_id": "adr_12ddda16f9b589fbdf7dfab9f31efedf",
+  "run_ref": {
+   "run_id": "adr_12ddda16f9b589fbdf7dfab9f31efedf",
+   "adapter_id": "trail.product_discovery",
+   "adapter_version": "2.2.0",
+   "workflow_version": "2.0.0",
+   "created_at": "2026-09-20T15:07:23Z",
+   "status": "running"
+  },
+  "agent_steps": [
+   {
+    "step_id": "C_hypotheses",
+    "sequence": 5,
+    "evidence_refs": 131,
+    "knowledge_refs": 131,
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 21232,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 22,
+     "rows_with_ca4_grade": 22,
+     "kinds": [
+      "chunk",
+      "document",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 131,
+      "readable": 131,
+      "returned": 60,
+      "unresolved": 0,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "G_mechanisms",
+    "sequence": 11,
+    "evidence_refs": 200,
+    "knowledge_refs": 195,
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 18354,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 31,
+     "rows_with_ca4_grade": 31,
+     "kinds": [
+      "chunk",
+      "document",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "K_revise",
+    "sequence": 15,
+    "evidence_refs": 200,
+    "knowledge_refs": 187,
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 15393,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 27,
+     "rows_with_ca4_grade": 27,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "G_mechanisms",
+    "sequence": 18,
+    "evidence_refs": 200,
+    "knowledge_refs": 187,
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 15393,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 27,
+     "rows_with_ca4_grade": 27,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "K_revise",
+    "sequence": 22,
+    "evidence_refs": 200,
+    "knowledge_refs": 179,
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 11516,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 27,
+     "rows_with_ca4_grade": 27,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "G_mechanisms",
+    "sequence": 25,
+    "evidence_refs": 200,
+    "knowledge_refs": 179,
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 11516,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 27,
+     "rows_with_ca4_grade": 27,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "K_revise",
+    "sequence": 29,
+    "evidence_refs": 200,
+    "knowledge_refs": 171,
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 9762,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 20,
+     "rows_with_ca4_grade": 20,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "N_jobs",
+    "sequence": 32,
+    "evidence_refs": 200,
+    "knowledge_refs": 171,
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 9762,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 20,
+     "rows_with_ca4_grade": 20,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "W_interpret",
+    "sequence": 41,
+    "evidence_refs": 200,
+    "knowledge_refs": 162,
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 9762,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 20,
+     "rows_with_ca4_grade": 20,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   }
+  ],
+  "harness_actions": [
+   {
+    "step_id": "I_research",
+    "action_id": "hact_fdaad72e7a4f15dcf8307804",
+    "action_kind": "AGENT_RESEARCH",
+    "hypothesis_ids": 2,
+    "search_intents": 11,
+    "registry_snapshot": "trs-da9942986e52f832",
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 18354,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 31,
+     "rows_with_ca4_grade": 31,
+     "kinds": [
+      "chunk",
+      "document",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "I_research",
+    "action_id": "hact_459048cdf2cbb05ad74f3afe",
+    "action_kind": "AGENT_RESEARCH",
+    "hypothesis_ids": 2,
+    "search_intents": 11,
+    "registry_snapshot": "trs-da9942986e52f832",
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 15393,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 27,
+     "rows_with_ca4_grade": 27,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "I_research",
+    "action_id": "hact_712c37cf359c2111fe036303",
+    "action_kind": "AGENT_RESEARCH",
+    "hypothesis_ids": 2,
+    "search_intents": 11,
+    "registry_snapshot": "trs-da9942986e52f832",
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 11516,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 27,
+     "rows_with_ca4_grade": 27,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "P_reality",
+    "action_id": "hact_612c469e27d4fa85db4e957f",
+    "action_kind": "PRODUCT_REALITY_CHECK",
+    "hypothesis_ids": 2,
+    "search_intents": 4,
+    "registry_snapshot": "trs-da9942986e52f832",
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 9762,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 20,
+     "rows_with_ca4_grade": 20,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   },
+   {
+    "step_id": "S_supply",
+    "action_id": "hact_db9ad2c626b4cee2451f091e",
+    "action_kind": "SUPPLIER_RESEARCH",
+    "hypothesis_ids": 2,
+    "search_intents": 4,
+    "registry_snapshot": "trs-da9942986e52f832",
+    "evidence": {
+     "present": true,
+     "rows": 60,
+     "text_chars": 9762,
+     "rows_with_text": 60,
+     "rows_with_utility_role": 20,
+     "rows_with_ca4_grade": 20,
+     "kinds": [
+      "chunk",
+      "document",
+      "field_evidence",
+      "graph_fact"
+     ],
+     "coverage": {
+      "refs": 200,
+      "readable": 195,
+      "returned": 60,
+      "unresolved": 5,
+      "max_rows": 60,
+      "max_chars": 600
+     },
+     "surfaces": [
+      "evidence_boundary",
+      "retrieve"
+     ],
+     "degraded": []
+    }
+   }
+  ],
+  "restart": {
+   "killed_pid": 28101,
+   "respawned_pid": 28591
+  },
+  "rejected_submission": {
+   "error": {
+    "rejected": [
+     "payload: 'hypotheses' is a required property",
+     "payload: Additional properties are not allowed ('invented', 'supporting_evidence_ids' were unexpected)",
+     "cited ids not in context.evidence_refs: chunk_invented"
+    ]
+   },
+   "status": 422
+  },
+  "final_status": {
+   "status": "completed",
+   "steps_issued": 42,
+   "steps_accepted": 42,
+   "branch_loops": 2,
+   "gap": null,
+   "failure": null
+  },
+  "result": {
+   "status": "completed",
+   "output_keys": [
+    "contradictions",
+    "evidence_admissions",
+    "hypothesis_ids",
+    "product_opportunity",
+    "qualifications",
+    "score_refusals",
+    "trail_scores"
+   ],
+   "lineage_evidence": 162,
+   "receipts": 41,
+   "external_operations": [
+    {
+     "record_ids": [
+      "fr-02",
+      "fr-16",
+      "fr-26",
+      "seed-0259",
+      "seed-0262",
+      "seed-0265",
+      "seed-0268",
+      "seed-0271",
+      "seed-0274",
+      "seed-0277",
+      "seed-0280",
+      "seed-0283",
+      "seed-0286",
+      "seed-0289",
+      "seed-0614",
+      "seed-0617",
+      "seed-0620",
+      "seed-0623",
+      "seed-0626",
+      "seed-0629",
+      "seed-0632",
+      "seed-0635",
+      "seed-0638",
+      "seed-0641"
+     ],
+     "operation_id": "operation:d7d7f8e2df03979ea6d162157d71cddc",
+     "operation_kind": "registry.project",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:0b523c9f20d5e2be913e657784c4492b",
+     "operation_kind": "hypotheses.judge",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:ae30d6f395dee16a7a0fd581dfb84359",
+     "operation_kind": "gaps.compile",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "adm-operation:bb0cf82a0fe256938e6049c8b52418f9-bh1",
+      "adm-operation:bb0cf82a0fe256938e6049c8b52418f9-bh2",
+      "adm-operation:bb0cf82a0fe256938e6049c8b52418f9-fr0",
+      "adm-operation:bb0cf82a0fe256938e6049c8b52418f9-fr1",
+      "adm-operation:bb0cf82a0fe256938e6049c8b52418f9-fr2",
+      "adm-operation:bb0cf82a0fe256938e6049c8b52418f9-fr3",
+      "adm-operation:bb0cf82a0fe256938e6049c8b52418f9-fr4",
+      "adm-operation:bb0cf82a0fe256938e6049c8b52418f9-fr5"
+     ],
+     "operation_id": "operation:bb0cf82a0fe256938e6049c8b52418f9",
+     "operation_kind": "evidence.admit",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:471d0d341bf1916a680c21ecffa68e78",
+     "operation_kind": "hypotheses.judge",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:2e79c9a00f3e38ec1e79ee2c8d03c5db",
+     "operation_kind": "gaps.compile",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "adm-operation:0107e1a962078481d6813e9650a56513-bh1",
+      "adm-operation:0107e1a962078481d6813e9650a56513-bh2",
+      "adm-operation:0107e1a962078481d6813e9650a56513-fr0",
+      "adm-operation:0107e1a962078481d6813e9650a56513-fr1",
+      "adm-operation:0107e1a962078481d6813e9650a56513-fr2",
+      "adm-operation:0107e1a962078481d6813e9650a56513-fr3",
+      "adm-operation:0107e1a962078481d6813e9650a56513-fr4",
+      "adm-operation:0107e1a962078481d6813e9650a56513-fr5"
+     ],
+     "operation_id": "operation:0107e1a962078481d6813e9650a56513",
+     "operation_kind": "evidence.admit",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:8d8317962d1f3ca964677e179041cb00",
+     "operation_kind": "hypotheses.judge",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:9ed8019519d41191ccae59890bb19b18",
+     "operation_kind": "gaps.compile",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "adm-operation:75531694174349bb161e0c50fe5f5d95-bh1",
+      "adm-operation:75531694174349bb161e0c50fe5f5d95-bh2",
+      "adm-operation:75531694174349bb161e0c50fe5f5d95-fr0",
+      "adm-operation:75531694174349bb161e0c50fe5f5d95-fr1",
+      "adm-operation:75531694174349bb161e0c50fe5f5d95-fr2",
+      "adm-operation:75531694174349bb161e0c50fe5f5d95-fr3",
+      "adm-operation:75531694174349bb161e0c50fe5f5d95-fr4",
+      "adm-operation:75531694174349bb161e0c50fe5f5d95-fr5"
+     ],
+     "operation_id": "operation:75531694174349bb161e0c50fe5f5d95",
+     "operation_kind": "evidence.admit",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:e8af5d26a457c655d20790e90a5844ec",
+     "operation_kind": "hypotheses.judge",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:d944e8353bffaae5116b0a5ab8fc2655",
+     "operation_kind": "territory.project",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "adm-operation:417e57041f51e310798b92bf5b82564e-cp1",
+      "adm-operation:417e57041f51e310798b92bf5b82564e-cp2",
+      "adm-operation:417e57041f51e310798b92bf5b82564e-pr0",
+      "adm-operation:417e57041f51e310798b92bf5b82564e-pr1",
+      "adm-operation:417e57041f51e310798b92bf5b82564e-pr2"
+     ],
+     "operation_id": "operation:417e57041f51e310798b92bf5b82564e",
+     "operation_kind": "evidence.admit",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:60c6e82359700b1cb5fde2afbfb68a34",
+     "operation_kind": "opportunity.qualify",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "adm-operation:2edd72e504d815f70516250efc62125f-rk1",
+      "adm-operation:2edd72e504d815f70516250efc62125f-sp0",
+      "adm-operation:2edd72e504d815f70516250efc62125f-sp1",
+      "adm-operation:2edd72e504d815f70516250efc62125f-sp2"
+     ],
+     "operation_id": "operation:2edd72e504d815f70516250efc62125f",
+     "operation_kind": "evidence.admit",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:6fff48a3ee117ce40b15a8dc6b87882d",
+     "operation_kind": "opportunity.qualify",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "score:8dedc0db9ed5fe7749d276196cade1d6",
+      "score:b16669743dfb35470f164ecca76bae06"
+     ],
+     "operation_id": "operation:2a1797b2d6d54b54e0023e03df5e390b",
+     "operation_kind": "opportunity.score",
+     "external_system": "trailsignal"
+    }
+   ],
+   "unknowns": [],
+   "gap": null,
+   "cited_ids_in_lineage": 2
+  },
+  "readable_evidence": {
+   "agent_steps": 9,
+   "with_evidence_key": 9,
+   "with_text": 9,
+   "text_chars": 122690,
+   "rows_with_utility_role": 221,
+   "surfaces": [
+    "evidence_boundary",
+    "retrieve"
+   ],
+   "degraded": [],
+   "errors": []
+  },
+  "portfolio": {
+   "hypotheses": 2,
+   "tagged": [
+    "hyp_09443bcc4d8af4ed31a64059"
+   ],
+   "scored": [
+    "hyp_09443bcc4d8af4ed31a64059"
+   ],
+   "refused": [
+    [
+     "hyp_02e70ca366f78d083e7b74bb",
+     "HARD_GATE_UNMET"
+    ]
+   ],
+   "trail_score_record_ids": [
+    "score:8dedc0db9ed5fe7749d276196cade1d6"
+   ],
+   "qualifications": 0
+  }
+ }
+}
