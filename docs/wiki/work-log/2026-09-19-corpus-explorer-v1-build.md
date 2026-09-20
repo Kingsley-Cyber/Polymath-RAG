@@ -22,6 +22,15 @@ pre-feature-equivalent V2. shared/ is unit-provable in the worktree; ui.py is li
   (pure aggregation of CONCEPT/THEORY atom hits; RRF over global atom rank; Scout = optional additive
   corroboration only) + `activate_corpus(*, corpus_ids, fetch_atoms, ...)` (fail-open live loop over an
   injected fetch closure) + `activation_receipt`. `CONCEPT_ATOM_KINDS=("CONCEPT","THEORY")`.
+- **CE3 (origin + lineage + fusion, shared).** `chat_plan.ORIGIN_TYPES` += `"CORPUS_EXPLORE"` (MUST-FIX —
+  else `__post_init__` coerces to USER). `ranked_fusion.lineage_class`: `CORPUS_EXPLORE` → the EXISTING
+  `CLASS_BRIDGE` (same weight; no new tunable). `bridge_integration.bridges_to_subqueries` gains
+  `origin="BRIDGE"` + `id_prefix="br"` params (backward-compatible defaults → BRIDGE path byte-identical).
+- **CE2 (explorer expansion, shared, pure).** NEW `shared/polymath_shared/corpus_explore.py`:
+  `activations_to_concepts` (ActivationCandidate → bridge_compiler.Concept) + `plan_corpus_explore_expansion`
+  (reuses `compiler_eligible`/`compile_bridges`/`parse_and_validate`; emits origin=CORPUS_EXPLORE, id_prefix
+  `ce`; text-dedups; `_stash` receipt `corpus_explore_expansion`). NOT a second compiler — same machinery,
+  concept-level grounding, distinct origin.
 
 ## Proof
 - **CE1 UNIT_PROVEN** (executed path = worktree copy, verified: `import polymath_shared.corpus_activation`
@@ -31,6 +40,14 @@ pre-feature-equivalent V2. shared/ is unit-provable in the worktree; ui.py is li
   corroboration additive-only (same concept set, tagged + slightly higher score, non-corroborated
   unchanged); min_grounding filter; max_activations bound; sort determinism; malformed hits skipped;
   activate_corpus fail-open per corpus; receipt shape.
+- **CE2/CE3 UNIT_PROVEN** (executed path = worktree; import sources verified). `test_corpus_explore.py`
+  13/13 + backward-compat GREEN (bridge_integration + bridge_compiler + ranked_fusion unchanged; 53 total),
+  plus affected-module regression GREEN (subquery_provenance/ranked_lane/candidate_engine/latent_fusion_seam/
+  latent_selection, 83). Pins: **origin registered not coerced** (`CompiledQuery(origin="CORPUS_EXPLORE")`
+  survives); CORPUS_EXPLORE → CLASS_BRIDGE; expansion appends `ce*` subqueries (q0 untouched, receipt
+  stashed); factual intent + no-primary + no-concepts skip the compiler (generate NOT called); invented
+  derived_from dropped (inherited anti-invention); fail-open when generate raises; text-dedup;
+  **coexists with Scout BRIDGE with no id collision** (br* vs ce*, both origins present, q0 primary).
 
 ## Rejected claims
 - NOT claimed: live activation stability (same NL q0 -> same concepts). CE1 proves BUILDER determinism
@@ -38,6 +55,10 @@ pre-feature-equivalent V2. shared/ is unit-provable in the worktree; ui.py is li
 - NOT claimed: any orchestrator/ui.py behavior (CE4, live-only).
 
 ## Open contract gaps
-CE2 (explorer expansion reusing compile_bridges under origin=CORPUS_EXPLORE), CE3 (ORIGIN_TYPES +
-lineage_class + bridges_to_subqueries origin param), CE4 (ui.py gate + LATENT_ORIGINS routing + request
-flag), CE5 (flag-off equivalence), CE6/CE7 (live smoke + activation-reliability qualification), CE-UI.
+CE1-CE3 COMPLETE (shared, UNIT_PROVEN). Remaining: CE4 (ui.py gate + `LATENT_ORIGINS` C4/C5 routing +
+per-request flag threaded through `_compile_chat_plan`; live-only), CE5 (flag-off equivalence), merge +
+port-gated bounce, CE6/CE7 (live smoke + activation-reliability qualification), CE-UI (request field +
+capabilities key + Chat.tsx toggle). Contract dispositions: `chat_plan.ORIGIN_TYPES` UPDATED (additive);
+`ranked_fusion.lineage_class` UPDATED (CORPUS_EXPLORE→BRIDGE class); `bridge_integration.bridges_to_subqueries`
+UPDATED (additive origin/id_prefix params, BRIDGE default unchanged) — all backward-compatible, existing
+tests green.

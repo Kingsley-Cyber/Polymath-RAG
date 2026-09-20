@@ -62,8 +62,11 @@ ROLE_TYPES = ("direct", "prerequisite", "complement", "bridge", "contrast", "inv
 #: SUBQUERY-PROVENANCE-V1 / P10 — where a subquery CAME FROM (checklist retrieval-trace row).
 #: q0 and its aspect decomposition are USER; a scout-inspired subquery is PROFILE; a graph-derived
 #: target is GRAPH; a claim-gap resolution query (P10) is EVIDENCE_GAP; a WLK2C concept-bridge
-#: (bounded compiler) is BRIDGE; a wildcard-frontier bridge is WILDCARD.
-ORIGIN_TYPES = ("USER", "PROFILE", "GRAPH", "EVIDENCE_GAP", "BRIDGE", "WILDCARD")
+#: (bounded compiler) is BRIDGE; a wildcard-frontier bridge is WILDCARD; a CORPUS-EXPLORER-V1
+#: concept-activation-derived bridge is CORPUS_EXPLORE (distinct from Scout-derived BRIDGE so it can be
+#: observed/A-B'd/gated separately). MUST stay in this tuple — CompiledQuery.__post_init__ coerces an
+#: unknown origin to USER, which would wrongly pull the lane's chunks into CA4's answerability set.
+ORIGIN_TYPES = ("USER", "PROFILE", "GRAPH", "EVIDENCE_GAP", "BRIDGE", "WILDCARD", "CORPUS_EXPLORE")
 _TYPE_ROLE = {
     "PRIMARY": "direct", "DEFINITION": "prerequisite", "MECHANISM": "complement",
     "CAUSAL": "complement", "PROCEDURE": "complement", "EXAMPLE": "complement",

@@ -85,7 +85,9 @@ def lineage_class(lane: RankedLane) -> str:
     if lane.role == ROLE_Q0:
         return CLASS_Q0
     origin = (lane.origin or "").upper()
-    if origin == "BRIDGE":
+    if origin in ("BRIDGE", "CORPUS_EXPLORE"):
+        # CORPUS-EXPLORER-V1: corpus-activation-derived exploration rides the SAME fusion class/weight as
+        # a Scout-derived BRIDGE (owner lock: V1 tests the activation source, not a new ranking policy).
         return CLASS_BRIDGE
     if origin == "PROFILE":
         return CLASS_PROFILE

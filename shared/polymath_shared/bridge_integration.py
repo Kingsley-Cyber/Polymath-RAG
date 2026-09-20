@@ -73,10 +73,13 @@ def covered_concept_keys(plan_queries, root_query: str) -> set:
 
 
 def bridges_to_subqueries(bridges, concepts_by_key, *, start_index: int = 0,
-                          weight: float = BRIDGE_SUBQUERY_WEIGHT) -> list:
-    """Admitted CompiledBridges → BRIDGE-origin `CompiledQuery` subqueries (deterministic). Each carries
-    full lineage: origin=BRIDGE, role=bridge, inspired_by_profile=[concept source], target=concept key,
-    and a `reason` naming the concept + relation_to_q0. proposed_role rides in the reason (C5 authoritative)."""
+                          weight: float = BRIDGE_SUBQUERY_WEIGHT,
+                          origin: str = "BRIDGE", id_prefix: str = "br") -> list:
+    """Admitted CompiledBridges → latent-origin `CompiledQuery` subqueries (deterministic). Each carries
+    full lineage: origin (default BRIDGE), role=bridge, inspired_by_profile=[concept source], target=concept
+    key, and a `reason` naming the concept + relation_to_q0. proposed_role rides in the reason (C5
+    authoritative). CORPUS-EXPLORER-V1 reuses this with origin="CORPUS_EXPLORE"/id_prefix="ce" (distinct ids
+    so both expansions can coexist); the BRIDGE defaults keep the existing WLK2C path byte-identical."""
     from polymath_shared.chat_plan import MAX_QUERY_WORDS, CompiledQuery
     out = []
     for i, b in enumerate(bridges):
@@ -85,8 +88,8 @@ def bridges_to_subqueries(bridges, concepts_by_key, *, start_index: int = 0,
         if not q:
             continue
         out.append(CompiledQuery(
-            id=f"br{start_index + i}", type="ENTITY", query=q, weight=weight,
-            role="bridge", origin="BRIDGE",
+            id=f"{id_prefix}{start_index + i}", type="ENTITY", query=q, weight=weight,
+            role="bridge", origin=origin,
             inspired_by_profile=([concept.source] if (concept and concept.source) else []),
             profile_surface=(concept.label if concept else None),
             target=(concept.key if concept else b.derived_from),
