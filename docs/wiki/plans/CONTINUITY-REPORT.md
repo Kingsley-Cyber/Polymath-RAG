@@ -135,12 +135,13 @@ journal + dossier.
 **Fleet (live)** — UP, bundle `9cb421b4eeed`, 13 worker types healthy, `/ready` true, 0 in-flight adapter runs; Trail
 daemon :8767 from A41. The fleet does not survive a reboot (`scripts/boot_polymath.sh`; Trail stack via `zsh`).
 
-**MIGRATION DOC SET — `docs/migration/` IS THE ACTIVE MISSION CONTEXT, status WAITING (2026-09-20).** The owner's consolidation direction is locked: ONE `polymath-v4`
-checkout carries the governed ecommerce reference implementation — `adapters/ecommerce/` (harvested AutoResearch intelligence) + `governance/trail/` (the
-required deterministic Trail core, embedding AUTHORIZED if the in-process seam holds) on the EXISTING adapter runtime; no second runtime / SDK / ledger.
-Read `docs/migration/BOOTSTRAP_CONTEXT.md` → `MIGRATION_POLICY.md` → `EXECUTION_PLAN.md` → `CONTINUATION.md`. **`MIGRATION_POLICY.md` and
-`EXECUTION_PLAN.md` DO NOT EXIST YET — that is a stop: no execution until the owner supplies them (or asks for drafts).** `CONTINUATION.md` holds the
-verification of the bootstrap's reported facts and the two genuine blockers (the missing files; the commerce corpus for the real E2E).
+**Active mission:** Polymath ecommerce consolidation migration.
+**Mission context:** `docs/migration/`.
+**Controlling documents (owner-authored):** `MIGRATION_POLICY.md` · `BOOTSTRAP_CONTEXT.md` · `EXECUTION_PLAN.md` — **the policy and the plan have NOT been
+supplied yet; only `BOOTSTRAP_CONTEXT.md` is installed. That is a stop for autonomous execution.**
+**Current execution state:** `docs/migration/CONTINUATION.md` (Phase 0 done, read-only; nothing migrated; blockers = the two missing files and the
+commerce corpus). Agent-owned companions: `CAPABILITY_MAP.md`, `PARITY_MATRIX.md`, `AUTO_DECISIONS.md`, `ADR-TRAIL-EMBEDDING.md` (DRAFT),
+`FINAL_MIGRATION_REPORT.md` (skeleton).
 
 **OWNER REFRAME 2026-09-20 (register 11.362) — THIS IS NOW A MIGRATION / RECOVERY PROJECT; ALL IMPLEMENTATION IS HALTED until the owner reviews
 `docs/wiki/reports/2026-09-20/ECOMMERCE-MIGRATION-HARVEST-MAP.md`.** The original `TRAIL_AGENT_AUTORESEARCH` controller already has working ecommerce
