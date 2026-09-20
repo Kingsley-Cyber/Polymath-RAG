@@ -21,7 +21,7 @@ Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (t
 ## CURRENT — 2026-09-20 — **CORPUS-EXPLORE-FIRING-V1 COMPLETE + LIVE (registers 11.346–348; v1-finish-line item 1).**
 
 **Repository State** — branch `production`; HEAD = the CORPUS-EXPLORE-FIRING-V1 closeout commit (above local
-tag `v4-corpus-explore-firing-v1`, **UNPUSHED**); tree clean; merges `3366d8c` (Phase A) + `c4391fc` (Phase
+tag `v4-corpus-explore-firing-v1` → `db2785a`, **ON ORIGIN** since 2026-09-20; docs-only commits sit above it); tree clean; merges `3366d8c` (Phase A) + `c4391fc` (Phase
 B); worktree `pmv4-firing` / branch `explorer/firing-reliability` merged. `origin/main` = `cf1ee4f` (far
 behind, PR-squash-only); no `origin/production`.
 
@@ -118,8 +118,8 @@ necessary. Four measurements, **D FIRST** (already surfaced as a likely correctn
   gap exists → TARGETED profile/atom backfill only. Do NOT re-ingest / re-chunk / re-embed the corpus unless
   evidence shows it is necessary.
 Then: item 3 migrate agent callers → 4 freeze EvidencePacket + MCP contract → 5 fresh release qual → 6 tag.
-Passive: watch the JSONL ledger for a fired row with `stages.plan_fallback` (the fix seen over HTTP). Push of
-`v4-corpus-explore-firing-v1` happens ONLY on the owner's explicit word.
+Passive: watch the JSONL ledger for a fired row with `stages.plan_fallback` (the fix seen over HTTP). The
+NEXT tag is again cut LOCALLY and pushed only on the owner's explicit per-push word.
 
 **Do Not Do**
 - Do NOT make the Corpus Explore toggle override a no-retrieval compiler route — DEFERRED OWNER DESIGN
@@ -176,10 +176,10 @@ recoverable from `origin` (`Kingsley-Cyber/Polymath-RAG`) via annotated tags, ea
 | `v4-latent-query-fusion-v2` | `4500c20` | LATENT-QUERY-FUSION-V2 |
 | `v4-corpus-explorer-v1` | `3e88b06` | CORPUS-EXPLORER-V1 |
 | `v4-reasoning-boundary-slice1` | `062f4fa` | REASONING-BOUNDARY Slice 1 (evidence boundary, policy OFF) |
-| `v4-reasoning-boundary-v1` | `12e907b` | **CURRENT authoritative REMOTE recovery checkpoint** |
-| `v4-corpus-explore-firing-v1` | *(closeout commit — `git rev-parse v4-corpus-explore-firing-v1^{commit}`)* | CORPUS-EXPLORE-FIRING-V1 — **LOCAL ONLY, UNPUSHED** (register 11.348); not recoverable from origin until the owner says push |
+| `v4-reasoning-boundary-v1` | `12e907b` | REASONING-BOUNDARY-V1 |
+| `v4-corpus-explore-firing-v1` | `db2785a` | **CURRENT authoritative REMOTE recovery checkpoint** — CORPUS-EXPLORE-FIRING-V1; pushed 2026-09-20 on the owner's explicit per-push word (register 11.350), remote == local verified |
 
-Recover: `git fetch origin --tags && git checkout -b production v4-reasoning-boundary-v1`. Local `production`
+Recover: `git fetch origin --tags && git checkout -b production v4-corpus-explore-firing-v1`. Local `production`
 HEAD may sit docs-only commits AHEAD of the newest tag (ledger notes like this one) — the tag is the code
 checkpoint. `.env` is gitignored and NOT in any tag: live flags (`POLYMATH_REASONING_POLICY=1`,
 `POLYMATH_CORPUS_EXPLORER=1`, `POLYMATH_CORPUS_EXPLORER_FALLBACK_OPEN=1`, fusion/bridge =1) must be re-set by hand after a recovery (`.env.example`
