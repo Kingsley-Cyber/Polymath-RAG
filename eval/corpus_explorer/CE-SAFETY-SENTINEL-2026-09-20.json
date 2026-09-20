@@ -1,0 +1,102 @@
+{
+ "contract": "corpus-explorer-safety-sentinel-v1",
+ "feature": "corpus_explorer=ON",
+ "n": 9,
+ "unsupported_hallucinations": 0,
+ "q0_preserved_failures": 0,
+ "provenance_incomplete": 0,
+ "supported_gold_misses": 0,
+ "PASS": true,
+ "rows": {
+  "unsup_nitrogen": {
+   "unsupported": true,
+   "declined": true,
+   "hallucinated": false,
+   "gold_hit": null,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": null,
+   "err": null
+  },
+  "unsup_taxes": {
+   "unsupported": true,
+   "declined": true,
+   "hallucinated": false,
+   "gold_hit": null,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": null,
+   "err": null
+  },
+  "unsup_chess": {
+   "unsupported": true,
+   "declined": true,
+   "hallucinated": false,
+   "gold_hit": null,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": null,
+   "err": null
+  },
+  "unsup_python": {
+   "unsupported": true,
+   "declined": true,
+   "hallucinated": false,
+   "gold_hit": null,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": null,
+   "err": null
+  },
+  "pmap_murch_blink": {
+   "unsupported": false,
+   "declined": false,
+   "hallucinated": false,
+   "gold_hit": true,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": 0,
+   "err": null
+  },
+  "pmap_savecat": {
+   "unsupported": false,
+   "declined": false,
+   "hallucinated": false,
+   "gold_hit": true,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": 4,
+   "err": null
+  },
+  "direct_180": {
+   "unsupported": false,
+   "declined": false,
+   "hallucinated": false,
+   "gold_hit": true,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": 0,
+   "err": null
+  },
+  "direct_facs": {
+   "unsupported": false,
+   "declined": false,
+   "hallucinated": false,
+   "gold_hit": true,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": 0,
+   "err": null
+  },
+  "synth_edit_music": {
+   "unsupported": false,
+   "declined": false,
+   "hallucinated": false,
+   "gold_hit": true,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": 0,
+   "err": null
+  }
+ }
+}

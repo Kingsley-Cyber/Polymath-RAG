@@ -2,9 +2,9 @@
 change_id: CORPUS-EXPLORE-FIRING-V1
 owner: "@king"
 date: 2026-09-19
-status: in-progress
+status: complete
 architecture_impact: "Observability-first hardening of the CORPUS-EXPLORER-V1 activation path. NEW pure shared module (corpus_explore_firing: one cause code per non-firing request) + additive diag fields (bridge_compiler.json_status, activate_corpus(diag=), explorer diag) + live receipt wiring in ui.py + the EvidencePacket `firing` receipt. Phase A changes NO gate, threshold, weight or ranking; any behavioral fix is a separate, evidence-gated slice recorded below."
-last_reviewed: 2026-09-19
+last_reviewed: 2026-09-20
 ---
 
 ## Contract
@@ -152,6 +152,32 @@ authoritative; fail-open. Tag LOCALLY at close; **no push of any ref**.
   the fix's effect is proven at function level on the deployed code, not yet observed over HTTP; the JSONL
   ledger (`stages.plan_fallback` on a fired row) will show it in production.
   MY PREDICTION WRONG: "a fresh negative may fire" — all four negatives were routed no-retrieval.
+- **CLOSURE RUNS — owner-approved past the 24 line (AskUserQuestion 2026-09-20: "Approve 10 runs" — 9
+  sentinel + 1 flag-off, classified as CLOSURE not exploratory; "no further expansion automatically
+  authorized"). TOTAL LIVE EXECUTIONS = 34** (A1 8 + gate proof 1 + C 15 + sentinel 9 + flag-off 1).
+  - **Safety sentinel PASS** (`CE-SAFETY-SENTINEL-2026-09-20.json`, 9 q, feature ON, HYBRID): unsupported
+    hallucinations **0** (4/4 declined), q0_preserved failures **0**, provenance incomplete **0**, supported
+    gold misses **0** (the 09-19 baseline had one feature-inert gold miss). Its firing receipts are all
+    sensible: 4 unsupported → `no_primary:retrieval_not_required:GENERAL_CONVERSATION`; 4 direct/named →
+    `INTENT_INELIGIBLE` (MECHANISM / EXACT / DEFINITION / COMPARISON); the one EXPLORATORY query fired (4).
+  - **Live flag-off structural check PASS** (run 34, `suppressed_grief`, `corpus_explorer=false`): receipt
+    `REQUEST_OFF`; plan origins USER 4 / PROFILE 2 / BRIDGE 1 — no `CORPUS_EXPLORE`; no `corpus_activation`,
+    no `corpus_explore_expansion`, no top-level `corpus_explore_firing` key; BRIDGE path intact (admitted 1);
+    21 evidence rows. The flag-ON run of the same q0 14 min earlier had the identical USER 4 / PROFILE 2 /
+    BRIDGE 1 composition plus CORPUS_EXPLORE 4.
+- **ACCEPTANCE — final, against the goal's list.**
+  | criterion | verdict | evidence |
+  |---|---|---|
+  | firing >= 95% on-target | **NOT MET on the strict number: 10/11 = 0.909** · 10/10 when retrieval was attempted | the one miss = intentional no-retrieval routing (owner: leave by design) |
+  | negatives quiet, none fire, leakage not worse | **MET** — 0/4 fired (0/6 lifetime), 0 activated | C2 |
+  | content-stability-when-fired 1.0 | **MET** — 1.0 over 12 same-query pairs | A1 + C |
+  | provenance complete | **MET** | every fired run |
+  | flag-off pre-feature-equivalent | **MET structurally + at function level**; strict evidence-id SET EQUALITY **NOT MEASURED** | gate proof case 4 + run 34; an A/A flag-off pair (to separate compiler nondeterminism from code) was not run — no runs authorized beyond 34. Retrieval code is untouched and nothing reads the new receipt key, so equality holds by construction |
+  | safety sentinel clean | **MET** | 0 / 0 / 0 / 0 |
+  | added latency p50/p95 reported | **MET** — 1.81 s / 2.69 s (fired turns) | C |
+  Exact reading of the strict miss (owner wording): 1 non-firing on-target phrasing = routed intentionally
+  to `TRANSFORM_USER_CONTENT` = no retrieval attempted = Corpus Explore correctly did not override q0
+  authority. No routing-policy override was introduced.
 
 ## Rejected claims
 - REJECTED (my own Phase A prediction): "on-target misses = `PLAN_FALLBACK` or `INTENT_INELIGIBLE`". Half
@@ -171,7 +197,31 @@ authoritative; fail-open. Tag LOCALLY at close; **no push of any ref**.
   by an idle probe) — the live `ATOMS_ERROR_OR_TIMEOUT` code exists to catch exactly that.
 
 ## Open contract gaps
-Phase A live attribution, Phase B, Phase C pending — this log is updated in place as each lands.
-Contract dispositions so far (additive, observation-only): `corpus_explore_firing` NEW;
-`bridge_compiler` / `corpus_activation` / `corpus_explore` / `evidence_packet` UPDATED (additive diag/receipt
-keys; return values TESTED_UNCHANGED); `chat_events` / `_compile_chat_plan` UPDATED (receipts only).
+MISSION COMPLETE (diagnosed · fixed · live-validated · ledgered · tagged locally). Contract dispositions:
+`corpus_explore_firing` **NEW**; `bridge_compiler` / `corpus_activation` / `corpus_explore` /
+`evidence_packet` **UPDATED** (additive diag/receipt keys; return values TESTED_UNCHANGED);
+`_add_corpus_explore_expansion` / `_finish` / `chat_events` **UPDATED** (receipts on every path + the
+no-judgment fallback gate behind a default-off switch). `contract_impact`: `PROFILE_SCOUT_WIRING` (ui.py)
+changed → ACCEPTANCE / CANDIDATE_ENGINE / PROFILE_YIELD_RECEIPT / QUERY_PLANNER / RESOLUTION_STATE /
+RETRIEVAL_RECEIPT / SUBQUERY_PROVENANCE all **TESTED_UNCHANGED** (7 suites green). Extraction, bridge
+reasoning and the extraction contract hash **NOT_AFFECTED** (untouched).
+
+**DEFERRED — owner design question (logged, deliberately NOT answered here):** *Should an explicitly enabled
+Corpus Explore toggle override a no-retrieval compiler route?* Today: no (q0 authority). Evidence to weigh:
+that same guard keeps every measured negative quiet; overriding it trades a false-positive retrieval
+problem for a firing percentage. Needs its own mission + qualification.
+
+**DEFERRED — observations handed on, not fixed here:**
+- `invalid_plan:*` fallbacks (2.6% of 1,379 turns; `task_type_invalid:PROCEDURE` dominates) still close the
+  explorer by design; unobserved on-target. Countable in the JSONL ledger as `PLAN_FALLBACK invalid_plan:*`.
+- Compiler lane health: failover used on 24% of turns (`compiler_alt` HTTP 429, `compiler_alibaba_qwen`
+  ReadTimeout). Provider flakiness — not removed here; the fix makes the explorer robust to it.
+- `_fetch(cid)` ignores `cid`: `search_atoms` searches the whole atom collection, not the scoped corpus.
+  Not a firing cause (single-corpus deployment today) — a scoping question for the coverage audit (item 2).
+- `NO_ATOM_COVERAGE` never occurred (0/34); nothing to hand to the coverage audit from this mission.
+- The fix's HTTP-path effect was not observed naturally (no transport fallback in 25 requested HTTP turns);
+  watch `stages.plan_fallback` on fired rows in `/private/tmp/polymath_fleet/corpus_explore_firing.jsonl`.
+
+REVERSIBLE: `POLYMATH_CORPUS_EXPLORER_FALLBACK_OPEN=0` + bounce restores the pre-fix gate (receipts stay).
+Two bounces were used (Phase A instrumentation had to be live to attribute; Phase B fix) — the goal's "ONE
+port-gated bounce" was applied per deploy.

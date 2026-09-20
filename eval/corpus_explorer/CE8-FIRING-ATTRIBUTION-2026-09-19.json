@@ -2031,9 +2031,100 @@
      "flag_off": false
     }
    ]
+  },
+  {
+   "batch": "F1",
+   "question": "Closure run (owner-approved past 24): with the request flag OFF, is the turn structurally pre-feature (no CORPUS_EXPLORE work, receipt REQUEST_OFF, no new top-level key)?",
+   "flag_off": true,
+   "ts": "2026-09-20T00:10:49",
+   "runs": [
+    {
+     "q": "make a character's suppressed grief visible while they try hard to hide it",
+     "err": null,
+     "latency_s": 25.5,
+     "answer_event": true,
+     "firing": {
+      "contract": "corpus-explore-firing-v1",
+      "requested": false,
+      "fired": false,
+      "cause": "REQUEST_OFF",
+      "detail": null,
+      "stages": {
+       "fetch_errors": 0,
+       "intent": "APPLICATION"
+      }
+     },
+     "fired": false,
+     "cause": "REQUEST_OFF",
+     "detail": null,
+     "activated": false,
+     "n_activations": 0,
+     "concept_ids": [],
+     "provenance_complete": true,
+     "n_ce_subqueries": 0,
+     "ce_subquery_ids": [],
+     "expansion": {
+      "attempted": null,
+      "added": null,
+      "eligible": null,
+      "reason": null,
+      "fallback_reason": null,
+      "json_status": null,
+      "generate_error": null,
+      "generated": null,
+      "admitted": null,
+      "latency_ms": null
+     },
+     "plan": {
+      "intent": "APPLICATION",
+      "task_type": "CREATE_FROM_KNOWLEDGE",
+      "retrieval_required": true,
+      "retrieval_skipped": false,
+      "fallback": false,
+      "fallback_reason": null,
+      "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+      "wall_ms": 3620.6,
+      "attempts": null,
+      "n_queries": 7
+     },
+     "compile_phase": {
+      "fallback": false,
+      "task_type": "CREATE_FROM_KNOWLEDGE",
+      "wall_ms": 3620.6,
+      "queries": 7
+     },
+     "evidence_ids": [
+      "chunk_133edaea085947a94fbaa0ab13fff5eac48794e62874e03c28c880a0efe476b2",
+      "chunk_3506091aa063ed4f80c1340641f38574fbc251add198b7d87200ce066eafb39a",
+      "chunk_6269429c4712201581e507b2e057a655644d8376a26a72aa93a83d20e0f95db0",
+      "chunk_70fbd8307a82c89241ee6b74aad409d130f2dab5c2d02de60f57a43edec66906",
+      "chunk_75517c013e6c9484640ed6e616ce38d61d634e328dd021b21d9d3e577bcd6c48",
+      "chunk_7fac2a1d38e8f48c71b90c92a70a6292f7e60e7f5d9bda72c1eb1f6ad323ab2c",
+      "chunk_8bcadeb28588ce2ebaef2bb379f2158ae7511999f9d5b50e279b0ebcd6a3867f",
+      "chunk_8e7e390ce421d37997ee5b4a4ba7ea72a0c8b18a970c43280c6ee5f4b2173d7e",
+      "chunk_91edcf26939071e96ed36478039043a928e6e7c2a3a00c221581a06d2fc5ec30",
+      "chunk_921e380a6144bd9456e5d3d56d04e7f150357d0fa19fe37822881cdb40dec5ba",
+      "chunk_92be5e1838334d061f7083ef18cd5084a5c4de018bc98bba011fbd5fd8778604",
+      "chunk_9f7c46ee1387c3de9410b1d78644ad8c6d60d4cd37005ad2180b283cc73abc47",
+      "chunk_a20ea9bbb8fbfac9e77bfe4305ed9262c3a51654acb5b38e7bba829b1d65403c",
+      "chunk_a928b08a94021c34d21e9295281bffa51d0cdeac2ea7e5d279f0da77b275336b",
+      "chunk_ae3dc9323aefba895cb7faf78be0e21c3104fb030c3ceb278d7b5bdf4f02e38f",
+      "chunk_c4c40020fd51143cf546a5bff6311677d2b42021c42f5e9c8ee308108fb42039",
+      "chunk_cec65e01d22c648d7575d3e5b69411b91a7fb705e45f2eadc6d8961be324bc0e",
+      "chunk_dced1ce513ea1164ff718fa17c77cf22ccf97f8a4b6415b898409422c647f26e",
+      "chunk_e92adab1309f76188144da9116038a65b4ffd69d8cd0c1d423b81f8885df65df",
+      "chunk_fd4b3ede6a3a170546acff7003fa378fa48b6cc8a9226213ae1e470977794bdf",
+      "chunk_fe34f9ce60ba5c656c1e0bfcae466a9c40b9aab78df78de198125220132d853c"
+     ],
+     "key": "suppressed_grief",
+     "kind": "target",
+     "seq": 24,
+     "flag_off": true
+    }
+   ]
   }
  ],
- "n_live_executions": 23,
+ "n_live_executions": 24,
  "cause_table": {
   "target": {
    "n": 17,

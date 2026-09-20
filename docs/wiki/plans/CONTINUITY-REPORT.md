@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-18
+last_reviewed: 2026-09-20
 ---
 
 # CONTINUITY REPORT — the single bootstrap (golden-run edition)
@@ -18,7 +18,100 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-19 — **REASONING-BOUNDARY-V1 LIVE (registers 11.340–344; RB0→RB4, two proven reversible slices).**
+## CURRENT — 2026-09-20 — **CORPUS-EXPLORE-FIRING-V1 COMPLETE + LIVE (registers 11.346–348; v1-finish-line item 1).**
+
+**Repository State** — branch `production`; HEAD = the CORPUS-EXPLORE-FIRING-V1 closeout commit (above local
+tag `v4-corpus-explore-firing-v1`, **UNPUSHED**); tree clean; merges `3366d8c` (Phase A) + `c4391fc` (Phase
+B); worktree `pmv4-firing` / branch `explorer/firing-reliability` merged. `origin/main` = `cf1ee4f` (far
+behind, PR-squash-only); no `origin/production`.
+
+**Active Mission** — NONE in flight. Owner's v1 finish line: item 1 (activation firing) CLOSED here; **next
+= item 2, concept-atom COVERAGE AUDIT** (then 3 migrate agent callers → 4 freeze EvidencePacket + MCP
+contract → 5 fresh release qualification → 6 final release tag).
+
+**Completed Since Last Bootstrap**
+- 11.346 Phase A instrumentation: every non-firing Corpus Explore request now records exactly ONE of 12
+  cause codes (`shared/polymath_shared/corpus_explore_firing.py`, first closed gate in pipeline order);
+  $0 substrate probe 40/40 deterministic → idle `search_atoms` exonerated.
+- 11.347 Live batch A1 (8) + $0 receipt-ledger forensics (1,379 turns) → ROOT CAUSES; Phase B narrow fix.
+- 11.348 Fix live + gate proof 5/5; Phase C re-measure; owner-approved closure runs; sentinel PASS.
+
+**Current Contract State**
+- Firing receipt `corpus-explore-firing-v1` = `{requested, fired, cause, detail, stages}`. Surfaced at
+  `retrieval.chat_plan.compiler.corpus_explore_firing` (every turn), `retrieval.corpus_explore_firing`
+  (REQUESTED turns only), EvidencePacket `receipts.firing`, and the JSONL rate ledger
+  `/private/tmp/polymath_fleet/corpus_explore_firing.jsonl` (requested turns, q0 hashed;
+  `POLYMATH_CE_FIRING_RECEIPT` overrides the path).
+- **`fired` is STRICT**: the explorer added >=1 `CORPUS_EXPLORE` subquery to a plan whose retrieval ran.
+  (CE7's looser "activated" = n_activations>0 is NOT the same thing — CE7's 14/18 = on-target 13/15.)
+- Fallback gate: a **NO-JUDGMENT** compiler fallback (`transport:` / `budget_exceeded:` / `invalid_json` /
+  `compiler_unavailable:` / `join_failed:`) lets the explorer run; **`invalid_plan:*` + unknown reasons stay
+  closed**. Switch `POLYMATH_CORPUS_EXPLORER_FALLBACK_OPEN` (code default 0 = old gate; **live `.env` = 1**).
+- ASYMMETRY to know: `_add_bridge_expansion` has NO fallback gate at all (the CORPUS-EXPLORER-V1
+  plan-of-record said the explorer's gate "mirrors" it — that was wrong).
+- **q0 AUTHORITY stands**: no PRIMARY (compiler routed the turn no-retrieval) ⇒ no exploration, receipt
+  `OTHER no_primary:retrieval_not_required:<task_type>`. NOT overridden (owner decision 2026-09-20).
+- Additive diag: `bridge_compiler` `json_status`; `activate_corpus(diag=)`; explorer diag `json_status` /
+  `generate_error` / `deduped_existing`.
+
+**Active Impact Closure** — changed: `PROFILE_SCOUT_WIRING` (ui.py). Affected (transitive): ACCEPTANCE,
+CANDIDATE_ENGINE, PROFILE_YIELD_RECEIPT, QUERY_PLANNER, RESOLUTION_STATE, RETRIEVAL_RECEIPT,
+SUBQUERY_PROVENANCE → all **TESTED_UNCHANGED**. Extraction / bridge reasoning / extraction contract hash
+**NOT_AFFECTED**. Deferred: the toggle-vs-routing design question (below). Blocked/unresolved: none.
+
+**Proof Status**
+- `corpus_explore_firing` + additive diag: **UNIT_PROVEN** (18 tests; executed path = worktree) + 202-test
+  impacted sweep + 7 contract-impact suites green.
+- Receipts on every live turn: **LIVE_PATH_PROVEN** (0/23 requested HTTP turns without a receipt).
+- Fallback-gate fix: **LIVE_PATH_PROVEN at function level on the DEPLOYED module** (5/5,
+  `eval/corpus_explorer/ce8_fallback_gate_live.py`). NOT yet observed over HTTP — no transport fallback
+  occurred naturally in 25 requested turns (base rate ~2.2%).
+- Phase C: on-target strict **10/11 (0.909)**; **10/10 when retrieval was attempted** (14/14 lifetime);
+  6/6 unseen queries fire; negatives 0/4 fired + 0 activated; content stability 1.0 (12 pairs); provenance
+  complete; explorer latency p50 1.81 s / p95 2.69 s; safety sentinel PASS (0/0/0/0); live flag-off
+  structural check PASS.
+- **NOT MET / NOT MEASURED (do not inherit false confidence):** strict >=95% (the one miss is an intentional
+  `TRANSFORM_USER_CONTENT` no-retrieval routing — by design); strict flag-off evidence-id SET EQUALITY (no
+  A/A pair run; holds by construction — retrieval code untouched, nothing reads the receipt key).
+
+**Runtime / Test Resolution** — `.venv` editable `.pth` resolves `orchestrator`/`workers`/`control` to the
+MAIN checkout; `shared/` resolves to the current worktree under pytest. `ui.py` is live-only-provable. Eval
+scripts that import `orchestrator` must run from MAIN with `.env` sourced.
+
+**Working Tree** — clean. Scratch (session scratchpad, not in repo): `.env` backup `env.bak.pre-firing`.
+
+**Tooling State** — unchanged (graft / contract_impact / ruff-S advisory; the pre-commit hook's ruff call
+fails under system python3 — "No module named ruff" — advisory only, pre-existing).
+
+**Fleet (live)** — bundle `327bcbd2385f`, 13 worker types, one bundle, `/ready` true, sidecars up.
+Orchestrator env: `POLYMATH_CORPUS_EXPLORER=1`, `POLYMATH_CORPUS_EXPLORER_FALLBACK_OPEN=1`,
+`POLYMATH_REASONING_POLICY=1`, `POLYMATH_CHAT_LATENT_FUSION=1`, `POLYMATH_CHAT_LATENT_SELECTION=1`,
+`POLYMATH_CHAT_BRIDGE_COMPILER=1` (`.env` is gitignored — read the LIVE file, not `.env.example`).
+
+**Next Action**
+1. Item 2 — concept-atom COVERAGE AUDIT ($0, read-only): total documents · documents with profile atoms ·
+   with CONCEPT/THEORY atoms · missing profile extraction · stale profile versions · failed extraction
+   rows. Include the scoping observation: `_add_corpus_explore_expansion._fetch(cid)` ignores `cid`
+   (`search_atoms` searches the whole atom collection). If gaps → propose a TARGETED backfill; never re-ingest.
+2. Passive: watch the JSONL ledger for a fired row with `stages.plan_fallback` (the fix seen over HTTP) and
+   for any `PLAN_FALLBACK invalid_plan:*` on an on-target query.
+3. Push of `v4-corpus-explore-firing-v1` happens ONLY on the owner's explicit word.
+
+**Do Not Do**
+- Do NOT make the Corpus Explore toggle override a no-retrieval compiler route — DEFERRED OWNER DESIGN
+  QUESTION, deliberately unanswered: *should an explicitly enabled Corpus Explore toggle override a
+  no-retrieval compiler route?* (That guard also keeps every measured negative quiet.)
+- Do NOT open the explorer for `invalid_plan:*` fallbacks without on-target evidence.
+- Do NOT tune thresholds / weights / `POLYMATH_CORPUS_EXPLORER_*` bounds to a query set; no activation-score
+  threshold; no new fusion weight; no parent-map / entity-card / graph activation (v2).
+- Do NOT run more live qualification for this mission: 34 executions spent, none further authorized.
+- Do NOT push any ref (tag, `production`, `main`) without the owner's explicit per-push word.
+
+**Live Qualification Queue** — none open for this mission.
+
+**Deferred Architecture** — graph traversal / bounded multi-hop; toggle-vs-routing override (own mission).
+
+## PRIOR — 2026-09-19 — **REASONING-BOUNDARY-V1 LIVE (registers 11.340–344; RB0→RB4, two proven reversible slices).**
 Two workstreams shipped to `production`. (1) **Evidence boundary:** `chat_events` short-circuits before
 synthesis when `req.evidence_only` → returns a versioned, size-bounded **EvidencePacket** (`shared/
 polymath_shared/evidence_packet.py`: utility_role DIRECT/COMPLEMENTARY/DIVERGENT + ca4_grade
@@ -53,12 +146,13 @@ recoverable from `origin` (`Kingsley-Cyber/Polymath-RAG`) via annotated tags, ea
 | `v4-latent-query-fusion-v2` | `4500c20` | LATENT-QUERY-FUSION-V2 |
 | `v4-corpus-explorer-v1` | `3e88b06` | CORPUS-EXPLORER-V1 |
 | `v4-reasoning-boundary-slice1` | `062f4fa` | REASONING-BOUNDARY Slice 1 (evidence boundary, policy OFF) |
-| `v4-reasoning-boundary-v1` | `12e907b` | **CURRENT authoritative recovery checkpoint** |
+| `v4-reasoning-boundary-v1` | `12e907b` | **CURRENT authoritative REMOTE recovery checkpoint** |
+| `v4-corpus-explore-firing-v1` | *(closeout commit — `git rev-parse v4-corpus-explore-firing-v1^{commit}`)* | CORPUS-EXPLORE-FIRING-V1 — **LOCAL ONLY, UNPUSHED** (register 11.348); not recoverable from origin until the owner says push |
 
 Recover: `git fetch origin --tags && git checkout -b production v4-reasoning-boundary-v1`. Local `production`
 HEAD may sit docs-only commits AHEAD of the newest tag (ledger notes like this one) — the tag is the code
 checkpoint. `.env` is gitignored and NOT in any tag: live flags (`POLYMATH_REASONING_POLICY=1`,
-`POLYMATH_CORPUS_EXPLORER=1`, fusion/bridge =1) must be re-set by hand after a recovery (`.env.example`
+`POLYMATH_CORPUS_EXPLORER=1`, `POLYMATH_CORPUS_EXPLORER_FALLBACK_OPEN=1`, fusion/bridge =1) must be re-set by hand after a recovery (`.env.example`
 defaults are 0). When later work ships, cut a new annotated tag LOCALLY and record it here as UNPUSHED;
 push a tag ONLY on the owner's explicit word for that push — the 2026-09-19 push was a ONE-TIME
 authorization, not a standing one (no ref of any kind is pre-authorized). Move the CURRENT marker only
