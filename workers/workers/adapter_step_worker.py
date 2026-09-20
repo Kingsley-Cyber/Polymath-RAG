@@ -6,7 +6,10 @@ gap, or the per-claim step budget is spent → release the lease. A crash mid-st
 next claim re-executes the ISSUED step idempotently (every step is a single committed unit).
 
 Knowledge steps reach Polymath through the orchestrator's HTTP API (POLYMATH_ORCH_URL, default 127.0.0.1:7200) —
-the same seam research/ uses; workers never import orchestrator code (architecture/dependencies.json).
+the same seam research/ uses; workers never import orchestrator code (architecture/dependencies.json). The outbound
+surface is an ALLOW-LIST owned by polymath_shared.adapter.evidence_boundary: the legacy retrieve lane, the plan lane, and
+(GOVERNED-CONVERGENCE-V1 TG2b, opt-in per manifest step via `config.surface: evidence_boundary`) the evidence route, which
+returns an EvidencePacket with NO synthesis. This worker never reaches a Polymath synthesis route.
 EXTERNAL_OPERATION steps call TrailSignal's BOUNDED synchronous operations (ADR-0019 §8): registry.project, gaps.compile,
 evidence.admit, hypotheses.judge, territory.project, opportunity.qualify, opportunity.score. HARNESS_ACTION steps are never
 executed here — the host harness answers them through adapter_submit.
@@ -25,7 +28,7 @@ from typing import Any
 
 import httpx
 
-from polymath_shared.adapter import service
+from polymath_shared.adapter import evidence_boundary as EB, service
 from polymath_shared.adapter.manifest import Manifest
 from polymath_shared.adapter.transitions import RunState
 from polymath_shared.db import tx
@@ -120,12 +123,59 @@ def _trim_rows(rows: list[dict[str, Any]], max_text: int = 700) -> list[dict[str
     return out
 
 
-def _orch_post(path: str, body: dict[str, Any]) -> dict[str, Any]:
-    with httpx.Client(timeout=HTTP_TIMEOUT_S) as c:
-        r = c.post(f"{ORCH}{path}", json=body)
+class OrchUnavailable(RuntimeError):
+    """The orchestrator could not be reached or failed server-side (transport error, timeout, 5xx)."""
+
+
+class OrchRejected(RuntimeError):
+    """The orchestrator refused the request (4xx): a caller defect, never an availability problem — so never a fallback."""
+
+
+def _ua(step: dict[str, Any], state: RunState) -> str:
+    return EB.user_agent(state.run_id, step["step_id"], step["sequence"])
+
+
+def _orch_post(path: str, body: dict[str, Any], *, user_agent: str | None = None) -> dict[str, Any]:
+    """POST to the orchestrator — ONLY to a path on the evidence-boundary allow-list. The User-Agent names run/step/sequence so
+    every call's query receipt is attributable to the adapter step that made it."""
+    EB.assert_allowed_path(path)
+    try:
+        with httpx.Client(timeout=HTTP_TIMEOUT_S) as c:
+            r = c.post(f"{ORCH}{path}", json=body, headers=({"User-Agent": user_agent} if user_agent else None))
+    except httpx.HTTPError as exc:
+        raise OrchUnavailable(f"orchestrator {path} unreachable: {type(exc).__name__}: {exc}"[:400]) from exc
+    if r.status_code >= 500:
+        raise OrchUnavailable(f"orchestrator {path} -> {r.status_code}: {r.text[:300]}")
     if r.status_code >= 400:
-        raise RuntimeError(f"orchestrator {path} -> {r.status_code}: {r.text[:300]}")
+        raise OrchRejected(f"orchestrator {path} -> {r.status_code}: {r.text[:300]}")
     return r.json()
+
+
+def _legacy_mode(cfg: dict[str, Any]) -> str:
+    """A step that opted into the evidence boundary keeps its pre-boundary retrieve mode under `legacy_mode`, so the kill switch
+    and the unavailable-fallback reproduce the legacy lane exactly (`mode` then means the BOUNDARY mode)."""
+    return str(cfg.get("legacy_mode", "EXPLORE") if cfg.get("surface") == EB.SURFACE_BOUNDARY else cfg.get("mode", "EXPLORE"))
+
+
+def _with_degraded(outcome: service.ExecOutcome, reasons: list[str]) -> service.ExecOutcome:
+    if reasons and isinstance(outcome.get("output"), dict):
+        outcome["output"]["degraded"] = True
+        outcome["output"]["degraded_reasons"] = list(outcome["output"].get("degraded_reasons") or []) + list(reasons)
+    return outcome
+
+
+def _retrieve_legacy(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids: list[str]) -> service.ExecOutcome:
+    cfg = m.step(step["step_id"]).get("config") or {}
+    mode = _legacy_mode(cfg)
+    body = {"query": _query_text(step, state, m), "corpus_ids": corpus_ids, "limit": int(cfg.get("top_k", state.input.get("top_k") or 16))}
+    if mode == "EXPLORE":
+        body["explore"] = True                 # contract rows (retrieve-evidence-rows-v1): the view an agent consumes
+    else:
+        body["mode"] = mode                    # FAST/HYBRID/GRAPH answer with hits; normalised below
+    out = _orch_post("/retrieve", body, user_agent=_ua(step, state))
+    rows = _rows(out, corpus_ids)
+    return {"output": {"surface": EB.SURFACE_LEGACY, "query": body["query"], "mode": mode, "corpus_ids": corpus_ids, "rows": _trim_rows(rows),
+                       "evidence_contract": out.get("evidence_contract")}, "evidence_refs": _refs_from_rows(rows)}
 
 
 def exec_retrieve(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:
@@ -133,36 +183,104 @@ def exec_retrieve(step: dict[str, Any], state: RunState, m: Manifest) -> service
     corpus_ids = _corpus_ids(state)
     if not corpus_ids:
         return {"gap": {"code": "INPUT_SCOPE_MISSING", "message": "no corpus_ids in input or request_options"}}
-    mode = cfg.get("mode", "EXPLORE")
-    body = {"query": _query_text(step, state, m), "corpus_ids": corpus_ids, "limit": int(cfg.get("top_k", state.input.get("top_k") or 16))}
-    if mode == "EXPLORE":
-        body["explore"] = True                 # contract rows (retrieve-evidence-rows-v1): the view an agent consumes
-    else:
-        body["mode"] = mode                    # FAST/HYBRID/GRAPH answer with hits; normalised below
-    out = _orch_post("/retrieve", body)
-    rows = _rows(out, corpus_ids)
-    return {"output": {"query": body["query"], "mode": mode, "corpus_ids": corpus_ids, "rows": _trim_rows(rows),
-                       "evidence_contract": out.get("evidence_contract")}, "evidence_refs": _refs_from_rows(rows)}
+    surface, forced = EB.resolve_surface(cfg, os.environ)
+    if surface == EB.SURFACE_BOUNDARY:
+        return exec_evidence(step, state, m, corpus_ids, legacy=_retrieve_legacy)
+    return _with_degraded(_retrieve_legacy(step, state, m, corpus_ids), forced)
+
+
+def exec_evidence(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids: list[str], *, legacy,
+                  union_legacy: bool = False) -> service.ExecOutcome:
+    """The evidence-boundary surface (GOVERNED-CONVERGENCE-V1 TG2b). The ORIGINAL need — the run's seed, or one need per live
+    hypothesis — goes to the evidence route, ONE corpus per call, bounded; Polymath plans, explores and grades, and returns an
+    EvidencePacket with no synthesis. The rules live in the pure module; this function only performs the calls:
+      * a packet that fails the contract is a TERMINAL gap (EVIDENCE_CONTRACT_MISMATCH) — never a fallback, never partial use;
+      * an unreachable surface falls back to the legacy lane when `config.fallback == "retrieve"` (recorded `degraded`), else
+        follows `config.on_unavailable` (gap | continue);
+      * empty evidence is a SUCCESS (`retrieval_completed: true`) — the corpus not supporting a need is a finding.
+    `union_legacy` (graph steps): the packet carries chunks, not graph facts, so the legacy graph rows are unioned in."""
+    sid = step["step_id"]
+    cfg = m.step(sid).get("config") or {}
+    needs = EB.original_needs(cfg, state.input, state.options, (step.get("context") or {}).get("hypotheses"))
+    plan = EB.plan_calls(needs, corpus_ids, max_calls=int(cfg.get("max_calls", EB.DEFAULT_MAX_CALLS)))
+    mode, explorer = str(cfg.get("mode") or "WILDCARD").upper(), bool(cfg.get("corpus_explorer", True))
+    calls: list[dict[str, Any]] = []
+    row_lists: list[list[dict[str, Any]]] = []
+    failures: list[dict[str, Any]] = []
+    for call in plan["calls"]:
+        try:
+            resp = _orch_post(EB.EVIDENCE_PATH, EB.request_body(call["need"], call["corpus_id"], mode=mode, corpus_explorer=explorer),
+                              user_agent=_ua(step, state))
+        except OrchUnavailable as exc:
+            failures.append({"need_index": call["need_index"], "corpus_id": call["corpus_id"], "error": str(exc)[:300]})
+            continue
+        errs = EB.check_response(resp)
+        if errs:
+            return {"gap": {"code": EB.GAP_CONTRACT_MISMATCH, "message": f"{sid}: " + "; ".join(errs[:5])}}
+        rows = EB.rows_from_packet(resp["evidence_packet"], call["corpus_id"])
+        calls.append(EB.call_record(call, resp["evidence_packet"], rows))
+        row_lists.append(rows)
+    if failures and not calls:
+        reason = failures[0]["error"]
+        if cfg.get("fallback") == EB.SURFACE_LEGACY:
+            try:
+                out = _with_degraded(legacy(step, state, m, corpus_ids), ["evidence_boundary_unavailable"])
+            except OrchUnavailable as exc:
+                return EB.unavailable_outcome(str(cfg.get("on_unavailable") or "gap"), sid, f"evidence surface and legacy fallback unreachable: {exc}")
+            out["output"].update({"fallback": EB.SURFACE_LEGACY, "boundary_failures": failures[:6]})
+            return out
+        return EB.unavailable_outcome(str(cfg.get("on_unavailable") or "gap"), sid, reason)
+    rows, dropped = EB.merge_rows(row_lists, max_rows=int(cfg.get("max_rows", EB.DEFAULT_MAX_ROWS)))
+    truncated = list(plan["truncated"]) + ([{"reason": "max_rows", "dropped": dropped}] if dropped else [])
+    output: dict[str, Any] = {"surface": EB.SURFACE_BOUNDARY, "mode": mode, "corpus_explorer": explorer, "needs": needs, "corpus_ids": corpus_ids,
+                              "rows": rows, "calls": calls, "retrieval_completed": not failures, "evidence_contract": EB.PACKET_SCHEMA_VERSION}
+    refs = EB.refs_from_rows(rows)
+    reasons: list[str] = []
+    if truncated:
+        output["truncated"] = truncated
+    if failures:
+        output["boundary_failures"] = failures[:6]
+        reasons.append("evidence_boundary_partial")
+    if union_legacy:
+        try:
+            g = legacy(step, state, m, corpus_ids)
+            output["graph_rows"] = (g.get("output") or {}).get("graph_rows") or []
+            output["graph_facts"] = (g.get("output") or {}).get("graph_facts") or 0
+            refs = refs + [r for r in (g.get("evidence_refs") or []) if r["id"] not in {x["id"] for x in refs}]
+        except OrchUnavailable as exc:
+            output["graph_rows"], output["graph_facts"] = [], 0
+            output["graph_failure"] = str(exc)[:300]
+            reasons.append("graph_facts_unavailable")
+    return _with_degraded({"output": output, "evidence_refs": refs}, reasons)
 
 
 def exec_compile_plan(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:
     corpus_ids = _corpus_ids(state)
     if not corpus_ids:
         return {"gap": {"code": "INPUT_SCOPE_MISSING", "message": "no corpus_ids in input or request_options"}}
-    out = _orch_post("/retrieve/plan", {"signal": _query_text(step, state, m), "corpus_ids": corpus_ids, "limit": 24, "explore": True})
+    out = _orch_post("/retrieve/plan", {"signal": _query_text(step, state, m), "corpus_ids": corpus_ids, "limit": 24, "explore": True},
+                     user_agent=_ua(step, state))
     rows = out.get("evidence_rows") or out.get("rows") or _rows(out, corpus_ids)
     return {"output": {"queries": out.get("queries") or out.get("plan") or [], "rows": _trim_rows(rows)}, "evidence_refs": _refs_from_rows(rows)}
+
+
+def _graph_legacy(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids: list[str]) -> service.ExecOutcome:
+    cfg = m.step(step["step_id"]).get("config") or {}
+    out = _orch_post("/retrieve", {"query": _query_text(step, state, m), "corpus_ids": corpus_ids, "explore": True,
+                                   "limit": int(cfg.get("max_facts", 20))}, user_agent=_ua(step, state))
+    rows = [r for r in (out.get("evidence_rows") or []) if r.get("kind") in ("graph_fact", "graph_hop")]
+    return {"output": {"surface": EB.SURFACE_LEGACY, "graph_rows": _trim_rows(rows), "graph_facts": len(out.get("graph_facts") or [])},
+            "evidence_refs": _refs_from_rows(rows)}
 
 
 def exec_graph_expand(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:
     corpus_ids = _corpus_ids(state)
     if not corpus_ids:
         return {"gap": {"code": "INPUT_SCOPE_MISSING", "message": "no corpus_ids in input or request_options"}}
-    cfg = m.step(step["step_id"]).get("config") or {}
-    out = _orch_post("/retrieve", {"query": _query_text(step, state, m), "corpus_ids": corpus_ids, "explore": True,
-                                   "limit": int(cfg.get("max_facts", 20))})
-    rows = [r for r in (out.get("evidence_rows") or []) if r.get("kind") in ("graph_fact", "graph_hop")]
-    return {"output": {"graph_rows": _trim_rows(rows), "graph_facts": len(out.get("graph_facts") or [])}, "evidence_refs": _refs_from_rows(rows)}
+    surface, forced = EB.resolve_surface(m.step(step["step_id"]).get("config") or {}, os.environ)
+    if surface == EB.SURFACE_BOUNDARY:
+        return exec_evidence(step, state, m, corpus_ids, legacy=_graph_legacy, union_legacy=True)
+    return _with_degraded(_graph_legacy(step, state, m, corpus_ids), forced)
 
 
 def _present(node: Any, path: str) -> bool:

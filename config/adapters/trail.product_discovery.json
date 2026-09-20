@@ -1,8 +1,8 @@
 {
  "adapter_id": "trail.product_discovery",
- "adapter_version": "2.1.0",
+ "adapter_version": "2.2.0",
  "workflow_version": "2.0.0",
- "retrieval_policy_version": "1.0.0",
+ "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
  "output_schema_version": "2.1.0",
  "description": "Harness-executed product-opportunity discovery (ADR-0019): Polymath retrieves knowledge and owns durable hypothesis state; θ (the connected agent) generates, revises and splits hypotheses; TrailSignal projects its registry priors, compiles evidence gaps, admits harness observations, judges hypotheses (φ), qualifies product territory / market delta / supply and computes the only score (LAW 1); the host harness executes AGENT_RESEARCH, PRODUCT_REALITY_CHECK and SUPPLIER_RESEARCH actions with its own tools. No Trail-owned live-web acquisition is required; no search engine, browser or source SDK is named.",
@@ -171,7 +171,14 @@
    "title": "Retrieve chunks, parent context, mechanisms, known frictions, opposing evidence",
    "next": "B_graph",
    "config": {
-    "mode": "EXPLORE",
+    "surface": "evidence_boundary",
+    "mode": "WILDCARD",
+    "corpus_explorer": true,
+    "max_calls": 3,
+    "max_rows": 40,
+    "fallback": "retrieve",
+    "on_unavailable": "gap",
+    "legacy_mode": "EXPLORE",
     "evidence": true,
     "top_k": 24,
     "source": "input.seed"
@@ -183,6 +190,13 @@
    "title": "Graph expansion from the retrieved seeds",
    "next": "C_hypotheses",
    "config": {
+    "surface": "evidence_boundary",
+    "mode": "GRAPH",
+    "corpus_explorer": false,
+    "max_calls": 3,
+    "max_rows": 40,
+    "fallback": "retrieve",
+    "on_unavailable": "gap",
     "max_seeds": 8,
     "max_facts": 20,
     "source": "input.seed"
@@ -394,7 +408,14 @@
    "title": "Retrieve mechanism evidence for the live hypotheses",
    "next": "F_graph",
    "config": {
-    "mode": "EXPLORE",
+    "surface": "evidence_boundary",
+    "mode": "WILDCARD",
+    "corpus_explorer": true,
+    "max_calls": 3,
+    "max_rows": 40,
+    "fallback": "retrieve",
+    "on_unavailable": "gap",
+    "legacy_mode": "EXPLORE",
     "evidence": true,
     "top_k": 16,
     "query_from": "hypotheses"
@@ -406,6 +427,13 @@
    "title": "Graph expansion around the mechanisms",
    "next": "G_mechanisms",
    "config": {
+    "surface": "evidence_boundary",
+    "mode": "GRAPH",
+    "corpus_explorer": false,
+    "max_calls": 3,
+    "max_rows": 40,
+    "fallback": "retrieve",
+    "on_unavailable": "gap",
     "max_seeds": 8,
     "max_facts": 16,
     "query_from": "hypotheses"
@@ -1414,6 +1442,10 @@
      "qualifications",
      "trail_scores",
      "score_refusals",
+     {
+      "collect_all": "evidence_admission",
+      "as": "evidence_admissions"
+     },
      "contradictions",
      "unknowns",
      "lineage"

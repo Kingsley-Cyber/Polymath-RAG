@@ -430,8 +430,12 @@ async def adapter_next(run_id: str) -> dict:
     step (reason over objective, bounded evidence_refs, hypotheses, constraints, output_schema, acceptance_rules) or a
     HARNESS_ACTION step (step.harness_action = HarnessActionV1: go research with YOUR OWN tools — web search, browser,
     APIs — within its search intents, source roles, freshness, independence and budget, then submit a
-    HarnessResearchReceiptV1 of structured observations; TrailSignal decides what is admitted as evidence). Else
-    {kind:"status", status: AdapterRunStatusV1} (running = Polymath is executing; terminal = fetch adapter_result)."""
+    HarnessResearchReceiptV1 of structured observations; TrailSignal decides what is admitted as evidence). An awaiting
+    step travels with a sibling `evidence` key: READABLE rows (text, source, utility_role, ca4_grade; admitted field
+    evidence with its claim, url, role and polarity) for exactly the ids in step.context.evidence_refs, capped at 60 rows x
+    600 chars, plus `receipts` (how each knowledge step retrieved) and `coverage`. REASON OVER evidence.rows; CITE ids
+    from context.evidence_refs. Else {kind:"status", status: AdapterRunStatusV1} (running = Polymath is executing;
+    terminal = fetch adapter_result)."""
     return await _orch("GET", f"/adapter/{run_id}/next")
 
 

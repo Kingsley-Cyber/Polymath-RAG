@@ -123,7 +123,7 @@ contracts:
       - shared/polymath_shared/subquery_provenance.py
       - shared/polymath_shared/chat_plan.py
     depends_on: [QUERY_PLANNER, PROFILE_SCOUT_OUTPUT]
-    consumed_by: [CANDIDATE_ENGINE, RETRIEVAL_RECEIPT]
+    consumed_by: [CANDIDATE_ENGINE, RETRIEVAL_RECEIPT, EVIDENCE_PACKET]
     tests: [tests/determinism/test_subquery_provenance.py]
     migration: null
     status: live                   # P6 — CompiledQuery provenance fields + pure annotate_subquery_provenance (unit-proven); ui.py wiring is L1-L5
@@ -212,3 +212,71 @@ contracts:
     tests: [tests/integration/test_cross_domain_routing.py]
     migration: null
     status: live
+
+  # ── GOVERNED-CONVERGENCE-V1 (TG1/TG2, 2026-09-20): the agent-facing evidence + cognitive-adapter surfaces. Until these four
+  #    rows existed, contract_impact.py was blind to the EvidencePacket, the evidence route, the adapter runtime and both MCP
+  #    servers — a change to any of them printed "no contract touched".
+  EVIDENCE_PACKET:
+    owner: shared
+    spec: contracts/evidence/v1/evidence_packet.schema.json
+    paths:
+      - shared/polymath_shared/evidence_packet.py
+      - contracts/evidence/v1/evidence_packet.schema.json
+      - contracts/evidence/v1/evidence_packet.example.json
+    depends_on: [SUBQUERY_PROVENANCE]
+    consumed_by: [EVIDENCE_BOUNDARY_API, ADAPTER_RUNTIME]
+    tests:
+      - tests/determinism/test_evidence_packet.py
+      - tests/contracts/test_evidence_packet_contract.py
+    migration: null
+    status: live                   # evidence-packet-v1; the JSON Schema is enforced CONSUMER-side (fail-closed) by ADAPTER_RUNTIME
+
+  EVIDENCE_BOUNDARY_API:
+    owner: orchestrator
+    spec: orchestrator/orchestrator/api/chat.py
+    paths:
+      - orchestrator/orchestrator/api/chat.py
+      - orchestrator/orchestrator/api/ui.py
+    depends_on: [EVIDENCE_PACKET]
+    consumed_by: [ADAPTER_RUNTIME, MCP_SURFACE]
+    tests: [tests/determinism/test_chat_runtime.py, tests/determinism/test_query_receipts.py]
+    migration: null
+    status: live                   # POST /chat/evidence: full planning + Corpus Explore, NO synthesis; query receipt verdict = evidence_only.
+                                   # DEBT (pre-existing at 94dbd57, not from TG1/TG2): one stale pin in EACH listed suite is red on untouched production
+                                   # (chat.py receipt-writer count 2->4 since /chat/evidence; subquery tuple gained `origin`). Owner decision pending.
+
+  ADAPTER_RUNTIME:
+    owner: shared
+    spec: contracts/adapter/v1/adapter_step.schema.json
+    paths:
+      - shared/polymath_shared/adapter/evidence_boundary.py
+      - shared/polymath_shared/adapter/service.py
+      - shared/polymath_shared/adapter/transitions.py
+      - shared/polymath_shared/adapter/store.py
+      - workers/workers/adapter_step_worker.py
+      - orchestrator/orchestrator/api/adapter.py
+      - contracts/adapter/v1/adapter_step.schema.json
+      - config/adapters/trail.product_discovery.json
+    depends_on: [EVIDENCE_PACKET, EVIDENCE_BOUNDARY_API]
+    consumed_by: [MCP_SURFACE]
+    tests:
+      - tests/determinism/test_adapter_evidence_boundary.py
+      - tests/contracts/test_adapter_worker_evidence_surface.py
+      - tests/contracts/test_adapter_contract_v1.py
+      - tests/determinism/test_adapter_runtime_pure.py
+      - tests/determinism/test_adapter_product_discovery_loop.py
+    migration: null
+    status: live                   # adapter_next = step + readable `evidence`; knowledge surface opt-in per step (default legacy); live proof = R1 + scripts/adapter_evidence_boundary_proof.py
+
+  MCP_SURFACE:
+    owner: orchestrator
+    spec: orchestrator/orchestrator/mcp_server.py
+    paths:
+      - orchestrator/orchestrator/mcp_server.py
+      - mcp_server/polymath_mcp.py
+      - orchestrator/orchestrator/api/capabilities.py
+    depends_on: [ADAPTER_RUNTIME, EVIDENCE_BOUNDARY_API]
+    consumed_by: []
+    tests: [tests/contracts/test_mcp_adapter_parity.py, tests/determinism/test_mcp_server_v2.py]
+    migration: null
+    status: live                   # Server A (http :8930, bearer) and Server B (stdio) serve the same seven adapter_* tools + the canonical trio

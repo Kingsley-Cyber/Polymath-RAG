@@ -11,7 +11,7 @@ from typing import Any, Callable
 
 from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, assert_valid, stable_hash, validate
 from .manifest import ADAPTER_DIR, Manifest, list_manifests
-from . import hypotheses as H, store, transitions as T
+from . import evidence_boundary as EB, hypotheses as H, store, transitions as T
 from .hypotheses import HypothesisRejected
 from .transitions import BudgetExhausted, RunState, SubmissionRejected
 
@@ -130,13 +130,24 @@ def status(conn, run_id: str, directory: Path | None = None) -> dict[str, Any]:
 
 
 def next_step(conn, run_id: str, directory: Path | None = None) -> dict[str, Any]:
-    """The step the connected agent must answer, or the run status when nothing is awaiting it."""
+    """The step the connected agent must answer, or the run status when nothing is awaiting it. An awaiting step travels with a
+    SIBLING `evidence` key (GOVERNED-CONVERGENCE-V1 TG2a): READABLE rows for exactly the ids in `step.context.evidence_refs`,
+    hydrated from the run's stored step outputs. The AdapterStepV1 itself is unchanged — ids stay the citation contract."""
     st = status(conn, run_id, directory)
     if st["status"] in ("awaiting_agent", "awaiting_harness"):
         row = store.current_step(conn, run_id)
         if row and row["status"] == "issued":
-            return {"kind": "step", "step": row["step"], "status": st}
+            return {"kind": "step", "step": row["step"], "status": st, "evidence": _readable_evidence(conn, run_id, row["step"])}
     return {"kind": "status", "status": st}
+
+
+def _readable_evidence(conn, run_id: str, step: dict[str, Any]) -> dict[str, Any]:
+    """Hydration reads stored JSON only; if it ever fails the agent still gets its step, and the failure is SAID, not hidden."""
+    try:
+        stored = [{"step_id": s["step_id"], "sequence": s["sequence"], "output": s.get("output")} for s in store.list_steps(conn, run_id)]
+        return EB.hydrate((step.get("context") or {}).get("evidence_refs") or [], stored)
+    except Exception as exc:  # noqa: BLE001 — never let the readable view take adapter_next down
+        return {"rows": [], "receipts": [], "error": f"{type(exc).__name__}: {exc}"[:500]}
 
 
 def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None = None) -> dict[str, Any]:
@@ -557,6 +568,14 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
     if output is None:
         output = {}
         for key in include:
+            if isinstance(key, dict):
+                # {"collect_all": <key>, "as": <output key>}: EVERY occurrence of a step-output key, in sequence order, read from the
+                # stored steps (state.outputs keeps only the newest pass of a looped step; a plain include gathers only the newest).
+                src = key.get("collect_all")
+                vals = [s["output"][src] for s in steps if src and isinstance(s.get("output"), dict) and s["output"].get(src) is not None]
+                if vals:
+                    output[str(key.get("as") or src)] = vals
+                continue
             if key == "lineage":
                 continue
             v = _gather(state.outputs, key, state.output_order)

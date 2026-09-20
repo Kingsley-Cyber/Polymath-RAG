@@ -1,0 +1,356 @@
+{
+ "artifact": "GOVERNED-CONVERGENCE-V1 R0 \u2014 fixture baseline BEFORE any TG1/TG2 code (legacy knowledge surface)",
+ "date": "2026-09-20",
+ "production_head": "94dbd57",
+ "fleet_bundle": "e43044475a4e",
+ "trail_tree": "A41 == origin/main == de64d84",
+ "command": ".venv/bin/python scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery --corpus cinema --harness receipts --harness-receipts tests/fixtures/harness_receipts",
+ "exit_code": 0,
+ "external_spend_usd": 0,
+ "receipt": {
+  "adapter_id": "trail.product_discovery",
+  "mcp_url": "http://127.0.0.1:8930/mcp",
+  "client": "mcp python client (streamable-http)",
+  "trail_calls_by_client": 0,
+  "supervised_worker_pid": 22701,
+  "adapter_tools_present": [
+   "adapter_cancel",
+   "adapter_list",
+   "adapter_next",
+   "adapter_result",
+   "adapter_start",
+   "adapter_status",
+   "adapter_submit"
+  ],
+  "adapters": [
+   "polymath.knowledge_brief",
+   "substack.article_development",
+   "trail.product_discovery"
+  ],
+  "run_id": "adr_1a357ee43e9c2e6750d756d9f2136761",
+  "run_ref": {
+   "run_id": "adr_1a357ee43e9c2e6750d756d9f2136761",
+   "adapter_id": "trail.product_discovery",
+   "adapter_version": "2.1.0",
+   "workflow_version": "2.0.0",
+   "created_at": "2026-09-20T14:35:00Z",
+   "status": "running"
+  },
+  "agent_steps": [
+   {
+    "step_id": "C_hypotheses",
+    "sequence": 5,
+    "evidence_refs": 84
+   },
+   {
+    "step_id": "G_mechanisms",
+    "sequence": 11,
+    "evidence_refs": 200
+   },
+   {
+    "step_id": "K_revise",
+    "sequence": 15,
+    "evidence_refs": 200
+   },
+   {
+    "step_id": "G_mechanisms",
+    "sequence": 18,
+    "evidence_refs": 200
+   },
+   {
+    "step_id": "K_revise",
+    "sequence": 22,
+    "evidence_refs": 200
+   },
+   {
+    "step_id": "G_mechanisms",
+    "sequence": 25,
+    "evidence_refs": 200
+   },
+   {
+    "step_id": "K_revise",
+    "sequence": 29,
+    "evidence_refs": 200
+   },
+   {
+    "step_id": "N_jobs",
+    "sequence": 32,
+    "evidence_refs": 200
+   },
+   {
+    "step_id": "W_interpret",
+    "sequence": 41,
+    "evidence_refs": 200
+   }
+  ],
+  "harness_actions": [
+   {
+    "step_id": "I_research",
+    "action_id": "hact_a41fcf9c3c3b3df4ca5cdbc7",
+    "action_kind": "AGENT_RESEARCH",
+    "hypothesis_ids": 2,
+    "search_intents": 11,
+    "registry_snapshot": "trs-da9942986e52f832"
+   },
+   {
+    "step_id": "I_research",
+    "action_id": "hact_e4d8c57ec14476cb198d7e54",
+    "action_kind": "AGENT_RESEARCH",
+    "hypothesis_ids": 2,
+    "search_intents": 11,
+    "registry_snapshot": "trs-da9942986e52f832"
+   },
+   {
+    "step_id": "I_research",
+    "action_id": "hact_ba07fd89308214615844c0de",
+    "action_kind": "AGENT_RESEARCH",
+    "hypothesis_ids": 2,
+    "search_intents": 11,
+    "registry_snapshot": "trs-da9942986e52f832"
+   },
+   {
+    "step_id": "P_reality",
+    "action_id": "hact_8a9b7b27ff03062a09fdf460",
+    "action_kind": "PRODUCT_REALITY_CHECK",
+    "hypothesis_ids": 2,
+    "search_intents": 4,
+    "registry_snapshot": "trs-da9942986e52f832"
+   },
+   {
+    "step_id": "S_supply",
+    "action_id": "hact_39e34ee82224353d1cb92517",
+    "action_kind": "SUPPLIER_RESEARCH",
+    "hypothesis_ids": 2,
+    "search_intents": 4,
+    "registry_snapshot": "trs-da9942986e52f832"
+   }
+  ],
+  "restart": {
+   "killed_pid": 22701,
+   "respawned_pid": 24036
+  },
+  "rejected_submission": {
+   "error": {
+    "rejected": [
+     "payload: 'hypotheses' is a required property",
+     "payload: Additional properties are not allowed ('invented', 'supporting_evidence_ids' were unexpected)",
+     "cited ids not in context.evidence_refs: chunk_invented"
+    ]
+   },
+   "status": 422
+  },
+  "final_status": {
+   "status": "completed",
+   "steps_issued": 42,
+   "steps_accepted": 42,
+   "branch_loops": 2,
+   "gap": null,
+   "failure": null
+  },
+  "result": {
+   "status": "completed",
+   "output_keys": [
+    "contradictions",
+    "hypothesis_ids",
+    "product_opportunity",
+    "qualifications",
+    "score_refusals",
+    "trail_scores"
+   ],
+   "lineage_evidence": 157,
+   "receipts": 41,
+   "external_operations": [
+    {
+     "record_ids": [
+      "fr-02",
+      "fr-16",
+      "fr-26",
+      "seed-0259",
+      "seed-0262",
+      "seed-0265",
+      "seed-0268",
+      "seed-0271",
+      "seed-0274",
+      "seed-0277",
+      "seed-0280",
+      "seed-0283",
+      "seed-0286",
+      "seed-0289",
+      "seed-0614",
+      "seed-0617",
+      "seed-0620",
+      "seed-0623",
+      "seed-0626",
+      "seed-0629",
+      "seed-0632",
+      "seed-0635",
+      "seed-0638",
+      "seed-0641"
+     ],
+     "operation_id": "operation:bb75d7cbc0b9b626b50ba285855993cd",
+     "operation_kind": "registry.project",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:79c27d4619cb35d239c61922ae881995",
+     "operation_kind": "hypotheses.judge",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:4a77738b8df832d43c70eac7ae5c65ae",
+     "operation_kind": "gaps.compile",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "adm-operation:eefbcff6e62e8ca29e86f171caa269d8-bh1",
+      "adm-operation:eefbcff6e62e8ca29e86f171caa269d8-bh2",
+      "adm-operation:eefbcff6e62e8ca29e86f171caa269d8-fr0",
+      "adm-operation:eefbcff6e62e8ca29e86f171caa269d8-fr1",
+      "adm-operation:eefbcff6e62e8ca29e86f171caa269d8-fr2",
+      "adm-operation:eefbcff6e62e8ca29e86f171caa269d8-fr3",
+      "adm-operation:eefbcff6e62e8ca29e86f171caa269d8-fr4",
+      "adm-operation:eefbcff6e62e8ca29e86f171caa269d8-fr5"
+     ],
+     "operation_id": "operation:eefbcff6e62e8ca29e86f171caa269d8",
+     "operation_kind": "evidence.admit",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:52dddd6b920622f1b7dbb3bcc246ce00",
+     "operation_kind": "hypotheses.judge",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:1ad4f2e3e27d1f9a27f4f3c8676e3f00",
+     "operation_kind": "gaps.compile",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "adm-operation:33536b683e7b502141a62fa445a4d485-bh1",
+      "adm-operation:33536b683e7b502141a62fa445a4d485-bh2",
+      "adm-operation:33536b683e7b502141a62fa445a4d485-fr0",
+      "adm-operation:33536b683e7b502141a62fa445a4d485-fr1",
+      "adm-operation:33536b683e7b502141a62fa445a4d485-fr2",
+      "adm-operation:33536b683e7b502141a62fa445a4d485-fr3",
+      "adm-operation:33536b683e7b502141a62fa445a4d485-fr4",
+      "adm-operation:33536b683e7b502141a62fa445a4d485-fr5"
+     ],
+     "operation_id": "operation:33536b683e7b502141a62fa445a4d485",
+     "operation_kind": "evidence.admit",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:f09a1e483a7eef14f9c7dda7cdc34830",
+     "operation_kind": "hypotheses.judge",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:f482e47b77377cf56602321bff03c38f",
+     "operation_kind": "gaps.compile",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "adm-operation:2dca495da67856fb4f5949e2682d7668-bh1",
+      "adm-operation:2dca495da67856fb4f5949e2682d7668-bh2",
+      "adm-operation:2dca495da67856fb4f5949e2682d7668-fr0",
+      "adm-operation:2dca495da67856fb4f5949e2682d7668-fr1",
+      "adm-operation:2dca495da67856fb4f5949e2682d7668-fr2",
+      "adm-operation:2dca495da67856fb4f5949e2682d7668-fr3",
+      "adm-operation:2dca495da67856fb4f5949e2682d7668-fr4",
+      "adm-operation:2dca495da67856fb4f5949e2682d7668-fr5"
+     ],
+     "operation_id": "operation:2dca495da67856fb4f5949e2682d7668",
+     "operation_kind": "evidence.admit",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:ea94deca6a675b8b52171905738f82c8",
+     "operation_kind": "hypotheses.judge",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:bf9d14121ab83e31f7c118b15e34b2a4",
+     "operation_kind": "territory.project",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "adm-operation:8154b9b60c02d9f85c4f34bea88aae72-cp1",
+      "adm-operation:8154b9b60c02d9f85c4f34bea88aae72-cp2",
+      "adm-operation:8154b9b60c02d9f85c4f34bea88aae72-pr0",
+      "adm-operation:8154b9b60c02d9f85c4f34bea88aae72-pr1",
+      "adm-operation:8154b9b60c02d9f85c4f34bea88aae72-pr2"
+     ],
+     "operation_id": "operation:8154b9b60c02d9f85c4f34bea88aae72",
+     "operation_kind": "evidence.admit",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:fcfe6daaeed40a98c8fc41ecf6e1ae5d",
+     "operation_kind": "opportunity.qualify",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "adm-operation:bd4b6ef616e3bac5eef5a697cc3b1d8a-rk1",
+      "adm-operation:bd4b6ef616e3bac5eef5a697cc3b1d8a-sp0",
+      "adm-operation:bd4b6ef616e3bac5eef5a697cc3b1d8a-sp1",
+      "adm-operation:bd4b6ef616e3bac5eef5a697cc3b1d8a-sp2"
+     ],
+     "operation_id": "operation:bd4b6ef616e3bac5eef5a697cc3b1d8a",
+     "operation_kind": "evidence.admit",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [],
+     "operation_id": "operation:3331caabd42fccb33078f195886fb0b7",
+     "operation_kind": "opportunity.qualify",
+     "external_system": "trailsignal"
+    },
+    {
+     "record_ids": [
+      "score:37bda1f2a8c69e2472eedb9c44de082c",
+      "score:97430b3cc62ad4c0b2c45e0fe76dab64"
+     ],
+     "operation_id": "operation:f96c840c23f33f1e69d5473e045b761c",
+     "operation_kind": "opportunity.score",
+     "external_system": "trailsignal"
+    }
+   ],
+   "unknowns": [],
+   "gap": null,
+   "cited_ids_in_lineage": 2
+  },
+  "portfolio": {
+   "hypotheses": 2,
+   "tagged": [
+    "hyp_df31bfc2c36901f640d9325a"
+   ],
+   "scored": [
+    "hyp_df31bfc2c36901f640d9325a"
+   ],
+   "refused": [
+    [
+     "hyp_e351b8da8bd3c0bab39778ad",
+     "HARD_GATE_UNMET"
+    ]
+   ],
+   "trail_score_record_ids": [
+    "score:37bda1f2a8c69e2472eedb9c44de082c"
+   ],
+   "qualifications": 0
+  }
+ }
+}

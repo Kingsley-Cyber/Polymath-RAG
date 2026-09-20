@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polymath.local/contracts/evidence/v1/evidence_packet.schema.json",
+  "title": "EvidencePacket (evidence-packet-v1)",
+  "description": "REASONING-BOUNDARY-V1: the agent-facing evidence contract returned by POST /chat/evidence. Produced by shared/polymath_shared/evidence_packet.py::build_evidence_packet; validated CONSUMER-SIDE by shared/polymath_shared/adapter/evidence_boundary.py::check_response. The packet is evidence, never an answer: synthesis_performed is the constant false. Additive by design: unknown properties are allowed, the required structure and the closed vocabularies below are not negotiable.",
+  "type": "object",
+  "required": ["schema_version", "q0", "retrieval_mode", "synthesis_performed", "plan", "evidence", "receipts"],
+  "properties": {
+    "schema_version": {"const": "evidence-packet-v1"},
+    "q0": {"type": "string"},
+    "retrieval_mode": {"type": "string", "minLength": 1},
+    "synthesis_performed": {"const": false},
+    "plan": {
+      "type": "object",
+      "required": ["compiled_queries", "corpus_explorer_requested", "corpus_explorer_used"],
+      "properties": {
+        "compiled_queries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "origin", "role"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "origin": {"type": "string", "minLength": 1},
+              "role": {"type": "string"}
+            }
+          }
+        },
+        "corpus_explorer_requested": {"type": "boolean"},
+        "corpus_explorer_used": {"type": "boolean"}
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/evidence_item"}
+    },
+    "receipts": {"type": "object"}
+  },
+  "$defs": {
+    "evidence_item": {
+      "type": "object",
+      "required": ["chunk_id", "document_id", "source", "text", "origin", "query_ids", "lineage", "utility_role", "synthesis_role", "ca4_grade", "c4_valid", "provenance"],
+      "properties": {
+        "chunk_id": {"type": "string", "minLength": 1},
+        "document_id": {"type": "string"},
+        "source": {"type": "string"},
+        "text": {"type": "string"},
+        "origin": {"type": "string", "minLength": 1},
+        "query_ids": {"type": "array", "items": {"type": "string"}},
+        "lineage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["query_id", "origin", "role"],
+            "properties": {
+              "query_id": {"type": "string"},
+              "origin": {"type": "string"},
+              "role": {"type": "string"}
+            }
+          }
+        },
+        "utility_role": {"enum": ["DIRECT", "COMPLEMENTARY", "DIVERGENT", "RELATED"]},
+        "synthesis_role": {"type": ["string", "null"]},
+        "ca4_grade": {"enum": ["DIRECT", "PARTIAL", "RELATED", null]},
+        "c4_valid": {"type": "boolean"},
+        "provenance": {
+          "type": "object",
+          "required": ["origin"],
+          "properties": {
+            "origin": {"type": "string"},
+            "inspired_by_profile": {"type": "array"},
+            "derived_from": {},
+            "relation_to_q0": {"type": ["string", "null"]}
+          }
+        }
+      }
+    }
+  }
+}

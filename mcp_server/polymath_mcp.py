@@ -20,6 +20,13 @@ Tools (REASONING-BOUNDARY-V1 canonical surface):
   polymath_delete_corpus    destructive: remove a corpus everywhere
                             (requires confirm=<corpus_id>)
 
+Cognitive adapter (ADR-0018; GOVERNED-CONVERGENCE-V1 TG1) — the SAME seven
+tools MCP Server A serves (orchestrator/orchestrator/mcp_server.py), as plain
+proxies over the orchestrator's /adapter/* routes (parity pinned by
+tests/contracts/test_mcp_adapter_parity.py):
+  adapter_list / adapter_start / adapter_next / adapter_submit /
+  adapter_status / adapter_result / adapter_cancel
+
 Transports:
   stdio (default)  — Claude Code / Claude Desktop / local agents:
       claude mcp add polymath -- <repo>/.venv/bin/python \
@@ -240,6 +247,88 @@ def polymath_delete_document(doc_id: str, confirm: str) -> dict:
                      params={"confirm": confirm}, timeout=300)
     r.raise_for_status()
     return r.json()
+
+
+# ------------------------------------------------------- cognitive adapter (ADR-0018)
+# GOVERNED-CONVERGENCE-V1 TG1: plain proxies over the orchestrator's /adapter/* routes — the same names,
+# parameters and semantics as MCP Server A (orchestrator/orchestrator/mcp_server.py), so a stdio agent
+# (Claude Code / Codex) drives the same governed run Hermes drives over HTTP. Nothing is decided here.
+
+def _adapter(method: str, path: str, payload: dict | None = None) -> Any:
+    """Server A's `_orch` error mapping: a 4xx/5xx becomes {"error": detail, "status": code} so the agent
+    sees a rejected submission's errors (422) or a not-yet-terminal run (409) instead of a transport error."""
+    r = httpx.request(method, f"{BASE}{path}", json=payload, timeout=180)
+    if r.status_code >= 400:
+        try:
+            detail = r.json().get("detail")
+        except Exception:  # noqa: BLE001
+            detail = r.text[:400]
+        return {"error": detail, "status": r.status_code}
+    return r.json()
+
+
+@server.tool()
+def adapter_list() -> dict:
+    """COGNITIVE-ADAPTER-V1: the admitted adapters (id, versions, description, input_schema, step counts, which
+    TrailSignal operations are working vs planned). One MCP connection, one adapter run — see adapter_start."""
+    return _adapter("GET", "/adapter/list")
+
+
+@server.tool()
+def adapter_start(adapter_id: str, input: dict, request_options: Optional[dict] = None) -> dict:
+    """Start ONE durable adapter run (AdapterRunRefV1). `input` must satisfy the adapter's input_schema
+    (adapter_list). request_options: corpus_ids, idempotency_key, agent_identity, retrieval_mode, deadline_s.
+    Polymath executes retrieval/graph/validation/compile steps itself; when a step needs YOUR reasoning,
+    adapter_next returns a typed AGENT_REASON step — answer it with adapter_submit."""
+    return _adapter("POST", "/adapter/start", {"adapter_id": adapter_id, "input": input, "request_options": request_options or {}})
+
+
+@server.tool()
+def adapter_next(run_id: str) -> dict:
+    """What the run needs from you now: {kind:"step", step: AdapterStepV1} when a step awaits you — an AGENT_REASON
+    step (reason over objective, bounded evidence_refs, hypotheses, constraints, output_schema, acceptance_rules) or a
+    HARNESS_ACTION step (step.harness_action = HarnessActionV1: go research with YOUR OWN tools — web search, browser,
+    APIs — within its search intents, source roles, freshness, independence and budget, then submit a
+    HarnessResearchReceiptV1 of structured observations; TrailSignal decides what is admitted as evidence). An awaiting
+    step travels with a sibling `evidence` key: READABLE rows (text, source, utility_role, ca4_grade; admitted field
+    evidence with its claim, url, role and polarity) for exactly the ids in step.context.evidence_refs, capped at 60 rows x
+    600 chars, plus `receipts` (how each knowledge step retrieved) and `coverage`. REASON OVER evidence.rows; CITE ids
+    from context.evidence_refs. Else {kind:"status", status: AdapterRunStatusV1} (running = Polymath is executing;
+    terminal = fetch adapter_result)."""
+    return _adapter("GET", f"/adapter/{run_id}/next")
+
+
+@server.tool()
+def adapter_submit(run_id: str, step_id: str, payload: dict, agent_identity: str = "connected-agent",
+                   model: Optional[str] = None, kind: Optional[str] = None) -> dict:
+    """Submit your answer for the awaiting step. AGENT_REASON: kind="reasoning" (default) — validated against the step's
+    output_schema and acceptance rules; cite ONLY ids from context.evidence_refs (never a trail_prior); hypotheses you
+    generate become durable state with lineage. HARNESS_ACTION: kind="receipt" — a HarnessResearchReceiptV1
+    (action_id, harness_id, sources, observations, tool_trace, limitations; no score field exists). A rejection returns
+    the errors and the step stays open for a corrected submission. Returns AdapterRunStatusV1."""
+    return _adapter("POST", f"/adapter/{run_id}/submit",
+                    {"step_id": step_id, "payload": payload, "agent_identity": agent_identity, "model": model,
+                     **({"kind": kind} if kind else {})})
+
+
+@server.tool()
+def adapter_status(run_id: str) -> dict:
+    """AdapterRunStatusV1 for a run (status, current step, counters, typed failure/gap)."""
+    return _adapter("GET", f"/adapter/{run_id}/status")
+
+
+@server.tool()
+def adapter_result(run_id: str) -> dict:
+    """AdapterResultV1 of a TERMINAL run: the domain output plus lineage (Polymath evidence ids, step receipt
+    hashes, TrailSignal operation/record ids), surviving contradictions/unknowns, and the typed gap if any.
+    409 while the run is still running or awaiting you."""
+    return _adapter("GET", f"/adapter/{run_id}/result")
+
+
+@server.tool()
+def adapter_cancel(run_id: str) -> dict:
+    """Cancel a run (terminal, idempotent; accepted work is kept). Returns AdapterRunStatusV1."""
+    return _adapter("POST", f"/adapter/{run_id}/cancel")
 
 
 def _auth_wrapped(app):

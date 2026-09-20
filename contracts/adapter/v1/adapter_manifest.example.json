@@ -1,8 +1,8 @@
 {
  "adapter_id": "trail.product_discovery",
- "adapter_version": "2.1.0",
+ "adapter_version": "2.2.0",
  "workflow_version": "2.0.0",
- "retrieval_policy_version": "1.0.0",
+ "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
  "output_schema_version": "2.1.0",
  "description": "Harness-executed product-opportunity discovery (ADR-0019): Polymath retrieves knowledge and owns durable hypothesis state; \u03b8 (the connected agent) generates, revises and splits hypotheses; TrailSignal projects its registry priors, compiles evidence gaps, admits harness observations, judges hypotheses (\u03c6), qualifies product territory / market delta / supply and computes the only score (LAW 1); the host harness executes AGENT_RESEARCH, PRODUCT_REALITY_CHECK and SUPPLIER_RESEARCH actions with its own tools. No Trail-owned live-web acquisition is required; no search engine, browser or source SDK is named.",
