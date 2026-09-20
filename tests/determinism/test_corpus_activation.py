@@ -103,3 +103,12 @@ def test_receipt_shape():
     assert r["contract"] == "corpus-activation-v1"
     assert r["n_activations"] >= 1
     assert r["activations"][0]["concept_id"] == "spatial-control"
+
+
+def test_corpus_ablation_removes_the_family(  # CE7 anti-contamination: activation is grounded in the
+):                                             # PROVIDED atoms only — drop a family's atoms and its concept
+    # must vanish (no memorized/benchmark leakage). Remove every "spatial control" atom hit.
+    ablated = [h for h in REAL_ATOMS if "spatial" not in h["text"]]
+    ids = {c.concept_id for c in build_activation_candidates(ablated)}
+    assert "spatial-control" not in ids            # the family disappeared with its atoms
+    assert "posture-and-weight" in ids             # unrelated families remain

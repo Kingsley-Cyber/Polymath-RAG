@@ -2,7 +2,7 @@
 change_id: CORPUS-EXPLORER-V1-BUILD
 owner: "@king"
 date: 2026-09-19
-status: in-progress
+status: complete
 architecture_impact: "Living build log for CORPUS-EXPLORER-V1 CE1->CE-UI. NEW non-generative concept-keyed corpus-activation path (shared, pure) feeding the EXISTING WLK2C bridge compiler under a distinct CORPUS_EXPLORE origin, two-layer gated. Additive + fail-open + flag-gated; flag-off = pre-feature-equivalent V2. Updated per phase."
 last_reviewed: 2026-09-19
 ---
@@ -70,19 +70,66 @@ pre-feature-equivalent V2. shared/ is unit-provable in the worktree; ui.py is li
   worktree COLLECTION error (`import orchestrator.orchestrator` under editable-.pth; identical at the
   checkpoint tag) → deferred to live proof after merge.
 - **CE4/CE-UI IMPLEMENTED, live-only** (editable-.pth: `orchestrator` resolves to MAIN under pytest, so
-  ui.py is not worktree-unit-provable). `py_compile` ui.py OK; `agent_preflight`=0. Real proof = the live
-  seam receipt + flag-off smoke after merge + port-gated bounce (CE5/CE6/CE7).
+  ui.py is not worktree-unit-provable). `py_compile` ui.py OK; `agent_preflight`=0.
+- **DEPLOYED (merge `e84d7cc` → production; port-gated bounce).** Deployed shared code re-proven on MAIN
+  (import source = MAIN; 103 determinism tests green incl. the new `test_corpus_explore_origin_flows_into_
+  lane_provenance` closing the RankedLane leg, and `test_corpus_ablation_removes_the_family`). Fleet: one
+  bundle `99f6c44e6f33`, 22 healthy workers, `/ready` true; orchestrator process env carries
+  `POLYMATH_CORPUS_EXPLORER=1` (+ V2 flags). Frontend built clean (`npm run build`, /v2 dist).
+- **CE5 flag-off equivalence — LIVE_PATH_PROVEN.** With `corpus_explorer` omitted (capability on): receipt
+  `corpus_activation`=null, `corpus_explore_expansion`=null, origins = USER/PROFILE/**BRIDGE** only (bridge
+  path intact, added 3) — pre-feature-equivalent V2. No CORPUS_EXPLORE work/receipts/model calls.
+- **CE5/CE6 + LIVE SEAM (DoD) — LIVE_PATH_PROVEN.** Flag-on (wc07 "silent authority"): q0 → **8 concept
+  ActivationCandidates** (CONCEPT/THEORY atoms + Scout corroboration, source_document_ids present) → **4
+  CORPUS_EXPLORE subqueries** (`ce0-3`, target=concept, derived_from clean, 0 invented) coexisting with
+  BRIDGE (`br*`, no id collision) → RankedLane (origin carried — unit-closed) → CA4 (RELATED bucket). The
+  WLK2C latent second-pass receipt is null because V2 fusion (on) preserves candidates upstream (empty
+  rescue pool) — pre-existing, not a defect.
+- **CE7 activation-reliability (`CE7-ACTIVATION-RELIABILITY-2026-09-19.json`, 18 live FAST, budget-bounded;
+  see `analysis_corrected`).** Honest firing-aware verdict: **firing 14/18 (0.778)**; **content stability
+  when fired = 1.0** (identical q0 → byte-identical concept set); paraphrase stability 0.318 mean (related
+  neighborhoods, not keyword-locked); **negative-control leakage 0.143** (birthday) / none (cooking,
+  vacation activated nothing — clean); provenance complete on all fired; target eligibility 0.917. Caveat:
+  2 on-target runs produced no activation (firing consistency ~78%; a run-to-run FIRING gap from empty
+  `search_atoms`/intent nondeterminism — content is stable when it fires). NOT tuned. (The raw headline
+  `same_query_stability=0.333`/`leakage=1.0` were empty-set-Jaccard artifacts, corrected offline + the
+  metric fixed in-harness.)
+- **Safety sentinel (`CE-SAFETY-SENTINEL-2026-09-19.json`, feature ON, 9-query scoped subset).**
+  unsupported-hallucination **0**, q0_preserved failures **0**, provenance-incomplete **0**. One supported
+  gold-miss (pmap_savecat, HYBRID) is on a feature-INERT query (`ce_added=0`) and a re-probe is
+  flag-off==flag-on → pre-existing HYBRID retrieval variance, **not a CORPUS-EXPLORER regression**
+  (`regression_verdict.material_regression_vs_v2=false`).
+
+## LEVEL-VERDICT (the one V1 architecture question)
+**Does non-generative concept-keyed corpus activation reliably expose useful corpus neighborhoods the
+document-level Scout→BRIDGE path does not?** ANSWER (with data): **Architecture VALIDATED + SAFE, activation
+content DETERMINISTIC-when-fired, with a measured FIRING-consistency caveat.** It is a genuine second,
+Scout-independent grounding source (CE1 independence proven); it activates concept neighborhoods live
+(14/18), content-identical on repeats, provenance-complete, clean on negative controls, and rides the
+existing C4/C5/CA4 spine with zero safety regression. It is NOT yet a *reliability* win end-to-end: firing
+consistency is ~78% (empty `search_atoms`/intent nondeterminism), so run-to-run it sometimes activates
+nothing. That is the identified follow-up (harden firing: retry/warm atom search, stabilize intent) — a V2
+enrichment, NOT a V1 blocker: the feature is opt-in, two-layer-gated, fail-open, and provably safe.
 
 ## Rejected claims
+- NOT claimed: end-to-end run-to-run activation RELIABILITY. Measured firing 14/18 (0.778); content is
+  stable when fired (1.0) but firing itself is inconsistent. Reported honestly; NOT tuned to pass.
+- NOT claimed: CORPUS_EXPLORER caused the pmap_savecat gold-miss (feature inert there; flag-off==flag-on).
+- REJECTED (my own harness artifact): `same_query_stability=0.333`/`negative_leakage=1.0` — empty-set
+  Jaccard scored 1.0; corrected to firing-aware metrics (content stability 1.0, leakage 0.143).
 - NOT claimed: live activation stability (same NL q0 -> same concepts). CE1 proves BUILDER determinism
   only (identical retrieved atoms -> identical candidates); live/ANN stability is MEASURED in CE7.
 - NOT claimed: any orchestrator/ui.py behavior (CE4, live-only).
 
 ## Open contract gaps
-CE1-CE3 COMPLETE (shared, UNIT_PROVEN). Remaining: CE4 (ui.py gate + `LATENT_ORIGINS` C4/C5 routing +
-per-request flag threaded through `_compile_chat_plan`; live-only), CE5 (flag-off equivalence), merge +
-port-gated bounce, CE6/CE7 (live smoke + activation-reliability qualification), CE-UI (request field +
-capabilities key + Chat.tsx toggle). Contract dispositions: `chat_plan.ORIGIN_TYPES` UPDATED (additive);
-`ranked_fusion.lineage_class` UPDATED (CORPUS_EXPLORE→BRIDGE class); `bridge_integration.bridges_to_subqueries`
-UPDATED (additive origin/id_prefix params, BRIDGE default unchanged) — all backward-compatible, existing
-tests green.
+CE0-CE7 + CE-UI COMPLETE + DEPLOYED + LIVE-PROVEN (merge `e84d7cc`, bundle `99f6c44e6f33`). Contract
+dispositions (all backward-compatible, existing tests green + live-verified): `chat_plan.ORIGIN_TYPES`
+UPDATED (additive `CORPUS_EXPLORE`); `ranked_fusion.lineage_class` UPDATED (→BRIDGE class, no new weight);
+`bridge_integration.bridges_to_subqueries` UPDATED (additive origin/id_prefix, BRIDGE default byte-identical);
+QUERY_PLANNER/SUBQUERY_PROVENANCE/PROFILE_SCOUT_WIRING UPDATED (additive, live-proven); consumers
+(ACCEPTANCE/CANDIDATE_ENGINE/RETRIEVAL_RECEIPT/PROFILE_YIELD/RESOLUTION_STATE) TESTED_UNCHANGED.
+FOLLOW-UP (V2, not a V1 blocker): harden activation FIRING consistency (~78% → higher): retry/warm
+`search_atoms`, stabilize intent classification; then re-measure paraphrase/same-query reliability.
+Deferred (out of V1 scope, unchanged): parent-map/entity-card/graph activation signals.
+REVERSIBLE: `POLYMATH_CORPUS_EXPLORER=0` + bounce → pre-feature V2 (the CE5 flag-off smoke IS this behavior;
+capability=0 returns even earlier). End state: capability ON (safe — inert unless the per-request toggle is set).

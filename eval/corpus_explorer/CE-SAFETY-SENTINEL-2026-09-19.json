@@ -1,0 +1,108 @@
+{
+ "contract": "corpus-explorer-safety-sentinel-v1",
+ "feature": "corpus_explorer=ON",
+ "n": 9,
+ "unsupported_hallucinations": 0,
+ "q0_preserved_failures": 0,
+ "provenance_incomplete": 0,
+ "supported_gold_misses": 1,
+ "PASS": false,
+ "rows": {
+  "unsup_nitrogen": {
+   "unsupported": true,
+   "declined": true,
+   "hallucinated": false,
+   "gold_hit": null,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": null,
+   "err": null
+  },
+  "unsup_taxes": {
+   "unsupported": true,
+   "declined": true,
+   "hallucinated": false,
+   "gold_hit": null,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": null,
+   "err": null
+  },
+  "unsup_chess": {
+   "unsupported": true,
+   "declined": true,
+   "hallucinated": false,
+   "gold_hit": null,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": null,
+   "err": null
+  },
+  "unsup_python": {
+   "unsupported": true,
+   "declined": true,
+   "hallucinated": false,
+   "gold_hit": null,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": null,
+   "err": null
+  },
+  "pmap_murch_blink": {
+   "unsupported": false,
+   "declined": false,
+   "hallucinated": false,
+   "gold_hit": true,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": 0,
+   "err": null
+  },
+  "pmap_savecat": {
+   "unsupported": false,
+   "declined": false,
+   "hallucinated": false,
+   "gold_hit": false,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": 0,
+   "err": null
+  },
+  "direct_180": {
+   "unsupported": false,
+   "declined": false,
+   "hallucinated": false,
+   "gold_hit": true,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": 0,
+   "err": null
+  },
+  "direct_facs": {
+   "unsupported": false,
+   "declined": false,
+   "hallucinated": false,
+   "gold_hit": true,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": 0,
+   "err": null
+  },
+  "synth_edit_music": {
+   "unsupported": false,
+   "declined": false,
+   "hallucinated": false,
+   "gold_hit": true,
+   "q0_preserved": true,
+   "provenance_complete": true,
+   "ce_added": 0,
+   "err": null
+  }
+ },
+ "regression_verdict": {
+  "safety_critical_pass": true,
+  "gold_miss_analysis": "The single supported gold miss (pmap_savecat, HYBRID) is on a query where corpus_explorer is INERT (ce_added=0; pmap/factual intent is non-latent). A confirming re-probe gave gold_hit FLAG-OFF==FLAG-ON (both True, 6 docs) => the miss is pre-existing HYBRID named-source retrieval variance, NOT a CORPUS-EXPLORER regression.",
+  "material_regression_vs_v2": false,
+  "verdict": "PASS on the no-material-regression bar: safety-critical metrics all 0-failure with the feature ON; the lone gold-miss is feature-inert and flag-off-identical (retrieval flakiness)."
+ }
+}

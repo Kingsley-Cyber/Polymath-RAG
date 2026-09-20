@@ -1,0 +1,384 @@
+{
+ "contract": "corpus-explorer-ce7-v1",
+ "corpus": "cinema",
+ "mode": "FAST",
+ "n_live_executions": 18,
+ "paraphrase_stability": {
+  "nonverbal_authority": 0.276,
+  "insincere_expression": 0.414,
+  "physical_weight": 0.111,
+  "ordinary_unease": 0.247
+ },
+ "paraphrase_stability_mean": 0.262,
+ "same_query_stability": 0.333,
+ "negative_control_leakage": {
+  "neg_birthday": 0.143,
+  "neg_cooking": 1.0,
+  "neg_vacation": 1.0
+ },
+ "negative_control_leakage_max": 1.0,
+ "eligibility_rate_targets": 0.917,
+ "provenance_complete_all": true,
+ "errors": {},
+ "runs": {
+  "nonverbal_authority__f0": {
+   "q": "a character commands a room the moment she enters, without saying a word",
+   "err": null,
+   "latency_s": 29.0,
+   "concept_ids": [
+    "character-interaction-in-fantasy-narrative",
+    "non-verbal-storytelling-through-combat",
+    "character-consistency-in-ai-generated-stories",
+    "subtle-communication-of-gestures",
+    "applying-acting-principles-to-character-animation",
+    "integrated-approach-to-acting-voice-and-text-work",
+    "multistage-pipeline-for-improving-character-consistency",
+    "the-expressive-power-of-audio-elements-in-film"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 3,
+   "reason": "eligible"
+  },
+  "nonverbal_authority__f1": {
+   "q": "show that someone holds power over a group using only body language and how they occupy space",
+   "err": null,
+   "latency_s": 23.7,
+   "concept_ids": [
+    "affective-states-communication-through-body-movements",
+    "subtle-communication-of-gestures",
+    "use-of-visual-elements-to-control-narrative-space",
+    "embodied-meaning-making-through-robotic-motion",
+    "non-verbal-storytelling-through-combat",
+    "embodied-cognition-in-robotics",
+    "illustration-technique-for-dynamic-action",
+    "total-body-integration-through-coordinated-movement-and-breath"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "nonverbal_authority__f2": {
+   "q": "make it unmistakable that a person is in charge purely through movement and presence, no dialogue",
+   "err": null,
+   "latency_s": 24.0,
+   "concept_ids": [
+    "subtle-communication-of-gestures",
+    "affective-states-communication-through-body-movements",
+    "embodied-meaning-making-through-robotic-motion",
+    "non-verbal-storytelling-through-combat",
+    "total-body-integration-through-coordinated-movement-and-breath",
+    "integrated-approach-to-acting-voice-and-text-work",
+    "movement-and-drama",
+    "understanding-movement-patterns"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "insincere_expression__f0": {
+   "q": "make a character's smile read as fake and forced to the audience",
+   "err": null,
+   "latency_s": 26.5,
+   "concept_ids": [
+    "applying-acting-principles-to-character-animation",
+    "facial-expression-analysis",
+    "standardized-representation-of-facial-expressions-using-action-units",
+    "muscle-action-coding-of-facial-expressions",
+    "facial-action-coding",
+    "character-interaction-in-fantasy-narrative",
+    "multistage-pipeline-for-improving-character-consistency",
+    "character-consistency-in-ai-generated-stories"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "insincere_expression__f1": {
+   "q": "convey that someone's cheerful expression is actually insincere and performed",
+   "err": null,
+   "latency_s": 25.2,
+   "concept_ids": [
+    "facial-expression-analysis",
+    "muscle-action-coding-of-facial-expressions",
+    "standardized-representation-of-facial-expressions-using-action-units",
+    "coding-facial-expressions-using-action-units",
+    "facial-action-coding",
+    "applying-acting-principles-to-character-animation",
+    "subtle-communication-of-gestures",
+    "affective-states-communication-through-body-movements"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "insincere_expression__f2": {
+   "q": "the face should look happy but the audience should sense the emotion is faked",
+   "err": null,
+   "latency_s": 40.7,
+   "concept_ids": [
+    "facial-expression-analysis",
+    "facial-action-coding",
+    "muscle-action-coding-of-facial-expressions",
+    "standardized-representation-of-facial-expressions-using-action-units",
+    "facial-action-coding-system",
+    "facial-action-coding-system-theory",
+    "coding-facial-expressions-using-action-units",
+    "dimensional-model-of-emotion"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "physical_weight__f0": {
+   "q": "make a fight feel like the blows land with real weight and consequence",
+   "err": null,
+   "latency_s": 21.2,
+   "concept_ids": [
+    "non-verbal-storytelling-through-combat",
+    "timing-as-a-tool-for-weight-perception",
+    "illustration-technique-for-dynamic-action",
+    "subtle-communication-of-gestures",
+    "psychological-triggers-in-persuasive-copy",
+    "effective-storytelling-in-business",
+    "affective-states-communication-through-body-movements",
+    "value-opposition-in-character-development"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "physical_weight__f1": {
+   "q": "convey physical heaviness and genuine impact in an action sequence",
+   "err": null,
+   "latency_s": 32.2,
+   "concept_ids": [
+    "choreography-in-action-sequences",
+    "timing-as-a-tool-for-weight-perception",
+    "non-verbal-storytelling-through-combat",
+    "integrated-approach-to-acting-voice-and-text-work",
+    "illustration-technique-for-dynamic-action",
+    "the-expressive-power-of-audio-elements-in-film",
+    "the-use-of-sound-to-convey-meaning-and-emotion-in-cinema",
+    "affective-states-communication-through-body-movements"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "physical_weight__f2": {
+   "q": "the movement should feel grounded and forceful rather than weightless and flashy",
+   "err": null,
+   "latency_s": 2.2,
+   "concept_ids": [],
+   "n_activations": 0,
+   "provenance_complete": true,
+   "eligible": false,
+   "added": null,
+   "reason": null
+  },
+  "ordinary_unease__f0": {
+   "q": "make an ordinary hallway feel quietly menacing without turning it into a horror set",
+   "err": null,
+   "latency_s": 31.2,
+   "concept_ids": [
+    "the-expressive-power-of-audio-elements-in-film",
+    "the-use-of-sound-to-convey-meaning-and-emotion-in-cinema",
+    "non-verbal-storytelling-through-combat",
+    "use-of-visual-elements-to-control-narrative-space",
+    "integrated-approach-to-acting-voice-and-text-work",
+    "practical-lighting-design",
+    "using-natural-light-timing-for-scene-composition",
+    "subtle-communication-of-gestures"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "ordinary_unease__f1": {
+   "q": "create a sense of dread from a completely normal room using framing and mood",
+   "err": null,
+   "latency_s": 31.0,
+   "concept_ids": [
+    "use-of-visual-elements-to-control-narrative-space",
+    "using-natural-light-timing-for-scene-composition",
+    "visual-storytelling-framework",
+    "non-verbal-storytelling-through-combat",
+    "expressive-power-of-lens-selection-in-film",
+    "human-perception-and-orientation-in-built-environments",
+    "the-expressive-power-of-audio-elements-in-film",
+    "the-use-of-sound-to-convey-meaning-and-emotion-in-cinema"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "ordinary_unease__f2": {
+   "q": "an everyday office space should feel subtly oppressive and psychologically unsettling",
+   "err": null,
+   "latency_s": 32.1,
+   "concept_ids": [
+    "human-perception-and-orientation-in-built-environments",
+    "psychological-triggers-in-persuasive-copy",
+    "use-of-visual-elements-to-control-narrative-space",
+    "the-document-is-based-on-the-theoretical-framework-of-the-circumplex-model-of-affect",
+    "practical-lighting-design",
+    "dimensional-model-of-emotion",
+    "advertising-psychology",
+    "sticky-ideas-framework-that-combines-surprise-concreteness-credibility-and-storytelling-to-make-ideas-endure"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "suppressed_grief__same0": {
+   "q": "make a character's suppressed grief visible while they try hard to hide it",
+   "err": null,
+   "latency_s": 30.6,
+   "concept_ids": [],
+   "n_activations": 0,
+   "provenance_complete": true,
+   "eligible": false,
+   "added": null,
+   "reason": null
+  },
+  "suppressed_grief__same1": {
+   "q": "make a character's suppressed grief visible while they try hard to hide it",
+   "err": null,
+   "latency_s": 34.6,
+   "concept_ids": [
+    "value-opposition-in-character-development",
+    "affective-states-communication-through-body-movements",
+    "non-verbal-storytelling-through-combat",
+    "subtle-communication-of-gestures",
+    "dimensional-model-of-emotion",
+    "psychological-triggers-in-persuasive-copy",
+    "using-empathy-in-messaging",
+    "character-arc-as-a-measurable-progression-from-start-to-middle-to-end"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "suppressed_grief__same2": {
+   "q": "make a character's suppressed grief visible while they try hard to hide it",
+   "err": null,
+   "latency_s": 34.0,
+   "concept_ids": [
+    "value-opposition-in-character-development",
+    "affective-states-communication-through-body-movements",
+    "non-verbal-storytelling-through-combat",
+    "subtle-communication-of-gestures",
+    "dimensional-model-of-emotion",
+    "psychological-triggers-in-persuasive-copy",
+    "using-empathy-in-messaging",
+    "character-arc-as-a-measurable-progression-from-start-to-middle-to-end"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": true,
+   "added": 4,
+   "reason": "eligible"
+  },
+  "neg_birthday": {
+   "q": "design a bright, joyful children's birthday party montage full of balloons and cake",
+   "err": null,
+   "latency_s": 29.2,
+   "concept_ids": [
+    "using-natural-light-timing-for-scene-composition",
+    "animation-techniques",
+    "image-blending",
+    "principles-of-motion-in-animation",
+    "practical-lighting-design",
+    "sticky-ideas-framework-that-combines-surprise-concreteness-credibility-and-storytelling-to-make-ideas-endure",
+    "camera-hierarchy-on-film-sets",
+    "dynamic-pose-composition"
+   ],
+   "n_activations": 8,
+   "provenance_complete": true,
+   "eligible": false,
+   "added": 0,
+   "reason": "intent_not_latent"
+  },
+  "neg_cooking": {
+   "q": "create an upbeat step-by-step cooking tutorial for a simple pasta dish",
+   "err": null,
+   "latency_s": 1.9,
+   "concept_ids": [],
+   "n_activations": 0,
+   "provenance_complete": true,
+   "eligible": false,
+   "added": null,
+   "reason": null
+  },
+  "neg_vacation": {
+   "q": "write a lighthearted scene of friends cheerfully planning a summer beach vacation",
+   "err": null,
+   "latency_s": 22.7,
+   "concept_ids": [],
+   "n_activations": 0,
+   "provenance_complete": true,
+   "eligible": false,
+   "added": null,
+   "reason": null
+  }
+ },
+ "analysis_corrected": {
+  "note": "CORRECTED firing-aware analysis (offline recompute from captured runs; empty-vs-empty Jaccard is undefined, not 1.0). Supersedes the original headline fields.",
+  "firing_rate": 0.778,
+  "n_fired": 14,
+  "n_total": 18,
+  "non_firing": [
+   "physical_weight__f2",
+   "suppressed_grief__same0",
+   "neg_cooking",
+   "neg_vacation"
+  ],
+  "paraphrase_stability_when_fired": {
+   "nonverbal_authority": 0.276,
+   "insincere_expression": 0.414,
+   "physical_weight": 0.333,
+   "ordinary_unease": 0.247
+  },
+  "paraphrase_forms_fired": {
+   "nonverbal_authority": "3/3",
+   "insincere_expression": "3/3",
+   "physical_weight": "2/3",
+   "ordinary_unease": "3/3"
+  },
+  "paraphrase_stability_mean": 0.318,
+  "same_query_content_stability_when_fired": 1.0,
+  "same_query_forms_fired": "2/3",
+  "negative_control_leakage_when_fired": {
+   "neg_birthday": 0.143,
+   "neg_cooking": null,
+   "neg_vacation": null
+  },
+  "negative_control_leakage_max": 0.143,
+  "eligibility_rate_targets": 0.917,
+  "provenance_complete_all_fired": true
+ }
+}

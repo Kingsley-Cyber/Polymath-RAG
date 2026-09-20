@@ -1074,3 +1074,16 @@ def test_subquery_origin_flows_into_lane_provenance(monkeypatch):
     on = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=FakeFlood().dense, sparse_search=FakeFlood().sparse, subqueries=[bridge])
     bA_lanes = [l for l in on.trace["ranked_lanes"]["lanes"] if l["query_id"] == "bA"]
     assert bA_lanes and all(l["origin"] == "BRIDGE" for l in bA_lanes)   # provenance carried, not inferred
+
+
+def test_corpus_explore_origin_flows_into_lane_provenance(monkeypatch):
+    # CORPUS-EXPLORER-V1: a CORPUS_EXPLORE-origin SubQuery reaches the RankedLane with its origin intact,
+    # so ranked_fusion.lineage_class maps it to the BRIDGE weight class (that mapping is proven in
+    # test_corpus_explore). Closes the activation -> subquery -> RankedLane leg deterministically.
+    monkeypatch.setenv("POLYMATH_CHAT_LATENT_FUSION", "1")
+    ceq = ce.SubQuery(query_id="ce0", qtype="BRIDGE_CANDIDATE", text="a grounded concept probe", weight=1.0,
+                      qvec=(0.9, 0.1), sparse_query=None, origin="CORPUS_EXPLORE")
+    on = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(), dense_search=FakeFlood().dense,
+                                sparse_search=FakeFlood().sparse, subqueries=[ceq])
+    ce_lanes = [l for l in on.trace["ranked_lanes"]["lanes"] if l["query_id"] == "ce0"]
+    assert ce_lanes and all(l["origin"] == "CORPUS_EXPLORE" for l in ce_lanes)   # origin carried generically
