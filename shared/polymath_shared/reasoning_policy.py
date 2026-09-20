@@ -137,20 +137,36 @@ def reasoning_params(role: str, model: str, api_surface: str = S_LITELLM) -> dic
     return {"top_level": top, "extra_body": extra, "max_output_tokens": int(out_cap) if out_cap else None}
 
 
+def _record(applied: dict) -> None:
+    """Best-effort append of the SANITIZED applied params (no secrets) to a JSONL receipt so the ACTUAL
+    outgoing reasoning params are provable per live call (Slice-2 wire proof). Never raises."""
+    try:
+        import json as _j
+        import time as _t
+        path = os.environ.get("POLYMATH_REASONING_RECEIPT",
+                              "/private/tmp/polymath_fleet/reasoning_policy.jsonl")
+        with open(path, "a") as fh:
+            fh.write(_j.dumps({"ts": round(_t.time(), 3), **applied}) + "\n")
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def apply_litellm(kwargs: dict, role: str, model: str) -> dict:
     """Overlay the role's reasoning params onto a `litellm.completion` kwargs dict IN PLACE, ONLY when the
     policy is enabled (else a no-op -> byte-identical). Runtime overlay: nothing is written to any config or
     contract hash. Output budget stays with the caller's existing max_tokens logic. Returns the SANITIZED
-    params applied (no secrets) for logging, or {} when disabled."""
+    params applied (no secrets), or {} when disabled; also appends them to the wire-proof receipt."""
     if not policy_enabled():
         return {}
     rp = reasoning_params(role, model, S_LITELLM)
     kwargs.update(rp["top_level"])
     if rp["extra_body"]:
         kwargs["extra_body"] = {**(kwargs.get("extra_body") or {}), **rp["extra_body"]}
-    return {"role": role, "provider": provider_family(model), "surface": S_LITELLM,
-            "top_level": dict(rp["top_level"]), "extra_body": dict(rp["extra_body"]),
-            "max_output_tokens": rp["max_output_tokens"]}
+    applied = {"role": role, "provider": provider_family(model), "surface": S_LITELLM,
+               "top_level": dict(rp["top_level"]), "extra_body": dict(rp["extra_body"]),
+               "max_output_tokens": rp["max_output_tokens"]}
+    _record(applied)
+    return applied
 
 
 def apply_chat_completions(payload: dict, role: str, model: str) -> dict:
@@ -163,6 +179,8 @@ def apply_chat_completions(payload: dict, role: str, model: str) -> dict:
     payload.update(rp["top_level"])
     if rp["extra_body"]:
         payload["extra_body"] = {**(payload.get("extra_body") or {}), **rp["extra_body"]}
-    return {"role": role, "provider": provider_family(model), "surface": S_CHAT_COMPLETIONS,
-            "top_level": dict(rp["top_level"]), "extra_body": dict(rp["extra_body"]),
-            "max_output_tokens": rp["max_output_tokens"]}
+    applied = {"role": role, "provider": provider_family(model), "surface": S_CHAT_COMPLETIONS,
+               "top_level": dict(rp["top_level"]), "extra_body": dict(rp["extra_body"]),
+               "max_output_tokens": rp["max_output_tokens"]}
+    _record(applied)
+    return applied
