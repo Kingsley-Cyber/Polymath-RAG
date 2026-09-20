@@ -681,6 +681,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-20-evidence-packet-text-excerpt.md", "md", None),
     ("tests/determinism/test_evidence_packet_text_excerpt.py", "py", None),
     ("eval/reasoning_boundary/rb5_packet_text_excerpt.py", "py", None),
+    ("eval/reasoning_boundary/RB5-PACKET-TEXT-EXCERPT-2026-09-20.json", "json", None),
     ("docs/wiki/work-log/2026-09-18-prelive-wiring-p10-resolution.md", "md", None),
     ("eval/librarian_qualification/harness.py", "py", None),
     ("eval/librarian_qualification/build_gold.py", "py", None),

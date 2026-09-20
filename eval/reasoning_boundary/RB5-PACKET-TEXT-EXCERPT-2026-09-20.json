@@ -1,0 +1,290 @@
+{
+ "artifact": "RB5 \u2014 EvidencePacket text = bounded verbatim excerpt of the chunk (presentation only): proof on a SMALL FIXED sample",
+ "date": "2026-09-20",
+ "base_rev": "4c1ecc0",
+ "fix_commit": "4325c6d",
+ "merge": "9a8959f",
+ "fleet_bundle_before": "c0d86509ad39",
+ "fleet_bundle_after": "9cb421b4eeed",
+ "corpus": "cinema",
+ "script": "eval/reasoning_boundary/rb5_packet_text_excerpt.py",
+ "external_spend_usd": 0,
+ "note": "verdicts only \u2014 no corpus text is stored here (the raw captures hold 240-char text heads and stay out of the repo)",
+ "sample_requests": [
+  {
+   "id": "s1",
+   "deterministic_lane": true,
+   "body": {
+    "message": "how do fight choreographers keep performers safe during rehearsal",
+    "mode": "FAST",
+    "compiler": "off",
+    "corpus_explorer": false
+   }
+  },
+  {
+   "id": "s2",
+   "deterministic_lane": true,
+   "body": {
+    "message": "what makes a cut feel invisible in continuity editing",
+    "mode": "FAST",
+    "compiler": "off",
+    "corpus_explorer": false
+   }
+  },
+  {
+   "id": "s3",
+   "deterministic_lane": true,
+   "body": {
+    "message": "how should a director block a scene with several actors",
+    "mode": "HYBRID",
+    "compiler": "off",
+    "corpus_explorer": false
+   }
+  },
+  {
+   "id": "s4",
+   "deterministic_lane": false,
+   "body": {
+    "message": "why does camera angle sell a staged hit",
+    "mode": "HYBRID",
+    "corpus_explorer": false
+   }
+  },
+  {
+   "id": "s5",
+   "deterministic_lane": false,
+   "body": {
+    "message": "how do editors control pace and rhythm",
+    "mode": "WILDCARD",
+    "corpus_explorer": true
+   }
+  },
+  {
+   "id": "s6",
+   "deterministic_lane": false,
+   "body": {
+    "message": "what do stage combat teachers do to keep partner drills safe",
+    "mode": "HYBRID",
+    "corpus_explorer": true
+   }
+  }
+ ],
+ "part_A_before_after_http": {
+  "what": "the SAME 5 requests against the pre-fix fleet and the post-fix fleet; s1-s3 run with the query compiler OFF (no LLM in the turn = an exactly repeatable lane); s4-s5 were captured TWICE before the fix to measure the lane's own repeatability",
+  "before_max_text_len": 240,
+  "after_max_text_len": 899,
+  "sample": [
+   {
+    "id": "s1",
+    "deterministic_lane": true,
+    "baseline_repeatable": true,
+    "rows_before": 15,
+    "rows_after": 15,
+    "identity_fields_equal_in_order": true,
+    "text_len_before": [
+     89,
+     212,
+     240
+    ],
+    "text_len_after_min_max": [
+     89,
+     837
+    ],
+    "rows_longer_than_240_after": 13,
+    "truncation_fields_present_after": true,
+    "old_preview_is_exact_prefix_of_new_text": 15,
+    "old_preview_is_prefix_after_whitespace_normalisation": 15,
+    "verdict": "UNCHANGED"
+   },
+   {
+    "id": "s2",
+    "deterministic_lane": true,
+    "baseline_repeatable": true,
+    "rows_before": 15,
+    "rows_after": 15,
+    "identity_fields_equal_in_order": true,
+    "text_len_before": [
+     240
+    ],
+    "text_len_after_min_max": [
+     339,
+     898
+    ],
+    "rows_longer_than_240_after": 15,
+    "truncation_fields_present_after": true,
+    "old_preview_is_exact_prefix_of_new_text": 15,
+    "old_preview_is_prefix_after_whitespace_normalisation": 15,
+    "verdict": "UNCHANGED"
+   },
+   {
+    "id": "s3",
+    "deterministic_lane": true,
+    "baseline_repeatable": true,
+    "rows_before": 15,
+    "rows_after": 15,
+    "identity_fields_equal_in_order": true,
+    "text_len_before": [
+     240
+    ],
+    "text_len_after_min_max": [
+     330,
+     899
+    ],
+    "rows_longer_than_240_after": 15,
+    "truncation_fields_present_after": true,
+    "old_preview_is_exact_prefix_of_new_text": 15,
+    "old_preview_is_prefix_after_whitespace_normalisation": 15,
+    "verdict": "UNCHANGED"
+   },
+   {
+    "id": "s4",
+    "deterministic_lane": false,
+    "baseline_repeatable": false,
+    "rows_before": 21,
+    "rows_after": 21,
+    "identity_fields_equal_in_order": false,
+    "text_len_before": [
+     206,
+     240
+    ],
+    "text_len_after_min_max": [
+     153,
+     899
+    ],
+    "rows_longer_than_240_after": 18,
+    "truncation_fields_present_after": true,
+    "verdict": "NOT_COMPARABLE (the lane differs between two identical BEFORE calls: an LLM planner, not this fix)"
+   },
+   {
+    "id": "s5",
+    "deterministic_lane": false,
+    "baseline_repeatable": false,
+    "rows_before": 15,
+    "rows_after": 15,
+    "identity_fields_equal_in_order": false,
+    "text_len_before": [
+     218,
+     235,
+     240
+    ],
+    "text_len_after_min_max": [
+     99,
+     898
+    ],
+    "rows_longer_than_240_after": 11,
+    "truncation_fields_present_after": true,
+    "verdict": "NOT_COMPARABLE (the lane differs between two identical BEFORE calls: an LLM planner, not this fix)"
+   }
+  ],
+  "failures": [],
+  "exact_comparisons": 3,
+  "ok": true
+ },
+ "part_B_same_inputs_ab": {
+  "what": "3 REAL planned turns run in-process on the deployed orchestrator package; the exact kwargs the evidence-only short-circuit hands to build_evidence_packet are captured and the packet is built twice from them \u2014 with the PRE-FIX builder loaded verbatim from git and with the deployed builder",
+  "base_rev": "4c1ecc0",
+  "legacy_default_max_text": 1200,
+  "deployed_default_max_text": 900,
+  "deployed_module": "polymath-v4/shared/polymath_shared/evidence_packet.py",
+  "orchestrator_module": "polymath-v4/orchestrator/orchestrator/api/chat.py",
+  "sample": [
+   {
+    "id": "s4",
+    "mode": "HYBRID",
+    "rows": 21,
+    "compiled_queries": 7,
+    "grades": {
+     "DIRECT": 21
+    },
+    "utility_roles": {
+     "DIRECT": 21
+    },
+    "origins": {
+     "USER": 13,
+     "PROFILE": 8
+    },
+    "corpus_explorer_used": false,
+    "rows_identical_outside_text_fields_in_order": true,
+    "plan_receipts_mode_identical": true,
+    "legacy_text_len_max": 240,
+    "new_text_len_min_max": [
+     153,
+     899
+    ],
+    "rows_longer_than_240": 19,
+    "rows_truncated": 8,
+    "chunks_resolved": 21,
+    "legacy_preview_is_prefix_of_new_text": 21,
+    "new_text_is_verbatim_prefix_of_chunk": 21,
+    "bounds_and_flags_consistent": true
+   },
+   {
+    "id": "s5",
+    "mode": "WILDCARD",
+    "rows": 15,
+    "compiled_queries": 13,
+    "grades": {
+     "DIRECT": 15
+    },
+    "utility_roles": {
+     "DIRECT": 15
+    },
+    "origins": {
+     "USER": 14,
+     "PROFILE": 1
+    },
+    "corpus_explorer_used": true,
+    "rows_identical_outside_text_fields_in_order": true,
+    "plan_receipts_mode_identical": true,
+    "legacy_text_len_max": 240,
+    "new_text_len_min_max": [
+     99,
+     898
+    ],
+    "rows_longer_than_240": 11,
+    "rows_truncated": 2,
+    "chunks_resolved": 15,
+    "legacy_preview_is_prefix_of_new_text": 15,
+    "new_text_is_verbatim_prefix_of_chunk": 15,
+    "bounds_and_flags_consistent": true
+   },
+   {
+    "id": "s6",
+    "mode": "HYBRID",
+    "rows": 15,
+    "compiled_queries": 4,
+    "grades": {
+     "DIRECT": 6,
+     "RELATED": 9
+    },
+    "utility_roles": {
+     "DIRECT": 15
+    },
+    "origins": {
+     "USER": 8,
+     "PROFILE": 7
+    },
+    "corpus_explorer_used": false,
+    "rows_identical_outside_text_fields_in_order": true,
+    "plan_receipts_mode_identical": true,
+    "legacy_text_len_max": 240,
+    "new_text_len_min_max": [
+     297,
+     896
+    ],
+    "rows_longer_than_240": 15,
+    "rows_truncated": 3,
+    "chunks_resolved": 15,
+    "legacy_preview_is_prefix_of_new_text": 15,
+    "new_text_is_verbatim_prefix_of_chunk": 15,
+    "bounds_and_flags_consistent": true
+   }
+  ],
+  "failures": [],
+  "ok": true
+ },
+ "totals": {
+  "rows_compared_exactly": 96,
+  "rows_with_any_non_text_difference": 0
+ }
+}
