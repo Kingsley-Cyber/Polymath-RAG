@@ -15,8 +15,10 @@ deterministic Trail core) on the EXISTING adapter runtime. Harvest behaviour, no
 generic infrastructure.
 
 ## Current Phase
-**Phase 0 — repository truth and capability map: DONE (read-only).**
-**BLOCKED before Phase 1:** `MIGRATION_POLICY.md` and `EXECUTION_PLAN.md` were never supplied (decision M-001).
+**Phase 0 — DONE** (gate: no unresolved risk of overwriting user work — all four locations clean except Hermes' three uncommitted skill text files, which the migration does not touch).
+**Phase 1 — capability forensics — gate MET** (`CAPABILITY_MAP.md`: every major responsibility has a target owner, a source implementation and an action). Two sub-items stay open inside it: the
+Trail wire-model file (`workflow/public/operations.py`) and the domain-binding seam decision (Phase 3).
+**NEXT: Phase 2 — import the ecommerce implementation additively.** Controlling documents installed from the owner's bundle (M-001 resolved, M-003).
 
 ## Repository State
 - polymath-v4: `production`, clean, 130+ commits ahead of `origin/main`, nothing pushed. Worktrees parked: `pmv4-atom-scope`
@@ -32,8 +34,11 @@ generic infrastructure.
 
 ## Completed
 - Owner reframe recorded in the plan of record; harvest map written (registers 11.362; commits `59a4b60`, `9dfd3c3`).
-- `docs/migration/` created: `BOOTSTRAP_CONTEXT.md` (owner text), `CAPABILITY_MAP.md`, `PARITY_MATRIX.md`, `AUTO_DECISIONS.md`,
-  `ADR-TRAIL-EMBEDDING.md` (DRAFT), `FINAL_MIGRATION_REPORT.md` (skeleton), this file.
+- `docs/migration/` complete: owner-controlling `MIGRATION_POLICY.md`, `BOOTSTRAP_CONTEXT.md`, `EXECUTION_PLAN.md` (+ `README.md`,
+  `NEW_SESSION_BOOTSTRAP_PROMPT.md`) installed BYTE-IDENTICAL from `~/Documents/polymath-rebuild/polymath_migration_bootstrap.zip`; the earlier,
+  longer owner text kept as `BOOTSTRAP_CONTEXT_EXTENDED.md` (the bundle wins on any difference; it alone states the target tree
+  `adapters/ecommerce/` + `governance/trail/` and the report acceptance list). Agent-owned: `CAPABILITY_MAP.md`, `PARITY_MATRIX.md`,
+  `AUTO_DECISIONS.md` (M-001…M-005), `ADR-TRAIL-EMBEDDING.md` (DRAFT), `FINAL_MIGRATION_REPORT.md` (skeleton), this file.
 - `/polymath-bootstrap` verified: detects `docs/migration/`, reads the documents in order, stops when the policy or plan is
   missing, baseline-first search, Trail / AutoResearch / wrapper names, test isolation, evidence vocabulary (10 of 10).
 - Tools discovered: `graphify` and `graft` present; CodeGraph and Ponytail absent.
@@ -52,8 +57,10 @@ admission, freshness, independence, judgement, territory, qualification, score /
 Full table: `CAPABILITY_MAP.md` "Duplicate Authority Map".
 
 ## Important Auto Decisions
-M-001 Phase 0 only, without inventing the two missing controlling files · M-002 documents on `production` declared in the
-scaffold `TREE`; all migration code in a dedicated worktree, new top-level packages outside the fence set.
+M-001 (resolved) · M-002 documents on `production` declared in the scaffold `TREE`; all migration code in a dedicated worktree, new
+top-level packages outside the fence set · M-003 the bundle's controlling files control; earlier bootstrap kept as EXTENDED · M-004 today's
+existing test runs ARE the Phase 0 baseline (no re-run; Trail baselined at Phase 6) · M-005 commerce corpus = reconstruct the 10-document set
+from preserved sources under a NEW corpus id at Phase 10, after Item 2D is merged.
 
 ## Tests Passed
 None run in Phase 0 (read-only). Last known: AutoResearch 609 checks + doctor green (TG4 close); static guards green today.
@@ -65,15 +72,22 @@ None run in Phase 0 (read-only). Last known: AutoResearch 609 checks + doctor gr
 - Historical baseline fails canary 2 of 9.
 
 ## Current Blocker
-1. `MIGRATION_POLICY.md` and `EXECUTION_PLAN.md` content was not supplied. 2. No commerce corpus exists for the real E2E
-(`cinema` only; `ecom-meta-v1` dropped by the owner; a second corpus needs Item 2D merged first).
+None. (The commerce corpus is pre-authorized by the policy and scheduled for Phase 10 — M-005. Item 2D must be merged before it.)
 
 ## Next Exact Action
-1. Owner supplies the two controlling files → install them verbatim, declare them in the scaffold `TREE`, commit.
-2. Then start the plan's Phase 1. Unknowns 1 and 3 of `CAPABILITY_MAP.md` are partly closed (Trail closure = 16 modules / 6,944 lines,
-   third-party `pydantic`, `typing_extensions`, `packageurl`; 57 % of it is unrelated contexts' contract modules pulled by the wire models ·
-   executors are one global `dict[step_type → Executor]` in the worker, no per-adapter binding). Remaining reads: `workflow/public/operations.py`
-   (can the research wire models stand alone?), the store port, and the Hermes deployed-copy reason.
+**Phase 2 — import AutoResearch additively, no redesign on import.**
+1. `git worktree add ../pmv4-consolidation -b migration/ecommerce-consolidation production` (M-002).
+2. Copy from `~/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH` @ `a7baa66` into `adapters/ecommerce/`, preserving its layout: `python/`, `prompts/`,
+   `schemas/`, `graph/`, `registry/` (WITHOUT `registry/research_evidence.csv`, `registry/compiled/`, `registry/patches/`), `tests/`, `docs/`, `SKILL.md`,
+   `manifest.yaml`, `policies` under `graph/`. EXCLUDE: `state/`, `candidates/`, `exports/`, `*.sqlite3*`, `__pycache__/`, `MIRROR_RECEIPT.json`, any `.env`.
+   Run a secrets / personal-data scan over the copy before `git add` (INV-7); record what was excluded.
+3. Declare every imported file in `scripts/scaffold_polymath_v4.py` `TREE` (generate the lines; `repo_guard` fails otherwise).
+4. Gate: `~/.hermes/hermes-agent/venv/bin/python adapters/ecommerce/tests/run_all.py` + `python/controller.py doctor` pass in the NEW location with
+   `OPPORTUNITY_RESEARCH_DB` pointed at a temp file (expect ≈ 606: the cross-repo checks look for a sibling `polymath-v4`; repoint them to the repo root as the
+   first ADAPT, which also removes the schema byte-copies' sha pins in favour of reading `contracts/` directly).
+5. Update `PARITY_MATRIX.md` (Migrated path column), this file, commit on the migration branch. Do NOT merge to `production` yet.
+Then Phase 3: decide the binding seam from the verified convention (one global `EXECUTORS: dict[step_type → Executor]` in
+`workers/workers/adapter_step_worker.py:509`; `Executor = (step, RunState, Manifest) → ExecOutcome`) — record as M-006 before coding.
 
 ## DO NOT REDO
 - The AutoResearch-vs-governed comparison, the dependency facts per harvest target, the registry-drift check, the historical-run

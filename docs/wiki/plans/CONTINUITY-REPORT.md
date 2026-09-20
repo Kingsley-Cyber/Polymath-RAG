@@ -137,10 +137,10 @@ daemon :8767 from A41. The fleet does not survive a reboot (`scripts/boot_polyma
 
 **Active mission:** Polymath ecommerce consolidation migration.
 **Mission context:** `docs/migration/`.
-**Controlling documents (owner-authored):** `MIGRATION_POLICY.md` · `BOOTSTRAP_CONTEXT.md` · `EXECUTION_PLAN.md` — **the policy and the plan have NOT been
-supplied yet; only `BOOTSTRAP_CONTEXT.md` is installed. That is a stop for autonomous execution.**
-**Current execution state:** `docs/migration/CONTINUATION.md` (Phase 0 done, read-only; nothing migrated; blockers = the two missing files and the
-commerce corpus). Agent-owned companions: `CAPABILITY_MAP.md`, `PARITY_MATRIX.md`, `AUTO_DECISIONS.md`, `ADR-TRAIL-EMBEDDING.md` (DRAFT),
+**Controlling documents (owner-authored, installed byte-identical from the owner's bundle 2026-09-20):** `MIGRATION_POLICY.md` · `BOOTSTRAP_CONTEXT.md` ·
+`EXECUTION_PLAN.md`. First prompt for a fresh session: `docs/migration/NEW_SESSION_BOOTSTRAP_PROMPT.md`. Read order: POLICY → BOOTSTRAP → PLAN → CONTINUATION → AUTO_DECISIONS.
+**Current execution state:** `docs/migration/CONTINUATION.md` (Phases 0–1 gates met, read-only; nothing migrated yet; NEXT = Phase 2 import in worktree
+`pmv4-consolidation`; no blocker). Agent-owned companions: `CAPABILITY_MAP.md`, `PARITY_MATRIX.md`, `AUTO_DECISIONS.md`, `ADR-TRAIL-EMBEDDING.md` (DRAFT),
 `FINAL_MIGRATION_REPORT.md` (skeleton).
 
 **OWNER REFRAME 2026-09-20 (register 11.362) — THIS IS NOW A MIGRATION / RECOVERY PROJECT; ALL IMPLEMENTATION IS HALTED until the owner reviews
