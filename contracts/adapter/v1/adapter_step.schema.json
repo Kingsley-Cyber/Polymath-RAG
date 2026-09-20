@@ -97,6 +97,32 @@
               "note": {
                 "type": "string",
                 "maxLength": 500
+              },
+              "utility_role": {
+                "description": "OPTIONAL (evidence-boundary surface): why the evidence was seated — EvidencePacket utility_role.",
+                "enum": [
+                  "DIRECT",
+                  "COMPLEMENTARY",
+                  "DIVERGENT",
+                  "RELATED"
+                ]
+              },
+              "ca4_grade": {
+                "description": "OPTIONAL (evidence-boundary surface): how the evidence supports the ORIGINAL need — EvidencePacket ca4_grade.",
+                "enum": [
+                  "DIRECT",
+                  "PARTIAL",
+                  "RELATED"
+                ]
+              },
+              "c4_valid": {
+                "description": "OPTIONAL (evidence-boundary surface): answerability-valid (DIRECT/PARTIAL grade, or seated COMPLEMENTARY/DIVERGENT).",
+                "type": "boolean"
+              },
+              "origin": {
+                "description": "OPTIONAL (evidence-boundary surface): provenance of the retrieving query (USER, CORPUS_EXPLORE, BRIDGE, EVIDENCE_GAP, ...).",
+                "type": "string",
+                "pattern": "^[A-Z][A-Z0-9_]{0,39}$"
               }
             }
           },

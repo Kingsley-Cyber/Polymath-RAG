@@ -1,0 +1,47 @@
+{
+  "schema_version": "evidence-packet-v1",
+  "q0": "why do running belts bounce on long runs",
+  "retrieval_mode": "WILDCARD",
+  "synthesis_performed": false,
+  "plan": {
+    "compiled_queries": [
+      {"id": "q0", "origin": "USER", "role": "PRIMARY"},
+      {"id": "ce1", "origin": "CORPUS_EXPLORE", "role": "SUPPORT"}
+    ],
+    "corpus_explorer_requested": true,
+    "corpus_explorer_used": true
+  },
+  "evidence": [
+    {
+      "chunk_id": "chunk_0001",
+      "document_id": "doc_0001",
+      "source": "Example Source — chapter 3",
+      "text": "A load carried away from the body's centre of mass oscillates with every stride.",
+      "origin": "USER",
+      "query_ids": ["q0"],
+      "lineage": [{"query_id": "q0", "origin": "USER", "role": "PRIMARY"}],
+      "utility_role": "DIRECT",
+      "synthesis_role": "DIRECT",
+      "ca4_grade": "DIRECT",
+      "c4_valid": true,
+      "provenance": {"origin": "USER", "inspired_by_profile": [], "derived_from": null, "relation_to_q0": null}
+    },
+    {
+      "chunk_id": "chunk_0002",
+      "document_id": "doc_0002",
+      "source": "Example Source — appendix",
+      "text": "Damping a suspended mass needs either tension or a second anchor point.",
+      "origin": "CORPUS_EXPLORE",
+      "query_ids": ["ce1"],
+      "lineage": [{"query_id": "ce1", "origin": "CORPUS_EXPLORE", "role": "SUPPORT"}],
+      "utility_role": "COMPLEMENTARY",
+      "synthesis_role": "LATENT",
+      "ca4_grade": "RELATED",
+      "c4_valid": true,
+      "provenance": {"origin": "CORPUS_EXPLORE", "inspired_by_profile": ["concept:damping"], "derived_from": "damping", "relation_to_q0": "a mechanism adjacent to the stated friction"}
+    }
+  ],
+  "receipts": {
+    "firing": {"requested": true, "fired": true, "cause": null}
+  }
+}

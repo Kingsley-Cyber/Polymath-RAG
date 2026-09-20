@@ -17,6 +17,11 @@ rejected-submission reason, result lineage). Exit 0 only when every observable c
     # (--harness-receipts DIR with AGENT_RESEARCH.json / PRODUCT_REALITY_CHECK.json / SUPPLIER_RESEARCH.json).
     .venv/bin/python scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery --corpus cinema --harness wait
     .venv/bin/python scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery --corpus cinema --harness-receipts /path/to/receipts
+    # GOVERNED-CONVERGENCE-V1 TG2: every awaiting step's adapter_next payload is inspected for its sibling `evidence` key
+    # (READABLE rows). --require-evidence-text fails the run unless every AGENT_REASON step that listed knowledge evidence
+    # carried evidence TEXT; --require-surface evidence_boundary fails it unless the knowledge steps ran on that surface.
+    .venv/bin/python scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery --corpus cinema --harness-receipts tests/fixtures/harness_receipts \
+        --require-evidence-text --require-surface evidence_boundary
 """
 from __future__ import annotations
 
@@ -48,6 +53,20 @@ def restart_supervised_worker() -> dict[str, Any]:
         if new and new != pid:
             return {"killed_pid": pid, "respawned_pid": new}
     raise SystemExit("the supervisor did not respawn the adapter_step worker within 120 s")
+
+
+def evidence_view(nxt: dict[str, Any]) -> dict[str, Any]:
+    """What the LIVE adapter_next payload carried beside the step (TG2a): readable rows, their text, roles/grades, and the
+    knowledge surfaces its receipts name. Observation only — the scripted answers still cite ids from context.evidence_refs."""
+    ev = nxt.get("evidence") if isinstance(nxt.get("evidence"), dict) else {}
+    rows = [r for r in (ev.get("rows") or []) if isinstance(r, dict)]
+    return {"present": "evidence" in nxt, "rows": len(rows), "text_chars": sum(len(str(r.get("text") or "")) for r in rows),
+            "rows_with_text": sum(1 for r in rows if str(r.get("text") or "").strip()),
+            "rows_with_utility_role": sum(1 for r in rows if r.get("utility_role")), "rows_with_ca4_grade": sum(1 for r in rows if r.get("ca4_grade")),
+            "kinds": sorted({str(r.get("kind")) for r in rows}), "coverage": ev.get("coverage"),
+            "surfaces": sorted({str(x.get("surface")) for x in (ev.get("receipts") or []) if isinstance(x, dict) and x.get("surface")}),
+            "degraded": sorted({d for x in (ev.get("receipts") or []) if isinstance(x, dict) for d in (x.get("degraded_reasons") or [])}),
+            **({"error": ev["error"]} if ev.get("error") else {})}
 
 
 # ── scripted "agent" answers per adapter: each returns a payload citing ONLY ids from the issued step's context ──
@@ -154,7 +173,7 @@ def load_receipt(receipts_dir: str, action: dict[str, Any]) -> dict[str, Any]:
 
 
 async def run(adapter_id: str, corpus: str, mcp_url: str, key: str, restart: bool, *, harness: str = "receipts", receipts_dir: str | None = None,
-              harness_id: str = "mcp-acceptance-harness") -> dict[str, Any]:
+              harness_id: str = "mcp-acceptance-harness", require_evidence_text: bool = False, require_surface: str | None = None) -> dict[str, Any]:
     import httpx
     from mcp import ClientSession
     from mcp.client.streamable_http import streamable_http_client
@@ -198,7 +217,8 @@ async def run(adapter_id: str, corpus: str, mcp_url: str, key: str, restart: boo
                     if step["step_type"] == "HARNESS_ACTION":
                         action = step["harness_action"]
                         receipts["harness_actions"].append({"step_id": step["step_id"], "action_id": action["action_id"], "action_kind": action["action_kind"],
-                                                            "hypothesis_ids": len(action["hypothesis_ids"]), "search_intents": len(action["search_intents"]), "registry_snapshot": action["registry_snapshot"]["snapshot_id"]})
+                                                            "hypothesis_ids": len(action["hypothesis_ids"]), "search_intents": len(action["search_intents"]), "registry_snapshot": action["registry_snapshot"]["snapshot_id"],
+                                                            "evidence": evidence_view(nxt)})
                         if harness == "wait":
                             # a REAL harness answers through its own MCP connection; this driver only shows the action and waits
                             print(json.dumps({"awaiting_harness": action}, indent=1, default=str), flush=True)
@@ -216,7 +236,9 @@ async def run(adapter_id: str, corpus: str, mcp_url: str, key: str, restart: boo
                         await asyncio.sleep(1)
                         continue
                     ids = _ids(step)
-                    receipts["agent_steps"].append({"step_id": step["step_id"], "sequence": step["sequence"], "evidence_refs": len(ids)})
+                    receipts["agent_steps"].append({"step_id": step["step_id"], "sequence": step["sequence"], "evidence_refs": len(ids),
+                                                    "knowledge_refs": sum(1 for r in step["context"]["evidence_refs"] if r.get("kind") in ("chunk", "document", "graph_fact", "graph_hop")),
+                                                    "evidence": evidence_view(nxt)})
                     if not restarted:
                         receipts["restart"] = restart_supervised_worker(); restarted = True
                     if not rejected_once:
@@ -236,6 +258,21 @@ async def run(adapter_id: str, corpus: str, mcp_url: str, key: str, restart: boo
                 receipts["result"] = {"status": res["status"], "output_keys": sorted(res["output"]), "lineage_evidence": len(res["lineage"]["polymath_evidence_ids"]),
                                       "receipts": len(res["lineage"]["step_receipt_hashes"]), "external_operations": res["lineage"]["external_operations"],
                                       "unknowns": res["unknowns"], "gap": res.get("gap")}
+                # TG2 readable-evidence observations over the LIVE adapter_next payloads of this run
+                views = [a["evidence"] for a in receipts["agent_steps"]]
+                receipts["readable_evidence"] = {"agent_steps": len(views), "with_evidence_key": sum(1 for v in views if v["present"]),
+                                                 "with_text": sum(1 for v in views if v["rows_with_text"]), "text_chars": sum(v["text_chars"] for v in views),
+                                                 "rows_with_utility_role": sum(v["rows_with_utility_role"] for v in views),
+                                                 "surfaces": sorted({x for v in views for x in v["surfaces"]}), "degraded": sorted({x for v in views for x in v["degraded"]}),
+                                                 "errors": [v["error"] for v in views if v.get("error")]}
+                if require_evidence_text:
+                    blind = [a["step_id"] for a in receipts["agent_steps"] if a["knowledge_refs"] and not a["evidence"]["rows_with_text"]]
+                    if blind or receipts["readable_evidence"]["errors"]:
+                        raise SystemExit(f"adapter_next carried ids without readable TEXT at {blind} (errors {receipts['readable_evidence']['errors']})")
+                if require_surface and require_surface not in receipts["readable_evidence"]["surfaces"]:
+                    raise SystemExit(f"knowledge steps did not run on surface {require_surface!r}: {receipts['readable_evidence']}")
+                if require_surface and receipts["readable_evidence"]["degraded"]:
+                    raise SystemExit(f"knowledge steps ran DEGRADED on surface {require_surface!r}: {receipts['readable_evidence']['degraded']}")
                 if res["status"] != spec["expect_status"]:
                     gap = res.get("gap") or {}
                     if gap.get("code") == "TRAIL_CAPABILITY_PLANNED":
@@ -282,12 +319,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--harness", choices=("receipts", "wait"), default="receipts", help="who answers HARNESS_ACTION steps: scripted receipt files, or a real harness through its own MCP connection (this driver waits)")
     ap.add_argument("--harness-receipts", default=os.environ.get("POLYMATH_HARNESS_RECEIPTS"), help="directory of <ACTION_KIND>.json HarnessResearchReceiptV1 files for --harness receipts")
     ap.add_argument("--harness-id", default="mcp-acceptance-harness")
+    ap.add_argument("--require-evidence-text", action="store_true", help="fail unless every AGENT_REASON step that listed knowledge evidence carried readable evidence TEXT in adapter_next")
+    ap.add_argument("--require-surface", default=None, help="fail unless the knowledge steps ran, un-degraded, on this surface (e.g. evidence_boundary)")
     args = ap.parse_args(argv)
     key = os.environ.get("POLYMATH_MCP_API_KEY")
     if not key:
         raise SystemExit("POLYMATH_MCP_API_KEY is required (source .env)")
     receipts = asyncio.run(run(args.adapter, args.corpus, args.mcp_url, key, restart=not args.no_restart, harness=args.harness,
-                               receipts_dir=args.harness_receipts, harness_id=args.harness_id))
+                               receipts_dir=args.harness_receipts, harness_id=args.harness_id,
+                               require_evidence_text=args.require_evidence_text, require_surface=args.require_surface))
     print(json.dumps(receipts, indent=1, default=str))
     if receipts.get("planned_gap"):
         print(f"PLANNED GAP: {receipts['planned_gap']['message']} — the loop resumes once TrailSignal HR3 is WORKING", file=sys.stderr)
