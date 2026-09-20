@@ -18,7 +18,88 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-20 — **CORPUS-EXPLORE-FIRING-V1 COMPLETE + LIVE (registers 11.346–348; v1-finish-line item 1).**
+## CURRENT — 2026-09-20 — **GOVERNED-CONVERGENCE-V1 ADMITTED, NOT STARTED (register 11.351). Execute from `docs/wiki/plans/GOVERNED-CONVERGENCE-V1.md`. NEXT ACTION = TG0.**
+
+**Repository State** — branch `production`; HEAD = the GOVERNED-CONVERGENCE-V1 admission commit (docs only);
+tree clean. Remote recovery checkpoint (CODE) = tag `v4-corpus-explore-firing-v1` → `db2785a`, ON ORIGIN; every
+commit above it is docs/ledger only. `origin/main` = `cf1ee4f` (far behind; PR-squash-only). No push of any ref
+without the owner's per-push word.
+
+**Active Mission** — **GOVERNED-CONVERGENCE-V1**: connect the REAL product-research system (the Hermes
+opportunity-research controller) to the GOVERNED one (Polymath adapter `trail.product_discovery` → Trail v2's
+seven deterministic ops), without moving reasoning or retrieval into Trail. MULTI-REPO — read the plan's
+"Where things live" header FIRST. First milestone: a Claude Code session drives ONE real governed
+product-discovery run and the EXISTING renderer produces the HTML dossier. Ground truth:
+`docs/wiki/reports/2026-09-20/TRAIL-GROUND-TRUTH-DOSSIER.md`.
+
+**Completed Since Last Bootstrap** — 11.349 Item 1 owner acceptance + freeze · 11.350 firing tag pushed ·
+11.351 this admission (read-only Trail discovery + the approved plan).
+
+**Current Contract State (what the discovery established — do not re-derive)**
+- Trail v2 = a deterministic JUDGE: seven bounded ops, zero LLM, zero outbound Polymath client. ADR-063 +
+  LAW 1 + `policy_v2.yaml:3154` forbid it retrieval, hypothesis generation, harness hosting, scraping and any
+  model-written score. No `Signal` / `Opportunity` entity exists; output is JSON only.
+- The governed adapter path has NEVER been driven by a real agent or a real harness (fixtures + scripted
+  Python only). `adapter_next` hands the agent evidence IDS, not text. No step lease (`expires_at` is
+  hard-coded `None`); a typed gap is ALWAYS terminal. No in-repo harness executor exists.
+- The real-world path = the controller at `/Users/king/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH`
+  (deployed, untracked, at `~/.hermes/standalone/opportunity-research`). It never calls Trail, carries its
+  own `evidence_score`, NESTS Polymath synthesis (`/chat` per reformulation → `CORPUS_SYNTHESIS`), and owns
+  the only HTML dossier renderer (`python/report.py`). `EvidencePacket` has ZERO consumers anywhere.
+- Agent reach today: only Hermes can see `adapter_*` (MCP Server A :8930). Claude Code has Server B (stdio,
+  0 adapter tools); Codex / Claude Desktop have no Polymath MCP; NO agent is configured for Trail's MCP.
+- Trail admission frictions a real run WILL hit — measure, never tune around: all of Reddit = ONE independence
+  group with a 14-day freshness window; a URL must route to an enabled registry row; a role must be one the
+  source supports; the supply gate's `risk` only from manufacturer sites.
+
+**Active Impact Closure** — this slice: docs only → `contract_impact` none. The plan's future slices touch the
+adapter wire schema (additive), the EvidencePacket (first consumer + JSON Schema), both MCP surfaces, and add
+four rows to `architecture/contract-dependencies.yaml` (today `contract_impact.py` is blind to all of them).
+
+**Proof Status** — dossier = measured, read-only, `path:line` evidence. Plan = ADMITTED, nothing implemented.
+
+**Runtime / Test Resolution** — unchanged: `.venv` editable `.pth` resolves `orchestrator`/`workers`/`control`
+to MAIN; `shared/` resolves to the current worktree under pytest. A single-file pytest that inserts
+`ROOT/"workers"` on `sys.path` DOES resolve to the worktree — such a run is NOT `UNIT_PROVEN` for `workers/`.
+The skill repo has its own dependency-free harness (`python3 tests/run_all.py`, `python/controller.py doctor`).
+
+**Fleet (live) — DOWN.** The Mac rebooted 2026-09-20 06:20. Docker stores are up (Polymath Postgres / Qdrant /
+Neo4j / Redis; Trail Postgres :15433 / Temporal :7233 / object store :7070). DOWN: orchestrator :7200, MCP
+Server A :8930, `adapter_step` worker, embedder / reranker, Trail daemon :8767. The `com.polymath.v5` autoboot
+fails, so the fleet does not survive a reboot. `/private/tmp/polymath_fleet` is wiped by a reboot — the Corpus
+Explore firing ledger that lived there is gone (needs a durable home; backlog).
+
+**Next Action — TG0 (no code):**
+1. `scripts/boot_polymath.sh` (ONE supervisor; never boot over a live one) → verify one bundle, `/ready`,
+   slots `mcp` (:8930) and `adapter_step` registered, flags from the LIVE `.env`.
+2. `bash /Users/king/Documents/polymath-rebuild/handoff-drafts/trail_stack_up.sh /Users/king/trail-signal-os-worktrees/A41`
+   → Trail daemon on :8767 (the script `pkill`s any running daemon; secrets stay in `~/.config/trail-signal/`).
+3. Baseline R0 ($0 external): `.venv/bin/python scripts/adapter_mcp_acceptance.py --adapter trail.product_discovery
+   --corpus cinema --harness receipts --harness-receipts tests/fixtures/harness_receipts` must complete.
+4. Then TG1 (seven `adapter_*` proxies on `mcp_server/polymath_mcp.py` + A/B parity test) in a NEW worktree.
+
+**Do Not Do**
+- Do NOT start finish-line Item 2 now — the owner sequenced GOVERNED-CONVERGENCE-V1 first. Item 2 (coverage +
+  `search_atoms` corpus isolation) remains the HARD prerequisite for any SECOND Polymath corpus.
+- Do NOT move reasoning, retrieval, scraping or a Polymath client into Trail; do NOT touch ANY Trail tree
+  before TG7 (owner word + owner-accepted ADR); never plan or run against `/Users/king/trail-signal-os` local
+  `main` (114 commits stale, dirty).
+- Do NOT ingest Reddit / web / product evidence into Polymath (owner: not in v1).
+- Do NOT build a second research system or a second HTML/report system — reuse the controller's.
+- Do NOT let the controller's `evidence_score`, or any LLM, rank / blend with / replace a Trail score (LAW 1).
+- Do NOT pre-decompose queries into `polymath_explore`; do NOT use `/chat` synthesis for agent work.
+- Do NOT tune Trail's registry, gates or freshness to make a run pass; never drop a known publish date; never
+  re-submit a rejected observation under a different role.
+- Do NOT hand-edit `~/.hermes/config.yaml` or `models.json`; do NOT enter or print any credential.
+- Live runs are STAGED: R0 fixture → R1 fixture on the evidence surface → R2 ONE real Claude Code run (≤12
+  queries per harness action) → R3 Hermes repeat. Anything beyond needs the owner's word.
+- Item 1 stays FROZEN (below). No push of any ref without the owner's per-push word.
+
+**Live Qualification Queue** — R0, R1, R2, R3 as above (none run yet).
+**Deferred Architecture** — graph traversal / multi-hop; toggle-vs-routing (B20); compiler provider reliability
+(B19); the adapter step lease; product-portfolio output on the governed path; source expansion.
+
+## PRIOR — 2026-09-20 — **CORPUS-EXPLORE-FIRING-V1 COMPLETE + LIVE (registers 11.346–348; v1-finish-line item 1).**
 
 **Repository State** — branch `production`; HEAD = the CORPUS-EXPLORE-FIRING-V1 closeout commit (above local
 tag `v4-corpus-explore-firing-v1` → `db2785a`, **ON ORIGIN** since 2026-09-20; docs-only commits sit above it); tree clean; merges `3366d8c` (Phase A) + `c4391fc` (Phase
@@ -28,7 +109,7 @@ behind, PR-squash-only); no `origin/production`.
 **OWNER ACCEPTANCE 2026-09-20 (register 11.349): Item 1 is CLOSED and FROZEN** — "closes Item 1 well enough to
 move on"; the meaningful metric is **14/14 fired when retrieval was attempted**, not the strict 10/11.
 
-**Active Mission** — NONE in flight. Owner's v1 finish line: item 1 (activation firing) CLOSED here; **next
+**Active Mission (AS OF THIS PRIOR CHECKPOINT — superseded by the CURRENT section above)** — none in flight. Owner's v1 finish line: item 1 (activation firing) CLOSED here; **then
 = item 2, CONCEPT/THEORY COVERAGE + CORPUS SCOPING** (then 3 migrate agent callers → 4 freeze EvidencePacket + MCP
 contract → 5 fresh release qualification → 6 final release tag).
 
@@ -97,7 +178,7 @@ Orchestrator env: `POLYMATH_CORPUS_EXPLORER=1`, `POLYMATH_CORPUS_EXPLORER_FALLBA
 `POLYMATH_REASONING_POLICY=1`, `POLYMATH_CHAT_LATENT_FUSION=1`, `POLYMATH_CHAT_LATENT_SELECTION=1`,
 `POLYMATH_CHAT_BRIDGE_COMPILER=1` (`.env` is gitignored — read the LIVE file, not `.env.example`).
 
-**Next Action** — **Item 2: CONCEPT/THEORY COVERAGE + CORPUS SCOPING** (owner spec 2026-09-20). The question:
+**Item 2 spec (DEFERRED by owner sequencing 2026-09-20 — NOT the next action; see CURRENT above)** — **CONCEPT/THEORY COVERAGE + CORPUS SCOPING** (owner spec 2026-09-20). The question:
 *does every corpus/document that should participate in Corpus Explore actually have usable CONCEPT/THEORY
 atoms, and are those atoms correctly scoped to the requested corpus?* Read-only + $0 until a fix is proven
 necessary. Four measurements, **D FIRST** (already surfaced as a likely correctness bug):
