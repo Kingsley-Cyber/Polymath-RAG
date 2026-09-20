@@ -1,0 +1,744 @@
+{
+ "contract": "corpus-explore-ce8-firing-attribution-v1",
+ "corpus": "cinema",
+ "mode": "FAST",
+ "fired_definition": "explorer added >=1 CORPUS_EXPLORE subquery to a plan whose retrieval ran",
+ "batches": [
+  {
+   "batch": "A1",
+   "question": "What cause code do CE7's receipt-less misses carry, and does the same-query miss (suppressed_grief) reproduce?",
+   "flag_off": false,
+   "ts": "2026-09-19T23:43:04",
+   "runs": [
+    {
+     "q": "make a character's suppressed grief visible while they try hard to hide it",
+     "err": null,
+     "latency_s": 21.4,
+     "answer_event": true,
+     "firing": {
+      "contract": "corpus-explore-firing-v1",
+      "requested": true,
+      "fired": true,
+      "cause": null,
+      "detail": null,
+      "stages": {
+       "fetch_errors": 0,
+       "n_hits": 12,
+       "n_candidates": 8,
+       "intent": "APPLICATION",
+       "eligible": true,
+       "json_status": "ok",
+       "generated": 3,
+       "admitted": 3,
+       "added": 3
+      }
+     },
+     "fired": true,
+     "cause": null,
+     "detail": null,
+     "activated": true,
+     "n_activations": 8,
+     "concept_ids": [
+      "value-opposition-in-character-development",
+      "affective-states-communication-through-body-movements",
+      "non-verbal-storytelling-through-combat",
+      "subtle-communication-of-gestures",
+      "dimensional-model-of-emotion",
+      "psychological-triggers-in-persuasive-copy",
+      "using-empathy-in-messaging",
+      "character-arc-as-a-measurable-progression-from-start-to-middle-to-end"
+     ],
+     "provenance_complete": true,
+     "n_ce_subqueries": 3,
+     "ce_subquery_ids": [
+      "ce0",
+      "ce1",
+      "ce2"
+     ],
+     "expansion": {
+      "attempted": true,
+      "added": 3,
+      "eligible": true,
+      "reason": "eligible",
+      "fallback_reason": null,
+      "json_status": "ok",
+      "generate_error": null,
+      "generated": 3,
+      "admitted": 3,
+      "latency_ms": 1433.4
+     },
+     "plan": {
+      "intent": "APPLICATION",
+      "task_type": "CREATE_FROM_KNOWLEDGE",
+      "retrieval_required": true,
+      "retrieval_skipped": false,
+      "fallback": false,
+      "fallback_reason": null,
+      "model": "compiler_alt:mistralai/mistral-small-2603",
+      "wall_ms": 2685.9,
+      "attempts": null,
+      "n_queries": 8
+     },
+     "compile_phase": {
+      "fallback": false,
+      "task_type": "CREATE_FROM_KNOWLEDGE",
+      "wall_ms": 2685.9,
+      "queries": 8
+     },
+     "evidence_ids": [
+      "chunk_051bd9eb398644c112861b31da4ddc8778405d2e6002b5728ef3d77cdf890fee",
+      "chunk_06570e4417fefbb43b25dd489b66132be0f3e101cf6e4acdfec9f3153b8c8f22",
+      "chunk_2b83c66d3a2a046a705bf701149b0d428591b1121ef8a0055caf7fbbec2f08f7",
+      "chunk_5c5b17ccc466a09eb2c1f5611c33c60a1ac5a59ac787ac453b995e0529f15bd8",
+      "chunk_7223a6bd36db9cd92ae43de0368abd406eafa2c9082e10789e5da7113d07d3e3",
+      "chunk_7df513ae5374518ec1cb9b829edb22b76b6bfda09552a5508c198d0b731c17a0",
+      "chunk_8b898cd522655e8f39ef8f6c9a6273693b5437ea22eb617f676fb2c0303c973a",
+      "chunk_94f7ea5acfc83fe916461f9617b30806082e9ad8bea19097cc3c119f0fe44f17",
+      "chunk_9967ebb96dc321c8fbe0975a2f30dd7987adecad8a7567ffec8c84201a13c0a4",
+      "chunk_d1075b8468d16fb9f7b3067091d05d88e69c26d0e8afb35fc445ed900558686f",
+      "chunk_d6108caddbc899bd6e740b99d7509e15a4e3c441c9f4a4dad1b8d2ceca2a1f97",
+      "chunk_dced1ce513ea1164ff718fa17c77cf22ccf97f8a4b6415b898409422c647f26e",
+      "chunk_e0ea00a9dc8324e94370637e3155be9badb663796172ed5644d079b777738948",
+      "chunk_fc410de39a950e335a9a050186086a46b10dbbafc26dce74dfd454e9ba6ac687",
+      "chunk_fee90e3b2adb0b5b1feff3ca08704002f80bbfc48674b45574c6107861461af0"
+     ],
+     "key": "suppressed_grief",
+     "kind": "target",
+     "seq": 1,
+     "flag_off": false
+    },
+    {
+     "q": "make a character's suppressed grief visible while they try hard to hide it",
+     "err": null,
+     "latency_s": 24.6,
+     "answer_event": true,
+     "firing": {
+      "contract": "corpus-explore-firing-v1",
+      "requested": true,
+      "fired": true,
+      "cause": null,
+      "detail": null,
+      "stages": {
+       "fetch_errors": 0,
+       "n_hits": 12,
+       "n_candidates": 8,
+       "intent": "APPLICATION",
+       "eligible": true,
+       "json_status": "ok",
+       "generated": 4,
+       "admitted": 4,
+       "added": 4
+      }
+     },
+     "fired": true,
+     "cause": null,
+     "detail": null,
+     "activated": true,
+     "n_activations": 8,
+     "concept_ids": [
+      "value-opposition-in-character-development",
+      "affective-states-communication-through-body-movements",
+      "non-verbal-storytelling-through-combat",
+      "subtle-communication-of-gestures",
+      "dimensional-model-of-emotion",
+      "psychological-triggers-in-persuasive-copy",
+      "using-empathy-in-messaging",
+      "character-arc-as-a-measurable-progression-from-start-to-middle-to-end"
+     ],
+     "provenance_complete": true,
+     "n_ce_subqueries": 4,
+     "ce_subquery_ids": [
+      "ce0",
+      "ce1",
+      "ce2",
+      "ce3"
+     ],
+     "expansion": {
+      "attempted": true,
+      "added": 4,
+      "eligible": true,
+      "reason": "eligible",
+      "fallback_reason": null,
+      "json_status": "ok",
+      "generate_error": null,
+      "generated": 4,
+      "admitted": 4,
+      "latency_ms": 1902.8
+     },
+     "plan": {
+      "intent": "APPLICATION",
+      "task_type": "CREATE_FROM_KNOWLEDGE",
+      "retrieval_required": true,
+      "retrieval_skipped": false,
+      "fallback": false,
+      "fallback_reason": null,
+      "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+      "wall_ms": 2429.4,
+      "attempts": null,
+      "n_queries": 11
+     },
+     "compile_phase": {
+      "fallback": false,
+      "task_type": "CREATE_FROM_KNOWLEDGE",
+      "wall_ms": 2429.4,
+      "queries": 11
+     },
+     "evidence_ids": [
+      "chunk_00668ee4d9e5789180bccc6c02a6eb83f1aabb9d9466a2d9792080bbf7c198a2",
+      "chunk_051bd9eb398644c112861b31da4ddc8778405d2e6002b5728ef3d77cdf890fee",
+      "chunk_18c5ea31322d3d38097524a1808dc8b33127937c437e9836a7d2039ce1fc1ff4",
+      "chunk_1a858340a2d18e62b2268026dd7d6ff35132b1976a68577e94b933ee5520584b",
+      "chunk_1bc4a6cb2876b195b12c77b9c6189cf99c1839f8ab804c99a6392575378502bc",
+      "chunk_2b9f27979b67916421d397eda5837927ffb95a0721ea74a1d74dbaf42187743a",
+      "chunk_3af030290737bc975e20d9f3b0916c66148990ba39e875a6d01c9cba20991d25",
+      "chunk_3e4b5fc5e4d7ccd3b461ebacc82e8af7615e33b45e96564558f301fceb82006a",
+      "chunk_3f75c204a42385d4ea071c3ea461b11183570111de3343174c7ba1dd7200420e",
+      "chunk_5122a803ea6e6eccf0e88579bc9cdd8f8c47a607588b0c004bd33a7042c5f50e",
+      "chunk_5e0338ea54a82c7581442e7beefdcd196fc47dab11af9ee0ffa933d644850931",
+      "chunk_70fbd8307a82c89241ee6b74aad409d130f2dab5c2d02de60f57a43edec66906",
+      "chunk_8e7e390ce421d37997ee5b4a4ba7ea72a0c8b18a970c43280c6ee5f4b2173d7e",
+      "chunk_9db5a65b7f06a68cb08fd5b3691a230b1f87879a68ff8d77589884a273ab153f",
+      "chunk_c1d38238df7d13e27b71a1919d95a491506963aba1b96597ff299de2553e2137",
+      "chunk_d87f163d2066466ff9bfed79fffa481cccc37ee398fdbf84e404f695aba42ba6",
+      "chunk_dced1ce513ea1164ff718fa17c77cf22ccf97f8a4b6415b898409422c647f26e",
+      "chunk_e0ea00a9dc8324e94370637e3155be9badb663796172ed5644d079b777738948",
+      "chunk_e46b7144cac1404b93ff297b928d91c9ac06e738168f9a4606bcc0c40002731d",
+      "chunk_fc410570fd4cdc43f657d86e04e8129814b33d0fda10e4e12d595e24719405e5",
+      "chunk_fc410de39a950e335a9a050186086a46b10dbbafc26dce74dfd454e9ba6ac687"
+     ],
+     "key": "suppressed_grief",
+     "kind": "target",
+     "seq": 2,
+     "flag_off": false
+    },
+    {
+     "q": "make a character's suppressed grief visible while they try hard to hide it",
+     "err": null,
+     "latency_s": 16.1,
+     "answer_event": true,
+     "firing": {
+      "contract": "corpus-explore-firing-v1",
+      "requested": true,
+      "fired": true,
+      "cause": null,
+      "detail": null,
+      "stages": {
+       "fetch_errors": 0,
+       "n_hits": 12,
+       "n_candidates": 8,
+       "intent": "APPLICATION",
+       "eligible": true,
+       "json_status": "ok",
+       "generated": 4,
+       "admitted": 4,
+       "added": 4
+      }
+     },
+     "fired": true,
+     "cause": null,
+     "detail": null,
+     "activated": true,
+     "n_activations": 8,
+     "concept_ids": [
+      "value-opposition-in-character-development",
+      "affective-states-communication-through-body-movements",
+      "non-verbal-storytelling-through-combat",
+      "subtle-communication-of-gestures",
+      "dimensional-model-of-emotion",
+      "psychological-triggers-in-persuasive-copy",
+      "using-empathy-in-messaging",
+      "character-arc-as-a-measurable-progression-from-start-to-middle-to-end"
+     ],
+     "provenance_complete": true,
+     "n_ce_subqueries": 4,
+     "ce_subquery_ids": [
+      "ce0",
+      "ce1",
+      "ce2",
+      "ce3"
+     ],
+     "expansion": {
+      "attempted": true,
+      "added": 4,
+      "eligible": true,
+      "reason": "eligible",
+      "fallback_reason": null,
+      "json_status": "ok",
+      "generate_error": null,
+      "generated": 4,
+      "admitted": 4,
+      "latency_ms": 1737.7
+     },
+     "plan": {
+      "intent": "APPLICATION",
+      "task_type": "CREATE_FROM_KNOWLEDGE",
+      "retrieval_required": true,
+      "retrieval_skipped": false,
+      "fallback": false,
+      "fallback_reason": null,
+      "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+      "wall_ms": 1702.5,
+      "attempts": null,
+      "n_queries": 11
+     },
+     "compile_phase": {
+      "fallback": false,
+      "task_type": "CREATE_FROM_KNOWLEDGE",
+      "wall_ms": 1702.5,
+      "queries": 11
+     },
+     "evidence_ids": [
+      "chunk_00668ee4d9e5789180bccc6c02a6eb83f1aabb9d9466a2d9792080bbf7c198a2",
+      "chunk_051bd9eb398644c112861b31da4ddc8778405d2e6002b5728ef3d77cdf890fee",
+      "chunk_0a6a5bdc6f9aaea193e547d43c876902eec2e2d3ae6dd220b815c3a204e0f759",
+      "chunk_18c5ea31322d3d38097524a1808dc8b33127937c437e9836a7d2039ce1fc1ff4",
+      "chunk_2e8d2e75e84f785cc2bf68f86a77f55e2085425ed02a5641d8152e04c7d677e1",
+      "chunk_365490afdf953dc288f726634bc915b911ca522536a0ba7e23aa133295b54a01",
+      "chunk_3af030290737bc975e20d9f3b0916c66148990ba39e875a6d01c9cba20991d25",
+      "chunk_3e4b5fc5e4d7ccd3b461ebacc82e8af7615e33b45e96564558f301fceb82006a",
+      "chunk_4940f7a4534e4d79b5d6230c6bf33aadf3253d6c60d2224c71b91eb36e43e297",
+      "chunk_5122a803ea6e6eccf0e88579bc9cdd8f8c47a607588b0c004bd33a7042c5f50e",
+      "chunk_70fbd8307a82c89241ee6b74aad409d130f2dab5c2d02de60f57a43edec66906",
+      "chunk_8a8a8c8600eb8c1fb85e6784ead2676ebee07cd1b4af71a02df969d33fc753ce",
+      "chunk_8e7e390ce421d37997ee5b4a4ba7ea72a0c8b18a970c43280c6ee5f4b2173d7e",
+      "chunk_a4034a90b1292a2f8f31cc296e9355831aff58e97054d6500280dbc7a6d3c4c1",
+      "chunk_c1d38238df7d13e27b71a1919d95a491506963aba1b96597ff299de2553e2137",
+      "chunk_dced1ce513ea1164ff718fa17c77cf22ccf97f8a4b6415b898409422c647f26e",
+      "chunk_e0ea00a9dc8324e94370637e3155be9badb663796172ed5644d079b777738948",
+      "chunk_e46b7144cac1404b93ff297b928d91c9ac06e738168f9a4606bcc0c40002731d",
+      "chunk_ee62525c76558a737ad8da558ffaa14351b3461e978ba1a49dca9d13de32f579",
+      "chunk_fc410570fd4cdc43f657d86e04e8129814b33d0fda10e4e12d595e24719405e5",
+      "chunk_fc410de39a950e335a9a050186086a46b10dbbafc26dce74dfd454e9ba6ac687"
+     ],
+     "key": "suppressed_grief",
+     "kind": "target",
+     "seq": 3,
+     "flag_off": false
+    },
+    {
+     "q": "the movement should feel grounded and forceful rather than weightless and flashy",
+     "err": null,
+     "latency_s": 1.1,
+     "answer_event": true,
+     "firing": {
+      "contract": "corpus-explore-firing-v1",
+      "requested": true,
+      "fired": false,
+      "cause": "OTHER",
+      "detail": "no_primary",
+      "stages": {
+       "fetch_errors": 0,
+       "intent": "EXPLORATORY"
+      }
+     },
+     "fired": false,
+     "cause": "OTHER",
+     "detail": "no_primary",
+     "activated": false,
+     "n_activations": 0,
+     "concept_ids": [],
+     "provenance_complete": true,
+     "n_ce_subqueries": 0,
+     "ce_subquery_ids": [],
+     "expansion": {
+      "attempted": null,
+      "added": null,
+      "eligible": null,
+      "reason": null,
+      "fallback_reason": null,
+      "json_status": null,
+      "generate_error": null,
+      "generated": null,
+      "admitted": null,
+      "latency_ms": null
+     },
+     "plan": {
+      "intent": "EXPLORATORY",
+      "task_type": "TRANSFORM_USER_CONTENT",
+      "retrieval_required": false,
+      "retrieval_skipped": true,
+      "fallback": false,
+      "fallback_reason": null,
+      "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+      "wall_ms": 804.5,
+      "attempts": null,
+      "n_queries": 0
+     },
+     "compile_phase": {
+      "fallback": false,
+      "task_type": "TRANSFORM_USER_CONTENT",
+      "wall_ms": 804.5,
+      "queries": 0
+     },
+     "evidence_ids": [],
+     "key": "physical_weight_f2",
+     "kind": "target",
+     "seq": 4,
+     "flag_off": false
+    },
+    {
+     "q": "the movement should feel grounded and forceful rather than weightless and flashy",
+     "err": null,
+     "latency_s": 1.0,
+     "answer_event": true,
+     "firing": {
+      "contract": "corpus-explore-firing-v1",
+      "requested": true,
+      "fired": false,
+      "cause": "OTHER",
+      "detail": "no_primary",
+      "stages": {
+       "fetch_errors": 0,
+       "intent": "EXPLORATORY"
+      }
+     },
+     "fired": false,
+     "cause": "OTHER",
+     "detail": "no_primary",
+     "activated": false,
+     "n_activations": 0,
+     "concept_ids": [],
+     "provenance_complete": true,
+     "n_ce_subqueries": 0,
+     "ce_subquery_ids": [],
+     "expansion": {
+      "attempted": null,
+      "added": null,
+      "eligible": null,
+      "reason": null,
+      "fallback_reason": null,
+      "json_status": null,
+      "generate_error": null,
+      "generated": null,
+      "admitted": null,
+      "latency_ms": null
+     },
+     "plan": {
+      "intent": "EXPLORATORY",
+      "task_type": "TRANSFORM_USER_CONTENT",
+      "retrieval_required": false,
+      "retrieval_skipped": true,
+      "fallback": false,
+      "fallback_reason": null,
+      "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+      "wall_ms": 729.2,
+      "attempts": null,
+      "n_queries": 0
+     },
+     "compile_phase": {
+      "fallback": false,
+      "task_type": "TRANSFORM_USER_CONTENT",
+      "wall_ms": 729.2,
+      "queries": 0
+     },
+     "evidence_ids": [],
+     "key": "physical_weight_f2",
+     "kind": "target",
+     "seq": 5,
+     "flag_off": false
+    },
+    {
+     "q": "a character commands a room the moment she enters, without saying a word",
+     "err": null,
+     "latency_s": 25.0,
+     "answer_event": true,
+     "firing": {
+      "contract": "corpus-explore-firing-v1",
+      "requested": true,
+      "fired": true,
+      "cause": null,
+      "detail": null,
+      "stages": {
+       "fetch_errors": 0,
+       "n_hits": 12,
+       "n_candidates": 8,
+       "intent": "SYNTHESIS",
+       "eligible": true,
+       "json_status": "ok",
+       "generated": 4,
+       "admitted": 4,
+       "added": 4
+      }
+     },
+     "fired": true,
+     "cause": null,
+     "detail": null,
+     "activated": true,
+     "n_activations": 8,
+     "concept_ids": [
+      "character-interaction-in-fantasy-narrative",
+      "non-verbal-storytelling-through-combat",
+      "character-consistency-in-ai-generated-stories",
+      "subtle-communication-of-gestures",
+      "applying-acting-principles-to-character-animation",
+      "integrated-approach-to-acting-voice-and-text-work",
+      "multistage-pipeline-for-improving-character-consistency",
+      "the-expressive-power-of-audio-elements-in-film"
+     ],
+     "provenance_complete": true,
+     "n_ce_subqueries": 4,
+     "ce_subquery_ids": [
+      "ce0",
+      "ce1",
+      "ce2",
+      "ce3"
+     ],
+     "expansion": {
+      "attempted": true,
+      "added": 4,
+      "eligible": true,
+      "reason": "eligible",
+      "fallback_reason": null,
+      "json_status": "ok",
+      "generate_error": null,
+      "generated": 4,
+      "admitted": 4,
+      "latency_ms": 1844.4
+     },
+     "plan": {
+      "intent": "SYNTHESIS",
+      "task_type": "GROUNDED_SYNTHESIS",
+      "retrieval_required": true,
+      "retrieval_skipped": false,
+      "fallback": false,
+      "fallback_reason": null,
+      "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+      "wall_ms": 2586.8,
+      "attempts": null,
+      "n_queries": 14
+     },
+     "compile_phase": {
+      "fallback": false,
+      "task_type": "GROUNDED_SYNTHESIS",
+      "wall_ms": 2586.8,
+      "queries": 14
+     },
+     "evidence_ids": [
+      "chunk_27f066f71eb88c3d5799c4e84997d6d41626de8a0ee64b47c84c0f414ae06e41",
+      "chunk_323ad5cd16527a85750d446cd33e448884c2b8b2ea5f61656ec81c79ed860270",
+      "chunk_471d0ef56bbed758aed06e8c19e1fc44ffef7d01273595a1c05aae55e192594d",
+      "chunk_5d11dc956277ec61da573230102ab3246a5051b17df869ebda0e00ac226913be",
+      "chunk_6b746c5122fb5f882d606dfec1a93689086523c8508f30f1c77c7691b97f70cb",
+      "chunk_7552ecc3188f1dffd51bff5fb457b4faba5d99b5dc828016e3c1025e2c772cb7",
+      "chunk_76dab4c3fc847569cc0da01db1591b916f36d0eadb2c98c2559436e7cc144690",
+      "chunk_7993cf89c31dd6ec840893da47e37aff44f5850adfc03721bad11094ce3d5520",
+      "chunk_9452ec5c6707dd29f8a150dcbd8a688ca01f40a2537c00c5460dd4002bfb4b33",
+      "chunk_a9d522604a5e17a8f31460e361253ef0ceae11579e9a073906e92249b6c279ca",
+      "chunk_b19ce4a16c64628bd6f6a538fb0f7b8a3007a24bedcb6608ae382ceae013e2b4",
+      "chunk_b6a200f6a9038db8409b125c1398b317961cb81e492461e8a4e3e05e1f307ee5",
+      "chunk_be1dbbb7f3ebd3dbd833e3ffc0e1b596ea526594b4f5901a8cf2e7d2df4cbf0c",
+      "chunk_c25c452ab046f2cb324ffe2311870efe964c0ef0521ba73a6341e0514cc62c83",
+      "chunk_c29731c70661cee892d7ccbc0a4080cee4c35a70ba0785cfc5711d4c20b63258",
+      "chunk_c2e545c2a14327ce9a6b813124c6e00761abf4569053b2e88777346019958c5e",
+      "chunk_c5f724850180eab149684870edd8e3a59b9420155142d642d510b32ffb03f17a",
+      "chunk_e54abc1fd69602c75b2ce698a13283cd5950f6804df858a9caeca0ef9bb33313",
+      "chunk_ede2ef1f2e64817d25a8a5b98e73da6d3f2dd024c5237b0b79fa923a72123343",
+      "chunk_f76dcf516e60ef7a2a0f8b537976746b8fd92cb85df91d4de29abe00e8d5dbdd",
+      "chunk_f87943c19c710f43959426013d09fd672c1d0831824ccbe781388306f57a45db"
+     ],
+     "key": "nonverbal_authority_f0",
+     "kind": "target",
+     "seq": 6,
+     "flag_off": false
+    },
+    {
+     "q": "create an upbeat step-by-step cooking tutorial for a simple pasta dish",
+     "err": null,
+     "latency_s": 1.3,
+     "answer_event": true,
+     "firing": {
+      "contract": "corpus-explore-firing-v1",
+      "requested": true,
+      "fired": false,
+      "cause": "OTHER",
+      "detail": "no_primary",
+      "stages": {
+       "fetch_errors": 0,
+       "intent": "APPLICATION"
+      }
+     },
+     "fired": false,
+     "cause": "OTHER",
+     "detail": "no_primary",
+     "activated": false,
+     "n_activations": 0,
+     "concept_ids": [],
+     "provenance_complete": true,
+     "n_ce_subqueries": 0,
+     "ce_subquery_ids": [],
+     "expansion": {
+      "attempted": null,
+      "added": null,
+      "eligible": null,
+      "reason": null,
+      "fallback_reason": null,
+      "json_status": null,
+      "generate_error": null,
+      "generated": null,
+      "admitted": null,
+      "latency_ms": null
+     },
+     "plan": {
+      "intent": "APPLICATION",
+      "task_type": "GENERAL_CONVERSATION",
+      "retrieval_required": false,
+      "retrieval_skipped": true,
+      "fallback": false,
+      "fallback_reason": null,
+      "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+      "wall_ms": 1073.1,
+      "attempts": null,
+      "n_queries": 0
+     },
+     "compile_phase": {
+      "fallback": false,
+      "task_type": "GENERAL_CONVERSATION",
+      "wall_ms": 1073.1,
+      "queries": 0
+     },
+     "evidence_ids": [],
+     "key": "neg_cooking",
+     "kind": "negative",
+     "seq": 7,
+     "flag_off": false
+    },
+    {
+     "q": "write a lighthearted scene of friends cheerfully planning a summer beach vacation",
+     "err": null,
+     "latency_s": 23.7,
+     "answer_event": true,
+     "firing": {
+      "contract": "corpus-explore-firing-v1",
+      "requested": true,
+      "fired": false,
+      "cause": "PLAN_FALLBACK",
+      "detail": "invalid_plan:no_queries_for_retrieval",
+      "stages": {
+       "fetch_errors": 0,
+       "intent": "APPLICATION"
+      }
+     },
+     "fired": false,
+     "cause": "PLAN_FALLBACK",
+     "detail": "invalid_plan:no_queries_for_retrieval",
+     "activated": false,
+     "n_activations": 0,
+     "concept_ids": [],
+     "provenance_complete": true,
+     "n_ce_subqueries": 0,
+     "ce_subquery_ids": [],
+     "expansion": {
+      "attempted": null,
+      "added": null,
+      "eligible": null,
+      "reason": null,
+      "fallback_reason": null,
+      "json_status": null,
+      "generate_error": null,
+      "generated": null,
+      "admitted": null,
+      "latency_ms": null
+     },
+     "plan": {
+      "intent": "APPLICATION",
+      "task_type": "GROUNDED_QA",
+      "retrieval_required": true,
+      "retrieval_skipped": false,
+      "fallback": true,
+      "fallback_reason": "invalid_plan:no_queries_for_retrieval",
+      "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+      "wall_ms": 994.2,
+      "attempts": null,
+      "n_queries": 6
+     },
+     "compile_phase": {
+      "fallback": true,
+      "task_type": "GROUNDED_QA",
+      "wall_ms": 994.2,
+      "queries": 6
+     },
+     "evidence_ids": [
+      "chunk_081f5ff8b74fb3d8024c9c38006480b19c1cb4c97fb785e68bc732bbae46efdd",
+      "chunk_3de3618d7c903d7980b938fd0db92a4e490352c2f13281b5cb898b997bb29e62",
+      "chunk_4ac475eb500bc58979fffcf41a83ef9220355b4df1a9172f4e41ed90b206fe38",
+      "chunk_5119ce08a7980a38c26f17cefc634d6dcd70949fda686faf7b263287219c1c3b",
+      "chunk_6f2853d81fa47a86ec880f322ff0d685b2759e12c318a382d3997e52128e1049",
+      "chunk_780d445dddff9b4db96e1f5d8dfa6f22b85b94629fa022744bd287bd4f2e37ca",
+      "chunk_7d688d732d2687ad0ffce1e19aed4a74ea3760c7316405538ebd12a1660fb3a4",
+      "chunk_7ea3853d750dc5cc9deb917a2f081430d69c5f4417dd11d3a61af80522c8bdbe",
+      "chunk_876751a46b884c38efcf032917a11b67b653f091d8ea97628573e6e8440405e6",
+      "chunk_9cd42f33067581eb833bbddb147f501ca9a5717adb618b5af81aa4ecf6a2f44c",
+      "chunk_aeb77599feeb0c4634cb5bf1e7026e7ebdbc104e74b36018e0cd7461e52e54de",
+      "chunk_b94e92af622c4216e22472140f2e5b5267f7c6d9cb46f0aef63f9ae65047ff3c",
+      "chunk_c1113940b65a1e7a62bee779ba4e010900fd0136b2bc556179383fe2a5308968",
+      "chunk_cbc95b5638f125f736063457b2727c64f09b6a32ed103db354b20f84ed62b7db",
+      "chunk_d6e2171472d8569b73a2d8436698bf25a642c6271d789788d9a6b9450196df1b",
+      "chunk_dc53a791034cd54a973ea35a4c6ed2f7f29db7aa094a7e3bc770821a33260681",
+      "chunk_f7d811f1a0f7606b55ca8523a96d9ba96d061ccb262198a52ef9d1bfeb55a951",
+      "chunk_fb142e3ac49dcc08681deb372beadedb1bbb6927e2373de53d753df8ee45f460"
+     ],
+     "key": "neg_vacation",
+     "kind": "negative",
+     "seq": 8,
+     "flag_off": false
+    }
+   ]
+  }
+ ],
+ "n_live_executions": 8,
+ "cause_table": {
+  "target": {
+   "n": 6,
+   "fired": 4,
+   "firing_rate": 0.667,
+   "activated": 4,
+   "causes": {
+    "OTHER": {
+     "count": 2,
+     "queries": {
+      "physical_weight_f2": 2
+     },
+     "details": {
+      "no_primary": 2
+     }
+    }
+   }
+  },
+  "negative": {
+   "n": 2,
+   "fired": 0,
+   "firing_rate": 0.0,
+   "activated": 0,
+   "causes": {
+    "OTHER": {
+     "count": 1,
+     "queries": {
+      "neg_cooking": 1
+     },
+     "details": {
+      "no_primary": 1
+     }
+    },
+    "PLAN_FALLBACK": {
+     "count": 1,
+     "queries": {
+      "neg_vacation": 1
+     },
+     "details": {
+      "invalid_plan:no_queries_for_retrieval": 1
+     }
+    }
+   }
+  }
+ },
+ "receipt_summary": {
+  "n": 8,
+  "fired": 4,
+  "firing_rate": 0.5,
+  "causes": {
+   "OTHER": 3,
+   "PLAN_FALLBACK": 1
+  }
+ },
+ "no_receipt": []
+}

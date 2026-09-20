@@ -51,6 +51,25 @@ authoritative; fail-open. Tag LOCALLY at close; **no push of any ref**.
     and in the EvidencePacket `receipts.firing`. Un-requested turns get no new top-level key.
   - NEW runner `eval/corpus_explorer/ce8_firing_attribution.py` (staged batches <=8, refuses to pass 24
     without `--owner-approved`, cause table, fresh query bank held out for Phase C).
+- **Phase A deploy.** Merge `3366d8c` → production; open runs: 63 `reconciling` + 1 `intake` are the dormant
+  HELD backlog (last activity 2026-09-07), 0 leased/running stage tickets → nothing in flight; ONE
+  port-gated bounce (supervisor TERM → 0 supervisors / 0 children / 0 listeners → one boot): bundle
+  `90983885cba7`, `/ready` true, sidecars up, all five live flags intact.
+- **Phase B — NARROW FIX for the one PROVEN, fixable cause (`PLAN_FALLBACK`).** The explorer skipped EVERY
+  fallback plan. The plan-of-record justified that as "mirror `_add_bridge_expansion`" — which has NO
+  fallback gate (code + ledger: BRIDGE attempts/admits on fallback plans). `corpus_explore_firing` now
+  splits fallback reasons: **NO JUDGMENT** (`transport:` / `budget_exceeded:` / `invalid_json` /
+  `compiler_unavailable:` / `join_failed:` — the compiler said nothing usable) lets the explorer run;
+  **INVALID JUDGMENT** (`invalid_plan:*` — the compiler answered and failed validation, e.g.
+  `no_queries_for_retrieval`, a non-latent task type) and any unknown reason stay closed (fail closed).
+  Kill switch `POLYMATH_CORPUS_EXPLORER_FALLBACK_OPEN` (default 0 = the pre-fix gate, byte-for-byte);
+  live `.env` opts in. A fire on a fallback plan is visible as such (`stages.plan_fallback`). No threshold,
+  weight, bound or `POLYMATH_CORPUS_EXPLORER_*` value changed; no new fusion weight; origins unchanged.
+- **Receipt detail for the by-design class.** `no_primary` now carries
+  `:retrieval_not_required:<task_type>` so a q0-authority no-retrieval turn is distinguishable at a glance.
+- NEW asserting live proof `eval/corpus_explorer/ce8_fallback_gate_live.py` (function-level against the
+  real embedder / Qdrant / bridge model — a compiler transport fallback cannot be produced on demand over
+  HTTP); `eval/corpus_explorer/ce8_substrate_probe.py` (the Phase A.2 probe, kept reproducible).
 
 ## Proof
 - **Phase A.2 $0 SUBSTRATE PROBE — substrate EXONERATED at idle.** 4 queries (both CE7 on-target misses, one
@@ -71,9 +90,51 @@ authoritative; fail-open. Tag LOCALLY at close; **no push of any ref**.
   (corpus_explore / corpus_activation / bridge_compiler / bridge_integration / evidence_packet) green.
 - `ui.py` wiring is live-only (editable .pth resolves `orchestrator` to MAIN under pytest): py_compile OK;
   real proof = the live receipts after merge + bounce.
+- **Phase A.3 LIVE BATCH A1 (8 executions; the ONLY Phase A batch — diagnosis resolved without expanding).**
+  Question: what cause do CE7's receipt-less misses carry, and does the same-query miss reproduce?
+  `eval/corpus_explorer/CE8-FIRING-ATTRIBUTION-2026-09-19.json`. Every turn carried a receipt (0
+  `NO_RECEIPT`). On-target 4/6 fired: `suppressed_grief` 3/3, `nonverbal_authority_f0` 1/1;
+  `physical_weight_f2` 0/2 → `OTHER no_primary` (compiler: `TRANSFORM_USER_CONTENT`,
+  `retrieval_required=False`, 0 queries, whole turn ~1 s, 0 evidence). Negatives 0/2 fired: `neg_cooking`
+  → `OTHER no_primary` (`GENERAL_CONVERSATION`); `neg_vacation` → `PLAN_FALLBACK
+  invalid_plan:no_queries_for_retrieval`. Every ATTEMPTED run: n_hits 12, n_candidates 8, fetch_errors 0,
+  json_status ok, generated == admitted == added (3–4).
+- **Phase A.4 ROOT CAUSES ($0 receipt-ledger forensics, `query_receipts.meta.chat_plan`).**
+  1. **`PLAN_FALLBACK`** — CE7 `suppressed_grief__same0` (09-20 00:47:41 UTC): compiler attempt 3,
+     `first_failure=compiler_alibaba_deepseek:transport:ReadTimeout`, final lane qwen `transport:ReadTimeout`
+     (6.5 s) → fallback plan → explorer skipped silently. The SAME q0 fired 5/5 whenever the compiler
+     answered. Base rate over 1,379 chat turns / 4 days: fallback **73 = 5.3%** (`invalid_plan:*` 36,
+     `transport:*` 30, `budget_exceeded` 6, `invalid_json` 1); lane failover in use on 24% of turns
+     (`compiler_alt` 429 ×184, `compiler_alibaba_qwen` ReadTimeout ×116). A fallback plan has a q0 PRIMARY
+     and a deterministic LATENT intent for every bank query (targets and negatives alike), and the
+     substrate yields 8 candidates for it — nothing the explorer needs is missing.
+  2. **No PRIMARY (compiler routed the turn as no-retrieval)** — deterministic per phrasing
+     (`physical_weight_f2` 3/3 across CE7 + A1). This is the settled **q0-authority** rule
+     (`_add_profile_expansion`: an expansion "must never CREATE retrieval where the compiler decided
+     none"); base rate `retrieval_required=false` = 107/1,379 = 7.8% (95 `GENERAL_CONVERSATION`). The SAME
+     cause is what keeps `neg_cooking` quiet. **By design — classified + receipted, NOT overridden.**
+  EXONERATED: `search_atoms` (idle 40/40 + live 12 hits / 8 candidates / 0 fetch errors every attempt),
+  intent eligibility (no on-target `INTENT_INELIGIBLE` in 21 on-target runs), bridge JSON, cold state.
+- **Phase B UNIT_PROVEN** (executed path = worktree): switch off ⇒ every fallback blocks (pre-fix gate);
+  switch on ⇒ only NO-JUDGMENT reasons open, `invalid_plan:*` + unknown reasons stay closed; env default
+  off; a fire on a fallback plan is marked `stages.plan_fallback`; `no_primary` carries the q0-authority
+  reason; the pure expansion expands a `fallback_plan` exactly like a compiled plan (q0 first + untouched).
+  18 tests in `test_corpus_explore_firing.py`; 202-test impacted sweep + the 7 contract-impact suites green.
 
 ## Rejected claims
-- NOT claimed: any root cause. Phase A.2 only rules OUT the idle substrate; the live cause table decides.
+- REJECTED (my own Phase A prediction): "on-target misses = `PLAN_FALLBACK` or `INTENT_INELIGIBLE`". Half
+  wrong — the reproducible miss is a compiler NO-RETRIEVAL routing decision, not a fallback and not intent.
+- REJECTED fix: forcing a q0 PRIMARY when Corpus Explore is requested on a no-retrieval turn. It violates
+  q0 authority and would make the same-cause negative (`neg_cooking`) fire. Whether the explicit toggle
+  should override the compiler's no-retrieval routing is an OWNER product decision (deferred, reported).
+- REJECTED fix: opening the gate for ALL fallbacks (the literal BRIDGE mirror). Only `transport:*` is PROVEN
+  on-target; `invalid_plan:*` carries a compiler judgment and is unobserved on-target — left closed,
+  receipted and countable. (Disclosed: `neg_vacation` is quiet today only because its phrasing
+  deterministically yields `invalid_plan:no_queries_for_retrieval`; the BRIDGE expansion already admits 3
+  bridges on that same turn. Subquery-level negative quietness was never a designed guard — CE7 measured
+  concept LEAKAGE; the designed guards are intent eligibility + C4/C5/CA4.)
+- REJECTED: tuning an activation-score threshold to separate targets (top 0.43–0.51) from negatives (0.276)
+  — that is tuning to the query set.
 - NOT claimed: `search_atoms` is safe under load (embedder/Metal contention during a busy turn is untested
   by an idle probe) — the live `ATOMS_ERROR_OR_TIMEOUT` code exists to catch exactly that.
 

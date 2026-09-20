@@ -1,0 +1,122 @@
+{
+ "collection": "polymath_document_profile_atoms_embed_e794ec4cab197a3f",
+ "n_repeats": 10,
+ "queries": {
+  "physical_weight__f2": {
+   "q": "the movement should feel grounded and forceful rather than weightless and flashy",
+   "errors": [],
+   "empties": 0,
+   "distinct_vectors": 1,
+   "distinct_hit_lists": 1,
+   "distinct_cand_lists": 1,
+   "n_cands": [
+    8
+   ],
+   "top_score": [
+    0.4953
+   ],
+   "embed_ms_first": 260.6,
+   "embed_ms_p50_rest": 190.1,
+   "search_ms_first": 4.9,
+   "search_ms_p50_rest": 3.8,
+   "search_ms_max": 4.9,
+   "cand_ids": [
+    "movement-and-drama",
+    "movement-analysis",
+    "understanding-movement-patterns",
+    "total-body-integration-through-coordinated-movement-and-breath",
+    "visual-movement-notation",
+    "laban-bartenieff-movement-studies-approach",
+    "movement-analysis-theory",
+    "principles-of-motion-in-animation"
+   ]
+  },
+  "suppressed_grief": {
+   "q": "make a character's suppressed grief visible while they try hard to hide it",
+   "errors": [],
+   "empties": 0,
+   "distinct_vectors": 1,
+   "distinct_hit_lists": 1,
+   "distinct_cand_lists": 1,
+   "n_cands": [
+    8
+   ],
+   "top_score": [
+    0.4259
+   ],
+   "embed_ms_first": 188.0,
+   "embed_ms_p50_rest": 192.7,
+   "search_ms_first": 3.8,
+   "search_ms_p50_rest": 4.0,
+   "search_ms_max": 6.0,
+   "cand_ids": [
+    "value-opposition-in-character-development",
+    "subtle-communication-of-gestures",
+    "affective-states-communication-through-body-movements",
+    "dimensional-model-of-emotion",
+    "psychological-triggers-in-persuasive-copy",
+    "using-empathy-in-messaging",
+    "character-arc-as-a-measurable-progression-from-start-to-middle-to-end",
+    "multistage-pipeline-for-improving-character-consistency"
+   ]
+  },
+  "nonverbal_authority__f0": {
+   "q": "a character commands a room the moment she enters, without saying a word",
+   "errors": [],
+   "empties": 0,
+   "distinct_vectors": 1,
+   "distinct_hit_lists": 1,
+   "distinct_cand_lists": 1,
+   "n_cands": [
+    8
+   ],
+   "top_score": [
+    0.5139
+   ],
+   "embed_ms_first": 190.9,
+   "embed_ms_p50_rest": 189.5,
+   "search_ms_first": 3.6,
+   "search_ms_p50_rest": 3.7,
+   "search_ms_max": 5.3,
+   "cand_ids": [
+    "character-interaction-in-fantasy-narrative",
+    "non-verbal-storytelling-through-combat",
+    "character-consistency-in-ai-generated-stories",
+    "the-expressive-power-of-audio-elements-in-film",
+    "subtle-communication-of-gestures",
+    "value-opposition-in-character-development",
+    "applying-acting-principles-to-character-animation",
+    "use-of-visual-elements-to-control-narrative-space"
+   ]
+  },
+  "neg_cooking": {
+   "q": "create an upbeat step-by-step cooking tutorial for a simple pasta dish",
+   "errors": [],
+   "empties": 0,
+   "distinct_vectors": 1,
+   "distinct_hit_lists": 1,
+   "distinct_cand_lists": 1,
+   "n_cands": [
+    8
+   ],
+   "top_score": [
+    0.276
+   ],
+   "embed_ms_first": 190.7,
+   "embed_ms_p50_rest": 192.0,
+   "search_ms_first": 3.5,
+   "search_ms_p50_rest": 3.6,
+   "search_ms_max": 4.5,
+   "cand_ids": [
+    "illustration-technique-for-dynamic-action",
+    "choreography-in-action-sequences",
+    "on-set-production-workflow",
+    "compositing-techniques",
+    "visual-movement-notation",
+    "feature-based-guidance-in-generative-diffusion",
+    "total-body-integration-through-coordinated-movement-and-breath",
+    "sticky-ideas"
+   ]
+  }
+ }
+}
