@@ -135,8 +135,15 @@ journal + dossier.
 **Fleet (live)** — UP, bundle `9cb421b4eeed`, 13 worker types healthy, `/ready` true, 0 in-flight adapter runs; Trail
 daemon :8767 from A41. The fleet does not survive a reboot (`scripts/boot_polymath.sh`; Trail stack via `zsh`).
 
+**External review M1 (register 11.361, work-log `2026-09-20-external-review-m1-verification`)** — 12 failure-mode findings, each reproduced
+on the isolated branch `review/m1-reproductions` @ `eb63bef` (`tests/review_m1/`; red = defect present). The work-log keeps EXECUTED and
+READ apart per finding and discloses that the reproductions used the SHARED Postgres (M1-09 committed + deleted probe runs). Re-run
+without the shared database: `-k memory` for M1-04..08; M1-09..12 need an isolated database first. NOTHING is fixed. The M1-04 fix
+contract is defined and BLOCKED by the unresolved HALT instruction (owner decision pending; quoted in the work-log). Trail-side findings
+M1-01..03 belong to TG7. Item 2D stays PARKED, uncommitted, in worktree `pmv4-atom-scope`.
+
 **Next Action**
-1. **IN PROGRESS (authorized): finish-line Item 2 sub-item D** — corpus-scope `search_atoms`
+1. **PARKED (was authorized; superseded by the pending HALT decision): finish-line Item 2 sub-item D** — corpus-scope `search_atoms`
    (`shared/polymath_shared/document_profile/profile_atom_projection.py:146`) and thread `corpus_ids` through its five
    callers (`orchestrator/orchestrator/api/ui.py:1723`, `:2022`; `chat_retrieval.py:329`, `:385`, `:848`). Contract change,
    not a post-filter. Acceptance: a corpus-A query activates 100 % corpus-A atoms, a corpus-B query 100 % corpus-B, no
