@@ -412,6 +412,21 @@ class LLMExtractionClient:
                     "json_schema": EXTRACTION_JSON_SCHEMA}
             elif self.cloud_opts.get("json_mode", True):
                 payload["response_format"] = {"type": "json_object"}
+        # REASONING-BOUNDARY-V1: the chat-COMPILER client carries a `reasoning_role`; overlay its
+        # reasoning-budget policy onto the payload at runtime (no-op unless POLYMATH_REASONING_POLICY=1).
+        # Document-extraction clients never set this attribute, so extraction is byte-identical + its
+        # contract hash (GENERATION_CONFIG / pool_fingerprint) is untouched (a runtime overlay, not config).
+        _rb_role = getattr(self, "reasoning_role", None)
+        if _rb_role:
+            try:
+                from polymath_shared.reasoning_policy import apply_chat_completions as _rb_apply
+                _rb = _rb_apply(payload, _rb_role, self.model)
+                if _rb:
+                    import json as _rb_js
+                    import logging as _rb_lg
+                    _rb_lg.getLogger("polymath.reasoning").info("reasoning_policy %s", _rb_js.dumps(_rb))
+            except Exception:  # noqa: BLE001 — additive; never break the compiler
+                pass
         resp = httpx.post(f"{self.base_url}/v1/chat/completions",
                           json=payload, timeout=self.timeout_s,
                           headers=self._headers())

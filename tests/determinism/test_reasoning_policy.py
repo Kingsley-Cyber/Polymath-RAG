@@ -12,6 +12,9 @@ from polymath_shared.reasoning_policy import (  # noqa: E402
     S_CHAT_COMPLETIONS,
     S_LITELLM,
     S_RESPONSES,
+    apply_chat_completions,
+    apply_litellm,
+    policy_enabled,
     provider_family,
     reasoning_params,
 )
@@ -91,3 +94,22 @@ def test_env_override(monkeypatch):
     monkeypatch.setenv("POLYMATH_OUTPUT_MAX_STRUCTURED_COMPILER", "400")
     p = reasoning_params(STRUCTURED_COMPILER, "qwen3.8-flash", S_CHAT_COMPLETIONS)
     assert p["top_level"]["thinking_budget"] == 150 and p["max_output_tokens"] == 400
+
+
+def test_appliers_are_noop_when_disabled(monkeypatch):
+    monkeypatch.delenv("POLYMATH_REASONING_POLICY", raising=False)
+    assert policy_enabled() is False
+    k = {"model": "deepseek-v4", "messages": []}
+    assert apply_litellm(k, CHAT_SYNTHESIS, "deepseek-v4") == {} and "extra_body" not in k   # byte-identical
+    p = {"model": "qwen3.8-flash", "messages": []}
+    assert apply_chat_completions(p, STRUCTURED_COMPILER, "qwen3.8-flash") == {} and "thinking_budget" not in p
+
+
+def test_appliers_overlay_when_enabled(monkeypatch):
+    monkeypatch.setenv("POLYMATH_REASONING_POLICY", "1")
+    k = {"model": "deepseek-v4", "messages": []}
+    applied = apply_litellm(k, CHAT_SYNTHESIS, "deepseek-v4")
+    assert applied and k["extra_body"]["thinking"] == {"type": "disabled"}   # deepseek disabled on the wire
+    p = {"model": "qwen3.8-flash", "messages": []}
+    a2 = apply_chat_completions(p, STRUCTURED_COMPILER, "qwen3.8-flash")
+    assert a2 and p["thinking_budget"] == 300 and p["preserve_thinking"] is False and "reasoning_effort" not in p

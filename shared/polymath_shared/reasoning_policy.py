@@ -52,6 +52,12 @@ ROLE_POLICIES: dict[str, RolePolicy] = {
 }
 
 
+def policy_enabled() -> bool:
+    """The kill switch. When off (default), every callsite is a no-op -> pre-RB behaviour is byte-identical.
+    Enabled only in the reasoning-qualification slice (Slice 2)."""
+    return os.environ.get("POLYMATH_REASONING_POLICY", "0") == "1"
+
+
 def _pol(role: str) -> RolePolicy:
     return ROLE_POLICIES.get(role) or ROLE_POLICIES[STRUCTURED_COMPILER]
 
@@ -129,3 +135,34 @@ def reasoning_params(role: str, model: str, api_surface: str = S_LITELLM) -> dic
             bag.pop("reasoning_effort")
 
     return {"top_level": top, "extra_body": extra, "max_output_tokens": int(out_cap) if out_cap else None}
+
+
+def apply_litellm(kwargs: dict, role: str, model: str) -> dict:
+    """Overlay the role's reasoning params onto a `litellm.completion` kwargs dict IN PLACE, ONLY when the
+    policy is enabled (else a no-op -> byte-identical). Runtime overlay: nothing is written to any config or
+    contract hash. Output budget stays with the caller's existing max_tokens logic. Returns the SANITIZED
+    params applied (no secrets) for logging, or {} when disabled."""
+    if not policy_enabled():
+        return {}
+    rp = reasoning_params(role, model, S_LITELLM)
+    kwargs.update(rp["top_level"])
+    if rp["extra_body"]:
+        kwargs["extra_body"] = {**(kwargs.get("extra_body") or {}), **rp["extra_body"]}
+    return {"role": role, "provider": provider_family(model), "surface": S_LITELLM,
+            "top_level": dict(rp["top_level"]), "extra_body": dict(rp["extra_body"]),
+            "max_output_tokens": rp["max_output_tokens"]}
+
+
+def apply_chat_completions(payload: dict, role: str, model: str) -> dict:
+    """Overlay reasoning params onto an OpenAI-compat /v1/chat/completions PAYLOAD in place, ONLY when the
+    policy is enabled. For the chat-COMPILER stage only (never document extraction). Runtime overlay; no
+    contract-hash change. Returns sanitized applied params (or {})."""
+    if not policy_enabled():
+        return {}
+    rp = reasoning_params(role, model, S_CHAT_COMPLETIONS)
+    payload.update(rp["top_level"])
+    if rp["extra_body"]:
+        payload["extra_body"] = {**(payload.get("extra_body") or {}), **rp["extra_body"]}
+    return {"role": role, "provider": provider_family(model), "surface": S_CHAT_COMPLETIONS,
+            "top_level": dict(rp["top_level"]), "extra_body": dict(rp["extra_body"]),
+            "max_output_tokens": rp["max_output_tokens"]}

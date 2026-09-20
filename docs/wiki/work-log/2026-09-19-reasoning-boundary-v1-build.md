@@ -30,6 +30,19 @@ ui.py/mcp_server/compare_review/client are live-only (editable-.pth).
   Output budget SEPARATE from the reasoning ceiling. Env overrides `POLYMATH_REASONING_MAX_<ROLE>` /
   `POLYMATH_OUTPUT_MAX_<ROLE>`.
 
+- **RB1-live (ui.py + chat.py; live-only).** `chat_events` short-circuit BEFORE the synth branch
+  (`ui.py`): when `req.evidence_only`, build the packet from the already-computed bundle (`fast['evidence']`,
+  `_grades_by_chunk` CA4, `_plan`, compiler receipts) and emit `kind:"evidence"` (`synthesis_performed=false`)
+  + return — NO synthesis LLM, NO reviewer. `StreamChatRequest.evidence_only` + `ChatRequest.{corpus_explorer,
+  evidence_only}` + the `stream_request()` mapping. NEW `POST /chat/evidence` (forces evidence_only; drains
+  via `run_chat`).
+- **RB2-live (3 callsites; ALL behind `POLYMATH_REASONING_POLICY`, default 0 -> no-op/byte-identical).**
+  Appliers `apply_litellm`/`apply_chat_completions` overlay reasoning params at runtime (never config ->
+  extraction contract hash UNTOUCHED). Wired: `_litellm_generate` (CHAT_SYNTHESIS), `_run_reviewer`
+  (REVIEWER; the deepseek `thinking:disabled` stays as an UNGATED correctness baseline, policy overlays on
+  top), and the chat-compiler via `client.reasoning_role="STRUCTURED_COMPILER"` read by `client._chat`
+  (extraction clients never set it). Each logs a sanitized `reasoning_policy {...}` line (Slice-2 wire proof).
+
 ## Proof
 - **RB1/RB2 shared UNIT_PROVEN** (executed path = worktree; import sources verified `pmv4-reasoning`).
   `test_evidence_packet.py` 8/8 (shape + no-synthesis flag; direct + CORPUS_EXPLORE rows; utility_role from
@@ -38,6 +51,10 @@ ui.py/mcp_server/compare_review/client are live-only (editable-.pth).
   reasoning_effort**; Qwen Responses no-budget->disable; DeepSeek disabled; Claude effort=low no manual
   budget; Gemini thinking_level=low; output-separate-and-independent; **never both effort+budget** swept over
   roles×providers×surfaces; env override).
+- **RB1-live/RB2-live IMPLEMENTED, live-only** (editable-.pth: ui.py/chat.py/compare_review/client resolve
+  to MAIN under pytest). py_compile all OK; preflight=0; appliers no-op when the flag is off (verified). +2
+  applier tests (off=no-op byte-identical; on=deepseek disabled + qwen thinking_budget=300 no reasoning_effort).
+  Real proof = the live boundary checks (Slice 1) + the reasoning wire-param log (Slice 2) after merge+bounce.
 
 ## Rejected claims
 - NOT claimed: any live behavior (RB1/RB2 live wiring + RB3 MCP are live-only; proof = post-merge live).
