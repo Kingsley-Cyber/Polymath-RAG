@@ -88,3 +88,25 @@ def test_server_b_adapter_tools_only_proxy_the_adapter_routes():
         literal = path.value if isinstance(path, ast.Constant) else "".join(
             v.value for v in path.values if isinstance(v, ast.Constant))
         assert literal.startswith("/adapter/"), (name, literal)
+
+
+# GOVERNED-CONVERGENCE-V1 TG4 — every legacy query tool says, in its FIRST sentence, that it is deprecated and which
+# canonical tool replaces it. An agent reads the description before it picks a tool; a legacy answer tool that reads as
+# the recommended path is how agent work ended up nested under a second synthesis.
+LEGACY = {"a": {"ask": ("polymath_answer", "polymath_explore"), "retrieve": ("polymath_search", "polymath_explore"),
+                "compile_plan": ("polymath_explore",), "retrieve_evidence": ("polymath_search",)},
+          "b": {"polymath_query": ("polymath_answer",), "polymath_retrieve": ("polymath_search",)}}
+
+
+def test_legacy_query_tools_lead_with_deprecated_and_name_the_canonical_tool():
+    a, b = _both()
+    for tools, legacy in ((a, LEGACY["a"]), (b, LEGACY["b"])):
+        for name, replacements in legacy.items():
+            assert name in tools, f"{name} must keep working for existing callers"
+            desc = " ".join((tools[name].description or "").split())
+            assert desc.startswith("DEPRECATED"), (name, desc[:60])
+            for canonical in replacements:
+                assert canonical in desc, (name, canonical)
+        for name in CANONICAL_TRIO:
+            assert not (tools[name].description or "").lstrip().startswith("DEPRECATED"), name
+    assert "Prefer this over retrieve" not in " ".join((a["ask"].description or "").split())     # the old steer toward synthesis is gone

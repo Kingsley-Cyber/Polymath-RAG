@@ -1,0 +1,124 @@
+{
+ "artifact": "TG4-SKILL-HARNESS-RECEIPT",
+ "date": "2026-09-20",
+ "plan": "docs/wiki/plans/GOVERNED-CONVERGENCE-V1.md#TG4",
+ "claim": "The existing opportunity-research skill is the harness: HarnessActionV1 -> the skill's own controller / acquisition tools -> HarnessResearchReceiptV1 -> adapter_submit. No second harness, no second report system, no score in a receipt.",
+ "live_governed_run_driven_by_this_code": false,
+ "not_proven": [
+  "no live governed run has driven adapter_receipt.py / governed_run.py end to end (that is TG5 = R2, NOT authorized)",
+  "adapter_start / adapter_submit over MCP Server B are still not live-exercised",
+  "the governed dossier was rendered from a journal REBUILT read-only from the finished fixture run R1, not from a journal written during a run"
+ ],
+ "skill_repo": {
+  "path": "/Users/king/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH",
+  "commit": "076922d",
+  "tag_local": "v2.3.0-tg4",
+  "head": "a7baa66",
+  "ahead_of_origin": 3,
+  "pushed": false,
+  "dirty_files": 0
+ },
+ "gates": {
+  "repo": {
+   "run_all_exit": 0,
+   "checks_passed": 609,
+   "doctor_exit": 0
+  },
+  "deployed_in_place": {
+   "run_all_exit": 0,
+   "checks_passed": 606,
+   "doctor_exit": 0,
+   "why_fewer": "polymath-v4 does not sit beside the deployed copy: six cross-repo checks collapse into three explicit 'not on this machine' passes (surfaced, never silent)"
+  }
+ },
+ "cross_repo_checks_run_in_the_skill_repo": [
+  "schemas/evidence_packet.json records the sha256 of the authoritative polymath-v4 schema it renders (drift = re-render + re-pin)",
+  "the dialect's required keys and closed vocabularies agree with the authoritative contract",
+  "the authoritative contract's own example passes the skill's fail-closed check",
+  "the receipt schema is a BYTE COPY of the authoritative polymath-v4 contract",
+  "structurally equal to the Polymath acceptance fixtures (same keys at every level)",
+  "Polymath's OWN adapter_submit check (transitions.validate_receipt) accepts the receipt — and refuses it under another action id"
+ ],
+ "receipt_contract": {
+  "authoritative": "contracts/adapter/v1/harness_receipt.schema.json",
+  "sha256": "f6189a45be6aaad934f2652f0d6411292900b26cc9e955be5559d50d5c27c866",
+  "skill_copy_sha256": "f6189a45be6aaad934f2652f0d6411292900b26cc9e955be5559d50d5c27c866",
+  "deployed_copy_sha256": "f6189a45be6aaad934f2652f0d6411292900b26cc9e955be5559d50d5c27c866"
+ },
+ "evidence_packet_contract": {
+  "authoritative": "contracts/evidence/v1/evidence_packet.schema.json",
+  "sha256": "dfacd1ac6b5fcdfb1b720f36c101f31b15b0027d0b45b9282481cbf1ed575c03",
+  "pinned_in_skill_dialect": "dfacd1ac6b5fcdfb1b720f36c101f31b15b0027d0b45b9282481cbf1ed575c03"
+ },
+ "polymath_gate": {
+  "function": "shared/polymath_shared/adapter/transitions.py::validate_receipt",
+  "executed_from": "polymath-v4 MAIN checkout (cwd) with shared/ first on sys.path, polymath-v4 .venv python",
+  "accepts_skill_built_receipt": true,
+  "refuses_other_action_id": true
+ },
+ "governed_dossier_render": {
+  "source_run": "adr_12ddda16f9b589fbdf7dfab9f31efedf (R1, fixture, finished)",
+  "journal": "rebuilt read-only from adapter status/result",
+  "renderer": "the skill's existing python/report.py (build_model_from_governed)",
+  "verdict": [
+   "GOVERNED — TRAIL SCORED"
+  ],
+  "evidence_score_mentions": 0,
+  "sections": [
+   "Opportunity Thesis",
+   "Governed Run",
+   "TrailSignal's Record",
+   "Reasoning Bridge (governed hypotheses)",
+   "Field Observations — admitted 33 · rejected 0",
+   "What the Field Actually Said",
+   "Product Directions",
+   "Corpus evidence packets",
+   "Qualified Leads",
+   "Unresolved",
+   "Research Audit"
+  ],
+  "html_bytes": 19926
+ },
+ "mirror": {
+  "reference": {
+   "path": "/Users/king/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH",
+   "commit": "076922d",
+   "dirty_files": 0,
+   "version": "2.3.0",
+   "files": 190
+  },
+  "deployed": {
+   "path": "/Users/king/.hermes/standalone/opportunity-research",
+   "version": "2.3.0",
+   "files_compared": 190
+  },
+  "missing_in_deployed": [],
+  "drift": [],
+  "unexpected_in_deployed": [],
+  "parity": true
+ },
+ "hermes_skill_text": {
+  "repo": "~/.hermes (HERMES-KING)",
+  "committed": false,
+  "files": [
+   "skills/productivity/ecommerce-niche-discovery/SKILL.md",
+   "skills/productivity/ecommerce-niche-discovery/references/polymath-multi-query-pattern.md",
+   "skills/mlops/polymath/SKILL.md"
+  ],
+  "diffstat": "3 files changed, 47 insertions(+), 17 deletions(-)",
+  "config_yaml_touched": false
+ },
+ "polymath_side_text": {
+  "server_a_deprecation_leads": [
+   "ask",
+   "retrieve",
+   "compile_plan",
+   "retrieve_evidence"
+  ],
+  "pinned_by": "tests/contracts/test_mcp_adapter_parity.py::test_legacy_query_tools_lead_with_deprecated_and_name_the_canonical_tool",
+  "red_without_fix": true,
+  "running": false,
+  "goes_live": "next fleet bounce + one Hermes MCP reload (no bounce was needed for TG4)",
+  "connectors_md_corrected": true
+ }
+}

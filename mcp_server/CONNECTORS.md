@@ -1,23 +1,31 @@
 # Polymath MCP — agents and connectors
 
 Two MCP servers share one canonical tool surface (REASONING-BOUNDARY-V1):
-- **Server B** (`mcp_server/polymath_mcp.py`, stdio / `--http`) — the one local Claude Code + Hermes use.
-- **Server A** (`orchestrator/orchestrator/mcp_server.py`, streamable-http, public `mcp.kingsleylab.xyz`).
+- **Server B** (`mcp_server/polymath_mcp.py`, stdio / `--http`) — what local Claude Code and Codex use: spawned by the
+  client over stdio, no credential, proxies the orchestrator on `:7200`.
+- **Server A** (`orchestrator/orchestrator/mcp_server.py`, streamable-http) — the supervised `mcp` slot on `:8930`
+  (Bearer key; `/health` open). **Hermes uses Server A** (`http://127.0.0.1:8930/mcp`); it is also the public
+  `mcp.kingsleylab.xyz`.
 
 Canonical query tools (prefer these): **polymath_search** (q0-only evidence rows), **polymath_explore**
 (full planning + Corpus Explore → EvidencePacket, NO answer — you reason over it yourself), **polymath_answer**
 (Polymath writes the grounded answer; humans/UI). Submit the ORIGINAL question — do NOT pre-decompose it;
-Polymath owns retrieval planning. `polymath_query`/`polymath_retrieve` are DEPRECATED aliases (kept working).
+Polymath owns retrieval planning. DEPRECATED, kept working for existing callers: Server B `polymath_query` /
+`polymath_retrieve`; Server A `ask` / `retrieve` / `compile_plan` / `retrieve_evidence`. Agent work never goes through
+an answer tool (`polymath_answer`, `ask`, `polymath_query`) — that nests a second synthesis under the agent's own.
 Plus corpus ops: list_corpora, list_documents, upload_file, upload_text, readiness, delete_corpus,
-delete_document (Server A also: capabilities, compile_plan, retrieve_evidence, adapter_*).
+delete_document (Server A also: capabilities). Both servers serve the seven cognitive-adapter tools
+`adapter_list / adapter_start / adapter_next / adapter_submit / adapter_status / adapter_result / adapter_cancel`
+with identical names, parameters and descriptions (pinned by `tests/contracts/test_mcp_adapter_parity.py`).
 
-## 1. Local agents over stdio (Claude Code, Hermes on this machine)
+## 1. Local agents over stdio (Claude Code, Codex) — Server B
 
 ```bash
 claude mcp add polymath -- /path/to/.venv/bin/python /path/to/mcp_server/polymath_mcp.py
 ```
 
-Hermes (`mcpServers` block — same shape as `~/.claude.json`):
+Any stdio MCP client (`mcpServers` block — same shape as `~/.claude.json`; Codex takes the same command / args / env
+under `[mcp_servers.polymath]` in `~/.codex/config.toml`):
 
 ```json
 {
@@ -31,16 +39,21 @@ Hermes (`mcpServers` block — same shape as `~/.claude.json`):
 }
 ```
 
-## 2. Remote agents over Streamable HTTP (Hermes remote, custom agents)
+## 2. Agents over Streamable HTTP (Hermes, remote and custom agents)
 
-Start the server (stateless HTTP, MCP 2026-07-28 core; Bearer-key auth):
+**Hermes on this machine → Server A.** Nothing to start: the fleet supervisor (`scripts/boot_polymath.sh`) runs it as
+the `mcp` slot. Hermes registers `url: http://127.0.0.1:8930/mcp` with an `Authorization: Bearer <key>` header through
+its own MCP tooling (never by hand-editing `~/.hermes/config.yaml`). A changed Server A tool description or schema
+reaches Hermes only after a fleet bounce AND one Hermes MCP reload.
+
+**Remote / custom agents → Server B over HTTP.** Start it (stateless HTTP, MCP 2026-07-28 core; Bearer-key auth):
 
 ```bash
 export POLYMATH_MCP_API_KEY="$(cat ~/PolymathRuntime/polymath-v4-mcp.key)"
 .venv/bin/python mcp_server/polymath_mcp.py --http 7300
 ```
 
-Hermes remote registration:
+Remote registration (any HTTP MCP client):
 
 ```json
 {
@@ -66,7 +79,8 @@ async with httpx.AsyncClient(
                                       http_client=hc) as ctx:
         async with ClientSession(ctx[0], ctx[1]) as s:
             await s.initialize()
-            await s.call_tool("polymath_query", {...})
+            # ONE call, the ORIGINAL need, never pre-decomposed. Returns an EvidencePacket (no answer): reason over it.
+            await s.call_tool("polymath_explore", {"query": "<the original need>", "corpus_id": "<corpus id>"})
 ```
 
 ## 3. Product connectors (Claude.ai / Grok / ChatGPT)

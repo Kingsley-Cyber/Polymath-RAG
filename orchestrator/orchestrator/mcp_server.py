@@ -229,7 +229,8 @@ async def corpus_status(corpus_id: str) -> dict:
 async def retrieve(query: str, corpus_id: str, mode: str = "HYBRID",
                    limit: int = 10, latent: Optional[bool] = None,
                    explore: bool = False) -> dict:
-    """Retrieve evidence chunks for a query within ONE corpus. mode:
+    """DEPRECATED for agent work — use polymath_search (q0-only evidence rows) or polymath_explore (full planning +
+    Corpus Explore -> EvidencePacket, no answer). Kept for existing callers. Retrieve evidence chunks for a query within ONE corpus. mode:
     FAST | HYBRID | GRAPH | EXPLORE. latent=false disables the cross-domain
     latent lane for this call (HYBRID/GRAPH run it by default).
     explore=true (or mode=EXPLORE) returns contract-ready `evidence_rows`
@@ -285,7 +286,8 @@ def _trim_rows(rows: list) -> list:
 @mcp.tool()
 async def compile_plan(signal: str, corpus_id: str, limit: int = 24, explore: bool = True,
                        communities: Optional[list[str]] = None) -> dict:
-    """CORPUS-PLAN-V1: send ONE signal; Polymath compiles 3-5 deterministic
+    """DEPRECATED for agent work — use polymath_explore (Polymath's full retrieval planning; submit the ORIGINAL need
+    once). Kept for existing callers. CORPUS-PLAN-V1: send ONE signal; Polymath compiles 3-5 deterministic
     reformulations (seed / tension / communities / invariant / contrast),
     runs each through the EXPLORE evidence view and returns the merged rows
     stamped with the query ids that found them, plus the plan itself."""
@@ -301,7 +303,8 @@ async def compile_plan(signal: str, corpus_id: str, limit: int = 24, explore: bo
 
 @mcp.tool()
 async def retrieve_evidence(query: str, corpus_id: str, limit: int = 12, explore: bool = False) -> dict:
-    """RETRIEVE-EVIDENCE-ROWS-V1: contract-ready evidence rows for one query
+    """DEPRECATED — use polymath_search (the same contract rows under the canonical name). Kept for existing callers.
+    RETRIEVE-EVIDENCE-ROWS-V1: contract-ready evidence rows for one query
     (id, verbatim text, title, auditable source, timecodes, document
     summaries, attested graph facts). explore=true = breadth across documents."""
     body: dict[str, Any] = {"query": query, "corpus_id": corpus_id, "limit": limit, "evidence": True}
@@ -317,9 +320,10 @@ async def retrieve_evidence(query: str, corpus_id: str, limit: int = 12, explore
 @mcp.tool()
 async def ask(question: str, corpus_id: str, mode: str = "HYBRID",
               latent: Optional[bool] = None, evidence: bool = False) -> dict:
-    """Ask a question of ONE corpus and get the grounded RAG answer with
-    citations (the same path the Polymath chat UI uses). Prefer this
-    over retrieve() when you want an answer, not raw evidence."""
+    """DEPRECATED — use polymath_answer when a HUMAN wants Polymath's own answer; for agent work use polymath_search /
+    polymath_explore and reason over the evidence yourself (never nest a second synthesis). Kept for existing callers.
+    Ask a question of ONE corpus and get the grounded RAG answer with
+    citations (the same path the Polymath chat UI uses)."""
     body: dict[str, Any] = {"message": question, "mode": mode,
                             "corpus_id": corpus_id, "evidence": bool(evidence)}
     if latent is not None:
