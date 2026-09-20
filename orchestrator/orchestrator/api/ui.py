@@ -3754,12 +3754,29 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     retrieval["corpus_explore_firing"] = dict(_firing or _stamp_firing())
                 _comp = (getattr(_plan, "compiler", None) or {}) if _plan is not None else {}
                 _ce = _comp.get("corpus_explore_expansion") or {}
+                # RB5 — TEXT IS EVIDENCE, NOT A PREVIEW. The inventory rows carry a 240-char UI preview of each chunk.
+                # Resolve the retrieved chunk for EXACTLY the rows the packet will present (same rows, same order) so
+                # the packet can carry a bounded verbatim excerpt. Presentation only: nothing here selects, ranks,
+                # grades or seats anything, and a resolver miss falls back to the preview (the packet then says so).
+                from polymath_shared.evidence_packet import DEFAULT_MAX_ROWS as _PK_ROWS
+                _full_texts: dict = {}
+                for _prow in (fast.get("evidence") or [])[:_PK_ROWS]:
+                    _pcid = _prow.get("chunk_id")
+                    if not _pcid or _pcid in _full_texts:
+                        continue
+                    try:
+                        _pch = _resolve_chunk(_pcid)
+                    except Exception:  # noqa: BLE001 — text hydration can never fail an evidence turn
+                        _pch = None
+                    if _pch and _pch.get("text"):
+                        _full_texts[_pcid] = _pch["text"]
                 _packet = build_evidence_packet(
                     q0=req.message,
                     retrieval_mode=retrieval.get("mode") or ui_mode,
                     plan_queries=(list(_plan.queries) if _plan is not None else []),
                     evidence_rows=(fast.get("evidence") or []),
                     ca4_grades=_grades_by_chunk,
+                    full_texts=_full_texts,
                     receipts={"activation": _comp.get("corpus_activation"),
                               "bridges": _comp.get("bridge_expansion"),
                               "corpus_explore": _ce,

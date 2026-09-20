@@ -196,8 +196,13 @@ def rows_from_packet(packet: Mapping[str, Any], corpus_id: str, *, max_text: int
         if not cid:
             continue
         prov = item.get("provenance") if isinstance(item.get("provenance"), Mapping) else {}
+        full = str(item.get("text") or "")
+        # RB5: a packet says whether its text is an excerpt; clipping it further here is said too, never silent
+        clipped = len(full) > max(0, int(max_text))
         row: dict[str, Any] = {"id": cid, "kind": "chunk", "doc_id": str(item.get("document_id") or "") or None, "corpus_id": corpus_id,
-                               "source": _clip(item.get("source"), 300) or None, "text": _clip(item.get("text"), max_text),
+                               "source": _clip(item.get("source"), 300) or None, "text": _clip(full, max_text),
+                               "text_truncated": True if clipped else item.get("text_truncated"),
+                               "text_chars": item.get("text_chars") if isinstance(item.get("text_chars"), int) else None,
                                "utility_role": str(item.get("utility_role") or "") or None,
                                "synthesis_role": str(item.get("synthesis_role") or "") or None,
                                "ca4_grade": str(item.get("ca4_grade") or "") or None, "c4_valid": bool(item.get("c4_valid")),
@@ -332,15 +337,17 @@ def _index_rows(step_outputs: Iterable[Mapping[str, Any]]) -> dict[str, dict[str
     return index
 
 
-_ROW_KEYS = ("id", "kind", "doc_id", "corpus_id", "title", "source", "heading_path", "text", "score", "utility_role", "synthesis_role",
+_ROW_KEYS = ("id", "kind", "doc_id", "corpus_id", "title", "source", "heading_path", "text", "text_truncated", "text_chars", "score", "utility_role", "synthesis_role",
              "ca4_grade", "c4_valid", "origin", "relation_to_q0", "source_class", "evidence_role", "polarity", "hypothesis_ids",
              "independence_group", "freshness", "published_at_if_known", "metric_if_present")
 
 
 def _readable(row: Mapping[str, Any], max_chars: int) -> dict[str, Any]:
-    text = row.get("text") or row.get("text_clean") or row.get("summary") or ""
+    text = str(row.get("text") or row.get("text_clean") or row.get("summary") or "")
     out = {k: row[k] for k in _ROW_KEYS if k in row and k != "text"}
     out["text"] = _clip(text, max_chars)
+    if len(text) > max(0, int(max_chars)):
+        out["text_truncated"] = True                          # the readable view cut it again: say so
     return out
 
 
