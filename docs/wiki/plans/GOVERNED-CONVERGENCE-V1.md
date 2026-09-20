@@ -37,6 +37,11 @@ checks, concepts + variations, product-reality and sourcing procedures, parsers,
 live-world execution · Trail: admission, freshness, independence, judgement, qualification, score / refusal, registry data ·
 the controller's renderer: the dossier. The controller's 28-node state machine, its score, its admission rules, its hypothesis
 authority and its Trail registry mirror are NOT migrated.
+**Names (owner, 2026-09-20).** Trail Signal OS = the deterministic judge, NOT the ecommerce adapter. `TRAIL_AGENT_AUTORESEARCH` = the
+ecommerce discovery engine. The adapter id `trail.product_discovery` is conceptually `ecommerce.product_discovery`: the governed
+composition wrapper around AutoResearch, with Trail as CHECKPOINTS (judge · admit · qualify · score) at meaningful boundaries — not a
+second research implementation, and not a node-by-node port. Delete nothing until AutoResearch is shown connected to the EvidencePacket
+and to Trail's checkpoints with its behaviour intact (harvest map §10 lists the boundaries and the verified constraints).
 **Harvest map (the first deliverable, docs only):** `docs/wiki/reports/2026-09-20/ECOMMERCE-MIGRATION-HARVEST-MAP.md` — all 28
 governed steps mapped to existing controller capabilities, all 28 controller nodes mapped to a future owner, dependency facts
 per harvest target, acquisition tools, parity fixtures and invariants, duplicates with deletion preconditions, a four-layer

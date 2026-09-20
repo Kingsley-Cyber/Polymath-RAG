@@ -182,3 +182,44 @@ Trail-side findings (M1-01, M1-02, M1-03, D4) go through Trail's own governance 
 4. **Mechanisms** have no deterministic producer in either system; they remain agent output with a 5-field schema.
 5. **The reviewer.** Advisory input to the agent's revision is lawful; whether its verdicts are shown in the dossier is a product choice.
 6. **Product reality** has never run in either system: its plan is new work, not a harvest.
+
+## 10. Owner addendum 2026-09-20 — names, and the BOUNDARY model (supersedes node-by-node mapping as the migration unit)
+**Names (this confusion sent earlier sessions the wrong way).** Trail Signal OS is NOT the ecommerce adapter: it is the
+deterministic judge ("what counts?"). `TRAIL_AGENT_AUTORESEARCH` IS the ecommerce discovery engine ("what should we investigate
+and what product might exist?"). Polymath is the knowledge layer. Claude / Hermes / Codex execute. The adapter id
+`trail.product_discovery` reads as if Trail did product discovery; conceptually it is `ecommerce.product_discovery` — the
+governed composition wrapper. (Renaming the id is a manifest-identity change with pinned contract examples; not done here.)
+**Shape.** The two graphs are not alternative implementations of one graph: AutoResearch is research intelligence, the adapter
+is governance around it. Preserve the AutoResearch graph as the ecommerce reasoning model and insert Trail checkpoints at
+meaningful boundaries; stop reproducing AutoResearch's cognitive sequence inside the manifest. The tables in §2–§3 remain as a
+REFERENCE for what each side needs — they are no longer the migration plan. **Delete nothing yet:** first prove AutoResearch can
+be connected to the EvidencePacket and to Trail's checkpoints while retaining its original behaviour.
+
+| Boundary | What crosses it | Already proven live | Not proven |
+|---|---|---|---|
+| Knowledge | AutoResearch ← Polymath `EvidencePacket` | yes — TG3 run `tg3_accept_02`: understand → corpus → primitives → gates → hypothesize → report, 0 answer calls | the field lanes on that lane; question mode |
+| Hypothesis judgement | AutoResearch hypotheses → adapter ledger → Trail `registry.project` + `hypotheses.judge` → verdicts back | the ledger + judge ran live in R2a with agent-written hypotheses | AutoResearch's bridge hypotheses projected into the ledger; verdicts fed back into its state |
+| Field evidence | Trail directive (WHAT: roles, freshness, budget) → AutoResearch planning (HOW) → receipt → `evidence.admit` → `hypotheses.judge` | receipt → admission → judge, 3 / 3 live in R2a | the directive entering AutoResearch's planner; its populations / channel queries producing the receipt |
+| Product reality | concepts + variations → research → receipt → admit → `opportunity.qualify` | nothing (fixtures only; never run by either system) | everything |
+| Supply | sourcing plan → supplier rows → receipt → admit → qualify → `opportunity.score` | receipt builder unit-tested | everything live |
+| Dossier | journal + result → the existing renderer | yes (R2a gap dossier) | a run with admitted products and suppliers |
+
+**Constraints verified in current code — they bound how thin the wrapper can get.**
+1. ADR-063 (`A41 docs/adr/063…`, lines 26-31): Polymath owns durable hypothesis state, hypothesis evolution, retrieval lineage and
+   mechanism reasoning; Trail owns the registry snapshot, gap compilation, admission, role policy, qualification and the score;
+   the host harness "receives a typed research action … and returns structured observations". AutoResearch therefore sits on
+   the AGENT + HARNESS side. Its hypotheses and every status change must be recorded in the adapter ledger; its own status
+   lattice, reviewer verdicts and final `qualify` verdict cannot be the record in governed mode.
+2. Trail's operations take the adapter's ledger and admission store as input (hypothesis views with revision + status, admitted
+   evidence ids). The Trail-facing half of the manifest — project → judge → admit → judge → territory → admit → qualify → admit →
+   qualify → score — IS the governance contract and stays. What can leave the manifest is the re-implemented cognition and,
+   possibly, the adapter's own knowledge steps.
+3. **Ordering mismatch.** AutoResearch is FIELD-FIRST: populations, community records and lived situations come BEFORE
+   hypotheses and anchor them. Trail admits an observation only if it links to a LIVE hypothesis
+   (`admission.py:209-211` → `HYPOTHESIS_LINK_MISSING`), and gap compilation iterates hypotheses. Pre-hypothesis field records
+   can therefore only be admitted AFTER hypotheses exist and cite them. Whether observations harvested before an action was
+   issued may ride in that action's receipt is a governance question, not a coding one.
+4. Citations: the ledger accepts only knowledge ids from the step's `evidence_refs`. If AutoResearch retrieves through its own
+   client, the wrapper still needs a lawful source of citable ids.
+5. Research planning splits cleanly: Trail = WHAT, AutoResearch = HOW. Today AutoResearch's gap compiler also sets roles and
+   freshness from its own policy tables; in governed mode those come from the directive.
