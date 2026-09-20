@@ -40,6 +40,34 @@ JSON_OK = "ok"
 JSON_EMPTY_OUTPUT = "empty_output"
 JSON_INVALID = "invalid_json"
 
+#: Phase B (proven cause). A chat-compiler FALLBACK plan is "grounded QA on the raw message": it still has a
+#: q0 PRIMARY and a deterministic intent, and its retrieval runs. The explorer used to skip EVERY fallback
+#: plan, so a compiler transport blip (all lanes timed out / 429) silently cost the turn its exploration —
+#: the measured intermittent miss. Fallback reasons split in two:
+#:   NO JUDGMENT  — the compiler said nothing usable (unreachable, too late, unparseable). Nothing argues
+#:                  against exploring; the explorer may run (exactly as the Scout BRIDGE expansion always has).
+#:   INVALID JUDGMENT (`invalid_plan:*`) — the compiler DID answer and the answer failed validation (e.g.
+#:                  `no_queries_for_retrieval`, a non-latent task type). That is a signal; stay closed.
+NO_JUDGMENT_FALLBACK_PREFIXES: tuple[str, ...] = (
+    "transport:", "budget_exceeded:", "invalid_json", "compiler_unavailable:", "join_failed:")
+FALLBACK_OPEN_ENV = "POLYMATH_CORPUS_EXPLORER_FALLBACK_OPEN"   # kill switch; default off = pre-fix gate
+
+
+def fallback_open_enabled() -> bool:
+    return os.environ.get(FALLBACK_OPEN_ENV, "0") == "1"
+
+
+def fallback_blocks_explorer(reason: str | None, *, fallback_open: bool | None = None) -> bool:
+    """Does this fallback plan keep the explorer closed? With the switch off: always (the pre-fix gate).
+    With it on: only an INVALID-JUDGMENT fallback blocks; a NO-JUDGMENT fallback lets the explorer run.
+    An unknown / missing reason blocks (fail closed). Pure."""
+    if fallback_open is None:
+        fallback_open = fallback_open_enabled()
+    if not fallback_open:
+        return True
+    r = (reason or "").strip()
+    return not any(r.startswith(p) for p in NO_JUDGMENT_FALLBACK_PREFIXES)
+
 
 @dataclass
 class FiringState:
@@ -49,7 +77,9 @@ class FiringState:
     plan_present: bool = True
     plan_fallback: bool = False
     fallback_reason: str | None = None
+    fallback_blocks: bool = True            # does this fallback keep the explorer closed? (Phase B)
     has_primary: bool = True
+    no_primary_reason: str | None = None    # e.g. retrieval_not_required:TRANSFORM_USER_CONTENT
     upstream_error: str | None = None       # a plan-finish step BEFORE the explorer raised (type name)
     no_corpus: bool = False
     stage: str | None = None                # embed | search | expand — where the explorer currently is
@@ -79,10 +109,12 @@ def classify(s: FiringState) -> tuple[bool, str | None, str | None]:
         return False, REQUEST_OFF, None
     if not s.plan_present:
         return False, OTHER, "no_plan"
-    if s.plan_fallback:
+    if s.plan_fallback and s.fallback_blocks:
         return False, PLAN_FALLBACK, (s.fallback_reason or None)
     if not s.has_primary:
-        return False, OTHER, "no_primary"
+        # q0 AUTHORITY (by design): the compiler routed the turn as no-retrieval, so there is no q0 retrieval
+        # to supplement. An expansion never CREATES retrieval where the compiler decided none.
+        return False, OTHER, ("no_primary" + (f":{s.no_primary_reason}" if s.no_primary_reason else ""))
     if s.upstream_error:
         return False, OTHER, f"finish_error:{s.upstream_error}"
     if s.no_corpus:
@@ -128,6 +160,9 @@ def firing_receipt(s: FiringState) -> dict:
     stages = {k: v for k, v in asdict(s).items()
               if k in ("intent", "n_hits", "atom_universe", "n_candidates", "eligible", "json_status",
                        "generated", "admitted", "added", "fetch_errors") and v is not None}
+    if s.plan_fallback:
+        # a fire ON a fallback plan is visible as such (the Phase B path), never mistaken for a normal fire
+        stages["plan_fallback"] = s.fallback_reason or True
     return {"contract": CONTRACT, "requested": bool(s.requested), "fired": fired,
             "cause": cause, "detail": detail, "stages": stages}
 

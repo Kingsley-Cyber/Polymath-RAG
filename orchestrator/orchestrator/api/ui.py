@@ -1958,7 +1958,7 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
     CORPUS-EXPLORE-FIRING-V1: every gate below fills a `FiringState`; the resulting receipt
     (`plan.compiler['corpus_explore_firing']`, exactly ONE cause code per non-firing request) is written on
     EVERY path, so no fallback is silent. Observation only — no gate, threshold or ranking changed."""
-    from polymath_shared.corpus_explore_firing import FiringState, firing_receipt
+    from polymath_shared.corpus_explore_firing import FiringState, fallback_blocks_explorer, firing_receipt
     st = FiringState(capability_on=os.environ.get("POLYMATH_CORPUS_EXPLORER", "0") == "1",
                      requested=bool(enabled),
                      plan_fallback=bool(getattr(plan, "fallback", False)),
@@ -1968,6 +1968,17 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
         st.fallback_reason = str((plan.compiler or {}).get("reason") or "")[:120] or None
     except Exception:  # noqa: BLE001
         pass
+    # CORPUS-EXPLORE-FIRING-V1 Phase B: a NO-JUDGMENT fallback (compiler unreachable / too late /
+    # unparseable) no longer closes the explorer — it has a q0 PRIMARY and a deterministic intent, and the
+    # Scout BRIDGE expansion has always run on it. An INVALID-JUDGMENT fallback (`invalid_plan:*`) still
+    # closes it. Kill switch `POLYMATH_CORPUS_EXPLORER_FALLBACK_OPEN` (default 0 = the pre-fix gate).
+    st.fallback_blocks = fallback_blocks_explorer(st.fallback_reason) if st.plan_fallback else True
+    if not st.has_primary:
+        try:
+            if not getattr(plan, "retrieval_required", True):
+                st.no_primary_reason = f"retrieval_not_required:{getattr(plan, 'task_type', '') or ''}"
+        except Exception:  # noqa: BLE001
+            pass
 
     def _stamp() -> None:
         try:
@@ -1975,7 +1986,8 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
         except Exception:  # noqa: BLE001
             pass
 
-    if not st.requested or not st.capability_on or st.plan_fallback or not st.has_primary or upstream_error:
+    if (not st.requested or not st.capability_on or (st.plan_fallback and st.fallback_blocks)
+            or not st.has_primary or upstream_error):
         _stamp()
         return
     import time as _t

@@ -188,3 +188,71 @@ def test_evidence_packet_carries_the_firing_receipt():
                                 corpus_explorer_requested=True, corpus_explorer_used=False).to_dict()
     assert pkt["receipts"]["firing"]["cause"] == F.PLAN_FALLBACK
     assert "not_a_known_key" not in pkt["receipts"]
+
+
+# ---- Phase B: a NO-JUDGMENT fallback no longer closes the explorer; an INVALID-JUDGMENT one still does ----
+
+NO_JUDGMENT = ["transport:ReadTimeout", "transport:HTTP_429", "budget_exceeded:6076ms", "invalid_json",
+               "compiler_unavailable:no_active_lane", "compiler_unavailable:KeyError", "join_failed:TimeoutError"]
+INVALID_JUDGMENT = ["invalid_plan:no_queries_for_retrieval", "invalid_plan:task_type_invalid:PROCEDURE",
+                    "invalid_plan:task_rewritten:explain"]
+
+
+def test_switch_off_is_the_pre_fix_gate_every_fallback_blocks():
+    for r in NO_JUDGMENT + INVALID_JUDGMENT + [None, "", "something_new"]:
+        assert F.fallback_blocks_explorer(r, fallback_open=False) is True, r
+
+
+def test_switch_on_opens_only_no_judgment_fallbacks():
+    for r in NO_JUDGMENT:
+        assert F.fallback_blocks_explorer(r, fallback_open=True) is False, r
+    for r in INVALID_JUDGMENT + [None, "", "something_new"]:          # unknown reason: fail closed
+        assert F.fallback_blocks_explorer(r, fallback_open=True) is True, r
+
+
+def test_switch_reads_env_and_defaults_off(monkeypatch):
+    monkeypatch.delenv(F.FALLBACK_OPEN_ENV, raising=False)
+    assert F.fallback_open_enabled() is False
+    assert F.fallback_blocks_explorer("transport:ReadTimeout") is True
+    monkeypatch.setenv(F.FALLBACK_OPEN_ENV, "1")
+    assert F.fallback_blocks_explorer("transport:ReadTimeout") is False
+    assert F.fallback_blocks_explorer("invalid_plan:no_queries_for_retrieval") is True
+
+
+def test_a_fire_on_a_fallback_plan_is_visible_as_such():
+    s = replace(FIRES, plan_fallback=True, fallback_reason="transport:ReadTimeout", fallback_blocks=False)
+    assert F.classify(s) == (True, None, None)
+    assert F.firing_receipt(s)["stages"]["plan_fallback"] == "transport:ReadTimeout"
+    blocked = replace(s, fallback_reason="invalid_plan:no_queries_for_retrieval", fallback_blocks=True)
+    assert F.classify(blocked)[:2] == (False, F.PLAN_FALLBACK)
+    assert "plan_fallback" not in F.firing_receipt(FIRES)["stages"]
+
+
+def test_no_primary_carries_the_q0_authority_reason():
+    s = replace(FIRES, has_primary=False, no_primary_reason="retrieval_not_required:TRANSFORM_USER_CONTENT")
+    assert F.classify(s) == (False, F.OTHER, "no_primary:retrieval_not_required:TRANSFORM_USER_CONTENT")
+    assert F.classify(replace(FIRES, has_primary=False)) == (False, F.OTHER, "no_primary")
+
+
+def test_explorer_expands_a_fallback_plan_like_any_q0_plan():
+    """The pure expansion never depended on the compiler having succeeded: a fallback plan (q0 PRIMARY +
+    deterministic latent intent) expands exactly like a compiled one. Guards the Phase B premise."""
+    from polymath_shared.chat_plan import fallback_plan
+    from polymath_shared.corpus_activation import build_activation_candidates
+    from polymath_shared.corpus_explore import CORPUS_EXPLORE_ORIGIN, plan_corpus_explore_expansion
+    q0 = "make a character's suppressed grief visible while they try hard to hide it"
+    plan = fallback_plan(q0, reason="transport:ReadTimeout")
+    assert plan.fallback and [q.type for q in plan.queries] == ["PRIMARY"]
+    acts = build_activation_candidates([
+        {"doc_id": "d1", "atom_kind": "CONCEPT", "text": "masking emotion through micro-expression",
+         "atom_id": "a1", "score": 0.5}])
+
+    def gen(_prompt):
+        return json.dumps([{"bridge_id": "b1", "derived_from": acts[0].concept_id,
+                            "bridge_query": "how do micro-expressions leak an emotion an actor is hiding",
+                            "relation_to_q0": "shows grief escaping a controlled face",
+                            "proposed_role": "COMPLEMENTARY", "model_confidence": 0.8}])
+    diag = plan_corpus_explore_expansion(plan, acts, generate=gen)
+    assert diag["eligible"] is True and diag["added"] == 1 and diag["json_status"] == "ok"
+    added = [q for q in plan.queries if getattr(q, "origin", "") == CORPUS_EXPLORE_ORIGIN]
+    assert len(added) == 1 and plan.queries[0].type == "PRIMARY" and plan.queries[0].query  # q0 untouched, first
