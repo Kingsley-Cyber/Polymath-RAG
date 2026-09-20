@@ -1944,7 +1944,8 @@ def _add_bridge_expansion(plan, scout_result) -> None:
         pass
 
 
-def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, enabled: bool) -> None:
+def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, enabled: bool,
+                                  upstream_error: str | None = None) -> None:
     """CORPUS-EXPLORER-V1 CE4 (live). TWO-LAYER GATE: the server capability `POLYMATH_CORPUS_EXPLORER`
     (default off) AND the per-request `enabled` flag (the "Corpus Explore" toggle) must BOTH be true; a
     fallback plan is skipped. Builds a NON-GENERATIVE, concept-keyed activation set from the corpus's own
@@ -1952,12 +1953,30 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
     corroboration), then REUSES the WLK2C bridge compiler to emit CORPUS_EXPLORE-origin subqueries. Runs
     LAST in `_finish` (after annotate, which would otherwise strip the activation `inspired_by_profile`
     links). q0 authority (no PRIMARY ⇒ nothing). FAIL-OPEN throughout — activation/generation never blocks
-    the answer. One bounded Gemma call (the reused bridge model), ≤N bridges."""
-    if not enabled or os.environ.get("POLYMATH_CORPUS_EXPLORER", "0") != "1":
-        return
-    if getattr(plan, "fallback", False):
-        return
-    if not any(q.type == "PRIMARY" for q in plan.queries):
+    the answer. One bounded Gemma call (the reused bridge model), ≤N bridges.
+
+    CORPUS-EXPLORE-FIRING-V1: every gate below fills a `FiringState`; the resulting receipt
+    (`plan.compiler['corpus_explore_firing']`, exactly ONE cause code per non-firing request) is written on
+    EVERY path, so no fallback is silent. Observation only — no gate, threshold or ranking changed."""
+    from polymath_shared.corpus_explore_firing import FiringState, firing_receipt
+    st = FiringState(capability_on=os.environ.get("POLYMATH_CORPUS_EXPLORER", "0") == "1",
+                     requested=bool(enabled),
+                     plan_fallback=bool(getattr(plan, "fallback", False)),
+                     has_primary=any(q.type == "PRIMARY" for q in (plan.queries or [])),
+                     upstream_error=upstream_error, intent=(getattr(plan, "intent", "") or None))
+    try:
+        st.fallback_reason = str((plan.compiler or {}).get("reason") or "")[:120] or None
+    except Exception:  # noqa: BLE001
+        pass
+
+    def _stamp() -> None:
+        try:
+            plan.compiler["corpus_explore_firing"] = firing_receipt(st)
+        except Exception:  # noqa: BLE001
+            pass
+
+    if not st.requested or not st.capability_on or st.plan_fallback or not st.has_primary or upstream_error:
+        _stamp()
         return
     import time as _t
     diag = {"attempted": False, "activations": 0, "added": 0, "fallback_reason": None, "latency_ms": 0.0}
@@ -1975,13 +1994,17 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
         corpora = [c for c in (corpus_ids or []) if c]
         if not corpora:
             diag["fallback_reason"] = "no_corpus"
+            st.no_corpus = True
         else:
             contract_id = active_contract().contract_id
+            st.stage = "embed"
             qv = list(_embed_queries([message])[0])
             max_acts = int(os.environ.get("POLYMATH_CORPUS_EXPLORER_MAX_ACTIVATIONS", "8"))
             max_add = int(os.environ.get("POLYMATH_CORPUS_EXPLORER_MAX_BRIDGES", "4"))
             min_grounding = int(os.environ.get("POLYMATH_CORPUS_EXPLORER_MIN_GROUNDING", "1"))
+            st.stage = "search"
             client = _QC(url=_gs().stores.qdrant_url, timeout=10)
+            adiag: dict = {}
             try:
                 def _fetch(cid):
                     return _pap.search_atoms(client, _pap.collection_name(contract_id), qv,
@@ -1989,9 +2012,23 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
                 activations = activate_corpus(
                     corpus_ids=corpora, fetch_atoms=_fetch,
                     scout_nominations=getattr(scout_result, "nominations", None),
-                    max_activations=max_acts, min_grounding=min_grounding)
+                    max_activations=max_acts, min_grounding=min_grounding, diag=adiag)
+                st.n_hits = adiag.get("n_hits")
+                st.fetch_errors = len(adiag.get("fetch_errors") or [])
+                st.n_candidates = len(activations)
+                if not st.n_hits and not st.fetch_errors:
+                    # zero hits: is there anything to search at all? (NO_ATOM_COVERAGE vs ATOMS_EMPTY)
+                    try:
+                        from qdrant_client.http import models as _qm
+                        st.atom_universe = int(client.count(
+                            _pap.collection_name(contract_id), exact=False,
+                            count_filter=_qm.Filter(must=[_qm.FieldCondition(
+                                key="atom_kind", match=_qm.MatchAny(any=list(CONCEPT_ATOM_KINDS)))])).count)
+                    except Exception:  # noqa: BLE001
+                        st.atom_universe = None
             finally:
                 client.close()
+            st.stage = "expand"
             diag["activations"] = len(activations)
             plan.compiler["corpus_activation"] = activation_receipt(activations)
             if not activations:
@@ -2011,18 +2048,53 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
                 res = plan_corpus_explore_expansion(plan, activations, generate=_explore_generate,
                                                     max_add=max_add)
                 diag["added"] = res.get("added") or 0
+                st.eligible = bool(res.get("eligible", False))
+                st.eligible_reason = res.get("reason")
+                st.intent = res.get("intent") or st.intent
+                st.generate_error = res.get("generate_error")
+                st.json_status = res.get("json_status")
+                st.generated = res.get("generated")
+                st.admitted = res.get("admitted")
+                st.added = diag["added"]
                 if not res.get("eligible", False):
                     diag["fallback_reason"] = res.get("reason")
                 elif (res.get("added") or 0) == 0:
                     diag["fallback_reason"] = "no_valid_bridges"
     except Exception as exc:  # noqa: BLE001 — FAIL-OPEN: the optional explorer never blocks the answer
         diag["fallback_reason"] = f"error:{type(exc).__name__}"
+        if st.stage in ("embed", "search"):
+            st.atoms_error = type(exc).__name__
+        else:
+            st.explorer_error = type(exc).__name__
     diag["latency_ms"] = round((_t.perf_counter() - t0) * 1000, 1)
     try:
         plan.compiler["corpus_explore_expansion"] = {
             **(plan.compiler.get("corpus_explore_expansion") or {}), **diag}
     except Exception:  # noqa: BLE001
         pass
+    _stamp()
+
+
+def _turn_firing_receipt(plan, *, requested: bool, compiler_flag: str, retrieval_skipped: bool) -> dict:
+    """CORPUS-EXPLORE-FIRING-V1: the TURN-level firing receipt. The plan-level receipt says whether the
+    explorer added subqueries; the turn can still not fire (no plan at all, a shadow compiler whose plan
+    never reaches retrieval, or a turn that skipped retrieval). Re-stamps the plan receipt so
+    `chat_plan.compiler.corpus_explore_firing` is the turn's one truth. Never raises."""
+    from polymath_shared.corpus_explore_firing import turn_receipt
+    rec = None
+    try:
+        rec = (getattr(plan, "compiler", None) or {}).get("corpus_explore_firing") if plan is not None else None
+    except Exception:  # noqa: BLE001
+        rec = None
+    out = turn_receipt(rec, capability_on=os.environ.get("POLYMATH_CORPUS_EXPLORER", "0") == "1",
+                       requested=requested, compiler_applied=(compiler_flag == "on"),
+                       retrieval_skipped=retrieval_skipped, compiler_flag=compiler_flag)
+    try:
+        if plan is not None and isinstance(getattr(plan, "compiler", None), dict):
+            plan.compiler["corpus_explore_firing"] = out
+    except Exception:  # noqa: BLE001
+        pass
+    return out
 
 
 def _bridge_role(q) -> str:
@@ -2130,15 +2202,22 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         nominations (profile-driven discovery), then (2) annotate every subquery with
         deterministic provenance (q0 authority, scout links validated). Fail-open — never a turn
         breaker; q0 and its aspects are untouched."""
+        _upstream_err = None
         try:
             _add_profile_expansion(plan, scout_result)
             _add_bridge_expansion(plan, scout_result)                   # WLK2C C3: bounded concept-bridge compiler (flag-gated, fail-open)
             from polymath_shared.subquery_provenance import annotate_subquery_provenance
             annotate_subquery_provenance(plan, scout_result)
             _resolve_plan_constraints(plan, scout_result, corpus_ids)   # CA2: identity resolution, no ranking effect
+        except Exception as exc:  # noqa: BLE001
+            _upstream_err = type(exc).__name__
+        try:
             # CORPUS-EXPLORER-V1 CE4: two-layer-gated (capability x per-request) concept-activation-derived
             # exploration. LAST — after annotate (which would strip the activation inspired_by links).
-            _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, enabled=corpus_explorer)
+            # CORPUS-EXPLORE-FIRING-V1: an upstream finish failure still skips the explorer (unchanged
+            # behavior) but is now COUNTED in the firing receipt instead of vanishing.
+            _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, enabled=corpus_explorer,
+                                          upstream_error=_upstream_err)
         except Exception:  # noqa: BLE001
             pass
         return plan
@@ -3149,6 +3228,23 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             _flag = _compiler_flag(getattr(req, "compiler", None))
             _retrieval_text = query
             _skip_retrieval = False
+            _firing: dict = {}
+
+            def _stamp_firing() -> dict:
+                # CORPUS-EXPLORE-FIRING-V1: the turn's ONE firing receipt (exactly one cause per miss),
+                # recorded once to the JSONL rate ledger. Observation only; never breaks a turn.
+                try:
+                    from polymath_shared.corpus_explore_firing import record as _ce_record
+                    rec = _turn_firing_receipt(_plan, requested=bool(getattr(req, "corpus_explorer", False)),
+                                               compiler_flag=_flag, retrieval_skipped=_skip_retrieval)
+                    if not _firing:
+                        _ce_record(rec, q0=query)
+                    _firing.clear()
+                    _firing.update(rec)
+                except Exception:  # noqa: BLE001
+                    pass
+                return _firing
+
             if _flag != "off":
                 from concurrent.futures import ThreadPoolExecutor
                 _session_key = (req.workspace or req.corpus_id or query[:64])
@@ -3170,6 +3266,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     _retrieval_text = query if _skip_retrieval else retrieval_text_for(_plan)
                     _plan_receipt["retrieval_query"] = None if _skip_retrieval else _retrieval_text
                     _plan_receipt["retrieval_skipped"] = _skip_retrieval
+                    _stamp_firing()
                     yield _phase("compile", "Query compiled" if not _plan.fallback else "Query compiler fell back",
                                  task_type=_plan.task_type, retrieval_required=_plan.retrieval_required,
                                  queries=len(_plan.queries), fallback=_plan.fallback,
@@ -3189,6 +3286,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     _plan_future = None
                     _plan_receipt = plan_receipt(_plan)
                     _mark("compile_joined")
+                    _stamp_firing()
+                elif not _firing:
+                    _stamp_firing()
 
             if ui_mode == "ASK":
                 yield _phase("ask", "Routing question over stored "
@@ -3638,6 +3738,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 from polymath_shared.evidence_packet import build_evidence_packet
                 if _plan_receipt:
                     retrieval["chat_plan"] = _plan_receipt
+                if getattr(req, "corpus_explorer", False):
+                    retrieval["corpus_explore_firing"] = dict(_firing or _stamp_firing())
                 _comp = (getattr(_plan, "compiler", None) or {}) if _plan is not None else {}
                 _ce = _comp.get("corpus_explore_expansion") or {}
                 _packet = build_evidence_packet(
@@ -3649,7 +3751,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     receipts={"activation": _comp.get("corpus_activation"),
                               "bridges": _comp.get("bridge_expansion"),
                               "corpus_explore": _ce,
-                              "fusion": (fast.get("trace") or {}).get("ranked_lanes")},
+                              "fusion": (fast.get("trace") or {}).get("ranked_lanes"),
+                              "firing": (_firing or _stamp_firing())},
                     corpus_explorer_requested=bool(getattr(req, "corpus_explorer", False)),
                     corpus_explorer_used=bool((_ce or {}).get("added")),
                 ).to_dict()
@@ -3734,6 +3837,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                                        for e in _legend]
                 retrieval["funnel"] = {"version": funnel["version"], "counts": funnel["counts"],
                                        "lane_counts": funnel["lane_counts"], "multi_lane": funnel["multi_lane"]}
+                if getattr(req, "corpus_explorer", False):
+                    retrieval["corpus_explore_firing"] = dict(_firing or _stamp_firing())
                 if _plan_receipt:
                     retrieval["chat_plan"] = _plan_receipt
                     if _flag == "shadow" and _plan is not None:
@@ -3797,6 +3902,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                                     "carried": bool(e.get("carried")), "carry_score": e.get("carry_score")} for e in _legend]
             retrieval["funnel"] = {"version": funnel["version"], "counts": funnel["counts"],
                                    "lane_counts": funnel["lane_counts"], "multi_lane": funnel["multi_lane"]}
+            if getattr(req, "corpus_explorer", False):
+                retrieval["corpus_explore_firing"] = dict(_firing or _stamp_firing())
             if _plan_receipt:
                 retrieval["chat_plan"] = _plan_receipt
                 if _flag == "shadow" and _plan is not None:

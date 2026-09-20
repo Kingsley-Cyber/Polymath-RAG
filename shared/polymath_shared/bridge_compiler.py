@@ -118,8 +118,11 @@ def build_prompt(inp: BridgeCompilerInput, *, max_bridges: int = MAX_BRIDGES) ->
     )
 
 
-def _loads(raw) -> list:
-    """Parse the model output to a list of dicts; tolerant of ```json fences and stray prose. Fail-open."""
+def _loads_status(raw) -> tuple[list, str]:
+    """Parse the model output to a list of dicts; tolerant of ```json fences and stray prose. Fail-open.
+    Also returns WHY the list is what it is — `ok` (parsed JSON, possibly a valid `[]`), `empty_output`
+    (the model returned nothing), `invalid_json` (non-empty output, no parseable JSON) — so a caller can
+    tell "the model declined" from "the model's output was garbage" (CORPUS-EXPLORE-FIRING-V1)."""
     if isinstance(raw, (list, dict)):
         data = raw
     else:
@@ -128,20 +131,25 @@ def _loads(raw) -> list:
         if m:
             s = m.group(1).strip()
         if not s:
-            return []
+            return [], "empty_output"
         try:
             data = json.loads(s)
         except Exception:
             m2 = re.search(r"\[.*\]", s, re.S)          # last resort: the first JSON array in the text
             if not m2:
-                return []
+                return [], "invalid_json"
             try:
                 data = json.loads(m2.group(0))
             except Exception:
-                return []
+                return [], "invalid_json"
     if isinstance(data, dict):
         data = data.get("bridges") or data.get("results") or [data]
-    return data if isinstance(data, list) else []
+    return (data, "ok") if isinstance(data, list) else ([], "invalid_json")
+
+
+def _loads(raw) -> list:
+    """Parse the model output to a list of dicts (see `_loads_status`). Fail-open."""
+    return _loads_status(raw)[0]
 
 
 def parse_and_validate(raw, inp: BridgeCompilerInput, *, max_bridges: int = MAX_BRIDGES) -> tuple[list, dict]:
@@ -155,7 +163,8 @@ def parse_and_validate(raw, inp: BridgeCompilerInput, *, max_bridges: int = MAX_
             "dropped_structural": 0, "dropped_empty": 0, "dropped_dup": 0}
     out: list[CompiledBridge] = []
     seen: set[str] = set()
-    for i, obj in enumerate(_loads(raw)):
+    parsed, diag["json_status"] = _loads_status(raw)
+    for i, obj in enumerate(parsed):
         if not isinstance(obj, dict):
             continue
         diag["generated"] += 1
