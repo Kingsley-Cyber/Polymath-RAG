@@ -34,6 +34,10 @@ CONTRACTS = {
 ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/chat/evidence", "/ask", "/adapter/list", "/adapter/start",
              "/adapter/{run_id}/next", "/adapter/{run_id}/submit", "/adapter/{run_id}/status", "/adapter/{run_id}/result",
              "/adapter/{run_id}/cancel"]
+# The seven adapter_* tools are served by BOTH MCP surfaces with identical names and parameters: Server A
+# (orchestrator/orchestrator/mcp_server.py, streamable-http :8930, bearer key — Hermes) and Server B
+# (mcp_server/polymath_mcp.py, stdio, no credential — Claude Code / Codex). Parity is pinned by
+# tests/contracts/test_mcp_adapter_parity.py (GOVERNED-CONVERGENCE-V1 TG1). The rest of MCP_TOOLS is Server A's list.
 ADAPTER_MCP_TOOLS = ["adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status", "adapter_result", "adapter_cancel"]
 MCP_TOOLS = ["capabilities", "polymath_search", "polymath_explore", "polymath_answer",
              "compile_plan", "retrieve_evidence", "retrieve", "ask", "list_corpora", "corpus_status"] + ADAPTER_MCP_TOOLS

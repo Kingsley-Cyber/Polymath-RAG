@@ -663,6 +663,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-19-reasoning-boundary-v1-build.md", "md", None),
     ("docs/wiki/work-log/2026-09-19-corpus-explore-firing-v1.md", "md", None),
     ("docs/wiki/work-log/2026-09-20-governed-convergence-v1-admission.md", "md", None),
+    ("docs/wiki/work-log/2026-09-20-governed-convergence-tg0-tg2.md", "md", None),
+    ("tests/contracts/test_mcp_adapter_parity.py", "py", None),
     ("docs/wiki/work-log/2026-09-18-prelive-wiring-p10-resolution.md", "md", None),
     ("eval/librarian_qualification/harness.py", "py", None),
     ("eval/librarian_qualification/build_gold.py", "py", None),
