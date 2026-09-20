@@ -5,12 +5,14 @@ A thin client of the orchestrator HTTP API (127.0.0.1:7200 by
 default): agents get the same fail-closed, evidence-first product the
 web UI uses — nothing is re-implemented here.
 
-Tools:
+Tools (REASONING-BOUNDARY-V1 canonical surface):
   polymath_list_corpora     corpus inventory (docs, readiness)
-  polymath_query            grounded question answering
-                            (VECTOR|HYBRID|GRAPH|ASK) with citations,
-                            abstention, and the retrieved-chunk list
-  polymath_retrieve         raw retrieval trace (no synthesis)
+  polymath_search           q0-only EVIDENCE (contract rows, no plan/answer)
+  polymath_explore          full planning + Corpus Explore -> EvidencePacket
+                            (roles/CA4/provenance, NO Polymath answer)
+  polymath_answer           Polymath's own grounded, cited answer (humans/UI)
+  polymath_query            DEPRECATED -> polymath_answer (kept for callers)
+  polymath_retrieve         DEPRECATED -> polymath_search (kept for callers)
   polymath_list_documents   file-manager listing for one corpus
   polymath_upload_file      ingest a local file into a corpus
   polymath_upload_text      ingest raw text/markdown into a corpus
@@ -44,11 +46,15 @@ server = MCPServer(
                 "source spans, typed abstention, corpus management.",
     version="1.0.0",
     instructions=(
-        "Query the user's Polymath knowledge corpora. Always pass an "
-        "explicit corpus_id (list them first) — missing scope fails "
-        "closed by design. Answers labeled verdict=insufficient_evidence "
-        "mean the corpus does not support the question; report that "
-        "honestly instead of substituting your own knowledge."
+        "Query the user's Polymath knowledge corpora. Always pass an explicit corpus_id (list them "
+        "first) — missing scope fails closed by design. Submit the user's ORIGINAL information need; do "
+        "NOT pre-decompose it into speculative retrieval subqueries — Polymath owns corpus retrieval "
+        "planning and grounded query expansion. Choose a tool by what you need: polymath_search = quick "
+        "q0-only corpus evidence; polymath_explore = full planning + Corpus Explore, returns validated "
+        "EVIDENCE (no answer) that you reason over yourself; polymath_answer = have Polymath write the "
+        "grounded answer (humans/UI). Prefer search/explore for agent work and synthesize yourself. "
+        "verdict=insufficient_evidence / an empty evidence set means the corpus does not support the "
+        "question; report that honestly instead of substituting your own knowledge."
     ),
 )
 
@@ -77,21 +83,59 @@ def polymath_list_corpora() -> dict:
 
 
 @server.tool()
+def polymath_search(query: str, corpus_id: str, max_evidence: int = 10) -> dict:
+    """Lightweight EVIDENCE retrieval for one corpus — q0-only, no planning, no Corpus Explore, no answer.
+    Returns contract evidence rows (human source, timecodes, attested facts). Use when you just need corpus
+    facts quickly. Pass your ORIGINAL question; do NOT pre-decompose it — Polymath owns retrieval planning.
+    Reason over the returned evidence yourself."""
+    return _post("/retrieve", {"query": query, "corpus_id": corpus_id,
+                               "evidence": True, "limit": max_evidence})
+
+
+@server.tool()
+def polymath_explore(query: str, corpus_id: str, corpus_explorer: bool = True,
+                     mode: str = "HYBRID") -> dict:
+    """Full Polymath retrieval PLANNING + grounded query expansion (+ optional Corpus Explore) returning a
+    versioned EvidencePacket: evidence with roles (DIRECT/COMPLEMENTARY/DIVERGENT), CA4 grades
+    (DIRECT/PARTIAL/RELATED), provenance and receipts — and NO Polymath answer (synthesis_performed=false).
+    Use this to discover hidden/adjacent corpus knowledge, then do your OWN final reasoning over the
+    evidence. Pass your ORIGINAL information need; do NOT pre-decompose it — Polymath owns retrieval
+    planning; you own the answer. corpus_explorer=true runs the concept-activation explorer."""
+    m = "FAST" if mode.upper() == "VECTOR" else mode.upper()
+    return _post("/chat/evidence", {"message": query, "corpus_id": corpus_id, "mode": m,
+                                    "corpus_explorer": bool(corpus_explorer)})
+
+
+@server.tool()
+def polymath_answer(question: str, corpus_id: str, mode: str = "HYBRID",
+                    latent: bool | None = None) -> dict:
+    """Have POLYMATH write a grounded, cited answer (its OWN synthesis) — for humans/UI, or when you
+    explicitly want Polymath's answer rather than raw evidence. For agent-to-agent work prefer
+    polymath_search / polymath_explore and synthesize yourself (avoids a nested synthesis pass).
+    verdict=insufficient_evidence means the corpus cannot support the question — relay it, do not fill the
+    gap. mode: VECTOR (dense) | HYBRID (default) | GRAPH (+ fact graph) | ASK (stored knowledge objects)."""
+    mode = mode.upper()
+    if mode == "ASK":
+        return _post("/ask", {"question": question, "corpus_id": corpus_id})
+    m = "FAST" if mode == "VECTOR" else mode
+    body = {"message": question, "corpus_id": corpus_id, "mode": m}
+    if latent is not None:
+        body["latent"] = latent
+    return _post("/chat", body)
+
+
+@server.tool()
 def polymath_query(
     question: str,
     corpus_id: str,
     mode: str = "HYBRID",
     latent: bool | None = None,
 ) -> dict:
-    """Ask a grounded question against one corpus.
-
-    mode: VECTOR (dense hierarchical), HYBRID (dense+lexical, default),
-    GRAPH (hybrid + canonical fact graph), ASK (stored knowledge
-    objects: facts/procedures/concepts).
-
-    The answer carries citations with exact chunk@start:end locators.
-    verdict=insufficient_evidence means the corpus cannot support the
-    question — relay that, do not fill the gap yourself."""
+    """DEPRECATED — use polymath_answer (identical behaviour: Polymath's own grounded answer) or, for
+    agent work, polymath_search / polymath_explore (evidence you reason over yourself). Kept for existing
+    callers. Ask a grounded question against one corpus. mode: VECTOR|HYBRID|GRAPH|ASK. The answer carries
+    citations with exact chunk@start:end locators. verdict=insufficient_evidence means the corpus cannot
+    support the question — relay that, do not fill the gap yourself."""
     mode = mode.upper()
     if mode == "ASK":
         return _post("/ask", {"question": question, "corpus_id": corpus_id})
@@ -109,9 +153,9 @@ def polymath_retrieve(
     mode: str = "HYBRID",
     latent: bool | None = None,
 ) -> dict:
-    """Raw retrieval trace (documents, sections, evidence chunks, graph
-    relationships) without answer synthesis. Useful when the agent
-    wants source material to work with directly."""
+    """DEPRECATED — use polymath_search (contract evidence rows) or polymath_explore (full planning +
+    EvidencePacket). Kept for existing callers. Raw retrieval trace (documents, sections, evidence chunks,
+    graph relationships) without answer synthesis."""
     m = "FAST" if mode.upper() == "VECTOR" else mode.upper()
     body = {"query": query, "corpus_id": corpus_id, "mode": m}
     if latent is not None:

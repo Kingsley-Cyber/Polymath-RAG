@@ -65,6 +65,11 @@ class ChatRequest(BaseModel):
     compiler: str | None = None           # off | shadow | on; None -> POLYMATH_CHAT_COMPILER
     reasoning: str | None = None
     reasoning_blend: list[str] = []
+    # REASONING-BOUNDARY-V1 / CORPUS-EXPLORER-V1: mirrored so a /chat or MCP caller drives the same turn.
+    # corpus_explorer = the Corpus Explore toggle; evidence_only = return the EvidencePacket and skip
+    # synthesis. Both default off (historical /chat behaviour unchanged); miss the mapping below and they drop.
+    corpus_explorer: bool = False
+    evidence_only: bool = False
 
 
 def stream_request(req: ChatRequest) -> StreamChatRequest:
@@ -100,6 +105,8 @@ def stream_request(req: ChatRequest) -> StreamChatRequest:
         history=list(req.history or []), carry_context=list(req.carry_context or []),
         compiler=req.compiler, reasoning=req.reasoning,
         reasoning_blend=list(req.reasoning_blend or []),
+        corpus_explorer=bool(getattr(req, "corpus_explorer", False)),
+        evidence_only=bool(getattr(req, "evidence_only", False)),
     )
 
 
@@ -185,6 +192,43 @@ async def chat(req: ChatRequest, request: Request) -> dict:
     with Timer() as t:
         try:
             return await run_in_threadpool(_chat_impl, req, receipt=_sink)
+        except Exception as exc:  # noqa: BLE001 — record, then re-raise unchanged
+            if not receipted:
+                detail = getattr(exc, "detail", None)
+                scope_corpora = [req.corpus_id] if req.corpus_id else list(req.corpus_ids or [])
+                scope_kind = ("corpus" if req.corpus_id else "corpora" if req.corpus_ids
+                              else "workspace" if req.workspace else "all_authorized" if req.all_authorized else None)
+                record_query_receipt(tx, kind="chat", question=req.message, req=req,
+                                     scope_corpora=scope_corpora, scope_kind=scope_kind,
+                                     wall_ms=(time.perf_counter() - t.t0) * 1000.0,
+                                     error=f"{type(exc).__name__}: {detail if detail is not None else exc}",
+                                     client=client)
+            raise
+
+
+def _evidence_impl(req: ChatRequest, *, receipt=None) -> dict:
+    """/chat/evidence body: the SAME runtime turn, forced evidence-only — the pipeline short-circuits
+    before synthesis and returns the EvidencePacket (`run_chat` surfaces the answer frame's result)."""
+    sreq = stream_request(req)
+    sreq.evidence_only = True
+    return run_chat(sreq, route="chat/evidence", receipt=receipt)
+
+
+@router.post("/chat/evidence")
+async def chat_evidence(req: ChatRequest, request: Request) -> dict:
+    """REASONING-BOUNDARY-V1 — the evidence boundary. Runs the FULL retrieval/planning pipeline (compiler
+    -> Corpus Explore -> retrieval -> C4/C5 -> CA4) and returns a versioned EvidencePacket with
+    `synthesis_performed=false`: NO synthesis LLM, NO reviewer. For external agents (Claude Code/Hermes)
+    that do their OWN final reasoning — Polymath owns retrieval planning, the caller owns the answer."""
+    client = request.headers.get("user-agent", "")
+    receipted: list[str] = []
+
+    def _sink(payload: dict) -> None:
+        receipted.append(record_query_receipt(tx, kind="chat", client=client, **payload) or "")
+
+    with Timer() as t:
+        try:
+            return await run_in_threadpool(_evidence_impl, req, receipt=_sink)
         except Exception as exc:  # noqa: BLE001 — record, then re-raise unchanged
             if not receipted:
                 detail = getattr(exc, "detail", None)

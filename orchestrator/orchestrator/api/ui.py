@@ -1309,6 +1309,10 @@ class StreamChatRequest(BaseModel):
     # this is true AND the server capability POLYMATH_CORPUS_EXPLORER is on (default off). Additive; when
     # off the turn is pre-feature-equivalent V2.
     corpus_explorer: bool = False
+    # REASONING-BOUNDARY-V1: evidence-only mode. When true, run the FULL pipeline (compiler -> Corpus
+    # Explore -> retrieval -> C4/C5 -> CA4) and return a versioned EvidencePacket, skipping synthesis +
+    # reviewer (no nested Polymath answer). Additive; false = the normal chat/synthesis path, unchanged.
+    evidence_only: bool = False
 
 
 def _sse(event: str, data: dict) -> str:
@@ -2160,6 +2164,11 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
                                          api_key=ep.api_key, cloud_opts=ep.cloud_opts,
                                          timeout_s=_COMPILER_HTTP_TIMEOUT_S, max_attempts=1)
             client.endpoint_name = ep.name
+            # REASONING-BOUNDARY-V1: mark this as the chat-COMPILER (STRUCTURED_COMPILER) so _chat overlays
+            # the reasoning-budget policy at runtime (no-op unless POLYMATH_REASONING_POLICY=1). Only the
+            # compiler's dedicated client carries this attribute; document-extraction clients never do, so
+            # extraction is byte-identical and its contract hash is untouched.
+            client.reasoning_role = "STRUCTURED_COMPILER"
 
             def _complete(system_prompt: str, user_prompt: str, max_tokens: int, _c=client):
                 return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
@@ -2733,6 +2742,17 @@ def _litellm_generate(model: str, query: str, bundle: dict,
     bound = _chat_max_tokens()
     kwargs = dict(model=model, messages=messages, stream=True, timeout=300,
                   **_litellm_credentials(model))
+    # REASONING-BOUNDARY-V1: overlay the CHAT_SYNTHESIS reasoning policy (LOW). No-op unless
+    # POLYMATH_REASONING_POLICY=1; output budget stays with the max_tokens bound below (separate).
+    try:
+        from polymath_shared.reasoning_policy import CHAT_SYNTHESIS as _RB_CS, apply_litellm as _RB_apply
+        _rb_applied = _RB_apply(kwargs, _RB_CS, model)
+        if _rb_applied:
+            import json as _RB_js
+            import logging as _RB_lg
+            _RB_lg.getLogger("polymath.reasoning").info("reasoning_policy %s", _RB_js.dumps(_rb_applied))
+    except Exception:  # noqa: BLE001 — the reasoning overlay is additive; never break synthesis
+        pass
     finish = None
     bound_sent = bool(bound)
     # PROVIDER-ATTEMPT-LEDGER-V4: answer synthesis is an EXTERNAL MODEL ATTEMPT on a paid
@@ -3609,6 +3629,44 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 # receipt all say WHY a turn's evidence differs (never silent).
                 "degraded": _merged_degraded(fast, stale),
             }
+
+            if getattr(req, "evidence_only", False):
+                # REASONING-BOUNDARY-V1: the evidence boundary. The full pipeline (compiler -> Corpus
+                # Explore -> retrieval -> C4/C5 -> CA4) has run; emit the validated EvidencePacket and
+                # STOP. NO synthesis LLM, NO reviewer — this is evidence, not an answer. External agents
+                # (Claude Code/Hermes) do their OWN final reasoning over it (no nested Polymath synthesis).
+                from polymath_shared.evidence_packet import build_evidence_packet
+                if _plan_receipt:
+                    retrieval["chat_plan"] = _plan_receipt
+                _comp = (getattr(_plan, "compiler", None) or {}) if _plan is not None else {}
+                _ce = _comp.get("corpus_explore_expansion") or {}
+                _packet = build_evidence_packet(
+                    q0=req.message,
+                    retrieval_mode=retrieval.get("mode") or ui_mode,
+                    plan_queries=(list(_plan.queries) if _plan is not None else []),
+                    evidence_rows=(fast.get("evidence") or []),
+                    ca4_grades=_grades_by_chunk,
+                    receipts={"activation": _comp.get("corpus_activation"),
+                              "bridges": _comp.get("bridge_expansion"),
+                              "corpus_explore": _ce,
+                              "fusion": (fast.get("trace") or {}).get("ranked_lanes")},
+                    corpus_explorer_requested=bool(getattr(req, "corpus_explorer", False)),
+                    corpus_explorer_used=bool((_ce or {}).get("added")),
+                ).to_dict()
+                _phase_ms["total"] = round((time.perf_counter() - t0) * 1000, 1)
+                yield _sse("answer", {
+                    "kind": "evidence",
+                    "result": {"evidence_packet": _packet, "synthesis_performed": False},
+                    "retrieval": retrieval,
+                    "latency_ms": _phase_ms["total"],
+                })
+                yield _sse("done", {})
+                _receipt(wall_ms=_phase_ms["total"], ui_mode=retrieval.get("mode") or ui_mode,
+                         answer=None,
+                         meta={"verdict": "evidence_only", "evidence_only": True,
+                               "n_evidence": len(_packet.get("evidence") or []),
+                               "phase_ms": dict(_phase_ms), "chat_plan": _plan_receipt or None})
+                return
 
             if llm_model is not None:
                 yield _phase("generate",

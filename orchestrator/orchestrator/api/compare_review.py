@@ -209,9 +209,21 @@ def _run_reviewer(model: Optional[str], user: str) -> str:
         # It must travel as EXTRA BODY, not a top-level param: litellm validates
         # top-level kwargs against the provider route and rejects `thinking` for this
         # one ("anthropic does not support parameters: ['thinking']"), while the
-        # upstream API reads it from the request body.
+        # upstream API reads it from the request body. CORRECTNESS baseline — ALWAYS applied
+        # (ungated): the reviewer returns EMPTY otherwise, independent of the reasoning policy.
         kwargs["extra_body"] = {**kwargs.get("extra_body", {}),
                                 "thinking": {"type": "disabled"}}
+    # REASONING-BOUNDARY-V1: overlay the REVIEWER reasoning policy (LOW) when enabled (no-op by default;
+    # idempotent for deepseek, adds effort=low / thinking_level=low for other providers).
+    try:
+        from polymath_shared.reasoning_policy import REVIEWER as _RB_R, apply_litellm as _RB_apply
+        _rb = _RB_apply(kwargs, _RB_R, name)
+        if _rb:
+            import json as _RB_js
+            import logging as _RB_lg
+            _RB_lg.getLogger("polymath.reasoning").info("reasoning_policy %s", _RB_js.dumps(_rb))
+    except Exception:  # noqa: BLE001 — additive; never break the reviewer
+        pass
     resp = litellm.completion(**kwargs)
     out = resp.choices[0].message.content or ""
     if not out.strip():

@@ -21,6 +21,7 @@ CONTRACTS = {
     "retrieve-evidence-rows": "v1",      # POST /retrieve evidence=true / mode=EXPLORE
     "corpus-plan": "v1",                 # POST /retrieve/plan
     "chat-evidence": "v1",               # POST /chat evidence=true → answer + citations + evidence_rows
+    "evidence-packet": "v1",             # POST /chat/evidence → EvidencePacket (roles/CA4/provenance, NO synthesis)
     "explore": True,
     # DOCUMENT-SCOPED-RETRIEVE-V1: POST /retrieve (default lane, EXPLORE) and
     # POST /retrieve/plan accept `document_ids` — rows come only from those
@@ -30,11 +31,12 @@ CONTRACTS = {
     "field-evidence-corpus": None,       # corpus_id of the ingested field-evidence ledger — none yet
     "adapter": "v1",                     # COGNITIVE-ADAPTER-V1 (ADR-0018): /adapter/* + the adapter_* MCP tools
 }
-ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/ask", "/adapter/list", "/adapter/start",
+ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/chat/evidence", "/ask", "/adapter/list", "/adapter/start",
              "/adapter/{run_id}/next", "/adapter/{run_id}/submit", "/adapter/{run_id}/status", "/adapter/{run_id}/result",
              "/adapter/{run_id}/cancel"]
 ADAPTER_MCP_TOOLS = ["adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status", "adapter_result", "adapter_cancel"]
-MCP_TOOLS = ["capabilities", "compile_plan", "retrieve_evidence", "retrieve", "ask", "list_corpora", "corpus_status"] + ADAPTER_MCP_TOOLS
+MCP_TOOLS = ["capabilities", "polymath_search", "polymath_explore", "polymath_answer",
+             "compile_plan", "retrieve_evidence", "retrieve", "ask", "list_corpora", "corpus_status"] + ADAPTER_MCP_TOOLS
 
 
 @lru_cache(maxsize=1)
