@@ -70,9 +70,10 @@ None run in Phase 0 (read-only). Last known: AutoResearch 609 checks + doctor gr
 
 ## Next Exact Action
 1. Owner supplies the two controlling files → install them verbatim, declare them in the scaffold `TREE`, commit.
-2. Then start the plan's Phase 1. If the plan leaves it open, the evidence says to close `CAPABILITY_MAP.md` "Unknowns" 1–3
-   first: Trail core dependency closure (imports of the seven operations + the store port), and the executor-binding convention
-   (`service.advance(…, executors: dict[step_type → callable])`), using `graft` / AST before reading source.
+2. Then start the plan's Phase 1. Unknowns 1 and 3 of `CAPABILITY_MAP.md` are partly closed (Trail closure = 16 modules / 6,944 lines,
+   third-party `pydantic`, `typing_extensions`, `packageurl`; 57 % of it is unrelated contexts' contract modules pulled by the wire models ·
+   executors are one global `dict[step_type → Executor]` in the worker, no per-adapter binding). Remaining reads: `workflow/public/operations.py`
+   (can the research wire models stand alone?), the store port, and the Hermes deployed-copy reason.
 
 ## DO NOT REDO
 - The AutoResearch-vs-governed comparison, the dependency facts per harvest target, the registry-drift check, the historical-run
