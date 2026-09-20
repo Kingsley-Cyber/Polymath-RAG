@@ -59,7 +59,10 @@ Recover: `git fetch origin --tags && git checkout -b production v4-reasoning-bou
 HEAD may sit docs-only commits AHEAD of the newest tag (ledger notes like this one) — the tag is the code
 checkpoint. `.env` is gitignored and NOT in any tag: live flags (`POLYMATH_REASONING_POLICY=1`,
 `POLYMATH_CORPUS_EXPLORER=1`, fusion/bridge =1) must be re-set by hand after a recovery (`.env.example`
-defaults are 0). When later work ships, cut + push a new tag and move the CURRENT marker here.
+defaults are 0). When later work ships, cut a new annotated tag LOCALLY and record it here as UNPUSHED;
+push a tag ONLY on the owner's explicit word for that push — the 2026-09-19 push was a ONE-TIME
+authorization, not a standing one (no ref of any kind is pre-authorized). Move the CURRENT marker only
+once the tag is actually on origin.
 
 **Next Action** — REASONING-BOUNDARY-V1 CLOSED OUT (LIVE, both slices proven). Optional follow-ups (not
 started, not blockers): unify the two MCP servers (owner deferred); the suppressed INFO `polymath.reasoning`
