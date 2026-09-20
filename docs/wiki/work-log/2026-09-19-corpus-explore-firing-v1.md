@@ -120,6 +120,38 @@ authoritative; fail-open. Tag LOCALLY at close; **no push of any ref**.
   off; a fire on a fallback plan is marked `stages.plan_fallback`; `no_primary` carries the q0-authority
   reason; the pure expansion expands a `fallback_plan` exactly like a compiled plan (q0 first + untouched).
   18 tests in `test_corpus_explore_firing.py`; 202-test impacted sweep + the 7 contract-impact suites green.
+- **Phase B DEPLOYED + LIVE GATE PROOF — PASS 5/5** (merge `c4391fc` → production; live `.env`
+  `POLYMATH_CORPUS_EXPLORER_FALLBACK_OPEN=1`; ONE port-gated bounce, bundle `327bcbd2385f`, `/ready`, all six
+  flags in the orchestrator process env). `eval/corpus_explorer/ce8_fallback_gate_live.py` on the DEPLOYED
+  module (`ui.__file__` = MAIN), real embedder + Qdrant + bridge model
+  (`CE8-FALLBACK-GATE-LIVE-2026-09-19.json`): (1) `transport:ReadTimeout` fallback + switch ON → **FIRES**
+  (12 hits → 8 candidates → generated 4 = admitted 4 = added 4, q0 first + untouched, every subquery carries
+  `inspired_by_profile`, receipt marks `plan_fallback`); (2) `invalid_plan:no_queries_for_retrieval` →
+  `PLAN_FALLBACK`, plan untouched; (3) switch OFF → `PLAN_FALLBACK` and NO activation work (the pre-fix
+  gate); (4) request flag off → `REQUEST_OFF`, plan queries untouched, no CE receipts (flag-off invariance);
+  (5) no PRIMARY → `OTHER no_primary:retrieval_not_required:TRANSFORM_USER_CONTENT`, nothing created.
+  (A compiler transport fallback cannot be produced on demand over HTTP, hence function-level.)
+- **Phase C RE-MEASURE — 15 live executions (C1 8 + C2 7); cumulative 24 = the owner ask line.**
+  n rationale (stated before running): no n <= 24 can statistically establish >=95% (0 misses in 11 only
+  bounds it near 76%), so the matrix tests for NEW miss causes on UNSEEN queries + negatives + stability +
+  provenance + latency; the rate claim rests on the cause table x the 1,379-turn base rates.
+  | metric | result |
+  |---|---|
+  | on-target fired (strict: >=1 CORPUS_EXPLORE subquery, retrieval ran) | **10/11 = 0.909** |
+  | on-target, turns that ATTEMPTED exploration | **10/10** (all batches: 14/14; + gate proof 1/1) |
+  | unseen fresh on-target queries | **6/6 queries, 7/7 runs** — no new miss cause |
+  | the one miss | `physical_weight_f2` → `no_primary:retrieval_not_required:TRANSFORM_USER_CONTENT` (by design; 4/4 lifetime) |
+  | negatives fired | **0/4** (2 seen + 2 fresh); 0 activated → leakage none (baseline max 0.143) |
+  | same-query content stability when fired | **1.0** over 12 pairs (suppressed_grief x5, nonverbal x2, power_shift x2) |
+  | provenance complete (all fired) | true |
+  | turns without a receipt | **0/23** |
+  | explorer added latency, fired turns (embed+search+bridge call) | p50 **1.81 s** · p95 **2.69 s** · max 2.99 s |
+  | turn latency | fired p50 24.6 s / p95 32.2 s; no-retrieval turns p50 1.1 s |
+  The fix adds latency ONLY to a requested turn that hit a no-judgment fallback (~2.7% of turns), where
+  the explorer previously did nothing. No transport fallback occurred naturally in the 15 Phase C turns, so
+  the fix's effect is proven at function level on the deployed code, not yet observed over HTTP; the JSONL
+  ledger (`stages.plan_fallback` on a fired row) will show it in production.
+  MY PREDICTION WRONG: "a fresh negative may fire" — all four negatives were routed no-retrieval.
 
 ## Rejected claims
 - REJECTED (my own Phase A prediction): "on-target misses = `PLAN_FALLBACK` or `INTENT_INELIGIBLE`". Half

@@ -1,0 +1,98 @@
+{
+ "contract": "corpus-explore-ce8-fallback-gate-live-v1",
+ "q0": "make a character's suppressed grief visible while they try hard to hide it",
+ "ui_module": "/Users/king/Documents/polymath-rebuild/polymath-v4/orchestrator/orchestrator/api/ui.py",
+ "results": {
+  "1_transport_fallback_fires": {
+   "ok": true,
+   "info": {
+    "receipt": {
+     "contract": "corpus-explore-firing-v1",
+     "requested": true,
+     "fired": true,
+     "cause": null,
+     "detail": null,
+     "stages": {
+      "fetch_errors": 0,
+      "n_hits": 12,
+      "n_candidates": 8,
+      "intent": "APPLICATION",
+      "eligible": true,
+      "json_status": "ok",
+      "generated": 4,
+      "admitted": 4,
+      "added": 4,
+      "plan_fallback": "transport:ReadTimeout"
+     }
+    },
+    "ce_subqueries": [
+     "What are examples of subtle gestures that contradict a character's spoken words or outward composure?",
+     "How can specific body movements be used to communicate internal affective states that the character is attempting to suppress?",
+     "How does value opposition manifest in a character's behavior when their internal emotional needs conflict with their external goals?",
+     "According to the dimensional model of emotion, how do valence and arousal levels shift when an emotion is suppressed versus expressed?"
+    ]
+   }
+  },
+  "2_invalid_judgment_stays_closed": {
+   "ok": true,
+   "info": {
+    "contract": "corpus-explore-firing-v1",
+    "requested": true,
+    "fired": false,
+    "cause": "PLAN_FALLBACK",
+    "detail": "invalid_plan:no_queries_for_retrieval",
+    "stages": {
+     "fetch_errors": 0,
+     "intent": "APPLICATION",
+     "plan_fallback": "invalid_plan:no_queries_for_retrieval"
+    }
+   }
+  },
+  "3_switch_off_is_pre_fix_gate": {
+   "ok": true,
+   "info": {
+    "contract": "corpus-explore-firing-v1",
+    "requested": true,
+    "fired": false,
+    "cause": "PLAN_FALLBACK",
+    "detail": "transport:ReadTimeout",
+    "stages": {
+     "fetch_errors": 0,
+     "intent": "APPLICATION",
+     "plan_fallback": "transport:ReadTimeout"
+    }
+   }
+  },
+  "4_request_off_untouched": {
+   "ok": true,
+   "info": {
+    "contract": "corpus-explore-firing-v1",
+    "requested": false,
+    "fired": false,
+    "cause": "REQUEST_OFF",
+    "detail": null,
+    "stages": {
+     "fetch_errors": 0,
+     "intent": "APPLICATION",
+     "plan_fallback": "transport:ReadTimeout"
+    }
+   }
+  },
+  "5_no_primary_q0_authority": {
+   "ok": true,
+   "info": {
+    "contract": "corpus-explore-firing-v1",
+    "requested": true,
+    "fired": false,
+    "cause": "OTHER",
+    "detail": "no_primary:retrieval_not_required:TRANSFORM_USER_CONTENT",
+    "stages": {
+     "fetch_errors": 0,
+     "intent": "APPLICATION",
+     "plan_fallback": "transport:ReadTimeout"
+    }
+   }
+  }
+ },
+ "passed": true
+}

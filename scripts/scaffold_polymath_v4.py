@@ -679,6 +679,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/reasoning_boundary/SLICE2-WIRE-PARAMS-2026-09-19.json", "json", None),
     ("eval/corpus_explorer/CE7-ACTIVATION-RELIABILITY-2026-09-19.json", "json", None),
     ("eval/corpus_explorer/CE-SAFETY-SENTINEL-2026-09-19.json", "json", None),
+    ("eval/corpus_explorer/CE8-FALLBACK-GATE-LIVE-2026-09-19.json", "json", None),
     ("eval/corpus_explorer/CE8-FIRING-ATTRIBUTION-2026-09-19.json", "json", None),
     ("eval/corpus_explorer/CE8-SUBSTRATE-PROBE-2026-09-19.json", "json", None),
     ("eval/wildcard_latent_knowledge/CAUSAL-REPLAY-HYBRID-2026-09-19.json", "json", None),
