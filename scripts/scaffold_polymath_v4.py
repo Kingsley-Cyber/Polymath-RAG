@@ -685,6 +685,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/governed_convergence/GC1-FIRST-REAL-RUN-2026-09-20.json", "json", None),
     ("docs/wiki/work-log/2026-09-20-governed-convergence-tg5-r2a.md", "md", None),
     ("docs/wiki/work-log/2026-09-20-external-review-m1-verification.md", "md", None),
+    ("docs/wiki/reports/2026-09-20/ECOMMERCE-MIGRATION-HARVEST-MAP.md", "md", None),
+    ("docs/wiki/work-log/2026-09-20-ecommerce-migration-harvest-map.md", "md", None),
     ("tests/determinism/test_evidence_packet_text_excerpt.py", "py", None),
     ("eval/reasoning_boundary/rb5_packet_text_excerpt.py", "py", None),
     ("eval/reasoning_boundary/RB5-PACKET-TEXT-EXCERPT-2026-09-20.json", "json", None),
