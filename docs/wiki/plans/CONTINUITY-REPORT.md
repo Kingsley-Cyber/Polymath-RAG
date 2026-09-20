@@ -18,7 +18,121 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-20 — **GOVERNED-CONVERGENCE-V1: TG0 + TG1 + TG2 DONE, MERGED, LIVE-PROVEN (registers 11.352–11.355). NEXT ACTION = TG3 (a SEPARATE goal — do not start it without the owner's word).**
+## CURRENT — 2026-09-20 — **GOVERNED-CONVERGENCE-V1: TG0–TG3 DONE (registers 11.352–11.356). TG3 = the skill's evidence-only corpus lane, live-accepted. NEXT ACTION = TG4 (needs the owner's word). OPEN before TG5: EvidencePacket text is a 240-char preview.**
+
+**Repository State** — MULTI-REPO. **polymath-v4**: branch `production`; HEAD = the TG3 ledger commit (docs/eval only)
+above tag `v4-governed-convergence-tg2` → `3d3064a`; local tag **`v4-governed-convergence-tg3` — UNPUSHED**; tree clean;
+remote recovery checkpoint (CODE) still `v4-corpus-explore-firing-v1` → `db2785a` on origin — all TG1/TG2 code exists ONLY
+locally. **Skill** `/Users/king/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH`: `main` = `438d92d` (v2.2.0), local tag
+`v2.2.0-tg3`, 1 commit ahead of `origin/main`, clean, **NOT pushed**; branch `tg3/evidence-only-corpus-lane` merged (ff).
+**Hermes deployed copy** `~/.hermes/standalone/opportunity-research` = still **v2.1.2**, untouched (it still calls the
+answer route until the TG4 mirror). **Trail** `A41` = `de64d84`, clean, untouched.
+
+**Active Mission** — GOVERNED-CONVERGENCE-V1 (plan of record `docs/wiki/plans/GOVERNED-CONVERGENCE-V1.md`). Done: TG0
+baseline · TG1 Server B adapter tools · TG2 readable evidence + evidence-boundary surface · **TG3 skill evidence-only corpus
+lane**. Next dependency = **TG4** (skill: `adapter_receipt.py` → `HarnessResearchReceiptV1`, the governed run journal, the
+report bridge onto the EXISTING renderer, then the mirror to Hermes). Live runs spent: R0, R1 (fixtures) + the TG3 skill
+acceptance (2 evidence calls, $0 external, no web). R2 / R3 are NOT authorized yet.
+
+**Completed Since Last Bootstrap** — 11.356 TG3: skill v2.2.0 (`ask_corpus`/`chat_question`/`answer_record` deleted;
+`explore_corpus` + fail-closed packet validation + `corpus_packets`; request ledger) · 580 checks + doctor · live acceptance
+PASS · R1-vs-R0 latency breakdown artifact.
+
+**Current Contract State (skill side — NEW; the Polymath-side contracts are in the PRIOR section below and still hold)**
+- The skill's native corpus lane = `--via evidence` (default; keyed on `capabilities.contracts["evidence-packet"]`): ONE
+  `POST /chat/evidence {message, corpus_id, mode:"WILDCARD", corpus_explorer:true}` per corpus with the run's ORIGINAL signal
+  (`state.data.signal`, capped 2,000 chars) — NEVER the 3–5 compiled reformulations; at `corpus_mechanisms` one call per
+  compiled question (cap `--max-evidence-calls` 12, skip recorded). The EXPLORE plan rows ride along (`lane: evidence+plan`
+  / `evidence+questions`). `--via plan` = rows-only rollback arm; `--via chat` no longer exists (exit 2).
+- Packet rows are docs/18 rows + `utility_role`, `ca4_grade`, `c4_valid`, `origin`, `lineage`, `provenance`,
+  `packet_query_ids`, tags `evidence_packet` / `role:*` / `ca4:*`; id space shared with the retrieve lanes — a chunk both lanes
+  return is ONE row and the FULLER passage wins. `corpus_answers` → **`corpus_packets`** (`authority:
+  CORPUS_EVIDENCE_PACKET`; no `answer`, no `abstained` — `n_evidence` + CA4 distribution + `text_chars` + explorer firing).
+  Readers tolerate LEGACY state (legacy answers render as "legacy synthesis, not evidence").
+- FAIL CLOSED: not `evidence-packet-v1` / `synthesis_performed != false` / fails `schemas/evidence_packet.json` →
+  `capability_failure{corpus_evidence_packet, EVIDENCE_CONTRACT_MISMATCH}` and NO further request. An unreachable evidence
+  route is a recorded error; the row lanes still run. Document scope active → the evidence route is skipped (`evidence_skipped`).
+- The adapter may POST ONLY to `{/chat/evidence, /retrieve, /retrieve/plan}` (refused before I/O otherwise). Every request is
+  counted + timed (`corpus_backend.calls`, `.timings_ms`, `polymath_chat_calls`, `polymath_evidence_calls`;
+  `utilization.corpus.*`) and carries `User-Agent: opportunity-research/2.2.0 corpus_polymath run:<id> node:<node>` =
+  `query_receipts.client` on the Polymath side.
+- CROSS-REPO PIN: the skill's `schemas/evidence_packet.json` records the sha256 of polymath-v4
+  `contracts/evidence/v1/evidence_packet.schema.json`. A schema change = re-render + re-pin in the skill repo, same slice
+  (noted on the `EVIDENCE_PACKET` contract row; `contract_impact.py` cannot see another repo).
+- Skill test isolation: the controller's loop memory defaults to the REAL DB
+  `~/.hermes/state/opportunity-research/opportunity.sqlite3` — set **`OPPORTUNITY_RESEARCH_DB`** for any ad-hoc run.
+
+**Active Impact Closure** — polymath-v4 commit: docs/eval + one YAML comment → `contract_impact` none. Cross-repo:
+`EVIDENCE_PACKET` TESTED_UNCHANGED (gained a second, external consumer) · `EVIDENCE_BOUNDARY_API` TESTED_UNCHANGED, **OPEN
+DEFECT: packet text is a 240-char preview** · `ADAPTER_RUNTIME` / `MCP_SURFACE` NOT_AFFECTED. Unresolved: none silent.
+
+**Proof Status**
+- TG3 skill gates: `tests/run_all.py` **580 checks** (baseline 555, both measured) + `controller.py doctor` — green.
+- Synthesis lane removed: UNIT_PROVEN + negative control (one stub: v2.1.2 = 5 × `POST /chat`; v2.2.0 = 0 × and 1 ×
+  `POST /chat/evidence`). Fail-closed mismatch: UNIT_PROVEN only (never occurred live).
+- TG3 live acceptance: **LIVE_PATH_PROVEN** for understand → corpus → primitives → gates → hypothesize → HTML report
+  (run `tg3_accept_02`, corpus `cinema`): 1 evidence call, `polymath_chat_calls = 0`, Polymath receipts = one
+  `chat/evidence_only`, 0 synthesis; primitives + hypothesize accepted on the FIRST submit; report rendered by the existing
+  renderer. NOT exercised: field lanes (honest `capability_failure{field_research}`), semantic_review → qualify,
+  `corpus_mechanisms` question mode (unit-proven only), COMPLEMENTARY / DIVERGENT seats (Corpus Explore did not fire).
+- NOT DEPLOYED: Hermes still runs v2.1.2. INVALIDATED: none.
+- Session-1 proof levels (TG0–TG2) unchanged — see PRIOR. One NEW caveat on them: R1's packet rows were 240-char previews too.
+
+**Findings to carry (measured, not tuned)**
+1. **EvidencePacket `text` is a 240-char PREVIEW.** `orchestrator/orchestrator/api/hybrid.py:273`, `fast.py:683`,
+   `chat_retrieval.py:598` build the chat evidence inventory with `text[:240]`; `ui.py` (~3757) feeds it to
+   `build_evidence_packet` (whose 1,200 cap never bites). 13/15 live packet rows = exactly 240 chars vs plan-lane median 736.
+   Polymath-side fix (orchestrator + ONE bounce) — needs the owner's word; should land BEFORE TG5.
+2. **Where R1's +134 s comes from** (`eval/governed_convergence/R1-VS-R0-LATENCY-2026-09-20.json`): all of it is the four
+   knowledge steps (B_retrieve +20 s, B_graph +34 s, F_retrieve +44 s, F_graph +36 s); 6 boundary calls = 146 s, 55.5 s of it
+   the query-compiler phase. The two GRAPH-mode steps cost +70 s and returned the same grade mix as the WILDCARD steps — the
+   cheapest place to recover time (owner decision; nothing changed). The UNCHANGED plan lane (~100 s/run here, 47–52 s per
+   skill call) is the largest single cost in both runs.
+3. Corpus Explore did NOT fire on any seed/signal need today (`PLAN_FALLBACK`, backlog B19): R1 seed, both TG3 calls. It
+   fired 2/2 on R1's hypothesis needs.
+4. `handoff-drafts/trail_stack_up.sh` is zsh-only (use `zsh`, never `bash`).
+5. PRE-EXISTING red pins (owner decision pending): `test_query_receipts::test_all_three_query_handlers…`,
+   `test_chat_runtime::test_compiler_on_drives…`.
+
+**Runtime / Test Resolution** — polymath-v4 unchanged (see PRIOR). Skill: run gates with the Hermes venv
+(`~/.hermes/hermes-agent/venv/bin/python tests/run_all.py`; `python/controller.py doctor`); the harness isolates its DB itself.
+
+**Working Tree** — both repos clean. Acceptance artifacts (gitignored): skill `candidates/tg3_acceptance/` (state, payloads,
+isolated loop DB, `tg3_acceptance_report.html`). polymath-v4 worktree `pmv4-governed` is merged (safe to remove).
+
+**Fleet (live)** — unchanged: UP, bundle `c0d86509ad39`, 13 types healthy, `/ready` true; Trail daemon :8767. The only
+Polymath corpus is `cinema` (67 docs) — `ecom-meta-v1`, the controller's historical product corpus, does NOT exist in v4.
+
+**Next Action — TG4 (needs the owner's word; re-read the plan's TG4 section from disk first):**
+1. Skill repo, new branch off `main` (`438d92d`). NEW `python/adapter_receipt.py` (+ CLI) → a valid `HarnessResearchReceiptV1`;
+   NEW `schemas/harness_receipt.schema.json` = byte copy of `polymath-v4/contracts/adapter/v1/harness_receipt.schema.json`
+   with its sha recorded (drift test — mirror the `schemas/evidence_packet.json` pattern). Capture per-source `retrieved_at`
+   + `published_at_if_known` at harvest time; static role + source-class maps; NO score field anywhere.
+2. NEW `python/governed_run.py` (run journal `state/<run_id>.governed.json`) + `report.build_model_from_governed(journal)`
+   feeding the EXISTING `report.render`. `SKILL.md`: the governed entrypoint section (reason over `evidence.rows`, cite ids
+   from `context.evidence_refs`).
+3. Gate: `tests/run_all.py` (≥ 580 + new) + `doctor`; commit locally; THEN mirror to
+   `~/.hermes/standalone/opportunity-research` with `tests/mirror_check.py` repointed (reference = the git repo). The
+   mirror is what finally removes the answer-route calls from Hermes' day-to-day runs.
+4. Decide with the owner BEFORE TG5: the 240-char packet-text fix; the corpus for R2 (v4 has only `cinema`).
+5. Owner step still open from TG1: the Codex `[mcp_servers.polymath]` entry (lines in the PRIOR section).
+
+**Do Not Do**
+- Do NOT start TG4+ without the owner's word. Do NOT start R2 / any real-world run; do NOT widen the ≤12 queries per
+  harness action cap; do NOT run field acquisition through the owner's sessions outside TG5.
+- Do NOT mirror to `~/.hermes` outside TG4; do NOT hand-edit `~/.hermes/config.yaml` / `models.json` or `~/.codex`.
+- Do NOT re-add a synthesis route to the skill adapter or widen its POST allow-list; do NOT send reformulations to the
+  evidence boundary; do NOT "fix" the 240-char preview inside the skill by extra retrieval tricks — it is a Polymath defect.
+- Do NOT run skill controller commands without `OPPORTUNITY_RESEARCH_DB` set unless the run is meant for the real loop memory.
+- Everything in the PRIOR section's Do Not Do still applies (Trail untouched before TG7; no field evidence into Polymath;
+  no second report system; no LLM or skill score touches a Trail score; never tune to pass; Item 1 frozen; Item 2 deferred;
+  no push of any ref without the owner's per-push word; never enter or print a credential).
+
+**Live Qualification Queue** — R0 ✅ · R1 ✅ · TG3 skill acceptance ✅ · R2 (TG5, not authorized) · R3 (TG8).
+**Deferred Architecture** — as PRIOR, plus: full-text EvidencePacket rows; GRAPH-step surface choice (latency); a durable
+corpus for product research in v4 (`cinema` is the only one).
+
+## PRIOR — 2026-09-20 — GOVERNED-CONVERGENCE-V1 session 1: TG0 + TG1 + TG2 (registers 11.352–11.355) — superseded as CURRENT by the TG3 checkpoint above; its Polymath-side contract state, proof status and fleet facts STILL HOLD
 
 **Repository State** — branch `production`; HEAD = the TG0–TG2 closeout commit, above merge `f206c33` (TG1 `797caea` +
 TG2 `7f9ae50`; worktree `pmv4-governed` / branch `governed/convergence-tg1-tg2`, merged). Local annotated tag

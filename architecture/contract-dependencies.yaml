@@ -230,6 +230,8 @@ contracts:
       - tests/contracts/test_evidence_packet_contract.py
     migration: null
     status: live                   # evidence-packet-v1; the JSON Schema is enforced CONSUMER-side (fail-closed) by ADAPTER_RUNTIME
+                                   # EXTERNAL consumer (other repo, invisible to contract_impact): TRAIL_AGENT_AUTORESEARCH `schemas/evidence_packet.json`
+                                   # pins this schema's sha256 (skill v2.2.0, TG3). Changing the schema = re-render + re-pin there, in the same slice.
 
   EVIDENCE_BOUNDARY_API:
     owner: orchestrator

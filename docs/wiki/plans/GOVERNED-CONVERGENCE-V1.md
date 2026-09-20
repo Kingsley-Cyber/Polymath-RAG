@@ -2,7 +2,7 @@
 title: "GOVERNED-CONVERGENCE-V1 — connect the real product-research controller to the governed Polymath → Trail adapter path"
 date: 2026-09-20
 last_reviewed: 2026-09-20
-status: "ADMITTED — owner-approved 2026-09-20 (plan mode, four decision rounds). IN PROGRESS: TG0 + TG1 + TG2 DONE, merged and live-proven 2026-09-20 (registers 11.352–11.355, local tag v4-governed-convergence-tg2, R0 + R1 PASS). NEXT = TG3 (skill repo) — a separate goal that needs the owner's word. Executes across four repos; Trail stays untouched until TG7."
+status: "ADMITTED — owner-approved 2026-09-20 (plan mode, four decision rounds). IN PROGRESS: TG0 + TG1 + TG2 DONE, merged and live-proven 2026-09-20 (registers 11.352–11.355, R0 + R1 PASS); TG3 DONE 2026-09-20 (register 11.356, skill v2.2.0 commit 438d92d, live acceptance PASS — not mirrored to Hermes, not pushed). NEXT = TG4 (skill repo) — needs the owner's word. Executes across four repos; Trail stays untouched until TG7."
 owner: "@king"
 scope: "Converge two existing systems instead of building a third: the governed adapter path (lawful, never driven by a real agent or the real world) and the Hermes opportunity-research controller (works in the real world, ungoverned, nests Polymath synthesis). Trail remains exactly what ADR-063 says. First milestone: a Claude Code session drives ONE real governed product-discovery run and the existing renderer produces the HTML dossier."
 ---
@@ -14,7 +14,7 @@ scope: "Converge two existing systems instead of building a third: the governed 
 
 # GOVERNED-CONVERGENCE-V1 — Plan of Record
 
-> **Execution ledger.** TG0 ✅ R0 PASS (11.352) · TG1 ✅ (11.353) · TG2a + TG2b ✅ (11.354) · deploy + R1 PASS + boundary proof (11.355) — work-log `docs/wiki/work-log/2026-09-20-governed-convergence-tg0-tg2.md`, evidence `eval/governed_convergence/`. TG3–TG8 NOT STARTED. Run the Trail stack script with **zsh** (under `bash` it silently skips compose / health / migrations).
+> **Execution ledger.** TG0 ✅ R0 PASS (11.352) · TG1 ✅ (11.353) · TG2a + TG2b ✅ (11.354) · deploy + R1 PASS + boundary proof (11.355) — work-log `docs/wiki/work-log/2026-09-20-governed-convergence-tg0-tg2.md`, evidence `eval/governed_convergence/`. TG3 ✅ skill v2.2.0 `438d92d`, 580 checks + doctor, live acceptance PASS (11.356; work-log `2026-09-20-governed-convergence-tg3`). TG4–TG8 NOT STARTED. OPEN before TG5: EvidencePacket text is a 240-char preview (Polymath-side). Run the Trail stack script with **zsh** (under `bash` it silently skips compose / health / migrations).
 
 ## Context
 

@@ -1,0 +1,143 @@
+{
+ "artifact": "GOVERNED-CONVERGENCE-V1 \u2014 where R1's extra wall time comes from (R1 evidence-boundary surface vs R0 legacy surface; same fixtures, same corpus)",
+ "date": "2026-09-20",
+ "method": "adapter_steps.receipt.wall_ms per step (1 s resolution: receipts are stamped to the second) + query_receipts.wall_ms / meta.phase_ms per boundary call; read-only",
+ "runs": {
+  "R0": {
+   "run_id": "adr_1a357ee43e9c2e6750d756d9f2136761",
+   "run_wall_s": 181,
+   "executor_wall_ms_by_step_type": {
+    "VALIDATE": 0,
+    "POLYMATH_COMPILE_PLAN": 100000,
+    "POLYMATH_RETRIEVE": 24000,
+    "POLYMATH_GRAPH_EXPAND": 17000,
+    "AGENT_REASON": 0,
+    "EXTERNAL_OPERATION": 1000,
+    "HARNESS_ACTION": 0,
+    "BRANCH": 0,
+    "COMPILE_RESULT": 0
+   },
+   "knowledge_steps_ms": {
+    "B_plan": 55000,
+    "B_retrieve": 10000,
+    "B_graph": 3000,
+    "F_plan": 45000,
+    "F_retrieve": 14000,
+    "F_graph": 14000
+   }
+  },
+  "R1": {
+   "run_id": "adr_12ddda16f9b589fbdf7dfab9f31efedf",
+   "run_wall_s": 315,
+   "executor_wall_ms_by_step_type": {
+    "VALIDATE": 0,
+    "POLYMATH_COMPILE_PLAN": 99000,
+    "POLYMATH_RETRIEVE": 88000,
+    "POLYMATH_GRAPH_EXPAND": 87000,
+    "AGENT_REASON": 0,
+    "EXTERNAL_OPERATION": 3000,
+    "HARNESS_ACTION": 0,
+    "BRANCH": 0,
+    "COMPILE_RESULT": 0
+   },
+   "knowledge_steps_ms": {
+    "B_plan": 56000,
+    "B_retrieve": 30000,
+    "B_graph": 37000,
+    "F_plan": 43000,
+    "F_retrieve": 58000,
+    "F_graph": 50000
+   }
+  }
+ },
+ "delta_ms_by_knowledge_step": {
+  "B_plan": 1000,
+  "B_retrieve": 20000,
+  "B_graph": 34000,
+  "F_plan": -2000,
+  "F_retrieve": 44000,
+  "F_graph": 36000
+ },
+ "delta_run_wall_s": 134,
+ "delta_knowledge_steps_s": 133,
+ "r1_boundary_calls": [
+  {
+   "step": "B_retrieve",
+   "mode": "WILDCARD",
+   "wall_ms": 29956,
+   "phase_ms": {
+    "carry": 29954.0,
+    "total": 29956.4,
+    "compile": 14413.0,
+    "assemble": 29954.0,
+    "retrieve": 29862.4
+   }
+  },
+  {
+   "step": "B_graph",
+   "mode": "GRAPH",
+   "wall_ms": 22734,
+   "phase_ms": {
+    "carry": 22733.1,
+    "total": 22733.6,
+    "compile": 5394.0,
+    "assemble": 22733.1,
+    "retrieve": 22491.9
+   }
+  },
+  {
+   "step": "F_retrieve",
+   "mode": "WILDCARD",
+   "wall_ms": 24170,
+   "phase_ms": {
+    "carry": 24169.1,
+    "total": 24169.5,
+    "compile": 7283.6,
+    "assemble": 24169.1,
+    "retrieve": 24075.8
+   }
+  },
+  {
+   "step": "F_retrieve",
+   "mode": "WILDCARD",
+   "wall_ms": 33508,
+   "phase_ms": {
+    "carry": 33506.9,
+    "total": 33507.9,
+    "compile": 16835.9,
+    "assemble": 33506.9,
+    "retrieve": 33415.5
+   }
+  },
+  {
+   "step": "F_graph",
+   "mode": "GRAPH",
+   "wall_ms": 11604,
+   "phase_ms": {
+    "carry": 11603.7,
+    "total": 11604.1,
+    "compile": 4546.0,
+    "assemble": 11603.7,
+    "retrieve": 11465.7
+   }
+  },
+  {
+   "step": "F_graph",
+   "mode": "GRAPH",
+   "wall_ms": 24251,
+   "phase_ms": {
+    "carry": 24249.6,
+    "total": 24250.6,
+    "compile": 7072.4,
+    "assemble": 24249.5,
+    "retrieve": 24095.2
+   }
+  }
+ ],
+ "r1_boundary_summary": {
+  "calls": 6,
+  "total_s": 146.2,
+  "compile_phase_s_total": 55.5,
+  "note": "phase_ms values are cumulative timestamps inside one call: `compile` = time until the query compiler returned; the remainder is retrieval + rerank + seating + CA4 grading"
+ }
+}
