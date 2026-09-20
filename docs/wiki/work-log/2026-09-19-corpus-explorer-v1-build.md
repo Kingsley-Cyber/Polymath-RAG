@@ -31,6 +31,19 @@ pre-feature-equivalent V2. shared/ is unit-provable in the worktree; ui.py is li
   (reuses `compiler_eligible`/`compile_bridges`/`parse_and_validate`; emits origin=CORPUS_EXPLORE, id_prefix
   `ce`; text-dedups; `_stash` receipt `corpus_explore_expansion`). NOT a second compiler — same machinery,
   concept-level grounding, distinct origin.
+- **CE4 (gate + routing, ui.py — live-only).** `StreamChatRequest.corpus_explorer: bool = False`;
+  `_compile_chat_plan` gains kw-only `corpus_explorer` threaded from the single call site
+  (`req.corpus_explorer`, ThreadPool submit-time). NEW `_add_corpus_explore_expansion(plan, message,
+  corpus_ids, scout_result, *, enabled)` runs LAST in `_finish` (after annotate, so activation
+  `inspired_by_profile` survives): two-layer gate (capability `POLYMATH_CORPUS_EXPLORER` x per-request
+  `enabled` x `not plan.fallback`), embeds q0 + `search_atoms(CONCEPT/THEORY)` -> `activate_corpus` ->
+  `plan_corpus_explore_expansion` with the REUSED gemma bridge closure; fail-open; stashes
+  `corpus_activation` + `corpus_explore_expansion` receipts. `LATENT_ORIGINS=("BRIDGE","CORPUS_EXPLORE")`
+  widens the two `=="BRIDGE"` latent filters (C4 grading dict + `latent_bridge_ids`).
+- **CE-UI (additive, off critical path).** `capabilities.py` advertises a dynamic `"corpus-explorer"` key
+  (reflects the env flag) so the UI hides/disables when off. `frontend-v2/src/screens/Chat.tsx`: a boolean
+  "Corpus Explore" toggle (capability-gated visibility) that sets `body.corpus_explorer`. `.env.example`
+  documents `POLYMATH_CORPUS_EXPLORER` + bounds.
 
 ## Proof
 - **CE1 UNIT_PROVEN** (executed path = worktree copy, verified: `import polymath_shared.corpus_activation`
@@ -48,6 +61,17 @@ pre-feature-equivalent V2. shared/ is unit-provable in the worktree; ui.py is li
   stashed); factual intent + no-primary + no-concepts skip the compiler (generate NOT called); invented
   derived_from dropped (inherited anti-invention); fail-open when generate raises; text-dedup;
   **coexists with Scout BRIDGE with no id collision** (br* vs ce*, both origins present, q0 primary).
+- **CE2/CE3 contract-impact closure:** pre-commit flagged QUERY_PLANNER (`chat_plan.ORIGIN_TYPES`) +
+  SUBQUERY_PROVENANCE (additive). Ran the full impacted set — determinism 106 GREEN (candidate_engine,
+  chat_funnel, chat_retrieval_v2, evidence_resolution, profile_yield, projection_manifest_writer,
+  subquery_provenance). Dispositions: QUERY_PLANNER UPDATED (additive origin) · SUBQUERY_PROVENANCE
+  TESTED_UNCHANGED · transitive (ACCEPTANCE/CANDIDATE_ENGINE/PROFILE_YIELD_RECEIPT/RESOLUTION_STATE/
+  RETRIEVAL_RECEIPT) TESTED_UNCHANGED. `tests/integration/test_cross_domain_routing.py` = pre-existing
+  worktree COLLECTION error (`import orchestrator.orchestrator` under editable-.pth; identical at the
+  checkpoint tag) → deferred to live proof after merge.
+- **CE4/CE-UI IMPLEMENTED, live-only** (editable-.pth: `orchestrator` resolves to MAIN under pytest, so
+  ui.py is not worktree-unit-provable). `py_compile` ui.py OK; `agent_preflight`=0. Real proof = the live
+  seam receipt + flag-off smoke after merge + port-gated bounce (CE5/CE6/CE7).
 
 ## Rejected claims
 - NOT claimed: live activation stability (same NL q0 -> same concepts). CE1 proves BUILDER determinism
