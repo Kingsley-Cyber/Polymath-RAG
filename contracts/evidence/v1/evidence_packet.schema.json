@@ -44,7 +44,9 @@
         "chunk_id": {"type": "string", "minLength": 1},
         "document_id": {"type": "string"},
         "source": {"type": "string"},
-        "text": {"type": "string"},
+        "text": {"type": "string", "description": "A bounded VERBATIM excerpt of the retrieved chunk (RB5) — never a UI preview."},
+        "text_truncated": {"type": ["boolean", "null"], "description": "OPTIONAL. true = `text` is a prefix of a longer chunk; false = the whole chunk; null = the chunk's length is unknown to the producer."},
+        "text_chars": {"type": ["integer", "null"], "minimum": 0, "description": "OPTIONAL. Length in characters of the retrieved chunk the excerpt was cut from; null when unknown."},
         "origin": {"type": "string", "minLength": 1},
         "query_ids": {"type": "array", "items": {"type": "string"}},
         "lineage": {

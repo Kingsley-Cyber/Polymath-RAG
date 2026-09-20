@@ -9,6 +9,12 @@ first-class field: the packet is evidence, never an answer.
 Pure + tolerant: `build_evidence_packet` takes already-extracted, normalized inputs (dict rows + a CA4-grade
 map + plan queries + bounded receipts) so it is unit-testable offline. The live short-circuit in the
 orchestrator extracts these from the chat bundle and calls this; nothing here imports the runtime.
+
+TEXT IS EVIDENCE, NOT A PREVIEW (RB5, 2026-09-20). The chat pipeline's evidence inventory carries a 240-character
+UI preview of each chunk; a packet built from it handed agents snippets and said nothing about it. The packet now
+presents a bounded VERBATIM EXCERPT of the retrieved chunk (`full_texts`, resolved by the caller for exactly the rows
+already selected) and states what it did: `text_truncated` and `text_chars`. This is presentation only — the rows,
+their order, ids, roles, grades, lineage and provenance come from the same inputs as before and are untouched.
 """
 from __future__ import annotations
 
@@ -16,7 +22,7 @@ from dataclasses import dataclass, field
 
 SCHEMA_VERSION = "evidence-packet-v1"
 DEFAULT_MAX_ROWS = 40           # bound the packet — agents don't need the whole union
-DEFAULT_MAX_TEXT = 1200         # per-row text cap (chars)
+DEFAULT_MAX_TEXT = 900          # per-row excerpt cap (chars): enough passage to reason over, still a bounded packet
 DEFAULT_MAX_RECEIPT_ITEMS = 12  # bound receipt lists
 
 _DIRECT = "DIRECT"
@@ -48,10 +54,13 @@ class EvidenceItem:
     ca4_grade: str | None                        # DIRECT / PARTIAL / RELATED
     c4_valid: bool
     provenance: dict                             # {origin, inspired_by_profile[], derived_from, relation_to_q0}
+    text_truncated: bool | None = None           # True = `text` is a prefix of a longer chunk; None = the chunk length is unknown
+    text_chars: int | None = None                # length of the retrieved chunk the excerpt was cut from (None = unknown)
 
     def to_dict(self) -> dict:
         return {"chunk_id": self.chunk_id, "document_id": self.document_id, "source": self.source,
-                "text": self.text, "origin": self.origin, "query_ids": list(self.query_ids),
+                "text": self.text, "text_truncated": self.text_truncated, "text_chars": self.text_chars,
+                "origin": self.origin, "query_ids": list(self.query_ids),
                 "lineage": [dict(l) for l in self.lineage], "utility_role": self.utility_role,
                 "synthesis_role": self.synthesis_role, "ca4_grade": self.ca4_grade,
                 "c4_valid": self.c4_valid, "provenance": dict(self.provenance)}
@@ -108,6 +117,20 @@ def _c4_valid(grade, row) -> bool:
     return str(_get(row, "latent_role", "seat_role", default="") or "").upper() in _SEAT_ROLES
 
 
+def excerpt(text: str, max_chars: int) -> tuple[str, bool]:
+    """A bounded VERBATIM prefix of `text` and whether anything was cut. The cut falls on the last whitespace inside the
+    final fifth of the window (never mid-word when a boundary is near); nothing is appended, so the excerpt stays a quote."""
+    text = str(text or "")
+    cap = max(0, int(max_chars))
+    if len(text) <= cap:
+        return text, False
+    head = text[:cap]
+    cut = max(head.rfind(" "), head.rfind("\n"), head.rfind("\t"))
+    if cut >= int(cap * 0.8):
+        head = head[:cut]
+    return head.rstrip(), True
+
+
 def _bound_receipt(value, max_items=DEFAULT_MAX_RECEIPT_ITEMS):
     """Keep receipts small: dicts pass through (already summaries); lists are truncated."""
     if isinstance(value, list):
@@ -127,6 +150,7 @@ def build_evidence_packet(
     corpus_explorer_used: bool = False,
     max_rows: int = DEFAULT_MAX_ROWS,
     max_text: int = DEFAULT_MAX_TEXT,
+    full_texts=None,
 ) -> EvidencePacket:
     """Map an internal chat evidence bundle → a bounded EvidencePacket. PURE.
 
@@ -135,8 +159,14 @@ def build_evidence_packet(
     `plan_queries`: the compiled plan queries (for origin/lineage/provenance joins). `receipts`: the bounded
     compiler receipts {activation, bridges, corpus_explore, fusion, firing}. Deterministic; row-, text- and
     receipt-bounded; `synthesis_performed` is always False (this is evidence, not an answer).
+
+    `full_texts`: {chunk_id: the retrieved chunk's text}. When present for a row the packet's `text` is a bounded
+    verbatim excerpt of THAT text (`text_truncated`, `text_chars` say what was cut). When absent the row's own `text` is
+    used as before — and because the chat inventory's text is itself a preview of unknown provenance, the packet then
+    says `text_truncated: None`, never a false "complete". Row membership and order never depend on `full_texts`.
     """
     ca4_grades = ca4_grades or {}
+    full_texts = full_texts or {}
     pidx = _plan_index(plan_queries)
 
     items: list[EvidenceItem] = []
@@ -159,7 +189,13 @@ def build_evidence_packet(
             "relation_to_q0": (prov_src or {}).get("reason") or (lat.get("proposed_role") if isinstance(lat, dict) else None),
         }
         grade = ca4_grades.get(cid)
-        text = str(_get(row, "text", default="") or "")[: max(0, int(max_text))]
+        full = full_texts.get(cid)
+        if isinstance(full, str) and full:
+            text, truncated = excerpt(full, max_text)
+            text_chars = len(full)
+        else:                                                  # no resolved chunk: present what the row carries, claim nothing
+            text, cut = excerpt(str(_get(row, "text", default="") or ""), max_text)
+            truncated, text_chars = (True if cut else None), None
         items.append(EvidenceItem(
             chunk_id=cid,
             document_id=str(_get(row, "doc_id", "document_id", default="") or ""),
@@ -168,7 +204,8 @@ def build_evidence_packet(
             utility_role=_utility_role(row),
             synthesis_role=(str(_get(row, "role", "synthesis_role", default="")).upper() or None),
             ca4_grade=(grade.upper() if isinstance(grade, str) else grade),
-            c4_valid=_c4_valid(grade, row), provenance=provenance))
+            c4_valid=_c4_valid(grade, row), provenance=provenance,
+            text_truncated=truncated, text_chars=text_chars))
 
     plan = {
         "compiled_queries": [
