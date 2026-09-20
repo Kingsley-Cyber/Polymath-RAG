@@ -7,6 +7,7 @@ on. Additive by design — a key is only ever added or versioned up.
 """
 from __future__ import annotations
 
+import os
 import subprocess
 from functools import lru_cache
 from pathlib import Path
@@ -61,6 +62,10 @@ def _live_contracts() -> dict:
                 c["field-evidence-corpus"] = row[0]
     except Exception:  # noqa: BLE001
         pass
+    # CORPUS-EXPLORER-V1: advertise the server capability so the "Corpus Explore" UI toggle can
+    # hide/disable itself when the deployment kill switch is off. The per-request `corpus_explorer`
+    # flag is still required per turn; this only reports whether the server would honour it.
+    c["corpus-explorer"] = "v1" if os.environ.get("POLYMATH_CORPUS_EXPLORER", "0") == "1" else False
     return c
 
 

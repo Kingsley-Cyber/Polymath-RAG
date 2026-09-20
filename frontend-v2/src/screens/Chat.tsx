@@ -32,6 +32,7 @@ export function Chat({
   const [mode, setMode] = useState<PublicMode>("HYBRID");
   const [model, setModel] = useState<string>("");
   const [reasoning, setReasoning] = useState<string>("");
+  const [corpusExplore, setCorpusExplore] = useState(false);
   const [question, setQuestion] = useState("");
   const [turns, setTurns] = useState<Turn[]>(session?.turns ?? []);
   const [busy, setBusy] = useState(false);
@@ -39,6 +40,12 @@ export function Chat({
 
   const synths = useAsync((s) => api.synthesizers(s), []);
   const reasons = useAsync((s) => api.reasoningModes(s), []);
+  // CORPUS-EXPLORER-V1: only show the "Corpus Explore" toggle when the server advertises the capability
+  // (the deployment kill switch POLYMATH_CORPUS_EXPLORER). The per-request flag is sent only when on.
+  const caps = useAsync((s) => api.capabilities(s), []);
+  const corpusExploreAvailable = Boolean(
+    ((caps.data?.contracts ?? {}) as Record<string, unknown>)["corpus-explorer"],
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // ChatGPT-style thread: newest at the bottom, so follow it as it streams.
@@ -66,6 +73,7 @@ export function Chat({
     const body: Record<string, unknown> = { message: q, corpus_id: corpusId, mode };
     if (model) body.synthesizer = model;
     if (reasoning) body.reasoning = reasoning;
+    if (corpusExplore) body.corpus_explorer = true;
     await runTurn(body, (patch) => {
       setTurns((ts) => ts.map((t, i) => (i === idx ? { ...t, ...patch } : t)));
     }, ac.signal);
@@ -109,6 +117,18 @@ export function Chat({
               ))}
             </select>
           </div>
+          {corpusExploreAvailable && (
+            <div className="field">
+              <span className="label">Corpus Explore</span>
+              <label
+                style={{ display: "flex", alignItems: "center", gap: 6, height: 32 }}
+                title="Bounded, corpus-grounded exploration: activate related concepts from your library and retrieve through a few grounded sub-questions."
+              >
+                <input type="checkbox" checked={corpusExplore} onChange={(e) => setCorpusExplore(e.target.checked)} />
+                <span>{corpusExplore ? "On" : "Off"}</span>
+              </label>
+            </div>
+          )}
         </div>
       </div>
 

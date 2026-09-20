@@ -1305,6 +1305,10 @@ class StreamChatRequest(BaseModel):
     # CHAT-RETRIEVAL-V2 P1.a: per-request override of POLYMATH_CHAT_RETRIEVAL
     # (v1 = hybrid-retrieval-v1, v2 = chat-retrieval-v2) for evaluation and A/B.
     retrieval: Optional[str] = None
+    # CORPUS-EXPLORER-V1: the user-facing "Corpus Explore" toggle (per query/conversation). RUNS only when
+    # this is true AND the server capability POLYMATH_CORPUS_EXPLORER is on (default off). Additive; when
+    # off the turn is pre-feature-equivalent V2.
+    corpus_explorer: bool = False
 
 
 def _sse(event: str, data: dict) -> str:
@@ -1877,6 +1881,12 @@ _BRIDGE_MODEL = (os.environ.get("POLYMATH_BRIDGE_MODEL", "gemma4:31b-cloud") or 
 _BRIDGE_TIMEOUT_S = float(os.environ.get("POLYMATH_BRIDGE_TIMEOUT_S", "12"))
 _BRIDGE_NUM_PREDICT = int(os.environ.get("POLYMATH_BRIDGE_NUM_PREDICT", "700"))
 
+#: CORPUS-EXPLORER-V1: origins that ride the WLK2C latent pass (C4 grading + latent-pool exposure). Adding
+#: a latent origin here (not scattered `== "BRIDGE"` checks) routes CORPUS_EXPLORE through the same C4/C5
+#: gate as a Scout BRIDGE. When POLYMATH_CORPUS_EXPLORER is off no CORPUS_EXPLORE origin is ever produced,
+#: so this set behaves identically to the old BRIDGE-only checks (flag-off = pre-feature-equivalent).
+LATENT_ORIGINS = ("BRIDGE", "CORPUS_EXPLORE")
+
 
 def _add_bridge_expansion(plan, scout_result) -> None:
     """WLK2C C3-live (bounded concept-bridge compiler). Flag `POLYMATH_CHAT_BRIDGE_COMPILER` (default
@@ -1930,6 +1940,87 @@ def _add_bridge_expansion(plan, scout_result) -> None:
         pass
 
 
+def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, enabled: bool) -> None:
+    """CORPUS-EXPLORER-V1 CE4 (live). TWO-LAYER GATE: the server capability `POLYMATH_CORPUS_EXPLORER`
+    (default off) AND the per-request `enabled` flag (the "Corpus Explore" toggle) must BOTH be true; a
+    fallback plan is skipped. Builds a NON-GENERATIVE, concept-keyed activation set from the corpus's own
+    CONCEPT/THEORY atoms (`search_atoms`, INDEPENDENT of Scout — Scout nominations are optional
+    corroboration), then REUSES the WLK2C bridge compiler to emit CORPUS_EXPLORE-origin subqueries. Runs
+    LAST in `_finish` (after annotate, which would otherwise strip the activation `inspired_by_profile`
+    links). q0 authority (no PRIMARY ⇒ nothing). FAIL-OPEN throughout — activation/generation never blocks
+    the answer. One bounded Gemma call (the reused bridge model), ≤N bridges."""
+    if not enabled or os.environ.get("POLYMATH_CORPUS_EXPLORER", "0") != "1":
+        return
+    if getattr(plan, "fallback", False):
+        return
+    if not any(q.type == "PRIMARY" for q in plan.queries):
+        return
+    import time as _t
+    diag = {"attempted": False, "activations": 0, "added": 0, "fallback_reason": None, "latency_ms": 0.0}
+    t0 = _t.perf_counter()
+    try:
+        from polymath_shared.corpus_activation import (
+            CONCEPT_ATOM_KINDS, activate_corpus, activation_receipt)
+        from polymath_shared.corpus_explore import plan_corpus_explore_expansion
+        from polymath_shared.document_profile import profile_atom_projection as _pap
+        from polymath_shared.embedding_contracts import active_contract
+        from polymath_shared.settings import get_settings as _gs
+        from orchestrator.api.fast import _embed_queries
+        from qdrant_client import QdrantClient as _QC
+
+        corpora = [c for c in (corpus_ids or []) if c]
+        if not corpora:
+            diag["fallback_reason"] = "no_corpus"
+        else:
+            contract_id = active_contract().contract_id
+            qv = list(_embed_queries([message])[0])
+            max_acts = int(os.environ.get("POLYMATH_CORPUS_EXPLORER_MAX_ACTIVATIONS", "8"))
+            max_add = int(os.environ.get("POLYMATH_CORPUS_EXPLORER_MAX_BRIDGES", "4"))
+            min_grounding = int(os.environ.get("POLYMATH_CORPUS_EXPLORER_MIN_GROUNDING", "1"))
+            client = _QC(url=_gs().stores.qdrant_url, timeout=10)
+            try:
+                def _fetch(cid):
+                    return _pap.search_atoms(client, _pap.collection_name(contract_id), qv,
+                                             CONCEPT_ATOM_KINDS, k=12)
+                activations = activate_corpus(
+                    corpus_ids=corpora, fetch_atoms=_fetch,
+                    scout_nominations=getattr(scout_result, "nominations", None),
+                    max_activations=max_acts, min_grounding=min_grounding)
+            finally:
+                client.close()
+            diag["activations"] = len(activations)
+            plan.compiler["corpus_activation"] = activation_receipt(activations)
+            if not activations:
+                diag["fallback_reason"] = "no_activations"
+            else:
+                def _explore_generate(prompt: str) -> str:
+                    import httpx
+                    r = httpx.post(f"{OLLAMA_URL}/api/chat",
+                                   json={"model": _BRIDGE_MODEL, "stream": False, "think": False,
+                                         "messages": [{"role": "user", "content": prompt}],
+                                         "options": {"temperature": 0.1, "num_predict": _BRIDGE_NUM_PREDICT}},
+                                   timeout=httpx.Timeout(_BRIDGE_TIMEOUT_S, connect=5))
+                    r.raise_for_status()
+                    return ((r.json() or {}).get("message") or {}).get("content") or ""
+
+                diag["attempted"] = True
+                res = plan_corpus_explore_expansion(plan, activations, generate=_explore_generate,
+                                                    max_add=max_add)
+                diag["added"] = res.get("added") or 0
+                if not res.get("eligible", False):
+                    diag["fallback_reason"] = res.get("reason")
+                elif (res.get("added") or 0) == 0:
+                    diag["fallback_reason"] = "no_valid_bridges"
+    except Exception as exc:  # noqa: BLE001 — FAIL-OPEN: the optional explorer never blocks the answer
+        diag["fallback_reason"] = f"error:{type(exc).__name__}"
+    diag["latency_ms"] = round((_t.perf_counter() - t0) * 1000, 1)
+    try:
+        plan.compiler["corpus_explore_expansion"] = {
+            **(plan.compiler.get("corpus_explore_expansion") or {}), **diag}
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _bridge_role(q) -> str:
     """The C2 proposed role of a BRIDGE subquery (encoded in its reason `bridge/<role> <- …`)."""
     reason = str(getattr(q, "reason", "") or "")
@@ -1966,7 +2057,7 @@ def _apply_latent_selection(fast, plan, q0_text) -> dict | None:
     if not pool_extra or plan is None:
         return None
     bridges = {q.id: {"query": q.query, "proposed_role": _bridge_role(q)}
-               for q in plan.queries if getattr(q, "origin", "") == "BRIDGE"}
+               for q in plan.queries if getattr(q, "origin", "") in LATENT_ORIGINS}
     if not bridges:
         return None
     import time as _t
@@ -2018,7 +2109,7 @@ def _apply_latent_selection(fast, plan, q0_text) -> dict | None:
 
 
 def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | None = None,
-                       titles_rank: str | None = None):
+                       titles_rank: str | None = None, corpus_explorer: bool = False):
     """CHAT-INTENT-PLAN-V1 through the `chat_compiler` stage pin (plan §3.2):
     one cheap lane, one call, strict local validation, deterministic fallback.
     The lane is chosen per session key (ring), each lane self-gates through
@@ -2041,6 +2132,9 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
             from polymath_shared.subquery_provenance import annotate_subquery_provenance
             annotate_subquery_provenance(plan, scout_result)
             _resolve_plan_constraints(plan, scout_result, corpus_ids)   # CA2: identity resolution, no ranking effect
+            # CORPUS-EXPLORER-V1 CE4: two-layer-gated (capability x per-request) concept-activation-derived
+            # exploration. LAST — after annotate (which would strip the activation inspired_by links).
+            _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, enabled=corpus_explorer)
         except Exception:  # noqa: BLE001
             pass
         return plan
@@ -3043,7 +3137,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 # only); ON (P0.c) is the serial stage 0 the plan describes.
                 _plan_future = ThreadPoolExecutor(max_workers=1).submit(
                     _compile_chat_plan, query, req.history, _corpora, session_key=_session_key,
-                    titles_rank=getattr(req, "titles_rank", None))
+                    titles_rank=getattr(req, "titles_rank", None),
+                    corpus_explorer=bool(getattr(req, "corpus_explorer", False)))
                 if _flag == "on":
                     _plan = _plan_future.result()
                     _plan_future = None
@@ -3227,7 +3322,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         if (_flag == "on" and _plan is not None and _rflag == "v2") else (),
                         # WLK2C: the BRIDGE subquery ids, so chat_retrieve_v2 exposes their candidates in the
                         # latent pool regardless of fused rank (bridge candidates rarely top the q0-dominated union).
-                        latent_bridge_ids=tuple(q.id for q in _plan.queries if getattr(q, "origin", "") == "BRIDGE")
+                        latent_bridge_ids=tuple(q.id for q in _plan.queries if getattr(q, "origin", "") in LATENT_ORIGINS)
                         if (_flag == "on" and _plan is not None) else ())
                     _aspects = (fast.get("meta") or {}).get("aspects") or {}
                     _weak = (fast.get("meta") or {}).get("weak_aspects") or []
