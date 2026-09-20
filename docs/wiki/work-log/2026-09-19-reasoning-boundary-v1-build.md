@@ -62,6 +62,17 @@ ui.py/mcp_server/compare_review/client are live-only (editable-.pth).
   to MAIN under pytest). py_compile all OK; preflight=0; appliers no-op when the flag is off (verified). +2
   applier tests (off=no-op byte-identical; on=deepseek disabled + qwen thinking_budget=300 no reasoning_effort).
   Real proof = the live boundary checks (Slice 1) + the reasoning wire-param log (Slice 2) after merge+bounce.
+- **SLICE 1 CUTOVER — LIVE_PATH_PROVEN (merge `99d12cc` -> production; bounce; `POLYMATH_REASONING_POLICY=0`).**
+  Fleet one bundle, /ready, orchestrator env `POLYMATH_REASONING_POLICY=0` + `POLYMATH_CORPUS_EXPLORER=1`.
+  Deployed shared re-proven on MAIN (113 tests). ALL 8 boundary checks PASS: (1) `/chat` normal =
+  answer, unchanged; (2) `/chat/evidence` = `kind:evidence` EvidencePacket v1, `synthesis_performed=false`,
+  21 rows w/ utility_role+ca4_grade (CA4 ran), corpus_explorer_used=true, all 4 receipts, NO answer field;
+  (3) evidence_only receipt `verdict=evidence_only` + NO synthesis_version (0 synthesis) & reviewer not in
+  path (0 reviewer); (4) polymath_search -> 38 evidence rows; (5) polymath_explore -> rich packet, no
+  synthesis; (6) polymath_answer -> answer; (7) `/capabilities` advertises `evidence-packet:v1` +
+  `/chat/evidence` + the 3 canonical tools, both servers carry the don't-pre-decompose contract; (8) bridge
+  `think:false` intact (2x) + extraction contract inputs (GENERATION_CONFIG/cloud_providers.json/pool.py)
+  UNCHANGED -> no re-key/re-extraction. Checkpoint tag `v4-reasoning-boundary-slice1`.
 
 ## Rejected claims
 - NOT claimed: any live behavior (RB1/RB2 live wiring + RB3 MCP are live-only; proof = post-merge live).
