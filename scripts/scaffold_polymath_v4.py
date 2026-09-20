@@ -672,6 +672,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("eval/librarian_qualification/CA5-SENTINEL-18-gold.json", "json", None),
     ("eval/corpus_explorer/ce7_activation_reliability.py", "py", None),
     ("eval/corpus_explorer/ce_safety_sentinel.py", "py", None),
+    ("eval/reasoning_boundary/SLICE2-WIRE-PARAMS-2026-09-19.json", "json", None),
     ("eval/corpus_explorer/CE7-ACTIVATION-RELIABILITY-2026-09-19.json", "json", None),
     ("eval/corpus_explorer/CE-SAFETY-SENTINEL-2026-09-19.json", "json", None),
     ("eval/wildcard_latent_knowledge/CAUSAL-REPLAY-HYBRID-2026-09-19.json", "json", None),

@@ -2,7 +2,7 @@
 change_id: REASONING-BOUNDARY-V1-BUILD
 owner: "@king"
 date: 2026-09-19
-status: in-progress
+status: complete
 architecture_impact: "Living build log for REASONING-BOUNDARY-V1 RB1->RB4. NEW pure shared modules (evidence_packet, reasoning_policy) + live wiring (chat_events short-circuit + /chat/evidence; reasoning policy on _litellm_generate/_run_reviewer/compiler; MCP search/explore/answer on both servers). Additive; the human /chat path stays byte-identical when evidence_only is unset; bridge + extraction reasoning untouched."
 last_reviewed: 2026-09-19
 ---
@@ -73,6 +73,19 @@ ui.py/mcp_server/compare_review/client are live-only (editable-.pth).
   `/chat/evidence` + the 3 canonical tools, both servers carry the don't-pre-decompose contract; (8) bridge
   `think:false` intact (2x) + extraction contract inputs (GENERATION_CONFIG/cloud_providers.json/pool.py)
   UNCHANGED -> no re-key/re-extraction. Checkpoint tag `v4-reasoning-boundary-slice1`.
+- **SLICE 2 REASONING QUAL — PASS (`POLYMATH_REASONING_POLICY=1` + bounce; separate reversible slice).**
+  INFO logs were suppressed, so the appliers append the sanitized applied params to a JSONL receipt
+  (`54094a4`; `POLYMATH_REASONING_RECEIPT`). Small live matrix (2 chats + 1 reviewer; the compiler fires on
+  each) captured the ACTUAL outgoing params (`eval/reasoning_boundary/SLICE2-WIRE-PARAMS-2026-09-19.json`):
+  STRUCTURED_COMPILER/qwen/chat_completions = **`thinking_budget=300, preserve_thinking=false` (NO
+  reasoning_effort)** out=500; CHAT_SYNTHESIS/deepseek/litellm = `extra_body.thinking:disabled` out=6000;
+  CHAT_SYNTHESIS/qwen/litellm = `enable_thinking:false, preserve_thinking:false` out=6000; REVIEWER/deepseek
+  = `thinking:disabled` out=200; a non-reasoning compiler lane ("other") = `{}` (safe). Output budget
+  INDEPENDENT of the reasoning ceiling; **reasoning never truncated the structured output** — all qual turns
+  finished `stop` (deepseek 1765 / qwen 1492 chars), reviewer parse_error=None, **0 compiler fallbacks**.
+  Claude(effort=low)/Gemini(thinking_level=low) not in the live config -> proven deterministically (unit).
+  End state: policy stays ON (qualified). REVERSIBLE: `POLYMATH_REASONING_POLICY=0` + bounce (evidence
+  boundary + MCP unaffected).
 
 ## Rejected claims
 - NOT claimed: any live behavior (RB1/RB2 live wiring + RB3 MCP are live-only; proof = post-merge live).
@@ -80,8 +93,12 @@ ui.py/mcp_server/compare_review/client are live-only (editable-.pth).
   request-capture test (RB2-live) validates each reaches the wire correctly.
 
 ## Open contract gaps
-RB1 live (chat_events short-circuit + `/chat/evidence` + `evidence_only`/`corpus_explorer` on both request
-models), RB2 live (apply `reasoning_params` at `_litellm_generate` CHAT_SYNTHESIS + `_run_reviewer` REVIEWER +
-chat-compiler STRUCTURED_COMPILER, VERIFYING no extract-contract re-key), RB3 (MCP search/explore/answer on
-both servers + deprecate polymath_query + capabilities + CONNECTORS.md), RB4 (live verification + close-out).
-All live-only + gated; `/chat` byte-identical when `evidence_only` unset.
+RB0-RB4 COMPLETE + LIVE. Slice 1 (evidence boundary, policy OFF) 8/8 proven; Slice 2 (reasoning policy ON)
+wire-params proven. Contract dispositions (additive, live-verified): `evidence_packet`/`reasoning_policy`
+NEW; `StreamChatRequest`/`ChatRequest`/`chat_events` UPDATED (`evidence_only`, byte-identical when unset);
+`_litellm_generate`/`_run_reviewer`/`client._chat` UPDATED (gated runtime overlay; extraction contract hash
+UNCHANGED, no re-extraction); both MCP servers + `capabilities.py` UPDATED (canonical surface). Consumers
+TESTED_UNCHANGED (102 impacted determinism + 69 extraction-client). END STATE: `POLYMATH_REASONING_POLICY=1`
+(qualified) + `POLYMATH_CORPUS_EXPLORER=1`, evidence boundary LIVE. FOLLOW-UPS (not blockers): Server A/B
+unification (deferred, owner said no); the suppressed INFO logger (superseded by the JSONL receipt).
+REVERSIBLE: `POLYMATH_REASONING_POLICY=0` + bounce restores pre-RB reasoning; evidence boundary + MCP stay.

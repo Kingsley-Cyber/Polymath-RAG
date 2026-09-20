@@ -18,7 +18,38 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-19 — **CORPUS-EXPLORER-V1 LIVE + SAFE (registers 11.335–339; CE0→CE7 + CE-UI).**
+## CURRENT — 2026-09-19 — **REASONING-BOUNDARY-V1 LIVE (registers 11.340–344; RB0→RB4, two proven reversible slices).**
+Two workstreams shipped to `production`. (1) **Evidence boundary:** `chat_events` short-circuits before
+synthesis when `req.evidence_only` → returns a versioned, size-bounded **EvidencePacket** (`shared/
+polymath_shared/evidence_packet.py`: utility_role DIRECT/COMPLEMENTARY/DIVERGENT + ca4_grade
+DIRECT/PARTIAL/RELATED + provenance + activation/bridges/corpus_explore/fusion receipts;
+`synthesis_performed=false`) via NEW `POST /chat/evidence`; NO synthesis LLM, NO reviewer. Canonical MCP
+surface **`polymath_search`/`polymath_explore`/`polymath_answer`** on BOTH servers (`orchestrator/mcp_server.py`
++ `mcp_server/polymath_mcp.py`), `polymath_query`/`polymath_retrieve` deprecated, retrieval-authority /
+don't-pre-decompose descriptions. So external agents (Claude Code/Hermes) get validated corpus evidence and
+do their OWN final reasoning — no nested Polymath synthesis. (2) **Reasoning policy:** a semantic
+role→BUDGET policy (`shared/polymath_shared/reasoning_policy.py`; reasoning ceiling SEPARATE from output
+floor) via API-surface-aware provider adapters, applied at `_litellm_generate` (CHAT_SYNTHESIS) +
+`_run_reviewer` (REVIEWER; deepseek disable kept ungated for correctness) + chat-compiler
+(`client.reasoning_role`), gated by `POLYMATH_REASONING_POLICY`. **Extraction (contract-hash-locked) + bridge
+(`think:false`) UNTOUCHED** (runtime overlay, no config/hash change). **Evidence: shared UNIT_PROVEN
+(evidence_packet 8 + reasoning_policy 13); SLICE 1 (policy OFF) 8/8 boundary checks LIVE-PROVEN** (`/chat`
+unchanged; `/chat/evidence` packet, 0 synthesis via ledger `verdict=evidence_only`; MCP tools; extraction/
+bridge unchanged); **SLICE 2 (policy ON) wire-params PROVEN** (`eval/reasoning_boundary/SLICE2-WIRE-PARAMS-
+2026-09-19.json`: qwen compiler `thinking_budget=300` not `reasoning_effort`, deepseek disabled, output
+independent, 0 truncation/fallbacks). **Repository State:** `production` HEAD = the REASONING-BOUNDARY-V1
+closeout commit; feature merge `99d12cc`; branch `reasoning-boundary/agent-evidence` merged; tags
+`v4-reasoning-boundary-slice1` + `v4-reasoning-boundary-v1`. Fleet: bundle bounced, /ready, orchestrator env
+`POLYMATH_REASONING_POLICY=1` + `POLYMATH_CORPUS_EXPLORER=1`. **REVERSIBLE:** `POLYMATH_REASONING_POLICY=0` +
+bounce restores pre-RB reasoning (evidence boundary + MCP stay); `evidence_only` unset = normal `/chat`.
+
+**Next Action** — REASONING-BOUNDARY-V1 CLOSED OUT (LIVE, both slices proven). Optional follow-ups (not
+started, not blockers): unify the two MCP servers (owner deferred); the suppressed INFO `polymath.reasoning`
+logger (superseded by the JSONL receipt — could wire a proper handler). Do NOT touch extraction/bridge
+reasoning; do NOT use `max_tokens` as the reasoning control. Startup unchanged (AGENTS.md → this report →
+guards → fleet truth → boot if needed).
+
+## PRIOR — 2026-09-19 — **CORPUS-EXPLORER-V1 LIVE + SAFE (registers 11.335–339; CE0→CE7 + CE-UI).**
 Bounded, corpus-grounded agentic RAG: a NON-GENERATIVE concept-keyed activation path (CONCEPT/THEORY atoms
 via `search_atoms`, INDEPENDENT of Scout) feeds the EXISTING WLK2C bridge compiler under a distinct
 `CORPUS_EXPLORE` origin, TWO-LAYER-GATED (server capability `POLYMATH_CORPUS_EXPLORER` × per-request

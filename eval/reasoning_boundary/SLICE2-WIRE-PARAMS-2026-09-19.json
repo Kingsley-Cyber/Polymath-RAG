@@ -1,0 +1,62 @@
+{
+ "contract": "reasoning-boundary-slice2-wire-v1",
+ "policy": "POLYMATH_REASONING_POLICY=1",
+ "note": "ACTUAL outgoing reasoning params captured live per (role,provider,surface). qwen compiler=thinking_budget=300 NOT reasoning_effort; deepseek disabled; output budget independent of reasoning; all qual turns finished stop (not truncated).",
+ "n_calls_logged": 7,
+ "distinct": [
+  {
+   "role": "STRUCTURED_COMPILER",
+   "provider": "qwen",
+   "surface": "chat_completions",
+   "top_level": {
+    "thinking_budget": 300,
+    "preserve_thinking": false
+   },
+   "extra_body": {},
+   "max_output_tokens": 500
+  },
+  {
+   "role": "STRUCTURED_COMPILER",
+   "provider": "other",
+   "surface": "chat_completions",
+   "top_level": {},
+   "extra_body": {},
+   "max_output_tokens": 500
+  },
+  {
+   "role": "CHAT_SYNTHESIS",
+   "provider": "deepseek",
+   "surface": "litellm",
+   "top_level": {},
+   "extra_body": {
+    "thinking": {
+     "type": "disabled"
+    }
+   },
+   "max_output_tokens": 6000
+  },
+  {
+   "role": "CHAT_SYNTHESIS",
+   "provider": "qwen",
+   "surface": "litellm",
+   "top_level": {},
+   "extra_body": {
+    "enable_thinking": false,
+    "preserve_thinking": false
+   },
+   "max_output_tokens": 6000
+  },
+  {
+   "role": "REVIEWER",
+   "provider": "deepseek",
+   "surface": "litellm",
+   "top_level": {},
+   "extra_body": {
+    "thinking": {
+     "type": "disabled"
+    }
+   },
+   "max_output_tokens": 200
+  }
+ ]
+}
