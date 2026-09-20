@@ -225,3 +225,16 @@ problem for a firing percentage. Needs its own mission + qualification.
 REVERSIBLE: `POLYMATH_CORPUS_EXPLORER_FALLBACK_OPEN=0` + bounce restores the pre-fix gate (receipts stay).
 Two bounces were used (Phase A instrumentation had to be live to attribute; Phase B fix) — the goal's "ONE
 port-gated bounce" was applied per deploy.
+
+**OWNER ACCEPTANCE 2026-09-20 (register 11.349) — Item 1 CLOSED + FROZEN.** Owner scorecard: root-cause
+attribution PASS · missing-receipt problem FIXED · fallback infrastructure case FIXED · thresholds/weights
+untouched PASS · negative controls PASS · same-query stability PASS · fresh-query firing 6/6 ·
+attempted-retrieval firing **14/14 across batches** (the meaningful metric; the strict 10/11 miss is the
+intentional `TRANSFORM_USER_CONTENT` case) · provenance PASS · safety sentinel PASS · kill switch PRESENT ·
+guards/tests PASS. Two caveats stay explicitly OPEN: (1) `FLAG-OFF: structural equivalence PROVEN · exact
+candidate/evidence set equality NOT MEASURED` — never to be restated as "exact equivalence proven";
+(2) the 24% compiler backup-lane rate is a SEPARATE reliability problem → `OWNER-BACKLOG.md` B19
+`CHAT-COMPILER-PROVIDER-RELIABILITY`, not a Corpus Explore defect. The toggle-vs-routing design question is
+parked as B20. Freeze: no higher firing target, no opportunistic retries, no `TRANSFORM_USER_CONTENT`
+override, no threshold change, no graph/entity enrichment, no further large CE benchmark.
+

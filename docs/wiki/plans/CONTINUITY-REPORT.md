@@ -25,8 +25,11 @@ tag `v4-corpus-explore-firing-v1`, **UNPUSHED**); tree clean; merges `3366d8c` (
 B); worktree `pmv4-firing` / branch `explorer/firing-reliability` merged. `origin/main` = `cf1ee4f` (far
 behind, PR-squash-only); no `origin/production`.
 
+**OWNER ACCEPTANCE 2026-09-20 (register 11.349): Item 1 is CLOSED and FROZEN** — "closes Item 1 well enough to
+move on"; the meaningful metric is **14/14 fired when retrieval was attempted**, not the strict 10/11.
+
 **Active Mission** — NONE in flight. Owner's v1 finish line: item 1 (activation firing) CLOSED here; **next
-= item 2, concept-atom COVERAGE AUDIT** (then 3 migrate agent callers → 4 freeze EvidencePacket + MCP
+= item 2, CONCEPT/THEORY COVERAGE + CORPUS SCOPING** (then 3 migrate agent callers → 4 freeze EvidencePacket + MCP
 contract → 5 fresh release qualification → 6 final release tag).
 
 **Completed Since Last Bootstrap**
@@ -73,6 +76,12 @@ SUBQUERY_PROVENANCE → all **TESTED_UNCHANGED**. Extraction / bridge reasoning 
 - **NOT MET / NOT MEASURED (do not inherit false confidence):** strict >=95% (the one miss is an intentional
   `TRANSFORM_USER_CONTENT` no-retrieval routing — by design); strict flag-off evidence-id SET EQUALITY (no
   A/A pair run; holds by construction — retrieval code untouched, nothing reads the receipt key).
+- **FLAG-OFF, in the owner's exact form — never let later docs upgrade this to "exact equivalence proven":**
+  ```text
+  FLAG-OFF:
+  structural equivalence:                  PROVEN
+  exact candidate/evidence set equality:   NOT MEASURED
+  ```
 
 **Runtime / Test Resolution** — `.venv` editable `.pth` resolves `orchestrator`/`workers`/`control` to the
 MAIN checkout; `shared/` resolves to the current worktree under pytest. `ui.py` is live-only-provable. Eval
@@ -88,14 +97,29 @@ Orchestrator env: `POLYMATH_CORPUS_EXPLORER=1`, `POLYMATH_CORPUS_EXPLORER_FALLBA
 `POLYMATH_REASONING_POLICY=1`, `POLYMATH_CHAT_LATENT_FUSION=1`, `POLYMATH_CHAT_LATENT_SELECTION=1`,
 `POLYMATH_CHAT_BRIDGE_COMPILER=1` (`.env` is gitignored — read the LIVE file, not `.env.example`).
 
-**Next Action**
-1. Item 2 — concept-atom COVERAGE AUDIT ($0, read-only): total documents · documents with profile atoms ·
-   with CONCEPT/THEORY atoms · missing profile extraction · stale profile versions · failed extraction
-   rows. Include the scoping observation: `_add_corpus_explore_expansion._fetch(cid)` ignores `cid`
-   (`search_atoms` searches the whole atom collection). If gaps → propose a TARGETED backfill; never re-ingest.
-2. Passive: watch the JSONL ledger for a fired row with `stages.plan_fallback` (the fix seen over HTTP) and
-   for any `PLAN_FALLBACK invalid_plan:*` on an on-target query.
-3. Push of `v4-corpus-explore-firing-v1` happens ONLY on the owner's explicit word.
+**Next Action** — **Item 2: CONCEPT/THEORY COVERAGE + CORPUS SCOPING** (owner spec 2026-09-20). The question:
+*does every corpus/document that should participate in Corpus Explore actually have usable CONCEPT/THEORY
+atoms, and are those atoms correctly scoped to the requested corpus?* Read-only + $0 until a fix is proven
+necessary. Four measurements, **D FIRST** (already surfaced as a likely correctness bug):
+- **D. Corpus isolation (PRIORITY).** `_add_corpus_explore_expansion._fetch(cid)` ignores `cid` and
+  `search_atoms(client, collection, query_vec, kinds, k)` takes NO corpus argument → it searches ALL atoms.
+  Harmless with one corpus; with several it is a correctness bug (query corpus A → concept atom from corpus B
+  → subquery grounded in the wrong corpus). Test: a corpus-A query's activation candidates must ALL originate
+  from corpus A (and B from B). **Fix the retrieval CONTRACT, do not filter after generation:**
+  `search_atoms(query_vector, kinds=[...], corpus_ids=[...], k=...)` so the nearest-neighbour result itself is
+  corpus-correct. Known fact: the atom payload ALREADY carries `corpus_id`
+  (`profile_atom_projection.py` payload builder) and the module already builds `corpus_id` Qdrant filters
+  for counts/deletes — so an early filter needs no payload backfill. Check every other `search_atoms` caller.
+- **A. Document coverage.** total documents · eligible for profiling · with PROFILE_ATOM rows · with >=1
+  CONCEPT · with >=1 THEORY · with neither — counts AND percentages, per corpus.
+- **B. Atom health.** total CONCEPT / THEORY atoms · missing `doc_id` · referencing nonexistent documents ·
+  duplicates · empty/near-empty text · invalid embeddings · profile-version distribution.
+- **C. Historical coverage.** coverage by ingestion/profile version (e.g. "version X 95%, older Y 23%"). If a
+  gap exists → TARGETED profile/atom backfill only. Do NOT re-ingest / re-chunk / re-embed the corpus unless
+  evidence shows it is necessary.
+Then: item 3 migrate agent callers → 4 freeze EvidencePacket + MCP contract → 5 fresh release qual → 6 tag.
+Passive: watch the JSONL ledger for a fired row with `stages.plan_fallback` (the fix seen over HTTP). Push of
+`v4-corpus-explore-firing-v1` happens ONLY on the owner's explicit word.
 
 **Do Not Do**
 - Do NOT make the Corpus Explore toggle override a no-retrieval compiler route — DEFERRED OWNER DESIGN
@@ -105,6 +129,12 @@ Orchestrator env: `POLYMATH_CORPUS_EXPLORER=1`, `POLYMATH_CORPUS_EXPLORER_FALLBA
 - Do NOT tune thresholds / weights / `POLYMATH_CORPUS_EXPLORER_*` bounds to a query set; no activation-score
   threshold; no new fusion weight; no parent-map / entity-card / graph activation (v2).
 - Do NOT run more live qualification for this mission: 34 executions spent, none further authorized.
+- **ITEM 1 IS FROZEN (owner 2026-09-20).** Do NOT: raise the firing target again · add retries "because you
+  can" · override `TRANSFORM_USER_CONTENT` · change thresholds · add graph/entity enrichment · rerun another
+  large CE benchmark. There is enough evidence.
+- Do NOT fold compiler provider reliability (24% backup-lane rate) back into Corpus Explore — it is its own
+  backlog item, `CHAT-COMPILER-PROVIDER-RELIABILITY` (`OWNER-BACKLOG.md` B19). The toggle-vs-routing
+  question is B20.
 - Do NOT push any ref (tag, `production`, `main`) without the owner's explicit per-push word.
 
 **Live Qualification Queue** — none open for this mission.
