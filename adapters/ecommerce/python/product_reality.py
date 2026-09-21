@@ -24,7 +24,7 @@ RELATIONS = ("competitor", "substitute", "current_solution", "validates", "solve
 ROLE_DEFAULT_RELATION = {"competition": "competitor", "price": "competitor"}
 CONTEXT_CONVENTION = ("record in the observation context — `concept: {concept_id}`{variation} · `relation: competitor | substitute | current_solution | "
                       "validates | solves` (`solves` = an existing product ALREADY does what this concept would) · `product: <name as listed>` · "
-                      "`price as listed: <text>` when shown")
+                      "`price as listed: <text>` when shown · `intent: <this intent's id>`")
 
 
 def variation_id(concept_id: str, index: int) -> str:
@@ -117,6 +117,7 @@ def join(admitted: list[Mapping[str, Any]], observations: Mapping[str, Mapping[s
     mech_by_id = {str(m.get("id")): m for m in mechanisms if isinstance(m, Mapping)}
     variations = {variation_id(cid, n): str(v.get("name")) for cid, c in concept_by_id.items() for n, v in enumerate(c.get("variations") or []) if isinstance(v, Mapping)}
     products: list[dict[str, Any]] = []
+    job_ids = {str(j.get("job_id")) for j in jobs if j.get("job_id")}
     stats = {"admitted": 0, "without_observation": 0, "without_concept_tag": 0, "unknown_concept": 0, "joined": 0}
     unjoined: list[dict[str, Any]] = []
     for a in admitted:
@@ -143,7 +144,8 @@ def join(admitted: list[Mapping[str, Any]], observations: Mapping[str, Mapping[s
                          "hypothesis_id": mech.get("hypothesis_id"), "hypothesis_ids": list(a.get("hypothesis_ids") or []), "mechanism_id": mech.get("id"),
                          "relation": relation, "contests_concept": contests, "product_name": context_field(ctx, "product"),
                          "price_raw": context_field(ctx, "price as listed"), "url": src.get("url"), "claim": str(o.get("claim") or "")[:400],
-                         "evidence_role": a.get("evidence_role"), "polarity": a.get("polarity"), "metric": o.get("metric_if_present")})
+                         "evidence_role": a.get("evidence_role"), "polarity": a.get("polarity"), "metric": o.get("metric_if_present"),
+                         "job_id": (context_field(ctx, "intent") if context_field(ctx, "intent") in job_ids else None)})   # PROVENANCE HOOK: the job that found it
         stats["joined"] += 1
     planned = {}
     for j in jobs:

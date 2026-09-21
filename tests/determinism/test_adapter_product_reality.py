@@ -113,7 +113,7 @@ def test_plan_refusals_are_typed_and_a_concept_without_lineage_is_reported():
 # ─────────────────────────────────────────────────────────── §10.4 / §10.5 join
 def _receipt_and_admission():
     obs = [("o1", "competition", "Peak Design Capture Clip V3 is sold with about 10,600 ratings: a dominant incumbent for strap-mounted carry.",
-            "concept: pc_1 · relation: competitor · product: Peak Design Capture Camera Clip V3 · price as listed: $79.95", "supporting"),
+            "concept: pc_1 · relation: competitor · product: Peak Design Capture Camera Clip V3 · price as listed: $79.95 · intent: q-review:pc_1:direct", "supporting"),
            ("o2", "price", "PGYTECH Beetle Clip V2 fits straps 1 to 20 mm thick and up to 80 mm wide.",
             "concept: pc_1 · variation: pc_1.v1 · relation: solves · product: PGYTECH Beetle Camera Clip V2 · price as listed: $59.95", "supporting"),
            ("o3", "competition", "No strap-mounted battery sleeve was found; photographers use generic belt pouches.",
@@ -139,6 +139,7 @@ def test_products_join_to_the_concept_their_tag_names_and_never_by_name(joined):
     products = {p["id"]: p for p in joined["existing_products"]}
     assert {i: p["concept_id"] for i, p in products.items()} == {"fev_o1": "pc_1", "fev_o2": "pc_1", "fev_o3": "pc_2"}
     assert products["fev_o2"]["variation_id"] == "pc_1.v1" and products["fev_o2"]["product_name"] == "PGYTECH Beetle Camera Clip V2" and products["fev_o2"]["price_raw"] == "$59.95"
+    assert products["fev_o1"]["job_id"] == "q-review:pc_1:direct" and products["fev_o2"]["job_id"] is None                 # PROVENANCE HOOK: the job that found it; absent stays absent
     assert products["fev_o1"]["hypothesis_id"] == H1 and products["fev_o1"]["mechanism_id"] == "m_strap_mount" and products["fev_o1"]["url"].startswith("https://www.amazon.com")
     # "a neoprene wrap" LOOKS like concept pc_3 — ownership is never inferred from a name; an unknown tag is not repaired either
     assert {(u["admitted_evidence_id"], u["reason"]) for u in joined["unjoined"]} == {("fev_o4", "NO_CONCEPT_TAG"), ("fev_o5", "UNKNOWN_CONCEPT")}

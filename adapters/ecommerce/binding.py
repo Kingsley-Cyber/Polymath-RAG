@@ -222,6 +222,16 @@ def _context_field(context: str, key: str) -> str | None:
     return m.group(1).strip() or None if m else None
 
 
+def _intent_lineage(context: str) -> dict[str, Any]:
+    """`intent: <search_intent_id>` in an observation's context -> {intent_id, gap_id}. A channel intent id ends with the gap it serves
+    (`q-complaint:reddit:gap_a5423927_0`, `…:falsify_a5423927`); a bound TrailSignal template ends with the hypothesis id prefix."""
+    intent = _context_field(context, "intent")
+    if not intent:
+        return {"intent_id": None, "gap_id": None}
+    tail = intent.rsplit(":", 1)[-1]
+    return {"intent_id": intent, "gap_id": tail if tail.startswith(("gap", "falsify")) else None}
+
+
 def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, int]]:
     """ADMITTED observations -> the engine's field records (AUTO_DECISIONS M-009 §3). Only what TrailSignal admitted exists here.
     The record id is the admitted-evidence id (the `field_evidence` id the agent can cite — one id space). TrailSignal's
@@ -277,7 +287,11 @@ def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, 
                         "workaround": str(o.get("claim") or "")[:200] if a.get("evidence_role") == "workaround" else "", "moment": _context_field(str(o.get("context") or ""), "moment"),
                         "freshness": {"class": a.get("freshness")}, "independence_group": a.get("independence_group"),
                         "hypothesis_ids": list(a.get("hypothesis_ids") or []), "contradicts": a.get("polarity") == "contradicting",
-                        "lead_id": _context_field(str(o.get("context") or ""), "lead")})
+                        "lead_id": _context_field(str(o.get("context") or ""), "lead"),
+                        # PROVENANCE HOOK: which compiled intent found this observation — and through the intent id, which gap of which
+                        # hypothesis it answers. The receipt's tool_trace counts queries per intent but never says which observation
+                        # came from which; without this tag that link is unrecoverable after the run.
+                        **_intent_lineage(str(o.get("context") or ""))})
     return out, {**stats, "_community_basis": basis}
 
 

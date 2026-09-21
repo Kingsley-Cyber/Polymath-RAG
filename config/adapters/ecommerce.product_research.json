@@ -1,6 +1,6 @@
 {
  "adapter_id": "ecommerce.product_research",
- "adapter_version": "0.5.0",
+ "adapter_version": "0.5.1",
  "workflow_version": "0.1.0",
  "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
@@ -1195,7 +1195,7 @@
    "type": "HARNESS_ACTION",
    "title": "Harness: field research",
    "next": "J_admit",
-   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations. Materials show `intent_index`: for every compiled intent the hypothesis it serves, the gap it answers and the query text — link each observation to the hypothesis whose intent found it.",
+   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations. Materials show `intent_index`: for every compiled intent the hypothesis it serves, the gap it answers and the query text — link each observation to the hypothesis whose intent found it. For every observation also record `intent: <the search intent id that found it>` in the observation context, so the evidence stays linked to the gap and the hypothesis it was sought for.",
    "harness": {
     "action_kind": "AGENT_RESEARCH",
     "minimum_independent_sources": 3,
@@ -2381,7 +2381,7 @@
    "type": "HARNESS_ACTION",
    "title": "Harness: product reality check",
    "next": "Q_admit",
-   "objective": "Investigate current products, alternatives, reviews, pricing, complaints and saturation for the candidate mechanisms; record sources, observations, tool trace and limitations. Every search intent is a JOB for ONE concept (materials: `reality_plan` — concept_id, variation_id, hypothesis_id, job_class, query). For every product you observe record in the observation context: `concept: <concept_id>` (and `variation: <variation_id>` when the job names one) · `relation: competitor | substitute | current_solution | validates | solves` — `solves` means an existing product ALREADY does what that concept would · `product: <name as listed>` · `price as listed: <text>`. An observation without a `concept:` tag is never attached to a concept.",
+   "objective": "Investigate current products, alternatives, reviews, pricing, complaints and saturation for the candidate mechanisms; record sources, observations, tool trace and limitations. Every search intent is a JOB for ONE concept (materials: `reality_plan` — concept_id, variation_id, hypothesis_id, job_class, query). For every product you observe record in the observation context: `concept: <concept_id>` (and `variation: <variation_id>` when the job names one) · `relation: competitor | substitute | current_solution | validates | solves` — `solves` means an existing product ALREADY does what that concept would · `product: <name as listed>` · `price as listed: <text>`. An observation without a `concept:` tag is never attached to a concept. Also record `intent: <the job's intent id>`.",
    "harness": {
     "action_kind": "PRODUCT_REALITY_CHECK",
     "minimum_independent_sources": 3,

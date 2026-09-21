@@ -287,7 +287,7 @@ def test_without_semantics_the_operation_behaves_exactly_as_before():
 # ─────────────────────────────────────────────────────────── §9.6 the field-record mapping
 def test_field_records_read_the_current_ledger_state_and_never_call_a_host_a_community():
     receipt = {"action_id": "hact_1", "observations": [
-        {"observation_id": "obs_1", "source_id": "s1", "claim": "I tape a spare battery to the tripod leg", "paraphrase_or_excerpt": "been doing this for years", "context": "lead: lead_1"},
+        {"observation_id": "obs_1", "source_id": "s1", "claim": "I tape a spare battery to the tripod leg", "paraphrase_or_excerpt": "been doing this for years", "context": "lead: lead_1 · intent: q-workaround:reddit:gap_a5423927_0"},
         {"observation_id": "obs_2", "source_id": "s1", "claim": "digging through the pack costs me the light", "paraphrase_or_excerpt": "every dawn", "context": ""}],
         "sources": [{"source_id": "s1", "url": "https://www.photrio.com/forum/threads/1", "source_class": "forum"}]}
     admission = {"admitted": [{"admitted_evidence_id": "fev_1", "observation_id": "obs_1", "evidence_role": "workaround", "polarity": "supporting", "hypothesis_ids": [H1],
@@ -303,3 +303,5 @@ def test_field_records_read_the_current_ledger_state_and_never_call_a_host_a_com
     assert rec["fev_1"]["workaround"] == "I tape a spare battery to the tripod leg" and rec["fev_1"]["quote_ref"] == "been doing this for years"
     assert rec["fev_1"]["friction_family"] == "buried accessories" and rec["fev_2"]["friction_family"] == "lens weight on the neck"   # revised state, SPLIT-safe
     assert rec["fev_2"]["workaround"] == ""
+    # PROVENANCE HOOK: the observation keeps the intent that found it and, through it, the gap it answers; absent stays absent
+    assert (rec["fev_1"]["intent_id"], rec["fev_1"]["gap_id"]) == ("q-workaround:reddit:gap_a5423927_0", "gap_a5423927_0") and (rec["fev_2"]["intent_id"], rec["fev_2"]["gap_id"]) == (None, None)
