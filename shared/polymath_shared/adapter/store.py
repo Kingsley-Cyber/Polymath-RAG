@@ -218,7 +218,13 @@ def admitted_evidence_refs(conn, run_id: str) -> list[dict[str, Any]]:
 
 
 def admission_ids(conn, run_id: str) -> list[str]:
-    rows = conn.execute("SELECT DISTINCT admission_id FROM adapter_admitted_evidence WHERE run_id=%s", (run_id,)).fetchall()
+    """Every admission TrailSignal made for this run — INCLUDING one that admitted nothing. An empty admission is a governed event,
+    and Trail's next judgement cites it as its cause; deriving the ids from admitted rows alone dropped it, the verdict was refused
+    (PHI_VERDICT_INVALID) and a real run died (defect D1, hit again by real input 2026-09-21)."""
+    rows = conn.execute("""SELECT DISTINCT admission_id FROM adapter_admitted_evidence WHERE run_id=%s
+                           UNION
+                           SELECT admission->>'admission_id' FROM adapter_harness_actions
+                            WHERE run_id=%s AND admission IS NOT NULL AND admission->>'admission_id' IS NOT NULL""", (run_id, run_id)).fetchall()
     return sorted(r[0] for r in rows)
 
 
