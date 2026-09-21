@@ -29,6 +29,8 @@ Env:  POLYMATH_MCP_PORT (8930)  POLYMATH_MCP_API_KEY (bearer)
 """
 from __future__ import annotations
 
+import contextvars
+import hmac
 import json
 
 import re
@@ -63,6 +65,24 @@ _SECURITY = TransportSecuritySettings(
     allowed_origins=[f"https://{PUBLIC_HOST}",
                      f"http://127.0.0.1:{PORT}",
                      f"http://localhost:{PORT}"])
+
+# HOSTED-SURFACE ISOLATION (migration Phase 13): this ONE process serves Hermes on the loopback listener AND the public
+# hostname through the tunnel. A tool that reads the HOST filesystem is lawful only for a caller that addressed the
+# loopback listener directly; everything that came through the edge carries the public Host and the edge's headers.
+# The gate decides per request; the default is NOT local, so a lost context refuses (fail closed) instead of serving.
+_LOOPBACK_HOSTS = {f"127.0.0.1:{PORT}", f"localhost:{PORT}"}
+_EDGE_HEADERS = (b"cf-connecting-ip", b"cf-ray", b"cdn-loop", b"x-forwarded-for", b"forwarded")
+_CALLER_IS_LOCAL: contextvars.ContextVar[bool] = contextvars.ContextVar("polymath_mcp_caller_is_local", default=False)
+REMOTE_PATH_UPLOAD_DISABLED = {
+    "error": "REMOTE_PATH_UPLOAD_DISABLED: upload_document reads a path on the Polymath HOST, and a remote caller has no "
+             "host paths. Send the content instead: upload_text(text, corpus_id, source_name).",
+    "status": 403}
+
+
+def _is_local_caller(headers: dict) -> bool:
+    host = (headers.get(b"host") or b"").decode("latin-1").strip().lower()
+    return host in _LOOPBACK_HOSTS and not any(h in headers for h in _EDGE_HEADERS)
+
 
 mcp = MCPServer(
     name="polymath",
@@ -137,7 +157,10 @@ async def upload_document(path: str, corpus_id: str) -> dict:
     addressed: the same bytes return the existing run, already_exists
     true). A file whose content already lives in ANOTHER corpus is
     refused (409 CROSS_CORPUS_CONTENT_COLLISION) — content belongs to
-    one corpus. Then poll document_status(corpus_id, source_name)."""
+    one corpus. Then poll document_status(corpus_id, source_name).
+    LOCAL callers only (the loopback listener): a remote caller gets REMOTE_PATH_UPLOAD_DISABLED — use upload_text."""
+    if not _CALLER_IS_LOCAL.get():
+        return dict(REMOTE_PATH_UPLOAD_DISABLED)             # before ANY filesystem access: no existence oracle either
     p = Path(path).expanduser()
     if not p.is_file():
         return {"error": f"file not found: {path}", "status": 404}
@@ -506,10 +529,11 @@ def build_app():
                     return
                 headers = dict(scope.get("headers") or [])
                 auth = (headers.get(b"authorization") or b"").decode()
-                if auth != f"Bearer {API_KEY}":
+                if not hmac.compare_digest(auth.encode(), f"Bearer {API_KEY}".encode()):
                     resp = Response("unauthorized", status_code=401)
                     await resp(scope, receive, send)
                     return
+                _CALLER_IS_LOCAL.set(_is_local_caller(headers))
             await self.app(scope, receive, send)
 
     app = Starlette(routes=[

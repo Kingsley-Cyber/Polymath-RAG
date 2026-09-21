@@ -46,6 +46,19 @@ the `mcp` slot. Hermes registers `url: http://127.0.0.1:8930/mcp` with an `Autho
 its own MCP tooling (never by hand-editing `~/.hermes/config.yaml`). A changed Server A tool description or schema
 reaches Hermes only after a fleet bounce AND one Hermes MCP reload.
 
+**The hosted surface (`https://mcp.kingsleylab.xyz/mcp`) is the SAME Server A**, reached through the named tunnel. A caller that
+did not address the loopback listener directly is REMOTE: `upload_document(path, …)` answers it
+`REMOTE_PATH_UPLOAD_DISABLED` (403) before any filesystem access — a remote agent has no host paths; it sends content with
+`upload_text`. Hermes on this machine (loopback) is unchanged. Surface acceptance, read-only by default:
+
+```bash
+.venv/bin/python scripts/hosted_mcp_acceptance.py --url https://mcp.kingsleylab.xyz --key-file ~/PolymathRuntime/polymath-v4-mcp.key --vantage host
+```
+
+Run it from ANOTHER machine with `--vantage external:<label>` for external-access proof. The adapter lifecycle over the hosted
+surface is `scripts/adapter_mcp_acceptance.py --mcp-url https://mcp.kingsleylab.xyz/mcp --no-restart`. The surface has ONE
+shared bearer key: every key holder sees every corpus and every caller's `recent_queries`.
+
 **Remote / custom agents → Server B over HTTP.** Start it (stateless HTTP, MCP 2026-07-28 core; Bearer-key auth):
 
 ```bash

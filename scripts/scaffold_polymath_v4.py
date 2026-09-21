@@ -218,6 +218,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/repo_guard.py", "py", "_REPO_GUARD"),
     ("scripts/contract_impact.py", "py", None),
     ("scripts/deploy_ecommerce_skill.py", "py", None),
+    ("scripts/hosted_mcp_acceptance.py", "py", None),
     ("scripts/hooks/pre-commit.sh", "sh", None),
 
     # ── CI ────────────────────────────────────────────────────────────────
@@ -707,6 +708,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-20-consolidation-phase6-recorded-equivalence.md", "md", None),
     ("docs/wiki/work-log/2026-09-20-consolidation-premerge-validation.md", "md", None),
     ("docs/wiki/work-log/2026-09-20-consolidation-phase9-deterministic-skill-deploy.md", "md", None),
+    ("docs/wiki/work-log/2026-09-20-consolidation-phase13-hosted-surface-acceptance.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT_EXTENDED.md", "md", None),
     ("docs/migration/MIGRATION_POLICY.md", "md", None),
@@ -1016,6 +1018,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_trail_core_embedding.py", "py", None),
     ("tests/contracts/test_registry_single_authority_state.py", "py", None),
     ("tests/contracts/test_deploy_ecommerce_skill.py", "py", None),
+    ("tests/contracts/test_hosted_mcp_acceptance.py", "py", None),
     ("tests/determinism/_adapter_memory_store.py", "py", None),
     ("tests/fixtures/adapter_domain_binding/fixture.domain_binding.json", "json", None),
     ("tests/fixtures/adapter_domain_binding/fixture.knowledge_intake.json", "json", None),
