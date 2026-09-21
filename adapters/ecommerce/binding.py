@@ -26,6 +26,12 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "python"))
 #: governed operations never read or write the engine's registry build cache (AUTO_DECISIONS M-009 §4)
 os.environ["OPPORTUNITY_RESEARCH_REGISTRY"] = "compile"
+#: Registry source for population priors (AUTO_DECISIONS M-014). The engine's mirror is a STRICT SUPERSET of TrailSignal's tables: it defines ten
+#: friction families that 236 of TrailSignal's own seed rows reference but TrailSignal's friction_library never defines, so TrailSignal's data alone
+#: fails this engine's fail-closed compiler. Until the owner decides whether those rows go upstream, governed nomination reads the mirror and SAYS so
+#: in its output; TrailSignal's registry stays the only GOVERNANCE registry (admission, judgement, qualification, score).
+REGISTRY_SOURCE = "adapters/ecommerce/registry/trailsignal (engine mirror; superset of governance/trail/data — M-014)"
+os.environ.pop("OPPORTUNITY_RESEARCH_REGISTRY_SRC", None)
 
 REQUEST_VERSION = "domain_operation_request.v1"
 
@@ -198,8 +204,11 @@ def _op_population_nominate(req: dict[str, Any]) -> dict[str, Any]:
         raise Refusal("POPULATION_NOT_FOUND", "no population could be nominated from the signal, the primitives, the registry or prior field rows")
     batch = lived_world.eligible_leads(state, policies)[: int((policies.get("lived_world") or {}).get("batch_size", 4))]
     d = state["data"]
+    import registry as _registry
+    snap = _registry.load_snapshot() or {}
     return {"population_leads": d.get("population_leads") or [], "community_leads": d.get("community_leads") or [], "ranked_lead_ids": ranked,
-            "batch": batch, "communities": d.get("communities") or [], "note": note}
+            "batch": batch, "communities": d.get("communities") or [], "note": note,
+            "registry": {"source": REGISTRY_SOURCE, "build_id": snap.get("build_id"), "seeds": len(snap.get("seeds") or []), "friction_families": len(snap.get("friction_families") or {})}}
 
 
 _CONTEXT_FIELD = r"(?:^|·|\||;|\n)\s*{key}\s*:\s*([^·|;\n]+)"

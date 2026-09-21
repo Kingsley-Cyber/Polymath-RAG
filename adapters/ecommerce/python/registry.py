@@ -29,7 +29,9 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "registry", "trailsignal")
+#: where the registry tables are read from. Standalone: this skill's own mirror. Inside polymath-v4 the governed binding points it at
+#: TrailSignal's byte-pinned registry (governance/trail/data) so a governed run has ONE registry authority (AUTO_DECISIONS M-014).
+SRC = os.environ.get("OPPORTUNITY_RESEARCH_REGISTRY_SRC") or os.path.join(ROOT, "registry", "trailsignal")
 OUT = os.path.join(ROOT, "registry", "compiled", "registry_snapshot.json")
 
 SOURCES = ["outdoor_activity_niche_seed", "friction_library", "search_query_templates",
