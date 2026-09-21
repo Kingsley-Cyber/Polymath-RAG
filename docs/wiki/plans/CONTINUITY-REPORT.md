@@ -32,8 +32,7 @@ failed on provider 503, 4 stuck in `reconciling`.
 **Proof Status** — `LIVE_PATH_PROVEN` with REAL_INPUT_EXECUTED for the whole ecommerce path (hosted endpoint, non-admin principal, corpus `cinema`, real web research, real competitors and Alibaba suppliers, Trail admission / judgement /
 territory / qualification / score refusal, engine-rendered dossier). Host vantage only. A positive Trail score: not reached. Capability table: `docs/migration/PARITY_MATRIX.md`.
 
-**Next Action** — dossier product-artifact gaps (existing-products section, qualification gates, links) → close Phase 10 (`commerce-v1`) → one real run on the commerce corpus → external-machine acceptance with a temporary principal → negative
-control → revoke acceptance principals → cleanup. Exact steps: `docs/migration/CONTINUATION.md` "Next Exact Action".
+**Next Action — REALIGNED by the owner 2026-09-21 (nothing executed yet):** read `docs/migration/OWNER_REALIGNMENT_2026-09-21_LATENT_TRANSDUCTION.md` first. NOW = the read-only semantic transduction AUDIT (arbitrary evidence → latent representation → Trail coordinates), then stop for the owner's three decisions; then five fixes → cinema real benchmark again → negative control → off-host MCP → dossier gaps → acceptance. `commerce-v1` repair and per-corpus Trail overlays are OFF the critical path. New-session prompt: `docs/migration/REALIGNMENT_BOOTSTRAP_PROMPT.md`. Exact steps: `docs/migration/CONTINUATION.md` "Next Exact Action".
 
 **Do Not Do** — stop the fleet for a merge that may be denied · run Postgres-backed adapter suites against the fleet's database · import the engine's flat modules in process · edit `governance/trail/{src,config,data}` ·
 relax the engine's registry compiler · carry an engine score into governed output · push any ref.
