@@ -357,3 +357,40 @@ directive are byte-equal before and after enrichment, and the issued `HarnessAct
 
 #### Affected files / commits
 Planned on `migration/ecommerce-consolidation`: `adapters/ecommerce/binding.py`, `adapters/ecommerce/python/registry.py` (env switch), `config/adapters/ecommerce.product_research.json`, tests.
+
+### M-010 — Hypotheses onto the ONE ledger, mechanism support from the ledger, and no engine score in governed mode
+
+#### Question
+(a) The engine's hypotheses carry bridge fields the ledger's `HypothesisStateV1` does not (`path`, `evidence_boundary`, `hop_refs`, `target_mechanism`, `gaps`, `lived_anchor_ids`). Where do they
+live without a second ledger? (b) The engine's product and supply code keys on mechanisms with `status == "SUPPORTED"` — who decides that in governed mode? (c) The engine's `scoring()` computes its own
+verdict and `evidence_score` while assembling leads.
+
+#### Evidence
+(a) `service._apply_theta` stores the agent's full proposals in the θ step output and adds a parallel `hypothesis_ids`; `hypotheses.generate` builds the ledger state from the fields it knows and
+ignores the rest; a manifest step's `output_schema` decides which extra fields an agent may send. (b) The ledger status enum is `proposed, filtered, retained, revised, split, merged, weakened,
+strengthened, contradicted, killed, promoted`; only TrailSignal's φ verdicts and θ revisions move it. (c) The join was inlined in `scoring()` (`executors.py:555-575`).
+
+#### Applicable migration invariants
+INV-3 one hypothesis ledger · INV-5 Trail is the deterministic judge · the standing rule "No LLM or skill score touches a Trail score".
+
+#### Decision
+(a) Bridge fields ride in the θ step OUTPUT beside the ledger ids; the binding zips them (`_ledger_hypotheses`) so every domain hypothesis is addressed by its ledger id. The ledger stays the only hypothesis STATE.
+(b) A mechanism is SUPPORTED only while the hypothesis it builds on is `proposed / retained / revised / split / strengthened / promoted` in the ledger; the agent's own `status` is ignored and ineligible
+mechanisms are listed. (c) The join is one engine function `join_leads` with no score; governed `supply.leads` emits leads with NO `evidence_score` and NO verdict; standalone `scoring()` is unchanged and is
+LEGACY_STANDALONE (non-authoritative in governed mode).
+
+#### Alternatives rejected
+Extending `HypothesisStateV1` with domain fields (a contract change that would put ecommerce vocabulary into a neutral runtime) · a domain-side hypothesis store (a second ledger) · trusting the
+agent's `status` · carrying the engine score "for information" (it would sit beside Trail's score in the dossier and be read as one).
+
+#### Why this is the smallest reversible choice
+No contract or runtime change; one extraction in the engine proven by its own suite.
+
+#### Reversibility
+Revert the binding helpers; `scoring()` still works standalone.
+
+#### Validation / proof
+`test_adapter_ecommerce_products_supply.py`: claimed-SUPPORTED on a `weakened` hypothesis is refused; `contradicted` yields no lead; leads carry no score; engine suite 609 / 609.
+
+#### Affected files / commits
+`migration/ecommerce-consolidation` `7f87e57` (register 11.368).
