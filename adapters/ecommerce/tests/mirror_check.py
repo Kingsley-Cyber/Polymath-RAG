@@ -54,9 +54,20 @@ def git_head(path: str) -> str | None:
         return None
 
 
+def git_containing(path: str) -> dict | None:
+    """When the REFERENCE is a subdirectory of a larger repository (the engine inside polymath-v4 at adapters/ecommerce), that
+    repository's HEAD and the subdirectory ARE its provenance. Never used for the deployed copy (see git_head)."""
+    try:
+        head = subprocess.run(["git", "-C", path, "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+        prefix = subprocess.run(["git", "-C", path, "rev-parse", "--show-prefix"], capture_output=True, text=True, check=True).stdout.strip().rstrip("/")
+        return {"commit": head, "subdir": prefix} if head and prefix else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def git_dirty(path: str) -> int | None:
     try:
-        return len([l for l in subprocess.run(["git", "-C", path, "status", "--porcelain"], capture_output=True, text=True, check=True).stdout.splitlines() if l.strip()])
+        return len([l for l in subprocess.run(["git", "-C", path, "status", "--porcelain", "--", "."], capture_output=True, text=True, check=True).stdout.splitlines() if l.strip()])
     except Exception:  # noqa: BLE001
         return None
 
@@ -75,6 +86,7 @@ def main() -> int:
     ap.add_argument("--standalone", default=None, help="alias of --deployed (pre-2.3.0 invocation)")
     ap.add_argument("--hermes-skill", default=os.path.expanduser("~/.hermes/skills/business/opportunity-research"))
     ap.add_argument("--out", default=None)
+    ap.add_argument("--no-hermes-link", action="store_true", help="the target is not a Hermes home (a staging / test directory): do not require the Hermes skill link to resolve to it")
     a = ap.parse_args()
     deployed = os.path.abspath(os.path.expanduser(a.deployed or a.standalone or "~/.hermes/standalone/opportunity-research"))
     if not os.path.isdir(deployed):
@@ -87,11 +99,15 @@ def main() -> int:
     hermes_target = os.path.realpath(a.hermes_skill) if os.path.exists(a.hermes_skill) else None
     hermes_is = ("deployed" if hermes_target == os.path.realpath(deployed) else "reference" if hermes_target == os.path.realpath(ROOT)
                  else "ELSEWHERE" if hermes_target else "absent")
-    receipt = {"reference": {"path": ROOT, "commit": git_head(ROOT), "dirty_files": git_dirty(ROOT), "version": version_of(os.path.join(ROOT, "SKILL.md")), "files": len(ref)},
+    containing = None if git_head(ROOT) else git_containing(ROOT)
+    receipt = {"reference": {"path": ROOT, "commit": git_head(ROOT) or (containing or {}).get("commit"), **({"containing_repo_subdir": containing["subdir"]} if containing else {}),
+                             "dirty_files": git_dirty(ROOT), "version": version_of(os.path.join(ROOT, "SKILL.md")), "files": len(ref)},
                "deployed": {"path": deployed, "version": version_of(os.path.join(deployed, "SKILL.md")), "files_compared": len([k for k in ref if k in dep])},
                "missing_in_deployed": missing, "drift": drift, "unexpected_in_deployed": extra,
                "hermes_skill": {"path": a.hermes_skill, "resolves_to": hermes_target, "is": hermes_is},
-               "parity": not missing and not drift and hermes_is in ("deployed", "reference")}
+               "parity": not missing and not drift and (a.no_hermes_link or hermes_is in ("deployed", "reference"))}
+    if a.no_hermes_link:
+        receipt["hermes_skill"] = {"checked": False}
     text = json.dumps(receipt, indent=1)
     if a.out:
         open(a.out, "w", encoding="utf-8").write(text + "\n")
