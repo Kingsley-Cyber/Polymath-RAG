@@ -536,7 +536,8 @@ def exec_domain(step: dict[str, Any], state: RunState, m: Manifest) -> service.E
     scope = {"input": state.input, "options": state.options, "outputs": state.outputs, "context": step.get("context") or {}}
     request = {"schema_version": DOMAIN_REQUEST_VERSION, "domain": domain, "operation": operation, "run_id": state.run_id,
                "step_id": step["step_id"], "input": state.input,
-               "inputs": {name: _path(scope, dotted) for name, dotted in (cfg.get("inputs") or {}).items()},
+               "inputs": {name: ([_path(scope, d) for d in sel] if isinstance(sel, list) else _path(scope, sel))
+                          for name, sel in (cfg.get("inputs") or {}).items()},
                "config": {k: v for k, v in cfg.items() if k not in ("domain", "operation", "inputs")}}
     env = {"PATH": os.environ.get("PATH", ""), "LANG": os.environ.get("LANG", "en_US.UTF-8"), "PYTHONDONTWRITEBYTECODE": "1"}
     try:

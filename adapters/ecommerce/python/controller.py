@@ -290,16 +290,7 @@ def cmd_submit(args):
             # never citable.
             import lived_world as _lw
             prim = items[0]
-            _rel = {**(state["data"].get("row_relevance") or {}), **(prim.get("row_relevance") or {})}
-            errors += _lw.validate_relevance_map(prim.get("row_relevance") or {}, state, pol_now)
-            for i, x in enumerate(prim.get("latent_structures") or []):
-                errors += [f"latent_structures[{i}]: {e}" for e in models.validate(x, "latent_structure")]
-                errors += _lw.lineage_ref_errors((x or {}).get("evidence_refs"), state, _rel, f"latent_structures[{i}]")
-            for i, x in enumerate(prim.get("corpus_observations") or []):
-                errors += [f"corpus_observations[{i}]: {e}" for e in models.validate(x, "corpus_observation")]
-                errors += _lw.lineage_ref_errors((x or {}).get("evidence_refs"), state, _rel, f"corpus_observations[{i}]")
-            for k, refs in (prim.get("evidence_refs") or {}).items():
-                errors += _lw.lineage_ref_errors(refs, state, _rel, f"primitives.evidence_refs.{k}")
+            errors += _lw.validate_primitives(prim, state, pol_now)
             if not errors:
                 state["data"]["latent_structures"] = list(prim.get("latent_structures") or [])
                 state["data"]["corpus_observations"] = list(prim.get("corpus_observations") or [])

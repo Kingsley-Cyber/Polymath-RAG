@@ -502,6 +502,23 @@ def validate_relevance_map(rel: dict, state: dict, policies: dict) -> list[str]:
     return errs
 
 
+def validate_primitives(prim: dict, state: dict, policies: dict) -> list[str]:
+    """The primitives submission check, in one place (the controller's submit path and the governed binding both call it):
+    the relevance map is well-formed, every interpretation object is schema-valid, and every evidence_ref obeys the lineage law."""
+    import models
+    rel = {**(state["data"].get("row_relevance") or {}), **(prim.get("row_relevance") or {})}
+    errors = validate_relevance_map(prim.get("row_relevance") or {}, state, policies)
+    for i, x in enumerate(prim.get("latent_structures") or []):
+        errors += [f"latent_structures[{i}]: {e}" for e in models.validate(x, "latent_structure")]
+        errors += lineage_ref_errors((x or {}).get("evidence_refs"), state, rel, f"latent_structures[{i}]")
+    for i, x in enumerate(prim.get("corpus_observations") or []):
+        errors += [f"corpus_observations[{i}]: {e}" for e in models.validate(x, "corpus_observation")]
+        errors += lineage_ref_errors((x or {}).get("evidence_refs"), state, rel, f"corpus_observations[{i}]")
+    for k, refs in (prim.get("evidence_refs") or {}).items():
+        errors += lineage_ref_errors(refs, state, rel, f"primitives.evidence_refs.{k}")
+    return errors
+
+
 def merge_relevance(state: dict, rel: dict) -> None:
     cur = dict(state["data"].get("row_relevance") or {})
     cur.update(rel or {})

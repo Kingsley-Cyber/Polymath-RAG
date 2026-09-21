@@ -13,6 +13,13 @@ from .contracts import _REPO, STEP_TYPES, validate
 _DOMAIN_RE = re.compile(r"^[a-z][a-z0-9_]{1,40}$")
 _DOMAIN_OP_RE = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){0,5}$")
 
+
+def _is_input_path(v: Any) -> bool:
+    """A DOMAIN_OPERATION input selects ONE value by dotted path, or a LIST of values by a non-empty list of dotted paths."""
+    if isinstance(v, str):
+        return bool(v)
+    return isinstance(v, list) and bool(v) and all(isinstance(x, str) and x for x in v)
+
 ADAPTER_DIR = _REPO / "config" / "adapters"
 
 
@@ -89,8 +96,8 @@ def graph_integrity_errors(raw: dict[str, Any]) -> list[str]:
             if not _DOMAIN_OP_RE.match(str(cfg.get("operation") or "")):
                 errs.append(f"{sid}: DOMAIN_OPERATION needs config.operation (a dotted operation id)")
             ins = cfg.get("inputs", {})
-            if not isinstance(ins, dict) or not all(isinstance(k, str) and isinstance(v, str) and v for k, v in ins.items()):
-                errs.append(f"{sid}: DOMAIN_OPERATION config.inputs maps a name to a dotted path")
+            if not isinstance(ins, dict) or not all(isinstance(k, str) and _is_input_path(v) for k, v in ins.items()):
+                errs.append(f"{sid}: DOMAIN_OPERATION config.inputs maps a name to a dotted path (or a list of dotted paths)")
         elif any(k in (s.get("config") or {}) for k in ("domain", "operation")):
             errs.append(f"{sid}: config.domain / config.operation are only valid on DOMAIN_OPERATION")
         if typ == "BRANCH" and not (s.get("branches") or nxt):

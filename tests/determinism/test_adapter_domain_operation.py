@@ -65,6 +65,8 @@ def _manifest_with(tmp_path, mutate) -> pathlib.Path:
     (lambda s: s["check"]["config"].pop("operation"), "needs config.operation"),
     (lambda s: s["check"]["config"].update(operation="hypotheses/validate"), "needs config.operation"),
     (lambda s: s["check"]["config"].update(inputs={"hypotheses": 7}), "config.inputs maps a name to a dotted path"),
+    (lambda s: s["check"]["config"].update(inputs={"hypotheses": []}), "config.inputs maps a name to a dotted path"),
+    (lambda s: s["check"]["config"].update(inputs={"hypotheses": ["outputs.draft.portfolio", 3]}), "config.inputs maps a name to a dotted path"),
     (lambda s: s["route"].update(config={"domain": "ecommerce"}), "only valid on DOMAIN_OPERATION"),
 ])
 def test_manifest_validation_refuses_a_malformed_domain_binding(tmp_path, mutate, needle):
