@@ -96,7 +96,7 @@ def test_one_sourcing_job_per_concept_per_channel_and_the_directive_is_enriched_
     assert out["governance_unchanged"] is True and d["search_intents"][0] == SUPPLY_DIRECTIVE["search_intents"][0]
     added = d["search_intents"][1:]
     assert len(d["search_intents"]) == 5 and out["planned"]["dropped_over_budget"] == 2 and out["planned"]["jobs"] == 6
-    assert {i["intent_id"].rsplit("~", 1)[-1] for i in added[:3]} == {"pc_1", "pc_2", "pc_3"}                # every concept gets a job before any gets its second
+    assert {i["intent_id"].rsplit(":", 1)[-1] for i in added[:3]} == {"pc_1", "pc_2", "pc_3"}                # every concept gets a job before any gets its second
     assert all(set(i["evidence_roles"]) <= {"supply", "price"} and "<term>" not in i["template"] and "concept:" in i["intent"] for i in added)
     assert "research_directive" not in _exec("supply.plan", {"product_concepts": CONCEPTS, "mechanisms": MECHS, "live_hypotheses": LIVE})["output"]   # a plan alone is fine
 

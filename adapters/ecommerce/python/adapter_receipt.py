@@ -37,7 +37,7 @@ SCHEMA_PATH = os.path.join(ROOT, "schemas", "harness_receipt.schema.json")     #
 #: the contract this copy was taken from, and its sha256 — tests/run_all.py fails on drift (copy != pin, or pin != the
 #: authoritative file when polymath-v4 sits beside this repo). A contract change = re-copy + re-pin, in the same slice.
 SCHEMA_SOURCE = "polymath-v4/contracts/adapter/v1/harness_receipt.schema.json"
-SCHEMA_SHA256 = "f6189a45be6aaad934f2652f0d6411292900b26cc9e955be5559d50d5c27c866"
+SCHEMA_SHA256 = "dd754bf281c3e988c205142d9038dad11235be936540bc188f208b868ea3cc00"
 
 EXCERPT_MAX, CLAIM_MAX, CONTEXT_MAX, LIMITATION_MAX = 600, 2000, 2000, 1000
 SCHEMA_MAX = {"sources": 100, "observations": 200, "tool_trace": 200, "limitations": 50}
@@ -206,10 +206,12 @@ def _metric(item: dict) -> dict | None:
     m = item.get("metric") or item.get("metric_if_present")
     if not isinstance(m, dict) or not m.get("name") or not m.get("unit") or not isinstance(m.get("value"), (int, float)) or isinstance(m.get("value"), bool):
         return None
-    out = {"name": _clip(m["name"], 100), "value": m["value"], "unit": _clip(m["unit"], 50)}
-    if isinstance(m.get("sample_n"), int) and not isinstance(m.get("sample_n"), bool) and m["sample_n"] >= 0:
-        out["sample_n"] = m["sample_n"]
-    return out
+    # TRAIL PARITY (2026-09-21): TrailSignal REQUIRES the `sample_n` key (nullable) and an identifier-shaped metric name; a metric
+    # without the key passed Polymath's old schema and ended a real run as TRAIL_REFUSED. Always emit it; null = not stated.
+    n = m.get("sample_n")
+    name = re.sub(r"[^A-Za-z0-9._:/-]+", "_", str(m["name"]).strip()).strip("_") or "metric"
+    return {"name": _clip(name, 100), "value": m["value"], "unit": _clip(m["unit"], 50),
+            "sample_n": n if isinstance(n, int) and not isinstance(n, bool) and n >= 0 else None}
 
 
 def _context(item: dict) -> str:

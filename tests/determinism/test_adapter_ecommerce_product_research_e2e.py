@@ -260,8 +260,8 @@ def test_one_complete_ecommerce_product_research_run(runtime):
 
     # TrailSignal said WHAT, the domain said HOW — for field research and, per concept, for supply
     research, supply = actions["I_research"][0], actions["S_supply"][0]
-    assert research["search_intents"][0]["intent_id"] == "q-complaint" and any("~" in i["intent_id"] and "bounce" in i["template"] for i in research["search_intents"][1:])
-    assert supply["search_intents"][0]["intent_id"] == "si_supply" and {i["intent_id"].rsplit("~", 1)[-1] for i in supply["search_intents"][1:]} >= {"pc_1", "pc_2", "pc_3"}
+    assert research["search_intents"][0]["intent_id"] == "q-complaint" and any(":" in i["intent_id"] and "bounce" in i["template"] for i in research["search_intents"][1:])
+    assert supply["search_intents"][0]["intent_id"] == "si_supply" and {i["intent_id"].rsplit(":", 1)[-1] for i in supply["search_intents"][1:]} >= {"pc_1", "pc_2", "pc_3"}
     assert [j["concept_id"] for j in actions["S_supply"][1]["sourcing_plan"]][:2] == ["pc_1", "pc_1"]
     # the knowledge need after admission is the field-grounded question, never a hypothesis statement (defect D2)
     assert "access interruption" in NEEDS["K_retrieve"] and "runners lose small items mid stride" not in NEEDS["K_retrieve"]

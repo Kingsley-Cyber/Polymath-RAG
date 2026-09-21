@@ -1649,3 +1649,7 @@ Real-data check (not committed — it holds corpus text): a journal rebuilt from
 TrailSignal's admission of real harvests, are TG5 (the first real governed run). Expect rejections there (all of Reddit =
 one independence group, 14-day social freshness, role/source suitability): they are findings, never tuned around.
 
+## 2026-09-21 — receipt ⇔ Trail parity (found by the first real governed run)
+- `schemas/harness_receipt.schema.json` re-copied from the tightened Polymath contract (sha re-pinned in `adapter_receipt.py`): Trail's identifier patterns; `sample_n`, `query_count`, `hypothesis_ids`, `evidence_role_claimed` required.
+- `adapter_receipt._metric` always emits `sample_n` (null = not stated) and an identifier-shaped metric name — supplier price / MOQ metrics were being emitted without the key Trail requires.
+- `binding.py` search-intent ids use `:` (Trail identifiers), not `~`.

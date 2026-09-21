@@ -181,7 +181,7 @@ def test_the_existing_runtime_hands_the_enriched_directive_to_the_harness(runtim
     assert [r["step_id"] for r in store.list_steps(None, rid)] == ["retrieve", "hypothesize", "project", "gaps", "plan", "research", "compile"]
     intents = action["search_intents"]
     assert [i["intent_id"] for i in intents[:2]] == ["q-complaint", "q-workaround"]                         # TrailSignal's intents, first
-    assert len(intents) == DIRECTIVE["budget"]["max_queries"] and all("~" in i["intent_id"] for i in intents[2:])   # then the domain's compiled channel intents
+    assert len(intents) == DIRECTIVE["budget"]["max_queries"] and all(i["intent_id"].count(":") == 2 for i in intents[2:])   # then the domain's compiled channel intents
     assert action["budget"]["max_queries"] == 24                                                          # the manifest's harness budget still wins, exactly as before
     assert action["freshness_requirement"]["max_age_days"] == 14 and action["minimum_independent_sources"] == 3 and action["disallowed_source_roles"] == ["supplier_listing"]
     assert hashlib.sha256(json.dumps(action["evidence_gaps"], sort_keys=True).encode()).hexdigest() == \

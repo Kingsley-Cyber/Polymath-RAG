@@ -3435,7 +3435,7 @@ _rco24, _rpo24 = _ar.build_receipt(dict(_A24, budget={"max_queries": 10, "max_so
 ok(len(_rcb24["sources"]) == 2 and _rpb24["omitted_by_reason"].get("source budget reached (2)") == 2 and len(_rco24["observations"]) == 2 and _rpo24["omitted_by_reason"].get("observation budget reached (2)") == 2
    and len(_rco24["sources"]) == 2 and any("budget reached" in l for l in _rcb24["limitations"]),
    "sources and observations clamp to the ACTION's budget, deterministically (input order), the clamp is said, and no source is listed without an observation")
-ok(_ob24["obs_2"]["metric_if_present"] == {"name": "hold_time", "value": 3, "unit": "hours"} and _ob24["obs_1"]["metric_if_present"] is None
+ok(_ob24["obs_2"]["metric_if_present"] == {"name": "hold_time", "value": 3, "unit": "hours", "sample_n": None} and _ob24["obs_1"]["metric_if_present"] is None
    and next(s for s in _rc24["sources"] if "icebaths" in s["url"])["published_at_if_known"] is None and "workaround: reflectix wrap" in _ob24["obs_2"]["context"],
    "a stated number rides as metric_if_present; an explicit null publish date stays null (the page shows none)")
 _why24 = {o["id"]: o["reason"] for o in _rp24["omitted"]}
@@ -3483,8 +3483,8 @@ _sc24 = [{"id": "sc1", "product_name": "Insulated plunge lid", "supplier_name": 
          {"id": "sc3", "product_name": "Lid C", "supplier_name": "X", "price_raw": "$2", "moq_raw": "100", "url": "https://www.alibaba.com/product-detail/x_3.html", "channel": "alibaba"}]
 _rs24, _rps24 = _ar.build_receipt(_A24s, supplier_candidates=_sc24, harness_id="claude-code", started_at="2026-09-20T18:00:00Z", completed_at="2026-09-20T18:10:00Z")
 _so24 = {o["observation_id"]: o for o in _rs24["observations"]}
-ok(_rps24["errors"] == [] and set(_so24) == {"sc1:price", "sc1:moq", "sc2:price"} and _so24["sc1:price"]["metric_if_present"] == {"name": "unit_price_low", "value": 3.2, "unit": "USD"}
-   and _so24["sc1:moq"]["metric_if_present"] == {"name": "minimum_order_quantity", "value": 500, "unit": "units"} and _so24["sc1:moq"]["evidence_role_claimed"] == "supply"
+ok(_rps24["errors"] == [] and set(_so24) == {"sc1:price", "sc1:moq", "sc2:price"} and _so24["sc1:price"]["metric_if_present"] == {"name": "unit_price_low", "value": 3.2, "unit": "USD", "sample_n": None}
+   and _so24["sc1:moq"]["metric_if_present"] == {"name": "minimum_order_quantity", "value": 500, "unit": "units", "sample_n": None} and _so24["sc1:moq"]["evidence_role_claimed"] == "supply"
    and _so24["sc1:price"]["evidence_role_claimed"] == "price" and {s["source_class"] for s in _rs24["sources"]} == {"supplier_listing"} and len(_rs24["sources"]) == 2
    and sum(1 for o in _rps24["omitted"] if o["id"].startswith("sc3")) == 2,
    "supplier listings: price -> role price + metric, minimum order -> role supply + metric (the skill's own parsers); no MOQ stated = no MOQ observation; a listing without harvest provenance is omitted")

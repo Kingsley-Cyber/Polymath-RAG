@@ -382,7 +382,7 @@ def _op_research_plan(req: dict[str, Any]) -> dict[str, Any]:
         for ti in trail_intents:                                    # the first Trail intent this channel can serve
             served = [r for r in roles if r in (ti.get("evidence_roles") or [])]
             if served:
-                return {"intent_id": f"{ti['intent_id']}~{q['channel']}~{q['gap_id']}"[:200], "evidence_goal": ti["evidence_goal"], "evidence_roles": served,
+                return {"intent_id": f"{ti['intent_id']}:{q['channel']}:{q['gap_id']}"[:200], "evidence_goal": ti["evidence_goal"], "evidence_roles": served,
                         "intent": f"{q['channel']}: {q.get('why_this_source')} — {q.get('query')}"[:500], "template": str((q.get("tools") or [q.get("query")])[0])[:500]}
         return None
 
@@ -464,7 +464,7 @@ def _op_supply_plan(req: dict[str, Any]) -> dict[str, Any]:
         for job in plan:
             terms = " ".join(job["search_terms"][:3])
             per_concept.setdefault(job["concept_id"], []).append(None if host is None else {
-                "intent_id": f"{host['intent_id']}~{job['channel']}~{job['concept_id']}"[:200], "evidence_goal": host["evidence_goal"],
+                "intent_id": f"{host['intent_id']}:{job['channel']}:{job['concept_id']}"[:200], "evidence_goal": host["evidence_goal"],
                 "evidence_roles": [r for r in host["evidence_roles"] if r in ("supply", "price")],
                 "intent": f"{job['channel']}: supplier listings for concept {job['concept']} — record concept: {job['concept_id']} in the observation context"[:500],
                 "template": (job["tools"][-1] if job["tools"] else terms).replace("<term>", terms)[:500]})
