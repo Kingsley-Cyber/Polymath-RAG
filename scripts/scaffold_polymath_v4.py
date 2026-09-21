@@ -700,6 +700,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/migration/PARITY_MATRIX.md", "md", None),
     ("docs/migration/ADR-TRAIL-EMBEDDING.md", "md", None),
     ("docs/migration/FINAL_MIGRATION_REPORT.md", "md", None),
+    ("docs/migration/COMMERCE_CORPUS_MANIFEST.md", "md", None),
     ("tests/determinism/test_evidence_packet_text_excerpt.py", "py", None),
     ("eval/reasoning_boundary/rb5_packet_text_excerpt.py", "py", None),
     ("eval/reasoning_boundary/RB5-PACKET-TEXT-EXCERPT-2026-09-20.json", "json", None),

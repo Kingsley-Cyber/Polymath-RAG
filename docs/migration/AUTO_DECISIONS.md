@@ -23,6 +23,8 @@
 | M-016 | Hermes keeps a physical copy (launchd cannot read `~/Documents`); produced by `scripts/deploy_ecommerce_skill.py`, proven by the engine's verifier | mechanism done `1d97536` |
 | M-017 | Item 2D committed on its own branch and pre-merged with `production` + the migration branch | done `5cd3cc1` |
 | M-018 | Owner bundle 2 installed byte-identical; plan renumbered (11 merge gate · 12 real E2E · 13 hosted MCP · 14 negative control · 15 cleanup); merge gate precedes Phase 10 in execution | locked |
+| M-019 | Phase 13 = a NEW read-only surface harness + the EXISTING lifecycle driver (`--mcp-url`) + a real agent host for the workflow; the harness found `upload_document` reading HOST paths for remote callers — confined to loopback callers on the branch; ONE shared key = no per-friend isolation (open, owner-visible) | harness + fix done `81a4472`; live after the merge |
+| M-020 | Phase 10 input = the exact 10 documents of the former corpus, identified from residue with the repo's own identity function; NEW corpus id `commerce-v1`; residue pre-flight BEFORE the first upload; staged, smallest first | manifest done; ingestion waits for the merge |
 
 ## Decision template
 `### M-XXX — <title>` with `####` Question · Evidence · Applicable migration invariants · Decision · Alternatives rejected ·
@@ -686,3 +688,79 @@ Docs only; every replaced text is in git history.
 
 #### Affected files / commits
 `production`: the commit that adds this entry.
+
+### M-019 — Phase 13: what proves the hosted surface, and the isolation defect the first run found
+
+#### Question
+The Phase 11 merge is blocked; `CONTINUATION.md` names Phase 13 preparation (read-only, current hosted surface) as unblocked work. What is the smallest thing that proves the hosted criteria, and what is done about what it finds?
+
+#### Evidence
+STATICALLY_VERIFIED: `~/.cloudflared/config.yml` routes `mcp.kingsleylab.xyz` → `localhost:8930` on the named tunnel; `:8930` is Server A (stateless streamable HTTP, ONE bearer key, fail-closed, `/health` open).
+EXISTS: `scripts/adapter_mcp_acceptance.py` already drives a complete adapter run through the official MCP client and takes `--mcp-url`. MISSING: anything that checks the edge, the gate, discovery, typed errors or
+isolation of a public surface. INTEGRATION_EXECUTED (from the host, through the public hostname, fleet on unchanged `production`): 13 PASS · 1 WARN (the edge 403s `Python-urllib`) · 2 SKIP (opt-ins) · 1 FAIL —
+`upload_document(path, …)` resolved a caller-supplied path on the HOST filesystem. READ (not exercised): any key holder could ingest and read back any host file with an accepted extension; "file not found" is an
+existence oracle. The surface has one shared bearer key: no per-caller identity exists to isolate.
+
+#### Applicable migration invariants
+`REUSE > WRAP > MOVE > ADAPT > REWRITE`. Policy "Hosted product requirement": correct isolation / error behaviour. Doctrine "Existing defects": a defect that blocks acceptance is addressed under policy. Live-system
+discipline: read-only calls only while nothing is merged. Credentials are never entered or printed.
+
+#### Decision
+1. Phase 13 is proven by three things, not one new system: the NEW small `scripts/hosted_mcp_acceptance.py` (surface: edge, gate, handshake, discovery, knowledge, typed errors, isolation; READ-ONLY by default;
+   `--vantage` records where it ran) · the EXISTING lifecycle driver pointed at the hosted URL (`--mcp-url … --no-restart`) · a REAL agent host, on another machine, running the ecommerce workflow.
+2. The host-path defect is fixed at its owner (Polymath's generic MCP surface), minimally: the bearer gate records per request whether the caller addressed the loopback listener directly (default NOT local);
+   `upload_document` answers a non-local caller `REMOTE_PATH_UPLOAD_DISABLED` (403) before any filesystem access. Hermes (loopback) is unchanged; remote callers keep `upload_text`. On the branch; live after the merge.
+3. Per-friend keys / principals are NOT built now. Recorded as open and owner-visible: with one shared key every holder has every corpus, every caller's `recent_queries`, `upload_text` into any corpus.
+
+#### Alternatives rejected
+Extending the scripted lifecycle driver to "be" the hosted acceptance (it cannot see a 401, an edge block or an isolation defect, and a scripted agent is not a friend's agent). Removing `upload_document` (Hermes
+uses it locally). A path allowlist for remote callers (a remote agent has no host paths at all; an allowlist is a smaller hole, not none). Building multi-tenant keys now (not needed to reach the next gate; a product
+decision about how much friends share). Stopping to ask about the defect (reversible, minimal, inside Polymath's ownership, closes a security hole rather than weakening one).
+
+#### Why this is the smallest reversible choice
+One script, one test file, ~25 lines in Server A; tool names, parameters and schemas unchanged (parity test green).
+
+#### Reversibility
+`git revert 81a4472`.
+
+#### Validation / proof
+`tests/contracts/test_hosted_mcp_acceptance.py` 5 (the REAL Server A app in process; negative controls: loopback → FAIL, open gate → FAIL, missing adapter → FAIL; no key → SKIP, never PASS; key never in the receipt) ·
+`tests/determinism/test_mcp_server_v2.py` 9 (identical refusal for an existing and a missing file under a public Host / `Cf-Ray` / `X-Forwarded-For`; orchestrator never called; loopback still resolves) · parity green ·
+guards 0/0/0/READY. NOT proven: external vantage; the live fix (needs merge + bounce, then this harness green from the public hostname).
+
+#### Affected files / commits
+`migration/ecommerce-consolidation` `81a4472` (register 11.377, work-log `2026-09-20-consolidation-phase13-hosted-surface-acceptance.md`); merged into `item2/corpus-scoped-atoms` `7de9e69`.
+
+### M-020 — Phase 10 input: which documents, which corpus id, and what must be checked before the first upload
+
+#### Question
+M-005 says "reconstruct the 10-document set from preserved sources under a NEW corpus id". Which 10, exactly — and is a re-ingest of the same bytes safe next to the old corpus's residue?
+
+#### Evidence
+EXECUTED (read-only): the old corpus's `documents` rows are gone; 2,266 surviving `parent_enrichments` rows name exactly 10 `doc_id`s; `doc_id` = sha256 of the NORMALIZED bytes while the spool is keyed by the RAW
+bytes; normalizing all 129 spool blobs with `polymath_shared.identity` matched 10 of 10, every blob sha-verified (5,995,118 bytes), 9 of 10 also byte-identical in the 117-file library.
+READ + read-only queries: residue in six tables; ids are content-derived and corpus-independent; `parent_enrichments` is UNIQUE on `(parent_id) WHERE status='READY'` and the summary worker reuses an enrichment by
+`input_hash` alone — neither is corpus-scoped. The consequence for a re-ingest is INFERRED, not reproduced.
+
+#### Applicable migration invariants
+Policy pre-authorization ("do not restore old indexes; reingest preserved sources through current V4"). INV-7 (books are ingested, never committed). Stop condition 3 (destructive live-data action). Spend is per-action.
+
+#### Decision
+`docs/migration/COMMERCE_CORPUS_MANIFEST.md` is the Phase 10 input: the 10 documents (title, bytes, sha256, locations), corpus id `commerce-v1`, a residue PRE-FLIGHT settled on the smallest document before ten are paid
+for, staged uploads smallest first, and the gate. No residue is deleted: that is a destructive live-data action and needs the owner's word.
+
+#### Alternatives rejected
+Reusing `ecom-meta-v1` (residue would mix in). Ingesting all 117 library files (M-005: smallest useful set first). Picking "10 good books" by judgement (the historical run's corpus is identifiable exactly). Deleting
+the residue now (destructive, and nothing can be ingested before the merge anyway).
+
+#### Why this is the smallest reversible choice
+A document. Nothing was ingested, copied or moved.
+
+#### Reversibility
+Delete the file.
+
+#### Validation / proof
+10 / 10 ids matched by recomputation with the repository's own function; sha256 verified per blob.
+
+#### Affected files / commits
+`docs/migration/COMMERCE_CORPUS_MANIFEST.md` (this commit, `production`, docs only).
