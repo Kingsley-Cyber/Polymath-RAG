@@ -49,6 +49,12 @@ class MemoryStore:
                     "harness_action_count": state.harness_action_count, "input": state.input, "options": state.options,
                     "outputs": state.outputs, "output_order": list(state.output_order), "failure": state.failure, "gap": state.gap})
 
+    def set_run_owner(self, conn, run_id: str, owner_principal_id: str) -> None:
+        self.runs[run_id]["owner_principal_id"] = owner_principal_id
+
+    def run_owner(self, conn, run_id: str):
+        return (True, self.runs[run_id].get("owner_principal_id")) if run_id in self.runs else (False, None)
+
     def find_run_by_idempotency(self, conn, key: str) -> str | None:
         return next((rid for rid, r in self.runs.items() if r["idempotency_key"] == key), None)
 

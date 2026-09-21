@@ -35,6 +35,18 @@ def insert_run(conn, state: RunState, manifest: Manifest, *, idempotency_key: st
          agent_identity, idempotency_key))
 
 
+def set_run_owner(conn, run_id: str, owner_principal_id: str) -> None:
+    """Security ownership of a run (migration 0066). Written only for a run started on behalf of a principal; a legacy /
+    trusted-local run keeps NULL and its INSERT is unchanged."""
+    conn.execute("UPDATE adapter_runs SET owner_principal_id=%s WHERE run_id=%s", (owner_principal_id, run_id))
+
+
+def run_owner(conn, run_id: str) -> tuple[bool, str | None]:
+    """(run exists, owner_principal_id)."""
+    row = conn.execute("SELECT owner_principal_id FROM adapter_runs WHERE run_id=%s", (run_id,)).fetchone()
+    return (True, row[0]) if row else (False, None)
+
+
 def find_run_by_idempotency(conn, key: str) -> str | None:
     row = conn.execute("SELECT run_id FROM adapter_runs WHERE idempotency_key=%s", (key,)).fetchone()
     return row[0] if row else None

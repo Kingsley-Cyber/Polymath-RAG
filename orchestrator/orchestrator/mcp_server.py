@@ -15,7 +15,9 @@ Tools
   retrieve(query, corpus_id, …)        raw evidence chunks
   ask(question, corpus_id, …)          grounded, cited answer (the chat path)
 
-Auth: Authorization: Bearer $POLYMATH_MCP_API_KEY on every /mcp request.
+Auth: Authorization: Bearer <key> on every /mcp request. $POLYMATH_MCP_API_KEY is the OWNER (admin) key; every other
+caller is a PRINCIPAL from $POLYMATH_MCP_PRINCIPALS_FILE (mcp_principals.py): default-deny action + resource scopes,
+private adapter runs, 401 unknown/revoked key, 403 not permitted, 429 over its rate.
 FAIL-CLOSED (V2): with no key configured the server answers 503 on /mcp
 instead of running open — measured 2026-09-02: the V1 process had booted
 without the key and the public mirror answered tools/call to anyone.
@@ -30,7 +32,6 @@ Env:  POLYMATH_MCP_PORT (8930)  POLYMATH_MCP_API_KEY (bearer)
 from __future__ import annotations
 
 import contextvars
-import hmac
 import json
 
 import re
@@ -47,6 +48,8 @@ from typing import Any, Optional
 import httpx
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
+
+from orchestrator import mcp_principals as P
 
 log = logging.getLogger("polymath.mcp")
 
@@ -79,6 +82,17 @@ REMOTE_PATH_UPLOAD_DISABLED = {
     "status": 403}
 
 
+# HOSTED-MCP PRINCIPALS (owner decision 2026-09-21): the gate authenticates the bearer to ONE principal per request and
+# authorizes every tools/call before the MCP layer sees it. Tools read the principal only to FILTER results and to stamp
+# what the principal creates (run ownership, query receipts). No gate = no principal = NOBODY (fail closed).
+NOBODY = P.Principal(principal_id="prn_nobody")
+_PRINCIPAL: contextvars.ContextVar[P.Principal] = contextvars.ContextVar("polymath_mcp_principal", default=NOBODY)
+_CALLER_AGENT: contextvars.ContextVar[str] = contextvars.ContextVar("polymath_mcp_caller_agent", default="polymath-mcp")
+_STORE = P.store_from_env(API_KEY)
+_LIMITER = P.RateLimiter()
+MAX_GATED_BODY = 2 * 1024 * 1024
+
+
 def _is_local_caller(headers: dict) -> bool:
     host = (headers.get(b"host") or b"").decode("latin-1").strip().lower()
     return host in _LOOPBACK_HOSTS and not any(h in headers for h in _EDGE_HEADERS)
@@ -107,7 +121,13 @@ mcp = MCPServer(
 
 async def _orch(method: str, path: str, **kw: Any) -> Any:
     timeout = kw.pop("timeout", 180)
-    async with httpx.AsyncClient(timeout=timeout) as client:
+    # TRUSTED CONTEXT to the loopback orchestrator: WHO the request is for (a non-admin principal only — the owner key
+    # stays the legacy / trusted-local caller) and WHICH SOFTWARE is calling (the caller's own User-Agent -> receipt.client)
+    who = _PRINCIPAL.get()
+    headers = {"User-Agent": _CALLER_AGENT.get(), **(kw.pop("headers", None) or {})}
+    if not who.is_admin:
+        headers[P.PRINCIPAL_HEADER] = who.principal_id
+    async with httpx.AsyncClient(timeout=timeout, headers=headers) as client:
         r = await client.request(method, f"{ORCH}{path}", **kw)
         if r.status_code >= 400:
             try:
@@ -136,8 +156,13 @@ def _trim_hit(h: dict, max_chars: int = 1400) -> dict:
 @mcp.tool()
 async def list_corpora() -> dict:
     """List every corpus: id, name, purpose, document count, and
-    whether it is currently queryable (has a converged run)."""
-    return await _orch("GET", "/corpora")
+    whether it is currently queryable (has a converged run). A non-admin
+    principal sees only the corpora it is allowed to use."""
+    out = await _orch("GET", "/corpora")
+    who = _PRINCIPAL.get()
+    if not who.is_admin and isinstance(out, dict) and isinstance(out.get("corpora"), list):
+        out["corpora"] = [c for c in out["corpora"] if isinstance(c, dict) and c.get("corpus_id") in who.corpus_ids]
+    return out
 
 
 @mcp.tool()
@@ -159,7 +184,7 @@ async def upload_document(path: str, corpus_id: str) -> dict:
     refused (409 CROSS_CORPUS_CONTENT_COLLISION) — content belongs to
     one corpus. Then poll document_status(corpus_id, source_name).
     LOCAL callers only (the loopback listener): a remote caller gets REMOTE_PATH_UPLOAD_DISABLED — use upload_text."""
-    if not _CALLER_IS_LOCAL.get():
+    if not _CALLER_IS_LOCAL.get() or not _PRINCIPAL.get().is_admin:
         return dict(REMOTE_PATH_UPLOAD_DISABLED)             # before ANY filesystem access: no existence oracle either
     p = Path(path).expanduser()
     if not p.is_file():
@@ -429,7 +454,7 @@ async def recent_queries(corpus_id: str, limit: int = 20, since_h: float = 24.0,
     params: dict[str, Any] = {"corpus_id": corpus_id, "limit": int(limit), "since_h": float(since_h)}
     if kind:
         params["kind"] = kind
-    return await _orch("GET", "/queries", params=params)
+    return await _orch("GET", "/queries", params=params)      # a principal's context narrows it to its OWN receipts
 
 
 
@@ -439,7 +464,11 @@ async def recent_queries(corpus_id: str, limit: int = 20, since_h: float = 24.0,
 async def adapter_list() -> dict:
     """COGNITIVE-ADAPTER-V1: the admitted adapters (id, versions, description, input_schema, step counts, which
     TrailSignal operations are working vs planned). One MCP connection, one adapter run — see adapter_start."""
-    return await _orch("GET", "/adapter/list")
+    out = await _orch("GET", "/adapter/list")
+    who = _PRINCIPAL.get()
+    if not who.is_admin and isinstance(out, dict) and isinstance(out.get("adapters"), list):
+        out["adapters"] = [a for a in out["adapters"] if isinstance(a, dict) and a.get("adapter_id") in who.adapter_ids]
+    return out
 
 
 @mcp.tool()
@@ -448,6 +477,7 @@ async def adapter_start(adapter_id: str, input: dict, request_options: Optional[
     (adapter_list). request_options: corpus_ids, idempotency_key, agent_identity, retrieval_mode, deadline_s.
     Polymath executes retrieval/graph/validation/compile steps itself; when a step needs YOUR reasoning,
     adapter_next returns a typed AGENT_REASON step — answer it with adapter_submit."""
+    # RUN OWNERSHIP is the runtime's: the forwarded principal context becomes adapter_runs.owner_principal_id
     return await _orch("POST", "/adapter/start", json={"adapter_id": adapter_id, "input": input, "request_options": request_options or {}})
 
 
@@ -515,26 +545,127 @@ def build_app():
                              "tools": sorted(t for t in _TOOL_NAMES)})
 
     class BearerGate:
+        """401 no / unknown / revoked / expired key · 429 over the principal's rate · 403 a tools/call the principal may
+        not make (action scope, corpus, adapter, another principal's run, anything without a policy) · else the MCP app.
+        The OWNER key passes through untouched. A non-admin request is read ONCE here, judged, and replayed."""
+
         def __init__(self, app):
             self.app = app
 
         async def __call__(self, scope, receive, send):
-            if scope["type"] == "http":
-                if not API_KEY:
-                    resp = JSONResponse(
-                        {"error": "MCP bearer key not configured "
-                                  "(POLYMATH_MCP_API_KEY); refusing to serve"},
-                        status_code=503)
-                    await resp(scope, receive, send)
-                    return
-                headers = dict(scope.get("headers") or [])
-                auth = (headers.get(b"authorization") or b"").decode()
-                if not hmac.compare_digest(auth.encode(), f"Bearer {API_KEY}".encode()):
-                    resp = Response("unauthorized", status_code=401)
-                    await resp(scope, receive, send)
-                    return
-                _CALLER_IS_LOCAL.set(_is_local_caller(headers))
-            await self.app(scope, receive, send)
+            if scope["type"] != "http":
+                await self.app(scope, receive, send)
+                return
+            if not API_KEY:
+                await JSONResponse({"error": "MCP bearer key not configured (POLYMATH_MCP_API_KEY); refusing to serve"},
+                                   status_code=503)(scope, receive, send)
+                return
+            headers = dict(scope.get("headers") or [])
+            auth = (headers.get(b"authorization") or b"").decode("latin-1")
+            who = _STORE.authenticate(auth[7:] if auth.startswith("Bearer ") else "")
+            if who is None:
+                await Response("unauthorized", status_code=401)(scope, receive, send)
+                return
+            _CALLER_IS_LOCAL.set(_is_local_caller(headers))
+            _PRINCIPAL.set(who)
+            _CALLER_AGENT.set(((headers.get(b"user-agent") or b"").decode("latin-1").strip() or "polymath-mcp")[:120])
+            if who.is_admin:
+                await self.app(scope, receive, send)
+                return
+            ok, retry_after = _LIMITER.allow(who)
+            if not ok:
+                await JSONResponse({"error": "rate limit exceeded", "status": 429}, status_code=429,
+                                   headers={"Retry-After": str(retry_after)})(scope, receive, send)
+                return
+            if scope.get("method") != "POST":
+                await self.app(scope, receive, send)
+                return
+            body = await _read_body(receive)
+            if body is None:
+                await JSONResponse({"error": "request body too large", "status": 413}, status_code=413)(scope, receive, send)
+                return
+            try:
+                msg = json.loads(body) if body else None
+            except ValueError:
+                msg = None                                   # not JSON: the MCP app answers the protocol error itself
+            denial = await _judge(who, msg)
+            if denial is not None:
+                log.info("mcp deny principal=%s tool=%s reason=%s", who.principal_id, denial[2], denial[0].reason)
+                await JSONResponse({"jsonrpc": "2.0", "id": denial[1],
+                                    "error": {"code": -32003, "message": f"FORBIDDEN: {denial[0].message}",
+                                              "data": {"status": 403, "reason": denial[0].reason}}},
+                                   status_code=403)(scope, receive, send)
+                return
+            replay = _replay(body, receive)
+            if isinstance(msg, dict) and msg.get("method") == "tools/list":
+                await _filtered_tools_list(self.app, scope, replay, send, who)
+                return
+            await self.app(scope, replay, send)
+
+    async def _read_body(receive):
+        chunks, size = [], 0
+        while True:
+            message = await receive()
+            if message["type"] != "http.request":
+                return b"".join(chunks)
+            chunks.append(message.get("body", b""))
+            size += len(chunks[-1])
+            if size > MAX_GATED_BODY:
+                return None
+            if not message.get("more_body"):
+                return b"".join(chunks)
+
+    def _replay(body, receive):
+        state = {"sent": False}
+
+        async def replayed():
+            if not state["sent"]:
+                state["sent"] = True
+                return {"type": "http.request", "body": body, "more_body": False}
+            return await receive()
+        return replayed
+
+    async def _judge(who, msg):
+        """None = let it through; else (Decision, jsonrpc id, tool name). JSON-RPC batches are refused for a non-admin
+        principal: a batch would let a call ride past a per-message judgement."""
+        if isinstance(msg, list):
+            return P.Decision(False, "batch_not_permitted", "send one JSON-RPC message per request"), None, "<batch>"
+        if not isinstance(msg, dict) or msg.get("method") != "tools/call":
+            return None
+        params = msg.get("params") if isinstance(msg.get("params"), dict) else {}
+        tool, args = params.get("name"), params.get("arguments")
+        decision = P.authorize(who, tool if isinstance(tool, str) else "", args)
+        if decision.allowed and P.TOOL_POLICY.get(tool, ((), ""))[1] == P.RUN:
+            run_id = args.get("run_id") if isinstance(args, dict) else None
+            # the adapter runtime owns the answer (adapter_runs.owner_principal_id); it gives ONE answer for "not yours"
+            # and "no such run", so a private run's existence is not disclosed. Anything but a clean status = denied.
+            status = await _orch("GET", f"/adapter/{run_id}/status") if isinstance(run_id, str) and re.fullmatch(r"[A-Za-z0-9_]{1,80}", run_id) else None
+            if not isinstance(status, dict) or "error" in status:
+                decision = P.Decision(False, "run_not_accessible", "no such run for this principal")
+        return None if decision.allowed else (decision, msg.get("id"), tool)
+
+    async def _filtered_tools_list(app, scope, receive, send, who):
+        """A principal's tools/list shows only the tools its scopes can call (calls are judged regardless)."""
+        start, chunks = {}, []
+
+        async def capture(message):
+            if message["type"] == "http.response.start":
+                start.update(message)
+            elif message["type"] == "http.response.body":
+                chunks.append(message.get("body", b""))
+        await app(scope, receive, capture)
+        raw = b"".join(chunks)
+        try:
+            text = raw.decode()
+            if b"text/event-stream" in dict(start.get("headers") or []).get(b"content-type", b""):
+                text = [line[5:].strip() for line in text.splitlines() if line.startswith("data:")][-1]
+            doc = json.loads(text)
+            doc["result"]["tools"] = [t for t in doc["result"]["tools"]
+                                      if set(P.TOOL_POLICY.get(t.get("name"), ((), ""))[0]) & who.scopes]
+            await JSONResponse(doc, status_code=start.get("status", 200))(scope, receive, send)
+        except (ValueError, KeyError, IndexError, TypeError, UnicodeDecodeError):
+            await send({**start, "type": "http.response.start"})
+            await send({"type": "http.response.body", "body": raw, "more_body": False})
 
     app = Starlette(routes=[
         Route("/health", health),

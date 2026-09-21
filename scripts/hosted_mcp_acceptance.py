@@ -18,6 +18,16 @@ and the REAL ecommerce workflow through the hosted surface is run by a real agen
     .venv/bin/python scripts/hosted_mcp_acceptance.py --url https://mcp.kingsleylab.xyz --key-file ~/path/to.key \
         --expect-adapter ecommerce.product_research --out /tmp/hosted_receipt.json
 
+PER-FRIEND PRINCIPALS (owner decision 2026-09-21, acceptance list §9): give two friend keys and what friend A may use, and
+the harness proves — through the same hosted surface — that A and B authenticate independently, A reaches its allowed
+corpus and gets HTTP 403 on another, listings are filtered, A starts and continues an allowed adapter run, B gets 403 on
+A's run (the same answer as for a run that does not exist), A has no upload / history / admin, and the owner key still
+reaches everything. This part STARTS ONE RUN as friend A and cancels it with the owner key.
+
+    scripts/hosted_mcp_acceptance.py --url https://mcp.kingsleylab.xyz --key-file owner.key --vantage external:laptop \
+        --friend-a-key-file a.key --friend-b-key-file b.key --friend-corpus commerce-v1 --denied-corpus cinema \
+        --friend-start friend_start.json          # {"adapter_id": ..., "input": {...}, "request_options": {"corpus_ids": [...]}}
+
 The key is read from `--key-file` or POLYMATH_MCP_API_KEY, sent only as the Authorization header to `--url`, and is
 never printed or written to the receipt. Without a key the unauthenticated checks still run; the rest are SKIP.
 Exit 0 only when no check FAILs. WARN and SKIP never fail the run — and never count as proof.
@@ -126,7 +136,7 @@ def _typed_client_error(payload: Any) -> bool:
 async def run(base_url: str, key: str | None, *, corpus: str = "cinema", query: str = "how do films build suspense",
               expect_adapters: tuple[str, ...] = (), explore: bool = False, cycle: dict[str, Any] | None = None,
               vantage: str = "unspecified", transport: httpx.AsyncBaseTransport | None = None, timeout: float = 60.0,
-              user_agents: tuple[str, ...] = USER_AGENTS) -> dict[str, Any]:
+              user_agents: tuple[str, ...] = USER_AGENTS, friends: dict[str, Any] | None = None) -> dict[str, Any]:
     rep, c = Report(), Client(base_url, key, transport, timeout)
     started = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     try:
@@ -138,14 +148,117 @@ async def run(base_url: str, key: str | None, *, corpus: str = "cinema", query: 
                 rep.add(cid, "SKIP", "no bearer key supplied (--key-file or POLYMATH_MCP_API_KEY)")
         else:
             await _authenticated(rep, c, corpus=corpus, query=query, expect_adapters=expect_adapters, explore=explore, cycle=cycle)
+        if friends:
+            await _principals(rep, base_url, key, friends, transport, timeout)
+        else:
+            rep.add("principal.checks", "SKIP", "no friend keys supplied (--friend-a-key-file / --friend-b-key-file)")
     finally:
         await c.close()
     out = {"schema": SCHEMA, "endpoint": base_url.rstrip("/") + "/mcp", "vantage": vantage, "started_at": started,
-           "authenticated": bool(key), "read_only": not (explore or cycle), "checks": rep.checks, "summary": rep.summary()}
+           "authenticated": bool(key), "read_only": not (explore or cycle or friends), "checks": rep.checks, "summary": rep.summary()}
     out["ok"] = out["summary"]["FAIL"] == 0
-    if key and key in json.dumps(out):                                  # belt and braces: a receipt never carries the key
-        raise SystemExit("refusing to emit a receipt that contains the bearer key")
+    text = json.dumps(out)
+    for secret in (key, (friends or {}).get("a_key"), (friends or {}).get("b_key")):   # belt and braces: a receipt never carries a key
+        if secret and secret in text:
+            raise SystemExit("refusing to emit a receipt that contains a bearer key")
     return out
+
+
+def _forbidden(status: int, body: dict[str, Any], reason: str | None = None) -> bool:
+    data = ((body or {}).get("error") or {}).get("data") or {}
+    return status == 403 and data.get("status") == 403 and (reason is None or data.get("reason") == reason)
+
+
+async def _principals(rep: Report, base_url: str, owner_key: str | None, friends: dict[str, Any],
+                      transport: httpx.AsyncBaseTransport | None, timeout: float) -> None:
+    """Owner decision 2026-09-21 §9 (3–11). Friend keys are read by the caller; nothing here prints or records one."""
+    a, b = Client(base_url, friends["a_key"], transport, timeout), Client(base_url, friends["b_key"], transport, timeout)
+    owner = Client(base_url, owner_key, transport, timeout) if owner_key else None
+    corpus, denied, start = friends["corpus"], friends["denied_corpus"], friends["start"]
+    init = {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "polymath-hosted-acceptance", "version": "1"}}
+    run_id = None
+    try:
+        for label, c in (("a", a), ("b", b)):
+            resp, body = await c.rpc("initialize", init)
+            ok = resp.status_code == 200 and bool((body.get("result") or {}).get("protocolVersion"))
+            rep.add(f"principal.{label}_authenticates", "PASS" if ok else "FAIL",
+                    f"friend {label.upper()} authenticates with its own key" if ok else f"initialize answered {resp.status_code}", http_status=resp.status_code)
+            if not ok:
+                return
+        status, body, found = await a.tool("polymath_search", {"query": friends["query"], "corpus_id": corpus, "max_evidence": 3})
+        rows = found.get("evidence_rows") if isinstance(found, dict) else None
+        rep.add("principal.a_allowed_corpus", "PASS" if rows else "FAIL",
+                f"friend A searched its allowed corpus {corpus!r}: {len(rows)} rows" if rows else f"({status}) {str(found or body)[:200]}")
+        status, body, _ = await a.tool("polymath_search", {"query": friends["query"], "corpus_id": denied, "max_evidence": 3})
+        ok = _forbidden(status, body, "corpus_not_allowed")
+        rep.add("principal.a_denied_corpus", "PASS" if ok else "FAIL",
+                f"friend A gets HTTP 403 on {denied!r}, decided by the server" if ok else f"expected HTTP 403 corpus_not_allowed, got {status}: {str(body)[:200]}", http_status=status)
+
+        _, _, corpora = await a.tool("list_corpora", {})
+        _, _, adapters = await a.tool("adapter_list", {})
+        seen_c = [x.get("corpus_id") for x in (corpora.get("corpora") if isinstance(corpora, dict) else None) or []]
+        seen_a = [x.get("adapter_id") for x in (adapters.get("adapters") if isinstance(adapters, dict) else None) or []]
+        ok = corpus in seen_c and denied not in seen_c and start["adapter_id"] in seen_a
+        rep.add("principal.a_listings_filtered", "PASS" if ok else "FAIL",
+                f"friend A is shown corpora {seen_c} and adapters {seen_a}: what it may use, not {denied!r}" if ok else
+                f"listings not filtered as expected: corpora {seen_c}, adapters {seen_a}", corpora=seen_c, adapters=seen_a)
+
+        status, body, ref = await a.tool("adapter_start", {"adapter_id": start["adapter_id"], "input": start["input"],
+                                                           "request_options": start.get("request_options") or {}})
+        run_id = ref.get("run_id") if isinstance(ref, dict) else None
+        rep.add("principal.a_starts_adapter", "PASS" if run_id else "FAIL",
+                f"friend A started {start['adapter_id']}" if run_id else f"({status}) {str(ref or body)[:300]}", run_id=run_id)
+        if not run_id:
+            return
+        kinds = []
+        for _ in range(int(friends.get("polls", 20))):
+            status, body, nxt = await a.tool("adapter_next", {"run_id": run_id})
+            kinds.append(nxt.get("kind") if isinstance(nxt, dict) else f"http{status}")
+            if kinds[-1] != "status" or ((nxt.get("status") or {}).get("status") != "running"):
+                break
+            await asyncio.sleep(float(friends.get("poll_s", 3)))
+        s2, _, st = await a.tool("adapter_status", {"run_id": run_id})
+        ok = kinds[-1] in ("step", "status") and isinstance(st, dict) and st.get("run_id") == run_id
+        rep.add("principal.a_continues_run", "PASS" if ok else "FAIL",
+                f"friend A continues its own run (next: {kinds[-1]}, status: {st.get('status') if isinstance(st, dict) else None})" if ok else
+                f"friend A could not continue its run: next={kinds[-3:]}, status http {s2}", next=kinds[-5:])
+
+        answers = {}
+        for tool, extra in (("adapter_status", {}), ("adapter_next", {}), ("adapter_result", {}), ("adapter_submit", {"step_id": "x", "payload": {}})):
+            status, body, _ = await b.tool(tool, {"run_id": run_id, **extra})
+            answers[tool] = (status, json.dumps((body or {}).get("error"), sort_keys=True))
+        status, body, _ = await b.tool("adapter_status", {"run_id": NO_SUCH_RUN})
+        nothing = (status, json.dumps((body or {}).get("error"), sort_keys=True))
+        ok = all(v[0] == 403 for v in answers.values()) and answers["adapter_status"] == nothing
+        rep.add("principal.b_cannot_reach_a_run", "PASS" if ok else "FAIL",
+                "friend B gets HTTP 403 on friend A's run — the same answer as for a run that does not exist" if ok else
+                f"friend B on A's run: { {k: v[0] for k, v in answers.items()} }; unknown run: {nothing[0]}; identical answers: {answers['adapter_status'] == nothing}",
+                http_status={k: v[0] for k, v in answers.items()})
+
+        denied_ops = {}
+        for tool, args in (("upload_text", {"text": "acceptance probe", "corpus_id": corpus}), ("upload_document", {"path": PROBE_PATH, "corpus_id": corpus}),
+                           ("recent_queries", {"corpus_id": corpus})):
+            status, body, _ = await a.tool(tool, args)
+            denied_ops[tool] = status if _forbidden(status, body) else f"{status}!"
+        ok = all(v == 403 for v in denied_ops.values())
+        rep.add("principal.a_no_upload_admin", "PASS" if ok else "FAIL",
+                "friend A gets HTTP 403 on upload_text, upload_document and recent_queries" if ok else f"expected 403 on each: {denied_ops}", http_status=denied_ops)
+
+        if owner is None:
+            rep.add("principal.owner_retains_access", "SKIP", "no owner key supplied")
+        else:
+            s1, _, st = await owner.tool("adapter_status", {"run_id": run_id})
+            _, _, oc = await owner.tool("list_corpora", {})
+            all_c = [x.get("corpus_id") for x in (oc.get("corpora") if isinstance(oc, dict) else None) or []]
+            ok = isinstance(st, dict) and st.get("run_id") == run_id and denied in all_c and corpus in all_c
+            rep.add("principal.owner_retains_access", "PASS" if ok else "FAIL",
+                    "the owner key reads friend A's run and sees every corpus" if ok else f"owner status http {s1}; corpora {all_c}")
+    finally:
+        if run_id and owner is not None:
+            await owner.tool("adapter_cancel", {"run_id": run_id})                 # leave no open run behind
+        for c in (a, b, owner):
+            if c is not None:
+                await c.close()
 
 
 async def _edge(rep: Report, c: Client, user_agents: tuple[str, ...]) -> None:
@@ -306,6 +419,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--explore", action="store_true", help="also call polymath_explore (provider spend)")
     ap.add_argument("--cycle", default=None, help="JSON file {adapter_id, input, request_options}: start ONE run, read its first step, cancel it")
     ap.add_argument("--vantage", default="unspecified", help="where this ran: host | external:<label>")
+    ap.add_argument("--friend-a-key-file", default=None, help="friend A's bearer file (per-principal acceptance; starts ONE run)")
+    ap.add_argument("--friend-b-key-file", default=None, help="friend B's bearer file")
+    ap.add_argument("--friend-corpus", default=None, help="a corpus friend A is allowed to use")
+    ap.add_argument("--denied-corpus", default=None, help="a corpus that EXISTS and friend A is NOT allowed to use")
+    ap.add_argument("--friend-start", default=None, help="JSON file {adapter_id, input, request_options}: a run friend A may start")
     ap.add_argument("--out", default=None, help="write the JSON receipt here as well")
     args = ap.parse_args(argv)
 
@@ -313,10 +431,19 @@ def main(argv: list[str] | None = None) -> int:
     if args.key_file:
         key = pathlib.Path(args.key_file).expanduser().read_text().strip() or None
     cycle = json.loads(pathlib.Path(args.cycle).read_text()) if args.cycle else None
+    friends = None
+    if args.friend_a_key_file or args.friend_b_key_file:
+        need = (args.friend_a_key_file, args.friend_b_key_file, args.friend_corpus, args.denied_corpus, args.friend_start)
+        if not all(need):
+            raise SystemExit("per-principal acceptance needs --friend-a-key-file, --friend-b-key-file, --friend-corpus, --denied-corpus and --friend-start")
+        friends = {"a_key": pathlib.Path(args.friend_a_key_file).expanduser().read_text().strip(),
+                   "b_key": pathlib.Path(args.friend_b_key_file).expanduser().read_text().strip(),
+                   "corpus": args.friend_corpus, "denied_corpus": args.denied_corpus, "query": args.query,
+                   "start": json.loads(pathlib.Path(args.friend_start).expanduser().read_text())}
     url = args.url.rstrip("/")
     url = url[:-4] if url.endswith("/mcp") else url
     receipt = asyncio.run(run(url, key, corpus=args.corpus, query=args.query, expect_adapters=tuple(args.expect_adapter),
-                              explore=args.explore, cycle=cycle, vantage=args.vantage))
+                              explore=args.explore, cycle=cycle, vantage=args.vantage, friends=friends))
     text = json.dumps(receipt, indent=2, sort_keys=True)
     if args.out:
         pathlib.Path(args.out).expanduser().write_text(text + "\n")

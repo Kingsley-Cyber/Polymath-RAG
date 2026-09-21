@@ -7,6 +7,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from polymath_shared import principal_context
 from polymath_shared.adapter import service
 from polymath_shared.adapter.contracts import ContractViolation
 from polymath_shared.adapter.transitions import SubmissionRejected
@@ -33,6 +34,15 @@ def _404(run_id: str) -> HTTPException:
     return HTTPException(status_code=404, detail=f"unknown adapter run {run_id!r}")
 
 
+def _own(conn, run_id: str) -> None:
+    """RUN OWNERSHIP (migration 0066): a request made for a principal reaches only that principal's runs. One answer for
+    "not yours" and "no such run". No principal context = the legacy / trusted-local caller, unchanged."""
+    try:
+        service.assert_owner(conn, run_id, principal_context.current())
+    except service.NotRunOwner:
+        raise HTTPException(status_code=403, detail="no such run for this principal")
+
+
 @router.get("/adapter/list")
 async def adapter_list() -> dict:
     return {"adapters": service.list_adapters(), "contract": "adapter-v1"}
@@ -42,7 +52,8 @@ async def adapter_list() -> dict:
 async def adapter_start(req: StartRequest) -> dict:
     try:
         with tx() as conn:
-            return service.start(conn, adapter_id=req.adapter_id, input_payload=req.input, request_options=req.request_options)
+            return service.start(conn, adapter_id=req.adapter_id, input_payload=req.input, request_options=req.request_options,
+                                 owner_principal_id=principal_context.current())
     except service.UnknownAdapter as exc:
         raise HTTPException(status_code=404, detail=f"unknown adapter {exc.args[0]!r}")
     except (ContractViolation, SubmissionRejected) as exc:
@@ -53,6 +64,7 @@ async def adapter_start(req: StartRequest) -> dict:
 async def adapter_next(run_id: str) -> dict:
     try:
         with tx() as conn:
+            _own(conn, run_id)
             return service.next_step(conn, run_id)
     except service.UnknownRun:
         raise _404(run_id)
@@ -65,6 +77,7 @@ async def adapter_submit(run_id: str, req: SubmitRequest) -> dict:
                   **({"kind": req.kind} if req.kind else {})}
     try:
         with tx() as conn:
+            _own(conn, run_id)
             return service.submit(conn, run_id, submission)
     except service.UnknownRun:
         raise _404(run_id)
@@ -78,6 +91,7 @@ async def adapter_submit(run_id: str, req: SubmitRequest) -> dict:
 async def adapter_status(run_id: str) -> dict:
     try:
         with tx() as conn:
+            _own(conn, run_id)
             return service.status(conn, run_id)
     except service.UnknownRun:
         raise _404(run_id)
@@ -87,6 +101,7 @@ async def adapter_status(run_id: str) -> dict:
 async def adapter_result(run_id: str) -> dict:
     try:
         with tx() as conn:
+            _own(conn, run_id)
             return service.result(conn, run_id)
     except service.UnknownRun:
         raise _404(run_id)
@@ -114,6 +129,7 @@ def _external_cancel(ext: dict) -> dict | None:
 async def adapter_cancel(run_id: str) -> dict:
     try:
         with tx() as conn:
+            _own(conn, run_id)
             return service.cancel(conn, run_id, external_cancel=_external_cancel)
     except service.UnknownRun:
         raise _404(run_id)

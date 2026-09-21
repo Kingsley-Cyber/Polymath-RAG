@@ -17,6 +17,8 @@ import time
 import uuid
 from typing import Any
 
+from polymath_shared import principal_context
+
 log = logging.getLogger("polymath.query_receipts")
 
 
@@ -154,6 +156,9 @@ def record_query_receipt(tx_factory, *, kind: str, question: str, req: Any,
                  _head(question), int(round(wall_ms)), summ["status"], summ["verdict"],
                  summ["citations"], summ["claims"], summ["evidence"], summ["source_docs"],
                  _meta_json(summ["meta"]), _head(error or "", 500) or None))
+            principal_id = principal_context.current()
+            if principal_id:                 # migration 0066; `client` above stays the SOFTWARE identity
+                conn.execute("UPDATE query_receipts SET principal_id=%s WHERE query_id=%s", (principal_id, qid))
         return qid
     except Exception as exc:  # noqa: BLE001 — receipts never break a query
         log.warning("query receipt not written: %s", str(exc)[:200],
@@ -172,9 +177,11 @@ def _row(cur, r) -> dict:
     return d
 
 
-def _where(corpus_id: str | None, kind: str | None, since_h: float) -> tuple[str, list]:
+def _where(corpus_id: str | None, kind: str | None, since_h: float, principal_id: str | None = None) -> tuple[str, list]:
     sql = ["received_at >= now() - make_interval(secs => %s)"]
     args: list = [float(since_h) * 3600.0]
+    if principal_id:                          # a principal's history is its OWN receipts; no principal = legacy caller
+        sql.append("principal_id = %s"); args.append(principal_id)
     if corpus_id:
         sql.append("%s = ANY(corpus_ids)"); args.append(corpus_id)
     if kind:
@@ -184,7 +191,7 @@ def _where(corpus_id: str | None, kind: str | None, since_h: float) -> tuple[str
 
 def recent_queries(conn, *, corpus_id: str | None = None, kind: str | None = None,
                    limit: int = 20, since_h: float = 24.0) -> list[dict]:
-    where, args = _where(corpus_id, kind, since_h)
+    where, args = _where(corpus_id, kind, since_h, principal_context.current())
     cur = conn.execute(
         f"""SELECT query_id, kind, received_at, client, corpus_ids, scope, mode, latent,
                    question_head, wall_ms, status, verdict, citations, claims, evidence,
@@ -197,7 +204,7 @@ def recent_queries(conn, *, corpus_id: str | None = None, kind: str | None = Non
 def query_summary(conn, *, corpus_id: str | None = None, kind: str | None = None,
                   since_h: float = 24.0) -> list[dict]:
     """Per (kind, mode): count, p50/p95/max wall, abstained, errors, avg citations."""
-    where, args = _where(corpus_id, kind, since_h)
+    where, args = _where(corpus_id, kind, since_h, principal_context.current())
     cur = conn.execute(
         f"""SELECT kind, COALESCE(mode, '-') AS mode, count(*) AS n,
                    percentile_cont(0.5) WITHIN GROUP (ORDER BY wall_ms) AS p50_ms,

@@ -73,6 +73,7 @@ def test_the_real_server_addressed_as_the_public_host_passes(monkeypatch):
     got = _status(receipt)
     assert receipt["ok"] is True and receipt["summary"]["FAIL"] == 0, receipt["checks"]
     assert got.pop("knowledge.explore") == "SKIP" and got.pop("adapter.cycle") == "SKIP"      # opt-ins: read-only by default
+    assert got.pop("principal.checks") == "SKIP"                                              # per-friend acceptance needs friend keys
     assert receipt["read_only"] is True
     assert set(got.values()) == {"PASS"}, got
     assert {"edge.health", "auth.missing_bearer", "auth.wrong_bearer", "mcp.initialize", "mcp.tools_list", "knowledge.list_corpora",
