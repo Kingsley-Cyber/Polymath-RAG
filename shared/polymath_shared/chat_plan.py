@@ -653,6 +653,32 @@ def plan_receipt(plan: ChatPlan) -> dict:
     }
 
 
+EVIDENCE_ROUTE_OVERRIDE = "evidence_route:retrieval_required"
+
+
+def plan_for_evidence_route(plan: "ChatPlan") -> "ChatPlan":
+    """The evidence-only route (`POST /chat/evidence`) exists to RETURN EVIDENCE. Its callers — the adapter's evidence boundary —
+    submit a NEED, which is usually a STATEMENT (the run's seed, a hypothesis statement), not a question. The chat intent compiler
+    reads a statement as GENERAL_CONVERSATION / `retrieval_required: false`, the turn then skips retrieval, and the route reports an
+    EMPTY packet as a completed retrieval (the first real ecommerce run: 13 of 13 boundary calls, `queries: []`,
+    `retrieval_skipped: true`, 0 rows, while `/retrieve/plan` — which has no such gate — carried the run).
+
+    On that route a plan that would not retrieve is made retrievable DETERMINISTICALLY: grounded QA on the need verbatim with a q0
+    PRIMARY (exactly what `fallback_plan` searches), keeping everything else the compiler produced and recording the override on the
+    plan's compiler receipt. A plan that already retrieves is returned unchanged. Pure; the chat route is untouched."""
+    if plan.retrieval_required and plan.queries:
+        return plan
+    from dataclasses import replace
+    need = (plan.original_request or plan.resolved_request or "").strip()
+    q0 = _clean_query(need)
+    queries = list(plan.queries) or [CompiledQuery(id="q0", type="PRIMARY", query=q0, weight=1.0)]
+    override = {"rule": EVIDENCE_ROUTE_OVERRIDE, "from_task_type": plan.task_type, "from_evidence_policy": plan.evidence_policy,
+                "from_retrieval_required": bool(plan.retrieval_required), "compiled_queries": len(plan.queries)}
+    return replace(plan, task_type="GROUNDED_QA", evidence_policy="corpus_grounded", retrieval_required=True, queries=queries,
+                   semantic_queries=list(plan.semantic_queries) or [q0], exact_terms=list(plan.exact_terms) or exact_terms_from(need),
+                   compiler={**(plan.compiler or {}), "evidence_route_override": override})
+
+
 def retrieval_text_for(plan: "ChatPlan") -> str:
     """COMPILED-RETRIEVAL-TEXT-V1 (P0.c interim until the lanes split in
     P1.a): the PRIMARY compiled query, with any exact term from the original

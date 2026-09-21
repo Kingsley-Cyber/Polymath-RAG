@@ -3274,7 +3274,10 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     _plan = _plan_future.result()
                     _plan_future = None
                     _mark("compile")
-                    from polymath_shared.chat_plan import plan_receipt, retrieval_text_for
+                    from polymath_shared.chat_plan import plan_for_evidence_route, plan_receipt, retrieval_text_for
+                    if getattr(req, "evidence_only", False):
+                        # the evidence route never answers a NEED with an empty packet because the need reads as conversation
+                        _plan = plan_for_evidence_route(_plan)
                     _plan_receipt = plan_receipt(_plan)
                     # COMPILED-RETRIEVAL-V1: search the compiled text, or not at all
                     _skip_retrieval = (not _plan.retrieval_required) and ui_mode != "ASK"
