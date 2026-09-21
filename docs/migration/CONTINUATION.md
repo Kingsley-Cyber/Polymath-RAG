@@ -18,22 +18,23 @@ deterministic Trail core) on the EXISTING adapter runtime. Harvest behaviour, no
 generic infrastructure.
 
 ## Current Phase
-**Phases 0–8 — DONE on the migration branch** (`072f1cc` import · `076eb6b` seam, ADR-0020 · `f20cf22` evidence intake · `92b9d76` / `4a938bd` / `7f87e57` domain operations · `92efc79` product manifest +
-complete scripted run + negative control · `b766678` TrailSignal core embedded, ADR-0021, first complete run against REAL TrailSignal code = a defensible rejection · `a1e886f` governed dossier · `4ebcd41`
-Phase 7 registry state measured + pinned, ONE owner decision open).
-**NEXT: the MERGE WINDOW — a live-fleet change (merge + `packageurl` install + ONE bounce). Everything that needs no live system is DONE.**
-All code on branch `migration/ecommerce-consolidation` (worktree `../pmv4-consolidation`), NOT merged; the live fleet is untouched; nothing pushed.
+**Phases 0–8 — DONE on the migration branch; PRE-MERGE VALIDATION DONE (`e176962`).** Repository acceptance (doctrine §17) is met in the worktree: one checkout contains and operates the engine, the embedded TrailSignal
+core and the runtime; every Postgres-backed adapter suite passes against it on an isolated real Postgres (41 / 41); the complete scripted run passes on the in-memory store, on the real store, and against the REAL
+TrailSignal code.
+**NOT done: LOCAL PRODUCTION acceptance.** The production merge was attempted inside a proper window and DENIED by the session's permission gate (M-015). The fleet was restored from unchanged `production`.
+**QUEUE — NOW:** the owner merges (or permits the merge) + ONE bounce. **NEXT:** local production acceptance checks. **LATER:** Phase 9 Hermes deploy · Item 2D merge · Phase 10 commerce corpus · Phase 11 live rungs ·
+hosted MCP acceptance (doctrine §17).
 
 ## Repository State
-- polymath-v4 `production`: clean, docs only since `758ff8a`; 130+ commits ahead of `origin/main`, nothing pushed.
-- **Migration worktree `~/Documents/polymath-rebuild/pmv4-consolidation`, branch `migration/ecommerce-consolidation`** = `production@758ff8a` + `072f1cc` (Phase 2) + `076eb6b` (Phase 3). Clean. It has no `.venv`: run with `/Users/king/Documents/polymath-rebuild/polymath-v4/.venv/bin/python` and `PYTHONPATH=$PWD`.
+- polymath-v4 `production`: clean, docs only since `758ff8a`; nothing pushed. **LIVE FLEET (rebooted 2026-09-21T02:01Z from unchanged `production`): 13 worker types healthy, ONE bundle `fa72e3b1adde`** (was
+  `9cb421b4eeed`: the boot made live the already-committed TG4 change `6708301` that was waiting for a bounce), MCP :8930 up, 0 open adapter runs. `packageurl-python 0.17.6` is installed in `.venv` (additive).
+- **Migration worktree `~/Documents/polymath-rebuild/pmv4-consolidation`, branch `migration/ecommerce-consolidation` @ `e176962`** — clean; `git merge-tree production` = no conflicts. It has no `.venv`: run with
+  `/Users/king/Documents/polymath-rebuild/polymath-v4/.venv/bin/python` and `PYTHONPATH=$PWD`.
 - Parked worktrees: `pmv4-atom-scope` (Item 2D, UNCOMMITTED, 7 files) · `pmv4-m1-repro` (`review/m1-reproductions` @ `eb63bef`, red on purpose). Merged, removable: `pmv4-governed`, `pmv4-packet-text`.
-- AutoResearch: `main` @ `a7baa66` (v2.3.0), clean, 3 commits ahead of GitHub. PUBLIC. Still the engine the Hermes skill runs (the import is a copy; nothing was removed — INV-9).
-- Trail: `~/trail-signal-os-worktrees/A41` @ `de64d84`, clean. Untouched.
-- Hermes: deployed copy `standalone/opportunity-research` v2.3.0; three skill text files uncommitted (owner's commit).
+- AutoResearch `main` @ `a7baa66` (public, 3 ahead of GitHub) and Trail A41 @ `de64d84`: untouched. Hermes: deployed skill copy v2.3.0; three skill text files uncommitted (owner's).
 
 ## Current HEAD / Branch
-`production` (docs) · `migration/ecommerce-consolidation` @ `4f89d4c` (code).
+`production` (docs only; the branch is NOT merged) · `migration/ecommerce-consolidation` @ `e176962` (code).
 
 ## Completed
 - Owner reframe recorded in the plan of record; harvest map written (registers 11.362; commits `59a4b60`, `9dfd3c3`).
@@ -67,6 +68,7 @@ Full table: `CAPABILITY_MAP.md` "Duplicate Authority Map".
 M-002 docs on `production`, code in the migration worktree · M-003 the bundle controls · M-004 baseline = existing runs · M-005 commerce corpus at Phase 10 after Item 2D ·
 **M-006** import via `git archive` (tracked files only), three exclusions, history: the engine lived here as `research/` until 11.274 retired it to the Hermes skill — the O6 dead-path guard stays green ·
 **M-007** the seam = one step type + out-of-process binding (rejected: `EXTERNAL_OPERATION` reuse, `VALIDATE` overload, in-process import, host-side only, SDK) ·
+**M-015** the merge was refused by the permission gate and NOT retried; fleet restored from unchanged `production`; merged-code uncertainty removed on an isolated Postgres instead ·
 **M-014** ONE governance registry (TrailSignal's); the engine mirror is a strict superset whose 10 extra friction families repair a gap in TrailSignal's own data — NOT merged, NOT relaxed: owner decision ·
 **M-013** the dossier renders HOST-SIDE from the journal with the engine's existing renderer; only the mapping + the five authority labels were added ·
 **M-012** (IMPLEMENTED `b766678`) embed the EXACT 16-module Trail closure byte-identical under `governance/trail/`, reached through the unchanged `TrailMCPClient` with an in-process transport, `POLYMATH_TRAIL_MODE` default `daemon`; trimming / D1 / registry reconciliation are separate later changes ·
@@ -84,26 +86,31 @@ files SKIP with the reason printed under this repo's interpreter. Reusable: `tes
 
 ## Known Failures
 - NOTHING here is a live run: agent, harness and sources are scripted; TrailSignal is the real code but in process; no real corpus, no real host.
-- `packageurl` is missing from `polymath-v4/.venv` → embedded mode cannot run in the fleet until it is added to `pyproject.toml` and installed (merge window). Default mode is `daemon`.
+- `packageurl-python` is now declared (`workers/pyproject.toml`) and installed; the 12 TrailSignal-dependent tests pass under this repo's interpreter. Embedded mode is still NOT live (unmerged); default mode is `daemon`.
 - TrailSignal-side defects D1, M1-01..03 are in the embedded code, UNFIXED (fixing them = a documented TrailSignal behaviour change that re-pins `PROVENANCE.json`). A zero-admission round would still hit D1.
 - `trail.product_discovery` keeps D2–D7 and M1-04..12 (unchanged by design). It also lacks the supply `gaps.compile` step (M1-07 confirmed on real TrailSignal code).
-- NOT RUN on the branch (deliberately): the Postgres-backed adapter suites (`test_adapter_evidence_boundary`, `_product_discovery_loop`, `_service_store`, `_harness_action`). Run them in the merge window, fleet drained.
+- The Postgres-backed adapter suites were run against the branch on an ISOLATED Postgres: 41 / 41 (one branch defect found and fixed — `materials` opt-in). They have NOT been run in the MAIN checkout because the merge has not happened.
 - Pre-existing red determinism tests on `production` (3 attributed, 5 not baselined). Historical baseline fails canary 2 of 9.
 
 ## Current Blocker
-None for worktree work. TWO owner items gate what follows:
-1. **The merge window** changes the LIVE system (merges `shared/` + `workers/` into the checkout the fleet runs, installs `packageurl` into its `.venv`, bounces the fleet). Prepared, not executed.
-2. **The 22 drifted registry rows** (M-014): upstream them into TrailSignal's registry or drop them. Until then governed population priors read the engine's superset mirror (and say so).
+**The production merge.** It is a production deploy and this session's permission gate refuses it; a refused action is not retried by another route. Everything it depends on is proven. The owner either runs the
+block in "Next Exact Action" or permits the session to. Not blocking, recorded for the owner: the 22 drifted registry rows (M-014), the unconfirmed dossier specification.
 
 ## Next Exact Action
-**A. Worktree-only work: DONE.** Phase 6 validation 3 (equivalence by replay) passed (`4f89d4c`, register 11.373): two recordings replay to EQUAL envelopes, the third reproduces the recorded M1-02 defect identically. Validation 2 (TrailSignal's own operation tests) does not apply: they target its Postgres store and daemon, which are not imported.
-**B. The MERGE WINDOW (live-fleet change — confirm with the owner first):** (1) `pyproject.toml` + `packageurl-python`, install into `polymath-v4/.venv`; (2) check open adapter runs == 0; (3) merge
-`migration/ecommerce-consolidation` into `production` (expect trivial conflicts only in `PLAN-AUTHORITY-REGISTER.md` / `scaffold_polymath_v4.py` if production moved); (4) with the fleet DRAINED run the Postgres-backed
-adapter suites (`test_adapter_service_store`, `_harness_action`, `_evidence_boundary`, `_product_discovery_loop`); (5) ONE `scripts/boot_polymath.sh` bounce (one supervisor, always); (6) verify `/ready`, one bundle hash,
-`adapter_list` shows `ecommerce.product_research`, the embedded-core tests now pass under this repo's interpreter; (7) Hermes MCP reload. Keep `POLYMATH_TRAIL_MODE=daemon` until step C.
-**C. After the merge:** Phase 9 (deploy the Hermes skill FROM `adapters/ecommerce/` with a version receipt; test whether Hermes can read a path under `~/Documents`) · merge Item 2D (`pmv4-atom-scope`), then Phase 10
-(reconstruct the 10-document commerce corpus under a NEW corpus id) · Phase 11 live rungs: E mechanical smoke with `POLYMATH_TRAIL_MODE=embedded`, F one real ecommerce run (5–8 live runs first, staged), G negative control.
-**D. Owner decisions waiting:** the 22 registry rows (M-014) · the unconfirmed dossier specification · pre-existing red determinism tests · the three uncommitted Hermes skill text files.
+**NOW — the production merge (owner runs it, or permits it).** From `~/Documents/polymath-rebuild/polymath-v4`, with 0 open adapter runs:
+```bash
+pgrep -f control.process_supervisor | xargs kill -TERM      # wait for 0 supervisors and no listener on :7200
+git merge --no-ff migration/ecommerce-consolidation
+.venv/bin/python scripts/agent_preflight.py && .venv/bin/python scripts/repo_guard.py && .venv/bin/python scripts/wiki_worm.py --check && .venv/bin/python shared/polymath_shared/bundle_integrity.py
+mkdir -p /private/tmp/polymath_fleet && nohup bash scripts/boot_polymath.sh > /private/tmp/polymath_fleet/boot.log 2>&1 &
+```
+Rollback: `git revert -m 1 <merge commit>` + the same boot. No Postgres migration is needed (no step-type constraint in 0061). Keep `POLYMATH_TRAIL_MODE` unset (= `daemon`).
+**NEXT — local production acceptance (doctrine §17), after the bounce:** `/ready` true with embedder + reranker; ONE bundle hash; `adapter_list` (MCP :8930 and Server B) shows `ecommerce.product_research` beside the three
+existing adapters; an `adapter_start` of `ecommerce.product_research` on corpus `cinema` reaches its first agent step and is then CANCELLED (mechanical, no spend); the full database-free suite passes in the MAIN checkout
+(execution path = the live code); Hermes MCP reload. Then rewrite the top of `docs/wiki/plans/CONTINUITY-REPORT.md`.
+**LATER (dependency order):** Phase 9 — deploy the Hermes skill FROM `adapters/ecommerce/` with a version receipt (test whether Hermes can read a path under `~/Documents`) · merge Item 2D (`pmv4-atom-scope`) → Phase 10
+commerce corpus (10 documents, NEW corpus id) · Phase 11 live rungs E (mechanical smoke, `POLYMATH_TRAIL_MODE=embedded`) → F (one real ecommerce run; 5–8 staged live runs first) → G (negative control) · hosted MCP
+acceptance from OUTSIDE the host (auth, tool discovery, knowledge calls, adapter start / next / submit / status / result, isolation, failure behaviour, a real ecommerce workflow).
 
 ## DO NOT REDO
 - The comparison, the dependency facts, the registry-drift check, the historical-run inspection (`CAPABILITY_MAP.md`, harvest map).
@@ -113,5 +120,5 @@ adapter suites (`test_adapter_service_store`, `_harness_action`, `_evidence_boun
 
 ## Relevant Commits
 `production`: `59a4b60` · `9dfd3c3` · `23d517e` · `758ff8a` owner bundle · `988070a` M-006 + M-007 · `4e627dc` continuation after phases 2–3 · this commit (M-008, phase 4).
-`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366) · `4a938bd` Phase 5b (11.367) · `7f87e57` Phase 5c (11.368) · `92efc79` product manifest + complete run in test form (11.369) · `b766678` Phase 6 Trail core embedded + first run against real TrailSignal code (11.370, ADR-0021) · `a1e886f` Phase 8 governed dossier (11.371) · `4ebcd41` Phase 7 registry state (11.372) · `4f89d4c` Phase 6 replay equivalence (11.373). Branch `review/m1-reproductions` `eb63bef`.
+`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366) · `4a938bd` Phase 5b (11.367) · `7f87e57` Phase 5c (11.368) · `92efc79` product manifest + complete run in test form (11.369) · `b766678` Phase 6 Trail core embedded + first run against real TrailSignal code (11.370, ADR-0021) · `a1e886f` Phase 8 governed dossier (11.371) · `4ebcd41` Phase 7 registry state (11.372) · `4f89d4c` Phase 6 replay equivalence (11.373) · `82624aa` dependency · `e176962` pre-merge validation + `materials` opt-in fix (11.374). Branch `review/m1-reproductions` `eb63bef`.
 

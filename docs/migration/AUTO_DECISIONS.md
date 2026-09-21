@@ -532,3 +532,38 @@ The three contract pins; engine suite 609 / 609; `PROVENANCE.json` untouched.
 
 #### Affected files / commits
 `migration/ecommerce-consolidation` `4ebcd41` (register 11.372).
+
+### M-015 — The merge window: what was done, what was refused, and how pre-merge uncertainty was removed anyway
+
+#### Question
+`AGENT_OPERATING_DOCTRINE.md` §7 names "merge-window validation" as the step after the embedded-Trail dependency. The Postgres-backed adapter suites commit `running` runs, so they may run only when no
+worker can claim them (§14). How is the merged code validated, and who performs the production merge?
+
+#### Evidence
+Preflight (read-only): 0 open adapter runs; no ingestion ticket or run had moved for 7+ days; 13 worker types healthy on bundle `9cb421b4eeed`. `git merge-tree` = clean. Migration 0061 has no step-type
+constraint. After the fleet was stopped, `git merge` into `production` was DENIED by the session's permission gate as a production deploy.
+
+#### Applicable migration invariants
+Doctrine §14 live-system discipline · §10 classify failures · the standing rule that a refused action is refused (it is not retried by another route).
+
+#### Decision
+(1) The denial stands: the merge was NOT retried or routed around. (2) Service first: the fleet was rebooted at once from the UNCHANGED `production` checkout with the standard boot script. (3) The merge's
+uncertainty was removed WITHOUT deploying: a throwaway Postgres (local image, 65 migrations, removed afterwards) ran the Postgres-backed adapter suites and a new real-store complete run against the branch
+code. (4) The production merge + ONE bounce + Hermes MCP reload stay with the owner (run them, or permit them).
+
+#### Alternatives rejected
+Running the suites against the fleet's database with the fleet stopped but WITHOUT the merge (proves nothing about the branch) · porting every Postgres-backed suite to the in-memory store first (slower,
+and it would not test the real store) · any second attempt at the merge.
+
+#### Why this is the smallest reversible choice
+Nothing was deployed; the throwaway database is gone; the only live-environment change is one additive pure-Python package.
+
+#### Reversibility
+`uv pip uninstall packageurl-python` (nothing live imports it).
+
+#### Validation / proof
+Isolated Postgres: 40 / 41 → one DEFECT in this branch found (`materials` leaked through its error path for steps that never opted in) → fixed → 41 / 41; the complete scripted ecommerce run `completed` on
+the real store. Side effect recorded: the restore boot made live the already-committed TG4 change `6708301` that was waiting for its next bounce (bundle → `fa72e3b1adde`).
+
+#### Affected files / commits
+`migration/ecommerce-consolidation` `82624aa` (dependency) · `e176962` (fix + isolated-Postgres test, register 11.374).
