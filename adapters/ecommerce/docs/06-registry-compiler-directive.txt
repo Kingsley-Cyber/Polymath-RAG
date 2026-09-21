@@ -1,0 +1,753 @@
+Worked for 19s
+
+Fable’s assessment is mostly right, and the actual CSVs confirm that the registry should now be wired in. I would make three corrections/locks before telling it to build registry.py.
+
+First, the CSVs really are functioning as a reasoning substrate rather than a category list. outdoor_activity_niche_seed.csv carries task, context, environmental constraints, body/hand state, friction hypothesis, workaround hypothesis, product territory, and reusable shared_predicates; it also explicitly labels these records hypothesis / seed. The query templates are already organized by evidence goal rather than arbitrary search phrases, including complaint, workaround, context, competition, price, falsification, community, and behavior.
+
+So yes: the importer is now high leverage.
+
+1. Build the importer now, but make it a compiler—not a loader
+
+I would not let registry.py simply read CSV rows into Python objects and expose them.
+
+Make the boundary:
+
+raw TrailSignal CSVs
+        ↓
+registry.py
+        ↓
+parse
+normalize
+split multi-value fields
+validate
+cross-reference IDs
+compile evidence-role mappings
+compile reasoning indices
+        ↓
+RegistrySnapshot
+        ↓
+hash/version
+        ↓
+runtime
+
+The runtime should consume one immutable compiled snapshot for the duration of a run.
+
+Conceptually:
+
+registry_snapshot:
+  build_id: registry_20260810_001
+  source_hashes:
+    activity_seed: sha256:...
+    friction_library: sha256:...
+    query_templates: sha256:...
+    scoring_rubric: sha256:...
+
+  activities: ...
+  friction_families: ...
+  predicates: ...
+  query_templates: ...
+  scoring_dimensions: ...
+
+That means later SQLite only needs:
+
+registry_build_hash
+
+on a run.
+
+This avoids turning live CSV mutation into silent runtime behavior changes.
+
+2. Fable is slightly overstating workaround_markers
+
+The useful observation is correct, but there is an important nuance.
+
+Your friction_library.csv really does contain:
+
+DIY
+modified
+cut
+taped
+tied
+repurposed
+carried separately
+
+as workaround markers.
+
+But from the actual rows, that marker set is essentially repeated across the friction families.
+
+So it should be used as:
+
+GLOBAL WORKAROUND SIGNAL LEXICON
+
+not:
+
+deterministic friction-family classifier
+
+Correct runtime:
+
+comment:
+"I taped the battery pack to the strap"
+
+        ↓ lexical marker
+
+possible WORKAROUND_EVIDENCE
+        ↓
+semantic classification
+        ↓
+Which friction?
+Which physical job?
+Which mechanism?
+        ↓
+θ proposes
+φ validates
+
+Python can deterministically detect:
+
+"taped"
+
+as a workaround marker.
+
+It should not deterministically conclude:
+
+friction = object_retention
+
+from the marker alone.
+
+That mapping still needs context.
+
+3. Lock the scoring authority before importer implementation
+
+This is the largest issue Fable identified.
+
+Your rubric really does have 13 weighted dimensions, including behavior frequency, friction severity, workaround strength, complaint repetition, product simplicity, shipping fit, margin potential, competition gap, and risk. It also explicitly says evidence IDs are required after seed stage.
+
+And niche_candidates.csv contains those same dimension fields alongside:
+
+fact_status = hypothesis
+research_state = seed
+score_basis = seed_prior
+hard_gates_passed = False
+
+plus an explicit falsification test.
+
+That gives you a very clean hierarchy:
+
+LEVEL 1
+Evidence-role coverage / hard gates
+        ↓
+"Is this candidate admissible for scoring?"
+
+LEVEL 2
+Scoring rubric
+        ↓
+"Among admissible candidates,
+which are comparatively attractive?"
+
+LEVEL 3
+Final research disposition
+
+So:
+
+ROLE COVERAGE
+≠
+OPPORTUNITY SCORE
+
+and:
+
+high score
+cannot override
+missing required evidence
+
+Example:
+
+candidate score = 89
+
+but
+
+SUPPLIER_AVAILABILITY = missing
+PRICE_EVIDENCE = missing
+CONTRADICTION = incomplete
+
+→ NOT QUALIFIED
+
+That needs to be a law.
+
+Seed scores need special treatment
+
+The existing numerical fields in niche_candidates.csv should be interpreted as:
+
+SEED_PRIOR
+
+not validated measurements.
+
+That's already consistent with the actual row metadata:
+
+score_basis = seed_prior
+
+So the importer should compile:
+
+candidate_prior:
+  candidate_id: nc-019
+
+  authority:
+    WORKING_HYPOTHESIS
+
+  score_basis:
+    SEED_PRIOR
+
+  priors:
+    behavior_frequency: 3
+    friction_severity: 4
+    workaround_strength: 2
+    ...
+
+  evidence_validated:
+    false
+
+Once real research begins, the prior does not magically become evidence.
+
+A later scoring receipt could be:
+
+scoring:
+  prior:
+    friction_severity: 4
+
+  evidence_score:
+    friction_severity: 3
+
+  evidence_refs:
+    - ev_18
+    - ev_22
+    - ev_31
+
+  score_basis:
+    OBSERVED_EVIDENCE
+
+The evidence-backed score should supersede the seed prior for decision-making.
+
+Do not make niche_candidates.csv the second scoring schema
+
+Fable correctly caught the duplication problem.
+
+The authority should be:
+
+scoring_rubric.csv
+        =
+dimension definitions
+weights
+anchors
+evidence requirements
+
+niche_candidates.csv merely stores:
+
+values assigned to those dimensions
+
+Therefore importer validation should say:
+
+every scoring column in niche_candidates
+must resolve to a dimension defined in scoring_rubric
+
+If the rubric adds/removes a dimension, compile should fail until candidate representation is compatible.
+
+Don't let two lists drift silently.
+
+4. shared_predicates should become a first-class retrieval index
+
+This part of Fable's observation is important.
+
+Your seed data repeatedly includes reusable predicates such as:
+
+carry
+access
+retain
+separate
+protect
+set-up
+clean
+repair
+
+Do not just store those as another string array.
+
+Compile an inverse index:
+
+predicate → seed paths
+
+Example:
+
+retain
+├── fishing / tackle
+├── kayaking / deck storage
+├── photography / lens access
+├── camping / staging
+└── pickleball / fence-side gear
+
+Then your cross-domain reasoning can ask:
+
+Current physical job:
+retain an object during motion
+
+        ↓
+
+Registry lookup:
+What unrelated activities contain
+the same physical predicate?
+
+        ↓
+
+retrieve:
+known friction patterns
+workarounds
+product territories
+
+That's the real multiplier.
+
+And combine predicate + friction, not predicate alone
+
+Better transfer key:
+
+(shared predicate, friction family)
+
+Example:
+
+access + occupied_hand
+
+is much more informative than merely:
+
+access
+
+Likewise:
+
+retain + bounce_access
+protect + environmental_protection
+clean + dirty_clean_transition
+
+The seed file already gives you enough fields to compile these combinations.
+
+So registry lookup should support:
+
+lookup_by_predicate(...)
+lookup_by_friction(...)
+lookup_by_predicate_friction(...)
+lookup_by_physical_context(...)
+
+Not only niche lookup.
+
+5. Query templates should plug directly into the new EvidenceRole architecture
+
+This is another place where the old design and new control plane line up unusually well.
+
+Actual templates include:
+
+complaint
+workaround
+context
+competition
+price
+seasonality
+falsification
+community
+behavior
+
+The importer should compile those to your current evidence roles.
+
+For example:
+
+evidence_goal_mapping:
+
+  complaint:
+    expected_roles:
+      - FRICTION_EVIDENCE
+
+  workaround:
+    expected_roles:
+      - WORKAROUND_EVIDENCE
+
+  behavior:
+    expected_roles:
+      - BEHAVIOR_SUPPORT
+
+  competition:
+    expected_roles:
+      - CURRENT_PRODUCT_REFERENCE
+      - PRODUCT_DELTA_SUPPORT
+
+  price:
+    expected_roles:
+      - PRICE_EVIDENCE
+
+  falsification:
+    expected_roles:
+      - CONTRADICTION
+
+Some goals shouldn't directly satisfy a final evidence role:
+
+community
+
+may primarily mean:
+
+SOURCE_DISCOVERY
+
+and:
+
+seasonality
+
+means:
+
+CURRENT_TIMING_CONTEXT
+
+rather than automatically proving demand.
+
+That distinction is consistent with the evidence-authority system you've just implemented.
+
+Then query compilation becomes three-layered
+EvidenceGap
+     ↓
+required EvidenceRole
+     ↓
+Registry query-template family
+     ↓
+θ contextualizes language
+     ↓
+source-specific query
+
+Example:
+
+gap:
+WORKAROUND_EVIDENCE needed
+
+        ↓
+
+registry template:
+{activity} {task} DIY modification
+
+        ↓
+
+current context:
+creator audio
+attach lav transmitter to clothing
+
+        ↓
+
+θ:
+"wireless mic transmitter DIY clothing mount"
+
+The CSV provides the proven search grammar.
+
+θ fills in the domain-specific semantics.
+
+This is much better than either pure hard-coded queries or unconstrained LLM query generation.
+
+6. The falsification field should actually enter the loop
+
+The next_falsification_test field should not stay registry metadata.
+
+Your candidate rows explicitly contain instructions such as:
+
+collect independent complaints and workaround examples before concept testing.
+
+Compile that into a candidate seed as:
+
+falsification:
+  source: registry
+
+  test:
+    Collect 10 independent complaints and
+    3 workaround examples before concept testing.
+
+  authority:
+    CURATED_SEED_RULE
+
+When such a candidate activates:
+
+Candidate
+    ↓
+existing falsification test?
+    ↓ YES
+Gap Compiler
+    ↓
+convert into EvidenceRequirements
+
+So the registry isn't just helping generate ideas.
+
+It's also telling the loop how to try to kill them.
+
+That's extremely useful.
+
+7. Outdoor-only isn't actually a runtime defect
+
+I agree with Fable's characterization but would phrase it carefully.
+
+The current registry is domain-skewed, not architecturally incomplete.
+
+For an outdoor case:
+
+registry support = dense
+
+For creator audio:
+
+registry support = sparse
+
+But creator audio can still use:
+
+friction families
+shared predicates
+workaround motifs
+physical jobs
+query grammars
+reasoning motifs
+
+even when it gets:
+
+niche_resolution = UNRESOLVED
+
+For example:
+
+creator audio:
+hands occupied
+
+can still connect to your existing:
+
+occupied_hand
+
+friction abstraction, whose definition is already broader than any single outdoor activity: one or both hands are committed to another responsibility.
+
+That's exactly why the registry can transfer beyond outdoor even before you add creator niches.
+
+This implies two kinds of registry reuse
+Direct reuse
+query = kayaking
+→ exact registry activities
+Structural reuse
+query = creator audio
+
+no niche match
+
+but:
+
+movement restriction
+occupied hand
+object retention
+access latency
+
+DO match
+
+So open-world mode should still query the registry for structural priors, even if niche resolution fails.
+
+That's important.
+
+Do not implement:
+
+niche unresolved
+→ bypass registry
+
+Implement:
+
+niche unresolved
+→ skip niche priors
+→ retain friction / predicate /
+   mechanism / query-pattern priors
+8. Do not derive a giant niche table yet
+
+Fable noted the lack of an explicit niche table.
+
+I would not solve this now by having the importer invent a taxonomy from every domain/activity/participant combination.
+
+That risks converting convenience inference into registry authority.
+
+For v1:
+
+activity_id
+activity
+domain
+participant
+
+stay exactly what the source says.
+
+Known explicit registry concepts remain known.
+
+When the new open-world system discovers a coherent niche:
+
+NICHE_CANDIDATE
+
+then normal promotion handles it.
+
+If later you need a dedicated niches.csv, add it explicitly rather than having registry.py secretly create authoritative niche semantics.
+
+9. Multi-value parsing needs one canonical rule
+
+Fable is right here.
+
+Fields such as:
+
+seasonal_tags
+shared_predicates
+workaround_markers
+body_or_hand_state
+environmental_constraints
+
+use semicolon-delimited values.
+
+Importer rule should be deterministic:
+
+split ";"
+trim whitespace
+drop empty values
+preserve source order
+normalize canonical case only where schema says
+dedupe exact normalized duplicates
+
+Do not split commas generically because several fields contain natural-language commas.
+
+This belongs in importer fixtures immediately.
+
+10. Registry compiler should fail loudly
+
+Don't tolerate malformed rows just to complete a build.
+
+Compilation checks should include at least:
+
+duplicate stable IDs
+unknown friction IDs/families
+unknown scoring dimensions
+invalid fact_status
+invalid research_status
+bad booleans
+malformed dates
+missing required task/context
+bad multi-value parsing
+enabled query template with missing placeholders
+candidate references nonexistent activity
+
+Output:
+
+RegistryBuild = VALID
+
+or don't activate it.
+
+11. Where it plugs into the current graph
+
+Do not add a new large stage.
+
+Registry retrieval supports existing nodes:
+
+UNDERSTAND / LENS
+        ↓
+Registry structural priors
+
+BRIDGE GENERATION
+        ↓
+shared predicates
+friction families
+reasoning paths
+
+GAP COMPILER
+        ↓
+query templates
+falsification tests
+
+COMMENT CURATION
+        ↓
+workaround marker lexicon
+
+PHYSICAL PRODUCT REASONING
+        ↓
+product territories / structural analogies
+
+QUALIFICATION
+        ↓
+scoring rubric
+
+The registry is support infrastructure across the graph.
+
+It isn't:
+
+START
+→ REGISTRY PIPELINE
+→ everything else
+12. The control boundary should be explicit
+
+Give Fable this rule:
+
+Registry data may seed, constrain, suggest, classify, retrieve, and provide reusable search/reasoning patterns. Registry seed hypotheses do not constitute current-world evidence and cannot satisfy EvidenceRole requirements merely because they exist in the registry.
+
+That's especially important because outdoor_activity_niche_seed.csv literally labels its rows as hypotheses and seeds.
+
+So:
+
+Registry:
+"occupied-hand friction may exist here"
+
+        ↓
+
+good enough to:
+generate hypothesis
+retrieve analogies
+compile research
+
+NOT enough to:
+mark FRICTION_EVIDENCE satisfied
+13. Scoring integration should look like this
+                      PRODUCT CANDIDATE
+                              │
+                              ▼
+                       HARD ELIGIBILITY
+                     / role coverage gates
+                              │
+                   ┌──────────┴──────────┐
+                   │                     │
+                 FAIL                   PASS
+                   │                     │
+                   ▼                     ▼
+            PROVISIONAL/REJECT      SCORING RUBRIC
+                                         │
+                         ┌───────────────┼───────────────┐
+                         ▼               ▼               ▼
+                    behavior        commercial        risk
+                    dimensions       dimensions       dimensions
+                         │               │               │
+                         └───────────────┼───────────────┘
+                                         ▼
+                               deterministic score
+                                         │
+                                         ▼
+                                comparative ranking
+
+And maintain the law from the existing TrailSignal architecture: the LLM never writes the opportunity score.
+
+14. I agree with the sequencing change—with one qualification
+
+I would now sequence:
+
+1. registry.py compiler
+2. wire structural priors
+3. wire workaround markers
+4. wire EvidenceRole → query template mapping
+5. wire falsification tests
+6. declare scoring layering
+7. run 2–3 supervised canaries
+8. SQLite durability
+9. budgets / crash resume / idempotency
+10. walk-away qualification
+
+But do not wait to design the SQLite schema until after those canaries.
+
+The persistence schema can remain frozen conceptually now.
+
+Just don't spend implementation time making it durable until the registry has been exercised.
+
+That gives you the best combination:
+
+first:
+improve intelligence
+
+then:
+observe actual behavior
+
+then:
+freeze operational durability
+The part I would send back to Fable
+
+Proceed with registry.py next. Treat it as a deterministic Registry Compiler, not a loose CSV loader. The source CSVs remain authoritative; compile them into an immutable, hash-pinned runtime snapshot. Keep all seed rows at their declared hypothesis/seed authority—they may drive retrieval and hypothesis generation but cannot satisfy field-evidence requirements. Compile shared_predicates and (predicate, friction) into cross-domain structural indices; compile workaround_markers into global workaround-detection vocabulary but do not use those generic markers alone to assign friction families; compile search-query evidence_goal values into the current EvidenceRole system; compile each candidate's falsification rule into evidence requirements when that seed activates.
+
+Lock scoring into two separate layers: role-coverage/hard gates determine whether a lead is admissible, then scoring_rubric.csv is the sole definition of deterministic comparative dimensions and weights. Numerical values already present in niche_candidates.csv are SEED_PRIOR values, not validated observations; after seed stage, evidence-backed score receipts supersede them and must cite evidence IDs. A high rubric score can never override missing required EvidenceRoles.
+
+Do not create a derived universal niche taxonomy during import. Open-world queries may remain UNRESOLVED while still using universal structural registry priors such as friction families, physical predicates, workaround motifs, product territories, and query grammars. Registry = reasoning prior, not evidence and not ontology ceiling.

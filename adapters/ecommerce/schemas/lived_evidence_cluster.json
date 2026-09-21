@@ -1,0 +1,92 @@
+{
+ "title": "lived_evidence_cluster",
+ "description": "LivedEvidenceCluster (docs/25 \u00a73): participant cards grouped by community and friction family. Authority comes from INDEPENDENT records and threads: ANCHOR at or above policies.lived_world.anchor_threshold, THIN below (may feed explicit reconstruction only).",
+ "required": [
+  "id",
+  "community",
+  "friction_family",
+  "card_ids",
+  "record_ids",
+  "record_count",
+  "thread_count",
+  "independent_voices",
+  "authority",
+  "unknowns"
+ ],
+ "properties": {
+  "id": {
+   "type": "string"
+  },
+  "lead_id": {
+   "type": "string"
+  },
+  "community": {
+   "type": "string"
+  },
+  "friction_family": {
+   "type": "string"
+  },
+  "card_ids": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "string"
+   }
+  },
+  "record_ids": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "string"
+   }
+  },
+  "record_count": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "thread_count": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "independent_voices": {
+   "type": "integer",
+   "minimum": 1
+  },
+  "authority": {
+   "enum": [
+    "THIN",
+    "ANCHOR"
+   ]
+  },
+  "roles_present": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "sample_quotes": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "products_named": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "seed_population": {
+   "type": "boolean"
+  },
+  "unknowns": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "threshold": {
+   "type": "object"
+  }
+ }
+}

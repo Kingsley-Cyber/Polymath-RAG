@@ -1,0 +1,16 @@
+{
+  "$id": "market_scope",
+  "title": "MarketScope — lattice cell (market x niche x dimensions), never a permanent taxonomy row (docs/12)",
+  "type": "object",
+  "required": ["id", "market"],
+  "properties": {
+    "id": {"type": "string"},
+    "market": {"type": "string"},
+    "niche": {"type": "string"},
+    "subniche": {"type": "string"},
+    "dimensions": {"type": "object"},
+    "origin": {"enum": ["FIELD", "TRENDS", "CORPUS", "SUPPLY", "REGISTRY", "THETA"]},
+    "features": {"type": "object"},
+    "status": {"enum": ["PROVISIONAL", "RETAINED", "COLLAPSED", "PROMOTED"]}
+  }
+}

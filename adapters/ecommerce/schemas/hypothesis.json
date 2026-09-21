@@ -1,0 +1,91 @@
+{
+ "title": "hypothesis",
+ "required": [
+  "id",
+  "source",
+  "path",
+  "target_mechanism",
+  "evidence_boundary",
+  "gaps",
+  "status",
+  "alternatives",
+  "falsifiers"
+ ],
+ "properties": {
+  "status": {
+   "enum": [
+    "WORKING_HYPOTHESIS",
+    "WORKING_ANALOGY",
+    "CHALLENGED",
+    "SUPPORTED",
+    "REJECTED",
+    "HOLD"
+   ]
+  },
+  "evidence_boundary": {
+   "required": [
+    "first_inference_at"
+   ],
+   "type": "object",
+   "properties": {
+    "first_inference_at": {
+     "type": "string"
+    }
+   }
+  },
+  "alternatives": {
+   "description": "competing explanations that were entertained",
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "falsifiers": {
+   "description": "observations that would kill this bridge",
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "source_refs": {
+   "description": "corpus evidence refs grounding hops before the boundary",
+   "type": "array"
+  },
+  "genesis": {
+   "enum": [
+    "PROBLEM_LED",
+    "SHIFT_LED",
+    "TREND_LED",
+    "DEMAND_REROUTE",
+    "CAPABILITY_LED",
+    "WORKAROUND_LED",
+    "COMMUNITY_LED",
+    "SUPPLY_TRANSFER_LED"
+   ]
+  },
+  "id": {
+   "type": "string"
+  },
+  "source": {
+   "type": "string"
+  },
+  "path": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "target_mechanism": {
+   "type": "string"
+  },
+  "gaps": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "exploratory": {
+   "type": "boolean"
+  }
+ }
+}

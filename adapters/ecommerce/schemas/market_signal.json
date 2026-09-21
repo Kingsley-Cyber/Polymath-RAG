@@ -1,0 +1,15 @@
+{
+  "$id": "market_signal",
+  "title": "MarketSignal — one lane-tagged discovery signal (docs/12). Origin is provenance, never authority.",
+  "type": "object",
+  "required": ["id", "origin", "summary"],
+  "properties": {
+    "id": {"type": "string"},
+    "origin": {"enum": ["FIELD", "TRENDS", "CORPUS", "SUPPLY", "COMMERCE"]},
+    "kind": {"type": "string"},
+    "summary": {"type": "string"},
+    "source": {"type": "string"},
+    "scope_hint": {"type": "string"},
+    "evidence_refs": {"type": "array"}
+  }
+}

@@ -1,0 +1,83 @@
+# Registry Maintenance Graph (docs/08) — the SECOND lifecycle.
+# Opportunity runs DISCOVER; this graph decides what becomes reusable.
+# LAW: the active registry never mutates inside the run that discovered the
+# knowledge. Runtime discovers -> maintenance evaluates -> human approves ->
+# git promotes -> registry.py compiles -> FUTURE runs consume.
+graph:
+  id: registry_maintenance
+  version: 1.0.0
+  entry: collect
+
+nodes:
+  collect:            {type: transform, executor: python.collect_candidates}   # aggregate across runs (SQLite)
+  normalize:          {type: transform, executor: python.normalize_candidates}
+  resolve_type:       {type: transform, executor: python.resolve_candidate_types}   # deterministic: kind -> registry row draft
+  deduplicate:        {type: transform, executor: python.dedupe_candidates}         # NEW / ALIAS / MERGE / EXISTING vs compiled snapshot
+  novelty_check:      {type: transform, executor: python.novelty_check}
+  evidence_review:    {type: transform, executor: python.candidate_evidence}   # independence across runs
+  research:           {type: agent,     executor: hermes_existing_web_stack, outputs: [observations],
+                       context: {require: [registry_candidates],
+                                 prefer: [queries, evidence_authority_rules],
+                                 exclude: [registry_snapshot]}}
+  promotion_gate:     {type: gate,      executor: python.promotion_satisfaction}
+  human_approval:     {type: agent,     executor: king_l5_approval, outputs: [approvals],   # L5 — never autonomous
+                       context: {require: [registry_candidates, promotion_summary], prefer: [evaluations]}}
+  patch:              {type: transform, executor: python.csv_patch}            # emits git patch, never edits live
+  compile_registry:   {type: transform, executor: python.registry_compile}
+  regression:         {type: transform, executor: python.regression_tests}
+  publish:            {type: terminal}
+  stop:               {type: terminal}
+
+edges:
+  - {from: collect,          to: normalize}
+  - {from: normalize,        to: resolve_type}
+  - {from: resolve_type,     to: deduplicate}
+  - {from: deduplicate,      to: novelty_check}
+  - {from: novelty_check,    to: evidence_review}
+  - {from: evidence_review,  to: research,        when: candidate_needs_field_evidence}
+  - {from: evidence_review,  to: promotion_gate,  when: candidate_evidence_sufficient}
+  - {from: research,         to: evidence_review}
+  - {from: promotion_gate,   to: human_approval,  when: promotion_eligible}
+  - {from: promotion_gate,   to: stop,            when: all_rejected_or_held}
+  - {from: human_approval,   to: patch}
+  - {from: patch,            to: compile_registry}
+  - {from: compile_registry, to: regression}
+  - {from: regression,       to: publish}
+
+loop:
+  goal: {all_candidates_resolved_or_held: true, registry_compiles: true, regression_passes: true}
+  terminals: [MAINTENANCE_COMPLETE, NO_CHANGES, NEEDS_APPROVAL, STALLED, BLOCKED, EXHAUSTED]
+
+# Growth laws
+laws:
+  horizontal_vs_vertical: >
+    Horizontal growth (new domains instantiated from EXISTING primitives) is
+    cheap and encouraged. Vertical growth (new friction families, predicates,
+    query grammars, scoring changes) has a progressively higher bar.
+  promotion_risk:
+    ATOMIC_ACTIVITY_SEED: LOW
+    NICHE: LOW_MEDIUM
+    ACTIVITY: LOW_MEDIUM
+    PRODUCT_TERRITORY: MEDIUM
+    QUERY_TEMPLATE: MEDIUM
+    SOURCE: HIGH
+    FRICTION_FAMILY: HIGH
+    SHARED_PREDICATE: HIGH
+    SCORING_RUBRIC: VERY_HIGH   # constitutional; never autonomous
+  prefer_combinations: >
+    Before inventing a primitive, check whether existing friction families +
+    predicates + physical jobs can represent the discovery as a new atomic
+    seed. Usually they can. Ontology explosion is the failure mode.
+  niche_expansion: >
+    A promoted niche is expanded into atomic activity/task/context/body-state/
+    friction/workaround/predicate seeds matching the grain of the 1,386-row
+    corpus — never just a niche name.
+  seed_packs: >
+    outdoor_activity_niche_seed.csv is the first pack of the AtomicActivitySeed
+    schema. New domains get their OWN pack files (creator_/home_/pet_...);
+    registry.py compiles all packs into one snapshot.
+  never_delete: MERGED/DEPRECATED statuses only — old runs must stay explainable.
+  demand_driven: >
+    Diversify where execution shows deficits: repeated UNRESOLVED resolutions,
+    high-usage/low-coverage predicates and frictions, recurring candidates.
+    Manual expansion requests run through this same graph.

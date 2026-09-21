@@ -1,0 +1,608 @@
+Yes. The missing piece is not another settings file; it is a **Hermes Preference Control Plane** that lets Hermes inspect the skill and determine, from the code/graphs themselves, **what the user is allowed to tune**.
+
+Fable should not manually hard-code a menu like “products/comments/hops.” It already knows the codebase. Have it make the skill **self-describing** so Hermes can discover adjustable controls automatically.
+
+## The core design
+
+The flow should be:
+
+```text
+USER
+"I want it to keep digging until it finds
+at least 12 decent product candidates,
+go heavy on comments,
+and give me 5 final products."
+
+        ↓
+
+HERMES
+interprets preference intent
+
+        ↓
+
+SETTINGS REGISTRY
+"What controls does this mode actually expose?"
+
+        ↓
+
+settings.py
+validates + resolves preferences
+
+        ↓
+
+ResolvedRunPreferences
+frozen in SQLite
+
+        ↓
+
+CONTROL GRAPH + LOOP
+consume those preferences
+
+        ↓
+
+RUN
+```
+
+Hermes should therefore be able to answer:
+
+> “What can I change for this research mode?”
+
+by **reading the mode's setting definitions**, not from prompt memory.
+
+---
+
+# Make each graph/node expose tunable controls
+
+For example, `loadout_graph.yaml` could declare:
+
+```yaml
+user_controls:
+
+  discovery_product_target:
+    type: integer
+    default: 10
+    min: 5
+    max: 30
+    user_safe: true
+    mutable: during_run
+
+  final_product_target:
+    type: integer
+    default: 4
+    min: 3
+    max: 6
+    user_safe: true
+    mutable: before_portfolio
+
+  community_strength:
+    type: enum
+    values:
+      - LIGHT
+      - STANDARD
+      - STRONG
+      - VERY_STRONG
+    default: STRONG
+    user_safe: true
+
+  research_depth:
+    type: enum
+    values:
+      - FAST
+      - BALANCED
+      - DEEP
+      - EXHAUSTIVE
+
+  open_discovery:
+    type: enum
+    values:
+      - LOW
+      - NORMAL
+      - HIGH
+
+  experience_profiles:
+    type: integer
+    default: 3
+    min: 2
+    max: 4
+
+  granularity:
+    type: enum
+    values:
+      - BROAD
+      - NORMAL
+      - GRANULAR
+      - VERY_GRANULAR
+```
+
+Hermes can discover all of that dynamically.
+
+---
+
+# Loop controls should work the same way
+
+This is especially important for what you're describing.
+
+A user might say:
+
+> “Keep looping until you find enough.”
+
+That should **not** translate into an unbounded loop.
+
+It should compile into a satisfaction target plus hard safety ceiling.
+
+For example:
+
+```yaml
+user_goal:
+  discovery:
+    min_product_candidates: 12
+
+  evidence:
+    community_strength: STRONG
+
+  final:
+    final_products: 5
+
+loop_preferences:
+  continue_while:
+    - product_candidates < 12
+    - critical_evidence_gaps_exist
+
+  user_requested_persistence:
+    HIGH
+```
+
+But the system-owned loop policy still says:
+
+```yaml
+system_limits:
+  max_research_rounds: 6
+  max_stagnation_rounds: 2
+  max_query_budget: 80
+  max_runtime_budget: ...
+```
+
+Therefore:
+
+```text
+USER:
+"Loop until you find 12."
+
+SYSTEM:
+tries to reach 12
+
+BUT IF:
+sources saturate
+progress stops
+budget ceiling reached
+evidence becomes insufficient
+
+→ EXHAUSTED / STALLED
+not infinite looping
+```
+
+That is the correct balance.
+
+> **User controls desired stopping conditions. φ retains absolute safety ceilings.**
+
+---
+
+# Separate discovery quantity from final quantity
+
+This is especially important for Niche Loadout.
+
+If the user says:
+
+> “Find me 15 products.”
+
+That could mean two very different things.
+
+Do not change:
+
+```text
+NICHE_LOADOUT final collection = 3–6
+```
+
+Instead distinguish:
+
+```yaml
+product_preferences:
+
+  discovery_target:
+    15
+
+  qualified_candidate_target:
+    8
+
+  final_loadout_target:
+    5
+```
+
+So the run might do:
+
+```text
+discover 21
+↓
+retain 13
+↓
+validate 8
+↓
+portfolio optimizer
+↓
+final 5
+```
+
+That's much stronger than either stopping after finding five products or forcing 15 products into the final collection.
+
+If the user genuinely wants a catalog of 20 products, Hermes can say that exceeds the `NICHE_LOADOUT` collection contract and use an expanded shortlist/report output instead.
+
+---
+
+# Hermes needs a settings/introspection API
+
+I would have Fable make something like:
+
+```python
+settings.describe(mode)
+settings.resolve(mode, user_preferences)
+settings.validate(mode, patch)
+settings.apply(run_id, patch)
+settings.explain(setting_id)
+```
+
+Then Hermes can naturally do:
+
+```text
+User:
+"What can I adjust?"
+
+Hermes:
+[reads settings.describe(NICHE_LOADOUT)]
+
+"You can adjust research depth, community evidence,
+product discovery quantity, final collection size,
+granularity, experience perspectives, currentness,
+trend research, supplier depth..."
+```
+
+No prompt-maintained documentation.
+
+---
+
+# Every setting needs metadata
+
+This is what makes it safe and understandable.
+
+```yaml
+setting:
+  id: community_strength
+
+  label:
+    Community research strength
+
+  description:
+    >
+    Controls how much independent community evidence
+    the system seeks before considering community
+    understanding sufficiently grounded.
+
+  level:
+    USER_SAFE
+
+  type:
+    enum
+
+  allowed:
+    - LIGHT
+    - STANDARD
+    - STRONG
+    - VERY_STRONG
+
+  default:
+    STRONG
+
+  mutability:
+    DURING_RUN
+
+  affects:
+    - comment_query_budget
+    - thread_independence_target
+    - author_independence_target
+    - contradiction_search_budget
+
+  cannot_affect:
+    - evidence_authority
+    - prevalence_inference_rules
+
+  cost_effect:
+    STRONG_INCREASES_RUNTIME
+```
+
+That last part is useful.
+
+Hermes can explain:
+
+> “Very Strong comments will likely make the run longer because it increases independent thread and contradiction research.”
+
+---
+
+# Let Fable generate the settings schema from the implementation
+
+This is the part I think aligns exactly with what you want.
+
+Tell Fable:
+
+> Inspect every graph, loop, policy and deterministic executor and identify every parameter that changes **breadth, depth, quantity, budget, emphasis, stopping condition, exploration strategy, source preference, report composition or creative output** without altering epistemic truth conditions.
+
+Then classify each discovered control:
+
+```text
+USER_SAFE
+ADVANCED_SAFE
+SYSTEM_LOCKED
+```
+
+That lets Fable **emerge the settings surface from what actually exists**.
+
+It can probably find things you've forgotten are configurable, such as:
+
+```text
+frontier beam width
+candidate-retention count
+comment traversal depth
+profile count
+open-discovery allocation
+VOI continuation threshold
+supplier depth
+contradiction intensity
+trend sensitivity
+report angle count
+market scopes retained
+adjacent-market exploration
+query expansion breadth
+```
+
+That is better than us inventing the complete menu manually.
+
+---
+
+# Hermes should translate plain English into a `PreferencePatch`
+
+For example:
+
+> “I care way more about finding obscure products than speed. Go deep in Reddit/comments, don't spend too much time on suppliers, find at least 15 possibilities, then give me your best 5.”
+
+Hermes outputs internally:
+
+```yaml
+preference_patch:
+
+  research_depth: DEEP
+
+  open_discovery: HIGH
+
+  community_strength: VERY_STRONG
+
+  assortment_style: INSIDER_HEAVY
+
+  discovery_product_target: 15
+
+  final_product_target: 5
+
+  supplier_depth: LIGHT
+```
+
+Then `settings.py` validates it.
+
+Hermes does **not** directly alter graph YAML.
+
+---
+
+# Settings revisions should be first-class SQLite state
+
+At run start:
+
+```text
+UserPreference
+↓
+ResolvedSettings
+↓
+SQLite settings revision 1
+```
+
+Mid-run:
+
+> “Actually go deeper on comments.”
+
+Create:
+
+```yaml
+settings_revision:
+  revision: 2
+
+  previous: 1
+
+  requested_by:
+    USER
+
+  patch:
+    community_strength:
+      STRONG -> VERY_STRONG
+
+  effective_from:
+    next_community_research_action
+
+  retroactive:
+    false
+```
+
+Never silently rewrite what earlier steps meant.
+
+This is also useful in the final report:
+
+```text
+Run started: Balanced
+Round 2: user increased Community Strength → Very Strong
+```
+
+---
+
+# Allow goal-level preferences, not just parameter-level preferences
+
+This is an important distinction.
+
+Non-coders often don't know what parameter they want.
+
+They know the **behavior** they want.
+
+Examples:
+
+> “Don't stop until you're really confident in the community.”
+
+> “I'd rather get fewer products but weird insider ones.”
+
+> “Explore broadly before settling.”
+
+> “Don't waste a lot of time on Alibaba.”
+
+> “I want at least three different sub-niches.”
+
+> “Keep researching if the top two markets are close.”
+
+Those should compile into multiple underlying settings.
+
+For example:
+
+```yaml
+preference_profile:
+  goal:
+    "favor unusual insider products over obvious products"
+
+resolved:
+  open_discovery: HIGH
+  frontier_diversity: HIGH
+  outsider_obviousness_penalty: HIGH
+  assortment_style: INSIDER_HEAVY
+  genericness_penalty: HIGH
+```
+
+That is where Hermes adds real value over a settings page.
+
+---
+
+# Add named behavioral presets too
+
+Not instead of natural language—alongside it.
+
+I would expect Fable to emerge presets such as:
+
+| Preset                | Behavior                                               |
+| --------------------- | ------------------------------------------------------ |
+| `FAST_SCAN`           | Low cost, enough evidence to orient                    |
+| `BALANCED`            | Default                                                |
+| `DEEP_INSIDER`        | Heavy community/lived-experience work                  |
+| `BLUE_OCEAN`          | High open discovery, diversity, analogical exploration |
+| `TREND_SCOUT`         | Strong current/trend/query discovery                   |
+| `EVIDENCE_MAX`        | Strong independence and falsification                  |
+| `STORE_BUILDER`       | Product breadth + collection/style/ad output           |
+| `PRODUCT_MARKET_HUNT` | Broad reverse-market exploration                       |
+
+User can say:
+
+> “Run it Blue Ocean but make comments very strong.”
+
+Preset + override.
+
+---
+
+# Some settings should be mode-specific
+
+`NICHE_LOADOUT` can expose:
+
+```text
+final products
+ExperienceProfiles
+collection role balance
+insider-gem emphasis
+```
+
+`MARKET_DISCOVERY` exposes:
+
+```text
+markets retained
+niche breadth
+query expansion
+blue-ocean emphasis
+```
+
+`PRODUCT_ANCHORED_DISCOVERY` exposes:
+
+```text
+number of market bridges
+meaning exploration
+adjacent market discovery
+reframing aggressiveness
+```
+
+`OPPORTUNITY_RESEARCH` exposes:
+
+```text
+hypothesis portfolio breadth
+qualification depth
+supplier depth
+contradiction strength
+```
+
+Shared settings remain shared.
+
+---
+
+# But constitutional controls never appear as adjustable
+
+Fable should explicitly find these and mark:
+
+```yaml
+level: SYSTEM_LOCKED
+```
+
+Things like:
+
+```text
+simulation cannot establish evidence
+supplier listing cannot establish demand
+Google Trends cannot establish sales
+comments cannot establish prevalence
+no fabricated evidence
+provenance required
+fresh evaluator independence
+unsupported-hop qualification ceiling
+commerce safety constraints
+idempotency
+context durability
+```
+
+Hermes can explain them.
+
+Hermes cannot change them.
+
+---
+
+# I would give Fable this exact assignment
+
+> **Implement a self-describing Hermes Preference Control Plane across all research modes. Do not manually create only the currently discussed settings. Inspect the existing Control Graphs, Loop specs, policies, Python executors/math functions, report options and research adapters and identify every parameter that changes user-desired breadth, depth, quantity, persistence, exploration, source emphasis, product/market counts, research budgets, stopping goals, report composition or creative output without weakening truth/evidence/safety laws.**
+>
+> **Represent each discovered control as a typed `SettingDefinition` with human label/description, `USER_SAFE | ADVANCED_SAFE | SYSTEM_LOCKED`, allowed values/range, default, mode applicability, mutability point, cost/runtime effect, deterministic components it affects, and explicit invariants it cannot affect. Generate Hermes-facing settings discovery/help from these definitions so Hermes can answer “what can I adjust?” from the implementation itself rather than a hard-coded prompt.**
+>
+> **Add a natural-language Preference Compiler. Hermes should translate requests such as “keep digging until you find 15 candidates, go very strong on comments, prioritize unusual insider products, but only give me 5 final products” into a structured `PreferencePatch`. `settings.py` validates and resolves the patch against the mode's SettingDefinitions and system ceilings before the controller consumes it. Hermes never edits graph/policy files directly.**
+>
+> **Distinguish user-desired satisfaction targets from hard loop ceilings. Users may request persistence such as `min_product_candidates=15`, `min_market_scopes=5`, `community_strength=VERY_STRONG`, or “continue while high-value evidence gaps remain,” but Python retains non-overridable maximum budgets, stagnation detection, capability failure and exhaustion behavior. “Loop until X” therefore means attempt to satisfy X within deterministic safety/resource ceilings, never run forever.**
+>
+> **Separate discovery targets, qualified-candidate targets and final-output targets. For example, Niche Loadout may discover 15 products, qualify 8 and select 5 final products while retaining its constitutional 3–6 final-loadout contract.**
+>
+> **Freeze resolved settings into SQLite with the run and persist all later safe changes as versioned `SettingsRevision` events with effective-from boundaries. No revision is retroactive. Context Compiler should include relevant resolved preferences in each ActionContext so workers know the user's desired behavior without relying on chat history.**
+>
+> **Finally, generate several useful preset profiles from the actual controls Fable discovers, but allow natural-language overrides. The presets are convenience bundles, never separate logic paths.**
+
+That's the version I would want.
+
+You're essentially asking for **agent-adjustable knobs without making the user become the programmer**. The clean solution is that **Fable exposes the code's safe degrees of freedom declaratively; Hermes discovers them, explains them, and compiles ordinary user language into validated runtime preferences.**

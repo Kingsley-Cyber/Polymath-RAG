@@ -1,0 +1,126 @@
+{
+ "title": "lived_situation",
+ "description": "LivedSituation (docs/09, docs/25 \u00a74): one moment in one real world. authority FIELD_ANCHORED requires an ANCHOR cluster and at least one friction carrying FIELD_OBSERVATION refs; RECONSTRUCTED fills silence around a THIN/ANCHOR cluster or corrected observations; SIMULATED has no records behind it (loadout round 1). Unknowns are preserved, never invented away.",
+ "required": [
+  "id",
+  "authority",
+  "unknowns"
+ ],
+ "properties": {
+  "id": {
+   "type": "string"
+  },
+  "authority": {
+   "enum": [
+    "FIELD_ANCHORED",
+    "RECONSTRUCTED",
+    "SIMULATED"
+   ]
+  },
+  "cluster_id": {
+   "type": "string"
+  },
+  "community": {
+   "type": "string"
+  },
+  "scope": {
+   "type": "string"
+  },
+  "experience_level": {
+   "type": "string"
+  },
+  "situation": {
+   "type": "string"
+  },
+  "activity": {
+   "type": "string"
+  },
+  "moment": {
+   "enum": [
+    "BEFORE",
+    "ARRIVAL",
+    "DURING",
+    "TRANSITION",
+    "AFTER"
+   ]
+  },
+  "environment": {
+   "type": "string"
+  },
+  "participants": {
+   "type": "string"
+  },
+  "body_hand_state": {
+   "type": "string"
+  },
+  "object_state": {
+   "type": "string"
+  },
+  "constraints": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "frictions": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "text",
+     "authority"
+    ],
+    "properties": {
+     "text": {
+      "type": "string"
+     },
+     "authority": {
+      "enum": [
+       "FIELD_OBSERVATION",
+       "RECONSTRUCTED"
+      ]
+     },
+     "refs": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "friction_family": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "inferred_frictions": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "workarounds": {
+   "type": "array"
+  },
+  "physical_jobs": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "unknowns": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "evidence_refs": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "preference_cluster": {
+   "type": "string"
+  }
+ }
+}

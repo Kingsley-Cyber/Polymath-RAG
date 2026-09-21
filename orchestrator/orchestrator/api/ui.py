@@ -1720,7 +1720,8 @@ def _profile_scout(message: str, corpus_ids) -> tuple[list[str], object | None, 
             for corpus_id in corpora:
                 doc_ids = _pj.profile_nominate(client, _pj.collection_name(contract_id), qv, corpus_id, k=8)
                 profile_hits.extend(profile_hits_from_doc_ids(doc_ids))
-                rows = _pap.search_atoms(client, _pap.collection_name(contract_id), qv, ATOM_KINDS, k=12)
+                rows = _pap.search_atoms(client, _pap.collection_name(contract_id), qv, ATOM_KINDS, k=12,
+                                         corpus_ids=[corpus_id])     # Item 2/D: the scout's atom lane is corpus-scoped
                 atom_hits.extend(atom_hits_from_search(rows, group_of=_group_of))
         finally:
             client.close()
@@ -2019,23 +2020,25 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
             adiag: dict = {}
             try:
                 def _fetch(cid):
+                    # Item 2/D: activation atoms come from THIS corpus only — the scope is inside the search, never after it
                     return _pap.search_atoms(client, _pap.collection_name(contract_id), qv,
-                                             CONCEPT_ATOM_KINDS, k=12)
+                                             CONCEPT_ATOM_KINDS, k=12, corpus_ids=[cid])
                 activations = activate_corpus(
                     corpus_ids=corpora, fetch_atoms=_fetch,
                     scout_nominations=getattr(scout_result, "nominations", None),
                     max_activations=max_acts, min_grounding=min_grounding, diag=adiag)
                 st.n_hits = adiag.get("n_hits")
+                if adiag.get("cross_corpus_dropped"):          # Item 2/D tripwire: surfaced, never silent (absent when the contract holds)
+                    diag["cross_corpus_dropped"] = adiag["cross_corpus_dropped"]
                 st.fetch_errors = len(adiag.get("fetch_errors") or [])
                 st.n_candidates = len(activations)
                 if not st.n_hits and not st.fetch_errors:
                     # zero hits: is there anything to search at all? (NO_ATOM_COVERAGE vs ATOMS_EMPTY)
                     try:
-                        from qdrant_client.http import models as _qm
-                        st.atom_universe = int(client.count(
-                            _pap.collection_name(contract_id), exact=False,
-                            count_filter=_qm.Filter(must=[_qm.FieldCondition(
-                                key="atom_kind", match=_qm.MatchAny(any=list(CONCEPT_ATOM_KINDS)))])).count)
+                        # Item 2/D: the universe is THIS request's corpora — another corpus's atoms must not turn
+                        # NO_ATOM_COVERAGE into ATOMS_EMPTY
+                        st.atom_universe = _pap.count_atoms(client, _pap.collection_name(contract_id), CONCEPT_ATOM_KINDS,
+                                                            corpus_ids=corpora)
                     except Exception:  # noqa: BLE001
                         st.atom_universe = None
             finally:

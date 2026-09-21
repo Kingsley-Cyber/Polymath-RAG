@@ -1,0 +1,69 @@
+{
+  "$id": "whitespace_hypothesis",
+  "title": "WhitespaceHypothesis \u2014 explicit mismatch between channels (docs/12)",
+  "type": "object",
+  "required": [
+    "id",
+    "market_scope_id",
+    "type",
+    "observed_mismatch"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "market_scope_id": {
+      "type": "string"
+    },
+    "type": {
+      "enum": [
+        "PRODUCT_WHITESPACE",
+        "MECHANISM_WHITESPACE",
+        "CURATION_WHITESPACE",
+        "SUBNICHE_WHITESPACE",
+        "STYLE_WHITESPACE",
+        "CONTEXT_WHITESPACE",
+        "VALUE_WHITESPACE"
+      ]
+    },
+    "observed_mismatch": {
+      "type": "string"
+    },
+    "supporting_signals": {
+      "type": "array"
+    },
+    "contradicting_signals": {
+      "type": "array"
+    },
+    "physical_jobs": {
+      "type": "array"
+    },
+    "product_territories": {
+      "type": "array"
+    },
+    "next_validation": {
+      "type": "array"
+    },
+    "state": {
+      "enum": [
+        "PROPOSED",
+        "SUPPORTED",
+        "REFINED",
+        "WEAKENED",
+        "CONTRADICTED"
+      ]
+    },
+    "genesis": {
+      "enum": [
+        "PROBLEM_LED",
+        "SHIFT_LED",
+        "TREND_LED",
+        "DEMAND_REROUTE",
+        "CAPABILITY_LED",
+        "WORKAROUND_LED",
+        "COMMUNITY_LED",
+        "SUPPLY_TRANSFER_LED"
+      ]
+    }
+  }
+}

@@ -1,0 +1,310 @@
+{
+ "run_id": "calib_books_01",
+ "date": "2026-09-04",
+ "purpose": "REGRESSION re-evaluation of the baseline receipt 2026-09-04-books-run-01 under v2.1.2 (split population canary, deterministic field origin, corpus presence audit); products untouched",
+ "mode": "STANDARD",
+ "acceptance_pass": true,
+ "statuses": {
+  "corpus_independence": "PASS",
+  "heterogeneous_source_reasoning": "NOT_EVALUATED",
+  "noun_echo_resistance": "NOT_TRIGGERED",
+  "legitimate_corpus_overlap_survival": "PASS",
+  "open_field_population_discovery": "PASS",
+  "latent_population_resolution": "FAIL",
+  "field_originated_opportunity": "PASS",
+  "irrelevant_source_rejection": "PASS",
+  "hypothesis_death": "PASS"
+ },
+ "advisory": [
+  "latent_population_resolution"
+ ],
+ "checks": {
+  "corpus_independence": {
+   "status": "PASS",
+   "hits": [
+    "Dose-state keychain fob",
+    "Empty-means-taken dose cup",
+    "One-dose exposure organiser",
+    "Salted edamame protein pack",
+    "Unflavoured protein coffee sachet"
+   ],
+   "kept_concepts": 5,
+   "note": null,
+   "presence_audited": 5,
+   "named_by_presence_only": []
+  },
+  "open_field_population_discovery": {
+   "status": "PASS",
+   "communities": [
+    "ADHD",
+    "functionalprint",
+    "Guitar",
+    "AskWomenOver60"
+   ],
+   "open_field_leads_nominated": 16,
+   "note": null
+  },
+  "latent_population_resolution": {
+   "status": "FAIL",
+   "resolved": [],
+   "unresolved": [
+    {
+     "lead_id": "09d7aaa8a499",
+     "latent_structure_id": "st_cue_placement",
+     "community": "who repeatedly experiences: a behavior survives when its trigger object sits in the physical path",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "3174d86a78f6",
+     "latent_structure_id": "st_midday_gap",
+     "community": "who repeatedly experiences: the mid-day slot away from home is where routines die: no fixed statio",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "3f564fe74599",
+     "latent_structure_id": "st_distributed_kit",
+     "community": "who repeatedly experiences: people plant duplicate small tools in every place they occupy (car, wa",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "98310e51d08c",
+     "latent_structure_id": "st_visible_station",
+     "community": "who repeatedly experiences: an object left in sight at a fixed station is the reminder: bottle nex",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "346acd8605f3",
+     "latent_structure_id": "st_hand_dump",
+     "community": "who repeatedly experiences: the person wants to tip ONE dose into the hand; multi-compartment orga",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    },
+    {
+     "lead_id": "ce3e895aa3ef",
+     "latent_structure_id": "st_regime_fatigue",
+     "community": "who repeatedly experiences: people on large multi-product regimes are exhausted by the steps and f",
+     "records_back_referenced": 0,
+     "reasons": [
+      "status 'NOMINATED', not INSTANTIATED",
+      "no record_ids"
+     ]
+    }
+   ],
+   "latent_leads": 6,
+   "note": null
+  },
+  "field_originated_opportunity": {
+   "status": "PASS",
+   "concepts": [
+    "Empty-means-taken dose cup",
+    "One-dose exposure organiser",
+    "Salted edamame protein pack",
+    "Unflavoured protein coffee sachet"
+   ],
+   "note": null,
+   "field_originated_total": 4,
+   "origins": {
+    "Dose-state keychain fob": "NOT_FIELD_ORIGINATED",
+    "Empty-means-taken dose cup": "WORKAROUND_DERIVED",
+    "One-dose exposure organiser": "WORKAROUND_DERIVED",
+    "Salted edamame protein pack": "FIELD_NAMED",
+    "Unflavoured protein coffee sachet": "FIELD_NAMED"
+   }
+  },
+  "irrelevant_source_rejection": {
+   "status": "PASS",
+   "trap_rows_retrieved": 2,
+   "unclassified": [],
+   "misclassified": [],
+   "leaked_downstream": [],
+   "note": null
+  },
+  "hypothesis_death": {
+   "status": "PASS",
+   "field_caused": [
+    "h_capacity_units"
+   ],
+   "rejected_without_field_cause": [
+    "h_instrument_in_reach"
+   ]
+  },
+  "heterogeneous_source_reasoning": {
+   "status": "NOT_EVALUATED",
+   "rows_from_configured_docs": 20,
+   "note": "any source MAY generate, no source MUST — evaluated only under --calibration-mode SOURCE_AGNOSTIC_CALIBRATION"
+  }
+ },
+ "concept_receipts": [
+  {
+   "concept_id": "pc_fob",
+   "concept": "Dose-state keychain fob",
+   "verdict": "GROUNDED",
+   "corpus_named": false,
+   "corpus_named_by": [],
+   "corpus_presence_named": false,
+   "corpus_example_overlap": [],
+   "field_origin": "NOT_FIELD_ORIGINATED",
+   "field_originated": false,
+   "independent_voices": 8,
+   "communities": [
+    "adhd",
+    "buyitforlife",
+    "chronicillness"
+   ]
+  },
+  {
+   "concept_id": "pc_cup",
+   "concept": "Empty-means-taken dose cup",
+   "verdict": "GROUNDED",
+   "corpus_named": false,
+   "corpus_named_by": [],
+   "corpus_presence_named": false,
+   "corpus_example_overlap": [],
+   "field_origin": "WORKAROUND_DERIVED",
+   "field_originated": true,
+   "independent_voices": 8,
+   "communities": [
+    "adhd",
+    "buyitforlife",
+    "chronicillness"
+   ]
+  },
+  {
+   "concept_id": "pc_box",
+   "concept": "One-dose exposure organiser",
+   "verdict": "GROUNDED",
+   "corpus_named": false,
+   "corpus_named_by": [],
+   "corpus_presence_named": false,
+   "corpus_example_overlap": [],
+   "field_origin": "WORKAROUND_DERIVED",
+   "field_originated": true,
+   "independent_voices": 7,
+   "communities": [
+    "buyitforlife",
+    "chronicillness",
+    "functionalprint",
+    "supplements"
+   ]
+  },
+  {
+   "concept_id": "pc_edamame",
+   "concept": "Salted edamame protein pack",
+   "verdict": "GROUNDED",
+   "corpus_named": false,
+   "corpus_named_by": [],
+   "corpus_presence_named": false,
+   "corpus_example_overlap": [
+    "protein"
+   ],
+   "field_origin": "FIELD_NAMED",
+   "field_originated": true,
+   "independent_voices": 15,
+   "communities": [
+    "mounjaro",
+    "zepbound"
+   ]
+  },
+  {
+   "concept_id": "pc_sachet",
+   "concept": "Unflavoured protein coffee sachet",
+   "verdict": "GROUNDED",
+   "corpus_named": false,
+   "corpus_named_by": [],
+   "corpus_presence_named": false,
+   "corpus_example_overlap": [
+    "protein"
+   ],
+   "field_origin": "FIELD_NAMED",
+   "field_originated": true,
+   "independent_voices": 15,
+   "communities": [
+    "mounjaro",
+    "zepbound"
+   ]
+  }
+ ],
+ "presence_receipts": [
+  {
+   "concept": "Dose-state keychain fob",
+   "named": false,
+   "exact_phrase_hits": [],
+   "normalized_multi_token_hits": [],
+   "observed_product_hits": [],
+   "example_hits": [],
+   "documents_checked": 10,
+   "rows_checked": 339,
+   "method_version": "presence-v1:retrieve-lexical"
+  },
+  {
+   "concept": "Empty-means-taken dose cup",
+   "named": false,
+   "exact_phrase_hits": [],
+   "normalized_multi_token_hits": [],
+   "observed_product_hits": [],
+   "example_hits": [],
+   "documents_checked": 10,
+   "rows_checked": 328,
+   "method_version": "presence-v1:retrieve-lexical"
+  },
+  {
+   "concept": "One-dose exposure organiser",
+   "named": false,
+   "exact_phrase_hits": [],
+   "normalized_multi_token_hits": [],
+   "observed_product_hits": [],
+   "example_hits": [],
+   "documents_checked": 10,
+   "rows_checked": 337,
+   "method_version": "presence-v1:retrieve-lexical"
+  },
+  {
+   "concept": "Salted edamame protein pack",
+   "named": false,
+   "exact_phrase_hits": [],
+   "normalized_multi_token_hits": [],
+   "observed_product_hits": [],
+   "example_hits": [],
+   "documents_checked": 10,
+   "rows_checked": 332,
+   "method_version": "presence-v1:retrieve-lexical"
+  },
+  {
+   "concept": "Unflavoured protein coffee sachet",
+   "named": false,
+   "exact_phrase_hits": [],
+   "normalized_multi_token_hits": [],
+   "observed_product_hits": [],
+   "example_hits": [],
+   "documents_checked": 10,
+   "rows_checked": 328,
+   "method_version": "presence-v1:retrieve-lexical"
+  }
+ ],
+ "baseline_deltas": [
+  "heterogeneous_source_reasoning: FAIL → NOT_EVALUATED (STANDARD mode; any source MAY generate, no source MUST)",
+  "latent_population_discovery (PASS) → open_field_population_discovery PASS + latent_population_resolution FAIL (advisory; 6 LATENT leads nominated, 0 instantiated — the baseline's PASS proved nothing about LATENT)",
+  "Dose-state keychain fob: field_originated true → false (NOT_FIELD_ORIGINATED; it was carried by one shared token); 4 of 5 concepts keep field origin (2 WORKAROUND_DERIVED, 2 FIELD_NAMED)",
+  "corpus presence audited for all 5 concepts: none named anywhere in the 10-document corpus"
+ ],
+ "harness_at_run": "ALL 555 CHECKS PASSED"
+}

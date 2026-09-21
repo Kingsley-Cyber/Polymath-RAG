@@ -13,7 +13,7 @@ import jsonschema
 _REPO = Path(__file__).resolve().parents[3]
 CONTRACT_DIR = _REPO / "contracts" / "adapter" / "v1"
 
-STEP_TYPES = ("POLYMATH_RETRIEVE", "POLYMATH_COMPILE_PLAN", "POLYMATH_GRAPH_EXPAND", "EXTERNAL_OPERATION",
+STEP_TYPES = ("POLYMATH_RETRIEVE", "POLYMATH_COMPILE_PLAN", "POLYMATH_GRAPH_EXPAND", "EXTERNAL_OPERATION", "DOMAIN_OPERATION",
               "AGENT_REASON", "HARNESS_ACTION", "VALIDATE", "BRANCH", "COMPILE_RESULT")
 #: steps answered through adapter_submit: AGENT_REASON by the connected agent (reasoning), HARNESS_ACTION by the host
 #: harness (a HarnessResearchReceiptV1). Every other step is executed by the runtime.

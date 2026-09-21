@@ -1,0 +1,28 @@
+{
+ "adapter_id": "fixture.domain_binding",
+ "adapter_version": "1.0.0",
+ "workflow_version": "1.0.0",
+ "retrieval_policy_version": "1.0.0",
+ "input_schema_version": "1.0.0",
+ "output_schema_version": "1.0.0",
+ "description": "TEST FIXTURE (ADR-0020): an agent drafts a portfolio, a DOMAIN_OPERATION checks it against the domain's own admissibility laws, a BRANCH returns an inadmissible portfolio to reasoning, the result compiles. Not a product adapter; never loaded from config/adapters.",
+ "input_schema": {"type": "object", "required": ["seed"], "additionalProperties": false, "properties": {"seed": {"type": "string", "minLength": 3, "maxLength": 2000}}},
+ "output_schema": {"type": "object"},
+ "budgets": {"max_steps": 12, "max_agent_reason": 3, "max_branch_loops": 2, "max_external_operations": 0},
+ "entry_step_id": "draft",
+ "terminal_step_id": "compile",
+ "steps": [
+  {"step_id": "draft", "type": "AGENT_REASON", "title": "Draft a portfolio of bridge ideas", "next": "check",
+   "objective": "Draft three to six bridge ideas with distinct mechanisms. If a previous check listed errors, correct them.",
+   "output_schema": {"type": "object", "required": ["portfolio"], "additionalProperties": false,
+                     "properties": {"portfolio": {"type": "array", "minItems": 1, "maxItems": 8, "items": {"type": "object"}}}}},
+  {"step_id": "check", "type": "DOMAIN_OPERATION", "title": "The domain's own admissibility laws", "next": "route",
+   "config": {"domain": "ecommerce", "operation": "hypotheses.validate_bridge", "inputs": {"hypotheses": "outputs.draft.portfolio"}}},
+  {"step_id": "route", "type": "BRANCH", "title": "An inadmissible portfolio returns through reasoning", "next": "compile",
+   "branches": [{"label": "inadmissible and loop budget left",
+                 "when": {"op": "all_of", "of": [{"op": "equals", "path": "steps.check.output.admissible", "value": false},
+                                                   {"op": "count_lt", "path": "run.branch_loops", "n": 2}]},
+                 "next": "draft"}]},
+  {"step_id": "compile", "type": "COMPILE_RESULT", "title": "Compile the result", "next": null, "config": {"include": ["portfolio", "lineage"]}}
+ ]
+}

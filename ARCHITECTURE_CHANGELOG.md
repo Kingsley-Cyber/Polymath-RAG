@@ -3,6 +3,24 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-09-20: TrailSignal's deterministic research core embedded (`governance/trail/`)
+
+- ADR-0021 / refactor 0015. The exact 16-module import closure of TrailSignal's research operation service, its registry data,
+  config and licence are imported BYTE-IDENTICAL (sha256-pinned) from TrailSignal A41 @ `de64d84`. One composition module provides
+  the service, TrailSignal's store port on SQLite and an in-process transport for the unchanged `TrailMCPClient`.
+  `POLYMATH_TRAIL_MODE=embedded` selects it; default `daemon`. New dependency-map owner `trail_governance` imports none of the runtime.
+  Logical ownership, LAW 1 and LAW 2 are unchanged (work log 2026-09-20-consolidation-phase6-trail-core-embedded).
+
+## 2026-09-20: DOMAIN_OPERATION — a manifest step binds a domain's own code
+
+- ADR-0020 / refactor 0014. The adapter step vocabulary gains ONE automatic type, `DOMAIN_OPERATION`: the manifest names a
+  directory under `adapters/` and an operation id; the existing worker runs `adapters/<domain>/binding.py` out of process
+  (JSON in, JSON out, hard timeout, minimal environment). Domain refusals are typed gaps; crashes are `STEP_EXECUTOR_ERROR`.
+  Domain code computes and never owns run state.
+- `architecture/dependencies.json`: new owner `domain_adapter` (`adapters/`), which may import none of the runtime packages.
+- First binding: the imported ecommerce engine's bridge / portfolio admissibility laws
+  (work log 2026-09-20-consolidation-phase3-domain-binding-seam).
+
 ## 2026-08-14: verify cross-corpus chunk-deletion fix
 
 - Bulk-acceptance run discovered `reconcile_neo4j` deleted other

@@ -279,6 +279,6 @@ contracts:
       - orchestrator/orchestrator/api/capabilities.py
     depends_on: [ADAPTER_RUNTIME, EVIDENCE_BOUNDARY_API]
     consumed_by: []
-    tests: [tests/contracts/test_mcp_adapter_parity.py, tests/determinism/test_mcp_server_v2.py]
+    tests: [tests/contracts/test_mcp_adapter_parity.py, tests/determinism/test_mcp_server_v2.py, tests/contracts/test_hosted_mcp_acceptance.py]
     migration: null
     status: live                   # Server A (http :8930, bearer) and Server B (stdio) serve the same seven adapter_* tools + the canonical trio

@@ -1,0 +1,13 @@
+{
+  "$id": "capture_assessment",
+  "title": "CaptureFeasibility / EntrySurface — how penetrable an attractive market is (docs/17 §16-17). Decomposed dims 0..1 with evidence; NEVER a market-share probability.",
+  "type": "object",
+  "required": ["id", "scope_id", "dimensions"],
+  "properties": {
+    "id": {"type": "string"},
+    "scope_id": {"type": "string"},
+    "dimensions": {"type": "object"},
+    "evidence_refs": {"type": "array"},
+    "result": {"enum": ["EASY_ENTRY", "PLAUSIBLE", "DIFFICULT", "HOSTILE"]}
+  }
+}

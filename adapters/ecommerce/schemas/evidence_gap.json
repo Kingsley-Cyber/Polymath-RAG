@@ -1,0 +1,21 @@
+{
+ "title": "evidence_gap",
+ "required": [
+  "id",
+  "hypothesis_id",
+  "question",
+  "status"
+ ],
+ "properties": {
+  "status": {
+   "enum": [
+    "open",
+    "supported",
+    "contradicted"
+   ]
+  },
+  "id": {
+   "type": "string"
+  }
+ }
+}

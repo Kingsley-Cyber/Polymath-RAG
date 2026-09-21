@@ -1,0 +1,56 @@
+{
+ "title": "supplier_candidate",
+ "required": [
+  "id",
+  "product_name",
+  "supplier_name",
+  "price_raw",
+  "moq_raw",
+  "url"
+ ],
+ "properties": {
+  "images": {
+   "type": "array"
+  },
+  "variants": {
+   "type": "array"
+  },
+  "customizable": {},
+  "id": {
+   "type": "string"
+  },
+  "product_name": {
+   "type": "string"
+  },
+  "supplier_name": {
+   "type": "string"
+  },
+  "price_raw": {
+   "type": "string"
+  },
+  "moq_raw": {
+   "type": "string"
+  },
+  "url": {
+   "type": "string"
+  },
+  "retrieved_at": {
+   "type": "string",
+   "description": "docs/27: RFC 3339 time THIS item was fetched, written at harvest time. Optional in standalone runs; REQUIRED for a governed receipt (never back-filled with 'now')."
+  },
+  "published_at_if_known": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "description": "docs/27: the publish date the page shows (RFC 3339), or null when it shows none. A known date is never omitted to read as fresh."
+  },
+  "hypothesis_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "description": "docs/27: GOVERNED mode only — the adapter's hyp_… ids this item bears on (a subset of the HarnessActionV1's)."
+  }
+ }
+}

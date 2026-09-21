@@ -1,0 +1,26 @@
+{
+  "$id": "angle",
+  "title": "Angle — evidence-grounded commercial/creative positioning (docs/11)",
+  "type": "object",
+  "required": ["id", "angle_type", "thesis", "evidence_refs"],
+  "properties": {
+    "id": {"type": "string"},
+    "angle_type": {"enum": ["MARKET", "PRODUCT", "STYLE", "COLLECTION", "AD"]},
+    "hook_type": {"enum": ["INSIDER_PROBLEM", "HIDDEN_UPGRADE", "DISCOVERY",
+                           "PERFORMANCE", "IDENTITY_STYLE", "CONVENIENCE",
+                           "CONTRARIAN", "SEASONAL", "TRANSITION",
+                           "BEGINNER_MISTAKE", "EXPERT_PREFERENCE",
+                           "COMPARISON", "VALUE"]},
+    "thesis": {"type": "string"},
+    "applies_to": {"type": "object"},
+    "derived_from": {"type": "object"},
+    "evidence_refs": {"type": "array"},
+    "allowed_claims": {"type": "array"},
+    "prohibited_claims": {"type": "array"},
+    "tension": {"type": "string"},
+    "reveal": {"type": "string"},
+    "featured_product": {"type": "string"},
+    "evidence_state": {"enum": ["GROUNDED", "PARTIAL", "SPECULATIVE"]},
+    "disposition": {"enum": ["ADVANCE", "HOLD", "REJECT"]}
+  }
+}

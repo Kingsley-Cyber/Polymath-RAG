@@ -1,0 +1,142 @@
+{
+ "evidence_contract": "retrieve-evidence-rows-v1",
+ "captured": "2026-09-03 mark-builds-brands-v1 /retrieve evidence=true",
+ "evidence_rows": [
+  {
+   "id": "chunk_019721a2a1febd1b827cd81f6ca5845134b335b593f6e4aca1372601ed59b947",
+   "kind": "chunk",
+   "doc_id": "doc_3d2434a7d9639402ac424e15bf5cdf280a0bfe729c82b117fd3cf17015509927",
+   "corpus_id": "mark-builds-brands-v1",
+   "title": "how i make $535k/mo with landing pages that look like sh*t",
+   "source": "how i make $535k/mo with landing pages that look like sh*t · Mark Builds Brands · 2025-11-21 · 7:33–8:05",
+   "text": "And then finally, we\n**[7:33]** have the actual like design and overall\n**[7:36]** aesthetics, I guess you could say, of\n**[7:38]** the landing page. Now, the reason why I\n**[7:40]** titled this video ugly landers or\n**[7:42]** landing pages that look like [ __ ] is\n**[7:44]** because if you get these two right, for\n**[7:46]** the most part, this one doesn't matter\n**[7:48]** unless you are adding friction to the\n**[7:51]** sales process. So, like the reason ugly\n**[7:53]** landers convert so well is because if\n**[7:55]** you do have good copy and you have good\n**[7:58]** images and videos and",
+   "text_clean": "And then finally, we have the actual like design and overall aesthetics, I guess you could say, of the landing page. Now, the reason why I titled this video ugly landers or landing pages that look like [ __ ] is because if you get these two right, for the most part, this one doesn't matter unless you are adding friction to the sales process. So, like the reason ugly landers convert so well is because if you do have good copy and you have good images and videos and gifts that substantiate that copy, it doesn't matter what your [ __ ] call to action color of your button is going to be.",
+   "timecode": {
+    "start": "7:33",
+    "end": "8:05",
+    "start_s": 453,
+    "end_s": 485
+   },
+   "heading_path": [
+    "Transcript"
+   ],
+   "char_start": 12582,
+   "char_end": 13337,
+   "tier": "child",
+   "lanes": [
+    "dense",
+    "lexical",
+    "reranked"
+   ],
+   "score": 7.25,
+   "document": {
+    "channel": "Mark Builds Brands",
+    "upload_date": "20251121",
+    "video_id": "bBjYDak1dRI",
+    "url": "https://www.youtube.com/watch?v=bBjYDak1dRI"
+   }
+  },
+  {
+   "id": "chunk_1de1d2a987d9ec10b98015cad4d4a9e20c34e04fadc6b08eaf04a540d5f44042",
+   "kind": "chunk",
+   "doc_id": "doc_3d2434a7d9639402ac424e15bf5cdf280a0bfe729c82b117fd3cf17015509927",
+   "corpus_id": "mark-builds-brands-v1",
+   "title": "how i make $535k/mo with landing pages that look like sh*t",
+   "source": "how i make $535k/mo with landing pages that look like sh*t · Mark Builds Brands · 2025-11-21 · 8:08–8:45",
+   "text": "It\n**[8:08]** doesn't matter what Shopify theme you're\n**[8:09]** using. Nothing matters because you're\n**[8:12]** saying the right sales message, which is\n**[8:14]** copy, and you're substantiating that\n**[8:15]** sales message with good visual asset.\n**[8:18]** The most important thing in copy and\n**[8:19]** conversions in general is just clarity.\n**[8:21]** Like so many of you are confusing people\n**[8:23]** and a confused mind doesn't buy. So\n**[8:26]** having a good AOV, a good conversion\n**[8:28]** rate, it's a game of subtraction of all\n**[8:30]** the confusing [ __ ] that you have on\n*",
+   "text_clean": "It doesn't matter what Shopify theme you're using. Nothing matters because you're saying the right sales message, which is copy, and you're substantiating that sales message with good visual asset. The most important thing in copy and conversions in general is just clarity. Like so many of you are confusing people and a confused mind doesn't buy. So having a good AOV, a good conversion rate, it's a game of subtraction of all the confusing [ __ ] that you have on your website. I would much much much rather have a very ugly but fast and clear landing page than a super duper heavy one with all th",
+   "timecode": {
+    "start": "8:08",
+    "end": "8:45",
+    "start_s": 488,
+    "end_s": 525
+   },
+   "heading_path": [
+    "Transcript"
+   ],
+   "char_start": 13338,
+   "char_end": 14276,
+   "tier": "child",
+   "lanes": [
+    "dense",
+    "lexical",
+    "reranked"
+   ],
+   "score": 5.0625,
+   "document": {
+    "channel": "Mark Builds Brands",
+    "upload_date": "20251121",
+    "video_id": "bBjYDak1dRI",
+    "url": "https://www.youtube.com/watch?v=bBjYDak1dRI"
+   }
+  },
+  {
+   "id": "doc:doc_3d2434a7d9639402ac424e15bf5cdf280a0bfe729c82b117fd3cf17015509927",
+   "kind": "document",
+   "doc_id": "doc_3d2434a7d9639402ac424e15bf5cdf280a0bfe729c82b117fd3cf17015509927",
+   "corpus_id": "mark-builds-brands-v1",
+   "title": "how i make $535k/mo with landing pages that look like sh*t",
+   "source": "how i make $535k/mo with landing pages that look like sh*t · Mark Builds Brands · 2025-11-21 · document summary",
+   "text": "You should make your **[16:51]** sales message as long as it needs to be **[16:53]** for you to communicate it with clarity **[16:55]** and concision. That is it. So simplicity **[… If you put this through **[10:10]** the foundational docs SOP, what'll **[10:12]** happen is you'll have four documents **[10:14]** returned to you. And the first of these **[10:15… **[23:35]** But in a lot of markets, it's not **[23:37]** automatically just like a doctor or a **[23:39]** lawyer. You This is why the research and **[23:41]** using these foundat…",
+   "text_clean": "You should make your **[16:51]** sales message as long as it needs to be **[16:53]** for you to communicate it with clarity **[16:55]** and concision. That is it. So simplicity **[… If you put this through **[10:10]** the foundational docs SOP, what'll **[10:12]** happen is you'll have four documents **[10:14]** returned to you. And the first of these **[10:15… **[23:35]** But in a lot of markets, it's not **[23:37]** automatically just like a doctor or a **[23:39]** lawyer. You This is why the research and **[23:41]** using these foundat…",
+   "summary": {
+    "major_entities": [
+     "landing pages",
+     "guarantee or risk reversal",
+     "scarcity",
+     "urgency",
+     "Primal Queen",
+     "clarity",
+     "order page",
+     "guarantee",
+     "credibility",
+     "curiosity"
+    ],
+    "major_concepts": [
+     "AOV",
+     "Primal Queen",
+     "SOP",
+     "PDP",
+     "VSSL",
+     "Mark Builds Brands",
+     "OTO1",
+     "Black Friday",
+     "Tik Toks",
+     "VOCC"
+    ],
+    "questions_answered": []
+   },
+   "lanes": [
+    "document"
+   ],
+   "score": 4.9375
+  },
+  {
+   "id": "fact:fact_001f7a580c254bd6ed38422e9f5f126e3fd3db33f566d17f5bc921a5898a829e",
+   "kind": "graph_fact",
+   "doc_id": "doc_5ac64981a0ff701daae1ce6bada8156ab98349bb09c3c5c1ca2af2d296b49732",
+   "corpus_id": "mark-builds-brands-v1",
+   "title": "$1,525,513 with video sales letters | how to write VSL ads for branded dropshipping",
+   "source": "$1,525,513 with video sales letters | how to write VSL ads for branded dropshipping · graph fact attested in 1 chunk(s)",
+   "text": "brand builders academy —IS_A→ program",
+   "text_clean": "brand builders academy IS_A program",
+   "fact": {
+    "subject": "brand builders academy",
+    "predicate": "IS_A",
+    "object": "program",
+    "subject_id": "ent_066c02972a80ac6978466effa267d79b11ce94011f1af738c959abba287b19c2",
+    "object_id": "ent_8f3ca5f1da6e5c3f4540d592dbde46d0e83fb7cda89938b1f5f7de46037a8d81"
+   },
+   "evidence": [
+    {
+     "doc_id": "doc_5ac64981a0ff701daae1ce6bada8156ab98349bb09c3c5c1ca2af2d296b49732",
+     "chunk_id": "chunk_2cf6c87299f20cf9a11befce995bb71a310470ae9bafed2a1caa210184749ea8"
+    }
+   ],
+   "lanes": [
+    "graph"
+   ],
+   "score": 0.0
+  }
+ ]
+}

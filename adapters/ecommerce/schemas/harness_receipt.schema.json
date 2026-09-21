@@ -1,0 +1,222 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/adapter/v1/harness_receipt.schema.json",
+ "title": "HarnessResearchReceiptV1",
+ "description": "Structured observations returned by the host harness for one HarnessActionV1 (adapter_submit with kind=receipt). Validated as PROVENANCE SHAPE only \u2014 sources with retrieval times, observations bound to sources, the tool trace per search intent, stated limitations. The harness never decides whether an observation satisfies an evidence standard: TrailSignal admission does, and only admitted observations become field_evidence. No score-bearing field exists in this contract (LAW 1).",
+ "type": "object",
+ "required": [
+  "action_id",
+  "run_id",
+  "harness_id",
+  "started_at",
+  "completed_at",
+  "sources",
+  "observations",
+  "tool_trace",
+  "limitations"
+ ],
+ "properties": {
+  "action_id": {
+   "type": "string",
+   "pattern": "^hact_[0-9a-f]{8,64}$"
+  },
+  "run_id": {
+   "type": "string",
+   "pattern": "^adr_[0-9a-f]{16,64}$"
+  },
+  "harness_id": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 100
+  },
+  "started_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "completed_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "sources": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "source_id",
+     "url",
+     "source_class",
+     "retrieved_at",
+     "published_at_if_known"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "url": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+     },
+     "source_class": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+     },
+     "retrieved_at": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "published_at_if_known": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "format": "date-time"
+     }
+    }
+   },
+   "minItems": 0,
+   "maxItems": 100
+  },
+  "observations": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "observation_id",
+     "source_id",
+     "claim",
+     "paraphrase_or_excerpt",
+     "metric_if_present",
+     "context"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "observation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "claim": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+     },
+     "paraphrase_or_excerpt": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 600
+     },
+     "metric_if_present": {
+      "type": [
+       "object",
+       "null"
+      ],
+      "required": [
+       "name",
+       "value",
+       "unit"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+       },
+       "value": {
+        "type": "number"
+       },
+       "unit": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50
+       },
+       "sample_n": {
+        "type": [
+         "integer",
+         "null"
+        ],
+        "minimum": 0
+       }
+      }
+     },
+     "context": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+     },
+     "evidence_role_claimed": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "pattern": "^[a-z][a-z0-9_]{1,40}$"
+     },
+     "hypothesis_ids": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "pattern": "^hyp_[0-9a-f]{8,64}$"
+      },
+      "minItems": 0,
+      "maxItems": 64
+     }
+    }
+   },
+   "minItems": 0,
+   "maxItems": 200
+  },
+  "tool_trace": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "search_intent_id",
+     "tool_class"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "search_intent_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+     },
+     "tool_class": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+     },
+     "query_count": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "minimum": 0
+     }
+    }
+   },
+   "minItems": 0,
+   "maxItems": 200
+  },
+  "limitations": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 1000
+   },
+   "minItems": 0,
+   "maxItems": 50
+  }
+ },
+ "additionalProperties": false
+}

@@ -1,0 +1,304 @@
+{
+ "adapter_id": "fixture.research_planning",
+ "adapter_version": "1.0.0",
+ "workflow_version": "1.0.0",
+ "retrieval_policy_version": "1.0.0",
+ "input_schema_version": "1.0.0",
+ "output_schema_version": "1.0.0",
+ "description": "TEST FIXTURE (consolidation Phase 5, AUTO_DECISIONS M-009): hypotheses, the registry snapshot and TrailSignal's research directive come first; a DOMAIN_OPERATION re-emits that directive with the domain's compiled channel intents; the EXISTING runtime hands the enriched directive to the harness with no runtime change. Not a product adapter; never loaded from config/adapters.",
+ "evidence_roles": [
+  "friction",
+  "workaround",
+  "behavior",
+  "demand",
+  "competition",
+  "seasonality",
+  "operations",
+  "risk",
+  "contradiction",
+  "price",
+  "supply"
+ ],
+ "input_schema": {
+  "type": "object",
+  "required": [
+   "seed",
+   "corpus_ids"
+  ],
+  "additionalProperties": false,
+  "properties": {
+   "seed": {
+    "type": "string",
+    "minLength": 3,
+    "maxLength": 2000
+   },
+   "corpus_ids": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    },
+    "minItems": 1
+   }
+  }
+ },
+ "output_schema": {
+  "type": "object"
+ },
+ "budgets": {
+  "max_steps": 16,
+  "max_agent_reason": 3,
+  "max_branch_loops": 0,
+  "max_external_operations": 4,
+  "max_harness_actions": 1,
+  "max_hypotheses": 8
+ },
+ "entry_step_id": "retrieve",
+ "terminal_step_id": "compile",
+ "steps": [
+  {
+   "step_id": "retrieve",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Knowledge",
+   "next": "hypothesize",
+   "config": {
+    "source": "input.seed"
+   }
+  },
+  {
+   "type": "AGENT_REASON",
+   "title": "θ generate hypotheses",
+   "theta_op": "generate_hypotheses",
+   "objective": "From the retrieved Polymath evidence only, generate up to 8 latent hypotheses: a population doing a repeated activity meets a recurring friction with a plausible mechanism. State assumptions, falsifiers and the knowledge gaps that only the live world can close. Cite evidence ids for every hypothesis; list unknowns instead of inventing.",
+   "constraints": [
+    "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
+    "No opportunity score, rank or weight of any kind (LAW 1)",
+    "Preserve contradictions with their evidence ids"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "hypotheses"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "hypotheses": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+       "type": "object",
+       "required": [
+        "statement",
+        "supporting_evidence_ids"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "statement": {
+         "type": "string",
+         "minLength": 8,
+         "maxLength": 2000
+        },
+        "mechanism": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "population": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "activity": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "task": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "context": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "suspected_friction": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "supporting_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "minItems": 1
+        },
+        "support_roles": {
+         "type": "object"
+        },
+        "contradictions": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "statement",
+           "evidence_ids"
+          ],
+          "properties": {
+           "statement": {
+            "type": "string"
+           },
+           "evidence_ids": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        },
+        "assumptions": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "falsifiers": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "knowledge_gaps": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "question",
+           "evidence_role"
+          ],
+          "properties": {
+           "question": {
+            "type": "string"
+           },
+           "evidence_role": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "trail_priors": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "registry_record_id",
+           "prior_role"
+          ],
+          "properties": {
+           "registry_record_id": {
+            "type": "string"
+           },
+           "prior_role": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every supporting_evidence_ids entry is a knowledge id from context.evidence_refs",
+    "1 <= len(hypotheses) <= 8"
+   ],
+   "step_id": "hypothesize",
+   "next": "project"
+  },
+  {
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail projects the registry priors onto the hypotheses (snapshot recorded)",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "registry.project",
+    "availability": "working"
+   },
+   "config": {
+    "max_priors_per_hypothesis": 12
+   },
+   "step_id": "project",
+   "next": "gaps"
+  },
+  {
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail compiles the evidence gaps into a research directive (search intents × source roles)",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "gaps.compile",
+    "availability": "working"
+   },
+   "config": {
+    "stage": "field_evidence"
+   },
+   "step_id": "gaps",
+   "next": "plan"
+  },
+  {
+   "step_id": "plan",
+   "type": "DOMAIN_OPERATION",
+   "title": "TrailSignal says WHAT, the domain says HOW",
+   "next": "research",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "research.plan",
+    "inputs": {
+     "research_directive": "outputs.gaps.research_directive",
+     "hypotheses": "context.hypotheses"
+    }
+   }
+  },
+  {
+   "type": "HARNESS_ACTION",
+   "title": "Harness: field research",
+   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations.",
+   "harness": {
+    "action_kind": "AGENT_RESEARCH",
+    "minimum_independent_sources": 3,
+    "disallowed_source_roles": [
+     "supplier_listing"
+    ],
+    "budget": {
+     "max_queries": 24,
+     "max_sources": 20,
+     "max_observations": 80
+    }
+   },
+   "step_id": "research",
+   "next": "compile"
+  },
+  {
+   "step_id": "compile",
+   "type": "COMPILE_RESULT",
+   "title": "Compile",
+   "next": null,
+   "config": {
+    "include": [
+     "hypothesis_ids",
+     "lineage"
+    ]
+   }
+  }
+ ]
+}
