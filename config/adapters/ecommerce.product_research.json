@@ -1,0 +1,2253 @@
+{
+ "adapter_id": "ecommerce.product_research",
+ "adapter_version": "0.1.0",
+ "workflow_version": "0.1.0",
+ "retrieval_policy_version": "2.0.0",
+ "input_schema_version": "1.0.0",
+ "output_schema_version": "0.1.0",
+ "description": "Niche-informed product research for ecommerce. Polymath supplies corpus knowledge and owns durable run and hypothesis state; the connected agent reasons (θ); the ecommerce domain (adapters/ecommerce, through DOMAIN_OPERATION) supplies the seller's craft as deterministic law and planning — interpretation lineage, population discovery, bridge and portfolio admissibility, research planning, evidence cards and lived situations from ADMITTED evidence, the product-set law, sourcing plans, price / MOQ normalization and the lead join; the host harness investigates customers, products and supply with its own tools; TrailSignal alone admits evidence, judges hypotheses, qualifies and computes the only score or refusal (LAW 1). The domain computes and never owns state; no source, search engine, browser or harness is named here.",
+ "evidence_roles": [
+  "friction",
+  "workaround",
+  "behavior",
+  "demand",
+  "competition",
+  "seasonality",
+  "operations",
+  "risk",
+  "contradiction",
+  "price",
+  "supply"
+ ],
+ "input_schema": {
+  "type": "object",
+  "required": [
+   "seed"
+  ],
+  "additionalProperties": false,
+  "properties": {
+   "seed": {
+    "type": "string",
+    "minLength": 3,
+    "maxLength": 2000
+   },
+   "constraints": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    }
+   },
+   "exclusions": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    }
+   },
+   "corpus_ids": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    }
+   },
+   "freshness_days": {
+    "type": "integer",
+    "minimum": 1,
+    "maximum": 3650
+   },
+   "geography": {
+    "type": "string"
+   },
+   "category": {
+    "type": "string"
+   }
+  }
+ },
+ "output_schema": {
+  "type": "object",
+  "required": [
+   "product_opportunity"
+  ],
+  "properties": {
+   "product_opportunity": {
+    "type": "object",
+    "required": [
+     "product_concept",
+     "evidence_chain",
+     "remaining_uncertainty",
+     "cheapest_falsification_experiment"
+    ],
+    "properties": {
+     "product_concept": {
+      "type": "object"
+     },
+     "evidence_chain": {
+      "type": "array"
+     },
+     "field_evidence": {
+      "type": "array"
+     },
+     "contradictions": {
+      "type": "array"
+     },
+     "competing_products": {
+      "type": "array"
+     },
+     "product_delta": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "supply": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "trail_score": {
+      "type": [
+       "object",
+       "null"
+      ]
+     },
+     "remaining_uncertainty": {
+      "type": "array"
+     },
+     "cheapest_falsification_experiment": {
+      "type": "string"
+     }
+    }
+   },
+   "hypothesis_ids": {
+    "type": "array"
+   },
+   "qualification": {
+    "type": "object"
+   },
+   "qualifications": {
+    "type": "array"
+   },
+   "trail_scores": {
+    "type": "array"
+   },
+   "score_refusals": {
+    "type": "array"
+   }
+  }
+ },
+ "budgets": {
+  "max_steps": 160,
+  "max_agent_reason": 30,
+  "max_branch_loops": 14,
+  "max_external_operations": 40,
+  "max_harness_actions": 6,
+  "max_hypotheses": 8
+ },
+ "entry_step_id": "A_understand",
+ "terminal_step_id": "X_compile",
+ "steps": [
+  {
+   "step_id": "A_understand",
+   "type": "VALIDATE",
+   "title": "Understand seed: validate input and corpus scope",
+   "next": "B_plan",
+   "config": {
+    "validate": "input_schema",
+    "require_corpus": true
+   }
+  },
+  {
+   "step_id": "B_plan",
+   "type": "POLYMATH_COMPILE_PLAN",
+   "title": "Compile deterministic reformulations of the seed",
+   "next": "B_retrieve",
+   "config": {
+    "source": "input.seed"
+   }
+  },
+  {
+   "step_id": "B_retrieve",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Retrieve chunks, parent context, mechanisms, known frictions, opposing evidence",
+   "next": "B_graph",
+   "config": {
+    "surface": "evidence_boundary",
+    "mode": "WILDCARD",
+    "corpus_explorer": true,
+    "max_calls": 3,
+    "max_rows": 40,
+    "fallback": "retrieve",
+    "on_unavailable": "gap",
+    "legacy_mode": "EXPLORE",
+    "evidence": true,
+    "top_k": 24,
+    "source": "input.seed"
+   }
+  },
+  {
+   "step_id": "B_graph",
+   "type": "POLYMATH_GRAPH_EXPAND",
+   "title": "Graph expansion from the retrieved seeds",
+   "next": "B_intake",
+   "config": {
+    "surface": "evidence_boundary",
+    "mode": "GRAPH",
+    "corpus_explorer": false,
+    "max_calls": 3,
+    "max_rows": 40,
+    "fallback": "retrieve",
+    "on_unavailable": "gap",
+    "max_seeds": 8,
+    "max_facts": 20,
+    "source": "input.seed"
+   }
+  },
+  {
+   "step_id": "B_intake",
+   "type": "DOMAIN_OPERATION",
+   "title": "Governed evidence rows become the domain's corpus rows (one id space)",
+   "next": "B_lenses",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "knowledge.corpus_evidence",
+    "inputs": {
+     "row_sets": [
+      "outputs.B_retrieve.rows",
+      "outputs.B_graph.rows",
+      "outputs.B_plan.rows"
+     ]
+    }
+   }
+  },
+  {
+   "step_id": "B_lenses",
+   "type": "DOMAIN_OPERATION",
+   "title": "Lens selection from the seed and the evidence",
+   "next": "C_primitives",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "understanding.lenses",
+    "inputs": {
+     "signal": "input.seed",
+     "corpus_evidence": "outputs.B_intake.corpus_evidence"
+    }
+   }
+  },
+  {
+   "step_id": "C_primitives",
+   "type": "AGENT_REASON",
+   "title": "Source-agnostic interpretation: primitives, latent structures, named populations",
+   "next": "C_lineage",
+   "objective": "Do NOT think about products yet. Read the evidence rows as a reader of ANY source and extract the reusable latent structure, or honestly declare there is none (generative_signal: false is a good outcome). Submit one object `primitives`: generative_signal, drivers[], behaviors[], adaptations[], constraints[], frictions[], workarounds[], physical_interactions[], physical_jobs[], latent_values[], transferable_invariants[], unresolved_questions[], shared_predicates[] (carry / access / retain / separate / protect / set-up / clean / repair / attach where they fit), evidence_refs {field: [evidence ids]}, inferred[] (items with no row behind them), latent_structures[] (id, kind, text, evidence_refs, possible_populations, applicability_outside_source), population_leads[] (name, why, activities, contexts, frictions, evidence_refs) and row_relevance {evidence id: LEXICAL_MATCH | SEMANTIC_MATCH | STRUCTURAL_ANALOGY | IRRELEVANT}. Every id you cite must be classified in row_relevance first; an IRRELEVANT row can never be cited. If a previous lineage check listed errors, correct exactly those.",
+   "constraints": [
+    "Cite only evidence ids supplied in context.evidence_refs",
+    "Classify a row in row_relevance before citing it; never cite an IRRELEVANT row",
+    "No products, no scores, no demand claims: corpus knowledge cannot establish demand"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "primitives"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "primitives": {
+      "type": "object",
+      "required": [
+       "generative_signal",
+       "row_relevance"
+      ]
+     }
+    }
+   },
+   "config": {
+    "show": {
+     "lenses": "outputs.B_lenses.lenses",
+     "previous_lineage_errors": "outputs.C_lineage.errors"
+    }
+   }
+  },
+  {
+   "step_id": "C_lineage",
+   "type": "DOMAIN_OPERATION",
+   "title": "The domain's lineage law on the interpretation",
+   "next": "C_lineage_route",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "understanding.validate_primitives",
+    "inputs": {
+     "primitives": "outputs.C_primitives.primitives",
+     "corpus_evidence": "outputs.B_intake.corpus_evidence"
+    }
+   }
+  },
+  {
+   "step_id": "C_lineage_route",
+   "type": "BRANCH",
+   "title": "An unlawful interpretation returns through reasoning",
+   "next": "C_population",
+   "branches": [
+    {
+     "label": "the law failed and repair budget is left",
+     "when": {
+      "op": "all_of",
+      "of": [
+       {
+        "op": "equals",
+        "path": "steps.C_lineage.output.valid",
+        "value": false
+       },
+       {
+        "op": "count_lt",
+        "path": "run.branch_loops",
+        "n": 10
+       }
+      ]
+     },
+     "next": "C_primitives"
+    },
+    {
+     "label": "the law failed and the repair budget is spent",
+     "when": {
+      "op": "equals",
+      "path": "steps.C_lineage.output.valid",
+      "value": false
+     },
+     "next": "Z_refuse_lineage"
+    }
+   ]
+  },
+  {
+   "step_id": "C_population",
+   "type": "DOMAIN_OPERATION",
+   "title": "Population discovery: leads, value-of-information ranking, per-lead research queries",
+   "next": "C_hypotheses",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "population.nominate",
+    "inputs": {
+     "signal": "input.seed",
+     "primitives": "outputs.C_primitives.primitives",
+     "latent_structures": "outputs.C_lineage.latent_structures",
+     "corpus_evidence": "outputs.B_intake.corpus_evidence"
+    }
+   }
+  },
+  {
+   "step_id": "C_hypotheses",
+   "type": "AGENT_REASON",
+   "title": "θ generate hypotheses",
+   "theta_op": "generate_hypotheses",
+   "next": "C_bridge",
+   "objective": "From the retrieved Polymath evidence only, generate up to 8 latent hypotheses: a population doing a repeated activity meets a recurring friction with a plausible mechanism. State assumptions, falsifiers and the knowledge gaps that only the live world can close. Cite evidence ids for every hypothesis; list unknowns instead of inventing.",
+   "constraints": [
+    "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
+    "No opportunity score, rank or weight of any kind (LAW 1)",
+    "Preserve contradictions with their evidence ids"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "hypotheses"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "hypotheses": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+       "type": "object",
+       "required": [
+        "statement",
+        "supporting_evidence_ids"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "statement": {
+         "type": "string",
+         "minLength": 8,
+         "maxLength": 2000
+        },
+        "mechanism": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "population": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "activity": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "task": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "context": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "suspected_friction": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "supporting_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "minItems": 1
+        },
+        "support_roles": {
+         "type": "object"
+        },
+        "contradictions": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "statement",
+           "evidence_ids"
+          ],
+          "properties": {
+           "statement": {
+            "type": "string"
+           },
+           "evidence_ids": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           }
+          }
+         }
+        },
+        "assumptions": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "falsifiers": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "knowledge_gaps": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "question",
+           "evidence_role"
+          ],
+          "properties": {
+           "question": {
+            "type": "string"
+           },
+           "evidence_role": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "trail_priors": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "registry_record_id",
+           "prior_role"
+          ],
+          "properties": {
+           "registry_record_id": {
+            "type": "string"
+           },
+           "prior_role": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every supporting_evidence_ids entry is a knowledge id from context.evidence_refs",
+    "1 <= len(hypotheses) <= 8"
+   ],
+   "config": {
+    "show": {
+     "lenses": "outputs.B_lenses.lenses",
+     "population_leads": "outputs.C_population.population_leads",
+     "community_leads": "outputs.C_population.community_leads",
+     "ranked_lead_ids": "outputs.C_population.ranked_lead_ids",
+     "latent_structures": "outputs.C_lineage.latent_structures"
+    }
+   }
+  },
+  {
+   "step_id": "C_bridge",
+   "type": "AGENT_REASON",
+   "title": "Write every live hypothesis as an explicit bridge path",
+   "next": "C_bridge_law",
+   "objective": "For EACH live hypothesis in context.hypotheses write its bridge: source, path[] (every hop written out, at least three hops, never seed -> product in one jump), target_mechanism (the mechanism FAMILY — variants of one mechanism are one hypothesis), evidence_boundary.first_inference_at (the FIRST hop that is inference, not evidence; it must be one of the hops), hop_refs {\"0\": [evidence ids], …} for every hop BEFORE the boundary, gaps[] (plain questions real communities could answer; enough to cover the hops past the boundary), alternatives[] (at least one competing explanation), falsifiers[] (the observation that would kill it), status WORKING_HYPOTHESIS (or WORKING_ANALOGY with exploratory: true for at most one deliberate transfer). Before any field evidence exists declare grounding: CORPUS_ONLY. The portfolio needs three to six hypotheses across DISTINCT mechanism families. If a previous bridge check listed errors, correct exactly those.",
+   "constraints": [
+    "One bridge per live hypothesis_id, no others",
+    "hop_refs cite only evidence ids supplied in context.evidence_refs",
+    "No opportunity score, rank or weight of any kind (LAW 1)"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "bridges"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "bridges": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "source",
+        "path",
+        "target_mechanism",
+        "evidence_boundary",
+        "gaps",
+        "alternatives",
+        "falsifiers",
+        "status"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "hypothesis_id": {
+         "type": "string",
+         "pattern": "^hyp_[0-9a-f]{8,64}$"
+        },
+        "source": {
+         "type": "string"
+        },
+        "path": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "minItems": 3,
+         "maxItems": 12
+        },
+        "target_mechanism": {
+         "type": "string"
+        },
+        "evidence_boundary": {
+         "type": "object",
+         "required": [
+          "first_inference_at"
+         ],
+         "properties": {
+          "first_inference_at": {
+           "type": "string"
+          }
+         }
+        },
+        "hop_refs": {
+         "type": "object"
+        },
+        "gaps": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "minItems": 1
+        },
+        "alternatives": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "minItems": 1
+        },
+        "falsifiers": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "minItems": 1
+        },
+        "status": {
+         "enum": [
+          "WORKING_HYPOTHESIS",
+          "WORKING_ANALOGY"
+         ]
+        },
+        "exploratory": {
+         "type": "boolean"
+        },
+        "grounding": {
+         "enum": [
+          "CORPUS_ONLY",
+          "LIVED"
+         ]
+        },
+        "lived_anchor_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "config": {
+    "show": {
+     "generated_hypotheses": "outputs.C_hypotheses.hypotheses",
+     "hypothesis_ids": "outputs.C_hypotheses.hypothesis_ids",
+     "lenses": "outputs.B_lenses.lenses",
+     "previous_bridge_errors": "outputs.C_bridge_law.bridge_errors",
+     "previous_portfolio_errors": "outputs.C_bridge_law.portfolio_errors"
+    }
+   }
+  },
+  {
+   "step_id": "C_bridge_law",
+   "type": "DOMAIN_OPERATION",
+   "title": "The domain's bridge and portfolio admissibility laws",
+   "next": "C_bridge_route",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "hypotheses.validate_bridge",
+    "inputs": {
+     "hypotheses": "outputs.C_bridge.bridges",
+     "corpus_evidence": "outputs.B_intake.corpus_evidence"
+    }
+   }
+  },
+  {
+   "step_id": "C_bridge_route",
+   "type": "BRANCH",
+   "title": "An inadmissible bridge portfolio returns through reasoning",
+   "next": "D_project",
+   "branches": [
+    {
+     "label": "the law failed and repair budget is left",
+     "when": {
+      "op": "all_of",
+      "of": [
+       {
+        "op": "equals",
+        "path": "steps.C_bridge_law.output.admissible",
+        "value": false
+       },
+       {
+        "op": "count_lt",
+        "path": "run.branch_loops",
+        "n": 10
+       }
+      ]
+     },
+     "next": "C_bridge"
+    },
+    {
+     "label": "the law failed and the repair budget is spent",
+     "when": {
+      "op": "equals",
+      "path": "steps.C_bridge_law.output.admissible",
+      "value": false
+     },
+     "next": "Z_refuse_bridge"
+    }
+   ]
+  },
+  {
+   "step_id": "D_project",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail projects the registry priors onto the hypotheses (snapshot recorded)",
+   "next": "E_filter",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "registry.project",
+    "availability": "working"
+   },
+   "config": {
+    "max_priors_per_hypothesis": 12
+   }
+  },
+  {
+   "step_id": "E_filter",
+   "type": "EXTERNAL_OPERATION",
+   "title": "φ filter: redundancy, unsupported, self-corroboration",
+   "next": "F_plan",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "hypotheses.judge",
+    "availability": "working"
+   },
+   "config": {
+    "stage": "filter"
+   }
+  },
+  {
+   "step_id": "F_plan",
+   "type": "POLYMATH_COMPILE_PLAN",
+   "title": "Compile mechanism-level questions from the live hypotheses",
+   "next": "F_retrieve",
+   "config": {
+    "query_from": "hypotheses"
+   }
+  },
+  {
+   "step_id": "F_retrieve",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Retrieve mechanism evidence for the live hypotheses",
+   "next": "F_graph",
+   "config": {
+    "surface": "evidence_boundary",
+    "mode": "WILDCARD",
+    "corpus_explorer": true,
+    "max_calls": 3,
+    "max_rows": 40,
+    "fallback": "retrieve",
+    "on_unavailable": "gap",
+    "legacy_mode": "EXPLORE",
+    "evidence": true,
+    "top_k": 16,
+    "query_from": "hypotheses"
+   }
+  },
+  {
+   "step_id": "F_graph",
+   "type": "POLYMATH_GRAPH_EXPAND",
+   "title": "Graph expansion around the mechanisms",
+   "next": "G_mechanisms",
+   "config": {
+    "surface": "evidence_boundary",
+    "mode": "GRAPH",
+    "corpus_explorer": false,
+    "max_calls": 3,
+    "max_rows": 40,
+    "fallback": "retrieve",
+    "on_unavailable": "gap",
+    "max_seeds": 8,
+    "max_facts": 16,
+    "query_from": "hypotheses"
+   }
+  },
+  {
+   "step_id": "G_mechanisms",
+   "type": "AGENT_REASON",
+   "title": "θ derive mechanisms and name the external knowledge gaps",
+   "theta_op": "derive_mechanisms",
+   "next": "H_gaps",
+   "objective": "For each live hypothesis, revise its mechanism from the corpus evidence and name the knowledge gaps that only live field evidence can close (behavior, friction, workaround, demand). Propose REVISE (or SPLIT) transitions with cause refs.",
+   "constraints": [
+    "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
+    "No opportunity score, rank or weight of any kind (LAW 1)",
+    "A transition without a cause ref is refused"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "transitions"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "transitions": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "kind",
+        "cause_refs"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "hypothesis_id": {
+         "type": "string"
+        },
+        "kind": {
+         "enum": [
+          "REVISE",
+          "SPLIT"
+         ]
+        },
+        "reason_code": {
+         "type": "string"
+        },
+        "cause_refs": {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "type": "object",
+          "required": [
+           "kind",
+           "id"
+          ],
+          "properties": {
+           "kind": {
+            "type": "string"
+           },
+           "id": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "changes": {
+         "type": "object"
+        },
+        "field_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "children": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "statement",
+           "supporting_evidence_ids"
+          ],
+          "additionalProperties": false,
+          "properties": {
+           "statement": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 2000
+           },
+           "mechanism": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "population": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "activity": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "task": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "context": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "suspected_friction": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "supporting_evidence_ids": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            },
+            "minItems": 1
+           },
+           "support_roles": {
+            "type": "object"
+           },
+           "contradictions": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "statement",
+              "evidence_ids"
+             ],
+             "properties": {
+              "statement": {
+               "type": "string"
+              },
+              "evidence_ids": {
+               "type": "array",
+               "items": {
+                "type": "string"
+               }
+              }
+             }
+            }
+           },
+           "assumptions": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "falsifiers": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "knowledge_gaps": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "question",
+              "evidence_role"
+             ],
+             "properties": {
+              "question": {
+               "type": "string"
+              },
+              "evidence_role": {
+               "type": "string"
+              }
+             }
+            }
+           },
+           "trail_priors": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "registry_record_id",
+              "prior_role"
+             ],
+             "properties": {
+              "registry_record_id": {
+               "type": "string"
+              },
+              "prior_role": {
+               "type": "string"
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "knowledge_gaps": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "question",
+        "evidence_role"
+       ],
+       "properties": {
+        "hypothesis_id": {
+         "type": "string"
+        },
+        "question": {
+         "type": "string"
+        },
+        "evidence_role": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every cause ref is an id from context (knowledge, admitted field evidence, hypothesis)"
+   ]
+  },
+  {
+   "step_id": "H_gaps",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail compiles the evidence gaps into a research directive (search intents × source roles)",
+   "next": "H_plan",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "gaps.compile",
+    "availability": "working"
+   },
+   "config": {
+    "stage": "field_evidence"
+   }
+  },
+  {
+   "step_id": "H_plan",
+   "type": "DOMAIN_OPERATION",
+   "title": "TrailSignal says WHAT, the domain says HOW: compiled source-specific research intents",
+   "next": "I_research",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "research.plan",
+    "inputs": {
+     "research_directive": "outputs.H_gaps.research_directive",
+     "hypotheses": "context.hypotheses",
+     "population_leads": "outputs.C_population.population_leads",
+     "community_leads": "outputs.C_population.community_leads",
+     "batch": "outputs.C_population.batch",
+     "communities": "outputs.C_population.communities"
+    }
+   }
+  },
+  {
+   "step_id": "I_research",
+   "type": "HARNESS_ACTION",
+   "title": "Harness: field research",
+   "next": "J_admit",
+   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations.",
+   "harness": {
+    "action_kind": "AGENT_RESEARCH",
+    "minimum_independent_sources": 3,
+    "disallowed_source_roles": [
+     "supplier_listing"
+    ],
+    "budget": {
+     "max_queries": 24,
+     "max_sources": 20,
+     "max_observations": 80
+    }
+   },
+   "config": {
+    "show": {
+     "population_batch": "outputs.C_population.batch",
+     "population_leads": "outputs.C_population.population_leads",
+     "community_leads": "outputs.C_population.community_leads",
+     "research_plan": "outputs.H_plan.planned"
+    }
+   }
+  },
+  {
+   "step_id": "J_admit",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail admits the field evidence (roles, suitability, freshness, provenance, independence, polarity)",
+   "next": "J_cards",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "evidence.admit",
+    "availability": "working"
+   },
+   "config": {
+    "stage": "field_evidence"
+   }
+  },
+  {
+   "step_id": "J_cards",
+   "type": "DOMAIN_OPERATION",
+   "title": "Evidence cards and lived clusters from ADMITTED field evidence (independence as TrailSignal assigned it)",
+   "next": "K_situations",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "population.evidence_cards",
+    "inputs": {
+     "admissions": [
+      "outputs.J_admit.evidence_admission"
+     ],
+     "receipts": [
+      "outputs.I_research"
+     ],
+     "hypotheses": "outputs.C_hypotheses.hypotheses",
+     "hypothesis_ids": "outputs.C_hypotheses.hypothesis_ids",
+     "population_leads": "outputs.C_population.population_leads",
+     "community_leads": "outputs.C_population.community_leads",
+     "prior_field_records": "outputs.J_cards.field_records",
+     "prior_round": "outputs.J_cards.round"
+    }
+   }
+  },
+  {
+   "step_id": "K_situations",
+   "type": "AGENT_REASON",
+   "title": "Lived situations: one moment in one real world, reconstructed from admitted records",
+   "next": "K_situations_law",
+   "objective": "Using the participant cards, lived clusters and field records in the J_cards output, build lived situations — NOT personas: community + activity + moment (BEFORE / ARRIVAL / DURING / TRANSITION / AFTER) + environment + participants + body / hand state + object state + constraints + frictions + unknowns. Authority is decided by the records, not by you: FIELD_ANCHORED only on a cluster_id whose authority is ANCHOR, with at least one friction carrying authority FIELD_OBSERVATION and refs to the record ids that say it; RECONSTRUCTED on a THIN cluster, with unknowns[] listing what the records do NOT say; SIMULATED only when there are no records at all (it is never evidence, it only says where to look next). One to three situations per cluster across different moments. If a previous check listed errors, correct exactly those.",
+   "constraints": [
+    "Cite only record ids present in the J_cards output",
+    "A situation on a cluster is never SIMULATED",
+    "No products, no scores"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "lived_situations"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "lived_situations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 24,
+      "items": {
+       "type": "object"
+      }
+     }
+    }
+   },
+   "config": {
+    "show": {
+     "participant_cards": "outputs.J_cards.participant_cards",
+     "lived_clusters": "outputs.J_cards.lived_clusters",
+     "field_records": "outputs.J_cards.field_records",
+     "previous_situation_errors": "outputs.K_situations_law.errors"
+    }
+   }
+  },
+  {
+   "step_id": "K_situations_law",
+   "type": "DOMAIN_OPERATION",
+   "title": "The domain's lived-situation law",
+   "next": "K_situations_route",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "population.validate_situations",
+    "inputs": {
+     "lived_situations": "outputs.K_situations.lived_situations",
+     "lived_clusters": "outputs.J_cards.lived_clusters",
+     "field_records": "outputs.J_cards.field_records"
+    }
+   }
+  },
+  {
+   "step_id": "K_situations_route",
+   "type": "BRANCH",
+   "title": "An unlawful lived situation returns through reasoning",
+   "next": "K_questions",
+   "branches": [
+    {
+     "label": "the law failed and repair budget is left",
+     "when": {
+      "op": "all_of",
+      "of": [
+       {
+        "op": "equals",
+        "path": "steps.K_situations_law.output.valid",
+        "value": false
+       },
+       {
+        "op": "count_lt",
+        "path": "run.branch_loops",
+        "n": 10
+       }
+      ]
+     },
+     "next": "K_situations"
+    },
+    {
+     "label": "the law failed and the repair budget is spent",
+     "when": {
+      "op": "equals",
+      "path": "steps.K_situations_law.output.valid",
+      "value": false
+     },
+     "next": "Z_refuse_situations"
+    }
+   ]
+  },
+  {
+   "step_id": "K_questions",
+   "type": "DOMAIN_OPERATION",
+   "title": "Field-grounded questions for the knowledge base (friction / mechanism level, never a hypothesis statement)",
+   "next": "K_retrieve",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "knowledge.corpus_questions",
+    "inputs": {
+     "lived_clusters": "outputs.J_cards.lived_clusters",
+     "field_records": "outputs.J_cards.field_records"
+    }
+   }
+  },
+  {
+   "step_id": "K_retrieve",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Knowledge for the mechanisms the field exposed",
+   "next": "K_revise",
+   "config": {
+    "surface": "evidence_boundary",
+    "mode": "WILDCARD",
+    "corpus_explorer": true,
+    "max_calls": 3,
+    "max_rows": 40,
+    "fallback": "retrieve",
+    "on_unavailable": "gap",
+    "legacy_mode": "EXPLORE",
+    "evidence": true,
+    "top_k": 16,
+    "source": "outputs.K_questions.need"
+   }
+  },
+  {
+   "step_id": "K_revise",
+   "type": "AGENT_REASON",
+   "title": "θ re-reason with admitted field evidence",
+   "theta_op": "cross_map_frictions",
+   "next": "L_judge",
+   "objective": "Reason again over the original knowledge, the hypothesis state and the newly admitted field evidence: propose REVISE or SPLIT transitions (citing admitted evidence ids), and name the gaps that remain open.",
+   "constraints": [
+    "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
+    "No opportunity score, rank or weight of any kind (LAW 1)",
+    "Only admitted field_evidence ids may be cited as live-world evidence"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "transitions"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "transitions": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "kind",
+        "cause_refs"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "hypothesis_id": {
+         "type": "string"
+        },
+        "kind": {
+         "enum": [
+          "REVISE",
+          "SPLIT"
+         ]
+        },
+        "reason_code": {
+         "type": "string"
+        },
+        "cause_refs": {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "type": "object",
+          "required": [
+           "kind",
+           "id"
+          ],
+          "properties": {
+           "kind": {
+            "type": "string"
+           },
+           "id": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "changes": {
+         "type": "object"
+        },
+        "field_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "children": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "statement",
+           "supporting_evidence_ids"
+          ],
+          "additionalProperties": false,
+          "properties": {
+           "statement": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 2000
+           },
+           "mechanism": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "population": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "activity": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "task": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "context": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "suspected_friction": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "supporting_evidence_ids": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            },
+            "minItems": 1
+           },
+           "support_roles": {
+            "type": "object"
+           },
+           "contradictions": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "statement",
+              "evidence_ids"
+             ],
+             "properties": {
+              "statement": {
+               "type": "string"
+              },
+              "evidence_ids": {
+               "type": "array",
+               "items": {
+                "type": "string"
+               }
+              }
+             }
+            }
+           },
+           "assumptions": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "falsifiers": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "knowledge_gaps": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "question",
+              "evidence_role"
+             ],
+             "properties": {
+              "question": {
+               "type": "string"
+              },
+              "evidence_role": {
+               "type": "string"
+              }
+             }
+            }
+           },
+           "trail_priors": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "registry_record_id",
+              "prior_role"
+             ],
+             "properties": {
+              "registry_record_id": {
+               "type": "string"
+              },
+              "prior_role": {
+               "type": "string"
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "open_gaps": {
+      "type": "array",
+      "items": {
+       "type": "object"
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every cause ref is an admitted field_evidence, evidence_admission, knowledge or hypothesis id from context"
+   ],
+   "config": {
+    "show": {
+     "lived_situations": "outputs.K_situations.lived_situations",
+     "lived_clusters": "outputs.J_cards.lived_clusters",
+     "bridges": "outputs.C_bridge.bridges"
+    }
+   }
+  },
+  {
+   "step_id": "L_judge",
+   "type": "EXTERNAL_OPERATION",
+   "title": "φ judge: kill / merge / weaken / strengthen / contradict / require_evidence",
+   "next": "M_loop",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "hypotheses.judge",
+    "availability": "working"
+   },
+   "config": {
+    "stage": "revision"
+   }
+  },
+  {
+   "step_id": "M_loop",
+   "type": "BRANCH",
+   "title": "Bounded evidence-gap loop (returns through reasoning, never straight to research)",
+   "next": "N_jobs",
+   "branches": [
+    {
+     "label": "open gaps remain and a research round is left",
+     "next": "G_mechanisms",
+     "when": {
+      "op": "all_of",
+      "of": [
+       {
+        "op": "count_gte",
+        "path": "steps.L_judge.output.open_gaps",
+        "n": 1
+       },
+       {
+        "op": "count_lt",
+        "path": "steps.J_cards.output.round",
+        "n": 3
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "step_id": "N_jobs",
+   "type": "AGENT_REASON",
+   "title": "θ derive physical jobs and product mechanisms",
+   "theta_op": "derive_physical_jobs",
+   "next": "N_concepts",
+   "objective": "For each surviving hypothesis derive the physical jobs (access, retention, visibility, protection, …) and candidate product mechanisms as REVISE transitions with cause refs; keep unknowns explicit.",
+   "constraints": [
+    "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
+    "No opportunity score, rank or weight of any kind (LAW 1)"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "transitions",
+     "physical_jobs"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "transitions": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "kind",
+        "cause_refs"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "hypothesis_id": {
+         "type": "string"
+        },
+        "kind": {
+         "enum": [
+          "REVISE",
+          "SPLIT"
+         ]
+        },
+        "reason_code": {
+         "type": "string"
+        },
+        "cause_refs": {
+         "type": "array",
+         "minItems": 1,
+         "items": {
+          "type": "object",
+          "required": [
+           "kind",
+           "id"
+          ],
+          "properties": {
+           "kind": {
+            "type": "string"
+           },
+           "id": {
+            "type": "string"
+           }
+          }
+         }
+        },
+        "changes": {
+         "type": "object"
+        },
+        "field_evidence_ids": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         }
+        },
+        "children": {
+         "type": "array",
+         "items": {
+          "type": "object",
+          "required": [
+           "statement",
+           "supporting_evidence_ids"
+          ],
+          "additionalProperties": false,
+          "properties": {
+           "statement": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 2000
+           },
+           "mechanism": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "population": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "activity": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "task": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "context": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "suspected_friction": {
+            "type": [
+             "string",
+             "null"
+            ]
+           },
+           "supporting_evidence_ids": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            },
+            "minItems": 1
+           },
+           "support_roles": {
+            "type": "object"
+           },
+           "contradictions": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "statement",
+              "evidence_ids"
+             ],
+             "properties": {
+              "statement": {
+               "type": "string"
+              },
+              "evidence_ids": {
+               "type": "array",
+               "items": {
+                "type": "string"
+               }
+              }
+             }
+            }
+           },
+           "assumptions": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "falsifiers": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            }
+           },
+           "knowledge_gaps": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "question",
+              "evidence_role"
+             ],
+             "properties": {
+              "question": {
+               "type": "string"
+              },
+              "evidence_role": {
+               "type": "string"
+              }
+             }
+            }
+           },
+           "trail_priors": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "registry_record_id",
+              "prior_role"
+             ],
+             "properties": {
+              "registry_record_id": {
+               "type": "string"
+              },
+              "prior_role": {
+               "type": "string"
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "physical_jobs": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "job",
+        "mechanism"
+       ],
+       "properties": {
+        "hypothesis_id": {
+         "type": "string"
+        },
+        "job": {
+         "type": "string"
+        },
+        "mechanism": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every cause ref is an id from context"
+   ]
+  },
+  {
+   "step_id": "N_concepts",
+   "type": "AGENT_REASON",
+   "title": "Product ideation: the SET of distinct product directions, each with variations",
+   "next": "N_concepts_law",
+   "objective": "Name the mechanisms the surviving hypotheses support: mechanisms[] = {id, name, hypothesis_id (a live hypothesis in context.hypotheses), evidence_refs (admitted field evidence ids), product_terms[]}. Then turn them into THREE to SIX DISTINCT product directions, product_concepts[] = {id, mechanism_id, name, form_factor (short noun phrase — the de-duplication key), target_moment (the cue moment it lives at), buyer (the sub-population), differentiator (why the generic version fails them — cite the friction), variations[] (at least two: {name, twist}), evidence_refs[] (at least one admitted field evidence id that grounds the moment or the friction)}. Distinct means a different form factor / moment / buyer — not the same organiser in five colours; variations that are only colour, size or price are not variations. Cover the physical jobs and the moments the evidence named. A concept with no admitted evidence behind it is forbidden. If a previous check listed errors, correct exactly those.",
+   "constraints": [
+    "mechanism hypothesis_id must be a live hypothesis; support is decided by the ledger, not by you",
+    "evidence_refs cite only admitted field evidence ids (kind field_evidence in context.evidence_refs)",
+    "No opportunity score, rank or weight of any kind (LAW 1)"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "mechanisms",
+     "product_concepts"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "mechanisms": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+       "type": "object",
+       "required": [
+        "id",
+        "name",
+        "hypothesis_id"
+       ]
+      }
+     },
+     "product_concepts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+       "type": "object",
+       "required": [
+        "id",
+        "mechanism_id",
+        "name",
+        "form_factor",
+        "target_moment",
+        "variations",
+        "evidence_refs"
+       ],
+       "properties": {
+        "id": {
+         "type": "string"
+        },
+        "mechanism_id": {
+         "type": "string"
+        },
+        "name": {
+         "type": "string"
+        },
+        "form_factor": {
+         "type": "string"
+        },
+        "target_moment": {
+         "type": "string"
+        },
+        "buyer": {
+         "type": "string"
+        },
+        "differentiator": {
+         "type": "string"
+        },
+        "evidence_refs": {
+         "type": "array",
+         "items": {
+          "type": "string"
+         },
+         "minItems": 1
+        },
+        "variations": {
+         "type": "array",
+         "minItems": 2,
+         "items": {
+          "type": "object",
+          "required": [
+           "name"
+          ],
+          "properties": {
+           "name": {
+            "type": "string"
+           },
+           "twist": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "config": {
+    "show": {
+     "lived_situations": "outputs.K_situations.lived_situations",
+     "lived_clusters": "outputs.J_cards.lived_clusters",
+     "field_records": "outputs.J_cards.field_records",
+     "physical_jobs": "outputs.N_jobs.physical_jobs",
+     "previous_concept_errors": "outputs.N_concepts_law.errors",
+     "mechanism_notes": "outputs.N_concepts_law.mechanism_notes"
+    }
+   }
+  },
+  {
+   "step_id": "N_concepts_law",
+   "type": "DOMAIN_OPERATION",
+   "title": "The domain's product-ideation portfolio law",
+   "next": "N_concepts_route",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "products.validate_concepts",
+    "inputs": {
+     "product_concepts": "outputs.N_concepts.product_concepts",
+     "mechanisms": "outputs.N_concepts.mechanisms",
+     "live_hypotheses": "context.hypotheses",
+     "field_records": "outputs.J_cards.field_records"
+    }
+   }
+  },
+  {
+   "step_id": "N_concepts_route",
+   "type": "BRANCH",
+   "title": "An unlawful product set returns through reasoning",
+   "next": "O_territory",
+   "branches": [
+    {
+     "label": "the law failed and repair budget is left",
+     "when": {
+      "op": "all_of",
+      "of": [
+       {
+        "op": "equals",
+        "path": "steps.N_concepts_law.output.valid",
+        "value": false
+       },
+       {
+        "op": "count_lt",
+        "path": "run.branch_loops",
+        "n": 10
+       }
+      ]
+     },
+     "next": "N_concepts"
+    },
+    {
+     "label": "the law failed and the repair budget is spent",
+     "when": {
+      "op": "equals",
+      "path": "steps.N_concepts_law.output.valid",
+      "value": false
+     },
+     "next": "Z_refuse_concepts"
+    }
+   ]
+  },
+  {
+   "step_id": "O_territory",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail projects product territory priors and compiles the product-reality directive",
+   "next": "P_reality",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "territory.project",
+    "availability": "working"
+   }
+  },
+  {
+   "step_id": "P_reality",
+   "type": "HARNESS_ACTION",
+   "title": "Harness: product reality check",
+   "next": "Q_admit",
+   "objective": "Investigate current products, alternatives, reviews, pricing, complaints and saturation for the candidate mechanisms; record sources, observations, tool trace and limitations.",
+   "harness": {
+    "action_kind": "PRODUCT_REALITY_CHECK",
+    "minimum_independent_sources": 3,
+    "preferred_source_roles": [
+     "product_review",
+     "marketplace_listing",
+     "retailer"
+    ],
+    "budget": {
+     "max_queries": 24,
+     "max_sources": 20,
+     "max_observations": 80
+    }
+   },
+   "config": {
+    "show": {
+     "product_concepts": "outputs.N_concepts.product_concepts"
+    }
+   }
+  },
+  {
+   "step_id": "Q_admit",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail admits market evidence (competition, price, complaints)",
+   "next": "R_qualify",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "evidence.admit",
+    "availability": "working"
+   },
+   "config": {
+    "stage": "product_reality"
+   }
+  },
+  {
+   "step_id": "R_qualify",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail qualifies the market delta and compiles the supplier directive",
+   "next": "S_plan",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "opportunity.qualify",
+    "availability": "working"
+   },
+   "config": {
+    "stage": "market_delta"
+   }
+  },
+  {
+   "step_id": "S_plan",
+   "type": "DOMAIN_OPERATION",
+   "title": "One sourcing job per concept per channel; the supply directive gains compiled intents",
+   "next": "S_supply",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "supply.plan",
+    "inputs": {
+     "product_concepts": "outputs.N_concepts.product_concepts",
+     "mechanisms": "outputs.N_concepts.mechanisms",
+     "live_hypotheses": "context.hypotheses",
+     "research_directive": "outputs.R_qualify.research_directive"
+    },
+    "require_directive": true
+   }
+  },
+  {
+   "step_id": "S_supply",
+   "type": "HARNESS_ACTION",
+   "title": "Harness: supplier research",
+   "next": "T_admit",
+   "objective": "Investigate supply feasibility: supplier URL and identity, platform, unit price, MOQ, variants, lead time, customization, shipping, limitations, retrieval date. Supply evidence never counts as demand.",
+   "harness": {
+    "action_kind": "SUPPLIER_RESEARCH",
+    "minimum_independent_sources": 2,
+    "preferred_source_roles": [
+     "supplier_listing",
+     "manufacturer_site"
+    ],
+    "budget": {
+     "max_queries": 16,
+     "max_sources": 12,
+     "max_observations": 40
+    }
+   },
+   "config": {
+    "show": {
+     "sourcing_plan": "outputs.S_plan.sourcing_plan",
+     "product_concepts": "outputs.N_concepts.product_concepts"
+    }
+   }
+  },
+  {
+   "step_id": "T_admit",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail admits supply evidence (role supply only)",
+   "next": "T_leads",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "evidence.admit",
+    "availability": "working"
+   },
+   "config": {
+    "stage": "supply"
+   }
+  },
+  {
+   "step_id": "T_leads",
+   "type": "DOMAIN_OPERATION",
+   "title": "Supplier normalization (price, MOQ), per-concept coverage and the mechanism × supplier join — no score",
+   "next": "U_qualify",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "supply.leads",
+    "inputs": {
+     "admissions": [
+      "outputs.T_admit.evidence_admission"
+     ],
+     "receipts": [
+      "outputs.S_supply"
+     ],
+     "product_concepts": "outputs.N_concepts.product_concepts",
+     "mechanisms": "outputs.N_concepts.mechanisms",
+     "live_hypotheses": "context.hypotheses"
+    }
+   }
+  },
+  {
+   "step_id": "U_qualify",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail qualifies supply",
+   "next": "V_score",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "opportunity.qualify",
+    "availability": "working"
+   },
+   "config": {
+    "stage": "supply"
+   }
+  },
+  {
+   "step_id": "V_score",
+   "type": "EXTERNAL_OPERATION",
+   "title": "Trail deterministic score (only after the hard gates; the only lawful score source)",
+   "next": "W_interpret",
+   "cognitive_op": "phi",
+   "external": {
+    "system": "trailsignal",
+    "operation_kind": "opportunity.score",
+    "availability": "working"
+   }
+  },
+  {
+   "step_id": "W_interpret",
+   "type": "AGENT_REASON",
+   "title": "Explain the score with record ids; define the cheapest falsification experiment",
+   "next": "X_compile",
+   "objective": "Using the qualification and score records only, explain the outcome by record id, state what remains uncertain, and define the cheapest falsification experiment. Never alter, rank or normalise a Trail score.",
+   "constraints": [
+    "Never alter, rank or normalise a Trail score",
+    "Cite trail_score_refs (V_score record ids) and admitted field_evidence_ids from context"
+   ],
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "product_opportunity"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "product_opportunity": {
+      "type": "object",
+      "required": [
+       "product_concept",
+       "evidence_chain",
+       "remaining_uncertainty",
+       "cheapest_falsification_experiment"
+      ],
+      "properties": {
+       "product_concept": {
+        "type": "object",
+        "required": [
+         "title",
+         "mechanism_explanation",
+         "population",
+         "activity",
+         "context",
+         "problem"
+        ]
+       },
+       "evidence_chain": {
+        "type": "array"
+       },
+       "field_evidence_ids": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "contradictions": {
+        "type": "array"
+       },
+       "competing_products": {
+        "type": "array"
+       },
+       "product_delta": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "supply": {
+        "type": [
+         "object",
+         "null"
+        ]
+       },
+       "remaining_uncertainty": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "cheapest_falsification_experiment": {
+        "type": "string"
+       },
+       "trail_score_refs": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   },
+   "acceptance_rules": [
+    "every trail_score_refs entry is a record id returned by V_score",
+    "every field_evidence_ids entry is an admitted id from context"
+   ],
+   "config": {
+    "show": {
+     "trail_scores": "outputs.V_score.trail_scores",
+     "score_refusals": "outputs.V_score.score_refusals",
+     "supply_qualifications": "outputs.U_qualify.qualifications",
+     "market_qualifications": "outputs.R_qualify.qualifications",
+     "product_concepts": "outputs.N_concepts.product_concepts",
+     "leads": "outputs.T_leads.leads",
+     "sourcing_coverage": "outputs.T_leads.sourcing_coverage",
+     "lived_situations": "outputs.K_situations.lived_situations"
+    }
+   }
+  },
+  {
+   "step_id": "Z_refuse_lineage",
+   "type": "DOMAIN_OPERATION",
+   "title": "The interpretation never satisfied the lineage law",
+   "next": "X_compile",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "law.refuse",
+    "inputs": {
+     "errors": [
+      "outputs.C_lineage.errors"
+     ]
+    },
+    "code": "LINEAGE_LAW_UNSATISFIED"
+   }
+  },
+  {
+   "step_id": "Z_refuse_bridge",
+   "type": "DOMAIN_OPERATION",
+   "title": "The hypothesis portfolio never became admissible",
+   "next": "X_compile",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "law.refuse",
+    "inputs": {
+     "errors": [
+      "outputs.C_bridge_law.bridge_errors",
+      "outputs.C_bridge_law.portfolio_errors",
+      "outputs.C_bridge_law.anchor_errors"
+     ]
+    },
+    "code": "BRIDGE_PORTFOLIO_INADMISSIBLE"
+   }
+  },
+  {
+   "step_id": "Z_refuse_situations",
+   "type": "DOMAIN_OPERATION",
+   "title": "The lived situations never satisfied their law",
+   "next": "X_compile",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "law.refuse",
+    "inputs": {
+     "errors": [
+      "outputs.K_situations_law.errors"
+     ]
+    },
+    "code": "LIVED_SITUATION_LAW_UNSATISFIED"
+   }
+  },
+  {
+   "step_id": "Z_refuse_concepts",
+   "type": "DOMAIN_OPERATION",
+   "title": "The product set never satisfied the portfolio law",
+   "next": "X_compile",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "law.refuse",
+    "inputs": {
+     "errors": [
+      "outputs.N_concepts_law.errors"
+     ]
+    },
+    "code": "PRODUCT_PORTFOLIO_LAW_UNSATISFIED"
+   }
+  },
+  {
+   "step_id": "X_compile",
+   "type": "COMPILE_RESULT",
+   "title": "Compile AdapterResultV1: the product opportunity with cross-system lineage",
+   "next": null,
+   "config": {
+    "include": [
+     "product_opportunity",
+     "hypothesis_ids",
+     "qualification",
+     "qualifications",
+     "trail_scores",
+     "score_refusals",
+     {
+      "collect_all": "evidence_admission",
+      "as": "evidence_admissions"
+     },
+     "contradictions",
+     "unknowns",
+     "lineage",
+     "product_concepts",
+     "mechanisms",
+     "leads",
+     "sourcing_coverage",
+     "supplier_candidates",
+     "sourcing_plan",
+     "lived_situations",
+     "lived_clusters",
+     "participant_cards",
+     "population_leads",
+     "community_leads",
+     "lenses",
+     "corpus_questions",
+     "physical_jobs"
+    ]
+   }
+  }
+ ]
+}

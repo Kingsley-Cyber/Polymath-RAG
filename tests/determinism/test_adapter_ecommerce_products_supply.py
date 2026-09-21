@@ -136,8 +136,10 @@ def test_admitted_supply_observations_become_parsed_candidates_coverage_and_lead
     assert out["authority"].startswith("DOMAIN_JOIN_ONLY")
 
 
-def test_no_admitted_supply_is_a_typed_gap_and_a_dead_hypothesis_yields_no_lead():
+def test_no_admitted_supply_is_a_state_for_trailsignal_to_refuse_and_a_dead_hypothesis_yields_no_lead():
     world = _supply_world(ROWS)
-    assert _exec("supply.leads", {**world, "admissions": [{"admission_id": "x", "admitted": []}]})["gap"]["code"] == "SUPPLY_EVIDENCE_MISSING"
+    none = _exec("supply.leads", {**world, "admissions": [{"admission_id": "x", "admitted": []}]})["output"]
+    assert none["leads"] == [] and {c["status"] for c in none["sourcing_coverage"]} == {"unsourced"}
+    assert _exec("supply.plan", {"product_concepts": CONCEPTS, "mechanisms": MECHS, "live_hypotheses": LIVE})["output"]["sourcing_plan"]
     dead = _exec("supply.leads", {**world, "live_hypotheses": [{"hypothesis_id": H1, "status": "contradicted"}]})["output"]
     assert dead["leads"] == [] and dead["supplier_candidates"] and any("contradicted" in n for n in dead["mechanism_notes"])

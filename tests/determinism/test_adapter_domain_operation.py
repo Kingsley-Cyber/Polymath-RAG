@@ -75,9 +75,11 @@ def test_manifest_validation_refuses_a_malformed_domain_binding(tmp_path, mutate
     assert needle in str(exc.value)
 
 
-def test_shipped_manifests_are_untouched_by_the_new_step_type():
-    for m in M.list_manifests():
-        assert not any(s["type"] == "DOMAIN_OPERATION" for s in m.steps.values()), m.adapter_id
+def test_the_pre_existing_adapters_are_untouched_by_the_new_step_type():
+    """Existing adapters stay compatible: none of the three that pre-date ADR-0020 uses the type; only the ecommerce adapter does."""
+    users = {m.adapter_id for m in M.list_manifests() if any(s["type"] == "DOMAIN_OPERATION" for s in m.steps.values())}
+    assert not users & {"trail.product_discovery", "substack.article_development", "polymath.knowledge_brief"}
+    assert users <= {"ecommerce.product_research"}
 
 
 # ─────────────────────────────────────────────────────────── the executor, against the real engine

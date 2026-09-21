@@ -52,3 +52,16 @@ functions are bound, and how their shapes map onto `HypothesisStateV1`, is migra
 Trail's budget) · overloading `VALIDATE` (documented closed and schema-free) · in-process import (the engine is ~40 flat top-level
 modules named `store`, `graph`, `transitions`, `models`, …; it would also enter the stale-bundle fence) · host-side only (not governed,
 not deterministic) · a plugin SDK (speculative).
+
+## Addendum 2026-09-20 — an agent-answered step may be SHOWN prior step outputs (`materials`)
+Composing the first product manifest on this seam exposed a gap that pre-dates it (external-review finding M1-08: `W_interpret` could not see TrailSignal's
+records): an `AGENT_REASON` / `HARNESS_ACTION` step saw only `context` (evidence refs, live hypotheses). A domain law's errors, the lived clusters or Trail's
+score records were invisible to the agent that had to act on them.
+
+- A step the agent / harness answers may declare `config.show`: `{name: "outputs.<step>.<key>" | "input.<key>"}`. `manifest.py` refuses it on any other step type.
+- `service.next_step` resolves it and returns a SIBLING key `materials` = `{values, missing, too_large, authority}` next to `step` and `evidence` — the same
+  mechanism TG2a used for `evidence`. The `AdapterStepV1` contract, the citation rules and the hypothesis ledger are unchanged; materials are context for
+  reasoning, never citable evidence. Values are bounded (400 kB per step; what does not fit is NAMED in `too_large`). A manifest without `config.show` gets no
+  key at all, so the three pre-existing adapters behave exactly as before. A read failure is said in `materials.error`, never raised.
+- `POLYMATH_RETRIEVE` / `POLYMATH_COMPILE_PLAN` / `POLYMATH_GRAPH_EXPAND` `config.source` may now also name a prior step output (`outputs.<step>.<key>`), so a
+  domain operation can compile the need a knowledge step asks (an empty value falls through to the existing seed fallback).

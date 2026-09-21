@@ -66,7 +66,7 @@ def _query_text(step: dict[str, Any], state: RunState, m: Manifest) -> str:
             return "; ".join(stmts)[:2000]
     src = cfg.get("source")
     if src:
-        v = _path({"input": state.input, "options": state.options}, src)
+        v = _path({"input": state.input, "options": state.options, "outputs": state.outputs}, src)      # a prior step may have compiled the need
         if isinstance(v, str) and v.strip():
             return v.strip()
     for k in ("question", "seed", "seed_idea", "query", "signal", "topic", "problem"):

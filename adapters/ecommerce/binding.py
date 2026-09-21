@@ -48,9 +48,11 @@ def _op_validate_bridge(req: dict[str, Any]) -> dict[str, Any]:
     hyps = _ledger_hypotheses(req.get("inputs") or {})
     if not hyps:
         raise Refusal("HYPOTHESES_MISSING", "inputs.hypotheses must be a non-empty list of bridge hypotheses")
-    known = (req.get("inputs") or {}).get("known_evidence_ids")
+    ins = req.get("inputs") or {}
+    known_rows = [r.get("id") for key in ("corpus_evidence", "field_records") for r in ins.get(key) or [] if isinstance(r, dict) and r.get("id")]
+    known = set(known_rows) | set(ins.get("known_evidence_ids") or []) if (known_rows or isinstance(ins.get("known_evidence_ids"), list)) else None
     policies = graphmod.load_policies()
-    bridge_errors = bridge.validate_all(hyps, policies, set(known) if isinstance(known, list) else None)
+    bridge_errors = bridge.validate_all(hyps, policies, known)
     portfolio_errors = bridge.validate_portfolio(hyps, policies)
     anchor_errors: list[str] = []
     clusters = (req.get("inputs") or {}).get("lived_clusters")
@@ -87,7 +89,9 @@ def _ledger_hypotheses(ins: dict[str, Any], key: str = "hypotheses") -> list[dic
     if isinstance(ids, list) and len(ids) == len(props):
         for h, hid in zip(props, ids):
             h["hypothesis_id"] = hid
-            h["id"] = hid
+    for h in props:
+        if h.get("hypothesis_id"):
+            h["id"] = h["hypothesis_id"]                  # one address for a hypothesis: its LEDGER id
     return props
 
 
@@ -262,12 +266,16 @@ def _op_evidence_cards(req: dict[str, Any]) -> dict[str, Any]:
 
     ins = _inputs(req)
     records, stats = _field_records_from_admissions(ins)
-    if not records:
-        raise Refusal("ADMITTED_EVIDENCE_MISSING", f"no admitted observation could be joined to a receipt ({stats})")
+    seen = {r["id"] for r in records}
+    records = [r for r in ins.get("prior_field_records") or [] if isinstance(r, dict) and r.get("id") not in seen] + records      # research rounds accumulate
+    rounds = int(ins.get("prior_round") or 0) + 1
+    if not records:                                      # nothing admitted is a STATE TrailSignal still judges — never a dead run
+        return {"field_records": [], "participant_cards": [], "lived_clusters": [], "anchors": [], "joined": stats, "round": rounds,
+                "note": "no admitted field evidence — no card, no cluster, nothing to anchor on"}
     state = _engine_state(field_records=records, population_leads=list(ins.get("population_leads") or []), community_leads=list(ins.get("community_leads") or []))
     note = lived_world.cards(state, graphmod.load_policies())
     d = state["data"]
-    return {"field_records": records, "participant_cards": d["participant_cards"], "lived_clusters": d["lived_clusters"], "joined": stats, "note": note,
+    return {"field_records": records, "participant_cards": d["participant_cards"], "lived_clusters": d["lived_clusters"], "joined": stats, "note": note, "round": rounds,
             "anchors": [c["id"] for c in d["lived_clusters"] if c["authority"] == "ANCHOR"]}
 
 
@@ -296,8 +304,8 @@ def _op_corpus_questions(req: dict[str, Any]) -> dict[str, Any]:
 
     ins = _inputs(req)
     state = _engine_state(lived_clusters=ins.get("lived_clusters") or [], field_records=ins.get("field_records") or [])
-    if not state["data"].get("lived_clusters"):
-        raise Refusal("LIVED_CLUSTERS_MISSING", "inputs.lived_clusters must be the clusters `population.evidence_cards` produced")
+    if not state["data"].get("lived_clusters"):           # no cluster, no field-grounded question: the knowledge step falls back to its seed need
+        return {"corpus_questions": [], "need": "", "note": "no lived cluster — no field-grounded corpus question"}
     note = lived_world.compile_corpus_questions(state, graphmod.load_policies())
     qs = state["data"]["corpus_questions"]
     return {"corpus_questions": qs, "need": " ".join(q["question"] for q in qs)[:2000], "note": note}
@@ -355,7 +363,7 @@ def _op_research_plan(req: dict[str, Any]) -> dict[str, Any]:
     if not subjects:
         subjects = [("hyp", h.get("hypothesis_id"), str(h.get("statement") or "")) for h in ins.get("hypotheses") or [] if isinstance(h, dict) and h.get("statement")]
     compiled: list[list[dict[str, Any]]] = [executors.channel_queries(str(sid), text, state, policies) for _, sid, text in subjects]
-    leads = {l.get("id"): l for l in ins.get("leads") or [] if isinstance(l, dict)}
+    leads = {l.get("id"): l for key in ("leads", "population_leads", "community_leads") for l in ins.get(key) or [] if isinstance(l, dict)}
     for lid in ins.get("batch") or []:
         if leads.get(lid, {}).get("channel_queries"):
             compiled.append([dict(q, _lead=True) for q in leads[lid]["channel_queries"]])
@@ -435,6 +443,9 @@ def _op_supply_plan(req: dict[str, Any]) -> dict[str, Any]:
     plan = state["data"]["sourcing_plan"]
     out: dict[str, Any] = {"sourcing_plan": plan, "note": note}
     directive = ins.get("research_directive")
+    if (req.get("config") or {}).get("require_directive") and not (isinstance(directive, dict) and directive.get("search_intents")):
+        # never let supplier research run under an OLDER directive compiled for another stage (external-review finding M1-07)
+        raise Refusal("SUPPLY_DIRECTIVE_MISSING", "TrailSignal compiled no supply research directive for this stage")
     if isinstance(directive, dict) and directive.get("search_intents"):
         enriched = copy.deepcopy(directive)
         trail_intents = [i for i in enriched["search_intents"] if isinstance(i, dict)]
@@ -498,8 +509,10 @@ def _op_supply_leads(req: dict[str, Any]) -> dict[str, Any]:
                           "moq_raw": _context_field(ctx, "MOQ as listed") or "", "url": src.get("url"), "channel": _context_field(ctx, "channel") or host.split(".")[0],
                           "concept_id": _context_field(ctx, "concept"), "retrieved_at": src.get("retrieved_at"), "published_at_if_known": src.get("published_at_if_known"),
                           "hypothesis_ids": list(a.get("hypothesis_ids") or [])})
-    if not cands:
-        raise Refusal("SUPPLY_EVIDENCE_MISSING", f"no admitted supply observation names a listing ({stats})")
+    if not cands:                                         # TrailSignal's qualification / score refusal is the verdict on missing supply, not a dead run
+        return {"supplier_candidates": [], "leads": [], "sourcing_coverage": [{"concept_id": c.get("id"), "concept": c.get("name"), "status": "unsourced"} for c in concepts],
+                "joined": stats, "mechanism_notes": notes, "note": "no admitted supply observation names a listing",
+                "authority": "DOMAIN_JOIN_ONLY — qualification and score are TrailSignal's"}
     policies = graphmod.load_policies()
     state = _engine_state(supplier_candidates=cands, product_concepts=concepts, mechanisms=mechs, leads=[])
     note = executors.supplier(state, policies)
@@ -516,6 +529,17 @@ def _op_supply_leads(req: dict[str, Any]) -> dict[str, Any]:
             "mechanism_notes": notes, "note": note, "authority": "DOMAIN_JOIN_ONLY — qualification and score are TrailSignal's"}
 
 
+def _op_refuse(req: dict[str, Any]) -> dict[str, Any]:
+    """A law the agent could not satisfy within the loop budget ends the run HONESTLY: a typed gap carrying the law's own errors.
+    A manifest routes here from a BRANCH; `config.code` names the refusal, `inputs.errors` (one list or several) says why."""
+    cfg = req.get("config") or {}
+    errors: list[str] = []
+    for v in _inputs(req).values():
+        for e in (v if isinstance(v, list) else [v]):
+            errors += [str(x) for x in e] if isinstance(e, list) else ([str(e)] if e else [])
+    raise Refusal(str(cfg.get("code") or "DOMAIN_LAW_UNSATISFIED"), "; ".join(errors[:6])[:1500] or "the domain law stayed unsatisfied within the loop budget")
+
+
 #: operation id -> wrapper. One table; an id not listed here is a typed refusal.
 OPERATIONS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "knowledge.corpus_evidence": _op_corpus_evidence,
@@ -530,6 +554,7 @@ OPERATIONS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "products.validate_concepts": _op_validate_concepts,
     "supply.plan": _op_supply_plan,
     "supply.leads": _op_supply_leads,
+    "law.refuse": _op_refuse,
 }
 
 

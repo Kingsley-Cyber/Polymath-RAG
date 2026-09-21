@@ -76,11 +76,15 @@ def test_anchor_needs_records_threads_and_trailsignals_independent_groups():
     assert few["authority"] == "THIN" and any("no PURCHASE_INTENT recorded" == u for u in few["unknowns"])
 
 
-def test_missing_community_is_counted_and_nothing_admitted_is_a_typed_gap():
+def test_missing_community_is_counted_and_nothing_admitted_is_a_state_not_a_dead_run():
     out = _exec("population.evidence_cards", _world(2, groups=2, threads=2, community=None))["output"]
     assert out["joined"]["without_community"] == 2 and out["lived_clusters"][0]["community"] == "reddit.com"   # falls back to the source host, and says so
     empty = {"receipts": [], "admissions": [{"admission_id": "x", "admitted": []}], "hypotheses": HYPOTHESES}
-    assert _exec("population.evidence_cards", empty)["gap"]["code"] == "ADMITTED_EVIDENCE_MISSING"
+    nothing = _exec("population.evidence_cards", empty)["output"]                                          # TrailSignal still has to judge a run with no admitted evidence
+    assert nothing["field_records"] == [] and nothing["lived_clusters"] == [] and nothing["anchors"] == [] and nothing["round"] == 1
+    second = _exec("population.evidence_cards", {**_world(2, groups=2, threads=2), "prior_field_records": [{"id": "fev_old", "community": "r/running", "friction_family": "access_interruption",
+                                                                                                          "independence_group": "g_old", "source_identity": {"platform": "forum", "thread_key": "t_old"}}], "prior_round": 1})["output"]
+    assert second["round"] == 2 and [r["id"] for r in second["field_records"]] == ["fev_old", "fev_0000", "fev_0001"]                  # research rounds accumulate
 
 
 def _situation(cluster_id, authority, refs, **extra):
@@ -127,4 +131,4 @@ def test_corpus_questions_come_from_lived_clusters_never_from_hypothesis_stateme
     assert qs and all(q["authority_of_answer"] == "CORPUS_EVIDENCE_PACKET" and q["cluster_id"] == world["lived_clusters"][0]["id"] for q in qs)
     assert any("access interruption" in q["question"] for q in qs) and all(HYPOTHESES[0]["statement"] not in q["question"] for q in qs)   # the fix for defect D2
     assert out["need"] and len(out["need"]) <= 2000
-    assert _exec("knowledge.corpus_questions", {"lived_clusters": []})["gap"]["code"] == "LIVED_CLUSTERS_MISSING"
+    assert _exec("knowledge.corpus_questions", {"lived_clusters": []})["output"]["need"] == ""              # no cluster: the knowledge step keeps its seed need
