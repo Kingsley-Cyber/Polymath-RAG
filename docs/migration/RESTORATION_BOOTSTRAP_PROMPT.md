@@ -2,7 +2,7 @@
 
 > Agent-written (2026-09-21) around the owner's goal prompt (§26 of `SEMANTIC_TRANSDUCTION_RESTORATION_REFERENCE.md`): path resolved, context references, start / exit / stop / done conditions, and the repository gates the reference does not
 > restate. The owner's words win where they differ. Supersedes `REALIGNMENT_BOOTSTRAP_PROMPT.md` (spent). A fresh session needs NOTHING from any earlier chat: everything it needs is named below and lives on disk.
-> State when this was written: `production` @ `ed9d818`, clean, nothing pushed · fleet 24 healthy workers / ONE bundle / `/ready` true · 0 running adapter runs · 0 leased stage tickets · no `restoration/*` branch or worktree exists yet · Trail A41 @ `de64d84`, clean.
+> State when this was written: `production` clean, nothing pushed (HEAD = whatever `CONTINUATION.md` and `git log` say; start condition S-1 checks it) · fleet 24 healthy workers / ONE bundle / `/ready` true · 0 running adapter runs · 0 leased stage tickets · no `restoration/*` branch or worktree exists yet · Trail A41 @ `de64d84`, clean.
 
 ## A. Paste this as the FIRST message of a new session opened in `~/Documents/polymath-rebuild/polymath-v4`
 ```text
@@ -14,7 +14,7 @@ CONTEXT — read from disk in this order; nothing from earlier chats is needed o
 3. docs/migration/SEMANTIC_TRANSDUCTION_RESTORATION_REFERENCE.md            READ IN FULL: locked decisions (§3) · defects (§5) · what NOT to build (§6) · OpportunitySemanticViewV1 (§7) · slices (§8–§13) · benchmark (§14–§15) · testing / git / continuation (§16–§18) · stop conditions (§24) · done (§25)
 4. docs/migration/AGENT_OPERATING_DOCTRINE.md
 5. docs/migration/CONTINUATION.md                                           STATE: queue · Next Exact Action · GATES G1–G7 · DELTAS D-a…D-e · DO NOT REDO
-6. docs/migration/AUTO_DECISIONS.md                                         INDEX only (next id M-026; next register row 11.389)
+6. docs/migration/AUTO_DECISIONS.md                                         INDEX only (next decision id + next register row: exactly as CONTINUATION.md states them)
 Code entry points (audit §2 / §5 give exact lines): shared/polymath_shared/adapter/{hypotheses,service,transitions,evidence_boundary,trail_client}.py · workers/workers/adapter_step_worker.py · config/adapters/ecommerce.product_research.json ·
 adapters/ecommerce/binding.py + python/{lived_world,executors,bridge,report,governed_run}.py · contracts/adapter/v1/ · governance/trail/ (READ ONLY — byte-pinned). Run-5 evidence for fixtures: adapter_steps / adapter_hypotheses rows of
 adr_c994b32a8c7287a9b0508f1f3a4c42e8 (read-only SELECT) + ~/PolymathRuntime/e2e/2026-09-21-real-ecommerce-e2e/.

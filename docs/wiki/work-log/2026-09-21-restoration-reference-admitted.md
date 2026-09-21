@@ -21,6 +21,8 @@ give it only the short goal prompt from Section 26." `/polymath-bootstrap` Step 
 
 - (11.389) `RESTORATION_BOOTSTRAP_PROMPT.md` rewritten with explicit execution conditions: context references, START S-1…S-5, per-slice EXIT conditions, repository law, owner gates that never idle the session, STOP / DONE, an optional goal-mode condition, the owner's action table. Handoff state verified read-only (fleet, 0 running runs, 0 leased tickets, free branch names, Trail A41 clean).
 
+- (11.390) The prompt's own pointers made self-healing: "next register row 11.389" and the pinned HEAD sha in its header were stale the moment 11.389 was committed; both now defer to `CONTINUATION.md` / `git log`.
+
 ## Proof
 The reference was READ IN FULL before admission and compared with `TRANSDUCTION_AUDIT.md`: no contradiction with repository evidence found. Copy verified by sha256 (source == installed). Guards 0 / 0 / 0 / READY. No code, manifest, contract, Trail file, fleet, database or provider touched.
 
