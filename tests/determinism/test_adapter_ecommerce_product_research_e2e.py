@@ -249,8 +249,13 @@ def test_one_complete_ecommerce_product_research_run(runtime):
     assert trail.calls == ["registry.project", "hypotheses.judge:filter", "gaps.compile", "evidence.admit:field_evidence", "hypotheses.judge:revision", "territory.project",
                            "evidence.admit:product_reality", "opportunity.qualify:market_delta", "gaps.compile:supply", "evidence.admit:supply", "opportunity.qualify:supply", "opportunity.score"]
 
-    # `materials` is strictly opt-in: a step whose manifest declares no `config.show` answers with exactly the pre-existing keys
-    assert agent.keys["G_mechanisms"] == {"kind", "step", "status", "evidence"} and agent.keys["C_primitives"] == {"kind", "step", "status", "evidence", "materials"}
+    # `materials` is strictly opt-in (the no-`config.show` case is proven on the fixture manifests of test_adapter_semantic_view and
+    # test_adapter_domain_operation). Restoration Slice 1 (manifest 0.2.0): G_mechanisms opts in to the DERIVED semantic view, so the
+    # step that revises a mechanism reads the ledger's state instead of re-deriving it from the four-field statement view.
+    assert agent.keys["G_mechanisms"] == agent.keys["C_primitives"] == {"kind", "step", "status", "evidence", "materials"}
+    shown = agent.seen["G_mechanisms"][0]["hypothesis_semantics"]
+    assert shown and all(v["semantics"]["population"] == "runners" and v["semantics"]["suspected_friction"] == "access_interruption" for v in shown)
+    assert all(v["knowledge"]["knowledge_support_count"] == 1 and v["bridge"] is not None for v in shown)
     # the agent was SHOWN what it needed — the previous law's errors, the lived clusters, TrailSignal's own records (external-review finding M1-08)
     assert any("UNCLASSIFIED" in e for e in agent.seen["C_primitives"][1]["previous_lineage_errors"])
     assert any("duplicate mechanism families" in e for e in agent.seen["C_bridge"][1]["previous_portfolio_errors"])

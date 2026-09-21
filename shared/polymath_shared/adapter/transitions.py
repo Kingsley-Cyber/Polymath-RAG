@@ -7,7 +7,7 @@ from typing import Any
 
 import jsonschema
 
-from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, TERMINAL_RUN_STATUSES, assert_valid, stable_hash, validate
+from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, ORIGIN_ID_FIELDS, PRIOR_EVIDENCE_KINDS, TERMINAL_RUN_STATUSES, assert_valid, stable_hash, validate
 from .manifest import Manifest
 
 
@@ -190,10 +190,13 @@ def newest_output(state: RunState, key: str) -> Any:
 
 # ─────────────────────────────────────────────────────────── submissions
 def _cited_ids(payload: Any) -> set[str]:
-    """Every string under a key that ends with `_ids` (the citation convention of AGENT_REASON output schemas)."""
+    """Every string under a key that ends with `_ids` (the citation convention of AGENT_REASON output schemas) — except the
+    ORIGIN_ID_FIELDS, which name a hypothesis's lineage inside the run and are validated by the ledger, not cited as evidence."""
     out: set[str] = set()
     if isinstance(payload, dict):
         for k, v in payload.items():
+            if k in ORIGIN_ID_FIELDS:
+                continue
             if k.endswith("_ids") and isinstance(v, list):
                 out |= {x for x in v if isinstance(x, str)}
             else:

@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
-from .contracts import (CITABLE_EVIDENCE_KINDS, HYPOTHESIS_STATUSES, PRIOR_EVIDENCE_KINDS, TRANSITION_KINDS,
+from .contracts import (CITABLE_EVIDENCE_KINDS, HYPOTHESIS_STATUSES, ORIGIN_ID_FIELDS, PRIOR_EVIDENCE_KINDS, TRANSITION_KINDS,
                         assert_valid)
 
 
@@ -29,6 +29,13 @@ KNOWLEDGE_ID_FIELD = {"chunk": "chunk_id", "document": "document_id", "parent_ma
 CAUSE_KINDS = frozenset({"chunk", "document", "graph_fact", "graph_hop", "parent_map", "trail_prior", "field_evidence",
                          "evidence_admission", "hypothesis", "step_output"})
 REVISABLE_FIELDS = ("statement", "mechanism", "population", "activity", "task", "context", "suspected_friction")
+#: list-valued fields a REVISE may change, each with a deliberate rule (restoration reference §8.4): `assumptions` / `falsifiers` /
+#: the origin ids REPLACE (every earlier revision stays in the ledger); `knowledge_gaps` UPSERT by gap id or question so a gap keeps
+#: its identity across rounds; `contradictions` only ever GROW and must cite evidence this step may cite. Any other key in `changes`
+#: is REFUSED — a revision is applied or rejected, never silently dropped.
+REVISABLE_LIST_FIELDS = ("assumptions", "falsifiers", "knowledge_gaps", "contradictions", "lead_ids", "latent_structure_ids")
+ORIGIN_FIELDS = ORIGIN_ID_FIELDS
+GAP_STATUSES = ("open", "researched", "closed")
 
 
 def _h(*parts: Any) -> str:
@@ -86,7 +93,59 @@ def _priors(proposal: dict[str, Any], allowed: dict[str, str], snapshot_id: str 
     return out, causes
 
 
-def _state(hid: str, run_id: str, proposal: dict[str, Any], *, parents: list[str], support, priors, field, recorded_at: str) -> dict[str, Any]:
+def _origin(proposal: dict[str, Any], known: dict[str, set[str]] | None, errors: list[str], *, label: str) -> dict[str, list[str]]:
+    """Origin linkage (reference §8.3): the ids of the population lead(s) / latent structure(s) a hypothesis came from. IDs only —
+    never a copy of the lead or the structure. With `known` (what the run has actually produced) an unknown id is a fabricated
+    lineage and is refused; without it the ids are stored as given."""
+    out: dict[str, list[str]] = {}
+    for f in ORIGIN_FIELDS:
+        if proposal.get(f) is None:
+            continue
+        if not isinstance(proposal[f], list) or not all(isinstance(i, str) and i.strip() for i in proposal[f]):
+            errors.append(f"{label}: {f} must be a list of non-empty ids")
+            continue
+        ids = list(dict.fromkeys(str(i) for i in proposal[f]))
+        if known is not None:
+            for i in ids:
+                if i not in (known.get(f) or set()):
+                    errors.append(f"{label}: {f} names {i!r}, which this run has not produced")
+        out[f] = ids
+    return out
+
+
+def _merge_gaps(hid: str, existing: list[dict[str, Any]], incoming: Any, errors: list[str], *, label: str) -> list[dict[str, Any]]:
+    """UPSERT: a gap matched by `gap_id` (or, without one, by its normalised question) keeps its id and takes the new status /
+    role; an unmatched gap is appended under a freshly minted, collision-free id. Nothing is deleted — close a gap, don't drop it."""
+    gaps = [dict(g) for g in existing or []]
+    if not isinstance(incoming, list):
+        errors.append(f"{label}: changes.knowledge_gaps must be a list")
+        return gaps
+    norm = lambda q: " ".join(str(q or "").lower().split())  # noqa: E731
+    for g in incoming:
+        if not isinstance(g, dict) or not (g.get("gap_id") or str(g.get("question") or "").strip()):
+            errors.append(f"{label}: every knowledge gap needs a question (or the gap_id of an existing gap)")
+            continue
+        if g.get("status") is not None and g["status"] not in GAP_STATUSES:
+            errors.append(f"{label}: gap status {g['status']!r} is not one of {', '.join(GAP_STATUSES)}")
+            continue
+        hit = next((x for x in gaps if g.get("gap_id") and x["gap_id"] == g["gap_id"]), None) \
+            or next((x for x in gaps if not g.get("gap_id") and norm(x["question"]) == norm(g.get("question"))), None)
+        if hit is not None:
+            hit.update({k: g[k] for k in ("question", "evidence_role", "status") if g.get(k)})
+            continue
+        if not str(g.get("question") or "").strip():
+            errors.append(f"{label}: gap {g.get('gap_id')!r} is unknown on {hid} and carries no question")
+            continue
+        taken, n = {x["gap_id"] for x in gaps}, len(gaps)
+        while f"gap_{hid[4:12]}_{n}" in taken:
+            n += 1
+        gaps.append({"gap_id": str(g.get("gap_id") or f"gap_{hid[4:12]}_{n}"), "question": g["question"],
+                     "evidence_role": g.get("evidence_role", "behavior"), "status": g.get("status", "open")})
+    return gaps
+
+
+def _state(hid: str, run_id: str, proposal: dict[str, Any], *, parents: list[str], support, priors, field, recorded_at: str,
+           origin: dict[str, list[str]] | None = None) -> dict[str, Any]:
     roles = proposal.get("support_roles") or {}
     for item in support:
         rid = next(v for k, v in item.items() if k.endswith("_id") and v)
@@ -101,7 +160,8 @@ def _state(hid: str, run_id: str, proposal: dict[str, Any], *, parents: list[str
             "task": proposal.get("task"), "context": proposal.get("context"), "suspected_friction": proposal.get("suspected_friction"),
             "status": "proposed", "knowledge_support": support, "trail_priors": priors, "field_evidence_ids": sorted(set(field)),
             "assumptions": list(proposal.get("assumptions") or []), "contradictions": contradictions,
-            "falsifiers": list(proposal.get("falsifiers") or []), "knowledge_gaps": gaps, "created_at": recorded_at, "updated_at": recorded_at}
+            "falsifiers": list(proposal.get("falsifiers") or []), "knowledge_gaps": gaps, "created_at": recorded_at, "updated_at": recorded_at,
+            **{f: list(v) for f, v in (origin or {}).items()}}
 
 
 def _transition(run_id: str, hid: str, kind: str, actor: str, step: dict[str, Any], ordinal: int, *, parents, children, causes,
@@ -117,7 +177,7 @@ def _transition(run_id: str, hid: str, kind: str, actor: str, step: dict[str, An
 # ─────────────────────────────────────────────────────────── θ: generate
 def generate(run_id: str, step: dict[str, Any], proposals: list[dict[str, Any]], *, registry_snapshot_id: str | None,
              recorded_at: str, max_hypotheses: int = 8, parents: list[str] | None = None,
-             ordinal_base: int = 0) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+             ordinal_base: int = 0, known_origin_ids: dict[str, set[str]] | None = None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """θ output → new HypothesisStateV1 revisions (revision 0) + GENERATE transitions. Every proposal must cite ≥1 evidence
     id from the step's context (knowledge or admitted field evidence); priors may be attached, never cited."""
     errors: list[str] = []
@@ -135,7 +195,8 @@ def generate(run_id: str, step: dict[str, Any], proposals: list[dict[str, Any]],
             errors.append(f"hypothesis {n}: cite at least one evidence id")
             continue
         hid = hypothesis_id(run_id, step["step_id"], ordinal_base + n)
-        st = _state(hid, run_id, prop, parents=parents or [], support=support, priors=priors, field=field, recorded_at=recorded_at)
+        origin = _origin(prop, known_origin_ids, errors, label=f"hypothesis {n}")
+        st = _state(hid, run_id, prop, parents=parents or [], support=support, priors=priors, field=field, recorded_at=recorded_at, origin=origin)
         assert_valid("hypothesis_state", st)
         states.append(st)
         transitions.append(_transition(run_id, hid, "GENERATE", "theta", step, n, parents=parents or [], children=[], causes=causes + pcauses,
@@ -148,7 +209,7 @@ def generate(run_id: str, step: dict[str, Any], proposals: list[dict[str, Any]],
 # ─────────────────────────────────────────────────────────── θ / φ: transitions on existing hypotheses
 def apply(run_id: str, step: dict[str, Any], current: dict[str, dict[str, Any]], requests: list[dict[str, Any]], *, actor: str,
           allowed_causes: dict[str, str], recorded_at: str, registry_snapshot_id: str | None = None,
-          max_hypotheses: int = 8) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+          max_hypotheses: int = 8, known_origin_ids: dict[str, set[str]] | None = None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Apply typed transition requests to the CURRENT revisions (`current` = hypothesis_id → latest state). Returns the new
     revisions (and any children) plus the transition records. θ may only GENERATE/REVISE/SPLIT; φ applies selective pressure."""
     errors: list[str] = []
@@ -203,8 +264,10 @@ def apply(run_id: str, step: dict[str, Any], current: dict[str, dict[str, Any]],
                 cid = hypothesis_id(run_id, step["step_id"], 100 * (n + 1) + k)
                 allowed_refs = [{"kind": v, "id": i} for i, v in allowed_causes.items()]
                 cs, cf, cc = _split_cited(list(child.get("supporting_evidence_ids") or []), _allowed(allowed_refs), errors, label=f"{label} child {k}")
+                inherited = {f: list(prev[f]) for f in ORIGIN_FIELDS if prev.get(f)}
                 st = _state(cid, run_id, {**child, "statement": child.get("statement") or prev["statement"]}, parents=[hid],
-                            support=cs or list(prev["knowledge_support"]), priors=list(prev["trail_priors"]), field=cf + list(prev["field_evidence_ids"]), recorded_at=recorded_at)
+                            support=cs or list(prev["knowledge_support"]), priors=list(prev["trail_priors"]), field=cf + list(prev["field_evidence_ids"]), recorded_at=recorded_at,
+                            origin={**inherited, **_origin(child, known_origin_ids, errors, label=f"{label} child {k}")})
                 assert_valid("hypothesis_state", st)
                 new_states[cid] = st; live[cid] = st; child_ids.append(cid)
                 transitions.append(_transition(run_id, cid, "GENERATE", actor, step, ordinal, parents=[hid], children=[], causes=causes + [{"kind": "hypothesis", "id": hid}] + cc,
@@ -233,9 +296,40 @@ def apply(run_id: str, step: dict[str, Any], current: dict[str, dict[str, Any]],
             continue
         changes: dict[str, Any] = {"status": RESULTING_STATUS[kind]}
         if kind == "REVISE":
+            asked = req.get("changes") or {}
+            if not isinstance(asked, dict):
+                errors.append(f"{label}: changes must be an object"); continue
+            unknown = sorted(k for k in asked if k not in REVISABLE_FIELDS + REVISABLE_LIST_FIELDS)
+            if unknown:
+                errors.append(f"{label}: changes.{', changes.'.join(unknown)} cannot be revised (revisable: "
+                              f"{', '.join(REVISABLE_FIELDS + REVISABLE_LIST_FIELDS)}); nothing of this revision was applied")
+                continue
+            before = len(errors)
             for f in REVISABLE_FIELDS:
-                if f in (req.get("changes") or {}):
-                    changes[f] = req["changes"][f]
+                if f in asked:
+                    changes[f] = asked[f]
+            for f in ("assumptions", "falsifiers"):
+                if f in asked:
+                    if not isinstance(asked[f], list) or not all(isinstance(x, str) and x.strip() for x in asked[f]):
+                        errors.append(f"{label}: changes.{f} must be a list of non-empty strings")
+                    else:
+                        changes[f] = list(asked[f])
+            changes.update(_origin(asked, known_origin_ids, errors, label=label))
+            if "knowledge_gaps" in asked:
+                changes["knowledge_gaps"] = _merge_gaps(hid, prev["knowledge_gaps"], asked["knowledge_gaps"], errors, label=label)
+            if "contradictions" in asked:
+                added = []
+                for c in asked["contradictions"] if isinstance(asked["contradictions"], list) else [None]:
+                    ids = [str(i) for i in (c or {}).get("evidence_ids") or []] if isinstance(c, dict) else []
+                    bad = [i for i in ids if allowed_causes.get(i) not in CITABLE_EVIDENCE_KINDS]
+                    if not ids or bad:
+                        errors.append(f"{label}: changes.contradictions entries need evidence_ids this step may cite"
+                                      + (f" (not citable: {', '.join(bad)})" if bad else ""))
+                        continue
+                    added.append({"statement": c.get("statement") or "contradicting evidence cited", "evidence_ids": ids})
+                changes["contradictions"] = list(prev["contradictions"]) + [c for c in added if c not in prev["contradictions"]]
+            if len(errors) > before:
+                continue
         if kind == "CONTRADICT":
             contra = [{"statement": c.get("statement") or "contradicting evidence admitted", "evidence_ids": list(c.get("evidence_ids") or [])}
                       for c in (req.get("contradictions") or []) if c.get("evidence_ids")]

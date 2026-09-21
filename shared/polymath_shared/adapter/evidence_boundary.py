@@ -62,6 +62,11 @@ HYDRATE_MAX_RECEIPTS = 12
 #: so freshly admitted field evidence is never starved by a large graded chunk set, and the reverse.
 HYDRATE_BUDGET = {"field_evidence": 24, "chunk": 20, "graph_fact": 10, "other": 6}
 HYDRATE_CLASS_ORDER = ("field_evidence", "chunk", "graph_fact", "other")
+#: LATER-PASS RESERVATION (restoration reference §8.5): inside a knowledge class at most this share of the slots is reserved for rows
+#: a LATER retrieval pass returned (hypothesis-targeted / loop retrieval), newest pass first. The caps do not move. With one pass
+#: nothing changes. Without it the stable first-pass order filled every slot and a targeted retrieval was citable but never readable.
+RECENT_SHARE = 0.4
+KNOWLEDGE_ROW_KEYS = ("rows", "graph_rows")
 
 
 class PathNotAllowed(ValueError):
@@ -299,6 +304,41 @@ def _hydrate_class(kind: str) -> str:
     return kind if kind in ("field_evidence", "chunk", "graph_fact") else "other"
 
 
+def knowledge_passes(outputs: Iterable[Mapping[str, Any] | None]) -> dict[str, int]:
+    """row id -> index of the NEWEST retrieval pass that returned it (0 = the first pass). `outputs` = step outputs in run order
+    (every step, knowledge or not). A pass is a maximal run of ADJACENT knowledge outputs (an output with a `rows` / `graph_rows`
+    key, even an empty one): plan + retrieve + graph of one round are one pass; any other step between two rounds separates them."""
+    passes: dict[str, int] = {}
+    index, inside = -1, False
+    for out in outputs:
+        knowledge = isinstance(out, Mapping) and any(k in out for k in KNOWLEDGE_ROW_KEYS)
+        if not knowledge:
+            inside = False
+            continue
+        if not inside:
+            index, inside = index + 1, True
+        for key in KNOWLEDGE_ROW_KEYS:
+            for row in out.get(key) or []:
+                if isinstance(row, Mapping) and row.get("id"):
+                    passes[str(row["id"])] = index
+    return passes
+
+
+def reserve_recent(bucket: list[dict[str, Any]], take: int, passes: Mapping[str, int], *, share: float = RECENT_SHARE) -> list[dict[str, Any]]:
+    """`take` items of `bucket` (already in its baseline order). Up to ceil(take x share) slots go to items of a LATER pass, newest
+    pass first and baseline order inside a pass; the remaining slots are filled in baseline order. Deterministic; the result keeps
+    baseline order, so a run with a single pass gets exactly what it got before."""
+    take = max(0, min(int(take), len(bucket)))
+    later = [r for r in bucket if passes.get(str(r.get("id")), 0) > 0]
+    if not take or not later or take == len(bucket):
+        return bucket[:take]
+    quota = min(len(later), take, -(-int(take * share * 1000) // 1000))                 # ceil without float drift
+    reserved = {str(r["id"]) for r in sorted(later, key=lambda r: -passes[str(r["id"])])[:quota]}     # stable: baseline order inside a pass
+    rest = [str(r.get("id")) for r in bucket if str(r.get("id")) not in reserved][: take - len(reserved)]
+    chosen = reserved | set(rest)
+    return [r for r in bucket if str(r.get("id")) in chosen]
+
+
 def _index_rows(step_outputs: Iterable[Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
     """id -> the stored row. Knowledge rows come from `rows` / `graph_rows`; field evidence is rebuilt from a Trail admission
     (`evidence_admission.admitted[]`) joined to the harness receipt it judged (same action_id, same observation_id)."""
@@ -406,8 +446,18 @@ def hydrate(evidence_refs: Iterable[Mapping[str, Any]], step_outputs: Iterable[M
         extra = min(spare, len(buckets[c]) - take[c])
         take[c] += extra
         spare -= extra
-    rows = [_readable(r, max_chars) for c in HYDRATE_CLASS_ORDER for r in buckets[c][: take[c]]]
+    passes = knowledge_passes(e.get("output") for e in sorted(entries, key=lambda e: int(e.get("sequence") or 0)))
+    picked = {c: (buckets[c][: take[c]] if c == "field_evidence" else reserve_recent(buckets[c], take[c], passes)) for c in HYDRATE_CLASS_ORDER}
+    rows = []
+    for c in HYDRATE_CLASS_ORDER:
+        for r in picked[c]:
+            view = _readable(r, max_chars)
+            if passes.get(str(r.get("id")), 0) > 0:
+                view["retrieval_pass"] = passes[str(r["id"])]          # a row a LATER (targeted / loop) retrieval returned
+            rows.append(view)
     receipts = [v for v in (_receipt_view(e) for e in entries) if v][-HYDRATE_MAX_RECEIPTS:]
     return {"rows": rows, "receipts": receipts,
             "coverage": {"refs": n_refs, "readable": n_refs - unresolved, "returned": len(rows), "unresolved": unresolved,
-                         "max_rows": cap, "max_chars": int(max_chars)}}
+                         "max_rows": cap, "max_chars": int(max_chars)},
+            "allocation": {"passes": (max(passes.values()) + 1 if passes else 0), "recent_share": RECENT_SHARE,
+                           "later_pass_rows": sum(1 for r in rows if r.get("retrieval_pass"))}}

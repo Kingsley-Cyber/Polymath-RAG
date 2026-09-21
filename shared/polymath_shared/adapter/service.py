@@ -13,7 +13,7 @@ from typing import Any, Callable
 
 from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, assert_valid, stable_hash, validate
 from .manifest import ADAPTER_DIR, Manifest, list_manifests
-from . import evidence_boundary as EB, hypotheses as H, store, transitions as T
+from . import evidence_boundary as EB, hypotheses as H, semantic_view as SV, store, transitions as T
 from .hypotheses import HypothesisRejected
 from .transitions import BudgetExhausted, RunState, SubmissionRejected
 
@@ -172,9 +172,11 @@ MATERIALS_MAX_BYTES = 400_000
 
 def _materials(conn, run_id: str, step: dict[str, Any], directory: Path | None) -> dict[str, Any] | None:
     """ADR-0020 addendum: an agent-answered step may be SHOWN selected prior step outputs. The manifest names them
-    (`config.show`: name -> dotted path over `outputs` / `input`); they travel as a SIBLING key of the step, exactly like
-    `evidence` — the AdapterStepV1 contract and the citation rules are unchanged, and nothing here is evidence. A manifest
-    without `config.show` yields no key at all. Reads stored state only; a failure is SAID, never raised."""
+    (`config.show`: name -> dotted path over `outputs` / `input` / `semantics`); they travel as a SIBLING key of the step, exactly
+    like `evidence` — the AdapterStepV1 contract and the citation rules are unchanged, and nothing here is evidence. `semantics` is
+    the DERIVED OpportunitySemanticViewV1 (semantic_view.py): the ledger's newest revisions joined by id to the run's own outputs —
+    built only when a path asks for it. A manifest without `config.show` yields no key at all. Reads stored state only; a failure
+    is SAID, never raised."""
     try:                                   # OPT-IN FIRST: if this step's manifest did not ask for materials — or that cannot even be determined — there is NO key
         loaded = store.load_run(conn, run_id)
         state = loaded[0] if loaded else None
@@ -185,6 +187,8 @@ def _materials(conn, run_id: str, step: dict[str, Any], directory: Path | None) 
         return None
     try:
         scope = {"outputs": state.outputs, "input": state.input}
+        if any(str(d).split(".", 1)[0] == "semantics" for d in show.values()):
+            scope["semantics"] = _semantics(conn, run_id, state)
         values: dict[str, Any] = {}
         missing, too_large, room = [], [], MATERIALS_MAX_BYTES
         for name, dotted in show.items():
@@ -201,6 +205,18 @@ def _materials(conn, run_id: str, step: dict[str, Any], directory: Path | None) 
         return {"values": values, "missing": missing, "too_large": too_large, "authority": "PRIOR_STEP_OUTPUT — context for reasoning, never citable evidence"}
     except Exception as exc:  # noqa: BLE001 — never let the readable view take adapter_next down
         return {"values": {}, "missing": [], "too_large": [], "error": f"{type(exc).__name__}: {exc}"[:500]}
+
+
+def _semantics(conn, run_id: str, state: RunState) -> dict[str, Any]:
+    """OpportunitySemanticViewV1 for the run as it stands NOW: a read of the ledger, the outputs and the stored steps. Never stored."""
+    stored = [{"step_id": s["step_id"], "sequence": s["sequence"], "output": s.get("output")} for s in store.list_steps(conn, run_id)]
+    return SV.scope(SV.build(store.current_hypotheses(conn, run_id), state.outputs, order=state.output_order, step_outputs=stored, run_id=run_id))
+
+
+def _wants_semantics(spec: dict[str, Any]) -> bool:
+    """A DOMAIN_OPERATION opts in by naming a `context.semantics…` path in `config.inputs`."""
+    sels = ((spec.get("config") or {}).get("inputs") or {}).values()
+    return any(str(d).startswith("context.semantics") for sel in sels for d in (sel if isinstance(sel, list) else [sel]))
 
 
 def _readable_evidence(conn, run_id: str, step: dict[str, Any]) -> dict[str, Any]:
@@ -282,7 +298,7 @@ def _apply_theta(conn, run_id: str, step: dict[str, Any], m: Manifest, state: Ru
             and (step.get("cognitive_op") == "theta" or step.get("theta_op")):
         states, trs = H.generate(run_id, step, payload["hypotheses"], registry_snapshot_id=(snapshot or {}).get("snapshot_id"), recorded_at=now,
                                  max_hypotheses=max(0, max_h - len([h for h in current.values() if h["status"] not in H.ABSORBED_STATUSES])) or 1,
-                                 ordinal_base=len(current))
+                                 ordinal_base=len(current), known_origin_ids=SV.known_origin_ids(state.outputs, state.output_order))
         store.insert_hypothesis_revisions(conn, states)
         store.insert_transitions(conn, trs)
         out["hypothesis_ids"] = [s_["hypothesis_id"] for s_ in states]
@@ -291,7 +307,8 @@ def _apply_theta(conn, run_id: str, step: dict[str, Any], m: Manifest, state: Ru
     if isinstance(payload.get("transitions"), list) and payload["transitions"]:
         allowed = _allowed_causes(conn, run_id, step, current)
         states, trs = H.apply(run_id, step, current, payload["transitions"], actor="theta", allowed_causes=allowed, recorded_at=now,
-                              registry_snapshot_id=(snapshot or {}).get("snapshot_id"), max_hypotheses=max_h)
+                              registry_snapshot_id=(snapshot or {}).get("snapshot_id"), max_hypotheses=max_h,
+                              known_origin_ids=SV.known_origin_ids(state.outputs, state.output_order))
         store.insert_hypothesis_revisions(conn, states)
         store.insert_transitions(conn, trs)
         out["hypothesis_transition_ids"] = [t["transition_id"] for t in trs]
@@ -447,6 +464,10 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
                               receipt=_receipt(step, "skipped", started, evidence_ids=[], model=None, validation={"ok": False, "errors": ["unsupported"]}))
             store.save_state(conn, state)
             break
+        if _wants_semantics(m.step(step["step_id"])):
+            # IN MEMORY ONLY: the stored AdapterStepV1 (schema-closed context, four-field hypotheses) is untouched, and so is every
+            # Trail payload — `_payload_for` reads `context.hypotheses`. The executor's copy of the step gains the derived view.
+            step = {**step, "context": {**(step.get("context") or {}), "semantics": _semantics(conn, run_id, state)}}
         try:
             outcome = executor(step, state, m)
         except Exception as exc:  # noqa: BLE001 — a step failure is a typed run failure, never a silent skip
@@ -540,9 +561,12 @@ def _context_refs(conn, state: RunState) -> list[dict[str, Any]]:
         extra = min(spare, len(buckets[c]) - take[c])
         take[c] += extra
         spare -= extra
+    # a LATER retrieval pass keeps a bounded share of each knowledge class (EB.reserve_recent): what a targeted retrieval returned
+    # must stay CITABLE, or `hydrate` — which reads exactly these ids — can never make it readable
+    passes = EB.knowledge_passes(state.outputs.get(sid) for sid in (state.output_order or tuple(state.outputs)))
     out: list[dict[str, Any]] = []
     for c in CONTEXT_CLASS_ORDER:
-        out.extend(buckets[c][: take[c]])
+        out.extend(buckets[c][: take[c]] if c == "field_evidence" else EB.reserve_recent(buckets[c], take[c], passes))
     return out[:MAX_CONTEXT_REFS]
 
 

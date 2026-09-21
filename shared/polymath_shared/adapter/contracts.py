@@ -34,6 +34,10 @@ EVIDENCE_ROLE_PATTERN = r"^[a-z][a-z0-9_]{1,40}$"
 #: evidence-ref kinds an agent may CITE (knowledge + Trail-admitted field evidence); `trail_prior` is a coordinate, never evidence
 CITABLE_EVIDENCE_KINDS = frozenset({"chunk", "document", "graph_fact", "graph_hop", "parent_map", "field_evidence"})
 PRIOR_EVIDENCE_KINDS = frozenset({"trail_prior"})
+#: ORIGIN LINKAGE (restoration reference §8.3): ids of the lead(s) / latent structure(s) a hypothesis came from. They are LINEAGE ids
+#: of the run's own step outputs — NOT evidence citations — so the `*_ids` citation convention does not read them; the ledger checks
+#: them against what the run actually produced instead.
+ORIGIN_ID_FIELDS = ("lead_ids", "latent_structure_ids")
 TERMINAL_RUN_STATUSES = frozenset({"completed", "terminal_gap", "cancelled", "failed"})
 STEP_STATUSES = ("issued", "accepted", "rejected", "executed", "failed", "skipped")
 

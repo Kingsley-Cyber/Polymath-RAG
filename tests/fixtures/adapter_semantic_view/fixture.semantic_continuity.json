@@ -1,0 +1,185 @@
+{
+ "adapter_id": "fixture.semantic_continuity",
+ "adapter_version": "1.0.0",
+ "workflow_version": "1.0.0",
+ "retrieval_policy_version": "1.0.0",
+ "input_schema_version": "1.0.0",
+ "output_schema_version": "1.0.0",
+ "description": "TEST FIXTURE (restoration Slice 1, reference §8.6): rich state -> OpportunitySemanticViewV1 -> a reasoning consumer and a domain consumer, with a SECOND retrieval pass that must become readable. Not a product adapter; never loaded from config/adapters.",
+ "evidence_roles": [
+  "behavior",
+  "friction",
+  "workaround",
+  "demand"
+ ],
+ "input_schema": {
+  "type": "object",
+  "required": [
+   "seed"
+  ],
+  "additionalProperties": false,
+  "properties": {
+   "seed": {
+    "type": "string",
+    "minLength": 3,
+    "maxLength": 2000
+   }
+  }
+ },
+ "output_schema": {
+  "type": "object"
+ },
+ "budgets": {
+  "max_steps": 20,
+  "max_agent_reason": 6,
+  "max_branch_loops": 0,
+  "max_external_operations": 0,
+  "max_hypotheses": 8
+ },
+ "entry_step_id": "first_pass",
+ "terminal_step_id": "compile",
+ "steps": [
+  {
+   "step_id": "first_pass",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "First knowledge pass (the seed)",
+   "next": "abstract",
+   "config": {
+    "source": "input.seed"
+   }
+  },
+  {
+   "step_id": "abstract",
+   "type": "AGENT_REASON",
+   "title": "Abstract the latent structure and nominate leads",
+   "next": "hypothesize",
+   "objective": "Extract primitives, latent structures and population leads from the evidence.",
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "primitives",
+     "latent_structures",
+     "population_leads"
+    ]
+   }
+  },
+  {
+   "step_id": "hypothesize",
+   "type": "AGENT_REASON",
+   "theta_op": "generate_hypotheses",
+   "title": "Generate hypotheses with their origin",
+   "next": "bridge",
+   "objective": "Generate hypotheses; name lead_ids and latent_structure_ids.",
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "hypotheses"
+    ],
+    "properties": {
+     "hypotheses": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "statement",
+        "supporting_evidence_ids"
+       ],
+       "properties": {
+        "statement": {
+         "type": "string",
+         "minLength": 8
+        }
+       }
+      }
+     }
+    }
+   },
+   "config": {
+    "show": {
+     "population_leads": "outputs.abstract.population_leads",
+     "latent_structures": "outputs.abstract.latent_structures"
+    }
+   }
+  },
+  {
+   "step_id": "bridge",
+   "type": "AGENT_REASON",
+   "title": "Earn the bridge",
+   "next": "targeted_pass",
+   "objective": "Write one bridge per live hypothesis.",
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "bridges"
+    ]
+   }
+  },
+  {
+   "step_id": "targeted_pass",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Second, hypothesis-targeted knowledge pass",
+   "next": "revise",
+   "config": {
+    "query_from": "hypotheses"
+   }
+  },
+  {
+   "step_id": "revise",
+   "type": "AGENT_REASON",
+   "theta_op": "derive_mechanisms",
+   "title": "Revise from the targeted evidence",
+   "next": "plan",
+   "objective": "Revise each hypothesis from the targeted evidence.",
+   "output_schema": {
+    "type": "object",
+    "required": [
+     "transitions"
+    ],
+    "properties": {
+     "transitions": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "kind",
+        "cause_refs"
+       ]
+      }
+     }
+    }
+   },
+   "config": {
+    "show": {
+     "hypothesis_semantics": "semantics.hypotheses"
+    }
+   }
+  },
+  {
+   "step_id": "plan",
+   "type": "DOMAIN_OPERATION",
+   "title": "A domain consumer of the query projection",
+   "next": "compile",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "fixture.echo",
+    "inputs": {
+     "semantics": "context.semantics.query",
+     "hypotheses": "context.hypotheses"
+    }
+   }
+  },
+  {
+   "step_id": "compile",
+   "type": "COMPILE_RESULT",
+   "title": "Compile",
+   "next": null,
+   "config": {
+    "include": [
+     "bridges",
+     "lineage"
+    ]
+   }
+  }
+ ]
+}
