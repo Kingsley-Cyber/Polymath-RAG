@@ -79,7 +79,11 @@ identity; `query_receipts.principal_id`. The pre-existing `POLYMATH_MCP_API_KEY`
 
 ## Next Exact Action
 1. Dossier gaps (Queue NOW) in a worktree → tests (`tests/determinism/test_adapter_ecommerce_dossier.py` + the engine suite) → merge at a quiescent point → `scripts/deploy_ecommerce_skill.py --execute` → re-render run 5 and send it to the owner.
-2. `commerce-v1`: `SELECT stage, status, attempt, last_error_note FROM stage_tickets WHERE corpus_id='commerce-v1' AND status='failed'` → retry ONLY those tickets the repository's own way (medic scoping law: pin ids, never a status sweep); trace why four
+2. `commerce-v1` — TRACED 2026-09-21T08:20Z (read-only; nothing repaired): (a) `Psychology of Habit` and `The Innovators Dilemma`: `extract` tickets `failed` at attempt 3, every attempt a provider `HTTP 503` / read timeout on the
+   Gemini-compatible endpoint; all later stages `pending`. (b) `Blue Ocean`, `Competing Against Luck`, `Always Alchemy`, `Atomic Habits`: all 11 stages done, NO open ticket, still `reconciling` — the control plane's own stall tracer says
+   `RUN_SETTLED_NOT_PROMOTED … census_gaps: ["project_qdrant: 543 projection receipts missing"]` (`/private/tmp/polymath_fleet/control.log`): the census barrier refuses promotion because projection receipts are missing although the
+   `project_qdrant` ticket is `done`. The gap was reported at 05:55Z, BEFORE the 06:04Z bounce — not caused by it. Both are ingestion-pipeline matters, not migration code. Repair the repository's own way, scoped to these six run ids
+   (medic scoping law: pin ids, never a status sweep); projection re-runs and extraction retries spend provider / GPU budget — per-action. First query: `SELECT stage, status, attempt, last_error_note FROM stage_tickets WHERE corpus_id='commerce-v1' AND status='failed'` → retry ONLY those tickets the repository's own way (medic scoping law: pin ids, never a status sweep); trace why four
    11-stage runs stay `reconciling`. Do not bounce while a ticket is leased.
 3. External-machine acceptance command: "Hosted surface" section. Create a TEMPORARY restricted principal for it; never move the owner key off the host.
 HOW THE REAL RUN WAS DRIVEN (no script is committed — it is a harness, not product): one `tools/call` per step through the hosted endpoint with a friend key file; every `adapter_next` payload and every submission saved → host-side journal
