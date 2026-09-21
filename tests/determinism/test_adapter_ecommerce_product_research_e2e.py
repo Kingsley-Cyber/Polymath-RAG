@@ -101,8 +101,13 @@ NEEDS: dict[str, str] = {}
 
 
 def _knowledge(step, state, m):
-    NEEDS[step["step_id"]] = W._query_text(step, state, m)
-    return {"output": {"rows": [dict(ROW)], "queries": []}, "evidence_refs": [{"kind": "chunk", "id": "chunk_k1", "doc_id": "doc_k", "corpus_id": "probe"}]}
+    """A knowledge step's output in the shape the real evidence boundary stores it (surface, need, contract, per-call grades)."""
+    need = NEEDS[step["step_id"]] = W._query_text(step, state, m)
+    call = {"need_index": 0, "corpus_id": "probe", "contract": {"schema_version": "evidence-packet-v1", "synthesis_performed": False, "valid": True}, "retrieval_mode": "WILDCARD",
+            "n_evidence": 1, "grades": {"DIRECT": 1}, "compiled_queries": 3, "corpus_explorer_requested": True, "corpus_explorer_used": True}
+    return {"output": {"surface": "evidence_boundary", "mode": "WILDCARD", "corpus_explorer": True, "needs": [need], "corpus_ids": ["probe"], "rows": [dict(ROW)], "calls": [call],
+                       "retrieval_completed": True, "evidence_contract": "evidence-packet-v1", "queries": []},
+            "evidence_refs": [{"kind": "chunk", "id": "chunk_k1", "doc_id": "doc_k", "corpus_id": "probe"}]}
 
 
 def _bridge(hid, mech):

@@ -193,6 +193,16 @@ def build_model_from_governed(journal: dict) -> dict:
                                 "compiled_queries": sum(int(c.get("compiled_queries") or 0) for c in calls),
                                 "corpus_explorer": {"requested": any(c.get("corpus_explorer_requested") for c in calls), "used": any(c.get("corpus_explorer_used") for c in calls),
                                                     "firing": next((c.get("firing") for c in calls if isinstance(c.get("firing"), dict) and c["firing"].get("cause")), None)}})
+    # ecommerce.product_research (consolidation migration): the result carries the domain's OWN typed product set, supplier join and
+    # lived world. They replace the single concept / metric-derived leads synthesized above for the older adapter's result.
+    real_concepts = [c for c in out.get("product_concepts") or [] if isinstance(c, dict)]
+    domain_supply = isinstance(out.get("sourcing_coverage"), list)
+    if domain_supply:
+        admitted_role = {r.get("admitted_evidence_id"): r.get("role") for r in admitted}
+        leads = [{"governed": True, "concept_id": l.get("concept_id"), "concept": l.get("concept"), "product_name": l.get("product_name"), "url": l.get("url"),
+                  "channel": l.get("channel"), "price_usd_low": l.get("price_usd_low"), "price_usd_high": l.get("price_usd_high"), "moq_units": l.get("moq_units"),
+                  "mechanism": l.get("mechanism") or "", "mechanism_id": l.get("mechanism_id"), "supplier_name": l.get("supplier_name") or "supplier not named on the listing",
+                  "trail_admission": [str(admitted_role.get(l.get("admitted_evidence_id")) or "supply")]} for l in out.get("leads") or [] if isinstance(l, dict)]
     limitations = [l for r in receipts for l in (r.get("payload") or {}).get("limitations") or []]
     unresolved = [str(u.get("about") if isinstance(u, dict) else u) for u in (result or {}).get("unknowns") or []] \
         + [str(x) for x in po.get("remaining_uncertainty") or []] + [f"harness limitation: {l}" for l in limitations]
@@ -204,9 +214,9 @@ def build_model_from_governed(journal: dict) -> dict:
         "coverage": {}, "independence": None, "bridges": [], "l4_receipts": [],
         "quotes": [{"quote": r.get("quote"), "source": r.get("url"), "community": r.get("independence_group") or r.get("source_class"), "roles": [r.get("role")]} for r in admitted][:14],
         "mechanisms": [], "leads": leads,
-        "product_concepts": ([{"id": "governed_concept", "name": pc.get("title"), "form_factor": pc.get("problem"), "target_moment": pc.get("context"), "buyer": pc.get("population"),
+        "product_concepts": real_concepts or ([{"id": "governed_concept", "name": pc.get("title"), "form_factor": pc.get("problem"), "target_moment": pc.get("context"), "buyer": pc.get("population"),
                                "differentiator": pc.get("mechanism_explanation"), "mechanism_id": "governed", "variations": [], "evidence_refs": po.get("field_evidence_ids") or []}] if pc.get("title") else []),
-        "sourcing_coverage": [], "utilization": {}, "provenance": [], "excluded_leads": [], "corpus_packets": packets, "corpus_answers": [],
+        "sourcing_coverage": [c for c in out.get("sourcing_coverage") or [] if isinstance(c, dict)], "utilization": {}, "provenance": [], "excluded_leads": [], "corpus_packets": packets, "corpus_answers": [],
         "held_rejected": [{"id": h["hypothesis_id"], "mechanism": h.get("mechanism") or h.get("statement"), "status": h.get("status")} for h in hyp_rows if h.get("status") in dead],
         "unresolved": list(dict.fromkeys(unresolved))[:12], "intelligence": None, "market_discovery": None, "product_anchored": None,
         "capability_failures": [], "settings": None,
@@ -218,6 +228,12 @@ def build_model_from_governed(journal: dict) -> dict:
                                            for r in receipts if (r.get("receipt_report") or {}).get("omitted_by_reason")],
                      "rejected_submissions": [{"step_id": s.get("step_id"), "kind": s.get("kind"), "errors": (s.get("response") or {}).get("error")} for s in subs if not s.get("accepted")],
                      "falsification_experiment": po.get("cheapest_falsification_experiment"), "contradictions": (result or {}).get("contradictions") or [],
+                     "mechanisms": [m for m in out.get("mechanisms") or [] if isinstance(m, dict)],
+                     "lived_situations": [x for x in out.get("lived_situations") or [] if isinstance(x, dict)],
+                     "lived_clusters": [x for x in out.get("lived_clusters") or [] if isinstance(x, dict)],
+                     "population_leads": [x for key in ("population_leads", "community_leads") for x in out.get(key) or [] if isinstance(x, dict)],
+                     "lenses": [x for x in out.get("lenses") or [] if isinstance(x, dict)], "corpus_questions": [x for x in out.get("corpus_questions") or [] if isinstance(x, dict)],
+                     "registry_snapshot": next((x.get("registry_snapshot") for x in adms if isinstance(x.get("registry_snapshot"), dict)), None),
                      "lineage": {k: (len(v) if isinstance(v, list) else v) for k, v in lineage.items()},
                      "steps": {"issued": len(steps), "agent_reason": sum(1 for s in steps if s["step"].get("step_type") == "AGENT_REASON"),
                                "harness_actions": sum(1 for s in steps if s["step"].get("step_type") == "HARNESS_ACTION"),
@@ -453,6 +469,42 @@ def _render_intelligence(intel: dict, layout: str) -> list[str]:
     return out
 
 
+#: who stands behind a block of the governed dossier (consolidation migration, EXECUTION_PLAN Phase 8). A reader must never have to guess
+#: whether a line is knowledge, something a person said in the world, the agent's inference, or TrailSignal's decision.
+AUTHORITY = {"POLYMATH": "POLYMATH KNOWLEDGE", "FIELD": "LIVE-WORLD OBSERVATION", "AGENT": "AGENT INFERENCE", "TRAIL": "TRAIL DETERMINATION", "REGISTRY": "TRAIL REGISTRY"}
+
+
+def _auth(*keys: str) -> str:
+    return " ".join(f"<span class='auth' style='font:600 10px/1 ui-monospace,monospace;letter-spacing:.06em;border:1px solid currentColor;border-radius:3px;padding:2px 5px;opacity:.75'>{AUTHORITY[k]}</span>" for k in keys)
+
+
+def _render_lived_world(g: dict) -> list[str]:
+    """Population leads, lived clusters and lived situations — the engine's lived world, computed in governed mode from what TrailSignal ADMITTED."""
+    out: list[str] = []
+    leads, clusters, sits = g.get("population_leads") or [], g.get("lived_clusters") or [], g.get("lived_situations") or []
+    if leads:
+        out.append(f"<h2>Populations Worth Looking At {_auth('AGENT', 'REGISTRY')}</h2><p class='why'>Leads are places to look, never demand. Lanes: the seed, the knowledge base, a latent problem nobody named a population for, "
+                   "and registry situations. Ranked by value of information.</p><div class='scroll'><table><tr><th>Lead</th><th>Lane</th><th>VOI</th><th>Restates the seed?</th><th>Why</th></tr>")
+        for l in sorted(leads, key=lambda x: -(x.get("voi") or 0))[:14]:
+            out.append(f"<tr><td>{_e(l.get('name'))}</td><td class='num'>{_e(l.get('source_lane'))}</td><td class='num'>{l.get('voi')}</td><td class='num'>{'yes' if l.get('seed_population') else 'no'}</td><td>{_e(l.get('why') or '')}</td></tr>")
+        out.append("</table></div>")
+    if clusters:
+        out.append(f"<h2>Lived Clusters {_auth('FIELD', 'TRAIL')}</h2><p class='why'>Built only from observations TrailSignal admitted; the voice count is TrailSignal's independence groups. "
+                   "ANCHOR = enough records, threads and independent voices to anchor reasoning; THIN = not yet.</p><div class='scroll'><table><tr><th>Community</th><th>Friction</th><th>Authority</th><th>Records / threads / voices</th><th>Unknowns</th></tr>")
+        for c in clusters[:12]:
+            out.append(f"<tr><td>{_e(c.get('community'))}</td><td>{_e(c.get('friction_family'))}</td><td class='num'><strong>{_e(c.get('authority'))}</strong></td>"
+                       f"<td class='num'>{c.get('record_count')} / {c.get('thread_count')} / {c.get('independent_voices')}</td><td>{_e('; '.join(c.get('unknowns') or []))}</td></tr>")
+        out.append("</table></div>")
+    if sits:
+        out.append(f"<h2>Lived Situations {_auth('AGENT')}</h2><p class='why'>One moment in one real world, reconstructed from admitted records — never a persona. FIELD_ANCHORED sits on an ANCHOR cluster and cites its records; "
+                   "RECONSTRUCTED lists what the records do not say; SIMULATED is never evidence.</p>")
+        for x in sits[:10]:
+            fr = "; ".join(f"{_e(f.get('text'))} [{_e(f.get('authority'))}: {_e(', '.join(map(str, f.get('refs') or [])))}]" for f in x.get("frictions") or [] if isinstance(f, dict))
+            out.append(f"<div class='card'><h3>{_e(x.get('participants') or x.get('community') or x.get('id'))} — {_e(x.get('activity') or '')} · {_e(x.get('moment') or '')} · <span class='num'>{_e(x.get('authority'))}</span></h3>"
+                       f"<div class='why'>{fr or '—'}</div><div class='econ'>unknowns: {_e('; '.join(map(str, x.get('unknowns') or [])) or 'none listed')}</div></div>")
+    return out
+
+
 def _render_governed(g: dict) -> list[str]:
     """The governed block (docs/27): TrailSignal's record VERBATIM, the hypotheses as the adapter's ledger holds them, and
     every field observation as TrailSignal left it — admitted, or rejected with its reason code. Nothing here is computed."""
@@ -463,7 +515,10 @@ def _render_governed(g: dict) -> list[str]:
     if g.get("gap"):
         out.append(f"<p>{_mark(None, True)} <strong>Typed gap {_e((g['gap'] or {}).get('code'))}</strong> at {_e((g['gap'] or {}).get('step_id'))} — {_e((g['gap'] or {}).get('message'))}. "
                    "A gap is a finding: the run stopped where the contract said it must.</p>")
-    out.append("<h2>TrailSignal's Record</h2>")
+    snap = g.get("registry_snapshot") or {}
+    if snap:
+        out.append(f"<p class='why'>{_auth('REGISTRY')} registry snapshot <span class='num'>{_e(snap.get('snapshot_id'))}</span> — source roles, freshness windows, independence groups and hard gates are registry data, never code.</p>")
+    out.append(f"<h2>TrailSignal's Record {_auth('TRAIL')}</h2>")
     if not (g.get("trail_scores") or g.get("score_refusals") or g.get("qualifications")):
         out.append("<p>No score, refusal or qualification record reached the result.</p>")
     for sc in g.get("trail_scores") or []:
@@ -477,14 +532,15 @@ def _render_governed(g: dict) -> list[str]:
 <div class="why">{_e(rf.get('detail') or '')}</div><div class="econ">{_e(rf.get('record_id'))} · as of {_e(rf.get('as_of'))}</div></div>""")
     for q in g.get("qualifications") or []:
         out.append(f"<p class='why'>qualification {_e(q.get('stage') or q.get('qualification_stage'))}: <strong>{_e(q.get('verdict') or q.get('status'))}</strong> · {_e(', '.join(map(str, q.get('hypothesis_ids') or [])))}</p>")
-    out.append("<h2>Reasoning Bridge (governed hypotheses)</h2><div class='scroll'><table><tr><th>Hypothesis</th><th>Statement</th><th>Mechanism</th><th>Ledger status</th><th>Field / corpus / contra</th><th>TrailSignal</th></tr>")
+    out += _render_lived_world(g)
+    out.append(f"<h2>Reasoning Bridge (governed hypotheses) {_auth('AGENT', 'TRAIL')}</h2><div class='scroll'><table><tr><th>Hypothesis</th><th>Statement</th><th>Mechanism</th><th>Ledger status</th><th>Field / corpus / contra</th><th>TrailSignal</th></tr>")
     for h in g.get("hypotheses") or []:
         ts = (f"score {h['trail_score'].get('score')}" if h.get("trail_score") else f"refused: {_e((h.get('trail_refusal') or {}).get('reason_code'))}" if h.get("trail_refusal") else "—")
         out.append(f"<tr><td class='num'>{_e(h.get('hypothesis_id'))}</td><td>{_e(h.get('statement'))}</td><td>{_e(h.get('mechanism') or '—')}</td><td class='num'>{_e(h.get('status'))}</td>"
                    f"<td class='num'>{h.get('field_evidence', 0)} / {h.get('knowledge_support', 0)} / {h.get('contradictions', 0)}</td><td class='num'>{ts}</td></tr>")
     out.append("</table></div>")
     adm, rej = g.get("admitted") or [], g.get("rejected") or []
-    out.append(f"<h2>Field Observations — admitted {len(adm)} · rejected {len(rej)}</h2>")
+    out.append(f"<h2>Field Observations — admitted {len(adm)} · rejected {len(rej)} {_auth('FIELD', 'TRAIL')}</h2>")
     if g.get("rejected_by_reason"):
         out.append("<p class='why'>Rejections by TrailSignal reason code: " + _e(", ".join(f"{k} × {v}" for k, v in g["rejected_by_reason"].items())) + " — rejections are findings, shown as recorded.</p>")
     for ro in g.get("receipt_omissions") or []:
@@ -576,7 +632,10 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
                        f"{_e(q['source'])}</span></blockquote>")
 
     if model.get("product_concepts"):
-        out.append("<h2>Product Directions</h2>")
+        out.append("<h2>Product Directions" + (f" {_auth('AGENT')}" if model.get("governed") else "") + "</h2>")
+        if model.get("governed"):
+            out.append("<p class='why'>The agent proposed these; the domain's portfolio law held them to several DISTINCT directions, each with variations, each citing admitted field evidence. "
+                       "No direction is ranked or scored here.</p>")
         leads_by_concept = {}
         for l in model["leads"]:
             leads_by_concept.setdefault(l.get("concept_id"), []).append(l)
@@ -605,7 +664,7 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
     if model.get("corpus_packets"):
         # docs/22 (v2.2.0): the corpus is asked for EVIDENCE. A packet is what Polymath retrieved, graded and seated for a
         # need — there is no corpus-written answer to show; the reasoning over these rows is θ's and appears above.
-        out.append("<h2>Corpus evidence packets</h2>")
+        out.append("<h2>Corpus evidence packets" + (f" {_auth('POLYMATH')}" if model.get("governed") else "") + "</h2>")
         for pk in model["corpus_packets"][:12]:
             _ce = pk.get("corpus_explorer") or {}
             _fire = ("Corpus Explore fired" if _ce.get("used") else
@@ -640,9 +699,14 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
     if model.get("excluded_leads"):
         out.append("<p class='why'>Excluded as CORPUS_ECHO_UNGROUNDED (lineage was corpus example → same noun → same-noun search only): "
                    + _e("; ".join(str(l.get("product_name")) for l in model["excluded_leads"])) + "</p>")
-    out.append("<h2>Qualified Leads</h2>")
+    if model.get("governed"):
+        out.append(f"<h2>Supplier Leads {_auth('FIELD', 'TRAIL')}</h2><p class='why'>A lead here is a supplier listing TrailSignal ADMITTED, joined to the mechanism it embodies and the concept it realises. "
+                   "Price and MOQ are what the listing said. Whether the opportunity qualifies is TrailSignal's record above — a lead is not a qualification.</p>")
+    else:
+        out.append("<h2>Qualified Leads</h2>")
     if not model["leads"]:
-        out.append("<p>No leads qualified — see verdict and unresolved items.</p>")
+        out.append("<p>No supplier listing was admitted for any concept — see TrailSignal's record and the unsourced concepts above.</p>" if model.get("governed")
+                   else "<p>No leads qualified — see verdict and unresolved items.</p>")
     for i, l in enumerate(model["leads"], 1):
         if l.get("governed"):
             # governed mode: a lead is a supplier observation TrailSignal ADMITTED. Price / MOQ are what the listing said (from
@@ -651,7 +715,8 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
             _moq = f"MOQ {l['moq_units']:,}" if isinstance(l.get("moq_units"), (int, float)) else "MOQ not parsed"
             out.append(f"""<div class="card"><h3>{i}. {_e(l.get('product_name'))}</h3>
 <div class="econ">{_e(_price)} · {_e(_moq)}</div>
-<div class="why">{_e(l.get('channel') or '')} · admitted by TrailSignal as {_e(', '.join(l.get('trail_admission') or []))}<br>{_e(l.get('url') or '')}</div></div>""")
+<div class="why">{_e(l.get('concept') or l.get('concept_id') or '')} · mechanism: {_e(l.get('mechanism') or '—')} · supplier: {_e(l.get('supplier_name') or 'not named on the listing')}<br>
+{_e(l.get('channel') or '')} · admitted by TrailSignal as {_e(', '.join(l.get('trail_admission') or []))}<br>{_e(l.get('url') or '')}</div></div>""")
             continue
         hi = f" – {l['price_usd_high']}" if l.get("price_usd_high") not in (None, l.get("price_usd_low")) else ""
         out.append(f"""<div class="card"><h3>{i}. {_e(l['product_name'])}</h3>
