@@ -45,8 +45,8 @@ def _op_validate_bridge(req: dict[str, Any]) -> dict[str, Any]:
     import bridge
     import graph as graphmod
 
-    hyps = (req.get("inputs") or {}).get("hypotheses")
-    if not isinstance(hyps, list) or not hyps or not all(isinstance(h, dict) for h in hyps):
+    hyps = _ledger_hypotheses(req.get("inputs") or {})
+    if not hyps:
         raise Refusal("HYPOTHESES_MISSING", "inputs.hypotheses must be a non-empty list of bridge hypotheses")
     known = (req.get("inputs") or {}).get("known_evidence_ids")
     policies = graphmod.load_policies()
@@ -71,6 +71,24 @@ def _engine_state(**data: Any) -> dict[str, Any]:
     """The engine's functions take `(state, policies)` and read / write `state["data"][key]`. A governed operation gets a
     THROWAWAY state holding only what the manifest selected; the keys the function wrote are returned as the step output."""
     return {"data": {k: v for k, v in data.items() if v is not None}}
+
+
+#: a mechanism / concept may build on a hypothesis only while the ledger holds it in one of these states (TrailSignal's φ pressure
+#: moves hypotheses between states; the domain never does). `weakened`, `contradicted`, `filtered`, `killed`, `merged` are not eligible.
+ELIGIBLE_HYPOTHESIS_STATUSES = frozenset({"proposed", "retained", "revised", "split", "strengthened", "promoted"})
+
+
+def _ledger_hypotheses(ins: dict[str, Any], key: str = "hypotheses") -> list[dict[str, Any]]:
+    """A θ step's stored output keeps the agent's proposals (`hypotheses`) and, in parallel, the ledger ids the runtime minted
+    (`hypothesis_ids`). The domain's extra fields (bridge path, evidence boundary, suspected friction, …) ride in the proposal; the
+    ledger stays the only hypothesis STATE. Zip them so every domain hypothesis is addressed by its ledger id."""
+    props = [dict(h) for h in ins.get(key) or [] if isinstance(h, dict)]
+    ids = ins.get("hypothesis_ids")
+    if isinstance(ids, list) and len(ids) == len(props):
+        for h, hid in zip(props, ids):
+            h["hypothesis_id"] = hid
+            h["id"] = hid
+    return props
 
 
 def _corpus_rows(value: Any) -> list[dict[str, Any]]:
@@ -208,7 +226,7 @@ def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, 
         if isinstance(rec, dict):
             obs.update({o.get("observation_id"): o for o in rec.get("observations") or [] if isinstance(o, dict)})
             sources.update({s.get("source_id"): s for s in rec.get("sources") or [] if isinstance(s, dict)})
-    hyps = {h.get("hypothesis_id"): h for h in ins.get("hypotheses") or [] if isinstance(h, dict)}
+    hyps = {h.get("hypothesis_id"): h for h in _ledger_hypotheses(ins)}
     out, stats = [], {"admitted": 0, "without_observation": 0, "without_community": 0}
     for adm in ins.get("admissions") or []:
         for a in (adm or {}).get("admitted") or []:
@@ -285,6 +303,26 @@ def _op_corpus_questions(req: dict[str, Any]) -> dict[str, Any]:
     return {"corpus_questions": qs, "need": " ".join(q["question"] for q in qs)[:2000], "note": note}
 
 
+def _round_robin(per_subject: list[list[dict[str, Any] | None]], seen: set, room: int) -> tuple[list[dict[str, Any]], int, int]:
+    """Every subject gets its first proposal before any gets its second. Returns (added, dropped_over_budget, unhostable)."""
+    added, dropped, unserved = [], 0, 0
+    for rank in range(max((len(c) for c in per_subject), default=0)):
+        for props in per_subject:
+            if rank >= len(props):
+                continue
+            intent = props[rank]
+            if intent is None:
+                unserved += 1
+            elif intent["intent_id"] in seen:
+                continue
+            elif len(added) >= room:
+                dropped += 1
+            else:
+                seen.add(intent["intent_id"])
+                added.append(intent)
+    return added, dropped, unserved
+
+
 _DIRECTIVE_GOVERNANCE = ("objective", "hypothesis_ids", "evidence_gaps", "preferred_source_roles", "disallowed_source_roles", "freshness_requirement",
                          "geography", "language", "minimum_independent_sources", "success_condition", "falsification_condition", "budget")
 
@@ -331,26 +369,151 @@ def _op_research_plan(req: dict[str, Any]) -> dict[str, Any]:
                         "intent": f"{q['channel']}: {q.get('why_this_source')} — {q.get('query')}"[:500], "template": str((q.get("tools") or [q.get("query")])[0])[:500]}
         return None
 
-    added, dropped, unserved, seen = [], 0, 0, {i.get("intent_id") for i in trail_intents}
-    for rank in range(max((len(c) for c in compiled), default=0)):   # round-robin: every subject gets its best channel before any gets its second
-        for qs in compiled:
-            if rank >= len(qs):
-                continue
-            intent = _host(qs[rank])
-            if intent is None:
-                unserved += 1
-            elif intent["intent_id"] in seen:
-                continue
-            elif len(trail_intents) + len(added) >= cap:
-                dropped += 1
-            else:
-                seen.add(intent["intent_id"])
-                added.append(intent)
+    added, dropped, unserved = _round_robin([[_host(q) for q in qs] for qs in compiled], {i.get("intent_id") for i in trail_intents}, cap - len(trail_intents))
     out["search_intents"] = trail_intents + added
     return {"research_directive": out, "planned": {"trail_intents": len(trail_intents), "channel_intents": len(added), "subjects": len(subjects),
                                                    "lead_batches": len(compiled) - len(subjects), "dropped_over_budget": dropped,
                                                    "channel_cannot_serve_roles": unserved, "roles_asked": asked, "intent_cap": cap},
             "governance_unchanged": all(out.get(k) == directive.get(k) for k in _DIRECTIVE_GOVERNANCE)}
+
+
+def _mechanisms(ins: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str]]:
+    """Mechanisms as the domain needs them, with `status` DERIVED from the ledger — never claimed by the agent: SUPPORTED only while
+    the hypothesis a mechanism builds on is in an eligible ledger state."""
+    status = {h.get("hypothesis_id"): h.get("status") for h in ins.get("live_hypotheses") or [] if isinstance(h, dict)}
+    out, notes = [], []
+    for i, m in enumerate(ins.get("mechanisms") or []):
+        if not isinstance(m, dict):
+            continue
+        mid = str(m.get("id") or m.get("mechanism_id") or f"mech_{i + 1}")
+        st = status.get(m.get("hypothesis_id"))
+        ok = st in ELIGIBLE_HYPOTHESIS_STATUSES
+        if not ok:
+            notes.append(f"{mid}: hypothesis {m.get('hypothesis_id')!r} is {st or 'not live'} in the ledger — not eligible")
+        out.append({**m, "id": mid, "name": str(m.get("name") or m.get("mechanism") or mid), "status": "SUPPORTED" if ok else "UNSUPPORTED",
+                    "supporting_observation_ids": list(m.get("supporting_observation_ids") or m.get("evidence_refs") or [])})
+    return out, notes
+
+
+def _op_validate_concepts(req: dict[str, Any]) -> dict[str, Any]:
+    """The product-ideation portfolio law (`ideation.validate_concepts`) + the engine's concept schema: 3–6 DISTINCT product
+    directions, each on a SUPPORTED mechanism, each with >= 2 distinct variations, each citing admitted field evidence. No scoring,
+    no opinion about which concept is best. Invalid is an OUTPUT (the run can branch back to reasoning)."""
+    import graph as graphmod
+    import ideation
+    import models
+
+    ins = _inputs(req)
+    concepts = ins.get("product_concepts")
+    if not isinstance(concepts, list) or not concepts:
+        raise Refusal("PRODUCT_CONCEPTS_MISSING", "inputs.product_concepts must be a non-empty list")
+    mechs, notes = _mechanisms(ins)
+    state = _engine_state(mechanisms=mechs, field_records=[{"id": i} for i in ins.get("field_evidence_ids") or []] + list(ins.get("field_records") or []))
+    errors = [f"product_concepts[{i}]: {e}" for i, c in enumerate(concepts) for e in models.validate(c, "product_concept")]
+    errors += ideation.validate_concepts([c for c in concepts if isinstance(c, dict)], state, graphmod.load_policies())
+    return {"valid": not errors, "errors": errors, "mechanism_notes": notes, "concepts_checked": len(concepts),
+            "variations_checked": sum(len(c.get("variations") or []) for c in concepts if isinstance(c, dict))}
+
+
+def _op_supply_plan(req: dict[str, Any]) -> dict[str, Any]:
+    """`executors.sourcing_plan_compiler`: one sourcing job PER CONCEPT per channel (no borrowing across concepts) — and, when
+    TrailSignal's supply `research_directive` is supplied, the same WHAT / HOW enrichment as `research.plan`: governance untouched,
+    Trail's intents first, one compiled intent per sourcing job for the roles Trail asked for, within the query budget."""
+    import copy
+
+    import executors
+    import graph as graphmod
+
+    ins = _inputs(req)
+    concepts = [c for c in ins.get("product_concepts") or [] if isinstance(c, dict)]
+    if not concepts:
+        raise Refusal("PRODUCT_CONCEPTS_MISSING", "inputs.product_concepts must be the validated concepts")
+    mechs, _ = _mechanisms(ins)
+    policies = graphmod.load_policies()
+    state = _engine_state(product_concepts=concepts, mechanisms=mechs, product_candidates=list(ins.get("product_candidates") or []))
+    note = executors.sourcing_plan_compiler(state, policies)
+    plan = state["data"]["sourcing_plan"]
+    out: dict[str, Any] = {"sourcing_plan": plan, "note": note}
+    directive = ins.get("research_directive")
+    if isinstance(directive, dict) and directive.get("search_intents"):
+        enriched = copy.deepcopy(directive)
+        trail_intents = [i for i in enriched["search_intents"] if isinstance(i, dict)]
+        host = next((ti for ti in trail_intents if set(ti.get("evidence_roles") or []) & {"supply", "price"}), None)
+        cap = max(len(trail_intents), min(100, int((directive.get("budget") or {}).get("max_queries") or 24)))
+        per_concept: dict[str, list[dict[str, Any] | None]] = {}
+        for job in plan:
+            terms = " ".join(job["search_terms"][:3])
+            per_concept.setdefault(job["concept_id"], []).append(None if host is None else {
+                "intent_id": f"{host['intent_id']}~{job['channel']}~{job['concept_id']}"[:200], "evidence_goal": host["evidence_goal"],
+                "evidence_roles": [r for r in host["evidence_roles"] if r in ("supply", "price")],
+                "intent": f"{job['channel']}: supplier listings for concept {job['concept']} — record concept: {job['concept_id']} in the observation context"[:500],
+                "template": (job["tools"][-1] if job["tools"] else terms).replace("<term>", terms)[:500]})
+        added, dropped, unserved = _round_robin(list(per_concept.values()), {i.get("intent_id") for i in trail_intents}, cap - len(trail_intents))
+        enriched["search_intents"] = trail_intents + added
+        out.update(research_directive=enriched, governance_unchanged=all(enriched.get(k) == directive.get(k) for k in _DIRECTIVE_GOVERNANCE),
+                   planned={"trail_intents": len(trail_intents), "sourcing_intents": len(added), "jobs": len(plan), "dropped_over_budget": dropped,
+                            "no_supply_intent_to_host": unserved, "intent_cap": cap})
+    return out
+
+
+def _op_supply_leads(req: dict[str, Any]) -> dict[str, Any]:
+    """ADMITTED supply observations -> supplier candidates -> `executors.supplier` (the engine's own price / MOQ parsers, channel
+    MOQ defaults, concept resolution, per-concept coverage) -> `executors.join_leads` (mechanism × supplier, fit required) ->
+    `interleave_leads`. NO score and NO verdict: qualification and the only score are TrailSignal's. A listing without a supplier
+    name keeps `supplier_name: null` and is counted — a name is never invented."""
+    from urllib.parse import urlparse
+
+    import executors
+    import graph as graphmod
+
+    ins = _inputs(req)
+    concepts = [c for c in ins.get("product_concepts") or [] if isinstance(c, dict)]
+    mechs, notes = _mechanisms(ins)
+    obs, sources = {}, {}
+    for rec in ins.get("receipts") or []:
+        if isinstance(rec, dict):
+            obs.update({o.get("observation_id"): o for o in rec.get("observations") or [] if isinstance(o, dict)})
+            sources.update({s.get("source_id"): s for s in rec.get("sources") or [] if isinstance(s, dict)})
+    cands, stats = [], {"admitted_supply": 0, "without_observation": 0, "without_supplier_name": 0, "without_listing": 0}
+    for adm in ins.get("admissions") or []:
+        for a in (adm or {}).get("admitted") or []:
+            if a.get("evidence_role") not in ("supply", "price"):
+                continue
+            stats["admitted_supply"] += 1
+            o = obs.get(a.get("observation_id"))
+            if not o:
+                stats["without_observation"] += 1
+                continue
+            ctx, src = str(o.get("context") or ""), sources.get(o.get("source_id")) or {}
+            listing = _context_field(ctx, "listing")
+            if not listing:
+                stats["without_listing"] += 1
+                continue
+            name = _context_field(ctx, "supplier")
+            if not name or name.lower() in ("none", "unknown", "unresolved"):
+                name = None
+                stats["without_supplier_name"] += 1
+            host = (urlparse(str(src.get("url") or "")).hostname or "").removeprefix("www.")
+            cands.append({"id": a["admitted_evidence_id"], "product_name": listing, "supplier_name": name or "", "price_raw": _context_field(ctx, "price as listed") or "",
+                          "moq_raw": _context_field(ctx, "MOQ as listed") or "", "url": src.get("url"), "channel": _context_field(ctx, "channel") or host.split(".")[0],
+                          "concept_id": _context_field(ctx, "concept"), "retrieved_at": src.get("retrieved_at"), "published_at_if_known": src.get("published_at_if_known"),
+                          "hypothesis_ids": list(a.get("hypothesis_ids") or [])})
+    if not cands:
+        raise Refusal("SUPPLY_EVIDENCE_MISSING", f"no admitted supply observation names a listing ({stats})")
+    policies = graphmod.load_policies()
+    state = _engine_state(supplier_candidates=cands, product_concepts=concepts, mechanisms=mechs, leads=[])
+    note = executors.supplier(state, policies)
+    d = state["data"]
+    leads = [l for m in mechs if m["status"] == "SUPPORTED" for l in executors.join_leads(m, d, policies)]
+    leads = executors.interleave_leads(leads)[: int(policies["supplier"]["max_leads"])]
+    for l in leads:
+        l["supplier_name"] = l["supplier_name"] or None
+        l["admitted_evidence_id"] = next((s["id"] for s in d["supplier_candidates"] if s.get("url") == l.get("url") and s.get("product_name") == l.get("product_name")), None)
+    d["leads"] = leads
+    for s in d["supplier_candidates"]:
+        s["supplier_name"] = s["supplier_name"] or None
+    return {"supplier_candidates": d["supplier_candidates"], "leads": leads, "sourcing_coverage": executors.sourcing_coverage(state), "joined": stats,
+            "mechanism_notes": notes, "note": note, "authority": "DOMAIN_JOIN_ONLY — qualification and score are TrailSignal's"}
 
 
 #: operation id -> wrapper. One table; an id not listed here is a typed refusal.
@@ -364,6 +527,9 @@ OPERATIONS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "knowledge.corpus_questions": _op_corpus_questions,
     "hypotheses.validate_bridge": _op_validate_bridge,
     "research.plan": _op_research_plan,
+    "products.validate_concepts": _op_validate_concepts,
+    "supply.plan": _op_supply_plan,
+    "supply.leads": _op_supply_leads,
 }
 
 

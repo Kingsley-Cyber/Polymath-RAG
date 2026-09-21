@@ -555,25 +555,10 @@ def scoring(state: dict, policies: dict) -> str:
             1 for o in support if o.get("purchase_language"))
         if len(support) < pol["scoring"]["min_mechanism_support"]:
             continue
-        for s in d["supplier_candidates"]:
-            need_price = pol["supplier"]["require_price"] and s.get("price_usd_low") is None
-            need_moq = pol["supplier"]["require_moq"] and not s.get("moq_units")
-            if need_price or need_moq:
-                continue
-            if pol["supplier"].get("require_mechanism_fit", True) and not _supplier_fits(s, mech, d):
-                continue  # docs/19: a lead pairs a supplier with the mechanism it embodies
-            concept = _concept_for(s, mech, d)
-            leads.append({
-                "id": stable_id("lead", mech["id"], s["id"]),
-                "concept_id": concept.get("id") if concept else None,
-                "concept": concept.get("name") if concept else None,
-                "mechanism": mech["name"], "mechanism_id": mech["id"],
-                "product_name": s["product_name"], "supplier_name": s["supplier_name"], "channel": s.get("channel") or "alibaba",
-                "url": s.get("url"), "images": s.get("images"),
-                "price_usd_low": s["price_usd_low"], "price_usd_high": s["price_usd_high"],
-                "moq_units": s["moq_units"], "evidence_score": score,
-                "supporting_quotes": [o.get("quote_ref") for o in support][:5],
-            })
+        for lead in join_leads(mech, d, pol):
+            lead["evidence_score"] = score
+            lead["supporting_quotes"] = [o.get("quote_ref") for o in support][:5]
+            leads.append(lead)
     leads.sort(key=lambda x: -x["evidence_score"])
     leads = interleave_leads(leads)
     import settings as _settings
@@ -604,6 +589,32 @@ def scoring(state: dict, policies: dict) -> str:
                 + (f", unsourced {[c['concept'] for c in cov if c['status'] == 'unsourced']}" if any(c['status'] == 'unsourced' for c in cov) else "")
                 if cov else "")
     return f"verdict: {state['verdict']} (tier={tier}, {len(d['leads'])} leads{cov_note}) | {note}"
+
+
+def join_leads(mech: dict, d: dict, pol: dict) -> list[dict]:
+    """The mechanism × supplier join, in one place (standalone scoring and the governed binding both call it): a lead pairs ONE
+    mechanism with a supplier candidate that has a parsed price and MOQ (when policy requires them) and embodies that mechanism
+    (docs/19), stamped with the concept it realises. No score, no verdict — the caller owns those."""
+    out = []
+    for s in d["supplier_candidates"]:
+        need_price = pol["supplier"]["require_price"] and s.get("price_usd_low") is None
+        need_moq = pol["supplier"]["require_moq"] and not s.get("moq_units")
+        if need_price or need_moq:
+            continue
+        if pol["supplier"].get("require_mechanism_fit", True) and not _supplier_fits(s, mech, d):
+            continue  # docs/19: a lead pairs a supplier with the mechanism it embodies
+        concept = _concept_for(s, mech, d)
+        out.append({
+            "id": stable_id("lead", mech["id"], s["id"]),
+            "concept_id": concept.get("id") if concept else None,
+            "concept": concept.get("name") if concept else None,
+            "mechanism": mech["name"], "mechanism_id": mech["id"],
+            "product_name": s["product_name"], "supplier_name": s["supplier_name"], "channel": s.get("channel") or "alibaba",
+            "url": s.get("url"), "images": s.get("images"),
+            "price_usd_low": s["price_usd_low"], "price_usd_high": s["price_usd_high"],
+            "moq_units": s["moq_units"],
+        })
+    return out
 
 
 def interleave_leads(leads: list[dict]) -> list[dict]:
