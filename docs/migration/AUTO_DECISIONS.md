@@ -181,3 +181,97 @@ Phase 10 gate: profiles, parents / chunks, embeddings, atoms, graph, provenance,
 
 #### Affected files / commits
 none yet.
+
+### M-006 — Phase 2 import: what came across, what was left out, and the engine's earlier life in this repo
+
+#### Question
+How is the engine imported "additively, no redesign on import" while INV-7 holds, and does re-importing it contradict register 11.274, which REMOVED it from this repo?
+
+#### Evidence
+`git archive a7baa66` of `TRAIL_AGENT_AUTORESEARCH` exports TRACKED files only, so nothing that repo git-ignores (run state, candidates, exports, compiled registry, review
+patches, the private field-evidence ledger, SQLite) can ride along. History: the engine lived here as `research/` (207 tracked files) until commit `d118078` (register 11.274,
+HARNESS-RESEARCH-MIGRATION-V1 O6, 2026-09-15) retired it and preserved it as the standalone Hermes skill at `~/.hermes/standalone/opportunity-research` — which also answers
+`CAPABILITY_MAP.md` Unknown 4: the deployed copy exists because O6 made it the engine's home, not because of a verified launchd / TCC restriction (that remains untested until Phase 9).
+The O6 dead-path guard `tests/contracts/test_research_package_removed.py` forbids a `research/` directory, the six `research_*` MCP tools and the `research-harness` workflow.
+
+#### Applicable migration invariants
+INV-2 reuse before rewrite · INV-7 privacy by default · INV-8 additive · policy "Consolidation: authorized; `polymath-v4` is the destination".
+
+#### Decision
+Import to `adapters/ecommerce/` with the source layout intact (193 files). Exclude `MIRROR_RECEIPT.json`, `.github/`, and `registry/friction_library.upstream.patch` (its diff
+header carries a machine-local home path). One adaptation only: the engine suite's three cross-repo pins compare against the CONTAINING repo instead of a sibling checkout — they
+were falling back to a pass. 11.274 is not contradicted: the policy (2026-09-20, later and controlling) authorizes consolidation, and the O6 guard stays green because the old
+path is NOT revived — no `research/`, no `research_*` MCP tools; the engine is bound through the adapter runtime (M-007).
+
+#### Alternatives rejected
+Copying the working directory (would carry git-ignored private artifacts). Restoring `research/` from history (older than v2.3.0, and revives the retired path). Sanitising the
+patch file in place (INV-7: "if uncertain, exclude and document"; its ten rows already sit in `registry/` and their fate is Phase 7).
+
+#### Why this is the smallest reversible choice
+One directory, no importer, no runtime package touched.
+
+#### Reversibility
+`git rm -r adapters/ecommerce` + drop the `TREE` block and the guard prefixes; nothing else references it.
+
+#### Validation / proof
+Engine suite 609 / 609 + `doctor` 0 in the new location under the Hermes interpreter AND this repo's `.venv` (606 + 3 skipped before the adaptation); 9 contract pins green with a
+negative control; privacy scan clean; guards 0 / 0 / 0 / READY. `WORKTREE_INTEGRATION_PROVEN`.
+
+#### Affected files / commits
+Branch `migration/ecommerce-consolidation` `072f1cc` (register 11.363, work-log `2026-09-20-consolidation-phase2-engine-import.md`).
+
+### M-007 — The domain binding seam: how a manifest-defined adapter invokes substantial domain Python
+
+#### Question
+`BOOTSTRAP_CONTEXT.md` names this as the one architectural seam that may need implementation. What is the smallest extension of the EXISTING runtime that lets a manifest step run
+ecommerce domain code, with no second scheduler, state machine or ledger, existing adapters unchanged, and domain failures mapped into existing typed semantics?
+
+#### Evidence
+- `service.advance` already takes an injected `executors: dict[step_type → Executor]`; an executor exception becomes a typed `STEP_EXECUTOR_ERROR` failure and an executor `gap`
+  becomes a typed `terminal_gap` (`service.py:380-410`). Gap / failure codes are an open `^[A-Z][A-Z0-9_]{2,60}$` pattern. `BRANCH` predicates read step outputs, so a domain
+  validator's verdict can already route a run back to reasoning.
+- The step-type vocabulary is CLOSED and pinned: `contracts.py:16` + four schema enums + `tests/contracts/test_adapter_contract_v1.py:18-44` (`set(node) == STEP_TYPES`).
+- `EXTERNAL_OPERATION` is Trail-specific end to end: schema `external.system` enum `["trailsignal"]`, `exec_external` builds Trail payloads, checks Trail response identity,
+  feeds φ verdicts to the ledger, and spends the `max_external_operations` budget.
+- `tests/determinism/test_adapter_runtime_neutrality.py`: the runtime, the worker AND every manifest may not name an adapter id, a domain word, a source or a harness.
+- The engine is ~40 FLAT top-level modules (`executors`, `report`, `store`, `bridge`, …) that import each other by bare name after `sys.path.insert(0, python/)`; it passes its
+  suite under this repo's interpreter.
+
+#### Applicable migration invariants
+INV-1 ecommerce first · INV-2 · INV-3 one authority per responsibility · INV-5 Trail stays deterministic and separate · INV-8 · EXECUTION_PLAN Phase 3 requirements.
+
+#### Decision
+One new AUTOMATIC step type, `DOMAIN_OPERATION`, executed by the existing worker through the existing `EXECUTORS` table:
+- manifest step `config`: `{"domain": "<dir under adapters/>", "operation": "<dotted id>", "inputs": {"<name>": "<dotted path over input / outputs / context>"}}`;
+- the executor runs `<repo>/adapters/<domain>/binding.py` OUT OF PROCESS with the worker's interpreter, one JSON request on stdin, one JSON response on stdout, a hard timeout;
+  `domain` must match `^[a-z][a-z0-9_]{1,40}$` and the binding file must exist inside the repo's `adapters/` directory;
+- response `{"ok": true, "output": {...}}` becomes the step output; `{"ok": false, "code", "message"}` becomes a typed gap with the domain's own code; a crash, a timeout or an
+  unparseable response raises, which the runtime already records as `STEP_EXECUTOR_ERROR`;
+- the output carries `_domain` lineage (domain, operation, sha256 of the binding file) — the engine is read from disk per call and is not part of the worker bundle hash;
+- `adapters/ecommerce/binding.py` holds ONE table `OPERATIONS: dict[str, callable]` that wraps existing engine functions. No engine function is rewritten to fit.
+No new budget counter (`max_steps` bounds it), no ledger access from domain code, no change to `service.py`, `transitions.py`, `store.py` or any existing manifest.
+
+#### Alternatives rejected
+- `EXTERNAL_OPERATION` with `system=<domain>`: mixes domain planning into the executor that enforces Trail identity and LAW 1, and spends Trail's budget (INV-3, INV-5).
+- Overloading `VALIDATE`: it is documented "closed and schema-free"; ranking and planning are not validation.
+- In-process import: puts ~40 generic top-level module names (`store`, `report`, `executors`) on the worker's `sys.path`, or forces a package rewrite of every engine import
+  (a redesign on import). It would also put the engine inside the stale-bundle fence.
+- Host-side only (the agent runs the engine as a tool): not governed, not deterministic, and fails the Phase 3 gate ("executes through the existing adapter runtime").
+- A plugin SDK / entry-point registry: speculative (INV-1).
+
+#### Why this is the smallest reversible choice
+One enum value, one executor function, one thin file per domain. Existing manifests stay valid (adding an enum member is backward compatible within v1).
+
+#### Reversibility
+Remove the enum value, the executor and `binding.py`; no stored run uses the type until an ecommerce manifest does.
+
+#### Validation / proof
+The contract pin `test_adapter_contract_v1.py` is a closed-vocabulary pin: it is EXTENDED by exactly one member in the same slice as the ADR — a declared contract change, not a
+weakened assertion; every other existing test stays untouched and green. New tests: manifest validation of the step type; the executor against a real engine operation (the
+executed path asserted to be this worktree); typed gap on a domain refusal; typed failure on a crash / timeout / malformed response; path-traversal refusal; the neutrality test
+still green. Gate: a real ecommerce domain operation runs through `service.advance` with the real executor table.
+
+#### Affected files / commits
+Planned: `shared/polymath_shared/adapter/{contracts,manifest}.py`, four `contracts/adapter/v1/*.schema.json` enums, `workers/workers/adapter_step_worker.py`,
+`adapters/ecommerce/binding.py`, ADR-0020 + changelog + refactor entry + `architecture/dependencies.json` owner for `adapters/`. Fence-set files change only in the migration
+worktree; a bounce is needed only when the branch is merged.
