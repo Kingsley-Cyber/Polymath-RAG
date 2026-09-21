@@ -1,44 +1,38 @@
+# Polymath Consolidation — Bootstrap Context
+
 ## Purpose
 
-This is the compact recovery context for a fresh migration session.
-
-Do not reconstruct the project from chat history.
+Compact recovery context for a fresh migration session.
 
 Read:
-
 1. `MIGRATION_POLICY.md`
-2. this file
-3. `EXECUTION_PLAN.md`
-4. `CONTINUATION.md`
+2. `AGENT_OPERATING_DOCTRINE.md`
+3. this file
+4. `EXECUTION_PLAN.md`
 5. `AUTO_DECISIONS.md`
+6. `CONTINUATION.md`
 
-Then inspect actual git/source state and continue.
-
----
+Then inspect actual git/source/test state.
 
 ## Why this migration exists
 
-The current product became fragmented across:
-
+The product became fragmented across:
 - `polymath-v4`;
 - `TRAIL_AGENT_AUTORESEARCH`;
 - `trail-signal-os`;
 - Hermes deployment.
 
-The original ecommerce engine already demonstrated substantial useful behavior.
+AutoResearch already demonstrated useful ecommerce intelligence.
 
-Later work added important governance/integration infrastructure but also recreated or weakened domain intelligence that already existed.
+Later work added important governance/integration but also recreated or weakened domain intelligence that already existed.
 
-The migration objective is therefore:
+Migration objective:
 
-> Keep the new infrastructure and governance while harvesting the stronger existing ecommerce implementation.
+> Keep the new infrastructure and governance while harvesting the stronger existing ecommerce implementation into Polymath.
 
----
+## Preserve Polymath
 
-## Existing infrastructure to preserve
-
-Polymath already has:
-
+Do not rebuild:
 - knowledge/RAG;
 - EvidencePacket;
 - Corpus Explore;
@@ -46,27 +40,21 @@ Polymath already has:
 - adapter runtime;
 - durable state;
 - hypothesis ledger;
-- loops;
-- budgets;
+- loops/budgets;
 - HarnessAction;
 - typed stops;
 - MCP surfaces;
-- receipt/lineage infrastructure.
-
-Do not build another version.
-
----
+- lineage infrastructure.
 
 ## AutoResearch role
 
-`TRAIL_AGENT_AUTORESEARCH` is the ecommerce intelligence harvest source.
+AutoResearch is the ecommerce intelligence harvest source.
 
-Its graph is not equivalent to the current governed adapter graph.
+Its graph is not equivalent to the governed adapter graph.
 
-Do not port graph nodes one-for-one.
+Do not port nodes one-for-one.
 
-Its graph captures ecommerce domain reasoning such as:
-
+Harvest behaviors such as:
 - population discovery;
 - lived situations;
 - hypotheses;
@@ -75,116 +63,86 @@ Its graph captures ecommerce domain reasoning such as:
 - variations;
 - sourcing.
 
-Harvest these behaviors into the existing Polymath runtime.
-
-Do not nest the complete AutoResearch state machine beneath another state machine.
-
----
+Do not nest its complete state machine under another state machine.
 
 ## Trail role
 
-Trail is NOT the ecommerce adapter.
+Trail is not the ecommerce adapter.
 
-Trail is a deterministic commercial judge/governance module.
+Trail is deterministic commercial governance.
 
-Keep Trail logically distinct even if its required core is physically consolidated into Polymath.
-
----
+Keep Trail logically distinct even if its core is embedded in Polymath.
 
 ## Historical proof
 
-A prior complete ecommerce run reportedly produced approximately:
-
+A prior complete ecommerce run reportedly produced about:
 - 5 product concepts;
 - 2 variations per concept;
 - 135 supplier candidates;
-- 8 qualified leads with price/MOQ;
-- 146 real Reddit observations.
+- 8 leads with price/MOQ;
+- 146 Reddit observations.
 
 Verify artifacts where needed.
 
-Do not treat those exact outputs as golden values.
+Use these as behavioral evidence, not golden exact-output requirements.
 
-Use them as evidence that the original domain pipeline could produce useful product research.
-
-Known historical weaknesses should be improved rather than restored:
-
+Known weaknesses to improve rather than restore:
 - obsolete corpus/synthesis transport;
 - Reddit-heavy evidence;
 - supplier identity weakness;
-- incomplete modern provenance;
+- incomplete provenance;
 - weak existing-product research.
 
----
+## Narrow architecture principle
 
-## Narrow architectural problem
+The generic adapter runtime already exists.
 
-The generic Polymath adapter runtime already exists.
+The important integration seam is allowing a manifest-defined adapter to invoke substantial domain Python such as:
+- population discovery;
+- validators;
+- product ideation;
+- sourcing.
 
-The primary architectural seam that may actually need implementation is:
+Solve minimally.
 
-> How a manifest-defined adapter binds substantial domain Python such as ecommerce population discovery, validators, product ideation and sourcing.
-
-Solve this minimally.
-
-Do not create a new SDK/runtime unless repository evidence proves there is no smaller seam.
-
----
+Do not create a new generic runtime/SDK unless repository evidence proves no smaller seam exists.
 
 ## Reporting intent
 
-The final HTML is a product/opportunity dossier.
+The final HTML is a product/opportunity dossier, not merely an adapter audit.
 
-It should communicate:
-
-- problem;
+It should show:
+- niche problem;
 - population;
 - hypotheses;
 - evidence;
 - contradictions;
 - product concepts;
 - variations;
-- actual products;
-- product links;
+- real products/links;
 - reviews/comments;
-- suppliers;
-- supplier links;
+- suppliers/links;
 - price/MOQ where available;
 - Polymath knowledge;
 - Trail decisions;
-- Trail registry mappings;
-- remaining unknowns;
+- registry mappings;
+- unresolved claims;
 - lineage.
 
-Do not reduce the report to adapter diagnostics.
+## Hosted-product intent
 
----
+Polymath is hosted through the owner's domain.
 
-## External execution
+Friends/users should eventually connect from their own supported agent environment—especially Claude Code—without running the Polymath data stack locally.
 
-Hermes/Claude/Codex/OpenClaw/Grok-style agents are execution hosts.
+Target shape:
 
-Reusable external tools may include:
+`external agent → authenticated remote MCP on owner's domain → Polymath → adapters/governance/retrieval`
 
-- opencli;
-- Exa;
-- mcporter;
-- Camofox;
-- browser tools;
-- Reddit;
-- YouTube;
-- retailer/product research;
-- supplier research.
-
-Prefer existing mature tooling over creating new scrapers.
-
----
+Remote hosted MCP acceptance is part of completion.
 
 ## Context recovery
 
-`CONTINUATION.md` is the migration restart boundary.
+`CONTINUATION.md` is the restart boundary.
 
-A new session should recover from durable repository state, not conversational history.
-
-
----
+Do not reconstruct the project from chat history.

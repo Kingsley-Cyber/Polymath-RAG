@@ -692,7 +692,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/migration/MIGRATION_POLICY.md", "md", None),
     ("docs/migration/AGENT_OPERATING_DOCTRINE.md", "md", None),
     ("docs/migration/EXECUTION_PLAN.md", "md", None),
-    ("docs/migration/README.md", "md", None),
+    ("docs/migration/README_OWNER_CONTROL.md", "md", None),
     ("docs/migration/NEW_SESSION_BOOTSTRAP_PROMPT.md", "md", None),
     ("docs/migration/CONTINUATION.md", "md", None),
     ("docs/migration/CAPABILITY_MAP.md", "md", None),

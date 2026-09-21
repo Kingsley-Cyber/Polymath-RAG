@@ -2,6 +2,28 @@
 
 > Agent-owned. Material autonomous decisions only (architecture, governance, compatibility, authority, migration seams).
 
+## INDEX (read this; open an entry only when you need its evidence or rejected alternatives)
+| # | Decision in one line | State |
+|---|---|---|
+| M-001 | Phase 0 was run before two controlling documents arrived | resolved by bundle 1 |
+| M-002 | Migration DOCUMENTS live on `production`; all migration CODE lives in a dedicated worktree / branch | locked |
+| M-003 | When two owner texts overlap, the newest bundle controls; an earlier longer text may stay as `*_EXTENDED.md` | locked |
+| M-004 | Phase 0 test baseline = the runs that already existed; Trail baselined at embedding | locked |
+| M-005 | Commerce corpus = reconstruct the 10-document set from preserved sources under a NEW corpus id, after Item 2D is live | locked (Phase 10) |
+| M-006 | Engine imported via `git archive` (tracked files only), 3 exclusions; it used to live here as `research/` until 11.274 | done `072f1cc` |
+| M-007 | Binding seam = ONE step type `DOMAIN_OPERATION` + out-of-process `adapters/<domain>/binding.py` | done `076eb6b` (ADR-0020) |
+| M-008 | ONE evidence id space in governed mode (the runtime's ids); engine schema byte copies stay, pinned | done `f20cf22` |
+| M-009 | Population discovery = research PLANNING; Trail says WHAT / engine says HOW via `research_directive`; cards + lived situations AFTER admission | done |
+| M-010 | Domain hypotheses addressed by LEDGER id; mechanism support derived from the ledger; NO engine score or verdict in governed output | done `7f87e57` |
+| M-011 | `next_step` sibling `materials` (manifest `config.show`, strictly opt-in); law loops end in a typed `law.refuse` | done `92efc79`, fixed `e176962` |
+| M-012 | Trail core embedded byte-identical under `governance/trail/`, reached through the unchanged client; default mode `daemon` | done `b766678` (ADR-0021) |
+| M-013 | The dossier renders HOST-SIDE from the journal with the engine's renderer; five authority labels | done `a1e886f` |
+| M-014 | One GOVERNANCE registry (Trail's); engine mirror is a strict superset repairing a gap in Trail's own data — not merged, not relaxed | OWNER decision open (22 rows) |
+| M-015 | The production merge was DENIED by the permission gate and not retried; fleet restored; merged-code uncertainty removed on an isolated Postgres | merge is the owner's |
+| M-016 | Hermes keeps a physical copy (launchd cannot read `~/Documents`); produced by `scripts/deploy_ecommerce_skill.py`, proven by the engine's verifier | mechanism done `1d97536` |
+| M-017 | Item 2D committed on its own branch and pre-merged with `production` + the migration branch | done `5cd3cc1` |
+| M-018 | Owner bundle 2 installed byte-identical; plan renumbered (11 merge gate · 12 real E2E · 13 hosted MCP · 14 negative control · 15 cleanup); merge gate precedes Phase 10 in execution | locked |
+
 ## Decision template
 `### M-XXX — <title>` with `####` Question · Evidence · Applicable migration invariants · Decision · Alternatives rejected ·
 Why this is the smallest reversible choice · Reversibility · Validation / proof · Affected files / commits.
@@ -630,3 +652,37 @@ Guards 0 / 0 / 0 / READY on the combined branch; 59 tests (Item 2D + activation 
 
 #### Affected files / commits
 `item2/corpus-scoped-atoms`: `221b95c`, `4d75387`, `5cd3cc1`.
+
+### M-018 — Owner bundle 2 (2026-09-21): what was installed, what it changes, and one ordering deviation
+
+#### Question
+The owner supplied `polymath_owner_migration_bundle.zip` (six files) and asked for a bootstrap that lets a NEW session continue without context rot. Five of the six differ from the installed owner files.
+
+#### Evidence
+Bundle read in full before installing. Differences that matter: a new controlling file order (policy → doctrine → bootstrap context → plan → `AUTO_DECISIONS` → `CONTINUATION`); the doctrine is now a bundle file
+(compact); HOSTED REMOTE MCP ACCEPTANCE through the owner's domain is part of the definition of success; `EXECUTION_PLAN.md` is renumbered — 11 production merge gate, 12 real ecommerce E2E, 13 hosted remote MCP
+acceptance, 14 negative control, 15 cleanup (the old 11 "acceptance ladder" and 12 "cleanup" are gone); `README_OWNER_CONTROL.md` names the five owner-controlled files.
+
+#### Applicable migration invariants
+M-003 (the newest owner bundle controls) · README_OWNER_CONTROL ("must not silently rewrite the mission, ownership model, invariants, or success criteria").
+
+#### Decision
+(1) The six files are installed BYTE-IDENTICAL; earlier versions stay in git history (`758ff8a` bundle 1; `8e89d44` the doctrine transcribed from chat). (2) The first bundle's `README.md` is removed as superseded
+by `README_OWNER_CONTROL.md` (recoverable from `758ff8a`). (3) Agent-owned `CONTINUATION.md` is REWRITTEN clean under the new numbering, and this file gains an INDEX, so a fresh session reads kilobytes, not the
+whole history. (4) ORDERING DEVIATION, recorded as the plan requires: Phase 11's gate is satisfied and the merge happens BEFORE Phase 10 executes, because Phase 10 (a second corpus) needs Item 2D LIVE, which only
+the merge + bounce delivers. Phase 10's isolation PROOF (Item 2D's tests) already exists.
+
+#### Alternatives rejected
+Keeping both READMEs (a stale controlling list is exactly the rot to prevent) · patching the old continuation again · renumbering past registers / work-logs (history keeps its own numbering).
+
+#### Why this is the smallest reversible choice
+Docs only; every replaced text is in git history.
+
+#### Reversibility
+`git revert` of the installing commit.
+
+#### Validation / proof
+`cmp` of each installed file against the bundle = identical; `repo_guard` 0; `/polymath-bootstrap` read order updated to match `BOOTSTRAP_CONTEXT.md`.
+
+#### Affected files / commits
+`production`: the commit that adds this entry.

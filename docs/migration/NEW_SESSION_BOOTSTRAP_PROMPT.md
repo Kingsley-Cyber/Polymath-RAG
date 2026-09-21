@@ -2,83 +2,72 @@
 
 Enter execution mode for the Polymath consolidation migration.
 
-You are taking over a long-running repository migration.
-
 Do not begin by proposing a new architecture.
+
 Do not ask me to restate project history.
+
 Do not ask routine implementation questions.
 
-The repository and durable migration documents are the source of truth.
+Repository state and durable migration documents are the source of truth.
 
 ## Mission
 
-Consolidate the fragmented Polymath agent/research stack into `polymath-v4` so ecommerce works end-to-end as the first complete reference adapter.
+Consolidate the fragmented Polymath agent/research stack into `polymath-v4` so ecommerce works end to end as the first complete reference adapter.
 
-Preserve and harvest proven ecommerce intelligence from `TRAIL_AGENT_AUTORESEARCH`, preserve the existing Polymath knowledge and adapter-runtime improvements, preserve Trail's deterministic governance, and make the complete system operable from the Polymath repository without rebuilding functionality that already exists.
+Preserve/harvest proven AutoResearch ecommerce intelligence.
 
-This is migration/convergence, not a rewrite and not a generic framework-design exercise.
+Preserve existing Polymath knowledge/runtime improvements.
+
+Preserve Trail's deterministic governance.
+
+Make the complete product operable from Polymath without rebuilding functionality that already exists.
+
+This is migration/convergence, not a rewrite.
 
 ## Source locations
 
 Destination:
-
 `~/Documents/polymath-rebuild/polymath-v4`
 
-Ecommerce harvest source:
-
+Ecommerce harvest:
 `~/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH`
 
-Trail harvest source:
-
+Trail harvest:
 `~/trail-signal-os-worktrees/A41`
 
 Agent/deployment environment:
-
 `~/.hermes`
 
-Verify paths and git states immediately.
+Verify actual state immediately.
 
-## Mandatory first read
-
-Read, in this order:
+## Mandatory read order
 
 1. `docs/migration/MIGRATION_POLICY.md`
-2. `docs/migration/BOOTSTRAP_CONTEXT.md`
-3. `docs/migration/EXECUTION_PLAN.md`
-4. `docs/migration/CONTINUATION.md`
+2. `docs/migration/AGENT_OPERATING_DOCTRINE.md`
+3. `docs/migration/BOOTSTRAP_CONTEXT.md`
+4. `docs/migration/EXECUTION_PLAN.md`
 5. `docs/migration/AUTO_DECISIONS.md`
+6. `docs/migration/CONTINUATION.md`
 
-Do not linearly consume the entire wiki.
+Then inspect source/git/tests.
 
-## Durable working files
+Do not linearly consume the whole wiki.
+
+## Living files you own
 
 Maintain:
+- CAPABILITY_MAP.md
+- AUTO_DECISIONS.md
+- PARITY_MATRIX.md
+- CONTINUATION.md
+- required ADRs
+- FINAL_MIGRATION_REPORT.md
 
-- `CAPABILITY_MAP.md`
-- `AUTO_DECISIONS.md`
-- `PARITY_MATRIX.md`
-- `CONTINUATION.md`
-- `ADR-TRAIL-EMBEDDING.md`
-- `FINAL_MIGRATION_REPORT.md`
-
-Populate them from source/code/test evidence rather than speculation.
-
-## Tool bootstrap
-
-Discover and use, when available:
-
-- Ponytail
-- Graphify
-- Graft
-- CodeGraph or equivalent deterministic dependency tooling
-
-Use deterministic tools before broad model reasoning.
+Populate from evidence, not speculation.
 
 ## Autonomous policy
 
 The user does not want routine questions.
-
-Follow `MIGRATION_POLICY.md`.
 
 Unless a genuine stop condition occurs:
 
@@ -86,87 +75,76 @@ MAKE THE DECISION.
 RECORD IT.
 CONTINUE.
 
-## Execution rules
+Use:
+`REUSE > WRAP > MOVE > ADAPT > REWRITE`
 
-- `REUSE > WRAP > MOVE > ADAPT > REWRITE`.
-- Do not create a second generic research runtime.
-- Do not flatten the AutoResearch graph into a naive one-to-one governed-step port.
-- Trail is governance, not ecommerce research.
-- Do not import private runtime/user evidence.
-- Use the smallest test that resolves the current uncertainty.
-- Do not push remotes unless explicitly authorized.
-- Never force-push.
+Do not create:
+- a second generic research runtime;
+- a naive node-by-node AutoResearch port;
+- duplicate Trail authority;
+- unnecessary speculative abstractions.
 
-## Immediate task
+## Tool bootstrap
 
-Execute Phase 0 and Phase 1 from `EXECUTION_PLAN.md`.
+Discover/use when available:
+- Ponytail;
+- Graphify;
+- Graft;
+- CodeGraph/equivalent.
 
-1. Establish exact repository/git truth.
-2. Establish baseline tests once.
-3. Inspect AutoResearch graph/node/executor/prompt/schema relationships.
-4. Inspect the current Polymath ecommerce manifest/runtime.
-5. Inspect Trail operation dependency closure.
-6. Build the complete capability/authority map.
-7. Identify the minimum ecommerce domain-Python binding seam.
-8. Record autonomous decisions.
-9. Continue into migration.
+Use deterministic tooling before broad model reasoning.
 
-Do not stop after producing the map.
-
-## Preserve Polymath improvements
+## Preserve
 
 Do not regress:
+- EvidencePacket;
+- evidence-only agent interface;
+- Corpus Explore;
+- CA4/provenance;
+- existing adapter/MCP capabilities;
+- HarnessResearchReceiptV1;
+- governed journal/lineage;
+- typed failure semantics.
 
-- EvidencePacket
-- evidence-only agent interface
-- Corpus Explore
-- CA4/provenance
-- Server A/B adapter capabilities
-- HarnessResearchReceiptV1
-- governed journal/lineage
-- typed failure semantics
+## Hosted product requirement
 
-## Acceptance target
+Polymath is hosted through the owner's domain.
 
-The migration is complete only when a real ecommerce run can demonstrate:
+Final completion includes external-agent access.
 
-`seed`
-→ Polymath evidence
-→ niche/population understanding
-→ hypotheses
-→ Trail judgement
-→ live-world research
-→ Trail admission
-→ revision
-→ multiple product concepts
-→ product variations
-→ existing-product investigation
-→ supplier investigation
-→ Trail qualification
-→ deterministic score/refusal
-→ governed HTML dossier
+A friend using Claude Code or another supported agent should be able to connect remotely without running the Polymath data stack locally.
 
-A defensible rejection is success.
-A software/runtime failure is not.
+Hosted acceptance must prove:
+- authenticated remote MCP connection;
+- tool discovery;
+- Polymath knowledge calls;
+- adapter discovery;
+- adapter start;
+- next/submit cycles;
+- status/result;
+- correct isolation/errors;
+- real ecommerce workflow.
+
+Do not call the product complete because local tests pass.
 
 ## Context management
 
-At meaningful checkpoints update `docs/migration/CONTINUATION.md`.
+At meaningful checkpoints update `CONTINUATION.md`.
 
-If context becomes noisy:
-
-1. finish the current atomic operation,
-2. update continuation,
-3. commit coherent work if appropriate,
+If context gets noisy:
+1. finish current atomic operation;
+2. update continuation;
+3. commit coherent work if appropriate;
 4. continue from durable state.
-
-Do not repeatedly re-explain the entire architecture.
 
 ## Final instruction
 
-Begin repository inspection and execution now.
+Begin from the exact phase recorded in `CONTINUATION.md`.
 
-Do not return with another hypothetical architecture proposal.
-Do not ask whether to proceed after the forensic map.
+Do not re-plan settled architecture unless repository evidence materially disproves it.
 
-Proceed until a genuine policy stop condition occurs or the ecommerce E2E acceptance criteria are satisfied.
+Do not ask whether to proceed after routine gates.
+
+Continue until:
+- a genuine stop condition occurs; or
+- production, real ecommerce E2E, and hosted remote MCP acceptance criteria are satisfied.
