@@ -50,11 +50,18 @@ Acceptance level reached (doctrine): REPOSITORY + PRODUCTION + a complete REAL_I
 | Slice | Branch @ tip | State | Proof level | Owed live after merge + bounce |
 |---|---|---|---|---|
 | 1 semantic continuity (§8) | `restoration/semantic-continuity` @ `98a0384` | exit §8.6 green | UNIT_PROVEN + WORKTREE_INTEGRATION_PROVEN (`shared/` only) | L1 `adapter_next` at `G_mechanisms` shows `hypothesis_semantics` · L2 a proposal with `lead_ids` persists, an invented id is rejected · L3 REVISE `changes.knowledge_gaps` lands in `adapter_hypotheses.state` · L4 after `F_plan`, `evidence.allocation.later_pass_rows > 0` |
+| 2 research fidelity (§9) | `restoration/research-fidelity` @ `4bcf17d` (worktree `../pmv4-research-fidelity`, stacked on 1) | exit §9.7 green | `shared/` + engine UNIT_PROVEN + WORKTREE_INTEGRATION_PROVEN; `workers/` two thin call sites IMPLEMENTED only | L5 `H_gaps` payload = ledger + bridge + agent gaps with stable ids · L6 `H_plan.intent_index` per hypothesis, zero `{` in the harness action · L7 `K_retrieve.needs` = `K_questions.need` · L8 `J_cards.community_basis.host == 0` |
+| 3 product reality (§10) | `restoration/product-reality` @ `d32c285` (worktree `../pmv4-product-reality`, stacked on 2) | exit §10.6 green | engine UNIT_PROVEN + WORKTREE_INTEGRATION_PROVEN | L9 `O_plan.reality_plan` ≥ 1 job per concept, zero `{` · L10 tagged `P_reality` receipt → `Q_join.joined.joined > 0` · L11 `W_interpret` materials carry `concept_reality` |
 
 What Slice 1 changed (so nobody rediscovers it): NEW `shared/polymath_shared/adapter/semantic_view.py` (pure; `build` / `scope` / `agent_projection` / `query_projection` / `product_reality_projection` / `trail_projection` closed at 4 fields). Delivery: agent steps through `materials`
 (`config.show` path `semantics.hypotheses`), DOMAIN_OPERATION steps IN MEMORY (`config.inputs` path `context.semantics.query` / `.product_reality` / `.by_id.<hid>`) — the stored AdapterStepV1 and `_payload_for` are untouched, NO `workers/` file changed. Ledger: optional
 `lead_ids[]` / `latent_structure_ids[]` (`ORIGIN_ID_FIELDS`, exempt from the `*_ids` citation convention, checked against the run's own leads / structures); REVISE applies scalars + `assumptions` / `falsifiers` (replace) + `knowledge_gaps` (upsert, stable `gap_id`) + `contradictions` (append, citable ids)
 and REFUSES any other `changes` key. Evidence: `EB.knowledge_passes` + `EB.reserve_recent` (≤ 40 % of a knowledge class for later passes, caps unchanged), used by `hydrate` and `_context_refs`; rows carry `retrieval_pass`, `evidence.allocation` reports it. Manifest `ecommerce.product_research` 0.2.0.
+What Slices 2–3 changed: `shared/polymath_shared/adapter/research_gaps.py` (pure `harvest` of ledger / step / agent-open / bridge / Trail-gate gaps → owned, deduplicated, STABLE ids, `origin` kept on Polymath's side; closed 4-field Trail gap projection; `unowned_gap_errors` = submit-time typed refusal
+`GAP_OWNER_MISSING` / `GAP_OWNER_NOT_LIVE`) · `EB.domain_compiled_need` (a DOMAIN_OPERATION-compiled need only; `original_needs` still has no `outputs` parameter and the evidence executor still never reads a step output — both law tests untouched) · engine `python/query_semantics.py` (`gap_query`, `falsifier_query`,
+`bind_template`; governance text never searched) + `research.plan` semantic path (`intent_index`, `unresolved_slots`; `{product_territory}` stays unresolved in field research until Trail returns a territory NAME — Slice 4) · `population.evidence_cards` reads the current ledger state (community = stated → lead → population → host last) ·
+engine `python/product_reality.py` + operations `product_reality.plan` / `.join` (per-concept jobs, `<concept>.v<n>` variation ids, join by the `concept:` tag only, `relation: … | solves`, `concept_reality[].status`) · manifest 0.4.0 = 56 steps (`O_plan`, `Q_join` added; no stage moved) · two thin `workers/` call sites
+(`gaps.compile` payload when `config.gaps_from`; `compiled_need=`). Engine files changed → after the merge the owner's block also runs `scripts/deploy_ecommerce_skill.py` (the Hermes skill copy) and keeps its parity receipt. Engine suite: `cd adapters/ecommerce && ~/.hermes/hermes-agent/venv/bin/python tests/run_all.py` (609 / 609; it sets its own temp loop DB).
 Test conventions: worktree has no `.venv` → `env -u POLYMATH_PG_DSN PYTHONPATH=$PWD ../polymath-v4/.venv/bin/python -m pytest …`; in-memory store double `tests/determinism/_adapter_memory_store.py`; never import `workers` in a proof of `shared/`.
 
 ### OWNER GATE G-merge — the exact block (slices STACK: merging a later tip brings every earlier slice; ONE merge + ONE bounce can cover several)
@@ -64,7 +71,7 @@ git status --short                                   # must print nothing
 set -a; . ./.env; set +a
 .venv/bin/python -c "import os,psycopg; c=psycopg.connect(os.environ['POLYMATH_PG_DSN']).cursor(); c.execute(\"select count(*) from adapter_runs where status in ('running','awaiting_agent','awaiting_harness')\"); print('open adapter runs', c.fetchone()); c.execute(\"select count(*) from stage_tickets where status='leased'\"); print('leased tickets', c.fetchone())"   # both must be 0
 git tag pre-restoration-merge production               # local rollback point (never pushed)
-git merge --no-ff restoration/semantic-continuity      # or the newest restoration/* tip listed in the table above
+git merge --no-ff restoration/product-reality          # the NEWEST restoration/* tip in the table above (it carries every earlier slice)
 .venv/bin/python scripts/agent_preflight.py; echo "preflight=$?"
 .venv/bin/python scripts/repo_guard.py; echo "repo_guard=$?"
 .venv/bin/python scripts/wiki_worm.py --check; echo "wiki_worm=$?"
@@ -72,6 +79,7 @@ git merge --no-ff restoration/semantic-continuity      # or the newest restorati
 pgrep -f control.process_supervisor | xargs kill -TERM  # then WAIT: 0 supervisors, 0 children, nothing on :7200
 mkdir -p /private/tmp/polymath_fleet && nohup bash scripts/boot_polymath.sh > /private/tmp/polymath_fleet/boot.log 2>&1 &
 curl -s 127.0.0.1:7200/ready                           # expect ready:true, embedder + reranker true, ONE bundle hash among healthy registrations
+.venv/bin/python scripts/deploy_ecommerce_skill.py --help   # engine files changed in slices 2–3: redeploy the Hermes skill copy the way this script documents, keep the parity receipt
 ```
 Rollback: `git reset --hard pre-restoration-merge` + the same bounce. After the bounce tell the session "merged" — it runs the live qualification listed in the table (that is a spend-free `adapter_next` inspection for L1–L4 only if a run exists; a fresh hosted run is G-spend).
 
