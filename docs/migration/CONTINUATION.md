@@ -3,6 +3,9 @@
 > Agent-owned restart boundary. Update at every meaningful phase transition. A fresh session continues from this file, the
 > controlling documents and the repositories — never from chat history.
 >
+> **How to operate:** `AGENT_OPERATING_DOCTRINE.md` (owner-authored, 2026-09-20): UNDERSTAND → INSPECT → DECIDE → IMPLEMENT → PROVE → RECORD → CONTINUE; one NOW / one NEXT; evidence classes; do not ask
+> "should I proceed?" when the policy authorizes the action. It does not replace the documents below.
+>
 > **Instruction hierarchy:** 1. user / repository constitutional rules · 2. `MIGRATION_POLICY.md` · 3. `BOOTSTRAP_CONTEXT.md` ·
 > 4. `EXECUTION_PLAN.md` · 5. applicable ADRs · 6. `AUTO_DECISIONS.md` · 7. `CONTINUATION.md` · 8. current source + tests + git
 > state. Repository facts can invalidate stale factual claims; they do not silently invalidate migration intent. Material
