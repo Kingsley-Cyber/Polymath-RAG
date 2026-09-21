@@ -1,43 +1,42 @@
 # Realignment — New Session Bootstrap Prompt
 
-> Drafted by the agent for the owner (2026-09-21). Paste the block below as the FIRST message of a new session opened in `~/Documents/polymath-rebuild/polymath-v4`. The owner's earlier `NEW_SESSION_BOOTSTRAP_PROMPT.md` is unchanged;
-> for the realignment phase this prompt is the one to use.
+> Drafted by the agent for the owner (2026-09-21, updated for the owner's audit directive). Paste the block below as the FIRST message of a new session opened in `~/Documents/polymath-rebuild/polymath-v4`.
+> The owner's earlier `NEW_SESSION_BOOTSTRAP_PROMPT.md` is unchanged; for the realignment phase this prompt is the one to use.
 
 ```text
 /polymath-bootstrap
 
-Enter AUDIT mode for the Polymath realignment. The consolidation migration is DONE and LIVE; do not redo it, do not re-plan it, do not repair commerce-v1, do not build a registry overlay for any corpus.
+This is an AUDIT session. Read-only. ONE deliverable: docs/migration/TRANSDUCTION_AUDIT.md. Then STOP and return it to me.
+No implementation, no production code change, no merge, no deployment, no fleet bounce, no corpus repair, no provider spend, no benchmark run. Do not resolve my three reserved decisions.
+The consolidation migration is DONE and LIVE: do not redo it, do not re-plan it, do not repair commerce-v1, do not build a registry overlay for any corpus.
 
-Read, in this order, then verify git / fleet state:
-1. docs/migration/OWNER_REALIGNMENT_2026-09-21_LATENT_TRANSDUCTION.md   (controlling intent for this phase — the thesis, the locked architecture, the ownership split, the DO-NOT list, the queue)
-2. docs/migration/AGENT_OPERATING_DOCTRINE.md
-3. docs/migration/CONTINUATION.md        (state, NOW / NEXT / LATER, next exact action, traps)
-4. docs/migration/PARITY_MATRIX.md       ("Real-input capability coverage — 2026-09-21": what the real runs proved and the findings)
-5. docs/migration/AUTO_DECISIONS.md      (INDEX only)
+Read, in this order, then verify branch / HEAD / clean status and fleet health:
+1. docs/migration/OWNER_REALIGNMENT_2026-09-21_LATENT_TRANSDUCTION.md   (the thesis, the locked architecture, the ownership split, the DO-NOT list; section 12b = review claims confirmed vs corrected)
+2. docs/migration/OWNER_AUDIT_DIRECTIVE_2026-09-21.md                   (THIS SESSION'S BRIEF: the correction, the method, confirmed findings A–D, questions A–I, the required structure of the audit, my reserved decisions)
+3. docs/migration/AGENT_OPERATING_DOCTRINE.md
+4. docs/migration/CONTINUATION.md                                       (state, next exact action, DO NOT REDO)
+5. docs/migration/PARITY_MATRIX.md   -> section "Real-input capability coverage — 2026-09-21"
+6. docs/migration/AUTO_DECISIONS.md  -> INDEX only
 
-The thesis: arbitrary corpus → Polymath / LLM extracts generalizable latent structure → Trail's DOMAIN-INVARIANT transformation grammar normalizes and governs it → real-world research tests whether the abstraction manifests commercially.
-Source domain and target market need not match. `cinema` is the canonical real benchmark corpus.
+Mission: audit the actual production semantic-transduction architecture and determine exactly where rich latent-opportunity semantics are created, preserved, reduced, flattened or ignored — before any new architecture is designed.
+Canonical object: the 54-step `ecommerce.product_research` (the manifest that completed the real E2E). Do NOT infer its behaviour from the 28-step `trail.product_discovery`; audit both, separately, and label every finding
+ECOMMERCE.PRODUCT_RESEARCH / TRAIL.PRODUCT_DISCOVERY / BOTH.
 
-NOW = the semantic transduction AUDIT. Read-only. Answer with evidence, per step and per field:
-  Does the implementation use the CSVs to transform arbitrary knowledge into a generalized latent-opportunity representation, or is it mostly lexical lookup against an ontology?
-Trace one real run (run 5, adr_c994b32a8c7287a9b0508f1f3a4c42e8; artifacts in ~/PolymathRuntime/e2e/2026-09-21-real-ecommerce-e2e/) from retrieved evidence → primitives / latent structures → hypotheses → what Trail actually
-receives → registry coordinates → research directive → product-reality and supply queries. For every hand-off state: which typed fields exist, which survive, which collapse into prose, and where matching is token overlap
-(start: governance/trail/src/trail_signal/contexts/planning/domain/gap_compiler.py:149 derive_registry_coordinates and :179 map_product_territories; adapters/ecommerce/binding.py research.plan / supply.plan; workers/workers/adapter_step_worker.py
-how the Trail payload is built). Also answer: are niche seeds used as transformation examples / priors or as literal market coordinates? does the 60-row evidence cap change what the agent actually reasons over? does real evidence ever
-populate LAW-1's `content` axis, and is `growth` inferred from growth evidence or from seasonality?
+Do NOT start from "there is no Opportunity Translation architecture". The production manifest already emits lenses, primitives (drivers, behaviours, adaptations, constraints, frictions, workarounds, latent values, transferable invariants,
+shared predicates), typed latent structures with possible populations, population nomination, lineage / bridge / portfolio law, and typed product concepts + variations BEFORE product reality. The hypothesis to establish from code: that
+structure is fragmented across step outputs / engine state and is reduced, flattened or ignored at consumer boundaries. Reuse > compose / project (e.g. an `OpportunitySemanticViewV1` read contract) > extend a contract > new durable IR.
 
-IMPORTANT: two manifests exist. The external review behind the realignment read `trail.product_discovery` (28 steps). What RAN is `ecommerce.product_research` (54 steps), which already emits typed structure (C_primitives, C_bridge, N_jobs, N_concepts).
-Audit BOTH, and for the one that ran answer field by field: what exists, where it dies (hypothesis ledger → hypotheses.py:256 context_view → the Trail payload → research_operations.py:166 HypothesisView / :170 first-hypothesis gap fallback → the directive → the
-compiled query), and what is the SMALLEST contract that carries it across. Realignment file §12b lists which review claims are already confirmed (READ) and which are corrected. Also note: the real runs' SEED named the population and the problem, so
-cross-domain transduction was never tested — propose the seed for the next cinema benchmark (one that does not presuppose the market).
+Trace DATA, not step names: A_understand → lenses → primitives → latent structures → situations → populations → hypotheses → ledger → Trail projection → gap compilation → research planning → receipts / admission → revision → product
+concepts → product reality → supply → dossier, recording per field the lifecycle columns the directive lists. Freshness-check (do not rediscover) the four confirmed findings: gap_compiler.py derive_registry_coordinates / map_product_territories
+(token overlap on the statement; pinned Trail core) · hypotheses.py context_view (statement-only) · research_operations.py HypothesisView (statement-only, knowledge_support_count=0) and the first-hypothesis gap fallback (pinned core).
+Do not reproduce the third-party errors: product concepts do NOT come after product reality in the production manifest (the defect is that P_reality ignores them); semantic structure and cross-domain hooks DO exist.
+Remember: the previous real run's seed named the population and the problem, so cross-domain transduction is unproven — DESIGN (do not run) a non-presupposing cinema benchmark.
 
-Deliver ONE document: docs/migration/TRANSDUCTION_AUDIT.md — findings with evidence class (EXECUTED / READ / STUBBED), a field-survival table, and a proposed minimal `LatentOpportunityRepresentationV1` with exactly where it would be
-produced, validated and consumed. Then STOP and give the owner the three decisions listed in §13 of the realignment file. Do NOT implement the representation, do NOT touch the byte-pinned Trail core, do NOT change LAW-1, before the owner answers.
+Inputs: config/adapters/ecommerce.product_research.json and trail.product_discovery.json · contracts/adapter/v1/ · adapters/ecommerce/binding.py + adapters/ecommerce/python/{lived_world,bridge,ideation,executors,report}.py + schemas/ ·
+shared/polymath_shared/adapter/{hypotheses,service,transitions}.py · workers/workers/adapter_step_worker.py (how each Trail payload and each harness action is built) · governance/trail/src/trail_signal/contexts/{planning,workflow,evidence,scoring}/ ·
+governance/trail/data/*.csv · real-run artifacts only where needed: ~/PolymathRuntime/e2e/2026-09-21-real-ecommerce-e2e/ (run 5, adr_c994b32a8c7287a9b0508f1f3a4c42e8) and the live rows adapter_runs.outputs / adapter_harness_actions (read-only).
+Use graft / grep / AST before broad reading; the large context is for holding the whole dataflow in one window, not for ingesting the repository.
 
-After the owner answers, the queue is: fix evidence polarity · preserve per-hypothesis gaps · fix semantic query compilation · fix product-reality search semantics · (60-row fix if the audit shows it matters) → CINEMA REAL BENCHMARK AGAIN →
-NEGATIVE CONTROL → OFF-HOST MCP with a temporary restricted principal → dossier product-artifact gaps → ACCEPTANCE.
-
-Standing rules: the harness executes the system's directives and never silently improves them; a software failure is not a governed outcome; never tune a registry, gate, threshold or freshness window to pass; validate every receipt
-against BOTH contracts before submit; no push; narrow commits; never enter or print a credential; no spend without a per-action word. Operate per the doctrine: INSPECT → DECIDE → IMPLEMENT → PROVE → RECORD → CONTINUE. Next decision id M-025,
-next register row 11.386.
+Evidence labels: EXECUTED · STATICALLY VERIFIED · READ · HISTORICAL RUN EVIDENCE · INFERRED. Exact paths / functions / contracts; "field exists here → projection here → contract contains X → Y disappears", never "probably lost".
+When the audit is written: update CONTINUATION.md factually (next decision id M-025, next register row 11.387), commit the documents narrowly, no push, and STOP.
 ```
