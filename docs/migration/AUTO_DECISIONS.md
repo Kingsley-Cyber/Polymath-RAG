@@ -431,3 +431,37 @@ asserted to have been shown; the negative control ends in `PRODUCT_PORTFOLIO_LAW
 
 #### Affected files / commits
 `migration/ecommerce-consolidation` `92efc79` (register 11.369; ADR-0020 addendum).
+
+### M-012 — Phase 6: how the TrailSignal core is embedded (PROPOSED, source-verified, not yet implemented)
+
+#### Question
+The policy pre-authorizes embedding "subject to dependency / license / source verification". What exactly is imported, how does Polymath reach it, and what must NOT be done in the same change?
+
+#### Evidence
+`ADR-TRAIL-EMBEDDING.md` "Imported dependency closure" (AST walk, A41 @ `de64d84`): 16 modules / 6,944 lines; `pydantic`, `typing_extensions`, `packageurl` (the last MISSING from `polymath-v4/.venv`);
+MIT; no vendored code in the closure; store port = two async methods; registry compiler reads five known data / config locations; `ResearchOperationService.admitted` is an in-memory dict.
+`workers/…/exec_external` reaches Trail only through `TrailMCPClient`, whose transport is injectable (every worker test already injects `httpx.MockTransport`).
+
+#### Applicable migration invariants
+INV-5 Trail stays deterministic · INV-3 · INV-9 reversible · stop conditions 1 (licence — clear) and 5 (no semantic change without documented intent).
+
+#### Decision
+Embed the EXACT closure byte-identical + its registry data + Trail's own operation tests under `governance/trail/`; one composition module provides the service, a `ResearchStorePort` implementation and an
+in-process transport for the unchanged `TrailMCPClient`; `POLYMATH_TRAIL_MODE=embedded|daemon`, default `daemon` until parity is proven. NOT in the same change: trimming the three unrelated contract
+modules, fixing D1 / M1-01..03, or reconciling the two registries.
+
+#### Alternatives rejected
+Trimming on import (edits Trail source, breaks byte-identity, makes equivalence a claim instead of a fact) · a new in-process client API (forks `exec_external` and its tests) · importing Trail's daemon
+composition (pulls Temporal, Postgres adapters and the platform contexts).
+
+#### Why this is the smallest reversible choice
+No Trail line edited; one switch; the daemon path keeps working.
+
+#### Reversibility
+Set the mode back to `daemon`; delete `governance/trail/`.
+
+#### Validation / proof
+The four checks in `ADR-TRAIL-EMBEDDING.md` "Validation". Open: durability of the embedded audit store.
+
+#### Affected files / commits
+None yet.
