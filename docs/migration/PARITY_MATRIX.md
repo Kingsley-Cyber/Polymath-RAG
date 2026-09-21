@@ -7,6 +7,7 @@
 | Capability | Historical AutoResearch | Current governed path | Migrated path | Evidence level | Status | Notes |
 |---|---|---|---|---|---|---|
 | Niche understanding | prompt, free-text `signal` | input validation only (`A_understand`) | — | HISTORICAL_ARTIFACT_ONLY / READ | NOT STARTED | output unvalidated in the original |
+| Knowledge intake + lenses + lineage law | `corpus_polymath.rows_from_packet`, `lens_gate`, `lineage_ref_errors` / `validate_relevance_map` | evidence-boundary rows reach the agent; no lens, no lineage law | `DOMAIN_OPERATION` `ecommerce` / `knowledge.corpus_evidence`, `understanding.lenses`, `understanding.validate_primitives` | INTEGRATION_EXECUTED (authoritative EvidencePacket example through `service.advance`, in-memory store) | BOUND — not yet in a product manifest | one id space = the runtime's evidence ids (M-008); not yet run on a live packet |
 | Population discovery | 62 leads over 5 lanes; communities outside the seed | absent | — | HISTORICAL_ARTIFACT_ONLY | NOT STARTED | LOST on the governed path |
 | VOI ranking | `rank_leads` | absent | — | READ | NOT STARTED | |
 | Evidence cards | 15 clusters, anchor / thin | absent (Trail owns independence) | — | HISTORICAL_ARTIFACT_ONLY | NOT STARTED | advisory only after migration |

@@ -275,3 +275,37 @@ still green. Gate: a real ecommerce domain operation runs through `service.advan
 Planned: `shared/polymath_shared/adapter/{contracts,manifest}.py`, four `contracts/adapter/v1/*.schema.json` enums, `workers/workers/adapter_step_worker.py`,
 `adapters/ecommerce/binding.py`, ADR-0020 + changelog + refactor entry + `architecture/dependencies.json` owner for `adapters/`. Fence-set files change only in the migration
 worktree; a bounce is needed only when the branch is merged.
+
+### M-008 — Phase 4: one evidence id space in governed mode, and the engine's schema byte copies stay
+
+#### Question
+(a) The engine names corpus rows `polymath:chunk:<id>`; the adapter runtime shows the agent raw evidence ids in `context.evidence_refs` and enforces citations against them. Which
+id does a governed run use? (b) Should the engine's two schema byte copies (`schemas/evidence_packet.json` dialect, `schemas/harness_receipt.schema.json`) be replaced by reads of
+`contracts/` now that both live in one checkout?
+
+#### Evidence
+(a) The `polymath:` prefix is read in three non-critical places only (`utilization.py:39`, `report.py:202`, `provenance.py:366`, the last with an `or rid in corpus row ids` fallback).
+The engine's lineage law compares refs to `corpus_evidence[].id`, whatever they are. (b) The three cross-repo pins (packet schema sha, receipt byte equality, Polymath's own
+`validate_receipt`) already execute against THIS repo on every engine-suite run since Phase 2, and `tests/contracts/test_ecommerce_engine_import.py` runs that suite.
+
+#### Applicable migration invariants
+INV-3 one authority per responsibility · INV-6 evidence-first · INV-2 · INV-9 reversible.
+
+#### Decision
+(a) ONE id space: `knowledge.corpus_evidence` emits the runtime's evidence id; the prefix is dropped at the binding. What the agent is shown is what the engine's law checks and what
+Polymath's citation check enforces. (b) Keep the byte copies and their pins: drift now fails a test in this checkout, and the standalone engine still runs. Removing the copies is Phase 12 cleanup.
+
+#### Alternatives rejected
+Teaching the agent the prefixed ids (two id spaces, and Polymath's citation check would reject them). Rewriting the engine's row mapping (INV-2: the binding WRAPS `rows_from_packet`).
+
+#### Why this is the smallest reversible choice
+One line at the boundary; no engine function changed for it.
+
+#### Reversibility
+Delete the line.
+
+#### Validation / proof
+`test_adapter_ecommerce_knowledge_intake.py`: ids equal the runtime rows' ids; the id shown in `context.evidence_refs` is the id the lineage law accepted.
+
+#### Affected files / commits
+`migration/ecommerce-consolidation` `f20cf22` (register 11.365).
