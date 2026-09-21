@@ -19,9 +19,14 @@ executed here — the host harness answers them through adapter_submit.
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import logging
 import os
+import pathlib
+import re
 import socket
+import subprocess
 import sys
 import time
 from typing import Any
@@ -506,9 +511,64 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
     return {"output": output, "external": rc, "evidence_refs": refs}
 
 
+# ─────────────────────────────────────────────────────────── DOMAIN_OPERATION (ADR-0020): manifest-named domain code, out of process
+#: where domain bindings live: <repo>/adapters/<domain>/binding.py. The manifest names the domain and the operation; this file never does.
+_DOMAINS_DIR = pathlib.Path(__file__).resolve().parents[2] / "adapters"
+_DOMAIN_RE = re.compile(r"^[a-z][a-z0-9_]{1,40}$")
+DOMAIN_REQUEST_VERSION = "domain_operation_request.v1"
+DOMAIN_TIMEOUT_S = float(os.environ.get("POLYMATH_DOMAIN_OPERATION_TIMEOUT_S", "120"))
+DOMAIN_OUTPUT_MAX_BYTES = 1_000_000
+
+
+def exec_domain(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:
+    """DOMAIN_OPERATION = one bounded, stateless computation by a domain's own code. The binding runs OUT OF PROCESS (its module
+    names never enter this worker; a crash is a typed step failure) with a MINIMAL environment (no DSN, no tokens). The domain
+    computes; it never reads or writes run state, the ledger or a store. `{"ok": false, code, message}` is a typed gap carrying the
+    domain's code; a crash, a timeout or a malformed response raises and the runtime records STEP_EXECUTOR_ERROR."""
+    cfg = m.step(step["step_id"]).get("config") or {}
+    domain, operation = str(cfg.get("domain") or ""), str(cfg.get("operation") or "")
+    if not _DOMAIN_RE.match(domain):
+        return {"gap": {"code": "DOMAIN_BINDING_INVALID", "message": f"{step['step_id']}: config.domain {domain!r} is not a domain name"}}
+    root = _DOMAINS_DIR.resolve()
+    binding = (root / domain / "binding.py").resolve()
+    if root not in binding.parents or not binding.is_file():
+        return {"gap": {"code": "DOMAIN_BINDING_MISSING", "message": f"{step['step_id']}: no binding for domain {domain!r}"}}
+    scope = {"input": state.input, "options": state.options, "outputs": state.outputs, "context": step.get("context") or {}}
+    request = {"schema_version": DOMAIN_REQUEST_VERSION, "domain": domain, "operation": operation, "run_id": state.run_id,
+               "step_id": step["step_id"], "input": state.input,
+               "inputs": {name: _path(scope, dotted) for name, dotted in (cfg.get("inputs") or {}).items()},
+               "config": {k: v for k, v in cfg.items() if k not in ("domain", "operation", "inputs")}}
+    env = {"PATH": os.environ.get("PATH", ""), "LANG": os.environ.get("LANG", "en_US.UTF-8"), "PYTHONDONTWRITEBYTECODE": "1"}
+    try:
+        proc = subprocess.run([sys.executable, str(binding)], input=json.dumps(request), capture_output=True, text=True,
+                              timeout=DOMAIN_TIMEOUT_S, cwd=str(binding.parent), env=env)
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"domain operation {operation} timed out after {DOMAIN_TIMEOUT_S:g}s") from exc
+    if proc.returncode != 0:
+        raise RuntimeError(f"domain operation {operation} exited {proc.returncode}: {proc.stderr.strip()[-600:]}")
+    if len(proc.stdout.encode()) > DOMAIN_OUTPUT_MAX_BYTES:
+        raise RuntimeError(f"domain operation {operation} returned more than {DOMAIN_OUTPUT_MAX_BYTES} bytes")
+    try:
+        resp = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"domain operation {operation} did not return one JSON object: {exc}") from exc
+    if not isinstance(resp, dict) or not isinstance(resp.get("ok"), bool):
+        raise RuntimeError(f"domain operation {operation} returned no boolean `ok`")
+    if not resp["ok"]:
+        code, message = str(resp.get("code") or ""), str(resp.get("message") or "")
+        if not re.match(r"^[A-Z][A-Z0-9_]{2,60}$", code):
+            raise RuntimeError(f"domain operation {operation} refused without a typed code: {code!r}")
+        return {"gap": {"code": code, "message": f"{operation}: {message}"[:2000]}}
+    if not isinstance(resp.get("output"), dict):
+        raise RuntimeError(f"domain operation {operation} returned ok without an output object")
+    output = dict(resp["output"])
+    output["_domain"] = {"domain": domain, "operation": operation, "binding_sha256": hashlib.sha256(binding.read_bytes()).hexdigest()}
+    return {"output": output}
+
+
 EXECUTORS: dict[str, service.Executor] = {
     "POLYMATH_RETRIEVE": exec_retrieve, "POLYMATH_COMPILE_PLAN": exec_compile_plan, "POLYMATH_GRAPH_EXPAND": exec_graph_expand,
-    "VALIDATE": exec_validate, "BRANCH": exec_branch, "EXTERNAL_OPERATION": exec_external,
+    "VALIDATE": exec_validate, "BRANCH": exec_branch, "EXTERNAL_OPERATION": exec_external, "DOMAIN_OPERATION": exec_domain,
 }
 
 

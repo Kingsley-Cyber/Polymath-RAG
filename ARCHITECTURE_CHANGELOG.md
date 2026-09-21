@@ -3,6 +3,16 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-09-20: DOMAIN_OPERATION — a manifest step binds a domain's own code
+
+- ADR-0020 / refactor 0014. The adapter step vocabulary gains ONE automatic type, `DOMAIN_OPERATION`: the manifest names a
+  directory under `adapters/` and an operation id; the existing worker runs `adapters/<domain>/binding.py` out of process
+  (JSON in, JSON out, hard timeout, minimal environment). Domain refusals are typed gaps; crashes are `STEP_EXECUTOR_ERROR`.
+  Domain code computes and never owns run state.
+- `architecture/dependencies.json`: new owner `domain_adapter` (`adapters/`), which may import none of the runtime packages.
+- First binding: the imported ecommerce engine's bridge / portfolio admissibility laws
+  (work log 2026-09-20-consolidation-phase3-domain-binding-seam).
+
 ## 2026-08-14: verify cross-corpus chunk-deletion fix
 
 - Bulk-acceptance run discovered `reconcile_neo4j` deleted other

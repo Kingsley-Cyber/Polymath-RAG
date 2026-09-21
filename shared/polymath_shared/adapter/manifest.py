@@ -2,11 +2,16 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from .contracts import _REPO, STEP_TYPES, validate
+
+#: ADR-0020 — a DOMAIN_OPERATION names a directory under adapters/ and a dotted operation id of that domain's binding
+_DOMAIN_RE = re.compile(r"^[a-z][a-z0-9_]{1,40}$")
+_DOMAIN_OP_RE = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){0,5}$")
 
 ADAPTER_DIR = _REPO / "config" / "adapters"
 
@@ -76,6 +81,18 @@ def graph_integrity_errors(raw: dict[str, Any]) -> list[str]:
                 errs.append(f"{sid}: EXTERNAL_OPERATION must name system=trailsignal")
             if ext.get("availability") == "planned" and not ext.get("planned_node"):
                 errs.append(f"{sid}: a planned Trail capability names its graph node")
+        if typ == "DOMAIN_OPERATION":
+            # ADR-0020: the manifest NAMES domain code (a directory under adapters/ + an operation id); the runtime never does
+            cfg = s.get("config") or {}
+            if not _DOMAIN_RE.match(str(cfg.get("domain") or "")):
+                errs.append(f"{sid}: DOMAIN_OPERATION needs config.domain (a directory name under adapters/)")
+            if not _DOMAIN_OP_RE.match(str(cfg.get("operation") or "")):
+                errs.append(f"{sid}: DOMAIN_OPERATION needs config.operation (a dotted operation id)")
+            ins = cfg.get("inputs", {})
+            if not isinstance(ins, dict) or not all(isinstance(k, str) and isinstance(v, str) and v for k, v in ins.items()):
+                errs.append(f"{sid}: DOMAIN_OPERATION config.inputs maps a name to a dotted path")
+        elif any(k in (s.get("config") or {}) for k in ("domain", "operation")):
+            errs.append(f"{sid}: config.domain / config.operation are only valid on DOMAIN_OPERATION")
         if typ == "BRANCH" and not (s.get("branches") or nxt):
             errs.append(f"{sid}: BRANCH needs branches or a default next")
         # ADR-0019: HARNESS_ACTION is a typed hand-off to the host harness; theta ops belong to AGENT_REASON only; and

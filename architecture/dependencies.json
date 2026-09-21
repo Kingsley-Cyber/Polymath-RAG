@@ -7,6 +7,7 @@
     "worker": {"paths": ["workers/"], "may_depend_on": ["contracts", "shared"]},
     "control": {"paths": ["control/"], "may_depend_on": ["contracts", "shared"]},
     "sidecar": {"paths": ["sidecars/"], "may_depend_on": ["contracts", "shared"]},
+    "domain_adapter": {"paths": ["adapters/"], "may_depend_on": []},
     "store": {"paths": ["stores/"], "may_depend_on": []},
     "governance": {"paths": ["architecture/", "docs/", "scripts/", ".github/"], "may_depend_on": []}
   },
@@ -20,7 +21,12 @@
     {"from": "control", "to": "worker"},
     {"from": "sidecar", "to": "orchestrator"},
     {"from": "sidecar", "to": "worker"},
-    {"from": "sidecar", "to": "control"}
+    {"from": "sidecar", "to": "control"},
+    {"from": "domain_adapter", "to": "shared"},
+    {"from": "domain_adapter", "to": "orchestrator"},
+    {"from": "domain_adapter", "to": "worker"},
+    {"from": "domain_adapter", "to": "control"},
+    {"from": "domain_adapter", "to": "sidecar"}
   ],
   "change_triggers": {
     "contracts/": ["reverse-dependent verification", "work log"],
