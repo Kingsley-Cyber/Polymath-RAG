@@ -98,7 +98,7 @@ step, CANCEL (mechanical, no spend) · run the database-free suite in the MAIN c
 per-action) → Phase 13 hosted remote MCP acceptance from OUTSIDE the host through the owner's domain (endpoint VERIFIED, harness ready — see "Hosted surface"; what remains is the EXTERNAL vantage, the lifecycle driver over the hosted URL, and a real agent host: auth, tool discovery, search / explore, adapter list / start / next / submit / status /
 result, isolation + error behaviour, a real ecommerce workflow) → Phase 14 → Phase 15.
 **If the merge is still blocked when you start:** do not idle and do not stop the fleet. The two unblocked items named here before (Phase 13 harness, Phase 10 manifest) are DONE. What is left without the merge is thin:
-the Phase 10 residue pre-flight READING (writer + readers, no ingestion) and an external-vantage run of the harness if another machine is at hand. Everything else waits for the merge — say so plainly.
+an external-vantage run of the harness if another machine is at hand (the Phase 10 residue pre-flight READING is done too: no crash path, one silent-reuse check after the first document — see the manifest). Everything else waits for the merge — say so plainly.
 
 ## DO NOT REDO / traps
 - Do not re-establish the hosted endpoint, rewrite the surface harness, or re-identify the 10 corpus documents (M-019, M-020).

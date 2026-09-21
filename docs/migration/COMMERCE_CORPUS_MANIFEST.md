@@ -39,9 +39,19 @@ Identities are CONTENT-derived and corpus-independent (`doc_id` from the bytes; 
 already uses, wherever the current chunker reproduces the old parent text. Two facts make that matter:
 - `parent_enrichments` has a UNIQUE index on `(parent_id) WHERE status='READY'` — not corpus-scoped.
 - `workers/workers/summary_worker_impl.py` looks an enrichment up by `input_hash` alone (`status IN ('READY','INVALID')` and the chunk exists) — not corpus-scoped.
-So a re-ingested parent may be treated as ALREADY enriched by a row stamped `ecom-meta-v1` (spend saved — but does a corpus-scoped reader of `commerce-v1` see it?), or a fresh `READY` insert may violate the
-unique index. Settle this FIRST, on the smallest document, before paying for ten: read the writer + the readers (`shared/polymath_shared/latent/{runtime,projection}.py`, `workers/workers/project_qdrant_worker.py`),
-then ingest `Netnography (Kozinets)` (43 kB) alone and check its enrichment rows and its retrieval. Deleting residue is a destructive live-data action: not taken here, and not without the owner's word.
+**Reading settled 2026-09-21 (READ; nothing run against residue):**
+- No crash path. `shared/polymath_shared/latent/runtime.py` marks older `READY` rows of the same parent `STALE` before it inserts, and deletes orphan rows (chunk gone) under the same identity — the unique index is not violated.
+- The identity is `input_hash = hash(parent id, children text, facts, entities, compiled card)` (`summary_worker_impl.py`) — NO corpus id. A hit needs the re-ingested parent to be byte-identical in all five; months of
+  chunker / extraction changes make that the exception, not the rule — but not impossible.
+- THE RISK IS SILENT, not loud: on a hit whose chunk is alive again, the writer answers `EXISTING` and the row stays stamped `ecom-meta-v1`; the projection reader joins `runs.corpus_id = parent_enrichments.corpus_id`
+  (`latent/projection.py`), so a `commerce-v1` run never sees that enrichment. That parent is simply missing from the latent lane.
+- The check, after the FIRST (smallest) document reaches `query_ready` — it must return 0:
+  ```sql
+  SELECT count(*) FROM parent_enrichments pe JOIN chunks c ON c.chunk_id = pe.parent_id
+   WHERE c.corpus_id = 'commerce-v1' AND pe.status = 'READY' AND pe.corpus_id <> 'commerce-v1';
+  ```
+  (adjust `chunks.corpus_id` to the column the live schema uses). Non-zero = cross-corpus reuse happened: stop, record, and bring the owner the exact rows — re-stamping or deleting residue is a live-data action that
+  needs the owner's word. Deleting residue pre-emptively is NOT taken here for the same reason.
 
 ## Procedure (after the merge; staged — provider spend is per-action)
 1. Pre-flight above. 2. Upload ONE document (the smallest) through the loopback surface — `upload_document(path=<spool path>, corpus_id="commerce-v1")` on `http://127.0.0.1:8930/mcp`, or `POST :7200/upload`.
