@@ -82,13 +82,30 @@ def list_adapters(directory: Path | None = None) -> list[dict[str, Any]]:
 
 
 # ─────────────────────────────────────────────────────────── lifecycle (routes)
+class NotRunOwner(Exception):
+    """A request made on behalf of a principal named a run that principal does not own (or that does not exist — the two
+    are deliberately indistinguishable to the caller)."""
+
+
+def assert_owner(conn, run_id: str, principal_id: str | None) -> None:
+    """RUN OWNERSHIP. No principal = the legacy / trusted-local caller: unchanged. With a principal, ONLY a run whose
+    `owner_principal_id` equals it is reachable; a NULL owner is legacy state, never "public"."""
+    if principal_id is None:
+        return
+    exists, owner = store.run_owner(conn, run_id)
+    if not exists or owner != principal_id:
+        raise NotRunOwner(run_id)
+
+
 def start(conn, *, adapter_id: str, input_payload: dict[str, Any], request_options: dict[str, Any] | None = None,
-          directory: Path | None = None) -> dict[str, Any]:
+          directory: Path | None = None, owner_principal_id: str | None = None) -> dict[str, Any]:
     """Create a durable run (status running — the worker picks it up). Idempotent on request_options.idempotency_key."""
     m = manifest_for(adapter_id, directory)
     opts = dict(request_options or {})
     assert_valid("adapter_run_request", {"adapter_id": adapter_id, "input": input_payload, "request_options": opts})
     key = opts.get("idempotency_key")
+    if key and owner_principal_id:
+        key = f"{key}@{owner_principal_id}"          # an idempotency key is per owner: never another principal's run
     if key:
         existing = store.find_run_by_idempotency(conn, f"{adapter_id}:{key}")
         if existing:
@@ -99,6 +116,8 @@ def start(conn, *, adapter_id: str, input_payload: dict[str, Any], request_optio
     state = T.replace(state, status="running")
     store.insert_run(conn, state, m, idempotency_key=(f"{adapter_id}:{key}" if key else None),
                      agent_identity=opts.get("agent_identity"))
+    if owner_principal_id:
+        store.set_run_owner(conn, run_id, owner_principal_id)
     return run_ref(conn, run_id)
 
 

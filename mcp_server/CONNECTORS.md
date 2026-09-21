@@ -56,8 +56,21 @@ did not address the loopback listener directly is REMOTE: `upload_document(path,
 ```
 
 Run it from ANOTHER machine with `--vantage external:<label>` for external-access proof. The adapter lifecycle over the hosted
-surface is `scripts/adapter_mcp_acceptance.py --mcp-url https://mcp.kingsleylab.xyz/mcp --no-restart`. The surface has ONE
-shared bearer key: every key holder sees every corpus and every caller's `recent_queries`.
+surface is `scripts/adapter_mcp_acceptance.py --mcp-url https://mcp.kingsleylab.xyz/mcp --no-restart`.
+
+**Friends get their OWN key, never the owner key (ADR-0022).** `$POLYMATH_MCP_API_KEY` is the owner / admin credential. A friend is a
+PRINCIPAL in the registry file `$POLYMATH_MCP_PRINCIPALS_FILE` (outside the repository, 0600):
+
+```bash
+.venv/bin/python scripts/mcp_principals.py add --id prn_fred --name "Fred" --corpus commerce-v1 \
+    --adapter ecommerce.product_research --key-out ~/PolymathRuntime/keys/prn_fred.key     # the bearer is written there ONCE, never printed
+```
+
+Default deny: profile `friend` = search / explore / answer + adapter list / start / next / submit / status / result, on the listed
+corpora and adapters only. 401 = unknown / revoked / expired key · 403 = a tool, corpus, adapter or RUN the principal may not reach
+(another principal's run and a missing run answer identically) · 429 = over its rate. A friend's Claude Code connects with
+`claude mcp add --transport http polymath https://mcp.kingsleylab.xyz/mcp --header "Authorization: Bearer <their key>"`.
+Revoking (`revoke`, `revoke-key`, `disable`) takes effect on the next request — no bounce.
 
 **Remote / custom agents → Server B over HTTP.** Start it (stateless HTTP, MCP 2026-07-28 core; Bearer-key auth):
 

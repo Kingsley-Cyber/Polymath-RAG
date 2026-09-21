@@ -84,8 +84,9 @@ def test_upload_document_refuses_bad_paths_locally(monkeypatch, bad):
     import contextvars
     mod = _load(monkeypatch, "sekrit")
 
-    def as_local_caller():                       # what the gate records for a request to the loopback listener
+    def as_local_caller():                       # what the gate records for the OWNER key on the loopback listener
         mod._CALLER_IS_LOCAL.set(True)
+        mod._PRINCIPAL.set(mod.P.OWNER)
         return asyncio.run(mod.upload_document.fn(bad, "some-corpus")
                            if hasattr(mod.upload_document, "fn")
                            else mod.upload_document(bad, "some-corpus"))

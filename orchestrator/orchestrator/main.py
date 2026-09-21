@@ -53,6 +53,9 @@ app = FastAPI(title="Polymath Orchestrator", lifespan=lifespan)
 # UI from this same process (below), so no cross-origin traffic exists.
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
+from polymath_shared.principal_context import PrincipalContextMiddleware  # noqa: E402
+
+app.add_middleware(PrincipalContextMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
