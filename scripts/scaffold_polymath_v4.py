@@ -723,6 +723,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-21-real-ecommerce-e2e.md", "md", None),
     ("docs/wiki/work-log/2026-09-21-owner-realignment-latent-transduction.md", "md", None),
     ("docs/wiki/work-log/2026-09-21-owner-audit-directive-handoff.md", "md", None),
+    ("docs/wiki/work-log/2026-09-21-transduction-audit.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT_EXTENDED.md", "md", None),
     ("docs/migration/MIGRATION_POLICY.md", "md", None),
@@ -741,6 +742,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/migration/OWNER_REALIGNMENT_2026-09-21_LATENT_TRANSDUCTION.md", "md", None),
     ("docs/migration/REALIGNMENT_BOOTSTRAP_PROMPT.md", "md", None),
     ("docs/migration/OWNER_AUDIT_DIRECTIVE_2026-09-21.md", "md", None),
+    ("docs/migration/TRANSDUCTION_AUDIT.md", "md", None),
     # CONSOLIDATION MIGRATION Phase 2 — the ecommerce engine imported additively from TRAIL_AGENT_AUTORESEARCH @ a7baa66
     # (tracked files only; MIRROR_RECEIPT.json, .github/ and registry/friction_library.upstream.patch excluded — AUTO_DECISIONS M-006).
     ("adapters/ecommerce/.gitignore", "gitignore", None),
