@@ -150,4 +150,7 @@ class MemoryStore:
         return [{"kind": "field_evidence", "id": r["evidence_id"], "note": f"{r['evidence_role']}/{r['polarity']}"} for r in self.admitted if r["run_id"] == run_id]
 
     def admission_ids(self, conn, run_id: str) -> list[str]:
-        return sorted({r["admission_id"] for r in self.admitted if r["run_id"] == run_id})
+        ids = {r["admission_id"] for r in self.admitted if r["run_id"] == run_id}
+        ids |= {a["admission"]["admission_id"] for a in self.actions.values()            # an admission that admitted nothing is still an admission (D1)
+                if a.get("run_id") == run_id and isinstance(a.get("admission"), dict) and a["admission"].get("admission_id")}
+        return sorted(ids)
