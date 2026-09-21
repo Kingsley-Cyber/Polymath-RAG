@@ -1,0 +1,69 @@
+{
+ "title": "product_slot",
+ "description": "ProductSlot candidate (docs/09): physical job + moment + scope, traceable to a lived situation (why_this).",
+ "required": [
+  "id",
+  "name",
+  "physical_jobs",
+  "moments",
+  "collection_roles"
+ ],
+ "properties": {
+  "id": {
+   "type": "string"
+  },
+  "name": {
+   "type": "string"
+  },
+  "quality": {
+   "type": "number",
+   "minimum": 0,
+   "maximum": 1
+  },
+  "physical_jobs": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "string"
+   }
+  },
+  "moments": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "type": "string"
+   }
+  },
+  "collection_roles": {
+   "type": "array",
+   "minItems": 1,
+   "items": {
+    "enum": [
+     "INSIDER_GEM",
+     "UTILITY",
+     "DISCOVERY",
+     "COMPLEMENT",
+     "IDENTITY"
+    ]
+   }
+  },
+  "mechanism_family": {
+   "type": "string"
+  },
+  "why_this": {
+   "type": "string"
+  },
+  "lived_situation_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "evidence_refs": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  }
+ }
+}

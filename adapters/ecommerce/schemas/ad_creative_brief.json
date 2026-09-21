@@ -1,0 +1,27 @@
+{
+  "$id": "ad_creative_brief",
+  "title": "AdCreativeBrief — compilable creative packet; downstream modes consume it without reopening research (docs/11)",
+  "type": "object",
+  "required": ["id", "angle_id", "target", "hook", "tension", "reveal",
+               "evidence_refs", "claim_boundaries"],
+  "properties": {
+    "id": {"type": "string"},
+    "angle_id": {"type": "string"},
+    "objective": {"enum": ["DISCOVERY", "CONSIDERATION", "COLLECTION_CLICK"]},
+    "target": {"type": "object"},
+    "hook": {"type": "string"},
+    "insider_truth": {"type": "string"},
+    "tension": {"type": "string"},
+    "reveal": {"type": "string"},
+    "proof": {"type": "string"},
+    "product_sequence": {"type": "array"},
+    "cta": {"type": "string"},
+    "visual_direction": {"type": "string"},
+    "tone": {"type": "string"},
+    "use_language": {"type": "array"},
+    "avoid_language": {"type": "array"},
+    "slides": {"type": "array"},
+    "evidence_refs": {"type": "array"},
+    "claim_boundaries": {"type": "array"}
+  }
+}

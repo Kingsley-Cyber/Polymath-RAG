@@ -1,0 +1,9 @@
+id,name,parent_id,type,notes
+hiking,Hiking,,NICHE,outdoor endurance movement
+ultralight-backpacking,Ultralight Backpacking,hiking,SUBNICHE,gram-counting minimalists
+content-creators,Content Creators,,NICHE,short-form video creators
+talking-head-creators,Talking-Head Creators,content-creators,SUBNICHE,face-to-camera educators
+larp,LARP,,NICHE,live-action roleplay communities
+photography,Photography,,NICHE,hobby and working photographers
+fishing,Fishing,,NICHE,shore and boat anglers
+field-technicians,Field Technicians,,AUDIENCE_SEGMENT,mobile trade workers

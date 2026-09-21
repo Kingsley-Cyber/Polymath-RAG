@@ -1,0 +1,31 @@
+{
+ "contract": "corpus-plan-v1",
+ "signal": "SEED (Mark Builds Brands, \"1 product. 3 AI tools. I make $23K/day\", 2025-07-09): \"Purple ocean strategy\": enter a market that is already hot and validated, then carve out a micro-market for a specific group of people. Primal Queen sells beef-organ supplements specifically to women who are postpartum and perimenopausal — \"two of the most significant events in the life of women biologically speaking.\" Hims and Hers split GLP-1 weight loss by gender because \"women and men just view their health completely differently... we have completely different hormone structures.\" A hydrogen-water bottle brand is scaling by selling the bottle on a skin-quality angle: \"the quality of water that you drink is going to impact acne that you have on your face, the blemishes, the imperfections.\" Margin rules: $20 gross margin and 3x cost of goods; \"humans buy based off emotion and then they justify with logic\"; \"all of marketing at its core is simply a game of belief change work\"; \"perception of value\" is half the sale.\n\nLATENT INTERPRETATION (understand): Beneath the marketing talk is a consumer tension: people inside a biological transition they did not choose — postpartum recovery, perimenopause, mid-life male metabolism, adult acne-prone skin — feel that generic health regimes were not built for the body they now have. The aspiration is to regain a sense of authorship over that body: to have the everyday ritual objects of a health regime (what they swallow, drink, apply) recognize their specific state and constraints, and to be told by a peer voice rather than a clinic that their situation is normal and addressable. The capacity being served is self-knowledge during transition; the tension is between a mass-market product's implicit \"average adult\" and a self that no longer feels average. Communities where this is lived: r/Menopause and perimenopause groups, postpartum and \"fourth trimester\" forums, animal-based and carnivore diet communities, adult-acne and skincare subreddits, GLP-1 patient communities (semaglutide/tirzepatide forums), hydration/\"water quality\" hobbyist groups.\n",
+ "expected": [
+  {
+   "id": "208ed7ff5900",
+   "kind": "seed",
+   "query": "Purple ocean strategy\": enter a market that is already hot and validated, then carve out a micro-market for a specific group of people."
+  },
+  {
+   "id": "25f6cd48b08f",
+   "kind": "tension",
+   "query": "(understand): Beneath the marketing talk is a consumer tension: people inside a biological transition they did not choose — postpartum recovery, perimenopause, mid-life male metabolism, adult acne-prone skin — feel that"
+  },
+  {
+   "id": "c2765bc2e96d",
+   "kind": "communities",
+   "query": "r/Menopause and perimenopause groups, postpartum and \"fourth trimester\" forums, animal-based and carnivore diet communities, adult-acne and skincare subreddits, GLP-1 patient communities (semaglutide/tirzepatide"
+  },
+  {
+   "id": "5eca5b96bfb1",
+   "kind": "invariant",
+   "query": "The aspiration is to regain a sense of authorship over that body: to have the everyday ritual objects of a health regime (what they swallow, drink, apply) recognize their specific state and constraints, and to be told"
+  },
+  {
+   "id": "a1ca36baf852",
+   "kind": "contrast",
+   "query": "why do people keep communities health postpartum women adult average"
+  }
+ ]
+}

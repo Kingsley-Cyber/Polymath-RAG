@@ -1,0 +1,61 @@
+# Loop Specification — the external pilot around the Control Graph.
+# (docs/02-loop-plane.txt) The graph structures ONE investigation turn;
+# this artifact defines why turns keep happening and when they must stop.
+# Loop semantics belong HERE, not hidden inside controller.py.
+loop:
+  id: opportunity-research.v1
+  version: 1.0.0
+
+  trigger:
+    type: human
+    command: opportunity_research
+
+  goal:
+    type: verifiable_state
+    success_when:
+      - research_satisfaction == satisfied
+      - mechanism_satisfaction == satisfied
+      - supplier_satisfaction == satisfied
+      - final_verdict in [QUALIFIED_LEAD, PROVISIONAL_LEAD]
+
+  execution:
+    skill: opportunity-research
+    graph: graph/control_graph.yaml
+
+  memory:
+    # v1: JSON work state (candidates/{run_id}.json). Target per
+    # docs/03-memory-layer.txt: SQLite at
+    # ~/.hermes/state/opportunity-research/opportunity.sqlite3 with
+    # runs/work_nodes/work_edges/actions/events/checks — see WORKLOG roadmap.
+    state_file: candidates/{run_id}.json
+    events_file: candidates/{run_id}.events.jsonl
+
+  verification:
+    policy: graph/policies.yaml
+    ladder:            # never report a higher level than what actually ran
+      L1: deterministic (schema, transition legality, dedup, parsing)
+      L2: policy (hop budgets, independence thresholds, allowed sources)
+      L3: field evidence (real comments, live Alibaba offers)
+      L4: model judge (fresh skeptical bridge evaluator — never self-graded)
+      L5: human (registry promotion, production decisions)
+
+  budgets:
+    max_cycles: 8
+    max_hypothesis_rounds: 3
+    max_research_rounds: 4
+    max_query_expansions_per_gap: 2
+    max_web_queries: 40
+    max_supplier_queries: 12
+
+  stagnation:
+    max_no_progress_cycles: 2   # identical meaningful progress_signature twice -> STALLED
+
+  terminals:                    # error/exhaustion is NEVER reported as success
+    - SUCCESS                   # verifiable research goal reached (incl. a correct rejection)
+    - NO_OP                     # nothing worth researching
+    - NO_DEFENSIBLE_BRIDGE      # source cannot support an opportunity path
+    - REJECTED                  # research actively contradicted the hypothesis
+    - BLOCKED                   # required capability/source unavailable
+    - STALLED                   # cycles no longer change meaningful state
+    - EXHAUSTED                 # budget consumed before satisfaction
+    - NEEDS_APPROVAL            # human-controlled promotion boundary reached

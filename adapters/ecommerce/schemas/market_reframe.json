@@ -1,0 +1,17 @@
+{
+  "$id": "market_reframe",
+  "title": "MarketReframe — the claim-audit verdict on the user's initial frame; reframing is a feature, not a failure (docs/13)",
+  "type": "object",
+  "required": ["id", "initial_user_frame", "user_frame_state"],
+  "properties": {
+    "id": {"type": "string"},
+    "initial_user_frame": {"type": "string"},
+    "evidence_supported_frame": {"type": "string"},
+    "why": {"type": "string"},
+    "user_frame_state": {"enum": ["CONFIRMED", "WEAKENED", "CONTRADICTED", "UNTESTED"]},
+    "proposed_repositioning": {"type": "string"},
+    "adjacent_products": {"type": "array"},
+    "adjacent_markets": {"type": "array"},
+    "evidence_refs": {"type": "array"}
+  }
+}

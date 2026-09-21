@@ -1,0 +1,15 @@
+{
+  "$id": "product_identity",
+  "title": "ProductIdentity — canonical name + aliases; an ambiguous product may not proceed as if certain (docs/13)",
+  "type": "object",
+  "required": ["id", "canonical_name", "identity_state"],
+  "properties": {
+    "id": {"type": "string"},
+    "user_name": {"type": "string"},
+    "canonical_name": {"type": "string"},
+    "aliases": {"type": "array"},
+    "observable_properties": {"type": "object"},
+    "source_refs": {"type": "array"},
+    "identity_state": {"enum": ["EXACT", "PROBABLE", "AMBIGUOUS", "UNRESOLVED"]}
+  }
+}

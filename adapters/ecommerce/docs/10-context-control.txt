@@ -1,0 +1,1122 @@
+Yes. This is the point where I would **formally add Context Engineering as a control-plane concern**. Your SQLite durability solves “what happened?” but it does not by itself solve:
+
+> “What exactly should Hermes/model know right now after 40 graph steps, three research rounds, a crash, context compaction, or a fresh subagent?”
+
+A `working_context.md` is a useful emergency/debugging artifact, but I would **not make Markdown the authority**. You already have the stronger answer available:
+
+> **SQLite owns durable workflow truth. Polymath owns source/evidence truth. The registry owns reusable priors. The Control Graph owns what a step requires. A Context Compiler owns the temporary context window presented to θ.**
+
+That closes the architecture.
+
+## The ownership model
+
+I would lock this:
+
+| Layer                   | Owns                                                                                    | Does NOT own               |
+| ----------------------- | --------------------------------------------------------------------------------------- | -------------------------- |
+| **Polymath**            | Documents, corpus knowledge, evidence/source content                                    | Current workflow position  |
+| **Registry/Git**        | Curated priors, activities, frictions, predicates, query grammar                        | Run state                  |
+| **Graph + policies**    | Legal reasoning structure, required context, budgets, authority rules                   | Historical execution state |
+| **SQLite**              | Exact run state, Work Graph, actions, receipts, gaps, products, evidence refs, progress | Full source corpus         |
+| **Context Compiler**    | What θ sees *for this particular action*                                                | Canonical truth            |
+| **Hermes conversation** | Human interaction surface                                                               | Workflow memory            |
+| **θ/model context**     | Temporary semantic reasoning                                                            | Durable memory             |
+| **Report layer**        | Presentation of canonical state                                                         | New facts/evidence         |
+
+The crucial invariant:
+
+> **A run must remain executable if Hermes's conversation history disappears completely.**
+
+You already wanted that for SQLite. Extend it to context:
+
+```text
+delete conversation history
+restart Hermes
+controller.py step --run nl_123
+
+→ system reconstructs exactly enough context
+  to perform the next legal action
+```
+
+If it cannot do that, context management is incomplete.
+
+---
+
+# Add `context.py`, but it must NOT know SQLite directly
+
+You already made:
+
+```text
+memory.py
+=
+ONLY module allowed to know SQLite exists
+```
+
+Keep that law.
+
+So:
+
+```text
+context.py
+    ↓
+memory.py API
+    ↓
+SQLite
+```
+
+Never:
+
+```text
+context.py
+→ raw SQL
+```
+
+`context.py` becomes the sole **Context Compiler / Context Assembler**.
+
+Conceptually:
+
+```text
+Canonical State
+   │
+   ├── memory.py → workflow state
+   ├── registry.py → pinned priors
+   ├── Polymath MCP → source/evidence when needed
+   └── graph.py → context contract for next node
+                     │
+                     ▼
+                context.py
+                     │
+                     ▼
+               ContextEnvelope
+                     │
+                     ▼
+                   Hermes
+                     │
+                     ▼
+                      θ
+```
+
+---
+
+# Do not continually stuff the whole run into the model
+
+This is the trap.
+
+A 30-step run might eventually contain:
+
+```text
+20 sub-niche candidates
+50 lived situations
+300 comments
+18 product candidates
+14 rejected products
+7 supplier sets
+6 contradictions
+3 preference clusters
+hundreds of events
+```
+
+The solution should **not** be:
+
+> summarize everything harder and put it all back into the prompt.
+
+Instead use:
+
+> **State persistence + selective reconstruction.**
+
+The model sees only the state needed for its next task.
+
+---
+
+# Make context requirements part of every graph node
+
+This is the strongest implementation.
+
+Every model-executed Control Graph node should declare a **Context Contract**.
+
+Example:
+
+```yaml
+node:
+  id: lived_experience_r2
+  executor: THETA
+
+  context:
+    require:
+      - run_identity
+      - niche_scope
+      - selected_experience_profiles
+      - lived_situations_r1
+      - relevant_field_observations
+      - preference_clusters
+      - contradictions
+      - evidence_authority_rules
+
+    exclude:
+      - supplier_offers
+      - rejected_unrelated_branches
+      - final_marketing_copy
+
+    evidence_roles:
+      - FRICTION_EVIDENCE
+      - WORKAROUND_EVIDENCE
+      - INSIDER_LANGUAGE
+      - CONTRADICTION
+
+    branch_scope:
+      current_only: true
+```
+
+Compare supplier research:
+
+```yaml
+node:
+  id: supplier_research
+
+  context:
+    require:
+      - surviving_products
+      - product_mechanisms
+      - sourcing_requirements
+      - current_product_references
+
+    exclude:
+      - full_comment_corpus
+      - rejected_experience_profiles
+      - unrelated_subniches
+
+    evidence_roles:
+      - SUPPLIER_AVAILABILITY
+      - PRICE_EVIDENCE
+      - MOQ_EVIDENCE
+      - CUSTOMIZATION_EVIDENCE
+```
+
+Now the graph itself says:
+
+> **Here is what the next reasoning call is legally allowed and required to know.**
+
+That's much stronger than hoping the agent remembers what matters.
+
+---
+
+# Use two context objects
+
+I would distinguish:
+
+## `RunBrief`
+
+Small, stable, always available.
+
+Contains:
+
+```yaml
+run_brief:
+  run_id:
+  mode:
+
+  original_user_goal:
+
+  current_scope:
+
+  registry_snapshot:
+
+  current_phase:
+  current_node:
+
+  terminal_goal:
+
+  hard_invariants:
+    - physical_ecommerce_products_only
+    - evidence_authority
+    - no_registry_mutation
+    - 3_to_6_products
+
+  budgets_remaining:
+
+  major_decisions:
+    - ...
+
+  unresolved_critical_gaps:
+    - ...
+
+  progress_signature:
+```
+
+This should stay relatively small.
+
+Think:
+
+> **What does someone need to understand the investigation in 30 seconds?**
+
+---
+
+## `ActionContext`
+
+Created fresh for each action.
+
+```yaml
+action_context:
+  action_id:
+  run_id:
+  branch_id:
+
+  objective:
+
+  required_state:
+    ...
+
+  focused_working_set:
+    ...
+
+  relevant_evidence:
+    ...
+
+  contradictions:
+    ...
+
+  prior_decisions:
+    ...
+
+  prohibited_assumptions:
+    ...
+
+  output_schema:
+    ...
+```
+
+This can be much richer but is **action-specific**.
+
+So:
+
+```text
+RunBrief
++
+ActionContext
+=
+ContextEnvelope
+```
+
+---
+
+# The ContextEnvelope should be frozen with the action
+
+This is important because of the crash/idempotency architecture you've already built.
+
+Current law:
+
+```text
+step
+→ persist PENDING
+→ execute
+```
+
+Extend it:
+
+```text
+controller.step()
+       ↓
+determine next action
+       ↓
+Context Compiler builds ContextEnvelope
+       ↓
+persist:
+  action
+  context digest
+  context snapshot/reference
+       ↓
+status = PENDING
+       ↓
+Hermes receives exact packet
+```
+
+If Hermes crashes:
+
+```text
+step(run_123)
+```
+
+returns:
+
+```text
+same action
++
+same ContextEnvelope
+```
+
+not a newly reconstructed prompt that happens to be slightly different.
+
+That gives you **reasoning replay stability**.
+
+---
+
+# The model should never depend on previous model turns
+
+A θ prompt should be able to say:
+
+```text
+Here is everything required to perform this action.
+Do not rely on prior conversation state.
+```
+
+That's the ideal.
+
+Not because prior turns are useless, but because they aren't deterministic infrastructure.
+
+This also solves model replacement:
+
+```text
+Gemini generates R1
+↓
+Hermes crashes
+↓
+another model performs R2
+```
+
+R2 still works because the state was externalized.
+
+---
+
+# Add deterministic Context Backfill
+
+This is exactly the fallback you were imagining, but I'd make it an actual mechanism.
+
+Before issuing an action:
+
+```text
+Context Contract
+      ↓
+Context Compiler
+      ↓
+required objects present?
+```
+
+If yes:
+
+```text
+READY
+```
+
+If not:
+
+```text
+CONTEXT_DEFICIT
+```
+
+Then determine where the missing information belongs.
+
+Example:
+
+```text
+Missing:
+selected ExperienceProfiles
+```
+
+Source:
+
+```text
+SQLite Work Graph
+```
+
+Backfill.
+
+Missing:
+
+```text
+original source passage
+```
+
+Source:
+
+```text
+Polymath
+```
+
+Backfill.
+
+Missing:
+
+```text
+friction definition
+```
+
+Source:
+
+```text
+pinned RegistrySnapshot
+```
+
+Backfill.
+
+Missing:
+
+```text
+policy for Alibaba authority
+```
+
+Source:
+
+```text
+pinned policies.yaml
+```
+
+Backfill.
+
+Only if a required object genuinely does not exist:
+
+```text
+BLOCKED_CONTEXT_INCOMPLETE
+```
+
+or the graph routes to the step that must create it.
+
+---
+
+# Context backfill is different from research
+
+Important boundary.
+
+```text
+BACKFILL
+=
+recover already-known canonical state
+```
+
+It cannot silently:
+
+```text
+browse web
+generate new hypothesis
+create evidence
+change product verdict
+```
+
+Example:
+
+> “We know comment ev_114 exists but it's no longer in the current model context.”
+
+Backfill it.
+
+Different:
+
+> “We need evidence about whether runners care about this.”
+
+That's research.
+
+This distinction prevents “context recovery” from mutating the investigation.
+
+---
+
+# Add a `ContextManifest`
+
+Every model call should have a machine-readable manifest.
+
+```yaml
+context_manifest:
+  context_id: ctx_291
+
+  run_id: nl_123
+  action_id: act_88
+
+  compiled_at:
+
+  sources:
+    workflow_state:
+      revision: 42
+
+    registry:
+      snapshot: registry_v18
+
+    graph:
+      version: niche_loadout_v1
+
+    policies:
+      hash: ...
+
+  included_objects:
+    - scope_12
+    - profile_4
+    - profile_5
+    - lived_22
+    - ev_101
+    - ev_102
+    - cluster_7
+
+  excluded_due_to_budget:
+    - ...
+
+  required_contract_complete: true
+
+  context_hash:
+    sha256:...
+```
+
+Now when a terrible model response appears, you can inspect:
+
+> **What exactly did it know?**
+
+That's extremely useful for debugging graph engineering.
+
+---
+
+# Context should use references before summaries wherever possible
+
+Hierarchy:
+
+```text
+CANONICAL OBJECT
+       ↓
+structured compact representation
+       ↓
+selective source excerpt
+       ↓
+summary only when necessary
+```
+
+Do not repeatedly summarize a summary of a summary.
+
+That causes semantic drift.
+
+For example:
+
+```text
+Comment 17
+→ canonical selected excerpt
+
+Observation 8
+→ structured interpretation with evidence_ref=17
+
+Bridge 4
+→ structured relation referencing Observation 8
+```
+
+When R2 needs it, provide:
+
+```text
+bridge
++
+observation
++
+selected relevant comment excerpt
+```
+
+not:
+
+> “Three rounds ago the agent summarized that runners seem to…”
+
+That distinction is huge.
+
+---
+
+# Separate `fact compression` from `semantic compression`
+
+For long runs, you need both.
+
+## Deterministic/state compression
+
+Python can compact:
+
+```text
+47 product candidates
+→
+5 ADVANCE
+4 HOLD
+38 REJECTED
+```
+
+and omit the 38 unless they're relevant.
+
+It can compact evidence:
+
+```text
+WORKAROUND_EVIDENCE
+coverage = satisfied
+independent authors = 9
+threads = 4
+```
+
+without asking an LLM.
+
+## Semantic compression
+
+θ may create a concise:
+
+```text
+"Current community picture"
+```
+
+from admitted observations.
+
+But that summary must contain:
+
+```text
+derived_from IDs
+```
+
+and remain:
+
+```text
+DERIVED_SUMMARY
+```
+
+not source evidence.
+
+Then the context compiler can choose either:
+
+```text
+summary
+```
+
+or:
+
+```text
+underlying evidence
+```
+
+depending on the node.
+
+---
+
+# Give each context item a priority
+
+This is where context-window management can become systematic instead of arbitrary.
+
+Something like:
+
+```text
+P0 — constitutional
+graph rules
+goal
+authority boundaries
+action instruction
+
+P1 — decision-critical
+active scope
+active hypothesis
+critical contradiction
+unresolved evidence gap
+
+P2 — strong relevant evidence
+selected comments
+product evidence
+relevant corpus excerpts
+
+P3 — useful supporting context
+analogies
+secondary observations
+related branches
+
+P4 — historical/debug
+rejected candidates
+old branches
+completed low-value events
+```
+
+When context gets tight:
+
+```text
+drop P4
+then P3
+```
+
+Never drop P0/P1.
+
+---
+
+# Context budgeting can be deterministic
+
+You don't need anything exotic.
+
+For a model with context capacity `W`:
+
+```text
+available =
+W
+- output_reserve
+- system/harness reserve
+```
+
+Then conceptually allocate:
+
+```text
+10–15%  invariants + action
+15–20%  current working state
+40–50%  highest-value evidence/source material
+10–15%  contradictions/alternatives
+10–15%  related priors/analogies
+```
+
+But I would not hardcode those percentages globally.
+
+Node contracts should influence them.
+
+For example:
+
+```text
+COMMENT_STRENGTHENER
+```
+
+should allocate heavily to actual comments.
+
+`PORTFOLIO_OPTIMIZER` needs almost no raw comments; it wants product receipts, physical jobs and coverage.
+
+---
+
+# This radically reduces token use too
+
+Imagine supplier step.
+
+Bad:
+
+```text
+entire 100k-token investigation
++
+supplier prompt
+```
+
+Correct:
+
+```text
+RunBrief: 1k
+Action rules: 1k
+surviving 4 product candidates: 3k
+sourcing requirements: 1k
+current product refs: 2k
+supplier findings: ...
+```
+
+Maybe 8–12k useful tokens instead of 100k historical tokens.
+
+Often **less context improves reasoning** because irrelevant branches cannot distract θ.
+
+---
+
+# Multi-agent becomes clean too
+
+Workers should **never receive the whole run context**.
+
+Parent:
+
+```text
+Controller
+↓
+Context Compiler
+↓
+branch-specific ResearchPacket
+↓
+Hermes subagent
+```
+
+Example worker gets:
+
+```text
+family hiking
+mid-hike shared access
+need:
+FRICTION_EVIDENCE
+WORKAROUND_EVIDENCE
+
+allowed sources:
+community/review
+
+cannot establish:
+market prevalence
+supplier availability
+```
+
+It does not need:
+
+```text
+Alibaba products
+other experience profiles
+all Polymath retrieval
+final ad strategy
+```
+
+This gives you both lower context and less cross-agent contamination.
+
+---
+
+# The Community Skeptic particularly needs isolated context
+
+Do **not** give it the generator's persuasive narrative.
+
+Compile:
+
+```text
+scope
+canonical evidence
+lived situation receipts
+product bindings
+claims
+contradictions
+```
+
+Then ask it to judge.
+
+That preserves evaluator independence.
+
+Same principle for the L4 evaluator in Opportunity Research.
+
+---
+
+# What about `working_context.md`?
+
+I would absolutely generate one.
+
+But as:
+
+```text
+DEBUG / HUMAN RECOVERY PROJECTION
+```
+
+not canonical memory.
+
+Example:
+
+```text
+~/.hermes/state/opportunity-research/
+runs/
+  nl_123/
+    working_context.md
+```
+
+or whatever artifact structure fits your implementation.
+
+Contents:
+
+```markdown
+# Run nl_123
+
+## Goal
+
+## Current phase
+
+## Current scope
+
+## Active hypotheses
+
+## What we currently believe
+
+## What evidence changed the model
+
+## Critical contradictions
+
+## Surviving products
+
+## Open evidence gaps
+
+## Next legal action
+
+## Budgets remaining
+
+## Registry/config versions
+
+## Important artifact IDs
+```
+
+This is excellent for:
+
+```text
+human debugging
+emergency recovery
+inspection
+copying into another environment
+```
+
+But it should always say:
+
+```text
+GENERATED FROM SQLITE
+DO NOT EDIT AS CANONICAL STATE
+```
+
+If it is deleted:
+
+```text
+controller context-export --run nl_123
+```
+
+rebuilds it.
+
+---
+
+# Don't make MD bidirectional
+
+This is critical.
+
+Never:
+
+```text
+SQLite ↔ working_context.md
+```
+
+because eventually they disagree.
+
+Use only:
+
+```text
+SQLite
+   ↓
+working_context.md
+```
+
+One-way projection.
+
+Same as reports.
+
+---
+
+# I would have three generated context artifacts
+
+Conceptually:
+
+```text
+run_brief.json
+working_context.md
+context_manifest.json
+```
+
+But they are projections/cache/debug artifacts.
+
+SQLite remains canonical.
+
+Even better, you don't necessarily need them permanently on disk unless useful—the system can generate them on demand.
+
+---
+
+# Context checkpoints
+
+One additional mechanism would make long loops robust.
+
+At meaningful graph boundaries, emit a deterministic checkpoint:
+
+```text
+R1 complete
+FIELD CORRECTION complete
+PRODUCT SLOTS finalized
+PRODUCT VALIDATION complete
+PORTFOLIO selected
+```
+
+Checkpoint object:
+
+```yaml
+checkpoint:
+  checkpoint_id: cp_17
+  run_id: nl_123
+
+  phase:
+    FIELD_CORRECTION_COMPLETE
+
+  state_revision: 38
+
+  active_scope:
+    ...
+
+  surviving_hypotheses:
+    ...
+
+  resolved_gaps:
+    ...
+
+  unresolved_gaps:
+    ...
+
+  key_decisions:
+    ...
+
+  progress_signature:
+
+  evidence_refs:
+    ...
+```
+
+Then recovering from a 50-step run doesn't require replaying 50 actions semantically.
+
+Context Compiler starts:
+
+```text
+latest valid checkpoint
++
+deltas since checkpoint
+```
+
+That's analogous to event sourcing + snapshots.
+
+Your event log already makes this fit naturally.
+
+---
+
+# So the architecture becomes
+
+```text
+                    POLYMATH
+                 source/evidence truth
+                       │
+                       │
+ REGISTRY ─────────────┼──────────── POLICIES/GRAPH
+ reusable priors       │             rules/contracts
+                       ▼
+                 ┌───────────┐
+                 │  SQLite   │
+                 │ canonical │
+                 │ run state │
+                 └─────┬─────┘
+                       │
+                  memory.py
+                       │
+                       ▼
+                  context.py
+               CONTEXT COMPILER
+                       │
+         ┌─────────────┼─────────────┐
+         │             │             │
+         ▼             ▼             ▼
+      RunBrief    ActionContext   Source Backfill
+         │             │             │
+         └─────────────┼─────────────┘
+                       ▼
+                ContextEnvelope
+                       │
+                       ▼
+                    HERMES
+                       │
+                       ▼
+                       θ
+                       │
+                       ▼
+                structured result
+                       │
+                       ▼
+                 φ verification
+                       │
+                       ▼
+                    SQLite
+```
+
+That's the complete memory/context lifecycle.
+
+---
+
+# What Fable should implement
+
+I would give it this delta:
+
+> **Add explicit Context Engineering to the existing control plane. SQLite remains the sole canonical workflow memory; Polymath remains source/evidence truth; the registry remains reusable-prior truth; Graph/Policy files remain execution-rule truth. Hermes conversation history and model context are never authoritative. Create `context.py` as the sole Context Compiler, but preserve `memory.py` as the only module allowed to access SQLite directly—`context.py` must obtain state through `memory.py` APIs.**
+>
+> **Every θ-executed Control Graph node must declare a `ContextContract`: required object classes, required EvidenceRoles, branch scope, exclusions, and optional context-budget hints. Before an action is exposed to Hermes, the Context Compiler deterministically assembles a `RunBrief + ActionContext` into a versioned `ContextEnvelope`. It must verify that all required context exists and perform deterministic context backfill from the correct canonical owner: SQLite for workflow state, Polymath for source material, pinned RegistrySnapshot for priors, and Graph/Policy files for rules. Backfill may recover known state but may never conduct new research or create evidence.**
+>
+> **Freeze the ContextEnvelope with every PENDING action, including its manifest/hash, so crash-resume returns not only the same pending action but the same execution context. No graph step may rely on previous conversational turns being present. A run must remain executable after complete loss of Hermes conversation memory.**
+>
+> **Use selective reconstruction rather than whole-run prompting. Context priority should preserve constitutional rules and decision-critical objects first, then relevant evidence/contradictions, then supporting priors, while completed/rejected/history data is omitted unless specifically required. Preserve source references and structured receipts rather than repeatedly summarizing summaries. Semantic summaries are derived artifacts with lineage, never evidence.**
+>
+> **Add phase checkpoints so context recovery may use `latest checkpoint + canonical deltas` instead of replaying the entire run. Subagents receive branch-specific ContextEnvelopes, never the full run; fresh evaluators receive evidence/claims/receipts without the generator's persuasive narrative.**
+>
+> **Generate an optional `working_context.md` for human inspection and emergency portability, but it is a one-way projection from SQLite and may never be edited back into canonical state. If deleted, it must be reproducible. The ultimate invariant is: deleting chat history, generated Markdown and model memory must not prevent `controller.py step --run <id>` from determining exactly what to do next and reconstructing the context required to do it.**
+
+This is one of the more important additions you've caught.
+
+**SQLite solved durable memory. `ContextContract → Context Compiler → ContextEnvelope` solves durable cognition.**
+
+Without it, long graph/loop runs eventually become dependent on whatever happens to still be in the LLM context window. With it, the context window becomes what it should be: **a temporary, deterministic projection of durable state for one reasoning action**, not the memory system itself.

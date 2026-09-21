@@ -1,0 +1,1104 @@
+Yes. The **registry/CSV layer is supposed to compound**, but not by simply accumulating more rows. Its value should grow because each high-quality reusable primitive increases the number of future reasoning paths Hermes can recognize without rediscovering them from scratch.
+
+The flywheel should become:
+
+```text
+RESEARCH RUN
+   ↓
+discovers real niche distinctions,
+frictions, workarounds, query language,
+market bridges, product mechanisms,
+successful/failed reasoning patterns
+   ↓
+RegistryCandidates
+   ↓
+AUTOMATIC MAINTENANCE TRIGGERS
+   ↓
+dedupe / recurrence / usefulness / evidence review
+   ↓
+promoted reusable knowledge
+   ↓
+NEW REGISTRY SNAPSHOT
+   ↓
+future research starts smarter
+   ↓
+better discoveries
+   ↓
+more high-quality candidates
+```
+
+The important distinction is:
+
+> **Registry growth should compound reasoning capability, not database size.**
+
+A new row is valuable when it helps many future runs make a better inference, route to a better source, recognize a useful distinction, or avoid a known failure.
+
+---
+
+# 1. Hermes should trigger registry growth itself
+
+I agree that the ordinary user should **not have to say**:
+
+> “Run registry maintenance.”
+
+That would defeat much of the point.
+
+A normal research run should automatically emit candidate knowledge whenever it encounters something reusable.
+
+Examples:
+
+```text
+SUBNICHE_CANDIDATE
+ACTIVITY_CANDIDATE
+SUBACTIVITY_CANDIDATE
+
+FRICTION_CANDIDATE
+WORKAROUND_PATTERN_CANDIDATE
+PHYSICAL_JOB_CANDIDATE
+
+QUERY_PATTERN_CANDIDATE
+SOURCE_CANDIDATE
+
+MARKET_BRIDGE_PATTERN_CANDIDATE
+WHITESPACE_MOTIF_CANDIDATE
+REASONING_MOTIF_CANDIDATE
+NEGATIVE_REASONING_MOTIF
+
+PRODUCT_TERRITORY_CANDIDATE
+TREND_PATTERN_CANDIDATE
+```
+
+The research run does **not** stop to update CSVs.
+
+It just records:
+
+```text
+"I discovered something that may deserve
+to become reusable system knowledge."
+```
+
+SQLite accumulates those candidates.
+
+---
+
+# 2. Maintenance should have automatic triggers
+
+Not necessarily after every run.
+
+Have Python evaluate triggers such as:
+
+```text
+RECURRENCE TRIGGER
+same candidate/pattern appears across multiple runs
+
+COVERAGE TRIGGER
+many runs enter a market where registry support is weak
+
+UNRESOLVED TRIGGER
+same unresolved niche/activity/friction repeatedly appears
+
+SUCCESSFUL-TRANSFER TRIGGER
+same reasoning motif repeatedly leads to strong opportunities
+
+FAILURE TRIGGER
+same reasoning pattern repeatedly gets contradicted
+
+QUERY TRIGGER
+one query formulation repeatedly produces useful evidence
+
+SOURCE TRIGGER
+particular source repeatedly becomes useful for an EvidenceRole
+
+DRIFT TRIGGER
+existing registry/source assumption is repeatedly contradicted
+
+DIVERSIFICATION TRIGGER
+new domains are being researched without enough seed coverage
+```
+
+Then:
+
+```text
+trigger threshold reached
+→ create Registry Maintenance run
+```
+
+Hermes can do this automatically.
+
+The user doesn't need to know it happened unless they ask or approval is needed.
+
+---
+
+# 3. But active registry still should not mutate during the research run
+
+Keep this law:
+
+```text
+Research run uses RegistrySnapshot v21
+                ↓
+discovers candidate
+                ↓
+candidate stored in SQLite
+                ↓
+run remains on v21
+```
+
+Later:
+
+```text
+Maintenance
+→ evaluate
+→ promote
+→ compile
+→ test
+→ RegistrySnapshot v22
+```
+
+Future runs consume v22.
+
+That protects reproducibility.
+
+---
+
+# 4. You can automate most maintenance without making it reckless
+
+I would use tiers.
+
+### Safe automatic maintenance
+
+Potentially automatic after deterministic validation:
+
+```text
+aliases
+normalized terminology
+source metadata
+query synonyms
+noncontroversial mappings
+duplicate consolidation proposals
+```
+
+### Conservative promotion
+
+Require stronger recurrence/evidence:
+
+```text
+new subniche
+new friction primitive
+new physical job
+new product territory
+new reasoning motif
+```
+
+### Constitutional changes
+
+Never autonomous:
+
+```text
+scoring weights
+EvidenceRole definitions
+authority laws
+qualification gates
+unsupported-hop ceilings
+commerce safety rules
+```
+
+Those stay L5/user-controlled.
+
+So Hermes can autonomously **discover, maintain and prepare growth** without becoming capable of rewriting its own epistemology.
+
+---
+
+# 5. The compounding return is combinatorial
+
+This is why your intuition is right.
+
+Imagine the registry eventually knows reusable:
+
+```text
+FRICTIONS
+bounce
+access delay
+heat retention
+bulk
+compatibility
+interference
+
+PHYSICAL JOBS
+retain
+access
+attach
+warm
+cool
+stabilize
+protect
+
+MOTIFS
+hidden layer
+silent upgrade
+repurpose
+reduce interference
+quick access
+compatibility adapter
+```
+
+Then a newly researched community doesn't require completely new reasoning.
+
+Suppose the niche is:
+
+```text
+bird photographers
+```
+
+The system might quickly recognize combinations like:
+
+```text
+access delay
++
+quick access
++
+camera accessory
+```
+
+or:
+
+```text
+carry interference
++
+stabilize
++
+hidden attachment
+```
+
+The primitives were learned somewhere else.
+
+That's where the return compounds.
+
+It's not:
+
+```text
+10,000 niches memorized
+```
+
+It's:
+
+```text
+small reusable vocabulary
+×
+many contexts
+×
+many activities
+×
+many combinations
+```
+
+That scales much better.
+
+---
+
+# 6. Measure registry quality by reuse, not size
+
+I would have telemetry calculate things like:
+
+```text
+times retrieved
+times used in surviving hypotheses
+cross-domain reuse
+times contributing to qualified products
+times contributing to rejected hypotheses
+false-positive rate
+query yield
+source yield
+age/freshness
+```
+
+Conceptually:
+
+```yaml
+registry_usage:
+  concept_id: hidden_layer_upgrade
+
+  retrieved_runs: 84
+  used_runs: 29
+  surviving_hypotheses: 17
+  qualified_opportunities: 8
+  contradicted: 3
+  domains_used: 7
+```
+
+That tells maintenance much more than:
+
+```text
+CSV has 4,322 rows
+```
+
+---
+
+# 7. The second idea you're describing is also important: `DEMAND_GAP_ANALYSIS`
+
+I would **not make it another research mode**.
+
+Make it a shared analysis operator available inside:
+
+```text
+MARKET_DISCOVERY
+PRODUCT_ANCHORED_DISCOVERY
+NICHE_LOADOUT
+OPPORTUNITY_RESEARCH
+```
+
+It answers:
+
+> **Given the actual market/community now, where is demand being insufficiently served, poorly served, generically served, or served in a way that leaves an exploitable segmentation/positioning opportunity?**
+
+That's broader than:
+
+```text
+find unsolved problem
+```
+
+because a product can already exist and the opportunity can still be excellent.
+
+---
+
+# 8. Gap analysis should compare two worlds
+
+Very simple conceptual model:
+
+```text
+WHAT PEOPLE WANT / DO / STRUGGLE WITH
+                    ↕
+WHAT THE CURRENT MARKET PROVIDES
+```
+
+Then analyze the mismatch.
+
+Input side:
+
+```text
+community behavior
+frictions
+workarounds
+desired outcomes
+preferences
+identity
+experience levels
+sub-niches
+search interest
+purchase/search language
+trend/catalyst signals
+```
+
+Supply/current-market side:
+
+```text
+existing products
+product quality
+current positioning
+feature sets
+price bands
+complaints
+market saturation
+supplier abundance
+brands
+retail presentation
+distribution channels
+```
+
+Difference:
+
+```text
+GAP / WHITESPACE
+```
+
+---
+
+# 9. There are several kinds of market gaps
+
+This should be explicit because **“unmet need” is only one type**.
+
+### `UNMET_NEED`
+
+People have a problem and good products barely exist.
+
+Classic:
+
+```text
+market
+→ problem
+→ solution
+```
+
+### `UNDERSERVED_NEED`
+
+Products exist, but they're weak.
+
+```text
+market
+→ problem
+→ mediocre solutions
+→ better mechanism/product
+```
+
+### `SEGMENT_GAP`
+
+The product exists but not for a particular subgroup.
+
+```text
+running product exists
++
+family runner / high-mileage / run-club / soldier
+has different constraints
+```
+
+### `POSITIONING_GAP`
+
+Product works but is framed for the wrong meaning/customer.
+
+This becomes especially useful in Product-Anchored Research.
+
+### `CURATION_GAP`
+
+Products exist individually, but nobody has assembled them intelligently for the community.
+
+This is a Niche Loadout specialty.
+
+### `EXPERIENCE_GAP`
+
+Product technically solves the job but is annoying:
+
+```text
+poor access
+awkward setup
+bulk
+compatibility problems
+maintenance
+bad portability
+```
+
+### `VALUE_GAP`
+
+Existing products are:
+
+```text
+too expensive
+too overbuilt
+too cheap/poor-quality
+wrong bundle
+```
+
+### `IDENTITY / CULTURAL GAP`
+
+Functional solution exists but doesn't fit the desired identity/aesthetic/community.
+
+### `CHANNEL_GAP`
+
+The product exists, but discovery/distribution doesn't reach a specific audience effectively.
+
+### `TECHNOLOGY GAP`
+
+New technology makes an old problem newly solvable.
+
+This connects directly to AI/new-tech paradigms.
+
+---
+
+# 10. The other concept you're describing is **Opportunity Genesis**
+
+Traditional ecommerce thinking often assumes:
+
+```text
+MARKET
+→ PROBLEM
+→ SOLUTION
+```
+
+Keep that.
+
+But it should only be **one opportunity pathway**.
+
+I would formalize several `OpportunityGenesis` types.
+
+## A. `PROBLEM_LED`
+
+```text
+market
+→ existing frustration
+→ physical job
+→ solution
+```
+
+Classic.
+
+---
+
+## B. `SHIFT_LED`
+
+This is the paradigm you are describing around AI, TikTok, societal changes, etc.
+
+```text
+CATALYST
+↓
+behavior changes
+↓
+new constraints/desires
+↓
+new product demand
+↓
+market formation/change
+```
+
+Catalysts:
+
+```text
+new technology
+AI adoption
+new platform behavior
+remote work
+new sport/hobby growth
+cultural shift
+regulation
+economic change
+new creator behavior
+new social ritual
+```
+
+You don't need to predict macroeconomic truth with an LLM.
+
+Hermes observes current field signals and proposes:
+
+```text
+SHIFT_HYPOTHESIS
+```
+
+then validates it.
+
+---
+
+# 11. `TREND_LED`
+
+Different from a structural technology shift.
+
+```text
+Google Trends
+TikTok
+X
+communities
+current search
+product velocity signals
+       ↓
+recurring / accelerating topic
+       ↓
+what changed?
+       ↓
+what behavior accompanies it?
+       ↓
+which products/jobs arise?
+```
+
+The important thing is:
+
+> Don't sell the trend itself; infer the **behavioral consequences** of the trend.
+
+Example:
+
+```text
+new hobby rises
+```
+
+weak reasoning:
+
+```text
+sell hobby T-shirt
+```
+
+stronger reasoning:
+
+```text
+more new participants
+↓
+beginner transition problems
+↓
+equipment confusion
+↓
+carrying/storage/setup problems
+↓
+physical jobs
+↓
+products
+```
+
+That's much more Trail-Signal-like.
+
+---
+
+# 12. Add `RecurringTrend`
+
+This addresses another point you raised.
+
+A one-week spike and a recurring seasonal/current pattern are not the same.
+
+Persist patterns like:
+
+```text
+FLASH
+EMERGING
+SUSTAINED
+RECURRING
+SEASONAL
+CYCLICAL
+DECLINING
+MIGRATING
+```
+
+`MIGRATING` is particularly useful when the behavior survives but terminology changes.
+
+Again, Google Trends/current platforms are optional sensors.
+
+---
+
+# 13. The third major paradigm: `DEMAND_REROUTING`
+
+This is important enough to make first-class.
+
+Here the demand already exists.
+
+You aren't discovering a new human problem.
+
+Instead:
+
+```text
+EXISTING DEMAND
+      ↓
+different meaning
+different audience
+different identity
+different channel
+different format
+different positioning
+      ↓
+NEW COMMERCIAL ROUTE
+```
+
+This is what your Liquid Death example points toward conceptually:
+
+```text
+existing demand:
+drink water
+
+existing category assumptions:
+plain / healthy / boring
+
+reframe:
+different identity / aesthetic / social positioning
+```
+
+The underlying need didn't need invention.
+
+**The route into the demand changed.**
+
+This deserves a canonical object:
+
+```yaml
+demand_reroute:
+  existing_demand:
+  incumbent_solution:
+  current_positioning:
+
+  reroute_dimension:
+    SEGMENT |
+    IDENTITY |
+    CHANNEL |
+    FORMAT |
+    AESTHETIC |
+    OCCASION |
+    VALUE |
+    BUNDLE |
+    EXPERIENCE
+
+  target_scope:
+  new_positioning:
+  why_existing_demand_transfers:
+
+  evidence_refs: []
+```
+
+---
+
+# 14. This creates a fourth paradigm too: `CAPABILITY_LED`
+
+Different from trend-led.
+
+```text
+NEW CAPABILITY
+↓
+what previously difficult job becomes easy?
+↓
+which populations experience that job?
+↓
+which physical product/service combinations become possible?
+```
+
+For your ecommerce system, examples of capability catalysts might include:
+
+```text
+new battery technology
+new materials
+smaller electronics
+better manufacturing
+3D printing
+new AI-assisted customization
+cheap sensors
+```
+
+Again, external evidence validates whether commercial reality exists.
+
+---
+
+# 15. So don't force every opportunity through one funnel
+
+I would define:
+
+```text
+OpportunityGenesis
+
+PROBLEM_LED
+SHIFT_LED
+TREND_LED
+DEMAND_REROUTE
+CAPABILITY_LED
+WORKAROUND_LED
+COMMUNITY_LED
+SUPPLY_TRANSFER_LED
+```
+
+A hypothesis can have multiple origins.
+
+This is useful because the graph can reason differently depending on genesis.
+
+For instance:
+
+```text
+WORKAROUND_LED
+```
+
+should heavily research comments.
+
+`TREND_LED` should emphasize currentness.
+
+`DEMAND_REROUTE` should emphasize existing demand + segmentation + positioning.
+
+`CAPABILITY_LED` needs stronger technical feasibility validation.
+
+---
+
+# 16. Gap Analysis should include **Capture Feasibility**
+
+You raised a very important question:
+
+> Even if demand is being served, how easy is it for us to enter and take a share?
+
+That's not exactly market demand.
+
+Call it:
+
+# `EntrySurface`
+
+or:
+
+# `CaptureFeasibility`
+
+It should analyze:
+
+```text
+How fragmented are competitors?
+
+How dominant are incumbent brands?
+
+How differentiated can the product be?
+
+How obvious is the differentiation?
+
+How difficult is switching?
+
+Can people discover it organically?
+
+Does TikTok/content fit the product?
+
+Does it have a visual demonstration?
+
+Can an unknown brand credibly sell it?
+
+Can suppliers create a differentiated version?
+
+Is MOQ practical?
+
+Is margin practical?
+
+How saturated are ads/listings?
+
+Does the niche respond to specialist positioning?
+
+Is the market driven by trust/brand authority?
+
+Are there regulatory/claim barriers?
+```
+
+This is exactly how you distinguish:
+
+```text
+great demand
+but nearly impossible entry
+```
+
+from:
+
+```text
+moderate demand
+but unusually easy niche capture
+```
+
+---
+
+# 17. Don't turn Capture Feasibility into fake “market share probability”
+
+Use decomposed dimensions:
+
+```yaml
+capture_feasibility:
+  competitor_fragmentation:
+  incumbent_lock_in:
+  differentiation_clarity:
+  switching_friction:
+  niche_specificity:
+  organic_contentability:
+  visual_demonstrability:
+  creator_channel_fit:
+  supplier_flexibility:
+  margin_room:
+  trust_barrier:
+  regulatory_burden:
+
+  result:
+    EASY_ENTRY |
+    PLAUSIBLE |
+    DIFFICULT |
+    HOSTILE
+```
+
+The values need evidence receipts.
+
+No:
+
+```text
+"You have 72% chance of gaining market share."
+```
+
+---
+
+# 18. This belongs naturally in Market Discovery
+
+Your Market Discovery graph can become:
+
+```text
+DISCOVER MARKET
+      ↓
+COMMUNITY / TREND / CORPUS / SUPPLY
+      ↓
+MARKET LATTICE
+      ↓
+DEMAND GAP ANALYSIS
+      ↓
+OPPORTUNITY GENESIS
+      ├─ Problem-led
+      ├─ Shift-led
+      ├─ Trend-led
+      ├─ Demand-reroute
+      ├─ Capability-led
+      └─ Workaround-led
+      ↓
+WHITESPACE
+      ↓
+CAPTURE FEASIBILITY
+      ↓
+MARKET FRONTIER
+```
+
+This is better than only asking:
+
+> “Does this niche have unmet problems?”
+
+---
+
+# 19. It belongs in Niche Loadout too
+
+Example:
+
+```text
+family hikers
+```
+
+You may find:
+
+```text
+products already exist
+```
+
+but:
+
+```text
+nobody curates specifically around
+family-hike transitions
+```
+
+That's:
+
+```text
+CURATION_GAP
+```
+
+Or:
+
+```text
+products exist
+but products are marketed to general outdoor users
+```
+
+That's:
+
+```text
+SEGMENT + POSITIONING GAP
+```
+
+The opportunity may be **storefront intelligence**, not product invention.
+
+That's very relevant to your intended business.
+
+---
+
+# 20. And Product-Anchored Discovery becomes stronger
+
+Given an object, it can ask:
+
+```text
+Does this solve unmet demand?
+
+Or:
+
+Is the demand already fully established,
+but the product can be rerouted toward another
+community/context/identity?
+```
+
+So:
+
+```text
+Product
+→ current market
+→ existing demand
+→ alternative MarketScopes
+→ DemandReroute hypotheses
+```
+
+That's exactly what inverted niche research should do.
+
+---
+
+# 21. The CSV compounding loop should learn these patterns too
+
+This is where qualitative registry growth becomes powerful.
+
+Suppose over multiple runs the system repeatedly discovers:
+
+```text
+people tolerate an inadequate hidden component
+because the visible outer system must remain
+```
+
+That becomes:
+
+```text
+REASONING MOTIF:
+HIDDEN_LAYER_UPGRADE
+```
+
+Or repeatedly:
+
+```text
+existing generic product
++
+distinct community language
++
+poor community-specific positioning
+```
+
+becomes:
+
+```text
+WHITESPACE MOTIF:
+COMMUNITY_POSITIONING_GAP
+```
+
+Or:
+
+```text
+existing demand
++
+new aesthetic identity
++
+same underlying functional product
+```
+
+becomes:
+
+```text
+DEMAND_REROUTE MOTIF:
+IDENTITY_REFRAME
+```
+
+These are precisely the kinds of reusable qualitative patterns that make the registry increasingly valuable.
+
+---
+
+# 22. I still would NOT create the motif CSV today
+
+Let SQLite collect these:
+
+```text
+REASONING_MOTIF_CANDIDATE
+WHITESPACE_MOTIF_CANDIDATE
+DEMAND_REROUTE_MOTIF_CANDIDATE
+```
+
+Then let maintenance prove:
+
+```text
+Do these recur?
+Do they generalize?
+Do they increase successful hypothesis generation?
+```
+
+Once you have enough evidence, **then** a `reasoning_motifs.csv` may become justified.
+
+That's how the registry should grow:
+
+> **Runtime demand creates schema growth, not architectural imagination.**
+
+---
+
+# 23. Fable delta I would add
+
+> **Treat registry growth as an autonomous compounding-learning lifecycle. Every research mode should emit reusable RegistryCandidates whenever it discovers potentially generalizable niche distinctions, activities, frictions, workarounds, physical jobs, query/source patterns, whitespace structures, demand-rerouting structures, reasoning motifs, negative motifs, market bridges or product territories. Ordinary users should never need to request maintenance. Add deterministic maintenance triggers based on cross-run recurrence, unresolved coverage, repeated successful/failed reasoning patterns, query/source yield, registry-support gaps and drift. Trigger Registry Maintenance automatically when thresholds are reached, while preserving immutable per-run RegistrySnapshots and preventing active-registry mutation during research.**
+>
+> **Add shared `DEMAND_GAP_ANALYSIS` as an integrated analytical operator, not another user research mode. Compare current human/community demand signals against existing market/product/positioning/supply reality and classify gaps such as UNMET_NEED, UNDERSERVED_NEED, SEGMENT_GAP, POSITIONING_GAP, CURATION_GAP, EXPERIENCE_GAP, VALUE_GAP, IDENTITY_GAP, CHANNEL_GAP and TECHNOLOGY_GAP.**
+>
+> **Add `OpportunityGenesis` so hypotheses are not forced through only `market → problem → solution`. Support at minimum PROBLEM_LED, SHIFT_LED, TREND_LED, DEMAND_REROUTE, CAPABILITY_LED, WORKAROUND_LED and COMMUNITY_LED genesis. Genesis controls research emphasis but grants no evidence authority. Trend/shift hypotheses must still establish downstream behavioral consequences rather than treating popularity itself as a product opportunity.**
+>
+> **Add `DemandReroute` as a first-class hypothesis for opportunities where underlying demand already exists but can be captured through a new segment, identity, channel, occasion, format, aesthetic, value proposition, bundle or experience.**
+>
+> **Add evidence-backed `CaptureFeasibility` after gap identification to measure how commercially penetrable an apparently attractive market is. Keep dimensions decomposed—competitor fragmentation, incumbent lock-in, differentiation clarity, switching friction, niche specificity, organic/content fit, visual demonstrability, supplier flexibility, margin room, trust barrier and regulatory burden—and return categorical/auditable routing judgments rather than fabricated market-share probabilities.**
+>
+> **Feed these structures into Market Discovery frontier ranking, Product-Anchored market bridges, Niche Loadout collection analysis and Opportunity Research qualification/reporting.**
+
+I think this addresses the thing you were sensing: **Trail-Signal should not just search for unsolved problems. It should search for exploitable mismatches between human demand, cultural/technological shifts, communities, existing solutions, positioning, supply and accessibility of market entry.**
+
+And over time, the registry should increasingly recognize those mismatch patterns before the model has to rediscover them from zero.

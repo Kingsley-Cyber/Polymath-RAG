@@ -1,0 +1,2500 @@
+{
+ "run_id": "run_story_001",
+ "created_at": "2026-08-10T07:09:29+00:00",
+ "node": "stop",
+ "status": "stopped",
+ "rounds": {
+  "research": 3
+ },
+ "history": [
+  {
+   "node": "understand",
+   "event": "submit",
+   "keys": [
+    "signal"
+   ],
+   "at": "2026-08-10T07:09:29+00:00"
+  },
+  {
+   "node": "understand",
+   "event": "advance",
+   "to": "polymath",
+   "note": null,
+   "at": "2026-08-10T07:09:29+00:00"
+  },
+  {
+   "node": "polymath",
+   "event": "submit",
+   "keys": [
+    "polymath_evidence"
+   ],
+   "at": "2026-08-10T07:09:51+00:00"
+  },
+  {
+   "node": "polymath",
+   "event": "advance",
+   "to": "primitives",
+   "note": null,
+   "at": "2026-08-10T07:09:51+00:00"
+  },
+  {
+   "node": "primitives",
+   "event": "submit",
+   "keys": [
+    "primitives"
+   ],
+   "at": "2026-08-10T07:09:51+00:00"
+  },
+  {
+   "node": "primitives",
+   "event": "advance",
+   "to": "signal_gate",
+   "note": null,
+   "at": "2026-08-10T07:09:51+00:00"
+  },
+  {
+   "node": "signal_gate",
+   "event": "advance",
+   "to": "lenses",
+   "note": "generative signal present: 2 physical jobs, 2 invariants",
+   "at": "2026-08-10T07:09:51+00:00"
+  },
+  {
+   "node": "lenses",
+   "event": "advance",
+   "to": "structural_lookup",
+   "note": "selected 4 lenses: performance, mobility, embodiment, minimal-interference",
+   "at": "2026-08-10T07:09:51+00:00"
+  },
+  {
+   "node": "structural_lookup",
+   "event": "advance",
+   "to": "hypothesize",
+   "note": "3 cross-domain structural analogies attached (invariant-bounded)",
+   "at": "2026-08-10T07:10:01+00:00"
+  },
+  {
+   "node": "hypothesize",
+   "event": "submit",
+   "keys": [
+    "hypotheses"
+   ],
+   "at": "2026-08-10T07:10:54+00:00"
+  },
+  {
+   "node": "hypothesize",
+   "event": "advance",
+   "to": "challenge",
+   "note": null,
+   "at": "2026-08-10T07:10:54+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "submit",
+   "keys": [
+    "challenges"
+   ],
+   "at": "2026-08-10T07:10:54+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "advance",
+   "to": "triage",
+   "note": null,
+   "at": "2026-08-10T07:10:54+00:00"
+  },
+  {
+   "node": "triage",
+   "event": "advance",
+   "to": "gaps",
+   "note": "triage: 3 research-ready, 1 held (priority is a prior, not evidence)",
+   "at": "2026-08-10T07:10:54+00:00"
+  },
+  {
+   "node": "gaps",
+   "event": "advance",
+   "to": "web_research",
+   "note": "compiled 8 new gaps, 24 queries (8 open)",
+   "at": "2026-08-10T07:10:54+00:00"
+  },
+  {
+   "node": "web_research",
+   "event": "submit",
+   "keys": [
+    "observations"
+   ],
+   "at": "2026-08-10T07:15:03+00:00"
+  },
+  {
+   "node": "web_research",
+   "event": "advance",
+   "to": "curate",
+   "note": null,
+   "at": "2026-08-10T07:15:03+00:00"
+  },
+  {
+   "node": "curate",
+   "event": "advance",
+   "to": "challenge",
+   "note": "curated 10 unique observations; gaps supported+2 contradicted+0; round 1; coverage missing: ['mechanism']",
+   "at": "2026-08-10T07:15:22+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "submit",
+   "keys": [
+    "challenges",
+    "hypotheses"
+   ],
+   "at": "2026-08-10T07:15:22+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "advance",
+   "to": "triage",
+   "note": null,
+   "at": "2026-08-10T07:15:22+00:00"
+  },
+  {
+   "node": "triage",
+   "event": "advance",
+   "to": "gaps",
+   "note": "triage: 1 research-ready, 0 held (priority is a prior, not evidence)",
+   "at": "2026-08-10T07:15:22+00:00"
+  },
+  {
+   "node": "gaps",
+   "event": "advance",
+   "to": "web_research",
+   "note": "compiled 0 new gaps, 0 queries (6 open)",
+   "at": "2026-08-10T07:15:22+00:00"
+  },
+  {
+   "node": "web_research",
+   "event": "submit",
+   "keys": [
+    "observations"
+   ],
+   "at": "2026-08-10T07:16:10+00:00"
+  },
+  {
+   "node": "web_research",
+   "event": "advance",
+   "to": "curate",
+   "note": null,
+   "at": "2026-08-10T07:16:10+00:00"
+  },
+  {
+   "node": "curate",
+   "event": "advance",
+   "to": "challenge",
+   "note": "curated 11 unique observations; gaps supported+0 contradicted+0; round 2; coverage missing: ['mechanism']",
+   "at": "2026-08-10T07:16:10+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "advance",
+   "to": "triage",
+   "note": null,
+   "at": "2026-08-10T07:16:10+00:00"
+  },
+  {
+   "node": "triage",
+   "event": "advance",
+   "to": "gaps",
+   "note": "triage: 1 research-ready, 0 held (priority is a prior, not evidence)",
+   "at": "2026-08-10T07:16:10+00:00"
+  },
+  {
+   "node": "gaps",
+   "event": "advance",
+   "to": "web_research",
+   "note": "compiled 0 new gaps, 0 queries (6 open)",
+   "at": "2026-08-10T07:16:10+00:00"
+  },
+  {
+   "node": "web_research",
+   "event": "advance",
+   "to": "curate",
+   "note": null,
+   "at": "2026-08-10T07:16:10+00:00"
+  },
+  {
+   "node": "curate",
+   "event": "advance",
+   "to": "challenge",
+   "note": "curated 11 unique observations; gaps supported+0 contradicted+0; round 3; coverage missing: ['mechanism']",
+   "at": "2026-08-10T07:16:10+00:00"
+  },
+  {
+   "node": "challenge",
+   "event": "advance",
+   "to": "triage",
+   "note": null,
+   "at": "2026-08-10T07:16:11+00:00"
+  },
+  {
+   "node": "triage",
+   "event": "advance",
+   "to": "gaps",
+   "note": "triage: 1 research-ready, 0 held (priority is a prior, not evidence)",
+   "at": "2026-08-10T07:16:11+00:00"
+  },
+  {
+   "node": "gaps",
+   "event": "advance",
+   "to": "mechanism",
+   "note": "compiled 0 new gaps, 0 queries (6 open)",
+   "at": "2026-08-10T07:16:11+00:00"
+  },
+  {
+   "node": "mechanism",
+   "event": "submit",
+   "keys": [
+    "mechanisms",
+    "product_candidates"
+   ],
+   "at": "2026-08-10T07:16:31+00:00"
+  },
+  {
+   "node": "mechanism",
+   "event": "advance",
+   "to": "supplier_search",
+   "note": null,
+   "at": "2026-08-10T07:16:31+00:00"
+  },
+  {
+   "node": "supplier_search",
+   "event": "submit",
+   "keys": [
+    "supplier_candidates"
+   ],
+   "at": "2026-08-10T07:17:05+00:00"
+  },
+  {
+   "node": "supplier_search",
+   "event": "advance",
+   "to": "normalize_supplier",
+   "note": null,
+   "at": "2026-08-10T07:17:05+00:00"
+  },
+  {
+   "node": "normalize_supplier",
+   "event": "advance",
+   "to": "qualify",
+   "note": "normalized 3 suppliers (3 with parsed price+MOQ)",
+   "at": "2026-08-10T07:17:05+00:00"
+  },
+  {
+   "node": "qualify",
+   "event": "advance",
+   "to": "stop",
+   "note": "verdict: QUALIFIED_LEADS (tier=QUALIFIED_LEAD, 3 leads)",
+   "at": "2026-08-10T07:17:05+00:00"
+  }
+ ],
+ "verdict": "QUALIFIED_LEADS",
+ "data": {
+  "signal": "Storytelling is the core differentiator for creators now. The best performers deliver with their whole body — movement, gesture, presence — not just words into a static mic. LATENT INTERPRETATION: the tension is between expressive physical performance and the capture apparatus. Creators aspire to embodied delivery (stage presence norms migrating to short-form video), but recording tools were designed for stationary use. The friction is lived wherever performance meets equipment: talking-head creators, walk-and-talk vloggers, fitness/dance instructors, workshop presenters. Communities where this is discussed: r/NewTubers, r/VideoEditing, r/podcasting, creator YouTube comment sections, TikTok creator forums.",
+  "polymath_evidence": [
+   {
+    "id": "ev_seed_1",
+    "summary": "Expressive storytelling benefits from embodied delivery: gesture and movement increase audience retention and perceived authenticity",
+    "source": "seed-transcript (Polymath MCP pending — King wiring)",
+    "knowledge_roles": [
+     "BEHAVIORAL",
+     "PATTERN"
+    ],
+    "can_establish": [
+     "behavioral_mechanism"
+    ],
+    "cannot_establish": [
+     "current_demand",
+     "current_supplier_availability"
+    ]
+   },
+   {
+    "id": "ev_seed_2",
+    "summary": "Creator differentiation increasingly rests on physical delivery quality rather than information content alone",
+    "source": "seed-transcript",
+    "knowledge_roles": [
+     "BEHAVIORAL",
+     "CULTURAL"
+    ],
+    "can_establish": [
+     "conceptual_pattern"
+    ],
+    "cannot_establish": [
+     "current_demand"
+    ]
+   },
+   {
+    "id": "ev_seed_3",
+    "summary": "Performance traditions (stage, oratory) treat hands and torso as primary expressive instruments; tools that occupy hands reduce expressive range",
+    "source": "seed-transcript",
+    "knowledge_roles": [
+     "BEHAVIORAL",
+     "HISTORICAL"
+    ],
+    "can_establish": [
+     "behavioral_mechanism"
+    ],
+    "cannot_establish": [
+     "current_demand"
+    ]
+   }
+  ],
+  "primitives": {
+   "generative_signal": true,
+   "drivers": [
+    "creator differentiation pressure",
+    "authenticity norms favoring embodied delivery"
+   ],
+   "behaviors": [
+    "performing with whole-body gesture while speaking to camera",
+    "walking while narrating",
+    "demonstrating physically while teaching"
+   ],
+   "adaptations": [
+    "staying seated to keep mic quality",
+    "re-shooting when movement ruins audio"
+   ],
+   "constraints": [
+    "capture system must preserve movement and gesture",
+    "audio quality cannot be sacrificed for mobility"
+   ],
+   "frictions": [
+    "occupied_hand",
+    "movement_restriction"
+   ],
+   "workarounds": [
+    "taping transmitters to clothing",
+    "improvised belt mounts"
+   ],
+   "physical_interactions": [
+    "wear/hold/attach recording equipment during performance"
+   ],
+   "physical_jobs": [
+    "capture clean audio without constraining physical expression",
+    "attach and reposition small hardware on changing outfits"
+   ],
+   "latent_values": [
+    "expressive freedom",
+    "professionalism without visible rigging"
+   ],
+   "transferable_invariants": [
+    "a tool should interfere as little as possible with the activity it enables",
+    "a frequently repositioned object needs tool-free secure attachment"
+   ],
+   "unresolved_questions": [
+    "do creators actually complain about attachment friction?",
+    "is purchase intent present or do workarounds satisfy?"
+   ],
+   "shared_predicates": [
+    "attach",
+    "access",
+    "retain"
+   ]
+  },
+  "cross_domain_analogies": [
+   {
+    "seed_id": "seed-1261",
+    "domain": "outdoors_with_animals",
+    "activity": "Dog hiking",
+    "task": "manage leash and supplies",
+    "friction_family": "occupied_hand",
+    "workaround_hypothesis": "overfilled pockets and wrist loops",
+    "product_territory": "one-hand animal-walk carry system",
+    "matched": {
+     "predicate": "access",
+     "friction": "occupied_hand"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   },
+   {
+    "seed_id": "seed-1321",
+    "domain": "adaptive_lower_intensity",
+    "activity": "Senior walking",
+    "task": "access essentials while using aid",
+    "friction_family": "occupied_hand",
+    "workaround_hypothesis": "hanging bags and caregiver carrying",
+    "product_territory": "mobility-aid compatible access module",
+    "matched": {
+     "predicate": "access",
+     "friction": "occupied_hand"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   },
+   {
+    "seed_id": "seed-0001",
+    "domain": "walking_running_movement",
+    "activity": "Neighborhood walking",
+    "task": "maintain unrestricted stride",
+    "friction_family": "movement_restriction",
+    "workaround_hypothesis": "cutting hems, sizing up, tying items down",
+    "product_territory": "articulated apparel and low-bounce storage",
+    "matched": {
+     "predicate": "access",
+     "friction": "movement_restriction"
+    },
+    "authority": "SEED_HYPOTHESIS"
+   }
+  ],
+  "lenses": [
+   {
+    "name": "performance",
+    "question": "What does excelling at this in front of others require physically?"
+   },
+   {
+    "name": "mobility",
+    "question": "What breaks when the person cannot stay still?"
+   },
+   {
+    "name": "embodiment",
+    "question": "Which body parts are occupied, and what competes for them?"
+   },
+   {
+    "name": "minimal-interference",
+    "question": "What tool disappears from awareness when it works?"
+   }
+  ],
+  "hypotheses": [
+   {
+    "id": "hyp_magnet",
+    "source": "storytelling_embodiment",
+    "path": [
+     "creator_differentiation",
+     "expressive_physical_delivery",
+     "movement_during_recording",
+     "tool_free_repositionable_attachment",
+     "magnetic_through_fabric_mount"
+    ],
+    "target_mechanism": "magnetic_through_fabric_attachment",
+    "invariant": "a frequently repositioned object needs tool-free secure attachment",
+    "evidence_boundary": {
+     "first_inference_at": "expressive_physical_delivery"
+    },
+    "gaps": [
+     "creators report clip/lav attachment interfering with clothing or movement",
+     "creators improvise attachment workarounds (tape/magnets/DIY)",
+     "purchase-seeking language for better attachment exists"
+    ],
+    "alternatives": [
+     "existing clips are good enough; friction is rare",
+     "creators just use handhelds and prefer them"
+    ],
+    "falsifiers": [
+     "communities show no attachment complaints",
+     "wardrobe changes don't affect mic setups"
+    ],
+    "status": "WORKING_HYPOTHESIS",
+    "research_priority": 5
+   },
+   {
+    "id": "hyp_wearable",
+    "source": "storytelling_embodiment",
+    "path": [
+     "creator_differentiation",
+     "expressive_physical_delivery",
+     "hands_used_for_gesture",
+     "hands_free_capture",
+     "wearable_wireless_audio_system"
+    ],
+    "target_mechanism": "wearable_wireless_audio_system",
+    "evidence_boundary": {
+     "first_inference_at": "expressive_physical_delivery"
+    },
+    "gaps": [
+     "creators moving while recording report audio tradeoffs",
+     "hands-free preference stated over handheld in creator communities",
+     "complaints about current wireless systems (dropouts, bulk, pairing)"
+    ],
+    "alternatives": [
+     "static shotgun mics satisfy most talking-head creators"
+    ],
+    "falsifiers": [
+     "creators report never moving while recording"
+    ],
+    "status": "HOLD"
+   },
+   {
+    "id": "hyp_garment",
+    "source": "storytelling_embodiment",
+    "path": [
+     "creator_differentiation",
+     "wardrobe_as_content_element",
+     "frequent_outfit_changes",
+     "audio_ready_garment_integration"
+    ],
+    "target_mechanism": "garment_integrated_mic_channeling",
+    "invariant": "equipment should disappear into what the performer already wears",
+    "evidence_boundary": {
+     "first_inference_at": "wardrobe_as_content_element"
+    },
+    "gaps": [
+     "creators mention outfit changes disrupting mic setups",
+     "any evidence of clothing modified for audio routing"
+    ],
+    "alternatives": [
+     "magnetic/clip solutions solve this more cheaply than garments"
+    ],
+    "falsifiers": [
+     "no one modifies clothing for audio; all solutions are external"
+    ],
+    "status": "HOLD",
+    "research_priority": 4
+   },
+   {
+    "id": "hyp_badge",
+    "source": "cross_domain_transfer",
+    "exploratory": true,
+    "path": [
+     "industrial_badge_and_sensor_mounting",
+     "tool_free_body_placement_standards",
+     "creator_transmitter_placement",
+     "retractable_or_dock_based_transmitter_carrier"
+    ],
+    "target_mechanism": "dock_based_transmitter_carrier",
+    "evidence_boundary": {
+     "first_inference_at": "industrial_badge_and_sensor_mounting"
+    },
+    "gaps": [
+     "creators describe wanting to move transmitter between positions/outfits quickly",
+     "evidence that cross-industry mounting patterns appear in creator gear discussions or DIY"
+    ],
+    "alternatives": [
+     "magnet mounts already solve repositioning"
+    ],
+    "falsifiers": [
+     "repositioning frequency is low"
+    ],
+    "status": "HOLD"
+   }
+  ],
+  "challenges": [
+   {
+    "id": "ch_1",
+    "hypothesis_id": "hyp_wearable",
+    "argument": "Wearable wireless is a crowded category (DJI/Rode dominate) — the bridge may be valid but the commercial delta unclear; keep, demand product-delta evidence later",
+    "verdict": "WORKING_HYPOTHESIS"
+   },
+   {
+    "id": "ch_2",
+    "hypothesis_id": "hyp_magnet",
+    "argument": "Magnets near electronics and thin fabrics raise practical concerns; but workaround evidence would directly support; strongest falsifiability",
+    "verdict": "WORKING_HYPOTHESIS"
+   },
+   {
+    "id": "ch_3",
+    "hypothesis_id": "hyp_garment",
+    "argument": "Garment integration fights sizing/washing/style variety — high alternative-explanation pressure from cheaper external mounts",
+    "verdict": "CHALLENGED"
+   },
+   {
+    "id": "ch_4",
+    "hypothesis_id": "hyp_badge",
+    "argument": "Repositioning frequency is the crux; if low, dock carrier is a solution seeking a problem",
+    "verdict": "WORKING_ANALOGY"
+   },
+   {
+    "id": "ch_5",
+    "hypothesis_id": "hyp_magnet",
+    "argument": "Round-1 field evidence: 4 independent DIY magnetic mounts (community-authored), purchase-intent across 3 sources, product complaints about clip attachment. First-person community friction quotes still missing (gap open). Bridge holding strongly.",
+    "verdict": "WORKING_HYPOTHESIS"
+   },
+   {
+    "id": "ch_6",
+    "hypothesis_id": "hyp_wearable",
+    "argument": "No admissible community behavior evidence surfaced this round; category crowded (DJI/Rode/Shure). Holding — magnet path carries the same invariant with better delta.",
+    "verdict": "HOLD"
+   },
+   {
+    "id": "ch_7",
+    "hypothesis_id": "hyp_badge",
+    "argument": "No cross-industry pattern penetration found in creator discussions round-1. Unproven, not disproven — holding.",
+    "verdict": "HOLD"
+   }
+  ],
+  "gaps": [
+   {
+    "id": "ddfc7539f5ad",
+    "hypothesis_id": "hyp_magnet",
+    "question": "creators report clip/lav attachment interfering with clothing or movement",
+    "status": "open",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "180e4ef30a6b",
+    "hypothesis_id": "hyp_magnet",
+    "question": "creators improvise attachment workarounds (tape/magnets/DIY)",
+    "status": "supported",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "789594da768c",
+    "hypothesis_id": "hyp_magnet",
+    "question": "purchase-seeking language for better attachment exists",
+    "status": "supported",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "a829c7efd0ef",
+    "hypothesis_id": "hyp_wearable",
+    "question": "creators moving while recording report audio tradeoffs",
+    "status": "open",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "7d143a3cbc86",
+    "hypothesis_id": "hyp_wearable",
+    "question": "hands-free preference stated over handheld in creator communities",
+    "status": "open",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "9378bc6c6b7b",
+    "hypothesis_id": "hyp_wearable",
+    "question": "complaints about current wireless systems (dropouts, bulk, pairing)",
+    "status": "open",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "4e3c6af564a9",
+    "hypothesis_id": "hyp_badge",
+    "question": "creators describe wanting to move transmitter between positions/outfits quickly",
+    "status": "open",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "483f0d2006d6",
+    "hypothesis_id": "hyp_badge",
+    "question": "evidence that cross-industry mounting patterns (badge reels, sensor docks) appear in creator gear discussions or DIY",
+    "status": "open",
+    "required_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "PURCHASE_INTENT"
+    ],
+    "required_freshness": [
+     "FAST",
+     "LIVE"
+    ],
+    "registry_query_grammars": [
+     {
+      "id": "q-complaint",
+      "grammar": "{activity} {task} annoying",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-hard-to",
+      "grammar": "{activity} hard to {task}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-wish",
+      "grammar": "{activity} wish it had {friction_family}",
+      "goal": "complaint",
+      "expected_roles": [
+       "FRICTION_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-workaround",
+      "grammar": "{activity} {task} DIY modification",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-cut",
+      "grammar": "{activity} cut sewed taped repurposed",
+      "goal": "workaround",
+      "expected_roles": [
+       "WORKAROUND_EVIDENCE"
+      ]
+     },
+     {
+      "id": "q-gloves",
+      "grammar": "{activity} {task} with gloves",
+      "goal": "context",
+      "expected_roles": [
+       "BEHAVIOR_SUPPORT"
+      ]
+     }
+    ]
+   }
+  ],
+  "queries": [
+   {
+    "id": "5c7f52bac98c",
+    "gap_id": "ddfc7539f5ad",
+    "query": "site:reddit.com \"creators report clip/lav attachment interfering with clothing or movement\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "2a65ceb88081",
+    "gap_id": "ddfc7539f5ad",
+    "query": "youtube comments: creators report clip/lav attachment interfering with clothing or movement",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "3e145d8ece2f",
+    "gap_id": "ddfc7539f5ad",
+    "query": "\"creators report clip/lav attachment interfering with clothing or movement\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "dda9ec97bd0d",
+    "gap_id": "180e4ef30a6b",
+    "query": "site:reddit.com \"creators improvise attachment workarounds (tape/magnets/DIY)\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "f38c5de52d57",
+    "gap_id": "180e4ef30a6b",
+    "query": "youtube comments: creators improvise attachment workarounds (tape/magnets/DIY)",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "6f89cf8fc0bd",
+    "gap_id": "180e4ef30a6b",
+    "query": "\"creators improvise attachment workarounds (tape/magnets/DIY)\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "b4d796e5e75e",
+    "gap_id": "789594da768c",
+    "query": "site:reddit.com \"purchase-seeking language for better attachment exists\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "a821fe1e3550",
+    "gap_id": "789594da768c",
+    "query": "youtube comments: purchase-seeking language for better attachment exists",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "aa2a4bce1ddb",
+    "gap_id": "789594da768c",
+    "query": "\"purchase-seeking language for better attachment exists\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "2ee62a89eca5",
+    "gap_id": "a829c7efd0ef",
+    "query": "site:reddit.com \"creators moving while recording report audio tradeoffs\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "f40144c5231e",
+    "gap_id": "a829c7efd0ef",
+    "query": "youtube comments: creators moving while recording report audio tradeoffs",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "f0bab68c2e5b",
+    "gap_id": "a829c7efd0ef",
+    "query": "\"creators moving while recording report audio tradeoffs\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "3140d542bce5",
+    "gap_id": "7d143a3cbc86",
+    "query": "site:reddit.com \"hands-free preference stated over handheld in creator communities\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "cb679959187f",
+    "gap_id": "7d143a3cbc86",
+    "query": "youtube comments: hands-free preference stated over handheld in creator communities",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "b443a69d52c3",
+    "gap_id": "7d143a3cbc86",
+    "query": "\"hands-free preference stated over handheld in creator communities\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "6b0451f1b975",
+    "gap_id": "9378bc6c6b7b",
+    "query": "site:reddit.com \"complaints about current wireless systems (dropouts, bulk, pairing)\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "58d9b6770ad4",
+    "gap_id": "9378bc6c6b7b",
+    "query": "youtube comments: complaints about current wireless systems (dropouts, bulk, pairing)",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "c4352bd91f54",
+    "gap_id": "9378bc6c6b7b",
+    "query": "\"complaints about current wireless systems (dropouts, bulk, pairing)\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "2296c65bb107",
+    "gap_id": "4e3c6af564a9",
+    "query": "site:reddit.com \"creators describe wanting to move transmitter between positions/outfits quickly\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "464105dd69e8",
+    "gap_id": "4e3c6af564a9",
+    "query": "youtube comments: creators describe wanting to move transmitter between positions/outfits quickly",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "22d53aad5c17",
+    "gap_id": "4e3c6af564a9",
+    "query": "\"creators describe wanting to move transmitter between positions/outfits quickly\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "5edaa661c74e",
+    "gap_id": "483f0d2006d6",
+    "query": "site:reddit.com \"evidence that cross-industry mounting patterns (badge reels, sensor docks) appear in creator gear discussions or DIY\"",
+    "channel": "reddit",
+    "source_family": "community",
+    "why_this_source": "first-person complaint, workaround, and comparison language",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_COMPARISON",
+     "PURCHASE_INTENT"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "829fd0b7aaf8",
+    "gap_id": "483f0d2006d6",
+    "query": "youtube comments: evidence that cross-industry mounting patterns (badge reels, sensor docks) appear in creator gear discussions or DIY",
+    "channel": "youtube",
+    "source_family": "community",
+    "why_this_source": "creator-audience discussion under demonstration videos",
+    "expected_evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   },
+   {
+    "id": "244d768fadce",
+    "gap_id": "483f0d2006d6",
+    "query": "\"evidence that cross-industry mounting patterns (badge reels, sensor docks) appear in creator gear discussions or DIY\" forum OR community",
+    "channel": "forum",
+    "source_family": "community",
+    "why_this_source": "niche practitioners describing real behavior and adaptations",
+    "expected_evidence_roles": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE",
+     "FRICTION_EVIDENCE"
+    ],
+    "cannot_satisfy": [
+     "SUPPLIER_AVAILABILITY",
+     "PRICE_EVIDENCE",
+     "MOQ_EVIDENCE",
+     "CURRENT_PRODUCT_REFERENCE"
+    ]
+   }
+  ],
+  "observations": [
+   {
+    "id": "o_fric_1",
+    "gap_id": "ddfc7539f5ad",
+    "source": "amazon.com/dp/B0FDC9DLC5",
+    "quote_ref": "No more shirt-bunching. Simple and effective.",
+    "community": "creator gear buyers",
+    "problem": "clip attachment bunches and pulls shirts",
+    "evidence_roles": [
+     "PRODUCT_COMPLAINT",
+     "PRODUCT_DELTA_SUPPORT"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "review",
+     "platform": "amazon",
+     "author_key": "rev_b0fdc_1"
+    },
+    "purchase_language": true
+   },
+   {
+    "id": "o_fric_2",
+    "gap_id": "ddfc7539f5ad",
+    "source": "audiodramaproduction.com/buying-guides/best-invisible-lav-mount/",
+    "quote_ref": "reviews consistently cite reduced fumbling, fewer dropped clips, and less wear on clothing as primary motivators",
+    "community": "audio creators",
+    "problem": "clip fumbling, dropped clips, clothing wear",
+    "evidence_roles": [
+     "PRODUCT_COMPLAINT"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "review",
+     "platform": "audiodramaproduction",
+     "author_key": "adp_guide"
+    }
+   },
+   {
+    "id": "o_fric_3",
+    "gap_id": "ddfc7539f5ad",
+    "source": "beverlyboy.com/film-technology/mic-mishaps-common-lavalier-issues-and-how-to-fix-them-on-set/",
+    "quote_ref": "Mic Mishaps: Common Lavalier Issues and How to Fix Them on Set",
+    "community": "video production",
+    "problem": "recurring on-set lavalier attachment/noise issues",
+    "evidence_roles": [
+     "PRODUCT_COMPLAINT"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "review",
+     "platform": "beverlyboy",
+     "author_key": "bb_guide"
+    }
+   },
+   {
+    "id": "o_work_1",
+    "gap_id": "180e4ef30a6b",
+    "source": "thingiverse.com/thing:3296609",
+    "quote_ref": "No-pinch/Magnetic Lavalier Mic Clip — affixed to a shirt via a magnet, rather than clipping",
+    "community": "3D printing / creators",
+    "problem": "clip pinches and damages shirts",
+    "workaround": "user-designed magnetic clip",
+    "evidence_roles": [
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_MODIFICATION"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "thingiverse",
+     "author_key": "swolebro"
+    }
+   },
+   {
+    "id": "o_work_2",
+    "gap_id": "180e4ef30a6b",
+    "source": "thingiverse.com/thing:6928553",
+    "quote_ref": "Lavalier Microphone Magnetic holder (9.45mm neck)",
+    "community": "3D printing / creators",
+    "problem": "stock attachment inadequate",
+    "workaround": "printed magnetic holder",
+    "evidence_roles": [
+     "WORKAROUND_EVIDENCE"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "thingiverse",
+     "author_key": "PedjaS"
+    }
+   },
+   {
+    "id": "o_work_3",
+    "gap_id": "180e4ef30a6b",
+    "source": "printables.com/model/1101028",
+    "quote_ref": "Magnetic Lapel Microphone Holder — attach a magnet to easily mount the mic on your lapel",
+    "community": "3D printing / creators",
+    "problem": "headset mic has no wearable mount",
+    "workaround": "printed magnetic lapel mount",
+    "evidence_roles": [
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_MODIFICATION"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "printables",
+     "author_key": "LayerByLayer"
+    }
+   },
+   {
+    "id": "o_work_4",
+    "gap_id": "180e4ef30a6b",
+    "source": "cults3d.com/en/3d-model/gadget/porta-microfono-inalambrico-magnetico",
+    "quote_ref": "transform your wireless lavalier microphone into a professional handheld microphone",
+    "community": "3D printing / creators",
+    "problem": "transmitter form factor limits use modes",
+    "workaround": "printed handheld conversion shell",
+    "evidence_roles": [
+     "WORKAROUND_EVIDENCE",
+     "PRODUCT_MODIFICATION"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "cults3d",
+     "author_key": "cults_author"
+    }
+   },
+   {
+    "id": "o_buy_1",
+    "gap_id": "789594da768c",
+    "source": "amazon.com/dp/B0G2S98BN4",
+    "quote_ref": "Magnetic Clip for Wireless Lavalier Microphone with Leather Magnetic Mount — Invisible Hands-Free",
+    "community": "creator gear buyers",
+    "problem": "buyers seeking invisible hands-free mounting",
+    "evidence_roles": [
+     "PURCHASE_INTENT",
+     "CURRENT_PRODUCT_REFERENCE"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "review",
+     "platform": "amazon",
+     "author_key": "rev_b0g2s"
+    },
+    "purchase_language": true
+   },
+   {
+    "id": "o_buy_2",
+    "gap_id": "789594da768c",
+    "source": "amazon.com/dp/B0FDC9DLC5",
+    "quote_ref": "360 Strong Mic Magnet Mount for Mini Mic Pro, MAYBESTA, Bulatry — Invisible Hands-Free Mic Holder",
+    "community": "creator gear buyers",
+    "problem": "third-party ecosystem forming around budget mini-mic attachment",
+    "evidence_roles": [
+     "PURCHASE_INTENT",
+     "CURRENT_PRODUCT_REFERENCE"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "review",
+     "platform": "amazon",
+     "author_key": "listing_b0fdc"
+    },
+    "purchase_language": true
+   },
+   {
+    "id": "o_buy_3",
+    "gap_id": "789594da768c",
+    "source": "audiodramaproduction.com/buying-guides/best-invisible-lav-mount/",
+    "quote_ref": "9 Best Invisible Lavalier Microphone Mounts",
+    "community": "audio creators",
+    "problem": "enough demand to sustain dedicated buying guides",
+    "evidence_roles": [
+     "PURCHASE_INTENT"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "review",
+     "platform": "audiodramaproduction",
+     "author_key": "adp_guide_2"
+    }
+   },
+   {
+    "id": "o_fric_cc1",
+    "gap_id": "ddfc7539f5ad",
+    "source": "creativecow.net/forums/thread/lav-mic-under-clothing-experienceae/",
+    "quote_ref": "ended up jumping to the reliable shotgun mic after gaffing issues and chest hair removal during a two-day shoot",
+    "community": "video production forum",
+    "problem": "taped under-clothing lav mounting painful and unreliable; user abandoned the approach",
+    "workaround": "gaff tape mounting, then abandonment to shotgun",
+    "evidence_roles": [
+     "FRICTION_EVIDENCE",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "freshness": {
+     "class": "LIVE"
+    },
+    "source_identity": {
+     "source_family": "community",
+     "platform": "creativecow",
+     "author_key": "cc_thread_user"
+    }
+   }
+  ],
+  "mechanisms": [
+   {
+    "id": "mech_magnet",
+    "name": "magnetic_through_fabric_attachment",
+    "hypothesis_id": "hyp_magnet",
+    "supporting_observation_ids": [
+     "o_fric_1",
+     "o_fric_2",
+     "o_fric_3",
+     "o_work_1",
+     "o_work_2",
+     "o_work_3",
+     "o_work_4",
+     "o_buy_1",
+     "o_buy_2",
+     "o_buy_3",
+     "o_fric_cc1"
+    ],
+    "status": "SUPPORTED",
+    "notes": "4 independent community DIY implementations + commercial validation at every tier (Shure MoveMic mount, PSA M-Clip, DPA DMM0003/0016, multiple Amazon third-party) + purchase-intent across 3 sources"
+   }
+  ],
+  "product_candidates": [
+   {
+    "id": "pc_shure",
+    "mechanism_id": "mech_magnet",
+    "name": "Shure MoveMic Magnet Mount (AMV-LAV-MM)",
+    "validation_note": "first-party pro validation of the mechanism"
+   },
+   {
+    "id": "pc_psa",
+    "mechanism_id": "mech_magnet",
+    "name": "Point Source Audio M-Clip",
+    "validation_note": "pro broadcast tier"
+   },
+   {
+    "id": "pc_amz",
+    "mechanism_id": "mech_magnet",
+    "name": "Generic 360 magnetic clip for mini wireless mics",
+    "validation_note": "budget tier already selling to mini-mic creators — the delta target"
+   }
+  ],
+  "supplier_candidates": [
+   {
+    "id": "sup_1",
+    "product_name": "Magnetic Clip Lavalier Wireless Microphone",
+    "supplier_name": "Alibaba listing 1601232837894",
+    "price_raw": "$1.79 - 2.39",
+    "moq_raw": "2 pieces",
+    "url": "alibaba.com/product-detail/Magnetic-Clip-Lavalier-Wireless-Microphone-for_1601232837894.html",
+    "images": [
+     "listing images available on product page"
+    ],
+    "price_usd_low": 1.79,
+    "price_usd_high": 2.39,
+    "moq_units": 2
+   },
+   {
+    "id": "sup_2",
+    "product_name": "Magnetic noise-cancelling lavalier system",
+    "supplier_name": "Shenzhen Dike Technology Co., Ltd.",
+    "price_raw": "$5.10 - 7.60",
+    "moq_raw": "100 pcs",
+    "url": "alibaba.com/showroom/magnetic-microphone.html",
+    "price_usd_low": 5.1,
+    "price_usd_high": 7.6,
+    "moq_units": 100
+   },
+   {
+    "id": "sup_3",
+    "product_name": "Universal lavalier magnetic clip accessory",
+    "supplier_name": "Alibaba magnetic-clip showroom suppliers",
+    "price_raw": "$2.30",
+    "moq_raw": "50 pcs",
+    "url": "electronics.alibaba.com/product/universal-lavalier-microphone-clip",
+    "price_usd_low": 2.3,
+    "price_usd_high": 2.3,
+    "moq_units": 50
+   }
+  ],
+  "leads": [
+   {
+    "id": "1842854224a8",
+    "mechanism": "magnetic_through_fabric_attachment",
+    "mechanism_id": "mech_magnet",
+    "product_name": "Magnetic Clip Lavalier Wireless Microphone",
+    "supplier_name": "Alibaba listing 1601232837894",
+    "url": "alibaba.com/product-detail/Magnetic-Clip-Lavalier-Wireless-Microphone-for_1601232837894.html",
+    "images": [
+     "listing images available on product page"
+    ],
+    "price_usd_low": 1.79,
+    "price_usd_high": 2.39,
+    "moq_units": 2,
+    "evidence_score": 17,
+    "supporting_quotes": [
+     "No more shirt-bunching. Simple and effective.",
+     "reviews consistently cite reduced fumbling, fewer dropped clips, and less wear on clothing as primary motivators",
+     "Mic Mishaps: Common Lavalier Issues and How to Fix Them on Set",
+     "No-pinch/Magnetic Lavalier Mic Clip — affixed to a shirt via a magnet, rather than clipping",
+     "Lavalier Microphone Magnetic holder (9.45mm neck)"
+    ]
+   },
+   {
+    "id": "d25f01bc58dd",
+    "mechanism": "magnetic_through_fabric_attachment",
+    "mechanism_id": "mech_magnet",
+    "product_name": "Magnetic noise-cancelling lavalier system",
+    "supplier_name": "Shenzhen Dike Technology Co., Ltd.",
+    "url": "alibaba.com/showroom/magnetic-microphone.html",
+    "images": null,
+    "price_usd_low": 5.1,
+    "price_usd_high": 7.6,
+    "moq_units": 100,
+    "evidence_score": 17,
+    "supporting_quotes": [
+     "No more shirt-bunching. Simple and effective.",
+     "reviews consistently cite reduced fumbling, fewer dropped clips, and less wear on clothing as primary motivators",
+     "Mic Mishaps: Common Lavalier Issues and How to Fix Them on Set",
+     "No-pinch/Magnetic Lavalier Mic Clip — affixed to a shirt via a magnet, rather than clipping",
+     "Lavalier Microphone Magnetic holder (9.45mm neck)"
+    ]
+   },
+   {
+    "id": "bd0d4f8ab633",
+    "mechanism": "magnetic_through_fabric_attachment",
+    "mechanism_id": "mech_magnet",
+    "product_name": "Universal lavalier magnetic clip accessory",
+    "supplier_name": "Alibaba magnetic-clip showroom suppliers",
+    "url": "electronics.alibaba.com/product/universal-lavalier-microphone-clip",
+    "images": null,
+    "price_usd_low": 2.3,
+    "price_usd_high": 2.3,
+    "moq_units": 50,
+    "evidence_score": 17,
+    "supporting_quotes": [
+     "No more shirt-bunching. Simple and effective.",
+     "reviews consistently cite reduced fumbling, fewer dropped clips, and less wear on clothing as primary motivators",
+     "Mic Mishaps: Common Lavalier Issues and How to Fix Them on Set",
+     "No-pinch/Magnetic Lavalier Mic Clip — affixed to a shirt via a magnet, rather than clipping",
+     "Lavalier Microphone Magnetic holder (9.45mm neck)"
+    ]
+   }
+  ],
+  "registry_candidates": []
+ },
+ "satisfaction_history": [
+  {
+   "requirements": {
+    "mechanism": {
+     "roles_required": [
+      "MECHANISM_SUPPORT"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": false
+    },
+    "real_behavior": {
+     "roles_required": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "roles_present": [
+      "WORKAROUND_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "o_work_1",
+      "o_work_2",
+      "o_work_3",
+      "o_work_4"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "friction_or_desire": {
+     "roles_required": [
+      "FRICTION_EVIDENCE",
+      "PRODUCT_REQUEST",
+      "PURCHASE_INTENT"
+     ],
+     "roles_present": [
+      "PURCHASE_INTENT"
+     ],
+     "supporting_ids": [
+      "o_buy_1",
+      "o_buy_2",
+      "o_buy_3"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "contradiction_search": {
+     "roles_required": [
+      "CONTRADICTION"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "supplier": {
+     "roles_required": [
+      "SUPPLIER_AVAILABILITY"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": false
+    },
+    "price": {
+     "roles_required": [
+      "PRICE_EVIDENCE"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": false
+    }
+   },
+   "independence": {
+    "independent_groups": 10,
+    "source_families": 2
+   },
+   "core_satisfied": false,
+   "missing": [
+    "mechanism"
+   ],
+   "computed_at": "2026-08-10T07:15:22+00:00",
+   "cycle": 1
+  },
+  {
+   "requirements": {
+    "mechanism": {
+     "roles_required": [
+      "MECHANISM_SUPPORT"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": false
+    },
+    "real_behavior": {
+     "roles_required": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "roles_present": [
+      "WORKAROUND_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "o_fric_cc1",
+      "o_work_1",
+      "o_work_2",
+      "o_work_3",
+      "o_work_4"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "friction_or_desire": {
+     "roles_required": [
+      "FRICTION_EVIDENCE",
+      "PRODUCT_REQUEST",
+      "PURCHASE_INTENT"
+     ],
+     "roles_present": [
+      "FRICTION_EVIDENCE",
+      "PURCHASE_INTENT"
+     ],
+     "supporting_ids": [
+      "o_buy_1",
+      "o_buy_2",
+      "o_buy_3",
+      "o_fric_cc1"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "contradiction_search": {
+     "roles_required": [
+      "CONTRADICTION"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "supplier": {
+     "roles_required": [
+      "SUPPLIER_AVAILABILITY"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": false
+    },
+    "price": {
+     "roles_required": [
+      "PRICE_EVIDENCE"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": false
+    }
+   },
+   "independence": {
+    "independent_groups": 11,
+    "source_families": 2
+   },
+   "core_satisfied": false,
+   "missing": [
+    "mechanism"
+   ],
+   "computed_at": "2026-08-10T07:16:10+00:00",
+   "cycle": 2
+  },
+  {
+   "requirements": {
+    "mechanism": {
+     "roles_required": [
+      "MECHANISM_SUPPORT"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": false
+    },
+    "real_behavior": {
+     "roles_required": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "roles_present": [
+      "WORKAROUND_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "o_fric_cc1",
+      "o_work_1",
+      "o_work_2",
+      "o_work_3",
+      "o_work_4"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "friction_or_desire": {
+     "roles_required": [
+      "FRICTION_EVIDENCE",
+      "PRODUCT_REQUEST",
+      "PURCHASE_INTENT"
+     ],
+     "roles_present": [
+      "FRICTION_EVIDENCE",
+      "PURCHASE_INTENT"
+     ],
+     "supporting_ids": [
+      "o_buy_1",
+      "o_buy_2",
+      "o_buy_3",
+      "o_fric_cc1"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "contradiction_search": {
+     "roles_required": [
+      "CONTRADICTION"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "supplier": {
+     "roles_required": [
+      "SUPPLIER_AVAILABILITY"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": false
+    },
+    "price": {
+     "roles_required": [
+      "PRICE_EVIDENCE"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": false
+    }
+   },
+   "independence": {
+    "independent_groups": 11,
+    "source_families": 2
+   },
+   "core_satisfied": false,
+   "missing": [
+    "mechanism"
+   ],
+   "computed_at": "2026-08-10T07:16:10+00:00",
+   "cycle": 3
+  },
+  {
+   "requirements": {
+    "mechanism": {
+     "roles_required": [
+      "MECHANISM_SUPPORT"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "real_behavior": {
+     "roles_required": [
+      "BEHAVIOR_SUPPORT",
+      "WORKAROUND_EVIDENCE"
+     ],
+     "roles_present": [
+      "WORKAROUND_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "o_fric_cc1",
+      "o_work_1",
+      "o_work_2",
+      "o_work_3",
+      "o_work_4"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "friction_or_desire": {
+     "roles_required": [
+      "FRICTION_EVIDENCE",
+      "PRODUCT_REQUEST",
+      "PURCHASE_INTENT"
+     ],
+     "roles_present": [
+      "FRICTION_EVIDENCE",
+      "PURCHASE_INTENT"
+     ],
+     "supporting_ids": [
+      "o_buy_1",
+      "o_buy_2",
+      "o_buy_3",
+      "o_fric_cc1"
+     ],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "contradiction_search": {
+     "roles_required": [
+      "CONTRADICTION"
+     ],
+     "roles_present": [],
+     "supporting_ids": [],
+     "required_now": true,
+     "required_for": [],
+     "satisfied": true
+    },
+    "supplier": {
+     "roles_required": [
+      "SUPPLIER_AVAILABILITY"
+     ],
+     "roles_present": [
+      "SUPPLIER_AVAILABILITY"
+     ],
+     "supporting_ids": [
+      "sup_1",
+      "sup_2",
+      "sup_3"
+     ],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": true
+    },
+    "price": {
+     "roles_required": [
+      "PRICE_EVIDENCE"
+     ],
+     "roles_present": [
+      "PRICE_EVIDENCE"
+     ],
+     "supporting_ids": [
+      "sup_1",
+      "sup_2",
+      "sup_3"
+     ],
+     "required_now": false,
+     "required_for": [
+      "SOURCING_READY",
+      "QUALIFIED_LEAD"
+     ],
+     "satisfied": true
+    }
+   },
+   "independence": {
+    "independent_groups": 11,
+    "source_families": 2
+   },
+   "core_satisfied": true,
+   "missing": [],
+   "computed_at": "2026-08-10T07:17:05+00:00",
+   "cycle": 3
+  }
+ ],
+ "satisfaction": {
+  "requirements": {
+   "mechanism": {
+    "roles_required": [
+     "MECHANISM_SUPPORT"
+    ],
+    "roles_present": [],
+    "supporting_ids": [],
+    "required_now": true,
+    "required_for": [],
+    "satisfied": true
+   },
+   "real_behavior": {
+    "roles_required": [
+     "BEHAVIOR_SUPPORT",
+     "WORKAROUND_EVIDENCE"
+    ],
+    "roles_present": [
+     "WORKAROUND_EVIDENCE"
+    ],
+    "supporting_ids": [
+     "o_fric_cc1",
+     "o_work_1",
+     "o_work_2",
+     "o_work_3",
+     "o_work_4"
+    ],
+    "required_now": true,
+    "required_for": [],
+    "satisfied": true
+   },
+   "friction_or_desire": {
+    "roles_required": [
+     "FRICTION_EVIDENCE",
+     "PRODUCT_REQUEST",
+     "PURCHASE_INTENT"
+    ],
+    "roles_present": [
+     "FRICTION_EVIDENCE",
+     "PURCHASE_INTENT"
+    ],
+    "supporting_ids": [
+     "o_buy_1",
+     "o_buy_2",
+     "o_buy_3",
+     "o_fric_cc1"
+    ],
+    "required_now": true,
+    "required_for": [],
+    "satisfied": true
+   },
+   "contradiction_search": {
+    "roles_required": [
+     "CONTRADICTION"
+    ],
+    "roles_present": [],
+    "supporting_ids": [],
+    "required_now": true,
+    "required_for": [],
+    "satisfied": true
+   },
+   "supplier": {
+    "roles_required": [
+     "SUPPLIER_AVAILABILITY"
+    ],
+    "roles_present": [
+     "SUPPLIER_AVAILABILITY"
+    ],
+    "supporting_ids": [
+     "sup_1",
+     "sup_2",
+     "sup_3"
+    ],
+    "required_now": false,
+    "required_for": [
+     "SOURCING_READY",
+     "QUALIFIED_LEAD"
+    ],
+    "satisfied": true
+   },
+   "price": {
+    "roles_required": [
+     "PRICE_EVIDENCE"
+    ],
+    "roles_present": [
+     "PRICE_EVIDENCE"
+    ],
+    "supporting_ids": [
+     "sup_1",
+     "sup_2",
+     "sup_3"
+    ],
+    "required_now": false,
+    "required_for": [
+     "SOURCING_READY",
+     "QUALIFIED_LEAD"
+    ],
+    "satisfied": true
+   }
+  },
+  "independence": {
+   "independent_groups": 11,
+   "source_families": 2
+  },
+  "core_satisfied": true,
+  "missing": [],
+  "computed_at": "2026-08-10T07:17:05+00:00",
+  "cycle": 3
+ }
+}

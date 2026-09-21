@@ -1,0 +1,1876 @@
+Yes. Keep Fable’s current implementation exactly where it is. This is an **integration delta** that strengthens the physical-product graph and loops by making every evidence item answer two separate questions:
+
+1. **How relevant is this?**
+2. **What is this evidence actually allowed to establish?**
+
+That distinction should become part of the physical-product workflow, not a separate subsystem.
+
+The broader reasoning architecture already supports this separation: Polymath evidence, temporary hypotheses, operational leads, and comments do not share the same authority, and provisional reasoning must not silently become factual support. 
+
+# Fable delta: Evidence-aware Physical Product Loop
+
+The final physical-product path becomes:
+
+```text
+ANY POLYMATH KNOWLEDGE
+        │
+        ▼
+What can this evidence legitimately contribute?
+        │
+        ▼
+KnowledgeRole + EvidenceRole
+        │
+        ▼
+Opportunity Context
+        │
+        ▼
+Lens Gate
+        │
+        ▼
+θ BridgeHypothesis
+        │
+        ▼
+Cross-domain Bridge Guard
+        │
+        ▼
+Evidence gaps by ROLE
+        │
+        ▼
+Source-specific research queries
+        │
+        ▼
+Hermes web loop
+        │
+        ├──── comments / reviews
+        ├──── products
+        ├──── workarounds / DIY
+        ├──── Amazon
+        ├──── CJ Dropshipping
+        └──── Alibaba
+        │
+        ▼
+Product signals may appear at ANY point
+        │
+        ▼
+PRODUCT_INTAKE
+        │
+        ▼
+Physical Job
+        │
+        ▼
+Product Mechanism
+        │
+        ▼
+ProductCandidate
+        │
+        ▼
+Role-aware research satisfaction
+        │
+        ▼
+Product Delta
+        │
+        ▼
+Supplier loop
+        │
+        ▼
+PROVISIONAL / QUALIFIED PHYSICAL PRODUCT LEAD
+```
+
+The corpus remains universal. The output remains deliberately constrained toward tangible products.
+
+---
+
+# 1. Every evidence reference gets an Evidence Contract
+
+Do not let an evidence object be merely:
+
+```yaml
+text: ...
+score: 0.91
+```
+
+Use:
+
+```yaml
+evidence_ref:
+  evidence_id: ev_123
+
+  source_ref:
+    system: polymath
+    id: chunk_91
+
+  relevance: 0.91
+
+  knowledge_roles:
+    - behavioral
+    - pattern
+
+  evidence_roles:
+    - mechanism_support
+
+  authority:
+    SOURCE_EVIDENCE
+
+  freshness:
+    class: SLOW
+    observed_at: null
+    published_at: 2023-04-15
+
+  source_identity:
+    source_family: book
+    platform: null
+    author_key: author_x
+    thread_key: null
+
+  can_establish:
+    - behavioral_mechanism
+    - conceptual_pattern
+
+  cannot_establish:
+    - current_demand
+    - current_purchase_intent
+    - current_supplier_availability
+```
+
+The critical point is:
+
+```text
+relevance != authority
+```
+
+A source can be:
+
+```text
+0.98 relevant
+```
+
+and still be incapable of proving the claim being tested.
+
+---
+
+# 2. `KnowledgeRole` describes what kind of knowledge it contributes
+
+Use a small multi-label enum:
+
+```text
+BEHAVIORAL
+CULTURAL
+COMMUNITY
+PATTERN
+TECHNICAL
+COMMERCE
+CONSUMER_FIELD
+SUPPLIER
+HISTORICAL
+```
+
+Examples:
+
+```text
+Psychology book
+    KNOWLEDGE:
+        BEHAVIORAL
+        PATTERN
+
+Reddit comment
+    KNOWLEDGE:
+        COMMUNITY
+        CONSUMER_FIELD
+
+Amazon review
+    KNOWLEDGE:
+        CONSUMER_FIELD
+        COMMERCE
+
+Alibaba listing
+    KNOWLEDGE:
+        SUPPLIER
+        COMMERCE
+```
+
+A source may have several.
+
+Do not create separate workflows for them.
+
+Your own reasoning source argues for treating sources according to the reusable knowledge they contribute rather than whether the file is a psychology book, technical book, transcript, etc. 
+
+---
+
+# 3. `EvidenceRole` describes what this specific item is doing in this hypothesis
+
+This is even more important than `KnowledgeRole`.
+
+Examples:
+
+```text
+MECHANISM_SUPPORT
+BEHAVIOR_SUPPORT
+FRICTION_EVIDENCE
+WORKAROUND_EVIDENCE
+PURCHASE_INTENT
+PRODUCT_REQUEST
+PRODUCT_COMPLAINT
+PRODUCT_COMPARISON
+
+CONTRADICTION
+
+CURRENT_PRODUCT_REFERENCE
+PRODUCT_DELTA_SUPPORT
+
+SUPPLIER_AVAILABILITY
+PRICE_EVIDENCE
+MOQ_EVIDENCE
+CUSTOMIZATION_EVIDENCE
+FULFILLMENT_EVIDENCE
+```
+
+So the same Amazon review might be:
+
+```yaml
+knowledge_roles:
+  - CONSUMER_FIELD
+  - COMMERCE
+
+evidence_roles:
+  - PRODUCT_COMPLAINT
+  - PRODUCT_DELTA_SUPPORT
+```
+
+That makes satisfaction compositional.
+
+---
+
+# 4. Add a Source Suitability matrix to `policies.yaml`
+
+This is how Python prevents evidence misuse.
+
+Conceptually:
+
+```yaml
+source_suitability:
+
+  polymath_evergreen:
+    may_support:
+      - MECHANISM_SUPPORT
+      - BEHAVIORAL_THEORY
+      - PATTERN_SUPPORT
+
+    cannot_establish:
+      - CURRENT_DEMAND
+      - CURRENT_PURCHASE_INTENT
+      - LIVE_SUPPLIER_AVAILABILITY
+
+  reddit_comment:
+    may_support:
+      - FRICTION_EVIDENCE
+      - WORKAROUND_EVIDENCE
+      - PRODUCT_REQUEST
+      - PURCHASE_INTENT
+      - BEHAVIOR_SUPPORT
+
+    cannot_establish:
+      - POPULATION_PREVALENCE
+      - SUPPLIER_AVAILABILITY
+
+  amazon_review:
+    may_support:
+      - PRODUCT_COMPLAINT
+      - PRODUCT_COMPARISON
+      - PRODUCT_DELTA_SUPPORT
+      - CURRENT_PRODUCT_REFERENCE
+
+  alibaba_listing:
+    may_support:
+      - SUPPLIER_AVAILABILITY
+      - PRICE_EVIDENCE
+      - MOQ_EVIDENCE
+      - CUSTOMIZATION_EVIDENCE
+
+    cannot_establish:
+      - CONSUMER_DEMAND
+      - HUMAN_FRICTION
+```
+
+The exact source list can expand later.
+
+The architecture matters more than exhaustive enumeration.
+
+---
+
+# 5. θ may classify; Python must constrain
+
+Do not expect Python to semantically decide that a psychology passage describes embodied cognition.
+
+θ can propose:
+
+```yaml
+knowledge_roles:
+  - BEHAVIORAL
+
+evidence_roles:
+  - MECHANISM_SUPPORT
+```
+
+Python then verifies:
+
+```text
+roles are valid enums
+source is permitted for those roles
+required fields exist
+authority is legal
+freshness requirements are met
+```
+
+So:
+
+```text
+θ = semantic classification
+
+φ = admissibility
+```
+
+Same architecture as hypothesis generation.
+
+---
+
+# 6. Physical Product qualification becomes role-aware
+
+This is the major integration.
+
+Do not evaluate:
+
+```text
+evidence_count >= 20
+```
+
+Evaluate coverage.
+
+For a physical product candidate:
+
+```yaml
+physical_product_requirements:
+
+  mechanism:
+    required: true
+    acceptable_evidence_roles:
+      - MECHANISM_SUPPORT
+
+  real_behavior:
+    required: true
+    acceptable_evidence_roles:
+      - BEHAVIOR_SUPPORT
+      - WORKAROUND_EVIDENCE
+
+  friction_or_desire:
+    required: true
+    acceptable_evidence_roles:
+      - FRICTION_EVIDENCE
+      - PRODUCT_REQUEST
+      - PURCHASE_INTENT
+
+  contradiction:
+    required: true
+    acceptable_evidence_roles:
+      - CONTRADICTION
+
+  current_product_reality:
+    required: true
+    acceptable_evidence_roles:
+      - CURRENT_PRODUCT_REFERENCE
+
+  product_delta:
+    required_for:
+      - PROVISIONAL_PRODUCT_LEAD
+
+    acceptable_evidence_roles:
+      - PRODUCT_COMPLAINT
+      - PRODUCT_DELTA_SUPPORT
+
+  supplier:
+    required_for:
+      - SOURCING_READY
+      - PROVISIONAL_PRODUCT_LEAD
+
+    acceptable_evidence_roles:
+      - SUPPLIER_AVAILABILITY
+
+  price:
+    required_for:
+      - SOURCING_READY
+
+    acceptable_evidence_roles:
+      - PRICE_EVIDENCE
+```
+
+Now `satisfaction.py` asks:
+
+> Which required evidence roles remain unsatisfied?
+
+Not:
+
+> Do we have lots of evidence?
+
+---
+
+# 7. Make `EvidenceGap` role-specific
+
+Currently a gap might be:
+
+```text
+Need more evidence that creators dislike lav mics.
+```
+
+Make it:
+
+```yaml
+evidence_gap:
+  gap_id: gap_47
+
+  subject_id: hyp_18
+
+  claim:
+    creators experience clothing/movement friction
+    with current lav attachment systems
+
+  required_evidence_roles:
+    - FRICTION_EVIDENCE
+    - WORKAROUND_EVIDENCE
+
+  required_freshness:
+    - FAST
+    - LIVE
+
+  acceptable_source_families:
+    - community
+    - review
+    - creator_discussion
+
+  satisfaction:
+    status: OPEN
+```
+
+Now query generation becomes much better.
+
+---
+
+# 8. `why_this_source` becomes mandatory
+
+Every Hermes research query should include:
+
+```yaml
+query:
+  query_id: q_187
+
+  gap_id: gap_47
+
+  question:
+    >
+    Do creators report that current lavalier
+    attachment systems interfere with clothing
+    or expressive movement?
+
+  source: reddit
+
+  why_this_source:
+    >
+    Reddit is being used for first-person complaint,
+    workaround, and comparison language.
+
+  expected_evidence_roles:
+    - FRICTION_EVIDENCE
+    - WORKAROUND_EVIDENCE
+    - PRODUCT_COMPARISON
+
+  cannot_satisfy:
+    - SUPPLIER_AVAILABILITY
+    - MOQ_EVIDENCE
+
+  stop_when:
+    - gap_role_coverage_reached
+    - query_saturated
+    - source_exhausted
+```
+
+This prevents Hermes from falling into:
+
+```text
+Reddit worked once
+→ research everything on Reddit
+```
+
+---
+
+# 9. Query satisfaction becomes role-aware too
+
+Instead of:
+
+```text
+query returned 15 results → success
+```
+
+use:
+
+```yaml
+query_result:
+
+  seen: 38
+
+  unique: 27
+
+  admitted_evidence:
+    FRICTION_EVIDENCE: 4
+    WORKAROUND_EVIDENCE: 2
+    PRODUCT_COMPARISON: 3
+
+  new_evidence_roles:
+    - WORKAROUND_EVIDENCE
+
+  gap_coverage_changed: true
+
+  state: PRODUCTIVE
+```
+
+A query that returns 100 irrelevant results:
+
+```yaml
+state: LOW_YIELD
+gap_coverage_changed: false
+```
+
+A query that returns duplicate evidence:
+
+```yaml
+state: SATURATED
+```
+
+---
+
+# 10. Research satisfaction becomes a coverage graph
+
+Conceptually:
+
+```text
+                    PRODUCT CANDIDATE
+                           │
+            ┌──────────────┼──────────────┐
+            ▼              ▼              ▼
+        MECHANISM       BEHAVIOR        FRICTION
+            │              │              │
+        SATISFIED      SATISFIED      SATISFIED
+            │              │              │
+            └──────────────┼──────────────┘
+                           │
+                           ▼
+                    PRODUCT DELTA
+                           │
+                        PARTIAL
+                           │
+                           ▼
+                     SUPPLIER
+                           │
+                     UNSATISFIED
+```
+
+The loop immediately knows:
+
+```text
+Do not research behavior again.
+
+Do not collect more generic complaints.
+
+Research:
+1. current product weaknesses
+2. supplier availability
+```
+
+This should drastically reduce wandering.
+
+---
+
+# 11. Product discovery from comments integrates naturally
+
+Suppose web research produces:
+
+> "I 3D printed a magnetic holder because the clip keeps pulling my shirt."
+
+That one observation can play multiple roles:
+
+```yaml
+knowledge_roles:
+  - CONSUMER_FIELD
+
+evidence_roles:
+  - FRICTION_EVIDENCE
+  - WORKAROUND_EVIDENCE
+  - PRODUCT_MODIFICATION
+
+authority:
+  FIELD_OBSERVATION
+```
+
+It also emits a product signal:
+
+```text
+3D printed magnetic holder
+```
+
+Then your existing physical-product branch runs:
+
+```text
+Observation
+    │
+    ├── supports Friction
+    │
+    ├── reveals Workaround
+    │
+    └── MENTIONS / REVEALS
+            ↓
+      ProductCandidate
+            ↓
+       PRODUCT_INTAKE
+```
+
+The evidence role and product signal are separate outputs from the same observation.
+
+---
+
+# 12. Marketplace discoveries use the same rule
+
+Alibaba result:
+
+```text
+magnetic wireless transmitter holder
+```
+
+may be highly relevant.
+
+But initially:
+
+```yaml
+knowledge_roles:
+  - SUPPLIER
+
+evidence_roles:
+  - SUPPLIER_AVAILABILITY
+
+cannot_establish:
+  - FRICTION_EVIDENCE
+  - PURCHASE_INTENT
+  - BEHAVIOR_SUPPORT
+```
+
+If the product itself reveals an interesting alternative mechanism:
+
+```text
+ProductCandidate
+      ↓
+ALTERNATIVE_IMPLEMENTATION
+      ↓
+ProductMechanism
+```
+
+that creates a hypothesis.
+
+It does **not** retroactively make the supplier listing behavioral evidence.
+
+This distinction is critical.
+
+---
+
+# 13. Amazon similarly has multiple evidence roles
+
+A listing:
+
+```text
+CURRENT_PRODUCT_REFERENCE
+```
+
+A review:
+
+```text
+PRODUCT_COMPLAINT
+PRODUCT_COMPARISON
+WORKAROUND_EVIDENCE
+```
+
+A Q&A question:
+
+```text
+PRODUCT_REQUEST
+PURCHASE_INTENT
+```
+
+They can come from the same platform while carrying completely different evidentiary authority.
+
+Do not classify authority merely from:
+
+```text
+platform = Amazon
+```
+
+Classify the record type too.
+
+---
+
+# 14. Add freshness directly onto evidence
+
+Use:
+
+```text
+EVERGREEN
+SLOW
+FAST
+LIVE
+```
+
+But do not make freshness merely a document attribute.
+
+Every admitted evidence item gets:
+
+```yaml
+freshness:
+  class: LIVE
+  observed_at: 2026-08-10
+```
+
+or:
+
+```yaml
+freshness:
+  class: EVERGREEN
+  published_at: 2018
+```
+
+Then requirements can specify:
+
+```yaml
+current_behavior:
+  allowed_freshness:
+    - FAST
+    - LIVE
+
+supplier_availability:
+  allowed_freshness:
+    - LIVE
+
+mechanism_support:
+  allowed_freshness:
+    - EVERGREEN
+    - SLOW
+    - FAST
+    - LIVE
+```
+
+So an old psychology source may continue to support a mechanism.
+
+It cannot establish current market conditions.
+
+---
+
+# 15. Freshness should be claim-relative
+
+This subtlety matters.
+
+A 2017 source about:
+
+```text
+human grip biomechanics
+```
+
+may still be excellent.
+
+A 2017 source saying:
+
+```text
+current creator microphone trend
+```
+
+is stale.
+
+Therefore:
+
+```text
+freshness class
++
+EvidenceRole
++
+claim type
+```
+
+determines admissibility.
+
+Do not blindly expire entire documents.
+
+---
+
+# 16. Add source independence dimensions
+
+Every field evidence item should have enough identity to group:
+
+```yaml
+source_identity:
+  source_family: community
+  platform: reddit
+  author_key: author_hash
+  thread_key: thread_123
+  content_key: comment_456
+```
+
+Supplier:
+
+```yaml
+source_identity:
+  source_family: supplier
+  platform: alibaba
+  supplier_key: supplier_18
+  listing_key: listing_942
+```
+
+Then satisfaction can distinguish:
+
+```text
+20 comments
+
+from:
+1 thread
+7 authors
+
+vs.
+
+20 comments
+
+from:
+8 threads
+16 authors
+3 platforms
+```
+
+Those are not equivalent.
+
+---
+
+# 17. Diversity requirements belong on the EvidenceRequirement
+
+Do not globally require:
+
+```text
+3 platforms for everything.
+```
+
+Instead:
+
+```yaml
+evidence_requirement:
+  id: er_behavior
+
+  evidence_roles:
+    - BEHAVIOR_SUPPORT
+
+  independence:
+    minimum_source_families: 2
+    minimum_independent_groups: 4
+```
+
+For a niche-specific specialist forum, you might instead use:
+
+```yaml
+independence:
+  minimum_source_families: 1
+  minimum_independent_threads: 5
+  minimum_independent_authors: 8
+```
+
+So specialized communities can legitimately carry more weight when appropriate.
+
+---
+
+# 18. Explicit Open-World Mode stays compatible with the product loop
+
+Registry resolution becomes:
+
+```text
+EXACT
+INFERRED
+MULTIPLE
+UNRESOLVED
+```
+
+Lens resolution:
+
+```text
+KNOWN
+COMPOSED
+OPEN
+```
+
+Example:
+
+```yaml
+opportunity_context:
+
+  seed:
+    >
+    people who deliberately use analog tools
+    inside AI-heavy workflows
+
+  niche_resolution:
+    status: UNRESOLVED
+
+  lens_resolution:
+    status: COMPOSED
+    lenses:
+      - intentional_friction
+      - tactility
+      - identity_expression
+
+  open_world: true
+```
+
+Then:
+
+```text
+UNRESOLVED
+    ≠
+STOP
+```
+
+It means:
+
+```text
+research the behavior first
+```
+
+The registry is a seed, not a closed ontology. Your original Reasoning Seed Registry explicitly allows discovery deeper, sideways, conceptually, temporally, and commercially beyond the original activity rows. 
+
+---
+
+# 19. Open-world discoveries can create candidates, not authority
+
+Hermes may discover:
+
+```text
+"analog-first AI creatives"
+```
+
+That can become:
+
+```text
+NICHE_CANDIDATE
+```
+
+or perhaps:
+
+```text
+MARKET_IDENTIFIER_CANDIDATE
+```
+
+But the physical-product investigation doesn't have to wait for registry promotion.
+
+It can continue:
+
+```text
+unresolved population
+      ↓
+observed behavior
+      ↓
+physical friction
+      ↓
+physical job
+      ↓
+product candidate
+```
+
+Registry approval and product discovery are separate concerns.
+
+---
+
+# 20. Cross-domain Bridge Guard becomes stricter
+
+Your corpus breadth makes this mandatory.
+
+Every cross-domain bridge should declare:
+
+```yaml
+bridge:
+  bridge_id: bridge_18
+
+  source_domain:
+    storytelling
+
+  target_domain:
+    creator_audio
+
+  transfer_type:
+    behavioral_mechanism
+
+  invariant:
+    >
+    Expressive mobile performance requires
+    audio capture that preserves movement
+    and does not materially interfere with delivery.
+
+  path:
+    - storytelling_quality
+    - performative_delivery
+    - physical_expression
+    - mobility
+    - low_interference_audio
+
+  first_inference_at:
+    from: storytelling_quality
+    to: performative_delivery
+
+  unsupported_hops: 2
+
+  evidence_gaps:
+    - gap_behavior
+    - gap_audio_friction
+
+  competing_paths:
+    - wearable_lavalier
+    - stationary_directional_audio
+```
+
+---
+
+# 21. A bridge needs a transferable invariant
+
+The model is not allowed to say merely:
+
+```text
+storytelling
+is related to
+microphones
+```
+
+It needs:
+
+```text
+SOURCE DOMAIN
+     ↓
+TRANSFERABLE MECHANISM / INVARIANT
+     ↓
+TARGET DOMAIN
+```
+
+For example:
+
+```text
+storytelling
+     ↓
+expressive performance
+     ↓
+movement while speaking
+     ↓
+audio interface must preserve movement
+     ↓
+creator audio mechanisms
+```
+
+That is the bridge.
+
+The graph reasoning source supports using relational/topological reasoning for multi-hop structures, but the controller still needs explicit rules around which transitions count as defensible. 
+
+---
+
+# 22. Physical Job should preferably appear before the terminal product jump
+
+For physical-product opportunities:
+
+```text
+cross-domain bridge
+      ↓
+behavior
+      ↓
+friction / desire
+      ↓
+PHYSICAL_JOB
+      ↓
+ProductMechanism
+      ↓
+ProductCandidate
+```
+
+This is your strongest protection against:
+
+```text
+interesting concept
+→ random dropshipping item
+```
+
+The physical job explains why the object exists.
+
+---
+
+# 23. Reverse product discovery gets a corresponding guard
+
+If the product appears first:
+
+```text
+Alibaba product
+Amazon product
+comment-mentioned product
+```
+
+reverse it:
+
+```text
+PRODUCT
+   ↓
+mechanism?
+   ↓
+physical job?
+   ↓
+behavior?
+   ↓
+friction/desire?
+```
+
+If the reverse chain cannot be established:
+
+```text
+PRODUCT_SIGNAL_REJECTED
+```
+
+or:
+
+```text
+UNPROVEN_PRODUCT_SIGNAL
+```
+
+Do not force a story around a cool product.
+
+---
+
+# 24. Product intake should therefore check evidence-role alignment
+
+`product_signal_intake()` should ask:
+
+```text
+1. Is it physical?
+2. Does it perform or suggest a meaningful PhysicalJob?
+3. Does it connect to an active friction, behavior,
+   mechanism, workaround, request, or gap?
+4. What evidence currently supports that connection?
+5. What evidence roles are still missing?
+```
+
+Output:
+
+```yaml
+product_intake:
+  disposition: ADMIT
+
+  candidate_id: pc_91
+
+  origin: COMMENT_MENTIONED
+
+  bindings:
+    physical_job: pj_8
+    mechanism: mech_11
+    friction: friction_4
+
+  current_evidence_roles:
+    - FRICTION_EVIDENCE
+    - WORKAROUND_EVIDENCE
+
+  missing_evidence_roles:
+    - CURRENT_PRODUCT_REFERENCE
+    - PRODUCT_DELTA_SUPPORT
+    - SUPPLIER_AVAILABILITY
+```
+
+Now Product Intake directly feeds research planning.
+
+---
+
+# 25. This changes the loop from stage-oriented to deficit-oriented
+
+This is a very useful distinction.
+
+Bad:
+
+```text
+We're at the comments stage.
+Collect comments.
+```
+
+Better:
+
+```text
+Current candidate lacks:
+
+PRODUCT_DELTA_SUPPORT
+SUPPLIER_AVAILABILITY
+
+Therefore:
+
+research Amazon reviews
+then CJ/Alibaba.
+```
+
+So the outer loop effectively becomes:
+
+```text
+current Work Graph
+      ↓
+compute missing evidence roles
+      ↓
+select highest-value unresolved requirement
+      ↓
+select appropriate source
+      ↓
+generate query
+      ↓
+Hermes research
+      ↓
+admit new evidence/products
+      ↓
+recompute satisfaction
+      ↓
+repeat
+```
+
+This is much more aligned with loop engineering because each turn's feedback changes the next action. 
+
+---
+
+# 26. Exact nested loop after integration
+
+```text
+══════════ BRIDGE LOOP ══════════
+
+Polymath
+   ↓
+KnowledgeRoles
+   ↓
+θ BridgeHypothesis
+   ↓
+Bridge Guard
+   ↓
+EvidenceRole gaps
+   ↓
+web research
+   ↓
+role-aware satisfaction
+   ↓
+bridge survives?
+   ├── NO → reject
+   └── YES
+
+
+══════════ PHYSICAL PRODUCT LOOP ══════════
+
+supported behavior/friction
+   ↓
+PhysicalJob
+   ↓
+mechanism hypotheses
+   ↓
+ProductCandidates
+   ↓
+PRODUCT_INTAKE
+   ↓
+missing evidence roles?
+   │
+   ├── human behavior missing
+   │        ↓
+   │   community/comment research
+   │
+   ├── current product missing
+   │        ↓
+   │      Amazon/web
+   │
+   ├── product delta missing
+   │        ↓
+   │   reviews/comparisons
+   │
+   └── supplier missing
+            ↓
+      CJ / Alibaba
+
+All research can discover
+additional ProductCandidates
+          ↓
+      PRODUCT_INTAKE
+          ↓
+      recompute coverage
+          ↓
+product discovery satisfied?
+
+
+══════════ SUPPLIER LOOP ══════════
+
+ProductCandidate
+   ↓
+supplier requirement
+   ↓
+CJ / Alibaba / approved source
+   ↓
+SupplierOffers
+   ↓
+sourceability satisfaction
+   ↓
+new implementation discovered?
+   ├── YES → PRODUCT_INTAKE
+   └── NO
+   ↓
+SOURCING_READY
+```
+
+---
+
+# 27. SQLite should store the evidence contract, not become smarter
+
+Do not add a separate knowledge database.
+
+Existing generic Work Graph payloads can contain:
+
+```text
+relevance
+knowledge_roles
+evidence_roles
+authority
+freshness
+source_identity
+can_establish
+cannot_establish
+```
+
+Likewise queries/actions contain:
+
+```text
+why_this_source
+expected_evidence_roles
+cannot_satisfy
+```
+
+Checks contain:
+
+```text
+covered roles
+missing roles
+source independence
+freshness result
+```
+
+That is enough.
+
+---
+
+# 28. Source utility should be derived from existing SQLite telemetry
+
+Do **not** add a new table yet.
+
+You already have:
+
+```text
+actions
+events
+checks
+```
+
+Those can answer:
+
+```text
+For WORKAROUND_EVIDENCE:
+
+Reddit:
+  queries = 42
+  productive = 19
+
+YouTube:
+  queries = 27
+  productive = 6
+```
+
+Later compute:
+
+```text
+routing_hint
+```
+
+from history.
+
+Example:
+
+```yaml
+routing_hint:
+  evidence_role: WORKAROUND_EVIDENCE
+  source: reddit
+  historical_yield: high
+```
+
+But:
+
+```text
+routing_hint
+≠
+policy
+```
+
+It can influence source ordering.
+
+It cannot automatically rewrite:
+
+```text
+sites/*.yaml
+policies.yaml
+control graph
+```
+
+---
+
+# 29. No automatic self-tuning
+
+SQLite may eventually tell you:
+
+```text
+Reddit is best for workaround research.
+```
+
+The runtime may prioritize it as a hint.
+
+But it must not autonomously conclude:
+
+```text
+Change all future policies:
+Reddit required first.
+```
+
+That would turn experience telemetry into control authority.
+
+If a repeated pattern deserves permanence:
+
+```text
+telemetry
+   ↓
+candidate policy/routing improvement
+   ↓
+evaluation
+   ↓
+you / Fable
+   ↓
+Git change
+```
+
+---
+
+# 30. Do not create corpus-specific workflows
+
+This remains a hard anti-pattern.
+
+Never:
+
+```text
+psychology_loop
+history_loop
+technical_loop
+marketing_loop
+video_loop
+```
+
+Instead:
+
+```text
+ANY SOURCE
+     ↓
+Polymath retrieval
+     ↓
+KnowledgeRole(s)
+     ↓
+EvidenceRole(s)
+     ↓
+current Work Graph
+     ↓
+active evidence requirements
+     ↓
+Control Graph
+```
+
+That is exactly what allows the corpus to contain nearly anything without creating an unmaintainable number of agent behaviors.
+
+---
+
+# 31. Minimal changes to Fable's existing files
+
+Again: **do not restructure anything.**
+
+### `models.py`
+
+Extend relevant models with:
+
+```text
+KnowledgeRole
+EvidenceRole
+FreshnessClass
+SourceIdentity
+
+can_establish
+cannot_establish
+
+RegistryResolution:
+    EXACT
+    INFERRED
+    MULTIPLE
+    UNRESOLVED
+
+LensResolution:
+    KNOWN
+    COMPOSED
+    OPEN
+```
+
+Extend queries with:
+
+```text
+why_this_source
+expected_evidence_roles
+cannot_satisfy
+```
+
+Extend `EvidenceGap` with:
+
+```text
+required_evidence_roles
+freshness_requirement
+independence_requirement
+acceptable_source_families
+```
+
+---
+
+### `executors.py`
+
+Extend existing logic with:
+
+```text
+classify/admit evidence role result
+
+product_signal_intake()
+
+compute_evidence_coverage()
+
+source_independence_grouping()
+```
+
+Semantic role classification can originate from θ.
+
+Python validates/adopts/rejects it.
+
+---
+
+### `verifiers.py`
+
+Add:
+
+```text
+evidence_role_admissibility()
+
+source_suitability()
+
+freshness_admissibility()
+
+source_independence()
+
+cross_domain_bridge_guard()
+
+product_evidence_binding()
+```
+
+---
+
+### `satisfaction.py`
+
+Change from primarily counts to:
+
+```text
+required-role coverage
++
+freshness
++
+independence
++
+contradiction coverage
+```
+
+Add/extend:
+
+```text
+evidence_requirement_satisfaction()
+
+research_satisfaction()
+
+product_discovery_satisfaction()
+
+supplier_satisfaction()
+```
+
+---
+
+### `transitions.py`
+
+Transitions should be able to evaluate:
+
+```text
+required_evidence_roles_missing()
+
+bridge_role_coverage_satisfied()
+
+physical_product_role_coverage_satisfied()
+
+supplier_role_coverage_satisfied()
+
+open_world_resolution_required()
+```
+
+---
+
+### `controller.py`
+
+No new intelligence.
+
+It merely consumes the new deterministic statuses.
+
+---
+
+### SQLite
+
+No schema explosion.
+
+Use existing generic records and JSON payloads.
+
+---
+
+# 32. Example: full storytelling → physical product path
+
+Start with Polymath:
+
+```text
+storytelling quality
+performative delivery
+audience attention
+```
+
+Evidence contract:
+
+```text
+knowledge_roles:
+BEHAVIORAL
+PATTERN
+
+can establish:
+conceptual mechanism
+
+cannot establish:
+current creator demand
+```
+
+θ:
+
+```text
+Storytelling quality
+→ performative delivery
+→ physical expressiveness
+→ movement
+→ low-interference audio
+```
+
+Bridge Guard:
+
+```text
+mechanistic invariant present ✓
+unsupported hops <= 2 ✓
+first inference declared ✓
+competing paths present ✓
+```
+
+Gap:
+
+```text
+Need current:
+BEHAVIOR_SUPPORT
+FRICTION_EVIDENCE
+WORKAROUND_EVIDENCE
+```
+
+Hermes searches Reddit/YouTube.
+
+It discovers:
+
+> "I hate clipping my lav every time I change outfits."
+
+Admit:
+
+```text
+FRICTION_EVIDENCE
+```
+
+Another:
+
+> "I put the transmitter in a magnetic holder."
+
+Admit:
+
+```text
+WORKAROUND_EVIDENCE
+PRODUCT_MODIFICATION
+```
+
+And create:
+
+```text
+ProductCandidate:
+magnetic transmitter holder
+```
+
+Product Intake reverse maps:
+
+```text
+product
+→ magnetic attachment
+→ secure removable mounting
+→ clothing-compatible audio attachment
+→ observed creator friction
+```
+
+Now role gaps become:
+
+```text
+CURRENT_PRODUCT_REFERENCE
+PRODUCT_DELTA_SUPPORT
+SUPPLIER_AVAILABILITY
+```
+
+Loop selects Amazon.
+
+Reviews expose:
+
+```text
+PRODUCT_COMPLAINT
+PRODUCT_DELTA_SUPPORT
+```
+
+Loop then selects Alibaba/CJ.
+
+Supplier listings establish:
+
+```text
+SUPPLIER_AVAILABILITY
+PRICE_EVIDENCE
+MOQ_EVIDENCE
+```
+
+Final result:
+
+```text
+Human friction              SATISFIED
+Behavior                     SATISFIED
+Physical job                 SATISFIED
+Mechanism                    SATISFIED
+Product delta                SATISFIED
+Current product              SATISFIED
+Supplier availability        SATISFIED
+Contradiction search         SATISFIED
+
+→ PROVISIONAL_PRODUCT_LEAD
+```
+
+Notice the psychology/storytelling material was useful.
+
+But it was never allowed to prove that people currently want the product.
+
+That's the entire point.
+
+---
+
+# 33. Example: Alibaba-first discovery
+
+During supplier research Hermes sees:
+
+```text
+adjustable silicone magnetic transmitter shell
+```
+
+It creates:
+
+```yaml
+origin:
+  ALIBABA_DISCOVERED
+
+evidence_roles:
+  - SUPPLIER_AVAILABILITY
+
+cannot_establish:
+  - BEHAVIOR_SUPPORT
+  - FRICTION_EVIDENCE
+  - PURCHASE_INTENT
+```
+
+PRODUCT_INTAKE recognizes:
+
+```text
+alternative implementation of current mechanism
+```
+
+and opens new gaps:
+
+```text
+Does anyone use this?
+Does it solve the observed friction better?
+Do reviews reveal issues?
+```
+
+The loop returns **from supplier research to human evidence research**.
+
+That's legal.
+
+Because:
+
+```text
+graph controls legal transitions
++
+loop controls repetition
++
+evidence roles control what has actually been established
+```
+
+---
+
+# 34. Final Control Law
+
+Give Fable this verbatim:
+
+> **Relevance determines whether evidence is worth considering. Evidentiary authority determines what that evidence is allowed to establish. These are never interchangeable. Every admitted evidence item must declare its KnowledgeRole, EvidenceRole, authority, freshness, source identity, and establishment limits. Every hypothesis, physical-product candidate, and supplier candidate must be evaluated against explicit required evidence roles rather than raw evidence counts.**
+
+And:
+
+> **Physical products may emerge from Polymath reasoning, comments, reviews, workarounds, Amazon, CJDropshipping, Alibaba, or other approved web research. Discovery origin does not grant evidentiary authority. A supplier listing proves supply, not demand. A comment can demonstrate a complaint or workaround, not population prevalence. An evergreen book can support a mechanism, not a current market state.**
+
+And:
+
+> **When required evidence roles remain unsatisfied, the loop must generate the next query against a source capable of satisfying those roles. Every query must declare why that source was selected, which evidence roles it seeks, and which requirements that source cannot satisfy.**
+
+And finally:
+
+> **The registry remains a reasoning seed rather than a closed world. EXACT, INFERRED, MULTIPLE, and UNRESOLVED resolution are all valid. An unresolved niche or lens must not force a nearest-neighbor classification; Hermes may investigate the open-world behavior directly and create provisional niche, market-identifier, or perspective candidates without blocking physical-product discovery.**
+
+That completes the physical-product graph/loop design without changing Fable's current architecture.
+
+The resulting system is not merely:
+
+```text
+find enough evidence
+```
+
+It becomes:
+
+```text
+find the RIGHT kind of evidence
+from a source qualified to provide it
+at the freshness required by the claim
+until every necessary part of the
+physical-product opportunity graph is satisfied.
+```
+
+That is the control that makes a corpus containing almost anything useful rather than dangerous.

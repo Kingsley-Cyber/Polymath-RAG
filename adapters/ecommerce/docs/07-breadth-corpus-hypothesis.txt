@@ -1,0 +1,890 @@
+Yes. On a second pass, I think the architecture is safe enough to avoid bad evidence, but there is still one optimization missing if the objective is specifically:
+
+Use a broad second-brain corpus to maximize the probability of generating unusually strong physical-product hypotheses—not merely valid hypotheses.
+
+I would not add another database, graph, or major service. I would strengthen the corpus → hypothesis section of the existing Control Graph.
+
+The core improvement is this:
+
+Do not retrieve corpus knowledge and immediately ask θ for a product hypothesis. First transform retrieved knowledge into reusable opportunity primitives, deliberately cross it with structurally related knowledge from other domains, generate a small diverse hypothesis portfolio, and only then spend web-research budget.
+
+That gives you a much stronger funnel.
+
+1. The corpus should be treated as a reasoning substrate, not an opportunity corpus
+
+Your second brain might contain:
+
+psychology
+filmmaking
+biomechanics
+marketing
+history
+AI
+military concepts
+design
+culture
+engineering
+creator research
+random transcripts
+books
+personal research
+
+Most passages should produce zero products.
+
+That is good.
+
+You do not want:
+
+every interesting concept
+→ forced ecommerce hypothesis
+
+You want:
+
+ANY KNOWLEDGE
+      ↓
+does this expose something
+behaviorally or physically useful?
+      ↓
+NO → retain as knowledge only
+YES
+      ↓
+opportunity reasoning
+
+So the system should explicitly be allowed to say:
+
+NO_GENERATIVE_SIGNAL
+
+before generating product hypotheses.
+
+This alone will improve lead quality.
+
+2. Add a corpus-to-opportunity primitive extraction pass
+
+After Polymath retrieval, don't ask:
+
+What product could come from this?
+
+Ask θ to identify only the useful intermediate primitives.
+
+Something like:
+
+opportunity_primitives:
+
+  drivers:
+    - ...
+
+  behaviors:
+    - ...
+
+  adaptations:
+    - ...
+
+  constraints:
+    - ...
+
+  frictions:
+    - ...
+
+  workarounds:
+    - ...
+
+  physical_interactions:
+    - ...
+
+  physical_jobs:
+    - ...
+
+  latent_values:
+    - ...
+
+  transferable_invariants:
+    - ...
+
+  unresolved_questions:
+    - ...
+
+This remains working reasoning, not factual promotion.
+
+Example from storytelling research:
+
+Corpus concept:
+expressive storytelling benefits from embodied delivery
+
+Don't jump to:
+
+microphone
+
+Extract:
+
+behavior:
+performer physically expresses while speaking
+
+constraint:
+capture system must preserve movement
+
+physical interaction:
+wear / hold / attach recording equipment
+
+physical job:
+capture clean audio without constraining expression
+
+transfer invariant:
+tool should interfere as little as possible
+with the activity it enables
+
+Now you have something capable of generating several physical solutions.
+
+3. The strongest hidden value of your corpus is cross-domain transfer
+
+A universal corpus should not merely retrieve the most semantically similar material.
+
+That would underuse it.
+
+You want two retrieval modes operating together:
+
+A. SEMANTIC / DIRECT RETRIEVAL
+"What does my corpus know about this?"
+
+B. STRUCTURAL / ANALOGICAL RETRIEVAL
+"Where else does this same constraint,
+physical job, predicate, or workaround occur?"
+
+Suppose the current opportunity contains:
+
+physical job:
+quickly access a small object
+while one hand is occupied
+
+Direct retrieval might find:
+
+creator equipment
+
+Structural retrieval through your registry could find:
+
+fishing
+kayaking
+photography
+hiking
+mechanics
+medical work
+
+because they share:
+
+access + occupied_hand
+
+Those unrelated domains may contain much better solutions.
+
+That is where having "almost anything" in Polymath becomes a competitive advantage.
+
+4. Use the CSV registry as the bridge between semantic retrievals
+
+This is where the registry you've built becomes particularly valuable.
+
+Conceptually:
+
+Polymath source A
+      ↓
+extract:
+occupied_hand + access
+
+Registry
+      ↓
+find structurally related activities
+
+occupied_hand + access
+      ↓
+Activity B
+Activity C
+Activity D
+      ↓
+Polymath retrieval against those concepts
+
+So you get:
+
+CORPUS
+   ↓
+STRUCTURAL PRIMITIVE
+   ↓
+REGISTRY
+   ↓
+CROSS-DOMAIN NEIGHBORS
+   ↓
+CORPUS AGAIN
+
+That is much stronger than a single RAG query.
+
+And importantly, you don't need another graph.
+
+Your existing Polymath graph + registry indices already provide the ingredients.
+
+5. Add a bounded cross-domain expansion
+
+You don't want:
+
+storytelling
+→ movement
+→ sports
+→ hiking
+→ water bottles
+→ hydration
+→ health
+→ supplements
+→ ...
+
+That becomes associative wandering.
+
+So structural expansion should be bounded by a shared invariant.
+
+Require:
+
+transfer:
+  source_domain: creator_performance
+  target_domain: outdoor_activity
+
+  shared_structure:
+    predicate: access
+    friction: occupied_hand
+
+  invariant:
+    >
+    A frequently needed small object must be
+    retrievable without interrupting the
+    primary activity.
+
+  reason_for_transfer:
+    >
+    Both domains contain an occupied-hand
+    constraint during an ongoing activity.
+
+No invariant:
+
+no cross-domain expansion
+
+This complements the bridge guard you've already built.
+
+6. Generate a hypothesis portfolio, not one hypothesis
+
+This is probably the largest practical improvement I would make.
+
+Do not let θ produce:
+
+Best idea:
+magnetic microphone holder
+
+and immediately spend the research budget validating it.
+
+Generate a small competing portfolio across different physical mechanisms.
+
+For example:
+
+Physical job:
+secure audio equipment while preserving movement
+
+Portfolio:
+
+H1 magnetic attachment
+H2 improved mechanical clip
+H3 wearable garment integration
+H4 lanyard / neck mounting
+H5 wrist mounting
+H6 handheld conversion shell
+
+Then challenge them before web research.
+
+The objective is not:
+
+generate many products
+
+It's:
+
+cover meaningfully different mechanism families
+
+Five versions of a magnetic clip are one hypothesis family.
+
+7. Force mechanism diversity
+
+The hypothesis generator should explicitly avoid superficial variations.
+
+Require:
+
+hypothesis_portfolio:
+
+  diversity_dimensions:
+    - mechanism
+    - attachment_mode
+    - body_location
+    - interaction_mode
+    - physical_form
+
+  prohibit:
+    - cosmetic_only_variants
+    - synonym_duplicates
+    - same_mechanism_reworded
+
+Example:
+
+Bad portfolio:
+
+small magnetic clip
+strong magnetic clip
+premium magnetic clip
+adjustable magnetic clip
+
+Good:
+
+magnet
+mechanical clamp
+garment-integrated pocket
+wrist mount
+conversion grip
+
+This gives web evidence room to surprise the system.
+
+8. Keep one deliberately non-obvious candidate
+
+There is a classic exploitation problem here.
+
+If all candidates are generated from:
+
+closest known friction
++
+closest known mechanism
+
+your system will become good at finding obvious products.
+
+For each serious portfolio, permit one:
+
+EXPLORATORY_TRANSFER
+
+candidate.
+
+It must still satisfy:
+
+mechanistic bridge
+physical job
+inference-hop limits
+falsifiability
+
+but it may come from a distant structural analogy.
+
+Example:
+
+creator clothing attachment problem
+
+could retrieve attachment solutions from:
+
+outdoor gear
+medical wearables
+industrial badge systems
+sports sensors
+
+That's where genuinely novel product forms may appear.
+
+9. But exploratory candidates get no evidentiary privilege
+
+This distinction matters.
+
+novel
+≠
+good
+
+and:
+
+creative
+≠
+supported
+
+So an exploratory hypothesis remains:
+
+WORKING_ANALOGY
+
+until field evidence promotes it.
+
+This lets θ be imaginative without lowering your evidence standard.
+
+10. Add a pre-research hypothesis triage gate
+
+Web research is the expensive part.
+
+Before spending it, eliminate weak hypotheses.
+
+Do not use your final opportunity score here.
+
+Use a separate:
+
+EXPLORATION_PRIORITY
+
+or:
+
+RESEARCH_PRIORITY
+
+which is explicitly a prior, not evidence.
+
+Possible dimensions:
+
+bridge coherence
+mechanism specificity
+physical-job clarity
+distinctiveness from alternatives
+falsifiability
+researchability
+physical-product plausibility
+likely sourceability
+expected informational value of research
+
+The most important one is:
+
+Will researching this hypothesis teach us something useful?
+
+11. Use information gain to allocate research budget
+
+Suppose you have six hypotheses.
+
+Don't research all six equally.
+
+Prioritize hypotheses where evidence could decisively change your understanding.
+
+Example:
+
+H1:
+already looks obviously commodity
+→ low research value
+
+H2:
+interesting but impossible to falsify
+→ low research value
+
+H3:
+strong mechanism, unknown real behavior
+→ high research value
+
+H4:
+weird structural analogy that can be
+quickly checked against comments
+→ high research value
+
+Research:
+
+H3 + H4 first
+
+Then recompute.
+
+This is essentially active-learning logic applied to opportunity discovery.
+
+12. Let hypotheses kill and mutate each other
+
+Your existing product loop already supports pivoting. Extend that to the hypothesis portfolio.
+
+Suppose:
+
+H1 handheld microphone
+H2 wearable clip
+H3 magnetic accessory
+
+Research finds:
+
+people overwhelmingly prefer hands-free
+
+Then:
+
+H1 ↓
+contradicted / weakened
+
+H2 ↑
+supported
+
+H3 ↑
+new workaround evidence
+
+The next cycle should spend more budget on H2/H3.
+
+Not restart all three equally.
+
+13. Preserve abandoned hypotheses
+
+Do not delete them from Work Graph state.
+
+Keep:
+
+REJECTED
+CONTRADICTED
+SUPERSEDED
+LOW_PRIORITY
+
+because failed paths are useful.
+
+Later, if another corpus investigation proposes:
+
+handheld shell
+
+the system can know:
+
+We've explored a structurally similar
+hypothesis before and it failed because...
+
+Initially this is run-local.
+
+Later your maintenance loop may recognize reusable negative motifs.
+
+Those could become powerful reasoning priors too.
+
+14. The maintenance loop should learn successful reasoning motifs, not just new niches
+
+This is an important second-pass addition to the CSV-growth design.
+
+Imagine across 12 successful opportunities you repeatedly observe:
+
+primary activity occupies hands
++
+secondary object needs frequent access
++
+users improvise retention
+→ wearable / attached access mechanism
+
+That is more valuable than adding twelve separate niche rows.
+
+It is a reusable:
+
+REASONING_MOTIF_CANDIDATE
+
+For example:
+
+motif:
+  name: occupied_hand_secondary_access
+
+  structure:
+    - primary_task_commits_hands
+    - secondary_object_needed_frequently
+    - interruption_cost_high
+    - improvised_retention_present
+
+  likely_physical_jobs:
+    - retain
+    - access
+    - attach
+
+  known_mechanism_families:
+    - clip
+    - magnet
+    - wearable_mount
+
+Your maintenance loop should be able to promote these after repeated cross-domain validation.
+
+That can compound much faster than endlessly adding niches.
+
+15. Also learn failure motifs
+
+Same idea:
+
+problem appears real
++
+people already solve it cheaply with
+something they own
++
+no purchase-seeking language
+
+may repeatedly predict:
+
+weak commercial opportunity
+
+That could become a:
+
+NEGATIVE_REASONING_MOTIF
+
+Again, not automatically.
+
+Maintenance proposes it after enough runs.
+
+16. Corpus retrieval should become hypothesis-specific after the first pass
+
+Don't repeatedly query Polymath with the original broad question.
+
+Initial:
+
+"What can storytelling teach us about
+creator product opportunities?"
+
+Later retrieval should target individual hypotheses/gaps:
+
+"physical interference during performance"
+
+"tools that preserve motion while capturing information"
+
+"occupied-hand access patterns"
+
+"wearable attachment under clothing changes"
+
+Each hypothesis gets its own retrieval branch.
+
+This should greatly improve the usefulness of the second-brain corpus.
+
+17. Use contradiction retrieval from the corpus too
+
+The web contradiction pass is necessary for current behavior.
+
+But your corpus can challenge reasoning before you ever hit the web.
+
+For every strong hypothesis, ask Polymath:
+
+What knowledge would make this mechanism
+less likely?
+
+What alternative explanations exist?
+
+What known constraint makes this physical
+implementation undesirable?
+
+Where has the analogous mechanism failed
+in another domain?
+
+For example:
+
+magnetic attachment
+
+cross-domain corpus might reveal:
+
+weight problems
+device interference
+material incompatibility
+detachment under high movement
+
+That makes web research much sharper.
+
+18. Product discovery signals found during corpus retrieval should enter Product Intake too
+
+Earlier we allowed product discoveries from:
+
+comments
+Amazon
+CJ
+Alibaba
+
+Do the same for Polymath.
+
+Suppose an old engineering source mentions:
+
+retractable tether
+
+while researching object retention.
+
+That can create:
+
+ProductCandidate:
+  discovery_origin: CORPUS_OBSERVED
+
+But the Evidence Contract still matters:
+
+old engineering book:
+may establish mechanism existence
+
+cannot establish:
+current demand
+current products
+current suppliers
+
+So the product can enter the graph without being mistaken for a current lead.
+
+19. Strong lead generation requires both novelty and grounding
+
+Your funnel should optimize for the intersection:
+
+              NOVEL
+               ▲
+               │
+               │     TARGET
+               │       ●
+               │
+───────────────┼────────────► GROUNDED
+               │
+               │
+
+Too far left:
+
+creative hallucination
+
+Too low novelty:
+
+obvious commodity
+
+The good zone is:
+
+A non-obvious physical implementation of a well-grounded human job.
+
+That's what the graph should select for.
+
+20. One more distinction: hypothesis strength vs lead strength
+
+A corpus can give you an excellent hypothesis.
+
+It cannot necessarily give you a strong lead.
+
+Represent separately:
+
+HYPOTHESIS QUALITY
+
+before web research, versus:
+
+LEAD QUALITY
+
+after field and supply validation.
+
+For example:
+
+hypothesis:
+  reasoning_quality: HIGH
+  evidence_state: UNPROVEN
+
+lead:
+  status: NOT_YET_A_LEAD
+
+This protects you from falling in love with elegant ideas.
+
+21. The final corpus-driven loop I'd use
+
+Without changing the architecture, strengthen the existing early graph to behave like:
+
+══════════ CORPUS HYPOTHESIS LOOP ══════════
+
+Opportunity context
+      ↓
+Polymath anchor retrieval
+      ↓
+Evidence-role classification
+      ↓
+Extract opportunity primitives
+      ↓
+Any useful generative signal?
+   ┌──────────┴──────────┐
+   NO                    YES
+   ↓                      ↓
+NO_GENERATIVE_SIGNAL   Registry structural lookup
+                          ↓
+                predicate / friction /
+                physical-job analogies
+                          ↓
+                cross-domain Polymath
+                      retrieval
+                          ↓
+                θ generates diverse
+                 hypothesis portfolio
+                          ↓
+                  Bridge Guard
+                          ↓
+                corpus contradiction
+                          ↓
+                 hypothesis triage
+                          ↓
+            ┌─────────────┼─────────────┐
+            ▼             ▼             ▼
+          reject        hold       research-ready
+                                         ↓
+
+
+══════════ FIELD EVIDENCE LOOP ══════════
+
+selected hypotheses
+      ↓
+required EvidenceRole deficits
+      ↓
+Hermes web research
+      ↓
+comments / reviews / workarounds /
+products / contradictions
+      ↓
+new ProductCandidates can appear
+      ↓
+Work Graph update
+      ↓
+hypothesis portfolio reprioritized
+      ↓
+role-aware satisfaction
+      ↓
+mechanism survives?
+      ↓
+
+
+══════════ PHYSICAL PRODUCT LOOP ══════════
+
+Behavior/friction
+      ↓
+PhysicalJob
+      ↓
+multiple mechanisms
+      ↓
+ProductCandidates
+      ↓
+Product Intake
+      ↓
+current product research
+      ↓
+Product Delta
+      ↓
+supplier research
+      ↓
+sourceability
+      ↓
+QUALIFIED / PROVISIONAL / REJECTED
+22. And feed the result back into your maintenance loop
+
+After each terminal run:
+
+What new reusable knowledge emerged?
+
+Possible candidates:
+
+new niche
+new activity
+new atomic task
+new friction instantiation
+new friction primitive
+new workaround motif
+new physical job
+new shared predicate
+new product territory
+new query template
+new source
+new positive reasoning motif
+new negative reasoning motif
+
+Then the separate maintenance graph decides whether any deserve permanence.
+
+The complete compounding flywheel becomes:
+
+       BROAD SECOND-BRAIN CORPUS
+                  ↓
+         opportunity primitives
+                  ↓
+         structural transfer
+                  ↓
+       diverse hypotheses
+                  ↓
+          web reality
+                  ↓
+        physical products
+                  ↓
+      successful + failed paths
+                  ↓
+       registry candidates
+                  ↓
+       maintenance loop
+                  ↓
+     better reusable priors
+                  ↓
+         FUTURE CORPUS RUNS
+What I would add to Fable's implementation plan
+
+I would add only these five things to maximize lead generation without introducing another architecture:
+
+OpportunityPrimitive extraction between Polymath retrieval and bridge generation.
+Structural second-pass retrieval using shared predicates, friction families and physical jobs to deliberately retrieve cross-domain analogues.
+Diverse hypothesis portfolios instead of immediately committing to one bridge/product mechanism.
+Pre-research hypothesis triage based on informational value, distinct from final lead scoring.
+Maintenance candidates for successful and failed reasoning motifs, not merely new niches/activities.
+
+Everything else you've built—evidence authority, role-aware satisfaction, physical Product Intake, open-world mode, SQLite durability, registry compiler, and the maintenance lifecycle—already supports this.
+
+The main second-pass conclusion is therefore:
+
+Don't make Polymath better at directly suggesting products. Make it better at exposing transferable behavioral, physical, causal, and constraint structures that θ can recombine into several competing physical-product hypotheses. Then let current-world evidence decide which one deserves to become a lead.
+
+That is how a messy, universal second brain becomes an asset rather than noise: breadth supplies distant mechanisms and analogies; the graph supplies discipline; the loops supply falsification; the web supplies reality.

@@ -1,0 +1,3 @@
+{"title":"work_state","required":["run_id","node","status","data","rounds"],
+ "properties":{"status":{"enum":["running","stopped"]},
+ "data":{"required":[],"properties":{}}}}

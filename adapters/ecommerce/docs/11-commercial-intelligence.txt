@@ -1,0 +1,976 @@
+Yes. I would add this now as a **shared Commercial/Creative Intelligence layer consumed by both modes**. The amount of analysis your system is doing would be wasted if the final output were only “here are the products.”
+
+The important architectural rule is:
+
+> **The research graph discovers truth; the report layer turns that truth into market, product, style, positioning, and advertising intelligence without re-reasoning the facts.**
+
+The uploaded design already establishes that Niche Loadout has deep community, lived-situation, comment, product, sourcing, and evidentiary state.  Opportunity Research has equivalent depth around the individual opportunity. Both should expose that analysis through a common reporting contract.
+
+## I would create a shared `COMMERCIAL_INTELLIGENCE_REPORT`
+
+Not another reasoning mode.
+
+```text
+OPPORTUNITY_RESEARCH
+        │
+        └──────────────┐
+                       │
+NICHE_LOADOUT          │
+        │              │
+        └──────────────┤
+                       ▼
+             CANONICAL RUN STATE
+                       ↓
+             ReportModel Compiler
+                       ↓
+        Commercial Intelligence Layer
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+        Market       Product       Style
+       Analysis      Analysis     Analysis
+          │            │            │
+          └────────────┼────────────┘
+                       ▼
+                   Angles
+          ┌────────────┼─────────────┐
+          ▼            ▼             ▼
+       Market       Product         Ad
+       Angles       Angles        Angles
+                       │
+                       ▼
+               Creative Strategy
+                       ↓
+                 HTML REPORT
+```
+
+The reports differ by mode, but they share the same intelligence vocabulary.
+
+---
+
+# Four angle objects — do not collapse these
+
+This is important.
+
+## `MarketAngle`
+
+Answers:
+
+> **What part of the market/world makes this commercially interesting?**
+
+Examples:
+
+```text
+winter FTX compatibility
+high-mileage runner comfort
+run-club fashion convergence
+family-hiking shared-access problems
+creator gear that doesn't interfere with movement
+```
+
+Schema:
+
+```yaml
+market_angle:
+  angle_id:
+  thesis:
+
+  target_scope:
+  subniche:
+  context:
+
+  underlying_signal:
+    - friction
+    - trend
+    - behavior
+    - identity
+    - lifecycle
+    - season
+    - preference_cluster
+
+  why_it_matters:
+  currentness:
+
+  evidence_refs: []
+  contradictions: []
+
+  authority:
+    EVIDENCE_GROUNDED_ANALYSIS
+```
+
+---
+
+# `ProductAngle`
+
+Answers:
+
+> **What specifically makes this product worth showing this person?**
+
+Not marketing copy yet.
+
+Example:
+
+```yaml
+product_angle:
+  product: heated_glove_liner
+
+  angle:
+    hidden_warmth_upgrade
+
+  lived_problem:
+    >
+    Required outer glove system remains useful,
+    but the inner warmth layer is inadequate.
+
+  mechanism:
+    heated_inner_layer
+
+  physical_job:
+    >
+    Increase hand warmth without replacing
+    the visible outer equipment.
+
+  product_delta:
+    >
+    Upgrade the hidden component instead
+    of replacing the full glove system.
+
+  evidence_refs: []
+```
+
+A single product may have multiple legitimate angles:
+
+```text
+PERFORMANCE
+COMFORT
+CONVENIENCE
+HIDDEN_UPGRADE
+SPACE_SAVING
+COMPATIBILITY
+AESTHETIC
+IDENTITY
+DISCOVERY
+VALUE
+DURABILITY
+PORTABILITY
+```
+
+But each angle needs its own grounding.
+
+---
+
+# `AdAngle`
+
+This answers:
+
+> **What story should we tell to make the underlying product insight immediately understandable?**
+
+Example:
+
+```yaml
+ad_angle:
+  angle_id: aa_71
+
+  type:
+    INSIDER_RECOGNITION
+
+  hook_thesis:
+    >
+    The problem isn't necessarily your outer gloves.
+
+  tension:
+    >
+    You still need the outer system,
+    but the issued inner layer isn't enough.
+
+  reveal:
+    >
+    Upgrade the layer underneath.
+
+  featured_product:
+    heated_glove_liner
+
+  evidence_basis:
+    - lived_situation_17
+    - friction_8
+    - comment_cluster_4
+    - product_reference_9
+
+  claims_allowed:
+    - ...
+
+  claims_prohibited:
+    - ...
+
+  confidence:
+    EVIDENCE_GROUNDED
+```
+
+That can later compile into TikTok slideshow copy.
+
+---
+
+# `StyleAngle`
+
+This is different again.
+
+It answers:
+
+> **How should the brand/content visually and tonally present this niche so it feels native rather than like generic dropshipping creative?**
+
+For runners you might find:
+
+```text
+technical-performance
+minimal
+run-club editorial
+retro athletics
+bright visibility
+race-day documentary
+```
+
+For Army/field:
+
+```text
+utilitarian
+low-key
+field-tested
+no tacticool cosplay
+equipment-focused
+functional
+understated
+```
+
+The report needs to distinguish:
+
+```text
+observed community aesthetic
+vs
+θ-proposed creative treatment
+```
+
+That authority distinction matters.
+
+---
+
+# Style intelligence should itself be evidence-driven
+
+Do not let θ arbitrarily say:
+
+> “Use black and neon green because runners like it.”
+
+Instead collect current style signals from:
+
+```text
+product imagery
+community imagery
+current apparel/product trends
+marketplaces
+brand/storefront patterns
+comments discussing aesthetics
+social content
+product reviews
+niche terminology
+```
+
+Then build:
+
+```yaml
+style_intelligence:
+  observed:
+    silhouettes: []
+    materials: []
+    forms: []
+    visual_motifs: []
+    common_product_finishes: []
+    photographic_patterns: []
+    language_patterns: []
+    aesthetic_clusters: []
+
+  inferred:
+    recommended_visual_direction: []
+    differentiation_opportunities: []
+
+  avoid:
+    - generic_visual_cliches
+    - styles_not_supported_by_scope
+
+  evidence_refs: []
+```
+
+This gives you an actual **style report**, not arbitrary branding advice.
+
+---
+
+# Both modes should have `MARKET_RESEARCH_ANALYSIS`
+
+This should be much deeper than a market-size number.
+
+I would structure it as:
+
+```text
+MARKET STRUCTURE
+├── target niche/sub-niche
+├── current products
+├── competing mechanisms
+├── price bands
+├── product saturation
+├── product deltas
+└── supplier landscape
+
+CUSTOMER / COMMUNITY
+├── behaviors
+├── frictions
+├── workarounds
+├── language
+├── preference clusters
+├── purchase/search signals
+└── contradictions
+
+CURRENT SIGNALS
+├── emerging products
+├── trend signals
+├── style changes
+├── recurring complaints
+├── new sub-niches
+└── changing preferences
+
+OPPORTUNITY
+├── underserved physical jobs
+├── weak existing solutions
+├── unusual mechanisms
+├── insider opportunities
+└── collection whitespace
+
+RISKS
+├── commodity risk
+├── saturation
+├── weak evidence
+├── supplier instability
+├── pricing
+├── trend fragility
+└── false-community-fit
+```
+
+---
+
+# But the two modes emphasize different things
+
+## Opportunity Research report
+
+It is **product/opportunity centered**.
+
+```text
+1. Opportunity thesis
+2. Origin of hypothesis
+3. Reasoning bridge
+4. Target market
+5. Target sub-niches
+6. Behavioral/friction evidence
+7. Physical job
+8. Competing mechanisms
+9. Product candidate
+10. Product delta
+11. Current marketplace analysis
+12. Competition
+13. Pricing
+14. Supplier analysis
+15. Style/aesthetic fit
+16. Market angles
+17. Product angles
+18. Ad angles
+19. Contradictions
+20. Qualification verdict
+21. Evidence audit
+```
+
+The question is:
+
+> **How should I understand, position, source and market this opportunity?**
+
+---
+
+# Niche Loadout report
+
+It is **world/collection centered**.
+
+```text
+1. Niche thesis
+2. CommunityWorldModel
+3. Sub-niche map
+4. Experience levels
+5. Activity journeys
+6. Lived situations
+7. Insider language
+8. Community norms/rituals
+9. Preference clusters
+10. Frictions/workarounds
+11. Current market signals
+12. Style/aesthetic world
+13. ProductSlots
+14. Final 3–6 product loadout
+15. Product-by-product rationale
+16. Collection coherence
+17. Market angles
+18. Collection angles
+19. Product angles
+20. TikTok/ad angles
+21. Slideshow concepts
+22. Storefront angle
+23. Supplier/Alibaba/CJ/Amazon analysis
+24. Community Skeptic
+25. Evidence audit
+```
+
+The question becomes:
+
+> **How do I build a store and creative world that feels like it was curated by someone inside this community?**
+
+---
+
+# Add `AngleCandidate → AngleReceipt`
+
+θ should absolutely generate creative angles.
+
+But just like product hypotheses:
+
+```text
+θ GENERATES
+φ ADMITS
+```
+
+Conceptually:
+
+```text
+canonical evidence/state
+       ↓
+θ generates 10–20 possible angles
+       ↓
+dedupe
+       ↓
+evidence grounding
+       ↓
+claim-strength validation
+       ↓
+specificity/genericness
+       ↓
+audience fit
+       ↓
+top angle portfolio
+```
+
+An angle receipt:
+
+```yaml
+angle_receipt:
+  angle_id:
+
+  angle_type:
+    MARKET | PRODUCT | AD | STYLE | COLLECTION
+
+  thesis:
+
+  applies_to:
+    scope_ids: []
+    product_ids: []
+
+  derived_from:
+    lived_situations: []
+    preference_clusters: []
+    frictions: []
+    product_deltas: []
+    trend_signals: []
+
+  evidence_refs: []
+
+  evidence_state:
+    GROUNDED | PARTIAL | SPECULATIVE
+
+  allowed_claims: []
+  prohibited_claims: []
+
+  genericness:
+  insider_specificity:
+  novelty:
+
+  disposition:
+    ADVANCE | HOLD | REJECT
+```
+
+---
+
+# Angles should also be selected as a portfolio
+
+Same logic as products.
+
+You don't want:
+
+```text
+Angle 1: helps runners
+Angle 2: makes running easier
+Angle 3: better running
+Angle 4: improve your runs
+```
+
+That's one angle four times.
+
+Instead cover:
+
+```text
+INSIDER PROBLEM
+DISCOVERY
+PERFORMANCE
+IDENTITY / STYLE
+CONVENIENCE
+CONTRARIAN / MISCONCEPTION
+SEASONAL
+TRANSITION
+```
+
+So again:
+
+> **Optimize a set, not just individual scores.**
+
+---
+
+# Ad angle matrix
+
+For each qualified product/loadout, generate a structured matrix.
+
+Example:
+
+| Angle                      | Hook source            | Evidence                       | Best content form     |
+| -------------------------- | ---------------------- | ------------------------------ | --------------------- |
+| Insider problem            | accepted friction      | comments + lived situation     | TikTok slideshow      |
+| Hidden upgrade             | silent workaround      | product + community evidence   | reveal slideshow      |
+| “Didn't know this existed” | field-emergent product | current product/community      | discovery post        |
+| Beginner mistake           | comment cluster        | community evidence             | educational slideshow |
+| Expert preference          | preference cluster     | experienced-user comments      | comparison            |
+| Seasonal                   | current context        | seasonal + product evidence    | timely collection     |
+| Product comparison         | complaints/delta       | reviews                        | before/after          |
+| Identity/style             | aesthetic cluster      | current social/product signals | editorial slideshow   |
+
+The actual report can populate only those supported by evidence.
+
+---
+
+# Make `AdCreativeBrief` a first-class output
+
+For each selected ad angle:
+
+```yaml
+ad_creative_brief:
+  angle_id:
+
+  target:
+    niche:
+    subniche:
+    experience_level:
+    context:
+
+  objective:
+    DISCOVERY | CONSIDERATION | COLLECTION_CLICK
+
+  hook:
+  insider_truth:
+  tension:
+  reveal:
+  proof:
+  product_sequence:
+  CTA:
+
+  visual_direction:
+  tone:
+  pacing:
+
+  use_language:
+    - ...
+
+  avoid_language:
+    - ...
+
+  evidence_refs: []
+
+  claim_boundaries:
+    - ...
+```
+
+Now another content-generation mode can consume this without reopening market research.
+
+---
+
+# TikTok slideshow planning should be generated from the brief
+
+For example:
+
+```yaml
+slideshow:
+  angle:
+    HIDDEN_UPGRADE
+
+  slide_1:
+    function: HOOK
+    message:
+      "The winter field upgrade nobody can see"
+
+  slide_2:
+    function: INSIDER_CONTEXT
+
+  slide_3:
+    function: FRICTION
+
+  slide_4:
+    function: PRODUCT_REVEAL
+
+  slide_5:
+    function: WHY_IT_WORKS
+
+  slide_6:
+    function: COLLECTION_BRIDGE
+
+  slide_7:
+    function: CTA
+```
+
+That is much stronger than asking a copy model cold:
+
+> Make a TikTok ad for this product.
+
+---
+
+# Add storefront positioning
+
+For Niche Loadout especially, the report should produce:
+
+```text
+STORE THESIS
+COLLECTION THESIS
+POSITIONING
+TONE
+VISUAL STYLE
+CATEGORY ORGANIZATION
+PRODUCT HIERARCHY
+CONTENT PILLARS
+```
+
+Example:
+
+```yaml
+storefront_strategy:
+  scope:
+    family_hikers
+
+  positioning:
+    >
+    Small equipment choices that make hiking
+    with other people less logistically annoying.
+
+  content_pillars:
+    - carrying_for_more_than_yourself
+    - constant_access_and_interruptions
+    - weather_transitions
+    - cleanup_and_recovery
+    - family_specific_discoveries
+
+  collection_roles:
+    - insider_gem
+    - utility
+    - discovery
+    - transition
+```
+
+Now the store itself inherits the research intelligence.
+
+---
+
+# Evidence must remain visible at the report level
+
+This is probably the most important part of your request.
+
+Every major analytical conclusion should be capable of exposing:
+
+```text
+WHY DO WE BELIEVE THIS?
+```
+
+Report objects should carry:
+
+```yaml
+analysis_claim:
+  claim_id:
+  statement:
+
+  classification:
+    OBSERVED |
+    INFERRED |
+    SIMULATED |
+    CURRENT_SIGNAL |
+    WORKING_HYPOTHESIS
+
+  evidence_refs: []
+
+  supporting:
+  contradicting:
+
+  freshness:
+  independence:
+
+  confidence_class:
+```
+
+Then HTML can visually distinguish:
+
+```text
+● Evidence backed
+◐ Partial / inferred
+○ Exploratory
+× Contradicted
+```
+
+Not literally those exact icons if you don't want them—but conceptually.
+
+---
+
+# A report should separate observation from interpretation
+
+Example:
+
+### Observed
+
+> 11 independent comments across four threads describe phone bounce or storage interference during longer runs.
+
+### Interpretation
+
+> Low-bounce storage therefore appears to be a meaningful physical job for this scope.
+
+### Creative implication
+
+> “Stop carrying your phone like this on long runs” may be a promising ad angle.
+
+Those are **three different authority levels**.
+
+Do not render them as one paragraph that sounds equally factual.
+
+---
+
+# Add `AnalysisChain`
+
+This would be useful for report explainability.
+
+```text
+EVIDENCE
+↓
+OBSERVATION
+↓
+INTERPRETATION
+↓
+MARKET IMPLICATION
+↓
+PRODUCT IMPLICATION
+↓
+CREATIVE ANGLE
+```
+
+Example:
+
+```yaml
+analysis_chain:
+  evidence:
+    - comment_17
+    - review_8
+
+  observation:
+    >
+    Experienced runners describe bouncing pockets
+    as increasingly irritating over longer runs.
+
+  interpretation:
+    >
+    Storage interference is duration-sensitive.
+
+  market_implication:
+    >
+    High-mileage runners represent a stronger
+    segment for low-bounce carry.
+
+  product_implication:
+    >
+    Prioritize stable body-hugging storage.
+
+  ad_implication:
+    >
+    Lead with the point at which normal pockets
+    become annoying rather than generic storage.
+```
+
+This is exactly the kind of intelligence your system earns by doing all that upstream research.
+
+---
+
+# Shared final architecture
+
+I'd tell Fable that **both modes must terminate into the same shared intelligence projection**:
+
+```text
+              OPPORTUNITY MODE
+                     │
+                     ▼
+              canonical state
+                     │
+                     │
+              NICHE LOADOUT MODE
+                     │
+                     ▼
+              canonical state
+                     │
+                     ▼
+       COMMERCIAL INTELLIGENCE COMPILER
+                     │
+       ┌─────────────┼──────────────┐
+       ▼             ▼              ▼
+   MARKET MODEL   PRODUCT MODEL   STYLE MODEL
+       │             │              │
+       └─────────────┼──────────────┘
+                     ▼
+               ANGLE ENGINE
+       ┌─────────────┼──────────────┐
+       ▼             ▼              ▼
+     MARKET        PRODUCT          AD
+     ANGLES        ANGLES         ANGLES
+                     │
+                     ▼
+              CREATIVE BRIEFS
+                     │
+                     ▼
+             REPORT MODEL JSON
+                     │
+           ┌─────────┴──────────┐
+           ▼                    ▼
+       FULL HTML           compact exports
+```
+
+---
+
+# Do not put this inside the core verdict
+
+Another hard boundary:
+
+```text
+research verdict
+≠
+marketing quality
+```
+
+A qualified product is still qualified if HTML generation fails.
+
+A weak ad angle does not make valid supplier evidence disappear.
+
+Therefore:
+
+```text
+QUALIFICATION
+      ↓
+canonical terminal state
+      ↓
+commercial/creative intelligence
+      ↓
+report
+```
+
+The creative layer can surface weaknesses, but cannot rewrite historical evidence receipts.
+
+---
+
+# SQLite should store the report intelligence too
+
+Because you want reproducibility.
+
+Add as Work Graph objects rather than an entirely new database:
+
+```text
+MARKET_ANALYSIS
+STYLE_SIGNAL
+STYLE_CLUSTER
+
+MARKET_ANGLE
+PRODUCT_ANGLE
+COLLECTION_ANGLE
+AD_ANGLE
+
+AD_CREATIVE_BRIEF
+STOREFRONT_STRATEGY
+ANALYSIS_CHAIN
+
+REPORT_REQUEST
+REPORT_MODEL
+```
+
+And edges such as:
+
+```text
+DERIVED_FROM
+SUPPORTED_BY
+CONTRADICTED_BY
+APPLIES_TO
+FEATURES_PRODUCT
+TARGETS_SCOPE
+COMPILED_INTO
+```
+
+Again: generic Work Graph rows are sufficient.
+
+---
+
+# Report requests can be customized
+
+User:
+
+> “Give me the deep report, focus heavily on TikTok ad angles and how the collection should visually look.”
+
+Compiles to:
+
+```yaml
+report_request:
+  run_id: nl_177
+
+  mode:
+    FULL_COMMERCIAL_INTELLIGENCE
+
+  emphasis:
+    - style
+    - ad_angles
+    - market_analysis
+
+  include:
+    market_research: true
+    style_analysis: true
+    product_analysis: true
+    market_angles: true
+    product_angles: true
+    ad_angles: true
+    slideshow_briefs: true
+    supplier_analysis: true
+    evidence_audit: true
+
+  detail_level:
+    DEEP
+```
+
+No new research is required unless the requested section exposes an unresolved evidence gap and the user asks to reopen the run.
+
+---
+
+# Final Fable delta
+
+I would give Fable this as an additional requirement:
+
+> **Add a shared Commercial Intelligence reporting layer consumed by both `OPPORTUNITY_RESEARCH` and `NICHE_LOADOUT`. Do not duplicate market/style/ad analysis inside each mode. Each mode produces canonical evidence-backed run state; a deterministic intelligence compiler projects that state into mode-specific `ReportModel`s containing market research, style/aesthetic intelligence, product analysis, competitive/supplier analysis, and evidence-grounded market/product/collection/ad angles.**
+>
+> **Make `MarketAngle`, `ProductAngle`, `StyleAngle`, `CollectionAngle`, `AdAngle`, `AdCreativeBrief`, `StorefrontStrategy`, and `AnalysisChain` first-class Work Graph objects. θ may generate interpretations and creative angles, but φ must require evidence lineage, enforce claim authority, deduplicate equivalent angles, detect genericness, and ensure creative claims do not exceed the evidence. Clearly distinguish OBSERVED evidence, INFERRED analysis, SIMULATED hypotheses, CURRENT signals, and CREATIVE recommendations in both canonical JSON and HTML.**
+>
+> **For every important recommendation preserve the chain `evidence → observation → interpretation → market implication → product implication → creative implication`. Reports should answer not only what to sell, but why the market matters, which sub-niche/context matters, how current competitors/products behave, what product mechanism/delta matters, how the niche currently looks and talks, which positioning angles are defensible, which ad stories are strongest, and what evidence supports each conclusion.**
+>
+> **For `OPPORTUNITY_RESEARCH`, center the report on one opportunity and its market/product/positioning/ad strategy. For `NICHE_LOADOUT`, center it on community world, sub-niches, activity/lived-situation intelligence, style world, final 3–6-item collection, storefront thesis, collection positioning, and multiple TikTok/ad angles. Both should retain supplier/current-price/product-image/source information and evidence audit.**
+>
+> **Generate reports only downstream of canonical state. Report generation cannot create evidence, upgrade qualification, alter verdicts, or manufacture unsupported market claims. HTML is a view; SQLite/Work Graph remains canonical.**
+
+That completes the business-facing side of the architecture. You aren't doing all this analysis merely to output **`QUALIFIED`** or **`LOADOUT_READY`**. The system should hand you a reusable **commercial intelligence packet**: what the market is doing, why the niche cares, what to sell, how to position it, what visual world fits it, what angles to test, how to structure the ad, what competitors/suppliers look like, and exactly which evidence supports each conclusion. 

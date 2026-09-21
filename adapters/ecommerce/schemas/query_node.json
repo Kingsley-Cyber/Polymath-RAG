@@ -1,0 +1,16 @@
+{
+  "$id": "query_node",
+  "title": "QueryNode — query-graph vertex with lineage; clusters carry the market signal, not single strings (docs/12)",
+  "type": "object",
+  "required": ["id", "query", "origin"],
+  "properties": {
+    "id": {"type": "string"},
+    "query": {"type": "string"},
+    "origin": {"enum": ["TREND_RELATED", "COMMUNITY_LANGUAGE", "PRODUCT_TITLE",
+                        "CORPUS", "THETA", "SEARCH_SUGGESTION", "USER"]},
+    "parent_ids": {"type": "array"},
+    "semantic_cluster": {"type": "string"},
+    "signal_types": {"type": "array"},
+    "evidence_refs": {"type": "array"}
+  }
+}

@@ -1,0 +1,180 @@
+{
+ "artifact": "GOVERNED-CONVERGENCE-V1 TG3 — real skill-level acceptance of the evidence-only corpus lane (opportunity-research v2.2.0)",
+ "date": "2026-09-20",
+ "controlled_by": "Claude Code acting as θ (the skill's calling agent); the controller decided every transition",
+ "skill_repo": "TRAIL_AGENT_AUTORESEARCH",
+ "skill_branch": "tg3/evidence-only-corpus-lane",
+ "polymath": {
+  "url": "http://127.0.0.1:7200",
+  "head": "3d3064a",
+  "fleet_bundle": "c0d86509ad39",
+  "corpus": "cinema (67 documents; the only corpus in polymath-v4)"
+ },
+ "isolation": "loop memory = candidates/tg3_acceptance/loop.sqlite3 (OPPORTUNITY_RESEARCH_DB), NOT the deployed Hermes skill's DB; the deployed copy (~/.hermes/standalone/opportunity-research, v2.1.2) was not touched",
+ "scope": "corpus lane -> primitives -> deterministic gates -> hypothesize -> HTML report. NO field research, NO web request, NO owner session: the field lanes recorded an honest capability_failure (reserved for TG5).",
+ "runs": {
+  "tg3_accept_01": "ABANDONED at the corpus node — it exposed that EvidencePacket rows carry 240-char text previews; the adapter merge was improved (the fuller passage wins when both lanes return a chunk) and the acceptance restarted on the final code",
+  "tg3_accept_02": "the acceptance of record; ABANDONED (terminal) at semantic_review once every acceptance criterion was observed"
+ },
+ "criteria": {
+  "exactly_one_evidence_exploration_call": {
+   "pass": true,
+   "observed": {
+    "GET /capabilities": 1,
+    "GET /corpora": 1,
+    "POST /chat/evidence": 1,
+    "POST /retrieve/plan": 1
+   }
+  },
+  "no_polymath_synthesis_call": {
+   "pass": true,
+   "adapter_ledger": {
+    "polymath_chat_calls": 0,
+    "polymath_evidence_calls": 1
+   },
+   "server_side_query_receipts": [
+    {
+     "client": "opportunity-research/2.2.0 corpus_polymath run:tg3_accept_01 node:corpus",
+     "kind": "chat",
+     "verdict": "evidence_only",
+     "mode": "WILDCARD",
+     "wall_ms": 25031,
+     "phase_ms": {
+      "carry": 25028.7,
+      "total": 25031.1,
+      "compile": 12205.5,
+      "assemble": 25028.6,
+      "retrieve": 24924.2
+     }
+    },
+    {
+     "client": "opportunity-research/2.2.0 corpus_polymath run:tg3_accept_02 node:corpus",
+     "kind": "chat",
+     "verdict": "evidence_only",
+     "mode": "WILDCARD",
+     "wall_ms": 18006,
+     "phase_ms": {
+      "carry": 18006.0,
+      "total": 18006.4,
+      "compile": 9969.6,
+      "assemble": 18006.0,
+      "retrieve": 17917.5
+     }
+    }
+   ]
+  },
+  "need_is_the_original_signal_not_a_reformulation": {
+   "pass": true,
+   "compiled_reformulations_not_sent": [
+    "seed",
+    "tension",
+    "invariant",
+    "contrast"
+   ]
+  },
+  "rows_preserve_text_role_grade_provenance_source_ids": {
+   "pass": true,
+   "packet_rows": 15,
+   "ca4_grades": {
+    "RELATED": 2,
+    "DIRECT": 13
+   },
+   "utility_roles": {
+    "DIRECT": 15
+   },
+   "origins": {
+    "PROFILE": 10,
+    "USER": 5
+   },
+   "merged_with_plan_lane": 4,
+   "text_lengths": [
+    134,
+    190,
+    240,
+    240,
+    240,
+    240,
+    240,
+    240,
+    240,
+    240,
+    240,
+    435,
+    586,
+    605,
+    773
+   ]
+  },
+  "primitives_continue_to_work": {
+   "pass": true,
+   "accepted_on_submit": 1,
+   "rows_classified": 34,
+   "rows_cited": 16,
+   "packet_rows_cited": 8,
+   "latent_structures": 7,
+   "lineage_law": "fail-closed row relevance satisfied with packet rows"
+  },
+  "hypothesize_continues_to_work": {
+   "pass": true,
+   "accepted_on_submit": 1,
+   "hypotheses": 4,
+   "grounding": [
+    "CORPUS_ONLY"
+   ],
+   "hop_cited_rows": 9,
+   "packet_rows_hop_cited": 1
+  },
+  "html_report_still_renders": {
+   "pass": true,
+   "renderer": "python/report.py (the EXISTING renderer)",
+   "bytes": 8750,
+   "self_contained": true,
+   "sections_seen": [
+    "Corpus evidence packets",
+    "bridges",
+    "capability failures"
+   ],
+   "no_corpus_written_answer_section": true
+  }
+ },
+ "instrumentation": {
+  "polymath_chat_calls": 0,
+  "polymath_evidence_calls": 1,
+  "adapter_timings_ms": {
+   "GET /capabilities": 3,
+   "GET /corpora": 11,
+   "POST /chat/evidence": 18018,
+   "POST /retrieve/plan": 47130
+  },
+  "rows": 135,
+  "kinds": {
+   "chunk": 66,
+   "document": 17,
+   "graph_fact": 52,
+   "graph_hop": 0
+  },
+  "plan_parity": true
+ },
+ "negative_control": {
+  "what": "the SAME stub backend served to both adapters",
+  "old_adapter_v2_1_2": {
+   "POST /chat": 5,
+   "POST /chat/evidence": 0
+  },
+  "new_adapter_v2_2_0": {
+   "POST /chat": 0,
+   "POST /chat/evidence": 1
+  }
+ },
+ "findings_measured_not_tuned": [
+  "EvidencePacket rows carry 240-char TEXT PREVIEWS (13 of 15 packet rows are exactly 240 chars; the plan lane's chunks have median 736). Root cause is Polymath-side (orchestrator chat retrieval builds its evidence inventory with text[:240]); not fixed here. Mitigated in the adapter only where lawful: a chunk both lanes return keeps the fuller passage (4 of 15 rows here).",
+  "Corpus Explore was requested on the signal and did NOT fire: firing cause PLAN_FALLBACK (compiler provider reliability, polymath backlog B19) — same as the adapter's R1 seed call.",
+  "The slowest request was the UNCHANGED plan lane (47-52 s); the evidence call took 18-25 s, of which ~10-12 s is Polymath's query-compiler phase.",
+  "All 15 packet rows have utility_role DIRECT: with the explorer not firing there were no COMPLEMENTARY / DIVERGENT seats to observe live (covered by unit tests only)."
+ ],
+ "gates": {
+  "tests_run_all": "ALL 580 CHECKS PASSED (baseline 555)",
+  "doctor": "exit 0"
+ },
+ "pass": true
+}
