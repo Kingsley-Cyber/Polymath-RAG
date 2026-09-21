@@ -233,7 +233,25 @@ def validate_receipt(step: dict[str, Any], payload: Any) -> list[str]:
             errors.append(f"receipt action_id {payload.get('action_id')!r} does not match the issued action {action.get('action_id')!r}")
         if payload.get("run_id") != step["run_id"]:
             errors.append("receipt run_id does not match the run")
+        # TRAIL PARITY, cross-field (a JSON schema cannot say these; TrailSignal's HarnessResearchReceiptV1 enforces both, and a receipt
+        # that broke one ended a real run as TRAIL_REFUSED instead of being handed back to the harness):
+        listed = {s.get("source_id") for s in payload.get("sources") or [] if isinstance(s, dict)}
+        orphan = sorted({str(o.get("source_id")) for o in payload.get("observations") or [] if isinstance(o, dict) and o.get("source_id") not in listed})
+        if orphan:
+            errors.append("observations name sources that are not listed: " + ", ".join(orphan[:10]))
+        started, completed = _instant(payload.get("started_at")), _instant(payload.get("completed_at"))
+        if started and completed and completed < started:
+            errors.append("completed_at precedes started_at")
     return errors
+
+
+def _instant(value: Any):
+    from datetime import datetime, timezone
+    try:
+        t = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
 
 
 def accept_submission(manifest: Manifest, state: RunState, step: dict[str, Any], submission: dict[str, Any]) -> RunState:
