@@ -41,8 +41,9 @@ governance — and it is usable by an external agent through the owner's hosted 
   2026-09-21T02:01Z), MCP Server A :8930 up, 0 open adapter runs. `packageurl-python 0.17.6` installed in `.venv`.
 - `../pmv4-consolidation` — `migration/ecommerce-consolidation` @ `81a4472`, clean, merges into `production` with NO conflict. No `.venv` of its own: run with
   `/Users/king/Documents/polymath-rebuild/polymath-v4/.venv/bin/python` and `PYTHONPATH=$PWD`.
-- `../pmv4-atom-scope` — `item2/corpus-scoped-atoms` @ `7de9e69` = the migration branch (incl. `81a4472`) + Item 2D (`221b95c`); register conflicts already resolved (11.375 · 11.376 · 11.377 in order); guards green.
-  Merging THIS branch takes everything; `git merge-tree production item2/corpus-scoped-atoms` = no conflicts (checked 2026-09-21, `production` docs commits included).
+- `../pmv4-atom-scope` — `item2/corpus-scoped-atoms` @ `a176880` = `production` (through `b92050b`) + the migration branch (incl. `81a4472`) + Item 2D (`221b95c`); register conflicts already resolved (11.375 · 11.376 · 11.377 in order); guards green.
+  Merging THIS branch takes everything; `git merge-tree --write-tree production item2/corpus-scoped-atoms` = no conflicts (re-check it before the merge: a later `production` commit that touches `scripts/scaffold_polymath_v4.py` next to the branch's block
+  conflicts — resolve by merging `production` INTO this branch in its own worktree, keeping both sides, as `a176880` did).
 - `../pmv4-m1-repro` — `review/m1-reproductions` @ `eb63bef` (red on purpose). Removable, merged: `pmv4-governed`, `pmv4-packet-text`. Others (`pmv4-librarian`, `pmv4-constraint`, `polymath-v4-main`, …) are other streams — not ours.
 - AutoResearch `main` @ `a7baa66` (PUBLIC; 3 commits ahead of GitHub) and Trail `~/trail-signal-os-worktrees/A41` @ `de64d84`: untouched sources. NEVER use `~/trail-signal-os` main (stale).
 - Hermes: `skills/business/opportunity-research` → `standalone/opportunity-research` (deployed copy v2.3.0, untouched; a dry run says a deploy would write 8 files). Three skill text files uncommitted there are the owner's.
@@ -116,4 +117,4 @@ the Phase 10 residue pre-flight READING (writer + readers, no ingestion) and an 
 `production`: docs only (`758ff8a` bundle 1 … this commit = bundle 2 + clean continuation).
 `migration/ecommerce-consolidation`: `072f1cc` P2 · `076eb6b` P3 · `f20cf22`,`b794b3a` P4 · `92b9d76`,`4a938bd`,`7f87e57` P5 · `92efc79` manifest + e2e · `b766678` P6 · `a1e886f` P8 · `4ebcd41` P7 · `4f89d4c` replay ·
 `82624aa` dependency · `e176962` pre-merge validation + `materials` fix · `1d97536` P9 mechanism · `81a4472` P13 surface harness + host-path fix. Registers 11.363 – 11.375, 11.377; ADR-0020, ADR-0021.
-`item2/corpus-scoped-atoms`: `221b95c` Item 2D (11.376) · `7de9e69` contains the migration branch through `81a4472`.
+`item2/corpus-scoped-atoms`: `221b95c` Item 2D (11.376) · `7de9e69` merges the migration branch through `81a4472` · `a176880` merges `production` through `b92050b`.

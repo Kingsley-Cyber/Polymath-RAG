@@ -27,7 +27,7 @@ and must never disagree with it. First prompt for a fresh session: `docs/migrati
 `CONTINUATION.md`. Owner-controlled files are listed in `README_OWNER_CONTROL.md`.
 
 **Repository State** — `production` clean, docs-only since `758ff8a`, nothing pushed. Code lives on `migration/ecommerce-consolidation` @ `81a4472` (worktree `../pmv4-consolidation`) and
-`item2/corpus-scoped-atoms` @ `7de9e69` (worktree `../pmv4-atom-scope`; = migration + Item 2D, merges into `production` conflict-free). Registers 11.363 – 11.377 live on those branches. ADR-0020, ADR-0021.
+`item2/corpus-scoped-atoms` @ `a176880` (worktree `../pmv4-atom-scope`; = production + migration + Item 2D, merges into `production` conflict-free). Registers 11.363 – 11.377 live on those branches. ADR-0020, ADR-0021.
 Done while the merge is blocked (2026-09-21): the hosted MCP surface harness + a host-path isolation fix on the branch (M-019), and the Phase 10 corpus manifest `docs/migration/COMMERCE_CORPUS_MANIFEST.md` (M-020).
 
 **Fleet (live)** — UP from unchanged `production`, rebooted 2026-09-21T02:01Z: 13 worker types healthy, ONE bundle `fa72e3b1adde` (the boot made the already-committed TG4 change `6708301` live), MCP :8930 up,
