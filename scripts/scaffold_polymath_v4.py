@@ -728,6 +728,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-21-restoration-slice1-semantic-continuity.md", "md", None),
     ("docs/wiki/work-log/2026-09-21-restoration-slice2-research-fidelity.md", "md", None),
     ("docs/wiki/work-log/2026-09-21-restoration-slice3-product-reality.md", "md", None),
+    ("docs/wiki/work-log/2026-09-21-restoration-slice4-trail-correctness.md", "md", None),
     ("docs/wiki/work-log/2026-09-21-restoration-slice5-reporting.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT_EXTENDED.md", "md", None),
