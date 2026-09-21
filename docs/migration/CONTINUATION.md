@@ -36,7 +36,7 @@ Acceptance level reached (doctrine): REPOSITORY + PRODUCTION + a complete REAL_I
   operations that do not perform them (audit §7).
 - **OWNER DECISIONS LOCKED 2026-09-21 (reference §3; M-025):** (1) STAGED — Polymath-side corrections first (Stage A), Trail-owned corrections second (Stage B), then re-pin; Trail remains the eventual mapping authority; never two permanent registry
   authorities. (2) `OpportunitySemanticViewV1` = a DERIVED read-only projection over existing authoritative state; no new durable IR. (3) ADDITIVE restoration under the completed migration's doctrine; migration history is not rewritten.
-- **NOW — Slice 1, semantic continuity (reference §8):** the view · governed `config.show` parity · origin linkage (`lead_ids[]`, `latent_structure_ids[]`) · revision correctness · readable-evidence allocation · §8.6 acceptance. No live E2E.
+- **DONE ON ITS BRANCH, NOT MERGED — Slice 1, semantic continuity (reference §8):** `restoration/semantic-continuity` @ `98a0384` (worktree `../pmv4-semantic-continuity`; register 11.391 ON THE BRANCH; work-log `2026-09-21-restoration-slice1-semantic-continuity.md`). Exit §8.6 green: UNIT_PROVEN + WORKTREE_INTEGRATION_PROVEN for `shared/` (30 new tests, 190 DB-free adapter tests, 70 impact-list tests; no DB, no network). See RESTORATION PROGRESS below.
 - **NEXT — Slice 2** research fidelity (§9) → **Slice 3** product-reality plan / join (§10) → **Slice 4** Trail contract + mapping + re-pin (§11) → **Slice 5** reporting (§13) → **THEN** the non-presupposing cinema benchmark (§14; ONE seed first).
 - **ONLY IF THE BENCHMARK REQUIRES (reference §12):** `structural_lookup` / `signal_gate` / an analogy stage / a multi-corpus benchmark.
 - **OWNER DECISIONS DEFERRED until the audit is reviewed** (the audit supplies evidence + options only): (1) where deterministic structured mapping lives — Trail upstream + re-pin / Polymath-side projection / staged; (2) the canonical latent
@@ -45,6 +45,35 @@ Acceptance level reached (doctrine): REPOSITORY + PRODUCTION + a complete REAL_I
   research programs preserved · query compilation consuming existing semantic state · `P_reality` consuming typed concepts · hypothesis-relative SUPPORTS / CONTRADICTS relation · the 60-row evidence reuse if it matters. Then a NON-PRESUPPOSING
   cinema benchmark (seed without market, population, product category or product problem) → negative control → off-host MCP with a temporary restricted principal → dossier product-artifact gaps → acceptance → revoke `prn_accept_*` → cleanup.
 - **OFF THE CRITICAL PATH (owner)**: repairing `commerce-v1` · any per-corpus Trail overlay · an analogy subsystem (authorized only if execution shows the existing cross-domain machinery cannot do the transfer) · a new durable IR (only if projection is proven insufficient).
+
+## RESTORATION PROGRESS (agent-recorded; the branches carry code + work-logs + register rows + scaffold entries; `production` carries ONLY this file and `CONTINUITY-REPORT.md`, so a later merge cannot conflict)
+| Slice | Branch @ tip | State | Proof level | Owed live after merge + bounce |
+|---|---|---|---|---|
+| 1 semantic continuity (§8) | `restoration/semantic-continuity` @ `98a0384` | exit §8.6 green | UNIT_PROVEN + WORKTREE_INTEGRATION_PROVEN (`shared/` only) | L1 `adapter_next` at `G_mechanisms` shows `hypothesis_semantics` · L2 a proposal with `lead_ids` persists, an invented id is rejected · L3 REVISE `changes.knowledge_gaps` lands in `adapter_hypotheses.state` · L4 after `F_plan`, `evidence.allocation.later_pass_rows > 0` |
+
+What Slice 1 changed (so nobody rediscovers it): NEW `shared/polymath_shared/adapter/semantic_view.py` (pure; `build` / `scope` / `agent_projection` / `query_projection` / `product_reality_projection` / `trail_projection` closed at 4 fields). Delivery: agent steps through `materials`
+(`config.show` path `semantics.hypotheses`), DOMAIN_OPERATION steps IN MEMORY (`config.inputs` path `context.semantics.query` / `.product_reality` / `.by_id.<hid>`) — the stored AdapterStepV1 and `_payload_for` are untouched, NO `workers/` file changed. Ledger: optional
+`lead_ids[]` / `latent_structure_ids[]` (`ORIGIN_ID_FIELDS`, exempt from the `*_ids` citation convention, checked against the run's own leads / structures); REVISE applies scalars + `assumptions` / `falsifiers` (replace) + `knowledge_gaps` (upsert, stable `gap_id`) + `contradictions` (append, citable ids)
+and REFUSES any other `changes` key. Evidence: `EB.knowledge_passes` + `EB.reserve_recent` (≤ 40 % of a knowledge class for later passes, caps unchanged), used by `hydrate` and `_context_refs`; rows carry `retrieval_pass`, `evidence.allocation` reports it. Manifest `ecommerce.product_research` 0.2.0.
+Test conventions: worktree has no `.venv` → `env -u POLYMATH_PG_DSN PYTHONPATH=$PWD ../polymath-v4/.venv/bin/python -m pytest …`; in-memory store double `tests/determinism/_adapter_memory_store.py`; never import `workers` in a proof of `shared/`.
+
+### OWNER GATE G-merge — the exact block (slices STACK: merging a later tip brings every earlier slice; ONE merge + ONE bounce can cover several)
+```bash
+cd ~/Documents/polymath-rebuild/polymath-v4
+git status --short                                   # must print nothing
+set -a; . ./.env; set +a
+.venv/bin/python -c "import os,psycopg; c=psycopg.connect(os.environ['POLYMATH_PG_DSN']).cursor(); c.execute(\"select count(*) from adapter_runs where status in ('running','awaiting_agent','awaiting_harness')\"); print('open adapter runs', c.fetchone()); c.execute(\"select count(*) from stage_tickets where status='leased'\"); print('leased tickets', c.fetchone())"   # both must be 0
+git tag pre-restoration-merge production               # local rollback point (never pushed)
+git merge --no-ff restoration/semantic-continuity      # or the newest restoration/* tip listed in the table above
+.venv/bin/python scripts/agent_preflight.py; echo "preflight=$?"
+.venv/bin/python scripts/repo_guard.py; echo "repo_guard=$?"
+.venv/bin/python scripts/wiki_worm.py --check; echo "wiki_worm=$?"
+.venv/bin/python shared/polymath_shared/bundle_integrity.py
+pgrep -f control.process_supervisor | xargs kill -TERM  # then WAIT: 0 supervisors, 0 children, nothing on :7200
+mkdir -p /private/tmp/polymath_fleet && nohup bash scripts/boot_polymath.sh > /private/tmp/polymath_fleet/boot.log 2>&1 &
+curl -s 127.0.0.1:7200/ready                           # expect ready:true, embedder + reranker true, ONE bundle hash among healthy registrations
+```
+Rollback: `git reset --hard pre-restoration-merge` + the same bounce. After the bounce tell the session "merged" — it runs the live qualification listed in the table (that is a spend-free `adapter_next` inspection for L1–L4 only if a run exists; a fresh hosted run is G-spend).
 
 ## Repository State (verify first — `git worktree list`, `git status`)
 - `~/Documents/polymath-rebuild/polymath-v4` — `production`, clean, nothing pushed (`origin/main` is far behind; recovery is by TAG). Local rollback tag `pre-consolidation-merge` → `7155250` (UNPUSHED).
