@@ -465,3 +465,34 @@ The four checks in `ADR-TRAIL-EMBEDDING.md` "Validation". Open: durability of th
 
 #### Affected files / commits
 `migration/ecommerce-consolidation` `b766678` (register 11.370, repo ADR-0021, refactor 0015). Audit-store durability resolved: SQLite behind TrailSignal's own store port.
+
+### M-013 — Phase 8: where the dossier renders, and from what
+
+#### Question
+"Reuse the existing AutoResearch renderer. Do not build another." Should a `DOMAIN_OPERATION` render the HTML inside the run, or does the host render from its journal as it does since TG4?
+
+#### Evidence
+`report.build_model_from_governed(journal)` + `governed_run.py report` already exist (TG4) and are covered by the engine suite; the worker caps a domain response at 1 MB and a domain operation must not
+write files; a dossier is a presentation of a FINISHED run, not a step a later step depends on.
+
+#### Applicable migration invariants
+INV-2 reuse before rewrite · EXECUTION_PLAN Phase 8 · the owner's dossier specification is UNCONFIRMED.
+
+#### Decision
+Render HOST-SIDE from the journal, as today. Extend only the mapping and the renderer: use the governed result's typed concepts + variations, supplier join, coverage, mechanisms, lived world and registry
+snapshot; put one of the five authority labels on every governed block. No `report.render` domain operation.
+
+#### Alternatives rejected
+A render step inside the manifest (adds a step nothing depends on, pushes HTML through the run store) · a second renderer in the runtime (forbidden by the plan).
+
+#### Why this is the smallest reversible choice
+Two functions in one engine file; the older adapter's result renders exactly as before.
+
+#### Reversibility
+Revert the mapping block; the synthesized single concept returns.
+
+#### Validation / proof
+`test_adapter_ecommerce_dossier.py` (journal recorded from a complete scripted run, rendered out of process through the engine's CLI) + the ad hoc render of the real-TrailSignal run.
+
+#### Affected files / commits
+`migration/ecommerce-consolidation` `a1e886f` (register 11.371).

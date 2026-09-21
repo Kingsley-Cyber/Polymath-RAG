@@ -15,10 +15,9 @@ deterministic Trail core) on the EXISTING adapter runtime. Harvest behaviour, no
 generic infrastructure.
 
 ## Current Phase
-**Phases 0–6 — DONE on the migration branch.** `072f1cc` import · `076eb6b` seam (ADR-0020) · `f20cf22` evidence intake · `92b9d76` / `4a938bd` / `7f87e57` domain operations · `92efc79` product
-manifest + complete scripted run + negative control · **`b766678` Phase 6: TrailSignal's core embedded byte-identical under `governance/trail/` (ADR-0021) and the FIRST COMPLETE RUN AGAINST THE REAL
-TRAILSIGNAL CODE — `completed`, a defensible rejection.**
-**NEXT: Phase 8 — the dossier (reuse the engine's renderer), then Phase 7 (one registry), then the merge window.** All code on branch `migration/ecommerce-consolidation` (worktree
+**Phases 0–6 and 8 — DONE on the migration branch** (`072f1cc` import · `076eb6b` seam, ADR-0020 · `f20cf22` evidence intake · `92b9d76` / `4a938bd` / `7f87e57` domain operations · `92efc79` product manifest +
+complete scripted run + negative control · `b766678` TrailSignal core embedded, ADR-0021, first complete run against REAL TrailSignal code = a defensible rejection · `a1e886f` the governed dossier).
+**NEXT: Phase 7 (one registry) is the last code phase before the MERGE WINDOW; Phases 9–11 need the merged, bounced fleet.** All code on branch `migration/ecommerce-consolidation` (worktree
 `../pmv4-consolidation`), NOT merged; the live fleet is untouched; nothing pushed.
 
 ## Repository State
@@ -30,7 +29,7 @@ TRAILSIGNAL CODE — `completed`, a defensible rejection.**
 - Hermes: deployed copy `standalone/opportunity-research` v2.3.0; three skill text files uncommitted (owner's commit).
 
 ## Current HEAD / Branch
-`production` (docs) · `migration/ecommerce-consolidation` @ `b766678` (code).
+`production` (docs) · `migration/ecommerce-consolidation` @ `a1e886f` (code).
 
 ## Completed
 - Owner reframe recorded in the plan of record; harvest map written (registers 11.362; commits `59a4b60`, `9dfd3c3`).
@@ -64,6 +63,7 @@ Full table: `CAPABILITY_MAP.md` "Duplicate Authority Map".
 M-002 docs on `production`, code in the migration worktree · M-003 the bundle controls · M-004 baseline = existing runs · M-005 commerce corpus at Phase 10 after Item 2D ·
 **M-006** import via `git archive` (tracked files only), three exclusions, history: the engine lived here as `research/` until 11.274 retired it to the Hermes skill — the O6 dead-path guard stays green ·
 **M-007** the seam = one step type + out-of-process binding (rejected: `EXTERNAL_OPERATION` reuse, `VALIDATE` overload, in-process import, host-side only, SDK) ·
+**M-013** the dossier renders HOST-SIDE from the journal with the engine's existing renderer; only the mapping + the five authority labels were added ·
 **M-012** (IMPLEMENTED `b766678`) embed the EXACT 16-module Trail closure byte-identical under `governance/trail/`, reached through the unchanged `TrailMCPClient` with an in-process transport, `POLYMATH_TRAIL_MODE` default `daemon`; trimming / D1 / registry reconciliation are separate later changes ·
 **M-011** `materials`: a manifest may SHOW an agent-answered step selected prior outputs (sibling key, additive); law loops end in a typed `law.refuse` gap; the evidence loop is bounded by research rounds ·
 **M-010** domain hypotheses ride in the θ step output addressed by LEDGER id (no second ledger); mechanism support is DERIVED from the ledger status; no engine score or verdict leaves the domain (`join_leads` extracted) ·
@@ -73,7 +73,7 @@ M-002 docs on `production`, code in the migration worktree · M-003 the bundle c
 ## Tests Passed
 In the migration worktree, database-free, `POLYMATH_PG_DSN` unset, under this repo's interpreter (`/Users/king/Documents/polymath-rebuild/polymath-v4/.venv/bin/python`, `PYTHONPATH=$PWD`): engine suite 609 / 609 + `doctor`
 (via `test_ecommerce_engine_import.py` 5) · `test_adapter_domain_operation.py` 25 · `…_knowledge_intake` 6 · `…_population_research` 6 · `…_lived_world` 7 · `…_products_supply` 7 · `…_product_research_e2e` 3 ·
-`test_trail_core_embedding.py` 4 · the existing contract / evidence-surface / MCP parity / neutrality / purity / R5 audit / MCP server / research-package-removed suites · guards 0 / 0 / 0 / READY.
+`test_trail_core_embedding.py` 4 · `test_adapter_ecommerce_dossier.py` 2 · the existing contract / evidence-surface / MCP parity / neutrality / purity / R5 audit / MCP server / research-package-removed suites · guards 0 / 0 / 0 / READY.
 Under TRAILSIGNAL'S interpreter (`~/trail-signal-os-worktrees/A41/.venv/bin/python`, it has `packageurl`): `test_trail_core_embedded.py` 4 · `test_adapter_ecommerce_product_research_embedded_trail.py` 1 — these two
 files SKIP with the reason printed under this repo's interpreter. Reusable: `tests/determinism/_adapter_memory_store.py`.
 
@@ -89,18 +89,17 @@ files SKIP with the reason printed under this repo's interpreter. Reusable: `tes
 None. (The commerce corpus is pre-authorized by the policy and scheduled for Phase 10 — M-005. Item 2D must be merged before it.)
 
 ## Next Exact Action
-**Phase 8 — the dossier.** Work in `../pmv4-consolidation`. Reuse the engine's renderer; do NOT build another.
-1. Read `adapters/ecommerce/python/report.py` (ReportModel + HTML renderer) and `governed_run.py` (TG4: it already maps a GOVERNED journal / result to the report model — that mapping is the starting point). Find what
-   the model needs and what `ecommerce.product_research`'s RESULT now offers beyond the old one: `product_concepts` + variations, `leads`, `sourcing_coverage`, `supplier_candidates`, `lived_situations`,
-   `lived_clusters`, `participant_cards`, `population_leads`, `lenses`, `corpus_questions`, `qualifications`, `trail_scores`, `score_refusals`, `evidence_admissions`, lineage.
-2. Bind `report.render` in `binding.py` (input = the run result + the step journal; output = HTML text + a report-model JSON). The five authority labels are mandatory and must be visible per block: POLYMATH
-   KNOWLEDGE · LIVE-WORLD OBSERVATION · AGENT INFERENCE · TRAIL DETERMINATION · TRAIL REGISTRY. A domain operation must not write files: return the HTML as output (mind `DOMAIN_OUTPUT_MAX_BYTES` = 1 MB in the worker)
-   or render host-side from the result. Decide and record (M-013).
-3. Gate: a fixture-driven report renders the complete product-oriented structure — feed it the RESULT of the scripted run and of the real-TrailSignal run (the rejection must read as a rejection: refusals, unmet
-   gates, unsourced concepts, remaining unknowns).
-**Then Phase 7** (one registry: the engine's `adapters/ecommerce/registry/` vs `governance/trail/data/` — drift +6 seeds / +10 friction families / +6 niche candidates; Trail's is the governance authority),
-**then the merge window**: add `packageurl`; port TrailSignal's operation tests + recorded-envelope equivalence; drain → merge → Postgres-backed suites → ONE bounce → Hermes MCP reload; **then** Phase 9 (Hermes
-deployment from this checkout), Phase 10 (commerce corpus — Item 2D must be merged first), Phase 11 live rungs E / F / G.
+**Phase 7 — one registry.** Work in `../pmv4-consolidation`. Read first, then decide (M-014):
+1. Two physical registries now sit in one checkout: `governance/trail/data/*.csv` (TrailSignal's — THE governance authority, byte-pinned) and `adapters/ecommerce/registry/` (the engine's mirror, with recorded
+   drift: +6 seeds, +10 friction families, +6 niche candidates, plus the engine-only files `lenses.yaml`, `reasoning_motifs.yaml`, query templates). Diff them file by file (`comm` on sorted rows).
+2. Who reads the engine's copy in GOVERNED mode? Only `population.nominate` (`_registry_nominations`: seeds, friction families, predicate indexes) and `understanding.lenses` (`lenses.yaml`, engine-only). Option to
+   test first: point the engine's registry compiler at `governance/trail/data` for the SHARED tables when it runs inside this repo (an env var the binding sets, like `OPPORTUNITY_RESEARCH_REGISTRY=compile`), keep
+   engine-only files where they are, and report the drifted rows as a finding for the owner (upstream to TrailSignal or drop) — never silently merge them into the byte-pinned Trail data.
+3. Gate: governed population nomination reads TrailSignal's tables; the engine suite still passes standalone; the provenance pin is untouched.
+**Then the MERGE WINDOW** (needs the owner's go for the fleet bounce — a live-environment change): add `packageurl` to `pyproject.toml` + install; port TrailSignal's operation tests + recorded-envelope
+equivalence (`pmv4-m1-repro/tests/review_m1/fixtures/`); drain → merge `migration/ecommerce-consolidation` into `production` → run the Postgres-backed adapter suites → ONE `scripts/boot_polymath.sh` bounce → Hermes
+MCP reload → verify `adapter_list` shows `ecommerce.product_research`. **Then** Phase 9 (deploy the Hermes skill FROM `adapters/ecommerce/` with a version receipt; test whether Hermes can read a path under
+`~/Documents`), Phase 10 (merge Item 2D first; reconstruct the 10-document commerce corpus under a NEW corpus id), Phase 11 live rungs E (mechanical smoke) → F (one real ecommerce run) → G (negative control).
 
 ## DO NOT REDO
 - The comparison, the dependency facts, the registry-drift check, the historical-run inspection (`CAPABILITY_MAP.md`, harvest map).
@@ -110,5 +109,5 @@ deployment from this checkout), Phase 10 (commerce corpus — Item 2D must be me
 
 ## Relevant Commits
 `production`: `59a4b60` · `9dfd3c3` · `23d517e` · `758ff8a` owner bundle · `988070a` M-006 + M-007 · `4e627dc` continuation after phases 2–3 · this commit (M-008, phase 4).
-`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366) · `4a938bd` Phase 5b (11.367) · `7f87e57` Phase 5c (11.368) · `92efc79` product manifest + complete run in test form (11.369) · `b766678` Phase 6 Trail core embedded + first run against real TrailSignal code (11.370, ADR-0021). Branch `review/m1-reproductions` `eb63bef`.
+`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366) · `4a938bd` Phase 5b (11.367) · `7f87e57` Phase 5c (11.368) · `92efc79` product manifest + complete run in test form (11.369) · `b766678` Phase 6 Trail core embedded + first run against real TrailSignal code (11.370, ADR-0021) · `a1e886f` Phase 8 governed dossier (11.371). Branch `review/m1-reproductions` `eb63bef`.
 

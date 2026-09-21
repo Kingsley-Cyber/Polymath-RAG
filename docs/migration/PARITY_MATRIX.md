@@ -37,7 +37,7 @@
 | Trail judgement | n/a | 2 runs; third died (D1); M1-01 / 02 / 03 reproduced | — | REAL_INPUT_EXECUTED · UNIT_EXECUTED | KEEP, defects open | |
 | Qualification | own `satisfaction` | never on real input | — | STUBBED | KEEP | 4 of 7 gates never evaluated |
 | Score / refusal | own `evidence_score` | never on real input | — | STUBBED | KEEP | |
-| ReportModel | `report.build_model` | `build_model_from_governed` | — | UNIT_EXECUTED · REAL_INPUT_EXECUTED (gap dossier) | NOT STARTED | shows 0 observations on a terminal gap (D5) |
-| HTML rendering | no HTML exists for the qualified run | R2a dossier rendered | — | REAL_INPUT_EXECUTED | NOT STARTED | |
+| ReportModel | `report.build_model` | `build_model_from_governed` | `adapters/ecommerce/python/report.py` `build_model_from_governed` — now uses the result's typed concepts + variations, supplier join, coverage, mechanisms, lived world, registry snapshot | INTEGRATION_EXECUTED (journal of a complete scripted run; also the real-TrailSignal run) | MIGRATED (host-side, M-013) | the older adapter's result still maps as before |
+| HTML rendering | no HTML exists for the qualified run | R2a dossier rendered | same file, `render` + `_render_governed` + `_render_lived_world`; five authority labels on every governed block | INTEGRATION_EXECUTED | MIGRATED | no engine score in a governed dossier; a refused run reads as a refusal; owner's dossier specification still UNCONFIRMED |
 | Hermes deployment | deployed copy v2.3.0, parity true | n/a | — | STATICALLY_VERIFIED | NOT STARTED | reason for the copy unknown |
 | Ecommerce corpus isolation | single-corpus era | `search_atoms` unscoped; fix parked uncommitted (Item 2D, 10 tests green in its worktree) | — | UNIT_EXECUTED (worktree) | PARKED | required before ANY second corpus |
