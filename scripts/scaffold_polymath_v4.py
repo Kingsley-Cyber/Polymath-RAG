@@ -716,7 +716,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/migration/MIGRATION_POLICY.md", "md", None),
     ("docs/migration/AGENT_OPERATING_DOCTRINE.md", "md", None),
     ("docs/migration/EXECUTION_PLAN.md", "md", None),
-    ("docs/migration/README.md", "md", None),
+    ("docs/migration/README_OWNER_CONTROL.md", "md", None),
     ("docs/migration/NEW_SESSION_BOOTSTRAP_PROMPT.md", "md", None),
     ("docs/migration/CONTINUATION.md", "md", None),
     ("docs/migration/CAPABILITY_MAP.md", "md", None),
@@ -724,6 +724,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/migration/PARITY_MATRIX.md", "md", None),
     ("docs/migration/ADR-TRAIL-EMBEDDING.md", "md", None),
     ("docs/migration/FINAL_MIGRATION_REPORT.md", "md", None),
+    ("docs/migration/COMMERCE_CORPUS_MANIFEST.md", "md", None),
     # CONSOLIDATION MIGRATION Phase 2 — the ecommerce engine imported additively from TRAIL_AGENT_AUTORESEARCH @ a7baa66
     # (tracked files only; MIRROR_RECEIPT.json, .github/ and registry/friction_library.upstream.patch excluded — AUTO_DECISIONS M-006).
     ("adapters/ecommerce/.gitignore", "gitignore", None),

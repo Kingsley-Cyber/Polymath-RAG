@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-20
+last_reviewed: 2026-09-21
 ---
 
 # CONTINUITY REPORT — the single bootstrap (golden-run edition)
@@ -18,7 +18,31 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-20 — **GOVERNED-CONVERGENCE-V1: TG0–TG4 + RB5 DONE; TG5 R2a (the first REAL governed run, cinema mechanical smoke) RUN = FAIL by the owner's rubric (registers 11.352–11.360). `adapter_start` / `adapter_submit` over Server B and the TG4 harness segment are now LIVE_PATH_PROVEN (3 / 3 receipts accepted; Trail admitted 8, rejected 7); the run then died at `L_judge` on a Polymath adapter defect (D1: an all-rejected admission is not an allowed cause). D1 is NOT fixed and a re-run is NOT authorized — each needs the owner's word. Item 2 sub-item D (corpus-scoped `search_atoms`) is authorized and is the work in progress.**
+## CURRENT — 2026-09-21 — **POLYMATH ECOMMERCE CONSOLIDATION MIGRATION — Phases 0–9 done on UNMERGED branches; BLOCKED at the production merge (Phase 11)**
+
+**Read this, then go straight to `docs/migration/`.** The migration's state authority is `docs/migration/CONTINUATION.md` (phase table, NOW / NEXT / LATER, next exact action, traps). This section only points there
+and must never disagree with it. First prompt for a fresh session: `docs/migration/NEW_SESSION_BOOTSTRAP_PROMPT.md`.
+
+**Read order (owner bundle 2, installed byte-identical 2026-09-21):** `MIGRATION_POLICY.md` → `AGENT_OPERATING_DOCTRINE.md` → `BOOTSTRAP_CONTEXT.md` → `EXECUTION_PLAN.md` → `AUTO_DECISIONS.md` (INDEX first) →
+`CONTINUATION.md`. Owner-controlled files are listed in `README_OWNER_CONTROL.md`.
+
+**Repository State** — `production` clean, docs-only since `758ff8a`, nothing pushed. Code lives on `migration/ecommerce-consolidation` @ `81a4472` (worktree `../pmv4-consolidation`) and
+`item2/corpus-scoped-atoms` @ `7de9e69` (worktree `../pmv4-atom-scope`; = migration + Item 2D, merges into `production` conflict-free). Registers 11.363 – 11.377 live on those branches. ADR-0020, ADR-0021.
+Done while the merge is blocked (2026-09-21): the hosted MCP surface harness + a host-path isolation fix on the branch (M-019), and the Phase 10 corpus manifest `docs/migration/COMMERCE_CORPUS_MANIFEST.md` (M-020).
+
+**Fleet (live)** — UP from unchanged `production`, rebooted 2026-09-21T02:01Z: 13 worker types healthy, ONE bundle `fa72e3b1adde` (the boot made the already-committed TG4 change `6708301` live), MCP :8930 up,
+0 open adapter runs. `packageurl-python` installed in `.venv` (additive). NOTHING of the migration is live.
+
+**Proof Status** — `WORKTREE_INTEGRATION_PROVEN` on scripted inputs (complete `ecommerce.product_research` run: in-memory store, real isolated Postgres, and against the REAL embedded TrailSignal code = a
+defensible rejection; Postgres-backed adapter suites 41 / 41 on a throwaway Postgres). NOT `MERGED`, NOT `DEPLOYED`, NOT `LIVE_PATH_PROVEN`. REAL_INPUT_EXECUTED: none.
+
+**Next Action** — the production merge, which the Claude Code permission gate DENIES as a production deploy: the OWNER runs the block in `docs/migration/CONTINUATION.md` "Next Exact Action" (or permits it). Then
+production acceptance → real Hermes deploy → commerce corpus → real ecommerce E2E → hosted remote MCP acceptance → negative control → cleanup.
+
+**Do Not Do** — stop the fleet for a merge that may be denied · run Postgres-backed adapter suites against the fleet's database · import the engine's flat modules in process · edit `governance/trail/{src,config,data}` ·
+relax the engine's registry compiler · carry an engine score into governed output · push any ref.
+
+## PRIOR — 2026-09-20 (superseded as CURRENT by the 2026-09-21 migration section above) — **GOVERNED-CONVERGENCE-V1: TG0–TG4 + RB5 DONE; TG5 R2a (the first REAL governed run, cinema mechanical smoke) RUN = FAIL by the owner's rubric (registers 11.352–11.360). `adapter_start` / `adapter_submit` over Server B and the TG4 harness segment are now LIVE_PATH_PROVEN (3 / 3 receipts accepted; Trail admitted 8, rejected 7); the run then died at `L_judge` on a Polymath adapter defect (D1: an all-rejected admission is not an allowed cause). D1 is NOT fixed and a re-run is NOT authorized — each needs the owner's word. Item 2 sub-item D (corpus-scoped `search_atoms`) is authorized and is the work in progress.**
 
 **Repository State** — MULTI-REPO, nothing pushed anywhere.
 - **polymath-v4**: branch `production`; HEAD = the docs / eval commit for register 11.360 (R2a record), above `819fd2d`

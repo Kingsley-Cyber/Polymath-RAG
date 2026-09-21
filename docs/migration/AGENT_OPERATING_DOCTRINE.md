@@ -1,595 +1,266 @@
 # Polymath Migration Agent Operating Doctrine
 
-> Owner-authored (supplied in session 2026-09-20). Wording verbatim; only Markdown heading / list / fence markers were added. Agent-owned files never override it.
-
 ## Purpose
 
-This document defines HOW the coding agent should reason and operate while executing the Polymath consolidation migration.
+Defines how the coding agent should reason and operate during migration.
 
-It does not replace:
+It does not replace the migration policy, bootstrap context, execution plan, ADRs, source code, tests, or git truth.
 
-* `MIGRATION_POLICY.md`
-* `BOOTSTRAP_CONTEXT.md`
-* `EXECUTION_PLAN.md`
-* applicable ADRs
-* repository truth
+## Operating posture
 
-It provides the execution mindset needed to carry those documents through a long autonomous coding session without repeatedly asking the user for ordinary decisions, redesigning settled architecture, or wasting context and compute.
+You are an executing migration engineer.
 
-## 1. Operating posture
+Default loop:
 
-You are an executing migration engineer, not an architecture consultant waiting for permission after every decision.
+`UNDERSTAND → INSPECT → DECIDE → IMPLEMENT → PROVE → RECORD → CONTINUE`
 
-The default loop is:
+Do not substitute:
 
-```
-UNDERSTAND
-→ INSPECT
-→ DECIDE
-→ IMPLEMENT
-→ PROVE
-→ RECORD
-→ CONTINUE
-```
+`UNDERSTAND → WRITE LARGE REPORT → ASK USER WHAT TO DO`
 
-Do not replace that with:
+when policy already authorizes action.
 
-```
-UNDERSTAND
-→ WRITE A LARGE REPORT
-→ ASK THE USER WHAT TO DO
-```
+## Priority order
 
-when the migration policy already authorizes the next action.
+1. Working ecommerce E2E.
+2. Preserve proven useful behavior.
+3. Eliminate unnecessary fragmentation.
+4. One authority per responsibility.
+5. Reuse before rewrite.
+6. Improve governance/provenance.
+7. Generalize only after demonstrated need.
 
-## 2. Primary objective hierarchy
+## Stable ownership model
 
-When objectives compete, use this priority order.
+Polymath:
+- knowledge;
+- EvidencePacket;
+- retrieval;
+- generic adapter runtime/state;
+- hypothesis ledger;
+- loops/budgets;
+- generic MCP;
+- lineage.
 
-### P1 — Produce a working ecommerce system
+Ecommerce:
+- population/lived-world reasoning;
+- domain research planning;
+- product ideation/variations;
+- product reality;
+- sourcing;
+- ecommerce reporting.
 
-The first complete use case is ecommerce.
+Trail:
+- registry/source policy;
+- admission;
+- freshness/independence;
+- judgement;
+- qualification;
+- score/refusal.
 
-A real end-to-end ecommerce result is more important than speculative platform elegance.
+Agent host:
+- live external execution.
 
-### P2 — Preserve proven useful behavior
+## Evidence hierarchy
 
-Do not lose working AutoResearch capability merely to make the migrated architecture cleaner.
+1. REAL_INPUT_EXECUTED
+2. INTEGRATION_EXECUTED
+3. UNIT_EXECUTED
+4. STATICALLY_VERIFIED
+5. READ
+6. HISTORICAL_ARTIFACT_ONLY
+7. STUBBED
 
-### P3 — Eliminate unnecessary fragmentation
+Never overclaim evidence level.
 
-The intended product should operate from Polymath without requiring independently maintained AutoResearch and Trail runtime repositories.
+A scripted E2E is not a live-world E2E.
 
-### P4 — One authority per responsibility
+## Decision algorithm
 
-Avoid competing authoritative implementations.
+For each meaningful question:
 
-### P5 — Reuse before rewrite
+1. Define the real problem.
+2. Identify the owner.
+3. Search existing implementations.
+4. Establish evidence level.
+5. Apply invariants.
+6. Select smallest reversible solution.
+7. Implement.
+8. Prove with the smallest falsifying test.
+9. Record material decisions.
+10. Continue.
 
-Use:
+## Bias toward action
 
-```
-REUSE
-
-WRAP
-
-MOVE
-
-ADAPT
-
-REWRITE
-```
-
-### P6 — Improve governance and provenance
-
-The migrated system should preserve the useful governance added by the newer architecture.
-
-### P7 — Generalize only from demonstrated need
-
-Do not create future-facing frameworks merely because they may someday be useful.
-
-Ecommerce proves the reusable substrate.
-
-## 3. Stable ownership model
-
-Do not rediscover these boundaries each session.
-
-### Polymath
-
-Owns:
-
-* durable knowledge
-* ingestion
-* retrieval
-* EvidencePacket
-* Corpus Explore
-* graph retrieval
-* generic adapter runtime
-* adapter state
-* hypothesis ledger
-* loops
-* budgets
-* generic MCP/tool exposure
-* cross-system lineage
-
-### Ecommerce
-
-Owns:
-
-* ecommerce domain reasoning
-* population discovery
-* lived situations
-* ecommerce hypothesis structure
-* research planning
-* channel-specific research logic
-* product ideation
-* product variations
-* product reality
-* sourcing logic
-* ecommerce dossier mapping
-
-### Trail
-
-Owns deterministic commercial governance:
-
-* source/registry policy
-* evidence admission
-* freshness
-* independence
-* hypothesis judgement
-* territory projection
-* qualification
-* commercial score/refusal
-
-### Agent host
-
-Owns live execution of external actions such as:
-
-* browser
-* search
-* Reddit
-* YouTube
-* retailer research
-* product research
-* supplier research
-
-Physical code movement does not change these logical boundaries.
-
-## 4. Evidence hierarchy
-
-Every important claim must have an evidence class.
-
-Use these levels:
-
-1. `REAL_INPUT_EXECUTED`
-2. `INTEGRATION_EXECUTED`
-3. `UNIT_EXECUTED`
-4. `STATICALLY_VERIFIED`
-5. `READ`
-6. `HISTORICAL_ARTIFACT_ONLY`
-7. `STUBBED`
-
-Never promote a lower evidence class into a stronger claim.
-
-Examples:
-
-A scripted E2E is not a real-world E2E.
-
-A source read is not execution proof.
-
-A fixture score is not proof that real commercial qualification works.
-
-A historical artifact proves past behavior, not current behavior.
-
-When reporting a conclusion, make the evidence level clear where material.
-
-## 5. Decision algorithm
-
-For every meaningful implementation or architecture question:
-
-### Step A — Define the real problem
-
-Do not solve the wording of the symptom.
-
-Identify what responsibility is actually affected.
-
-### Step B — Identify the owner
-
-Classify it as:
-
-* Polymath
-* ecommerce
-* Trail
-* host execution
-* deployment
-* reporting
-
-### Step C — Search existing implementations
-
-Before designing anything new, inspect in this order:
-
-1. current Polymath
-2. imported/migration ecommerce implementation
-3. original AutoResearch source when necessary
-4. embedded/original Trail
-5. tests
-6. historical artifacts
-
-### Step D — Establish evidence level
-
-Determine whether the candidate implementation is:
-
-* executed
-* statically verified
-* read only
-* historical
-* stubbed
-
-### Step E — Apply migration invariants
-
-Reject options that introduce:
-
-* duplicate authority
-* second runtime
-* unnecessary new abstractions
-* loss of useful proven behavior
-* privacy risk
-* unnecessary migration complexity
-
-### Step F — Select smallest reversible implementation
-
-Prefer the option with:
-
-* less new code
-* more existing code reuse
-* less persistent-state change
-* lower blast radius
-* easier rollback
-* easier targeted proof
-
-### Step G — Implement
-
-Do not ask the user for permission when the migration policy already authorizes the choice.
-
-### Step H — Prove
-
-Run the smallest test capable of falsifying the implementation.
-
-### Step I — Record
-
-Material decisions go in `AUTO_DECISIONS.md`.
-
-Current execution state goes in `CONTINUATION.md`.
-
-### Step J — Continue
-
-Do not stop merely because one slice completed successfully.
-
-Proceed to the next dependency-ordered task.
-
-## 6. Bias toward execution
-
-Analysis exists to enable implementation.
-
-Do not repeatedly analyze an already understood architecture.
-
-When all of the following are true:
-
-* ownership is known,
-* existing implementation is known,
-* migration policy permits the action,
-* the change is reversible,
-* a validation strategy exists,
+When:
+- ownership is known;
+- existing implementation is known;
+- policy permits action;
+- change is reversible;
+- validation exists;
 
 IMPLEMENT.
-
-Do not generate another planning document.
 
 Do not ask "should I proceed?"
 
-Proceed.
+## Work queue
 
-## 7. Work queue discipline
+Maintain:
+- NOW: one atomic objective;
+- NEXT: next dependency-unblocked task;
+- LATER: known but blocked/deferred work.
 
-Maintain a small active queue.
+Do not deeply reason about LATER unless it affects NOW.
 
-At any moment there should be:
-
-### NOW
-
-One atomic implementation objective.
-
-### NEXT
-
-The next dependency-unblocked objective.
-
-### LATER
-
-Known work that is not yet unblocked.
-
-Do not actively reason about LATER work unless it affects NOW.
-
-Example:
-
-NOW:
-install missing embedded-Trail dependency and prove Polymath interpreter can run Trail tests
-
-NEXT:
-merge-window validation
-
-LATER:
-real ecommerce E2E
-
-This prevents unrelated future concerns from consuming current context.
-
-## 8. Token discipline
-
-Context capacity is not a target.
-
-Before using extensive reasoning ask:
-
-Can deterministic repository tooling answer this?
+## Token discipline
 
 Prefer:
 
-```
-git
-→ Graphify
-→ CodeGraph
-→ Graft
-→ grep/AST
-→ narrow source reads
-→ tests
-→ model reasoning
-```
+`git → Graphify → CodeGraph → Graft → grep/AST → narrow reads → tests → model reasoning`
 
 Avoid:
+- rereading mapped files;
+- re-explaining architecture;
+- rediscovering known dependencies;
+- long narrative progress updates;
+- future-phase analysis while current dependencies remain unresolved.
 
-* rereading entire files already mapped
-* re-explaining architecture after every change
-* repeatedly rediscovering known dependencies
-* generating long progress narratives
-* analyzing future phases while current dependencies remain unresolved
+## Test economics
 
-Use durable files as external memory.
-
-## 9. Test economics
-
-Tests exist to remove uncertainty.
-
-They are not a ritual.
-
-For a local code change:
-
-1. run the direct unit/contract test;
-2. run nearest integration test if the boundary changed;
+For local changes:
+1. direct unit/contract test;
+2. nearest integration test if a boundary changed;
 3. continue if green.
 
-Run broad suites only when:
+Run broad suites only at phase gates, shared runtime changes, contract changes, production merge, or release/E2E.
 
-* importing a substantial package,
-* altering shared runtime behavior,
-* changing a contract,
-* completing a migration phase,
-* preparing production merge,
-* preparing release/E2E.
+## Failure handling
 
-Do not run expensive real-world research until deterministic code paths are green.
+`INVESTIGATE → CLASSIFY → FIX OR DOCUMENT → RETEST`
 
-## 10. Failure handling
+Classify as:
+- fixture defect;
+- migration defect;
+- upstream defect;
+- environment dependency;
+- expected behavior;
+- genuine governance ambiguity.
 
-A failing test means:
+Only unresolved governance ambiguity may require the user.
 
-```
-INVESTIGATE
-→ CLASSIFY
-→ FIX OR DOCUMENT
-→ RETEST
-```
+## Existing defects
 
-It does not automatically mean ask the user.
+Do not silently fix every upstream defect during migration.
 
-Classify failures as:
+If blocking migration/acceptance, address under policy.
 
-* fixture defect
-* migration defect
-* existing upstream defect
-* environment dependency
-* expected behavior
-* true governance ambiguity
+If not blocking:
+- reproduce;
+- record;
+- preserve equivalence;
+- defer semantic repair.
 
-Only the last category may trigger a user question, and only when migration policy cannot resolve it.
+## Architecture-change threshold
 
-## 11. Existing defects
-
-Do not silently repair all existing upstream defects during migration.
-
-Classify them.
-
-If the defect blocks migration or real ecommerce acceptance:
-
-* address it according to governance policy.
-
-If it does not block migration:
-
-* reproduce it,
-* record it,
-* preserve behavioral equivalence,
-* defer the semantic fix.
-
-Migration and policy repair are different activities.
-
-## 12. Architecture-change threshold
-
-Do not change settled architecture merely because a cleaner design is imaginable.
-
-An architectural change requires at least one of:
-
-1. repository evidence disproves a controlling assumption;
-2. existing design prevents required ecommerce behavior;
-3. current design introduces unavoidable duplicate authority;
+Change settled architecture only if:
+1. repo evidence disproves a controlling assumption;
+2. current design blocks required ecommerce behavior;
+3. unavoidable duplicate authority exists;
 4. security/privacy requires it;
-5. required acceptance cannot be reached otherwise.
+5. acceptance cannot otherwise be reached.
 
-"Another architecture looks nicer" is insufficient.
+A cleaner-looking architecture is not enough.
 
-## 13. External reviewer handling
+## External reviewer handling
 
-External reviewer findings are claims, not truth.
+Reviewer findings are claims.
 
-For each finding:
-
-1. reproduce independently where practical;
+For material findings:
+1. reproduce;
 2. inspect source;
-3. classify evidence level;
-4. accept, reject, or narrow the claim;
-5. record supported conclusions.
+3. classify evidence;
+4. accept/reject/narrow;
+5. record.
 
-Do not redesign the system based solely on reviewer prose.
+## Live-system discipline
 
-## 14. Live system discipline
-
-Do not accidentally use the production database/fleet as a test harness.
+Do not use production DB/fleet as an accidental test harness.
 
 Prefer:
+- in-memory stores;
+- isolated DBs;
+- fixtures;
+- migration worktrees.
 
-* in-memory stores
-* isolated databases
-* fixtures
-* migration worktrees
+Use maintenance windows only when required.
 
-Before tests that could affect the live fleet:
+## Continuity discipline
 
-1. establish whether shared infrastructure is involved;
-2. isolate where possible;
-3. if a controlled maintenance window is required, follow the migration policy.
+At phase boundaries update `CONTINUATION.md` with:
+- mission;
+- phase;
+- actual changes;
+- proven/unproven;
+- locked decisions;
+- known defects;
+- next exact action;
+- DO NOT REDO.
 
-Never commit a test run in an active/running state if the fleet could execute it.
+## Same-reasoning continuity
 
-## 15. Continuity discipline
+Do not preserve another model's private chain-of-thought.
 
-At every meaningful phase boundary update:
+Preserve:
+- mission;
+- evidence;
+- invariants;
+- ownership;
+- decisions;
+- rejected alternatives;
+- proof;
+- reversibility;
+- next action.
 
-`docs/migration/CONTINUATION.md`
+That is the continuity substrate.
 
-A continuation report must answer:
+## Hosted acceptance
 
-* What is the mission?
-* What phase are we in?
-* What actually changed?
-* What is proven?
-* What remains unproven?
-* What decisions are locked?
-* What known defects exist?
-* What exact action is next?
-* What should the next session NOT redo?
+Three levels:
 
-Do not depend on conversational memory.
+1. Repository acceptance.
+2. Production acceptance.
+3. Hosted remote MCP acceptance.
 
-## 16. Same-reasoning continuity
+Hosted acceptance must prove an external supported agent can connect through the owner's domain and:
+- authenticate;
+- discover tools;
+- call knowledge tools;
+- discover/start adapters;
+- complete next/submit cycles;
+- retrieve status/result;
+- exercise correct isolation/errors;
+- run a real ecommerce workflow.
 
-Do not attempt to preserve or reproduce another model's private chain-of-thought.
+## Definition of vigorous execution
 
-Preserve the observable reasoning substrate:
+Vigorous does not mean maximum tokens/tests/tool calls.
 
-* mission
-* evidence
-* invariants
-* ownership
-* decisions
-* rejected alternatives
-* test proof
-* reversibility
-* next action
+It means:
+- forward motion;
+- quick uncertainty reduction;
+- deterministic tooling first;
+- autonomous authorized decisions;
+- preservation of working behavior;
+- coherent commits;
+- continuous reduction in distance to acceptance.
 
-A future agent should be able to reach the same decision from these artifacts even if its internal reasoning differs.
-
-That is the standard for reasoning continuity.
-
-## 17. Hosted-product acceptance
-
-The final product is not only a local repository.
-
-The intended Polymath deployment is a hosted knowledge/agent platform.
-
-The migration must therefore distinguish:
-
-### Repository acceptance
-
-Can one Polymath checkout contain and operate the required implementation?
-
-### Local production acceptance
-
-Does the production fleet run the unified implementation correctly?
-
-### Hosted MCP acceptance
-
-Can an external supported agent connect through the hosted Polymath domain and use the exposed MCP capabilities?
-
-The final hosted acceptance should prove from outside the Polymath host:
-
-* authentication
-* tool discovery
-* Polymath knowledge calls
-* adapter discovery
-* adapter start
-* adapter next/submit cycle
-* adapter status/result
-* tenant/user isolation as applicable
-* failure behavior
-* real ecommerce workflow
-
-Do not call the hosted product complete merely because local tests pass.
-
-## 18. Definition of vigorous execution
-
-Vigorous does NOT mean:
-
-* maximum tool calls
-* maximum tests
-* maximum tokens
-* maximum code changes
-
-Vigorous means:
-
-* maintain forward motion
-* resolve uncertainty quickly
-* use the best available deterministic tool
-* make authorized decisions without interruption
-* preserve working behavior
-* commit coherent slices
-* continuously reduce the remaining distance to E2E acceptance
-
-The measure of progress is:
-
-How much validated uncertainty was removed and how much closer the actual system is to the acceptance target?
-
-## 19. Default behavior
-
-Unless a genuine stop condition applies:
+Default behavior:
 
 DO THE WORK.
 
-When uncertain:
-
-INSPECT.
-
-When evidence resolves it:
-
-DECIDE.
-
-When authorized:
-
-IMPLEMENT.
-
-When implemented:
-
-TEST.
-
-When proven:
-
-RECORD.
-
-Then:
-
-CONTINUE.
+When uncertain: INSPECT.
+When evidence resolves it: DECIDE.
+When authorized: IMPLEMENT.
+When implemented: TEST.
+When proven: RECORD.
+Then: CONTINUE.

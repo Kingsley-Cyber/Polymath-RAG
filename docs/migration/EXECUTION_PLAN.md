@@ -1,60 +1,43 @@
+# Polymath Consolidation — Execution Plan
+
 ## Rule
 
 Execute this plan.
 
 Do not repeatedly redesign it.
 
-Repository evidence may justify local adjustments.
+Material deviations go to `AUTO_DECISIONS.md`.
 
-Material changes are recorded in `AUTO_DECISIONS.md`.
-
----
-
-## Phase 0 — Establish repository truth
+## Phase 0 — Repository truth
 
 Inspect:
-
-- `polymath-v4`;
-- `TRAIL_AGENT_AUTORESEARCH`;
+- Polymath;
+- AutoResearch;
 - Trail A41;
-- Hermes deployed skill.
+- Hermes deployed copy.
 
 Record:
-
 - path;
 - branch;
 - HEAD;
 - status;
-- upstream;
-- divergence;
+- upstream/divergence;
 - tags;
 - user modifications.
 
 Discover:
-
-- Ponytail if available;
+- Ponytail;
 - Graphify;
 - Graft;
 - CodeGraph/equivalent.
 
 Establish baseline tests once.
 
-Create/update operational migration documents.
-
-### Gate
-
-No unresolved risk of overwriting user work.
-
----
+Gate: no unresolved risk of overwriting user work.
 
 ## Phase 1 — Capability forensics
 
-Before moving implementation, create the complete factual harvest map.
-
-### AutoResearch
-
-Map:
-
+Map AutoResearch:
 - graph nodes;
 - executors;
 - prompts;
@@ -67,7 +50,6 @@ Map:
 - historical proof.
 
 Cover:
-
 - niche understanding;
 - population discovery;
 - VOI;
@@ -76,8 +58,7 @@ Cover:
 - hypothesis generation;
 - bridge/portfolio rules;
 - semantic review;
-- gap planning;
-- channel planning;
+- gap/channel planning;
 - field research;
 - product ideation;
 - variations;
@@ -88,36 +69,19 @@ Cover:
 - lead construction;
 - reporting.
 
-### Governed adapter
+Map current governed adapter against AutoResearch and Trail.
 
-Map every current ecommerce step against existing AutoResearch capability and Trail checkpoint.
+Map exact Trail dependency closure.
 
-### Trail
-
-Find the exact dependency closure required by the governed operations.
-
-Determine whether any Trail function duplicates ecommerce-specific planning and assign one owner.
-
-### Gate
-
-Every major responsibility has:
-
-- target owner;
-- source implementation;
-- migration action.
-
----
+Gate: every major responsibility has one target owner, source implementation, and migration action.
 
 ## Phase 2 — Import ecommerce implementation
 
-Import the useful AutoResearch implementation into Polymath additively.
+Import useful AutoResearch behavior additively.
 
 Do not redesign on import.
 
-Preserve source organization where practical.
-
 Exclude:
-
 - secrets;
 - private ledgers;
 - DBs;
@@ -127,38 +91,26 @@ Exclude:
 
 Migrate behavioral tests.
 
-### Gate
-
-Imported domain logic passes expected tests in its new location.
-
----
+Gate: imported domain logic passes expected tests.
 
 ## Phase 3 — Domain binding seam
 
-Extend the EXISTING adapter runtime minimally so an ecommerce adapter can invoke domain Python.
-
-Possible mechanism depends on source inspection.
+Extend the existing adapter runtime minimally so ecommerce can invoke domain Python.
 
 Requirements:
-
 - no second scheduler;
-- no second durable state machine;
+- no second state machine;
 - no second hypothesis ledger;
 - existing adapters remain compatible;
-- ecommerce domain failures map into existing typed adapter semantics.
+- ecommerce failures map into existing typed semantics.
 
-### Gate
-
-A real ecommerce domain operation executes through the existing adapter runtime.
-
----
+Gate: a real ecommerce domain operation executes through the existing runtime.
 
 ## Phase 4 — EvidencePacket integration
 
-Replace obsolete Polymath synthesis dependencies with current evidence contracts.
+Replace obsolete synthesis dependencies with current evidence contracts.
 
 Preserve:
-
 - EvidencePacket;
 - provenance;
 - CA4;
@@ -166,287 +118,151 @@ Preserve:
 - Corpus Explore;
 - graph/wildcard lineage.
 
-Adapt domain boundaries instead of deleting useful reasoning.
-
-### Gate
-
-Existing ecommerce understanding logic consumes current Polymath evidence and produces valid downstream structures.
-
----
+Gate: ecommerce understanding consumes current Polymath evidence correctly.
 
 ## Phase 5 — Restore ecommerce intelligence
 
-In dependency order restore:
-
-### Population
-
-- lenses;
-- structural lookup;
-- nomination;
-- VOI;
-- scouting;
-- evidence cards;
-- lived situations.
-
-### Hypotheses
-
-- bridge;
-- portfolio constraints;
-- generation;
-- validators;
-- challenge;
-- advisory semantic review.
-
-Use Polymath's durable hypothesis ledger.
-
-Trail remains final deterministic judge.
-
-### Field research
-
 Reconnect:
-
-- gaps;
-- channel planning;
-- source-specific queries;
-- acquisition directives;
-- observation normalization;
-- curation.
-
-Do not improvise queries that existing planners already know how to compile.
-
-### Products
-
-Restore:
-
-- multiple product concepts;
-- multiple variations;
-- mechanism links;
-- population/problem links;
-- evidence links;
-- assumptions.
-
-### Product reality
-
-Investigate real:
-
-- competing products;
-- prices;
-- reviews;
-- complaints;
-- alternatives;
-- missing features.
-
-### Supply
-
-Restore:
-
-- sourcing plan;
-- Exa;
-- Alibaba;
-- CJ;
-- normalization;
-- price parsing;
-- MOQ parsing;
+- population/lived-world logic;
+- bridge/portfolio/hypothesis validation;
+- field research planning;
+- product concepts/variations;
+- product reality;
+- sourcing;
+- price/MOQ;
 - lead assembly.
 
-Capture stronger provenance at harvest time.
-
----
+Do not hand-author queries when existing planners already compile them.
 
 ## Phase 6 — Embed required Trail core
 
-Use deterministic dependency analysis.
-
-Import minimum required core into Polymath.
+Import only the minimum required deterministic Trail core.
 
 Preserve:
-
 - deterministic behavior;
 - source registry;
-- LAW 1;
-- LAW 2;
+- Trail laws;
 - Trail logical ownership.
 
-Write/update `ADR-TRAIL-EMBEDDING.md`.
-
-### Gate
-
-Embedded operations pass equivalence/contract tests.
-
----
+Gate: equivalence/contract tests pass.
 
 ## Phase 7 — Registry and authority consolidation
 
-Ensure there is one authoritative registry.
+One authoritative registry.
 
 In governed mode:
+- Trail owns admission/judgement/qualification/score;
+- Polymath owns runtime/state/transitions;
+- ecommerce owns domain research/product/sourcing intelligence.
 
-Trail owns:
-
-- admission;
-- judgement;
-- qualification;
-- score/refusal.
-
-Polymath owns:
-
-- runtime;
-- state;
-- transitions.
-
-Ecommerce owns:
-
-- domain research and product/sourcing intelligence.
-
-Legacy AutoResearch score/admission logic may remain only as explicitly non-authoritative standalone compatibility until cleanup.
-
----
+Legacy authorities may remain only as explicitly non-authoritative compatibility until cleanup.
 
 ## Phase 8 — Reporting
 
-Reuse existing AutoResearch renderer.
+Reuse the existing renderer.
 
 Do not build another renderer.
 
-Expand the governed ReportModel/input mapping.
+Render:
+- Polymath knowledge;
+- live-world observations;
+- agent inference;
+- Trail determinations;
+- Trail registry mappings.
 
-Clearly distinguish:
+Gate: complete product-facing fixture report renders.
 
-- POLYMATH KNOWLEDGE;
-- LIVE-WORLD OBSERVATION;
-- AGENT INFERENCE;
-- TRAIL DETERMINATION;
-- TRAIL REGISTRY.
-
-### Gate
-
-A fixture-driven report renders the complete product-oriented structure.
-
----
-
-## Phase 9 — Hermes deployment
+## Phase 9 — Hermes / host deployment
 
 Determine why a physical deployed copy exists.
 
-Test:
-
-- filesystem permissions;
-- macOS restrictions;
-- service context;
-- Hermes skill loading;
-- supported source paths.
-
-If physical deployment remains required, create deterministic deployment with:
-
+If required, create deterministic deployment with:
 - one source;
 - version receipt;
 - parity verification.
-
-Do not manually maintain two sources.
-
----
 
 ## Phase 10 — Commerce corpus
 
 Do not restore old indexes.
 
-Fix/prove corpus isolation first.
-
-Then ingest the smallest useful preserved ecommerce source set through current V4.
+Prove corpus isolation, then reingest preserved ecommerce sources through current V4.
 
 Verify:
-
 - profiles;
-- parents/chunks;
+- chunks/parents;
 - embeddings;
 - atoms;
 - graph;
 - provenance;
 - corpus-scoped retrieval.
 
----
+## Phase 11 — Production merge gate
 
-## Phase 11 — Acceptance ladder
+Before live merge:
+- required dependencies installed in Polymath environment;
+- migration tests green;
+- shared Postgres test isolation/drain plan known;
+- merge/bounce/reload procedure recorded;
+- rollback path known.
 
-### A. Targeted unit tests
+## Phase 12 — Real ecommerce E2E
 
-### B. Contract tests
+Run one broad real test:
 
-### C. Focused integration
+`seed → knowledge → population → hypotheses → Trail judgement → real research → admission → revision → multiple concepts → variations → product reality → supplier research → qualification → score/refusal → HTML`
 
-### D. Historical behavioral parity fixture
+A defensible rejection is valid.
 
-Structural, not exact-output parity.
+Runtime failure is not.
 
-### E. Mechanical governed smoke
+## Phase 13 — Hosted remote MCP acceptance
 
-No expensive open-world research until internal contracts work.
+From an external client/session prove:
+- authenticated connection through owner's domain;
+- MCP tool discovery;
+- Polymath search/explore;
+- adapter discovery;
+- adapter start;
+- next/submit cycle;
+- status/result;
+- correct failures/isolation;
+- real ecommerce workflow.
 
-### F. One real ecommerce E2E
+This should represent a friend using Claude Code or another supported host.
 
-Required path:
+Local-only success does not satisfy this gate.
 
-`seed`
-→ knowledge
-→ population
-→ hypotheses
-→ Trail judgement
-→ real research
-→ Trail admission
-→ revision
-→ multiple product concepts
-→ variations
-→ product reality
-→ supplier research
-→ qualification
-→ score/refusal
-→ HTML
+## Phase 14 — Negative control
 
-### G. One negative control
+Prove a lawful negative outcome is possible.
 
-System must be able to reject/withhold an unsupported opportunity.
-
----
-
-## Phase 12 — Cleanup
+## Phase 15 — Cleanup
 
 Only after acceptance:
-
 - retire external AutoResearch runtime dependency;
 - retire external Trail runtime dependency if embedded;
-- remove duplicated registry;
-- retire duplicate governed ecommerce planners;
+- remove duplicate registry;
+- retire duplicate planners;
 - remove manual Hermes mirroring;
-- mark legacy authority paths non-governed/obsolete;
+- mark legacy authorities obsolete;
 - update architecture docs.
 
-Destructive deletion occurs separately from migration proof.
-
----
+Destructive deletion is separate from proof.
 
 ## Continuation contract
 
-At every major phase update:
-
-`docs/migration/CONTINUATION.md`
-
-with:
-
+At every major phase update `CONTINUATION.md` with:
 - mission;
-- current phase;
+- phase;
 - repo state;
 - completed work;
 - architecture;
 - migrated capabilities;
 - authority map;
-- auto decisions;
+- decisions;
 - tests;
 - failures;
 - blocker;
 - next exact action;
 - DO NOT REDO;
 - commits.
-
-A new session reads this and continues.
-
-Do not restart discovery from zero unless repository state contradicts it.

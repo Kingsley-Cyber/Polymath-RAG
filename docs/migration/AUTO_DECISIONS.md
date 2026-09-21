@@ -2,6 +2,30 @@
 
 > Agent-owned. Material autonomous decisions only (architecture, governance, compatibility, authority, migration seams).
 
+## INDEX (read this; open an entry only when you need its evidence or rejected alternatives)
+| # | Decision in one line | State |
+|---|---|---|
+| M-001 | Phase 0 was run before two controlling documents arrived | resolved by bundle 1 |
+| M-002 | Migration DOCUMENTS live on `production`; all migration CODE lives in a dedicated worktree / branch | locked |
+| M-003 | When two owner texts overlap, the newest bundle controls; an earlier longer text may stay as `*_EXTENDED.md` | locked |
+| M-004 | Phase 0 test baseline = the runs that already existed; Trail baselined at embedding | locked |
+| M-005 | Commerce corpus = reconstruct the 10-document set from preserved sources under a NEW corpus id, after Item 2D is live | locked (Phase 10) |
+| M-006 | Engine imported via `git archive` (tracked files only), 3 exclusions; it used to live here as `research/` until 11.274 | done `072f1cc` |
+| M-007 | Binding seam = ONE step type `DOMAIN_OPERATION` + out-of-process `adapters/<domain>/binding.py` | done `076eb6b` (ADR-0020) |
+| M-008 | ONE evidence id space in governed mode (the runtime's ids); engine schema byte copies stay, pinned | done `f20cf22` |
+| M-009 | Population discovery = research PLANNING; Trail says WHAT / engine says HOW via `research_directive`; cards + lived situations AFTER admission | done |
+| M-010 | Domain hypotheses addressed by LEDGER id; mechanism support derived from the ledger; NO engine score or verdict in governed output | done `7f87e57` |
+| M-011 | `next_step` sibling `materials` (manifest `config.show`, strictly opt-in); law loops end in a typed `law.refuse` | done `92efc79`, fixed `e176962` |
+| M-012 | Trail core embedded byte-identical under `governance/trail/`, reached through the unchanged client; default mode `daemon` | done `b766678` (ADR-0021) |
+| M-013 | The dossier renders HOST-SIDE from the journal with the engine's renderer; five authority labels | done `a1e886f` |
+| M-014 | One GOVERNANCE registry (Trail's); engine mirror is a strict superset repairing a gap in Trail's own data — not merged, not relaxed | OWNER decision open (22 rows) |
+| M-015 | The production merge was DENIED by the permission gate and not retried; fleet restored; merged-code uncertainty removed on an isolated Postgres | merge is the owner's |
+| M-016 | Hermes keeps a physical copy (launchd cannot read `~/Documents`); produced by `scripts/deploy_ecommerce_skill.py`, proven by the engine's verifier | mechanism done `1d97536` |
+| M-017 | Item 2D committed on its own branch and pre-merged with `production` + the migration branch | done `5cd3cc1` |
+| M-018 | Owner bundle 2 installed byte-identical; plan renumbered (11 merge gate · 12 real E2E · 13 hosted MCP · 14 negative control · 15 cleanup); merge gate precedes Phase 10 in execution | locked |
+| M-019 | Phase 13 = a NEW read-only surface harness + the EXISTING lifecycle driver (`--mcp-url`) + a real agent host for the workflow; the harness found `upload_document` reading HOST paths for remote callers — confined to loopback callers on the branch; ONE shared key = no per-friend isolation (open, owner-visible) | harness + fix done `81a4472`; live after the merge |
+| M-020 | Phase 10 input = the exact 10 documents of the former corpus, identified from residue with the repo's own identity function; NEW corpus id `commerce-v1`; residue pre-flight BEFORE the first upload; staged, smallest first | manifest done; ingestion waits for the merge |
+
 ## Decision template
 `### M-XXX — <title>` with `####` Question · Evidence · Applicable migration invariants · Decision · Alternatives rejected ·
 Why this is the smallest reversible choice · Reversibility · Validation / proof · Affected files / commits.
@@ -599,3 +623,144 @@ Delete the script; the verifier still works standalone.
 
 #### Affected files / commits
 `migration/ecommerce-consolidation` `1d97536` (register 11.375).
+
+### M-017 — Item 2D: commit it and make its merge conflict-free now, deploy it later
+
+#### Question
+Item 2D (corpus-scoped atom search — the gate for any second corpus, hence for Phase 10) sat UNCOMMITTED in a worktree. The production merge is gated. What can be done without deploying?
+
+#### Evidence
+7 files uncommitted since the change was made; its 10 tests pass, database-free; a trial merge after the migration branch conflicted only in `PLAN-AUTHORITY-REGISTER.md` (adjacent row insertions).
+
+#### Applicable migration invariants
+Doctrine §6 bias toward execution · §14 nothing live · policy "never overwrite user work" (uncommitted work is the easiest to lose).
+
+#### Decision
+Commit Item 2D on its own branch with the repository's change-slice discipline (work-log, register 11.376, scaffold declarations, guards), then merge `production` and `migration/ecommerce-consolidation` INTO that
+topic branch, resolving the register in numeric order. `item2/corpus-scoped-atoms` @ `5cd3cc1` now merges into `production` without conflict and contains the migration branch. Deploying it stays with the owner.
+
+#### Alternatives rejected
+Leaving it uncommitted · rebasing (history rewrite) · merging it into `production` (a production deploy).
+
+#### Why this is the smallest reversible choice
+Topic-branch commits only; nothing live; nothing pushed.
+
+#### Reversibility
+Delete the branch commits; the change itself is in `221b95c`.
+
+#### Validation / proof
+Guards 0 / 0 / 0 / READY on the combined branch; 59 tests (Item 2D + activation pins + the ecommerce e2e / seam / provenance / registry pins). Proof level for Item 2D: `UNIT_PROVEN` (`shared/`) +
+`STATICALLY_VERIFIED` (`orchestrator/` callers).
+
+#### Affected files / commits
+`item2/corpus-scoped-atoms`: `221b95c`, `4d75387`, `5cd3cc1`.
+
+### M-018 — Owner bundle 2 (2026-09-21): what was installed, what it changes, and one ordering deviation
+
+#### Question
+The owner supplied `polymath_owner_migration_bundle.zip` (six files) and asked for a bootstrap that lets a NEW session continue without context rot. Five of the six differ from the installed owner files.
+
+#### Evidence
+Bundle read in full before installing. Differences that matter: a new controlling file order (policy → doctrine → bootstrap context → plan → `AUTO_DECISIONS` → `CONTINUATION`); the doctrine is now a bundle file
+(compact); HOSTED REMOTE MCP ACCEPTANCE through the owner's domain is part of the definition of success; `EXECUTION_PLAN.md` is renumbered — 11 production merge gate, 12 real ecommerce E2E, 13 hosted remote MCP
+acceptance, 14 negative control, 15 cleanup (the old 11 "acceptance ladder" and 12 "cleanup" are gone); `README_OWNER_CONTROL.md` names the five owner-controlled files.
+
+#### Applicable migration invariants
+M-003 (the newest owner bundle controls) · README_OWNER_CONTROL ("must not silently rewrite the mission, ownership model, invariants, or success criteria").
+
+#### Decision
+(1) The six files are installed BYTE-IDENTICAL; earlier versions stay in git history (`758ff8a` bundle 1; `8e89d44` the doctrine transcribed from chat). (2) The first bundle's `README.md` is removed as superseded
+by `README_OWNER_CONTROL.md` (recoverable from `758ff8a`). (3) Agent-owned `CONTINUATION.md` is REWRITTEN clean under the new numbering, and this file gains an INDEX, so a fresh session reads kilobytes, not the
+whole history. (4) ORDERING DEVIATION, recorded as the plan requires: Phase 11's gate is satisfied and the merge happens BEFORE Phase 10 executes, because Phase 10 (a second corpus) needs Item 2D LIVE, which only
+the merge + bounce delivers. Phase 10's isolation PROOF (Item 2D's tests) already exists.
+
+#### Alternatives rejected
+Keeping both READMEs (a stale controlling list is exactly the rot to prevent) · patching the old continuation again · renumbering past registers / work-logs (history keeps its own numbering).
+
+#### Why this is the smallest reversible choice
+Docs only; every replaced text is in git history.
+
+#### Reversibility
+`git revert` of the installing commit.
+
+#### Validation / proof
+`cmp` of each installed file against the bundle = identical; `repo_guard` 0; `/polymath-bootstrap` read order updated to match `BOOTSTRAP_CONTEXT.md`.
+
+#### Affected files / commits
+`production`: the commit that adds this entry.
+
+### M-019 — Phase 13: what proves the hosted surface, and the isolation defect the first run found
+
+#### Question
+The Phase 11 merge is blocked; `CONTINUATION.md` names Phase 13 preparation (read-only, current hosted surface) as unblocked work. What is the smallest thing that proves the hosted criteria, and what is done about what it finds?
+
+#### Evidence
+STATICALLY_VERIFIED: `~/.cloudflared/config.yml` routes `mcp.kingsleylab.xyz` → `localhost:8930` on the named tunnel; `:8930` is Server A (stateless streamable HTTP, ONE bearer key, fail-closed, `/health` open).
+EXISTS: `scripts/adapter_mcp_acceptance.py` already drives a complete adapter run through the official MCP client and takes `--mcp-url`. MISSING: anything that checks the edge, the gate, discovery, typed errors or
+isolation of a public surface. INTEGRATION_EXECUTED (from the host, through the public hostname, fleet on unchanged `production`): 13 PASS · 1 WARN (the edge 403s `Python-urllib`) · 2 SKIP (opt-ins) · 1 FAIL —
+`upload_document(path, …)` resolved a caller-supplied path on the HOST filesystem. READ (not exercised): any key holder could ingest and read back any host file with an accepted extension; "file not found" is an
+existence oracle. The surface has one shared bearer key: no per-caller identity exists to isolate.
+
+#### Applicable migration invariants
+`REUSE > WRAP > MOVE > ADAPT > REWRITE`. Policy "Hosted product requirement": correct isolation / error behaviour. Doctrine "Existing defects": a defect that blocks acceptance is addressed under policy. Live-system
+discipline: read-only calls only while nothing is merged. Credentials are never entered or printed.
+
+#### Decision
+1. Phase 13 is proven by three things, not one new system: the NEW small `scripts/hosted_mcp_acceptance.py` (surface: edge, gate, handshake, discovery, knowledge, typed errors, isolation; READ-ONLY by default;
+   `--vantage` records where it ran) · the EXISTING lifecycle driver pointed at the hosted URL (`--mcp-url … --no-restart`) · a REAL agent host, on another machine, running the ecommerce workflow.
+2. The host-path defect is fixed at its owner (Polymath's generic MCP surface), minimally: the bearer gate records per request whether the caller addressed the loopback listener directly (default NOT local);
+   `upload_document` answers a non-local caller `REMOTE_PATH_UPLOAD_DISABLED` (403) before any filesystem access. Hermes (loopback) is unchanged; remote callers keep `upload_text`. On the branch; live after the merge.
+3. Per-friend keys / principals are NOT built now. Recorded as open and owner-visible: with one shared key every holder has every corpus, every caller's `recent_queries`, `upload_text` into any corpus.
+
+#### Alternatives rejected
+Extending the scripted lifecycle driver to "be" the hosted acceptance (it cannot see a 401, an edge block or an isolation defect, and a scripted agent is not a friend's agent). Removing `upload_document` (Hermes
+uses it locally). A path allowlist for remote callers (a remote agent has no host paths at all; an allowlist is a smaller hole, not none). Building multi-tenant keys now (not needed to reach the next gate; a product
+decision about how much friends share). Stopping to ask about the defect (reversible, minimal, inside Polymath's ownership, closes a security hole rather than weakening one).
+
+#### Why this is the smallest reversible choice
+One script, one test file, ~25 lines in Server A; tool names, parameters and schemas unchanged (parity test green).
+
+#### Reversibility
+`git revert 81a4472`.
+
+#### Validation / proof
+`tests/contracts/test_hosted_mcp_acceptance.py` 5 (the REAL Server A app in process; negative controls: loopback → FAIL, open gate → FAIL, missing adapter → FAIL; no key → SKIP, never PASS; key never in the receipt) ·
+`tests/determinism/test_mcp_server_v2.py` 9 (identical refusal for an existing and a missing file under a public Host / `Cf-Ray` / `X-Forwarded-For`; orchestrator never called; loopback still resolves) · parity green ·
+guards 0/0/0/READY. NOT proven: external vantage; the live fix (needs merge + bounce, then this harness green from the public hostname).
+
+#### Affected files / commits
+`migration/ecommerce-consolidation` `81a4472` (register 11.377, work-log `2026-09-20-consolidation-phase13-hosted-surface-acceptance.md`); merged into `item2/corpus-scoped-atoms` `7de9e69`.
+
+### M-020 — Phase 10 input: which documents, which corpus id, and what must be checked before the first upload
+
+#### Question
+M-005 says "reconstruct the 10-document set from preserved sources under a NEW corpus id". Which 10, exactly — and is a re-ingest of the same bytes safe next to the old corpus's residue?
+
+#### Evidence
+EXECUTED (read-only): the old corpus's `documents` rows are gone; 2,266 surviving `parent_enrichments` rows name exactly 10 `doc_id`s; `doc_id` = sha256 of the NORMALIZED bytes while the spool is keyed by the RAW
+bytes; normalizing all 129 spool blobs with `polymath_shared.identity` matched 10 of 10, every blob sha-verified (5,995,118 bytes), 9 of 10 also byte-identical in the 117-file library.
+READ + read-only queries: residue in six tables; ids are content-derived and corpus-independent; `parent_enrichments` is UNIQUE on `(parent_id) WHERE status='READY'` and the summary worker reuses an enrichment by
+`input_hash` alone — neither is corpus-scoped. The consequence for a re-ingest is INFERRED, not reproduced.
+
+#### Applicable migration invariants
+Policy pre-authorization ("do not restore old indexes; reingest preserved sources through current V4"). INV-7 (books are ingested, never committed). Stop condition 3 (destructive live-data action). Spend is per-action.
+
+#### Decision
+`docs/migration/COMMERCE_CORPUS_MANIFEST.md` is the Phase 10 input: the 10 documents (title, bytes, sha256, locations), corpus id `commerce-v1`, a residue PRE-FLIGHT settled on the smallest document before ten are paid
+for, staged uploads smallest first, and the gate. No residue is deleted: that is a destructive live-data action and needs the owner's word.
+
+#### Alternatives rejected
+Reusing `ecom-meta-v1` (residue would mix in). Ingesting all 117 library files (M-005: smallest useful set first). Picking "10 good books" by judgement (the historical run's corpus is identifiable exactly). Deleting
+the residue now (destructive, and nothing can be ingested before the merge anyway).
+
+#### Why this is the smallest reversible choice
+A document. Nothing was ingested, copied or moved.
+
+#### Reversibility
+Delete the file.
+
+#### Validation / proof
+10 / 10 ids matched by recomputation with the repository's own function; sha256 verified per blob.
+
+#### Affected files / commits
+`docs/migration/COMMERCE_CORPUS_MANIFEST.md` (this commit, `production`, docs only).
