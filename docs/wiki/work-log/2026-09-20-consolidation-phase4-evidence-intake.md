@@ -55,5 +55,5 @@ Decision `docs/migration/AUTO_DECISIONS.md` M-008.
 ## Open contract gaps
 - `ADAPTER_RUNTIME` — UPDATED (manifest validation accepts list-valued `config.inputs`; no schema change: `config` is a free object).
 - `EVIDENCE_PACKET` / evidence boundary — TESTED_UNCHANGED (the example packet and `rows_from_packet` are read, not modified).
-- `MCP_SURFACE` — NOT_AFFECTED.
+- `MCP_SURFACE` (transitive, flagged by `contract_impact`) — TESTED_UNCHANGED (`test_mcp_adapter_parity.py`, `test_mcp_server_v2.py`, `test_adapter_worker_evidence_surface.py`, `test_adapter_r5_audit.py` green after this change).
 - Database-backed adapter suites — DEFERRED to the merge window (unchanged from Phase 3).
