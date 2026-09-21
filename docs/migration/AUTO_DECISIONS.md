@@ -432,7 +432,7 @@ asserted to have been shown; the negative control ends in `PRODUCT_PORTFOLIO_LAW
 #### Affected files / commits
 `migration/ecommerce-consolidation` `92efc79` (register 11.369; ADR-0020 addendum).
 
-### M-012 — Phase 6: how the TrailSignal core is embedded (PROPOSED, source-verified, not yet implemented)
+### M-012 — Phase 6: how the TrailSignal core is embedded (IMPLEMENTED on the migration branch `b766678`; default mode `daemon`)
 
 #### Question
 The policy pre-authorizes embedding "subject to dependency / license / source verification". What exactly is imported, how does Polymath reach it, and what must NOT be done in the same change?
@@ -464,4 +464,4 @@ Set the mode back to `daemon`; delete `governance/trail/`.
 The four checks in `ADR-TRAIL-EMBEDDING.md` "Validation". Open: durability of the embedded audit store.
 
 #### Affected files / commits
-None yet.
+`migration/ecommerce-consolidation` `b766678` (register 11.370, repo ADR-0021, refactor 0015). Audit-store durability resolved: SQLite behind TrailSignal's own store port.
