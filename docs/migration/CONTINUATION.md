@@ -18,7 +18,7 @@ generic infrastructure.
 **Phases 0–8 — DONE on the migration branch** (`072f1cc` import · `076eb6b` seam, ADR-0020 · `f20cf22` evidence intake · `92b9d76` / `4a938bd` / `7f87e57` domain operations · `92efc79` product manifest +
 complete scripted run + negative control · `b766678` TrailSignal core embedded, ADR-0021, first complete run against REAL TrailSignal code = a defensible rejection · `a1e886f` governed dossier · `4ebcd41`
 Phase 7 registry state measured + pinned, ONE owner decision open).
-**NEXT: the MERGE WINDOW — a live-fleet change (merge + `packageurl` install + ONE bounce). Everything before it that needs no live system is done except the two Phase 6 equivalence validations.**
+**NEXT: the MERGE WINDOW — a live-fleet change (merge + `packageurl` install + ONE bounce). Everything that needs no live system is DONE.**
 All code on branch `migration/ecommerce-consolidation` (worktree `../pmv4-consolidation`), NOT merged; the live fleet is untouched; nothing pushed.
 
 ## Repository State
@@ -30,7 +30,7 @@ All code on branch `migration/ecommerce-consolidation` (worktree `../pmv4-consol
 - Hermes: deployed copy `standalone/opportunity-research` v2.3.0; three skill text files uncommitted (owner's commit).
 
 ## Current HEAD / Branch
-`production` (docs) · `migration/ecommerce-consolidation` @ `4ebcd41` (code).
+`production` (docs) · `migration/ecommerce-consolidation` @ `4f89d4c` (code).
 
 ## Completed
 - Owner reframe recorded in the plan of record; harvest map written (registers 11.362; commits `59a4b60`, `9dfd3c3`).
@@ -76,7 +76,7 @@ M-002 docs on `production`, code in the migration worktree · M-003 the bundle c
 In the migration worktree, database-free, `POLYMATH_PG_DSN` unset, under this repo's interpreter (`/Users/king/Documents/polymath-rebuild/polymath-v4/.venv/bin/python`, `PYTHONPATH=$PWD`): engine suite 609 / 609 + `doctor`
 (via `test_ecommerce_engine_import.py` 5) · `test_adapter_domain_operation.py` 25 · `…_knowledge_intake` 6 · `…_population_research` 6 · `…_lived_world` 7 · `…_products_supply` 7 · `…_product_research_e2e` 3 ·
 `test_trail_core_embedding.py` 4 · `test_adapter_ecommerce_dossier.py` 2 · `test_registry_single_authority_state.py` 3 · the existing contract / evidence-surface / MCP parity / neutrality / purity / R5 audit / MCP server / research-package-removed suites · guards 0 / 0 / 0 / READY.
-Under TRAILSIGNAL'S interpreter (`~/trail-signal-os-worktrees/A41/.venv/bin/python`, it has `packageurl`): `test_trail_core_embedded.py` 4 · `test_adapter_ecommerce_product_research_embedded_trail.py` 1 — these two
+Under TRAILSIGNAL'S interpreter (`~/trail-signal-os-worktrees/A41/.venv/bin/python`, it has `packageurl`): `test_trail_core_embedded.py` 4 · `test_adapter_ecommerce_product_research_embedded_trail.py` 1 · `test_trail_core_recorded_equivalence.py` 3 — these three
 files SKIP with the reason printed under this repo's interpreter. Reusable: `tests/determinism/_adapter_memory_store.py`.
 
 ## Known Failures
@@ -93,9 +93,7 @@ None for worktree work. TWO owner items gate what follows:
 2. **The 22 drifted registry rows** (M-014): upstream them into TrailSignal's registry or drop them. Until then governed population priors read the engine's superset mirror (and say so).
 
 ## Next Exact Action
-**A. Still doable in the worktree (no live system):** Phase 6 validations 2–3 — port TrailSignal's own operation tests (`~/trail-signal-os-worktrees/A41/tests/integration/research/test_research_operations_store.py`,
-`tests/e2e/research/test_research_mcp_operations.py`) to run against `governance/trail/` and replay the recorded request envelopes under `pmv4-m1-repro/tests/review_m1/fixtures/` through `embedded.operate`, asserting
-the same results the daemon build produced. Run under TrailSignal's interpreter (`~/trail-signal-os-worktrees/A41/.venv/bin/python`).
+**A. Worktree-only work: DONE.** Phase 6 validation 3 (equivalence by replay) passed (`4f89d4c`, register 11.373): two recordings replay to EQUAL envelopes, the third reproduces the recorded M1-02 defect identically. Validation 2 (TrailSignal's own operation tests) does not apply: they target its Postgres store and daemon, which are not imported.
 **B. The MERGE WINDOW (live-fleet change — confirm with the owner first):** (1) `pyproject.toml` + `packageurl-python`, install into `polymath-v4/.venv`; (2) check open adapter runs == 0; (3) merge
 `migration/ecommerce-consolidation` into `production` (expect trivial conflicts only in `PLAN-AUTHORITY-REGISTER.md` / `scaffold_polymath_v4.py` if production moved); (4) with the fleet DRAINED run the Postgres-backed
 adapter suites (`test_adapter_service_store`, `_harness_action`, `_evidence_boundary`, `_product_discovery_loop`); (5) ONE `scripts/boot_polymath.sh` bounce (one supervisor, always); (6) verify `/ready`, one bundle hash,
@@ -112,5 +110,5 @@ adapter suites (`test_adapter_service_store`, `_harness_action`, `_evidence_boun
 
 ## Relevant Commits
 `production`: `59a4b60` · `9dfd3c3` · `23d517e` · `758ff8a` owner bundle · `988070a` M-006 + M-007 · `4e627dc` continuation after phases 2–3 · this commit (M-008, phase 4).
-`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366) · `4a938bd` Phase 5b (11.367) · `7f87e57` Phase 5c (11.368) · `92efc79` product manifest + complete run in test form (11.369) · `b766678` Phase 6 Trail core embedded + first run against real TrailSignal code (11.370, ADR-0021) · `a1e886f` Phase 8 governed dossier (11.371) · `4ebcd41` Phase 7 registry state (11.372). Branch `review/m1-reproductions` `eb63bef`.
+`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366) · `4a938bd` Phase 5b (11.367) · `7f87e57` Phase 5c (11.368) · `92efc79` product manifest + complete run in test form (11.369) · `b766678` Phase 6 Trail core embedded + first run against real TrailSignal code (11.370, ADR-0021) · `a1e886f` Phase 8 governed dossier (11.371) · `4ebcd41` Phase 7 registry state (11.372) · `4f89d4c` Phase 6 replay equivalence (11.373). Branch `review/m1-reproductions` `eb63bef`.
 

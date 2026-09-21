@@ -84,6 +84,6 @@ Postgres tables — the latter needs a migration and a live window).
 ## Result of the implementation (2026-09-20)
 Validation 1 (sha256 of every imported file == the source commit, also compared to the git objects): DONE, 30 / 30. Validation 4 (the complete ecommerce run with the EMBEDDED core in place of the
 stub): DONE — `completed`, a defensible rejection produced by TrailSignal's own code (field evidence admitted; fabricated review / supplier sources rejected `SOURCE_UNREGISTERED` /
-`SOURCE_ROLE_UNSUITABLE`; score refused `HARD_GATE_UNMET`). Validations 2 (TrailSignal's own operation tests ported) and 3 (recorded-envelope equivalence): NOT done. Durability: TrailSignal's store
+`SOURCE_ROLE_UNSUITABLE`; score refused `HARD_GATE_UNMET`). Validation 3 (recorded-envelope equivalence): DONE (`4f89d4c`) — two recordings replay to EQUAL envelopes, the third reproduces the recorded M1-02 defect identically. Validation 2 does not apply: TrailSignal's operation tests target its Postgres store and daemon, which are not imported; the embedded store port is covered by `test_trail_core_embedded.py`. Durability: TrailSignal's store
 port is implemented on SQLite (`POLYMATH_TRAIL_STORE` file path; in memory when unset) — no Polymath migration needed. Finding: `opportunity.qualify` returns no research directive; a supply directive
 comes from `gaps.compile` with `stage: supply` (the ecommerce manifest's new `S_gaps`; `trail.product_discovery` lacks it — external-review M1-07 confirmed on real code).
