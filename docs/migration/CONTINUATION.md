@@ -28,13 +28,13 @@ hosted MCP acceptance (doctrine §17).
 ## Repository State
 - polymath-v4 `production`: clean, docs only since `758ff8a`; nothing pushed. **LIVE FLEET (rebooted 2026-09-21T02:01Z from unchanged `production`): 13 worker types healthy, ONE bundle `fa72e3b1adde`** (was
   `9cb421b4eeed`: the boot made live the already-committed TG4 change `6708301` that was waiting for a bounce), MCP :8930 up, 0 open adapter runs. `packageurl-python 0.17.6` is installed in `.venv` (additive).
-- **Migration worktree `~/Documents/polymath-rebuild/pmv4-consolidation`, branch `migration/ecommerce-consolidation` @ `e176962`** — clean; `git merge-tree production` = no conflicts. It has no `.venv`: run with
+- **Migration worktree `~/Documents/polymath-rebuild/pmv4-consolidation`, branch `migration/ecommerce-consolidation` @ `1d97536`** — clean; `git merge-tree production` = no conflicts. It has no `.venv`: run with
   `/Users/king/Documents/polymath-rebuild/polymath-v4/.venv/bin/python` and `PYTHONPATH=$PWD`.
 - Parked worktrees: `pmv4-atom-scope` (Item 2D, UNCOMMITTED, 7 files) · `pmv4-m1-repro` (`review/m1-reproductions` @ `eb63bef`, red on purpose). Merged, removable: `pmv4-governed`, `pmv4-packet-text`.
 - AutoResearch `main` @ `a7baa66` (public, 3 ahead of GitHub) and Trail A41 @ `de64d84`: untouched. Hermes: deployed skill copy v2.3.0; three skill text files uncommitted (owner's).
 
 ## Current HEAD / Branch
-`production` (docs only; the branch is NOT merged) · `migration/ecommerce-consolidation` @ `e176962` (code).
+`production` (docs only; the branch is NOT merged) · `migration/ecommerce-consolidation` @ `1d97536` (code).
 
 ## Completed
 - Owner reframe recorded in the plan of record; harvest map written (registers 11.362; commits `59a4b60`, `9dfd3c3`).
@@ -68,6 +68,7 @@ Full table: `CAPABILITY_MAP.md` "Duplicate Authority Map".
 M-002 docs on `production`, code in the migration worktree · M-003 the bundle controls · M-004 baseline = existing runs · M-005 commerce corpus at Phase 10 after Item 2D ·
 **M-006** import via `git archive` (tracked files only), three exclusions, history: the engine lived here as `research/` until 11.274 retired it to the Hermes skill — the O6 dead-path guard stays green ·
 **M-007** the seam = one step type + out-of-process binding (rejected: `EXTERNAL_OPERATION` reuse, `VALIDATE` overload, in-process import, host-side only, SDK) ·
+**M-016** the Hermes copy stays physical (launchd cannot read `~/Documents`); it is produced by `scripts/deploy_ecommerce_skill.py` and proven by the engine's own verifier ·
 **M-015** the merge was refused by the permission gate and NOT retried; fleet restored from unchanged `production`; merged-code uncertainty removed on an isolated Postgres instead ·
 **M-014** ONE governance registry (TrailSignal's); the engine mirror is a strict superset whose 10 extra friction families repair a gap in TrailSignal's own data — NOT merged, NOT relaxed: owner decision ·
 **M-013** the dossier renders HOST-SIDE from the journal with the engine's existing renderer; only the mapping + the five authority labels were added ·
@@ -108,7 +109,7 @@ Rollback: `git revert -m 1 <merge commit>` + the same boot. No Postgres migratio
 **NEXT — local production acceptance (doctrine §17), after the bounce:** `/ready` true with embedder + reranker; ONE bundle hash; `adapter_list` (MCP :8930 and Server B) shows `ecommerce.product_research` beside the three
 existing adapters; an `adapter_start` of `ecommerce.product_research` on corpus `cinema` reaches its first agent step and is then CANCELLED (mechanical, no spend); the full database-free suite passes in the MAIN checkout
 (execution path = the live code); Hermes MCP reload. Then rewrite the top of `docs/wiki/plans/CONTINUITY-REPORT.md`.
-**LATER (dependency order):** Phase 9 — deploy the Hermes skill FROM `adapters/ecommerce/` with a version receipt (test whether Hermes can read a path under `~/Documents`) · merge Item 2D (`pmv4-atom-scope`) → Phase 10
+**LATER (dependency order):** Phase 9 — the MECHANISM is done (`1d97536`, M-016: `scripts/deploy_ecommerce_skill.py`, proven on temp targets; a physical copy stays because the Hermes gateway is a launchd job). After the merge run it for real, from merged `production`: `python3 scripts/deploy_ecommerce_skill.py --target ~/.hermes/standalone/opportunity-research` (dry run: expect 8 files to write) then `--execute`; it is a change to the owner's agent host · merge Item 2D (`pmv4-atom-scope`) → Phase 10
 commerce corpus (10 documents, NEW corpus id) · Phase 11 live rungs E (mechanical smoke, `POLYMATH_TRAIL_MODE=embedded`) → F (one real ecommerce run; 5–8 staged live runs first) → G (negative control) · hosted MCP
 acceptance from OUTSIDE the host (auth, tool discovery, knowledge calls, adapter start / next / submit / status / result, isolation, failure behaviour, a real ecommerce workflow).
 
@@ -120,5 +121,5 @@ acceptance from OUTSIDE the host (auth, tool discovery, knowledge calls, adapter
 
 ## Relevant Commits
 `production`: `59a4b60` · `9dfd3c3` · `23d517e` · `758ff8a` owner bundle · `988070a` M-006 + M-007 · `4e627dc` continuation after phases 2–3 · this commit (M-008, phase 4).
-`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366) · `4a938bd` Phase 5b (11.367) · `7f87e57` Phase 5c (11.368) · `92efc79` product manifest + complete run in test form (11.369) · `b766678` Phase 6 Trail core embedded + first run against real TrailSignal code (11.370, ADR-0021) · `a1e886f` Phase 8 governed dossier (11.371) · `4ebcd41` Phase 7 registry state (11.372) · `4f89d4c` Phase 6 replay equivalence (11.373) · `82624aa` dependency · `e176962` pre-merge validation + `materials` opt-in fix (11.374). Branch `review/m1-reproductions` `eb63bef`.
+`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366) · `4a938bd` Phase 5b (11.367) · `7f87e57` Phase 5c (11.368) · `92efc79` product manifest + complete run in test form (11.369) · `b766678` Phase 6 Trail core embedded + first run against real TrailSignal code (11.370, ADR-0021) · `a1e886f` Phase 8 governed dossier (11.371) · `4ebcd41` Phase 7 registry state (11.372) · `4f89d4c` Phase 6 replay equivalence (11.373) · `82624aa` dependency · `e176962` pre-merge validation + `materials` opt-in fix (11.374) · `1d97536` Phase 9 deploy mechanism (11.375). Branch `review/m1-reproductions` `eb63bef`.
 

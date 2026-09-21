@@ -567,3 +567,35 @@ the real store. Side effect recorded: the restore boot made live the already-com
 
 #### Affected files / commits
 `migration/ecommerce-consolidation` `82624aa` (dependency) · `e176962` (fix + isolated-Postgres test, register 11.374).
+
+### M-016 — Phase 9: a physical deployed copy stays; it is produced by a script and proven by the engine's own verifier
+
+#### Question
+Why does Hermes load a physical copy, and how do we stop maintaining two sources by hand?
+
+#### Evidence
+`launchctl list` shows `ai.hermes.gateway` (launchd); launchd processes on this machine cannot read `~/Documents` (standing TCC finding); register 11.274 made `~/.hermes/standalone/opportunity-research` the
+engine's home. The engine already ships the parity VERIFIER (`tests/mirror_check.py` → `MIRROR_RECEIPT.json`); only the copy step was manual. Evidence class READ — the gateway was not made to read a
+`~/Documents` path.
+
+#### Applicable migration invariants
+INV-2 reuse · INV-7 (never deploy private artifacts) · EXECUTION_PLAN Phase 9 (one source, version receipt, parity verification).
+
+#### Decision
+Keep the physical copy. `scripts/deploy_ecommerce_skill.py` copies `adapters/ecommerce/` to a target (dry run by default, new / changed files only, never deletes, refuses a dirty source) and then runs the
+engine's own verifier, adapted so the receipt names THIS repository's commit and subdirectory. The real deploy to `~/.hermes` happens only after the production merge, from merged `production`.
+
+#### Alternatives rejected
+A symlink into `~/Documents` (launchd cannot read it) · a second verifier · `rsync --delete` (destructive on the owner's host).
+
+#### Why this is the smallest reversible choice
+One script around an existing verifier; nothing on any host changed.
+
+#### Reversibility
+Delete the script; the verifier still works standalone.
+
+#### Validation / proof
+`tests/contracts/test_deploy_ecommerce_skill.py` on temp targets; read-only dry run against the real copy: 182 / 190 identical, 8 to write (exactly this migration's adaptations).
+
+#### Affected files / commits
+`migration/ecommerce-consolidation` `1d97536` (register 11.375).
