@@ -105,3 +105,20 @@ def test_the_ecommerce_binding_issues_trail_valid_intent_ids():
     pattern = re.compile(_flat(TRAIL)["tool_trace[].search_intent_id"]["pattern"])
     assert pattern.match("q-complaint:reddit:hyp_0123456789abcdef") and pattern.match("si_supply:alibaba:pc_1")
     assert (ROOT / "adapters" / "ecommerce" / "schemas" / "harness_receipt.schema.json").read_bytes() == (ROOT / "contracts" / "adapter" / "v1" / "harness_receipt.schema.json").read_bytes()
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda r: r.__setitem__("completed_at", "2026-09-21T06:00:00Z"),                       # before started_at — ended a real run (2026-09-21)
+    lambda r: r["observations"][0].__setitem__("source_id", "src_not_listed"),
+])
+def test_trails_cross_field_rules_are_checked_at_submit(mutate):
+    """Two rules of HarnessResearchReceiptV1 that no JSON schema can express. `validate_receipt` is what the submit path runs."""
+    from polymath_shared.adapter.transitions import validate_receipt
+    good, bad = _receipt(), _receipt()
+    mutate(bad)
+    step = {"run_id": good["run_id"], "harness_action": {"action_id": good["action_id"]}}
+    assert validate_receipt(step, good) == []
+    with pytest.raises(Exception):
+        HarnessResearchReceiptV1.model_validate_json(json.dumps(bad))                       # Trail refuses it …
+    assert validate_receipt(step, bad), "… so the submit path must refuse it first"
+
