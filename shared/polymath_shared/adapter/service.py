@@ -686,6 +686,14 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
                 continue
             if key == "lineage":
                 continue
+            if key == "hypothesis_semantics":
+                # restoration reference §13: the dossier renders hypotheses from AUTHORITATIVE state, not from the four-field step view.
+                # The result is the run's outcome document; it carries the DERIVED view as it stood at the end (every live and
+                # absorbed hypothesis) — the ledger stays the record, nothing reads this back into the run.
+                view = SV.build(store.current_hypotheses(conn, run_id), state.outputs, order=state.output_order, run_id=run_id, include_absorbed=True,
+                                step_outputs=[{"step_id": s["step_id"], "sequence": s["sequence"], "output": s.get("output")} for s in steps])
+                output[key] = view["hypotheses"]
+                continue
             v = _gather(state.outputs, key, state.output_order)
             if v is not None:
                 output[key] = v
