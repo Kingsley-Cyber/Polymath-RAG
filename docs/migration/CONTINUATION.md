@@ -195,6 +195,7 @@ population leads, top-level `knowledge_gaps` at `G_mechanisms`, `cause_refs` = `
 
 
 ## DO NOT REDO / traps
+- **NAVIGATION RULE (owner, 2026-09-21 — applies to ALL work, every repo): use `graft` and Graphify BEFORE reading files.** `graft callers <symbol>` / `graft skeleton <file>` / `graft grep` from the throwaway graph worktree `~/Documents/polymath-rebuild/_graft_polymath` (structural, $0, local; rebuilt 2026-09-21 at `restoration/reporting` `31273f7` — refresh with `git -C <that worktree> checkout --detach <sha> && graft build .`), Trail's graph at `~/trail-signal-os-worktrees/_graft_trail`; Graphify `graphify-out/GRAPH_REPORT.md` for the semantic map (dated 2026-09-14 — STALE: it predates the consolidation and the restoration; regenerate through the graphify skill before relying on it). Open only the line ranges the change needs; report the graft tokens saved. Graphs navigate — tests and guards stay the authority.
 - Do not re-run: the comparison, capability map, engine import, seam decision (M-007), Trail closure (M-012), registry diff (M-014), hosted endpoint discovery (M-019), the 10-document identification (M-020), the first-document gate.
 - DO NOT REDO: the migration, the real E2E runs, endpoint / principal work, the corpus manifest, the ingestion diagnosis, findings A–D, **the transduction audit** (its dataflow map, semantic inventory, CSV profile, run-5 evidence pull and the engine baseline
   search for a product-reality planner — none exists; `supply.plan` / `supply.leads` are the pattern).
