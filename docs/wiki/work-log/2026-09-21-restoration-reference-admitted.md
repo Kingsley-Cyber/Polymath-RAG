@@ -19,6 +19,8 @@ give it only the short goal prompt from Section 26." `/polymath-bootstrap` Step 
 - `docs/migration/RESTORATION_BOOTSTRAP_PROMPT.md` (new, agent-written): the §26 prompt with the path resolved, the read order, and the repository gates.
 - `docs/migration/CONTINUATION.md`: decisions LOCKED, queue = the five slices, Next Exact Action = Slice 1 in a worktree, GATES G1–G7, DELTAS D-a … D-e. `AUTO_DECISIONS.md` M-025 (index). `docs/wiki/plans/CONTINUITY-REPORT.md` next action aligned.
 
+- (11.389) `RESTORATION_BOOTSTRAP_PROMPT.md` rewritten with explicit execution conditions: context references, START S-1…S-5, per-slice EXIT conditions, repository law, owner gates that never idle the session, STOP / DONE, an optional goal-mode condition, the owner's action table. Handoff state verified read-only (fleet, 0 running runs, 0 leased tickets, free branch names, Trail A41 clean).
+
 ## Proof
 The reference was READ IN FULL before admission and compared with `TRANSDUCTION_AUDIT.md`: no contradiction with repository evidence found. Copy verified by sha256 (source == installed). Guards 0 / 0 / 0 / READY. No code, manifest, contract, Trail file, fleet, database or provider touched.
 
