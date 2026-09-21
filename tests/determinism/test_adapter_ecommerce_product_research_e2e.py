@@ -129,6 +129,8 @@ class Agent:
     def answer(self, nxt: dict) -> dict:
         step, mats = nxt["step"], (nxt.get("materials") or {}).get("values") or {}
         sid, ctx = step["step_id"], step["context"]
+        self.keys = getattr(self, "keys", {})
+        self.keys[sid] = set(nxt)
         n = len(self.seen.setdefault(sid, [])); self.seen[sid].append(mats)
         live = [h["hypothesis_id"] for h in ctx.get("hypotheses") or []]
         fev = [r["id"] for r in ctx["evidence_refs"] if r["kind"] == "field_evidence"]
@@ -247,6 +249,8 @@ def test_one_complete_ecommerce_product_research_run(runtime):
     assert trail.calls == ["registry.project", "hypotheses.judge:filter", "gaps.compile", "evidence.admit:field_evidence", "hypotheses.judge:revision", "territory.project",
                            "evidence.admit:product_reality", "opportunity.qualify:market_delta", "gaps.compile:supply", "evidence.admit:supply", "opportunity.qualify:supply", "opportunity.score"]
 
+    # `materials` is strictly opt-in: a step whose manifest declares no `config.show` answers with exactly the pre-existing keys
+    assert agent.keys["G_mechanisms"] == {"kind", "step", "status", "evidence"} and agent.keys["C_primitives"] == {"kind", "step", "status", "evidence", "materials"}
     # the agent was SHOWN what it needed — the previous law's errors, the lived clusters, TrailSignal's own records (external-review finding M1-08)
     assert any("UNCLASSIFIED" in e for e in agent.seen["C_primitives"][1]["previous_lineage_errors"])
     assert any("duplicate mechanism families" in e for e in agent.seen["C_bridge"][1]["previous_portfolio_errors"])

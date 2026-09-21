@@ -156,14 +156,15 @@ def _materials(conn, run_id: str, step: dict[str, Any], directory: Path | None) 
     (`config.show`: name -> dotted path over `outputs` / `input`); they travel as a SIBLING key of the step, exactly like
     `evidence` — the AdapterStepV1 contract and the citation rules are unchanged, and nothing here is evidence. A manifest
     without `config.show` yields no key at all. Reads stored state only; a failure is SAID, never raised."""
-    try:
+    try:                                   # OPT-IN FIRST: if this step's manifest did not ask for materials — or that cannot even be determined — there is NO key
         loaded = store.load_run(conn, run_id)
-        if not loaded:
-            return None
-        state, _ = loaded
-        show = (manifest_for(state.adapter_id, directory).step(step["step_id"]).get("config") or {}).get("show")
-        if not isinstance(show, dict) or not show:
-            return None
+        state = loaded[0] if loaded else None
+        show = (manifest_for(state.adapter_id, directory).step(step["step_id"]).get("config") or {}).get("show") if state else None
+    except Exception:  # noqa: BLE001
+        return None
+    if not isinstance(show, dict) or not show:
+        return None
+    try:
         scope = {"outputs": state.outputs, "input": state.input}
         values: dict[str, Any] = {}
         missing, too_large, room = [], [], MATERIALS_MAX_BYTES
