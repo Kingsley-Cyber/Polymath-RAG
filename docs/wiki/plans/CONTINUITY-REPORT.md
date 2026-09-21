@@ -135,8 +135,31 @@ journal + dossier.
 **Fleet (live)** — UP, bundle `9cb421b4eeed`, 13 worker types healthy, `/ready` true, 0 in-flight adapter runs; Trail
 daemon :8767 from A41. The fleet does not survive a reboot (`scripts/boot_polymath.sh`; Trail stack via `zsh`).
 
+**Active mission:** Polymath ecommerce consolidation migration.
+**Mission context:** `docs/migration/`.
+**Controlling documents (owner-authored, installed byte-identical from the owner's bundle 2026-09-20):** `MIGRATION_POLICY.md` · `BOOTSTRAP_CONTEXT.md` ·
+`EXECUTION_PLAN.md`. First prompt for a fresh session: `docs/migration/NEW_SESSION_BOOTSTRAP_PROMPT.md`. Read order: POLICY → BOOTSTRAP → PLAN → CONTINUATION → AUTO_DECISIONS.
+**Current execution state:** `docs/migration/CONTINUATION.md` (Phases 0–1 gates met, read-only; nothing migrated yet; NEXT = Phase 2 import in worktree
+`pmv4-consolidation`; no blocker). Agent-owned companions: `CAPABILITY_MAP.md`, `PARITY_MATRIX.md`, `AUTO_DECISIONS.md`, `ADR-TRAIL-EMBEDDING.md` (DRAFT),
+`FINAL_MIGRATION_REPORT.md` (skeleton).
+
+**OWNER REFRAME 2026-09-20 (register 11.362) — THIS IS NOW A MIGRATION / RECOVERY PROJECT; ALL IMPLEMENTATION IS HALTED until the owner reviews
+`docs/wiki/reports/2026-09-20/ECOMMERCE-MIGRATION-HARVEST-MAP.md`.** The original `TRAIL_AGENT_AUTORESEARCH` controller already has working ecommerce
+intelligence; the governed path duplicated its workflow / hypothesis lifecycle / research planning / admission and lost population discovery, bridge laws,
+typed concepts + variations and sourcing plans. Target: adapter = spine + the only caller of Trail · harvested controller FUNCTIONS (not its state machine) =
+research intelligence · Trail = authority · the controller's renderer = dossier. The plan of record now opens with the authoritative product direction.
+Do NOT fix M1-04 / D1, merge Item 2D, run anything or design a framework before that review. Open owner decisions: the commerce corpus · Trail fixes
+before / after the first ecommerce run · upstream or drop the mirror's drifted registry rows.
+
+**External review M1 (register 11.361, work-log `2026-09-20-external-review-m1-verification`)** — 12 failure-mode findings, each reproduced
+on the isolated branch `review/m1-reproductions` @ `eb63bef` (`tests/review_m1/`; red = defect present). The work-log keeps EXECUTED and
+READ apart per finding and discloses that the reproductions used the SHARED Postgres (M1-09 committed + deleted probe runs). Re-run
+without the shared database: `-k memory` for M1-04..08; M1-09..12 need an isolated database first. NOTHING is fixed. The M1-04 fix
+contract is defined and BLOCKED by the unresolved HALT instruction (owner decision pending; quoted in the work-log). Trail-side findings
+M1-01..03 belong to TG7. Item 2D stays PARKED, uncommitted, in worktree `pmv4-atom-scope`.
+
 **Next Action**
-1. **IN PROGRESS (authorized): finish-line Item 2 sub-item D** — corpus-scope `search_atoms`
+1. **PARKED (was authorized; superseded by the pending HALT decision): finish-line Item 2 sub-item D** — corpus-scope `search_atoms`
    (`shared/polymath_shared/document_profile/profile_atom_projection.py:146`) and thread `corpus_ids` through its five
    callers (`orchestrator/orchestrator/api/ui.py:1723`, `:2022`; `chat_retrieval.py:329`, `:385`, `:848`). Contract change,
    not a post-filter. Acceptance: a corpus-A query activates 100 % corpus-A atoms, a corpus-B query 100 % corpus-B, no
