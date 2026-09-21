@@ -390,7 +390,10 @@ def cards(state: dict, policies: dict) -> str:
         groups[(_norm_community(r.get("community")), str(r.get("friction_family") or "unassigned"))].append(r)
     clusters_out = []
     for (comm, fam), items in sorted(groups.items()):
-        ind = _ver.independence_groups(items)["independent_groups"]
+        # governed mode: when EVERY record carries the independence group the governance authority assigned, count those as
+        # given; the skill's own arithmetic stays the rule for standalone records that carry none
+        ind = (len({r["independence_group"] for r in items}) if all(r.get("independence_group") for r in items)
+               else _ver.independence_groups(items)["independent_groups"])
         threads = {_ident(r)[2] for r in items}
         roles = sorted({x for r in items for x in (r.get("evidence_roles") or [])})
         anchor = (len(items) >= thr["min_records"] and len(threads) >= thr["min_threads"] and ind >= thr["min_independent_voices"])

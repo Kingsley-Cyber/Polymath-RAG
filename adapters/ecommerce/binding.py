@@ -52,8 +52,14 @@ def _op_validate_bridge(req: dict[str, Any]) -> dict[str, Any]:
     policies = graphmod.load_policies()
     bridge_errors = bridge.validate_all(hyps, policies, set(known) if isinstance(known, list) else None)
     portfolio_errors = bridge.validate_portfolio(hyps, policies)
-    return {"admissible": not bridge_errors and not portfolio_errors, "bridge_errors": bridge_errors,
-            "portfolio_errors": portfolio_errors, "hypotheses_checked": len(hyps)}
+    anchor_errors: list[str] = []
+    clusters = (req.get("inputs") or {}).get("lived_clusters")
+    if isinstance(clusters, list):                 # after admission: a hypothesis names ANCHOR clusters or declares CORPUS_ONLY
+        import lived_world
+        state = _engine_state(lived_clusters=clusters)
+        anchor_errors = lived_world.validate_hypothesis_anchors(hyps, state, policies) + lived_world.validate_portfolio_anchors(hyps, state, policies)
+    return {"admissible": not bridge_errors and not portfolio_errors and not anchor_errors, "bridge_errors": bridge_errors,
+            "portfolio_errors": portfolio_errors, "anchor_errors": anchor_errors, "hypotheses_checked": len(hyps)}
 
 
 def _inputs(req: dict[str, Any]) -> dict[str, Any]:
@@ -174,6 +180,111 @@ def _op_population_nominate(req: dict[str, Any]) -> dict[str, Any]:
             "batch": batch, "communities": d.get("communities") or [], "note": note}
 
 
+_CONTEXT_FIELD = r"(?:^|·|\||;|\n)\s*{key}\s*:\s*([^·|;\n]+)"
+
+
+def _context_field(context: str, key: str) -> str | None:
+    """The engine's receipt builder writes `community: … · activity: … · moment: …` into an observation's free-text context; any
+    host may. Read it back tolerantly; absent stays absent."""
+    import re
+    m = re.search(_CONTEXT_FIELD.format(key=key), context or "", re.I)
+    return m.group(1).strip() or None if m else None
+
+
+def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    """ADMITTED observations -> the engine's field records (AUTO_DECISIONS M-009 §3). Only what TrailSignal admitted exists here.
+    The record id is the admitted-evidence id (the `field_evidence` id the agent can cite — one id space). TrailSignal's
+    independence group, freshness, role and polarity are taken AS GIVEN. A receipt carries no author (privacy by design), so the
+    source URL stands in for author and thread — the engine's own legacy identity rule."""
+    from urllib.parse import urlparse
+
+    import adapter_receipt
+
+    engine_role = {}
+    for skill_role, trail_role in adapter_receipt.ROLE_MAP.items():
+        engine_role.setdefault(trail_role, skill_role)               # first declared skill role per TrailSignal role
+    obs, sources = {}, {}
+    for rec in ins.get("receipts") or []:
+        if isinstance(rec, dict):
+            obs.update({o.get("observation_id"): o for o in rec.get("observations") or [] if isinstance(o, dict)})
+            sources.update({s.get("source_id"): s for s in rec.get("sources") or [] if isinstance(s, dict)})
+    hyps = {h.get("hypothesis_id"): h for h in ins.get("hypotheses") or [] if isinstance(h, dict)}
+    out, stats = [], {"admitted": 0, "without_observation": 0, "without_community": 0}
+    for adm in ins.get("admissions") or []:
+        for a in (adm or {}).get("admitted") or []:
+            stats["admitted"] += 1
+            o = obs.get(a.get("observation_id"))
+            if not o:
+                stats["without_observation"] += 1
+                continue
+            src = sources.get(o.get("source_id")) or {}
+            host = (urlparse(str(src.get("url") or "")).hostname or "").removeprefix("www.") or str(a.get("source_class") or "?")
+            community = _context_field(str(o.get("context") or ""), "community")
+            if not community:
+                stats["without_community"] += 1
+            linked = [hyps[h] for h in a.get("hypothesis_ids") or [] if h in hyps]
+            role = engine_role.get(a.get("evidence_role"))
+            excerpt = str(o.get("paraphrase_or_excerpt") or "")
+            out.append({"id": a["admitted_evidence_id"], "observation_id": a.get("observation_id"), "source": src.get("url") or o.get("source_id"),
+                        "source_identity": {"platform": host.split(".")[0] if "." in host else host, "thread_key": src.get("url") or o.get("source_id")},
+                        "community": community or host, "friction_family": next((str(h["suspected_friction"]) for h in linked if h.get("suspected_friction")), "unassigned"),
+                        "evidence_roles": [role] if role else [], "problem": str(o.get("claim") or "")[:300], "quote_ref": excerpt[:300],
+                        "workaround": excerpt[:200] if a.get("evidence_role") == "workaround" else "", "moment": _context_field(str(o.get("context") or ""), "moment"),
+                        "freshness": {"class": a.get("freshness")}, "independence_group": a.get("independence_group"),
+                        "hypothesis_ids": list(a.get("hypothesis_ids") or []), "contradicts": a.get("polarity") == "contradicting",
+                        "lead_id": _context_field(str(o.get("context") or ""), "lead")})
+    return out, stats
+
+
+def _op_evidence_cards(req: dict[str, Any]) -> dict[str, Any]:
+    """`lived_world.cards` over ADMITTED field evidence: participant cards, lived clusters (community × friction family) and each
+    cluster's ANCHOR / THIN authority against the policy threshold — with TrailSignal's independence groups as the voice count."""
+    import graph as graphmod
+    import lived_world
+
+    ins = _inputs(req)
+    records, stats = _field_records_from_admissions(ins)
+    if not records:
+        raise Refusal("ADMITTED_EVIDENCE_MISSING", f"no admitted observation could be joined to a receipt ({stats})")
+    state = _engine_state(field_records=records, population_leads=list(ins.get("population_leads") or []), community_leads=list(ins.get("community_leads") or []))
+    note = lived_world.cards(state, graphmod.load_policies())
+    d = state["data"]
+    return {"field_records": records, "participant_cards": d["participant_cards"], "lived_clusters": d["lived_clusters"], "joined": stats, "note": note,
+            "anchors": [c["id"] for c in d["lived_clusters"] if c["authority"] == "ANCHOR"]}
+
+
+def _op_validate_situations(req: dict[str, Any]) -> dict[str, Any]:
+    """`lived_world.validate_situations`: a FIELD_ANCHORED situation needs an ANCHOR cluster and cited field records; a
+    RECONSTRUCTED one lists its unknowns; a situation on a cluster is never SIMULATED. Invalid is an OUTPUT."""
+    import graph as graphmod
+    import lived_world
+    import models
+
+    ins = _inputs(req)
+    items = ins.get("lived_situations")
+    if not isinstance(items, list) or not items:
+        raise Refusal("LIVED_SITUATIONS_MISSING", "inputs.lived_situations must be a non-empty list")
+    state = _engine_state(lived_clusters=ins.get("lived_clusters") or [], field_records=ins.get("field_records") or [])
+    errors = [f"lived_situations[{i}]: {e}" for i, x in enumerate(items) for e in models.validate(x, "lived_situation")]
+    errors += lived_world.validate_situations(items, state, graphmod.load_policies())
+    return {"valid": not errors, "errors": errors, "situations_checked": len(items)}
+
+
+def _op_corpus_questions(req: dict[str, Any]) -> dict[str, Any]:
+    """`lived_world.compile_corpus_questions`: what to ask the knowledge base, at friction / mechanism level, from the lived
+    clusters (ANCHOR first) — never a hypothesis statement, never a person."""
+    import graph as graphmod
+    import lived_world
+
+    ins = _inputs(req)
+    state = _engine_state(lived_clusters=ins.get("lived_clusters") or [], field_records=ins.get("field_records") or [])
+    if not state["data"].get("lived_clusters"):
+        raise Refusal("LIVED_CLUSTERS_MISSING", "inputs.lived_clusters must be the clusters `population.evidence_cards` produced")
+    note = lived_world.compile_corpus_questions(state, graphmod.load_policies())
+    qs = state["data"]["corpus_questions"]
+    return {"corpus_questions": qs, "need": " ".join(q["question"] for q in qs)[:2000], "note": note}
+
+
 _DIRECTIVE_GOVERNANCE = ("objective", "hypothesis_ids", "evidence_gaps", "preferred_source_roles", "disallowed_source_roles", "freshness_requirement",
                          "geography", "language", "minimum_independent_sources", "success_condition", "falsification_condition", "budget")
 
@@ -248,6 +359,9 @@ OPERATIONS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "understanding.lenses": _op_lenses,
     "understanding.validate_primitives": _op_validate_primitives,
     "population.nominate": _op_population_nominate,
+    "population.evidence_cards": _op_evidence_cards,
+    "population.validate_situations": _op_validate_situations,
+    "knowledge.corpus_questions": _op_corpus_questions,
     "hypotheses.validate_bridge": _op_validate_bridge,
     "research.plan": _op_research_plan,
 }
