@@ -18,23 +18,22 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-21 — **POLYMATH ECOMMERCE CONSOLIDATION MIGRATION — MERGED + LIVE (`8ae4cf3`); commerce corpus ingesting; per-friend principals built, not merged**
+## CURRENT — 2026-09-21 — **POLYMATH ECOMMERCE CONSOLIDATION — LIVE; first complete REAL ecommerce run done (Trail refused the score); dossier gaps + commerce corpus + external acceptance remain**
 
-**Read this, then go straight to `docs/migration/`.** The migration's state authority is `docs/migration/CONTINUATION.md` (phase table, NOW / NEXT / LATER, next exact action, traps). This section only points there
-and must never disagree with it. First prompt for a fresh session: `docs/migration/NEW_SESSION_BOOTSTRAP_PROMPT.md`. Owner decision of the day: `docs/migration/OWNER_DECISION_2026-09-21_MERGE_AND_PRINCIPALS.md`.
+**Read this, then go straight to `docs/migration/`.** State authority: `docs/migration/CONTINUATION.md`. This section only points there and must never disagree with it. Owner texts: `MIGRATION_POLICY.md`, `AGENT_OPERATING_DOCTRINE.md`,
+`OWNER_DECISION_2026-09-21_MERGE_AND_PRINCIPALS.md`. Fresh-session prompt: `docs/migration/NEW_SESSION_BOOTSTRAP_PROMPT.md`.
 
-**Repository State** — `production` clean, nothing pushed; local rollback tag `pre-consolidation-merge` → `7155250`. The consolidation (engine, `DOMAIN_OPERATION`, embedded Trail core, `ecommerce.product_research`, dossier,
-deterministic skill deploy, hosted surface harness + remote host-path refusal) and Item 2D are MERGED (`8ae4cf3`, registers 11.363 – 11.378). Unmerged: `hosted/mcp-principals` @ `5fde29f` (worktree `../pmv4-principals`;
-ADR-0022, migration 0066 NOT applied, register 11.379).
+**Repository State** — `production` clean, nothing pushed. Merged and live: the consolidation + Item 2D (`8ae4cf3`), per-friend MCP principals (`82b6437`, migration 0066 applied), and three fixes found by real runs — receipt ⇔ Trail parity
+(`655d45f`), D1 empty admission (`66c3fb2`), cross-field receipt rules (`66c9898`). Registers through 11.384; ADR-0020 / 0021 / 0022; decisions M-001 … M-023. Local rollback tags only.
 
-**Fleet (live)** — booted 2026-09-21T04:19Z from merged `production`: 13 worker types healthy, ONE bundle `53482cc21156`, MCP :8930 up, `ecommerce.product_research` 0.1.0 listed. Corpus `commerce-v1` is INGESTING
-(do not bounce while a run is open).
+**Fleet (live)** — 13 worker types healthy, one bundle; MCP :8930 with the principal registry; the adapter worker runs EMBEDDED Trail with a durable audit store (the external Trail daemon is not used). `commerce-v1`: 4 / 10 query-ready, 2 extractions
+failed on provider 503, 4 stuck in `reconciling`.
 
-**Proof Status** — `DEPLOYED` + `LIVE_PATH_PROVEN` (mechanical, host vantage) for the merge: hosted harness exit 0 incl. the host-path refusal and a start → step → cancel of the ecommerce adapter. Principal layer:
-`WORKTREE_INTEGRATION_PROVEN` (real gate / tools / adapter API / service in process; throwaway Postgres with 66 migrations). REAL_INPUT_EXECUTED for the ecommerce workflow: none yet.
+**Proof Status** — `LIVE_PATH_PROVEN` with REAL_INPUT_EXECUTED for the whole ecommerce path (hosted endpoint, non-admin principal, corpus `cinema`, real web research, real competitors and Alibaba suppliers, Trail admission / judgement /
+territory / qualification / score refusal, engine-rendered dossier). Host vantage only. A positive Trail score: not reached. Capability table: `docs/migration/PARITY_MATRIX.md`.
 
-**Next Action** — finish the corpus batch → merge window for the principal layer at an ingestion-quiescent point (apply 0066 → merge → `.env` line → boot) → rest of the corpus → real ecommerce E2E → hosted acceptance
-from an EXTERNAL machine with two friend principals → negative control → cleanup. Exact commands: `docs/migration/CONTINUATION.md` "Next Exact Action".
+**Next Action** — dossier product-artifact gaps (existing-products section, qualification gates, links) → close Phase 10 (`commerce-v1`) → one real run on the commerce corpus → external-machine acceptance with a temporary principal → negative
+control → revoke acceptance principals → cleanup. Exact steps: `docs/migration/CONTINUATION.md` "Next Exact Action".
 
 **Do Not Do** — stop the fleet for a merge that may be denied · run Postgres-backed adapter suites against the fleet's database · import the engine's flat modules in process · edit `governance/trail/{src,config,data}` ·
 relax the engine's registry compiler · carry an engine score into governed output · push any ref.
