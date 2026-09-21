@@ -2,6 +2,7 @@
 
 > Agent-owned. Evidence levels: READ · STATICALLY_VERIFIED · UNIT_EXECUTED · INTEGRATION_EXECUTED · REAL_INPUT_EXECUTED ·
 > HISTORICAL_ARTIFACT_ONLY · STUBBED. "Historical" = run `calib_books_01` (2026-09-04) unless noted. Migrated path: **Phase 2 (`072f1cc`)** — every AutoResearch capability below is IMPORTED at `adapters/ecommerce/` and its own suite passes there (609 / 609, fixture-driven). A row's "Migrated path" stays "—" until that capability is BOUND to the adapter runtime through `DOMAIN_OPERATION` (ADR-0020, Phase 3 `076eb6b`).
+> **Composed (`92efc79`):** `config/adapters/ecommerce.product_research.json` runs every BOUND capability below in ONE scripted run through the existing runtime (stub TrailSignal, in-memory store) and a negative control — evidence level for the composition: INTEGRATION_EXECUTED; REAL_INPUT_EXECUTED: none yet.
 > Parity is structural (HM §6: invariants + the nine canaries), never exact-output matching. Baseline caveat: the historical run FAILS canary 2.
 
 | Capability | Historical AutoResearch | Current governed path | Migrated path | Evidence level | Status | Notes |

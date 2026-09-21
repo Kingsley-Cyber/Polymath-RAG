@@ -394,3 +394,40 @@ Revert the binding helpers; `scoring()` still works standalone.
 
 #### Affected files / commits
 `migration/ecommerce-consolidation` `7f87e57` (register 11.368).
+
+### M-011 — An agent-answered step may be shown prior step outputs (`materials`), and law loops end in a typed refusal
+
+#### Question
+Composing `ecommerce.product_research` showed that an `AGENT_REASON` / `HARNESS_ACTION` step sees only `context` (evidence refs + live hypotheses). The agent could not see a domain law's errors, the
+lived clusters it must write situations on, the sourcing plan, or TrailSignal's score records (external-review finding M1-08). And a BRANCH that loops a failed draft back needs an honest end when the
+repair budget is spent.
+
+#### Evidence
+`service.next_step` already returns a SIBLING `evidence` key beside the step (TG2a) and the API / MCP layers pass the response through unchanged. `max_branch_loops` is one counter shared by every BRANCH.
+Gap and failure codes are an open pattern.
+
+#### Applicable migration invariants
+INV-8 minimal, additive · existing adapters stay compatible · INV-6 (materials are not evidence) · "A defensible rejection is success. A software / runtime failure is not."
+
+#### Decision
+(a) A manifest step the agent / harness answers may declare `config.show` (`name → outputs.<step>.<key>` | `input.<key>`); `next_step` returns them as a sibling `materials` key (`values`, `missing`,
+`too_large`, `authority`), bounded at 400 kB, never raised on failure, absent when not declared. The `AdapterStepV1` contract and citation rules are unchanged. (b) A knowledge step's `config.source` may
+name a prior step output. (c) Each domain law gets a BRANCH with two arms — failed + budget left → back through reasoning; failed + budget spent → a `law.refuse` domain step that ends the run with a
+typed gap carrying the law's own errors. (d) The evidence-gap loop is bounded by the research ROUND the cards operation counts, not by the shared counter, so law repairs cannot starve it.
+
+#### Alternatives rejected
+Putting prior outputs INTO `step.context` (changes the step contract and its hash) · letting the run continue with an unlawful draft once the loop budget is spent (a silent fallback) · a per-branch
+budget in the runtime (a bigger change than the manifest-level workaround needs).
+
+#### Why this is the smallest reversible choice
+One sibling key, one validation rule, one extra scope entry; manifests that do not opt in see nothing.
+
+#### Reversibility
+Remove `_materials`; manifests that declare `config.show` still load if the validation line is kept.
+
+#### Validation / proof
+`test_adapter_ecommerce_product_research_e2e.py`: the scripted agent answers ONLY from `context` + `materials` and completes the run; the law errors, the ANCHOR cluster and TrailSignal's records are
+asserted to have been shown; the negative control ends in `PRODUCT_PORTFOLIO_LAW_UNSATISFIED`. The three pre-existing manifests are byte-identical and their suites green.
+
+#### Affected files / commits
+`migration/ecommerce-consolidation` `92efc79` (register 11.369; ADR-0020 addendum).
