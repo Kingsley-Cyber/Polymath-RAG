@@ -599,3 +599,34 @@ Delete the script; the verifier still works standalone.
 
 #### Affected files / commits
 `migration/ecommerce-consolidation` `1d97536` (register 11.375).
+
+### M-017 — Item 2D: commit it and make its merge conflict-free now, deploy it later
+
+#### Question
+Item 2D (corpus-scoped atom search — the gate for any second corpus, hence for Phase 10) sat UNCOMMITTED in a worktree. The production merge is gated. What can be done without deploying?
+
+#### Evidence
+7 files uncommitted since the change was made; its 10 tests pass, database-free; a trial merge after the migration branch conflicted only in `PLAN-AUTHORITY-REGISTER.md` (adjacent row insertions).
+
+#### Applicable migration invariants
+Doctrine §6 bias toward execution · §14 nothing live · policy "never overwrite user work" (uncommitted work is the easiest to lose).
+
+#### Decision
+Commit Item 2D on its own branch with the repository's change-slice discipline (work-log, register 11.376, scaffold declarations, guards), then merge `production` and `migration/ecommerce-consolidation` INTO that
+topic branch, resolving the register in numeric order. `item2/corpus-scoped-atoms` @ `5cd3cc1` now merges into `production` without conflict and contains the migration branch. Deploying it stays with the owner.
+
+#### Alternatives rejected
+Leaving it uncommitted · rebasing (history rewrite) · merging it into `production` (a production deploy).
+
+#### Why this is the smallest reversible choice
+Topic-branch commits only; nothing live; nothing pushed.
+
+#### Reversibility
+Delete the branch commits; the change itself is in `221b95c`.
+
+#### Validation / proof
+Guards 0 / 0 / 0 / READY on the combined branch; 59 tests (Item 2D + activation pins + the ecommerce e2e / seam / provenance / registry pins). Proof level for Item 2D: `UNIT_PROVEN` (`shared/`) +
+`STATICALLY_VERIFIED` (`orchestrator/` callers).
+
+#### Affected files / commits
+`item2/corpus-scoped-atoms`: `221b95c`, `4d75387`, `5cd3cc1`.
