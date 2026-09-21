@@ -33,7 +33,7 @@ from typing import Any
 
 import httpx
 
-from polymath_shared.adapter import evidence_boundary as EB, service
+from polymath_shared.adapter import evidence_boundary as EB, research_gaps as RG, service
 from polymath_shared.adapter.manifest import Manifest
 from polymath_shared.adapter.transitions import RunState
 from polymath_shared.db import tx
@@ -206,7 +206,9 @@ def exec_evidence(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids
     `union_legacy` (graph steps): the packet carries chunks, not graph facts, so the legacy graph rows are unioned in."""
     sid = step["step_id"]
     cfg = m.step(sid).get("config") or {}
-    needs = EB.original_needs(cfg, state.input, state.options, (step.get("context") or {}).get("hypotheses"))
+    # `_compiled_need`: resolved by the RUNTIME (service.advance -> EB.domain_compiled_need) from a DOMAIN_OPERATION step only; this
+    # executor still never reads a step output
+    needs = EB.original_needs(cfg, state.input, state.options, (step.get("context") or {}).get("hypotheses"), compiled_need=step.get("_compiled_need"))
     plan = EB.plan_calls(needs, corpus_ids, max_calls=int(cfg.get("max_calls", EB.DEFAULT_MAX_CALLS)))
     mode, explorer = str(cfg.get("mode") or "WILDCARD").upper(), bool(cfg.get("corpus_explorer", True))
     calls: list[dict[str, Any]] = []
@@ -395,6 +397,12 @@ def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str
     if kind == "registry.project":
         payload["max_priors_per_hypothesis"] = int(cfg.get("max_priors_per_hypothesis", 12))
     elif kind == "gaps.compile":
+        # a step that opted in (`config.gaps_from: context.semantics.research_gaps`) sends the HARVESTED per-hypothesis gaps: ledger +
+        # step + agent open gaps + bridge gaps, each owned and stably identified, Trail's gate gaps beside them (research_gaps.py)
+        harvested = RG.trail_gap_payload(ctx.get("semantics")) if cfg.get("gaps_from") else None
+        if harvested is not None:
+            payload.update(harvested)
+            return payload
         gaps = []
         for out in _ordered_outputs(state):
             gaps += [g for g in (out.get("knowledge_gaps") or []) if isinstance(g, dict)]

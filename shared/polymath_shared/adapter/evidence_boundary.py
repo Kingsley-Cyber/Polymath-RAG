@@ -108,15 +108,33 @@ def _path(obj: Mapping[str, Any], dotted: str) -> Any:
     return cur
 
 
+def domain_compiled_need(config: Mapping[str, Any] | None, outputs: Mapping[str, Any] | None, trusted_steps: Iterable[str]) -> str | None:
+    """The ONE narrow exception to "a step output never becomes a retrieval need" (restoration reference §9.5): a `source` of the
+    form `outputs.<step>.<key>` is honoured only when `<step>` is in `trusted_steps` — the manifest's DOMAIN_OPERATION steps, i.e. a
+    need COMPILED BY DETERMINISTIC DOMAIN CODE from admitted field evidence (`K_questions.need`). An agent-answered step is never
+    trusted, so an LLM-written reformulation still can not reach the explorer. The runtime resolves this (service.advance); the
+    evidence executor itself still never reads a step output."""
+    parts = str((config or {}).get("source") or "").split(".")
+    if parts[0] != "outputs" or len(parts) < 3 or parts[1] not in set(trusted_steps):
+        return None
+    value = _path({"outputs": dict(outputs or {})}, ".".join(parts))
+    text = " ".join(str(value).split())[:MAX_NEED_CHARS] if isinstance(value, str) else ""
+    return text or None
+
+
 def original_needs(config: Mapping[str, Any] | None, inputs: Mapping[str, Any] | None, options: Mapping[str, Any] | None = None,
-                   hypotheses: Iterable[Mapping[str, Any]] | None = None) -> list[str]:
+                   hypotheses: Iterable[Mapping[str, Any]] | None = None, *, compiled_need: str | None = None) -> list[str]:
     """The information need(s) a boundary step submits: the run's ORIGINAL seed, or — for `query_from: hypotheses` — one need
     per live hypothesis statement (distinct agent-authored needs, in generation order). By construction this never sees a step
-    output, so a compiled reformulation can not reach the explorer: Polymath owns retrieval planning, the caller owns the need."""
+    output, so a compiled reformulation can not reach the explorer: Polymath owns retrieval planning, the caller owns the need.
+    `compiled_need`: a need the RUNTIME already resolved through `domain_compiled_need` (deterministic domain code only) — when
+    present it is the need; otherwise nothing changes."""
     cfg, inp = dict(config or {}), dict(inputs or {})
     needs: list[str] = []
     if cfg.get("query_from") == "hypotheses":
         needs = [str(h.get("statement") or "").strip() for h in hypotheses or []]
+    if not any(needs) and isinstance(compiled_need, str) and compiled_need.strip():
+        needs = [compiled_need]
     if not any(needs):
         seed = _path({"input": inp, "options": dict(options or {})}, str(cfg["source"])) if cfg.get("source") else None
         if not (isinstance(seed, str) and seed.strip()):

@@ -1,0 +1,76 @@
+{
+ "adapter_id": "fixture.research_fidelity",
+ "adapter_version": "1.0.0",
+ "workflow_version": "1.0.0",
+ "retrieval_policy_version": "1.0.0",
+ "input_schema_version": "1.0.0",
+ "output_schema_version": "1.0.0",
+ "description": "TEST FIXTURE (restoration Slice 2, reference §9.5): a retrieval step whose need is compiled by a DOMAIN_OPERATION step. Not a product adapter; never loaded from config/adapters.",
+ "input_schema": {
+  "type": "object",
+  "required": [
+   "seed"
+  ],
+  "additionalProperties": false,
+  "properties": {
+   "seed": {
+    "type": "string",
+    "minLength": 3,
+    "maxLength": 2000
+   }
+  }
+ },
+ "output_schema": {
+  "type": "object"
+ },
+ "budgets": {
+  "max_steps": 8,
+  "max_agent_reason": 0,
+  "max_branch_loops": 0,
+  "max_external_operations": 0
+ },
+ "entry_step_id": "first_pass",
+ "terminal_step_id": "compile",
+ "steps": [
+  {
+   "step_id": "first_pass",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "First pass: the seed",
+   "next": "questions",
+   "config": {
+    "source": "outputs.questions.need"
+   }
+  },
+  {
+   "step_id": "questions",
+   "type": "DOMAIN_OPERATION",
+   "title": "Deterministic domain code compiles the next corpus need",
+   "next": "loop_pass",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "knowledge.corpus_questions",
+    "inputs": {}
+   }
+  },
+  {
+   "step_id": "loop_pass",
+   "type": "POLYMATH_RETRIEVE",
+   "title": "Loop pass: the domain-compiled need",
+   "next": "compile",
+   "config": {
+    "source": "outputs.questions.need"
+   }
+  },
+  {
+   "step_id": "compile",
+   "type": "COMPILE_RESULT",
+   "title": "Compile",
+   "next": null,
+   "config": {
+    "include": [
+     "lineage"
+    ]
+   }
+  }
+ ]
+}

@@ -240,7 +240,14 @@ def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, 
             obs.update({o.get("observation_id"): o for o in rec.get("observations") or [] if isinstance(o, dict)})
             sources.update({s.get("source_id"): s for s in rec.get("sources") or [] if isinstance(s, dict)})
     hyps = {h.get("hypothesis_id"): h for h in _ledger_hypotheses(ins)}
+    # the CURRENT ledger state (the runtime's query projection) overrides the generation-time proposal: a REVISE moves the friction,
+    # and a SPLIT child never existed in `C_hypotheses` — without this both clustered as `unassigned` (restoration reference §9.6)
+    for v in ins.get("semantics") or []:
+        if isinstance(v, dict) and v.get("hypothesis_id"):
+            hyps[v["hypothesis_id"]] = {**hyps.get(v["hypothesis_id"], {}), **{k: v[k] for k in ("population", "activity", "task", "suspected_friction") if v.get(k)}}
+    lead_names = {str(l.get("id")): str(l.get("name")) for key in ("population_leads", "community_leads") for l in ins.get(key) or [] if isinstance(l, dict) and l.get("id") and l.get("name")}
     out, stats = [], {"admitted": 0, "without_observation": 0, "without_community": 0}
+    basis = {"lead": 0, "population": 0, "host": 0}                # how a record without a stated community got one
     for adm in ins.get("admissions") or []:
         for a in (adm or {}).get("admitted") or []:
             stats["admitted"] += 1
@@ -251,20 +258,27 @@ def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, 
             src = sources.get(o.get("source_id")) or {}
             host = (urlparse(str(src.get("url") or "")).hostname or "").removeprefix("www.") or str(a.get("source_class") or "?")
             community = _context_field(str(o.get("context") or ""), "community")
-            if not community:
-                stats["without_community"] += 1
             linked = [hyps[h] for h in a.get("hypothesis_ids") or [] if h in hyps]
+            if not community:
+                # WHO this record is about, in the order the run knows it: the lead the harness researched, else the population of the
+                # hypothesis it is linked to. The source HOST is a last resort and is said to be one — a host is a place, not a community
+                stats["without_community"] += 1
+                lead_name = lead_names.get(_context_field(str(o.get("context") or ""), "lead"))
+                population = next((str(h["population"]) for h in linked if h.get("population")), "")
+                community = lead_name or population
+                basis["lead" if lead_name else "population" if population else "host"] += 1
             role = engine_role.get(a.get("evidence_role"))
             excerpt = str(o.get("paraphrase_or_excerpt") or "")
             out.append({"id": a["admitted_evidence_id"], "observation_id": a.get("observation_id"), "source": src.get("url") or o.get("source_id"),
                         "source_identity": {"platform": host.split(".")[0] if "." in host else host, "thread_key": src.get("url") or o.get("source_id")},
                         "community": community or host, "friction_family": next((str(h["suspected_friction"]) for h in linked if h.get("suspected_friction")), "unassigned"),
                         "evidence_roles": [role] if role else [], "problem": str(o.get("claim") or "")[:300], "quote_ref": excerpt[:300],
-                        "workaround": excerpt[:200] if a.get("evidence_role") == "workaround" else "", "moment": _context_field(str(o.get("context") or ""), "moment"),
+                        # the workaround is WHAT THE PERSON DOES (the claim); the excerpt is their quote and already rides in `quote_ref`
+                        "workaround": str(o.get("claim") or "")[:200] if a.get("evidence_role") == "workaround" else "", "moment": _context_field(str(o.get("context") or ""), "moment"),
                         "freshness": {"class": a.get("freshness")}, "independence_group": a.get("independence_group"),
                         "hypothesis_ids": list(a.get("hypothesis_ids") or []), "contradicts": a.get("polarity") == "contradicting",
                         "lead_id": _context_field(str(o.get("context") or ""), "lead")})
-    return out, stats
+    return out, {**stats, "_community_basis": basis}
 
 
 def _op_evidence_cards(req: dict[str, Any]) -> dict[str, Any]:
@@ -275,17 +289,18 @@ def _op_evidence_cards(req: dict[str, Any]) -> dict[str, Any]:
 
     ins = _inputs(req)
     records, stats = _field_records_from_admissions(ins)
+    community_basis = stats.pop("_community_basis")                # `joined` keeps its three counters; the basis is its own output key
     seen = {r["id"] for r in records}
     records = [r for r in ins.get("prior_field_records") or [] if isinstance(r, dict) and r.get("id") not in seen] + records      # research rounds accumulate
     rounds = int(ins.get("prior_round") or 0) + 1
     if not records:                                      # nothing admitted is a STATE TrailSignal still judges — never a dead run
         return {"field_records": [], "participant_cards": [], "lived_clusters": [], "anchors": [], "joined": stats, "round": rounds,
-                "note": "no admitted field evidence — no card, no cluster, nothing to anchor on"}
+                "community_basis": community_basis, "note": "no admitted field evidence — no card, no cluster, nothing to anchor on"}
     state = _engine_state(field_records=records, population_leads=list(ins.get("population_leads") or []), community_leads=list(ins.get("community_leads") or []))
     note = lived_world.cards(state, graphmod.load_policies())
     d = state["data"]
     return {"field_records": records, "participant_cards": d["participant_cards"], "lived_clusters": d["lived_clusters"], "joined": stats, "note": note, "round": rounds,
-            "anchors": [c["id"] for c in d["lived_clusters"] if c["authority"] == "ANCHOR"]}
+            "community_basis": community_basis, "anchors": [c["id"] for c in d["lived_clusters"] if c["authority"] == "ANCHOR"]}
 
 
 def _op_validate_situations(req: dict[str, Any]) -> dict[str, Any]:
@@ -371,6 +386,9 @@ def _op_research_plan(req: dict[str, Any]) -> dict[str, Any]:
     subjects = [("gap", g.get("gap_id"), str(g.get("question") or "")) for g in directive.get("evidence_gaps") or [] if isinstance(g, dict) and g.get("question")]
     if not subjects:
         subjects = [("hyp", h.get("hypothesis_id"), str(h.get("statement") or "")) for h in ins.get("hypotheses") or [] if isinstance(h, dict) and h.get("statement")]
+    views = {v.get("hypothesis_id"): v for v in ins.get("semantics") or [] if isinstance(v, dict) and v.get("hypothesis_id")}
+    if views:
+        return _semantic_research_plan(ins, directive, out, trail_intents, asked, cap, state, policies, views)
     compiled: list[list[dict[str, Any]]] = [executors.channel_queries(str(sid), text, state, policies) for _, sid, text in subjects]
     leads = {l.get("id"): l for key in ("leads", "population_leads", "community_leads") for l in ins.get(key) or [] if isinstance(l, dict)}
     for lid in ins.get("batch") or []:
@@ -391,6 +409,91 @@ def _op_research_plan(req: dict[str, Any]) -> dict[str, Any]:
     return {"research_directive": out, "planned": {"trail_intents": len(trail_intents), "channel_intents": len(added), "subjects": len(subjects),
                                                    "lead_batches": len(compiled) - len(subjects), "dropped_over_budget": dropped,
                                                    "channel_cannot_serve_roles": unserved, "roles_asked": asked, "intent_cap": cap},
+            "governance_unchanged": all(out.get(k) == directive.get(k) for k in _DIRECTIVE_GOVERNANCE)}
+
+
+def _semantic_research_plan(ins, directive, out, trail_intents, asked, cap, state, policies, views) -> dict[str, Any]:
+    """The governed path once the runtime supplies `semantics` (the per-hypothesis query projection) — restoration reference §9:
+      * every evidence gap is compiled THROUGH ITS OWN hypothesis: H1's gap -> H1's vocabulary -> an intent that carries H1's id;
+      * a gate gap TrailSignal wrote ("corroborate from a second independent source") is served by that hypothesis's vocabulary —
+        its governance text is never the search string (`research_gaps[].origin` says which gaps a reasoning step wrote);
+      * TrailSignal's stage templates are BOUND per hypothesis (`{activity} {task} annoying` -> "landscape photography reach spare
+        batteries annoying"); a template a hypothesis cannot bind is reported in `unresolved_slots`, never sent with a `{slot}`;
+      * one falsifier search per hypothesis. Governance fields, budget and role routing are TrailSignal's, untouched."""
+    import adapter_receipt
+    import executors
+    import query_semantics as QS
+
+    origin = {g.get("gap_id"): g.get("origin") for key in ("knowledge_gaps", "open_gaps") for g in (ins.get("research_gaps") or {}).get(key) or [] if isinstance(g, dict)}
+    statements = {h.get("hypothesis_id"): str(h.get("statement") or "") for h in ins.get("hypotheses") or [] if isinstance(h, dict)}
+    index: list[dict[str, Any]] = []
+    unresolved: list[dict[str, Any]] = []
+
+    bound: list[dict[str, Any]] = []
+    for ti in trail_intents:
+        if not QS.has_unbound_slot(ti.get("template")):
+            bound.append(ti)
+            continue
+        for hid, view in views.items():
+            text, missing = QS.bind_template(str(ti.get("template") or ""), view)
+            if text is None:
+                unresolved.append({"intent_id": ti.get("intent_id"), "hypothesis_id": hid, "missing_slots": missing})
+                continue
+            iid = f"{ti['intent_id']}:{str(hid)[4:12]}"[:200]
+            bound.append({**ti, "intent_id": iid, "intent": f"{ti.get('intent')} — {text}"[:500], "template": text[:500]})
+            index.append({"intent_id": iid, "hypothesis_id": hid, "gap_id": None, "origin": "trail_template", "query": text})
+
+    compiled: list[list[dict[str, Any]]] = []
+    meta: dict[str, dict[str, Any]] = {}
+    for g in directive.get("evidence_gaps") or []:
+        if not (isinstance(g, dict) and g.get("gap_id") and g.get("hypothesis_id")):
+            continue
+        hid, gid = g["hypothesis_id"], str(g["gap_id"])
+        q = QS.gap_query(g, views.get(hid), origin=origin.get(gid), statement=statements.get(hid, ""))
+        if not q["query"]:
+            unresolved.append({"gap_id": gid, "hypothesis_id": hid, "missing_slots": ["semantic_state"]})
+            continue
+        meta[gid] = {"hypothesis_id": hid, "gap_id": gid, "origin": origin.get(gid) or "unknown", "query": q["query"], "basis": q["basis"]}
+        compiled.append(executors.channel_queries(gid, str(g.get("question") or ""), state, policies, short=q["query"]))
+    for hid, view in views.items():
+        f = QS.falsifier_query(view)
+        if f["query"]:
+            gid = f"falsify_{str(hid)[4:12]}"
+            meta[gid] = {"hypothesis_id": hid, "gap_id": gid, "origin": "falsifier", "query": f["query"], "basis": f["basis"]}
+            compiled.append(executors.channel_queries(gid, f["falsifier"], state, policies, short=f["query"]))
+    n_subjects = len(compiled)
+    leads = {l.get("id"): l for key in ("leads", "population_leads", "community_leads") for l in ins.get(key) or [] if isinstance(l, dict)}
+    for lid in ins.get("batch") or []:
+        if leads.get(lid, {}).get("channel_queries"):
+            compiled.append([dict(q, _lead=True) for q in leads[lid]["channel_queries"]])
+
+    def _host(q: dict[str, Any]) -> dict[str, Any] | None:
+        roles = sorted({adapter_receipt.ROLE_MAP.get(r) for r in q.get("expected_evidence_roles") or []} - {None})
+        for ti in trail_intents:                                    # the first Trail intent this channel can serve
+            served = [r for r in roles if r in (ti.get("evidence_roles") or [])]
+            if served:
+                return {"intent_id": f"{ti['intent_id']}:{q['channel']}:{q['gap_id']}"[:200], "evidence_goal": ti["evidence_goal"], "evidence_roles": served,
+                        "intent": f"{q['channel']}: {q.get('why_this_source')} — {q.get('query')}"[:500], "template": str((q.get("tools") or [q.get("query")])[0])[:500]}
+        return None
+
+    cap = max(len(bound), cap)
+    added, dropped, unserved = _round_robin([[_host(q) for q in qs] for qs in compiled], {i.get("intent_id") for i in bound}, cap - len(bound))
+    for a in added:
+        gid = a["intent_id"].rsplit(":", 1)[-1]
+        if gid in meta:
+            index.append({"intent_id": a["intent_id"], **meta[gid]})
+    out["search_intents"] = bound + added
+    if not out["search_intents"]:
+        raise Refusal("RESEARCH_PLAN_UNBOUND", "no search intent could be bound from the hypotheses' semantic state: " + json.dumps(unresolved)[:600])
+    leaked = [i["intent_id"] for i in out["search_intents"] if QS.has_unbound_slot(i.get("template")) or QS.has_unbound_slot(i.get("intent"))]
+    if leaked:
+        raise Refusal("RESEARCH_PLAN_UNBOUND_SLOT", f"an intent still carries an unbound slot: {leaked[:5]}")
+    return {"research_directive": out,
+            "planned": {"trail_intents": len(trail_intents), "bound_trail_intents": len(bound), "channel_intents": len(added), "subjects": n_subjects,
+                        "lead_batches": len(compiled) - n_subjects, "dropped_over_budget": dropped, "channel_cannot_serve_roles": unserved,
+                        "roles_asked": asked, "intent_cap": cap, "unresolved_slots": unresolved[:100], "compiler": "semantic.v1",
+                        "refused_gaps": list((ins.get("research_gaps") or {}).get("refused") or [])[:50]},
+            "intent_index": index[:200],
             "governance_unchanged": all(out.get(k) == directive.get(k) for k in _DIRECTIVE_GOVERNANCE)}
 
 

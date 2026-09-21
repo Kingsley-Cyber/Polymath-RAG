@@ -1,6 +1,6 @@
 {
  "adapter_id": "ecommerce.product_research",
- "adapter_version": "0.2.0",
+ "adapter_version": "0.3.0",
  "workflow_version": "0.1.0",
  "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
@@ -1166,7 +1166,8 @@
     "availability": "working"
    },
    "config": {
-    "stage": "field_evidence"
+    "stage": "field_evidence",
+    "gaps_from": "context.semantics.research_gaps"
    }
   },
   {
@@ -1183,7 +1184,9 @@
      "population_leads": "outputs.C_population.population_leads",
      "community_leads": "outputs.C_population.community_leads",
      "batch": "outputs.C_population.batch",
-     "communities": "outputs.C_population.communities"
+     "communities": "outputs.C_population.communities",
+     "semantics": "context.semantics.query",
+     "research_gaps": "context.semantics.research_gaps"
     }
    }
   },
@@ -1192,7 +1195,7 @@
    "type": "HARNESS_ACTION",
    "title": "Harness: field research",
    "next": "J_admit",
-   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations.",
+   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations. Materials show `intent_index`: for every compiled intent the hypothesis it serves, the gap it answers and the query text — link each observation to the hypothesis whose intent found it.",
    "harness": {
     "action_kind": "AGENT_RESEARCH",
     "minimum_independent_sources": 3,
@@ -1210,7 +1213,8 @@
      "population_batch": "outputs.C_population.batch",
      "population_leads": "outputs.C_population.population_leads",
      "community_leads": "outputs.C_population.community_leads",
-     "research_plan": "outputs.H_plan.planned"
+     "research_plan": "outputs.H_plan.planned",
+     "intent_index": "outputs.H_plan.intent_index"
     }
    }
   },
@@ -1249,7 +1253,8 @@
      "population_leads": "outputs.C_population.population_leads",
      "community_leads": "outputs.C_population.community_leads",
      "prior_field_records": "outputs.J_cards.field_records",
-     "prior_round": "outputs.J_cards.round"
+     "prior_round": "outputs.J_cards.round",
+     "semantics": "context.semantics.query"
     }
    }
   },
@@ -1380,7 +1385,7 @@
    "title": "θ re-reason with admitted field evidence",
    "theta_op": "cross_map_frictions",
    "next": "L_judge",
-   "objective": "Reason again over the original knowledge, the hypothesis state and the newly admitted field evidence: propose REVISE or SPLIT transitions (citing admitted evidence ids), and name the gaps that remain open. Materials show `hypothesis_semantics`: for each live hypothesis its CURRENT ledger state (population, activity, task, context, mechanism, friction, assumptions, falsifiers, contradictions, open knowledge gaps, support), its origin leads / latent structures, its bridge and the primitives that share its evidence — reason from that state, do not re-derive it from the statement. A REVISE `changes` object may set only the listed keys; an unknown key rejects the submission.",
+   "objective": "Reason again over the original knowledge, the hypothesis state and the newly admitted field evidence: propose REVISE or SPLIT transitions (citing admitted evidence ids), and name the gaps that remain open. Materials show `hypothesis_semantics`: for each live hypothesis its CURRENT ledger state (population, activity, task, context, mechanism, friction, assumptions, falsifiers, contradictions, open knowledge gaps, support), its origin leads / latent structures, its bridge and the primitives that share its evidence — reason from that state, do not re-derive it from the statement. A REVISE `changes` object may set only the listed keys; an unknown key rejects the submission. Every open gap names the ONE live hypothesis it belongs to (hypothesis_id), the question in the language the population would use, and the evidence_role; a gap without an owner rejects the submission.",
    "constraints": [
     "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
     "No opportunity score, rank or weight of any kind (LAW 1)",
@@ -1722,7 +1727,27 @@
      "open_gaps": {
       "type": "array",
       "items": {
-       "type": "object"
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "question",
+        "evidence_role"
+       ],
+       "properties": {
+        "hypothesis_id": {
+         "type": "string"
+        },
+        "question": {
+         "type": "string",
+         "minLength": 1
+        },
+        "evidence_role": {
+         "type": "string"
+        },
+        "note": {
+         "type": "string"
+        }
+       }
       }
      }
     }

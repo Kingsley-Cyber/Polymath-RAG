@@ -13,7 +13,7 @@ from typing import Any, Callable
 
 from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, assert_valid, stable_hash, validate
 from .manifest import ADAPTER_DIR, Manifest, list_manifests
-from . import evidence_boundary as EB, hypotheses as H, semantic_view as SV, store, transitions as T
+from . import evidence_boundary as EB, hypotheses as H, research_gaps as RG, semantic_view as SV, store, transitions as T
 from .hypotheses import HypothesisRejected
 from .transitions import BudgetExhausted, RunState, SubmissionRejected
 
@@ -188,7 +188,7 @@ def _materials(conn, run_id: str, step: dict[str, Any], directory: Path | None) 
     try:
         scope = {"outputs": state.outputs, "input": state.input}
         if any(str(d).split(".", 1)[0] == "semantics" for d in show.values()):
-            scope["semantics"] = _semantics(conn, run_id, state)
+            scope["semantics"] = _semantics(conn, run_id, state, manifest_for(state.adapter_id, directory))
         values: dict[str, Any] = {}
         missing, too_large, room = [], [], MATERIALS_MAX_BYTES
         for name, dotted in show.items():
@@ -207,16 +207,28 @@ def _materials(conn, run_id: str, step: dict[str, Any], directory: Path | None) 
         return {"values": {}, "missing": [], "too_large": [], "error": f"{type(exc).__name__}: {exc}"[:500]}
 
 
-def _semantics(conn, run_id: str, state: RunState) -> dict[str, Any]:
-    """OpportunitySemanticViewV1 for the run as it stands NOW: a read of the ledger, the outputs and the stored steps. Never stored."""
+def _semantics(conn, run_id: str, state: RunState, m: Manifest | None = None) -> dict[str, Any]:
+    """OpportunitySemanticViewV1 for the run as it stands NOW: a read of the ledger, the outputs and the stored steps. Never stored.
+    `research_gaps` = every hypothesis's open gaps from every legitimate source, each owned and stably identified (research_gaps.py)."""
     stored = [{"step_id": s["step_id"], "sequence": s["sequence"], "output": s.get("output")} for s in store.list_steps(conn, run_id)]
-    return SV.scope(SV.build(store.current_hypotheses(conn, run_id), state.outputs, order=state.output_order, step_outputs=stored, run_id=run_id))
+    current = store.current_hypotheses(conn, run_id)
+    scope = SV.scope(SV.build(current, state.outputs, order=state.output_order, step_outputs=stored, run_id=run_id))
+    roles = list(((m.raw if m else {}) or {}).get("evidence_roles") or [])
+    scope["research_gaps"] = RG.harvest(current, state.outputs, order=state.output_order,
+                                        default_role="behavior" if "behavior" in roles or not roles else roles[0])
+    return scope
 
 
 def _wants_semantics(spec: dict[str, Any]) -> bool:
-    """A DOMAIN_OPERATION opts in by naming a `context.semantics…` path in `config.inputs`."""
-    sels = ((spec.get("config") or {}).get("inputs") or {}).values()
-    return any(str(d).startswith("context.semantics") for sel in sels for d in (sel if isinstance(sel, list) else [sel]))
+    """An automatic step opts in by naming a `context.semantics…` path anywhere in its `config` (a DOMAIN_OPERATION input, or an
+    EXTERNAL_OPERATION's `gaps_from`)."""
+    def walk(v: Any) -> bool:
+        if isinstance(v, str):
+            return v.startswith("context.semantics")
+        if isinstance(v, dict):
+            return any(walk(x) for x in v.values())
+        return isinstance(v, list) and any(walk(x) for x in v)
+    return walk(spec.get("config") or {})
 
 
 def _readable_evidence(conn, run_id: str, step: dict[str, Any]) -> dict[str, Any]:
@@ -265,6 +277,12 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
         store.finish_step(conn, run_id, row["sequence"], status="accepted", receipt=receipt, output=output, submission=sub)
         store.save_state(conn, new_state)
         return status(conn, run_id, directory)
+    # reference §9.2: a research gap belongs to exactly one LIVE hypothesis — refused here, typed, so Trail never has to guess an owner
+    gap_errors = RG.unowned_gap_errors(sub["payload"], [h for h, s_ in store.current_hypotheses(conn, run_id).items() if s_["status"] not in H.ABSORBED_STATUSES])
+    if gap_errors:
+        receipt = _receipt(step, "rejected", started, evidence_ids=[], model=who, validation={"ok": False, "errors": gap_errors})
+        store.finish_step(conn, run_id, row["sequence"], status="issued", receipt=receipt)
+        raise SubmissionRejected(gap_errors)
     # θ ledger: generated hypotheses and/or proposed transitions inside a reasoning payload become durable state in the SAME unit
     output = dict(sub["payload"])
     transition_ids: list[str] = []
@@ -464,10 +482,14 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
                               receipt=_receipt(step, "skipped", started, evidence_ids=[], model=None, validation={"ok": False, "errors": ["unsupported"]}))
             store.save_state(conn, state)
             break
+        compiled_need = EB.domain_compiled_need(m.step(step["step_id"]).get("config"), state.outputs,
+                                                [sid_ for sid_, spec_ in m.steps.items() if spec_.get("type") == "DOMAIN_OPERATION"])
+        if compiled_need:
+            step = {**step, "_compiled_need": compiled_need}       # in memory only; honoured by the boundary executor, from domain code only
         if _wants_semantics(m.step(step["step_id"])):
             # IN MEMORY ONLY: the stored AdapterStepV1 (schema-closed context, four-field hypotheses) is untouched, and so is every
             # Trail payload — `_payload_for` reads `context.hypotheses`. The executor's copy of the step gains the derived view.
-            step = {**step, "context": {**(step.get("context") or {}), "semantics": _semantics(conn, run_id, state)}}
+            step = {**step, "context": {**(step.get("context") or {}), "semantics": _semantics(conn, run_id, state, m)}}
         try:
             outcome = executor(step, state, m)
         except Exception as exc:  # noqa: BLE001 — a step failure is a typed run failure, never a silent skip

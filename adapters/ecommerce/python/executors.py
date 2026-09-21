@@ -255,12 +255,13 @@ def _gap_keywords(question: str, n: int = 8) -> list[str]:
     return out[:n]
 
 
-def channel_queries(gid: str, question: str, state: dict, policies: dict, id_prefix: str = "q") -> list[dict]:
+def channel_queries(gid: str, question: str, state: dict, policies: dict, id_prefix: str = "q", short: str | None = None) -> list[dict]:
     """docs/24: one query per enabled evidence channel (policy order) for one gap.
     The SHORT keyword form is the search string; every row names the exact tool
-    chain, the identity key and the freshness source for its channel."""
+    chain, the identity key and the freshness source for its channel. `short` (governed runs, query_semantics.py): a search
+    string already compiled from the hypothesis's semantic state — then the question's first keywords are NOT the search."""
     kw = _gap_keywords(question)
-    short = " ".join(kw[:6])
+    short = short or " ".join(kw[:6])
     hints = list(state["data"].get("communities") or [])
     enabled = list(policies.get("evidence_channels") or [t[0] for t in _CHANNEL_TEMPLATES])
     out = []
