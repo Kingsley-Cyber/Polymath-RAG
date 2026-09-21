@@ -711,6 +711,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-20-consolidation-premerge-validation.md", "md", None),
     ("docs/wiki/work-log/2026-09-20-consolidation-phase9-deterministic-skill-deploy.md", "md", None),
     ("docs/wiki/work-log/2026-09-20-consolidation-phase13-hosted-surface-acceptance.md", "md", None),
+    ("docs/wiki/work-log/2026-09-21-consolidation-phase11-production-merge-and-phase9-deploy.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT_EXTENDED.md", "md", None),
     ("docs/migration/MIGRATION_POLICY.md", "md", None),
