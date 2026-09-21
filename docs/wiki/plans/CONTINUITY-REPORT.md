@@ -18,7 +18,41 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-21 — **POLYMATH ECOMMERCE CONSOLIDATION — LIVE; first complete REAL ecommerce run done (Trail refused the score); dossier gaps + commerce corpus + external acceptance remain**
+## CURRENT — 2026-09-21 (late) — **RESTORATION PHASE, SESSION 1 COMPLETE: slices 1, 2, 3, 5 committed on STACKED local branches (exit conditions green), Slice 4 implemented + proven in TRAIL's repo with ADR-069 drafted Proposed — NOTHING merged, deployed, pushed or spent; the next actions are the OWNER's**
+
+## Repository State
+`production` = documents only since `1d9f695` (this file + `docs/migration/CONTINUATION.md`), clean, nothing pushed. Restoration branches (local, stacked, each in its own worktree): `restoration/semantic-continuity` `98a0384` → `restoration/research-fidelity` `4bcf17d` →
+`restoration/product-reality` `d32c285` → `restoration/reporting` `31273f7` (the tip carries slices 1, 2, 3, 5 + the Slice 4 record). TRAIL: worktree `~/trail-signal-os-worktrees/R1-semantic-restoration`, branch `codex/r1-semantic-restoration` off `origin/main` `de64d84` —
+UNCOMMITTED working tree (Trail's `agentctl guard` refuses an unauthorized commit; not bypassed) + patch `~/PolymathRuntime/handoff/trail-adr-069/trail_adr_069.patch` (sha256 `c9d8264a…66cd`). `governance/trail` here: untouched, not re-pinned.
+## Active Mission
+Semantic Transduction Restoration (owner build reference `docs/migration/SEMANTIC_TRANSDUCTION_RESTORATION_REFERENCE.md`, decisions LOCKED). Restart boundary = `docs/migration/CONTINUATION.md` (RESTORATION PROGRESS table, what each slice changed, the owner-gate blocks, Next Exact Action).
+## Completed Since Last Bootstrap
+Registers 11.391–11.395 (ON THE BRANCHES; `production`'s register ends at 11.390): Slice 1 semantic continuity · Slice 2 research fidelity · Slice 3 product reality · Slice 5 reporting · Slice 4 record. Work-logs `2026-09-21-restoration-slice{1,2,3,4,5}-*.md` (on the branches).
+## Current Contract State
+NEW pure modules `shared/polymath_shared/adapter/{semantic_view,research_gaps}.py`; engine `python/{query_semantics,product_reality}.py`; operations `product_reality.plan` / `.join`; manifest `ecommerce.product_research` 0.5.0 = 56 steps (`O_plan`, `Q_join` added; no stage moved). AdapterStepV1 and every Trail
+payload are UNCHANGED (the view travels through `materials` and in memory; Trail still receives four fields until the re-pin). HypothesisStateV1 += optional `lead_ids[]`, `latent_structure_ids[]`. REVISE refuses unknown `changes` keys. A top-level gap without a live owner rejects the submission.
+## Active Impact Closure
+ADAPTER_RUNTIME: UPDATED (additive), tests green on every branch · MCP_SURFACE: TESTED_UNCHANGED · no unresolved, no blocked. Trail wire: changed ONLY in Trail's worktree (Proposed).
+## Proof Status
+Slices 1, 2, 3, 5: UNIT_PROVEN + WORKTREE_INTEGRATION_PROVEN for `shared/` + the engine (new suites 30 + 15 + 8 + 8; DB-free adapter suites green; engine suite 609 / 609); `workers/adapter_step_worker.py` two thin call sites: IMPLEMENTED only. Slice 4: EXECUTED in Trail's repo (6 / 6 + 27 / 27; byte-for-byte replays unchanged).
+NOT proven: anything live (MERGED / DEPLOYED / LIVE_PATH_PROVEN = none). INVALIDATED: none.
+## Runtime / Test Resolution
+Worktrees have no `.venv`: `env -u POLYMATH_PG_DSN PYTHONPATH=$PWD ../polymath-v4/.venv/bin/python -m pytest …`; never import `workers` in a proof of `shared/`; the engine binding is tested OUT OF PROCESS. Trail: the worktree has its own `.venv` with a `.pth` putting its `src` first (A41's environment resolves `trail_signal` to A41).
+## Working Tree
+`production` clean. Four Polymath worktrees clean. Trail worktree: 25 changed paths, uncommitted ON PURPOSE. Scratch: none in the repos.
+## Tooling State
+Guards 0 / 0 / 0 / READY on `production` and on every restoration branch. Graft / Graphify used for navigation in Trail.
+## Next Action
+1. OWNER: G-merge `restoration/reporting` → `production` + bounce + `scripts/deploy_ecommerce_skill.py` (exact block in `CONTINUATION.md`). 2. OWNER: G-adr — accept / reject Trail ADR-069. 3. A session, on the owner's word: "merged" → live qualification L1–L13 ($0); "ADR-069 accepted" → Trail admission + `restoration/trail-repin`;
+"diagnose D-a" → the $0 receipt-ledger read. 4. OWNER: G-spend — ONE benchmark run (reference §14.2 seed S1) after 1–3.
+## Do Not Do
+Do not redo the audit or any slice. Do not merge, bounce, push or spend without the owner's word. Do not bypass Trail's guard (`AGENT_CONTROL_BYPASS`). Do not edit `governance/trail/{src,config,data}`. Do not send Trail a new field before the re-pin (`extra="forbid"`). Do not build an analogy stage, a new IR or a per-corpus registry.
+## Live Qualification Queue
+L1–L4 (Slice 1) · L5–L8 (Slice 2) · L9–L11 (Slice 3) · L12–L13 (Slice 5) — listed per slice in `CONTINUATION.md`'s RESTORATION PROGRESS table.
+## Deferred Architecture
+`structural_lookup` / `signal_gate` / an analogy stage / registry data repair: only if the benchmark proves the restored path cannot transfer (reference §12, §11.6). LAW-1 `content` / `growth` axes: benchmark-only.
+
+## PRIOR — 2026-09-21 (superseded as CURRENT by the restoration section above; every fact below still holds) — **POLYMATH ECOMMERCE CONSOLIDATION — LIVE; first complete REAL ecommerce run done (Trail refused the score); dossier gaps + commerce corpus + external acceptance remain**
 
 **Read this, then go straight to `docs/migration/`.** State authority: `docs/migration/CONTINUATION.md`. This section only points there and must never disagree with it. Owner texts: `MIGRATION_POLICY.md`, `AGENT_OPERATING_DOCTRINE.md`,
 `OWNER_DECISION_2026-09-21_MERGE_AND_PRINCIPALS.md`. Fresh-session prompt: `docs/migration/NEW_SESSION_BOOTSTRAP_PROMPT.md`.
