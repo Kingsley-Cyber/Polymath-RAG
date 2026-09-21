@@ -15,22 +15,21 @@ deterministic Trail core) on the EXISTING adapter runtime. Harvest behaviour, no
 generic infrastructure.
 
 ## Current Phase
-**Phase 0 — DONE** (gate: no unresolved risk of overwriting user work — all four locations clean except Hermes' three uncommitted skill text files, which the migration does not touch).
-**Phase 1 — capability forensics — gate MET** (`CAPABILITY_MAP.md`: every major responsibility has a target owner, a source implementation and an action). Two sub-items stay open inside it: the
-Trail wire-model file (`workflow/public/operations.py`) and the domain-binding seam decision (Phase 3).
-**NEXT: Phase 2 — import the ecommerce implementation additively.** Controlling documents installed from the owner's bundle (M-001 resolved, M-003).
+**Phases 0–1 — DONE.**
+**Phase 2 — import — DONE, gate MET** (`072f1cc`): the engine sits at `adapters/ecommerce/` (193 files of AutoResearch @ `a7baa66`); its own suite passes THERE, 609 / 609 + `doctor`, under this repo's interpreter.
+**Phase 3 — domain binding seam — DONE, gate MET** (`076eb6b`, ADR-0020, M-007): new automatic step type `DOMAIN_OPERATION`; a real engine law governed a run through the existing `service.advance` + `EXECUTORS`.
+**NEXT: Phase 4 — EvidencePacket integration.** Both phases live on branch `migration/ecommerce-consolidation` (worktree `../pmv4-consolidation`), NOT merged; the live fleet is untouched.
 
 ## Repository State
-- polymath-v4: `production`, clean, 130+ commits ahead of `origin/main`, nothing pushed. Worktrees parked: `pmv4-atom-scope`
-  (Item 2D, UNCOMMITTED, 7 files) · `pmv4-m1-repro` (`review/m1-reproductions` @ `eb63bef`, 12 reproductions red on purpose).
-  Merged worktrees safe to remove: `pmv4-governed`, `pmv4-packet-text`.
-- AutoResearch: `main` @ `a7baa66` (v2.3.0), clean, 3 commits ahead of GitHub (`a7dbc52`, v2.1.2). PUBLIC repo.
-- Trail: `~/trail-signal-os-worktrees/A41` @ `de64d84`, clean, == local `origin/main` ref. Untouched.
-- Hermes: `skills/business/opportunity-research` → symlink → `standalone/opportunity-research` (deployed copy v2.3.0). Three
-  tracked skill text files edited and uncommitted (owner's commit). Reason for the deployed copy: unknown.
+- polymath-v4 `production`: clean, docs only since `758ff8a`; 130+ commits ahead of `origin/main`, nothing pushed.
+- **Migration worktree `~/Documents/polymath-rebuild/pmv4-consolidation`, branch `migration/ecommerce-consolidation`** = `production@758ff8a` + `072f1cc` (Phase 2) + `076eb6b` (Phase 3). Clean. It has no `.venv`: run with `/Users/king/Documents/polymath-rebuild/polymath-v4/.venv/bin/python` and `PYTHONPATH=$PWD`.
+- Parked worktrees: `pmv4-atom-scope` (Item 2D, UNCOMMITTED, 7 files) · `pmv4-m1-repro` (`review/m1-reproductions` @ `eb63bef`, red on purpose). Merged, removable: `pmv4-governed`, `pmv4-packet-text`.
+- AutoResearch: `main` @ `a7baa66` (v2.3.0), clean, 3 commits ahead of GitHub. PUBLIC. Still the engine the Hermes skill runs (the import is a copy; nothing was removed — INV-9).
+- Trail: `~/trail-signal-os-worktrees/A41` @ `de64d84`, clean. Untouched.
+- Hermes: deployed copy `standalone/opportunity-research` v2.3.0; three skill text files uncommitted (owner's commit).
 
 ## Current HEAD / Branch
-`production` — the document-bootstrap commit (see Relevant Commits).
+`production` (docs) · `migration/ecommerce-consolidation` @ `076eb6b` (code).
 
 ## Completed
 - Owner reframe recorded in the plan of record; harvest map written (registers 11.362; commits `59a4b60`, `9dfd3c3`).
@@ -44,11 +43,12 @@ Trail wire-model file (`workflow/public/operations.py`) and the domain-binding s
 - Tools discovered: `graphify` and `graft` present; CodeGraph and Ponytail absent.
 
 ## Current Architecture
-Unchanged. Four locations, no code moved. The governed adapter (28-step `trail.product_discovery`) calls Trail's daemon over
-MCP; AutoResearch runs standalone and as the harness (receipt + journal + report bridge, v2.3.0).
+On the migration branch: `adapters/ecommerce/` (the engine, its own layout, its own suite) + `adapters/ecommerce/binding.py` (the ONE door: `OPERATIONS` table, JSON in / JSON out)
++ `DOMAIN_OPERATION` in the existing runtime (`exec_domain` in the existing `EXECUTORS`; out of process; minimal environment; typed gap / `STEP_EXECUTOR_ERROR`). Domain code computes and never
+owns state. `service.py`, `transitions.py`, `store.py` and the three shipped manifests are unchanged. Live system: unchanged (four locations; governed adapter → Trail daemon over MCP).
 
 ## Capabilities Migrated
-None.
+IMPORTED (all, fixture-proven in place). BOUND to the runtime: `hypotheses.validate_bridge` (bridge + portfolio admissibility laws). In a product manifest: none yet.
 
 ## Authority Map
 Polymath: knowledge, EvidencePacket, adapter runtime, ledger, lineage, MCP · ecommerce adapter (to be harvested): niche /
@@ -57,45 +57,42 @@ admission, freshness, independence, judgement, territory, qualification, score /
 Full table: `CAPABILITY_MAP.md` "Duplicate Authority Map".
 
 ## Important Auto Decisions
-M-001 (resolved) · M-002 documents on `production` declared in the scaffold `TREE`; all migration code in a dedicated worktree, new
-top-level packages outside the fence set · M-003 the bundle's controlling files control; earlier bootstrap kept as EXTENDED · M-004 today's
-existing test runs ARE the Phase 0 baseline (no re-run; Trail baselined at Phase 6) · M-005 commerce corpus = reconstruct the 10-document set
-from preserved sources under a NEW corpus id at Phase 10, after Item 2D is merged.
+M-002 docs on `production`, code in the migration worktree · M-003 the bundle controls · M-004 baseline = existing runs · M-005 commerce corpus at Phase 10 after Item 2D ·
+**M-006** import via `git archive` (tracked files only), three exclusions, history: the engine lived here as `research/` until 11.274 retired it to the Hermes skill — the O6 dead-path guard stays green ·
+**M-007** the seam = one step type + out-of-process binding (rejected: `EXTERNAL_OPERATION` reuse, `VALIDATE` overload, in-process import, host-side only, SDK).
 
 ## Tests Passed
-None run in Phase 0 (read-only). Last known: AutoResearch 609 checks + doctor green (TG4 close); static guards green today.
+In the migration worktree, all database-free, `POLYMATH_PG_DSN` unset: engine suite 609 / 609 + `doctor` · `test_ecommerce_engine_import.py` 5 (INV-7 privacy pins incl. a negative control) ·
+`test_adapter_domain_operation.py` 23 · existing `test_adapter_contract_v1` / `_worker_evidence_surface` / `test_mcp_adapter_parity` / `_runtime_neutrality` / `_runtime_pure` / `_r5_audit` /
+`test_mcp_server_v2` / `test_research_package_removed` green · guards 0 / 0 / 0 / READY. Reusable asset: `tests/determinism/_adapter_memory_store.py` (runtime tests with NO Postgres).
 
 ## Known Failures
-- Governed path: D1–D7 (first real run R2a died at `L_judge`) and M1-01..M1-12 (external review, reproduced) — none fixed.
-  A run cannot pass `L_judge` and the product stages without D1, M1-06, M1-07, M1-08; M1-04 is an availability risk.
-- Pre-existing red determinism tests on `production` (3 attributed, 5 not yet baselined) — see the M1 verification work-log.
-- Historical baseline fails canary 2 of 9.
+- Governed path: D1–D7 and M1-01..M1-12 — none fixed (they are scheduled inside Phases 4–7, where the code they live in is reworked).
+- NOT RUN on the branch (deliberately): `test_adapter_evidence_boundary.py`, `test_adapter_product_discovery_loop.py` — they commit `running` runs into the shared Postgres. Run them in the merge window with the fleet drained, or port them onto the memory store.
+- Pre-existing red determinism tests on `production` (3 attributed, 5 not baselined). Historical baseline fails canary 2 of 9.
 
 ## Current Blocker
 None. (The commerce corpus is pre-authorized by the policy and scheduled for Phase 10 — M-005. Item 2D must be merged before it.)
 
 ## Next Exact Action
-**Phase 2 — import AutoResearch additively, no redesign on import.**
-1. `git worktree add ../pmv4-consolidation -b migration/ecommerce-consolidation production` (M-002).
-2. Copy from `~/Documents/polymath-rebuild/TRAIL_AGENT_AUTORESEARCH` @ `a7baa66` into `adapters/ecommerce/`, preserving its layout: `python/`, `prompts/`,
-   `schemas/`, `graph/`, `registry/` (WITHOUT `registry/research_evidence.csv`, `registry/compiled/`, `registry/patches/`), `tests/`, `docs/`, `SKILL.md`,
-   `manifest.yaml`, `policies` under `graph/`. EXCLUDE: `state/`, `candidates/`, `exports/`, `*.sqlite3*`, `__pycache__/`, `MIRROR_RECEIPT.json`, any `.env`.
-   Run a secrets / personal-data scan over the copy before `git add` (INV-7); record what was excluded.
-3. Declare every imported file in `scripts/scaffold_polymath_v4.py` `TREE` (generate the lines; `repo_guard` fails otherwise).
-4. Gate: `~/.hermes/hermes-agent/venv/bin/python adapters/ecommerce/tests/run_all.py` + `python/controller.py doctor` pass in the NEW location with
-   `OPPORTUNITY_RESEARCH_DB` pointed at a temp file (expect ≈ 606: the cross-repo checks look for a sibling `polymath-v4`; repoint them to the repo root as the
-   first ADAPT, which also removes the schema byte-copies' sha pins in favour of reading `contracts/` directly).
-5. Update `PARITY_MATRIX.md` (Migrated path column), this file, commit on the migration branch. Do NOT merge to `production` yet.
-Then Phase 3: decide the binding seam from the verified convention (one global `EXECUTORS: dict[step_type → Executor]` in
-`workers/workers/adapter_step_worker.py:509`; `Executor = (step, RunState, Manifest) → ExecOutcome`) — record as M-006 before coding.
+**Phase 4 — EvidencePacket integration** (gate: existing ecommerce understanding logic consumes CURRENT Polymath evidence and produces valid downstream structures). Work in `../pmv4-consolidation`.
+1. Read how governed knowledge reaches a step: `B_retrieve` / `F_retrieve` outputs (`_rows`, `_trim_rows`, `_refs_from_rows` in `workers/workers/adapter_step_worker.py`) and the engine's row shape
+   (`adapters/ecommerce/python/corpus_polymath.py` `rows_from_response`, `packet_errors`; `schemas/corpus_observation.json`). Write the ONE mapping governed evidence rows → engine `corpus_evidence` rows inside `binding.py`
+   (no HTTP from domain code: the runtime already retrieved; `corpus_polymath.py` stays LEGACY_STANDALONE).
+2. Bind the first understanding operations that consume that evidence: `understanding.lenses` (`executors.py:52`) and the primitives lineage check (`lived_world.py:471,493` `lineage_ref_errors`, `validate_relevance_map`).
+   Watch `structural_lookup`: `registry.load_snapshot` WRITES a compiled file when missing — a domain operation must not write into the repo; give it a temp dir or pre-compile.
+3. Replace the engine's two schema BYTE COPIES with reads of `contracts/` when the engine sits inside this repo (keep the pinned copies for standalone use); the three cross-repo pins already point here.
+4. Test with `_adapter_memory_store.py` + a fixture manifest whose retrieve executor returns recorded evidence rows (no live retrieval until Phase 11-E).
+5. Then Phase 5 in dependency order (population → hypotheses onto `HypothesisStateV1` → field research planning → products → product reality → supply). Draft the ecommerce product manifest
+   (`config/adapters/ecommerce.product_research.json`) only when at least the population + hypothesis operations are bound; do NOT edit `trail.product_discovery.json` (INV-9).
 
 ## DO NOT REDO
-- The AutoResearch-vs-governed comparison, the dependency facts per harvest target, the registry-drift check, the historical-run
-  inspection — all recorded (`CAPABILITY_MAP.md`, harvest map).
-- The R2a run and the M1 reproductions (preserved; do not re-run against the shared Postgres — `-k memory` only).
-- Any node-by-node port, second runtime / SDK / ledger, package reshuffle, or import of private ledgers.
+- The comparison, the dependency facts, the registry-drift check, the historical-run inspection (`CAPABILITY_MAP.md`, harvest map).
+- The R2a run and the M1 reproductions (never re-run against the shared Postgres).
+- The import (Phase 2) and the seam decision (M-007 lists the rejected alternatives with reasons — do not re-litigate).
+- Any node-by-node port, second runtime / SDK / ledger, package reshuffle, in-process import of the engine's flat modules, or import of private ledgers.
 
 ## Relevant Commits
-`a125103` R2a record · `faedb20` M1 evidence record · `59a4b60` reframe + harvest map · `9dfd3c3` boundary model ·
-`23d517e` bootstrap + first continuation · `c583dc6` CONTINUITY pointer · the document-bootstrap commit (this change) ·
-branch `review/m1-reproductions` `eb63bef`.
+`production`: `59a4b60` reframe + harvest map · `9dfd3c3` boundary model · `23d517e` bootstrap · `758ff8a` owner bundle installed · `988070a` M-006 + M-007.
+`migration/ecommerce-consolidation`: `072f1cc` Phase 2 import (register 11.363) · `076eb6b` Phase 3 seam (register 11.364, ADR-0020). Branch `review/m1-reproductions` `eb63bef`.
+

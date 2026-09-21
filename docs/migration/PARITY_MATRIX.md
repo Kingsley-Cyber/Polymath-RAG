@@ -1,7 +1,7 @@
 # Migration Parity Matrix
 
 > Agent-owned. Evidence levels: READ · STATICALLY_VERIFIED · UNIT_EXECUTED · INTEGRATION_EXECUTED · REAL_INPUT_EXECUTED ·
-> HISTORICAL_ARTIFACT_ONLY · STUBBED. "Historical" = run `calib_books_01` (2026-09-04) unless noted. Migrated path: nothing exists yet.
+> HISTORICAL_ARTIFACT_ONLY · STUBBED. "Historical" = run `calib_books_01` (2026-09-04) unless noted. Migrated path: **Phase 2 (`072f1cc`)** — every AutoResearch capability below is IMPORTED at `adapters/ecommerce/` and its own suite passes there (609 / 609, fixture-driven). A row's "Migrated path" stays "—" until that capability is BOUND to the adapter runtime through `DOMAIN_OPERATION` (ADR-0020, Phase 3 `076eb6b`).
 > Parity is structural (HM §6: invariants + the nine canaries), never exact-output matching. Baseline caveat: the historical run FAILS canary 2.
 
 | Capability | Historical AutoResearch | Current governed path | Migrated path | Evidence level | Status | Notes |
@@ -11,8 +11,8 @@
 | VOI ranking | `rank_leads` | absent | — | READ | NOT STARTED | |
 | Evidence cards | 15 clusters, anchor / thin | absent (Trail owns independence) | — | HISTORICAL_ARTIFACT_ONLY | NOT STARTED | advisory only after migration |
 | Lived situations | 6 field-anchored (novel run) | absent | — | HISTORICAL_ARTIFACT_ONLY | NOT STARTED | |
-| Bridge validation | `bridge.validate_bridge / hop_refs` | schema + citation check only | — | READ | NOT STARTED | `bridge.py` has zero imports |
-| Portfolio validation | `validate_portfolio`, anchors | absent | — | READ | NOT STARTED | |
+| Bridge validation | `bridge.validate_bridge / hop_refs` | schema + citation check only | `DOMAIN_OPERATION` `ecommerce` / `hypotheses.validate_bridge` (`adapters/ecommerce/binding.py`) | INTEGRATION_EXECUTED (fixture manifest through `service.advance`, in-memory store) | BOUND — not yet in a product manifest | engine-shaped hypotheses; mapping onto `HypothesisStateV1` is Phase 5 |
+| Portfolio validation | `validate_portfolio`, anchors | absent | same operation (`portfolio_errors`); `validate_hypothesis_anchors` not yet bound | INTEGRATION_EXECUTED | BOUND (portfolio) · NOT STARTED (anchors) | the portfolio law sent a fixture run back to reasoning |
 | Hypothesis generation | 5 (3 supported / 2 rejected); 4 all rejected (novel) | 4 agent hypotheses, ledger + transitions | — | HISTORICAL_ARTIFACT_ONLY · REAL_INPUT_EXECUTED (R2a, to `L_judge`) | NOT STARTED | two lifecycles today |
 | Semantic review | 4 verdicts per run (fresh subagent) | Trail judge is the authority | — | HISTORICAL_ARTIFACT_ONLY | NOT STARTED | advisory after migration |
 | Gap compilation | 27 gaps / 189 queries | Trail `gaps.compile` (generic templates) | — | HISTORICAL_ARTIFACT_ONLY · REAL_INPUT_EXECUTED | NOT STARTED | split WHAT / HOW |
