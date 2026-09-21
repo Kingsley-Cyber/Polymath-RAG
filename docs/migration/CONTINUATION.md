@@ -15,10 +15,11 @@ deterministic Trail core) on the EXISTING adapter runtime. Harvest behaviour, no
 generic infrastructure.
 
 ## Current Phase
-**Phases 0–6 and 8 — DONE on the migration branch** (`072f1cc` import · `076eb6b` seam, ADR-0020 · `f20cf22` evidence intake · `92b9d76` / `4a938bd` / `7f87e57` domain operations · `92efc79` product manifest +
-complete scripted run + negative control · `b766678` TrailSignal core embedded, ADR-0021, first complete run against REAL TrailSignal code = a defensible rejection · `a1e886f` the governed dossier).
-**NEXT: Phase 7 (one registry) is the last code phase before the MERGE WINDOW; Phases 9–11 need the merged, bounced fleet.** All code on branch `migration/ecommerce-consolidation` (worktree
-`../pmv4-consolidation`), NOT merged; the live fleet is untouched; nothing pushed.
+**Phases 0–8 — DONE on the migration branch** (`072f1cc` import · `076eb6b` seam, ADR-0020 · `f20cf22` evidence intake · `92b9d76` / `4a938bd` / `7f87e57` domain operations · `92efc79` product manifest +
+complete scripted run + negative control · `b766678` TrailSignal core embedded, ADR-0021, first complete run against REAL TrailSignal code = a defensible rejection · `a1e886f` governed dossier · `4ebcd41`
+Phase 7 registry state measured + pinned, ONE owner decision open).
+**NEXT: the MERGE WINDOW — a live-fleet change (merge + `packageurl` install + ONE bounce). Everything before it that needs no live system is done except the two Phase 6 equivalence validations.**
+All code on branch `migration/ecommerce-consolidation` (worktree `../pmv4-consolidation`), NOT merged; the live fleet is untouched; nothing pushed.
 
 ## Repository State
 - polymath-v4 `production`: clean, docs only since `758ff8a`; 130+ commits ahead of `origin/main`, nothing pushed.
@@ -29,7 +30,7 @@ complete scripted run + negative control · `b766678` TrailSignal core embedded,
 - Hermes: deployed copy `standalone/opportunity-research` v2.3.0; three skill text files uncommitted (owner's commit).
 
 ## Current HEAD / Branch
-`production` (docs) · `migration/ecommerce-consolidation` @ `a1e886f` (code).
+`production` (docs) · `migration/ecommerce-consolidation` @ `4ebcd41` (code).
 
 ## Completed
 - Owner reframe recorded in the plan of record; harvest map written (registers 11.362; commits `59a4b60`, `9dfd3c3`).
@@ -63,6 +64,7 @@ Full table: `CAPABILITY_MAP.md` "Duplicate Authority Map".
 M-002 docs on `production`, code in the migration worktree · M-003 the bundle controls · M-004 baseline = existing runs · M-005 commerce corpus at Phase 10 after Item 2D ·
 **M-006** import via `git archive` (tracked files only), three exclusions, history: the engine lived here as `research/` until 11.274 retired it to the Hermes skill — the O6 dead-path guard stays green ·
 **M-007** the seam = one step type + out-of-process binding (rejected: `EXTERNAL_OPERATION` reuse, `VALIDATE` overload, in-process import, host-side only, SDK) ·
+**M-014** ONE governance registry (TrailSignal's); the engine mirror is a strict superset whose 10 extra friction families repair a gap in TrailSignal's own data — NOT merged, NOT relaxed: owner decision ·
 **M-013** the dossier renders HOST-SIDE from the journal with the engine's existing renderer; only the mapping + the five authority labels were added ·
 **M-012** (IMPLEMENTED `b766678`) embed the EXACT 16-module Trail closure byte-identical under `governance/trail/`, reached through the unchanged `TrailMCPClient` with an in-process transport, `POLYMATH_TRAIL_MODE` default `daemon`; trimming / D1 / registry reconciliation are separate later changes ·
 **M-011** `materials`: a manifest may SHOW an agent-answered step selected prior outputs (sibling key, additive); law loops end in a typed `law.refuse` gap; the evidence loop is bounded by research rounds ·
@@ -73,7 +75,7 @@ M-002 docs on `production`, code in the migration worktree · M-003 the bundle c
 ## Tests Passed
 In the migration worktree, database-free, `POLYMATH_PG_DSN` unset, under this repo's interpreter (`/Users/king/Documents/polymath-rebuild/polymath-v4/.venv/bin/python`, `PYTHONPATH=$PWD`): engine suite 609 / 609 + `doctor`
 (via `test_ecommerce_engine_import.py` 5) · `test_adapter_domain_operation.py` 25 · `…_knowledge_intake` 6 · `…_population_research` 6 · `…_lived_world` 7 · `…_products_supply` 7 · `…_product_research_e2e` 3 ·
-`test_trail_core_embedding.py` 4 · `test_adapter_ecommerce_dossier.py` 2 · the existing contract / evidence-surface / MCP parity / neutrality / purity / R5 audit / MCP server / research-package-removed suites · guards 0 / 0 / 0 / READY.
+`test_trail_core_embedding.py` 4 · `test_adapter_ecommerce_dossier.py` 2 · `test_registry_single_authority_state.py` 3 · the existing contract / evidence-surface / MCP parity / neutrality / purity / R5 audit / MCP server / research-package-removed suites · guards 0 / 0 / 0 / READY.
 Under TRAILSIGNAL'S interpreter (`~/trail-signal-os-worktrees/A41/.venv/bin/python`, it has `packageurl`): `test_trail_core_embedded.py` 4 · `test_adapter_ecommerce_product_research_embedded_trail.py` 1 — these two
 files SKIP with the reason printed under this repo's interpreter. Reusable: `tests/determinism/_adapter_memory_store.py`.
 
@@ -86,20 +88,21 @@ files SKIP with the reason printed under this repo's interpreter. Reusable: `tes
 - Pre-existing red determinism tests on `production` (3 attributed, 5 not baselined). Historical baseline fails canary 2 of 9.
 
 ## Current Blocker
-None. (The commerce corpus is pre-authorized by the policy and scheduled for Phase 10 — M-005. Item 2D must be merged before it.)
+None for worktree work. TWO owner items gate what follows:
+1. **The merge window** changes the LIVE system (merges `shared/` + `workers/` into the checkout the fleet runs, installs `packageurl` into its `.venv`, bounces the fleet). Prepared, not executed.
+2. **The 22 drifted registry rows** (M-014): upstream them into TrailSignal's registry or drop them. Until then governed population priors read the engine's superset mirror (and say so).
 
 ## Next Exact Action
-**Phase 7 — one registry.** Work in `../pmv4-consolidation`. Read first, then decide (M-014):
-1. Two physical registries now sit in one checkout: `governance/trail/data/*.csv` (TrailSignal's — THE governance authority, byte-pinned) and `adapters/ecommerce/registry/` (the engine's mirror, with recorded
-   drift: +6 seeds, +10 friction families, +6 niche candidates, plus the engine-only files `lenses.yaml`, `reasoning_motifs.yaml`, query templates). Diff them file by file (`comm` on sorted rows).
-2. Who reads the engine's copy in GOVERNED mode? Only `population.nominate` (`_registry_nominations`: seeds, friction families, predicate indexes) and `understanding.lenses` (`lenses.yaml`, engine-only). Option to
-   test first: point the engine's registry compiler at `governance/trail/data` for the SHARED tables when it runs inside this repo (an env var the binding sets, like `OPPORTUNITY_RESEARCH_REGISTRY=compile`), keep
-   engine-only files where they are, and report the drifted rows as a finding for the owner (upstream to TrailSignal or drop) — never silently merge them into the byte-pinned Trail data.
-3. Gate: governed population nomination reads TrailSignal's tables; the engine suite still passes standalone; the provenance pin is untouched.
-**Then the MERGE WINDOW** (needs the owner's go for the fleet bounce — a live-environment change): add `packageurl` to `pyproject.toml` + install; port TrailSignal's operation tests + recorded-envelope
-equivalence (`pmv4-m1-repro/tests/review_m1/fixtures/`); drain → merge `migration/ecommerce-consolidation` into `production` → run the Postgres-backed adapter suites → ONE `scripts/boot_polymath.sh` bounce → Hermes
-MCP reload → verify `adapter_list` shows `ecommerce.product_research`. **Then** Phase 9 (deploy the Hermes skill FROM `adapters/ecommerce/` with a version receipt; test whether Hermes can read a path under
-`~/Documents`), Phase 10 (merge Item 2D first; reconstruct the 10-document commerce corpus under a NEW corpus id), Phase 11 live rungs E (mechanical smoke) → F (one real ecommerce run) → G (negative control).
+**A. Still doable in the worktree (no live system):** Phase 6 validations 2–3 — port TrailSignal's own operation tests (`~/trail-signal-os-worktrees/A41/tests/integration/research/test_research_operations_store.py`,
+`tests/e2e/research/test_research_mcp_operations.py`) to run against `governance/trail/` and replay the recorded request envelopes under `pmv4-m1-repro/tests/review_m1/fixtures/` through `embedded.operate`, asserting
+the same results the daemon build produced. Run under TrailSignal's interpreter (`~/trail-signal-os-worktrees/A41/.venv/bin/python`).
+**B. The MERGE WINDOW (live-fleet change — confirm with the owner first):** (1) `pyproject.toml` + `packageurl-python`, install into `polymath-v4/.venv`; (2) check open adapter runs == 0; (3) merge
+`migration/ecommerce-consolidation` into `production` (expect trivial conflicts only in `PLAN-AUTHORITY-REGISTER.md` / `scaffold_polymath_v4.py` if production moved); (4) with the fleet DRAINED run the Postgres-backed
+adapter suites (`test_adapter_service_store`, `_harness_action`, `_evidence_boundary`, `_product_discovery_loop`); (5) ONE `scripts/boot_polymath.sh` bounce (one supervisor, always); (6) verify `/ready`, one bundle hash,
+`adapter_list` shows `ecommerce.product_research`, the embedded-core tests now pass under this repo's interpreter; (7) Hermes MCP reload. Keep `POLYMATH_TRAIL_MODE=daemon` until step C.
+**C. After the merge:** Phase 9 (deploy the Hermes skill FROM `adapters/ecommerce/` with a version receipt; test whether Hermes can read a path under `~/Documents`) · merge Item 2D (`pmv4-atom-scope`), then Phase 10
+(reconstruct the 10-document commerce corpus under a NEW corpus id) · Phase 11 live rungs: E mechanical smoke with `POLYMATH_TRAIL_MODE=embedded`, F one real ecommerce run (5–8 live runs first, staged), G negative control.
+**D. Owner decisions waiting:** the 22 registry rows (M-014) · the unconfirmed dossier specification · pre-existing red determinism tests · the three uncommitted Hermes skill text files.
 
 ## DO NOT REDO
 - The comparison, the dependency facts, the registry-drift check, the historical-run inspection (`CAPABILITY_MAP.md`, harvest map).
@@ -109,5 +112,5 @@ MCP reload → verify `adapter_list` shows `ecommerce.product_research`. **Then*
 
 ## Relevant Commits
 `production`: `59a4b60` · `9dfd3c3` · `23d517e` · `758ff8a` owner bundle · `988070a` M-006 + M-007 · `4e627dc` continuation after phases 2–3 · this commit (M-008, phase 4).
-`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366) · `4a938bd` Phase 5b (11.367) · `7f87e57` Phase 5c (11.368) · `92efc79` product manifest + complete run in test form (11.369) · `b766678` Phase 6 Trail core embedded + first run against real TrailSignal code (11.370, ADR-0021) · `a1e886f` Phase 8 governed dossier (11.371). Branch `review/m1-reproductions` `eb63bef`.
+`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366) · `4a938bd` Phase 5b (11.367) · `7f87e57` Phase 5c (11.368) · `92efc79` product manifest + complete run in test form (11.369) · `b766678` Phase 6 Trail core embedded + first run against real TrailSignal code (11.370, ADR-0021) · `a1e886f` Phase 8 governed dossier (11.371) · `4ebcd41` Phase 7 registry state (11.372). Branch `review/m1-reproductions` `eb63bef`.
 

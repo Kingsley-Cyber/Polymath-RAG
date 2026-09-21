@@ -496,3 +496,39 @@ Revert the mapping block; the synthesized single concept returns.
 
 #### Affected files / commits
 `migration/ecommerce-consolidation` `a1e886f` (register 11.371).
+
+### M-014 — Phase 7: "one registry" — what was decided here, and what is the owner's
+
+#### Question
+Two physical registries now sit in one checkout (TrailSignal's byte-pinned `governance/trail/data`, the engine's mirror `adapters/ecommerce/registry/trailsignal`). Can governed population nomination
+simply read TrailSignal's tables, making the mirror deletable?
+
+#### Evidence
+Row-level diff (2026-09-20): identical headers on the nine shared tables; the mirror is a STRICT SUPERSET (+10 friction families, +6 niche candidates, +6 seeds); nothing of TrailSignal's is missing from
+it. The redirect was tried: the engine's fail-closed registry compiler returns 236 errors on TrailSignal's tables — 236 of TrailSignal's own seeds reference friction families its `friction_library.csv`
+never defines; the mirror's 10 extra family rows are exactly those definitions. TrailSignal's own compiler tolerates the gap.
+
+#### Applicable migration invariants
+INV-3 one authority · INV-5 embedding changes the deployment boundary only · the standing rule "never tune a registry, gate, threshold or freshness window to pass" · stop condition 5.
+
+#### Decision
+Decided here: (1) the engine's compiler check is NOT relaxed; (2) TrailSignal's byte-pinned registry is NOT edited; (3) the state is pinned by `tests/contracts/test_registry_single_authority_state.py` so
+it can only change deliberately; (4) `population.nominate` names the registry source it used; (5) an unused hook (`OPPORTUNITY_RESEARCH_REGISTRY_SRC`) is ready. There is ONE GOVERNANCE registry
+(TrailSignal's: every admission, judgement, qualification, score); population PRIORS still come from the superset mirror.
+NOT decided here — the OWNER'S: upstream the 22 rows into TrailSignal's registry (re-pin `PROVENANCE.json`, delete the mirror, set the hook) or drop them (236 seeds then cannot be nominated). It
+changes what the governance registry can project, so it is not an "ordinary migration question".
+
+#### Alternatives rejected
+Relaxing the compiler · silently merging the 22 rows into the byte-pinned data · deleting the mirror now (population nomination would lose its registry lane).
+
+#### Why this is the smallest reversible choice
+Nothing authoritative changed; the facts are pinned.
+
+#### Reversibility
+n/a — no behaviour changed.
+
+#### Validation / proof
+The three contract pins; engine suite 609 / 609; `PROVENANCE.json` untouched.
+
+#### Affected files / commits
+`migration/ecommerce-consolidation` `4ebcd41` (register 11.372).
