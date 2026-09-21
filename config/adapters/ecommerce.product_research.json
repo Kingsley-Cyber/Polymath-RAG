@@ -1,6 +1,6 @@
 {
  "adapter_id": "ecommerce.product_research",
- "adapter_version": "0.3.0",
+ "adapter_version": "0.4.0",
  "workflow_version": "0.1.0",
  "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
@@ -2351,7 +2351,7 @@
    "step_id": "O_territory",
    "type": "EXTERNAL_OPERATION",
    "title": "Trail projects product territory priors and compiles the product-reality directive",
-   "next": "P_reality",
+   "next": "O_plan",
    "cognitive_op": "phi",
    "external": {
     "system": "trailsignal",
@@ -2360,11 +2360,28 @@
    }
   },
   {
+   "step_id": "O_plan",
+   "type": "DOMAIN_OPERATION",
+   "title": "Product reality: plan per concept (TrailSignal says WHAT, the domain says HOW)",
+   "next": "P_reality",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "product_reality.plan",
+    "inputs": {
+     "research_directive": "outputs.O_territory.research_directive",
+     "product_concepts": "outputs.N_concepts.product_concepts",
+     "mechanisms": "outputs.N_concepts.mechanisms",
+     "live_hypotheses": "context.hypotheses",
+     "semantics": "context.semantics.product_reality"
+    }
+   }
+  },
+  {
    "step_id": "P_reality",
    "type": "HARNESS_ACTION",
    "title": "Harness: product reality check",
    "next": "Q_admit",
-   "objective": "Investigate current products, alternatives, reviews, pricing, complaints and saturation for the candidate mechanisms; record sources, observations, tool trace and limitations.",
+   "objective": "Investigate current products, alternatives, reviews, pricing, complaints and saturation for the candidate mechanisms; record sources, observations, tool trace and limitations. Every search intent is a JOB for ONE concept (materials: `reality_plan` — concept_id, variation_id, hypothesis_id, job_class, query). For every product you observe record in the observation context: `concept: <concept_id>` (and `variation: <variation_id>` when the job names one) · `relation: competitor | substitute | current_solution | validates | solves` — `solves` means an existing product ALREADY does what that concept would · `product: <name as listed>` · `price as listed: <text>`. An observation without a `concept:` tag is never attached to a concept.",
    "harness": {
     "action_kind": "PRODUCT_REALITY_CHECK",
     "minimum_independent_sources": 3,
@@ -2381,7 +2398,10 @@
    },
    "config": {
     "show": {
-     "product_concepts": "outputs.N_concepts.product_concepts"
+     "product_concepts": "outputs.N_concepts.product_concepts",
+     "mechanisms": "outputs.N_concepts.mechanisms",
+     "reality_plan": "outputs.O_plan.reality_plan",
+     "planned": "outputs.O_plan.planned"
     }
    }
   },
@@ -2389,7 +2409,7 @@
    "step_id": "Q_admit",
    "type": "EXTERNAL_OPERATION",
    "title": "Trail admits market evidence (competition, price, complaints)",
-   "next": "R_qualify",
+   "next": "Q_join",
    "cognitive_op": "phi",
    "external": {
     "system": "trailsignal",
@@ -2398,6 +2418,28 @@
    },
    "config": {
     "stage": "product_reality"
+   }
+  },
+  {
+   "step_id": "Q_join",
+   "type": "DOMAIN_OPERATION",
+   "title": "Product reality: join existing products to the concept they test",
+   "next": "R_qualify",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "product_reality.join",
+    "inputs": {
+     "admissions": [
+      "outputs.Q_admit.evidence_admission"
+     ],
+     "receipts": [
+      "outputs.P_reality"
+     ],
+     "product_concepts": "outputs.N_concepts.product_concepts",
+     "mechanisms": "outputs.N_concepts.mechanisms",
+     "live_hypotheses": "context.hypotheses",
+     "reality_plan": "outputs.O_plan.reality_plan"
+    }
    }
   },
   {
@@ -2541,7 +2583,7 @@
    "type": "AGENT_REASON",
    "title": "Explain the score with record ids; define the cheapest falsification experiment",
    "next": "X_compile",
-   "objective": "Using the qualification and score records only, explain the outcome by record id, state what remains uncertain, and define the cheapest falsification experiment. Never alter, rank or normalise a Trail score.",
+   "objective": "Using the qualification and score records only, explain the outcome by record id, state what remains uncertain, and define the cheapest falsification experiment. Never alter, rank or normalise a Trail score. Materials show `concept_reality` and `existing_products`: a concept whose status is EXISTING_PRODUCT_CONTESTS is contradicted by a real product — say so and do not present it as an open opportunity; its sibling concepts stand or fall on their own products.",
    "constraints": [
     "Never alter, rank or normalise a Trail score",
     "Cite trail_score_refs (V_score record ids) and admitted field_evidence_ids from context"
@@ -2632,7 +2674,9 @@
      "product_concepts": "outputs.N_concepts.product_concepts",
      "leads": "outputs.T_leads.leads",
      "sourcing_coverage": "outputs.T_leads.sourcing_coverage",
-     "lived_situations": "outputs.K_situations.lived_situations"
+     "lived_situations": "outputs.K_situations.lived_situations",
+     "existing_products": "outputs.Q_join.existing_products",
+     "concept_reality": "outputs.Q_join.concept_reality"
     }
    }
   },
@@ -2735,7 +2779,10 @@
      "community_leads",
      "lenses",
      "corpus_questions",
-     "physical_jobs"
+     "physical_jobs",
+     "existing_products",
+     "concept_reality",
+     "reality_plan"
     ]
    }
   }

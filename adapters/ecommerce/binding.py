@@ -641,6 +641,66 @@ def _op_supply_leads(req: dict[str, Any]) -> dict[str, Any]:
             "mechanism_notes": notes, "note": note, "authority": "DOMAIN_JOIN_ONLY — qualification and score are TrailSignal's"}
 
 
+def _op_product_reality_plan(req: dict[str, Any]) -> dict[str, Any]:
+    """The product-reality half of `supply.plan` (restoration reference §10.2 / §10.3): TrailSignal's product-reality directive —
+    every governance field untouched — with its stage templates BOUND PER CONCEPT from the concept's market vocabulary (form factor
+    + the mechanism's `product_terms`) and its hypothesis's activity, one job per variation and one substitute job per concept.
+    Each job names its concept / variation / hypothesis / mechanism and asks the harness to record `concept:` (the supply lane's
+    convention) so the join never has to infer ownership. Every concept gets its first job before any gets its second; what did not
+    fit the query budget is counted."""
+    import copy
+
+    import product_reality as PR
+
+    ins = _inputs(req)
+    directive = ins.get("research_directive")
+    if not isinstance(directive, dict) or not directive.get("search_intents"):
+        raise Refusal("REALITY_DIRECTIVE_MISSING", "inputs.research_directive must be the product-reality directive TrailSignal compiled (with search_intents)")
+    concepts = [c for c in ins.get("product_concepts") or [] if isinstance(c, dict)]
+    if not concepts:
+        raise Refusal("PRODUCT_CONCEPTS_MISSING", "inputs.product_concepts must be the validated concepts")
+    mechs, notes = _mechanisms(ins)
+    views = {v.get("hypothesis_id"): v for v in ins.get("semantics") or [] if isinstance(v, dict) and v.get("hypothesis_id")}
+    out = copy.deepcopy(directive)
+    trail_intents = [i for i in out["search_intents"] if isinstance(i, dict)]
+    per_concept, unresolved = PR.plan(concepts, mechs, views, trail_intents)
+    names = {str(c.get("id")): str(c.get("name") or c.get("id")) for c in concepts}
+    unslotted = [ti for ti in trail_intents if not PR.QS.has_unbound_slot(ti.get("template"))]
+    cap = max(len(unslotted), min(100, int((directive.get("budget") or {}).get("max_queries") or 24)))
+    added, dropped, _ = _round_robin([[PR.intent_for(j, names[j["concept_id"]]) for j in jobs] for jobs in per_concept], {i.get("intent_id") for i in unslotted}, cap - len(unslotted))
+    issued = {i["intent_id"] for i in added}
+    jobs = [j for group in per_concept for j in group if j["job_id"] in issued]
+    out["search_intents"] = unslotted + added
+    if not out["search_intents"]:
+        raise Refusal("REALITY_PLAN_UNBOUND", "no product-reality job could be compiled: " + json.dumps(unresolved)[:600])
+    return {"research_directive": out, "reality_plan": jobs, "mechanism_notes": notes,
+            "planned": {"trail_intents": len(trail_intents), "concepts": len(concepts), "jobs": len(jobs), "dropped_over_budget": dropped,
+                        "concepts_without_a_job": sorted(set(names) - {j["concept_id"] for j in jobs}), "unresolved": unresolved[:100], "intent_cap": cap},
+            "governance_unchanged": all(out.get(k) == directive.get(k) for k in _DIRECTIVE_GOVERNANCE)}
+
+
+def _op_product_reality_join(req: dict[str, Any]) -> dict[str, Any]:
+    """The product-reality half of `supply.leads` (restoration reference §10.4 / §10.5): ADMITTED product-reality observations ->
+    existing products joined to the concept (and variation) whose job found them, by the explicit `concept:` tag only. A product
+    marked `relation: solves` — or admitted by TrailSignal as contradicting — CONTESTS that one concept; its siblings are untouched.
+    NO score and NO verdict: qualification and the only score are TrailSignal's."""
+    import product_reality as PR
+
+    ins = _inputs(req)
+    concepts = [c for c in ins.get("product_concepts") or [] if isinstance(c, dict)]
+    mechs, notes = _mechanisms(ins)
+    obs, sources = {}, {}
+    for rec in ins.get("receipts") or []:
+        if isinstance(rec, dict):
+            obs.update({o.get("observation_id"): o for o in rec.get("observations") or [] if isinstance(o, dict)})
+            sources.update({s.get("source_id"): s for s in rec.get("sources") or [] if isinstance(s, dict)})
+    admitted = [a for adm in ins.get("admissions") or [] for a in (adm or {}).get("admitted") or [] if isinstance(a, dict)]
+    joined = PR.join(admitted, obs, sources, concepts, mechs, [j for j in ins.get("reality_plan") or [] if isinstance(j, dict)], _context_field)
+    return {**joined, "mechanism_notes": notes, "authority": "DOMAIN_JOIN_ONLY — qualification and score are TrailSignal's",
+            "note": f"{joined['joined']['joined']} of {joined['joined']['admitted']} admitted observations joined to a concept by their `concept:` tag; "
+                    f"{sum(1 for c in joined['concept_reality'] if c['status'] == 'EXISTING_PRODUCT_CONTESTS')} concept(s) contested by an existing product"}
+
+
 def _op_refuse(req: dict[str, Any]) -> dict[str, Any]:
     """A law the agent could not satisfy within the loop budget ends the run HONESTLY: a typed gap carrying the law's own errors.
     A manifest routes here from a BRANCH; `config.code` names the refusal, `inputs.errors` (one list or several) says why."""
@@ -664,6 +724,8 @@ OPERATIONS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "hypotheses.validate_bridge": _op_validate_bridge,
     "research.plan": _op_research_plan,
     "products.validate_concepts": _op_validate_concepts,
+    "product_reality.plan": _op_product_reality_plan,
+    "product_reality.join": _op_product_reality_join,
     "supply.plan": _op_supply_plan,
     "supply.leads": _op_supply_leads,
     "law.refuse": _op_refuse,

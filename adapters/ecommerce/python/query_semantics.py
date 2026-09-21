@@ -87,13 +87,17 @@ def falsifier_query(view: Mapping[str, Any]) -> dict[str, Any]:
     return {"query": " ".join(_merge(voc["who"], voc["doing"], keywords(falsifier, 4))), "basis": ["population", "task", "falsifier"], "falsifier": str(falsifier)[:300]}
 
 
-def bind_template(template: str, view: Mapping[str, Any] | None) -> tuple[str | None, list[str]]:
-    """Trail's template with every slot bound from the hypothesis's state -> (text, []); or (None, [missing slot names])."""
+def bind_template(template: str, view: Mapping[str, Any] | None, *, overrides: Mapping[str, str] | None = None) -> tuple[str | None, list[str]]:
+    """Trail's template with every slot bound from the hypothesis's state -> (text, []); or (None, [missing slot names]).
+    `overrides`: a slot value the caller already compiled (product reality binds `{product_territory}` with the CONCEPT's market
+    phrase — form factor + the mechanism's `product_terms` — not with a registry territory)."""
     v = view or {}
     values: dict[str, str] = {}
     missing: list[str] = []
     for slot in dict.fromkeys(_SLOT.findall(template or "")):
-        if slot == "product_territory":
+        if (overrides or {}).get(slot):
+            value = " ".join(str(overrides[slot]).split())
+        elif slot == "product_territory":
             name = next((str(t.get("territory_name")) for t in v.get("territories") or [] if isinstance(t, Mapping) and t.get("territory_name")), "")
             value = " ".join(keywords(name, 4))
         else:

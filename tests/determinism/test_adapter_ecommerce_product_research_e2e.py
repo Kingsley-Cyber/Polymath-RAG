@@ -190,7 +190,9 @@ def _harness(step, rid):
         ctx = "community: r/running · activity: running · moment: during"
         rows = [(f"https://forum{i}.example/thread/{i}", "community_discussion", ctx, f"my keys bounced out of my pocket again on the trail ({i})") for i in range(5)]
     elif kind == "PRODUCT_REALITY_CHECK":
-        rows = [("https://shop.example/p/1", "product_review", "product: running belt", "the belt rides up and the keys still jingle")]
+        # restoration Slice 3: every product-reality intent is a JOB for one concept, and the harness records that concept's tag
+        concept = next(i["intent_id"].split(":")[1] for i in action["search_intents"] if ":pc_" in i["intent_id"])
+        rows = [("https://shop.example/p/1", "product_review", f"concept: {concept} · relation: competitor · product: running belt", "the belt rides up and the keys still jingle")]
     else:
         rows = [("https://www.supplier-a.example/item/a1", "supplier_listing", "listing: magnetic belt clip key holder · supplier: Example Hardware Co · price as listed: US$1.20-1.80 / piece · MOQ as listed: 500 pieces · concept: pc_1", "listing"),
                 ("https://www.supplier-b.example/item/b2", "supplier_listing", "listing: running wrist pouch wallet · supplier: unresolved · price as listed: $4.35 · MOQ as listed: 50 pcs · concept: pc_2", "listing")]
@@ -244,7 +246,7 @@ def test_one_complete_ecommerce_product_research_run(runtime):
     domain = [r for r in rows if r["step_type"] == "DOMAIN_OPERATION"]
     assert all(r["status"] == "executed" for r in domain) and not [s for s in order if s.startswith("Z_refuse")]
     assert [r["step_id"] for r in domain] == ["B_intake", "B_lenses", "C_lineage", "C_lineage", "C_population", "C_bridge_law", "C_bridge_law", "H_plan", "J_cards", "K_situations_law", "K_questions",
-                                              "N_concepts_law", "N_concepts_law", "S_plan", "T_leads"]
+                                              "N_concepts_law", "N_concepts_law", "O_plan", "Q_join", "S_plan", "T_leads"]              # Slice 3 added the product-reality plan + join; no stage moved
     assert st.branch_loops == 3                                                                            # three domain laws each sent one draft back through reasoning, then passed
     assert trail.calls == ["registry.project", "hypotheses.judge:filter", "gaps.compile", "evidence.admit:field_evidence", "hypotheses.judge:revision", "territory.project",
                            "evidence.admit:product_reality", "opportunity.qualify:market_delta", "gaps.compile:supply", "evidence.admit:supply", "opportunity.qualify:supply", "opportunity.score"]
@@ -262,6 +264,15 @@ def test_one_complete_ecommerce_product_research_run(runtime):
     assert agent.seen["K_situations"][0]["lived_clusters"][0]["authority"] == "ANCHOR"                       # 5 admitted records, 5 sources, 5 of TrailSignal's independence groups
     assert any("3–6 distinct product concepts" in e for e in agent.seen["N_concepts"][1]["previous_concept_errors"])
     assert agent.seen["W_interpret"][0]["trail_scores"][0]["record_id"] == "score-1" and agent.seen["W_interpret"][0]["score_refusals"]
+
+    # product reality is researched PER CONCEPT in market language, and what it finds is joined back to that concept (restoration Slice 3)
+    reality = actions["P_reality"][0]
+    jobs = [i for i in reality["search_intents"] if ":pc_" in i["intent_id"]]
+    assert not [i for i in reality["search_intents"] if "{" in (i.get("template") or "")] and {i["intent_id"].split(":")[1] for i in jobs} >= {"pc_1", "pc_2", "pc_3"}
+    assert reality["search_intents"][0]["intent_id"] == "si_skus"                                          # TrailSignal's own slot-free intent stays first, untouched
+    q_join = next(r["output"] for r in rows if r["step_id"] == "Q_join")
+    assert q_join["joined"]["joined"] == 1 and q_join["existing_products"][0]["concept_id"] == jobs[0]["intent_id"].split(":")[1]
+    assert q_join["existing_products"][0]["product_name"] == "running belt" and q_join["authority"].startswith("DOMAIN_JOIN_ONLY")
 
     # TrailSignal said WHAT, the domain said HOW — for field research and, per concept, for supply
     research, supply = actions["I_research"][0], actions["S_supply"][0]
