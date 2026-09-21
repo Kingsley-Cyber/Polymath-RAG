@@ -27,6 +27,7 @@
 | M-020 | Phase 10 input = the exact 10 documents of the former corpus, identified from residue with the repo's own identity function; NEW corpus id `commerce-v1`; residue pre-flight BEFORE the first upload; staged, smallest first | manifest done; ingestion waits for the merge |
 | M-021 | OWNER decisions 2026-09-21 executed: merge `item2/corpus-scoped-atoms` (done, `8ae4cf3`); per-friend principals REQUIRED — Server A = the one authorization boundary, file-backed registry, default-deny scopes, run ownership = `adapter_runs.owner_principal_id` (NOT `agent_identity`), software identity kept separate (ADR-0022) | built `5fde29f` on `hosted/mcp-principals`; merge waits for an ingestion-quiescent point |
 | M-022 | Small reorder of the owner's step 3 ↔ 4: corpus ingestion runs in batches (smallest first) so quiescent points exist; the principal layer is built in a worktree meanwhile and merged BETWEEN batches | in progress |
+| M-023 | Real E2E (owner direction 2026-09-21): corpus `cinema` for this run by the owner's word; embedded Trail is the LIVE mode with a durable store; seed chosen inside Trail's registered outdoor domain; the harness executes the system's directives as issued and reports weakness instead of repairing it; defects that END a run are fixed, quality findings are recorded | run 5 completed — Trail refused the score; 3 boundary defects fixed (11.381 – 11.383) |
 
 ## Decision template
 `### M-XXX — <title>` with `####` Question · Evidence · Applicable migration invariants · Decision · Alternatives rejected ·
@@ -832,4 +833,39 @@ The first-document gate (EXECUTED, live): atoms corpus-scoped (30 vs 609; a comm
 
 #### Affected files / commits
 none (ordering).
+
+### M-023 — The real ecommerce E2E: what was run, how, and what counts
+
+#### Question
+The owner asked for execution evidence that Polymath performs the complete ecommerce research job on real inputs, with the harness as executor (not as a replacement for the domain's planning), and said: for this prompt use the `cinema` corpus.
+
+#### Evidence
+The supervisor overlays the current `.env` on every spawn; nothing was leased and no adapter run was open → a clean restart was safe. No Trail daemon was listening; the embedded core + durable store passed a targeted governed check. Trail's
+registry covers outdoor activities incl. nature / landscape photography. `opencli` (Reddit, YouTube, Amazon) and Exa search / fetch were available — the tools the directives themselves name.
+
+#### Applicable migration invariants
+Ecommerce first · Trail remains deterministic and is never tuned to pass · evidence classes never overclaimed · no engine score in governed output · privacy (no author identities; artifacts with third-party text stay outside the repo) ·
+"blocking acceptance → address; otherwise reproduce, record, defer".
+
+#### Decision
+1. `POLYMATH_TRAIL_MODE=embedded` + `POLYMATH_TRAIL_STORE` in the live `.env`; the external daemon is not restored. 2. Seed inside Trail's registered domain AND the corpus's subject: outdoor / nature photographers handling camera gear on the
+trail. 3. Non-admin principal `prn_accept_e2e` through the hosted endpoint. 4. Directives are executed as issued, within budget, with every query in the tool trace; where a template's literal fill is poor, the literal fill is executed AND
+recorded beside any fill that uses adapter-supplied terms. 5. A defect that ENDS a run is fixed at its owner with a pinned test, then the run is repeated; a quality weakness is recorded, not repaired mid-run. 6. Replaying this agent's own
+earlier answers (ids remapped, queries re-executed) is allowed to reach the unexercised stages; fabricating an observation is not.
+
+#### Alternatives rejected
+Waiting for `commerce-v1` (owner said otherwise; two extractions are failing on a provider outage). Scripted receipts (forbidden). Hand-writing better queries than the directive's (hides the product's weakness). Treating the three early
+deaths as "defensible rejections" (they were software failures). Relaxing Trail's 14-day freshness or registering blogs to admit more evidence (tuning governance to pass).
+
+#### Why this is the smallest reversible choice
+Two `.env` lines; three narrow fixes (schema alignment, one SQL union, two cross-field checks); everything else is evidence.
+
+#### Reversibility
+Remove the two `.env` lines + bounce (daemon mode returns); `git revert` each fix merge.
+
+#### Validation / proof
+`docs/migration/PARITY_MATRIX.md` "Real-input capability coverage"; `eval/consolidation_e2e/2026-09-21-real-ecommerce-e2e.json`; work-log `2026-09-21-real-ecommerce-e2e.md`; registers 11.381 – 11.384.
+
+#### Affected files / commits
+`production`: `655d45f` (receipt parity) · `66c3fb2` (D1) · `66c9898` (cross-field rules) · this commit (records).
 

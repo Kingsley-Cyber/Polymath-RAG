@@ -41,3 +41,48 @@
 | HTML rendering | no HTML exists for the qualified run | R2a dossier rendered | same file, `render` + `_render_governed` + `_render_lived_world`; five authority labels on every governed block | INTEGRATION_EXECUTED | MIGRATED | no engine score in a governed dossier; a refused run reads as a refusal; owner's dossier specification still UNCONFIRMED |
 | Hermes deployment | deployed copy v2.3.0, parity true | n/a | — | STATICALLY_VERIFIED | NOT STARTED | reason for the copy unknown |
 | Ecommerce corpus isolation | single-corpus era | `search_atoms` unscoped; fix parked uncommitted (Item 2D, 10 tests green in its worktree) | — | UNIT_EXECUTED (worktree) | PARKED | required before ANY second corpus |
+
+## Real-input capability coverage — 2026-09-21 (owner direction "finish core functionality"; corpus `cinema` by the owner's instruction for this run)
+
+Five REAL runs of `ecommerce.product_research` through the HOSTED endpoint (`https://mcp.kingsleylab.xyz/mcp`, host vantage) as the non-admin principal `prn_accept_e2e`, embedded Trail (`POLYMATH_TRAIL_MODE=embedded`, durable store), this
+session as agent host and harness executor with real web tools (`opencli` Reddit / YouTube / Amazon, Exa search + fetch). Evidence summary (no corpus text): `eval/consolidation_e2e/2026-09-21-real-ecommerce-e2e.json`. Artifacts (journal,
+receipts, tool traces, dossier) are kept OUTSIDE the repository: `~/PolymathRuntime/e2e/2026-09-21-real-ecommerce-e2e/`.
+
+| Run | Ended | Classification |
+|---|---|---|
+| 1 `adr_d503e87f…` | `J_admit` · `TRAIL_REFUSED` | FAILED (software): receipt ⇔ Trail contract drift → fixed 11.381 |
+| 2 `adr_47b7277c…` | `L_judge` · `PHI_VERDICT_INVALID` | FAILED (software): D1, an empty admission was not a citable cause → fixed 11.382 |
+| 3 `adr_ebbcdd56…` | `Z_refuse_lineage` · `LINEAGE_LAW_UNSATISFIED` | VALID typed refusal — caused by the harness driver replaying row ids this run did not retrieve (driver mistake; the law was right) |
+| 4 `adr_ebd92926…` | `Q_admit` · `TRAIL_REFUSED` | FAILED (software): Trail's cross-field receipt rule not checked at submit; triggered by a harness timestamp mistake → fixed 11.383 |
+| **5 `adr_c994b32a…`** | **`X_compile` · `completed`, 78 steps** | **VALID governed outcome: Trail REFUSED the score for all four hypotheses (`HARD_GATE_UNMET`)** |
+
+| Capability | Evidence (run 5 unless stated) | What happened |
+|---|---|---|
+| Hosted MCP, per-principal authz, run ownership | REAL_INPUT_EXECUTED | every run `owner_principal_id = prn_accept_e2e`, `agent_identity = claude-code/agent-host-e2e`; friend `adapter_cancel` = 403 |
+| Corpus knowledge → readable evidence rows | REAL_INPUT_EXECUTED | 122 → 200 refs from `cinema`; FINDING: the evidence-boundary WILDCARD pass returned 0 rows, the `retrieve` plan pass carried the run; the 60-row display cap returns the SAME first 60 rows at every step |
+| `knowledge.corpus_evidence`, `understanding.lenses`, lineage law | REAL_INPUT_EXECUTED | law looped once in run 1 (`doc:` / `fact:` rows are shown as citable but refused), passed first time afterwards; typed refusal proven in run 3 |
+| Population nomination, VOI, channel queries | REAL_INPUT_EXECUTED | 22 ranked leads; FINDING: queries are keyword fragments of the lead NAME / hypothesis STATEMENT — verbose agent wording gave 13 / 13 useless queries (run 1); plain community names + top-level gaps gave usable ones (run 2+) |
+| Hypothesis ledger (generate, revise ×11) | REAL_INPUT_EXECUTED | four hypotheses; revisions cite admitted evidence; contradiction kept |
+| Bridge + portfolio law | REAL_INPUT_EXECUTED | passed first time; bridges shrink honestly when a run does not retrieve a row |
+| Trail `registry.project` | REAL_INPUT_EXECUTED | snapshot `trs-da9942986e52f832`; territories projected: body_mounted_access, one_hand_controls, modular_carry, environmental_protection … |
+| Trail `hypotheses.judge` | REAL_INPUT_EXECUTED | ×3 per run: weakened → strengthened (carry, heavy lens) / weakened (buried accessories) / unchanged (rain) |
+| Trail `gaps.compile` (field, supply) | REAL_INPUT_EXECUTED | compiles ONLY a step's top-level `knowledge_gaps`; per-hypothesis gaps in the ledger are ignored (FINDING) ; adds its own gate gaps |
+| `research.plan` → directive | REAL_INPUT_EXECUTED | 66 intents / budget 24; intent ids Trail-valid after 11.381 |
+| Harness field research | REAL_INPUT_EXECUTED | 24 + 6 + 4 directed queries; 11 real sources, 26 observations incl. counter-evidence; limitations reported |
+| Trail `evidence.admit` | REAL_INPUT_EXECUTED | field: 8 / 20 admitted (8 `STALE_BEYOND_POLICY` at a 14-day policy, 4 `SOURCE_UNREGISTERED`), then 0 / 6, 0 / 0; product reality 5 / 9; supply 9 / 9. FINDING: the receipt has no polarity field — admitted counter-evidence is recorded "supporting" |
+| Evidence cards, lived clusters | REAL_INPUT_EXECUTED | 3 clusters, all THIN (one thread each; author identity deliberately not recorded → 1 voice) |
+| Lived situations law, corpus questions, revise, research loop ×3 | REAL_INPUT_EXECUTED | passed first time; a zero-admission round no longer kills the run (11.382) |
+| Physical jobs, mechanisms, product concepts + product-set law | REAL_INPUT_EXECUTED | 4 mechanisms, 5 distinct concepts × 2 variations, each on admitted evidence |
+| Trail `territory.project` | REAL_INPUT_EXECUTED | registry territories per hypothesis |
+| Product reality (real products / competitors) | REAL_INPUT_EXECUTED | Peak Design Capture V3 (≈10,600 ratings, 79.95 USD), PGYTECH Beetle V2 (59.95), NEEWER GP67 (39.99), Falcam F38 (≈59); review complaints (rigid / wide straps, two-handed release); it CUT AGAINST two concepts (shared plate exists; wide-strap fit exists). FINDING: the directive's 4 templates key on the registry territory name — literal fill finds articles, the adapter-supplied product terms find products |
+| Trail `opportunity.qualify` market_delta | REAL_INPUT_EXECUTED | carry hypothesis PROVISIONAL: competitor_review_analysis 1 / 2 ✗, current_price_checks 3 / 3 ✓ |
+| `supply.plan` (S_gaps → S_plan) | REAL_INPUT_EXECUTED | 10 concept-derived supplier queries (Alibaba, CJ) |
+| Supplier research (real sourcing) | REAL_INPUT_EXECUTED | 5 Alibaba listings with printed price tiers + MOQ + one lead time; CJ Dropshipping returned nothing usable (FAILED for that channel); no supplier offers a concept as designed — nearest components only |
+| `supply.leads` (price / MOQ parse, concept join, coverage) | REAL_INPUT_EXECUTED | 4 leads: Shenzhen Qiyu 10.19 USD MOQ 2 · Shenzhen Hqs 2.80 USD MOQ 10 · Zhongshan Letu 10 USD MOQ 1 · neoprene showroom 0.99 USD MOQ 100; `pc_5` UNSOURCED |
+| Trail `opportunity.qualify` supply | REAL_INPUT_EXECUTED | PROVISIONAL: current_price_checks 4 / 3 ✓, risk_review 0 / 1 ✗ |
+| Trail `opportunity.score` | REAL_INPUT_EXECUTED (refusal) | `HARD_GATE_UNMET` ×4; for the carry hypothesis exactly `market_delta:competitor_review_analysis, supply:risk_review`. A POSITIVE score: NOT_REACHED |
+| Interpretation + `X_compile` result + lineage | REAL_INPUT_EXECUTED | FINDING: the objective says "explain by record id" but only `trail_score_refs` may carry Trail record ids |
+| Governed dossier (engine renderer, host-side journal) | REAL_INPUT_EXECUTED (render) | verdict "GOVERNED — TRAIL REFUSED TO SCORE"; five authority labels, populations, clusters, situations, bridge, 22 admitted / 22 rejected with reasons, 5 concepts + variations, supplier leads with price / MOQ / URL, held + rejected paths, unresolved, audit. PRODUCT-ARTIFACT GAPS: no "existing products" section (admitted competitor names / prices appear only in the observation list), Trail qualification gate results are not rendered, URLs are text not links |
+| Trail audit store (durable, embedded) | REAL_INPUT_EXECUTED | 42 operations: admit 10 · gaps 10 · judge 12 · qualify 2 · score 1 · registry 5 · territory 2 |
+| Commerce corpus `commerce-v1` | NOT_REACHED for the E2E (owner: use `cinema`) | 10 / 10 documents uploaded; 4 `query_ready`; 4 complete-but-`reconciling`; 2 `extract` tickets FAILED after 3 attempts on provider HTTP 503 |
+| External-machine hosted acceptance | NOT_REACHED | every run here is host vantage |

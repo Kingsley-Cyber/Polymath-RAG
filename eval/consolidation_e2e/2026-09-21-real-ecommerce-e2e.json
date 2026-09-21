@@ -1,0 +1,488 @@
+{
+ "corpus": "cinema (owner instruction for this run)",
+ "date": "2026-09-21",
+ "endpoint": "https://mcp.kingsleylab.xyz/mcp",
+ "principal": "prn_accept_e2e (profile friend; corpus cinema; adapter ecommerce.product_research)",
+ "registry_snapshot": "trs-da9942986e52f832",
+ "runs": {
+  "run1": {
+   "admissions": [
+    {
+     "admitted": 0,
+     "rejected": {},
+     "sequence": 26,
+     "step": "I_research"
+    }
+   ],
+   "agent_identity": "claude-code/agent-host-e2e",
+   "agent_reason_steps": 5,
+   "branch_loops": 1,
+   "ended_at_step": "J_admit",
+   "gap": "TRAIL_REFUSED",
+   "harness_actions": 1,
+   "owner_principal_id": "prn_accept_e2e",
+   "run_id": "adr_d503e87fd8ab7223709e55eb532c075e",
+   "status": "terminal_gap",
+   "steps_accepted": 26,
+   "trail_operations": 4
+  },
+  "run2": {
+   "admissions": [
+    {
+     "admitted": 8,
+     "rejected": {
+      "SOURCE_UNREGISTERED": 4,
+      "STALE_BEYOND_POLICY": 8
+     },
+     "sequence": 23,
+     "step": "I_research"
+    },
+    {
+     "admitted": 0,
+     "rejected": {
+      "SOURCE_UNREGISTERED": 6
+     },
+     "sequence": 37,
+     "step": "I_research"
+    }
+   ],
+   "agent_identity": "claude-code/agent-host-e2e",
+   "agent_reason_steps": 9,
+   "branch_loops": 1,
+   "ended_at_step": "L_judge",
+   "gap": "PHI_VERDICT_INVALID",
+   "harness_actions": 2,
+   "owner_principal_id": "prn_accept_e2e",
+   "run_id": "adr_47b7277c04f3b756903ff89f796b35aa",
+   "status": "terminal_gap",
+   "steps_accepted": 45,
+   "trail_operations": 8
+  },
+  "run3": {
+   "admissions": [],
+   "agent_identity": "claude-code/agent-host-e2e",
+   "agent_reason_steps": 11,
+   "branch_loops": 11,
+   "ended_at_step": "Z_refuse_lineage",
+   "gap": "LINEAGE_LAW_UNSATISFIED",
+   "harness_actions": 0,
+   "owner_principal_id": "prn_accept_e2e",
+   "run_id": "adr_ebbcdd56f10ed4301c221b3e90cf39a8",
+   "status": "terminal_gap",
+   "steps_accepted": 39,
+   "trail_operations": 0
+  },
+  "run4": {
+   "admissions": [
+    {
+     "admitted": 8,
+     "rejected": {
+      "SOURCE_UNREGISTERED": 4,
+      "STALE_BEYOND_POLICY": 8
+     },
+     "sequence": 23,
+     "step": "I_research"
+    },
+    {
+     "admitted": 0,
+     "rejected": {
+      "SOURCE_UNREGISTERED": 6
+     },
+     "sequence": 37,
+     "step": "I_research"
+    },
+    {
+     "admitted": 0,
+     "rejected": {},
+     "sequence": 51,
+     "step": "I_research"
+    },
+    {
+     "admitted": 0,
+     "rejected": {},
+     "sequence": 67,
+     "step": "P_reality"
+    }
+   ],
+   "agent_identity": "claude-code/agent-host-e2e",
+   "agent_reason_steps": 14,
+   "branch_loops": 2,
+   "ended_at_step": "Q_admit",
+   "gap": "TRAIL_REFUSED",
+   "harness_actions": 4,
+   "owner_principal_id": "prn_accept_e2e",
+   "run_id": "adr_ebd9292682adebdbfeb0e4f000d7ee44",
+   "status": "terminal_gap",
+   "steps_accepted": 67,
+   "trail_operations": 13
+  },
+  "run5": {
+   "admissions": [
+    {
+     "admitted": 8,
+     "rejected": {
+      "SOURCE_UNREGISTERED": 4,
+      "STALE_BEYOND_POLICY": 8
+     },
+     "sequence": 23,
+     "step": "I_research"
+    },
+    {
+     "admitted": 0,
+     "rejected": {
+      "SOURCE_UNREGISTERED": 6
+     },
+     "sequence": 37,
+     "step": "I_research"
+    },
+    {
+     "admitted": 0,
+     "rejected": {},
+     "sequence": 51,
+     "step": "I_research"
+    },
+    {
+     "admitted": 5,
+     "rejected": {
+      "SOURCE_UNREGISTERED": 4
+     },
+     "sequence": 67,
+     "step": "P_reality"
+    },
+    {
+     "admitted": 9,
+     "rejected": {},
+     "sequence": 72,
+     "step": "S_supply"
+    }
+   ],
+   "agent_identity": "claude-code/agent-host-e2e",
+   "agent_reason_steps": 15,
+   "branch_loops": 2,
+   "ended_at_step": "X_compile",
+   "gap": null,
+   "harness_actions": 5,
+   "leads": [
+    {
+     "admitted_evidence_id": "fev_7e4963808e31",
+     "channel": "alibaba",
+     "concept_id": "pc_1",
+     "moq_units": 2,
+     "price_usd_low": 10.19,
+     "product_name": "Andoer CL-50LS Aluminum Alloy Quick Release Clamp and Quick Release Plate",
+     "supplier_name": "Shenzhen Qiyu Technology",
+     "url": "https://www.alibaba.com/product-detail/Andoer-CL-50LS-Aluminum-Alloy-Quick_1601524650451.html"
+    },
+    {
+     "admitted_evidence_id": "fev_08d140386696",
+     "channel": "alibaba",
+     "concept_id": "pc_2",
+     "moq_units": 10,
+     "price_usd_low": 2.8,
+     "product_name": "360 degrees Rotatable Backpack Shoulder Strap Mount Camera Holder",
+     "supplier_name": "Shenzhen Hqs Technology",
+     "url": "https://www.alibaba.com/product-detail/360degrees-Rotatable-Backpack-Shoulder-Strap-Mount_1600155230473.html"
+    },
+    {
+     "admitted_evidence_id": "fev_51989ca8223f",
+     "channel": "alibaba",
+     "concept_id": "pc_3",
+     "moq_units": 1,
+     "price_usd_low": 10.0,
+     "product_name": "XILETU XPA-1 Multi-Compatible Dovetail Adapter 1/4-3/8 Arca Swiss",
+     "supplier_name": "Zhongshan Letu Photographic Equipment Factory",
+     "url": "https://www.alibaba.com/product-detail/XILETU-XPA-1-Multi-Compatible-Dovetail_1601382054600.html"
+    },
+    {
+     "admitted_evidence_id": "fev_d9e369007519",
+     "channel": "alibaba",
+     "concept_id": "pc_4",
+     "moq_units": 100,
+     "price_usd_low": 0.99,
+     "product_name": "Neoprene camera wrap (showroom of several listings)",
+     "supplier_name": null,
+     "url": "https://www.alibaba.com/showroom/neoprene-camera-wrap.html"
+    }
+   ],
+   "owner_principal_id": "prn_accept_e2e",
+   "product_concepts": [
+    {
+     "id": "pc_1",
+     "name": "Universal-fit strap camera mount",
+     "variations": [
+      "wide-jaw clamp",
+      "webbing anchor"
+     ]
+    },
+    {
+     "id": "pc_2",
+     "name": "Articulating chest carry mount",
+     "variations": [
+      "damped pivot",
+      "big-lever release"
+     ]
+    },
+    {
+     "id": "pc_3",
+     "name": "Carry plate that is also a tripod plate",
+     "variations": [
+      "two dovetails in one",
+      "plate with strap lug and safety stops"
+     ]
+    },
+    {
+     "id": "pc_4",
+     "name": "Form-fitting soft camera wrap",
+     "variations": [
+      "body-and-lens sleeve set",
+      "wrap that opens into a mat"
+     ]
+    },
+    {
+     "id": "pc_5",
+     "name": "Back-carry harness for a lens on a monopod",
+     "variations": [
+      "sling with lens-foot lock",
+      "pack-side quiver"
+     ]
+    }
+   ],
+   "run_id": "adr_c994b32a8c7287a9b0508f1f3a4c42e8",
+   "sourcing_coverage": [
+    {
+     "concept_id": "pc_1",
+     "leads": 1,
+     "status": "sourced"
+    },
+    {
+     "concept_id": "pc_2",
+     "leads": 1,
+     "status": "sourced"
+    },
+    {
+     "concept_id": "pc_3",
+     "leads": 1,
+     "status": "sourced"
+    },
+    {
+     "concept_id": "pc_4",
+     "leads": 1,
+     "status": "sourced"
+    },
+    {
+     "concept_id": "pc_5",
+     "leads": 0,
+     "status": "unsourced"
+    }
+   ],
+   "status": "completed",
+   "steps_accepted": 78,
+   "trail": {
+    "market_delta": [
+     {
+      "gates": [
+       [
+        "competitor_review_analysis",
+        0,
+        2,
+        false
+       ],
+       [
+        "current_price_checks",
+        0,
+        3,
+        false
+       ]
+      ],
+      "hypothesis": [
+       "hyp_a5423927fff69cb4bc52eead"
+      ],
+      "state": "UNPROVEN"
+     },
+     {
+      "gates": [
+       [
+        "competitor_review_analysis",
+        0,
+        2,
+        false
+       ],
+       [
+        "current_price_checks",
+        0,
+        3,
+        false
+       ]
+      ],
+      "hypothesis": [
+       "hyp_2bb7c484b0dbf0327bb99c49"
+      ],
+      "state": "UNPROVEN"
+     },
+     {
+      "gates": [
+       [
+        "competitor_review_analysis",
+        0,
+        2,
+        false
+       ],
+       [
+        "current_price_checks",
+        0,
+        3,
+        false
+       ]
+      ],
+      "hypothesis": [
+       "hyp_5d3107aca1a541bc5b109baa"
+      ],
+      "state": "NO_DEFENSIBLE_BRIDGE"
+     },
+     {
+      "gates": [
+       [
+        "competitor_review_analysis",
+        1,
+        2,
+        false
+       ],
+       [
+        "current_price_checks",
+        3,
+        3,
+        true
+       ]
+      ],
+      "hypothesis": [
+       "hyp_4983a2b60d63ee405e9453ac"
+      ],
+      "state": "PROVISIONAL"
+     }
+    ],
+    "score_refusals": [
+     {
+      "detail": "HARD_GATE_UNMET: market_delta:competitor_review_analysis, market_delta:current_price_checks, supply:current_price_checks, supply:risk_review",
+      "hypothesis_id": "hyp_a5423927fff69cb4bc52eead",
+      "record_id": "score:a99bbea928ec3e5fc50829fe083a240c"
+     },
+     {
+      "detail": "HARD_GATE_UNMET: market_delta:competitor_review_analysis, market_delta:current_price_checks, supply:current_price_checks, supply:risk_review",
+      "hypothesis_id": "hyp_2bb7c484b0dbf0327bb99c49",
+      "record_id": "score:3ad79ca62c7ab6dd751874a7cb2c4c89"
+     },
+     {
+      "detail": "HARD_GATE_UNMET: market_delta:competitor_review_analysis, market_delta:current_price_checks, supply:current_price_checks, supply:risk_review",
+      "hypothesis_id": "hyp_5d3107aca1a541bc5b109baa",
+      "record_id": "score:3e4ed7564bc432e4bb1c6a22ec9df072"
+     },
+     {
+      "detail": "HARD_GATE_UNMET: market_delta:competitor_review_analysis, supply:risk_review",
+      "hypothesis_id": "hyp_4983a2b60d63ee405e9453ac",
+      "record_id": "score:fc42d2885eacc426cf675dcd2a5ea5e6"
+     }
+    ],
+    "scores": 0,
+    "supply": [
+     {
+      "gates": [
+       [
+        "current_price_checks",
+        0,
+        3,
+        false
+       ],
+       [
+        "risk_review",
+        0,
+        1,
+        false
+       ]
+      ],
+      "hypothesis": [
+       "hyp_a5423927fff69cb4bc52eead"
+      ],
+      "state": "UNPROVEN"
+     },
+     {
+      "gates": [
+       [
+        "current_price_checks",
+        0,
+        3,
+        false
+       ],
+       [
+        "risk_review",
+        0,
+        1,
+        false
+       ]
+      ],
+      "hypothesis": [
+       "hyp_2bb7c484b0dbf0327bb99c49"
+      ],
+      "state": "UNPROVEN"
+     },
+     {
+      "gates": [
+       [
+        "current_price_checks",
+        0,
+        3,
+        false
+       ],
+       [
+        "risk_review",
+        0,
+        1,
+        false
+       ]
+      ],
+      "hypothesis": [
+       "hyp_5d3107aca1a541bc5b109baa"
+      ],
+      "state": "NO_DEFENSIBLE_BRIDGE"
+     },
+     {
+      "gates": [
+       [
+        "current_price_checks",
+        4,
+        3,
+        true
+       ],
+       [
+        "risk_review",
+        0,
+        1,
+        false
+       ]
+      ],
+      "hypothesis": [
+       "hyp_4983a2b60d63ee405e9453ac"
+      ],
+      "state": "PROVISIONAL"
+     }
+    ]
+   },
+   "trail_operations": 18
+  }
+ },
+ "schema": "consolidation_real_e2e_summary.v1",
+ "seed": "Nature and outdoor photographers and filmmakers struggle to reach, steady and protect their camera gear with cold, wet hands while moving between shots on the trail",
+ "trail_audit_store": {
+  "operations": {
+   "evidence.admit": 10,
+   "gaps.compile": 10,
+   "hypotheses.judge": 12,
+   "opportunity.qualify": 2,
+   "opportunity.score": 1,
+   "registry.project": 5,
+   "territory.project": 2
+  },
+  "path": "/Users/king/PolymathRuntime/polymath-v4-trail-store.sqlite3"
+ },
+ "trail_mode": "embedded",
+ "vantage": "host (through the public hostname)"
+}
