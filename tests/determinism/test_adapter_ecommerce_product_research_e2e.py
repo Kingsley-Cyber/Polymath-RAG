@@ -51,7 +51,7 @@ class StubTrail:
 
     def handle(self, req: httpx.Request) -> httpx.Response:
         body = json.loads(req.content); name = body["params"]["name"]; r = body["params"]["arguments"].get("request") or {}; payload = r.get("payload") or {}
-        self.calls.append(name if name not in ("hypotheses.judge", "opportunity.qualify", "evidence.admit") else f"{name}:{payload['stage']}")
+        self.calls.append(name if name not in ("hypotheses.judge", "opportunity.qualify", "evidence.admit") and payload.get("stage") != "supply" else f"{name}:{payload['stage']}")
         ids = [h["hypothesis_id"] for h in payload.get("hypotheses") or []]
         env = {"operation_id": f"op-{len(self.calls)}", "operation_kind": name, "status_revision": 1, "registry_snapshot": SNAP}
         if name == "registry.project":
@@ -62,6 +62,8 @@ class StubTrail:
             adm = payload.get("latest_admission_id")
             result = {"verdicts": [{"hypothesis_id": ids[0], "kind": "STRENGTHEN", "polymath_transition": "STRENGTHEN", "cause_refs": [{"kind": "evidence_admission", "id": adm}],
                                     "reason_code": "INDEPENDENT_SUPPORT"}], "open_gaps": []}
+        elif name == "gaps.compile" and payload["stage"] == "supply":                    # TrailSignal compiles the supply directive here, from the qualification's open gaps
+            result = {"research_directive": _directive("si_supply", "supply", ["supply", "price"], "find supply feasibility")}
         elif name == "gaps.compile":
             d = _directive("q-complaint", "complaint", ["friction", "behavior", "workaround"], "find first-person field evidence")
             d["evidence_gaps"] = [{"gap_id": "gap_0", "hypothesis_id": ids[0], "question": "do runners complain that keys bounce out of pockets mid stride", "evidence_role": "friction"}]
@@ -81,7 +83,7 @@ class StubTrail:
                       "research_directive": _directive("si_skus", "competition", ["competition", "price"], "map current competing products")}
         elif name == "opportunity.qualify" and payload["stage"] == "market_delta":
             result = {"qualifications": [{"record_id": f"qual-market-{i + 1}", "stage": "market_delta", "state": "PROVISIONAL" if i == 0 else "UNPROVEN", "hypothesis_ids": [h]} for i, h in enumerate(ids)],
-                      "open_gaps": [], "research_directive": _directive("si_supply", "supply", ["supply", "price"], "find supply feasibility")}
+                      "open_gaps": [{"gap_id": "g-supply", "hypothesis_id": ids[0], "question": "is there a supplier under the target landed cost?", "evidence_role": "supply"}]}
         elif name == "opportunity.qualify":
             result = {"qualifications": [{"record_id": f"qual-supply-{i + 1}", "stage": "supply", "state": "PROMOTED" if i == 0 else "UNPROVEN", "hypothesis_ids": [h]} for i, h in enumerate(ids)]}
         elif name == "opportunity.score":
@@ -157,8 +159,9 @@ class Agent:
             return {"product_opportunity": {"product_concept": {"title": "stride-stable key carry", "mechanism_explanation": "holds a small item against the body", "population": "runners", "activity": "running",
                                                                 "context": "mid stride", "problem": "items bounce loose"},
                                             "evidence_chain": [{"hypothesis_id": live[0]}], "field_evidence_ids": fev[:2], "contradictions": [], "competing_products": [], "product_delta": "one-hand access",
-                                            "supply": {"supplier_url": mats["leads"][0]["url"], "unit_price": mats["leads"][0]["price_usd_low"], "moq": mats["leads"][0]["moq_units"]},
-                                            "trail_score_refs": [s["record_id"] for s in mats["trail_scores"]], "remaining_uncertainty": ["warm-season demand"], "cheapest_falsification_experiment": "concept interviews"}}
+                                            "supply": ({"supplier_url": mats["leads"][0]["url"], "unit_price": mats["leads"][0]["price_usd_low"], "moq": mats["leads"][0]["moq_units"]}
+                                                       if mats.get("leads") else None),                  # no lead -> no supply claim; never invent one
+                                            "trail_score_refs": [s["record_id"] for s in (mats.get("trail_scores") or []) + (mats.get("score_refusals") or [])], "remaining_uncertainty": ["warm-season demand"], "cheapest_falsification_experiment": "concept interviews"}}
         raise AssertionError(sid)
 
 
@@ -237,7 +240,7 @@ def test_one_complete_ecommerce_product_research_run(runtime):
                                               "N_concepts_law", "N_concepts_law", "S_plan", "T_leads"]
     assert st.branch_loops == 3                                                                            # three domain laws each sent one draft back through reasoning, then passed
     assert trail.calls == ["registry.project", "hypotheses.judge:filter", "gaps.compile", "evidence.admit:field_evidence", "hypotheses.judge:revision", "territory.project",
-                           "evidence.admit:product_reality", "opportunity.qualify:market_delta", "evidence.admit:supply", "opportunity.qualify:supply", "opportunity.score"]
+                           "evidence.admit:product_reality", "opportunity.qualify:market_delta", "gaps.compile:supply", "evidence.admit:supply", "opportunity.qualify:supply", "opportunity.score"]
 
     # the agent was SHOWN what it needed — the previous law's errors, the lived clusters, TrailSignal's own records (external-review finding M1-08)
     assert any("UNCLASSIFIED" in e for e in agent.seen["C_primitives"][1]["previous_lineage_errors"])
@@ -263,7 +266,7 @@ def test_one_complete_ecommerce_product_research_run(runtime):
     assert {c["concept_id"]: c["status"] for c in out["sourcing_coverage"]} == {"pc_1": "sourced", "pc_2": "sourced", "pc_3": "unsourced"}
     assert out["trail_scores"][0]["score"] == 0.61 and len(out["score_refusals"]) == 2                                      # the only score, and the refusals, are TrailSignal's
     assert out["lived_situations"][0]["authority"] == "FIELD_ANCHORED" and out["lived_clusters"][0]["independent_voices"] == 5
-    assert out["population_leads"] and out["lenses"] and out["product_opportunity"]["trail_score_refs"] == ["score-1"]
+    assert out["population_leads"] and out["lenses"] and out["product_opportunity"]["trail_score_refs"] == ["score-1", "score-2", "score-3"]   # the score AND the refusals, by record id
 
 
 class OneIdeaAgent(Agent):

@@ -342,10 +342,25 @@ from polymath_shared.adapter import trail_client as TC  # noqa: E402  (shared ty
 _TRAIL: TC.TrailMCPClient | None = None
 
 
+def _embedded_trail() -> TC.TrailMCPClient:
+    """POLYMATH_TRAIL_MODE=embedded (docs/migration/ADR-TRAIL-EMBEDDING.md): the SAME client, over an in-process transport that reaches
+    TrailSignal's deterministic core under `governance/trail/` — no daemon, no network. Loaded by file path so this module never imports
+    it by name; its audit store persists at POLYMATH_TRAIL_STORE (a file path; in memory when unset)."""
+    import importlib.util
+    path = pathlib.Path(__file__).resolve().parents[2] / "governance" / "trail" / "embedded.py"
+    spec = importlib.util.spec_from_file_location("polymath_governance_trail_embedded", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"embedded Trail core not found at {path}")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    store = mod.SqliteResearchStore(os.environ.get("POLYMATH_TRAIL_STORE") or None)
+    return TC.TrailMCPClient("http://trail.embedded/mcp", "in-process", transport=mod.transport(mod.build_service(store=store)))
+
+
 def trail() -> TC.TrailMCPClient:
     global _TRAIL
     if _TRAIL is None:
-        _TRAIL = TC.TrailMCPClient.from_env()
+        _TRAIL = _embedded_trail() if os.environ.get("POLYMATH_TRAIL_MODE", "daemon").strip().lower() == "embedded" else TC.TrailMCPClient.from_env()
     return _TRAIL
 
 
