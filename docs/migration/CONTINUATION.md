@@ -15,9 +15,11 @@ deterministic Trail core) on the EXISTING adapter runtime. Harvest behaviour, no
 generic infrastructure.
 
 ## Current Phase
-**Phases 0–1 — DONE.** **Phase 2 — import — DONE** (`072f1cc`). **Phase 3 — domain binding seam — DONE** (`076eb6b`, ADR-0020, M-007).
-**Phase 4 — EvidencePacket integration — DONE, gate MET** (`f20cf22`, M-008): the engine's understanding logic consumes the runtime's evidence-boundary rows and its lineage law governs the agent's interpretation, through `service.advance`.
-**NEXT: Phase 5 — restore ecommerce intelligence, in dependency order (population first).** All code is on branch `migration/ecommerce-consolidation` (worktree `../pmv4-consolidation`), NOT merged; the live fleet is untouched.
+**Phases 0–4 — DONE** (`072f1cc` import · `076eb6b` seam, ADR-0020 · `f20cf22` evidence intake).
+**Phase 5 — IN PROGRESS.** 5a DONE (`92b9d76`, M-009): `population.nominate` (leads + VOI + channel queries) and `research.plan` (TrailSignal's `research_directive` re-emitted with the engine's compiled channel
+intents; governance untouched; the unchanged runtime hands it to the harness).
+**NEXT: Phase 5b — evidence cards + lived situations AFTER admission, then hypotheses onto the one ledger, then products, product reality, supply.** All code on branch `migration/ecommerce-consolidation`
+(worktree `../pmv4-consolidation`), NOT merged; the live fleet is untouched.
 
 ## Repository State
 - polymath-v4 `production`: clean, docs only since `758ff8a`; 130+ commits ahead of `origin/main`, nothing pushed.
@@ -28,7 +30,7 @@ generic infrastructure.
 - Hermes: deployed copy `standalone/opportunity-research` v2.3.0; three skill text files uncommitted (owner's commit).
 
 ## Current HEAD / Branch
-`production` (docs) · `migration/ecommerce-consolidation` @ `b794b3a` (code).
+`production` (docs) · `migration/ecommerce-consolidation` @ `92b9d76` (code).
 
 ## Completed
 - Owner reframe recorded in the plan of record; harvest map written (registers 11.362; commits `59a4b60`, `9dfd3c3`).
@@ -47,8 +49,8 @@ On the migration branch: `adapters/ecommerce/` (the engine, its own layout, its 
 owns state. `service.py`, `transitions.py`, `store.py` and the three shipped manifests are unchanged. Live system: unchanged (four locations; governed adapter → Trail daemon over MCP).
 
 ## Capabilities Migrated
-IMPORTED: all (fixture-proven in place, 609 / 609). BOUND to the runtime (`adapters/ecommerce/binding.py` `OPERATIONS`):
-`knowledge.corpus_evidence` · `understanding.lenses` · `understanding.validate_primitives` · `hypotheses.validate_bridge`. In a product manifest: none yet.
+IMPORTED: all (609 / 609 in place). BOUND (`adapters/ecommerce/binding.py` `OPERATIONS`): `knowledge.corpus_evidence` · `understanding.lenses` · `understanding.validate_primitives` ·
+`population.nominate` · `hypotheses.validate_bridge` · `research.plan`. In a product manifest: none yet (fixture manifests only, under `tests/fixtures/adapter_domain_binding/`).
 
 ## Authority Map
 Polymath: knowledge, EvidencePacket, adapter runtime, ledger, lineage, MCP · ecommerce adapter (to be harvested): niche /
@@ -60,11 +62,12 @@ Full table: `CAPABILITY_MAP.md` "Duplicate Authority Map".
 M-002 docs on `production`, code in the migration worktree · M-003 the bundle controls · M-004 baseline = existing runs · M-005 commerce corpus at Phase 10 after Item 2D ·
 **M-006** import via `git archive` (tracked files only), three exclusions, history: the engine lived here as `research/` until 11.274 retired it to the Hermes skill — the O6 dead-path guard stays green ·
 **M-007** the seam = one step type + out-of-process binding (rejected: `EXTERNAL_OPERATION` reuse, `VALIDATE` overload, in-process import, host-side only, SDK) ·
+**M-009** Phase 5 shape: population discovery = research PLANNING; TrailSignal WHAT / engine HOW via the `research_directive` key (no runtime change); cards + lived situations AFTER admission using Trail's independence groups; governed operations compile the engine registry in memory ·
 **M-008** ONE evidence id space in governed mode (the runtime's ids; the engine's `polymath:chunk:` prefix is dropped at the binding); the engine's schema byte copies stay, pinned against this repo.
 
 ## Tests Passed
 In the migration worktree, all database-free, `POLYMATH_PG_DSN` unset: engine suite 609 / 609 + `doctor` · `test_ecommerce_engine_import.py` 5 (INV-7 privacy pins incl. a negative control) ·
-`test_adapter_domain_operation.py` 25 · `test_adapter_ecommerce_knowledge_intake.py` 6 · existing `test_adapter_contract_v1` / `_worker_evidence_surface` / `test_mcp_adapter_parity` / `_runtime_neutrality` / `_runtime_pure` / `_r5_audit` /
+`test_adapter_domain_operation.py` 25 · `test_adapter_ecommerce_knowledge_intake.py` 6 · `test_adapter_ecommerce_population_research.py` 6 · existing `test_adapter_contract_v1` / `_worker_evidence_surface` / `test_mcp_adapter_parity` / `_runtime_neutrality` / `_runtime_pure` / `_r5_audit` /
 `test_mcp_server_v2` / `test_research_package_removed` green · guards 0 / 0 / 0 / READY. Reusable asset: `tests/determinism/_adapter_memory_store.py` (runtime tests with NO Postgres).
 
 ## Known Failures
@@ -76,19 +79,20 @@ In the migration worktree, all database-free, `POLYMATH_PG_DSN` unset: engine su
 None. (The commerce corpus is pre-authorized by the policy and scheduled for Phase 10 — M-005. Item 2D must be merged before it.)
 
 ## Next Exact Action
-**Phase 5 — restore ecommerce intelligence.** Work in `../pmv4-consolidation`. The binding pattern is fixed: a throwaway engine state (`_engine_state`) holding what the manifest selected →
-the engine's own `(state, policies)` function → return the keys it wrote. Where logic is inlined in `controller.cmd_submit`, extract it into ONE engine function both paths call (as `validate_primitives`).
-1. **Population** (`adapters/ecommerce/python/lived_world.py`): bind `population.nominate` (`:234,279` nomination + `rank_leads` VOI `:218`), `population.validate_leads` (`:515`), `population.evidence_cards` (`:363,432`),
-   `population.gate` (`:61`), `population.validate_situations` (`validate_situations`), `knowledge.corpus_questions` (`:618`, the fix for defect D2). CAUTION: `structural_lookup` → `registry.load_snapshot()` WRITES
-   `registry/compiled/` when missing — a domain operation must not write into the repo: compile to a temp dir (env the binding sets) or refuse when the snapshot is absent.
-   Scouting itself is a `HARNESS_ACTION` (the host searches), not domain code; `field_records` reach the engine as the admitted-receipt observations — decide the mapping and record it (M-009).
-2. **Hypotheses onto the ONE ledger**: map engine bridge hypotheses (`path`, `evidence_boundary`, `hop_refs`, `target_mechanism`, `gaps`) ⇄ `HypothesisStateV1` (read `shared/polymath_shared/adapter/hypotheses.py`
-   `generate` / `REVISABLE_FIELDS` and `contracts/adapter/v1/hypothesis_state.schema.json` first). The engine's fields ride in the ledger's free / extension fields if the schema allows, else in the step output keyed by
-   `hypothesis_id`. Bind `hypotheses.validate_anchors` (`lived_world.py:580,606`) and the advisory review (`evaluator.py`) as ADVISORY only — Trail's `hypotheses.judge` stays the judge (INV-5).
-3. **Field research planning**: bind `research.channel_queries` (`executors.py:198-282`) so a `HARNESS_ACTION` directive carries compiled, source-specific queries. NOTE the neutrality test forbids source names in
-   MANIFESTS and the runtime — they may appear only in domain OUTPUT. Check how `service._compile_harness_action` builds the directive and whether a domain output can feed it without a runtime change.
-4. **Products / product reality / supply**: `ideation.validate_concepts` (`ideation.py:17`), `sourcing_plan_compiler`, supplier normalization + `_parse_price` / `_parse_moq`, the mechanism × supplier lead join.
-5. Draft `config/adapters/ecommerce.product_research.json` once population + hypothesis operations are bound. Do NOT edit `trail.product_discovery.json` (INV-9). Test every step with `_adapter_memory_store.py`.
+**Phase 5b onward.** Work in `../pmv4-consolidation`. Binding pattern (fixed): throwaway `_engine_state(...)` → the engine's own `(state, policies)` function → return the keys it wrote; logic inlined in
+`controller.cmd_submit` gets extracted into ONE engine function both paths call. Test pattern (fixed): `_exec(operation, inputs)` for one operation through the real executor, then a fixture manifest through
+`service.advance` on `_adapter_memory_store.py`; TrailSignal = `httpx.MockTransport` behind the production `TrailMCPClient` (see `test_adapter_ecommerce_population_research.py`).
+1. **Cards + lived situations after admission (M-009 §3).** Map ADMITTED observations → engine `field_records`: inputs are the newest `evidence_admission.admitted[]` (Trail: `admitted_evidence_id`, `observation_id`,
+   `source_id`, `evidence_role`, `independence_group`, `hypothesis_ids`) joined to the receipt's observations / sources (`contracts/adapter/v1/harness_receipt.schema.json`) and the engine's
+   `schemas/field_record.json`. Bind `population.evidence_cards` (`lived_world.cards` `:363`) using Trail's `independence_group` AS GIVEN (do not call `verifiers.independence_groups`), `population.gate` (`:432`, drop its
+   wall-clock `elapsed_min`), `population.validate_situations` (`:559`), `knowledge.corpus_questions` (`compile_corpus_questions` `:635` — feeds `F_retrieve`'s need; fixes D2; check how `_query_text` picks the need:
+   `config.query_from` only knows `hypotheses` — a `config.source: outputs.<step>.<key>` path may need `_query_text` to read `outputs`, a small worker change).
+2. **Hypotheses onto the ONE ledger.** Read `shared/polymath_shared/adapter/hypotheses.py` (`generate`, `REVISABLE_FIELDS`) + `contracts/adapter/v1/hypothesis_state.schema.json`. The engine's bridge fields (`path`,
+   `evidence_boundary`, `hop_refs`, `target_mechanism`, `gaps`, `lived_anchor_ids`) must ride WITH a ledger hypothesis (extension field if the schema allows; else a sibling output keyed by `hypothesis_id`). Then
+   `hypotheses.validate_bridge` + `validate_hypothesis_anchors` (`:597`) run on the θ output BEFORE Trail judges. The advisory review (`evaluator.py`) stays advisory.
+3. **Products**: extract + bind `ideation.validate_concepts` (`ideation.py:17`; ≥ 2 variations, ≥ 1 evidence ref, mechanism / population links). **Supply**: `executors.sourcing_plan_compiler` → a second `research.plan`-style
+   enrichment for the SUPPLIER_RESEARCH directive; supplier normalization + `_parse_price` / `_parse_moq`; the mechanism × supplier lead join. `sourcing_exa.py:49` hard-codes the supplier name as unresolved — improve, do not restore.
+4. Draft `config/adapters/ecommerce.product_research.json` (shape in M-009 §5) once 1–3 are bound; then Phase 6 (embed the Trail core — `ADR-TRAIL-EMBEDDING.md` is a DRAFT needing source verification).
 
 ## DO NOT REDO
 - The comparison, the dependency facts, the registry-drift check, the historical-run inspection (`CAPABILITY_MAP.md`, harvest map).
@@ -98,5 +102,5 @@ the engine's own `(state, policies)` function → return the keys it wrote. Wher
 
 ## Relevant Commits
 `production`: `59a4b60` · `9dfd3c3` · `23d517e` · `758ff8a` owner bundle · `988070a` M-006 + M-007 · `4e627dc` continuation after phases 2–3 · this commit (M-008, phase 4).
-`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365). Branch `review/m1-reproductions` `eb63bef`.
+`migration/ecommerce-consolidation`: `072f1cc` Phase 2 (11.363) · `076eb6b` Phase 3 (11.364, ADR-0020) · `f20cf22` + `b794b3a` Phase 4 (11.365) · `92b9d76` Phase 5a (11.366). Branch `review/m1-reproductions` `eb63bef`.
 

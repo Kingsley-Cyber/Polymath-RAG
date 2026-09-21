@@ -8,8 +8,8 @@
 |---|---|---|---|---|---|---|
 | Niche understanding | prompt, free-text `signal` | input validation only (`A_understand`) | — | HISTORICAL_ARTIFACT_ONLY / READ | NOT STARTED | output unvalidated in the original |
 | Knowledge intake + lenses + lineage law | `corpus_polymath.rows_from_packet`, `lens_gate`, `lineage_ref_errors` / `validate_relevance_map` | evidence-boundary rows reach the agent; no lens, no lineage law | `DOMAIN_OPERATION` `ecommerce` / `knowledge.corpus_evidence`, `understanding.lenses`, `understanding.validate_primitives` | INTEGRATION_EXECUTED (authoritative EvidencePacket example through `service.advance`, in-memory store) | BOUND — not yet in a product manifest | one id space = the runtime's evidence ids (M-008); not yet run on a live packet |
-| Population discovery | 62 leads over 5 lanes; communities outside the seed | absent | — | HISTORICAL_ARTIFACT_ONLY | NOT STARTED | LOST on the governed path |
-| VOI ranking | `rank_leads` | absent | — | READ | NOT STARTED | |
+| Population discovery | 62 leads over 5 lanes; communities outside the seed | absent | `DOMAIN_OPERATION` `population.nominate` | INTEGRATION_EXECUTED (real executor; 4 lanes incl. LATENT; deterministic) | BOUND — nomination + queries; instantiation from admitted observations pending | leads feed `research.plan` |
+| VOI ranking | `rank_leads` | absent | same operation (`ranked_lead_ids`, `batch`) | INTEGRATION_EXECUTED | BOUND | the engine's clock-stamping `queue` is not used |
 | Evidence cards | 15 clusters, anchor / thin | absent (Trail owns independence) | — | HISTORICAL_ARTIFACT_ONLY | NOT STARTED | advisory only after migration |
 | Lived situations | 6 field-anchored (novel run) | absent | — | HISTORICAL_ARTIFACT_ONLY | NOT STARTED | |
 | Bridge validation | `bridge.validate_bridge / hop_refs` | schema + citation check only | `DOMAIN_OPERATION` `ecommerce` / `hypotheses.validate_bridge` (`adapters/ecommerce/binding.py`) | INTEGRATION_EXECUTED (fixture manifest through `service.advance`, in-memory store) | BOUND — not yet in a product manifest | engine-shaped hypotheses; mapping onto `HypothesisStateV1` is Phase 5 |
@@ -18,6 +18,7 @@
 | Semantic review | 4 verdicts per run (fresh subagent) | Trail judge is the authority | — | HISTORICAL_ARTIFACT_ONLY | NOT STARTED | advisory after migration |
 | Gap compilation | 27 gaps / 189 queries | Trail `gaps.compile` (generic templates) | — | HISTORICAL_ARTIFACT_ONLY · REAL_INPUT_EXECUTED | NOT STARTED | split WHAT / HOW |
 | Channel-specific research | Reddit only executed; 6 other channels CODE | improvised by the agent in R2a (15 queries) | — | HISTORICAL_ARTIFACT_ONLY · REAL_INPUT_EXECUTED | NOT STARTED | |
+| Research planning (Trail WHAT / engine HOW) | `gap_compiler` + `channel_queries` (27 gaps / 189 queries) | TrailSignal generic templates only (defect D6) | `DOMAIN_OPERATION` `research.plan` enriches the `research_directive` the runtime already hands to the harness | INTEGRATION_EXECUTED (stub TrailSignal through the production client; contract-valid `HarnessActionV1`) + smoke on the real R2a directive | BOUND | Trail intents keep their slots first; overflow counted; no runtime change |
 | Field observation capture | 146 observations, 78 field records | 15 observations submitted in 3 receipts | — | HISTORICAL_ARTIFACT_ONLY · REAL_INPUT_EXECUTED | NOT STARTED | |
 | Evidence provenance | 0 / 146 carry harvest dates | harvest dates REQUIRED by the receipt builder | — | STATICALLY_VERIFIED · REAL_INPUT_EXECUTED | NOT STARTED | capture paths must stamp dates |
 | Product ideation | prompt + `validate_concepts` | `N_jobs` physical jobs | — | HISTORICAL_ARTIFACT_ONLY · STUBBED | NOT STARTED | governed side FIX only |
