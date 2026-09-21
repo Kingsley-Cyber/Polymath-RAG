@@ -309,3 +309,51 @@ Delete the line.
 
 #### Affected files / commits
 `migration/ecommerce-consolidation` `f20cf22` (register 11.365).
+
+### M-009 — Phase 5 shape: the engine's "field first, hypotheses second" order inside a runtime whose research requires a live hypothesis
+
+#### Question
+The engine scouts populations and builds lived situations BEFORE it hypothesizes. The governed runtime cannot: `service._compile_harness_action` returns None without a live hypothesis and a
+compiled `research_directive`, and Trail's admission rejects an observation not linked to a LIVE hypothesis (`HYPOTHESIS_LINK_MISSING`, `admission.py:209-211`). How is the engine's behaviour preserved
+without changing Trail's semantics (stop condition 5) or adding a second research loop?
+
+#### Evidence
+- `_compile_harness_action` reads the NEWEST prior step output that carries the key `research_directive` (`_gather(state.outputs, "research_directive", order)`), whoever produced it. Its
+  `search_intents[]` items allow `intent`, `evidence_goal`, `evidence_roles` and a free `template` string (`contracts/adapter/v1/harness_action.schema.json`).
+- The governed loop already is hypothesize → research → admit → revise (θ `REVISE` / `SPLIT`) → judge → loop (`M_loop`, 2 loops).
+- Engine population code is pure over a state dict: `lived_world.nominate` / `rank_leads` (VOI) / `cards` / `gate`, `executors.channel_queries` (7 channel procedures), `compile_corpus_questions`.
+  `registry.compile_registry()` builds the snapshot in memory in ~80 ms; `load_snapshot()` otherwise reads — and on a fresh checkout WRITES — `registry/compiled/`, and never rebuilds a stale file.
+- `tests/determinism/test_adapter_runtime_neutrality.py` forbids source and harness names in the runtime and in MANIFESTS; run-time DATA is not constrained.
+
+#### Applicable migration invariants
+INV-3 · INV-4 preserve proven behaviour · INV-5 Trail stays the deterministic judge · EXECUTION_PLAN Phase 5 ("Do not improvise queries that existing planners already know how to compile").
+
+#### Decision
+Harvest the behaviour onto the EXISTING loop; do not port the engine's order.
+1. **Population discovery becomes research PLANNING.** `population.nominate` runs after the primitives are accepted: leads, VOI ranking and per-lead channel queries are step output. First-round hypotheses
+   are generated WITH the leads in view, so every scouting query has a live hypothesis to attach to.
+2. **Trail says WHAT, the engine says HOW.** A domain operation placed after Trail's `gaps.compile` re-emits the `research_directive` unchanged in its governance fields (gaps, roles, freshness,
+   budget, hypothesis ids) and fills each search intent's `template` with the engine's compiled channel query — plus population-lead queries as extra intents under the same roles — within the intent
+   cap. The runtime picks it up with NO runtime change. Source names appear only in run-time data, never in a manifest or the runtime.
+3. **Evidence cards and lived situations move AFTER admission.** They are computed from ADMITTED observations and use Trail's independence groups as given (the engine's own independence arithmetic
+   stays standalone-only). Lived situations then ground `K_revise` (θ `REVISE` / `SPLIT`), which is where the engine's "anchor a hypothesis on a lived cluster" law applies.
+4. **Governed operations never touch the engine's registry build cache**: `OPPORTUNITY_RESEARCH_REGISTRY=compile` (set by the binding) makes `registry.load_snapshot()` compile in memory. Registry
+   AUTHORITY is unchanged here and is Phase 7.
+5. A NEW manifest `config/adapters/ecommerce.product_research.json` carries this shape. `trail.product_discovery.json` is not edited (INV-9).
+
+#### Alternatives rejected
+A pre-hypothesis scouting `HARNESS_ACTION` (needs a runtime change AND Trail would refuse its observations) · synthetic "population hypotheses" just to satisfy admission (pollutes the ledger with
+things nobody believes) · harness-side query planning only (host-specific; the R2a run showed hosts improvise) · editing Trail's admission rule (stop condition 5).
+
+#### Why this is the smallest reversible choice
+No runtime change, no Trail change; a new manifest plus wrapped engine functions.
+
+#### Reversibility
+Delete the manifest and the operations.
+
+#### Validation / proof
+Per operation: executor tests on the real engine code. Per segment: fixture runs through `service.advance` on the in-memory store with a stub Trail. The pin for point 2: the governance fields of the
+directive are byte-equal before and after enrichment, and the issued `HarnessActionV1` validates against its schema.
+
+#### Affected files / commits
+Planned on `migration/ecommerce-consolidation`: `adapters/ecommerce/binding.py`, `adapters/ecommerce/python/registry.py` (env switch), `config/adapters/ecommerce.product_research.json`, tests.
