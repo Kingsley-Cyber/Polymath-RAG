@@ -252,6 +252,11 @@ def compile_registry() -> tuple[dict | None, list[str]]:
 
 
 def load_snapshot() -> dict | None:
+    if os.environ.get("OPPORTUNITY_RESEARCH_REGISTRY") == "compile":
+        # governed mode (adapter runtime binding): never read or write the build cache — compile from the CSVs in memory,
+        # so a stale compiled file can never decide a governed run and a domain operation never writes into the checkout
+        snap, errors = compile_registry()
+        return None if errors or not snap else snap
     try:
         with open(OUT, encoding="utf-8") as f:
             return json.load(f)
