@@ -162,10 +162,11 @@ def activate_corpus(
     turn's normal retrieval must never break because activation failed.
 
     `diag` (optional out-param, CORPUS-EXPLORE-FIRING-V1): filled with `n_hits`, `fetch_errors` (the
-    swallowed per-corpus failures, by type name) and `n_candidates`, so a skipped failure is COUNTED, not
-    silent. Observability only — the returned candidates are identical with or without it."""
+    swallowed per-corpus failures, by type name) and `n_candidates` — plus `cross_corpus_dropped` ONLY when an atom owned by
+    another corpus was dropped (absent while the substrate contract holds) — so a skipped failure is COUNTED, not silent. Observability only — the returned candidates are identical with or without it."""
     hits: list = []
     errors: list[str] = []
+    cross = 0
     for cid in (corpus_ids or ()):
         if not cid:
             continue
@@ -174,12 +175,22 @@ def activate_corpus(
         except Exception as exc:  # noqa: BLE001 — additive; a fetch failure must never break the turn
             errors.append(type(exc).__name__)
             continue
-        hits.extend(rows or [])
+        # CORPUS ISOLATION (finish-line Item 2 / D): the substrate is corpus-scoped by contract (`search_atoms(corpus_ids=)`),
+        # so this is a tripwire, not the filter — an atom that says it belongs to ANOTHER corpus never activates here, and
+        # the drop is counted (0 when the contract holds). Rows that carry no corpus_id are legacy-shaped and pass.
+        for row in rows or []:
+            owner = row.get("corpus_id") if isinstance(row, dict) else None
+            if owner is not None and str(owner) != str(cid):
+                cross += 1
+                continue
+            hits.append(row)
     out = build_activation_candidates(
         hits, scout_nominations=scout_nominations,
         max_activations=max_activations, min_grounding=min_grounding, rrf_k=rrf_k)
     if diag is not None:
         diag.update({"n_hits": len(hits), "fetch_errors": errors, "n_candidates": len(out)})
+        if cross:                      # present ONLY on a violation: the healthy receipt keeps its pinned shape
+            diag["cross_corpus_dropped"] = cross
     return out
 
 

@@ -17,8 +17,9 @@ QUERIES = {
     "neg_cooking": "create an upbeat step-by-step cooking tutorial for a simple pasta dish",
 }
 N = 10
+CORPUS = sys.argv[2] if len(sys.argv) > 2 else "cinema"      # Item 2/D: the atom lookup is corpus-scoped by contract
 coll = pap.collection_name(active_contract().contract_id)
-out = {"collection": coll, "n_repeats": N, "queries": {}}
+out = {"collection": coll, "corpus_id": CORPUS, "n_repeats": N, "queries": {}}
 for key, q in QUERIES.items():
     rows = []
     for i in range(N):
@@ -31,7 +32,7 @@ for key, q in QUERIES.items():
             c = QdrantClient(url=get_settings().stores.qdrant_url, timeout=10)   # fresh client each time = the live path
             try:
                 t1 = time.perf_counter()
-                hits = pap.search_atoms(c, coll, qv, CONCEPT_ATOM_KINDS, k=12)
+                hits = pap.search_atoms(c, coll, qv, CONCEPT_ATOM_KINDS, k=12, corpus_ids=[CORPUS])
                 rec["search_ms"] = round((time.perf_counter() - t1) * 1000, 1)
             finally:
                 c.close()

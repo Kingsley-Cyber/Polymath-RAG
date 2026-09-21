@@ -143,17 +143,46 @@ def ingest_document_atoms(conn, client, *, embed, embedding_contract_id: str, di
             "by_kind": by_kind, "profile_contract": profile_contract}
 
 
-def search_atoms(client, collection: str, query_vec, kinds: Sequence[str], k: int = 12) -> list[dict]:
-    """Search the atom collection by the query vector, filtered to the given atom kinds →
-    [{doc_id, atom_kind, text, atom_id, score}] desc. Read-only routing lookup."""
+def corpus_scope(corpus_ids) -> list[str]:
+    """The corpus scope of an atom lookup: a de-duplicated list of non-empty corpus ids (a bare string is ONE id)."""
+    if isinstance(corpus_ids, str):
+        corpus_ids = [corpus_ids]
+    return list(dict.fromkeys(str(c) for c in (corpus_ids or ()) if c))
+
+
+def search_atoms(client, collection: str, query_vec, kinds: Sequence[str], k: int = 12, *,
+                 corpus_ids: Sequence[str]) -> list[dict]:
+    """Search the atom collection by the query vector, filtered to the given atom kinds AND to the given corpora →
+    [{doc_id, corpus_id, atom_kind, text, atom_id, score}] desc. Read-only routing lookup.
+
+    CORPUS ISOLATION (finish-line Item 2 / D): every corpus shares ONE atom collection, so the corpus scope is part of
+    the retrieval CONTRACT — `corpus_ids` is REQUIRED and rides INSIDE the Qdrant filter, so the nearest-neighbour
+    result itself is corpus-correct (never a post-filter over a cross-corpus top-k). No scope → no atoms (fail closed):
+    an unscoped lookup is how a corpus-A query activates a corpus-B concept."""
     from qdrant_client.http import models as qm
-    must = []
+    scope = corpus_scope(corpus_ids)
+    if not scope:
+        return []
+    must = [qm.FieldCondition(key="corpus_id", match=qm.MatchAny(any=scope))]
     ks = tuple(kinds or ())
     if ks:
         must.append(qm.FieldCondition(key="atom_kind", match=qm.MatchAny(any=list(ks))))
-    flt = qm.Filter(must=must) if must else None
-    res = client.query_points(collection, query=list(query_vec), using=VECTOR_NAME, query_filter=flt,
-                              limit=k, with_payload=["doc_id", "atom_kind", "text", "atom_id"])
-    return [{"doc_id": p.payload.get("doc_id"), "atom_kind": p.payload.get("atom_kind"),
+    res = client.query_points(collection, query=list(query_vec), using=VECTOR_NAME, query_filter=qm.Filter(must=must),
+                              limit=k, with_payload=["doc_id", "corpus_id", "atom_kind", "text", "atom_id"])
+    return [{"doc_id": p.payload.get("doc_id"), "corpus_id": p.payload.get("corpus_id"), "atom_kind": p.payload.get("atom_kind"),
              "text": p.payload.get("text"), "atom_id": p.payload.get("atom_id"), "score": p.score}
             for p in res.points]
+
+
+def count_atoms(client, collection: str, kinds: Sequence[str], *, corpus_ids: Sequence[str], exact: bool = False) -> int:
+    """How many atoms of these kinds exist INSIDE the corpus scope (the "is there anything to search" diagnostic).
+    Same scope rule as `search_atoms`: no scope → 0."""
+    from qdrant_client.http import models as qm
+    scope = corpus_scope(corpus_ids)
+    if not scope:
+        return 0
+    must = [qm.FieldCondition(key="corpus_id", match=qm.MatchAny(any=scope))]
+    ks = tuple(kinds or ())
+    if ks:
+        must.append(qm.FieldCondition(key="atom_kind", match=qm.MatchAny(any=list(ks))))
+    return int(client.count(collection, exact=exact, count_filter=qm.Filter(must=must)).count)

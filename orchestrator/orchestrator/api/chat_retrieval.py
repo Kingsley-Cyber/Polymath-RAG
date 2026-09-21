@@ -327,7 +327,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                 from polymath_shared.document_profile import profile_atom_projection as _pap
                 try:
                     for h in _pap.search_atoms(client, _pap.collection_name(cid), qv, atom_kinds,
-                                               k=int(getattr(budget, "atom_k", 12))):
+                                               k=int(getattr(budget, "atom_k", 12)), corpus_ids=[corpus_id]):
                         d = h.get("doc_id")
                         if d and d not in docs:
                             docs.append(d)
@@ -383,7 +383,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                 return []
             cid = _ac().contract_id
             atoms = [a for a in _pap.search_atoms(client, _pap.collection_name(cid), qv, kinds,
-                                                  k=int(budget.seealso_fanout_atoms)) if a.get("text")]
+                                                  k=int(budget.seealso_fanout_atoms), corpus_ids=[corpus_id]) if a.get("text")]
             if not atoms:
                 return []
             rows: list[dict] = []
@@ -845,7 +845,8 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
                     from polymath_shared.document_profile import profile_atom_projection as _pap
                     from polymath_shared.embedding_contracts import active_contract as _ac
                     cid = _ac().contract_id
-                    atoms = _pap.search_atoms(client, _pap.collection_name(cid), qvec, _WILDCARD_ATOM_KINDS, k=12)
+                    atoms = _pap.search_atoms(client, _pap.collection_name(cid), qvec, _WILDCARD_ATOM_KINDS, k=12,
+                                              corpus_ids=[corpus_id])
                     docs = list(dict.fromkeys(a.get("doc_id") for a in atoms if a.get("doc_id")))
                     maps = (_pmp.search_parent_maps(client, _pmp.collection_name(cid), qvec, docs, k=16)
                             if docs else [])
