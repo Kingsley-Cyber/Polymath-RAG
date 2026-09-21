@@ -726,6 +726,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/migration/ADR-TRAIL-EMBEDDING.md", "md", None),
     ("docs/migration/FINAL_MIGRATION_REPORT.md", "md", None),
     ("docs/migration/COMMERCE_CORPUS_MANIFEST.md", "md", None),
+    ("docs/migration/OWNER_DECISION_2026-09-21_MERGE_AND_PRINCIPALS.md", "md", None),
     # CONSOLIDATION MIGRATION Phase 2 — the ecommerce engine imported additively from TRAIL_AGENT_AUTORESEARCH @ a7baa66
     # (tracked files only; MIRROR_RECEIPT.json, .github/ and registry/friction_library.upstream.patch excluded — AUTO_DECISIONS M-006).
     ("adapters/ecommerce/.gitignore", "gitignore", None),

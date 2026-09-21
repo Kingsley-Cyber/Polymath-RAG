@@ -23,8 +23,10 @@
 | M-016 | Hermes keeps a physical copy (launchd cannot read `~/Documents`); produced by `scripts/deploy_ecommerce_skill.py`, proven by the engine's verifier | mechanism done `1d97536` |
 | M-017 | Item 2D committed on its own branch and pre-merged with `production` + the migration branch | done `5cd3cc1` |
 | M-018 | Owner bundle 2 installed byte-identical; plan renumbered (11 merge gate · 12 real E2E · 13 hosted MCP · 14 negative control · 15 cleanup); merge gate precedes Phase 10 in execution | locked |
-| M-019 | Phase 13 = a NEW read-only surface harness + the EXISTING lifecycle driver (`--mcp-url`) + a real agent host for the workflow; the harness found `upload_document` reading HOST paths for remote callers — confined to loopback callers on the branch; ONE shared key = no per-friend isolation (open, owner-visible) | harness + fix done `81a4472`; live after the merge |
+| M-019 | (per-friend isolation part RESOLVED by the owner → M-021) Phase 13 = a NEW read-only surface harness + the EXISTING lifecycle driver (`--mcp-url`) + a real agent host for the workflow; the harness found `upload_document` reading HOST paths for remote callers — confined to loopback callers on the branch; ONE shared key = no per-friend isolation (open, owner-visible) | harness + fix done `81a4472`; live after the merge |
 | M-020 | Phase 10 input = the exact 10 documents of the former corpus, identified from residue with the repo's own identity function; NEW corpus id `commerce-v1`; residue pre-flight BEFORE the first upload; staged, smallest first | manifest done; ingestion waits for the merge |
+| M-021 | OWNER decisions 2026-09-21 executed: merge `item2/corpus-scoped-atoms` (done, `8ae4cf3`); per-friend principals REQUIRED — Server A = the one authorization boundary, file-backed registry, default-deny scopes, run ownership = `adapter_runs.owner_principal_id` (NOT `agent_identity`), software identity kept separate (ADR-0022) | built `5fde29f` on `hosted/mcp-principals`; merge waits for an ingestion-quiescent point |
+| M-022 | Small reorder of the owner's step 3 ↔ 4: corpus ingestion runs in batches (smallest first) so quiescent points exist; the principal layer is built in a worktree meanwhile and merged BETWEEN batches | in progress |
 
 ## Decision template
 `### M-XXX — <title>` with `####` Question · Evidence · Applicable migration invariants · Decision · Alternatives rejected ·
@@ -764,3 +766,70 @@ Delete the file.
 
 #### Affected files / commits
 `docs/migration/COMMERCE_CORPUS_MANIFEST.md` (this commit, `production`, docs only).
+
+### M-021 — Owner decisions of 2026-09-21: the production merge, and per-friend principals on the hosted surface
+
+#### Question
+The owner authorized the merge and resolved M-019's open item: friends never get the shared key; build the smallest durable per-principal authorization layer. A same-day clarification settled the architecture. What exactly
+was built, and where did the first draft go wrong?
+
+#### Evidence
+Owner text: `OWNER_DECISION_2026-09-21_MERGE_AND_PRINCIPALS.md` (transcribed) + the clarification (Server A = boundary; file-backed registry with key id, hashed secret, atomic updates, restrictive permissions, `--key-out`;
+`owner_principal_id` on the adapter run, prefer a first-class nullable column, NULL = legacy / trusted-local and never public; software identity separate; filtered listings; remote host-path upload permanently prohibited).
+Repository: no principal machinery existed; `adapter_runs` had `agent_identity` + `request_options` (schema-closed); `query_receipts.client` = the User-Agent; migrations are idempotent SQL applied by hand in a window; the
+orchestrator `:7200` is loopback-only and unauthenticated by design.
+
+#### Applicable migration invariants
+One authority per responsibility (Polymath owns the generic MCP surface and the adapter runtime). Smallest reversible change. No second state system. No weakening of a security boundary. Credentials are never printed.
+
+#### Decision
+ADR-0022. The gate in Server A authenticates → rate-limits → judges every `tools/call` (HTTP 401 / 403 / 429) before the MCP layer; the registry is a 0600 JSON file outside the repo managed by `scripts/mcp_principals.py`;
+the resolved `principal_id` travels to the loopback orchestrator in `X-Polymath-Principal`; `adapter_runs.owner_principal_id` (migration 0066) is written by `service.start` and enforced by `service.assert_owner`;
+`query_receipts.principal_id` + context-filtered history; `agent_identity` / `client` untouched in meaning. My FIRST draft reused `agent_identity` as the owner key (no schema change, no shared/ change) — the owner rejected
+that conflation before it was committed; it was removed, not layered over.
+
+#### Alternatives rejected
+See ADR-0022 "Alternatives rejected".
+
+#### Why this is the smallest reversible choice
+One module + one gate + one middleware + two nullable columns + one CLI; tool names / schemas, `AdapterRunStatusV1`, the legacy INSERT and every trusted-local caller are unchanged.
+
+#### Reversibility
+`git revert` the merge of `hosted/mcp-principals`; drop the two columns (statement in the migration header).
+
+#### Validation / proof
+Work-log `2026-09-21-hosted-mcp-principals.md` (register 11.379): 13 + 3 + 4 in process through the real gate / tools / adapter API / service; 33 on a throwaway Postgres with all 66 migrations. WORKTREE_INTEGRATION_PROVEN; not live.
+
+#### Affected files / commits
+`production` `8ae4cf3` (the merge), `63da5ce` (record). `hosted/mcp-principals` `5fde29f`.
+
+### M-022 — A small reorder: ingest in batches, merge the principal layer between batches
+
+#### Question
+The owner's order is corpus (3) → principals (4), and the clarification forbids bouncing fenced changes mid-ingestion. Ingesting all ten documents first would park the principal merge for hours; merging first would idle
+the fleet while the layer was still being written.
+
+#### Evidence
+The first document (43 kB) took 13 minutes to `query_ready`; the set is 6 MB. The principal layer touches `shared/` (fenced) and needs migration 0066 + a bounce. The pipeline is ticket-based and retries failed attempts
+(observed: an `extract` attempt failed on a provider 503 / timeout and was re-leased).
+
+#### Decision
+Ingest smallest-first in batches (1 → gate → 3 → …), build and prove the principal layer in a worktree meanwhile, and take the merge window (apply 0066 → merge → guards → boot → verify) at the first point where NO
+ingestion run is open; then continue the remaining documents. Nothing is bounced mid-run.
+
+#### Alternatives rejected
+All ten first (hours of idle critical path). Merge first (idle fleet, and the owner asked for the corpus gate before the rest).
+
+#### Why this is the smallest reversible choice
+Ordering only.
+
+#### Reversibility
+n/a.
+
+#### Validation / proof
+The first-document gate (EXECUTED, live): atoms corpus-scoped (30 vs 609; a commerce vector scoped to `cinema` returns only `cinema`; no scope → 0); 6 / 6 parents enriched FRESH and stamped `commerce-v1`; 0 cross-corpus
+`READY` reuse (the six 2026-09-03 `ecom-meta-v1` rows are orphans — the current chunker produces different parent ids); 11 / 11 evidence rows resolve to `commerce-v1` documents and 26 / 26 to `cinema` for the same question.
+
+#### Affected files / commits
+none (ordering).
+
