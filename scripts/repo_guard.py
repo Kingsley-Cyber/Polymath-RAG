@@ -31,6 +31,14 @@ IGNORED_PREFIXES = (
     "research/registry/patches/",
     "research/candidates/",
     "research/registry/research_evidence.csv",   # local field-evidence ledger (authors + quotes) — git-ignored, never source
+    # adapters/ecommerce/ (consolidation migration Phase 2) — the harvested engine's runtime artifacts, git-ignored by its own
+    # .gitignore: run state, compiled registry snapshot, review patches, candidate runs, exports, the private field-evidence ledger.
+    "adapters/ecommerce/state/",
+    "adapters/ecommerce/registry/compiled/",
+    "adapters/ecommerce/registry/patches/",
+    "adapters/ecommerce/candidates/",
+    "adapters/ecommerce/exports/",
+    "adapters/ecommerce/registry/research_evidence.csv",
     "stores/postgres/data/",
     "stores/qdrant/data/",
     "stores/neo4j/data/",

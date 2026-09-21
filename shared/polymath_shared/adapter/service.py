@@ -2,6 +2,8 @@
 (transitions/manifest/contracts) with the store; each public function runs inside the caller's transaction."""
 from __future__ import annotations
 
+import json
+
 import datetime as _dt
 import hashlib
 import uuid
@@ -137,8 +139,49 @@ def next_step(conn, run_id: str, directory: Path | None = None) -> dict[str, Any
     if st["status"] in ("awaiting_agent", "awaiting_harness"):
         row = store.current_step(conn, run_id)
         if row and row["status"] == "issued":
-            return {"kind": "step", "step": row["step"], "status": st, "evidence": _readable_evidence(conn, run_id, row["step"])}
+            out = {"kind": "step", "step": row["step"], "status": st, "evidence": _readable_evidence(conn, run_id, row["step"])}
+            materials = _materials(conn, run_id, row["step"], directory)
+            if materials is not None:
+                out["materials"] = materials
+            return out
     return {"kind": "status", "status": st}
+
+
+#: the most a step's `materials` may weigh on the wire (the agent still gets its step when a value does not fit — and is told which)
+MATERIALS_MAX_BYTES = 400_000
+
+
+def _materials(conn, run_id: str, step: dict[str, Any], directory: Path | None) -> dict[str, Any] | None:
+    """ADR-0020 addendum: an agent-answered step may be SHOWN selected prior step outputs. The manifest names them
+    (`config.show`: name -> dotted path over `outputs` / `input`); they travel as a SIBLING key of the step, exactly like
+    `evidence` — the AdapterStepV1 contract and the citation rules are unchanged, and nothing here is evidence. A manifest
+    without `config.show` yields no key at all. Reads stored state only; a failure is SAID, never raised."""
+    try:                                   # OPT-IN FIRST: if this step's manifest did not ask for materials — or that cannot even be determined — there is NO key
+        loaded = store.load_run(conn, run_id)
+        state = loaded[0] if loaded else None
+        show = (manifest_for(state.adapter_id, directory).step(step["step_id"]).get("config") or {}).get("show") if state else None
+    except Exception:  # noqa: BLE001
+        return None
+    if not isinstance(show, dict) or not show:
+        return None
+    try:
+        scope = {"outputs": state.outputs, "input": state.input}
+        values: dict[str, Any] = {}
+        missing, too_large, room = [], [], MATERIALS_MAX_BYTES
+        for name, dotted in show.items():
+            val = T._lookup(str(dotted), scope)
+            if val is None:
+                missing.append(name)
+                continue
+            size = len(json.dumps(val, ensure_ascii=False, default=str).encode())
+            if size > room:
+                too_large.append(name)
+                continue
+            room -= size
+            values[name] = val
+        return {"values": values, "missing": missing, "too_large": too_large, "authority": "PRIOR_STEP_OUTPUT — context for reasoning, never citable evidence"}
+    except Exception as exc:  # noqa: BLE001 — never let the readable view take adapter_next down
+        return {"values": {}, "missing": [], "too_large": [], "error": f"{type(exc).__name__}: {exc}"[:500]}
 
 
 def _readable_evidence(conn, run_id: str, step: dict[str, Any]) -> dict[str, Any]:

@@ -1,0 +1,1889 @@
+Yes. For **both new modes**—`MARKET_DISCOVERY` and `PRODUCT_ANCHORED_DISCOVERY`—I would give Fable the same production treatment you gave `NICHE_LOADOUT`: their own graph, bounded loop, Python deterministic control, prompts/schemas, SQLite Work Graph state, CSV/registry integration, ContextContracts, settings, report model, maintenance emissions, and shared research capabilities.
+
+The important architectural rule is:
+
+> **They are separate reasoning modes, not separate systems.**
+
+They should reuse the exact same controller/memory/context/browser/evidence/report infrastructure.
+
+---
+
+# 1. Final mode architecture
+
+You now have four primary research modes:
+
+```text
+opportunity-research/
+│
+├── OPPORTUNITY_RESEARCH
+│   Opportunity hypothesis → deep qualification
+│
+├── NICHE_LOADOUT
+│   Niche/community → lived world → 3–6 products
+│
+├── MARKET_DISCOVERY
+│   Broad market/category → promising niches/sub-niches
+│
+└── PRODUCT_ANCHORED_DISCOVERY
+    Existing product → strongest markets/niches/communities
+```
+
+Plus:
+
+```text
+REGISTRY_MAINTENANCE
+```
+
+as the shared maintenance mode.
+
+All use:
+
+```text
+controller.py
+graph.py
+memory.py
+context.py
+registry.py
+settings.py
+evidence.py
+comments.py
+trends.py
+research.py
+reports.py
+```
+
+where appropriate.
+
+No second SQLite.
+
+No second scraper.
+
+No second Polymath integration.
+
+No second evidence system.
+
+---
+
+# 2. Shared execution law
+
+Every mode remains:
+
+```text
+Control Graph
+=
+structure of one pass
+
+Loop Spec
+=
+bounded lifecycle across passes
+
+Python
+=
+deterministic φ authority
+
+θ
+=
+semantic generation/inference
+
+SQLite
+=
+durable run truth
+
+Registry CSV/YAML
+=
+versioned reusable priors
+
+Polymath
+=
+corpus/source knowledge
+
+Hermes
+=
+execution harness + web/browser + user interface
+```
+
+That remains constitutional.
+
+---
+
+# 3. Shared mode package pattern
+
+Conceptually:
+
+```text
+modes/
+│
+├── market_discovery/
+│   ├── control_graph.yaml
+│   ├── loop.yaml
+│   ├── policies.yaml
+│   ├── settings.yaml
+│   ├── prompts/
+│   ├── schemas/
+│   └── report/
+│
+└── product_anchored/
+    ├── control_graph.yaml
+    ├── loop.yaml
+    ├── policies.yaml
+    ├── settings.yaml
+    ├── prompts/
+    ├── schemas/
+    └── report/
+```
+
+Do not restructure working code just for folder aesthetics; this is the logical ownership model.
+
+---
+
+# 4. `MARKET_DISCOVERY` graph
+
+Its job:
+
+> Starting from a broad market/category/topic, discover and rank markets, niches, sub-niches, intersections, emerging queries, community surfaces and ecommerce whitespace worth deeper investigation.
+
+I would lock this graph:
+
+```text
+START
+ ↓
+01 MARKET_INTAKE
+ ↓
+02 RESOLVE_MARKET_IDENTITY
+ ↓
+03 LOAD_REGISTRY_PRIORS
+ ↓
+04 BUILD_INITIAL_MARKET_SCOPE
+ ↓
+────────────────────────────────────────
+       INDEPENDENT DISCOVERY LANES
+────────────────────────────────────────
+
+05A BLIND_FIELD_DISCOVERY
+    ├─ search
+    ├─ communities
+    ├─ current web
+    └─ current products
+
+05B TREND_DISCOVERY
+    ├─ Google Trends
+    ├─ related queries
+    ├─ rising queries
+    ├─ geography
+    └─ seasonality
+
+05C CORPUS_DISCOVERY
+    ├─ Polymath
+    ├─ behavioral structures
+    ├─ constraints
+    ├─ transferable invariants
+    └─ analogical opportunities
+
+05D SUPPLY_DISCOVERY
+    ├─ Alibaba category ontology
+    ├─ current product families
+    ├─ physical mechanisms
+    └─ supply-side surprises
+
+ ↓
+06 MERGE_MARKET_SIGNALS
+ ↓
+07 BUILD_QUERY_GRAPH
+ ↓
+08 BUILD_MARKET_LATTICE
+ ↓
+09 GENERATE_MARKET_FRONTIER
+ ↓
+10 FRONTIER_GATE
+      U_market(scope)
+ ↓
+11 DIVERSITY_FRONTIER_SELECT
+ ↓
+──────── MARKET GRANULARITY LOOP ───────
+ ↓
+12 COMMUNITY_SAMPLING
+ ↓
+13 COMMENT_STRENGTHENER
+ ↓
+14 BUILD_SIGNAL_DIVERGENCE
+ ↓
+15 WHITESPACE_MINING
+ ↓
+16 MARKET_HYPOTHESES
+ ↓
+17 EVIDENCE_GAPS
+ ↓
+18 VOI_GATE
+ ↓
+19 TARGETED_FIELD_RESEARCH
+ ↓
+20 MARKET_HYPOTHESIS_REVISION
+ ↓
+21 MARKET_ANALYSIS
+ ↓
+22 MARKET_SKEPTIC
+ ↓
+23 PROMOTION_GATE
+ ↓
+24 SELECT 3–8 MARKET SCOPES
+ ↓
+25 COMMERCIAL_INTELLIGENCE
+ ↓
+26 MARKET_DISCOVERY_REPORT
+ ↓
+TERMINAL
+```
+
+---
+
+# 5. Why the four discovery lanes stay separated initially
+
+This is critical.
+
+### `BLIND_FIELD_DISCOVERY`
+
+Doesn't see corpus hypotheses.
+
+Find:
+
+```text
+current conversations
+current terminology
+communities
+weird products
+recent behavior
+new styles
+unexpected complaints
+```
+
+### `TREND_DISCOVERY`
+
+Find:
+
+```text
+search-interest movement
+query migration
+related concepts
+seasonality
+geographic concentration
+```
+
+### `CORPUS_DISCOVERY`
+
+Find:
+
+```text
+latent behavioral structures
+physical-job analogies
+underused mechanisms
+cross-domain transferable invariants
+```
+
+### `SUPPLY_DISCOVERY`
+
+Find:
+
+```text
+things manufacturers can make
+unexpected product forms
+adjacent product families
+cross-category mechanisms
+```
+
+Only after this:
+
+```text
+MERGE_MARKET_SIGNALS
+```
+
+This protects against anchoring.
+
+---
+
+# 6. `MarketLattice`
+
+Do not create a single niche tree.
+
+Canonical object:
+
+```yaml
+market_scope:
+  scope_id:
+
+  market:
+  niche:
+  subniche:
+
+  dimensions:
+    experience_level:
+    activity:
+    context:
+    life_role:
+    lifestyle:
+    relational:
+
+  origin:
+    FIELD |
+    TRENDS |
+    CORPUS |
+    SUPPLY |
+    REGISTRY |
+    THETA
+
+  status:
+    PROVISIONAL | RETAINED | COLLAPSED
+```
+
+So:
+
+```text
+Running
+× long-distance
+× high-mileage
+× hot-weather
+```
+
+can be a MarketScope without becoming a permanent taxonomy row.
+
+---
+
+# 7. `QueryGraph`
+
+This should be first-class.
+
+```text
+running
+  ↓
+running shorts
+  ↓
+split shorts
+  ↓
+high split running shorts
+```
+
+But also lateral:
+
+```text
+running
+ ├─ run club
+ ├─ anti chafe
+ ├─ running belt
+ └─ long run nutrition
+```
+
+Node:
+
+```yaml
+query_node:
+  id:
+  query:
+
+  parent_ids: []
+
+  origin:
+    TREND_RELATED |
+    COMMUNITY_LANGUAGE |
+    PRODUCT_TITLE |
+    CORPUS |
+    THETA |
+    SEARCH_SUGGESTION
+
+  semantic_cluster:
+  product_signal:
+  community_signal:
+
+  trend_receipt_id:
+  evidence_refs: []
+```
+
+This gives you query lineage rather than a bag of keywords.
+
+---
+
+# 8. `SignalDivergence`
+
+I would definitely make this Python-controlled.
+
+```yaml
+signal_divergence:
+  scope_id:
+
+  search_interest:
+  community_activity:
+  commerce_supply:
+  product_saturation:
+  workaround_density:
+
+  patterns:
+    - EARLY_EMERGENCE
+    - MATURE_COMMODITY
+    - PRE_CATEGORY
+    - COMMUNITY_COMMERCE_GAP
+```
+
+Examples:
+
+```text
+community ↑
+search interest low
+supply low
+
+→ EARLY_EMERGENCE
+```
+
+or:
+
+```text
+search high
+supply massive
+community complaints generic
+
+→ MATURE_COMMODITY
+```
+
+This can be extremely useful for blue-ocean discovery.
+
+---
+
+# 9. `WhitespaceHypothesis`
+
+Core object:
+
+```yaml
+whitespace_hypothesis:
+  id:
+  market_scope_id:
+
+  type:
+    PRODUCT_WHITESPACE |
+    MECHANISM_WHITESPACE |
+    CURATION_WHITESPACE |
+    SUBNICHE_WHITESPACE |
+    STYLE_WHITESPACE |
+    CONTEXT_WHITESPACE |
+    VALUE_WHITESPACE
+
+  observed_mismatch:
+
+  supporting_signals: []
+  contradicting_signals: []
+
+  physical_jobs: []
+  product_territories: []
+
+  state:
+    PROPOSED |
+    SUPPORTED |
+    REFINED |
+    WEAKENED |
+    CONTRADICTED
+```
+
+---
+
+# 10. Market Discovery Python
+
+I would add shared or mode-specific functions in something like:
+
+```text
+python/market_discovery.py
+```
+
+or split if necessary.
+
+φ owns:
+
+```text
+resolve_market_scope()
+normalize_market_signal()
+build_query_graph()
+dedupe_queries()
+build_market_lattice()
+compute_market_surface_gain()
+compute_market_frontier_utility()
+diversity_select_frontier()
+compute_signal_divergence()
+detect_whitespace_patterns()
+build_market_evidence_gaps()
+rank_market_voi()
+revise_market_hypothesis_state()
+market_promotion_gate()
+```
+
+θ owns:
+
+```text
+propose market scopes
+infer latent niches
+semantic query expansion
+cross-domain analogies
+interpret divergence
+propose whitespace hypotheses
+```
+
+---
+
+# 11. Market Frontier formula
+
+Configurable, not law:
+
+[
+M(s)=
+w_AA+
+w_CC+
+w_WW+
+w_JJ+
+w_TT+
+w_SS+
+w_XX-
+w_RR-
+w_{sat}Sat
+]
+
+Where:
+
+```text
+A   = current attention
+C   = community richness
+W   = whitespace strength
+J   = physical-job richness
+T   = trend/currentness
+S   = physical-commerce reachability
+X   = cross-domain/corpus transfer value
+
+R   = redundancy
+Sat = saturation/commodity pressure
+```
+
+Then diversity-aware selection:
+
+[
+M'(s)=M(s)-\lambda\max_{x\in Selected}Sim(s,x)
+]
+
+Same controlled exploration logic.
+
+---
+
+# 12. Market Discovery loop
+
+Keep it bounded:
+
+```yaml
+loop:
+  id: market_discovery.v1
+
+  loops:
+
+    market_frontier:
+      max_rounds: 3
+
+    query_expansion:
+      max_rounds: 3
+
+    evidence_correction:
+      max_rounds: 2
+
+  stop_when:
+    - retained_market_scopes >= target
+    - marginal_frontier_gain_below_threshold
+    - query_graph_saturated
+    - critical_market_gaps_resolved
+
+  terminals:
+    - MARKET_SCOPES_READY
+    - NO_PROMISING_MARKETS
+    - INSUFFICIENT_CURRENT_SIGNAL
+    - BLOCKED
+    - STALLED
+    - EXHAUSTED
+```
+
+No long agent loop.
+
+---
+
+# 13. `PRODUCT_ANCHORED_DISCOVERY` graph
+
+This mode reverses direction.
+
+Goal:
+
+> Given a physical product, determine what it really is, what meanings/jobs surround it, who actually cares, which communities exist, and which market/niche positioning is most defensible.
+
+Graph:
+
+```text
+START
+ ↓
+01 PRODUCT_SEED_INTAKE
+ ↓
+02 PRODUCT_IDENTITY_RESOLUTION
+ ↓
+03 PRODUCT_CLAIM_QUARANTINE
+ ↓
+04 BUILD_PRODUCT_QUERY_GRAPH
+ ↓
+────────────────────────────────────────
+       INDEPENDENT DISCOVERY LANES
+────────────────────────────────────────
+
+05A BLIND_PRODUCT_FIELD
+    ├─ current web
+    ├─ communities
+    ├─ current product mentions
+    └─ marketplace language
+
+05B CORPUS_PRODUCT_REASONING
+    ├─ Polymath
+    ├─ physical interaction
+    ├─ behavioral mechanisms
+    └─ analogical markets
+
+05C COMMERCE_SCAN
+    ├─ Etsy/Amazon/current marketplace
+    ├─ competitors
+    ├─ positioning
+    ├─ related products
+    └─ price structure
+
+05D OPTIONAL_TREND_SENSOR
+
+ ↓
+06 MERGE_PRODUCT_SIGNALS
+ ↓
+07 USE_MEANING_DECOMPOSITION
+ ↓
+08 GENERATE_PRODUCT_MEANINGS
+ ↓
+09 GENERATE_MARKET_BRIDGES
+ ↓
+10 REVERSE_FIT_FRONTIER
+ ↓
+11 DIVERSITY_SELECT_MARKETS
+ ↓
+────── MARKET/SUBNICHE GRANULARITY LOOP ──────
+ ↓
+12 DISCOVER_COMMUNITIES
+ ↓
+13 COMMUNITY_RESEARCH
+ ↓
+14 COMMENT_STRENGTHENER
+ ↓
+15 BUILD_NICHE_LATTICE
+ ↓
+16 REVISE_MARKET_BRIDGES
+ ↓
+17 IDENTIFY_MARKET_GAPS
+ ↓
+18 VOI_GATE
+ ↓
+19 TARGETED_RESEARCH
+ ↓
+20 CURRENT_COMPETITION_ANALYSIS
+ ↓
+21 MARKET_BRIDGE_QUALIFICATION
+ ↓
+22 MARKET_REFRAME
+ ↓
+23 ADJACENT_MARKET / PRODUCT_DISCOVERY
+ ↓
+24 PRODUCT_MARKET_SKEPTIC
+ ↓
+25 COMMERCIAL_INTELLIGENCE
+ ↓
+26 PRODUCT_ANCHORED_REPORT
+ ↓
+TERMINAL
+```
+
+---
+
+# 14. Product identity has to be durable
+
+Canonical:
+
+```yaml
+product_identity:
+  product_id:
+
+  user_name:
+  canonical_name:
+  aliases: []
+
+  observable_properties:
+    material:
+    form:
+    size:
+    interaction:
+    category_candidates: []
+
+  source_refs: []
+
+  identity_state:
+    EXACT |
+    PROBABLE |
+    AMBIGUOUS |
+    UNRESOLVED
+```
+
+Do not let an ambiguous product proceed as if the name is certain.
+
+---
+
+# 15. `ProductClaim`
+
+Quarantine all input claims.
+
+```yaml
+product_claim:
+  id:
+  product_id:
+
+  claim:
+  origin:
+    USER |
+    SELLER |
+    MARKETPLACE |
+    CORPUS |
+    COMMUNITY
+
+  state:
+    UNVERIFIED |
+    SUPPORTED |
+    PARTIAL |
+    CONTRADICTED
+
+  claim_type:
+    FUNCTION |
+    HEALTH |
+    CULTURAL |
+    MATERIAL |
+    ORIGIN |
+    PERFORMANCE |
+    MARKET
+```
+
+The user's idea is allowed to guide research.
+
+It doesn't get evidence authority for free.
+
+---
+
+# 16. `ProductMeaning`
+
+Central object:
+
+```yaml
+product_meaning:
+  id:
+  product_id:
+
+  type:
+    FUNCTIONAL |
+    COLLECTOR |
+    HOBBY |
+    RITUAL |
+    IDENTITY |
+    AESTHETIC |
+    GIFT |
+    PERFORMANCE |
+    CONVENIENCE
+
+  interaction:
+  lived_situation:
+  job:
+  possible_participants: []
+
+  origin:
+  inference_distance:
+
+  state:
+    PROPOSED |
+    SUPPORTED |
+    REFINED |
+    CONTRADICTED
+```
+
+One object may have several meanings.
+
+That's exactly what makes inverted research useful.
+
+---
+
+# 17. `MarketBridge`
+
+Core reverse-search object:
+
+```yaml
+market_bridge:
+  id:
+  product_id:
+  meaning_id:
+
+  market_scope:
+  niche:
+  subniche:
+
+  lived_situations: []
+  jobs: []
+
+  community_refs: []
+  trend_refs: []
+  marketplace_refs: []
+  corpus_refs: []
+
+  supporting_evidence: []
+  contradicting_evidence: []
+
+  unsupported_hops:
+
+  state:
+    PROPOSED |
+    SUPPORTED |
+    REFINED |
+    WEAK |
+    CONTRADICTED |
+    UNSUPPORTED
+```
+
+This is what the mode actually evaluates.
+
+---
+
+# 18. Reverse-fit Python score
+
+Something like:
+
+[
+R(n|p)=
+w_mM+
+w_jJ+
+w_cC+
+w_lL+
+w_tT+
+w_dD+
+w_eE-
+w_aA-
+w_sS-
+w_rR
+]
+
+Where:
+
+```text
+M = mechanism/use fit
+J = lived-job fit
+C = community richness
+L = observed language/identity coherence
+T = currentness/search-interest support
+D = meaningful differentiation
+E = ecommerce compatibility
+
+A = unsupported inference distance
+S = saturation
+R = redundancy with retained market branches
+```
+
+Again: research priority, not success probability.
+
+---
+
+# 19. Product-Anchored Python
+
+`python/product_anchored.py` could own:
+
+```text
+resolve_product_identity()
+quarantine_claims()
+build_product_query_graph()
+normalize_product_signals()
+generate_meaning_candidates_validation()
+validate_market_bridge_shape()
+compute_reverse_fit()
+diversity_select_market_bridges()
+build_market_bridge_gaps()
+rank_product_market_voi()
+apply_bridge_revision()
+compute_market_reframe()
+detect_adjacent_products()
+detect_adjacent_markets()
+market_bridge_gate()
+```
+
+Do not let θ directly mutate bridge states.
+
+θ proposes semantic revision.
+
+Python applies legal transition.
+
+---
+
+# 20. Product-Anchored loop
+
+Only two meaningful loops:
+
+```yaml
+loop:
+  id: product_anchored.v1
+
+  loops:
+
+    market_frontier:
+      max_rounds: 3
+
+    evidence_correction:
+      max_rounds: 2
+
+  stop_when:
+    - top_market_bridges_decision_stable
+    - no_high_voi_gaps
+    - market_frontier_saturated
+
+  terminals:
+    - PRODUCT_MARKETS_READY
+    - PRODUCT_REFRAMED
+    - NO_DEFENSIBLE_MARKET
+    - PRODUCT_IDENTITY_UNRESOLVED
+    - BLOCKED
+    - STALLED
+    - EXHAUSTED
+```
+
+---
+
+# 21. Both modes reuse `COMMENT_STRENGTHENER`
+
+But its objective changes by mode.
+
+## Market Discovery
+
+Comments strengthen:
+
+```text
+market
+→ community
+→ lived problems
+→ whitespace
+```
+
+It extracts:
+
+```text
+sub-niche language
+current frustrations
+workarounds
+products
+style changes
+beginner/expert distinctions
+accepted suffering
+emerging terminology
+```
+
+## Product-Anchored
+
+Comments strengthen:
+
+```text
+product
+→ meaning
+→ behavior
+→ community
+→ market
+```
+
+It extracts:
+
+```text
+who uses it
+why they own it
+what they call it
+quality criteria
+ritual
+care/maintenance
+beginner misunderstandings
+expert preferences
+alternative uses
+adjacent products
+```
+
+Same engine.
+
+Different `CommentStrengthenerObjective`.
+
+---
+
+# 22. Shared `TrendSensor`
+
+Both modes reuse:
+
+```text
+TrendSignalReceipt
+```
+
+Market Discovery uses it for:
+
+```text
+query emergence
+market movement
+seasonality
+regional interest
+query migration
+```
+
+Product Anchored uses it for:
+
+```text
+product terminology
+related searches
+market wording
+seasonality
+product attention
+```
+
+Still optional.
+
+Still:
+
+```text
+SEARCH_INTEREST ≠ DEMAND
+```
+
+---
+
+# 23. CSV / registry ownership
+
+This is important.
+
+You do **not** need giant new CSV systems for both modes.
+
+Reuse current registry plus add only reusable conceptual seeds when evidence justifies them.
+
+Existing:
+
+```text
+outdoor_activity_niche_seed.csv
+friction_library.csv
+search_query_templates.csv
+scoring_rubric.csv
+niche_candidates.csv
+product_territories.csv
+activity_taxonomy.csv
+source_registry.csv
+seasonal_calendar.csv
+```
+
+Continue exactly as designed.
+
+For Market Discovery, these serve:
+
+```text
+activity_taxonomy
+→ known navigation priors
+
+friction_library
+→ universal friction patterns
+
+search_query_templates
+→ query grammar
+
+product_territories
+→ solution-space priors
+
+source_registry
+→ source routing
+
+seasonal_calendar
+→ timing priors
+
+niche_candidates
+→ seed theses, never truth
+
+AtomicActivitySeed packs
+→ lived-situation reasoning seeds
+```
+
+---
+
+# 24. Add only a few shared registry concepts
+
+I would consider:
+
+```text
+niche_scopes.yaml
+```
+
+already created.
+
+Potentially later:
+
+```text
+market_identifiers.csv
+reasoning_motifs.csv
+```
+
+But only if runtime candidates prove useful.
+
+`market_identifiers` could hold reusable intersection primitives such as:
+
+```text
+EXPERIENCE_LEVEL
+LIFE_ROLE
+LIFESTYLE
+RELATIONAL
+CONTEXT
+ACTIVITY
+```
+
+But don't prematurely enumerate every market combination.
+
+---
+
+# 25. Runtime discoveries do NOT immediately become CSV rows
+
+Both modes emit:
+
+```text
+MARKET_CANDIDATE
+SUBNICHE_CANDIDATE
+QUERY_PATTERN_CANDIDATE
+PRODUCT_MEANING_CANDIDATE
+REASONING_MOTIF_CANDIDATE
+SOURCE_CANDIDATE
+STYLE_SIGNAL_CANDIDATE
+```
+
+into SQLite.
+
+Then:
+
+```text
+REGISTRY_MAINTENANCE
+```
+
+decides whether reusable concepts should reach Git/CSV.
+
+---
+
+# 26. SQLite memory
+
+Both use the same database.
+
+No specialized tables required initially.
+
+Use generic:
+
+```text
+runs
+work_nodes
+work_edges
+actions
+events
+checks
+```
+
+Mode:
+
+```text
+run_type = MARKET_DISCOVERY
+```
+
+or:
+
+```text
+run_type = PRODUCT_ANCHORED_DISCOVERY
+```
+
+---
+
+# 27. Market Discovery Work Graph node kinds
+
+```text
+MARKET_SEED
+MARKET_SCOPE
+NICHE_SCOPE
+SUBNICHE_SCOPE
+INTERSECTION_SCOPE
+
+QUERY_NODE
+QUERY_CLUSTER
+
+MARKET_SIGNAL
+TREND_SIGNAL
+COMMUNITY_SIGNAL
+COMMERCE_SIGNAL
+SUPPLY_SIGNAL
+CORPUS_SIGNAL
+
+SIGNAL_DIVERGENCE
+
+WHITESPACE_HYPOTHESIS
+EVIDENCE_GAP
+RESEARCH_QUERY
+
+MARKET_HYPOTHESIS
+MARKET_ANALYSIS
+MARKET_SCOPE_RECOMMENDATION
+
+REPORT_MODEL
+```
+
+---
+
+# 28. Product-Anchored Work Graph nodes
+
+```text
+PRODUCT_SEED
+PRODUCT_IDENTITY
+PRODUCT_CLAIM
+
+PRODUCT_MEANING
+PRODUCT_INTERACTION
+LIVED_SITUATION
+PHYSICAL_JOB
+
+QUERY_NODE
+COMMUNITY_SIGNAL
+TREND_SIGNAL
+
+MARKET_SCOPE
+MARKET_BRIDGE
+
+MARKET_REFRAME
+ADJACENT_PRODUCT_SIGNAL
+ADJACENT_MARKET_SIGNAL
+
+EVIDENCE_GAP
+RESEARCH_QUERY
+REPORT_MODEL
+```
+
+---
+
+# 29. Useful edges
+
+Shared generic relationships:
+
+```text
+DERIVED_FROM
+SUPPORTED_BY
+CONTRADICTED_BY
+REFINES
+SUPERSEDES
+
+PARENT_OF
+APPLIES_TO
+REVEALS
+
+HAS_QUERY
+HAS_SIGNAL
+
+IMPLIES
+SERVES_JOB
+OCCURS_IN
+
+PROPOSES_MARKET
+BRIDGES_TO
+FITS_SCOPE
+
+ADJACENT_TO
+PROMOTED_TO
+```
+
+This remains Work Graph reasoning state.
+
+Not Polymath's factual graph.
+
+---
+
+# 30. ContextContracts are mandatory here too
+
+Example Market Discovery node:
+
+```yaml
+node:
+  id: corpus_discovery
+  type: reason
+
+  context:
+    require:
+      - market_seed
+      - market_scope
+
+    prefer:
+      - registry_snapshot
+
+    exclude:
+      - blind_field_findings
+      - trend_findings
+      - supply_findings
+```
+
+That exclusion is deliberate.
+
+It preserves independent lanes.
+
+Blind field:
+
+```yaml
+context:
+  require:
+    - market_seed
+    - canonical_market_identity
+
+  exclude:
+    - corpus_hypotheses
+    - supply_hypotheses
+    - whitespace_hypotheses
+```
+
+Same for Product-Anchored.
+
+---
+
+# 31. Context Compiler freezes each research lane
+
+SQLite stores:
+
+```text
+Action
++
+ContextEnvelope
++
+ContextManifest
+```
+
+So blind discovery is truly blind.
+
+A crash cannot accidentally rebuild it later with additional hypotheses included.
+
+That is a subtle but powerful property of your Context Compiler architecture.
+
+---
+
+# 32. Settings for Market Discovery
+
+User-safe settings:
+
+```yaml
+market_discovery:
+  breadth:
+    NARROW | BALANCED | BROAD
+
+  niche_granularity:
+    BROAD | NORMAL | GRANULAR
+
+  currentness:
+    EVERGREEN | BALANCED | CURRENT | TREND_SCOUT
+
+  trends:
+    OFF | AUTO | STRONG
+
+  corpus_influence:
+    LIGHT | BALANCED | STRONG
+
+  community_strength:
+    LIGHT | STANDARD | STRONG | VERY_STRONG
+
+  supply_discovery:
+    OFF | LIGHT | STANDARD
+
+  open_discovery:
+    LOW | NORMAL | HIGH
+
+  retained_markets:
+    3-8
+```
+
+Notice `corpus_influence` only changes generation/retrieval budget.
+
+It never raises corpus evidence authority.
+
+---
+
+# 33. Product-Anchored settings
+
+```yaml
+product_anchored:
+  market_breadth:
+    FOCUSED | BALANCED | BROAD
+
+  meaning_exploration:
+    CONSERVATIVE | BALANCED | CREATIVE
+
+  community_strength:
+    LIGHT | STANDARD | STRONG
+
+  trends:
+    OFF | AUTO | STRONG
+
+  corpus_reasoning:
+    LIGHT | BALANCED | STRONG
+
+  competition_depth:
+    LIGHT | STANDARD | DEEP
+
+  market_bridges:
+    target: 3
+
+  adjacent_discovery:
+    OFF | NORMAL | HIGH
+
+  marketplace_focus:
+    - ETSY
+    - AMAZON
+    - OTHER
+```
+
+Again:
+
+```text
+more creative meanings
+≠
+weaker proof requirements
+```
+
+---
+
+# 34. System-locked settings
+
+Both modes must preserve:
+
+```text
+supplier ≠ demand
+Trends ≠ sales
+comments ≠ prevalence
+simulation ≠ evidence
+corpus relevance ≠ current market proof
+seller claims ≠ facts
+failed search ≠ contradiction
+one viral thread ≠ independent community evidence
+```
+
+Cannot be user-disabled.
+
+---
+
+# 35. Maintenance
+
+Both modes feed the **same Registry Maintenance graph**.
+
+Market Discovery may emit reusable:
+
+```text
+NEW_MARKET_SCOPE
+NEW_SUBNICHE
+NEW_ACTIVITY
+NEW_QUERY_TEMPLATE
+NEW_SOURCE
+NEW_SEASONAL_PATTERN
+NEW_WHITESPACE_MOTIF
+```
+
+Product Anchored may emit:
+
+```text
+NEW_PRODUCT_MEANING
+NEW_MARKET_BRIDGE_PATTERN
+NEW_QUERY_PATTERN
+NEW_REASONING_MOTIF
+NEW_ADJACENCY_PATTERN
+```
+
+Maintenance asks:
+
+```text
+Is it recurring?
+Is it reusable?
+Does it improve reasoning?
+Can an existing primitive represent it?
+Is it evidence-backed across runs?
+```
+
+Then:
+
+```text
+EXISTING
+ALIAS
+MERGE
+HOLD
+PROMOTE
+REJECT
+```
+
+No live registry mutation.
+
+---
+
+# 36. Reports
+
+Both terminate into your shared Commercial Intelligence Compiler.
+
+## Market Discovery Report
+
+```text
+Market overview
+Current search landscape
+Query graph
+Trend signals
+Communities
+Niche/sub-niche lattice
+Current product landscape
+Supply landscape
+Corpus-derived latent transfers
+Signal divergence
+Whitespace hypotheses
+Saturated areas
+Top 3–8 scopes
+Market/style/ad angles
+Evidence + contradictions
+Recommended next mode
+```
+
+## Product-Anchored Report
+
+```text
+Product identity
+Claim audit
+Product meanings
+Actual uses/communities
+Observed language
+Market/niche lattice
+Top market bridges
+Search/trend analysis
+Community/comment analysis
+Competition
+Market reframes
+Positioning
+Product/style/ad angles
+Adjacent products
+Adjacent markets
+Evidence + contradictions
+Recommended next mode
+```
+
+---
+
+# 37. Mode handoff should create child runs
+
+This is another implementation point I would lock.
+
+Do not mutate:
+
+```text
+MARKET_DISCOVERY run
+```
+
+into:
+
+```text
+NICHE_LOADOUT
+```
+
+Instead:
+
+```text
+parent_run_id: md_123
+       ↓
+child_run_id: nl_456
+```
+
+Persist:
+
+```yaml
+handoff:
+  parent_run_id:
+  child_run_id:
+
+  from_mode:
+    MARKET_DISCOVERY
+
+  to_mode:
+    NICHE_LOADOUT
+
+  promoted_objects:
+    - market_scope_17
+    - community_signal_29
+
+  source_checkpoint:
+    MARKET_DISCOVERY_COMPLETE
+```
+
+This preserves auditability.
+
+---
+
+# 38. The child does NOT inherit the whole parent's context
+
+It receives a **HandoffPacket**.
+
+```yaml
+handoff_packet:
+  source_run:
+  destination_mode:
+
+  user_goal:
+
+  promoted_scope:
+  promoted_hypotheses: []
+
+  evidence_refs: []
+
+  unresolved_questions: []
+
+  prior_rejections: []
+
+  registry_snapshot:
+
+  authority_boundaries:
+```
+
+Then the child's Context Compiler constructs its own context.
+
+This prevents mode contamination.
+
+---
+
+# 39. Python shared modules I would ultimately expect
+
+Without overengineering:
+
+```text
+python/
+├── controller.py
+├── graph.py
+├── transitions.py
+├── executors.py
+├── models.py
+├── memory.py
+├── context.py
+├── registry.py
+├── settings.py
+│
+├── evidence.py
+├── research.py
+├── comments.py
+├── trends.py
+├── suppliers.py
+├── product_intake.py
+│
+├── loadout_math.py
+├── market_math.py
+├── product_market_math.py
+│
+├── market_discovery.py
+├── product_anchored.py
+│
+├── satisfaction.py
+├── verifiers.py
+├── maintenance.py
+└── reporting.py
+```
+
+But don't split working modules just to reach this exact list. Split only where ownership becomes confusing.
+
+---
+
+# 40. `market_math.py`
+
+Own deterministic:
+
+```python
+market_frontier_utility(...)
+market_surface_gain(...)
+diversity_adjusted_market_utility(...)
+signal_divergence(...)
+market_voi(...)
+market_robustness(...)
+```
+
+---
+
+# 41. `product_market_math.py`
+
+Own:
+
+```python
+reverse_fit_utility(...)
+market_bridge_diversity(...)
+bridge_surface_gain(...)
+product_market_voi(...)
+bridge_robustness(...)
+```
+
+No LLM calls.
+
+No browser.
+
+Pure deterministic functions.
+
+Easy tests.
+
+---
+
+# 42. Each formula gets a receipt
+
+Important:
+
+```yaml
+score_receipt:
+  formula:
+    reverse_fit_v1
+
+  inputs:
+    mechanism_fit: ...
+    job_fit: ...
+    community_richness: ...
+    saturation: ...
+
+  weights:
+    ...
+
+  total:
+    ...
+
+  disposition:
+    EXPLORE
+
+  config_hash:
+    ...
+```
+
+Never persist just:
+
+```text
+score = .74
+```
+
+You want reproducibility.
+
+---
+
+# 43. Robustness testing applies to both
+
+Since the weights are config, run bounded perturbation checks on important decisions.
+
+Market:
+
+```text
+Does top market stay top
+when reasonable weights move?
+```
+
+Product anchored:
+
+```text
+Does collector community remain stronger
+than wellness community under moderate perturbation?
+```
+
+Persist:
+
+```text
+STABLE
+SENSITIVE
+HIGHLY_SENSITIVE
+```
+
+No fake probability.
+
+---
+
+# 44. Semantic canaries for both
+
+Before production:
+
+### Market Discovery canary
+
+```text
+RUNNING
+```
+
+Must find:
+
+```text
+multiple useful scopes
+at least one current field-emergent branch
+at least one corpus-derived branch
+commodity/saturated branches
+```
+
+Trap:
+
+```text
+top markets = running shoes, water bottle, running shirt
+```
+
+with no granularity.
+
+### Product Anchored canary
+
+Your Chinese/Wenwan walnut example is actually excellent.
+
+Must:
+
+```text
+resolve identity
+quarantine seller/user claims
+find multiple possible meanings
+discover actual community language
+reframe if user's initial framing is weak
+find adjacent products
+```
+
+Trap:
+
+```text
+invent meditation/stress customer persona
+because supplier copy said it
+```
+
+---
+
+# 45. The overall architecture is now a directional research system
+
+This is what I think is particularly strong about the design.
+
+```text
+                 MARKET_DISCOVERY
+                       ↓
+              Market → Niches
+
+PRODUCT_ANCHORED                 NICHE_LOADOUT
+      ↓                              ↓
+Product → Market              Niche → Products
+      │                              │
+      └──────────────┬───────────────┘
+                     ▼
+             OPPORTUNITY_RESEARCH
+               deep qualification
+```
+
+All four are different **directions through the same latent commerce space**.
+
+You aren't building four unrelated agents.
+
+You're essentially defining four traversal operators:
+
+```text
+MARKET → NICHE
+NICHE → PRODUCT SET
+PRODUCT → MARKET
+OPPORTUNITY → EVIDENCE/QUALIFICATION
+```
+
+That is the right abstraction.
+
+## Exact Fable handoff
+
+> **Implement `MARKET_DISCOVERY` and `PRODUCT_ANCHORED_DISCOVERY` as first-class run modes on the existing graph-generic controller. Each receives its own Control Graph, Loop spec, policies/settings, schemas, prompts and report projection while reusing `memory.py`, `context.py`, registry compilation, Hermes native web/browser execution, Polymath MCP, evidence authority, CommentStrengthener, TrendSensor, Product Intake, deterministic scoring/VOI infrastructure, Commercial Intelligence Compiler and Registry Maintenance.**
+>
+> **`MARKET_DISCOVERY` starts from a broad market seed and maintains isolated blind-field, Trends, corpus and supply discovery lanes until `MERGE_MARKET_SIGNALS`. It then builds a QueryGraph and MarketLattice, applies deterministic surface gain, market-frontier utility and diversity-aware selection, researches retained markets through communities/comments, calculates SignalDivergence, proposes WhitespaceHypotheses, runs bounded VOI correction, and terminates with 3–8 evidence-grounded market/niche scopes plus a Market Discovery report and optional child-run handoffs.**
+>
+> **`PRODUCT_ANCHORED_DISCOVERY` starts from a physical ProductSeed, resolves ProductIdentity, quarantines user/seller claims, independently performs blind-field, Polymath, current-commerce and optional Trends research, then builds competing ProductMeanings and MarketBridges. Use deterministic reverse-fit utility, diversity-aware market selection and bounded market/sub-niche granularity; deepen communities/comments only for retained bridges, revise rather than overwrite hypotheses, permit explicit MarketReframe and AdjacentMarket/AdjacentProduct discoveries, and terminate with the strongest defensible product→market bridges or `NO_DEFENSIBLE_MARKET`.**
+>
+> **Both modes persist all canonical state, actions, receipts, context manifests, hypotheses, revisions, evidence gaps, query graphs and handoffs in the existing SQLite Work Graph. CSV/YAML registry assets remain reusable priors only. Runtime discoveries produce RegistryCandidates but never mutate the pinned snapshot. Registry Maintenance remains the only promotion path. All formula results require input/weight/config receipts and bounded robustness checks.**
+>
+> **Mode handoffs create new child runs with explicit `HandoffPacket`s and provenance rather than changing the parent run's type. Child runs inherit only promoted canonical objects/evidence references and unresolved questions, not the parent's entire context window.**
+
+That gives the two newest modes the same **graph + loop + φ/Python + θ + CSV registry + SQLite memory + context engineering + maintenance + reports** discipline as the rest of Trail-Signal.

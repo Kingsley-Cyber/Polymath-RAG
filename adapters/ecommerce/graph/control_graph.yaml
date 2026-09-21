@@ -1,0 +1,253 @@
+# Control Graph — the operational constitution of the opportunity_research skill.
+# Structure lives HERE, not in SKILL.md prose (graph-engineering principle:
+# structure and prompt content must be independently versionable).
+graph:
+  id: opportunity_research
+  version: 2.0.0   # LIVED-WORLD-V2 (docs/25): population discovery before ideation
+  entry: understand
+
+# Every model-executed node declares a ContextContract (docs/10): what the
+# reasoning call is legally allowed and required to know. `require` must be
+# non-empty after backfill (else BLOCKED_CONTEXT_INCOMPLETE); `prefer` is
+# included when present; `exclude` is enforced, never hoped for.
+nodes:
+  understand:
+    type: reason
+    prompt: latent_interpretation
+    outputs: [signal]
+    optional_outputs: [communities]     # docs/19: named communities seed subreddit hints for the web lane
+    context:
+      require: [run_identity]
+      prefer: [signal, registry_snapshot]
+      exclude: [supplier_candidates, leads, mechanisms]
+
+  corpus:
+    type: retrieve
+    on_enter: python.corpus_query_compiler   # docs/19: 3–5 reformulations compiled the moment the run arrives, no LLM
+    executor: corpus_retrieve        # agent queries the host corpus backend (docs/18); never storage engines directly
+    fresh_submission_per_visit: true  # each entry retrieves; stale rows never satisfy a re-entry
+    outputs: [corpus_evidence]
+    optional_outputs: [corpus_backend, corpus_packets]   # docs/21: backend record; docs/22: the EvidencePackets behind the rows (evidence, never an answer)
+    context:
+      require: [run_identity, signal, corpus_queries]
+      exclude: [hypotheses, mechanisms, supplier_candidates, leads]
+
+  primitives:
+    type: reason
+    prompt: opportunity_primitives
+    outputs: [primitives]
+    context:
+      require: [signal, corpus_evidence]
+      prefer: [registry_snapshot, corpus_packets]
+      exclude: [supplier_candidates, leads]
+
+  signal_gate:
+    type: transform
+    executor: python.signal_gate   # NO_GENERATIVE_SIGNAL is a success outcome
+
+  structural_lookup:
+    type: transform
+    executor: python.structural_lookup  # registry cross-domain analogies (invariant-bounded)
+
+  lenses:
+    type: transform
+    executor: python.lens_gate
+
+  # ── LIVED-WORLD-V2 (docs/25): the field co-generates the opportunity space ──
+  population_nominate:
+    type: transform
+    executor: python.population_nominate   # corpus / registry / signal / prior field rows propose leads — never demand
+
+  population_scout:
+    type: agent
+    fresh_submission_per_visit: true
+    executor: hermes_existing_web_stack    # open field: where do these populations actually talk? (+ anything current nobody predicted)
+    prompt: population_scout
+    outputs: [community_leads]
+    context:
+      require: [run_identity]
+      prefer: [population_leads, community_leads, signal, primitives, evidence_authority_rules]
+      exclude: [corpus_evidence, hypotheses, mechanisms, supplier_candidates, leads]
+
+  population_queue:
+    type: transform
+    executor: python.population_queue      # VOI-ranked work queue: ONE batch per round, sequential controller, no fan-out
+
+  community_instantiate:
+    type: agent
+    fresh_submission_per_visit: true
+    executor: hermes_existing_web_stack    # channel tool chains per lead (docs/24) → field_records with author + thread identity
+    prompt: community_instantiate
+    outputs: [field_records]
+    context:
+      require: [run_identity]
+      prefer: [population_queue, population_leads, community_leads, lived_clusters, participant_cards,
+               evidence_authority_rules, signal]
+      exclude: [corpus_evidence, hypotheses, mechanisms, supplier_candidates, leads]
+
+  evidence_cards:
+    type: transform
+    executor: python.evidence_cards        # ParticipantEvidenceCards + LivedEvidenceClusters (THIN / ANCHOR by independent records)
+
+  population_gate:
+    type: gate
+    executor: python.population_gate       # rounds until enough ANCHOR clusters; max_rounds / stagnation / wall clock
+    checkpoint: POPULATION_DISCOVERED
+
+  lived_situations:
+    type: reason
+    prompt: lived_situation                # reconstruct per cluster; FIELD_ANCHORED only on ANCHOR; unknowns preserved
+    outputs: [lived_situations]
+    context:
+      require: [lived_clusters]
+      prefer: [participant_cards, field_records, population_leads, community_leads, signal, evidence_authority_rules]
+      exclude: [corpus_evidence, hypotheses, mechanisms, supplier_candidates, leads]
+
+  corpus_mechanisms:
+    type: retrieve
+    on_enter: python.corpus_question_compiler   # docs/25 §6: friction / mechanism / question level, never per person
+    executor: corpus_retrieve
+    fresh_submission_per_visit: true
+    outputs: [corpus_evidence]
+    optional_outputs: [corpus_packets, corpus_backend]
+    context:
+      require: [run_identity]
+      prefer: [corpus_questions, lived_clusters]
+      exclude: [hypotheses, mechanisms, supplier_candidates, leads]
+
+  hypothesize:
+    type: reason
+    prompt: bridge_hypothesis     # PORTFOLIO: 3-6 across distinct mechanism families; lived anchors (docs/25 §5)
+    outputs: [hypotheses]
+    optional_outputs: [row_relevance]   # docs/26 §2: classify the rows a hop cites (merges; fail-closed lineage)
+    context:
+      require: [signal, primitives]
+      prefer: [lived_situations, lived_clusters, lenses, cross_domain_analogies, corpus_evidence, corpus_questions,
+               registry_snapshot, evidence_authority_rules]
+      exclude: [supplier_candidates, leads]
+
+  semantic_review:
+    type: agent
+    executor: fresh_skeptical_evaluator   # L4: SEPARATE fresh-context subagent, never the generator
+    prompt: semantic_evaluation
+    outputs: [evaluations]
+    sanitize: dossier             # evaluator independence: receipts, never the generator's narrative
+    context:
+      require: [hypotheses]
+      prefer: [satisfaction, evidence_authority_rules]
+      exclude: [corpus_evidence, supplier_candidates, leads, mechanisms]
+    checkpoint: HYPOTHESES_REVIEWED
+
+  apply_review:
+    type: transform
+    executor: python.apply_evaluations    # deterministic application + L4 receipts
+
+  triage:
+    type: transform
+    executor: python.triage        # research-priority prior; HOLD the rest
+    checkpoint: TRIAGE_COMPLETE
+
+  challenge:
+    type: reason
+    prompt: contradiction
+    outputs: [challenges]
+    context:
+      require: [hypotheses]
+      prefer: [observations, evaluations, challenges, satisfaction,
+               evidence_authority_rules, research_allocation]
+      exclude: [supplier_candidates, leads]
+
+  gaps:
+    type: transform
+    executor: python.gap_compiler   # also compiles research queries for open gaps
+
+  web_research:
+    type: agent
+    fresh_submission_per_visit: true  # a research round needs THIS visit's evidence (or a capability_failure)
+    executor: hermes_existing_web_stack   # scrape waterfall / camofox / agent-reach — NO new browser layer
+    outputs: [observations]
+    context:
+      require: [queries, gaps]
+      prefer: [signal, satisfaction, evidence_authority_rules, research_allocation]   # docs/20: starved hypotheses first
+      exclude: [hypotheses, corpus_evidence, mechanisms, supplier_candidates, leads]
+
+  curate:
+    type: transform
+    executor: python.comments
+    checkpoint: RESEARCH_ROUND_CURATED
+
+  mechanism:
+    type: reason
+    prompt: mechanism_mapping
+    outputs: [mechanisms]
+    context:
+      require: [hypotheses, observations]
+      prefer: [satisfaction, primitives, field_records, lived_clusters, evidence_authority_rules]
+      exclude: [supplier_candidates]
+
+  product_ideation:
+    type: reason
+    prompt: product_ideation             # docs/19: 3–6 DISTINCT product directions, each with variations
+    outputs: [product_concepts]
+    context:
+      require: [signal, mechanisms, observations]
+      prefer: [hypotheses, product_candidates, cross_domain_analogies, primitives, field_records, lived_situations, lived_clusters]
+      exclude: [supplier_candidates, leads]
+
+  supplier_search:
+    type: agent
+    on_enter: python.sourcing_plan_compiler   # docs/20 §2: per-concept search jobs compiled on arrival
+    fresh_submission_per_visit: true
+    executor: hermes_existing_alibaba_path  # camofox-first sourcing lane
+    outputs: [supplier_candidates]
+    context:
+      require: [mechanisms, product_candidates, product_concepts, sourcing_plan]   # docs/20 §2: one sourcing job per concept
+      prefer: [signal]
+      exclude: [observations, corpus_evidence, challenges, evaluations]
+
+  normalize_supplier:
+    type: transform
+    executor: python.supplier
+    checkpoint: SOURCING_COMPLETE
+
+  qualify:
+    type: gate
+    executor: python.scoring
+    checkpoint: QUALIFICATION_COMPLETE
+
+  stop:
+    type: terminal
+
+edges:
+  - {from: understand,        to: corpus}
+  - {from: corpus,            to: primitives}
+  - {from: primitives,        to: signal_gate}
+  - {from: signal_gate,       to: stop,             when: no_generative_signal}
+  - {from: signal_gate,       to: lenses,           when: generative_signal_present}
+  - {from: lenses,            to: structural_lookup}
+  - {from: structural_lookup, to: population_nominate}
+  - {from: population_nominate, to: population_scout}
+  - {from: population_scout,   to: population_queue}
+  - {from: population_queue,   to: community_instantiate}
+  - {from: community_instantiate, to: evidence_cards}
+  - {from: evidence_cards,     to: population_gate}
+  - {from: population_gate,    to: population_queue,   when: population_round_needed}
+  - {from: population_gate,    to: lived_situations,   when: lived_world_present}
+  - {from: population_gate,    to: hypothesize,        when: lived_world_empty}
+  - {from: lived_situations,   to: corpus_mechanisms}
+  - {from: corpus_mechanisms,  to: hypothesize}
+  - {from: hypothesize,       to: semantic_review}
+  - {from: semantic_review,   to: apply_review}
+  - {from: apply_review,      to: challenge}
+  - {from: challenge,         to: triage}
+  - {from: triage,            to: gaps}
+  - {from: gaps,              to: web_research,     when: material_gap_exists}
+  - {from: gaps,              to: mechanism,        when: evidence_sufficient}
+  - {from: web_research,      to: curate}
+  - {from: curate,            to: challenge}
+  - {from: mechanism,         to: product_ideation, when: mechanism_supported}
+  - {from: product_ideation,  to: supplier_search}
+  - {from: mechanism,         to: stop,             when: no_defensible_bridge}
+  - {from: supplier_search,   to: normalize_supplier}
+  - {from: normalize_supplier, to: qualify}
+  - {from: qualify,           to: stop}

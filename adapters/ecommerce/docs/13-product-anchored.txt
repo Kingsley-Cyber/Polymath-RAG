@@ -1,0 +1,1036 @@
+Yes. This should be a **separate fourth entry mode**, because its epistemic direction is genuinely different.
+
+I would name it:
+
+# `PRODUCT_ANCHORED_DISCOVERY`
+
+UI name: **Inverted Niche Research**
+
+The four modes then become clean:
+
+```text
+MARKET_DISCOVERY
+"I want to find interesting markets/niches."
+Market → niche → opportunity
+
+NICHE_LOADOUT
+"I understand the community; build me the right assortment."
+Niche → lived world → jobs → 3–6 products
+
+OPPORTUNITY_RESEARCH
+"I have an opportunity/problem hypothesis; is it defensible?"
+Opportunity → evidence → mechanism → product
+
+PRODUCT_ANCHORED_DISCOVERY
+"I already have this product. Who actually cares, why,
+and what market/community should I sell it into?"
+Product → meanings/jobs → people → communities → niches → market thesis
+```
+
+That last direction is fundamentally different enough that I would **not hide it inside Opportunity Research**.
+
+Your example also appears to be **Wenwan walnuts** rather than “jade walnuts”: collectible Chinese walnuts/play walnuts handled as matched pairs. Current Etsy listings position them around hand rolling/exercise, relaxation/gifting, while specialist material emphasizes collecting, pairing, hand feel and development of patina. Etsy currently has a dedicated Wenwan-walnut market surface as well. ([Etsy][1])
+
+That is actually a very good canary because one physical object can plausibly occupy **multiple meanings**, and the system must discover which meanings correspond to defensible ecommerce markets rather than accepting the seller's description.
+
+## The critical concept: don't reverse from product directly to “persona”
+
+This would be weak:
+
+```text
+Wenwan walnuts
+→ men 30–55
+→ meditation enthusiasts
+→ sell ads
+```
+
+You want:
+
+```text
+PRODUCT
+   ↓
+WHAT PHYSICALLY IS IT?
+   ↓
+WHAT CAN BE DONE WITH IT?
+   ↓
+WHAT DOES IT MEAN IN DIFFERENT CONTEXTS?
+   ↓
+WHAT HUMAN JOB / RITUAL / DESIRE DOES EACH MEANING SERVE?
+   ↓
+WHO ACTUALLY EXHIBITS THOSE BEHAVIORS?
+   ↓
+WHERE DO THOSE PEOPLE CONGREGATE?
+   ↓
+WHAT DO THEY SAY?
+   ↓
+WHAT NICHES / SUBNICHES EXIST?
+   ↓
+WHICH PRODUCT↔MARKET BRIDGES SURVIVE CURRENT EVIDENCE?
+```
+
+The missing semantic object is therefore not initially `CustomerPersona`.
+
+It is:
+
+# `ProductMeaning`
+
+One physical product can have several possible market meanings.
+
+Conceptually:
+
+```yaml
+product_meaning:
+  product_id: p_17
+
+  meaning_type:
+    FUNCTIONAL |
+    COLLECTOR |
+    RITUAL |
+    IDENTITY |
+    AESTHETIC |
+    GIFT |
+    PERFORMANCE |
+    CONVENIENCE |
+    HOBBY
+
+  hypothesized_job:
+    ...
+
+  hypothesized_behavior:
+    ...
+
+  hypothesized_context:
+    ...
+
+  authority:
+    HYPOTHESIS
+
+  evidence_refs: []
+```
+
+That matters enormously.
+
+The same object might be valuable because somebody **uses** it, **collects** it, **displays** it, **gifts** it, **maintains** it, values its cultural tradition, or participates in a hobby/community surrounding it.
+
+Those are potentially completely different ecommerce markets.
+
+---
+
+# First rule: quarantine the user's/supplier's story
+
+Suppose the user says:
+
+> “I found these Chinese walnuts. Supplier says they're stress-relief health exercise walnuts.”
+
+Store that as:
+
+```text
+USER_PRODUCT_HYPOTHESIS
+SELLER_CLAIM
+```
+
+Not truth.
+
+Particularly:
+
+```text
+health claim
+stress claim
+medical benefit
+authenticity
+rarity
+origin
+traditional significance
+```
+
+must be independently established before appearing as market/ad claims.
+
+This mode should have an explicit:
+
+```text
+PRODUCT_CLAIM_QUARANTINE
+```
+
+stage.
+
+Otherwise reverse research becomes extremely susceptible to supplier marketing copy.
+
+---
+
+# The elite version uses four independent lanes
+
+This is the same anti-anchoring principle we just found for Market Discovery.
+
+```text
+                        PRODUCT SEED
+                             │
+                    UNDERSTAND OBJECT
+                             │
+          ┌──────────────────┼──────────────────┐
+          │                  │                  │
+          ▼                  ▼                  ▼
+     BLIND FIELD        CORPUS REASONING    COMMERCE FIELD
+       DISCOVERY             │                  │
+          │                  │                  │
+ communities/search     Polymath/registry   marketplaces/products
+ comments/reviews       mechanisms/jobs     prices/competition
+ current language       analogies           related products
+          │                  │                  │
+          └──────────────────┼──────────────────┘
+                             │
+                             ▼
+                      PRODUCT MEANINGS
+                             ↓
+                       MARKET BRIDGES
+                             ↓
+                    NICHE/SUBNICHE MAP
+                             ↓
+                     COMMUNITY DEEPENING
+                             ↓
+                   COMMENT STRENGTHENER
+                             ↓
+                    REVISE MARKET BRIDGES
+                             ↓
+                    MARKET FIT FRONTIER
+                             ↓
+                         ANALYSIS
+```
+
+I would actually add a fourth optional lane:
+
+```text
+TRENDS / QUERY GRAPH
+```
+
+for current search language, seasonality, related terms and movement.
+
+But it remains optional.
+
+---
+
+# Why Blind Field must not see θ's hypotheses
+
+Same reason as before.
+
+If θ decides:
+
+```text
+Product → meditation
+```
+
+and then the research agent searches:
+
+```text
+"wenwan walnut meditation"
+```
+
+it will probably find evidence that appears to confirm its own framing.
+
+Instead one worker gets only:
+
+```text
+product identity
+aliases
+observable characteristics
+```
+
+and asks:
+
+> Where does this object naturally appear online? Who talks about it? What terminology, activities, questions, complaints, rituals and related products appear around it?
+
+No hypothesis dossier.
+
+Then separately:
+
+```text
+Polymath
+→ theoretical/analogical meanings
+```
+
+Only later do they merge.
+
+That will make this mode considerably harder to fool.
+
+---
+
+# Product identity resolution comes first
+
+This is especially important when users don't know the proper product terminology.
+
+For your example:
+
+```text
+user term
+"Chinese jaded walnuts"
+     ↓
+IDENTITY RESOLUTION
+     ↓
+canonical candidate
+Wenwan walnuts
+
+aliases / query forms
+play walnuts
+Chinese hand walnuts
+etc.
+```
+
+This creates a:
+
+```text
+ProductIdentityGraph
+```
+
+not just one string.
+
+Because community discovery, Google Trends, marketplaces and comments may all use different language.
+
+Exactly the same QueryGraph concept from Market Discovery applies here.
+
+---
+
+# Then do `Use–Meaning Decomposition`
+
+θ asks several different questions instead of one:
+
+```text
+What does the product physically enable?
+
+What repeated interaction occurs?
+
+What existing object does it substitute for?
+
+What ritual might surround ownership/use?
+
+What skill or expertise changes how it is evaluated?
+
+Could quality differences matter?
+
+Could collecting behavior exist?
+
+Does customization matter?
+
+Does identity/status matter?
+
+Is there maintenance/care behavior?
+
+Is it bought for oneself or another person?
+
+What surrounding products naturally co-occur?
+```
+
+This produces **competing ProductMeaning hypotheses**.
+
+Do not make them agree.
+
+---
+
+# Then reverse into physical/lived jobs
+
+Instead of:
+
+```text
+product → target customer
+```
+
+use:
+
+```text
+ProductMeaning
+      ↓
+Interaction
+      ↓
+LivedSituation
+      ↓
+Physical / emotional / identity job
+      ↓
+Behavior
+      ↓
+Possible participant
+      ↓
+Possible MarketScope
+```
+
+So a candidate bridge looks like:
+
+```yaml
+market_bridge:
+  product_id: p17
+
+  meaning:
+    COLLECTOR_OBJECT
+
+  interaction:
+    repeated_handling_and_pair_evaluation
+
+  possible_jobs:
+    - tactile_hobby
+    - collection_progression
+    - aesthetic_appreciation
+
+  possible_market:
+    collector_hobbyists
+
+  inference_distance:
+    2
+
+  evidence_state:
+    HYPOTHESIS
+```
+
+Then field research determines whether that market actually exists and how it behaves.
+
+---
+
+# Comments become even more powerful in this mode
+
+In `NICHE_LOADOUT`, comments strengthen:
+
+```text
+community → lived experience → product
+```
+
+Here they strengthen the inverse bridge:
+
+```text
+product → claimed use/meaning → actual people/community
+```
+
+So `COMMENT_STRENGTHENER` should be shared but operate with a different objective.
+
+For Product-Anchored Discovery it asks:
+
+```text
+Who says they own/use this?
+
+What do they call it?
+
+Why did they buy it?
+
+What did they expect?
+
+What do experienced users care about?
+
+What do beginners misunderstand?
+
+What qualities determine good vs bad?
+
+What do people compare it with?
+
+What frustrates them?
+
+What do they modify/maintain/store?
+
+What adjacent things do they buy?
+
+Is the product primarily functional,
+collectible, aesthetic, identity-driven,
+gift-driven, etc.?
+
+Where do communities disagree?
+```
+
+That gets you much closer to:
+
+> **Who is the actual customer?**
+
+rather than inventing one.
+
+---
+
+# Add `MarketBridgeReceipt`
+
+This should be the equivalent of your existing bridge receipts.
+
+```yaml
+market_bridge_receipt:
+
+  product:
+    wenwan_walnut_pair
+
+  proposed_market:
+    ...
+
+  proposed_subniche:
+    ...
+
+  product_meaning:
+    ...
+
+  job:
+    ...
+
+  lived_situations: []
+
+  evidence:
+
+    product_reality: []
+
+    community:
+      supporting: []
+      contradicting: []
+
+    search_interest: []
+
+    current_marketplace: []
+
+    corpus_support: []
+
+  language:
+    observed_terms: []
+
+  independence:
+    authors:
+    threads:
+    platforms:
+
+  bridge_state:
+    SUPPORTED |
+    REFINED |
+    WEAK |
+    CONTRADICTED |
+    UNSUPPORTED
+
+  remaining_gaps: []
+```
+
+Now you can have five different market bridges competing for one object.
+
+---
+
+# Do not force one winner too early
+
+For a product seed, you may discover:
+
+```text
+PRODUCT
+│
+├── Market A
+│    strong functional fit
+│
+├── Market B
+│    strong collector fit
+│
+├── Market C
+│    gift fit
+│
+├── Market D
+│    weak wellness fit
+│
+└── Market E
+     no defensible bridge
+```
+
+That's valuable.
+
+The output should likely return:
+
+```text
+top 2–5 defensible market/niche positions
+```
+
+rather than immediately pretending:
+
+> “This is a product for X.”
+
+---
+
+# You need a reverse-fit routing function
+
+Similar to Frontier Utility, but specific to this mode.
+
+For market candidate (n) given product (p):
+
+[
+R(n|p)=
+w_mM+
+w_jJ+
+w_cC+
+w_lL+
+w_tT+
+w_dD+
+w_eE
+----
+
+w_aA-
+w_sS-
+w_rR
+]
+
+Conceptually:
+
+```text
+M = product-mechanism fit
+J = job/lived-situation fit
+C = community evidence richness
+L = observed language/identity coherence
+T = currentness/search support
+D = meaningful product differentiation
+E = ecommerce compatibility
+
+A = unsupported assumption distance
+S = saturation/commodity pressure
+R = redundancy with already-retained markets
+```
+
+Again:
+
+> This does **not** mean probability of success.
+
+It means:
+
+> **How much research budget does this product↔market bridge deserve?**
+
+Use diversity-aware frontier selection so the top four aren't merely four names for the same audience.
+
+---
+
+# Google Trends gets a useful but secondary role
+
+For this mode:
+
+```text
+ProductIdentityGraph
+       ↓
+QueryGraph
+       ↓
+optional TrendSensor
+```
+
+Useful questions:
+
+```text
+Which name do people search?
+
+Is interest stable/rising/seasonal?
+
+Which related queries surround the product?
+
+Do queries reveal another use/community?
+
+Where is relative interest concentrated?
+```
+
+But:
+
+```text
+Google Trends
+≠
+market fit
+```
+
+It strengthens the **search-interest dimension** of a market bridge.
+
+Comments/community tell you substantially more about **why**.
+
+---
+
+# Polymath is absolutely useful here
+
+Probably more useful than in simple product validation.
+
+The user provides an object but often has no idea **what latent jobs/meanings could surround it**.
+
+Polymath can ask:
+
+```text
+Where else does this interaction pattern occur?
+
+What psychology exists around tactile objects?
+
+What mechanisms create collecting behavior?
+
+What is known about ritual, mastery,
+patina, personalization, identity,
+progression, gifting, display,
+repetitive manual interaction, etc.?
+```
+
+But those are **hypothesis-generation primitives**.
+
+External reality still decides whether they belong to this product's actual market.
+
+So:
+
+```text
+Polymath
+→ expand possible meaning space
+
+Current community
+→ constrain meaning space
+```
+
+That's the correct relationship.
+
+---
+
+# The graph should reverse your existing normal direction
+
+I would implement roughly:
+
+```text
+PRODUCT_ANCHORED_DISCOVERY START
+        ↓
+01 PRODUCT_INTAKE
+        ↓
+02 PRODUCT_IDENTITY_RESOLUTION
+        ↓
+03 CLAIM_QUARANTINE
+        ↓
+04 BUILD_QUERY_GRAPH
+        ↓
+──────────────────────────────────
+INDEPENDENT DISCOVERY
+──────────────────────────────────
+
+05A BLIND_PRODUCT_FIELD_DISCOVERY
+      current web
+      marketplaces
+      communities
+
+05B POLYMATH_PRODUCT_PRIMITIVES
+      physical interaction
+      behavioral mechanisms
+      analogical markets
+
+05C CURRENT_COMMERCE_SCAN
+      pricing
+      product positioning
+      related products
+      competition
+
+05D OPTIONAL_TREND_SENSOR
+
+        ↓
+06 MERGE_PRODUCT_SIGNALS
+        ↓
+07 USE_MEANING_DECOMPOSITION
+        ↓
+08 GENERATE_MARKET_BRIDGES
+        ↓
+09 REVERSE_FIT_FRONTIER
+        ↓
+10 DIVERSITY_AWARE_PRUNE
+        ↓
+11 DISCOVER_COMMUNITIES
+        ↓
+12 COMMUNITY / COMMENT RESEARCH
+        ↓
+13 COMMENT_STRENGTHENER
+        ↓
+14 BUILD NICHE + SUBNICHE LATTICE
+        ↓
+15 REVISE MARKET BRIDGES
+        ↓
+16 IDENTIFY EVIDENCE GAPS
+        ↓
+17 VOI TARGETED RESEARCH
+        ↓
+18 CURRENT MARKET / COMPETITION ANALYSIS
+        ↓
+19 MARKET-BRIDGE QUALIFICATION
+        ↓
+20 PRODUCT POSITIONING ANALYSIS
+        ↓
+21 MARKET / PRODUCT / STYLE / AD ANGLES
+        ↓
+22 COMMUNITY SKEPTIC
+        ↓
+23 PRODUCT_ANCHORED_REPORT
+        ↓
+TERMINAL
+```
+
+Still mostly linear.
+
+No giant loop.
+
+---
+
+# Only two real loops are needed
+
+### Market bridge frontier
+
+```text
+candidate markets
+→ evaluate
+→ retain diverse top candidates
+→ one deeper sub-niche expansion if gain remains
+→ stop
+```
+
+### Evidence correction
+
+```text
+market bridge hypothesis
+→ highest-VOI evidence gap
+→ field research
+→ revise bridge
+→ stop when decision-stable
+```
+
+You don't need another simulation loop unless the system decides one of the promoted markets deserves `NICHE_LOADOUT`.
+
+That's key.
+
+---
+
+# Let this mode hand off rather than doing everything itself
+
+Suppose the final analysis says:
+
+```text
+Market A:
+very promising community/niche fit
+
+Market B:
+possible but under-evidenced
+
+Market C:
+commodity / weak
+
+Market D:
+unsupported
+```
+
+Then:
+
+```text
+Market A
+→ Spawn NICHE_LOADOUT
+```
+
+if you want:
+
+> What other 3–6 products belong beside this product for these people?
+
+Or:
+
+```text
+Product + Market A
+→ Spawn OPPORTUNITY_RESEARCH
+```
+
+if you want:
+
+> Deeply qualify this exact product-market opportunity.
+
+Or:
+
+```text
+broader market discovered
+→ Spawn MARKET_DISCOVERY
+```
+
+if the investigation unexpectedly reveals a much larger market worth mapping.
+
+That makes all four modes composable.
+
+---
+
+# There is a very useful special output: `Market Reframe`
+
+This is one of the strongest potential outcomes.
+
+Maybe the user starts:
+
+> “I want to sell this as a stress-relief gadget.”
+
+Research discovers:
+
+```text
+the strongest actual community
+doesn't primarily think about it that way
+```
+
+The system should explicitly say:
+
+```yaml
+market_reframe:
+
+  initial_user_frame:
+    stress_relief_gadget
+
+  evidence_supported_frame:
+    collectible_hobby_object
+
+  why:
+    ...
+
+  user_frame_state:
+    WEAKENED
+
+  proposed_repositioning:
+    ...
+```
+
+This is tremendously valuable.
+
+The mode isn't there to validate the user's idea.
+
+It's there to **find the strongest defensible interpretation of the product**.
+
+---
+
+# Another important output: `AdjacentMarket`
+
+Maybe the product itself isn't compelling, but its investigation uncovers:
+
+```text
+care brushes
+storage/display
+carrying cases
+maintenance kits
+gift sets
+comparison tools
+related collectibles
+```
+
+Don't lose that.
+
+Create:
+
+```text
+ADJACENT_PRODUCT_SIGNAL
+ADJACENT_MARKET_SIGNAL
+```
+
+Then Product-Anchored Discovery may discover that the original SKU isn't actually the best opportunity.
+
+That's a feature, not a failure.
+
+---
+
+# The final report should answer a different question than every other mode
+
+Title conceptually:
+
+# Product → Market Intelligence Report
+
+Sections should revolve around:
+
+```text
+What exactly is this product?
+
+What claims about it are actually supported?
+
+What different meanings/use modes exist?
+
+Who currently appears to care?
+
+Which communities exist?
+
+How do insiders talk about it?
+
+What separates beginner vs experienced buyers?
+
+What qualities matter?
+
+What objections exist?
+
+What rituals/maintenance/adjacent behavior exists?
+
+What niches/sub-niches fit?
+
+Which market bridges are strongest?
+
+Which initial user assumptions were wrong?
+
+How is current search attention behaving?
+
+What current competitors/listings exist?
+
+How saturated is each positioning?
+
+What price/quality structure exists?
+
+What market positioning is defensible?
+
+What product angles work?
+
+What ad angles work?
+
+What visual/style direction fits?
+
+What claims should not be made?
+
+What adjacent products could build a collection?
+
+What mode should run next?
+```
+
+Then finish with something like:
+
+```text
+RECOMMENDED PATH
+
+Primary Market         → ...
+Secondary Market       → ...
+Experimental Market    → ...
+Rejected Framing       → ...
+
+Next:
+→ Niche Loadout
+```
+
+---
+
+# The four-mode system now becomes unusually coherent
+
+```text
+                         USER ENTRY
+                             │
+          ┌──────────────────┼───────────────────┐
+          │                  │                   │
+          ▼                  ▼                   ▼
+   "find markets"      "I know a niche"      "I have a product"
+          │                  │                   │
+          ▼                  ▼                   ▼
+ MARKET_DISCOVERY     NICHE_LOADOUT    PRODUCT_ANCHORED_DISCOVERY
+          │                  │                   │
+          └────────────┐     │     ┌─────────────┘
+                       ▼     ▼     ▼
+                  OPPORTUNITY_RESEARCH
+                   deep qualification
+```
+
+And all four share:
+
+```text
+SQLite memory
+Context Compiler
+Polymath
+Registry
+Hermes web/browser
+Comment Strengthener
+Trend Sensor
+Product Intake
+Evidence Authority
+VOI
+Supplier research
+Commercial Intelligence
+Style/Market/Product/Ad angles
+HTML reports
+Registry candidate emission
+```
+
+No duplicated infrastructure.
+
+## What I would tell Fable
+
+> **Add `PRODUCT_ANCHORED_DISCOVERY` as a separate user-activated mode for inverted niche research. Its input is a physical ProductSeed plus optional user hypotheses such as intended marketplace, expected use, audience, price or source. Treat all user/supplier positioning as hypotheses or seller claims, never evidence. Resolve the product identity and aliases first, then run isolated blind-field, Polymath/registry, current-commerce and optional TrendSensor lanes before merging.**
+>
+> **Make `ProductMeaning` and `MarketBridge` the central semantic objects. Decompose one physical object into competing functional, hobby, collector, ritual, identity, aesthetic, gift, performance or convenience meanings; map each through interaction → lived situation/job → behavior → possible MarketScope. Do not jump directly from product to persona.**
+>
+> **Rank product↔market hypotheses with a deterministic reverse-fit frontier utility and diversity-aware selection. Deepen only the strongest meaningfully different market/niche branches. Then discover relevant communities and apply the shared CommentStrengthener specifically to determine who actually uses/owns/discusses the product, how they describe it, why they value it, beginner/expert differences, rituals, complaints, comparisons, adjacent products and contradictions. Use VOI for short targeted correction rounds.**
+>
+> **The mode must be allowed to reframe or reject the user's initial market thesis. A valid terminal may conclude that the strongest market meaning differs from the user's description, that several distinct markets exist, or that no defensible ecommerce community bridge was found. Preserve rejected and superseded market hypotheses rather than forcing product-market fit.**
+>
+> **Output a Product→Market Intelligence report with the top defensible market/niche/sub-niche bridges, community intelligence, observed terminology, product meanings, current search/trend context, competition, saturation, positioning, style, product/ad angles, claim boundaries, adjacent-product opportunities and a recommended next mode. A strong market bridge may spawn `NICHE_LOADOUT`; a specific promising product-market pair may spawn `OPPORTUNITY_RESEARCH`; a broader unexpected market may spawn `MARKET_DISCOVERY`.**
+
+The key law for this mode should be:
+
+> **Do not ask “who can I sell this product to?” Ask “in whose lived world does this object already make sense, what does it mean there, and is that relationship strong enough to build commerce around?”**
+
+That prevents the exact failure most inverted market research produces: inventing a customer to justify an object you already want to sell.
+
+[1]: https://www.etsy.com/ca/listing/4443208082/wenwan-walnuts-for-hand-exercise-natural?content_source=997e7b8d-18e4-460b-8a3b-9bff3574e47c%253ALT3a2748d8f1de40305ef2f887500d232208fc1878&ls=s&pro=1&utm_source=chatgpt.com "Wenwan Walnuts for Hand Exercise, Natural 4cm Walnut Balls, Hand Massage Gift - Etsy"

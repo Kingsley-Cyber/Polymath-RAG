@@ -1,0 +1,17 @@
+{
+ "title": "product_candidate",
+ "required": [
+  "id",
+  "mechanism_id",
+  "name"
+ ],
+ "properties": {
+  "validation_note": {},
+  "id": {
+   "type": "string"
+  },
+  "evidence_refs": {
+   "type": "array"
+  }
+ }
+}

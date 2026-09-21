@@ -1,0 +1,18 @@
+{
+  "$id": "storefront_strategy",
+  "title": "StorefrontStrategy — the store inherits the research intelligence (docs/11)",
+  "type": "object",
+  "required": ["id", "scope", "positioning", "content_pillars"],
+  "properties": {
+    "id": {"type": "string"},
+    "scope": {"type": "string"},
+    "positioning": {"type": "string"},
+    "tone": {"type": "string"},
+    "visual_style": {"type": "string"},
+    "category_organization": {"type": "array"},
+    "product_hierarchy": {"type": "array"},
+    "content_pillars": {"type": "array"},
+    "collection_roles": {"type": "array"},
+    "evidence_refs": {"type": "array"}
+  }
+}

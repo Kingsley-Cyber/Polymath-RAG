@@ -1,0 +1,132 @@
+# NICHE_LOADOUT Control Graph (docs/09): community-native product collections.
+# Products are selected from an accurate model of how the community actually
+# LIVES the activity — the product finder is downstream of the world model.
+graph:
+  id: niche_loadout
+  version: 0.1.0
+  entry: scope_intake
+
+# ContextContracts (docs/10): each θ node states what it may legally know.
+# Workers never receive the whole run; the skeptic never sees the generator's
+# persuasive narrative.
+nodes:
+  scope_intake:
+    type: reason
+    prompt: loadout_scope
+    outputs: [scope_request]
+    context:
+      require: [run_identity]
+      prefer: [signal, registry_snapshot]
+      exclude: [slot_candidates, supplier_candidates, loadout]
+
+  frontier:
+    type: reason
+    prompt: loadout_frontier
+    outputs: [frontier_branches]
+    context:
+      require: [scope_request]
+      prefer: [registry_snapshot]
+      exclude: [slot_candidates, supplier_candidates, loadout]
+
+  frontier_gate:     {type: transform, executor: python.frontier_gate}     # U(b|s): explore/prune
+
+  world_model:
+    type: reason
+    prompt: community_world_model
+    outputs: [world_model]
+    context:
+      require: [scope_request, frontier_branches]
+      prefer: [frontier_rankings, registry_snapshot]
+      exclude: [slot_candidates, supplier_candidates, loadout]
+
+  lived_r1:
+    type: reason
+    prompt: lived_situation
+    outputs: [lived_situations]
+    context:
+      require: [scope_request, world_model]
+      prefer: [lived_situations, evidence_authority_rules]
+      evidence_roles: [FRICTION_EVIDENCE, WORKAROUND_EVIDENCE, INSIDER_LANGUAGE, CONTRADICTION]
+      branch_scope: {current_only: true}
+      exclude: [supplier_candidates, slot_candidates, loadout]
+    checkpoint: LIVED_R1_COMPLETE
+
+  voi_gate:          {type: transform, executor: python.voi_gate}          # rank research questions
+
+  field:
+    type: agent
+    executor: hermes_existing_web_stack
+    outputs: [observations]
+    context:
+      require: [scope_request, research_plan]
+      prefer: [world_model, evidence_authority_rules]
+      exclude: [slot_candidates, supplier_candidates, loadout, lived_situations]
+
+  culture_curate:
+    type: transform
+    executor: python.comments          # + insider language/rituals
+    checkpoint: FIELD_CORRECTION_COMPLETE
+
+  lived_r2:
+    type: reason
+    prompt: lived_situation
+    outputs: [lived_situations]
+    context:
+      require: [scope_request, world_model, lived_situations, observations]
+      prefer: [challenges, evidence_authority_rules]
+      evidence_roles: [FRICTION_EVIDENCE, WORKAROUND_EVIDENCE, INSIDER_LANGUAGE, CONTRADICTION]
+      branch_scope: {current_only: true}
+      exclude: [supplier_candidates, loadout]
+
+  product_slots:
+    type: reason
+    prompt: loadout_slots
+    outputs: [slot_candidates]
+    context:
+      require: [scope_request, world_model, lived_situations]
+      prefer: [observations, registry_snapshot]
+      exclude: [supplier_candidates]
+    checkpoint: PRODUCT_SLOTS_FINALIZED
+
+  discovery_gate:    {type: transform, executor: python.discovery_loop_gate}  # docs/16: dig until target OR ceiling/stagnation
+  sellability:       {type: transform, executor: python.supplier}          # normalize offers when present
+
+  portfolio:
+    type: transform
+    executor: python.portfolio_gate    # F(S): the 3-6 SET
+    checkpoint: PORTFOLIO_SELECTED
+
+  community_skeptic:
+    type: agent
+    executor: fresh_skeptical_evaluator
+    prompt: community_skeptic
+    outputs: [evaluations]
+    sanitize: dossier
+    context:
+      require: [scope_request, loadout]
+      prefer: [lived_situations, observations, challenges, loadout_receipt,
+               evidence_authority_rules]
+      exclude: [frontier_branches, research_plan]
+
+  apply_skeptic:     {type: transform, executor: python.apply_evaluations}
+  loadout_gate:      {type: gate,      executor: python.loadout_ready}     # the success contract
+  stop:              {type: terminal}
+
+edges:
+  - {from: scope_intake,      to: frontier}
+  - {from: frontier,          to: frontier_gate}
+  - {from: frontier_gate,     to: world_model}
+  - {from: world_model,       to: lived_r1}
+  - {from: lived_r1,          to: voi_gate}
+  - {from: voi_gate,          to: field}
+  - {from: field,             to: culture_curate}
+  - {from: culture_curate,    to: lived_r2}
+  - {from: lived_r2,          to: product_slots}
+  - {from: product_slots,     to: discovery_gate}
+  - {from: discovery_gate,    to: voi_gate,     when: loadout_discovery_needed}
+  - {from: discovery_gate,    to: sellability,  when: loadout_discovery_done}
+  - {from: sellability,       to: portfolio}
+  - {from: portfolio,         to: community_skeptic}
+  - {from: community_skeptic, to: apply_skeptic}
+  - {from: apply_skeptic,     to: loadout_gate}
+  - {from: loadout_gate,      to: stop}

@@ -1,0 +1,346 @@
+{
+ "finding": "M1-03",
+ "hypothesis_ids": [
+  "hyp_0448d8fbf8efb3248eead0f0",
+  "hyp_57d38a8eb882ac79b4a4d613"
+ ],
+ "requests": {
+  "hypotheses.judge": {
+   "idempotency_key": "idempotency:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:E-filter:7",
+   "operation_kind": "hypotheses.judge",
+   "payload": {
+    "admitted_evidence_ids": [],
+    "hypotheses": [
+     {
+      "hypothesis_id": "hyp_0448d8fbf8efb3248eead0f0",
+      "revision": 0,
+      "statement": "Runners lose access to small items",
+      "status": "proposed"
+     },
+     {
+      "hypothesis_id": "hyp_57d38a8eb882ac79b4a4d613",
+      "revision": 0,
+      "statement": "Runners lose access to small items",
+      "status": "proposed"
+     }
+    ],
+    "latest_admission_id": null,
+    "redundancy_groups": [
+     [
+      "hyp_0448d8fbf8efb3248eead0f0",
+      "hyp_57d38a8eb882ac79b4a4d613"
+     ]
+    ],
+    "stage": "filter"
+   },
+   "purpose_ref": "purpose:product-discovery",
+   "registry_snapshot_id": "trs-da9942986e52f832",
+   "request_id": "request:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:E-filter:7",
+   "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1"
+  },
+  "registry.project": {
+   "idempotency_key": "idempotency:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:D-project:6",
+   "operation_kind": "registry.project",
+   "payload": {
+    "admitted_evidence_ids": [],
+    "hypotheses": [
+     {
+      "hypothesis_id": "hyp_0448d8fbf8efb3248eead0f0",
+      "revision": 0,
+      "statement": "Runners lose access to small items",
+      "status": "proposed"
+     },
+     {
+      "hypothesis_id": "hyp_57d38a8eb882ac79b4a4d613",
+      "revision": 0,
+      "statement": "Runners lose access to small items",
+      "status": "proposed"
+     }
+    ],
+    "max_priors_per_hypothesis": 12,
+    "stage": null
+   },
+   "purpose_ref": "purpose:product-discovery",
+   "registry_snapshot_id": null,
+   "request_id": "request:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:D-project:6",
+   "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1"
+  }
+ },
+ "responses": {
+  "hypotheses.judge": {
+   "operation_id": "operation:67921bb342ec0de945df8e2c8f65f1ca",
+   "operation_kind": "hypotheses.judge",
+   "registry_snapshot": {
+    "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
+    "snapshot_id": "trs-da9942986e52f832"
+   },
+   "result": {
+    "evidence_admission": null,
+    "open_gaps": [],
+    "priors": [],
+    "qualifications": [],
+    "redundancy_groups": [],
+    "registry_snapshot": {
+     "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
+     "snapshot_id": "trs-da9942986e52f832"
+    },
+    "research_directive": null,
+    "score_refusals": [],
+    "territories": [],
+    "trail_scores": [],
+    "unsupported_hypothesis_ids": [],
+    "verdicts": [
+     {
+      "cause_refs": [
+       {
+        "id": "hyp_0448d8fbf8efb3248eead0f0",
+        "kind": "hypothesis"
+       }
+      ],
+      "hypothesis_id": "hyp_57d38a8eb882ac79b4a4d613",
+      "into_hypothesis_id": "hyp_0448d8fbf8efb3248eead0f0",
+      "kind": "DEDUPLICATE",
+      "polymath_transition": "MERGE",
+      "reason_code": "REDUNDANT_STATEMENT"
+     },
+     {
+      "cause_refs": [
+       {
+        "id": "hyp_0448d8fbf8efb3248eead0f0",
+        "kind": "hypothesis"
+       }
+      ],
+      "hypothesis_id": "hyp_0448d8fbf8efb3248eead0f0",
+      "into_hypothesis_id": null,
+      "kind": "WEAKEN",
+      "polymath_transition": "WEAKEN",
+      "reason_code": "NO_KNOWLEDGE_SUPPORT"
+     },
+     {
+      "cause_refs": [
+       {
+        "id": "hyp_57d38a8eb882ac79b4a4d613",
+        "kind": "hypothesis"
+       }
+      ],
+      "hypothesis_id": "hyp_57d38a8eb882ac79b4a4d613",
+      "into_hypothesis_id": null,
+      "kind": "WEAKEN",
+      "polymath_transition": "WEAKEN",
+      "reason_code": "NO_KNOWLEDGE_SUPPORT"
+     }
+    ]
+   },
+   "result_sha256": "sha256:9f6c5ea98428404688eaa4b86460723cbfa7fa8f98c16f38d57d9b1731ca148f",
+   "status_revision": 1
+  },
+  "registry.project": {
+   "operation_id": "operation:99073d5b9713e4c277f1cc554c1d5d3a",
+   "operation_kind": "registry.project",
+   "registry_snapshot": {
+    "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
+    "snapshot_id": "trs-da9942986e52f832"
+   },
+   "result": {
+    "evidence_admission": null,
+    "open_gaps": [],
+    "priors": [
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1015"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1018"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1021"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1024"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1027"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1030"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1033"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1036"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1039"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1042"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1045"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_0448d8fbf8efb3248eead0f0"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1048"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1015"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1018"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1021"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1024"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1027"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1030"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1033"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1036"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1039"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1042"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1045"
+     },
+     {
+      "hypothesis_ids": [
+       "hyp_57d38a8eb882ac79b4a4d613"
+      ],
+      "prior_role": "niche_seed",
+      "registry_record_id": "seed-1048"
+     }
+    ],
+    "qualifications": [],
+    "redundancy_groups": [
+     [
+      "hyp_0448d8fbf8efb3248eead0f0",
+      "hyp_57d38a8eb882ac79b4a4d613"
+     ]
+    ],
+    "registry_snapshot": {
+     "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
+     "snapshot_id": "trs-da9942986e52f832"
+    },
+    "research_directive": null,
+    "score_refusals": [],
+    "territories": [],
+    "trail_scores": [],
+    "unsupported_hypothesis_ids": [
+     "hyp_0448d8fbf8efb3248eead0f0",
+     "hyp_57d38a8eb882ac79b4a4d613"
+    ],
+    "verdicts": []
+   },
+   "result_sha256": "sha256:4cbcd893b7300206b41f17de0f24602f1c11243359f7a733ebfca18a3d9725c5",
+   "status_revision": 1
+  }
+ },
+ "run_id": "adr_b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+ "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+ "statement": "Runners lose access to small items",
+ "trail_head": "de64d84"
+}

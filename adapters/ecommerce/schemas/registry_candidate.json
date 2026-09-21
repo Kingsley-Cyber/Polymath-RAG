@@ -1,0 +1,53 @@
+{
+ "title": "registry_candidate",
+ "required": [
+  "id",
+  "kind",
+  "name",
+  "evidence_refs",
+  "status"
+ ],
+ "properties": {
+  "kind": {
+   "enum": [
+    "NICHE",
+    "SUBNICHE",
+    "AUDIENCE_SEGMENT",
+    "MARKET_IDENTIFIER",
+    "PERSPECTIVE",
+    "BEHAVIOR",
+    "TREND",
+    "ALIAS",
+    "ACTIVITY",
+    "ATOMIC_TASK",
+    "ATOMIC_ACTIVITY_SEED",
+    "FRICTION_FAMILY",
+    "WORKAROUND_PATTERN",
+    "SHARED_PREDICATE",
+    "PHYSICAL_JOB",
+    "PRODUCT_TERRITORY",
+    "QUERY_TEMPLATE",
+    "SOURCE",
+    "SEASONAL_PATTERN",
+    "REASONING_MOTIF",
+    "NEGATIVE_REASONING_MOTIF",
+    "REJECT"
+   ]
+  },
+  "status": {
+   "enum": [
+    "DISCOVERED",
+    "DEDUPLICATED",
+    "CLASSIFIED",
+    "RESEARCHED",
+    "CHALLENGED",
+    "APPROVED",
+    "REJECTED",
+    "MERGED"
+   ]
+  },
+  "id": {
+   "type": "string"
+  }
+ }
+}

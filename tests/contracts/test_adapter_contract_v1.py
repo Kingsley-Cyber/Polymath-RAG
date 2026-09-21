@@ -15,7 +15,7 @@ V1 = ROOT / "contracts" / "adapter" / "v1"
 NAMES = ["adapter_manifest", "adapter_run_request", "adapter_run_ref", "adapter_run_status", "adapter_step",
          "adapter_submission", "adapter_step_receipt", "external_operation_receipt", "adapter_result",
          "harness_action", "harness_receipt", "hypothesis_state", "hypothesis_transition", "evidence_admission"]
-STEP_TYPES = {"POLYMATH_RETRIEVE", "POLYMATH_COMPILE_PLAN", "POLYMATH_GRAPH_EXPAND", "EXTERNAL_OPERATION",
+STEP_TYPES = {"POLYMATH_RETRIEVE", "POLYMATH_COMPILE_PLAN", "POLYMATH_GRAPH_EXPAND", "EXTERNAL_OPERATION", "DOMAIN_OPERATION",   # +1: ADR-0020
               "AGENT_REASON", "HARNESS_ACTION", "VALIDATE", "BRANCH", "COMPILE_RESULT"}
 ROLE_PATTERN = "^[a-z][a-z0-9_]{1,40}$"
 ACTION_KINDS = {"AGENT_RESEARCH", "PRODUCT_REALITY_CHECK", "SUPPLIER_RESEARCH"}

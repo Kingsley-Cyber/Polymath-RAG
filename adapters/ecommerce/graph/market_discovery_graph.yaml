@@ -1,0 +1,195 @@
+# MARKET_DISCOVERY Control Graph (docs/12, docs/14 §4).
+# Discover market -> niche -> sub-niche opportunity surfaces worth the
+# expensive deeper loops. Independent discovery lanes stay ISOLATED until
+# merge_signals — whichever source goes first must not anchor the rest.
+# Lane isolation is enforced by ContextContracts and made durable by the
+# frozen ContextEnvelopes (docs/14 §31): a crash cannot rebuild a blind lane
+# with hypotheses it was never allowed to see.
+graph:
+  id: market_discovery
+  version: 1.0.0
+  entry: market_intake
+
+nodes:
+  market_intake:
+    type: reason
+    prompt: market_intake
+    outputs: [market_seed]
+    context:
+      require: [run_identity]
+      prefer: [signal, handoff_packet, registry_snapshot]
+      exclude: [field_signals, trend_signals, corpus_signals, supply_signals]
+
+  field_lane:                       # BLIND: current world only, no hypotheses
+    type: agent
+    executor: hermes_existing_web_stack
+    outputs: [field_signals]
+    context:
+      require: [market_seed]
+      prefer: [evidence_authority_rules]
+      exclude: [corpus_signals, supply_signals, trend_signals,
+                whitespace_hypotheses, market_scopes, registry_snapshot]
+
+  trend_lane:                       # search attention: movement, migration, seasonality
+    type: agent
+    executor: hermes_trend_sensor
+    outputs: [trend_signals]
+    context:
+      require: [market_seed]
+      exclude: [field_signals, corpus_signals, supply_signals]
+
+  corpus_lane:                      # corpus: transferable structures, not product picks
+    type: retrieve
+    executor: corpus_retrieve
+    outputs: [corpus_signals]
+    context:
+      require: [market_seed]
+      prefer: [registry_snapshot]
+      exclude: [field_signals, trend_signals, supply_signals]
+
+  supply_lane:                      # Alibaba ontology = supply existence, never demand
+    type: agent
+    executor: hermes_existing_alibaba_path
+    outputs: [supply_signals]
+    context:
+      require: [market_seed]
+      exclude: [field_signals, trend_signals, corpus_signals]
+
+  merge_signals:
+    type: transform
+    executor: python.merge_market_signals
+    checkpoint: LANES_MERGED
+
+  query_graph:
+    type: reason
+    prompt: query_graph
+    outputs: [query_nodes]
+    context:
+      require: [market_seed]
+      prefer: [field_signals, trend_signals, registry_snapshot]
+      exclude: [supply_signals]
+
+  lattice:
+    type: reason
+    prompt: market_lattice
+    outputs: [market_scopes]
+    context:
+      require: [market_seed]
+      prefer: [field_signals, trend_signals, corpus_signals, supply_signals,
+               query_nodes, registry_snapshot]
+
+  market_frontier:                  # M(s) + diversity + robustness receipts
+    type: transform
+    executor: python.market_frontier
+    checkpoint: FRONTIER_SELECTED
+
+  community_sampling:
+    type: agent
+    executor: hermes_existing_web_stack
+    outputs: [observations]
+    context:
+      require: [market_scopes]
+      prefer: [query_nodes, evidence_authority_rules]
+      exclude: [corpus_signals, supply_signals, whitespace_hypotheses]
+
+  curate:
+    type: transform
+    executor: python.comments
+
+  divergence:                       # channel disagreement IS information
+    type: transform
+    executor: python.signal_divergence
+
+  gap_analysis:                     # docs/17: demand vs current supply, typed gaps
+    type: transform
+    executor: python.demand_gap_analysis
+
+  whitespace:
+    type: reason
+    prompt: whitespace_mining
+    outputs: [whitespace_hypotheses]
+    optional_outputs: [demand_reroutes]
+    context:
+      require: [market_scopes, signal_divergences]
+      prefer: [demand_gaps, observations, field_signals, supply_signals, trend_signals]
+      exclude: [corpus_signals]
+
+  market_gaps:
+    type: transform
+    executor: python.market_gaps
+
+  targeted_research:
+    type: agent
+    executor: hermes_existing_web_stack
+    outputs: [observations]
+    context:
+      require: [queries, gaps]
+      prefer: [evidence_authority_rules]
+      exclude: [whitespace_hypotheses, corpus_signals]   # validate blind, not confirm
+
+  revise:
+    type: transform
+    executor: python.revise_whitespace
+    checkpoint: WHITESPACE_REVISED
+
+  entry_surface:                    # docs/17 §16: capture feasibility dims (θ estimates)
+    type: reason
+    prompt: entry_surface
+    outputs: [capture_assessments]
+    context:
+      require: [market_scopes]
+      prefer: [demand_gaps, whitespace_hypotheses, supply_signals, commerce_signals,
+               observations]
+      exclude: [corpus_signals]
+
+  capture_gate:                     # φ: dims -> EASY_ENTRY/PLAUSIBLE/DIFFICULT/HOSTILE
+    type: transform
+    executor: python.capture_gate
+
+  market_skeptic:
+    type: agent
+    executor: fresh_skeptical_evaluator
+    prompt: market_skeptic
+    outputs: [evaluations]
+    sanitize: dossier
+    context:
+      require: [market_scopes, whitespace_hypotheses]
+      prefer: [signal_divergences, observations]
+      exclude: [corpus_signals]
+
+  apply_skeptic:
+    type: transform
+    executor: python.apply_market_evaluations
+
+  promotion:                        # 3-8 scopes; shallow supply check only
+    type: gate
+    executor: python.market_promotion
+    checkpoint: MARKET_DISCOVERY_COMPLETE
+
+  stop:
+    type: terminal
+
+edges:
+  - {from: market_intake,      to: field_lane}
+  - {from: field_lane,         to: trend_lane}
+  - {from: trend_lane,         to: corpus_lane}
+  - {from: corpus_lane,        to: supply_lane}
+  - {from: supply_lane,        to: merge_signals}
+  - {from: merge_signals,      to: query_graph}
+  - {from: query_graph,        to: lattice}
+  - {from: lattice,            to: market_frontier}
+  - {from: market_frontier,    to: community_sampling}
+  - {from: community_sampling, to: curate}
+  - {from: curate,             to: divergence}
+  - {from: divergence,         to: gap_analysis}
+  - {from: gap_analysis,       to: whitespace}
+  - {from: whitespace,         to: market_gaps}
+  - {from: market_gaps,        to: targeted_research, when: market_research_needed}
+  - {from: market_gaps,        to: entry_surface,     when: market_research_done}
+  - {from: entry_surface,      to: capture_gate}
+  - {from: capture_gate,       to: market_skeptic}
+  - {from: targeted_research,  to: revise}
+  - {from: revise,             to: market_gaps}
+  - {from: market_skeptic,     to: apply_skeptic}
+  - {from: apply_skeptic,      to: promotion}
+  - {from: promotion,          to: stop}

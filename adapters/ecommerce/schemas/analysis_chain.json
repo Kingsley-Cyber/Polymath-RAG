@@ -1,0 +1,16 @@
+{
+  "$id": "analysis_chain",
+  "title": "AnalysisChain — evidence -> observation -> interpretation -> implications (docs/11)",
+  "type": "object",
+  "required": ["id", "evidence", "observation", "interpretation",
+               "market_implication", "product_implication", "ad_implication"],
+  "properties": {
+    "id": {"type": "string"},
+    "evidence": {"type": "array"},
+    "observation": {"type": "string"},
+    "interpretation": {"type": "string"},
+    "market_implication": {"type": "string"},
+    "product_implication": {"type": "string"},
+    "ad_implication": {"type": "string"}
+  }
+}

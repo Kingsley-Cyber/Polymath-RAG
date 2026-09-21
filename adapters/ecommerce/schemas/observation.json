@@ -1,0 +1,121 @@
+{
+ "title": "observation",
+ "required": [
+  "id",
+  "gap_id",
+  "source",
+  "quote_ref",
+  "community",
+  "problem",
+  "evidence_roles",
+  "freshness",
+  "source_identity"
+ ],
+ "properties": {
+  "purchase_language": {
+   "type": "boolean"
+  },
+  "workaround": {
+   "type": "string"
+  },
+  "desired_outcome": {},
+  "context": {},
+  "activity": {},
+  "contradicts": {
+   "type": "boolean"
+  },
+  "freshness": {
+   "required": [
+    "class"
+   ],
+   "type": "object",
+   "properties": {
+    "class": {
+     "type": "string"
+    }
+   }
+  },
+  "source_identity": {
+   "required": [
+    "source_family",
+    "platform"
+   ],
+   "type": "object",
+   "properties": {
+    "platform": {
+     "type": "string"
+    },
+    "author_key": {
+     "type": "string"
+    },
+    "thread_key": {
+     "type": "string"
+    },
+    "source_family": {
+     "type": "string"
+    }
+   }
+  },
+  "knowledge_roles": {
+   "description": "what kind of knowledge this contributes"
+  },
+  "evidence_roles": {
+   "description": "what this item is allowed to establish HERE",
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "id": {
+   "type": "string"
+  },
+  "gap_id": {
+   "type": "string"
+  },
+  "quote_ref": {
+   "type": "string"
+  },
+  "source": {
+   "type": "string"
+  },
+  "problem": {
+   "type": "string"
+  },
+  "retrieved_at": {
+   "type": "string",
+   "description": "docs/27: RFC 3339 time THIS item was fetched, written at harvest time. Optional in standalone runs; REQUIRED for a governed receipt (never back-filled with 'now')."
+  },
+  "published_at_if_known": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "description": "docs/27: the publish date the page shows (RFC 3339), or null when it shows none. A known date is never omitted to read as fresh."
+  },
+  "hypothesis_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "description": "docs/27: GOVERNED mode only — the adapter's hyp_… ids this item bears on (a subset of the HarnessActionV1's)."
+  },
+  "metric": {
+   "type": "object",
+   "description": "docs/27: a number the source states (price, rating, count): {name, value, unit, sample_n?}. Carried into a governed receipt as metric_if_present.",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "value": {
+     "type": "number"
+    },
+    "unit": {
+     "type": "string"
+    },
+    "sample_n": {
+     "type": "integer"
+    }
+   }
+  }
+ }
+}

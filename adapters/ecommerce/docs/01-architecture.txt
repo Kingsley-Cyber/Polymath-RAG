@@ -1,0 +1,1289 @@
+Yes. There **was a deviation in my last pass**, specifically in where I placed the control plane. I moved too much of it into Trail-Signal and made it look like a new platform-level reasoning context. That is not necessary for the architecture you have now converged on.
+
+After reconciling the original φ design, the Reasoning Seed Registry work, the Work Graph design, and the new prompt-graph-engineering source, this is the version I would lock.
+
+The **intent never changed**: Polymath establishes knowledge; a higher-order reasoning layer constructs non-obvious hypotheses; Hermes investigates those hypotheses in the real world; deterministic code constrains the process; validated discoveries can compound into the registry. The original plan explicitly describes φ as a dynamic research-graph compiler grounded in Polymath, with Hermes executing the resulting investigation. 
+
+# Final validated architecture
+
+```text
+                     POLYMATH
+           existing second-brain knowledge
+        Mongo + Qdrant + existing Neo4j graph
+                       │
+                       │ MCP
+                       ▼
+              HERMES AGENT RUNTIME
+          existing CLI / model / web tools
+          existing escalation / Camoufox
+                       │
+                       ▼
+        ┌─────────────────────────────┐
+        │ OPPORTUNITY RESEARCH SKILL  │  ← BUILD
+        │                             │
+        │ Control Graph               │
+        │ Lens/Registry retrieval     │
+        │ θ latent interpretation     │
+        │ Bridge hypotheses           │
+        │ Work Graph                  │
+        │ Evidence-gap reasoning      │
+        │ Research query generation   │
+        │ Product-mechanism mapping   │
+        └──────────────┬──────────────┘
+                       │
+                       │ uses
+                       ▼
+        ┌─────────────────────────────┐
+        │ DETERMINISTIC PYTHON SKILL  │  ← BUILD
+        │                             │
+        │ graph runner                │
+        │ state transitions           │
+        │ schema validation           │
+        │ registry resolution         │
+        │ deduplication               │
+        │ query compilation           │
+        │ evidence bookkeeping        │
+        │ supplier normalization      │
+        │ price/MOQ calculations      │
+        │ promotion candidate logic   │
+        └──────────────┬──────────────┘
+                       │
+                       ▼
+                  HERMES WEB
+        Reddit / YouTube / comments /
+          reviews / forums / etc.
+                       │
+                       ▼
+              REAL USER LANGUAGE
+         complaints / adaptations /
+       requests / workarounds / demand
+                       │
+                       ▼
+                PRODUCT MECHANISM
+                       │
+                       ▼
+                    ALIBABA
+                       │
+                       ▼
+              PRODUCT + PICTURES
+          PRICE + MOQ + SUPPLIER DATA
+                       │
+                       ▼
+               PRODUCT LEAD REPORT
+```
+
+**That is the current architecture.**
+
+Not another Trail-Signal reasoning service.
+
+Not another RAG.
+
+Not another Neo4j.
+
+Not another scheduler.
+
+---
+
+# 1. What was correct all along
+
+These decisions remain unchanged.
+
+### Polymath is the knowledge/evidence brain
+
+The opportunity skill consumes Polymath. It does not replace it.
+
+Your original design is explicit that normal Polymath ingestion stays:
+
+```text
+document
+→ parse
+→ chunk
+→ embed
+→ factual extraction
+→ Mongo
+→ Qdrant
+→ Neo4j
+→ query_ready
+```
+
+The research layer starts **after** that and derives higher-order research objects rather than rerunning ordinary extraction. 
+
+Therefore:
+
+```text
+Polymath Neo4j
+= evidence graph
+
+NOT
+
+opportunity hypothesis graph
+```
+
+---
+
+# 2. What I am correcting
+
+The last answer said:
+
+> Put a new `reasoning/` bounded context inside Trail-Signal.
+
+For **your current simplified architecture, do not do that**.
+
+That was carrying forward an older, heavier architecture lock in which Trail-Signal owned opportunity workflow state and Temporal controlled the lifecycle. 
+
+Your newer requirement has removed that need:
+
+* Hermes already exists.
+* Hermes already has the agent loop.
+* Hermes already has web escalation.
+* Hermes already has browser tooling.
+* Hermes can already call Polymath MCP.
+* You want this behavior packaged as an **agent skill**.
+
+Therefore the new component belongs logically with **Hermes**, not inside Polymath or Trail-Signal.
+
+Trail-Signal can still be one of Hermes's acquisition tools if useful. It just doesn't own this reasoning architecture.
+
+---
+
+# 3. The graph architecture was not abandoned
+
+This is the part I do **not** want simplified away.
+
+There should still be three distinct graph scopes.
+
+## A. Evidence Graph — existing Polymath
+
+```text
+documents
+claims
+entities
+relationships
+sources
+provenance
+```
+
+Durable.
+
+Authoritative.
+
+Neo4j.
+
+---
+
+## B. Control Graph — inside the Hermes opportunity skill
+
+This controls:
+
+```text
+what operation runs
+what can follow what
+when research is allowed
+when the agent must challenge a hypothesis
+when Alibaba may be searched
+when the run must stop
+```
+
+Example:
+
+```text
+START
+  ↓
+retrieve_polymath
+  ↓
+interpret_latent_signal
+  ↓
+select_lenses
+  ↓
+generate_bridge_hypotheses
+  ↓
+challenge_hypotheses
+  ↓
+identify_evidence_gaps
+  ↓
+       evidence sufficient?
+       /               \
+     yes                no
+      │                  │
+      │            research_comments
+      │                  │
+      │            curate_evidence
+      │                  │
+      └────────────◄─────┘
+               ↓
+       derive_mechanisms
+               ↓
+       validate_current_products
+               ↓
+          Alibaba search
+               ↓
+       normalize suppliers
+               ↓
+          qualify leads
+               ↓
+              END
+```
+
+This is the **graph control plane**.
+
+The new graph-engineering source strongly supports keeping this as an explicit artifact: the structure must be enumerated, separate from prompt text, executable, and independently versionable/inspectable. 
+
+---
+
+## C. Work Graph — current investigation
+
+This is what Hermes is actually reasoning about.
+
+Example:
+
+```text
+Storytelling
+     │
+     ▼
+Creator differentiation
+     │
+     ▼
+Performance hypothesis
+     │
+     ├───────────────┐
+     ▼               ▼
+Mobility          Presence
+     │
+     ▼
+Hands-free capture
+     │
+     ▼
+Wearable audio mechanism
+     │
+     ▼
+Evidence gap:
+Do real creators complain about
+equipment interfering with movement?
+     │
+     ▼
+Reddit / YouTube / review research
+```
+
+This graph can contain:
+
+```text
+EvidenceRef
+Observation
+Lens
+Driver
+Behavior
+Friction
+Adaptation
+LatentValue
+BridgeHypothesis
+MarketIdentifierCandidate
+NicheCandidate
+ProductMechanism
+ResearchGap
+Query
+ProductCandidate
+SupplierCandidate
+Contradiction
+```
+
+It is **not Neo4j**.
+
+Initially make it a simple Python object + JSON artifact.
+
+The earlier reasoning architecture reached exactly this separation: durable evidence graph, curated registry graph, temporary Work Graph; Work Graph hypotheses must not enter factual Neo4j. 
+
+---
+
+# 4. Final code location
+
+Because I cannot currently verify the actual Hermes repository tree, I should **not invent a repository-specific absolute path**.
+
+The code generator must locate Hermes's existing skill root first.
+
+Inside whatever Hermes currently uses for skills, create conceptually:
+
+```text
+hermes/
+└── skills/
+    └── opportunity_research/
+        │
+        ├── SKILL.md
+        │
+        ├── manifest.yaml
+        │
+        │
+        ├── graph/
+        │   ├── control_graph.yaml
+        │   ├── nodes.yaml
+        │   └── policies.yaml
+        │
+        ├── prompts/
+        │   ├── latent_interpretation.md
+        │   ├── bridge_hypothesis.md
+        │   ├── contradiction.md
+        │   ├── mechanism_mapping.md
+        │   └── evidence_judgment.md
+        │
+        ├── schemas/
+        │   ├── work_state.json
+        │   ├── hypothesis.json
+        │   ├── evidence_gap.json
+        │   ├── research_query.json
+        │   ├── observation.json
+        │   ├── product_candidate.json
+        │   └── supplier_candidate.json
+        │
+        ├── registry/
+        │   ├── niches.csv
+        │   ├── activities.csv
+        │   ├── niche_activity.csv
+        │   ├── frictions.csv
+        │   ├── mechanisms.csv
+        │   ├── market_identifiers.csv
+        │   ├── lenses.yaml
+        │   └── reasoning_motifs.yaml
+        │
+        ├── python/
+        │   ├── controller.py
+        │   ├── graph.py
+        │   ├── transitions.py
+        │   ├── registry.py
+        │   ├── lens_gate.py
+        │   ├── bridge_validator.py
+        │   ├── gap_compiler.py
+        │   ├── query_compiler.py
+        │   ├── evidence.py
+        │   ├── comments.py
+        │   ├── supplier.py
+        │   ├── scoring.py
+        │   └── models.py
+        │
+        ├── tests/
+        │   ├── fixtures/
+        │   ├── stress/
+        │   ├── test_graph.py
+        │   ├── test_registry.py
+        │   ├── test_bridge.py
+        │   ├── test_abstention.py
+        │   ├── test_queries.py
+        │   └── test_supplier.py
+        │
+        └── examples/
+            ├── storytelling.json
+            ├── dexterity.json
+            └── negative_control.json
+```
+
+That is the physical unit.
+
+You can optionally break the deterministic Python support into a second Hermes skill if Hermes's skill conventions favor that:
+
+```text
+skills/
+├── opportunity_research/
+└── opportunity_python/
+```
+
+Architecturally, however, **they remain one feature**.
+
+---
+
+# 5. `SKILL.md` is the agent's semantic constitution
+
+`SKILL.md` explains:
+
+* when the skill applies;
+* the objective;
+* Polymath's role;
+* reasoning requirements;
+* web research requirements;
+* what counts as evidence;
+* how to use comments;
+* when to search Alibaba;
+* what must never be inferred;
+* how the registry is used;
+* what Python operations are mandatory.
+
+It should say, conceptually:
+
+```text
+Never begin with Alibaba.
+
+Begin with evidence or an opportunity thesis.
+
+Use Polymath first.
+
+Interpret abstract material through relevant lenses.
+
+Generate multiple bridge hypotheses.
+
+Identify unsupported links.
+
+Use real communities to test those unsupported links.
+
+Prefer comments containing behavior,
+complaints, adaptations, comparisons,
+purchase seeking, and workarounds.
+
+Only after a plausible human need and
+product mechanism survive research should
+supplier discovery begin.
+
+Alibaba establishes supply availability,
+not demand.
+
+Return evidence, inference boundaries,
+product mechanism, candidate products,
+supplier data, and unresolved risk.
+```
+
+That preserves the original purpose.
+
+---
+
+# 6. `control_graph.yaml` is the operational constitution
+
+Do not stuff the graph into `SKILL.md`.
+
+That would violate the graph-engineering principle that structure and prompt content should be independently changeable. 
+
+Instead:
+
+```yaml
+graph:
+  id: opportunity_research
+  version: 1.0.0
+  entry: understand
+
+nodes:
+
+  understand:
+    type: reason
+    next: polymath
+
+  polymath:
+    type: retrieve
+    executor: polymath_mcp
+
+  lenses:
+    type: transform
+    executor: python.lens_gate
+
+  hypothesize:
+    type: reason
+    prompt: bridge_hypothesis
+
+  challenge:
+    type: reason
+    prompt: contradiction
+
+  gaps:
+    type: transform
+    executor: python.gap_compiler
+
+  web_research:
+    type: agent
+    executor: hermes_existing_web_stack
+
+  curate:
+    type: transform
+    executor: python.comments
+
+  mechanism:
+    type: reason
+    prompt: mechanism_mapping
+
+  supplier_search:
+    type: agent
+    executor: hermes_existing_alibaba_path
+
+  normalize_supplier:
+    type: transform
+    executor: python.supplier
+
+  qualify:
+    type: gate
+    executor: python.scoring
+
+  stop:
+    type: terminal
+```
+
+Edges:
+
+```yaml
+edges:
+
+  - from: understand
+    to: polymath
+
+  - from: polymath
+    to: lenses
+
+  - from: lenses
+    to: hypothesize
+
+  - from: hypothesize
+    to: challenge
+
+  - from: challenge
+    to: gaps
+
+  - from: gaps
+    to: web_research
+    when: material_gap_exists
+
+  - from: gaps
+    to: mechanism
+    when: evidence_sufficient
+
+  - from: web_research
+    to: curate
+
+  - from: curate
+    to: challenge
+
+  - from: mechanism
+    to: supplier_search
+    when: mechanism_supported
+
+  - from: supplier_search
+    to: normalize_supplier
+
+  - from: normalize_supplier
+    to: qualify
+
+  - from: qualify
+    to: stop
+```
+
+Now it is a genuine control graph rather than prose.
+
+---
+
+# 7. Python does not become another agent
+
+This was also important in the original architecture.
+
+Python owns things that should be deterministic:
+
+```text
+graph validation
+legal transition checking
+registry loading
+registry relationship resolution
+deduplication
+evidence counts
+independent-source grouping
+comment signal extraction helpers
+query formatting
+price parsing
+currency normalization
+MOQ parsing
+supplier comparison
+hashing
+candidate IDs
+ranking inputs
+hard gates
+```
+
+θ/LLM owns:
+
+```text
+latent interpretation
+abduction
+analogy
+concept bridging
+alternative explanations
+semantic market hypotheses
+mechanism hypotheses
+```
+
+This preserves:
+
+```text
+θ = semantic possibility
+
+φ/Python = bounded admissibility
+```
+
+---
+
+# 8. Hermes remains Hermes
+
+This is the biggest location correction from my last answer.
+
+Do **not** put another abstraction layer in front of:
+
+```text
+Agent CLI
+Camoufox
+browser controls
+web search
+existing tool escalation
+existing marketplace tools
+```
+
+The skill calls those existing capabilities.
+
+Conceptually:
+
+```text
+Control Graph node:
+    web_research
+            │
+            ▼
+existing Hermes agent/tool router
+            │
+     ┌──────┼─────────┐
+     ▼      ▼         ▼
+ search  browser   Camoufox
+```
+
+And:
+
+```text
+supplier_search
+      ↓
+existing Hermes supplier/web path
+      ↓
+Alibaba
+```
+
+No replacement.
+
+No duplicate browser abstraction unless the repository already has an adapter convention.
+
+---
+
+# 9. Polymath integration is simple
+
+The skill calls Polymath MCP for:
+
+```text
+semantic retrieval
+cross-corpus retrieval
+graph retrieval
+source fetch
+previous findings
+relevant concepts
+```
+
+It does **not** call:
+
+```text
+Mongo directly
+Qdrant directly
+Neo4j directly
+```
+
+This was an original architectural invariant: the higher-order research projection consumes existing Polymath results rather than reimplementing factual extraction or storage. 
+
+The existing factual Neo4j graph is enough.
+
+---
+
+# 10. The registry is absolutely retained
+
+This has **not** disappeared.
+
+It remains one of the key multipliers.
+
+Your original reasoning work explicitly describes the existing 460 activities and ~1,380 activity→task→friction→workaround pathways as a **Reasoning Seed Registry**, not a complete niche database. It should allow paths outside the CSV and support functional, cultural/psychological, and knowledge/capability translations. 
+
+Use:
+
+```text
+Git-authoritative registry
+```
+
+with:
+
+```text
+niches.csv
+activities.csv
+niche_activity.csv
+frictions.csv
+mechanisms.csv
+market_identifiers.csv
+
+lenses.yaml
+reasoning_motifs.yaml
+```
+
+This is smaller and cleaner than putting every concept in one niche CSV.
+
+---
+
+# 11. The registry grows, but through candidates
+
+Runtime discovers:
+
+```text
+AI builders
+agent builders
+mobile explainer creators
+no-cook backpackers
+LARPers
+```
+
+It creates:
+
+```text
+RegistryCandidate
+```
+
+not an automatic row.
+
+Candidate lifecycle:
+
+```text
+DISCOVERED
+   ↓
+DEDUPLICATED
+   ↓
+CLASSIFIED
+   ↓
+RESEARCHED
+   ↓
+CHALLENGED
+   ↓
+       ┌─────────────────────────┐
+       ▼                         ▼
+APPROVE                    REJECT/MERGE
+       │
+       ▼
+Git registry proposal
+       │
+       ▼
+registry vNext
+```
+
+Possible classification:
+
+```text
+NICHE
+SUBNICHE
+AUDIENCE_SEGMENT
+MARKET_IDENTIFIER
+PERSPECTIVE
+BEHAVIOR
+TREND
+ALIAS
+REJECT
+```
+
+The existing DWRK architecture makes this distinction explicit; for example Hiking is a niche, Ultralight Backpacking a sub-niche, Minimalism a perspective, Cold Soaking a behavior/adaptation, and a supplier listing is a supplier offer. 
+
+---
+
+# 12. Activities remain many-to-many
+
+Do not revert to:
+
+```text
+Niche.activity1
+Niche.activity2
+```
+
+Use:
+
+```text
+Niche
+   ↕
+NicheActivity
+   ↕
+Activity
+```
+
+This enables:
+
+```text
+LARP
+→ gear transport
+
+Photography
+→ gear transport
+
+Fishing
+→ gear transport
+
+Field technicians
+→ gear transport
+```
+
+which enables cross-domain reasoning:
+
+```text
+same activity
+→ same constraint?
+→ same adaptation?
+→ transferable mechanism?
+```
+
+Your current `activity_taxonomy.csv` is already organized around broad domains while explicitly recommending reasoning at the atomic-task level rather than jumping from broad categories directly to products. 
+
+---
+
+# 13. Lenses remain before/around hypothesis generation
+
+Also unchanged.
+
+```text
+abstract signal
+      ↓
+Lens Gate
+      ↓
+selected perspectives
+      ↓
+θ
+      ↓
+bridge hypotheses
+```
+
+For example:
+
+```text
+Storytelling
+× Performance
+× Mobility
+× Embodiment
+× Minimal interference
+```
+
+can generate:
+
+```text
+creator differentiation
+→ physical delivery
+→ hands used for gesture
+→ low-interference voice capture
+→ wearable audio mechanism
+```
+
+The registry gives the model structured directions; it does not predetermine the answer.
+
+---
+
+# 14. The most important reasoning object remains the Bridge Hypothesis
+
+This was part of the architecture before the graph source and remains correct. 
+
+Example:
+
+```yaml
+bridge:
+  source:
+    storytelling_importance
+
+  path:
+    - creator_differentiation
+    - expressive_performance
+    - physical_delivery
+    - movement_or_demonstration
+    - low_interference_audio
+
+  target_mechanism:
+    wearable_wireless_audio
+
+  evidence_boundary:
+    first_inference_at: creator_differentiation
+
+  gaps:
+    - creators_actually_move_while_recording
+    - existing_audio_creates_friction
+    - willingness_to_buy_improvement
+
+  status:
+    WORKING_HYPOTHESIS
+```
+
+That is how you prevent:
+
+```text
+storytelling → microphone
+```
+
+from being an opaque model jump.
+
+---
+
+# 15. Real comments remain central
+
+Also unchanged.
+
+Hermes should seek:
+
+```text
+"I wish..."
+"I hate..."
+"I ended up..."
+"I had to..."
+"Does anyone know..."
+"too bulky..."
+"doesn't work when..."
+"looking for..."
+"what do you use..."
+```
+
+Those become structured observations:
+
+```yaml
+observation:
+  source:
+  quote_ref:
+  community:
+  activity:
+  context:
+  problem:
+  workaround:
+  desired_outcome:
+  purchase_language:
+  captured_at:
+```
+
+Hermes interprets.
+
+Python groups/deduplicates/counts.
+
+The registry may learn from repeated validated patterns.
+
+---
+
+# 16. Alibaba remains the terminal supply test
+
+It does not move earlier.
+
+Correct:
+
+```text
+abstract knowledge
+→ latent hypothesis
+→ human behavior research
+→ real comments
+→ recurring friction/adaptation
+→ need
+→ product mechanism
+→ existing product validation
+→ Alibaba
+```
+
+Incorrect:
+
+```text
+storytelling
+→ Alibaba microphone
+```
+
+Alibaba answers:
+
+```text
+What exists?
+At what price?
+At what MOQ?
+With what variants?
+Can it be customized?
+Who supplies it?
+What does it look like?
+```
+
+It does **not** answer:
+
+```text
+Do consumers actually want it?
+```
+
+---
+
+# 17. No new graph database
+
+This is fully confirmed.
+
+Your graph scopes become:
+
+```text
+1. POLYMATH EVIDENCE GRAPH
+   existing Neo4j
+   durable knowledge
+
+2. REASONING REGISTRY
+   CSV/YAML
+   curated priors
+
+3. CONTROL GRAPH
+   YAML
+   authored executable skill structure
+
+4. WORK GRAPH
+   JSON/Python
+   current reasoning state
+```
+
+Only #1 needs Neo4j.
+
+The earlier DWRK architecture also explicitly says that the Work Graph must remain outside factual Neo4j. 
+
+---
+
+# 18. No LangGraph required
+
+The graph-engineering paper does **not** say LangGraph is necessary.
+
+It explicitly says no specific framework is required; a code-defined graph qualifies as long as the structure is explicit, independently parameterized, executable, and first-class. 
+
+Therefore:
+
+```text
+LangGraph
+= optional implementation library
+
+NOT
+= architectural requirement
+```
+
+For your current scope, the Python controller can execute `control_graph.yaml`.
+
+That is simpler.
+
+---
+
+# 19. No Temporal required for the skill
+
+This is another correction from my previous answer.
+
+For this Hermes skill:
+
+```text
+existing Hermes agent lifecycle
++
+control_graph.yaml
++
+controller.py
+```
+
+is enough.
+
+Only introduce durable scheduling if you later need investigations that survive:
+
+```text
+machine restart
+hours/days of waiting
+large crawl jobs
+manual approval delays
+```
+
+Do not make Temporal a prerequisite for this first implementation.
+
+The older lock made Temporal mandatory because it assumed Trail-Signal owned the full durable opportunity workflow.  That assumption has been superseded by your newer Hermes-skill design.
+
+---
+
+# 20. No new MCP required
+
+Also confirmed.
+
+You already have:
+
+```text
+Hermes
+→ Polymath MCP
+```
+
+and Hermes already has its external tool ecosystem.
+
+So initially:
+
+```text
+NO opportunity MCP
+NO reasoning MCP
+NO registry MCP
+```
+
+The skill itself is the integration layer.
+
+Add an MCP surface only if another independent agent later needs to invoke the complete opportunity workflow remotely.
+
+---
+
+# 21. CPCS is no longer the required owner
+
+This is another place where the architecture evolved.
+
+The original plan put the research adapter under CPCS:
+
+```text
+Polymath
+→ CPCS φ adapter
+→ Hermes
+```
+
+
+
+That made sense when the product opportunity function was being treated as one CPCS application.
+
+Your latest requirement makes it:
+
+```text
+Polymath
+→ Hermes opportunity skill
+```
+
+This is a **location change, not an intent change**.
+
+CPCS can still consume the resulting product/creative findings later.
+
+It does not need to own the research logic.
+
+---
+
+# 22. Final implementation tree to lock
+
+Conceptually:
+
+```text
+HERMES REPOSITORY
+│
+├── existing agent runtime
+├── existing CLI
+├── existing tools
+├── existing browser/Camoufox
+│
+└── skills/
+    │
+    └── opportunity_research/
+        │
+        ├── SKILL.md
+        ├── manifest.yaml
+        │
+        ├── graph/
+        │   └── control_graph.yaml
+        │
+        ├── prompts/
+        │
+        ├── schemas/
+        │
+        ├── registry/
+        │   ├── niches.csv
+        │   ├── activities.csv
+        │   ├── niche_activity.csv
+        │   ├── frictions.csv
+        │   ├── mechanisms.csv
+        │   ├── market_identifiers.csv
+        │   ├── lenses.yaml
+        │   └── reasoning_motifs.yaml
+        │
+        ├── python/
+        │   ├── controller.py
+        │   ├── graph.py
+        │   ├── state.py
+        │   ├── registry.py
+        │   ├── lens_gate.py
+        │   ├── bridge.py
+        │   ├── gaps.py
+        │   ├── queries.py
+        │   ├── evidence.py
+        │   ├── comments.py
+        │   ├── suppliers.py
+        │   ├── scoring.py
+        │   └── models.py
+        │
+        ├── candidates/
+        │   └── .gitkeep
+        │
+        └── tests/
+            ├── fixtures/
+            ├── adversarial/
+            ├── test_control_graph.py
+            ├── test_bridge_reasoning.py
+            ├── test_registry.py
+            ├── test_no_false_bridge.py
+            ├── test_query_lineage.py
+            └── test_supplier_normalization.py
+```
+
+**The coding agent must map Hermes's real skill convention and adapt these logical paths rather than blindly creating `skills/` if Hermes calls it something else.**
+
+---
+
+# 23. The first E2E build
+
+The first test should be only:
+
+```text
+storytelling transcript
+       ↓
+Polymath MCP
+       ↓
+relevant knowledge
+       ↓
+lens selection
+       ↓
+bridge hypotheses
+       ↓
+explicit unsupported links
+       ↓
+Hermes comment research
+       ↓
+curated real observations
+       ↓
+bridge reevaluation
+       ↓
+wearable/clip-on audio mechanism
+       ↓
+Alibaba search
+       ↓
+products + pictures + price + MOQ
+       ↓
+normalized product leads
+```
+
+And simultaneously:
+
+```text
+irrelevant corpus
+       ↓
+NO_DEFENSIBLE_BRIDGE
+```
+
+The original implementation DAG also correctly puts semantic stress fixtures before registry normalization, bridge reasoning, Hermes integration, and self-growth. 
+
+---
+
+# 24. Final validation matrix
+
+| Decision                                            | Final status             |
+| --------------------------------------------------- | ------------------------ |
+| Polymath stays knowledge authority                  | **LOCKED**               |
+| Existing Polymath Neo4j stays evidence graph        | **LOCKED**               |
+| New opportunity Neo4j                               | **DO NOT BUILD**         |
+| New Qdrant                                          | **DO NOT BUILD**         |
+| New embedding/extraction pipeline                   | **DO NOT BUILD**         |
+| Opportunity logic lives as Hermes skill             | **LOCKED**               |
+| Deterministic Python accompanies skill              | **LOCKED**               |
+| Existing Hermes CLI/web/Camoufox reused             | **LOCKED**               |
+| Control Graph remains explicit                      | **LOCKED**               |
+| Control Graph stored as authored/versioned artifact | **LOCKED**               |
+| Work Graph remains non-authoritative                | **LOCKED**               |
+| Registry remains Git controlled                     | **LOCKED**               |
+| CSV for flat registries                             | **LOCKED**               |
+| YAML for lenses/motifs/control graph                | **LOCKED**               |
+| Activities many-to-many with niches                 | **LOCKED**               |
+| Registry grows through candidates                   | **LOCKED**               |
+| Automatic candidate discovery                       | **YES**                  |
+| Automatic authoritative registry mutation           | **NO**                   |
+| BridgeHypothesis first-class                        | **LOCKED**               |
+| Real comments before product sourcing               | **LOCKED**               |
+| Alibaba is supply validation, not demand validation | **LOCKED**               |
+| CPCS required in loop                               | **NO**                   |
+| Trail-Signal required as control owner              | **NO**                   |
+| Trail-Signal usable by Hermes if useful             | **YES**                  |
+| LangGraph required                                  | **NO**                   |
+| Temporal required                                   | **NO, not for v1 skill** |
+| New MCP required                                    | **NO**                   |
+| Stress/negative fixtures before expansion           | **LOCKED**               |
+
+## The final invariant
+
+> **Polymath knows. The registry gives Hermes reusable reasoning coordinates. The Control Graph determines how the opportunity skill operates. θ constructs latent bridges. Python/φ constrains and validates them. The Work Graph records what the current investigation is trying to establish. Hermes uses its existing web stack to test the unknowns against real people and current markets. Alibaba is searched only after a plausible mechanism survives evidence testing. Validated discoveries may propose new niches, activities, lenses, motifs, and market identifiers, but only reviewed promotion changes the curated registry.**
+
+That is aligned with the original intent. The last answer's large Trail-Signal-owned reasoning context was the deviation; **this is the corrected architecture I would now treat as the implementation baseline.**

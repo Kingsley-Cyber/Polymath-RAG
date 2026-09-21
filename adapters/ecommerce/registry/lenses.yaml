@@ -1,0 +1,22 @@
+# Lens Gate registry — perspectives applied BEFORE hypothesis generation.
+# keywords drive deterministic selection in python/lens_gate.py; the model
+# may request additional lenses explicitly but never silently.
+lenses:
+  performance:
+    keywords: [storytelling, delivery, presence, audience, expressive, camera]
+    question: What does excelling at this in front of others require physically?
+  mobility:
+    keywords: [move, movement, walk, travel, carry, portable, field]
+    question: What breaks when the person cannot stay still?
+  embodiment:
+    keywords: [hands, gesture, wear, body, physical, posture]
+    question: Which body parts are occupied, and what competes for them?
+  minimal-interference:
+    keywords: [friction, setup, bulky, tangle, interfere, hassle]
+    question: What tool disappears from awareness when it works?
+  identity-signaling:
+    keywords: [style, aesthetic, brand, look, differentiate]
+    question: What does the tool say about its owner to their community?
+  economics:
+    keywords: [price, cheap, budget, cost, margin, afford]
+    question: What is the willingness-to-pay boundary in this community?

@@ -1,0 +1,174 @@
+{
+ "title": "evidence_packet",
+ "description": "docs/22 (v2.2.0): the EvidencePacket returned by Polymath's evidence boundary (evidence-packet-v1) — evidence with roles, CA4 grades and provenance, NEVER an answer. This is the skill-dialect rendering (schema-lite: no const / $ref) of the authoritative JSON Schema named in x-source; corpus_polymath.packet_errors enforces it FAIL CLOSED, together with two exact checks the dialect cannot express (schema_version is the literal string, synthesis_performed is the literal false). Additive by design: unknown properties are allowed; the required structure and the closed vocabularies are not negotiable.",
+ "x-source": {
+  "repo": "polymath-v4",
+  "path": "contracts/evidence/v1/evidence_packet.schema.json",
+  "sha256": "dfacd1ac6b5fcdfb1b720f36c101f31b15b0027d0b45b9282481cbf1ed575c03",
+  "producer": "shared/polymath_shared/evidence_packet.py::build_evidence_packet",
+  "route": "POST /chat/evidence"
+ },
+ "required": [
+  "schema_version",
+  "q0",
+  "retrieval_mode",
+  "synthesis_performed",
+  "plan",
+  "evidence",
+  "receipts"
+ ],
+ "properties": {
+  "schema_version": {
+   "enum": [
+    "evidence-packet-v1"
+   ]
+  },
+  "q0": {
+   "type": "string"
+  },
+  "retrieval_mode": {
+   "type": "string"
+  },
+  "synthesis_performed": {
+   "enum": [
+    false
+   ]
+  },
+  "plan": {
+   "type": "object",
+   "required": [
+    "compiled_queries",
+    "corpus_explorer_requested",
+    "corpus_explorer_used"
+   ],
+   "properties": {
+    "compiled_queries": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "id",
+       "origin"
+      ],
+      "properties": {
+       "id": {
+        "type": "string"
+       },
+       "origin": {
+        "type": "string"
+       },
+       "role": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "corpus_explorer_requested": {
+     "type": "boolean"
+    },
+    "corpus_explorer_used": {
+     "type": "boolean"
+    }
+   }
+  },
+  "evidence": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "chunk_id",
+     "origin",
+     "query_ids",
+     "lineage",
+     "utility_role",
+     "c4_valid",
+     "provenance"
+    ],
+    "properties": {
+     "chunk_id": {
+      "type": "string"
+     },
+     "document_id": {
+      "type": "string"
+     },
+     "source": {
+      "type": "string"
+     },
+     "text": {
+      "type": "string"
+     },
+     "text_truncated": {
+      "type": [
+       "boolean",
+       "null"
+      ]
+     },
+     "text_chars": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "minimum": 0
+     },
+     "origin": {
+      "type": "string"
+     },
+     "query_ids": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "lineage": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "query_id": {
+         "type": "string"
+        },
+        "origin": {
+         "type": "string"
+        },
+        "role": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "utility_role": {
+      "enum": [
+       "DIRECT",
+       "COMPLEMENTARY",
+       "DIVERGENT",
+       "RELATED"
+      ]
+     },
+     "synthesis_role": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "ca4_grade": {
+      "enum": [
+       "DIRECT",
+       "PARTIAL",
+       "RELATED",
+       null
+      ]
+     },
+     "c4_valid": {
+      "type": "boolean"
+     },
+     "provenance": {
+      "type": "object"
+     }
+    }
+   }
+  },
+  "receipts": {
+   "type": "object"
+  }
+ }
+}

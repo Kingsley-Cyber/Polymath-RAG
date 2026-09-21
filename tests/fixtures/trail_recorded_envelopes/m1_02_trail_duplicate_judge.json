@@ -1,0 +1,216 @@
+{
+ "finding": "M1-02",
+ "hypothesis_id": "hyp_0448d8fbf8efb3248eead0f0",
+ "judge_error": {
+  "message": "1 validation error for HypothesisJudgementRequestV1\n  Value error, admitted_evidence must carry exactly the admitted_evidence_ids [type=value_error, input_value={'stage': <JudgementStage...d': 'hadm_081db7d39311'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error",
+  "mro": [
+   "ValidationError",
+   "ValueError",
+   "Exception",
+   "BaseException",
+   "object"
+  ],
+  "type": "ValidationError"
+ },
+ "mcp_tool_error_text_static": "invalid tool input",
+ "requests": {
+  "evidence.admit": {
+   "idempotency_key": "idempotency:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:J-admit:14",
+   "operation_kind": "evidence.admit",
+   "payload": {
+    "action_id": "hact_bd6442651c05",
+    "admitted_evidence_ids": [],
+    "hypotheses": [
+     {
+      "hypothesis_id": "hyp_0448d8fbf8efb3248eead0f0",
+      "revision": 0,
+      "statement": "Runners lose access to small items mid-stride because pockets bounce",
+      "status": "proposed"
+     }
+    ],
+    "receipt": {
+     "action_id": "hact_bd6442651c05",
+     "completed_at": "2026-09-15T01:30:00Z",
+     "harness_id": "review-m1",
+     "limitations": [
+      "review-m1 reproduction receipt"
+     ],
+     "observations": [
+      {
+       "claim": "My pocket bounces on every run!",
+       "context": "thread",
+       "evidence_role_claimed": "friction",
+       "hypothesis_ids": [
+        "hyp_0448d8fbf8efb3248eead0f0"
+       ],
+       "metric_if_present": null,
+       "observation_id": "a",
+       "paraphrase_or_excerpt": "excerpt",
+       "source_id": "r1"
+      },
+      {
+       "claim": "my pocket bounces on every run",
+       "context": "thread",
+       "evidence_role_claimed": "friction",
+       "hypothesis_ids": [
+        "hyp_0448d8fbf8efb3248eead0f0"
+       ],
+       "metric_if_present": null,
+       "observation_id": "b",
+       "paraphrase_or_excerpt": "excerpt",
+       "source_id": "r2"
+      }
+     ],
+     "run_id": "adr_b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+     "sources": [
+      {
+       "published_at_if_known": "2026-09-10T00:00:00Z",
+       "retrieved_at": "2026-09-15T01:20:00Z",
+       "source_class": "community_discussion",
+       "source_id": "r1",
+       "url": "https://www.reddit.com/r/running/comments/m102a"
+      },
+      {
+       "published_at_if_known": "2026-09-10T00:00:00Z",
+       "retrieved_at": "2026-09-15T01:20:00Z",
+       "source_class": "community_discussion",
+       "source_id": "r2",
+       "url": "https://www.reddit.com/r/trailrunning/comments/m102b"
+      }
+     ],
+     "started_at": "2026-09-15T01:00:00Z",
+     "tool_trace": [
+      {
+       "query_count": 1,
+       "search_intent_id": "si_complaint",
+       "tool_class": "web_search"
+      }
+     ]
+    },
+    "stage": "field_evidence"
+   },
+   "purpose_ref": "purpose:product-discovery",
+   "registry_snapshot_id": "trs-da9942986e52f832",
+   "request_id": "request:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:J-admit:14",
+   "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1"
+  },
+  "hypotheses.judge": {
+   "idempotency_key": "idempotency:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:L-judge:16",
+   "operation_kind": "hypotheses.judge",
+   "payload": {
+    "admitted_evidence_ids": [
+     "fev_8464b7aa6def",
+     "fev_75a5034ffd09"
+    ],
+    "hypotheses": [
+     {
+      "hypothesis_id": "hyp_0448d8fbf8efb3248eead0f0",
+      "revision": 0,
+      "statement": "Runners lose access to small items mid-stride because pockets bounce",
+      "status": "proposed"
+     }
+    ],
+    "latest_admission_id": "hadm_081db7d39311",
+    "redundancy_groups": [],
+    "stage": "revision"
+   },
+   "purpose_ref": "purpose:product-discovery",
+   "registry_snapshot_id": "trs-da9942986e52f832",
+   "request_id": "request:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:L-judge:16",
+   "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1"
+  }
+ },
+ "responses": {
+  "evidence.admit": {
+   "operation_id": "operation:73e179527e6c7a5e588c32c28825cae9",
+   "operation_kind": "evidence.admit",
+   "registry_snapshot": {
+    "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
+    "snapshot_id": "trs-da9942986e52f832"
+   },
+   "result": {
+    "evidence_admission": {
+     "action_id": "hact_bd6442651c05",
+     "admission_id": "hadm_081db7d39311",
+     "admitted": [
+      {
+       "admitted_evidence_id": "fev_8464b7aa6def",
+       "anchored_at": "2026-09-10T00:00:00Z",
+       "authority_class": "ADMITTED_OBSERVATION",
+       "duplicate_of": null,
+       "evidence_role": "friction",
+       "freshness": "fresh",
+       "hypothesis_ids": [
+        "hyp_0448d8fbf8efb3248eead0f0"
+       ],
+       "independence_group": "reddit",
+       "limitations": [
+        "Self-selected communities; verify API/content terms; no bulk copying"
+       ],
+       "observation_id": "a",
+       "polarity": "supporting",
+       "provenance": "recorded",
+       "source_class": "community_discussion",
+       "source_id": "r1",
+       "source_suitability": "suitable",
+       "stage_relevance": "field_evidence",
+       "trail_admission_record_id": "adm-operation:73e179527e6c7a5e588c32c28825cae9-a"
+      },
+      {
+       "admitted_evidence_id": "fev_75a5034ffd09",
+       "anchored_at": "2026-09-10T00:00:00Z",
+       "authority_class": "ADMITTED_OBSERVATION",
+       "duplicate_of": "fev_8464b7aa6def",
+       "evidence_role": "friction",
+       "freshness": "fresh",
+       "hypothesis_ids": [
+        "hyp_0448d8fbf8efb3248eead0f0"
+       ],
+       "independence_group": "reddit",
+       "limitations": [
+        "Self-selected communities; verify API/content terms; no bulk copying"
+       ],
+       "observation_id": "b",
+       "polarity": "supporting",
+       "provenance": "recorded",
+       "source_class": "community_discussion",
+       "source_id": "r2",
+       "source_suitability": "suitable",
+       "stage_relevance": "field_evidence",
+       "trail_admission_record_id": "adm-operation:73e179527e6c7a5e588c32c28825cae9-b"
+      }
+     ],
+     "evaluated_at": "2026-09-15T02:00:00Z",
+     "registry_snapshot": {
+      "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
+      "snapshot_id": "trs-da9942986e52f832"
+     },
+     "rejected": [],
+     "run_id": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+     "trail_operation_id": "operation:73e179527e6c7a5e588c32c28825cae9"
+    },
+    "open_gaps": [],
+    "priors": [],
+    "qualifications": [],
+    "redundancy_groups": [],
+    "registry_snapshot": {
+     "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
+     "snapshot_id": "trs-da9942986e52f832"
+    },
+    "research_directive": null,
+    "score_refusals": [],
+    "territories": [],
+    "trail_scores": [],
+    "unsupported_hypothesis_ids": [],
+    "verdicts": []
+   },
+   "result_sha256": "sha256:51e271ae92924150c9d31c147bb295cbd905fa2416d0a15cea3ff61f2bcea6c0",
+   "status_revision": 1
+  },
+  "hypotheses.judge": null
+ },
+ "run_id": "adr_b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+ "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
+ "statement": "Runners lose access to small items mid-stride because pockets bounce",
+ "trail_head": "de64d84"
+}

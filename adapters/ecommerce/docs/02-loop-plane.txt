@@ -1,0 +1,887 @@
+The important point is that we should not replace the graph control plane with loops. The two should nest:
+
+Control Graph = the authored structure of one opportunity investigation.
+Loop Specification = the external pilot that keeps giving that graph/Hermes another turn until verification says the goal is satisfied, disproven, blocked, stalled, or exhausted.
+
+The prompt-graph source requires the graph to exist explicitly, independently of its prompts, with executable semantics and artifact/version status. The loop source separately defines an external reusable artifact containing a trigger, goal, execution, verification, stopping rule, and persistent memory.
+
+That combination is exactly what you want if the criterion is:
+
+I start Hermes, walk away, and when I return it has either completed the intended investigation correctly or stopped for an explicit defensible reason—not wandered, self-approved, or silently given up.
+
+Assessment of what Fable built
+
+The current core is good:
+
+controller.py
+    owns advancement
+
+graph.py
+    owns graph structure
+
+transitions.py
+    owns legal edge conditions
+
+executors.py
+    owns deterministic transforms
+
+models.py
+    owns durable state/contracts
+
+tests/run_all.py
+    verifies behavior
+
+And Fable is correct about a critical boundary:
+
+θ / Hermes LLM
+    GENERATES hypotheses
+
+Python
+    NEVER invents hypotheses
+    VALIDATES and governs them
+
+That remains locked.
+
+But the implementation described is currently a graph runner, not yet a hardened unattended loop.
+
+The new loop research shows why. A real loop must have an external persistent memory, a check that can actually say no, no-progress detection, budget ceilings, and explicit terminal states; errors or budget exhaustion must never be reported as success.
+
+So I would refine the existing implementation rather than rebuild it.
+
+Final architecture
+                    USER TRIGGER
+                        │
+                        ▼
+              OPPORTUNITY LOOP SPEC
+                        │
+              goal + verification
+              budgets + stopping
+              persistent memory
+                        │
+                        ▼
+                 HERMES HARNESS
+        existing agent CLI / tools / Camoufox
+                        │
+                        ▼
+                  SKILL.md
+                        │
+                        ▼
+                CONTROL GRAPH
+                        │
+        ┌───────────────┼─────────────────┐
+        │               │                 │
+        ▼               ▼                 ▼
+  Polymath MCP       θ reasoning       Web tools
+        │               │                 │
+        │        hypotheses/analogies      │
+        │               │                 │
+        └───────────────┼─────────────────┘
+                        ▼
+                    WORK STATE
+                        │
+                        ▼
+                PYTHON CONTROL
+                        │
+       ┌────────────────┼──────────────────┐
+       ▼                ▼                  ▼
+  structural       satisfaction       verification
+  validation         evaluation          gates
+       │                │                  │
+       └────────────────┼──────────────────┘
+                        ▼
+                 NEXT ACTION?
+        ┌───────────────┼─────────────────┐
+        ▼               ▼                 ▼
+      repeat         escalate           stop
+
+The loop sits outside the graph.
+
+The graph sits inside each investigation turn.
+
+Hermes remains the harness.
+
+Python remains φ.
+
+Polymath remains knowledge/evidence.
+
+The biggest addition: explicit loop.yaml
+
+Do not hide loop semantics inside controller.py.
+
+Add:
+
+~/.hermes/skills/business/opportunity-research/
+
+├── SKILL.md
+├── control_graph.yaml
+├── policies.yaml
+├── loop.yaml                    ← NEW
+│
+├── prompts/
+├── schemas/
+├── candidates/
+└── python/
+
+loop.yaml is the object that operationalizes the loop-engineering paper.
+
+Something approximately like:
+
+loop:
+  id: opportunity-research.v1
+  version: 1.0.0
+
+  trigger:
+    type: human
+    command: opportunity_research
+
+  goal:
+    type: verifiable_state
+    success_when:
+      - research_satisfaction == satisfied
+      - mechanism_satisfaction == satisfied
+      - supplier_satisfaction == satisfied
+      - final_verdict in:
+          - QUALIFIED_LEAD
+          - PROVISIONAL_LEAD
+
+  execution:
+    skill: opportunity-research
+    graph: control_graph.yaml
+
+  memory:
+    state_file: candidates/{run_id}.json
+    events_file: candidates/{run_id}.events.jsonl
+
+  verification:
+    policy: policies.yaml
+
+  budgets:
+    max_cycles: 8
+    max_hypothesis_rounds: 3
+    max_research_rounds: 4
+    max_query_expansions_per_gap: 2
+    max_web_queries: 40
+    max_supplier_queries: 12
+
+  stagnation:
+    max_no_progress_cycles: 2
+
+  terminals:
+    - SUCCESS
+    - NO_DEFENSIBLE_BRIDGE
+    - REJECTED
+    - NO_OP
+    - BLOCKED
+    - STALLED
+    - EXHAUSTED
+    - NEEDS_APPROVAL
+
+That is a genuine loop specification, not merely while True.
+
+The source specifically distinguishes the external loop specification from both ordinary programming loops and Hermes's existing perceive/act/observe cycle.
+
+Do not put the entire loop in Python
+
+This distinction matters.
+
+Hermes already provides:
+
+think
+→ tool call
+→ observe
+→ think
+
+That is the harness's internal loop.
+
+We do not rebuild that.
+
+Instead, the Hermes skill says:
+
+1. Ask controller for next legal action.
+2. Perform that action using existing Hermes capabilities.
+3. Submit result to controller.
+4. Ask controller again.
+5. Repeat until controller returns a named terminal state.
+
+Conceptually:
+
+controller.py step --state run1.json
+
+might return:
+
+{
+  "status": "ACTION_REQUIRED",
+  "action": "THETA_HYPOTHESIS",
+  "node": "generate_hypotheses",
+  "input_file": "...",
+  "output_schema": "schemas/hypothesis.json"
+}
+
+Hermes performs the model reasoning.
+
+Then:
+
+controller.py submit \
+  --state run1.json \
+  --node generate_hypotheses \
+  --result hypothesis-result.json
+
+Python validates it.
+
+Then:
+
+controller.py step --state run1.json
+
+returns:
+
+{
+  "status": "ACTION_REQUIRED",
+  "action": "WEB_RESEARCH",
+  "gap_ids": ["gap_17", "gap_19"],
+  "queries": [...],
+  "allowed_sources": ["reddit", "youtube"]
+}
+
+Hermes uses its existing web stack.
+
+No duplicate agent runtime.
+
+I would add only two Python modules
+
+Do not explode the small codebase yet.
+
+Your existing modules cover most of it.
+
+Add:
+
+python/
+├── controller.py
+├── graph.py
+├── transitions.py
+├── executors.py
+├── models.py
+│
+├── verifiers.py              ← NEW
+├── satisfaction.py           ← NEW
+│
+└── tests/
+    └── run_all.py
+verifiers.py
+
+Owns:
+
+hypothesis admissibility
+evidence-boundary validation
+research-result verification
+query lineage verification
+comment independence checks
+supplier completeness
+final lead gates
+verification-level receipts
+satisfaction.py
+
+Owns:
+
+comment satisfaction
+query satisfaction
+research satisfaction
+mechanism satisfaction
+supplier satisfaction
+progress calculation
+stagnation detection
+budget exhaustion
+terminal-state resolution
+
+Everything else stays where Fable put it.
+
+No registry.py yet is fine. Your registry importer being deferred until the satisfaction layer exists is a reasonable ordering decision.
+
+Fable's hypothesis layer needs to be hardened now
+
+The concern you raised was valid.
+
+The schema validator is not enough.
+
+A structurally valid hypothesis can still be garbage.
+
+For every BridgeHypothesis, Python should require something like:
+
+hypothesis:
+  hypothesis_id: hyp_...
+
+  source_refs:
+    - polymath://...
+
+  source_concepts:
+    - storytelling_quality
+
+  reasoning_path:
+    - creator_differentiation
+    - performative_delivery
+    - physical_expression
+    - mobility
+    - low_interference_audio
+
+  first_inference_at:
+    from: storytelling_quality
+    to: creator_differentiation
+
+  target:
+    type: ProductMechanism
+    value: wearable_wireless_audio
+
+  alternatives:
+    - hands_free_lavalier
+    - stationary_audio_improvement
+
+  falsifiers:
+    - creators_prefer_stationary_delivery
+    - mobility_does_not_affect_audio_choice
+
+  evidence_gaps:
+    - gap_01
+    - gap_02
+
+  authority:
+    WORKING_HYPOTHESIS
+
+Then Python validates semantic admissibility rules that are objectively checkable.
+
+Required deterministic checks
+✓ source references exist
+✓ reasoning path is nonempty
+✓ first_inference_at exists in the actual path
+✓ every node before first_inference_at is evidence-grounded
+✓ max unsupported inference hops <= policy threshold
+✓ no direct source-concept → product-candidate jump
+✓ ProductMechanism precedes ProductCandidate
+✓ every unsupported edge creates an EvidenceGap
+✓ every gap has a falsification route
+✓ hypothesis authority is WORKING_HYPOTHESIS
+✓ at least one competing explanation exists
+✓ contradiction search cannot be skipped
+
+So yes, the two rules Fable just identified should be implemented:
+
+max_inference_hops_without_evidence: 2
+
+first_inference_at must actually be a path edge
+
+But I would add the rest of that list at the same time.
+
+Your older Work Graph architecture already requires fact/inference boundaries to remain explicit rather than hiding the point where a path stops being established evidence and becomes reasoning.
+
+Then add an independent hypothesis checker
+
+This is where the loop research adds something very important.
+
+There are parts of hypothesis evaluation that cannot be deterministic.
+
+Python can establish:
+
+The bridge followed the rules.
+
+Python cannot establish:
+
+This is a genuinely plausible and nontrivial explanation of the source evidence.
+
+That is semantic judgment.
+
+So use:
+
+θ generator
+      ↓
+Python L1/L2 verification
+      ↓
+fresh skeptical evaluator
+      ↓
+Python records verdict
+
+Not:
+
+θ:
+"I generated a good hypothesis."
+
+θ:
+"I reviewed myself and agree."
+
+The loop literature specifically identifies this self-grading pattern as the "nodding loop" and recommends structural generator/evaluator separation.
+
+For the semantic bridge evaluator, use a fresh context and, ideally, a separate model/subagent.
+
+Its instruction should be adversarial:
+
+Assume this bridge is unsupported until demonstrated otherwise.
+
+Do not generate a better opportunity.
+
+Evaluate only:
+
+1. Does each semantic step follow plausibly?
+2. Is any step merely associative rather than explanatory?
+3. Are there missing intermediate mechanisms?
+4. Is the proposed product mechanism premature?
+5. Are credible alternative explanations missing?
+6. What observation would falsify the bridge?
+
+Return PASS / REVISE / REJECT with reasons.
+
+But that verdict is still Level 4 verification—a model judgment—not field truth.
+
+That matters.
+
+Use the loop paper's five-level verification ladder directly
+
+This is one of the strongest things in the new source.
+
+It distinguishes:
+
+L1  deterministic
+L2  rule/constraint
+L3  delayed real-world truth
+L4  model judge
+L5  human checkpoint
+
+and warns not to pretend L4 is L1.
+
+Map that directly into opportunity research.
+
+Verification	Your system	Level
+Schema validates	Python	L1
+Transition legal	Python	L1
+Stable IDs/dedup	Python	L1
+Price/MOQ parsed	Python	L1
+≤2 unsupported hops	Policy/Python	L2
+Required contradiction search	Policy/Python	L2
+Comment independence thresholds	Policy/Python	L2
+Site/source allowed	Policy/Python	L2
+Real comments exist	Hermes/web	L3
+Actual users describe workaround	Hermes/web	L3
+Current Alibaba offer exists	Hermes/web	L3
+Supplier shows current MOQ/price	Hermes/web	L3
+Bridge is semantically plausible	fresh evaluator	L4
+New niche promoted to registry	you	L5
+
+That gives you an extremely useful law:
+
+No L4 semantic judge can manufacture missing L3 market evidence.
+
+The system should contain nested loops, not one giant loop
+
+I would use four.
+
+Loop A — Hypothesis loop
+Polymath evidence
+      ↓
+θ generates 3–6 candidate bridges
+      ↓
+deterministic hypothesis gate
+      ↓
+independent semantic checker
+      ↓
+survivors?
+   /       \
+ no         yes
+ ↓           ↓
+NO_BRIDGE   identify gaps
+
+Repeat only if the evaluator identifies a specific repairable missing intermediate step.
+
+Do not endlessly tell θ:
+
+Try again.
+
+Maximum:
+
+max_hypothesis_rounds: 3
+Loop B — Evidence loop
+EvidenceGap
+    ↓
+query compile
+    ↓
+Hermes search
+    ↓
+comments/reviews/posts
+    ↓
+curate + dedupe
+    ↓
+research satisfaction
+    │
+    ├── SATISFIED → reevaluate hypothesis
+    │
+    ├── LOW_YIELD → reformulate query
+    │
+    ├── SOURCE_EXHAUSTED → escalate source
+    │
+    └── CONTRADICTED → kill hypothesis
+
+This is where your website/query/comment controls live.
+
+Loop C — Mechanism loop
+
+Once real behavior survives:
+
+supported behavior
+      ↓
+θ proposes mechanisms
+      ↓
+alternative mechanism generation
+      ↓
+existing-product research
+      ↓
+mechanism satisfaction
+
+This is important because you do not want:
+
+friction
+→ first product idea
+→ Alibaba
+
+You want:
+
+friction
+        ↓
+┌───────┼────────┐
+mechanism A
+mechanism B
+mechanism C
+        ↓
+evidence / tradeoffs
+        ↓
+surviving mechanism
+
+That preserves the original architecture's reasoning quality. The storytelling simulation specifically requires the system to entertain handheld, wearable, stationary, accessory, and other explanations rather than prematurely choosing a microphone.
+
+Loop D — Supplier loop
+
+Only then:
+
+supported mechanism
+      ↓
+Alibaba queries
+      ↓
+candidate products
+      ↓
+normalize
+      ↓
+dedupe suppliers
+      ↓
+supplier satisfaction
+      ↓
+enough viable offers?
+   /                 \
+ yes                  no
+ ↓                     ↓
+QUALIFY             broaden query
+
+Bound it.
+
+Alibaba availability is supply evidence, not market-demand evidence.
+
+Research satisfaction needs to become first-class state
+
+This is probably the largest missing piece in the current Python.
+
+Add receipts such as:
+
+satisfaction:
+  comments:
+    qualifying: 17
+    independent_authors: 12
+    independent_threads: 6
+    independent_sources: 3
+    saturation: 0.91
+    satisfied: true
+
+  contradiction:
+    search_completed: true
+    counterexamples: 4
+    satisfied: true
+
+  gap_coverage:
+    required: 4
+    satisfied: 3
+    ratio: 0.75
+
+  queries:
+    productive: 6
+    low_yield: 3
+    exhausted: 2
+
+  suppliers:
+    valid_products: 7
+    unique_suppliers: 4
+    price_complete: true
+    moq_complete: true
+
+The controller makes transitions from those receipts.
+
+Hermes does not declare:
+
+"I think I have enough research."
+
+Add a real no-progress detector
+
+This is exactly the kind of thing that lets you walk away safely.
+
+The loop source's Figure 2 on page 5 explicitly shows the loop bounded by both a budget ceiling and no-progress detector.
+
+Create a deterministic progress signature from meaningful state:
+
+supported hypothesis edges
+contradicted hypothesis edges
+closed evidence gaps
+new independent source groups
+new signal classes
+new product mechanisms
+supplier completeness
+
+For example:
+
+progress_signature = hash(
+    supported_edges,
+    contradicted_edges,
+    unresolved_gap_ids,
+    evidence_class_counts,
+    source_group_counts,
+    mechanism_ids,
+    supplier_completeness
+)
+
+If cycle N+1 has the same meaningful signature as N:
+
+no_progress_count += 1
+
+Then:
+
+max_no_progress_cycles: 2
+
+causes:
+
+STALLED
+
+rather than wasting another 100 queries.
+
+Query repetition also needs memory
+
+The system should remember failed research.
+
+Persist:
+
+queries attempted
+normalized query families
+source
+yield
+signal classes returned
+reason rejected
+
+Then Hermes cannot come back two rounds later and unknowingly execute:
+
+"best microphone creators"
+
+after it already exhausted three semantically equivalent searches.
+
+This is the "agent forgets, repo does not" principle in the loop sources. The field study specifically identifies failure to externalize state as the amnesiac loop.
+
+State should therefore grow slightly
+
+Your current models.py state should include:
+
+loop:
+  iteration: 4
+  no_progress_cycles: 0
+
+  budgets:
+    cycles_remaining: 4
+    queries_remaining: 21
+    research_rounds_remaining: 2
+    supplier_queries_remaining: 8
+
+  current_goal:
+    id: validate_creator_audio_bridge
+
+  pending_action:
+    type: WEB_RESEARCH
+
+  verification:
+    latest_receipts: []
+
+  progress:
+    previous_signature: ...
+    current_signature: ...
+
+  terminal:
+    status: null
+    reason: null
+
+And keep an append-only event stream:
+
+run1.events.jsonl
+
+Events such as:
+
+HYPOTHESIS_PROPOSED
+HYPOTHESIS_RULE_REJECTED
+HYPOTHESIS_SEMANTIC_REJECTED
+GAP_CREATED
+QUERY_EXECUTED
+QUERY_LOW_YIELD
+SOURCE_ESCALATED
+EVIDENCE_ADMITTED
+HYPOTHESIS_CONTRADICTED
+MECHANISM_SUPPORTED
+SUPPLIER_FOUND
+TERMINAL_REACHED
+
+Now you can inspect exactly what happened while you were gone.
+
+Named terminal states are mandatory
+
+Do not have:
+
+done: true
+
+Use:
+
+SUCCESS
+    Qualified/provisional product leads reached required evidence state.
+
+NO_OP
+    Nothing worth researching was found.
+
+NO_DEFENSIBLE_BRIDGE
+    The source cannot support a reasonable opportunity path.
+
+REJECTED
+    Research actively contradicted the hypothesis.
+
+BLOCKED
+    Required external capability/source unavailable.
+
+STALLED
+    More cycles are not changing useful state.
+
+EXHAUSTED
+    Budget was consumed before satisfaction.
+
+NEEDS_APPROVAL
+    System reached a human-controlled promotion boundary.
+
+The loop paper specifically recommends named terminal states—success, clean no-op, blocked, stalled, exhausted—and stresses that an error or budget exhaustion is never success.
+
+For your domain, REJECTED, NO_DEFENSIBLE_BRIDGE, and NEEDS_APPROVAL are useful domain-specific additions.
+
+Very important: separate "research complete" from "commercially true"
+
+You want Hermes unattended, but that does not mean every result becomes authoritative.
+
+The loop can autonomously reach:
+
+PROVISIONAL_LEAD
+
+because:
+
+behavioral evidence satisfied
+friction evidence satisfied
+contradiction performed
+product mechanism survived
+supplier evidence satisfied
+
+But:
+
+REGISTER_NEW_NICHE
+ALTER_REGISTRY_POLICY
+DECLARE_PRODUCTION_WINNER
+
+can still terminate at:
+
+NEEDS_APPROVAL
+
+That gives you autonomy without surrendering ontology control.
+
+The loop literature itself warns that increasing autonomy increases the blast radius of mistakes and makes verification more—not less—important.
+
+The final unattended behavior
+
+This is what I would require before you say:
+
+"I can walk away."
+
+You launch Hermes once.
+          ↓
+Hermes loads opportunity-research SKILL.
+          ↓
+Hermes loads loop.yaml.
+          ↓
+controller init
+          ↓
+════════════ LOOP TURN ════════════
+          ↓
+controller step
+          ↓
+returns exact next legal action
+          ↓
+Hermes executes using:
+    Polymath MCP
+    LLM
+    search
+    browser
+    Camoufox
+    selected websites
+    Alibaba
+          ↓
+Hermes submits structured result
+          ↓
+Python verifies
+          ↓
+Work state persists
+          ↓
+satisfaction evaluates
+          ↓
+progress evaluates
+          ↓
+budget evaluates
+          ↓
+terminal?
+     /            \
+   NO              YES
+   ↓                ↓
+next turn       stop cleanly
+════════════════════════════════════
+
+Critically, the result of a turn changes the next action. That is the loop paper's "golden rule": if prior feedback does not change what happens next, it isn't meaningfully a loop.
+
+What I would tell Fable to implement next
+
+In order:
+
+Finish the deterministic bridge validator immediately. Add first_inference_at, inference-hop budget, evidence-boundary validation, no direct product jumps, gaps/falsifiers, and alternatives.
+Add verifiers.py. Separate L1/L2 deterministic verification from L4 semantic evaluation. Store a typed VerificationReceipt for every check.
+Add satisfaction.py. Implement comment, query, research, mechanism and supplier satisfaction plus progress signatures, no-progress detection, budget evaluation and terminal-state calculation.
+Add loop.yaml. Make trigger, goal, budgets, verification policy, memory, no-progress and named terminals explicit rather than implicit in Python.
+Harden SKILL.md as the external Hermes loop driver. It must repeatedly call controller step → execute requested action → submit → repeat until a named terminal. It must never improvise around a rejected transition.
+Add an independent semantic hypothesis evaluator. Fresh context/subagent, skeptical instructions, incapable of promoting evidence. The generator cannot certify itself. The source's maker-checker guidance is directly applicable here.
+Expand the test suite from graph correctness to loop correctness. At minimum test successful completion, false bridge, contradiction death, low-yield query expansion, source escalation, semantic saturation, stagnation, budget exhaustion, invalid hypothesis, duplicate comments, supplier incompleteness, crash/resume, and a generator that repeatedly tries to self-approve.
+The governing architecture after these changes
+Prompt engineering
+    gives θ good reasoning instructions.
+
+Context engineering
+    gives θ the right Polymath evidence.
+
+Harness engineering
+    gives Hermes MCP, CLI, search, browser, Camoufox.
+
+Prompt/control graph engineering
+    defines the explicit executable reasoning/research topology.
+
+Loop engineering
+    keeps invoking that system, verifies progress,
+    persists memory, escalates intelligently, and knows when to stop.
+
+Python / φ
+    is the authority that refuses illegal transitions and false completion.
+
+The new loop sources do not invalidate what you built. They supply the missing outer reliability layer. Fable's current graph runner is therefore the correct nucleus; the work now is to make verification, satisfaction, progress, memory and terminal semantics as explicit as the graph itself.
+
+That is what turns it from "a good opportunity-research workflow" into an unattended opportunity-research loop I would actually trust to run while you are gone.
