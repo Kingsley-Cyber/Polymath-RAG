@@ -239,5 +239,11 @@
  "run_id": "adr_b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
  "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
  "statement": "Runners lose access to small items mid-stride because pockets bounce",
- "trail_head": "de64d84"
+ "trail_head": "829a0ab",
+ "previous_trail_head": "de64d84",
+ "re_recorded": {
+  "at_trail_head": "829a0ab",
+  "responses_changed": [],
+  "note": "ADR-069 re-pin: additive optional wire fields; requests unchanged"
+ }
 }

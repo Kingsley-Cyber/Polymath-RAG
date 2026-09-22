@@ -137,210 +137,314 @@
   "registry.project": {
    "operation_id": "operation:99073d5b9713e4c277f1cc554c1d5d3a",
    "operation_kind": "registry.project",
+   "status_revision": 1,
    "registry_snapshot": {
-    "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
-    "snapshot_id": "trs-da9942986e52f832"
+    "snapshot_id": "trs-da9942986e52f832",
+    "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3"
    },
    "result": {
-    "evidence_admission": null,
-    "open_gaps": [],
+    "registry_snapshot": {
+     "snapshot_id": "trs-da9942986e52f832",
+     "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3"
+    },
     "priors": [
      {
+      "registry_record_id": "seed-1015",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1015"
+      "label": "Rock climbing",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1018",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1018"
+      "label": "Bouldering",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1021",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1021"
+      "label": "Scrambling practice",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1024",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1024"
+      "label": "Slacklining",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1027",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1027"
+      "label": "Caving",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1030",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1030"
+      "label": "Rappelling practice",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1033",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1033"
+      "label": "Amateur radio field operations",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1036",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1036"
+      "label": "Model-aircraft flying",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1039",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1039"
+      "label": "RC rock crawling",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1042",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1042"
+      "label": "Field dog training",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1045",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1045"
+      "label": "Search-and-rescue volunteering",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1048",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_0448d8fbf8efb3248eead0f0"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1048"
+      "label": "Wilderness skills practice",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1015",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1015"
+      "label": "Rock climbing",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1018",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1018"
+      "label": "Bouldering",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1021",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1021"
+      "label": "Scrambling practice",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1024",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1024"
+      "label": "Slacklining",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1027",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1027"
+      "label": "Caving",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1030",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1030"
+      "label": "Rappelling practice",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1033",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1033"
+      "label": "Amateur radio field operations",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1036",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1036"
+      "label": "Model-aircraft flying",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1039",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1039"
+      "label": "RC rock crawling",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1042",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1042"
+      "label": "Field dog training",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1045",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1045"
+      "label": "Search-and-rescue volunteering",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      },
      {
+      "registry_record_id": "seed-1048",
+      "prior_role": "niche_seed",
       "hypothesis_ids": [
        "hyp_57d38a8eb882ac79b4a4d613"
       ],
-      "prior_role": "niche_seed",
-      "registry_record_id": "seed-1048"
+      "label": "Wilderness skills practice",
+      "section": "niche_seeds",
+      "match_strength": 3,
+      "mapping_path": "lexical"
      }
     ],
-    "qualifications": [],
     "redundancy_groups": [
      [
       "hyp_0448d8fbf8efb3248eead0f0",
       "hyp_57d38a8eb882ac79b4a4d613"
      ]
     ],
-    "registry_snapshot": {
-     "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
-     "snapshot_id": "trs-da9942986e52f832"
-    },
-    "research_directive": null,
-    "score_refusals": [],
-    "territories": [],
-    "trail_scores": [],
     "unsupported_hypothesis_ids": [
      "hyp_0448d8fbf8efb3248eead0f0",
      "hyp_57d38a8eb882ac79b4a4d613"
     ],
-    "verdicts": []
+    "research_directive": null,
+    "evidence_admission": null,
+    "verdicts": [],
+    "open_gaps": [],
+    "territories": [],
+    "qualifications": [],
+    "trail_scores": [],
+    "score_refusals": []
    },
-   "result_sha256": "sha256:4cbcd893b7300206b41f17de0f24602f1c11243359f7a733ebfca18a3d9725c5",
-   "status_revision": 1
+   "result_sha256": "sha256:585e53edb177d5082d0bc7e9dc43ea99461798454eb37ae5cf5a310e44afe7b8"
   }
  },
  "run_id": "adr_b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
  "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
  "statement": "Runners lose access to small items",
- "trail_head": "de64d84"
+ "trail_head": "829a0ab",
+ "previous_trail_head": "de64d84",
+ "re_recorded": {
+  "at_trail_head": "829a0ab",
+  "responses_changed": [
+   "registry.project"
+  ],
+  "note": "ADR-069 re-pin: additive optional wire fields; requests unchanged"
+ }
 }

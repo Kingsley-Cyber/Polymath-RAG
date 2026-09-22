@@ -54,12 +54,25 @@ class Contradiction(BoundaryModel):
     evidence_ids: tuple[Identifier, ...]
 
 
+class EvidenceRelationView(BoundaryModel):
+    hypothesis_id: Identifier
+    relation: Literal["SUPPORTS", "CONTRADICTS", "NEUTRAL"]
+
+
 class AdmittedEvidenceView(BoundaryModel):
     admitted_evidence_id: Identifier
     hypothesis_ids: tuple[Identifier, ...]
     independence_group: Identifier
     polarity: Polarity
     evidence_role: Identifier
+    hypothesis_relations: tuple[EvidenceRelationView, ...] = ()  # ADR-069
+
+    def polarity_for(self, hypothesis_id: str) -> Polarity | None:
+        """Hypothesis-relative: the stated relation for this hypothesis (NEUTRAL -> None), else the observation's global polarity."""
+        for r in self.hypothesis_relations:
+            if r.hypothesis_id == hypothesis_id:
+                return {"SUPPORTS": Polarity.SUPPORTING, "CONTRADICTS": Polarity.CONTRADICTING}.get(r.relation)
+        return self.polarity
 
 
 class HypothesisVerdict(BoundaryModel):
@@ -115,8 +128,8 @@ def judge_hypotheses(snapshot, request):
     stage_roles = STAGE_GATE_ROLES[ResearchStage.FIELD_EVIDENCE]
     for hypothesis in live:
         mine = [a for a in admitted if hypothesis.hypothesis_id in a.hypothesis_ids]
-        supporting = [a for a in mine if a.polarity == Polarity.SUPPORTING]
-        contradicting = [a for a in mine if a.polarity == Polarity.CONTRADICTING]
+        supporting = [a for a in mine if a.polarity_for(hypothesis.hypothesis_id) == Polarity.SUPPORTING]
+        contradicting = [a for a in mine if a.polarity_for(hypothesis.hypothesis_id) == Polarity.CONTRADICTING]
         groups = {a.independence_group for a in supporting}
         causes = tuple(([CauseRef(kind="evidence_admission", id=request.latest_admission_id)] if request.latest_admission_id else [])
                        + [CauseRef(kind="field_evidence", id=a.admitted_evidence_id) for a in mine[:5]])

@@ -864,6 +864,15 @@ class ResearchHypothesisViewV1(BoundaryModel):
     revision: NonNegativeInt
     status: Identifier
     statement: Annotated[str, Field(min_length=1, max_length=4096)]
+    knowledge_support_count: NonNegativeInt | None = None      # ADR-069: the caller's ledger fact; absent = a pre-ADR-069 caller (treated as 0, as before)
+    # ADR-069: STRUCTURED semantic candidates the caller derived for this hypothesis (normalised ids and short phrases). Trail compares
+    # them FIELD TO FIELD with the registry's own dimensions — deterministic, no free-text inference, no model. All absent = lexical mapping.
+    candidate_friction_families: tuple[Identifier, ...] = ()
+    candidate_activity: NonEmptyText | None = None
+    candidate_task: NonEmptyText | None = None
+    candidate_context: NonEmptyText | None = None
+    candidate_predicates: tuple[Identifier, ...] = ()
+    candidate_product_territories: tuple[Identifier, ...] = ()
 
 
 class ResearchKnowledgeGapV1(BoundaryModel):
@@ -922,6 +931,11 @@ class ResearchPriorV1(BoundaryModel):
     registry_record_id: Identifier
     prior_role: Identifier
     hypothesis_ids: tuple[Identifier, ...]
+    # ADR-069: the coordinate's MEANING survives the wire — the caller no longer resolves opaque ids against its own registry copy
+    label: NonEmptyText | None = None
+    section: Identifier | None = None
+    match_strength: NonNegativeInt | None = None
+    mapping_path: Literal["structured", "lexical"] | None = None
 
 
 class ResearchCauseRefV1(BoundaryModel):
@@ -942,6 +956,8 @@ class ResearchTerritoryV1(BoundaryModel):
     territory_id: Identifier
     territory: Identifier
     hypothesis_ids: tuple[Identifier, ...]
+    territory_name: NonEmptyText | None = None                 # ADR-069: the registry's territory name (`territory` keeps the prior role, as before)
+    mapping_path: Literal["structured", "lexical"] | None = None
 
 
 class ResearchResultV1(BoundaryModel):

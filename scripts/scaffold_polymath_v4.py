@@ -217,6 +217,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/agent_preflight.py", "py", "_AGENT_PREFLIGHT"),
     ("scripts/repo_guard.py", "py", "_REPO_GUARD"),
     ("scripts/contract_impact.py", "py", None),
+    ("scripts/semantic_restoration_gate.py", "py", None),
     ("scripts/deploy_ecommerce_skill.py", "py", None),
     ("scripts/hosted_mcp_acceptance.py", "py", None),
     ("scripts/mcp_principals.py", "py", None),
@@ -732,6 +733,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-21-restoration-slice5-reporting.md", "md", None),
     ("docs/wiki/work-log/2026-09-21-evidence-route-zero-rows.md", "md", None),
     ("docs/wiki/work-log/2026-09-21-restoration-provenance-hook.md", "md", None),
+    ("docs/wiki/work-log/2026-09-22-restoration-trail-repin.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT_EXTENDED.md", "md", None),
     ("docs/migration/MIGRATION_POLICY.md", "md", None),
@@ -764,7 +766,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("adapters/ecommerce/SKILL.md", "md", None),
     ("adapters/ecommerce/WORKLOG.md", "md", None),
     ("adapters/ecommerce/binding.py", "py", None),
-    # CONSOLIDATION MIGRATION Phase 6 — TrailSignal core, BYTE-IDENTICAL to A41 @ de64d84 (ADR-0021; governance/trail/PROVENANCE.json pins every sha256)
+    # CONSOLIDATION MIGRATION Phase 6 — TrailSignal core, BYTE-IDENTICAL to HR6 @ 829a0ab (ADR-0021, re-pinned under ADR-069; governance/trail/PROVENANCE.json pins every sha256)
     ("governance/trail/embedded.py", "py", None),
     ("governance/trail/PROVENANCE.json", "json", None),
     ("governance/trail/LICENSE", "md", None),
@@ -1072,6 +1074,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_adapter_product_reality.py", "py", None),
     ("tests/determinism/test_adapter_dossier_fidelity.py", "py", None),
     ("tests/determinism/test_chat_evidence_route.py", "py", None),
+    ("tests/determinism/test_adapter_trail_wire.py", "py", None),
+    ("tests/determinism/test_worker_call_sites_merged.py", "py", None),
     ("tests/fixtures/adapter_domain_binding/fixture.knowledge_intake.json", "json", None),
     ("tests/fixtures/adapter_domain_binding/fixture.research_planning.json", "json", None),
     ("tests/fixtures/trail_recorded_envelopes/m1_01_trail_judge_challenge.json", "json", None),

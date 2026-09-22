@@ -37,7 +37,7 @@ SCHEMA_PATH = os.path.join(ROOT, "schemas", "harness_receipt.schema.json")     #
 #: the contract this copy was taken from, and its sha256 — tests/run_all.py fails on drift (copy != pin, or pin != the
 #: authoritative file when polymath-v4 sits beside this repo). A contract change = re-copy + re-pin, in the same slice.
 SCHEMA_SOURCE = "polymath-v4/contracts/adapter/v1/harness_receipt.schema.json"
-SCHEMA_SHA256 = "dd754bf281c3e988c205142d9038dad11235be936540bc188f208b868ea3cc00"
+SCHEMA_SHA256 = "c5a8e1ca1c3a28e18b1a0ae5a5b66c1d765793df507c6e9a76d8304c4e3cd7e8"   # ADR-069: + optional hypothesis_relations (four copies re-pinned 2026-09-22)
 
 EXCERPT_MAX, CLAIM_MAX, CONTEXT_MAX, LIMITATION_MAX = 600, 2000, 2000, 1000
 SCHEMA_MAX = {"sources": 100, "observations": 200, "tool_trace": 200, "limitations": 50}
@@ -306,9 +306,14 @@ def build_receipt(action: dict, *, observations: list | None = None, field_recor
         if foreign:
             notes.append(f"{oid}: dropped hypothesis ids that are not in the action: {foreign[:4]}")
         seen_ids.add(oid)
+        linked = [h for h in tagged if h in action_hyps][:64]
+        relations = [{"hypothesis_id": str(r.get("hypothesis_id")), "relation": str(r.get("relation")).upper()} for r in (it.get("hypothesis_relations") or []) if isinstance(r, dict)]
+        kept = [r for r in relations if r["hypothesis_id"] in linked and r["relation"] in ("SUPPORTS", "CONTRADICTS", "NEUTRAL")]
+        if len(kept) != len(relations):
+            notes.append(f"{oid}: dropped {len(relations) - len(kept)} relation(s) naming an unlinked hypothesis or an unknown relation")
         obs_out.append({"observation_id": oid[:200], "source_id": sid, "claim": claim, "paraphrase_or_excerpt": excerpt,
                         "metric_if_present": _metric(it), "context": _context(it), "evidence_role_claimed": role,
-                        "hypothesis_ids": [h for h in tagged if h in action_hyps][:64]})
+                        "hypothesis_ids": linked, **({"hypothesis_relations": kept} if kept else {})})       # ADR-069: stated, never inferred
     used = {o["source_id"] for o in obs_out}
     trace_acc: dict[tuple[str, str], int] = {}
     for row in tool_trace or []:

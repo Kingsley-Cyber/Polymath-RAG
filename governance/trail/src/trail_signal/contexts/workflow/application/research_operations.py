@@ -112,6 +112,31 @@ class ResearchFunctions:
     prior_record_ids: Callable[[TrailRegistrySnapshotV1], frozenset[str]]
 
 
+def _coordinate(prior, name: str) -> str | None:
+    return next((f.value for f in prior.coordinates if f.name == name), None)
+
+
+def _coordinate_meaning(prior) -> dict:
+    """ADR-069: what the registry projection already computed (label, section, strength, mapping path) crosses the wire."""
+    strength = _coordinate(prior, "overlap")
+    return {"label": _coordinate(prior, "label"), "section": _coordinate(prior, "section"), "match_strength": int(strength) if strength is not None else None,
+            "mapping_path": _coordinate(prior, "path") or "lexical"}
+
+
+def _relative_inputs(inputs, records, hypothesis_id: str):
+    """Scoring inputs as they relate to ONE hypothesis: each linked observation carries its polarity for that hypothesis; one that is
+    NEUTRAL to it is left out. Observations of other hypotheses pass through unchanged (the engine filters by hypothesis_ids)."""
+    by_id = {a.admitted_evidence_id: a for a in records}
+    out = []
+    for i in inputs:
+        if hypothesis_id not in i.hypothesis_ids:
+            out.append(i); continue
+        polarity = by_id[i.admitted_evidence_id].polarity_for(hypothesis_id)
+        if polarity is not None:
+            out.append(i.model_copy(update={"polarity": polarity.value}))
+    return tuple(out)
+
+
 def _id(prefix: str, value: str) -> str:
     return f"{prefix}:{hashlib.sha256(value.encode('utf-8')).hexdigest()[:32]}"
 
@@ -163,16 +188,26 @@ class ResearchOperationService:
 
     @staticmethod
     def _hypotheses(request: BoundedResearchRequestV1) -> tuple[HypothesisView, ...]:
-        return tuple(HypothesisView(hypothesis_id=h.hypothesis_id, revision=h.revision, status=h.status, statement=h.statement, knowledge_support_count=0) for h in request.payload.hypotheses)
+        # ADR-069: the caller STATES its ledger's knowledge support; an absent value is a pre-ADR-069 caller and keeps the old reading (0)
+        return tuple(HypothesisView(hypothesis_id=h.hypothesis_id, revision=h.revision, status=h.status, statement=h.statement,
+                                    knowledge_support_count=h.knowledge_support_count or 0,
+                                    semantic={"friction_families": h.candidate_friction_families, "activity": h.candidate_activity, "task": h.candidate_task,
+                                              "context": h.candidate_context, "predicates": h.candidate_predicates,
+                                              "product_territories": h.candidate_product_territories}) for h in request.payload.hypotheses)
 
     @staticmethod
     def _gaps(gaps, hypotheses) -> tuple[EvidenceGap, ...]:
-        fallback = hypotheses[0].hypothesis_id if hypotheses else None
+        # ADR-069: a gap belongs to the hypothesis it NAMES. The first-hypothesis fallback guessed an owner inside a portfolio; it is
+        # gone. Like admission's HYPOTHESIS_LINK_MISSING: one live hypothesis links unambiguously, anything else is a typed refusal.
+        live = {h.hypothesis_id for h in hypotheses}
+        only = next(iter(live)) if len(live) == 1 else None
         out = []
         for index, gap in enumerate(gaps):
-            hypothesis_id = gap.hypothesis_id or fallback
+            hypothesis_id = gap.hypothesis_id or only
             if hypothesis_id is None:
-                continue
+                raise ResearchRefused("GAP_HYPOTHESIS_LINK_MISSING", f"knowledge gap {gap.gap_id or index} names no hypothesis and {len(live)} hypotheses are live")
+            if hypothesis_id not in live:
+                raise ResearchRefused("GAP_HYPOTHESIS_UNKNOWN", f"knowledge gap {gap.gap_id or index} names {hypothesis_id}, which is not a hypothesis of this request")
             out.append(_from_wire(EvidenceGap, {"gap_id": gap.gap_id or f"gap_{index}", "hypothesis_id": hypothesis_id, "question": gap.question, "evidence_role": gap.evidence_role}))
         return tuple(out)
 
@@ -182,7 +217,8 @@ class ResearchOperationService:
             for a in records:
                 if a.admitted_evidence_id in wanted and a.duplicate_of is None:
                     views.append(_from_wire(AdmittedEvidenceView, {"admitted_evidence_id": a.admitted_evidence_id, "hypothesis_ids": a.hypothesis_ids, "independence_group": a.independence_group.replace(" ", "_")[:256],
-                                                                  "polarity": a.polarity.value, "evidence_role": a.evidence_role}))
+                                                                  "polarity": a.polarity.value, "evidence_role": a.evidence_role,
+                                                                  "hypothesis_relations": tuple({"hypothesis_id": r.hypothesis_id, "relation": r.relation} for r in a.hypothesis_relations)}))
         views.sort(key=lambda v: v.admitted_evidence_id)  # canonical order, independent of self.admitted iteration order (HR4 restart determinism)
         return tuple(views)
 
@@ -215,7 +251,7 @@ class ResearchOperationService:
             stage = STAGE_BY_WIRE.get(payload.stage or "", ResearchStage.FIELD_EVIDENCE)
             projection = self.functions.derive_registry_coordinates(self.snapshot, RegistryProjectionRequestV1(stage=stage, hypotheses=hypotheses, admitted_evidence_ids=payload.admitted_evidence_ids,
                                                                                                     max_priors_per_hypothesis=payload.max_priors_per_hypothesis or 12, physical_jobs=(), geography=None, language=None))
-            return ResearchResultV1(registry_snapshot=self._snapshot_ref(), priors=tuple(ResearchPriorV1(registry_record_id=p.registry_record_id, prior_role=p.prior_role, hypothesis_ids=p.hypothesis_ids) for p in projection.priors),
+            return ResearchResultV1(registry_snapshot=self._snapshot_ref(), priors=tuple(ResearchPriorV1(registry_record_id=p.registry_record_id, prior_role=p.prior_role, hypothesis_ids=p.hypothesis_ids, **_coordinate_meaning(p)) for p in projection.priors),
                                     redundancy_groups=projection.redundancy_groups, unsupported_hypothesis_ids=projection.unsupported_hypothesis_ids)
         if kind == "gaps.compile":
             stage = STAGE_BY_WIRE.get(payload.stage or "", ResearchStage.FIELD_EVIDENCE)
@@ -244,7 +280,8 @@ class ResearchOperationService:
             jobs = tuple(PhysicalJob(hypothesis_id=j.hypothesis_id, job=j.job, mechanism=j.mechanism) for j in payload.physical_jobs)
             projection = self.functions.map_product_territories(self.snapshot, RegistryProjectionRequestV1(stage=ResearchStage.PRODUCT_REALITY, hypotheses=hypotheses, admitted_evidence_ids=payload.admitted_evidence_ids,
                                                                                             max_priors_per_hypothesis=payload.max_priors_per_hypothesis or 12, physical_jobs=jobs, geography=None, language=None))
-            territories = tuple(ResearchTerritoryV1(territory_id=t.registry_record_id, territory=t.prior_role, hypothesis_ids=t.hypothesis_ids) for t in projection.territories)
+            territories = tuple(ResearchTerritoryV1(territory_id=t.registry_record_id, territory=t.prior_role, hypothesis_ids=t.hypothesis_ids,
+                                                    territory_name=_coordinate(t, "territory"), mapping_path=_coordinate(t, "path") or "lexical") for t in projection.territories)
             return ResearchResultV1(registry_snapshot=self._snapshot_ref(), territories=territories, research_directive=projection.research_directive)
         if kind == "opportunity.qualify":
             stage = QUALIFICATION_STAGE_BY_WIRE.get(payload.stage or "")
@@ -278,9 +315,12 @@ class ResearchOperationService:
                 mine = tuple(q for q in payload.qualifications if h.hypothesis_id in q.hypothesis_ids)
                 views = tuple(QualificationView(record_id=q.record_id, stage=q.stage.value, state=q.state.value, gate_results=tuple({"name": g.name, "minimum": g.minimum, "observed": g.observed, "passed": g.passed} for g in q.gate_results)) for q in mine)
                 record_id = _id("score", f"{operation_id}:{h.hypothesis_id}")
+                # ADR-069: LAW 1 is untouched — it still reads one polarity per input; that polarity is now the observation's relation
+                # to THIS hypothesis (its stated relation, else the global polarity), and an observation NEUTRAL to it is not an input.
+                relative = _relative_inputs(inputs, records, h.hypothesis_id)
                 try:
                     scores.append(score_opportunity(OpportunityScoreRequestV1(record_id=record_id, hypothesis_id=h.hypothesis_id, registry_snapshot=snapshot_ref,
-                                                                              as_of=as_of, admitted=inputs, qualifications=views), self.weights))
+                                                                              as_of=as_of, admitted=relative, qualifications=views), self.weights))
                 except ScoreRefused as exc:
                     refusals.append(refuse_score(record_id=record_id, hypothesis_id=h.hypothesis_id, registry_snapshot=snapshot_ref, as_of=as_of, error=exc))
             return ResearchResultV1(registry_snapshot=self._snapshot_ref(), trail_scores=tuple(scores), score_refusals=tuple(refusals))

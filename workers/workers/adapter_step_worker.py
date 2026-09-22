@@ -386,7 +386,11 @@ def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str
     """The typed payload of a bounded Trail operation, assembled from generic engine state only (live hypotheses, admitted
     evidence ids, the latest research receipt, physical jobs, qualifications) — never from a source or harness name."""
     ctx = step.get("context") or {}
-    hyps = list(ctx.get("hypotheses") or [])
+    # ADR-069: a step that opted in sends the CLOSED extended wire (four fields + stated support + structured candidates) the re-pinned
+    # core admits; every other step sends the four-field view exactly as before
+    hyps = list((ctx.get("semantics") or {}).get("trail") or []) if cfg.get("hypotheses_from") == "context.semantics.trail" else list(ctx.get("hypotheses") or [])
+    if cfg.get("hypotheses_from") == "context.semantics.trail" and not hyps:
+        hyps = list(ctx.get("hypotheses") or [])
     # admitted_evidence_ids = the COMPLETE admitted set the service threaded into the step context (store accumulator, never the
     # display cap). The service includes every admitted observation in evidence_refs — across all bounded-loop passes — precisely so
     # the qualify/score hard gates, which count independent groups over exactly these ids, always see the full set (see _context_refs).

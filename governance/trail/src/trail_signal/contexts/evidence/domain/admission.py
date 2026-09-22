@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import Field, StringConstraints, model_validator
+from pydantic import Field, StringConstraints, model_serializer, model_validator
 from typing_extensions import Self
 
 from trail_signal.kernel.contracts import BoundaryModel, Identifier, NonEmptyText, ReasonCode, Sha256
@@ -54,6 +54,13 @@ class ReceiptMetric(BoundaryModel):
     sample_n: NonNegInt | None
 
 
+class HypothesisRelation(BoundaryModel):
+    """ADR-069: what ONE observation means for ONE hypothesis. The evidence role says what kind of evidence it is; the relation says
+    which way it cuts for that hypothesis. One observation may support H1, contradict H2 and be neutral to H3."""
+    hypothesis_id: Identifier
+    relation: Literal["SUPPORTS", "CONTRADICTS", "NEUTRAL"]
+
+
 class ReceiptObservation(BoundaryModel):
     observation_id: Identifier
     source_id: Identifier
@@ -63,6 +70,7 @@ class ReceiptObservation(BoundaryModel):
     context: LongText
     evidence_role_claimed: EvidenceRole | None
     hypothesis_ids: tuple[Identifier, ...]
+    hypothesis_relations: tuple[HypothesisRelation, ...] = ()  # ADR-069: optional; absent = the legacy global polarity rule decides
 
 
 class ReceiptToolTrace(BoundaryModel):
@@ -136,6 +144,20 @@ class AdmittedObservation(BoundaryModel):
     limitations: tuple[LongText, ...]
     trail_admission_record_id: Identifier
     authority_class: Literal["ADMITTED_OBSERVATION"]
+    hypothesis_relations: tuple[HypothesisRelation, ...] = ()  # ADR-069: stated relations of the LINKED hypotheses only
+
+    def polarity_for(self, hypothesis_id: str) -> Polarity | None:
+        """The polarity of this observation FOR ONE hypothesis: its stated relation when the receipt gave one (NEUTRAL -> None: it
+        neither supports nor contradicts), else the observation's global polarity (the pre-ADR-069 rule, unchanged)."""
+        return relation_polarity(self.hypothesis_relations, hypothesis_id, self.polarity)
+
+    @model_serializer(mode="wrap")
+    def _omit_absent_relations(self, handler):
+        """A record without stated relations serialises exactly as it did before ADR-069 (recorded envelopes and replays stay byte-stable)."""
+        data = handler(self)
+        if not data.get("hypothesis_relations"):
+            data.pop("hypothesis_relations", None)
+        return data
 
     @model_validator(mode="after")
     def _linked_and_supply_bound(self) -> Self:
@@ -144,6 +166,13 @@ class AdmittedObservation(BoundaryModel):
         if self.evidence_role == "supply" and self.stage_relevance != ResearchStage.SUPPLY:
             raise ValueError("supply evidence belongs to the supply stage only")
         return self
+
+
+def relation_polarity(relations, hypothesis_id: str, fallback: Polarity) -> Polarity | None:
+    for r in relations:
+        if r.hypothesis_id == hypothesis_id:
+            return {"SUPPORTS": Polarity.SUPPORTING, "CONTRADICTS": Polarity.CONTRADICTING}.get(r.relation)
+    return fallback
 
 
 def normalise_claim(text: str) -> str:
@@ -227,7 +256,8 @@ def admit_observations(*, stage: ResearchStage, action_id: str, run_id: str, ope
             freshness=fresh, provenance="recorded", independence_group=group, duplicate_of=duplicate_of,
             polarity=Polarity.CONTRADICTING if contradicting else Polarity.SUPPORTING, hypothesis_ids=linked, stage_relevance=stage,
             anchored_at=anchor, limitations=(routed.limitations,) if routed.limitations else (),
-            trail_admission_record_id=f"adm-{operation_id}-{observation.observation_id}", authority_class="ADMITTED_OBSERVATION"))
+            trail_admission_record_id=f"adm-{operation_id}-{observation.observation_id}", authority_class="ADMITTED_OBSERVATION",
+            hypothesis_relations=tuple(r for r in observation.hypothesis_relations if r.hypothesis_id in linked)))
     return tuple(admitted), tuple(rejected)
 
 
