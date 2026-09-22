@@ -13,13 +13,14 @@ export function QueryTrace({ receipt, requestedMode }: {
 }) {
   const plan = receipt.chat_plan ?? {};
   const executed = receipt.mode ?? "—";
-  const drift = Boolean(requestedMode) && executed !== "—" && requestedMode !== executed;
+  const fastAlias = requestedMode === "FAST" && executed === "VECTOR";
+  const drift = Boolean(requestedMode) && executed !== "—" && requestedMode !== executed && !fastAlias;
 
   return (
     <>
       <div className="grid grid--3" style={{ marginBottom: 12 }}>
         <Fact label="Requested mode" value={requestedMode} />
-        <Fact label="Executed mode" value={executed} warn={drift}
+        <Fact label="Executed mode" value={fastAlias ? "VECTOR (FAST)" : executed} warn={drift}
               note={drift ? "the backend executed a different mode than requested" : undefined} />
         <Fact label="Retrieval version" value={receipt.engine ?? "—"} />
         <Fact label="Classified intent" value={String(plan.intent ?? "—")}

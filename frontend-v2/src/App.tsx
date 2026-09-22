@@ -125,6 +125,12 @@ export function App() {
   const corporaLoaded = corpora.data != null || corpora.error != null;
   const corpusValid = corpusId !== "" && corpusList.some((c) => c.corpus_id === corpusId);
 
+  // Resolve the session before mounting Chat. Creating it after the first pending
+  // turn changed Chat's key mid-stream and discarded the component receiving SSE.
+  useEffect(() => {
+    if (screen === "chat" && corpusValid && !activeChat) startChat();
+  }, [screen, corpusValid, activeChat]);
+
   // CORPUS RESOLUTION — derive the active corpus from backend authority, never a
   // hardcoded name. Priority: (1) the persisted/current corpus if it still exists,
   // (2) the first query-enabled corpus, (3) the first corpus, (4) none → empty state.
@@ -290,20 +296,12 @@ export function App() {
         ) : (
           <>
         {screen === "overview" && <Overview corpusId={corpusId} />}
-        {screen === "chat" && (
+        {screen === "chat" && activeChat && (
           <Chat
-            key={activeChat?.id ?? "scratch"}
+            key={activeChat.id}
             corpusId={corpusId}
             session={activeChat}
-            onTurns={(turns) => {
-              if (activeChat) updateChat(activeChat.id, turns);
-              else {
-                // first message with no session selected starts one
-                const s = { ...emptySession(corpusId), turns };
-                setSessions((xs) => [{ ...s, title: titleFor(s) }, ...xs]);
-                setActiveChatId(s.id);
-              }
-            }}
+            onTurns={(turns) => updateChat(activeChat.id, turns)}
           />
         )}
         {screen === "compare" && <Compare corpusId={corpusId} />}

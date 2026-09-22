@@ -70,7 +70,7 @@ export function Chat({
     setTurns((t) => [...t, newTurn(q, mode)]);
     const ac = new AbortController();
     abort.current = ac;
-    const body: Record<string, unknown> = { message: q, corpus_id: corpusId, mode };
+    const body: Record<string, unknown> = { message: q, corpus_id: corpusId, mode, require_retrieval: true };
     if (model) body.synthesizer = model;
     if (reasoning) body.reasoning = reasoning;
     if (corpusExplore) body.corpus_explorer = true;
@@ -86,7 +86,7 @@ export function Chat({
       <div className="screen__head">
         <h1 className="screen__title">Chat</h1>
         <p className="screen__sub">
-          Corpus <span className="mono">{corpusId}</span> · retrieval runs on the final core
+          Corpus <span className="mono">{corpusId}</span> · every message searches this corpus
         </p>
       </div>
 

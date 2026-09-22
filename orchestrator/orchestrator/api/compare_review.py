@@ -31,8 +31,7 @@ from pydantic import BaseModel, Field
 router = APIRouter()
 
 #: The public modes (VECTOR is a backend primitive, never offered as a product mode).
-COMPARABLE_MODES = ("HYBRID", "GRAPH", "WILDCARD")
-MAX_ARMS = 4
+COMPARABLE_MODES = ("FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN")
 
 
 class CompareRequest(BaseModel):
@@ -58,7 +57,8 @@ def compare(req: CompareRequest) -> dict:
     them in parallel would make the latency numbers meaningless (measured 2026-09-05:
     parallel support passes took p50 12s -> 31s).
     """
-    modes = [m.upper() for m in req.modes][:MAX_ARMS]
+    # One arm per requested public mode; never silently drop the final mode.
+    modes = list(dict.fromkeys(m.upper() for m in req.modes))
     bad = [m for m in modes if m not in COMPARABLE_MODES]
     if bad:
         raise HTTPException(status_code=422,
@@ -102,11 +102,14 @@ def _slim(out: dict) -> dict:
     meta = out.get("meta") or {}
     trace = out.get("trace") or {}
     evidence = out.get("evidence") or []
+    degraded = meta.get("degraded") or []
+    if not isinstance(degraded, list):
+        degraded = [degraded]
     return {
         "engine": meta.get("engine"),
         "plan_version": meta.get("plan_version"),
         "mode": meta.get("mode"),
-        "degraded": meta.get("degraded"),
+        "degraded": [d if isinstance(d, str) else json.dumps(d, sort_keys=True) for d in degraded],
         "evidence_count": meta.get("evidence_count", len(evidence)),
         "selected_documents": len(out.get("selected_documents") or []),
         "selected_sections": len(out.get("selected_sections") or []),

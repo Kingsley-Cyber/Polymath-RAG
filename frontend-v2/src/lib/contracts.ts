@@ -174,7 +174,7 @@ export interface Corpus {
  *  GNN (GNN-RETRIEVAL-V1) is the experimental fifth mode: graph-neural PARENT routing over the
  *  existing corpus — the GNN routes, original children prove, the same reranker judges. It is
  *  sent as `mode: "GNN"` through the very same /chat path as every other mode. */
-export const PUBLIC_MODES = ["HYBRID", "GRAPH", "WILDCARD", "GNN"] as const;
+export const PUBLIC_MODES = ["FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN"] as const;
 export type PublicMode = (typeof PUBLIC_MODES)[number];
 
 /** `/synthesizers` catalog row. `provider`/`provider_label`/`model` are the
