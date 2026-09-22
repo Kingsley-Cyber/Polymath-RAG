@@ -37,6 +37,7 @@ UNIT_PROVEN in the worktree (DB-free): route + engine + registry 13 / 13, offlin
 - "The first-message scratch-chat stream works" — it strands (the pre-existing scratch-key remount trap, memory 2026-09-17); "+ New chat" works; not touched here.
 
 ## Open contract gaps
+`contract_impact.py --staged` named: CANDIDATE_ENGINE (changed) → UPDATED additively (lane I; byte-identical when off — engine suite 59 + the impact list 274 passed); EVIDENCE_BOUNDARY_API (changed, `orchestrator/api/chat.py` family) → TESTED_UNCHANGED (only `ui.py` mode validation + receipt key; `test_chat_retrieval_v2`, `test_chat_funnel`, `test_chat_runtime` green except the pre-existing compiler pin); PROFILE_SCOUT_WIRING (changed by the shared candidate-engine file) → NOT_AFFECTED (no profile-scout code path touched; `test_profile_yield` green). Transitive: ACCEPTANCE, ADAPTER_RUNTIME, EVIDENCE_PACKET, MCP_SURFACE, PROFILE_YIELD_RECEIPT, QUERY_PLANNER, RESOLUTION_STATE, RETRIEVAL_RECEIPT, SUBQUERY_PROVENANCE → TESTED_UNCHANGED (their tests in the impact list pass; `RETRIEVAL_RECEIPT` gains the optional `gnn` key only on GNN turns).
 - `CandidateBudget` / engine trace: UPDATED additively (new optional fields, new receipt keys; `lane_sizes` gains `gnn_route`) — TESTED_UNCHANGED for every other lane (byte-identical union when off).
 - Chat receipt (`retrieval.gnn`): UPDATED additively; None for every other mode.
 - `retrieval-mode-v1` (`EXPOSED_MODES`): UPDATED additively (fifth entry).
