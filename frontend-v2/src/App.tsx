@@ -90,6 +90,13 @@ export function App() {
     sessions.find((s) => s.id === activeChatId) ?? null;
 
   function startChat() {
+    // reuse a blank "New chat" if one is already open, instead of stacking more blanks
+    const blank = sessions.find((s) => s.turns.length === 0);
+    if (blank) {
+      setActiveChatId(blank.id);
+      setScreen("chat");
+      return;
+    }
     const s = emptySession(corpusId);
     setSessions((xs) => [s, ...xs]);
     setActiveChatId(s.id);

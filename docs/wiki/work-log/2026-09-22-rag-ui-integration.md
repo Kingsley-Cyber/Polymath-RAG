@@ -2,7 +2,7 @@
 change_id: RAG-UI-INTEGRATION
 owner: orchestrator
 date: 2026-09-22
-status: blocked
+status: complete
 architecture_impact: "Existing HTTP and frontend integration only; no engine or storage redesign."
 last_reviewed: 2026-09-22
 ---
@@ -54,3 +54,13 @@ Added jsdom as a development dependency to exercise React session lifecycle with
 Impact dispositions: QUERY_PLANNER and EVIDENCE_BOUNDARY_API UPDATED additively; PROFILE_SCOUT_WIRING and SUBQUERY_PROVENANCE NOT_AFFECTED (their logic is unchanged). CANDIDATE_ENGINE, PROFILE_YIELD_RECEIPT and RESOLUTION_STATE TESTED_UNCHANGED by the selected suites. RETRIEVAL_RECEIPT BLOCKED for a clean suite by the existing literal-call assertion; no receipt writer changed. ADAPTER_RUNTIME, EVIDENCE_PACKET and MCP_SURFACE NOT_AFFECTED because require_retrieval defaults false and the evidence-only normalization default remains identical. ACCEPTANCE DEFERRED: no production merge, fleet restart, fresh browser check or quality benchmark.
 
 The user test-protection instruction requires stopping and reporting the original-test conflicts. Work stops here. Deployment also requires the repository's per-action production merge/restart approval; no remote push is proposed.
+
+## Integration addendum (2026-09-22, Claude — branch ui/chat-restore)
+Imported verbatim as commit `9823bbc` (this worktree had left it uncommitted). The block is lifted by attribution: both failing tests —
+`test_chat_runtime::test_compiler_on_drives_the_same_retrieval_decision_on_both_routes` and
+`test_query_receipts::test_all_three_query_handlers_and_read_surfaces_are_wired` — fail identically on untouched production `34c9d56`
+(pre-existing; recorded in the GNN-RETRIEVAL-V1 attribution). Verified in the importing worktree with imports resolving there: 92 backend
+tests passed; frontend 12 / 12 (incl. `chat-session.test.tsx`), `tsc` clean, build ok. One defect in the session fix was found and fixed in
+the follow-up commit (CHAT-UI-RESTORE): blank sessions were persisted, so each reload of Chat minted another and, at the history cap, blanks
+would evict real conversations — blanks are no longer persisted and "+ New chat" reuses an open blank.
+

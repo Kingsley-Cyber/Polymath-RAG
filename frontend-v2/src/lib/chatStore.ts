@@ -62,7 +62,10 @@ export function loadSessions(): ChatSession[] {
 
 export function saveSessions(sessions: ChatSession[]): void {
   try {
-    const trimmed = [...sessions]
+    // An empty session is a blank "New chat" — never history. Persisting them let every reload of
+    // Chat mint another, and at MAX_SESSIONS the blanks would evict real conversations.
+    const trimmed = sessions
+      .filter((s) => s.turns.length > 0)
       .sort((a, b) => b.updatedAt - a.updatedAt)
       .slice(0, MAX_SESSIONS);
     localStorage.setItem(KEY, JSON.stringify(trimmed));

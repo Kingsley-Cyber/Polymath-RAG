@@ -2213,6 +2213,11 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-22-gnn-retrieval-v1.md", "md", None),
     ("docs/wiki/work-log/2026-09-22-rag-ui-integration.md", "md", None),
     ("frontend-v2/src/__tests__/chat-session.test.tsx", "tsx", None),
+    # CHAT-UI-RESTORE (2026-09-22): the ELITE chat surface, recovered from stash@{0} (2026-09-18) and committed
+    ("frontend-v2/src/components/AnswerBody.tsx", "tsx", None),
+    ("frontend-v2/src/components/ProcessRail.tsx", "tsx", None),
+    ("frontend-v2/src/__tests__/chat-surface.test.tsx", "tsx", None),
+    ("docs/wiki/work-log/2026-09-22-chat-ui-restore.md", "md", None),
     ("tests/determinism/test_rag_ui_integration.py", "py", None),
     ("docs/wiki/experiments/gnn-route/cinema/build-2026-09-22.json", "json", None),
     ("docs/wiki/experiments/gnn-route/cinema/build-m2-2026-09-22.json", "json", None),
