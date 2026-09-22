@@ -2216,6 +2216,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/gnn-route/cinema/qualify-m1-2026-09-22.json", "json", None),
     ("docs/wiki/experiments/gnn-route/cinema/qualify-m2-2026-09-22.json", "json", None),
     ("docs/wiki/reports/2026-09-22/GNN-RETRIEVAL-V1-QUALIFICATION.md", "md", None),
+    ("docs/wiki/reports/2026-09-22/GNN-RETRIEVAL-V1-HANDOFF.md", "md", None),
     ("scripts/siliconflow_extraction_canary.py", "py", None),
     # shared
     ("shared/polymath_shared/acceptance_harness.py", "py", None),
