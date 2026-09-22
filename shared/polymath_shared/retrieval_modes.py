@@ -27,7 +27,10 @@ MODE_LEGACY = "LEGACY"
 #: `wildcard` lane rides separately and never displaces evidence.
 MODE_WILDCARD = "WILDCARD"
 
-EXPOSED_MODES = (MODE_FAST, MODE_HYBRID, MODE_GRAPH, MODE_WILDCARD,
+#: GNN-RETRIEVAL-V1 (experimental, additive): graph-neural PARENT routing over the existing corpus —
+#: the GNN routes, ORIGINAL children prove, the existing reranker judges (docs/wiki/plans/GNN-RETRIEVAL-V1.md).
+MODE_GNN = "GNN"
+EXPOSED_MODES = (MODE_FAST, MODE_HYBRID, MODE_GRAPH, MODE_WILDCARD, MODE_GNN,
                  MODE_LEGACY)
 
 DEFAULT_MODE = MODE_LEGACY  # frozen regression default; FAST/HYBRID are explicit

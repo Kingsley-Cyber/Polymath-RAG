@@ -3183,7 +3183,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
     ui_mode = (req.mode or "HYBRID").upper()
     if ui_mode == "VECTOR":
         ui_mode = "FAST"
-    if ui_mode not in ("FAST", "HYBRID", "GRAPH", "ASK", "WILDCARD"):
+    if ui_mode not in ("FAST", "HYBRID", "GRAPH", "ASK", "WILDCARD", "GNN"):   # GNN-RETRIEVAL-V1: the experimental fifth mode
         raise HTTPException(422, {"error_code": "unknown_mode",
                                   "message": f"mode {req.mode!r}"})
     synth = req.synthesizer or _default_synthesizer()   # never a hidden provider (see _default_synthesizer)
@@ -3365,6 +3365,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             # B12 LATENT-COMPOSITION-V1: ✨ (`req.latent`) no longer drops the turn to the v1 engine — it enables lane D
             # inside the v2 composition (see the budget below); `utility` remains a v1 knob.
             _v2_mode = _rflag in ("v2", "v2-single") and not req.utility
+            if ui_mode == "GNN" and not _v2_mode:      # GNN-RETRIEVAL-V1: the route lives in the candidate engine only
+                raise HTTPException(422, {"error_code": "gnn_requires_v2",
+                                          "message": "GNN retrieval needs the v2 candidate engine (POLYMATH_CHAT_RETRIEVAL=v2, no utility turn)"})
             # GRAPH bounds follow the compiled plan's relational verdict (plan §3.15 / §5 #14): `graph_useful: false`
             # keeps the expansion definitional (≤ 2 seeds); no compiler, or a fallback plan, keeps the default breadth.
             _graph_useful = True if (_flag != "on" or _plan is None or getattr(_plan, "fallback", False)) \
@@ -3712,6 +3715,10 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 "engine": (fast.get("meta") or {}).get("plan_version"),
                 "arrivals": _arrivals,
                 "lane_sizes": (fast.get("trace") or {}).get("lane_sizes"),
+                # GNN-RETRIEVAL-V1 (plan §17): the route receipt for direct comparison — snapshot, contract, model digest, collection,
+                # parent_k, the nominated parents, hydrated / unique children, elapsed; typed `code` when the route degraded. None
+                # for every other mode (nothing about their receipts changes).
+                "gnn": (fast.get("meta") or {}).get("gnn") if ui_mode == "GNN" else None,
                 # per-stage retrieval timings (embed / lanes / rerank_select / total) — P1.b/P1.d latency accounting
                 "latency_ms": (fast.get("trace") or {}).get("latency_ms"),
                 # P1.b aspect coverage: per compiled query, candidates in union / final; weak = none in final

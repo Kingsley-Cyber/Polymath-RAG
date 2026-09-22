@@ -1,0 +1,5576 @@
+{
+ "contract": "gnn-route-qualify-v1",
+ "corpus": "cinema",
+ "family": "m1-smooth",
+ "fixtures": {},
+ "k_fixed": 24,
+ "k_gnn_share": 6,
+ "modes": [
+  "FAST",
+  "HYBRID",
+  "GRAPH",
+  "WILDCARD",
+  "GNN"
+ ],
+ "rows": [
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1454.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1438.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_545eec254ab2b3410d427afa96856d5d28f05c81ad3f5616f47fdc3fa1cdc47f"
+   ],
+   "gold_parent_ids": [
+    "chunk_8722df98bca494d92f4c1193acd9f0ac90a0efe25285d108613395271b343ae0"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 57,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 1071.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 57
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1071.4,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 1452.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_bf1090169f25358bd8404fe3a48caccebe4dd1ad4c2d0411f2ad50c015178c60",
+      "chunk_9ff497d79d2cc810400c42b5f168e4ae320634da56c3f12d6db7f88a0a2f01cb",
+      "chunk_aa30aa1f017c8ce2151048eff81d4cff7ece44e71d9de8f22a7a350bad30264c",
+      "chunk_0933f623d85fd392cb8a4fb0b562e4ce02f8173f564aaf7f1cc885e47a82bdbf",
+      "chunk_bc2ab846f162ecf2b5826d1857e1b007cfe484ac74be03e59c1f43a74638b324",
+      "chunk_649f4d143b19f4646f1a42a31bbc0f988605df371ec6f33a78c17d8c970eff1a",
+      "chunk_8979b4d0a71ec5a6c5ed9644a30f4943756a13b950158597e9d9f73bbc16c03c",
+      "chunk_4f72d2b17eea1711c59812f1e4a337999ff9fdaedbb63253d1d8f8e5db1af909"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 58,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2064.8,
+     "mrr": 0.143,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 58
+    },
+    "HYBRID": {
+     "candidates": 58,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 969.5,
+     "mrr": 0.143,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 58
+    },
+    "WILDCARD": {
+     "candidates": 58,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 4577.4,
+     "mrr": 0.143,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 58
+    }
+   },
+   "overlap_with_hybrid": 0.25,
+   "query": "What does the book say about \"AU62\"?",
+   "query_id": "L00",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 58,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2145.2,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 67
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 11,
+     "mrr": 0.091,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 13,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 0.077,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 0.083,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 0.083,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1427.5,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1444.9,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_f5a61001815ab3b878221e023864ff484bfd200d7ce176246e5d16bb25e746e2"
+   ],
+   "gold_parent_ids": [
+    "chunk_6f5b8b3de8b985a37cacfa47b18ca6d2bbae68869fa9872838321f4b8224136e"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 67,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 1839.3,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 67
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1080.5,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 1479.8,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_307603030dbe3090e61a68c7cc8a75481b696215ad0ae1eaa0e2c81d6feb21e9",
+      "chunk_d18895d92290ac6e60fab04e32c5c1d3287965395ff41ed9fd2195148e3f51f0",
+      "chunk_87da24b88e726ac9031d1f5fecd3f9065aa2923ecb3d21c86a21cd07123e7af7",
+      "chunk_2422a19d1c388df6a46bb048fcbed47f32858c9e397ffdebc259110e9f0bb6f0",
+      "chunk_94d3a89ab3be1035aeb384b20be7ac75f240409626d710066f14716439aeff95",
+      "chunk_3ba9482c67ecca80422b3dca11e60c54f4ec9b3c8c535e42bd248e9a723a2385",
+      "chunk_96767059e2b53012de48c15e9e53a2517875af8d1e6316733243829337cd6ae6",
+      "chunk_9b0be0bb70f8aa12a5d6b9a9ceff67c2a3502bc9357819a0290da930f300377d"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2645.2,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 68
+    },
+    "HYBRID": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 1776.6,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 68
+    },
+    "WILDCARD": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 4494.3,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 68
+    }
+   },
+   "overlap_with_hybrid": 0.167,
+   "query": "What does the book say about \"SO202\"?",
+   "query_id": "L01",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 68,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2831.5,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 78
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 14,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 10,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2610.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1985.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_46a7cc83d83fda994c0c32621cdb02561308917eae5c278e6a6d5c34b27b689f",
+    "chunk_d280219e81333a0bc07255821523df51b03d98f4a2354e81b23f2dcf2a44b5df"
+   ],
+   "gold_parent_ids": [
+    "chunk_1862f35dfd02963e3ff3e204d2a0255e4fd218e12625e0ea3aa51c1f46c4b266",
+    "chunk_44b2d6ee52699aa8c07b13ced19490b3715a7e2870b5ff0111b4233f8f42717f"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 70,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 12604.4,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 70
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1322.8,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 2782.6,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_b15089c86cc94512e0e3d01160dff9effa018466a9e170e28cc879dd00297091",
+      "chunk_21262f474f48eca76f692a5264c6fd34a53ab443d106415ec132c2bb8db29917",
+      "chunk_62a5e1828bf44e11acd9c27794165e488f8795fa50c6d0c131e406a969d2a1d8",
+      "chunk_4812c0081edf40dc8d120f23c37df18bb3156e872600c79c37b373b6ce7ff91e",
+      "chunk_81cca74a1c3988e2824e177c9e70d3478793e0158127530d4e0a81b2ff99d544",
+      "chunk_3543328384a40d36c2bcc09d08185548473a74774fd40a4056e79e441eba35b3",
+      "chunk_b1a89b3fc1bd2e6d4b56d44ce8ee30ec6fe629bb854ad487eed6b7c5df940234",
+      "chunk_0342ea3bec6f06f90c3fdeeaeedc386132ef7a67a9a8e8ab3a62f7d7e0702b40"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 72,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2572.3,
+     "mrr": 0.091,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 72
+    },
+    "HYBRID": {
+     "candidates": 72,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2132.9,
+     "mrr": 0.091,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 72
+    },
+    "WILDCARD": {
+     "candidates": 72,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5454.5,
+     "mrr": 0.091,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 72
+    }
+   },
+   "overlap_with_hybrid": 0.167,
+   "query": "What does the book say about \"HD1\"?",
+   "query_id": "L02",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 72,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3148.7,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 82
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 0.067,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.062,
+     "recall_at_k": 0.5,
+     "selected_gold": false,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.062,
+     "recall_at_k": 0.5,
+     "selected_gold": false,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.062,
+     "recall_at_k": 0.5,
+     "selected_gold": false,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1902.4,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2130.5,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_d7b2cfb308d2044013685bb7b78da8046afd560a20eb57be257cfb19f94dab5f"
+   ],
+   "gold_parent_ids": [
+    "chunk_790fb67e67644237e76b8d8ec6342a1d409d01cc9f9a6b666eb5e79104efb524"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 67,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 5590.5,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 67
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1261.7,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 2430.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_4caccdc55734aa9be21e5e60f781c577cc82d9f9dbc1a3a01bbead1f4b18be50",
+      "chunk_9b0be0bb70f8aa12a5d6b9a9ceff67c2a3502bc9357819a0290da930f300377d",
+      "chunk_8523702c4d36d4b391abf9ad37f738696dccee54fbe301745b78bad8c94f8e8c",
+      "chunk_9243069b923ac3322057194e219b5b70b2665dc28109b901c8f5d3aafc8d0cac",
+      "chunk_f1fc998258bf092dce3203bfe49426832de244836de47e505639221958e3cebb",
+      "chunk_e0b74947937bb2e508b6d13e297af0204b8a272f0480a67212f2aa0fceb76dde",
+      "chunk_3126e7414bceaab3afaf88e5bda5e1b2dc2c395a34941d9f75a044a7c703f74e",
+      "chunk_cfc0063857aae1fb69aa84c579bdb0785745ca4301456c5c4e0fb18f6a923513"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2638.7,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 68
+    },
+    "HYBRID": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 1990.6,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 68
+    },
+    "WILDCARD": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5648.5,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 68
+    }
+   },
+   "overlap_with_hybrid": 0.5,
+   "query": "What does the book say about \"F850LP\"?",
+   "query_id": "L03",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 68,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3110.5,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 74
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 12,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 10,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 10,
+     "latency_ms": 1984.6,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 10
+    },
+    "shuffled": {
+     "candidates": 10,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 10,
+     "latency_ms": 1822.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 10
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_860a8371243336aef0fa96a46ca1be2375cbd1fbfb0289b051f50fcf76bf4297"
+   ],
+   "gold_parent_ids": [
+    "chunk_9fb99d2f7a99955641122338778ae912e07d01da39d654d8f875786f94261483"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 73,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 4991.3,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 73
+    },
+    "GNN": {
+     "candidates": 10,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1284.2,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 10,
+     "latency_ms": 2744.4,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_3bc0d7be986e2eb7a404e84e106383cdb2f37c335e6b4884833f55bfc8f2725f",
+      "chunk_f47053eae6330456372592a85dc489d370475729a49fa549f8426757d3bc4c05",
+      "chunk_14bd5ac07cae758e79a4cdfd5fced05d1befce5e0272ecebae26c7f4f240dc76",
+      "chunk_0c33b31814a0f690e848626a82fe5054f1e69227974ca9d2b36ff0dbb6435548",
+      "chunk_bc70052bf5bb4195875568852b0fbc60e99960df13f6f1139a546c3c7f9d516d",
+      "chunk_ce6848610221a7e673ffe404c4886033151ec76e39475c903f03072c8e0defd8",
+      "chunk_c6133ce0187e797ea1dc62db45e13e4f7796b19eaa86445202033ee46b5c499e",
+      "chunk_bd588dcbf7071a9469144b66d3099a8627bade1d1b5ea554cecb5f8824ddca45"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 10
+    },
+    "GRAPH": {
+     "candidates": 75,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2636.6,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 75
+    },
+    "HYBRID": {
+     "candidates": 75,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2050.3,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 75
+    },
+    "WILDCARD": {
+     "candidates": 75,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5420.7,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 75
+    }
+   },
+   "overlap_with_hybrid": 0.3,
+   "query": "What does the book say about \"D16\"?",
+   "query_id": "L04",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 75,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3134.6,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 82
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 14,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 10,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2420.7,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 10,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 10,
+     "latency_ms": 2129.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 10
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_0d553d4e4a0ad455b5a8f1d069181b406ad4c093ba83cbf9d156bdd0606ac01b"
+   ],
+   "gold_parent_ids": [
+    "chunk_e75813cfbde16af606c4fa133127e75681e2f5641b3ea74fd372760b61a1646b"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 73,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 9138.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 73
+    },
+    "GNN": {
+     "candidates": 10,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1270.3,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 10,
+     "latency_ms": 2527.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_7fa08ae9551147f38906bfab413d46e57e0f450ac8fe1669a4fc46a1e2789a12",
+      "chunk_77c5f897db5581d090368240efaca7dfa37c9f71e22974484a7ef105aa5011fc",
+      "chunk_330adf970ab7dbcf586008f3b5e41c0f55fcf60fbb05448907eab0e19ba5da49",
+      "chunk_fbff4ed768fd62109e91b0324968d2a5ce88d9d4b859594f49c3bee241d54278",
+      "chunk_2dc24155e184f3b6afcf9e0bd7fbc44916dc9c6daefce895ba759df7e6a1e485",
+      "chunk_6ea25b45677fb18f3886e440e3f3eec3e76b4750839acedff03ebfeef955cfc0",
+      "chunk_8276441fc16fbd62e8cfa20a08c60693ad37cda3b2933c3d7973043afd85bd37",
+      "chunk_0f547d5dec60da3236ebd7b361ffb2453e911a9768af2990996199d94f4d4ed0"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 10
+    },
+    "GRAPH": {
+     "candidates": 74,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2957.1,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 74
+    },
+    "HYBRID": {
+     "candidates": 74,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2436.1,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 74
+    },
+    "WILDCARD": {
+     "candidates": 74,
+     "degraded": [
+      {
+       "component": "wildcard",
+       "effect": "3 frontier bridge(s) shipped UNVERIFIED \u2014 the two-hop judge missed its budget; the core evidence stands",
+       "reason": "wildcard_partial:unverified",
+       "state": "unverified"
+      }
+     ],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 6022.5,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 74
+    }
+   },
+   "overlap_with_hybrid": 0.0,
+   "query": "What does the book say about \"W372\"?",
+   "query_id": "L05",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 74,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3219.4,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 84
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 11,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 13,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2483.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2391.5,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_ce225976982e5396153fe41ec6f86e1f107c35ca1fbf830cc6ae491627860e8c"
+   ],
+   "gold_parent_ids": [
+    "chunk_be6a8435531d793808d6ca0fda81a23505530a44d76571411e5822d1ffefbedc"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 77,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 5606.4,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 77
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1144.5,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 2775.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_e1c8e1a92adc509101abdba733f3db006055f6c323807281099a7631a4879af6",
+      "chunk_12a9c585284cc4cd2ad7013c0f0b51c659e77168745b4bd9421a475182c80849",
+      "chunk_1dedc8c67133774ce06f324c80c25f4d42a07f8c97aeaec9936e2ecf4e782f47",
+      "chunk_307603030dbe3090e61a68c7cc8a75481b696215ad0ae1eaa0e2c81d6feb21e9",
+      "chunk_2ff08e1cc716b92b38e5fc0702bd2bd2db21754f17ffecfb06bf22891a70fd16",
+      "chunk_3a3585c758057d978e9a0cc3fa53aff4696e6c3f9eea13a531a62281b4a522b1",
+      "chunk_9f7c18ff87f1f9db01b4693220834ba0300e100397d9f07718c1f92066a4eaf5",
+      "chunk_330adf970ab7dbcf586008f3b5e41c0f55fcf60fbb05448907eab0e19ba5da49"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 78,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2539.3,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 78
+    },
+    "HYBRID": {
+     "candidates": 78,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2012.0,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 78
+    },
+    "WILDCARD": {
+     "candidates": 78,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5673.6,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 78
+    }
+   },
+   "overlap_with_hybrid": 0.0,
+   "query": "What does the book say about \"A100\"?",
+   "query_id": "L06",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 78,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2988.6,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 90
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "mrr": 0.091,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 12,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.071,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.071,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.083,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2216.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1852.6,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_654b33c48e6975d896eee22b5d675a3cf67930c757f791bdd28038fb7f2af2c5"
+   ],
+   "gold_parent_ids": [
+    "chunk_a7000750a5201c7e5a89cb427ee8d2b9723da67c816542c271894b72933ad62d"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 75,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 9311.4,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 75
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1092.9,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 2862.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_0f547d5dec60da3236ebd7b361ffb2453e911a9768af2990996199d94f4d4ed0",
+      "chunk_b9a2e128d40f4e996d999a4e63410ed1b4cc45529d484c5ff659c6cf9340c4c0",
+      "chunk_34a4f03972771ebfc094832457be6f7e5625941ab9a20910b0a2de937b389ee2",
+      "chunk_ef52f09bf547b43a6a12aa0de0baa21fd0fe4b355215b85301b56b28873b2bc8",
+      "chunk_31aa29484937bf8da868cb932f8876177c585cd9d5dda2bdb0ec052b78e12a48",
+      "chunk_c39a02300fd6bce9e35586f938417748105496fe9a3b33d7593a27be7478f113",
+      "chunk_e1c8e1a92adc509101abdba733f3db006055f6c323807281099a7631a4879af6",
+      "chunk_e08842340163a90547589564200266d1886c576d15c484f341ca75944701ebbd"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 76,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2519.9,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 76
+    },
+    "HYBRID": {
+     "candidates": 76,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2021.7,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 76
+    },
+    "WILDCARD": {
+     "candidates": 76,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5966.5,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 76
+    }
+   },
+   "overlap_with_hybrid": 0.25,
+   "query": "What does the book say about \"M4A1\"?",
+   "query_id": "L07",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 76,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2972.2,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 84
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 14,
+     "mrr": 0.111,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 10,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.1,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.111,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.125,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1707.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1777.6,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_53706d6843722cb634cddaa074abe89ebc399fb6ebdc9ff4e6ff694681f9f98f"
+   ],
+   "gold_parent_ids": [
+    "chunk_9fe2b0939179e8a125ac60a04c4aafad1db71e5d59918241a40ede8c66df4afa"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 70,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 9082.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 70
+    },
+    "GNN": {
+     "candidates": 11,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1246.1,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 11,
+     "latency_ms": 2255.8,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_1396438b8d2813445c113e0865c018c55046eccdb5199fffd850acd1529f9d26",
+      "chunk_87da24b88e726ac9031d1f5fecd3f9065aa2923ecb3d21c86a21cd07123e7af7",
+      "chunk_2422a19d1c388df6a46bb048fcbed47f32858c9e397ffdebc259110e9f0bb6f0",
+      "chunk_1a991067c23bb35914c19f0b665fc417b20e5f41779fe6f89ca4f0a0cbba0b28",
+      "chunk_d18895d92290ac6e60fab04e32c5c1d3287965395ff41ed9fd2195148e3f51f0",
+      "chunk_307603030dbe3090e61a68c7cc8a75481b696215ad0ae1eaa0e2c81d6feb21e9",
+      "chunk_67f42fea1f69359dd0d8fd29c397e8f822b75b0d494b4b1cedb7773d8465dbdc",
+      "chunk_491cba300ad7944445f468b958863238d4d70fa1a240e03717b53ee993583de0"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 11
+    },
+    "GRAPH": {
+     "candidates": 72,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2576.2,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 72
+    },
+    "HYBRID": {
+     "candidates": 72,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2141.2,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 72
+    },
+    "WILDCARD": {
+     "candidates": 72,
+     "degraded": [
+      {
+       "component": "wildcard",
+       "effect": "3 frontier bridge(s) shipped UNVERIFIED \u2014 the two-hop judge missed its budget; the core evidence stands",
+       "reason": "wildcard_partial:unverified",
+       "state": "unverified"
+      }
+     ],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 6477.9,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 72
+    }
+   },
+   "overlap_with_hybrid": 0.182,
+   "query": "What does the book say about \"XXXII\"?",
+   "query_id": "L08",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 72,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3114.1,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 81
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 11,
+     "mrr": 0.143,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 13,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 0.1,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 0.111,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 0.111,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1621.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1562.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_9b6c17a6461333b9f68d872ab953660049cac611598243ccd1234d795b737d98"
+   ],
+   "gold_parent_ids": [
+    "chunk_f5698126d41e313d7bdcfdc526454ad6cefca0b78173800451d10708b7bd9650"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 58,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 8731.9,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 58
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1068.5,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 2023.8,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_4ddc6c7192d37c8bdb40b3453974065c13568e3796f0294cfae09d4fc032aab7",
+      "chunk_09f9b22a60e05d3bf4e35cc2ea3def65f74b49cf2be9b5bb50b30fc701d65f33",
+      "chunk_a4545ccb6340698102c757fe651ad1100c613de09bcc883f7497a703304a513b",
+      "chunk_0f547d5dec60da3236ebd7b361ffb2453e911a9768af2990996199d94f4d4ed0",
+      "chunk_a236cc2b95fa7d02e97d47a51f0b25ab8eabebcd38a9829cf75ea4231d11aac2",
+      "chunk_2ff08e1cc716b92b38e5fc0702bd2bd2db21754f17ffecfb06bf22891a70fd16",
+      "chunk_6ea25b45677fb18f3886e440e3f3eec3e76b4750839acedff03ebfeef955cfc0",
+      "chunk_61067eb70974f3f6143004973587a7af32464c1fba8719d2e38343b4f380606a"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 59,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2301.6,
+     "mrr": 0.2,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 59
+    },
+    "HYBRID": {
+     "candidates": 59,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 1844.0,
+     "mrr": 0.2,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 59
+    },
+    "WILDCARD": {
+     "candidates": 59,
+     "degraded": [
+      {
+       "component": "wildcard",
+       "effect": "3 frontier bridge(s) shipped UNVERIFIED \u2014 the two-hop judge missed its budget; the core evidence stands",
+       "reason": "wildcard_partial:unverified",
+       "state": "unverified"
+      }
+     ],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 4991.3,
+     "mrr": 0.2,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 59
+    }
+   },
+   "overlap_with_hybrid": 0.5,
+   "query": "What does the book say about \"MUA\"?",
+   "query_id": "L09",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 59,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2777.7,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 63
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 14,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 10,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 11,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 11,
+     "latency_ms": 2105.3,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 11
+    },
+    "shuffled": {
+     "candidates": 11,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 11,
+     "latency_ms": 1934.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 11
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_6a7723f67cbf055fa5c0e768d343e6c3fb2c2ce7cd5ccc97a9f5138e72425bed"
+   ],
+   "gold_parent_ids": [
+    "chunk_5e3f9ef7f4c080dc51240c39a19570bae54e1f0a39bc0d89461d75c8649128b2"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 73,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 4339.7,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 73
+    },
+    "GNN": {
+     "candidates": 11,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1256.0,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 11,
+     "latency_ms": 2617.8,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_2c49e0c3efc3d7860e5a413b903d7675798d1c7bdfca3ca7499b2ff7bf7f613d",
+      "chunk_e08842340163a90547589564200266d1886c576d15c484f341ca75944701ebbd",
+      "chunk_e9954f0f2591e126cfec54d198b42a68d3ca4cd5f3e5012c754ecffdf9ff5ba4",
+      "chunk_2ff08e1cc716b92b38e5fc0702bd2bd2db21754f17ffecfb06bf22891a70fd16",
+      "chunk_307603030dbe3090e61a68c7cc8a75481b696215ad0ae1eaa0e2c81d6feb21e9",
+      "chunk_2e516e582d105f6076fd03afcc9fd0e0fc94f42ce9f2bdc3fb4889dd6915884d",
+      "chunk_10a639c0dbab1a5149514dd697be8970ccbb75ef5bfcdfbd36f84b8fa5eb965d",
+      "chunk_9667f10c7325f858509cfcaa9b7c2f8f9b58938d218ed3d2c2358081d658e9bb"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 11
+    },
+    "GRAPH": {
+     "candidates": 74,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2779.1,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 74
+    },
+    "HYBRID": {
+     "candidates": 74,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2056.1,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 74
+    },
+    "WILDCARD": {
+     "candidates": 74,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5870.4,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 74
+    }
+   },
+   "overlap_with_hybrid": 0.091,
+   "query": "What does the book say about \"UPA\"?",
+   "query_id": "L10",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 74,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3130.8,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 84
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 14,
+     "mrr": 0.083,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 10,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.059,
+     "recall_at_k": 1.0,
+     "selected_gold": false,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.059,
+     "recall_at_k": 1.0,
+     "selected_gold": false,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.062,
+     "recall_at_k": 1.0,
+     "selected_gold": false,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2201.4,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1844.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_4f271574d3204c47734730ee9ce5a442f556a37ca3cadd36bec6ad5ed3bde6a7",
+    "chunk_ed5cdf9aaeb067c46bcbdbd68fca9e14b791f832989992d8a822a68622ee7d26"
+   ],
+   "gold_parent_ids": [
+    "chunk_d86b3d9f1dd956ab58514db8079744c7bce9c515d9ce38e93d1203718dfd4fd6"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 75,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 4769.6,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 75
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1231.9,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 2536.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_68f3b0f2c9c79ecad0deae92cc048ea46d2a3ba0f708a615d4af4be126dde739",
+      "chunk_b486b02374d8f3d0cfb2563bd8b5a6c1f677e28967c2600a556b055e1d6db80e",
+      "chunk_be0fd77b01a0650ba744aa9724d460a5daa39859b1c0e4997e1ff99a26360145",
+      "chunk_6477f8a396ebd99a9e076c96449d627697a28c507470bdd3210041f3900c2d67",
+      "chunk_6edfc7451219327dd294dc8022ac72c0ea925dbc5391150439362d56b468ed8e",
+      "chunk_593c6ea1128d5532ac9f734affc8629c6c85221e38b69812f89d986cabb6c940",
+      "chunk_830d00a3ef86d45e9ed5541cc94c491b397f6853b6836757d4f1aa3b8fa10652",
+      "chunk_96e7d820d37b37a168cb506c4a6cccbb69d4c1b0fd336dfbfe380b4ff9b2cce5"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 76,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2991.3,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 76
+    },
+    "HYBRID": {
+     "candidates": 76,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 3310.2,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 76
+    },
+    "WILDCARD": {
+     "candidates": 76,
+     "degraded": [
+      {
+       "component": "wildcard",
+       "effect": "3 frontier bridge(s) shipped UNVERIFIED \u2014 the two-hop judge missed its budget; the core evidence stands",
+       "reason": "wildcard_partial:unverified",
+       "state": "unverified"
+      }
+     ],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5367.1,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 76
+    }
+   },
+   "overlap_with_hybrid": 0.167,
+   "query": "What does the book say about \"ABLEGI\"?",
+   "query_id": "L11",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 76,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3120.7,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 86
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 11,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unhydrated": 13,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1735.4,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1826.9,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_a4a7d25a337cfd6e68bfc5ebd57f879aa27f5915d8d0a22b10920b82008b2e99"
+   ],
+   "gold_parent_ids": [
+    "chunk_3ceba50c41326c85da19b75dc84eeb49f76350e533907639411a990ca5a406da"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 71,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 8781.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 71
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1256.9,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 2552.4,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_efab1d7a7a3dbfbe4b2e37fe27a908ccad39fcda57c3ecab322f64258e48f4e0",
+      "chunk_9d7b3d0e9dd5f3089b8c590d9c626be78b0b7b431c09825a18892aa0fb8fea9a",
+      "chunk_5d9524bfb817f887fd827b308d1f27c74b940ea4570827bd04537a2c863e80df",
+      "chunk_f70f07315f0e1c80b4c4250e5f660d1ce56e7e7db4399a5070d1215010c75f10",
+      "chunk_2274c0826ec4ce0fddaf2766d932085bd161e22112f0b240adc241982573c8b8",
+      "chunk_2c3e4bce441d4e45313c2bf7547a741a383978ddb80c43c15c4d2a86d35ca789",
+      "chunk_51f159a5e077fa32f6da5ac75d05a9fbbe9d7cb25ca43f871b840e34fddae906",
+      "chunk_eba8d0977f3bf367987157a52b2c6300267b881143d57e1204948cd99384cc37"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 72,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2667.2,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 72
+    },
+    "HYBRID": {
+     "candidates": 72,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 1992.0,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 72
+    },
+    "WILDCARD": {
+     "candidates": 72,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 6021.0,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 72
+    }
+   },
+   "overlap_with_hybrid": 0.25,
+   "query": "What does the book say about \"NSCB\"?",
+   "query_id": "L12",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 72,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3144.4,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 81
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 13,
+     "mrr": 0.1,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 11,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.067,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.067,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.067,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2029.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1810.8,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_36656bdfb5da3bc8e1c0d358345fcbcc0e95bc27640c23d17362e570bd4c3044",
+    "chunk_9c4fce8bfec9d8913cca3dda2d79ad69265e5c4139b14f1d3c0997efe28cacbb"
+   ],
+   "gold_parent_ids": [
+    "chunk_6a42181b67c7ae6ac2c94ffb2023a5a4506026dd136ed0f3cf4b9f113d9cf574",
+    "chunk_c10cc5235e03f463345da73ad261327a11e47e5c5d73e389a58d78d3e74b52d6"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 71,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 9280.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 71
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1450.9,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 2621.6,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_87f83da5bd3f858c2dc8720117ecce2c40c219f2e28d47f9ce87e1308300f1f3",
+      "chunk_bf86ce7caef9cb553aa0dc088a85798fa338589f77876c569842d6b5a835a26d",
+      "chunk_9ed8bc1042843c97f8eb99d19fc7c2f2a94b03860a5c08f9a8bd9fdbec9ab6c2",
+      "chunk_ba057f627e6be8d746c22b9c24753bb2b2502b817000eb86ca1555a60be5d44f",
+      "chunk_9b2fd7ba6cd507387956d279fc8fe8d8886131c8e0490e08175077b8d2801fa3",
+      "chunk_51f159a5e077fa32f6da5ac75d05a9fbbe9d7cb25ca43f871b840e34fddae906",
+      "chunk_fa651309d5f1265210d46a86b2642fe5a9d35aecc9d24ebeaf56a3cc1a5f7bae",
+      "chunk_9b0be0bb70f8aa12a5d6b9a9ceff67c2a3502bc9357819a0290da930f300377d"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 73,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2572.3,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 73
+    },
+    "HYBRID": {
+     "candidates": 73,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2115.6,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 73
+    },
+    "WILDCARD": {
+     "candidates": 73,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5790.4,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 73
+    }
+   },
+   "overlap_with_hybrid": 0.417,
+   "query": "What does the book say about \"VNSP\"?",
+   "query_id": "L13",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 73,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3277.5,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 80
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 21,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 3,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 21,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 3,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 21,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 3,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 11,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 11,
+     "latency_ms": 2009.5,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 11
+    },
+    "shuffled": {
+     "candidates": 11,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 11,
+     "latency_ms": 1860.7,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 11
+    }
+   },
+   "fixture": "L",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_2756e5116216bd3f8251fd8062235e49faa31b077665e04a03af53ad8a8b25f0"
+   ],
+   "gold_parent_ids": [
+    "chunk_00869ce2534b16adead5656a2387517b71a57d4c26d1cd21f3c1f40675cd1c56"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 73,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 4913.8,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 73
+    },
+    "GNN": {
+     "candidates": 11,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1243.1,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 11,
+     "latency_ms": 2367.0,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "route_parents": [
+      "chunk_00869ce2534b16adead5656a2387517b71a57d4c26d1cd21f3c1f40675cd1c56",
+      "chunk_cca3291e07c29082cf178eab10668a8244f5816b4b05d3ac6b9196daa606b411",
+      "chunk_53ee550cab75cd5d8020252f0ab49fe0df66679c6eb9eba7a36dca0a40971347",
+      "chunk_679a261f8ef60f634776ae91394d94e7b37bdd24e6484a62778cdb0c5eacea67",
+      "chunk_8276441fc16fbd62e8cfa20a08c60693ad37cda3b2933c3d7973043afd85bd37",
+      "chunk_e800ce9c977aca90e709c407a188ff37dceba3ea249cf1a6f7a77a41273d3ddb",
+      "chunk_cc55ced9e59146ba93af1303820290fd39d0cbf36a0847f1ff22fab4f1c7ece3",
+      "chunk_b7d0f4c4f963f47c68289f6513834bd9b9c63ad76c45b2c16d6678b77dd9b7e6"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 11
+    },
+    "GRAPH": {
+     "candidates": 73,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2515.7,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 73
+    },
+    "HYBRID": {
+     "candidates": 73,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 1900.9,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 73
+    },
+    "WILDCARD": {
+     "candidates": 73,
+     "degraded": [
+      {
+       "component": "wildcard",
+       "effect": "3 frontier bridge(s) shipped UNVERIFIED \u2014 the two-hop judge missed its budget; the core evidence stands",
+       "reason": "wildcard_partial:unverified",
+       "state": "unverified"
+      }
+     ],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5961.7,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 73
+    }
+   },
+   "overlap_with_hybrid": 0.364,
+   "query": "What does the book say about \"UFO\"?",
+   "query_id": "L14",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 73,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3161.4,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 78
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 14,
+     "mrr": 0.071,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 10,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.062,
+     "recall_at_k": 1.0,
+     "selected_gold": false,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.067,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.067,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1868.7,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1795.2,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_ac16b3ffb273d6bd9c977e11cf728ea611e5b248b6753f18f1f7e1d4df99a12a",
+    "chunk_f8ae8454a2e5f5bff1e254d97457d7e4759464b699dff39e1b475c4ddc5c14d0",
+    "chunk_fbe841b47db000daceea61d2f3e94fd6e33a3ee22f0aac8c63b356d4dca9781a"
+   ],
+   "gold_parent_ids": [
+    "chunk_2f2b7a61fbf67bd9c68d449b576f1eb5c01f39ff7ed5ea4d1cbea95b09c32f20"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 53,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 8091.3,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 53
+    },
+    "GNN": {
+     "candidates": 10,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1244.4,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 10,
+     "latency_ms": 1832.0,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "route_parents": [
+      "chunk_2f2b7a61fbf67bd9c68d449b576f1eb5c01f39ff7ed5ea4d1cbea95b09c32f20",
+      "chunk_51e93b2d364342ab6ee0da11bb03883dc15665c40da83094fff127f2c287c231",
+      "chunk_b9664e53c186ccbe6f001ddd1480ba62c18828e31f997d59bc19eee5b4eede18",
+      "chunk_ed72940aeb50547e7f37cc6d5fb1ee289cbe8d2c80048a0deeaa911653a62f50",
+      "chunk_56c53fb2f83902029da86130e8f588e1182d9d567d1f7e8b4e6fb25f0e3aaed8",
+      "chunk_ae744494c1316bc9098c22f403fb5e9e6c3365024fd6918adb3b6ed83ab60e9e",
+      "chunk_7fba84eb4f2e8c4d48df213328565c80e3749e98184f071fa09a9bd4986f0478",
+      "chunk_e9affbf12a09e281a4e013d5d17bc0b053a9fe73b5dfdf5d2562327e4cb44991"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 10
+    },
+    "GRAPH": {
+     "candidates": 69,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2212.1,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 69
+    },
+    "HYBRID": {
+     "candidates": 69,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2517.9,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 69
+    },
+    "WILDCARD": {
+     "candidates": 69,
+     "degraded": [
+      {
+       "component": "wildcard",
+       "effect": "3 frontier bridge(s) shipped UNVERIFIED \u2014 the two-hop judge missed its budget; the core evidence stands",
+       "reason": "wildcard_timeout:finish",
+       "state": "unverified"
+      }
+     ],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 7388.7,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 69
+    }
+   },
+   "overlap_with_hybrid": 0.9,
+   "query": "What does the book say about making your own chroma keyer?",
+   "query_id": "B00",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 69,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2536.2,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 70
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 21,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 3,
+     "unique_candidates": 21
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 22,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 3,
+     "unique_candidates": 22
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 21,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 3,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1836.4,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1838.6,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_0d671409f181b0b320f5d2f9b5faeaa8ed1b3ac3a1576f0d7e0851bee9a1559d",
+    "chunk_11970fedf58b95743716a1b9b46f4a3cbf24b4a370f4a53a58bc6cbb95b1d830",
+    "chunk_74b49ddcf389b50f0305f208264f32f9a311edad11859b6dbf0835b01b73e040",
+    "chunk_bf71322e03a8e934244e5629ca66fd85c67b47a3524a07d06139dd292ee258cc"
+   ],
+   "gold_parent_ids": [
+    "chunk_14d1f3a3862315b1f22b2de3b5bb26f6d020e7419e46737ec3035cedd3ab3862"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 67,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5355.6,
+     "mrr": 0.5,
+     "recall_at_k": 0.75,
+     "selected_gold": true,
+     "unique_candidates": 67
+    },
+    "GNN": {
+     "candidates": 10,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1252.4,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 10,
+     "latency_ms": 2215.9,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "route_parents": [
+      "chunk_d3148b761845d3ec1b3707f00fc4af66dce5049d71a5cbb73251562cae963cc0",
+      "chunk_14d1f3a3862315b1f22b2de3b5bb26f6d020e7419e46737ec3035cedd3ab3862",
+      "chunk_35e9d21c8ad195318a7cf7f6be74d66ac380013e007453ecdf2b64a5eaeadb52",
+      "chunk_fb71f6812c851676bc74a2a018ace7a950f247b2b8be5c9fd1d8a5e891bcb4cb",
+      "chunk_3525376bb3f0a10ae54f55fa047f0503ecf0641b7ff066c03f41ae0ab3384e34",
+      "chunk_bd1d076dd30d76251f93f6bed51de6886ed746e17680e539f0296daa410e75f0",
+      "chunk_5873cf59c43bc77039d3ebc93d5957325f92a4aa3f1cb913d7b72a132bc398c9",
+      "chunk_3203078b73062aa8fab8e3824624daca300c0db42e522aa8cd7838b5d2bb4a5a"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 10
+    },
+    "GRAPH": {
+     "candidates": 99,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2432.3,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 99
+    },
+    "HYBRID": {
+     "candidates": 99,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 3207.0,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 99
+    },
+    "WILDCARD": {
+     "candidates": 99,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5337.5,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 99
+    }
+   },
+   "overlap_with_hybrid": 0.6,
+   "query": "What does the book say about nonsquare pixels?",
+   "query_id": "B01",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 99,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3033.3,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 103
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 13,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 11,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 23,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 23
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2289.9,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 1915.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_01d23488248ca9121285e48509d644ba3e4f28d4f1bb51f5b27cba62a9fb2bc6",
+    "chunk_a66d71cdb86db22f053583288e7ec05ffc6be9040d9c36e70483b57e3d9ffd29"
+   ],
+   "gold_parent_ids": [
+    "chunk_e99029aa43331fe08754214d264cc4efe7b4cb81db1fbcb23466df11afe45a4b"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 64,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 12829.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 64
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1255.7,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 2944.5,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_0f547d5dec60da3236ebd7b361ffb2453e911a9768af2990996199d94f4d4ed0",
+      "chunk_26cccd83c6205e52c29e0735f551a74b19a41b65a3615b4515155d8c5c865ca1",
+      "chunk_6edfc7451219327dd294dc8022ac72c0ea925dbc5391150439362d56b468ed8e",
+      "chunk_5ad1d3d90b20b13982276ba58097d8e9afe457a34300e1beddaaacedc707ae8d",
+      "chunk_addd3932d04cd4e82809b4c549b115525e20eb1ebacf9ca1fef5794a27ba8da0",
+      "chunk_cb242721306f13a5e216aded49fa5734fc84b16f2cc448095a952d8c8bf4ba64",
+      "chunk_92e2be8023710337e6fa0ebe764da95e14f073241c5e35579d9157acd2e2901c",
+      "chunk_c4bc7e7feb32e07b002cfacf95e1e077bd0999e6141a8f2d59a68cda3c893889"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 2334.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 68
+    },
+    "HYBRID": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 1865.7,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 68
+    },
+    "WILDCARD": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 5177.4,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 68
+    }
+   },
+   "overlap_with_hybrid": 0.083,
+   "query": "What does the book say about oebps/ritc 9781119685401 epub3 035 r1.xhtml?",
+   "query_id": "B02",
+   "test_a": {
+    "baseline_gold_in_union": false,
+    "baseline_union": 68,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2995.4,
+    "plus_gnn_gold_in_union": false,
+    "plus_gnn_union": 79
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 10,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 14,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 10,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 10,
+     "latency_ms": 1776.1,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 10
+    },
+    "shuffled": {
+     "candidates": 10,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 10,
+     "latency_ms": 1854.8,
+     "mrr": 0.5,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 10
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_5a76fc85d88b1ee39fbd66022000004335ca4d1d41d6307847e265db78b3c52d",
+    "chunk_6c0a4c104f64f233a9797b5841c3282ee55bec7cf8974bb855591d82290e9c01"
+   ],
+   "gold_parent_ids": [
+    "chunk_ae0c87d77a5af720bfc696ad64f0afaaf8628026128ebc3506e40c193e6e6f32"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 61,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5566.9,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 61
+    },
+    "GNN": {
+     "candidates": 10,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1271.9,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 10,
+     "latency_ms": 2330.9,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "route_parents": [
+      "chunk_28b8c60f2e7bbb04d1a56cac96cc971bad5720a225b6f78b5053ad5d442e462b",
+      "chunk_ae0c87d77a5af720bfc696ad64f0afaaf8628026128ebc3506e40c193e6e6f32",
+      "chunk_b9a9566b3f6778795ed414284c51136b44a4608e0a0f538da19a6b99b1f4b973",
+      "chunk_568ffe30c5e8dca8add6aefff041baf358c1f4a7066d5b64c618c8d465895e5a",
+      "chunk_6c113aabc32c2030b15df70832d4b4ae5f898b3503e23c2f5a6aeb8423528a31",
+      "chunk_694b5ed5e4cad782b8c6285c820219f384f830f87e8c93d0d10ba5b555662141",
+      "chunk_2ff08e1cc716b92b38e5fc0702bd2bd2db21754f17ffecfb06bf22891a70fd16",
+      "chunk_9aca63a035c06b0283d0e267fc8c68540dcecbceb943e35086032b6f5b31e03e"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 10
+    },
+    "GRAPH": {
+     "candidates": 97,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2473.9,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 97
+    },
+    "HYBRID": {
+     "candidates": 97,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 3412.0,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 97
+    },
+    "WILDCARD": {
+     "candidates": 97,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5734.9,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 97
+    }
+   },
+   "overlap_with_hybrid": 0.4,
+   "query": "What does the book say about miscellaneous drawing tips?",
+   "query_id": "B03",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 97,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3178.2,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 102
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 11,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 13,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1736.1,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1465.2,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_7a9df67eb59719c2da8e638cc812b3146aa43dc9eda60d39454b3f25342c81d1"
+   ],
+   "gold_parent_ids": [
+    "chunk_c6639331de42074ce54b077bcd9400fa52913045d68f424fd1242c2350f45638"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 53,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 11420.5,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 53
+    },
+    "GNN": {
+     "candidates": 10,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1107.4,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 10,
+     "latency_ms": 2045.6,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "route_parents": [
+      "chunk_c6639331de42074ce54b077bcd9400fa52913045d68f424fd1242c2350f45638",
+      "chunk_f800a3899e849bd2367dd1510f1923d7a868cd8503eaa708aab427a7d3ea3b9a",
+      "chunk_35e9d21c8ad195318a7cf7f6be74d66ac380013e007453ecdf2b64a5eaeadb52",
+      "chunk_4a14a8e068876ac049e44bd7167e623f9f0c98be1764aa86d583f0eee92247f0",
+      "chunk_8cd44e75762b5e12717c97ece1973e8bdd065999e566784f9be3e6a99d5ba7f0",
+      "chunk_aec670413b5c430e6330f7a1818114ffb313970511a91c609657b2b301af48c4",
+      "chunk_9e764c6d57c15b47040c39b300f10a29a1ecc08df500cad8224d9baa5a575bbf",
+      "chunk_02095bb70e20926955613ec06866cbd41e7b573a448c62109cff65448c813714"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 10
+    },
+    "GRAPH": {
+     "candidates": 86,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2129.2,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 86
+    },
+    "HYBRID": {
+     "candidates": 86,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2972.8,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 86
+    },
+    "WILDCARD": {
+     "candidates": 86,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5247.8,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 86
+    }
+   },
+   "overlap_with_hybrid": 0.5,
+   "query": "What does the book say about transcoding versus color rerendering?",
+   "query_id": "B04",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 86,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2532.8,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 91
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 14,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 10,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 11,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 11,
+     "latency_ms": 1769.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 11
+    },
+    "shuffled": {
+     "candidates": 11,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 11,
+     "latency_ms": 1635.7,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 11
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_52dd8a04f0a9549c872c1ad6de9400dff88e98eb3e76edab7ac1ba89c1e10a3b"
+   ],
+   "gold_parent_ids": [
+    "chunk_60486683c87a405a4e3de8ca0f31248a4f130c2dae8e7e451481959757d6d5b2"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 55,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 12156.2,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 55
+    },
+    "GNN": {
+     "candidates": 11,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1086.2,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 11,
+     "latency_ms": 2391.3,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_8400f05fa5a465faef5d5b3bf557bb00558899baf38acaa35c6311eb8c5abfd7",
+      "chunk_735c8747a7a60f7c20c73f21a0ebf789ad06b93b99ccb1fd9bd231a026cbe28f",
+      "chunk_2bf1162851f423c7ba5e55ee41ff82e27a3d80940a5b01e4cdef7a5dd00cecc1",
+      "chunk_9ee3d2d9833c99c362184cfc274647e3c10f97461bdb4a5dcf54e71f727e71fc",
+      "chunk_76b3f6d5d8322293a20cbf2eacb37bcb62f86f81afeab77be979233fcb7af23d",
+      "chunk_ac43ccffabeecf5d825af69c5bd72342582bbe838ce0cfb316f92edc5010455b",
+      "chunk_94890e51a186ac8f9b447a1710be14e0555062fa46d02d82a3a0fa38f7b64f14",
+      "chunk_26eae01048a441e03bc802317697ea9ba9cbda882d15db023ca315ac66c22a1c"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 11
+    },
+    "GRAPH": {
+     "candidates": 85,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 2396.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 85
+    },
+    "HYBRID": {
+     "candidates": 85,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 2936.5,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 85
+    },
+    "WILDCARD": {
+     "candidates": 85,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "latency_ms": 5575.3,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 85
+    }
+   },
+   "overlap_with_hybrid": 0.091,
+   "query": "What does the book say about FACE OFF?",
+   "query_id": "B05",
+   "test_a": {
+    "baseline_gold_in_union": false,
+    "baseline_union": 85,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2869.3,
+    "plus_gnn_gold_in_union": false,
+    "plus_gnn_union": 94
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 10,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 14,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 15,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1630.5,
+     "mrr": 0.333,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1654.5,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_cdf646794ffa0ad50c991c9b563c13e1c02b34c5d4d12c43e76933c56b2ebe34"
+   ],
+   "gold_parent_ids": [
+    "chunk_a9c8f78f823ae7a6119542196eb7911e95e1281efca2c1d8e286ae28640e4d09"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 72,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5729.4,
+     "mrr": 0.2,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 72
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1090.4,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 12,
+     "latency_ms": 2549.7,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "route_parents": [
+      "chunk_a9c8f78f823ae7a6119542196eb7911e95e1281efca2c1d8e286ae28640e4d09",
+      "chunk_fb0f92a0020c47f9ee79222d202fb7f338ec311bd2308fb06f26f090c9a078b8",
+      "chunk_0f73d8d105670ef2ad8f43b0cc98ba37ec9617cc53d53d91455e798148102bd5",
+      "chunk_4a1dee9f7c31103eef5e111d542c27b2d612354772747ce78719936f3702ca04",
+      "chunk_a668726265d4d675aa7a2a445e3f8d84b8fe8f2af43583a47e4af18850b493c2",
+      "chunk_4c1fe37e35e9dbf24f6f2543b43f534299ee162a44c6775c34f26e5d1040aa3d",
+      "chunk_714297101b68ad23f74a4683770f6949929a84511e9df724f759c107ff558b21",
+      "chunk_d92f7bcf7864ea02f3d8f654ca56b9cc65ad108022b228b10917562e976a79c2"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 107,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2508.0,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 107
+    },
+    "HYBRID": {
+     "candidates": 107,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 3096.9,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 107
+    },
+    "WILDCARD": {
+     "candidates": 107,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5150.2,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 107
+    }
+   },
+   "overlap_with_hybrid": 0.583,
+   "query": "What does the book say about affect, fatigue, and injury are control states?",
+   "query_id": "B06",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 107,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2987.6,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 112
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.25,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 2116.6,
+     "mrr": 1.0,
+     "recall_at_k": 0.333,
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1602.3,
+     "mrr": 1.0,
+     "recall_at_k": 0.333,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_0a8d74a6ef1ef968790a1a5f1b8b716e547fd8eb6973823b17b865911a0122ee",
+    "chunk_180af9f44565cd52310df840d261423cc92a111788e3b58c99bdf6cb3cee6eaf",
+    "chunk_2014d7cfa2ecdf17141b719ddb03a0f9c7d4c3364e6f035597e19b0d63417649",
+    "chunk_4db5db1e217cdaae506ddc37d54c63f4d7bb8a1e1779c5bc7367c8fbed1e94f1",
+    "chunk_ad355d57afb403a85ef2527c071091dc8ea303be8be6b345283cf7f9cabce37b",
+    "chunk_b02b2342784d3c3fb3a149f9c5351d927e565f63809d8f62bddb7e87eb3b477c"
+   ],
+   "gold_parent_ids": [
+    "chunk_2948689931f42a6e35dd061ce14ea96f3cf758f9d787aaa867c4898aafeda1d8"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 71,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 4788.5,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 71
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1247.7,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 12,
+     "latency_ms": 2535.0,
+     "mrr": 1.0,
+     "recall_at_k": 0.333,
+     "route_parents": [
+      "chunk_2948689931f42a6e35dd061ce14ea96f3cf758f9d787aaa867c4898aafeda1d8",
+      "chunk_7c001b35b2afa35fb029839ac6e45d1bb166772a0bef0ce6eb17b38465e2381e",
+      "chunk_54e4a2d8924654974ee9d11905dff65b74d4e69b9c61acac4eed60ad7c1d7e57",
+      "chunk_900564af755818c9b8351387ef0b1cc0429a69eed2eecd19a220ffd6a825f594",
+      "chunk_bf61699d48ba6bc5b7128bd4a140e472d3ed204e49d5e5282659df444b314f42",
+      "chunk_392270b497981c93400efb521e800089a7e84dd70fa82978b111f170408dda73",
+      "chunk_1174402afa3fff6bf6060dcdb12455d03c55dc9396b32deeed6b80fe8f9e70af",
+      "chunk_031c6ab779ae95844fc46dfba5e74c27d13ddc0ff8901b8183351c64b9885222"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 105,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 3778.5,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 105
+    },
+    "HYBRID": {
+     "candidates": 105,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 3845.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 105
+    },
+    "WILDCARD": {
+     "candidates": 105,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5659.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 105
+    }
+   },
+   "overlap_with_hybrid": 0.583,
+   "query": "What does the book say about movement of an object with a background?",
+   "query_id": "B07",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 105,
+    "gained_gold": true,
+    "gnn_lane": 12,
+    "latency_ms": 2886.8,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 110
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 10,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 14,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 1.0,
+     "recall_at_k": 0.333,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 1.0,
+     "recall_at_k": 0.333,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 16,
+     "mrr": 1.0,
+     "recall_at_k": 0.333,
+     "selected_gold": true,
+     "unhydrated": 8,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2277.3,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1695.4,
+     "mrr": 0.125,
+     "recall_at_k": 0.333,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_1b2bbeac2a4acc9a8464d4e969bff9d09b41b9daa3fef62847a901d13851f330",
+    "chunk_338dc69a4cfd8aa09b176438e1bd0c65a9e82486c4439e85474f40d300be335d",
+    "chunk_39ffd23de1d83302edf519a013a6e40a3c45fd5a49451a81b4514b8343e69457",
+    "chunk_50994b28ef138c8fd47a267aa1d611b8b83e14f8e6268baee7fe69e235675bb2",
+    "chunk_8b100b98bd51cc04844cfc849b134310fdfe851e5b98366e61b4370cea0fe9e7",
+    "chunk_9a13af23db5f2ef32234ded71d4ef8d48b7c859f27038213a3a03c464aae2454"
+   ],
+   "gold_parent_ids": [
+    "chunk_392765aeb7a075fbc60a2b33c743d10adf3ea35edf5daba3ab38ab37f7df9c11"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 71,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5651.1,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 71
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1070.0,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 12,
+     "latency_ms": 2310.1,
+     "mrr": 0.125,
+     "recall_at_k": 0.333,
+     "route_parents": [
+      "chunk_392765aeb7a075fbc60a2b33c743d10adf3ea35edf5daba3ab38ab37f7df9c11",
+      "chunk_a46c2ffd87ab9517b9408f8efe7cd1c39707eff8811e672b191983abd8c2fca2",
+      "chunk_b6f599f8cba1da768b01eb29f01382453f1d1959a259d909a20416fb283a9963",
+      "chunk_8d5ec5f9785a50fcb546292c2b9eaa3aafbfb01b7d15dd7d14ccef68884df978",
+      "chunk_73d1520cb2ac85891ddfc3fb9ac301ad106fe42d3c0da5cc66fcd8216a032cb5",
+      "chunk_a826b477111c25a99f82e863e5c1a212dd4bcf0ed16265cdf9cb20044216dd3c",
+      "chunk_f6195f899fefcf95cb606a43908c4775d7167de571ab74c24a6ce94ccb074e05",
+      "chunk_fbd28c1ae443a334d4022c8cc6520b687de98f7047529570004177eb58e634e5"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 95,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2748.4,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 95
+    },
+    "HYBRID": {
+     "candidates": 95,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2887.8,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 95
+    },
+    "WILDCARD": {
+     "candidates": 95,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5994.7,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 95
+    }
+   },
+   "overlap_with_hybrid": 0.5,
+   "query": "What does the book say about sound editing?",
+   "query_id": "B08",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 95,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2960.3,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 101
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 13,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 11,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 0.077,
+     "recall_at_k": 0.333,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 18,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 18,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1779.0,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1782.3,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_3a4b68e41a9cb1ce64da73e67ce8e8826f9fa42d2c6e4aa12f99971236049b3b",
+    "chunk_55582675ca68104318f6ff8f27434cd489ca2bbc48f50bdeb9fbd205a50f675a",
+    "chunk_76a25185347a83bee385aa0fc4f80c4198197eb63a4761d899b25d99d6d4836f",
+    "chunk_d43f29cc1f4dae5ca2e01f590fa4bbee7d58eaec4aad31ec8e8e4ff4f6191a3b"
+   ],
+   "gold_parent_ids": [
+    "chunk_1b1cdc451e1d001f4638524590e20dfcaf104efcb3b4e2d4fd9a70a3575bc9a1"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 59,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 8556.7,
+     "mrr": 1.0,
+     "recall_at_k": 0.75,
+     "selected_gold": true,
+     "unique_candidates": 59
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1254.4,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 12,
+     "latency_ms": 2023.5,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "route_parents": [
+      "chunk_1b1cdc451e1d001f4638524590e20dfcaf104efcb3b4e2d4fd9a70a3575bc9a1",
+      "chunk_c9eda359f81322cbb046d4f074b5d65d94c5643987927cb099d380f6bf0567f1",
+      "chunk_5a10cc33a328168aff8ff06d1af3436c06fe6f77da971f7c98362261a8bc2485",
+      "chunk_8d240e7f0edcba66308efaa97f1554284fb9e99535ee81d89a977d9cd63257ae",
+      "chunk_37a1b5189505ba93ad593262f2bf7a996d89fb3829e02b886fa638c3be67786c",
+      "chunk_28e03bca503bee01aaf1ed2ac82d7abf6313c21f4e7b89e8032735e9ef8a157c",
+      "chunk_4d7e0eb1f91fc309a1dddeffa2a330ec84a0f71fd03b2aaf715bf4a9bbf1135d",
+      "chunk_a659ac4611fcedfcb8d67aa392004d37a55f9c0008ccd3b2518a9edf6c030242"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 88,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2229.4,
+     "mrr": 1.0,
+     "recall_at_k": 0.75,
+     "selected_gold": true,
+     "unique_candidates": 88
+    },
+    "HYBRID": {
+     "candidates": 88,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2873.3,
+     "mrr": 1.0,
+     "recall_at_k": 0.75,
+     "selected_gold": true,
+     "unique_candidates": 88
+    },
+    "WILDCARD": {
+     "candidates": 88,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5689.3,
+     "mrr": 1.0,
+     "recall_at_k": 0.75,
+     "selected_gold": true,
+     "unique_candidates": 88
+    }
+   },
+   "overlap_with_hybrid": 0.333,
+   "query": "What does the book say about write radio sparely?",
+   "query_id": "B09",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 88,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2774.1,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 96
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 13,
+     "mrr": 1.0,
+     "recall_at_k": 0.75,
+     "selected_gold": true,
+     "unhydrated": 11,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 1.0,
+     "recall_at_k": 0.75,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 1.0,
+     "recall_at_k": 0.75,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 18,
+     "mrr": 1.0,
+     "recall_at_k": 0.75,
+     "selected_gold": true,
+     "unhydrated": 6,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1565.2,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1476.6,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_a6e73f6adc8b1b835c6ee30ddc98c8873b256ac6a86a9cf03006df8bab58ffd8",
+    "chunk_a8c102dc5794fc5d66689d5632b5da2867014bb243626146e9a304102f247c49"
+   ],
+   "gold_parent_ids": [
+    "chunk_875ba21f955f877a3c0974382de43bfd82e19e81c876d00723586862e6356c50"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 49,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2939.8,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 49
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1080.1,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 12,
+     "latency_ms": 1662.0,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "route_parents": [
+      "chunk_875ba21f955f877a3c0974382de43bfd82e19e81c876d00723586862e6356c50",
+      "chunk_5c2be02456d1c8a7f80c8da172ad012dad92a756190992a1fc83cfcc2dfaffc5",
+      "chunk_de294a79d005caa5067ed8a5475d304f9f32a884ef110ae480b32190da8362c8",
+      "chunk_0b03009ed4b9c8aeb1f2d8b4bd3f1c8bda4c49d8e9f748dbdc04cdfecc0b9069",
+      "chunk_ecb156fc32b8401d7ccb2efe981e8290f3fd6aa1eb64258c2ec000e0b7c0139b",
+      "chunk_ec6e9bb207974e5e946fc33d7db830fc0288d76315987bc9781c7ae4bc74e9f2",
+      "chunk_29b17b4933f72da28214aaa49f63e4ca9f9a6bab28297ecf62609674efdfa643",
+      "chunk_d4fa0f7f15fa230d3c9e524f2997f73bfc61ee11672ded4394f78e9239f5ea8f"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 1521.4,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 68
+    },
+    "HYBRID": {
+     "candidates": 68,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2411.8,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 68
+    },
+    "WILDCARD": {
+     "candidates": 68,
+     "degraded": [
+      {
+       "component": "wildcard",
+       "effect": "3 frontier bridge(s) shipped UNVERIFIED \u2014 the two-hop judge missed its budget; the core evidence stands",
+       "reason": "wildcard_partial:unverified",
+       "state": "unverified"
+      }
+     ],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 4877.6,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 68
+    }
+   },
+   "overlap_with_hybrid": 0.917,
+   "query": "What does the book say about rewards of good type development?",
+   "query_id": "B10",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 68,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 1893.6,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 69
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 22,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 3,
+     "unique_candidates": 22
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 21,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 3,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 21,
+     "mrr": 0.5,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 3,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2089.5,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "k": 12,
+     "latency_ms": 2239.8,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "selected_gold": false,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_20ca68354e18e4a15157fb5cfca6a9215ed57347027971552cc652cb03d1ea06",
+    "chunk_757fab6819630f250b75a85bb230faaec070789b3a95b8411a2478bfe97a5544"
+   ],
+   "gold_parent_ids": [
+    "chunk_cf0f02654c314c529e0e14979f354ef80ccf5f93f9a7f80f533acd23be132454"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 62,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 4689.1,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 62
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1248.9,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": false,
+     "gold_in_union": false,
+     "gold_parent_nominated": false,
+     "k": 12,
+     "latency_ms": 2435.0,
+     "mrr": 0.0,
+     "recall_at_k": 0.0,
+     "route_parents": [
+      "chunk_43f6813eae0f6db2bd30db3728e2ba768bd70adfcab7ada50d7d71f805c0104d",
+      "chunk_14b85b90ca7b350026e5b0819ce699b465732616334300ff5235a211e8d5d3c2",
+      "chunk_c75def5868950f0d953a19e835d7f9fb22dc97221f863b0d70aefdfd45e33b28",
+      "chunk_8ec57cd1a139925e4250a73359f8e9bddccf21fab343a28179c2dadddcc11fe7",
+      "chunk_8073d929be6516774b3dc848eb105d4332bffe70dd22ff4728c4fa31625d6892",
+      "chunk_f9a51ddbbee0d236d73346582cc8c5e52cdacd4544e2875c1f2e5e8dc6699707",
+      "chunk_ab6fd9c184210d515c7ecb768c1ae51086096bdd7a6891b590627962a8fa9e25",
+      "chunk_6351d6f8776f000a37f25643ebacddd443a268527005cbb351e385a6b4b41b31"
+     ],
+     "selected_gold": false,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 100,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2286.7,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 100
+    },
+    "HYBRID": {
+     "candidates": 100,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 3088.9,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 100
+    },
+    "WILDCARD": {
+     "candidates": 100,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5071.7,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 100
+    }
+   },
+   "overlap_with_hybrid": 0.417,
+   "query": "What does the book say about multiple moments?",
+   "query_id": "B11",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 100,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2820.8,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 107
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 11,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unhydrated": 13,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1749.9,
+     "mrr": 1.0,
+     "recall_at_k": 0.4,
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 2002.3,
+     "mrr": 1.0,
+     "recall_at_k": 0.4,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_58b258f7de1cc77c5b9bb16a2b2c6ffc3b7cc3160a459bb18edb0678324eb431",
+    "chunk_c6ddc65092ff01d63430e0f2fe175051e3bf1760a0de647a49bd9b8c10826a70",
+    "chunk_c78703d35941543a3b6f37db70f4ece943db04b0b547737dab7f1b8a0281881a",
+    "chunk_ea9c7608f6e34fc4265d72393d59c1fbf1ad320027ce045055f6a5e3a572b9c3",
+    "chunk_ff2960114cabe2b82ca52c8ebd45d29b8b9d8ea45d4aa1200063fa9ee7dc6d83"
+   ],
+   "gold_parent_ids": [
+    "chunk_e77bb81848311a1f80a96a1b489c0df2d00af5aa85937d2e034279a52228da98"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 62,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 4963.8,
+     "mrr": 1.0,
+     "recall_at_k": 0.6,
+     "selected_gold": true,
+     "unique_candidates": 62
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1268.9,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 12,
+     "latency_ms": 2247.0,
+     "mrr": 1.0,
+     "recall_at_k": 0.4,
+     "route_parents": [
+      "chunk_e77bb81848311a1f80a96a1b489c0df2d00af5aa85937d2e034279a52228da98",
+      "chunk_672097c51b15b4b92e7f0de1f426c355f3a7afe0b3dd879d4cb0fe0f67e527bb",
+      "chunk_de86ad7e06f46ba11844324f02e33378d7c3ff7f990629d8734660cfa9a6e6df",
+      "chunk_1a7110722c5e5dca7a152c835ec320f068b22a1fc27387ad2fb2b414bbd53ff2",
+      "chunk_7080ddaeef2614d6a8e83bec1d178d2dfa26876a34fff6623abb09aa4ae9d7e3",
+      "chunk_6b52de14c93f36a317c4d27605fc4b674f729a5dc1e6a1ecb2931575f5c3f6b2",
+      "chunk_e46d846a8487edcfc1905b66bedace33ddc1b1f5f9f87bdbd2fa43325a95d2e6",
+      "chunk_dfe88644170f0950f12837b07c266721dc0e86c0defe68602d36cd2285fa62e9"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 90,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2347.2,
+     "mrr": 1.0,
+     "recall_at_k": 0.6,
+     "selected_gold": true,
+     "unique_candidates": 90
+    },
+    "HYBRID": {
+     "candidates": 90,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 3372.5,
+     "mrr": 1.0,
+     "recall_at_k": 0.6,
+     "selected_gold": true,
+     "unique_candidates": 90
+    },
+    "WILDCARD": {
+     "candidates": 90,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5073.5,
+     "mrr": 1.0,
+     "recall_at_k": 0.6,
+     "selected_gold": true,
+     "unique_candidates": 90
+    }
+   },
+   "overlap_with_hybrid": 0.583,
+   "query": "What does the book say about PREMISE AND THEME?",
+   "query_id": "B12",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 90,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2878.1,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 93
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 17,
+     "mrr": 0.5,
+     "recall_at_k": 0.6,
+     "selected_gold": true,
+     "unhydrated": 7,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.5,
+     "recall_at_k": 0.6,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.5,
+     "recall_at_k": 0.6,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 0.5,
+     "recall_at_k": 0.6,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1664.0,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1675.5,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_35efd0c3451d46dba5d79b2e7148432e4c880990fdf57180c5e40bbe4a7b4131",
+    "chunk_7227b8d10052bc902aac390f246227153731f6f6e3e4187ca01e2a5a11ec5f51"
+   ],
+   "gold_parent_ids": [
+    "chunk_d1c526741d0873765745ad4ec4637f5ad396ba11cf1fe7b15f72e8238dc2ae44"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 72,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 4968.4,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "selected_gold": true,
+     "unique_candidates": 72
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1087.7,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 12,
+     "latency_ms": 2260.9,
+     "mrr": 1.0,
+     "recall_at_k": 0.5,
+     "route_parents": [
+      "chunk_d1c526741d0873765745ad4ec4637f5ad396ba11cf1fe7b15f72e8238dc2ae44",
+      "chunk_39258d52ed943972e2854ebcc6c6fdc7522309844775f14e5413322de571aaab",
+      "chunk_9d7b3d0e9dd5f3089b8c590d9c626be78b0b7b431c09825a18892aa0fb8fea9a",
+      "chunk_39c3f9ed80d3fdfe420d291079be94fe044ba4fb000e96e81e8d598fdcd77a4d",
+      "chunk_e8d4fef77b04c4c9c04a3d8fe18625f124c74f5a3a92f0b6a39a7248381e0489",
+      "chunk_e2f40e57858aaac423591ebbf2cf1499222a377cde526543795a792074569986",
+      "chunk_a179e378b90e57bd2ed020ecbf1b8d1180378a562074c9fb4e388e75afef03f9",
+      "chunk_66cbfb1b5a6e27e4816b6c40be54c26f064e6fc28ec1d647f77872c1c58d3791"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 108,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2424.8,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 108
+    },
+    "HYBRID": {
+     "candidates": 108,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 3774.2,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 108
+    },
+    "WILDCARD": {
+     "candidates": 108,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 6027.7,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unique_candidates": 108
+    }
+   },
+   "overlap_with_hybrid": 0.167,
+   "query": "What does the book say about battling overconfidence?",
+   "query_id": "B13",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 108,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 2879.8,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 117
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 10,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 14,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "mrr": 1.0,
+     "recall_at_k": 1.0,
+     "selected_gold": true,
+     "unhydrated": 9,
+     "unique_candidates": 24
+    }
+   }
+  },
+  {
+   "controls": {
+    "nograph": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 1811.2,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "shuffled": {
+     "candidates": 12,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 12,
+     "latency_ms": 3011.4,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unique_candidates": 12
+    }
+   },
+   "fixture": "B",
+   "gnn_unique_gold": false,
+   "gold_chunk_ids": [
+    "chunk_84ed7e07af603f0335b50fe7fa8812d3f8507fd267475502a4156c94ed6a2cdd",
+    "chunk_eaa818558a96c6ba57abfd76fc3687f4da93044a98e9fd33ecd3179c06cc757a",
+    "chunk_feb908559f8f3d50b38a9e689a3443f3d741168c8ac4b723cbbed7533f717378"
+   ],
+   "gold_parent_ids": [
+    "chunk_1d3cce2781fb656c4188f640b03b0b3faec83137f8290f283023f1a852b4fd18"
+   ],
+   "modes": {
+    "FAST": {
+     "candidates": 67,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 8958.3,
+     "mrr": 0.2,
+     "recall_at_k": 0.333,
+     "selected_gold": true,
+     "unique_candidates": 67
+    },
+    "GNN": {
+     "candidates": 12,
+     "degraded": [],
+     "gnn": {
+      "code": null,
+      "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+      "elapsed_ms": 1071.8,
+      "gnn_contract": "m1-smooth-real",
+      "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+      "hydrated_children": 12,
+      "model_digest": "m1_2f14df897d8f8e36",
+      "parent_k": 8,
+      "unique_children": 12
+     },
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "gold_parent_nominated": true,
+     "k": 12,
+     "latency_ms": 1807.0,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "route_parents": [
+      "chunk_1d3cce2781fb656c4188f640b03b0b3faec83137f8290f283023f1a852b4fd18",
+      "chunk_cd3f268463899a2334337eeead48492117ee0ed0ec60380a132f9d21ce4de08e",
+      "chunk_5069f1d4257c66a88b8b6110fb34729283efec12569aeeea204af60922587b98",
+      "chunk_07236481a6627056b06bc53db683e45ee60c1ac01be9a71c566ac3389ecf0f9b",
+      "chunk_6fdf20cc6ad7723cd4d26c9a3f200095c33ddf566a6d6e9ebb983ae593e2b2a6",
+      "chunk_8dc392584001a5aa3635b27344675dac046fc2c9837013fe28da1142ff876b78",
+      "chunk_81f2891f5f396dec49db378e1102f803a0d9d0e61f496a286438298bcb8a1433",
+      "chunk_be8c896824ceeaf7fd2e39251640ff7ef4e0678ebf7ad73acaac0be51c73ebfc"
+     ],
+     "selected_gold": true,
+     "unique_candidates": 12
+    },
+    "GRAPH": {
+     "candidates": 98,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2440.4,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unique_candidates": 98
+    },
+    "HYBRID": {
+     "candidates": 98,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 2617.6,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unique_candidates": 98
+    },
+    "WILDCARD": {
+     "candidates": 98,
+     "degraded": [],
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 15,
+     "latency_ms": 5266.3,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unique_candidates": 98
+    }
+   },
+   "overlap_with_hybrid": 0.833,
+   "query": "What does the book say about changing a level within a clip?",
+   "query_id": "B14",
+   "test_a": {
+    "baseline_gold_in_union": true,
+    "baseline_union": 98,
+    "gained_gold": false,
+    "gnn_lane": 12,
+    "latency_ms": 3126.0,
+    "plus_gnn_gold_in_union": true,
+    "plus_gnn_union": 100
+   },
+   "test_b": {
+    "A_hybrid_24": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 14,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unhydrated": 10,
+     "unique_candidates": 24
+    },
+    "B_hybrid18_gnn6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "C_hybrid18_nograph6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    },
+    "D_hybrid18_shuffled6": {
+     "candidates": 24,
+     "gold_after_rerank": true,
+     "gold_in_union": true,
+     "k": 19,
+     "mrr": 1.0,
+     "recall_at_k": 0.667,
+     "selected_gold": true,
+     "unhydrated": 5,
+     "unique_candidates": 24
+    }
+   }
+  }
+ ],
+ "summary": {
+  "causal": {
+   "delta_real_minus_nograph_gold_after_rerank": 0.033,
+   "delta_real_minus_nograph_mrr": 0.027,
+   "delta_real_minus_shuffled_gold_after_rerank": 0.0,
+   "delta_real_minus_shuffled_mrr": 0.017,
+   "topology_supported": false
+  },
+  "controls": {
+   "nograph": {
+    "gold_after_rerank": 0.4,
+    "gold_in_union": 0.4,
+    "mrr": 0.361,
+    "n": 30,
+    "selected_gold": 0.4
+   },
+   "shuffled": {
+    "gold_after_rerank": 0.433,
+    "gold_in_union": 0.433,
+    "mrr": 0.371,
+    "n": 30,
+    "selected_gold": 0.433
+   }
+  },
+  "fixed_budget_delta_gnn_minus_baseline_selected_gold": -0.034,
+  "gnn_gold_parent_nominated_rate": 0.433,
+  "gnn_overlap_with_hybrid_mean": 0.37,
+  "gnn_unique_gold_count": 0,
+  "gnn_unique_gold_rate": 0.0,
+  "n": 30,
+  "per_mode": {
+   "FAST": {
+    "candidates_mean": 66.3,
+    "errors": 0,
+    "gold_after_rerank": 0.367,
+    "gold_in_union": 0.467,
+    "latency_p50_ms": 5606.4,
+    "latency_p95_ms": 12604.4,
+    "mrr": 0.297,
+    "n": 30,
+    "recall_at_k": 0.281,
+    "selected_gold": 0.367,
+    "unique_candidates_mean": 66.3
+   },
+   "GNN": {
+    "candidates_mean": 11.5,
+    "errors": 0,
+    "gold_after_rerank": 0.433,
+    "gold_in_union": 0.433,
+    "latency_p50_ms": 2367.0,
+    "latency_p95_ms": 2862.2,
+    "mrr": 0.388,
+    "n": 30,
+    "recall_at_k": 0.28,
+    "selected_gold": 0.433,
+    "unique_candidates_mean": 11.5
+   },
+   "GRAPH": {
+    "candidates_mean": 81.0,
+    "errors": 0,
+    "gold_after_rerank": 0.867,
+    "gold_in_union": 0.933,
+    "latency_p50_ms": 2508.0,
+    "latency_p95_ms": 2991.3,
+    "mrr": 0.692,
+    "n": 30,
+    "recall_at_k": 0.784,
+    "selected_gold": 0.867,
+    "unique_candidates_mean": 81.0
+   },
+   "HYBRID": {
+    "candidates_mean": 81.0,
+    "errors": 0,
+    "gold_after_rerank": 0.867,
+    "gold_in_union": 0.933,
+    "latency_p50_ms": 2411.8,
+    "latency_p95_ms": 3774.2,
+    "mrr": 0.692,
+    "n": 30,
+    "recall_at_k": 0.784,
+    "selected_gold": 0.867,
+    "unique_candidates_mean": 81.0
+   },
+   "WILDCARD": {
+    "candidates_mean": 81.0,
+    "errors": 0,
+    "gold_after_rerank": 0.867,
+    "gold_in_union": 0.933,
+    "latency_p50_ms": 5575.3,
+    "latency_p95_ms": 6477.9,
+    "mrr": 0.692,
+    "n": 30,
+    "recall_at_k": 0.784,
+    "selected_gold": 0.867,
+    "unique_candidates_mean": 81.0
+   }
+  },
+  "test_a": {
+   "baseline_gold_in_union": 0.933,
+   "baseline_union_mean": 81.0,
+   "n": 30,
+   "plus_gnn_gold_in_union": 0.933,
+   "plus_gnn_union_mean": 87.9,
+   "queries_gaining_gold": 1
+  },
+  "test_b": {
+   "A_hybrid_24": {
+    "gold_after_rerank": 0.867,
+    "gold_in_union": 0.867,
+    "mrr": 0.484,
+    "n": 30,
+    "selected_gold": 0.867
+   },
+   "B_hybrid18_gnn6": {
+    "gold_after_rerank": 0.933,
+    "gold_in_union": 0.933,
+    "mrr": 0.531,
+    "n": 30,
+    "selected_gold": 0.833
+   },
+   "C_hybrid18_nograph6": {
+    "gold_after_rerank": 0.9,
+    "gold_in_union": 0.9,
+    "mrr": 0.527,
+    "n": 30,
+    "selected_gold": 0.833
+   },
+   "D_hybrid18_shuffled6": {
+    "gold_after_rerank": 0.9,
+    "gold_in_union": 0.9,
+    "mrr": 0.528,
+    "n": 30,
+    "selected_gold": 0.833
+   }
+  }
+ }
+}

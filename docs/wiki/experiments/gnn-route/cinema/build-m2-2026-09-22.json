@@ -1,0 +1,216 @@
+{
+ "built_at": "2026-09-22",
+ "collections": [
+  {
+   "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m2-hsage-real",
+   "dim": 1024,
+   "gnn_contract": "m2-hsage-real",
+   "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+   "model_digest": "m2_746dfd1944b7cc3a",
+   "points": 12361
+  },
+  {
+   "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m2-hsage-nograph",
+   "dim": 1024,
+   "gnn_contract": "m2-hsage-nograph",
+   "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+   "model_digest": "m2_bab10c56eee74499",
+   "points": 11993
+  },
+  {
+   "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m2-hsage-shuffled",
+   "dim": 1024,
+   "gnn_contract": "m2-hsage-shuffled",
+   "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+   "model_digest": "m2_66685b1e01a4ebd1",
+   "points": 12361
+  }
+ ],
+ "contract": "gnn-route-build-v1",
+ "corpus_id": "cinema",
+ "elapsed_s": 85.6,
+ "models": [
+  {
+   "anchor_cos_parent": 0.8957622647285461,
+   "digest": "m2_746dfd1944b7cc3a",
+   "family": "m2-hsage",
+   "history": [
+    {
+     "anchor": 0.2226582169532776,
+     "epoch": 27,
+     "graph": 2.3646726608276367,
+     "loss": 2.5873308181762695,
+     "stepped": true
+    },
+    {
+     "anchor": 0.22380289435386658,
+     "epoch": 28,
+     "graph": 2.357722282409668,
+     "loss": 2.5815250873565674,
+     "stepped": true
+    },
+    {
+     "anchor": 0.22516721487045288,
+     "epoch": 29,
+     "graph": 2.332763433456421,
+     "loss": 2.5579307079315186,
+     "stepped": true
+    }
+   ],
+   "params": {
+    "batch": 2048,
+    "contract": "m2-hsage-v1",
+    "device": "mps",
+    "epochs": 30,
+    "eta": 1.0,
+    "gamma": 0.5,
+    "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+    "layers": 2,
+    "loss": "InfoNCE link prediction (E-E, E-C, C-P; in-batch type-compatible negatives) + eta * anchor(1 - cos)",
+    "lr": 0.001,
+    "seed": 0,
+    "variant": "real",
+    "weights_digest": "82bcc9ac4ace577e"
+   },
+   "train_seconds": 29.4,
+   "variant": "real"
+  },
+  {
+   "anchor_cos_parent": 1.0,
+   "digest": "m2_bab10c56eee74499",
+   "family": "m2-hsage",
+   "history": [
+    {
+     "anchor": -1.1776591435364026e-07,
+     "epoch": 27,
+     "graph": 0.0,
+     "loss": -1.1776591435364026e-07,
+     "stepped": false
+    },
+    {
+     "anchor": -1.1776591435364026e-07,
+     "epoch": 28,
+     "graph": 0.0,
+     "loss": -1.1776591435364026e-07,
+     "stepped": false
+    },
+    {
+     "anchor": -1.1776591435364026e-07,
+     "epoch": 29,
+     "graph": 0.0,
+     "loss": -1.1776591435364026e-07,
+     "stepped": false
+    }
+   ],
+   "params": {
+    "batch": 2048,
+    "contract": "m2-hsage-v1",
+    "device": "mps",
+    "epochs": 30,
+    "eta": 1.0,
+    "gamma": 0.5,
+    "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+    "layers": 2,
+    "loss": "InfoNCE link prediction (E-E, E-C, C-P; in-batch type-compatible negatives) + eta * anchor(1 - cos)",
+    "lr": 0.001,
+    "seed": 0,
+    "variant": "nograph",
+    "weights_digest": "fabf0e5471e8386f"
+   },
+   "train_seconds": 3.2,
+   "variant": "nograph"
+  },
+  {
+   "anchor_cos_parent": 0.9036270380020142,
+   "digest": "m2_66685b1e01a4ebd1",
+   "family": "m2-hsage",
+   "history": [
+    {
+     "anchor": 0.30228763818740845,
+     "epoch": 27,
+     "graph": 5.0669846534729,
+     "loss": 5.369272232055664,
+     "stepped": true
+    },
+    {
+     "anchor": 0.30522167682647705,
+     "epoch": 28,
+     "graph": 5.034036159515381,
+     "loss": 5.339257717132568,
+     "stepped": true
+    },
+    {
+     "anchor": 0.30798107385635376,
+     "epoch": 29,
+     "graph": 5.0201497077941895,
+     "loss": 5.328130722045898,
+     "stepped": true
+    }
+   ],
+   "params": {
+    "batch": 2048,
+    "contract": "m2-hsage-v1",
+    "device": "mps",
+    "epochs": 30,
+    "eta": 1.0,
+    "gamma": 0.5,
+    "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+    "layers": 2,
+    "loss": "InfoNCE link prediction (E-E, E-C, C-P; in-batch type-compatible negatives) + eta * anchor(1 - cos)",
+    "lr": 0.001,
+    "seed": 0,
+    "variant": "shuffled",
+    "weights_digest": "2bda4d7fb346917f"
+   },
+   "train_seconds": 27.6,
+   "variant": "shuffled"
+  }
+ ],
+ "snapshot": {
+  "contract": "gnn-graph-snapshot-v1",
+  "corpus_id": "cinema",
+  "dim": 1024,
+  "edge_counts": {
+   "child_parent": 71791,
+   "entity_child": 74783,
+   "entity_entity": 21776
+  },
+  "embedding_contract": "embed_e794ec4cab197a3f",
+  "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+  "missing_vectors": {
+   "child_without_vector": 0,
+   "entity_without_vector": 0,
+   "parent_without_map_vector": 368
+  },
+  "node_counts": {
+   "child": 71791,
+   "entity": 43707,
+   "parent": 12361
+  },
+  "orphans": {
+   "children_without_mention": 48287,
+   "entities_without_relation": 31256,
+   "parents_without_child": 0
+  },
+  "predicates": {
+   "ACTS_ON": 3264,
+   "ALTERNATIVE_TO": 367,
+   "CAUSES": 656,
+   "CONSTRAINED_BY": 752,
+   "CORRELATES_WITH": 113,
+   "HAS_PROPERTY": 3009,
+   "IS_A": 2595,
+   "LOCATED_IN": 693,
+   "MEASURES": 177,
+   "OPPOSES": 561,
+   "PART_OF": 1315,
+   "PRECEDES": 212,
+   "PRODUCES": 1544,
+   "REGULATES": 149,
+   "RELATED_TO": 2163,
+   "REQUIRES": 1091,
+   "SAME_AS": 394,
+   "USES": 2721
+  }
+ }
+}
