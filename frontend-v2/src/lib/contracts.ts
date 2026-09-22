@@ -269,8 +269,12 @@ export interface CompareArm {
   retrieval?: {
     engine?: string; plan_version?: string; degraded?: string[] | null;
     evidence_count?: number; selected_documents?: number; selected_sections?: number;
-    lane_sizes?: Record<string, number> | null; funnel_lanes?: Record<string, number> | null;
-    union_size?: number; latency_ms?: number;
+    lane_sizes?: Record<string, number> | null;
+    /** lane -> the chunk ids that lane delivered (not counts; `lane_sizes` has the counts) */
+    funnel_lanes?: Record<string, string[]> | null;
+    union_size?: number;
+    /** per-stage timings of this arm (embed, lanes, rerank …); the arm-level `latency_ms` is the total */
+    latency_ms?: Record<string, unknown> | null;
     documents?: string[];
     rows?: { chunk_id?: string; doc_id?: string; source_name?: string; score?: number; arrival?: string }[];
   };
