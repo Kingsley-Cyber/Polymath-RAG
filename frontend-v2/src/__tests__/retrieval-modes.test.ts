@@ -8,7 +8,7 @@ import { PUBLIC_MODES } from "../lib/contracts";
  */
 describe("retrieval modes", () => {
   it("exposes GNN beside the existing public modes", () => {
-    expect([...PUBLIC_MODES]).toEqual(["HYBRID", "GRAPH", "WILDCARD", "GNN"]);
+    expect([...PUBLIC_MODES]).toEqual(["FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN"]);
   });
 
   it("serializes GNN as the plain mode string the backend validates", () => {

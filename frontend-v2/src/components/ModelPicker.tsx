@@ -57,6 +57,10 @@ export function ModelPicker({
 
   const groups = useMemo(() => groupBy(synthesizers), [synthesizers]);
   const current = synthesizers.find((s) => idOf(s) === value);
+  // "" = let the backend pick. The catalog marks exactly the row it will pick (`default: true`, the
+  // same rule as `_default_synthesizer`), so show THAT provider + model instead of an opaque label.
+  const backendDefault = synthesizers.find((s) => s.default);
+  const shownCurrent = current ?? (value === "" ? backendDefault : undefined);
   const q = filter.trim().toLowerCase();
 
   const shown = useMemo(
@@ -98,7 +102,7 @@ export function ModelPicker({
   }, [open]);
 
   // the group holding the current selection starts open
-  const currentGroup = current ? current.provider || current.kind || "other" : null;
+  const currentGroup = shownCurrent ? shownCurrent.provider || shownCurrent.kind || "other" : null;
   function isExpanded(gid: string): boolean {
     return expanded[gid] ?? (gid === currentGroup);
   }
@@ -118,10 +122,11 @@ export function ModelPicker({
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
       >
-        {current ? (
-          <span>
-            <span className="mp__provider">{current.provider_label || current.kind}</span>{" "}
-            <span className="mp__model">{current.model || idOf(current)}</span>
+        {shownCurrent ? (
+          <span title={value === "" ? "The backend's default model (nothing picked)" : undefined}>
+            <span className="mp__provider">{shownCurrent.provider_label || shownCurrent.kind}</span>{" "}
+            <span className="mp__model">{shownCurrent.model || idOf(shownCurrent)}</span>
+            {value === "" && <span className="faint"> · default</span>}
           </span>
         ) : (
           <span className="mp__model">backend default</span>
@@ -147,7 +152,9 @@ export function ModelPicker({
             aria-selected={value === ""}
             onClick={() => pick("")}
           >
-            backend default
+            {backendDefault
+              ? <>Default — {backendDefault.provider_label || backendDefault.kind} · {backendDefault.model || idOf(backendDefault)}</>
+              : "backend default"}
           </button>
 
           {shown.map((g) => (

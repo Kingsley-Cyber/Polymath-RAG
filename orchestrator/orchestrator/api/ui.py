@@ -1313,6 +1313,9 @@ class StreamChatRequest(BaseModel):
     # Explore -> retrieval -> C4/C5 -> CA4) and return a versioned EvidencePacket, skipping synthesis +
     # reviewer (no nested Polymath answer). Additive; false = the normal chat/synthesis path, unchanged.
     evidence_only: bool = False
+    # Corpus-chat clients explicitly request retrieval even when the compiler reads
+    # their need as conversation. Other clients keep automatic routing by default.
+    require_retrieval: bool = False
 
 
 def _sse(event: str, data: dict) -> str:
@@ -3278,6 +3281,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     if getattr(req, "evidence_only", False):
                         # the evidence route never answers a NEED with an empty packet because the need reads as conversation
                         _plan = plan_for_evidence_route(_plan)
+                    elif req.require_retrieval:
+                        _plan = plan_for_evidence_route(_plan, override_rule="corpus_chat:retrieval_required")
                     _plan_receipt = plan_receipt(_plan)
                     # COMPILED-RETRIEVAL-V1: search the compiled text, or not at all
                     _skip_retrieval = (not _plan.retrieval_required) and ui_mode != "ASK"

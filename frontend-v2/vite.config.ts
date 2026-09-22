@@ -16,6 +16,8 @@ const apiPaths = [
   "/compare", "/review", "/graph",
   // found by the guard test below, not by a user hitting a mystery 404
   "/intake", "/ui_pulse",
+  // the cognitive-adapter surface (/adapter/list, /adapter/{run_id}/next, …)
+  "/adapter",
 ];
 
 // A backend path missing from the list above does NOT fail loudly — vite answers it

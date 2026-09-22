@@ -4,20 +4,19 @@ import { useAsync } from "../lib/useAsync";
 import { PUBLIC_MODES } from "../lib/contracts";
 import type { PublicMode, Synthesizer } from "../lib/contracts";
 import { newTurn, runTurn, type Turn } from "../lib/chat";
-import { QueryTrace } from "../components/QueryTrace";
-import { EvidenceInspector } from "../components/EvidenceInspector";
-import { AnswerReview } from "../components/AnswerReview";
+import { ProcessRail } from "../components/ProcessRail";
+import { AnswerBody } from "../components/AnswerBody";
 import { ModelPicker } from "../components/ModelPicker";
 import type { ChatSession } from "../lib/chatStore";
 
 /**
- * F2 + F3 — Chat with corpus, retrieval mode, intent, model, reasoning and streaming.
+ * F2 + F3 — Chat with corpus, retrieval mode, model, reasoning and streaming.
  *
- * FRONTEND-V2-PLAN §2: VECTOR is NOT offered; it is a backend primitive. Intent is
- * Auto — the compiler classifies it and we display it READ-ONLY, because there is no
- * intent-override contract and POLYMATH_CHAT_INTENT_POLICY is off, so a displayed
- * intent is honest but inert for routing. The UI says exactly that rather than
- * implying a control that does not exist.
+ * FRONTEND-V2-PLAN §2: VECTOR is NOT offered by that name; FAST is its public name. Intent is
+ * classified by the compiler and shown READ-ONLY as a badge on each answer — there is no
+ * intent-override contract, so no control pretends to be one (a disabled one-option
+ * "Intent" dropdown used to sit here). Each turn streams through the process rail
+ * (steps + live reasoning, collapsing when done) into a Markdown answer (AnswerBody).
  */
 export function Chat({
   corpusId,
@@ -70,7 +69,7 @@ export function Chat({
     setTurns((t) => [...t, newTurn(q, mode)]);
     const ac = new AbortController();
     abort.current = ac;
-    const body: Record<string, unknown> = { message: q, corpus_id: corpusId, mode };
+    const body: Record<string, unknown> = { message: q, corpus_id: corpusId, mode, require_retrieval: true };
     if (model) body.synthesizer = model;
     if (reasoning) body.reasoning = reasoning;
     if (corpusExplore) body.corpus_explorer = true;
@@ -86,7 +85,7 @@ export function Chat({
       <div className="screen__head">
         <h1 className="screen__title">Chat</h1>
         <p className="screen__sub">
-          Corpus <span className="mono">{corpusId}</span> · retrieval runs on the final core
+          Corpus <span className="mono">{corpusId}</span> · every message searches this corpus
         </p>
       </div>
 
@@ -96,12 +95,6 @@ export function Chat({
             <span className="label">Retrieval</span>
             <select value={mode} onChange={(e) => setMode(e.target.value as PublicMode)}>
               {PUBLIC_MODES.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
-          <div className="field">
-            <span className="label">Intent</span>
-            <select value="auto" disabled title="The compiler classifies intent; there is no override contract.">
-              <option value="auto">Auto (classified)</option>
             </select>
           </div>
           <div className="field" style={{ minWidth: 260 }}>
@@ -180,63 +173,22 @@ export function Chat({
 }
 
 function TurnView({ t, models }: { t: Turn; models: Synthesizer[] }) {
-  const intent = t.receipt?.chat_plan?.intent;
   return (
     <>
       <div className="msg-user">
         <div className="msg-user__bubble">{t.question}</div>
       </div>
-      <div className="card">
-      <div className="row" style={{ justifyContent: "flex-end" }}>
-        <span className="row" style={{ gap: 6 }}>
-          <span className="pill pill--unknown">{t.mode}</span>
-          {intent && (
-            <span className="pill pill--unknown" title="Classified by the compiler. POLYMATH_CHAT_INTENT_POLICY is OFF, so this is honest but inert for routing.">
-              ⌖ {String(intent)}
-            </span>
-          )}
-          {t.receipt?.engine && <span className="pill pill--unknown">{t.receipt.engine}</span>}
-          {t.latencyMs != null && <span className="faint mono">{(t.latencyMs / 1000).toFixed(1)}s</span>}
-        </span>
-      </div>
-
-      {t.phases.length > 0 && !t.done && (
-        <div className="row mono faint" style={{ marginTop: 8, gap: 6 }}>
-          {t.phases.map((p, i) => <span key={i}>{p.name}{i < t.phases.length - 1 ? " ›" : " …"}</span>)}
-        </div>
-      )}
-
-      {t.error && <div className="banner banner--bad" style={{ marginTop: 10 }}>{t.error}</div>}
-
-      {t.answerText && (
-        <div style={{ marginTop: 12, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{t.answerText}</div>
-      )}
-
-      {t.receipt && (
-        <>
-          <details style={{ marginTop: 12 }}>
-            <summary className="label" style={{ cursor: "pointer" }}>Query trace</summary>
-            <div style={{ marginTop: 10 }}>
-              <QueryTrace receipt={t.receipt} requestedMode={t.mode} />
-            </div>
-          </details>
-          <details style={{ marginTop: 8 }}>
-            <summary className="label" style={{ cursor: "pointer" }}>Evidence</summary>
-            <div style={{ marginTop: 10 }}>
-              <EvidenceInspector receipt={t.receipt} />
-            </div>
-          </details>
-          {t.answerText && (
-            <details style={{ marginTop: 8 }}>
-              <summary className="label" style={{ cursor: "pointer" }}>Review this answer</summary>
-              <div style={{ marginTop: 10 }}>
-                <AnswerReview question={t.question} answer={t.answerText}
-                              receipt={t.receipt} models={models} />
-              </div>
-            </details>
-          )}
-        </>
-      )}
+      <div className="msg-assistant">
+        <ProcessRail phases={t.phases} live={!t.done} reasoning={t.reasoningText} />
+        {t.error && <div className="answer answer-error">{t.error}</div>}
+        {t.answerText ? (
+          <AnswerBody t={t} models={models} />
+        ) : t.done && !t.error ? (
+          <div className="answer empty-answer">
+            The model returned no answer text — it spent its token budget reasoning
+            without committing a reply. Send again, or pick a lighter model.
+          </div>
+        ) : null}
       </div>
     </>
   );
