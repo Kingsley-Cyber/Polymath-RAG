@@ -22,7 +22,8 @@ from trail_signal.contexts.evidence.public.contracts import HarnessResearchRecei
 
 POLYMATH = json.loads((ROOT / "contracts" / "adapter" / "v1" / "harness_receipt.schema.json").read_text())
 TRAIL = HarnessResearchReceiptV1.model_json_schema()
-STRICTER_BY_CONSTRUCTION = {"action_id": "hact_0123456789abcdef", "run_id": "adr_0123456789abcdef0123"}      # Polymath's own id formats: a subset of Trail's identifier
+STRICTER_BY_CONSTRUCTION = {"action_id": "hact_0123456789abcdef", "run_id": "adr_0123456789abcdef0123",
+                            "observations[].hypothesis_relations[].hypothesis_id": "hyp_0123456789abcdef01234567"}      # Polymath's own id formats: a subset of Trail's identifier (ADR-069: the relation names a hypothesis by Polymath's id)
 
 
 def _res(s):
@@ -101,7 +102,7 @@ def test_what_trail_refuses_is_rejected_at_submit_not_at_admission(mutate):
 def test_the_ecommerce_binding_issues_trail_valid_intent_ids():
     src = (ROOT / "adapters" / "ecommerce" / "binding.py").read_text()
     made = re.findall(r'"intent_id": f"([^"]+)"', src)
-    assert len(made) == 2 and all("~" not in m for m in made), made
+    assert len(made) == 3 and all("~" not in m for m in made), made        # 2 field-research channel intents + the product-reality job intent (Slice 3, `host:channel:concept_id`)
     pattern = re.compile(_flat(TRAIL)["tool_trace[].search_intent_id"]["pattern"])
     assert pattern.match("q-complaint:reddit:hyp_0123456789abcdef") and pattern.match("si_supply:alibaba:pc_1")
     assert (ROOT / "adapters" / "ecommerce" / "schemas" / "harness_receipt.schema.json").read_bytes() == (ROOT / "contracts" / "adapter" / "v1" / "harness_receipt.schema.json").read_bytes()

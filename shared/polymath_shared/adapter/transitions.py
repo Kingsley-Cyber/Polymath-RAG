@@ -242,6 +242,11 @@ def validate_receipt(step: dict[str, Any], payload: Any) -> list[str]:
         orphan = sorted({str(o.get("source_id")) for o in payload.get("observations") or [] if isinstance(o, dict) and o.get("source_id") not in listed})
         if orphan:
             errors.append("observations name sources that are not listed: " + ", ".join(orphan[:10]))
+        for o in payload.get("observations") or []:
+            if isinstance(o, dict) and o.get("hypothesis_relations"):
+                unlinked = sorted({str(r.get("hypothesis_id")) for r in o["hypothesis_relations"] if isinstance(r, dict) and r.get("hypothesis_id") not in (o.get("hypothesis_ids") or [])})
+                if unlinked:
+                    errors.append(f"observation {o.get('observation_id')} states a relation to a hypothesis it does not link: " + ", ".join(unlinked[:5]))
         started, completed = _instant(payload.get("started_at")), _instant(payload.get("completed_at"))
         if started and completed and completed < started:
             errors.append("completed_at precedes started_at")

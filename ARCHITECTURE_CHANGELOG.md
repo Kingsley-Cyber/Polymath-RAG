@@ -3,6 +3,14 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-09-21 — embedded TrailSignal core re-pinned to HR6 @ `829a0ab` (TrailSignal ADR-069)
+
+`governance/trail/{src,config,data}` re-extracted with `git archive` from the HR6 commit (deterministic pin; `PROVENANCE.json` names the
+files the pin changed). Adapter manifest `ecommerce.product_research` 0.6.0: every Trail step opts in to the closed extended hypothesis wire
+(`context.semantics.trail`: four fields + stated knowledge support + structured candidates). Receipt contract (four copies) gains the optional
+`hypothesis_relations`; the submit-time rule refuses a relation to a hypothesis the observation does not link. Recorded Trail envelopes
+re-recorded at the new pin (requests unchanged). See `docs/wiki/decisions/0021-trailsignal-core-embedded.md` addendum.
+
 ## 2026-09-20: TrailSignal's deterministic research core embedded (`governance/trail/`)
 
 - ADR-0021 / refactor 0015. The exact 16-module import closure of TrailSignal's research operation service, its registry data,

@@ -6,12 +6,12 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import model_validator
+from pydantic import model_serializer, model_validator
 from typing_extensions import Self
 
 from trail_signal.contexts.evidence.domain.admission import (
-    AdmissionPolicy, EvidenceRole, HypothesisRef, LongText, Polarity, ReceiptObservation, ReceiptSource, ReceiptToolTrace, RegistrySnapshotRef,
-    RejectedObservation, ResearchStage,
+    AdmissionPolicy, EvidenceRole, HypothesisRef, HypothesisRelation, LongText, Polarity, ReceiptObservation, ReceiptSource, ReceiptToolTrace,
+    RegistrySnapshotRef, RejectedObservation, ResearchStage, relation_polarity,
 )
 from trail_signal.contexts.evidence.domain.qualification import GateResult, OpenGap, QualificationStage, QualificationState
 from trail_signal.kernel.contracts import BoundaryModel, Identifier, NonEmptyText
@@ -68,6 +68,18 @@ class AdmittedObservationV1(BoundaryModel):
     limitations: tuple[LongText, ...]
     trail_admission_record_id: Identifier
     authority_class: Literal["ADMITTED_OBSERVATION"]
+    hypothesis_relations: tuple[HypothesisRelation, ...] = ()  # ADR-069: SUPPORTS / CONTRADICTS / NEUTRAL per linked hypothesis (absent on older records)
+
+    def polarity_for(self, hypothesis_id: str) -> Polarity | None:
+        return relation_polarity(self.hypothesis_relations, hypothesis_id, self.polarity)
+
+    @model_serializer(mode="wrap")
+    def _omit_absent_relations(self, handler):
+        """A record without stated relations serialises exactly as it did before ADR-069 (recorded envelopes and replays stay byte-stable)."""
+        data = handler(self)
+        if not data.get("hypothesis_relations"):
+            data.pop("hypothesis_relations", None)
+        return data
 
     @model_validator(mode="after")
     def _linked_and_supply_bound(self) -> Self:

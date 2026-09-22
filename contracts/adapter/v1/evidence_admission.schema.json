@@ -177,6 +177,32 @@
       "type": "string",
       "const": "ADMITTED_OBSERVATION",
       "description": "Trail authority class of the record: an admitted observation is evidence, never a prior, a verdict, or a score"
+     },
+     "hypothesis_relations": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "relation"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "hypothesis_id": {
+         "type": "string",
+         "pattern": "^hyp_[0-9a-f]{8,64}$"
+        },
+        "relation": {
+         "enum": [
+          "SUPPORTS",
+          "CONTRADICTS",
+          "NEUTRAL"
+         ]
+        }
+       }
+      },
+      "description": "ADR-069 (optional): the relations the receipt stated, kept for the LINKED hypotheses only."
      }
     }
    },

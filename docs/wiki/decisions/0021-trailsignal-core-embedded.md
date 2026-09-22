@@ -29,3 +29,15 @@ boundary change only (MIGRATION_POLICY INV-5).
   embedded-core tests run under TrailSignal's interpreter and SKIP — with the reason printed — under this repo's.
 - ~57 % of the imported lines are contract models unrelated to research (`data_os`, `discovery`, `platform`); trimming them is a separate change that re-pins `PROVENANCE.json`.
 - D1 and M1-01..03 live in this code. They are NOT fixed here; fixing them is a documented TrailSignal behaviour change, separate from the embedding.
+
+## Addendum 2026-09-21 — re-pinned to HR6 @ `829a0ab` (TrailSignal ADR-069)
+
+The embedded core is re-pinned through the SAME deterministic process (`git archive 829a0ab <the 30 pinned paths> | tar -x`; `PROVENANCE.json`
+rewritten with the new sha256 of every file and `previous_pin` naming the files the pin changed). TrailSignal ADR-069 (Accepted by the owner
+2026-09-21) restores the semantics of the bounded research operations: stated `knowledge_support_count`, field-aware structured mapping
+with the lexical path kept as the fallback, prior / territory meaning on the wire (`label`, `section`, `match_strength`, `mapping_path`,
+`territory_name`), typed refusal of a gap that names no hypothesis, and a hypothesis-relative evidence relation
+(`hypothesis_relations`). Every new wire field is optional: the recorded envelopes were re-recorded at the new pin with the SAME requests
+and the same clock (`tests/fixtures/trail_recorded_envelopes/*.json` carry `previous_trail_head` + `re_recorded`). Polymath's side: the closed
+extended wire (`semantic_view.trail_wire`, sent only by steps that opt in with `hypotheses_from: context.semantics.trail`), the four-copy
+receipt contract (`hypothesis_relations` on a receipt observation, kept only for a hypothesis the observation links). Source commit (full): `829a0abf853fdb0c3589c4162177beb8c836c515`.

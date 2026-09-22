@@ -28,12 +28,27 @@ STAGE_GATE_ROLES: dict[ResearchStage, tuple[str, ...]] = {
 STOPWORDS = frozenset({"and", "the", "for", "with", "that", "this", "from", "into", "when", "their", "they", "have", "while"})
 
 
+class SemanticCandidate(BoundaryModel):
+    """ADR-069: structured candidates for one hypothesis (normalised ids and short phrases supplied by the caller). Trail matches
+    them field to field; it never infers them from prose."""
+    friction_families: tuple[Identifier, ...] = ()
+    activity: NonEmptyText | None = None
+    task: NonEmptyText | None = None
+    context: NonEmptyText | None = None
+    predicates: tuple[Identifier, ...] = ()
+    product_territories: tuple[Identifier, ...] = ()
+
+    def empty(self) -> bool:
+        return not (self.friction_families or self.activity or self.task or self.context or self.predicates or self.product_territories)
+
+
 class HypothesisView(BoundaryModel):
     hypothesis_id: Identifier
     revision: NonNegInt
     status: Identifier
     statement: LongText
     knowledge_support_count: NonNegInt
+    semantic: SemanticCandidate | None = None
 
 
 class EvidenceGap(BoundaryModel):
@@ -146,6 +161,33 @@ def compile_research_directive(snapshot, *, stage: ResearchStage, gaps: tuple[Ev
         routed_source_ids=tuple(sorted(s.source_id for s in sources)), registry_snapshot=snapshot_ref(snapshot))
 
 
+#: ADR-069 field-aware mapping: what an agreement between a candidate dimension and a registry field is worth. An exact friction-family /
+#: territory id agreement outweighs any amount of shared vocabulary; phrase dimensions count shared tokens.
+ID_WEIGHT, SEED_TERRITORY_WEIGHT, ACTIVITY_WEIGHT, TASK_WEIGHT, CONTEXT_WEIGHT, PREDICATE_WEIGHT, SEED_FAMILY_WEIGHT = 8, 6, 2, 2, 1, 1, 3
+
+
+def structured_strength(candidate: SemanticCandidate, fields: dict[str, str], section: str = "") -> int:
+    """Deterministic field-to-field agreement between one hypothesis's candidates and one registry record. A friction PRIMITIVE or
+    a TERRITORY is its id: agreement on the id is decisive. A NICHE SEED is an archetype x activity row — the same friction family
+    repeats across hundreds of activities — so a seed counts only when its activity, task or context ALSO agrees with the candidate
+    (when the candidate states any); the shared family then adds to it, it never carries a foreign activity on its own."""
+    def shared(value: str | None, name: str) -> int:
+        return len(tokens(value) & tokens(fields[name])) if value and fields.get(name) else 0
+
+    phrase = ACTIVITY_WEIGHT * shared(candidate.activity, "activity") + TASK_WEIGHT * shared(candidate.task, "task") + CONTEXT_WEIGHT * shared(candidate.context, "context")
+    ids = ((ID_WEIGHT if fields.get("friction_family") in candidate.friction_families else 0)
+           + (ID_WEIGHT if fields.get("territory") in candidate.product_territories else 0)
+           + (SEED_TERRITORY_WEIGHT if fields.get("product_territory") in candidate.product_territories else 0))
+    predicates = 0
+    if candidate.predicates and fields.get("shared_predicates"):
+        predicates = PREDICATE_WEIGHT * len(set(candidate.predicates) & set(re.split(r"[^a-z0-9_]+", fields["shared_predicates"].lower())))
+    if section == "niche_seeds":
+        if (candidate.activity or candidate.task or candidate.context) and not phrase:
+            return 0
+        return phrase + (SEED_FAMILY_WEIGHT if ids else 0) + (predicates if phrase else 0)
+    return ids + phrase + (predicates if ids or phrase else 0)
+
+
 def derive_registry_coordinates(snapshot, request):
     """Priors are coordinates for the live hypotheses (lexical overlap with niche seeds, friction primitives, and territories);
     redundancy groups share a normalised statement; unsupported hypotheses have no knowledge support. Nothing here is evidence."""
@@ -155,19 +197,29 @@ def derive_registry_coordinates(snapshot, request):
     priors: list[PriorCoordinates] = []
     for hypothesis in request.hypotheses:
         words = tokens(hypothesis.statement)
+        candidate = hypothesis.semantic if hypothesis.semantic is not None and not hypothesis.semantic.empty() else None
         scored: list[tuple[int, str, str, str, str]] = []
+        structured: list[tuple[int, str, str, str, str]] = []
         for section, section_priors in prior_sections(snapshot):
             if section not in {"friction_primitives", "product_territories", "niche_seeds"}:
                 continue
             for prior in section_priors:
+                label = next((f.value for f in prior.fields if f.name in {"friction_family", "territory", "activity"}), prior.record_id)
+                if candidate is not None:
+                    strength = structured_strength(candidate, {f.name: f.value for f in prior.fields}, section)
+                    if strength:
+                        structured.append((strength, prior.record_id, prior.prior_role, label, section))
                 text = " ".join(field.value for field in prior.fields)
                 overlap = len(words & tokens(text))
                 if overlap:
-                    label = next((f.value for f in prior.fields if f.name in {"friction_family", "territory", "activity"}), prior.record_id)
                     scored.append((overlap, prior.record_id, prior.prior_role, label, section))
-        for overlap, record_id, role, label, section in sorted(scored, key=lambda x: (-x[0], x[1]))[: request.max_priors_per_hypothesis]:
+        # ADR-069: structured agreement decides when the caller supplied candidates AND any record agrees; otherwise the lexical
+        # mapping — unchanged, byte for byte — remains the compatibility path. The coordinate records which path produced it.
+        path, ranked = ("structured", structured) if structured else ("lexical", scored)
+        for overlap, record_id, role, label, section in sorted(ranked, key=lambda x: (-x[0], x[1]))[: request.max_priors_per_hypothesis]:
+            fields = (SnapshotField(name="label", value=label), SnapshotField(name="overlap", value=str(overlap)), SnapshotField(name="section", value=section))
             priors.append(PriorCoordinates(registry_record_id=record_id, prior_role=role, hypothesis_ids=(hypothesis.hypothesis_id,),
-                                         coordinates=(SnapshotField(name="label", value=label), SnapshotField(name="overlap", value=str(overlap)), SnapshotField(name="section", value=section))))
+                                         coordinates=fields + ((SnapshotField(name="path", value="structured"),) if path == "structured" else ())))
     groups: dict[str, list[str]] = {}
     for hypothesis in request.hypotheses:
         groups.setdefault(normalise(hypothesis.statement), []).append(hypothesis.hypothesis_id)
@@ -187,14 +239,22 @@ def map_product_territories(snapshot, request, *, max_per_hypothesis: int = 3):
     for hypothesis in hypotheses:
         jobs = [j for j in physical_jobs if j.hypothesis_id == hypothesis.hypothesis_id]
         words = tokens(" ".join([hypothesis.statement, *(f"{j.job} {j.mechanism}" for j in jobs)]))
+        candidate = hypothesis.semantic if hypothesis.semantic is not None and not hypothesis.semantic.empty() else None
         scored: list[tuple[int, str, str]] = []
+        structured: list[tuple[int, str, str]] = []
         for prior in snapshot.product_territories:
             fields = {f.name: f.value for f in prior.fields}
+            if candidate is not None:
+                strength = structured_strength(candidate, fields)
+                if strength:
+                    structured.append((strength, prior.record_id, fields.get("territory", prior.record_id)))
             overlap = len(words & (tokens(f"{fields.get('territory', '')} {fields.get('definition', '')} {fields.get('preferred_first_product', '')}") | set(fields.get("territory", "").split("_"))))
             if overlap:
                 scored.append((overlap, prior.record_id, fields.get("territory", prior.record_id)))
-        for overlap, record_id, name in sorted(scored, key=lambda x: (-x[0], x[1]))[:max_per_hypothesis]:
+        path, ranked = ("structured", structured) if structured else ("lexical", scored)
+        for overlap, record_id, name in sorted(ranked, key=lambda x: (-x[0], x[1]))[:max_per_hypothesis]:
+            fields_out = (SnapshotField(name="territory", value=name), SnapshotField(name="overlap", value=str(overlap)))
             territories.append(PriorCoordinates(registry_record_id=record_id, prior_role="product_territory", hypothesis_ids=(hypothesis.hypothesis_id,),
-                                              coordinates=(SnapshotField(name="territory", value=name), SnapshotField(name="overlap", value=str(overlap)))))
+                                              coordinates=fields_out + ((SnapshotField(name="path", value="structured"),) if path == "structured" else ())))
     directive = compile_research_directive(snapshot, stage=ResearchStage.PRODUCT_REALITY, gaps=(), hypotheses=hypotheses, geography=geography, language=language)
     return ProductTerritoryProjectionV1(registry_snapshot=snapshot_ref(snapshot), territories=tuple(territories), research_directive=directive)

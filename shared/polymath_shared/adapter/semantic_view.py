@@ -216,14 +216,47 @@ def trail_projection(hypothesis: Mapping[str, Any]) -> dict[str, Any]:
     return {"hypothesis_id": str(src["hypothesis_id"]), "revision": int(src["revision"]), "status": src["status"], "statement": src["statement"]}
 
 
+#: Trail's `ResearchHypothesisViewV1` after ADR-069 (embedded core re-pinned): the four fields + the caller's STATED knowledge support +
+#: optional STRUCTURED candidates. Still CLOSED — exactly these keys, nothing of the rich view crosses the wire.
+TRAIL_WIRE_EXTENDED_FIELDS = TRAIL_WIRE_FIELDS + ("knowledge_support_count", "candidate_friction_families", "candidate_activity", "candidate_task", "candidate_context",
+                                                  "candidate_predicates", "candidate_product_territories")
+
+
+def trail_wire(view: Mapping[str, Any], *, friction_family_ids: Iterable[str] = ()) -> dict[str, Any]:
+    """ADR-069 wire for ONE hypothesis from its view. Candidates are DETERMINISTIC facts the ledger already holds — activity / task /
+    context verbatim, the run's shared predicates — plus a friction family ONLY when the ledger's `suspected_friction` IS a registry
+    family id (the engine's own exact-id rule; free text is never guessed into a family). Absent values stay absent so Trail's lexical
+    path decides, exactly as before."""
+    h, s = view["hypothesis"], view.get("semantics") or {}
+    families = set(friction_family_ids)
+    friction = str(s.get("suspected_friction") or "").strip().lower().replace(" ", "_")
+    out = {**trail_projection(h), "knowledge_support_count": int((view.get("knowledge") or {}).get("knowledge_support_count") or 0),
+           "candidate_friction_families": [friction] if friction and friction in families else [],
+           "candidate_activity": _short(s.get("activity")), "candidate_task": _short(s.get("task")), "candidate_context": _short(s.get("context")),
+           "candidate_predicates": [str(p) for p in ((view.get("transduction") or {}).get("run_level") or {}).get("shared_predicates") or [] if _identifier(p)][:MAX_ITEMS],
+           "candidate_product_territories": []}
+    return {k: v for k, v in out.items() if v not in (None, [])}
+
+
+def _short(v: Any) -> str | None:
+    text = " ".join(str(v or "").split())
+    return text[:512] or None
+
+
+def _identifier(v: Any) -> bool:
+    import re
+    return bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]*", str(v or "")))
+
+
 PROJECTIONS = {"agent": agent_projection, "query": query_projection, "product_reality": product_reality_projection}
 
 
-def scope(view: Mapping[str, Any]) -> dict[str, Any]:
+def scope(view: Mapping[str, Any], *, friction_family_ids: Iterable[str] = ()) -> dict[str, Any]:
     """What a manifest path may address: `semantics.hypotheses` (agent projection), `semantics.query`, `semantics.product_reality`
-    — each a list in generation order — plus `semantics.by_id.<hypothesis_id>` (the full view)."""
+    — each a list in generation order — plus `semantics.trail` (the ADR-069 wire, closed) and `semantics.by_id.<hypothesis_id>` (the full view)."""
     hyps = list(view.get("hypotheses") or [])
     return {"view_version": view.get("view_version"), "authority": view.get("authority"),
             "hypotheses": [agent_projection(v) for v in hyps], "query": [query_projection(v) for v in hyps],
             "product_reality": [product_reality_projection(v) for v in hyps],
+            "trail": [trail_wire(v, friction_family_ids=friction_family_ids) for v in hyps],
             "by_id": {v["hypothesis"]["hypothesis_id"]: copy.deepcopy(dict(v)) for v in hyps}}

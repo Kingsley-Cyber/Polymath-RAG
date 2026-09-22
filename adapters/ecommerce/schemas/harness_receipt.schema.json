@@ -178,6 +178,32 @@
       },
       "minItems": 0,
       "maxItems": 64
+     },
+     "hypothesis_relations": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "relation"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "hypothesis_id": {
+         "type": "string",
+         "pattern": "^hyp_[0-9a-f]{8,64}$"
+        },
+        "relation": {
+         "enum": [
+          "SUPPORTS",
+          "CONTRADICTS",
+          "NEUTRAL"
+         ]
+        }
+       }
+      },
+      "description": "ADR-069 (optional): what THIS observation means for EACH hypothesis it is linked to — SUPPORTS, CONTRADICTS or NEUTRAL. The evidence role says what kind of evidence it is; the relation says which way it cuts for that hypothesis. Absent = TrailSignal's global polarity rule decides, as before."
      }
     }
    },

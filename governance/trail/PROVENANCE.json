@@ -1,9 +1,9 @@
 {
- "source_repository": "TrailSignal OS (trail-signal-os), worktree A41",
- "source_commit": "de64d84",
- "imported_at": "2026-09-20",
+ "source_repository": "TrailSignal OS (trail-signal-os), worktree R1-semantic-restoration (branch codex/r1-semantic-restoration, HR6 admitted under ADR-069)",
+ "source_commit": "829a0ab",
+ "imported_at": "2026-09-21",
  "licence": "MIT (LICENSE)",
- "method": "git archive de64d84 <paths> | tar -x \u2014 tracked files only, no edits",
+ "method": "git archive 829a0ab <paths> | tar -x — tracked files only, no edits",
  "closure": "AST import closure of src/trail_signal/contexts/workflow/application/research_operations.py (16 modules) + the registry data and config the closure reads",
  "rule": "every file listed here is BYTE-IDENTICAL to the source commit; a change to TrailSignal's behaviour is made upstream or as a separate, documented change that re-pins this file",
  "files": {
@@ -23,19 +23,32 @@
   "data/source_registry.csv": "734622452671d0c4a50c06f4c97971f67ef594ee75847b730ced2b237ccf0682",
   "src/trail_signal/contexts/data_os/public/contracts.py": "5a2262e159685d78c5125143200a08ad60f46188f7bfe4037d1a665ecd8e7619",
   "src/trail_signal/contexts/discovery/public/contracts.py": "e134cc9eaa9263be76e37491d60fc8d1b0be74847389a398a8807ffecd3e88f0",
-  "src/trail_signal/contexts/evidence/domain/admission.py": "efa3afb21ce9b515c22f152049bc293f4e30fca17f430e7991b117d06f7ff269",
-  "src/trail_signal/contexts/evidence/domain/qualification.py": "f23bd6c019836145225c38def58dacb090aa200bf4bdeee95d83c48fdb8c4b3a",
-  "src/trail_signal/contexts/evidence/public/contracts.py": "151aacd15eb283e2c397f0395a706b4cabc13825a223e99430851b4cfdb0bce9",
+  "src/trail_signal/contexts/evidence/domain/admission.py": "ffdc0ed6908e93de127aa27494386f0c1faf0a8fcd95c90d847ed7f85dc1df2d",
+  "src/trail_signal/contexts/evidence/domain/qualification.py": "16cc0a92ae8a3401733bb2a790bbfc22ee3601b10633bb7fea2a628abb442f5d",
+  "src/trail_signal/contexts/evidence/public/contracts.py": "a609b5f9a23799cb3ba8ca20006f172b9469b02d3f79aa2269fd90975ac14e45",
   "src/trail_signal/contexts/evidence/public/ports.py": "2b8e8e52a33a2b8cc256e6e56a6aab4ce779d8ccfe9f9d416296143d3cb4b1eb",
-  "src/trail_signal/contexts/planning/domain/gap_compiler.py": "0da6d9d8a6a7f69e9bbcf66c49fb73c7308f98bd6b3bf840966502a175d1f7d2",
-  "src/trail_signal/contexts/planning/domain/judgement.py": "e318ef163e8b5fa5868e8876ec38a9537a7278098e19b27738c6be7f2443949e",
+  "src/trail_signal/contexts/planning/domain/gap_compiler.py": "66e91ff3069a18e2dd34a3c6fb92e9e9673e5bd183e94bb5f0d9403c1844d7c0",
+  "src/trail_signal/contexts/planning/domain/judgement.py": "b62cc88ef4c9a60cc85bc6912443b00614bf20324bbcfce2ab11fa4fab12da38",
   "src/trail_signal/contexts/planning/domain/registry_compiler.py": "0f06f11f88dae1fb40905d95c2da0e7177441d5024f7f13b53aa2518087b300a",
   "src/trail_signal/contexts/planning/public/contracts.py": "c4aa84aa59810b9926286ccc48af4b58f3c19503cef7fae58bec78af81e26b93",
   "src/trail_signal/contexts/platform/public/contracts.py": "e0e6e9fed5cc329288c2890eb540d00783d976e029b623849a1352fea61f0475",
   "src/trail_signal/contexts/scoring/domain/engine.py": "975257d1e525de8649bfa5c01f3eac2e68a1b6c52a7ffe6837d9b0ed262340eb",
   "src/trail_signal/contexts/scoring/public/contracts.py": "4ff58d016f0c231c305714f7757ce06d1f1959548bf463b812cef964b52784fe",
-  "src/trail_signal/contexts/workflow/application/research_operations.py": "110b4e8eefd2e4a82008969551abf80efdc57a646d41ce2c7256fec71edf0636",
-  "src/trail_signal/contexts/workflow/public/operations.py": "16c344ae2d64da00f20737749fa1d188e4e838b92f9d543b1f0b393db73e84bf",
+  "src/trail_signal/contexts/workflow/application/research_operations.py": "fc44147d0814178697d82397ac96ccd55e2ce662e1af83a8e51899dccd1a97db",
+  "src/trail_signal/contexts/workflow/public/operations.py": "7b298e505f26b733bba90469483b323eed1b2ac6eb9f76bb94833cb5a5b81806",
   "src/trail_signal/kernel/contracts.py": "1f7de60a0acb3b31d7818c80a265452720e642d7c8538b9618ad63e23dba53d4"
+ },
+ "source_commit_full": "829a0abf853fdb0c3589c4162177beb8c836c515",
+ "previous_pin": {
+  "source_commit": "de64d84",
+  "files_changed_by_this_pin": [
+   "src/trail_signal/contexts/evidence/domain/admission.py",
+   "src/trail_signal/contexts/evidence/domain/qualification.py",
+   "src/trail_signal/contexts/evidence/public/contracts.py",
+   "src/trail_signal/contexts/planning/domain/gap_compiler.py",
+   "src/trail_signal/contexts/planning/domain/judgement.py",
+   "src/trail_signal/contexts/workflow/application/research_operations.py",
+   "src/trail_signal/contexts/workflow/public/operations.py"
+  ]
  }
 }

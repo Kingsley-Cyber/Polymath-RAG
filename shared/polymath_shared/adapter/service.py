@@ -212,11 +212,21 @@ def _semantics(conn, run_id: str, state: RunState, m: Manifest | None = None) ->
     `research_gaps` = every hypothesis's open gaps from every legitimate source, each owned and stably identified (research_gaps.py)."""
     stored = [{"step_id": s["step_id"], "sequence": s["sequence"], "output": s.get("output")} for s in store.list_steps(conn, run_id)]
     current = store.current_hypotheses(conn, run_id)
-    scope = SV.scope(SV.build(current, state.outputs, order=state.output_order, step_outputs=stored, run_id=run_id))
+    scope = SV.scope(SV.build(current, state.outputs, order=state.output_order, step_outputs=stored, run_id=run_id), friction_family_ids=_friction_family_ids(state))
     roles = list(((m.raw if m else {}) or {}).get("evidence_roles") or [])
     scope["research_gaps"] = RG.harvest(current, state.outputs, order=state.output_order,
                                         default_role="behavior" if "behavior" in roles or not roles else roles[0])
     return scope
+
+
+def _friction_family_ids(state: RunState) -> list[str]:
+    """Registry friction-family ids this run may name as a structured candidate: the ids Trail's registry projection returned as
+    `friction_primitive` priors (their `label` after ADR-069 is the family id). Nothing else — never a guess from prose."""
+    out: list[str] = []
+    for p in _collect_lists(state, "priors"):
+        if isinstance(p, dict) and p.get("prior_role") == "friction_primitive" and p.get("label"):
+            out.append(str(p["label"]))
+    return sorted(set(out))
 
 
 def _wants_semantics(spec: dict[str, Any]) -> bool:

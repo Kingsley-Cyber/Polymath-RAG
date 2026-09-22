@@ -63,8 +63,9 @@ def qualify_hypothesis(*, stage: QualificationStage, hypothesis_id: str, admitte
                        ) -> tuple[QualificationState, tuple[GateResult, ...], tuple[AdmittedObservation, ...], tuple[AdmittedObservation, ...], tuple[OpenGap, ...]]:
     by_name = {g.name: g for g in gates}
     mine = tuple(e for e in admitted if hypothesis_id in e.hypothesis_ids and e.duplicate_of is None)
-    supporting = tuple(e for e in mine if e.polarity == Polarity.SUPPORTING)
-    contradicting = tuple(e for e in mine if e.polarity == Polarity.CONTRADICTING)
+    # ADR-069: what an observation means FOR THIS hypothesis (its stated relation; the global polarity when none was stated)
+    supporting = tuple(e for e in mine if e.polarity_for(hypothesis_id) == Polarity.SUPPORTING)
+    contradicting = tuple(e for e in mine if e.polarity_for(hypothesis_id) == Polarity.CONTRADICTING)
     results = tuple(GateResult(gate_id=by_name[n].id, name=n, minimum=by_name[n].minimum, observed=observed_count(n, supporting),
                                passed=observed_count(n, supporting) >= by_name[n].minimum) for n in STAGE_GATES[stage] if n in by_name)
     passed = sum(1 for r in results if r.passed)

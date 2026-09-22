@@ -1,6 +1,6 @@
 """Consolidation migration Phase 6, validation 3 — EQUIVALENCE by replay. The request / response envelopes under
 `tests/fixtures/trail_recorded_envelopes/` were recorded from TrailSignal's OWN checkout (A41 @ de64d84, in-process service, fixed clock) during
-the external-review M1 reproductions. Replayed through the EMBEDDED copy with the same clock they must produce the SAME envelopes — including the
+the external-review M1 reproductions, and RE-RECORDED at HR6 @ 829a0ab (ADR-069: additive optional wire fields; requests unchanged). Replayed through the EMBEDDED copy with the same clock they must produce the SAME envelopes — including the
 recorded refusal. (The machine-local `trail_root` was removed from the fixtures on import; nothing else was changed.)
 
 Needs `packageurl`: run with TrailSignal's interpreter until it is added to this repo's environment (see test_trail_core_embedded.py).
@@ -28,7 +28,7 @@ ORDER = ("registry.project", "gaps.compile", "evidence.admit", "hypotheses.judge
 @pytest.mark.parametrize("name", sorted(p.name for p in FIXTURES.glob("*.json")))
 def test_the_embedded_core_reproduces_the_recorded_envelopes(name):
     rec = json.loads((FIXTURES / name).read_text())
-    assert rec["trail_head"].startswith("de64d84")
+    assert rec["trail_head"].startswith("829a0ab") and rec["previous_trail_head"].startswith("de64d84")     # re-recorded at the ADR-069 pin
     service = E.build_service(clock=lambda: NOW)
     replayed = 0
     for kind in ORDER:
