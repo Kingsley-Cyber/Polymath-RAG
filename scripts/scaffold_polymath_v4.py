@@ -746,6 +746,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/migration/TRANSDUCTION_AUDIT.md", "md", None),
     ("docs/migration/SEMANTIC_TRANSDUCTION_RESTORATION_REFERENCE.md", "md", None),
     ("docs/migration/RESTORATION_BOOTSTRAP_PROMPT.md", "md", None),
+    ("docs/migration/INTEGRATION_BOOTSTRAP_PROMPT.md", "md", None),
     # CONSOLIDATION MIGRATION Phase 2 — the ecommerce engine imported additively from TRAIL_AGENT_AUTORESEARCH @ a7baa66
     # (tracked files only; MIRROR_RECEIPT.json, .github/ and registry/friction_library.upstream.patch excluded — AUTO_DECISIONS M-006).
     ("adapters/ecommerce/.gitignore", "gitignore", None),
