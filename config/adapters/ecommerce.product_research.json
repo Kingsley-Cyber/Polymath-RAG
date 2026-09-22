@@ -1,6 +1,6 @@
 {
  "adapter_id": "ecommerce.product_research",
- "adapter_version": "0.1.0",
+ "adapter_version": "0.5.1",
  "workflow_version": "0.1.0",
  "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
@@ -339,7 +339,7 @@
    "title": "θ generate hypotheses",
    "theta_op": "generate_hypotheses",
    "next": "C_bridge",
-   "objective": "From the retrieved Polymath evidence only, generate up to 8 latent hypotheses: a population doing a repeated activity meets a recurring friction with a plausible mechanism. State assumptions, falsifiers and the knowledge gaps that only the live world can close. Cite evidence ids for every hypothesis; list unknowns instead of inventing.",
+   "objective": "From the retrieved Polymath evidence only, generate up to 8 latent hypotheses: a population doing a repeated activity meets a recurring friction with a plausible mechanism. State assumptions, falsifiers and the knowledge gaps that only the live world can close. Cite evidence ids for every hypothesis; list unknowns instead of inventing. Materials show `primitives` (drivers, behaviors, adaptations, constraints, workarounds, frictions, latent_values, physical_jobs, transferable_invariants), `latent_structures` and the ranked `population_leads` / `community_leads`: build hypotheses FROM them, not from the seed alone. For every hypothesis name its ORIGIN by id: `lead_ids` (ids of the leads it is about) and `latent_structure_ids` (ids of the structures it was abstracted from), copied exactly as shown; an empty list means it truly came from neither. An id this run did not produce rejects the submission.",
    "constraints": [
     "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
     "No opportunity score, rank or weight of any kind (LAW 1)",
@@ -483,6 +483,24 @@
            }
           }
          }
+        },
+        "lead_ids": {
+         "type": "array",
+         "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+         },
+         "maxItems": 50
+        },
+        "latent_structure_ids": {
+         "type": "array",
+         "items": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+         },
+         "maxItems": 50
         }
        }
       }
@@ -491,7 +509,8 @@
    },
    "acceptance_rules": [
     "every supporting_evidence_ids entry is a knowledge id from context.evidence_refs",
-    "1 <= len(hypotheses) <= 8"
+    "1 <= len(hypotheses) <= 8",
+    "every lead_ids / latent_structure_ids entry is an id shown in materials (population_leads, community_leads, latent_structures)"
    ],
    "config": {
     "show": {
@@ -499,7 +518,8 @@
      "population_leads": "outputs.C_population.population_leads",
      "community_leads": "outputs.C_population.community_leads",
      "ranked_lead_ids": "outputs.C_population.ranked_lead_ids",
-     "latent_structures": "outputs.C_lineage.latent_structures"
+     "latent_structures": "outputs.C_lineage.latent_structures",
+     "primitives": "outputs.C_primitives.primitives"
     }
    }
   },
@@ -508,7 +528,7 @@
    "type": "AGENT_REASON",
    "title": "Write every live hypothesis as an explicit bridge path",
    "next": "C_bridge_law",
-   "objective": "For EACH live hypothesis in context.hypotheses write its bridge: source, path[] (every hop written out, at least three hops, never seed -> product in one jump), target_mechanism (the mechanism FAMILY — variants of one mechanism are one hypothesis), evidence_boundary.first_inference_at (the FIRST hop that is inference, not evidence; it must be one of the hops), hop_refs {\"0\": [evidence ids], …} for every hop BEFORE the boundary, gaps[] (plain questions real communities could answer; enough to cover the hops past the boundary), alternatives[] (at least one competing explanation), falsifiers[] (the observation that would kill it), status WORKING_HYPOTHESIS (or WORKING_ANALOGY with exploratory: true for at most one deliberate transfer). Before any field evidence exists declare grounding: CORPUS_ONLY. The portfolio needs three to six hypotheses across DISTINCT mechanism families. If a previous bridge check listed errors, correct exactly those.",
+   "objective": "For EACH live hypothesis in context.hypotheses write its bridge: source, path[] (every hop written out, at least three hops, never seed -> product in one jump), target_mechanism (the mechanism FAMILY — variants of one mechanism are one hypothesis), evidence_boundary.first_inference_at (the FIRST hop that is inference, not evidence; it must be one of the hops), hop_refs {\"0\": [evidence ids], …} for every hop BEFORE the boundary, gaps[] (plain questions real communities could answer; enough to cover the hops past the boundary), alternatives[] (at least one competing explanation), falsifiers[] (the observation that would kill it), status WORKING_HYPOTHESIS (or WORKING_ANALOGY with exploratory: true for at most one deliberate transfer). Before any field evidence exists declare grounding: CORPUS_ONLY. The portfolio needs three to six hypotheses across DISTINCT mechanism families. If a previous bridge check listed errors, correct exactly those. Materials show `hypothesis_semantics` (each hypothesis's ledger state, origin leads and latent structures, and the run's transferable invariants): a bridge starts at the corpus evidence behind the hypothesis's latent structure and states the invariant it transfers.",
    "constraints": [
     "One bridge per live hypothesis_id, no others",
     "hop_refs cite only evidence ids supplied in context.evidence_refs",
@@ -625,7 +645,8 @@
      "hypothesis_ids": "outputs.C_hypotheses.hypothesis_ids",
      "lenses": "outputs.B_lenses.lenses",
      "previous_bridge_errors": "outputs.C_bridge_law.bridge_errors",
-     "previous_portfolio_errors": "outputs.C_bridge_law.portfolio_errors"
+     "previous_portfolio_errors": "outputs.C_bridge_law.portfolio_errors",
+     "hypothesis_semantics": "semantics.hypotheses"
     }
    }
   },
@@ -761,7 +782,7 @@
    "title": "θ derive mechanisms and name the external knowledge gaps",
    "theta_op": "derive_mechanisms",
    "next": "H_gaps",
-   "objective": "For each live hypothesis, revise its mechanism from the corpus evidence and name the knowledge gaps that only live field evidence can close (behavior, friction, workaround, demand). Propose REVISE (or SPLIT) transitions with cause refs.",
+   "objective": "For each live hypothesis, revise its mechanism from the corpus evidence and name the knowledge gaps that only live field evidence can close (behavior, friction, workaround, demand). Propose REVISE (or SPLIT) transitions with cause refs. Materials show `hypothesis_semantics`: for each live hypothesis its CURRENT ledger state (population, activity, task, context, mechanism, friction, assumptions, falsifiers, contradictions, open knowledge gaps, support), its origin leads / latent structures, its bridge and the primitives that share its evidence — reason from that state, do not re-derive it from the statement. A REVISE `changes` object may set only the listed keys; an unknown key rejects the submission.",
    "constraints": [
     "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
     "No opportunity score, rank or weight of any kind (LAW 1)",
@@ -817,7 +838,128 @@
          }
         },
         "changes": {
-         "type": "object"
+         "type": "object",
+         "additionalProperties": false,
+         "description": "Only these keys can be revised; any other key REJECTS the whole submission (nothing is dropped silently). Scalars, assumptions, falsifiers and the origin ids REPLACE; knowledge_gaps UPSERT by gap_id or question (close a gap with status, never delete it); contradictions are APPENDED and must cite evidence ids.",
+         "properties": {
+          "statement": {
+           "type": "string",
+           "minLength": 8,
+           "maxLength": 2000
+          },
+          "mechanism": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "population": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "activity": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "task": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "context": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "suspected_friction": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "assumptions": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "falsifiers": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "knowledge_gaps": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "gap_id": {
+              "type": "string"
+             },
+             "question": {
+              "type": "string"
+             },
+             "evidence_role": {
+              "type": "string"
+             },
+             "status": {
+              "enum": [
+               "open",
+               "researched",
+               "closed"
+              ]
+             }
+            }
+           }
+          },
+          "contradictions": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "required": [
+             "statement",
+             "evidence_ids"
+            ],
+            "properties": {
+             "statement": {
+              "type": "string"
+             },
+             "evidence_ids": {
+              "type": "array",
+              "items": {
+               "type": "string"
+              },
+              "minItems": 1
+             }
+            }
+           }
+          },
+          "lead_ids": {
+           "type": "array",
+           "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+           },
+           "maxItems": 50
+          },
+          "latent_structure_ids": {
+           "type": "array",
+           "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+           },
+           "maxItems": 50
+          }
+         }
         },
         "field_evidence_ids": {
          "type": "array",
@@ -954,6 +1096,24 @@
               }
              }
             }
+           },
+           "lead_ids": {
+            "type": "array",
+            "items": {
+             "type": "string",
+             "minLength": 1,
+             "maxLength": 200
+            },
+            "maxItems": 50
+           },
+           "latent_structure_ids": {
+            "type": "array",
+            "items": {
+             "type": "string",
+             "minLength": 1,
+             "maxLength": 200
+            },
+            "maxItems": 50
            }
           }
          }
@@ -987,7 +1147,12 @@
    },
    "acceptance_rules": [
     "every cause ref is an id from context (knowledge, admitted field evidence, hypothesis)"
-   ]
+   ],
+   "config": {
+    "show": {
+     "hypothesis_semantics": "semantics.hypotheses"
+    }
+   }
   },
   {
    "step_id": "H_gaps",
@@ -1001,7 +1166,8 @@
     "availability": "working"
    },
    "config": {
-    "stage": "field_evidence"
+    "stage": "field_evidence",
+    "gaps_from": "context.semantics.research_gaps"
    }
   },
   {
@@ -1018,7 +1184,9 @@
      "population_leads": "outputs.C_population.population_leads",
      "community_leads": "outputs.C_population.community_leads",
      "batch": "outputs.C_population.batch",
-     "communities": "outputs.C_population.communities"
+     "communities": "outputs.C_population.communities",
+     "semantics": "context.semantics.query",
+     "research_gaps": "context.semantics.research_gaps"
     }
    }
   },
@@ -1027,7 +1195,7 @@
    "type": "HARNESS_ACTION",
    "title": "Harness: field research",
    "next": "J_admit",
-   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations.",
+   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations. Materials show `intent_index`: for every compiled intent the hypothesis it serves, the gap it answers and the query text — link each observation to the hypothesis whose intent found it. For every observation also record `intent: <the search intent id that found it>` in the observation context, so the evidence stays linked to the gap and the hypothesis it was sought for.",
    "harness": {
     "action_kind": "AGENT_RESEARCH",
     "minimum_independent_sources": 3,
@@ -1045,7 +1213,8 @@
      "population_batch": "outputs.C_population.batch",
      "population_leads": "outputs.C_population.population_leads",
      "community_leads": "outputs.C_population.community_leads",
-     "research_plan": "outputs.H_plan.planned"
+     "research_plan": "outputs.H_plan.planned",
+     "intent_index": "outputs.H_plan.intent_index"
     }
    }
   },
@@ -1084,7 +1253,8 @@
      "population_leads": "outputs.C_population.population_leads",
      "community_leads": "outputs.C_population.community_leads",
      "prior_field_records": "outputs.J_cards.field_records",
-     "prior_round": "outputs.J_cards.round"
+     "prior_round": "outputs.J_cards.round",
+     "semantics": "context.semantics.query"
     }
    }
   },
@@ -1215,7 +1385,7 @@
    "title": "θ re-reason with admitted field evidence",
    "theta_op": "cross_map_frictions",
    "next": "L_judge",
-   "objective": "Reason again over the original knowledge, the hypothesis state and the newly admitted field evidence: propose REVISE or SPLIT transitions (citing admitted evidence ids), and name the gaps that remain open.",
+   "objective": "Reason again over the original knowledge, the hypothesis state and the newly admitted field evidence: propose REVISE or SPLIT transitions (citing admitted evidence ids), and name the gaps that remain open. Materials show `hypothesis_semantics`: for each live hypothesis its CURRENT ledger state (population, activity, task, context, mechanism, friction, assumptions, falsifiers, contradictions, open knowledge gaps, support), its origin leads / latent structures, its bridge and the primitives that share its evidence — reason from that state, do not re-derive it from the statement. A REVISE `changes` object may set only the listed keys; an unknown key rejects the submission. Every open gap names the ONE live hypothesis it belongs to (hypothesis_id), the question in the language the population would use, and the evidence_role; a gap without an owner rejects the submission.",
    "constraints": [
     "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
     "No opportunity score, rank or weight of any kind (LAW 1)",
@@ -1271,7 +1441,128 @@
          }
         },
         "changes": {
-         "type": "object"
+         "type": "object",
+         "additionalProperties": false,
+         "description": "Only these keys can be revised; any other key REJECTS the whole submission (nothing is dropped silently). Scalars, assumptions, falsifiers and the origin ids REPLACE; knowledge_gaps UPSERT by gap_id or question (close a gap with status, never delete it); contradictions are APPENDED and must cite evidence ids.",
+         "properties": {
+          "statement": {
+           "type": "string",
+           "minLength": 8,
+           "maxLength": 2000
+          },
+          "mechanism": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "population": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "activity": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "task": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "context": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "suspected_friction": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "assumptions": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "falsifiers": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "knowledge_gaps": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "gap_id": {
+              "type": "string"
+             },
+             "question": {
+              "type": "string"
+             },
+             "evidence_role": {
+              "type": "string"
+             },
+             "status": {
+              "enum": [
+               "open",
+               "researched",
+               "closed"
+              ]
+             }
+            }
+           }
+          },
+          "contradictions": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "required": [
+             "statement",
+             "evidence_ids"
+            ],
+            "properties": {
+             "statement": {
+              "type": "string"
+             },
+             "evidence_ids": {
+              "type": "array",
+              "items": {
+               "type": "string"
+              },
+              "minItems": 1
+             }
+            }
+           }
+          },
+          "lead_ids": {
+           "type": "array",
+           "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+           },
+           "maxItems": 50
+          },
+          "latent_structure_ids": {
+           "type": "array",
+           "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+           },
+           "maxItems": 50
+          }
+         }
         },
         "field_evidence_ids": {
          "type": "array",
@@ -1408,6 +1699,24 @@
               }
              }
             }
+           },
+           "lead_ids": {
+            "type": "array",
+            "items": {
+             "type": "string",
+             "minLength": 1,
+             "maxLength": 200
+            },
+            "maxItems": 50
+           },
+           "latent_structure_ids": {
+            "type": "array",
+            "items": {
+             "type": "string",
+             "minLength": 1,
+             "maxLength": 200
+            },
+            "maxItems": 50
            }
           }
          }
@@ -1418,7 +1727,27 @@
      "open_gaps": {
       "type": "array",
       "items": {
-       "type": "object"
+       "type": "object",
+       "required": [
+        "hypothesis_id",
+        "question",
+        "evidence_role"
+       ],
+       "properties": {
+        "hypothesis_id": {
+         "type": "string"
+        },
+        "question": {
+         "type": "string",
+         "minLength": 1
+        },
+        "evidence_role": {
+         "type": "string"
+        },
+        "note": {
+         "type": "string"
+        }
+       }
       }
      }
     }
@@ -1430,7 +1759,8 @@
     "show": {
      "lived_situations": "outputs.K_situations.lived_situations",
      "lived_clusters": "outputs.J_cards.lived_clusters",
-     "bridges": "outputs.C_bridge.bridges"
+     "bridges": "outputs.C_bridge.bridges",
+     "hypothesis_semantics": "semantics.hypotheses"
     }
    }
   },
@@ -1482,7 +1812,7 @@
    "title": "θ derive physical jobs and product mechanisms",
    "theta_op": "derive_physical_jobs",
    "next": "N_concepts",
-   "objective": "For each surviving hypothesis derive the physical jobs (access, retention, visibility, protection, …) and candidate product mechanisms as REVISE transitions with cause refs; keep unknowns explicit.",
+   "objective": "For each surviving hypothesis derive the physical jobs (access, retention, visibility, protection, …) and candidate product mechanisms as REVISE transitions with cause refs; keep unknowns explicit. Materials show `hypothesis_semantics`: for each live hypothesis its CURRENT ledger state (population, activity, task, context, mechanism, friction, assumptions, falsifiers, contradictions, open knowledge gaps, support), its origin leads / latent structures, its bridge and the primitives that share its evidence — reason from that state, do not re-derive it from the statement. A REVISE `changes` object may set only the listed keys; an unknown key rejects the submission.",
    "constraints": [
     "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
     "No opportunity score, rank or weight of any kind (LAW 1)"
@@ -1538,7 +1868,128 @@
          }
         },
         "changes": {
-         "type": "object"
+         "type": "object",
+         "additionalProperties": false,
+         "description": "Only these keys can be revised; any other key REJECTS the whole submission (nothing is dropped silently). Scalars, assumptions, falsifiers and the origin ids REPLACE; knowledge_gaps UPSERT by gap_id or question (close a gap with status, never delete it); contradictions are APPENDED and must cite evidence ids.",
+         "properties": {
+          "statement": {
+           "type": "string",
+           "minLength": 8,
+           "maxLength": 2000
+          },
+          "mechanism": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "population": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "activity": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "task": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "context": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "suspected_friction": {
+           "type": [
+            "string",
+            "null"
+           ]
+          },
+          "assumptions": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "falsifiers": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "knowledge_gaps": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "gap_id": {
+              "type": "string"
+             },
+             "question": {
+              "type": "string"
+             },
+             "evidence_role": {
+              "type": "string"
+             },
+             "status": {
+              "enum": [
+               "open",
+               "researched",
+               "closed"
+              ]
+             }
+            }
+           }
+          },
+          "contradictions": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "required": [
+             "statement",
+             "evidence_ids"
+            ],
+            "properties": {
+             "statement": {
+              "type": "string"
+             },
+             "evidence_ids": {
+              "type": "array",
+              "items": {
+               "type": "string"
+              },
+              "minItems": 1
+             }
+            }
+           }
+          },
+          "lead_ids": {
+           "type": "array",
+           "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+           },
+           "maxItems": 50
+          },
+          "latent_structure_ids": {
+           "type": "array",
+           "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+           },
+           "maxItems": 50
+          }
+         }
         },
         "field_evidence_ids": {
          "type": "array",
@@ -1675,6 +2126,24 @@
               }
              }
             }
+           },
+           "lead_ids": {
+            "type": "array",
+            "items": {
+             "type": "string",
+             "minLength": 1,
+             "maxLength": 200
+            },
+            "maxItems": 50
+           },
+           "latent_structure_ids": {
+            "type": "array",
+            "items": {
+             "type": "string",
+             "minLength": 1,
+             "maxLength": 200
+            },
+            "maxItems": 50
            }
           }
          }
@@ -1708,14 +2177,19 @@
    },
    "acceptance_rules": [
     "every cause ref is an id from context"
-   ]
+   ],
+   "config": {
+    "show": {
+     "hypothesis_semantics": "semantics.hypotheses"
+    }
+   }
   },
   {
    "step_id": "N_concepts",
    "type": "AGENT_REASON",
    "title": "Product ideation: the SET of distinct product directions, each with variations",
    "next": "N_concepts_law",
-   "objective": "Name the mechanisms the surviving hypotheses support: mechanisms[] = {id, name, hypothesis_id (a live hypothesis in context.hypotheses), evidence_refs (admitted field evidence ids), product_terms[]}. Then turn them into THREE to SIX DISTINCT product directions, product_concepts[] = {id, mechanism_id, name, form_factor (short noun phrase — the de-duplication key), target_moment (the cue moment it lives at), buyer (the sub-population), differentiator (why the generic version fails them — cite the friction), variations[] (at least two: {name, twist}), evidence_refs[] (at least one admitted field evidence id that grounds the moment or the friction)}. Distinct means a different form factor / moment / buyer — not the same organiser in five colours; variations that are only colour, size or price are not variations. Cover the physical jobs and the moments the evidence named. A concept with no admitted evidence behind it is forbidden. If a previous check listed errors, correct exactly those.",
+   "objective": "Name the mechanisms the surviving hypotheses support: mechanisms[] = {id, name, hypothesis_id (a live hypothesis in context.hypotheses), evidence_refs (admitted field evidence ids), product_terms[]}. Then turn them into THREE to SIX DISTINCT product directions, product_concepts[] = {id, mechanism_id, name, form_factor (short noun phrase — the de-duplication key), target_moment (the cue moment it lives at), buyer (the sub-population), differentiator (why the generic version fails them — cite the friction), variations[] (at least two: {name, twist}), evidence_refs[] (at least one admitted field evidence id that grounds the moment or the friction)}. Distinct means a different form factor / moment / buyer — not the same organiser in five colours; variations that are only colour, size or price are not variations. Cover the physical jobs and the moments the evidence named. A concept with no admitted evidence behind it is forbidden. If a previous check listed errors, correct exactly those. Materials show `hypothesis_semantics`: the surviving hypotheses' current ledger state, physical jobs, origin and the primitives (workarounds, adaptations, latent values) that share their evidence — concepts must answer that state, not the seed.",
    "constraints": [
     "mechanism hypothesis_id must be a live hypothesis; support is decided by the ledger, not by you",
     "evidence_refs cite only admitted field evidence ids (kind field_evidence in context.evidence_refs)",
@@ -1816,7 +2290,8 @@
      "field_records": "outputs.J_cards.field_records",
      "physical_jobs": "outputs.N_jobs.physical_jobs",
      "previous_concept_errors": "outputs.N_concepts_law.errors",
-     "mechanism_notes": "outputs.N_concepts_law.mechanism_notes"
+     "mechanism_notes": "outputs.N_concepts_law.mechanism_notes",
+     "hypothesis_semantics": "semantics.hypotheses"
     }
    }
   },
@@ -1876,7 +2351,7 @@
    "step_id": "O_territory",
    "type": "EXTERNAL_OPERATION",
    "title": "Trail projects product territory priors and compiles the product-reality directive",
-   "next": "P_reality",
+   "next": "O_plan",
    "cognitive_op": "phi",
    "external": {
     "system": "trailsignal",
@@ -1885,11 +2360,28 @@
    }
   },
   {
+   "step_id": "O_plan",
+   "type": "DOMAIN_OPERATION",
+   "title": "Product reality: plan per concept (TrailSignal says WHAT, the domain says HOW)",
+   "next": "P_reality",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "product_reality.plan",
+    "inputs": {
+     "research_directive": "outputs.O_territory.research_directive",
+     "product_concepts": "outputs.N_concepts.product_concepts",
+     "mechanisms": "outputs.N_concepts.mechanisms",
+     "live_hypotheses": "context.hypotheses",
+     "semantics": "context.semantics.product_reality"
+    }
+   }
+  },
+  {
    "step_id": "P_reality",
    "type": "HARNESS_ACTION",
    "title": "Harness: product reality check",
    "next": "Q_admit",
-   "objective": "Investigate current products, alternatives, reviews, pricing, complaints and saturation for the candidate mechanisms; record sources, observations, tool trace and limitations.",
+   "objective": "Investigate current products, alternatives, reviews, pricing, complaints and saturation for the candidate mechanisms; record sources, observations, tool trace and limitations. Every search intent is a JOB for ONE concept (materials: `reality_plan` — concept_id, variation_id, hypothesis_id, job_class, query). For every product you observe record in the observation context: `concept: <concept_id>` (and `variation: <variation_id>` when the job names one) · `relation: competitor | substitute | current_solution | validates | solves` — `solves` means an existing product ALREADY does what that concept would · `product: <name as listed>` · `price as listed: <text>`. An observation without a `concept:` tag is never attached to a concept. Also record `intent: <the job's intent id>`.",
    "harness": {
     "action_kind": "PRODUCT_REALITY_CHECK",
     "minimum_independent_sources": 3,
@@ -1906,7 +2398,10 @@
    },
    "config": {
     "show": {
-     "product_concepts": "outputs.N_concepts.product_concepts"
+     "product_concepts": "outputs.N_concepts.product_concepts",
+     "mechanisms": "outputs.N_concepts.mechanisms",
+     "reality_plan": "outputs.O_plan.reality_plan",
+     "planned": "outputs.O_plan.planned"
     }
    }
   },
@@ -1914,7 +2409,7 @@
    "step_id": "Q_admit",
    "type": "EXTERNAL_OPERATION",
    "title": "Trail admits market evidence (competition, price, complaints)",
-   "next": "R_qualify",
+   "next": "Q_join",
    "cognitive_op": "phi",
    "external": {
     "system": "trailsignal",
@@ -1923,6 +2418,28 @@
    },
    "config": {
     "stage": "product_reality"
+   }
+  },
+  {
+   "step_id": "Q_join",
+   "type": "DOMAIN_OPERATION",
+   "title": "Product reality: join existing products to the concept they test",
+   "next": "R_qualify",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "product_reality.join",
+    "inputs": {
+     "admissions": [
+      "outputs.Q_admit.evidence_admission"
+     ],
+     "receipts": [
+      "outputs.P_reality"
+     ],
+     "product_concepts": "outputs.N_concepts.product_concepts",
+     "mechanisms": "outputs.N_concepts.mechanisms",
+     "live_hypotheses": "context.hypotheses",
+     "reality_plan": "outputs.O_plan.reality_plan"
+    }
    }
   },
   {
@@ -2066,7 +2583,7 @@
    "type": "AGENT_REASON",
    "title": "Explain the score with record ids; define the cheapest falsification experiment",
    "next": "X_compile",
-   "objective": "Using the qualification and score records only, explain the outcome by record id, state what remains uncertain, and define the cheapest falsification experiment. Never alter, rank or normalise a Trail score.",
+   "objective": "Using the qualification and score records only, explain the outcome by record id, state what remains uncertain, and define the cheapest falsification experiment. Never alter, rank or normalise a Trail score. Materials show `concept_reality` and `existing_products`: a concept whose status is EXISTING_PRODUCT_CONTESTS is contradicted by a real product — say so and do not present it as an open opportunity; its sibling concepts stand or fall on their own products.",
    "constraints": [
     "Never alter, rank or normalise a Trail score",
     "Cite trail_score_refs (V_score record ids) and admitted field_evidence_ids from context"
@@ -2157,7 +2674,9 @@
      "product_concepts": "outputs.N_concepts.product_concepts",
      "leads": "outputs.T_leads.leads",
      "sourcing_coverage": "outputs.T_leads.sourcing_coverage",
-     "lived_situations": "outputs.K_situations.lived_situations"
+     "lived_situations": "outputs.K_situations.lived_situations",
+     "existing_products": "outputs.Q_join.existing_products",
+     "concept_reality": "outputs.Q_join.concept_reality"
     }
    }
   },
@@ -2260,7 +2779,17 @@
      "community_leads",
      "lenses",
      "corpus_questions",
-     "physical_jobs"
+     "physical_jobs",
+     "existing_products",
+     "concept_reality",
+     "reality_plan",
+     "hypothesis_semantics",
+     "primitives",
+     "latent_structures",
+     "bridges",
+     "priors",
+     "territories",
+     "intent_index"
     ]
    }
   }

@@ -105,8 +105,8 @@ def graph_integrity_errors(raw: dict[str, Any]) -> list[str]:
             # ADR-0020 addendum: only a step the agent / harness answers may be SHOWN prior outputs (name -> dotted path)
             if typ not in ("AGENT_REASON", "HARNESS_ACTION"):
                 errs.append(f"{sid}: config.show is only valid on AGENT_REASON / HARNESS_ACTION")
-            elif not isinstance(show, dict) or not show or not all(isinstance(k, str) and isinstance(v, str) and v.startswith(("outputs.", "input.")) for k, v in show.items()):
-                errs.append(f"{sid}: config.show maps a name to a dotted path under outputs. or input.")
+            elif not isinstance(show, dict) or not show or not all(isinstance(k, str) and isinstance(v, str) and v.startswith(("outputs.", "input.", "semantics.")) for k, v in show.items()):
+                errs.append(f"{sid}: config.show maps a name to a dotted path under outputs., input. or semantics. (the derived OpportunitySemanticViewV1)")
         if typ == "BRANCH" and not (s.get("branches") or nxt):
             errs.append(f"{sid}: BRANCH needs branches or a default next")
         # ADR-0019: HARNESS_ACTION is a typed hand-off to the host harness; theta ops belong to AGENT_REASON only; and

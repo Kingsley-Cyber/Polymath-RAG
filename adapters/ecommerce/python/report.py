@@ -158,11 +158,37 @@ def build_model_from_governed(journal: dict) -> dict:
                 hyps[h["hypothesis_id"]] = h
     score_by = {x.get("hypothesis_id"): x for x in scores}
     refusal_by = {x.get("hypothesis_id"): x for x in refusals}
-    hyp_rows = [{"hypothesis_id": hid, "statement": h.get("statement"), "mechanism": h.get("mechanism"), "population": h.get("population"),
-                 "activity": h.get("activity"), "suspected_friction": h.get("suspected_friction"), "status": h.get("status"),
-                 "field_evidence": len(h.get("field_evidence_ids") or []), "knowledge_support": len(h.get("knowledge_support") or []),
-                 "contradictions": len(h.get("contradictions") or []), "trail_score": score_by.get(hid), "trail_refusal": refusal_by.get(hid)}
-                for hid, h in hyps.items()]
+    # AUTHORITATIVE hypothesis state (restoration reference §13.1): the result's DERIVED semantic view (ledger + outputs + admissions at
+    # the end of the run); else the newest view the journal shows the agent was given; ONLY then the four-field step context, whose
+    # mechanism / population / friction / support columns are empty by construction.
+    views = [v for v in out.get("hypothesis_semantics") or [] if isinstance(v, dict) and isinstance(v.get("hypothesis"), dict)]
+    views_from = "RESULT" if views else None
+    if not views:
+        for s in reversed(steps):
+            shown = ((s.get("materials") or {}).get("values") or {}).get("hypothesis_semantics")
+            if isinstance(shown, list) and shown:
+                views, views_from = [v for v in shown if isinstance(v, dict) and isinstance(v.get("hypothesis"), dict)], f"MATERIALS@{s['step'].get('step_id')}"
+                break
+    view_by = {v["hypothesis"]["hypothesis_id"]: v for v in views}
+
+    def _hyp_row(hid: str, h: dict) -> dict:
+        v = view_by.get(hid)
+        if not v:
+            return {"hypothesis_id": hid, "statement": h.get("statement"), "mechanism": h.get("mechanism"), "population": h.get("population"),
+                    "activity": h.get("activity"), "suspected_friction": h.get("suspected_friction"), "status": h.get("status"), "state_from": "STEP_CONTEXT_4_FIELDS",
+                    "field_evidence": len(h.get("field_evidence_ids") or []), "knowledge_support": len(h.get("knowledge_support") or []),
+                    "contradictions": len(h.get("contradictions") or []), "trail_score": score_by.get(hid), "trail_refusal": refusal_by.get(hid)}
+        hy, se, kn, fe = v["hypothesis"], v.get("semantics") or {}, v.get("knowledge") or {}, [e for e in v.get("field_evidence") or [] if isinstance(e, dict)]
+        return {"hypothesis_id": hid, "statement": hy.get("statement"), "revision": hy.get("revision"), "status": hy.get("status"), "state_from": views_from,
+                "mechanism": se.get("mechanism"), "population": se.get("population"), "activity": se.get("activity"), "task": se.get("task"), "context": se.get("context"),
+                "suspected_friction": se.get("suspected_friction"), "assumptions": se.get("assumptions") or [], "falsifiers": se.get("falsifiers") or [],
+                "open_gaps": [g_.get("question") for g_ in kn.get("knowledge_gaps") or [] if isinstance(g_, dict) and g_.get("status", "open") == "open"],
+                "field_evidence": len(fe), "field_supporting": sum(1 for e in fe if e.get("polarity") == "supporting"),
+                "field_contradicting": sum(1 for e in fe if e.get("polarity") == "contradicting"), "knowledge_support": kn.get("knowledge_support_count") or 0,
+                "contradictions": len(se.get("contradictions") or []), "trail_score": score_by.get(hid), "trail_refusal": refusal_by.get(hid)}
+    hyp_rows = [_hyp_row(hid, hyps.get(hid) or {}) for hid in dict.fromkeys(list(view_by) + list(hyps))]
+    transduction = _transduction_block(out, views)
+    reality = _product_reality_block(out)
     terminal = (result or {}).get("status")
     gap = (result or {}).get("gap")
     verdict = (None if result is None else f"GOVERNED GAP — {(gap or {}).get('code')}" if terminal == "terminal_gap"
@@ -211,7 +237,9 @@ def build_model_from_governed(journal: dict) -> dict:
         "run": {"run_id": journal.get("run_id"), "created_at": journal.get("created_at"), "status": terminal or "running", "verdict": verdict,
                 "signal": _seed_of(journal.get("input") or {})[:600], "corpus": "polymath:" + ",".join(journal.get("corpus_ids") or []) if journal.get("corpus_ids") else None,
                 "rounds": {"research": len(receipts)}},
-        "coverage": {}, "independence": None, "bridges": [], "l4_receipts": [],
+        "coverage": {}, "independence": None, "l4_receipts": [],
+        "bridges": [{"id": b.get("hypothesis_id"), "path": b.get("path"), "boundary": (b.get("evidence_boundary") or {}).get("first_inference_at"), "mechanism": b.get("target_mechanism"),
+                     "status": b.get("status"), "invariant": None, "exploratory": False} for b in out.get("bridges") or [] if isinstance(b, dict)],
         "quotes": [{"quote": r.get("quote"), "source": r.get("url"), "community": r.get("independence_group") or r.get("source_class"), "roles": [r.get("role")]} for r in admitted][:14],
         "mechanisms": [], "leads": leads,
         "product_concepts": real_concepts or ([{"id": "governed_concept", "name": pc.get("title"), "form_factor": pc.get("problem"), "target_moment": pc.get("context"), "buyer": pc.get("population"),
@@ -229,6 +257,9 @@ def build_model_from_governed(journal: dict) -> dict:
                      "rejected_submissions": [{"step_id": s.get("step_id"), "kind": s.get("kind"), "errors": (s.get("response") or {}).get("error")} for s in subs if not s.get("accepted")],
                      "falsification_experiment": po.get("cheapest_falsification_experiment"), "contradictions": (result or {}).get("contradictions") or [],
                      "mechanisms": [m for m in out.get("mechanisms") or [] if isinstance(m, dict)],
+                     "transduction": transduction, "product_reality": reality, "hypothesis_state_from": views_from or "STEP_CONTEXT_4_FIELDS",
+                     "coordinates": {"priors": [p for p in out.get("priors") or [] if isinstance(p, dict)], "territories": [t for t in out.get("territories") or [] if isinstance(t, dict)]},
+                     "materials_recorded": sum(1 for s in steps if s.get("materials")),
                      "lived_situations": [x for x in out.get("lived_situations") or [] if isinstance(x, dict)],
                      "lived_clusters": [x for x in out.get("lived_clusters") or [] if isinstance(x, dict)],
                      "population_leads": [x for key in ("population_leads", "community_leads") for x in out.get(key) or [] if isinstance(x, dict)],
@@ -242,6 +273,43 @@ def build_model_from_governed(journal: dict) -> dict:
                   "events": len(ev), "hypotheses_total": len(hyp_rows)},
         "built_at": journal.get("built_at") or models.now(),
     }
+
+
+def _transduction_block(out: dict, views: list) -> dict | None:
+    """Where each hypothesis CAME FROM (restoration reference §13.2): what was abstracted from the corpus, which population lead /
+    latent structure it declares as its origin, and the bridge it earned. Four authorities are kept apart: corpus evidence (cited
+    ids), inferred semantic structure (the agent's abstraction), live-world evidence, TrailSignal's determination."""
+    prim = out.get("primitives") if isinstance(out.get("primitives"), dict) else {}
+    structures = [x for x in out.get("latent_structures") or [] if isinstance(x, dict)]
+    bridges = {b.get("hypothesis_id"): b for b in out.get("bridges") or [] if isinstance(b, dict)}
+    if not (prim or structures or bridges or views):
+        return None
+    per_h = []
+    for v in views:
+        hid = v["hypothesis"]["hypothesis_id"]
+        b = v.get("bridge") or bridges.get(hid) or {}
+        origin = v.get("origin") or {}
+        per_h.append({"hypothesis_id": hid, "statement": v["hypothesis"].get("statement"),
+                      "origin_leads": [{"id": l.get("id"), "name": l.get("name"), "lane": l.get("source_lane"), "seed_population": l.get("seed_population")} for l in origin.get("leads") or []],
+                      "origin_declared": bool(origin.get("lead_ids") or origin.get("latent_structure_ids")),
+                      "latent_structures": [{"id": x.get("id"), "kind": x.get("kind"), "text": x.get("text"), "basis": x.get("basis"),
+                                             "applicability_outside_source": x.get("applicability_outside_source")} for x in (v.get("transduction") or {}).get("latent_structures") or []],
+                      "primitives_sharing_evidence": (v.get("transduction") or {}).get("primitives_sharing_evidence") or {},
+                      "bridge": ({"source": b.get("source"), "path": b.get("path") or [], "first_inference_at": (b.get("evidence_boundary") or {}).get("first_inference_at"),
+                                  "target_mechanism": b.get("target_mechanism"), "gaps": b.get("gaps") or [], "alternatives": b.get("alternatives") or [],
+                                  "falsifiers": b.get("falsifiers") or [], "status": b.get("status"), "grounding": b.get("grounding")} if b else None)})
+    return {"transferable_invariants": [str(x) for x in prim.get("transferable_invariants") or []], "shared_predicates": [str(x) for x in prim.get("shared_predicates") or []],
+            "families": {k: [str(x) for x in prim.get(k) or []][:8] for k in ("drivers", "behaviors", "adaptations", "constraints", "workarounds", "frictions", "latent_values", "physical_jobs") if prim.get(k)},
+            "latent_structures": structures, "hypotheses": per_h}
+
+
+def _product_reality_block(out: dict) -> dict | None:
+    """Generated concepts and EXISTING products, kept apart and joined by concept id (restoration reference §13.3)."""
+    reality = [c for c in out.get("concept_reality") or [] if isinstance(c, dict)]
+    products = [p for p in out.get("existing_products") or [] if isinstance(p, dict)]
+    if not reality and not products:
+        return None
+    return {"concepts": reality, "existing_products": products, "jobs": len(out.get("reality_plan") or [])}
 
 
 def _intel_block(state: dict) -> dict | None:
@@ -505,6 +573,72 @@ def _render_lived_world(g: dict) -> list[str]:
     return out
 
 
+def _render_transduction(t: dict | None) -> list[str]:
+    """§13.2: what was abstracted, what each hypothesis declares as its origin, the bridge it earned — authorities kept apart."""
+    if not t:
+        return []
+    out = [f"<h2>Transduction — from the corpus to the hypothesis {_auth('POLYMATH', 'AGENT')}</h2><p class='why'>Corpus evidence is cited by id; the structure below is the agent's "
+           "ABSTRACTION of it (inferred, not evidence); the live world and TrailSignal's determination come later and are shown in their own sections.</p>"]
+    if t.get("transferable_invariants"):
+        out.append("<p><strong>Transferable invariants</strong> (source-independent): " + _e(" · ".join(t["transferable_invariants"][:6])) + "</p>")
+    if t.get("families"):
+        out.append("<p class='why'>" + " · ".join(f"<strong>{_e(k.replace('_', ' '))}</strong>: {_e('; '.join(v[:4]))}" for k, v in t["families"].items()) + "</p>")
+    if t.get("latent_structures"):
+        out.append("<div class='scroll'><table><tr><th>Latent structure</th><th>Kind</th><th>Text</th><th>Possible populations</th><th>Applies outside the source</th></tr>")
+        for x in t["latent_structures"][:12]:
+            out.append(f"<tr><td class='num'>{_e(x.get('id'))}</td><td class='num'>{_e(x.get('kind'))}</td><td>{_e(x.get('text'))}</td>"
+                       f"<td>{_e(', '.join(map(str, x.get('possible_populations') or [])))}</td><td>{_e(x.get('applicability_outside_source') or '—')}</td></tr>")
+        out.append("</table></div>")
+    for h in t.get("hypotheses") or []:
+        leads = ", ".join(f"{l.get('name')} [{l.get('lane')}{', seed population' if l.get('seed_population') else ''}]" for l in h.get("origin_leads") or [])
+        structs = ", ".join(f"{x.get('id')} ({str(x.get('basis') or '').lower().replace('_', ' ')})" for x in h.get("latent_structures") or [])
+        out.append(f"<div class='card'><h3>{_e(h.get('hypothesis_id'))}</h3><div class='why'>{_e(h.get('statement'))}<br><strong>Origin</strong>: "
+                   + (_e(leads or "no lead resolved") if h.get("origin_declared") else "<em>not declared by the hypothesis</em>")
+                   + (f" · structures: {_e(structs)}" if structs else "") + "</div>")
+        b = h.get("bridge")
+        if b:
+            out.append(f"<p style='margin:6px 0 2px'><strong>{_e(b.get('target_mechanism'))}</strong> <span class='pill'>{_e(b.get('status'))} · {_e(b.get('grounding'))}</span></p><ul class='bridge'>")
+            crossed = False
+            for hop in b.get("path") or []:
+                crossed = crossed or hop == b.get("first_inference_at")
+                cls, tag = (" class='inferred'", "inferred") if crossed else ("", "evidence-backed")
+                out.append(f"<li{cls}>{_e(hop)}<span class='tag'>{tag}</span></li>")
+            out.append("</ul>")
+            for label, key in (("speculative gaps", "gaps"), ("alternatives", "alternatives"), ("falsifiers", "falsifiers")):
+                if b.get(key):
+                    out.append(f"<p class='why'>{label}: {_e('; '.join(map(str, b[key][:4])))}</p>")
+        else:
+            out.append("<p class='why'><em>No bridge recorded for this hypothesis.</em></p>")
+        out.append("</div>")
+    return out
+
+
+def _render_product_reality(pr: dict | None) -> list[str]:
+    """§13.3: GENERATED concepts on the left of every row, EXISTING products under them — never one list."""
+    if not pr:
+        return []
+    out = [f"<h2>Product Reality — generated concepts vs. existing products {_auth('AGENT', 'FIELD', 'TRAIL')}</h2><p class='why'>{pr.get('jobs', 0)} per-concept research job(s). "
+           "A concept is the run's own idea; an existing product is something a real seller lists today. They are joined only by the concept tag the research job asked for.</p>"]
+    by_concept: dict = {}
+    for p in pr.get("existing_products") or []:
+        by_concept.setdefault(p.get("concept_id"), []).append(p)
+    for c in pr.get("concepts") or []:
+        contested = c.get("status") == "EXISTING_PRODUCT_CONTESTS"
+        out.append(f"<div class='card'><h3>GENERATED CONCEPT {_e(c.get('concept_id'))} — {_e(c.get('concept'))} "
+                   f"<span class='pill' style='{'color:#b00' if contested else ''}'>{_e(str(c.get('status') or '').replace('_', ' ').lower())}</span></h3>"
+                   f"<div class='why'>hypothesis {_e(c.get('hypothesis_id'))} · mechanism {_e(c.get('mechanism_id'))} · {c.get('jobs_planned', 0)} job(s) · {c.get('existing_products', 0)} existing product(s)</div>")
+        rows = by_concept.get(c.get("concept_id")) or []
+        if rows:
+            out.append("<div class='scroll'><table><tr><th>EXISTING product</th><th>Relation</th><th>Price as listed</th><th>What was observed</th><th>Source</th></tr>")
+            for p in rows[:12]:
+                rel = f"<strong style='color:#b00'>{_e(p.get('relation'))} — contests this concept</strong>" if p.get("contests_concept") else _e(p.get("relation"))
+                out.append(f"<tr><td>{_e(p.get('product_name') or '—')}{(' · ' + _e(p.get('variation_id'))) if p.get('variation_id') else ''}</td><td class='num'>{rel}</td>"
+                           f"<td class='num'>{_e(p.get('price_raw') or '—')}</td><td>{_e(p.get('claim'))}</td><td class='num'>{_e(p.get('url') or '')}</td></tr>")
+            out.append("</table></div>")
+        out.append("</div>")
+    return out
+
+
 def _render_governed(g: dict) -> list[str]:
     """The governed block (docs/27): TrailSignal's record VERBATIM, the hypotheses as the adapter's ledger holds them, and
     every field observation as TrailSignal left it — admitted, or rejected with its reason code. Nothing here is computed."""
@@ -533,12 +667,27 @@ def _render_governed(g: dict) -> list[str]:
     for q in g.get("qualifications") or []:
         out.append(f"<p class='why'>qualification {_e(q.get('stage') or q.get('qualification_stage'))}: <strong>{_e(q.get('verdict') or q.get('status'))}</strong> · {_e(', '.join(map(str, q.get('hypothesis_ids') or [])))}</p>")
     out += _render_lived_world(g)
-    out.append(f"<h2>Reasoning Bridge (governed hypotheses) {_auth('AGENT', 'TRAIL')}</h2><div class='scroll'><table><tr><th>Hypothesis</th><th>Statement</th><th>Mechanism</th><th>Ledger status</th><th>Field / corpus / contra</th><th>TrailSignal</th></tr>")
+    out += _render_transduction(g.get("transduction"))
+    out.append(f"<h2>Reasoning Bridge (governed hypotheses) {_auth('AGENT', 'TRAIL')}</h2><p class='why'>Hypothesis state read from: <strong>{_e(g.get('hypothesis_state_from'))}</strong>"
+               + (" — the four-field step view carries no mechanism, population, friction or support; those columns are empty by construction, not by finding." if g.get("hypothesis_state_from") == "STEP_CONTEXT_4_FIELDS" else " (the ledger's newest revision, joined to the run's own outputs).")
+               + "</p><div class='scroll'><table><tr><th>Hypothesis</th><th>Statement</th><th>Population · activity · task · context</th><th>Mechanism</th><th>Friction</th>"
+                 "<th>Ledger status (rev)</th><th>Field + / − · corpus · contra</th><th>TrailSignal</th></tr>")
     for h in g.get("hypotheses") or []:
         ts = (f"score {h['trail_score'].get('score')}" if h.get("trail_score") else f"refused: {_e((h.get('trail_refusal') or {}).get('reason_code'))}" if h.get("trail_refusal") else "—")
-        out.append(f"<tr><td class='num'>{_e(h.get('hypothesis_id'))}</td><td>{_e(h.get('statement'))}</td><td>{_e(h.get('mechanism') or '—')}</td><td class='num'>{_e(h.get('status'))}</td>"
-                   f"<td class='num'>{h.get('field_evidence', 0)} / {h.get('knowledge_support', 0)} / {h.get('contradictions', 0)}</td><td class='num'>{ts}</td></tr>")
+        who = " · ".join(str(x) for x in (h.get("population"), h.get("activity"), h.get("task"), h.get("context")) if x) or "—"
+        out.append(f"<tr><td class='num'>{_e(h.get('hypothesis_id'))}</td><td>{_e(h.get('statement'))}</td><td>{_e(who)}</td><td>{_e(h.get('mechanism') or '—')}</td><td>{_e(h.get('suspected_friction') or '—')}</td>"
+                   f"<td class='num'>{_e(h.get('status'))} ({_e(h.get('revision') if h.get('revision') is not None else '—')})</td>"
+                   f"<td class='num'>{h.get('field_supporting', h.get('field_evidence', 0))} / {h.get('field_contradicting', 0)} · {h.get('knowledge_support', 0)} · {h.get('contradictions', 0)}</td><td class='num'>{ts}</td></tr>")
+        if h.get("open_gaps") or h.get("falsifiers"):
+            out.append("<tr><td></td><td colspan='7' class='why'>" + (f"open gaps: {_e('; '.join(map(str, h['open_gaps'][:4])))}" if h.get("open_gaps") else "")
+                       + (" · " if h.get("open_gaps") and h.get("falsifiers") else "") + (f"falsifiers: {_e('; '.join(map(str, h['falsifiers'][:3])))}" if h.get("falsifiers") else "") + "</td></tr>")
     out.append("</table></div>")
+    out += _render_product_reality(g.get("product_reality"))
+    coords = g.get("coordinates") or {}
+    if coords.get("priors") or coords.get("territories"):
+        out.append(f"<h2>Registry Coordinates {_auth('REGISTRY', 'TRAIL')}</h2><p class='why'>Coordinates TrailSignal projected the hypotheses onto — never evidence. "
+                   + _e("; ".join(f"{p.get('registry_record_id') or p.get('record_id')} ({p.get('label') or p.get('prior_role')})" for p in (coords.get('priors') or [])[:16]))
+                   + (" · territories: " + _e("; ".join(f"{t.get('territory_id')} ({t.get('territory_name') or t.get('territory')})" for t in (coords.get('territories') or [])[:12])) if coords.get("territories") else "") + "</p>")
     adm, rej = g.get("admitted") or [], g.get("rejected") or []
     out.append(f"<h2>Field Observations — admitted {len(adm)} · rejected {len(rej)} {_auth('FIELD', 'TRAIL')}</h2>")
     if g.get("rejected_by_reason"):

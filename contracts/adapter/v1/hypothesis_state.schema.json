@@ -341,6 +341,28 @@
    "minItems": 0,
    "maxItems": 100
   },
+  "lead_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 200
+   },
+   "minItems": 0,
+   "maxItems": 50,
+   "description": "OPTIONAL origin linkage (restoration reference §8.3): ids of the population / community lead(s) this hypothesis came from. Ids only — the lead itself stays in the step output that produced it. Absent on revisions written before the field existed."
+  },
+  "latent_structure_ids": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 200
+   },
+   "minItems": 0,
+   "maxItems": 50,
+   "description": "OPTIONAL origin linkage: ids of the latent structure(s) this hypothesis was abstracted from. Ids only."
+  },
   "created_at": {
    "type": "string",
    "format": "date-time"

@@ -33,6 +33,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JOURNAL_VERSION = "governed-run-journal-v1"
 KINDS = ("start", "step", "status", "submission", "result", "note")
 MAX_EVIDENCE_ROWS = 60            # == the adapter's own adapter_next cap; the journal never grows past what was issued
+MAX_MATERIALS_BYTES = 300_000      # per step, all shown values together; MAX_MATERIAL_VALUE_BYTES per value — larger ones are named + sized
+MAX_MATERIAL_VALUE_BYTES = 120_000
 
 
 def now_iso() -> str:
@@ -74,6 +76,24 @@ def _append(journal: dict, kind: str, data: dict, at: str | None = None) -> dict
     return ev
 
 
+def _materials_record(materials) -> dict | None:
+    """The `materials` sibling of an issued step (prior step outputs and the derived semantic view the manifest chose to show),
+    BOUNDED: a value that fits is kept, a larger one is recorded by name and size only. Execution semantics and ids — never model
+    reasoning (there is none in `materials`)."""
+    if not isinstance(materials, dict):
+        return None
+    values, oversized, room = {}, {}, MAX_MATERIALS_BYTES
+    for name, val in (materials.get("values") or {}).items():
+        size = len(json.dumps(val, ensure_ascii=False, default=str).encode("utf-8"))
+        if size <= min(room, MAX_MATERIAL_VALUE_BYTES):
+            values[name] = val
+            room -= size
+        else:
+            oversized[name] = size
+    return {"values": values, "oversized_bytes": oversized, "missing": list(materials.get("missing") or []), "too_large": list(materials.get("too_large") or []),
+            **({"error": materials["error"]} if materials.get("error") else {})}
+
+
 def record_next(journal: dict, payload: dict, at: str | None = None) -> dict | None:
     """One adapter_next payload. A step is recorded ONCE per (step_id, sequence) — polling returns the same step many times —
     together with the readable evidence it carried. A status payload is recorded only when the status changed."""
@@ -85,9 +105,14 @@ def record_next(journal: dict, payload: dict, at: str | None = None) -> dict | N
         if any(e["kind"] == "step" and (e["data"]["step"].get("step_id"), e["data"]["step"].get("sequence")) == key for e in journal["events"]):
             return None
         ev = payload.get("evidence") if isinstance(payload.get("evidence"), dict) else {}
-        return _append(journal, "step", {"step": step, "status": (payload.get("status") or {}).get("status"),
-                                         "evidence": {"rows": list(ev.get("rows") or [])[:MAX_EVIDENCE_ROWS], "receipts": list(ev.get("receipts") or []),
-                                                      "coverage": ev.get("coverage"), **({"error": ev["error"]} if ev.get("error") else {})}}, at)
+        data = {"step": step, "status": (payload.get("status") or {}).get("status"),
+                "evidence": {"rows": list(ev.get("rows") or [])[:MAX_EVIDENCE_ROWS], "receipts": list(ev.get("receipts") or []),
+                             "coverage": ev.get("coverage"), **({"allocation": ev["allocation"]} if ev.get("allocation") else {}),
+                             **({"error": ev["error"]} if ev.get("error") else {})}}
+        mats = _materials_record(payload.get("materials"))
+        if mats is not None:
+            data["materials"] = mats                       # what the agent was SHOWN beside the step — so the dossier can reconstruct it
+        return _append(journal, "step", data, at)
     st = payload.get("status") or {}
     last = next((e for e in reversed(journal["events"]) if e["kind"] == "status"), None)
     view = {k: st.get(k) for k in ("status", "current_step_id", "steps_issued", "steps_accepted", "branch_loops", "gap", "failure")}
