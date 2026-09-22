@@ -87,7 +87,7 @@ def test_every_candidate_carries_lane_provenance_and_multi_lane_chunks_fuse_once
     # REGION-EXCLUSION-V1 (2026-09-07): a noisy role is dropped at the union and receipted — demotion alone let a
     # table-of-contents chunk take a document-fair judged seat and become S1 when the judge missed its deadline
     assert "d2-noise" not in ids and res.trace["noise_reasons"] == {"region:front_matter": 1} and res.trace["noise_dropped"] == 1
-    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue", "dualread", "resolution_lift", "seealso_fanout", "graph_dest"}   # lanes D/E/F/G/H receipted (empty when off)
+    assert res.trace["funnel_lanes"].keys() == {"hierarchical", "global_dense_child", "global_sparse_child", "latent_rescue", "dualread", "resolution_lift", "seealso_fanout", "graph_dest", "gnn_route"}   # lanes D/E/F/G/H/I receipted (empty when off; I = GNN-RETRIEVAL-V1)
     assert res.trace["funnel_lanes"]["latent_rescue"] == [] and res.trace["lane_sizes"]["latent_rescue"] == 0
     assert res.trace["funnel_union"] == [c.chunk_id for c in res.union] and res.trace["plan"] == "chat-retrieval-v2"
     assert res.trace["multi_lane"] >= 1 and res.degraded == []

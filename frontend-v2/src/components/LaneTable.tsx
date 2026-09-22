@@ -26,6 +26,7 @@ const ALIASES: Record<string, string> = {
   SHADOW_DUALREAD: "dualread",
   SEEALSO_FANOUT: "seealso_fanout",
   GRAPH_DEST: "graph_dest",
+  GNN_ROUTE: "gnn_route",          // GNN-RETRIEVAL-V1 lane I (experimental fifth mode)
   LATENT_RESCUE: "latent_rescue",
   RESOLUTION_LIFT: "resolution_lift",
   ENTITY_CARD: "entity_card",

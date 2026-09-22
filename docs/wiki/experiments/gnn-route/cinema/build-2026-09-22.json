@@ -1,0 +1,167 @@
+{
+ "built_at": "2026-09-22",
+ "collections": [
+  {
+   "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m0-identity-real",
+   "dim": 1024,
+   "gnn_contract": "m0-identity-real",
+   "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+   "model_digest": "m0_9e9d444178d85abd",
+   "points": 11993
+  },
+  {
+   "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real",
+   "dim": 1024,
+   "gnn_contract": "m1-smooth-real",
+   "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+   "model_digest": "m1_2f14df897d8f8e36",
+   "points": 12361
+  },
+  {
+   "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-nograph",
+   "dim": 1024,
+   "gnn_contract": "m1-smooth-nograph",
+   "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+   "model_digest": "m1_fb3e3ba7e7e63fd2",
+   "points": 11993
+  },
+  {
+   "collection": "polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-shuffled",
+   "dim": 1024,
+   "gnn_contract": "m1-smooth-shuffled",
+   "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+   "model_digest": "m1_dca5adf1ff4cd068",
+   "points": 12361
+  }
+ ],
+ "contract": "gnn-route-build-v1",
+ "corpus_id": "cinema",
+ "elapsed_s": 87.6,
+ "models": [
+  {
+   "anchor_cos_parent": 1.0,
+   "digest": "m0_9e9d444178d85abd",
+   "family": "m0-identity",
+   "params": {
+    "contract": "m0-identity-v1",
+    "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+    "lambda": 1.0,
+    "variant": "real"
+   },
+   "variant": "real"
+  },
+  {
+   "anchor_cos_parent": 0.9789879322052002,
+   "digest": "m1_2f14df897d8f8e36",
+   "family": "m1-smooth",
+   "params": {
+    "contract": "m1-smooth-v1",
+    "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+    "lambda": 0.7,
+    "layers": 2,
+    "prior": {
+     "_default": 0.5,
+     "belongs_to": 1.0,
+     "contains": 1.0,
+     "mentioned_in": 1.0,
+     "mentions": 1.0,
+     "similar_to": 0.25
+    },
+    "seed": 0,
+    "variant": "real"
+   },
+   "variant": "real"
+  },
+  {
+   "anchor_cos_parent": 1.0,
+   "digest": "m1_fb3e3ba7e7e63fd2",
+   "family": "m1-smooth",
+   "params": {
+    "contract": "m1-smooth-v1",
+    "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+    "lambda": 1.0,
+    "layers": 2,
+    "prior": {
+     "_default": 0.5,
+     "belongs_to": 1.0,
+     "contains": 1.0,
+     "mentioned_in": 1.0,
+     "mentions": 1.0,
+     "similar_to": 0.25
+    },
+    "seed": 0,
+    "variant": "nograph"
+   },
+   "variant": "nograph"
+  },
+  {
+   "anchor_cos_parent": 0.9698168635368347,
+   "digest": "m1_dca5adf1ff4cd068",
+   "family": "m1-smooth",
+   "params": {
+    "contract": "m1-smooth-v1",
+    "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+    "lambda": 0.7,
+    "layers": 2,
+    "prior": {
+     "_default": 0.5,
+     "belongs_to": 1.0,
+     "contains": 1.0,
+     "mentioned_in": 1.0,
+     "mentions": 1.0,
+     "similar_to": 0.25
+    },
+    "seed": 0,
+    "variant": "shuffled"
+   },
+   "variant": "shuffled"
+  }
+ ],
+ "snapshot": {
+  "contract": "gnn-graph-snapshot-v1",
+  "corpus_id": "cinema",
+  "dim": 1024,
+  "edge_counts": {
+   "child_parent": 71791,
+   "entity_child": 74783,
+   "entity_entity": 21776
+  },
+  "embedding_contract": "embed_e794ec4cab197a3f",
+  "graph_snapshot_id": "gs_3673c34e9b06f569c46a9782",
+  "missing_vectors": {
+   "child_without_vector": 0,
+   "entity_without_vector": 0,
+   "parent_without_map_vector": 368
+  },
+  "node_counts": {
+   "child": 71791,
+   "entity": 43707,
+   "parent": 12361
+  },
+  "orphans": {
+   "children_without_mention": 48287,
+   "entities_without_relation": 31256,
+   "parents_without_child": 0
+  },
+  "predicates": {
+   "ACTS_ON": 3264,
+   "ALTERNATIVE_TO": 367,
+   "CAUSES": 656,
+   "CONSTRAINED_BY": 752,
+   "CORRELATES_WITH": 113,
+   "HAS_PROPERTY": 3009,
+   "IS_A": 2595,
+   "LOCATED_IN": 693,
+   "MEASURES": 177,
+   "OPPOSES": 561,
+   "PART_OF": 1315,
+   "PRECEDES": 212,
+   "PRODUCES": 1544,
+   "REGULATES": 149,
+   "RELATED_TO": 2163,
+   "REQUIRES": 1091,
+   "SAME_AS": 394,
+   "USES": 2721
+  }
+ }
+}

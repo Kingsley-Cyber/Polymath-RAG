@@ -51,6 +51,7 @@ from fastapi import HTTPException
 from qdrant_client import QdrantClient
 
 from polymath_shared.candidate_engine import (
+    ARRIVAL_GNN_ROUTE,
     CANDIDATE_ENGINE_VERSION,
     CHAT_RETRIEVAL_PLAN_VERSION,
     CONCURRENCY_CONTRACT,
@@ -172,6 +173,7 @@ from polymath_shared.retrieval_modes import (
     GRAPH_MAX_FACTS,
     GRAPH_MAX_SEEDS,
     MODE_FAST,
+    MODE_GNN,
     MODE_GRAPH,
     MODE_HYBRID,
     MODE_VECTOR,
@@ -213,6 +215,7 @@ _INT_KNOBS = ("rerank_max", "synthesis_max", "global_dense_k", "global_sparse_k"
               "hierarchy_route_documents",                                                              # SECTION-ROUTING-V1
               "seealso_fanout_enabled", "seealso_fanout_atoms", "seealso_fanout_children",              # P5 fan-out (lane G)
               "graph_dest_enabled", "graph_dest_children",                                             # P7 graph destination (lane H)
+              "gnn_enabled", "gnn_parent_k", "gnn_children_per_parent", "gnn_children",               # GNN-RETRIEVAL-V1 (lane I)
               # EVIDENCE-DIET-V1 step 3: POLYMATH_CHAT_RERANK_ROUND_ROBIN (0/1), POLYMATH_CHAT_RERANK_DOC_CAP, POLYMATH_CHAT_RERANK_MAX_FAIR
               "rerank_round_robin", "rerank_doc_cap", "rerank_max_fair")
 _FLOAT_KNOBS = ("embed_deadline_s", "lane_deadline_s", "rerank_deadline_s",     # P1.d wall-clock budgets
@@ -220,10 +223,13 @@ _FLOAT_KNOBS = ("embed_deadline_s", "lane_deadline_s", "rerank_deadline_s",     
                 "wildcard_finish_budget_s", "wildcard_unverified_fill_s")        # B12 finish budget + unverified fill
 
 
+_STR_KNOBS = ("gnn_family", "gnn_variant")                                        # GNN-RETRIEVAL-V1: POLYMATH_CHAT_GNN_FAMILY / _VARIANT
+
+
 def default_budget() -> CandidateBudget:
     b = CandidateBudget()
     over = {}
-    for name, cast in [(n, int) for n in _INT_KNOBS] + [(n, float) for n in _FLOAT_KNOBS]:
+    for name, cast in [(n, int) for n in _INT_KNOBS] + [(n, float) for n in _FLOAT_KNOBS] + [(n, str) for n in _STR_KNOBS]:
         raw = os.environ.get(f"POLYMATH_CHAT_{name.upper()}")
         if raw:
             try:
@@ -396,6 +402,24 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                     rows.append(r)
             return rows
 
+        gnn_search = None
+        if budget.gnn_enabled:
+            def gnn_search(qv) -> tuple[list[dict], dict]:
+                # GNN-RETRIEVAL-V1 lane I: the SAME primary vector → the isolated experimental GNN parent collection (contract-
+                # derived name; refused on a dimension / contract mismatch) → PARENT nominations → the SAME original-child
+                # search every other route uses (`searcher._search`, corpus + doc + parent filtered). The GNN routes; the
+                # original children prove; the cross-encoder judges. Cheap: one Qdrant parent search + k tiny child searches.
+                from polymath_shared import gnn_route as _gr
+                from polymath_shared.embedding_contracts import active_contract as _ac
+                _cid = _ac().contract_id
+                _coll = _gr.collection_name(_cid, _gr.gnn_contract(budget.gnn_family or _gr.DEFAULT_FAMILY, budget.gnn_variant or _gr.VARIANT_REAL))
+                _gr.verify_collection(searcher.client, _coll, expect_dim=len(qv), embedding_contract=_cid)
+
+                def _child_search(vec, extra, limit):
+                    return searcher._search(collection, list(vec), dict(extra), limit=int(limit))
+                return _gr.route(searcher.client, _coll, _child_search, qv, corpus_id=corpus_id, parent_k=int(budget.gnn_parent_k),
+                                 per_parent=int(budget.gnn_children_per_parent), cap=int(budget.gnn_children))
+
         def graph_dest_search(qv) -> list[dict]:
             # P7 graph destination (§39) + ELITE-MODE D: query entities → Neo4j hop-1 → dest
             # entities → their DOCUMENTS (`mentions`) → parent MAP inside those docs → ORIGINAL
@@ -513,7 +537,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
         # STAGES 2–3: concurrent lanes under `lane_deadline_s` → union with provenance (the engine)
         result = retrieve_candidates(ctx, budget, dense_search=dense_search, sparse_search=sparse_search, latent_search=latent_search,
                                      dualread_search=dualread_search, lift_search=lift_search, fanout_search=fanout_search,
-                                     graph_dest_search=graph_dest_search, region_lookup=_region_lookup, subqueries=subs,
+                                     graph_dest_search=graph_dest_search, gnn_search=gnn_search, region_lookup=_region_lookup, subqueries=subs,
                                      executor=pool, prestarted=prestarted)
 
         # STAGE 4: exactly ONE judge call per turn, under `rerank_deadline_s`. Past it the turn proceeds in
@@ -660,6 +684,7 @@ MODE_LANES: dict[str, tuple[str, ...]] = {
     MODE_HYBRID: LANES,
     MODE_GRAPH: LANES,
     MODE_WILDCARD: LANES,
+    MODE_GNN: (),          # GNN-RETRIEVAL-V1: NO A/B/C lane — the GNN route is the only candidate lane (see _retrieve_gnn)
 }
 
 
@@ -695,6 +720,8 @@ def chat_retrieve_mode(mode: str, query: str, corpus_id: str, *, graph_useful: b
         if reserved in kw:
             raise TypeError(f"chat_retrieve_mode owns {reserved!r}; select a mode instead")
     lanes = MODE_LANES[m]
+    if m == MODE_GNN:
+        return _retrieve_gnn(query, corpus_id, **kw)
     if m == MODE_WILDCARD:
         return _retrieve_wildcard(query, corpus_id, lanes=lanes, **kw)
     if m == MODE_GRAPH:
@@ -706,6 +733,28 @@ def chat_retrieve_mode(mode: str, query: str, corpus_id: str, *, graph_useful: b
         return _with_graph_assist(query, corpus_id, lanes, graph_useful=graph_useful, mode_stamp=MODE_HYBRID, kw=kw)
     out = chat_retrieve_v2(query, corpus_id, lanes=lanes, **kw)
     out["meta"]["mode"] = MODE_VECTOR if m in (MODE_VECTOR, MODE_FAST) else MODE_HYBRID
+    return out
+
+
+def _retrieve_gnn(query: str, corpus_id: str, **kw) -> dict:
+    """GNN-RETRIEVAL-V1: the experimental fifth mode. The candidate route is the GNN route ALONE (no lane A / B / C), so the
+    style itself is measurable against FAST / HYBRID / GRAPH / WILDCARD. The COMMON SUBSTRATE every mode shares is kept and
+    is the only thing shared: the query compiler / primary embedding, the original-child hydration, the cross-encoder judge,
+    the evidence composer and synthesis. A missing / mismatched GNN collection is a TYPED, degraded receipt (`meta.gnn.code`),
+    never a fallback to another mode's candidates."""
+    budget = kw.pop("budget", None) or default_budget()
+    # the GNN route ALONE: no A / B / C lane and none of the additive depth lanes the intent policy may have switched on for the
+    # turn (latent / dual-read / resolution lift / fan-out / graph destination) — otherwise the chat path would measure
+    # "every existing lane + GNN", which plan §16 forbids
+    budget = replace(budget, lanes=(), gnn_enabled=True, latent_enabled=False, dualread_enabled=False, resolution_lift_enabled=False,
+                     seealso_fanout_enabled=False, graph_dest_enabled=False)
+    out = chat_retrieve_v2(query, corpus_id, budget=budget, **kw)
+    gnn = dict((out.get("trace") or {}).get("gnn") or {})
+    out["meta"]["mode"] = MODE_GNN
+    out["meta"]["gnn"] = {**gnn, "mode": MODE_GNN, "arrival": ARRIVAL_GNN_ROUTE}
+    if gnn.get("degraded") or not gnn.get("candidates"):
+        out["meta"]["degraded"] = {"component": "gnn_route", "code": gnn.get("code") or "GNN_NO_CANDIDATES",
+                                   "message": gnn.get("degraded") or "the GNN route nominated no original children"}
     return out
 
 
