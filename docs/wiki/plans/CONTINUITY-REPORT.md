@@ -7,6 +7,7 @@ architecture_impact: none (the single session bootstrap — updated in place, ne
 last_reviewed: 2026-09-22
 ---
 
+
 # CONTINUITY REPORT — the single bootstrap (golden-run edition)
 
 **This is the ONLY session hand-off document.** Every dated packet,
@@ -18,7 +19,15 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-22 (later) — **RESTORATION INTEGRATED AND LIVE; THE DETERMINISTIC VERIFICATION SHELL BUILT AND FROZEN; STOPPED BEFORE THE BENCHMARK (owner's separate word).**
+## CURRENT — 2026-09-22 (latest) — **GNN-RETRIEVAL-V1 MERGED AND LIVE (experimental fifth retrieval mode).**
+
+Owner design (`polymath_gnn_retrieval_experiment.zip`), implemented on branch `experiment/gnn-retrieval` off the checkpoint tag `restoration-integrated-2026-09-22`, qualified, merged into `production` **`76b7197`** (no-ff, clean, 30 files, guards 0/0/0/READY), `frontend-v2/dist` rebuilt (GNN in the bundle), ONE bounce (`/ready` true, embedder + reranker, 24 healthy / ONE bundle, `/adapter/list` serves `ecommerce.product_research` 0.6.0). Live proof on :7200: a real `mode: GNN` chat turn — requested = executed = GNN, 12 candidates all `GNN_ROUTE`, receipt names collection `polymath_gnn_parent_embed_e794ec4cab197a3f_m1-smooth-real` / snapshot `gs_3673c34e9b06f569c46a9782` / digest `m1_2f14df897d8f8e36`, grounded cited answer; HYBRID re-checked same session, `gnn_route: 0`, unaffected. Full-suite attribution done pre-merge: worktree failures (6) a strict subset of production's (7) — no regression. Worktree `../pmv4-gnn` and branch `experiment/gnn-retrieval` removed post-merge.
+
+**Verdict (measured, causal controls): D + C** — the parent-MAP projection helps routing quality; the propagated graph topology is not causally responsible (real ≤ shuffled / = no-graph); GNN mostly duplicates existing HYBRID routing (unique gold 0/30 on cinema L+B). GNN stays selectable and experimental; default OFF in every other mode; no promotion recommended from this evidence.
+
+Next Action = NOTHING autonomous on GNN. Records: `docs/wiki/plans/GNN-RETRIEVAL-V1.md`, `docs/wiki/reports/2026-09-22/GNN-RETRIEVAL-V1-{QUALIFICATION,HANDOFF}.md`, work-log `2026-09-22-gnn-retrieval-v1.md`, register 11.401. Do Not Do: claim GNN retrieval value from union growth alone (the controls decided); write to any `polymath_gnn_parent_*` collection outside the offline builder; push any ref.
+
+## PRIOR — 2026-09-22 (earlier) — **RESTORATION INTEGRATED AND LIVE; THE DETERMINISTIC VERIFICATION SHELL BUILT AND FROZEN; STOPPED BEFORE THE BENCHMARK (owner's separate word).**
 
 Trail: HR6 **`829a0ab`** on `codex/r1-semantic-restoration` (anchor `efaca09`, A46 `6fa0d84`) through Trail's own gate (exact verifier 6 / 6, research 27 / 27, architecture 276, governance PASS 0 at the fixpoint, ceilings 3/3 · 9/24 · 196/800 · 194/300, agentctl check / guard / verify / close --receipt). Polymath `production`: restoration merge **`a21f9aa`** (`a7b9f08`, ancestry verified) → re-pin merge **`8a66934`** (embedded core pinned to `829a0ab`, 30 files, 7 changed; manifest **0.6.0**; extended Trail wire; four-copy receipt relation; envelopes re-recorded; register 11.399) → gate frozen **`69b1dc2`** (1.0.1; register 11.400). G4 `--phase integration` on MAIN = **PASS · safe_to_bounce: true** (13 / 13; call sites 4 / 4). ONE bounce: `/ready` true, embedder + reranker, 24 healthy / 13 types / ONE bundle `cc1f7e1b144c`, hosted `/adapter/list` serves 0.6.0, `POLYMATH_TRAIL_MODE=embedded`. Hermes skill redeployed (parity true, drift 0, 192 files, receipt names `8a66934`). $0 smoke green. `--phase benchmark --preflight` on seed S1 = **PASS**. Nothing pushed; nothing spent.
 
