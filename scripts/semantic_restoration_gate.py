@@ -334,9 +334,291 @@ def phase_trail_preflight(a: argparse.Namespace) -> Report:
     return rep
 
 
-# ─────────────────────────────────────────────────────────── phase: benchmark (§2.3) — built at G7b, frozen before G8
+# ─────────────────────────────────────────────────────────── phase: benchmark (§2.3) — adjudicates a FINISHED run from durable state
+TERMINAL_RUN_STATUSES = {"completed", "failed", "terminated", "cancelled", "refused", "terminal_gap"}
+#: the gate's ONE declared mapping from the runtime's terminal fields to the manifest's outcome vocabulary (§8, open point 3)
+GAP_CODE_OUTCOMES = {"LINEAGE_LAW_UNSATISFIED": "NO_DEFENSIBLE_BRIDGE", "BRIDGE_LAW_UNSATISFIED": "NO_DEFENSIBLE_BRIDGE", "NO_DEFENSIBLE_BRIDGE": "NO_DEFENSIBLE_BRIDGE",
+                     "MARKET_ALREADY_SOLVED": "MARKET_ALREADY_SOLVED", "SUPPLY_UNPROVEN": "SUPPLY_UNPROVEN", "HARD_GATE_UNMET": "HARD_GATE_UNMET", "LAWFUL_REFUSAL": "LAWFUL_REFUSAL"}
+SOFTWARE_FAILURE_CODES = {"STEP_EXECUTOR_ERROR", "SCHEMA_ERROR", "LINEAGE_SOFTWARE_FAILURE", "UNHANDLED_EXCEPTION", "TRAIL_REFUSED", "EVIDENCE_CONTRACT_MISMATCH", "SUBMISSION_REJECTED"}
+INFRA_MARKERS = ("provider", "timeout", "timed out", "connection", "transport", "unreachable", "503", "502", "429", "rate limit", "econn", "dns")
+PLACEHOLDER = re.compile(r"\{[a-zA-Z_][a-zA-Z0-9_]*\}")
+
+
+def load_run_from_db(run_id: str) -> dict[str, Any]:
+    """Read-only SELECTs of exactly what the gate needs; contexts are reduced to ids (the evidence rows themselves are never needed)."""
+    import psycopg  # type: ignore
+
+    dsn = os.environ.get("POLYMATH_PG_DSN")
+    if not dsn:
+        raise RuntimeError("POLYMATH_PG_DSN not set")
+    with psycopg.connect(dsn) as conn, conn.cursor() as cur:
+        cur.execute("select run_id, adapter_id, adapter_version, status, input, outputs, output_order, gap, failure, request_options from adapter_runs where run_id=%s", (run_id,))
+        row = cur.fetchone()
+        if not row:
+            raise RuntimeError(f"run {run_id} not found")
+        run = {"run_id": row[0], "adapter_id": row[1], "adapter_version": row[2], "status": row[3], "input": row[4], "outputs": row[5] or {}, "output_order": row[6] or [],
+               "gap": row[7], "failure": row[8], "request_options": row[9]}
+        cur.execute("select sequence, step_id, step_type, status, step->'harness_action', step->'context'->'hypotheses', step->'context'->'evidence_refs', submission, output, receipt->'failure' "
+                    "from adapter_steps where run_id=%s order by sequence", (run_id,))
+        run["steps"] = [{"sequence": r[0], "step_id": r[1], "step_type": r[2], "status": r[3], "harness_action": r[4],
+                         "context_hypothesis_ids": [h.get("hypothesis_id") for h in (r[5] or []) if isinstance(h, dict)],
+                         "context_evidence_ref_ids": [x.get("id") for x in (r[6] or []) if isinstance(x, dict)],
+                         "submission": (r[7] or {}).get("payload") if isinstance(r[7], dict) else None, "output": r[8], "receipt_failure": r[9]} for r in cur.fetchall()]
+        cur.execute("select hypothesis_id, revision, status, state from adapter_hypotheses where run_id=%s order by seq", (run_id,))
+        run["hypotheses"] = [{"hypothesis_id": r[0], "revision": r[1], "status": r[2], "state": r[3]} for r in cur.fetchall()]
+        cur.execute("select evidence_id, action_id, observation_id, evidence_role, polarity, independence_group, hypothesis_ids, record from adapter_admitted_evidence where run_id=%s order by admitted_at, evidence_id", (run_id,))
+        run["admitted"] = [{"evidence_id": r[0], "action_id": r[1], "observation_id": r[2], "evidence_role": r[3], "polarity": r[4], "independence_group": r[5], "hypothesis_ids": r[6] or [], "record": r[7]} for r in cur.fetchall()]
+    return run
+
+
+def load_run_file(path: Path) -> dict[str, Any]:
+    import gzip
+    raw = gzip.open(path, "rb").read() if str(path).endswith(".gz") else path.read_bytes()
+    return json.loads(raw.decode("utf-8"))
+
+
+def _newest_output(run: dict[str, Any], key: str) -> Any:
+    """The newest output carrying `key` (bounded-loop passes: the last pass wins), by the run's own output order."""
+    outs = run["outputs"]
+    for sid in reversed(list(run.get("output_order") or list(outs))):
+        o = outs.get(sid)
+        if isinstance(o, dict) and key in o:
+            return o[key]
+    return None
+
+
+def _ids(v: Any, key: str = "id") -> set[str]:
+    return {str(x[key]) for x in v if isinstance(x, dict) and x.get(key)} if isinstance(v, list) else set()
+
+
+def _strings(v: Any) -> list[str]:
+    if isinstance(v, str):
+        return [v]
+    if isinstance(v, dict):
+        return [t for x in v.values() for t in _strings(x)]
+    if isinstance(v, list):
+        return [t for x in v for t in _strings(x)]
+    return []
+
+
+def _norm(t: Any) -> str:
+    return " ".join(str(t or "").lower().split())
+
+
 def phase_benchmark(a: argparse.Namespace) -> Report:
-    raise SystemExit("benchmark phase: built at G7b (docs/migration/DETERMINISTIC_VERIFICATION_SHELL.md §2.3); not available in this gate version")
+    import yaml  # type: ignore
+
+    manifest = yaml.safe_load(Path(a.manifest).read_text(encoding="utf-8")) if a.manifest else {}
+    mid = manifest.get("benchmark_id")
+    if a.preflight:
+        rep = Report("benchmark-preflight", {"manifest_id": mid, "gate_version_expected": manifest.get("gate_version")})
+        seed = a.seed if a.seed is not None else (Path(a.seed_file).read_text(encoding="utf-8") if a.seed_file else None)
+        rep.add("B0", "manifest names this gate version and a seed policy", PASS if manifest.get("gate_version") == GATE_VERSION and isinstance(manifest.get("seed_policy"), dict) else FAIL, manifest_gate_version=manifest.get("gate_version"))
+        if seed is None:
+            rep.add("B1", "the seed is the manifest's pinned seed", NE, reason="no --seed / --seed-file")
+        else:
+            digest = hashlib.sha256(_norm(seed).encode("utf-8")).hexdigest()
+            rep.add("B1", "the seed is the manifest's pinned seed (normalised sha256)", PASS if digest == manifest.get("seed", {}).get("sha256_normalised") else FAIL, seed_sha256=digest, expected=manifest.get("seed", {}).get("sha256_normalised"))
+            found = sorted(t for t in (manifest.get("seed_policy", {}).get("forbidden_terms") or []) if re.search(r"\b" + re.escape(t.lower()) + r"\b", _norm(seed)))
+            rep.add("B2", "the seed names no market / population / product category / desired product / consumer problem / niche term", PASS if not found else FAIL, forbidden_terms_found=found)
+        rep.add("B3", "required stages and allowed terminal states declared", PASS if manifest.get("required_stages") and manifest.get("allowed_terminal_states") else FAIL,
+                required_stages=manifest.get("required_stages"), allowed_terminal_states=manifest.get("allowed_terminal_states"))
+        return rep
+
+    run = load_run_file(Path(a.run_file)) if a.run_file else load_run_from_db(a.run_id)
+    if a.export:
+        Path(a.export).parent.mkdir(parents=True, exist_ok=True)
+        data = json.dumps(run, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")
+        if str(a.export).endswith(".gz"):
+            import gzip
+            Path(a.export).write_bytes(gzip.compress(data, mtime=0))
+        else:
+            Path(a.export).write_bytes(data)
+    rep = Report("benchmark", {"run_id": run["run_id"], "adapter_id": run.get("adapter_id"), "adapter_version": run.get("adapter_version"), "status": run.get("status"), "manifest_id": mid,
+                               "seed_sha256": hashlib.sha256(_norm((run.get("input") or {}).get("seed")).encode("utf-8")).hexdigest()})
+    outs = run["outputs"]
+    hyps = {h["hypothesis_id"]: h for h in run["hypotheses"]}
+    latest: dict[str, dict[str, Any]] = {}
+    for h in run["hypotheses"]:
+        if h["hypothesis_id"] not in latest or h["revision"] >= latest[h["hypothesis_id"]]["revision"]:
+            latest[h["hypothesis_id"]] = h
+    retrieved = {i for st in run["steps"] for i in st["context_evidence_ref_ids"] if i}
+    admitted_ids = {x["evidence_id"] for x in run["admitted"]} | {x["observation_id"] for x in run["admitted"] if x.get("observation_id")}
+    if run.get("status") not in TERMINAL_RUN_STATUSES:
+        rep.add("T0", "the run is terminal", NE, run_status=run.get("status"), reason="a benchmark is adjudicated only when finished")
+        return rep
+
+    # T1 abstraction
+    prim = (outs.get("C_primitives") or {}).get("primitives") if isinstance(outs.get("C_primitives"), dict) else None
+    inv = list((prim or {}).get("transferable_invariants") or [])
+    structures = _newest_output(run, "latent_structures") or []
+    cited = {str(i) for v in ((prim or {}).get("evidence_refs") or {}).values() for i in (v if isinstance(v, list) else [])} if isinstance((prim or {}).get("evidence_refs"), dict) else set()
+    unresolved = sorted(i for i in cited if i not in retrieved)
+    rep.add("T1", "abstraction: C_primitives with ≥ 1 transferable invariant and ≥ 1 latent structure; every cited evidence ref was retrieved",
+            PASS if prim and inv and structures and not unresolved else FAIL, transferable_invariants=len(inv), latent_structures=len(structures) if isinstance(structures, list) else 0, cited=len(cited), unresolved_refs=unresolved[:10])
+    # T2 nomination
+    pop = outs.get("C_population") if isinstance(outs.get("C_population"), dict) else {}
+    leads = [l for l in (pop.get("population_leads") or []) + (pop.get("community_leads") or []) if isinstance(l, dict)]
+    lanes = sorted({str(l.get("source_lane") or l.get("search_mode")) for l in leads})       # the engine's lanes: CORPUS / REGISTRY (named) / LATENT
+    voi = all(isinstance(l.get("voi"), (int, float)) for l in leads)
+    seedflag = all("seed_population" in l for l in leads)
+    rep.add("T2", "nomination: C_population with CORPUS / NAMED and LATENT candidates, a VOI per lead, a ranking, the seed_population flag recorded (a LATENT lead need not win)",
+            PASS if leads and "LATENT" in lanes and any(k in lanes for k in ("CORPUS", "REGISTRY", "NAMED")) and voi and pop.get("ranked_lead_ids") and seedflag else FAIL,
+            leads=len(leads), lanes=lanes, voi_on_every_lead=voi, ranked=bool(pop.get("ranked_lead_ids")), seed_population_recorded=seedflag)
+    # T3 origin
+    known_leads, known_structures = _ids(leads), _ids(structures)
+    origin_linked, bad_origin = [], []
+    for hid, h in latest.items():
+        st = h.get("state") or {}
+        li, si = [str(x) for x in st.get("lead_ids") or []], [str(x) for x in st.get("latent_structure_ids") or []]
+        if li or si:
+            origin_linked.append(hid)
+            bad_origin += [x for x in li if x not in known_leads] + [x for x in si if x not in known_structures]
+    seed_pops = {hid: [l.get("seed_population") for l in leads if str(l.get("id")) in (latest[hid].get("state") or {}).get("lead_ids", [])] for hid in origin_linked}
+    rep.add("T3", "origin: ≥ 1 hypothesis names its lead / latent-structure origin; every origin id resolves", PASS if origin_linked and not bad_origin else FAIL,
+            origin_linked_hypotheses=len(origin_linked), hypotheses=len(latest), unresolved_origins=bad_origin[:10], origin_seed_population=seed_pops, hypothesis_population={hid: (latest[hid].get("state") or {}).get("population") for hid in origin_linked})
+    # T4 bridge
+    bridges = [b for b in ((outs.get("C_bridge") or {}).get("bridges") or []) if isinstance(b, dict)] if isinstance(outs.get("C_bridge"), dict) else []
+    problems = []
+    for b in bridges:
+        path = [str(x) for x in b.get("path") or []]
+        fia = (b.get("evidence_boundary") or {}).get("first_inference_at") if isinstance(b.get("evidence_boundary"), dict) else None
+        if len(path) < 3:
+            problems.append(f"{b.get('hypothesis_id')}: path {len(path)} < 3")
+        if not fia or fia not in path:
+            problems.append(f"{b.get('hypothesis_id')}: first_inference_at is not one of the hops")
+        if not b.get("evidence_boundary"):
+            problems.append(f"{b.get('hypothesis_id')}: no evidence_boundary")
+        if b.get("grounding") in ("CORPUS_ONLY", "SPECULATIVE") and not b.get("gaps"):
+            problems.append(f"{b.get('hypothesis_id')}: speculative transfer without gaps")
+        if not b.get("falsifiers"):
+            problems.append(f"{b.get('hypothesis_id')}: no falsifiers")
+    rep.add("T4", "bridge: every inference-transfer hypothesis has a path ≥ 3 hops, first_inference_at on the path, an evidence boundary, gaps for a speculative transfer, falsifiers",
+            PASS if bridges and not problems else (FAIL if problems or latest else SKIP), bridges=len(bridges), problems=problems[:10])
+    # T5 Trail normalization
+    priors = [p for sid in ("D_project", "E_filter") for p in ((outs.get(sid) or {}).get("priors") or []) if isinstance(p, dict)]
+    terr = [t for t in ((outs.get("O_territory") or {}).get("territories") or []) if isinstance(t, dict)] if isinstance(outs.get("O_territory"), dict) else []
+    prior_bad = [p.get("registry_record_id") for p in priors if not p.get("registry_record_id") or not p.get("label") or p.get("mapping_path") not in ("structured", "lexical")]
+    terr_bad = [t.get("territory_id") for t in terr if not t.get("territory_id") or not t.get("territory_name") or t.get("mapping_path") not in ("structured", "lexical")]
+    distinct_terr = len({t.get("territory_id") for t in terr})
+    rep.add("T5", "Trail normalization: every prior / territory id resolves with a meaningful label / name and a recorded mapping_path (structured or lexical)",
+            PASS if priors and not prior_bad and (not terr or not terr_bad) else FAIL, priors=len(priors), priors_without_meaning=len(prior_bad), territories=len(terr), territories_without_meaning=len(terr_bad),
+            distinct_territories=distinct_terr, mapping_paths=sorted({str(p.get("mapping_path")) for p in priors} | {str(t.get("mapping_path")) for t in terr}))
+    # T6 research fidelity
+    try:
+        sys.path.insert(0, str(ROOT / "adapters" / "ecommerce" / "python"))
+        from query_semantics import GOVERNANCE_TERMS  # type: ignore
+    except Exception:  # noqa: BLE001
+        GOVERNANCE_TERMS = frozenset({"independent", "independence", "corroborate", "corroboration", "observations", "admitted", "admission", "evidence"})
+    intents, issues = [], []
+    for st in run["steps"]:
+        ha = st.get("harness_action") or {}
+        for it in ha.get("search_intents") or []:
+            if not isinstance(it, dict):
+                continue
+            intents.append(it)
+            iid = str(it.get("intent_id") or "")
+            if not iid:
+                issues.append(f"{st['step_id']}: intent without id")
+            if any(PLACEHOLDER.search(t) for t in _strings(it)):
+                issues.append(f"{iid}: unbound placeholder")
+            hid = it.get("hypothesis_id")
+            if ha.get("action_kind") == "AGENT_RESEARCH" and hid and hid not in hyps:
+                issues.append(f"{iid}: hypothesis {hid} unknown")
+            if ha.get("action_kind") == "AGENT_RESEARCH" and not hid and not it.get("concept_id"):
+                issues.append(f"{iid}: no hypothesis")
+            q = _norm(it.get("query"))
+            if q and set(q.replace("?", "").split()) <= set(GOVERNANCE_TERMS):
+                issues.append(f"{iid}: governance-only query")
+    intent_ids = {str(i.get("intent_id")) for i in intents}
+    gap_ids = {str(g.get("gap_id")) for st in run["steps"] for g in ((st.get("harness_action") or {}).get("evidence_gaps") or []) if isinstance(g, dict)}
+    tagged, chain_bad = 0, []
+    for x in run["admitted"]:
+        ctx = str((x.get("record") or {}).get("context") or "")
+        m = re.search(r"\bintent:\s*([A-Za-z0-9][A-Za-z0-9._:/-]*)", ctx)
+        if m:
+            tagged += 1
+            if m.group(1) not in intent_ids:
+                chain_bad.append(m.group(1))
+    rep.add("T6", "research fidelity: every issued intent has an id, a resolving hypothesis, no unbound placeholder, no governance-only query; tagged observations resolve to an issued intent",
+            PASS if intents and not issues and not chain_bad and tagged else FAIL, intents=len(intents), issues=issues[:10], observations_tagged=tagged, admitted=len(run["admitted"]), unresolved_tags=chain_bad[:10], gaps_issued=len(gap_ids))
+    # T7 evidence and revision
+    link_bad = [x["evidence_id"] for x in run["admitted"] if any(h not in hyps for h in x["hypothesis_ids"])]
+    rel_bad = []
+    contradict: set[str] = set()
+    for x in run["admitted"]:
+        for r in (x.get("record") or {}).get("hypothesis_relations") or []:
+            if not isinstance(r, dict) or r.get("hypothesis_id") not in x["hypothesis_ids"] or r.get("relation") not in ("SUPPORTS", "CONTRADICTS", "NEUTRAL"):
+                rel_bad.append(x["evidence_id"])
+            elif r.get("relation") == "CONTRADICTS":
+                contradict.add(str(r["hypothesis_id"]))
+        if x.get("polarity") == "contradicting":
+            contradict |= {str(h) for h in x["hypothesis_ids"]}
+    transitions = [t for st in run["steps"] for t in ((st.get("submission") or {}).get("transitions") or []) if isinstance(t, dict)]
+    cause_bad = [t.get("hypothesis_id") for t in transitions for c in t.get("cause_refs") or [] if isinstance(c, dict) and str(c.get("id")) not in admitted_ids | retrieved]
+    verdict_kinds = {v.get("kind") for sid in ("L_judge", "R_qualify", "U_qualify") for v in ((outs.get(sid) or {}).get("hypothesis_verdicts") or []) if isinstance(v, dict)}
+    represented = [hid for hid in contradict if (latest.get(hid, {}).get("state") or {}).get("contradictions") or latest.get(hid, {}).get("status") in ("weakened", "killed", "split")]
+    rep.add("T7", "evidence and revision: admitted links resolve; stated relations are valid; a transition's cause_refs resolve; admitted contradictions are represented in state",
+            PASS if not link_bad and not rel_bad and not cause_bad and len(represented) == len(contradict) else FAIL,
+            admitted=len(run["admitted"]), unresolved_links=link_bad[:10], invalid_relations=rel_bad[:10], transitions=len(transitions), kinds=sorted({str(t.get("kind")) for t in transitions}),
+            unresolved_cause_refs=cause_bad[:10], contradicted_hypotheses=sorted(contradict), represented=sorted(represented), verdict_kinds=sorted(str(k) for k in verdict_kinds))
+    # T8 concepts
+    nc = outs.get("N_concepts") if isinstance(outs.get("N_concepts"), dict) else {}
+    concepts = [c for c in (nc.get("product_concepts") or []) if isinstance(c, dict)]
+    mechs = {str(m.get("id")): m for m in (nc.get("mechanisms") or []) if isinstance(m, dict)}
+    seed = _norm((run.get("input") or {}).get("seed"))
+    c_bad = [c.get("id") for c in concepts if str(c.get("mechanism_id")) not in mechs or str(mechs.get(str(c.get("mechanism_id")), {}).get("hypothesis_id")) not in hyps
+             or not all(c.get(k) for k in ("id", "name", "buyer", "form_factor", "target_moment")) or _norm(c.get("name")) == seed or _norm(c.get("problem")) == seed]
+    min_concepts = int(manifest.get("min_concepts", 1))
+    rep.add("T8", "concepts: N_concepts with ≥ the manifest minimum; each concept's mechanism and hypothesis resolve; typed fields present; concept text is not the seed",
+            PASS if len(concepts) >= min_concepts and not c_bad else FAIL, concepts=len(concepts), minimum=min_concepts, invalid=c_bad[:10])
+    # T9 product reality
+    plan = outs.get("O_plan") if isinstance(outs.get("O_plan"), dict) else {}
+    jobs = [j for j in (plan.get("reality_plan") or []) if isinstance(j, dict)]
+    join = outs.get("Q_join") if isinstance(outs.get("Q_join"), dict) else {}
+    concept_ids = {str(c.get("id")) for c in concepts}
+    job_ids = {str(j.get("job_id")) for j in jobs}
+    uncovered = sorted(concept_ids - {str(j.get("concept_id")) for j in jobs})
+    joined_bad = [p.get("observation_id") for p in (join.get("existing_products") or []) if isinstance(p, dict) and (str(p.get("concept_id")) not in concept_ids or (p.get("job_id") and str(p.get("job_id")) not in job_ids))]
+    reality = [r for r in (join.get("concept_reality") or []) if isinstance(r, dict)]
+    statuses = sorted({str(r.get("status")) for r in reality})
+    rep.add("T9", "product reality: O_plan.reality_plan with ≥ 1 job per concept; every joined existing product resolves to a concept and a job; ≥ 1 concept has a reality disposition",
+            PASS if jobs and not uncovered and not joined_bad and reality and any(s in ("EXISTING_PRODUCT_CONTESTS", "EXISTING_PRODUCTS_FOUND", "NO_EXISTING_PRODUCT_JOINED", "NOT_RESEARCHED") for s in statuses) else FAIL,
+            jobs=len(jobs), concepts_without_job=uncovered[:10], joined=(join.get("joined") or {}).get("joined") if isinstance(join.get("joined"), dict) else None, invalid_joins=joined_bad[:10], dispositions=statuses)
+    # T10 supply
+    supply_present = {sid: sid in outs for sid in ("S_plan", "S_supply", "T_admit", "T_leads")}
+    contested_all = bool(reality) and all(r.get("status") == "EXISTING_PRODUCT_CONTESTS" for r in reality)
+    lawful_gap = isinstance(run.get("gap"), dict) and run["gap"].get("code") in GAP_CODE_OUTCOMES
+    if not supply_present["S_plan"] and (contested_all or not concepts or lawful_gap):
+        rep.add("T10", "supply: S_plan → S_supply → T_admit → T_leads executed", SKIP, reason="no concept reached supply lawfully", contested_all=contested_all, concepts=len(concepts), gap=(run.get("gap") or {}).get("code") if isinstance(run.get("gap"), dict) else None)
+    else:
+        rep.add("T10", "supply: S_plan → S_supply → T_admit → T_leads executed", PASS if all(supply_present.values()) else FAIL, **supply_present)
+    # T11 terminal outcome
+    failure = run.get("failure") if isinstance(run.get("failure"), dict) else None
+    gap = run.get("gap") if isinstance(run.get("gap"), dict) else None
+    scores = (outs.get("V_score") or {}).get("trail_scores") if isinstance(outs.get("V_score"), dict) else None
+    refusals = [r.get("reason_code") for r in ((outs.get("V_score") or {}).get("score_refusals") or []) if isinstance(r, dict)] if isinstance(outs.get("V_score"), dict) else []
+    text = _norm(json.dumps([failure, gap], default=str))
+    if failure or (gap and gap.get("code") in SOFTWARE_FAILURE_CODES):
+        outcome, status = (str((failure or gap or {}).get("code") or "UNHANDLED_EXCEPTION")), (NE if any(m in text for m in INFRA_MARKERS) else FAIL)
+    elif run["status"] == "completed" and scores:
+        outcome, status = "SCORED", PASS
+    elif run["status"] == "completed" and refusals:
+        outcome, status = ("HARD_GATE_UNMET" if "HARD_GATE_UNMET" in refusals else str(refusals[0])), PASS
+    elif gap and gap.get("code") in GAP_CODE_OUTCOMES:
+        outcome, status = GAP_CODE_OUTCOMES[gap["code"]], PASS
+    else:
+        outcome, status = f"{run['status']}:{(gap or {}).get('code')}", FAIL
+    allowed = set(manifest.get("allowed_terminal_states") or [])
+    if status == PASS and allowed and outcome not in allowed:
+        status = FAIL
+    rep.add("T11", "terminal outcome: a lawful terminal state (SCORED / HARD_GATE_UNMET / NO_DEFENSIBLE_BRIDGE / MARKET_ALREADY_SOLVED / SUPPLY_UNPROVEN / LAWFUL_REFUSAL); a software failure is FAIL; an infrastructure cause is NOT_EVALUABLE",
+            status, outcome=outcome, run_status=run["status"], gap_code=(gap or {}).get("code"), failure_code=(failure or {}).get("code"), score_refusals=sorted({str(r) for r in refusals}), scored=bool(scores), allowed=sorted(allowed))
+    required = set(manifest.get("required_stages") or [])
+    missing_required = sorted(t for t in required if not any(c["id"] == t for c in rep.checks))
+    if missing_required:
+        rep.add("TX", "every required stage was evaluated", FAIL, missing=missing_required)
+    return rep
 
 
 # ─────────────────────────────────────────────────────────── main
@@ -359,6 +641,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--manifest", type=Path, help="benchmark manifest yaml")
     ap.add_argument("--preflight", action="store_true", help="check the seed against the manifest before any run exists")
     ap.add_argument("--seed", help="the seed text (preflight)")
+    ap.add_argument("--seed-file", help="file holding the seed text (preflight)")
+    ap.add_argument("--run-file", help="a run exported by --export (json or json.gz) instead of the database")
+    ap.add_argument("--export", help="also write the loaded run (reduced durable state) to this json / json.gz path (fixtures)")
     a = ap.parse_args(argv)
     if a.phase == "integration":
         rep = phase_integration(a)
@@ -370,8 +655,10 @@ def main(argv: list[str] | None = None) -> int:
         fails = [c["id"] for c in rep.checks if c["status"] == FAIL]
         headline = f"TRAIL_PREFLIGHT: {rep.overall} · diagnostics: {len(fails)}"
     else:
+        if not a.preflight and not (a.run_id or a.run_file):
+            ap.error("--run-id or --run-file is required (or --preflight)")
         rep = phase_benchmark(a)
-        headline = f"BENCHMARK_GATE: {rep.overall}"
+        headline = f"BENCHMARK_{'PREFLIGHT' if a.preflight else 'GATE'}: {rep.overall}"
     write_outputs(rep, a.json, a.md, headline)
     for c in rep.checks:
         print(f"  {c['id']:<4} {c['status']:<14} {c['title']}")

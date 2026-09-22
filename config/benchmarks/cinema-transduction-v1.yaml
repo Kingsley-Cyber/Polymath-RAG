@@ -1,0 +1,26 @@
+# Benchmark manifest — cinema-transduction-v1 (docs/migration/DETERMINISTIC_VERIFICATION_SHELL.md §3)
+# benchmark manifest + frozen gate + run state = deterministic adjudication. Frozen with the gate: never edited after a benchmark run exists.
+benchmark_id: cinema-transduction-v1
+gate_version: 1.0.0
+adapter: ecommerce.product_research
+corpus: [cinema]
+seed:
+  reference: docs/migration/SEMANTIC_TRANSDUCTION_RESTORATION_REFERENCE.md §14.2 — the source-situation seed (S1), verbatim
+  text: "How a camera crew keeps equipment working through a shooting day — who handles what, what is moved between setups, and what repeatedly goes wrong in hand-offs."
+  sha256_normalised: aa08dc88d58b39dc612ca8b833db5c7857ed21b736c7335098f700afd1f3d420      # sha256 of the lower-cased, whitespace-collapsed text; the preflight refuses any other seed
+seed_policy:                       # reference §14.1 — what the seed must NOT contain (the preflight checks the pinned hash AND these terms)
+  target_market_allowed: false
+  target_population_allowed: false
+  product_category_allowed: false
+  desired_product_allowed: false
+  explicit_problem_allowed: false
+  expected_niche_allowed: false
+  forbidden_terms: [hiker, hikers, photographer, photographers, backpack, backpacks, mount, mounts, clip, clips, strap, straps, tripod, tripods, camera bag, camera bags, market, niche, consumer, consumers, customers, buyers, product category, e-commerce, ecommerce, amazon, shopify]
+required_stages: [T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11]
+min_concepts: 1
+allowed_terminal_states: [SCORED, HARD_GATE_UNMET, NO_DEFENSIBLE_BRIDGE, MARKET_ALREADY_SOLVED, SUPPLY_UNPROVEN, LAWFUL_REFUSAL]
+prohibited_terminal_states: [STEP_EXECUTOR_ERROR, SCHEMA_ERROR, LINEAGE_SOFTWARE_FAILURE, UNHANDLED_EXCEPTION, TRAIL_REFUSED, EVIDENCE_CONTRACT_MISMATCH]
+run_policy:
+  runs_authorized_per_owner_word: 1
+  hosted_endpoint: true
+  principal: prn_accept_e2e

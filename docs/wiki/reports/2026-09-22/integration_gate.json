@@ -1,0 +1,174 @@
+{
+ "checks": [
+  {
+   "facts": {
+    "tip": "a7b9f08"
+   },
+   "id": "I1",
+   "status": "PASS",
+   "title": "production contains the restoration tip"
+  },
+  {
+   "facts": {
+    "expected": "829a0abf853fdb0c3589c4162177beb8c836c515",
+    "pinned": "829a0abf853fdb0c3589c4162177beb8c836c515"
+   },
+   "id": "I2",
+   "status": "PASS",
+   "title": "Trail pin == the accepted HR6 commit"
+  },
+  {
+   "facts": {
+    "blob_checked": true,
+    "blob_mismatch": [],
+    "files": 30,
+    "sha_mismatch": []
+   },
+   "id": "I3",
+   "status": "PASS",
+   "title": "every embedded Trail file equals its pinned sha256 (and the commit's blob when the Trail worktree is given)"
+  },
+  {
+   "facts": {
+    "adapter_version": "0.6.0",
+    "opted_in": true,
+    "trail_steps": 12
+   },
+   "id": "I4",
+   "status": "PASS",
+   "title": "manifest adapter_version == expected and every Trail step opts in to the extended wire"
+  },
+  {
+   "facts": {
+    "byte_equal": true,
+    "relation_field": true
+   },
+   "id": "I5",
+   "status": "PASS",
+   "title": "receipt contract: contract and engine copy byte-equal; hypothesis_relations in the receipt and the admission contract"
+  },
+  {
+   "facts": {
+    "dirty": []
+   },
+   "id": "I6",
+   "status": "PASS",
+   "title": "working tree clean"
+  },
+  {
+   "facts": {
+    "stale": []
+   },
+   "id": "I7",
+   "status": "PASS",
+   "title": "no stale generated contract copy under adapters/ecommerce/schemas"
+  },
+  {
+   "facts": {
+    "exit": 0,
+    "passed": 4
+   },
+   "id": "I8",
+   "status": "PASS",
+   "title": "the three previously untestable call sites pass on this checkout (never skipped)"
+  },
+  {
+   "facts": {
+    "exit": 0,
+    "passed": 122,
+    "suites": [
+     "tests/determinism/test_adapter_semantic_view.py",
+     "tests/determinism/test_adapter_research_fidelity.py",
+     "tests/determinism/test_adapter_product_reality.py",
+     "tests/determinism/test_adapter_dossier_fidelity.py",
+     "tests/determinism/test_chat_evidence_route.py",
+     "tests/determinism/test_adapter_trail_wire.py",
+     "tests/determinism/test_adapter_ecommerce_product_research_e2e.py",
+     "tests/determinism/test_adapter_ecommerce_product_research_embedded_trail.py",
+     "tests/contracts/test_adapter_contract_v1.py",
+     "tests/contracts/test_harness_receipt_trail_parity.py",
+     "tests/contracts/test_deploy_ecommerce_skill.py"
+    ]
+   },
+   "id": "I9",
+   "status": "PASS",
+   "title": "focused adapter suites pass (DB-free)"
+  },
+  {
+   "facts": {
+    "exit": 0,
+    "ratio": null,
+    "tail": [
+     "ALL 609 CHECKS PASSED"
+    ]
+   },
+   "id": "I10",
+   "status": "PASS",
+   "title": "engine suite passes (adapters/ecommerce, Hermes venv, temp loop db)"
+  },
+  {
+   "facts": {
+    "agent_preflight": {
+     "exit": 0,
+     "tail": [
+      "preflight: ok"
+     ]
+    },
+    "bundle_integrity": {
+     "exit": 0,
+     "tail": [
+      "  READY"
+     ]
+    },
+    "repo_guard": {
+     "exit": 0,
+     "tail": [
+      "repo guard: ok"
+     ]
+    },
+    "wiki_worm": {
+     "exit": 0,
+     "tail": [
+      "wiki: ok"
+     ]
+    }
+   },
+   "id": "I11",
+   "status": "PASS",
+   "title": "repository guards 0 / 0 / 0 / READY"
+  },
+  {
+   "facts": {
+    "exit": 0,
+    "passed": 7,
+    "suites": [
+     "tests/contracts/test_trail_core_embedding.py",
+     "tests/determinism/test_trail_core_recorded_equivalence.py"
+    ]
+   },
+   "id": "I12",
+   "status": "PASS",
+   "title": "embedded Trail parity (sha pins + recorded envelopes replay)"
+  },
+  {
+   "facts": {
+    "leased_tickets": 0,
+    "open_runs": 0
+   },
+   "id": "I13",
+   "status": "PASS",
+   "title": "0 open adapter runs, 0 leased tickets"
+  }
+ ],
+ "gate_commit": "8a66934a94b1a12ba66360e06f5dd894d52394f9",
+ "gate_version": "1.0.0",
+ "overall": "PASS",
+ "phase": "integration",
+ "target": {
+  "head": "8a66934a94b1a12ba66360e06f5dd894d52394f9",
+  "manifest_version": "0.6.0",
+  "repo": "/Users/king/Documents/polymath-rebuild/polymath-v4",
+  "restoration_tip": "a7b9f08",
+  "trail_commit": "829a0abf853fdb0c3589c4162177beb8c836c515"
+ }
+}
