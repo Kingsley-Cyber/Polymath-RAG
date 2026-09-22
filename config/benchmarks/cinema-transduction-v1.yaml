@@ -1,7 +1,7 @@
 # Benchmark manifest — cinema-transduction-v1 (docs/migration/DETERMINISTIC_VERIFICATION_SHELL.md §3)
 # benchmark manifest + frozen gate + run state = deterministic adjudication. Frozen with the gate: never edited after a benchmark run exists.
 benchmark_id: cinema-transduction-v1
-gate_version: 1.0.0
+gate_version: 1.0.1
 adapter: ecommerce.product_research
 corpus: [cinema]
 seed:

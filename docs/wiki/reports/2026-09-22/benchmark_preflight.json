@@ -1,0 +1,65 @@
+{
+ "checks": [
+  {
+   "facts": {
+    "manifest_gate_version": "1.0.1"
+   },
+   "id": "B0",
+   "status": "PASS",
+   "title": "manifest names this gate version and a seed policy"
+  },
+  {
+   "facts": {
+    "expected": "aa08dc88d58b39dc612ca8b833db5c7857ed21b736c7335098f700afd1f3d420",
+    "seed_sha256": "aa08dc88d58b39dc612ca8b833db5c7857ed21b736c7335098f700afd1f3d420"
+   },
+   "id": "B1",
+   "status": "PASS",
+   "title": "the seed is the manifest's pinned seed (normalised sha256)"
+  },
+  {
+   "facts": {
+    "forbidden_terms_found": []
+   },
+   "id": "B2",
+   "status": "PASS",
+   "title": "the seed names no market / population / product category / desired product / consumer problem / niche term"
+  },
+  {
+   "facts": {
+    "allowed_terminal_states": [
+     "SCORED",
+     "HARD_GATE_UNMET",
+     "NO_DEFENSIBLE_BRIDGE",
+     "MARKET_ALREADY_SOLVED",
+     "SUPPLY_UNPROVEN",
+     "LAWFUL_REFUSAL"
+    ],
+    "required_stages": [
+     "T1",
+     "T2",
+     "T3",
+     "T4",
+     "T5",
+     "T6",
+     "T7",
+     "T8",
+     "T9",
+     "T10",
+     "T11"
+    ]
+   },
+   "id": "B3",
+   "status": "PASS",
+   "title": "required stages and allowed terminal states declared"
+  }
+ ],
+ "gate_commit": "2167569619537cec95e2d263877b90a1e1a17d43",
+ "gate_version": "1.0.1",
+ "overall": "PASS",
+ "phase": "benchmark-preflight",
+ "target": {
+  "gate_version_expected": "1.0.1",
+  "manifest_id": "cinema-transduction-v1"
+ }
+}

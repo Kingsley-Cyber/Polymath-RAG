@@ -180,4 +180,15 @@ def test_preflight_accepts_the_pinned_seed_and_refuses_a_presupposing_one():
 
 def test_the_gate_version_is_the_manifests():
     import yaml
-    assert yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["gate_version"] == G.GATE_VERSION == "1.0.0"
+    assert yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["gate_version"] == G.GATE_VERSION == "1.0.1"
+
+
+def test_a_markdown_verdict_under_docs_wiki_carries_front_matter(tmp_path):
+    md = ROOT / "docs" / "wiki" / "reports" / "_gate_selftest" / "verdict.md"
+    try:
+        subprocess.run([sys.executable, str(GATE), "--phase", "benchmark", "--preflight", "--manifest", str(MANIFEST), "--seed", SEED_S1, "--md", str(md)], cwd=ROOT, capture_output=True, text=True)
+        text = md.read_text(encoding="utf-8")
+        assert text.startswith("---\ntitle:") and "last_reviewed:" in text.split("---")[1]
+    finally:
+        if md.exists():
+            md.unlink(); md.parent.rmdir()

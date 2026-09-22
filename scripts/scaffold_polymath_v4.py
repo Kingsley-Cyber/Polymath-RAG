@@ -737,6 +737,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-22-restoration-benchmark-gate-frozen.md", "md", None),
     ("docs/wiki/reports/2026-09-22/integration_gate.json", "json", None),
     ("docs/wiki/reports/2026-09-22/integration_gate.md", "md", None),
+    ("docs/wiki/reports/2026-09-22/benchmark_preflight.json", "json", None),
+    ("docs/wiki/reports/2026-09-22/benchmark_preflight.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT.md", "md", None),
     ("docs/migration/BOOTSTRAP_CONTEXT_EXTENDED.md", "md", None),
     ("docs/migration/MIGRATION_POLICY.md", "md", None),

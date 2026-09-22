@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-GATE_VERSION = "1.0.0"
+GATE_VERSION = "1.0.1"          # 1.0.1 (2026-09-22, before any benchmark run): the markdown verdict carries wiki front matter (repo law: docs/wiki/**/*.md)
 PASS, FAIL, NE, SKIP = "PASS", "FAIL", "NOT_EVALUABLE", "SKIP_LAWFUL"
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -103,7 +103,8 @@ def write_outputs(rep: Report, json_path: Path | None, md_path: Path | None, hea
         json_path.parent.mkdir(parents=True, exist_ok=True)
         json_path.write_text(text, encoding="utf-8")
     if md_path:
-        lines = [f"# {headline}", "", f"gate_version `{GATE_VERSION}` · gate_commit `{payload['gate_commit']}` · phase `{rep.phase}` · **overall {rep.overall}**", "",
+        from datetime import date
+        lines = ([f"---\ntitle: \"{headline}\"\nlast_reviewed: {date.today().isoformat()}\nkind: gate_verdict\ngate_version: {GATE_VERSION}\n---", ""] if "docs/wiki" in md_path.resolve().as_posix() else []) + [f"# {headline}", "", f"gate_version `{GATE_VERSION}` · gate_commit `{payload['gate_commit']}` · phase `{rep.phase}` · **overall {rep.overall}**", "",
                  "| id | check | status | facts |", "|---|---|---|---|"]
         for c in rep.checks:
             facts = json.dumps(c["facts"], sort_keys=True, ensure_ascii=False)

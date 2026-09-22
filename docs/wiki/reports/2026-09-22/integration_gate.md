@@ -1,3 +1,10 @@
+---
+title: "INTEGRATION_GATE: PASS · safe_to_bounce: true"
+last_reviewed: 2026-09-21
+kind: gate_verdict
+gate_version: 1.0.1
+---
+
 # INTEGRATION_GATE: PASS · safe_to_bounce: true
 
 gate_version `1.0.0` · gate_commit `8a66934a94b1a12ba66360e06f5dd894d52394f9` · phase `integration` · **overall PASS**
