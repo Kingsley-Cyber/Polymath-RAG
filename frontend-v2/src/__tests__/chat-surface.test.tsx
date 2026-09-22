@@ -14,6 +14,7 @@ import { App } from "../App";
 import { AnswerBody } from "../components/AnswerBody";
 import { ModelPicker } from "../components/ModelPicker";
 import { ProcessRail } from "../components/ProcessRail";
+import { QueryTrace } from "../components/QueryTrace";
 import { newTurn, runTurn, type Turn } from "../lib/chat";
 import { emptySession, loadSessions, saveSessions } from "../lib/chatStore";
 import type { Synthesizer } from "../lib/contracts";
@@ -138,3 +139,14 @@ it("a blank New chat is never persisted as history", () => {
   saveSessions([blank, real]);
   expect(loadSessions().map((s) => s.id)).toEqual([real.id]);
 });
+
+it("query trace shows the retrieval total from the v2 timing map — never NaN", () => {
+  const html = renderToStaticMarkup(<QueryTrace requestedMode="HYBRID" receipt={{
+    mode: "HYBRID", engine: "chat-retrieval-v2", latency_ms: { embed: 225.6, lanes: 900.1, rerank: 1200, sparse_prestart: null, total: 2415.3 },
+  }} />);
+  expect(html).toContain("2.4s");
+  expect(html).not.toContain("NaN");
+  const v1 = renderToStaticMarkup(<QueryTrace requestedMode="HYBRID" receipt={{ mode: "HYBRID", engine: "v1", latency_ms: 1500 }} />);
+  expect(v1).toContain("1.5s");
+});
+

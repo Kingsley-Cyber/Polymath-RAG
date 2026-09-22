@@ -52,3 +52,16 @@ Deployed-state proof (both tiers on :7200 after merge + bounce) is recorded in t
 - Control-plane status (`control-plane-status-v1`): UPDATED additively — two counters added to CHAT.
 - CompareArm type: UPDATED to mirror the backend; the `/compare` response is unchanged.
 - The chat SSE frames (phase / reasoning / token / answer / error / done): TESTED_UNCHANGED — emitted and handled 1 : 1.
+
+## Deployed proof + the fourth gap (2026-09-22, after merge `6ca4047` and one bounce)
+Live on production :7200, both tiers, through the real client: first run — free tier 5 / 5; paid tier found a FOURTH mismatch that IS
+user-visible: `RetrievalReceipt.latency_ms` was typed `number`, but the v2 chat receipt carries the per-stage timing map, and
+`QueryTrace` divided it by 1000 — the "LATENCY NaNs" in the Query trace. Fixed (branch `fix/trace-latency`): the type is
+`number | Record<string, number | null>`, the trace renders the map's `total` as "Retrieval latency" (a unit test pins "2.4s", never
+NaN). The same run's GRAPH turn died on `litellm.Timeout … after 300.0 seconds` (receipt ledger: wall 290 167 ms, no phases); the
+re-run passed in 22 s and GRAPH turns earlier the same day took 32–66 s — a transient provider stall, not a GRAPH defect.
+Second run (corrected type), production :7200: **12 / 12** — the five read-only / static checks, FAST 40 s · HYBRID 31 s · GRAPH 22 s ·
+WILDCARD 30 s · GNN 19 s (each: steps streamed, answer + model, receipt conforms to `RetrievalReceipt`, executed mode = requested
+(FAST → VECTOR), evidence > 0 for the small-talk-phrased question, GNN lane only on GNN, Evidence-panel rows resolve), Review on the
+HYBRID answer, the Models screen's model test.
+

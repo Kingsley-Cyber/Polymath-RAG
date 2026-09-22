@@ -215,7 +215,9 @@ export interface RetrievalReceipt {
   latent?: unknown;
   chat_plan?: { intent?: string; [k: string]: unknown };
   degraded?: string[];
-  latency_ms?: number;
+  /** v2: the per-stage retrieval timings (embed, lanes, rerank, compose, total — ms; an absent stage is null);
+   *  v1: one number. Render `total`, never the map itself (it rendered as "NaNs"). */
+  latency_ms?: number | Record<string, number | null>;
 }
 
 export interface AnswerFrame {

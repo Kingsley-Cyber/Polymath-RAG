@@ -13,6 +13,9 @@ export function QueryTrace({ receipt, requestedMode }: {
 }) {
   const plan = receipt.chat_plan ?? {};
   const executed = receipt.mode ?? "—";
+  // v2 sends the per-stage timing map (its `total` is the retrieval wall time); v1 sent one number
+  const lat = receipt.latency_ms;
+  const retrievalMs = typeof lat === "number" ? lat : typeof lat?.total === "number" ? lat.total : null;
   const fastAlias = requestedMode === "FAST" && executed === "VECTOR";
   const drift = Boolean(requestedMode) && executed !== "—" && requestedMode !== executed && !fastAlias;
 
@@ -25,7 +28,7 @@ export function QueryTrace({ receipt, requestedMode }: {
         <Fact label="Retrieval version" value={receipt.engine ?? "—"} />
         <Fact label="Classified intent" value={String(plan.intent ?? "—")}
               note="classified by the compiler; INTENT_POLICY is OFF, so it is inert for routing" />
-        <Fact label="Latency" value={receipt.latency_ms != null ? `${(receipt.latency_ms / 1000).toFixed(1)}s` : "—"} />
+        <Fact label="Retrieval latency" value={retrievalMs != null ? `${(retrievalMs / 1000).toFixed(1)}s` : "—"} />
         <Fact label="Degradation"
               value={receipt.degraded && receipt.degraded.length ? receipt.degraded.join(", ") : "none"}
               warn={!!receipt.degraded?.length} />
