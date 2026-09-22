@@ -4,6 +4,7 @@
 > Owner authorization (chat, 2026-09-21, genuine): ADR-069 ACCEPTED; proceed gate by gate — Trail commit → verify ancestry → merge the stack → re-pin → merged-checkout proofs → ONE bounce → Hermes redeploy → smallest hosted smoke → STOP before the paid cinema benchmark. The live `/chat/evidence` probe (L14) is a small paid compiler call: the owner's word at that moment.
 
 ## A. Paste this as the FIRST message of a new session opened in `~/Documents/polymath-rebuild/polymath-v4`
+> **STATUS 2026-09-22: G0–G7b are DONE and green (HR6 `829a0ab`, production `8a66934`, one bounce, Hermes redeployed, gate FROZEN at `69b1dc2` (1.0.1), preflight PASS) — see `CONTINUATION.md` → Next Exact Action. A fresh session must NOT redo them; it starts at the owner's word for the `/chat/evidence` probe and / or ONE benchmark (G8 → G9 → G10).**
 ```text
 /polymath-bootstrap INTEGRATION SESSION (executor role) — Semantic Transduction Restoration: controlled integration. Owner build reference docs/migration/SEMANTIC_TRANSDUCTION_RESTORATION_REFERENCE.md (never edit). Navigate with graft / graphify BEFORE reading files (owner rule): `~/Documents/polymath-rebuild/_graft_polymath` (rebuilt at 31273f7), Trail graph `~/trail-signal-os-worktrees/_graft_trail`; open only the line ranges a change needs.
 

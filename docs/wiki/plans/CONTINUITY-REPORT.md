@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-21
+last_reviewed: 2026-09-22
 ---
 
 # CONTINUITY REPORT — the single bootstrap (golden-run edition)
@@ -18,7 +18,13 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-22 — **BOOTSTRAPPED FOR THE FRESH INTEGRATION SESSION: Trail A46 committed `6fa0d84`; owner's DETERMINISTIC VERIFICATION SHELL admitted as plan of record; paste `docs/migration/INTEGRATION_BOOTSTRAP_PROMPT.md` §A — nothing merged, re-pinned, bounced, deployed, pushed or spent**
+## CURRENT — 2026-09-22 (later) — **RESTORATION INTEGRATED AND LIVE; THE DETERMINISTIC VERIFICATION SHELL BUILT AND FROZEN; STOPPED BEFORE THE BENCHMARK (owner's separate word).**
+
+Trail: HR6 **`829a0ab`** on `codex/r1-semantic-restoration` (anchor `efaca09`, A46 `6fa0d84`) through Trail's own gate (exact verifier 6 / 6, research 27 / 27, architecture 276, governance PASS 0 at the fixpoint, ceilings 3/3 · 9/24 · 196/800 · 194/300, agentctl check / guard / verify / close --receipt). Polymath `production`: restoration merge **`a21f9aa`** (`a7b9f08`, ancestry verified) → re-pin merge **`8a66934`** (embedded core pinned to `829a0ab`, 30 files, 7 changed; manifest **0.6.0**; extended Trail wire; four-copy receipt relation; envelopes re-recorded; register 11.399) → gate frozen **`69b1dc2`** (1.0.1; register 11.400). G4 `--phase integration` on MAIN = **PASS · safe_to_bounce: true** (13 / 13; call sites 4 / 4). ONE bounce: `/ready` true, embedder + reranker, 24 healthy / 13 types / ONE bundle `cc1f7e1b144c`, hosted `/adapter/list` serves 0.6.0, `POLYMATH_TRAIL_MODE=embedded`. Hermes skill redeployed (parity true, drift 0, 192 files, receipt names `8a66934`). $0 smoke green. `--phase benchmark --preflight` on seed S1 = **PASS**. Nothing pushed; nothing spent.
+
+Next Action = NOTHING autonomous. On the owner's OWN words only: (a) the live `/chat/evidence` STATEMENT probe (L14); (b) ONE cinema benchmark (G8: `ecommerce.product_research` 0.6.0, corpus `cinema`, seed S1 verbatim, hosted, `prn_accept_e2e`) → G9 the FROZEN gate at `69b1dc2` (`--phase benchmark --run-id <run> --manifest config/benchmarks/cinema-transduction-v1.yaml`) → G10 the machine verdict verbatim. Restart boundary: `docs/migration/CONTINUATION.md` → Next Exact Action (the integrated-state table). Do Not Do: edit the gate or the manifest after a run exists (a change = a new version BEFORE the next run); run a second benchmark without a new word; push any ref.
+
+## PRIOR — 2026-09-22 (earlier) — **BOOTSTRAPPED FOR THE FRESH INTEGRATION SESSION: Trail A46 committed `6fa0d84`; owner's DETERMINISTIC VERIFICATION SHELL admitted as plan of record; paste `docs/migration/INTEGRATION_BOOTSTRAP_PROMPT.md` §A — nothing merged, re-pinned, bounced, deployed, pushed or spent**
 
 Next Action = the prompt's G0–G7b (build + freeze `scripts/semantic_restoration_gate.py`, HR6, merge `a7b9f08`, re-pin, integration gate, one bounce, Hermes, smoke, benchmark preflight) then STOP; G8–G10 only on the owner's own words. Read order: CONTINUATION.md → DETERMINISTIC_VERIFICATION_SHELL.md → INTEGRATION_BOOTSTRAP_PROMPT.md. Everything below (2026-09-21) still holds for the slices.
 
