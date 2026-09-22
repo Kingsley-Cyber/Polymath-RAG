@@ -163,10 +163,8 @@ def control_plane_status(conn, *, corpus_id: str,
         "GRAPH_EXTRACTION": pool("GRAPH_EXTRACTION", _graph_provider(conn, corpus_id)),
         "DOCUMENT_PROFILE": pool("DOCUMENT_PROFILE"),
         "PMAP": pool("PMAP", _pmap_provider(conn, corpus_id)),
-        "CHAT": {"lanes": {"active": health.get("CHAT", {}).get("active", 0),
-                           "total": health.get("CHAT", {}).get("total", 0),
-                           "active_lanes": health.get("CHAT", {}).get("active_lanes", [])},
-                 "latency_pool": True},  # not an ingestion backlog drainer
+        # the same lane shape as every pool (FRONTEND-BACKEND-CONTRACT-V1: CHAT used to omit credential_absent / disabled)
+        "CHAT": {**pool("CHAT"), "latency_pool": True},  # not an ingestion backlog drainer
     }
     return {
         "contract": CONTROL_PLANE_STATUS_VERSION,

@@ -256,6 +256,20 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
 
         return wildcard_retrieve(query, cid)
 
+    from polymath_shared.retrieval_modes import MODE_GNN
+    if mode == MODE_GNN:
+        cid = single_corpus_or_422(scope, mode)
+        # GNN-RETRIEVAL-V1: the GNN route exists ONLY on the final core (candidate-engine lane I). Before this branch a GNN
+        # request passed validate_mode and fell through to the LEGACY lane path below — legacy output answering a GNN request.
+        # A v1 / utility request is refused (the chat path's rule), never served by another mode's lanes.
+        if retrieve_engine_flag() != "v2" or req.utility:
+            raise HTTPException(status_code=422, detail={
+                "error_code": "gnn_requires_v2",
+                "message": "GNN retrieval exists only on the v2 core (POLYMATH_RETRIEVE_ENGINE=v2, no utility)"})
+        from orchestrator.api.chat_retrieval import chat_retrieve_mode
+
+        return chat_retrieve_mode("GNN", query, cid)
+
     corpus_ids = list(scope.corpus_ids)
     with tx() as conn:
         profiles = _fetch_profiles(conn, corpus_ids, document_ids=doc_ids)
