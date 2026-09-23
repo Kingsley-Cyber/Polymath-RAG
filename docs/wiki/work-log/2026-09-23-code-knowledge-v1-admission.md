@@ -33,6 +33,10 @@ records the review in the repository.
   - the phased execution;
   - 8 owner decisions;
   - 2 independent bugs.
+- Addendum (same day, register 11.414): the owner's second design note, saved verbatim at
+  `docs/code-knowledge-v1/ADDENDUM_2026-09-23_OWNER_NOTE.md` and reconciled in report §10 (agreements, 3 conflicts with
+  recommendations, additions by phase, 5 more owner decisions). The Canvas Authoring MCP claim was checked against
+  Microsoft Learn and the NuGet package listing.
 
 ## Proof
 - I read the whole packet. Three read-only mappings (ingestion / semantic layers / query) walked slices C0–C13 against

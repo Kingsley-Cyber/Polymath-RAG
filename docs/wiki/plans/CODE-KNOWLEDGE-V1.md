@@ -2,7 +2,7 @@
 title: "CODE-KNOWLEDGE-V1 — first-class code knowledge (Python, Luau, YAML, Power Apps) inside the existing retrieval architecture"
 date: 2026-09-23
 last_reviewed: 2026-09-23
-status: "ADMITTED — not started. Execution waits on the 8 owner decisions in the feasibility report §8."
+status: "ADMITTED — not started. Execution waits on the 13 owner decisions in the feasibility report §8 + §10."
 owner: "@king"
 scope: "Source-family extension of ingestion (detection, exact-source chunk providers, structure store) and retrieval (code_task overlay, one structure nomination lane, candidate roles, validators). No new public mode; document ingestion stays byte-identical."
 ---
@@ -35,5 +35,6 @@ candidate funnel and reranker, and always resolve the winning route back to exac
 |---|---|
 | Packet admitted | 2026-09-23 (register 11.413) |
 | Feasibility review | done — feasible; phased MVP (Python + YAML → Luau → Power Apps) |
-| Owner decisions (report §8) | OPEN |
+| Owner's second design note | admitted 2026-09-23 (`docs/code-knowledge-v1/ADDENDUM_2026-09-23_OWNER_NOTE.md`), reconciled in report §10 |
+| Owner decisions (report §8 + §10, 13 total) | OPEN |
 | Slices C0–C14 | not started |

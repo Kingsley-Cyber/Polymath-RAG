@@ -2,7 +2,7 @@
 title: "CODE-KNOWLEDGE-V1 — feasibility review mapped to the repository (production 1d91593)"
 date: 2026-09-23
 last_reviewed: 2026-09-23
-status: "REVIEW — the plan is feasible; phased MVP recommended; 8 owner decisions open before slice C1"
+status: "REVIEW — the plan is feasible; phased MVP recommended; 13 owner decisions open before slice C1 (8 in §8 + 5 from the addendum §10)"
 owner: "@king"
 scope: "Read-only review of the owner's execution packet (docs/code-knowledge-v1/) against the live repository. No code changed."
 ---
@@ -25,8 +25,8 @@ overlay, the structure lane's store and the generation validators.
 - **Phase 2:** Luau.
 - **Phase 3:** Power Apps / Power Fx, which needs a .NET sidecar.
 
-Also recommended: **defer the Neo4j code projection (C8)** and do bounded structural traversal in Postgres first. Eight owner
-decisions (§8) should be settled before C1.
+Also recommended: **defer the Neo4j code projection (C8)** and do bounded structural traversal in Postgres first. Thirteen
+owner decisions (§8 + §10) should be settled before C1.
 
 ## 2. What the plan gets right (keep as written)
 
@@ -152,3 +152,82 @@ or needs a decision.
 - **The extra lanes D–I run one after another, outside `lane_deadline_s`** (`candidate_engine.py:793-925`), and
   `dualread_budget_ms` is never read (`:270`). This is the likely cause of the ~10 s the chat retrieval step spends beyond
   the search itself (17–20 s observed, against 5–8 s in the replay).
+
+## 10. Addendum — the owner's second design note (2026-09-23)
+
+The note is saved verbatim at `docs/code-knowledge-v1/ADDENDUM_2026-09-23_OWNER_NOTE.md`. It mostly **agrees** with the packet,
+**conflicts** with it in three places, and **adds** six things the packet lacks.
+
+### Agrees (no change to the plan)
+- Extend the document RAG rather than build a second system.
+- One universal code layer that every language parser feeds (the packet's StructureManifest).
+- AST-bounded CodeUnits that keep the parent/child model (CODE-CHUNK-V1).
+- Power Apps parsed twice: the YAML structure, then the embedded Power Fx with Microsoft's own parser and binder
+  (POWERAPPS-STRUCTURE-V1 + POWERFX-ANALYSIS-V1).
+- Deterministic parsing owns references; the LLM owns behavior / purpose (laws 1.3 / 1.4).
+- Code and document branches fused before the LLM (C11 roles + typed subqueries).
+- ASK / DEBUG / REFACTOR / DESIGN routing (the `code_task` vocabulary).
+
+### Conflicts, with recommendations
+
+| The note says | The packet says | Recommendation |
+|---|---|---|
+| Add an explicit **IMPACT retrieval mode** (a 4th mode). | No new public mode; IMPACT is a `code_task` that turns on reverse-caller traversal. | Keep IMPACT as an **auto-detected `code_task`**: same behavior ("what breaks if I change X"), no new mode or selector. *(Owner decision 9.)* |
+| **FAST for code = symbol lookup**, no vector search. | FAST is lanes A + B, dense-only with no sparse lane, so exact symbols are weak in FAST today. | Let FAST use the structure lane's **exact-symbol lookup only**, not its traversal: deterministic and cheaper than dense search. *(Decision 10.)* |
+| A **heterogeneous graph** with document↔code edges (Requirement IMPLEMENTS Screen, SOP ENFORCED_BY Formula, Doc DESCRIBES Function). | Keep code edges separate from semantic Fact / Entity edges. | Two tiers. **Deterministic identifier links first**: a formula calling `Patch` ↔ corpus entities / terms named Patch; needs the C8 projection, Phase 2. **Inferred links** (IMPLEMENTS / ENFORCED_BY) are LLM inference, so label them routing-only, never evidence, and gate them on evaluation. Phase 1 already gets the retrieval payoff (Patch documentation next to the formula) through typed REFERENCE subqueries and resolution lift from code identifiers, with no graph edges. *(Decision 11.)* |
+
+### Additions — where they land
+
+- **Multiple representations per CodeUnit** (source = evidence; structural + semantic = embedded). In this system the
+  semantic form is the pMAP routing signature + hooks. The structural form can ride the same pMAP embedding: include the
+  deterministic facts in the projection text for code families only (`parent_map_projection.py`; documents stay
+  byte-identical). **Phase 1 (C6)**, measured with and without.
+- **Power Apps App Model**: screens, controls, navigation, variables, collections, named formulas, data sources, forms,
+  galleries, and the derived control / variable / navigation / data-flow graphs. It is an app-level aggregate over
+  per-screen manifests and needs cross-file resolution (C8). **Phase 3.**
+- **Living code corpora (re-index changed files).** A requirement the packet misses. `doc_id` = sha256 of the bytes, so
+  an edited file becomes a NEW document while the old one stays. The repository importer must **sync by relative path**
+  (add / replace / delete) and retire the old version through DOCUMENT-DELETE-V1. **Phase 1 (C1).** *(Decision 13.)*
+- **Canvas Authoring MCP for write validation** (verified: Microsoft ships `Microsoft.PowerApps.CanvasAuthoring.McpServer`).
+  It lists and describes controls, discovers data sources, validates / compiles `.pa.yaml` and syncs with Studio. It
+  requires an open Power Apps Studio co-authoring session and the .NET 10 SDK. Use it in C13 for Power Apps writes. It
+  cannot serve unattended ingestion, which still needs the Power Fx parser offline. Phase 3 needs .NET either way.
+  **Phase 3.** *(Decision 12.)*
+- **`.pa.yaml` contract** (add to POWERAPPS-STRUCTURE-V1):
+  - detect the schema version;
+  - preserve unknown nodes;
+  - never rewrite destructively;
+  - parse formulas separately;
+  - require Canvas MCP validation for writes.
+
+  `.fx.yaml` is retired. External edits are supported only through Power Platform Git integration. **Phase 3.**
+- **Agent workflow**: detect → app model → retrieve → expand graph → retrieve target → retrieve docs → build delta →
+  impact → plan → generate → validate → re-index → diff graph → report. It is a harness workflow over Polymath's MCP
+  surface and needs code tools on MCP (locate / impact / validate) plus the sync importer. **Phase 4.**
+
+### Five more owner decisions (with §8, 13 in total)
+
+9. IMPACT: an auto-detected `code_task` *(recommended)*, or a public 4th mode?
+10. FAST for code: allow exact-symbol lookup *(recommended)*?
+11. Document↔code graph links: deterministic identifier links first, inferred links only after evaluation *(recommended)*?
+12. Power Apps write validation through Microsoft's Canvas MCP (Studio session + .NET 10) in Phase 3 *(recommended)*?
+13. A sync importer (replace by path) in Phase 1 *(recommended: code corpora change)*?
+
+### Revised phases
+
+- **Phase 1** (Python + generic YAML): §7, plus:
+  - the sync importer;
+  - structural facts in the code pMAP embedding (measured);
+  - IMPACT as a `code_task` with bounded Postgres reverse traversal.
+- **Phase 2** (Luau): plus deterministic document↔code identifier links, which needs the C8 projection.
+- **Phase 3** (Power Apps):
+  - .NET 10 for the Power Fx parser + Canvas MCP;
+  - the App Model and derived graphs;
+  - the `.pa.yaml` contract.
+- **Phase 4** (agent workflow over MCP): code tools, re-index + graph diff, write validation loop.
+
+Sources for the Canvas MCP facts:
+- https://learn.microsoft.com/en-us/power-apps/maker/canvas-apps/create-canvas-external-tools
+- https://libraries.io/nuget/Microsoft.PowerApps.CanvasAuthoring.McpServer
+- https://github.com/microsoft/power-platform-skills/blob/main/plugins/canvas-apps/AGENTS.md
+

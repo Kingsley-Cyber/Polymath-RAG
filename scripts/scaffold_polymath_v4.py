@@ -2241,6 +2241,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/code-knowledge-v1/03a_code_control_map_v1.yaml", "yaml", None),
     ("docs/code-knowledge-v1/04_CODE_KNOWLEDGE_V1_GOAL_MODE.md", "md", None),
     ("docs/code-knowledge-v1/05_CODE_KNOWLEDGE_V1_CONTRACT_ARCHITECTURE.md", "md", None),
+    ("docs/code-knowledge-v1/ADDENDUM_2026-09-23_OWNER_NOTE.md", "md", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay_owner_plans.py", "py", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay.jsonl", "jsonl", None),
     ("tests/determinism/test_rag_ui_integration.py", "py", None),
