@@ -113,3 +113,66 @@ def test_appliers_overlay_when_enabled(monkeypatch):
     p = {"model": "qwen3.8-flash", "messages": []}
     a2 = apply_chat_completions(p, STRUCTURED_COMPILER, "qwen3.8-flash")
     assert a2 and p["thinking_budget"] == 300 and p["preserve_thinking"] is False and "reasoning_effort" not in p
+
+
+def test_anthropic_route_sends_thinking_top_level_not_in_extra_body(monkeypatch):
+    """ANTHROPIC-THINKING-TRANSPORT-V1: on litellm's `anthropic/` route `extra_body` is NOT merged into the request (it
+    goes out as a literal "extra_body" key the endpoint ignores), so DeepSeek's `thinking: disabled` must go top level,
+    with `thinking` in `allowed_openai_params` (litellm refuses it otherwise for models it does not map)."""
+    monkeypatch.setenv("POLYMATH_REASONING_POLICY", "1")
+    k = {"model": "anthropic/deepseek-v4-flash-0731", "messages": [], "allowed_openai_params": ["tools"]}
+    applied = apply_litellm(k, CHAT_SYNTHESIS, "anthropic/deepseek-v4-flash-0731")
+    assert k["thinking"] == {"type": "disabled"}
+    assert k["allowed_openai_params"] == ["tools", "thinking"]
+    assert "thinking" not in (k.get("extra_body") or {})
+    assert applied["top_level"] == {"thinking": {"type": "disabled"}} and applied["extra_body"] == {}
+    # the other routes keep the passthrough the OpenAI SDK merges (unchanged behaviour)
+    k2 = {"model": "deepseek-v4", "messages": []}
+    apply_litellm(k2, CHAT_SYNTHESIS, "deepseek-v4")
+    assert k2["extra_body"]["thinking"] == {"type": "disabled"} and "thinking" not in k2
+
+
+def test_anthropic_route_wire_body_carries_thinking_disabled(monkeypatch):
+    """The wire itself, not the kwargs: litellm serializes the applied request to a local stand-in Anthropic endpoint
+    and the captured JSON body must carry top-level `thinking: {"type": "disabled"}` and no literal `extra_body`."""
+    import http.server
+    import json
+    import socketserver
+    import threading
+
+    import pytest
+    litellm = pytest.importorskip("litellm")
+    monkeypatch.setenv("POLYMATH_REASONING_POLICY", "1")
+    captured: dict = {}
+
+    class _StandIn(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            n = int(self.headers.get("content-length", 0))
+            captured["path"], captured["body"] = self.path, json.loads(self.rfile.read(n) or b"{}")
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(b'{"error":"stand-in"}')
+
+        def log_message(self, *a):
+            pass
+
+    srv = socketserver.TCPServer(("127.0.0.1", 0), _StandIn)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        model = "anthropic/deepseek-v4-flash-0731"
+        kw = dict(model=model, messages=[{"role": "user", "content": "hi"}], stream=True, timeout=10, max_tokens=64,
+                  api_base=f"http://127.0.0.1:{srv.server_address[1]}", api_key="stand-in-not-a-key")
+        apply_litellm(kw, CHAT_SYNTHESIS, model)
+        try:
+            for _ in litellm.completion(**kw):
+                break
+        except Exception:  # noqa: BLE001 — the stand-in answers 500 on purpose; only the request matters
+            pass
+    finally:
+        srv.shutdown()
+        srv.server_close()
+    body = captured.get("body") or {}
+    assert captured.get("path", "").endswith("/v1/messages"), captured
+    assert body.get("thinking") == {"type": "disabled"}, sorted(body)
+    assert "extra_body" not in body, sorted(body)
+
