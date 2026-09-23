@@ -1,0 +1,313 @@
+[
+ {
+  "id": "litellm:anthropic/deepseek-v4-flash-0731",
+  "route": "litellm",
+  "ok": true,
+  "seconds": 2.1,
+  "first_token_s": 2.1,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "thinking": {
+    "type": "disabled"
+   }
+  },
+  "error": null
+ },
+ {
+  "id": "litellm:anthropic/qwen3.7-plus",
+  "route": "litellm",
+  "ok": true,
+  "seconds": 1.7,
+  "first_token_s": 1.6,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "thinking": {
+    "type": "disabled"
+   }
+  },
+  "error": null
+ },
+ {
+  "id": "litellm:anthropic/qwen3.6-flash",
+  "route": "litellm",
+  "ok": true,
+  "seconds": 1.0,
+  "first_token_s": 1.0,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "thinking": {
+    "type": "disabled"
+   }
+  },
+  "error": null
+ },
+ {
+  "id": "litellm:anthropic/glm-5.2",
+  "route": "litellm",
+  "ok": true,
+  "seconds": 1.5,
+  "first_token_s": 1.5,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "thinking": {
+    "type": "disabled"
+   }
+  },
+  "error": null
+ },
+ {
+  "id": "litellm:anthropic/qwen3.7-max",
+  "route": "litellm",
+  "ok": true,
+  "seconds": 1.5,
+  "first_token_s": 1.5,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "thinking": {
+    "type": "disabled"
+   }
+  },
+  "error": null
+ },
+ {
+  "id": "litellm:anthropic/deepseek-v4-pro",
+  "route": "litellm",
+  "ok": true,
+  "seconds": 1.9,
+  "first_token_s": 1.8,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "thinking": {
+    "type": "disabled"
+   }
+  },
+  "error": null
+ },
+ {
+  "id": "litellm:anthropic/deepseek-v4-pro-0813",
+  "route": "litellm",
+  "ok": true,
+  "seconds": 1.3,
+  "first_token_s": 1.2,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "thinking": {
+    "type": "disabled"
+   }
+  },
+  "error": null
+ },
+ {
+  "id": "litellm:anthropic/qwen3.8-flash",
+  "route": "litellm",
+  "ok": true,
+  "seconds": 1.8,
+  "first_token_s": 1.7,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "thinking": {
+    "type": "disabled"
+   }
+  },
+  "error": null
+ },
+ {
+  "id": "litellm:anthropic/qwen3.8-max",
+  "route": "litellm",
+  "ok": true,
+  "seconds": 1.2,
+  "first_token_s": 1.2,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "thinking": {
+    "type": "disabled"
+   }
+  },
+  "error": null
+ },
+ {
+  "id": "litellm:openai/big-pickle",
+  "route": "litellm",
+  "ok": false,
+  "seconds": 0.5,
+  "first_token_s": null,
+  "answer": "",
+  "reasoning_chars": 0,
+  "control_sent": {},
+  "error": "APIError: litellm.APIError: APIError: OpenAIException - OpenCode's free tier can only be used from within OpenCode"
+ },
+ {
+  "id": "litellm:openai/deepseek-v4-flash-free",
+  "route": "litellm",
+  "ok": false,
+  "seconds": 0.1,
+  "first_token_s": null,
+  "answer": "",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "thinking": {
+    "type": "disabled"
+   }
+  },
+  "error": "BadRequestError: litellm.BadRequestError: OpenAIException - Upstream request failed: Model is unavailable."
+ },
+ {
+  "id": "litellm:openai/ling-3.0-flash-fin-free",
+  "route": "litellm",
+  "ok": false,
+  "seconds": 0.1,
+  "first_token_s": null,
+  "answer": "",
+  "reasoning_chars": 0,
+  "control_sent": {},
+  "error": "APIError: litellm.APIError: APIError: OpenAIException - OpenCode's free tier can only be used from within OpenCode"
+ },
+ {
+  "id": "litellm:openai/mimo-v2.5-free",
+  "route": "litellm",
+  "ok": false,
+  "seconds": 0.1,
+  "first_token_s": null,
+  "answer": "",
+  "reasoning_chars": 0,
+  "control_sent": {},
+  "error": "APIError: litellm.APIError: APIError: OpenAIException - OpenCode's free tier can only be used from within OpenCode"
+ },
+ {
+  "id": "litellm:openai/muse-spark-1.2-contributor-free",
+  "route": "litellm",
+  "ok": false,
+  "seconds": 0.1,
+  "first_token_s": null,
+  "answer": "",
+  "reasoning_chars": 0,
+  "control_sent": {},
+  "error": "APIError: litellm.APIError: APIError: OpenAIException - OpenCode's free tier can only be used from within OpenCode"
+ },
+ {
+  "id": "litellm:openai/muse-spark-1.3-contributor-free",
+  "route": "litellm",
+  "ok": false,
+  "seconds": 0.2,
+  "first_token_s": null,
+  "answer": "",
+  "reasoning_chars": 0,
+  "control_sent": {},
+  "error": "APIError: litellm.APIError: APIError: OpenAIException - OpenCode's free tier can only be used from within OpenCode"
+ },
+ {
+  "id": "litellm:openai/nemotron-3-ultra-free",
+  "route": "litellm",
+  "ok": false,
+  "seconds": 0.1,
+  "first_token_s": null,
+  "answer": "",
+  "reasoning_chars": 0,
+  "control_sent": {},
+  "error": "APIError: litellm.APIError: APIError: OpenAIException - OpenCode's free tier can only be used from within OpenCode"
+ },
+ {
+  "id": "litellm:openai/nemotron-3.5-lightning-free",
+  "route": "litellm",
+  "ok": false,
+  "seconds": 0.1,
+  "first_token_s": null,
+  "answer": "",
+  "reasoning_chars": 0,
+  "control_sent": {},
+  "error": "APIError: litellm.APIError: APIError: OpenAIException - OpenCode's free tier can only be used from within OpenCode"
+ },
+ {
+  "id": "ollama:gemma4:31b-cloud",
+  "route": "ollama",
+  "ok": true,
+  "seconds": 0.3,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "think": false
+  },
+  "think_rejected_fell_back_to_default": false,
+  "available_in_daemon": true,
+  "error": null
+ },
+ {
+  "id": "ollama:gpt-oss:120b-cloud",
+  "route": "ollama",
+  "ok": true,
+  "seconds": 0.4,
+  "answer": "OK",
+  "reasoning_chars": 85,
+  "control_sent": {
+   "think": "low"
+  },
+  "think_rejected_fell_back_to_default": false,
+  "available_in_daemon": true,
+  "error": null
+ },
+ {
+  "id": "ollama:gpt-oss:20b-cloud",
+  "route": "ollama",
+  "ok": true,
+  "seconds": 0.7,
+  "answer": "OK",
+  "reasoning_chars": 27,
+  "control_sent": {
+   "think": "low"
+  },
+  "think_rejected_fell_back_to_default": false,
+  "available_in_daemon": true,
+  "error": null
+ },
+ {
+  "id": "ollama:nemotron-3-nano:30b-cloud",
+  "route": "ollama",
+  "ok": true,
+  "seconds": 0.5,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "think": false
+  },
+  "think_rejected_fell_back_to_default": false,
+  "available_in_daemon": true,
+  "error": null
+ },
+ {
+  "id": "ollama:nemotron-3-super:cloud",
+  "route": "ollama",
+  "ok": true,
+  "seconds": 0.5,
+  "answer": "OK",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "think": false
+  },
+  "think_rejected_fell_back_to_default": false,
+  "available_in_daemon": true,
+  "error": null
+ },
+ {
+  "id": "ollama:nemotron-3-ultra:cloud",
+  "route": "ollama",
+  "ok": false,
+  "seconds": 2.6,
+  "answer": "",
+  "reasoning_chars": 0,
+  "control_sent": {
+   "think": false
+  },
+  "think_rejected_fell_back_to_default": false,
+  "available_in_daemon": true,
+  "error": "HTTP 503: {\"error\":\"model 'nemotron-3-ultra' is temporarily overloaded, please retry shortly or try a different model (ref: 7d891011-b338-442c-9241-bfd6c670efb0)\"} "
+ }
+]
