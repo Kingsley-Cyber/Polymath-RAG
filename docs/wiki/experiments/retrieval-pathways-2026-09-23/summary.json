@@ -1,0 +1,1407 @@
+{
+ "turns": [
+  {
+   "turn": 1,
+   "mode": "HYBRID",
+   "question": "What do my books say about making an animated character's movement feel weighty?",
+   "wall_s": 31.7,
+   "errors": [],
+   "receipt": {
+    "status": "ok",
+    "verdict": "generated",
+    "citations": null,
+    "evidence": null,
+    "source_docs": 0
+   },
+   "phase_s": {
+    "scope": 7.8,
+    "compile": 3843.9,
+    "retrieve": 15074.1,
+    "assemble": 103.3,
+    "carry": 0.0,
+    "generate": 10580.1,
+    "total": 29610.0
+   },
+   "compiler": {
+    "lane": "compiler_ollama_gemma",
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "attempt": 1,
+    "fallback": false,
+    "first_failure": null,
+    "wall_ms": 1293.3,
+    "compile_ms": {
+     "lanes": 1296.9,
+     "scout": 577.7,
+     "total": 3825.0,
+     "bridges": 1924.7,
+     "explorer": 1.2,
+     "endpoints": 3.5,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "profile_expansion": 0.1
+    },
+    "reasoning_sent": {},
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true
+   },
+   "plan": {
+    "n": 7,
+    "by_origin": {
+     "USER": 3,
+     "PROFILE": 2,
+     "BRIDGE": 2
+    },
+    "queries": [
+     [
+      "q0",
+      "USER",
+      "PRIMARY",
+      "making animated character movement feel weighty",
+      null
+     ],
+     [
+      "q1",
+      "USER",
+      "MECHANISM",
+      "Laban effort weight and timing in animation",
+      null
+     ],
+     [
+      "q2",
+      "USER",
+      "ADJACENT",
+      "how physical mass and gravity influence the timing and acceleration of",
+      null
+     ],
+     [
+      "p0",
+      "PROFILE",
+      "ENTITY",
+      "How does timing influence the perception of weight and force in animat",
+      "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+     ],
+     [
+      "p1",
+      "PROFILE",
+      "ENTITY",
+      "Using movement to convey emotions and character",
+      "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f"
+     ],
+     [
+      "br0",
+      "BRIDGE",
+      "ENTITY",
+      "How can acting principles be used to communicate a character's physica",
+      "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+     ],
+     [
+      "br1",
+      "BRIDGE",
+      "ENTITY",
+      "How does the balance between anatomical accuracy and exaggerated dynam",
+      "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875"
+     ]
+    ]
+   },
+   "routing": {
+    "scout": {
+     "ms": 577.6,
+     "enabled": true,
+     "contract": "profile-scout-v1",
+     "n_injected": 8,
+     "nominations": 8
+    },
+    "profile_expansion": {
+     "flag": true,
+     "added": 2
+    },
+    "bridge_expansion": {
+     "added": 2,
+     "route": {
+      "model": "gemma4:31b-cloud",
+      "route": "ollama",
+      "reasoning": {
+       "think": false,
+       "surface": "ollama"
+      }
+     },
+     "intent": "SYNTHESIS",
+     "reason": "eligible",
+     "admitted": 2,
+     "concepts": 8,
+     "eligible": true,
+     "rejected": 0,
+     "attempted": true,
+     "generated": 2,
+     "succeeded": true,
+     "uncovered": 6,
+     "latency_ms": 1924.6,
+     "fallback_reason": null,
+     "dropped_invented": 0,
+     "dropped_structural": 0
+    },
+    "corpus_explore": {
+     "cause": "REQUEST_OFF",
+     "fired": false,
+     "detail": null,
+     "stages": {
+      "intent": "SYNTHESIS",
+      "fetch_errors": 0
+     },
+     "contract": "corpus-explore-firing-v1",
+     "requested": false
+    }
+   },
+   "funnel": {
+    "counts": {
+     "cited": 10,
+     "union": 242,
+     "selected": 15,
+     "retrieved": 142,
+     "pre_rerank": 32,
+     "post_rerank": 32
+    },
+    "lane_counts": {
+     "dualread": 22,
+     "gnn_route": 0,
+     "graph_dest": 0,
+     "hierarchical": 32,
+     "latent_rescue": 14,
+     "seealso_fanout": 0,
+     "resolution_lift": 0,
+     "global_dense_child": 50,
+     "global_sparse_child": 40
+    },
+    "multi_lane": 16,
+    "lane_in_final": {
+     "hierarchical": 8,
+     "global_dense_child": 12,
+     "global_sparse_child": 2,
+     "latent_rescue": 0,
+     "dualread": 2,
+     "resolution_lift": 0,
+     "seealso_fanout": 0,
+     "graph_dest": 0,
+     "gnn_route": 0
+    },
+    "lane_in_cited": {
+     "hierarchical": 6,
+     "global_dense_child": 9,
+     "global_sparse_child": 1,
+     "latent_rescue": 0,
+     "dualread": 0,
+     "resolution_lift": 0,
+     "seealso_fanout": 0,
+     "graph_dest": 0,
+     "gnn_route": 0
+    }
+   },
+   "probes": {
+    "aspects": null,
+    "aspect_final": null,
+    "aspect_best": null,
+    "weak_aspects": null,
+    "weak_reasons": null,
+    "timed_out": null
+   },
+   "lane_ms": null,
+   "stage_ms": null,
+   "latent_selection": null,
+   "prompt": {
+    "carry_in": 0,
+    "messages": 2,
+    "prompt_chars": 32047,
+    "latent_labels": 15,
+    "carry_in_prompt": 0
+   },
+   "wildcard": null,
+   "wildcard_bridges": [],
+   "generation": {
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "surface": "litellm",
+     "provider": "deepseek",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    },
+    "max_tokens": 6000,
+    "finish_reason": "stop"
+   },
+   "degraded": [],
+   "final_docs": [
+    "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+    "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "cited_docs": [
+    "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "cited_breadcrumbs": [
+    "Timing for Animation \u203a Newton\u2019s Laws of Motion",
+    "VES Handbook of Visual Effects \u203a Speed",
+    "Timing for Animation \u203a Animation and Properties of Matter",
+    "Timing for Animation \u203a Newton\u2019s Laws of Motion",
+    "Ed Hooks - Acting for Animators \u203a Animating force versus form",
+    "Timing for Animation \u203a Timing to Give a Feeling of Size",
+    "Timing for Animation \u203a What Is Good Timing?",
+    "Complete Guide to Drawing Dynamic Manga Sword Fighters \u203a Pages 68\u201370",
+    "The Laban Workbook for Actors \u203a Pages 72\u201373",
+    "Timing for Animation \u203a Timing for an Actor-Based Program (Performance or Motion Capture)"
+   ],
+   "answer_head": "The core idea across your books is that **weight on screen is a property of timing and spacing, not of drawing accuracy** \u2014 a cannonball drawn beautifully will still float unless its motion is timed to suggest mass [S5]. Each object has its own weight, construction, and flexibility, so it behaves individually when a force acts on it; that behavior\u2014the combination of position and timing\u2014is the real basis of animation [S4]. In practice this means heavy objects must be given plenty of time to start, stop, or change direction, and the animator must apply plenty of force to make them do so convincingly [S1].\n\n**What the timing rules are**\n\n- **Inertia and acceleration:** Things don't jump from rest to full speed; even a cannonball accelerates to maximum when fired, and a car hitting a wall keeps moving through the impact while folding up [S4]. The visible interval between drawings (the spacin"
+  },
+  {
+   "turn": 2,
+   "mode": "WILDCARD",
+   "question": "What do my books say about making an animated character's movement feel weighty?",
+   "wall_s": 34.3,
+   "errors": [],
+   "receipt": {
+    "status": "ok",
+    "verdict": "generated",
+    "citations": null,
+    "evidence": null,
+    "source_docs": 0
+   },
+   "phase_s": {
+    "scope": 1.8,
+    "compile": 3516.1,
+    "retrieve": 15273.2,
+    "assemble": 121.8,
+    "carry": 0.0,
+    "generate": 13324.8,
+    "total": 32238.0
+   },
+   "compiler": {
+    "lane": "compiler_ollama_gemma",
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "attempt": 1,
+    "fallback": false,
+    "first_failure": null,
+    "wall_ms": 1399.8,
+    "compile_ms": {
+     "lanes": 1401.0,
+     "scout": 372.3,
+     "total": 3515.6,
+     "bridges": 1738.0,
+     "explorer": 0.1,
+     "endpoints": 4.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "profile_expansion": 0.1
+    },
+    "reasoning_sent": {},
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true
+   },
+   "plan": {
+    "n": 7,
+    "by_origin": {
+     "USER": 3,
+     "PROFILE": 2,
+     "BRIDGE": 2
+    },
+    "queries": [
+     [
+      "q0",
+      "USER",
+      "PRIMARY",
+      "making animated character movement feel weighty",
+      null
+     ],
+     [
+      "q1",
+      "USER",
+      "MECHANISM",
+      "Laban effort weight and timing in animation",
+      null
+     ],
+     [
+      "q2",
+      "USER",
+      "ADJACENT",
+      "how a body communicates force and mass to an observer",
+      null
+     ],
+     [
+      "p0",
+      "PROFILE",
+      "ENTITY",
+      "How does timing influence the perception of weight and force in animat",
+      "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+     ],
+     [
+      "p1",
+      "PROFILE",
+      "ENTITY",
+      "Using movement to convey emotions and character",
+      "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f"
+     ],
+     [
+      "br0",
+      "BRIDGE",
+      "ENTITY",
+      "How can acting principles be used to convey a character's physical eff",
+      "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+     ],
+     [
+      "br1",
+      "BRIDGE",
+      "ENTITY",
+      "How does the balance between anatomical accuracy and exaggerated poses",
+      "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875"
+     ]
+    ]
+   },
+   "routing": {
+    "scout": {
+     "ms": 372.2,
+     "enabled": true,
+     "contract": "profile-scout-v1",
+     "n_injected": 8,
+     "nominations": 8
+    },
+    "profile_expansion": {
+     "flag": true,
+     "added": 2
+    },
+    "bridge_expansion": {
+     "added": 2,
+     "route": {
+      "model": "gemma4:31b-cloud",
+      "route": "ollama",
+      "reasoning": {
+       "think": false,
+       "surface": "ollama"
+      }
+     },
+     "intent": "SYNTHESIS",
+     "reason": "eligible",
+     "admitted": 2,
+     "concepts": 8,
+     "eligible": true,
+     "rejected": 0,
+     "attempted": true,
+     "generated": 2,
+     "succeeded": true,
+     "uncovered": 6,
+     "latency_ms": 1738.0,
+     "fallback_reason": null,
+     "dropped_invented": 0,
+     "dropped_structural": 0
+    },
+    "corpus_explore": {
+     "cause": "REQUEST_OFF",
+     "fired": false,
+     "detail": null,
+     "stages": {
+      "intent": "SYNTHESIS",
+      "fetch_errors": 0
+     },
+     "contract": "corpus-explore-firing-v1",
+     "requested": false
+    }
+   },
+   "funnel": {
+    "counts": {
+     "cited": 11,
+     "union": 241,
+     "selected": 15,
+     "retrieved": 142,
+     "pre_rerank": 32,
+     "post_rerank": 32
+    },
+    "lane_counts": {
+     "dualread": 22,
+     "gnn_route": 0,
+     "graph_dest": 0,
+     "hierarchical": 32,
+     "latent_rescue": 14,
+     "seealso_fanout": 0,
+     "resolution_lift": 0,
+     "global_dense_child": 50,
+     "global_sparse_child": 40
+    },
+    "multi_lane": 16,
+    "lane_in_final": {
+     "hierarchical": 9,
+     "global_dense_child": 13,
+     "global_sparse_child": 1,
+     "latent_rescue": 0,
+     "dualread": 1,
+     "resolution_lift": 0,
+     "seealso_fanout": 0,
+     "graph_dest": 0,
+     "gnn_route": 0
+    },
+    "lane_in_cited": {
+     "hierarchical": 8,
+     "global_dense_child": 10,
+     "global_sparse_child": 0,
+     "latent_rescue": 0,
+     "dualread": 0,
+     "resolution_lift": 0,
+     "seealso_fanout": 0,
+     "graph_dest": 0,
+     "gnn_route": 0
+    }
+   },
+   "probes": {
+    "aspects": null,
+    "aspect_final": null,
+    "aspect_best": null,
+    "weak_aspects": null,
+    "weak_reasons": null,
+    "timed_out": null
+   },
+   "lane_ms": null,
+   "stage_ms": null,
+   "latent_selection": null,
+   "prompt": {
+    "carry_in": 0,
+    "messages": 2,
+    "prompt_chars": 33597,
+    "latent_labels": 15,
+    "carry_in_prompt": 0
+   },
+   "wildcard": null,
+   "wildcard_bridges": [
+    {
+     "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+    },
+    {
+     "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+    },
+    {
+     "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+    }
+   ],
+   "generation": {
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "surface": "litellm",
+     "provider": "deepseek",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    },
+    "max_tokens": 6000,
+    "finish_reason": "stop"
+   },
+   "degraded": [],
+   "final_docs": [
+    "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+    "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "cited_docs": [
+    "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "cited_breadcrumbs": [
+    "Timing for Animation \u203a Newton\u2019s Laws of Motion",
+    "Timing for Animation \u203a Animation and Properties of Matter",
+    "VES Handbook of Visual Effects \u203a Speed",
+    "Timing for Animation \u203a Animation and Properties of Matter",
+    "Timing for Animation \u203a Newton\u2019s Laws of Motion",
+    "Ed Hooks - Acting for Animators \u203a Animating force versus form",
+    "Timing for Animation \u203a Timing to Give a Feeling of Size",
+    "The Laban Workbook for Actors \u203a Pages 76\u201377",
+    "The Laban Workbook for Actors \u203a Pages 72\u201373",
+    "handbook \u203a 04. Motion core",
+    "Timing for Animation \u203a What Is Good Timing?"
+   ],
+   "answer_head": "Your books converge on one clear thesis: **a character reads as heavy not because of how it is drawn, but because of how its motion is timed and spaced** \u2014 weight is a behavior, not an image. And this has both a physical side (Newtonian timing, mass, momentum) and a perceptual/emotional side (the audience reads the movement's purpose, not just its form).\n\n**Core principle \u2014 weight is timing, not drawing.** The way an object behaves on screen, and the effect of weight it gives, depends almost entirely on the spacing of the animation drawings, not on the drawing itself; a beautifully drawn cannonball still won't look heavy if it doesn't behave like one [S5]. This is because a static drawing has no actual weight or forces acting on it \u2014 the animator must supply those through motion [S4]. Concretely, heavy objects need *plenty of time* to start, stop, or change direction, and the animator mu"
+  },
+  {
+   "turn": 3,
+   "mode": "HYBRID",
+   "question": "How do editors and directors build suspense without dialogue?",
+   "wall_s": 26.8,
+   "errors": [],
+   "receipt": {
+    "status": "ok",
+    "verdict": "generated",
+    "citations": null,
+    "evidence": null,
+    "source_docs": 0
+   },
+   "phase_s": {
+    "scope": 1.6,
+    "compile": 3641.7,
+    "retrieve": 11462.7,
+    "assemble": 105.3,
+    "carry": 0.0,
+    "generate": 9500.8,
+    "total": 24713.2
+   },
+   "compiler": {
+    "lane": "compiler_ollama_gemma",
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "attempt": 1,
+    "fallback": false,
+    "first_failure": null,
+    "wall_ms": 1501.7,
+    "compile_ms": {
+     "lanes": 1502.4,
+     "scout": 716.8,
+     "total": 3641.2,
+     "bridges": 1417.4,
+     "explorer": 0.3,
+     "endpoints": 4.1,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "profile_expansion": 0.1
+    },
+    "reasoning_sent": {},
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true
+   },
+   "plan": {
+    "n": 7,
+    "by_origin": {
+     "USER": 3,
+     "PROFILE": 2,
+     "BRIDGE": 2
+    },
+    "queries": [
+     [
+      "q0",
+      "USER",
+      "PRIMARY",
+      "building suspense without dialogue",
+      null
+     ],
+     [
+      "q1",
+      "USER",
+      "MECHANISM",
+      "editing techniques for tension and suspense",
+      null
+     ],
+     [
+      "q2",
+      "USER",
+      "MECHANISM",
+      "visual storytelling and cinematic motion to create suspense",
+      null
+     ],
+     [
+      "p0",
+      "PROFILE",
+      "ENTITY",
+      "How do directors convey meaning in a story?",
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+     ],
+     [
+      "p1",
+      "PROFILE",
+      "ENTITY",
+      "How do television techniques influence film editing and audience perce",
+      "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4"
+     ],
+     [
+      "br0",
+      "BRIDGE",
+      "ENTITY",
+      "How is misdirection used in film editing to create tension or surprise",
+      "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937"
+     ],
+     [
+      "br1",
+      "BRIDGE",
+      "ENTITY",
+      "In what ways do fight scenes convey narrative and character developmen",
+      "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45"
+     ]
+    ]
+   },
+   "routing": {
+    "scout": {
+     "ms": 716.6,
+     "enabled": true,
+     "contract": "profile-scout-v1",
+     "n_injected": 8,
+     "nominations": 8
+    },
+    "profile_expansion": {
+     "flag": true,
+     "added": 2
+    },
+    "bridge_expansion": {
+     "added": 2,
+     "route": {
+      "model": "gemma4:31b-cloud",
+      "route": "ollama",
+      "reasoning": {
+       "think": false,
+       "surface": "ollama"
+      }
+     },
+     "intent": "SYNTHESIS",
+     "reason": "eligible",
+     "admitted": 2,
+     "concepts": 8,
+     "eligible": true,
+     "rejected": 0,
+     "attempted": true,
+     "generated": 2,
+     "succeeded": true,
+     "uncovered": 6,
+     "latency_ms": 1417.3,
+     "fallback_reason": null,
+     "dropped_invented": 0,
+     "dropped_structural": 0
+    },
+    "corpus_explore": {
+     "cause": "REQUEST_OFF",
+     "fired": false,
+     "detail": null,
+     "stages": {
+      "intent": "SYNTHESIS",
+      "fetch_errors": 0
+     },
+     "contract": "corpus-explore-firing-v1",
+     "requested": false
+    }
+   },
+   "funnel": {
+    "counts": {
+     "cited": 9,
+     "union": 294,
+     "selected": 15,
+     "retrieved": 142,
+     "pre_rerank": 37,
+     "post_rerank": 37
+    },
+    "lane_counts": {
+     "dualread": 24,
+     "gnn_route": 0,
+     "graph_dest": 0,
+     "hierarchical": 34,
+     "latent_rescue": 18,
+     "seealso_fanout": 0,
+     "resolution_lift": 0,
+     "global_dense_child": 50,
+     "global_sparse_child": 40
+    },
+    "multi_lane": 18,
+    "lane_in_final": {
+     "hierarchical": 7,
+     "global_dense_child": 10,
+     "global_sparse_child": 5,
+     "latent_rescue": 1,
+     "dualread": 4,
+     "resolution_lift": 0,
+     "seealso_fanout": 0,
+     "graph_dest": 0,
+     "gnn_route": 0
+    },
+    "lane_in_cited": {
+     "hierarchical": 6,
+     "global_dense_child": 9,
+     "global_sparse_child": 3,
+     "latent_rescue": 1,
+     "dualread": 3,
+     "resolution_lift": 0,
+     "seealso_fanout": 0,
+     "graph_dest": 0,
+     "gnn_route": 0
+    }
+   },
+   "probes": {
+    "aspects": null,
+    "aspect_final": null,
+    "aspect_best": null,
+    "weak_aspects": null,
+    "weak_reasons": null,
+    "timed_out": null
+   },
+   "lane_ms": null,
+   "stage_ms": null,
+   "latent_selection": null,
+   "prompt": {
+    "carry_in": 0,
+    "messages": 2,
+    "prompt_chars": 32209,
+    "latent_labels": 15,
+    "carry_in_prompt": 0
+   },
+   "wildcard": null,
+   "wildcard_bridges": [],
+   "generation": {
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "surface": "litellm",
+     "provider": "deepseek",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    },
+    "max_tokens": 6000,
+    "finish_reason": "stop"
+   },
+   "degraded": [],
+   "final_docs": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+    "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45",
+    "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+   ],
+   "cited_docs": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3"
+   ],
+   "cited_breadcrumbs": [
+    "Joseph V. Mascelli - The Five C's of Cinematography \u203a Pages 86\u201388",
+    "Blain Brown - Cinematography - Theory and Practice \u203a Pages 83\u201384",
+    "Francis Glebas - Directing the Story \u203a Pendulum of Suspense",
+    "The Anatomy of Story \u203a text/part0012.html",
+    "Francis Glebas - Directing the Story \u203a Pendulum of Suspense",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers \u203a DON\u2019T OVERSHOW",
+    "Francis Glebas - Directing the Story \u203a Pendulum of Suspense",
+    "Ken Dancyger - The technique of film & video editing \u203a Page 112",
+    "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics \u203a **LIMITED VS. OPEN INFORMATION**"
+   ],
+   "answer_head": "Editors and directors build suspense without dialogue by controlling what the audience knows and when they know it, then using cutting, composition, and motion to convert that knowledge into dread. The core trick is information asymmetry \u2014 let the viewer understand more than the on-screen character, and the gap itself becomes tension [S11][S4]. Hitchcock's framing makes this literal: low-angle shots share a character's limited awareness, while high-angle shots reveal the danger they don't see, and combining them is \"the true nature of suspense\" \u2014 his bomb-under-the-table example, where we know what's coming and wait [S3].\n\n**Editing mechanics** are the strongest tool. Cutting back and forth at an increasing pace creates suspense on its own, especially the classic rush-to-rescue intercut [S5]. The same technique appears in the _Dunkirk_ example \u2014 we hear the enemy plane, see bombs walk to"
+  },
+  {
+   "turn": 4,
+   "mode": "WILDCARD",
+   "question": "How do editors and directors build suspense without dialogue?",
+   "wall_s": 31.4,
+   "errors": [],
+   "receipt": {
+    "status": "ok",
+    "verdict": "generated",
+    "citations": null,
+    "evidence": null,
+    "source_docs": 0
+   },
+   "phase_s": {
+    "scope": 1.8,
+    "compile": 3058.3,
+    "retrieve": 10665.8,
+    "assemble": 84.4,
+    "carry": 0.1,
+    "generate": 15525.6,
+    "total": 29336.3
+   },
+   "compiler": {
+    "lane": "compiler_ollama_gemma",
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "attempt": 1,
+    "fallback": false,
+    "first_failure": null,
+    "wall_ms": 1474.1,
+    "compile_ms": {
+     "lanes": 1474.8,
+     "scout": 406.3,
+     "total": 3057.7,
+     "bridges": 1171.2,
+     "explorer": 0.2,
+     "endpoints": 5.0,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "profile_expansion": 0.1
+    },
+    "reasoning_sent": {},
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true
+   },
+   "plan": {
+    "n": 7,
+    "by_origin": {
+     "USER": 3,
+     "PROFILE": 2,
+     "BRIDGE": 2
+    },
+    "queries": [
+     [
+      "q0",
+      "USER",
+      "PRIMARY",
+      "building suspense without dialogue",
+      null
+     ],
+     [
+      "q1",
+      "USER",
+      "MECHANISM",
+      "editing techniques for tension and suspense",
+      null
+     ],
+     [
+      "q2",
+      "USER",
+      "MECHANISM",
+      "visual storytelling and directing for suspense",
+      null
+     ],
+     [
+      "p0",
+      "PROFILE",
+      "ENTITY",
+      "How do directors convey meaning in a story?",
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+     ],
+     [
+      "p1",
+      "PROFILE",
+      "ENTITY",
+      "How do television techniques influence film editing and audience perce",
+      "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4"
+     ],
+     [
+      "br0",
+      "BRIDGE",
+      "ENTITY",
+      "How is misdirection used in film editing to create tension or surprise",
+      "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937"
+     ],
+     [
+      "br1",
+      "BRIDGE",
+      "ENTITY",
+      "In what ways can action sequences and fight scenes convey narrative an",
+      "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45"
+     ]
+    ]
+   },
+   "routing": {
+    "scout": {
+     "ms": 406.1,
+     "enabled": true,
+     "contract": "profile-scout-v1",
+     "n_injected": 8,
+     "nominations": 8
+    },
+    "profile_expansion": {
+     "flag": true,
+     "added": 2
+    },
+    "bridge_expansion": {
+     "added": 2,
+     "route": {
+      "model": "gemma4:31b-cloud",
+      "route": "ollama",
+      "reasoning": {
+       "think": false,
+       "surface": "ollama"
+      }
+     },
+     "intent": "SYNTHESIS",
+     "reason": "eligible",
+     "admitted": 2,
+     "concepts": 8,
+     "eligible": true,
+     "rejected": 0,
+     "attempted": true,
+     "generated": 2,
+     "succeeded": true,
+     "uncovered": 6,
+     "latency_ms": 1171.2,
+     "fallback_reason": null,
+     "dropped_invented": 0,
+     "dropped_structural": 0
+    },
+    "corpus_explore": {
+     "cause": "REQUEST_OFF",
+     "fired": false,
+     "detail": null,
+     "stages": {
+      "intent": "SYNTHESIS",
+      "fetch_errors": 0
+     },
+     "contract": "corpus-explore-firing-v1",
+     "requested": false
+    }
+   },
+   "funnel": {
+    "counts": {
+     "cited": 14,
+     "union": 290,
+     "selected": 15,
+     "retrieved": 142,
+     "pre_rerank": 37,
+     "post_rerank": 37
+    },
+    "lane_counts": {
+     "dualread": 24,
+     "gnn_route": 0,
+     "graph_dest": 0,
+     "hierarchical": 34,
+     "latent_rescue": 18,
+     "seealso_fanout": 0,
+     "resolution_lift": 0,
+     "global_dense_child": 50,
+     "global_sparse_child": 40
+    },
+    "multi_lane": 18,
+    "lane_in_final": {
+     "hierarchical": 7,
+     "global_dense_child": 10,
+     "global_sparse_child": 5,
+     "latent_rescue": 1,
+     "dualread": 3,
+     "resolution_lift": 0,
+     "seealso_fanout": 0,
+     "graph_dest": 0,
+     "gnn_route": 0
+    },
+    "lane_in_cited": {
+     "hierarchical": 7,
+     "global_dense_child": 10,
+     "global_sparse_child": 4,
+     "latent_rescue": 1,
+     "dualread": 3,
+     "resolution_lift": 0,
+     "seealso_fanout": 0,
+     "graph_dest": 0,
+     "gnn_route": 0
+    }
+   },
+   "probes": {
+    "aspects": null,
+    "aspect_final": null,
+    "aspect_best": null,
+    "weak_aspects": null,
+    "weak_reasons": null,
+    "timed_out": null
+   },
+   "lane_ms": null,
+   "stage_ms": null,
+   "latent_selection": null,
+   "prompt": {
+    "carry_in": 0,
+    "messages": 2,
+    "prompt_chars": 36903,
+    "latent_labels": 15,
+    "carry_in_prompt": 0
+   },
+   "wildcard": null,
+   "wildcard_bridges": [
+    {
+     "doc_id": "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45"
+    },
+    {
+     "doc_id": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4"
+    },
+    {
+     "doc_id": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4"
+    }
+   ],
+   "generation": {
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "surface": "litellm",
+     "provider": "deepseek",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    },
+    "max_tokens": 6000,
+    "finish_reason": "stop"
+   },
+   "degraded": [],
+   "final_docs": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45"
+   ],
+   "cited_docs": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45"
+   ],
+   "cited_breadcrumbs": [
+    "Joseph V. Mascelli - The Five C's of Cinematography \u203a Pages 86\u201388",
+    "The Anatomy of Story \u203a text/part0013.html",
+    "Blain Brown - Cinematography - Theory and Practice \u203a Pages 83\u201384",
+    "Francis Glebas - Directing the Story \u203a Pendulum of Suspense",
+    "The Anatomy of Story \u203a text/part0012.html",
+    "Francis Glebas - Directing the Story \u203a Pendulum of Suspense",
+    "The Screen Combat Handbook A Practical Guide for Filmmakers \u203a DON\u2019T OVERSHOW",
+    "Francis Glebas - Directing the Story \u203a Pendulum of Suspense",
+    "Ken Dancyger - The technique of film & video editing \u203a Page 112",
+    "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics \u203a **LIMITED VS. OPEN INFORMATION**",
+    "Grammar of the Edit \u203a Chapter Three \u2013 Principles in Practice",
+    "Fight Choreography The Art of Non-Verbal Dialogue \u203a Pages 397\u2013398"
+   ],
+   "answer_head": "Suspense without dialogue is built on one core principle: the audience knows something the character doesn't, and the film gives them time to imagine the worst. Everything else \u2014 editing, camera, pacing, sound \u2014 is a mechanism for controlling that gap between what we know and what we fear.\n\n**Information control is the foundation.** Hitchcock's rule holds: there can be no real suspense unless the audience knows what is going to happen; the bomb under the table only works if we know it's there [S3]. This is the \"limited vs. open information\" strategy \u2014 when Anne approaches the car in the classic example, we know a bomb is planted but she doesn't, so we jump at every click of the car door and worry each mile down the highway [S11]. Suspense is what's suspended: emotionally intense waiting, the audience held between curiosity and fear, needing enough information to anticipate the bad thing "
+  },
+  {
+   "turn": 5,
+   "mode": "GRAPH",
+   "question": "How do lighting and color choices change how an audience reads a scene?",
+   "wall_s": 33.7,
+   "errors": [],
+   "receipt": {
+    "status": "ok",
+    "verdict": "generated",
+    "citations": null,
+    "evidence": null,
+    "source_docs": 0
+   },
+   "phase_s": {
+    "scope": 1.8,
+    "compile": 4825.6,
+    "retrieve": 14352.0,
+    "assemble": 173.3,
+    "carry": 0.0,
+    "generate": 12279.6,
+    "total": 31633.2
+   },
+   "compiler": {
+    "lane": "compiler_ollama_gemma",
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "attempt": 1,
+    "fallback": false,
+    "first_failure": null,
+    "wall_ms": 1612.2,
+    "compile_ms": {
+     "lanes": 1613.1,
+     "scout": 247.7,
+     "total": 4825.1,
+     "bridges": 2960.9,
+     "explorer": 0.1,
+     "endpoints": 3.1,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "profile_expansion": 0.1
+    },
+    "reasoning_sent": {},
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true
+   },
+   "plan": {
+    "n": 9,
+    "by_origin": {
+     "USER": 3,
+     "PROFILE": 2,
+     "BRIDGE": 4
+    },
+    "queries": [
+     [
+      "q0",
+      "USER",
+      "PRIMARY",
+      "how lighting and color choices affect audience perception of a scene",
+      null
+     ],
+     [
+      "q1",
+      "USER",
+      "MECHANISM",
+      "visual storytelling through lighting and color palettes",
+      null
+     ],
+     [
+      "q2",
+      "USER",
+      "ADJACENT",
+      "how visual stimuli influence emotional and psychological interpretatio",
+      null
+     ],
+     [
+      "p0",
+      "PROFILE",
+      "ENTITY",
+      "over\u2011lighting versus under\u2011lighting for mood",
+      "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+     ],
+     [
+      "p1",
+      "PROFILE",
+      "ENTITY",
+      "What emotional effects can different lens choices create in a film?",
+      "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852"
+     ],
+     [
+      "br0",
+      "BRIDGE",
+      "ENTITY",
+      "How are visual elements used to control and define narrative space wit",
+      "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+     ],
+     [
+      "br1",
+      "BRIDGE",
+      "ENTITY",
+      "What is the role of the audience in interpreting the story through vis",
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+     ],
+     [
+      "br2",
+      "BRIDGE",
+      "ENTITY",
+      "How is the balance between clarity of action and readability of a scen",
+      "doc_0dd48434e2ceeccee1a6e406c5c6e31e205079566103f2547413bd4f3274b80d"
+     ],
+     [
+      "br3",
+      "BRIDGE",
+      "ENTITY",
+      "In what ways do television techniques influence film editing and the r",
+      "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4"
+     ]
+    ]
+   },
+   "routing": {
+    "scout": {
+     "ms": 247.6,
+     "enabled": true,
+     "contract": "profile-scout-v1",
+     "n_injected": 8,
+     "nominations": 8
+    },
+    "profile_expansion": {
+     "flag": true,
+     "added": 2
+    },
+    "bridge_expansion": {
+     "added": 4,
+     "route": {
+      "model": "gemma4:31b-cloud",
+      "route": "ollama",
+      "reasoning": {
+       "think": false,
+       "surface": "ollama"
+      }
+     },
+     "intent": "SYNTHESIS",
+     "reason": "eligible",
+     "admitted": 4,
+     "concepts": 8,
+     "eligible": true,
+     "rejected": 0,
+     "attempted": true,
+     "generated": 4,
+     "succeeded": true,
+     "uncovered": 6,
+     "latency_ms": 2960.9,
+     "fallback_reason": null,
+     "dropped_invented": 0,
+     "dropped_structural": 0
+    },
+    "corpus_explore": {
+     "cause": "REQUEST_OFF",
+     "fired": false,
+     "detail": null,
+     "stages": {
+      "intent": "SYNTHESIS",
+      "fetch_errors": 0
+     },
+     "contract": "corpus-explore-firing-v1",
+     "requested": false
+    }
+   },
+   "funnel": {
+    "counts": {
+     "cited": 11,
+     "union": 330,
+     "selected": 15,
+     "retrieved": 129,
+     "pre_rerank": 36,
+     "post_rerank": 36
+    },
+    "lane_counts": {
+     "dualread": 24,
+     "gnn_route": 0,
+     "graph_dest": 0,
+     "hierarchical": 30,
+     "latent_rescue": 18,
+     "seealso_fanout": 0,
+     "resolution_lift": 0,
+     "global_dense_child": 50,
+     "global_sparse_child": 40
+    },
+    "multi_lane": 27,
+    "lane_in_final": {
+     "hierarchical": 7,
+     "global_dense_child": 14,
+     "global_sparse_child": 2,
+     "latent_rescue": 3,
+     "dualread": 6,
+     "resolution_lift": 0,
+     "seealso_fanout": 0,
+     "graph_dest": 0,
+     "gnn_route": 0
+    },
+    "lane_in_cited": {
+     "hierarchical": 5,
+     "global_dense_child": 11,
+     "global_sparse_child": 0,
+     "latent_rescue": 3,
+     "dualread": 5,
+     "resolution_lift": 0,
+     "seealso_fanout": 0,
+     "graph_dest": 0,
+     "gnn_route": 0
+    }
+   },
+   "probes": {
+    "aspects": null,
+    "aspect_final": null,
+    "aspect_best": null,
+    "weak_aspects": null,
+    "weak_reasons": null,
+    "timed_out": null
+   },
+   "lane_ms": null,
+   "stage_ms": null,
+   "latent_selection": null,
+   "prompt": {
+    "carry_in": 0,
+    "messages": 2,
+    "prompt_chars": 35289,
+    "latent_labels": 15,
+    "carry_in_prompt": 0
+   },
+   "wildcard": null,
+   "wildcard_bridges": [],
+   "generation": {
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "surface": "litellm",
+     "provider": "deepseek",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    },
+    "max_tokens": 6000,
+    "finish_reason": "stop"
+   },
+   "degraded": [],
+   "final_docs": [
+    "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+    "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+   ],
+   "cited_docs": [
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584"
+   ],
+   "cited_breadcrumbs": [
+    "David Landau - Lighting for Cinematography \u203a Pages 310\u2013313",
+    "David Landau - Lighting for Cinematography \u203a Page 120",
+    "David Landau - Lighting for Cinematography \u203a Page 120",
+    "David Landau - Lighting for Cinematography \u203a Pages 310\u2013313",
+    "Grammar of the Shot \u203a Pages 163\u2013164",
+    "Blain Brown - Cinematography - Theory and Practice \u203a Pages 90\u201392",
+    "David Landau - Lighting for Cinematography \u203a Pages 299\u2013300",
+    "Joseph V. Mascelli - The Five C's of Cinematography \u203a Page 216",
+    "Scoppettuolo & Saccone - The Definitive Guide to DaVinci Resolve \u203a **Setting the tone of the visuals**",
+    "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics \u203a **VISUAL DESIGN QUESTIONNAIRE**",
+    "David Landau - Lighting for Cinematography \u203a Pages 307\u2013309"
+   ],
+   "answer_head": "Lighting and color are the fastest shorthand an audience reads before they interpret a single line of dialogue. They work at a \"gut, emotional level\" that reaches viewers on one plane while their conscious brain processes the story on another [S7]. The same physical scene lit bright and warm reads differently than if the background behind the actors is \"dark and murky\" \u2014 the viewer may suspect someone is lying, sad, or there is a sinister subtext [S2]. Because the background is \"part of the same picture, and thus part of the overall message,\" how it's lit is almost as important as how the acting area is lit [S4].\n\n**Why it works: color is an international, transcultural language.** The sources repeatedly stress that color carries instinctive, almost linguistic meaning: bluish light signals night worldwide, warm golden reads as dawn, orangey as sunset [S4]; we say people \"look green\" when"
+  }
+ ],
+ "pairs": [
+  {
+   "question": "What do my books say about making an animated character's movement feel weighty?",
+   "cited_overlap": [
+    "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "wildcard_only_cited": [
+    "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab"
+   ],
+   "hybrid_only_cited": [
+    "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875"
+   ],
+   "final_jaccard": 0.667
+  },
+  {
+   "question": "How do editors and directors build suspense without dialogue?",
+   "cited_overlap": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3"
+   ],
+   "wildcard_only_cited": [
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45"
+   ],
+   "hybrid_only_cited": [],
+   "final_jaccard": 0.818
+  }
+ ]
+}
