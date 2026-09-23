@@ -2257,6 +2257,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/enrichment-surfaces-2026-09-23/wildcard_probe.py", "py", None),
     ("docs/wiki/experiments/enrichment-surfaces-2026-09-23/wildcard_probe.json", "json", None),
     ("docs/wiki/work-log/2026-09-23-document-rag-first-design-lineage.md", "md", None),
+    ("docs/wiki/work-log/2026-09-23-grounded-learning-objective.md", "md", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay_owner_plans.py", "py", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay.jsonl", "jsonl", None),
     ("tests/determinism/test_rag_ui_integration.py", "py", None),

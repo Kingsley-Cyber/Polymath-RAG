@@ -2,9 +2,9 @@
 title: "ENRICHMENT-SURFACES-AUDIT — do the skeleton, pMAP, profile (SEEALSO, questions) and atoms reach the answers? (production 7eb767d)"
 date: 2026-09-23
 last_reviewed: 2026-09-23
-status: "AUDIT — read-only; no code, flag or data changed. Nine defects found, none fixed; the fixes are owner decisions (§6). Same-day addendum (register 11.416): §8 field inventory, §9 owner intent + root cause (every enrichment lane is judged against q0), §6 revised to wire the fields in; §10 design lineage + WILDCARD finding + the owner's sequencing (document RAG before code RAG); §11 concepts / theories as routers to real chunks, not hydration (register 11.417)."
+status: "AUDIT — read-only; no code, flag or data changed. Nine defects found, none fixed; the fixes are owner decisions (§6). Same-day addendum (register 11.416): §8 field inventory, §9 owner intent + root cause (every enrichment lane is judged against q0), §6 revised to wire the fields in; §10 design lineage + WILDCARD finding + the owner's sequencing (document RAG before code RAG); §11 concepts / theories as routers to real chunks, not hydration (register 11.417); §12 owner intent = grounded learning value + where the path context is lost + the path-aware judge decision; §13 execution-design input mapped to code; §5 timing corrected (register 11.418)."
 owner: "@king"
-scope: "Every document-enrichment surface, from its store to the evidence the synthesizer sees and the citations in the answer, measured on 1,508 real UI chat turns (cinema) plus in-process replays and a static trace."
+scope: "Every document-enrichment surface, from its store to the evidence the synthesizer sees and the citations in the answer, measured on 1,508 live pipeline turns (cinema; 139 distinct questions, mostly qualification runs through the UI streaming endpoint) plus in-process replays and a static trace."
 ---
 
 # ENRICHMENT-SURFACES-AUDIT
@@ -13,9 +13,15 @@ scope: "Every document-enrichment surface, from its store to the evidence the sy
 they reach the answers, for example SEEALSO and questions.
 
 **Method.** Evidence class per claim: EXECUTED (observed by running code or reading live stores) or READ (concluded from code).
-- EXECUTED — the retrieval funnel of **1,508 real UI chat turns** (7 days to 2026-09-23, all modes, status ok). Every turn
+- EXECUTED — the retrieval funnel of **1,508 live pipeline turns** (7 days to 2026-09-23, all modes, status ok). Every turn
   records in `query_receipts.meta.funnel` which lane brought each candidate chunk, the cross-encoder order, the rows the
   model saw (`selected`) and the rows the answer cited. Script: `receipt_audit.py`.
+  - Population (corrected 2026-09-23, 11.418): all ran the real retrieval code on the live fleet through the UI streaming
+    endpoint, but they are mostly qualification / harness runs, not owner-typed questions:
+    - 139 distinct questions;
+    - 1,128 of the turns on 2026-09-18;
+    - 1,397 with deterministic synthesis and 111 with model synthesis.
+  - The lane measurements describe the retrieval pipeline, mostly as configured before the subquery cap moved to 10.
 - EXECUTED — store counts: Qdrant profiles, atoms and parent maps, plus the Postgres concept families and aliases the lift
   reads. Script: `surface_counts.py`.
 - EXECUTED — in-process replays of real turns (no LLM call): the resolution-lift terms, one turn per intent, and the concept
@@ -139,22 +145,32 @@ answers through lane E and ORIENTATION.
    latent-selection seats are not persisted. Per-lane `lane_ms` is computed but not written, so the receipt cannot say which
    lane is slow (§5).
 
-## 5. Latency signal found in the same receipts
+## 5. Where the time goes (corrected 2026-09-23, register 11.418)
 
-The live retrieve phase roughly tripled after the `5df4536` deploy (subquery cap 3 → 10):
+`meta.phase_ms` holds cumulative marks (ms since the turn started), not durations:
+- compile = the `compile` mark;
+- retrieval = `retrieve` − `compile`;
+- synthesis = `generate` − `assemble`.
 
-| | before (7 days) | after (all turns since the deploy) |
-|---|---|---|
-| HYBRID | p50 9.2 s (n 567) | 29.8 s and 32.2 s |
-| GRAPH | p50 8.6 s (n 263) | 30.9 s |
-| WILDCARD | p50 11.6 s (n 282) | 31.4 s |
-| GNN | p50 15.8 s (n 13) | 14.7 s and 15.0 s |
+This section first read the `retrieve` mark as the retrieval duration and reported "≈ 30 s live retrieve". That was wrong.
 
-GNN runs no subqueries and did not change. The warm in-process replay of the same plans measured 5.3–5.7 s (register 11.408).
+Owner-style turns since the `5df4536` deploy (n = 6, all with model synthesis, all before the 11.411 thinking fix):
 
-INFERRED, n = 4: the extra subqueries and bridge seats cost far more live than in the warm replay. The receipt cannot
-attribute the time (defect 9). Before changing the cap, persist per-lane and per-subquery timings and measure. The lanes D–I
-deadline gap (feasibility report §9) is the other candidate.
+| mode | compile | retrieval | synthesis | total |
+|---|---:|---:|---:|---:|
+| HYBRID (n 2) | 12.6 s | 18.4 s | 51.4 s | 82.5 s |
+| GRAPH (n 1) | 11.6 s | 19.3 s | 34.0 s | 65.0 s |
+| WILDCARD (n 1) | 11.6 s | 19.8 s | 42.8 s | 74.3 s |
+| GNN (n 2) | 11.8 s | 3.0 s | 48.6 s | 63.5 s |
+
+- **Compile ≈ 12 s.** The compiler call (1.6–3.2 s) and the bridge compiler (1.5–2.6 s) are two sequential model calls and
+  account for about 4–5 s. The receipt does not attribute the rest.
+- **Retrieval ≈ 19 s** for the modes with depth lanes; GNN takes 3 s.
+- **Synthesis 34–51 s**, before thinking was turned off on the wire.
+- **The 7-day "before" medians are not a clean baseline.** They are mostly harness turns: deterministic synthesis, different
+  plans, compile 2.4–2.7 s, retrieval 6.1–9.2 s. The GNN turns (the same population on both sides) show no deploy effect:
+  compile 10.3 → 11.8 s, retrieval 3.3 → 3.0 s.
+- Attributing the time needs per-step timings (defect 9 / §6 fix 6) and a timing trace of one slow turn (§13).
 
 ## 6. Recommended fixes (owner decisions; none executed; revised after the owner's statement of intent, §9)
 
@@ -195,7 +211,7 @@ bridges and hops. The fixes therefore wire the fields in; none of them removes a
      measured loss.
    - For CODE-KNOWLEDGE-V1 identifiers ARE the vocabulary, so settle this before slice C10.
 6. **Receipts.** Persist per-probe lineage, local-winner survival, `latent_selection`, per-lane `lane_ms` and per-subquery
-   timings. Without them, fixes 1–5 and the ≈ 30 s live retrieve (§5) cannot be measured.
+   timings. Without them, fixes 1–5 and the ≈ 12 s compile + ≈ 19 s retrieval (§5) cannot be attributed.
 7. **Synthesis sees the abstraction level.** Carry role and latent seat labels past `ui.py:3519`, so the model knows a row is
    COMPLEMENTARY or LATENT rather than DIRECT. Stop listing PROFILE / BRIDGE probes as "NO EVIDENCE RETRIEVED" aspects
    (defects 5–6). This is how a different abstraction level also wins in synthesis, not only in retrieval.
@@ -419,4 +435,112 @@ mechanism that fetches real chunks, so the answer to the owner's question is yes
 
 **Cost to control.**
 - Each selected item costs a child search, a map search and extra judge pairs.
-- Live retrieve is already about 30 s (§5). k stays small in HYBRID, and the per-probe timings (§6 fix 6) land first.
+- Live compile is already about 12 s and retrieval about 19 s (§5). k stays small in HYBRID, and the per-probe timings
+  (§6 fix 6) land first.
+
+## 12. Owner intent: grounded learning value — and where the path context is lost (same day)
+
+**Owner, 2026-09-23 (verbatim, shared from another conversation):** "I want a RAG pipeline that taps into latent or subdued
+chunks, since a lot of my corpus knowledge is documents I'm not well versed on, so I may not know how to query properly. I'm
+using it to improve my knowledge."
+
+**The objective this implies: rank for grounded learning value, not literal query satisfaction.**
+- The question is the starting point of a learning need, not a complete specification.
+- A chunk can earn its place in five ways, always with source support: it answers directly, supplies a prerequisite, explains
+  a mechanism, corrects a premise, or offers a transfer (with its limits).
+- Novelty alone earns nothing.
+
+**Policy input the owner shared.** These are recommendations from that conversation; the owner has not decided yet.
+1. Separate "worth following" (a bridge's ability to retrieve evidence) from "worth including" (a chunk's supported
+   contribution). No answer-worthiness filter runs before a bridge has retrieved its targets.
+2. Select a bridge for a specific need: "what missing part of this question could following this bridge resolve?" Topical
+   relatedness is not enough, and matching a subquery is not enough if the subquery has drifted.
+3. Judge evidence with its path attached: question → subquery → bridge → source chunk. The judge asks:
+   - does the source support the relationship the path depends on;
+   - does that help the learning need;
+   - does it add something beyond the evidence already selected?
+4. Select by contribution, with no guaranteed seats. A bridge stays in the context only when it is needed to explain the
+   connection. The answer shows the connection and labels analogies.
+5. Rejected there:
+   - fixed bridge quotas;
+   - automatic boosts for abstract chunks;
+   - unconditional protection of subquery winners;
+   - multiplied hop scores as the verdict;
+   - a universal standalone query-similarity floor;
+   - guaranteed direct-first ordering;
+   - novelty boosts.
+
+**Where the path context is lost today** (READ, code at `7eb767d`). That conversation left this open; the code answers it:
+
+| Stage | What the judge receives | Anchor |
+|---|---|---|
+| Retrieval, lanes D–I | the chunk is tagged with q0's id; the probe that found it is forgotten | `candidate_engine.py:814–919` |
+| Bridge generation | atom-kind names and doc ids instead of concept text | `bridge_integration.py:46` |
+| Main judge (every candidate) | (q0, the isolated chunk): one cross-encoder call | `candidate_engine.py:1447` |
+| Bridge pass (WLK2C; bridge subqueries only) | three separate pairwise scores, combined by floors and then seated by caps with q0-primary non-displacement (see below) | `latent_selection.py:65–96`, `latent_eligibility.py:142`, `latent_portfolio.py:47` |
+| Synthesis | role, latent-seat and lineage labels are dropped; the model never sees why a chunk is there | `ui.py:3519` |
+
+The three bridge-pass scores are q0↔chunk (reused), q0↔bridge and bridge↔chunk. No judge sees question + bridge + chunk
+together, and none asks whether the source supports the relationship.
+
+**What this changes in this report's recommendations:**
+- **Withdrawn as the admission rule:** §11 step 3 (the two-hop product with a q0-groundedness floor as the verdict) and the
+  seat budgets proposed in chat. Hop scores stay, as "worth following" signals.
+- **§6 fix 1 splits in two:**
+  - carry the full path end to end (keep);
+  - a path-aware admission judge (new; a design decision).
+- **Laws that conflict with the objective** (owner decisions):
+  - FINAL "cross-encoder = final judge" (l.39);
+  - FINAL §47 "LATENT may never substitute for DIRECT";
+  - WLK2C's q0-primary non-displacement;
+  - ELITE §6 rule 1 (lead with DIRECT; never fill with `[A#]`) and the WILDCARD novelty term.
+
+  What survives from them: an unsupported connection never enters, and the answer says when a direct answer is missing.
+- **Unchanged:**
+  - profile metadata routes and is never evidence;
+  - §6 fixes 2, 3 and 6;
+  - fix 7 becomes "make the connection visible": the concept, why it matters, the supporting source, and analogy labels.
+
+**Open design decision for the plan: how the path-aware admission judge works.**
+- (A) One batched LLM judge over a shortlist of full paths, returning support, contribution type and adds-beyond.
+- (B) The cross-encoder with a composed path query. Cheap, but it measures relevance only.
+- (C) Two stages: cross-encoder signals build the shortlist ("worth following"), then one batched LLM judge admits ("worth
+  including").
+- (D) Hand the paths to the synthesizer and let it choose and label.
+
+Recommendation: C. Acceptance fixtures:
+- a useful bridge that is dropped today (a WLK-10 wc01-class case);
+- a vague bridge that must fail (a lift `A1` term, or a merely topical bridge);
+- direct evidence that stays eligible.
+
+Plus the frozen baselines and the owner's three metrics.
+
+## 13. Execution design input the owner shared, mapped to today's code (same day; not yet decided)
+
+**The principle the owner shared** (from the same outside conversation): keep dependent waiting small.
+- Precompute relationships at index time.
+- Have the EXISTING compiler plan the independent probes together (learning need, probes, and the relationship each probe
+  investigates), instead of adding model calls per stage.
+- Start the original-question search while compilation runs.
+- Search concurrently, merge duplicates while keeping their paths, and batch the conditional judging (question + bridge
+  relationship + source text).
+- Expand a second round only for an identified evidence gap.
+- Do not prune against q0 before conditional judging sees the candidates.
+- Verify that a reranker given bridge text actually judges conditional relevance.
+- Measure before promising a response time: a timing trace of one slow turn, showing which operations wait on others.
+
+| Principle | Today (READ / EXECUTED) | Gap |
+|---|---|---|
+| Relationships precomputed at index time | concept / theory / seealso vectors stored per document (profile multivectors); document → parents via pMAP | no concept → parent / chunk links; no concept-neighbour table |
+| One compiler call plans all probes | the compiler emits intent + USER / PROFILE / BRIDGE subqueries (1.6–3.2 s); the bridge compiler is a SECOND sequential model call (1.5–2.6 s) and gets kind names | fold bridge generation into the one planning call, fed the selected concept items |
+| q0 search starts during compilation | the phase marks run in sequence (compile → retrieve); whether any lane is prestarted during compile is not visible in receipts | measure it with the timing trace |
+| Concurrent search | lanes D–I run one after another outside `lane_deadline_s` (feasibility report §9) | run them concurrently under the deadline |
+| Batched conditional judging | one q0 judge call + the WLK2C pass (1 + #bridges calls), pairwise only (§12) | one batched path-aware admission judge (§12 option C) |
+| No pruning against q0 first | the fusion cap and judged prefix run before any conditional judgment; lanes D–I compete inside q0's preservation pool (§9) | per-probe lineage + local winners carried to admission (§6 fix 1) |
+| Expand only for gaps | single pass today, no second round | keep; add a gap-triggered round only with a named missing need |
+
+**First measurements the plan needs** (both $0, before any design is finalized):
+1. A timing trace of one slow turn with per-step, wait-on-what timings: compiler, Scout, bridge compiler, each lane, fusion,
+   judge, WLK2C pass, assembly, synthesis.
+2. A trace of one dropped chunk from its bridge / probe through final selection, showing what question and context each
+   judge received (one useful bridge dropped today, one vague bridge that must fail).

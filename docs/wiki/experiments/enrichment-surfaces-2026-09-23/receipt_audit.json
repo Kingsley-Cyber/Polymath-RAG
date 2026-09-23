@@ -1,6 +1,22 @@
 {
- "generated_at": "2026-09-23T16:56:50+00:00",
- "source": "query_receipts kind=chat_stream status=ok with meta.funnel (the owner's UI turns)",
+ "generated_at": "2026-09-23T18:16:34+00:00",
+ "source": "query_receipts kind=chat_stream status=ok with meta.funnel (live pipeline turns through the UI streaming endpoint)",
+ "population_7d": {
+  "turns": 1508,
+  "distinct_questions": 139,
+  "deterministic_synthesis": 1397,
+  "model_synthesis": 111,
+  "turns_per_day": {
+   "2026-09-17": 30,
+   "2026-09-18": 1128,
+   "2026-09-19": 156,
+   "2026-09-20": 92,
+   "2026-09-21": 4,
+   "2026-09-22": 81,
+   "2026-09-23": 17
+  },
+  "note": "live pipeline runs through the UI streaming endpoint: owner turns plus qualification / harness runs"
+ },
  "lanes_7d": {
   "turns": 1508,
   "by_mode": {
@@ -257,8 +273,8 @@
    "turns": 1508,
    "turns_selected_enrichment_only": 793,
    "turns_cited_enrichment_only": 652,
-   "selected_no_lane": 1040,
    "selected_baseline": 18206,
+   "selected_no_lane": 1040,
    "cited_baseline": 15205,
    "cited_no_lane": 629
   },
@@ -269,29 +285,29 @@
     "turns_cited_enrichment_only": 13
    },
    "HYBRID": {
-    "selected_no_lane": 374,
     "selected_baseline": 7008,
+    "selected_no_lane": 374,
     "selected_enrichment_only": 565,
     "turns": 569,
     "turns_cited_enrichment_only": 210
    },
    "GRAPH": {
     "selected_baseline": 3329,
-    "selected_enrichment_only": 207,
     "selected_no_lane": 94,
+    "selected_enrichment_only": 207,
     "turns": 264,
     "turns_cited_enrichment_only": 105
    },
    "WILDCARD": {
     "selected_baseline": 3605,
-    "selected_enrichment_only": 213,
     "selected_no_lane": 112,
+    "selected_enrichment_only": 213,
     "turns": 283,
     "turns_cited_enrichment_only": 101
    },
    "FAST": {
-    "selected_enrichment_only": 758,
     "selected_baseline": 4264,
+    "selected_enrichment_only": 758,
     "turns": 377,
     "turns_cited_enrichment_only": 223,
     "selected_no_lane": 460
@@ -322,60 +338,69 @@
  "retrieve_phase_latency": {
   "before_5df4536_7d": {
    "FAST": {
-    "n": 377,
-    "p50_s": 14.5,
-    "p90_s": 28.6,
-    "max_s": 46.1
+    "n": 341,
+    "compile_s": 2.7,
+    "retrieval_s": 9.2,
+    "synthesis_s": 0.0,
+    "total_s": 15.3
    },
    "GNN": {
-    "n": 13,
-    "p50_s": 15.8,
-    "p90_s": 18.2,
-    "max_s": 20.8
+    "n": 12,
+    "compile_s": 10.3,
+    "retrieval_s": 3.3,
+    "synthesis_s": 34.5,
+    "total_s": 54.6
    },
    "GRAPH": {
-    "n": 263,
-    "p50_s": 8.6,
-    "p90_s": 17.7,
-    "max_s": 39.0
+    "n": 241,
+    "compile_s": 2.4,
+    "retrieval_s": 6.1,
+    "synthesis_s": 0.0,
+    "total_s": 8.8
    },
    "HYBRID": {
-    "n": 567,
-    "p50_s": 9.2,
-    "p90_s": 20.7,
-    "max_s": 51.1
+    "n": 502,
+    "compile_s": 2.6,
+    "retrieval_s": 6.5,
+    "synthesis_s": 0.0,
+    "total_s": 10.2
    },
    "WILDCARD": {
-    "n": 282,
-    "p50_s": 11.6,
-    "p90_s": 22.6,
-    "max_s": 59.6
+    "n": 261,
+    "compile_s": 2.4,
+    "retrieval_s": 9.1,
+    "synthesis_s": 0.0,
+    "total_s": 11.9
    }
   },
   "after_5df4536": {
    "GNN": {
     "n": 2,
-    "p50_s": 14.8,
-    "p90_s": 14.7,
-    "max_s": 15.0
+    "compile_s": 11.8,
+    "retrieval_s": 3.0,
+    "synthesis_s": 48.6,
+    "total_s": 63.5
    },
    "GRAPH": {
     "n": 1,
-    "p50_s": 30.9,
-    "p90_s": 30.9,
-    "max_s": 30.9
+    "compile_s": 11.6,
+    "retrieval_s": 19.3,
+    "synthesis_s": 34.0,
+    "total_s": 65.0
    },
    "HYBRID": {
     "n": 2,
-    "p50_s": 31.0,
-    "p90_s": 29.8,
-    "max_s": 32.2
+    "compile_s": 12.6,
+    "retrieval_s": 18.4,
+    "synthesis_s": 51.4,
+    "total_s": 82.5
    },
    "WILDCARD": {
     "n": 1,
-    "p50_s": 31.4,
-    "p90_s": 31.4,
-    "max_s": 31.4
+    "compile_s": 11.6,
+    "retrieval_s": 19.8,
+    "synthesis_s": 42.8,
+    "total_s": 74.3
    }
   }
  }

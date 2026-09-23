@@ -7,7 +7,7 @@ Reads the retrieval funnel every UI chat turn writes to `query_receipts.meta.fun
 and reports, per lane: turns it fired, chunks it brought, how many reached the rerank pool, the evidence (selected)
 and the citations, and how many of those it brought ALONE (no other lane found them). Also: the share of evidence found
 ONLY by enrichment lanes (not by plain dense / sparse child search), where the resolution-lift chunks sit in the
-cross-encoder order, and the retrieve-phase latency per mode before / after the 5df4536 deploy.
+cross-encoder order, the phase durations per mode before / after the 5df4536 deploy, and who generated the turns.
 
 usage: set -a; . ./.env; set +a; .venv/bin/python docs/wiki/experiments/enrichment-surfaces-2026-09-23/receipt_audit.py [out.json]
 """
@@ -26,13 +26,32 @@ NO_LANE = "(no lane: subquery / bridge rows)"
 
 
 def load(conn, since, until=None):
-    """UI turns received after `since` (and before `until` when given); both are timestamps."""
+    """Turns through the UI streaming endpoint received after `since` (and before `until` when given). `meta.phase_ms`
+    holds CUMULATIVE marks (ms since the turn started), so the third column is the dict of marks, not a duration."""
     with conn.cursor() as c:
-        c.execute("""select mode, meta->'funnel', (meta->'phase_ms'->>'retrieve')::float from query_receipts
+        c.execute("""select mode, meta->'funnel', meta->'phase_ms' from query_receipts
                      where kind='chat_stream' and status='ok' and meta ? 'funnel'
                        and received_at > %s and (%s::timestamptz is null or received_at <= %s::timestamptz)""",
                   (since, until, until))
         return c.fetchall()
+
+
+def population(conn, since):
+    """Who generated the turns: distinct questions, turns per day, deterministic vs model synthesis."""
+    with conn.cursor() as c:
+        c.execute("""select count(*), count(distinct question_sha256),
+                            count(*) filter (where meta->>'synthesis_version' like 'deterministic%%'),
+                            count(*) filter (where meta->>'synthesis_version' not like 'deterministic%%')
+                     from query_receipts where kind='chat_stream' and status='ok' and meta ? 'funnel' and received_at > %s""",
+                  (since,))
+        turns, distinct_q, deterministic, model = c.fetchone()
+        c.execute("""select date_trunc('day', received_at)::date::text, count(*) from query_receipts
+                     where kind='chat_stream' and status='ok' and meta ? 'funnel' and received_at > %s group by 1 order by 1""",
+                  (since,))
+        per_day = dict(c.fetchall())
+    return {"turns": turns, "distinct_questions": distinct_q, "deterministic_synthesis": deterministic,
+            "model_synthesis": model, "turns_per_day": per_day,
+            "note": "live pipeline runs through the UI streaming endpoint: owner turns plus qualification / harness runs"}
 
 
 def lane_table(rows):
@@ -118,16 +137,22 @@ def lift_positions(rows):
 
 
 def latency(rows):
-    by = collections.defaultdict(list)
-    for mode, _f, ms in rows:
-        if ms is not None:
-            by[mode].append(ms / 1000)
-    out = {}
-    for mode, v in sorted(by.items()):
-        v.sort()
-        out[mode] = {"n": len(v), "p50_s": round(statistics.median(v), 1), "p90_s": round(v[int(0.9 * (len(v) - 1))], 1),
-                     "max_s": round(v[-1], 1)}
-    return out
+    """Phase durations from the cumulative marks, for turns that retrieved (union > 0): compile = mark `compile`;
+    retrieval = `retrieve` − `compile`; synthesis = `generate` − `assemble`; total = `total`. Medians per mode."""
+    by = collections.defaultdict(lambda: collections.defaultdict(list))
+    for mode, f, ph in rows:
+        if not ph or not (((f or {}).get("counts") or {}).get("union")):
+            continue
+        g = {k: ph.get(k) for k in ("compile", "retrieve", "assemble", "generate", "total")}
+        if None in (g["compile"], g["retrieve"], g["total"]):
+            continue
+        by[mode]["compile_s"].append(g["compile"] / 1000)
+        by[mode]["retrieval_s"].append((g["retrieve"] - g["compile"]) / 1000)
+        if g["assemble"] is not None and g["generate"] is not None:
+            by[mode]["synthesis_s"].append((g["generate"] - g["assemble"]) / 1000)
+        by[mode]["total_s"].append(g["total"] / 1000)
+    return {mode: {"n": len(v["total_s"]), **{k: round(statistics.median(x), 1) for k, x in v.items() if x}}
+            for mode, v in sorted(by.items())}
 
 
 def main():
@@ -137,12 +162,14 @@ def main():
     week = load(conn, week_ago)
     before = load(conn, week_ago, deploy)
     after = load(conn, deploy)
-    conn.close()
+    conn_pop = conn
     out = {"generated_at": datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds"),
-           "source": "query_receipts kind=chat_stream status=ok with meta.funnel (the owner's UI turns)",
+           "source": "query_receipts kind=chat_stream status=ok with meta.funnel (live pipeline turns through the UI streaming endpoint)",
+           "population_7d": population(conn_pop, week_ago),
            "lanes_7d": lane_table(week), "lanes_since_5df4536": lane_table(after),
            "enrichment_only_7d": enrichment_only(week), "resolution_lift_positions_7d": lift_positions(week),
            "retrieve_phase_latency": {"before_5df4536_7d": latency(before), "after_5df4536": latency(after)}}
+    conn.close()
     text = json.dumps(out, indent=1)
     if len(sys.argv) > 1:
         with open(sys.argv[1], "w") as fh:

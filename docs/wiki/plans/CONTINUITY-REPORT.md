@@ -23,18 +23,23 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (close-out before compaction) — **MISSION = COMPLETE DOCUMENT RAG FIRST (owner, 11.417); CODE-KNOWLEDGE-V1 parked behind it. First slice: one consolidated plan of record that joins the owner's already-written design (audit §10) and settles concepts / theories as routers (audit §11).**
+## CURRENT — 2026-09-23 (close-out before compaction) — **MISSION = COMPLETE DOCUMENT RAG FIRST (owner, 11.417); objective = GROUNDED LEARNING VALUE (owner, 11.418). CODE-KNOWLEDGE-V1 parked behind it. First slice: one consolidated plan of record (audit §10–§12), which the owner decides on before any code.**
 
 ### Repository State
-- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 11 unpushed commits (`58c819f` … the
-  11.417 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
-- Main checkout clean after the 11.417 commit. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
+- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 12 unpushed commits (`58c819f` … the
+  11.418 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
+- Main checkout clean after the 11.418 commit. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
   (+5). Every other worktree branch is merged into `production`.
 - Fleet: 24 workers / 13 types healthy on ONE bundle, `/ready` true (embedder + reranker). Running code = committed code
-  (last bounce after `c6c31aa`; 11.413–11.417 are documents only).
+  (last bounce after `c6c31aa`; 11.413–11.418 are documents only).
 
 ### Active Mission
 - **DOCUMENT RAG COMPLETION (active; owner 2026-09-23: "before we work on code rag, we must complete document rag").**
+  - **Objective (owner, verbatim):** "a RAG pipeline that taps into latent or subdued chunks, since a lot of my corpus knowledge
+    is documents I'm not well versed on, so I may not know how to query properly. I'm using it to improve my knowledge."
+    That means ranking for grounded learning value, not literal query match (audit §12).
+  - **Path context is lost at five points:** retrieval lanes D–I, the bridge compiler, the q0-only main judge, the pairwise
+    bridge pass, and the synthesis labels (audit §12 table).
   - The owner's design is already written, but scattered: FINAL §1.2 / §7 / §40–42, ELITE §6–7, WLK2A, LQF-V2. It was never
     consolidated.
   - FINAL's law "cross-encoder = final judge" was never amended to LQF-V2's multi-authority ranking.
@@ -48,7 +53,7 @@ historical, never an instruction.
   - Plan `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`; 13 owner decisions (feasibility report §8 + §10).
   - Parsers come from open-source packages behind thin adapters (report §11).
 
-### Completed Since Last Bootstrap (11.406–11.417)
+### Completed Since Last Bootstrap (11.406–11.418)
 - 11.406 — chat answers survive a chat switch (frontend).
 - 11.407 — Claude-style composer.
 - 11.408 — subquery cap 10; FAST / VECTOR = lanes A + B, with no depth lanes and no bridge pass.
@@ -63,6 +68,8 @@ historical, never an instruction.
   fields in (§6).
 - 11.417 — document RAG before code RAG (owner); design lineage (§10); WILDCARD probe; concepts / theories as routers, not
   hydration (§11).
+- 11.418 — the owner's objective is grounded learning value; where the path context is lost; the admission-judge decision
+  (§12).
 
 ### Current Contract State
 - **Retrieval.** `MODE_LANES`: FAST / VECTOR = A + B; HYBRID / GRAPH / WILDCARD = all lanes; GNN = its own route.
@@ -91,7 +98,7 @@ historical, never an instruction.
   - cinema's atom store is the vNext generation (≈ 1 per kind per doc).
 
 ### Active Impact Closure
-- Changed by 11.413–11.417: documents and read-only scripts only → NOT_AFFECTED.
+- Changed by 11.413–11.418: documents and read-only scripts only → NOT_AFFECTED.
 - 11.406–11.412: UPDATED and deployed (see their rows).
 - DEFERRED: the nine audit defects (audit §4) and the seven fixes (audit §6), pending the owner's word per fix.
 - BLOCKED: fix 4's multi-hop part, on the owner lifting the Graph traversal deferral. The one-hop part is not blocked.
@@ -104,7 +111,7 @@ historical, never an instruction.
 - 11.411 — DEPLOYED; the wire was confirmed against the merged code. The effect on the owner's answers is unconfirmed: the last
   UI turn (09:42Z) predates the deploy.
 - 11.412 — DEPLOYED; live canary: Alibaba 9 / 9 with 0 reasoning characters.
-- 11.413–11.417 — documents; the audit numbers are EXECUTED, with evidence under
+- 11.413–11.418 — documents; the audit numbers are EXECUTED, with evidence under
   `docs/wiki/experiments/enrichment-surfaces-2026-09-23/`.
 - INVALIDATED: none.
 
@@ -117,25 +124,46 @@ historical, never an instruction.
 - **zsh:** word-split file lists with `${=T}`.
 
 ### Working Tree
-- Clean after the 11.417 commit. Scratch lives outside the repo (session scratchpad).
+- Clean after the 11.418 commit. Scratch lives outside the repo (session scratchpad).
 
 ### Tooling State
 - `_graft_polymath` graph refreshed to `7eb767d` on 2026-09-23. Code is unchanged since, so it is current.
 - `graphify-out` was last refreshed 2026-09-21 (`acd83bb`); `graphify update .` refreshes it at $0.
-- Guards at the 11.417 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
+- Guards at the 11.418 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
 
 ### Next Action
 1. Run the `polymath-bootstrap` skill.
-2. Read the audit: §9 root cause → §10 design lineage → §11 routing rule + design sketch → §6 fixes. Then read the sources it
+2. Read the audit: §12 objective + path-loss map → §9 root cause → §10 design lineage → §11 routing rule → §6 fixes. Then read the sources it
    cites: FINAL §1.2 / §7 / §40–42 / l.39, ELITE §6–7, WLK2A (findings + recommendation), LQF-V2 (architectural lock).
 3. **Draft ONE consolidated plan of record, documents only, admitted as its own slice**, e.g.
    `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. It:
-   - amends FINAL's "cross-encoder = final judge" to the multi-authority ranking;
-   - makes each profile field a modular conditional bridge + ranking (FINAL §7 × WLK2A / LQF-V2);
-   - treats concepts / theories as routers, never hydration (§11): selection → three doors → two-hop judging;
+   - states the objective as a law: grounded learning value. It amends FINAL l.39 "cross-encoder = final judge", FINAL §47,
+     WLK2C's non-displacement, and ELITE §6 rule 1 + the novelty term. It keeps: an unsupported connection never enters, and
+     the answer says when a direct answer is missing;
+   - separates "worth following" (bridge / probe ranking by ability to retrieve) from "worth including" (path-aware admission
+     by supported contribution: direct answer / prerequisite / mechanism / correction / transfer, no quotas);
+   - carries the full path end to end: question → subquery → bridge / concept → chunk;
+   - decides the admission-judge design: A LLM batch / B composed cross-encoder / C two-stage (recommended) / D synthesizer.
+     It sets the judge's cost and latency budget per mode;
+   - makes each profile field a modular conditional bridge (FINAL §7 × WLK2A / LQF-V2). Concepts / theories are routers,
+     never hydration (§11): selection → three doors;
    - names WILDCARD the full embodiment and HYBRID / GRAPH its §7 subsets; GRAPH uses SEEALSO (and optionally concept
      neighbours) for hops; GNN is excluded;
-   - makes the §6 fixes its execution slices, with receipts first.
+   - makes the §6 fixes its execution slices, with receipts first;
+   - adopts the execution principles in audit §13, for the owner to confirm:
+     - relationships precomputed at index time;
+     - ONE compiler call plans all probes, including bridges;
+     - q0 search starts during compilation;
+     - lanes run concurrently under the deadline;
+     - one batched path-aware judge;
+     - a second round only for a named evidence gap;
+   - starts from two $0 measurements (audit §13): a timing trace of one slow turn, and a trace of one dropped chunk through
+     every judge;
+   - sets the acceptance fixtures:
+     - a useful bridge dropped today (WLK-10 wc01-class) now surfaces;
+     - a vague bridge (a lift `A1` term, or a merely topical bridge) fails;
+     - direct evidence stays eligible;
+     - plus the frozen baselines and the owner's three metrics.
    Put its open decisions to the owner in one batch. It amends an owner law, so the owner confirms it before any code.
 4. **Execution slices after the owner confirms** (audit §6, one slice each):
    1. per-probe lineage + conditional judging for lanes D–H: each probe gets its own query id and text, LQF-V2 preserves its
@@ -144,8 +172,8 @@ historical, never an instruction.
    3. project cinema's v3.2 `concepts` / `theories` / `seealso` into the atom store (from existing artifacts only);
    4. SEEALSO hops in GRAPH: one hop now; multi-hop needs the deferral lifted;
    5. resolution lift → PRECISION lineage: query-relevant terms, every term kept (or `resolution_lift="off"` until then);
-   6. receipts: per-probe lineage, local-winner survival, `latent_selection`, `lane_ms`, subquery timings; then measure
-      the ≈ 30 s live retrieve;
+   6. receipts: per-probe lineage, local-winner survival, `latent_selection`, `lane_ms`, subquery timings; then attribute
+      the ≈ 12 s compile + ≈ 19 s retrieval (audit §5, corrected);
    7. synthesis sees roles: labels past `ui.py:3519`; no "NO EVIDENCE RETRIEVED" for PROFILE / BRIDGE probes.
    - Receipts (6) should land before or together with 1, so the gain is measurable.
 5. CODE-KNOWLEDGE-V1 stays parked until document RAG is complete (then its 13 decisions, feasibility report §8 + §10).
@@ -172,7 +200,8 @@ historical, never an instruction.
 
 ### Live Qualification Queue
 - L1 — the owner's next DeepSeek turn streams no reasoning, and its `chat_synth` latency drops (it was 34–61 s).
-- L2 — once receipts carry `lane_ms`, attribute the ≈ 30 s live retrieve (HYBRID / GRAPH / WILDCARD since `5df4536`, n = 4).
+- L2 — a timing trace of one slow turn (audit §13) plus `lane_ms` receipts: attribute the ≈ 12 s compile and ≈ 19 s retrieval
+  (owner-style turns, n = 6; `phase_ms` marks are cumulative).
 - L3 — CODE-KNOWLEDGE-V1 acceptance per the packet's matrix, after Phase 1.
 
 ### Deferred Architecture
