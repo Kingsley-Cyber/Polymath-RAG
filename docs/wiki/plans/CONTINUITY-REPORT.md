@@ -19,7 +19,11 @@ Update THIS file in place at session end. History lives in
 
 Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
 
-## CURRENT — 2026-09-23 — **DEEPSEEK ANSWERS: `thinking: disabled` NOW REACHES THE WIRE (ANTHROPIC-THINKING-TRANSPORT-V1).**
+## CURRENT — 2026-09-23 (later) — **EVERY CHAT MODEL GETS A WORKING REASONING CONTROL; NON-ANSWERING MODELS REMOVED (MODEL-LIST-REASONING-V1).**
+
+Alibaba 9 / 9 answer with thinking off (0 reasoning chars); Ollama 6 usable (gpt-oss `think: "low"`); the 8 OpenCode free models are gone (OpenCode refuses its free tier outside OpenCode; row `opencode-free` disabled, key kept). Catalog 23 → 15. Register 11.412.
+
+## PRIOR — 2026-09-23 — **DEEPSEEK ANSWERS: `thinking: disabled` NOW REACHES THE WIRE (ANTHROPIC-THINKING-TRANSPORT-V1).**
 
 Owner: answers took too long / reasoned too much. REASONING-BOUNDARY-V1 already said thinking OFF for chat synthesis, but litellm's `anthropic/` route sent it inside a literal `extra_body` key the endpoint ignores (proven on a local stand-in). `apply_litellm` now sends `thinking` top level with `allowed_openai_params`. Register 11.411. DEPLOYED (merge `980ed76`, one bounce, 24 / 24 healthy on one bundle). Next: the owner's next DeepSeek answer should stream no reasoning and its `chat_synth` latency should drop (was 34–61 s).
 

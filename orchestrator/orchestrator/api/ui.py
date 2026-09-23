@@ -3037,6 +3037,8 @@ def _ollama_generate(model: str, query: str, bundle: dict,
 def _ollama_generate_inner(_out, model: str, messages: list[dict]):
     import httpx
 
+    from polymath_shared.reasoning_policy import ollama_think as _ollama_think   # gpt-oss → "low"; others: the switch
+
     try:
         with httpx.stream(
                 "POST", f"{OLLAMA_URL}/api/chat",
@@ -3047,8 +3049,7 @@ def _ollama_generate_inner(_out, model: str, messages: list[dict]):
                 # Default off; POLYMATH_CHAT_THINK=on restores the
                 # reasoning-card behavior for models that separate cleanly.
                 json={"model": model, "messages": messages, "stream": True,
-                      "think": os.environ.get("POLYMATH_CHAT_THINK", "off")
-                               .lower() in ("1", "on", "true")},
+                      "think": _ollama_think(model)},
                 timeout=httpx.Timeout(300, connect=10)) as r:
             _out.status(r.status_code)
             if r.status_code != 200:
