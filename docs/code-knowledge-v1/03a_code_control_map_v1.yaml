@@ -1,0 +1,267 @@
+version: code-control-map-v1
+planning_date: 2026-09-18
+repository: Kingsley-Cyber/Polymath-RAG
+
+laws:
+  public_modes: [HYBRID, GRAPH, WILDCARD]
+  evidence_authority: original_source_chunks
+  workflow_authority: postgres
+  semantic_projection: qdrant
+  graph_projection: neo4j
+  routing_only:
+    - document_profile
+    - profile_atom
+    - parent_map
+    - structure_nomination
+
+source_plans:
+  python:
+    extensions: [".py"]
+    source_family: source_code
+    semantic_family: code
+    structure_adapter: python-libcst-v1
+    chunk_provider: ast-code-v1
+    validator: python-project-v1
+
+  luau:
+    extensions: [".luau"]
+    source_family: source_code
+    semantic_family: code
+    structure_adapter: luau-existing-parser-v1
+    chunk_provider: ast-code-v1
+    validator: luau-official-v1
+
+  lua:
+    extensions: [".lua"]
+    source_family: source_code
+    semantic_family: code
+    structure_adapter: lua-policy-v1
+    chunk_provider: ast-code-v1
+    validator: lua-or-luau-policy-v1
+
+  generic_yaml:
+    extensions: [".yaml", ".yml"]
+    source_family: structured_data
+    semantic_family: structured_config
+    structure_adapter: yaml-existing-parser-v1
+    chunk_provider: structured-yaml-v1
+
+  powerapps_yaml:
+    extensions: [".yaml", ".yml"]
+    detector: deterministic-powerapps-source-v1
+    source_family: low_code_app
+    semantic_family: powerapps
+    structure_adapter: powerapps-source-v1
+    embedded_language_adapter: powerfx-analysis-v1
+    chunk_provider: powerapps-yaml-v1
+    validator: powerapps-powerfx-v1
+
+external_reuse:
+  powerfx: [microsoft/Power-Fx]
+  powerapps: [microsoft/PowerApps-Tooling]
+  luau:
+    - luau-lang/luau
+    - tree-sitter-grammars/tree-sitter-luau
+  python: [Instagram/LibCST]
+  references:
+    - SylphxAI/coderag
+    - Aider-AI/aider
+    - einad5/codegraph
+    - ian000/graphify-go
+
+contracts:
+  source_detection: code-source-detection-v1
+  structure_manifest: code-structure-manifest-v1
+  code_chunk: code-chunk-v1
+  code_parent_skeleton: code-parent-skeleton-v1
+  code_pmap_prompt: code-pmap-prompt-v1
+  powerapps_pmap_prompt: powerapps-pmap-prompt-v1
+  structured_pmap_prompt: structured-pmap-prompt-v1
+  code_fingerprint: code-document-fingerprint-v1
+  structure_projection: code-structure-projection-v1
+  query_policy: code-query-policy-v1
+  structure_retrieval: code-structure-retrieval-v1
+  evidence_metadata: code-evidence-metadata-v1
+  code_readiness: code-query-ready-v1
+  generation_validation: code-generation-validation-v1
+
+execution_contract_keys:
+  - source_adapter_bundle
+  - code_structure_contract
+  - code_chunk_contract
+  - code_semantic_prompt_bundle
+  - code_query_policy
+
+pipeline:
+  intake:
+    owner: worker
+    blocking: true
+    code_path:
+      - materialize_exact_text
+      - detect_source
+      - parse_structure
+      - build_structure_manifest
+      - code_aware_chunk
+      - validate_exact_offsets
+      - persist_document_chunks_structure
+      - emit_chunked_v1
+    non_code_path: current_behavior_unchanged
+
+  doc_parent_map:
+    owner: worker
+    trigger: existing_auto_map_parents_on_chunks
+    output_contract: existing_MAP_DSL
+    prompt_dispatch:
+      document: existing
+      code: code-pmap-prompt-v1
+      powerapps: powerapps-pmap-prompt-v1
+      structured_config: structured-pmap-prompt-v1
+
+  doc_profile:
+    owner: worker
+    trigger: existing_early_profile_emit
+    fingerprint_dispatch:
+      document: existing
+      code: code-document-fingerprint-v1
+      powerapps: powerapps-document-fingerprint-v1
+      structured_config: structured-document-fingerprint-v1
+    compiler: existing_profile_compiler
+
+  project_code_structure:
+    owner: worker
+    trigger: auto_project_code_structure_on_chunks
+    stage_dag: outside_initially
+    legacy_promotion_blocking: false
+    code_readiness_required: true
+    authority: postgres
+    projection: neo4j_Code_namespace
+
+readiness:
+  code_query_ready_v1:
+    required:
+      - chunks_present
+      - structure_manifest_active
+      - structure_projection_reconciled
+      - child_qdrant_projection_present
+      - parent_maps_complete
+      - parent_map_projection_reconciled
+      - document_profile_active
+      - profile_atoms_reconciled_if_applicable
+    fail_closed: true
+
+query:
+  generic_intent: existing_query_intent_v1
+  code_task:
+    contract: code-query-policy-v1
+    values:
+      - NONE
+      - LOCATE
+      - EXPLAIN
+      - TRACE
+      - IMPACT
+      - DEBUG
+      - CRITIQUE
+      - REFACTOR
+      - GENERATE
+      - COMPARE
+
+  lanes:
+    direct_dense:
+      evidence_capable: true
+    sparse_exact:
+      evidence_capable: true
+    document_profile:
+      evidence_capable: false
+      resolves_to: doc_ids
+    profile_atom:
+      evidence_capable: false
+      resolves_to: doc_ids
+    parent_map:
+      evidence_capable: false
+      resolves_to: parent_ids
+    structure:
+      evidence_capable: false
+      resolves_to: parent_ids
+      tasks: [TRACE, IMPACT, DEBUG, REFACTOR, CRITIQUE, GENERATE]
+    graph_destination:
+      evidence_capable: false
+      resolves_to: source_docs_or_parents
+    wildcard:
+      evidence_capable: false_until_source_hydrated
+
+  candidate_roles:
+    - IMPLEMENTATION
+    - DEPENDENCY
+    - CONFIG
+    - REFERENCE
+    - ANALOG
+    - TEST
+    - LATENT
+
+  fusion:
+    - lane_nomination
+    - canonical_identity_dedup
+    - preserve_all_provenance
+    - role_aware_pre_rerank_admission
+    - one_cross_encoder_judge
+    - source_hydration
+    - final_evidence_selection
+
+modes:
+  HYBRID:
+    code_extension:
+      - code_aware_pmap
+      - code_profile_atoms
+      - conditional_structure_nomination
+
+  GRAPH:
+    base: HYBRID
+    code_extension:
+      - bounded_code_structure_graph
+      - semantic_graph_when_relevant
+      - source_hydration_required
+
+  WILDCARD:
+    base: HYBRID
+    code_extension:
+      - implementation_baseline_preserved
+      - existing_divergent_frontier
+      - source_support_required
+
+api_metadata:
+  optional_fields:
+    - source_family
+    - source_language
+    - semantic_family
+    - symbol_id
+    - symbol_kind
+    - qualified_name
+    - symbol_path
+    - candidate_role
+    - structural_route_reason
+    - structure_contract
+    - line_start
+    - line_end
+
+validation:
+  python:
+    - parse
+    - compile
+    - configured_project_checks
+  luau:
+    - official_parse
+    - official_analysis_if_available
+    - configured_project_checks
+  powerapps:
+    - yaml_source_parse
+    - powerfx_parse
+    - powerfx_bind_type_if_context_available
+
+feature_flags:
+  - CODE_SOURCE_SUPPORT
+  - CODE_PMAP_PROMPTS
+  - CODE_PROFILE_PROMPTS
+  - CODE_STRUCTURE_PROJECTION
+  - CODE_QUERY_POLICY
+  - CODE_STRUCTURE_LANE
+  - CODE_GENERATION_VALIDATION

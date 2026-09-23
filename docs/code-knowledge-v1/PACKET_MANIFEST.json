@@ -1,0 +1,30 @@
+{
+  "01_CODE_KNOWLEDGE_V1_IMPLEMENTATION_PLAN.md": {
+    "bytes": 32122,
+    "sha256": "7ca497deec59b9ff001535fdcf86ccb985bbc058804720d8999d9f2ae0c446a1"
+  },
+  "02_CODE_KNOWLEDGE_V1_ACCEPTANCE_MATRIX.md": {
+    "bytes": 17065,
+    "sha256": "aef022965280bc9a2f040426434a208997ddf60af7333dcd8e39965bb2f2f711"
+  },
+  "03_CODE_KNOWLEDGE_V1_CONTROL_MAP_SCHEMA.md": {
+    "bytes": 14628,
+    "sha256": "010b55a1c09aad007c8143d53ded20a74a88f335bf1855ee7c334ed72f134e13"
+  },
+  "03a_code_control_map_v1.yaml": {
+    "bytes": 6665,
+    "sha256": "c1d413752e621cb80ca3c91f02565b96973fe54b10d73ca0d3460360b69a8f8c"
+  },
+  "04_CODE_KNOWLEDGE_V1_GOAL_MODE.md": {
+    "bytes": 12568,
+    "sha256": "1f657ae36d5945631f955960ce135f27a5c0f399fd38c9153017c33194fa73d0"
+  },
+  "05_CODE_KNOWLEDGE_V1_CONTRACT_ARCHITECTURE.md": {
+    "bytes": 14440,
+    "sha256": "a8bdc7001c249a5012cb5f9ccc762afa0592355059855ca6a694aa30e546171e"
+  },
+  "README.md": {
+    "bytes": 5114,
+    "sha256": "f666f137d955c822d637066d3312fa05935fc1c94df822124ff70fec125bef65"
+  }
+}
