@@ -418,6 +418,7 @@ class LLMExtractionClient:
         # contract hash (GENERATION_CONFIG / pool_fingerprint) is untouched (a runtime overlay, not config).
         _rb_role = getattr(self, "reasoning_role", None)
         if _rb_role:
+            self.last_reasoning = None
             try:
                 from polymath_shared.reasoning_policy import apply_chat_completions as _rb_apply
                 _rb = _rb_apply(payload, _rb_role, self.model)
@@ -437,6 +438,13 @@ class LLMExtractionClient:
         content = (choice.get("message") or {}).get("content") or ""
         usage = body.get("usage") or {}
         self._last_finish_reason = choice.get("finish_reason")
+        if _rb_role:
+            # DEEPSEEK-ENABLE-THINKING-V1: what the model did with the switch — the thinking it returned — beside what was
+            # sent, so a receipt proves the setting at $0 (compiler / bridge clients only; extraction never sets a role).
+            self.last_reasoning = {**(self.last_reasoning or {}), "observed": {
+                "reasoning_chars": len((choice.get("message") or {}).get("reasoning_content") or ""),
+                "completion_tokens": int(usage.get("completion_tokens", 0)),
+                "finish_reason": choice.get("finish_reason")}}
         # GROQ-MAP-CONTROL-PLANE-REPAIR-V1: return the SUCCESS-path response
         # headers so the limiter can observe provider rate-limit truth on 2xx
         # (previously dropped — RPD was observable only on 429). Reading headers

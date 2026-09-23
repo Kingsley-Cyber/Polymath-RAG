@@ -23,7 +23,7 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (close-out before compaction) — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md` (D1–D8 answered). DEPLOYED today: S0 core (E1 / E2 / E8) + owner thinking rule (11.424) + compiler / bridges work without Ollama (11.426). E4 + E3 DEPLOYED (`c174c33`, 11.429); E7 + S1a + S1b DEPLOYED (`2a7cbd5`, 11.433). The owner's next turn proves E3 / E4 / S1 from its receipt ($0). Next: S2 traces (E6) from those receipts, then S4+. CODE-KNOWLEDGE-V1 parked.**
+## CURRENT — 2026-09-23 (close-out before compaction) — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md` (D1–D8 answered). DEPLOYED today: S0 core (E1 / E2 / E8) + owner thinking rule (11.424) + compiler / bridges work without Ollama (11.426). E4 + E3 DEPLOYED (`c174c33`, 11.429); E7 + S1a + S1b DEPLOYED (`2a7cbd5`, 11.433). The owner's next turn proves E3 / E4 / S1 from its receipt ($0). DEEPSEEK-ENABLE-THINKING-V1 on branch `fix/deepseek-enable-thinking` (11.434, UNIT_PROVEN): merge + bounce and a one-call live probe on the owner's word. Next: S2 traces (E6) from those receipts, then S4+. CODE-KNOWLEDGE-V1 parked.**
 
 ### Repository State
 - Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 32 unpushed commits (`58c819f` … the
