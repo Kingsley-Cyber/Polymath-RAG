@@ -131,6 +131,12 @@ needs multiple runtime owners, split it at a versioned contract boundary.
     candidates first; only volumes the user approves are touched. Removing
     a stopped container that owns no volume still requires listing what it
     owned first.
+11. The document skeleton (profile + atoms + pMAP) is a document-level
+    ROUTER and BRIDGE: it finds documents, similar documents and abstract
+    bridges; its text is never hydrated into synthesis without a justified,
+    labelled reason; no LLM judge ever enters the retrieval path. Read
+    `docs/wiki/plans/DOCUMENT-SKELETON-V1.md` before touching retrieval,
+    routing, ranking, WILDCARD, the profile or pMAP (owner, 2026-09-23).
 
 ## 3. Read and verify before editing
 
@@ -138,6 +144,7 @@ Read in this order:
 
 1. `AGENTS.md` (bootstrap section included)
 2. `docs/wiki/plans/CONTINUITY-REPORT.md`
+2a. `docs/wiki/plans/DOCUMENT-SKELETON-V1.md` (the skeleton law: profile + pMAP are routers / bridges, never hydration)
 3. `docs/wiki/reports/2026-09-07/README.md` (the dated handoff it points to)
 4. `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md`
 4. `ARCHITECTURE.md`

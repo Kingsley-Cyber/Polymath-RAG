@@ -209,6 +209,9 @@ order (plan §9). Its parts:
 - `nemotron-3-ultra` is flaky.
 
 ### Do Not Do
+- Touch retrieval / routing / ranking / WILDCARD / the profile / pMAP without reading `docs/wiki/plans/DOCUMENT-SKELETON-V1.md`
+  (owner 2026-09-23): the skeleton (profile + atoms + pMAP) finds documents, similar documents and abstract bridges; never
+  hydrate its text without a justified, labelled reason; never add an LLM judge (latency).
 - Push any ref without the owner's per-push word. Run `git add -A`. Use `AGENT_CONTROL_BYPASS`. Pre-write a PASS log.
 - Add code keys to `worker_contracts()`, or let code fall into tier_v3.
 - Admit a code corpus before checking that every shared surface filters by corpus. Atoms are scoped since 11.376; check pMAP
