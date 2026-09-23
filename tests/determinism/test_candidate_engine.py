@@ -1087,3 +1087,125 @@ def test_corpus_explore_origin_flows_into_lane_provenance(monkeypatch):
                                 sparse_search=FakeFlood().sparse, subqueries=[ceq])
     ce_lanes = [l for l in on.trace["ranked_lanes"]["lanes"] if l["query_id"] == "ce0"]
     assert ce_lanes and all(l["origin"] == "CORPUS_EXPLORE" for l in ce_lanes)   # origin carried generically
+
+
+# ---------------------------------------------------------------- SKELETON-ROUTING-V1 (DOCUMENT-SKELETON-V1 §4)
+
+def _skeleton_inputs():
+    fake = Fake()
+    nominator = _fake_dualread([{"doc_id": "d1", "parent_id": "d1-p0", "routing_signature": "how timing conveys weight"}])
+    fan_rows = [dict(_row(CHILD, 0, "d3", parent="d3-p1", chunk="d3-fanout", text="delaying the resolution builds anticipation"),
+                     fanout_atom="anticipation increases when resolution is delayed")]
+    return fake, nominator, (lambda qv: fan_rows)
+
+
+def test_skeleton_paths_give_each_door_its_own_path_id_aspect_and_need():
+    fake, nominator, fanout = _skeleton_inputs()
+    b = ce.CandidateBudget(dualread_enabled=True, seealso_fanout_enabled=True, atom_kinds=("SEEALSO",), skeleton_paths=True)
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=fake.dense, sparse_search=fake.sparse, dualread_search=nominator,
+                                 fanout_search=fanout)
+    fan = next(c for c in res.union if c.chunk_id == "d3-fanout")
+    assert ce.ROUTE_SEEALSO in fan.query_ids and "q0" in fan.query_ids          # its own path id, the primary kept
+    pmap = [c for c in res.union if ce.LANE_E in c.arrivals]
+    assert pmap and all(ce.ROUTE_PMAP in c.query_ids for c in pmap)
+    aspects = res.trace["aspects"]
+    assert aspects[ce.ROUTE_SEEALSO]["origin"] == "SKELETON" and aspects[ce.ROUTE_PMAP]["type"] == "ROUTE"
+    assert res.trace["route_need"]["d3-fanout"] == "anticipation increases when resolution is delayed"
+    assert all(res.trace["route_need"][c.chunk_id] == "how timing conveys weight" for c in pmap if c.parent_id == "d1-p0")
+
+
+def test_skeleton_paths_off_keeps_the_primary_id_only():
+    fake, nominator, fanout = _skeleton_inputs()
+    b = ce.CandidateBudget(dualread_enabled=True, seealso_fanout_enabled=True, atom_kinds=("SEEALSO",))
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=fake.dense, sparse_search=fake.sparse, dualread_search=nominator,
+                                 fanout_search=fanout)
+    assert all(not any(str(q).startswith(ce.ROUTE_PREFIX) for q in c.query_ids) for c in res.union)
+    assert not any(str(k).startswith(ce.ROUTE_PREFIX) for k in res.trace["aspects"]) and "route_need" not in res.trace
+
+
+def _skeleton_judge(conn_logit):
+    q0 = _ctx().query
+
+    def judge(q, rows):
+        out = []
+        for i, r in enumerate(rows):
+            cid = r["chunk_id"]
+            if cid.startswith("need"):                        # the connection check: does the need relate to the question?
+                s = conn_logit
+            elif q == q0:                                     # the literal question alone vetoes the mechanism chunk
+                s = -3.0 if cid == "d3-fanout" else 2.0 - 0.01 * i
+            else:                                             # question + the need that found it
+                s = 2.5 if cid == "d3-fanout" else 0.0
+            out.append(dict(r, rerank_score=s))
+        return sorted(out, key=lambda r: -r["rerank_score"])
+    return judge
+
+
+def test_contextual_judge_keeps_a_mechanism_chunk_the_question_alone_would_veto():
+    fake, nominator, fanout = _skeleton_inputs()
+    b = ce.CandidateBudget(dualread_enabled=True, seealso_fanout_enabled=True, atom_kinds=("SEEALSO",), skeleton_paths=True,
+                           contextual_judge=True, synthesis_max=6)
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=fake.dense, sparse_search=fake.sparse, dualread_search=nominator,
+                                 fanout_search=fanout)
+    final, tr = ce.select_evidence(res, b, rerank_children=_skeleton_judge(conn_logit=1.0))
+    assert tr["contextual"]["promoted"] >= 1 and tr["aspect_prefix"][ce.ROUTE_SEEALSO] >= 1
+    fan = next(c for c in final if c.chunk_id == "d3-fanout")        # seated for its path: it explains the mechanism
+    assert fan.context_score > 0 and fan.rerank_score == -3.0        # the question's score is untouched (no outranking)
+    assert ce.ROUTE_SEEALSO not in tr["weak_aspects"]
+    best_direct = max((c for c in final if c.chunk_id != "d3-fanout"), key=lambda c: c.rerank_score)
+    assert best_direct.rerank_score > 1.0                            # strong direct evidence still holds its seat
+
+
+def test_a_vague_route_earns_nothing():
+    fake, nominator, fanout = _skeleton_inputs()
+    b = ce.CandidateBudget(dualread_enabled=True, seealso_fanout_enabled=True, atom_kinds=("SEEALSO",), skeleton_paths=True,
+                           contextual_judge=True, synthesis_max=6)
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=fake.dense, sparse_search=fake.sparse, dualread_search=nominator,
+                                 fanout_search=fanout)
+    final, tr = ce.select_evidence(res, b, rerank_children=_skeleton_judge(conn_logit=-4.0))
+    assert tr["contextual"]["promoted"] == 0 and tr["contextual"]["vague"] >= 1   # the need does not connect to the question
+    assert all(c.context_score is None for c in final)
+
+
+def test_a_route_is_represented_by_the_chunk_that_serves_its_need():
+    """The route's aspect seat goes to the candidate that serves the route's NEED — not to the one that merely scores well
+    against the literal question (the replay's 'animation nerd' intro)."""
+    fake, nominator, _ = _skeleton_inputs()
+    atom = "anticipation increases when resolution is delayed"
+    fan_rows = [dict(_row(CHILD, 0, "d3", parent="d3-p1", chunk="d3-fanout", text="delaying the resolution builds anticipation"),
+                     fanout_atom=atom),
+                dict(_row(CHILD, 1, "d4", parent="d4-p1", chunk="d4-generic", text="about the author of this book"), fanout_atom=atom)]
+    q0 = _ctx().query
+
+    def judge(q, rows):
+        out = []
+        for i, r in enumerate(rows):
+            cid = r["chunk_id"]
+            if cid.startswith("need"):
+                s = 1.0
+            elif q == q0:
+                s = {"d3-fanout": -3.0, "d4-generic": 0.4}.get(cid, 2.0 - 0.01 * i)
+            else:
+                s = {"d3-fanout": 2.5, "d4-generic": -2.0}.get(cid, 0.0)
+            out.append(dict(r, rerank_score=s))
+        return sorted(out, key=lambda r: -r["rerank_score"])
+    b = ce.CandidateBudget(dualread_enabled=True, seealso_fanout_enabled=True, atom_kinds=("SEEALSO",), skeleton_paths=True,
+                           contextual_judge=True, synthesis_max=6, compose_aspect_slots=5)
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=fake.dense, sparse_search=fake.sparse, dualread_search=nominator,
+                                 fanout_search=lambda qv: fan_rows)
+    _final, tr = ce.select_evidence(res, b, rerank_children=judge)
+    seats = {s["query_id"]: s["chunk_id"] for s in tr["composition"]["aspect_seats"]}
+    assert seats.get(ce.ROUTE_SEEALSO) == "d3-fanout"
+    generic = next(c for c in res.union if c.chunk_id == "d4-generic")
+    assert generic.route_score is not None and generic.route_score < 0     # judged against the need, and found wanting
+
+
+def test_paths_without_the_judge_give_routes_judged_seats_but_no_forced_final_seat():
+    fake, nominator, fanout = _skeleton_inputs()
+    b = ce.CandidateBudget(dualread_enabled=True, seealso_fanout_enabled=True, atom_kinds=("SEEALSO",), skeleton_paths=True,
+                           synthesis_max=6, compose_aspect_slots=5)
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=fake.dense, sparse_search=fake.sparse, dualread_search=nominator,
+                                 fanout_search=fanout)
+    _final, tr = ce.select_evidence(res, b, rerank_children=_skeleton_judge(conn_logit=1.0))
+    assert tr["aspect_prefix"][ce.ROUTE_SEEALSO] >= 1                        # the route reached the judge
+    assert not any(str(s["query_id"]).startswith(ce.ROUTE_PREFIX) for s in tr["composition"]["aspect_seats"])

@@ -67,8 +67,7 @@ from polymath_shared.candidate_engine import (
     SYNTHESIS_ROLES,
     synthesis_role,
     shape_budget,
-    sparse_vector_for,
-)
+    sparse_vector_for, effective_score)
 from polymath_shared.divergent import DIVERGENT_DEFAULT_PLAN, divergent_finish, divergent_sweep
 #: P1.e: the finish stops STARTING validations at the frontier deadline; a validation already in flight may overrun by
 #: at most one reranker call — the route waits this bounded grace for the partial result instead of abandoning it.
@@ -340,7 +339,22 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                             docs.append(d)
                 except Exception:  # noqa: BLE001 — the atom lane is optional; absence never breaks routing
                     pass
-            return _pmp.search_parent_maps(client, _pmp.collection_name(cid), qv, docs, k=budget.dualread_map_k)
+            maps = _pmp.search_parent_maps(client, _pmp.collection_name(cid), qv, docs, k=budget.dualread_map_k)
+            if getattr(budget, "skeleton_paths", False) and maps:
+                # SKELETON-ROUTING-V1: the section's pMAP routing signature is the abstract need that found its children —
+                # the contextual judge scores them against it (Postgres is its authority; the map point carries no text)
+                import contextlib as _contextlib
+                with _contextlib.suppress(Exception):   # without a signature the route keeps its seats; only the context is lost
+                    from polymath_shared.db import tx as _tx
+                    pids = [m.get("parent_id") for m in maps if m.get("parent_id")]
+                    with _tx() as conn:
+                        sig = {pid: s for pid, s in conn.execute(
+                            "SELECT parent_id, routing_signature FROM document_parent_maps "
+                            "WHERE parent_id = ANY(%s) AND routing_signature IS NOT NULL", (pids,)).fetchall()}
+                    for m in maps:
+                        if sig.get(m.get("parent_id")):
+                            m["routing_signature"] = sig[m["parent_id"]]
+            return maps
 
         def lift_search(qv) -> list[dict]:
             # R6 RESOLUTION_LIFT (§10–§12): discover the corpus's precise vocabulary from the
@@ -617,7 +631,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
     rows = []
     for c in final:
         r = c.to_row()
-        r.update({"g3_score": c.rerank_score, "locator": f"chunk:{c.chunk_id}",
+        # SKELETON-ROUTING-V1: a rescued indirect candidate carries its contextual score downstream (WLK2C seats on it)
+        r.update({"g3_score": (effective_score(c) if c.context_score is not None else c.rerank_score), "locator": f"chunk:{c.chunk_id}",
                   "source_name": c.source_name or _p.get(c.doc_id, {}).get("source_name", ""),
                   "title": _p.get(c.chunk_id, {}).get("title", ""), "heading_path": _p.get(c.chunk_id, {}).get("heading_path", ""),
                   "human_locator": _p.get(c.chunk_id, {}).get("human_locator", ""), "text": (c.text or "")[:240],
