@@ -142,6 +142,11 @@ def reasoning_params(role: str, model: str, api_surface: str = S_LITELLM) -> dic
             (top if api_surface == S_CHAT_COMPLETIONS else extra).update(params)
         # thinking-only on the Responses API: no numeric budget exists there and it cannot be disabled -> send nothing
     elif fam == "deepseek":
+        if api_surface == S_CHAT_COMPLETIONS:
+            # DEEPSEEK-ENABLE-THINKING-V1: on Alibaba Model Studio's OpenAI-compatible API (the token plan behind every raw-HTTP
+            # DeepSeek lane) DeepSeek-V4 thinking is switched with `enable_thinking`; its `thinking` object is documented for
+            # MiniMax only ("OpenAI compatible - Chat", updated 2026-09-21). `thinking` stays for DeepSeek's own API shape.
+            extra["enable_thinking"] = False
         extra["thinking"] = {"type": "disabled"}          # required or the model returns empty
     elif fam == "glm":
         extra["thinking"] = {"type": "disabled"}          # Zhipu's native switch (same field on the Anthropic route)

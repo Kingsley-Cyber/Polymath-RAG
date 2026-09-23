@@ -2275,6 +2275,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_turn_receipt_extras.py", "py", None),
     ("docs/wiki/work-log/2026-09-23-s1b-compile-steps-emitted-reasoning.md", "md", None),
     ("tests/determinism/test_compile_steps_and_emitted_reasoning.py", "py", None),
+    ("docs/wiki/work-log/2026-09-23-deepseek-enable-thinking.md", "md", None),
+    ("tests/determinism/test_deepseek_enable_thinking.py", "py", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay_owner_plans.py", "py", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay.jsonl", "jsonl", None),
     ("tests/determinism/test_rag_ui_integration.py", "py", None),
