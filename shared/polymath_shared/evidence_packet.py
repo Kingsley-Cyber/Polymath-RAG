@@ -32,6 +32,10 @@ _DIRECT = "DIRECT"
 _SEAT_ROLES = ("COMPLEMENTARY", "DIVERGENT")
 
 
+def _has(row, name) -> bool:
+    return (name in row) if isinstance(row, dict) else hasattr(row, name)
+
+
 def _get(row, *names, default=None):
     for n in names:
         v = row.get(n) if isinstance(row, dict) else getattr(row, n, None)
@@ -84,7 +88,9 @@ class EvidencePacket:
 
 
 def _plan_index(plan_queries):
-    """id -> {origin, role, inspired_by_profile, target, reason, query} for lineage/provenance joins."""
+    """id -> {origin, role, inspired_by_profile, target, derived_from, reason} for lineage/provenance joins.
+    E7: `derived_from` is its own field. A legacy row (a receipt written before E7, with no `derived_from` key)
+    still resolves through `target`, which then held the reference."""
     out = {}
     for q in (plan_queries or ()):
         qid = str(_get(q, "id", default=""))
@@ -95,6 +101,8 @@ def _plan_index(plan_queries):
             "role": _get(q, "role", "type", default=""),
             "inspired_by_profile": list(_get(q, "inspired_by_profile", default=[]) or []),
             "target": _get(q, "target", default=None),
+            "derived_from": (_get(q, "derived_from", default=None) if _has(q, "derived_from")
+                             else _get(q, "target", default=None)),
             "reason": _get(q, "reason", default=None),
         }
     return out
@@ -185,7 +193,7 @@ def build_evidence_packet(
         provenance = {
             "origin": origin,
             "inspired_by_profile": (prov_src or {}).get("inspired_by_profile", []),
-            "derived_from": (prov_src or {}).get("target"),
+            "derived_from": (prov_src or {}).get("derived_from"),
             "relation_to_q0": (prov_src or {}).get("reason") or (lat.get("proposed_role") if isinstance(lat, dict) else None),
         }
         grade = ca4_grades.get(cid)

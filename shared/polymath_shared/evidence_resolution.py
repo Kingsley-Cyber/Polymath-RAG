@@ -122,7 +122,7 @@ def _resolution_query(claim: ClaimState, round_no: int) -> CompiledQuery:
     return CompiledQuery(
         id=f"r{round_no}_{claim.claim_id}", type="MECHANISM", query=need, weight=0.8,
         role="resolution", reason=f"resolution: {claim.claim_id} {claim.evidence_state}",
-        target=claim.claim_id, origin="EVIDENCE_GAP")
+        target=claim.next_information_need, derived_from=claim.claim_id, origin="EVIDENCE_GAP")  # E7
 
 
 def plan_resolution_round(state: RetrievalState, *, max_rounds: int = MAX_RESOLUTION_ROUNDS,

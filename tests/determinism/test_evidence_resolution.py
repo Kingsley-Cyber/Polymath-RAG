@@ -2,7 +2,7 @@
 
 Proves: deterministic lexical gap detection (SUPPORTED/PARTIAL/UNSUPPORTED + explicit CONFLICTING);
 importance is position-weighted; a resolution round fires ONLY for an important unresolved gap and
-emits a single targeted CompiledQuery (role=resolution, origin=EVIDENCE_GAP, target=claim); the
+emits a single targeted CompiledQuery (role=resolution, origin=EVIDENCE_GAP, derived_from=claim, target=need); the
 most important / most severe gap is chosen deterministically; the loop is BOUNDED (no round past
 max_rounds → no runaway); q0 is immutable across rounds; advance_state folds evidence back and
 retires a SUPPORTED claim; the receipt is observable. Pure — no I/O, no LLM.
@@ -79,7 +79,8 @@ def test_gap_fires_targeted_resolution_query():
     q = d.query
     assert q is not None and q.role == "resolution" and q.role in ROLE_TYPES
     assert q.origin == "EVIDENCE_GAP" and q.origin in ORIGIN_TYPES
-    assert q.target == "claim_0" and q.query == "sound design ambience"
+    assert q.derived_from == "claim_0" and q.query == "sound design ambience"   # E7: the claim is the reference
+    assert q.target == "sound design ambience"                                  # and the need is the target
 
 
 def test_picks_most_important_then_most_severe():

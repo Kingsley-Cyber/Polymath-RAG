@@ -1907,7 +1907,7 @@ def _add_profile_expansion(plan, scout_result) -> None:
         plan.queries.append(CompiledQuery(
             id=f"p{added}", type="ENTITY", query=q, weight=0.6, role="bridge", origin="PROFILE",
             inspired_by_profile=[nom.doc_id], profile_surface=getattr(nom, "representative_surface", None),
-            target=nom.doc_id))
+            derived_from=nom.doc_id))                     # E7: a reference, never `target`
         existing.add(q.lower())
         added += 1
     plan.compiler["profile_expansion"] = {"added": added, "flag": True}

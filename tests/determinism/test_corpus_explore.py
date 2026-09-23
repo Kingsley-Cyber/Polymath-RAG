@@ -72,7 +72,8 @@ def test_expansion_appends_corpus_explore_subquery_preserves_q0():
     assert diag["added"] == 1 and diag["eligible"] is True and diag["origin"] == CORPUS_EXPLORE_ORIGIN
     ce = [q for q in plan.queries if q.origin == "CORPUS_EXPLORE"]
     assert len(ce) == 1 and ce[0].id.startswith("ce") and ce[0].role == "bridge"
-    assert ce[0].target == "spatial-control" and ce[0].inspired_by_profile == ["laban_workbook"]
+    assert ce[0].derived_from == "spatial-control" and ce[0].inspired_by_profile == ["laban_workbook"]  # E7
+    assert ce[0].target is None
     assert plan.queries[0].type == "PRIMARY" and plan.queries[0].query == Q0     # q0 untouched
     assert plan.compiler["corpus_explore_expansion"]["added"] == 1
 

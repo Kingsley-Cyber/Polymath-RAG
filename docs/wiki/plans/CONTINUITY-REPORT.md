@@ -169,7 +169,7 @@ PYTHONPATH recipe and asserting tests; merge + bounce on the owner's word.
   - the emitted reasoning settings per model call.
 - **E6 — two $0 traces** (audit §13): a timing trace of one slow turn (which step waits on which), and one dropped chunk
   followed through every judge.
-- **E7 — NEXT. Consumers of `CompiledQuery.target` (READ 2026-09-23): writers `bridge_integration.py:97` (concept key / doc id) and `ui.py:1910` (`target=nom.doc_id`, PROFILE expansion); readers `subquery_provenance.py:77` (receipt), `evidence_packet.py:97` and `:188` (`derived_from` = target), `evidence_resolution.py:125` (claim id). `target` misuse:** bridges store a doc id in `target`. Move it to a source-reference field after a consumer check
+- **E7 — DONE on branch `fix/compiled-query-derived-from` (11.430, UNIT_PROVEN); merge + bounce on the owner's word. `derived_from` now carries the reference; `target` = a need only. Consumers of `CompiledQuery.target` (READ 2026-09-23): writers `bridge_integration.py:97` (concept key / doc id) and `ui.py:1910` (`target=nom.doc_id`, PROFILE expansion); readers `subquery_provenance.py:77` (receipt), `evidence_packet.py:97` and `:188` (`derived_from` = target), `evidence_resolution.py:125` (claim id). `target` misuse:** bridges store a doc id in `target`. Move it to a source-reference field after a consumer check
   (`graft callers`).
 
 **B. Owner decisions — ANSWERED 2026-09-23 (plan §1):** D1 adopted · D2 yes · D3 yes · D4 PAUSED (profile routes first; re-project only if they

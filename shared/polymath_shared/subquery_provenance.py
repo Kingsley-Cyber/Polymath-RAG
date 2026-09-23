@@ -74,7 +74,8 @@ def annotate_subquery_provenance(plan: ChatPlan, scout: ProfileScoutResult | Non
         rows.append({
             "id": q.id, "type": q.type, "role": q.role, "reason": q.reason,
             "inspired_by_profile": list(q.inspired_by_profile),
-            "profile_surface": q.profile_surface, "target": q.target, "origin": q.origin,
+            "profile_surface": q.profile_surface, "target": q.target, "derived_from": q.derived_from,
+            "origin": q.origin,
         })
     block = {
         "contract": "subquery-provenance-v1",
