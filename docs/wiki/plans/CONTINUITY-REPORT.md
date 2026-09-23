@@ -23,13 +23,13 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (close-out before compaction) — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md` (D1–D8 answered). DEPLOYED today: S0 core (E1 / E2 / E8) + owner thinking rule (11.424) + compiler / bridges work without Ollama (11.426). Next: E4 / E3 / E7, then S1 receipts (E5), S2 traces (E6). CODE-KNOWLEDGE-V1 parked.**
+## CURRENT — 2026-09-23 (close-out before compaction) — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md` (D1–D8 answered). DEPLOYED today: S0 core (E1 / E2 / E8) + owner thinking rule (11.424) + compiler / bridges work without Ollama (11.426). IN FLIGHT: E4 + E3 on branch `fix/document-rag-s0-rest` (worktree `../pmv4-e4`, UNIT_PROVEN, NOT merged: merge + bounce on the owner's word). Next: E7, then S1 receipts (E5), S2 traces (E6). CODE-KNOWLEDGE-V1 parked.**
 
 ### Repository State
 - Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 22 unpushed commits (`58c819f` … the
   11.426 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
 - Main checkout clean after the 11.426 commit. Both slice branches are merged and their worktrees removed. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
-  (+5). Every other worktree branch is merged into `production`.
+  (+5), and the in-flight slice branch `fix/document-rag-s0-rest` (+3 on `f74871d`: E4 `862f22d` 11.427, E3 `6ba3904` 11.428, their impact dispositions). Every other worktree branch is merged into `production`.
 - Fleet: 24 workers / 13 types healthy on ONE bundle, `/ready` true (embedder + reranker). Running code = committed code
   (last bounce after the `fd77619` merge, 2026-09-23 14:56; 24 healthy / 13 types / ONE bundle).
 
@@ -113,6 +113,9 @@ historical, never an instruction.
 - DEFERRED: the nine audit defects (audit §4) and the seven fixes (audit §6), pending the owner's word per fix.
 - BLOCKED: fix 4's multi-hop part, on the owner lifting the Graph traversal deferral. The one-hop part is not blocked.
 - DEFERRED: CODE-KNOWLEDGE-V1, parked behind document RAG completion (owner sequencing, 11.417).
+- 11.427–11.428 (branch, not merged): EVIDENCE_BOUNDARY_API + PROFILE_SCOUT_WIRING + 10 transitive = TESTED_UNCHANGED.
+  Branch 21 suites = 270 passed, 2 failed; the base fails the same 2 known tests. The integration file is DEFERRED (not collectable
+  under the worktree PYTHONPATH; skip-gated). Detail: the E3 work-log.
 - Unresolved: none.
 
 ### Proof Status
@@ -123,6 +126,7 @@ historical, never an instruction.
 - 11.412 — DEPLOYED; live canary: Alibaba 9 / 9 with 0 reasoning characters.
 - 11.413–11.421 — documents; the audit numbers are EXECUTED, with evidence under
   `docs/wiki/experiments/enrichment-surfaces-2026-09-23/`.
+- 11.427–11.428 — UNIT_PROVEN on branch `fix/document-rag-s0-rest`: NOT merged, NOT live.
 - INVALIDATED: none.
 
 ### Runtime / Test Resolution
@@ -134,7 +138,8 @@ historical, never an instruction.
 - **zsh:** word-split file lists with `${=T}`.
 
 ### Working Tree
-- Clean after the 11.426 commit. Scratch lives outside the repo (session scratchpad).
+- Main checkout clean after the 11.426 commit. Slice worktree `../pmv4-e4` (branch `fix/document-rag-s0-rest`) is clean
+  at its last commit. Scratch lives outside the repo (session scratchpad).
 
 ### Tooling State
 - `_graft_polymath` graph refreshed to `7eb767d` on 2026-09-23. Code is unchanged since, so it is current.
@@ -153,9 +158,9 @@ PYTHONPATH recipe and asserting tests; merge + bounce on the owner's word.
   DeepSeek 7 / 13 today.
 - **E2 — DEPLOYED (11.424).** The bridge compiler gets real concept text, not kind names or doc ids (`bridge_integration.py:46` precedence). Fix
   the hiding test (`test_bridge_integration.py:31`).
-- **E3 — DONE on branch `fix/document-rag-s0-rest` (11.428, UNIT_PROVEN; base attribution of one combined-run telemetry failure PENDING).** Synthesis gets roles and latent labels (`ui.py:3519`), and the coverage lines stop listing PROFILE / BRIDGE probes
+- **E3 — DONE on branch `fix/document-rag-s0-rest` (11.428, UNIT_PROVEN); merge + bounce on the owner's word. The combined-run telemetry failure is pre-existing (the base fails it too).** Synthesis gets roles and latent labels (`ui.py:3519`), and the coverage lines stop listing PROFILE / BRIDGE probes
   as "NO EVIDENCE RETRIEVED" (`ui.py:2370-2389`).
-- **E4 — DONE on branch `fix/wildcard-atom-frontier-receipt` (11.427, UNIT_PROVEN); merge + bounce on the owner's word.** WILDCARD
+- **E4 — DONE on branch `fix/document-rag-s0-rest` (11.427, UNIT_PROVEN); merge + bounce on the owner's word.** WILDCARD
   atom frontier: the bare `except: pass` (`chat_retrieval.py:919`) is replaced with a counted, receipted degradation.
 - **E5 — receipts:**
   - per-lane `lane_ms` and per-subquery timings;

@@ -40,8 +40,9 @@ latent labels reach synthesis; coverage lines)". This fixes ENRICHMENT-SURFACES-
   - Two are the known pre-existing failures (the WILDCARD timing test; compiler-on-both-routes).
   - The third, `test_synthesis_attempt_telemetry::test_the_bound_retry_records_BOTH_attempts`, hit a Postgres auth error
     inside the combined no-`.env` run. The file alone passes on this branch (21 / 21), and the test passes alone on the base.
-  - PENDING: the same combined run on the unmodified base (`f74871d`) was still running when the session closed. The next
-    session reruns it. If the telemetry test fails there too, it is order / environment dependent (no `.env`), not E3.
+  - **Attribution (EXECUTED):** the same combined run on the unmodified base (`f74871d`, throwaway worktree, same PYTHONPATH,
+    no `.env`) = 105 passed, the SAME 3 failed. The telemetry failure is pre-existing and environment-dependent (it needs a DB),
+    not E3. The branch's +2 passes are E4's two tests.
 - Proof level: UNIT_PROVEN. A live turn with a seated latent chunk must show the label in the prompt after merge + bounce.
 
 ## Rejected claims
@@ -51,5 +52,22 @@ latent labels reach synthesis; coverage lines)". This fixes ENRICHMENT-SURFACES-
 
 ## Open contract gaps
 - The synthesis prompt contract (roles, latent labels, coverage): UPDATED (tests added).
-- Contract impact: `scripts/contract_impact.py` at commit time (the pre-commit hook output is recorded in the register row).
+- Contract impact (`scripts/contract_impact.py --range f74871d..HEAD`, EXECUTED 2026-09-23). E4 alone maps to no contract.
+  - CHANGED `EVIDENCE_BOUNDARY_API`: TESTED_UNCHANGED.
+    - The public `/chat` `evidence_rows` come from `chat.attach_evidence_rows` → `evidence_rows.build_evidence_rows`, which this
+      slice does not touch.
+    - `assemble_evidence_bundle` builds its items from named fields, so the new row keys never reach bundle items. They reach
+      only `bundle["evidence_roles"]` / `bundle["evidence_latent"]`, which feed the prompt.
+  - CHANGED `PROFILE_SCOUT_WIRING`: TESTED_UNCHANGED. PROFILE probes still compile, retrieve and route. Only the prompt's
+    coverage block stops naming them as aspects.
+  - TRANSITIVE, all TESTED_UNCHANGED: `ACCEPTANCE`, `ADAPTER_RUNTIME`, `CANDIDATE_ENGINE`, `EVIDENCE_PACKET`, `MCP_SURFACE`,
+    `PROFILE_YIELD_RECEIPT`, `QUERY_PLANNER`, `RESOLUTION_STATE`, `RETRIEVAL_RECEIPT` (E4 adds one key to the WILDCARD sweep
+    receipt, `atom_frontier`), `SUBQUERY_PROVENANCE`.
+  - Proof: the tool's 21 runnable suites on the branch = 270 passed, 2 failed.
+    - The same list on the base `f74871d` (throwaway detached worktree, same PYTHONPATH, no `.env`, `-k "not test_live_"`)
+      fails the SAME 2 known pre-existing tests: compiler-on-both-routes and handlers-wired.
+    - Every live `:7200` caller in those suites is a `test_live_*` function (deselected). DB-backed tests fail auth, so nothing
+      reaches the fleet database.
+  - DEFERRED: `tests/integration/test_cross_domain_routing.py`. It imports `orchestrator.orchestrator.*`, which the worktree
+    PYTHONPATH cannot resolve, and it errors at collection on the base too. It is also skip-gated behind `POLYMATH_INTEGRATION=1`.
 - BLOCKED: merge + bounce, on the owner's word.
