@@ -585,3 +585,38 @@ def test_fast_runs_no_depth_lane_even_when_the_intent_policy_switched_them_on(mo
     assert kept.latent_enabled is True and not kept.dualread_enabled and not kept.resolution_lift_enabled
     cr.chat_retrieve_mode("HYBRID", QUERY, "cinema", budget=deep)
     assert all(getattr(seen[ce.LANES], k) for k in depth)
+
+
+# ---------------------------------------------------------------- E4: the WILDCARD atom frontier is receipted, never silent
+
+def test_wildcard_atom_frontier_failure_is_receipted_not_swallowed(monkeypatch):
+    """DOCUMENT-RAG S0 E4 (ENRICHMENT-SURFACES-AUDIT §10): the atom frontier sat in a bare `except: pass`, so a failure left
+    no trace. The WILDCARD receipt must name it; the core evidence and the latent sweep are unaffected."""
+    from polymath_shared.document_profile import profile_atom_projection as pap
+
+    def _atoms_down(*_a, **_k):
+        raise RuntimeError("atom store down")
+
+    monkeypatch.setattr(pap, "search_atoms", _atoms_down)
+    h = _ModeHarness(monkeypatch, latent=FAR_FIVE)
+    out = h.mode("WILDCARD")
+    af = out["meta"]["wildcard"]["atom_frontier"]
+    assert af["error"] == "RuntimeError" and af["atoms"] == 0 and af["parents_added"] == 0
+
+
+def test_wildcard_atom_frontier_counts_are_receipted(monkeypatch):
+    from types import SimpleNamespace
+
+    from polymath_shared import embedding_contracts
+    from polymath_shared.document_profile import parent_map_projection as pmp
+    from polymath_shared.document_profile import profile_atom_projection as pap
+    monkeypatch.setattr(embedding_contracts, "active_contract", lambda: SimpleNamespace(contract_id="c"))
+    monkeypatch.setattr(pap, "search_atoms", lambda *a, **k: [
+        {"doc_id": "docA", "atom_kind": "CONCEPT", "text": "withheld information", "score": 0.61},
+        {"doc_id": "docB", "atom_kind": "SEEALSO", "text": "suspense and anticipation", "score": 0.55}])
+    monkeypatch.setattr(pmp, "search_parent_maps", lambda *a, **k: [
+        {"parent_id": "pA1", "doc_id": "docA", "score": 0.5}, {"parent_id": "pB1", "doc_id": "docB", "score": 0.4}])
+    h = _ModeHarness(monkeypatch, latent=FAR_FIVE)
+    out = h.mode("WILDCARD")
+    af = out["meta"]["wildcard"]["atom_frontier"]
+    assert af["error"] is None and af["atoms"] == 2 and af["maps"] == 2 and af["parents_added"] >= 1

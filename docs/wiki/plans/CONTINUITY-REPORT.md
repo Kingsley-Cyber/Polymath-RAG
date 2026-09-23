@@ -155,8 +155,8 @@ PYTHONPATH recipe and asserting tests; merge + bounce on the owner's word.
   the hiding test (`test_bridge_integration.py:31`).
 - **E3 — synthesis gets roles and latent labels** (`ui.py:3519`), and the coverage lines stop listing PROFILE / BRIDGE probes
   as "NO EVIDENCE RETRIEVED" (`ui.py:2370-2389`).
-- **E4 — WILDCARD atom frontier:** replace the bare `except: pass` (`chat_retrieval.py:919`) with a counted, receipted
-  degradation.
+- **E4 — DONE on branch `fix/wildcard-atom-frontier-receipt` (11.427, UNIT_PROVEN); merge + bounce on the owner's word.** WILDCARD
+  atom frontier: the bare `except: pass` (`chat_retrieval.py:919`) is replaced with a counted, receipted degradation.
 - **E5 — receipts:**
   - per-lane `lane_ms` and per-subquery timings;
   - `latent_selection`;
