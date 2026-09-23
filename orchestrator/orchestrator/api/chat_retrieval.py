@@ -889,7 +889,7 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
         raise HTTPException(status_code=502, detail={
             "error_code": "qdrant_unavailable", "message": f"qdrant unavailable: {type(exc).__name__}"}) from exc
     t_turn = time.perf_counter()
-    sweep: dict = {"future": None, "error": None, "searcher": None, "qvec": None, "started_ms": None}
+    sweep: dict = {"future": None, "error": None, "searcher": None, "qvec": None, "started_ms": None, "atom_frontier": None}
     finish_pool: Optional[ThreadPoolExecutor] = None
     try:
         def _on_context(ctx: SearchContext, pool: Executor) -> None:
@@ -905,6 +905,8 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
                 t0 = time.perf_counter()
                 parents = divergent_sweep(qvec, _latent_search, plan)
                 # P12 / ELITE-MODE E: atoms nominate extra parents through the same map door.
+                # E4 (DOCUMENT-RAG S0): the atom frontier is optional, but its outcome is receipted, never silent.
+                atom_rec = {"atoms": 0, "maps": 0, "parents_added": 0, "error": None}
                 try:
                     from polymath_shared.document_profile import parent_map_projection as _pmp
                     from polymath_shared.document_profile import profile_atom_projection as _pap
@@ -912,12 +914,17 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
                     cid = _ac().contract_id
                     atoms = _pap.search_atoms(client, _pap.collection_name(cid), qvec, _WILDCARD_ATOM_KINDS, k=12,
                                               corpus_ids=[corpus_id])
+                    atom_rec["atoms"] = len(atoms)
                     docs = list(dict.fromkeys(a.get("doc_id") for a in atoms if a.get("doc_id")))
                     maps = (_pmp.search_parent_maps(client, _pmp.collection_name(cid), qvec, docs, k=16)
                             if docs else [])
+                    atom_rec["maps"] = len(maps)
+                    before = len(parents or {})
                     parents = merge_atom_frontier(parents, atoms, maps)
-                except Exception:  # noqa: BLE001 — atom frontier is optional
-                    pass
+                    atom_rec["parents_added"] = max(0, len(parents or {}) - before)
+                except Exception as exc:  # noqa: BLE001 — optional frontier: the failure is receipted, the sweep continues
+                    atom_rec["error"] = type(exc).__name__
+                sweep["atom_frontier"] = atom_rec
                 return parents, round((time.perf_counter() - t0) * 1000, 1)
 
             sweep["searcher"], sweep["qvec"] = searcher, qvec
@@ -947,7 +954,7 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
             "sweep_done_before_core": bool(sweep["future"] is not None and sweep["future"].done()),
             "sweep_ms": None, "finish_ms": None,
             "latent_candidates": 0, "excluded_obvious": 0, "support_filtered": 0, "excluded_in_evidence": 0,
-            "returned": 0, "reranker": None, "degraded": None,
+            "returned": 0, "reranker": None, "degraded": None, "atom_frontier": None,
         }
         bridges: list[dict] = []
         parents: Optional[dict] = None
@@ -957,6 +964,7 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
         else:
             try:
                 parents, receipt["sweep_ms"] = fut.result(timeout=max(0.0, deadline - time.perf_counter()))
+                receipt["atom_frontier"] = sweep.get("atom_frontier")     # E4: atoms / maps / parents added / error
             except FutureTimeout:
                 receipt["degraded"] = "wildcard_timeout:sweep"
             except CancelledError:
