@@ -8,6 +8,7 @@ import { Pill } from "./components/Pill";
 import { PhaseStub } from "./components/PhaseStub";
 import { Overview } from "./screens/Overview";
 import { Chat } from "./screens/Chat";
+import { stopStream } from "./lib/chat";
 import { Files } from "./screens/Files";
 import { ControlPlane } from "./screens/ControlPlane";
 import { Graph } from "./screens/Graph";
@@ -109,18 +110,21 @@ export function App() {
   }
 
   function deleteChat(id: string) {
+    stopStream(id);
     setSessions((xs) => xs.filter((s) => s.id !== id));
     setActiveChatId((cur) => (cur === id ? "" : cur));
   }
 
-  /** Chat.tsx owns the live turns; it hands them back so they persist. */
-  function updateChat(id: string, turns: ChatSession["turns"]) {
+  /** Apply `fn` to one chat's turns. App owns the turns, keyed by chat id, and Chat.tsx only shows them:
+   *  a stream writes here through a functional update, so its answer still lands in ITS chat after the
+   *  user opens another one (which unmounts the Chat screen that sent it). */
+  function updateTurns(id: string, fn: (turns: ChatSession["turns"]) => ChatSession["turns"]) {
     setSessions((xs) =>
-      xs.map((s) =>
-        s.id === id
-          ? { ...s, turns, updatedAt: Date.now(), title: titleFor({ ...s, turns }) }
-          : s,
-      ),
+      xs.map((s) => {
+        if (s.id !== id) return s;
+        const turns = fn(s.turns);
+        return { ...s, turns, updatedAt: Date.now(), title: titleFor({ ...s, turns }) };
+      }),
     );
   }
 
@@ -308,7 +312,7 @@ export function App() {
             key={activeChat.id}
             corpusId={corpusId}
             session={activeChat}
-            onTurns={(turns) => updateChat(activeChat.id, turns)}
+            onUpdateTurns={(fn) => updateTurns(activeChat.id, fn)}
           />
         )}
         {screen === "compare" && <Compare corpusId={corpusId} />}

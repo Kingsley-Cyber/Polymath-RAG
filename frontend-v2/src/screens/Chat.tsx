@@ -3,7 +3,7 @@ import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { PUBLIC_MODES } from "../lib/contracts";
 import type { PublicMode, Synthesizer } from "../lib/contracts";
-import { newTurn, runTurn, type Turn } from "../lib/chat";
+import { beginStream, endStream, newTurn, runTurn, stopStream, type Turn } from "../lib/chat";
 import { ProcessRail } from "../components/ProcessRail";
 import { AnswerBody } from "../components/AnswerBody";
 import { ModelPicker } from "../components/ModelPicker";
@@ -17,25 +17,31 @@ import type { ChatSession } from "../lib/chatStore";
  * intent-override contract, so no control pretends to be one (a disabled one-option
  * "Intent" dropdown used to sit here). Each turn streams through the process rail
  * (steps + live reasoning, collapsing when done) into a Markdown answer (AnswerBody).
+ *
+ * The turns are the session's, held by App: this screen reads them and writes through
+ * `onUpdateTurns`. Opening another chat unmounts this screen but not its stream, and the
+ * answer must still land in this chat (owner report 2026-09-22, "only graph worked").
  */
 export function Chat({
   corpusId,
-  session = null,
-  onTurns,
+  session,
+  onUpdateTurns,
 }: {
   corpusId: string;
-  /** CHAT-HISTORY-V1: the persisted session being viewed, or null for a scratch thread. */
-  session?: ChatSession | null;
-  onTurns?: (turns: Turn[]) => void;
+  /** CHAT-HISTORY-V1: the session being viewed. App creates it before this screen mounts. */
+  session: ChatSession;
+  /** Apply a change to THIS session's turns in App's store. */
+  onUpdateTurns: (fn: (turns: Turn[]) => Turn[]) => void;
 }) {
   const [mode, setMode] = useState<PublicMode>("HYBRID");
   const [model, setModel] = useState<string>("");
   const [reasoning, setReasoning] = useState<string>("");
   const [corpusExplore, setCorpusExplore] = useState(false);
   const [question, setQuestion] = useState("");
-  const [turns, setTurns] = useState<Turn[]>(session?.turns ?? []);
-  const [busy, setBusy] = useState(false);
-  const abort = useRef<AbortController | null>(null);
+  const turns = session.turns;
+  // Busy is the chat's, not this screen's: a chat reopened mid-answer is still streaming.
+  const last = turns[turns.length - 1];
+  const busy = !!last && !last.done;
 
   const synths = useAsync((s) => api.synthesizers(s), []);
   const reasons = useAsync((s) => api.reasoningModes(s), []);
@@ -53,31 +59,25 @@ export function Chat({
     if (el) el.scrollTop = el.scrollHeight;
   }, [turns]);
 
-  // Hand every change back up so the session persists (App owns the store).
-  // Skipped while empty so merely opening Chat never creates a blank session.
-  useEffect(() => {
-    if (turns.length) onTurns?.(turns);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [turns]);
-
   async function send() {
     const q = question.trim();
     if (!q || busy) return;
-    setBusy(true);
     setQuestion("");
     const idx = turns.length;
-    setTurns((t) => [...t, newTurn(q, mode)]);
-    const ac = new AbortController();
-    abort.current = ac;
+    onUpdateTurns((t) => [...t, newTurn(q, mode)]);
     const body: Record<string, unknown> = { message: q, corpus_id: corpusId, mode, require_retrieval: true };
     if (model) body.synthesizer = model;
     if (reasoning) body.reasoning = reasoning;
     if (corpusExplore) body.corpus_explorer = true;
-    await runTurn(body, (patch) => {
-      setTurns((ts) => ts.map((t, i) => (i === idx ? { ...t, ...patch } : t)));
-    }, ac.signal);
-    setBusy(false);
-    abort.current = null;
+    const id = session.id;
+    const ac = beginStream(id);
+    try {
+      await runTurn(body, (patch) => {
+        onUpdateTurns((ts) => ts.map((t, i) => (i === idx ? { ...t, ...patch } : t)));
+      }, ac.signal);
+    } finally {
+      endStream(id, ac);
+    }
   }
 
   return (
@@ -162,7 +162,7 @@ export function Chat({
           <button className="btn btn--primary" onClick={() => void send()} disabled={busy || !question.trim()}>
             {busy ? "Streaming…" : "Send"}
           </button>
-          {busy && <button className="btn" onClick={() => abort.current?.abort()}>Stop</button>}
+          {busy && <button className="btn" onClick={() => stopStream(session.id)}>Stop</button>}
         </div>
         <div className="chat__hint">
           Enter to send · Shift+Enter for a newline · answers cite exact source spans
