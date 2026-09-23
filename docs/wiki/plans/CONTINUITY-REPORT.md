@@ -26,12 +26,12 @@ historical, never an instruction.
 ## CURRENT — 2026-09-23 (close-out before compaction) — **MISSION = COMPLETE DOCUMENT RAG FIRST (owner, 11.417); objective = GROUNDED LEARNING VALUE (owner, 11.418). CODE-KNOWLEDGE-V1 parked behind it. First slice: one consolidated plan of record (audit §10–§12), which the owner decides on before any code.**
 
 ### Repository State
-- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 13 unpushed commits (`58c819f` … the
-  11.419 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
-- Main checkout clean after the 11.419 commit. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
+- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 14 unpushed commits (`58c819f` … the
+  11.420 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
+- Main checkout clean after the 11.420 commit. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
   (+5). Every other worktree branch is merged into `production`.
 - Fleet: 24 workers / 13 types healthy on ONE bundle, `/ready` true (embedder + reranker). Running code = committed code
-  (last bounce after `c6c31aa`; 11.413–11.419 are documents only).
+  (last bounce after `c6c31aa`; 11.413–11.420 are documents only).
 
 ### Active Mission
 - **DOCUMENT RAG COMPLETION (active; owner 2026-09-23: "before we work on code rag, we must complete document rag").**
@@ -53,7 +53,7 @@ historical, never an instruction.
   - Plan `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`; 13 owner decisions (feasibility report §8 + §10).
   - Parsers come from open-source packages behind thin adapters (report §11).
 
-### Completed Since Last Bootstrap (11.406–11.419)
+### Completed Since Last Bootstrap (11.406–11.420)
 - 11.406 — chat answers survive a chat switch (frontend).
 - 11.407 — Claude-style composer.
 - 11.408 — subquery cap 10; FAST / VECTOR = lanes A + B, with no depth lanes and no bridge pass.
@@ -72,6 +72,8 @@ historical, never an instruction.
   (§12).
 - 11.419 — the owner's proposed compiler contract ("RAG compiler for grounded discovery") admitted as input
   (`docs/document-rag/inputs/`) and assessed: adopt, adapted (audit §14).
+- 11.420 — compiler reasoning controls per lane (audit §15: the Alibaba backup lanes fall back 29 / 36); the owner's
+  amendments; this execution queue.
 
 ### Current Contract State
 - **Retrieval.** `MODE_LANES`: FAST / VECTOR = A + B; HYBRID / GRAPH / WILDCARD = all lanes; GNN = its own route.
@@ -100,7 +102,7 @@ historical, never an instruction.
   - cinema's atom store is the vNext generation (≈ 1 per kind per doc).
 
 ### Active Impact Closure
-- Changed by 11.413–11.419: documents and read-only scripts only → NOT_AFFECTED.
+- Changed by 11.413–11.420: documents and read-only scripts only → NOT_AFFECTED.
 - 11.406–11.412: UPDATED and deployed (see their rows).
 - DEFERRED: the nine audit defects (audit §4) and the seven fixes (audit §6), pending the owner's word per fix.
 - BLOCKED: fix 4's multi-hop part, on the owner lifting the Graph traversal deferral. The one-hop part is not blocked.
@@ -113,7 +115,7 @@ historical, never an instruction.
 - 11.411 — DEPLOYED; the wire was confirmed against the merged code. The effect on the owner's answers is unconfirmed: the last
   UI turn (09:42Z) predates the deploy.
 - 11.412 — DEPLOYED; live canary: Alibaba 9 / 9 with 0 reasoning characters.
-- 11.413–11.419 — documents; the audit numbers are EXECUTED, with evidence under
+- 11.413–11.420 — documents; the audit numbers are EXECUTED, with evidence under
   `docs/wiki/experiments/enrichment-surfaces-2026-09-23/`.
 - INVALIDATED: none.
 
@@ -126,71 +128,72 @@ historical, never an instruction.
 - **zsh:** word-split file lists with `${=T}`.
 
 ### Working Tree
-- Clean after the 11.419 commit. Scratch lives outside the repo (session scratchpad).
+- Clean after the 11.420 commit. Scratch lives outside the repo (session scratchpad).
 
 ### Tooling State
 - `_graft_polymath` graph refreshed to `7eb767d` on 2026-09-23. Code is unchanged since, so it is current.
 - `graphify-out` was last refreshed 2026-09-21 (`acd83bb`); `graphify update .` refreshes it at $0.
-- Guards at the 11.419 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
+- Guards at the 11.420 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
 
-### Next Action
-1. Run the `polymath-bootstrap` skill.
-2. Read the audit: §12 objective + path-loss map → §13 execution design → §14 compiler contract (input:
-   `docs/document-rag/inputs/2026-09-23-rag-compiler-contract.md`) → §9 root cause → §10 design lineage → §11 routing rule →
-   §6 fixes. Then read the sources it
-   cites: FINAL §1.2 / §7 / §40–42 / l.39, ELITE §6–7, WLK2A (findings + recommendation), LQF-V2 (architectural lock).
-3. **Draft ONE consolidated plan of record, documents only, admitted as its own slice**, e.g.
-   `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. It:
-   - states the objective as a law: grounded learning value. It amends FINAL l.39 "cross-encoder = final judge", FINAL §47,
-     WLK2C's non-displacement, and ELITE §6 rule 1 + the novelty term. It keeps: an unsupported connection never enters, and
-     the answer says when a direct answer is missing;
-   - takes the proposed compiler contract as its Part B (audit §14): extend `ChatPlan` / `CompiledQuery` with the learning
-     need (`retrieval_goal`, never filled today), expected contribution, evidence requirement, inquiry dimensions and synthesis
-     targets. Fold the bridge compiler into the one planning call, fed the selected profile items. v1 executes independent
-     requests only. Protect compiler reliability (10% backup lane, 5% fallback over 7 days);
-   - separates "worth following" (bridge / probe ranking by ability to retrieve) from "worth including" (path-aware admission
-     by supported contribution: direct answer / prerequisite / mechanism / correction / transfer, no quotas);
-   - carries the full path end to end: question → subquery → bridge / concept → chunk;
-   - decides the admission-judge design: A LLM batch / B composed cross-encoder / C two-stage (recommended) / D synthesizer.
-     It sets the judge's cost and latency budget per mode;
-   - makes each profile field a modular conditional bridge (FINAL §7 × WLK2A / LQF-V2). Concepts / theories are routers,
-     never hydration (§11): selection → three doors;
-   - names WILDCARD the full embodiment and HYBRID / GRAPH its §7 subsets; GRAPH uses SEEALSO (and optionally concept
-     neighbours) for hops; GNN is excluded;
-   - makes the §6 fixes its execution slices, with receipts first;
-   - adopts the execution principles in audit §13, for the owner to confirm:
-     - relationships precomputed at index time;
-     - ONE compiler call plans all probes, including bridges;
-     - q0 search starts during compilation;
-     - lanes run concurrently under the deadline;
-     - one batched path-aware judge;
-     - a second round only for a named evidence gap;
-   - starts from two $0 measurements (audit §13): a timing trace of one slow turn, and a trace of one dropped chunk through
-     every judge;
-   - sets the acceptance fixtures:
-     - a useful bridge dropped today (WLK-10 wc01-class) now surfaces;
-     - a vague bridge (a lift `A1` term, or a merely topical bridge) fails;
-     - direct evidence stays eligible;
-     - plus the frozen baselines and the owner's three metrics.
-   Put its open decisions to the owner in one batch. It amends an owner law, so the owner confirms it before any code.
-4. **Execution slices after the owner confirms** (audit §6, one slice each):
-   1. per-probe lineage + conditional judging for lanes D–H: each probe gets its own query id and text, LQF-V2 preserves its
-      local winners, and the judge scores against the probe with a q0-groundedness floor;
-   2. the bridge compiler is fed `concepts` / `theories` / `seealso` text instead of kind names and doc ids;
-   3. project cinema's v3.2 `concepts` / `theories` / `seealso` into the atom store (from existing artifacts only);
-   4. SEEALSO hops in GRAPH: one hop now; multi-hop needs the deferral lifted;
-   5. resolution lift → PRECISION lineage: query-relevant terms, every term kept (or `resolution_lift="off"` until then);
-   6. receipts: per-probe lineage, local-winner survival, `latent_selection`, `lane_ms`, subquery timings; then attribute
-      the ≈ 12 s compile + ≈ 19 s retrieval (audit §5, corrected);
-   7. synthesis sees roles: labels past `ui.py:3519`; no "NO EVIDENCE RETRIEVED" for PROFILE / BRIDGE probes.
-   - Receipts (6) should land before or together with 1, so the gain is measurable.
-5. CODE-KNOWLEDGE-V1 stays parked until document RAG is complete (then its 13 decisions, feasibility report §8 + §10).
-6. Other open bugs:
-   - evidence-role labels (`ui.py:3519` → `:3631`; background task chip `task_f664f82b`);
-   - lanes D–I run outside `lane_deadline_s`;
-   - the q0 top-k floor is unbuilt;
-   - `chat_synth` token counts are null;
-   - `nemotron-3-ultra` is flaky.
+### Next Action — the EXECUTION QUEUE (owner, 2026-09-23: "we should have a list of work-logs to execute")
+0. Run the `polymath-bootstrap` skill. Read audit §15 → §14 → §12 → §13 → §9–§11 → §6
+   (`docs/wiki/reports/2026-09-23/ENRICHMENT-SURFACES-AUDIT.md`).
+
+**A. Easy fixes: no owner decision needed, one admitted slice each.** Code slices run in a worktree with the skill's
+PYTHONPATH recipe and asserting tests; merge + bounce on the owner's word.
+- **E1 — compiler backup-lane reasoning placement** (audit §15). First prove the outgoing request on a local stand-in. Then
+  `apply_chat_completions` puts provider switches at the TOP level for raw-HTTP callers: DeepSeek `thinking: {type:
+  disabled}`, Qwen `enable_thinking: false` (the compiler role may disable). Re-measure the lane fallbacks: Qwen 22 / 23 and
+  DeepSeek 7 / 13 today.
+- **E2 — the bridge compiler gets real concept text**, not kind names or doc ids (`bridge_integration.py:46` precedence). Fix
+  the hiding test (`test_bridge_integration.py:31`).
+- **E3 — synthesis gets roles and latent labels** (`ui.py:3519`), and the coverage lines stop listing PROFILE / BRIDGE probes
+  as "NO EVIDENCE RETRIEVED" (`ui.py:2370-2389`).
+- **E4 — WILDCARD atom frontier:** replace the bare `except: pass` (`chat_retrieval.py:919`) with a counted, receipted
+  degradation.
+- **E5 — receipts:**
+  - per-lane `lane_ms` and per-subquery timings;
+  - `latent_selection`;
+  - compile sub-steps: Scout / compiler / bridge / constraints / explorer (≈ 7 s of the ≈ 12 s compile is unattributed);
+  - the emitted reasoning settings per model call.
+- **E6 — two $0 traces** (audit §13): a timing trace of one slow turn (which step waits on which), and one dropped chunk
+  followed through every judge.
+- **E7 — `target` misuse:** bridges store a doc id in `target`. Move it to a source-reference field after a consumer check
+  (`graft callers`).
+
+**B. Owner decisions** (yes / no; the recommendation is in brackets):
+- D1 — governing objective = grounded learning value. It amends FINAL l.39, FINAL §47, WLK2C non-displacement and ELITE §6
+  rule 1; it keeps "an unsupported connection never enters" [yes].
+- D2 — require retrieval for corpus-learning questions (reverse B20; 8.4% of turns skip today); keep the bypass for explicit
+  non-retrieval tasks [yes].
+- D3 — resolution lift off now (`INTENT_POLICY`), repair later [yes].
+- D4 — atom store: add v3.2-derived concept / theory / seealso atoms ALONGSIDE the vNext atoms, projection only [alongside].
+- D5 — merge bridge planning into the compiler call; its inputs exist before the call, verified in audit §15 [yes].
+- D6 — latency budget per mode, end to end [the owner sets it; it bounds the judge design].
+- D7 — live-spend allowance for acceptance runs [5–8 turns first].
+- D8 — multi-hop GRAPH traversal [keep deferred; one SEEALSO hop only].
+
+**C. The consolidated plan of record** (`docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`, documents only), drafted on the
+owner's prompt once B is answered:
+- Part A: the objective law + acceptance.
+- Part B: the compiler contract (audit §14 as amended in §15): the learning need in `retrieval_goal`; expected contribution;
+  evidence requirement; inquiry dimensions; synthesis targets; per-stage reasoning settings; missing fields degrade by marking
+  missing context, never by skipping retrieval; no dependency fields until needed.
+- Part C: retrieval execution: lineage end to end; lanes D–I concurrent under the deadline; q0 search during compilation;
+  concept / theory routing (§11 selection + three doors); precomputed concept → parent links / neighbour table.
+- Part D: the path-aware admission judge, chosen by evidence (reranker with the path vs one batched LLM judge). It sees the
+  current selection, so "adds beyond" can be judged.
+- Part E: the synthesis contract: synthesis targets; roles; visible connections; labelled inferences and analogies.
+- Part F: measurement: the E6 traces, the acceptance fixtures, the frozen baselines, the owner's three metrics.
+
+**D. CODE-KNOWLEDGE-V1 stays parked** until document RAG is complete (then its 13 decisions, feasibility report §8 + §10).
+
+**E. Other open bugs:**
+- evidence-role labels (`ui.py:3519` → `:3631`; task chip `task_f664f82b`), covered by E3;
+- lanes D–I run outside `lane_deadline_s` (Part C);
+- the q0 top-k floor is superseded by Part D;
+- `chat_synth` token counts are null;
+- `nemotron-3-ultra` is flaky.
 
 ### Do Not Do
 - Push any ref without the owner's per-push word. Run `git add -A`. Use `AGENT_CONTROL_BYPASS`. Pre-write a PASS log.

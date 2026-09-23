@@ -2,7 +2,7 @@
 title: "ENRICHMENT-SURFACES-AUDIT — do the skeleton, pMAP, profile (SEEALSO, questions) and atoms reach the answers? (production 7eb767d)"
 date: 2026-09-23
 last_reviewed: 2026-09-23
-status: "AUDIT — read-only; no code, flag or data changed. Nine defects found, none fixed; the fixes are owner decisions (§6). Same-day addendum (register 11.416): §8 field inventory, §9 owner intent + root cause (every enrichment lane is judged against q0), §6 revised to wire the fields in; §10 design lineage + WILDCARD finding + the owner's sequencing (document RAG before code RAG); §11 concepts / theories as routers to real chunks, not hydration (register 11.417); §12 owner intent = grounded learning value + where the path context is lost + the path-aware judge decision; §13 execution-design input mapped to code; §5 timing corrected (register 11.418); §14 proposed compiler contract assessed + admitted as input (register 11.419)."
+status: "AUDIT — read-only; no code, flag or data changed. Nine defects found, none fixed; the fixes are owner decisions (§6). Same-day addendum (register 11.416): §8 field inventory, §9 owner intent + root cause (every enrichment lane is judged against q0), §6 revised to wire the fields in; §10 design lineage + WILDCARD finding + the owner's sequencing (document RAG before code RAG); §11 concepts / theories as routers to real chunks, not hydration (register 11.417); §12 owner intent = grounded learning value + where the path context is lost + the path-aware judge decision; §13 execution-design input mapped to code; §5 timing corrected (register 11.418); §14 proposed compiler contract assessed + admitted as input (register 11.419); §15 compiler reasoning controls per lane + the owner's amendments (register 11.420)."
 owner: "@king"
 scope: "Every document-enrichment surface, from its store to the evidence the synthesizer sees and the citations in the answer, measured on 1,508 live pipeline turns (cinema; 139 distinct questions, mostly qualification runs through the UI streaming endpoint) plus in-process replays and a static trace."
 ---
@@ -609,3 +609,47 @@ and the judge do not (§12).
 - The judge being anchored by confident but wrong "expected contributions". They are hypotheses; the judge verifies against
   source text.
 - "Learning value" is judged partly subjectively, so owner-labelled fixtures are required.
+
+## 15. Compiler reasoning controls per lane, and the amendments the owner shared (same day)
+
+**Owner, 2026-09-23:** the compiler should use provider-specific reasoning settings, because a generic "thinking off" flag
+does not mean the same thing across Qwen, Anthropic and Ollama. A Gemma-4-on-Ollama default could be efficient.
+
+The owner shared two more excerpts from the outside conversation, recorded as input:
+1. Resolve settings by provider + endpoint + exact model. Tune the compiler, judge, synthesis and fallback stages separately,
+   and record the emitted settings.
+2. Amendments to §14:
+   - merge bridge planning only when its inputs exist before the planning call;
+   - passing concept text, not merging, is what fixes the `THEORY` bug;
+   - richer fields degrade by marking missing context, never by reverting to the failing behaviour, inventing a
+     justification or skipping corpus retrieval;
+   - choose the judge by evidence, not by default;
+   - "what does it add" needs the selected set in view;
+   - add no dependency fields until a dependent route needs them.
+
+§14's adaptations are amended accordingly.
+
+**Measured** (EXECUTED receipts, 7 days, 1,490 plans; READ `ui.py:2209-2290`, `llm_extraction/client.py:415-431`,
+`reasoning_policy.py:106-160, :221-238`; the policy function simulated per model, the wire NOT yet captured):
+
+| Compiler lane (model) | Plans | Fallbacks | Mean compiler time | Reasoning params the compiler sends |
+|---|---:|---:|---:|---|
+| `compiler_ollama_gemma` (gemma4:31b-cloud) | 1,344 | 38 (2.8%) | 1.9 s | none (family "other") |
+| `compiler_alt` (mistral-small via OpenRouter) | 110 | 9 (8%) | 2.9 s | none (family "other") |
+| `compiler_alibaba_qwen` (qwen3.8-flash) | 23 | **22 (96%)** | 7.7 s | top-level `thinking_budget: 300`, and no `enable_thinking: false` although the compiler role allows disabling |
+| `compiler_alibaba_deepseek` (deepseek-v4-flash) | 13 | **7 (54%)** | 5.1 s | a literal `extra_body: {thinking: disabled}` key inside a raw HTTP JSON body |
+
+- The two Alibaba lanes mostly fail with `budget_exceeded` (6.1–34.5 s), plus `ReadTimeout`, `invalid_json` and
+  `no_queries`.
+- **Hypothesis** (the same bug class as 11.411): the compiler posts with raw `httpx`, which does not unpack an `extra_body`
+  key, so DeepSeek's switch is ignored, and Qwen is never told to stop thinking.
+- DeepSeek v4 is known to return empty output at a bounded token budget unless thinking is disabled.
+- These two lanes account for 29 of the 76 fallback plans, although they produced only 36 plans.
+- **To promote the hypothesis:** capture the outgoing request on a local stand-in (as in 11.411), then place the switches at
+  the top level (`thinking: {type: disabled}`; `enable_thinking: false`) and re-measure the lane fallback rates.
+- Gemma 4 (the default, and the best lane) gets no reasoning params. That is fine at 1.9 s; check its thinking capability via
+  Ollama `/api/show` before adding any.
+
+**Dependency check for merging bridge planning** (READ, `ui.py:2217-2230`): the Profile Scout runs BEFORE the compiler call.
+The bridge compiler runs after it in `_finish` and uses the Scout's nominations plus the compiled plan (to find uncovered
+concepts). Its inputs therefore exist before the planning call, and merging is dependency-feasible.
