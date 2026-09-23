@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { PUBLIC_MODES } from "../lib/contracts";
@@ -52,6 +52,18 @@ export function Chat({
     ((caps.data?.contracts ?? {}) as Record<string, unknown>)["corpus-explorer"],
   );
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // The box grows with the text, like Claude's: one line when empty, taller as you type, and it
+  // only scrolls inside once it reaches its CSS max-height.
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const max = parseFloat(getComputedStyle(el).maxHeight) || 320;
+    el.style.height = `${Math.min(el.scrollHeight, max)}px`;
+    el.style.overflowY = el.scrollHeight > max ? "auto" : "hidden";
+  }, [question]);
 
   // ChatGPT-style thread: newest at the bottom, so follow it as it streams.
   useEffect(() => {
@@ -144,25 +156,39 @@ export function Chat({
       </div>
 
       <div className="chat__composer">
-        <div className="chat__composer-inner">
+        {/* One rounded box, Claude-style: the text grows upward, the send / stop button sits inside.
+            You can type the next question while an answer streams; it sends once that answer is done. */}
+        <div className="composer" onClick={() => inputRef.current?.focus()}>
           <textarea
-            className="chat__input"
+            ref={inputRef}
+            className="composer__input"
             rows={1}
             placeholder={`Ask ${corpusId}…`}
+            aria-label="Message"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              // Enter sends; Shift+Enter is a newline; never send mid IME composition
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 void send();
               }
             }}
-            disabled={busy}
           />
-          <button className="btn btn--primary" onClick={() => void send()} disabled={busy || !question.trim()}>
-            {busy ? "Streaming…" : "Send"}
-          </button>
-          {busy && <button className="btn" onClick={() => stopStream(session.id)}>Stop</button>}
+          <div className="composer__bar">
+            <span className="composer__meta">{mode} · {corpusId}</span>
+            {busy ? (
+              <button className="composer__send composer__send--stop" aria-label="Stop" title="Stop the answer"
+                      onClick={(e) => { e.stopPropagation(); stopStream(session.id); }}>
+                <span aria-hidden="true">■</span>
+              </button>
+            ) : (
+              <button className="composer__send" aria-label="Send" title="Send (Enter)" disabled={!question.trim()}
+                      onClick={(e) => { e.stopPropagation(); void send(); }}>
+                <span aria-hidden="true">↑</span>
+              </button>
+            )}
+          </div>
         </div>
         <div className="chat__hint">
           Enter to send · Shift+Enter for a newline · answers cite exact source spans

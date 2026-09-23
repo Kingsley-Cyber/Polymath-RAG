@@ -59,8 +59,10 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
+/** A button by its visible text or, for the composer's icon buttons, its accessible name. */
 function button(label: string): HTMLButtonElement {
-  const b = [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === label);
+  const b = [...host.querySelectorAll("button")].find(
+    (b) => b.textContent?.trim() === label || b.getAttribute("aria-label") === label);
   expect(b, label).toBeDefined();
   return b!;
 }
@@ -151,8 +153,9 @@ it("a chat reopened mid-stream keeps streaming live, and Stop still cancels it",
   await ask("Still streaming?");
   await act(async () => button("＋ New chat").click());
   await act(async () => chatNamed("Still streaming?").click());
-  // busy belongs to the turn, not to the screen that sent it
-  expect(button("Streaming…").disabled).toBe(true);
+  // busy belongs to the turn, not to the screen that sent it: Stop stands where Send was
+  expect(host.querySelector('button[aria-label="Send"]')).toBeNull();
+  expect(button("Stop")).toBeDefined();
   await act(async () => frames(0, 'event: token\ndata: {"token":"Partial answer"}\n\n'));
   expect(host.textContent).toContain("Partial answer");
   await act(async () => button("Stop").click());
@@ -169,4 +172,37 @@ it("a turn a reload cut off reads as interrupted, and its chat is usable again",
   await act(async () => chatNamed("Cut off?").click());
   expect(host.textContent).toMatch(/interrupted/);
   expect(host.querySelector("textarea")!.disabled).toBe(false);
+});
+
+// Owner, 2026-09-22: "the textbox is weird with that scroll feature; why can't it be more like Claude".
+it("composer: Enter sends, Shift+Enter does not, and you can type the next question while an answer streams", async () => {
+  await act(async () => root.render(<App />));
+  await act(async () => button("＋ New chat").click());
+  const textarea = host.querySelector<HTMLTextAreaElement>("textarea.composer__input")!;
+  expect(textarea).not.toBeNull();
+  expect(button("Send").disabled).toBe(true);            // nothing to send yet
+  const type = async (v: string) => act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(textarea, v);
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  const key = async (init: KeyboardEventInit) =>
+    act(async () => { textarea.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, ...init })); });
+  await type("First line");
+  await key({ key: "Enter", shiftKey: true });            // a newline, not a send
+  expect(streams).toHaveLength(0);
+  await key({ key: "Enter" });                            // sends
+  expect(streams).toHaveLength(1);
+  expect(streams[0]!.body.message).toBe("First line");
+  // mid-answer: the box stays editable, Stop replaces Send, and Enter does not start a second stream
+  expect(textarea.disabled).toBe(false);
+  await type("Next question");
+  await key({ key: "Enter" });
+  expect(streams).toHaveLength(1);
+  expect(textarea.value).toBe("Next question");
+  expect(button("Stop")).toBeDefined();
+  await act(async () => finish(0, "Done [S1]."));
+  expect(button("Send").disabled).toBe(false);
+  await key({ key: "Enter" });
+  expect(streams).toHaveLength(2);
+  expect(streams[1]!.body.message).toBe("Next question");
 });

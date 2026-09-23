@@ -46,8 +46,11 @@ FLEET: list = [
     # LLM-DIRECT-CANON (2026-09-03): the local extraction lane — the privacy
     # path for every document at or under the cloud floor — had run as a
     # hand-started process outside the supervisor and the budget for days.
-    {"name": "local_extractor", "argv": ["{python}", "sidecars/local_extractor/batched_server.py", "8755"],
-     "cwd": ".", "health_url": "http://127.0.0.1:8755/ready"},
+    # FLEET-MEMORY-REBALANCE-V1 (owner, 2026-09-22): the local_extractor slot is RETIRED. Under CLOUD-FIRST-V1
+    # (floor 0 B) it received no extraction request, yet held 2.76 GB and 11.5 GB of the budget; that memory now goes
+    # to the reranker and embedder caps (config/runtime_budget.yaml). Rollback = restore this entry:
+    #   {"name": "local_extractor", "argv": ["{python}", "sidecars/local_extractor/batched_server.py", "8755"],
+    #    "cwd": ".", "health_url": "http://127.0.0.1:8755/ready"},
     {"name": "sidecar_embedder", "argv": ["{python}", "-m", "uvicorn",
         "server:app", "--host", "127.0.0.1", "--port", "8742"],
      "cwd": "sidecars/embedder", "health_url": "http://127.0.0.1:8742/ready"},

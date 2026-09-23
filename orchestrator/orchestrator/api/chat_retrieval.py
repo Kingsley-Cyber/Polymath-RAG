@@ -209,6 +209,7 @@ def chat_retrieval_flag(override: str | None = None) -> str:
 
 #: env-tunable knobs on the one budget authority, POLYMATH_CHAT_<NAME> (measurement only; the defaults are the contract)
 _INT_KNOBS = ("rerank_max", "synthesis_max", "global_dense_k", "global_sparse_k", "merged_candidate_max", "max_workers",
+              "max_subqueries",                                                                         # POLYMATH_CHAT_MAX_SUBQUERIES
               "latent_enabled", "latent_max_parents", "latent_children_per_parent", "latent_budget_ms",   # B12 lane D
               "dualread_enabled", "dualread_profile_docs", "dualread_map_k",                            # S9 dual-read (lane E)
               "dualread_max_parents", "dualread_children_per_parent", "dualread_budget_ms",             # POLYMATH_CHAT_DUALREAD_*
@@ -702,8 +703,21 @@ def _with_graph_assist(query: str, corpus_id: str, lanes, *, graph_useful: bool,
     return out
 
 
+#: the additive depth lanes the intent policy / env may switch on — FAST runs none of them (see `_fast_budget`)
+_DEPTH_LANES_OFF = dict(dualread_enabled=False, resolution_lift_enabled=False, seealso_fanout_enabled=False,
+                        graph_dest_enabled=False)
+
+
+def _fast_budget(budget: Optional[CandidateBudget], *, keep_latent: bool) -> CandidateBudget:
+    """FAST / VECTOR = lanes A + B on the primary and its typed subqueries, and nothing else (owner 2026-09-22: "FAST isn't
+    lighter than HYBRID" — the intent policy was adding dual-read, latent and resolution lift in every mode but GNN). The
+    explicit ✨ toggle (`keep_latent`) still wins the latent lane, as it does in every other mode."""
+    b = budget or default_budget()
+    return replace(b, latent_enabled=bool(keep_latent and b.latent_enabled), **_DEPTH_LANES_OFF)
+
+
 def chat_retrieve_mode(mode: str, query: str, corpus_id: str, *, graph_useful: bool = True,
-                       graph_assist: str = "off", **kw) -> dict:
+                       graph_assist: str = "off", keep_latent: bool = False, **kw) -> dict:
     """One engine, four compositions (§3.15). VECTOR / FAST = A + B; HYBRID = A + B + C; GRAPH = HYBRID +
     bounded hop-1 over the FINAL evidence (`_attach_graph`; global winners seed exactly like hierarchy
     winners, §3.21 #5–#6; the primary vector is reused for the entity-card seeds, #7); WILDCARD = HYBRID ∥
@@ -722,6 +736,8 @@ def chat_retrieve_mode(mode: str, query: str, corpus_id: str, *, graph_useful: b
     lanes = MODE_LANES[m]
     if m == MODE_GNN:
         return _retrieve_gnn(query, corpus_id, **kw)
+    if m in (MODE_VECTOR, MODE_FAST):
+        kw["budget"] = _fast_budget(kw.pop("budget", None), keep_latent=keep_latent)
     if m == MODE_WILDCARD:
         return _retrieve_wildcard(query, corpus_id, lanes=lanes, **kw)
     if m == MODE_GRAPH:

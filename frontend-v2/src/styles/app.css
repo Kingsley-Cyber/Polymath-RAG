@@ -290,20 +290,41 @@ button.btn:disabled { opacity: .5; cursor: not-allowed; }
 .chat__welcome h2 { margin: 0; font-size: 17px; color: var(--fg); font-weight: 600; }
 
 .chat__composer {
-  border-top: 1px solid var(--line); background: var(--bg);
-  padding: 12px 0 14px; margin-top: auto;
+  background: linear-gradient(to bottom, transparent, var(--bg) 14px);
+  padding: 10px 4px 12px; margin-top: auto;
 }
-.chat__composer-inner {
-  max-width: 860px; margin: 0 auto; width: 100%; padding: 0 4px;
-  display: flex; align-items: flex-end; gap: 8px;
+/* Claude-style composer: one rounded box; the textarea grows with its text (Chat.tsx sets the
+   height) up to max-height, then scrolls inside; the send / stop button sits in the bottom bar. */
+.composer {
+  max-width: 860px; margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--bg-raised); border: 1px solid var(--line); border-radius: 18px;
+  padding: 10px 10px 8px 16px; cursor: text;
+  box-shadow: 0 8px 28px -16px rgba(0, 0, 0, 0.55);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.chat__input {
-  flex: 1; resize: none; min-height: 44px; max-height: 180px;
-  background: var(--bg-raised); color: var(--fg); font: inherit;
-  border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px;
+.composer:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent), 0 8px 28px -16px rgba(0, 0, 0, 0.55);
 }
-.chat__input:focus { outline: none; border-color: var(--accent); }
-.chat__hint { max-width: 860px; margin: 6px auto 0; width: 100%; padding: 0 4px;
+.composer__input {
+  width: 100%; resize: none; border: 0; outline: none; box-shadow: none;
+  background: transparent; color: var(--fg); font: inherit; font-size: 14.5px; line-height: 1.55;
+  padding: 4px 0; margin: 0; min-height: 0; max-height: min(40vh, 320px); overflow-y: hidden;
+}
+.composer__input:focus { outline: none; border: 0; }
+.composer__input::placeholder { color: var(--fg-faint); }
+.composer__bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; }
+.composer__meta { font-family: var(--mono); font-size: 11px; color: var(--fg-faint); letter-spacing: 0.02em; }
+.composer__send {
+  appearance: none; flex: none; width: 32px; height: 32px; border-radius: 10px; border: 0; cursor: pointer;
+  display: inline-grid; place-items: center; font: inherit; font-size: 17px; font-weight: 700; line-height: 1;
+  background: var(--accent); color: var(--bg); transition: opacity 0.15s, background 0.15s;
+}
+.composer__send:hover:not(:disabled) { opacity: 0.88; }
+.composer__send:disabled { background: var(--line); color: var(--fg-faint); cursor: default; }
+.composer__send--stop { background: var(--fg); font-size: 11px; }
+.chat__hint { max-width: 860px; margin: 6px auto 0; width: 100%; padding: 0 4px; text-align: center;
   font-size: 11px; color: var(--fg-faint); }
 
 .msg-user { display: flex; justify-content: flex-end; }

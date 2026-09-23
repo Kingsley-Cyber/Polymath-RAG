@@ -49,10 +49,9 @@ LANES = [
     # GLiNER retired, spaCy slice interpreter skipped) — keeping them
     # here made "sidecar_gliner in desired" true during every ingest,
     # which is what kept parking the reranker (RERANKER-DURING-INGEST-V1).
-    # local_extractor: the batched 4B lane is supervised now (LLM-DIRECT-CANON
-    # 2026-09-03); under CLOUD-FIRST-V1 (floor 0) it is the assist/fallback lane,
-    # so it wakes with extraction demand instead of holding 10 GB while idle.
-    ("extract", ("profile_document", "extract"), {"extract", "profile", "local_extractor"}),
+    # local_extractor: the batched 4B lane was supervised from 2026-09-03 (LLM-DIRECT-CANON) and RETIRED
+    # 2026-09-22 (FLEET-MEMORY-REBALANCE-V1): under CLOUD-FIRST-V1 (floor 0) extraction never reaches it.
+    ("extract", ("profile_document", "extract"), {"extract", "profile"}),
     ("embed", ("project_qdrant",),
      {"sidecar_embedder", "qdrant"}),
     ("graph", ("canonicalize", "project_canonical", "project_neo4j",
