@@ -91,3 +91,18 @@ interleaved reps.
   follow-up.
 - Evidence composition (up to ~10 of 15 seats complementary): DEFERRED to the owner. The q0 top-k floor from the
   owner's design would bound it.
+- Per `contract_impact` at commit (changed: CANDIDATE_ENGINE, EVIDENCE_BOUNDARY_API, PROFILE_SCOUT_WIRING; transitive:
+  ACCEPTANCE, ADAPTER_RUNTIME, EVIDENCE_PACKET, MCP_SURFACE, PROFILE_YIELD_RECEIPT, QUERY_PLANNER, RESOLUTION_STATE,
+  RETRIEVAL_RECEIPT, SUBQUERY_PROVENANCE):
+  - CANDIDATE_ENGINE: UPDATED (the budget default).
+  - EVIDENCE_BOUNDARY_API: TESTED_UNCHANGED (the row shape is unchanged; FAST callers now get lanes A + B only).
+  - PROFILE_SCOUT_WIRING: TESTED_UNCHANGED (the scout still runs before the compiler; more of its subqueries now search).
+  - ACCEPTANCE, EVIDENCE_PACKET, MCP_SURFACE, PROFILE_YIELD_RECEIPT, RESOLUTION_STATE, SUBQUERY_PROVENANCE:
+    TESTED_UNCHANGED. 138 of 138 impacted contract and determinism tests pass on both trees.
+  - ADAPTER_RUNTIME: NOT_AFFECTED. No adapter config uses FAST (EXPLORE 3, GRAPH 4, WILDCARD 5); MCP reaches FAST
+    only when a caller asks for VECTOR.
+  - QUERY_PLANNER: NOT_AFFECTED (the compiler is untouched).
+  - RETRIEVAL_RECEIPT: TESTED_UNCHANGED (same fields; FAST receipts show 0 for the depth lanes).
+  - DB-backed or live suites named by the tool (`test_query_receipts`, `test_chat_funnel`,
+    `integration/test_cross_domain_routing`, the adapter suites) were NOT run: they would touch the fleet database or
+    the live server.
