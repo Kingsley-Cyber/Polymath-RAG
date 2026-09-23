@@ -76,6 +76,7 @@ historical, never an instruction.
   amendments; this execution queue.
 - 11.421 — DOCUMENT-RAG-COMPLETION-V1 admitted as the plan of record; owner decisions D1–D8 answered.
 - 11.422 — S0 easy wins E1 / E2 / E8 (branch `fix/document-rag-easy-wins`, UNIT_PROVEN; merge + bounce on the owner's word).
+- 11.423 — owner thinking rule (disabled where possible, else ≤ 100, gpt-oss low) on the same branch; all four compiler lanes re-qualified live (Qwen / DeepSeek now valid in < 5 s).
 
 ### Current Contract State
 - **Retrieval.** `MODE_LANES`: FAST / VECTOR = A + B; HYBRID / GRAPH / WILDCARD = all lanes; GNN = its own route.

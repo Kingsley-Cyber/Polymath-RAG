@@ -7,9 +7,11 @@ reasoning can never truncate the structured contract:
     numeric budget isn't available.
   - output budget: set INDEPENDENTLY (≥250-350 for bridge/compiler JSON), never shared with reasoning.
 
-Provider realities encoded (owner-authoritative intents; exact wire placement validated live):
-  - Qwen 3.8 Chat Completions: `thinking_budget=N` + `preserve_thinking=false`; NEVER also `reasoning_effort`
-    (invalid combo; `reasoning_effort=low`≈4096 = too big). Responses API: no `thinking_budget` -> disable/low.
+Owner rule (2026-09-23): thinking DISABLED wherever the provider allows it; otherwise ≤ OWNER_MAX_REASONING_TOKENS (100);
+gpt-oss "low". Provider realities encoded (owner-authoritative intents; exact wire placement validated live):
+  - Qwen (hybrid, e.g. qwen3.8-flash): `enable_thinking=false` + `preserve_thinking=false` on every surface. A thinking-only
+    Qwen model gets `thinking_budget` ≤ 100 instead; NEVER also `reasoning_effort` (invalid combo).
+  - Gemma 4 on Ollama: thinks only when asked — send nothing (`reasoning_effort=low` TURNS thinking on; measured 2026-09-23).
   - Claude: `effort=low` (or disabled); no manual small budget (manual min 1024).
   - Gemini 3.x Flash: `thinking_level=low` (cannot fully disable).
   - DeepSeek v4: thinking disabled (returns empty otherwise).
@@ -44,10 +46,14 @@ class RolePolicy:
     hard_output_tokens: int
 
 
+#: Owner rule (2026-09-23, DOCUMENT-RAG S0): every kept model runs with thinking DISABLED where the provider allows it;
+#: otherwise at most this many reasoning tokens; gpt-oss runs "low". Env overrides are capped at it too.
+OWNER_MAX_REASONING_TOKENS = 100
+
 ROLE_POLICIES: dict[str, RolePolicy] = {
-    BRIDGE:              RolePolicy(BRIDGE, 200, "low", True, 300, 350),
-    STRUCTURED_COMPILER: RolePolicy(STRUCTURED_COMPILER, 300, "low", True, 350, 500),
-    REVIEWER:            RolePolicy(REVIEWER, 200, "low", True, 150, 200),
+    BRIDGE:              RolePolicy(BRIDGE, 100, "low", True, 300, 350),
+    STRUCTURED_COMPILER: RolePolicy(STRUCTURED_COMPILER, 100, "low", True, 350, 500),
+    REVIEWER:            RolePolicy(REVIEWER, 100, "low", True, 150, 200),
     CHAT_SYNTHESIS:      RolePolicy(CHAT_SYNTHESIS, None, "low", False, 2000, 6000),
 }
 
@@ -116,20 +122,25 @@ def reasoning_params(role: str, model: str, api_surface: str = S_LITELLM) -> dic
     budget = pol.preferred_max_reasoning_tokens
     # env override hook, e.g. POLYMATH_REASONING_MAX_STRUCTURED_COMPILER=300
     budget = _env_int(f"POLYMATH_REASONING_MAX_{role}", budget)
+    if budget is not None:
+        budget = min(int(budget), OWNER_MAX_REASONING_TOKENS)
     out_cap = _env_int(f"POLYMATH_OUTPUT_MAX_{role}", pol.hard_output_tokens)
 
     top: dict = {}
     extra: dict = {}
 
     if fam == "qwen":
-        if api_surface in (S_CHAT_COMPLETIONS, S_LITELLM) and budget is not None:
-            # Chat Completions supports an explicit numeric reasoning budget. NOT reasoning_effort.
-            params = {"thinking_budget": int(budget), "preserve_thinking": False}
-            (top if api_surface == S_CHAT_COMPLETIONS else extra).update(params)
-        else:
-            # Responses API (no thinking_budget) or synthesis-low: disable thinking.
+        m = _model_name(model)
+        thinking_only = "thinking" in m or m.startswith("qwq")      # these cannot disable thinking at all
+        if not thinking_only:
+            # Owner rule: disable thinking wherever the provider allows it (every hybrid Qwen model, every role).
             params = {"enable_thinking": False, "preserve_thinking": False}
             (top if api_surface == S_CHAT_COMPLETIONS else extra).update(params)
+        elif api_surface in (S_CHAT_COMPLETIONS, S_LITELLM):
+            # Thinking-only model: the smallest numeric budget, never above the owner's ceiling. NOT reasoning_effort.
+            params = {"thinking_budget": int(budget or OWNER_MAX_REASONING_TOKENS), "preserve_thinking": False}
+            (top if api_surface == S_CHAT_COMPLETIONS else extra).update(params)
+        # thinking-only on the Responses API: no numeric budget exists there and it cannot be disabled -> send nothing
     elif fam == "deepseek":
         extra["thinking"] = {"type": "disabled"}          # required or the model returns empty
     elif fam == "glm":
