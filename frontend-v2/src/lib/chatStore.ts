@@ -26,6 +26,8 @@ export interface ChatSession {
 }
 
 const KEY = "polymath-v2.chats";
+export const INTERRUPTED =
+  "interrupted: the page was reloaded or closed before this answer finished. Send the question again.";
 const MAX_SESSIONS = 50;
 
 export function newSessionId(): string {
@@ -51,10 +53,17 @@ export function loadSessions(): ChatSession[] {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     // tolerate rows written by an older/newer shape rather than losing the lot
-    return parsed.filter(
-      (s): s is ChatSession =>
-        !!s && typeof s.id === "string" && Array.isArray(s.turns),
-    );
+    return parsed
+      .filter(
+        (s): s is ChatSession =>
+          !!s && typeof s.id === "string" && Array.isArray(s.turns),
+      )
+      // No stream survives a page load, so a turn still unfinished here never finishes.
+      // Left as it is, its chat would read as busy forever.
+      .map((s) => ({
+        ...s,
+        turns: s.turns.map((t) => (t.done ? t : { ...t, done: true, error: t.error ?? INTERRUPTED })),
+      }));
   } catch {
     return [];
   }

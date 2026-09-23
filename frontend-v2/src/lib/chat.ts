@@ -36,6 +36,27 @@ export function newTurn(question: string, mode: string): Turn {
   };
 }
 
+/* Live streams by chat session id. Module scope on purpose: a stream outlives the Chat screen
+ * that started it (opening another chat unmounts that screen), so Stop has to find it from
+ * whichever screen shows its chat now. */
+const inflight = new Map<string, AbortController>();
+
+/** Register a new stream for a chat; its signal goes to runTurn. */
+export function beginStream(sessionId: string): AbortController {
+  const ac = new AbortController();
+  inflight.set(sessionId, ac);
+  return ac;
+}
+
+export function endStream(sessionId: string, ac: AbortController): void {
+  if (inflight.get(sessionId) === ac) inflight.delete(sessionId);
+}
+
+/** Cancel a chat's live stream, if it has one. */
+export function stopStream(sessionId: string): void {
+  inflight.get(sessionId)?.abort();
+}
+
 /** Pull the human answer text out of the answer frame without guessing a schema. */
 function pickAnswer(result: unknown): string {
   if (typeof result === "string") return result;

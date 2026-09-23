@@ -2221,6 +2221,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_retrieve_gnn_routing.py", "py", None),
     ("docs/wiki/work-log/2026-09-22-frontend-backend-contract.md", "md", None),
     ("docs/wiki/work-log/2026-09-22-chat-ui-restore.md", "md", None),
+    ("docs/wiki/work-log/2026-09-22-chat-inflight-streams.md", "md", None),
     ("tests/determinism/test_rag_ui_integration.py", "py", None),
     ("docs/wiki/experiments/gnn-route/cinema/build-2026-09-22.json", "json", None),
     ("docs/wiki/experiments/gnn-route/cinema/build-m2-2026-09-22.json", "json", None),
