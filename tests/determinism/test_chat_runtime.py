@@ -605,3 +605,10 @@ def test_s1a_the_receipt_keeps_the_retrieval_trace_and_counts_the_prompt_labels(
     assert "core_wall" in meta["trace_ms"]["stages"]                  # the engine's timings, kept
     assert meta["prompt"]["latent_labels"] == 0                        # the harness seats no latent row
     assert "latent_selection" in meta and "wildcard" in meta
+
+
+def test_s1b_the_phase_marks_include_the_scope_share_of_the_compile_mark(monkeypatch):
+    hs = Runtime(monkeypatch)
+    _stream(dict(BASE, mode="HYBRID"))
+    marks = hs.receipts[0]["out"]["meta"]["phase_ms"]
+    assert "scope" in marks and marks["scope"] <= marks["retrieve"]   # cumulative marks: scope comes first

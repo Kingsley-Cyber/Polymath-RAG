@@ -421,6 +421,7 @@ class LLMExtractionClient:
             try:
                 from polymath_shared.reasoning_policy import apply_chat_completions as _rb_apply
                 _rb = _rb_apply(payload, _rb_role, self.model)
+                self.last_reasoning = _rb          # S1b (E5): what this call put on the wire, for the caller's receipt
                 if _rb:
                     import json as _rb_js
                     import logging as _rb_lg
