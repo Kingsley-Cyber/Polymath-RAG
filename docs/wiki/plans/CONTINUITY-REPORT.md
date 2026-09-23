@@ -26,12 +26,12 @@ historical, never an instruction.
 ## CURRENT — 2026-09-23 (close-out before compaction) — **MISSION = COMPLETE DOCUMENT RAG FIRST (owner, 11.417); objective = GROUNDED LEARNING VALUE (owner, 11.418). CODE-KNOWLEDGE-V1 parked behind it. First slice: one consolidated plan of record (audit §10–§12), which the owner decides on before any code.**
 
 ### Repository State
-- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 12 unpushed commits (`58c819f` … the
-  11.418 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
-- Main checkout clean after the 11.418 commit. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
+- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 13 unpushed commits (`58c819f` … the
+  11.419 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
+- Main checkout clean after the 11.419 commit. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
   (+5). Every other worktree branch is merged into `production`.
 - Fleet: 24 workers / 13 types healthy on ONE bundle, `/ready` true (embedder + reranker). Running code = committed code
-  (last bounce after `c6c31aa`; 11.413–11.418 are documents only).
+  (last bounce after `c6c31aa`; 11.413–11.419 are documents only).
 
 ### Active Mission
 - **DOCUMENT RAG COMPLETION (active; owner 2026-09-23: "before we work on code rag, we must complete document rag").**
@@ -53,7 +53,7 @@ historical, never an instruction.
   - Plan `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`; 13 owner decisions (feasibility report §8 + §10).
   - Parsers come from open-source packages behind thin adapters (report §11).
 
-### Completed Since Last Bootstrap (11.406–11.418)
+### Completed Since Last Bootstrap (11.406–11.419)
 - 11.406 — chat answers survive a chat switch (frontend).
 - 11.407 — Claude-style composer.
 - 11.408 — subquery cap 10; FAST / VECTOR = lanes A + B, with no depth lanes and no bridge pass.
@@ -70,6 +70,8 @@ historical, never an instruction.
   hydration (§11).
 - 11.418 — the owner's objective is grounded learning value; where the path context is lost; the admission-judge decision
   (§12).
+- 11.419 — the owner's proposed compiler contract ("RAG compiler for grounded discovery") admitted as input
+  (`docs/document-rag/inputs/`) and assessed: adopt, adapted (audit §14).
 
 ### Current Contract State
 - **Retrieval.** `MODE_LANES`: FAST / VECTOR = A + B; HYBRID / GRAPH / WILDCARD = all lanes; GNN = its own route.
@@ -98,7 +100,7 @@ historical, never an instruction.
   - cinema's atom store is the vNext generation (≈ 1 per kind per doc).
 
 ### Active Impact Closure
-- Changed by 11.413–11.418: documents and read-only scripts only → NOT_AFFECTED.
+- Changed by 11.413–11.419: documents and read-only scripts only → NOT_AFFECTED.
 - 11.406–11.412: UPDATED and deployed (see their rows).
 - DEFERRED: the nine audit defects (audit §4) and the seven fixes (audit §6), pending the owner's word per fix.
 - BLOCKED: fix 4's multi-hop part, on the owner lifting the Graph traversal deferral. The one-hop part is not blocked.
@@ -111,7 +113,7 @@ historical, never an instruction.
 - 11.411 — DEPLOYED; the wire was confirmed against the merged code. The effect on the owner's answers is unconfirmed: the last
   UI turn (09:42Z) predates the deploy.
 - 11.412 — DEPLOYED; live canary: Alibaba 9 / 9 with 0 reasoning characters.
-- 11.413–11.418 — documents; the audit numbers are EXECUTED, with evidence under
+- 11.413–11.419 — documents; the audit numbers are EXECUTED, with evidence under
   `docs/wiki/experiments/enrichment-surfaces-2026-09-23/`.
 - INVALIDATED: none.
 
@@ -124,22 +126,28 @@ historical, never an instruction.
 - **zsh:** word-split file lists with `${=T}`.
 
 ### Working Tree
-- Clean after the 11.418 commit. Scratch lives outside the repo (session scratchpad).
+- Clean after the 11.419 commit. Scratch lives outside the repo (session scratchpad).
 
 ### Tooling State
 - `_graft_polymath` graph refreshed to `7eb767d` on 2026-09-23. Code is unchanged since, so it is current.
 - `graphify-out` was last refreshed 2026-09-21 (`acd83bb`); `graphify update .` refreshes it at $0.
-- Guards at the 11.418 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
+- Guards at the 11.419 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
 
 ### Next Action
 1. Run the `polymath-bootstrap` skill.
-2. Read the audit: §12 objective + path-loss map → §9 root cause → §10 design lineage → §11 routing rule → §6 fixes. Then read the sources it
+2. Read the audit: §12 objective + path-loss map → §13 execution design → §14 compiler contract (input:
+   `docs/document-rag/inputs/2026-09-23-rag-compiler-contract.md`) → §9 root cause → §10 design lineage → §11 routing rule →
+   §6 fixes. Then read the sources it
    cites: FINAL §1.2 / §7 / §40–42 / l.39, ELITE §6–7, WLK2A (findings + recommendation), LQF-V2 (architectural lock).
 3. **Draft ONE consolidated plan of record, documents only, admitted as its own slice**, e.g.
    `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. It:
    - states the objective as a law: grounded learning value. It amends FINAL l.39 "cross-encoder = final judge", FINAL §47,
      WLK2C's non-displacement, and ELITE §6 rule 1 + the novelty term. It keeps: an unsupported connection never enters, and
      the answer says when a direct answer is missing;
+   - takes the proposed compiler contract as its Part B (audit §14): extend `ChatPlan` / `CompiledQuery` with the learning
+     need (`retrieval_goal`, never filled today), expected contribution, evidence requirement, inquiry dimensions and synthesis
+     targets. Fold the bridge compiler into the one planning call, fed the selected profile items. v1 executes independent
+     requests only. Protect compiler reliability (10% backup lane, 5% fallback over 7 days);
    - separates "worth following" (bridge / probe ranking by ability to retrieve) from "worth including" (path-aware admission
      by supported contribution: direct answer / prerequisite / mechanism / correction / transfer, no quotas);
    - carries the full path end to end: question → subquery → bridge / concept → chunk;

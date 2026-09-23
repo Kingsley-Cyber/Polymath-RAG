@@ -2,7 +2,7 @@
 title: "ENRICHMENT-SURFACES-AUDIT — do the skeleton, pMAP, profile (SEEALSO, questions) and atoms reach the answers? (production 7eb767d)"
 date: 2026-09-23
 last_reviewed: 2026-09-23
-status: "AUDIT — read-only; no code, flag or data changed. Nine defects found, none fixed; the fixes are owner decisions (§6). Same-day addendum (register 11.416): §8 field inventory, §9 owner intent + root cause (every enrichment lane is judged against q0), §6 revised to wire the fields in; §10 design lineage + WILDCARD finding + the owner's sequencing (document RAG before code RAG); §11 concepts / theories as routers to real chunks, not hydration (register 11.417); §12 owner intent = grounded learning value + where the path context is lost + the path-aware judge decision; §13 execution-design input mapped to code; §5 timing corrected (register 11.418)."
+status: "AUDIT — read-only; no code, flag or data changed. Nine defects found, none fixed; the fixes are owner decisions (§6). Same-day addendum (register 11.416): §8 field inventory, §9 owner intent + root cause (every enrichment lane is judged against q0), §6 revised to wire the fields in; §10 design lineage + WILDCARD finding + the owner's sequencing (document RAG before code RAG); §11 concepts / theories as routers to real chunks, not hydration (register 11.417); §12 owner intent = grounded learning value + where the path context is lost + the path-aware judge decision; §13 execution-design input mapped to code; §5 timing corrected (register 11.418); §14 proposed compiler contract assessed + admitted as input (register 11.419)."
 owner: "@king"
 scope: "Every document-enrichment surface, from its store to the evidence the synthesizer sees and the citations in the answer, measured on 1,508 live pipeline turns (cinema; 139 distinct questions, mostly qualification runs through the UI streaming endpoint) plus in-process replays and a static trace."
 ---
@@ -544,3 +544,68 @@ Plus the frozen baselines and the owner's three metrics.
    judge, WLK2C pass, assembly, synthesis.
 2. A trace of one dropped chunk from its bridge / probe through final selection, showing what question and context each
    judge received (one useful bridge dropped today, one vague bridge that must fail).
+
+## 14. Proposed compiler contract: assessment and incorporation (same day)
+
+**Input.** The owner shared a compiler specification written in another tool: "RAG compiler for grounded discovery". It is
+admitted byte-identical as a proposal input at `docs/document-rag/inputs/2026-09-23-rag-compiler-contract.md` (sha256
+`ff71a2bf…`); its own status line reads "proposed design". What it asks for:
+- the compiler emits search hypotheses and evidence requirements, never verdicts;
+- every exploratory request completes "Investigate X because it could help the user understand Y; look for Z";
+- four inquiry dimensions: precision, depth, cross-domain connection, synthesis across documents;
+- a ranking contract of three questions: does the source support the relationship; does that advance the learning
+  objective; what does it add?
+- a latency contract: concurrent independent work, batched scoring, no per-route model calls, expansion only for named gaps;
+- an acceptance table and an implementation boundary: map to existing owners, implement demonstrated gaps only.
+
+**Assessment: adopt, adapted.**
+- It matches every conclusion of §9–§13.
+- It supplies the half that the path-aware judge (§12) needs: the reason each probe exists, and what evidence would
+  confirm it.
+- About half of its schema already exists (EXECUTED: 40 recent plans, 223 queries; READ: `chat_plan.py:119-175`):
+
+| Spec field | Today | Gap |
+|---|---|---|
+| `original_query` | `ChatPlan.original_request` | — |
+| `learning_need` | `ChatPlan.retrieval_goal` exists but is **never filled** (0 / 40) | populate it |
+| `constraints` | `user_constraints` + `explicit_constraints` (CONSTRAINT-AWARE-RETRIEVAL-V1) | split explicit from inferred |
+| `inquiry_requirements` | `must_answer` (39 / 40) | add the four dimensions |
+| `request_id`, `origin` | `CompiledQuery.id`, `origin` (USER / PROFILE / BRIDGE / CORPUS_EXPLORE) | mark model hypotheses distinctly |
+| `query_or_reference` | `query` text; `inspired_by_profile` doc ids | reference profile ITEMS (concept / theory items), not only documents |
+| `expected_contribution` | `role` / `reason` are generic (e.g. "bridge/complementary <- doc_…"). `target` is documented as the information need, but bridges store a **doc id** there, and `profile_surface` stores the atom kind | new specific field; fix the `target` misuse |
+| `evidence_requirement` | — | new |
+| `synthesis_targets` | `response_type` / `task_type` (coarse) | new |
+| `depends_on` | — | record it; execute later |
+| `operation` | lanes chosen by mode × intent policy, not per request | not needed in v1 |
+
+Downstream, `retrieval_lineage` / `subquery_provenance` already carry lineage for subqueries and bridges. The enrichment lanes
+and the judge do not (§12).
+
+**Adaptations (my recommendation):**
+1. Make it Part B of the ONE document-RAG plan of record, not a separate design. §10 showed the cost of four unjoined plans.
+2. Extend `ChatPlan` / `CompiledQuery`: populate `retrieval_goal`; add the expected contribution, evidence requirement,
+   inquiry dimensions and synthesis targets; stop storing doc ids in `target`.
+3. Fold the bridge compiler into the one planning call, fed the selected profile items (concept / theory / seealso text + item
+   ids, §11 step 1). That fixes defect 2 and saves one sequential model call (1.5–2.6 s).
+4. v1 executes independent requests only. `depends_on` is recorded; at most one gap-triggered round comes later.
+5. Keep the new fields compact, and measure compile time before and after. The compile phase is already ≈ 12 s for
+   owner-style turns (§5).
+6. **Protect compiler reliability.** Over 7 days (1,490 plans), 10% came from a backup model lane and 5% were deterministic
+   fallbacks. Missing new fields must degrade to today's behaviour, and the fallback rate must be measured.
+7. The three ranking questions ARE the path-aware admission judge (§12, option C). The spec rightly demands proof: A/B a
+   cross-encoder with a composed path query against one batched LLM judge on the acceptance fixtures.
+8. Its rule that general-sounding questions in the corpus-learning workflow must not skip retrieval would reverse owner
+   backlog B20. Today 8.4% of turns skip retrieval. This is an owner decision; explicit "don't search" is still respected.
+9. **Acceptance cases:**
+   - the spec's table;
+   - WLK-10, which was built for latent knowledge a general model would not surface;
+   - a handful of owner-labelled questions (what the owner would want to learn);
+   - the §12 fixtures.
+
+**Risks:**
+- Latency: a larger compiler output plus one judge call. Owner-style turns already take 63–83 s end to end (before the
+  thinking fix).
+- JSON reliability of a richer schema.
+- The judge being anchored by confident but wrong "expected contributions". They are hypotheses; the judge verifies against
+  source text.
+- "Learning value" is judged partly subjectively, so owner-labelled fixtures are required.
