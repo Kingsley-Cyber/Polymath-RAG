@@ -77,6 +77,7 @@ historical, never an instruction.
 - 11.421 — DOCUMENT-RAG-COMPLETION-V1 admitted as the plan of record; owner decisions D1–D8 answered.
 - 11.422 — S0 easy wins E1 / E2 / E8 (branch `fix/document-rag-easy-wins`, UNIT_PROVEN; merge + bounce on the owner's word).
 - 11.423 — owner thinking rule (disabled where possible, else ≤ 100, gpt-oss low) on the same branch; all four compiler lanes re-qualified live (Qwen / DeepSeek now valid in < 5 s).
+- 11.425 — the compiler and bridges work WITHOUT Ollama (gemma first, failover on late / invalid plans, cloud bridge fallback, 8 s limits); branch `fix/compiler-works-without-ollama`, proven by a live simulation.
 - 11.424 — S0 + thinking rule DEPLOYED (`d85d43a`, one bounce). Post-deploy canary: lift off; gemma / qwen valid; deepseek 2 of 3 canaries valid (watch its receipts); mistral 429 = capacity.
 
 ### Current Contract State
