@@ -2225,6 +2225,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-22-chat-composer.md", "md", None),
     ("docs/wiki/work-log/2026-09-22-subquery-cap-fast-lanes.md", "md", None),
     ("docs/wiki/work-log/2026-09-22-fleet-memory-rebalance.md", "md", None),
+    ("docs/wiki/work-log/2026-09-23-anthropic-thinking-transport.md", "md", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay_owner_plans.py", "py", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay.jsonl", "jsonl", None),
     ("tests/determinism/test_rag_ui_integration.py", "py", None),

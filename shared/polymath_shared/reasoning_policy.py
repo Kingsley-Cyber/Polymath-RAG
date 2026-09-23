@@ -159,11 +159,23 @@ def apply_litellm(kwargs: dict, role: str, model: str) -> dict:
     if not policy_enabled():
         return {}
     rp = reasoning_params(role, model, S_LITELLM)
-    kwargs.update(rp["top_level"])
-    if rp["extra_body"]:
-        kwargs["extra_body"] = {**(kwargs.get("extra_body") or {}), **rp["extra_body"]}
+    top, extra = dict(rp["top_level"]), dict(rp["extra_body"])
+    # ANTHROPIC-THINKING-TRANSPORT-V1 (2026-09-23): litellm's `anthropic/` route does NOT merge `extra_body` into the
+    # request — it sends a literal "extra_body" key, which an Anthropic-format endpoint ignores. Measured on the wire
+    # (local stand-in server, litellm 1.98): DeepSeek v4 via Alibaba's Anthropic API kept thinking at full length on
+    # every chat answer although this policy said "disabled". `thinking` is a native Messages API field there, so it
+    # goes top level, and litellm is told to pass it through (it refuses `thinking` for models its map does not know).
+    if (model or "").startswith("anthropic/") and "thinking" in extra:
+        top["thinking"] = extra.pop("thinking")
+        allowed = list(kwargs.get("allowed_openai_params") or [])
+        if "thinking" not in allowed:
+            allowed.append("thinking")
+        kwargs["allowed_openai_params"] = allowed
+    kwargs.update(top)
+    if extra:
+        kwargs["extra_body"] = {**(kwargs.get("extra_body") or {}), **extra}
     applied = {"role": role, "provider": provider_family(model), "surface": S_LITELLM,
-               "top_level": dict(rp["top_level"]), "extra_body": dict(rp["extra_body"]),
+               "top_level": top, "extra_body": extra,
                "max_output_tokens": rp["max_output_tokens"]}
     _record(applied)
     return applied
