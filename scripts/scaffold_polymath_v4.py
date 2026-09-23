@@ -2279,6 +2279,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_deepseek_enable_thinking.py", "py", None),
     ("docs/wiki/reports/2026-09-23/RETRIEVAL-PATHWAYS-5Q.md", "md", None),
     ("docs/wiki/plans/DOCUMENT-SKELETON-V1.md", "md", None),
+    ("docs/wiki/work-log/2026-09-23-s1c-receipt-whitelist-latent-labels.md", "md", None),
     ("docs/wiki/experiments/retrieval-pathways-2026-09-23/run_5q.py", "py", None),
     ("docs/wiki/experiments/retrieval-pathways-2026-09-23/analyze.py", "py", None),
     ("docs/wiki/experiments/retrieval-pathways-2026-09-23/results.json", "json", None),

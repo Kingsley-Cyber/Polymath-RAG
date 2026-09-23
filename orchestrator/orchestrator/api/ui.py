@@ -2757,7 +2757,7 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
         _role = _roles.get(e.get("chunk_id")) if _role_present else None
         _lat = _latent.get(e.get("chunk_id")) or {}
         _core = _role or ""
-        if _core and _lat.get("seat"):
+        if _core and _lat.get("seat") in _LATENT_SEATS:                  # S1c: latent seats only (never DIRECT / RELATED)
             _core += f" · {_lat['seat']}"                                   # E3: the latent seat …
             if _lat.get("via"):
                 _core += f" via: {str(_lat['via'])[:120]}"                   # … and the bridge that found it
@@ -2939,8 +2939,10 @@ def _prompt_stats(messages: list[dict], carry_context, carried_in_prompt: int) -
             "latent_labels": sum(len(_LATENT_LABEL_RE.findall(str(m.get("content") or ""))) for m in messages)}
 
 
+#: S1c: the latent seats WLK2C assigns (evidence_packet._SEAT_ROLES); DIRECT / RELATED seats are q0 evidence, never labelled.
+_LATENT_SEATS = ("COMPLEMENTARY", "DIVERGENT")
 #: S1a: an evidence header that names a latent seat — `[S3] (LATENT · COMPLEMENTARY via: …)`.
-_LATENT_LABEL_RE = re.compile(r"^\[[^\]\n]+\] \([A-Z_]+ · [A-Z_]+", re.MULTILINE)
+_LATENT_LABEL_RE = re.compile(r"^\[[^\]\n]+\] \([A-Z_]+ · (?:COMPLEMENTARY|DIVERGENT)", re.MULTILINE)
 
 #: S1a (DOCUMENT-RAG-COMPLETION-V1 Part F, E5): the retrieval-trace keys a receipt keeps — per-probe survival. Their values
 #: carry no clock readings; every timing moves to `trace_ms`.

@@ -126,3 +126,19 @@ def test_summarize_keeps_the_generation_receipt_and_still_drops_unknown_keys():
     assert d["meta"]["generation"] == {"finish_reason": "length", "max_tokens": 16000}
     assert d["meta"]["degraded"][0]["state"] == "cut" and d["meta"]["route"] == "chat/stream"
     assert "not_a_receipt_key" not in d["meta"]
+
+
+def test_summarize_keeps_the_s1a_turn_receipts():
+    """S1c (RETRIEVAL-PATHWAYS-5Q, register 11.436): S1a added retrieval_trace / latent_selection / wildcard / trace_ms to the
+    receipt meta, but the stored receipt whitelists meta keys and dropped all four on every live turn — the harness test
+    had captured the payload BEFORE summarization. The same defect class as B7 above."""
+    from polymath_shared.query_receipts import summarize_response
+
+    meta = {"verdict": "generated", "route": "chat/stream",
+            "retrieval_trace": {"aspect_final": {"q1": 2}, "timed_out": ["latent_rescue"]},
+            "latent_selection": {"enabled": True, "counts": {"complementary": 1}},
+            "wildcard": {"returned": 3, "atom_frontier": {"atoms": 12, "maps": 16, "parents_added": 14, "error": None}},
+            "trace_ms": {"stages": {"core_wall": 900.1}}}
+    d = summarize_response("chat_stream", {"answer": "x", "meta": meta})
+    for k in ("retrieval_trace", "latent_selection", "wildcard", "trace_ms"):
+        assert d["meta"][k] == meta[k], k
