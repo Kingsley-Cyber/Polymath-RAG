@@ -23,15 +23,15 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (close-out before compaction) — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md` (D1–D8 answered). DEPLOYED today: S0 core (E1 / E2 / E8) + owner thinking rule (11.424) + compiler / bridges work without Ollama (11.426). E4 + E3 DEPLOYED (merge `c174c33`, 11.429). They are not yet receipted in `query_receipts`, so S1 persists them. Next: E7, then S1 receipts (E5, incl. `meta.wildcard` + `meta.prompt.latent_labels`), then S2 traces (E6). CODE-KNOWLEDGE-V1 parked.**
+## CURRENT — 2026-09-23 (close-out before compaction) — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md` (D1–D8 answered). DEPLOYED today: S0 core (E1 / E2 / E8) + owner thinking rule (11.424) + compiler / bridges work without Ollama (11.426). E4 + E3 DEPLOYED (`c174c33`, 11.429); E7 + S1a + S1b DEPLOYED (`2a7cbd5`, 11.433). The owner's next turn proves E3 / E4 / S1 from its receipt ($0). Next: S2 traces (E6) from those receipts, then S4+. CODE-KNOWLEDGE-V1 parked.**
 
 ### Repository State
-- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 27 unpushed commits (`58c819f` … the
-  11.429 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
-- Main checkout clean after the 11.429 commit. Every document-RAG slice branch is merged, including `fix/document-rag-s0-rest` (`c174c33`), and their worktrees are removed. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
+- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 32 unpushed commits (`58c819f` … the
+  11.433 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
+- Main checkout clean after the 11.433 commit. Every document-RAG slice branch is merged, including `fix/document-rag-s0-rest` (`c174c33`) and `fix/document-rag-s1-receipts` (`2a7cbd5`, which contains `fix/compiled-query-derived-from`), and their worktrees are removed. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
   (+5). Every other worktree branch is merged into `production`.
 - Fleet: 24 workers / 13 types healthy on ONE bundle, `/ready` true (embedder + reranker). Running code = committed code
-  (last bounce after the `c174c33` merge, 2026-09-23 15:29 MDT; 24 healthy / 13 types / ONE bundle `9360066c07d2`).
+  (last bounce after the `2a7cbd5` merge, 2026-09-23 16:39 MDT; 24 healthy / 13 types / ONE bundle `142e3ff3e56a`).
 
 ### Active Mission
 - **DOCUMENT RAG COMPLETION (active; owner 2026-09-23: "before we work on code rag, we must complete document rag").**
@@ -139,12 +139,12 @@ historical, never an instruction.
 - **zsh:** word-split file lists with `${=T}`.
 
 ### Working Tree
-- Main checkout clean after the 11.429 commit. Slice worktree `../pmv4-e4` removed (branch merged). Scratch lives outside the repo (session scratchpad).
+- Main checkout clean after the 11.433 commit. Slice worktrees `../pmv4-e4`, `../pmv4-e7`, `../pmv4-s1` removed (branches merged). Scratch lives outside the repo (session scratchpad).
 
 ### Tooling State
-- `_graft_polymath` graph refreshed to `c174c33` on 2026-09-23 (after the E3 / E4 merge).
+- `_graft_polymath` graph refreshed to `2a7cbd5` on 2026-09-23 (after the E7 / S1 merge).
 - `graphify-out` was last refreshed 2026-09-21 (`acd83bb`); `graphify update .` refreshes it at $0.
-- Guards at the 11.429 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
+- Guards at the 11.433 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
 
 ### Next Action — the EXECUTION QUEUE (owner, 2026-09-23: "we should have a list of work-logs to execute")
 0. Run the `polymath-bootstrap` skill. Read audit §15 → §14 → §12 → §13 → §9–§11 → §6
