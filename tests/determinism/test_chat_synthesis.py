@@ -365,3 +365,48 @@ def test_orientation_and_derived_blocks_are_additive_and_default_absent():
     assert on.index("ORIENTATION") < on.index("EVIDENCE (this turn)") < on.index("DERIVED INSIGHTS")
     assert "[S1] Screen Combat › Camera" in on
 
+
+
+# ---------------------------------------------------------------- E3 (DOCUMENT-RAG S0): roles and latent labels reach synthesis
+
+def test_evidence_rows_keep_the_role_and_the_latent_seat():
+    """ENRICHMENT-SURFACES-AUDIT defect 5: the chat path rebuilt the evidence rows with only chunk / doc / parent ids, so the
+    retrieval role and the WLK2C latent seat never reached the bundle (evidence_roles was always {})."""
+    evidence = [{"chunk_id": "c1", "doc_id": "d1", "parent_id": "p1", "role": "DIRECT", "text": "…"},
+                {"chunk_id": "c2", "doc_id": "d2", "parent_id": "p2", "role": "LATENT", "latent_role": "COMPLEMENTARY",
+                 "latent_lineage": {"bridge_id": "br0", "origin_query": "how withheld information builds suspense"}}]
+    rows = ui._evidence_rows(evidence)
+    assert rows[0] == {"chunk_id": "c1", "doc_id": "d1", "parent_id": "p1", "role": "DIRECT"}
+    assert rows[1]["role"] == "LATENT" and rows[1]["latent_role"] == "COMPLEMENTARY"
+    assert rows[1]["latent_lineage"]["origin_query"].startswith("how withheld")
+
+
+def test_latent_seat_and_its_bridge_are_shown_to_the_model(monkeypatch):
+    bundle = {"evidence_bundle": [
+        _item("child_chunk", "chunk:c_direct", "answers the question", source="Book.md", chunk_id="c_direct"),
+        _item("child_chunk", "chunk:c_lat", "an adjacent mechanism", source="Book.md", chunk_id="c_lat")],
+        "evidence_roles": {"c_direct": "DIRECT", "c_lat": "LATENT"},
+        "evidence_latent": {"c_lat": {"seat": "COMPLEMENTARY", "via": "how withheld information builds suspense"}}}
+    monkeypatch.setenv("POLYMATH_CHAT_SYNTH_ROLES", "1")
+    on = ui._grounded_messages("q", bundle, [], [], [])[-1]["content"]
+    assert "(LATENT · COMPLEMENTARY via: how withheld information builds suspense)" in on
+    assert "(DIRECT)" in on
+    monkeypatch.delenv("POLYMATH_CHAT_SYNTH_ROLES", raising=False)
+    off = ui._grounded_messages("q", bundle, [], [], [])[-1]["content"]
+    assert "COMPLEMENTARY" not in off                                          # default off stays byte-identical
+
+
+def test_coverage_lines_skip_exploration_probes():
+    """ENRICHMENT-SURFACES-AUDIT defect 6: PROFILE / BRIDGE probes were listed as aspects, and a weak probe told the model
+    "NO EVIDENCE RETRIEVED: say so explicitly" about see-also text. Only the user's own aspects are coverage lines."""
+    from types import SimpleNamespace
+    plan = SimpleNamespace(queries=[SimpleNamespace(id="q0", origin="USER"), SimpleNamespace(id="q1", origin="USER"),
+                                    SimpleNamespace(id="p0", origin="PROFILE"), SimpleNamespace(id="br0", origin="BRIDGE"),
+                                    SimpleNamespace(id="ce0", origin="CORPUS_EXPLORE")])
+    coverage = {"q1": {"type": "ASPECT", "query": "anticipation", "final": 3},
+                "p0": {"type": "PROFILE", "query": "see-also text", "final": 0, "weak": "no_candidates"},
+                "br0": {"type": "BRIDGE", "query": "a bridge", "final": 0, "weak": "below_floor", "best": -2.1},
+                "ce0": {"type": "EXPLORE", "query": "an activation", "final": 0}}
+    lines = "\n".join(ui._coverage_lines(coverage, skip_ids=ui._exploration_query_ids(plan)))
+    assert "q1" in lines and "p0" not in lines and "br0" not in lines and "ce0" not in lines
+    assert "NO EVIDENCE RETRIEVED" not in lines

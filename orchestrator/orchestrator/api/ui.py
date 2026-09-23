@@ -2431,13 +2431,40 @@ def _prior_artifact(plan, history) -> str | None:
     return _turn_content(cand)[:_PRIOR_ARTIFACT_CHARS] if cand is not None else None
 
 
-def _coverage_lines(coverage: dict | None) -> list[str]:
+#: E3 (DOCUMENT-RAG S0): exploration probes (Scout PROFILE expansions, bridges, Corpus Explore) are not the user's aspects.
+_EXPLORATION_ORIGINS = ("PROFILE",) + LATENT_ORIGINS
+
+
+def _exploration_query_ids(plan) -> frozenset:
+    """The plan's exploration probe ids; their coverage is never presented to the synthesizer as a user aspect."""
+    return frozenset(getattr(q, "id", None) for q in (getattr(plan, "queries", None) or ())
+                     if getattr(q, "origin", "") in _EXPLORATION_ORIGINS)
+
+
+def _evidence_rows(evidence) -> list[dict]:
+    """E3 (DOCUMENT-RAG S0, ENRICHMENT-SURFACES-AUDIT defect 5): the evidence rows handed to assembly KEEP the retrieval role
+    and the WLK2C latent seat + lineage; the chat path used to rebuild them with only chunk / doc / parent ids, so
+    `evidence_roles` was always empty and synthesis never saw why a chunk was there."""
+    rows = []
+    for c in evidence or ():
+        row = {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
+        for k in ("role", "latent_role", "latent_lineage"):
+            if c.get(k):
+                row[k] = c[k]
+        rows.append(row)
+    return rows
+
+
+def _coverage_lines(coverage: dict | None, *, skip_ids: frozenset = frozenset()) -> list[str]:
     """P1.b: tell the synthesizer which compiled aspects found evidence and
-    which found none, so a weak dimension is named instead of papered over."""
+    which found none, so a weak dimension is named instead of papered over. E3: exploration probes (`skip_ids`) are not
+    aspects — a weak see-also probe must never make the model announce "no evidence"."""
     if not coverage:
         return []
     parts = []
     for qid, a in coverage.items():
+        if qid in skip_ids:
+            continue
         n = a.get("final", 0)
         weak = a.get("weak")
         if weak == "below_floor":
@@ -2450,7 +2477,7 @@ def _coverage_lines(coverage: dict | None) -> list[str]:
         else:
             why = f"{n} evidence item(s)"
         parts.append(f'{qid} {a.get("type")} "{str(a.get("query") or "")[:60]}" — {why}')
-    return ["EVIDENCE COVERAGE BY ASPECT:\n" + "\n".join(parts)]
+    return ["EVIDENCE COVERAGE BY ASPECT:\n" + "\n".join(parts)] if parts else []
 
 
 def _request_block(query: str, plan, history, coverage: dict | None = None) -> str:
@@ -2469,7 +2496,7 @@ def _request_block(query: str, plan, history, coverage: dict | None = None) -> s
         lines.append("MUST COVER: " + "; ".join(str(x) for x in plan.must_answer[:6]))
     if plan.user_constraints:
         lines.append("CONSTRAINTS: " + "; ".join(str(x) for x in plan.user_constraints[:8]))
-    lines.extend(_coverage_lines(coverage))
+    lines.extend(_coverage_lines(coverage, skip_ids=_exploration_query_ids(plan)))
     ante = plan.antecedent if isinstance(plan.antecedent, dict) else None
     if ante and ante.get("summary"):
         lines.append(f"ANTECEDENT ({ante.get('kind') or 'topic'}, turn {ante.get('turn')}): {ante['summary']}")
@@ -2701,10 +2728,17 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
         # A STABLE sort by role only (ties keep tag order); the [S#] tag→locator mapping is unchanged,
         # so citations are unaffected — only the presentation order + a per-tag role label change.
         _entries.sort(key=lambda e: _SYNTH_ROLE_ORDER.get(_roles.get(e.get("chunk_id")), 0))
+    _latent = (bundle.get("evidence_latent") or {}) if _role_present else {}
     for e in _entries:
         crumb = e.get("breadcrumb") or ""
         _role = _roles.get(e.get("chunk_id")) if _role_present else None
-        _lbl = f" ({_role})" if _role else ""
+        _lat = _latent.get(e.get("chunk_id")) or {}
+        _core = _role or ""
+        if _core and _lat.get("seat"):
+            _core += f" · {_lat['seat']}"                                   # E3: the latent seat …
+            if _lat.get("via"):
+                _core += f" via: {str(_lat['via'])[:120]}"                   # … and the bridge that found it
+        _lbl = f" ({_core})" if _core else ""
         # EVIDENCE-DIET-V1: the passage header names its book › section; the legend maps the tag to that
         # breadcrumb (the raw locator stays on the answer event and the receipt for the UI and traces)
         ev_lines.append(f"[{e['tag']}]{_lbl} {crumb}\n{e['text']}" if crumb else f"[{e['tag']}]{_lbl}\n{e['text']}")
@@ -3580,11 +3614,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 # WLK2C C4-live/C5-live: the additive latent second pass (flag-gated, fail-open). Runs
                 # BEFORE CA3/CA4 so they grade + gate the latent-aware evidence; reassigns fast["evidence"].
                 _latent_receipt = _apply_latent_selection(fast, _plan, _retrieval_text, mode=ui_mode)
-                evidence_rows = [
-                    {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"],
-                     "parent_id": c["parent_id"]}
-                    for c in fast["evidence"]
-                ]
+                evidence_rows = _evidence_rows(fast["evidence"])      # E3: role + latent seat kept
                 _mark("retrieve")
                 yield _phase("retrieve_done", "Evidence selected",
                              evidence_count=len(evidence_rows),
@@ -3694,6 +3724,10 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             # default-off ⇒ the grounded prompt is byte-identical. assemble_evidence_bundle is untouched.
             bundle["evidence_roles"] = {c.get("chunk_id"): c.get("role") for c in evidence_rows
                                         if c.get("chunk_id") and c.get("role")}
+            # E3: the WLK2C latent seat (COMPLEMENTARY / DIVERGENT) and the bridge that justified it
+            bundle["evidence_latent"] = {c["chunk_id"]: {"seat": c.get("latent_role"),
+                                                         "via": (c.get("latent_lineage") or {}).get("origin_query")}
+                                         for c in evidence_rows if c.get("chunk_id") and c.get("latent_role")}
             # CA4: per-chunk support grades + the epistemic verdict ride the bundle. `epistemic`
             # drives render_answer's multi-signal answerability gate (grounded in ≥1 DIRECT/PARTIAL).
             if _epistemic is not None:

@@ -2268,6 +2268,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-23-compiler-works-without-ollama.md", "md", None),
     ("tests/determinism/test_compiler_resilience.py", "py", None),
     ("docs/wiki/work-log/2026-09-23-e4-wildcard-atom-frontier-receipt.md", "md", None),
+    ("docs/wiki/work-log/2026-09-23-e3-roles-latent-labels-coverage.md", "md", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay_owner_plans.py", "py", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay.jsonl", "jsonl", None),
     ("tests/determinism/test_rag_ui_integration.py", "py", None),
