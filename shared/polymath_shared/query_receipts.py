@@ -47,7 +47,10 @@ def summarize_response(kind: str, out: Any) -> dict:
                           "route",
                           # GENERATION-BOUND-V1 / backlog B7 (2026-09-06): the provider's finish_reason and the
                           # max_tokens the chat path sent — a cut answer is visible in the stored receipt too
-                          "generation")}
+                          "generation",
+                          # S1a / S1c (DOCUMENT-RAG-COMPLETION-V1 Part F): what the turn measured — per-probe survival,
+                          # latent selection, the WILDCARD sweep (atom frontier) and every clock reading
+                          "retrieval_trace", "latent_selection", "wildcard", "trace_ms")}
     cits = out.get("citations")
     if isinstance(cits, list):
         d["citations"] = len(cits)

@@ -424,3 +424,24 @@ def test_the_prompt_receipt_counts_the_latent_labels_the_model_saw(monkeypatch):
     assert ui._prompt_stats(ui._grounded_messages("q", bundle, [], [], []), [], 0)["latent_labels"] == 1  # DIRECT: no seat
     monkeypatch.delenv("POLYMATH_CHAT_SYNTH_ROLES", raising=False)
     assert ui._prompt_stats(ui._grounded_messages("q", bundle, [], [], []), [], 0)["latent_labels"] == 0
+
+
+def test_only_latent_seats_are_labelled_and_counted(monkeypatch):
+    """S1c: every seated row carries a latent_role (DIRECT / RELATED too), so E3 labelled every row and the receipt counted
+    15 of 15. Only the latent seats (COMPLEMENTARY / DIVERGENT) carry a seat label and a bridge; only they are counted."""
+    bundle = {"evidence_bundle": [
+        _item("child_chunk", "chunk:c_direct", "answers the question", source="Book.md", chunk_id="c_direct"),
+        _item("child_chunk", "chunk:c_rel", "a related passage", source="Book.md", chunk_id="c_rel"),
+        _item("child_chunk", "chunk:c_lat", "an adjacent mechanism", source="Book.md", chunk_id="c_lat"),
+        _item("child_chunk", "chunk:c_div", "a contrasting view", source="Book.md", chunk_id="c_div")],
+        "evidence_roles": {"c_direct": "DIRECT", "c_rel": "DIRECT", "c_lat": "LATENT", "c_div": "LATENT"},
+        "evidence_latent": {"c_direct": {"seat": "DIRECT", "via": None}, "c_rel": {"seat": "RELATED", "via": None},
+                            "c_lat": {"seat": "COMPLEMENTARY", "via": "how withheld information builds suspense"},
+                            "c_div": {"seat": "DIVERGENT", "via": "comic timing as a counterpoint"}}}
+    monkeypatch.setenv("POLYMATH_CHAT_SYNTH_ROLES", "1")
+    msgs = ui._grounded_messages("q", bundle, [], [], [])
+    text = msgs[-1]["content"]
+    assert "(LATENT · COMPLEMENTARY via: how withheld information builds suspense)" in text
+    assert "(LATENT · DIVERGENT via: comic timing as a counterpoint)" in text
+    assert "· DIRECT" not in text and "· RELATED" not in text             # q0 seats keep their plain role label
+    assert ui._prompt_stats(msgs, [], 0)["latent_labels"] == 2
