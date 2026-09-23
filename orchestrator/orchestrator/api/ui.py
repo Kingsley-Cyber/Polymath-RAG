@@ -2911,7 +2911,62 @@ def _prompt_stats(messages: list[dict], carry_context, carried_in_prompt: int) -
     both generators, recorded in result.meta["prompt"] and the receipt."""
     return {"prompt_chars": sum(len(str(m.get("content") or "")) for m in messages),
             "messages": len(messages), "carry_in": len(list(carry_context or [])),
-            "carry_in_prompt": int(carried_in_prompt)}
+            "carry_in_prompt": int(carried_in_prompt),
+            # S1a (E5): the latent seat labels E3 put in the prompt, counted where the model reads them
+            "latent_labels": sum(len(_LATENT_LABEL_RE.findall(str(m.get("content") or ""))) for m in messages)}
+
+
+#: S1a: an evidence header that names a latent seat — `[S3] (LATENT · COMPLEMENTARY via: …)`.
+_LATENT_LABEL_RE = re.compile(r"^\[[^\]\n]+\] \([A-Z_]+ · [A-Z_]+", re.MULTILINE)
+
+#: S1a (DOCUMENT-RAG-COMPLETION-V1 Part F, E5): the retrieval-trace keys a receipt keeps — per-probe survival. Their values
+#: carry no clock readings; every timing moves to `trace_ms`.
+_TRACE_RECEIPT_KEYS = ("aspects", "aspect_final", "aspect_best", "aspect_prefix", "aspect_seated", "weak_aspects",
+                       "weak_reasons")
+_LANE_TRACE_KEYS = ("latent", "dualread", "resolution_lift", "seealso_fanout", "graph_dest", "gnn")
+
+
+#: S1a: a flag that says which of two concurrent tasks finished first is a clock reading too.
+_CLOCK_KEYS = frozenset({"sweep_done_before_core"})
+
+
+def _is_clock(key) -> bool:
+    return str(key).endswith("_ms") or key in _CLOCK_KEYS
+
+
+def _split_clock(d):
+    """(`d` without its clock readings, those readings). Shallow; a non-dict comes back as it is."""
+    if not isinstance(d, dict):
+        return d, {}
+    return {k: v for k, v in d.items() if not _is_clock(k)}, {k: v for k, v in d.items() if _is_clock(k)}
+
+
+def _turn_receipt_extras(trace: dict | None, latent_meta: dict | None, wildcard: dict | None) -> dict:
+    """S1a (E5): keep what the turn already measured on its receipt — per-probe survival, the deadlines hit, latent
+    selection, the WILDCARD sweep (with E4's atom frontier) and every lane / stage timing. Clock readings live under
+    `trace_ms` only, so a route-parity comparison drops them in one place. Receipt-only: nothing reads these back."""
+    trace = trace if isinstance(trace, dict) else {}
+    rt = {k: trace[k] for k in _TRACE_RECEIPT_KEYS if trace.get(k) is not None}
+    timed_out = (trace.get("concurrency") or {}).get("timed_out")
+    if timed_out:
+        rt["timed_out"] = list(timed_out)
+    ms: dict = {}
+    if trace.get("timings_ms"):
+        ms["stages"] = trace["timings_ms"]
+    if trace.get("latency_ms"):
+        ms["retrieval"] = trace["latency_ms"]
+    lanes = {k: trace[k]["lane_ms"] for k in _LANE_TRACE_KEYS
+             if isinstance(trace.get(k), dict) and trace[k].get("lane_ms") is not None}
+    if lanes:
+        ms["lanes"] = lanes
+    latent, latent_ms = _split_clock(latent_meta)
+    if latent_ms:
+        ms["latent"] = latent_ms
+    sweep, sweep_ms = _split_clock(wildcard)
+    if sweep_ms:
+        ms["wildcard"] = sweep_ms
+    return {"retrieval_trace": rt or None, "latent_selection": latent or None, "wildcard": sweep or None,
+            "trace_ms": ms or None}
 
 def _litellm_generate(model: str, query: str, bundle: dict,
                       graph_facts: list, history, carry_context,
@@ -4026,7 +4081,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                           "funnel": funnel, "used_evidence": used, "legend": retrieval["legend"],
                           "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan"),
                           "chat_plan": _plan_receipt or None, "prompt": _prompt_meta or None, "carry": _carry_meta,
-                          "generation": _gen_meta or None, "composition": retrieval.get("composition")})
+                          "generation": _gen_meta or None, "composition": retrieval.get("composition"),
+                          **_turn_receipt_extras(_trace, latent_meta, retrieval.get("wildcard_diagnostics"))})
                 return
 
             yield _phase("synthesize", "Validating claims against "
@@ -4077,7 +4133,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                       "latent": req.latent, "phase_ms": dict(_phase_ms), "funnel": funnel,
                       "used_evidence": used, "degraded": retrieval.get("degraded"),
                       "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None, "carry": _carry_meta,
-                      "composition": retrieval.get("composition")})
+                      "composition": retrieval.get("composition"),
+                      **_turn_receipt_extras(_trace, latent_meta, retrieval.get("wildcard_diagnostics"))})
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {
                 "message": str(exc.detail)}

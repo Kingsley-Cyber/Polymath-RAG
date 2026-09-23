@@ -410,3 +410,17 @@ def test_coverage_lines_skip_exploration_probes():
     lines = "\n".join(ui._coverage_lines(coverage, skip_ids=ui._exploration_query_ids(plan)))
     assert "q1" in lines and "p0" not in lines and "br0" not in lines and "ce0" not in lines
     assert "NO EVIDENCE RETRIEVED" not in lines
+
+
+def test_the_prompt_receipt_counts_the_latent_labels_the_model_saw(monkeypatch):
+    """S1a (E5): E3's latent label is prompt text, so the prompt receipt counts the seat labels that reached the prompt:
+    the $0 proof, on a live turn, that a latent seat was shown to the model."""
+    bundle = {"evidence_bundle": [
+        _item("child_chunk", "chunk:c_direct", "answers the question", source="Book.md", chunk_id="c_direct"),
+        _item("child_chunk", "chunk:c_lat", "an adjacent mechanism", source="Book.md", chunk_id="c_lat")],
+        "evidence_roles": {"c_direct": "DIRECT", "c_lat": "LATENT"},
+        "evidence_latent": {"c_lat": {"seat": "COMPLEMENTARY", "via": "how withheld information builds suspense"}}}
+    monkeypatch.setenv("POLYMATH_CHAT_SYNTH_ROLES", "1")
+    assert ui._prompt_stats(ui._grounded_messages("q", bundle, [], [], []), [], 0)["latent_labels"] == 1  # DIRECT: no seat
+    monkeypatch.delenv("POLYMATH_CHAT_SYNTH_ROLES", raising=False)
+    assert ui._prompt_stats(ui._grounded_messages("q", bundle, [], [], []), [], 0)["latent_labels"] == 0

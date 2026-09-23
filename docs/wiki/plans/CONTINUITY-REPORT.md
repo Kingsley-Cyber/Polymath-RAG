@@ -162,7 +162,7 @@ PYTHONPATH recipe and asserting tests; merge + bounce on the owner's word.
   as "NO EVIDENCE RETRIEVED" (`ui.py:2370-2389`).
 - **E4 — DEPLOYED (11.427 → 11.429; LIVE_PATH pending S1 receipts).** WILDCARD
   atom frontier: the bare `except: pass` (`chat_retrieval.py:919`) is replaced with a counted, receipted degradation.
-- **E5 — receipts:**
+- **E5 — receipts. S1a DONE on branch `fix/document-rag-s1-receipts` (11.431, UNIT_PROVEN; stacked on E7): the turn's existing measurements + `atom_frontier` + `latent_labels` reach the receipt. S1b NEXT: compile sub-steps + emitted reasoning settings.**
   - per-lane `lane_ms` and per-subquery timings;
   - `latent_selection`;
   - compile sub-steps: Scout / compiler / bridge / constraints / explorer (≈ 7 s of the ≈ 12 s compile is unattributed);

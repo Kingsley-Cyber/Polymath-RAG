@@ -295,7 +295,7 @@ def _view(result: dict, retrieval: dict) -> dict:
 def _receipt_view(r: dict) -> dict:
     """A receipt payload minus the transport's tags (kind, client, meta.route) and wall-clock numbers."""
     out = dict(r.get("out") or {})
-    meta = {k: v for k, v in (out.get("meta") or {}).items() if k not in ("phase_ms", "route")}
+    meta = {k: v for k, v in (out.get("meta") or {}).items() if k not in ("phase_ms", "trace_ms", "route")}
     if out:
         out["meta"] = meta
     req = r["req"]
@@ -593,3 +593,15 @@ def test_live_chat_and_stream_agree_on_plan_and_evidence_ids():
     assert [e.get("chunk_id") for e in ra.get("legend") or []] == [e.get("chunk_id") for e in rb.get("legend") or []]
     assert [c["locator"] for c in ra["chunks"]] == [c["locator"] for c in rb["chunks"]]
     assert ra.get("used_evidence") == rb.get("used_evidence") and a["citations"] == b["result"]["citations"]
+
+
+# ---------------------------------------------------------------- S1a (E5): the turn's measurements reach its receipt
+
+def test_s1a_the_receipt_keeps_the_retrieval_trace_and_counts_the_prompt_labels(monkeypatch):
+    hs = Runtime(monkeypatch)
+    _stream(dict(BASE, mode="HYBRID", synthesizer="ollama:fake"))     # the LLM path: the one with a prompt receipt
+    meta = hs.receipts[0]["out"]["meta"]
+    assert isinstance(meta["retrieval_trace"], dict) and "aspect_final" in meta["retrieval_trace"]
+    assert "core_wall" in meta["trace_ms"]["stages"]                  # the engine's timings, kept
+    assert meta["prompt"]["latent_labels"] == 0                        # the harness seats no latent row
+    assert "latent_selection" in meta and "wildcard" in meta
