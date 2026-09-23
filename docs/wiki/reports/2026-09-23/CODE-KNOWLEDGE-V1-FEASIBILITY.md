@@ -231,3 +231,22 @@ Sources for the Canvas MCP facts:
 - https://libraries.io/nuget/Microsoft.PowerApps.CanvasAuthoring.McpServer
 - https://github.com/microsoft/power-platform-skills/blob/main/plugins/canvas-apps/AGENTS.md
 
+## 11. Parsers: existing open-source packages added to the repository, never written from scratch
+
+Owner, 2026-09-23: "we are not building the parsers from scratch; repos already have it that are open source that we can add
+into our repo." Every "NEW" parser item in §5 therefore means a THIN ADAPTER (source family → StructureManifest symbols /
+edges / spans) around one of these packages. No grammar or parser code is written. Checked 2026-09-23:
+
+| Language | Package (upstream) | Version | License | How it is added |
+|---|---|---|---|---|
+| Python | `libcst` (Instagram/LibCST) | 1.9.0 | MIT (small portions under the Python license) | pip wheel (macOS arm64 ✓); declare in `shared/pyproject.toml` |
+| Luau (spans / AST) | `tree-sitter` + `tree-sitter-luau` (tree-sitter-grammars) | 0.26.0 + 1.2.0 | MIT | pip wheels ✓. Alternative: `tree-sitter-language-pack` 1.20.0 (MIT, many grammars) |
+| Luau (validation) | `luau-lang/luau` release (`luau-analyze`, `luau`) | 0.739 | MIT | `luau-macos.zip` from GitHub releases, fetched by a pinned, checksummed setup script (not committed binaries) |
+| YAML | PyYAML | installed (`shared/pyproject.toml:11`) | MIT | nothing to add (`compose()` gives offsets) |
+| Power Fx | `Microsoft.PowerFx.Core` (microsoft/Power-Fx) | 1.8.1 | MIT | NuGet inside a small .NET CLI / sidecar (Phase 3; needs a .NET SDK) |
+| Power Apps write validation | `Microsoft.PowerApps.CanvasAuthoring.McpServer` | NuGet | Microsoft | .NET 10 + an open Studio coauthoring session (Phase 3) |
+
+The architecture references in the packet (SylphxAI/coderag, Aider-AI/aider, einad5/codegraph, ian000/graphify-go) are ideas
+to study, not dependencies. PAR-05 still applies: record license, version and contract for each package in the slice that
+adds it.
+

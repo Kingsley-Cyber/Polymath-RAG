@@ -1,0 +1,175 @@
+{
+ "generated_at": "2026-09-23T15:45:13+00:00",
+ "resolution_lift": [
+  {
+   "query_id": "q_24f4aa2ac2bd46dea6d75022",
+   "intent": "APPLICATION",
+   "q0": "realistic character prompt for image generation UGC tea brand advertisement",
+   "lifted_terms": [
+    "A100",
+    "A7",
+    "B2"
+   ],
+   "lift_candidates": 6,
+   "lift_chunks_in_output": 0,
+   "lane_ms": 1152.1
+  },
+  {
+   "query_id": "q_ec26293e42e645b985902fa6",
+   "intent": "COMPARISON",
+   "q0": "rhythm of film editing timing of music",
+   "lifted_terms": [
+    "A1",
+    "A10",
+    "A11"
+   ],
+   "lift_candidates": 6,
+   "lift_chunks_in_output": 0,
+   "lane_ms": 1007.9
+  },
+  {
+   "query_id": "q_ae3cffbea5184e23b40a1540",
+   "intent": "DEFINITION",
+   "q0": "nonsquare pixels",
+   "lifted_terms": [
+    "A1",
+    "A2",
+    "A3"
+   ],
+   "lift_candidates": 6,
+   "lift_chunks_in_output": 0,
+   "lane_ms": 906.3
+  },
+  {
+   "query_id": "q_64f45ad167c949cb8e345b54",
+   "intent": "EXACT",
+   "q0": "180-degree rule",
+   "lifted_terms": [
+    "A10",
+    "A2",
+    "A445"
+   ],
+   "lift_candidates": 6,
+   "lift_chunks_in_output": 0,
+   "lane_ms": 874.6
+  },
+  {
+   "query_id": "q_6a4e34eed36841c093009713",
+   "intent": "EXPLORATORY",
+   "q0": "fifteen beats in the Save the Cat story structure",
+   "lifted_terms": [
+    "A1",
+    "A10",
+    "A11"
+   ],
+   "lift_candidates": 6,
+   "lift_chunks_in_output": 0,
+   "lane_ms": 967.5
+  },
+  {
+   "query_id": "q_270618b1d3cc41988c7ab4d3",
+   "intent": "MECHANISM",
+   "q0": "How does a lone landscape photographer keep spare batteries reachable on the trail?",
+   "lifted_terms": [
+    "ADR12",
+    "ADX16",
+    "AIM57"
+   ],
+   "lift_candidates": 6,
+   "lift_chunks_in_output": 0,
+   "lane_ms": 1015.4
+  },
+  {
+   "query_id": "q_20b23306bf6f44d08d30e9b7",
+   "intent": "PROCEDURE",
+   "q0": "making your own chroma keyer",
+   "lifted_terms": [
+    "A1",
+    "A2",
+    "A3"
+   ],
+   "lift_candidates": 6,
+   "lift_chunks_in_output": 0,
+   "lane_ms": 953.1
+  },
+  {
+   "query_id": "q_fce07375af524276b401af96",
+   "intent": "RELATIONSHIP",
+   "q0": "shifting balance of power in a conversation",
+   "lifted_terms": [
+    "A1",
+    "A4",
+    "ANG6618"
+   ],
+   "lift_candidates": 6,
+   "lift_chunks_in_output": 0,
+   "lane_ms": 923.4
+  },
+  {
+   "query_id": "q_965cb1b3d7004d96891d0143",
+   "intent": "SYNTHESIS",
+   "q0": "making your own chroma keyer RGB HSV HSL",
+   "lifted_terms": [
+    "A1",
+    "A2",
+    "A3"
+   ],
+   "lift_candidates": 6,
+   "lift_chunks_in_output": 0,
+   "lane_ms": 1001.6
+  }
+ ],
+ "bridge_compiler_concepts": [
+  {
+   "query_id": "q_24f4aa2ac2bd46dea6d75022",
+   "question_head": "I need a prompt for a image generation ugc image for a image to vide to get a re",
+   "labels": [
+    "LATENT_PATTERN",
+    "BOUNDARY",
+    "doc_3f09f808d1fa2a25ebb4fb0aa894f1b652a0550e7ce6b17185baa5be97ae9e1c",
+    "doc_0dd48434e2ceeccee1a6e406c5c6e31e205079566103f2547413bd4f3274b80d",
+    "SEEALSO",
+    "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+    "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7"
+   ],
+   "kind_names": 3,
+   "raw_doc_ids": 5,
+   "other_text": 0
+  },
+  {
+   "query_id": "q_fce07375af524276b401af96",
+   "question_head": "let the audience feel the balance of power tip from one person to the other mid-",
+   "labels": [
+    "INVERSION",
+    "TENSION",
+    "LATENT_PATTERN",
+    "INVERSION",
+    "doc_42e9fa7440e5724fccf602f36e7b9bdc31e259cd2630cbb3ec9fa1316121da64",
+    "TENSION",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+    "TENSION"
+   ],
+   "kind_names": 6,
+   "raw_doc_ids": 2,
+   "other_text": 0
+  },
+  {
+   "query_id": "q_6a4e34eed36841c093009713",
+   "question_head": "What are the fifteen beats in the Save the Cat story structure?",
+   "labels": [
+    "RECALLQ",
+    "THEORY",
+    "ANCHOR",
+    "THEORY",
+    "CONCEPT",
+    "THEORY",
+    "doc_b31f2c49dbb3db53a1b069e434f75b2457ddeacfe7bf479049eb211c27d0ee45",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "kind_names": 6,
+   "raw_doc_ids": 2,
+   "other_text": 0
+  }
+ ]
+}

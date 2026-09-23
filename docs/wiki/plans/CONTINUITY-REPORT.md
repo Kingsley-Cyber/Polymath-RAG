@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-22
+last_reviewed: 2026-09-23
 ---
 
 
@@ -17,9 +17,136 @@ Update THIS file in place at session end. History lives in
 `docs/wiki/work-log/` (append-only) and `PLAN-AUTHORITY-REGISTER.md`
 (the completion contract; never delete rows).
 
-Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (the NEWEST dated handoff snapshot — end-of-session 2026-09-09; supersedes `2026-09-09/` and `2026-09-08/`) + its `BE_AWARE.md` / `UNFINISHED_WORK.md` / `DEPENDENCY_MAP.md`** → **`docs/wiki/plans/FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1.md`** (the LIVING plan-of-record ledger: phase table P0–P14 + primitive table R1–R10 + DEFERRED register D-5…D-14) → `docs/wiki/plans/RETRIEVAL-MIGRATION-DEPENDENCY-V1.md` (migration/retirement authority) → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (the file is append-only and now runs to **11.282**; read the newest rows) → `POLYMATH_EXECUTION_AUTHORITY_XML_FINALIZED.md` (`~/Downloads/`, the current owner execution authority — supersedes the prior directive on anything it names explicitly) → `CLAUDE.md` → the two newest work-logs → **`Polymath_librarian_architecture_checklist.md`** (repo ROOT — the ACTIVE Librarian-goal contract + ground-truth ledger; see the 2026-09-18 checkpoint below) → **`git worktree list`** (in-flight work lives on `librarian/retrieval-architecture`). See the **NEXT SESSION** block at the end of this checkpoint for the exact read order + first action.
+Read order: the **CURRENT** block below (repository state, mission, Next Action, Do Not Do, gates) → the plan of record it
+names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the newest rows) → the two newest work-logs →
+`git worktree list` (other worktrees hold committed work on their own branches). The bootstrap procedure is the
+`polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
+historical, never an instruction.
 
-## CURRENT — 2026-09-23 (latest) — **NEXT MISSION ADMITTED: CODE-KNOWLEDGE-V1 (code RAG inside the existing architecture). Feasible; waits on 13 owner decisions.**
+## CURRENT — 2026-09-23 (close-out before compaction) — **ENRICHMENT AUDIT DONE (11.415). NEXT: CODE-KNOWLEDGE-V1, waiting on 13 owner decisions; the enrichment fixes are the alternative track.**
+
+### Repository State
+- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 9 unpushed commits (`58c819f` … the
+  11.415 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
+- Main checkout clean after the 11.415 commit. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
+  (+5). Every other worktree branch is merged into `production`.
+- Fleet: 24 workers / 13 types healthy on ONE bundle, `/ready` true (embedder + reranker). Running code = committed code
+  (last bounce after `c6c31aa`; 11.413–11.415 are documents only).
+
+### Active Mission
+- **CODE-KNOWLEDGE-V1** (plan `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`): admitted and reviewed; no slice started.
+  - Next dependency: the owner's answers to the feasibility report §8 + §10 (13 decisions).
+  - Parsers come from existing open-source packages behind thin adapters (report §11).
+- **Alternative track (owner's choice):** the six enrichment fixes in `docs/wiki/reports/2026-09-23/ENRICHMENT-SURFACES-AUDIT.md`
+  §6.
+
+### Completed Since Last Bootstrap (11.406–11.415)
+- 11.406 — chat answers survive a chat switch (frontend).
+- 11.407 — Claude-style composer.
+- 11.408 — subquery cap 10; FAST / VECTOR = lanes A + B, with no depth lanes and no bridge pass.
+- 11.409 — local Qwen 4B retired; reranker 6 GB / embedder 4.5 GB.
+- 11.410 — the above DEPLOYED (`5df4536`).
+- 11.411 — DeepSeek `thinking: disabled` reaches the wire (`980ed76`).
+- 11.412 — every chat model has a working reasoning control; 8 dead OpenCode models removed (`c6c31aa`).
+- 11.413 — CODE-KNOWLEDGE-V1 admitted + feasibility review.
+- 11.414 — the owner's second design note reconciled.
+- 11.415 — enrichment-surfaces audit + report §11 (open-source parsers) + this CONTINUITY refresh.
+
+### Current Contract State
+- **Retrieval.** `MODE_LANES`: FAST / VECTOR = A + B; HYBRID / GRAPH / WILDCARD = all lanes; GNN = its own route.
+  `max_subqueries` 10 (rollback: `POLYMATH_CHAT_MAX_SUBQUERIES=3` + bounce).
+- **The receipt funnel** (`query_receipts.meta.funnel`, every UI turn) is the $0 audit surface: per-lane candidate ids,
+  cross-encoder order, selected, cited.
+  - NOT persisted: per-lane `lane_ms`, `latent_selection`.
+  - `meta.latent` is always `None` on v2.
+- **Enrichment, measured (audit §1–§2):** 86% of evidence is also found by dense / sparse child search; 9.1% is found only by
+  enrichment lanes, and 43% of turns cite at least one enrichment-only row.
+  - Reaching answers: summaries (lane A), profile → pMAP (lane E), latent points (lane D), SEEALSO atoms (lane G, 93 turns).
+  - Not reaching: resolution lift (0 of 7,806 candidates) and the profile concepts / theories / seealso multivectors (never
+    searched).
+- **Reasoning.** `reasoning_policy.apply_litellm` puts `thinking` at top level with `allowed_openai_params` on the anthropic
+  route; Ollama gpt-oss takes `think: "low"`; the `opencode-free` row is disabled.
+- **Known asymmetries (not fixed):**
+  - roles and latent seat labels are dropped at `ui.py:3519`;
+  - the coverage block renders PROFILE / BRIDGE probes as "NO EVIDENCE RETRIEVED";
+  - the bridge compiler gets atom-kind names and doc ids;
+  - cinema's atom store is the vNext generation (≈ 1 per kind per doc).
+
+### Active Impact Closure
+- Changed by 11.413–11.415: documents and read-only scripts only → NOT_AFFECTED.
+- 11.406–11.412: UPDATED and deployed (see their rows).
+- DEFERRED: the nine audit defects (audit §4), pending the owner's word per fix.
+- BLOCKED: CODE-KNOWLEDGE-V1 execution, on the 13 owner decisions.
+- Unresolved: none.
+
+### Proof Status
+- 11.406 — DEPLOYED (`dist` rebuilt) + UNIT_PROVEN (chat-session tests).
+- 11.407–11.409 — DEPLOYED (11.410): reranker OOMs 184 → 0; FAST retrieval 1.7–1.9 s warm (replay).
+- 11.411 — DEPLOYED; the wire was confirmed against the merged code. The effect on the owner's answers is unconfirmed: the last
+  UI turn (09:42Z) predates the deploy.
+- 11.412 — DEPLOYED; live canary: Alibaba 9 / 9 with 0 reasoning characters.
+- 11.413–11.415 — documents; the audit numbers are EXECUTED, with evidence under
+  `docs/wiki/experiments/enrichment-surfaces-2026-09-23/`.
+- INVALIDATED: none.
+
+### Runtime / Test Resolution
+- **Main checkout:** the editable installs resolve to MAIN.
+- **Worktrees:** export `PYTHONPATH=$PWD/shared:$PWD/orchestrator:$PWD/workers:$PWD/control` and check the origins with
+  `importlib.util.find_spec` (measured 2026-09-23). A worktree has no `.env`: load the main one for DB tests, which means the
+  FLEET database.
+- **Determinism suite:** always `-k "not test_live_"`.
+- **zsh:** word-split file lists with `${=T}`.
+
+### Working Tree
+- Clean after the 11.415 commit. Scratch lives outside the repo (session scratchpad).
+
+### Tooling State
+- `_graft_polymath` graph refreshed to `7eb767d` on 2026-09-23. Code is unchanged since, so it is current.
+- `graphify-out` was last refreshed 2026-09-21 (`acd83bb`); `graphify update .` refreshes it at $0.
+- Guards at the 11.415 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
+
+### Next Action
+1. Run the `polymath-bootstrap` skill.
+2. Ask the owner which track goes first: (A) CODE-KNOWLEDGE-V1, or (B) the enrichment fixes.
+3. **Track A:**
+   - read `docs/wiki/plans/CODE-KNOWLEDGE-V1.md` → the packet `docs/code-knowledge-v1/` (its own read order) → the feasibility
+     report (§3 drift overrides the packet; §8 + §10 = 13 decisions; §11 = parsers from open-source packages);
+   - put the 13 decisions to the owner in one batch;
+   - execute Phase 1 (Python + generic YAML) one admitted slice at a time: C0 → C1 (flag + sync importer by repo path) → C2
+     → C3 → C5-YAML → C6 → C7 → C9 → C10 → role-bug fix + C11 → C12 → C13.
+4. **Track B** (audit §6, one slice each):
+   1. resolution lift: fix the ranking, or set `resolution_lift="off"` in `INTENT_POLICY` until fixed;
+   2. project cinema's v3.2 profile items into the atom store (from existing artifacts only);
+   3. bridge-compiler labels;
+   4. the profile exploration multivectors: search them or stop producing them;
+   5. prompt labels + coverage lines;
+   6. receipt `lane_ms` / subquery timings, then measure the ≈ 30 s live retrieve.
+5. Other open bugs:
+   - evidence-role labels (`ui.py:3519` → `:3631`; background task chip `task_f664f82b`);
+   - lanes D–I run outside `lane_deadline_s`;
+   - the q0 top-k floor is unbuilt;
+   - `chat_synth` token counts are null;
+   - `nemotron-3-ultra` is flaky.
+
+### Do Not Do
+- Push any ref without the owner's per-push word. Run `git add -A`. Use `AGENT_CONTROL_BYPASS`. Pre-write a PASS log.
+- Add code keys to `worker_contracts()`, or let code fall into tier_v3.
+- Admit a code corpus before checking that every shared surface filters by corpus. Atoms are scoped since 11.376; check pMAP
+  routing, GNN, graph and summaries.
+- Change the subquery cap before per-lane timings are persisted and measured.
+- Re-ingest or re-embed cinema for the atom fix (projection only).
+- Run determinism suites without `-k "not test_live_"`.
+- Edit the frozen gate `69b1dc2`. Run the benchmark G8 or the `/chat/evidence` probe L14 without the owner's own words.
+
+### Live Qualification Queue
+- L1 — the owner's next DeepSeek turn streams no reasoning, and its `chat_synth` latency drops (it was 34–61 s).
+- L2 — once receipts carry `lane_ms`, attribute the ≈ 30 s live retrieve (HYBRID / GRAPH / WILDCARD since `5df4536`, n = 4).
+- L3 — CODE-KNOWLEDGE-V1 acceptance per the packet's matrix, after Phase 1.
+
+### Deferred Architecture
+- Graph traversal / bounded multi-hop stays deferred until Librarian DONE_AND_PROVEN.
+
+## PRIOR — 2026-09-23 (evening) — **NEXT MISSION ADMITTED: CODE-KNOWLEDGE-V1 (code RAG inside the existing architecture). Feasible; waits on 13 owner decisions.**
 
 Next Action (after the context compaction):
 1. Read `docs/wiki/plans/CODE-KNOWLEDGE-V1.md` → the packet `docs/code-knowledge-v1/` in its own read order → the review `docs/wiki/reports/2026-09-23/CODE-KNOWLEDGE-V1-FEASIBILITY.md` (drift §3 overrides the packet; §10 reconciles the owner's second design note, `docs/code-knowledge-v1/ADDENDUM_2026-09-23_OWNER_NOTE.md`).

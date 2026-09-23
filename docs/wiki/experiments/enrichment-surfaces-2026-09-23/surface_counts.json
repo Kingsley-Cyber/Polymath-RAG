@@ -1,0 +1,302 @@
+{
+ "generated_at": "2026-09-23T15:44:55+00:00",
+ "parent_map_points_by_corpus": {
+  "cinema": 11993,
+  "commerce-v1": 1170,
+  "d7-h1-test": 78,
+  "rag-canary": 50
+ },
+ "lift_vocabulary_by_corpus": {
+  "canary-llm-direct-0903": {
+   "concept_families": 1,
+   "aliases": 90
+  },
+  "cinema": {
+   "concept_families": 20,
+   "aliases": 71934
+  },
+  "commerce-v1": {
+   "concept_families": 9,
+   "aliases": 8046
+  },
+  "cysa-canary-shadow-v1": {
+   "concept_families": 1,
+   "aliases": 46
+  },
+  "cysa-study-v1": {
+   "concept_families": 24,
+   "aliases": 14575
+  },
+  "d7-h1-test": {
+   "concept_families": 1,
+   "aliases": 182
+  },
+  "e2e-hardening-v2": {
+   "concept_families": 1,
+   "aliases": 170
+  },
+  "ecom-meta-v1": {
+   "concept_families": 9,
+   "aliases": 47681
+  },
+  "field-evidence-v1": {
+   "concept_families": 5,
+   "aliases": 419
+  },
+  "gliner3-probe-v1": {
+   "concept_families": 1,
+   "aliases": 18
+  },
+  "mark-builds-brands-v1": {
+   "concept_families": 6,
+   "aliases": 162
+  },
+  "probe-canon-2026-09-03": {
+   "concept_families": 7,
+   "aliases": 615
+  },
+  "probe-incr-2026-09-03-7760": {
+   "concept_families": 1,
+   "aliases": 81
+  },
+  "quality-probe-v1": {
+   "concept_families": 1,
+   "aliases": 633
+  },
+  "rag-canary": {
+   "concept_families": 6,
+   "aliases": 399
+  },
+  "vocab-canary-v1": {
+   "concept_families": 1,
+   "aliases": 8
+  }
+ },
+ "profiles": {
+  "points_by_corpus": {
+   "cinema": 67,
+   "commerce-v1": 10,
+   "rag-canary": 10,
+   "d7-h1-test": 3
+  },
+  "versions": {
+   "cinema|doc-profile-v3.2": 67,
+   "commerce-v1|doc-profile-v3.2": 10,
+   "d7-h1-test|doc-profile-vnext-v1": 3,
+   "rag-canary|doc-profile-vnext-v1": 10
+  },
+  "multivector_items_by_corpus": {
+   "cinema": {
+    "concepts": {
+     "points": 67,
+     "mean_items": 9.4,
+     "total_items": 629
+    },
+    "identity": {
+     "points": 67,
+     "mean_items": 1,
+     "total_items": 67
+    },
+    "questions": {
+     "points": 67,
+     "mean_items": 14.7,
+     "total_items": 984
+    },
+    "searches": {
+     "points": 67,
+     "mean_items": 14.8,
+     "total_items": 991
+    },
+    "seealso": {
+     "points": 67,
+     "mean_items": 9.5,
+     "total_items": 638
+    },
+    "theme": {
+     "points": 67,
+     "mean_items": 1,
+     "total_items": 67
+    },
+    "theories": {
+     "points": 67,
+     "mean_items": 8.7,
+     "total_items": 580
+    },
+    "title": {
+     "points": 67,
+     "mean_items": 1,
+     "total_items": 67
+    }
+   },
+   "commerce-v1": {
+    "concepts": {
+     "points": 10,
+     "mean_items": 10,
+     "total_items": 100
+    },
+    "identity": {
+     "points": 10,
+     "mean_items": 1,
+     "total_items": 10
+    },
+    "questions": {
+     "points": 10,
+     "mean_items": 14,
+     "total_items": 140
+    },
+    "searches": {
+     "points": 10,
+     "mean_items": 14.6,
+     "total_items": 146
+    },
+    "seealso": {
+     "points": 10,
+     "mean_items": 10,
+     "total_items": 100
+    },
+    "theme": {
+     "points": 10,
+     "mean_items": 1,
+     "total_items": 10
+    },
+    "theories": {
+     "points": 10,
+     "mean_items": 9.5,
+     "total_items": 95
+    },
+    "title": {
+     "points": 10,
+     "mean_items": 1,
+     "total_items": 10
+    }
+   },
+   "d7-h1-test": {
+    "concepts": {
+     "points": 3,
+     "mean_items": 1,
+     "total_items": 3
+    },
+    "identity": {
+     "points": 3,
+     "mean_items": 1,
+     "total_items": 3
+    },
+    "questions": {
+     "points": 3,
+     "mean_items": 1,
+     "total_items": 3
+    },
+    "searches": {
+     "points": 3,
+     "mean_items": 1,
+     "total_items": 3
+    },
+    "seealso": {
+     "points": 3,
+     "mean_items": 1,
+     "total_items": 3
+    },
+    "theme": {
+     "points": 3,
+     "mean_items": 1,
+     "total_items": 3
+    },
+    "theories": {
+     "points": 3,
+     "mean_items": 1,
+     "total_items": 3
+    },
+    "title": {
+     "points": 3,
+     "mean_items": 1,
+     "total_items": 3
+    }
+   },
+   "rag-canary": {
+    "concepts": {
+     "points": 10,
+     "mean_items": 1,
+     "total_items": 10
+    },
+    "identity": {
+     "points": 10,
+     "mean_items": 1,
+     "total_items": 10
+    },
+    "questions": {
+     "points": 10,
+     "mean_items": 1,
+     "total_items": 10
+    },
+    "searches": {
+     "points": 10,
+     "mean_items": 1,
+     "total_items": 10
+    },
+    "seealso": {
+     "points": 6,
+     "mean_items": 1,
+     "total_items": 6
+    },
+    "theme": {
+     "points": 10,
+     "mean_items": 1,
+     "total_items": 10
+    },
+    "theories": {
+     "points": 10,
+     "mean_items": 1,
+     "total_items": 10
+    },
+    "title": {
+     "points": 10,
+     "mean_items": 1,
+     "total_items": 10
+    }
+   }
+  }
+ },
+ "atoms": {
+  "cinema": {
+   "docs": 67,
+   "points": 609,
+   "by_kind": {
+    "ANCHOR": 67,
+    "BOUNDARY": 60,
+    "BRIDGE": 54,
+    "CONCEPT": 66,
+    "INVERSION": 50,
+    "LATENT_PATTERN": 66,
+    "RECALLQ": 65,
+    "SEEALSO": 59,
+    "TENSION": 58,
+    "THEORY": 64
+   }
+  },
+  "commerce-v1": {
+   "docs": 10,
+   "points": 295,
+   "by_kind": {
+    "CONCEPT": 100,
+    "SEEALSO": 100,
+    "THEORY": 95
+   }
+  },
+  "d7-h1-test": {
+   "docs": 3,
+   "points": 30,
+   "by_kind": {
+    "ANCHOR": 3,
+    "BOUNDARY": 3,
+    "BRIDGE": 3,
+    "CONCEPT": 3,
+    "INVERSION": 3,
+    "LATENT_PATTERN": 3,
+    "RECALLQ": 3,
+    "SEEALSO": 3,
+    "TENSION": 3,
+    "THEORY": 3
+   }
+  }
+ }
+}

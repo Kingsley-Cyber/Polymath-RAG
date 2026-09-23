@@ -1,0 +1,366 @@
+{
+ "generated_at": "2026-09-23T15:46:54+00:00",
+ "source": "query_receipts kind=chat_stream status=ok with meta.funnel (the owner's UI turns)",
+ "lanes_7d": {
+  "turns": 1508,
+  "by_mode": {
+   "GNN": 15,
+   "HYBRID": 569,
+   "GRAPH": 264,
+   "WILDCARD": 283,
+   "FAST": 377
+  },
+  "selected_rows": 21163,
+  "cited_rows": 19539,
+  "lanes": {
+   "global_dense_child": {
+    "fired": 1367,
+    "brought": 67450,
+    "pre_rerank": 21956,
+    "post_rerank": 21956,
+    "selected": 16443,
+    "cited": 13873,
+    "turns_selected": 1367,
+    "turns_cited": 1211,
+    "selected_alone": 1828,
+    "cited_alone": 1470
+   },
+   "hierarchical": {
+    "fired": 1367,
+    "brought": 39214,
+    "pre_rerank": 17906,
+    "post_rerank": 17906,
+    "selected": 12400,
+    "cited": 10255,
+    "turns_selected": 1367,
+    "turns_cited": 1199,
+    "selected_alone": 301,
+    "cited_alone": 238
+   },
+   "global_sparse_child": {
+    "fired": 1026,
+    "brought": 39777,
+    "pre_rerank": 12315,
+    "post_rerank": 12315,
+    "selected": 7857,
+    "cited": 6904,
+    "turns_selected": 1010,
+    "turns_cited": 881,
+    "selected_alone": 707,
+    "cited_alone": 810
+   },
+   "dualread": {
+    "fired": 1301,
+    "brought": 28829,
+    "pre_rerank": 8425,
+    "post_rerank": 8425,
+    "selected": 4705,
+    "cited": 3968,
+    "turns_selected": 1206,
+    "turns_cited": 1069,
+    "selected_alone": 458,
+    "cited_alone": 411
+   },
+   "latent_rescue": {
+    "fired": 906,
+    "brought": 14675,
+    "pre_rerank": 3122,
+    "post_rerank": 3122,
+    "selected": 1158,
+    "cited": 876,
+    "turns_selected": 558,
+    "turns_cited": 453,
+    "selected_alone": 400,
+    "cited_alone": 247
+   },
+   "(no lane: subquery / bridge rows)": {
+    "fired": 557,
+    "selected": 1040,
+    "cited": 2578,
+    "turns_selected": 415,
+    "turns_cited": 482
+   },
+   "seealso_fanout": {
+    "fired": 93,
+    "brought": 2157,
+    "pre_rerank": 525,
+    "post_rerank": 525,
+    "selected": 175,
+    "cited": 172,
+    "turns_selected": 70,
+    "turns_cited": 69,
+    "selected_alone": 87,
+    "cited_alone": 85
+   },
+   "gnn_route": {
+    "fired": 14,
+    "brought": 168,
+    "pre_rerank": 167,
+    "post_rerank": 167,
+    "selected": 162,
+    "cited": 78,
+    "turns_selected": 14,
+    "turns_cited": 13,
+    "selected_alone": 148,
+    "cited_alone": 76
+   },
+   "graph_dest": {
+    "fired": 17,
+    "brought": 136,
+    "pre_rerank": 53,
+    "post_rerank": 53,
+    "selected": 12,
+    "cited": 12,
+    "turns_selected": 6,
+    "turns_cited": 6,
+    "selected_alone": 1,
+    "cited_alone": 1
+   },
+   "resolution_lift": {
+    "fired": 1301,
+    "brought": 7806,
+    "pre_rerank": 2797,
+    "post_rerank": 2797,
+    "selected": 0,
+    "cited": 0,
+    "turns_selected": 0,
+    "turns_cited": 0,
+    "selected_alone": 0,
+    "cited_alone": 0
+   }
+  }
+ },
+ "lanes_since_5df4536": {
+  "turns": 6,
+  "by_mode": {
+   "GNN": 2,
+   "HYBRID": 2,
+   "GRAPH": 1,
+   "WILDCARD": 1
+  },
+  "selected_rows": 84,
+  "cited_rows": 49,
+  "lanes": {
+   "global_dense_child": {
+    "fired": 4,
+    "brought": 200,
+    "pre_rerank": 49,
+    "post_rerank": 49,
+    "selected": 36,
+    "cited": 24,
+    "turns_selected": 4,
+    "turns_cited": 4,
+    "selected_alone": 22,
+    "cited_alone": 12
+   },
+   "gnn_route": {
+    "fired": 2,
+    "brought": 24,
+    "pre_rerank": 24,
+    "post_rerank": 24,
+    "selected": 24,
+    "cited": 17,
+    "turns_selected": 2,
+    "turns_cited": 2,
+    "selected_alone": 24,
+    "cited_alone": 17
+   },
+   "(no lane: subquery / bridge rows)": {
+    "fired": 4,
+    "selected": 15,
+    "cited": 6,
+    "turns_selected": 4,
+    "turns_cited": 4
+   },
+   "dualread": {
+    "fired": 4,
+    "brought": 91,
+    "pre_rerank": 24,
+    "post_rerank": 24,
+    "selected": 13,
+    "cited": 8,
+    "turns_selected": 4,
+    "turns_cited": 4,
+    "selected_alone": 3,
+    "cited_alone": 1
+   },
+   "hierarchical": {
+    "fired": 4,
+    "brought": 118,
+    "pre_rerank": 37,
+    "post_rerank": 37,
+    "selected": 13,
+    "cited": 8,
+    "turns_selected": 4,
+    "turns_cited": 4,
+    "selected_alone": 1,
+    "cited_alone": 0
+   },
+   "latent_rescue": {
+    "fired": 4,
+    "brought": 55,
+    "pre_rerank": 14,
+    "post_rerank": 14,
+    "selected": 4,
+    "cited": 3,
+    "turns_selected": 2,
+    "turns_cited": 2,
+    "selected_alone": 0,
+    "cited_alone": 0
+   },
+   "global_sparse_child": {
+    "fired": 4,
+    "brought": 160,
+    "pre_rerank": 19,
+    "post_rerank": 19,
+    "selected": 3,
+    "cited": 1,
+    "turns_selected": 3,
+    "turns_cited": 1,
+    "selected_alone": 2,
+    "cited_alone": 1
+   },
+   "resolution_lift": {
+    "fired": 4,
+    "brought": 24,
+    "pre_rerank": 12,
+    "post_rerank": 12,
+    "selected": 0,
+    "cited": 0,
+    "turns_selected": 0,
+    "turns_cited": 0,
+    "selected_alone": 0,
+    "cited_alone": 0
+   }
+  }
+ },
+ "enrichment_only_7d": {
+  "all": {
+   "selected_enrichment_only": 1917,
+   "cited_enrichment_only": 1348,
+   "turns": 1508,
+   "turns_selected_enrichment_only": 793,
+   "turns_cited_enrichment_only": 652,
+   "selected_no_lane": 1040,
+   "selected_baseline": 18206,
+   "cited_no_lane": 629,
+   "cited_baseline": 15205
+  },
+  "by_mode": {
+   "GNN": {
+    "selected_enrichment_only": 174,
+    "turns": 15,
+    "turns_cited_enrichment_only": 13
+   },
+   "HYBRID": {
+    "selected_enrichment_only": 565,
+    "selected_no_lane": 374,
+    "selected_baseline": 7008,
+    "turns": 569,
+    "turns_cited_enrichment_only": 210
+   },
+   "GRAPH": {
+    "selected_no_lane": 94,
+    "selected_baseline": 3329,
+    "selected_enrichment_only": 207,
+    "turns": 264,
+    "turns_cited_enrichment_only": 105
+   },
+   "WILDCARD": {
+    "selected_no_lane": 112,
+    "selected_baseline": 3605,
+    "selected_enrichment_only": 213,
+    "turns": 283,
+    "turns_cited_enrichment_only": 101
+   },
+   "FAST": {
+    "selected_baseline": 4264,
+    "selected_enrichment_only": 758,
+    "turns": 377,
+    "turns_cited_enrichment_only": 223,
+    "selected_no_lane": 460
+   }
+  }
+ },
+ "resolution_lift_positions_7d": {
+  "turns_with_lift_in_rerank_pool": 952,
+  "lift_chunks_found_only_by_lift": 2797,
+  "lift_chunks_also_found_by_other_lanes": 0,
+  "cross_encoder_rank_buckets_lift": {
+   "6-10": 2,
+   "16-20": 9,
+   "21-25": 175,
+   "26-30": 981,
+   "31-end": 1630
+  },
+  "cross_encoder_rank_buckets_selected": {
+   "1-5": 4648,
+   "6-10": 4588,
+   "11-15": 3940,
+   "16-20": 908,
+   "21-25": 172,
+   "26-30": 59,
+   "31-end": 22
+  }
+ },
+ "retrieve_phase_latency": {
+  "before_5df4536_7d": {
+   "FAST": {
+    "n": 377,
+    "p50_s": 14.5,
+    "p90_s": 28.6,
+    "max_s": 46.1
+   },
+   "GNN": {
+    "n": 13,
+    "p50_s": 15.8,
+    "p90_s": 18.2,
+    "max_s": 20.8
+   },
+   "GRAPH": {
+    "n": 263,
+    "p50_s": 8.6,
+    "p90_s": 17.7,
+    "max_s": 39.0
+   },
+   "HYBRID": {
+    "n": 567,
+    "p50_s": 9.2,
+    "p90_s": 20.7,
+    "max_s": 51.1
+   },
+   "WILDCARD": {
+    "n": 282,
+    "p50_s": 11.6,
+    "p90_s": 22.6,
+    "max_s": 59.6
+   }
+  },
+  "after_5df4536": {
+   "GNN": {
+    "n": 2,
+    "p50_s": 14.8,
+    "p90_s": 14.7,
+    "max_s": 15.0
+   },
+   "GRAPH": {
+    "n": 1,
+    "p50_s": 30.9,
+    "p90_s": 30.9,
+    "max_s": 30.9
+   },
+   "HYBRID": {
+    "n": 2,
+    "p50_s": 31.0,
+    "p90_s": 29.8,
+    "max_s": 32.2
+   },
+   "WILDCARD": {
+    "n": 1,
+    "p50_s": 31.4,
+    "p90_s": 31.4,
+    "max_s": 31.4
+   }
+  }
+ }
+}
