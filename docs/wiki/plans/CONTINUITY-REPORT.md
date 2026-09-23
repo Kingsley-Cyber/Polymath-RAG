@@ -21,7 +21,7 @@ Read order: this file → **`docs/wiki/reports/2026-09-09T2039/START-HERE.md` (t
 
 ## CURRENT — 2026-09-23 — **DEEPSEEK ANSWERS: `thinking: disabled` NOW REACHES THE WIRE (ANTHROPIC-THINKING-TRANSPORT-V1).**
 
-Owner: answers took too long / reasoned too much. REASONING-BOUNDARY-V1 already said thinking OFF for chat synthesis, but litellm's `anthropic/` route sent it inside a literal `extra_body` key the endpoint ignores (proven on a local stand-in). `apply_litellm` now sends `thinking` top level with `allowed_openai_params`. Register 11.411. Next: the owner's next DeepSeek answer should stream no reasoning and its `chat_synth` latency should drop (was 34–61 s).
+Owner: answers took too long / reasoned too much. REASONING-BOUNDARY-V1 already said thinking OFF for chat synthesis, but litellm's `anthropic/` route sent it inside a literal `extra_body` key the endpoint ignores (proven on a local stand-in). `apply_litellm` now sends `thinking` top level with `allowed_openai_params`. Register 11.411. DEPLOYED (merge `980ed76`, one bounce, 24 / 24 healthy on one bundle). Next: the owner's next DeepSeek answer should stream no reasoning and its `chat_synth` latency should drop (was 34–61 s).
 
 ## PRIOR — 2026-09-22 (late night, 2) — **SUBQUERY CAP 10 + FAST WITHOUT DEPTH PASSES + CLAUDE-STYLE COMPOSER + LOCAL 4B RETIRED (reranker 6 GB, embedder 4.5 GB).**
 
