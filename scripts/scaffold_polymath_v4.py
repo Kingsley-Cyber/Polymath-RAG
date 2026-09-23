@@ -2261,6 +2261,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/document-rag/inputs/2026-09-23-rag-compiler-contract.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-compiler-contract-input.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-compiler-lanes-execution-queue.md", "md", None),
+    ("docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md", "md", None),
+    ("docs/wiki/work-log/2026-09-23-document-rag-plan-admitted.md", "md", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay_owner_plans.py", "py", None),
     ("docs/wiki/experiments/subquery-cap-fast-2026-09-22/replay.jsonl", "jsonl", None),
     ("tests/determinism/test_rag_ui_integration.py", "py", None),
