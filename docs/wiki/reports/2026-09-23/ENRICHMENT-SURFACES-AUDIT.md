@@ -2,7 +2,7 @@
 title: "ENRICHMENT-SURFACES-AUDIT — do the skeleton, pMAP, profile (SEEALSO, questions) and atoms reach the answers? (production 7eb767d)"
 date: 2026-09-23
 last_reviewed: 2026-09-23
-status: "AUDIT — read-only; no code, flag or data changed. Nine defects found, none fixed; the fixes are owner decisions (§6)."
+status: "AUDIT — read-only; no code, flag or data changed. Nine defects found, none fixed; the fixes are owner decisions (§6). Same-day addendum (register 11.416): §8 field inventory, §9 owner intent + root cause (every enrichment lane is judged against q0), §6 revised to wire the fields in."
 owner: "@king"
 scope: "Every document-enrichment surface, from its store to the evidence the synthesizer sees and the citations in the answer, measured on 1,508 real UI chat turns (cinema) plus in-process replays and a static trace."
 ---
@@ -33,9 +33,9 @@ All evidence is in `docs/wiki/experiments/enrichment-surfaces-2026-09-23/`.
 | **Parent skeleton** | nothing; it is an ingestion input to pMAP building | through pMAP only | no | used indirectly (via pMAP) |
 | **pMAP** (11,993 routing points) | lane E dual-read (profile → map parents → children), lane H graph destination, the WILDCARD sweep, lift terms (hooks / identifiers) | yes, through lane E (below) | yes: ORIENTATION shows the signature and ≤ 3 hooks; identifiers never | **used, reaches answers** |
 | **Profile identity / title / theme + questions + searches** (67 / 67 docs, v3.2; 984 questions, 991 searches) | RRF document nomination in the Profile Scout, lane E and lift document choice | yes, through lane E: **4,705 rows, 458 alone, cited in 1,069 turns** | ORIENTATION shows profile ONE / SUMMARY for ≤ 3 docs; question text never | **used for routing, reaches answers** |
-| **Profile concepts / theories / seealso multivectors** (629 / 580 / 638 items) | nothing (`EXPLORATION_SURFACES`, `projection.py:28`, is read only by a test) | no | no | **produced, never read** |
+| **Profile concepts / theories / seealso multivectors** (629 / 580 / 638 items) | nothing (`EXPLORATION_SURFACES`, `projection.py:28`, is read only by a test). Designed for GRAPH / WILDCARD discovery (`selection.py:8-12`), never wired | no | no | **produced, never read** |
 | **Atoms** (609 for cinema: ≈ 1 per kind per doc) | Scout, lane G see-also fan-out, lift, WILDCARD, Corpus Explore | lane G: **175 rows, 87 alone, cited in 69 turns** (it fired in 93 turns) | only as coverage-line text or WILDCARD `[A#]` | used, but starved (defect 3) and rarely allowed (intent-gated) |
-| **Aliases** (20 families, 71,934 aliases), pMAP identifiers / hooks, profile TERM / TOPIC, headings | resolution lift (lane F) only | **no: 0 of 7,806 candidates in 7 days** | no | **dead in practice** (defects 1–2) |
+| **Aliases** (20 families, 71,934 aliases), **pMAP exact identifiers** (41,350), **profile terms** (668) | resolution lift (lane F) only | **no: 0 of 7,806 candidates in 7 days** | no | **dead in practice** (defects 1–2). pMAP hooks, profile topics and headings also feed the lift, but reach answers by other paths (§8) |
 | **Document + section summaries** | lane A hierarchical route (votes + deepening) | **12,400 rows (59% of all evidence), 301 alone, cited in 1,199 turns** | no: removed before the prompt (EVIDENCE-DIET-V1, `ui.py:1538-1544`) | used for routing, reaches answers |
 | **Latent abstraction / transfer points** | lane D latent rescue; the WILDCARD sweep | **1,158 rows, 400 alone** | WILDCARD `[A#]` only | used, reaches answers |
 | **Entity cards** | lane A votes, graph seeds | through lane A | no | routing only |
@@ -156,25 +156,52 @@ INFERRED, n = 4: the extra subqueries and bridge seats cost far more live than i
 attribute the time (defect 9). Before changing the cap, persist per-lane and per-subquery timings and measure. The lanes D–I
 deadline gap (feasibility report §9) is the other candidate.
 
-## 6. Recommended fixes (owner decisions; none executed)
+## 6. Recommended fixes (owner decisions; none executed; revised after the owner's statement of intent, §9)
 
-Ranked by expected effect per unit of work:
-1. **Resolution lift.** Either add a query-relevance term (embedding similarity of term to q0), drop identifier-shaped map ids
-   and aliases unless the query names them, and keep every term's rows. Or turn the lane off until then:
-   `resolution_lift="off"` in `INTENT_POLICY`, which saves about 1 s and 3 cross-encoder seats per turn for no loss.
-   - This also decides how aliases reach retrieval at all.
-   - For CODE-KNOWLEDGE-V1 identifiers ARE the vocabulary, so settle the lift design before slice C10.
-2. **Re-project cinema's v3.2 profile items into the atom store.** This is a targeted projection from existing artifacts: no
-   LLM, no re-ingest. It gives lane G, the Scout and Corpus Explore about ten times more SEEALSO / CONCEPT / THEORY items.
-3. **Bridge labels.** Prefer atom text or profile ONE over the kind name or doc id (a precedence fix in
-   `bridge_integration.py`), and fix the test that hides it.
-4. **Profile concepts / theories / seealso multivectors.** Either search them (for example, add them to the RRF for
-   RELATIONSHIP / EXPLORATORY) or stop producing them. After fix 2 they duplicate the atoms.
-5. **Prompt.** Carry roles and latent seat labels past `ui.py:3519`, and drop PROFILE / BRIDGE probes from the coverage lines.
-6. **Receipts.** Persist per-lane `lane_ms`, per-subquery timings and `latent_selection`; then measure the ~30 s retrieve.
+The owner's intent (§9) is that these fields are used at query time: they feed the conditional rank system, so that
+information at a different abstraction level can win in retrieval and synthesis, and they give the bridge compiler more
+bridges and hops. The fixes therefore wire the fields in; none of them removes a field. Ordered so the root cause comes first:
 
-Each fix is a separate admitted slice. Fixes 1, 3, 5 and 6 are orchestrator / shared code (stale-bundle fence, bounce).
-Fix 2 is a data projection (check the corpus-scoped atom contract, 11.376).
+1. **Give every enrichment probe its own lineage: conditional rank for lanes D, E, F, G and H.** Each probe gets its own query
+   id, its probe text and a lineage class (LATENT, PROFILE, PRECISION, GRAPH) instead of q0's id. The probes are:
+   - the latent-kind search (D);
+   - the profile → map route (E);
+   - the lifted term (F);
+   - the atom text (G);
+   - the graph destination (H).
+
+   The existing LATENT-QUERY-FUSION-V2 then preserves each probe's local winners. The judge scores those chunks against
+   their probe text, which is the pattern WLK2C already uses for bridges, with a q0-groundedness floor so off-topic chunks
+   still fail. This is where the dropped, latent-but-relevant chunks come back.
+   - Measure with the owner's metrics: local-winner survival per lineage, q0 groundedness, chain precision.
+   - GNN stays out: it is its own mode.
+2. **The bridge compiler uses the profile's abstract fields.** Its grounded concept set becomes the documents' `concepts`,
+   `theories` and `seealso` text (1,847 items for cinema) plus atom text, instead of kind names and doc ids (defect 2). The
+   bridges it writes already get conditional judging, so this is the shortest path to "more bridges".
+   - Includes the one-line precedence fix in `bridge_integration.py:46` and the test that hides it.
+3. **Re-project cinema's v3.2 `concepts` / `theories` / `seealso` into the atom store.** This is a projection from existing
+   artifacts: no LLM, no re-ingest, and it respects the corpus-scoped atom contract (11.376). Lane G, the Scout and Corpus
+   Explore then see about ten times more items (defect 3).
+4. **SEEALSO for hops in GRAPH mode.** Each `seealso` item points to target documents, whose children become GRAPH-lineage
+   probes under fix 1. One hop fits the current architecture.
+   - Bounded multi-hop traversal is the item CONTINUITY defers until Librarian DONE_AND_PROVEN, so it needs the owner's
+     word to lift that deferral.
+   - Today no mode reads the `seealso` multivector, although `selection.py:8-12` names GRAPH / WILDCARD as its consumers.
+5. **Repair the resolution lift so it becomes a PRECISION lineage.**
+   - Select terms by relevance to the query, and drop identifier-shaped map ids and aliases unless the query names them.
+   - Keep every term's rows; its chunks then ride fix 1.
+   - `terms` (668) and the pMAP's 41,350 `exact_identifiers` reach answers only through this lane.
+   - Until the repair lands, `resolution_lift="off"` in `INTENT_POLICY` saves about 1 s and 3 judge seats per turn at no
+     measured loss.
+   - For CODE-KNOWLEDGE-V1 identifiers ARE the vocabulary, so settle this before slice C10.
+6. **Receipts.** Persist per-probe lineage, local-winner survival, `latent_selection`, per-lane `lane_ms` and per-subquery
+   timings. Without them, fixes 1–5 and the ≈ 30 s live retrieve (§5) cannot be measured.
+7. **Synthesis sees the abstraction level.** Carry role and latent seat labels past `ui.py:3519`, so the model knows a row is
+   COMPLEMENTARY or LATENT rather than DIRECT. Stop listing PROFILE / BRIDGE probes as "NO EVIDENCE RETRIEVED" aspects
+   (defects 5–6). This is how a different abstraction level also wins in synthesis, not only in retrieval.
+
+Each fix is a separate admitted slice. Fixes 1, 2, 4, 5, 6 and 7 are orchestrator / shared code (stale-bundle fence, bounce).
+Fix 3 is a data projection.
 
 ## 7. Evidence and reruns
 
@@ -186,7 +213,107 @@ D=docs/wiki/experiments/enrichment-surfaces-2026-09-23
 .venv/bin/python $D/surface_counts.py $D/surface_counts.json    # profile + atom stores per corpus
 PYTHONPATH=$PWD/shared:$PWD/orchestrator:$PWD/workers:$PWD/control \
   .venv/bin/python $D/replay_probe.py $D/replay_probe.json      # lift terms per intent + bridge-compiler labels (no LLM)
+.venv/bin/python $D/field_inventory.py cinema $D/field_inventory.json   # every profile / pMAP field with item totals (§8)
 ```
 
 All three are read-only and cost nothing. `receipt_audit.py` reads a rolling 7-day window, so a rerun sees newer turns;
 the committed JSON is the 2026-09-23 run.
+
+## 8. Field inventory: every field the profile, the parent skeleton and the pMAP produce (addendum, same day)
+
+Owner, same day: the skeleton "is more than see also". It is: the profile alone has nine fields. Counts are for cinema
+(EXECUTED, `field_inventory.py`); the readers are READ from code, with anchors.
+
+### 8.1 Document profile v3.2 (67 of 67 documents; 5,151 list items)
+
+| Field | Cinema total | How it is stored | Read at query time by | Reaches the evidence? | Reaches the prompt as text? |
+|---|---:|---|---|---|---|
+| `one` | 67 | inside the `identity` dense vector (`compiler.py:909-912`) | RRF document nomination (Scout, lane E, lift document choice) | yes (lane E) | yes: ORIENTATION, ≤ 240 characters, ≤ 3 documents (`ui.py:2464-2516`) |
+| `topics` | 661 | pooled into the same `identity` vector ("Topics: …", one vector per document, not per topic); also payload | the same RRF; the lift (TOPIC terms) | yes, as part of `identity` | no |
+| `summary` | 67 | the `theme` dense vector (`compiler.py:914-917`) | the same RRF | yes (lane E) | yes: ORIENTATION, ≤ 400 characters |
+| `questions` | 984 | multivector (one vector per question) | the same RRF (MaxSim) | yes (lane E); its own share is not separable inside the RRF | no |
+| `searches` | 991 | multivector | the same RRF | yes (lane E) | no |
+| `concepts` | 629 | multivector | **nothing** | **no** | no |
+| `theories` | 580 | multivector | **nothing** | **no** | no |
+| `seealso` | 638 | multivector | **nothing** | **no** | no |
+| `terms` | 668 | payload only (not a vector, `projection.py:4`) | the lift only (TERM terms) | **no** (lift 0 of 7,806) | no |
+
+- The document title (source name) is a tenth vector, `title`, in the same RRF. It is not a compiled field.
+- **Tally:**
+  - 1,975 list items (38%) route answers (`questions`, `searches`);
+  - 661 (13%) route as one pooled string per document (`topics`);
+  - **2,515 (49%) never reach an answer** (`concepts`, `theories`, `seealso`, `terms`).
+- `profile_nominate` searches only `ANSWER_SURFACES` = identity, theme, questions, searches, title (`projection.py:27, :40`).
+  Its `surfaces` argument could take `EXPLORATION_SURFACES`, but no caller passes it.
+
+### 8.2 Parent skeleton (per parent; deterministic; built at ingestion, never stored for query time)
+
+| Field | Used for |
+|---|---|
+| `heading_path` | the pMAP prompt, and the compact heading inside the pMAP `routing` vector text (`parent_map_projection.py:64-75`) → lanes E, H and the WILDCARD sweep. Passage breadcrumbs in the prompt come from the chunk's own heading path, not from the skeleton |
+| `salient_excerpt`, `lead_excerpt` (headingless parents only), `key_terms` | the pMAP prompt only (they shape the signature and hooks the model writes) |
+| `identifiers` | the pMAP prompt, which yields `exact_identifiers` (§8.3) |
+| `region_role`, `ordinal`, `source_position`, `alias`, `parent_id`, `text_hash`, `skeleton_hash` | bookkeeping and prompt layout. Query-time region roles come from a separate chunk lookup (`candidate_engine.py:708`) |
+
+The skeleton has no query-time reader. Its value reaches answers only through the pMAP fields it shapes.
+
+### 8.3 pMAP (11,993 active maps)
+
+| Field | Cinema total | Read at query time by | Reaches the evidence? | Reaches the prompt as text? |
+|---|---:|---|---|---|
+| `routing_signature` | 11,993 | the `routing` vector (signature + hooks + compact heading) → lane E dual-read, lane H localization, the WILDCARD sweep | yes (lane E: 4,705 rows) | yes: ORIENTATION, ≤ 160 characters |
+| `semantic_hooks` | 35,838 (≈ 3 per map) | the same `routing` vector; the lift (MAP_HOOK terms) | yes, through the vector | yes: ≤ 3 hooks per map in ORIENTATION |
+| `exact_identifiers` | 41,350 (≈ 3.4 per map) | **the lift only** (MAP_ID terms). Not in the routing vector, never in the prompt | **no** | no |
+| `quality_flags`, hashes, `provider`, `model` | — | ingestion and projection bookkeeping | — | — |
+
+1,023 maps carry an identifier shaped like `A1` / `A445` / `ADR12` (`^[A-Z]{1,4}[0-9]{1,5}$`). These are the tokens the lift
+picked in every replay (defect 1).
+
+### 8.4 vNext atoms (atom store; frozen 2026-09-08 canary snapshot, not produced now)
+
+The atom store holds ten vNext kinds for cinema, about one atom per kind per document (609 in total).
+- Three kinds have a v3.2 counterpart: CONCEPT, THEORY, SEEALSO. The v3.2 profile carries about nine items per document for
+  each, but none of those are in the atom store (defect 3).
+- Seven kinds exist only as this snapshot: ANCHOR, BRIDGE, RECALLQ, LATENT_PATTERN, INVERSION, TENSION, BOUNDARY. The
+  current v3.2 prompt does not produce them. `POLYMATH_DOC_PROFILE_VNEXT=0`.
+- Readers: Scout, lane G (SEEALSO / BRIDGE / ANCHOR), Corpus Explore, WILDCARD, the lift.
+- Only lane G's share is attributable in receipts (175 evidence rows). The Scout's and Corpus Explore's effect lands in the
+  subquery / bridge rows. The bridge compiler receives these atoms as kind names (defect 2).
+
+## 9. Owner intent and the root cause (same day)
+
+**Owner, 2026-09-23:** the profile fields exist to be used at query time. They feed the conditional rank system so that
+information at a different abstraction level wins in retrieval and synthesis, and they allow more bridges and hops, so
+the compiler's bridging must use them. GNN is excluded. In GRAPH, SEEALSO can drive hops or traversal. The owner's
+diagnosis: the design got complicated when subqueries entered the equation, and chunks that were retrieved (subdued,
+latent, but relevant) were dropped when ranked against the original query.
+
+**The code agrees with that diagnosis** (READ, anchors at `7eb767d`):
+1. Every enrichment lane tags its chunks with q0's query id: lanes D, E, F, G, H, I at `candidate_engine.py:814, 846, 863,
+   882, 900, 919`.
+2. The LATENT-QUERY-FUSION-V2 fusion assigns lineage by query. `lineage_class` puts any lane of q0's query in class Q0
+   (`ranked_fusion.py:82`), and local-winner preservation keeps each QUERY's top five across all of its lanes
+   (`preserved_winners`, `ranked_fusion.py:159`). An enrichment lane's winners must therefore beat q0's own dense / sparse
+   winners to be preserved.
+3. The turn makes exactly one judge call, and it scores every candidate against q0: `select_evidence` →
+   `rerank_children(result.context.query, rows)` (`candidate_engine.py:1447`).
+4. Only BRIDGE-origin subqueries get a conditional second pass: WLK2C grades the bridge pool against the bridges and seats
+   it with C5, gated by q0 grounding (`ui.py:2140-2206`). The enrichment lanes never enter that pool.
+
+**The measurement shows the consequence** (EXECUTED, `receipt_audit.json`, 1,508 turns). Survival from the judge's pool into
+the evidence falls with the lane's distance from q0's own signal:
+
+| lane | pool → evidence | chunks only this lane found: pool → evidence |
+|---|---:|---:|
+| B dense child (q0's own signal) | 75% (16,443 / 21,956) | 55% (1,828 / 3,294) |
+| A hierarchical (summaries) | 69% | 35% |
+| C sparse child | 64% | 19% |
+| E dual-read (profile → pMAP) | 56% | 24% (458 / 1,934) |
+| D latent rescue | 37% | 21% (400 / 1,861) |
+| G SEEALSO fan-out | 33% | 20% (87 / 426) |
+| H graph destination | 23% | 3% (1 / 32) |
+| F resolution lift | 0% | 0% (0 / 2,797) |
+
+The bridge compiler is the one path whose output gets conditional judging, and it is fed atom-kind names instead of the
+profile's concepts, theories and seealso (defect 2). So the conditional rank system exists, but the enrichment the owner
+built for it never reaches it. Fixes 1 and 2 (§6) close that gap.

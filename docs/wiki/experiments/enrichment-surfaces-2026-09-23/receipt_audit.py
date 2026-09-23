@@ -52,6 +52,7 @@ def lane_table(rows):
         for ln, ids in lanes.items():
             s, ct = ids & sel, ids & cit
             k[ln].update(fired=1, brought=len(ids), pre_rerank=len(ids & pre), post_rerank=len(ids & post),
+                         pre_rerank_alone=sum(1 for x in ids & pre if len(arrivals[x]) == 1),
                          selected=len(s), cited=len(ct), turns_selected=bool(s), turns_cited=bool(ct),
                          selected_alone=sum(1 for x in s if len(arrivals[x]) == 1),
                          cited_alone=sum(1 for x in ct if len(arrivals[x]) == 1))

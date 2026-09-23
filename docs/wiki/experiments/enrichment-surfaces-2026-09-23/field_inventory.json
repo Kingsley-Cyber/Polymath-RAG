@@ -1,0 +1,34 @@
+{
+ "generated_at": "2026-09-23T16:54:19+00:00",
+ "corpus": "cinema",
+ "documents": 67,
+ "profiles_v3_2": 67,
+ "profile_fields_present": {
+  "concepts": 67,
+  "one": 67,
+  "questions": 67,
+  "searches": 67,
+  "seealso": 67,
+  "summary": 67,
+  "terms": 67,
+  "theories": 67,
+  "topics": 67
+ },
+ "profile_list_items_total": {
+  "concepts": 629,
+  "questions": 984,
+  "searches": 991,
+  "seealso": 638,
+  "terms": 668,
+  "theories": 580,
+  "topics": 661
+ },
+ "profile_list_items_all": 5151,
+ "pmap": {
+  "active_maps": 11993,
+  "semantic_hooks_total": 35838,
+  "exact_identifiers_total": 41350,
+  "maps_with_identifier_shaped_id": 1023,
+  "identifier_shape": "^[A-Z]{1,4}[0-9]{1,5}$"
+ }
+}
