@@ -122,3 +122,15 @@ def test_dedup_against_existing_query():
     plan = _plan(extra=[dup])
     diag = plan_bridge_expansion(plan, NOMS, generate=_gen_ok)
     assert diag["added"] == 0                                     # identical bridge query already present
+
+
+def test_concept_label_is_the_atom_text_not_its_kind_name():
+    """ENRICHMENT-SURFACES-AUDIT defect 2 (E2): the live Scout sets `representative_surface` to the atom KIND (e.g. "THEORY")
+    and `representative_text` to the atom's real text. The bridge compiler must receive the text; a kind name tells it
+    nothing (24 / 24 live labels were kind names or doc ids). A text-less nomination falls back to its title / source name,
+    and only then to the kind or the doc id."""
+    live_shaped = SimpleNamespace(doc_id="docFACS", representative_surface="THEORY",
+                                  representative_text="Facial muscle actions separate felt from posed smiles")
+    titled = SimpleNamespace(doc_id="docHooks", representative_surface=None, representative_text=None, title="Acting for Animators")
+    labels = [c.label for c in concepts_from_nominations([live_shaped, titled])]
+    assert labels == ["Facial muscle actions separate felt from posed smiles", "Acting for Animators"]

@@ -225,11 +225,13 @@ def apply_chat_completions(payload: dict, role: str, model: str) -> dict:
     if not policy_enabled():
         return {}
     rp = reasoning_params(role, model, S_CHAT_COMPLETIONS)
-    payload.update(rp["top_level"])
-    if rp["extra_body"]:
-        payload["extra_body"] = {**(payload.get("extra_body") or {}), **rp["extra_body"]}
+    # COMPILER-REASONING-PLACEMENT-V1: this payload is posted with raw httpx, never through an SDK, so nothing unpacks an
+    # `extra_body` key; a switch left inside one reaches the server as an unknown field and is ignored (the bug class
+    # ANTHROPIC-THINKING-TRANSPORT-V1 fixed on litellm). Provider passthrough fields therefore go at the TOP level.
+    wire = {**rp["top_level"], **rp["extra_body"]}
+    payload.update(wire)
     applied = {"role": role, "provider": provider_family(model), "surface": S_CHAT_COMPLETIONS,
-               "top_level": dict(rp["top_level"]), "extra_body": dict(rp["extra_body"]),
+               "top_level": dict(wire), "extra_body": {},
                "max_output_tokens": rp["max_output_tokens"]}
     _record(applied)
     return applied

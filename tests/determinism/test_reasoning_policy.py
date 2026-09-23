@@ -267,3 +267,44 @@ def test_ollama_think_gpt_oss_low_others_off(monkeypatch):
     monkeypatch.setenv("POLYMATH_CHAT_THINK", "on")
     assert ollama_think("gpt-oss:20b-cloud") == "high" and ollama_think("gemma4:31b-cloud") is True
 
+
+
+def test_compiler_raw_http_body_carries_switches_top_level(monkeypatch):
+    """COMPILER-REASONING-PLACEMENT-V1 (ENRICHMENT-SURFACES-AUDIT §15): the chat compiler posts with raw `httpx`, which never
+    unpacks an `extra_body` key, so a provider switch left inside one is ignored by the server. The JSON body handed to httpx
+    must carry DeepSeek's `thinking: disabled` at the TOP level and no literal `extra_body` key; Qwen keeps its numeric budget
+    at the top level (REASONING-BOUNDARY-V1, unchanged)."""
+    from polymath_shared.llm_extraction import client as C
+    monkeypatch.setenv("POLYMATH_REASONING_POLICY", "1")
+    captured: dict = {}
+
+    class _Resp:
+        status_code = 200
+
+        def __init__(self):
+            self.headers: dict = {}
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"choices": [{"message": {"content": "{}"}, "finish_reason": "stop"}], "usage": {}}
+
+    def _post(url, json=None, timeout=None, headers=None):
+        captured["body"] = json
+        return _Resp()
+
+    monkeypatch.setattr(C.httpx, "post", _post)
+    deepseek = C.LLMExtractionClient("cloud", url="http://127.0.0.1:9", model="deepseek-v4-flash-0731",
+                                     limiter_key="compiler_alibaba_deepseek")
+    deepseek.reasoning_role = STRUCTURED_COMPILER
+    deepseek._chat("q", 500, system_prompt="s")
+    body = captured["body"]
+    assert "extra_body" not in body, "a literal extra_body key is never unpacked on a raw HTTP call"
+    assert body["thinking"] == {"type": "disabled"}
+
+    qwen = C.LLMExtractionClient("cloud", url="http://127.0.0.1:9", model="qwen3.8-flash", limiter_key="compiler_alibaba_qwen")
+    qwen.reasoning_role = STRUCTURED_COMPILER
+    qwen._chat("q", 500, system_prompt="s")
+    body = captured["body"]
+    assert "extra_body" not in body and body["thinking_budget"] == 300 and body["preserve_thinking"] is False

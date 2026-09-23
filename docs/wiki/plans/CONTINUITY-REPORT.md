@@ -75,6 +75,7 @@ historical, never an instruction.
 - 11.420 — compiler reasoning controls per lane (audit §15: the Alibaba backup lanes fall back 29 / 36); the owner's
   amendments; this execution queue.
 - 11.421 — DOCUMENT-RAG-COMPLETION-V1 admitted as the plan of record; owner decisions D1–D8 answered.
+- 11.422 — S0 easy wins E1 / E2 / E8 (branch `fix/document-rag-easy-wins`, UNIT_PROVEN; merge + bounce on the owner's word).
 
 ### Current Contract State
 - **Retrieval.** `MODE_LANES`: FAST / VECTOR = A + B; HYBRID / GRAPH / WILDCARD = all lanes; GNN = its own route.
@@ -142,11 +143,11 @@ historical, never an instruction.
 
 **A. Easy fixes: no owner decision needed, one admitted slice each.** Code slices run in a worktree with the skill's
 PYTHONPATH recipe and asserting tests; merge + bounce on the owner's word.
-- **E1 — compiler backup-lane reasoning placement** (audit §15). First prove the outgoing request on a local stand-in. Then
+- **E1 — DONE on branch `fix/document-rag-easy-wins` (11.422); after merge + bounce, re-measure the lane fallbacks.** Compiler backup-lane reasoning placement (audit §15). First prove the outgoing request on a local stand-in. Then
   `apply_chat_completions` puts provider switches at the TOP level for raw-HTTP callers: DeepSeek `thinking: {type:
   disabled}`, Qwen `enable_thinking: false` (the compiler role may disable). Re-measure the lane fallbacks: Qwen 22 / 23 and
   DeepSeek 7 / 13 today.
-- **E2 — the bridge compiler gets real concept text**, not kind names or doc ids (`bridge_integration.py:46` precedence). Fix
+- **E2 — DONE on the same branch (11.422).** The bridge compiler gets real concept text, not kind names or doc ids (`bridge_integration.py:46` precedence). Fix
   the hiding test (`test_bridge_integration.py:31`).
 - **E3 — synthesis gets roles and latent labels** (`ui.py:3519`), and the coverage lines stop listing PROFILE / BRIDGE probes
   as "NO EVIDENCE RETRIEVED" (`ui.py:2370-2389`).
