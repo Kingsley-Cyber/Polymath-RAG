@@ -12,7 +12,7 @@ expansion`) but sources the subqueries from the C2 compiler under the tiered pol
 
 Additive and q0-first: q0 and its existing aspect subqueries are untouched; a plan with no PRIMARY gets
 no expansion (q0 authority); every added subquery carries full lineage (`origin='BRIDGE'`, `role=
-'bridge'`, `inspired_by_profile=[concept source]`, `target=concept key`, a `reason` tying it to q0).
+'bridge'`, `inspired_by_profile=[concept source]`, `derived_from=concept key`, a `reason` tying it to q0).
 Whether a bridge candidate actually survives is decided downstream: C4 (semantic bridge↔q0 + chunk↔
 bridge) and C5 (authoritative role/portfolio).
 """
@@ -78,8 +78,8 @@ def bridges_to_subqueries(bridges, concepts_by_key, *, start_index: int = 0,
                           weight: float = BRIDGE_SUBQUERY_WEIGHT,
                           origin: str = "BRIDGE", id_prefix: str = "br") -> list:
     """Admitted CompiledBridges → latent-origin `CompiledQuery` subqueries (deterministic). Each carries
-    full lineage: origin (default BRIDGE), role=bridge, inspired_by_profile=[concept source], target=concept
-    key, and a `reason` naming the concept + relation_to_q0. proposed_role rides in the reason (C5
+    full lineage: origin (default BRIDGE), role=bridge, inspired_by_profile=[concept source], derived_from=concept
+    key (E7: never `target`, which holds an information need), and a `reason` naming the concept + relation_to_q0. proposed_role rides in the reason (C5
     authoritative). CORPUS-EXPLORER-V1 reuses this with origin="CORPUS_EXPLORE"/id_prefix="ce" (distinct ids
     so both expansions can coexist); the BRIDGE defaults keep the existing WLK2C path byte-identical."""
     from polymath_shared.chat_plan import MAX_QUERY_WORDS, CompiledQuery
@@ -94,7 +94,7 @@ def bridges_to_subqueries(bridges, concepts_by_key, *, start_index: int = 0,
             role="bridge", origin=origin,
             inspired_by_profile=([concept.source] if (concept and concept.source) else []),
             profile_surface=(concept.label if concept else None),
-            target=(concept.key if concept else b.derived_from),
+            derived_from=(concept.key if concept else b.derived_from),
             reason=(f"bridge/{b.proposed_role.lower()} <- {b.derived_from}: {b.relation_to_q0}")[:200]))
     return out
 

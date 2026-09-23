@@ -127,11 +127,14 @@ class CompiledQuery:
     #: populated ONLY by subquery_provenance.annotate_subquery_provenance, which validates every
     #: link against the scout's real nominations and never touches q0. `target` = the
     #: information need this subquery localizes (planner-supplied; never fabricated).
+    #: E7 (DOCUMENT-RAG-COMPLETION-V1 Part B): `derived_from` = the reference this subquery was derived
+    #: from (a profile concept key, a nominated doc id, a gap claim id). References never go in `target`.
     role: str = ""
     reason: str = ""
     inspired_by_profile: list[str] = field(default_factory=list)   # JSON-native (never a tuple: receipts round-trip through JSON)
     profile_surface: str | None = None
     target: str | None = None
+    derived_from: str | None = None
     origin: str = "USER"
 
     def __post_init__(self) -> None:

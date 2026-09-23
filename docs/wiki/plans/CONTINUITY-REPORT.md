@@ -162,14 +162,14 @@ PYTHONPATH recipe and asserting tests; merge + bounce on the owner's word.
   as "NO EVIDENCE RETRIEVED" (`ui.py:2370-2389`).
 - **E4 — DEPLOYED (11.427 → 11.429; LIVE_PATH pending S1 receipts).** WILDCARD
   atom frontier: the bare `except: pass` (`chat_retrieval.py:919`) is replaced with a counted, receipted degradation.
-- **E5 — receipts:**
+- **E5 — receipts. S1a DONE on branch `fix/document-rag-s1-receipts` (11.431, UNIT_PROVEN; stacked on E7): the turn's existing measurements + `atom_frontier` + `latent_labels` reach the receipt. S1b DONE on the same branch (11.432, UNIT_PROVEN): compile sub-steps + the reasoning each chat model call sent. Next: S2 traces (E6).**
   - per-lane `lane_ms` and per-subquery timings;
   - `latent_selection`;
   - compile sub-steps: Scout / compiler / bridge / constraints / explorer (≈ 7 s of the ≈ 12 s compile is unattributed);
   - the emitted reasoning settings per model call.
 - **E6 — two $0 traces** (audit §13): a timing trace of one slow turn (which step waits on which), and one dropped chunk
   followed through every judge.
-- **E7 — NEXT. Consumers of `CompiledQuery.target` (READ 2026-09-23): writers `bridge_integration.py:97` (concept key / doc id) and `ui.py:1910` (`target=nom.doc_id`, PROFILE expansion); readers `subquery_provenance.py:77` (receipt), `evidence_packet.py:97` and `:188` (`derived_from` = target), `evidence_resolution.py:125` (claim id). `target` misuse:** bridges store a doc id in `target`. Move it to a source-reference field after a consumer check
+- **E7 — DONE on branch `fix/compiled-query-derived-from` (11.430, UNIT_PROVEN); merge + bounce on the owner's word. `derived_from` now carries the reference; `target` = a need only. Consumers of `CompiledQuery.target` (READ 2026-09-23): writers `bridge_integration.py:97` (concept key / doc id) and `ui.py:1910` (`target=nom.doc_id`, PROFILE expansion); readers `subquery_provenance.py:77` (receipt), `evidence_packet.py:97` and `:188` (`derived_from` = target), `evidence_resolution.py:125` (claim id). `target` misuse:** bridges store a doc id in `target`. Move it to a source-reference field after a consumer check
   (`graft callers`).
 
 **B. Owner decisions — ANSWERED 2026-09-23 (plan §1):** D1 adopted · D2 yes · D3 yes · D4 PAUSED (profile routes first; re-project only if they

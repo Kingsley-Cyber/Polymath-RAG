@@ -68,7 +68,8 @@ def test_bridges_to_subqueries_carry_lineage():
                        proposed_role="COMPLEMENTARY")
     sq = bridges_to_subqueries([b], {"docFACS": Concept("docFACS", "FACS", "docFACS")})[0]
     assert sq.origin == "BRIDGE" and sq.role == "bridge"          # origin survives (ORIGIN_TYPES extended)
-    assert sq.inspired_by_profile == ["docFACS"] and sq.target == "docFACS"
+    assert sq.inspired_by_profile == ["docFACS"] and sq.derived_from == "docFACS"   # E7: the reference moved
+    assert sq.target is None                                                     # target = a need, never a key
     assert "docFACS" in sq.reason
 
 

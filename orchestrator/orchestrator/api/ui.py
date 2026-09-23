@@ -1907,7 +1907,7 @@ def _add_profile_expansion(plan, scout_result) -> None:
         plan.queries.append(CompiledQuery(
             id=f"p{added}", type="ENTITY", query=q, weight=0.6, role="bridge", origin="PROFILE",
             inspired_by_profile=[nom.doc_id], profile_surface=getattr(nom, "representative_surface", None),
-            target=nom.doc_id))
+            derived_from=nom.doc_id))                     # E7: a reference, never `target`
         existing.add(q.lower())
         added += 1
     plan.compiler["profile_expansion"] = {"added": added, "flag": True}
@@ -1946,9 +1946,10 @@ def _bridge_cloud_clients() -> list:
         return []
 
 
-def _bridge_llm(prompt: str, *, ollama_post=None, cloud_attempts=None) -> str:
+def _bridge_llm(prompt: str, *, ollama_post=None, cloud_attempts=None, route: dict | None = None) -> str:
     """The bridge / Corpus-Explore generator: Ollama (gemma) first; when Ollama is unreachable, errors or answers empty,
-    the cloud compiler lanes in turn. Raises only when every route failed (the callers are fail-open)."""
+    the cloud compiler lanes in turn. Raises only when every route failed (the callers are fail-open). S1b (E5): `route`,
+    when given, receives the route that answered and the reasoning settings it sent."""
     import httpx
     post = ollama_post or httpx.post
     err: Exception = RuntimeError("no_bridge_route")
@@ -1961,6 +1962,8 @@ def _bridge_llm(prompt: str, *, ollama_post=None, cloud_attempts=None) -> str:
         r.raise_for_status()
         out = ((r.json() or {}).get("message") or {}).get("content") or ""
         if out.strip():
+            if route is not None:
+                route.update({"route": "ollama", "model": _BRIDGE_MODEL, "reasoning": {"surface": "ollama", "think": False}})
             return out
         err = RuntimeError("ollama_empty")
     except Exception as exc:  # noqa: BLE001 — fall through to the cloud lanes
@@ -1969,6 +1972,10 @@ def _bridge_llm(prompt: str, *, ollama_post=None, cloud_attempts=None) -> str:
         try:
             content, _pt, _ct, _h = client._chat(prompt, _BRIDGE_NUM_PREDICT, system_prompt=_BRIDGE_SYSTEM_PROMPT)
             if (content or "").strip():
+                if route is not None:
+                    route.update({"route": getattr(client, "endpoint_name", None) or "cloud",
+                                  "model": getattr(client, "model", None),
+                                  "reasoning": getattr(client, "last_reasoning", None) or None})
                 return content
             err = RuntimeError("cloud_empty")
         except Exception as exc:  # noqa: BLE001 — try the next lane
@@ -2002,12 +2009,13 @@ def _add_bridge_expansion(plan, scout_result) -> None:
     import time as _t
     diag = {"attempted": False, "succeeded": False, "generated": 0, "admitted": 0, "rejected": 0,
             "fallback_reason": None, "latency_ms": 0.0}
+    _route: dict = {}                                        # S1b: which route answered, with what reasoning
     t0 = _t.perf_counter()
     try:
         from polymath_shared.bridge_integration import plan_bridge_expansion
 
         def _bridge_generate(prompt: str) -> str:
-            return _bridge_llm(prompt)                       # Ollama first, cloud lanes when Ollama is down
+            return _bridge_llm(prompt, route=_route)         # Ollama first, cloud lanes when Ollama is down
 
         diag["attempted"] = True
         res = plan_bridge_expansion(plan, noms, generate=_bridge_generate)
@@ -2022,6 +2030,7 @@ def _add_bridge_expansion(plan, scout_result) -> None:
     except Exception as exc:  # noqa: BLE001 — FAIL-OPEN: the optional bridge layer never blocks the answer
         diag["fallback_reason"] = f"error:{type(exc).__name__}"
     diag["latency_ms"] = round((_t.perf_counter() - t0) * 1000, 1)
+    diag["route"] = _route or None
     try:
         plan.compiler["bridge_expansion"] = {**(plan.compiler.get("bridge_expansion") or {}), **diag}
     except Exception:  # noqa: BLE001
@@ -2043,6 +2052,7 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
     (`plan.compiler['corpus_explore_firing']`, exactly ONE cause code per non-firing request) is written on
     EVERY path, so no fallback is silent. Observation only — no gate, threshold or ranking changed."""
     from polymath_shared.corpus_explore_firing import FiringState, fallback_blocks_explorer, firing_receipt
+    _ce_route: dict = {}                                  # S1b: which route answered, with what reasoning
     st = FiringState(capability_on=os.environ.get("POLYMATH_CORPUS_EXPLORER", "0") == "1",
                      requested=bool(enabled),
                      plan_fallback=bool(getattr(plan, "fallback", False)),
@@ -2133,7 +2143,7 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
                 diag["fallback_reason"] = "no_activations"
             else:
                 def _explore_generate(prompt: str) -> str:
-                    return _bridge_llm(prompt)               # Ollama first, cloud lanes when Ollama is down
+                    return _bridge_llm(prompt, route=_ce_route)   # Ollama first, cloud lanes when Ollama is down
 
                 diag["attempted"] = True
                 res = plan_corpus_explore_expansion(plan, activations, generate=_explore_generate,
@@ -2159,6 +2169,7 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
             st.explorer_error = type(exc).__name__
     diag["latency_ms"] = round((_t.perf_counter() - t0) * 1000, 1)
     try:
+        diag["route"] = _ce_route or None                   # S1b: which route answered, with what reasoning
         plan.compiler["corpus_explore_expansion"] = {
             **(plan.compiler.get("corpus_explore_expansion") or {}), **diag}
     except Exception:  # noqa: BLE001
@@ -2287,8 +2298,18 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
     its own limiter. Never raises. PROFILE-SCOUT-V1: profile reconnaissance conditions the
     compiler when POLYMATH_PROFILE_SCOUT is on (B16 title injection retired)."""
     from polymath_shared.chat_plan import COMPILER_STAGE, compile_plan, fallback_plan
+    t_compile = time.perf_counter()
+    steps: dict = {}           # S1b (E5): each compile step's wall time, receipted as plan.compiler["compile_ms"]
+
+    def _timed(name, fn, *a, **kw):
+        t = time.perf_counter()
+        try:
+            return fn(*a, **kw)
+        finally:
+            steps[name] = round((time.perf_counter() - t) * 1000, 1)
+
     try:
-        titles, scout_result, scout_rec = _profile_scout(message, corpus_ids)
+        titles, scout_result, scout_rec = _timed("scout", _profile_scout, message, corpus_ids)
     except Exception as exc:  # noqa: BLE001
         titles, scout_result, scout_rec = [], None, {"contract": "profile-scout-v1", "reason": f"scout:{type(exc).__name__}"}
 
@@ -2299,11 +2320,11 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         breaker; q0 and its aspects are untouched."""
         _upstream_err = None
         try:
-            _add_profile_expansion(plan, scout_result)
-            _add_bridge_expansion(plan, scout_result)                   # WLK2C C3: bounded concept-bridge compiler (flag-gated, fail-open)
+            _timed("profile_expansion", _add_profile_expansion, plan, scout_result)
+            _timed("bridges", _add_bridge_expansion, plan, scout_result)   # WLK2C C3: bounded concept-bridge compiler (flag-gated, fail-open)
             from polymath_shared.subquery_provenance import annotate_subquery_provenance
-            annotate_subquery_provenance(plan, scout_result)
-            _resolve_plan_constraints(plan, scout_result, corpus_ids)   # CA2: identity resolution, no ranking effect
+            _timed("provenance", annotate_subquery_provenance, plan, scout_result)
+            _timed("constraints", _resolve_plan_constraints, plan, scout_result, corpus_ids)   # CA2: identity resolution, no ranking effect
         except Exception as exc:  # noqa: BLE001
             _upstream_err = type(exc).__name__
         try:
@@ -2311,17 +2332,18 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
             # exploration. LAST — after annotate (which would strip the activation inspired_by links).
             # CORPUS-EXPLORE-FIRING-V1: an upstream finish failure still skips the explorer (unchanged
             # behavior) but is now COUNTED in the firing receipt instead of vanishing.
-            _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, enabled=corpus_explorer,
-                                          upstream_error=_upstream_err)
+            _timed("explorer", _add_corpus_explore_expansion, plan, message, corpus_ids, scout_result,
+                   enabled=corpus_explorer, upstream_error=_upstream_err)
         except Exception:  # noqa: BLE001
             pass
+        if isinstance(getattr(plan, "compiler", None), dict):   # receipt-only; a plan always carries one
+            plan.compiler["compile_ms"] = {**steps, "total": round((time.perf_counter() - t_compile) * 1000, 1)}
         return plan
     try:
         from polymath_shared.llm_extraction.client import LLMExtractionClient
         from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
         key = session_key or message[:64]
-        pin = stage_pin(COMPILER_STAGE) or []
-        endpoints = [e for e in cloud_endpoints() if e.name in pin]
+        endpoints = _timed("endpoints", lambda: [e for e in cloud_endpoints() if e.name in (stage_pin(COMPILER_STAGE) or [])])
         if not endpoints:
             plan = fallback_plan(message, reason="compiler_unavailable:no_active_lane")
             plan.compiler["scout"] = scout_rec
@@ -2344,9 +2366,10 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
                 return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
             one = compile_plan(message, history, corpus_ids, _complete, model=f"{ep.name}:{ep.model}", titles=titles)
             one.compiler["scout"] = scout_rec
+            one.compiler["reasoning"] = getattr(client, "last_reasoning", None) or None   # S1b: what this attempt sent
             return one
 
-        plan = _run_compiler_lanes(_compiler_attempt_order(endpoints, key), _compile_one)
+        plan = _timed("lanes", _run_compiler_lanes, _compiler_attempt_order(endpoints, key), _compile_one)
         return _finish(plan)
     except Exception as exc:  # noqa: BLE001 — a missing pin / dark lane is a receipted fallback
         plan = fallback_plan(message, reason=f"compiler_unavailable:{type(exc).__name__}")
@@ -2911,7 +2934,62 @@ def _prompt_stats(messages: list[dict], carry_context, carried_in_prompt: int) -
     both generators, recorded in result.meta["prompt"] and the receipt."""
     return {"prompt_chars": sum(len(str(m.get("content") or "")) for m in messages),
             "messages": len(messages), "carry_in": len(list(carry_context or [])),
-            "carry_in_prompt": int(carried_in_prompt)}
+            "carry_in_prompt": int(carried_in_prompt),
+            # S1a (E5): the latent seat labels E3 put in the prompt, counted where the model reads them
+            "latent_labels": sum(len(_LATENT_LABEL_RE.findall(str(m.get("content") or ""))) for m in messages)}
+
+
+#: S1a: an evidence header that names a latent seat — `[S3] (LATENT · COMPLEMENTARY via: …)`.
+_LATENT_LABEL_RE = re.compile(r"^\[[^\]\n]+\] \([A-Z_]+ · [A-Z_]+", re.MULTILINE)
+
+#: S1a (DOCUMENT-RAG-COMPLETION-V1 Part F, E5): the retrieval-trace keys a receipt keeps — per-probe survival. Their values
+#: carry no clock readings; every timing moves to `trace_ms`.
+_TRACE_RECEIPT_KEYS = ("aspects", "aspect_final", "aspect_best", "aspect_prefix", "aspect_seated", "weak_aspects",
+                       "weak_reasons")
+_LANE_TRACE_KEYS = ("latent", "dualread", "resolution_lift", "seealso_fanout", "graph_dest", "gnn")
+
+
+#: S1a: a flag that says which of two concurrent tasks finished first is a clock reading too.
+_CLOCK_KEYS = frozenset({"sweep_done_before_core"})
+
+
+def _is_clock(key) -> bool:
+    return str(key).endswith("_ms") or key in _CLOCK_KEYS
+
+
+def _split_clock(d):
+    """(`d` without its clock readings, those readings). Shallow; a non-dict comes back as it is."""
+    if not isinstance(d, dict):
+        return d, {}
+    return {k: v for k, v in d.items() if not _is_clock(k)}, {k: v for k, v in d.items() if _is_clock(k)}
+
+
+def _turn_receipt_extras(trace: dict | None, latent_meta: dict | None, wildcard: dict | None) -> dict:
+    """S1a (E5): keep what the turn already measured on its receipt — per-probe survival, the deadlines hit, latent
+    selection, the WILDCARD sweep (with E4's atom frontier) and every lane / stage timing. Clock readings live under
+    `trace_ms` only, so a route-parity comparison drops them in one place. Receipt-only: nothing reads these back."""
+    trace = trace if isinstance(trace, dict) else {}
+    rt = {k: trace[k] for k in _TRACE_RECEIPT_KEYS if trace.get(k) is not None}
+    timed_out = (trace.get("concurrency") or {}).get("timed_out")
+    if timed_out:
+        rt["timed_out"] = list(timed_out)
+    ms: dict = {}
+    if trace.get("timings_ms"):
+        ms["stages"] = trace["timings_ms"]
+    if trace.get("latency_ms"):
+        ms["retrieval"] = trace["latency_ms"]
+    lanes = {k: trace[k]["lane_ms"] for k in _LANE_TRACE_KEYS
+             if isinstance(trace.get(k), dict) and trace[k].get("lane_ms") is not None}
+    if lanes:
+        ms["lanes"] = lanes
+    latent, latent_ms = _split_clock(latent_meta)
+    if latent_ms:
+        ms["latent"] = latent_ms
+    sweep, sweep_ms = _split_clock(wildcard)
+    if sweep_ms:
+        ms["wildcard"] = sweep_ms
+    return {"retrieval_trace": rt or None, "latent_selection": latent or None, "wildcard": sweep or None,
+            "trace_ms": ms or None}
 
 def _litellm_generate(model: str, query: str, bundle: dict,
                       graph_facts: list, history, carry_context,
@@ -2943,6 +3021,7 @@ def _litellm_generate(model: str, query: str, bundle: dict,
                   **_litellm_credentials(model))
     # REASONING-BOUNDARY-V1: overlay the CHAT_SYNTHESIS reasoning policy (LOW). No-op unless
     # POLYMATH_REASONING_POLICY=1; output budget stays with the max_tokens bound below (separate).
+    _rb_applied: dict = {}
     try:
         from polymath_shared.reasoning_policy import CHAT_SYNTHESIS as _RB_CS, apply_litellm as _RB_apply
         _rb_applied = _RB_apply(kwargs, _RB_CS, model)
@@ -3019,7 +3098,10 @@ def _litellm_generate(model: str, query: str, bundle: dict,
             yield {"error": True, "error_code": "litellm_error",
                    "message": f"{type(exc).__name__}: {str(exc)[:280]}"}
             return
-    yield {"finish": {"finish_reason": finish, "max_tokens": bound if bound_sent else None}}
+    _fin = {"finish_reason": finish, "max_tokens": bound if bound_sent else None}
+    if _rb_applied:
+        _fin["reasoning"] = _rb_applied                 # S1b (E5): the reasoning params this call sent
+    yield {"finish": _fin}
 
 
 def _chat_max_tokens() -> int:
@@ -3136,6 +3218,7 @@ def _ollama_generate_inner(_out, model: str, messages: list[dict]):
     import httpx
 
     from polymath_shared.reasoning_policy import ollama_think as _ollama_think   # gpt-oss → "low"; others: the switch
+    _think = _ollama_think(model)
 
     try:
         with httpx.stream(
@@ -3147,7 +3230,7 @@ def _ollama_generate_inner(_out, model: str, messages: list[dict]):
                 # Default off; POLYMATH_CHAT_THINK=on restores the
                 # reasoning-card behavior for models that separate cleanly.
                 json={"model": model, "messages": messages, "stream": True,
-                      "think": _ollama_think(model)},
+                      "think": _think},
                 timeout=httpx.Timeout(300, connect=10)) as r:
             _out.status(r.status_code)
             if r.status_code != 200:
@@ -3185,6 +3268,7 @@ def _ollama_generate_inner(_out, model: str, messages: list[dict]):
                     yield {"token": piece}
                 if chunk.get("done"):
                     _out.ok()
+                    yield {"finish": {"reasoning": {"surface": "ollama", "think": _think}}}   # S1b: the `think` sent
                     return
     except Exception as exc:
         _out.failed(type(exc).__name__)
@@ -3234,6 +3318,7 @@ def _ollama_stream_plain_inner(_out, model: str, messages: list[dict]):
                     yield {"token": piece}
                 if chunk.get("done"):
                     _out.ok()
+                    yield {"finish": {"reasoning": {"surface": "ollama", "think": None, "think_rejected": True}}}
                     return
     except Exception as exc:
         _out.failed(type(exc).__name__)
@@ -3339,6 +3424,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             yield _phase("scope", "Resolving query scope…")
             with tx() as conn:
                 scope = resolve_http_scope(conn, req)
+            _mark("scope")                      # S1b (E5): the compile mark includes this; now it can be subtracted
             yield _phase("scope_ok", "Scope resolved",
                          mode=scope.mode, corpora=list(scope.corpus_ids))
             # CHAT-INTENT-PLAN-V1 (plan P0.b): compile the turn. In `shadow`
@@ -4026,7 +4112,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                           "funnel": funnel, "used_evidence": used, "legend": retrieval["legend"],
                           "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan"),
                           "chat_plan": _plan_receipt or None, "prompt": _prompt_meta or None, "carry": _carry_meta,
-                          "generation": _gen_meta or None, "composition": retrieval.get("composition")})
+                          "generation": _gen_meta or None, "composition": retrieval.get("composition"),
+                          **_turn_receipt_extras(_trace, latent_meta, retrieval.get("wildcard_diagnostics"))})
                 return
 
             yield _phase("synthesize", "Validating claims against "
@@ -4077,7 +4164,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                       "latent": req.latent, "phase_ms": dict(_phase_ms), "funnel": funnel,
                       "used_evidence": used, "degraded": retrieval.get("degraded"),
                       "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None, "carry": _carry_meta,
-                      "composition": retrieval.get("composition")})
+                      "composition": retrieval.get("composition"),
+                      **_turn_receipt_extras(_trace, latent_meta, retrieval.get("wildcard_diagnostics"))})
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {
                 "message": str(exc.detail)}
