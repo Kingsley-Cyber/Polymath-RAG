@@ -35,13 +35,15 @@ def test_family_detection():
     assert provider_family("openai/nemotron-3-ultra-free") == "other"
 
 
-def test_qwen_chat_completions_uses_thinking_budget_not_effort():
+def test_qwen_chat_completions_disables_thinking():
+    """Owner rule 2026-09-23 (DOCUMENT-RAG S0): thinking is disabled wherever the provider allows it. qwen3.8-flash is a
+    hybrid model, so the compiler sends enable_thinking=false (it previously sent a 300-token budget and its lane fell back
+    on 22 of 23 plans)."""
     p = reasoning_params(STRUCTURED_COMPILER, "qwen3.8-flash", S_CHAT_COMPLETIONS)
-    assert p["top_level"]["thinking_budget"] == 300
-    assert p["top_level"]["preserve_thinking"] is False
+    assert p["top_level"]["enable_thinking"] is False and p["top_level"]["preserve_thinking"] is False
+    assert "thinking_budget" not in p["top_level"] and "thinking_budget" not in p["extra_body"]
     assert "reasoning_effort" not in p["top_level"] and "reasoning_effort" not in p["extra_body"]  # invalid combo
-    # output budget is SEPARATE and larger than the reasoning ceiling
-    assert p["max_output_tokens"] == 500 and p["max_output_tokens"] > 300
+    assert p["max_output_tokens"] == 500                             # output budget stays SEPARATE
 
 
 def test_qwen_responses_has_no_thinking_budget():
@@ -67,10 +69,33 @@ def test_gemini_thinking_level_low():
     assert p["extra_body"]["thinking_level"] == "low"
 
 
-def test_qwen_litellm_uses_extra_body_budget():
+def test_qwen_litellm_disables_thinking_in_extra_body():
     p = reasoning_params(STRUCTURED_COMPILER, "qwen3.8-flash", S_LITELLM)
-    assert p["extra_body"].get("thinking_budget") == 300         # placed in extra_body for litellm passthrough
-    assert p["top_level"] == {} or "thinking_budget" not in p["top_level"]
+    assert p["extra_body"].get("enable_thinking") is False       # extra_body = the litellm passthrough
+    assert "thinking_budget" not in p["extra_body"] and "thinking_budget" not in p["top_level"]
+
+
+def test_qwen_thinking_only_model_gets_a_budget_of_at_most_100():
+    """A thinking-only Qwen model cannot disable thinking, so it gets the smallest budget, never above the owner's 100."""
+    for surf, bag in ((S_CHAT_COMPLETIONS, "top_level"), (S_LITELLM, "extra_body")):
+        p = reasoning_params(STRUCTURED_COMPILER, "qwen3-235b-a22b-thinking-2507", surf)
+        assert p[bag]["thinking_budget"] <= 100 and "enable_thinking" not in p[bag]
+
+
+def test_role_budgets_never_exceed_the_owner_ceiling():
+    from polymath_shared.reasoning_policy import OWNER_MAX_REASONING_TOKENS, ROLE_POLICIES
+    assert OWNER_MAX_REASONING_TOKENS == 100
+    for pol in ROLE_POLICIES.values():
+        assert pol.preferred_max_reasoning_tokens is None or pol.preferred_max_reasoning_tokens <= 100
+
+
+def test_gemma_on_ollama_gets_no_reasoning_effort():
+    """EXECUTED 2026-09-23 on local Ollama 0.34.2: gemma4:31b-cloud does not think by default (0 reasoning chars, 0.5 s);
+    reasoning_effort="low" TURNS thinking on (1,145 reasoning chars) and returned empty content at 300 tokens. The compiler
+    must therefore never send it an effort level."""
+    for surf in (S_CHAT_COMPLETIONS, S_LITELLM):
+        p = reasoning_params(STRUCTURED_COMPILER, "gemma4:31b-cloud", surf)
+        assert "reasoning_effort" not in p["top_level"] and "reasoning_effort" not in p["extra_body"]
 
 
 def test_synthesis_qwen_disables_thinking_but_keeps_big_output():
@@ -97,10 +122,14 @@ def test_never_both_effort_and_budget():
 
 
 def test_env_override(monkeypatch):
+    """The env hooks still work, but a reasoning override is capped at the owner's 100 (the output cap is separate)."""
     monkeypatch.setenv("POLYMATH_REASONING_MAX_STRUCTURED_COMPILER", "150")
     monkeypatch.setenv("POLYMATH_OUTPUT_MAX_STRUCTURED_COMPILER", "400")
-    p = reasoning_params(STRUCTURED_COMPILER, "qwen3.8-flash", S_CHAT_COMPLETIONS)
-    assert p["top_level"]["thinking_budget"] == 150 and p["max_output_tokens"] == 400
+    p = reasoning_params(STRUCTURED_COMPILER, "qwen3-235b-a22b-thinking-2507", S_CHAT_COMPLETIONS)
+    assert p["top_level"]["thinking_budget"] == 100 and p["max_output_tokens"] == 400
+    monkeypatch.setenv("POLYMATH_REASONING_MAX_STRUCTURED_COMPILER", "60")
+    p = reasoning_params(STRUCTURED_COMPILER, "qwen3-235b-a22b-thinking-2507", S_CHAT_COMPLETIONS)
+    assert p["top_level"]["thinking_budget"] == 60
 
 
 def test_appliers_are_noop_when_disabled(monkeypatch):
@@ -119,7 +148,8 @@ def test_appliers_overlay_when_enabled(monkeypatch):
     assert applied and k["extra_body"]["thinking"] == {"type": "disabled"}   # deepseek disabled on the wire
     p = {"model": "qwen3.8-flash", "messages": []}
     a2 = apply_chat_completions(p, STRUCTURED_COMPILER, "qwen3.8-flash")
-    assert a2 and p["thinking_budget"] == 300 and p["preserve_thinking"] is False and "reasoning_effort" not in p
+    assert a2 and p["enable_thinking"] is False and p["preserve_thinking"] is False
+    assert "thinking_budget" not in p and "reasoning_effort" not in p
 
 
 def test_anthropic_route_sends_thinking_top_level_not_in_extra_body(monkeypatch):
@@ -267,3 +297,44 @@ def test_ollama_think_gpt_oss_low_others_off(monkeypatch):
     monkeypatch.setenv("POLYMATH_CHAT_THINK", "on")
     assert ollama_think("gpt-oss:20b-cloud") == "high" and ollama_think("gemma4:31b-cloud") is True
 
+
+
+def test_compiler_raw_http_body_carries_switches_top_level(monkeypatch):
+    """COMPILER-REASONING-PLACEMENT-V1 (ENRICHMENT-SURFACES-AUDIT §15): the chat compiler posts with raw `httpx`, which never
+    unpacks an `extra_body` key, so a provider switch left inside one is ignored by the server. The JSON body handed to httpx
+    must carry DeepSeek's `thinking: disabled` at the TOP level and no literal `extra_body` key; Qwen keeps its numeric budget
+    at the top level (REASONING-BOUNDARY-V1, unchanged)."""
+    from polymath_shared.llm_extraction import client as C
+    monkeypatch.setenv("POLYMATH_REASONING_POLICY", "1")
+    captured: dict = {}
+
+    class _Resp:
+        status_code = 200
+
+        def __init__(self):
+            self.headers: dict = {}
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"choices": [{"message": {"content": "{}"}, "finish_reason": "stop"}], "usage": {}}
+
+    def _post(url, json=None, timeout=None, headers=None):
+        captured["body"] = json
+        return _Resp()
+
+    monkeypatch.setattr(C.httpx, "post", _post)
+    deepseek = C.LLMExtractionClient("cloud", url="http://127.0.0.1:9", model="deepseek-v4-flash-0731",
+                                     limiter_key="compiler_alibaba_deepseek")
+    deepseek.reasoning_role = STRUCTURED_COMPILER
+    deepseek._chat("q", 500, system_prompt="s")
+    body = captured["body"]
+    assert "extra_body" not in body, "a literal extra_body key is never unpacked on a raw HTTP call"
+    assert body["thinking"] == {"type": "disabled"}
+
+    qwen = C.LLMExtractionClient("cloud", url="http://127.0.0.1:9", model="qwen3.8-flash", limiter_key="compiler_alibaba_qwen")
+    qwen.reasoning_role = STRUCTURED_COMPILER
+    qwen._chat("q", 500, system_prompt="s")
+    body = captured["body"]
+    assert "extra_body" not in body and body["enable_thinking"] is False and "thinking_budget" not in body

@@ -140,17 +140,22 @@ class IntentPolicy:
 from polymath_shared.surface_registry import ATOM_KINDS as _ALL_ATOMS, MECHANISM_KINDS as _MECH
 
 #: FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1 §33 intent matrix, one row per intent.
+#: DOCUMENT-RAG-COMPLETION-V1 D3 (owner, 2026-09-23): the resolution lift is OFF for every intent until it is repaired as a
+#: PRECISION lineage — it lifted identifier tokens (`A1`, `A445`) and put 0 of 7,806 candidates into the evidence in 7 days
+#: while taking ~1 s and ~3 judge seats per turn (ENRICHMENT-SURFACES-AUDIT §4 defect 1). Prior values, for the repair:
+#: EXACT / DEFINITION / MECHANISM / RELATIONSHIP / COMPARISON / PROCEDURE = high, APPLICATION = very_high,
+#: SYNTHESIS / RECALL / EXPLORATORY = normal.
 INTENT_POLICY: dict[str, IntentPolicy] = {
-    "EXACT":        IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="high",      graph="off",         atom_kinds=()),
-    "DEFINITION":   IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="high",      graph="off",         atom_kinds=("CONCEPT", "THEORY")),
-    "MECHANISM":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="conditional", atom_kinds=_MECH),
-    "RELATIONSHIP": IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="auto",        atom_kinds=("CONCEPT", "THEORY", "SEEALSO", "BRIDGE", "ANCHOR", "TENSION"), seealso_fanout=True),
-    "COMPARISON":   IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="high",      graph="conditional", atom_kinds=("CONCEPT", "BOUNDARY", "TENSION", "INVERSION")),
-    "PROCEDURE":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="high",      graph="conditional", atom_kinds=("THEORY", "BOUNDARY", "INVERSION", "SEEALSO")),
-    "APPLICATION":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="very_high", graph="conditional", atom_kinds=("THEORY", "CONCEPT", "BOUNDARY", "INVERSION", "SEEALSO")),
-    "SYNTHESIS":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="normal",    graph="conditional", atom_kinds=("THEORY", "CONCEPT", "BOUNDARY", "TENSION")),
-    "RECALL":       IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="off",         atom_kinds=("RECALLQ", "CONCEPT", "LATENT_PATTERN", "SEEALSO")),
-    "EXPLORATORY":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="normal",    graph="conditional", atom_kinds=_ALL_ATOMS, seealso_fanout=True),
+    "EXACT":        IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="off",       graph="off",         atom_kinds=()),
+    "DEFINITION":   IntentPolicy(dualread=True,  micro_latent=False, breadth="SINGLE_OK",      resolution_lift="off",       graph="off",         atom_kinds=("CONCEPT", "THEORY")),
+    "MECHANISM":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="off",       graph="conditional", atom_kinds=_MECH),
+    "RELATIONSHIP": IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="off",       graph="auto",        atom_kinds=("CONCEPT", "THEORY", "SEEALSO", "BRIDGE", "ANCHOR", "TENSION"), seealso_fanout=True),
+    "COMPARISON":   IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="off",       graph="conditional", atom_kinds=("CONCEPT", "BOUNDARY", "TENSION", "INVERSION")),
+    "PROCEDURE":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="off",       graph="conditional", atom_kinds=("THEORY", "BOUNDARY", "INVERSION", "SEEALSO")),
+    "APPLICATION":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="off",       graph="conditional", atom_kinds=("THEORY", "CONCEPT", "BOUNDARY", "INVERSION", "SEEALSO")),
+    "SYNTHESIS":    IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_REQUIRED",  resolution_lift="off",       graph="conditional", atom_kinds=("THEORY", "CONCEPT", "BOUNDARY", "TENSION")),
+    "RECALL":       IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="off",       graph="off",         atom_kinds=("RECALLQ", "CONCEPT", "LATENT_PATTERN", "SEEALSO")),
+    "EXPLORATORY":  IntentPolicy(dualread=True,  micro_latent=True,  breadth="MULTI_PREFERRED", resolution_lift="off",       graph="conditional", atom_kinds=_ALL_ATOMS, seealso_fanout=True),
 }
 
 

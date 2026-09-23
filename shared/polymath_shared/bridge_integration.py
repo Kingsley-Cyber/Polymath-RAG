@@ -43,8 +43,10 @@ def concepts_from_nominations(nominations, *, max_concepts: int = MAX_CONCEPTS) 
         did = str(_g(nom, "doc_id") or "").strip()
         if not did or did in seen:
             continue
-        label = (_g(nom, "representative_surface") or _g(nom, "representative_text")
-                 or _g(nom, "title") or _g(nom, "source_name") or did)
+        # E2 (ENRICHMENT-SURFACES-AUDIT defect 2): the Scout's `representative_surface` is the atom KIND ("THEORY"),
+        # which tells the bridge compiler nothing; the atom's real text comes first, then the title / source name.
+        label = (_g(nom, "representative_text") or _g(nom, "title") or _g(nom, "source_name")
+                 or _g(nom, "representative_surface") or did)
         out.append(Concept(key=did, label=" ".join(str(label).split())[:200], source=did))
         seen.add(did)
         if len(out) >= max_concepts:
