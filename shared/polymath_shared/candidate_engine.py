@@ -175,7 +175,11 @@ class CandidateBudget:
     #: with smaller K; document routing (lane A) happens once, on the primary.
     subquery_dense_k: int = 20
     subquery_sparse_k: int = 15
-    max_subqueries: int = 3
+    #: owner 2026-09-22: 10 (was 3). The compiler + Profile Scout + bridge compiler write up to ~9 typed subqueries;
+    #: at 3 the PROFILE and BRIDGE ones (the lineage WLK2C exposes) were cut before they searched. The embedder takes
+    #: ≤ 32 texts per call (it batches on the device), so 1 + 10 is still ONE embedding round trip.
+    #: Env override: POLYMATH_CHAT_MAX_SUBQUERIES.
+    max_subqueries: int = 10
     #: one targeted second pass for the weakest aspect (0 candidates): B + C
     #: again at K × factor; at most one per turn
     second_pass_factor: int = 2

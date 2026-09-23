@@ -2137,15 +2137,19 @@ def _selected_lineage(elig: dict, bridges: dict) -> dict | None:
     return None
 
 
-def _apply_latent_selection(fast, plan, q0_text) -> dict | None:
+def _apply_latent_selection(fast, plan, q0_text, *, mode: str = "") -> dict | None:
     """WLK2C C4-live/C5-live — an ADDITIVE second portfolio pass. Grades the BOUNDED bridge pool
     (`fast['latent_pool']`) with C4 and re-seats [q0 evidence + latent] with C5, gated by the q0
     grounding, WITHOUT mutating the q0 rows in place: it reassigns `fast['evidence']` to a NEW list.
     Flag `POLYMATH_CHAT_LATENT_SELECTION` (default off) / no bridges / no pool ⇒ returns None and leaves
     `fast['evidence']` untouched (byte-identical, trivial rollback). q0 stays primary; the FINAL CA4
     grade + answerability gate still run downstream on the result (C5 never bypasses CA4). Fail-open:
-    any error leaves the pre-WLK2C evidence intact. Returns the C6 calibration receipt."""
+    any error leaves the pre-WLK2C evidence intact. Returns the C6 calibration receipt.
+    FAST skips it (owner 2026-09-22): re-judging the bridge pool is a depth pass (3.7–6.2 s measured once the bridges
+    actually search), and FAST runs no depth pass — its bridge subqueries still retrieve and fuse like every subquery."""
     if os.environ.get("POLYMATH_CHAT_LATENT_SELECTION", "0") != "1":
+        return None
+    if (mode or "").strip().upper() == "FAST":
         return None
     pool_extra = fast.get("latent_pool")
     if not pool_extra or plan is None:
@@ -3459,7 +3463,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     _graph_assist = _pol.graph if _pol is not None else "off"
                     fast = chat_retrieve_mode(
                         "VECTOR" if ui_mode == "FAST" else ui_mode, _retrieval_text, corpus_id,
-                        graph_useful=_graph_useful, graph_assist=_graph_assist, **_latent_kw,
+                        graph_useful=_graph_useful, graph_assist=_graph_assist, keep_latent=bool(req.latent), **_latent_kw,
                         exact_terms=tuple(_plan.exact_terms) if (_flag == "on" and _plan is not None) else (),
                         # P1.b: typed subqueries run lanes B + C on their own vectors (v2-single = A/B without them)
                         # LATENT-QUERY-FUSION-V2 F4: carry the plan's EXISTING per-query origin provenance
@@ -3510,7 +3514,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     _resolution = None
                 # WLK2C C4-live/C5-live: the additive latent second pass (flag-gated, fail-open). Runs
                 # BEFORE CA3/CA4 so they grade + gate the latent-aware evidence; reassigns fast["evidence"].
-                _latent_receipt = _apply_latent_selection(fast, _plan, _retrieval_text)
+                _latent_receipt = _apply_latent_selection(fast, _plan, _retrieval_text, mode=ui_mode)
                 evidence_rows = [
                     {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"],
                      "parent_id": c["parent_id"]}

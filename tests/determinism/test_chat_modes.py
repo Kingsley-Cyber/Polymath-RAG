@@ -528,3 +528,60 @@ def test_graph_assist_attaches_facts_to_hybrid_without_changing_mode(monkeypatch
     assert "graph_relationships" not in off                      # default HYBRID: no graph attach
     cond = _ModeHarness(monkeypatch, graph_facts_n=30, cards_n=5).mode("HYBRID", graph_assist="conditional")
     assert "graph_relationships" not in cond                     # only auto/strong attach
+
+
+# ---------------------------------------------------------------- (owner 2026-09-22) the subquery cap is 10; FAST runs no depth lane
+
+#: a live-shaped plan: 8 typed subqueries after q0 — USER aspects, PROFILE (Profile Scout) and BRIDGE origins, in plan order
+EIGHT_SUBS = tuple((f"s{i}", "ENTITY", f"distinct subquery text {i}", 0.6, ("USER", "USER", "PROFILE", "PROFILE")[i] if i < 4 else "BRIDGE")
+                   for i in range(8))
+
+
+def test_every_compiled_subquery_reaches_the_engine_not_just_the_first_three(monkeypatch):
+    """The live compiler writes ~8 subqueries (2 USER aspects, 2 PROFILE, 4 BRIDGE). At the old cap of 3 the PROFILE and
+    BRIDGE ones were dropped before they searched. All 8 are embedded in the ONE embedding call and each runs its own
+    sparse search (plus its dense search) at T=0."""
+    assert ce.CandidateBudget().max_subqueries == 10
+    h = _ModeHarness(monkeypatch)
+    h.mode("HYBRID", subqueries=EIGHT_SUBS)
+    assert len(h.embed_calls) == 1
+    assert h.embed_calls[0] == [QUERY] + [t for (_, _, t, _, _) in EIGHT_SUBS]
+    assert len(h.sparse_starts) == 1 + len(EIGHT_SUBS)          # the primary's lane C + one per subquery
+
+
+def test_the_subquery_cap_is_an_env_knob_for_rollback(monkeypatch):
+    monkeypatch.setenv("POLYMATH_CHAT_MAX_SUBQUERIES", "3")
+    assert cr.default_budget().max_subqueries == 3
+    h = _ModeHarness(monkeypatch)
+    h.mode("HYBRID", subqueries=EIGHT_SUBS)
+    assert h.embed_calls[0] == [QUERY] + [t for (_, _, t, _, _) in EIGHT_SUBS[:3]]
+
+
+def test_fast_runs_no_depth_lane_even_when_the_intent_policy_switched_them_on(monkeypatch):
+    """Owner 2026-09-22: "FAST isn't lighter than HYBRID" — the intent policy was switching dual-read, latent and resolution
+    lift on in every mode but GNN. FAST / VECTOR now get lanes A + B and their typed subqueries only; the explicit ✨
+    (`keep_latent`) still wins the latent lane; the deeper modes keep every lane the policy chose."""
+    from dataclasses import replace
+
+    seen: dict = {}
+
+    def record(query, corpus_id, **kw):
+        seen[kw.get("lanes")] = kw["budget"]
+        return {"meta": {}, "evidence": [], "trace": {}}
+
+    monkeypatch.setattr(cr, "chat_retrieve_v2", record)
+    deep = replace(cr.default_budget(), dualread_enabled=True, latent_enabled=True, resolution_lift_enabled=True,
+                   seealso_fanout_enabled=True, graph_dest_enabled=True)
+    depth = ("dualread_enabled", "latent_enabled", "resolution_lift_enabled", "seealso_fanout_enabled", "graph_dest_enabled")
+    for mode in ("FAST", "VECTOR"):
+        seen.clear()
+        out = cr.chat_retrieve_mode(mode, QUERY, "cinema", budget=deep)
+        b = seen[(ce.LANE_A, ce.LANE_B)]
+        assert not any(getattr(b, k) for k in depth), mode
+        assert b.max_subqueries == deep.max_subqueries                 # FAST keeps its typed subqueries
+        assert out["meta"]["mode"] == "VECTOR"
+    cr.chat_retrieve_mode("FAST", QUERY, "cinema", budget=deep, keep_latent=True)
+    kept = seen[(ce.LANE_A, ce.LANE_B)]
+    assert kept.latent_enabled is True and not kept.dualread_enabled and not kept.resolution_lift_enabled
+    cr.chat_retrieve_mode("HYBRID", QUERY, "cinema", budget=deep)
+    assert all(getattr(seen[ce.LANES], k) for k in depth)

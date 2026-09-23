@@ -19,6 +19,12 @@
 # 2026-09-03 LLM-DIRECT-CANON: the local extraction lane (batched 4B on
 # :8755, memory-capped at 10 GB) is now a supervised slot INSIDE this budget;
 # it had run outside it for days. GLiNER/spaCy caps removed (retired).
+# 2026-09-22 FLEET-MEMORY-REBALANCE-V1 (owner): the 4B lane is RETIRED from the
+# fleet. Under CLOUD-FIRST-V1 (floor 0 B, 2026-09-02) it received no extraction
+# request, yet it held 2.76 GB resident and 11.5 GB of this budget. Its share
+# goes to the query path: reranker 3.5 -> 6.0 GB (it OOM'd 184x since 09-20 at
+# ~33 pairs), embedder 3.5 -> 4.5 GB. Rollback = restore its `sidecars` spec
+# (resident_gb 1.5, mps_gb 10.0) and its FLEET entry in control/process_supervisor.py.
 # 32 GB machine: 29 GB fleet + Docker VM (caps are ceilings, not usage;
 # the same processes ran unaccounted at the same caps for days), ~3 GB
 # for the OS and the desktop. Autopilot parks the reranker first when the
@@ -59,17 +65,15 @@ sidecars:
   sidecar_embedder:
     port: 8742          # observed to decide if this cap is actually held
     resident_gb: 0.5      # measured host RSS ~0.30 GB; headroom for tokenizer
-    mps_gb: 3.5           # measured peak 3.17 GiB + margin
+    mps_gb: 4.5           # measured peak 3.17 GiB (8x2048 tokens) + ~1.3 GB margin (was 3.5)
     # Long chunk texts make attention memory scale with the SQUARE of
     # sequence length, so batches are bounded by TOKENS, not by count.
+    # The token bound is what caps memory; the text count only matters for
+    # short texts (a chat turn's 1 + 10 query texts: 2 device batches at 8, 3 at 4).
     max_batch_tokens: 8192
-    max_batch_texts: 4
-  local_extractor:
-    port: 8755          # observed to decide if this cap is actually held
-    resident_gb: 1.5      # python + tokenizer; weights live in MLX memory
-    # mlx-community/Qwen3.5-4B-MLX-4bit batched server; its own limit is
-    # POLYMATH_LLM_LOCAL_MEMORY_GB (set 10) + 1 GB cache
-    mps_gb: 10.0
+    max_batch_texts: 8
+  # local_extractor (Qwen3.5-4B-MLX-4bit, :8755, resident 1.5 + mps 10.0) — RETIRED
+  # 2026-09-22, see the header. Code stays in sidecars/local_extractor/.
   sidecar_reranker:
     port: 8743          # observed to decide if this cap is actually held
     resident_gb: 0.8
@@ -79,7 +83,10 @@ sidecars:
     # 3.0 was 38 MiB short in production: a 16x4000-char batch peaks at
     # the cap exactly (observed 2026-08-26, MPS OOM at 2.97/3.00 GiB on
     # apply_rotary_pos_emb). 3.5 gives the measured peak real headroom.
-    mps_gb: 3.5
+    # 2026-09-22: 3.5 -> 6.0. At 384 tokens a judged pair costs ~70 MB; 3.5 GB OOM'd
+    # at ~33 pairs (184 halving retries since 09-20) and the 10-subquery prefix reaches
+    # ~56 pairs. 6.0 is estimated to hold ~64 in one pass; verify with the sidecar log.
+    mps_gb: 6.0
 
 # --------------------------------------------------------------------
 # Control plane. Workers are thin; the orchestrator holds request state.
@@ -112,7 +119,7 @@ profiles:
   extraction:
     why: "ingest and extract; needs GLiNER and spaCy, plus embedder for projection"
     slots: [control, intake, profile, extract,
-            sidecar_embedder, local_extractor]
+            sidecar_embedder]
   pipeline:
     why: "every ingestion stage end to end: intake through verify, with the
           extraction and embedding models. Excludes the orchestrator and
@@ -148,4 +155,4 @@ profiles:
     slots: [control, intake, profile, extract, extract2, extract3,
             canonicalize, project_canonical, neo4j, qdrant, verify,
             compile_objects, summaries, summaries2, sidecar_embedder,
-            sidecar_reranker, orchestrator, mcp, local_extractor]
+            sidecar_reranker, orchestrator, mcp]
