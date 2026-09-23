@@ -2486,7 +2486,7 @@ def _coverage_lines(coverage: dict | None, *, skip_ids: frozenset = frozenset())
         return []
     parts = []
     for qid, a in coverage.items():
-        if qid in skip_ids:
+        if qid in skip_ids or str(qid).startswith("rt:"):          # SKELETON-ROUTING-V1: a route is a door, not an aspect
             continue
         n = a.get("final", 0)
         weak = a.get("weak")
@@ -3568,6 +3568,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             # keeps the expansion definitional (≤ 2 seeds); no compiler, or a fallback plan, keeps the default breadth.
             _graph_useful = True if (_flag != "on" or _plan is None or getattr(_plan, "fallback", False)) \
                 else bool(getattr(_plan, "graph_useful", True))
+            from polymath_shared.skeleton_routes import enabled as _skeleton_routes_on
+            if _skeleton_routes_on() and ui_mode == "GRAPH":
+                _graph_useful = True     # SKELETON-ROUTING-V1: the owner chose GRAPH — the hop runs; the compiler's verdict doesn't veto it
             if _skip_retrieval:
                 # NO-RETRIEVAL ROUTING (plan §3.1 evidence_policy=conversation):
                 # the task lives in the conversation; the corpus is not searched.
@@ -3636,6 +3639,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     # frontier (§3.19) — bridges ride `fast["wildcard"]`, never the evidence list.
                     from orchestrator.api.chat_retrieval import default_budget as _default_budget, intent_policy_enabled as _ip_on
                     from polymath_shared.query_intent import apply_intent_policy as _apply_intent, policy_for as _policy_for
+                    from polymath_shared.skeleton_routes import apply_skeleton_routes as _skeleton_routes
                     from dataclasses import replace as _replace
                     # FINAL-PLAN P2b: intent→budget policy (default off, byte-identical when off);
                     # the explicit ✨ (req.latent) always wins the latent toggle.
@@ -3643,7 +3647,10 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     _budget = _apply_intent(_plan.intent, _default_budget()) if _ip else _default_budget()
                     if req.latent:
                         _budget = _replace(_budget, latent_enabled=True)                       # B12: ✨ = lane D
-                    _latent_kw = {"budget": _budget} if (req.latent or _ip) else {}
+                    # SKELETON-ROUTING-V1 (DOCUMENT-SKELETON-V1 §4.3): the skeleton doors follow the plan + the mode, not the
+                    # intent word the policy above read (default off, byte-identical when off)
+                    _budget = _skeleton_routes(_budget, mode=ui_mode, plan=_plan)
+                    _latent_kw = {"budget": _budget} if (req.latent or _ip or _skeleton_routes_on()) else {}
                     # FINAL-PLAN P6 (§37/§38): intent-conditioned graph ASSIST on a HYBRID turn
                     # (RELATIONSHIP → graph=auto), default off; never changes the public mode (§2).
                     _pol = _policy_for(_plan.intent) if _ip else None

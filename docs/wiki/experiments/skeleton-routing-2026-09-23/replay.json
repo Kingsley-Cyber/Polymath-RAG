@@ -1,0 +1,1551 @@
+[
+ {
+  "mode": "HYBRID",
+  "config": "off",
+  "wall_ms": 5342.9,
+  "final": 15,
+  "final_chunks": [
+   "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+   "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+   "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+   "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+   "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+   "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+   "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+   "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+   "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+   "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+   "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+   "chunk_f3ce3f13d2be5d2d31c06054b027df6cb992774f06cb1f31b83e714f58fccc91",
+   "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+   "chunk_4a4549c9f8fbf90da7e97074695793ed70d5d22b1284e53b594136605af6cf81",
+   "chunk_bf097e57ee1dc4ad96154bfff86450a67dd951f1aaca2f4af2156bfcf25e2781"
+  ],
+  "final_docs": [
+   "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+   "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+   "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+   "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+   "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+   "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+  ],
+  "lanes_final": {
+   "HIERARCHICAL_ROUTE": 8,
+   "GLOBAL_DENSE_CHILD": 13,
+   "SHADOW_DUALREAD": 2,
+   "GLOBAL_SPARSE_CHILD": 2
+  },
+  "skeleton_final": 2,
+  "skeleton_only_final": 1,
+  "indirect_final": 13,
+  "direct_final": 15,
+  "route_aspects": {},
+  "aspect_prefix": {
+   "q1": 9,
+   "q2": 3,
+   "p0": 8,
+   "p1": 11,
+   "br0": 7,
+   "br1": 12
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "lane_sizes": {
+   "latent_rescue": 14,
+   "dualread": 22,
+   "seealso_fanout": 0,
+   "graph_dest": 0
+  },
+  "timings_ms": {
+   "lanes_wall": 225.5,
+   "global_dense_child": 136.3,
+   "document_summary": 158.0,
+   "section_summary": 224.2,
+   "entity_card": 162.7,
+   "hierarchical_children": 1509.1,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 143.2,
+   "sub_q2_dense": 185.7,
+   "sub_p0_dense": 197.6,
+   "sub_p1_dense": 170.1,
+   "sub_br0_dense": 75.6,
+   "sub_br1_dense": 72.5,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 9.8,
+   "core_wall": 4635.7
+  },
+  "rerank_prefix": 32,
+  "degraded": [],
+  "turn": 1
+ },
+ {
+  "mode": "HYBRID",
+  "config": "paths",
+  "wall_ms": 5466.8,
+  "final": 15,
+  "final_chunks": [
+   "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+   "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+   "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+   "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+   "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+   "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+   "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+   "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+   "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+   "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+   "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+   "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+   "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+   "chunk_4a4549c9f8fbf90da7e97074695793ed70d5d22b1284e53b594136605af6cf81",
+   "chunk_73257537ea9aff27316717cac81a98b26e904ce3be3121cc4beb870a88101d1e"
+  ],
+  "final_docs": [
+   "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+   "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+   "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+   "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+   "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+   "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+  ],
+  "lanes_final": {
+   "HIERARCHICAL_ROUTE": 7,
+   "GLOBAL_DENSE_CHILD": 12,
+   "SEEALSO_FANOUT": 1,
+   "SHADOW_DUALREAD": 1,
+   "GLOBAL_SPARSE_CHILD": 2,
+   "LATENT_RESCUE": 1
+  },
+  "skeleton_final": 3,
+  "skeleton_only_final": 2,
+  "indirect_final": 12,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 14
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 22
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   }
+  },
+  "aspect_prefix": {
+   "q1": 8,
+   "q2": 3,
+   "p0": 9,
+   "p1": 11,
+   "br0": 8,
+   "br1": 13,
+   "rt:latent": 2,
+   "rt:pmap": 3,
+   "rt:seealso": 4
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "lane_sizes": {
+   "latent_rescue": 14,
+   "dualread": 22,
+   "seealso_fanout": 24,
+   "graph_dest": 0
+  },
+  "timings_ms": {
+   "lanes_wall": 163.9,
+   "global_dense_child": 30.4,
+   "document_summary": 163.1,
+   "section_summary": 104.6,
+   "entity_card": 123.6,
+   "hierarchical_children": 1483.4,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 47.8,
+   "sub_q2_dense": 132.1,
+   "sub_p0_dense": 155.2,
+   "sub_p1_dense": 146.9,
+   "sub_br0_dense": 139.4,
+   "sub_br1_dense": 128.1,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 8.2,
+   "core_wall": 4929.1
+  },
+  "rerank_prefix": 35,
+  "degraded": [],
+  "turn": 1
+ },
+ {
+  "mode": "HYBRID",
+  "config": "judge",
+  "wall_ms": 5955.7,
+  "final": 15,
+  "final_chunks": [
+   "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+   "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+   "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+   "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+   "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+   "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+   "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+   "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+   "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+   "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+   "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+   "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+   "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+   "chunk_4a4549c9f8fbf90da7e97074695793ed70d5d22b1284e53b594136605af6cf81",
+   "chunk_73257537ea9aff27316717cac81a98b26e904ce3be3121cc4beb870a88101d1e"
+  ],
+  "final_docs": [
+   "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+   "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+   "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+   "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+   "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+   "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+  ],
+  "lanes_final": {
+   "HIERARCHICAL_ROUTE": 7,
+   "GLOBAL_DENSE_CHILD": 12,
+   "SEEALSO_FANOUT": 1,
+   "SHADOW_DUALREAD": 1,
+   "GLOBAL_SPARSE_CHILD": 2,
+   "LATENT_RESCUE": 1
+  },
+  "skeleton_final": 3,
+  "skeleton_only_final": 2,
+  "indirect_final": 12,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 14
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 22
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   }
+  },
+  "aspect_prefix": {
+   "q1": 8,
+   "q2": 3,
+   "p0": 9,
+   "p1": 11,
+   "br0": 8,
+   "br1": 13,
+   "rt:latent": 2,
+   "rt:pmap": 3,
+   "rt:seealso": 4
+  },
+  "contextual": {
+   "enabled": true,
+   "judged": 16,
+   "needs": 3,
+   "pairs": 8,
+   "promoted": 3,
+   "vague": 1,
+   "ms": 559.0
+  },
+  "lane_sizes": {
+   "latent_rescue": 14,
+   "dualread": 22,
+   "seealso_fanout": 24,
+   "graph_dest": 0
+  },
+  "timings_ms": {
+   "lanes_wall": 161.4,
+   "global_dense_child": 50.0,
+   "document_summary": 160.7,
+   "section_summary": 95.7,
+   "entity_card": 22.3,
+   "hierarchical_children": 1537.7,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 155.1,
+   "sub_q2_dense": 135.3,
+   "sub_p0_dense": 125.0,
+   "sub_p1_dense": 163.6,
+   "sub_br0_dense": 153.9,
+   "sub_br1_dense": 139.7,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 7.5,
+   "core_wall": 4921.8
+  },
+  "rerank_prefix": 35,
+  "degraded": [],
+  "turn": 1
+ },
+ {
+  "mode": "WILDCARD",
+  "config": "off",
+  "wall_ms": 4997.7,
+  "final": 15,
+  "final_chunks": [
+   "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+   "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+   "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+   "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+   "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+   "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+   "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+   "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+   "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+   "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060",
+   "chunk_f3ce3f13d2be5d2d31c06054b027df6cb992774f06cb1f31b83e714f58fccc91",
+   "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+   "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4",
+   "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+   "chunk_4a4549c9f8fbf90da7e97074695793ed70d5d22b1284e53b594136605af6cf81"
+  ],
+  "final_docs": [
+   "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+   "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+   "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+   "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+   "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+  ],
+  "lanes_final": {
+   "HIERARCHICAL_ROUTE": 9,
+   "GLOBAL_DENSE_CHILD": 14,
+   "SHADOW_DUALREAD": 1,
+   "GLOBAL_SPARSE_CHILD": 2
+  },
+  "skeleton_final": 1,
+  "skeleton_only_final": 0,
+  "indirect_final": 13,
+  "direct_final": 14,
+  "route_aspects": {},
+  "aspect_prefix": {
+   "q1": 9,
+   "q2": 3,
+   "p0": 11,
+   "p1": 9,
+   "br0": 7,
+   "br1": 10
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "lane_sizes": {
+   "latent_rescue": 14,
+   "dualread": 22,
+   "seealso_fanout": 0,
+   "graph_dest": 0
+  },
+  "timings_ms": {
+   "lanes_wall": 169.7,
+   "global_dense_child": 54.7,
+   "document_summary": 91.1,
+   "section_summary": 168.5,
+   "entity_card": 75.3,
+   "hierarchical_children": 1487.1,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 148.7,
+   "sub_q2_dense": 101.4,
+   "sub_p0_dense": 142.3,
+   "sub_p1_dense": 120.8,
+   "sub_br0_dense": 107.6,
+   "sub_br1_dense": 96.3,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 30.2,
+   "core_wall": 4527.3
+  },
+  "rerank_prefix": 32,
+  "degraded": [],
+  "turn": 2
+ },
+ {
+  "mode": "WILDCARD",
+  "config": "paths",
+  "wall_ms": 7318.6,
+  "final": 15,
+  "final_chunks": [
+   "chunk_066e7c2bb83a46b817222cdcb014a3403aa9c5a2b8bb90c2ce96740e6edf568c",
+   "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+   "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+   "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+   "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+   "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+   "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+   "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+   "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+   "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+   "chunk_a66cb41c4d63b802e5662237065c2b876029df593bb27a1225d94b9ec80c666d",
+   "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060",
+   "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+   "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4",
+   "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce"
+  ],
+  "final_docs": [
+   "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+   "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+   "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+   "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+   "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 14,
+   "GLOBAL_SPARSE_CHILD": 3,
+   "SEEALSO_FANOUT": 2,
+   "HIERARCHICAL_ROUTE": 8,
+   "SHADOW_DUALREAD": 1,
+   "GRAPH_DEST": 1,
+   "LATENT_RESCUE": 1
+  },
+  "skeleton_final": 4,
+  "skeleton_only_final": 0,
+  "indirect_final": 12,
+  "direct_final": 14,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 14
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 22
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   },
+   "rt:graph": {
+    "GRAPH_DEST": 8
+   }
+  },
+  "aspect_prefix": {
+   "q1": 9,
+   "q2": 3,
+   "p0": 11,
+   "p1": 9,
+   "br0": 7,
+   "br1": 10,
+   "rt:latent": 3,
+   "rt:pmap": 4,
+   "rt:seealso": 5,
+   "rt:graph": 3
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "lane_sizes": {
+   "latent_rescue": 14,
+   "dualread": 22,
+   "seealso_fanout": 24,
+   "graph_dest": 8
+  },
+  "timings_ms": {
+   "lanes_wall": 203.3,
+   "global_dense_child": 121.0,
+   "document_summary": 96.5,
+   "section_summary": 202.0,
+   "entity_card": 142.0,
+   "hierarchical_children": 1503.2,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 125.3,
+   "sub_q2_dense": 149.8,
+   "sub_p0_dense": 95.5,
+   "sub_p1_dense": 132.1,
+   "sub_br0_dense": 67.1,
+   "sub_br1_dense": 74.1,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 8.9,
+   "core_wall": 6812.4
+  },
+  "rerank_prefix": 35,
+  "degraded": [],
+  "turn": 2
+ },
+ {
+  "mode": "WILDCARD",
+  "config": "judge",
+  "wall_ms": 8139.3,
+  "final": 15,
+  "final_chunks": [
+   "chunk_066e7c2bb83a46b817222cdcb014a3403aa9c5a2b8bb90c2ce96740e6edf568c",
+   "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+   "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+   "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+   "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+   "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+   "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+   "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+   "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+   "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+   "chunk_a66cb41c4d63b802e5662237065c2b876029df593bb27a1225d94b9ec80c666d",
+   "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060",
+   "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+   "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4",
+   "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce"
+  ],
+  "final_docs": [
+   "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+   "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+   "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+   "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+   "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 14,
+   "GLOBAL_SPARSE_CHILD": 3,
+   "SEEALSO_FANOUT": 2,
+   "HIERARCHICAL_ROUTE": 8,
+   "SHADOW_DUALREAD": 1,
+   "GRAPH_DEST": 1,
+   "LATENT_RESCUE": 1
+  },
+  "skeleton_final": 4,
+  "skeleton_only_final": 0,
+  "indirect_final": 12,
+  "direct_final": 14,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 14
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 22
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   },
+   "rt:graph": {
+    "GRAPH_DEST": 8
+   }
+  },
+  "aspect_prefix": {
+   "q1": 9,
+   "q2": 3,
+   "p0": 11,
+   "p1": 9,
+   "br0": 7,
+   "br1": 10,
+   "rt:latent": 3,
+   "rt:pmap": 4,
+   "rt:seealso": 5,
+   "rt:graph": 3
+  },
+  "contextual": {
+   "enabled": true,
+   "judged": 17,
+   "needs": 3,
+   "pairs": 11,
+   "promoted": 2,
+   "vague": 1,
+   "ms": 804.3
+  },
+  "lane_sizes": {
+   "latent_rescue": 14,
+   "dualread": 22,
+   "seealso_fanout": 24,
+   "graph_dest": 8
+  },
+  "timings_ms": {
+   "lanes_wall": 162.2,
+   "global_dense_child": 70.0,
+   "document_summary": 161.5,
+   "section_summary": 111.5,
+   "entity_card": 147.5,
+   "hierarchical_children": 1657.2,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 52.6,
+   "sub_q2_dense": 48.2,
+   "sub_p0_dense": 140.9,
+   "sub_p1_dense": 162.4,
+   "sub_br0_dense": 124.3,
+   "sub_br1_dense": 126.8,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 8.2,
+   "core_wall": 6824.5
+  },
+  "rerank_prefix": 35,
+  "degraded": [],
+  "turn": 2
+ },
+ {
+  "mode": "HYBRID",
+  "config": "off",
+  "wall_ms": 5041.8,
+  "final": 15,
+  "final_chunks": [
+   "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+   "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+   "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+   "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+   "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+   "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+   "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+   "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+   "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+   "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+   "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+   "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+   "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+   "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+   "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585"
+  ],
+  "final_docs": [
+   "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+   "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+   "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+   "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 11,
+   "GLOBAL_SPARSE_CHILD": 6,
+   "HIERARCHICAL_ROUTE": 9,
+   "SHADOW_DUALREAD": 5,
+   "LATENT_RESCUE": 2
+  },
+  "skeleton_final": 7,
+  "skeleton_only_final": 1,
+  "indirect_final": 1,
+  "direct_final": 15,
+  "route_aspects": {},
+  "aspect_prefix": {
+   "q1": 8,
+   "q2": 6,
+   "p0": 3,
+   "p1": 4,
+   "br0": 5,
+   "br1": 3
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 0,
+   "graph_dest": 0
+  },
+  "timings_ms": {
+   "lanes_wall": 186.7,
+   "global_dense_child": 127.7,
+   "document_summary": 185.9,
+   "section_summary": 100.2,
+   "entity_card": 135.7,
+   "hierarchical_children": 1472.7,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 144.7,
+   "sub_q2_dense": 111.8,
+   "sub_p0_dense": 154.1,
+   "sub_p1_dense": 99.4,
+   "sub_br0_dense": 69.0,
+   "sub_br1_dense": 76.7,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 12.2,
+   "core_wall": 4524.4
+  },
+  "rerank_prefix": 37,
+  "degraded": [],
+  "turn": 3
+ },
+ {
+  "mode": "HYBRID",
+  "config": "paths",
+  "wall_ms": 5265.8,
+  "final": 15,
+  "final_chunks": [
+   "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+   "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+   "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+   "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+   "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+   "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+   "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+   "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+   "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+   "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+   "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+   "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+   "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+   "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+   "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480"
+  ],
+  "final_docs": [
+   "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+   "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+   "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+   "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 11,
+   "GLOBAL_SPARSE_CHILD": 7,
+   "HIERARCHICAL_ROUTE": 9,
+   "SHADOW_DUALREAD": 4,
+   "LATENT_RESCUE": 2,
+   "SEEALSO_FANOUT": 1
+  },
+  "skeleton_final": 7,
+  "skeleton_only_final": 0,
+  "indirect_final": 1,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 18
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 24
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   }
+  },
+  "aspect_prefix": {
+   "q1": 7,
+   "q2": 6,
+   "p0": 3,
+   "p1": 3,
+   "br0": 4,
+   "br1": 3,
+   "rt:latent": 3,
+   "rt:pmap": 5,
+   "rt:seealso": 2
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 24,
+   "graph_dest": 0
+  },
+  "timings_ms": {
+   "lanes_wall": 198.0,
+   "global_dense_child": 51.9,
+   "document_summary": 197.2,
+   "section_summary": 132.1,
+   "entity_card": 53.4,
+   "hierarchical_children": 1401.0,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 172.9,
+   "sub_q2_dense": 60.5,
+   "sub_p0_dense": 160.2,
+   "sub_p1_dense": 149.8,
+   "sub_br0_dense": 133.5,
+   "sub_br1_dense": 137.6,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 9.8,
+   "core_wall": 4773.1
+  },
+  "rerank_prefix": 37,
+  "degraded": [],
+  "turn": 3
+ },
+ {
+  "mode": "HYBRID",
+  "config": "judge",
+  "wall_ms": 6141.5,
+  "final": 15,
+  "final_chunks": [
+   "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+   "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+   "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+   "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+   "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+   "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+   "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+   "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+   "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+   "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+   "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+   "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+   "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+   "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+   "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480"
+  ],
+  "final_docs": [
+   "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+   "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+   "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+   "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 11,
+   "GLOBAL_SPARSE_CHILD": 7,
+   "HIERARCHICAL_ROUTE": 9,
+   "SHADOW_DUALREAD": 4,
+   "LATENT_RESCUE": 2,
+   "SEEALSO_FANOUT": 1
+  },
+  "skeleton_final": 7,
+  "skeleton_only_final": 0,
+  "indirect_final": 1,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 18
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 24
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   }
+  },
+  "aspect_prefix": {
+   "q1": 7,
+   "q2": 6,
+   "p0": 3,
+   "p1": 3,
+   "br0": 4,
+   "br1": 3,
+   "rt:latent": 3,
+   "rt:pmap": 5,
+   "rt:seealso": 2
+  },
+  "contextual": {
+   "enabled": true,
+   "judged": 17,
+   "needs": 2,
+   "pairs": 8,
+   "promoted": 0,
+   "vague": 2,
+   "ms": 641.5
+  },
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 24,
+   "graph_dest": 0
+  },
+  "timings_ms": {
+   "lanes_wall": 175.6,
+   "global_dense_child": 140.6,
+   "document_summary": 113.8,
+   "section_summary": 174.4,
+   "entity_card": 117.8,
+   "hierarchical_children": 1473.3,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 126.0,
+   "sub_q2_dense": 146.2,
+   "sub_p0_dense": 170.6,
+   "sub_p1_dense": 159.2,
+   "sub_br0_dense": 62.6,
+   "sub_br1_dense": 67.7,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 9.3,
+   "core_wall": 5016.2
+  },
+  "rerank_prefix": 37,
+  "degraded": [],
+  "turn": 3
+ },
+ {
+  "mode": "WILDCARD",
+  "config": "off",
+  "wall_ms": 5121.1,
+  "final": 15,
+  "final_chunks": [
+   "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+   "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+   "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+   "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+   "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+   "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+   "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+   "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+   "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+   "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+   "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+   "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+   "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+   "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+   "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480"
+  ],
+  "final_docs": [
+   "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+   "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+   "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+   "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 11,
+   "GLOBAL_SPARSE_CHILD": 7,
+   "HIERARCHICAL_ROUTE": 9,
+   "SHADOW_DUALREAD": 4,
+   "LATENT_RESCUE": 2
+  },
+  "skeleton_final": 6,
+  "skeleton_only_final": 0,
+  "indirect_final": 2,
+  "direct_final": 15,
+  "route_aspects": {},
+  "aspect_prefix": {
+   "q1": 8,
+   "q2": 4,
+   "p0": 3,
+   "p1": 4,
+   "br0": 5,
+   "br1": 3
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 0,
+   "graph_dest": 0
+  },
+  "timings_ms": {
+   "lanes_wall": 193.8,
+   "global_dense_child": 27.3,
+   "document_summary": 120.0,
+   "section_summary": 192.4,
+   "entity_card": 163.3,
+   "hierarchical_children": 1535.7,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 161.9,
+   "sub_q2_dense": 180.5,
+   "sub_p0_dense": 137.9,
+   "sub_p1_dense": 125.6,
+   "sub_br0_dense": 161.2,
+   "sub_br1_dense": 72.7,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 9.1,
+   "core_wall": 4605.0
+  },
+  "rerank_prefix": 37,
+  "degraded": [],
+  "turn": 4
+ },
+ {
+  "mode": "WILDCARD",
+  "config": "paths",
+  "wall_ms": 7342.8,
+  "final": 15,
+  "final_chunks": [
+   "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+   "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+   "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+   "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+   "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+   "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+   "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+   "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+   "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+   "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+   "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+   "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+   "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+   "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+   "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb"
+  ],
+  "final_docs": [
+   "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+   "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+   "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+   "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3",
+   "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 10,
+   "GLOBAL_SPARSE_CHILD": 7,
+   "HIERARCHICAL_ROUTE": 8,
+   "SHADOW_DUALREAD": 5,
+   "GRAPH_DEST": 2,
+   "LATENT_RESCUE": 2,
+   "SEEALSO_FANOUT": 1
+  },
+  "skeleton_final": 8,
+  "skeleton_only_final": 1,
+  "indirect_final": 2,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 18
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 24
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   },
+   "rt:graph": {
+    "GRAPH_DEST": 8
+   }
+  },
+  "aspect_prefix": {
+   "q1": 6,
+   "q2": 4,
+   "p0": 3,
+   "p1": 3,
+   "br0": 4,
+   "br1": 3,
+   "rt:latent": 3,
+   "rt:pmap": 9,
+   "rt:seealso": 4,
+   "rt:graph": 6
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 24,
+   "graph_dest": 8
+  },
+  "timings_ms": {
+   "lanes_wall": 228.2,
+   "global_dense_child": 70.6,
+   "document_summary": 227.4,
+   "section_summary": 209.2,
+   "entity_card": 35.6,
+   "hierarchical_children": 1859.3,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 62.7,
+   "sub_q2_dense": 55.9,
+   "sub_p0_dense": 172.9,
+   "sub_p1_dense": 195.7,
+   "sub_br0_dense": 170.1,
+   "sub_br1_dense": 177.3,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 12.9,
+   "core_wall": 6838.2
+  },
+  "rerank_prefix": 38,
+  "degraded": [],
+  "turn": 4
+ },
+ {
+  "mode": "WILDCARD",
+  "config": "judge",
+  "wall_ms": 7020.0,
+  "final": 15,
+  "final_chunks": [
+   "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+   "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+   "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+   "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+   "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+   "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+   "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+   "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+   "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+   "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+   "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+   "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+   "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+   "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+   "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb"
+  ],
+  "final_docs": [
+   "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+   "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+   "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+   "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3",
+   "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 10,
+   "GLOBAL_SPARSE_CHILD": 7,
+   "HIERARCHICAL_ROUTE": 8,
+   "SHADOW_DUALREAD": 5,
+   "GRAPH_DEST": 2,
+   "LATENT_RESCUE": 2,
+   "SEEALSO_FANOUT": 1
+  },
+  "skeleton_final": 8,
+  "skeleton_only_final": 1,
+  "indirect_final": 2,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 18
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 24
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   },
+   "rt:graph": {
+    "GRAPH_DEST": 8
+   }
+  },
+  "aspect_prefix": {
+   "q1": 6,
+   "q2": 4,
+   "p0": 3,
+   "p1": 3,
+   "br0": 4,
+   "br1": 3,
+   "rt:latent": 3,
+   "rt:pmap": 9,
+   "rt:seealso": 4,
+   "rt:graph": 6
+  },
+  "contextual": {
+   "enabled": true,
+   "judged": 20,
+   "needs": 2,
+   "pairs": 8,
+   "promoted": 0,
+   "vague": 2,
+   "ms": 162.3
+  },
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 24,
+   "graph_dest": 8
+  },
+  "timings_ms": {
+   "lanes_wall": 191.3,
+   "global_dense_child": 191.1,
+   "document_summary": 176.4,
+   "section_summary": 138.3,
+   "entity_card": 140.4,
+   "hierarchical_children": 1463.3,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 169.8,
+   "sub_q2_dense": 152.8,
+   "sub_p0_dense": 199.0,
+   "sub_p1_dense": 154.6,
+   "sub_br0_dense": 67.7,
+   "sub_br1_dense": 73.6,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 9.3,
+   "core_wall": 6328.8
+  },
+  "rerank_prefix": 38,
+  "degraded": [],
+  "turn": 4
+ },
+ {
+  "mode": "GRAPH",
+  "config": "off",
+  "wall_ms": 5561.3,
+  "final": 15,
+  "final_chunks": [
+   "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+   "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+   "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+   "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+   "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+   "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+   "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+   "chunk_5414df79a1d4bcc27775b95785459e69ebba5a6a09c7c7c424b6f6642a90e586",
+   "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a",
+   "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+   "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931",
+   "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91",
+   "chunk_9596d9f4cca743b138c9a4ed95ecd87d4f1aae2eb4362ffa6205511c0292ce88",
+   "chunk_b4e1bcc329b2d5b748fd3403b7fccdad773acc48da62131034db3025958d20d1",
+   "chunk_af5fb56ab6497bef9ee1580462bc91d000e3605b2fc8d6085fd47d54b7acc27a"
+  ],
+  "final_docs": [
+   "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+   "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+   "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 14,
+   "LATENT_RESCUE": 3,
+   "SHADOW_DUALREAD": 6,
+   "HIERARCHICAL_ROUTE": 7,
+   "GLOBAL_SPARSE_CHILD": 2
+  },
+  "skeleton_final": 7,
+  "skeleton_only_final": 0,
+  "indirect_final": 5,
+  "direct_final": 15,
+  "route_aspects": {},
+  "aspect_prefix": {
+   "q1": 15,
+   "q2": 4,
+   "p0": 6,
+   "p1": 3,
+   "br0": 3,
+   "br1": 4,
+   "br2": 3,
+   "br3": 3
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 0,
+   "graph_dest": 0
+  },
+  "timings_ms": {
+   "lanes_wall": 179.3,
+   "global_dense_child": 37.2,
+   "document_summary": 178.1,
+   "section_summary": 112.5,
+   "entity_card": 137.1,
+   "hierarchical_children": 1261.1,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 51.1,
+   "sub_q2_dense": 83.5,
+   "sub_p0_dense": 55.4,
+   "sub_p1_dense": 79.7,
+   "sub_br0_dense": 134.8,
+   "sub_br1_dense": 136.5,
+   "sub_br2_dense": 137.2,
+   "sub_br3_dense": 115.2,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "sub_br2_sparse": 0.0,
+   "sub_br3_sparse": 0.0,
+   "union": 12.4,
+   "core_wall": 4310.7
+  },
+  "rerank_prefix": 36,
+  "degraded": [],
+  "turn": 5
+ },
+ {
+  "mode": "GRAPH",
+  "config": "paths",
+  "wall_ms": 7449.3,
+  "final": 15,
+  "final_chunks": [
+   "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+   "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+   "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+   "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+   "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+   "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+   "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+   "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+   "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+   "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+   "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931",
+   "chunk_b4e1bcc329b2d5b748fd3403b7fccdad773acc48da62131034db3025958d20d1",
+   "chunk_b8589e899b7c4621b04ccfd11bec4b7626bdb46401c5c4c6675cd935faf54926",
+   "chunk_214dcb2181ede913cb36d6828cb796ac879d1fb17f1a6a357013bc377e7ed4b4",
+   "chunk_a8f011682c2883c6a9d7945baeb88976a622aea72bac483db08d638d67d93a20"
+  ],
+  "final_docs": [
+   "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+   "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+   "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+   "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 14,
+   "LATENT_RESCUE": 3,
+   "SHADOW_DUALREAD": 7,
+   "GRAPH_DEST": 6,
+   "HIERARCHICAL_ROUTE": 6,
+   "SEEALSO_FANOUT": 4,
+   "GLOBAL_SPARSE_CHILD": 1
+  },
+  "skeleton_final": 10,
+  "skeleton_only_final": 1,
+  "indirect_final": 5,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 18
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 24
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   },
+   "rt:graph": {
+    "GRAPH_DEST": 8
+   }
+  },
+  "aspect_prefix": {
+   "q1": 10,
+   "q2": 4,
+   "p0": 3,
+   "p1": 3,
+   "br0": 3,
+   "br1": 5,
+   "br2": 3,
+   "br3": 3,
+   "rt:latent": 3,
+   "rt:pmap": 7,
+   "rt:seealso": 8,
+   "rt:graph": 6
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 24,
+   "graph_dest": 8
+  },
+  "timings_ms": {
+   "lanes_wall": 193.8,
+   "global_dense_child": 58.2,
+   "document_summary": 139.4,
+   "section_summary": 192.8,
+   "entity_card": 122.2,
+   "hierarchical_children": 1251.0,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 42.9,
+   "sub_q2_dense": 167.9,
+   "sub_p0_dense": 155.5,
+   "sub_p1_dense": 145.2,
+   "sub_br0_dense": 130.3,
+   "sub_br1_dense": 125.7,
+   "sub_br2_dense": 72.3,
+   "sub_br3_dense": 101.1,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "sub_br2_sparse": 0.0,
+   "sub_br3_sparse": 0.0,
+   "union": 17.1,
+   "core_wall": 6167.0
+  },
+  "rerank_prefix": 35,
+  "degraded": [],
+  "turn": 5
+ },
+ {
+  "mode": "GRAPH",
+  "config": "judge",
+  "wall_ms": 8833.1,
+  "final": 15,
+  "final_chunks": [
+   "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+   "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+   "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+   "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+   "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+   "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+   "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+   "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+   "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+   "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+   "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931",
+   "chunk_b4e1bcc329b2d5b748fd3403b7fccdad773acc48da62131034db3025958d20d1",
+   "chunk_b8589e899b7c4621b04ccfd11bec4b7626bdb46401c5c4c6675cd935faf54926",
+   "chunk_214dcb2181ede913cb36d6828cb796ac879d1fb17f1a6a357013bc377e7ed4b4",
+   "chunk_a8f011682c2883c6a9d7945baeb88976a622aea72bac483db08d638d67d93a20"
+  ],
+  "final_docs": [
+   "doc_26cceca252a72ae476beead4e21d7d3ad9bb07fa5cfd5e49e34182505cd90b16",
+   "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+   "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+   "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 14,
+   "LATENT_RESCUE": 3,
+   "SHADOW_DUALREAD": 7,
+   "GRAPH_DEST": 6,
+   "HIERARCHICAL_ROUTE": 6,
+   "SEEALSO_FANOUT": 4,
+   "GLOBAL_SPARSE_CHILD": 1
+  },
+  "skeleton_final": 10,
+  "skeleton_only_final": 1,
+  "indirect_final": 5,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 18
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 24
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   },
+   "rt:graph": {
+    "GRAPH_DEST": 8
+   }
+  },
+  "aspect_prefix": {
+   "q1": 10,
+   "q2": 4,
+   "p0": 3,
+   "p1": 3,
+   "br0": 3,
+   "br1": 5,
+   "br2": 3,
+   "br3": 3,
+   "rt:latent": 3,
+   "rt:pmap": 7,
+   "rt:seealso": 8,
+   "rt:graph": 6
+  },
+  "contextual": {
+   "enabled": true,
+   "judged": 23,
+   "needs": 4,
+   "pairs": 12,
+   "promoted": 3,
+   "vague": 0,
+   "ms": 1312.2
+  },
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 24,
+   "graph_dest": 8
+  },
+  "timings_ms": {
+   "lanes_wall": 209.0,
+   "global_dense_child": 88.8,
+   "document_summary": 100.6,
+   "section_summary": 207.9,
+   "entity_card": 109.1,
+   "hierarchical_children": 1228.5,
+   "global_sparse_child": 0.0,
+   "sub_q1_dense": 120.2,
+   "sub_q2_dense": 95.7,
+   "sub_p0_dense": 47.3,
+   "sub_p1_dense": 118.7,
+   "sub_br0_dense": 97.8,
+   "sub_br1_dense": 77.3,
+   "sub_br2_dense": 74.6,
+   "sub_br3_dense": 88.6,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "sub_br2_sparse": 0.0,
+   "sub_br3_sparse": 0.0,
+   "union": 10.4,
+   "core_wall": 6289.5
+  },
+  "rerank_prefix": 35,
+  "degraded": [],
+  "turn": 5
+ }
+]
