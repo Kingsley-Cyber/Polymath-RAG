@@ -23,15 +23,15 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (close-out before compaction) — **PLAN OF RECORD ADMITTED: `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md` (11.421); owner decisions D1–D8 ANSWERED; execute slices S0–S9 in order. CODE-KNOWLEDGE-V1 parked.**
+## CURRENT — 2026-09-23 (close-out before compaction) — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md` (D1–D8 answered). S0 easy wins + owner thinking rule DEPLOYED (`d85d43a`, 11.424). Next: E4 / E3 / E7, then S1 receipts, S2 traces. CODE-KNOWLEDGE-V1 parked.**
 
 ### Repository State
-- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 15 unpushed commits (`58c819f` … the
-  11.421 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
-- Main checkout clean after the 11.421 commit. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
+- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 19 unpushed commits (`58c819f` … the
+  11.424 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
+- Main checkout clean after the 11.424 commit. The S0 branch is merged and its worktree removed. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
   (+5). Every other worktree branch is merged into `production`.
 - Fleet: 24 workers / 13 types healthy on ONE bundle, `/ready` true (embedder + reranker). Running code = committed code
-  (last bounce after `c6c31aa`; 11.413–11.421 are documents only).
+  (last bounce after the `d85d43a` merge, 2026-09-23 13:24; 24 healthy / 13 types / ONE bundle).
 
 ### Active Mission
 - **DOCUMENT RAG COMPLETION (active; owner 2026-09-23: "before we work on code rag, we must complete document rag").**
@@ -53,7 +53,7 @@ historical, never an instruction.
   - Plan `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`; 13 owner decisions (feasibility report §8 + §10).
   - Parsers come from open-source packages behind thin adapters (report §11).
 
-### Completed Since Last Bootstrap (11.406–11.421)
+### Completed Since Last Bootstrap (11.406–11.424)
 - 11.406 — chat answers survive a chat switch (frontend).
 - 11.407 — Claude-style composer.
 - 11.408 — subquery cap 10; FAST / VECTOR = lanes A + B, with no depth lanes and no bridge pass.
@@ -77,6 +77,7 @@ historical, never an instruction.
 - 11.421 — DOCUMENT-RAG-COMPLETION-V1 admitted as the plan of record; owner decisions D1–D8 answered.
 - 11.422 — S0 easy wins E1 / E2 / E8 (branch `fix/document-rag-easy-wins`, UNIT_PROVEN; merge + bounce on the owner's word).
 - 11.423 — owner thinking rule (disabled where possible, else ≤ 100, gpt-oss low) on the same branch; all four compiler lanes re-qualified live (Qwen / DeepSeek now valid in < 5 s).
+- 11.424 — S0 + thinking rule DEPLOYED (`d85d43a`, one bounce). Post-deploy canary: lift off; gemma / qwen valid; deepseek 2 of 3 canaries valid (watch its receipts); mistral 429 = capacity.
 
 ### Current Contract State
 - **Retrieval.** `MODE_LANES`: FAST / VECTOR = A + B; HYBRID / GRAPH / WILDCARD = all lanes; GNN = its own route.
@@ -131,12 +132,12 @@ historical, never an instruction.
 - **zsh:** word-split file lists with `${=T}`.
 
 ### Working Tree
-- Clean after the 11.421 commit. Scratch lives outside the repo (session scratchpad).
+- Clean after the 11.424 commit. Scratch lives outside the repo (session scratchpad).
 
 ### Tooling State
 - `_graft_polymath` graph refreshed to `7eb767d` on 2026-09-23. Code is unchanged since, so it is current.
 - `graphify-out` was last refreshed 2026-09-21 (`acd83bb`); `graphify update .` refreshes it at $0.
-- Guards at the 11.421 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
+- Guards at the 11.424 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
 
 ### Next Action — the EXECUTION QUEUE (owner, 2026-09-23: "we should have a list of work-logs to execute")
 0. Run the `polymath-bootstrap` skill. Read audit §15 → §14 → §12 → §13 → §9–§11 → §6
@@ -144,11 +145,11 @@ historical, never an instruction.
 
 **A. Easy fixes: no owner decision needed, one admitted slice each.** Code slices run in a worktree with the skill's
 PYTHONPATH recipe and asserting tests; merge + bounce on the owner's word.
-- **E1 — DONE on branch `fix/document-rag-easy-wins` (11.422); after merge + bounce, re-measure the lane fallbacks.** Compiler backup-lane reasoning placement (audit §15). First prove the outgoing request on a local stand-in. Then
+- **E1 — DEPLOYED (11.422 → 11.424). Watch the compiler lane fallbacks in owner-style receipts.** Compiler backup-lane reasoning placement (audit §15). First prove the outgoing request on a local stand-in. Then
   `apply_chat_completions` puts provider switches at the TOP level for raw-HTTP callers: DeepSeek `thinking: {type:
   disabled}`, Qwen `enable_thinking: false` (the compiler role may disable). Re-measure the lane fallbacks: Qwen 22 / 23 and
   DeepSeek 7 / 13 today.
-- **E2 — DONE on the same branch (11.422).** The bridge compiler gets real concept text, not kind names or doc ids (`bridge_integration.py:46` precedence). Fix
+- **E2 — DEPLOYED (11.424).** The bridge compiler gets real concept text, not kind names or doc ids (`bridge_integration.py:46` precedence). Fix
   the hiding test (`test_bridge_integration.py:31`).
 - **E3 — synthesis gets roles and latent labels** (`ui.py:3519`), and the coverage lines stop listing PROFILE / BRIDGE probes
   as "NO EVIDENCE RETRIEVED" (`ui.py:2370-2389`).
