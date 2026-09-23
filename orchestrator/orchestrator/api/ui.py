@@ -1625,7 +1625,7 @@ def _cited_chunk_ids(answer_text: str, legend: list[dict]) -> list[str]:
 _COMPILER_FLAG_ENV = "POLYMATH_CHAT_COMPILER"          # off | shadow | on
 #: a compiler call that has not answered in 6 s is a failed lane, not a wait
 #: (measured 2026-09-05: a Gemini 503 arrived after a 24 s hang)
-_COMPILER_HTTP_TIMEOUT_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_HTTP_TIMEOUT_S", "6.0"))
+_COMPILER_HTTP_TIMEOUT_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_HTTP_TIMEOUT_S", "8.0"))   # = the hard budget
 
 
 def _compiler_flag(override: str | None = None) -> str:
@@ -1638,6 +1638,9 @@ def _compiler_flag(override: str | None = None) -> str:
 
 _COMPILER_LANE_COOLDOWN_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_LANE_COOLDOWN_S", "120"))
 _COMPILER_LANE_FAILED_AT: dict[str, float] = {}       # lane name -> last transport failure (process-local breaker)
+#: COMPILER-WORKS-WITHOUT-OLLAMA: the go-to lane (gemma on Ollama: fastest, most reliable). Every session tries it first while
+#: it is healthy; while it is cooling (down, slow) the backups go first. Empty = the old per-session hash ring.
+_COMPILER_PREFERRED_LANE = os.environ.get("POLYMATH_CHAT_COMPILER_PREFERRED_LANE", "compiler_ollama_gemma").strip()
 
 
 def _lane_family(ep) -> str:
@@ -1650,7 +1653,7 @@ def _lane_family(ep) -> str:
 
 def _compiler_attempt_order(endpoints: list, key: str, *, failed_at: dict | None = None,
                             now: float | None = None, cooldown_s: float = _COMPILER_LANE_COOLDOWN_S,
-                            max_attempts: int = 3) -> list:
+                            max_attempts: int = 3, preferred: str | None = None) -> list:
     """COMPILER-LANE-ORDER-V1: deterministic attempt list for one turn —
     the ring's home lane for `key`, then the first lane of a DIFFERENT
     provider family (a Gemini-wide 503 storm must not eat both attempts),
@@ -1661,8 +1664,13 @@ def _compiler_attempt_order(endpoints: list, key: str, *, failed_at: dict | None
     if not endpoints:
         return []
     roster = sorted(endpoints, key=lambda e: e.name)
-    digest = hashlib.blake2b((key or "").encode(), digest_size=8).digest()
-    home_idx = int.from_bytes(digest, "big") % len(roster)
+    pref = _COMPILER_PREFERRED_LANE if preferred is None else preferred
+    pref_idx = next((i for i, e in enumerate(roster) if pref and e.name == pref), None)
+    if pref_idx is not None:
+        home_idx = pref_idx                      # the go-to lane first for every session
+    else:
+        digest = hashlib.blake2b((key or "").encode(), digest_size=8).digest()
+        home_idx = int.from_bytes(digest, "big") % len(roster)
     home = roster[home_idx]
     order = [home]
     alt = next((e for e in roster if _lane_family(e) != _lane_family(home)), None)
@@ -1677,6 +1685,29 @@ def _compiler_attempt_order(endpoints: list, key: str, *, failed_at: dict | None
     cold = lambda e: (now - failed_at.get(e.name, -1e12)) < cooldown_s
     order = [e for e in order if not cold(e)] + [e for e in order if cold(e)]
     return order[:max_attempts]
+
+
+def _run_compiler_lanes(attempts: list, compile_one, *, failed_at: dict | None = None, now_fn=time.time):
+    """COMPILER-WORKS-WITHOUT-OLLAMA: try the attempts in order and return the first REAL plan. A transport failure or a
+    late answer (`budget_exceeded`) cools that lane for later turns; an invalid plan moves on without cooling (the lane is
+    reachable, and another model may plan the question). If every attempt fails, the last fallback plan is returned with
+    the first failure recorded: the turn still retrieves on the raw question. Pure over its inputs."""
+    failed_at = _COMPILER_LANE_FAILED_AT if failed_at is None else failed_at
+    plan, first_failure = None, None
+    for attempt_no, ep in enumerate(attempts, start=1):
+        plan = compile_one(ep)
+        plan.compiler["lane"] = ep.name
+        plan.compiler["attempt"] = attempt_no
+        if first_failure is not None:
+            plan.compiler["first_failure"] = first_failure
+        if not plan.fallback:
+            return plan
+        reason = str(plan.compiler.get("reason") or "")
+        if reason.startswith(("transport:", "budget_exceeded:")):
+            failed_at[ep.name] = now_fn()
+        if first_failure is None:
+            first_failure = f"{ep.name}:{reason}"
+    return plan
 
 
 def _profile_scout(message: str, corpus_ids) -> tuple[list[str], object | None, dict]:
@@ -1889,6 +1920,62 @@ _BRIDGE_MODEL = (os.environ.get("POLYMATH_BRIDGE_MODEL", "gemma4:31b-cloud") or 
 _BRIDGE_TIMEOUT_S = float(os.environ.get("POLYMATH_BRIDGE_TIMEOUT_S", "12"))
 _BRIDGE_NUM_PREDICT = int(os.environ.get("POLYMATH_BRIDGE_NUM_PREDICT", "700"))
 
+_BRIDGE_SYSTEM_PROMPT = "Follow the user's instructions exactly and return only the requested JSON."
+
+
+def _bridge_cloud_clients() -> list:
+    """COMPILER-WORKS-WITHOUT-OLLAMA: the bridge generator's backups = the chat-compiler lanes that are NOT on an Ollama
+    host, in attempt order (cooling lanes last), each with the owner's thinking rule (BRIDGE role) and plain-text output
+    (bridges are a JSON array, so no json_object mode)."""
+    try:
+        from polymath_shared.chat_plan import COMPILER_STAGE
+        from polymath_shared.llm_extraction.client import LLMExtractionClient
+        from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
+        pin = stage_pin(COMPILER_STAGE) or []
+        eps = [e for e in cloud_endpoints() if e.name in pin and ":11434" not in (e.url or "") and "ollama" not in e.name]
+        out = []
+        for ep in _compiler_attempt_order(eps, "bridge", preferred=""):
+            c = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key, api_key=ep.api_key,
+                                    cloud_opts={**(ep.cloud_opts or {}), "json_mode": False},
+                                    timeout_s=min(_BRIDGE_TIMEOUT_S, _COMPILER_HTTP_TIMEOUT_S), max_attempts=1)
+            c.endpoint_name = ep.name
+            c.reasoning_role = "BRIDGE"
+            out.append(c)
+        return out
+    except Exception:  # noqa: BLE001 — no backups is a degraded, receipted bridge step, never a broken turn
+        return []
+
+
+def _bridge_llm(prompt: str, *, ollama_post=None, cloud_attempts=None) -> str:
+    """The bridge / Corpus-Explore generator: Ollama (gemma) first; when Ollama is unreachable, errors or answers empty,
+    the cloud compiler lanes in turn. Raises only when every route failed (the callers are fail-open)."""
+    import httpx
+    post = ollama_post or httpx.post
+    err: Exception = RuntimeError("no_bridge_route")
+    try:
+        r = post(f"{OLLAMA_URL}/api/chat",
+                 json={"model": _BRIDGE_MODEL, "stream": False, "think": False,
+                       "messages": [{"role": "user", "content": prompt}],
+                       "options": {"temperature": 0.1, "num_predict": _BRIDGE_NUM_PREDICT}},
+                 timeout=httpx.Timeout(_BRIDGE_TIMEOUT_S, connect=5))
+        r.raise_for_status()
+        out = ((r.json() or {}).get("message") or {}).get("content") or ""
+        if out.strip():
+            return out
+        err = RuntimeError("ollama_empty")
+    except Exception as exc:  # noqa: BLE001 — fall through to the cloud lanes
+        err = exc
+    for client in (_bridge_cloud_clients() if cloud_attempts is None else cloud_attempts):
+        try:
+            content, _pt, _ct, _h = client._chat(prompt, _BRIDGE_NUM_PREDICT, system_prompt=_BRIDGE_SYSTEM_PROMPT)
+            if (content or "").strip():
+                return content
+            err = RuntimeError("cloud_empty")
+        except Exception as exc:  # noqa: BLE001 — try the next lane
+            err = exc
+    raise err
+
+
 #: CORPUS-EXPLORER-V1: origins that ride the WLK2C latent pass (C4 grading + latent-pool exposure). Adding
 #: a latent origin here (not scattered `== "BRIDGE"` checks) routes CORPUS_EXPLORE through the same C4/C5
 #: gate as a Scout BRIDGE. When POLYMATH_CORPUS_EXPLORER is off no CORPUS_EXPLORE origin is ever produced,
@@ -1920,14 +2007,7 @@ def _add_bridge_expansion(plan, scout_result) -> None:
         from polymath_shared.bridge_integration import plan_bridge_expansion
 
         def _bridge_generate(prompt: str) -> str:
-            import httpx
-            r = httpx.post(f"{OLLAMA_URL}/api/chat",
-                           json={"model": _BRIDGE_MODEL, "stream": False, "think": False,
-                                 "messages": [{"role": "user", "content": prompt}],
-                                 "options": {"temperature": 0.1, "num_predict": _BRIDGE_NUM_PREDICT}},
-                           timeout=httpx.Timeout(_BRIDGE_TIMEOUT_S, connect=5))
-            r.raise_for_status()
-            return ((r.json() or {}).get("message") or {}).get("content") or ""
+            return _bridge_llm(prompt)                       # Ollama first, cloud lanes when Ollama is down
 
         diag["attempted"] = True
         res = plan_bridge_expansion(plan, noms, generate=_bridge_generate)
@@ -2053,14 +2133,7 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
                 diag["fallback_reason"] = "no_activations"
             else:
                 def _explore_generate(prompt: str) -> str:
-                    import httpx
-                    r = httpx.post(f"{OLLAMA_URL}/api/chat",
-                                   json={"model": _BRIDGE_MODEL, "stream": False, "think": False,
-                                         "messages": [{"role": "user", "content": prompt}],
-                                         "options": {"temperature": 0.1, "num_predict": _BRIDGE_NUM_PREDICT}},
-                                   timeout=httpx.Timeout(_BRIDGE_TIMEOUT_S, connect=5))
-                    r.raise_for_status()
-                    return ((r.json() or {}).get("message") or {}).get("content") or ""
+                    return _bridge_llm(prompt)               # Ollama first, cloud lanes when Ollama is down
 
                 diag["attempted"] = True
                 res = plan_corpus_explore_expansion(plan, activations, generate=_explore_generate,
@@ -2253,14 +2326,10 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
             plan = fallback_plan(message, reason="compiler_unavailable:no_active_lane")
             plan.compiler["scout"] = scout_rec
             return _finish(plan)
-        last = None
-        # COMPILER-LANE-FAILOVER-V1 + COMPILER-LANE-ORDER-V1: a transport
-        # failure (429/503/timeout) walks to the next attempt — home lane,
-        # then a different provider family, then the ring neighbour — and
-        # cools the failed lane for later turns; validation failures do not
-        # retry (the same prompt would produce the same plan).
-        for attempt_no, ep in enumerate(_compiler_attempt_order(endpoints, key), start=1):
-            offset = attempt_no - 1
+        # COMPILER-LANE-FAILOVER-V1 + COMPILER-LANE-ORDER-V1 + COMPILER-WORKS-WITHOUT-OLLAMA: the go-to lane first, then a
+        # different provider family, then the ring. A transport failure, a late answer or an unusable plan walks to the
+        # next attempt (another model may plan it); unreachable / slow lanes cool down for later turns.
+        def _compile_one(ep):
             client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
                                          api_key=ep.api_key, cloud_opts=ep.cloud_opts,
                                          timeout_s=_COMPILER_HTTP_TIMEOUT_S, max_attempts=1)
@@ -2273,16 +2342,11 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
 
             def _complete(system_prompt: str, user_prompt: str, max_tokens: int, _c=client):
                 return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
-            plan = compile_plan(message, history, corpus_ids, _complete, model=f"{ep.name}:{ep.model}", titles=titles)
-            plan.compiler["lane"] = ep.name
-            plan.compiler["scout"] = scout_rec
-            plan.compiler["attempt"] = attempt_no
-            if last is not None:
-                plan.compiler["first_failure"] = last
-            if not plan.fallback or not str(plan.compiler.get("reason", "")).startswith("transport:"):
-                return _finish(plan)
-            _COMPILER_LANE_FAILED_AT[ep.name] = time.time()
-            last = f"{ep.name}:{plan.compiler.get('reason')}"
+            one = compile_plan(message, history, corpus_ids, _complete, model=f"{ep.name}:{ep.model}", titles=titles)
+            one.compiler["scout"] = scout_rec
+            return one
+
+        plan = _run_compiler_lanes(_compiler_attempt_order(endpoints, key), _compile_one)
         return _finish(plan)
     except Exception as exc:  # noqa: BLE001 — a missing pin / dark lane is a receipted fallback
         plan = fallback_plan(message, reason=f"compiler_unavailable:{type(exc).__name__}")

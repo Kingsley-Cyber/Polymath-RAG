@@ -35,7 +35,7 @@ from polymath_shared.query_intent import intent_of_plan
 CONTRACT = "chat-intent-plan-v1"
 COMPILER_STAGE = "chat_compiler"                 # stage pin in config/cloud_providers.json
 COMPILER_BUDGET_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_BUDGET_S", "2.5"))       # soft: the p50 gate
-COMPILER_HARD_BUDGET_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_HARD_BUDGET_S", "6.0"))  # hard: give up → fallback
+COMPILER_HARD_BUDGET_S = float(os.environ.get("POLYMATH_CHAT_COMPILER_HARD_BUDGET_S", "8.0"))  # hard: give up → fallback (8 s: backup lanes plan in 3.5–5.3 s)
 COMPILER_MAX_OUTPUT_TOKENS = int(os.environ.get("POLYMATH_CHAT_COMPILER_MAX_TOKENS", "600"))
 HISTORY_TURNS = int(os.environ.get("POLYMATH_CHAT_COMPILER_HISTORY_TURNS", "8"))
 HISTORY_CHARS_PER_TURN = 1500
