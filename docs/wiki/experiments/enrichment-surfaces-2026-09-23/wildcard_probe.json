@@ -1,0 +1,238 @@
+{
+ "generated_at": "2026-09-23T17:32:29+00:00",
+ "turns": [
+  {
+   "query_id": "q_3ba2699e71b746ca8efd1932",
+   "intent": "APPLICATION",
+   "q0": "realistic character for tea brand advertisement UGC AI video",
+   "receipt": {
+    "returned": 3,
+    "verified_bridges": 3,
+    "unverified_bridges": 0,
+    "degraded": null,
+    "sweep_ms": 1385.4,
+    "finish_ms": 1984.5,
+    "latent_candidates": 57,
+    "atom_candidates": null
+   },
+   "bridges_from_atom_channels": 0,
+   "atom_frontier_direct": {
+    "atoms": 12,
+    "atom_texts": [
+     "INVERSION: Inconsistent character portrayal in AI-generated stories",
+     "LATENT_PATTERN: Use of humor and emotional appeal in ads",
+     "CONCEPT: Character consistency in AI-generated stories",
+     "ANCHOR: Character stability in AI video stories"
+    ],
+    "maps": 16,
+    "atom_nominated_parents": 16,
+    "error": null
+   },
+   "bridges": [
+    {
+     "verified": true,
+     "principle": "Use a story to engage and transform an audience by modeling a character after them.",
+     "why_it_may_transfer": "",
+     "source_name": "Francis Glebas - Directing the Story (2008).md",
+     "channels": [
+      "abstraction"
+     ]
+    },
+    {
+     "verified": true,
+     "principle": "True human-like empathy in digital characters requires mastering both physical realism *and* the ineffable qualities of human behavior.",
+     "why_it_may_transfer": "Mechanisms: The 'uncanny valley' as a psychological barrier to acceptance of hyper-realistic characters.; Observational and cultural cues (e.g., children\u2019s instinctive detection of 'fakeness') as test",
+     "source_name": "Ed Hooks - Acting for Animators (2017).md",
+     "channels": [
+      "abstraction",
+      "transfer"
+     ]
+    },
+    {
+     "verified": true,
+     "principle": "Mechanisms: Displays the actor's performance in real-time as the character; Allows actors to adjust their performance to match the character's proportions and style. Useful for: Improves actor immersi",
+     "why_it_may_transfer": "",
+     "source_name": "VES Handbook of Visual Effects.md",
+     "channels": [
+      "transfer"
+     ]
+    }
+   ]
+  },
+  {
+   "query_id": "q_270618b1d3cc41988c7ab4d3",
+   "intent": "MECHANISM",
+   "q0": "How does a lone landscape photographer keep spare batteries reachable on the trail?",
+   "receipt": {
+    "returned": 3,
+    "verified_bridges": 3,
+    "unverified_bridges": 0,
+    "degraded": null,
+    "sweep_ms": 1442.7,
+    "finish_ms": 1987.0,
+    "latent_candidates": 55,
+    "atom_candidates": null
+   },
+   "bridges_from_atom_channels": 0,
+   "atom_frontier_direct": {
+    "atoms": 12,
+    "atom_texts": [
+     "RECALLQ: What is the role of the B camera in achieving close\u2011up shots on a film",
+     "BRIDGE: photography lighting principles applied to film",
+     "RECALLQ: How can a cinematographer plan lighting based on the sun\u2019s position?",
+     "INVERSION: Emphasizing the A camera\u2019s role instead of the B camera for close\u2011ups"
+    ],
+    "maps": 16,
+    "atom_nominated_parents": 16,
+    "error": null
+   },
+   "bridges": [
+    {
+     "verified": true,
+     "principle": "A low-fidelity, manual method for documenting lighting setups using hand-drawn and photographic references.",
+     "why_it_may_transfer": "Mechanisms: Create scene overviews via sketches indicating camera, objects, and lights.; Supplement sketches with slated photographs to capture details not easily conveyed by drawing.. Useful for: Use",
+     "source_name": "VES Handbook of Visual Effects.md",
+     "channels": [
+      "abstraction",
+      "transfer"
+     ]
+    },
+    {
+     "verified": true,
+     "principle": "Temporal and environmental parameters must be systematically recorded and respected to maintain lighting continuity across disjointed capture sessions.",
+     "why_it_may_transfer": "",
+     "source_name": "VES Handbook of Visual Effects.md",
+     "channels": [
+      "abstraction"
+     ]
+    },
+    {
+     "verified": true,
+     "principle": "Physical environment constraints frequently override optimal camera angle choices in documentary work, requiring pragmatic compromises for feasibility and legibility.",
+     "why_it_may_transfer": "",
+     "source_name": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "channels": [
+      "abstraction"
+     ]
+    }
+   ]
+  },
+  {
+   "query_id": "q_602b1f48ebdd459fbf0417c7",
+   "intent": "MECHANISM",
+   "q0": "How does a lone landscape photographer keep spare batteries reachable on the trail?",
+   "receipt": {
+    "returned": 3,
+    "verified_bridges": 3,
+    "unverified_bridges": 0,
+    "degraded": null,
+    "sweep_ms": 1460.4,
+    "finish_ms": 2000.8,
+    "latent_candidates": 55,
+    "atom_candidates": null
+   },
+   "bridges_from_atom_channels": 0,
+   "atom_frontier_direct": {
+    "atoms": 12,
+    "atom_texts": [
+     "RECALLQ: What is the role of the B camera in achieving close\u2011up shots on a film",
+     "BRIDGE: photography lighting principles applied to film",
+     "RECALLQ: How can a cinematographer plan lighting based on the sun\u2019s position?",
+     "INVERSION: Emphasizing the A camera\u2019s role instead of the B camera for close\u2011ups"
+    ],
+    "maps": 16,
+    "atom_nominated_parents": 16,
+    "error": null
+   },
+   "bridges": [
+    {
+     "verified": true,
+     "principle": "A low-fidelity, manual method for documenting lighting setups using hand-drawn and photographic references.",
+     "why_it_may_transfer": "Mechanisms: Create scene overviews via sketches indicating camera, objects, and lights.; Supplement sketches with slated photographs to capture details not easily conveyed by drawing.. Useful for: Use",
+     "source_name": "VES Handbook of Visual Effects.md",
+     "channels": [
+      "abstraction",
+      "transfer"
+     ]
+    },
+    {
+     "verified": true,
+     "principle": "Temporal and environmental parameters must be systematically recorded and respected to maintain lighting continuity across disjointed capture sessions.",
+     "why_it_may_transfer": "",
+     "source_name": "VES Handbook of Visual Effects.md",
+     "channels": [
+      "abstraction"
+     ]
+    },
+    {
+     "verified": true,
+     "principle": "Physical environment constraints frequently override optimal camera angle choices in documentary work, requiring pragmatic compromises for feasibility and legibility.",
+     "why_it_may_transfer": "",
+     "source_name": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "channels": [
+      "abstraction"
+     ]
+    }
+   ]
+  },
+  {
+   "query_id": "q_22bf6a0b3224422b9ae6bae9",
+   "intent": "SYNTHESIS",
+   "q0": "camera equipment maintenance during shooting day hand-offs",
+   "receipt": {
+    "returned": 3,
+    "verified_bridges": 3,
+    "unverified_bridges": 0,
+    "degraded": null,
+    "sweep_ms": 1662.0,
+    "finish_ms": 1986.7,
+    "latent_candidates": 59,
+    "atom_candidates": null
+   },
+   "bridges_from_atom_channels": 0,
+   "atom_frontier_direct": {
+    "atoms": 12,
+    "atom_texts": [
+     "CONCEPT: Camera hierarchy on film sets",
+     "RECALLQ: What is the role of the B camera in achieving close\u2011up shots on a film",
+     "ANCHOR: Camera operation decisions",
+     "LATENT_PATTERN: Repeated mention of on\u2011set roles and equipment handling"
+    ],
+    "maps": 16,
+    "atom_nominated_parents": 16,
+    "error": null
+   },
+   "bridges": [
+    {
+     "verified": true,
+     "principle": "Camera movement must be justified and controlled: silent dolly shots risk being too long for static subjects, and loose or nervous camera operation\u2014especially at shot beginnings\u2014creates matching probl",
+     "why_it_may_transfer": "Mechanisms: Locking the camera for shots of players moving into frame ensures stable framing for match-cutting.; Slight off-center framing is preferred over camera movement to correct framing.. Useful",
+     "source_name": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "channels": [
+      "abstraction",
+      "transfer"
+     ]
+    },
+    {
+     "verified": true,
+     "principle": "The choice of camera setup balances the performer's ability to sustain a performance against the editor's need for flexible, multi-angle coverage.",
+     "why_it_may_transfer": "",
+     "source_name": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "channels": [
+      "abstraction"
+     ]
+    },
+    {
+     "verified": true,
+     "principle": "Camera logistics and shooting order are critical to maintaining continuity, performer safety, and efficiency during fight scene production.",
+     "why_it_may_transfer": "Mechanisms: Choosing camera setups based on choreographic needs (e.g., non-contact hits vs. dynamic sequences); Optimizing shooting order to manage performer energy and continuity. Useful for: Framewo",
+     "source_name": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+     "channels": [
+      "abstraction",
+      "transfer"
+     ]
+    }
+   ]
+  }
+ ]
+}

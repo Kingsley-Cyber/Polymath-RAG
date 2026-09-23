@@ -2,7 +2,7 @@
 title: "ENRICHMENT-SURFACES-AUDIT — do the skeleton, pMAP, profile (SEEALSO, questions) and atoms reach the answers? (production 7eb767d)"
 date: 2026-09-23
 last_reviewed: 2026-09-23
-status: "AUDIT — read-only; no code, flag or data changed. Nine defects found, none fixed; the fixes are owner decisions (§6). Same-day addendum (register 11.416): §8 field inventory, §9 owner intent + root cause (every enrichment lane is judged against q0), §6 revised to wire the fields in."
+status: "AUDIT — read-only; no code, flag or data changed. Nine defects found, none fixed; the fixes are owner decisions (§6). Same-day addendum (register 11.416): §8 field inventory, §9 owner intent + root cause (every enrichment lane is judged against q0), §6 revised to wire the fields in; §10 design lineage + WILDCARD finding + the owner's sequencing (document RAG before code RAG); §11 concepts / theories as routers to real chunks, not hydration (register 11.417)."
 owner: "@king"
 scope: "Every document-enrichment surface, from its store to the evidence the synthesizer sees and the citations in the answer, measured on 1,508 real UI chat turns (cinema) plus in-process replays and a static trace."
 ---
@@ -214,6 +214,8 @@ D=docs/wiki/experiments/enrichment-surfaces-2026-09-23
 PYTHONPATH=$PWD/shared:$PWD/orchestrator:$PWD/workers:$PWD/control \
   .venv/bin/python $D/replay_probe.py $D/replay_probe.json      # lift terms per intent + bridge-compiler labels (no LLM)
 .venv/bin/python $D/field_inventory.py cinema $D/field_inventory.json   # every profile / pMAP field with item totals (§8)
+PYTHONPATH=$PWD/shared:$PWD/orchestrator:$PWD/workers:$PWD/control \
+  .venv/bin/python $D/wildcard_probe.py 4 $D/wildcard_probe.json   # WILDCARD frontier on real turns + direct atom frontier (§10)
 ```
 
 All three are read-only and cost nothing. `receipt_audit.py` reads a rolling 7-day window, so a rerun sees newer turns;
@@ -317,3 +319,104 @@ the evidence falls with the lane's distance from q0's own signal:
 The bridge compiler is the one path whose output gets conditional judging, and it is fed atom-kind names instead of the
 profile's concepts, theories and seealso (defect 2). So the conditional rank system exists, but the enrichment the owner
 built for it never reaches it. Fixes 1 and 2 (§6) close that gap.
+
+## 10. Design lineage: what the repository already says about the owner's idea (same day)
+
+**Owner, 2026-09-23** (summarized from the message):
+- Complete document RAG before CODE-KNOWLEDGE-V1.
+- Alongside the pMAP, the structure extraction's conditional ranking and the document-level extractions should power
+  document- and domain-level synthesis with different ideas.
+- The reranker number should not be the final determinant.
+- Each skeleton field (questions, searches, concepts, theories…) should be a modular conditional bridge and ranking.
+- Query → subqueries → bridges, document routing, chunk / document retrieval, synthesis.
+- WILDCARD was meant to be the poster-child layer that fully embodies this: documents are abstracted far enough that
+  domain-level synthesis and bridges let latent chunks related to the query win.
+- "I don't think I designed and solidified the idea."
+
+| Owner idea | Where the repository already says it | Built? | Measured today |
+|---|---|---|---|
+| Abstract documents so latent-but-relevant knowledge wins, and synthesis thinks with it | FINAL §1.2 Depth (l.190: how far beyond the user's vocabulary to search); FINAL §41 WILDCARD objective (l.1829: "maximize useful surprise subject to source grounding, semantic support, novelty"); ELITE §6 (l.243: "extracted mechanism → judged source child → synthesis that can think with the mechanism"); LQF-V2 l.21-22 ("what information needs (explicit + latent) must be satisfied, and what evidence ranks highest FOR EACH") | partly | Latent lanes survive the judge 20–37% of the time; dense survives 55–75% (§9) |
+| Every profile field is modular | FINAL §7 (l.451): the field → retrieval contract gives every field a technique and a role in each mode | for ROUTING (lanes A, D, E, F, G, H); not for ranking | concepts / theories / seealso multivectors never searched; atoms vNext-sized (§8) |
+| … as conditional bridges and rankings | WLK2A finding 5 (l.76) and recommendation (l.88): judge a chunk against q0 AND the bridge that retrieved it, with roles DIRECT / COMPLEMENTARY / DIVERGENT, "NOT max(q0, bridge)". Option (b) (l.96), bridges from profile concept text, was held back because good concept text was "unverified" | BRIDGE subqueries only (WLK2C) | v3.2 profiles now hold that text (1,847 items), but the bridge compiler receives kind names (defect 2) |
+| The reranker number is not the final determinant | LQF-V2 l.22-24: "different ranking authorities at different stages": retrieval rank (does it answer THIS local need?) → fusion → C4 (is this need tied to q0?) → C5 (does it add useful information?) → CA4. ELITE §6 (l.214): WildcardValue = hop1 × hop2 × novelty | bridges (WLK2C) and the WILDCARD sweep only | **Contradicted by the FINAL governing law** (l.39) "cross-encoder = final judge" and §51 (l.2244) "source relevance authority", inherited from the July "cross-encoder as the sole scoring authority" decision. Never amended; every other candidate gets one judge call against q0 |
+| Query → subqueries → bridges + document routing + chunk / document retrieval + synthesis | CHAT-QUERY-COMPILER-PLAN, PROFILE-SCOUT-V1, WLK2C, LQF-V2, CORPUS-EXPLORER-V1 | yes, live | 127 of 1,508 turns (8.4%, every mode) skip retrieval entirely: the compiler's no-retrieval route, owner backlog B20 |
+| WILDCARD is the poster child | FINAL §40 (l.1768): all ten atom kinds strong, SEEALSO / BRIDGE / ANCHOR on, broad frontier, ≤ 3 discoveries, each atom → MAP → child → support validation. ELITE §6 (l.190): "profound because it is abstract-grounded", with DIRECT + DERIVED `[A#]` synthesis bands | frontier yes; atom frontier wired (slice E); `[A#]` synthesis executed 2026-09-17 | See the WILDCARD finding below |
+| Document- and domain-level synthesis with different ideas | ELITE §7 (l.245): bundle ORIENTATION / EVIDENCE / RELATIONS / DERIVED. FINAL §44–47: roles DIRECT / PRECISION / RELATIONAL / LATENT | bundle yes; roles are dropped at `ui.py:3519` (defect 5) | The synthesizer cannot tell a DIRECT row from a LATENT one |
+
+**WILDCARD finding** (EXECUTED, `wildcard_probe.json`; 4 real turns replayed):
+- Each turn produced 55–59 latent candidates and 3 verified bridges.
+- All 12 bridges came from the latent abstraction / transfer channels, none from atoms.
+- Run directly, the same atom-frontier calls work: 12 atoms and 16 atom-nominated parents per turn. None wins a bridge; the
+  cinema atoms are thin vNext labels such as "Camera operation decisions".
+- In the live path that frontier sits in a bare `except: pass` with no receipt (`chat_retrieval.py:919`).
+- Whether the `[A#]` bridges reach the synthesis prompt is not recorded in the receipts.
+
+**Verdict.** The owner designed most of this, across four owner-authorized documents written in two weeks: FINAL
+2026-09-07, ELITE 2026-09-17, WLK2A 2026-09-18, LQF-V2 2026-09-19. It was never joined into one design:
+1. FINAL's law "cross-encoder = final judge" was never amended to LQF-V2's multi-authority ranking, so the code applies it
+   to everything except bridges and the WILDCARD sweep.
+2. No document says each profile field is its own conditional bridge with its own ranking:
+   - FINAL §7 made the fields modular for ROUTING;
+   - WLK2A / LQF-V2 made conditional RANKING work for queries and bridges;
+   - nobody joined the two.
+3. WILDCARD embodies it only at the latent-point level:
+   - its atom frontier is fed thin vNext atoms and never wins a bridge;
+   - the profile's concepts / theories / seealso never reach it;
+   - HYBRID / GRAPH get none of its two-hop judgement.
+
+**Sequencing (owner, 2026-09-23):** document RAG is completed before CODE-KNOWLEDGE-V1. The first slice of that track is one
+consolidated plan of record that does four things:
+- amends the FINAL law to the multi-authority ranking;
+- joins FINAL §7 with the WLK2A / LQF-V2 ranking model field by field;
+- names WILDCARD as the full embodiment (every field, two-hop value, DERIVED synthesis), with HYBRID / GRAPH taking the
+  subsets §7 assigns them, GNN excluded, and GRAPH using SEEALSO for hops;
+- lists the §6 fixes as its execution slices.
+
+## 11. Concepts and theories: routers to real chunks, not hydration (owner guidance + design sketch, same day)
+
+**Owner, 2026-09-23:** "We have to be careful selecting concepts and theories as hydrations to be fed, because they can also
+be more powerful if used as abstraction bridging and routing for relevant chunks from other documents and / or chunks.
+Essentially I don't know how to design this where they can be used to find real document chunks relevant to my query,
+unless they are used as subqueries for sparse and dense?"
+
+**Rule (consistent with FINAL's law, l.34-43: routing-inferred artifacts are never factual evidence).**
+- A concept or theory is a ROUTER. It finds real chunks, and the real chunks are the evidence.
+- Its text reaches the synthesizer only as a labelled derived principle bound to a real chunk already in the evidence
+  (ELITE §6 DERIVED `[A#]` → `[S#]`), capped.
+- It is never loaded into the prompt as bulk context: cinema has about 18 concept / theory items per document.
+
+**Design sketch (a PROPOSAL for the consolidated document-RAG plan; owner to confirm).** The subquery / probe is the
+mechanism that fetches real chunks, so the answer to the owner's question is yes. Four things around it make it work:
+1. **Select a few items per turn, not all 1,209.** Search q0 against the profile's `concepts` / `theories` (and `seealso`)
+   multivectors: one corpus-filtered MaxSim query. These multivectors exist today and nothing queries them (§8.1).
+   - Score each item of the top documents against q0 locally, and keep the top k: HYBRID about 2–3, WILDCARD about 5–8.
+   - Each item keeps (doc, field, text, vector, hop1 = item ↔ q0).
+   - The item vectors are already stored, so a probe needs no embedder call.
+2. **Route each selected item through three doors, all ending at real children:**
+   - *global door*: the item vector searches the child index across ALL documents (dense), plus sparse over the item's
+     specialist terms when it has any. This is the cross-document abstraction bridge; lane G does the same today for SEEALSO
+     atom text;
+   - *home door*: the item vector searches its own document's parent maps → parents → children (FINAL §42: atom → MAP →
+     child);
+   - *neighbour door* (GRAPH / WILDCARD): the item vector searches OTHER documents' concept / theory items → documents that
+     share the abstraction → their parent maps → children. This can also be precomputed offline, with no LLM, as a
+     concept-neighbour edge list, which becomes the GRAPH hop table next to SEEALSO.
+3. **Judge conditionally, not against q0 alone.** A chunk that arrived through an item scores chunk ↔ item (hop2,
+   cross-encoder with the item text as the query) × item ↔ q0 (hop1). That is ELITE's WildcardValue without the novelty
+   term.
+   - A q0-groundedness floor still applies, so tangents die.
+   - Roles: DIRECT (chunk ↔ q0 strong); COMPLEMENTARY (reached through the item and q0-grounded); DERIVED (WILDCARD, tighter
+     floor).
+   - The probes carry their own lineage (§6 fix 1), so LQF-V2 preserves their local winners.
+4. **Feed the same selected items to the bridge compiler** as its grounded concept set (§6 fix 2). Its 1–3 natural-language
+   bridges take the WLK2C conditional pass that already exists.
+
+**Evidence the pattern works** (all from this audit or earlier findings):
+- WLK2A's bridge-primary test: judging chunks against a good bridge seated the expert material, wc01 0 → 10.
+- Lane G, which probes children with atom text: half of the evidence rows it seats come from no other lane, even under
+  q0's judge.
+- WILDCARD's latent frontier, the same shape with latent abstraction vectors: 3 verified bridges on each of 4 real turns.
+
+**Cost to control.**
+- Each selected item costs a child search, a map search and extra judge pairs.
+- Live retrieve is already about 30 s (§5). k stays small in HYBRID, and the per-probe timings (§6 fix 6) land first.

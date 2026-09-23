@@ -23,24 +23,32 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (close-out before compaction) — **ENRICHMENT AUDIT DONE (11.415–11.416): enrichment chunks are judged against q0 and die; the owner's intent is query-time use through conditional rank + bridges. NEXT: owner picks the track: CODE-KNOWLEDGE-V1 (13 decisions) or the enrichment wiring.**
+## CURRENT — 2026-09-23 (close-out before compaction) — **MISSION = COMPLETE DOCUMENT RAG FIRST (owner, 11.417); CODE-KNOWLEDGE-V1 parked behind it. First slice: one consolidated plan of record that joins the owner's already-written design (audit §10) and settles concepts / theories as routers (audit §11).**
 
 ### Repository State
-- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 10 unpushed commits (`58c819f` … the
-  11.416 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
-- Main checkout clean after the 11.416 commit. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
+- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 11 unpushed commits (`58c819f` … the
+  11.417 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
+- Main checkout clean after the 11.417 commit. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
   (+5). Every other worktree branch is merged into `production`.
 - Fleet: 24 workers / 13 types healthy on ONE bundle, `/ready` true (embedder + reranker). Running code = committed code
-  (last bounce after `c6c31aa`; 11.413–11.416 are documents only).
+  (last bounce after `c6c31aa`; 11.413–11.417 are documents only).
 
 ### Active Mission
-- **CODE-KNOWLEDGE-V1** (plan `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`): admitted and reviewed; no slice started.
-  - Next dependency: the owner's answers to the feasibility report §8 + §10 (13 decisions).
-  - Parsers come from existing open-source packages behind thin adapters (report §11).
-- **Alternative track (owner's choice):** wire the enrichment into query time, as the seven fixes in
-  `docs/wiki/reports/2026-09-23/ENRICHMENT-SURFACES-AUDIT.md` §6 describe (owner intent + root cause: §9).
+- **DOCUMENT RAG COMPLETION (active; owner 2026-09-23: "before we work on code rag, we must complete document rag").**
+  - The owner's design is already written, but scattered: FINAL §1.2 / §7 / §40–42, ELITE §6–7, WLK2A, LQF-V2. It was never
+    consolidated.
+  - FINAL's law "cross-encoder = final judge" was never amended to LQF-V2's multi-authority ranking.
+  - Per-field conditional ranking is written nowhere.
+  - WILDCARD (the intended poster child) bridges only from latent points: its atoms lose every slot, and the profile's
+    concepts / theories never reach it.
+  - Evidence: audit `docs/wiki/reports/2026-09-23/ENRICHMENT-SURFACES-AUDIT.md` §9 (root cause), §10 (lineage), §11 (the
+    owner's routing rule + design sketch), §6 (the fixes).
+  - Plan of record: to be written first (not yet admitted).
+- **CODE-KNOWLEDGE-V1:** admitted and reviewed, PARKED behind document RAG by the owner.
+  - Plan `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`; 13 owner decisions (feasibility report §8 + §10).
+  - Parsers come from open-source packages behind thin adapters (report §11).
 
-### Completed Since Last Bootstrap (11.406–11.416)
+### Completed Since Last Bootstrap (11.406–11.417)
 - 11.406 — chat answers survive a chat switch (frontend).
 - 11.407 — Claude-style composer.
 - 11.408 — subquery cap 10; FAST / VECTOR = lanes A + B, with no depth lanes and no bridge pass.
@@ -53,6 +61,8 @@ historical, never an instruction.
 - 11.415 — enrichment-surfaces audit + report §11 (open-source parsers) + this CONTINUITY refresh.
 - 11.416 — audit addendum: full field inventory (§8), the owner's intent + the root cause (§9), fixes revised to wire the
   fields in (§6).
+- 11.417 — document RAG before code RAG (owner); design lineage (§10); WILDCARD probe; concepts / theories as routers, not
+  hydration (§11).
 
 ### Current Contract State
 - **Retrieval.** `MODE_LANES`: FAST / VECTOR = A + B; HYBRID / GRAPH / WILDCARD = all lanes; GNN = its own route.
@@ -81,11 +91,11 @@ historical, never an instruction.
   - cinema's atom store is the vNext generation (≈ 1 per kind per doc).
 
 ### Active Impact Closure
-- Changed by 11.413–11.416: documents and read-only scripts only → NOT_AFFECTED.
+- Changed by 11.413–11.417: documents and read-only scripts only → NOT_AFFECTED.
 - 11.406–11.412: UPDATED and deployed (see their rows).
 - DEFERRED: the nine audit defects (audit §4) and the seven fixes (audit §6), pending the owner's word per fix.
 - BLOCKED: fix 4's multi-hop part, on the owner lifting the Graph traversal deferral. The one-hop part is not blocked.
-- BLOCKED: CODE-KNOWLEDGE-V1 execution, on the 13 owner decisions.
+- DEFERRED: CODE-KNOWLEDGE-V1, parked behind document RAG completion (owner sequencing, 11.417).
 - Unresolved: none.
 
 ### Proof Status
@@ -94,7 +104,7 @@ historical, never an instruction.
 - 11.411 — DEPLOYED; the wire was confirmed against the merged code. The effect on the owner's answers is unconfirmed: the last
   UI turn (09:42Z) predates the deploy.
 - 11.412 — DEPLOYED; live canary: Alibaba 9 / 9 with 0 reasoning characters.
-- 11.413–11.416 — documents; the audit numbers are EXECUTED, with evidence under
+- 11.413–11.417 — documents; the audit numbers are EXECUTED, with evidence under
   `docs/wiki/experiments/enrichment-surfaces-2026-09-23/`.
 - INVALIDATED: none.
 
@@ -107,23 +117,27 @@ historical, never an instruction.
 - **zsh:** word-split file lists with `${=T}`.
 
 ### Working Tree
-- Clean after the 11.416 commit. Scratch lives outside the repo (session scratchpad).
+- Clean after the 11.417 commit. Scratch lives outside the repo (session scratchpad).
 
 ### Tooling State
 - `_graft_polymath` graph refreshed to `7eb767d` on 2026-09-23. Code is unchanged since, so it is current.
 - `graphify-out` was last refreshed 2026-09-21 (`acd83bb`); `graphify update .` refreshes it at $0.
-- Guards at the 11.416 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
+- Guards at the 11.417 commit: preflight 0 · repo_guard 0 · wiki_worm 0 · bundle_integrity READY.
 
 ### Next Action
 1. Run the `polymath-bootstrap` skill.
-2. Ask the owner which track goes first: (A) CODE-KNOWLEDGE-V1, or (B) the enrichment wiring.
-3. **Track A:**
-   - read `docs/wiki/plans/CODE-KNOWLEDGE-V1.md` → the packet `docs/code-knowledge-v1/` (its own read order) → the feasibility
-     report (§3 drift overrides the packet; §8 + §10 = 13 decisions; §11 = parsers from open-source packages);
-   - put the 13 decisions to the owner in one batch;
-   - execute Phase 1 (Python + generic YAML) one admitted slice at a time: C0 → C1 (flag + sync importer by repo path) → C2
-     → C3 → C5-YAML → C6 → C7 → C9 → C10 → role-bug fix + C11 → C12 → C13.
-4. **Track B** (audit §6, one slice each; the owner's intent is in §9):
+2. Read the audit: §9 root cause → §10 design lineage → §11 routing rule + design sketch → §6 fixes. Then read the sources it
+   cites: FINAL §1.2 / §7 / §40–42 / l.39, ELITE §6–7, WLK2A (findings + recommendation), LQF-V2 (architectural lock).
+3. **Draft ONE consolidated plan of record, documents only, admitted as its own slice**, e.g.
+   `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. It:
+   - amends FINAL's "cross-encoder = final judge" to the multi-authority ranking;
+   - makes each profile field a modular conditional bridge + ranking (FINAL §7 × WLK2A / LQF-V2);
+   - treats concepts / theories as routers, never hydration (§11): selection → three doors → two-hop judging;
+   - names WILDCARD the full embodiment and HYBRID / GRAPH its §7 subsets; GRAPH uses SEEALSO (and optionally concept
+     neighbours) for hops; GNN is excluded;
+   - makes the §6 fixes its execution slices, with receipts first.
+   Put its open decisions to the owner in one batch. It amends an owner law, so the owner confirms it before any code.
+4. **Execution slices after the owner confirms** (audit §6, one slice each):
    1. per-probe lineage + conditional judging for lanes D–H: each probe gets its own query id and text, LQF-V2 preserves its
       local winners, and the judge scores against the probe with a q0-groundedness floor;
    2. the bridge compiler is fed `concepts` / `theories` / `seealso` text instead of kind names and doc ids;
@@ -134,7 +148,8 @@ historical, never an instruction.
       the ≈ 30 s live retrieve;
    7. synthesis sees roles: labels past `ui.py:3519`; no "NO EVIDENCE RETRIEVED" for PROFILE / BRIDGE probes.
    - Receipts (6) should land before or together with 1, so the gain is measurable.
-5. Other open bugs:
+5. CODE-KNOWLEDGE-V1 stays parked until document RAG is complete (then its 13 decisions, feasibility report §8 + §10).
+6. Other open bugs:
    - evidence-role labels (`ui.py:3519` → `:3631`; background task chip `task_f664f82b`);
    - lanes D–I run outside `lane_deadline_s`;
    - the q0 top-k floor is unbuilt;
@@ -149,6 +164,9 @@ historical, never an instruction.
 - Change the subquery cap before per-lane timings are persisted and measured.
 - Re-ingest or re-embed cinema for the atom fix (projection only).
 - Remove or stop producing any profile field: the owner's intent is query-time use (audit §9).
+- Load concepts / theories into the prompt as hydration or evidence. They are routers to real chunks; their text is allowed
+  only as a labelled derived principle bound to a real chunk, capped (audit §11).
+- Start CODE-KNOWLEDGE-V1 slices before document RAG is complete (owner sequencing, 11.417).
 - Run determinism suites without `-k "not test_live_"`.
 - Edit the frozen gate `69b1dc2`. Run the benchmark G8 or the `/chat/evidence` probe L14 without the owner's own words.
 
