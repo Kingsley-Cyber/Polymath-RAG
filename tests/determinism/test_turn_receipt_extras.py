@@ -66,3 +66,23 @@ def test_latent_selection_and_the_wildcard_sweep_are_kept_without_their_timings(
 def test_nothing_measured_means_nothing_receipted():
     assert ui._turn_receipt_extras(None, None, None) == {
         "retrieval_trace": None, "latent_selection": None, "wildcard": None, "trace_ms": None}
+
+
+def test_s1d_the_path_aware_judge_and_each_probe_route_are_receipted_without_their_timings():
+    trace = {"contextual": {"enabled": True, "judged": 4, "needs": 2, "pairs": 7, "promoted": 1, "vague": 1, "ms": 212.4},
+             "probe_routes": {"p0": {"origin": "PROFILE", "own_book": True, "docs": 1, "sections": 3, "candidates": 6,
+                                     "lane_ms": 188.0},
+                              "br0": {"origin": "BRIDGE", "own_book": False, "docs": 3, "sections": 3, "candidates": 5,
+                                      "lane_ms": 240.5}}}
+    x = ui._turn_receipt_extras(trace, None, None)
+    rt = x["retrieval_trace"]
+    assert rt["contextual"] == {"enabled": True, "judged": 4, "needs": 2, "pairs": 7, "promoted": 1, "vague": 1}
+    assert rt["probe_routes"]["p0"] == {"origin": "PROFILE", "own_book": True, "docs": 1, "sections": 3, "candidates": 6}
+    assert x["trace_ms"]["contextual"] == 212.4
+    assert x["trace_ms"]["probe_routes"] == {"p0": {"lane_ms": 188.0}, "br0": {"lane_ms": 240.5}}
+    assert not _ms_keys({k: v for k, v in x.items() if k != "trace_ms"})
+
+
+def test_s1d_a_judge_that_did_not_run_is_not_receipted():
+    x = ui._turn_receipt_extras({"contextual": {"enabled": False}, "aspects": {"q1": {}}}, None, None)
+    assert "contextual" not in x["retrieval_trace"] and "probe_routes" not in x["retrieval_trace"]

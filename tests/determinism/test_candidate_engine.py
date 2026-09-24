@@ -1209,3 +1209,211 @@ def test_paths_without_the_judge_give_routes_judged_seats_but_no_forced_final_se
     _final, tr = ce.select_evidence(res, b, rerank_children=_skeleton_judge(conn_logit=1.0))
     assert tr["aspect_prefix"][ce.ROUTE_SEEALSO] >= 1                        # the route reached the judge
     assert not any(str(s["query_id"]).startswith(ce.ROUTE_PREFIX) for s in tr["composition"]["aspect_seats"])
+
+
+# ---------------------------------------------------------------- SKELETON-ROUTING-V1.1 (the plan's probes drive the skeleton)
+
+class QFake(Fake):
+    """The Fake corpus, whose dense search also records the query vector each call used."""
+    def __init__(self):
+        super().__init__()
+        self.qvecs = []
+
+    def dense(self, kind, top_k, extra=None, qvec=None):
+        self.qvecs.append((kind, dict(extra or {}), tuple(qvec) if qvec is not None else None))
+        return super().dense(kind, top_k, extra)
+
+
+_MAPS = [{"doc_id": "doc_a", "parent_id": "doc_a-p0"}, {"doc_id": "doc_a", "parent_id": "doc_a-p1"},
+         {"doc_id": "doc_b", "parent_id": "doc_b-p0"}, {"doc_id": "doc_c", "parent_id": "doc_c-p0"}]
+
+
+def _probe_door(maps=_MAPS):
+    """A fake pMAP door: `docs` are searched first, `nominate=False` stays inside them (the real door's contract)."""
+    calls = []
+
+    def door(qv, *, docs=None, nominate=True, signatures=True):
+        calls.append({"qv": tuple(qv), "docs": list(docs) if docs else None, "nominate": nominate, "signatures": signatures})
+        own = [dict(m) for m in maps if docs and m["doc_id"] in docs]
+        return own if (docs and not nominate) else own + [dict(m) for m in maps if not docs or m["doc_id"] not in docs]
+
+    door.calls = calls
+    return door
+
+
+def _probe(qid, origin, derived_from="", text=None, vec=(0.9, 0.1), weight=0.6):
+    return ce.SubQuery(query_id=qid, qtype="ENTITY", text=text or f"probe {qid}", weight=weight, qvec=vec,
+                       sparse_query=None, origin=origin, derived_from=derived_from)
+
+
+def _probe_budget(**kw):
+    return ce.CandidateBudget(**{"dualread_enabled": True, "skeleton_paths": True, "skeleton_probe_routes": 4,
+                                 "skeleton_probe_parents": 2, "skeleton_probe_children": 1, **kw})
+
+
+def test_each_probe_drives_the_skeleton_door_its_origin_calls_for():
+    fake, door = QFake(), _probe_door()
+    subs = [_probe("p0", "PROFILE", "doc_a"), _probe("br0", "BRIDGE", "doc_b"), _probe("q1", "USER")]
+    res = ce.retrieve_candidates(_ctx(), _probe_budget(), dense_search=fake.dense, sparse_search=fake.sparse,
+                                 dualread_search=door, subqueries=subs)
+    by_vec = {c["qv"]: c for c in door.calls}
+    assert by_vec[(0.1, 0.2)] == {"qv": (0.1, 0.2), "docs": None, "nominate": True, "signatures": True}   # the q0 door, unchanged
+    probe_calls = [c for c in door.calls if c["qv"] == (0.9, 0.1)]
+    # a PROFILE question stays inside its own book; a BRIDGE starts at its book and hops; a USER facet takes the nominated books
+    assert {"docs": ["doc_a"], "nominate": False} in [{"docs": c["docs"], "nominate": c["nominate"]} for c in probe_calls]
+    assert {"docs": ["doc_b"], "nominate": True} in [{"docs": c["docs"], "nominate": c["nominate"]} for c in probe_calls]
+    assert {"docs": None, "nominate": True} in [{"docs": c["docs"], "nominate": c["nominate"]} for c in probe_calls]
+    assert all(c["signatures"] is False for c in probe_calls)                  # a probe's need is the probe itself
+    tr = res.trace["probe_routes"]
+    assert tr["p0"]["own_book"] is True and tr["p0"]["docs"] == 1 and tr["br0"]["own_book"] is False and tr["br0"]["docs"] == 2
+
+
+def test_a_probe_route_keeps_its_path_and_its_need_and_never_poses_as_the_question():
+    fake, door = QFake(), _probe_door()
+    p0 = _probe("p0", "PROFILE", "doc_a", text="how do directors convey meaning")
+    res = ce.retrieve_candidates(_ctx(), _probe_budget(), dense_search=fake.dense, sparse_search=fake.sparse,
+                                 dualread_search=door, subqueries=[p0])
+    routed = [c for c in res.union if "p0" in c.query_ids and ce.ROUTE_PROBE in c.query_ids]
+    assert routed and all(ce.LANE_E in c.arrivals and c.doc_id == "doc_a" for c in routed)
+    assert {c.parent_id for c in routed} == {"doc_a-p0", "doc_a-p1"}              # pMAP found the sections of THAT book
+    assert all(res.trace["route_need"][c.chunk_id] == "how do directors convey meaning" for c in routed
+               if c.chunk_id not in {x.chunk_id for x in res.union if ce.ROUTE_PMAP in x.query_ids})
+    assert res.trace["aspects"][ce.ROUTE_PROBE]["origin"] == "SKELETON"
+    assert res.trace["aspects"]["p0"]["lanes"][ce.ROUTE_PROBE] == res.trace["probe_routes"]["p0"]["candidates"] == 2
+    assert res.trace["lane_sizes"]["probe_routes"] == 2 and set(res.trace["funnel_lanes"]["probe_routes"]) == {c.chunk_id for c in routed}
+
+
+def test_a_probe_reads_its_sections_through_the_question_blended_with_the_probe():
+    fake, door = QFake(), _probe_door()
+    p0 = _probe("p0", "PROFILE", "doc_a", vec=(0.0, 1.0))
+    ce.retrieve_candidates(_ctx(), _probe_budget(), dense_search=fake.dense, sparse_search=fake.sparse,
+                           dualread_search=door, subqueries=[p0])
+    deepen = [q for kind, extra, q in fake.qvecs if kind == CHILD and extra.get("doc_id") == "doc_a" and q is not None]
+    assert deepen and all(q == ce._blend((0.1, 0.2), (0.0, 1.0)) for q in deepen)
+    blend = ce._blend((0.1, 0.2), (0.0, 1.0))
+    assert abs(sum(x * x for x in blend) - 1.0) < 1e-9                          # a unit vector between the two
+
+
+def test_probe_order_is_most_abstract_first_and_capped():
+    subs = [_probe("q1", "USER", weight=0.8), _probe("p0", "PROFILE", "doc_a"), _probe("q2", "USER", weight=0.9),
+            _probe("br0", "BRIDGE", "doc_b")]
+    order = [sq.query_id for sq in ce._probe_order(subs, ce.CandidateBudget(skeleton_probe_routes=3))]
+    assert order == ["br0", "p0", "q2"]
+    assert ce._probe_order(subs, ce.CandidateBudget()) == []                   # 0 = off
+
+
+def test_a_bridge_probe_spreads_over_the_books_it_reached():
+    rows = [{"doc_id": "d1", "parent_id": "d1-p0"}, {"doc_id": "d1", "parent_id": "d1-p1"}, {"doc_id": "d2", "parent_id": "d2-p0"},
+            {"doc_id": "d1", "parent_id": "d1-p0"}]
+    assert ce._doc_fair_parents(rows, 2) == [("d1", "d1-p0"), ("d2", "d2-p0")]
+    assert ce._doc_fair_parents(rows, 5) == [("d1", "d1-p0"), ("d2", "d2-p0"), ("d1", "d1-p1")]
+
+
+def test_probe_routes_are_off_by_default_and_the_q0_door_is_called_as_before():
+    fake, door = QFake(), _probe_door()
+    res = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(dualread_enabled=True, skeleton_paths=True), dense_search=fake.dense,
+                                 sparse_search=fake.sparse, dualread_search=door, subqueries=[_probe("p0", "PROFILE", "doc_a")])
+    assert [c["qv"] for c in door.calls] == [(0.1, 0.2)]
+    assert "probe_routes" not in res.trace and "probe_routes" not in res.trace["lane_sizes"]
+    assert "route_lanes_wall" not in res.trace["timings_ms"]
+    assert not any(ce.ROUTE_PROBE in c.query_ids for c in res.union)
+
+
+def test_parallel_route_lanes_merge_in_the_fixed_order_so_the_union_is_the_sequential_run():
+    fan_rows = [dict(_row(CHILD, 0, "d3", parent="d3-p1", chunk="d3-fanout", text="delay builds anticipation"),
+                     fanout_atom="anticipation grows when resolution is delayed")]
+
+    def run(parallel):
+        fake = QFake()
+        b = _probe_budget(seealso_fanout_enabled=True, atom_kinds=("SEEALSO",), parallel_route_lanes=parallel)
+        subs = [_probe("p0", "PROFILE", "doc_a"), _probe("br0", "BRIDGE", "doc_b", vec=(0.3, 0.7))]
+        return ce.retrieve_candidates(_ctx(), b, dense_search=fake.dense, sparse_search=fake.sparse, dualread_search=_probe_door(),
+                                      fanout_search=lambda qv: fan_rows, subqueries=subs)
+
+    seq, par = run(False), run(True)
+    key = [(c.chunk_id, tuple(c.arrivals), tuple(c.query_ids), round(c.fused_score, 9)) for c in seq.union]
+    assert key == [(c.chunk_id, tuple(c.arrivals), tuple(c.query_ids), round(c.fused_score, 9)) for c in par.union]
+    assert seq.trace["route_need"] == par.trace["route_need"]
+    assert "route_lanes_wall" in par.trace["timings_ms"]
+
+
+def test_a_route_lane_that_raises_becomes_an_empty_receipted_lane():
+    def boom():
+        raise RuntimeError("store down")
+    outs = ce._run_route_lanes([("ok", lambda: (["x"], {"enabled": True}, {"x": "n"})), ("bad", boom)], parallel=True)
+    assert outs["ok"] == (["x"], {"enabled": True}, {"x": "n"})
+    assert outs["bad"][0] == [] and outs["bad"][1]["degraded"].startswith("RuntimeError") and outs["bad"][2] == {}
+
+
+def test_latent_rescue_keeps_the_latent_text_that_found_each_parent_as_its_need():
+    from polymath_shared.latent.rescue import latent_rescue_parents
+
+    def routing(_c, v, filters):
+        if filters["representation_kind"] == "latent_abstraction":
+            return [{"score": 0.6, "payload": {"parent_id": "pA", "doc_id": "dA", "text": "structure recurs under pressure"}}]
+        return [{"score": 0.9, "payload": {"parent_id": "pA", "doc_id": "dA", "text": "effort shapes perceived weight"}},
+                {"score": 0.5, "payload": {"parent_id": "pB", "doc_id": "dB"}}]
+
+    lr = latent_rescue_parents([0.1], corpus_id="c1", plan=ce.CandidateBudget(), routing_search=routing)
+    need = {p.parent_id: p.need for p in lr.parents}
+    assert need == {"pA": "effort shapes perceived weight", "pB": ""}          # the best hit's text; none when it has none
+
+    def dense(kind, top_k, extra=None, qvec=None):
+        if kind == ce.REPRESENTATION_KIND_CHILD and extra and extra.get("parent_id"):
+            pid = extra["parent_id"]
+            return [{"score": 0.5, "payload": {"chunk_id": f"{pid}-kid", "doc_id": "dA", "parent_id": pid, "source_name": "L.md", "text": "t"}}]
+        return []
+
+    b = ce.CandidateBudget(latent_enabled=True, skeleton_paths=True, lanes=(ce.LANE_B,))
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=dense, sparse_search=lambda k, q=None: [], latent_search=routing)
+    assert res.trace["route_need"]["pA-kid"] == "effort shapes perceived weight" and "pB-kid" not in res.trace["route_need"]
+
+
+def test_the_graph_path_need_is_the_fact_that_reached_the_book_never_its_doc_id():
+    rows = [dict(_row(CHILD, 0, "d3", parent="d3-p1", chunk="d3-dest"), dest_entity="d3", dest_need="lighting influences mood"),
+            dict(_row(CHILD, 1, "d2", parent="d2-p0", chunk="d2-dest"), dest_entity="d2")]
+    b = ce.CandidateBudget(graph_dest_enabled=True, skeleton_paths=True)
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=Fake().dense, sparse_search=Fake().sparse, graph_dest_search=lambda qv: rows)
+    assert res.trace["route_need"]["d3-dest"] == "lighting influences mood"
+    assert "d2-dest" not in res.trace["route_need"]                            # a bare doc id is no need (V1 passed it)
+    assert res.trace["graph_dest"]["destinations"] == ["d2", "d3"]             # the receipt still names the destinations
+
+
+def test_the_path_aware_judge_reads_every_paths_strongest_need_before_any_second():
+    """V1.1: a path whose chunks sit lower in the prefix is never left unjudged because another path found more needs."""
+    rows = [dict(_row(CHILD, i, "d3", parent="d3-p1", chunk=f"d3-fan{i}", text=f"fan {i}"), fanout_atom=f"atom {i}") for i in range(3)]
+    gd = [dict(_row(CHILD, 0, "d2", parent="d2-p1", chunk="d2-dest", text="graph dest"), dest_entity="d2",
+               dest_need="lighting influences mood")]
+    b = ce.CandidateBudget(seealso_fanout_enabled=True, graph_dest_enabled=True, atom_kinds=("SEEALSO",), skeleton_paths=True,
+                           contextual_judge=True, contextual_max_needs=2, route_prefix_seats=3)
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=Fake().dense, sparse_search=Fake().sparse,
+                                 fanout_search=lambda qv: rows, graph_dest_search=lambda qv: gd)
+    seen: list[str] = []
+
+    def judge(q, rs):
+        if " — " in q:
+            seen.append(q.split(" — ", 1)[1])
+        return sorted([dict(r, rerank_score=1.0) for r in rs], key=lambda r: r["chunk_id"], reverse=True)   # graph chunk last
+
+    ce.select_evidence(res, b, rerank_children=judge)
+    assert "lighting influences mood" in seen and len(seen) == 2              # the graph path got its judgement
+
+
+def test_a_vague_need_never_spends_its_paths_turn():
+    """V1.1: the connection check runs before the path-fair pick — a path's vague first need is skipped for its next one."""
+    rows = [dict(_row(CHILD, 0, "d3", parent="d3-p1", chunk="d3-fanA", text="fan A"), fanout_atom="everything involves uncertainty"),
+            dict(_row(CHILD, 1, "d3", parent="d3-p1", chunk="d3-fanB", text="fan B"), fanout_atom="delay builds anticipation")]
+    b = ce.CandidateBudget(seealso_fanout_enabled=True, atom_kinds=("SEEALSO",), skeleton_paths=True, contextual_judge=True,
+                           contextual_max_needs=1, route_prefix_seats=3)
+    res = ce.retrieve_candidates(_ctx(), b, dense_search=Fake().dense, sparse_search=Fake().sparse, fanout_search=lambda qv: rows)
+    seen: list[str] = []
+
+    def judge(q, rs):
+        if " — " in q:
+            seen.append(q.split(" — ", 1)[1])
+        order = {"d3-fanA": 0, "d3-fanB": 1}                                   # the vague need's chunk sits first
+        out = [dict(r, rerank_score=(-4.0 if r.get("text") == "everything involves uncertainty" else 1.0)) for r in rs]
+        return sorted(out, key=lambda r: (order.get(r["chunk_id"], 2), r["chunk_id"]))
+
+    _final, tr = ce.select_evidence(res, b, rerank_children=judge)
+    assert seen == ["delay builds anticipation"] and tr["contextual"]["vague"] == 1

@@ -64,3 +64,26 @@ def test_the_judge_can_be_scoped_to_wildcard():
     assert apply_skeleton_routes(CandidateBudget(), mode="WILDCARD", plan=_plan(), env=env).contextual_judge
     assert not apply_skeleton_routes(CandidateBudget(), mode="HYBRID", plan=_plan(), env=env).contextual_judge
     assert not apply_skeleton_routes(CandidateBudget(), mode="GRAPH", plan=_plan(), env=env).contextual_judge
+
+
+# ---------------------------------------------------------------- SKELETON-ROUTING-V1.1: the plan's probes drive the skeleton
+
+PROBES = {**ON, "POLYMATH_CHAT_SKELETON_PROBES": "1"}
+
+
+def test_probe_routes_follow_the_mode_and_run_the_skeleton_lanes_concurrently():
+    wild = apply_skeleton_routes(CandidateBudget(), mode="WILDCARD", plan=_plan("PROFILE", "BRIDGE"), env=PROBES)
+    hyb = apply_skeleton_routes(CandidateBudget(), mode="HYBRID", plan=_plan("PROFILE"), env=PROBES)
+    graph = apply_skeleton_routes(CandidateBudget(), mode="GRAPH", plan=_plan("USER"), env=PROBES)
+    assert wild.skeleton_probe_routes == 7 and hyb.skeleton_probe_routes == 4 == graph.skeleton_probe_routes
+    assert wild.parallel_route_lanes and hyb.parallel_route_lanes and graph.parallel_route_lanes
+
+
+def test_probe_routes_need_their_own_flag_and_the_doors():
+    doors_only = apply_skeleton_routes(CandidateBudget(), mode="WILDCARD", plan=_plan("PROFILE"), env=ON)
+    assert doors_only.skeleton_probe_routes == 0 and doors_only.parallel_route_lanes      # opened doors always run concurrently
+    no_doors = apply_skeleton_routes(CandidateBudget(), mode="WILDCARD", plan=_plan("PROFILE"),
+                                     env={"POLYMATH_CHAT_SKELETON_PROBES": "1"})
+    assert no_doors == CandidateBudget()                                      # probes ride the doors; alone they change nothing
+    for mode in ("FAST", "VECTOR", "GNN"):
+        assert apply_skeleton_routes(CandidateBudget(), mode=mode, plan=_plan("PROFILE"), env=PROBES) == CandidateBudget()

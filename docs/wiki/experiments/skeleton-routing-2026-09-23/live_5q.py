@@ -4,7 +4,7 @@ evidence; does the compiler plan as designed; and does WILDCARD surface grounded
 questions HYBRID answers? Posts to the live :7200/chat/stream exactly as the UI does (message, corpus_id, mode,
 require_retrieval; the server's default synthesizer and compiler), then reads each turn's own receipt.
 
-LIVE SPEND: five chat turns, authorized by the owner for this run. Writes results.json next to this file."""
+LIVE SPEND: five chat turns, authorized by the owner for this run. Writes live_results.json next to this file."""
 from __future__ import annotations
 
 import json

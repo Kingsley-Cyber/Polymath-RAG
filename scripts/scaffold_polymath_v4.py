@@ -2288,6 +2288,13 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/skeleton-routing-2026-09-23/replay.json", "json", None),
     ("docs/wiki/experiments/skeleton-routing-2026-09-23/live_5q.py", "py", None),
     ("docs/wiki/experiments/skeleton-routing-2026-09-23/compare.py", "py", None),
+    # SKELETON-ROUTING-V1.1 (register 11.441–11.442): the V1 live check + the V1.1 replays (probe doors; V1 vs V1.1)
+    ("docs/wiki/experiments/skeleton-routing-2026-09-23/live_results.json", "json", None),
+    ("docs/wiki/experiments/skeleton-routing-2026-09-23/live_compare.json", "json", None),
+    ("docs/wiki/experiments/skeleton-routing-2026-09-23/replay_probes.json", "json", None),
+    ("docs/wiki/experiments/skeleton-routing-2026-09-23/replay_v1_deployed.json", "json", None),
+    ("docs/wiki/experiments/skeleton-routing-2026-09-23/replay_v11_deployed.json", "json", None),
+    ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1-1.md", "md", None),
     ("docs/wiki/experiments/retrieval-pathways-2026-09-23/run_5q.py", "py", None),
     ("docs/wiki/experiments/retrieval-pathways-2026-09-23/analyze.py", "py", None),
     ("docs/wiki/experiments/retrieval-pathways-2026-09-23/results.json", "json", None),

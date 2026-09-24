@@ -2966,10 +2966,11 @@ def _split_clock(d):
     return {k: v for k, v in d.items() if not _is_clock(k)}, {k: v for k, v in d.items() if _is_clock(k)}
 
 
-def _turn_receipt_extras(trace: dict | None, latent_meta: dict | None, wildcard: dict | None) -> dict:
+def _turn_receipt_extras(trace: dict | None, latent_selection: dict | None, wildcard: dict | None) -> dict:
     """S1a (E5): keep what the turn already measured on its receipt — per-probe survival, the deadlines hit, latent
-    selection, the WILDCARD sweep (with E4's atom frontier) and every lane / stage timing. Clock readings live under
-    `trace_ms` only, so a route-parity comparison drops them in one place. Receipt-only: nothing reads these back."""
+    selection (WLK2C's seat calibration), the WILDCARD sweep (with E4's atom frontier) and every lane / stage timing. Clock
+    readings live under `trace_ms` only, so a route-parity comparison drops them in one place. Receipt-only: nothing reads
+    these back. S1d (SKELETON-ROUTING-V1.1): the path-aware judge's verdict counts and each probe route's reach too."""
     trace = trace if isinstance(trace, dict) else {}
     rt = {k: trace[k] for k in _TRACE_RECEIPT_KEYS if trace.get(k) is not None}
     timed_out = (trace.get("concurrency") or {}).get("timed_out")
@@ -2984,7 +2985,16 @@ def _turn_receipt_extras(trace: dict | None, latent_meta: dict | None, wildcard:
              if isinstance(trace.get(k), dict) and trace[k].get("lane_ms") is not None}
     if lanes:
         ms["lanes"] = lanes
-    latent, latent_ms = _split_clock(latent_meta)
+    judge = trace.get("contextual")
+    if isinstance(judge, dict) and judge.get("enabled"):
+        rt["contextual"] = {k: v for k, v in judge.items() if k != "ms" and not _is_clock(k)}
+        if judge.get("ms") is not None:
+            ms["contextual"] = judge["ms"]
+    probes = trace.get("probe_routes")
+    if isinstance(probes, dict) and probes:
+        rt["probe_routes"] = {q: _split_clock(r)[0] for q, r in probes.items()}
+        ms["probe_routes"] = {q: _split_clock(r)[1] for q, r in probes.items() if _split_clock(r)[1]}
+    latent, latent_ms = _split_clock(latent_selection)
     if latent_ms:
         ms["latent"] = latent_ms
     sweep, sweep_ms = _split_clock(wildcard)
@@ -3662,7 +3672,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         # P1.b: typed subqueries run lanes B + C on their own vectors (v2-single = A/B without them)
                         # LATENT-QUERY-FUSION-V2 F4: carry the plan's EXISTING per-query origin provenance
                         # (USER/PROFILE/GRAPH/BRIDGE/WILDCARD) so V2 fusion weights each lane by lineage class.
-                        subqueries=tuple((q.id, q.type, q.query, q.weight, getattr(q, "origin", "")) for q in _plan.queries if q.type != "PRIMARY")
+                        subqueries=tuple((q.id, q.type, q.query, q.weight, getattr(q, "origin", ""), getattr(q, "derived_from", None) or "") for q in _plan.queries if q.type != "PRIMARY")
                         if (_flag == "on" and _plan is not None and _rflag == "v2") else (),
                         # WLK2C: the BRIDGE subquery ids, so chat_retrieve_v2 exposes their candidates in the
                         # latent pool regardless of fused rank (bridge candidates rarely top the q0-dominated union).
@@ -4122,7 +4132,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                           "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan"),
                           "chat_plan": _plan_receipt or None, "prompt": _prompt_meta or None, "carry": _carry_meta,
                           "generation": _gen_meta or None, "composition": retrieval.get("composition"),
-                          **_turn_receipt_extras(_trace, latent_meta, retrieval.get("wildcard_diagnostics"))})
+                          **_turn_receipt_extras(_trace, _latent_receipt, retrieval.get("wildcard_diagnostics"))})
                 return
 
             yield _phase("synthesize", "Validating claims against "
@@ -4174,7 +4184,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                       "used_evidence": used, "degraded": retrieval.get("degraded"),
                       "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None, "carry": _carry_meta,
                       "composition": retrieval.get("composition"),
-                      **_turn_receipt_extras(_trace, latent_meta, retrieval.get("wildcard_diagnostics"))})
+                      **_turn_receipt_extras(_trace, _latent_receipt, retrieval.get("wildcard_diagnostics"))})
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {
                 "message": str(exc.detail)}

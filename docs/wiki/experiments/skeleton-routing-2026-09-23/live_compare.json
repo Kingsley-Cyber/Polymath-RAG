@@ -1,0 +1,255 @@
+[
+ {
+  "before": {
+   "mode": "HYBRID",
+   "wall_s": 31.7,
+   "status": "ok",
+   "lane_counts": {
+    "latent_rescue": 14,
+    "dualread": 22,
+    "seealso_fanout": 0,
+    "graph_dest": 0
+   },
+   "skeleton_final": 2,
+   "skeleton_cited": 0,
+   "cited": 10,
+   "final_docs": 8,
+   "cited_docs": 5,
+   "route_aspects": [],
+   "latent_selection": null,
+   "latent_labels": 15,
+   "atom_frontier": null,
+   "answer_head": "The core idea across your books is that **weight on screen is a property of timing and spacing, not of drawing accuracy** \u2014 a cannonball drawn beautifully will still float unless its motion is timed to suggest mass [S5]. Each object has its own weight, construction, and flexibility, so it behaves in"
+  },
+  "after": {
+   "mode": "HYBRID",
+   "wall_s": 31.9,
+   "status": "ok",
+   "lane_counts": {
+    "latent_rescue": 14,
+    "dualread": 22,
+    "seealso_fanout": 22,
+    "graph_dest": 0
+   },
+   "skeleton_final": 3,
+   "skeleton_cited": 2,
+   "cited": 12,
+   "final_docs": 8,
+   "cited_docs": 5,
+   "route_aspects": [
+    "rt:latent",
+    "rt:pmap",
+    "rt:seealso"
+   ],
+   "latent_selection": null,
+   "latent_labels": 0,
+   "atom_frontier": null,
+   "answer_head": "## Core idea\n\nMaking a character feel weighty is almost entirely a matter of timing and spacing, not drawing \u2014 a static frame cannot communicate mass. The books converge on the same principle: on screen, weight is conveyed by how long a body takes to start, stop, and change direction, because that b"
+  }
+ },
+ {
+  "before": {
+   "mode": "WILDCARD",
+   "wall_s": 34.3,
+   "status": "ok",
+   "lane_counts": {
+    "latent_rescue": 14,
+    "dualread": 22,
+    "seealso_fanout": 0,
+    "graph_dest": 0
+   },
+   "skeleton_final": 1,
+   "skeleton_cited": 0,
+   "cited": 11,
+   "final_docs": 7,
+   "cited_docs": 5,
+   "route_aspects": [],
+   "latent_selection": null,
+   "latent_labels": 15,
+   "atom_frontier": null,
+   "answer_head": "Your books converge on one clear thesis: **a character reads as heavy not because of how it is drawn, but because of how its motion is timed and spaced** \u2014 weight is a behavior, not an image. And this has both a physical side (Newtonian timing, mass, momentum) and a perceptual/emotional side (the au"
+  },
+  "after": {
+   "mode": "WILDCARD",
+   "wall_s": 35.4,
+   "status": "ok",
+   "lane_counts": {
+    "latent_rescue": 14,
+    "dualread": 22,
+    "seealso_fanout": 24,
+    "graph_dest": 8
+   },
+   "skeleton_final": 5,
+   "skeleton_cited": 3,
+   "cited": 12,
+   "final_docs": 9,
+   "cited_docs": 6,
+   "route_aspects": [
+    "rt:graph",
+    "rt:latent",
+    "rt:pmap",
+    "rt:seealso"
+   ],
+   "latent_selection": null,
+   "latent_labels": 0,
+   "atom_frontier": {
+    "maps": 16,
+    "atoms": 12,
+    "error": null,
+    "parents_added": 14
+   },
+   "answer_head": "Your books converge on one core idea: **weight on screen is a timing problem before it is a drawing problem.** The classic phrasing in *Timing for Animation* is that a heavy or light read depends entirely on the *spacing of the drawings*, not the drawing itself \u2014 a perfectly drawn cannonball that mo"
+  }
+ },
+ {
+  "before": {
+   "mode": "HYBRID",
+   "wall_s": 26.8,
+   "status": "ok",
+   "lane_counts": {
+    "latent_rescue": 18,
+    "dualread": 24,
+    "seealso_fanout": 0,
+    "graph_dest": 0
+   },
+   "skeleton_final": 5,
+   "skeleton_cited": 4,
+   "cited": 9,
+   "final_docs": 10,
+   "cited_docs": 7,
+   "route_aspects": [],
+   "latent_selection": null,
+   "latent_labels": 15,
+   "atom_frontier": null,
+   "answer_head": "Editors and directors build suspense without dialogue by controlling what the audience knows and when they know it, then using cutting, composition, and motion to convert that knowledge into dread. The core trick is information asymmetry \u2014 let the viewer understand more than the on-screen character,"
+  },
+  "after": {
+   "mode": "HYBRID",
+   "wall_s": 40.2,
+   "status": "ok",
+   "lane_counts": {
+    "latent_rescue": 18,
+    "dualread": 24,
+    "seealso_fanout": 24,
+    "graph_dest": 0
+   },
+   "skeleton_final": 8,
+   "skeleton_cited": 6,
+   "cited": 12,
+   "final_docs": 10,
+   "cited_docs": 8,
+   "route_aspects": [
+    "rt:latent",
+    "rt:pmap",
+    "rt:seealso"
+   ],
+   "latent_selection": null,
+   "latent_labels": 4,
+   "atom_frontier": null,
+   "answer_head": "# How Editors and Directors Build Suspense Without Dialogue\n\nThe most powerful tool for wordless suspense is **information asymmetry** \u2014 letting the audience know something the character doesn't. As Hitchcock put it, there can be no real suspense unless the audience knows what's going to happen: his"
+  }
+ },
+ {
+  "before": {
+   "mode": "WILDCARD",
+   "wall_s": 31.4,
+   "status": "ok",
+   "lane_counts": {
+    "latent_rescue": 18,
+    "dualread": 24,
+    "seealso_fanout": 0,
+    "graph_dest": 0
+   },
+   "skeleton_final": 4,
+   "skeleton_cited": 4,
+   "cited": 14,
+   "final_docs": 10,
+   "cited_docs": 9,
+   "route_aspects": [],
+   "latent_selection": null,
+   "latent_labels": 15,
+   "atom_frontier": null,
+   "answer_head": "Suspense without dialogue is built on one core principle: the audience knows something the character doesn't, and the film gives them time to imagine the worst. Everything else \u2014 editing, camera, pacing, sound \u2014 is a mechanism for controlling that gap between what we know and what we fear.\n\n**Inform"
+  },
+  "after": {
+   "mode": "WILDCARD",
+   "wall_s": 40.3,
+   "status": "ok",
+   "lane_counts": {
+    "latent_rescue": 18,
+    "dualread": 24,
+    "seealso_fanout": 24,
+    "graph_dest": 8
+   },
+   "skeleton_final": 10,
+   "skeleton_cited": 8,
+   "cited": 12,
+   "final_docs": 9,
+   "cited_docs": 7,
+   "route_aspects": [
+    "rt:graph",
+    "rt:latent",
+    "rt:pmap",
+    "rt:seealso"
+   ],
+   "latent_selection": null,
+   "latent_labels": 5,
+   "atom_frontier": {
+    "maps": 16,
+    "atoms": 12,
+    "error": null,
+    "parents_added": 15
+   },
+   "answer_head": "**Suspense without dialogue is built by controlling what the audience knows and when they know it \u2014 then using editing and visual choices to make them wait.** The central engine is the Hitchcock principle from [S2]: there is no real suspense unless the audience knows something bad is coming. The bom"
+  }
+ },
+ {
+  "before": {
+   "mode": "GRAPH",
+   "wall_s": 33.7,
+   "status": "ok",
+   "lane_counts": {
+    "latent_rescue": 18,
+    "dualread": 24,
+    "seealso_fanout": 0,
+    "graph_dest": 0
+   },
+   "skeleton_final": 9,
+   "skeleton_cited": 8,
+   "cited": 11,
+   "final_docs": 8,
+   "cited_docs": 6,
+   "route_aspects": [],
+   "latent_selection": null,
+   "latent_labels": 15,
+   "atom_frontier": null,
+   "answer_head": "Lighting and color are the fastest shorthand an audience reads before they interpret a single line of dialogue. They work at a \"gut, emotional level\" that reaches viewers on one plane while their conscious brain processes the story on another [S7]. The same physical scene lit bright and warm reads d"
+  },
+  "after": {
+   "mode": "GRAPH",
+   "wall_s": 36.1,
+   "status": "ok",
+   "lane_counts": {
+    "latent_rescue": 18,
+    "dualread": 24,
+    "seealso_fanout": 24,
+    "graph_dest": 8
+   },
+   "skeleton_final": 19,
+   "skeleton_cited": 19,
+   "cited": 14,
+   "final_docs": 7,
+   "cited_docs": 6,
+   "route_aspects": [
+    "rt:graph",
+    "rt:latent",
+    "rt:pmap",
+    "rt:seealso"
+   ],
+   "latent_selection": null,
+   "latent_labels": 0,
+   "atom_frontier": null,
+   "answer_head": "Lighting and color are the fastest way to change what a scene *means* to an audience, often working below conscious awareness. Blain Brown puts it directly: light and color \"reach viewers at a purely emotional gut level,\" affecting the audience on one plane while their conscious brain interprets the"
+  }
+ }
+]

@@ -293,8 +293,9 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
         hidden = tuple(searcher._hidden_for(corpus_id) or ())      # warm the generation cache ONCE, before any lane thread reads it
         # LATENT-QUERY-FUSION-V2 F4: specs may carry a 5th field (origin, from the plan's existing
         # provenance); pad legacy 4-tuples so unpacking stays uniform. origin is descriptive only.
-        sub_specs = [((tuple(x) + ("",) * 5)[:5]) for x in (subqueries or ())][: budget.max_subqueries]
-        texts = [query] + [t for (_, _, t, _, _) in sub_specs if t and t != query]
+        # (id, type, text, weight, origin[, derived_from]) — SKELETON-ROUTING-V1.1 reads the probe's source document
+        sub_specs = [((tuple(x) + ("",) * 6)[:6]) for x in (subqueries or ())][: budget.max_subqueries]
+        texts = [query] + [t for (_, _, t, _, _, _) in sub_specs if t and t != query]
         distinct = list(dict.fromkeys(texts))
         sparse_q, sparse_rule = None, "raw"
         try:
@@ -302,7 +303,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
         except Exception:  # noqa: BLE001 — lane C degrades in the engine
             sparse_q = None
         sub_sparse: dict[str, tuple] = {}                                    # subquery sparse queries need no vector either
-        for (sid, _stype, stext, _sweight, _sorigin) in sub_specs:
+        for (sid, _stype, stext, _sweight, _sorigin, _sfrom) in sub_specs:
             if stext and stext != query:
                 sub_sparse[str(sid)] = sparse_vector_for(stext, ())
 
@@ -316,19 +317,26 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             # B12 lane D: the latent kinds live in the same collection; `latent_rescue_parents` passes the kind + corpus
             return searcher._search(collection, list(v), dict(filters), limit=max(budget.latent_abstraction_top_k, budget.latent_transfer_top_k))
 
-        def dualread_search(qv) -> list[dict]:
+        def dualread_search(qv, *, docs=None, nominate: bool = True, signatures: bool = True) -> list[dict]:
             # S9 lane E (RETRIEVAL-MIGRATION §17): the vNext routing door — global-profile RRF
             # nomination → ONE `doc_id`-filtered parent-map search → resolved parents
             # [{doc_id, parent_id, …}]. The engine deepens each parent through the ORIGINAL
             # child lane (dense_search) and unions it LAST. Read-only; only invoked when
             # `budget.dualread_enabled` (POLYMATH_CHAT_DUALREAD_ENABLED) — zero cost when off.
+            # SKELETON-ROUTING-V1.1 (a probe drives the door): `docs` are searched first (the probe's own book);
+            # `nominate=False` keeps the search inside them; `signatures=False` skips the Postgres read (a probe's
+            # need is the probe itself). The defaults are the q0 door, unchanged.
             from polymath_shared.document_profile import parent_map_projection as _pmp, projection as _pj
             from polymath_shared.embedding_contracts import active_contract as _ac
             cid = _ac().contract_id
-            docs = _pj.profile_nominate(client, _pj.collection_name(cid), qv, corpus_id, k=budget.dualread_profile_docs)
+            docs = [str(d) for d in (docs or ()) if d]
+            if nominate:
+                for d in _pj.profile_nominate(client, _pj.collection_name(cid), qv, corpus_id, k=budget.dualread_profile_docs):
+                    if d not in docs:
+                        docs.append(d)
             # R4 PROFILE_ATOM lane (§42): atoms of the intent-selected kinds nominate ADDITIONAL
             # docs (routing/expansion, never evidence) that converge through the SAME parent-MAP.
-            atom_kinds = tuple(getattr(budget, "atom_kinds", ()) or ())
+            atom_kinds = tuple(getattr(budget, "atom_kinds", ()) or ()) if nominate else ()
             if atom_kinds:
                 from polymath_shared.document_profile import profile_atom_projection as _pap
                 try:
@@ -340,7 +348,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                 except Exception:  # noqa: BLE001 — the atom lane is optional; absence never breaks routing
                     pass
             maps = _pmp.search_parent_maps(client, _pmp.collection_name(cid), qv, docs, k=budget.dualread_map_k)
-            if getattr(budget, "skeleton_paths", False) and maps:
+            if signatures and getattr(budget, "skeleton_paths", False) and maps:
                 # SKELETON-ROUTING-V1: the section's pMAP routing signature is the abstract need that found its children —
                 # the contextual judge scores them against it (Postgres is its authority; the map point carries no text)
                 import contextlib as _contextlib
@@ -471,6 +479,26 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             dest_docs = [str(r[0]) for r in doc_rows if r and r[0]]
             if not dest_docs:
                 return []
+            # SKELETON-ROUTING-V1.1: the graph path's NEED is the fact that reached the destination ("lighting influences
+            # mood"), not the destination's doc id — the path-aware judge reads it beside the question (V1 passed the doc id)
+            need_by_doc: dict[str, str] = {}
+            if getattr(budget, "skeleton_paths", False):
+                phrase: dict[str, str] = {}
+                for f in facts:
+                    for k in ("subject_id", "object_id"):
+                        eid = f.get(k)
+                        if eid in dest_ids and eid not in phrase and f.get("subject") and f.get("object"):
+                            pred = str(f.get("predicate") or "relates to").lower().replace("_", " ")
+                            phrase[eid] = f"{f['subject']} {pred} {f['object']}"
+                try:
+                    with _tx() as _conn:
+                        for did_, eid_ in _conn.execute(
+                                "SELECT DISTINCT doc_id, entity_id FROM mentions WHERE entity_id = ANY(%s) AND corpus_id=%s",
+                                (dest_ids[:32], corpus_id)).fetchall():
+                            if phrase.get(eid_) and str(did_) not in need_by_doc:
+                                need_by_doc[str(did_)] = phrase[eid_]
+                except Exception:  # noqa: BLE001 — without a phrase the route keeps its seats; only its context is lost
+                    need_by_doc = {}
             # P7 residue / ELITE-MODE D: dest docs → parent map (one search) → ORIGINAL children.
             # Fail-open to the prior doc-filtered child search when maps miss.
             parents: list[tuple[str, str]] = []
@@ -493,6 +521,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                     r = dict(r)
                     r["dest_entity"] = did
                     r["dest_parent"] = pid
+                    if need_by_doc.get(did):
+                        r["dest_need"] = need_by_doc[did]
                     rows.append(r)
                 if len(rows) >= int(budget.graph_dest_children):
                     break
@@ -504,6 +534,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                                           limit=2):
                     r = dict(r)
                     r["dest_entity"] = did
+                    if need_by_doc.get(did):
+                        r["dest_need"] = need_by_doc[did]
                     rows.append(r)
             return rows
 
@@ -538,12 +570,13 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                                    "effect": "dense lanes started late (the embedding is a hard dependency; the turn waited for it)",
                                    "reason": f"embedding took {embed_ms:.0f} ms; embed_deadline_s={budget.embed_deadline_s:g}"})
         subs: list[SubQuery] = []
-        for (sid, stype, stext, sweight, sorigin) in sub_specs:
+        for (sid, stype, stext, sweight, sorigin, sfrom) in sub_specs:
             if not stext or stext == query:
                 continue
             sv, srule = sub_sparse[str(sid)]
             subs.append(SubQuery(query_id=str(sid), qtype=str(stype), text=str(stext), weight=float(sweight or 1.0),
-                                 qvec=tuple(vecs[stext]), sparse_query=sv, sparse_rule=srule, origin=str(sorigin or "")))
+                                 qvec=tuple(vecs[stext]), sparse_query=sv, sparse_rule=srule, origin=str(sorigin or ""),
+                                 derived_from=str(sfrom or "")))
         ctx = SearchContext(query=query, corpus_id=corpus_id, collection=collection, qvec=tuple(qvec),
                             sparse_query=sparse_q, exact_terms=tuple(exact_terms or ()),
                             hidden_generations=hidden, query_id=query_id, sparse_rule=sparse_rule)
