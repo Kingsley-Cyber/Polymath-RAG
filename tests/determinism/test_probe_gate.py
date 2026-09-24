@@ -59,8 +59,10 @@ def test_nothing_to_gate_means_no_judge_call():
 
 def test_the_switch_rides_the_doors_and_never_touches_fast_or_gnn():
     on = {"POLYMATH_CHAT_SKELETON_ROUTES": "1", "POLYMATH_CHAT_PROBE_GATE": "1"}
-    for mode in ("HYBRID", "GRAPH", "WILDCARD"):
+    for mode in ("HYBRID", "GRAPH"):
         assert apply_skeleton_routes(CandidateBudget(), mode=mode, env=on).probe_gate_floor == 0.2
+    # WILDCARD is exempt: an off-topic probe (0.04) and a non-obvious bridge (0.06) share the band the gate would cut
+    assert apply_skeleton_routes(CandidateBudget(), mode="WILDCARD", env=on).probe_gate_floor == 0.0
     assert apply_skeleton_routes(CandidateBudget(), mode="HYBRID", env={"POLYMATH_CHAT_SKELETON_ROUTES": "1"}).probe_gate_floor == 0.0
     for mode in ("FAST", "VECTOR", "GNN"):
         assert apply_skeleton_routes(CandidateBudget(), mode=mode, env=on).probe_gate_floor == 0.0

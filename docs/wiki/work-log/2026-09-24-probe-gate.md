@@ -50,6 +50,21 @@ last_reviewed: 2026-09-24
     fails identically on production in the same environment.
 - **Lint:** zero new (ui.py 77 → 77; the new files are clean).
 
+## Live (deployed 2026-09-24; register 11.447)
+- Merged `4f6bf08`; `.env` gains `POLYMATH_CHAT_PROBE_GATE=1` (backup `~/PolymathBackups/env-before-probe-gate-2026-09-24.bak`);
+  one bounce, 24 / 13 / one bundle.
+- **Live proof** (1 owner test query, 9 of 10; `docs/wiki/experiments/probe-gate-2026-09-24/live_check.json`), HYBRID
+  "suspense without dialogue":
+  - status ok, 35.1 s; the gate took 324 ms and scored 5 probes;
+  - dropped "How do directors convey meaning in a story?" (0.037);
+  - also dropped "How can manipulating depth of field be used to create narrative tension in a scene?" (0.064);
+  - kept "Structuring suspense through framing and lighting choices." (0.916 — a base concept atom the atom repair
+    restored, now a PROFILE probe), the editor-as-storyteller bridge (0.998) and the misdirection bridge (0.993).
+- **Refinement: WILDCARD is exempt** (branch `fix/probe-gate-wildcard`). The depth-of-field bridge is a plausible
+  non-obvious link, and it scored inside the band of the true misses (0.02–0.08). The gate cannot separate them there.
+  - Precision modes (HYBRID / GRAPH) keep the gate.
+  - WILDCARD — the mode of the not-so-obvious — keeps every probe; its path-aware judge weighs them downstream.
+
 ## Rejected claims
 - **"Score probes against the retrieval query":** the compact query lost the context and inverted verdicts (measured above).
 - **"Gate the user's own facets too":** they are the compiler's decomposition of the question itself. The lowest-scoring one

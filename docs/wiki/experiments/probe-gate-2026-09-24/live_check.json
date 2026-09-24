@@ -1,0 +1,2060 @@
+{
+ "question": "How do editors and directors build suspense without dialogue?",
+ "mode": "HYBRID",
+ "wall_s": 35.1,
+ "status": "ok",
+ "errors": [],
+ "probe_gate": {
+  "floor": 0.2,
+  "scored": 5,
+  "scores": {
+   "p0": {
+    "score": 0.0368,
+    "origin": "PROFILE"
+   },
+   "p1": {
+    "score": 0.9161,
+    "origin": "PROFILE"
+   },
+   "br0": {
+    "score": 0.0642,
+    "origin": "BRIDGE"
+   },
+   "br1": {
+    "score": 0.9976,
+    "origin": "BRIDGE"
+   },
+   "br2": {
+    "score": 0.9929,
+    "origin": "BRIDGE"
+   }
+  },
+  "dropped": [
+   "br0",
+   "p0"
+  ],
+  "version": "probe-gate-v1"
+ },
+ "gate_ms": 323.9,
+ "probes": [
+  [
+   "q1",
+   "USER",
+   "editing techniques for tension and suspense"
+  ],
+  [
+   "q2",
+   "USER",
+   "visual storytelling and cinematography for suspense"
+  ],
+  [
+   "p0",
+   "PROFILE",
+   "How do directors convey meaning in a story?"
+  ],
+  [
+   "p1",
+   "PROFILE",
+   "Structuring suspense through framing and lighting choices."
+  ],
+  [
+   "br0",
+   "BRIDGE",
+   "How can manipulating depth of field be used to create narrative tension in a sce"
+  ],
+  [
+   "br1",
+   "BRIDGE",
+   "In what ways does the editor act as a storyteller to build pacing and suspense?"
+  ],
+  [
+   "br2",
+   "BRIDGE",
+   "What is the role of misdirection in film editing to create suspense or surprise?"
+  ]
+ ],
+ "receipt": {
+  "query_id": "q_abc4d355f11d4de5bdfb1795",
+  "mode": "HYBRID",
+  "received_at": "2026-09-24 02:52:10.555340+00:00",
+  "wall_ms": 33013,
+  "status": "ok",
+  "verdict": "generated",
+  "citations": null,
+  "evidence": null,
+  "source_docs": [],
+  "meta": {
+   "mode": "HYBRID",
+   "plan": "chat-retrieval-v2",
+   "carry": {
+    "in": 0,
+    "admitted": 0
+   },
+   "model": "anthropic/deepseek-v4-flash-0731",
+   "route": "chat/stream",
+   "funnel": {
+    "lanes": {
+     "dualread": [
+      "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+      "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+      "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+      "chunk_a3831f5a71f0a1376a870889c1e4e6f2bcedc97ad1e526e389956f186a01dc8e",
+      "chunk_a859e7984af2899927ae3f8eb2b76465b1f29788b42ef47deb2e40fac2aacd84",
+      "chunk_4eac0d77a5cf2b12c4460a0c5696c633e0d29f09e8e00ab8660df943545125fb",
+      "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+      "chunk_7c85d86618a9a4e737be5102eccfecca9268ebda22af26cc3728c59e1469087e",
+      "chunk_c456bec15f268c9effac9336a8505c8817b3241ee3e8a5a9aaff245eb2e5a9f3",
+      "chunk_18d2bc587cf8b6abc05bb16d8812d50a1ef91fa6d1e21530c9dbce0455cab7e9",
+      "chunk_6882191f86fcec1840a80efebed274d2a3642e184c271389ad0226ade96b0f70",
+      "chunk_f7fdd1ede3cad170bc4eff0a10f5f85af135b9ed64c93720ea58fc1e4c437b13",
+      "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+      "chunk_408f5cdf411f033dcdcccceb31adf985bfdbae265d99ebc4efb5cd9aa8f02c9d",
+      "chunk_47f90f381c03a64ea3a06d7f546a8cc286314e0399695791758c2077e623fef4",
+      "chunk_2500462809e291ccbf39acdd3585b747da8a82a9b9f5e05ac0cfbc41436af70d",
+      "chunk_369d52fa72d46180d0e9aa770d9117f6520e364ef8ce3238508688f7989d7c0a",
+      "chunk_ca26f49d0ab80d227cbee41ab1851067e28c1e78e2035c8ca94b3634e521b033",
+      "chunk_e06ba2c7de5ed690ae2806b185a19069f0afe78b4eae4fd98cda7af7f87755a8",
+      "chunk_ebb292ae9e1c97959a1c5a9f3089a1a0437503d2fe0780158ef5558681fdca10"
+     ],
+     "gnn_route": [],
+     "graph_dest": [],
+     "hierarchical": [
+      "chunk_7fe250fe3f2f93b7377f7d46be69392ef3a87780d6af637d6674164d2c22dafe",
+      "chunk_851b999387ad4a9796c6ccf5d43be3141c1349bfda59328cb0e2dc4f25a3a89b",
+      "chunk_88443b95bf7bae41450d403a1760fda1f002bac0bc68e8ac5a533992608da680",
+      "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+      "chunk_462583d75caed4ab602fcd1e173cebf3c7b834bff4e1e8d6c1e5ca720d03339d",
+      "chunk_1504f8036dbac76abc373076d1237cf80eb367e3f7d76ab9a444e69e1a249047",
+      "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+      "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+      "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+      "chunk_37da7c49a2dc9043a38dea6c65c769613580d2d68a3b3481e79906087593ae47",
+      "chunk_dd4ae392cee2b96e63838d02e316f5fecda2e772a1a2daae4b022d3ee47edd98",
+      "chunk_2fc8c26f4d66745732330fe6777ed66ad19d695277d43b18451a0b72be26b0b4",
+      "chunk_d96f9e01126b513e3c45740b405cb7e12f9cc1d8d51e4db1342ad4f5033052d2",
+      "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+      "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+      "chunk_845f712ea5ebf272b84cb338d7af35f1a18e82f4b7c7f6698dc8954ad504e9ec",
+      "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+      "chunk_240b40332db06f95abc69777ea7f2f44e84b5840863013d0549745007a520168",
+      "chunk_fcbb2c4aef2684e54c33c2ec0fad86dbf760b93d97b1ab87341d4da85be38360",
+      "chunk_d9b05b21d2e2d6a99d8b951c4eeeead6dfea8875a589c760ad3b6857de95f9f2"
+     ],
+     "latent_rescue": [
+      "chunk_958a966f099812a26136cc391019eaeca8c7da95ca63a93ba083dbafc9c3f22a",
+      "chunk_ded432420a71117a0cb7a273341a155bbe7724dc9f0e2a864934ce6b25b01824",
+      "chunk_4c200843084501ca66e90356ca6a5b9f0d6cfe5913960ba75f555910ba5992bb",
+      "chunk_ed6390401f425596cd4216a8feccb02a209c843e290164b47a063d50d43da703",
+      "chunk_0da072cdaf5b9c7abc03ee8517801c23ef51edec805b6d7eac6e0032911d476c",
+      "chunk_a3c3f1017b1b0929aa5031481ac819f536f496fddd46c63d827779075bbe5dc8",
+      "chunk_d83e6a94e10c08b89094b4d59a8c67cbe29ece7135eed92726db786df8ebc636",
+      "chunk_e3b7b7821a5eafb119386d6849c4190f5b614eb1f30f833e5ff661ab7a2c5f91",
+      "chunk_952bd439aa84565b4e2c0bb2bfc6fb3b42f3451eec178f761ea42d28f70c0ad7",
+      "chunk_0fca91ff314f925ef903d443eaba9c378ab40020be0b5c5a39fd892aa7b6c3e6",
+      "chunk_c6bda63fea844e9140d22225c02a0865fa9691e3161d4da2c08ad0c7be4dcbc2",
+      "chunk_0ce3f7956feaca4602d72a3d39fbd2bb97fc4d34be1a6062fb67abc819cde5ae",
+      "chunk_fc4537879b5e2af4101eafb93a2d35c8f713a4b74156adf2d25a8ddd9e23b1f8",
+      "chunk_799045001879b392864bc7bab3ca30e810f375611681af51b3f110637c140cf0",
+      "chunk_72e472edc5d4ecc730e603a6b7c3f70e2e27a04f9de7abdeafa4cecc43f3aab3",
+      "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+      "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+      "chunk_845f712ea5ebf272b84cb338d7af35f1a18e82f4b7c7f6698dc8954ad504e9ec"
+     ],
+     "seealso_fanout": [
+      "chunk_3e7544c005394af1b0b3d10df9f05a12261164f16fd421d2c8e70f9a19d6c626",
+      "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+      "chunk_bc95e5cd65617a2edcb29dfd15f47442104e91077add2f1737cf8a4d5f421841",
+      "chunk_1f12e0e6ed23de3785d06501be46b00f5a28edc4ee2d7f18db24b8093408d629",
+      "chunk_e7ba6d1d79b82aabf005aa6410acc3bb21e71303e4b7674c5807f54230fdec4f",
+      "chunk_c3e7e96e93078b474feb7fcb2cc1c0f3b2a5edfdff8b20bfd9729e143f1f89e3",
+      "chunk_792a7272d6dce32cd84220236e0faf788ffa4b7cd4d48dd1709e99813d5184c8",
+      "chunk_93b89d02749c6c2082e2a70a4f6f6a51a72568fde37bd6a9d31a6fc1d867f541",
+      "chunk_dfe53071d1e5816b3d97ee5bfb07e7dd2f1c7e0d791201312b81d665c0f1fe18",
+      "chunk_feab29a9311aead9c5dd4b118f556fbe991b607efcff596a9736a061e0e7e3e3",
+      "chunk_c36eeb9a9a79935944f9eb1c2449a1b11f76f7e968ea2bbe763f38810c7bfe9f",
+      "chunk_69e8c4fdf9bc6d023d289274dc68ca698757ea9d7f8a18db1e0740d6c7dcba30",
+      "chunk_82d5dd6f9eec8c30dadd04518169a59a3ec317647adbe6d349c739fd137def47",
+      "chunk_79fbe60007a4340e488cb5889985b67a1f6544bfe57d9ef77a1174410b8ad5b4",
+      "chunk_ba113f4b9f6dc4f29b64aa0c7ab75adcd52208102e14ea3eeb797cbde19d6cdc",
+      "chunk_79e29a04f5ff16446d0cb077f114c981bd02be48802d712a99f0082a8c1640ca",
+      "chunk_1d3246ddb690806bd225966025a2521333b43e4c296826a3a07218434a94a44f",
+      "chunk_699d60185547528edd1e219f367efbb4427346ede56b9e3f5cb9f2770bfaa273",
+      "chunk_78417dd3e397aa4daf0518af9610c8ea4805dde58e98fde0f9c852efb03037d8",
+      "chunk_ad9d7b08ca5b10275d8346434880fb5d8101a504ec515a2b0b17af256a02394f"
+     ],
+     "resolution_lift": [],
+     "global_dense_child": [
+      "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+      "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+      "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+      "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+      "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+      "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+      "chunk_c5f724850180eab149684870edd8e3a59b9420155142d642d510b32ffb03f17a",
+      "chunk_5cfc8a490181b49d96e86f760059d603f1d3961a30fabf77d1a9d77647a8ba95",
+      "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+      "chunk_93ae6c7cefac8aad51b9b57dbd8c7b782db2127257a982b883fb38a3aec95ffd",
+      "chunk_18c81c75053d93c5b5a16fddd94760ce2d945ae1916afa6ea272a114fc5bb39a",
+      "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+      "chunk_30b5f6139bfda4a17138ca6abb5a64a3c5cc7b688011c658077fa5fbda5c4b0f",
+      "chunk_a0e3284787ddf66ff52d34e2f85aa5b0249f10a5568ec7637c5392c03eec6af4",
+      "chunk_7fe250fe3f2f93b7377f7d46be69392ef3a87780d6af637d6674164d2c22dafe",
+      "chunk_7bad2cb019e4871e3c32887418d6a81535eb1ac9eafe3f012630d7a2cbd415a3",
+      "chunk_859ba8c4c5ada52d17164f8336092c05ba874c241a5a2530d7887ea4a08373e3",
+      "chunk_1e28e14cdc517921bc26f0d79c6087a26e824a90f56ce754e9126d558a4acc69",
+      "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+      "chunk_754906fd43cbe37040294bbc6d7a63a4063054e017321a78964c607030b287b4"
+     ],
+     "global_sparse_child": [
+      "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+      "chunk_5257171a1135d02468e671707032186a2b51abb77dc4c42dff11a921e8da08d0",
+      "chunk_d3a3742bdd4c9a6bba9222bd4088b9bf948a57f52f930322afa9e8e2437fee5f",
+      "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+      "chunk_dcbe2db83b68b0411203b877b6017433b1e96a1d86e8153f5d208180776285f3",
+      "chunk_906d45c31166ad20cc8b5b662cd25ef9a8be6ffd1220c3ba6ab245a657289c56",
+      "chunk_61be8ad64ae538fde3f45b49690082a7c8d73d1aeaeb0353b9a283d2713a7272",
+      "chunk_c08ed2db20d63c8ce781614d30d2485b634eb0bf06b85122dace876c0e7e0822",
+      "chunk_fa85815c1d4fa901e4b59d211707fda7981af0ca625f4d3a091b3da6152bf4ca",
+      "chunk_c27d6a1cb6e07756ca72006c6192a59e3c1165e97d09f76d5432529231a66854",
+      "chunk_fc9fecfcfc223549631c78d3c55693a31379ec4770576f6e5b58140bba5749af",
+      "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+      "chunk_2e6493ee5b0e7c631a61101c47c9300d68f4f335bfb50d5a91e0a5d3e0ce2540",
+      "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+      "chunk_b3bb28cfde0abdc60f0be62e8580bacf48e5a997d02a602924cb2717387b0c8a",
+      "chunk_1c65904201b8200953fc70ffcf4abd253ffd6a95320b449741cf33cb7e1437c8",
+      "chunk_cc2779dbb9186572a9dd029532354f6fbf2304a504aac4b21f5d76958812b048",
+      "chunk_e8f934cc69a17cede17cb5dd00a8fa67353e43051cf6d9e6d9c7d47de15ed0e7",
+      "chunk_1aad482fc1c4498b250de9db7c438533cbc4cad9a0529ea4d5b7f4f7c5f3472e",
+      "chunk_6043b16289d6c367bd154c5fa63347942c86bc1f1809c123a94ef1252980e1bf"
+     ]
+    },
+    "counts": {
+     "cited": 9,
+     "union": 291,
+     "selected": 15,
+     "retrieved": 166,
+     "pre_rerank": 34,
+     "post_rerank": 34
+    },
+    "stages": {
+     "cited": [
+      "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+      "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+      "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+      "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+      "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+      "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+      "chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a",
+      "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+      "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce"
+     ],
+     "union": [
+      "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+      "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+      "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+      "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+      "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+      "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+      "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+      "chunk_7fe250fe3f2f93b7377f7d46be69392ef3a87780d6af637d6674164d2c22dafe",
+      "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+      "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+      "chunk_845f712ea5ebf272b84cb338d7af35f1a18e82f4b7c7f6698dc8954ad504e9ec",
+      "chunk_d96f9e01126b513e3c45740b405cb7e12f9cc1d8d51e4db1342ad4f5033052d2",
+      "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+      "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+      "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+      "chunk_18c81c75053d93c5b5a16fddd94760ce2d945ae1916afa6ea272a114fc5bb39a",
+      "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+      "chunk_69dd7acc43935ddb308c71d7e30a93b2c5992051b80c7d96039989af16a424c1",
+      "chunk_106c0e1fb206245aa6ffaf302c96e73bac8b283e20f32d34361118f70bb7ddc1",
+      "chunk_1e28e14cdc517921bc26f0d79c6087a26e824a90f56ce754e9126d558a4acc69",
+      "chunk_d9b05b21d2e2d6a99d8b951c4eeeead6dfea8875a589c760ad3b6857de95f9f2",
+      "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+      "chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a",
+      "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f",
+      "chunk_0fca91ff314f925ef903d443eaba9c378ab40020be0b5c5a39fd892aa7b6c3e6",
+      "chunk_18d2bc587cf8b6abc05bb16d8812d50a1ef91fa6d1e21530c9dbce0455cab7e9",
+      "chunk_24a9784070953065c706784b70f7a433bb1c7e1a7bce96a5f1ca8c2d930bc631",
+      "chunk_2500462809e291ccbf39acdd3585b747da8a82a9b9f5e05ac0cfbc41436af70d",
+      "chunk_3e7544c005394af1b0b3d10df9f05a12261164f16fd421d2c8e70f9a19d6c626",
+      "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+      "chunk_958a966f099812a26136cc391019eaeca8c7da95ca63a93ba083dbafc9c3f22a",
+      "chunk_a3831f5a71f0a1376a870889c1e4e6f2bcedc97ad1e526e389956f186a01dc8e",
+      "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+      "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+      "chunk_d83e6a94e10c08b89094b4d59a8c67cbe29ece7135eed92726db786df8ebc636",
+      "chunk_e06ba2c7de5ed690ae2806b185a19069f0afe78b4eae4fd98cda7af7f87755a8",
+      "chunk_ed6390401f425596cd4216a8feccb02a209c843e290164b47a063d50d43da703",
+      "chunk_fc4537879b5e2af4101eafb93a2d35c8f713a4b74156adf2d25a8ddd9e23b1f8",
+      "chunk_0da072cdaf5b9c7abc03ee8517801c23ef51edec805b6d7eac6e0032911d476c",
+      "chunk_369d52fa72d46180d0e9aa770d9117f6520e364ef8ce3238508688f7989d7c0a"
+     ],
+     "selected": [
+      "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+      "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+      "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+      "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+      "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+      "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+      "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+      "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+      "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+      "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+      "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+      "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+      "chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a",
+      "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+      "chunk_30b5f6139bfda4a17138ca6abb5a64a3c5cc7b688011c658077fa5fbda5c4b0f"
+     ],
+     "retrieved": [
+      "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+      "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+      "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+      "chunk_a3831f5a71f0a1376a870889c1e4e6f2bcedc97ad1e526e389956f186a01dc8e",
+      "chunk_a859e7984af2899927ae3f8eb2b76465b1f29788b42ef47deb2e40fac2aacd84",
+      "chunk_4eac0d77a5cf2b12c4460a0c5696c633e0d29f09e8e00ab8660df943545125fb",
+      "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+      "chunk_7c85d86618a9a4e737be5102eccfecca9268ebda22af26cc3728c59e1469087e",
+      "chunk_c456bec15f268c9effac9336a8505c8817b3241ee3e8a5a9aaff245eb2e5a9f3",
+      "chunk_18d2bc587cf8b6abc05bb16d8812d50a1ef91fa6d1e21530c9dbce0455cab7e9",
+      "chunk_6882191f86fcec1840a80efebed274d2a3642e184c271389ad0226ade96b0f70",
+      "chunk_f7fdd1ede3cad170bc4eff0a10f5f85af135b9ed64c93720ea58fc1e4c437b13",
+      "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+      "chunk_408f5cdf411f033dcdcccceb31adf985bfdbae265d99ebc4efb5cd9aa8f02c9d",
+      "chunk_47f90f381c03a64ea3a06d7f546a8cc286314e0399695791758c2077e623fef4",
+      "chunk_2500462809e291ccbf39acdd3585b747da8a82a9b9f5e05ac0cfbc41436af70d",
+      "chunk_369d52fa72d46180d0e9aa770d9117f6520e364ef8ce3238508688f7989d7c0a",
+      "chunk_ca26f49d0ab80d227cbee41ab1851067e28c1e78e2035c8ca94b3634e521b033",
+      "chunk_e06ba2c7de5ed690ae2806b185a19069f0afe78b4eae4fd98cda7af7f87755a8",
+      "chunk_ebb292ae9e1c97959a1c5a9f3089a1a0437503d2fe0780158ef5558681fdca10",
+      "chunk_25739db011782a506ab6129ffebda3acd3d8281c4653088fb6829abf207065c5",
+      "chunk_24a9784070953065c706784b70f7a433bb1c7e1a7bce96a5f1ca8c2d930bc631",
+      "chunk_6316263135552c834fb1be03979b8ca7fcb587cc9c9894bda6efa19514f2f37b",
+      "chunk_a0dc5821c73c094d40fdd9e4c7da7cd9e9bd086554d48242cfc0b96395a47d9f",
+      "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+      "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+      "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+      "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+      "chunk_c5f724850180eab149684870edd8e3a59b9420155142d642d510b32ffb03f17a",
+      "chunk_5cfc8a490181b49d96e86f760059d603f1d3961a30fabf77d1a9d77647a8ba95",
+      "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+      "chunk_93ae6c7cefac8aad51b9b57dbd8c7b782db2127257a982b883fb38a3aec95ffd",
+      "chunk_18c81c75053d93c5b5a16fddd94760ce2d945ae1916afa6ea272a114fc5bb39a",
+      "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+      "chunk_30b5f6139bfda4a17138ca6abb5a64a3c5cc7b688011c658077fa5fbda5c4b0f",
+      "chunk_a0e3284787ddf66ff52d34e2f85aa5b0249f10a5568ec7637c5392c03eec6af4",
+      "chunk_7fe250fe3f2f93b7377f7d46be69392ef3a87780d6af637d6674164d2c22dafe",
+      "chunk_7bad2cb019e4871e3c32887418d6a81535eb1ac9eafe3f012630d7a2cbd415a3",
+      "chunk_859ba8c4c5ada52d17164f8336092c05ba874c241a5a2530d7887ea4a08373e3",
+      "chunk_1e28e14cdc517921bc26f0d79c6087a26e824a90f56ce754e9126d558a4acc69"
+     ],
+     "pre_rerank": [
+      "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+      "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+      "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+      "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+      "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+      "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+      "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+      "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+      "chunk_d96f9e01126b513e3c45740b405cb7e12f9cc1d8d51e4db1342ad4f5033052d2",
+      "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+      "chunk_7fe250fe3f2f93b7377f7d46be69392ef3a87780d6af637d6674164d2c22dafe",
+      "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+      "chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a",
+      "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+      "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+      "chunk_18c81c75053d93c5b5a16fddd94760ce2d945ae1916afa6ea272a114fc5bb39a",
+      "chunk_845f712ea5ebf272b84cb338d7af35f1a18e82f4b7c7f6698dc8954ad504e9ec",
+      "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+      "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+      "chunk_106c0e1fb206245aa6ffaf302c96e73bac8b283e20f32d34361118f70bb7ddc1",
+      "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+      "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f",
+      "chunk_d3a3742bdd4c9a6bba9222bd4088b9bf948a57f52f930322afa9e8e2437fee5f",
+      "chunk_a3831f5a71f0a1376a870889c1e4e6f2bcedc97ad1e526e389956f186a01dc8e",
+      "chunk_dcbe2db83b68b0411203b877b6017433b1e96a1d86e8153f5d208180776285f3",
+      "chunk_7966febb5f90a5c50c76bd5ca0c164026e1791e089d9099975a8183ab400d3d6",
+      "chunk_fa85815c1d4fa901e4b59d211707fda7981af0ca625f4d3a091b3da6152bf4ca",
+      "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+      "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+      "chunk_b3bb28cfde0abdc60f0be62e8580bacf48e5a997d02a602924cb2717387b0c8a",
+      "chunk_3dca6b1f4e9ab1680b3221c5df1ae29f01e004bd6a3284fb6e8cc191830ea6bc",
+      "chunk_e126c14b34df9280e8912c4396be56d287935b72b94c12293bb263681eb0ff2d",
+      "chunk_1b29bafd9f9245567d8726b197edd847db892cafeea7f11555c8a54014a8e816",
+      "chunk_3e7544c005394af1b0b3d10df9f05a12261164f16fd421d2c8e70f9a19d6c626"
+     ],
+     "post_rerank": [
+      "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+      "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+      "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+      "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+      "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+      "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+      "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+      "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+      "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+      "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+      "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+      "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+      "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+      "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+      "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+      "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f",
+      "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+      "chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a",
+      "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+      "chunk_7966febb5f90a5c50c76bd5ca0c164026e1791e089d9099975a8183ab400d3d6",
+      "chunk_845f712ea5ebf272b84cb338d7af35f1a18e82f4b7c7f6698dc8954ad504e9ec",
+      "chunk_d96f9e01126b513e3c45740b405cb7e12f9cc1d8d51e4db1342ad4f5033052d2",
+      "chunk_3e7544c005394af1b0b3d10df9f05a12261164f16fd421d2c8e70f9a19d6c626",
+      "chunk_7fe250fe3f2f93b7377f7d46be69392ef3a87780d6af637d6674164d2c22dafe",
+      "chunk_a3831f5a71f0a1376a870889c1e4e6f2bcedc97ad1e526e389956f186a01dc8e",
+      "chunk_18c81c75053d93c5b5a16fddd94760ce2d945ae1916afa6ea272a114fc5bb39a",
+      "chunk_fa85815c1d4fa901e4b59d211707fda7981af0ca625f4d3a091b3da6152bf4ca",
+      "chunk_dcbe2db83b68b0411203b877b6017433b1e96a1d86e8153f5d208180776285f3",
+      "chunk_d3a3742bdd4c9a6bba9222bd4088b9bf948a57f52f930322afa9e8e2437fee5f",
+      "chunk_106c0e1fb206245aa6ffaf302c96e73bac8b283e20f32d34361118f70bb7ddc1",
+      "chunk_1b29bafd9f9245567d8726b197edd847db892cafeea7f11555c8a54014a8e816",
+      "chunk_3dca6b1f4e9ab1680b3221c5df1ae29f01e004bd6a3284fb6e8cc191830ea6bc",
+      "chunk_b3bb28cfde0abdc60f0be62e8580bacf48e5a997d02a602924cb2717387b0c8a",
+      "chunk_e126c14b34df9280e8912c4396be56d287935b72b94c12293bb263681eb0ff2d"
+     ]
+    },
+    "version": "retrieval-funnel-v1",
+    "arrivals": {
+     "chunk_30b5f6139bfda4a17138ca6abb5a64a3c5cc7b688011c658077fa5fbda5c4b0f": [
+      "global_dense_child"
+     ],
+     "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed": [
+      "dualread",
+      "global_dense_child",
+      "global_sparse_child",
+      "hierarchical"
+     ],
+     "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c": [
+      "global_dense_child",
+      "hierarchical"
+     ],
+     "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50": [
+      "global_dense_child",
+      "hierarchical",
+      "latent_rescue"
+     ],
+     "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb": [
+      "global_dense_child"
+     ],
+     "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf": [
+      "global_dense_child",
+      "global_sparse_child"
+     ],
+     "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6": [
+      "global_dense_child"
+     ],
+     "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce": [
+      "global_dense_child"
+     ],
+     "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55": [
+      "global_sparse_child"
+     ],
+     "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6": [
+      "dualread",
+      "global_dense_child",
+      "hierarchical"
+     ],
+     "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d": [
+      "dualread",
+      "global_dense_child",
+      "hierarchical"
+     ],
+     "chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a": [
+      "global_dense_child"
+     ],
+     "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d": [
+      "global_sparse_child",
+      "seealso_fanout"
+     ],
+     "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3": [
+      "global_dense_child",
+      "hierarchical"
+     ],
+     "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec": [
+      "global_dense_child",
+      "global_sparse_child",
+      "hierarchical"
+     ]
+    },
+    "query_ids": {},
+    "truncated": "ids_capped",
+    "multi_lane": 18,
+    "lane_counts": {
+     "dualread": 24,
+     "gnn_route": 0,
+     "graph_dest": 0,
+     "hierarchical": 34,
+     "latent_rescue": 18,
+     "seealso_fanout": 24,
+     "resolution_lift": 0,
+     "global_dense_child": 50,
+     "global_sparse_child": 40
+    },
+    "plan_version": "chat-retrieval-v2"
+   },
+   "latent": null,
+   "legend": [
+    {
+     "tag": "S1",
+     "doc_id": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+     "carried": false,
+     "locator": "chunk:chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf@200025:200878",
+     "chunk_id": "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+     "breadcrumb": "Joseph V. Mascelli - The Five C's of Cinematography \u203a Pages 86\u201388",
+     "carry_score": null
+    },
+    {
+     "tag": "S2",
+     "doc_id": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "carried": false,
+     "locator": "chunk:chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3@783039:783253",
+     "chunk_id": "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+     "breadcrumb": "The Anatomy of Story \u203a text/part0013.html",
+     "carry_score": null
+    },
+    {
+     "tag": "S3",
+     "doc_id": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "carried": false,
+     "locator": "chunk:chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec@86329:87070",
+     "chunk_id": "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+     "breadcrumb": "Blain Brown - Cinematography - Theory and Practice \u203a Pages 83\u201384",
+     "carry_score": null
+    },
+    {
+     "tag": "S4",
+     "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "carried": false,
+     "locator": "chunk:chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed@422454:423026",
+     "chunk_id": "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+     "breadcrumb": "Francis Glebas - Directing the Story \u203a Pendulum of Suspense",
+     "carry_score": null
+    },
+    {
+     "tag": "S5",
+     "doc_id": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "carried": false,
+     "locator": "chunk:chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6@632922:633066",
+     "chunk_id": "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+     "breadcrumb": "The Anatomy of Story \u203a text/part0012.html",
+     "carry_score": null
+    },
+    {
+     "tag": "S6",
+     "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "carried": false,
+     "locator": "chunk:chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6@420785:421920",
+     "chunk_id": "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+     "breadcrumb": "Francis Glebas - Directing the Story \u203a Pendulum of Suspense",
+     "carry_score": null
+    },
+    {
+     "tag": "S7",
+     "doc_id": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+     "carried": false,
+     "locator": "chunk:chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c@725761:726483",
+     "chunk_id": "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+     "breadcrumb": "The Screen Combat Handbook A Practical Guide for Filmmakers \u203a DON\u2019T OVERSHOW",
+     "carry_score": null
+    },
+    {
+     "tag": "S8",
+     "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "carried": false,
+     "locator": "chunk:chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d@423028:423672",
+     "chunk_id": "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+     "breadcrumb": "Francis Glebas - Directing the Story \u203a Pendulum of Suspense",
+     "carry_score": null
+    },
+    {
+     "tag": "S9",
+     "doc_id": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "carried": false,
+     "locator": "chunk:chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce@275013:275838",
+     "chunk_id": "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+     "breadcrumb": "Ken Dancyger - The technique of film & video editing \u203a Page 112",
+     "carry_score": null
+    },
+    {
+     "tag": "S10",
+     "doc_id": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+     "carried": false,
+     "locator": "chunk:chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55@19389:19728",
+     "chunk_id": "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+     "breadcrumb": "Manga in Theory and Practice \u203a Creating the First Page, Part Three: What Makes Good Dialogue",
+     "carry_score": null
+    },
+    {
+     "tag": "S11",
+     "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "carried": false,
+     "locator": "chunk:chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50@440037:441071",
+     "chunk_id": "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+     "breadcrumb": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics \u203a **LIMITED VS. OPEN INFORMATION**",
+     "carry_score": null
+    },
+    {
+     "tag": "S12",
+     "doc_id": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+     "carried": false,
+     "locator": "chunk:chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d@239710:241068",
+     "chunk_id": "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+     "breadcrumb": "Grammar of the Edit \u203a Chapter Three \u2013 Principles in Practice",
+     "carry_score": null
+    },
+    {
+     "tag": "S13",
+     "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "carried": false,
+     "locator": "chunk:chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a@395855:396112",
+     "chunk_id": "chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a",
+     "breadcrumb": "Francis Glebas - Directing the Story \u203a Pacing: The Expansion and Contraction of Time",
+     "carry_score": null
+    },
+    {
+     "tag": "S14",
+     "doc_id": "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3",
+     "carried": false,
+     "locator": "chunk:chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb@619859:620610",
+     "chunk_id": "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+     "breadcrumb": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema \u203a Page 24",
+     "carry_score": null
+    },
+    {
+     "tag": "S15",
+     "doc_id": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "carried": false,
+     "locator": "chunk:chunk_30b5f6139bfda4a17138ca6abb5a64a3c5cc7b688011c658077fa5fbda5c4b0f@602502:603124",
+     "chunk_id": "chunk_30b5f6139bfda4a17138ca6abb5a64a3c5cc7b688011c658077fa5fbda5c4b0f",
+     "breadcrumb": "The Anatomy of Story \u203a text/part0011.html",
+     "carry_score": null
+    }
+   ],
+   "prompt": {
+    "carry_in": 0,
+    "messages": 2,
+    "prompt_chars": 33213,
+    "latent_labels": 3,
+    "carry_in_prompt": 0
+   },
+   "verdict": "generated",
+   "degraded": [],
+   "phase_ms": {
+    "carry": 15871.9,
+    "scope": 16.2,
+    "total": 33013.3,
+    "compile": 3729.2,
+    "assemble": 15871.9,
+    "generate": 33012.6,
+    "retrieve": 15738.8
+   },
+   "trace_ms": {
+    "lanes": {
+     "latent": 2084.2,
+     "dualread": 2342.4,
+     "seealso_fanout": 915.8
+    },
+    "latent": {
+     "latency_ms": {
+      "portfolio_seating": 3056.4
+     }
+    },
+    "stages": {
+     "union": 11.9,
+     "core_wall": 4173.6,
+     "lanes_wall": 229.9,
+     "entity_card": 91.5,
+     "sub_p1_dense": 88.5,
+     "sub_q1_dense": 41.0,
+     "sub_q2_dense": 37.6,
+     "sub_br1_dense": 175.2,
+     "sub_br2_dense": 143.0,
+     "sub_p1_sparse": 0.0,
+     "sub_q1_sparse": 0.0,
+     "sub_q2_sparse": 0.0,
+     "sub_br1_sparse": 0.0,
+     "sub_br2_sparse": 0.0,
+     "section_summary": 228.4,
+     "document_summary": 176.8,
+     "route_lanes_wall": 2344.8,
+     "global_dense_child": 92.3,
+     "global_sparse_child": 0.0,
+     "hierarchical_children": 1549.6
+    },
+    "retrieval": {
+     "doc": 176.8,
+     "deep": 13091.7,
+     "child": 1142.8,
+     "embed": 352.8,
+     "lanes": 4173.6,
+     "total": 8546.0,
+     "union": 11.9,
+     "rerank": 3997.6,
+     "sparse": 115.7,
+     "compose": 0.5,
+     "section": 620.7,
+     "rerank_select": 3998.1,
+     "embedded_texts": 6,
+     "sparse_prestart": 26.0,
+     "lane_entity_card": 91.5,
+     "lane_sub_p1_dense": 88.5,
+     "lane_sub_q1_dense": 41.0,
+     "lane_sub_q2_dense": 37.6,
+     "lane_sub_br1_dense": 175.2,
+     "lane_sub_br2_dense": 143.0,
+     "lane_sub_p1_sparse": 0.0,
+     "lane_sub_q1_sparse": 0.0,
+     "lane_sub_q2_sparse": 0.0,
+     "lane_sub_br1_sparse": 0.0,
+     "lane_sub_br2_sparse": 0.0,
+     "lanes_primary_batch": 229.9,
+     "lane_section_summary": 228.4,
+     "lane_document_summary": 176.8,
+     "lane_route_lanes_wall": 2344.8,
+     "lane_global_dense_child": 92.3,
+     "lane_global_sparse_child": 0.0,
+     "lane_hierarchical_children": 1549.6
+    },
+    "probe_gate": 323.9
+   },
+   "wildcard": null,
+   "chat_plan": {
+    "intent": "SYNTHESIS",
+    "queries": [
+     {
+      "id": "q0",
+      "role": "direct",
+      "type": "PRIMARY",
+      "query": "building suspense without dialogue",
+      "origin": "USER",
+      "reason": "q0: authoritative user query",
+      "target": null,
+      "weight": 1.0,
+      "derived_from": null,
+      "profile_surface": null,
+      "inspired_by_profile": []
+     },
+     {
+      "id": "q1",
+      "role": "complement",
+      "type": "MECHANISM",
+      "query": "editing techniques for tension and suspense",
+      "origin": "USER",
+      "reason": "aspect:mechanism (complement)",
+      "target": null,
+      "weight": 0.8,
+      "derived_from": null,
+      "profile_surface": null,
+      "inspired_by_profile": []
+     },
+     {
+      "id": "q2",
+      "role": "complement",
+      "type": "MECHANISM",
+      "query": "visual storytelling and cinematography for suspense",
+      "origin": "USER",
+      "reason": "aspect:mechanism (complement)",
+      "target": null,
+      "weight": 0.8,
+      "derived_from": null,
+      "profile_surface": null,
+      "inspired_by_profile": []
+     },
+     {
+      "id": "p0",
+      "role": "bridge",
+      "type": "ENTITY",
+      "query": "How do directors convey meaning in a story?",
+      "origin": "PROFILE",
+      "reason": "aspect:entity (bridge)",
+      "target": null,
+      "weight": 0.6,
+      "derived_from": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+      "profile_surface": "RECALLQ",
+      "inspired_by_profile": [
+       "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+      ]
+     },
+     {
+      "id": "p1",
+      "role": "bridge",
+      "type": "ENTITY",
+      "query": "Structuring suspense through framing and lighting choices.",
+      "origin": "PROFILE",
+      "reason": "aspect:entity (bridge)",
+      "target": null,
+      "weight": 0.6,
+      "derived_from": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+      "profile_surface": "CONCEPT",
+      "inspired_by_profile": [
+       "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed"
+      ]
+     },
+     {
+      "id": "br0",
+      "role": "bridge",
+      "type": "ENTITY",
+      "query": "How can manipulating depth of field be used to create narrative tension in a scene?",
+      "origin": "BRIDGE",
+      "reason": "bridge/complementary <- doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852: provides a visual method for building suspense without relying on dialogue",
+      "target": null,
+      "weight": 0.55,
+      "derived_from": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+      "profile_surface": null,
+      "inspired_by_profile": [
+       "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852"
+      ]
+     },
+     {
+      "id": "br1",
+      "role": "bridge",
+      "type": "ENTITY",
+      "query": "In what ways does the editor act as a storyteller to build pacing and suspense?",
+      "origin": "BRIDGE",
+      "reason": "bridge/complementary <- doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4: explores how post-production timing creates suspense independently of script dialogue",
+      "target": null,
+      "weight": 0.55,
+      "derived_from": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+      "profile_surface": null,
+      "inspired_by_profile": [
+       "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4"
+      ]
+     },
+     {
+      "id": "br2",
+      "role": "bridge",
+      "type": "ENTITY",
+      "query": "What is the role of misdirection in film editing to create suspense or surprise?",
+      "origin": "BRIDGE",
+      "reason": "bridge/complementary <- doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937: offers a structural technique for suspense that bypasses the need for verbal exposition",
+      "target": null,
+      "weight": 0.55,
+      "derived_from": "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+      "profile_surface": null,
+      "inspired_by_profile": [
+       "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937"
+      ]
+     }
+    ],
+    "compiler": {
+     "lane": "compiler_ollama_gemma",
+     "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+     "scout": {
+      "ms": 631.9,
+      "enabled": true,
+      "contract": "profile-scout-v1",
+      "n_injected": 8,
+      "nominations": 8
+     },
+     "reason": null,
+     "attempt": 1,
+     "wall_ms": 1356.7,
+     "fallback": false,
+     "raw_chars": 1294,
+     "reasoning": {
+      "role": "STRUCTURED_COMPILER",
+      "surface": "chat_completions",
+      "observed": {
+       "finish_reason": "stop",
+       "reasoning_chars": 0,
+       "completion_tokens": 403
+      },
+      "provider": "other",
+      "top_level": {},
+      "extra_body": {},
+      "max_output_tokens": 500
+     },
+     "compile_ms": {
+      "lanes": 1359.2,
+      "scout": 632.0,
+      "total": 3697.4,
+      "bridges": 1687.7,
+      "explorer": 1.2,
+      "endpoints": 3.9,
+      "provenance": 0.0,
+      "constraints": 0.0,
+      "profile_expansion": 0.1
+     },
+     "corrections": [],
+     "over_budget": false,
+     "history_turns": 0,
+     "bridge_expansion": {
+      "added": 3,
+      "route": {
+       "model": "gemma4:31b-cloud",
+       "route": "ollama",
+       "reasoning": {
+        "think": false,
+        "surface": "ollama"
+       }
+      },
+      "intent": "SYNTHESIS",
+      "reason": "eligible",
+      "admitted": 3,
+      "concepts": 8,
+      "eligible": true,
+      "rejected": 0,
+      "attempted": true,
+      "generated": 3,
+      "succeeded": true,
+      "uncovered": 6,
+      "latency_ms": 1687.6,
+      "fallback_reason": null,
+      "dropped_invented": 0,
+      "dropped_structural": 0
+     },
+     "profile_expansion": {
+      "flag": true,
+      "added": 2
+     },
+     "subquery_provenance": {
+      "contract": "subquery-provenance-v1",
+      "subqueries": [
+       {
+        "id": "q0",
+        "role": "direct",
+        "type": "PRIMARY",
+        "origin": "USER",
+        "reason": "q0: authoritative user query",
+        "target": null,
+        "derived_from": null,
+        "profile_surface": null,
+        "inspired_by_profile": []
+       },
+       {
+        "id": "q1",
+        "role": "complement",
+        "type": "MECHANISM",
+        "origin": "USER",
+        "reason": "aspect:mechanism (complement)",
+        "target": null,
+        "derived_from": null,
+        "profile_surface": null,
+        "inspired_by_profile": []
+       },
+       {
+        "id": "q2",
+        "role": "complement",
+        "type": "MECHANISM",
+        "origin": "USER",
+        "reason": "aspect:mechanism (complement)",
+        "target": null,
+        "derived_from": null,
+        "profile_surface": null,
+        "inspired_by_profile": []
+       },
+       {
+        "id": "p0",
+        "role": "bridge",
+        "type": "ENTITY",
+        "origin": "PROFILE",
+        "reason": "aspect:entity (bridge)",
+        "target": null,
+        "derived_from": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+        "profile_surface": "RECALLQ",
+        "inspired_by_profile": [
+         "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+        ]
+       },
+       {
+        "id": "p1",
+        "role": "bridge",
+        "type": "ENTITY",
+        "origin": "PROFILE",
+        "reason": "aspect:entity (bridge)",
+        "target": null,
+        "derived_from": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+        "profile_surface": "CONCEPT",
+        "inspired_by_profile": [
+         "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed"
+        ]
+       },
+       {
+        "id": "br0",
+        "role": "bridge",
+        "type": "ENTITY",
+        "origin": "BRIDGE",
+        "reason": "bridge/complementary <- doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852: provides a visual method for building suspense without relying on dialogue",
+        "target": null,
+        "derived_from": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+        "profile_surface": null,
+        "inspired_by_profile": [
+         "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852"
+        ]
+       },
+       {
+        "id": "br1",
+        "role": "bridge",
+        "type": "ENTITY",
+        "origin": "BRIDGE",
+        "reason": "bridge/complementary <- doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4: explores how post-production timing creates suspense independently of script dialogue",
+        "target": null,
+        "derived_from": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+        "profile_surface": null,
+        "inspired_by_profile": [
+         "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4"
+        ]
+       },
+       {
+        "id": "br2",
+        "role": "bridge",
+        "type": "ENTITY",
+        "origin": "BRIDGE",
+        "reason": "bridge/complementary <- doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937: offers a structural technique for suspense that bypasses the need for verbal exposition",
+        "target": null,
+        "derived_from": "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+        "profile_surface": null,
+        "inspired_by_profile": [
+         "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937"
+        ]
+       }
+      ],
+      "q0_preserved": true,
+      "scout_present": true,
+      "scout_nominations": [
+       "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+       "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+       "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+       "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+       "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497",
+       "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1",
+       "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+       "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5"
+      ],
+      "provenance_complete": true,
+      "provenance_completeness": 1.0
+     },
+     "corpus_explore_firing": {
+      "cause": "REQUEST_OFF",
+      "fired": false,
+      "detail": null,
+      "stages": {
+       "intent": "SYNTHESIS",
+       "fetch_errors": 0
+      },
+      "contract": "corpus-explore-firing-v1",
+      "requested": false
+     }
+    },
+    "contract": "chat-intent-plan-v1",
+    "task_type": "GROUNDED_SYNTHESIS",
+    "antecedent": null,
+    "exact_terms": [],
+    "must_answer": [
+     "editing techniques",
+     "cinematography/visuals",
+     "pacing/timing",
+     "information control"
+    ],
+    "graph_useful": false,
+    "response_type": "answer",
+    "evidence_policy": "corpus_grounded",
+    "retrieval_query": "building suspense without dialogue",
+    "resolved_request": "How do editors and directors build suspense without dialogue?",
+    "semantic_queries": [
+     "q1",
+     "q2",
+     "q3",
+     "q4"
+    ],
+    "retrieval_skipped": false,
+    "retrieval_required": true,
+    "subquery_provenance": {
+     "contract": "subquery-provenance-v1",
+     "subqueries": [
+      {
+       "id": "q0",
+       "role": "direct",
+       "type": "PRIMARY",
+       "origin": "USER",
+       "reason": "q0: authoritative user query",
+       "target": null,
+       "derived_from": null,
+       "profile_surface": null,
+       "inspired_by_profile": []
+      },
+      {
+       "id": "q1",
+       "role": "complement",
+       "type": "MECHANISM",
+       "origin": "USER",
+       "reason": "aspect:mechanism (complement)",
+       "target": null,
+       "derived_from": null,
+       "profile_surface": null,
+       "inspired_by_profile": []
+      },
+      {
+       "id": "q2",
+       "role": "complement",
+       "type": "MECHANISM",
+       "origin": "USER",
+       "reason": "aspect:mechanism (complement)",
+       "target": null,
+       "derived_from": null,
+       "profile_surface": null,
+       "inspired_by_profile": []
+      },
+      {
+       "id": "p0",
+       "role": "bridge",
+       "type": "ENTITY",
+       "origin": "PROFILE",
+       "reason": "aspect:entity (bridge)",
+       "target": null,
+       "derived_from": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+       "profile_surface": "RECALLQ",
+       "inspired_by_profile": [
+        "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+       ]
+      },
+      {
+       "id": "p1",
+       "role": "bridge",
+       "type": "ENTITY",
+       "origin": "PROFILE",
+       "reason": "aspect:entity (bridge)",
+       "target": null,
+       "derived_from": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+       "profile_surface": "CONCEPT",
+       "inspired_by_profile": [
+        "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed"
+       ]
+      },
+      {
+       "id": "br0",
+       "role": "bridge",
+       "type": "ENTITY",
+       "origin": "BRIDGE",
+       "reason": "bridge/complementary <- doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852: provides a visual method for building suspense without relying on dialogue",
+       "target": null,
+       "derived_from": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+       "profile_surface": null,
+       "inspired_by_profile": [
+        "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852"
+       ]
+      },
+      {
+       "id": "br1",
+       "role": "bridge",
+       "type": "ENTITY",
+       "origin": "BRIDGE",
+       "reason": "bridge/complementary <- doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4: explores how post-production timing creates suspense independently of script dialogue",
+       "target": null,
+       "derived_from": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+       "profile_surface": null,
+       "inspired_by_profile": [
+        "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4"
+       ]
+      },
+      {
+       "id": "br2",
+       "role": "bridge",
+       "type": "ENTITY",
+       "origin": "BRIDGE",
+       "reason": "bridge/complementary <- doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937: offers a structural technique for suspense that bypasses the need for verbal exposition",
+       "target": null,
+       "derived_from": "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+       "profile_surface": null,
+       "inspired_by_profile": [
+        "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937"
+       ]
+      }
+     ],
+     "q0_preserved": true,
+     "scout_present": true,
+     "scout_nominations": [
+      "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+      "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+      "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+      "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+      "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497",
+      "doc_7041b219489ebd0ee7a2c751a2ef70682653ec9b23673d9c349e7676c0f6b4b1",
+      "doc_159cd48993b4b2114cd12724821fdc172f85c53ab0985b7cc65c6da84e6a4937",
+      "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5"
+     ],
+     "provenance_complete": true,
+     "provenance_completeness": 1.0
+    }
+   },
+   "generation": {
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "surface": "litellm",
+     "provider": "deepseek",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    },
+    "max_tokens": 6000,
+    "finish_reason": "stop"
+   },
+   "composition": {
+    "slots": {
+     "fill": 3,
+     "aspect": 0,
+     "sparse": 0,
+     "diversity": 4,
+     "relevance": 8
+    },
+    "dominance": false,
+    "doc_counts": {
+     "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4": 2,
+     "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b": 1,
+     "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed": 1,
+     "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f": 1,
+     "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8": 1,
+     "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887": 3,
+     "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5": 2,
+     "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3": 2,
+     "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17": 1,
+     "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3": 1
+    },
+    "aspect_seats": [],
+    "doc_share_top": 0.2,
+    "docs_within_gap": 4,
+    "agreement_reordered": 15,
+    "dominance_avoidable": false
+   },
+   "used_evidence": [
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce"
+   ],
+   "retrieval_trace": {
+    "aspects": {
+     "p1": {
+      "type": "ENTITY",
+      "lanes": {
+       "GLOBAL_DENSE_CHILD": 20,
+       "GLOBAL_SPARSE_CHILD": 15
+      },
+      "query": "Structuring suspense through framing and lighting choices.",
+      "union": 9,
+      "origin": "PROFILE",
+      "weight": 0.6,
+      "degraded": []
+     },
+     "q0": {
+      "type": "PRIMARY",
+      "lanes": {
+       "GLOBAL_DENSE_CHILD": 50,
+       "HIERARCHICAL_ROUTE": 34,
+       "GLOBAL_SPARSE_CHILD": 40
+      },
+      "query": "building suspense without dialogue",
+      "union": 92,
+      "weight": 1.0,
+      "degraded": []
+     },
+     "q1": {
+      "type": "MECHANISM",
+      "lanes": {
+       "GLOBAL_DENSE_CHILD": 20,
+       "GLOBAL_SPARSE_CHILD": 15
+      },
+      "query": "editing techniques for tension and suspense",
+      "union": 14,
+      "origin": "USER",
+      "weight": 0.8,
+      "degraded": []
+     },
+     "q2": {
+      "type": "MECHANISM",
+      "lanes": {
+       "GLOBAL_DENSE_CHILD": 20,
+       "GLOBAL_SPARSE_CHILD": 15
+      },
+      "query": "visual storytelling and cinematography for suspense",
+      "union": 7,
+      "origin": "USER",
+      "weight": 0.8,
+      "degraded": []
+     },
+     "br1": {
+      "type": "ENTITY",
+      "lanes": {
+       "GLOBAL_DENSE_CHILD": 20,
+       "GLOBAL_SPARSE_CHILD": 15
+      },
+      "query": "In what ways does the editor act as a storyteller to build pacing and suspense?",
+      "union": 11,
+      "origin": "BRIDGE",
+      "weight": 0.55,
+      "degraded": []
+     },
+     "br2": {
+      "type": "ENTITY",
+      "lanes": {
+       "GLOBAL_DENSE_CHILD": 20,
+       "GLOBAL_SPARSE_CHILD": 15
+      },
+      "query": "What is the role of misdirection in film editing to create suspense or surprise?",
+      "union": 12,
+      "origin": "BRIDGE",
+      "weight": 0.55,
+      "degraded": []
+     },
+     "rt:pmap": {
+      "type": "ROUTE",
+      "lanes": {
+       "SHADOW_DUALREAD": 24
+      },
+      "query": "rt:pmap",
+      "union": 21,
+      "origin": "SKELETON",
+      "weight": 1.0,
+      "degraded": []
+     },
+     "rt:latent": {
+      "type": "ROUTE",
+      "lanes": {
+       "LATENT_RESCUE": 18
+      },
+      "query": "rt:latent",
+      "union": 18,
+      "origin": "SKELETON",
+      "weight": 1.0,
+      "degraded": []
+     },
+     "rt:seealso": {
+      "type": "ROUTE",
+      "lanes": {
+       "SEEALSO_FANOUT": 24
+      },
+      "query": "rt:seealso",
+      "union": 15,
+      "origin": "SKELETON",
+      "weight": 1.0,
+      "degraded": []
+     }
+    },
+    "probe_gate": {
+     "floor": 0.2,
+     "scored": 5,
+     "scores": {
+      "p0": {
+       "score": 0.0368,
+       "origin": "PROFILE"
+      },
+      "p1": {
+       "score": 0.9161,
+       "origin": "PROFILE"
+      },
+      "br0": {
+       "score": 0.0642,
+       "origin": "BRIDGE"
+      },
+      "br1": {
+       "score": 0.9976,
+       "origin": "BRIDGE"
+      },
+      "br2": {
+       "score": 0.9929,
+       "origin": "BRIDGE"
+      }
+     },
+     "dropped": [
+      "br0",
+      "p0"
+     ],
+     "version": "probe-gate-v1"
+    },
+    "aspect_best": {
+     "p1": 0.7746,
+     "q0": 0.9944,
+     "q1": 0.9012,
+     "q2": 0.7746,
+     "br1": 0.9012,
+     "br2": 0.9944,
+     "rt:pmap": 0.9284,
+     "rt:latent": 0.5927,
+     "rt:seealso": 0.5156
+    },
+    "aspect_final": {
+     "p1": 1,
+     "q0": 15,
+     "q1": 3,
+     "q2": 2,
+     "br1": 1,
+     "br2": 1,
+     "rt:pmap": 3,
+     "rt:latent": 2,
+     "rt:seealso": 1
+    },
+    "weak_aspects": [],
+    "weak_reasons": {},
+    "aspect_prefix": {
+     "p1": 4,
+     "q1": 6,
+     "q2": 4,
+     "br1": 4,
+     "br2": 3,
+     "rt:pmap": 5,
+     "rt:latent": 3,
+     "rt:seealso": 2
+    },
+    "aspect_seated": []
+   },
+   "latent_selection": {
+    "counts": {
+     "fill": 0,
+     "direct": 12,
+     "divergent": 0,
+     "complementary": 3
+    },
+    "graded": [
+     {
+      "c4_state": "DIRECT_ELIGIBLE",
+      "chunk_id": "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+      "eligibility": {
+       "role": "DIRECT_ELIGIBLE",
+       "chunk_id": "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+       "q0_chunk_score": 5.179688,
+       "direct_eligible": true,
+       "lineage_results": [
+        {
+         "state": "DIRECT_ELIGIBLE",
+         "direct": true,
+         "reason": "chunk_relevant_to_q0",
+         "scores": {
+          "q0_chunk": 5.179688,
+          "bridge_q0": 0.117188,
+          "origin_chunk": -2.054688
+         },
+         "bridge_id": "br2",
+         "bridge_valid": null,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": null
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "DIRECT_ELIGIBLE",
+      "chunk_id": "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+      "eligibility": {
+       "role": "DIRECT_ELIGIBLE",
+       "chunk_id": "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+       "q0_chunk_score": 2.210938,
+       "direct_eligible": true,
+       "lineage_results": [
+        {
+         "state": "DIRECT_ELIGIBLE",
+         "direct": true,
+         "reason": "chunk_relevant_to_q0",
+         "scores": {
+          "q0_chunk": 2.210938,
+          "bridge_q0": 0.835938,
+          "origin_chunk": 6.710938
+         },
+         "bridge_id": "br1",
+         "bridge_valid": null,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": null
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "INELIGIBLE",
+      "chunk_id": "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+      "eligibility": {
+       "role": "INELIGIBLE",
+       "chunk_id": "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+       "q0_chunk_score": -0.117188,
+       "direct_eligible": false,
+       "lineage_results": []
+      }
+     },
+     {
+      "c4_state": "INELIGIBLE",
+      "chunk_id": "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+      "eligibility": {
+       "role": "INELIGIBLE",
+       "chunk_id": "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+       "q0_chunk_score": -0.34375,
+       "direct_eligible": false,
+       "lineage_results": []
+      }
+     },
+     {
+      "c4_state": "INELIGIBLE",
+      "chunk_id": "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+      "eligibility": {
+       "role": "INELIGIBLE",
+       "chunk_id": "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+       "q0_chunk_score": -0.40625,
+       "direct_eligible": false,
+       "lineage_results": []
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_e9e9ae2057548d45d1d48f039f127655d11d5c22dc02c9811ca0eda4bd46164a",
+       "q0_chunk_score": -0.757812,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": -0.757812,
+          "bridge_q0": 0.835938,
+          "origin_chunk": 6.273438
+         },
+         "bridge_id": "br1",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+       "q0_chunk_score": -0.882812,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": -0.882812,
+          "bridge_q0": 0.835938,
+          "origin_chunk": 5.492188
+         },
+         "bridge_id": "br1",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "INELIGIBLE",
+      "chunk_id": "chunk_1b29bafd9f9245567d8726b197edd847db892cafeea7f11555c8a54014a8e816",
+      "eligibility": {
+       "role": "INELIGIBLE",
+       "chunk_id": "chunk_1b29bafd9f9245567d8726b197edd847db892cafeea7f11555c8a54014a8e816",
+       "q0_chunk_score": -5.734375,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "INELIGIBLE",
+         "direct": false,
+         "reason": "local_subfloor",
+         "scores": {
+          "q0_chunk": -5.734375,
+          "bridge_q0": 0.835938,
+          "origin_chunk": -0.664062
+         },
+         "bridge_id": "br1",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": false
+        },
+        {
+         "state": "INELIGIBLE",
+         "direct": false,
+         "reason": "local_subfloor",
+         "scores": {
+          "q0_chunk": -5.734375,
+          "bridge_q0": 0.117188,
+          "origin_chunk": -1.671875
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": false
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_30b5f6139bfda4a17138ca6abb5a64a3c5cc7b688011c658077fa5fbda5c4b0f",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_30b5f6139bfda4a17138ca6abb5a64a3c5cc7b688011c658077fa5fbda5c4b0f",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.835938,
+          "origin_chunk": 7.375
+         },
+         "bridge_id": "br1",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_02b9207a76b241692edb258f343444f2f36ff4219eabc43669958a73a38e28fc",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_02b9207a76b241692edb258f343444f2f36ff4219eabc43669958a73a38e28fc",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.117188,
+          "origin_chunk": 4.789062
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "INELIGIBLE",
+      "chunk_id": "chunk_a3f1375b6eca74ee5517606b63828247a8fb633af1a5e3b50aa926ac768e9265",
+      "eligibility": {
+       "role": "INELIGIBLE",
+       "chunk_id": "chunk_a3f1375b6eca74ee5517606b63828247a8fb633af1a5e3b50aa926ac768e9265",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "INELIGIBLE",
+         "direct": false,
+         "reason": "local_subfloor",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.117188,
+          "origin_chunk": -4.734375
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": false
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_99fb5f357c96a700f54c929879b688401b477f76e319d7e7e7e5a92bfc99c018",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_99fb5f357c96a700f54c929879b688401b477f76e319d7e7e7e5a92bfc99c018",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.117188,
+          "origin_chunk": 4.3125
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f",
+       "q0_chunk_score": -0.382812,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": -0.382812,
+          "bridge_q0": 0.835938,
+          "origin_chunk": 7.492188
+         },
+         "bridge_id": "br1",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_fdc074629f3a194335a35744b86abd816cd439dc3bc47d02de321495755c6964",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_fdc074629f3a194335a35744b86abd816cd439dc3bc47d02de321495755c6964",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.117188,
+          "origin_chunk": 5.5625
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_f5967392e0e3fc63671a4f2a3eea7c94e2a7197f313ba9092a9c1d337e374cfa",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_f5967392e0e3fc63671a4f2a3eea7c94e2a7197f313ba9092a9c1d337e374cfa",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.117188,
+          "origin_chunk": 1.859375
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_689f429174b35985e5801b8db6518fb8a1a653b84d7f29f7999203aef685b392",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_689f429174b35985e5801b8db6518fb8a1a653b84d7f29f7999203aef685b392",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.835938,
+          "origin_chunk": 5.304688
+         },
+         "bridge_id": "br1",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_7966febb5f90a5c50c76bd5ca0c164026e1791e089d9099975a8183ab400d3d6",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_7966febb5f90a5c50c76bd5ca0c164026e1791e089d9099975a8183ab400d3d6",
+       "q0_chunk_score": -1.007812,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": -1.007812,
+          "bridge_q0": 0.117188,
+          "origin_chunk": 4.1875
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_36e6ef5bb56c0e22b5602e9f64e4e8a711db77ef9c0dbac638ec45efc4f9e06a",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_36e6ef5bb56c0e22b5602e9f64e4e8a711db77ef9c0dbac638ec45efc4f9e06a",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.117188,
+          "origin_chunk": 5.875
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_3aadad3ea35602cae52a48067c38c42c12b3940ee3ac54d42c3473411eb1c89a",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_3aadad3ea35602cae52a48067c38c42c12b3940ee3ac54d42c3473411eb1c89a",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.117188,
+          "origin_chunk": 5.664062
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "INELIGIBLE",
+      "chunk_id": "chunk_3d605fa9a9aaa3e06b6e5f538ab6fc64b5de97c52c830872d99caf0249f67d70",
+      "eligibility": {
+       "role": "INELIGIBLE",
+       "chunk_id": "chunk_3d605fa9a9aaa3e06b6e5f538ab6fc64b5de97c52c830872d99caf0249f67d70",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "INELIGIBLE",
+         "direct": false,
+         "reason": "local_subfloor",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.117188,
+          "origin_chunk": -9.507812
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": false
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_562bcdfa7efeee5ef308e52581a37d3f22ea93707ee2e66f4148bed63f703a36",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_562bcdfa7efeee5ef308e52581a37d3f22ea93707ee2e66f4148bed63f703a36",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.835938,
+          "origin_chunk": 5.710938
+         },
+         "bridge_id": "br1",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "INELIGIBLE",
+      "chunk_id": "chunk_a66fe9da76da521b03eebbe5a74ebcf995079a8203823cc70a5eee421e160993",
+      "eligibility": {
+       "role": "INELIGIBLE",
+       "chunk_id": "chunk_a66fe9da76da521b03eebbe5a74ebcf995079a8203823cc70a5eee421e160993",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "INELIGIBLE",
+         "direct": false,
+         "reason": "local_subfloor",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.835938,
+          "origin_chunk": -3.140625
+         },
+         "bridge_id": "br1",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": false
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "INELIGIBLE",
+      "chunk_id": "chunk_3e74c9d5893d2a65447ebadb24e94171a27429ce0453f5a7d2a6f716da4947ad",
+      "eligibility": {
+       "role": "INELIGIBLE",
+       "chunk_id": "chunk_3e74c9d5893d2a65447ebadb24e94171a27429ce0453f5a7d2a6f716da4947ad",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "INELIGIBLE",
+         "direct": false,
+         "reason": "local_subfloor",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.117188,
+          "origin_chunk": -8.3125
+         },
+         "bridge_id": "br2",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": false
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "COMPLEMENTARY_ELIGIBLE",
+      "chunk_id": "chunk_3fb6a0fc705617bf9e78822df135ef6af2b63c4e19f2e0f15c3e6bcdc6feff49",
+      "eligibility": {
+       "role": "COMPLEMENTARY_ELIGIBLE",
+       "chunk_id": "chunk_3fb6a0fc705617bf9e78822df135ef6af2b63c4e19f2e0f15c3e6bcdc6feff49",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "COMPLEMENTARY_ELIGIBLE",
+         "direct": false,
+         "reason": "both_links_hold",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.835938,
+          "origin_chunk": 0.25
+         },
+         "bridge_id": "br1",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": true
+        }
+       ]
+      }
+     },
+     {
+      "c4_state": "INELIGIBLE",
+      "chunk_id": "chunk_218606738db5f9d9dafb4218e2c48285d7464a284cc05e843f33a22fa8a6665d",
+      "eligibility": {
+       "role": "INELIGIBLE",
+       "chunk_id": "chunk_218606738db5f9d9dafb4218e2c48285d7464a284cc05e843f33a22fa8a6665d",
+       "q0_chunk_score": null,
+       "direct_eligible": false,
+       "lineage_results": [
+        {
+         "state": "INELIGIBLE",
+         "direct": false,
+         "reason": "local_subfloor",
+         "scores": {
+          "q0_chunk": null,
+          "bridge_q0": 0.835938,
+          "origin_chunk": -6.761719
+         },
+         "bridge_id": "br1",
+         "bridge_valid": true,
+         "proposed_role": "COMPLEMENTARY",
+         "local_relevant": false
+        }
+       ]
+      }
+     }
+    ],
+    "enabled": true,
+    "n_direct": 12,
+    "bridge_q0": {
+     "br0": -2.492188,
+     "br1": 0.835938,
+     "br2": 0.117188
+    },
+    "n_bridges": 3,
+    "establishes_need": true,
+    "divergent_allowed": true
+   },
+   "synthesis_version": "litellm:anthropic/deepseek-v4-flash-0731"
+  }
+ }
+}
