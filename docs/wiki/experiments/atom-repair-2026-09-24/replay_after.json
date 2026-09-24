@@ -1,0 +1,1817 @@
+[
+ {
+  "mode": "HYBRID",
+  "config": "deployed",
+  "wall_ms": 5424.0,
+  "final": 15,
+  "final_chunks": [
+   "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+   "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+   "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+   "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+   "chunk_73257537ea9aff27316717cac81a98b26e904ce3be3121cc4beb870a88101d1e",
+   "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+   "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+   "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+   "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+   "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+   "chunk_f3ce3f13d2be5d2d31c06054b027df6cb992774f06cb1f31b83e714f58fccc91",
+   "chunk_c25dd19bccb66077a78efe108227dfc25b0dbf268f9ffca1e3743119a94f49c2",
+   "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4",
+   "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+   "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce"
+  ],
+  "final_docs": [
+   "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+   "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+   "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+   "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+   "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+   "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+  ],
+  "lanes_final": {
+   "HIERARCHICAL_ROUTE": 8,
+   "GLOBAL_DENSE_CHILD": 13,
+   "GLOBAL_SPARSE_CHILD": 2,
+   "LATENT_RESCUE": 1,
+   "SEEALSO_FANOUT": 1,
+   "SHADOW_DUALREAD": 1
+  },
+  "skeleton_final": 3,
+  "skeleton_only_final": 1,
+  "indirect_final": 12,
+  "direct_final": 13,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 14
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 22
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   }
+  },
+  "aspect_prefix": {
+   "q1": 10,
+   "q2": 3,
+   "p0": 10,
+   "p1": 7,
+   "br0": 9,
+   "br1": 11,
+   "rt:latent": 2,
+   "rt:pmap": 4,
+   "rt:seealso": 4
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "probe_routes": null,
+  "probe_route_final": 0,
+  "aspect_final": {
+   "q1": 3,
+   "q2": 2,
+   "p0": 8,
+   "p1": 2,
+   "br0": 2,
+   "br1": 7,
+   "rt:latent": 1,
+   "rt:pmap": 1,
+   "rt:seealso": 1
+  },
+  "final_rows": [
+   {
+    "chunk_id": "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0",
+     "br1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 6.3125,
+    "text": "When dealing with very heavy objects, therefore, the director must allow plenty of time to start, stop, or change their movements, in order to make their weight"
+   },
+   {
+    "chunk_id": "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "q1",
+     "q2",
+     "p0",
+     "br1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 6.257812,
+    "text": "It is not the exaggeration of the weight of the object which is at the center of animation, but the exaggeration of the tendency of the weight\u2014any weight\u2014to mov"
+   },
+   {
+    "chunk_id": "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "doc_id": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "source_name": "VES Handbook of Visual Effects.md",
+    "query_ids": [
+     "q0",
+     "br1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 6.109375,
+    "text": "The speed at which an object moves also tends to convey its sense of size. The faster it moves, the smaller it will seem to be, especially if it shows no sense "
+   },
+   {
+    "chunk_id": "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "p0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 5.773438,
+    "text": "All objects in nature have their own weight, construction, and degree of flexibility, and therefore each behaves in its own individual way when a force acts upo"
+   },
+   {
+    "chunk_id": "chunk_73257537ea9aff27316717cac81a98b26e904ce3be3121cc4beb870a88101d1e",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "rt:latent"
+    ],
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD",
+     "LATENT_RESCUE"
+    ],
+    "g3": 5.710938,
+    "text": "If it is a fairly gentle movement, the action might take about 16 frames to complete which on double frame animation, or \u201ctwos,\u201d would be eight drawings. If the"
+   },
+   {
+    "chunk_id": "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "p0",
+     "br1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 5.515625,
+    "text": "The way an object behaves on the screen, and the effect of weight that it gives, depends entirely on the spacing of the animation drawings and not on the drawin"
+   },
+   {
+    "chunk_id": "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "doc_id": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+    "source_name": "Ed Hooks - Acting for Animators (2017).md",
+    "query_ids": [
+     "q0",
+     "p1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 4.421875,
+    "text": "In 1937, Don Graham lectured at the old Hyperion Disney Studio about the importance of animating force rather than animating mere form. He pointed out that if y"
+   },
+   {
+    "chunk_id": "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "p0",
+     "br1",
+     "rt:seealso"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "SEEALSO_FANOUT"
+    ],
+    "g3": 4.359375,
+    "text": "This is not strictly true, of course, with live characters because if the movement is slow enough, the muscles have time to contract and stop the arms straighte"
+   },
+   {
+    "chunk_id": "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "doc_id": "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+    "source_name": "Making Meaning with Machines.md",
+    "query_ids": [
+     "q0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 3.773438,
+    "text": "182\t\nChapter 7\ndynamics of hardware, as robots (and humans) are. Moreover, talented \nartists create their motion profiles in context (using environment and \nnar"
+   },
+   {
+    "chunk_id": "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+    "doc_id": "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+    "source_name": "Force Dynamic Life Drawing.md",
+    "query_ids": [
+     "q0",
+     "rt:pmap"
+    ],
+    "arrivals": [
+     "SHADOW_DUALREAD"
+    ],
+    "g3": 5.1875,
+    "text": "When animating, or drawing, gravity is the invisible force you must always be aware of to bring reality to your work. Some pointers to think about when drawing "
+   },
+   {
+    "chunk_id": "chunk_f3ce3f13d2be5d2d31c06054b027df6cb992774f06cb1f31b83e714f58fccc91",
+    "doc_id": "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "source_name": "The Laban Workbook for Actors.md",
+    "query_ids": [
+     "q0",
+     "br0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 2.640625,
+    "text": "where is \u201ccenter\u201d?\nThese questions were in the Tuning section; but here you are working \nwith transformation.\nM\nM\nDoes your character\u2019s posture affect where you"
+   },
+   {
+    "chunk_id": "chunk_c25dd19bccb66077a78efe108227dfc25b0dbf268f9ffca1e3743119a94f49c2",
+    "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "source_name": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "query_ids": [
+     "p1",
+     "br0"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 2.523438,
+    "text": "Actors\u2019 interactions must be contained and purposeful, not florid and \u201cactory.\u201d You know this is happening when an actor makes unmotivated movements, paces, and"
+   },
+   {
+    "chunk_id": "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4",
+    "doc_id": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+    "source_name": "handbook.html",
+    "query_ids": [
+     "p0",
+     "br1"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "g3": 1.0625,
+    "text": "SUB motion.force\n\n## Force dynamics\n\n08 \u2014 Force Dynamics: Physical and Perceived Force\nsrc: Additional/motion direction/08_force_dynamics.md \u00b7 words: 864\n\n### 0"
+   },
+   {
+    "chunk_id": "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "q2",
+     "p0",
+     "br1"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 7.515625,
+    "text": "The way a movement is timed can contribute greatly to the feeling of size and scale of an object or character. When animating a man with naturalistic proportion"
+   },
+   {
+    "chunk_id": "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 6.460938,
+    "text": "A live actor faced with these problems moves his muscles and limbs and deals with gravity automatically from habit, and so can concentrate on acting. An animato"
+   }
+  ],
+  "lane_sizes": {
+   "latent_rescue": 14,
+   "dualread": 22,
+   "seealso_fanout": 24,
+   "graph_dest": 0,
+   "probe_routes": null
+  },
+  "timings_ms": {
+   "lanes_wall": 197.7,
+   "global_dense_child": 138.8,
+   "document_summary": 110.9,
+   "section_summary": 196.0,
+   "entity_card": 106.6,
+   "hierarchical_children": 1547.4,
+   "global_sparse_child": 0.0,
+   "route_lanes_wall": 2014.9,
+   "sub_q1_dense": 76.8,
+   "sub_q2_dense": 177.8,
+   "sub_p0_dense": 164.0,
+   "sub_p1_dense": 148.8,
+   "sub_br0_dense": 110.0,
+   "sub_br1_dense": 103.8,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 10.7,
+   "core_wall": 3803.2
+  },
+  "rerank_prefix": 34,
+  "degraded": [],
+  "turn": 1
+ },
+ {
+  "mode": "WILDCARD",
+  "config": "deployed",
+  "wall_ms": 7645.6,
+  "final": 15,
+  "final_chunks": [
+   "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+   "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+   "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+   "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+   "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+   "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+   "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+   "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+   "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+   "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+   "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+   "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060",
+   "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+   "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4",
+   "chunk_809101575708d29f278eba16d2fee1f4a8905b57f24880ea6b7909aeda29274a"
+  ],
+  "final_docs": [
+   "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+   "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+   "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+   "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+   "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+  ],
+  "lanes_final": {
+   "HIERARCHICAL_ROUTE": 8,
+   "GLOBAL_DENSE_CHILD": 14,
+   "SEEALSO_FANOUT": 2,
+   "SHADOW_DUALREAD": 2,
+   "GRAPH_DEST": 1,
+   "GLOBAL_SPARSE_CHILD": 2
+  },
+  "skeleton_final": 4,
+  "skeleton_only_final": 1,
+  "indirect_final": 12,
+  "direct_final": 14,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 14
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 22
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   },
+   "rt:graph": {
+    "GRAPH_DEST": 8
+   }
+  },
+  "aspect_prefix": {
+   "q1": 9,
+   "q2": 3,
+   "p0": 10,
+   "p1": 9,
+   "br0": 8,
+   "br1": 9,
+   "rt:latent": 3,
+   "rt:pmap": 5,
+   "rt:seealso": 4,
+   "rt:graph": 3
+  },
+  "contextual": {
+   "enabled": true,
+   "judged": 19,
+   "needs": 6,
+   "pairs": 19,
+   "promoted": 6,
+   "vague": 2,
+   "ms": 1899.7
+  },
+  "probe_routes": null,
+  "probe_route_final": 0,
+  "aspect_final": {
+   "q1": 2,
+   "q2": 3,
+   "p0": 7,
+   "p1": 3,
+   "br0": 2,
+   "br1": 7,
+   "rt:latent": 0,
+   "rt:pmap": 2,
+   "rt:seealso": 2,
+   "rt:graph": 1
+  },
+  "final_rows": [
+   {
+    "chunk_id": "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0",
+     "br1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 6.3125,
+    "text": "When dealing with very heavy objects, therefore, the director must allow plenty of time to start, stop, or change their movements, in order to make their weight"
+   },
+   {
+    "chunk_id": "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "q1",
+     "q2",
+     "p0",
+     "br1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 6.257812,
+    "text": "It is not the exaggeration of the weight of the object which is at the center of animation, but the exaggeration of the tendency of the weight\u2014any weight\u2014to mov"
+   },
+   {
+    "chunk_id": "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "doc_id": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "source_name": "VES Handbook of Visual Effects.md",
+    "query_ids": [
+     "q0",
+     "br1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 6.109375,
+    "text": "The speed at which an object moves also tends to convey its sense of size. The faster it moves, the smaller it will seem to be, especially if it shows no sense "
+   },
+   {
+    "chunk_id": "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "p0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 5.773438,
+    "text": "All objects in nature have their own weight, construction, and degree of flexibility, and therefore each behaves in its own individual way when a force acts upo"
+   },
+   {
+    "chunk_id": "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "q2",
+     "p0",
+     "br1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 5.515625,
+    "text": "The way an object behaves on the screen, and the effect of weight that it gives, depends entirely on the spacing of the animation drawings and not on the drawin"
+   },
+   {
+    "chunk_id": "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "doc_id": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+    "source_name": "Ed Hooks - Acting for Animators (2017).md",
+    "query_ids": [
+     "q0",
+     "p1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 4.421875,
+    "text": "In 1937, Don Graham lectured at the old Hyperion Disney Studio about the importance of animating force rather than animating mere form. He pointed out that if y"
+   },
+   {
+    "chunk_id": "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "p0",
+     "br1",
+     "rt:seealso"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "SEEALSO_FANOUT"
+    ],
+    "g3": 4.359375,
+    "text": "This is not strictly true, of course, with live characters because if the movement is slow enough, the muscles have time to contract and stop the arms straighte"
+   },
+   {
+    "chunk_id": "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "doc_id": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "source_name": "Timing for Animation.md",
+    "query_ids": [
+     "q0",
+     "q2",
+     "p0",
+     "br1"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 7.515625,
+    "text": "The way a movement is timed can contribute greatly to the feeling of size and scale of an object or character. When animating a man with naturalistic proportion"
+   },
+   {
+    "chunk_id": "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "doc_id": "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+    "source_name": "Making Meaning with Machines.md",
+    "query_ids": [
+     "q0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 3.773438,
+    "text": "182\t\nChapter 7\ndynamics of hardware, as robots (and humans) are. Moreover, talented \nartists create their motion profiles in context (using environment and \nnar"
+   },
+   {
+    "chunk_id": "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+    "doc_id": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+    "source_name": "Ed Hooks - Acting for Animators (2017).md",
+    "query_ids": [
+     "q0",
+     "rt:pmap",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "SHADOW_DUALREAD",
+     "GRAPH_DEST"
+    ],
+    "g3": 3.109375,
+    "text": "Throughout the 1935 memo, Walt makes it obvious that he considered movement itself to be funny, that there are \u201cfunny\u201d things to be done with, for example, a fa"
+   },
+   {
+    "chunk_id": "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+    "doc_id": "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+    "source_name": "Force Dynamic Life Drawing.md",
+    "query_ids": [
+     "q0",
+     "rt:pmap"
+    ],
+    "arrivals": [
+     "SHADOW_DUALREAD"
+    ],
+    "g3": 5.1875,
+    "text": "When animating, or drawing, gravity is the invisible force you must always be aware of to bring reality to your work. Some pointers to think about when drawing "
+   },
+   {
+    "chunk_id": "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060",
+    "doc_id": "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "source_name": "The Laban Workbook for Actors.md",
+    "query_ids": [
+     "q0",
+     "br0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 2.882812,
+    "text": "Moving Into Character\t\n65\nexercise or two for each quality. Keep in mind that it is really impossible \nto isolate just one Effort quality in one\u2019s movement. In "
+   },
+   {
+    "chunk_id": "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "source_name": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "query_ids": [
+     "q0",
+     "p1",
+     "br0"
+    ],
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 2.640625,
+    "text": "Each actor strives constantly to develop their character in relation to the text. From all the clues scattered throughout the script, she decides scene by scene"
+   },
+   {
+    "chunk_id": "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4",
+    "doc_id": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+    "source_name": "handbook.html",
+    "query_ids": [
+     "p0",
+     "br1"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "g3": 1.0625,
+    "text": "SUB motion.force\n\n## Force dynamics\n\n08 \u2014 Force Dynamics: Physical and Perceived Force\nsrc: Additional/motion direction/08_force_dynamics.md \u00b7 words: 864\n\n### 0"
+   },
+   {
+    "chunk_id": "chunk_809101575708d29f278eba16d2fee1f4a8905b57f24880ea6b7909aeda29274a",
+    "doc_id": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "source_name": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+    "query_ids": [
+     "p1",
+     "q0",
+     "rt:seealso"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "SEEALSO_FANOUT"
+    ],
+    "g3": 0.8485656357268158,
+    "text": "Movements possess\nes the tic and psychological properties, which may\ncOI1\\'ey varied pic torial and emotion al connota-\ntions to th e viewer. Movement may be cr"
+   }
+  ],
+  "lane_sizes": {
+   "latent_rescue": 14,
+   "dualread": 22,
+   "seealso_fanout": 24,
+   "graph_dest": 8,
+   "probe_routes": null
+  },
+  "timings_ms": {
+   "lanes_wall": 189.6,
+   "global_dense_child": 45.2,
+   "document_summary": 122.9,
+   "section_summary": 188.3,
+   "entity_card": 142.6,
+   "hierarchical_children": 1565.2,
+   "global_sparse_child": 0.0,
+   "route_lanes_wall": 2904.2,
+   "sub_q1_dense": 133.9,
+   "sub_q2_dense": 169.8,
+   "sub_p0_dense": 166.5,
+   "sub_p1_dense": 187.8,
+   "sub_br0_dense": 152.5,
+   "sub_br1_dense": 84.1,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 9.2,
+   "core_wall": 4695.6
+  },
+  "rerank_prefix": 35,
+  "degraded": [],
+  "turn": 2
+ },
+ {
+  "mode": "HYBRID",
+  "config": "deployed",
+  "wall_ms": 5013.0,
+  "final": 15,
+  "final_chunks": [
+   "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+   "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+   "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+   "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+   "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+   "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+   "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+   "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+   "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+   "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+   "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+   "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+   "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+   "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+   "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb"
+  ],
+  "final_docs": [
+   "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+   "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+   "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+   "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+   "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 11,
+   "GLOBAL_SPARSE_CHILD": 6,
+   "HIERARCHICAL_ROUTE": 8,
+   "SHADOW_DUALREAD": 4,
+   "LATENT_RESCUE": 2,
+   "SEEALSO_FANOUT": 1
+  },
+  "skeleton_final": 7,
+  "skeleton_only_final": 1,
+  "indirect_final": 1,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 18
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 24
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   }
+  },
+  "aspect_prefix": {
+   "q1": 7,
+   "q2": 5,
+   "p0": 3,
+   "p1": 3,
+   "br0": 4,
+   "br1": 3,
+   "rt:latent": 4,
+   "rt:pmap": 4,
+   "rt:seealso": 3
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "probe_routes": null,
+  "probe_route_final": 0,
+  "aspect_final": {
+   "q1": 4,
+   "q2": 2,
+   "p0": 0,
+   "p1": 0,
+   "br0": 1,
+   "br1": 0,
+   "rt:latent": 2,
+   "rt:pmap": 4,
+   "rt:seealso": 1
+  },
+  "final_rows": [
+   {
+    "chunk_id": "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "doc_id": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "source_name": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+    "query_ids": [
+     "q0",
+     "q2",
+     "br0"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "g3": 5.179688,
+    "text": "By judicious\nuse of opposing screen travel, the audience will\nalways assume that the\ntwo opposite moving\nimages will meet -\nunless otherwise informed\nthrough di"
+   },
+   {
+    "chunk_id": "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "doc_id": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "source_name": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+    "query_ids": [
+     "q0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "g3": 2.78125,
+    "text": "A low-angle shot can make a character seem ominous and foreboding, as in Dr.\nStrangelove (Figure 3.20). When a character is approaching something as seen from a"
+   },
+   {
+    "chunk_id": "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "source_name": "Francis Glebas - Directing the Story (2008).md",
+    "query_ids": [
+     "q0",
+     "rt:pmap"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD",
+     "SHADOW_DUALREAD"
+    ],
+    "g3": 2.5625,
+    "text": "There are two forces at work for the audience. The first is _curiosity_ or the desire to know. This is why narrative questions drive the story. In this case the"
+   },
+   {
+    "chunk_id": "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "doc_id": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+    "source_name": "The Anatomy of Story.md",
+    "query_ids": [
+     "q0",
+     "q1"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 2.210938,
+    "text": "**1.** It creates suspense, especially when you cut back and forth at an increasing pace, as when someone is rushing to save a victim in danger."
+   },
+   {
+    "chunk_id": "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "source_name": "Francis Glebas - Directing the Story (2008).md",
+    "query_ids": [
+     "q0",
+     "rt:pmap"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "SHADOW_DUALREAD"
+    ],
+    "g3": 1.21875,
+    "text": "Before we discuss what suspense is, let\u2019s look at how it can be generated with just the looks and gazes of the characters. This next example is a scene from Edg"
+   },
+   {
+    "chunk_id": "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "doc_id": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "source_name": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "query_ids": [
+     "q0",
+     "q1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 1.234375,
+    "text": "Alternately, there\u2019s suspense in knowing something\u2019s coming. In _Dunkirk_ we hear an enemy plane coming to attack troops trapped on the beach. We see soldiers h"
+   },
+   {
+    "chunk_id": "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "source_name": "Francis Glebas - Directing the Story (2008).md",
+    "query_ids": [
+     "q0",
+     "q2",
+     "rt:pmap"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "SHADOW_DUALREAD"
+    ],
+    "g3": 0.695312,
+    "text": "\u201cIf a director wants to take advantage of suspense and draw the spectator into the film, the director must understand how to tell the story so that the spectato"
+   },
+   {
+    "chunk_id": "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+    "doc_id": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "source_name": "Ken Dancyger - The technique of film & video editing (2019).md",
+    "query_ids": [
+     "q0",
+     "q1"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "g3": 0.742188,
+    "text": "Suspense: The Extreme Long Shot\n85\nHannay\u2019s apartment. In the background, we see the woman\u2019s body on the bed. The house-\nkeeper screams, but what we hear is the"
+   },
+   {
+    "chunk_id": "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "doc_id": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+    "source_name": "Manga in Theory and Practice.md",
+    "query_ids": [
+     "q0"
+    ],
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "g3": 0.617188,
+    "text": "Now, make a list of what kinds of dialogue would make you want to read on to the next page. I\u2019ll provide some examples.\n\n\u2022 Shocking dialogue\n\n\u2022 Mellow, calming "
+   },
+   {
+    "chunk_id": "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "source_name": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "query_ids": [
+     "q0",
+     "rt:latent"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "LATENT_RESCUE"
+    ],
+    "g3": 0.375,
+    "text": "In this version, the explosion is not a total surprise to the audience because they knew more than she did. By loosening the previously tight POV identification"
+   },
+   {
+    "chunk_id": "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "doc_id": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "source_name": "Grammar of the Edit.md",
+    "query_ids": [
+     "q0",
+     "rt:seealso"
+    ],
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD",
+     "SEEALSO_FANOUT"
+    ],
+    "g3": 0.0625,
+    "text": "> ### \u261e \u2013 PIP #7 Hold Off on Adding Music to Dialogue Scenes\n> \n> #### Reason\n> \n> Dialogue should most often convey important information about the story, the "
+   },
+   {
+    "chunk_id": "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+    "doc_id": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "source_name": "Ken Dancyger - The technique of film & video editing (2019).md",
+    "query_ids": [
+     "q0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": -0.34375,
+    "text": "Rather than simply relying on visual parallel action, Lang cuts on dialog at one point, \nstarting a sentence in the police camp and ending it in the criminal me"
+   },
+   {
+    "chunk_id": "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+    "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "source_name": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "query_ids": [
+     "q0",
+     "rt:latent"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "LATENT_RESCUE"
+    ],
+    "g3": -0.40625,
+    "text": "Open information, on the other hand, is a common strategy for genre films structured around suspense, like David Farr and Susanne Bier\u2019s six-part spy thriller _"
+   },
+   {
+    "chunk_id": "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+    "doc_id": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+    "source_name": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+    "query_ids": [
+     "q0",
+     "rt:pmap"
+    ],
+    "arrivals": [
+     "SHADOW_DUALREAD"
+    ],
+    "g3": -0.375,
+    "text": "There are several techniques that can suggest a special connection between characters before it is explicitly revealed through action or dialogue; one of them i"
+   },
+   {
+    "chunk_id": "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+    "doc_id": "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3",
+    "source_name": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema.md",
+    "query_ids": [
+     "q0",
+     "q1"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": -0.882812,
+    "text": "or suspense by.not revealing the audio source. If this. style works well in pad and pen available for noting your first impressions, but avoid any\n\none scene, y"
+   }
+  ],
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 24,
+   "graph_dest": 0,
+   "probe_routes": null
+  },
+  "timings_ms": {
+   "lanes_wall": 187.6,
+   "global_dense_child": 169.1,
+   "document_summary": 152.5,
+   "section_summary": 186.1,
+   "entity_card": 91.9,
+   "hierarchical_children": 1502.2,
+   "global_sparse_child": 0.0,
+   "route_lanes_wall": 2134.0,
+   "sub_q1_dense": 100.2,
+   "sub_q2_dense": 57.2,
+   "sub_p0_dense": 124.9,
+   "sub_p1_dense": 144.4,
+   "sub_br0_dense": 119.6,
+   "sub_br1_dense": 94.8,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 9.5,
+   "core_wall": 3847.7
+  },
+  "rerank_prefix": 35,
+  "degraded": [],
+  "turn": 3
+ },
+ {
+  "mode": "WILDCARD",
+  "config": "deployed",
+  "wall_ms": 6240.3,
+  "final": 15,
+  "final_chunks": [
+   "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+   "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+   "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+   "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+   "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+   "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+   "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+   "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+   "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+   "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+   "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+   "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+   "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+   "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+   "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb"
+  ],
+  "final_docs": [
+   "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+   "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+   "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+   "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+   "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+   "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 10,
+   "GLOBAL_SPARSE_CHILD": 6,
+   "HIERARCHICAL_ROUTE": 8,
+   "SHADOW_DUALREAD": 5,
+   "GRAPH_DEST": 3,
+   "LATENT_RESCUE": 2,
+   "SEEALSO_FANOUT": 1
+  },
+  "skeleton_final": 8,
+  "skeleton_only_final": 2,
+  "indirect_final": 2,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 18
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 24
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   },
+   "rt:graph": {
+    "GRAPH_DEST": 8
+   }
+  },
+  "aspect_prefix": {
+   "q1": 5,
+   "q2": 5,
+   "p0": 3,
+   "p1": 3,
+   "br0": 4,
+   "br1": 3,
+   "rt:latent": 3,
+   "rt:pmap": 10,
+   "rt:seealso": 3,
+   "rt:graph": 8
+  },
+  "contextual": {
+   "enabled": true,
+   "judged": 23,
+   "needs": 6,
+   "pairs": 22,
+   "promoted": 5,
+   "vague": 4,
+   "ms": 1084.0
+  },
+  "probe_routes": null,
+  "probe_route_final": 0,
+  "aspect_final": {
+   "q1": 3,
+   "q2": 2,
+   "p0": 0,
+   "p1": 0,
+   "br0": 1,
+   "br1": 1,
+   "rt:latent": 2,
+   "rt:pmap": 5,
+   "rt:seealso": 1,
+   "rt:graph": 3
+  },
+  "final_rows": [
+   {
+    "chunk_id": "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "doc_id": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "source_name": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+    "query_ids": [
+     "q0",
+     "q2",
+     "br0"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "g3": 5.179688,
+    "text": "By judicious\nuse of opposing screen travel, the audience will\nalways assume that the\ntwo opposite moving\nimages will meet -\nunless otherwise informed\nthrough di"
+   },
+   {
+    "chunk_id": "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "doc_id": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "source_name": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+    "query_ids": [
+     "q0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "g3": 2.78125,
+    "text": "A low-angle shot can make a character seem ominous and foreboding, as in Dr.\nStrangelove (Figure 3.20). When a character is approaching something as seen from a"
+   },
+   {
+    "chunk_id": "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "source_name": "Francis Glebas - Directing the Story (2008).md",
+    "query_ids": [
+     "q0",
+     "rt:pmap",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD",
+     "SHADOW_DUALREAD",
+     "GRAPH_DEST"
+    ],
+    "g3": 2.5625,
+    "text": "There are two forces at work for the audience. The first is _curiosity_ or the desire to know. This is why narrative questions drive the story. In this case the"
+   },
+   {
+    "chunk_id": "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "source_name": "Francis Glebas - Directing the Story (2008).md",
+    "query_ids": [
+     "q0",
+     "rt:pmap",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "SHADOW_DUALREAD",
+     "GRAPH_DEST"
+    ],
+    "g3": 1.21875,
+    "text": "Before we discuss what suspense is, let\u2019s look at how it can be generated with just the looks and gazes of the characters. This next example is a scene from Edg"
+   },
+   {
+    "chunk_id": "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "doc_id": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "source_name": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+    "query_ids": [
+     "q0",
+     "q1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 1.234375,
+    "text": "Alternately, there\u2019s suspense in knowing something\u2019s coming. In _Dunkirk_ we hear an enemy plane coming to attack troops trapped on the beach. We see soldiers h"
+   },
+   {
+    "chunk_id": "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "doc_id": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "source_name": "Francis Glebas - Directing the Story (2008).md",
+    "query_ids": [
+     "q0",
+     "q2",
+     "rt:pmap"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "SHADOW_DUALREAD"
+    ],
+    "g3": 0.695312,
+    "text": "\u201cIf a director wants to take advantage of suspense and draw the spectator into the film, the director must understand how to tell the story so that the spectato"
+   },
+   {
+    "chunk_id": "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+    "doc_id": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "source_name": "Ken Dancyger - The technique of film & video editing (2019).md",
+    "query_ids": [
+     "q0",
+     "q1"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "g3": 0.742188,
+    "text": "Suspense: The Extreme Long Shot\n85\nHannay\u2019s apartment. In the background, we see the woman\u2019s body on the bed. The house-\nkeeper screams, but what we hear is the"
+   },
+   {
+    "chunk_id": "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "doc_id": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+    "source_name": "Manga in Theory and Practice.md",
+    "query_ids": [
+     "q0"
+    ],
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "g3": 0.617188,
+    "text": "Now, make a list of what kinds of dialogue would make you want to read on to the next page. I\u2019ll provide some examples.\n\n\u2022 Shocking dialogue\n\n\u2022 Mellow, calming "
+   },
+   {
+    "chunk_id": "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "source_name": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "query_ids": [
+     "q0",
+     "rt:latent"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "LATENT_RESCUE"
+    ],
+    "g3": 1.8423068933878992,
+    "text": "In this version, the explosion is not a total surprise to the audience because they knew more than she did. By loosening the previously tight POV identification"
+   },
+   {
+    "chunk_id": "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+    "doc_id": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "source_name": "Ken Dancyger - The technique of film & video editing (2019).md",
+    "query_ids": [
+     "q0",
+     "rt:pmap",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "SHADOW_DUALREAD",
+     "GRAPH_DEST"
+    ],
+    "g3": 0.453125,
+    "text": "86\nCHAPTER 7:\u2003 Experiments in Editing: Alfred Hitchcock\nsee his hands in closeup. Hitchcock then cuts to an extreme long shot of a man falling to \nthe ground. W"
+   },
+   {
+    "chunk_id": "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "doc_id": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "source_name": "Grammar of the Edit.md",
+    "query_ids": [
+     "q0",
+     "br1",
+     "rt:seealso"
+    ],
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD",
+     "SEEALSO_FANOUT"
+    ],
+    "g3": 0.0625,
+    "text": "> ### \u261e \u2013 PIP #7 Hold Off on Adding Music to Dialogue Scenes\n> \n> #### Reason\n> \n> Dialogue should most often convey important information about the story, the "
+   },
+   {
+    "chunk_id": "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+    "doc_id": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "source_name": "Ken Dancyger - The technique of film & video editing (2019).md",
+    "query_ids": [
+     "q0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": -0.34375,
+    "text": "Rather than simply relying on visual parallel action, Lang cuts on dialog at one point, \nstarting a sentence in the police camp and ending it in the criminal me"
+   },
+   {
+    "chunk_id": "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+    "doc_id": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "source_name": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+    "query_ids": [
+     "q0",
+     "rt:latent"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "LATENT_RESCUE"
+    ],
+    "g3": 1.7971336015443202,
+    "text": "Open information, on the other hand, is a common strategy for genre films structured around suspense, like David Farr and Susanne Bier\u2019s six-part spy thriller _"
+   },
+   {
+    "chunk_id": "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+    "doc_id": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+    "source_name": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+    "query_ids": [
+     "q0",
+     "rt:pmap"
+    ],
+    "arrivals": [
+     "SHADOW_DUALREAD"
+    ],
+    "g3": -0.375,
+    "text": "There are several techniques that can suggest a special connection between characters before it is explicitly revealed through action or dialogue; one of them i"
+   },
+   {
+    "chunk_id": "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+    "doc_id": "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3",
+    "source_name": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema.md",
+    "query_ids": [
+     "q0",
+     "q1"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": -0.882812,
+    "text": "or suspense by.not revealing the audio source. If this. style works well in pad and pen available for noting your first impressions, but avoid any\n\none scene, y"
+   }
+  ],
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 24,
+   "graph_dest": 8,
+   "probe_routes": null
+  },
+  "timings_ms": {
+   "lanes_wall": 209.5,
+   "global_dense_child": 34.5,
+   "document_summary": 152.6,
+   "section_summary": 208.2,
+   "entity_card": 23.2,
+   "hierarchical_children": 1504.3,
+   "global_sparse_child": 0.0,
+   "route_lanes_wall": 2692.5,
+   "sub_q1_dense": 39.3,
+   "sub_q2_dense": 55.4,
+   "sub_p0_dense": 59.8,
+   "sub_p1_dense": 153.1,
+   "sub_br0_dense": 144.2,
+   "sub_br1_dense": 143.0,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "union": 10.6,
+   "core_wall": 4427.9
+  },
+  "rerank_prefix": 38,
+  "degraded": [],
+  "turn": 4
+ },
+ {
+  "mode": "GRAPH",
+  "config": "deployed",
+  "wall_ms": 6440.4,
+  "final": 15,
+  "final_chunks": [
+   "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+   "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+   "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+   "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+   "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+   "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+   "chunk_c13623bda0afebe82606600b65077293111aba63c8a9949260d9e72df57c2558",
+   "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+   "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9",
+   "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+   "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+   "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+   "chunk_532490b79c273a3f234ea5c906326e323c6fdf4fa18733f3560dc6c8e40f0da0",
+   "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931",
+   "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91"
+  ],
+  "final_docs": [
+   "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+   "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+   "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+   "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+   "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+   "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+  ],
+  "lanes_final": {
+   "GLOBAL_DENSE_CHILD": 14,
+   "LATENT_RESCUE": 2,
+   "SHADOW_DUALREAD": 7,
+   "GRAPH_DEST": 7,
+   "HIERARCHICAL_ROUTE": 7,
+   "SEEALSO_FANOUT": 3,
+   "GLOBAL_SPARSE_CHILD": 2
+  },
+  "skeleton_final": 9,
+  "skeleton_only_final": 0,
+  "indirect_final": 5,
+  "direct_final": 15,
+  "route_aspects": {
+   "rt:latent": {
+    "LATENT_RESCUE": 18
+   },
+   "rt:pmap": {
+    "SHADOW_DUALREAD": 24
+   },
+   "rt:seealso": {
+    "SEEALSO_FANOUT": 24
+   },
+   "rt:graph": {
+    "GRAPH_DEST": 8
+   }
+  },
+  "aspect_prefix": {
+   "q1": 15,
+   "q2": 5,
+   "p0": 6,
+   "p1": 3,
+   "br0": 3,
+   "br1": 3,
+   "br2": 3,
+   "rt:latent": 4,
+   "rt:pmap": 9,
+   "rt:seealso": 8,
+   "rt:graph": 7
+  },
+  "contextual": {
+   "enabled": false
+  },
+  "probe_routes": null,
+  "probe_route_final": 0,
+  "aspect_final": {
+   "q1": 9,
+   "q2": 1,
+   "p0": 5,
+   "p1": 0,
+   "br0": 0,
+   "br1": 0,
+   "br2": 0,
+   "rt:latent": 2,
+   "rt:pmap": 7,
+   "rt:seealso": 3,
+   "rt:graph": 7
+  },
+  "final_rows": [
+   {
+    "chunk_id": "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+    "doc_id": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "source_name": "David Landau - Lighting for Cinematography (2014).md",
+    "query_ids": [
+     "q0",
+     "rt:latent",
+     "q1",
+     "rt:pmap",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "LATENT_RESCUE",
+     "SHADOW_DUALREAD",
+     "GRAPH_DEST"
+    ],
+    "g3": 6.484375,
+    "text": "PHOTO 10.5 Colored light accents on Cuyle Carvin and Ashley Taylor, The\nCold Equations, Ellipsis Films\nAudiences easily accept colored accents in sci-fi due to "
+   },
+   {
+    "chunk_id": "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "doc_id": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "source_name": "David Landau - Lighting for Cinematography (2014).md",
+    "query_ids": [
+     "q0",
+     "p0",
+     "rt:pmap",
+     "rt:seealso",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "SHADOW_DUALREAD",
+     "SEEALSO_FANOUT",
+     "GRAPH_DEST"
+    ],
+    "g3": 5.929688,
+    "text": "First, we light them at the sofa.\nNow we light the area behind them. If that area is dark and murky,\nhow will that affect the perception of the viewer when list"
+   },
+   {
+    "chunk_id": "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+    "doc_id": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "source_name": "David Landau - Lighting for Cinematography (2014).md",
+    "query_ids": [
+     "q0",
+     "q1",
+     "rt:pmap",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD",
+     "SHADOW_DUALREAD",
+     "GRAPH_DEST"
+    ],
+    "g3": 5.742188,
+    "text": "10 WORKING WITH COLOR:\nUsing Color for Mood and Using\nGels\nAnyone wanting to master lighting for cinematography should study\ntheatrical lighting design for its "
+   },
+   {
+    "chunk_id": "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "doc_id": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "source_name": "David Landau - Lighting for Cinematography (2014).md",
+    "query_ids": [
+     "q0",
+     "p0",
+     "rt:pmap",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "SHADOW_DUALREAD",
+     "GRAPH_DEST"
+    ],
+    "g3": 5.1875,
+    "text": "a feeling of dawn or sunset. This is all part of that international\nlanguage of light. The color of the light on the background will also\ntransmit a subliminal "
+   },
+   {
+    "chunk_id": "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+    "doc_id": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "source_name": "David Landau - Lighting for Cinematography (2014).md",
+    "query_ids": [
+     "q0",
+     "rt:latent",
+     "q1",
+     "rt:pmap",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "LATENT_RESCUE",
+     "SHADOW_DUALREAD",
+     "GRAPH_DEST"
+    ],
+    "g3": 4.351562,
+    "text": "Superhero movies,\nlike horror films, force the audience to suspend disbelief so far that\ncolor becomes more than acceptable. Look at the Batman and\nSpider-Man m"
+   },
+   {
+    "chunk_id": "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+    "doc_id": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "source_name": "David Landau - Lighting for Cinematography (2014).md",
+    "query_ids": [
+     "q0",
+     "q1",
+     "rt:pmap",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "SHADOW_DUALREAD",
+     "GRAPH_DEST"
+    ],
+    "g3": 5.8125,
+    "text": "We all see the same colors of sunrise and\nsunset, of twilight and moonlight, of fire and streetlights. So color can\nbe used to help communicate visually to ever"
+   },
+   {
+    "chunk_id": "chunk_c13623bda0afebe82606600b65077293111aba63c8a9949260d9e72df57c2558",
+    "doc_id": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "source_name": "David Landau - Lighting for Cinematography (2014).md",
+    "query_ids": [
+     "q0",
+     "q1",
+     "rt:pmap",
+     "rt:graph"
+    ],
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD",
+     "SHADOW_DUALREAD",
+     "GRAPH_DEST"
+    ],
+    "g3": 5.015625,
+    "text": "11 LIGHT THE SCENE, NOT JUST\nTHE SHOT:\nHigh Key, Low Key, Contrast\nRatios, Exposure Choice,\nChiaroscuro Lighting, Rembrandt,\nand Butterfly Lighting\nWhen I told "
+   },
+   {
+    "chunk_id": "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "doc_id": "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+    "source_name": "Scoppettuolo & Saccone - The Definitive Guide to DaVinci Resolve 15 (2018).md",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0",
+     "rt:seealso"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "SEEALSO_FANOUT"
+    ],
+    "g3": 8.242188,
+    "text": "Much has been said about the emotional power of color to shape audience mood, and nobody would argue that a scene lit by cool blue lighting is going to have a v"
+   },
+   {
+    "chunk_id": "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9",
+    "doc_id": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "source_name": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+    "query_ids": [
+     "q0",
+     "p0",
+     "rt:seealso"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD",
+     "SEEALSO_FANOUT"
+    ],
+    "g3": 6.5625,
+    "text": "The most commonly used terminology is front, 3/4 front, side,\n3/4 back, and backlight. The direction of the light is a major determinant not only of\nthe shadows"
+   },
+   {
+    "chunk_id": "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+    "doc_id": "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+    "source_name": "Grammar of the Shot.md",
+    "query_ids": [
+     "q0",
+     "q1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 6.226562,
+    "text": "There is a science to color and light and you should certainly explore more of that on \nyour own. Just be aware that bright colors will tend to appear closer to"
+   },
+   {
+    "chunk_id": "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "doc_id": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "source_name": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+    "query_ids": [
+     "q0",
+     "q2"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 5.953125,
+    "text": "LIGHTING AS STORYTELLING\nIn visual storytelling, few elements are as effective and as powerful as light and color.\nThey have the ability to reach viewers at a p"
+   },
+   {
+    "chunk_id": "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "doc_id": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "source_name": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+    "query_ids": [
+     "q0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 4.859375,
+    "text": "THE FIVE C's\nA\np[(lyer\nmay\n(/SS IIIII(!\ndo minance\nof\na\nWOII/! IJY\n,~ t a ll rl i ll g up, w hile tlwy rem ai n\nsea/rd.\nLIGHTING, TONAL VA LUE & COLORS\nViewer's"
+   },
+   {
+    "chunk_id": "chunk_532490b79c273a3f234ea5c906326e323c6fdf4fa18733f3560dc6c8e40f0da0",
+    "doc_id": "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+    "source_name": "Grammar of the Shot.md",
+    "query_ids": [
+     "q0",
+     "q1"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 4.609375,
+    "text": "Chapter Six   |   Working Practices and General Guidelines    151 \n Be Aware of the Color Choices Made Throughout \nYour Project \n Although they do not have to b"
+   },
+   {
+    "chunk_id": "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931",
+    "doc_id": "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd",
+    "source_name": "Framed Ink.md",
+    "query_ids": [
+     "q0"
+    ],
+    "arrivals": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 4.265625,
+    "text": "Lighti\nIs what is in front of us and what we perceive actually the Lighting is the first answer. By changing the lighting we\nsame thing? change the reality in f"
+   },
+   {
+    "chunk_id": "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91",
+    "doc_id": "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+    "source_name": "Scoppettuolo & Saccone - The Definitive Guide to DaVinci Resolve 15 (2018).md",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "g3": 8.296875,
+    "text": "Of course, what these varied illuminants mean depends on the visual palette you develop. Warm lighting that denotes romance in one film may instead portray roil"
+   }
+  ],
+  "lane_sizes": {
+   "latent_rescue": 18,
+   "dualread": 24,
+   "seealso_fanout": 24,
+   "graph_dest": 8,
+   "probe_routes": null
+  },
+  "timings_ms": {
+   "lanes_wall": 181.9,
+   "global_dense_child": 23.8,
+   "document_summary": 181.2,
+   "section_summary": 156.6,
+   "entity_card": 33.1,
+   "hierarchical_children": 1245.4,
+   "global_sparse_child": 0.0,
+   "route_lanes_wall": 2496.4,
+   "sub_q1_dense": 146.2,
+   "sub_q2_dense": 63.6,
+   "sub_p0_dense": 155.3,
+   "sub_p1_dense": 36.3,
+   "sub_br0_dense": 144.4,
+   "sub_br1_dense": 146.4,
+   "sub_br2_dense": 147.6,
+   "sub_q1_sparse": 0.0,
+   "sub_q2_sparse": 0.0,
+   "sub_p0_sparse": 0.0,
+   "sub_p1_sparse": 0.0,
+   "sub_br0_sparse": 0.0,
+   "sub_br1_sparse": 0.0,
+   "sub_br2_sparse": 0.0,
+   "union": 9.5,
+   "core_wall": 3947.7
+  },
+  "rerank_prefix": 36,
+  "degraded": [],
+  "turn": 5
+ }
+]

@@ -13,6 +13,13 @@ Pure + store-thin: `extract_atoms` is deterministic over a compiled-profile dict
 read helpers take a live connection. Supersession is per (doc, profile_contract): a fresh
 profile deactivates the doc's old atoms and (re)activates the new set — same atom text yields
 the same `atom_id`, so re-persisting is idempotent.
+
+ATOM-REPAIR-V1 (owner 2026-09-24, decision D4 "alongside"): a document can carry atoms from TWO
+profile families — the base profile (v3.x: ~10 theories / concepts / seealso) and the vNext
+research-index profile (one item per kind, incl. the latent kinds). A `source` tag
+(`family:compiled_hash`, kept in `source_profile_hash`) scopes supersession to ONE family, so a
+fresh vNext profile never deactivates the base atoms (the 2026-09-08 regression) and a fresh base
+profile never deactivates the vNext atoms. Untagged (legacy) rows are superseded as before.
 """
 from __future__ import annotations
 
@@ -67,9 +74,56 @@ def extract_atoms(compiled: dict, *, doc_id: str, corpus_id: str | None,
     return out
 
 
-def persist_atoms(conn, *, doc_id: str, profile_contract: str, atoms: Sequence[ProfileAtom]) -> dict:
+#: ATOM-REPAIR-V1: the profile families whose atoms live side by side (D4 "alongside").
+PROFILE_FAMILIES = ("base", "vnext")
+
+
+def source_tag(family: str, compiled_hash: str) -> str:
+    """The provenance an atom row keeps in `source_profile_hash`: `family:compiled_hash`."""
+    if family not in PROFILE_FAMILIES:
+        raise ValueError(f"unknown profile family {family!r}")
+    return f"{family}:{compiled_hash or ''}"
+
+
+def family_of(source: str | None) -> str | None:
+    """The family of a `source_profile_hash`; None for an untagged (legacy) row."""
+    fam = str(source or "").split(":", 1)[0] if ":" in str(source or "") else ""
+    return fam if fam in PROFILE_FAMILIES else None
+
+
+def persist_atoms(conn, *, doc_id: str, profile_contract: str, atoms: Sequence[ProfileAtom],
+                  source: str | None = None) -> dict:
     """Supersede the doc's prior active atoms for this contract, then (re)activate the new set.
-    Returns {'active': n, 'deactivated': m}. Idempotent."""
+    Returns {'active': n, 'deactivated': m}. Idempotent.
+
+    With a `source` (ATOM-REPAIR-V1) only the doc's active atoms of the SAME family — or untagged
+    legacy rows — are superseded; the other family's atoms stay active, and every new row records
+    the source. Without one, the original whole-document supersession runs unchanged."""
+    if source is not None:
+        fam = family_of(source)
+        if fam is None:
+            raise ValueError(f"source must be family:compiled_hash, got {source!r}")
+        rows = conn.execute(
+            "SELECT atom_id, source_profile_hash FROM document_profile_atoms "
+            "WHERE doc_id=%s AND profile_contract=%s AND active",
+            (doc_id, profile_contract),
+        ).fetchall()
+        doomed = [r[0] for r in rows if family_of(r[1]) in (fam, None)]
+        if doomed:
+            conn.execute(
+                "UPDATE document_profile_atoms SET active=FALSE, updated_at=now() WHERE atom_id = ANY(%s)",
+                (doomed,),
+            )
+        for a in atoms:
+            conn.execute(
+                "INSERT INTO document_profile_atoms "
+                "(atom_id, doc_id, corpus_id, profile_contract, atom_kind, atom_text, ordinal, source_profile_hash, active) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,TRUE) "
+                "ON CONFLICT (atom_id) DO UPDATE SET active=TRUE, ordinal=EXCLUDED.ordinal, "
+                "corpus_id=EXCLUDED.corpus_id, source_profile_hash=EXCLUDED.source_profile_hash, updated_at=now()",
+                (a.atom_id, a.doc_id, a.corpus_id, a.profile_contract, a.kind, a.text, a.ordinal, source),
+            )
+        return {"active": len(atoms), "deactivated": len(doomed), "family": fam}
     cur = conn.execute(
         "UPDATE document_profile_atoms SET active=FALSE, updated_at=now() "
         "WHERE doc_id=%s AND profile_contract=%s AND active",

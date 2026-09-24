@@ -1,0 +1,81 @@
+{
+ "corpus": "cinema",
+ "profile_contract": "rag-profile-v3",
+ "collection": "polymath_document_profile_atoms_embed_e794ec4cab197a3f",
+ "docs": 67,
+ "docs_with_base": 67,
+ "docs_with_vnext": 67,
+ "before": {
+  "active": 609,
+  "inactive": 1844,
+  "active_by_kind": {
+   "ANCHOR": 67,
+   "BOUNDARY": 60,
+   "BRIDGE": 54,
+   "CONCEPT": 66,
+   "INVERSION": 50,
+   "LATENT_PATTERN": 66,
+   "RECALLQ": 65,
+   "SEEALSO": 59,
+   "TENSION": 58,
+   "THEORY": 64
+  },
+  "inactive_by_kind": {
+   "CONCEPT": 629,
+   "SEEALSO": 637,
+   "THEORY": 578
+  },
+  "active_docs": 67
+ },
+ "target_atoms": 2453,
+ "target_by_kind": {
+  "ANCHOR": 67,
+  "BOUNDARY": 60,
+  "BRIDGE": 54,
+  "CONCEPT": 695,
+  "INVERSION": 50,
+  "LATENT_PATTERN": 66,
+  "RECALLQ": 65,
+  "SEEALSO": 696,
+  "TENSION": 58,
+  "THEORY": 642
+ },
+ "reactivate": 1844,
+ "new_rows": 0,
+ "already_active": 609,
+ "would_deactivate": 0,
+ "live_equals_vnext": true,
+ "after": {
+  "active": 2453,
+  "inactive": 0,
+  "active_by_kind": {
+   "ANCHOR": 67,
+   "BOUNDARY": 60,
+   "BRIDGE": 54,
+   "CONCEPT": 695,
+   "INVERSION": 50,
+   "LATENT_PATTERN": 66,
+   "RECALLQ": 65,
+   "SEEALSO": 696,
+   "TENSION": 58,
+   "THEORY": 642
+  },
+  "inactive_by_kind": {},
+  "active_docs": 67
+ },
+ "projected_new_points": 1844,
+ "deleted_orphans": 0,
+ "reconcile": {
+  "corpus_id": "cinema",
+  "active_atoms": 2453,
+  "projected_points": 2453,
+  "reconciled": true
+ },
+ "persist_s": 1.6,
+ "project_s": 56.3,
+ "sources": {
+  "base": 1847,
+  "vnext": 606
+ },
+ "backup_dir": "/Users/king/PolymathBackups/atom-repair-2026-09-24"
+}
