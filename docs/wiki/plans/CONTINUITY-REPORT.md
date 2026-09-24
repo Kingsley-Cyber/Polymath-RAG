@@ -23,15 +23,57 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (close-out before compaction) — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md` (D1–D8 answered). DEPLOYED today: S0 core (E1 / E2 / E8) + owner thinking rule (11.424) + compiler / bridges work without Ollama (11.426). E4 + E3 DEPLOYED (`c174c33`, 11.429); E7 + S1a + S1b DEPLOYED (`2a7cbd5`, 11.433). The owner's next turn proves E3 / E4 / S1 from its receipt ($0). DEEPSEEK-ENABLE-THINKING-V1 MERGED (`eb3e2b9`, 11.435) but NOT live: it rides the next bounce together with the Groq model update (owner 2026-09-23: compound / compound-mini gone; gpt-oss-120b / gpt-oss-20b / gpt-oss-safeguard-20b / qwen3.8-27b with independent per-model per-key limits; reasoning gpt-oss low, qwen none). A one-call DeepSeek live probe still needs the owner's word. S1c (11.438) + the DeepSeek switch DEPLOYED (11.439, bundle `c35cd08d8823`). SKELETON-ROUTING-V1 (11.440, design `docs/wiki/plans/SKELETON-ROUTING-V1.md`) built + replay-proven on branch `feat/skeleton-routes`; owner authorized merge + bounce of green slices while away. Next: S2 traces (E6) from those receipts, then S4+. CODE-KNOWLEDGE-V1 parked.**
+## CURRENT — 2026-09-23 (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. Owner actions waiting: the corpus-delete command, the atom repair decision, the probe-quality slice, pushes. CODE-KNOWLEDGE-V1 parked.**
+
+### READ FIRST — what happened while the owner was away (2026-09-23 night)
+1. **Skeleton routing is live** (flags `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard` in `.env`;
+   backup `~/PolymathBackups/env-before-skeleton-routes-2026-09-23.bak`).
+   - V1 live check, 5 queries: skeleton lanes reach the final evidence and the citations in every mode, and direct
+     grounding is kept.
+   - V1.1:
+     - skeleton lanes run in parallel (engine core −1.2…−2.3 s);
+     - every path carries a readable need (latent text; the graph hop's fact instead of a doc id);
+     - the path-aware judge is path-fair and checks connection first;
+     - receipts now record `latent_selection` and the judge's verdict counts.
+   - Live, 3 queries: skeleton cited 2→3 / 8→10 / 19→19, cited books 5→5 / 7→9 / 6→7.
+   - Latency: WILDCARD 50.8 s end to end (the judge contends with the bridge validation on the one GPU; knob:
+     `contextual_max_needs` 6 → 4 in `skeleton_routes.py`). HYBRID / GRAPH retrieval is faster.
+2. **Probe doors** ("the skeleton works with my subqueries"): each planned probe drives the profile → pMAP → children door.
+   - Built behind `POLYMATH_CHAT_SKELETON_PROBES` and **left OFF**. The replay showed the probe chunks rarely reach the
+     judge, and in WILDCARD they displaced two cross-domain finds.
+   - The limiter is **probe quality**. Next slice: a plan-time probe-connection gate (design §9.4).
+3. **Groq:** compound / compound-mini are gone (canary 404), so the profile / pMAP lanes were dead for new documents.
+   - Now: profiles on `openai/gpt-oss-120b` (low); pMAP on `openai/gpt-oss-20b` (low) + `qwen/qwen3.8-27b` (none) over keys
+     2–6.
+   - One limiter family per (key, model).
+   - `pool_fingerprint` now covers only the extraction roster, so there is no re-extraction and no reconciliation.
+   - Canary: 16/17 calls fully valid; one qwen call hit an org OTPM cap (1000).
+4. **Corpus cleanup (owner-approved: "delete it", commerce-v1 included):** the agent may not run a permanent delete.
+   - Backup taken (582 MB).
+   - The owner runs ONE command (`~/PolymathBackups/corpus-cleanup-2026-09-23/README.md`):
+     `cd /Users/king/PolymathBackups/corpus-cleanup-2026-09-23 && set -a && . /Users/king/Documents/polymath-rebuild/polymath-v4/.env && set +a && /Users/king/Documents/polymath-rebuild/polymath-v4/.venv/bin/python delete.py --execute`
+   - Dry run: the same command without `--execute`.
+5. **Atom finding (awaiting the owner):** since 2026-09-08 only ONE atom per kind per cinema book is active. The global
+   profile point still holds 10–15 items per field.
+   - Repair = re-derive atoms from the current compiled profiles and merge them with the active latent kinds.
+   - That is a projection only, no LLM spend. It waits for the owner's word (plan §8).
+6. **Stuck runs (pre-existing, not touched):**
+   - 37 cinema runs in `reconciling` with pending downstream tickets, untouched since 2026-09-05..07;
+   - 1 cinema run parked at `intake` (09-07);
+   - commerce-v1: extract failed 09-21.
+   - The corpus cleanup removes the commerce-v1 part.
 
 ### Repository State
-- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 40+ unpushed commits (`58c819f` … the
-  11.435 commit): `git log --oneline origin/production..production`. Push only on the owner's per-push word.
-- Main checkout clean after the 11.433 commit. Every document-RAG slice branch is merged, including `fix/document-rag-s0-rest` (`c174c33`) and `fix/document-rag-s1-receipts` (`2a7cbd5`, which contains `fix/compiled-query-derived-from`), and their worktrees are removed. Unmerged worktree branches: `review/m1-reproductions` (+1), `handoff/r5-audit-fix`
-  (+5). Every other worktree branch is merged into `production`.
-- Fleet: 24 workers / 13 types healthy on ONE bundle, `/ready` true (embedder + reranker). Running code = committed code
-  (last bounce after the `2a7cbd5` merge, 2026-09-23 16:39 MDT; 24 healthy / 13 types / ONE bundle `142e3ff3e56a`).
+- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 47 unpushed commits
+  (`git log --oneline origin/production..production`). Push only on the owner's per-push word.
+- HEAD = the 11.444 documents commit, on top of merges `d7706c7` (V1.1) + `79c4c34` (Groq).
+  - Rollback tags (local): `pre-v11-groq-merge` → `0e57c46`, `pre-skeleton-routes-merge` → `4ab046e`.
+  - Worktrees `pmv4-probe-routes` / `pmv4-groq` are removed after merge; their branches are merged.
+  - Unmerged worktree branches (not tonight's): `review/m1-reproductions` (+1), `handoff/r5-audit-fix` (+5).
+- Fleet: 24 workers / 13 types healthy on ONE bundle `69c4fc4d1df1`, `/ready` true (embedder + reranker). Running code =
+  committed code (bounce after `79c4c34`, 2026-09-23 night).
+- Live `.env` (gitignored): `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard`; the probe flag is
+  unset.
 
 ### Active Mission
 - **DOCUMENT RAG COMPLETION (active; owner 2026-09-23: "before we work on code rag, we must complete document rag").**
