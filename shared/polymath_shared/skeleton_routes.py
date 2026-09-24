@@ -25,6 +25,8 @@ Measured on 2026-09-23 (replay of five live turns): the probe doors rarely reach
 cross-domain finds — so the flag stays OFF; the code stays for the next probe-quality slice.
 Whenever the doors are open, the skeleton lanes run concurrently (`parallel_route_lanes`): merged in the fixed lane order,
 so only the wall-clock changes.
+PROBE-GATE-V1 (`POLYMATH_CHAT_PROBE_GATE`, default off; rides the doors): PROFILE / BRIDGE / CORPUS_EXPLORE probes scoring
+below 0.2 against the user's resolved question are dropped before retrieval (`probe_gate.py`).
 Pure: no I/O. Default off (`POLYMATH_CHAT_SKELETON_ROUTES`)."""
 from __future__ import annotations
 
@@ -41,6 +43,7 @@ from polymath_shared.surface_registry import (
 FLAG = "POLYMATH_CHAT_SKELETON_ROUTES"
 JUDGE_FLAG = "POLYMATH_CHAT_CONTEXTUAL_JUDGE"
 PROBES_FLAG = "POLYMATH_CHAT_SKELETON_PROBES"
+PROBE_GATE_FLAG = "POLYMATH_CHAT_PROBE_GATE"
 _SKIP_MODES = frozenset({"FAST", "VECTOR", "GNN"})
 _NOMINATING_ORIGINS = frozenset({"PROFILE", "BRIDGE"})
 
@@ -82,4 +85,8 @@ def apply_skeleton_routes(budget, *, mode: str, plan=None, env: Mapping[str, str
     }
     if env.get(PROBES_FLAG, "0") == "1":
         overrides["skeleton_probe_routes"] = 7 if m == "WILDCARD" else 4
+    if env.get(PROBE_GATE_FLAG, "0") == "1":
+        # PROBE-GATE-V1: a vague probe earns nothing, decided before retrieval (probe_gate.py; FAST / GNN never gated)
+        from polymath_shared.probe_gate import DEFAULT_FLOOR
+        overrides["probe_gate_floor"] = DEFAULT_FLOOR
     return replace(budget, **{k: v for k, v in overrides.items() if hasattr(budget, k)})

@@ -226,6 +226,9 @@ class CandidateBudget:
     skeleton_probe_parents: int = 3
     skeleton_probe_children: int = 2
     parallel_route_lanes: bool = False
+    #: PROBE-GATE-V1 (flag POLYMATH_CHAT_PROBE_GATE, default off): PROFILE / BRIDGE / CORPUS_EXPLORE probes scoring below this
+    #: σ against the user's resolved question are dropped before retrieval (`probe_gate.gate_probes`); 0 = off.
+    probe_gate_floor: float = 0.0
     aspect_final_seats: int = 1
     #: P1.c EVIDENCE COMPOSER (§3.17): deterministic, metadata only. Slots
     #: over the judged prefix: pure relevance → source diversity (soft max

@@ -5,6 +5,8 @@ candidate engine against the live stores + local embedder / reranker, three ways
   judge — paths + POLYMATH_CHAT_CONTEXTUAL_JUDGE=1 (path-aware cross-encoder, no LLM)
   deployed — the live V1 config: paths + the judge in WILDCARD only (POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard)
   probes   — deployed + POLYMATH_CHAT_SKELETON_PROBES=1 (V1.1: each planned probe drives the skeleton door)
+  gate     — deployed + POLYMATH_CHAT_PROBE_GATE=1 (PROBE-GATE-V1: off-topic PROFILE / BRIDGE probes dropped before retrieval,
+             through the same `probe_gate.gate_probes` the chat layer calls)
 WILDCARD turns replay the CORE retrieval with WILDCARD's door budget (the sweep's LLM finish is not called).
 Writes replay.json next to this file (REPLAY_OUT renames it; REPLAY_RESULTS picks the stored turns, REPLAY_CONFIGS the
 configs). Run from the branch worktree with its PYTHONPATH and the main .env loaded."""
@@ -31,9 +33,11 @@ def _plan(cp: dict):
 
 
 def _run(mode: str, question: str, cp: dict, config: str) -> dict:
-    os.environ["POLYMATH_CHAT_SKELETON_ROUTES"] = "1" if config in ("paths", "judge", "deployed", "probes") else "0"
-    os.environ["POLYMATH_CHAT_CONTEXTUAL_JUDGE"] = {"judge": "1", "deployed": "wildcard", "probes": "wildcard"}.get(config, "0")
+    os.environ["POLYMATH_CHAT_SKELETON_ROUTES"] = "1" if config in ("paths", "judge", "deployed", "probes", "gate") else "0"
+    os.environ["POLYMATH_CHAT_CONTEXTUAL_JUDGE"] = {"judge": "1", "deployed": "wildcard", "probes": "wildcard",
+                                                    "gate": "wildcard"}.get(config, "0")
     os.environ["POLYMATH_CHAT_SKELETON_PROBES"] = "1" if config == "probes" else "0"
+    os.environ["POLYMATH_CHAT_PROBE_GATE"] = "1" if config == "gate" else "0"
     from orchestrator.api.chat_retrieval import (
         chat_retrieve_mode,
         default_budget,
@@ -49,13 +53,21 @@ def _run(mode: str, question: str, cp: dict, config: str) -> dict:
     if config != "off" and mode == "GRAPH":
         graph_useful = True
     core_mode = "HYBRID" if mode == "WILDCARD" else mode           # the sweep's LLM finish stays out of a $0 replay
+    gated_out, gate_receipt = set(), None
+    if getattr(budget, "probe_gate_floor", 0.0) > 0:               # PROBE-GATE-V1: the chat layer's own gate call
+        from orchestrator.api import chat_retrieval as _cr
+        from polymath_shared.probe_gate import gate_probes
+        gated_out, gate_receipt = gate_probes((cp.get("resolved_request") or question).strip(),
+                                              [(q.id, q.origin, q.query) for q in plan.queries if q.type != "PRIMARY"],
+                                              _cr._rerank_children, floor=budget.probe_gate_floor)
     t0 = time.perf_counter()
     fast = chat_retrieve_mode(
         core_mode, cp.get("retrieval_query") or question, "cinema", graph_useful=graph_useful,
         graph_assist=(policy_for(plan.intent).graph if ip else "off"), keep_latent=False, budget=budget,
         exact_terms=plan.exact_terms,
-        subqueries=tuple((q.id, q.type, q.query, q.weight, q.origin, q.derived_from) for q in plan.queries if q.type != "PRIMARY"),
-        latent_bridge_ids=tuple(q.id for q in plan.queries if q.origin in ("BRIDGE", "CORPUS_EXPLORE")))
+        subqueries=tuple((q.id, q.type, q.query, q.weight, q.origin, q.derived_from) for q in plan.queries
+                         if q.type != "PRIMARY" and q.id not in gated_out),
+        latent_bridge_ids=tuple(q.id for q in plan.queries if q.origin in ("BRIDGE", "CORPUS_EXPLORE") and q.id not in gated_out))
     wall = round((time.perf_counter() - t0) * 1000, 1)
     ev = fast.get("evidence") or []
     tr = fast.get("trace") or {}
@@ -74,7 +86,7 @@ def _run(mode: str, question: str, cp: dict, config: str) -> dict:
             "direct_final": sum(1 for r in ev if "q0" in (r.get("query_ids") or [])),
             "route_aspects": {k: v.get("lanes") for k, v in (tr.get("aspects") or {}).items() if str(k).startswith("rt:")},
             "aspect_prefix": tr.get("aspect_prefix"), "contextual": tr.get("contextual"),
-            "probe_routes": tr.get("probe_routes"),
+            "probe_routes": tr.get("probe_routes"), "probe_gate": gate_receipt,
             "probe_route_final": sum(1 for r in ev if "rt:probe" in (r.get("query_ids") or [])),
             "aspect_final": {k: v for k, v in (tr.get("aspect_final") or {}).items() if k in probe_ids or str(k).startswith("rt:")},
             "final_rows": [{"chunk_id": r.get("chunk_id"), "doc_id": r.get("doc_id"), "source_name": r.get("source_name"),

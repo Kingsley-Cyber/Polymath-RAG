@@ -626,3 +626,30 @@ def test_s1d_the_receipt_keeps_wlk2c_latent_selection_not_the_diagnostics_frame(
     assert meta["latent_selection"] == {"enabled": True, "n_bridges": 2,
                                         "counts": {"direct": 5, "complementary": 2, "divergent": 0, "fill": 0}}
     assert meta["trace_ms"]["latent"] == {"latency_ms": {"portfolio_seating": 41.0}}
+
+
+def test_probe_gate_an_off_topic_probe_never_reaches_retrieval_and_the_receipt_says_why(monkeypatch):
+    """PROBE-GATE-V1 end to end: with the gate on, a PROFILE probe that misses the resolved question is not handed to
+    retrieval (nor to WLK2C as a bridge); an on-topic BRIDGE probe is; the receipt keeps the verdicts."""
+    monkeypatch.setenv("POLYMATH_CHAT_SKELETON_ROUTES", "1")
+    monkeypatch.setenv("POLYMATH_CHAT_PROBE_GATE", "1")
+    off, on = "How do television techniques influence film editing?", "How do reward signals shape prompt search?"
+
+    def plan():
+        p = _plan()
+        p.queries.append(cp.CompiledQuery(id="p0", type="ENTITY", query=off, weight=0.6, origin="PROFILE"))
+        p.queries.append(cp.CompiledQuery(id="br0", type="ENTITY", query=on, weight=0.55, origin="BRIDGE"))
+        return p
+
+    hs = Runtime(monkeypatch, plan=plan)
+
+    def judge(q, rows):
+        return sorted([dict(r, rerank_score=(-4.0 if r.get("text") == off else 2.0 - 0.01 * i)) for i, r in enumerate(rows)],
+                      key=lambda r: -r["rerank_score"])
+    monkeypatch.setattr(cr, "_rerank_children", judge)
+    _stream(dict(BASE, compiler="on", synthesizer="ollama:fake"))
+    call = hs.calls[0]
+    assert [s[0] for s in call["subqueries"]] == ["q1", "br0"] and "br0" in call["latent_bridge_ids"]
+    gate = hs.receipts[0]["out"]["meta"]["retrieval_trace"]["probe_gate"]
+    assert gate["dropped"] == ["p0"] and gate["scores"]["br0"]["score"] > 0.8
+    assert "probe_gate" in hs.receipts[0]["out"]["meta"]["trace_ms"]
