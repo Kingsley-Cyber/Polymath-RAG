@@ -26,7 +26,8 @@ cross-domain finds — so the flag stays OFF; the code stays for the next probe-
 Whenever the doors are open, the skeleton lanes run concurrently (`parallel_route_lanes`): merged in the fixed lane order,
 so only the wall-clock changes.
 PROBE-GATE-V1 (`POLYMATH_CHAT_PROBE_GATE`, default off; rides the doors): PROFILE / BRIDGE / CORPUS_EXPLORE probes scoring
-below 0.2 against the user's resolved question are dropped before retrieval (`probe_gate.py`).
+below 0.2 against the user's resolved question are dropped before retrieval (`probe_gate.py`) in HYBRID and GRAPH; WILDCARD,
+the mode of the not-so-obvious, is exempt.
 Pure: no I/O. Default off (`POLYMATH_CHAT_SKELETON_ROUTES`)."""
 from __future__ import annotations
 
@@ -85,8 +86,11 @@ def apply_skeleton_routes(budget, *, mode: str, plan=None, env: Mapping[str, str
     }
     if env.get(PROBES_FLAG, "0") == "1":
         overrides["skeleton_probe_routes"] = 7 if m == "WILDCARD" else 4
-    if env.get(PROBE_GATE_FLAG, "0") == "1":
-        # PROBE-GATE-V1: a vague probe earns nothing, decided before retrieval (probe_gate.py; FAST / GNN never gated)
+    if env.get(PROBE_GATE_FLAG, "0") == "1" and m != "WILDCARD":
+        # PROBE-GATE-V1: a vague probe earns nothing, decided before retrieval (probe_gate.py; FAST / GNN never gated).
+        # WILDCARD is exempt (live 2026-09-24): the gate cannot tell an off-topic probe (0.04) from a non-obvious bridge
+        # ("depth of field → narrative tension", 0.06) in that band, and the not-so-obvious is WILDCARD's point — its
+        # path-aware judge weighs those bridges downstream instead.
         from polymath_shared.probe_gate import DEFAULT_FLOOR
         overrides["probe_gate_floor"] = DEFAULT_FLOOR
     return replace(budget, **{k: v for k, v in overrides.items() if hasattr(budget, k)})
