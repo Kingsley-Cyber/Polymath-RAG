@@ -1481,18 +1481,21 @@ def _style_for(corpus_ids, lookup=None) -> str:
     return "study" if any(c in study for c in ids) else "neutral"
 
 
-def _llm_system_prompt(style: str = "neutral") -> str:
+def _llm_system_prompt(style: str = "neutral", *, learning: bool = False) -> str:
     """Grounding core + optional study layer + the v3.3 style layer + date
     context (the v3.3 freshness block minus its live-web lines — v4 has no
-    web lane)."""
+    web lane). `learning` (S8): the grounded-learning contract sits ABOVE the
+    presentation contract, whose "a display rule above loses" clause then
+    keeps the answer's shape (measured: appended below it, an answer grew headings)."""
     from datetime import datetime
 
     from orchestrator.api.polymath_style import POLYMATH_STYLE_PROMPT
 
     current = datetime.now().astimezone()
     layer = f"\n\n{_STUDY_LAYER}" if style == "study" else ""
+    learn = f"\n\n{_LEARNING_CONTRACT_BLOCK}" if learning else ""
     return (
-        f"{_LLM_GROUNDING}{layer}\n\n{POLYMATH_STYLE_PROMPT}\n\n{_PRESENTATION_BLOCK}\n\n"
+        f"{_LLM_GROUNDING}{layer}\n\n{POLYMATH_STYLE_PROMPT}{learn}\n\n{_PRESENTATION_BLOCK}\n\n"
         "Date and source freshness:\n"
         f"- Today's date is {current.strftime('%Y-%m-%d')} "
         f"({current.tzname() or 'local time'}). Interpret relative dates "
@@ -2570,7 +2573,7 @@ def _evidence_rows(evidence) -> list[dict]:
     rows = []
     for c in evidence or ():
         row = {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
-        for k in ("role", "latent_role", "latent_lineage"):
+        for k in ("role", "latent_role", "latent_lineage", "query_ids"):   # S8: + the searches that found it (paths)
             if c.get(k):
                 row[k] = c[k]
         rows.append(row)
@@ -2602,7 +2605,7 @@ def _coverage_lines(coverage: dict | None, *, skip_ids: frozenset = frozenset())
     return ["EVIDENCE COVERAGE BY ASPECT:\n" + "\n".join(parts)] if parts else []
 
 
-def _request_block(query: str, plan, history, coverage: dict | None = None) -> str:
+def _request_block(query: str, plan, history, coverage: dict | None = None, *, learning: bool = False) -> str:
     """SYNTHESIS-V2 request framing: the request as written, the RESOLVED
     request, the compiled task/evidence policy/response type, coverage,
     constraints, the compiler's antecedent summary and the prior artifact
@@ -2618,6 +2621,15 @@ def _request_block(query: str, plan, history, coverage: dict | None = None) -> s
         lines.append("MUST COVER: " + "; ".join(str(x) for x in plan.must_answer[:6]))
     if plan.user_constraints:
         lines.append("CONSTRAINTS: " + "; ".join(str(x) for x in plan.user_constraints[:8]))
+    if learning:                                    # S8: the S4 (v2) plan's learning need and synthesis targets
+        if (plan.retrieval_goal or "").strip() and getattr(plan, "contract", "") == "chat-intent-plan-v2":
+            lines.append("LEARNING NEED (the planner's reading, written before any source was read): "
+                         + plan.retrieval_goal.strip())
+        targets = [str(t).strip() for t in (getattr(plan, "synthesis_targets", None) or []) if str(t).strip()]
+        if targets:
+            lines.append("SYNTHESIS TARGETS (the planner's questions, written before any source was read — check "
+                         "their premises; address each the sources support; say which they cannot settle):\n"
+                         + "\n".join(f"{i}. {t}" for i, t in enumerate(targets, 1)))
     lines.extend(_coverage_lines(coverage, skip_ids=_exploration_query_ids(plan)))
     ante = plan.antecedent if isinstance(plan.antecedent, dict) else None
     if ante and ante.get("summary"):
@@ -2630,9 +2642,10 @@ def _request_block(query: str, plan, history, coverage: dict | None = None) -> s
 
 def _plan_meta(plan) -> dict:
     """§3.4: the answer event names the task the synthesizer was given."""
+    contract = _SYNTHESIS_CONTRACT_V3 if _synth_contract_enabled() else _SYNTHESIS_CONTRACT
     if plan is None:
-        return {"prompt_contract": _SYNTHESIS_CONTRACT, "presentation_contract": _PRESENTATION_CONTRACT}
-    return {"prompt_contract": _SYNTHESIS_CONTRACT, "presentation_contract": _PRESENTATION_CONTRACT,
+        return {"prompt_contract": contract, "presentation_contract": _PRESENTATION_CONTRACT}
+    return {"prompt_contract": contract, "presentation_contract": _PRESENTATION_CONTRACT,
             "task_type": plan.task_type, "evidence_policy": plan.evidence_policy,
             "response_type": plan.response_type, "retrieval_required": plan.retrieval_required,
             "compiler_fallback": bool(plan.fallback)}
@@ -2652,6 +2665,77 @@ def _synth_roles_enabled() -> bool:
     return os.environ.get("POLYMATH_CHAT_SYNTH_ROLES", "").strip().lower() in ("1", "true", "yes", "on")
 
 
+#: S8 (DOCUMENT-RAG-COMPLETION-V1 Part E): the grounded-learning synthesis contract. Default OFF ⇒ the prompt is
+#: byte-identical. On: the system prompt gains the learning rules, every [S#] the main search did not find names the
+#: path that discovered it (plus that search's stated purpose on a v2 plan), the request block carries the planner's
+#: learning need and synthesis targets as hypotheses, and an [A#] whose proving child is not an [S#] is dropped (ELITE §6
+#: rule 3).
+_SYNTH_CONTRACT_FLAG = "POLYMATH_CHAT_SYNTH_CONTRACT"
+_SYNTHESIS_CONTRACT_V3 = "synthesis-v3"
+_PATH_LINE_CHARS = 220
+_ROUTE_NAMES = {"rt:latent": "the latent route (a hidden-pattern search)", "rt:pmap": "the section-map route",
+                "rt:seealso": "the see-also route (a related-book link)", "rt:graph": "the graph route (a fact hop)",
+                "rt:probe": "the probe route (a planned search through a book's section map)"}
+_PATH_ORIGINS = {"PROFILE": "a profile search from a matched book's idea", "BRIDGE": "a bridge from a matched book's idea",
+                 "CORPUS_EXPLORE": "an exploration search"}
+_LEARNING_CONTRACT_BLOCK = """Grounded-learning contract. The user reads these answers to learn from \
+documents they are not expert in, so they may not know what to ask. These rules change what the answer \
+says, never how long it is: fold them into the same paragraphs, within the presentation contract's length, \
+with no heading or section per rule or per target.
+- Check the question's premises against the sources before anything else. If a source contradicts one, \
+open the answer by correcting it, citing that source. The LEARNING NEED and the SYNTHESIS TARGETS in the \
+request were written by a planner BEFORE any source was read and may repeat the user's mistaken \
+assumption: never answer a target as asked when the sources contradict its premise — say so instead.
+- If no source answers the question directly, say so plainly before offering related material; related \
+material never poses as the direct answer.
+- A passage labelled "found by" was discovered on a path other than the main search (an aspect search, a \
+bridge, a profile idea or a skeleton route). When you use one, say what the idea is, why it matters to \
+THIS question, and cite it. The path explains relevance; it is never evidence itself.
+- Label analogies and inferences. When you carry an idea across fields, say so, state the mapping (what \
+corresponds to what) and where it stops holding. When the sources do not support the mapping, say the \
+transfer is not established instead of asserting it. Say that the sources connect two ideas only when \
+one passage states the connection; otherwise present the link as your own inference.
+- When sources disagree or cover different scopes (a rule and its exceptions, one medium or genre and \
+another), keep the difference visible: who says what, under which conditions. Never invent a consensus.
+- Address each SYNTHESIS TARGET the sources can support, and say which ones they cannot settle."""
+
+
+def _synth_contract_enabled() -> bool:
+    return os.environ.get(_SYNTH_CONTRACT_FLAG, "").strip().lower() in ("1", "true", "yes", "on")
+
+
+def _path_line(query_ids, plan) -> str | None:
+    """S8: the path that DISCOVERED a passage — which aspect search, bridge, profile idea or skeleton route found it and,
+    on a v2 plan, what that search was meant to show. A passage the main search (PRIMARY) found is direct evidence and
+    gets no line (measured: repeating the main search on every passage was noise). The first two paths, then a count;
+    a route id is named in words. None when nothing is known."""
+    ids = list(dict.fromkeys(str(q) for q in (query_ids or []) if q))
+    by_id = {q.id: q for q in (getattr(plan, "queries", None) or [])}
+    if not ids or any(getattr(by_id.get(i), "type", None) == "PRIMARY" for i in ids):
+        return None
+    parts: list[str] = []
+    for qid in ids[:2]:
+        q = by_id.get(qid)
+        if q is not None:
+            kind = _PATH_ORIGINS.get(q.origin) or f"a {q.type.lower()} search"
+            part = f'{kind} "{" ".join(str(q.query or "").split())[:90]}"'
+            purpose = getattr(q, "expected_contribution", None)
+            if purpose:
+                part += f" (meant to show: {purpose})"
+        elif qid in _ROUTE_NAMES:
+            part = _ROUTE_NAMES[qid]
+        elif qid.startswith("rt:"):
+            part = f"the {qid[3:]} route"
+        else:
+            continue
+        parts.append(part)
+    if not parts:
+        return None
+    more = len(ids) - 2
+    line = "found by: " + "; also ".join(parts) + (f" (+{more} more)" if more > 0 else "")
+    return line[:_PATH_LINE_CHARS]
+
+
 #: ELITE-MODE-RETRIEVAL-SYNTHESIS-V1 — orientation (profile/map) and derived (wildcard)
 #: blocks. Absent keys ⇒ the grounded prompt is byte-identical to pre-slice C.
 _ORIENTATION_MAX_DOCS = 3
@@ -2667,6 +2751,9 @@ _DERIVED_GUIDANCE = (
     "They are NOT book quotes. Cite them as [A#] and say they are derived. Each insight GROUNDS IN "
     "a proving [S#] when that child is in EVIDENCE. Never replace a missing DIRECT answer with [A#]. "
     "Lead with EVIDENCE; then use [A#] for analogical or cross-domain argument.")
+#: S8 (ELITE §6 rule 2): how a derived insight is worded.
+_DERIVED_GUIDANCE_V3 = (
+    " Never write that a book says the principle; write that a transferable pattern in [S#] is the principle.")
 _RELATIONS_GUIDANCE = (
     "RELATIONS are source-attested graph facts. Cite them as [G#]. "
     "A [G#] that names proves: [S#] is grounded in that child. "
@@ -2753,7 +2840,10 @@ def _render_orientation(orientation: dict | None) -> str:
     return "\n".join(lines)
 
 
-def _render_derived(wildcard_lane, tag_by_chunk: dict[str, str]) -> tuple[str, int]:
+def _render_derived(wildcard_lane, tag_by_chunk: dict[str, str], *, require_proof: bool = False,
+                    diag: dict | None = None) -> tuple[str, int]:
+    """[A#] derived insights. `require_proof` (S8, ELITE §6 rule 3): an insight whose proving child is not an [S#]
+    is dropped, counted in `diag["derived_dropped"]`, instead of riding with its attached child's text."""
     if not wildcard_lane:
         return "", 0
     blocks: list[str] = []
@@ -2766,6 +2856,10 @@ def _render_derived(wildcard_lane, tag_by_chunk: dict[str, str]) -> tuple[str, i
         cid = ev.get("chunk_id") or ""
         tag = tag_by_chunk.get(cid) if cid else None
         if not principle and not transfer:
+            continue
+        if require_proof and not tag:
+            if diag is not None:
+                diag["derived_dropped"] = diag.get("derived_dropped", 0) + 1
             continue
         lines = [f"[A{i}] PRINCIPLE: {principle or '(unspecified)'}"]
         if transfer:
@@ -2780,7 +2874,8 @@ def _render_derived(wildcard_lane, tag_by_chunk: dict[str, str]) -> tuple[str, i
         blocks.append("\n".join(lines))
     if not blocks:
         return "", 0
-    return _DERIVED_GUIDANCE + "\n\nDERIVED INSIGHTS (not source quotes):\n" + "\n\n".join(blocks), len(blocks)
+    guidance = _DERIVED_GUIDANCE + (_DERIVED_GUIDANCE_V3 if require_proof else "")
+    return guidance + "\n\nDERIVED INSIGHTS (not source quotes):\n" + "\n\n".join(blocks), len(blocks)
 
 
 def _proving_tag(fact: dict, tag_by_chunk: dict[str, str], bundle: dict | None) -> str | None:
@@ -2851,6 +2946,9 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
         # so citations are unaffected — only the presentation order + a per-tag role label change.
         _entries.sort(key=lambda e: _SYNTH_ROLE_ORDER.get(_roles.get(e.get("chunk_id")), 0))
     _latent = (bundle.get("evidence_latent") or {}) if _role_present else {}
+    _contract = _synth_contract_enabled()
+    _paths = (bundle.get("evidence_paths") or {}) if _contract else {}
+    _sdiag: dict = {"contract": _SYNTHESIS_CONTRACT_V3, "paths": 0} if _contract else {}
     for e in _entries:
         crumb = e.get("breadcrumb") or ""
         _role = _roles.get(e.get("chunk_id")) if _role_present else None
@@ -2863,7 +2961,11 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
         _lbl = f" ({_core})" if _core else ""
         # EVIDENCE-DIET-V1: the passage header names its book › section; the legend maps the tag to that
         # breadcrumb (the raw locator stays on the answer event and the receipt for the UI and traces)
-        ev_lines.append(f"[{e['tag']}]{_lbl} {crumb}\n{e['text']}" if crumb else f"[{e['tag']}]{_lbl}\n{e['text']}")
+        _path = _path_line(_paths.get(e.get("chunk_id")), plan) if _contract else None
+        if _path:
+            _sdiag["paths"] += 1
+        _body = f"{_path}\n{e['text']}" if _path else e["text"]              # S8: the path sits above the passage
+        ev_lines.append(f"[{e['tag']}]{_lbl} {crumb}\n{_body}" if crumb else f"[{e['tag']}]{_lbl}\n{_body}")
         legend.append(f"[{e['tag']}] = {crumb or e['locator']}")
     carried = [
         f"[{c.locator}]\n{c.preview}" for c in (carry_context or [])[:30]
@@ -2885,11 +2987,12 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     orient = _render_orientation(bundle.get("orientation") if isinstance(bundle, dict) else None)
     tag_by_chunk = {str(e.get("chunk_id")): e["tag"] for e in _entries if e.get("chunk_id") and e.get("tag")}
     derived, _ = _render_derived(
-        (bundle.get("derived_insights") if isinstance(bundle, dict) else None), tag_by_chunk)
+        (bundle.get("derived_insights") if isinstance(bundle, dict) else None), tag_by_chunk,
+        require_proof=_contract, diag=_sdiag if _contract else None)
     relations, _ = _render_relations(graph_facts, tag_by_chunk, bundle if isinstance(bundle, dict) else None)
     # ELITE-MODE D/F: ORIENTATION → EVIDENCE (DIRECT) → RELATIONS [G#] → DERIVED [A#].
     context_block = "\n\n".join(p for p in (orient, context_block, relations, derived) if p)
-    messages = [{"role": "system", "content": _llm_system_prompt(style)}]
+    messages = [{"role": "system", "content": _llm_system_prompt(style, learning=_contract)}]
     for turn in (history or [])[-12:]:
         if turn.role in ("user", "assistant") and turn.content:
             messages.append({"role": turn.role,
@@ -2897,10 +3000,13 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     from orchestrator.api.reasoning import apply_reasoning
 
     user_content = apply_reasoning(
-        f"{context_block}\n\n{_request_block(query, plan, history, coverage)}",
+        f"{context_block}\n\n{_request_block(query, plan, history, coverage, learning=_contract)}",
         mode=reasoning or os.environ.get("POLYMATH_REASONING_MODE", "none"),
         blend=reasoning_blend)
     messages.append({"role": "user", "content": user_content})
+    if _contract and isinstance(bundle, dict):                   # S8: what the contract put in front of the model
+        _sdiag["targets"] = len(getattr(plan, "synthesis_targets", None) or []) if plan is not None else 0
+        bundle["synth_contract"] = _sdiag
     return messages
 
 
@@ -3122,8 +3228,10 @@ def _litellm_generate(model: str, query: str, bundle: dict,
     messages = _grounded_messages(query, bundle, graph_facts,
                                   history, carry_context,
                                   reasoning, reasoning_blend, style=style, plan=plan, coverage=coverage)
-    yield {"prompt": _prompt_stats(messages, carry_context,
-                                   sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", "")))}
+    yield {"prompt": {**_prompt_stats(messages, carry_context,
+                                      sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", ""))),
+                      **({"synthesis_contract": bundle["synth_contract"]}
+                         if isinstance(bundle, dict) and bundle.get("synth_contract") else {})}}
     # GENERATION-BOUND-V1 (measured 2026-09-06): LiteLLM sends Anthropic-format
     # providers DEFAULT_MAX_TOKENS = 4096 when no bound is given; deepseek-v4-flash
     # (Alibaba Model Studio) spends most of that on reasoning, so long artifacts
@@ -3317,8 +3425,10 @@ def _ollama_generate(model: str, query: str, bundle: dict,
     messages = _grounded_messages(query, bundle, graph_facts,
                                   history, carry_context,
                                   reasoning, reasoning_blend, style=style, plan=plan, coverage=coverage)
-    yield {"prompt": _prompt_stats(messages, carry_context,
-                                   sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", "")))}
+    yield {"prompt": {**_prompt_stats(messages, carry_context,
+                                      sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", ""))),
+                      **({"synthesis_contract": bundle["synth_contract"]}
+                         if isinstance(bundle, dict) and bundle.get("synth_contract") else {})}}
 
     # PROVIDER-ATTEMPT-LEDGER-V4: the daemon is local, but the MODEL need not be —
     # `gemma4:31b-cloud` is in the default catalog and routes through this same daemon to
@@ -3952,6 +4062,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             bundle["evidence_latent"] = {c["chunk_id"]: {"seat": c.get("latent_role"),
                                                          "via": (c.get("latent_lineage") or {}).get("origin_query")}
                                          for c in evidence_rows if c.get("chunk_id") and c.get("latent_role")}
+            # S8: the planned searches / skeleton routes that found each passage (read only under the synthesis contract)
+            bundle["evidence_paths"] = {c["chunk_id"]: list(c.get("query_ids") or [])
+                                        for c in evidence_rows if c.get("chunk_id") and c.get("query_ids")}
             # CA4: per-chunk support grades + the epistemic verdict ride the bundle. `epistemic`
             # drives render_answer's multi-signal answerability gate (grounded in ≥1 DIRECT/PARTIAL).
             if _epistemic is not None:
@@ -3984,7 +4097,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             _mark("carry")
             _legend = _evidence_legend(bundle)
             _tag_by_chunk = {str(e.get("chunk_id")): e["tag"] for e in _legend if e.get("chunk_id") and e.get("tag")}
-            _, _derived_n = _render_derived(wildcard_lane, _tag_by_chunk)
+            _, _derived_n = _render_derived(wildcard_lane, _tag_by_chunk, require_proof=_synth_contract_enabled())
             _, _relations_n = _render_relations(graph_facts, _tag_by_chunk, bundle)
             yield _phase("assemble_done", "Bundle assembled",
                          items=len(bundle.get("evidence_bundle", [])))
