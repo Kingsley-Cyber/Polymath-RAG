@@ -64,6 +64,17 @@ ADJACENT_MAX = 1                       # at most one per plan; it takes the seat
 ADJACENT_TASKS = ("GROUNDED_SYNTHESIS", "CREATE_FROM_KNOWLEDGE")   # never for identifier lookups / plain factual QA
 RESPONSE_TYPES = ("answer", "artifact")
 NO_RETRIEVAL_TASKS = ("TRANSFORM_USER_CONTENT", "CONTINUE_PRIOR_ARTIFACT", "GENERAL_CONVERSATION")
+#: A QUERY type the model wrote into `task_type` (measured 2026-09-24: 30 of 85 compiler fallbacks in 14 days were
+#: `task_type_invalid:PROCEDURE`, each discarding a whole plan) maps to the task the planner itself pairs most often with
+#: that query type in its successful plans (3,741 receipts, 2026-09-24): PROCEDURE 77% / DEFINITION 97% / EXAMPLE 62% /
+#: ENTITY 51% / PRIMARY 65% GROUNDED_QA; MECHANISM + CAUSAL 52% (classify_intent treats them as one) / COMPARISON 97% /
+#: COUNTERPOINT 100% / BRIDGE 90% / ADJACENT 89% GROUNDED_SYNTHESIS. Both tasks retrieve; QA never widens with ADJACENT
+#: and lets classify_intent reach PROCEDURE / DEFINITION. The fix is recorded in `compiler.corrections`.
+QUERY_TYPE_AS_TASK = {"PROCEDURE": "GROUNDED_QA", "DEFINITION": "GROUNDED_QA", "EXAMPLE": "GROUNDED_QA",
+                      "ENTITY": "GROUNDED_QA", "PRIMARY": "GROUNDED_QA",
+                      "MECHANISM": "GROUNDED_SYNTHESIS", "CAUSAL": "GROUNDED_SYNTHESIS",
+                      "COMPARISON": "GROUNDED_SYNTHESIS", "COUNTERPOINT": "GROUNDED_SYNTHESIS",
+                      "BRIDGE": "GROUNDED_SYNTHESIS", "ADJACENT": "GROUNDED_SYNTHESIS"}
 
 #: SUBQUERY-PROVENANCE-V1 (librarian P6). Every subquery carries a `role` — WHY it exists
 #: relative to q0 — drawn from this closed vocabulary. `direct` is q0 itself; `resolution` is
@@ -474,6 +485,9 @@ def validate_plan(raw: dict, message: str, *, contract: bool = False,
     if len(resolved) < 8:
         return None, "resolved_request_missing"
     task = str(raw.get("task_type") or "").strip().upper()
+    task_fix = None
+    if task not in TASK_TYPES and task in QUERY_TYPE_AS_TASK:           # a query type in the task slot: map, never discard
+        task_fix, task = f"task_type:{task}->{QUERY_TYPE_AS_TASK[task]}", QUERY_TYPE_AS_TASK[task]
     if task not in TASK_TYPES:
         return None, f"task_type_invalid:{task[:24]}"
     policy = str(raw.get("evidence_policy") or "").strip().lower()
@@ -592,6 +606,7 @@ def validate_plan(raw: dict, message: str, *, contract: bool = False,
         _apply_contract_fields(plan, raw, matches, d2_override=d2_override, no_search=no_search, retyped=retyped)
     plan.intent = intent_of_plan(plan)
     plan.explicit_constraints = detect_explicit_constraints(message or "")
+    plan._validation_fixes = [task_fix] if task_fix else []    # type: ignore[attr-defined] — compile_plan receipts them
     return plan, None
 
 
@@ -795,7 +810,7 @@ def compile_plan(message: str, history: Iterable, corpus_ids: Iterable[str] | No
     plan, reason = validate_plan(raw, message, contract=v2, matches=matches)
     if plan is None:
         return fallback_plan(message, reason=f"invalid_plan:{reason}", history_turns=n_hist, wall_ms=wall_ms, model=model)
-    fixes = apply_corrections(plan, message, history, corpus_ids=corpus_ids)
+    fixes = [*getattr(plan, "_validation_fixes", []), *apply_corrections(plan, message, history, corpus_ids=corpus_ids)]
     plan.compiler = {"fallback": False, "reason": None, "model": model, "wall_ms": round(wall_ms, 1),
                      "over_budget": wall_ms > budget_s * 1000, "history_turns": n_hist, "raw_chars": len(text or ""),
                      "corrections": fixes}

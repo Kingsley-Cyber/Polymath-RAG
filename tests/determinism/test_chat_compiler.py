@@ -53,6 +53,41 @@ def test_fallback_is_todays_behaviour_and_receipted():
         assert plan.compiler["reason"], reason_src
 
 
+def test_a_query_type_in_the_task_slot_maps_to_the_planners_usual_task_and_is_receipted():
+    """Measured 2026-09-24: 30 of 85 live compiler fallbacks in 14 days were `task_type_invalid:PROCEDURE` — the model
+    wrote a query type into `task_type` and the whole plan was discarded. It now maps to the task the planner itself pairs
+    with that query type, and the correction is on the receipt."""
+    q = "How do I light a face with soft key and fill for a portrait?"
+    proc = dict(GOOD, resolved_request=q, task_type="procedure", antecedent=None, must_answer=[],
+                queries=[{"id": "q0", "type": "PRIMARY", "query": "soft key and fill light portrait", "weight": 1.0},
+                         {"id": "q1", "type": "PROCEDURE", "query": "setting up key and fill lights for a face", "weight": 0.8},
+                         {"id": "q2", "type": "ADJACENT", "query": "shaping light on a curved surface", "weight": 0.6}])
+    plan = cp.compile_plan(q, [], ["cinema"], _complete_returning(proc), model="stub")
+    assert not plan.fallback and plan.task_type == "GROUNDED_QA" and plan.retrieval_required
+    assert plan.compiler["corrections"][0] == "task_type:PROCEDURE->GROUNDED_QA"
+    assert plan.intent == "PROCEDURE"                                  # the question's nature still reaches the intent layer
+    assert [x.type for x in plan.queries] == ["PRIMARY", "PROCEDURE"]  # a plain lookup is never widened (B9)
+    mech = cp.compile_plan("Why does a long take feel tense?", [], ["cinema"],
+                           _complete_returning(dict(GOOD, task_type="MECHANISM")), model="stub")
+    assert not mech.fallback and mech.task_type == "GROUNDED_SYNTHESIS"
+    assert "task_type:MECHANISM->GROUNDED_SYNTHESIS" in mech.compiler["corrections"]
+
+
+def test_every_query_type_has_a_task_and_a_real_task_type_is_never_rewritten():
+    assert set(cp.QUERY_TYPE_AS_TASK) == set(cp.QUERY_TYPES)           # a new query type forces a mapping decision
+    assert all(t in cp.TASK_TYPES and t not in cp.NO_RETRIEVAL_TASKS for t in cp.QUERY_TYPE_AS_TASK.values())
+    plan = cp.compile_plan("How does that affect creativity though?", [], ["cinema"], _complete_returning(GOOD), model="stub")
+    assert not plan.fallback and plan.task_type == "GROUNDED_SYNTHESIS"
+    assert not any(str(c).startswith("task_type:") for c in plan.compiler["corrections"])
+
+
+def test_a_garbage_task_type_still_falls_back():
+    plan = cp.compile_plan("What is the 180-degree rule?", [], ["cinema"],
+                           _complete_returning(dict(GOOD, task_type="VIBES")), model="stub")
+    assert plan.fallback and plan.compiler["reason"] == "invalid_plan:task_type_invalid:VIBES"
+    assert cp.validate_plan(dict(GOOD, task_type=""), "How does overload affect creativity?") == (None, "task_type_invalid:")
+
+
 def test_soft_budget_is_measured_and_hard_budget_falls_back():
     import time as _t
     def slow(s, u, m):
