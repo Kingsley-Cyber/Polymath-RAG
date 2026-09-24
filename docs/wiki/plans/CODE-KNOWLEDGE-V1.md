@@ -2,7 +2,7 @@
 title: "CODE-KNOWLEDGE-V1 — first-class code knowledge (Python, Luau/Roblox, YAML/TOML, Power Fx) inside the existing retrieval architecture"
 date: 2026-09-23
 last_reviewed: 2026-09-24
-status: "ACTIVE (owner 2026-09-24: 'i want to implement multi code langauge rag'). Reconciled with the third design note; 4 owner answers recorded. Next: C0 once the owner points to the real code (report 2026-09-24 §7)."
+status: "ACTIVE (owner 2026-09-24: 'i want to implement multi code langauge rag'). Reconciled with the third design note; 4 owner answers recorded. C0a done 2026-09-24 (register 11.458, download-free); next: the owner's download word (C0b) and decision 6, then C1 (START-HERE §4)."
 owner: "@king"
 scope: "Source-family extension of ingestion (detection, exact-source chunk providers, structure store, code pMAP / profile enrichment) and retrieval (code_task overlay, one structure nomination lane, candidate roles, validators). No new public mode; document ingestion stays byte-identical."
 ---
@@ -79,7 +79,7 @@ candidate funnel and reranker, and always resolve the winning route back to exac
   - the existing fleet runs ingestion;
   - one reranker, no fixed weights;
   - no new chat mode.
-- **Still open:** decision 6 (profile capacity). C0 measures it on the real code.
+- **Still open:** decision 6 (profile capacity). Measured in C0a (11.458): the profile stage binds; the owner chooses more profile lanes and / or a product-code-first scope.
 
 ## Status
 
@@ -90,7 +90,7 @@ candidate funnel and reranker, and always resolve the winning route back to exac
 | Owner's second design note | admitted 2026-09-23, reconciled in the review §10 |
 | Owner's third design note | admitted 2026-09-24, reconciled in the 2026-09-24 report (register 11.452) |
 | Owner decisions (13) | 12 settled 2026-09-24 (answered or following the review by the accepted defaults); decision 6 open |
-| Slices C0–C14 | not started. Order: report §6 |
+| Slices C0–C14 | C0a DONE 2026-09-24 (register 11.458: baseline, census, capacity, download-free tool decisions); C0b waits for the owner's download word; C1–C14 not started. Order: START-HERE §4 |
 | Language representation spec | written 2026-09-24 (register 11.453) |
 | GitHub sources list | verified 2026-09-24 (register 11.454) |
 | Design reviews A + B | reconciled 2026-09-24 (register 11.455); Neo4j projection moved into the first version |
