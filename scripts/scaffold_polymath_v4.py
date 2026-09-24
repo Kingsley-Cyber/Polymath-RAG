@@ -2285,6 +2285,11 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/plans/DOCUMENT-SKELETON-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-s1c-receipt-whitelist-latent-labels.md", "md", None),
     ("shared/polymath_shared/skeleton_routes.py", "py", None),
+    # PROBE-GATE-V1 (register 11.446): a vague probe earns nothing, decided before retrieval
+    ("shared/polymath_shared/probe_gate.py", "py", None),
+    ("tests/determinism/test_probe_gate.py", "py", None),
+    ("docs/wiki/experiments/probe-gate-2026-09-24/replay.json", "json", None),
+    ("docs/wiki/work-log/2026-09-24-probe-gate.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),

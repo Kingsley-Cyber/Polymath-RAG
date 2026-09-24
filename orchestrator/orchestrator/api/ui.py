@@ -2990,6 +2990,11 @@ def _turn_receipt_extras(trace: dict | None, latent_selection: dict | None, wild
         rt["contextual"] = {k: v for k, v in judge.items() if k != "ms" and not _is_clock(k)}
         if judge.get("ms") is not None:
             ms["contextual"] = judge["ms"]
+    gate = trace.get("probe_gate")
+    if isinstance(gate, dict) and gate.get("scored"):
+        rt["probe_gate"] = {k: v for k, v in gate.items() if k != "ms" and not _is_clock(k)}
+        if gate.get("ms") is not None:
+            ms["probe_gate"] = gate["ms"]
     probes = trace.get("probe_routes")
     if isinstance(probes, dict) and probes:
         rt["probe_routes"] = {q: _split_clock(r)[0] for q, r in probes.items()}
@@ -3665,6 +3670,19 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     # (RELATIONSHIP → graph=auto), default off; never changes the public mode (§2).
                     _pol = _policy_for(_plan.intent) if _ip else None
                     _graph_assist = _pol.graph if _pol is not None else "off"
+                    # PROBE-GATE-V1: a probe that misses the user's resolved question is dropped before it spends retrieval
+                    # (one cross-encoder call, fail-open; default off; FAST / GNN are never gated — the budget carries the floor)
+                    _gated_out: set = set()
+                    _probe_gate = None
+                    if getattr(_budget, "probe_gate_floor", 0.0) > 0 and _flag == "on" and _plan is not None and _rflag == "v2":
+                        from orchestrator.api import chat_retrieval as _cr_mod
+                        from polymath_shared.probe_gate import (
+                            gate_probes as _gate_probes,
+                        )
+                        _gated_out, _probe_gate = _gate_probes(
+                            (_plan.resolved_request or query or "").strip(),
+                            [(q.id, getattr(q, "origin", ""), q.query) for q in _plan.queries if q.type != "PRIMARY"],
+                            _cr_mod._rerank_children, floor=_budget.probe_gate_floor)
                     fast = chat_retrieve_mode(
                         "VECTOR" if ui_mode == "FAST" else ui_mode, _retrieval_text, corpus_id,
                         graph_useful=_graph_useful, graph_assist=_graph_assist, keep_latent=bool(req.latent), **_latent_kw,
@@ -3672,12 +3690,14 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         # P1.b: typed subqueries run lanes B + C on their own vectors (v2-single = A/B without them)
                         # LATENT-QUERY-FUSION-V2 F4: carry the plan's EXISTING per-query origin provenance
                         # (USER/PROFILE/GRAPH/BRIDGE/WILDCARD) so V2 fusion weights each lane by lineage class.
-                        subqueries=tuple((q.id, q.type, q.query, q.weight, getattr(q, "origin", ""), getattr(q, "derived_from", None) or "") for q in _plan.queries if q.type != "PRIMARY")
+                        subqueries=tuple((q.id, q.type, q.query, q.weight, getattr(q, "origin", ""), getattr(q, "derived_from", None) or "") for q in _plan.queries if q.type != "PRIMARY" and q.id not in _gated_out)
                         if (_flag == "on" and _plan is not None and _rflag == "v2") else (),
                         # WLK2C: the BRIDGE subquery ids, so chat_retrieve_v2 exposes their candidates in the
                         # latent pool regardless of fused rank (bridge candidates rarely top the q0-dominated union).
-                        latent_bridge_ids=tuple(q.id for q in _plan.queries if getattr(q, "origin", "") in LATENT_ORIGINS)
+                        latent_bridge_ids=tuple(q.id for q in _plan.queries if getattr(q, "origin", "") in LATENT_ORIGINS and q.id not in _gated_out)
                         if (_flag == "on" and _plan is not None) else ())
+                    if _probe_gate is not None:
+                        fast.setdefault("trace", {})["probe_gate"] = _probe_gate          # receipted with the turn (S1d)
                     _aspects = (fast.get("meta") or {}).get("aspects") or {}
                     _weak = (fast.get("meta") or {}).get("weak_aspects") or []
                     if ui_mode == "WILDCARD":
