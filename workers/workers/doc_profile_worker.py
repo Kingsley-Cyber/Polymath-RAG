@@ -228,6 +228,18 @@ def _embed_texts(texts: list[str], embed_one_batch=None) -> list[list[float]]:
     return out
 
 
+def _embed_atom_texts(texts: list[str]) -> list[list[float]]:
+    """ATOM-REPAIR-V1: atoms are routing hypotheses matched against QUERY vectors, and the live atom collection holds
+    query-mode vectors (projected 2026-09-08; measured cos 0.9999 against query-mode re-embeddings). One embedding mode
+    per collection — a doc-mode atom would score on a different scale than its neighbours."""
+    from polymath_shared.clients import EmbedderClient
+    client = EmbedderClient()
+    try:
+        return _embed_texts(texts, embed_one_batch=lambda chunk: client.embed(chunk, "query"))
+    finally:
+        client.close()
+
+
 def process_event(conn: Connection, event: dict) -> None:
     run_id = event["run_id"]
     with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=contract()) as writer:
@@ -321,10 +333,15 @@ def process_event(conn: Connection, event: dict) -> None:
                 # transient atom failure must never fail the already-projected profile.
                 try:
                     from polymath_shared.document_profile import profile_atom_projection as PAP
+                    from polymath_shared.document_profile import profile_atom as PA
+                    # ATOM-REPAIR-V1: family-scoped supersession (a vNext profile keeps the base atoms and vice
+                    # versa, owner D4 "alongside") + the collection's query-mode embedding
                     atom_receipt = PAP.ingest_document_atoms(
-                        conn, client, embed=embed, embedding_contract_id=contract_obj.contract_id,
+                        conn, client, embed=HOOKS.get("embed") or _embed_atom_texts,
+                        embedding_contract_id=contract_obj.contract_id,
                         dim=contract_obj.dimension, doc_id=doc_id, corpus_id=corpus_id,
-                        compiled=artifact, profile_contract=C.SCHEMA_VERSION)
+                        compiled=artifact, profile_contract=C.SCHEMA_VERSION,
+                        source=PA.source_tag("vnext" if vnext else "base", compiled_hash))
                 except Exception as _atom_err:
                     atom_receipt = {"ok": False, "error": str(_atom_err)[:200]}
                     log.warning("doc_profile atom ingest failed run=%s doc=%s err=%s",

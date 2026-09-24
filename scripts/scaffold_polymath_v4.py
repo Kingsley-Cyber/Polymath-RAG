@@ -2758,6 +2758,12 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_contract_impact.py", "py", None),
     ("tests/determinism/test_surface_taxonomy_drift.py", "py", None),
     ("tests/determinism/test_profile_atom_ingest.py", "py", None),
+    # ATOM-REPAIR-V1 (register 11.445): family-scoped atom supersession + the one-off repair of the 2026-09-08 regression
+    ("scripts/repair_profile_atoms.py", "py", None),
+    ("tests/determinism/test_atom_repair.py", "py", None),
+    ("docs/wiki/work-log/2026-09-24-atom-repair.md", "md", None),
+    ("docs/wiki/experiments/atom-repair-2026-09-24/receipt.json", "json", None),
+    ("docs/wiki/experiments/atom-repair-2026-09-24/replay_after.json", "json", None),
     ("tests/determinism/test_projection_lifecycle.py", "py", None),
     ("tests/determinism/test_projection_lifecycle_migration.py", "py", None),
     ("tests/determinism/test_projection_manifest_writer.py", "py", None),

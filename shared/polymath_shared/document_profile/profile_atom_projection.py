@@ -124,23 +124,29 @@ def purge_doc(client, embedding_contract_id: str, doc_id: str) -> int:
 
 
 def ingest_document_atoms(conn, client, *, embed, embedding_contract_id: str, dim: int,
-                          doc_id: str, corpus_id: str | None, compiled: dict, profile_contract: str) -> dict:
+                          doc_id: str, corpus_id: str | None, compiled: dict, profile_contract: str,
+                          source: str | None = None) -> dict:
     """PROFILE-ATOM ingest (P4a DAG wiring) — lift a compiled profile's atom surfaces into the
     live architecture instead of a canary: extract → persist as durable rows (Postgres authority,
     supersede the doc's prior atoms) → purge the doc's stale atom points → project the new set.
     Per-doc rebuild keeps the atom collection == the doc's ACTIVE rows. Additive: touches only
-    `document_profile_atoms` + the atom collection, never the global profile point or chunks."""
-    from polymath_shared.document_profile.profile_atom import extract_atoms, persist_atoms
+    `document_profile_atoms` + the atom collection, never the global profile point or chunks.
+
+    ATOM-REPAIR-V1: with a `source` (`family:compiled_hash`) supersession is family-scoped, so the
+    doc keeps the other family's atoms active; the doc's points are rebuilt from ALL its active
+    rows (both families), which keeps the collection == the active rows."""
+    from polymath_shared.document_profile.profile_atom import active_atoms, extract_atoms, persist_atoms
     atoms = extract_atoms(compiled, doc_id=doc_id, corpus_id=corpus_id, profile_contract=profile_contract)
-    persisted = persist_atoms(conn, doc_id=doc_id, profile_contract=profile_contract, atoms=atoms)
+    persisted = persist_atoms(conn, doc_id=doc_id, profile_contract=profile_contract, atoms=atoms, source=source)
     purged = purge_doc(client, embedding_contract_id, doc_id)
-    proj = project_atoms(client, embed=embed, embedding_contract_id=embedding_contract_id, dim=dim, atoms=atoms)
+    to_project = atoms if source is None else active_atoms(conn, doc_id=doc_id)
+    proj = project_atoms(client, embed=embed, embedding_contract_id=embedding_contract_id, dim=dim, atoms=to_project)
     by_kind: dict[str, int] = {}
     for a in atoms:
         by_kind[a.kind] = by_kind.get(a.kind, 0) + 1
     return {"ok": True, "active": len(atoms), "persisted": persisted, "purged_points": purged,
             "projected_points": proj["points"], "collection": proj["collection"],
-            "by_kind": by_kind, "profile_contract": profile_contract}
+            "by_kind": by_kind, "profile_contract": profile_contract, "source": source}
 
 
 def corpus_scope(corpus_ids) -> list[str]:
