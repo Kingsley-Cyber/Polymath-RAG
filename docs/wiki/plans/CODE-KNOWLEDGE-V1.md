@@ -27,6 +27,18 @@ scope: "Source-family extension of ingestion (detection, exact-source chunk prov
    `docs/wiki/reports/2026-09-24/CODE-KNOWLEDGE-V1-NOTE-3-RECONCILIATION.md`. This report holds the owner's answers of
    2026-09-24, the status of all 13 review decisions, and the **revised phases, which supersede the review's §7 / §10
    phases.**
+4. **How each language is represented:** `docs/wiki/plans/CODE-LANGUAGE-REPRESENTATIONS-V1.md` (owner 2026-09-24). One card
+   per language (Python, YAML, TOML, Luau / Roblox, Power Fx) gives:
+   - detection;
+   - tooling;
+   - units and addresses;
+   - the symbol / relation vocabulary and how each link is resolved;
+   - the file- and parent-level meaning fields;
+   - search vocabulary;
+   - validation;
+   - test questions.
+
+   It is the contract that slices C1–C7, C10, C13 and C14 implement.
 
 ## One-sentence architecture (from the packet)
 
@@ -64,4 +76,5 @@ candidate funnel and reranker, and always resolve the winning route back to exac
 | Owner's third design note | admitted 2026-09-24, reconciled in the 2026-09-24 report (register 11.452) |
 | Owner decisions (13) | 12 settled 2026-09-24 (answered or following the review by the accepted defaults); decision 6 open |
 | Slices C0–C14 | not started. Order: report §6 |
+| Language representation spec | written 2026-09-24 (register 11.453) |
 | Owner input before C0 | the real code locations and formats (report §7) |

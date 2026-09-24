@@ -34,7 +34,9 @@ historical, never an instruction.
   4. the third note `docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTE_3.md` + its reconciliation
      `docs/wiki/reports/2026-09-24/CODE-KNOWLEDGE-V1-NOTE-3-RECONCILIATION.md` (register 11.452).
 
-  The reconciliation's §6 phase order supersedes the review's phases.
+  The reconciliation's §6 phase order supersedes the review's phases. How each language is represented (units, deterministic links, meaning fields, search
+  vocabulary, validation, test questions) is `docs/wiki/plans/CODE-LANGUAGE-REPRESENTATIONS-V1.md` (11.453), the contract the
+  slices implement.
 
 ### Next Action
 1. **Owner input (reconciliation §7):**

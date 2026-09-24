@@ -2312,6 +2312,9 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTE_3.md", "md", None),
     ("docs/wiki/reports/2026-09-24/CODE-KNOWLEDGE-V1-NOTE-3-RECONCILIATION.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-code-knowledge-note-3.md", "md", None),
+    # CODE-LANGUAGE-REPRESENTATIONS-V1 (register 11.453): one representation card per code language
+    ("docs/wiki/plans/CODE-LANGUAGE-REPRESENTATIONS-V1.md", "md", None),
+    ("docs/wiki/work-log/2026-09-24-code-language-representations.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),
