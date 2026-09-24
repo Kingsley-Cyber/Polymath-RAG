@@ -199,3 +199,8 @@ Per-slice anchors in more depth: the feasibility review §5. Use graft first (`g
   in any code prompt too.
 - **Graphify (the owner's installed 0.9.53)** reads `.luau` with its plain-Lua extractor: it is not a Luau parser.
 - **The permission classifier** has denied production merges and bounces inconsistently. Check before stopping anything.
+- **Read the 2026-09-24 audit before C1** (`docs/wiki/reports/2026-09-24/CODE-RAG-AND-PROVIDER-KEYS-AUDIT.md`, register
+  11.459). Its §4 adds requirements per slice: the upload gate refuses code; tier_v3 leaves real code lines in no chunk;
+  region roles drop code as `noise_ocr`; the MAP / profile compilers split on `|` and strip `_` / `*`; route seats for
+  structure-lane paths depend on the WILDCARD-only contextual judge; the fairness rules assume a document is a book;
+  FAST opens no doors. Its §1 is the provider-key plan (profile capacity, decision 6).

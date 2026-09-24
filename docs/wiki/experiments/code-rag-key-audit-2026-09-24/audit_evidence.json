@@ -1,0 +1,682 @@
+{
+ "audit": "code-RAG + provider-key audit 2026-09-24 (register 11.459)",
+ "groq": {
+  "matrix": {
+   "GROQ_API_KEY_1": {
+    "openai/gpt-oss-120b": {
+     "lane": "profile_groq1",
+     "enabled": true,
+     "stage": "doc_profile"
+    },
+    "openai/gpt-oss-20b": {
+     "lane": "map_groq1",
+     "enabled": false,
+     "stage": null
+    },
+    "qwen/qwen3.8-27b": null
+   },
+   "GROQ_API_KEY_2": {
+    "openai/gpt-oss-120b": {
+     "lane": "profile_groq2",
+     "enabled": false,
+     "stage": null
+    },
+    "openai/gpt-oss-20b": {
+     "lane": "map_groq2",
+     "enabled": true,
+     "stage": "doc_parent_map"
+    },
+    "qwen/qwen3.8-27b": {
+     "lane": "map_groq2q",
+     "enabled": true,
+     "stage": "doc_parent_map"
+    }
+   },
+   "GROQ_API_KEY_3": {
+    "openai/gpt-oss-120b": {
+     "lane": "profile_groq3",
+     "enabled": false,
+     "stage": null
+    },
+    "openai/gpt-oss-20b": {
+     "lane": "map_groq3",
+     "enabled": true,
+     "stage": "doc_parent_map"
+    },
+    "qwen/qwen3.8-27b": {
+     "lane": "map_groq3q",
+     "enabled": true,
+     "stage": "doc_parent_map"
+    }
+   },
+   "GROQ_API_KEY_4": {
+    "openai/gpt-oss-120b": {
+     "lane": "profile_groq4",
+     "enabled": false,
+     "stage": null
+    },
+    "openai/gpt-oss-20b": {
+     "lane": "map_groq4",
+     "enabled": true,
+     "stage": "doc_parent_map"
+    },
+    "qwen/qwen3.8-27b": {
+     "lane": "map_groq4q",
+     "enabled": true,
+     "stage": "doc_parent_map"
+    }
+   },
+   "GROQ_API_KEY_5": {
+    "openai/gpt-oss-120b": {
+     "lane": "profile_groq5",
+     "enabled": false,
+     "stage": null
+    },
+    "openai/gpt-oss-20b": {
+     "lane": "map_groq5",
+     "enabled": true,
+     "stage": "doc_parent_map"
+    },
+    "qwen/qwen3.8-27b": {
+     "lane": "map_groq5q",
+     "enabled": true,
+     "stage": "doc_parent_map"
+    }
+   },
+   "GROQ_API_KEY_6": {
+    "openai/gpt-oss-120b": {
+     "lane": "profile_groq6",
+     "enabled": false,
+     "stage": null
+    },
+    "openai/gpt-oss-20b": {
+     "lane": "map_groq6",
+     "enabled": true,
+     "stage": "doc_parent_map"
+    },
+    "qwen/qwen3.8-27b": {
+     "lane": "map_groq6q",
+     "enabled": true,
+     "stage": "doc_parent_map"
+    }
+   }
+  },
+  "pairs_total": 18,
+  "pairs_active": 11,
+  "pairs_idle": 7,
+  "idle_tokens_per_day": 1400000
+ },
+ "post_swap_groq_attempts": [],
+ "last_groq_attempt_at": "2026-09-21 05:20:12.668897+00:00",
+ "saved_limiter_state_groq": {
+  "llm_cloud[profile_groq1]": {
+   "ceiling": 1,
+   "adopted_tpm": 70000.0,
+   "adopted_rpm": null,
+   "provider_rpd_limit": null
+  },
+  "llm_cloud[map_groq3]": {
+   "ceiling": 2,
+   "adopted_tpm": 70000.0,
+   "adopted_rpm": null,
+   "provider_rpd_limit": 250.0
+  },
+  "llm_cloud[map_groq6]": {
+   "ceiling": 2,
+   "adopted_tpm": 70000.0,
+   "adopted_rpm": null,
+   "provider_rpd_limit": 250.0
+  },
+  "llm_cloud[map_groq5]": {
+   "ceiling": 2,
+   "adopted_tpm": 70000.0,
+   "adopted_rpm": null,
+   "provider_rpd_limit": 250.0
+  },
+  "llm_cloud[map_groq2]": {
+   "ceiling": 2,
+   "adopted_tpm": 70000.0,
+   "adopted_rpm": null,
+   "provider_rpd_limit": 250.0
+  },
+  "llm_cloud[map_groq4]": {
+   "ceiling": 2,
+   "adopted_tpm": 70000.0,
+   "adopted_rpm": null,
+   "provider_rpd_limit": 250.0
+  }
+ },
+ "cloudflare_account_ids_set": {
+  "CLOUDFLARE_ACCOUNT_ID_1": false,
+  "CLOUDFLARE_ACCOUNT_ID_2": true,
+  "CLOUDFLARE_ACCOUNT_ID_3": false,
+  "CLOUDFLARE_ACCOUNT_ID_4": false,
+  "CLOUDFLARE_ACCOUNT_ID_5": false,
+  "CLOUDFLARE_ACCOUNT_ID_6": false
+ },
+ "limiter": {
+  "families_with_more_than_one_lane": {
+   "nvidia": [
+    "nvidia",
+    "nvidia2"
+   ],
+   "openrouter": [
+    "compiler_alt",
+    "map_fallback_openrouter",
+    "openrouter1",
+    "openrouter2",
+    "openrouter3",
+    "openrouter5",
+    "profile_fallback_openrouter"
+   ],
+   "gemini": [
+    "compiler1",
+    "compiler2",
+    "compiler3",
+    "compiler4",
+    "gemini1",
+    "gemini1b",
+    "gemini2",
+    "gemini2b",
+    "gemini3",
+    "gemini3b",
+    "gemini4",
+    "gemini4b",
+    "gemini5",
+    "gemini5b",
+    "gemini6",
+    "gemini6b",
+    "profile_fallback_gemini1",
+    "profile_fallback_gemini2"
+   ],
+   "alibaba": [
+    "compiler_alibaba_deepseek",
+    "compiler_alibaba_qwen"
+   ]
+  }
+ },
+ "lanes_all_time": [
+  {
+   "lane": "compiler_ollama_gemma",
+   "attempts": 1890,
+   "ok": 1856,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 1643
+  },
+  {
+   "lane": "openrouter2",
+   "attempts": 1295,
+   "ok": 148,
+   "http_429": 0,
+   "local_refusals": 1147,
+   "p50_ms": 48
+  },
+  {
+   "lane": "openrouter1",
+   "attempts": 1233,
+   "ok": 22,
+   "http_429": 140,
+   "local_refusals": 1071,
+   "p50_ms": 47
+  },
+  {
+   "lane": "openrouter3",
+   "attempts": 1106,
+   "ok": 73,
+   "http_429": 3,
+   "local_refusals": 1030,
+   "p50_ms": 49
+  },
+  {
+   "lane": "openrouter5",
+   "attempts": 1019,
+   "ok": 54,
+   "http_429": 3,
+   "local_refusals": 962,
+   "p50_ms": 39
+  },
+  {
+   "lane": "compiler_alt",
+   "attempts": 663,
+   "ok": 352,
+   "http_429": 310,
+   "local_refusals": 0,
+   "p50_ms": 1792
+  },
+  {
+   "lane": "compiler_alibaba_qwen",
+   "attempts": 434,
+   "ok": 5,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 6568
+  },
+  {
+   "lane": "chat_synth:anthropic",
+   "attempts": 185,
+   "ok": 184,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 17802
+  },
+  {
+   "lane": "map_fallback_openrouter",
+   "attempts": 170,
+   "ok": 162,
+   "http_429": 6,
+   "local_refusals": 2,
+   "p50_ms": 3136
+  },
+  {
+   "lane": "cloudflare_map2",
+   "attempts": 167,
+   "ok": 167,
+   "http_429": 0,
+   "local_refusals": null,
+   "p50_ms": 8873
+  },
+  {
+   "lane": "gemini1",
+   "attempts": 155,
+   "ok": 121,
+   "http_429": 1,
+   "local_refusals": 0,
+   "p50_ms": 15082
+  },
+  {
+   "lane": "map_groq2",
+   "attempts": 147,
+   "ok": 52,
+   "http_429": 93,
+   "local_refusals": 1,
+   "p50_ms": 216
+  },
+  {
+   "lane": "map_groq3",
+   "attempts": 125,
+   "ok": 45,
+   "http_429": 78,
+   "local_refusals": 0,
+   "p50_ms": 194
+  },
+  {
+   "lane": "map_groq5",
+   "attempts": 121,
+   "ok": 52,
+   "http_429": 68,
+   "local_refusals": 0,
+   "p50_ms": 217
+  },
+  {
+   "lane": "map_groq6",
+   "attempts": 119,
+   "ok": 63,
+   "http_429": 55,
+   "local_refusals": 0,
+   "p50_ms": 1898
+  },
+  {
+   "lane": "map_groq4",
+   "attempts": 119,
+   "ok": 56,
+   "http_429": 62,
+   "local_refusals": 0,
+   "p50_ms": 265
+  },
+  {
+   "lane": "compiler_alibaba_deepseek",
+   "attempts": 96,
+   "ok": 15,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 6522
+  },
+  {
+   "lane": "gemini3b",
+   "attempts": 87,
+   "ok": 81,
+   "http_429": 6,
+   "local_refusals": 0,
+   "p50_ms": 4785
+  },
+  {
+   "lane": "gemini4",
+   "attempts": 64,
+   "ok": 48,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 18714
+  },
+  {
+   "lane": "cloudflare2",
+   "attempts": 49,
+   "ok": 47,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 4286
+  },
+  {
+   "lane": "nvidia",
+   "attempts": 42,
+   "ok": 37,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 99503
+  },
+  {
+   "lane": "siliconflow2",
+   "attempts": 39,
+   "ok": 18,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 182983
+  },
+  {
+   "lane": "default",
+   "attempts": 38,
+   "ok": 0,
+   "http_429": 0,
+   "local_refusals": 4,
+   "p50_ms": 227
+  },
+  {
+   "lane": "gemini2",
+   "attempts": 37,
+   "ok": 31,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 20454
+  },
+  {
+   "lane": "gemini1b",
+   "attempts": 35,
+   "ok": 35,
+   "http_429": 0,
+   "local_refusals": null,
+   "p50_ms": 4528
+  },
+  {
+   "lane": "siliconflow1",
+   "attempts": 33,
+   "ok": 23,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 180494
+  },
+  {
+   "lane": "chat_synth:ollama",
+   "attempts": 30,
+   "ok": 27,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 2944
+  },
+  {
+   "lane": "gemini3",
+   "attempts": 25,
+   "ok": 19,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 9515
+  },
+  {
+   "lane": "profile_groq1",
+   "attempts": 10,
+   "ok": 9,
+   "http_429": 0,
+   "local_refusals": 0,
+   "p50_ms": 6816
+  },
+  {
+   "lane": "gemini2b",
+   "attempts": 9,
+   "ok": 9,
+   "http_429": 0,
+   "local_refusals": null,
+   "p50_ms": 4829
+  },
+  {
+   "lane": "gemini4b",
+   "attempts": 9,
+   "ok": 9,
+   "http_429": 0,
+   "local_refusals": null,
+   "p50_ms": 3902
+  },
+  {
+   "lane": "cloudflare_summary1",
+   "attempts": 6,
+   "ok": 6,
+   "http_429": 0,
+   "local_refusals": null,
+   "p50_ms": 3572
+  },
+  {
+   "lane": "gemini5",
+   "attempts": 4,
+   "ok": 4,
+   "http_429": 0,
+   "local_refusals": null,
+   "p50_ms": 18694
+  },
+  {
+   "lane": "selftest-v3",
+   "attempts": 2,
+   "ok": 0,
+   "http_429": null,
+   "local_refusals": 0,
+   "p50_ms": 46
+  },
+  {
+   "lane": "profile_fallback_openrouter",
+   "attempts": 1,
+   "ok": 1,
+   "http_429": 0,
+   "local_refusals": null,
+   "p50_ms": 6007
+  },
+  {
+   "lane": "chat_synth:openai",
+   "attempts": 1,
+   "ok": 0,
+   "http_429": null,
+   "local_refusals": 0,
+   "p50_ms": 765
+  },
+  {
+   "lane": "selftest-batch-seam",
+   "attempts": 1,
+   "ok": 0,
+   "http_429": null,
+   "local_refusals": 0,
+   "p50_ms": 55
+  },
+  {
+   "lane": "dbg",
+   "attempts": 1,
+   "ok": 0,
+   "http_429": null,
+   "local_refusals": 0,
+   "p50_ms": 5
+  }
+ ],
+ "ui_funnel_last_5_days": {
+  "HYBRID": {
+   "retrieved": {
+    "n": 117,
+    "p10": 0.0,
+    "p50": 112.0,
+    "p90": 142.0
+   },
+   "union": {
+    "n": 117,
+    "p10": 0.0,
+    "p50": 161.0,
+    "p90": 212.4
+   },
+   "pre_rerank": {
+    "n": 117,
+    "p10": 0.0,
+    "p50": 32.0,
+    "p90": 33.0
+   },
+   "post_rerank": {
+    "n": 117,
+    "p10": 0.0,
+    "p50": 32.0,
+    "p90": 33.0
+   },
+   "selected": {
+    "n": 117,
+    "p10": 0.0,
+    "p50": 15.0,
+    "p90": 15.0
+   },
+   "cited": {
+    "n": 117,
+    "p10": 0.0,
+    "p50": 10.0,
+    "p90": 15.0
+   }
+  },
+  "GRAPH": {
+   "retrieved": {
+    "n": 12,
+    "p10": 12.4,
+    "p50": 140.0,
+    "p90": 147.0
+   },
+   "union": {
+    "n": 12,
+    "p10": 14.1,
+    "p50": 215.5,
+    "p90": 328.3
+   },
+   "pre_rerank": {
+    "n": 12,
+    "p10": 3.2,
+    "p50": 32.0,
+    "p90": 35.0
+   },
+   "post_rerank": {
+    "n": 12,
+    "p10": 3.2,
+    "p50": 32.0,
+    "p90": 35.0
+   },
+   "selected": {
+    "n": 12,
+    "p10": 1.5,
+    "p50": 15.0,
+    "p90": 15.0
+   },
+   "cited": {
+    "n": 12,
+    "p10": 0.3,
+    "p50": 7.0,
+    "p90": 13.9
+   }
+  }
+ },
+ "tier_v3_on_code": [
+  {
+   "file": "config/runtime_budget.yaml",
+   "non_blank_lines": 152,
+   "parents": 5,
+   "children": 5,
+   "layout_regions": {
+    "dropped_stub": 79,
+    "heading": 84
+   },
+   "lines_outside_every_child": 98,
+   "non_comment_lines_outside_every_child": 10,
+   "examples": [
+    [
+     32,
+     "total_gb: 29.0"
+    ],
+    [
+     73,
+     "max_batch_tokens: 8192"
+    ],
+    [
+     74,
+     "max_batch_texts: 8"
+    ],
+    [
+     89,
+     "mps_gb: 6.0"
+    ],
+    [
+     94,
+     "control_plane:"
+    ],
+    [
+     95,
+     "per_worker_gb: 0.15"
+    ],
+    [
+     96,
+     "orchestrator_gb: 0.5"
+    ],
+    [
+     98,
+     "control_gb: 0.15"
+    ],
+    [
+     101,
+     "enforce_preflight: true"
+    ],
+    [
+     103,
+     "reserve_gb: 0.5"
+    ]
+   ]
+  },
+  {
+   "file": "workers/workers/doc_profile_worker.py",
+   "non_blank_lines": 332,
+   "parents": 9,
+   "children": 28,
+   "layout_regions": {
+    "dropped_stub": 10,
+    "heading": 18
+   },
+   "lines_outside_every_child": 21,
+   "non_comment_lines_outside_every_child": 3,
+   "examples": [
+    [
+     334,
+     "try:"
+    ],
+    [
+     335,
+     "from polymath_shared.document_profile import profile_atom_projection as PAP"
+    ],
+    [
+     336,
+     "from polymath_shared.document_profile import profile_atom as PA"
+    ]
+   ]
+  },
+  {
+   "file": ".github/workflows/determinism.yml",
+   "non_blank_lines": 46,
+   "parents": 1,
+   "children": 7,
+   "layout_regions": {
+    "dropped_stub": 6,
+    "heading": 6
+   },
+   "lines_outside_every_child": 7,
+   "non_comment_lines_outside_every_child": 1,
+   "examples": [
+    [
+     1,
+     "name: determinism"
+    ]
+   ]
+  }
+ ]
+}
