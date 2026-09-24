@@ -39,6 +39,9 @@ scope: "Source-family extension of ingestion (detection, exact-source chunk prov
    - test questions.
 
    It is the contract that slices C1–C7, C10, C13 and C14 implement.
+5. **The GitHub sources:** `docs/wiki/plans/CODE-KNOWLEDGE-V1-SOURCES.md` (verified 2026-09-24). What we pull (parsers,
+   resolvers, validators), what we only study (Aider's repo map, code-graph-rag, claude-context, serena …), what we reject
+   and why, with the licence, version and slice of each.
 
 ## One-sentence architecture (from the packet)
 
@@ -77,4 +80,5 @@ candidate funnel and reranker, and always resolve the winning route back to exac
 | Owner decisions (13) | 12 settled 2026-09-24 (answered or following the review by the accepted defaults); decision 6 open |
 | Slices C0–C14 | not started. Order: report §6 |
 | Language representation spec | written 2026-09-24 (register 11.453) |
+| GitHub sources list | verified 2026-09-24 (register 11.454) |
 | Owner input before C0 | the real code locations and formats (report §7) |

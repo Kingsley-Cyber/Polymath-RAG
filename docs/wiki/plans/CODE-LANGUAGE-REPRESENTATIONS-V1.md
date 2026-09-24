@@ -173,7 +173,8 @@ These live as `code_edges` rows in V1. The Neo4j projection and the doc↔code n
 6. Whether Qwen3-Embedding is enough on enriched code text, or a code embedding model earns a measured place.
 
 Every tool is judged by the same four checks: it exists, it runs on a fixture, it runs on the real code, and its output is
-useful. Its version, license and contract are recorded when a slice adds it (PAR-05).
+useful. Its version, license and contract are recorded when a slice adds it (PAR-05). The candidates, with their repositories,
+licences, versions and reasons, are listed in `docs/wiki/plans/CODE-KNOWLEDGE-V1-SOURCES.md`.
 
 ## 9. Which slice implements what
 
