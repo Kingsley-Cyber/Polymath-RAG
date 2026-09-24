@@ -55,7 +55,11 @@ Proposal (owner-gated): all 3 models on every Groq key, one worker per pair, lim
 `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (47 rows). The owner (2026-09-24): "fix all of this", downloads
 approved, one Luau file from GitHub, walk the code graph with the document graph.
 
-**Next action: C0b** (tooling runs), then L1 → L2 → L3 → L4 (the provider backend) → D1 → C1 … (roadmap §3).
+**C0b DONE (11.461):** official `luau-ast` / `luau-analyze` run on one MIT Roblox file (Knit), LibCST parses all 944
+Python files, tree-sitter-toml spans all 28 TOML headers. C0 closed.
+
+**Next action: L1** (account registry: accounts → models → limits, derived lanes, ownership report; byte-identical
+roster first), then L2 → L3 → L4 (the provider backend) → D1 → C1 … (roadmap §3).
 
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs
   alreayd a md plan i beleive and i want to add upon it".

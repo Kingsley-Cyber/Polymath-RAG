@@ -2,7 +2,7 @@
 title: "Roadmap: a clean LLM provider backend, the document defects, and code RAG with a joint code / document graph walk"
 date: 2026-09-24
 last_reviewed: 2026-09-24
-status: "PLAN OF RECORD (owner 2026-09-24: 'fix all of this … implement this in strategic slices and a plan way ahead'). Execution order across tracks. Slice C0b is next."
+status: "PLAN OF RECORD (owner 2026-09-24: 'fix all of this … implement this in strategic slices and a plan way ahead'). Execution order across tracks. C0b done (11.461); L1 is next."
 owner: "@king"
 scope: "Closes every row of GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md. Supersedes the slice ORDER in CODE-KNOWLEDGE-V1-START-HERE.md §4 (the C-slice definitions there and in CODE-LANGUAGE-REPRESENTATIONS-V1.md still hold, amended here)."
 ---
@@ -112,7 +112,7 @@ GRAPH = the full walk (FACT + STRUCTURE + MENTION + one SEMANTIC hop) · WILDCAR
 
 | # | Slice | Closes | Depends on | Proof (exit) | Gates |
 |---|---|---|---|---|---|
-| 1 | **C0b** tooling runs | C0 open items | — | LibCST on this repository vs the C0a stdlib numbers; the official Luau zip (checksum, `luau-ast`, `luau-analyze`) on one GitHub Luau file; tree-sitter-toml spans on the 10 TOML files | downloads approved 2026-09-24 |
+| 1 | **C0b** tooling runs — **DONE 11.461** | C0 open items | — | LibCST on this repository vs the C0a stdlib numbers; the official Luau zip (checksum, `luau-ast`, `luau-analyze`) on one GitHub Luau file; tree-sitter-toml spans on the 10 TOML files | downloads approved 2026-09-24 |
 | 2 | **L1** account registry | L-01, L-10 (families by account) | — | the registry regenerates today's lane roster byte-identically (no behaviour change); validator + ownership report green | none (config compile only) |
 | 3 | **L2** limiter correctness | L-04, L-05, L-08, L-09, L-16, L-17 | L1 | unit tests: real-token admission, rolling TPD, OTPM, clamp on restore, transient refusal; ledger rows carry stage / account / model | fence + bounce |
 | 4 | **L3** ownership + wiring | L-02, L-07, L-11, L-12, L-13, L-14, L-15, L-18 | L2 | registry: all 18 Groq pairs owned (6 profile + 6 pMAP slots), Cloudflare account ids discovered (read-only API) or supplied by the owner, dead lanes parked, the unused flag removed | `.env` edits (account ids) = owner-visible; fence + bounce |

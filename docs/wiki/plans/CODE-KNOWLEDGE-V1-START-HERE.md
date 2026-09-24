@@ -116,6 +116,11 @@ Document ingestion stays byte-identical, and every slice ships behind a flag, de
    anchors / aliases from the event stream) · TOML = tree-sitter-toml (C5a) · CodeGraphContext = study only (it links
    calls by bare name) · Qwen3-Embedding: deferred to C9 / C10 (needs C6 / C7 descriptions) · Luau: the official 0.739
    zip is built to ship `luau-ast` (READ). **C0b** runs the downloaded tools on the owner's word.
+
+   **C0b results (11.461, `docs/wiki/experiments/code-knowledge-c0b-2026-09-24/`), C0 CLOSED:** the official Luau 0.739
+   zip ships `luau-ast` + `luau-analyze` (EXECUTED on the Knit fixture; Roblox validation needs luau-lsp's Roblox types);
+   LibCST 1.9.0 parses all 944 Python files (0 errors, spans equal to stdlib `ast`, units must be extended to their
+   decorators); tree-sitter-toml gives spans for all 28 TOML headers.
 4. **.NET for Power Fx:** ask the owner before installing anything (C5b).
 
 ## 4. Slice order (each slice = its own worktree branch, flag default off, tests, work-log, register row, guards)
@@ -127,7 +132,7 @@ Document ingestion stays byte-identical, and every slice ships behind a flag, de
 
 | # | Slice | Delivers | Proof |
 |---|---|---|---|
-| 1 | **C0** baseline + tooling evaluation (**C0a DONE 11.458**; C0b = the download-dependent runs) | the fleet / receipts baseline; the §3.3 comparisons on this repository (Python / YAML / TOML); whether the macOS Luau release ships `luau-ast` (else build it from source); capacity numbers (decision 6) | an experiments JSON + a work-log; each candidate judged: exists · fixture run · real-input run · useful output |
+| 1 | **C0** baseline + tooling evaluation (**C0a DONE 11.458; C0b DONE 11.461**) | the fleet / receipts baseline; the §3.3 comparisons on this repository (Python / YAML / TOML); whether the macOS Luau release ships `luau-ast` (else build it from source); capacity numbers (decision 6) | an experiments JSON + a work-log; each candidate judged: exists · fixture run · real-input run · useful output |
 | 2 | **C1** detection + importer | extension + strict-parser content detection (YAML / TOML `.txt` promotion; skips with receipts), the repo importer (repo-relative paths, sync by path, a path → hash ledger), routing code away from tier_v3 | detection tests per card; an importer test on a fixture repo; documents byte-identical with the flag off |
 | 3 | **C2** structure manifest + Postgres | `code_symbols` / `code_edges` / `code_symbol_parent_links` (schema `03_…` §4–§6) with the controlled vocabularies + the reproducibility attributes | migration on a throwaway Postgres first; the re-extraction reproducibility test |
 | 4 | **C3** Python | the Python card: units, symbols, relations, the chunk provider (`ast_code_v1`) | this repository parsed; spans exact; `CALLS` / `IMPORTS` spot-checked |
