@@ -2184,6 +2184,7 @@ TREE: list[tuple[str, str, str | None]] = [
     # scripts
     ("scripts/backfill_document_regions.py", "py", None),
     ("scripts/boot_polymath.sh", "sh", None),
+    ("scripts/bounce_fleet.sh", "sh", None),   # 11.456: the one-click fleet restart (lock, readiness wait)
     ("scripts/mission_next.py", "py", None),
     ("scripts/retire_pronoun_facts.py", "py", None),
     ("scripts/run_fleet_supervised.sh", "sh", None),
@@ -2322,6 +2323,10 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTES_4_5.md", "md", None),
     ("docs/wiki/reports/2026-09-24/CODE-KNOWLEDGE-V1-NOTES-4-5-RECONCILIATION.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-code-knowledge-notes-4-5.md", "md", None),
+    # CODE-KNOWLEDGE-V1 START HERE + notes 6-7 (register 11.456): the implementation bootstrap for a new session
+    ("docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTES_6_7.md", "md", None),
+    ("docs/wiki/plans/CODE-KNOWLEDGE-V1-START-HERE.md", "md", None),
+    ("docs/wiki/work-log/2026-09-24-code-knowledge-start-here.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),
