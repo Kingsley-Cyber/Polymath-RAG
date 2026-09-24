@@ -23,7 +23,7 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). PROBE-GATE-V1 live 2026-09-24 (11.446–11.447; HYBRID / GRAPH, WILDCARD exempt). S4 compiler contract built + measured 2026-09-24, flag OFF (11.449). S8 synthesis contract built + inspected, flag OFF (11.450). Pushed to origin 2026-09-24 on the owner's word (`0e0978b`). Owner actions waiting: the census-probe test-row cleanup (READ FIRST 6); the S8 merge + one bounce (before S9); the corpus-delete command; pushes of later commits. CODE-KNOWLEDGE-V1 parked.**
+## CURRENT — 2026-09-23 (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). PROBE-GATE-V1 live 2026-09-24 (11.446–11.447; HYBRID / GRAPH, WILDCARD exempt). S4 compiler contract built + measured 2026-09-24, flag OFF (11.449). S8 synthesis contract built + inspected, flag OFF (11.450). Pushed to origin 2026-09-24 on the owner's word (`0e0978b`). Owner actions waiting: S9 (turn S4 + S8 on for 5–8 live questions — needs the owner's word and a bigger query allowance; 9 of 10 used); the corpus-delete command; pushes of later commits. CODE-KNOWLEDGE-V1 parked.**
 
 ### READ FIRST — what happened while the owner was away (2026-09-23 night)
 1. **Skeleton routing is live** (flags `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard` in `.env`;
@@ -83,9 +83,8 @@ historical, never an instruction.
    - A bug fix ships either way: the instruction-word filter matched substrings ("information" holds "format") and
      silently dropped topical planner queries.
    - Test-hygiene incident: a stopped full-suite run left 7 `census_probe_*` runs (57 attempts, corpus `census-probe`,
-     1 cursor) in the fleet DB. The module's own teardown purge removes exactly these rows. The owner runs it (the agent
-     runs no permanent delete):
-     `cd /Users/king/Documents/polymath-rebuild/polymath-v4 && set -a && . ./.env && set +a && PYTHONPATH=$PWD/shared:$PWD/orchestrator:$PWD/workers:$PWD/control:$PWD/tests/determinism .venv/bin/python -c "import os, psycopg, test_incremental_census as t; c = psycopg.connect(os.environ['POLYMATH_PG_DSN'], autocommit=True); t._purge_probe_rows(c); print('purged', t.PROBE_CORPUS)"`
+     1 cursor) in the fleet DB. **Cleaned up by the owner 2026-09-23 night** with the module's own teardown purge
+     (`test_incremental_census._purge_probe_rows`); 0 rows left, verified.
    - Never run the whole determinism suite against the fleet: `env -u POLYMATH_PG_DSN` does not isolate the tests with a
      hard-coded DSN. Run only the impacted suites.
 7. **S8 synthesis contract: BUILT + INSPECTED 2026-09-24, flag OFF** (owner: "yes start S8"; register 11.450; work-log
@@ -108,20 +107,21 @@ historical, never an instruction.
 
 ### Repository State
 - Branch `production` (the fleet checkout). `origin/production` = `0e0978b` (pushed 2026-09-24 on the owner's word). Local is
-  ahead by 10 unpushed commits (`git log --oneline origin/production..production`). Push only on the owner's per-push word.
-- HEAD = this documents commit, on top of merge `50fa36a` (S4 compiler contract + the whole-word instruction-filter fix,
-  register 11.449), `ea950a2` (11.448 documents), merges `9697a91` (probe gate WILDCARD exempt), `4f6bf08` (PROBE-GATE-V1) and
-  `706ed2c` (ATOM-REPAIR-V1).
-  - Rollback tags (local): `pre-s4-merge` → `ea950a2`, `pre-probe-gate-merge` → `0e0978b`, `pre-atom-repair-merge` → `903cb89`, `pre-v11-groq-merge` → `0e57c46`, `pre-skeleton-routes-merge` → `4ab046e`.
-- **Bounced by the owner 2026-09-23 22:26 MDT** (the classifier had denied the agent's bounce and, later, the S8 merge):
-  - 24 / 13 / ONE bundle `addf0cd080cb`, `/ready` true;
-  - S4's code and the whole-word filter fix are live, with the flags off.
-  - The S8 merge (this commit, when merged) changes orchestrator code only. One more bounce loads it; the flag is off, so
-    behaviour is unchanged until the owner turns it on.
-  - Worktrees `pmv4-probe-routes` / `pmv4-groq` are removed after merge; their branches are merged.
+  ahead by 14 unpushed commits (`git log --oneline origin/production..production`). Push only on the owner's per-push word.
+- HEAD = this documents commit, on top of merge `6f18017` (S8 synthesis contract, register 11.450; merged by the owner) and
+  merge `50fa36a` (S4 compiler contract + the whole-word instruction-filter fix, register 11.449), `ea950a2` (11.448
+  documents), merges `9697a91` (probe gate WILDCARD exempt), `4f6bf08` (PROBE-GATE-V1) and `706ed2c` (ATOM-REPAIR-V1).
+  - Rollback tags (local): `pre-s8-merge` → `fea18f9`, `pre-s4-merge` → `ea950a2`, `pre-probe-gate-merge` → `0e0978b`, `pre-atom-repair-merge` → `903cb89`, `pre-v11-groq-merge` → `0e57c46`, `pre-skeleton-routes-merge` → `4ab046e`.
+- **Deploy (2026-09-23 night, done by the owner):** the permission classifier denied the agent's bounces and the S8 merge,
+  so the owner ran them.
+  - Bounce 22:26 MDT loaded S4.
+  - Merge `6f18017` 23:07.
+  - Bounce 23:29 loaded S8.
+  - Verified: 24 / 13 / ONE bundle `3b8b06f49864`, `/ready` true. Neither new switch is set in the orchestrator process.
+  - Worktrees `pmv4-probe-routes` / `pmv4-groq` / `pmv4-s4` / `pmv4-s8` are removed after merge; their branches are merged.
   - Unmerged worktree branches (not tonight's): `review/m1-reproductions` (+1), `handoff/r5-audit-fix` (+5).
-- Fleet: 24 workers / 13 types healthy on ONE bundle `addf0cd080cb`, `/ready` true (embedder + reranker). Running code = `fea18f9`
-  (S4 merged, flags off). S8 needs its merge + one bounce.
+- Fleet: 24 workers / 13 types healthy on ONE bundle `3b8b06f49864`, `/ready` true (embedder + reranker). Running code = committed
+  code (`6f18017`: S4 + S8 installed, both flags off).
 - Live `.env` (gitignored): `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard`,
   `POLYMATH_CHAT_PROBE_GATE=1`; the probe-doors flag (`POLYMATH_CHAT_SKELETON_PROBES`) is unset.
 
