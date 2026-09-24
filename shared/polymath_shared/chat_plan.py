@@ -214,9 +214,12 @@ def _clean_query(q: str) -> str:
     return " ".join(words[:MAX_QUERY_WORDS])
 
 
+_INSTRUCTION_RE = re.compile("|".join(rf"(?<!\w){re.escape(t)}(?!\w)" for t in _INSTRUCTION_TOKENS))
+
+
 def _has_instruction_tokens(q: str) -> bool:
-    ql = f" {q.lower()} "
-    return any(tok in ql for tok in _INSTRUCTION_TOKENS)
+    """Whole words only: a substring test dropped topical queries ("information" holds "format")."""
+    return _INSTRUCTION_RE.search(q.lower()) is not None
 
 
 def fallback_plan(message: str, *, reason: str, history_turns: int = 0, wall_ms: float = 0.0,

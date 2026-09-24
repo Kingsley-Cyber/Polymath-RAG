@@ -110,6 +110,22 @@ def test_queries_are_topical_short_and_bounded():
     assert sum(1 for q in plan.queries if q.type == "PRIMARY") == 1 and all(q.weight <= 1.0 for q in plan.queries)
 
 
+def test_the_instruction_filter_matches_whole_words_only():
+    """The filter dropped any query CONTAINING a token: "format" inside "information" / "formation", "use a" inside
+    "because a", "act as" inside "impact as" — topical queries, silently lost. Real instructions still drop."""
+    raw = dict(GOOD, queries=[
+        {"id": "a", "type": "PRIMARY", "query": "withheld information builds suspense", "weight": 1},
+        {"id": "b", "type": "MECHANISM", "query": "habit formation because a cue repeats", "weight": 0.8},
+        {"id": "c", "type": "CAUSAL", "query": "respond in markdown", "weight": 0.5},
+        {"id": "d", "type": "EXAMPLE", "query": "the impact as a milestone correspondence", "weight": 0.5},
+    ])
+    plan, reason = cp.validate_plan(raw, "Why does withheld information build suspense?")
+    assert plan is not None, reason
+    assert [q.query for q in plan.queries] == ["withheld information builds suspense",
+                                               "habit formation because a cue repeats",
+                                               "the impact as a milestone correspondence"]
+
+
 def test_no_retrieval_tasks_carry_no_queries():
     raw = {"resolved_request": "Rewrite the user's Brainrot Recovery prompt into a stronger production-quality prompt with the same deliverable.",
            "task_type": "TRANSFORM_USER_CONTENT", "evidence_policy": "conversation", "retrieval_required": True,
