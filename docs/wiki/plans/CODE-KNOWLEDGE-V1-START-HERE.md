@@ -120,6 +120,11 @@ Document ingestion stays byte-identical, and every slice ships behind a flag, de
 
 ## 4. Slice order (each slice = its own worktree branch, flag default off, tests, work-log, register row, guards)
 
+> **ORDER SUPERSEDED (register 11.460):** the execution order across all tracks is
+> `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (C0b → L1 → L2 → L3 → L4 → D1 → C1 → C2 → C3 → L5 →
+> C6+C7 → C9+C10 → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14). The confirmed gaps each slice must close
+> are in `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md`. The slice definitions below still hold.
+
 | # | Slice | Delivers | Proof |
 |---|---|---|---|
 | 1 | **C0** baseline + tooling evaluation (**C0a DONE 11.458**; C0b = the download-dependent runs) | the fleet / receipts baseline; the §3.3 comparisons on this repository (Python / YAML / TOML); whether the macOS Luau release ships `luau-ast` (else build it from source); capacity numbers (decision 6) | an experiments JSON + a work-log; each candidate judged: exists · fixture run · real-input run · useful output |
@@ -199,3 +204,8 @@ Per-slice anchors in more depth: the feasibility review §5. Use graft first (`g
   in any code prompt too.
 - **Graphify (the owner's installed 0.9.53)** reads `.luau` with its plain-Lua extractor: it is not a Luau parser.
 - **The permission classifier** has denied production merges and bounces inconsistently. Check before stopping anything.
+- **Read the 2026-09-24 audit before C1** (`docs/wiki/reports/2026-09-24/CODE-RAG-AND-PROVIDER-KEYS-AUDIT.md`, register
+  11.459). Its §4 adds requirements per slice: the upload gate refuses code; tier_v3 leaves real code lines in no chunk;
+  region roles drop code as `noise_ocr`; the MAP / profile compilers split on `|` and strip `_` / `*`; route seats for
+  structure-lane paths depend on the WILDCARD-only contextual judge; the fairness rules assume a document is a book;
+  FAST opens no doors. Its §1 is the provider-key plan (profile capacity, decision 6).

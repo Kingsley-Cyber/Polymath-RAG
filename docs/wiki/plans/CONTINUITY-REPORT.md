@@ -45,7 +45,17 @@ is `bash scripts/bounce_fleet.sh`.
   pack downloads parsers at run time: rejected); TOML = tree-sitter-toml in C5a; CodeGraphContext = study only; the
   official Luau 0.739 release is built to ship `luau-ast` (READ).
 
-**Next action: the owner's two words, then C0b / C1** (Next Action below).
+**Audit 2026-09-24 (11.459, documents only):** `docs/wiki/reports/2026-09-24/CODE-RAG-AND-PROVIDER-KEYS-AUDIT.md`.
+Keys: 7 of 18 Groq (key, model) pairs idle; the 09-23 Groq setup has 0 live calls; the limiter cannot hold Groq's
+limits (per process, `len/4` admission, no daily-token budget, stale 70K TPM restored). Code: refused at upload; as
+`.txt` the book chunker loses real lines. Retrieval: no cosine floor (right); code risks listed per slice (report §4).
+Proposal (owner-gated): all 3 models on every Groq key, one worker per pair, limiter fixes, a ≤ 20-call canary first.
+
+**Plan of record for ORDER (11.460):** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3; confirmed gaps:
+`docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (47 rows). The owner (2026-09-24): "fix all of this", downloads
+approved, one Luau file from GitHub, walk the code graph with the document graph.
+
+**Next action: C0b** (tooling runs), then L1 → L2 → L3 → L4 (the provider backend) → D1 → C1 … (roadmap §3).
 
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs
   alreayd a md plan i beleive and i want to add upon it".
@@ -66,8 +76,10 @@ is `bash scripts/bounce_fleet.sh`.
      (2.1 MB), tree-sitter 0.26 + the TOML / YAML / Luau grammars (0.2 MB), the official Luau 0.739 zip (5.8 MB); later
      Rojo 7.7.0 (5.2 MB) + luau-lsp 1.70.0 (7.7 MB) with the game. The first download dialog was rejected when the app
      quit: ask again in plain text, never re-issue on inference.
-   - **Decision 6:** enable `profile_groq2..6` (config only, owner's key mapping) and / or start with product code
-     (272 files).
+   - **Decision 6 / the key plan:** the audit's Phase 1 (report §1.4: every Groq key runs all 3 models, one worker per
+     pair, the limiter fixes) replaces "enable `profile_groq2..6`"; a ≤ 20-call canary first. Or start with product
+     code (272 files).
+   - **The audit's independent defects** (report §5): which to fix now.
 2. **C0b** (after the download word): LibCST on this repository; the Luau zip (checksum, `luau-ast`, a typed-Luau
    fixture); tree-sitter-toml spans.
 3. **C1** (detection + importer) needs no download (stdlib `ast`, PyYAML, `tomllib`) and may start before C0b. C3 needs
