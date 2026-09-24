@@ -51,8 +51,11 @@ limits (per process, `len/4` admission, no daily-token budget, stale 70K TPM res
 `.txt` the book chunker loses real lines. Retrieval: no cosine floor (right); code risks listed per slice (report §4).
 Proposal (owner-gated): all 3 models on every Groq key, one worker per pair, limiter fixes, a ≤ 20-call canary first.
 
-**Next action: the owner's words (downloads, the key plan / decision 6, the audit's defects), then C0b / C1** (Next
-Action below).
+**Plan of record for ORDER (11.460):** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3; confirmed gaps:
+`docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (47 rows). The owner (2026-09-24): "fix all of this", downloads
+approved, one Luau file from GitHub, walk the code graph with the document graph.
+
+**Next action: C0b** (tooling runs), then L1 → L2 → L3 → L4 (the provider backend) → D1 → C1 … (roadmap §3).
 
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs
   alreayd a md plan i beleive and i want to add upon it".

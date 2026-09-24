@@ -2347,6 +2347,10 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/code-rag-key-audit-2026-09-24/audit_evidence.py", "py", None),
     ("docs/wiki/experiments/code-rag-key-audit-2026-09-24/audit_evidence.json", "json", None),
     ("docs/wiki/work-log/2026-09-24-code-rag-key-audit.md", "md", None),
+    # Gap register + roadmap V1 (register 11.460): confirmed gaps; the plan of record for order across tracks L / D / C / G
+    ("docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md", "md", None),
+    ("docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md", "md", None),
+    ("docs/wiki/work-log/2026-09-24-gap-register-roadmap.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),
