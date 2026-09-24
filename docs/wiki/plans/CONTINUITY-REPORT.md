@@ -23,7 +23,7 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). PROBE-GATE-V1 live 2026-09-24 (11.446–11.447; HYBRID / GRAPH, WILDCARD exempt). S4 compiler contract built + measured 2026-09-24, flag OFF (11.449). S8 synthesis contract built + inspected, flag OFF (11.450). Pushed to origin 2026-09-24 on the owner's word (`0e0978b`). Owner actions waiting: the fleet bounce after the S4 merge; the census-probe test-row cleanup (READ FIRST 6); the corpus-delete command; pushes of later commits. CODE-KNOWLEDGE-V1 parked.**
+## CURRENT — 2026-09-23 (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). PROBE-GATE-V1 live 2026-09-24 (11.446–11.447; HYBRID / GRAPH, WILDCARD exempt). S4 compiler contract built + measured 2026-09-24, flag OFF (11.449). S8 synthesis contract built + inspected, flag OFF (11.450). Pushed to origin 2026-09-24 on the owner's word (`0e0978b`). Owner actions waiting: the census-probe test-row cleanup (READ FIRST 6); the S8 merge + one bounce (before S9); the corpus-delete command; pushes of later commits. CODE-KNOWLEDGE-V1 parked.**
 
 ### READ FIRST — what happened while the owner was away (2026-09-23 night)
 1. **Skeleton routing is live** (flags `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard` in `.env`;
@@ -113,15 +113,15 @@ historical, never an instruction.
   register 11.449), `ea950a2` (11.448 documents), merges `9697a91` (probe gate WILDCARD exempt), `4f6bf08` (PROBE-GATE-V1) and
   `706ed2c` (ATOM-REPAIR-V1).
   - Rollback tags (local): `pre-s4-merge` → `ea950a2`, `pre-probe-gate-merge` → `0e0978b`, `pre-atom-repair-merge` → `903cb89`, `pre-v11-groq-merge` → `0e57c46`, `pre-skeleton-routes-merge` → `4ab046e`.
-- **BOUNCE PENDING (2026-09-24):** after the S4 merge, the permission classifier denied the bounce as a production deploy.
-  Nothing was stopped.
-  - The supervisor fence moved 23 workers / 12 types to bundle `5e53b7e5ad28`.
-  - `adapter_step` (bundle `fe75ad230a1c`) and the orchestrator (:7200, started 2026-09-23 20:53 MDT) still run pre-merge
-    code. The filter fix is not live until the bounce; S4 itself is flag-off either way.
-  - After the owner's bounce, verify: 24 / 13 / ONE bundle, `/ready` true.
+- **Bounced by the owner 2026-09-23 22:26 MDT** (the classifier had denied the agent's bounce and, later, the S8 merge):
+  - 24 / 13 / ONE bundle `addf0cd080cb`, `/ready` true;
+  - S4's code and the whole-word filter fix are live, with the flags off.
+  - The S8 merge (this commit, when merged) changes orchestrator code only. One more bounce loads it; the flag is off, so
+    behaviour is unchanged until the owner turns it on.
   - Worktrees `pmv4-probe-routes` / `pmv4-groq` are removed after merge; their branches are merged.
   - Unmerged worktree branches (not tonight's): `review/m1-reproductions` (+1), `handoff/r5-audit-fix` (+5).
-- Fleet: 24 workers / 13 types healthy, `/ready` true (embedder + reranker), but on TWO bundles until the pending bounce (above).
+- Fleet: 24 workers / 13 types healthy on ONE bundle `addf0cd080cb`, `/ready` true (embedder + reranker). Running code = `fea18f9`
+  (S4 merged, flags off). S8 needs its merge + one bounce.
 - Live `.env` (gitignored): `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard`,
   `POLYMATH_CHAT_PROBE_GATE=1`; the probe-doors flag (`POLYMATH_CHAT_SKELETON_PROBES`) is unset.
 
