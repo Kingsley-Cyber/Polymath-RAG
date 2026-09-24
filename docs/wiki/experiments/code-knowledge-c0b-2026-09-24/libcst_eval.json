@@ -1,0 +1,35 @@
+{
+ "measure": "CODE-KNOWLEDGE-V1 C0b LibCST on this repository",
+ "tool": {
+  "libcst": "1.9.0",
+  "python": "3.11.15"
+ },
+ "files": 944,
+ "parse_errors": [],
+ "parse_and_metadata_seconds": 84.3,
+ "top_level_spans_vs_stdlib_ast": {
+  "compared": 7843,
+  "start_equals_def_line": 7843,
+  "start_equals_first_decorator": 7357,
+  "end_equals": 7843,
+  "count_mismatch_files": 2,
+  "name_mismatch": 13
+ },
+ "product_code_call_sites": 23381,
+ "product_code_callee_resolution": {
+  "named_not_a_repo_definition": 9273,
+  "builtin": 7358,
+  "repo_definition": 4292,
+  "external": 2451,
+  "ambiguous_multiple_kinds": 5,
+  "unresolved": 2
+ },
+ "c0a_stdlib_baseline_product_code": {
+  "call_sites": 23381,
+  "repo_internal_resolved_without_types": 4446
+ },
+ "reading": [
+  "QualifiedNameProvider resolves names through imports and scopes, not through types: `obj.m()` on an unknown object stays unresolved, as the spec requires",
+  "repo_definition = the qualified name equals a repository function / class / method the stdlib index knows"
+ ]
+}

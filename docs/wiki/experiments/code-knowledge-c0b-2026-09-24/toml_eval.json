@@ -1,0 +1,318 @@
+{
+ "measure": "CODE-KNOWLEDGE-V1 C0b tree-sitter-toml spans",
+ "tool": {
+  "tree-sitter": "0.26.0",
+  "tree-sitter-toml": "0.7.0"
+ },
+ "totals": {
+  "files": 10,
+  "headers": 28,
+  "headers_found_in_tomllib": 28,
+  "ERROR_nodes": 0,
+  "MISSING_nodes": 0
+ },
+ "files": [
+  {
+   "file": "control/pyproject.toml",
+   "headers": [
+    {
+     "name": "project",
+     "array": false,
+     "lines": [
+      1,
+      10
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "tool.setuptools.packages.find",
+     "array": false,
+     "lines": [
+      10,
+      12
+     ],
+     "in_tomllib": true
+    }
+   ]
+  },
+  {
+   "file": "orchestrator/pyproject.toml",
+   "headers": [
+    {
+     "name": "project",
+     "array": false,
+     "lines": [
+      1,
+      13
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "tool.setuptools.packages.find",
+     "array": false,
+     "lines": [
+      13,
+      15
+     ],
+     "in_tomllib": true
+    }
+   ]
+  },
+  {
+   "file": "pyproject.toml",
+   "headers": [
+    {
+     "name": "project",
+     "array": false,
+     "lines": [
+      1,
+      7
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "tool.uv.workspace",
+     "array": false,
+     "lines": [
+      7,
+      10
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "dependency-groups",
+     "array": false,
+     "lines": [
+      10,
+      16
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "tool.uv.sources",
+     "array": false,
+     "lines": [
+      16,
+      22
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "tool.pytest.ini_options",
+     "array": false,
+     "lines": [
+      22,
+      28
+     ],
+     "in_tomllib": true
+    }
+   ]
+  },
+  {
+   "file": "shared/pyproject.toml",
+   "headers": [
+    {
+     "name": "project",
+     "array": false,
+     "lines": [
+      1,
+      15
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "tool.setuptools.packages.find",
+     "array": false,
+     "lines": [
+      15,
+      18
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "tool.setuptools.package-data",
+     "array": false,
+     "lines": [
+      18,
+      20
+     ],
+     "in_tomllib": true
+    }
+   ]
+  },
+  {
+   "file": "sidecars/cloud-modal.toml",
+   "headers": [
+    {
+     "name": "cloud-modal",
+     "array": false,
+     "lines": [
+      1,
+      8
+     ],
+     "in_tomllib": true
+    }
+   ]
+  },
+  {
+   "file": "sidecars/embedder.toml",
+   "headers": [
+    {
+     "name": "embedder",
+     "array": false,
+     "lines": [
+      1,
+      8
+     ],
+     "in_tomllib": true
+    }
+   ]
+  },
+  {
+   "file": "sidecars/embedder/manifest.toml",
+   "headers": [
+    {
+     "name": "identity",
+     "array": false,
+     "lines": [
+      9,
+      14
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "identity.model",
+     "array": false,
+     "lines": [
+      14,
+      19
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "wire",
+     "array": false,
+     "lines": [
+      19,
+      22
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "health",
+     "array": false,
+     "lines": [
+      22,
+      26
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "runtime",
+     "array": false,
+     "lines": [
+      26,
+      30
+     ],
+     "in_tomllib": true
+    }
+   ]
+  },
+  {
+   "file": "sidecars/reranker.toml",
+   "headers": [
+    {
+     "name": "reranker",
+     "array": false,
+     "lines": [
+      1,
+      8
+     ],
+     "in_tomllib": true
+    }
+   ]
+  },
+  {
+   "file": "sidecars/reranker/manifest.toml",
+   "headers": [
+    {
+     "name": "identity",
+     "array": false,
+     "lines": [
+      10,
+      15
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "identity.model",
+     "array": false,
+     "lines": [
+      15,
+      20
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "wire",
+     "array": false,
+     "lines": [
+      20,
+      23
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "health",
+     "array": false,
+     "lines": [
+      23,
+      27
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "runtime",
+     "array": false,
+     "lines": [
+      27,
+      31
+     ],
+     "in_tomllib": true
+    }
+   ]
+  },
+  {
+   "file": "workers/pyproject.toml",
+   "headers": [
+    {
+     "name": "project",
+     "array": false,
+     "lines": [
+      1,
+      13
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "project.optional-dependencies",
+     "array": false,
+     "lines": [
+      13,
+      16
+     ],
+     "in_tomllib": true
+    },
+    {
+     "name": "tool.setuptools.packages.find",
+     "array": false,
+     "lines": [
+      16,
+      18
+     ],
+     "in_tomllib": true
+    }
+   ]
+  }
+ ]
+}

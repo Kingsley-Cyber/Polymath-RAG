@@ -1,0 +1,180 @@
+{
+ "measure": "CODE-KNOWLEDGE-V1 C0b official Luau toolchain vs tree-sitter-luau",
+ "fixture": {
+  "file": "fixtures/KnitServer.luau",
+  "source": "https://github.com/Sleitnick/Knit",
+  "commit": "bb1ecf3dea69ca89147b9abe802a8c14399cb5e5",
+  "licence": "MIT",
+  "bytes": 12543
+ },
+ "toolchain": {
+  "release": "luau-lang/luau 0.739 luau-macos.zip",
+  "sha256": "f66cabc7937ce1df0c40d160139aa115a4f0db57b2288e35a83f75d218bc3ff3",
+  "binaries": [
+   "luau",
+   "luau-analyze",
+   "luau-ast",
+   "luau-compile",
+   "luau-macos.zip"
+  ]
+ },
+ "luau_ast": {
+  "exit": 0,
+  "ast_bytes": 95128,
+  "node_kinds": 42,
+  "top_node_kinds": {
+   "AstLocal": 203,
+   "AstExprLocal": 156,
+   "AstExprIndexName": 93,
+   "AstTypeReference": 86,
+   "AstExprCall": 68,
+   "AstExprGlobal": 47,
+   "AstStatBlock": 44,
+   "AstExprConstantString": 26,
+   "AstStatExpr": 26,
+   "AstStatLocal": 23,
+   "AstExprBinary": 22,
+   "AstTypeTable": 20
+  },
+  "functions": [
+   {
+    "kind": "local",
+    "name": "DoesServiceExist",
+    "line": 149
+   },
+   {
+    "kind": "global_or_method",
+    "name": "KnitServer.CreateService",
+    "line": 184
+   },
+   {
+    "kind": "global_or_method",
+    "name": "KnitServer.AddServices",
+    "line": 214
+   },
+   {
+    "kind": "global_or_method",
+    "name": "KnitServer.AddServicesDeep",
+    "line": 232
+   },
+   {
+    "kind": "global_or_method",
+    "name": "KnitServer.GetService",
+    "line": 250
+   },
+   {
+    "kind": "global_or_method",
+    "name": "KnitServer.GetServices",
+    "line": 260
+   },
+   {
+    "kind": "global_or_method",
+    "name": "KnitServer.CreateSignal",
+    "line": 290
+   },
+   {
+    "kind": "global_or_method",
+    "name": "KnitServer.CreateUnreliableSignal",
+    "line": 313
+   },
+   {
+    "kind": "global_or_method",
+    "name": "KnitServer.CreateProperty",
+    "line": 346
+   },
+   {
+    "kind": "global_or_method",
+    "name": "KnitServer.Start",
+    "line": 384
+   },
+   {
+    "kind": "global_or_method",
+    "name": "KnitServer.OnStart",
+    "line": 480
+   }
+  ],
+  "type_aliases": [
+   {
+    "name": "Middleware",
+    "exported": false,
+    "line": 7
+   },
+   {
+    "name": "ServerMiddlewareFn",
+    "exported": false,
+    "line": 18
+   },
+   {
+    "name": "ServerMiddleware",
+    "exported": false,
+    "line": 25
+   },
+   {
+    "name": "ServiceDef",
+    "exported": false,
+    "line": 40
+   },
+   {
+    "name": "Service",
+    "exported": false,
+    "line": 55
+   },
+   {
+    "name": "ServiceClient",
+    "exported": false,
+    "line": 68
+   },
+   {
+    "name": "KnitOptions",
+    "exported": false,
+    "line": 81
+   }
+  ],
+  "requires": [
+   {
+    "line": 140,
+    "argument": "KnitServer.Util.Promise",
+    "shape": "index_chain"
+   },
+   {
+    "line": 141,
+    "argument": "KnitServer.Util.Comm",
+    "shape": "index_chain"
+   },
+   {
+    "line": 223,
+    "argument": "v",
+    "shape": "computed"
+   },
+   {
+    "line": 241,
+    "argument": "v",
+    "shape": "computed"
+   }
+  ],
+  "typed_parameters": 7,
+  "type_assertions": 2,
+  "interpolated_strings": 6
+ },
+ "luau_analyze": {
+  "exit": 1,
+  "diagnostics": 10,
+  "by_message": {
+   "TypeError: Unknown type 'Instance'": 3,
+   "TypeError: Unknown global 'script'": 2,
+   "TypeError: Unknown global 'task'": 2,
+   "TypeError: Unknown global 'Instance'": 2,
+   "TypeError: Unknown type 'Player'": 1
+  }
+ },
+ "tree_sitter_luau": {
+  "version": "1.2.0",
+  "engine": "0.26.0",
+  "has_error": false,
+  "ERROR_nodes": 0,
+  "MISSING_nodes": 0,
+  "function_declarations": 11,
+  "local_function_declarations": 0,
+  "type_definitions": 7
+ }
+}
