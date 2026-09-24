@@ -95,4 +95,5 @@ candidate funnel and reranker, and always resolve the winning route back to exac
 | GitHub sources list | verified 2026-09-24 (register 11.454) |
 | Design reviews A + B | reconciled 2026-09-24 (register 11.455); Neo4j projection moved into the first version |
 | Notes 6–7 (LLM requests, large files) + START HERE | 2026-09-24 (register 11.456): spec §11–§12; the implementation bootstrap `CODE-KNOWLEDGE-V1-START-HERE.md` |
+| Retrieval model + Luau toolchain + order | 2026-09-24 (register 11.457): code ranked by descriptions, hydrated by rule (spec §13); official `luau-ast` / `luau-analyze` + Rojo; walking skeleton (Python on this repo answers questions by step 6) |
 | Owner input before C0 | the real code locations and formats (report §7) |

@@ -29,6 +29,14 @@ historical, never an instruction.
 the decided design, the slice order C0 → C14, the code anchors, the run rules and the traps. The owner's one-click restart
 is `bash scripts/bounce_fleet.sh`.
 
+**Decided 2026-09-24 (11.457):**
+- code is ranked by its descriptions and HYDRATED by rule: the exact code + its graph neighbourhood, never scored as
+  text (spec §13);
+- Luau uses the official `luau-ast` / `luau-analyze` + Rojo;
+- the order is a walking skeleton: Python on this repository answers questions by step 6.
+
+**Next action: C0.**
+
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs
   alreayd a md plan i beleive and i want to add upon it".
 - **Read in this order:**
