@@ -263,62 +263,62 @@ providers:
     min: 1
     max: 2
     init: 1
-  profile_groq1:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 1, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k). The limiter is per PROCESS (threading locks): with six profile slots each row is ONE slot's budget on ITS key (lane offset) — rpm 2 / conc 1: measured 2026-09-07 with the rate-limit headers, ONE profile request through compound = 12 internal model calls (11 llama-4-scout router steps + 1 gpt-oss-120b answer), 38.5k internal tokens, 40 s, while the key's own TPM window is charged only ~3.7k and RPD 1 — the 429s come from the internal models' budgets, so ~1–2 compound requests per key per minute is the safe cadence (AIMD halves on 429/503).
+  profile_groq1:       # GROQ-MODEL-SWAP-2026-09-23: openai/gpt-oss-120b (reasoning_effort low) on GROQ_API_KEY_1; provider limits are INDEPENDENT per model per key (RPM 30 / RPD 1K / TPM 8K / TPD 200K). The limiter is per PROCESS: six doc_profile slots can share this key, so each row is one slot's share (rpd 150 × 6 = 900 < 1K); one profile call measured ~2.2–2.4K total tokens (canary 2026-09-23), AIMD halves on 429.
     kind: rate
-    family: groq_acct_1
-    rpd: 230
+    family: groq_acct_1_gpt_oss_120b
+    rpd: 150
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
     min: 1
     max: 2
     init: 1
-  profile_groq2:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 2, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+  profile_groq2:       # GROQ-MODEL-SWAP-2026-09-23: openai/gpt-oss-120b on GROQ_API_KEY_2 (lane disabled in cloud_providers.json)
     kind: rate
-    family: groq_acct_2
-    rpd: 230
+    family: groq_acct_2_gpt_oss_120b
+    rpd: 150
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
     min: 1
     max: 2
     init: 1
-  profile_groq3:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 3, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+  profile_groq3:       # GROQ-MODEL-SWAP-2026-09-23: openai/gpt-oss-120b on GROQ_API_KEY_3 (lane disabled in cloud_providers.json)
     kind: rate
-    family: groq_acct_3
-    rpd: 230
+    family: groq_acct_3_gpt_oss_120b
+    rpd: 150
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
     min: 1
     max: 2
     init: 1
-  profile_groq4:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 4, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+  profile_groq4:       # GROQ-MODEL-SWAP-2026-09-23: openai/gpt-oss-120b on GROQ_API_KEY_4 (lane disabled in cloud_providers.json)
     kind: rate
-    family: groq_acct_4
-    rpd: 230
+    family: groq_acct_4_gpt_oss_120b
+    rpd: 150
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
     min: 1
     max: 2
     init: 1
-  profile_groq5:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 5, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+  profile_groq5:       # GROQ-MODEL-SWAP-2026-09-23: openai/gpt-oss-120b on GROQ_API_KEY_5 (lane disabled in cloud_providers.json)
     kind: rate
-    family: groq_acct_5
-    rpd: 230
+    family: groq_acct_5_gpt_oss_120b
+    rpd: 150
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
     min: 1
     max: 2
     init: 1
-  profile_groq6:       # DOCUMENT-PROFILE-V1 pool tier 0: dedicated Groq account 6, groq/compound (provider limits RPM 30 / RPD 250 / TPM 70k)
+  profile_groq6:       # GROQ-MODEL-SWAP-2026-09-23: openai/gpt-oss-120b on GROQ_API_KEY_6 (lane disabled in cloud_providers.json)
     kind: rate
-    family: groq_acct_6
-    rpd: 230
+    family: groq_acct_6_gpt_oss_120b
+    rpd: 150
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
     min: 1
     max: 2
@@ -352,47 +352,82 @@ providers:
     min: 1
     max: 1
     init: 1
-  map_groq1:       # PARENT-MAP compound-mini lane; SHARES account 1's budget (GROQ_API_KEY_1) with profile_groq1 via groq_accounts (S7a)
+  map_groq1:       # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on openai/gpt-oss-20b (low), GROQ_API_KEY_1; its own per-model budget (RPD 1K / TPM 8K) — four doc_parent_map slots share it (rpd 200 × 4 = 800); a 15-parent batch measured ~2.4–3.4K total tokens
     kind: rate
-    family: groq_acct_1
-    rpd: 230
+    family: groq_acct_1_gpt_oss_20b
+    rpd: 200
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
-  map_groq2:       # PARENT-MAP compound-mini lane; SHARES account 2's budget (GROQ_API_KEY_2) with profile_groq2 via groq_accounts (S7a)
+  map_groq2:       # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on openai/gpt-oss-20b (low), GROQ_API_KEY_2; its own per-model budget (RPD 1K / TPM 8K) — four doc_parent_map slots share it (rpd 200 × 4 = 800); a 15-parent batch measured ~2.4–3.4K total tokens
     kind: rate
-    family: groq_acct_2
-    rpd: 230
+    family: groq_acct_2_gpt_oss_20b
+    rpd: 200
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
-  map_groq3:       # PARENT-MAP compound-mini lane; SHARES account 3's budget (GROQ_API_KEY_3) with profile_groq3 via groq_accounts (S7a)
+  map_groq2q:      # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on qwen/qwen3.8-27b (reasoning_effort none), the SAME key GROQ_API_KEY_2 with an INDEPENDENT per-model budget (own family). One org enforces an output-tokens-per-minute cap of 1000 on this model (canary 429 'OTPM') — the pool failover absorbs it
     kind: rate
-    family: groq_acct_3
-    rpd: 230
+    family: groq_acct_2_qwen3_8_27b
+    rpd: 200
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
-  map_groq4:       # PARENT-MAP compound-mini lane; SHARES account 4's budget (GROQ_API_KEY_4) with profile_groq4 via groq_accounts (S7a)
+  map_groq3:       # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on openai/gpt-oss-20b (low), GROQ_API_KEY_3; its own per-model budget (RPD 1K / TPM 8K) — four doc_parent_map slots share it (rpd 200 × 4 = 800); a 15-parent batch measured ~2.4–3.4K total tokens
     kind: rate
-    family: groq_acct_4
-    rpd: 230
+    family: groq_acct_3_gpt_oss_20b
+    rpd: 200
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
-  map_groq5:       # PARENT-MAP compound-mini lane; SHARES account 5's budget (GROQ_API_KEY_5) with profile_groq5 via groq_accounts (S7a)
+  map_groq3q:      # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on qwen/qwen3.8-27b (reasoning_effort none), the SAME key GROQ_API_KEY_3 with an INDEPENDENT per-model budget (own family). One org enforces an output-tokens-per-minute cap of 1000 on this model (canary 429 'OTPM') — the pool failover absorbs it
     kind: rate
-    family: groq_acct_5
-    rpd: 230
+    family: groq_acct_3_qwen3_8_27b
+    rpd: 200
     rpm: 2
-    tpm: 60000
+    tpm: 8000
     conc_cap: 1
-  map_groq6:       # PARENT-MAP compound-mini lane; SHARES account 6's budget (GROQ_API_KEY_6) with profile_groq6 via groq_accounts (S7a)
+  map_groq4:       # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on openai/gpt-oss-20b (low), GROQ_API_KEY_4; its own per-model budget (RPD 1K / TPM 8K) — four doc_parent_map slots share it (rpd 200 × 4 = 800); a 15-parent batch measured ~2.4–3.4K total tokens
     kind: rate
-    family: groq_acct_6
-    rpd: 230
+    family: groq_acct_4_gpt_oss_20b
+    rpd: 200
     rpm: 2
-    tpm: 60000
+    tpm: 8000
+    conc_cap: 1
+  map_groq4q:      # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on qwen/qwen3.8-27b (reasoning_effort none), the SAME key GROQ_API_KEY_4 with an INDEPENDENT per-model budget (own family). One org enforces an output-tokens-per-minute cap of 1000 on this model (canary 429 'OTPM') — the pool failover absorbs it
+    kind: rate
+    family: groq_acct_4_qwen3_8_27b
+    rpd: 200
+    rpm: 2
+    tpm: 8000
+    conc_cap: 1
+  map_groq5:       # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on openai/gpt-oss-20b (low), GROQ_API_KEY_5; its own per-model budget (RPD 1K / TPM 8K) — four doc_parent_map slots share it (rpd 200 × 4 = 800); a 15-parent batch measured ~2.4–3.4K total tokens
+    kind: rate
+    family: groq_acct_5_gpt_oss_20b
+    rpd: 200
+    rpm: 2
+    tpm: 8000
+    conc_cap: 1
+  map_groq5q:      # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on qwen/qwen3.8-27b (reasoning_effort none), the SAME key GROQ_API_KEY_5 with an INDEPENDENT per-model budget (own family). One org enforces an output-tokens-per-minute cap of 1000 on this model (canary 429 'OTPM') — the pool failover absorbs it
+    kind: rate
+    family: groq_acct_5_qwen3_8_27b
+    rpd: 200
+    rpm: 2
+    tpm: 8000
+    conc_cap: 1
+  map_groq6:       # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on openai/gpt-oss-20b (low), GROQ_API_KEY_6; its own per-model budget (RPD 1K / TPM 8K) — four doc_parent_map slots share it (rpd 200 × 4 = 800); a 15-parent batch measured ~2.4–3.4K total tokens
+    kind: rate
+    family: groq_acct_6_gpt_oss_20b
+    rpd: 200
+    rpm: 2
+    tpm: 8000
+    conc_cap: 1
+  map_groq6q:      # GROQ-MODEL-SWAP-2026-09-23: PARENT-MAP on qwen/qwen3.8-27b (reasoning_effort none), the SAME key GROQ_API_KEY_6 with an INDEPENDENT per-model budget (own family). One org enforces an output-tokens-per-minute cap of 1000 on this model (canary 429 'OTPM') — the pool failover absorbs it
+    kind: rate
+    family: groq_acct_6_qwen3_8_27b
+    rpd: 200
+    rpm: 2
+    tpm: 8000
     conc_cap: 1
   # SILICONFLOW-EXTRACTION-LANES-V1 (2026-09-08): 3 INDEPENDENT accounts (own
   # balances), Qwen/Qwen3-8B, firing EXCLUSIVELY into the unpinned `extract`

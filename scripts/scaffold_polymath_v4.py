@@ -1168,6 +1168,10 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/document_profile/groq_router.py", "py", None),
     ("shared/polymath_shared/document_profile/groq_accounts.py", "py", None),
     ("shared/polymath_shared/document_profile/groq_routing.py", "py", None),
+    # GROQ-MODEL-SWAP-2026-09-23 (register 11.443): the read-only qualification canary of the new Groq models
+    ("docs/wiki/experiments/groq-model-canary-2026-09-23/groq_canary.py", "py", None),
+    ("docs/wiki/experiments/groq-model-canary-2026-09-23/results.json", "json", None),
+    ("docs/wiki/work-log/2026-09-23-groq-model-swap.md", "md", None),
     ("shared/polymath_shared/document_profile/fingerprint.py", "py", None),
     ("shared/polymath_shared/document_profile/grounding.py", "py", None),
     ("shared/polymath_shared/document_profile/map_trigger.py", "py", None),
