@@ -99,7 +99,9 @@ Document ingestion stays byte-identical, and every slice ships behind a flag, de
    - a Power Apps app as source (`.pa.yaml`, via Power Platform Git integration);
    - the reference documents for each project's corpus.
 2. **Decision 6, profile / pMAP capacity:** C0 measures parents per repository × seconds per call on the existing lanes,
-   then proposes a cap or extra lanes to the owner.
+   then proposes a cap or extra lanes to the owner. **Measured in C0a (11.458, `capacity.json`):** the profile stage
+   binds (200K tokens per day per Groq key): this repository's product code (272 files) = 11.0 days on today's one
+   profile key, 1.8 days with `profile_groq2..6` enabled (configured, disabled); pMAP 0.46 day. The owner chooses.
 3. **Tool choices C0 makes** (sources list group B):
    - the Luau resolver: rojo sourcemap + luau-lsp;
    - the Python resolver: scip-python vs jedi vs LibCST-only;
@@ -107,13 +109,20 @@ Document ingestion stays byte-identical, and every slice ships behind a flag, de
    - YAML: tree-sitter-yaml / ruamel vs PyYAML;
    - CodeGraphContext's extraction vs ours;
    - whether Qwen3-Embedding suffices on enriched code text.
+
+   **C0a results (11.458, `docs/wiki/experiments/code-knowledge-c0-2026-09-24/`):** Python = LibCST-only (93.8 % of
+   product-code calls into repository code resolve without type inference; scip-python optional later) · single grammar
+   wheels (the language pack downloads parsers at run time: rejected) · YAML = PyYAML (character offsets; 0 lost lines;
+   anchors / aliases from the event stream) · TOML = tree-sitter-toml (C5a) · CodeGraphContext = study only (it links
+   calls by bare name) · Qwen3-Embedding: deferred to C9 / C10 (needs C6 / C7 descriptions) · Luau: the official 0.739
+   zip is built to ship `luau-ast` (READ). **C0b** runs the downloaded tools on the owner's word.
 4. **.NET for Power Fx:** ask the owner before installing anything (C5b).
 
 ## 4. Slice order (each slice = its own worktree branch, flag default off, tests, work-log, register row, guards)
 
 | # | Slice | Delivers | Proof |
 |---|---|---|---|
-| 1 | **C0** baseline + tooling evaluation | the fleet / receipts baseline; the §3.3 comparisons on this repository (Python / YAML / TOML); whether the macOS Luau release ships `luau-ast` (else build it from source); capacity numbers (decision 6) | an experiments JSON + a work-log; each candidate judged: exists · fixture run · real-input run · useful output |
+| 1 | **C0** baseline + tooling evaluation (**C0a DONE 11.458**; C0b = the download-dependent runs) | the fleet / receipts baseline; the §3.3 comparisons on this repository (Python / YAML / TOML); whether the macOS Luau release ships `luau-ast` (else build it from source); capacity numbers (decision 6) | an experiments JSON + a work-log; each candidate judged: exists · fixture run · real-input run · useful output |
 | 2 | **C1** detection + importer | extension + strict-parser content detection (YAML / TOML `.txt` promotion; skips with receipts), the repo importer (repo-relative paths, sync by path, a path → hash ledger), routing code away from tier_v3 | detection tests per card; an importer test on a fixture repo; documents byte-identical with the flag off |
 | 3 | **C2** structure manifest + Postgres | `code_symbols` / `code_edges` / `code_symbol_parent_links` (schema `03_…` §4–§6) with the controlled vocabularies + the reproducibility attributes | migration on a throwaway Postgres first; the re-extraction reproducibility test |
 | 4 | **C3** Python | the Python card: units, symbols, relations, the chunk provider (`ast_code_v1`) | this repository parsed; spans exact; `CALLS` / `IMPORTS` spot-checked |

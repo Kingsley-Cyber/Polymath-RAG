@@ -35,7 +35,17 @@ is `bash scripts/bounce_fleet.sh`.
 - Luau uses the official `luau-ast` / `luau-analyze` + Rojo;
 - the order is a walking skeleton: Python on this repository answers questions by step 6.
 
-**Next action: C0.**
+**C0a DONE (11.458; experiments + documents, nothing downloaded):** work-log `2026-09-24-code-c0-baseline.md`, evidence
+`docs/wiki/experiments/code-knowledge-c0-2026-09-24/`.
+- This repository as a code corpus: 938 Python files / 8,745 parents (product code 272 / 2,544), 55 YAML, 10 TOML, 0 Luau.
+- Decision 6 measured: the PROFILE stage binds (gpt-oss-120b, 200K tokens per day per key). Product code = 11.0 days on
+  today's one profile key, 1.8 days with the configured-but-disabled `profile_groq2..6`; pMAP 0.46 day.
+- Tool decisions: Python = LibCST-only (93.8 % of product-code calls into repo code resolve without type inference;
+  scip-python optional); YAML = PyYAML (character offsets, 0 lost lines); single tree-sitter grammar wheels (the language
+  pack downloads parsers at run time: rejected); TOML = tree-sitter-toml in C5a; CodeGraphContext = study only; the
+  official Luau 0.739 release is built to ship `luau-ast` (READ).
+
+**Next action: the owner's two words, then C0b / C1** (Next Action below).
 
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs
   alreayd a md plan i beleive and i want to add upon it".
@@ -51,13 +61,23 @@ is `bash scripts/bounce_fleet.sh`.
   slices implement.
 
 ### Next Action
-1. **Owner input (reconciliation §7):**
+1. **Owner's words (asked 2026-09-24):**
+   - **Downloads for C0b** into a throwaway folder, never the fleet `.venv` (sizes in `tool_reads.json`): LibCST 1.9.0
+     (2.1 MB), tree-sitter 0.26 + the TOML / YAML / Luau grammars (0.2 MB), the official Luau 0.739 zip (5.8 MB); later
+     Rojo 7.7.0 (5.2 MB) + luau-lsp 1.70.0 (7.7 MB) with the game. The first download dialog was rejected when the app
+     quit: ask again in plain text, never re-issue on inference.
+   - **Decision 6:** enable `profile_groq2..6` (config only, owner's key mapping) and / or start with product code
+     (272 files).
+2. **C0b** (after the download word): LibCST on this repository; the Luau zip (checksum, `luau-ast`, a typed-Luau
+   fixture); tree-sitter-toml spans.
+3. **C1** (detection + importer) needs no download (stdlib `ast`, PyYAML, `tomllib`) and may start before C0b. C3 needs
+   LibCST.
+4. **Owner input (reconciliation §7):**
    - the Roblox game's folder and format (Rojo / Argon files, or a `.rbxl` / `.rbxlx` place file);
-   - the Python repo + YAML / TOML configs;
+   - YAML / TOML config sets;
    - a Power Apps app as source files (`.pa.yaml`);
    - the reference documents that join each project's corpus.
-2. **Then C0:** baseline + mature-tooling evaluation (§5) + profile-capacity measurement on the real code (decision 6).
-   Then the slices in §6 order.
+   Then the slices in START-HERE §4 order.
    - Each slice: a worktree branch, a flag default off, a work-log, a register row, tests, guards.
    - The owner asked the agent to run merges / bounces itself. The permission classifier may still block one: say so at
      once and hand over one Run-button command.
@@ -75,7 +95,7 @@ is `bash scripts/bounce_fleet.sh`.
   - the fleet runs ingestion;
   - one reranker, no fixed weights;
   - no new chat mode.
-- **Open:** decision 6 (profile capacity).
+- **Open:** decision 6 (profile capacity), measured in C0a (11.458): the owner chooses.
 
 ### Document RAG — paused, not dropped
 - **Live:** skeleton routes, probe gate, atom repair, the PROCEDURE → task fix (11.451), and S4 + S8 (installed, flags OFF).
@@ -84,7 +104,8 @@ is `bash scripts/bounce_fleet.sh`.
 
 ### Repository State
 - `origin/production` = `a7e3e38` (pushed 2026-09-24 on the owner's word). `production` = that + the planning slices
-  11.452–11.456 (documents + `scripts/bounce_fleet.sh`), unpushed until the owner's next word.
+  11.452–11.457 (documents + `scripts/bounce_fleet.sh`) + C0a 11.458 (experiments + documents), unpushed until the
+  owner's next word.
 - **Fleet:** 24 / 13 on ONE bundle `87e5db83bf30` (bounce 2026-09-24 00:43). Running code = committed code (the slice is
   documents only).
 - **Live `.env` flags:**

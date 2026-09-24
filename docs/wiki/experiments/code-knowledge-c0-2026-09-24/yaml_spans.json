@@ -1,0 +1,111 @@
+{
+ "measure": "CODE-KNOWLEDGE-V1 C0 YAML spans with PyYAML 6.0.3",
+ "repository": {
+  "files": 55,
+  "sections": 260,
+  "overlaps": 6,
+  "char_offset_overlaps": 0,
+  "comment_lines_inside_sections": 237,
+  "comment_lines_between_sections": 368,
+  "uncovered_content_lines": 0,
+  "document_marker_lines": 0
+ },
+ "files_with_problems": [
+  {
+   "path": "eval/i3_5doc/versioned/manifest.yaml",
+   "sections": 4,
+   "overlaps": 3,
+   "char_offset_overlaps": 0,
+   "comment_lines_inside_sections": 0,
+   "comment_lines_between_sections": 0,
+   "blank_gap_lines": 0,
+   "document_marker_lines": 0,
+   "uncovered_content_lines": 0
+  },
+  {
+   "path": "eval/i4/versioned/manifest.yaml",
+   "sections": 4,
+   "overlaps": 3,
+   "char_offset_overlaps": 0,
+   "comment_lines_inside_sections": 0,
+   "comment_lines_between_sections": 0,
+   "blank_gap_lines": 0,
+   "document_marker_lines": 0,
+   "uncovered_content_lines": 0
+  }
+ ],
+ "fixture": {
+  "sections": [
+   [
+    0,
+    "defaults",
+    2,
+    4
+   ],
+   [
+    0,
+    "sword",
+    5,
+    7
+   ],
+   [
+    0,
+    "bow",
+    8,
+    10
+   ],
+   [
+    0,
+    "aliases_list",
+    11,
+    11
+   ],
+   [
+    1,
+    "services",
+    14,
+    19
+   ]
+  ],
+  "gaps": {
+   "sections": 5,
+   "overlaps": 0,
+   "char_offset_overlaps": 0,
+   "comment_lines_inside_sections": 0,
+   "comment_lines_between_sections": 2,
+   "blank_gap_lines": 0,
+   "document_marker_lines": 1,
+   "uncovered_content_lines": 0
+  },
+  "anchors": [
+   {
+    "name": "base",
+    "line": 2
+   }
+  ],
+  "aliases": [
+   {
+    "name": "base",
+    "line": 6
+   },
+   {
+    "name": "base",
+    "line": 9
+   },
+   {
+    "name": "base",
+    "line": 11
+   }
+  ],
+  "merge_key_resolved_value": {
+   "cooldown_s": 1.5,
+   "damage": 25
+  }
+ },
+ "reading": [
+  "comments between sections survive when gap lines attach to the following section",
+  "LINE spans overlap on flow-style (single-line JSON-like) YAML; CHARACTER offsets (mark.index) never do, so children are cut by offsets (chunks.char_start / char_end)",
+  "the event stream gives every anchor and alias with its line: ALIASES edges need no other parser",
+  "PyYAML resolves `<<: *base` merge keys in load(); compose() keeps the alias node for the edge"
+ ]
+}

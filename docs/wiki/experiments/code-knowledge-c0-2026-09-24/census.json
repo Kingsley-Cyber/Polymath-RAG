@@ -1,0 +1,1255 @@
+{
+ "census": "CODE-KNOWLEDGE-V1 C0 repository census",
+ "root_commit": "62e267176dacb038d71282b713d60bd0bf77d58d",
+ "tokenizer": "tiktoken cl100k_base (proxy)",
+ "tracked_files": 2955,
+ "tracked_by_extension_top": {
+  ".md": 1048,
+  ".py": 938,
+  ".json": 554,
+  ".sql": 68,
+  ".yaml": 50,
+  ".txt": 49,
+  ".csv": 45,
+  ".jsonl": 34,
+  ".tsx": 34,
+  "(none)": 22,
+  ".plist": 14,
+  ".sha256": 14,
+  ".ts": 14,
+  ".toml": 10,
+  ".html": 10,
+  ".sh": 8,
+  ".pdf": 7,
+  ".log": 7,
+  ".docx": 6,
+  ".yml": 5
+ },
+ "skipped_with_receipt": {
+  "count": 1,
+  "by_reason": {
+   "generated_header": 1
+  },
+  "items": [
+   {
+    "path": "eval/gold/relations_v1.yaml",
+    "card": "yaml",
+    "reason": "generated_header"
+   }
+  ]
+ },
+ "python": {
+  "files": 938,
+  "parse_errors": [],
+  "tokens_total": 2541204,
+  "parents_total": 8745,
+  "by_area": {
+   "tests": {
+    "files": 379,
+    "tokens": 737133,
+    "parents": 4005,
+    "test_files": 379,
+    "call_sites": 21490,
+    "import_names": 3766,
+    "parents_function": 3496,
+    "parents_module_block": 377,
+    "parents_class": 132
+   },
+   "shared": {
+    "files": 194,
+    "tokens": 491738,
+    "parents": 1659,
+    "test_files": 0,
+    "call_sites": 13868,
+    "import_names": 1388,
+    "parents_function": 1214,
+    "parents_module_block": 186,
+    "parents_class": 259
+   },
+   "eval": {
+    "files": 126,
+    "tokens": 303440,
+    "parents": 741,
+    "test_files": 0,
+    "call_sites": 12128,
+    "import_names": 1568,
+    "parents_function": 596,
+    "parents_module_block": 126,
+    "parents_class": 19
+   },
+   "scripts": {
+    "files": 73,
+    "tokens": 274625,
+    "parents": 456,
+    "test_files": 0,
+    "call_sites": 7833,
+    "import_names": 761,
+    "parents_function": 379,
+    "parents_module_block": 73,
+    "parents_class": 4
+   },
+   "adapters": {
+    "files": 45,
+    "tokens": 268836,
+    "parents": 565,
+    "test_files": 3,
+    "call_sites": 12379,
+    "import_names": 471,
+    "parents_class": 8,
+    "parents_function": 512,
+    "parents_module_block": 45
+   },
+   "orchestrator": {
+    "files": 28,
+    "tokens": 147606,
+    "parents": 344,
+    "test_files": 0,
+    "call_sites": 4449,
+    "import_names": 690,
+    "parents_class": 30,
+    "parents_function": 287,
+    "parents_module_block": 27
+   },
+   "workers": {
+    "files": 28,
+    "tokens": 117564,
+    "parents": 319,
+    "test_files": 0,
+    "call_sites": 3320,
+    "import_names": 530,
+    "parents_function": 277,
+    "parents_class": 15,
+    "parents_module_block": 27
+   },
+   "control": {
+    "files": 17,
+    "tokens": 53787,
+    "parents": 138,
+    "test_files": 0,
+    "call_sites": 1113,
+    "import_names": 185,
+    "parents_class": 9,
+    "parents_function": 113,
+    "parents_module_block": 16
+   },
+   "governance": {
+    "files": 17,
+    "tokens": 73875,
+    "parents": 360,
+    "test_files": 0,
+    "call_sites": 2093,
+    "import_names": 360,
+    "parents_class": 249,
+    "parents_function": 94,
+    "parents_module_block": 17
+   },
+   "docs/wiki/experiments": {
+    "files": 16,
+    "tokens": 23771,
+    "parents": 62,
+    "test_files": 0,
+    "call_sites": 1179,
+    "import_names": 151,
+    "parents_function": 46,
+    "parents_module_block": 16
+   },
+   "docs": {
+    "files": 10,
+    "tokens": 29058,
+    "parents": 12,
+    "test_files": 0,
+    "call_sites": 263,
+    "import_names": 20,
+    "parents_module_block": 10,
+    "parents_function": 2
+   },
+   "sidecars": {
+    "files": 4,
+    "tokens": 15375,
+    "parents": 59,
+    "test_files": 0,
+    "call_sites": 538,
+    "import_names": 78,
+    "parents_class": 5,
+    "parents_function": 50,
+    "parents_module_block": 4
+   },
+   "mcp_server": {
+    "files": 1,
+    "tokens": 4396,
+    "parents": 25,
+    "test_files": 0,
+    "call_sites": 93,
+    "import_names": 11,
+    "parents_function": 24,
+    "parents_module_block": 1
+   }
+  },
+  "file_token_bands": {
+   ">8000": 39,
+   "<=8000": 100,
+   "<=2000": 471,
+   "<=4000": 265,
+   "<=500": 63
+  },
+  "parent_token_bands": {
+   "<=500": 7720,
+   "<=2000": 945,
+   "<=4000": 57,
+   "<=8000": 18,
+   ">8000": 5
+  },
+  "largest_child_token_bands": {
+   "<=500": 7764,
+   "<=2000": 909,
+   "<=4000": 53,
+   "<=8000": 15,
+   ">8000": 4
+  },
+  "symbols": {
+   "constant": 3463,
+   "class": 730,
+   "method": 833,
+   "function": 7018,
+   "entrypoint": 246,
+   "property": 56,
+   "async_function": 72,
+   "route": 67,
+   "async_method": 13,
+   "test": 2788
+  },
+  "largest_files": [
+   {
+    "path": "scripts/scaffold_polymath_v4.py",
+    "tokens": 95291,
+    "lines": 7078,
+    "parents": 6
+   },
+   {
+    "path": "adapters/ecommerce/tests/run_all.py",
+    "tokens": 88309,
+    "lines": 3572,
+    "parents": 32
+   },
+   {
+    "path": "orchestrator/orchestrator/api/ui.py",
+    "tokens": 60141,
+    "lines": 4522,
+    "parents": 120
+   },
+   {
+    "path": "shared/polymath_shared/candidate_engine.py",
+    "tokens": 28803,
+    "lines": 1871,
+    "parents": 39
+   },
+   {
+    "path": "tests/determinism/test_candidate_engine.py",
+    "tokens": 27621,
+    "lines": 1420,
+    "parents": 83
+   },
+   {
+    "path": "adapters/ecommerce/python/report.py",
+    "tokens": 20956,
+    "lines": 1018,
+    "parents": 20
+   },
+   {
+    "path": "governance/trail/src/trail_signal/contexts/data_os/public/contracts.py",
+    "tokens": 20451,
+    "lines": 2364,
+    "parents": 94
+   },
+   {
+    "path": "orchestrator/orchestrator/api/chat_retrieval.py",
+    "tokens": 16920,
+    "lines": 1113,
+    "parents": 16
+   },
+   {
+    "path": "eval/historical/i3_5doc/verify_i3.py",
+    "tokens": 14750,
+    "lines": 1223,
+    "parents": 28
+   },
+   {
+    "path": "scripts/verify_final_state.py",
+    "tokens": 14318,
+    "lines": 1091,
+    "parents": 26
+   },
+   {
+    "path": "shared/polymath_shared/llm_extraction/client.py",
+    "tokens": 14250,
+    "lines": 1118,
+    "parents": 17
+   },
+   {
+    "path": "shared/polymath_shared/chat_plan.py",
+    "tokens": 13549,
+    "lines": 884,
+    "parents": 32
+   },
+   {
+    "path": "scripts/semantic_restoration_gate.py",
+    "tokens": 13359,
+    "lines": 672,
+    "parents": 22
+   },
+   {
+    "path": "adapters/ecommerce/binding.py",
+    "tokens": 13119,
+    "lines": 775,
+    "parents": 29
+   },
+   {
+    "path": "adapters/ecommerce/python/corpus_polymath.py",
+    "tokens": 12694,
+    "lines": 793,
+    "parents": 28
+   }
+  ],
+  "largest_parents": [
+   {
+    "path": "scripts/scaffold_polymath_v4.py",
+    "kind": "module_block",
+    "name": "<module>",
+    "line": 2,
+    "tokens": 94276,
+    "children": 1,
+    "largest_child_tokens": 94276
+   },
+   {
+    "path": "adapters/ecommerce/tests/run_all.py",
+    "kind": "module_block",
+    "name": "<module>",
+    "line": 2,
+    "tokens": 83391,
+    "children": 1,
+    "largest_child_tokens": 83391
+   },
+   {
+    "path": "orchestrator/orchestrator/api/ui.py",
+    "kind": "function",
+    "name": "chat_events",
+    "line": 3575,
+    "tokens": 12381,
+    "children": 1,
+    "largest_child_tokens": 12381
+   },
+   {
+    "path": "shared/polymath_shared/candidate_engine.py",
+    "kind": "function",
+    "name": "_retrieve_on",
+    "line": 740,
+    "tokens": 10676,
+    "children": 1,
+    "largest_child_tokens": 10676
+   },
+   {
+    "path": "shared/polymath_shared/llm_extraction/client.py",
+    "kind": "class",
+    "name": "LLMExtractionClient",
+    "line": 304,
+    "tokens": 10465,
+    "children": 15,
+    "largest_child_tokens": 1899
+   },
+   {
+    "path": "orchestrator/orchestrator/api/chat_retrieval.py",
+    "kind": "function",
+    "name": "chat_retrieve_v2",
+    "line": 248,
+    "tokens": 7436,
+    "children": 1,
+    "largest_child_tokens": 7436
+   },
+   {
+    "path": "scripts/chat_m_replay.py",
+    "kind": "function",
+    "name": "run",
+    "line": 151,
+    "tokens": 6407,
+    "children": 1,
+    "largest_child_tokens": 6407
+   },
+   {
+    "path": "docs/wiki/plans/handoff/applied/p1c_patch.py",
+    "kind": "module_block",
+    "name": "<module>",
+    "line": 1,
+    "tokens": 5665,
+    "children": 1,
+    "largest_child_tokens": 5665
+   },
+   {
+    "path": "adapters/ecommerce/python/report.py",
+    "kind": "function",
+    "name": "render",
+    "line": 719,
+    "tokens": 5338,
+    "children": 1,
+    "largest_child_tokens": 5338
+   },
+   {
+    "path": "workers/workers/llm_provider.py",
+    "kind": "function",
+    "name": "run_proposals",
+    "line": 278,
+    "tokens": 5129,
+    "children": 1,
+    "largest_child_tokens": 5129
+   },
+   {
+    "path": "scripts/semantic_restoration_gate.py",
+    "kind": "function",
+    "name": "phase_benchmark",
+    "line": 409,
+    "tokens": 4974,
+    "children": 1,
+    "largest_child_tokens": 4974
+   },
+   {
+    "path": "adapters/ecommerce/python/corpus_polymath.py",
+    "kind": "function",
+    "name": "main",
+    "line": 540,
+    "tokens": 4922,
+    "children": 1,
+    "largest_child_tokens": 4922
+   },
+   {
+    "path": "shared/polymath_shared/llm_extraction/limiter.py",
+    "kind": "class",
+    "name": "AdaptiveLimiter",
+    "line": 403,
+    "tokens": 4918,
+    "children": 22,
+    "largest_child_tokens": 833
+   },
+   {
+    "path": "control/control/process_supervisor.py",
+    "kind": "class",
+    "name": "Supervisor",
+    "line": 222,
+    "tokens": 4754,
+    "children": 14,
+    "largest_child_tokens": 987
+   },
+   {
+    "path": "adapters/ecommerce/python/report.py",
+    "kind": "function",
+    "name": "build_model_from_governed",
+    "line": 116,
+    "tokens": 4401,
+    "children": 1,
+    "largest_child_tokens": 4401
+   },
+   {
+    "path": "tests/fixtures/i2/author.py",
+    "kind": "module_block",
+    "name": "<module>",
+    "line": 1,
+    "tokens": 4351,
+    "children": 1,
+    "largest_child_tokens": 4351
+   },
+   {
+    "path": "adapters/ecommerce/python/run_triage.py",
+    "kind": "function",
+    "name": "triage",
+    "line": 74,
+    "tokens": 4254,
+    "children": 1,
+    "largest_child_tokens": 4254
+   },
+   {
+    "path": "workers/workers/summary_worker_impl.py",
+    "kind": "function",
+    "name": "_do_enrichment",
+    "line": 443,
+    "tokens": 4238,
+    "children": 1,
+    "largest_child_tokens": 4238
+   },
+   {
+    "path": "docs/wiki/plans/handoff/applied/p1d_engine_rewrite.py",
+    "kind": "module_block",
+    "name": "<module>",
+    "line": 1,
+    "tokens": 4198,
+    "children": 1,
+    "largest_child_tokens": 4198
+   },
+   {
+    "path": "docs/wiki/plans/handoff/applied/p1d_route_patch.py",
+    "kind": "module_block",
+    "name": "<module>",
+    "line": 1,
+    "tokens": 4070,
+    "children": 1,
+    "largest_child_tokens": 4070
+   }
+  ]
+ },
+ "yaml": {
+  "files": 54,
+  "parse_errors": [],
+  "tokens_total": 64218,
+  "top_level_sections": 258,
+  "documents": 54,
+  "multi_document_files": 0,
+  "files_with_anchors_or_aliases": 0,
+  "comment_lines_pyyaml_drops": 588,
+  "files_starting_with_document_marker": 0,
+  "dialects": {
+   "github_actions": 5,
+   "generic": 48,
+   "docker_compose": 1
+  },
+  "per_file": [
+   {
+    "path": ".github/workflows/agent-preflight.yml",
+    "tokens": 79,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "github_actions"
+    ]
+   },
+   {
+    "path": ".github/workflows/contract-impact.yml",
+    "tokens": 232,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "github_actions"
+    ]
+   },
+   {
+    "path": ".github/workflows/contracts.yml",
+    "tokens": 198,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 2,
+    "dialects": [
+     "github_actions"
+    ]
+   },
+   {
+    "path": ".github/workflows/determinism.yml",
+    "tokens": 646,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 6,
+    "dialects": [
+     "github_actions"
+    ]
+   },
+   {
+    "path": ".github/workflows/repo-governance.yml",
+    "tokens": 144,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "github_actions"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/graph/control_graph.yaml",
+    "tokens": 2530,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 8,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/graph/loadout_graph.yaml",
+    "tokens": 1228,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 6,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/graph/loadout_policies.yaml",
+    "tokens": 664,
+    "documents": 1,
+    "top_level_sections": 7,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 2,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/graph/maintenance_graph.yaml",
+    "tokens": 1070,
+    "documents": 1,
+    "top_level_sections": 5,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 6,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/graph/market_discovery_graph.yaml",
+    "tokens": 1564,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 7,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/graph/policies.yaml",
+    "tokens": 3707,
+    "documents": 1,
+    "top_level_sections": 30,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 15,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/graph/product_anchored_graph.yaml",
+    "tokens": 1444,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 5,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/graph/settings_schema.yaml",
+    "tokens": 3730,
+    "documents": 1,
+    "top_level_sections": 2,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 20,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/loop.yaml",
+    "tokens": 560,
+    "documents": 1,
+    "top_level_sections": 1,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 8,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/manifest.yaml",
+    "tokens": 150,
+    "documents": 1,
+    "top_level_sections": 12,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/registry/lenses.yaml",
+    "tokens": 246,
+    "documents": 1,
+    "top_level_sections": 1,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 3,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/registry/niche_scopes.yaml",
+    "tokens": 485,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 5,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "adapters/ecommerce/registry/reasoning_motifs.yaml",
+    "tokens": 93,
+    "documents": 1,
+    "top_level_sections": 1,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "architecture/contract-dependencies.yaml",
+    "tokens": 3238,
+    "documents": 1,
+    "top_level_sections": 2,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 18,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "compose.yaml",
+    "tokens": 665,
+    "documents": 1,
+    "top_level_sections": 1,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 11,
+    "dialects": [
+     "docker_compose"
+    ]
+   },
+   {
+    "path": "config/benchmarks/cinema-transduction-v1.yaml",
+    "tokens": 517,
+    "documents": 1,
+    "top_level_sections": 11,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 2,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "config/extraction_models/limiter.yaml",
+    "tokens": 6620,
+    "documents": 1,
+    "top_level_sections": 1,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 43,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "config/extraction_models/qwen35-4b-extraction-v1.yaml",
+    "tokens": 710,
+    "documents": 1,
+    "top_level_sections": 5,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 15,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "config/ontology/scientific-predicate-ontology-v2.yaml",
+    "tokens": 2479,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 17,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "config/runtime_budget.yaml",
+    "tokens": 2378,
+    "documents": 1,
+    "top_level_sections": 7,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 88,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "docs/code-knowledge-v1/03a_code_control_map_v1.yaml",
+    "tokens": 1703,
+    "documents": 1,
+    "top_level_sections": 15,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/core3/manifest.yaml",
+    "tokens": 329,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 18,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/em1/models.yaml",
+    "tokens": 497,
+    "documents": 1,
+    "top_level_sections": 2,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 6,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/gold/ep1_dev_gold.yaml",
+    "tokens": 3586,
+    "documents": 1,
+    "top_level_sections": 2,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 11,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/gold/ep1_heldout_gold.yaml",
+    "tokens": 2735,
+    "documents": 1,
+    "top_level_sections": 2,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 6,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/gold/qualification_q1.yaml",
+    "tokens": 5173,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 35,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/gold/relations_v1.1.yaml",
+    "tokens": 5725,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 32,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/i3_5doc/manifest.yaml",
+    "tokens": 168,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/i3_5doc/manifest_reversed.yaml",
+    "tokens": 156,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/i3_5doc/versioned/manifest.yaml",
+    "tokens": 82,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/i4/manifest.yaml",
+    "tokens": 161,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/i4/manifest_reversed.yaml",
+    "tokens": 148,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/i4/versioned/manifest.yaml",
+    "tokens": 83,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "eval/v5/latent_transfer/cases.yaml",
+    "tokens": 1078,
+    "documents": 1,
+    "top_level_sections": 2,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 6,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "governance/trail/config/weights.yaml",
+    "tokens": 254,
+    "documents": 1,
+    "top_level_sections": 9,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 1,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "resources/manifests/framenet-1.7.yaml",
+    "tokens": 130,
+    "documents": 1,
+    "top_level_sections": 6,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 3,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "resources/manifests/propbank-unified-2020.yaml",
+    "tokens": 212,
+    "documents": 1,
+    "top_level_sections": 9,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 3,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "resources/manifests/semlink-2.0.yaml",
+    "tokens": 254,
+    "documents": 1,
+    "top_level_sections": 9,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 4,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "resources/manifests/verbnet-3.3.yaml",
+    "tokens": 224,
+    "documents": 1,
+    "top_level_sections": 9,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 3,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "resources/predicates/trigger_allowlist.yaml",
+    "tokens": 2224,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 64,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "resources/registries/scientific-registries.yaml",
+    "tokens": 279,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 7,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "shared/polymath_shared/entity_admission_policy.yaml",
+    "tokens": 1271,
+    "documents": 1,
+    "top_level_sections": 5,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 54,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "shared/polymath_shared/knowledge_router/knowledge_types.yaml",
+    "tokens": 1023,
+    "documents": 1,
+    "top_level_sections": 7,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 16,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "shared/polymath_shared/type_ontology.yaml",
+    "tokens": 580,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 32,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "tests/fixtures/i1/duplicates.yaml",
+    "tokens": 41,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "tests/fixtures/i1/manifest.yaml",
+    "tokens": 176,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "tests/fixtures/i1/unknown_field.yaml",
+    "tokens": 38,
+    "documents": 1,
+    "top_level_sections": 3,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "tests/fixtures/i2/isolation.yaml",
+    "tokens": 100,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   },
+   {
+    "path": "tests/fixtures/i2/manifest.yaml",
+    "tokens": 411,
+    "documents": 1,
+    "top_level_sections": 4,
+    "anchors": 0,
+    "aliases": 0,
+    "comment_lines": 0,
+    "dialects": [
+     "generic"
+    ]
+   }
+  ]
+ },
+ "toml": {
+  "files": 10,
+  "parse_errors": [],
+  "tables": 47,
+  "arrays_of_tables": 0,
+  "keys": 77,
+  "spans_available_from_tomllib": false,
+  "per_file": [
+   {
+    "path": "control/pyproject.toml",
+    "tokens": 67,
+    "tables": 5,
+    "arrays_of_tables": 0,
+    "keys": 5,
+    "known_schema": true
+   },
+   {
+    "path": "orchestrator/pyproject.toml",
+    "tokens": 110,
+    "tables": 5,
+    "arrays_of_tables": 0,
+    "keys": 5,
+    "known_schema": true
+   },
+   {
+    "path": "pyproject.toml",
+    "tokens": 186,
+    "tables": 12,
+    "arrays_of_tables": 0,
+    "keys": 13,
+    "known_schema": true
+   },
+   {
+    "path": "shared/pyproject.toml",
+    "tokens": 148,
+    "tables": 6,
+    "arrays_of_tables": 0,
+    "keys": 6,
+    "known_schema": true
+   },
+   {
+    "path": "sidecars/cloud-modal.toml",
+    "tokens": 66,
+    "tables": 1,
+    "arrays_of_tables": 0,
+    "keys": 6,
+    "known_schema": false
+   },
+   {
+    "path": "sidecars/embedder.toml",
+    "tokens": 79,
+    "tables": 1,
+    "arrays_of_tables": 0,
+    "keys": 6,
+    "known_schema": false
+   },
+   {
+    "path": "sidecars/embedder/manifest.toml",
+    "tokens": 287,
+    "tables": 5,
+    "arrays_of_tables": 0,
+    "keys": 12,
+    "known_schema": false
+   },
+   {
+    "path": "sidecars/reranker.toml",
+    "tokens": 79,
+    "tables": 1,
+    "arrays_of_tables": 0,
+    "keys": 6,
+    "known_schema": false
+   },
+   {
+    "path": "sidecars/reranker/manifest.toml",
+    "tokens": 268,
+    "tables": 5,
+    "arrays_of_tables": 0,
+    "keys": 12,
+    "known_schema": false
+   },
+   {
+    "path": "workers/pyproject.toml",
+    "tokens": 160,
+    "tables": 6,
+    "arrays_of_tables": 0,
+    "keys": 6,
+    "known_schema": true
+   }
+  ]
+ },
+ "luau": {
+  "files": 0
+ }
+}

@@ -1,0 +1,137 @@
+{
+ "capacity": "CODE-KNOWLEDGE-V1 C0 decision 6",
+ "groq_limits_per_key_per_model": {
+  "rpm": 30,
+  "rpd": 1000,
+  "tpm": 8000,
+  "tpd": 200000
+ },
+ "canary_observed": {
+  "profile_completion_tokens_mean": 1059,
+  "profile_samples": 3,
+  "pmap_completion_tokens_per_parent_mean": 27.4,
+  "pmap_samples": 5
+ },
+ "lanes_today": {
+  "doc_profile_pin": [
+   "profile_groq1",
+   "profile_fallback_openrouter"
+  ],
+  "doc_parent_map_pin": [
+   "map_groq2",
+   "map_groq3",
+   "map_groq4",
+   "map_groq5",
+   "map_groq6",
+   "map_groq2q",
+   "map_groq3q",
+   "map_groq4q",
+   "map_groq5q",
+   "map_groq6q",
+   "map_fallback_openrouter",
+   "cloudflare_map1",
+   "cloudflare_map2"
+  ],
+  "profile_groq_lanes_in_config": {
+   "profile_groq1": {
+    "enabled": true,
+    "model": "openai/gpt-oss-120b"
+   },
+   "profile_groq2": {
+    "enabled": false,
+    "model": "openai/gpt-oss-120b"
+   },
+   "profile_groq3": {
+    "enabled": false,
+    "model": "openai/gpt-oss-120b"
+   },
+   "profile_groq4": {
+    "enabled": false,
+    "model": "openai/gpt-oss-120b"
+   },
+   "profile_groq5": {
+    "enabled": false,
+    "model": "openai/gpt-oss-120b"
+   },
+   "profile_groq6": {
+    "enabled": false,
+    "model": "openai/gpt-oss-120b"
+   }
+  },
+  "profile_request_char_budget": 18000,
+  "pmap_batch_cap": 15,
+  "groq_pmap_lanes_pinned": 10
+ },
+ "assumptions": {
+  "profile_system_tokens": 758,
+  "code_rules_addendum_tokens": 350,
+  "structure_context_tokens": 600,
+  "profile_output_tokens": 1059,
+  "profile_max_output_tokens_reserved": 2400,
+  "pmap_system_tokens": 367,
+  "pmap_code_per_parent_tokens": 300,
+  "pmap_context_per_parent_tokens": 120,
+  "pmap_output_per_parent_tokens": 27.4,
+  "profile_source_budget_tokens": 3892,
+  "pmap_batch_size": 15
+ },
+ "scopes": {
+  "whole_repository": {
+   "files": 938,
+   "parents": 8745,
+   "profile_requests": 1356,
+   "profile_tokens": 6658056,
+   "profile_tokens_per_request_mean": 4910,
+   "pmap_batches": 1101,
+   "pmap_tokens": 3140684,
+   "pmap_tokens_per_batch_mean": 2853,
+   "profile_days_on_1_key": 33.3,
+   "profile_days_on_6_key": 5.5,
+   "pmap_days_on_10_groq_lanes": 1.57
+  },
+  "product_code": {
+   "files": 272,
+   "parents": 2544,
+   "profile_requests": 437,
+   "profile_tokens": 2193245,
+   "profile_tokens_per_request_mean": 5019,
+   "pmap_batches": 314,
+   "pmap_tokens": 927993,
+   "pmap_tokens_per_batch_mean": 2955,
+   "profile_days_on_1_key": 11.0,
+   "profile_days_on_6_key": 1.8,
+   "pmap_days_on_10_groq_lanes": 0.46
+  },
+  "product_code_plus_scripts": {
+   "files": 345,
+   "parents": 3000,
+   "profile_requests": 564,
+   "profile_tokens": 2852879,
+   "profile_tokens_per_request_mean": 5058,
+   "pmap_batches": 392,
+   "pmap_tokens": 1115058,
+   "pmap_tokens_per_batch_mean": 2845,
+   "profile_days_on_1_key": 14.3,
+   "profile_days_on_6_key": 2.4,
+   "pmap_days_on_10_groq_lanes": 0.56
+  },
+  "tests_only": {
+   "files": 382,
+   "parents": 4051,
+   "profile_requests": 490,
+   "profile_tokens": 2284165,
+   "profile_tokens_per_request_mean": 4662,
+   "pmap_batches": 461,
+   "pmap_tokens": 1372793,
+   "pmap_tokens_per_batch_mean": 2978,
+   "profile_days_on_1_key": 11.4,
+   "profile_days_on_6_key": 1.9,
+   "pmap_days_on_10_groq_lanes": 0.69
+  }
+ },
+ "reading": [
+  "profile days = profile tokens / (200K TPD x keys); the TPD, not latency, binds (a call is ~2.5-3 s)",
+  "pMAP days assume all 10 Groq pMAP lanes (5 keys x 2 models) are free for code; Cloudflare / OpenRouter fallbacks are not counted",
+  "document ingestion shares the same lanes; these numbers assume no document ingestion runs meanwhile"
+ ]
+}

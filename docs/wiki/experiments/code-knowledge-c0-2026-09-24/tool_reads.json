@@ -1,0 +1,58 @@
+{
+ "reads": "CODE-KNOWLEDGE-V1 C0 — tool facts established by READING (GitHub API / PyPI / npm metadata), nothing downloaded or executed",
+ "read_at": "2026-09-24",
+ "evidence_class": "READ",
+ "items": [
+  {
+   "tool": "luau-lang/luau (official Luau toolchain)",
+   "version": "0.739, released 2026-09-18T22:26:33Z",
+   "asset": {"name": "luau-macos.zip", "bytes": 5757113,
+             "sha256": "f66cabc7937ce1df0c40d160139aa115a4f0db57b2288e35a83f75d218bc3ff3"},
+   "facts": [
+    ".github/workflows/new-release.yml@0.739 L47 builds the targets Luau.Repl.CLI Luau.Analyze.CLI Luau.Compile.CLI Luau.Ast.CLI",
+    ".github/workflows/new-release.yml@0.739 L50 packages them with `zip luau-${{matrix.os.name}}.zip luau*`",
+    "CMakeLists.txt@0.739 L70 sets Luau.Ast.CLI OUTPUT_NAME luau-ast (L69 luau-analyze)",
+    "the master-branch release.yml (nightly artifacts) builds Repl / Analyze / Compile only: take luau-ast from the TAGGED release zip"
+   ],
+   "verdict": "luau-macos.zip is built to contain luau-ast and luau-analyze. EXECUTED check (unzip, checksum, run on a typed-Luau fixture) waits for the owner's download word (C0b)."
+  },
+  {
+   "tool": "xberg-io/tree-sitter-language-pack",
+   "version": "1.20.0 (PyPI wheel 2.18 MB)",
+   "facts": [
+    "README L109: it 'downloads each parser on first use so the install stays small'",
+    "README L121: 'Parsers are fetched on first use and cached locally'"
+   ],
+   "verdict": "REJECT for the fleet runtime: native parser binaries fetched at run time break the pinned, reproducible tool rule (spec §1: tool + tool_version on every link). Use the single grammar wheels: tree-sitter-yaml 0.7.2 (0.04 MB), tree-sitter-toml 0.7.0 (0.02 MB), tree-sitter-luau 1.2.0 (0.03 MB, fallback only), tree-sitter-python 0.25.0 (0.08 MB), engine tree-sitter 0.26.0 (0.14 MB); all MIT, abi3 macOS arm64 wheels."
+  },
+  {
+   "tool": "CodeGraphContext/CodeGraphContext",
+   "version": "HEAD a864a9f9097c (2026-09-24); PyPI 0.6.13",
+   "facts": [
+    "languages/python.py (725 lines): tree-sitter queries; a call keeps only the LAST name segment (`obj.m` -> `m`) with inferred_obj_type None",
+    "indexing/pre_scan: a global NAME -> [files] map of every class / function definition",
+    "indexing/resolution/calls.py::resolve_function_call (file of 3,114 lines, many languages): heuristic resolution with resolution_tier 1-9 and diagnostics (ambiguous class target, receiver resolution failed)",
+    "PyPI requires neo4j, redis, falkordb, kuzu, fastapi, uvicorn, mcp, cryptography, nbconvert, protobuf<3.21, tree-sitter<0.26 + tree-sitter-language-pack",
+    "languages/lua.py (464 lines) reads Lua syntax; no Luau type syntax"
+   ],
+   "verdict": "STUDY only (its tier + diagnostics idea maps onto our resolution + confidence attributes). Its name-based linking is the failure python_calls.json measures: 1,084 of the 1,891 name-matched attribute calls in product code are DB-API cursor calls (execute / fetchall / fetchone) that only match because test fakes define those names."
+  },
+  {
+   "tool": "sourcegraph/scip-python + pyright",
+   "version": "@sourcegraph/scip-python 0.6.6 (npm, 20.3 MB unpacked + deps: ts-node, google-protobuf, vscode-languageserver ...); pyright 1.1.414 (19.5 MB); scip CLI v0.10.0 darwin-arm64 12.3 MB",
+   "facts": ["needs Node (installed: node v26.0.0, npm 11.12.1)"],
+   "verdict": "NOT NEEDED for V1: python_calls.json (EXECUTED) shows import-table + enclosing-class resolution links 93.8% of product-code calls into repository code; type inference would add at most ~293 call sites. Optional later, only if C9 / C10 questions fail on a missing CALLS edge."
+  },
+  {
+   "tool": "PyPI candidates for C0b / C3 / C5a (sizes for the download request)",
+   "facts": [
+    "libcst 1.9.0 (2.06 MB arm64 wheel; requires pyyaml)",
+    "jedi 0.20.0 (4.88 MB) + parso 0.8.7 (0.11 MB): not needed if LibCST-only is kept",
+    "ruamel.yaml 0.19.1 (0.12 MB), tomlkit 0.15.1 (0.05 MB): only for config WRITE validation (C13)",
+    "rojo 7.7.0 rojo-7.7.0-macos-aarch64.zip 5.20 MB sha256 000f663eb406ec4670e1b675069a5e9fdb6e131505ff60f6a8e28bc8a97488cd",
+    "luau-lsp 1.70.0 luau-lsp-macos.zip 7.70 MB sha256 b0491a64f441a37f187b34f01c932ddcfc7f3603cefd043cd5a385da33ba7de8"
+   ],
+   "verdict": "nothing downloaded; the owner's word decides C0b"
+  }
+ ]
+}

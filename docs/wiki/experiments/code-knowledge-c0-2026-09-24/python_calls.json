@@ -1,0 +1,157 @@
+{
+ "measure": "CODE-KNOWLEDGE-V1 C0 Python call-site resolution without type inference",
+ "files": 938,
+ "repo_modules": 938,
+ "whole_repository": {
+  "call_sites": 80746,
+  "by_category": {
+   "attr_builtin_type_method": 21589,
+   "builtin": 20249,
+   "resolved_same_module": 10827,
+   "external": 8250,
+   "resolved_import": 7107,
+   "attr_unknown_repo_name": 5689,
+   "attr_unknown_other": 5199,
+   "local_or_param": 1360,
+   "resolved_self": 248,
+   "import_ambiguous": 125,
+   "other_dynamic": 57,
+   "self_inherited_or_attr": 46
+  },
+  "repo_internal_resolved_without_types": 18182,
+  "candidates_only_type_inference_or_mro_could_link": 5860,
+  "share_of_repo_internal_candidates_resolved_without_types": 0.756
+ },
+ "product_code": {
+  "call_sites": 23381,
+  "by_category": {
+   "attr_builtin_type_method": 7271,
+   "builtin": 6361,
+   "resolved_same_module": 2870,
+   "external": 2013,
+   "attr_unknown_repo_name": 1757,
+   "resolved_import": 1417,
+   "attr_unknown_other": 917,
+   "local_or_param": 582,
+   "resolved_self": 159,
+   "import_ambiguous": 12,
+   "other_dynamic": 11,
+   "self_inherited_or_attr": 11
+  },
+  "repo_internal_resolved_without_types": 4446,
+  "candidates_only_type_inference_or_mro_could_link": 1780,
+  "share_of_repo_internal_candidates_resolved_without_types": 0.714
+ },
+ "tests": {
+  "call_sites": 24889,
+  "by_category": {
+   "resolved_same_module": 4912,
+   "resolved_import": 4703,
+   "builtin": 4448,
+   "attr_builtin_type_method": 3320,
+   "external": 2912,
+   "attr_unknown_other": 2042,
+   "attr_unknown_repo_name": 1999,
+   "local_or_param": 370,
+   "import_ambiguous": 68,
+   "resolved_self": 52,
+   "other_dynamic": 32,
+   "self_inherited_or_attr": 31
+  },
+  "repo_internal_resolved_without_types": 9667,
+  "candidates_only_type_inference_or_mro_could_link": 2098,
+  "share_of_repo_internal_candidates_resolved_without_types": 0.822
+ },
+ "product_code_tight": {
+  "product_code_type_only_candidates": 293,
+  "distinct_method_names": 93,
+  "top": [
+   [
+    "step",
+    20
+   ],
+   [
+    "artifact",
+    20
+   ],
+   [
+    "to_dict",
+    17
+   ],
+   [
+    "end",
+    12
+   ],
+   [
+    "run_status",
+    11
+   ],
+   [
+    "as_dict",
+    10
+   ],
+   [
+    "_search",
+    9
+   ],
+   [
+    "embed",
+    9
+   ],
+   [
+    "complete_one",
+    9
+   ],
+   [
+    "record_failure",
+    9
+   ],
+   [
+    "lock",
+    8
+   ],
+   [
+    "write_text",
+    7
+   ],
+   [
+    "release",
+    7
+   ],
+   [
+    "acquire",
+    7
+   ],
+   [
+    "record_success",
+    6
+   ],
+   [
+    "status",
+    4
+   ],
+   [
+    "ready",
+    4
+   ],
+   [
+    "verify_pin",
+    4
+   ],
+   [
+    "failed",
+    4
+   ],
+   [
+    "from_env",
+    3
+   ]
+  ],
+  "share_of_repo_internal_calls_resolved_without_types": 0.938
+ },
+ "caveats": [
+  "module names map shared/ orchestrator/ workers/ control/ and the repo root, as the fleet's PYTHONPATH does; a package imported under another name counts as external",
+  "attr_unknown_repo_name is an UPPER bound: a method name shared with a library type counts",
+  "inheritance (MRO) and decorators are not followed; LibCST would follow the same scopes"
+ ]
+}
