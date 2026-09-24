@@ -2315,6 +2315,9 @@ TREE: list[tuple[str, str, str | None]] = [
     # CODE-LANGUAGE-REPRESENTATIONS-V1 (register 11.453): one representation card per code language
     ("docs/wiki/plans/CODE-LANGUAGE-REPRESENTATIONS-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-code-language-representations.md", "md", None),
+    # CODE-KNOWLEDGE-V1-SOURCES (register 11.454): the verified GitHub sources list
+    ("docs/wiki/plans/CODE-KNOWLEDGE-V1-SOURCES.md", "md", None),
+    ("docs/wiki/work-log/2026-09-24-code-knowledge-sources.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),
