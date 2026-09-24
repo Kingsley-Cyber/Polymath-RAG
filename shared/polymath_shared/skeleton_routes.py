@@ -16,6 +16,15 @@ Every opened door also switches on path ids (`skeleton_paths`), so its hits keep
 judged seats. `POLYMATH_CHAT_CONTEXTUAL_JUDGE` separately enables the path-aware (cross-encoder, no LLM) judgement:
 `1` = every opened mode, `wildcard` = WILDCARD only (the replay showed it changes no final set on ordinary turns while
 costing 0.2–1.3 s, so it belongs where depth is the point).
+SKELETON-ROUTING-V1.1 (`POLYMATH_CHAT_SKELETON_PROBES`, default off; needs the doors above): the plan's own probes drive
+the skeleton too — "the skeleton works with my subqueries". A PROFILE probe (a question from one book's profile) goes into
+THAT book's pMAP sections; a BRIDGE probe starts at its source book and adds the books the profile and atoms nominate for it
+(the cross-document hop); a USER facet takes the nominated books. Each probe's sections give real children ranked against
+the question blended with the probe. WILDCARD routes up to 7 probes, GRAPH / HYBRID up to 4 (the most abstract first).
+Measured on 2026-09-23 (replay of five live turns): the probe doors rarely reached the judge and, in WILDCARD, displaced two
+cross-domain finds — so the flag stays OFF; the code stays for the next probe-quality slice.
+Whenever the doors are open, the skeleton lanes run concurrently (`parallel_route_lanes`): merged in the fixed lane order,
+so only the wall-clock changes.
 Pure: no I/O. Default off (`POLYMATH_CHAT_SKELETON_ROUTES`)."""
 from __future__ import annotations
 
@@ -31,6 +40,7 @@ from polymath_shared.surface_registry import (
 
 FLAG = "POLYMATH_CHAT_SKELETON_ROUTES"
 JUDGE_FLAG = "POLYMATH_CHAT_CONTEXTUAL_JUDGE"
+PROBES_FLAG = "POLYMATH_CHAT_SKELETON_PROBES"
 _SKIP_MODES = frozenset({"FAST", "VECTOR", "GNN"})
 _NOMINATING_ORIGINS = frozenset({"PROFILE", "BRIDGE"})
 
@@ -65,5 +75,11 @@ def apply_skeleton_routes(budget, *, mode: str, plan=None, env: Mapping[str, str
         # items no other path depends on; the relevance / diversity slots stay the question's)
         "compose_aspect_slots": max(int(getattr(budget, "compose_aspect_slots", 3) or 3), 6 if m == "WILDCARD" else 5),
         "contextual_judge": (env.get(JUDGE_FLAG, "0") == "1") or (env.get(JUDGE_FLAG, "0") == "wildcard" and m == "WILDCARD"),
+        # V1.1: the opened doors run concurrently — merged in the fixed lane order, so only the wall-clock changes
+        "parallel_route_lanes": True,
+        # V1.1: WILDCARD opens up to five paths; the path-aware judge reads one need per path (≤ 6 × 3 pairs + 1)
+        "contextual_max_needs": max(int(getattr(budget, "contextual_max_needs", 4) or 4), 6 if m == "WILDCARD" else 4),
     }
+    if env.get(PROBES_FLAG, "0") == "1":
+        overrides["skeleton_probe_routes"] = 7 if m == "WILDCARD" else 4
     return replace(budget, **{k: v for k, v in overrides.items() if hasattr(budget, k)})

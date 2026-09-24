@@ -612,3 +612,17 @@ def test_s1b_the_phase_marks_include_the_scope_share_of_the_compile_mark(monkeyp
     _stream(dict(BASE, mode="HYBRID"))
     marks = hs.receipts[0]["out"]["meta"]["phase_ms"]
     assert "scope" in marks and marks["scope"] <= marks["retrieve"]   # cumulative marks: scope comes first
+
+
+def test_s1d_the_receipt_keeps_wlk2c_latent_selection_not_the_diagnostics_frame(monkeypatch):
+    """S1a wired the LATENT-DIAGNOSTICS frame (`fast.meta.latent`, usually None) into `latent_selection`, so every live receipt
+    read null although WLK2C seated latent rows. The receipt now carries WLK2C's own seat calibration."""
+    hs = Runtime(monkeypatch)
+    seat = {"enabled": True, "n_bridges": 2, "counts": {"direct": 5, "complementary": 2, "divergent": 0, "fill": 0},
+            "latency_ms": {"portfolio_seating": 41.0}}
+    monkeypatch.setattr(ui, "_apply_latent_selection", lambda fast, plan, q0, mode="": dict(seat))
+    _stream(dict(BASE, mode="HYBRID", synthesizer="ollama:fake"))
+    meta = hs.receipts[0]["out"]["meta"]
+    assert meta["latent_selection"] == {"enabled": True, "n_bridges": 2,
+                                        "counts": {"direct": 5, "complementary": 2, "divergent": 0, "fill": 0}}
+    assert meta["trace_ms"]["latent"] == {"latency_ms": {"portfolio_seating": 41.0}}

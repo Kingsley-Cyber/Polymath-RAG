@@ -97,6 +97,8 @@ ARRIVAL_GNN_ROUTE = "GNN_ROUTE"
 #: query-stratified fusion gives it a stratum and the judge reserves it seats. Never plan query ids; never coverage aspects.
 ROUTE_PREFIX = "rt:"
 ROUTE_LATENT, ROUTE_PMAP, ROUTE_SEEALSO, ROUTE_GRAPH = "rt:latent", "rt:pmap", "rt:seealso", "rt:graph"
+#: SKELETON-ROUTING-V1.1: the plan's own probes routed through the skeleton (probe → its books → pMAP sections → children).
+ROUTE_PROBE = "rt:probe"
 ARRIVAL_NEIGHBOR = "NEIGHBOR_EXPANSION"
 LANES = (LANE_A, LANE_B, LANE_C)
 
@@ -214,6 +216,16 @@ class CandidateBudget:
     contextual_conn_floor: float = 0.3
     contextual_max_needs: int = 4
     contextual_per_need: int = 3
+    #: SKELETON-ROUTING-V1.1 (flag POLYMATH_CHAT_SKELETON_PROBES, default off): each planned probe routes through the skeleton
+    #: itself — a PROFILE probe into its own book's pMAP sections, a BRIDGE probe into its book plus the books the profile and
+    #: atoms nominate for it, a USER facet into the nominated books — and fetches real children ranked against the question
+    #: blended with the probe. `skeleton_probe_routes` probes per turn (0 = off), `skeleton_probe_parents` sections each,
+    #: `skeleton_probe_children` children per section. `parallel_route_lanes` runs lanes D–H and the probe routes concurrently,
+    #: merged in the fixed lane order (the union is the sequential run's).
+    skeleton_probe_routes: int = 0
+    skeleton_probe_parents: int = 3
+    skeleton_probe_children: int = 2
+    parallel_route_lanes: bool = False
     aspect_final_seats: int = 1
     #: P1.c EVIDENCE COMPOSER (§3.17): deterministic, metadata only. Slots
     #: over the judged prefix: pure relevance → source diversity (soft max
@@ -408,6 +420,62 @@ class SubQuery:
     #: "" ⇒ the lane classifies by qtype/modality (the orchestrator populates it from existing plan
     #: provenance at F4; unset here keeps behavior unchanged).
     origin: str = ""
+    #: SKELETON-ROUTING-V1.1: the document this probe was derived from (a PROFILE question's book, a BRIDGE concept's book —
+    #: the plan's `derived_from`); "" when the probe came from no single document.
+    derived_from: str = ""
+
+
+def _probe_order(subqueries: list[SubQuery], budget: CandidateBudget) -> list[SubQuery]:
+    """The probes a turn routes through the skeleton (SKELETON-ROUTING-V1.1), most abstract first: BRIDGE / CORPUS_EXPLORE,
+    then PROFILE, then the USER facets by weight (stable). At most `skeleton_probe_routes`; 0 = none."""
+    n = max(0, int(budget.skeleton_probe_routes))
+    if not n:
+        return []
+    rank = {"BRIDGE": 0, "CORPUS_EXPLORE": 0, "PROFILE": 1}
+    eligible = [sq for sq in subqueries if sq.qvec and sq.text]
+    return sorted(eligible, key=lambda sq: (rank.get(sq.origin, 2), -float(sq.weight or 0.0)))[:n]
+
+
+def _doc_fair_parents(rows: list[dict], n: int) -> list[tuple[str, str]]:
+    """Up to `n` distinct (doc_id, parent_id) from map hits (best first), one per document before any document gets a second:
+    a bridge probe's sections should span the books it reached, not stack inside one."""
+    firsts: list[tuple[str, str]] = []
+    rest: list[tuple[str, str]] = []
+    seen_p: set[str] = set()
+    seen_d: set[str] = set()
+    for r in rows:
+        pid = r.get("parent_id")
+        if not pid or pid in seen_p:
+            continue
+        seen_p.add(pid)
+        d = str(r.get("doc_id") or "")
+        (rest if d in seen_d else firsts).append((d, pid))
+        seen_d.add(d)
+    return (firsts + rest)[: max(0, int(n))]
+
+
+def _blend(a, b) -> tuple[float, ...]:
+    """The unit mean of two query vectors — the question read through a probe."""
+    import math
+    s = [float(x) + float(y) for x, y in zip(a, b)]
+    norm = math.sqrt(sum(x * x for x in s)) or 1.0
+    return tuple(x / norm for x in s)
+
+
+def _run_route_lanes(tasks: list[tuple[str, Callable[[], tuple]]], *, parallel: bool) -> dict[str, tuple]:
+    """Run the skeleton lanes: in order, or concurrently on a pool of their own. A lane that raises (each one already catches
+    its own failures) becomes an empty, receipted lane — never a failed turn. Results are keyed by name, so the caller merges
+    them in its fixed order whatever finished first."""
+    def _safe(fn) -> tuple:
+        try:
+            return fn()
+        except Exception as exc:  # noqa: BLE001 — a lane is optional; its absence is receipted
+            return [], {"enabled": True, "degraded": f"{type(exc).__name__}: {str(exc)[:80]}"}, {}
+    if not parallel or len(tasks) < 2:
+        return {name: _safe(fn) for name, fn in tasks}
+    with ThreadPoolExecutor(max_workers=min(len(tasks), 12), thread_name_prefix="route-lanes") as ex:
+        futs = [(name, ex.submit(_safe, fn)) for name, fn in tasks]
+        return {name: f.result() for name, f in futs}
 
 
 @dataclass
@@ -813,135 +881,221 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
                                 text=h.text, arrivals=[LANE_C], query_ids=[ctx.query_id], sparse_rank=h.rank,
                                 sparse_score=h.raw_similarity)
               for h in sparse_lane if h.chunk_id]
-    route_need: dict[str, str] = {}                     # SKELETON-ROUTING-V1: chunk → the abstract need that found it
-
+    # ---- skeleton lanes D–H and the plan's probe routes (SKELETON-ROUTING-V1 / V1.1) ---------------------------------------
+    # Each lane is a self-contained function that returns (candidates, receipt, needs); `needs` maps a chunk to the abstract
+    # need that found it (a latent abstraction, a pMAP routing signature, an atom, a graph destination, a probe). With
+    # `parallel_route_lanes` they run concurrently on a small pool of their own (the turn pool is busy with the subquery lanes)
+    # and are merged in the FIXED lane order below, so the union never depends on which lane finished first.
     def _route_qids(route: str) -> list[str]:
         return [ctx.query_id, route] if budget.skeleton_paths else [ctx.query_id]
 
-    # ---- lane D (B12): latent rescue — parents nominated by the latent kinds, deepened through ORIGINAL children ----
-    lane_d: list[CandidateEvidence] = []
-    latent_trace: dict = {"enabled": bool(budget.latent_enabled and latent_search is not None)}
-    if budget.latent_enabled and latent_search is not None:
-        from polymath_shared.latent.rescue import latent_rescue_parents
-        t_lat = time.perf_counter()
-        skip = frozenset(h.parent_id for h in section_lane if getattr(h, "parent_id", None)) if LANE_A in lanes else frozenset()
-        try:
-            lr = latent_rescue_parents(list(ctx.qvec), corpus_id=ctx.corpus_id, plan=budget, routing_search=latent_search,
-                                       skip_parent_ids=skip)
-            latent_trace.update({"parents": [{"parent_id": p.parent_id, "channels": dict(p.channels), "score": round(p.best_score, 4)} for p in lr.parents],
-                                 "degraded": lr.degraded, "rescue_ms": round(lr.latency_ms, 1)})
-            for p in lr.parents[: budget.latent_max_parents]:
-                try:
-                    rows = dense_search(REPRESENTATION_KIND_CHILD, budget.latent_children_per_parent, {"parent_id": p.parent_id}) or []
-                except Exception as exc:  # noqa: BLE001 — a parent that fails to deepen is skipped, receipted
-                    latent_trace.setdefault("deepen_errors", []).append(f"{p.parent_id[:20]}:{type(exc).__name__}")
-                    continue
-                for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, budget.latent_children_per_parent):
-                    if h.chunk_id:
-                        lane_d.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
-                                                        text=h.text, arrivals=[LANE_D], query_ids=_route_qids(ROUTE_LATENT), dense_rank=h.rank,
-                                                        dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
-        except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
-            latent_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
-        latent_trace["candidates"] = len(lane_d)
-        latent_trace["lane_ms"] = round((time.perf_counter() - t_lat) * 1000, 1)
+    def _lane_d() -> tuple[list[CandidateEvidence], dict, dict]:
+        # ---- lane D (B12): latent rescue — parents nominated by the latent kinds, deepened through ORIGINAL children ----
+        lane_d: list[CandidateEvidence] = []
+        needs: dict[str, str] = {}
+        latent_trace: dict = {"enabled": bool(budget.latent_enabled and latent_search is not None)}
+        if budget.latent_enabled and latent_search is not None:
+            from polymath_shared.latent.rescue import latent_rescue_parents
+            t_lat = time.perf_counter()
+            skip = frozenset(h.parent_id for h in section_lane if getattr(h, "parent_id", None)) if LANE_A in lanes else frozenset()
+            try:
+                lr = latent_rescue_parents(list(ctx.qvec), corpus_id=ctx.corpus_id, plan=budget, routing_search=latent_search,
+                                           skip_parent_ids=skip)
+                latent_trace.update({"parents": [{"parent_id": p.parent_id, "channels": dict(p.channels), "score": round(p.best_score, 4)} for p in lr.parents],
+                                     "degraded": lr.degraded, "rescue_ms": round(lr.latency_ms, 1)})
+                for p in lr.parents[: budget.latent_max_parents]:
+                    try:
+                        rows = dense_search(REPRESENTATION_KIND_CHILD, budget.latent_children_per_parent, {"parent_id": p.parent_id}) or []
+                    except Exception as exc:  # noqa: BLE001 — a parent that fails to deepen is skipped, receipted
+                        latent_trace.setdefault("deepen_errors", []).append(f"{p.parent_id[:20]}:{type(exc).__name__}")
+                        continue
+                    for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, budget.latent_children_per_parent):
+                        if h.chunk_id:
+                            lane_d.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                            text=h.text, arrivals=[LANE_D], query_ids=_route_qids(ROUTE_LATENT), dense_rank=h.rank,
+                                                            dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
+                            if budget.skeleton_paths and getattr(p, "need", ""):
+                                needs.setdefault(h.chunk_id, p.need)     # V1.1: the latent abstraction / transfer that found it
+            except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
+                latent_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
+            latent_trace["candidates"] = len(lane_d)
+            latent_trace["lane_ms"] = round((time.perf_counter() - t_lat) * 1000, 1)
+        return lane_d, latent_trace, needs
 
-    # ---- lane E (S9 dual-read): global-profile→parent-map nominated parents, deepened through ORIGINAL children ----
-    lane_e: list[CandidateEvidence] = []
-    dualread_trace: dict = {"enabled": bool(budget.dualread_enabled and dualread_search is not None)}
-    if budget.dualread_enabled and dualread_search is not None:
-        t_dr = time.perf_counter()
+    def _lane_e() -> tuple[list[CandidateEvidence], dict, dict]:
+        # ---- lane E (S9 dual-read): global-profile→parent-map nominated parents, deepened through ORIGINAL children ----
+        lane_e: list[CandidateEvidence] = []
+        needs: dict[str, str] = {}
+        dualread_trace: dict = {"enabled": bool(budget.dualread_enabled and dualread_search is not None)}
+        if budget.dualread_enabled and dualread_search is not None:
+            t_dr = time.perf_counter()
+            try:
+                rows = dualread_search(list(ctx.qvec)) or []          # profile→map → resolved parents [{doc_id, parent_id, …}]
+                parents: list[tuple[str, str]] = []
+                seen_p: set[str] = set()
+                for r in rows:
+                    pid = r.get("parent_id")
+                    if pid and pid not in seen_p:
+                        seen_p.add(pid)
+                        parents.append((r.get("doc_id", ""), pid))
+                dualread_trace["resolved_parents"] = len(parents)
+                sig_by_parent = {r.get("parent_id"): str(r["routing_signature"]) for r in rows
+                                 if r.get("parent_id") and r.get("routing_signature")}
+                for doc_id_p, pid in parents[: budget.dualread_max_parents]:
+                    extra = {"parent_id": pid, "doc_id": doc_id_p} if doc_id_p else {"parent_id": pid}
+                    try:
+                        crows = dense_search(REPRESENTATION_KIND_CHILD, budget.dualread_children_per_parent, extra) or []
+                    except Exception as exc:  # noqa: BLE001 — a parent that fails to deepen is skipped, receipted
+                        dualread_trace.setdefault("deepen_errors", []).append(f"{pid[:20]}:{type(exc).__name__}")
+                        continue
+                    for h in _hits(REPRESENTATION_KIND_CHILD, crows, ctx.corpus_id, budget.dualread_children_per_parent):
+                        if h.chunk_id:
+                            lane_e.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                            text=h.text, arrivals=[LANE_E], query_ids=_route_qids(ROUTE_PMAP), dense_rank=h.rank,
+                                                            dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
+                            if budget.skeleton_paths and sig_by_parent.get(pid):
+                                needs.setdefault(h.chunk_id, sig_by_parent[pid])
+            except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
+                dualread_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
+            dualread_trace["candidates"] = len(lane_e)
+            dualread_trace["lane_ms"] = round((time.perf_counter() - t_dr) * 1000, 1)
+        return lane_e, dualread_trace, needs
+
+    def _lane_f() -> tuple[list[CandidateEvidence], dict, dict]:
+        # ---- lane F (R6 resolution lift): the corpus's precise vocabulary probed as ORIGINAL children ----
+        lane_f: list[CandidateEvidence] = []
+        lift_trace: dict = {"enabled": bool(budget.resolution_lift_enabled and lift_search is not None)}
+        if budget.resolution_lift_enabled and lift_search is not None:
+            t_lift = time.perf_counter()
+            try:
+                rows = lift_search(list(ctx.qvec)) or []   # dense-child rows ({payload, score}) from the lifted-term probes
+                for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, budget.resolution_lift_children):
+                    if h.chunk_id:
+                        lane_f.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                        text=h.text, arrivals=[LANE_F], query_ids=[ctx.query_id], dense_rank=h.rank,
+                                                        dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
+                lift_trace["terms"] = sorted({str(r.get("lifted_term")) for r in rows if r.get("lifted_term")})[:8]
+            except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
+                lift_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
+            lift_trace["candidates"] = len(lane_f)
+            lift_trace["lane_ms"] = round((time.perf_counter() - t_lift) * 1000, 1)
+        return lane_f, lift_trace, {}
+
+    def _lane_g() -> tuple[list[CandidateEvidence], dict, dict]:
+        # ---- lane G (P5 SEEALSO/BRIDGE fan-out): RELATIONAL atom texts probed as ORIGINAL children ----
+        lane_g: list[CandidateEvidence] = []
+        needs: dict[str, str] = {}
+        fanout_trace: dict = {"enabled": bool(budget.seealso_fanout_enabled and fanout_search is not None)}
+        if budget.seealso_fanout_enabled and fanout_search is not None:
+            t_fan = time.perf_counter()
+            try:
+                rows = fanout_search(list(ctx.qvec)) or []   # dense-child rows ({payload, score}) from the atom-text probes
+                cap = budget.seealso_fanout_atoms * budget.seealso_fanout_children
+                atom_by_chunk = {(r.get("payload") or {}).get("chunk_id"): str(r["fanout_atom"]) for r in rows if r.get("fanout_atom")}
+                for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, cap):
+                    if h.chunk_id:
+                        lane_g.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                        text=h.text, arrivals=[LANE_G], query_ids=_route_qids(ROUTE_SEEALSO), dense_rank=h.rank,
+                                                        dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
+                        if budget.skeleton_paths and atom_by_chunk.get(h.chunk_id):
+                            needs.setdefault(h.chunk_id, atom_by_chunk[h.chunk_id])
+                fanout_trace["atoms"] = sorted({str(r.get("fanout_atom")) for r in rows if r.get("fanout_atom")})[:8]
+            except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
+                fanout_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
+            fanout_trace["candidates"] = len(lane_g)
+            fanout_trace["lane_ms"] = round((time.perf_counter() - t_fan) * 1000, 1)
+        return lane_g, fanout_trace, needs
+
+    def _lane_h() -> tuple[list[CandidateEvidence], dict, dict]:
+        # ---- lane H (P7 graph destination): query entities → Neo4j hop → destination docs → JUDGED children ----
+        lane_h: list[CandidateEvidence] = []
+        needs: dict[str, str] = {}
+        graph_dest_trace: dict = {"enabled": bool(budget.graph_dest_enabled and graph_dest_search is not None)}
+        if budget.graph_dest_enabled and graph_dest_search is not None:
+            t_gd = time.perf_counter()
+            try:
+                rows = graph_dest_search(list(ctx.qvec)) or []   # ORIGINAL children of the graph destinations (source-attested route)
+                # V1.1: the path's need is the fact that reached the destination (`dest_need`); its doc id is no need
+                need_by_chunk = {(r.get("payload") or {}).get("chunk_id"): str(r["dest_need"]) for r in rows if r.get("dest_need")}
+                for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, budget.graph_dest_children):
+                    if h.chunk_id:
+                        lane_h.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                        text=h.text, arrivals=[ARRIVAL_GRAPH_DEST], query_ids=_route_qids(ROUTE_GRAPH), dense_rank=h.rank,
+                                                        dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
+                        if budget.skeleton_paths and need_by_chunk.get(h.chunk_id):
+                            needs.setdefault(h.chunk_id, need_by_chunk[h.chunk_id])
+                graph_dest_trace["destinations"] = sorted({str(r.get("dest_entity")) for r in rows if r.get("dest_entity")})[:8]
+            except Exception as exc:  # noqa: BLE001 — the graph lane is optional + fail-open; absence is receipted, never silent
+                graph_dest_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
+            graph_dest_trace["candidates"] = len(lane_h)
+            graph_dest_trace["lane_ms"] = round((time.perf_counter() - t_gd) * 1000, 1)
+        return lane_h, graph_dest_trace, needs
+
+    def _probe_route(sq: SubQuery) -> tuple[list[CandidateEvidence], dict, dict]:
+        # ---- SKELETON-ROUTING-V1.1: one planned probe through the skeleton — its documents → pMAP sections → children ----
+        # A PROFILE probe is a question from one book's profile: pMAP finds the section of THAT book that answers it. A BRIDGE
+        # probe starts at its source book and adds the books the profile and atoms nominate for it (the cross-document hop).
+        # A USER facet takes the nominated books. The children are ranked against the question blended with the probe: the
+        # probe chose the section, the question decides which of its passages is evidence. Never skeleton text as evidence.
+        t_pr = time.perf_counter()
+        items: list[CandidateEvidence] = []
+        needs: dict[str, str] = {}
+        doc = str(sq.derived_from or "")
+        doc = doc if doc.startswith("doc_") else ""
+        own_book = sq.origin == "PROFILE" and bool(doc)
+        rec: dict = {"origin": sq.origin or "", "own_book": own_book}
         try:
-            rows = dualread_search(list(ctx.qvec)) or []          # profile→map → resolved parents [{doc_id, parent_id, …}]
-            parents: list[tuple[str, str]] = []
-            seen_p: set[str] = set()
-            for r in rows:
-                pid = r.get("parent_id")
-                if pid and pid not in seen_p:
-                    seen_p.add(pid)
-                    parents.append((r.get("doc_id", ""), pid))
-            dualread_trace["resolved_parents"] = len(parents)
-            sig_by_parent = {r.get("parent_id"): str(r["routing_signature"]) for r in rows
-                             if r.get("parent_id") and r.get("routing_signature")}
-            for doc_id_p, pid in parents[: budget.dualread_max_parents]:
+            rows = dualread_search(list(sq.qvec), docs=[doc] if doc else None, nominate=not own_book, signatures=False) or []
+            parents = _doc_fair_parents(rows, budget.skeleton_probe_parents)
+            blend = _blend(ctx.qvec, sq.qvec)
+            for doc_id_p, pid in parents:
                 extra = {"parent_id": pid, "doc_id": doc_id_p} if doc_id_p else {"parent_id": pid}
                 try:
-                    crows = dense_search(REPRESENTATION_KIND_CHILD, budget.dualread_children_per_parent, extra) or []
-                except Exception as exc:  # noqa: BLE001 — a parent that fails to deepen is skipped, receipted
-                    dualread_trace.setdefault("deepen_errors", []).append(f"{pid[:20]}:{type(exc).__name__}")
+                    crows = _call_dense(dense_search, REPRESENTATION_KIND_CHILD, budget.skeleton_probe_children, extra, blend) or []
+                except Exception as exc:  # noqa: BLE001 — a section that fails to deepen is skipped, receipted
+                    rec.setdefault("deepen_errors", []).append(f"{pid[:20]}:{type(exc).__name__}")
                     continue
-                for h in _hits(REPRESENTATION_KIND_CHILD, crows, ctx.corpus_id, budget.dualread_children_per_parent):
+                for h in _hits(REPRESENTATION_KIND_CHILD, crows, ctx.corpus_id, budget.skeleton_probe_children):
                     if h.chunk_id:
-                        lane_e.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
-                                                        text=h.text, arrivals=[LANE_E], query_ids=_route_qids(ROUTE_PMAP), dense_rank=h.rank,
-                                                        dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
-                        if budget.skeleton_paths and sig_by_parent.get(pid):
-                            route_need.setdefault(h.chunk_id, sig_by_parent[pid])
-        except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
-            dualread_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
-        dualread_trace["candidates"] = len(lane_e)
-        dualread_trace["lane_ms"] = round((time.perf_counter() - t_dr) * 1000, 1)
+                        items.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                       text=h.text, arrivals=[LANE_E],
+                                                       query_ids=[sq.query_id, ROUTE_PROBE] if budget.skeleton_paths else [sq.query_id],
+                                                       query_scores={sq.query_id: sq.weight * _rrf_score(len(items), budget.rrf_k)},
+                                                       dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
+                        needs.setdefault(h.chunk_id, sq.text)
+            rec.update({"docs": len({d for d, _ in parents}), "sections": len(parents)})
+        except Exception as exc:  # noqa: BLE001 — a probe route is optional; absence is receipted, never silent
+            rec["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
+        rec["candidates"] = len(items)
+        rec["lane_ms"] = round((time.perf_counter() - t_pr) * 1000, 1)
+        return items, rec, needs
 
-    # ---- lane F (R6 resolution lift): the corpus's precise vocabulary probed as ORIGINAL children ----
-    lane_f: list[CandidateEvidence] = []
-    lift_trace: dict = {"enabled": bool(budget.resolution_lift_enabled and lift_search is not None)}
-    if budget.resolution_lift_enabled and lift_search is not None:
-        t_lift = time.perf_counter()
-        try:
-            rows = lift_search(list(ctx.qvec)) or []   # dense-child rows ({payload, score}) from the lifted-term probes
-            for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, budget.resolution_lift_children):
-                if h.chunk_id:
-                    lane_f.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
-                                                    text=h.text, arrivals=[LANE_F], query_ids=[ctx.query_id], dense_rank=h.rank,
-                                                    dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
-            lift_trace["terms"] = sorted({str(r.get("lifted_term")) for r in rows if r.get("lifted_term")})[:8]
-        except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
-            lift_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
-        lift_trace["candidates"] = len(lane_f)
-        lift_trace["lane_ms"] = round((time.perf_counter() - t_lift) * 1000, 1)
-
-    # ---- lane G (P5 SEEALSO/BRIDGE fan-out): RELATIONAL atom texts probed as ORIGINAL children ----
-    lane_g: list[CandidateEvidence] = []
-    fanout_trace: dict = {"enabled": bool(budget.seealso_fanout_enabled and fanout_search is not None)}
-    if budget.seealso_fanout_enabled and fanout_search is not None:
-        t_fan = time.perf_counter()
-        try:
-            rows = fanout_search(list(ctx.qvec)) or []   # dense-child rows ({payload, score}) from the atom-text probes
-            cap = budget.seealso_fanout_atoms * budget.seealso_fanout_children
-            atom_by_chunk = {(r.get("payload") or {}).get("chunk_id"): str(r["fanout_atom"]) for r in rows if r.get("fanout_atom")}
-            for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, cap):
-                if h.chunk_id:
-                    lane_g.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
-                                                    text=h.text, arrivals=[LANE_G], query_ids=_route_qids(ROUTE_SEEALSO), dense_rank=h.rank,
-                                                    dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
-                    if budget.skeleton_paths and atom_by_chunk.get(h.chunk_id):
-                        route_need.setdefault(h.chunk_id, atom_by_chunk[h.chunk_id])
-            fanout_trace["atoms"] = sorted({str(r.get("fanout_atom")) for r in rows if r.get("fanout_atom")})[:8]
-        except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
-            fanout_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
-        fanout_trace["candidates"] = len(lane_g)
-        fanout_trace["lane_ms"] = round((time.perf_counter() - t_fan) * 1000, 1)
-
-    # ---- lane H (P7 graph destination): query entities → Neo4j hop → destination docs → JUDGED children ----
-    lane_h: list[CandidateEvidence] = []
-    graph_dest_trace: dict = {"enabled": bool(budget.graph_dest_enabled and graph_dest_search is not None)}
-    if budget.graph_dest_enabled and graph_dest_search is not None:
-        t_gd = time.perf_counter()
-        try:
-            rows = graph_dest_search(list(ctx.qvec)) or []   # ORIGINAL children of the graph destinations (source-attested route)
-            dest_by_chunk = {(r.get("payload") or {}).get("chunk_id"): str(r["dest_entity"]) for r in rows if r.get("dest_entity")}
-            for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, budget.graph_dest_children):
-                if h.chunk_id:
-                    lane_h.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
-                                                    text=h.text, arrivals=[ARRIVAL_GRAPH_DEST], query_ids=_route_qids(ROUTE_GRAPH), dense_rank=h.rank,
-                                                    dense_score=h.raw_similarity, region_role=roles.get(h.chunk_id)))
-                    if budget.skeleton_paths and dest_by_chunk.get(h.chunk_id):
-                        route_need.setdefault(h.chunk_id, dest_by_chunk[h.chunk_id])
-            graph_dest_trace["destinations"] = sorted({str(r.get("dest_entity")) for r in rows if r.get("dest_entity")})[:8]
-        except Exception as exc:  # noqa: BLE001 — the graph lane is optional + fail-open; absence is receipted, never silent
-            graph_dest_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
-        graph_dest_trace["candidates"] = len(lane_h)
-        graph_dest_trace["lane_ms"] = round((time.perf_counter() - t_gd) * 1000, 1)
+    probe_list = _probe_order(subqueries, budget) if dualread_search is not None else []
+    route_tasks: list[tuple[str, Callable[[], tuple]]] = [
+        ("latent", _lane_d), ("dualread", _lane_e), ("resolution_lift", _lane_f), ("seealso_fanout", _lane_g), ("graph_dest", _lane_h)]
+    route_tasks += [(f"probe:{sq.query_id}", (lambda sq=sq: _probe_route(sq))) for sq in probe_list]
+    t_routes = time.perf_counter()
+    route_outs = _run_route_lanes(route_tasks, parallel=budget.parallel_route_lanes)
+    if budget.parallel_route_lanes or probe_list:
+        timings["route_lanes_wall"] = round((time.perf_counter() - t_routes) * 1000, 1)
+    lane_d, latent_trace, need_d = route_outs["latent"]
+    lane_e, dualread_trace, need_e = route_outs["dualread"]
+    lane_f, lift_trace, _ = route_outs["resolution_lift"]
+    lane_g, fanout_trace, need_g = route_outs["seealso_fanout"]
+    lane_h, graph_dest_trace, need_h = route_outs["graph_dest"]
+    lane_p: list[CandidateEvidence] = []
+    probe_trace: dict = {}
+    need_p: dict[str, str] = {}
+    for sq in probe_list:
+        items, rec, needs = route_outs[f"probe:{sq.query_id}"]
+        lane_p.extend(items)
+        probe_trace[sq.query_id] = rec
+        for cid, n in needs.items():
+            need_p.setdefault(cid, n)
+    route_need: dict[str, str] = {}                     # SKELETON-ROUTING-V1: chunk → the abstract need that found it
+    for needs in (need_d, need_e, need_g, need_h, need_p):
+        for cid, n in needs.items():
+            route_need.setdefault(cid, n)
 
     # ---- lane I (GNN-RETRIEVAL-V1): graph-neural PARENT nomination → ORIGINAL children (JUDGED like every lane) ----
     lane_i: list[CandidateEvidence] = []
@@ -1048,10 +1202,14 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     # ---- SKELETON-ROUTING-V1: each skeleton door that found something is an aspect → judged seats, own receipt ----
     if budget.skeleton_paths:
         for rid, lane, items in ((ROUTE_LATENT, LANE_D, lane_d), (ROUTE_PMAP, LANE_E, lane_e),
-                                 (ROUTE_SEEALSO, LANE_G, lane_g), (ROUTE_GRAPH, ARRIVAL_GRAPH_DEST, lane_h)):
+                                 (ROUTE_SEEALSO, LANE_G, lane_g), (ROUTE_GRAPH, ARRIVAL_GRAPH_DEST, lane_h),
+                                 (ROUTE_PROBE, LANE_E, lane_p)):
             if items:
                 aspects[rid] = {"type": "ROUTE", "query": rid, "weight": 1.0, "origin": "SKELETON",
                                 "lanes": {lane: len(items)}, "degraded": []}
+    for qid, rec in probe_trace.items():                 # V1.1: a probe's aspect counts what its skeleton route found
+        if qid in aspects:
+            aspects[qid]["lanes"] = {**aspects[qid]["lanes"], ROUTE_PROBE: int(rec.get("candidates") or 0)}
 
     # ---- LATENT-QUERY-FUSION-V2 · F1: capture each query's LOCAL ranked list BEFORE the flatten -------
     # Observability only (flag-gated, default-off ⇒ this block never runs ⇒ union byte-identical). The
@@ -1062,7 +1220,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
         from polymath_shared.ranked_lane import build_ranked_lanes
         _qmeta = {sq.query_id: {"text": sq.text, "role": sq.qtype, "origin": getattr(sq, "origin", "")} for sq in subqueries}
         ranked_lanes = build_ranked_lanes(
-            [c for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e, lane_f, lane_g, lane_h, lane_i)
+            [c for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e, lane_p, lane_f, lane_g, lane_h, lane_i)
              for c in lane_items],
             primary_query_id=ctx.query_id, primary_query_text=ctx.query, query_meta=_qmeta,
         )
@@ -1072,7 +1230,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     by_id: dict[str, CandidateEvidence] = {}
     for c in lane_a + lane_b + lane_c:
         c.query_scores = dict(c.query_scores)
-    for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e, lane_f, lane_g, lane_h, lane_i):
+    for lane_items in (lane_a, lane_b, lane_c, lane_d, sub_items, lane_e, lane_p, lane_f, lane_g, lane_h, lane_i):
         for c in lane_items:
             cur = by_id.get(c.chunk_id)
             if cur is None:
@@ -1190,6 +1348,10 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     trace["seealso_fanout"] = fanout_trace
     trace["graph_dest"] = graph_dest_trace
     trace["gnn"] = gnn_trace
+    if probe_list:                                   # V1.1 receipts only when probe routing ran (byte-identical otherwise)
+        trace["probe_routes"] = probe_trace
+        trace["lane_sizes"]["probe_routes"] = len(lane_p)
+        trace["funnel_lanes"]["probe_routes"] = [c.chunk_id for c in lane_p]
     if budget.skeleton_paths:
         trace["route_need"] = dict(list(route_need.items())[:200])
     trace["route_kinds"] = (["document_summary"] if budget.hierarchy_route_documents else []) + ["section_summary", "child", "entity_card"]
@@ -1519,7 +1681,7 @@ def _contextual_judge(prefix: list, scores: dict, result: CandidateResult, budge
     aspects = result.trace.get("aspects") or {}
     route_need = result.trace.get("route_need") or {}
     q0 = result.context.query
-    need_of: dict[str, tuple[str, bool]] = {}              # chunk → (need text, is a skeleton need that must connect)
+    need_of: dict[str, tuple[str, bool, str]] = {}         # chunk → (need text, skeleton need that must connect?, its path)
     for c in prefix:
         s0 = scores.get(c.chunk_id)
         if s0 is None:
@@ -1529,26 +1691,29 @@ def _contextual_judge(prefix: list, scores: dict, result: CandidateResult, budge
             if str(qid).startswith(ROUTE_PREFIX):
                 need = route_need.get(c.chunk_id)
                 if need:                                    # a route's representative must serve the route's need
-                    need_of[c.chunk_id] = (str(need), True)
+                    need_of[c.chunk_id] = (str(need), True, str(qid))
                     break
             elif at_risk:                                   # a planned indirect probe: rescue only what the question vetoes
                 info = aspects.get(qid) or {}
                 if str(info.get("origin") or "") in _INDIRECT_ORIGINS and info.get("query"):
-                    need_of[c.chunk_id] = (str(info["query"]), False)
+                    need_of[c.chunk_id] = (str(info["query"]), False, str(qid))
                     break
     receipt = {"enabled": True, "judged": len(need_of), "needs": 0, "pairs": 0, "promoted": 0, "vague": 0}
     if not need_of:
         receipt["ms"] = round((time.perf_counter() - t0) * 1000, 1)
         return receipt
     groups: dict[str, list] = {}
+    path_of: dict[str, str] = {}
     for c in prefix:                                        # judge order: each need's strongest candidates first
         if c.chunk_id in need_of:
             members = groups.setdefault(need_of[c.chunk_id][0], [])
+            path_of.setdefault(need_of[c.chunk_id][0], need_of[c.chunk_id][2])
             if len(members) < budget.contextual_per_need:
                 members.append(c)
-    needs = list(groups)[: max(0, int(budget.contextual_max_needs))]
+    # V1.1: the connection check runs FIRST, over every skeleton need (one call, bounded): a vague need earns nothing and
+    # never spends its path's turn — the path's next need is judged instead
     conn: dict[str, float] = {}
-    skeleton_needs = [n for n in needs if any(need_of[c.chunk_id][1] for c in groups[n])]
+    skeleton_needs = [n for n in groups if any(need_of[c.chunk_id][1] for c in groups[n])][: 3 * max(1, int(budget.contextual_max_needs))]
     if skeleton_needs:
         rows = [{"chunk_id": f"need{i}", "doc_id": "", "parent_id": "", "source_name": "", "text": n}
                 for i, n in enumerate(skeleton_needs)]
@@ -1556,12 +1721,22 @@ def _contextual_judge(prefix: list, scores: dict, result: CandidateResult, budge
         by = {r.get("chunk_id"): r.get("rerank_score") for r in out}
         conn = {n: sig(by[f"need{i}"]) for i, n in enumerate(skeleton_needs) if by.get(f"need{i}") is not None}
         receipt["pairs"] += len(rows)
+    usable: list[str] = []
+    for n in groups:
+        if any(need_of[c.chunk_id][1] for c in groups[n]) and conn.get(n, 0.0) < budget.contextual_conn_floor:
+            receipt["vague"] += 1
+        else:
+            usable.append(n)
+    # V1.1 path-fair: every path's strongest usable need is judged before any path gets a second — a path whose chunks sit
+    # lower in the prefix is never left unjudged because another path found more needs
+    firsts: list[str] = []
+    rest: list[str] = []
+    for n in usable:
+        (rest if path_of[n] in {path_of[f] for f in firsts} else firsts).append(n)
+    needs = (firsts + rest)[: max(0, int(budget.contextual_max_needs))]
     for n in needs:
         is_skeleton = any(need_of[c.chunk_id][1] for c in groups[n])
         weight = conn.get(n, 0.0) if is_skeleton else 1.0
-        if is_skeleton and weight < budget.contextual_conn_floor:
-            receipt["vague"] += 1
-            continue
         out = _judge_or_none(rerank_children, f"{q0} — {n}", [c.to_row() for c in groups[n]])
         if out is None:                                     # a failed path judgement keeps the question's score
             continue

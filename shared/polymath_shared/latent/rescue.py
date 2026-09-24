@@ -26,6 +26,9 @@ class LatentParent:
     source_name: str
     best_score: float
     channels: dict = field(default_factory=dict)   # kind -> best rank
+    #: SKELETON-ROUTING-V1.1: the latent abstraction / transfer text of the best hit — the abstract need that found this
+    #: parent (a routing need for the contextual judge, never evidence). "" when the point carries no text.
+    need: str = ""
 
 
 @dataclass
@@ -64,13 +67,16 @@ def latent_rescue_parents(
                 if not pid or pid in skip_parent_ids:
                     continue
                 score = float(row.get("score") or 0.0)
+                text = str(payload.get("text") or "")
                 lp = by_parent.get(pid)
                 if lp is None:
                     lp = by_parent[pid] = LatentParent(
                         parent_id=pid,
                         doc_id=payload.get("doc_id") or "",
                         source_name=payload.get("source_name") or "",
-                        best_score=score)
+                        best_score=score, need=text)
+                elif score > lp.best_score and text:
+                    lp.need = text
                 lp.best_score = max(lp.best_score, score)
                 lp.channels[kind] = min(lp.channels.get(kind, rank), rank)
     except Exception as exc:
