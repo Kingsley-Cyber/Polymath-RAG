@@ -106,8 +106,12 @@ historical, never an instruction.
    - The corpus cleanup removes the commerce-v1 part.
 
 ### Repository State
-- Branch `production` (the fleet checkout). `origin/production` = `0e0978b` (pushed 2026-09-24 on the owner's word). Local is
-  ahead by 14 unpushed commits (`git log --oneline origin/production..production`). Push only on the owner's per-push word.
+- Branch `production` (the fleet checkout). `origin/production` = `606b867` (pushed 2026-09-24 on the owner's word, 14 commits).
+  Commits after that (this slice's merge included) are unpushed until the owner's next per-push word.
+- **COMPILER-QUERY-TYPE-AS-TASK (register 11.451):** a query type the compiler writes into `task_type` (30 of 85 fallbacks
+  in 14 days were PROCEDURE) now maps to the planner's usual task instead of discarding the plan. The mapping is recorded in
+  `compiler.corrections`. The orchestrator runs the compiler, so one bounce after the merge loads it; then look for
+  `task_type:` in `query_receipts.meta.chat_plan.compiler.corrections`.
 - HEAD = this documents commit, on top of merge `6f18017` (S8 synthesis contract, register 11.450; merged by the owner) and
   merge `50fa36a` (S4 compiler contract + the whole-word instruction-filter fix, register 11.449), `ea950a2` (11.448
   documents), merges `9697a91` (probe gate WILDCARD exempt), `4f6bf08` (PROBE-GATE-V1) and `706ed2c` (ATOM-REPAIR-V1).

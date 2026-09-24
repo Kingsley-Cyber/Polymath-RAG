@@ -2306,6 +2306,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/s8-synthesis-contract-2026-09-24/answers_round3.json", "json", None),
     ("docs/wiki/experiments/s8-synthesis-contract-2026-09-24/answers.json", "json", None),
     ("docs/wiki/work-log/2026-09-24-s8-synthesis-contract.md", "md", None),
+    # COMPILER-QUERY-TYPE-AS-TASK (register 11.451): a query type in the task slot maps instead of discarding the plan
+    ("docs/wiki/work-log/2026-09-24-compiler-query-type-as-task.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),
