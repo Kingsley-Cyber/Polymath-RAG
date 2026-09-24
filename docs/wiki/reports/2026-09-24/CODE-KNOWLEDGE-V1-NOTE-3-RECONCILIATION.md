@@ -82,7 +82,7 @@ ADD is the second note, REV is the review.
 | 2 | Per-document code contracts, not fleet-wide keys | follows the review's recommendation (defaults); the alternative marks every live corpus stale |
 | 3 | Code as `format: "text"`, no schema change | follows the recommendation (defaults) |
 | 4 | Power Fx now or Phase 3 | **ANSWERED: in the first version** (first answer). It needs a .NET SDK + a small sidecar; the owner is asked before anything is installed |
-| 5 | Neo4j code projection deferred; Postgres traversal first | **ANSWERED yes** (defaults) |
+| 5 | Neo4j code projection deferred; Postgres traversal first | **CHANGED later on 2026-09-24:** the Neo4j projection ships in the first version, right after C2; Postgres stays the authority (notes 4–5 reconciliation §1, register 11.455) |
 | 6 | Profile capacity for code | OPEN. File + class enrichment raises the LLM volume; C0 measures it on the real code and proposes a cap or extra lanes |
 | 7 | Repository importer keeping relative paths, in C1 | **ANSWERED yes** (the note's upload flow) |
 | 8 | Which real code qualifies | **ANSWERED in scope:** a Python repository, YAML / TOML configs, a Roblox game, a Power Apps app. The owner still has to point to them (§7) |
@@ -114,7 +114,8 @@ resolver where a maintained indexer exists.
 1. C0: baseline + tooling evaluation (§5) + profile-capacity measurement on the owner's real code.
 2. C1: detection (extension → strict-parser content check for `.txt` / extensionless YAML and TOML; never an LLM) + the
    repository importer (repo-relative paths, sync by path, a path → hash ledger).
-3. C2: structure manifest + Postgres tables (deterministic symbols, edges, spans, provenance).
+3. C2: structure manifest + Postgres tables (deterministic symbols, edges, spans, provenance, reproducibility attributes).
+   C8: the deterministic Neo4j projection of those tables (added to the first version 2026-09-24, register 11.455).
 4. C3: Python structure + exact-source chunk provider.
 5. C5a: YAML + TOML structure (key paths as symbols, anchors).
 6. C4: Luau / Roblox structure: modules, functions, metatables / OOP, `require` + ModuleScript / RemoteEvent / GetService,
@@ -133,7 +134,7 @@ resolver where a maintained indexer exists.
 **Later** (not in the first version):
 - search across corpora (shared documents without copying; scope strict / with_references / global; per-corpus
   visibility);
-- the Neo4j code projection + cross-language links + deterministic doc↔code links;
+- deterministic doc↔code links (decision 11). The Neo4j projection moved into the first version on 2026-09-24;
 - MCP code tools (search_code, get_symbol with callers / callees, compare_implementations, the note's response shape) and
   stack-trace debugging;
 - the Power Apps App Model + `.pa.yaml` contract + Canvas MCP write validation;

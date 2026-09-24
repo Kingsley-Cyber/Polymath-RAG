@@ -58,7 +58,7 @@ historical, never an instruction.
   answer model, never evidence. Mature tooling (tree-sitter / AST).
 - **Defaults accepted:**
   - parsers only, never LLM detection or LLM code facts;
-  - Postgres graph first, Neo4j later;
+  - Postgres graph authority + a Neo4j projection IN THE FIRST VERSION (changed after reviews A + B, register 11.455);
   - strict-parser `.txt` promotion;
   - the fleet runs ingestion;
   - one reranker, no fixed weights;
