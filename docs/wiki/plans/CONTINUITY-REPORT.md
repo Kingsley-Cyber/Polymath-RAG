@@ -23,7 +23,69 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). PROBE-GATE-V1 live 2026-09-24 (11.446–11.447; HYBRID / GRAPH, WILDCARD exempt). S4 compiler contract built + measured 2026-09-24, flag OFF (11.449). S8 synthesis contract built + inspected, flag OFF (11.450). Pushed to origin 2026-09-24 on the owner's word (`0e0978b`). Owner actions waiting: S9 (turn S4 + S8 on for 5–8 live questions — needs the owner's word and a bigger query allowance; 9 of 10 used); the corpus-delete command; pushes of later commits. CODE-KNOWLEDGE-V1 parked.**
+## CURRENT — 2026-09-24 — **ACTIVE MISSION: CODE-KNOWLEDGE-V1 (multi-language code RAG)**
+
+- **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs
+  alreayd a md plan i beleive and i want to add upon it".
+- **Read in this order:**
+  1. the plan of record `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`;
+  2. the packet `docs/code-knowledge-v1/`;
+  3. the feasibility review `docs/wiki/reports/2026-09-23/CODE-KNOWLEDGE-V1-FEASIBILITY.md`;
+  4. the third note `docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTE_3.md` + its reconciliation
+     `docs/wiki/reports/2026-09-24/CODE-KNOWLEDGE-V1-NOTE-3-RECONCILIATION.md` (register 11.452).
+
+  The reconciliation's §6 phase order supersedes the review's phases.
+
+### Next Action
+1. **Owner input (reconciliation §7):**
+   - the Roblox game's folder and format (Rojo / Argon files, or a `.rbxl` / `.rbxlx` place file);
+   - the Python repo + YAML / TOML configs;
+   - a Power Apps app as source files (`.pa.yaml`);
+   - the reference documents that join each project's corpus.
+2. **Then C0:** baseline + mature-tooling evaluation (§5) + profile-capacity measurement on the real code (decision 6).
+   Then the slices in §6 order.
+   - Each slice: a worktree branch, a flag default off, a work-log, a register row, tests, guards.
+   - The owner asked the agent to run merges / bounces itself. The permission classifier may still block one: say so at
+     once and hand over one Run-button command.
+
+### Owner decisions (2026-09-24, reconciliation §1 / §4)
+- **Languages:** the first version covers Python, YAML (+ TOML), Luau / Roblox and Power Fx (last; .NET needs the
+  owner's OK to install).
+- **Project isolation:** project = corpus; its reference documents join the same corpus. Search across corpora comes later.
+- **Code enrichment:** file level (profile) + every class (pMAP parent), with the note's fields. It is ORIENTATION for the
+  answer model, never evidence. Mature tooling (tree-sitter / AST).
+- **Defaults accepted:**
+  - parsers only, never LLM detection or LLM code facts;
+  - Postgres graph first, Neo4j later;
+  - strict-parser `.txt` promotion;
+  - the fleet runs ingestion;
+  - one reranker, no fixed weights;
+  - no new chat mode.
+- **Open:** decision 6 (profile capacity).
+
+### Document RAG — paused, not dropped
+- **Live:** skeleton routes, probe gate, atom repair, the PROCEDURE → task fix (11.451), and S4 + S8 (installed, flags OFF).
+- **Paused:** S5–S7 and S9 (the live check of S4 + S8 needs the owner's query allowance; 9 of 10 used).
+- Details: the PREVIOUS block below.
+
+### Repository State
+- `origin/production` = `a7e3e38` (pushed 2026-09-24 on the owner's word). `production` = that + this documents slice
+  (11.452), unpushed until the owner's next word.
+- **Fleet:** 24 / 13 on ONE bundle `87e5db83bf30` (bounce 2026-09-24 00:43). Running code = committed code (the slice is
+  documents only).
+- **Live `.env` flags:**
+  - on: `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard`, `POLYMATH_CHAT_PROBE_GATE=1`,
+    `POLYMATH_CHAT_SYNTH_ROLES=1`, `POLYMATH_REASONING_POLICY=1`;
+  - unset (off): `POLYMATH_CHAT_COMPILER_CONTRACT` (S4) and `POLYMATH_CHAT_SYNTH_CONTRACT` (S8).
+
+### Do Not Do
+- Never run the whole determinism suite against the fleet: hard-coded DSNs (e.g. `test_incremental_census.py`) write to
+  the live database. Run the impacted files only, with `-k "not test_live_"`.
+- No LLM language detection or LLM-derived code facts, no new chat mode, no second scheduler, no fixed fusion weights
+  (the owner's defaults, 2026-09-24).
+- Push only on the owner's per-push word; tags stay local.
+
+## PREVIOUS — 2026-09-23 night → 2026-09-24 (document RAG completion; paused 2026-09-24 for CODE-KNOWLEDGE-V1) — (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). PROBE-GATE-V1 live 2026-09-24 (11.446–11.447; HYBRID / GRAPH, WILDCARD exempt). S4 compiler contract built + measured 2026-09-24, flag OFF (11.449). S8 synthesis contract built + inspected, flag OFF (11.450). Pushed to origin 2026-09-24 on the owner's word (`0e0978b`). Owner actions waiting: S9 (turn S4 + S8 on for 5–8 live questions — needs the owner's word and a bigger query allowance; 9 of 10 used); the corpus-delete command; pushes of later commits. CODE-KNOWLEDGE-V1 parked.**
 
 ### READ FIRST — what happened while the owner was away (2026-09-23 night)
 1. **Skeleton routing is live** (flags `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard` in `.env`;
@@ -145,8 +207,8 @@ historical, never an instruction.
   - Evidence: audit `docs/wiki/reports/2026-09-23/ENRICHMENT-SURFACES-AUDIT.md` §9 (root cause), §10 (lineage), §11 (the
     owner's routing rule + design sketch), §6 (the fixes).
   - Plan of record: to be written first (not yet admitted).
-- **CODE-KNOWLEDGE-V1:** admitted and reviewed, PARKED behind document RAG by the owner.
-  - Plan `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`; 13 owner decisions (feasibility report §8 + §10).
+- **CODE-KNOWLEDGE-V1:** ACTIVE since 2026-09-24 (see CURRENT above). Plan `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`; 12 of 13
+  owner decisions settled 2026-09-24 (reconciliation §4).
   - Parsers come from open-source packages behind thin adapters (report §11).
 
 ### Completed Since Last Bootstrap (11.406–11.426)

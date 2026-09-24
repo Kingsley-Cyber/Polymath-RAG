@@ -2308,6 +2308,10 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-24-s8-synthesis-contract.md", "md", None),
     # COMPILER-QUERY-TYPE-AS-TASK (register 11.451): a query type in the task slot maps instead of discarding the plan
     ("docs/wiki/work-log/2026-09-24-compiler-query-type-as-task.md", "md", None),
+    # CODE-KNOWLEDGE-V1 third design note (register 11.452): admitted verbatim, reconciled, mission switched to code RAG
+    ("docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTE_3.md", "md", None),
+    ("docs/wiki/reports/2026-09-24/CODE-KNOWLEDGE-V1-NOTE-3-RECONCILIATION.md", "md", None),
+    ("docs/wiki/work-log/2026-09-24-code-knowledge-note-3.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),
