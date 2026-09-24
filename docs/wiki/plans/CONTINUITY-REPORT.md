@@ -43,6 +43,9 @@ historical, never an instruction.
    - Scope: HYBRID and GRAPH only. WILDCARD is exempt, because a non-obvious bridge shares the low band with true misses.
    - Switch: `POLYMATH_CHAT_PROBE_GATE=1` in `.env`.
    - Live proof: the off-topic probe was dropped; the restored concept atoms now show up as probes.
+   **Idea doors (tested 2026-09-24, not adopted; register 11.448):** steering a book's section search with the idea card or
+   graph fact that found it re-found passages already chosen and displaced two strong finds. The code is on branch
+   `feat/idea-doors`, not merged.
    **Probe doors** ("the skeleton works with my subqueries"): each planned probe drives the profile → pMAP → children door.
    - Built behind `POLYMATH_CHAT_SKELETON_PROBES` and **left OFF**. The replay showed the probe chunks rarely reach the
      judge, and in WILDCARD they displaced two cross-domain finds.
