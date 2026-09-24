@@ -2,7 +2,7 @@
 title: "CODE-KNOWLEDGE-V1 — START HERE: the implementation bootstrap for a new session"
 date: 2026-09-24
 last_reviewed: 2026-09-24
-status: "ACTIVE — the single entry point for implementing multi-language code RAG. Planning is complete; implementation starts at C0 once the owner's real-code inputs (§3) are in."
+status: "ACTIVE — the single entry point for implementing multi-language code RAG. Planning is complete (11.452–11.457); implementation starts at C0 (Python / YAML / TOML on this repository need no owner input; Luau needs the owner's game)."
 owner: "@king"
 scope: "Documents only. Consolidates the decided design (11.452–11.456) into one bootstrap: what to build, in what order, what is already decided, where the code lives, how every slice is run, and the traps."
 ---
@@ -26,7 +26,12 @@ door is new:
 3. a deterministic graph of symbols and links in Postgres, projected to Neo4j;
 4. the SAME `doc_profile` / `doc_parent_map` workers and LLM lanes write file-level profiles and class-level pMAP routes
    with a code prompt variant;
-5. retrieval uses the existing lanes and the ONE reranker, plus a structure lane that walks the graph;
+5. **retrieval ranks code by its DESCRIPTIONS and HYDRATES the code by rule** (owner 2026-09-24, register 11.457):
+   - a plain-language question meets the file / class descriptions, so the embedder and reranker compare English with
+     English;
+   - an exact name, path, stack trace or error text goes straight to a symbol lookup;
+   - the winning units' exact code + their graph neighbourhood are pulled in deterministically, never scored as text
+     (spec §13);
 6. answers cite exact code (`[S#]`). Summaries are orientation only.
 
 Document ingestion stays byte-identical, and every slice ships behind a flag, default off.
@@ -76,6 +81,8 @@ Document ingestion stays byte-identical, and every slice ships behind a flag, de
 | `.txt` files | promoted to YAML / TOML only by a strict parser + structure markers; versioned, receipted | owner defaults |
 | Ingestion runtime | the existing fleet and control plane; no Celery / RQ, no second scheduler | owner defaults |
 | Ranking | one reranker judges code and documents together; no fixed weights; discovery paths reach the path-aware judge | owner defaults + 11.455 |
+| **Code retrieval = deterministic hydration** | the reranker judges code units by their DESCRIPTION (with book passages in the same pool, balanced by the implementation / reference roles). The exact code + its bounded graph neighbourhood are HYDRATED by rule, per task and token budget. Two doors: plain language → descriptions; exact identifiers / paths / stack traces / error text → symbol lookup. Plain code search stays as a safety net (spec §13) | owner 2026-09-24 (11.457) |
+| **Luau tooling** | the OFFICIAL Luau toolchain: `luau-ast` (the official parser, full typed syntax; build target `Luau.Ast.CLI`) + `luau-analyze` (types / lints) from luau-lang/luau, and **Rojo** (sourcemap → instance paths, script kinds) with luau-lsp for `require` resolution. tree-sitter-luau is a fallback / comparison only. A place file is exported by Lune first | owner 2026-09-24 (11.457) |
 | Modes | no new public mode; code tasks (LOCATE / EXPLAIN / DEBUG / IMPACT / COMPARE / GENERATE) are an overlay | owner defaults |
 | Answers | three labelled parts: observed implementation / relevant principles / proposed changes; a book never proves a bug | 11.455 |
 | Tooling | mature open source per the sources list. No hand-written parser or resolver where a maintained one exists | owner 2026-09-23 / 24 |
@@ -106,20 +113,24 @@ Document ingestion stays byte-identical, and every slice ships behind a flag, de
 
 | # | Slice | Delivers | Proof |
 |---|---|---|---|
-| 1 | **C0** baseline + tooling evaluation | the fleet / receipts baseline; the §3.3 comparisons on real files (this repository for Python / YAML / TOML); capacity numbers (decision 6) | an experiments JSON + a work-log; each candidate judged: exists · fixture run · real-input run · useful output |
+| 1 | **C0** baseline + tooling evaluation | the fleet / receipts baseline; the §3.3 comparisons on this repository (Python / YAML / TOML); whether the macOS Luau release ships `luau-ast` (else build it from source); capacity numbers (decision 6) | an experiments JSON + a work-log; each candidate judged: exists · fixture run · real-input run · useful output |
 | 2 | **C1** detection + importer | extension + strict-parser content detection (YAML / TOML `.txt` promotion; skips with receipts), the repo importer (repo-relative paths, sync by path, a path → hash ledger), routing code away from tier_v3 | detection tests per card; an importer test on a fixture repo; documents byte-identical with the flag off |
 | 3 | **C2** structure manifest + Postgres | `code_symbols` / `code_edges` / `code_symbol_parent_links` (schema `03_…` §4–§6) with the controlled vocabularies + the reproducibility attributes | migration on a throwaway Postgres first; the re-extraction reproducibility test |
-| 4 | **C8** Neo4j projection | `CodeDocument` / `CodeSymbol` / `CodeConfigPath` + `CODE_*` relationships, projection receipts, reconciliation | desired = actual counts; no collision with the Entity / Fact graph |
-| 5 | **C3** Python | the Python card: units, symbols, relations, the chunk provider (`ast_code_v1`) | this repository parsed; spans exact; `CALLS` / `IMPORTS` spot-checked |
-| 6 | **C5a** YAML + TOML | the YAML and TOML cards (dialects, key paths, anchors, entrypoints) | the fixtures + real configs |
-| 7 | **C4** Luau / Roblox | the Luau card (Rojo script kinds, metatable classes, requires via sourcemap, remotes paired by instance) | the owner's game: typed syntax parses, requires resolve, remote pairs correct |
-| 8 | **C6** code pMAP | the §11 pMAP variant for every class / parent + the language addenda; the relationships copied from the graph | MAP contract intact (every alias exactly once); hash-gated reuse |
-| 9 | **C7** code profile | the §11 profile variant; large files per §12 (built upward, never from hooks) | labels intact; the §12 acceptance checks |
-| 10 | **C9–C11** retrieval | the code-task overlay, the structure lane (the graph walk from strong hits, with readable paths into the path-aware judge), candidate roles, ORIENTATION for code summaries, the §10 answer contract | owner-style questions per card (in-process replay first, then the owner's live words) |
+| 4 | **C3** Python | the Python card: units, symbols, relations, the chunk provider (`ast_code_v1`) | this repository parsed; spans exact; `CALLS` / `IMPORTS` spot-checked |
+| 5 | **C6 + C7 (Python first)** code pMAP + profile | the §11 prompt variants with the Python addendum; large files per §12; relationships copied from the graph | MAP contract + profile labels intact; hash-gated reuse; the §12 acceptance on this repository |
+| 6 | **C9 + C10 (walking skeleton)** two doors + hydration + structure lane | the code-task overlay; the semantic door (descriptions) + the exact door (symbol lookup); deterministic hydration per task + token budget; the structure lane with readable paths (spec §13) | **the first real questions answered on this repository** with cited exact code (in-process replay first; live turns on the owner's word) |
+| 7 | **C4** Luau / Roblox | the Luau card with the OFFICIAL toolchain (`luau-ast`, `luau-analyze`) + the Rojo sourcemap + luau-lsp resolution | the owner's game: typed syntax parses, requires resolve, remote pairs correct, a question answered |
+| 8 | **C5a** YAML + TOML | the YAML and TOML cards (dialects, key paths, anchors, entrypoints) | the fixtures + real configs |
+| 9 | **C8** Neo4j projection | `CodeDocument` / `CodeSymbol` / `CodeConfigPath` + `CODE_*` relationships, projection receipts, reconciliation | desired = actual counts; no collision with the Entity / Fact graph |
+| 10 | **C11** code + book roles | implementation / reference roles so code units and book passages both reach the answer; the §10 three-part answer | a code + book question (e.g. the dodge example) |
 | 11 | **C12** readiness | code corpora in control / readiness | readiness receipts |
 | 12 | **C13** validators + diagnostics | per-card validation; layer 3b diagnostics (Ruff, pyright, luau-analyze, selene) | findings stored with rule / severity / span / tool version |
 | 13 | **C5b** Power Fx | two passes (YAML structure → PowerFx.Core binder fed pass 1's symbol table) in a .NET sidecar | the owner's app: formulas bound; the navigation / data links correct |
 | 14 | **C14** qualification | every card's test questions on the owner's real code, incl. a code + book question | the §12 acceptance + cited exact source + revision updates |
+
+**Why this order** (owner 2026-09-24, register 11.457): a WALKING SKELETON first. Python on this repository runs end to
+end by step 6: detection → parse → graph → descriptions → two doors + hydration → a cited answer. Every later language
+and layer then plugs into a path that already works. Nothing waits until step 10 to be usable.
 
 ## 5. Where the code lives today (verified 2026-09-24, production `eb93d24`)
 

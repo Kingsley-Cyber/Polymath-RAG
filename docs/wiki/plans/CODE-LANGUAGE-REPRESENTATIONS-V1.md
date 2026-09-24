@@ -2,7 +2,7 @@
 title: "CODE-LANGUAGE-REPRESENTATIONS-V1 — how each code language is represented (Python, YAML, TOML, Luau/Roblox, Power Fx)"
 date: 2026-09-24
 last_reviewed: 2026-09-24
-status: "PLAN — the per-language representation contract that CODE-KNOWLEDGE-V1 slices C1–C8, C10, C13 and C14 implement. Updated 2026-09-24 with reviews A + B (11.455) and notes 6–7 (§11–§12, 11.456). No code yet."
+status: "PLAN — the per-language representation contract that CODE-KNOWLEDGE-V1 slices C1–C8, C10, C13 and C14 implement. Updated 2026-09-24 with reviews A + B (11.455), notes 6–7 (§11–§12, 11.456) and the retrieval model + official Luau toolchain (§13, 11.457). No code yet."
 owner: "@king"
 scope: "Documents only. Extends the packet's §6 (parsers), §8 (code chunking) and the schema §4–§6 (symbols, parent links, edges) with one representation card per language. No schema change: symbol kinds, relations and attributes are controlled vocabularies inside the existing columns."
 ---
@@ -41,7 +41,7 @@ query plan → lanes → reranker → answer. Only the front door (detection + p
 | 3. Graph | symbols and links; every link carries `resolution` (resolved / unresolved / ambiguous / external), `confidence`, `provenance` | parsers + analyzers, deterministic, never an LLM | `code_symbols`, `code_edges`: Postgres authority, plus a deterministic Neo4j projection in the first version (C8, owner 2026-09-24) |
 | 3b. Diagnostics | real analyzer findings: rule id, severity, message, span, tool + version (Ruff, pyright, luau-analyze, selene, the Power Fx binder, YAML schema checks) | the validators / analyzers of each card, never an LLM | with the structure manifest; exposed to the DEBUG task and the MCP diagnostics tool |
 | 4. Meaning | AI enrichment at the file level (Document Profile) and at every parent / class (pMAP). The requests are specified in §11; large files and oversized units in §12 | the SAME `doc_profile` and `doc_parent_map` workers, provider lanes and env as documents. A code prompt = a shared code skeleton + a per-language addendum. Contract per document (decision 2), gated on the source hash | existing profile / pMAP artifacts + Qdrant collections |
-| 5. Routing / search | vectors (exact source, pMAP, profile, atoms) + sparse vocabulary + the structure lane (walks layer 3 from strong hits) | existing lanes + one structure lane | existing collections |
+| 5. Routing / search | code is RANKED BY ITS DESCRIPTIONS and HYDRATED BY RULE (§13): the semantic door (profile / pMAP text, dense + sparse), the exact door (symbol / path / stack-trace lookup), the structure lane (walks layer 3); exact code vectors stay as a safety net | existing lanes + one structure lane + the hydrator | existing collections |
 
 **Rules that hold for every language:**
 - Only layer 1 is evidence. It is cited as `[S#]` with file, path and line span.
@@ -141,7 +141,7 @@ query plan → lanes → reranker → answer. Only the front door (detection + p
 | | |
 |---|---|
 | **Detection** | `.luau`; `.lua` under the packet's Lua / Luau policy (Luau when Luau markers or a Roblox project are present). Markers: `--!strict` / `--!nonstrict` / `--!nocheck`, type annotations, `game:GetService`, `script.Parent`. A Rojo project file (`default.project.json`) marks a Roblox project |
-| **Tooling** | tree-sitter + tree-sitter-luau (AST + spans); `luau-analyze` (validation, types). **Evaluate in C0:** Rojo `rojo sourcemap` (file ↔ instance tree, which `require` resolution needs); luau-lsp consuming that sourcemap; an export step if the code lives in a place file (`.rbxl` / `.rbxlx`), which depends on the owner's project format |
+| **Tooling** | **the OFFICIAL Luau toolchain** (owner 2026-09-24): `luau-ast` (the official parser, full typed syntax, JSON AST with positions; build target `Luau.Ast.CLI` in luau-lang/luau) + `luau-analyze` (types, lints). **Rojo** `rojo sourcemap` (file ↔ instance tree, script kinds) + luau-lsp consuming it for `require` / instance resolution. tree-sitter-luau is a fallback / comparison only. A place file (`.rbxl` / `.rbxlx`) is exported to files first (Lune + rbx-dom). **C0 checks** that the macOS release ships `luau-ast` (else it is built from source with CMake) |
 | **Script kind** | from the Rojo naming convention: `*.server.luau` = Script (server), `*.client.luau` = LocalScript (client), other `*.luau` = ModuleScript; `init.*` represents its folder |
 | **Units** | file = one script instance (`heading_path`: instance path, e.g. `ServerScriptService → Combat → WeaponService`). **Parents:** each class (the metatable OOP pattern: `local Class = {}`, `Class.__index = Class`, a constructor calling `setmetatable`); each module-table method group; each top-level function; each event-handler group (the `:Connect` handlers a script registers for one signal or remote); one init block (services, requires, remote setup). **Children:** methods / functions as exact blocks; an oversized one is split on statement boundaries |
 | **Symbol kinds** | `module` (the table a ModuleScript returns), `class`, `method` (`function Class:m` / `Class.m`), `function`, `local_function`, `type` (incl. exported types), `remote` (a RemoteEvent / RemoteFunction / BindableEvent by instance path), `service` (a `GetService` target), `connection` (a `:Connect` handler) |
@@ -183,7 +183,7 @@ These live as `code_edges` rows and are projected into Neo4j in the first versio
 ## 8. What C0 verifies on the owner's real code before a slice depends on it
 
 1. The Roblox project format (Rojo / Argon files, or a place file) and whether `rojo sourcemap` + luau-lsp resolve its
-   `require` calls.
+   `require` calls; whether the macOS Luau release ships `luau-ast` (else build it from source).
 2. LibCST-only against a SCIP / pyright-class resolver for Python cross-file calls, on this repository.
 3. A span-preserving TOML reader; ruamel.yaml / tree-sitter-yaml against PyYAML for anchors and comments.
 4. The Power Apps export format of the owner's app.
@@ -331,4 +331,58 @@ verbatim):
    - every parsed unit is accounted for (described, batched or explicitly skipped with a receipt);
    - every request fits its model's limits (measured);
    - questions that span connected units retrieve the needed source.
+
+## 13. Retrieval model: rank descriptions, hydrate code deterministically (owner, 2026-09-24)
+
+**Owner:** "code should be treated as determinsitic hydration … if the semantic llm generation part win it is
+determinsitically retrieved with contexts, so the embedder and reranker not trained on code still work".
+
+**The rule.**
+- A code UNIT (file, class / parent, config section, formula) competes for a place in the answer through its
+  DESCRIPTIONS: the file profile (ONE / SUMMARY / Q / SEARCH / TERM …) and the class pMAP line. These are natural
+  language, which is what the embedder and the reranker were trained on.
+- When a unit wins, its **exact source is hydrated by rule**: the parser's span for that unit, plus its bounded graph
+  neighbourhood. The code is never scored as text.
+- The citation is the hydrated exact code (`[S#]`). The description stays ORIENTATION.
+
+**Two doors in.**
+
+| Door | Input | How it resolves | AI? |
+|---|---|---|---|
+| Semantic | a plain-language question ("why does damage sometimes apply twice?") | dense + sparse over the descriptions → the reranker judges (question, description) → winning units | the embedder / reranker only, on English |
+| Exact | an identifier, qualified name, file / instance path, stack trace, error text | the symbol table / sparse identifier lane / span lookup (a stack trace's file:line → the symbol whose span contains it) → units | none |
+
+Both doors end at the same hydrator. A question can use both.
+
+**Hydration rules** (deterministic, per code task, capped by a token budget measured with the synthesis model's
+counting method):
+- **LOCATE / EXPLAIN:** the unit's full source; its direct callees / requires as signatures + call-site lines; its parent's
+  signature list.
+- **DEBUG:**
+  - the unit + both sides of any remote it fires or handles (resolved pairs only);
+  - the config readers of any key it uses;
+  - the diagnostics on those spans;
+  - a stack trace hydrates every frame's unit.
+- **IMPACT:** the unit's callers (resolved), then their callers, to the budget, as signatures + call sites; the full bodies
+  only for the top ranked.
+- **COMPARE / GENERATE:** the matched units + their ANALOG units (the same role in another file / project) as signatures
+  first, bodies to the budget.
+- An oversized unit hydrates on syntax boundaries marked PARTIAL (§12), never cut by characters.
+- Every hydrated item names its path ("callee of `Y.apply`", "handler of remote `ReplicatedStorage.Remotes.Hit`") and its
+  resolution status. An unresolved link hydrates nothing and is shown as unresolved.
+
+**Coverage safety nets** (a description can miss a behaviour):
+- several routes per unit: the file profile, the class pMAP, the Q / SEARCH / TERM lines;
+- the exact door for identifiers;
+- the plain exact-code vectors + sparse lane stay searchable as a fallback door;
+- the structure lane pulls neighbours of any hydrated unit.
+
+**Score balance.** Descriptions are query-shaped and may outrank book passages in one pool. The implementation /
+reference roles (C11) keep both code units and book passages in the answer; no fixed weights.
+
+**Measured, not assumed** (C9 / C10 acceptance):
+- the semantic door finds the right unit for owner-style questions;
+- hydration stays inside the budget;
+- a question whose answer spans units gets all of them;
+- the exact door resolves identifiers and stack traces without an LLM.
 
