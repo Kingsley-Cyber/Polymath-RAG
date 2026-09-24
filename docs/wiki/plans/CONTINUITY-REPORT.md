@@ -25,6 +25,10 @@ historical, never an instruction.
 
 ## CURRENT — 2026-09-24 — **ACTIVE MISSION: CODE-KNOWLEDGE-V1 (multi-language code RAG)**
 
+**NEW SESSION → open `docs/wiki/plans/CODE-KNOWLEDGE-V1-START-HERE.md` first** (11.456). It is the implementation bootstrap:
+the decided design, the slice order C0 → C14, the code anchors, the run rules and the traps. The owner's one-click restart
+is `bash scripts/bounce_fleet.sh`.
+
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs
   alreayd a md plan i beleive and i want to add upon it".
 - **Read in this order:**
@@ -71,8 +75,8 @@ historical, never an instruction.
 - Details: the PREVIOUS block below.
 
 ### Repository State
-- `origin/production` = `a7e3e38` (pushed 2026-09-24 on the owner's word). `production` = that + this documents slice
-  (11.452), unpushed until the owner's next word.
+- `origin/production` = `a7e3e38` (pushed 2026-09-24 on the owner's word). `production` = that + the planning slices
+  11.452–11.456 (documents + `scripts/bounce_fleet.sh`), unpushed until the owner's next word.
 - **Fleet:** 24 / 13 on ONE bundle `87e5db83bf30` (bounce 2026-09-24 00:43). Running code = committed code (the slice is
   documents only).
 - **Live `.env` flags:**

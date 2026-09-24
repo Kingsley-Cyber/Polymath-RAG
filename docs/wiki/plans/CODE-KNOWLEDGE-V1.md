@@ -9,6 +9,9 @@ scope: "Source-family extension of ingestion (detection, exact-source chunk prov
 
 # CODE-KNOWLEDGE-V1
 
+**A new implementation session starts at `docs/wiki/plans/CODE-KNOWLEDGE-V1-START-HERE.md`** (11.456). It gathers the decided
+design, the slice order, the code anchors, the run rules and the traps.
+
 **Plan of record = the owner's execution packet, admitted byte-identical at `docs/code-knowledge-v1/`** (planned 2026-09-18;
 `PACKET_MANIFEST.json` sha256 verified on admission). Two reviews override it where they conflict. Read in this order:
 
@@ -91,4 +94,5 @@ candidate funnel and reranker, and always resolve the winning route back to exac
 | Language representation spec | written 2026-09-24 (register 11.453) |
 | GitHub sources list | verified 2026-09-24 (register 11.454) |
 | Design reviews A + B | reconciled 2026-09-24 (register 11.455); Neo4j projection moved into the first version |
+| Notes 6–7 (LLM requests, large files) + START HERE | 2026-09-24 (register 11.456): spec §11–§12; the implementation bootstrap `CODE-KNOWLEDGE-V1-START-HERE.md` |
 | Owner input before C0 | the real code locations and formats (report §7) |
