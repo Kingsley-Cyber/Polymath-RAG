@@ -23,7 +23,7 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). Owner actions waiting: the corpus-delete command, the probe-quality slice, pushes. CODE-KNOWLEDGE-V1 parked.**
+## CURRENT — 2026-09-23 (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). PROBE-GATE-V1 live 2026-09-24 (11.446–11.447; HYBRID / GRAPH, WILDCARD exempt). Pushed to origin 2026-09-24 on the owner's word (`0e0978b`). Owner actions waiting: the corpus-delete command; pushes of later commits. CODE-KNOWLEDGE-V1 parked.**
 
 ### READ FIRST — what happened while the owner was away (2026-09-23 night)
 1. **Skeleton routing is live** (flags `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard` in `.env`;
@@ -38,7 +38,12 @@ historical, never an instruction.
    - Live, 3 queries: skeleton cited 2→3 / 8→10 / 19→19, cited books 5→5 / 7→9 / 6→7.
    - Latency: WILDCARD 50.8 s end to end (the judge contends with the bridge validation on the one GPU; knob:
      `contextual_max_needs` 6 → 4 in `skeleton_routes.py`). HYBRID / GRAPH retrieval is faster.
-2. **Probe doors** ("the skeleton works with my subqueries"): each planned probe drives the profile → pMAP → children door.
+2. **Probe gate: LIVE 2026-09-24** (register 11.446–11.447). One cross-encoder call scores each PROFILE / BRIDGE probe
+   against the resolved question and drops those below 0.2 before retrieval.
+   - Scope: HYBRID and GRAPH only. WILDCARD is exempt, because a non-obvious bridge shares the low band with true misses.
+   - Switch: `POLYMATH_CHAT_PROBE_GATE=1` in `.env`.
+   - Live proof: the off-topic probe was dropped; the restored concept atoms now show up as probes.
+   **Probe doors** ("the skeleton works with my subqueries"): each planned probe drives the profile → pMAP → children door.
    - Built behind `POLYMATH_CHAT_SKELETON_PROBES` and **left OFF**. The replay showed the probe chunks rarely reach the
      judge, and in WILDCARD they displaced two cross-domain finds.
    - The limiter is **probe quality**. Next slice: a plan-time probe-connection gate (design §9.4).
@@ -67,16 +72,17 @@ historical, never an instruction.
    - The corpus cleanup removes the commerce-v1 part.
 
 ### Repository State
-- Branch `production` (the fleet checkout). `origin/production` = `19750d4`. Local is ahead by 50 unpushed commits
-  (`git log --oneline origin/production..production`). Push only on the owner's per-push word.
-- HEAD = the 11.445 documents commit, on top of merge `706ed2c` (ATOM-REPAIR-V1), which follows `d7706c7` (V1.1) + `79c4c34` (Groq).
-  - Rollback tags (local): `pre-atom-repair-merge` → `903cb89`, `pre-v11-groq-merge` → `0e57c46`, `pre-skeleton-routes-merge` → `4ab046e`.
+- Branch `production` (the fleet checkout). `origin/production` = `0e0978b` (pushed 2026-09-24 on the owner's word). Local is
+  ahead by 5 unpushed commits (`git log --oneline origin/production..production`). Push only on the owner's per-push word.
+- HEAD = the 11.446–11.447 documents commit, on top of merges `9697a91` (probe gate WILDCARD exempt), `4f6bf08` (PROBE-GATE-V1)
+  and `706ed2c` (ATOM-REPAIR-V1).
+  - Rollback tags (local): `pre-probe-gate-merge` → `0e0978b`, `pre-atom-repair-merge` → `903cb89`, `pre-v11-groq-merge` → `0e57c46`, `pre-skeleton-routes-merge` → `4ab046e`.
   - Worktrees `pmv4-probe-routes` / `pmv4-groq` are removed after merge; their branches are merged.
   - Unmerged worktree branches (not tonight's): `review/m1-reproductions` (+1), `handoff/r5-audit-fix` (+5).
-- Fleet: 24 workers / 13 types healthy on ONE bundle `8d6ae18a44f4`, `/ready` true (embedder + reranker). Running code =
-  committed code (bounce after `706ed2c`, 2026-09-24).
-- Live `.env` (gitignored): `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard`; the probe flag is
-  unset.
+- Fleet: 24 workers / 13 types healthy on ONE bundle `fe75ad230a1c`, `/ready` true (embedder + reranker). Running code =
+  committed code (bounce after `9697a91`, 2026-09-24).
+- Live `.env` (gitignored): `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard`,
+  `POLYMATH_CHAT_PROBE_GATE=1`; the probe-doors flag (`POLYMATH_CHAT_SKELETON_PROBES`) is unset.
 
 ### Active Mission
 - **DOCUMENT RAG COMPLETION (active; owner 2026-09-23: "before we work on code rag, we must complete document rag").**
