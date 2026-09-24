@@ -2318,6 +2318,10 @@ TREE: list[tuple[str, str, str | None]] = [
     # CODE-KNOWLEDGE-V1-SOURCES (register 11.454): the verified GitHub sources list
     ("docs/wiki/plans/CODE-KNOWLEDGE-V1-SOURCES.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-code-knowledge-sources.md", "md", None),
+    # CODE-KNOWLEDGE-V1 reviews A + B (register 11.455): admitted verbatim, reconciled; Neo4j projection in the first version
+    ("docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTES_4_5.md", "md", None),
+    ("docs/wiki/reports/2026-09-24/CODE-KNOWLEDGE-V1-NOTES-4-5-RECONCILIATION.md", "md", None),
+    ("docs/wiki/work-log/2026-09-24-code-knowledge-notes-4-5.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),

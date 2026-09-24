@@ -2,7 +2,7 @@
 title: "CODE-KNOWLEDGE-V1 — GitHub sources: what we pull, what we only study, what we reject, and why"
 date: 2026-09-24
 last_reviewed: 2026-09-24
-status: "PLAN — verified against the GitHub API on 2026-09-24 (licence, archived flag, last push, latest release). Nothing is installed by this document; each slice pins and records what it adds (PAR-05)."
+status: "PLAN — verified against the GitHub API on 2026-09-24 (licence, archived flag, last push, latest release); CodeGraphContext, Graphify and Ruff added the same day from reviews A + B (register 11.455). Nothing is installed by this document; each slice pins and records what it adds (PAR-05)."
 owner: "@king"
 scope: "Documents only. The external source list for CODE-KNOWLEDGE-V1 and CODE-LANGUAGE-REPRESENTATIONS-V1."
 ---
@@ -57,6 +57,8 @@ NOASSERTION), stars, archived flag, last push, latest release.
 | [scip-code/scip](https://github.com/scip-code/scip) | Apache-2.0 | v0.10.0 (moved from sourcegraph/) | The SCIP index format + CLI to read scip-python's output | binary / proto | C0 (with scip-python) |
 | [microsoft/pyright](https://github.com/microsoft/pyright) | MIT | 1.1.414 | The type checker behind scip-python, and a Python validator where the repository configures it | npm / pip wrapper | C0, C13 |
 | [davidhalter/jedi](https://github.com/davidhalter/jedi) | MIT | active | A lighter Python resolver: the fallback if scip-python is too heavy | pip | C0 (evaluate) |
+| [astral-sh/ruff](https://github.com/astral-sh/ruff) | MIT | 0.16.8 (2026-09-16) | The standard Python linter: its findings are real diagnostics (layer 3b), the facts behind "issue identification" (review A). It is already the repository's own linter | pip wheel | C13 |
+| [CodeGraphContext/CodeGraphContext](https://github.com/CodeGraphContext/CodeGraphContext) | MIT | v0.5.7 (2026-08-08), 4.2k★ | "An MCP server plus a CLI tool that indexes local code into a graph database" (Neo4j support, optional SCIP). We evaluate its EXTRACTION components against our adapters on the same files before writing equivalents. Its pipeline is not adopted (it would be a second system), and its Lua support is not Luau support (review A) | pip, evaluation only | C0 (evaluate) |
 | [microsoft/multilspy](https://github.com/microsoft/multilspy) | MIT | v0.1.0 | A Python client that drives language servers for definition / reference queries, used only if C0 chooses LSP-based resolution. Its luau-lsp support is unverified | pip | C0 (evaluate) |
 
 ## C. Code-RAG implementations — STUDY (ideas, no code pulled)
@@ -66,6 +68,7 @@ NOASSERTION), stars, archived flag, last push, latest release.
 | [Aider-AI/aider](https://github.com/Aider-AI/aider) | Apache-2.0 | 49k★; last push 2026-05, release v0.86.0 (2025-08) | **The repo map:** tree-sitter tag queries (definitions / references) + PageRank over the reference graph rank the important symbols. We use the idea to order which classes get enrichment first, and to answer "big picture" questions. Its per-language tag queries may be reusable under Apache-2.0 with attribution (decided in C4 / C5a) |
 | [vitali87/code-graph-rag](https://github.com/vitali87/code-graph-rag) | MIT | 5.2k★, active (v0.0.945, 2026-09-16) | The closest open-source analogue of this plan: tree-sitter → code knowledge graph → natural-language queries across languages. Compare its node / edge schema and multi-language adapters with our cards before C2 freezes the vocabularies |
 | [zilliztech/claude-context](https://github.com/zilliztech/claude-context) | MIT | 12.5k★ | Code search over MCP for agents: AST chunking, hybrid search, incremental re-indexing by file hashes. Reference for the later MCP code tools and for the importer's sync-by-path |
+| [Graphify-Labs/graphify](https://github.com/Graphify-Labs/graphify) | Apache-2.0 | 121k★, v0.9.67 (the owner has `graphifyy` 0.9.53 installed) | Its MCP access and Neo4j export / push are patterns to study for C8 and the MCP phase (review B). **Not a Luau parser:** the installed `extract.py` maps `.luau` to its plain-Lua extractor (lines 2327, 5400, verified 2026-09-24), which does not read Luau type syntax |
 | [oraios/serena](https://github.com/oraios/serena) | MIT per component | 29.7k★, v1.7.0 | Symbol-level retrieval for agents through language servers (find a symbol, find referencing symbols). Reference for the later `get_symbol` / references MCP tools |
 | [run-llama/llama_index](https://github.com/run-llama/llama_index) | MIT | active | Its tree-sitter `CodeSplitter`: reference for splitting an oversized function on syntax boundaries |
 | [continuedev/continue](https://github.com/continuedev/continue) | Apache-2.0 | active | Codebase indexing (tree-sitter chunks + embeddings + a repo map): reference |

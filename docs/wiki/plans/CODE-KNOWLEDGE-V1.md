@@ -42,6 +42,14 @@ scope: "Source-family extension of ingestion (detection, exact-source chunk prov
 5. **The GitHub sources:** `docs/wiki/plans/CODE-KNOWLEDGE-V1-SOURCES.md` (verified 2026-09-24). What we pull (parsers,
    resolvers, validators), what we only study (Aider's repo map, code-graph-rag, claude-context, serena …), what we reject
    and why, with the licence, version and slice of each.
+6. **Two design reviews:** `docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTES_4_5.md`, reconciled in
+   `docs/wiki/reports/2026-09-24/CODE-KNOWLEDGE-V1-NOTES-4-5-RECONCILIATION.md`. They added:
+   - reproducible links;
+   - remotes paired by instance identity;
+   - config strings as possible references;
+   - a diagnostics layer;
+   - the three-part code answer;
+   - Neo4j in the first version.
 
 ## One-sentence architecture (from the packet)
 
@@ -62,7 +70,8 @@ candidate funnel and reranker, and always resolve the winning route back to exac
   evidence. Structure comes from AST / tree-sitter via mature tooling. Per-function enrichment only after a measured miss.
 - **Technical defaults accepted:**
   - parsers only, no LLM guessing of code facts;
-  - the call graph in Postgres first, Neo4j later;
+  - Postgres is the graph's authority, with a deterministic Neo4j projection IN THE FIRST VERSION (changed later on
+    2026-09-24 after two design reviews; register 11.455);
   - `.txt` becomes YAML / TOML only if a strict parser accepts it;
   - the existing fleet runs ingestion;
   - one reranker, no fixed weights;
@@ -81,4 +90,5 @@ candidate funnel and reranker, and always resolve the winning route back to exac
 | Slices C0–C14 | not started. Order: report §6 |
 | Language representation spec | written 2026-09-24 (register 11.453) |
 | GitHub sources list | verified 2026-09-24 (register 11.454) |
+| Design reviews A + B | reconciled 2026-09-24 (register 11.455); Neo4j projection moved into the first version |
 | Owner input before C0 | the real code locations and formats (report §7) |
