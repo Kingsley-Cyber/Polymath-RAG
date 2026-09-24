@@ -2291,6 +2291,13 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/probe-gate-2026-09-24/replay.json", "json", None),
     ("docs/wiki/experiments/probe-gate-2026-09-24/live_check.json", "json", None),
     ("docs/wiki/work-log/2026-09-24-probe-gate.md", "md", None),
+    # S4 COMPILER CONTRACT (register 11.449): the plan states the learning need; bridges written in the one compiler call
+    ("tests/determinism/test_s4_compiler_contract.py", "py", None),
+    ("docs/wiki/experiments/s4-compiler-contract-2026-09-24/measure_compile.py", "py", None),
+    ("docs/wiki/experiments/s4-compiler-contract-2026-09-24/measure_round1.json", "json", None),
+    ("docs/wiki/experiments/s4-compiler-contract-2026-09-24/measure_round2.json", "json", None),
+    ("docs/wiki/experiments/s4-compiler-contract-2026-09-24/measure.json", "json", None),
+    ("docs/wiki/work-log/2026-09-24-s4-compiler-contract.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),

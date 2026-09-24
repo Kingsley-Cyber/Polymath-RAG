@@ -1,0 +1,4338 @@
+{
+ "reps": 2,
+ "questions": [
+  "What do my books say about making an animated character's movement feel weighty?",
+  "How do editors and directors build suspense without dialogue?",
+  "How do lighting and color choices change how an audience reads a scene?",
+  "What does the book say about nonsquare pixels?",
+  "How do the rhythm of film editing and the timing of music relate?",
+  "What is the 180-degree rule in filming a scene?",
+  "make a character's suppressed grief visible while they try hard to hide it",
+  "why does camera angle sell a staged hit",
+  "What do the cinema documents say about how a camera crew keeps equipment working through a shooting day, and what goes wrong in hand-offs?",
+  "What is the Facial Action Coding System and what does it measure?"
+ ],
+ "summary": {
+  "v1": {
+   "runs": 20,
+   "errors": 0,
+   "fallback_rate": 0.0,
+   "fallback_reasons": [],
+   "compile_total_ms": {
+    "median": 3026.9,
+    "p90": 4118.4
+   },
+   "plan_call_ms": {
+    "median": 1500.8,
+    "p90": 2284.7
+   },
+   "bridges_step_ms": {
+    "median": 1111.0,
+    "p90": 2087.7
+   },
+   "scout_ms": 272.1,
+   "matches_ms": null,
+   "bridges_admitted_per_turn": 2.0,
+   "turns_with_bridges": 11,
+   "retrieval_required_rate": 1.0,
+   "learning_need_rate": null,
+   "user_queries_with_purpose": null,
+   "synthesis_targets_per_turn": null,
+   "inquiry_dims_per_turn": null
+  },
+  "v2": {
+   "runs": 20,
+   "errors": 0,
+   "fallback_rate": 0.05,
+   "fallback_reasons": [
+    "transport:ReadTimeout"
+   ],
+   "compile_total_ms": {
+    "median": 2975.2,
+    "p90": 5754.8
+   },
+   "plan_call_ms": {
+    "median": 2699.1,
+    "p90": 5470.4
+   },
+   "bridges_step_ms": {
+    "median": 0.2,
+    "p90": 0.7
+   },
+   "scout_ms": 268.4,
+   "matches_ms": 1.5,
+   "bridges_admitted_per_turn": 1.5,
+   "turns_with_bridges": 11,
+   "retrieval_required_rate": 1.0,
+   "learning_need_rate": 1.0,
+   "user_queries_with_purpose": 1.0,
+   "synthesis_targets_per_turn": 2.0,
+   "inquiry_dims_per_turn": 4.0
+  }
+ },
+ "runs": [
+  {
+   "rep": 0,
+   "q": 0,
+   "question": "What do my books say about making an animated character's movement feel weighty?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 4132.3,
+    "compile_ms": {
+     "scout": 716.0,
+     "endpoints": 4.4,
+     "lanes": 1294.6,
+     "profile_expansion": 0.1,
+     "bridges": 2087.7,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 1.4,
+     "total": 4118.4
+    },
+    "llm_wall_ms": 1290.3,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 4,
+     "admitted": 4,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 2087.7
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "making animated character movement feel weighty",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "Laban effort weight and timing in animation",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how a body communicates force and mass to an observer",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How does timing influence the perception of weight and force in animation?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Using movement to convey emotions and character",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How does the distribution and shifting of weight contribute to realism in kinetic illustrations?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "What are the techniques for translating real-world physics into exaggerated motion for animation?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "Which acting principles can be applied to character animation to enhance the believability of movement?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br3",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How can character locomotion be used as a narrative cue to describe a character's physical state?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 0,
+   "question": "What do my books say about making an animated character's movement feel weighty?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 3053.5,
+    "compile_ms": {
+     "scout": 267.6,
+     "matches": 1.5,
+     "endpoints": 4.3,
+     "lanes": 2778.8,
+     "profile_expansion": 0.1,
+     "bridges": 0.8,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "explorer": 0.2,
+     "total": 3053.5
+    },
+    "llm_wall_ms": 2777.4,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "The user wants to understand the principles of conveying mass and gravity through character animation.",
+    "inquiry": {
+     "precision": "The distinction between visual weight (scale) and kinetic weight (timing/physics).",
+     "depth": "How weight shift and center of gravity influence the perceived mass of a character.",
+     "transfer": "Applying real-world physics to exaggerated or stylized animation.",
+     "synthesis": "Combining animation timing with physical movement analysis to create believable weight."
+    },
+    "synthesis_targets": [
+     "How does timing relate to the perception of weight?",
+     "What role does weight shift play in making movement feel realistic?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 2,
+     "unexplained": [],
+     "matches": 5,
+     "bridges": {
+      "proposed": 2,
+      "grounded": 2,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 2,
+     "admitted": 2,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.8
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "making animated character movement feel weighty",
+      "expected_contribution": "direct techniques for conveying weight in animation",
+      "evidence_requirement": "specific animation principles or rules"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "weight shift and center of gravity in kinetic movement",
+      "expected_contribution": "the physical mechanics that create the illusion of weight",
+      "evidence_requirement": "descriptions of balance and mass distribution"
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how physical mass affects the timing and acceleration of a body",
+      "expected_contribution": "domain-neutral principles of physics applied to motion",
+      "evidence_requirement": "general laws of inertia and momentum"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How does timing influence the perception of weight and force in animation?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Using movement to convey emotions and character",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "translating real-world physics into exaggerated motion for weight",
+      "expected_contribution": "how to amplify weight for cinematic effect",
+      "evidence_requirement": "examples of exaggerated physics"
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "weight shift in kinetic illustration and movement",
+      "expected_contribution": "the role of balance in conveying realism",
+      "evidence_requirement": "descriptions of weight distribution"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 1,
+   "question": "How do editors and directors build suspense without dialogue?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 3440.3,
+    "compile_ms": {
+     "scout": 258.1,
+     "endpoints": 3.6,
+     "lanes": 1559.3,
+     "profile_expansion": 0.1,
+     "bridges": 1619.0,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 3440.3
+    },
+    "llm_wall_ms": 1557.9,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 3,
+     "admitted": 3,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 1618.9
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "building suspense without dialogue",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "editing techniques for tension and suspense",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "visual storytelling and cinematography for suspense",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q3",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "creating anticipation and psychological tension through pacing and information control",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How do directors convey meaning in a story?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Structuring suspense through framing and lighting choices.",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How can the manipulation of depth of field be used to create narrative tension in a scene?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "In what ways does the editor act as a storyteller to build suspense through the assembly of shots?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "What is the role of misdirection in film editing when establishing suspense?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 1,
+   "question": "How do editors and directors build suspense without dialogue?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 5754.8,
+    "compile_ms": {
+     "scout": 277.6,
+     "matches": 1.6,
+     "endpoints": 4.2,
+     "lanes": 5470.4,
+     "profile_expansion": 0.1,
+     "bridges": 0.6,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 5754.8
+    },
+    "llm_wall_ms": 5469.5,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understanding the non-verbal toolkit for creating cinematic tension.",
+    "inquiry": {
+     "precision": "Distinction between tension created by what is shown vs. what is hidden.",
+     "depth": "The relationship between cut frequency and psychological pressure.",
+     "transfer": "How suspense in cinema mirrors general psychological anticipation.",
+     "synthesis": "Integrating visual composition with temporal editing patterns."
+    },
+    "synthesis_targets": [
+     "How does the interplay between shot duration and framing build suspense?",
+     "How is information withheld from the audience to create tension?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 2,
+     "unexplained": [],
+     "matches": 3,
+     "bridges": {
+      "proposed": 3,
+      "grounded": 3,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 3,
+     "admitted": 3,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.5
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "building suspense without dialogue",
+      "expected_contribution": "direct techniques for creating tension through visuals and timing",
+      "evidence_requirement": "specific non-verbal suspense methods"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "pacing and rhythm of editing for tension",
+      "expected_contribution": "how the timing of cuts affects the viewer's anxiety",
+      "evidence_requirement": "editing patterns for suspense"
+     },
+     {
+      "id": "q2",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "visual composition and framing to create suspense",
+      "expected_contribution": "how shot choice and framing build anticipation",
+      "evidence_requirement": "cinematographic choices for tension"
+     },
+     {
+      "id": "q3",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "managing information asymmetry to create anticipation",
+      "expected_contribution": "the psychological principle of withholding information",
+      "evidence_requirement": "theory of information control"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How do directors convey meaning in a story?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Structuring suspense through framing and lighting choices.",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "the editor's role in shaping narrative tension",
+      "expected_contribution": "how the editor specifically manipulates the story's flow for suspense",
+      "evidence_requirement": "editor-specific storytelling strategies"
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "using depth of field to create narrative tension",
+      "expected_contribution": "how focusing/blurring elements creates a sense of unease",
+      "evidence_requirement": "depth of field examples for tension"
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "misdirection in film editing",
+      "expected_contribution": "how leading the audience away from the truth builds suspense",
+      "evidence_requirement": "techniques of visual misdirection"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 2,
+   "question": "How do lighting and color choices change how an audience reads a scene?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 3908.6,
+    "compile_ms": {
+     "scout": 225.3,
+     "endpoints": 3.7,
+     "lanes": 1942.8,
+     "profile_expansion": 0.1,
+     "bridges": 1736.4,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 3908.5
+    },
+    "llm_wall_ms": 1942.2,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 4,
+     "admitted": 4,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 1736.4
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "lighting and color choices audience perception",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "visual contrast and color saturation emotional impact",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how visual stimuli influence psychological interpretation of a narrative",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "lighting direction influencing mood",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Visual storytelling and mise\u2011en\u2011scene",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How are lighting flares utilized as narrative devices to influence viewer perception?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "In what ways do lighting choices and framing structure the feeling of suspense for an audience?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "What is the role of the audience in interpreting the story based on visual cues?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br3",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How does the use of color filtration modify the mood of a scene?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 2,
+   "question": "How do lighting and color choices change how an audience reads a scene?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 4076.0,
+    "compile_ms": {
+     "scout": 267.4,
+     "matches": 1.6,
+     "endpoints": 3.7,
+     "lanes": 3802.6,
+     "profile_expansion": 0.1,
+     "bridges": 0.4,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 4075.9
+    },
+    "llm_wall_ms": 3801.4,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understand the causal link between cinematic visual aesthetics (light/color) and the audience's psychological interpretation of the story.",
+    "inquiry": {
+     "precision": "The distinction between lighting for visibility versus lighting for narrative meaning.",
+     "depth": "How specific color temperatures or lighting ratios trigger specific emotional responses.",
+     "transfer": "Applying color theory from art to cinematic storytelling.",
+     "synthesis": "Reconciling technical lighting setups with the resulting emotional 'read' by the audience."
+    },
+    "synthesis_targets": [
+     "How does lighting contrast specifically change the 'read' of a character?",
+     "In what ways do color palettes shift the audience's perception of time or place?",
+     "How do lighting and color work together to create suspense or tension?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 3,
+     "unexplained": [],
+     "matches": 4,
+     "bridges": {
+      "proposed": 2,
+      "grounded": 2,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 2,
+     "admitted": 2,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.4
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "how lighting and color choices influence audience interpretation of a scene",
+      "expected_contribution": "direct relationship between visual choices and audience perception",
+      "evidence_requirement": "text linking lighting/color to emotional or narrative reading"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "psychological effects of color filtration and lighting contrast on mood",
+      "expected_contribution": "the technical mechanism by which color/light alters mood",
+      "evidence_requirement": "descriptions of specific color or light effects on emotion"
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how visual stimuli guide the observer's emotional response to a narrative",
+      "expected_contribution": "general principles of visual communication and perception",
+      "evidence_requirement": "theory on how visual cues signal meaning to a viewer"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "lighting direction influencing mood",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Visual storytelling and mise\u2011en\u2011scene",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "how color filtration modifies scene mood",
+      "expected_contribution": "provides a specific technical example of color's effect on mood",
+      "evidence_requirement": "details on color filtration techniques"
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "structuring suspense through framing and lighting choices",
+      "expected_contribution": "explains how lighting specifically creates the feeling of suspense",
+      "evidence_requirement": "lighting patterns used for suspense"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 3,
+   "question": "What does the book say about nonsquare pixels?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 1281.6,
+    "compile_ms": {
+     "scout": 282.3,
+     "endpoints": 3.8,
+     "lanes": 995.0,
+     "profile_expansion": 0.1,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 1281.5
+    },
+    "llm_wall_ms": 991.1,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": "intent_not_latent",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "nonsquare pixels",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "pixel aspect ratio",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Pixel aspect\u2011ratio handling",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Literature on non\u2011linear editing systems (e.g., Avid user guides)",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 3,
+   "question": "What does the book say about nonsquare pixels?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 1854.3,
+    "compile_ms": {
+     "scout": 224.8,
+     "matches": 2.7,
+     "endpoints": 3.5,
+     "lanes": 1622.6,
+     "profile_expansion": 0.1,
+     "bridges": 0.1,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "explorer": 0.2,
+     "total": 1854.2
+    },
+    "llm_wall_ms": 1621.6,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understanding the concept and application of non-square pixels in digital cinema and compositing.",
+    "inquiry": {
+     "precision": "The distinction between square and non-square pixels and how they relate to pixel aspect ratio (PAR)."
+    },
+    "synthesis_targets": [],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "precision"
+     ],
+     "synthesis_targets": 0,
+     "unexplained": [],
+     "matches": 5,
+     "bridges": {
+      "proposed": 0,
+      "grounded": 0,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": false,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": "no_plan_bridges",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "nonsquare pixels",
+      "expected_contribution": "direct explanation of nonsquare pixels and their usage",
+      "evidence_requirement": "technical definition or usage notes"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "pixel aspect ratio",
+      "expected_contribution": "how pixel aspect ratio affects image proportions",
+      "evidence_requirement": "mathematical or technical implementation details"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Pixel aspect\u2011ratio handling",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Literature on non\u2011linear editing systems (e.g., Avid user guides)",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 4,
+   "question": "How do the rhythm of film editing and the timing of music relate?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 1841.9,
+    "compile_ms": {
+     "scout": 268.2,
+     "endpoints": 4.2,
+     "lanes": 1569.3,
+     "profile_expansion": 0.0,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.0,
+     "total": 1841.9
+    },
+    "llm_wall_ms": 1569.0,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": "intent_not_latent",
+     "latency_ms": 0.0
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "relationship between film editing rhythm and music timing",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "COMPARISON",
+      "origin": "USER",
+      "query": "rhythm and pacing in film editing",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "COMPARISON",
+      "origin": "USER",
+      "query": "expressive power of music timing and sound effects",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q3",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "synchronization of temporal patterns across different sensory channels",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Film Editing Theory (pacing and rhythm)",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Applying rhythmic editing to control narrative pacing",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 4,
+   "question": "How do the rhythm of film editing and the timing of music relate?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 3223.3,
+    "compile_ms": {
+     "scout": 258.3,
+     "matches": 1.4,
+     "endpoints": 4.4,
+     "lanes": 2958.0,
+     "profile_expansion": 0.1,
+     "bridges": 0.7,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "explorer": 0.2,
+     "total": 3223.2
+    },
+    "llm_wall_ms": 2956.7,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understanding the synergistic or oppositional relationship between visual pacing and auditory rhythm in cinema.",
+    "inquiry": {
+     "precision": "The distinction between cutting to the beat versus using music to contrast the edit rhythm.",
+     "depth": "How the tension between audio and visual rhythms creates specific psychological effects.",
+     "transfer": "Temporal alignment principles from music theory applied to visual sequences.",
+     "synthesis": "Reconciling the independent roles of the editor and the composer in establishing film rhythm."
+    },
+    "synthesis_targets": [
+     "How does cutting on the beat differ from cutting against the beat in terms of effect?",
+     "When does the music lead the edit versus the edit leading the music?",
+     "How do rhythm and timing combine to manipulate the viewer's perception of time?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 3,
+     "unexplained": [],
+     "matches": 3,
+     "bridges": {
+      "proposed": 2,
+      "grounded": 2,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 2
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 2,
+     "admitted": 2,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.7
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "relationship between film editing rhythm and music timing",
+      "expected_contribution": "direct interaction between cut points and musical beats",
+      "evidence_requirement": "text discussing synchronization or counterpoint"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "rhythm in editing as a driver of tension",
+      "expected_contribution": "how editing rhythm independently creates tension",
+      "evidence_requirement": "descriptions of pacing and cut frequency"
+     },
+     {
+      "id": "q2",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "expressive power of music and sound effects timing",
+      "expected_contribution": "how musical timing independently drives emotion",
+      "evidence_requirement": "analysis of score and sound effect placement"
+     },
+     {
+      "id": "q3",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "synchronization of temporal patterns across different sensory channels",
+      "expected_contribution": "general principles of audio-visual temporal alignment",
+      "evidence_requirement": "theory on sensory perception of rhythm"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Film Editing Theory (pacing and rhythm)",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Applying rhythmic editing to control narrative pacing",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "how editing rhythm drives tension in action or combat",
+      "expected_contribution": "provides a concrete example of rhythm creating tension without music",
+      "evidence_requirement": "text on combat editing pacing"
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "audio editing techniques for cinematic impact",
+      "expected_contribution": "explains the technical side of aligning sound to image",
+      "evidence_requirement": "details on audio-visual synchronization"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 5,
+   "question": "What is the 180-degree rule in filming a scene?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 1274.8,
+    "compile_ms": {
+     "scout": 263.9,
+     "endpoints": 4.3,
+     "lanes": 1006.3,
+     "profile_expansion": 0.0,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 1274.8
+    },
+    "llm_wall_ms": 1005.7,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": "intent_not_latent",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "180-degree rule",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "maintaining spatial continuity and axis of action",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Aligning camera movement with story rhythm.",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "use of camera angles to convey character importance",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 5,
+   "question": "What is the 180-degree rule in filming a scene?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 1864.7,
+    "compile_ms": {
+     "scout": 267.0,
+     "matches": 1.5,
+     "endpoints": 3.7,
+     "lanes": 1592.3,
+     "profile_expansion": 0.0,
+     "bridges": 0.0,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.0,
+     "total": 1864.6
+    },
+    "llm_wall_ms": 1592.1,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "The user wants to understand the fundamental cinematic convention for maintaining spatial orientation between characters.",
+    "inquiry": {
+     "precision": "The specific definition of the imaginary line (axis) and how it dictates camera placement.",
+     "depth": "The psychological effect on the audience when the rule is followed versus when it is 'jumped'."
+    },
+    "synthesis_targets": [],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision"
+     ],
+     "synthesis_targets": 0,
+     "unexplained": [],
+     "matches": 4,
+     "bridges": {
+      "proposed": 0,
+      "grounded": 0,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": false,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": "no_plan_bridges",
+     "latency_ms": 0.0
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "180-degree rule",
+      "expected_contribution": "definition and basic application of the rule",
+      "evidence_requirement": "text explaining the axis of action"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "maintaining spatial continuity and screen direction",
+      "expected_contribution": "how the rule prevents viewer disorientation",
+      "evidence_requirement": "explanation of eyelines and character positioning"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Aligning camera movement with story rhythm.",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "use of camera angles to convey character importance",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 6,
+   "question": "make a character's suppressed grief visible while they try hard to hide it",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 4407.3,
+    "compile_ms": {
+     "scout": 267.2,
+     "endpoints": 4.4,
+     "lanes": 1491.7,
+     "profile_expansion": 0.0,
+     "bridges": 2643.9,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 4407.3
+    },
+    "llm_wall_ms": 1491.3,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "CREATE_FROM_KNOWLEDGE",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 4,
+     "admitted": 4,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 2643.8
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "visualizing suppressed grief and hiding emotion",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "micro-expressions and facial reveals of hidden emotion",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "Laban effort and body language for internal conflict",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q3",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "contrast between an intended external mask and an involuntary internal state",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How do fight scenes convey character and narrative without spoken words?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Using movement to convey emotions and character",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How can selective focus be used to visually represent a character's emotional isolation?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "What specific iconography or compositional choices can convey emotional subtext without the use of dialogue?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "In what ways do close-up shots reveal character emotions that are otherwise being hidden?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br3",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How can facial nuance be utilized to communicate an emotional truth that contradicts a character's outward expression?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 6,
+   "question": "make a character's suppressed grief visible while they try hard to hide it",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 3261.7,
+    "compile_ms": {
+     "scout": 268.5,
+     "matches": 1.9,
+     "endpoints": 4.0,
+     "lanes": 2986.7,
+     "profile_expansion": 0.0,
+     "bridges": 0.4,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 3261.7
+    },
+    "llm_wall_ms": 2985.9,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "CREATE_FROM_KNOWLEDGE",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "How to visually communicate the tension between a character's internal grief and their external effort to mask it.",
+    "inquiry": {
+     "precision": "The distinction between overt grief and the 'leakage' of suppressed emotion.",
+     "depth": "The psychological mechanism of emotional masking translated to visual media.",
+     "transfer": "How animation principles of nuance apply to live-action cinematic grief.",
+     "synthesis": "Combining acting nuance with lens choices to reveal internal subtext."
+    },
+    "synthesis_targets": [
+     "How do facial nuances contrast with overall body posture to show suppression?",
+     "How can camera distance or focus emphasize emotional isolation during masking?",
+     "What visual cues signal the 'break' in a character's facade?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 3,
+     "unexplained": [],
+     "matches": 5,
+     "bridges": {
+      "proposed": 3,
+      "grounded": 3,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 3,
+     "admitted": 3,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.4
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "visualizing suppressed grief and hiding emotion",
+      "expected_contribution": "specific acting and visual cues for internal conflict",
+      "evidence_requirement": "descriptions of micro-expressions or composition"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "facial nuance and non-verbal dialogue for hidden emotion",
+      "expected_contribution": "physical manifestations of suppressed feeling",
+      "evidence_requirement": "acting techniques for emotional truth"
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "communicating internal contradiction through external behavior",
+      "expected_contribution": "general principles of subtext and behavioral leakage",
+      "evidence_requirement": "theory on non-verbal communication"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How do fight scenes convey character and narrative without spoken words?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Using movement to convey emotions and character",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "using selective focus to isolate a character's internal state",
+      "expected_contribution": "how to use the lens to separate the character's inner grief from their environment",
+      "evidence_requirement": "examples of selective focus for isolation"
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "visual cues and composition for conveying subtext",
+      "expected_contribution": "how framing can suggest grief that the character is not speaking",
+      "evidence_requirement": "compositional techniques for subtext"
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "facial nuance for emotional truth",
+      "expected_contribution": "specific facial movements that betray suppressed emotion",
+      "evidence_requirement": "details on micro-expressions"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 7,
+   "question": "why does camera angle sell a staged hit",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 3758.1,
+    "compile_ms": {
+     "scout": 281.3,
+     "endpoints": 4.7,
+     "lanes": 2284.7,
+     "profile_expansion": 0.0,
+     "bridges": 1187.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 3758.0
+    },
+    "llm_wall_ms": 2284.4,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 2,
+     "admitted": 2,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 1187.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "camera angle for staged hits and combat impact",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "masking the distance between attacker and target in screen combat",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how perspective and occlusion create the illusion of physical contact",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "camera angle usage",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "use of camera angles to convey character importance",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "When should the A camera be prioritized over the B camera for capturing close-up impact shots?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How can camera perspective be used to imply depth and spatial distance in static frames?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 7,
+   "question": "why does camera angle sell a staged hit",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 24950.7,
+    "compile_ms": {
+     "scout": 262.9,
+     "matches": 1.3,
+     "endpoints": 4.4,
+     "lanes": 24681.7,
+     "profile_expansion": 0.1,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 24950.7
+    },
+    "llm_wall_ms": 8575.9,
+    "model": "compiler_alibaba_qwen:qwen3.8-flash",
+    "fallback": true,
+    "reason": "transport:ReadTimeout",
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": "intent_not_latent",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "why does camera angle sell a staged hit",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "camera angle usage",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "use of camera angles to convey character importance",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 8,
+   "question": "What do the cinema documents say about how a camera crew keeps equipment working through a shooting day, and what goes wrong in hand-offs?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 3889.7,
+    "compile_ms": {
+     "scout": 280.3,
+     "endpoints": 4.7,
+     "lanes": 2427.0,
+     "profile_expansion": 0.1,
+     "bridges": 1177.1,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "explorer": 0.2,
+     "total": 3889.6
+    },
+    "llm_wall_ms": 1321.5,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 2,
+     "admitted": 2,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 1177.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "camera equipment maintenance during shooting day",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "PROCEDURE",
+      "origin": "USER",
+      "query": "equipment hand-off protocols and common errors",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "maintaining operational readiness of technical tools during high-pressure workflows",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Camera hierarchy on film sets",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "technical aspects of cinematography",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "What are the specific maintenance requirements and handling procedures for traditional film cameras during a production shoot?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How should photography lighting equipment be maintained and adjusted for stability and safety during a film shoot?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 8,
+   "question": "What do the cinema documents say about how a camera crew keeps equipment working through a shooting day, and what goes wrong in hand-offs?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 3242.2,
+    "compile_ms": {
+     "scout": 272.2,
+     "matches": 1.6,
+     "endpoints": 4.1,
+     "lanes": 2963.7,
+     "profile_expansion": 0.1,
+     "bridges": 0.1,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "explorer": 0.2,
+     "total": 3242.2
+    },
+    "llm_wall_ms": 2962.3,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understanding the logistical and human-error aspects of camera equipment management on a professional film set.",
+    "inquiry": {
+     "precision": "The distinction between routine maintenance and the specific failure points of hand-offs.",
+     "depth": "The systemic reasons why hand-offs fail (e.g., communication gaps, fatigue).",
+     "synthesis": "Connecting daily maintenance habits to the prevention of hand-off errors."
+    },
+    "synthesis_targets": [
+     "How does daily maintenance reduce the risk of hand-off failures?",
+     "What are the most critical points of failure during equipment transfers?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis"
+     ],
+     "synthesis_targets": 2,
+     "unexplained": [],
+     "matches": 3,
+     "bridges": {
+      "proposed": 0,
+      "grounded": 0,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": false,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": "no_plan_bridges",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "camera equipment maintenance and upkeep during a shooting day",
+      "expected_contribution": "procedures for keeping gear operational during production",
+      "evidence_requirement": "daily maintenance checklists or crew routines"
+     },
+     {
+      "id": "q1",
+      "type": "PROCEDURE",
+      "origin": "USER",
+      "query": "equipment hand-off protocols and common errors",
+      "expected_contribution": "specific points of failure when transferring gear between crew",
+      "evidence_requirement": "descriptions of hand-off mistakes or best practices"
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "maintaining tool integrity and continuity of custody in high-pressure environments",
+      "expected_contribution": "general principles of equipment stewardship and risk management",
+      "evidence_requirement": "principles of asset management under stress"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Camera hierarchy on film sets",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "technical aspects of cinematography",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 9,
+   "question": "What is the Facial Action Coding System and what does it measure?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 1991.1,
+    "compile_ms": {
+     "scout": 259.9,
+     "endpoints": 4.2,
+     "lanes": 1721.8,
+     "profile_expansion": 0.0,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 4.8,
+     "explorer": 0.1,
+     "total": 1991.0
+    },
+    "llm_wall_ms": 1720.5,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": "intent_not_latent",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "Facial Action Coding System",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "what the Facial Action Coding System measures",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Facial Action Coding System theory",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Facial Action Coding",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 0,
+   "q": 9,
+   "question": "What is the Facial Action Coding System and what does it measure?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 2175.0,
+    "compile_ms": {
+     "scout": 269.0,
+     "matches": 2.6,
+     "endpoints": 3.7,
+     "lanes": 1895.7,
+     "profile_expansion": 0.0,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 3.7,
+     "explorer": 0.1,
+     "total": 2175.0
+    },
+    "llm_wall_ms": 1895.1,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "The user wants to understand the fundamental nature and objective of the FACS framework.",
+    "inquiry": {
+     "precision": "The distinction between measuring muscle movement (AUs) versus inferring emotion."
+    },
+    "synthesis_targets": [],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "precision"
+     ],
+     "synthesis_targets": 0,
+     "unexplained": [],
+     "matches": 2,
+     "bridges": {
+      "proposed": 0,
+      "grounded": 0,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": false,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": "no_plan_bridges",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "Facial Action Coding System definition and measurement",
+      "expected_contribution": "definition of FACS and the specific facial movements it quantifies",
+      "evidence_requirement": "explicit definition and measurement goals"
+     },
+     {
+      "id": "q1",
+      "type": "DEFINITION",
+      "origin": "USER",
+      "query": "Action Units in FACS",
+      "expected_contribution": "explanation of the basic units of measurement used by the system",
+      "evidence_requirement": "description of Action Units (AUs)"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Facial Action Coding System theory",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Facial Action Coding System",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 0,
+   "question": "What do my books say about making an animated character's movement feel weighty?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 3560.7,
+    "compile_ms": {
+     "scout": 269.3,
+     "endpoints": 4.6,
+     "lanes": 1503.4,
+     "profile_expansion": 0.2,
+     "bridges": 1783.0,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 3560.7
+    },
+    "llm_wall_ms": 1502.3,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 4,
+     "admitted": 4,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 1783.0
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "making animated character movement feel weighty",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "Laban effort weight and timing in animation",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how a body communicates force and mass to an observer",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How does timing influence the perception of weight and force in animation?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Using movement to convey emotions and character",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How does the distribution and shift of weight contribute to realism in kinetic illustrations?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "What are the techniques for translating real-world physics into exaggerated motion for animation?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "Which acting principles can be applied to character animation to enhance the physical presence of a character?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br3",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How can character locomotion be used as a narrative cue to signal a character's state or burden?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 0,
+   "question": "What do my books say about making an animated character's movement feel weighty?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 2605.3,
+    "compile_ms": {
+     "scout": 267.0,
+     "matches": 1.5,
+     "endpoints": 3.9,
+     "lanes": 2332.5,
+     "profile_expansion": 0.0,
+     "bridges": 0.2,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.0,
+     "total": 2605.3
+    },
+    "llm_wall_ms": 2332.3,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understand how to visually communicate the physical property of weight through character animation.",
+    "inquiry": {
+     "precision": "The distinction between actual mass and the visual illusion of weight in animation.",
+     "depth": "How timing and weight shift interact to create a sense of gravity.",
+     "transfer": "Applying real-world physics to exaggerated animated motion.",
+     "synthesis": "Combining acting principles, physics, and timing to convey weight."
+    },
+    "synthesis_targets": [
+     "How does timing relate to the perceived weight of an object?",
+     "What role does the center of gravity play in conveying weight?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 2,
+     "unexplained": [],
+     "matches": 5,
+     "bridges": {
+      "proposed": 2,
+      "grounded": 2,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 2,
+     "admitted": 2,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "making animated character movement feel weighty",
+      "expected_contribution": "direct techniques for conveying weight in animation",
+      "evidence_requirement": "specific animation principles or rules"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "weight shift and center of gravity in kinetic movement",
+      "expected_contribution": "the physical mechanics that create the illusion of weight",
+      "evidence_requirement": "descriptions of balance and mass distribution"
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how physical mass affects the timing and acceleration of a body",
+      "expected_contribution": "domain-neutral principles of physics applied to motion",
+      "evidence_requirement": "general laws of inertia and momentum"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How does timing influence the perception of weight and force in animation?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Using movement to convey emotions and character",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "translating real-world physics into exaggerated motion for weight",
+      "expected_contribution": "how to push weight for dramatic effect in animation",
+      "evidence_requirement": "examples of exaggerated physics"
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "weight shift in kinetic illustration and movement",
+      "expected_contribution": "the role of weight shift in creating realism",
+      "evidence_requirement": "descriptions of weight distribution"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 1,
+   "question": "How do editors and directors build suspense without dialogue?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 3192.2,
+    "compile_ms": {
+     "scout": 268.6,
+     "endpoints": 4.5,
+     "lanes": 1476.8,
+     "profile_expansion": 0.1,
+     "bridges": 1442.0,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 3192.2
+    },
+    "llm_wall_ms": 1475.5,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 3,
+     "admitted": 3,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 1441.9
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "building suspense without dialogue",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "editing techniques for tension and suspense",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "visual storytelling and cinematography for suspense",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q3",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "creating anticipation and psychological tension through pacing and information control",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How do directors convey meaning in a story?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Structuring suspense through framing and lighting choices.",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How can the manipulation of depth of field be used to create narrative tension in a scene?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "In what ways does the editor act as a storyteller to build suspense through the assembly of shots?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "What is the role of misdirection in film editing when establishing suspense?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 1,
+   "question": "How do editors and directors build suspense without dialogue?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 3083.2,
+    "compile_ms": {
+     "scout": 273.0,
+     "matches": 1.3,
+     "endpoints": 4.3,
+     "lanes": 2803.7,
+     "profile_expansion": 0.1,
+     "bridges": 0.5,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 3083.2
+    },
+    "llm_wall_ms": 2802.8,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understanding the non-verbal cinematic tools used to manipulate audience tension and anticipation.",
+    "inquiry": {
+     "precision": "The distinction between tension created by what is shown vs. what is hidden.",
+     "depth": "The relationship between cut rhythm and the viewer's physiological response.",
+     "transfer": "How information asymmetry in cinema mirrors psychological suspense in real life.",
+     "synthesis": "Integrating directing (framing) and editing (timing) into a unified suspense strategy."
+    },
+    "synthesis_targets": [
+     "How does the interplay between shot composition and cut timing amplify suspense?",
+     "In what ways does withholding visual information create more tension than showing it?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 2,
+     "unexplained": [],
+     "matches": 3,
+     "bridges": {
+      "proposed": 3,
+      "grounded": 3,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 3,
+     "admitted": 3,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.5
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "building suspense without dialogue",
+      "expected_contribution": "direct techniques for creating tension through visuals and timing",
+      "evidence_requirement": "specific non-verbal suspense methods"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "pacing and rhythm of editing for tension",
+      "expected_contribution": "how cut frequency and duration manipulate viewer anxiety",
+      "evidence_requirement": "editing patterns for suspense"
+     },
+     {
+      "id": "q2",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "visual composition and framing for suspense",
+      "expected_contribution": "how shot choice and framing create a sense of dread",
+      "evidence_requirement": "cinematographic choices for tension"
+     },
+     {
+      "id": "q3",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "managing information asymmetry to create anticipation",
+      "expected_contribution": "the psychological principle of withholding information from an observer",
+      "evidence_requirement": "theory of anticipation and suspense"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How do directors convey meaning in a story?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Structuring suspense through framing and lighting choices.",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "the editor's role in shaping narrative tension",
+      "expected_contribution": "how the editor specifically crafts the 'story' of the suspense",
+      "evidence_requirement": "editor-led storytelling for tension"
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "using depth of field to create narrative tension",
+      "expected_contribution": "how focusing/blurring elements creates suspense without words",
+      "evidence_requirement": "depth of field manipulation examples"
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "the role of misdirection in film editing",
+      "expected_contribution": "how leading the audience away from the threat builds suspense",
+      "evidence_requirement": "misdirection techniques in editing"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 2,
+   "question": "How do lighting and color choices change how an audience reads a scene?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 3297.1,
+    "compile_ms": {
+     "scout": 283.3,
+     "endpoints": 4.0,
+     "lanes": 1242.1,
+     "profile_expansion": 0.0,
+     "bridges": 1767.5,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.0,
+     "total": 3297.1
+    },
+    "llm_wall_ms": 1241.8,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 4,
+     "admitted": 4,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 1767.5
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "how lighting and color choices affect audience perception of a scene",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "psychological impact of color palettes and lighting contrast in cinematography",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how visual stimuli influence emotional response and narrative interpretation",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "lighting direction influencing mood",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Visual storytelling and mise\u2011en\u2011scene",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How are lighting flares utilized as narrative devices to shape viewer perception?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "In what ways do lighting choices and framing work together to structure suspense for the audience?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "What is the role of the audience in interpreting the story based on visual cues?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br3",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How does the use of color filtration modify the mood of a scene?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 2,
+   "question": "How do lighting and color choices change how an audience reads a scene?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 2753.5,
+    "compile_ms": {
+     "scout": 279.5,
+     "matches": 1.0,
+     "endpoints": 3.9,
+     "lanes": 2468.4,
+     "profile_expansion": 0.1,
+     "bridges": 0.4,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 2753.4
+    },
+    "llm_wall_ms": 2467.5,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understand the psychological and narrative mechanisms by which lighting and color manipulate viewer perception.",
+    "inquiry": {
+     "precision": "The specific link between a visual choice (e.g., high-key lighting, warm colors) and a specific audience reading.",
+     "depth": "The mechanism of how color filtration or lighting contrast modifies the emotional tone.",
+     "transfer": "How general visual storytelling principles apply to specific lighting setups.",
+     "synthesis": "Reconciling technical lighting choices with the resulting narrative interpretation."
+    },
+    "synthesis_targets": [
+     "How does lighting create suspense or mood?",
+     "How does color filtration change the emotional reading of a scene?",
+     "What is the relationship between visual style and audience interpretation?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 3,
+     "unexplained": [],
+     "matches": 4,
+     "bridges": {
+      "proposed": 2,
+      "grounded": 2,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 2,
+     "admitted": 2,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.4
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "how lighting and color choices affect audience perception of a scene",
+      "expected_contribution": "direct relationship between visual choices and audience reading",
+      "evidence_requirement": "text linking lighting/color to emotional response"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "color filtration and lighting mood modification",
+      "expected_contribution": "technical methods for altering scene atmosphere",
+      "evidence_requirement": "explanation of color filters or lighting quality"
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how visual stimuli influence psychological interpretation of a narrative",
+      "expected_contribution": "underlying principles of visual communication",
+      "evidence_requirement": "general theories on visual perception and meaning"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "lighting direction influencing mood",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Visual storytelling and mise\u2011en\u2011scene",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "effects of color filtration on scene mood",
+      "expected_contribution": "provides a specific mechanism for color's impact",
+      "evidence_requirement": "details on color filter usage"
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "lighting choices for structuring suspense",
+      "expected_contribution": "explains how lighting drives a specific narrative reading (suspense)",
+      "evidence_requirement": "framing and lighting strategies for tension"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 3,
+   "question": "What does the book say about nonsquare pixels?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 1317.0,
+    "compile_ms": {
+     "scout": 238.6,
+     "endpoints": 4.2,
+     "lanes": 1074.1,
+     "profile_expansion": 0.0,
+     "bridges": 0.0,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.0,
+     "total": 1317.0
+    },
+    "llm_wall_ms": 1073.8,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": "intent_not_latent",
+     "latency_ms": 0.0
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "nonsquare pixels",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "pixel aspect ratio",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Pixel aspect\u2011ratio handling",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Literature on non\u2011linear editing systems (e.g., Avid user guides)",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 3,
+   "question": "What does the book say about nonsquare pixels?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 2140.2,
+    "compile_ms": {
+     "scout": 268.4,
+     "matches": 2.0,
+     "endpoints": 4.3,
+     "lanes": 1865.1,
+     "profile_expansion": 0.1,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 2140.2
+    },
+    "llm_wall_ms": 1864.4,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understanding the concept and implications of non-square pixels in digital imaging.",
+    "inquiry": {
+     "precision": "The distinction between square and non-square pixel aspect ratios.",
+     "depth": "How non-square pixels relate to final image aspect ratio and display standards."
+    },
+    "synthesis_targets": [],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision"
+     ],
+     "synthesis_targets": 0,
+     "unexplained": [],
+     "matches": 5,
+     "bridges": {
+      "proposed": 0,
+      "grounded": 0,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": false,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": "no_plan_bridges",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "nonsquare pixels",
+      "expected_contribution": "definition and technical impact of non-square pixels",
+      "evidence_requirement": "technical specifications or explanations"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "pixel aspect ratio",
+      "expected_contribution": "how pixel aspect ratio affects image geometry",
+      "evidence_requirement": "descriptions of scaling or distortion"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Pixel aspect\u2011ratio handling",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Literature on non\u2011linear editing systems (e.g., Avid user guides)",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 4,
+   "question": "How do the rhythm of film editing and the timing of music relate?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 1804.4,
+    "compile_ms": {
+     "scout": 282.8,
+     "endpoints": 4.1,
+     "lanes": 1517.1,
+     "profile_expansion": 0.1,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 1804.4
+    },
+    "llm_wall_ms": 1516.4,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": "intent_not_latent",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "relationship between film editing rhythm and music timing",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "COMPARISON",
+      "origin": "USER",
+      "query": "rhythm and pacing in film editing",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "COMPARISON",
+      "origin": "USER",
+      "query": "expressive power and timing of music and sound effects",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q3",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "synchronization of temporal patterns across different sensory channels",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Film Editing Theory (pacing and rhythm)",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Applying rhythmic editing to control narrative pacing",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 4,
+   "question": "How do the rhythm of film editing and the timing of music relate?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 3075.7,
+    "compile_ms": {
+     "scout": 268.4,
+     "matches": 1.3,
+     "endpoints": 4.1,
+     "lanes": 2801.5,
+     "profile_expansion": 0.0,
+     "bridges": 0.2,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.0,
+     "total": 3075.7
+    },
+    "llm_wall_ms": 2800.0,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understanding the symbiotic relationship between visual pacing and auditory rhythm in cinema.",
+    "inquiry": {
+     "precision": "The distinction between rhythmic alignment (mickey-mousing) and rhythmic contrast.",
+     "depth": "How the conflict between music timing and edit rhythm creates psychological tension.",
+     "transfer": "Temporal patterns in music applied to visual sequences.",
+     "synthesis": "Reconciling the independent rhythms of sound and image into a unified cinematic experience."
+    },
+    "synthesis_targets": [
+     "How does rhythmic alignment differ from rhythmic contrast in effect?",
+     "In what ways does music timing dictate the length of a shot?",
+     "How do editing and music together manipulate the viewer's perception of time?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 3,
+     "unexplained": [],
+     "matches": 3,
+     "bridges": {
+      "proposed": 2,
+      "grounded": 2,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 1
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 2,
+     "admitted": 2,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.2
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "relationship between film editing rhythm and music timing",
+      "expected_contribution": "direct interaction between cut points and musical beats",
+      "evidence_requirement": "text discussing synchronization or counterpoint"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "rhythm in editing as a driver of tension",
+      "expected_contribution": "how editing rhythm creates tension independently or with music",
+      "evidence_requirement": "descriptions of pacing and tension"
+     },
+     {
+      "id": "q2",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "audio editing and cinematic techniques for timing",
+      "expected_contribution": "technical methods for aligning sound and image",
+      "evidence_requirement": "technical guidelines for sound-image alignment"
+     },
+     {
+      "id": "q3",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "synchronization of temporal patterns across different sensory channels",
+      "expected_contribution": "general principles of multisensory temporal alignment",
+      "evidence_requirement": "theory on perceived rhythm and timing"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Film Editing Theory (pacing and rhythm)",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Applying rhythmic editing to control narrative pacing",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "how editing rhythm drives tension in combat or action sequences",
+      "expected_contribution": "provides a specific case study of rhythm driving tension",
+      "evidence_requirement": "examples of tension-based editing"
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "the role of film scoring in audio editing",
+      "expected_contribution": "explains the technical integration of score and cut",
+      "evidence_requirement": "scoring and editing workflows"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 5,
+   "question": "What is the 180-degree rule in filming a scene?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 1602.3,
+    "compile_ms": {
+     "scout": 277.9,
+     "endpoints": 5.3,
+     "lanes": 1318.6,
+     "profile_expansion": 0.0,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 1602.2
+    },
+    "llm_wall_ms": 1318.1,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": "intent_not_latent",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "180-degree rule",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "maintaining spatial continuity and axis of action",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Aligning camera movement with story rhythm.",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "use of camera angles to convey character importance",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 5,
+   "question": "What is the 180-degree rule in filming a scene?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 1800.2,
+    "compile_ms": {
+     "scout": 273.6,
+     "matches": 1.4,
+     "endpoints": 4.8,
+     "lanes": 1520.1,
+     "profile_expansion": 0.0,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 1800.2
+    },
+    "llm_wall_ms": 1519.6,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "The user wants to understand the fundamental principle of spatial orientation in cinematography known as the 180-degree rule.",
+    "inquiry": {
+     "precision": "The specific definition of the axis of action and how crossing it affects screen direction."
+    },
+    "synthesis_targets": [],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "precision"
+     ],
+     "synthesis_targets": 0,
+     "unexplained": [],
+     "matches": 4,
+     "bridges": {
+      "proposed": 0,
+      "grounded": 0,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": false,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": "no_plan_bridges",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "180-degree rule",
+      "expected_contribution": "definition and basic application of the rule",
+      "evidence_requirement": "text explaining the imaginary line"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "maintaining spatial continuity and screen direction",
+      "expected_contribution": "how the rule prevents viewer disorientation",
+      "evidence_requirement": "explanation of axis of action"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Aligning camera movement with story rhythm.",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "use of camera angles to convey character importance",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 6,
+   "question": "make a character's suppressed grief visible while they try hard to hide it",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 1935.6,
+    "compile_ms": {
+     "scout": 275.0,
+     "endpoints": 4.3,
+     "lanes": 1656.1,
+     "profile_expansion": 0.0,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.0,
+     "total": 1935.6
+    },
+    "llm_wall_ms": 1655.7,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "CREATE_FROM_KNOWLEDGE",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": "intent_not_latent",
+     "latency_ms": 0.0
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "making suppressed grief visible while hiding it",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "micro-expressions and facial reveals of hidden emotion",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "PROCEDURE",
+      "origin": "USER",
+      "query": "using lens choice and framing to convey internal conflict",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q3",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "tension between an internal emotional state and an external social mask",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How do fight scenes convey character and narrative without spoken words?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Using movement to convey emotions and character",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 6,
+   "question": "make a character's suppressed grief visible while they try hard to hide it",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 3148.6,
+    "compile_ms": {
+     "scout": 266.2,
+     "matches": 2.4,
+     "endpoints": 5.0,
+     "lanes": 2874.3,
+     "profile_expansion": 0.1,
+     "bridges": 0.4,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.1,
+     "total": 3148.5
+    },
+    "llm_wall_ms": 2871.9,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "CREATE_FROM_KNOWLEDGE",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "The user wants to understand the technical and artistic methods for portraying a character's internal struggle to conceal grief.",
+    "inquiry": {
+     "precision": "The distinction between overt grief and the 'leakage' of suppressed grief.",
+     "depth": "How cinematic tools (lenses, framing) amplify subtle acting choices.",
+     "transfer": "Applying principles of non-verbal dialogue to emotional repression.",
+     "synthesis": "Combining facial nuance with visual composition to create subtext."
+    },
+    "synthesis_targets": [
+     "How does the camera's proximity affect the visibility of suppressed emotion?",
+     "What is the relationship between physical restraint and emotional truth?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 2,
+     "unexplained": [],
+     "matches": 5,
+     "bridges": {
+      "proposed": 3,
+      "grounded": 3,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 3,
+     "admitted": 3,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.4
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "visualizing suppressed grief and hiding emotion",
+      "expected_contribution": "specific acting and cinematic cues for hidden sorrow",
+      "evidence_requirement": "descriptions of subtle emotional leakage"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "facial nuance and micro-expressions of grief",
+      "expected_contribution": "physical markers of suppressed emotion in the face",
+      "evidence_requirement": "anatomical or behavioral facial cues"
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "communicating internal conflict through external restraint",
+      "expected_contribution": "general principles of tension between intent and expression",
+      "evidence_requirement": "theories on non-verbal contradiction"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "How do fight scenes convey character and narrative without spoken words?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Using movement to convey emotions and character",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "using selective focus to isolate a character's internal state",
+      "expected_contribution": "how to use depth of field to emphasize isolation and grief",
+      "evidence_requirement": "examples of selective focus for emotion"
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "visual cues and composition for conveying subtext",
+      "expected_contribution": "how to use the environment or framing to signal grief",
+      "evidence_requirement": "compositional techniques for hidden meaning"
+     },
+     {
+      "id": "br2",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "facial nuance for emotional truth",
+      "expected_contribution": "specific facial movements that betray hidden grief",
+      "evidence_requirement": "nuanced facial acting guidelines"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 7,
+   "question": "why does camera angle sell a staged hit",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 3282.0,
+    "compile_ms": {
+     "scout": 278.5,
+     "endpoints": 4.2,
+     "lanes": 1859.3,
+     "profile_expansion": 0.1,
+     "bridges": 1139.5,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.2,
+     "total": 3282.0
+    },
+    "llm_wall_ms": 1858.3,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 2,
+     "admitted": 2,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 1139.5
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "camera angle for staged hits and combat impact",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "hiding the gap between attacker and target in screen combat",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how perspective and occlusion create the illusion of physical contact",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "camera angle usage",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "use of camera angles to convey character importance",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "When should the A camera be prioritized over the B camera for capturing close-up shots of action?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How can camera perspective be used to imply depth and spatial distance in static images?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 7,
+   "question": "why does camera angle sell a staged hit",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 2897.0,
+    "compile_ms": {
+     "scout": 271.4,
+     "matches": 1.3,
+     "endpoints": 4.3,
+     "lanes": 2619.3,
+     "profile_expansion": 0.0,
+     "bridges": 0.3,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.2,
+     "total": 2896.9
+    },
+    "llm_wall_ms": 2618.6,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understanding the technical application of camera angles to create the illusion of physical impact in choreographed fights.",
+    "inquiry": {
+     "precision": "The specific angle that hides the distance between the strike and the target.",
+     "depth": "The role of the 'mask' (the attacker's body) in blocking the viewer's line of sight.",
+     "transfer": "How forced perspective in static art applies to moving combat.",
+     "synthesis": "Combining fight choreography distance with camera placement for visual impact."
+    },
+    "synthesis_targets": [
+     "How does the camera angle hide the 'miss'?",
+     "What is the relationship between the attacker's position and the camera's lens?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis",
+      "transfer"
+     ],
+     "synthesis_targets": 2,
+     "unexplained": [],
+     "matches": 2,
+     "bridges": {
+      "proposed": 1,
+      "grounded": 1,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": true,
+     "generated": 1,
+     "admitted": 1,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": null,
+     "latency_ms": 0.3
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "camera angle for selling staged hits and combat impact",
+      "expected_contribution": "explains how specific angles hide the gap between attacker and target",
+      "evidence_requirement": "descriptions of camera placement for fight scenes"
+     },
+     {
+      "id": "q1",
+      "type": "MECHANISM",
+      "origin": "USER",
+      "query": "masking the point of impact in screen combat",
+      "expected_contribution": "details the physical alignment needed to create the illusion of contact",
+      "evidence_requirement": "technical guides on masking and sightlines"
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "how perspective creates the illusion of physical contact between two objects",
+      "expected_contribution": "provides the general principle of forced perspective and occlusion",
+      "evidence_requirement": "principles of visual perception and depth"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "camera angle usage",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "use of camera angles to convey character importance",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "using camera perspective to imply depth and distance in action",
+      "expected_contribution": "explains how depth perception can be manipulated to make a hit look closer than it is",
+      "evidence_requirement": "techniques for implying depth in static or moving frames"
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 8,
+   "question": "What do the cinema documents say about how a camera crew keeps equipment working through a shooting day, and what goes wrong in hand-offs?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 2861.8,
+    "compile_ms": {
+     "scout": 276.3,
+     "endpoints": 4.2,
+     "lanes": 1498.2,
+     "profile_expansion": 0.1,
+     "bridges": 1082.6,
+     "provenance": 0.1,
+     "constraints": 0.0,
+     "explorer": 0.2,
+     "total": 2861.7
+    },
+    "llm_wall_ms": 1497.0,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 2,
+     "admitted": 2,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": null,
+     "latency_ms": 1082.6
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "camera equipment maintenance during shooting day",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "PROCEDURE",
+      "origin": "USER",
+      "query": "equipment hand-off protocols and common errors",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "maintaining operational readiness of technical tools during high-pressure workflows",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Camera hierarchy on film sets",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "technical aspects of cinematography",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br0",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "What are the specific maintenance requirements and handling procedures for traditional film cameras during a production shoot?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "br1",
+      "type": "ENTITY",
+      "origin": "BRIDGE",
+      "query": "How should photography lighting equipment be maintained and adjusted for stability and safety during a film shoot?",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 8,
+   "question": "What do the cinema documents say about how a camera crew keeps equipment working through a shooting day, and what goes wrong in hand-offs?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 2480.5,
+    "compile_ms": {
+     "scout": 268.8,
+     "matches": 1.1,
+     "endpoints": 4.8,
+     "lanes": 2205.7,
+     "profile_expansion": 0.0,
+     "bridges": 0.0,
+     "provenance": 0.0,
+     "constraints": 0.0,
+     "explorer": 0.0,
+     "total": 2480.5
+    },
+    "llm_wall_ms": 2205.3,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_SYNTHESIS",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "Understanding the operational logistics of camera gear maintenance and the risks associated with equipment transfers on set.",
+    "inquiry": {
+     "precision": "The distinction between routine maintenance and the specific point of failure during a hand-off.",
+     "depth": "The systemic reasons why hand-offs fail (e.g., communication, fatigue, lack of protocol).",
+     "synthesis": "Connecting daily upkeep habits to the prevention of hand-off errors."
+    },
+    "synthesis_targets": [
+     "How does daily maintenance reduce the likelihood of hand-off errors?",
+     "What are the primary causes of equipment failure during crew transitions?"
+    ],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "depth",
+      "precision",
+      "synthesis"
+     ],
+     "synthesis_targets": 2,
+     "unexplained": [],
+     "matches": 3,
+     "bridges": {
+      "proposed": 0,
+      "grounded": 0,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": false,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": "no_plan_bridges",
+     "latency_ms": 0.0
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "camera equipment maintenance and upkeep during a shooting day",
+      "expected_contribution": "procedures for keeping gear operational during production",
+      "evidence_requirement": "daily maintenance checklists or crew routines"
+     },
+     {
+      "id": "q1",
+      "type": "PROCEDURE",
+      "origin": "USER",
+      "query": "equipment hand-off protocols and common errors",
+      "expected_contribution": "specific failures during gear transfers between crew members",
+      "evidence_requirement": "descriptions of hand-off mistakes or best practices"
+     },
+     {
+      "id": "q2",
+      "type": "ADJACENT",
+      "origin": "USER",
+      "query": "maintaining tool integrity and continuity of custody in high-pressure environments",
+      "expected_contribution": "general principles of equipment stewardship and risk management",
+      "evidence_requirement": "principles of asset management under stress"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Camera hierarchy on film sets",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "technical aspects of cinematography",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 9,
+   "question": "What is the Facial Action Coding System and what does it measure?",
+   "variant": "v1",
+   "result": {
+    "wall_ms": 1367.9,
+    "compile_ms": {
+     "scout": 265.1,
+     "endpoints": 3.6,
+     "lanes": 1093.3,
+     "profile_expansion": 0.0,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 5.5,
+     "explorer": 0.1,
+     "total": 1367.9
+    },
+    "llm_wall_ms": 1092.7,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v1",
+    "learning_need": null,
+    "inquiry": {},
+    "synthesis_targets": [],
+    "contract_diag": null,
+    "bridge_expansion": {
+     "merged": null,
+     "attempted": true,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": null,
+     "fallback_reason": "intent_not_latent",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "Facial Action Coding System",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "q1",
+      "type": "DEFINITION",
+      "origin": "USER",
+      "query": "what the Facial Action Coding System measures",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Facial Action Coding System theory",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Facial Action Coding",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  },
+  {
+   "rep": 1,
+   "q": 9,
+   "question": "What is the Facial Action Coding System and what does it measure?",
+   "variant": "v2",
+   "result": {
+    "wall_ms": 2785.6,
+    "compile_ms": {
+     "scout": 271.9,
+     "matches": 1.4,
+     "endpoints": 3.9,
+     "lanes": 2502.3,
+     "profile_expansion": 0.1,
+     "bridges": 0.1,
+     "provenance": 0.0,
+     "constraints": 5.6,
+     "explorer": 0.2,
+     "total": 2785.5
+    },
+    "llm_wall_ms": 2501.6,
+    "model": "compiler_ollama_gemma:gemma4:31b-cloud",
+    "fallback": false,
+    "reason": null,
+    "task_type": "GROUNDED_QA",
+    "retrieval_required": true,
+    "contract": "chat-intent-plan-v2",
+    "learning_need": "The user wants to understand the fundamental nature and the specific metrics of the FACS methodology.",
+    "inquiry": {
+     "precision": "The distinction between measuring muscle movement (AUs) versus inferring emotion"
+    },
+    "synthesis_targets": [],
+    "contract_diag": {
+     "version": "chat-intent-plan-v2",
+     "learning_need": true,
+     "inquiry": [
+      "precision"
+     ],
+     "synthesis_targets": 0,
+     "unexplained": [],
+     "matches": 2,
+     "bridges": {
+      "proposed": 0,
+      "grounded": 0,
+      "dropped_invented": 0
+     },
+     "d2_override": false,
+     "no_search": false,
+     "retyped_comparison": 0
+    },
+    "bridge_expansion": {
+     "merged": true,
+     "attempted": false,
+     "generated": 0,
+     "admitted": 0,
+     "rejected": 0,
+     "dropped_covered": 0,
+     "fallback_reason": "no_plan_bridges",
+     "latency_ms": 0.1
+    },
+    "queries": [
+     {
+      "id": "q0",
+      "type": "PRIMARY",
+      "origin": "USER",
+      "query": "Facial Action Coding System definition and measurement",
+      "expected_contribution": "Definition of FACS and the specific facial movements it quantifies",
+      "evidence_requirement": "Direct definition and list of measured units"
+     },
+     {
+      "id": "q1",
+      "type": "DEFINITION",
+      "origin": "USER",
+      "query": "Action Units in FACS",
+      "expected_contribution": "Explanation of the basic unit of measurement used by the system",
+      "evidence_requirement": "Description of Action Units (AUs)"
+     },
+     {
+      "id": "p0",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Facial Action Coding System theory",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     },
+     {
+      "id": "p1",
+      "type": "ENTITY",
+      "origin": "PROFILE",
+      "query": "Facial Action Coding System",
+      "expected_contribution": null,
+      "evidence_requirement": null
+     }
+    ]
+   }
+  }
+ ]
+}
