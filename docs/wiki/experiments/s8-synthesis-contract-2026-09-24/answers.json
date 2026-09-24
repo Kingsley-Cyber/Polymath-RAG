@@ -1,0 +1,776 @@
+[
+ {
+  "fixture": 4,
+  "kind": "faulty premise corrected by the sources",
+  "mode": "HYBRID",
+  "question": "Since Walter Murch says continuity is the most important thing to protect when cutting, how should I prioritise continuity in my edit?",
+  "turn_s": 23.2,
+  "model": "anthropic/deepseek-v4-flash-0731",
+  "injected_round1_targets": true,
+  "plan": {
+   "learning_need": "The user wants to translate a theoretical priority (continuity) into a practical decision-making framework for editing.",
+   "synthesis_targets": [
+    "How does Murch's 'protection' of continuity differ from standard continuity editing?",
+    "What takes precedence over continuity if a conflict arises?"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "origin": "USER",
+     "type": "PRIMARY",
+     "query": "Walter Murch continuity priority cutting",
+     "expected_contribution": "Murch's specific hierarchy or rules for protecting continuity"
+    },
+    {
+     "id": "q1",
+     "origin": "USER",
+     "type": "MECHANISM",
+     "query": "maintaining temporal and spatial coherence across cuts",
+     "expected_contribution": "Technical methods for implementing continuity priority"
+    },
+    {
+     "id": "q2",
+     "origin": "USER",
+     "type": "ADJACENT",
+     "query": "preserving the observer's mental model of a physical space",
+     "expected_contribution": "The cognitive principle behind why continuity must be protected"
+    },
+    {
+     "id": "p0",
+     "origin": "PROFILE",
+     "type": "ENTITY",
+     "query": "Walter Murch's editing principles",
+     "expected_contribution": null
+    },
+    {
+     "id": "p1",
+     "origin": "PROFILE",
+     "type": "ENTITY",
+     "query": "Continuity editing",
+     "expected_contribution": null
+    },
+    {
+     "id": "br0",
+     "origin": "BRIDGE",
+     "type": "ENTITY",
+     "query": "Continuity editing theory for temporal and spatial coherence",
+     "expected_contribution": "Provides the foundational theory Murch is reacting to or building upon"
+    },
+    {
+     "id": "br1",
+     "origin": "BRIDGE",
+     "type": "ENTITY",
+     "query": "Principles of continuity editing in film technique",
+     "expected_contribution": "Offers a technical baseline for 'protecting' continuity"
+    }
+   ]
+  },
+  "legend": [
+   {
+    "tag": "S1",
+    "where": "Francis Glebas - Directing the Story \u203a Why Cuts Work",
+    "text": "The cut appears \u201cnatural\u201d even when it is actually a \u201ctotal and instantaneous displacement of one visual field with another.\u201d9 According to Walter Murch, editor and author of _In the Blink of an Eye_ "
+   },
+   {
+    "tag": "S2",
+    "where": "Walter Murch - In the Blink of an Eye \u203a OEBPS/Text/Section0001.xhtml",
+    "text": "Screenplays on which Murch has collaborated include THX-1138, directed by George Lucas, and The Black Stallion (1979, uncredited), directed by Carroll Ballard. Murch directed and co-wrote the film Ret"
+   },
+   {
+    "tag": "S3",
+    "where": "Ed Hooks - Acting for Animators \u203a Blinking",
+    "text": "If you have never read Walter Murch\u2019s book In the Blink of an Eye, it could be a revelation. Mr. Murch is a three-time Academy Award winner for sound and film editing. In his book, he explains how he "
+   },
+   {
+    "tag": "S4",
+    "where": "Film Directing Cinematic Motion \u203a Pages 238\u2013250",
+    "text": "Cut to: Walter at the top of the stairs. This is a repeat of the camera position in panel 7b Walter\nexits the frame on the left.\n10\nCut to: The group shot seen in frame 7. Walter enters the shot...\nWA"
+   },
+   {
+    "tag": "S5",
+    "where": "Walter Murch - In the Blink of an Eye \u203a OEBPS/Text/Section0001.xhtml",
+    "text": "Murch was the re-recording mixer for The Rainpeople (1969, dir. F. Coppola), THX-1138 (1971, dir. G. Lucas), The Godfather (1972, dir. F. Coppola), American Graffiti (1973, dir. G. Lucas), The Godfath"
+   },
+   {
+    "tag": "S6",
+    "where": "Walter Murch - In the Blink of an Eye \u203a OEBPS/Text/Section0001.xhtml",
+    "text": "Walter Murch has been honored by both British and American Motion Picture Academies for his picture editing and sound mixing. In 1997, Murch received an unprecedented double Oscar for both film editin"
+   },
+   {
+    "tag": "S7",
+    "where": "Blain Brown - Cinematography - Theory and Practice \u203a Pages 135\u2013136",
+    "text": "CONTINUITY\nContinuity is perhaps the most important element of invisible technique: it\u2019s all about\nmaintaining the illusion by avoiding jarring cuts that will take the audience out of the\nflow of the "
+   },
+   {
+    "tag": "S8",
+    "where": "Walter Murch - In the Blink of an Eye \u203a OEBPS/Text/main.xhtml",
+    "text": "This is a revised transcription of a lecture on film editing given by Walter Murch in the mixing theater at Spectrum Films, Sydney, Australia, in October 1988. It was one in a series of lectures spons"
+   },
+   {
+    "tag": "S9",
+    "where": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema \u203a Pages 39\u201340",
+    "text": "I don\u2019t :\nrll music made specifically for his film, but applied them deliberately to the | know how we discovered this, just by goofing around, a big part of cre- |\nes incorrect scenes. Walter Murch h"
+   },
+   {
+    "tag": "S10",
+    "where": "Walter Murch - In the Blink of an Eye \u203a The Rule of Six",
+    "text": "For instance, if you are considering a range of possible edits for a particular moment in the film, and you find that there is one cut that gives the right emotion and moves the story forward, and is "
+   },
+   {
+    "tag": "S11",
+    "where": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics \u203a **THE CONCERNED OBSERVER AND STORYTELLER ROLES**",
+    "text": "_**The Concerned Observer**_**:** The word \u201cobserve\u201d has such scientific associations that I have added \u201cconcerned\u201d to imply the sympathies and responses that make our observer fully human. In this bo"
+   },
+   {
+    "tag": "S12",
+    "where": "Chip Heath & Dan Heath - Made to Stick \u203a 6\\. Stories",
+    "text": "**\u201cJohn** **_put on_** **his sweatshirt\u201d:** This study is among dozens of studies that support the importance of mental simulation. For a review, see Rolf A. Zwaan and Gabriel A. Radvansky, \u201cSituation"
+   },
+   {
+    "tag": "S13",
+    "where": "David Keirsey - Please Understand Me II (1998, Prometheus Nemesis Book Company) - libgen.l \u203a part0014.xhtml",
+    "text": "To put this difference another way, Observers might be called \"earthlings\" or \"terrestrials,\" concrete, down-to-earth beings who keep their feet on the ground. These persons see what is in front of th"
+   },
+   {
+    "tag": "S14",
+    "where": "[(Architectural Design)] Ian Ritchie - Neuroarchitecture_ Designing with the Mind in Mind \u203a OEBPS/ritc_9781119685401_epub3_041_r1.xhtml",
+    "text": "of California Press (Berkeley, Los Angeles and London), 1977, p 28. \n\n[8.](ritc_9781119685401_epub3_039_r1.xhtml#fnt8a) Mitsuo Inoue,  Space in Japanese Architecture,  Weatherhill \n\n(Tokyo and NewYork"
+   },
+   {
+    "tag": "S15",
+    "where": "[International Journal of Reasoning-based Intelligent Systems vol. 2 iss. 1] Bayesian reas \u203a Page 15",
+    "text": "Notes: Space model (left side): the vector symbols are \npart of both, the Laban space and the Physical \nspace. Their instances are the left (lh) and right \nhand (rh). The frame I is associated with th"
+   },
+   {
+    "tag": "S16",
+    "where": "Bayesian reasoning for Laban Movement Analysis \u203a Page 15",
+    "text": "Notes: Space model (left side): the vector symbols are \npart of both, the Laban space and the Physical \nspace. Their instances are the left (lh) and right \nhand (rh). The frame I is associated with th"
+   },
+   {
+    "tag": "S17",
+    "where": "Grammar of the Edit \u203a Continuity",
+    "text": "In traditional editing methodologies, providing smooth, seamless continuity across transitions is a very important element to keeping edits unnoticed by the viewer. This is called continuity editing o"
+   },
+   {
+    "tag": "S18",
+    "where": "handbook \u203a UG-008 Supplement \u2014 Causal video-generation reliability cheat sheet",
+    "text": "The image carries appearance continuity. The state record carries causal continuity. Neither substitutes for the other.\n\n##### 4.3 When to preserve the hard cut\n\nUse the reference\u2019s hard cut when:"
+   },
+   {
+    "tag": "S19",
+    "where": "Joseph V. Mascelli - The Five C's of Cinematography \u203a Page 155",
+    "text": "The ca mera should be started beiore\na player enters the frame and stopped utter he\nleaves, to provide \"clean\" entra nces and exits.\nStatically positioning a playe r in a close-up\nforces the film edit"
+   },
+   {
+    "tag": "S20",
+    "where": "Ken Dancyger - The technique of film & video editing \u203a Page 298",
+    "text": "In fact, in each of these \nthree films, the sad narrative content is subverted by an editing strategy that captures the \nvitality and creativity that characters need to call upon to deal with the prob"
+   },
+   {
+    "tag": "S21",
+    "where": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics \u203a **THE SIX PRINCIPLES OF CONTINUITY EDITING**",
+    "text": "1. **Continuity of mise-en-sc\u00e8ne** (shared shot content). Common detail contained in juxtaposed shots, such as costume, hair, environment, lighting, props, character movement, must all match\u2014or the il"
+   }
+  ],
+  "derived": 0,
+  "off": {
+   "answer": "There's an important nuance hiding in your question. Murch's famous position is actually the opposite of \"continuity is the most important thing\": he says continuity is the **least** important of his six criteria, and that you should sacrifice it when the higher values demand it. His hierarchy, from the Rule of Six, is: **emotion \u2192 story \u2192 rhythm \u2192 eye trace \u2192 two-dimensional plane of screen \u2192 three-dimensional space of the action** (continuity of physical space sits last) [S1][S10]. So the honest answer to \"how should I prioritize continuity\" is: protect it, but know exactly when to break it.\n\n**How to apply that in practice:**\n\n- **Lead with emotion and story.** If a cut delivers the right feeling and moves the narrative forward, Murch says to make it even if it breaks spatial continuity \u2014 \"then, by all means, that is the cut you should make\" [S10]. The audience follows the story, not individual actions, so they will forgive a lapse in continuity if the emotion lands [S1].\n- **Treat continuity as the floor, not the ceiling.** It is what keeps edits invisible and stops the audience being yanked out of the illusion [S7][S17]. So you protect it by default\u2014clean screen direction, matched performance, consistent mise-en-sc\u00e8ne\u2014and only surrender it when a stronger criterion forces the choice [S21][S19].\n- **Break it deliberately, not accidentally.** A \"planned lack of continuity can be a useful technique to create tension and confusion,\" but overuse just distracts from the story [S7]. An intentional jump cut or spatial rupture is fine; an unintended one reads as a mistake [S17].\n\n**Prioritization decision rule:** order your candidate cuts by the six criteria, find the one that maximizes the top values (emotion, story, rhythm), and accept it even if it fails the bottom ones (screen plane, 3D space). If *no* candidate has the right emotion, then worries about spatial continuity become irrelevant anyway\u2014there's no cut worth protecting [S10].\n\nOne gap worth naming: your question implies continuity as a *temporal/spatial coherence* mechanism, and that's well covered here. But the aspect of \"preserving the observer's mental model of a physical space\" is not directly addressed by the retrieved material\u2014it's implicit in Murch's \"three-dimensional space of the action\" and in Rabiger's 180-degree line principle, but no source in this corpus walks through the mental-model mechanics of spatial continuity explicitly [S21].",
+   "error": null,
+   "wall_s": 10.4,
+   "finish": {
+    "finish_reason": "stop",
+    "max_tokens": 6000,
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "provider": "deepseek",
+     "surface": "litellm",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    }
+   },
+   "prompt": {
+    "prompt_chars": 39757,
+    "messages": 2,
+    "carry_in": 0,
+    "carry_in_prompt": 0,
+    "latent_labels": 0
+   },
+   "words": 388,
+   "s_tags": [
+    "[S10]",
+    "[S17]",
+    "[S19]",
+    "[S1]",
+    "[S21]",
+    "[S7]"
+   ],
+   "a_tags": [],
+   "prompt_chars": 39757,
+   "s8_prompt_lines": []
+  },
+  "on": {
+   "answer": "The place to start is a small correction to your premise: Murch does **not** say continuity is the most important thing to protect. His Rule of Six puts **emotion** and **story** above continuity, with rhythm, eye-trace, planarity, and spatial continuity ranked below them. So the practical question isn't \"how do I protect continuity above all?\" \u2014 it's \"how do I know which continuity to spend, and when?\"\n\n**What Murch actually prioritizes**\n\nThe ideal cut satisfies all six of Murch's criteria at once, but when they conflict, the priority order is fixed: **emotion, then story, then rhythm, eye-trace, planarity, and finally spatial continuity** [S1][S10]. Note that \"continuity\" in Murch's list is specifically the *three-dimensional spatial* continuity of the action \u2014 the lowest-ranked member \u2014 not the broader continuity-edit doctrine you might associate with invisible cutting.\n\nMurch's stated rule for conflict resolution: if you find a cut that gets the right emotion and moves the story forward, and is rhythmically satisfying, and respects eye-trace and planarity, but it *fails* to preserve 3D spatial continuity \u2014 \"then, by all means, that is the cut you should make\" [S10]. The related principle: if the emotion is right and the story advances, audiences will forgive and overlook the other four continuity-related criteria, because they follow the story, not individual actions [S1].\n\n**How this differs from standard continuity editing**\n\nThe difference is philosophical. Standard \"continuity editing\" or \"invisible editing\" treats smooth, seamless continuity as a hard requirement \u2014 the goal is edits the viewer never notices, so shots flow as if presenting continuous events [S17]. Rabiger's six principles codify this as strict, non-negotiable matching: mise-en-sc\u00e8ne, performance, spatial orientation (the 180\u00b0 line), and so on must all match or the illusion breaks [S21].\n\nMurch inverts this. For him, continuity is **disposable in service of emotion and story** \u2014 a tool, not a law. The Blain Brown passage reinforces the mechanism: continuity's job is to maintain the illusion and keep the audience in the story flow, but a *planned* lack of continuity can be a deliberate technique to create tension and confusion [S7]. So the corpus supports the reading that Murch's \"protection\" of continuity is really *selective* protection: preserve it where it supports the emotional/story goals, break it deliberately where breaking it serves them.\n\n**The practical framework for your edit**\n\nTranslate the Rule of Six into a decision procedure when a cut feels wrong:\n\n1. **Ask which criterion is failing.** If the cut fails on spatial continuity but hits emotion and story, make the cut \u2014 that's exactly Murch's instruction [S10].\n2. **Check the audience's likely focus.** Since viewers follow story, not individual actions [S1], minor physical-continuity slips (a prop, a hand position) matter far less than a cut that deadens emotion or stalls the story.\n3. **Match to standard practice where it's cheap.** Where continuity *doesn't* conflict with emotion and story, follow the seamless-edit defaults \u2014 matching mise-en-sc\u00e8ne, performance, and the 180\u00b0 line [S21] \u2014 and you get every benefit at no cost.\n4. **Reserve deliberate breaks for effect.** Breaking continuity can be a legitimate tool for tension and confusion, but don't overdo it [S7].\n\n**What the evidence does not settle**\n\nThe corpus does not directly answer which *specific* continuity type Murch would sacrifice first in a multi-continuity conflict (e.g., performance continuity versus spatial continuity) \u2014 his Rule of Six collapses all spatial/temporal continuity concerns into the single lowest-ranked slot, and the external sources on Rabiger's principles don't engage with his ranking scheme. If you need a finer-grained \"which continuity breaks first\" rule, that premise isn't in the retrieved material.",
+   "error": null,
+   "wall_s": 11.7,
+   "finish": {
+    "finish_reason": "stop",
+    "max_tokens": 6000,
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "provider": "deepseek",
+     "surface": "litellm",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    }
+   },
+   "prompt": {
+    "prompt_chars": 42146,
+    "messages": 2,
+    "carry_in": 0,
+    "carry_in_prompt": 0,
+    "latent_labels": 0,
+    "synthesis_contract": {
+     "contract": "synthesis-v3",
+     "paths": 0,
+     "targets": 2
+    }
+   },
+   "words": 593,
+   "s_tags": [
+    "[S10]",
+    "[S17]",
+    "[S1]",
+    "[S21]",
+    "[S7]"
+   ],
+   "a_tags": [],
+   "prompt_chars": 42146,
+   "s8_prompt_lines": [
+    "1. **Continuity of mise-en-sc\u00e8ne** (shared shot content). Common detail contained in juxtaposed shots, such as costume, hair, environment, lighting, props, character movement, must all match\u2014or the illusion of continuity will be broken. In the master shot Peppy wears a white blouse, white skirt, and earrings and stands at the newel of the staircase (_frame a_). It would be jarring if any of these details differed in her MLS or MCU reverse shots. If in the MLS Peppy wears her glasses, or stands in the middle of the staircase, or has changed her blouse \u2026 continuity is broken and shots would not flow together**.**",
+    "2. **Continuity of performance.** Given that contiguous shots are taken at different times, each actor must (with the director\u2019s help) maintain the same movements and performance intensity from shot to shot. In the master shot, Peppy is bright, winning, and cheerful (_frame a_) and you see the same in both of her reverse shots (_frames c and e_). Should Peppy\u2019s bright energy falter over many takes, the close-ups would not match other material. Actor movements can also pose a problem: should reverse shots be played differently from the master shot, it might be hard to find an edit point that maintains the illusion of an unbroken flow of action.",
+    "3. **Continuity of spatial orientation** (**180 degree principle**). As we said, the master shot establishes the characters\u2019 proximity and also the perspective from which the camera (the observer) views the exchange. The person-to-person relationships, taking place on the **subject-to-subject axis** , are seen from the **camera-to-subject axis** respectively (Figure 15-6). With two subjects in a scene, their positioning creates a **180 degree line of action** (also called the **axis of action, scene axis** or simply \u201c**the line** \u201d). The master shot establishes from which side of that 180\u00b0 line the camera (and therefore the audience) will observe the exchange. In Figure 15-4, _frame a_ , the camera is placed so that G",
+    "LEARNING NEED (the planner's reading, written before any source was read): The user wants to translate a theoretical priority (continuity) into a practical decision-making framework for editing.",
+    "SYNTHESIS TARGETS (the planner's questions, written before any source was read \u2014 check their premises; address each the sources support; say which they cannot settle):",
+    "1. How does Murch's 'protection' of continuity differ from standard continuity editing?",
+    "2. What takes precedence over continuity if a conflict arises?"
+   ]
+  }
+ },
+ {
+  "fixture": 5,
+  "kind": "cross-domain transfer established with its mapping and limits, or rejected",
+  "mode": "WILDCARD",
+  "question": "Can Laban's effort qualities from dance tell me how the camera should move during a fight scene?",
+  "turn_s": 12.5,
+  "model": "anthropic/deepseek-v4-flash-0731",
+  "injected_round1_targets": false,
+  "plan": {
+   "learning_need": "Understanding how to translate a movement analysis system into a visual language for cinematography.",
+   "synthesis_targets": [
+    "How does a 'strong' or 'sudden' effort quality translate to a specific camera move?",
+    "Does the camera act as a participant in the Laban effort or an observer of it?"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "origin": "USER",
+     "type": "PRIMARY",
+     "query": "Laban effort qualities applied to camera movement in fight scenes",
+     "expected_contribution": "Direct links between effort qualities and cinematography"
+    },
+    {
+     "id": "q1",
+     "origin": "USER",
+     "type": "MECHANISM",
+     "query": "Laban effort and shape in fight choreography and non-verbal dialogue",
+     "expected_contribution": "How effort qualities manifest in combat movement"
+    },
+    {
+     "id": "q2",
+     "origin": "USER",
+     "type": "ADJACENT",
+     "query": "translating physical energy and intent into visual perspective",
+     "expected_contribution": "General principles of matching observer perspective to actor energy"
+    },
+    {
+     "id": "p0",
+     "origin": "PROFILE",
+     "type": "ENTITY",
+     "query": "How can actors use the Laban Workbook to improve their movement?",
+     "expected_contribution": null
+    },
+    {
+     "id": "p1",
+     "origin": "PROFILE",
+     "type": "ENTITY",
+     "query": "Laban movement analysis for motion generation",
+     "expected_contribution": null
+    },
+    {
+     "id": "br0",
+     "origin": "BRIDGE",
+     "type": "ENTITY",
+     "query": "computational implementations of Laban Effort and Shape",
+     "expected_contribution": "Provides a structured way to quantify effort that could be mapped to camera coordinates/speed."
+    }
+   ]
+  },
+  "legend": [
+   {
+    "tag": "S1",
+    "where": "handbook \u203a Kinetic motion direction manual",
+    "text": "Use for actor-friendly movement qualities and physical characterization.\n- Affective Movement Generation using Laban Effort and Shape and Hidden Markov Models"
+   },
+   {
+    "tag": "S2",
+    "where": "handbook \u203a Kinetic motion direction manual",
+    "text": "Use for Space, Weight, Time, Flow, effort, shape, and expressive motion vocabulary.\n  URL: https://en.wikipedia.org/wiki/Laban_movement_analysis\n- Laban for Actors and Dancers by Jean Newlove"
+   },
+   {
+    "tag": "S3",
+    "where": "handbook \u203a 01 \u2014 Laban Movement Analysis: Full BESS Framework",
+    "text": "- [S001] Laban/Bartenieff and Somatic Studies International (LSSI/LIMS) (2026), Movement Analysis Overview. Locator: \u00a7 What is Laban/Bartenieff Movement Analysis?\n- [S002] Irmgard Bartenieff; Dori Lew"
+   },
+   {
+    "tag": "S4",
+    "where": "Stage Combat Arts \u203a Pages 246\u2013248",
+    "text": "ACTING THE FIGHT\n229\nM\nM\nIn what ways are fight scenes and choreography potentially \ninfluenced by Laban\u2019s system?\nNow explore these eight different Effort Actions, which are the result of \nthe combin"
+   },
+   {
+    "tag": "S5",
+    "where": "The Screen Combat Handbook A Practical Guide for Filmmakers \u203a CAMERA",
+    "text": "This can be hard. The vast majority of fight scenes are shot with moving cameras, whether it\u2019s hand-held, steadicam or gimbal stabilizer shots, or something more elaborate like a dolly, jib arm, cable"
+   },
+   {
+    "tag": "S6",
+    "where": "Laban-Bartenieff Movement Studies for Neonatal Movements \u203a Page 5",
+    "text": "10.\t Groff E. Laban movement analysis: charting the inef-"
+   },
+   {
+    "tag": "S7",
+    "where": "The Screen Combat Handbook A Practical Guide for Filmmakers \u203a SHUTTER SPEED",
+    "text": "Camera settings pertaining to light and speed directly impact action. We\u2019re following bodies that move quickly, and camera often goes handheld and moves with them. A series of very crisp clear images "
+   },
+   {
+    "tag": "S8",
+    "where": "The Laban Workbook for Actors \u203a Pages 278\u2013283",
+    "text": "BIBLIOGRAPHY AND \nFURTHER READING\nAdrian, Barbara (2008). Actor Training the Laban Way: An Integrated \nApproach to Voice, Speech, and Movement. New York: Allworth Press.\nAdrian, Barbara (2017). \u201cAn In"
+   },
+   {
+    "tag": "S9",
+    "where": "Ken Dancyger - The technique of film & video editing \u203a Page 210",
+    "text": "Whereas the narrative has proceeded in a kind of stillness and serenity until now, the tone \nshifts in the set-piece. First, the theft is exciting. Camera movement and cutting on move-\nment makes the "
+   },
+   {
+    "tag": "S10",
+    "where": "Laban Movement-Guided Diffusion for Text-to-Motion Generation \u203a Page 1",
+    "text": "LaMoGen: Laban Movement-Guided Diffusion for Text-to-Motion Generation\nHeechang Kim1\nGwanghyun Kim1\nSe Young Chun1,2\u2021\n1Dept. of Electrical and Computer Engineering, 2INMC & IPAI\nSeoul National Univers"
+   },
+   {
+    "tag": "S11",
+    "where": "Fight Choreography The Art of Non-Verbal Dialogue \u203a Page 429",
+    "text": "However, it all depends on the techniques and\neffect you wish to convey.\nHere are some examples of effective camera height:\n\u0002 Jackie Chan\u2019s Police Story. A good example is when Ka Kui tosses Carina\nin"
+   },
+   {
+    "tag": "S12",
+    "where": "Fight Choreography The Art of Non-Verbal Dialogue \u203a Page 429",
+    "text": "Camera Height\nThe height of the camera, along with the angle, can add to, or take away from,\nthe effectiveness of the technique and the actor\u2019s relationship with the opponent\nand the environment. If y"
+   },
+   {
+    "tag": "S13",
+    "where": "The Laban Workbook for Actors \u203a Pages 268\u2013277",
+    "text": "APPENDIX A\u0003: GENERAL \nOVERVIEW OF LABAN \nMOVEMENT ANALYSIS \nVOCABULARY\nBESS (Body, Effort, Shape, Space)\nBody, which includes Bartenieff Fundamentals, increases body aware\u00ad\nness and range of movement "
+   },
+   {
+    "tag": "S14",
+    "where": "handbook \u203a References and locators",
+    "text": "- [S005] Ohio State University Department of Dance (2026), LabanWriter. Locator: \u00a7 LabanWriter; description of 700+ symbols and notation editor\n- [S006] Wenbin Guo et al. (2022), AI-driven Human Motio"
+   },
+   {
+    "tag": "S15",
+    "where": "Fight Choreography The Art of Non-Verbal Dialogue \u203a Page 433",
+    "text": "Along with the magic of editing, you are able to tell a story\nand make the uncoordinated actor appear as if he could beat any and all comers.\nBut this practice is happening all across the board and ev"
+   }
+  ],
+  "derived": 3,
+  "off": {
+   "answer": "Laban's effort qualities can absolutely steer camera movement in a fight scene \u2014 not as a literal rulebook, but as a shared expressive vocabulary that lets the camera embody the same energetic intent as the fighters. The core idea is translation: the eight Effort Actions (Press, Flick, Wring, Dab, Slash, Glide, Punch, Float) each compose Space, Time, and Weight qualities [S4], and those same qualities can describe how a camera moves \u2014 its speed, its directness, its weight in the frame [S13]. If a fighter \"Slash\" (Indirect, Staccato, Heavy), the camera should feel indirect and staccato too, cutting quickly on unpredictable angles rather than gliding smoothly [S4].\n\nHere's a practical effort-to-camera mapping based on the Effort Actions from Stage Combat Arts [S4]:\n\n| Effort Action | Space | Time | Weight | Camera treatment |\n|---|---|---|---|---|\n| **Press** | Direct | Sustained | Heavy | Slow push-in, locked framing, deliberate tracking |\n| **Flick** | Indirect | Staccato | Light | Quick whip pans, jump cuts, handheld micro-jolts |\n| **Wring** | Indirect | Sustained | Heavy | Slow circling or orbiting, twisting dolly movement |\n| **Dab** | Direct | Staccato | Light | Sharp, precise punch-ins; snap zooms to a target |\n| **Slash** | Indirect | Staccato | Heavy | Fast diagonal whip pans, aggressive angle cuts |\n| **Glide** | Direct | Sustained | Light | Smooth steadicam or gimbal follow, fluid tracking |\n| **Punch** | Direct | Staccato | Heavy | Explosive crash zooms or hard hitting camera bumps |\n| **Float** | Indirect | Sustained | Light | Slow drift, aerial or crane movement, eased camera |\n\nThe theoretical bridge is that the camera is itself a mover \u2014 in the Screen Combat Handbook's terms, \"We're following bodies that move quickly\" [S5], and the camera's speed and stability are deliberate aesthetic choices. High shutter speed creates a jerky, staccato quality that reinforces violence and chaos, as in the Kingsman church fight [S7]. So the camera's mechanical parameters \u2014 shutter speed, stability, movement path \u2014 all carry the same effort qualities as the bodies it films. Vary the camera's effort according to the fighters' effort, and the two become one expressive performance.\n\nThat said, I'd add two caveats. First, context (camera movement, angles, editing) is ideal here; the direct corpus evidence covers the Effort Actions and the camera's expressive potential, but there's no explicit \"this effort maps to this camera move\" table \u2014 I've inferred the mappings from the shared qualities. Second, for Grounded_QA purposes: the \"translating physical energy and intent into visual perspective\" aspect has no relevant evidence in the corpus \u2014 nothing explicitly theorizes the dancer-to-cameraperson translation. The reasoning stands on the fact that Effort is defined as \"energy and dynamics\" revealing inner attitude [S13], and the camera can read as a body with attitude.",
+   "error": null,
+   "wall_s": 10.0,
+   "finish": {
+    "finish_reason": "stop",
+    "max_tokens": 6000,
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "provider": "deepseek",
+     "surface": "litellm",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    }
+   },
+   "prompt": {
+    "prompt_chars": 39014,
+    "messages": 2,
+    "carry_in": 0,
+    "carry_in_prompt": 0,
+    "latent_labels": 0
+   },
+   "words": 473,
+   "s_tags": [
+    "[S13]",
+    "[S4]",
+    "[S5]",
+    "[S7]"
+   ],
+   "a_tags": [],
+   "prompt_chars": 39014,
+   "s8_prompt_lines": []
+  },
+  "on": {
+   "answer": "The short answer is: your corpus gives you a rich, ready-made bridge between Laban effort and camera behaviour, but it never states the mapping explicitly. What it does give you is the two halves of the puzzle \u2014 the effort vocabulary on one side and specific camera decisions on the other \u2014 plus enough connective logic to build the translation yourself.\n\n## What the sources support\n\n**The effort qualities themselves.** Your corpus is explicit about the four Effort Factors and their eight elements: Space (direct \u2194 indirect), Weight (strong \u2194 light), Time (quick/sudden \u2194 sustained), and Flow (bound \u2194 free) [S13]. It also gives you the eight classic Effort Actions that combine Space, Time, and Weight \u2014 Press, Flick, Wring, Dab, Slash, Glide, Punch, Float \u2014 with their full attribute tables [S4]. So the camera-movement question isn't missing its vocabulary; it's missing the explicit instruction to apply it to the camera.\n\n**Laban as a tool for actor motion direction.** The corpus frames Laban specifically as \"affective movement generation\" for \"actor-friendly movement qualities and physical characterization\" [S1], with the movement qualities listed as Space, Weight, Time, Flow, effort, and shape [S2]. That's the theoretical basis: effort qualities are the physical expression of an inner attitude, visible in how Weight, Space, Time, and Flow occur in movement [S13].\n\n## The translation \u2014 your inference, not the corpus's\n\nThe corpus never connects effort to camera. But it does give you the mapping logic in two places. First, it tells you that camera decisions are made to make a technique \"register\" with the audience \u2014 the camera height section warns that the wrong angle makes a move \"simply look like the character was quickly sliding across the room, as if he had skates on,\" failing to give \"proper information about what was happening\" [S12]. Second, it tells you the camera's energy matters aesthetically: high shutter speed produces \"a jerky quality that adds to the chaos\" when the action is violent, as in the *Kingsman* church fight [S7].\n\nSo the honest synthesis is: **the camera doesn't have effort qualities; it has energy decisions that can be made to echo the fighter's effort qualities.** And the sources give you a defensible way to do that, because they establish the principle that camera choices exist to amplify and clarify the physical action, not to observe it neutrally.\n\n| Fighter's effort | Camera response (my construction) | Basis |\n|---|---|---|\n| **Press** (direct, sustained, heavy) | Slow push-in, deliberate dolly following a heavy strike | Direct space + sustained time = steady, weighted move |\n| **Slash** (indirect, staccato, heavy) | Quick whip pan, handheld whip following a sweeping strike | Indirect space + staccato time = fast, arcing move |\n| **Flick** (indirect, staccato, light) | Snap zoom or quick rack-pull on a light, quick jab | Staccato time = abrupt cut or fast move |\n| **Float** (indirect, sustained, light) | Slow crane-up or drifting steadicam gliding with a floating body | Sustained + light = graceful, airborne move |\n| **Punch** (direct, staccato, heavy) | Hard quick push-in, or cut on the impact beat | Direct + staccato + heavy = aggressive, decisive move |\n\nThese are my constructions, not the corpus's mappings \u2014 the sources give you the effort attributes [S4] and the camera-movement principles [S5][S12], but no source states \"Slash equals whip pan.\" You'd need to reason from the attributes yourself, which is exactly what the diffusion-motion literature in your corpus does in a different form: it uses Laban to express \"motion quality\" that natural language can't quantitatively capture [S10].\n\n## Your two synthesis targets\n\n**Target 1 (strong/sudden \u2192 specific camera move):** The corpus gives you the mechanism but not the answer. A \"strong\" (heavy Weight) or \"sudden\" (staccato Time) effort is defined by its attributes [S13][S4], so a camera that echoes it would move decisively and abruptly \u2014 a hard push-in or a cut on the beat. But no source says this, so I'd call it a supported inference, not a sourced fact.\n\n**Target 2 (camera as participant or observer):** This one the corpus partly answers. The camera-height section says the camera must give the audience \"proper information\" and make techniques register \u2014 that's an observer role whose job is to *clarify* the effort [S12]. But the shutter-speed material explicitly makes the camera an echo of the action's violence, altering the texture to reinforce the chaos [S7]. So the corpus supports **both**, with the participant energy reserved for aesthetic emphasis and the observer clarity as the baseline \u2014 the camera's energy *reacts to* the fighter's effort, even while it stays outside the fight. The sources never frame it in exactly these terms, so the participant/observer duality is my synthesis of what they imply.\n\nOne gap: the corpus gives you extensive Laban vocabulary [S1][S2][S3][S13] and separate cinematography guidance [S5][S7][S9][S12], but no source performs the translation between them. Your q2 aspect (translating physical energy and intent into visual perspective) has no direct evidence \u2014 that's the connective tissue you'd be adding, and the sources don't establish it as a standard practice.",
+   "error": null,
+   "wall_s": 16.5,
+   "finish": {
+    "finish_reason": "stop",
+    "max_tokens": 6000,
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "provider": "deepseek",
+     "surface": "litellm",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    }
+   },
+   "prompt": {
+    "prompt_chars": 38359,
+    "messages": 2,
+    "carry_in": 0,
+    "carry_in_prompt": 0,
+    "latent_labels": 0,
+    "synthesis_contract": {
+     "contract": "synthesis-v3",
+     "paths": 1,
+     "derived_dropped": 3,
+     "targets": 2
+    }
+   },
+   "words": 847,
+   "s_tags": [
+    "[S10]",
+    "[S12]",
+    "[S13]",
+    "[S1]",
+    "[S2]",
+    "[S3]",
+    "[S4]",
+    "[S5]",
+    "[S7]",
+    "[S9]"
+   ],
+   "a_tags": [],
+   "prompt_chars": 38359,
+   "s8_prompt_lines": [
+    "found by: a profile search from a matched book's idea \"Laban movement analysis for motion generation\"",
+    "LEARNING NEED (the planner's reading, written before any source was read): Understanding how to translate a movement analysis system into a visual language for cinematography.",
+    "SYNTHESIS TARGETS (the planner's questions, written before any source was read \u2014 check their premises; address each the sources support; say which they cannot settle):",
+    "1. How does a 'strong' or 'sudden' effort quality translate to a specific camera move?",
+    "2. Does the camera act as a participant in the Laban effort or an observer of it?"
+   ]
+  }
+ },
+ {
+  "fixture": 6,
+  "kind": "disagreements and scope differences kept visible",
+  "mode": "HYBRID",
+  "question": "Do jump cuts always break the audience's immersion in a film?",
+  "turn_s": 9.4,
+  "model": "anthropic/deepseek-v4-flash-0731",
+  "injected_round1_targets": false,
+  "plan": {
+   "learning_need": "Understanding the relationship between editing discontinuities and the psychological state of audience immersion.",
+   "synthesis_targets": [
+    "When does a jump cut feel like a mistake versus a choice?",
+    "How does the context of the scene influence the viewer's reaction to a jump cut?"
+   ],
+   "queries": [
+    {
+     "id": "q0",
+     "origin": "USER",
+     "type": "PRIMARY",
+     "query": "effect of jump cuts on audience immersion",
+     "expected_contribution": "Direct evidence of how jump cuts impact viewer engagement"
+    },
+    {
+     "id": "q1",
+     "origin": "USER",
+     "type": "MECHANISM",
+     "query": "stylistic use of jump cuts to enhance storytelling",
+     "expected_contribution": "Examples where jump cuts are used intentionally without breaking immersion"
+    },
+    {
+     "id": "q2",
+     "origin": "USER",
+     "type": "ADJACENT",
+     "query": "how temporal discontinuity affects observer perception of a narrative",
+     "expected_contribution": "General principles of how gaps in time affect mental models"
+    },
+    {
+     "id": "p0",
+     "origin": "PROFILE",
+     "type": "ENTITY",
+     "query": "Cognitive perception of continuity and disruption in film cuts",
+     "expected_contribution": null
+    },
+    {
+     "id": "p1",
+     "origin": "PROFILE",
+     "type": "ENTITY",
+     "query": "Maintaining spatial and temporal continuity to avoid viewer disorientation.",
+     "expected_contribution": null
+    },
+    {
+     "id": "br0",
+     "origin": "BRIDGE",
+     "type": "ENTITY",
+     "query": "kinetic storytelling and audience immersion",
+     "expected_contribution": "Insights into how movement-based storytelling maintains immersion despite cuts"
+    }
+   ]
+  },
+  "legend": [
+   {
+    "tag": "S1",
+    "where": "Ken Dancyger - The technique of film & video editing \u203a Page 152",
+    "text": "The jump cut asks viewers to tolerate the admission \nthat we are watching a film or to temporarily suspend belief in the film. This disruption \ncan help the film experience or harm it. In the past, it"
+   },
+   {
+    "tag": "S2",
+    "where": "Ken Dancyger - The technique of film & video editing \u203a Page 152",
+    "text": "125\nThe Jump Cut and Discontinuity\nThe jump cut itself is nothing more than the joining of two noncontiguous shots. Whether \nthe two shots recognize a change in direction, focus on an unexpected actio"
+   },
+   {
+    "tag": "S3",
+    "where": "Ken Dancyger - The technique of film & video editing \u203a Page 152",
+    "text": "Truffaut used the jump cut even more dynamically in Jules et Jim (1962), a period story \nabout two friends in love with the same woman. Whenever possible, Truffaut showed \nall three friends together i"
+   },
+   {
+    "tag": "S4",
+    "where": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press) \u203a Pages 181\u2013183",
+    "text": "A\u001fjump cut is abrupt, but it is the fastest way to move the story \nforward. Jump cuts compress time and space in a way that is similar to montage, \nalthough montages do not usually show the same chara"
+   },
+   {
+    "tag": "S5",
+    "where": "Grammar of the Edit \u203a Camera Angle",
+    "text": "The audience will not see these shots as providing sufficiently different views of the same information. In their eyes, the image will merely jump, which they will consciously notice, and as a result "
+   },
+   {
+    "tag": "S6",
+    "where": "Grammar of the Edit \u203a Select the Appropriate Form of Edit Transition",
+    "text": "For example, the action line has been mistakenly crossed in the shots in [Figure 8.5](chapter8.xhtml#fig8_5). Obviously, Character B is on the wrong side of the frame. As a cut from one shot to the ot"
+   },
+   {
+    "tag": "S7",
+    "where": "Kelly Gordon Brine - The Art Of Cinematic Storytelling (2020, Oxford University Press) \u203a Pages 181\u2013183",
+    "text": "Notable examples of this are cuts to characters\u0092 hands, their back, \nthe back of their head, or their silhouette. \ne cut will also not seem like a jump cut \nif the character is not immediately recogni"
+   },
+   {
+    "tag": "S8",
+    "where": "Ken Dancyger - The technique of film & video editing \u203a Page 287",
+    "text": "The story is filmed as if it\u2019s just happening before our eyes.\nThis means shorter takes, handheld shots, and the use of sound to provide continuity \nwithin scenes, just as would be the editing style o"
+   },
+   {
+    "tag": "S9",
+    "where": "Francis Glebas - Directing the Story \u203a Pacing: The Expansion and Contraction of Time",
+    "text": "We can move the story along quicker through jump cuts. These gaps in time get hidden by the dramatic flow of the story. To make a cut feel seamless, we cut away to something else: start the action and"
+   },
+   {
+    "tag": "S10",
+    "where": "Walter Murch - In the Blink of an Eye \u203a Dragnet",
+    "text": "You should be right with the blinks, perhaps leading them ever so slightly. I certainly don\u2019t expect the audience to blink at every cut\u2014the cut point should be a potential blink point. In a sense, by "
+   },
+   {
+    "tag": "S11",
+    "where": "Grammar of the Edit \u203a Camera Angle",
+    "text": "FIGURE 5.7 Editing together two shots from similar camera angles will cause a jump at the cut point. Differing camera angles and framing will help to prevent the jump cut in the mind of the viewer."
+   },
+   {
+    "tag": "S12",
+    "where": "Walter Murch - In the Blink of an Eye \u203a Why Do Cuts Work?",
+    "text": "The truth of the matter is that film is actually being \u201ccut\u201d twenty-four times a second. Each frame is a displacement from the previous one\u2014it is just that in a continuous shot, the space/time displac"
+   },
+   {
+    "tag": "S13",
+    "where": "Grammar of the Edit \u203a Figures",
+    "text": "67. [Figure 5.7 Editing together two shots from similar camera angles will cause a jump at the cut point. Differing camera angles and framing will help to prevent the jump cut in the mind of the viewe"
+   },
+   {
+    "tag": "S14",
+    "where": "Ken Dancyger - The technique of film & video editing \u203a Page 413",
+    "text": "The cue card cuts to \u201cListen.\u201d The visual cuts to an eye-line mid shot of the rats scurrying \nto run away from a threat. Jump cuts cue their sense of alarm. The accompanying sound \nis an over-modulate"
+   },
+   {
+    "tag": "S15",
+    "where": "Ken Dancyger - The technique of film & video editing \u203a Page 316",
+    "text": "My point here is that the doubling \nof purpose only enriches the experience of the film.\nThe film editor and director can go in one of two directions with this dual impulse. They \ncan favor using cuts"
+   },
+   {
+    "tag": "S16",
+    "where": "VES Handbook of Visual Effects \u203a **R**",
+    "text": "**RRT:** Abbreviation for Reference Rendering Transform: In the ACES color management system, a unique color transform that provides a color reproduction of ACES data appropriate for a dark-surround t"
+   },
+   {
+    "tag": "S17",
+    "where": "Blain Brown - Cinematography - Theory and Practice \u203a Pages 193\u2013194",
+    "text": "applications. The Reference Rendering Transform (RRT), on the other hand, is\nstrictly controlled by the ACES Committee. It is intended to be universal and the idea\nis that it will remain unchanged for"
+   },
+   {
+    "tag": "S18",
+    "where": "Facial Action coding 3.0 \u203a 4.png",
+    "text": "= \u2014 \u00ab \u2018\n,S St We) wl\ny \\ rT)\n] ~\u2014 \u2014\ns4a s4b\n<> Ss | > >\n\\\\ mp.\nrT? a\n\u2014 ra\n}\n. g be. fh\nSSX sSz"
+   },
+   {
+    "tag": "S19",
+    "where": "VES Handbook of Visual Effects \u203a _15/70 3D IMAX and Giant Screen Venues_",
+    "text": "Something very interesting happens on a movie screen when the audience sits within two-thirds of a screen width away from it: The image becomes completely immersive. In other words, the audience no lo"
+   },
+   {
+    "tag": "S20",
+    "where": "Joseph V. Mascelli - The Five C's of Cinematography \u203a Pages 119\u2013120",
+    "text": "Mem bers of the audience on one side\nwill look left; on the other side they will look right.\nEditorially, it is wise to inter-cut the shots, so that\na look by the speaker is followed by a look by a\nme"
+   },
+   {
+    "tag": "S21",
+    "where": "Francis Glebas - Directing the Story \u203a Why Do We Watch and More \u2026",
+    "text": "As you have just seen, the audience isn\u2019t just sitting there passively watching. They\u2019re actively engaged in the story, creating it for themselves in their head, and we\u2019ve gotten a glimpse of what the"
+   }
+  ],
+  "derived": 0,
+  "off": {
+   "answer": "No \u2014 a jump cut doesn't always break immersion; much depends on intent. A poorly handled jump cut yanks the audience out of the experience, but as a deliberate device it can actually deepen engagement by making viewers consciously aware they're watching constructed film. The same technique can rupture or reinforce attention depending on how and why it's used.\n\n**What a jump cut is**\n\nA jump cut is simply the joining of two noncontiguous shots \u2014 a cut that skips over time or space so the image noticeably \"jumps\" [S2]. Editing two shots from similar camera angles produces this effect; the audience sees the image jump, consciously notices it, and is pulled out of the viewing experience [S5][S11]. The viewer is forced to re-evaluate the new image as a different context rather than as continuous motion [S12].\n\n**How it disrupts immersion**\n\nThe jump cut asks viewers to tolerate the admission that they're watching a film, or to temporarily suspend their belief in it \u2014 a disruption that can help or harm the experience [S1]. It's jarring, reminding viewers they're watching a constructed work rather than reality unfolding before them [S2]. It breaks continuity editing, and can make storytelling feel choppy if overused [S4]. From the Grammar of the Edit perspective, this is something the editor should prevent unless it's part of the project's established visual style [S5].\n\n**How it can serve the story**\n\nThe same disruption becomes powerful when used with intent:\n- **The New Wave's embrace:** Since the French New Wave (particularly Jean-Luc Godard), the jump cut has been accepted as a stylistic device rather than an error [S1][S5]. It became a symbol of freedom in style and subject [S3].\n- **Showing a character's state:** Truffaut used a series of jump cuts in *Jules et Jim* (1962) to show Catherine in close-up and profile, communicating the \"thunderbolt effect\" she has on the two men [S3].\n- **Suggesting instability or urgency:** Jump cuts can suggest instability or lack of importance, and they create a sense of urgency that suggests a character is in a hurry or on a mission [S2][S4].\n- **Elongating emotion:** Greengrass uses jump cuts in his September 11 films to punctuate a feeling or elongate a hijacker's reaction \u2014 \"as if extending behaviors as captured in close-ups\" [S8].\n- **Adding energy:** In *Seven Samurai*, jump cuts in the battle scenes make them feel dynamic and energetic [S15].\n\nThis aligns with pacing theory: jump cuts move the story along quickly, and the time gaps get hidden by dramatic flow [S9].\n\n**What mitigates the disruption**\n\nJump cuts become less noticeable \u2014 and thus less immersion-breaking \u2014 with good shot contrast, because viewers take a moment longer to recognize the same character in the new shot, creating the feeling that time has passed [S4]. Cuts to body parts (hands, back, silhouette) or shots where a character isn't immediately recognized also reduce the abruptness [S7]. A dissolve instead of a cut can smooth over a jump when condensing time \u2014 though the dissolve version loses the sense of discomfort the jump cut would convey [S6]. Alternatively, letting a character clear the frame entirely and starting the new shot empty provides fresh visual data of place and time before the character strides in [S13].\n\nSo the principle is clear: when a jump cut serves the story's dramatic intent, it's an accepted and effective storytelling tool; when it's accidental or unmotivated, it's a disruption that pulls the audience out. It only breaks immersion as a matter of default \u2014 never as a universal rule.",
+   "error": null,
+   "wall_s": 14.0,
+   "finish": {
+    "finish_reason": "stop",
+    "max_tokens": 6000,
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "provider": "deepseek",
+     "surface": "litellm",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    }
+   },
+   "prompt": {
+    "prompt_chars": 38013,
+    "messages": 2,
+    "carry_in": 0,
+    "carry_in_prompt": 0,
+    "latent_labels": 1
+   },
+   "words": 591,
+   "s_tags": [
+    "[S11]",
+    "[S12]",
+    "[S13]",
+    "[S15]",
+    "[S1]",
+    "[S2]",
+    "[S3]",
+    "[S4]",
+    "[S5]",
+    "[S6]",
+    "[S7]",
+    "[S8]",
+    "[S9]"
+   ],
+   "a_tags": [],
+   "prompt_chars": 38013,
+   "s8_prompt_lines": []
+  },
+  "on": {
+   "answer": "A jump cut does not always break immersion \u2014 whether it does depends entirely on whether the audience reads it as a deliberate choice or an error, and on how the scene's context shapes that reading. The sources agree that jump cuts *can* destroy the viewing experience, but they just as consistently document their purposeful, effective use.\n\n**The disruptive core.** At its most basic, a jump cut is simply the joining of two noncontiguous shots [S2]. Because it ignores a change in direction, skips expected action, or lacks the setup that prepares viewers for the next shot, it focuses attention on discontinuity \u2014 it reminds viewers they are watching a film, and it is jarring [S2]. This can suggest instability or a lack of importance, and it forces the viewer to broaden their \"band of acceptance\" for what screen time means [S2]. Grammatically, jump cuts most often appear when the editor violates a rule: cutting together two shots from *similar* camera angles makes the image merely \"jump\" in the viewer's eyes, pulling them out of the experience [S11][S5]. A wrongly crossed action line produces a \"blatant jump\" that jars the audience and interrupts the narrative [S6]. Frame-to-frame motion reads as continuous context, but a large visual displacement at a cut forces the brain to re-evaluate the new image as a different context \u2014 which is precisely where immersion can be lost [S12].\n\n**When it reads as a choice.** The decisive factor is whether the discontinuity serves the story. The French New Wave normalized the jump cut as a legitimate device; audiences accepted that discontinuity could portray a less stable view of society or personality, or act as a warning that they were watching a film and should beware of manipulation [S1][S5]. Truffaut used a rapid series of jump cuts on Catherine in *Jules et Jim* to convey the \"thunderbolt effect\" she has on the two men [S3]. Brine frames the jump cut as the fastest way to move a story forward \u2014 it compresses time and space, creates urgency, and suggests a character in a hurry or on a mission [S4]. Glebas adds that such gaps in time get hidden by the dramatic flow of the story [S9]. Dancyger documents both extremes: Kurosawa's jump cuts in *Seven Samurai* make battle scenes feel dynamic and energetic, while Boorman's straight-cut time jumps in *Point Blank* feel elliptical and psychological, like recovered memories or an obsession [S15]. Greengrass uses jump cuts in a v\u00e9rit\u00e9 style to punctuate or question a feeling, elongating the initial reaction of the hijackers [S8].\n\n**What mitigates the disruption.** Several conditions soften the jolt:\n\n- **Good shot contrast** \u2014 if the new shot differs enough, viewers take a moment longer to recognize the same character, and that delay creates a feeling of time having passed [S4].\n- **Delayed recognition** \u2014 cutting to the character's hands, back, back of the head, or silhouette, or placing them in a long shot or crowd, reduces abruptness and preserves continuity [S7].\n- **Cutaways and inserts** \u2014 a cutaway can break inconsistent content so the audience doesn't consciously notice the discontinuity [S13]. Similarly, an insert shot can break attention on screen direction [S13].\n- **Clearing the frame** \u2014 if a subject jumps in place and time, letting them clear the frame entirely and starting the new shot empty provides fresh visual data before the character re-enters [S13].\n- **Alternative transitions** \u2014 when condensing time and a straight cut would cause a jump cut, a dissolve is often more acceptable; the jump-cut version implies discomfort and agitation, while the dissolve underscores the extreme length of time [S6].\n\n**How context shapes reaction.** This is the crux of your two questions. A jump cut feels like a *mistake* when it violates continuity grammar for no expressive purpose \u2014 similar angles [S11], crossed action lines [S6], subjects jumping screen position [S13] \u2014 and the editor's job is to prevent that unless it's part of an established visual style [S5]. It feels like a *choice* when the discontinuity is motivated by the story's emotional or psychological content: alarm [S14], instability [S2], urgency [S4], or stylistic freedom [S1]. Overuse is the one consistent failure mode \u2014 if jump cuts accumulate, the storytelling becomes choppy and their effectiveness is lost [S4]. Worth noting, too, that the audience is not a passive recipient; they are actively constructing the story in their heads [S21], which is why a motivated jump cut can pull them *more* deeply into the drama even as it reminds them they are watching a film.\n\nThe sources do not settle a finer question \u2014 under what exact threshold of shot contrast or duration a jump cut flips from \"choice\" to \"mistake.\" That boundary is presented as a judgment call rather than a fixed rule.",
+   "error": null,
+   "wall_s": 13.7,
+   "finish": {
+    "finish_reason": "stop",
+    "max_tokens": 6000,
+    "reasoning": {
+     "role": "CHAT_SYNTHESIS",
+     "provider": "deepseek",
+     "surface": "litellm",
+     "top_level": {
+      "thinking": {
+       "type": "disabled"
+      }
+     },
+     "extra_body": {},
+     "max_output_tokens": 6000
+    }
+   },
+   "prompt": {
+    "prompt_chars": 40578,
+    "messages": 2,
+    "carry_in": 0,
+    "carry_in_prompt": 0,
+    "latent_labels": 1,
+    "synthesis_contract": {
+     "contract": "synthesis-v3",
+     "paths": 1,
+     "targets": 2
+    }
+   },
+   "words": 795,
+   "s_tags": [
+    "[S11]",
+    "[S12]",
+    "[S13]",
+    "[S14]",
+    "[S15]",
+    "[S1]",
+    "[S21]",
+    "[S2]",
+    "[S3]",
+    "[S4]",
+    "[S5]",
+    "[S6]",
+    "[S7]",
+    "[S8]",
+    "[S9]"
+   ],
+   "a_tags": [],
+   "prompt_chars": 40578,
+   "s8_prompt_lines": [
+    "found by: a bridge from a matched book's idea \"kinetic storytelling and audience immersion\" (meant to show: Insights into how movement-based storytelling maintains immersion despite cuts)",
+    "LEARNING NEED (the planner's reading, written before any source was read): Understanding the relationship between editing discontinuities and the psychological state of audience immersion.",
+    "SYNTHESIS TARGETS (the planner's questions, written before any source was read \u2014 check their premises; address each the sources support; say which they cannot settle):",
+    "1. When does a jump cut feel like a mistake versus a choice?",
+    "2. How does the context of the scene influence the viewer's reaction to a jump cut?"
+   ]
+  }
+ }
+]
