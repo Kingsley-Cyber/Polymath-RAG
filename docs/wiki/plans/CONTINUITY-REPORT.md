@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-23
+last_reviewed: 2026-09-24
 ---
 
 
@@ -23,7 +23,7 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-23 (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). PROBE-GATE-V1 live 2026-09-24 (11.446–11.447; HYBRID / GRAPH, WILDCARD exempt). Pushed to origin 2026-09-24 on the owner's word (`0e0978b`). Owner actions waiting: the corpus-delete command; pushes of later commits. CODE-KNOWLEDGE-V1 parked.**
+## CURRENT — 2026-09-23 (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). PROBE-GATE-V1 live 2026-09-24 (11.446–11.447; HYBRID / GRAPH, WILDCARD exempt). S4 compiler contract built + measured 2026-09-24, flag OFF (11.449). Pushed to origin 2026-09-24 on the owner's word (`0e0978b`). Owner actions waiting: the corpus-delete command; pushes of later commits. CODE-KNOWLEDGE-V1 parked.**
 
 ### READ FIRST — what happened while the owner was away (2026-09-23 night)
 1. **Skeleton routing is live** (flags `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard` in `.env`;
@@ -68,7 +68,23 @@ historical, never an instruction.
    - The worker embeds atoms in the collection's query mode.
    - Rollback: `scripts/repair_profile_atoms.py --corpus cinema --restore ~/PolymathBackups/atom-repair-2026-09-24` + tag
      `pre-atom-repair-merge`.
-6. **Stuck runs (pre-existing, not touched):**
+6. **S4 compiler contract: BUILT + MEASURED 2026-09-24, flag OFF** (owner: "yes start S4"; register 11.449; work-log
+   `2026-09-24-s4-compiler-contract.md`).
+   - `POLYMATH_CHAT_COMPILER_CONTRACT=1` makes the one compiler call also write:
+     - the learning need;
+     - a purpose + evidence need per query;
+     - inquiry dimensions and ≤ 3 synthesis targets;
+     - ≤ 3 bridges from the Scout's matched profile items. They pass the retired bridge call's own admission, so that
+       second model call is gone.
+   - D2: knowledge questions always retrieve.
+   - Measured (compiler calls only, 3 rounds): compile median 2.98 s vs 3.03 s. Synthesis turns are faster (no second
+     call), factual turns +0.7 s. Turns with bridges 11/20 both. Fallback 1/60 vs 0/60, inside the live 4.0% baseline.
+   - Flip only on the owner's word, after a flagged live check (S9). Nothing reads the new fields yet (S7 judge, S8 answer).
+   - A bug fix ships either way: the instruction-word filter matched substrings ("information" holds "format") and
+     silently dropped topical planner queries.
+   - Test-hygiene incident: a stopped full-suite run left 7 `census_probe_*` runs (57 attempts, corpus `census-probe`,
+     1 cursor) in the fleet DB. The cleanup waits on the owner's word.
+7. **Stuck runs (pre-existing, not touched):**
    - 37 cinema runs in `reconciling` with pending downstream tickets, untouched since 2026-09-05..07;
    - 1 cinema run parked at `intake` (09-07);
    - commerce-v1: extract failed 09-21.

@@ -1787,6 +1787,41 @@ def _scout_source_names(doc_ids, corpora) -> list[str]:
     return [by_id[d] for d in ids if by_id.get(d)]
 
 
+def _scout_matches(scout_result, corpora) -> list[dict]:
+    """S4 (v2 compiler contract): the Scout's matched profile items as text with a stable ref each — the compiler writes the
+    concept bridges from these in its one call (D5) and may reference only these refs. Items without text (a bare profile
+    nomination) stay out: their titles already ride the library block. The window is the admission's own concept window
+    (the first MAX_PROFILE_MATCHES distinct documents, as `concepts_from_nominations`), so every ref the compiler may use
+    names a concept the bridge admission accepts. The documents the PROFILE expansion will search verbatim stay out too
+    (its first POLYMATH_CHAT_PROFILE_EXPANSION_MAX text nominations): the admission would drop their bridges as covered,
+    and the retired call likewise saw only the uncovered concepts. A read; never breaks the compile."""
+    from polymath_shared.chat_plan import MAX_PROFILE_MATCHES
+    window, seen = [], set()
+    for n in getattr(scout_result, "nominations", None) or ():
+        did = str(getattr(n, "doc_id", "") or "").strip()
+        if did and did not in seen and len(seen) < MAX_PROFILE_MATCHES:
+            seen.add(did)
+            window.append(n)
+    noms = [n for n in window if (getattr(n, "representative_text", None) or "").strip()]
+    if os.environ.get("POLYMATH_CHAT_PROFILE_EXPANSION", "0") == "1":          # the same pick as _add_profile_expansion
+        texted = [n for n in getattr(scout_result, "nominations", None) or () if (getattr(n, "representative_text", None) or "").strip()]
+        covered = {n.doc_id for n in texted[:int(os.environ.get("POLYMATH_CHAT_PROFILE_EXPANSION_MAX", "2"))]}
+        noms = [n for n in noms if n.doc_id not in covered]
+    if not noms:
+        return []
+    titles: dict = {}
+    try:
+        with tx() as conn:
+            titles = {r[0]: r[1] for r in conn.execute(
+                "SELECT doc_id, source_name FROM documents WHERE doc_id = ANY(%s) AND corpus_id = ANY(%s)",
+                ([n.doc_id for n in noms], list(corpora or []))).fetchall()}
+    except Exception:  # noqa: BLE001 — titles are decoration; the matches still ride
+        titles = {}
+    return [{"ref": f"m{i}", "doc_id": n.doc_id, "kind": getattr(n, "representative_surface", None) or "PROFILE",
+             "text": " ".join(str(n.representative_text).split())[:200],
+             "title": str(titles.get(n.doc_id) or "").rsplit(".", 1)[0][:80]} for i, n in enumerate(noms)]
+
+
 def _corpus_source_index(corpora) -> dict[str, str]:
     """CA1/CA2 identity index: {doc_id: source_name} for the active corpus/corpora. A cheap
     metadata read, called ONLY when the plan carries an explicit constraint (no cost on the common
@@ -2035,6 +2070,58 @@ def _add_bridge_expansion(plan, scout_result) -> None:
         plan.compiler["bridge_expansion"] = {**(plan.compiler.get("bridge_expansion") or {}), **diag}
     except Exception:  # noqa: BLE001
         pass
+
+
+def _admit_plan_bridges(plan, scout_result) -> None:
+    """S4 (D5): the concept bridges the ONE compiler call wrote from the Scout's matches, admitted by the SAME tiered policy
+    as the retired second call — `plan_bridge_expansion` (q0 authority, intent eligibility, tier-1 reuse of concepts the
+    PROFILE expansion already covers, the activation guard, the C1 structural gate, dedup, weight, lineage) with the model
+    call replaced by the plan's own output. Same flag, same `plan.compiler["bridge_expansion"]` receipt plus `merged`
+    and `dropped_covered`; each admitted bridge keeps its S4 purpose fields. FAIL-OPEN like the old pass."""
+    if os.environ.get("POLYMATH_CHAT_BRIDGE_COMPILER", "0") != "1":
+        return
+    import time as _t
+    proposed = list(getattr(plan, "_plan_bridges", None) or [])
+    diag = {"merged": True, "attempted": False, "succeeded": False, "generated": 0, "admitted": 0, "rejected": 0,
+            "dropped_covered": 0, "fallback_reason": None, "latency_ms": 0.0}
+    t0 = _t.perf_counter()
+    try:
+        from polymath_shared.bridge_integration import (
+            covered_concept_keys,
+            plan_bridge_expansion,
+        )
+        from polymath_shared.retrieval_lineage import primary_text
+
+        covered = covered_concept_keys(plan.queries, primary_text(plan.queries))
+        keep = [b for b in proposed if b.get("derived_from") not in covered]
+        diag["dropped_covered"] = len(proposed) - len(keep)
+        if not keep:
+            diag["fallback_reason"] = "no_plan_bridges" if not proposed else "all_concepts_have_admissible_bridge"
+        else:
+            payload = json.dumps(keep)
+            before = len(plan.queries)
+            diag["attempted"] = True
+            res = plan_bridge_expansion(plan, list(getattr(scout_result, "nominations", None) or ()),
+                                        generate=lambda _prompt: payload)
+            diag["generated"] = res.get("generated") or 0
+            diag["admitted"] = res.get("admitted") or 0
+            diag["rejected"] = max(0, (res.get("generated") or 0) - (res.get("admitted") or 0))
+            diag["succeeded"] = (res.get("added") or 0) > 0
+            if not res.get("eligible", False):
+                diag["fallback_reason"] = res.get("reason")
+            elif (res.get("added") or 0) == 0:
+                diag["fallback_reason"] = "no_valid_bridges"
+            by_query = {" ".join((b.get("bridge_query") or "").lower().split()): b for b in keep}
+            for q in plan.queries[before:]:
+                b = by_query.get(" ".join((q.query or "").lower().split()))
+                if b is not None:
+                    q.expected_contribution = b.get("expected_contribution")
+                    q.evidence_requirement = b.get("evidence_requirement")
+    except Exception as exc:  # noqa: BLE001 — FAIL-OPEN: the optional bridge layer never blocks the answer
+        diag["fallback_reason"] = f"error:{type(exc).__name__}"
+    diag["latency_ms"] = round((_t.perf_counter() - t0) * 1000, 1)
+    if isinstance(getattr(plan, "compiler", None), dict):
+        plan.compiler["bridge_expansion"] = {**(plan.compiler.get("bridge_expansion") or {}), **diag}
 
 
 def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, enabled: bool,
@@ -2290,6 +2377,12 @@ def _apply_latent_selection(fast, plan, q0_text, *, mode: str = "") -> dict | No
         return {"enabled": True, "error": f"{type(exc).__name__}"}
 
 
+def _bridges_merged(plan) -> bool:
+    """S4 (D5): the v2 compiler wrote this turn's concept bridges itself; a fallback plan keeps the separate bridge call."""
+    from polymath_shared.chat_plan import CONTRACT_V2
+    return getattr(plan, "contract", "") == CONTRACT_V2 and not getattr(plan, "fallback", True)
+
+
 def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | None = None,
                        titles_rank: str | None = None, corpus_explorer: bool = False):
     """CHAT-INTENT-PLAN-V1 through the `chat_compiler` stage pin (plan §3.2):
@@ -2321,7 +2414,10 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         _upstream_err = None
         try:
             _timed("profile_expansion", _add_profile_expansion, plan, scout_result)
-            _timed("bridges", _add_bridge_expansion, plan, scout_result)   # WLK2C C3: bounded concept-bridge compiler (flag-gated, fail-open)
+            if _bridges_merged(plan):
+                _timed("bridges", _admit_plan_bridges, plan, scout_result)    # S4 (D5): the compiler's own bridges, same admission
+            else:
+                _timed("bridges", _add_bridge_expansion, plan, scout_result)   # WLK2C C3: bounded concept-bridge compiler (flag-gated, fail-open)
             from polymath_shared.subquery_provenance import annotate_subquery_provenance
             _timed("provenance", annotate_subquery_provenance, plan, scout_result)
             _timed("constraints", _resolve_plan_constraints, plan, scout_result, corpus_ids)   # CA2: identity resolution, no ranking effect
@@ -2339,6 +2435,8 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         if isinstance(getattr(plan, "compiler", None), dict):   # receipt-only; a plan always carries one
             plan.compiler["compile_ms"] = {**steps, "total": round((time.perf_counter() - t_compile) * 1000, 1)}
         return plan
+    from polymath_shared.chat_plan import contract_enabled as _contract_on
+    matches = _timed("matches", _scout_matches, scout_result, corpus_ids) if (_contract_on() and scout_result is not None) else None
     try:
         from polymath_shared.llm_extraction.client import LLMExtractionClient
         from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
@@ -2364,7 +2462,8 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
 
             def _complete(system_prompt: str, user_prompt: str, max_tokens: int, _c=client):
                 return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
-            one = compile_plan(message, history, corpus_ids, _complete, model=f"{ep.name}:{ep.model}", titles=titles)
+            one = compile_plan(message, history, corpus_ids, _complete, model=f"{ep.name}:{ep.model}", titles=titles,
+                               matches=matches)
             one.compiler["scout"] = scout_rec
             one.compiler["reasoning"] = getattr(client, "last_reasoning", None) or None   # S1b: what this attempt sent
             return one
