@@ -329,11 +329,20 @@ def select_cloud_endpoint(doc_id: str, ring_offset: int = 0) -> CloudEndpoint:
 
 def pool_fingerprint() -> list[dict]:
     """Roster identity for contract_identity(): a provider added/removed/
-    re-modeled must show up in the extraction contract."""
+    re-modeled must show up in the extraction contract.
+
+    GROQ-MODEL-SWAP-2026-09-23: only the lanes extraction can dispatch to — the
+    non-dedicated roster, or the whole roster when every lane is dedicated (the
+    rule `select_cloud_endpoint` and `cloud_ring` apply). A dedicated lane serves
+    only its pinned stage (profile / pMAP / enrichment / compiler), so re-modelling
+    it cannot change what a document is extracted by and must not invalidate the
+    extraction call cache (`llm_provider._key`)."""
+    eps = cloud_endpoints()
+    extraction_roster = [ep for ep in eps if not ep.dedicated] or eps
     return [{"name": ep.name, "url": ep.url, "model": ep.model,
              "reasoning_effort": ep.reasoning_effort,
              "structured": ep.structured, "dedicated": ep.dedicated}
-            for ep in cloud_endpoints()]
+            for ep in extraction_roster]
 
 
 def _family_of(ep: CloudEndpoint) -> str:

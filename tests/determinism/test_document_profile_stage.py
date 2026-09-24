@@ -41,7 +41,7 @@ def test_stage_is_wired_non_blocking_for_rollout_phase_a():
 
 def test_profile_pool_is_pinned_and_isolated_in_config():
     """PROVIDER-LANE-REASSIGNMENT-V1 (11.193): doc_profile is ONE dedicated Groq account
-    (GROQ_API_KEY_1, groq/compound) plus an OpenRouter fallback. The other five Groq
+    (GROQ_API_KEY_1; openai/gpt-oss-120b since GROQ-MODEL-SWAP-2026-09-23 — compound is gone) plus an OpenRouter fallback. The other five Groq
     accounts left doc_profile for pMAP, and the Gemini profile fallbacks were retired
     when Google moved to graph extraction.
     """
@@ -55,7 +55,8 @@ def test_profile_pool_is_pinned_and_isolated_in_config():
         # unless the prompt contains the word "json")
         assert eps[n]["enabled"] and eps[n]["dedicated"] and eps[n]["structured"] == "text"
     assert eps["profile_groq1"]["url"] == "https://api.groq.com/openai"
-    assert eps["profile_groq1"]["model"] == "groq/compound"
+    assert eps["profile_groq1"]["model"] == "openai/gpt-oss-120b"
+    assert eps["profile_groq1"]["reasoning_effort"] == "low"          # owner: gpt-oss runs low reasoning
     assert eps["profile_groq1"]["api_key_env"] == "GROQ_API_KEY_1"
     # ISOLATION: the doc_profile account is used by NO other enabled lane.
     others = {e["api_key_env"] for e in d["providers"]
@@ -307,4 +308,4 @@ def test_each_profile_slot_starts_on_its_own_key_and_falls_back_to_run_rotation_
     src = (ROOT / "control/control/process_supervisor.py").read_text()
     assert 'POLYMATH_DOC_PROFILE_LANE_OFFSET' in src and 'slot.name[len("doc_profile"):] or "1"' in src
     lim = (ROOT / "config/extraction_models/limiter.yaml").read_text()
-    assert lim.count("    rpm: 2\n") >= 6 and "limiter is per PROCESS" in lim and "12 internal model calls" in lim
+    assert lim.count("    rpm: 2\n") >= 6 and "limiter is per PROCESS" in lim and "INDEPENDENT per model per key" in lim

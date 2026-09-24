@@ -1,0 +1,740 @@
+{
+ "canary": "GROQ-MODEL-CANARY-2026-09-23",
+ "calls": 17,
+ "results": [
+  {
+   "stage": "pmap",
+   "doc": "doc_0661e39c4ec6c9d4",
+   "model": "openai/gpt-oss-20b",
+   "key": "GROQ_API_KEY_2",
+   "batch": 15,
+   "prompt_chars": 7920,
+   "status": 200,
+   "reasoning_chars": 51,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.003263797,
+    "prompt_tokens": 2331,
+    "prompt_time": 0.139091957,
+    "completion_tokens": 397,
+    "completion_time": 0.502260393,
+    "total_tokens": 2728,
+    "total_time": 0.64135235,
+    "completion_tokens_details": {
+     "reasoning_tokens": 16
+    }
+   },
+   "ms": 901,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "999",
+    "x-ratelimit-remaining-tokens": "5201",
+    "x-ratelimit-reset-requests": "1m26.4s",
+    "x-ratelimit-reset-tokens": "20.992s"
+   },
+   "sent": {
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "low"
+   },
+   "valid_maps": 15,
+   "expected": 15,
+   "rejected_lines": 0,
+   "unknown_aliases": 0,
+   "sample": "MAP|P0001|David Keirsey book file location and source|epub;libgen;Keirsey  \nMAP|P0002|Copyright notice for 1998 book edition|Prometheus;Nemesis;1998  \nMAP|P0003|Opening remarks about human differences and temperament|Keirsey;temperament;differences  \nMAP|P0004|Table of contents listing chapters and "
+  },
+  {
+   "stage": "pmap",
+   "doc": "doc_0661e39c4ec6c9d4",
+   "model": "openai/gpt-oss-20b",
+   "key": "GROQ_API_KEY_3",
+   "batch": 8,
+   "prompt_chars": 5252,
+   "status": 200,
+   "reasoning_chars": 58,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.110036457,
+    "prompt_tokens": 1567,
+    "prompt_time": 0.111241196,
+    "completion_tokens": 222,
+    "completion_time": 0.250398401,
+    "total_tokens": 1789,
+    "total_time": 0.361639597,
+    "completion_tokens_details": {
+     "reasoning_tokens": 17
+    }
+   },
+   "ms": 637,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "999",
+    "x-ratelimit-remaining-tokens": "6033",
+    "x-ratelimit-reset-requests": "1m26.4s",
+    "x-ratelimit-reset-tokens": "14.752s"
+   },
+   "sent": {
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "low"
+   },
+   "valid_maps": 8,
+   "expected": 8,
+   "rejected_lines": 0,
+   "unknown_aliases": 0,
+   "sample": "MAP|P0001|David Keirsey book file location and source|epub;libgen;nemesis  \nMAP|P0002|Copyright notice for 1998 Prometheus Nemesis book|copyright;1998;International  \nMAP|P0003|Opening quote about human differences in Keirsey book|temperament;difference;Keirsey  \nMAP|P0004|Table of contents listing "
+  },
+  {
+   "stage": "pmap",
+   "doc": "doc_0661e39c4ec6c9d4",
+   "model": "qwen/qwen3.8-27b",
+   "key": "GROQ_API_KEY_4",
+   "batch": 15,
+   "prompt_chars": 7920,
+   "status": 200,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.007423769,
+    "prompt_tokens": 2477,
+    "prompt_time": 0.222780453,
+    "completion_tokens": 490,
+    "completion_time": 1.000376203,
+    "total_tokens": 2967,
+    "total_time": 1.223156656
+   },
+   "ms": 1403,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "999",
+    "x-ratelimit-remaining-tokens": "5047",
+    "x-ratelimit-reset-requests": "1m26.4s",
+    "x-ratelimit-reset-tokens": "22.147s"
+   },
+   "sent": {
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "none"
+   },
+   "valid_maps": 15,
+   "expected": 15,
+   "rejected_lines": 0,
+   "unknown_aliases": 0,
+   "sample": "MAP|P0001|Book metadata and source file path for Please Understand Me II|epub source;libgen.li;David Keirsey\nMAP|P0002|Copyright notice and rights reservation for Prometheus Nemesis Book Company|copyright notice;Prometheus Nemesis;1998 rights\nMAP|P0003|Forward introduction emphasizing individual dif"
+  },
+  {
+   "stage": "pmap",
+   "doc": "doc_0661e39c4ec6c9d4",
+   "model": "qwen/qwen3.8-27b",
+   "key": "GROQ_API_KEY_5",
+   "batch": 8,
+   "prompt_chars": 5252,
+   "status": 200,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.192436864,
+    "prompt_tokens": 1646,
+    "prompt_time": 0.123466851,
+    "completion_tokens": 261,
+    "completion_time": 0.50492382,
+    "total_tokens": 1907,
+    "total_time": 0.628390671
+   },
+   "ms": 865,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "999",
+    "x-ratelimit-remaining-tokens": "5617",
+    "x-ratelimit-reset-requests": "1m26.4s",
+    "x-ratelimit-reset-tokens": "17.872s"
+   },
+   "sent": {
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "none"
+   },
+   "valid_maps": 8,
+   "expected": 8,
+   "rejected_lines": 0,
+   "unknown_aliases": 0,
+   "sample": "MAP|P0001|Book metadata and source file path for Please Understand Me II|epub source;libgen.li;David Keirsey\nMAP|P0002|Copyright notice and rights reservation for Prometheus Nemesis Book Company|copyright notice;Prometheus Nemesis;1998 rights\nMAP|P0003|Forward introduction emphasizing individual dif"
+  },
+  {
+   "stage": "profile",
+   "doc": "doc_0661e39c4ec6c9d4",
+   "model": "openai/gpt-oss-120b",
+   "key": "GROQ_API_KEY_1",
+   "prompt_chars": 4825,
+   "status": 200,
+   "reasoning_chars": 112,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.149762816,
+    "prompt_tokens": 1142,
+    "prompt_time": 0.05711752,
+    "completion_tokens": 1025,
+    "completion_time": 2.139350013,
+    "total_tokens": 2167,
+    "total_time": 2.196467533,
+    "completion_tokens_details": {
+     "reasoning_tokens": 26
+    }
+   },
+   "ms": 2519,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "999",
+    "x-ratelimit-remaining-tokens": "6483",
+    "x-ratelimit-reset-requests": "1m26.4s",
+    "x-ratelimit-reset-tokens": "11.377s"
+   },
+   "sent": {
+    "model": "openai/gpt-oss-120b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "low"
+   },
+   "profile_valid": true,
+   "missing": [],
+   "field_counts": {
+    "topics": 10,
+    "terms": 10,
+    "questions": 15,
+    "searches": 15,
+    "theories": 10,
+    "concepts": 10,
+    "seealso": 10
+   },
+   "has_one_liner": true,
+   "has_summary": true,
+   "sample": "ONE: The document presents David Keirsey\u2019s expanded temperament theory and personality type descriptions in \u201cPlease Understand Me\u202fII.\u201d\n\nSUMMARY: Keirsey\u2019s book elaborates on his four temperaments\u2014Guardians, Artisans, Idealists, and Rationals\u2014detailing their traits, child development patterns, and so"
+  },
+  {
+   "stage": "profile",
+   "doc": "doc_0661e39c4ec6c9d4",
+   "model": "qwen/qwen3.8-27b",
+   "key": "GROQ_API_KEY_1",
+   "prompt_chars": 4825,
+   "status": 200,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.063958741,
+    "prompt_tokens": 1150,
+    "prompt_time": 0.08975553,
+    "completion_tokens": 802,
+    "completion_time": 1.6496877620000001,
+    "total_tokens": 1952,
+    "total_time": 1.739443292
+   },
+   "ms": 1975,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "999",
+    "x-ratelimit-remaining-tokens": "6133",
+    "x-ratelimit-reset-requests": "1m26.4s",
+    "x-ratelimit-reset-tokens": "14.002s"
+   },
+   "sent": {
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "none"
+   },
+   "profile_valid": true,
+   "missing": [],
+   "field_counts": {
+    "topics": 10,
+    "terms": 10,
+    "questions": 15,
+    "searches": 15,
+    "theories": 10,
+    "concepts": 10,
+    "seealso": 10
+   },
+   "has_one_liner": true,
+   "has_summary": true,
+   "sample": "ONE: The book presents David Keirsey's four-temperament personality model, detailing the characteristics, motivations, and social roles of Guardians, Artisans, Idealists, and Rationals.\n\nSUMMARY: Please Understand Me II explores the psychological profiles of four distinct temperaments, analyzing how"
+  },
+  {
+   "stage": "profile",
+   "doc": "doc_0661e39c4ec6c9d4",
+   "model": "openai/gpt-oss-20b",
+   "key": "GROQ_API_KEY_1",
+   "prompt_chars": 4825,
+   "status": 200,
+   "reasoning_chars": 36,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.208796735,
+    "prompt_tokens": 1142,
+    "prompt_time": 0.088191825,
+    "completion_tokens": 854,
+    "completion_time": 0.9436193,
+    "total_tokens": 1996,
+    "total_time": 1.031811125,
+    "completion_tokens_details": {
+     "reasoning_tokens": 9
+    }
+   },
+   "ms": 1410,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "999",
+    "x-ratelimit-remaining-tokens": "6458",
+    "x-ratelimit-reset-requests": "1m26.4s",
+    "x-ratelimit-reset-tokens": "11.565s"
+   },
+   "sent": {
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "low"
+   },
+   "profile_valid": true,
+   "missing": [],
+   "field_counts": {
+    "topics": 10,
+    "terms": 10,
+    "questions": 14,
+    "searches": 15,
+    "theories": 10,
+    "concepts": 10,
+    "seealso": 11
+   },
+   "has_one_liner": true,
+   "has_summary": true,
+   "sample": "ONE: A personality typology system that expands on the Myers\u2013Briggs Type Indicator by categorizing people into four temperaments and sixteen personality types.  \nSUMMARY: The book presents Keirsey\u2019s temperament theory, describing four temperaments\u2014Artisans, Guardians, Idealists, and Rationals\u2014and th"
+  },
+  {
+   "stage": "pmap",
+   "doc": "doc_0661e39c4ec6c9d4",
+   "model": "groq/compound-mini",
+   "key": "GROQ_API_KEY_6",
+   "batch": 8,
+   "prompt_chars": 5252,
+   "status": 404,
+   "error": "{\"error\":{\"message\":\"The model `groq/compound-mini` does not exist or you do not have access to it.\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}\n",
+   "ms": 165,
+   "headers": {},
+   "sent": {
+    "model": "groq/compound-mini",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false
+   }
+  },
+  {
+   "stage": "pmap",
+   "doc": "doc_0730dc4586caa99d",
+   "model": "openai/gpt-oss-20b",
+   "key": "GROQ_API_KEY_2",
+   "batch": 15,
+   "prompt_chars": 6861,
+   "status": 200,
+   "reasoning_chars": 14,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.171652572,
+    "prompt_tokens": 1993,
+    "prompt_time": 0.098998367,
+    "completion_tokens": 374,
+    "completion_time": 0.393774948,
+    "total_tokens": 2367,
+    "total_time": 0.492773315,
+    "completion_tokens_details": {
+     "reasoning_tokens": 6
+    }
+   },
+   "ms": 864,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "998",
+    "x-ratelimit-remaining-tokens": "5408",
+    "x-ratelimit-reset-requests": "2m52.8s",
+    "x-ratelimit-reset-tokens": "19.44s"
+   },
+   "sent": {
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "low"
+   },
+   "valid_maps": 15,
+   "expected": 15,
+   "rejected_lines": 0,
+   "unknown_aliases": 0,
+   "sample": "MAP|P0001|Image cover with OCR noise|cover;image;OCR\nMAP|P0002|Copyright page with 2021 CRC Press details|copyright;2021;CRC\nMAP|P0003|Foreword by Joanna Quinn, student experience|foreword;Joanna Quinn;Middlesex\nMAP|P0004|Preface to 3rd Edition, 40 years of animation teaching|preface;3rd Edition;ani"
+  },
+  {
+   "stage": "pmap",
+   "doc": "doc_0730dc4586caa99d",
+   "model": "openai/gpt-oss-20b",
+   "key": "GROQ_API_KEY_3",
+   "batch": 8,
+   "prompt_chars": 4665,
+   "status": 200,
+   "reasoning_chars": 58,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.086315794,
+    "prompt_tokens": 1348,
+    "prompt_time": 0.06681859,
+    "completion_tokens": 228,
+    "completion_time": 0.261700675,
+    "total_tokens": 1576,
+    "total_time": 0.328519265,
+    "completion_tokens_details": {
+     "reasoning_tokens": 17
+    }
+   },
+   "ms": 582,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "998",
+    "x-ratelimit-remaining-tokens": "6430",
+    "x-ratelimit-reset-requests": "2m52.8s",
+    "x-ratelimit-reset-tokens": "11.775s"
+   },
+   "sent": {
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "low"
+   },
+   "valid_maps": 8,
+   "expected": 8,
+   "rejected_lines": 0,
+   "unknown_aliases": 0,
+   "sample": "MAP|P0001|Cover image OCR with garbled text|LEN;BER;AY\nMAP|P0002|Copyright page with 2021 CRC Press details|CRC;ISBN;Boca Raton\nMAP|P0003|Foreword by Joanna Quinn, student experience|Joanna Quinn;Middlesex University;Foreword\nMAP|P0004|Preface to 3rd Edition, 40 years of animation teaching|Harold Wh"
+  },
+  {
+   "stage": "pmap",
+   "doc": "doc_0730dc4586caa99d",
+   "model": "qwen/qwen3.8-27b",
+   "key": "GROQ_API_KEY_4",
+   "batch": 15,
+   "prompt_chars": 6861,
+   "status": 200,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.023211163,
+    "prompt_tokens": 2139,
+    "prompt_time": 0.178513127,
+    "completion_tokens": 431,
+    "completion_time": 0.860011321,
+    "total_tokens": 2570,
+    "total_time": 1.038524448
+   },
+   "ms": 1245,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "998",
+    "x-ratelimit-remaining-tokens": "5367",
+    "x-ratelimit-reset-requests": "2m52.8s",
+    "x-ratelimit-reset-tokens": "19.747s"
+   },
+   "sent": {
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "none"
+   },
+   "valid_maps": 15,
+   "expected": 15,
+   "rejected_lines": 0,
+   "unknown_aliases": 0,
+   "sample": "MAP|P0001|OCR noise from cover image with garbled text|cover image;OCR noise;garbled text\nMAP|P0002|Copyright page for 3rd edition published by CRC Press|CRC Press;copyright page;ISBN\nMAP|P0003|Foreword by Joanna Quinn discussing her student experience|Joanna Quinn;foreword;Middlesex University\nMAP|"
+  },
+  {
+   "stage": "pmap",
+   "doc": "doc_0730dc4586caa99d",
+   "model": "qwen/qwen3.8-27b",
+   "key": "GROQ_API_KEY_5",
+   "batch": 8,
+   "prompt_chars": 4665,
+   "status": 429,
+   "error": "{\"error\":{\"message\":\"Request too large for model `qwen/qwen3.8-27b` in organization `org_<redacted>` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1750. The request's expected output tokens exceed the enforced limit; reduce max_tokens (or the request's expected output) and try again. Need more tokens? Upgrade to Dev Tier today at https://console",
+   "ms": 166,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "999",
+    "x-ratelimit-remaining-tokens": "8000",
+    "x-ratelimit-reset-requests": "1m26.4s",
+    "x-ratelimit-reset-tokens": "1ms"
+   },
+   "sent": {
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "none"
+   }
+  },
+  {
+   "stage": "profile",
+   "doc": "doc_0730dc4586caa99d",
+   "model": "openai/gpt-oss-120b",
+   "key": "GROQ_API_KEY_1",
+   "prompt_chars": 5351,
+   "status": 200,
+   "reasoning_chars": 57,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.050890992,
+    "prompt_tokens": 1303,
+    "prompt_time": 0.077205276,
+    "completion_tokens": 1056,
+    "completion_time": 2.228303255,
+    "total_tokens": 2359,
+    "total_time": 2.305508531,
+    "completion_tokens_details": {
+     "reasoning_tokens": 14
+    }
+   },
+   "ms": 2589,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "998",
+    "x-ratelimit-remaining-tokens": "6337",
+    "x-ratelimit-reset-requests": "2m52.8s",
+    "x-ratelimit-reset-tokens": "12.472s"
+   },
+   "sent": {
+    "model": "openai/gpt-oss-120b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "low"
+   },
+   "profile_valid": true,
+   "missing": [],
+   "field_counts": {
+    "topics": 10,
+    "terms": 10,
+    "questions": 15,
+    "searches": 15,
+    "theories": 10,
+    "concepts": 10,
+    "seealso": 10
+   },
+   "has_one_liner": true,
+   "has_summary": true,
+   "sample": "ONE: The document is a comprehensive guide on using timing techniques to enhance animation across various media and contexts.  \nSUMMARY: It covers principles of timing for broadcast, television, web, 3D digital productions, interactive games, and feature film editing, illustrating how timing conveys"
+  },
+  {
+   "stage": "profile",
+   "doc": "doc_0730dc4586caa99d",
+   "model": "qwen/qwen3.8-27b",
+   "key": "GROQ_API_KEY_1",
+   "prompt_chars": 5351,
+   "status": 200,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.021523224,
+    "prompt_tokens": 1359,
+    "prompt_time": 0.109311344,
+    "completion_tokens": 740,
+    "completion_time": 1.479673922,
+    "total_tokens": 2099,
+    "total_time": 1.588985266
+   },
+   "ms": 1781,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "998",
+    "x-ratelimit-remaining-tokens": "6147",
+    "x-ratelimit-reset-requests": "2m52.8s",
+    "x-ratelimit-reset-tokens": "13.897s"
+   },
+   "sent": {
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "none"
+   },
+   "profile_valid": true,
+   "missing": [],
+   "field_counts": {
+    "topics": 10,
+    "terms": 10,
+    "questions": 15,
+    "searches": 15,
+    "theories": 10,
+    "concepts": 10,
+    "seealso": 10
+   },
+   "has_one_liner": true,
+   "has_summary": true,
+   "sample": "ONE: This document is a comprehensive technical guide on the principles and application of timing in animation across various media formats.\n\nSUMMARY: The text details the mechanics of movement, cause and effect, and timing adjustments for 2D, 3D, and interactive animation. It covers specific scenar"
+  },
+  {
+   "stage": "profile",
+   "doc": "doc_0c9cded11e26fd11",
+   "model": "openai/gpt-oss-120b",
+   "key": "GROQ_API_KEY_1",
+   "prompt_chars": 5316,
+   "status": 200,
+   "reasoning_chars": 43,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.196500719,
+    "prompt_tokens": 1315,
+    "prompt_time": 0.063856054,
+    "completion_tokens": 1097,
+    "completion_time": 2.270730608,
+    "total_tokens": 2412,
+    "total_time": 2.334586662,
+    "completion_tokens_details": {
+     "reasoning_tokens": 11
+    }
+   },
+   "ms": 2720,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "997",
+    "x-ratelimit-remaining-tokens": "6379",
+    "x-ratelimit-reset-requests": "4m19.2s",
+    "x-ratelimit-reset-tokens": "12.157s"
+   },
+   "sent": {
+    "model": "openai/gpt-oss-120b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "low"
+   },
+   "profile_valid": true,
+   "missing": [],
+   "field_counts": {
+    "topics": 10,
+    "terms": 10,
+    "questions": 15,
+    "searches": 15,
+    "theories": 10,
+    "concepts": 11,
+    "seealso": 10
+   },
+   "has_one_liner": true,
+   "has_summary": true,
+   "sample": "ONE: A guide on how to avoid arrest and manipulate interactions with police and legal systems.  \nSUMMARY: The document combines tactics for evading police detection, exploiting stereotypes, and using deceptive communication, framed as a \u201chow\u2011to\u2011be\u2011a\u2011crook\u201d manual with sections on social profiling, t"
+  },
+  {
+   "stage": "pmap",
+   "doc": "doc_0c9cded11e26fd11",
+   "model": "openai/gpt-oss-20b",
+   "key": "GROQ_API_KEY_2",
+   "batch": 15,
+   "prompt_chars": 8967,
+   "status": 200,
+   "reasoning_chars": 52,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.043805326,
+    "prompt_tokens": 2986,
+    "prompt_time": 0.221243644,
+    "completion_tokens": 437,
+    "completion_time": 0.495249593,
+    "total_tokens": 3423,
+    "total_time": 0.716493237,
+    "completion_tokens_details": {
+     "reasoning_tokens": 16
+    }
+   },
+   "ms": 904,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "997",
+    "x-ratelimit-remaining-tokens": "4556",
+    "x-ratelimit-reset-requests": "4m19.2s",
+    "x-ratelimit-reset-tokens": "25.83s"
+   },
+   "sent": {
+    "model": "openai/gpt-oss-20b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "low"
+   },
+   "valid_maps": 15,
+   "expected": 15,
+   "rejected_lines": 0,
+   "unknown_aliases": 0,
+   "sample": "MAP|P0001|Table of contents for arrest-proofing guide, listing chapters and sections|arrest-proofing;criminal justice;face reveals  \nMAP|P0002|Image of ex-cop revealing content, captioned in Chicago|ex-cop;image;Chicago  \nMAP|P0003|Photographic credits and ISBN details for the book|photographs;ISBN;"
+  },
+  {
+   "stage": "pmap",
+   "doc": "doc_0c9cded11e26fd11",
+   "model": "qwen/qwen3.8-27b",
+   "key": "GROQ_API_KEY_4",
+   "batch": 15,
+   "prompt_chars": 8967,
+   "status": 200,
+   "reasoning_chars": 0,
+   "finish": "stop",
+   "usage": {
+    "queue_time": 0.056679754,
+    "prompt_tokens": 3140,
+    "prompt_time": 0.252903292,
+    "completion_tokens": 437,
+    "completion_time": 0.861437798,
+    "total_tokens": 3577,
+    "total_time": 1.11434109
+   },
+   "ms": 1339,
+   "headers": {
+    "x-ratelimit-limit-requests": "1000",
+    "x-ratelimit-limit-tokens": "8000",
+    "x-ratelimit-remaining-requests": "997",
+    "x-ratelimit-remaining-tokens": "4444",
+    "x-ratelimit-reset-requests": "4m19.2s",
+    "x-ratelimit-reset-tokens": "26.67s"
+   },
+   "sent": {
+    "model": "qwen/qwen3.8-27b",
+    "temperature": 0.0,
+    "max_tokens": 2400,
+    "stream": false,
+    "reasoning_effort": "none"
+   },
+   "valid_maps": 15,
+   "expected": 15,
+   "rejected_lines": 0,
+   "unknown_aliases": 0,
+   "sample": "MAP|P0001|Book table of contents listing all chapters and parts|table of contents; chapter list; book structure\nMAP|P0002|Title page image showing ex-cop author reveal|title page; ex-cop; author reveal\nMAP|P0003|Copyright page with ISBN and photo credits|copyright page; ISBN; photo credits\nMAP|P0004"
+  }
+ ]
+}

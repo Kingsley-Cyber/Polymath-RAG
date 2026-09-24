@@ -27,11 +27,15 @@ def _lane(**over):
 
 
 def test_config_assigns_per_account_families():
+    # GROQ-MODEL-SWAP-2026-09-23 (owner): Groq limits are INDEPENDENT per model per key, so each (key, model) is its own
+    # family — a cooldown on one model never cools the other model on the same key, nor another key
     for n in (1, 2, 3, 4, 5, 6):
         prof = _lane_limit("cloud", f"profile_groq{n}")
         mp = _lane_limit("cloud", f"map_groq{n}")
-        assert prof.family == f"groq_acct_{n}"      # compound
-        assert mp.family == f"groq_acct_{n}"        # compound-mini, same account
+        assert prof.family == f"groq_acct_{n}_gpt_oss_120b"
+        assert mp.family == f"groq_acct_{n}_gpt_oss_20b"
+        if n >= 2:
+            assert _lane_limit("cloud", f"map_groq{n}q").family == f"groq_acct_{n}_qwen3_8_27b"
     # no groq lane remains on the shared single circuit
     assert _lane_limit("cloud", "map_groq1").family != "groq"
     assert _lane_limit("cloud", "map_groq1").family != _lane_limit("cloud", "map_groq2").family

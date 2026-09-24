@@ -64,14 +64,15 @@ def test_distinct_keys_are_distinct_accounts() -> None:
 
 
 def test_groq_accounts_carry_distinct_isolation_families() -> None:
-    # limiter.yaml family: groq_acct_N — account N's compound + compound-mini share
-    # a family, but account N and N+1 do NOT (a cooldown on one never cools the other).
+    # GROQ-MODEL-SWAP-2026-09-23: limits are INDEPENDENT per model per key, so the damp family is (key, model) — account N
+    # and N+1 never share one, and neither do two models on the same key (a qwen OTPM refusal never cools gpt-oss).
     lanes = {l.name: l for l in _reg().lanes}
     f1 = lanes["profile_groq1"].capacity.family
     f2 = lanes["profile_groq2"].capacity.family
     m1 = lanes["map_groq1"].capacity.family
+    m2, q2 = lanes["map_groq2"].capacity.family, lanes["map_groq2q"].capacity.family
     assert f1 and f2 and f1 != f2
-    assert f1 == m1  # compound + compound-mini of account 1 share the damp family
+    assert f1 != m1 and m2 != q2 and all(f.startswith("groq_acct_") for f in (f1, f2, m1, m2, q2))
 
 
 def test_configured_fallback_lanes_are_present_and_labelled() -> None:
@@ -140,12 +141,12 @@ def test_pool_lane_health_counts_active_lanes() -> None:
         assert h["total"] >= 1
         assert h["active"] + h["credential_absent"] + h["disabled"] == h["total"]
         assert len(h["active_lanes"]) == h["active"]
-    # PMAP total = every lane pinned to doc_parent_map (map_groq2..6 + map_fallback_openrouter +
-    # cloudflare_map1..2 since CLOUDFLARE-PMAP-V1) — pinned to the CONFIG, not a magic number.
+    # PMAP total = every lane pinned to doc_parent_map (map_groq2..6 on gpt-oss-20b + map_groq2q..6q on qwen3.8-27b since
+    # GROQ-MODEL-SWAP-2026-09-23 + map_fallback_openrouter + cloudflare_map1..2) — pinned to the CONFIG, not a magic number.
     import json as _json
     import pathlib as _pl
     pin = _json.loads((_pl.Path(__file__).resolve().parents[2] / "config" / "cloud_providers.json").read_text())["stage_pins"]["doc_parent_map"]
-    assert health[LR.PMAP]["total"] == len(pin) == 8
+    assert health[LR.PMAP]["total"] == len(pin) == 13
 
 
 def test_inventory_flags_dark_pool_when_no_credentials(monkeypatch) -> None:
@@ -161,12 +162,12 @@ def test_inventory_flags_dark_pool_when_no_credentials(monkeypatch) -> None:
 
 def test_pmap_pool_batch_cap_is_min_over_active_lanes() -> None:
     reg = _reg()
-    # config declares map_batch_cap=15 on the FIVE compound-mini pMAP lanes (11.193
+    # config declares map_batch_cap=15 on the TEN Groq pMAP lanes (keys 2–6 × gpt-oss-20b / qwen3.8-27b; 11.193
     # de-shared GROQ_API_KEY_1 to doc_profile); the OpenRouter last-resort fallback
     # declares no cap, and the pool cap is the min over lanes that DO declare one.
     caps = {l.name: l.map_batch_cap for l in reg.by_function()[LR.PMAP]}
     groq_caps = {n: c for n, c in caps.items() if n.startswith("map_groq")}
-    assert len(groq_caps) == 5 and all(c == 15 for c in groq_caps.values())
+    assert len(groq_caps) == 10 and all(c == 15 for c in groq_caps.values())
     assert caps["map_fallback_openrouter"] is None
     assert LR.pmap_pool_batch_cap(reg) == 15
     assert LR.PMAP_DEFAULT_BATCH_CAP == 15

@@ -126,7 +126,8 @@ def test_config_map_lanes_are_de_shared_from_the_profile_key():
     d = json.loads((ROOT / "config/cloud_providers.json").read_text())
     eps = {e["name"]: e for e in d["providers"]}
     pin = d["stage_pins"]["doc_parent_map"]
-    groq_ring = [f"map_groq{i}" for i in range(2, 7)] + ["map_fallback_openrouter"]
+    # GROQ-MODEL-SWAP-2026-09-23: each pMAP key carries one lane per model (independent per-model budgets)
+    groq_ring = [f"map_groq{i}" for i in range(2, 7)] + [f"map_groq{i}q" for i in range(2, 7)] + ["map_fallback_openrouter"]
     assert pin[: len(groq_ring)] == groq_ring
     # CLOUDFLARE-PMAP-V1 (11.255): the owner added two DEDICATED Cloudflare map lanes to the pool;
     # they are the ONLY admissible additions and never touch a Groq account key.
@@ -134,9 +135,11 @@ def test_config_map_lanes_are_de_shared_from_the_profile_key():
     assert all(n.startswith("cloudflare_map") and eps[n]["dedicated"] is True for n in extra), extra
     assert all(not eps[n]["api_key_env"].startswith("GROQ_") for n in extra)
     for i in range(2, 7):
-        assert eps[f"map_groq{i}"]["model"] == "groq/compound-mini"
-        assert eps[f"map_groq{i}"]["api_key_env"] == f"GROQ_API_KEY_{i}"
-        assert eps[f"map_groq{i}"]["dedicated"] is True
+        assert eps[f"map_groq{i}"]["model"] == "openai/gpt-oss-20b" and eps[f"map_groq{i}"]["reasoning_effort"] == "low"
+        assert eps[f"map_groq{i}q"]["model"] == "qwen/qwen3.8-27b" and eps[f"map_groq{i}q"]["reasoning_effort"] == "none"
+        for n in (f"map_groq{i}", f"map_groq{i}q"):
+            assert eps[n]["api_key_env"] == f"GROQ_API_KEY_{i}"
+            assert eps[n]["dedicated"] is True and eps[n]["map_batch_cap"] == 15
     # the retired lane is DISABLED, not deleted (rollback stays possible)
     assert eps["map_groq1"]["enabled"] is False
     # DE-SHARED: no pMAP lane may use the doc_profile account

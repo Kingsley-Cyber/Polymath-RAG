@@ -408,3 +408,28 @@ def test_failover_ring_is_deterministic_and_crosses_lanes(pool_env,
     s0 = pool.select_endpoint_for_stage("parent_enrichment", "dX").name
     s1 = pool.select_endpoint_for_stage("parent_enrichment", "dX", 1).name
     assert {s0, s1} == {"nv", "g9"}
+
+
+def test_fingerprint_is_the_extraction_roster_so_a_dedicated_lane_never_moves_it(pool_env, monkeypatch, tmp_path):
+    # GROQ-MODEL-SWAP-2026-09-23: a dedicated lane (profile / pMAP / enrichment) cannot extract, so re-modelling it must not
+    # change the extraction contract or invalidate the extraction call cache; the all-dedicated fail-open roster still counts.
+    import json as _json
+
+    from polymath_shared.llm_extraction import pool
+    pf = tmp_path / "providers.json"
+    monkeypatch.setattr(pool, "_PROVIDERS_FILE", pf)
+    monkeypatch.setenv("T_DK", "k")
+
+    def fp(dedicated_model: str, *, extractor: bool = True) -> list:
+        provs = [{"name": "map1", "url": "http://m", "model": dedicated_model, "api_key_env": "T_DK", "dedicated": True}]
+        if extractor:
+            provs.insert(0, {"name": "g1", "url": "http://g1", "model": "m", "api_key_env": "T_DK"})
+        pf.write_text(_json.dumps({"stage_pins": {"doc_parent_map": ["map1"]}, "providers": provs}))
+        pool_env(None)
+        return pool.pool_fingerprint()
+
+    before, after = fp("groq/compound-mini"), fp("openai/gpt-oss-20b")
+    assert before == after and "map1" not in {e["name"] for e in before}
+    assert {"primary", "g1"} <= {e["name"] for e in before}       # the lanes extraction really uses still count
+    alone = fp("openai/gpt-oss-20b", extractor=False)             # only the settings primary extracts
+    assert [e["name"] for e in alone] == ["primary"]
