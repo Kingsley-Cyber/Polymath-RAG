@@ -154,8 +154,10 @@ historical, never an instruction.
 1. **Owner:** push the 36 commits (Run button; command in Repository State).
 2. **Owner: Cloudflare account 1's id.** Log in to account 1 (the login its API token came from). Its 32-character id is in
    the address bar (`dash.cloudflare.com/<id>/…`) or under AI → Workers AI → Use REST API. It is NOT the id ending `1efb`
-   (that is account 2's). The agent checks it against token 1 read-only, fills `CLOUDFLARE_ACCOUNT_ID_1=` in `.env` (no
-   bounce), and makes one canary call on cloudflare_map1 (1 of the 3 Cloudflare calls left in the L4 cap).
+   (that is account 2's: token 1 gets 403 on it and 401 on a real call). Token 1 belongs to a sixth login, not one of the
+   five already sent. The agent checks the new id against token 1 read-only and fills `CLOUDFLARE_ACCOUNT_ID_1=` in `.env`
+   (no bounce). The L4 Cloudflare cap is used up (6 / 6), so the lane's first real call comes from normal pMAP work. If no
+   sixth login exists, the owner says "drop account 1" and the agent parks it in the registry.
 3. **L4b: one document through the fleet.** The owner chooses how:
    - (a) a one-document test corpus `l4-canary` with a small file; the agent first runs the corpus-filter checks the
      standing rule asks for, and deleting the corpus later is the owner's step;

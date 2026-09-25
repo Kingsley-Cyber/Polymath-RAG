@@ -50,6 +50,10 @@ last_reviewed: 2026-09-24
   - 23 rows, 23 admitted, 23 dispatched, 23 success, 23 distinct lanes, 11 distinct accounts (6 Groq + 5 Cloudflare);
   - the real token counts: 1,492 in, 1,069 out;
   - every row carries its stage, function, lane, model and key variable name (never a value).
+- Account 1 re-checked after the owner confirmed sending five ids. Token 1 got 403 (code 10000) on the model catalog for
+  all five ids, while token 2 got 200 on …1efb. One real call with token 1 on …1efb (the 6th and last Cloudflare call of the
+  L4 cap, ledger stage `l4_canary`) returned HTTP 401. So …1efb is account 2 only, and token 1 belongs to a sixth login
+  whose id was not in the list.
 - `scripts/llm_accounts.py validate`: 0 errors, 6 warnings (the 5 shared-tier pairs, L5; ACCOUNT_ID_UNSET for
   cloudflare_1).
 - No existing document has pMAP work left: `document_status` shows 0 unresolved eligible parents in cinema (67 docs)
