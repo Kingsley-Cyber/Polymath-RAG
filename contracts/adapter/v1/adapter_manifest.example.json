@@ -1,11 +1,11 @@
 {
  "adapter_id": "trail.product_discovery",
- "adapter_version": "2.2.0",
+ "adapter_version": "2.2.1",
  "workflow_version": "2.0.0",
  "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
  "output_schema_version": "2.1.0",
- "description": "Harness-executed product-opportunity discovery (ADR-0019): Polymath retrieves knowledge and owns durable hypothesis state; \u03b8 (the connected agent) generates, revises and splits hypotheses; TrailSignal projects its registry priors, compiles evidence gaps, admits harness observations, judges hypotheses (\u03c6), qualifies product territory / market delta / supply and computes the only score (LAW 1); the host harness executes AGENT_RESEARCH, PRODUCT_REALITY_CHECK and SUPPLIER_RESEARCH actions with its own tools. No Trail-owned live-web acquisition is required; no search engine, browser or source SDK is named.",
+ "description": "LEGACY (kept for compatibility; prefer ecommerce.product_research, which carries the restored reasoning, the harness-neutral research plan and the short-video comment sources). Harness-executed product-opportunity discovery (ADR-0019): Polymath retrieves knowledge and owns durable hypothesis state; \u03b8 (the connected agent) generates, revises and splits hypotheses; TrailSignal projects its registry priors, compiles evidence gaps, admits harness observations, judges hypotheses (\u03c6), qualifies product territory / market delta / supply and computes the only score (LAW 1); the host harness executes AGENT_RESEARCH, PRODUCT_REALITY_CHECK and SUPPLIER_RESEARCH actions with its own tools. No Trail-owned live-web acquisition is required; no search engine, browser or source SDK is named.",
  "evidence_roles": [
   "friction",
   "workaround",
@@ -1207,9 +1207,9 @@
     "action_kind": "PRODUCT_REALITY_CHECK",
     "minimum_independent_sources": 3,
     "preferred_source_roles": [
-     "product_review",
      "marketplace_listing",
-     "retailer"
+     "retailer",
+     "video_platform"
     ],
     "budget": {
      "max_queries": 24,
@@ -1260,8 +1260,7 @@
     "action_kind": "SUPPLIER_RESEARCH",
     "minimum_independent_sources": 2,
     "preferred_source_roles": [
-     "supplier_listing",
-     "manufacturer_site"
+     "supplier_listing"
     ],
     "budget": {
      "max_queries": 16,
@@ -1401,7 +1400,10 @@
    "acceptance_rules": [
     "every trail_score_refs entry is a record id returned by V_score",
     "every field_evidence_ids entry is an admitted id from context"
-   ]
+   ],
+   "config": {
+    "refs_must_resolve": true
+   }
   },
   {
    "step_id": "X_compile",

@@ -21,16 +21,18 @@ metadata:
 > not a run and must not be presented as evidence-backed.**
 
 
-## Governed entrypoint — Polymath adapter `trail.product_discovery` (docs/27)
+## Governed entrypoint — Polymath adapter `ecommerce.product_research` (docs/27)
 
 Use this when the run must be GOVERNED: Polymath's cognitive adapter decides what runs next, **TrailSignal** decides
 what counts as evidence and computes the ONLY score, and you are the reasoner (θ) and the harness. You have the seven
 tools `adapter_list / adapter_start / adapter_next / adapter_submit / adapter_status / adapter_result / adapter_cancel`
-(Hermes: Polymath MCP Server A; Claude Code / Codex: Server B). The standalone controller below stays available as
-`--mode standalone`; the two never mix in one run.
+(Hermes: Polymath MCP Server A; Claude Code / Codex: Server B). Any other MCP agent needs no part of this skill: both servers
+publish the harness-neutral operating guide (prompt `run_governed_research`, resource `polymath://adapter/guide`). The standalone
+controller below stays available as `--mode standalone`; the two never mix in one run. `ecommerce.product_research` is the
+PREFERRED adapter; `trail.product_discovery` is legacy (it lacks the restored reasoning).
 
-1. `adapter_start {adapter_id: "trail.product_discovery", input: {seed, corpus_ids}, request_options: {corpus_ids,
-   agent_identity, idempotency_key}}` → save the result, then
+1. `adapter_start {adapter_id: "ecommerce.product_research", input: {seed, corpus_ids, geography?, language?, freshness_days?,
+   constraints?, exclusions?, category?}, request_options: {corpus_ids, agent_identity, idempotency_key}}` → save the result, then
    `python3 python/governed_run.py start --run-ref ref.json --input input.json --agent-identity <you>` (the run JOURNAL).
 2. Loop `adapter_next {run_id}` and hand EVERY payload to `governed_run.py record-next --journal J --file next.json`:
    - `kind: status, running` → Polymath is working; poll again. Terminal → step 5.
@@ -38,8 +40,13 @@ tools `adapter_list / adapter_start / adapter_next / adapter_submit / adapter_st
      its claim, url, role, polarity). Cite ONLY ids from `step.context.evidence_refs`, never a `trail_prior`. Answer
      the step's `output_schema` and nothing else → `adapter_submit {run_id, step_id, payload}`.
    - **HARNESS_ACTION** → `governed_run.py action --journal J --out action.json`, then do the research with THIS
-     skill's acquisition commands (the channel tools of docs/24: reddit, forums via Exa + reader, amazon / retailer
-     pages, youtube, supplier listings) — INSIDE the action's `search_intents`, source roles, freshness and `budget`.
+     skill's acquisition commands — INSIDE the action's `search_intents`, source roles, freshness and `budget`. Each
+     intent reads `<channel> (<site>): <what to read> — <query>` and its `template` is the plain query: map the channel to
+     its tools in docs/24 (reddit, amazon reviews, youtube + tiktok + instagram COMMENT threads, forums via Exa + reader,
+     alibaba / cjdropshipping supplier listings). Comments: cite the video's canonical permalink (tiktok.com/@creator/video/<id>,
+     instagram.com/reel/<id>, youtube.com/watch?v=<id>) — a short link routes to the wrong source — and date each comment by
+     its own date. Supplier listings: record `listing:`, `supplier:`, `price as listed:`, `MOQ as listed:`, `channel:`,
+     `concept:` in the observation context.
      Write each item as the usual `observation` / `field_record` / `supplier_candidate` PLUS harvest provenance
      (`retrieved_at`, `published_at_if_known` — `null` only when the page shows no date) and the action's
      `hypothesis_ids` it bears on. Then

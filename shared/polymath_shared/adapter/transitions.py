@@ -7,7 +7,7 @@ from typing import Any
 
 import jsonschema
 
-from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, ORIGIN_ID_FIELDS, PRIOR_EVIDENCE_KINDS, TERMINAL_RUN_STATUSES, assert_valid, stable_hash, validate
+from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, ORIGIN_ID_FIELDS, PRIOR_EVIDENCE_KINDS, TERMINAL_RUN_STATUSES, assert_valid, schema, stable_hash, validate
 from .manifest import Manifest
 
 
@@ -120,6 +120,21 @@ def start_run(manifest: Manifest, run_id: str, input_payload: dict[str, Any], op
     return RunState(run_id=run_id, adapter_id=manifest.adapter_id, input=dict(input_payload), options=dict(options or {}))
 
 
+#: AUTORESEARCH-SOURCES-AND-HARNESS-V1 (gaps H-02, H-04): what EVERY research step tells the harness about its answer, whatever the
+#: adapter — source- and harness-neutral (the source table is TrailSignal's pinned data, served by both MCP servers as a resource)
+HARNESS_RECEIPT_RULES = (
+    'Answer with adapter_submit(kind="receipt"): ONE HarnessResearchReceiptV1 that validates against output_schema; action_id = harness_action.action_id.',
+    "Research with any tools you have; never invent a source, a quote, a date or a number. A page you could not read (login wall, CAPTCHA, rate "
+    "limit, region block) is a limitation to report, never to bypass.",
+    "sources[].url is the page the evidence is on, as its canonical permalink (routing is by URL: a short link can route to the wrong source); "
+    "published_at_if_known is that page's own date (a comment's own date), else null; timestamps are ISO-8601.",
+    "source_class and evidence_role_claimed come from the source table (resource polymath://trail/source-capabilities.csv); an observation outside a "
+    "source's stage, roles or freshness is rejected by admission: a finding, not a failure.",
+    "paraphrase_or_excerpt quotes the evidence (at most 600 characters); never record a person's name or handle. Record in each observation's "
+    "context the `key: value` tags the step objective names.",
+)
+
+
 def issue_step(manifest: Manifest, state: RunState, *, issued_at: str, evidence_refs: list[dict[str, Any]] | None = None,
                inputs: dict[str, Any] | None = None, hypotheses: list[dict[str, Any]] | None = None,
                registry_snapshot: dict[str, Any] | None = None, harness_action: dict[str, Any] | None = None,
@@ -151,8 +166,8 @@ def issue_step(manifest: Manifest, state: RunState, *, issued_at: str, evidence_
         "objective": spec.get("objective") or spec.get("title") or sid,
         "context": context,
         "constraints": list(spec.get("constraints") or []),
-        "output_schema": dict(spec.get("output_schema") or {"type": "object"}),
-        "acceptance_rules": list(spec.get("acceptance_rules") or []),
+        "output_schema": dict(spec.get("output_schema") or (schema("harness_receipt") if spec["type"] == "HARNESS_ACTION" else {"type": "object"})),
+        "acceptance_rules": list(spec.get("acceptance_rules") or []) + (list(HARNESS_RECEIPT_RULES) if spec["type"] == "HARNESS_ACTION" else []),
         "external": ({"system": spec["external"]["system"], "operation_kind": spec["external"]["operation_kind"]}
                      if spec["type"] == "EXTERNAL_OPERATION" else None),
         "cognitive_op": spec.get("cognitive_op") or ("theta" if spec["type"] == "AGENT_REASON" and spec.get("theta_op") else None),
@@ -207,9 +222,61 @@ def _cited_ids(payload: Any) -> set[str]:
     return out
 
 
-def validate_submission(step: dict[str, Any], payload: Any) -> list[str]:
+def _ref_strings(value: Any) -> set[str]:
+    """The record ids a `*_refs` value names: a string, a list of strings, or a map of such lists. Object items (a transition's
+    `{kind, id}` causes) are the ledger's to check, not this rule's."""
+    if isinstance(value, str):
+        return {value}
+    if isinstance(value, list):
+        return {x for x in value if isinstance(x, str)}
+    if isinstance(value, dict):
+        return set().union(*(_ref_strings(v) for v in value.values() if not isinstance(v, dict)))
+    return set()
+
+
+def _cited_refs(payload: Any) -> set[str]:
+    """Every record id under a key that ends with `_refs` (gap A-06: `*_refs` fields escaped the citation check)."""
+    out: set[str] = set()
+    if isinstance(payload, dict):
+        for k, v in payload.items():
+            out |= _ref_strings(v) if k.endswith("_refs") else _cited_refs(v)
+    elif isinstance(payload, list):
+        for v in payload:
+            out |= _cited_refs(v)
+    return out
+
+
+def _id_values(node: Any) -> set[str]:
+    """Every id recorded in a run's outputs: values of `id` / `*_id` keys and items of `*_ids` lists, at any depth."""
+    out: set[str] = set()
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if (k == "id" or k.endswith("_id")) and isinstance(v, str):
+                out.add(v)
+            elif k.endswith("_ids") and isinstance(v, list):
+                out |= {x for x in v if isinstance(x, str)}
+            else:
+                out |= _id_values(v)
+    elif isinstance(node, list):
+        for v in node:
+            out |= _id_values(v)
+    return out
+
+
+def run_record_ids(state: RunState, step: dict[str, Any]) -> set[str]:
+    """What a `*_refs` value may name (gap A-06): a record THIS run produced or showed the agent — the step's evidence and
+    hypotheses, the run's step ids, and every id recorded in its outputs (TrailSignal's record ids among them)."""
+    ctx = step.get("context") or {}
+    ids = {r.get("id") for r in ctx.get("evidence_refs") or [] if isinstance(r, dict)}
+    ids |= {h.get("hypothesis_id") for h in ctx.get("hypotheses") or [] if isinstance(h, dict)}
+    ids |= set(state.outputs) | _id_values(state.outputs)
+    return {i for i in ids if isinstance(i, str) and i}
+
+
+def validate_submission(step: dict[str, Any], payload: Any, *, known_refs: set[str] | None = None) -> list[str]:
     """The step's output_schema + the machine-checkable acceptance invariant: every cited `*_ids` value must be an
-    id from context.evidence_refs (an agent may never cite evidence it was not given)."""
+    id from context.evidence_refs (an agent may never cite evidence it was not given); with `known_refs`, every `*_refs`
+    value must name a record the run produced (gap A-06)."""
     errors = [("payload/" + "/".join(map(str, e.path)) if e.path else "payload") + ": " + e.message
               for e in sorted(jsonschema.Draft202012Validator(step["output_schema"]).iter_errors(payload),
                               key=lambda e: (list(map(str, e.path)), e.message))]
@@ -223,6 +290,10 @@ def validate_submission(step: dict[str, Any], payload: Any) -> list[str]:
     uncited = sorted(cited - allowed - priors) if allowed or cited else []
     if uncited:
         errors.append("cited ids not in context.evidence_refs: " + ", ".join(uncited[:10]))
+    if known_refs is not None:
+        unknown = sorted(_cited_refs(payload) - known_refs - allowed - priors)
+        if unknown:
+            errors.append("referenced records this run never produced: " + ", ".join(unknown[:10]))
     return errors
 
 
@@ -273,7 +344,10 @@ def accept_submission(manifest: Manifest, state: RunState, step: dict[str, Any],
         raise SubmissionRejected([f"step {submission['step_id']!r} is not the awaiting step {state.current_step_id!r}"])
     if submission.get("kind") and submission["kind"] != expected[1]:
         raise SubmissionRejected([f"submission kind {submission['kind']!r} does not fit a {step['step_type']} step (expected {expected[1]!r})"])
-    errors = validate_receipt(step, submission["payload"]) if step["step_type"] == "HARNESS_ACTION" else validate_submission(step, submission["payload"])
+    # gap A-06, opt-in per step (manifest data `config.refs_must_resolve`): its `*_refs` values must name records the run produced
+    checks_refs = bool((manifest.step(step["step_id"]).get("config") or {}).get("refs_must_resolve"))
+    errors = (validate_receipt(step, submission["payload"]) if step["step_type"] == "HARNESS_ACTION"
+              else validate_submission(step, submission["payload"], known_refs=run_record_ids(state, step) if checks_refs else None))
     if errors:
         raise SubmissionRejected(errors)
     # A step id re-entered through a bounded loop is a NEW issuance: its payload may legitimately differ from the earlier pass

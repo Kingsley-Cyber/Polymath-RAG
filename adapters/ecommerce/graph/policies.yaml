@@ -20,7 +20,7 @@ supplier:
 sourcing:                      # docs/20 §2: one sourcing job per concept — per channel (docs/24 §2)
   min_candidates_per_concept: 1
   channels: [alibaba, cjdropshipping]
-evidence_channels: [reddit, amazon_reviews, youtube, tiktok, xiaohongshu, twitter, forum]   # docs/24 §1: compiled per gap, in this priority
+evidence_channels: [reddit, amazon_reviews, youtube, tiktok, instagram, xiaohongshu, twitter, forum]   # docs/24 §1: compiled per gap, in this priority; every channel gets one intent before any gets a second (binding._round_robin)
 ideation:                      # docs/19: the product SET
   min_concepts: 3
   max_concepts: 6

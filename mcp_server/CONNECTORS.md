@@ -109,7 +109,58 @@ async with httpx.AsyncClient(
             await s.call_tool("polymath_explore", {"query": "<the original need>", "corpus_id": "<corpus id>"})
 ```
 
-## 3. Product connectors (Claude.ai / Grok / ChatGPT)
+## 3. Governed research from ANY agent harness (AUTORESEARCH-SOURCES-AND-HARNESS-V1)
+
+A governed adapter run (for example product research, `ecommerce.product_research`, the PREFERRED entry in `adapter_list`) needs
+no knowledge of this repository: both servers publish ONE operating guide.
+- **Prompt** `run_governed_research` (optional arguments `adapter_id`, `seed`): the whole loop, start to result.
+- **Resources**:
+  - `polymath://adapter/guide`: the same guide;
+  - `polymath://adapter/harness-receipt.schema.json`: what a research step returns;
+  - `polymath://adapter/harness-action.schema.json`: what a research step asks for;
+  - `polymath://trail/source-capabilities.csv`: TrailSignal's pinned source table (routing, stages, roles, freshness,
+    independence).
+
+The harness reasons at `AGENT_REASON` steps and does the live research at `HARNESS_ACTION` steps with WHATEVER tools it has
+(web search, fetch, a browser, an API). Every search intent carries a plain query plus where to look and what to read (e.g.
+the comment threads under the top videos, cited by their canonical permalink). No step names a tool, a search engine or a
+harness. A page it cannot read (login wall, CAPTCHA, rate limit) is a `limitations` entry, never bypassed.
+
+Registration (hosted Server A; a friend uses their own principal key, section 2). Commands checked on this machine,
+2026-09-25:
+
+```bash
+claude mcp add --transport http polymath https://mcp.kingsleylab.xyz/mcp --header "Authorization: Bearer <key>"
+```
+
+```bash
+codex mcp add polymath --url https://mcp.kingsleylab.xyz/mcp --bearer-token-env-var POLYMATH_MCP_KEY
+```
+
+```bash
+gemini mcp add --transport http --scope user --header "Authorization: Bearer <key>" polymath https://mcp.kingsleylab.xyz/mcp
+```
+
+```bash
+opencode mcp add polymath --url https://mcp.kingsleylab.xyz/mcp --header "Authorization=Bearer <key>"
+```
+
+```bash
+hermes mcp add polymath --url http://127.0.0.1:8930/mcp --auth header
+```
+
+- Codex reads the key from the environment variable named there.
+- Hermes on this machine uses the loopback listener and asks for the header value.
+- **OpenClaw** (not installed here, so not verified) and any other MCP client: register the streamable-HTTP URL
+  `https://mcp.kingsleylab.xyz/mcp` with the header `Authorization: Bearer <key>` in its MCP server settings.
+- On this host, the stdio Server B of section 1 serves the same guide.
+- Send a normal client User-Agent: the Cloudflare edge answers `Python-urllib` with 403.
+
+Then, in the agent: "use the `run_governed_research` prompt", or call `adapter_list`, start the PREFERRED adapter with a `seed`,
+`corpus_ids` and optionally `geography` / `language` / `freshness_days` / `constraints` / `exclusions` / `category` (they reach
+every research step), and loop `adapter_next` → `adapter_submit` until `adapter_result`.
+
+## 4. Product connectors (Claude.ai / Grok / ChatGPT)
 
 All three ingest the same remote MCP URL:
 

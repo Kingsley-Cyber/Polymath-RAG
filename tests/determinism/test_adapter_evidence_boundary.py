@@ -289,7 +289,7 @@ def test_collect_all_include_gathers_every_admission_in_sequence_order(monkeypat
 def test_manifest_2_2_0_opts_four_steps_in_and_keeps_the_workflow():
     ms = {m.adapter_id: m for m in list_manifests(ADAPTER_DIR)}
     m = ms["trail.product_discovery"]
-    assert (m.identity["adapter_version"], m.identity["workflow_version"], m.identity["retrieval_policy_version"]) == ("2.2.0", "2.0.0", "2.0.0")
+    assert (m.identity["adapter_version"], m.identity["workflow_version"], m.identity["retrieval_policy_version"]) == ("2.2.1", "2.0.0", "2.0.0")   # 2.2.1: source classes Trail routes (gap S-07); workflow unchanged
     example = json.loads((ROOT / "contracts/adapter/v1/adapter_manifest.example.json").read_text())
     assert len(m.steps) == 28 and list(m.steps) == [s["step_id"] for s in example["steps"]]              # no step id added, removed or renamed
     cfg = {sid: m.step(sid).get("config") or {} for sid in m.steps}

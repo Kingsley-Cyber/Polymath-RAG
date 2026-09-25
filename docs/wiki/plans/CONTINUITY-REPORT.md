@@ -23,7 +23,7 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-25 (autoresearch plan admitted; R1 next) — **ACTIVE MISSION: AUTORESEARCH-SOURCES-AND-HARNESS-V1 (register 11.489, roadmap row 6d; the owner's order 2026-09-25, before C1): TikTok / short-video comments admitted and counted by Trail, CJ Dropshipping alongside Alibaba, any MCP agent harness (Claude Code, Codex, Hermes, OpenClaw, Gemini, OpenCode) can run the governed product research, ONE real e2e run. Before it: K1 + K1b LIVE (11.485–11.488). NEXT = R1 (Trail rows in ~/trail-signal-os + re-pin) → R2 → R3 → R4 → R5 → R6 deploy (the owner's Run button) → R7 e2e.**
+## CURRENT — 2026-09-25 (autoresearch R2–R5 built; R1 in Trail's gate) — **ACTIVE MISSION: AUTORESEARCH-SOURCES-AND-HARNESS-V1 (register 11.489, roadmap row 6d; the owner's order 2026-09-25, before C1). R0 ✔ (11.489). R2–R5 ✔ BUILT (11.490) on branch `feat/autoresearch-sources-harness` (worktree `pmv4-autoresearch`): harness-neutral research plan, comment channels, CJ + Alibaba supply fixes, the operating guide over MCP, the receipt contract in the step, the requester's limits, the A-track. R1 IN PROGRESS: TikTok + Instagram comment rows through TrailSignal's own gate (ADR-070 ACCEPTED by the owner 2026-09-25; A47 authorization → HR7 anchor → HR7 in `~/trail-signal-os-worktrees/HR7`, branch `agent/HR7`), then the Polymath re-pin (the owner AUTHORIZED re-recording the three M1 envelopes for the new snapshot id, 2026-09-25). NEXT = re-pin → one merge + bounce (the owner's Run button) → R6 live checks → R7 e2e.**
 
 ### Repository State
 - Branch `production`. HEAD = the plan admission (11.489), on top of `366fd8dc` (K1b live, 11.488) and `6c52bc1c`
@@ -180,11 +180,15 @@ historical, never an instruction.
   (preflight, repo_guard, wiki_worm) · bundle_integrity READY; registry 0 errors / 4 warnings.
 
 ### Next Action
-1. **R1** (plan §4): the two comment rows in `~/trail-signal-os` (branch off `829a0ab`, agentctl task, fixtures
-   re-recorded), then the re-pin in polymath-v4 (PROVENANCE, the embedding test, the recorded-equivalence envelopes,
+1. **R1** (plan §4): Trail's governed change is in progress — A47 (admits node HR7 under ADR-070, accepted by the owner
+   2026-09-25) → HR7 anchor → HR7 (the two comment rows, the admission test, the re-recorded replay fixtures; the bytes were
+   first built and proven in the abandoned `~/trail-signal-os-worktrees/SRC1`, which only failed the v2 governor's
+   RUN_CHANGE_COVERAGE because a data change needs an admitted slice). Then the re-pin in polymath-v4 (PROVENANCE, the
+   embedding test, the three M1 recorded envelopes — re-record AUTHORIZED by the owner, snapshot id + routed rows only —,
    `embedded.py`, the scaffold, the ADR-0021 addendum). Trail pushes are the owner's word.
-2. **R2–R5** on one polymath-v4 branch (domain intents, runtime contract + MCP guide, the A-track, docs), then **R6**: merge
-   + bounce = the owner's Run button, live checks; then **R7**, the e2e run.
+2. **R2–R5 BUILT (11.490)** on `feat/autoresearch-sources-harness`; the re-pin joins that branch, then **R6**: ONE merge +
+   bounce = the owner's Run button, live checks (prompt + resources on both servers; a started run's first HARNESS_ACTION
+   carries the receipt schema and plain queries); then **R7**, the e2e run (Claude Code over MCP, its own browser research).
 3. The blend + DOC-STEER live receipt: the owner's next GRAPH / WILDCARD chat.
 4. After 6d: **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28);
    C1 carries K-03.

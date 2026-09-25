@@ -1,11 +1,11 @@
 {
  "adapter_id": "ecommerce.product_research",
- "adapter_version": "0.6.0",
+ "adapter_version": "0.7.0",
  "workflow_version": "0.1.0",
  "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
  "output_schema_version": "0.1.0",
- "description": "Niche-informed product research for ecommerce. Polymath supplies corpus knowledge and owns durable run and hypothesis state; the connected agent reasons (θ); the ecommerce domain (adapters/ecommerce, through DOMAIN_OPERATION) supplies the seller's craft as deterministic law and planning — interpretation lineage, population discovery, bridge and portfolio admissibility, research planning, evidence cards and lived situations from ADMITTED evidence, the product-set law, sourcing plans, price / MOQ normalization and the lead join; the host harness investigates customers, products and supply with its own tools; TrailSignal alone admits evidence, judges hypotheses, qualifies and computes the only score or refusal (LAW 1). The domain computes and never owns state; no source, search engine, browser or harness is named here.",
+ "description": "PREFERRED entry for governed product research. Niche-informed product research for ecommerce. Polymath supplies corpus knowledge and owns durable run and hypothesis state; the connected agent reasons (θ); the ecommerce domain (adapters/ecommerce, through DOMAIN_OPERATION) supplies the seller's craft as deterministic law and planning — interpretation lineage, population discovery, bridge and portfolio admissibility, research planning, evidence cards and lived situations from ADMITTED evidence, the product-set law, sourcing plans, price / MOQ normalization and the lead join; the host harness investigates customers, products and supply with its own tools; TrailSignal alone admits evidence, judges hypotheses, qualifies and computes the only score or refusal (LAW 1). The domain computes and never owns state; no source, search engine, browser or harness is named here.",
  "evidence_roles": [
   "friction",
   "workaround",
@@ -59,6 +59,10 @@
    },
    "category": {
     "type": "string"
+   },
+   "language": {
+    "type": "string",
+    "maxLength": 50
    }
   }
  },
@@ -314,6 +318,15 @@
       "value": false
      },
      "next": "Z_refuse_lineage"
+    },
+    {
+     "label": "the lawful interpretation holds no generative signal (a success outcome: retained as knowledge)",
+     "when": {
+      "op": "equals",
+      "path": "steps.C_primitives.output.primitives.generative_signal",
+      "value": false
+     },
+     "next": "Z_no_signal"
     }
    ]
   },
@@ -1198,7 +1211,7 @@
    "type": "HARNESS_ACTION",
    "title": "Harness: field research",
    "next": "J_admit",
-   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations. Materials show `intent_index`: for every compiled intent the hypothesis it serves, the gap it answers and the query text — link each observation to the hypothesis whose intent found it. For every observation also record `intent: <the search intent id that found it>` in the observation context, so the evidence stays linked to the gap and the hypothesis it was sought for.",
+   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations. Materials show `intent_index`: for every compiled intent the hypothesis it serves, the gap it answers and the query text — link each observation to the hypothesis whose intent found it. For every observation also record `intent: <the search intent id that found it>` in the observation context, so the evidence stays linked to the gap and the hypothesis it was sought for. Comment threads under short-form and long-form videos are field evidence: quote the comment, cite the page it is on (the video's canonical permalink, never a short link) and date it by the comment.",
    "harness": {
     "action_kind": "AGENT_RESEARCH",
     "minimum_independent_sources": 3,
@@ -1788,7 +1801,7 @@
    "step_id": "M_loop",
    "type": "BRANCH",
    "title": "Bounded evidence-gap loop (returns through reasoning, never straight to research)",
-   "next": "N_jobs",
+   "next": "M_unresolved",
    "branches": [
     {
      "label": "open gaps remain and a research round is left",
@@ -1810,6 +1823,19 @@
      }
     }
    ]
+  },
+  {
+   "step_id": "M_unresolved",
+   "type": "DOMAIN_OPERATION",
+   "title": "Record the research questions the loop leaves open",
+   "next": "N_jobs",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "research.unresolved_gaps",
+    "inputs": {
+     "research_gaps": "context.semantics.research_gaps"
+    }
+   }
   },
   {
    "step_id": "N_jobs",
@@ -2394,9 +2420,9 @@
     "action_kind": "PRODUCT_REALITY_CHECK",
     "minimum_independent_sources": 3,
     "preferred_source_roles": [
-     "product_review",
      "marketplace_listing",
-     "retailer"
+     "retailer",
+     "video_platform"
     ],
     "budget": {
      "max_queries": 24,
@@ -2505,13 +2531,12 @@
    "type": "HARNESS_ACTION",
    "title": "Harness: supplier research",
    "next": "T_admit",
-   "objective": "Investigate supply feasibility: supplier URL and identity, platform, unit price, MOQ, variants, lead time, customization, shipping, limitations, retrieval date. Supply evidence never counts as demand.",
+   "objective": "Investigate supply feasibility: supplier URL and identity, platform, unit price, MOQ, variants, lead time, customization, shipping, limitations, retrieval date. Supply evidence never counts as demand. Every search intent is a job for ONE concept (materials: `sourcing_plan` — concept_id, channel, where, search_terms, rule). For every listing record in the observation context: `listing: <product title as listed>` · `supplier: <supplier name as shown, or none>` · `price as listed: <text>` · `MOQ as listed: <text>` · `channel: <the job's channel>` · `concept: <concept_id>` · `intent: <the search intent id>`. A supply observation without a `listing:` tag is never turned into a supplier lead.",
    "harness": {
     "action_kind": "SUPPLIER_RESEARCH",
     "minimum_independent_sources": 2,
     "preferred_source_roles": [
-     "supplier_listing",
-     "manufacturer_site"
+     "supplier_listing"
     ],
     "budget": {
      "max_queries": 16,
@@ -2599,7 +2624,7 @@
    "type": "AGENT_REASON",
    "title": "Explain the score with record ids; define the cheapest falsification experiment",
    "next": "X_compile",
-   "objective": "Using the qualification and score records only, explain the outcome by record id, state what remains uncertain, and define the cheapest falsification experiment. Never alter, rank or normalise a Trail score. Materials show `concept_reality` and `existing_products`: a concept whose status is EXISTING_PRODUCT_CONTESTS is contradicted by a real product — say so and do not present it as an open opportunity; its sibling concepts stand or fall on their own products.",
+   "objective": "Using the qualification and score records only, explain the outcome by record id, state what remains uncertain, and define the cheapest falsification experiment. Never alter, rank or normalise a Trail score. Materials show `concept_reality` and `existing_products`: a concept whose status is EXISTING_PRODUCT_CONTESTS is contradicted by a real product — say so and do not present it as an open opportunity; its sibling concepts stand or fall on their own products. `evidence_chain` is one object per link: `hypothesis_id`, `claim`, `evidence_ids` (field evidence ids from your context) and `record_refs` (the qualification / score record ids you rely on); every id you name must be one this run produced. Materials show `unresolved_research_gaps`: questions the research never closed — carry each into `remaining_uncertainty`; never present an open question as answered.",
    "constraints": [
     "Never alter, rank or normalise a Trail score",
     "Cite trail_score_refs (V_score record ids) and admitted field_evidence_ids from context"
@@ -2632,7 +2657,32 @@
         ]
        },
        "evidence_chain": {
-        "type": "array"
+        "type": "array",
+        "items": {
+         "type": "object",
+         "additionalProperties": false,
+         "properties": {
+          "hypothesis_id": {
+           "type": "string"
+          },
+          "claim": {
+           "type": "string",
+           "maxLength": 1000
+          },
+          "evidence_ids": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "record_refs": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          }
+         }
+        }
        },
        "field_evidence_ids": {
         "type": "array",
@@ -2692,7 +2742,22 @@
      "sourcing_coverage": "outputs.T_leads.sourcing_coverage",
      "lived_situations": "outputs.K_situations.lived_situations",
      "existing_products": "outputs.Q_join.existing_products",
-     "concept_reality": "outputs.Q_join.concept_reality"
+     "concept_reality": "outputs.Q_join.concept_reality",
+     "unresolved_research_gaps": "outputs.M_unresolved.unresolved_research_gaps"
+    },
+    "refs_must_resolve": true
+   }
+  },
+  {
+   "step_id": "Z_no_signal",
+   "type": "DOMAIN_OPERATION",
+   "title": "The source holds no generative signal: retained as knowledge",
+   "next": "X_compile",
+   "config": {
+    "domain": "ecommerce",
+    "operation": "understanding.no_signal",
+    "inputs": {
+     "primitives": "outputs.C_primitives.primitives"
     }
    }
   },
@@ -2781,6 +2846,7 @@
      },
      "contradictions",
      "unknowns",
+     "unresolved_research_gaps",
      "lineage",
      "product_concepts",
      "mechanisms",

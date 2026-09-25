@@ -2434,6 +2434,10 @@ TREE: list[tuple[str, str, str | None]] = [
     # AUTORESEARCH-SOURCES-AND-HARNESS-V1 (register 11.489): the owner's 2026-09-25 plan of record
     ("docs/wiki/plans/AUTORESEARCH-SOURCES-AND-HARNESS-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-plan-admitted.md", "md", None),
+    ("shared/polymath_shared/adapter/harness_guide.py", "py", None),
+    ("tests/determinism/test_autoresearch_sources_harness.py", "py", None),
+    ("tests/determinism/test_autoresearch_harness_contract.py", "py", None),
+    ("docs/wiki/work-log/2026-09-25-autoresearch-r2-r5.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-k1b-scope-echo.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),

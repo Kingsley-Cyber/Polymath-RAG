@@ -19,6 +19,7 @@ from __future__ import annotations
 import contextlib
 import json
 import os
+import re
 import sys
 from typing import Any, Callable
 
@@ -349,9 +350,34 @@ def _op_corpus_questions(req: dict[str, Any]) -> dict[str, Any]:
     return {"corpus_questions": qs, "need": " ".join(q["question"] for q in qs)[:2000], "note": note}
 
 
-def _round_robin(per_subject: list[list[dict[str, Any] | None]], seen: set, room: int) -> tuple[list[dict[str, Any]], int, int]:
-    """Every subject gets its first proposal before any gets its second. Returns (added, dropped_over_budget, unhostable)."""
+def _round_robin(per_subject: list[list[dict[str, Any] | None]], seen: set, room: int, *, channel_floor: bool = False,
+                 ) -> tuple[list[dict[str, Any]], int, int]:
+    """Every subject gets its first proposal before any gets its second. Returns (added, dropped_over_budget, unhostable).
+    `channel_floor` (evidence channels; gap S-02): first, every CHANNEL gets one proposal, in the channels' priority order, taken
+    DIAGONALLY across subjects (channel k from subject k mod N, else the next subject that has it) — so a channel late in the
+    priority list (tiktok, instagram) is never starved by the budget, and the floor never spends the budget on one subject;
+    then the rank-major fill."""
     added, dropped, unserved = [], 0, 0
+    if channel_floor and per_subject:
+        by_subject: list[dict[str, dict[str, Any]]] = [{} for _ in per_subject]
+        order: list[str] = []
+        for rank in range(max((len(c) for c in per_subject), default=0)):
+            for s, props in enumerate(per_subject):
+                intent = props[rank] if rank < len(props) else None
+                if intent is not None and intent["intent_id"] not in seen:
+                    channel = _channel_of(intent)
+                    by_subject[s].setdefault(channel, intent)
+                    if channel not in order:
+                        order.append(channel)
+        for k, channel in enumerate(order):
+            if len(added) >= room:
+                break
+            for j in range(len(per_subject)):
+                intent = by_subject[(k + j) % len(per_subject)].get(channel)
+                if intent is not None and intent["intent_id"] not in seen:
+                    seen.add(intent["intent_id"])
+                    added.append(intent)
+                    break
     for rank in range(max((len(c) for c in per_subject), default=0)):
         for props in per_subject:
             if rank >= len(props):
@@ -367,6 +393,21 @@ def _round_robin(per_subject: list[list[dict[str, Any] | None]], seen: set, room
                 seen.add(intent["intent_id"])
                 added.append(intent)
     return added, dropped, unserved
+
+
+def _channel_of(intent: dict[str, Any]) -> str:
+    """The evidence channel of a compiled channel intent (`<trail intent>:<channel>:<gap>`)."""
+    parts = str(intent.get("intent_id") or "").split(":")
+    return parts[-2] if len(parts) >= 3 else ""
+
+
+def _neutral_intent(ti: dict[str, Any], q: dict[str, Any], served: list[str]) -> dict[str, Any]:
+    """A channel query as a HARNESS-NEUTRAL search intent (gap H-03, ADR-063 — the harness picks its own tools): the template is
+    the plain search string; the intent names the channel, where it lives and what to read there. Never a tool command."""
+    what = q.get("collect") or q.get("why_this_source")
+    where = f" ({q['where']})" if q.get("where") else ""
+    return {"intent_id": f"{ti['intent_id']}:{q['channel']}:{q['gap_id']}"[:200], "evidence_goal": ti["evidence_goal"], "evidence_roles": served,
+            "intent": f"{q['channel']}{where}: {what} — {q.get('query')}"[:500], "template": str(q.get("query") or "")[:500]}
 
 
 _DIRECTIVE_GOVERNANCE = ("objective", "hypothesis_ids", "evidence_gaps", "preferred_source_roles", "disallowed_source_roles", "freshness_requirement",
@@ -414,11 +455,11 @@ def _op_research_plan(req: dict[str, Any]) -> dict[str, Any]:
         for ti in trail_intents:                                    # the first Trail intent this channel can serve
             served = [r for r in roles if r in (ti.get("evidence_roles") or [])]
             if served:
-                return {"intent_id": f"{ti['intent_id']}:{q['channel']}:{q['gap_id']}"[:200], "evidence_goal": ti["evidence_goal"], "evidence_roles": served,
-                        "intent": f"{q['channel']}: {q.get('why_this_source')} — {q.get('query')}"[:500], "template": str((q.get("tools") or [q.get("query")])[0])[:500]}
+                return _neutral_intent(ti, q, served)
         return None
 
-    added, dropped, unserved = _round_robin([[_host(q) for q in qs] for qs in compiled], {i.get("intent_id") for i in trail_intents}, cap - len(trail_intents))
+    added, dropped, unserved = _round_robin([[_host(q) for q in qs] for qs in compiled], {i.get("intent_id") for i in trail_intents}, cap - len(trail_intents),
+                                            channel_floor=True)
     out["search_intents"] = trail_intents + added
     return {"research_directive": out, "planned": {"trail_intents": len(trail_intents), "channel_intents": len(added), "subjects": len(subjects),
                                                    "lead_batches": len(compiled) - len(subjects), "dropped_over_budget": dropped,
@@ -486,12 +527,12 @@ def _semantic_research_plan(ins, directive, out, trail_intents, asked, cap, stat
         for ti in trail_intents:                                    # the first Trail intent this channel can serve
             served = [r for r in roles if r in (ti.get("evidence_roles") or [])]
             if served:
-                return {"intent_id": f"{ti['intent_id']}:{q['channel']}:{q['gap_id']}"[:200], "evidence_goal": ti["evidence_goal"], "evidence_roles": served,
-                        "intent": f"{q['channel']}: {q.get('why_this_source')} — {q.get('query')}"[:500], "template": str((q.get("tools") or [q.get("query")])[0])[:500]}
+                return _neutral_intent(ti, q, served)
         return None
 
     cap = max(len(bound), cap)
-    added, dropped, unserved = _round_robin([[_host(q) for q in qs] for qs in compiled], {i.get("intent_id") for i in bound}, cap - len(bound))
+    added, dropped, unserved = _round_robin([[_host(q) for q in qs] for qs in compiled], {i.get("intent_id") for i in bound}, cap - len(bound),
+                                            channel_floor=True)
     for a in added:
         gid = a["intent_id"].rsplit(":", 1)[-1]
         if gid in meta:
@@ -567,29 +608,56 @@ def _op_supply_plan(req: dict[str, Any]) -> dict[str, Any]:
     state = _engine_state(product_concepts=concepts, mechanisms=mechs, product_candidates=list(ins.get("product_candidates") or []))
     note = executors.sourcing_plan_compiler(state, policies)
     plan = state["data"]["sourcing_plan"]
-    out: dict[str, Any] = {"sourcing_plan": plan, "note": note}
+    # harness-neutral (gap H-03): the plan an agent reads names WHERE each channel lists its catalogue, never a tool command
+    public_plan = [{**{k: v for k, v in job.items() if k != "tools"}, "where": executors.SOURCING_SITES.get(job["channel"])} for job in plan]
+    out: dict[str, Any] = {"sourcing_plan": public_plan, "note": note}
     directive = ins.get("research_directive")
     if (req.get("config") or {}).get("require_directive") and not (isinstance(directive, dict) and directive.get("search_intents")):
         # never let supplier research run under an OLDER directive compiled for another stage (external-review finding M1-07)
         raise Refusal("SUPPLY_DIRECTIVE_MISSING", "TrailSignal compiled no supply research directive for this stage")
     if isinstance(directive, dict) and directive.get("search_intents"):
+        import product_reality as PR
+        import query_semantics as QS
+
         enriched = copy.deepcopy(directive)
         trail_intents = [i for i in enriched["search_intents"] if isinstance(i, dict)]
         host = next((ti for ti in trail_intents if set(ti.get("evidence_roles") or []) & {"supply", "price"}), None)
         cap = max(len(trail_intents), min(100, int((directive.get("budget") or {}).get("max_queries") or 24)))
+        # TrailSignal's supply templates carry `{product_territory}`: bound PER CONCEPT with the concept's market phrase (as product
+        # reality does, gap S-06); a template that cannot be bound is counted, never sent with a `{slot}`
+        unslotted = [ti for ti in trail_intents if not QS.has_unbound_slot(ti.get("template"))]
+        mech_by_id = {m.get("id"): m for m in mechs if isinstance(m, dict)}
         per_concept: dict[str, list[dict[str, Any] | None]] = {}
+        unresolved: list[dict[str, Any]] = []
+        bound_templates = 0
+        for c in concepts:
+            phrase = PR.market_phrase(c, mech_by_id.get(c.get("mechanism_id")))
+            for ti in trail_intents:
+                if not QS.has_unbound_slot(ti.get("template")):
+                    continue
+                text, missing = QS.bind_template(str(ti.get("template") or ""), None, overrides={"product_territory": phrase})
+                if text is None:
+                    unresolved.append({"intent_id": ti.get("intent_id"), "concept_id": c.get("id"), "missing_slots": missing})
+                    continue
+                bound_templates += 1
+                per_concept.setdefault(str(c.get("id")), []).append({**ti, "intent_id": f"{ti['intent_id']}:{c.get('id')}"[:200],
+                                                                    "intent": f"{ti.get('intent')} — concept {c.get('id')} ({c.get('name')}): record `concept: {c.get('id')}`"[:500],
+                                                                    "template": text[:500]})
         for job in plan:
             terms = " ".join(job["search_terms"][:3])
-            per_concept.setdefault(job["concept_id"], []).append(None if host is None else {
+            site = executors.SOURCING_SITES.get(job["channel"])
+            per_concept.setdefault(str(job["concept_id"]), []).append(None if host is None else {
                 "intent_id": f"{host['intent_id']}:{job['channel']}:{job['concept_id']}"[:200], "evidence_goal": host["evidence_goal"],
                 "evidence_roles": [r for r in host["evidence_roles"] if r in ("supply", "price")],
-                "intent": f"{job['channel']}: supplier listings for concept {job['concept']} — record concept: {job['concept_id']} in the observation context"[:500],
-                "template": (job["tools"][-1] if job["tools"] else terms).replace("<term>", terms)[:500]})
-        added, dropped, unserved = _round_robin(list(per_concept.values()), {i.get("intent_id") for i in trail_intents}, cap - len(trail_intents))
-        enriched["search_intents"] = trail_intents + added
+                "intent": (f"{job['channel']}{f' ({site})' if site else ''}: supplier listings for concept {job['concept_id']} ({job['concept']}) — record in the "
+                           f"observation context `listing:`, `supplier:`, `price as listed:`, `MOQ as listed:`, `channel: {job['channel']}`, "
+                           f"`concept: {job['concept_id']}`")[:500],
+                "template": terms[:500]})
+        added, dropped, unserved = _round_robin(list(per_concept.values()), {i.get("intent_id") for i in unslotted}, cap - len(unslotted))
+        enriched["search_intents"] = unslotted + added
         out.update(research_directive=enriched, governance_unchanged=all(enriched.get(k) == directive.get(k) for k in _DIRECTIVE_GOVERNANCE),
-                   planned={"trail_intents": len(trail_intents), "sourcing_intents": len(added), "jobs": len(plan), "dropped_over_budget": dropped,
-                            "no_supply_intent_to_host": unserved, "intent_cap": cap})
+                   planned={"trail_intents": len(trail_intents), "trail_templates_bound": bound_templates, "sourcing_intents": len(added), "jobs": len(plan), "dropped_over_budget": dropped,
+                            "no_supply_intent_to_host": unserved, "unresolved": unresolved[:100], "intent_cap": cap})
     return out
 
 
@@ -627,7 +695,7 @@ def _op_supply_leads(req: dict[str, Any]) -> dict[str, Any]:
                 stats["without_listing"] += 1
                 continue
             name = _context_field(ctx, "supplier")
-            if not name or name.lower() in ("none", "unknown", "unresolved"):
+            if not name or re.match(r"(?:none|unknown|unresolved)\b", name.strip().lower()):      # also "unresolved (alibaba listing)" (gap S-06)
                 name = None
                 stats["without_supplier_name"] += 1
             host = (urlparse(str(src.get("url") or "")).hostname or "").removeprefix("www.")
@@ -726,6 +794,27 @@ def _op_refuse(req: dict[str, Any]) -> dict[str, Any]:
     raise Refusal(str(cfg.get("code") or "DOMAIN_LAW_UNSATISFIED"), "; ".join(errors[:6])[:1500] or "the domain law stayed unsatisfied within the loop budget")
 
 
+def _op_no_signal(req: dict[str, Any]) -> dict[str, Any]:
+    """NO_GENERATIVE_SIGNAL is a SUCCESS outcome (the engine's `signal_gate`, docs/07): most knowledge should produce zero products.
+    A lawful interpretation that declares `generative_signal: false` ends the run HONESTLY here — a typed outcome saying why, before
+    any population, hypothesis, research or supply step; the interpretation itself stays in the run's records (gap A-03)."""
+    prim = _inputs(req).get("primitives") or {}
+    kept = [k for k in ("physical_jobs", "frictions", "latent_structures", "transferable_invariants") if isinstance(prim, dict) and prim.get(k)]
+    raise Refusal("NO_GENERATIVE_SIGNAL", "no behaviorally or physically useful signal in the source: the interpretation is retained as knowledge only"
+                  + (f" ({', '.join(kept)} recorded)" if kept else "") + "; no population, hypothesis, research or supply step ran")
+
+
+def _op_unresolved_gaps(req: dict[str, Any]) -> dict[str, Any]:
+    """Gap A-05: the evidence loop's exit test reads TrailSignal's gate gaps only, so when the loop ends, the SEMANTIC research
+    questions still open (ledger, step, agent and bridge origins; closed ones never re-enter) are recorded here — shown to the final
+    interpretation and kept in the result, never silently dropped."""
+    rg = _inputs(req).get("research_gaps") or {}
+    gaps = [{k: g.get(k) for k in ("gap_id", "hypothesis_id", "question", "evidence_role", "origin")}
+            for g in rg.get("knowledge_gaps") or [] if isinstance(g, dict)]
+    return {"unresolved_research_gaps": gaps, "refused_gaps": len(rg.get("refused") or []),
+            "closed_not_reoffered": int(rg.get("closed_not_reoffered") or 0)}
+
+
 #: operation id -> wrapper. One table; an id not listed here is a typed refusal.
 OPERATIONS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "knowledge.corpus_evidence": _op_corpus_evidence,
@@ -743,6 +832,8 @@ OPERATIONS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "supply.plan": _op_supply_plan,
     "supply.leads": _op_supply_leads,
     "law.refuse": _op_refuse,
+    "understanding.no_signal": _op_no_signal,
+    "research.unresolved_gaps": _op_unresolved_gaps,
 }
 
 

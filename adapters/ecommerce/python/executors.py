@@ -195,47 +195,64 @@ def triage(state: dict, policies: dict) -> str:
 # (OpenCLI / agent-reach verbs verified 2026-09-03), the source family (docs/04
 # authority decides what it may establish), and how independence is keyed.
 # Enabled/ordered by policies.evidence_channels; the query form is SHORT keywords.
+# `where` / `collect` are the HARNESS-NEUTRAL description (AUTORESEARCH-SOURCES-AND-HARNESS-V1, gap H-03): the governed
+# binding sends only these plus the query — any harness picks its own tools (ADR-063); `tools` stay for the standalone engine.
 _CHANNEL_TEMPLATES = [
     ("reddit", "{q}", "community",
      "first-person complaint, workaround, and comparison language",
      ["FRICTION_EVIDENCE", "WORKAROUND_EVIDENCE", "PRODUCT_COMPARISON", "PURCHASE_INTENT"],
      {"tools": ['opencli reddit search "{q}" --subreddit <hint> --sort relevance --time year --limit 10 -f json',
                 "opencli reddit read <post-id> -f json"],
-      "identity": "platform=reddit author_key=u/<author> thread_key=<post-id>", "freshness": "post date → LIVE ≤90d / FAST ≤2y"}),
+      "identity": "platform=reddit author_key=u/<author> thread_key=<post-id>", "freshness": "post date → LIVE ≤90d / FAST ≤2y",
+      "where": "reddit.com", "collect": "posts and their comment threads"}),
     ("amazon_reviews", "{q}", "review",
      "post-purchase language: what broke, what they did instead, what they compared it to",
      ["PRODUCT_COMPLAINT", "WORKAROUND_EVIDENCE", "PRODUCT_COMPARISON", "PRODUCT_REQUEST", "CURRENT_PRODUCT_REFERENCE"],
      {"tools": ['opencli amazon search "{q}" -f json', "opencli amazon discussion <asin-or-url> -f json"],
       "identity": "platform=amazon author_key=<reviewer> thread_key=<ASIN>", "freshness": "review date",
+      "where": "amazon.com", "collect": "product reviews and customer questions",
       "law": "a review is a product complaint or request, never FRICTION_EVIDENCE about life without the product (docs/04)"}),
     ("youtube", "{q}", "community",
      "creator-audience discussion under demonstration videos",
      ["FRICTION_EVIDENCE", "BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE"],
      {"tools": ['opencli youtube search "{q}" -f json', "opencli youtube comments <video-url> -f json"],
-      "identity": "platform=youtube author_key=<channel/handle> thread_key=<video-id>", "freshness": "comment date"}),
+      "identity": "platform=youtube author_key=<channel/handle> thread_key=<video-id>", "freshness": "comment date",
+      "where": "youtube.com", "collect": "the comment threads under the top demonstration videos (cite the video's youtube.com/watch URL; date = the comment's date)"}),
     ("tiktok", "{q}", "community",
-     "short-video captions and on-screen text where people show the workaround",
+     "short-video comment threads, captions and on-screen text where people show and discuss the workaround",
      ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE"],
      {"tools": ['opencli tiktok search "{q}" -f json'],
-      "identity": "platform=tiktok author_key=@<creator> thread_key=<video-id>", "freshness": "video date",
-      "limits": "OpenCLI reads videos, not their comment threads — quote the caption/on-screen text, or read comments through the browser lane"}),
+      "identity": "platform=tiktok author_key=@<creator> thread_key=<video-id>", "freshness": "comment date (else video date)",
+      "limits": "OpenCLI reads videos, not their comment threads — quote the caption/on-screen text, or read comments through the browser lane",
+      "where": "tiktok.com", "collect": "the comment threads under the top videos (cite each video as tiktok.com/@creator/video/<id>, never a short link; date = the comment's date)"}),
+    ("instagram", "{q}", "community",
+     "comment threads under public Reels and posts where people show and discuss the workaround",
+     ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE"],
+     {"tools": ['mcporter call exa.web_search_exa query="{q} site:instagram.com/reel" numResults=10',
+                '~/camoufox-env/bin/python3 ~/.hermes/skills/social-media/instagram-leads/extract_comments.py "<reel-or-post-url>" --top 50 --json <file>'],
+      "identity": "platform=instagram author_key=@<account> thread_key=<reel-or-post-id>", "freshness": "comment date (else post date)",
+      "limits": "OpenCLI searches Instagram users only: find Reels by web search, then read their comments with the logged-in session extractor; public posts only, read occasionally (never in bulk), never quote a username",
+      "where": "instagram.com", "collect": "the comment threads under public Reels and posts (cite instagram.com/reel/<id> or instagram.com/p/<id>; date = the comment's date)"}),
     ("xiaohongshu", "{q}", "community",
      "consumer notes + threaded comments (Chinese; translate the quote, keep the original)",
      ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE", "PRODUCT_COMPARISON"],
      {"tools": ['opencli xiaohongshu search "{q}" -f json', "opencli xiaohongshu comments <note-id> -f json"],
-      "identity": "platform=xiaohongshu author_key=<user> thread_key=<note-id>", "freshness": "note date"}),
+      "identity": "platform=xiaohongshu author_key=<user> thread_key=<note-id>", "freshness": "note date",
+      "where": "xiaohongshu.com", "collect": "consumer notes and their comment threads"}),
     ("twitter", "{q}", "community",
      "public complaint and comparison language in threads",
      ["FRICTION_EVIDENCE", "PRODUCT_COMPARISON", "PURCHASE_INTENT"],
      {"tools": ['opencli twitter search "{q}" -f json', "opencli twitter thread <tweet-id> -f json"],
-      "identity": "platform=twitter author_key=@<handle> thread_key=<tweet-id>", "freshness": "tweet date"}),
+      "identity": "platform=twitter author_key=@<handle> thread_key=<tweet-id>", "freshness": "tweet date",
+      "where": "x.com", "collect": "public posts and their reply threads"}),
     ("forum", "{q} forum", "community",
      "niche practitioners describing real behavior and adaptations",
      ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE"],
      {"tools": ['mcporter call exa.web_search_exa query="{q} forum" numResults=10', 'curl -s "https://r.jina.ai/<url>"'],
-      "identity": "platform=<forum host> author_key=<handle> thread_key=<thread url>", "freshness": "post date"}),
+      "identity": "platform=<forum host> author_key=<handle> thread_key=<thread url>", "freshness": "post date",
+      "where": "specialist forums", "collect": "threads where practitioners describe real behavior and adaptations"}),
 ]
-# not compiled (honest): instagram — OpenCLI searches USERS only, no post/comment search; facebook — groups need membership
+# not compiled (honest): facebook — groups need membership
 _GAP_DEFAULT_ROLES = ["FRICTION_EVIDENCE", "WORKAROUND_EVIDENCE",
                       "BEHAVIOR_SUPPORT", "PURCHASE_INTENT"]
 _GAP_STOP = {"evidence", "missing", "intermediate", "does", "do", "they", "their", "what", "which", "where", "when",
@@ -273,6 +290,7 @@ def channel_queries(gid: str, question: str, state: dict, policies: dict, id_pre
             "subreddit_hints": hints[:6] if channel == "reddit" else [],
             "tools": [t.replace("{q}", short) for t in how.get("tools") or []],
             "identity": how.get("identity"), "freshness_hint": how.get("freshness"),
+            "where": how.get("where"), "collect": how.get("collect"),
             **({"law": how["law"]} if how.get("law") else {}), **({"limits": how["limits"]} if how.get("limits") else {}),
             "channel": channel, "source_family": family, "why_this_source": why,
             "expected_evidence_roles": expected,
@@ -435,6 +453,9 @@ def _num(s: str) -> float | None:
     except (ValueError, AttributeError):
         return None
 
+
+#: harness-neutral: where each supply channel lists its catalogue (the governed binding sends this, never `_SOURCING_TOOLS`)
+SOURCING_SITES = {"alibaba": "alibaba.com", "cjdropshipping": "cjdropshipping.com", "1688": "1688.com"}
 
 _SOURCING_TOOLS = {
     "alibaba": ['python3 python/sourcing_exa.py --state run.json --out cands.json --channels alibaba',

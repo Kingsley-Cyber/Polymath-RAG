@@ -246,7 +246,11 @@ def test_one_complete_ecommerce_product_research_run(runtime):
     domain = [r for r in rows if r["step_type"] == "DOMAIN_OPERATION"]
     assert all(r["status"] == "executed" for r in domain) and not [s for s in order if s.startswith("Z_refuse")]
     assert [r["step_id"] for r in domain] == ["B_intake", "B_lenses", "C_lineage", "C_lineage", "C_population", "C_bridge_law", "C_bridge_law", "H_plan", "J_cards", "K_situations_law", "K_questions",
-                                              "N_concepts_law", "N_concepts_law", "O_plan", "Q_join", "S_plan", "T_leads"]              # Slice 3 added the product-reality plan + join; no stage moved
+                                              "M_unresolved", "N_concepts_law", "N_concepts_law", "O_plan", "Q_join", "S_plan", "T_leads"]   # Slice 3 added the product-reality plan + join; AUTORESEARCH (A-05) the loop-exit record; no stage moved
+    unresolved = next(r["output"] for r in rows if r["step_id"] == "M_unresolved")                           # gap A-05: the questions the loop leaves open are RECORDED
+    assert isinstance(unresolved["unresolved_research_gaps"], list) and all(g["origin"] in ("ledger", "step", "agent_open", "bridge")
+                                                                            and g["hypothesis_id"] and g["question"] for g in unresolved["unresolved_research_gaps"])
+    assert "unresolved_research_gaps" in agent.seen["W_interpret"][0]                                         # ... shown to the final interpretation
     assert st.branch_loops == 3                                                                            # three domain laws each sent one draft back through reasoning, then passed
     assert trail.calls == ["registry.project", "hypotheses.judge:filter", "gaps.compile", "evidence.admit:field_evidence", "hypotheses.judge:revision", "territory.project",
                            "evidence.admit:product_reality", "opportunity.qualify:market_delta", "gaps.compile:supply", "evidence.admit:supply", "opportunity.qualify:supply", "opportunity.score"]
@@ -310,3 +314,24 @@ def test_negative_control_an_unlawful_product_set_ends_in_a_typed_refusal_not_a_
     assert "3–6 distinct product concepts required, got 1" in st.gap["message"]
     assert "opportunity.score" not in trail.calls and "evidence.admit:supply" not in trail.calls          # nothing was sourced or scored for a product set that never became lawful
     assert [r["step_id"] for r in store.list_steps(None, rid)][-1] == "Z_refuse_concepts"
+
+
+class NoSignalAgent(Agent):
+    """Reads the sources and honestly declares there is no reusable signal (gap A-03)."""
+    def answer(self, nxt: dict) -> dict:
+        out = super().answer(nxt)
+        if nxt["step"]["step_id"] == "C_primitives":
+            out["primitives"]["generative_signal"] = False
+        return out
+
+
+def test_no_generative_signal_ends_as_retained_knowledge_before_any_population_research_or_supply(runtime):
+    store, trail = runtime
+    rid, st, actions = _run(NoSignalAgent())
+    assert st.status == "terminal_gap" and st.gap["code"] == "NO_GENERATIVE_SIGNAL" and st.gap["step_id"] == "Z_no_signal"
+    assert "retained as knowledge" in st.gap["message"] and "no population, hypothesis, research or supply step ran" in st.gap["message"]
+    steps = [r["step_id"] for r in store.list_steps(None, rid)]
+    assert steps.count("C_primitives") == 2 and steps[-1] == "Z_no_signal"                                  # the lineage law was repaired FIRST, then the honest end
+    assert "C_population" not in steps and "C_hypotheses" not in steps and actions == {}                  # no population, no hypothesis, no research or supply action
+    assert not [c for c in trail.calls if c.startswith(("evidence.admit", "opportunity."))]
+

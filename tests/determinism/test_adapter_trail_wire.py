@@ -70,7 +70,7 @@ def test_the_wire_is_deterministic_and_never_mutates_the_view():
 def test_every_trail_step_of_the_production_manifest_opts_in():
     trail_steps = [s for s in MANIFEST["steps"] if s["type"] == "EXTERNAL_OPERATION"]
     assert trail_steps and all(s["config"].get("hypotheses_from") == "context.semantics.trail" for s in trail_steps)
-    assert MANIFEST["adapter_version"] == "0.6.0"
+    assert MANIFEST["adapter_version"] == "0.7.0"          # opted in at 0.6.0; 0.7.0 (AUTORESEARCH-SOURCES-AND-HARNESS-V1) keeps it
 
 
 # ─────────────────────────────────────────────────────────── the receipt relation, submit-time half

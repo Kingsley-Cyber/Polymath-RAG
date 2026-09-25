@@ -11,7 +11,8 @@ if str(ROOT / "shared") not in sys.path:
     sys.path.insert(0, str(ROOT / "shared"))
 from polymath_shared.adapter import list_manifests  # noqa: E402
 
-RUNTIME = [ROOT / "shared/polymath_shared/adapter" / f for f in ("service.py", "transitions.py", "manifest.py", "contracts.py", "store.py", "trail_client.py", "hypotheses.py")] + \
+RUNTIME = [ROOT / "shared/polymath_shared/adapter" / f for f in ("service.py", "transitions.py", "manifest.py", "contracts.py", "store.py", "trail_client.py", "hypotheses.py",
+                                                                "harness_guide.py")] + \
           [ROOT / "workers/workers/adapter_step_worker.py", ROOT / "orchestrator/orchestrator/api/adapter.py"]
 ADAPTER_IDS = ("trail.product_discovery", "substack.article_development", "polymath.knowledge_brief")
 # hypotheses are GENERIC engine state since ADR-0019 (HypothesisStateV1), not a domain word

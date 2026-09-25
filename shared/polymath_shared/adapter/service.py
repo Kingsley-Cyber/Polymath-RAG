@@ -373,14 +373,27 @@ def _compile_harness_action(state: RunState, spec: dict[str, Any], step_id: str,
     if not live:
         return None
     budget = {**{"max_queries": 20, "max_sources": 15, "max_observations": 60}, **(directive.get("budget") or {}), **(hb.get("budget") or {})}
+    # the requester's limits reach the research (gap A-04): geography / language fill what TrailSignal left open, freshness_days only
+    # TIGHTENS the window, and constraints / exclusions / category travel in the objective the harness reads
+    limits = state.input if isinstance(state.input, dict) else {}
+    windows = [d for d in (hb.get("freshness_max_age_days", (directive.get("freshness_requirement") or {}).get("max_age_days")), limits.get("freshness_days"))
+               if isinstance(d, int) and not isinstance(d, bool) and d > 0]
+    asked = [f"{label}: " + "; ".join(str(v) for v in (value if isinstance(value, list) else [value]) if str(v).strip())
+             for label, value in (("constraints", limits.get("constraints")), ("exclude", limits.get("exclusions")), ("category", limits.get("category")))
+             if value and (not isinstance(value, list) or any(str(v).strip() for v in value))]
+    geography = directive.get("geography") or limits.get("geography")
+    language = directive.get("language") or limits.get("language")
+    objective = str(directive.get("objective") or spec.get("objective") or spec.get("title") or step_id)
+    if asked:
+        objective = f"{objective}\nThe requester's limits (honour them in every search): " + " · ".join(asked)
     action = {"action_id": "hact_" + hashlib.sha256(f"{state.run_id}:{step_id}:{sequence}".encode()).hexdigest()[:24], "run_id": state.run_id, "step_id": step_id,
-              "action_kind": hb["action_kind"], "hypothesis_ids": live[:64], "objective": str(directive.get("objective") or spec.get("objective") or spec.get("title") or step_id)[:4000],
+              "action_kind": hb["action_kind"], "hypothesis_ids": live[:64], "objective": objective[:4000],
               "evidence_gaps": list(directive.get("evidence_gaps") or [])[:200], "search_intents": list(directive["search_intents"])[:100],
               "preferred_source_roles": list(hb.get("preferred_source_roles") or directive.get("preferred_source_roles") or [])[:50],
               "disallowed_source_roles": list(hb.get("disallowed_source_roles") or directive.get("disallowed_source_roles") or [])[:50],
-              "freshness_requirement": {"max_age_days": hb.get("freshness_max_age_days", (directive.get("freshness_requirement") or {}).get("max_age_days")),
+              "freshness_requirement": {"max_age_days": min(windows) if windows else None,
                                         "policy_ref": (directive.get("freshness_requirement") or {}).get("policy_ref")},
-              "geography": directive.get("geography"), "language": directive.get("language"),
+              "geography": str(geography)[:200] if geography else None, "language": str(language)[:50] if language else None,
               "minimum_independent_sources": int(hb.get("minimum_independent_sources") or directive.get("minimum_independent_sources") or 1),
               "success_condition": str(directive.get("success_condition") or "the evidence gaps are answered by independent sources")[:2000],
               "falsification_condition": str(directive.get("falsification_condition") or "independent sources contradict the hypotheses")[:2000],

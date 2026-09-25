@@ -45,7 +45,7 @@ PRIMITIVES = {"physical_jobs": ["carry keys while running"], "frictions": ["acce
               "population_leads": [{"name": "trail runners", "frictions": ["keys bounce in pocket"], "activities": ["trail running"]}],
               "latent_structures": [{"id": "ls1", "kind": "FRICTION", "text": "small items bounce and fall out during repetitive motion",
                                      "possible_populations": ["dog walkers"], "evidence_refs": ["chunk_0001"]}]}
-SOURCE_NAMES = ("reddit", "youtube", "tiktok", "amazon", "twitter", "xiaohongshu")
+SOURCE_NAMES = ("reddit", "youtube", "tiktok", "instagram", "amazon", "twitter", "xiaohongshu")      # instagram: AUTORESEARCH-SOURCES-AND-HARNESS-V1
 
 
 def _exec(operation: str, inputs: dict) -> dict:

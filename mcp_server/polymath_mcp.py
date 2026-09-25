@@ -44,6 +44,11 @@ from typing import Any, Optional
 import httpx
 from mcp.server.mcpserver import MCPServer
 
+_SHARED = Path(__file__).resolve().parents[1] / "shared"
+if _SHARED.is_dir() and str(_SHARED) not in sys.path:          # the repository's shared package (normally already on the path)
+    sys.path.insert(0, str(_SHARED))
+from polymath_shared.adapter import harness_guide as HG  # noqa: E402
+
 BASE = os.environ.get("POLYMATH_API", "http://127.0.0.1:7200")
 
 server = MCPServer(
@@ -61,7 +66,8 @@ server = MCPServer(
         "EVIDENCE (no answer) that you reason over yourself; polymath_answer = have Polymath write the "
         "grounded answer (humans/UI). Prefer search/explore for agent work and synthesize yourself. "
         "verdict=insufficient_evidence / an empty evidence set means the corpus does not support the "
-        "question; report that honestly instead of substituting your own knowledge."
+        "question; report that honestly instead of substituting your own knowledge. "
+        "Governed research (e.g. product research): adapter_list -> adapter_start -> loop adapter_next / adapter_submit -> adapter_result; the operating guide for any agent harness and any tools is the prompt run_governed_research and the resource polymath://adapter/guide."
     ),
 )
 
@@ -270,16 +276,20 @@ def _adapter(method: str, path: str, payload: dict | None = None) -> Any:
 @server.tool()
 def adapter_list() -> dict:
     """COGNITIVE-ADAPTER-V1: the admitted adapters (id, versions, description, input_schema, step counts, which
-    TrailSignal operations are working vs planned). One MCP connection, one adapter run — see adapter_start."""
+    TrailSignal operations are working vs planned). One MCP connection, one adapter run — see adapter_start. The PREFERRED
+    adapter says so in its description. How to run any adapter end to end with any tools you have: the prompt
+    run_governed_research and the resource polymath://adapter/guide."""
     return _adapter("GET", "/adapter/list")
 
 
 @server.tool()
 def adapter_start(adapter_id: str, input: dict, request_options: Optional[dict] = None) -> dict:
-    """Start ONE durable adapter run (AdapterRunRefV1). `input` must satisfy the adapter's input_schema
-    (adapter_list). request_options: corpus_ids, idempotency_key, agent_identity, retrieval_mode, deadline_s.
-    Polymath executes retrieval/graph/validation/compile steps itself; when a step needs YOUR reasoning,
-    adapter_next returns a typed AGENT_REASON step — answer it with adapter_submit."""
+    """Start ONE durable adapter run (AdapterRunRefV1). `input` must satisfy the adapter's input_schema (adapter_list): at
+    least `seed` and `corpus_ids`; optional research limits (geography, language, freshness_days, constraints, exclusions,
+    category) reach every research step. request_options: idempotency_key (a retry never starts a second run),
+    agent_identity ("<harness>/<label>"), corpus_ids (REQUIRED for a non-admin key), retrieval_mode, deadline_s.
+    Polymath executes retrieval/graph/validation/compile steps itself; adapter_next hands you AGENT_REASON steps (your
+    reasoning) and HARNESS_ACTION steps (your live research) — answer each with adapter_submit."""
     return _adapter("POST", "/adapter/start", {"adapter_id": adapter_id, "input": input, "request_options": request_options or {}})
 
 
@@ -303,9 +313,12 @@ def adapter_submit(run_id: str, step_id: str, payload: dict, agent_identity: str
                    model: Optional[str] = None, kind: Optional[str] = None) -> dict:
     """Submit your answer for the awaiting step. AGENT_REASON: kind="reasoning" (default) — validated against the step's
     output_schema and acceptance rules; cite ONLY ids from context.evidence_refs (never a trail_prior); hypotheses you
-    generate become durable state with lineage. HARNESS_ACTION: kind="receipt" — a HarnessResearchReceiptV1
-    (action_id, harness_id, sources, observations, tool_trace, limitations; no score field exists). A rejection returns
-    the errors and the step stays open for a corrected submission. Returns AdapterRunStatusV1."""
+    generate become durable state with lineage. HARNESS_ACTION: kind="receipt" — exactly the step's output_schema, a
+    HarnessResearchReceiptV1: action_id, run_id, harness_id, started_at, completed_at, sources[{source_id, url (canonical
+    permalink), source_class, retrieved_at, published_at_if_known}], observations[{observation_id, source_id, claim,
+    paraphrase_or_excerpt, metric_if_present, context, evidence_role_claimed, hypothesis_ids}], tool_trace, limitations; no
+    score field exists. A rejection returns the errors and the step stays open for a corrected submission. Returns
+    AdapterRunStatusV1."""
     return _adapter("POST", f"/adapter/{run_id}/submit",
                     {"step_id": step_id, "payload": payload, "agent_identity": agent_identity, "model": model,
                      **({"kind": kind} if kind else {})})
@@ -329,6 +342,32 @@ def adapter_result(run_id: str) -> dict:
 def adapter_cancel(run_id: str) -> dict:
     """Cancel a run (terminal, idempotent; accepted work is kept). Returns AdapterRunStatusV1."""
     return _adapter("POST", f"/adapter/{run_id}/cancel")
+
+
+# ------------------------------------------------------- the operating guide for any agent harness
+# AUTORESEARCH-SOURCES-AND-HARNESS-V1 (gaps H-01, H-02, H-04): ONE guide, published identically by both MCP servers as a prompt
+# and resources (polymath_shared.adapter.harness_guide); the files are read per request, so a re-pinned Trail source table is live.
+_GUIDE_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _guide_resources() -> dict:
+    return HG.resources({uri: (_GUIDE_ROOT / rel).read_text(encoding="utf-8") for uri, rel in HG.FILES.items()})
+
+
+def _guide_reader(uri: str):
+    def read() -> str:
+        return _guide_resources()[uri][1]
+    return read
+
+
+for _uri in HG.RESOURCE_URIS:
+    server.resource(_uri, name=_uri.rsplit("/", 1)[-1], title=HG.TITLES[_uri], description=HG.TITLES[_uri], mime_type=HG.MIME[_uri])(_guide_reader(_uri))
+
+
+@server.prompt(name=HG.PROMPT_NAME, title="Run a governed adapter end to end", description=HG.PROMPT_DESCRIPTION)
+def run_governed_research(adapter_id: str = "", seed: str = "") -> str:
+    """The operating guide, then where to begin (optionally a given adapter and seed)."""
+    return HG.prompt_text(adapter_id, seed)
 
 
 def _auth_wrapped(app):

@@ -55,6 +55,11 @@ def harvest(current: Mapping[str, Mapping[str, Any]], outputs: Mapping[str, Any]
     kept: list[dict[str, Any]] = []
     refused: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
+    # gap A-05: a question the LEDGER closed stays closed — the same question never re-enters through another origin (a step's
+    # knowledge_gaps, the agent's open_gaps, a bridge) under a new origin-based id. TrailSignal's own gate gaps are TrailSignal's.
+    closed = {(str(hid), _norm(g.get("question"))) for hid, state in current.items() for g in state.get("knowledge_gaps") or []
+              if isinstance(g, Mapping) and g.get("status") == "closed" and g.get("question")}
+    not_reoffered = [0]
 
     def offer(origin: str, hid: Any, question: Any, role: Any, given_id: Any = None, bucket: list[dict[str, Any]] = kept) -> None:
         q = str(question or "").strip()
@@ -67,6 +72,9 @@ def harvest(current: Mapping[str, Mapping[str, Any]], outputs: Mapping[str, Any]
             refused.append({"code": REFUSAL_NOT_LIVE, "origin": origin, "hypothesis_id": str(hid), "question": q[:300]})
             return
         key = (str(hid), _norm(q))
+        if origin != GATE_ORIGIN and key in closed:
+            not_reoffered[0] += 1
+            return
         if key in seen:
             return
         seen.add(key)
@@ -101,7 +109,7 @@ def harvest(current: Mapping[str, Mapping[str, Any]], outputs: Mapping[str, Any]
         if isinstance(g, Mapping):
             offer(GATE_ORIGIN, g.get("hypothesis_id"), g.get("question"), g.get("evidence_role"), g.get("gap_id"), bucket=gate)
     return {"knowledge_gaps": kept[:MAX_GAPS], "open_gaps": gate[:MAX_GAPS], "refused": refused[:MAX_GAPS],
-            "dropped_over_cap": max(0, len(kept) - MAX_GAPS) + max(0, len(gate) - MAX_GAPS)}
+            "dropped_over_cap": max(0, len(kept) - MAX_GAPS) + max(0, len(gate) - MAX_GAPS), "closed_not_reoffered": not_reoffered[0]}
 
 
 def trail_gap(gap: Mapping[str, Any]) -> dict[str, Any]:
