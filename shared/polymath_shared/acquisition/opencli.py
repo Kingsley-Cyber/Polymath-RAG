@@ -77,7 +77,11 @@ class OpenCLIBackend:
     def _run(self, args: list[str], timeout: int = READ_TIMEOUT_S) -> str:
         # reviewed (ruff S603): no shell; the binary is the host's OpenCLI; every argument is a fixed command word, a validated
         # permalink / id, a query passed as ONE argv item, or a fixed read-only script (test_the_backend_calls_only_read_commands)
-        proc = subprocess.run([self.binary, *args], capture_output=True, text=True, timeout=timeout)  # noqa: S603
+        # OpenCLI is a Node program (`#!/usr/bin/env node`): its own directory goes first on PATH, so a fleet started with a thin PATH
+        # still finds the `node` installed beside it
+        env = {**os.environ, "PATH": os.pathsep.join([os.path.dirname(os.path.realpath(shutil.which(self.binary) or self.binary)),
+                                                     os.path.dirname(self.binary), os.environ.get("PATH", "")])}
+        proc = subprocess.run([self.binary, *args], capture_output=True, text=True, timeout=timeout, env=env)  # noqa: S603
         return "\n".join(ln for ln in (proc.stdout or "").splitlines() if not any(n in ln for n in _NOISE)).strip()
 
     def _json(self, args: list[str], timeout: int = READ_TIMEOUT_S) -> Any:
