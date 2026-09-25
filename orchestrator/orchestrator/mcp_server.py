@@ -139,8 +139,12 @@ async def _orch(method: str, path: str, **kw: Any) -> Any:
 
 
 def _trim_hit(h: dict, max_chars: int = 1400) -> dict:
+    """A slim hit. D-02: a cut text says so — `truncated: true` + `full_length` (characters before the cut); a hit that
+    fits keeps exactly its old keys."""
+    text = h.get("text") or ""
+    cut = len(text) > max_chars
     return {k: v for k, v in {
-        "text": (h.get("text") or "")[:max_chars],
+        "text": text[:max_chars],
         "source_name": h.get("source_name"),
         "heading_path": h.get("heading_path"),
         "doc_id": h.get("doc_id"),
@@ -148,6 +152,8 @@ def _trim_hit(h: dict, max_chars: int = 1400) -> dict:
         "score": h.get("score"),
         "tier": h.get("tier"),
         "arrival": h.get("arrival"),
+        "truncated": True if cut else None,
+        "full_length": len(text) if cut else None,
     }.items() if v is not None}
 
 
@@ -295,14 +301,7 @@ async def retrieve(query: str, corpus_id: str, mode: str = "HYBRID",
     if "error" in out:
         return out
     if out.get("evidence_rows") is not None:
-        rows = []
-        for r in out["evidence_rows"]:
-            r = dict(r)
-            for k in ("text", "text_clean"):
-                if isinstance(r.get(k), str) and len(r[k]) > 1200:
-                    r[k] = r[k][:1200]
-            rows.append(r)
-        return {"evidence_rows": rows, "evidence_contract": out.get("evidence_contract"),
+        return {"evidence_rows": _trim_rows(out["evidence_rows"]), "evidence_contract": out.get("evidence_contract"),
                 "graph_facts": len(out.get("graph_facts") or [])}
     hits = out.get("evidence") or out.get("hits") or []
     return {
@@ -321,12 +320,17 @@ async def capabilities() -> dict:
 
 
 def _trim_rows(rows: list) -> list:
+    """Contract rows with `text` / `text_clean` cut at 1,200 characters. D-02: a cut row says so — `truncated: true` +
+    `full_length` (the untrimmed `text`, else `text_clean`, in characters); a row that fits is unchanged."""
     out = []
     for r in rows or []:
         r = dict(r)
-        for k in ("text", "text_clean"):
-            if isinstance(r.get(k), str) and len(r[k]) > 1200:
-                r[k] = r[k][:1200]
+        full = {k: len(r[k]) for k in ("text", "text_clean") if isinstance(r.get(k), str) and len(r[k]) > 1200}
+        for k in full:
+            r[k] = r[k][:1200]
+        if full:
+            r["truncated"] = True
+            r["full_length"] = full.get("text", full.get("text_clean"))
         out.append(r)
     return out
 

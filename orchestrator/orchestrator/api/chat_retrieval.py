@@ -195,7 +195,7 @@ from orchestrator.api.fast import (
     entity_card_probe,
 )
 from orchestrator.api.graph import _selected_surfaces
-from orchestrator.api.retrieve import graph_expand_or_502
+from orchestrator.api.retrieve import fact_rank_enabled, graph_expand_or_502
 
 _FLAG_ENV = "POLYMATH_CHAT_RETRIEVAL"        # v1 | v2 (default v2 after the P1.a gate)
 
@@ -897,7 +897,9 @@ def _attach_graph(out: dict, query: str, corpus_id: str, *, qvec, graph_useful: 
          "object_id": f.get("object_id"), "object": f["object"]}
         for f in facts], [c["chunk_id"] for c in evidence if c.get("chunk_id")])
     meta["graph_bounds"] = {"max_seeds": seeds_max, "max_facts": GRAPH_MAX_FACTS, "graph_useful": bool(graph_useful),
-                            "hops": 1, "contract": MODE_COMPOSITION_CONTRACT}
+                            "hops": 1, "contract": MODE_COMPOSITION_CONTRACT,
+                            # D1: which hop-1 order served this turn (absent = the legacy fact_id window)
+                            **({"fact_order": "ranked"} if fact_rank_enabled() else {})}
     meta["graph_fact_count"] = len(facts)
     meta["graph_seeds"] = {"surfaces": len(surfaces), "cards": len(card_seed_ids), "max_seeds": seeds_max, "card_probe": card_probe}
     meta["graph_degraded"] = degraded_reason
