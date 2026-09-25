@@ -23,12 +23,12 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-24 (L3 close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1, track L (the provider backend). L1 + L2 + L3 DONE and live; L4a (the canary, 11.468) DONE: all 18 Groq pairs and 5 Cloudflare accounts answered live. NEXT = L4b (one document through the fleet): the owner picks the document; the owner also sends account 1's Cloudflare id. Code RAG (CODE-KNOWLEDGE-V1) resumes after L4: D1 → K1 → C1 …**
+## CURRENT — 2026-09-24 (L3 close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1, track L (the provider backend). L1 + L2 + L3 DONE and live; L4a (the canary, 11.468) DONE: all 18 Groq pairs and 5 Cloudflare accounts answered live. Cloudflare account 1 RETIRED by the owner (11.469): 5 working Cloudflare accounts (2-6). NEXT = L4b (one document through the fleet): the owner picks the document. Code RAG (CODE-KNOWLEDGE-V1) resumes after L4: D1 → K1 → C1 …**
 
 ### Repository State
-- Branch `production`, HEAD = the L4a records commit (register 11.468) on top of the L3 close-out and `a3df56b9` (merge of
-  L3, register 11.467). Main checkout clean.
-- `origin/production` = `a7e3e388`; **36 commits unpushed** (registers 11.452–11.468, the L2 and L3 close-outs). The agent's push is blocked by the permission classifier; the owner pushes with the Run button:
+- Branch `production`, HEAD = the merge of `fix/retire-cloudflare-account-1` (register 11.469) on top of the L4a records
+  (11.468), the L3 close-out and `a3df56b9` (merge of L3, 11.467). Main checkout clean.
+- `origin/production` = `a7e3e388`; **39 commits unpushed** (registers 11.452–11.469, the L2 and L3 close-outs). The agent's push is blocked by the permission classifier; the owner pushes with the Run button:
   `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
 - **Fleet:** 13 worker types / **26** registrations (doc_profile ×6, doc_parent_map ×6 since L3), all healthy, ONE
   bundle `5e94c7bffa6c`, `/ready` true (embedder + reranker). Bounced by the agent after the L3 merge
@@ -38,7 +38,8 @@ historical, never an instruction.
 - **Live `.env` (gitignored), unchanged by L3:** `POLYMATH_LLM_CLOUD_PRIMARY=0`, no `POLYMATH_GROQ_ROUTER` (11.464);
   chat flags unchanged since 11.451 (`SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`, `PROBE_GATE=1`, `SYNTH_ROLES=1`,
   `REASONING_POLICY=1`; S4 / S8 unset = off). `CLOUDFLARE_ACCOUNT_ID_3..6` filled 2026-09-24 (11.468; the running workers
-  read them through from `.env`, no bounce); `CLOUDFLARE_ACCOUNT_ID_1` still empty (L-11).
+  read them through from `.env`, no bounce). Account 1 is retired (11.469): its token stays in `.env`, unused (deleting
+  it is the owner's step).
 - **Other worktrees:** 19 (18 `pmv4-*` + `polymath-v4-main`) + `_graft_polymath`, all on branches merged into
   `production` except `pmv4-m1-repro` (`review/m1-reproductions`, kept on purpose). All clean except `pmv4-rag-ui`
   (`codex/rag-ui-integration`): 14 UNCOMMITTED files from another stream (2026-09-22). Not ours: never add, stash or
@@ -62,13 +63,15 @@ historical, never an instruction.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) is paused, not dropped: S5–S7 and S9 wait (S9 needs the owner's
   query allowance; 9 of 10 used). Details: the PREVIOUS block.
 
-### Completed Since Last Bootstrap (11.467–11.468; not pushed)
+### Completed Since Last Bootstrap (11.467–11.469; not pushed)
 - **11.468 L4a the canary** (work-log `2026-09-24-llm-canary-l4a.md`, evidence
   `docs/wiki/experiments/llm-backend-l4-canary-2026-09-24/`): the five pasted Cloudflare ids were matched to tokens
   read-only. 3, 4, 5, 6 are wired; the fifth id was account 2's, so account 1 is still missing. 23 real calls, one per
   active lane, through the production client: 23 / 23 OK (18 Groq pairs + 5 Cloudflare accounts). Groq's headers show
   independent per-(key, model) limits (1K requests/day, 8K tokens/min) and TPM charged prompt + requested output (what
   L2 reserves). The ledger shows 23 rows with stage `l4_canary` and real tokens. L-03 CLOSED; L-11 narrowed to account 1.
+- **11.469 retire Cloudflare account 1** (the owner: "dispose of it"): cloudflare_map1 is disabled and off the pMAP pin;
+  the credential check skips accounts with no enabled lane; L-11 CLOSED. Working Cloudflare accounts: 2-6.
 - **11.467 L3 ownership + wiring** (work-log `2026-09-24-llm-ownership-l3.md`):
   - the registry `config/llm_accounts.yaml` gains `slots.<stage>.owners`: profile slot N owns `profile_groqN`, pMAP slot
     N owns `map_groqN` + `map_groqNq`; pMAP slots 4 → 6;
@@ -145,20 +148,14 @@ historical, never an instruction.
 - Structural: graft in `../_graft_polymath` at `a7eaa808` (one slice behind; refresh before the next code read:
   `cd ../_graft_polymath && git checkout -q --detach <production-sha> && graft build . && git checkout -q -- .gitignore`).
 - Guards at close-out: agent_preflight 0 · repo_guard 0 · wiki_worm --check 0 · bundle_integrity READY.
-- Registry: `scripts/llm_accounts.py validate` (with `.env` loaded in the same shell) = 0 errors, 6 warnings:
-  PAIR_SHARED_BY_SLOTS ×5 (the shared tier → L5) · ACCOUNT_ID_UNSET ×1 (cloudflare_1, L-11). `report` shows the
+- Registry: `scripts/llm_accounts.py validate` (with `.env` loaded in the same shell) = 0 errors, 4 warnings:
+  PAIR_SHARED_BY_SLOTS ×4 (the shared tier → L5). `report` shows the
   owning slot per (account, model).
-- CI: the 36 local commits have not run CI yet (push pending).
+- CI: the 39 local commits have not run CI yet (push pending).
 
 ### Next Action
-1. **Owner:** push the 36 commits (Run button; command in Repository State).
-2. **Owner: Cloudflare account 1's id.** Log in to account 1 (the login its API token came from). Its 32-character id is in
-   the address bar (`dash.cloudflare.com/<id>/…`) or under AI → Workers AI → Use REST API. It is NOT the id ending `1efb`
-   (that is account 2's: token 1 gets 403 on it and 401 on a real call). Token 1 belongs to a sixth login, not one of the
-   five already sent. The agent checks the new id against token 1 read-only and fills `CLOUDFLARE_ACCOUNT_ID_1=` in `.env`
-   (no bounce). The L4 Cloudflare cap is used up (6 / 6), so the lane's first real call comes from normal pMAP work. If no
-   sixth login exists, the owner says "drop account 1" and the agent parks it in the registry.
-3. **L4b: one document through the fleet.** The owner chooses how:
+1. **Owner:** push the 39 commits (Run button; command in Repository State).
+2. **L4b: one document through the fleet.** The owner chooses how:
    - (a) a one-document test corpus `l4-canary` with a small file; the agent first runs the corpus-filter checks the
      standing rule asks for, and deleting the corpus later is the owner's step;
    - or (b) the owner's next real upload. No test data; the agent checks that upload's receipts.
@@ -166,7 +163,7 @@ historical, never an instruction.
    Pass: its `doc_profile` attempt row is on the claiming slot's own key (`profile_groqN`, stage `doc_profile`); its pMAP
    rows are on that slot's `map_groqN` / `map_groqNq` (stage `doc_parent_map`); `document_status` shows 0 unresolved
    eligible parents (L-19); no call on another slot's key.
-4. Then D1 → K1 → C1 … (roadmap §3).
+3. Then D1 → K1 → C1 … (roadmap §3).
 
 ### Do Not Do
 - Never hand-edit `config/cloud_providers.json` or `config/extraction_models/limiter.yaml`: they are generated (edit the
@@ -182,7 +179,7 @@ historical, never an instruction.
 - No permanent deletes by the agent (branches → `archive/<branch>` tags first).
 
 ### Live Qualification Queue
-- L4a canary: DONE 11.468 (23 / 23); cloudflare_map1 gets its one call when account 1's id arrives.
+- L4a canary: DONE 11.468 (23 / 23). Cloudflare account 1 retired (11.469).
 - L4b real work: one document through the fleet on its owning slots (L-19, fleet stage tags). The owner picks the
   document.
 - Document RAG S9 (S4 + S8 on for 5–8 live questions): the owner's word + a bigger query allowance.

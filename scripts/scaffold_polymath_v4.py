@@ -2386,6 +2386,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-24-llm-canary-l4a.md", "md", None),
     ("docs/wiki/experiments/llm-backend-l4-canary-2026-09-24/canary.py", "py", None),
     ("docs/wiki/experiments/llm-backend-l4-canary-2026-09-24/canary.json", "json", None),
+    ("docs/wiki/work-log/2026-09-24-retire-cloudflare-account-1.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),

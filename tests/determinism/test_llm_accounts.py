@@ -89,6 +89,15 @@ def test_the_checks_flag_shared_families_shared_pairs_idle_quota_and_missing_cre
     assert "KEY_UNSET" in codes and "ACCOUNT_ID_UNSET" in codes
 
 
+def test_a_parked_or_retired_account_is_not_flagged_for_missing_credentials(tmp_path):
+    # register 11.469: credentials matter only while an account has an enabled lane (Cloudflare account 1 was retired)
+    body = FIXTURE.replace("x2: {model: m-big, url: https://x.invalid, limiter",
+                           "x2: {model: m-big, url: https://x.invalid, enabled: false, limiter")
+    codes = {(f.code, f.message.split(":")[0]) for f in A.validate(_registry(tmp_path, body), env={})}
+    assert ("KEY_UNSET", "acme_2") not in codes and ("ACCOUNT_ID_UNSET", "acme_2") not in codes
+    assert ("KEY_UNSET", "acme_1") in codes                  # an account in use still is
+
+
 def test_a_pin_to_an_unknown_lane_is_an_error(tmp_path):
     reg = _registry(tmp_path, FIXTURE.replace("doc_profile: [p1]", "doc_profile: [p1, ghost]"))
     errors = [f for f in A.validate(reg, env={}) if f.level == "error"]
