@@ -17,6 +17,7 @@ the call proceeds.
 """
 from __future__ import annotations
 
+import contextlib
 import contextvars
 import logging
 import os
@@ -132,6 +133,26 @@ class Attempt:
     account_env: str | None = None
     tokens_in: int | None = None
     tokens_out: int | None = None
+
+
+def merged_tags(ctx: dict, *, stage: str | None = None, function: str | None = None) -> dict:
+    """LLM-BACKEND-BATCH1 (gap L-17): 96.7 % of attempt rows had no stage, because attempt_context is a
+    contextvar that worker threads do not inherit. The calling client passes its own tags as a fallback;
+    an explicit attempt_context always wins."""
+    if (stage and not ctx.get("stage")) or (function and not ctx.get("function")):
+        return {**ctx, "stage": ctx.get("stage") or stage, "function": ctx.get("function") or function}
+    return ctx
+
+
+@contextlib.contextmanager
+def fallback_tags(*, stage: str | None = None, function: str | None = None):
+    """Apply a client's stage / function tags for the attempts recorded inside this block, unless the
+    calling context already carries them (gap L-17). The record() signature stays unchanged."""
+    token = _ctx.set(merged_tags(_ctx.get(), stage=stage, function=function))
+    try:
+        yield
+    finally:
+        _ctx.reset(token)
 
 
 def record(a: Attempt) -> None:

@@ -79,6 +79,13 @@ class SidecarSettings(BaseSettings):
         description="Pinned cloud quality-lane model tag (verify with a "
                     "one-token probe; no document content in probes)",
     )
+    llm_cloud_primary: bool = Field(
+        default=True,
+        description="LLM-BACKEND-BATCH1 (gap L-12): whether the settings endpoint ('primary', limiter lane "
+                    "'default') joins the extraction pool. Off parks it while other providers exist (measured "
+                    "2026-09-21: 34 of its 38 calls returned HTTP 402). The pool never goes empty: with no "
+                    "other provider the primary stays.",
+    )
     llm_cloud_extra_endpoints: str = Field(
         default="",
         description="EXTRACTION-POOL-V1: additional cloud providers as a "

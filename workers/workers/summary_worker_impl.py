@@ -543,6 +543,7 @@ def _do_enrichment(conn: Connection, run_id: str) -> dict:
                     limiter_key=ep.limiter_key, api_key=ep.api_key,
                     cloud_opts=ep.cloud_opts)
                 c.endpoint_name = ep.name
+                c.attempt_stage, c.attempt_function = "parent_enrichment", "ENRICH"   # gap L-17
                 _lane_clients[ep.name] = c
             return c
 

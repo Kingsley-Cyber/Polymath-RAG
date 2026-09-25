@@ -45,8 +45,11 @@ FALLBACK_MARK = "fallback"       # a pinned lane whose name contains this is a f
 # Errors that mean "the pool cannot answer right now" (rate/size limits, 5xx, transport) — the ticket is handed back
 # READY (TRANSIENT-HOLD-V1). Anything else (HTTP 400/401/403/404, a 200 with empty text) is a failed attempt, so a
 # document that can never be profiled ends as a receipted failure instead of holding forever.
+# LLM-BACKEND-BATCH1 (gap L-09): LIMITER_REFUSED is this process's own rate limiter saying "wait" (budget spent,
+# breaker open, family gate) — capacity, never a fault of the document, so it holds the ticket like a 429 does.
 _TRANSIENT_ERR = re.compile(r"^(?:HTTP_(?:408|413|425|429|5\d\d)|TRANSPORT_.*|.*Timeout.*|Connect.*|RemoteProtocolError"
-                            r"|ReadError|WriteError|rate_limited|pool_dark|circuit_open|no_active_lane|no_attempt)$")
+                            r"|ReadError|WriteError|rate_limited|pool_dark|circuit_open|no_active_lane|no_attempt"
+                            r"|LIMITER_REFUSED)$")
 
 log = logging.getLogger("doc_profile")
 
@@ -176,7 +179,7 @@ def _pool_complete(system_prompt: str, user_prompt: str, max_tokens: int, run_ke
     """The isolated profile pool: walk `lane_order(stage_pin("doc_profile"), run)` — primaries rotated by run,
     fallbacks last. Returns (raw_text, error, receipt). A transport failure on one lane moves to the next."""
     from polymath_shared.llm_extraction.client import LLMExtractionClient
-    from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
+    from polymath_shared.llm_extraction.pool import cloud_endpoints, lane_max_tokens, stage_pin
 
     pin = stage_pin(STAGE) or []
     by_name = {e.name: e for e in cloud_endpoints() if e.name in pin}
@@ -190,7 +193,9 @@ def _pool_complete(system_prompt: str, user_prompt: str, max_tokens: int, run_ke
             client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
                                          api_key=ep.api_key, cloud_opts=ep.cloud_opts, timeout_s=90.0, max_attempts=1)
             client.endpoint_name = ep.name
-            raw, err = client.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
+            client.attempt_stage, client.attempt_function = STAGE, "PROFILE"   # gap L-17: attributable rows
+            raw, err = client.complete_one(user_prompt, system_prompt=system_prompt,
+                                           max_tokens=lane_max_tokens(ep, max_tokens))
         except Exception as exc:  # noqa: BLE001 — a lane failure is a receipted attempt, never a crash
             raw, err = "", f"{type(exc).__name__}"
         if not err and not (raw or "").strip():

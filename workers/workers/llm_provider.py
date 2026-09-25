@@ -238,6 +238,7 @@ def make_client(lane: str, doc_id: str = "",
             api_key=ep.api_key,
             cloud_opts=ep.cloud_opts if ep.name != "primary" else None)
         client.endpoint_name = ep.name
+        client.attempt_stage, client.attempt_function = "extract", "EXTRACT"   # gap L-17
         return client
     raise ValueError(f"unknown lane: {lane!r}")
 
@@ -364,6 +365,7 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                     limiter_key=ep.limiter_key, api_key=ep.api_key,
                     cloud_opts=ep.cloud_opts if ep.name != "primary" else None)
                 c.endpoint_name = ep.name
+                c.attempt_stage, c.attempt_function = "extract", "EXTRACT"   # gap L-17
                 c.base_url = ep.url
                 c.request_char_budget = ep.request_char_budget
                 _abs_clients[idx] = c

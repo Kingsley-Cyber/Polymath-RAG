@@ -128,6 +128,7 @@ def _make_pmap_infer(run_key: str):
     batch raises MapInferError (carrying whether any HTTP was dispatched) so the durable
     core defers it — a lane outage never manufactures a document failure."""
     from polymath_shared.llm_extraction.client import LLMExtractionClient
+    from polymath_shared.llm_extraction.pool import lane_max_tokens
 
     def infer(skeletons, *, is_combined: bool = False, grounding=None) -> str:
         system, user = build_map_prompt(skeletons, grounding=grounding, is_combined=is_combined)
@@ -140,10 +141,12 @@ def _make_pmap_infer(run_key: str):
             client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
                                          api_key=ep.api_key, cloud_opts=ep.cloud_opts, timeout_s=90.0, max_attempts=1)
             client.endpoint_name = ep.name
+            client.attempt_stage, client.attempt_function = STAGE, "PMAP"   # gap L-17 (worker threads)
             infer.last_provider = provider_family(ep.url, ep.name)   # per-batch provenance (CLOUDFLARE-PMAP-V1)
             infer.last_model = ep.model
             try:
-                raw, err = client.complete_one(user, system_prompt=system, max_tokens=MAX_MAP_TOKENS)
+                raw, err = client.complete_one(user, system_prompt=system,
+                                               max_tokens=lane_max_tokens(ep, MAX_MAP_TOKENS))
             except Exception as exc:  # noqa: BLE001 — a lane failure moves to the next account
                 raw, err = "", f"{type(exc).__name__}"
             any_dispatched = any_dispatched or bool(getattr(client, "_last_http_dispatched", False))

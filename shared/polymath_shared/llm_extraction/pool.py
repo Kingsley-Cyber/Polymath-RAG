@@ -90,6 +90,11 @@ class CloudEndpoint:
     # JSON). None = append nothing (every existing provider unchanged). This is a message
     # STRING, never a fabricated request field.
     think_suffix: str | None = None
+    # LLM-BACKEND-BATCH1 (gap L-16): an optional per-lane ceiling on the requested output tokens. Some
+    # providers count the requested max_tokens against an output-tokens-per-minute cap (Groq org OTPM 1000
+    # on qwen3.8-27b refused a 2,400-token request), so a lane can ask for less than the stage default.
+    # None = the stage's own max_tokens (every existing lane unchanged).
+    max_output_tokens: int | None = None
 
     @property
     def limiter_key(self) -> str:
@@ -198,7 +203,8 @@ def _configured_providers() -> list[CloudEndpoint]:
             dedicated=bool(e.get("dedicated", False)),
             request_char_budget=int(e.get("request_char_budget", 60000)),
             enable_thinking=e.get("enable_thinking"),
-            think_suffix=(str(e.get("think_suffix")).strip() or None) if e.get("think_suffix") else None))
+            think_suffix=(str(e.get("think_suffix")).strip() or None) if e.get("think_suffix") else None,
+            max_output_tokens=int(e["max_output_tokens"]) if e.get("max_output_tokens") else None))
     return out
 
 
@@ -210,12 +216,16 @@ def _log_once(token: tuple, msg: str, *args) -> None:
 
 def cloud_endpoints() -> list[CloudEndpoint]:
     """The enabled roster, sorted by name. Always >= 1 (the primary from
-    settings). Extras come from POLYMATH_LLM_CLOUD_EXTRA_ENDPOINTS
+    settings, unless parked with POLYMATH_LLM_CLOUD_PRIMARY=0 while other
+    providers exist). Extras come from POLYMATH_LLM_CLOUD_EXTRA_ENDPOINTS
     (JSON list of {name, url, model}); malformed JSON fails LOUDLY —
     a silently-dropped provider would look like a half-speed pool."""
     s = get_settings().sidecars
-    roster = [CloudEndpoint("primary", s.llm_cloud_url, s.llm_cloud_model)]
-    roster.extend(_configured_providers())
+    configured = _configured_providers()
+    # LLM-BACKEND-BATCH1 (gap L-12): the primary can be parked, but the roster never goes empty
+    keep_primary = bool(getattr(s, "llm_cloud_primary", True)) or not configured
+    roster = [CloudEndpoint("primary", s.llm_cloud_url, s.llm_cloud_model)] if keep_primary else []
+    roster.extend(configured)
     raw = (getattr(s, "llm_cloud_extra_endpoints", "") or "").strip()
     if raw:
         try:
@@ -256,6 +266,12 @@ class PinnedProviderUnavailable(RuntimeError):
     """A stage is DEDICATED to a provider that is not active (no key /
     enabled:false / missing from the registry). Loud by design — a
     dedicated stage must never silently spend another provider."""
+
+
+def lane_max_tokens(ep: CloudEndpoint, stage_max: int) -> int:
+    """The max_tokens a stage sends on this lane: its own budget, lowered to the lane's cap when set."""
+    cap = getattr(ep, "max_output_tokens", None)
+    return min(int(stage_max), int(cap)) if cap else int(stage_max)
 
 
 def stage_pin(stage: str) -> list[str] | None:

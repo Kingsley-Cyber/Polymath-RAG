@@ -304,6 +304,20 @@ _NO_INFER_BATCH_STATUSES = (400, 404, 405)
 class LLMExtractionClient:
     """One client, two lanes. `lane` selects endpoint + model pin."""
 
+
+    # LLM-BACKEND-BATCH1 (gap L-17): callers tag the client once (`attempt_stage`, `attempt_function`),
+    # and every attempt row it records carries those tags when the calling context has none.
+    attempt_stage: str | None = None
+    attempt_function: str | None = None
+
+    def _record_attempt(self, attempt) -> None:
+        from polymath_shared.conformance import attempts
+        if self.attempt_stage or self.attempt_function:
+            with attempts.fallback_tags(stage=self.attempt_stage, function=self.attempt_function):
+                attempts.record(attempt)
+        else:
+            attempts.record(attempt)
+
     def __init__(self, lane: str, *, url: str, model: str,
                  timeout_s: float = 180.0, max_attempts: int = 2,
                  limiter_key: str = "default",
@@ -468,7 +482,8 @@ class LLMExtractionClient:
         asserted "zero HTTP, zero quota" about a call that really did reach the provider
         — so probes went unrecorded, and a probe that takes a 429 or a 401 is exactly the
         evidence lane qualification is arguing about."""
-        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
+        from polymath_shared.conformance.attempts import Attempt as _At
+        _rec = self._record_attempt
         t0 = time.perf_counter()
         payload = {"model": self.model, "messages": [
             {"role": "user", "content": "ping"}], "max_tokens": 1, "stream": False}
@@ -518,7 +533,8 @@ class LLMExtractionClient:
         # that sees limiter admission, the lane, the HTTP status and Retry-After
         # together. Cross-lane failover retries land here as separate attempts, so an
         # earlier 429 can no longer be erased by a later success on another lane.
-        from polymath_shared.conformance.attempts import Attempt, record as _rec
+        from polymath_shared.conformance.attempts import Attempt
+        _rec = self._record_attempt
         _t0 = time.monotonic()
         _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env(), provider=self._provider())
 
@@ -706,7 +722,8 @@ class LLMExtractionClient:
         # batch outcome was durable, the per-attempt 429s were not. Recording is
         # fail-soft by construction (`record` never raises, warns once if the ledger is
         # unavailable) so this cannot affect a dispatch.
-        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
+        from polymath_shared.conformance.attempts import Attempt as _At
+        _rec = self._record_attempt
         if not limiter.acquire(est_tokens=sum(len(u) for _, u, _ in prompt_items) / 4.0):
             _rec(_At(lane=self.limiter_key, limiter_admitted=False, http_dispatched=False,
                      success=False, error_class="LIMITER_REFUSED",
@@ -878,7 +895,8 @@ class LLMExtractionClient:
         # PROVIDER-ATTEMPT-LEDGER: the SECOND batched seam. `_infer_batch_call` serves
         # extraction; this one serves the non-extraction compilers, and it has the same
         # four branches and the same 500-halving recursion — so it needed the same rows.
-        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
+        from polymath_shared.conformance.attempts import Attempt as _At
+        _rec = self._record_attempt
         _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env(), provider=self._provider())
 
         def run(batch: list[tuple[str, str, str, int]]
@@ -977,7 +995,8 @@ class LLMExtractionClient:
         # the loop retries, attempt 2 succeeds and the function returns SUCCESS — and
         # before this the 429 was durable nowhere. `attempts` was counted in the RESULT,
         # which is per logical call; the ledger needs one row per attempt.
-        from polymath_shared.conformance.attempts import Attempt as _At, record as _rec
+        from polymath_shared.conformance.attempts import Attempt as _At
+        _rec = self._record_attempt
         _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env(), provider=self._provider())
         while attempts < self.max_attempts:
             attempts += 1
