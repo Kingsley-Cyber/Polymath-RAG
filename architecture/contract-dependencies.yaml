@@ -63,6 +63,8 @@ contracts:
     tests:
       - tests/determinism/test_profile_atom.py
       - tests/determinism/test_profile_atom_ingest.py
+      - tests/determinism/test_profile_atom_corpus_scope.py
+      - tests/contracts/test_search_atoms_callers_scoped.py   # pins every search_atoms caller's corpus scope (11.476)
     migration: stores/postgres/migrations/0055_document_profile_atoms.sql
     status: live
 
@@ -131,10 +133,15 @@ contracts:
   CANDIDATE_ENGINE:
     owner: shared
     spec: shared/polymath_shared/candidate_engine.py
-    paths: [shared/polymath_shared/candidate_engine.py]
+    paths:
+      - shared/polymath_shared/candidate_engine.py
+      - orchestrator/orchestrator/api/chat_retrieval.py   # the lane callbacks the engine runs (11.476: a new search_atoms call here went unlisted)
     depends_on: [PROFILE_PROJECTION, PROFILE_ATOM, QUERY_PLANNER]
     consumed_by: [RETRIEVAL_RECEIPT]
-    tests: [tests/determinism/test_candidate_engine.py, tests/determinism/test_chat_retrieval_v2.py]
+    tests:
+      - tests/determinism/test_candidate_engine.py
+      - tests/determinism/test_chat_retrieval_v2.py
+      - tests/contracts/test_search_atoms_callers_scoped.py
     migration: null
     status: live
 

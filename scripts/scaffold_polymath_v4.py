@@ -2406,6 +2406,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-24-owner-note-8-code-pmap.md", "md", None),
     ("docs/wiki/experiments/llm-backend-l4b-2026-09-24/manifest.yaml", "yaml", None),
     ("docs/wiki/work-log/2026-09-24-llm-l4b-document.md", "md", None),
+    ("docs/wiki/work-log/2026-09-24-ci-search-atoms-pin.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),
