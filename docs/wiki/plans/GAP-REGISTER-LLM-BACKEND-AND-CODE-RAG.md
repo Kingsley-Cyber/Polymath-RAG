@@ -114,8 +114,9 @@ Severity: **Critical** = loses data or silently gives wrong results · **High** 
 |---|---|---|---|---|---|
 | C-24 | GRAPH reads only `(:Entity)-[:REL]->(:Entity)`; no code edges exist anywhere | R `retrieve.py:686-712` | High | C2 + C8 + G1 | OPEN |
 | C-25 | Code files would get `:Document` / `:Chunk` nodes from the existing projection beside the planned `:CodeDocument`; the delete path knows only Chunk / Evidence / Fact / REL / Document, so Code* nodes would be orphaned | R `ui.py:782-798` | Medium | C8 | OPEN |
-| C-26 | All five modes require one corpus, and a content-addressed `doc_id` belongs to one corpus: one reference book cannot join two project corpora | R `ui.py:3755-3766`, `intake_worker.py:172, 226-236` | Medium | C1 decision (documented) | OPEN |
+| C-26 | All five modes require one corpus, and a content-addressed `doc_id` belongs to one corpus: one reference book cannot join two project corpora | R `ui.py:3755-3766`, `intake_worker.py:172, 226-236` | Medium | C1 decision (documented) | OPEN — 11.471: confirmed by the external audit and narrowed: only a book wanted in TWO corpora conflicts (owner question) |
 | C-27 | Profile and pMAP are non-blocking stages: `QUERY_READY` can be true while code descriptions are missing | R `control/tickets.py` (`NON_BLOCKING_STAGES`) | Medium | C12 | OPEN |
+| C-28 | Intake computes `doc_id` / `content_hash` from NORMALIZED bytes (BOM strip, CRLF → LF, NFC) before materialization, so the plan's code passthrough in the materializer is too late to keep exact code bytes and spans | R `intake_worker.py:168-172`, `identity.py:95` (external audit A1, re-checked 11.471) | High | C1 (branch before normalization) | OPEN |
 
 ## T. Trail core embedded in Polymath (from refactor 0015, closed by the 2026-09-24 bookkeeping pass)
 

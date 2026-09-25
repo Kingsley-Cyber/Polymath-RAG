@@ -61,10 +61,15 @@ historical, never an instruction.
   `luau-analyze` + Rojo), Power Fx last; project = corpus; parsers only (no LLM language detection, no LLM code facts);
   code ranked by its descriptions and loaded by identity; Postgres graph authority + a Neo4j projection in V1; no new chat
   mode; one reranker, no fixed weights; the code graph is walked with the document graph (G1).
+- **External end-to-end audit of the code RAG plan admitted (11.471):**
+  - accepted amendments bind C1 (branch before byte normalization, gap C-28), C2 / C3, C6 / C7, K1, §3 and C9 / C10;
+  - the owner's rule R11: code never goes through the heading skeleton; the parser defines units;
+  - open owner questions in `CODE-RAG-IMPLEMENTATION-V1.md` §6 items 6 (a book shared across projects) and 7 (keep
+    per-unit descriptions).
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) is paused, not dropped: S5–S7 and S9 wait (S9 needs the owner's
   query allowance; 9 of 10 used). Details: the PREVIOUS block.
 
-### Completed Since Last Bootstrap (11.467–11.470)
+### Completed Since Last Bootstrap (11.467–11.471)
 - **11.468 L4a the canary** (work-log `2026-09-24-llm-canary-l4a.md`, evidence
   `docs/wiki/experiments/llm-backend-l4-canary-2026-09-24/`): the five pasted Cloudflare ids were matched to tokens
   read-only. 3, 4, 5, 6 are wired; the fifth id was account 2's, so account 1 is still missing. 23 real calls, one per
@@ -74,6 +79,7 @@ historical, never an instruction.
 - **11.470 every model tested:** all 44 provider lanes and all 15 chat answer models answered. The only failures were
   transient capacity events: Mistral upstream 429 on OpenRouter, Google 503 on gemini-3.1-flash-lite for accounts 3-4.
   One L3 CI regression was fixed (a stale lane-count test).
+- **11.471 external code RAG audit admitted:** reconciled item by item; R11 (no heading curation for code); gap C-28.
 - **11.469 retire Cloudflare account 1** (the owner: "dispose of it"): cloudflare_map1 is disabled and off the pMAP pin;
   the credential check skips accounts with no enabled lane; L-11 CLOSED. Working Cloudflare accounts: 2-6.
 - **11.467 L3 ownership + wiring** (work-log `2026-09-24-llm-ownership-l3.md`):

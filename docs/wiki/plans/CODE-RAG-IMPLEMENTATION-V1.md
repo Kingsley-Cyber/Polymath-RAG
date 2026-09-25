@@ -29,10 +29,25 @@ guards, merge + bounce).
 | R4 | **Issues are three different things:** tool diagnostics (facts, layer 3b), demonstrated defects (a test or a trace shows it), suspected problems (hypotheses, labelled). Only the first two are ever stated as facts. | review 2 |
 | R5 | **Execution rules are chosen per UNIT, not per language:** Python / Luau functions, state, events, async and framework; Power Fx value formulas vs behavior formulas (`OnSelect`); YAML meaning comes from its consumer; DAX measures vs calculated columns and filter / row context; Power Query M lazy evaluation. | review 2 |
 | R6 | **Bridges must be concrete:** a semantic bridge resolves to real source on both ends and survives inspection by the path-aware judge; "both involve feedback" is rejected. At most one semantic hop per walk. | review 2; roadmap §2 |
-| R7 | **Freshness follows context, not only the unit's bytes:** a description is refreshed when its unit OR its supporting context (resolved callees' signatures, config values read, types) changes; parent and file profiles roll up. | reviews 1 + 2 |
+| R7 | **Freshness follows context, not only the unit's bytes:** a description is refreshed when its unit OR its supporting context (resolved callees' signatures, config values read, types) changes; parent and file profiles roll up. | reviews 1 + 2; amended 11.471 (external audit A5): hash the exact context SUPPLIED — callee bodies or behaviour records used, parser / binder / prompt versions — not only signatures |
 | R8 | **Knowledge role is inherited and enforced before planning:** every derived representation of code (children, parents, pMAP, profile, atoms, graph provenance, corpus summaries) carries `knowledge_role=implementation`; Trail ideation requests `reference` only; the scope filters the profile scout, the compiler context and every lane; the scope is part of cache identity; an LLM-generated plan cannot widen it. | owner-shared proposal 2026-09-24 |
 | R9 | **One searchable corpus, several collections; no new public mode, no new service, no new scheduler.** | owner defaults |
 | R10 | **Documents stay byte-identical with every code flag off** (a test proves it per slice). No fleet-wide `worker_contracts()` key (it would mark every live corpus stale); the code contract travels per document. | feasibility review drift table |
+| R11 | **Code never goes through the document heading skeleton or its curation** (`build_parent_skeletons`). The language parser defines code units; each unit's description is written from its complete source (C-12). | owner 2026-09-24: "pmap does a determinsitic parse and curations of docuemnts headings and subheading but for codes i dont want thats" (11.471) |
+
+**Amendments admitted 11.471 (external end-to-end audit, reconciled in
+`docs/wiki/reports/2026-09-24/CODE-RAG-E2E-AUDIT-RECONCILIATION.md`; they bind the slices below where they differ):**
+- C1: branch code BEFORE `normalize_document_bytes` (gap C-28), keep the original bytes, and build the code identity from
+  project + repository-relative path + raw hash (snapshot kept separately).
+- C2 / C3: the symbol tree nests with exact spans; physical children partition the source; a unit is read by its own
+  span.
+- C6 / C7: durable per-unit description records (input hash, checkpoint on refusal). The file rollup waits for them;
+  pMAP runs from the same full source independently (not "before the profile"); there is no sampling fallback.
+- K1: a rollback never widens a reference-only request (fail closed).
+- §3: no database / filesystem / subprocess I/O in `shared/`.
+- C9 / C10: every route joins one nomination → hydration contract; unit descriptions also reach the base section
+  routing, so FAST finds them.
+- The audit's V-* verifiers are the slices' exit proofs.
 
 ## 2. Data contracts
 
@@ -438,5 +453,9 @@ scripts/backfill_knowledge_role.py      idempotent Qdrant set_payload backfill w
 1. Admit the language JSON draft as `config/code_languages.yaml` (or .json) — its fields map onto §2.5.
 2. Default role for repository Markdown (proposal: `implementation`, since it documents the implementation).
 3. Whether FAST opens the description door (proposal: yes; it is cheap) and the exact door (proposal: yes).
-4. Candidate languages beyond V1 (DAX, Power Query M).
+4. Candidate languages beyond V1 (DAX, Power Query M). The external audit (11.471) supplies their contracts; still candidates until the owner promotes them.
+6. Reference books across projects (C-26, narrowed 11.471): a book used by ONE project goes into that project's corpus;
+   only a book wanted in TWO corpora needs multi-corpus queries (FAST / HYBRID / GRAPH / WILDCARD / GNN take one corpus
+   today). Will any book be shared?
+7. Per-unit plain-English descriptions for code (kept by R1 / R11 so plain questions find code). Keep them?
 5. The live windows: migrations 0067 / 0068, the Qdrant `knowledge_role` backfill.
