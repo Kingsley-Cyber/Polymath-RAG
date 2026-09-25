@@ -58,8 +58,13 @@ approved, one Luau file from GitHub, walk the code graph with the document graph
 **C0b DONE (11.461):** official `luau-ast` / `luau-analyze` run on one MIT Roblox file (Knit), LibCST parses all 944
 Python files, tree-sitter-toml spans all 28 TOML headers. C0 closed.
 
+**Implementation file (11.462):** `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` — how to build code RAG: design rules
+R1–R10 (descriptions rank, code loads by identity, concrete bridges, context-aware freshness, knowledge roles), data
+contracts (migrations 0067–0071, payloads, Neo4j), module layout, and per-slice modify points with file:line, tests and
+acceptance (K1 scope before C1; E2E-1 = the walking-skeleton proof).
+
 **Next action: L1** (account registry: accounts → models → limits, derived lanes, ownership report; byte-identical
-roster first), then L2 → L3 → L4 (the provider backend) → D1 → C1 … (roadmap §3).
+roster first), then L2 → L3 → L4 (the provider backend) → D1 → K1 → C1 … (roadmap §3).
 
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs
   alreayd a md plan i beleive and i want to add upon it".
