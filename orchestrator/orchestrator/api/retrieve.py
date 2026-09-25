@@ -41,6 +41,52 @@ HIGH_MEDIUM_PREDICATES = {
     "ACTS_ON", "RELATED_TO",
 }
 
+#: D1 (gap D-01): rank the hop-1 facts instead of keeping the first 20 by `fact_id` (a content hash, so an arbitrary
+#: pick). Default OFF ⇒ the legacy `ORDER BY fact_id LIMIT 20`, unchanged.
+FACT_RANK_FLAG = "POLYMATH_GRAPH_FACT_RANK"
+#: the ranked path reads at most this many authorized hop-1 facts (by `fact_id`, authorization inside the query) and
+#: ranks them; the graph averages ~1 edge per entity, so eight seeds stay far below it
+_FACT_RANK_POOL = 500
+_GRAPH_FACT_CAP = 20
+
+
+def fact_rank_enabled() -> bool:
+    return os.environ.get(FACT_RANK_FLAG, "0") == "1"
+
+
+def _last_resort_predicates() -> frozenset[str]:
+    # the relation ontology's own last resort ("RELATED_TO": "keep rare"); every other allowlisted predicate is specific
+    from polymath_shared.llm_extraction.ontology import LAST_RESORT
+    return frozenset({LAST_RESORT})
+
+
+def rank_graph_facts(rows: list[dict], seed_ids: list[str], selected_fact_ids) -> list[dict]:
+    """D1: the hop-1 fact order — deterministic and weight-free (lexicographic):
+    1. a fact with evidence among the selected chunks first (the answer can cite it this turn);
+    2. a specific predicate before the ontology's last resort (`RELATED_TO`);
+    3. the seeds take turns: each seed's first fact, then each seed's second, … (inside a turn, by the best seed the fact
+       touches, in the resolver's order: entity cards best-first, then surfaces attached to the selected evidence);
+    4. `fact_id` for ties.
+    Taking turns keeps one seed from filling the 20 slots: replayed 2026-09-24, a strict seed order let an off-topic top
+    card ("ADR" for "suspense without dialogue") push the question's own "suspense" facts out."""
+    rank = {eid: i for i, eid in enumerate(seed_ids)}
+    worst = len(seed_ids)
+    selected = set(selected_fact_ids or ())
+    last_resort = _last_resort_predicates()
+
+    def band_seed(r: dict) -> tuple:
+        seed = min(rank.get(r.get("subject_id"), worst), rank.get(r.get("object_id"), worst))
+        return (0 if r.get("fact_id") in selected else 1, 1 if r.get("predicate") in last_resort else 0, seed)
+
+    turn: dict[tuple, int] = {}
+    keyed = []
+    for r in sorted(rows, key=lambda r: (band_seed(r), str(r.get("fact_id") or ""))):
+        sel, tier, seed = band_seed(r)
+        n = turn.get((sel, tier, seed), 0)
+        turn[(sel, tier, seed)] = n + 1
+        keyed.append(((sel, tier, n, seed, str(r.get("fact_id") or "")), r))
+    return [r for _k, r in sorted(keyed, key=lambda kr: kr[0])]
+
 
 class RetrieveRequest(BaseModel):
     query: str
@@ -355,6 +401,8 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
         ],
         "graph_facts": result.graph_facts,
     }
+    if fact_rank_enabled():
+        out["graph_fact_order"] = "ranked"   # D1: the facts above were ranked (absent = the legacy fact_id window)
     if doc_ids:
         out["document_ids"] = list(doc_ids)  # the filter as applied (additive)
     if req.evidence or req.explore:
@@ -596,7 +644,13 @@ def _corpus_seed_ids(
     # proposes, this authorization decides); surface matching remains the
     # fallback vocabulary.
     card_set = set(seed_entity_ids or [])
-    card_seeds = sorted(eid for eid, _surf, _pref in rows if eid in card_set)
+    if fact_rank_enabled():
+        # D1: the cards arrive best-first (entity_card_probe); sorting them by id discarded that, and with max_seeds=2 it
+        # kept the two alphabetically-first cards rather than the two best
+        eligible = {eid for eid, _surf, _pref in rows}
+        card_seeds = [eid for eid in dict.fromkeys(seed_entity_ids or []) if eid in eligible]
+    else:
+        card_seeds = sorted(eid for eid, _surf, _pref in rows if eid in card_set)
     matched = [
         (bool(pref), eid) for eid, surf, pref in rows
         if eid not in card_set
@@ -641,6 +695,15 @@ def _authorized_fact_ids(conn, corpus_ids: Optional[list[str]],
     return in_scope | {r[0] for r in rows}
 
 
+def _selected_fact_ids(conn, chunk_ids: list[str]) -> set:
+    """D1: facts with an evidence row in the selected chunks — the chunks this turn already shows."""
+    if not chunk_ids:
+        return set()
+    rows = conn.execute("SELECT DISTINCT fact_id FROM evidence WHERE chunk_id = ANY(%s)",
+                        (list(chunk_ids),)).fetchall()
+    return {r[0] for r in rows}
+
+
 def _neo4j_expand(
     surfaces: list[str],
     corpus_id: Optional[str] = None,
@@ -659,7 +722,9 @@ def _neo4j_expand(
     construction; an incoming edge only makes the EXISTING fact
     eligible, never reverses or invents a relation. HIGH_MEDIUM
     allowlist, 8-seed / 20-fact caps, dedupe by fact_id, stable
-    ORDER BY fact_id. Seeds are resolved from entities attached to
+    ORDER BY fact_id — or, with POLYMATH_GRAPH_FACT_RANK=1 (D1), the
+    authorized pool ranked by `rank_graph_facts` before the 20-fact cap.
+    Seeds are resolved from entities attached to
     in-scope evidence (D2); facts supported exclusively by another
     corpus are never returned (D2).
 
@@ -675,6 +740,8 @@ def _neo4j_expand(
         ids = _corpus_seed_ids(conn, surfaces, corpus_ids, preferred_chunk_ids or [],
                                seed_entity_ids or [], document_ids=document_ids, max_seeds=max_seeds)
         authorized = _authorized_fact_ids(conn, corpus_ids, document_ids=document_ids)
+        ranked = fact_rank_enabled()
+        selected = _selected_fact_ids(conn, preferred_chunk_ids or []) if ranked and ids else set()
 
     if not ids:
         return []
@@ -691,7 +758,7 @@ def _neo4j_expand(
             # answer-bearing evidence displaced by rows nobody may see.
             auth_filter = "" if authorized is None else \
                 " AND r.fact_id IN $authorized"
-            rows = session.run(
+            cypher = (
                 """
                 CALL () {
                     MATCH (s:Entity)-[r:REL]->(o:Entity)
@@ -711,16 +778,20 @@ def _neo4j_expand(
                 RETURN fact_id, predicate, subject_id, subject, object_id, object
                 ORDER BY fact_id
                 LIMIT 20
-                """,
+                """)
+            # D1: the ranked path reads the whole authorized pool (bounded), so the cap keeps the best 20, not the first
+            rows = session.run(
+                cypher.replace("LIMIT 20", "LIMIT $pool") if ranked else cypher,
                 ids=ids,
                 predicates=sorted(HIGH_MEDIUM_PREDICATES),
                 authorized=(None if authorized is None else sorted(authorized)),
+                **({"pool": _FACT_RANK_POOL} if ranked else {}),
             ).data()
             if authorized is not None:
                 # belt and braces: the Cypher filter is the authority,
                 # this can only ever be a no-op now.
                 rows = [r for r in rows if r["fact_id"] in authorized]
-            return rows
+            return rank_graph_facts(rows, ids, selected)[:_GRAPH_FACT_CAP] if ranked else rows
     except Exception as exc:
         # FAILURE-TRANSPARENCY-V1: a graph-store failure is typed and
         # loud — it must never masquerade as a valid zero-relationship
