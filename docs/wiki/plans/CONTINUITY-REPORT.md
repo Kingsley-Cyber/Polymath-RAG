@@ -23,141 +23,171 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-24 — **ACTIVE MISSION: CODE-KNOWLEDGE-V1 (multi-language code RAG)**
-
-**NEW SESSION → open `docs/wiki/plans/CODE-KNOWLEDGE-V1-START-HERE.md` first** (11.456). It is the implementation bootstrap:
-the decided design, the slice order C0 → C14, the code anchors, the run rules and the traps. The owner's one-click restart
-is `bash scripts/bounce_fleet.sh`.
-
-**Decided 2026-09-24 (11.457):**
-- code is ranked by its descriptions and HYDRATED by rule: the exact code + its graph neighbourhood, never scored as
-  text (spec §13);
-- Luau uses the official `luau-ast` / `luau-analyze` + Rojo;
-- the order is a walking skeleton: Python on this repository answers questions by step 6.
-
-**C0a DONE (11.458; experiments + documents, nothing downloaded):** work-log `2026-09-24-code-c0-baseline.md`, evidence
-`docs/wiki/experiments/code-knowledge-c0-2026-09-24/`.
-- This repository as a code corpus: 938 Python files / 8,745 parents (product code 272 / 2,544), 55 YAML, 10 TOML, 0 Luau.
-- Decision 6 measured: the PROFILE stage binds (gpt-oss-120b, 200K tokens per day per key). Product code = 11.0 days on
-  today's one profile key, 1.8 days with the configured-but-disabled `profile_groq2..6`; pMAP 0.46 day.
-- Tool decisions: Python = LibCST-only (93.8 % of product-code calls into repo code resolve without type inference;
-  scip-python optional); YAML = PyYAML (character offsets, 0 lost lines); single tree-sitter grammar wheels (the language
-  pack downloads parsers at run time: rejected); TOML = tree-sitter-toml in C5a; CodeGraphContext = study only; the
-  official Luau 0.739 release is built to ship `luau-ast` (READ).
-
-**Audit 2026-09-24 (11.459, documents only):** `docs/wiki/reports/2026-09-24/CODE-RAG-AND-PROVIDER-KEYS-AUDIT.md`.
-Keys: 7 of 18 Groq (key, model) pairs idle; the 09-23 Groq setup has 0 live calls; the limiter cannot hold Groq's
-limits (per process, `len/4` admission, no daily-token budget, stale 70K TPM restored). Code: refused at upload; as
-`.txt` the book chunker loses real lines. Retrieval: no cosine floor (right); code risks listed per slice (report §4).
-Proposal (owner-gated): all 3 models on every Groq key, one worker per pair, limiter fixes, a ≤ 20-call canary first.
-
-**Plan of record for ORDER (11.460):** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3; confirmed gaps:
-`docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (47 rows). The owner (2026-09-24): "fix all of this", downloads
-approved, one Luau file from GitHub, walk the code graph with the document graph.
-
-**C0b DONE (11.461):** official `luau-ast` / `luau-analyze` run on one MIT Roblox file (Knit), LibCST parses all 944
-Python files, tree-sitter-toml spans all 28 TOML headers. C0 closed.
-
-**Implementation file (11.462):** `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` — how to build code RAG: design rules
-R1–R10 (descriptions rank, code loads by identity, concrete bridges, context-aware freshness, knowledge roles), data
-contracts (migrations 0067–0071, payloads, Neo4j), module layout, and per-slice modify points with file:line, tests and
-acceptance (K1 scope before C1; E2E-1 = the walking-skeleton proof).
-
-**Bookkeeping (11.463):** 21 superseded branches archived as local `archive/<branch>` tags and deleted
-(`review/m1-reproductions` kept); every open work-log and refactor record closed with an evidence note (wiki_worm: 0 open);
-leftovers are gap-register rows L-19, D-03..D-09, O-01..O-03, T-01, T-02 (62 rows).
-
-**LLM-BACKEND-BATCH1 (11.464) merged:** gap rows L-08, L-09, L-10, L-12, L-13, L-16, L-17, L-18 closed by tests; live
-`.env`: `POLYMATH_GROQ_ROUTER` removed, `POLYMATH_LLM_CLOUD_PRIMARY=0` added; one bounce; live check = new attempt rows
-carry a stage and the pool roster omits `primary`, `nvidia*`, `siliconflow*`.
-
-**L1 DONE (11.465):** `config/llm_accounts.yaml` names every account (28), its models and quota, its lanes (56) and their
-limiters; it compiles to exactly the runtime files (drift test). `scripts/llm_accounts.py report|validate|diff` shows who
-owns what (key / account-id SET booleans only). 31 warnings = the L3 worklist (gap L-20 new: gemini / nvidia families span
-accounts). Push of 27 commits waits on the owner's Run button (classifier).
-
-**L2 DONE (11.466):** complete_one reserves prompt + output and settles to real usage; rolling 24 h token budgets on the
-Groq lanes (per process: 95 % of 200K ÷ sharing slots) and OTPM on groq_5 qwen; registry check BUDGET_EXCEEDS_QUOTA (daily
-budgets fit; per-minute overshoot on shared pairs = L3's job). New gap L-21 (batched extraction admissions).
-
-**Next action: L3** (ownership: all 18 Groq pairs, each owned by one worker; 6 pMAP slots with offsets; per-process budgets =
-the full pair; per-account Gemini families L-20; Cloudflare account ids L-11; the runtime files generated from the registry).
-Then L1 → L2 → L3 → L4 (the provider backend) → D1 → K1 → C1 … (roadmap §3).
-
-- **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs
-  alreayd a md plan i beleive and i want to add upon it".
-- **Read in this order:**
-  1. the plan of record `docs/wiki/plans/CODE-KNOWLEDGE-V1.md`;
-  2. the packet `docs/code-knowledge-v1/`;
-  3. the feasibility review `docs/wiki/reports/2026-09-23/CODE-KNOWLEDGE-V1-FEASIBILITY.md`;
-  4. the third note `docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTE_3.md` + its reconciliation
-     `docs/wiki/reports/2026-09-24/CODE-KNOWLEDGE-V1-NOTE-3-RECONCILIATION.md` (register 11.452).
-
-  The reconciliation's §6 phase order supersedes the review's phases. How each language is represented (units, deterministic links, meaning fields, search
-  vocabulary, validation, test questions) is `docs/wiki/plans/CODE-LANGUAGE-REPRESENTATIONS-V1.md` (11.453), the contract the
-  slices implement.
-
-### Next Action
-1. **Owner's words (asked 2026-09-24):**
-   - **Downloads for C0b** into a throwaway folder, never the fleet `.venv` (sizes in `tool_reads.json`): LibCST 1.9.0
-     (2.1 MB), tree-sitter 0.26 + the TOML / YAML / Luau grammars (0.2 MB), the official Luau 0.739 zip (5.8 MB); later
-     Rojo 7.7.0 (5.2 MB) + luau-lsp 1.70.0 (7.7 MB) with the game. The first download dialog was rejected when the app
-     quit: ask again in plain text, never re-issue on inference.
-   - **Decision 6 / the key plan:** the audit's Phase 1 (report §1.4: every Groq key runs all 3 models, one worker per
-     pair, the limiter fixes) replaces "enable `profile_groq2..6`"; a ≤ 20-call canary first. Or start with product
-     code (272 files).
-   - **The audit's independent defects** (report §5): which to fix now.
-2. **C0b** (after the download word): LibCST on this repository; the Luau zip (checksum, `luau-ast`, a typed-Luau
-   fixture); tree-sitter-toml spans.
-3. **C1** (detection + importer) needs no download (stdlib `ast`, PyYAML, `tomllib`) and may start before C0b. C3 needs
-   LibCST.
-4. **Owner input (reconciliation §7):**
-   - the Roblox game's folder and format (Rojo / Argon files, or a `.rbxl` / `.rbxlx` place file);
-   - YAML / TOML config sets;
-   - a Power Apps app as source files (`.pa.yaml`);
-   - the reference documents that join each project's corpus.
-   Then the slices in START-HERE §4 order.
-   - Each slice: a worktree branch, a flag default off, a work-log, a register row, tests, guards.
-   - The owner asked the agent to run merges / bounces itself. The permission classifier may still block one: say so at
-     once and hand over one Run-button command.
-
-### Owner decisions (2026-09-24, reconciliation §1 / §4)
-- **Languages:** the first version covers Python, YAML (+ TOML), Luau / Roblox and Power Fx (last; .NET needs the
-  owner's OK to install).
-- **Project isolation:** project = corpus; its reference documents join the same corpus. Search across corpora comes later.
-- **Code enrichment:** file level (profile) + every class (pMAP parent), with the note's fields. It is ORIENTATION for the
-  answer model, never evidence. Mature tooling (tree-sitter / AST).
-- **Defaults accepted:**
-  - parsers only, never LLM detection or LLM code facts;
-  - Postgres graph authority + a Neo4j projection IN THE FIRST VERSION (changed after reviews A + B, register 11.455);
-  - strict-parser `.txt` promotion;
-  - the fleet runs ingestion;
-  - one reranker, no fixed weights;
-  - no new chat mode.
-- **Open:** decision 6 (profile capacity), measured in C0a (11.458): the owner chooses.
-
-### Document RAG — paused, not dropped
-- **Live:** skeleton routes, probe gate, atom repair, the PROCEDURE → task fix (11.451), and S4 + S8 (installed, flags OFF).
-- **Paused:** S5–S7 and S9 (the live check of S4 + S8 needs the owner's query allowance; 9 of 10 used).
-- Details: the PREVIOUS block below.
+## CURRENT — 2026-09-24 (close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1, track L (the provider backend). L1 + L2 DONE and live. NEXT = L3 (ownership). Code RAG (CODE-KNOWLEDGE-V1) resumes after L4: D1 → K1 → C1 …**
 
 ### Repository State
-- `origin/production` = `a7e3e38` (pushed 2026-09-24 on the owner's word). `production` = that + the planning slices
-  11.452–11.457 (documents + `scripts/bounce_fleet.sh`) + C0a 11.458 (experiments + documents), unpushed until the
-  owner's next word.
-- **Fleet:** 24 / 13 on ONE bundle `87e5db83bf30` (bounce 2026-09-24 00:43). Running code = committed code (the slice is
-  documents only).
-- **Live `.env` flags:**
-  - on: `POLYMATH_CHAT_SKELETON_ROUTES=1`, `POLYMATH_CHAT_CONTEXTUAL_JUDGE=wildcard`, `POLYMATH_CHAT_PROBE_GATE=1`,
-    `POLYMATH_CHAT_SYNTH_ROLES=1`, `POLYMATH_REASONING_POLICY=1`;
-  - unset (off): `POLYMATH_CHAT_COMPILER_CONTRACT` (S4) and `POLYMATH_CHAT_SYNTH_CONTRACT` (S8).
+- Branch `production`, HEAD `245c3b07` (merge of L2, register 11.466). Main checkout clean.
+- `origin/production` = `a7e3e388`; **32 commits unpushed** (registers 11.452–11.466 and this close-out). The agent's push is
+  blocked by the permission classifier; the owner pushes with the Run button:
+  `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
+- **Fleet:** 13 worker types / 24 registrations, all healthy, ONE bundle `7dbbd3037bc7`; `/ready` true (embedder +
+  reranker). The supervisor started 2026-09-24 19:37 local, 9 s after the L2 merge: running code = committed code.
+- **Live `.env` (gitignored):** `POLYMATH_LLM_CLOUD_PRIMARY=0` and no `POLYMATH_GROQ_ROUTER` (both 11.464). Chat flags
+  unchanged since 11.451: `SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`, `PROBE_GATE=1`, `SYNTH_ROLES=1`,
+  `REASONING_POLICY=1`; S4 `POLYMATH_CHAT_COMPILER_CONTRACT` and S8 `POLYMATH_CHAT_SYNTH_CONTRACT` unset (off).
+- **Other worktrees:** 19 (18 `pmv4-*` + `polymath-v4-main`) + `_graft_polymath`. All sit on branches already merged into
+  `production` except `pmv4-m1-repro` (`review/m1-reproductions`, unmerged, kept on purpose). All clean except
+  `pmv4-rag-ui` (`codex/rag-ui-integration`): 14 UNCOMMITTED files from another stream (2026-09-22: frontend-v2, `ui.py`,
+  `compare_review.py`, `chat_plan.py`, a work-log, two tests). Not ours: never add, stash or revert them.
+- 53 local branches besides `production` / `main` are merged (hygiene: archive + delete when convenient, never urgent).
+
+### Active Mission
+- **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (11.460). Confirmed gaps:
+  `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (living; 64 rows: 11 closed, 53 open — C 27, L 10, D 9, O 3,
+  K 2, T 2). How to build code RAG: `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` (11.462). Code RAG background:
+  `CODE-KNOWLEDGE-V1-START-HERE.md` (11.456) and `CODE-LANGUAGE-REPRESENTATIONS-V1.md` (11.453).
+- **Order:** C0b ✔ → L1 ✔ → L2 ✔ → **L3** → L4 → D1 → K1 → C1 → C2 → C3 → L5 → C6+C7 → C9+C10 (E2E-1) → C8 → G1+C11 → C4 →
+  C5a → C12 → C13 → gates → C5b → C14.
+- **The owner's intent for the keys (2026-09-24):** each API key is its own account; about 4–6 accounts per provider;
+  3 models per key and every model used; Cloudflare wired and working; "proper identification and ownership
+  architecture".
+- **Code RAG decisions already made** (11.452–11.457): Python, YAML + TOML, Luau / Roblox (official `luau-ast` /
+  `luau-analyze` + Rojo), Power Fx last; project = corpus; parsers only (no LLM language detection, no LLM code facts);
+  code ranked by its descriptions and loaded by identity; Postgres graph authority + a Neo4j projection in V1; no new chat
+  mode; one reranker, no fixed weights; the code graph is walked with the document graph (G1).
+- **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) is paused, not dropped: S5–S7 and S9 wait (S9 = S4 + S8 on for live
+  questions, needs the owner's query allowance; 9 of 10 used). Details: the PREVIOUS block.
+
+### Completed Since Last Bootstrap (11.458–11.466; all merged, none pushed)
+- **11.458 C0a:** repository census (938 `.py` / 8,745 parents; product code 272 / 2,544), capacity (the profile stage binds:
+  11.0 days for product code on one key, 1.8 on six), download-free tool decisions (LibCST only, PyYAML offsets,
+  per-language tree-sitter wheels).
+- **11.459 audit:** `docs/wiki/reports/2026-09-24/CODE-RAG-AND-PROVIDER-KEYS-AUDIT.md` (keys, limiter, code ingestion,
+  retrieval; no cosine floor is right).
+- **11.460** the gap register + the roadmap. **11.461 C0b:** official `luau-ast` / `luau-analyze` on one MIT Knit file,
+  LibCST parses all 944 `.py`, tree-sitter-toml spans 28 / 28 headers (C0 closed). **11.462** the code RAG implementation file.
+- **11.463 bookkeeping:** 21 superseded branches → local `archive/<branch>` tags; every open work-log closed (wiki_worm:
+  0 open); leftovers → gap rows L-19, D-03..D-09, O-01..O-03, T-01, T-02.
+- **11.464 BATCH1:** gap rows L-08, L-09, L-10, L-12, L-13, L-16, L-17, L-18 closed by tests. The pool roster drops
+  `primary`, `nvidia*`, `siliconflow*`; qwen lanes cap output at 900; a stale 70K TPM is ignored on restore; attempt rows
+  carry stage + function; LIMITER_REFUSED is transient for profiles; the compiler pin; OpenRouter families per account.
+- **11.465 L1:** `config/llm_accounts.yaml` (28 accounts, 56 lanes, quotas, slots, pins) compiles to exactly
+  `config/cloud_providers.json` + `config/extraction_models/limiter.yaml` (drift test); `scripts/llm_accounts.py
+  report|validate|diff` shows who owns what (key / account-id SET booleans only).
+- **11.466 L2:** `complete_one` reserves prompt + output (3 characters per token) and settles to real usage; rolling 24 h
+  token budgets (`tpd`) on the Groq lanes; OTPM on groq_5 qwen; saved limiter state is restored only on a matching
+  `spec_fingerprint`.
+
+### Current Contract State
+- **Registry → runtime files (L1):** `config/llm_accounts.yaml` is the source. `cloud_providers.json` and `limiter.yaml`
+  must equal its compile (`scripts/llm_accounts.py diff` = 0 drift; `test_llm_accounts.py` asserts it). Change the
+  registry and the runtime files together, never one side. L3 makes generation the normal path.
+- **Limiter (L2):** `admit(est_tokens, block, *, reserved_output=0.0)` returns a `LimiterDecision` with `reserved_tokens`,
+  `reserved_output`, `tpd_slot`; the caller must `settle(decision, tokens_in, tokens_out, *, failed=…)`. New refusals
+  `REFUSE_TPD`, `REFUSE_OTPM`. Test doubles need `reserved_output` + `settle` (see `test_offline_conservation_replay.py`,
+  `test_limiter_control_plane.py`).
+- **Asymmetry (L-21):** the batched extraction paths (`extract_batched`, `complete_batched`, `_extract_prompt`) still admit
+  `len(user prompts) / 4`, no system prompt, no output reservation. They run on lanes without daily budgets.
+- **Budgets are per process (L-06):** each process holds 95 % of the pair's daily quota ÷ its sharing slots; buckets are
+  not shared between processes. L3 gives each pair one owner; L5 shares budgets across processes.
+- **Attempt tags (11.464):** the `attempts.fallback_tags(stage=…, function=…)` context + the client's `attempt_stage` /
+  `attempt_function`; `attempts.record(a)` is unchanged. `lane_max_tokens(ep, stage_max)` caps a stage's `max_tokens` by
+  the lane's `max_output_tokens` (profile + pMAP use it).
+
+### Active Impact Closure
+- `scripts/contract_impact.py --range origin/production..production` names EVIDENCE_BOUNDARY_API and
+  PROFILE_SCOUT_WIRING (the stage-tag lines in `orchestrator/api/ui.py` and `doc_profile_worker.py`): TESTED_UNCHANGED,
+  recorded in `docs/wiki/work-log/2026-09-24-llm-backend-batch1.md`. L1 / L2 dispositions are in their work-logs.
+  DEFERRED: L-06 (→ L3 / L5), L-21 (→ L5). Nothing BLOCKED, nothing unresolved.
+
+### Proof Status
+- **11.464 BATCH1:** UNIT_PROVEN (14 tests) · MERGED · DEPLOYED. Checked on the running fleet (EXECUTED): the roster, the
+  qwen cap, the restore rule. **Stage tags on `llm_provider_attempts`: not yet LIVE_PATH_PROVEN** — no model call since the
+  bounce (last attempt 2026-09-24 05:00 UTC). L4 proves it.
+- **11.465 L1:** UNIT_PROVEN (10 tests) · MERGED · DEPLOYED (no runtime behaviour change).
+- **11.466 L2:** UNIT_PROVEN (12 tests) · MERGED · DEPLOYED (the running loader reads `tpd` / `otpm`, EXECUTED).
+  Settle-to-usage on real traffic: not yet LIVE_PATH_PROVEN (L4).
+- **11.461 C0b:** EXECUTED in a throwaway folder; the tools are not in the fleet `.venv`.
+- INVALIDATED: none.
+
+### Runtime / Test Resolution
+- Use `.venv/bin/python` (system `python3` is 3.9, no `tomllib`). In a worktree, export
+  `PYTHONPATH=$PWD/shared:$PWD/orchestrator:$PWD/workers:$PWD/control` and check the origins (skill Step 2b); a
+  worktree has no `.env`.
+- Safe unit recipe (no fleet database, no live calls): `env -u POLYMATH_PG_DSN
+  POLYMATH_TEST_DSN=postgresql://nobody@127.0.0.1:1/none POLYMATH_ATTEMPT_LEDGER=0 .venv/bin/python -m pytest -q -p
+  no:cacheprovider -k "not test_live_" <files> --junitxml=<scratch>/r.xml`. The pytest summary line does not print here:
+  read the counts from the XML. Compare failures with a detached `production` worktree.
+- Files with a hard-coded DSN write to the fleet database even under `env -u`: `test_query_receipts.py`,
+  `test_incremental_census.py`. Exclude them; never run all of `tests/determinism`.
+- Known pre-existing failure: `test_synthesis_attempt_telemetry::test_the_bound_retry_records_BOTH_attempts` (depends on
+  test order; passes alone).
+- Never call `get_settings.cache_clear()` inside a test (it leaks into later tests); stub `pool.get_settings`.
+- zsh does not split `$T` into words (use `${=T}`); macOS has no `timeout`.
+
+### Working Tree
+- Main checkout: clean; no scratch files in the repository. `pmv4-rag-ui`: another stream's uncommitted work (above).
+
+### Tooling State
+- Structural: graft in `../_graft_polymath`, current at `245c3b07`. Semantic: `graphify-out/` (git-ignored; `graphify
+  update .` when it lags).
+- Guards at close-out: agent_preflight 0 · repo_guard 0 · wiki_worm --check 0 (0 open work-logs) · bundle_integrity READY.
+- Registry: `scripts/llm_accounts.py validate` (with `.env` loaded) = 0 errors, 43 warnings — PAIR_SHARED_BY_SLOTS 16 ·
+  BUDGET_EXCEEDS_QUOTA 12 · IDLE_PAIR 7 · ACCOUNT_ID_UNSET 5 · FAMILY_SPANS_ACCOUNTS 2 · LANE_UNUSED 1. This is the L3
+  checklist. Without `.env` loaded it adds 28 KEY_UNSET.
+- CI: the four checks run on origin; the 32 local commits have not run CI yet (push pending).
+
+### Next Action
+1. **Owner:** push the 32 commits (Run button; command in Repository State).
+2. **L3 — ownership** (roadmap §3 row 4; closes L-02, L-07, L-11, L-14, L-15, L-20; the registry warnings are the checklist):
+   1. Worktree `fix/llm-ownership-l3` from `production`; the PYTHONPATH recipe; `scripts/llm_accounts.py validate` first
+      (expect 0 errors / 43 warnings).
+   2. Every Groq pair (6 keys × 3 models = 18) owned by exactly one slot: 6 profile slots on `gpt-oss-120b` (one key
+      each), 6 pMAP slots on `gpt-oss-20b` + `qwen3.8-27b` (one key each, lane offsets, L-14). A process's daily budget
+      = the whole pair. IDLE_PAIR, PAIR_SHARED_BY_SLOTS and BUDGET_EXCEEDS_QUOTA go to 0. The FLEET list in
+      `control/control/process_supervisor.py` follows the registry (keep the old lines commented as rollback).
+   3. One limiter family per Gemini account (L-20); spread the extraction pool's starting lane so every Gemini account
+      gets work (L-15).
+   4. Cloudflare (L-11): read each account id with a read-only `GET https://api.cloudflare.com/client/v4/accounts` per
+      token (print ids and SET booleans only, never a token). If that is refused or fails, ask the owner to paste the ids
+      into `.env` as `CLOUDFLARE_ACCOUNT_ID_N`.
+   5. Generate `cloud_providers.json` + `limiter.yaml` from the registry (a write mode in `scripts/llm_accounts.py`); the
+      drift test stays; park the LANE_UNUSED lane.
+   6. Asserting tests (junit counts), guards, work-log, register 11.467, gap rows marked `CLOSED 11.467`, TREE,
+      CONTINUITY; merge; ONE bounce (`bash scripts/bounce_fleet.sh`); verify 13 types / one bundle / `/ready`.
+3. **L4 — canary:** ask the owner before the first model call. Planned cap: ≤ 20 Groq + ≤ 6 Cloudflare calls (one per
+   pair / account), then one profile ticket + one small pMAP document. Proves L-03, L-19, the stage tags and
+   settle-to-usage. A 429 is a capacity event: pace it.
+4. Then D1 → K1 → C1 … (roadmap §3).
 
 ### Do Not Do
-- Never run the whole determinism suite against the fleet: hard-coded DSNs (e.g. `test_incremental_census.py`) write to
-  the live database. Run the impacted files only, with `-k "not test_live_"`.
-- No LLM language detection or LLM-derived code facts, no new chat mode, no second scheduler, no fixed fusion weights
-  (the owner's defaults, 2026-09-24).
-- Push only on the owner's per-push word; tags stay local.
+- Never print or paste a key or token; SET booleans only.
+- Never `git push` (the owner, per push); tags stay local; never `git add -A`.
+- Never run all of `tests/determinism`; `test_live_*` and live chat turns only on the owner's word (9 of 10 chat turns used).
+- No model calls in L3; the L4 canary starts only on the owner's word.
+- No LLM language detection or LLM code facts, no new chat mode, no second scheduler, no fixed fusion weights.
+- Never touch `pmv4-rag-ui`'s uncommitted files. Never re-issue a command the owner or the classifier denied: hand the owner
+  one Run-button command.
+- No permanent deletes by the agent (branches → `archive/<branch>` tags first).
+
+### Live Qualification Queue
+- L4 canary (≤ 20 Groq + ≤ 6 Cloudflare calls, the owner's word first): L-03, stage tags, settle-to-usage.
+- L4 real work: one profile ticket + one small pMAP document: L-19 (parent maps minted for new documents).
+- Document RAG S9 (S4 + S8 on for 5–8 live questions): the owner's word + a bigger query allowance.
+- Benchmark G8 and the `/chat/evidence` probe: still the owner's own words (restoration, 2026-09-22).
+
+### Deferred Architecture
+- The joint code ↔ document graph walk (STRUCTURE / FACT / MENTION / SEMANTIC links, one semantic hop at most): designed
+  in `CODE-RAG-IMPLEMENTATION-V1.md`, built in C8 → G1 + C11.
+- Shared budgets across processes (L-06) and batched admissions (L-21): L5.
+- Gap rows O-01..O-03 (control tick 55 s, census 51 s; 63 + 6 stuck runs), T-01, T-02, D-03..D-09: open, not scheduled.
+- Search across corpora: later (owner). GNN retrieval stays experimental.
+
+## PRIOR — 2026-09-24 (day) — **CODE-KNOWLEDGE-V1 admitted and planned (11.452–11.457); C0 run (11.458, 11.461); audit, gap register, roadmap (11.459–11.460); implementation file (11.462); bookkeeping (11.463); provider backend BATCH1 / L1 / L2 (11.464–11.466).**
+Superseded as CURRENT by the close-out above. The facts live in registers 11.452–11.466, their work-logs,
+`CODE-KNOWLEDGE-V1-START-HERE.md` and the roadmap. Still true: the owner's code RAG decisions (listed under Active Mission)
+and the reconciliation §7 owner inputs for later slices (the Roblox game's folder and format, YAML / TOML config sets, a
+Power Apps app as `.pa.yaml`, the reference documents that join each project's corpus).
 
 ## PREVIOUS — 2026-09-23 night → 2026-09-24 (document RAG completion; paused 2026-09-24 for CODE-KNOWLEDGE-V1) — (night; the owner was away and delegated: "fix the issues you've found … design whatever is missing … no more than 10 queries tests") — **PLAN OF RECORD `docs/wiki/plans/DOCUMENT-RAG-COMPLETION-V1.md`. LIVE tonight: SKELETON-ROUTING-V1 (11.441) and V1.1 (11.442 / 11.444; design `docs/wiki/plans/SKELETON-ROUTING-V1.md` §9) plus GROQ-MODEL-SWAP (11.443 / 11.444). 8 of the owner's 10 test queries used (5 for V1, 3 for V1.1). Probe doors built but OFF on evidence. ATOM-REPAIR-V1 done 2026-09-24 (11.445). PROBE-GATE-V1 live 2026-09-24 (11.446–11.447; HYBRID / GRAPH, WILDCARD exempt). S4 compiler contract built + measured 2026-09-24, flag OFF (11.449). S8 synthesis contract built + inspected, flag OFF (11.450). Pushed to origin 2026-09-24 on the owner's word (`0e0978b`). Owner actions waiting: S9 (turn S4 + S8 on for 5–8 live questions — needs the owner's word and a bigger query allowance; 9 of 10 used); the corpus-delete command; pushes of later commits. CODE-KNOWLEDGE-V1 parked.**
 
