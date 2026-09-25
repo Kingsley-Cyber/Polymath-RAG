@@ -133,14 +133,21 @@ def _load_inputs(conn: Connection, doc_id: str, *, want_terms: bool = True) -> t
     return document, parents, terms
 
 
-def lane_order(pin: list[str], run_key: str) -> list[str]:
+def lane_order(pin: list[str], run_key: str, owners: list[list[str]] | None = None) -> list[str]:
     """The pool's attempt order for one run: the PRIMARY lanes (pin entries without "fallback" in the name)
     rotated by a hash of the run so consecutive documents start on different keys, then the fallback lanes in
-    pin order (owner 2026-09-07: six dedicated keys as tier 0, Gemini as fallback 1, OpenRouter as fallback 2)."""
+    pin order (owner 2026-09-07: six dedicated keys as tier 0, Gemini as fallback 1, OpenRouter as fallback 2).
+
+    LLM-BACKEND L3 (register 11.467, gap L-07): when the stage declares ownership (`stage_owners`) and the supervisor
+    gave this slot its index, the slot calls ITS OWN key's lane and then the shared fallbacks — never another slot's
+    key, so each Groq (key, model) pair has one calling process and that process may spend the whole pair's budget."""
+    offset = lane_offset()
+    if owners and offset is not None:
+        from polymath_shared.llm_extraction.pool import owned_lane_order
+        return owned_lane_order(pin, owners, offset, run_key, fallback_mark=FALLBACK_MARK)
     primaries = [n for n in pin if FALLBACK_MARK not in n]
     fallbacks = [n for n in pin if FALLBACK_MARK in n]
     if primaries:
-        offset = lane_offset()
         if offset is not None:
             # DOC-PROFILE-SCALE-OUT-V1: this slot's own key first (doc_profileN → primary N), the rest in order
             start = (offset - 1) % len(primaries)
@@ -160,10 +167,13 @@ def lane_offset() -> int | None:
     return int(raw)
 
 
-def attempt_lanes(pin: list[str], run_key: str) -> list[str]:
+def attempt_lanes(pin: list[str], run_key: str, owners: list[list[str]] | None = None) -> list[str]:
     """The lanes ONE pass actually tries: the first PRIMARY_ATTEMPTS rotated primaries, then the fallbacks, capped at
-    MAX_LANE_ATTEMPTS — so with six primaries a document still reaches Gemini on its third attempt."""
-    order = lane_order(pin, run_key)
+    MAX_LANE_ATTEMPTS — so with six primaries a document still reaches Gemini on its third attempt. An owning slot
+    (L3) tries its own lane(s) and the shared tier, capped the same way."""
+    order = lane_order(pin, run_key, owners)
+    if owners and lane_offset() is not None:
+        return order[:MAX_LANE_ATTEMPTS]
     primaries = [n for n in order if FALLBACK_MARK not in n][:PRIMARY_ATTEMPTS]
     fallbacks = [n for n in order if FALLBACK_MARK in n]
     return (primaries + fallbacks)[:MAX_LANE_ATTEMPTS]
@@ -179,11 +189,11 @@ def _pool_complete(system_prompt: str, user_prompt: str, max_tokens: int, run_ke
     """The isolated profile pool: walk `lane_order(stage_pin("doc_profile"), run)` — primaries rotated by run,
     fallbacks last. Returns (raw_text, error, receipt). A transport failure on one lane moves to the next."""
     from polymath_shared.llm_extraction.client import LLMExtractionClient
-    from polymath_shared.llm_extraction.pool import cloud_endpoints, lane_max_tokens, stage_pin
+    from polymath_shared.llm_extraction.pool import cloud_endpoints, lane_max_tokens, stage_owners, stage_pin
 
     pin = stage_pin(STAGE) or []
     by_name = {e.name: e for e in cloud_endpoints() if e.name in pin}
-    endpoints = [by_name[n] for n in attempt_lanes(pin, run_key) if n in by_name]
+    endpoints = [by_name[n] for n in attempt_lanes(pin, run_key, stage_owners(STAGE)) if n in by_name]
     if not endpoints:
         return "", "no_active_lane", {"attempts": [], "pin": list(pin)}
     attempts: list[dict] = []

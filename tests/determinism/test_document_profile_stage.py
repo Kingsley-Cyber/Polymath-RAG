@@ -40,31 +40,34 @@ def test_stage_is_wired_non_blocking_for_rollout_phase_a():
 
 
 def test_profile_pool_is_pinned_and_isolated_in_config():
-    """PROVIDER-LANE-REASSIGNMENT-V1 (11.193): doc_profile is ONE dedicated Groq account
-    (GROQ_API_KEY_1; openai/gpt-oss-120b since GROQ-MODEL-SWAP-2026-09-23 — compound is gone) plus an OpenRouter fallback. The other five Groq
-    accounts left doc_profile for pMAP, and the Gemini profile fallbacks were retired
-    when Google moved to graph extraction.
+    """PROVIDER-LANE-REASSIGNMENT-V1 (11.193) made doc_profile ONE Groq account; LLM-BACKEND L3 (11.467, the owner
+    2026-09-24: every key is its own account, 3 models per key, all used) gives it all six: profile slot N owns
+    profile_groqN (GROQ_API_KEY_N x openai/gpt-oss-120b) and the OpenRouter fallback is the shared last tier. Groq
+    limits are per (key, model), so the isolation that protects the profile is per PAIR: no other enabled lane uses a
+    profile pair (the same keys serve pMAP on gpt-oss-20b / qwen3.8-27b, each with its own budget).
     """
     d = json.loads((ROOT / "config/cloud_providers.json").read_text())
     eps = {e["name"]: e for e in d["providers"]}
-    tier0 = ["profile_groq1"]
+    tier0 = [f"profile_groq{i}" for i in range(1, 7)]
     fallbacks = ["profile_fallback_openrouter"]
     assert d["stage_pins"]["doc_profile"] == tier0 + fallbacks        # tier 0 first, fallback last
+    assert d["stage_owners"]["doc_profile"] == [[n] for n in tier0]   # slot N owns key N's lane
     for n in tier0 + fallbacks:
         # plain-text labels: the client sends NO response_format (Groq 400s json_object
         # unless the prompt contains the word "json")
         assert eps[n]["enabled"] and eps[n]["dedicated"] and eps[n]["structured"] == "text"
-    assert eps["profile_groq1"]["url"] == "https://api.groq.com/openai"
-    assert eps["profile_groq1"]["model"] == "openai/gpt-oss-120b"
-    assert eps["profile_groq1"]["reasoning_effort"] == "low"          # owner: gpt-oss runs low reasoning
-    assert eps["profile_groq1"]["api_key_env"] == "GROQ_API_KEY_1"
-    # ISOLATION: the doc_profile account is used by NO other enabled lane.
-    others = {e["api_key_env"] for e in d["providers"]
+    for i, n in enumerate(tier0, start=1):
+        assert eps[n]["url"] == "https://api.groq.com/openai"
+        assert eps[n]["model"] == "openai/gpt-oss-120b"
+        assert eps[n]["reasoning_effort"] == "low"                    # owner: gpt-oss runs low reasoning
+        assert eps[n]["api_key_env"] == f"GROQ_API_KEY_{i}"
+    # ISOLATION per (key, model): no other enabled lane uses a doc_profile pair.
+    profile_pairs = {(eps[n]["api_key_env"], eps[n]["model"]) for n in tier0}
+    others = {(e["api_key_env"], e["model"]) for e in d["providers"]
               if e["name"] not in tier0 + fallbacks and e.get("enabled") is not False}
-    assert "GROQ_API_KEY_1" not in others
+    assert not (profile_pairs & others)
     # superseded lanes are DISABLED, not deleted (rollback stays possible)
-    for n in [f"profile_groq{i}" for i in range(2, 7)] + ["profile_fallback_gemini1",
-                                                          "profile_fallback_gemini2"]:
+    for n in ["profile_fallback_gemini1", "profile_fallback_gemini2"]:
         assert eps[n]["enabled"] is False
     assert all("fallback" in n for n in fallbacks)
     lim = (ROOT / "config/extraction_models/limiter.yaml").read_text()
@@ -72,7 +75,7 @@ def test_profile_pool_is_pinned_and_isolated_in_config():
         assert f"  {n}:" in lim
     assert not (set(d["stage_pins"]["chat_compiler"]) & set(tier0 + fallbacks))
     assert W.lane_order(d["stage_pins"]["doc_profile"], "run_x")[-1:] == fallbacks
-    # all six Groq accounts remain documented even though five now serve pMAP
+    # all six Groq accounts remain documented
     ex = (ROOT / ".env.example").read_text()
     assert all(f"GROQ_API_KEY_{i}=" in ex for i in range(1, 7))
 
@@ -304,8 +307,10 @@ def test_each_profile_slot_starts_on_its_own_key_and_falls_back_to_run_rotation_
     monkeypatch.delenv("POLYMATH_DOC_PROFILE_LANE_OFFSET")
     assert {W.lane_order(pin, f"run_{i}")[0] for i in range(40)} == set(pin[:6])   # no offset → run-hash rotation
     # the supervisor hands slot N the offset N (doc_profile → 1)
-    from control import process_supervisor as PS
-    src = (ROOT / "control/control/process_supervisor.py").read_text()
-    assert 'POLYMATH_DOC_PROFILE_LANE_OFFSET' in src and 'slot.name[len("doc_profile"):] or "1"' in src
+    assert PS.lane_offset_env("doc_profile") == {"POLYMATH_DOC_PROFILE_LANE_OFFSET": "1"}
+    assert PS.lane_offset_env("doc_profile4") == {"POLYMATH_DOC_PROFILE_LANE_OFFSET": "4"}
     lim = (ROOT / "config/extraction_models/limiter.yaml").read_text()
-    assert lim.count("    rpm: 2\n") >= 6 and "limiter is per PROCESS" in lim and "INDEPENDENT per model per key" in lim
+    assert lim.count("    rpm: 2\n") >= 6
+    # the limiter notes moved into the registry when L3 made limiter.yaml a generated file (register 11.467)
+    reg = (ROOT / "config/llm_accounts.yaml").read_text()
+    assert "limiter is per PROCESS" in reg and "INDEPENDENT per model per key" in reg

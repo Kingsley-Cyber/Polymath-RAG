@@ -290,6 +290,44 @@ def stage_pin(stage: str) -> list[str] | None:
     return [str(x).strip() for x in pin if str(x).strip()]
 
 
+def stage_owners(stage: str) -> list[list[str]] | None:
+    """LLM-BACKEND L3 (register 11.467): the stage's per-slot lane ownership, compiled from
+    config/llm_accounts.yaml into cloud_providers.json `stage_owners` — list index k-1 = the lanes slot k owns
+    (its own account's lanes). None when the stage declares no ownership."""
+    try:
+        raw = json.loads(_PROVIDERS_FILE.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    groups = (raw.get("stage_owners") or {}).get(stage)
+    if not groups:
+        return None
+    return [[str(x).strip() for x in (g or []) if str(x).strip()] for g in groups]
+
+
+def _rotated(names: list[str], run_key: str) -> list[str]:
+    if len(names) < 2:
+        return list(names)
+    start = int(hashlib.sha256((run_key or "").encode("utf-8")).hexdigest(), 16) % len(names)
+    return names[start:] + names[:start]
+
+
+def owned_lane_order(pin: list[str], owners: list[list[str]], offset: int, run_key: str,
+                     fallback_mark: str = "fallback") -> list[str]:
+    """LLM-BACKEND L3 (gaps L-07, L-14): the lanes ONE owning slot may call, in order.
+
+    First the slot's OWN lanes (`owners[offset-1]`, rotated by the run so consecutive documents alternate between the
+    account's models), then the SHARED tier: the pin lanes no slot owns — the non-fallback ones rotated by the run,
+    the ones whose name contains `fallback_mark` last, in pin order. Another slot's own lanes are never included, so
+    an owned (account, model) pair has exactly one calling process and that process's limiter budget can be the whole
+    pair. A slot index beyond the owner list owns nothing and calls the shared tier only (never another slot's)."""
+    owned_any = {n for g in owners for n in g}
+    own = [n for n in (owners[offset - 1] if 1 <= offset <= len(owners) else []) if n in pin]
+    shared = [n for n in pin if n not in owned_any]
+    tier = [n for n in shared if fallback_mark not in n]
+    last = [n for n in shared if fallback_mark in n]
+    return _rotated(own, run_key) + _rotated(tier, run_key) + last
+
+
 def select_endpoint_for_stage(stage: str, doc_id: str,
                               ring_offset: int = 0) -> CloudEndpoint:
     """STAGE-PIN-V1: a pinned stage dispatches ONLY within its pin group

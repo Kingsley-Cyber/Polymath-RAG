@@ -115,33 +115,31 @@ def test_reservation_decays_so_sequential_is_not_starved():
     assert d.routed and d.account == "GROQ_API_KEY_1"   # back to the deterministic first pick
 
 
-def test_config_map_lanes_are_de_shared_from_the_profile_key():
-    """PROVIDER-LANE-REASSIGNMENT-V1 (11.193) INVERTED the old S7 shared-budget rule.
-
-    Previously map_groq{i} deliberately SHARED account i's key with profile_groq{i}.
-    The owner-directed reassignment split them: GROQ_API_KEY_1 serves doc_profile ONLY
-    and GROQ_API_KEY_2..6 serve pMAP ONLY, so a pMAP burst can no longer starve
-    doc_profile through a shared account budget.
+def test_config_map_lanes_never_share_a_pair_with_the_profile():
+    """PROVIDER-LANE-REASSIGNMENT-V1 (11.193) split each Groq KEY between doc_profile and pMAP so a pMAP burst could
+    not starve doc_profile through a shared budget. Since GROQ-MODEL-SWAP-2026-09-23 the budgets are per (key, model),
+    and LLM-BACKEND L3 (11.467; the owner 2026-09-24: 3 models per key, all used) puts pMAP back on every key on the
+    two OTHER models: the profile's pair (key x gpt-oss-120b) is never on the pMAP pin, so the protection holds per
+    pair. pMAP slot N owns map_groqN (gpt-oss-20b) + map_groqNq (qwen3.8-27b).
     """
     d = json.loads((ROOT / "config/cloud_providers.json").read_text())
     eps = {e["name"]: e for e in d["providers"]}
     pin = d["stage_pins"]["doc_parent_map"]
-    # GROQ-MODEL-SWAP-2026-09-23: each pMAP key carries one lane per model (independent per-model budgets)
-    groq_ring = [f"map_groq{i}" for i in range(2, 7)] + [f"map_groq{i}q" for i in range(2, 7)] + ["map_fallback_openrouter"]
+    # each pMAP key carries one lane per model (independent per-model budgets)
+    groq_ring = [f"map_groq{i}" for i in range(1, 7)] + [f"map_groq{i}q" for i in range(1, 7)] + ["map_fallback_openrouter"]
     assert pin[: len(groq_ring)] == groq_ring
     # CLOUDFLARE-PMAP-V1 (11.255): the owner added two DEDICATED Cloudflare map lanes to the pool;
     # they are the ONLY admissible additions and never touch a Groq account key.
     extra = pin[len(groq_ring):]
     assert all(n.startswith("cloudflare_map") and eps[n]["dedicated"] is True for n in extra), extra
     assert all(not eps[n]["api_key_env"].startswith("GROQ_") for n in extra)
-    for i in range(2, 7):
+    for i in range(1, 7):
         assert eps[f"map_groq{i}"]["model"] == "openai/gpt-oss-20b" and eps[f"map_groq{i}"]["reasoning_effort"] == "low"
         assert eps[f"map_groq{i}q"]["model"] == "qwen/qwen3.8-27b" and eps[f"map_groq{i}q"]["reasoning_effort"] == "none"
         for n in (f"map_groq{i}", f"map_groq{i}q"):
             assert eps[n]["api_key_env"] == f"GROQ_API_KEY_{i}"
-            assert eps[n]["dedicated"] is True and eps[n]["map_batch_cap"] == 15
-    # the retired lane is DISABLED, not deleted (rollback stays possible)
-    assert eps["map_groq1"]["enabled"] is False
-    # DE-SHARED: no pMAP lane may use the doc_profile account
-    assert eps["profile_groq1"]["api_key_env"] == "GROQ_API_KEY_1"
-    assert "GROQ_API_KEY_1" not in {eps[n]["api_key_env"] for n in pin}
+            assert eps[n]["dedicated"] is True and eps[n]["map_batch_cap"] == 15 and eps[n]["enabled"] is True
+    assert d["stage_owners"]["doc_parent_map"] == [[f"map_groq{i}", f"map_groq{i}q"] for i in range(1, 7)]
+    # DE-SHARED per pair: no pMAP lane uses a doc_profile (key, model) pair
+    profile_pairs = {(eps[n]["api_key_env"], eps[n]["model"]) for n in d["stage_pins"]["doc_profile"]}
+    assert not ({(eps[n]["api_key_env"], eps[n]["model"]) for n in pin} & profile_pairs)

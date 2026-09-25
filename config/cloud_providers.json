@@ -1,5 +1,6 @@
 {
   "_doc": [
+    "GENERATED from config/llm_accounts.yaml by scripts/llm_accounts.py write (register 11.467) \u2014 edit the registry, not this file.",
     "EXTRACTION-POOL pre-configured cloud providers (MULTI-PROVIDER-AUTH-V1).",
     "A provider JOINS the pool automatically when its api_key_env resolves",
     "(process env first, then the repo .env) AND enabled is not false.",
@@ -49,14 +50,21 @@
     ],
     "doc_profile": [
       "profile_groq1",
+      "profile_groq2",
+      "profile_groq3",
+      "profile_groq4",
+      "profile_groq5",
+      "profile_groq6",
       "profile_fallback_openrouter"
     ],
     "doc_parent_map": [
+      "map_groq1",
       "map_groq2",
       "map_groq3",
       "map_groq4",
       "map_groq5",
       "map_groq6",
+      "map_groq1q",
       "map_groq2q",
       "map_groq3q",
       "map_groq4q",
@@ -67,256 +75,55 @@
       "cloudflare_map2"
     ]
   },
+  "stage_owners": {
+    "doc_profile": [
+      [
+        "profile_groq1"
+      ],
+      [
+        "profile_groq2"
+      ],
+      [
+        "profile_groq3"
+      ],
+      [
+        "profile_groq4"
+      ],
+      [
+        "profile_groq5"
+      ],
+      [
+        "profile_groq6"
+      ]
+    ],
+    "doc_parent_map": [
+      [
+        "map_groq1",
+        "map_groq1q"
+      ],
+      [
+        "map_groq2",
+        "map_groq2q"
+      ],
+      [
+        "map_groq3",
+        "map_groq3q"
+      ],
+      [
+        "map_groq4",
+        "map_groq4q"
+      ],
+      [
+        "map_groq5",
+        "map_groq5q"
+      ],
+      [
+        "map_groq6",
+        "map_groq6q"
+      ]
+    ]
+  },
   "providers": [
-    {
-      "name": "nvidia",
-      "enabled": false,
-      "url": "https://integrate.api.nvidia.com",
-      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
-      "api_key_env": "NVIDIA_API_KEY",
-      "reasoning_effort": "none",
-      "structured": "json",
-      "dedicated": false,
-      "request_char_budget": 60000
-    },
-    {
-      "name": "nvidia2",
-      "enabled": false,
-      "url": "https://integrate.api.nvidia.com",
-      "model": "nvidia/nemotron-3-super-120b-a12b",
-      "api_key_env": "NVIDIA_API_KEY_2",
-      "reasoning_effort": "none",
-      "structured": "json",
-      "dedicated": false,
-      "request_char_budget": 60000
-    },
-    {
-      "name": "gemini1",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "api_key_env": "GEMINI_API_KEY_1",
-      "request_char_budget": 120000
-    },
-    {
-      "name": "gemini2",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "api_key_env": "GEMINI_API_KEY_2",
-      "request_char_budget": 120000
-    },
-    {
-      "name": "gemini3",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "api_key_env": "GEMINI_API_KEY_3",
-      "request_char_budget": 120000
-    },
-    {
-      "name": "gemini4",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "api_key_env": "GEMINI_API_KEY_4",
-      "request_char_budget": 120000
-    },
-    {
-      "name": "gemini5",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "api_key_env": "GEMINI_API_KEY_5",
-      "dedicated": false,
-      "request_char_budget": 120000
-    },
-    {
-      "name": "gemini6",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "api_key_env": "GEMINI_API_KEY_6",
-      "dedicated": false,
-      "request_char_budget": 120000
-    },
-    {
-      "name": "gemini1b",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.5-flash-lite",
-      "api_key_env": "GEMINI_API_KEY_1",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "request_char_budget": 120000,
-      "dedicated": false
-    },
-    {
-      "name": "gemini2b",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.5-flash-lite",
-      "api_key_env": "GEMINI_API_KEY_2",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "request_char_budget": 120000,
-      "dedicated": false
-    },
-    {
-      "name": "gemini3b",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.5-flash-lite",
-      "api_key_env": "GEMINI_API_KEY_3",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "request_char_budget": 120000,
-      "dedicated": false
-    },
-    {
-      "name": "gemini4b",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.5-flash-lite",
-      "api_key_env": "GEMINI_API_KEY_4",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "request_char_budget": 120000,
-      "dedicated": false
-    },
-    {
-      "name": "gemini5b",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.5-flash-lite",
-      "api_key_env": "GEMINI_API_KEY_5",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "request_char_budget": 120000,
-      "dedicated": false
-    },
-    {
-      "name": "gemini6b",
-      "enabled": true,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.5-flash-lite",
-      "api_key_env": "GEMINI_API_KEY_6",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "request_char_budget": 120000,
-      "dedicated": false
-    },
-    {
-      "name": "openrouter1",
-      "enabled": true,
-      "url": "https://openrouter.ai/api",
-      "model": "mistralai/mistral-small-2603",
-      "api_key_env": "OPENROUTER_API_KEY",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "dedicated": false,
-      "request_char_budget": 100000
-    },
-    {
-      "name": "openrouter2",
-      "enabled": true,
-      "url": "https://openrouter.ai/api",
-      "model": "mistralai/ministral-14b-2512",
-      "api_key_env": "OPENROUTER_API_KEY",
-      "reasoning_effort": null,
-      "structured": "schema",
-      "dedicated": false,
-      "request_char_budget": 100000
-    },
-    {
-      "name": "openrouter3",
-      "enabled": true,
-      "url": "https://openrouter.ai/api",
-      "model": "qwen/qwen3.7-flash",
-      "api_key_env": "OPENROUTER_API_KEY_2",
-      "reasoning_effort": "none",
-      "structured": "json",
-      "dedicated": false,
-      "request_char_budget": 100000
-    },
-    {
-      "name": "openrouter5",
-      "enabled": true,
-      "url": "https://openrouter.ai/api",
-      "model": "mistralai/mistral-small-24b-instruct-2501",
-      "api_key_env": "OPENROUTER_API_KEY_3",
-      "reasoning_effort": null,
-      "structured": "json",
-      "dedicated": true,
-      "request_char_budget": 100000
-    },
-    {
-      "name": "compiler1",
-      "enabled": false,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "json",
-      "api_key_env": "GEMINI_API_KEY_1",
-      "dedicated": true,
-      "request_char_budget": 40000
-    },
-    {
-      "name": "compiler2",
-      "enabled": false,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "json",
-      "api_key_env": "GEMINI_API_KEY_2",
-      "dedicated": true,
-      "request_char_budget": 40000
-    },
-    {
-      "name": "compiler3",
-      "enabled": false,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "json",
-      "api_key_env": "GEMINI_API_KEY_3",
-      "dedicated": true,
-      "request_char_budget": 40000
-    },
-    {
-      "name": "compiler4",
-      "enabled": false,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "json",
-      "api_key_env": "GEMINI_API_KEY_4",
-      "dedicated": true,
-      "request_char_budget": 40000
-    },
-    {
-      "name": "compiler_alt",
-      "enabled": true,
-      "url": "https://openrouter.ai/api",
-      "model": "mistralai/mistral-small-2603",
-      "reasoning_effort": null,
-      "structured": "json",
-      "api_key_env": "OPENROUTER_API_KEY",
-      "dedicated": true,
-      "request_char_budget": 40000
-    },
     {
       "name": "profile_groq1",
       "enabled": true,
@@ -324,119 +131,49 @@
       "model": "openai/gpt-oss-120b",
       "reasoning_effort": "low",
       "structured": "text",
-      "api_key_env": "GROQ_API_KEY_1",
       "dedicated": true,
       "request_char_budget": 18000,
-      "json_mode": false
-    },
-    {
-      "name": "profile_groq2",
-      "enabled": false,
-      "url": "https://api.groq.com/openai",
-      "model": "openai/gpt-oss-120b",
-      "reasoning_effort": "low",
-      "structured": "text",
-      "api_key_env": "GROQ_API_KEY_2",
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "json_mode": false
-    },
-    {
-      "name": "profile_groq3",
-      "enabled": false,
-      "url": "https://api.groq.com/openai",
-      "model": "openai/gpt-oss-120b",
-      "reasoning_effort": "low",
-      "structured": "text",
-      "api_key_env": "GROQ_API_KEY_3",
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "json_mode": false
-    },
-    {
-      "name": "profile_groq4",
-      "enabled": false,
-      "url": "https://api.groq.com/openai",
-      "model": "openai/gpt-oss-120b",
-      "reasoning_effort": "low",
-      "structured": "text",
-      "api_key_env": "GROQ_API_KEY_4",
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "json_mode": false
-    },
-    {
-      "name": "profile_groq5",
-      "enabled": false,
-      "url": "https://api.groq.com/openai",
-      "model": "openai/gpt-oss-120b",
-      "reasoning_effort": "low",
-      "structured": "text",
-      "api_key_env": "GROQ_API_KEY_5",
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "json_mode": false
-    },
-    {
-      "name": "profile_groq6",
-      "enabled": false,
-      "url": "https://api.groq.com/openai",
-      "model": "openai/gpt-oss-120b",
-      "reasoning_effort": "low",
-      "structured": "text",
-      "api_key_env": "GROQ_API_KEY_6",
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "json_mode": false
-    },
-    {
-      "name": "profile_fallback_gemini1",
-      "enabled": false,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "text",
-      "api_key_env": "GEMINI_API_KEY_5",
-      "dedicated": true,
-      "request_char_budget": 12000,
-      "json_mode": false
-    },
-    {
-      "name": "profile_fallback_gemini2",
-      "enabled": false,
-      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
-      "model": "gemini-3.1-flash-lite",
-      "reasoning_effort": null,
-      "structured": "text",
-      "api_key_env": "GEMINI_API_KEY_6",
-      "dedicated": true,
-      "request_char_budget": 12000,
-      "json_mode": false
-    },
-    {
-      "name": "profile_fallback_openrouter",
-      "enabled": true,
-      "url": "https://openrouter.ai/api",
-      "model": "mistralai/mistral-small-2603",
-      "reasoning_effort": null,
-      "structured": "text",
-      "api_key_env": "OPENROUTER_API_KEY_2",
-      "dedicated": true,
-      "request_char_budget": 12000,
-      "json_mode": false
+      "json_mode": false,
+      "api_key_env": "GROQ_API_KEY_1"
     },
     {
       "name": "map_groq1",
-      "enabled": false,
+      "enabled": true,
       "url": "https://api.groq.com/openai",
       "model": "openai/gpt-oss-20b",
       "reasoning_effort": "low",
       "structured": "text",
-      "api_key_env": "GROQ_API_KEY_1",
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
-      "map_batch_cap": 15
+      "map_batch_cap": 15,
+      "api_key_env": "GROQ_API_KEY_1"
+    },
+    {
+      "name": "map_groq1q",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "qwen/qwen3.8-27b",
+      "reasoning_effort": "none",
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "map_batch_cap": 15,
+      "max_output_tokens": 900,
+      "api_key_env": "GROQ_API_KEY_1"
+    },
+    {
+      "name": "profile_groq2",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "openai/gpt-oss-120b",
+      "reasoning_effort": "low",
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "api_key_env": "GROQ_API_KEY_2"
     },
     {
       "name": "map_groq2",
@@ -445,63 +182,11 @@
       "model": "openai/gpt-oss-20b",
       "reasoning_effort": "low",
       "structured": "text",
-      "api_key_env": "GROQ_API_KEY_2",
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
-      "map_batch_cap": 15
-    },
-    {
-      "name": "map_groq3",
-      "enabled": true,
-      "url": "https://api.groq.com/openai",
-      "model": "openai/gpt-oss-20b",
-      "reasoning_effort": "low",
-      "structured": "text",
-      "api_key_env": "GROQ_API_KEY_3",
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "json_mode": false,
-      "map_batch_cap": 15
-    },
-    {
-      "name": "map_groq4",
-      "enabled": true,
-      "url": "https://api.groq.com/openai",
-      "model": "openai/gpt-oss-20b",
-      "reasoning_effort": "low",
-      "structured": "text",
-      "api_key_env": "GROQ_API_KEY_4",
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "json_mode": false,
-      "map_batch_cap": 15
-    },
-    {
-      "name": "map_groq5",
-      "enabled": true,
-      "url": "https://api.groq.com/openai",
-      "model": "openai/gpt-oss-20b",
-      "reasoning_effort": "low",
-      "structured": "text",
-      "api_key_env": "GROQ_API_KEY_5",
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "json_mode": false,
-      "map_batch_cap": 15
-    },
-    {
-      "name": "map_groq6",
-      "enabled": true,
-      "url": "https://api.groq.com/openai",
-      "model": "openai/gpt-oss-20b",
-      "reasoning_effort": "low",
-      "structured": "text",
-      "api_key_env": "GROQ_API_KEY_6",
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "json_mode": false,
-      "map_batch_cap": 15
+      "map_batch_cap": 15,
+      "api_key_env": "GROQ_API_KEY_2"
     },
     {
       "name": "map_groq2q",
@@ -510,12 +195,37 @@
       "model": "qwen/qwen3.8-27b",
       "reasoning_effort": "none",
       "structured": "text",
-      "api_key_env": "GROQ_API_KEY_2",
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
       "map_batch_cap": 15,
-      "max_output_tokens": 900
+      "max_output_tokens": 900,
+      "api_key_env": "GROQ_API_KEY_2"
+    },
+    {
+      "name": "profile_groq3",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "openai/gpt-oss-120b",
+      "reasoning_effort": "low",
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "api_key_env": "GROQ_API_KEY_3"
+    },
+    {
+      "name": "map_groq3",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "openai/gpt-oss-20b",
+      "reasoning_effort": "low",
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "map_batch_cap": 15,
+      "api_key_env": "GROQ_API_KEY_3"
     },
     {
       "name": "map_groq3q",
@@ -524,12 +234,37 @@
       "model": "qwen/qwen3.8-27b",
       "reasoning_effort": "none",
       "structured": "text",
-      "api_key_env": "GROQ_API_KEY_3",
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
       "map_batch_cap": 15,
-      "max_output_tokens": 900
+      "max_output_tokens": 900,
+      "api_key_env": "GROQ_API_KEY_3"
+    },
+    {
+      "name": "profile_groq4",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "openai/gpt-oss-120b",
+      "reasoning_effort": "low",
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "api_key_env": "GROQ_API_KEY_4"
+    },
+    {
+      "name": "map_groq4",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "openai/gpt-oss-20b",
+      "reasoning_effort": "low",
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "map_batch_cap": 15,
+      "api_key_env": "GROQ_API_KEY_4"
     },
     {
       "name": "map_groq4q",
@@ -538,12 +273,37 @@
       "model": "qwen/qwen3.8-27b",
       "reasoning_effort": "none",
       "structured": "text",
-      "api_key_env": "GROQ_API_KEY_4",
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
       "map_batch_cap": 15,
-      "max_output_tokens": 900
+      "max_output_tokens": 900,
+      "api_key_env": "GROQ_API_KEY_4"
+    },
+    {
+      "name": "profile_groq5",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "openai/gpt-oss-120b",
+      "reasoning_effort": "low",
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "api_key_env": "GROQ_API_KEY_5"
+    },
+    {
+      "name": "map_groq5",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "openai/gpt-oss-20b",
+      "reasoning_effort": "low",
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "map_batch_cap": 15,
+      "api_key_env": "GROQ_API_KEY_5"
     },
     {
       "name": "map_groq5q",
@@ -552,12 +312,37 @@
       "model": "qwen/qwen3.8-27b",
       "reasoning_effort": "none",
       "structured": "text",
-      "api_key_env": "GROQ_API_KEY_5",
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
       "map_batch_cap": 15,
-      "max_output_tokens": 900
+      "max_output_tokens": 900,
+      "api_key_env": "GROQ_API_KEY_5"
+    },
+    {
+      "name": "profile_groq6",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "openai/gpt-oss-120b",
+      "reasoning_effort": "low",
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "api_key_env": "GROQ_API_KEY_6"
+    },
+    {
+      "name": "map_groq6",
+      "enabled": true,
+      "url": "https://api.groq.com/openai",
+      "model": "openai/gpt-oss-20b",
+      "reasoning_effort": "low",
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "map_batch_cap": 15,
+      "api_key_env": "GROQ_API_KEY_6"
     },
     {
       "name": "map_groq6q",
@@ -566,12 +351,428 @@
       "model": "qwen/qwen3.8-27b",
       "reasoning_effort": "none",
       "structured": "text",
-      "api_key_env": "GROQ_API_KEY_6",
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
       "map_batch_cap": 15,
-      "max_output_tokens": 900
+      "max_output_tokens": 900,
+      "api_key_env": "GROQ_API_KEY_6"
+    },
+    {
+      "name": "cloudflare_map1",
+      "enabled": true,
+      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
+      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "reasoning_effort": null,
+      "structured": "text",
+      "json_mode": false,
+      "think_suffix": null,
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "map_batch_cap": 15,
+      "api_key_env": "CLOUDFLARE_API_TOKEN_1",
+      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_1"
+    },
+    {
+      "name": "cloudflare_map2",
+      "enabled": true,
+      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
+      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "reasoning_effort": null,
+      "structured": "text",
+      "json_mode": false,
+      "think_suffix": null,
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "map_batch_cap": 15,
+      "api_key_env": "CLOUDFLARE_API_TOKEN_2",
+      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_2"
+    },
+    {
+      "name": "cloudflare3",
+      "enabled": true,
+      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
+      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "reasoning_effort": null,
+      "structured": "json",
+      "json_mode": true,
+      "think_suffix": null,
+      "dedicated": false,
+      "request_char_budget": 30000,
+      "api_key_env": "CLOUDFLARE_API_TOKEN_3",
+      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_3"
+    },
+    {
+      "name": "cloudflare4",
+      "enabled": true,
+      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
+      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "reasoning_effort": null,
+      "structured": "json",
+      "json_mode": true,
+      "think_suffix": null,
+      "dedicated": false,
+      "request_char_budget": 30000,
+      "api_key_env": "CLOUDFLARE_API_TOKEN_4",
+      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_4"
+    },
+    {
+      "name": "cloudflare5",
+      "enabled": true,
+      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
+      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "reasoning_effort": null,
+      "structured": "json",
+      "json_mode": true,
+      "think_suffix": null,
+      "dedicated": false,
+      "request_char_budget": 30000,
+      "api_key_env": "CLOUDFLARE_API_TOKEN_5",
+      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_5"
+    },
+    {
+      "name": "cloudflare6",
+      "enabled": true,
+      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
+      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "reasoning_effort": null,
+      "structured": "json",
+      "json_mode": true,
+      "think_suffix": null,
+      "dedicated": false,
+      "request_char_budget": 30000,
+      "api_key_env": "CLOUDFLARE_API_TOKEN_6",
+      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_6"
+    },
+    {
+      "name": "gemini1",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "request_char_budget": 120000,
+      "api_key_env": "GEMINI_API_KEY_1"
+    },
+    {
+      "name": "gemini1b",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.5-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "request_char_budget": 120000,
+      "dedicated": false,
+      "api_key_env": "GEMINI_API_KEY_1"
+    },
+    {
+      "name": "compiler1",
+      "enabled": false,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "json",
+      "dedicated": true,
+      "request_char_budget": 40000,
+      "api_key_env": "GEMINI_API_KEY_1"
+    },
+    {
+      "name": "gemini2",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "request_char_budget": 120000,
+      "api_key_env": "GEMINI_API_KEY_2"
+    },
+    {
+      "name": "gemini2b",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.5-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "request_char_budget": 120000,
+      "dedicated": false,
+      "api_key_env": "GEMINI_API_KEY_2"
+    },
+    {
+      "name": "compiler2",
+      "enabled": false,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "json",
+      "dedicated": true,
+      "request_char_budget": 40000,
+      "api_key_env": "GEMINI_API_KEY_2"
+    },
+    {
+      "name": "gemini3",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "request_char_budget": 120000,
+      "api_key_env": "GEMINI_API_KEY_3"
+    },
+    {
+      "name": "gemini3b",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.5-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "request_char_budget": 120000,
+      "dedicated": false,
+      "api_key_env": "GEMINI_API_KEY_3"
+    },
+    {
+      "name": "compiler3",
+      "enabled": false,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "json",
+      "dedicated": true,
+      "request_char_budget": 40000,
+      "api_key_env": "GEMINI_API_KEY_3"
+    },
+    {
+      "name": "gemini4",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "request_char_budget": 120000,
+      "api_key_env": "GEMINI_API_KEY_4"
+    },
+    {
+      "name": "gemini4b",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.5-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "request_char_budget": 120000,
+      "dedicated": false,
+      "api_key_env": "GEMINI_API_KEY_4"
+    },
+    {
+      "name": "compiler4",
+      "enabled": false,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "json",
+      "dedicated": true,
+      "request_char_budget": 40000,
+      "api_key_env": "GEMINI_API_KEY_4"
+    },
+    {
+      "name": "gemini5",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "dedicated": false,
+      "request_char_budget": 120000,
+      "api_key_env": "GEMINI_API_KEY_5"
+    },
+    {
+      "name": "gemini5b",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.5-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "request_char_budget": 120000,
+      "dedicated": false,
+      "api_key_env": "GEMINI_API_KEY_5"
+    },
+    {
+      "name": "profile_fallback_gemini1",
+      "enabled": false,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 12000,
+      "json_mode": false,
+      "api_key_env": "GEMINI_API_KEY_5"
+    },
+    {
+      "name": "gemini6",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "dedicated": false,
+      "request_char_budget": 120000,
+      "api_key_env": "GEMINI_API_KEY_6"
+    },
+    {
+      "name": "gemini6b",
+      "enabled": true,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.5-flash-lite",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "request_char_budget": 120000,
+      "dedicated": false,
+      "api_key_env": "GEMINI_API_KEY_6"
+    },
+    {
+      "name": "profile_fallback_gemini2",
+      "enabled": false,
+      "url": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "model": "gemini-3.1-flash-lite",
+      "reasoning_effort": null,
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 12000,
+      "json_mode": false,
+      "api_key_env": "GEMINI_API_KEY_6"
+    },
+    {
+      "name": "openrouter1",
+      "enabled": true,
+      "url": "https://openrouter.ai/api",
+      "model": "mistralai/mistral-small-2603",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "dedicated": false,
+      "request_char_budget": 100000,
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
+    {
+      "name": "openrouter2",
+      "enabled": true,
+      "url": "https://openrouter.ai/api",
+      "model": "mistralai/ministral-14b-2512",
+      "reasoning_effort": null,
+      "structured": "schema",
+      "dedicated": false,
+      "request_char_budget": 100000,
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
+    {
+      "name": "compiler_alt",
+      "enabled": true,
+      "url": "https://openrouter.ai/api",
+      "model": "mistralai/mistral-small-2603",
+      "reasoning_effort": null,
+      "structured": "json",
+      "dedicated": true,
+      "request_char_budget": 40000,
+      "api_key_env": "OPENROUTER_API_KEY"
+    },
+    {
+      "name": "openrouter3",
+      "enabled": true,
+      "url": "https://openrouter.ai/api",
+      "model": "qwen/qwen3.7-flash",
+      "reasoning_effort": "none",
+      "structured": "json",
+      "dedicated": false,
+      "request_char_budget": 100000,
+      "api_key_env": "OPENROUTER_API_KEY_2"
+    },
+    {
+      "name": "profile_fallback_openrouter",
+      "enabled": true,
+      "url": "https://openrouter.ai/api",
+      "model": "mistralai/mistral-small-2603",
+      "reasoning_effort": null,
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 12000,
+      "json_mode": false,
+      "api_key_env": "OPENROUTER_API_KEY_2"
+    },
+    {
+      "name": "openrouter5",
+      "enabled": true,
+      "url": "https://openrouter.ai/api",
+      "model": "mistralai/mistral-small-24b-instruct-2501",
+      "reasoning_effort": null,
+      "structured": "json",
+      "dedicated": true,
+      "request_char_budget": 100000,
+      "api_key_env": "OPENROUTER_API_KEY_3"
+    },
+    {
+      "name": "map_fallback_openrouter",
+      "enabled": true,
+      "url": "https://openrouter.ai/api",
+      "model": "mistralai/mistral-small-2603",
+      "reasoning_effort": null,
+      "structured": "text",
+      "dedicated": true,
+      "request_char_budget": 18000,
+      "json_mode": false,
+      "api_key_env": "OPENROUTER_API_KEY_3"
+    },
+    {
+      "name": "compiler_alibaba_qwen",
+      "enabled": false,
+      "url": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode",
+      "model": "qwen3.8-flash",
+      "reasoning_effort": null,
+      "structured": "json",
+      "dedicated": true,
+      "request_char_budget": 40000,
+      "api_key_env": "ALIBABA_MODEL_STUDIO_API_KEY"
+    },
+    {
+      "name": "compiler_alibaba_deepseek",
+      "enabled": true,
+      "url": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode",
+      "model": "deepseek-v4-flash-0731",
+      "reasoning_effort": null,
+      "structured": "json",
+      "dedicated": true,
+      "request_char_budget": 40000,
+      "api_key_env": "ALIBABA_MODEL_STUDIO_API_KEY"
+    },
+    {
+      "name": "compiler_ollama_gemma",
+      "enabled": true,
+      "url": "http://127.0.0.1:11434",
+      "model": "gemma4:31b-cloud",
+      "reasoning_effort": null,
+      "structured": "json",
+      "dedicated": true,
+      "request_char_budget": 40000,
+      "api_key_env": "OLLAMA_API_KEY"
+    },
+    {
+      "name": "nvidia",
+      "enabled": false,
+      "url": "https://integrate.api.nvidia.com",
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "reasoning_effort": "none",
+      "structured": "json",
+      "dedicated": false,
+      "request_char_budget": 60000,
+      "api_key_env": "NVIDIA_API_KEY"
+    },
+    {
+      "name": "nvidia2",
+      "enabled": false,
+      "url": "https://integrate.api.nvidia.com",
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "reasoning_effort": "none",
+      "structured": "json",
+      "dedicated": false,
+      "request_char_budget": 60000,
+      "api_key_env": "NVIDIA_API_KEY_2"
     },
     {
       "name": "siliconflow1",
@@ -581,9 +782,9 @@
       "reasoning_effort": null,
       "enable_thinking": false,
       "structured": "json",
-      "api_key_env": "SILICONFLOW_API_KEY_1",
       "dedicated": false,
-      "request_char_budget": 30000
+      "request_char_budget": 30000,
+      "api_key_env": "SILICONFLOW_API_KEY_1"
     },
     {
       "name": "siliconflow2",
@@ -593,9 +794,9 @@
       "reasoning_effort": null,
       "enable_thinking": false,
       "structured": "json",
-      "api_key_env": "SILICONFLOW_API_KEY_2",
       "dedicated": false,
-      "request_char_budget": 30000
+      "request_char_budget": 30000,
+      "api_key_env": "SILICONFLOW_API_KEY_2"
     },
     {
       "name": "siliconflow3",
@@ -605,140 +806,9 @@
       "reasoning_effort": null,
       "enable_thinking": false,
       "structured": "json",
-      "api_key_env": "SILICONFLOW_API_KEY_3",
       "dedicated": false,
-      "request_char_budget": 30000
-    },
-    {
-      "name": "compiler_alibaba_qwen",
-      "enabled": true,
-      "url": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode",
-      "model": "qwen3.8-flash",
-      "reasoning_effort": null,
-      "structured": "json",
-      "api_key_env": "ALIBABA_MODEL_STUDIO_API_KEY",
-      "dedicated": true,
-      "request_char_budget": 40000
-    },
-    {
-      "name": "compiler_alibaba_deepseek",
-      "enabled": true,
-      "url": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode",
-      "model": "deepseek-v4-flash-0731",
-      "reasoning_effort": null,
-      "structured": "json",
-      "api_key_env": "ALIBABA_MODEL_STUDIO_API_KEY",
-      "dedicated": true,
-      "request_char_budget": 40000
-    },
-    {
-      "name": "compiler_ollama_gemma",
-      "enabled": true,
-      "url": "http://127.0.0.1:11434",
-      "model": "gemma4:31b-cloud",
-      "reasoning_effort": null,
-      "structured": "json",
-      "api_key_env": "OLLAMA_API_KEY",
-      "dedicated": true,
-      "request_char_budget": 40000
-    },
-    {
-      "name": "map_fallback_openrouter",
-      "enabled": true,
-      "url": "https://openrouter.ai/api",
-      "model": "mistralai/mistral-small-2603",
-      "reasoning_effort": null,
-      "structured": "text",
-      "api_key_env": "OPENROUTER_API_KEY_3",
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "json_mode": false
-    },
-    {
-      "name": "cloudflare_map1",
-      "enabled": true,
-      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
-      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_1",
-      "api_key_env": "CLOUDFLARE_API_TOKEN_1",
-      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
-      "reasoning_effort": null,
-      "structured": "text",
-      "json_mode": false,
-      "think_suffix": null,
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "map_batch_cap": 15
-    },
-    {
-      "name": "cloudflare_map2",
-      "enabled": true,
-      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
-      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_2",
-      "api_key_env": "CLOUDFLARE_API_TOKEN_2",
-      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
-      "reasoning_effort": null,
-      "structured": "text",
-      "json_mode": false,
-      "think_suffix": null,
-      "dedicated": true,
-      "request_char_budget": 18000,
-      "map_batch_cap": 15
-    },
-    {
-      "name": "cloudflare3",
-      "enabled": true,
-      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
-      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_3",
-      "api_key_env": "CLOUDFLARE_API_TOKEN_3",
-      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
-      "reasoning_effort": null,
-      "structured": "json",
-      "json_mode": true,
-      "think_suffix": null,
-      "dedicated": false,
-      "request_char_budget": 30000
-    },
-    {
-      "name": "cloudflare4",
-      "enabled": true,
-      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
-      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_4",
-      "api_key_env": "CLOUDFLARE_API_TOKEN_4",
-      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
-      "reasoning_effort": null,
-      "structured": "json",
-      "json_mode": true,
-      "think_suffix": null,
-      "dedicated": false,
-      "request_char_budget": 30000
-    },
-    {
-      "name": "cloudflare5",
-      "enabled": true,
-      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
-      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_5",
-      "api_key_env": "CLOUDFLARE_API_TOKEN_5",
-      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
-      "reasoning_effort": null,
-      "structured": "json",
-      "json_mode": true,
-      "think_suffix": null,
-      "dedicated": false,
-      "request_char_budget": 30000
-    },
-    {
-      "name": "cloudflare6",
-      "enabled": true,
-      "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
-      "account_id_env": "CLOUDFLARE_ACCOUNT_ID_6",
-      "api_key_env": "CLOUDFLARE_API_TOKEN_6",
-      "model": "@cf/qwen/qwen3-30b-a3b-fp8",
-      "reasoning_effort": null,
-      "structured": "json",
-      "json_mode": true,
-      "think_suffix": null,
-      "dedicated": false,
-      "request_char_budget": 30000
+      "request_char_budget": 30000,
+      "api_key_env": "SILICONFLOW_API_KEY_3"
     }
   ]
 }

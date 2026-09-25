@@ -123,14 +123,39 @@ FLEET: list = [
     # there is no double-mapping), which fits inside the lane budget rather than straining
     # it. Autopilot still parks them all when no pMAP ticket is open, so the idle cost is
     # unchanged. MAP_RELIABILITY_CAP is untouched.
+    #
+    # LLM-BACKEND L3 (register 11.467): SIX slots, one per Groq account — slot N owns
+    # map_groqN + map_groqNq (config/llm_accounts.yaml `slots.doc_parent_map.owners`), so each
+    # (key, model) pair has one calling process. Rollback: drop doc_parent_map5 / 6 here and
+    # set `slots.doc_parent_map.count: 4` (+ owners) in the registry, then run the writer.
     ("doc_parent_map", "workers.doc_parent_map_stage_worker"),
     ("doc_parent_map2", "workers.doc_parent_map_stage_worker"),
     ("doc_parent_map3", "workers.doc_parent_map_stage_worker"),
     ("doc_parent_map4", "workers.doc_parent_map_stage_worker"),
+    ("doc_parent_map5", "workers.doc_parent_map_stage_worker"),
+    ("doc_parent_map6", "workers.doc_parent_map_stage_worker"),
     # COGNITIVE-ADAPTER-V1 (ADR-0018, E2): durable automatic-step executor for adapter runs; health = its own
     # `adapter_step` registration heartbeat (register_worker/heartbeat in the worker loop).
     ("adapter_step", "workers.adapter_step_worker"),
 ]
+
+
+#: LLM-BACKEND L3 (register 11.467): the stages whose slots OWN lanes, and the variable that carries a slot's
+#: 1-based index (config/llm_accounts.yaml `slots.<stage>.lane_offset_env`; a test keeps the two equal).
+LANE_OFFSET_ENV = {
+    "doc_profile": "POLYMATH_DOC_PROFILE_LANE_OFFSET",
+    "doc_parent_map": "POLYMATH_DOC_PARENT_MAP_LANE_OFFSET",
+}
+
+
+def lane_offset_env(slot_name: str) -> dict[str, str]:
+    """The slot-index variable for an owning stage's slot: `doc_parent_map` -> {…: "1"}, `doc_parent_map3` -> "3";
+    {} for every other slot."""
+    for stage, env in LANE_OFFSET_ENV.items():
+        suffix = slot_name[len(stage):] if slot_name.startswith(stage) else None
+        if suffix == "" or (suffix and suffix.isdigit()):
+            return {env: suffix or "1"}
+    return {}
 
 
 @dataclass
@@ -351,11 +376,11 @@ class Supervisor:
             child_env.setdefault("POLYMATH_EXTRACT_AFFINITY", "local")
         elif slot.name.startswith("extract"):
             child_env.setdefault("POLYMATH_EXTRACT_AFFINITY", "cloud")
-        # DOC-PROFILE-SCALE-OUT-V1: each profile slot starts its lane walk on ITS OWN dedicated key
-        # (doc_profile → key 1, doc_profile2 → key 2, …) so six workers never burst one account; the
-        # run-hash rotation stays the fallback when the offset is absent (single slot, tests).
-        if slot.name.startswith("doc_profile"):
-            child_env.setdefault("POLYMATH_DOC_PROFILE_LANE_OFFSET", slot.name[len("doc_profile"):] or "1")
+        # DOC-PROFILE-SCALE-OUT-V1 + LLM-BACKEND L3: each profile / pMAP slot learns its 1-based index
+        # (doc_profile → 1, doc_profile2 → 2, …) and calls ITS OWN account's lanes (registry `owners`);
+        # without the index a worker falls back to the run-hash rotation (single slot, tests).
+        for key, value in lane_offset_env(slot.name).items():
+            child_env.setdefault(key, value)
         slot.proc = subprocess.Popen(
             argv, cwd=cwd,
             stdout=out, stderr=subprocess.STDOUT,

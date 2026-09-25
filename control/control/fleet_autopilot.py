@@ -179,12 +179,12 @@ def desired_slots(conn, known_slots: set[str]) -> tuple[set[str], dict]:
                 # worker maps ONE DOCUMENT at a time and pays skeleton-build, batch
                 # planning and projection-embed serially between dispatches. The
                 # constraint is the worker, not the pool. One worker per open
-                # doc_parent_map ticket, capped at FOUR: tickets are leased per
-                # document so there is no double-mapping, and four concurrent
-                # documents still fit inside the lane budget.
+                # doc_parent_map ticket, capped at SIX (LLM-BACKEND L3: one slot per
+                # Groq account, each owning its own pair): tickets are leased per
+                # document so there is no double-mapping.
                 n_pm = _open_work(conn, ("doc_parent_map",))
                 extra = [f"doc_parent_map{i}"
-                         for i in range(2, min(int(n_pm), 4) + 1)]
+                         for i in range(2, min(int(n_pm), 6) + 1)]
                 _last_demand.update({s: now for s in extra})
                 slots = set(slots) | set(extra)
             if lane == "summary" and int(n) >= 2:
