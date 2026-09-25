@@ -28,8 +28,9 @@ historical, never an instruction.
 ### Repository State
 - Branch `production`, HEAD = the merge of `fix/retire-cloudflare-account-1` (register 11.469) on top of the L4a records
   (11.468), the L3 close-out and `a3df56b9` (merge of L3, 11.467). Main checkout clean.
-- `origin/production` = `a7e3e388`; **39 commits unpushed** (registers 11.452–11.469, the L2 and L3 close-outs). The agent's push is blocked by the permission classifier; the owner pushes with the Run button:
-  `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
+- `origin/production` = `8c2bbfe8`: **the owner pushed `a7e3e388..8c2bbfe8` (39 commits, registers 11.452–11.469) on
+  2026-09-25 03:20 UTC.** Only this note is local. The agent's push is blocked by the permission classifier; the owner
+  pushes with the Run button: `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
 - **Fleet:** 13 worker types / **26** registrations (doc_profile ×6, doc_parent_map ×6 since L3), all healthy, ONE
   bundle `5e94c7bffa6c`, `/ready` true (embedder + reranker). Bounced by the agent after the L3 merge
   (`bash scripts/bounce_fleet.sh` → READY in ~55 s): running code = committed code. Every profile / pMAP worker carries
@@ -151,11 +152,18 @@ historical, never an instruction.
 - Registry: `scripts/llm_accounts.py validate` (with `.env` loaded in the same shell) = 0 errors, 4 warnings:
   PAIR_SHARED_BY_SLOTS ×4 (the shared tier → L5). `report` shows the
   owning slot per (account, model).
-- CI: the 39 local commits have not run CI yet (push pending).
+- CI on `8c2bbfe8`: `repo-governance` passed. `agent-preflight`, `determinism` and `contracts` were running when this
+  note was written. `determinism` was ALREADY red on `a7e3e388` (09-24, before this session's commits) with 16 failures:
+  - adapter suites ×9 (`test_adapter_harness_action` ×4, `test_adapter_product_discovery_loop` ×3,
+    `test_adapter_service_store`, `test_adapter_worker_registration`);
+  - `test_chat_runtime::test_compiler_on_drives…`;
+  - `test_document_profile_stage::test_worker_writes_the_profile_and_projection_artifacts…` (a database test);
+  - `test_gnn_offline` (no torch in CI);
+  - `test_query_receipts::test_all_three…`.
+  Compare any new red run with this list before calling it a regression.
 
 ### Next Action
-1. **Owner:** push the 39 commits (Run button; command in Repository State).
-2. **L4b: one document through the fleet.** The owner chooses how:
+1. **L4b: one document through the fleet.** The owner chooses how:
    - (a) a one-document test corpus `l4-canary` with a small file; the agent first runs the corpus-filter checks the
      standing rule asks for, and deleting the corpus later is the owner's step;
    - or (b) the owner's next real upload. No test data; the agent checks that upload's receipts.
@@ -163,7 +171,7 @@ historical, never an instruction.
    Pass: its `doc_profile` attempt row is on the claiming slot's own key (`profile_groqN`, stage `doc_profile`); its pMAP
    rows are on that slot's `map_groqN` / `map_groqNq` (stage `doc_parent_map`); `document_status` shows 0 unresolved
    eligible parents (L-19); no call on another slot's key.
-3. Then D1 → K1 → C1 … (roadmap §3).
+2. Then D1 → K1 → C1 … (roadmap §3).
 
 ### Do Not Do
 - Never hand-edit `config/cloud_providers.json` or `config/extraction_models/limiter.yaml`: they are generated (edit the
