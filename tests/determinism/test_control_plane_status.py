@@ -102,12 +102,13 @@ def test_pool_lanes_detail_is_secret_free_and_model_grouped():
     d = CPS.pool_lanes_detail(_NoState(), function="PMAP")
     assert d["function"] == "PMAP"
     models = {m["model"]: m for m in d["models"]}
-    # GROQ-MODEL-SWAP-2026-09-23: keys 2–6 carry one pMAP lane per model (gpt-oss-20b + qwen3.8-27b)
+    # GROQ-MODEL-SWAP-2026-09-23: every pMAP key carries one lane per model (gpt-oss-20b + qwen3.8-27b); since
+    # LLM-BACKEND L3 (11.467) all six keys do (11.193 had moved KEY_1 to doc_profile only)
     for model in ("openai/gpt-oss-20b", "qwen/qwen3.8-27b"):
         assert model in models
         lanes = models[model]["lanes"]
-        assert len(lanes) == 5          # 11.193: KEY_1 left pMAP for doc_profile
-        assert all(l["account_env"].startswith("GROQ_API_KEY_") for l in lanes)
+        assert len(lanes) == 6
+        assert {l["account_env"] for l in lanes} == {f"GROQ_API_KEY_{i}" for i in range(1, 7)}
         assert lanes[0]["capacity"]["map_batch_cap"] == 15
     # NEVER a secret value anywhere in the payload
     import json

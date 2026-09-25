@@ -64,13 +64,16 @@ historical, never an instruction.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) is paused, not dropped: S5–S7 and S9 wait (S9 needs the owner's
   query allowance; 9 of 10 used). Details: the PREVIOUS block.
 
-### Completed Since Last Bootstrap (11.467–11.469; not pushed)
+### Completed Since Last Bootstrap (11.467–11.470)
 - **11.468 L4a the canary** (work-log `2026-09-24-llm-canary-l4a.md`, evidence
   `docs/wiki/experiments/llm-backend-l4-canary-2026-09-24/`): the five pasted Cloudflare ids were matched to tokens
   read-only. 3, 4, 5, 6 are wired; the fifth id was account 2's, so account 1 is still missing. 23 real calls, one per
   active lane, through the production client: 23 / 23 OK (18 Groq pairs + 5 Cloudflare accounts). Groq's headers show
   independent per-(key, model) limits (1K requests/day, 8K tokens/min) and TPM charged prompt + requested output (what
   L2 reserves). The ledger shows 23 rows with stage `l4_canary` and real tokens. L-03 CLOSED; L-11 narrowed to account 1.
+- **11.470 every model tested:** all 44 provider lanes and all 15 chat answer models answered. The only failures were
+  transient capacity events: Mistral upstream 429 on OpenRouter, Google 503 on gemini-3.1-flash-lite for accounts 3-4.
+  One L3 CI regression was fixed (a stale lane-count test).
 - **11.469 retire Cloudflare account 1** (the owner: "dispose of it"): cloudflare_map1 is disabled and off the pMAP pin;
   the credential check skips accounts with no enabled lane; L-11 CLOSED. Working Cloudflare accounts: 2-6.
 - **11.467 L3 ownership + wiring** (work-log `2026-09-24-llm-ownership-l3.md`):
@@ -160,7 +163,8 @@ historical, never an instruction.
   - `test_document_profile_stage::test_worker_writes_the_profile_and_projection_artifacts…` (a database test);
   - `test_gnn_offline` (no torch in CI);
   - `test_query_receipts::test_all_three…`.
-  Compare any new red run with this list before calling it a regression.
+  Compare any new red run with this list before calling it a regression. The `8c2bbfe8` run had these 13 + one L3
+  regression (`test_control_plane_status`, a pre-L3 lane-count snapshot) → fixed in 11.470.
 
 ### Next Action
 1. **L4b: one document through the fleet.** The owner chooses how:

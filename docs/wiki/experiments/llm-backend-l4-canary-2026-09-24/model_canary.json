@@ -1,0 +1,290 @@
+[
+ {
+  "kind": "lane",
+  "name": "compiler_alibaba_deepseek",
+  "model": "deepseek-v4-flash-0731",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 2534
+ },
+ {
+  "kind": "lane",
+  "name": "compiler_alt",
+  "model": "mistralai/mistral-small-2603",
+  "result": "HTTP_429",
+  "reply": "",
+  "ms": 1182
+ },
+ {
+  "kind": "lane",
+  "name": "compiler_ollama_gemma",
+  "model": "gemma4:31b-cloud",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 452
+ },
+ {
+  "kind": "lane",
+  "name": "gemini1",
+  "model": "gemini-3.1-flash-lite",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 772
+ },
+ {
+  "kind": "lane",
+  "name": "gemini1b",
+  "model": "gemini-3.5-flash-lite",
+  "result": "OK",
+  "reply": "{\n  \"answer\": \"OK\"\n}",
+  "ms": 2368
+ },
+ {
+  "kind": "lane",
+  "name": "gemini2",
+  "model": "gemini-3.1-flash-lite",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 1253
+ },
+ {
+  "kind": "lane",
+  "name": "gemini2b",
+  "model": "gemini-3.5-flash-lite",
+  "result": "OK",
+  "reply": "{\n  \"answer\": \"OK\"\n}",
+  "ms": 822
+ },
+ {
+  "kind": "lane",
+  "name": "gemini3",
+  "model": "gemini-3.1-flash-lite",
+  "result": "HTTP_503",
+  "reply": "",
+  "ms": 33636
+ },
+ {
+  "kind": "lane",
+  "name": "gemini3b",
+  "model": "gemini-3.5-flash-lite",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 2500
+ },
+ {
+  "kind": "lane",
+  "name": "gemini4",
+  "model": "gemini-3.1-flash-lite",
+  "result": "HTTP_503",
+  "reply": "",
+  "ms": 8443
+ },
+ {
+  "kind": "lane",
+  "name": "gemini4b",
+  "model": "gemini-3.5-flash-lite",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 880
+ },
+ {
+  "kind": "lane",
+  "name": "gemini5",
+  "model": "gemini-3.1-flash-lite",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 20663
+ },
+ {
+  "kind": "lane",
+  "name": "gemini5b",
+  "model": "gemini-3.5-flash-lite",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 575
+ },
+ {
+  "kind": "lane",
+  "name": "gemini6",
+  "model": "gemini-3.1-flash-lite",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 930
+ },
+ {
+  "kind": "lane",
+  "name": "gemini6b",
+  "model": "gemini-3.5-flash-lite",
+  "result": "OK",
+  "reply": "{\n  \"answer\": \"OK\"\n}",
+  "ms": 772
+ },
+ {
+  "kind": "lane",
+  "name": "map_fallback_openrouter",
+  "model": "mistralai/mistral-small-2603",
+  "result": "HTTP_429",
+  "reply": "",
+  "ms": 652
+ },
+ {
+  "kind": "lane",
+  "name": "openrouter1",
+  "model": "mistralai/mistral-small-2603",
+  "result": "HTTP_429",
+  "reply": "",
+  "ms": 1189
+ },
+ {
+  "kind": "lane",
+  "name": "openrouter2",
+  "model": "mistralai/ministral-14b-2512",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 779
+ },
+ {
+  "kind": "lane",
+  "name": "openrouter3",
+  "model": "qwen/qwen3.7-flash",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 988
+ },
+ {
+  "kind": "lane",
+  "name": "openrouter5",
+  "model": "mistralai/mistral-small-24b-instruct-2501",
+  "result": "OK",
+  "reply": "{\"answer\": \"OK\"}",
+  "ms": 852
+ },
+ {
+  "kind": "lane",
+  "name": "profile_fallback_openrouter",
+  "model": "mistralai/mistral-small-2603",
+  "result": "HTTP_429",
+  "reply": "",
+  "ms": 948
+ },
+ {
+  "kind": "chat",
+  "name": "litellm:anthropic/deepseek-v4-flash-0731",
+  "model": "anthropic/deepseek-v4-flash-0731",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 3817
+ },
+ {
+  "kind": "chat",
+  "name": "litellm:anthropic/qwen3.7-plus",
+  "model": "anthropic/qwen3.7-plus",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 3171
+ },
+ {
+  "kind": "chat",
+  "name": "litellm:anthropic/qwen3.6-flash",
+  "model": "anthropic/qwen3.6-flash",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 695
+ },
+ {
+  "kind": "chat",
+  "name": "litellm:anthropic/glm-5.2",
+  "model": "anthropic/glm-5.2",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 907
+ },
+ {
+  "kind": "chat",
+  "name": "litellm:anthropic/qwen3.7-max",
+  "model": "anthropic/qwen3.7-max",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 1397
+ },
+ {
+  "kind": "chat",
+  "name": "litellm:anthropic/deepseek-v4-pro",
+  "model": "anthropic/deepseek-v4-pro",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 1411
+ },
+ {
+  "kind": "chat",
+  "name": "litellm:anthropic/deepseek-v4-pro-0813",
+  "model": "anthropic/deepseek-v4-pro-0813",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 906
+ },
+ {
+  "kind": "chat",
+  "name": "litellm:anthropic/qwen3.8-flash",
+  "model": "anthropic/qwen3.8-flash",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 982
+ },
+ {
+  "kind": "chat",
+  "name": "litellm:anthropic/qwen3.8-max",
+  "model": "anthropic/qwen3.8-max",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 1052
+ },
+ {
+  "kind": "chat",
+  "name": "ollama:gemma4:31b-cloud",
+  "model": "gemma4:31b-cloud",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 326
+ },
+ {
+  "kind": "chat",
+  "name": "ollama:gpt-oss:120b-cloud",
+  "model": "gpt-oss:120b-cloud",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 419
+ },
+ {
+  "kind": "chat",
+  "name": "ollama:gpt-oss:20b-cloud",
+  "model": "gpt-oss:20b-cloud",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 943
+ },
+ {
+  "kind": "chat",
+  "name": "ollama:nemotron-3-nano:30b-cloud",
+  "model": "nemotron-3-nano:30b-cloud",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 520
+ },
+ {
+  "kind": "chat",
+  "name": "ollama:nemotron-3-super:cloud",
+  "model": "nemotron-3-super:cloud",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 502
+ },
+ {
+  "kind": "chat",
+  "name": "ollama:nemotron-3-ultra:cloud",
+  "model": "nemotron-3-ultra:cloud",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 837
+ }
+]
