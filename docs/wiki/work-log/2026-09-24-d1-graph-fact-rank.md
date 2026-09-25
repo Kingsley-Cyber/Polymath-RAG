@@ -84,6 +84,14 @@ last_reviewed: 2026-09-24
   markers) runs after the owner's bounce. Its pre-bounce baseline (`live_check_before_bounce.json`) recorded the MCP
   defect live: 116 rows, 2 cut at exactly 1,200 characters with no marker.
 
+- **LIVE_PATH_PROVEN** (EXECUTED 2026-09-25 00:10 MDT, register 11.480). The owner's bounce at 00:09 started the
+  orchestrator and MCP Server A at 00:09:08, with `POLYMATH_GRAPH_FACT_RANK=1` in the orchestrator environment
+  (`ps eww`); the fleet came back as 26 / 13 / one bundle `c6687ef2365a`. `live_check.py` exited 0
+  (`live_check.json`):
+  - `/retrieve` GRAPH on :7200: HTTP 200, `meta.graph_bounds.fact_order: "ranked"`, 20 facts, for all three questions;
+  - MCP `polymath_search` on :8930: 114 rows. The 1 cut row says `truncated` (exactly 1,200 characters, a longer
+    `full_length`), and no unmarked row is at or over 1,200. Before the bounce: 2 of 116 rows cut with no marker.
+
 ## Rejected claims
 - "Rank strictly by seed" (the first design, `replay_strict_seed.json`): the entity-card probe ranked "ADR" top for
   "suspense WITHOUT dialogue" (it matched "dialogue"), so its facts filled the list and "shorter and shorter shots CAUSES

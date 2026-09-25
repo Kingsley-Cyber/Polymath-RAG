@@ -23,27 +23,21 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-25 (D1 + DOC-STEER replay close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE (11.478 + the post-merge fix 11.479): GRAPH hop-1 facts ranked behind `POLYMATH_GRAPH_FACT_RANK` (ON in `.env`), the MCP truncation marker. BOUNCE PENDING (the owner's Run button), then the $0 live check. The SEE ALSO blend is DEPLOYED (the owner bounced at 23:21 MDT). DOC-STEER-V1 replay done (11.477): the build waits on the owner's word. THE OWNER'S STANDING WORD (2026-09-24): "i decide for all your deficiencies found to be resolved". NEXT = the owner's bounce + `live_check.py`, then K1 → C1 → C2 → C3 → L5 → C6+C7 … (or DOC-STEER-V1 first, on the owner's word).**
+## CURRENT — 2026-09-25 (D1 LIVE + DOC-STEER replay close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE AND LIVE (11.478–11.480): GRAPH hop-1 facts ranked (`POLYMATH_GRAPH_FACT_RANK=1`), the MCP truncation marker; the owner bounced at 00:09 MDT and `live_check.py` passed. The SEE ALSO blend is DEPLOYED. DOC-STEER-V1 replay done (11.477): the build waits on the owner's word. THE OWNER'S STANDING WORD (2026-09-24): "i decide for all your deficiencies found to be resolved". NEXT = K1 → C1 → C2 → C3 → L5 → C6+C7 … (or DOC-STEER-V1 first, on the owner's word).**
 
 ### Repository State
 - Branch `production`. HEAD = this close-out, on top of `a18f1a2e` (11.479 post-merge fix), `08528640` (merge of
   `fix/d1-graph-fact-rank`, 11.478) and `c03890e5` (11.477 DOC-STEER replay).
-- `origin/production` = `9fc0956f` (pushed 2026-09-24). Unpushed: the four commits above + this close-out. The owner's
-  word for this session was "push only on my word", so the push is the owner's:
+- `origin/production` = `9fc0956f` (pushed 2026-09-24). Unpushed at this close-out: 6 commits (11.477–11.480 + two
+  close-outs; count with `git rev-list --count origin/production..production`). The owner's word for this session was
+  "push only on my word", so the push is the owner's:
   `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
-- **Fleet: BOUNCE PENDING.** The owner's bounce at 23:21 MDT is verified: 26 / 13 / ONE bundle `a755e35eadc1`,
-  `/ready` true, the orchestrator env `POLYMATH_CHAT_SEEALSO_BLEND=1` and no `_HOP`. The agent's bounce after the D1
-  merge was denied (Production Deploy). The state at close-out:
-  - stage workers are unaffected (the bundle is unchanged: D1 touched `orchestrator/` only);
-  - the orchestrator (pid started 23:21) holds the pre-D1 `retrieve` module in memory and loads the new
-    `chat_retrieval.py` through the guarded import (11.479). It serves the legacy fact order, and `/retrieve` GRAPH
-    answers 200 (checked);
-  - MCP Server A (started 23:21) runs the old code: no truncation marker until the bounce.
-- **After the owner's bounce**, run (from the main checkout, `.env` loaded; $0):
-  `.venv/bin/python docs/wiki/experiments/graph-fact-rank-2026-09-24/live_check.py`. Exit 0 = `/retrieve` GRAPH answers
-  `meta.graph_bounds.fact_order: "ranked"` with facts, and MCP `polymath_search` rows cut at 1,200 characters say
-  `truncated` + `full_length`. The pre-bounce baseline is `live_check_before_bounce.json`: 2 of 116 rows cut with no
-  marker.
+- **Fleet (the owner's bounce, 2026-09-25 00:09 MDT):** 26 / 13 / ONE bundle `c6687ef2365a`, `/ready` true; the
+  orchestrator and MCP Server A started 00:09:08 with `POLYMATH_CHAT_SEEALSO_BLEND=1` and `POLYMATH_GRAPH_FACT_RANK=1`
+  (`ps eww`). Running code = committed code.
+- **D1 live check** (`docs/wiki/experiments/graph-fact-rank-2026-09-24/live_check.py`, $0; rerun any time with `.env`
+  loaded): exit 0 at 00:10 (`live_check.json`): `/retrieve` GRAPH `fact_order: "ranked"`, 20 facts, all three
+  questions; MCP rows: the 1 cut row of 114 marked, none unmarked at or over 1,200 (before: 2 of 116 cut unmarked).
 - **Live `.env` (gitignored):** lines 146–147 hold the SEEALSO-BLEND comment + `POLYMATH_CHAT_SEEALSO_BLEND=1`; lines
   148–149 hold the D1 comment + `POLYMATH_GRAPH_FACT_RANK=1` (rollback = 0 + a bounce). Unchanged:
   `POLYMATH_LLM_CLOUD_PRIMARY=0`; chat flags `SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`, `PROBE_GATE=1`,
@@ -75,7 +69,8 @@ historical, never an instruction.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) stays paused: S5–S7 and S9 wait (S9 needs the owner's query
   allowance; 9 of 10 used).
 
-### Completed Since Last Bootstrap (11.477–11.479)
+### Completed Since Last Bootstrap (11.477–11.480)
+- **11.480 D1 live:** the owner's bounce (00:09) + `live_check.py` exit 0 → LIVE_PATH_PROVEN.
 - **11.479 D1 post-merge fix:** the bounce was denied, so the old orchestrator loaded the new `chat_retrieval.py` beside its
   old in-memory `retrieve` and failed the new import (`/retrieve` GRAPH 500; chat would have failed). Guarded import
   (fallback = the legacy order) + a test; `/retrieve` GRAPH 200 again. The bootstrap skill now warns about this pattern.
@@ -114,8 +109,8 @@ historical, never an instruction.
   Nothing BLOCKED.
 
 ### Proof Status
-- **11.478 / 11.479 D1:** UNIT_PROVEN (13 tests) · REPLAY (8 questions, $0) · MERGED · **NOT DEPLOYED** (bounce pending).
-  LIVE_PATH_PROVEN = `live_check.py` exit 0 after the bounce.
+- **11.478–11.480 D1:** UNIT_PROVEN (13 tests) · REPLAY (8 questions, $0) · MERGED · DEPLOYED · **LIVE_PATH_PROVEN**
+  (`live_check.py` exit 0, 2026-09-25 00:10 MDT).
 - **11.475 SEE ALSO blend:** DEPLOYED (the owner's bounce, env verified). LIVE_PATH_PROVEN needs one HYBRID / GRAPH /
   WILDCARD chat turn (receipt `trace.seealso_fanout.blends`); live chat turns are the owner's word.
 - **11.477 DOC-STEER:** REPLAY only (no code).
@@ -142,9 +137,7 @@ historical, never an instruction.
 - graft refreshed at `9fc0956f` this session; guards 0 · bundle_integrity READY · registry 0 errors / 4 warnings.
 
 ### Next Action
-1. **The owner's bounce** (Run button): `bash /Users/king/Documents/polymath-rebuild/polymath-v4/scripts/bounce_fleet.sh`.
-   Then verify 26 / 13 / ONE bundle, `/ready`, the orchestrator env has `POLYMATH_GRAPH_FACT_RANK=1`, and run
-   `live_check.py` (exit 0 → record D1 LIVE_PATH_PROVEN in the register and the D1 work-log).
+1. (done 00:09–00:10) The owner's bounce + the D1 live check: D1 LIVE_PATH_PROVEN (11.480).
 2. **The owner's DOC-STEER word** (build GRAPH + WILDCARD as recommended, or not). If yes: a slice that generalizes
    `fanout_search`'s blend line lookup to per-mode kinds (no INVERSION), behind its own flag, replay-proven.
 3. **K1** (roadmap row 6b): knowledge roles + retrieval scope (K-01, K-02; the external audit's fail-closed rule); no
@@ -169,7 +162,6 @@ historical, never an instruction.
 - No permanent deletes by the agent (the `l4-canary` corpus, the retired Cloudflare token).
 
 ### Live Qualification Queue
-- D1 live check (`live_check.py`, $0) after the bounce.
 - The SEE ALSO blend's first live receipt (the owner's next HYBRID / GRAPH / WILDCARD chat).
 - Document RAG S9: the owner's word + a bigger query allowance.
 - Benchmark G8 and the `/chat/evidence` probe: the owner's own words.

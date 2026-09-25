@@ -1,0 +1,37 @@
+{
+ "retrieve": [
+  {
+   "question": "How do editors and directors build suspense without dialogue?",
+   "http": 200,
+   "fact_order": "ranked",
+   "facts": 20,
+   "related_to": 2
+  },
+  {
+   "question": "How do lighting and color choices change how an audience reads a scene?",
+   "http": 200,
+   "fact_order": "ranked",
+   "facts": 20,
+   "related_to": 0
+  },
+  {
+   "question": "What does 'shape' mean in Laban movement terms?",
+   "http": 200,
+   "fact_order": "ranked",
+   "facts": 20,
+   "related_to": 0
+  }
+ ],
+ "mcp": {
+  "rows": 114,
+  "marked": 1,
+  "marked_consistent": 1,
+  "unmarked": 113,
+  "unmarked_over_1200": 0,
+  "unmarked_at_1200": 0
+ },
+ "ok": {
+  "retrieve_ranked": true,
+  "mcp_marker": true
+ }
+}
