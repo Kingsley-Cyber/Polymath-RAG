@@ -80,6 +80,11 @@ class ProviderLimit:
     # keys on one throttled project 429 together; per-lane AIMD can't
     # see that. Lanes of one family share a damp signal.
     family: str | None = None
+    # LLM-BACKEND L2 (gaps L-05, L-16): tokens per ROLLING 24 h (Groq refills its daily budget
+    # continuously, so a UTC-midnight reset would be wrong) and output tokens per minute (some orgs
+    # enforce OTPM, counting the requested max_tokens). None = no such budget (every lane unchanged).
+    tpd: int | None = None
+    otpm: int | None = None
 
     @classmethod
     def from_config(cls, base: ProviderLimit, cfg: dict | None) -> ProviderLimit:
@@ -127,6 +132,8 @@ REFUSE_RPM = "RPM"
 REFUSE_TPM = "TPM"
 REFUSE_RPD = "RPD"                 # local daily safety cap spent
 REFUSE_PROVIDER_RPD = "PROVIDER_RPD"  # provider header says the day is spent
+REFUSE_TPD = "TPD"                 # LLM-BACKEND L2: the rolling 24 h token budget is spent
+REFUSE_OTPM = "OTPM"               # LLM-BACKEND L2: the output-tokens-per-minute budget is spent
 
 
 @dataclass(frozen=True)
@@ -136,6 +143,10 @@ class LimiterDecision:
     admitted: bool
     reason: str | None = None          # None iff admitted; else a REFUSE_* class
     retry_after: float | None = None
+    # LLM-BACKEND L2: what the admission reserved, so settle() can true it up to the real usage
+    reserved_tokens: float = 0.0       # prompt estimate + reserved output (TPM / TPD)
+    reserved_output: float = 0.0       # reserved output (OTPM)
+    tpd_slot: float | None = None      # the rolling-window entry holding this call's reservation
 
 
 _DURATION_RE = re.compile(
@@ -163,6 +174,68 @@ def _to_float(value) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+class _RollingTokens:
+    """LLM-BACKEND L2 (gap L-05): tokens spent in a ROLLING window (24 h), entry by entry.
+    Wall-clock timestamps so the window survives a restart (persisted as hour buckets)."""
+
+    WINDOW_S = 86400.0
+
+    def __init__(self) -> None:
+        self._entries: dict[float, float] = {}
+        self._lock = threading.Lock()
+
+    def _prune_locked(self, now: float) -> None:
+        cutoff = now - self.WINDOW_S
+        for ts in [ts for ts in self._entries if ts <= cutoff]:
+            del self._entries[ts]
+
+    def total(self, now: float | None = None) -> float:
+        now = time.time() if now is None else now
+        with self._lock:
+            self._prune_locked(now)
+            return sum(self._entries.values())
+
+    def add(self, n: float, now: float | None = None) -> float:
+        ts = time.time() if now is None else now
+        with self._lock:
+            while ts in self._entries:          # one entry per call, even within one clock tick
+                ts += 1e-6
+            self._entries[ts] = float(n)
+        return ts
+
+    def set(self, ts: float, n: float) -> None:
+        with self._lock:
+            if ts in self._entries:
+                self._entries[ts] = float(n)
+
+    def remove(self, ts: float) -> None:
+        with self._lock:
+            self._entries.pop(ts, None)
+
+    def to_hours(self, now: float | None = None) -> dict[str, float]:
+        now = time.time() if now is None else now
+        with self._lock:
+            self._prune_locked(now)
+            hours: dict[str, float] = {}
+            for ts, n in self._entries.items():
+                h = str(int(ts // 3600) * 3600)
+                hours[h] = hours.get(h, 0.0) + n
+            return hours
+
+    def load_hours(self, hours: dict | None, now: float | None = None) -> None:
+        now = time.time() if now is None else now
+        with self._lock:
+            for h, n in (hours or {}).items():
+                try:
+                    ts, amount = float(h), float(n)
+                except (TypeError, ValueError):
+                    continue
+                if ts > now - self.WINDOW_S and amount > 0:
+                    # an hour bucket re-enters at the start of its hour: conservative (expires no later
+                    # than the calls it sums)
+                    self._entries[ts] = self._entries.get(ts, 0.0) + amount
 
 
 class _TokenBucket:
@@ -203,6 +276,12 @@ class _TokenBucket:
         """Hand back tokens taken for a call that was never made."""
         with self._lock:
             self.tokens = min(self.capacity, self.tokens + float(n))
+
+    def debit(self, n: float) -> None:
+        """LLM-BACKEND L2: charge tokens a call used beyond its reservation (a bounded deficit that refills)."""
+        with self._lock:
+            self._refill_locked()
+            self.tokens = max(-self.capacity, self.tokens - float(n))
 
     def adopt_capacity(self, new_cap: float) -> bool:
         """FLEET-V3 header-declared ceiling adoption: grow-only — the
@@ -421,6 +500,8 @@ class AdaptiveLimiter:
         self._sem = _DynamicSemaphore(seed)
         self._rpm = _TokenBucket(spec.rpm) if spec.kind == "rate" and spec.rpm else None
         self._tpm = _TokenBucket(spec.tpm) if spec.kind == "rate" and spec.tpm else None
+        self._otpm = _TokenBucket(spec.otpm) if spec.kind == "rate" and spec.otpm else None   # L2
+        self._tpd = _RollingTokens() if spec.kind == "rate" and spec.tpd else None            # L2
         self._breaker = _Breaker()
         self._streak = 0
         self._effective = seed
@@ -469,6 +550,8 @@ class AdaptiveLimiter:
                     # LLM-BACKEND-BATCH1 (gap L-08): which configured limits the adopted
                     # ceilings were learned under; restore() reuses them only when unchanged
                     "spec_fingerprint": self.spec_fingerprint(),
+                    # LLM-BACKEND L2: the rolling 24 h token usage as hour buckets (None without a tpd budget)
+                    "tpd_hours": self._tpd.to_hours() if self._tpd is not None else None,
                     # provider truth (observed from headers; not restored — it is
                     # re-observed live each epoch so a stale value never binds)
                     "provider_rpd_limit": self._provider_rpd_limit,
@@ -509,7 +592,7 @@ class AdaptiveLimiter:
         the lane's limiter.yaml entry is unchanged; any edit (e.g. a model swap that renames the
         family or changes tpm) yields a new fingerprint."""
         s = self.spec
-        basis = json.dumps([s.kind, s.init, s.min, s.max, s.rpm, s.tpm, s.conc_cap, s.rpd, s.family],
+        basis = json.dumps([s.kind, s.init, s.min, s.max, s.rpm, s.tpm, s.conc_cap, s.rpd, s.family, s.tpd, s.otpm],
                            separators=(",", ":"))
         return hashlib.sha256(basis.encode("utf-8")).hexdigest()[:16]
 
@@ -543,6 +626,8 @@ class AdaptiveLimiter:
             # A row without a fingerprint (written before this change) or with a different one is
             # not reused: the configured limits apply until live headers re-adopt a ceiling.
             if state.get("spec_fingerprint") == self.spec_fingerprint():
+                if self._tpd is not None:
+                    self._tpd.load_hours(state.get("tpd_hours"))    # L2: today's usage survives a restart
                 for attr, bucket in (("adopted_rpm", self._rpm),
                                      ("adopted_tpm", self._tpm)):
                     val = state.get(attr)
@@ -591,7 +676,8 @@ class AdaptiveLimiter:
         REASON for a refusal use `admit()` (GROQ-MAP-CONTROL-PLANE-REPAIR-V1)."""
         return self.admit(est_tokens=est_tokens, block=block).admitted
 
-    def admit(self, est_tokens: float = 0.0, block: bool = True) -> LimiterDecision:
+    def admit(self, est_tokens: float = 0.0, block: bool = True, *,
+              reserved_output: float = 0.0) -> LimiterDecision:
         """Take the concurrency slot + rate tokens, returning a reasoned
         LimiterDecision. `admitted=False` ALWAYS means zero HTTP dispatch and
         zero provider consumption; every refusal releases whatever it briefly
@@ -619,6 +705,7 @@ class AdaptiveLimiter:
         elif not self._sem.try_acquire():
             self._breaker.release_probe()
             return LimiterDecision(False, REFUSE_CONCURRENCY)
+        tpd_slot: float | None = None
         if self.spec.kind == "rate":
             reason: str | None = None
             if self._rpm is not None and not self._rpm.acquire(1.0, block):
@@ -628,6 +715,14 @@ class AdaptiveLimiter:
                 if self._rpm is not None:
                     self._rpm.refund(1.0)         # no call will be made
                 reason = REFUSE_TPM
+            elif (self._otpm is not None and reserved_output > 0
+                    and not self._otpm.acquire(reserved_output, block)):
+                # LLM-BACKEND L2 (gap L-16): the output-per-minute budget counts the REQUESTED output
+                if self._rpm is not None:
+                    self._rpm.refund(1.0)
+                if self._tpm is not None and est_tokens > 0:
+                    self._tpm.refund(est_tokens)
+                reason = REFUSE_OTPM
             # PROVIDER-declared daily exhaustion (from headers) refuses BEFORE
             # the local cap is charged — a provider-spent day must not consume a
             # local admission slot, and must never dispatch.
@@ -636,7 +731,17 @@ class AdaptiveLimiter:
                     prov_spent = self._provider_rpd_exhausted_locked()
                 if prov_spent:
                     reason = REFUSE_PROVIDER_RPD
-                    self._refund_rate(est_tokens)
+                    self._refund_rate(est_tokens, reserved_output)
+            # LLM-BACKEND L2 (gap L-05): the rolling 24 h token budget, charged with the reservation now and
+            # trued up by settle(). Refused, not waited for: a spent day does not refill within a call.
+            if reason is None and self._tpd is not None:
+                with self._lock:
+                    if self._tpd.total() + max(est_tokens, 0.0) > float(self.spec.tpd):
+                        reason = REFUSE_TPD
+                    else:
+                        tpd_slot = self._tpd.add(max(est_tokens, 0.0))
+                if reason == REFUSE_TPD:
+                    self._refund_rate(est_tokens, reserved_output)
             if reason is None and self.spec.rpd:
                 with self._lock:
                     today = time.strftime("%Y-%m-%d", time.gmtime())
@@ -650,7 +755,10 @@ class AdaptiveLimiter:
                         self._last_dispatch_at = _utc_iso()
                         self._rpd_dirty = True
                 if reason == REFUSE_RPD:
-                    self._refund_rate(est_tokens)
+                    self._refund_rate(est_tokens, reserved_output)
+                    if tpd_slot is not None:
+                        self._tpd.remove(tpd_slot)
+                        tpd_slot = None
             if reason is not None:
                 self._sem.release()
                 self._breaker.release_probe()
@@ -659,7 +767,35 @@ class AdaptiveLimiter:
         # admitted path only (a refusal consumes no provider request, so it moves no
         # counter). Coalesced — see _persist_rpd_if_due.
         self._persist_rpd_if_due()
-        return LimiterDecision(True)
+        return LimiterDecision(True, reserved_tokens=max(est_tokens, 0.0), reserved_output=max(reserved_output, 0.0),
+                               tpd_slot=tpd_slot)
+
+    def settle(self, decision: LimiterDecision, tokens_in: int | None = None, tokens_out: int | None = None,
+               *, failed: bool = False) -> None:
+        """LLM-BACKEND L2 (gap L-04): true an admission up to what the call really used. On success with
+        provider usage, unused reserved tokens go back to TPM / OTPM (a deficit is charged) and the rolling
+        daily window records the real total; a failed call removes its daily reservation. Never raises."""
+        if not decision.admitted:
+            return
+        known = bool(tokens_in) or bool(tokens_out)
+        actual = float((tokens_in or 0) + (tokens_out or 0))
+        if known and not failed:
+            if self._tpm is not None:
+                if decision.reserved_tokens > actual:
+                    self._tpm.refund(decision.reserved_tokens - actual)
+                elif actual > decision.reserved_tokens:
+                    self._tpm.debit(actual - decision.reserved_tokens)
+            out = float(tokens_out or 0)
+            if self._otpm is not None and decision.reserved_output > out:
+                self._otpm.refund(decision.reserved_output - out)
+        if self._tpd is not None and decision.tpd_slot is not None:
+            if failed:
+                self._tpd.remove(decision.tpd_slot)
+            elif known:
+                self._tpd.set(decision.tpd_slot, actual)
+            with self._lock:
+                self._rpd_dirty = True
+            self._persist_rpd_if_due()
 
     #: RPD-DURABILITY-V1 (D-4) coalescing window. A write per dispatch would put a
     #: Postgres round trip in the admission path of every extraction call; a window
@@ -690,12 +826,14 @@ class AdaptiveLimiter:
         """Force the coalesced counter out (shutdown / end of a bounded run)."""
         self._persist_rpd_if_due(force=True)
 
-    def _refund_rate(self, est_tokens: float) -> None:
-        """Hand back the rpm/tpm tokens taken for a call that will not be made."""
+    def _refund_rate(self, est_tokens: float, reserved_output: float = 0.0) -> None:
+        """Hand back the rpm/tpm/otpm tokens taken for a call that will not be made."""
         if self._rpm is not None:
             self._rpm.refund(1.0)
         if self._tpm is not None and est_tokens > 0:
             self._tpm.refund(est_tokens)
+        if self._otpm is not None and reserved_output > 0:
+            self._otpm.refund(reserved_output)
 
     def _observe_provider_rpd_locked(self, limit, remaining, reset_secs) -> None:
         """Reconcile the provider's declared daily-request budget conservatively.

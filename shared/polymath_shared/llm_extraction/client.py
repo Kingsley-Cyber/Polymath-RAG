@@ -266,6 +266,17 @@ def estimate_input_tokens(user_prompt: str) -> int:
     return max(1, int(len(user_prompt) / 4.0))
 
 
+#: LLM-BACKEND L2 (gap L-04): characters per token used to RESERVE a request before it is sent. Conservative
+#: on purpose (English prose runs ~4, code and JSON ~3): an over-reservation is refunded by settle() from the
+#: provider's own usage, an under-reservation is what produced 429s.
+ADMISSION_CHARS_PER_TOKEN = 3.0
+
+
+def admission_tokens(*texts: str | None) -> int:
+    """The prompt side of an admission: every message the provider will count (system + user)."""
+    return sum(-(-len(t) // int(ADMISSION_CHARS_PER_TOKEN)) for t in texts if t)
+
+
 def alias_neighborhoods(neighborhoods: list[tuple[str, list[tuple[str, str]]]]
                         ) -> tuple[list[tuple[str, list[tuple[str, str]]]], dict[str, str]]:
     """SHORT-ID CONTRACT (measured 2026-08-30): the local 4B model dropped
@@ -522,7 +533,10 @@ class LLMExtractionClient:
         method never interprets content. Cloud lanes only (the local
         batched path goes through complete_batched)."""
         limiter = self._lane_limiter()
-        decision = limiter.admit(est_tokens=len(user_prompt) / 4.0)
+        # LLM-BACKEND L2 (gap L-04): reserve what the provider will count — the system prompt, the user prompt
+        # and the requested output — not the user prompt / 4; settle() trues it up from the response's usage.
+        decision = limiter.admit(est_tokens=admission_tokens(system_prompt, user_prompt) + max_tokens,
+                                 reserved_output=max_tokens)
         # GROQ-MAP-CONTROL-PLANE-REPAIR-V1: keep the bare "LIMITER_REFUSED"
         # return (existing consumers exact-match it) but expose WHICH gate
         # refused and whether the request reached the network, so the MAP
@@ -548,6 +562,7 @@ class LLMExtractionClient:
         try:
             text, _ti, _to, hdrs = self._chat(user_prompt, max_tokens,
                                               system_prompt=system_prompt)
+            limiter.settle(decision, _ti, _to)        # L2: the real usage replaces the reservation
             limiter.record_success(headers=hdrs)     # observe provider RPD on 2xx
             _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=True,
                          http_status=200, tokens_in=_ti, tokens_out=_to,
@@ -561,6 +576,7 @@ class LLMExtractionClient:
             from polymath_shared.llm_extraction import cloudflare_errors as _cf
             _status = exc.response.status_code
             _cf_class = _cf.classify(_status, exc.response.text) if _cf.is_cloudflare_host(self.base_url) else None
+            limiter.settle(decision, failed=True)      # L2: a refused call spends no daily tokens
             if _cf_class == _cf.DAILY_FREE_QUOTA_EXHAUSTED:
                 limiter.park_provider_day(_cf.seconds_to_daily_reset())
             else:
@@ -576,6 +592,7 @@ class LLMExtractionClient:
                          latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
             return "", _err
         except Exception as exc:
+            limiter.settle(decision, failed=True)
             limiter.record_failure()
             _rec(Attempt(limiter_admitted=True, http_dispatched=True, success=False,
                          error_class=type(exc).__name__,

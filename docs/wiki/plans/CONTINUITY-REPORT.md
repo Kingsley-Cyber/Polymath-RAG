@@ -76,8 +76,12 @@ limiters; it compiles to exactly the runtime files (drift test). `scripts/llm_ac
 owns what (key / account-id SET booleans only). 31 warnings = the L3 worklist (gap L-20 new: gemini / nvidia families span
 accounts). Push of 27 commits waits on the owner's Run button (classifier).
 
-**Next action: L2** (limiter correctness: real-token admission, rolling daily-token budget, OTPM; gaps L-04, L-05, L-16
-remainder), then L3 (ownership: all 18 Groq pairs, 6 pMAP slots, Cloudflare ids, per-account Gemini families).
+**L2 DONE (11.466):** complete_one reserves prompt + output and settles to real usage; rolling 24 h token budgets on the
+Groq lanes (per process: 95 % of 200K ÷ sharing slots) and OTPM on groq_5 qwen; registry check BUDGET_EXCEEDS_QUOTA (daily
+budgets fit; per-minute overshoot on shared pairs = L3's job). New gap L-21 (batched extraction admissions).
+
+**Next action: L3** (ownership: all 18 Groq pairs, each owned by one worker; 6 pMAP slots with offsets; per-process budgets =
+the full pair; per-account Gemini families L-20; Cloudflare account ids L-11; the runtime files generated from the registry).
 Then L1 → L2 → L3 → L4 (the provider backend) → D1 → K1 → C1 … (roadmap §3).
 
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs

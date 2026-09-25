@@ -187,6 +187,23 @@ def validate(reg: Registry, env: dict[str, str] | None = None) -> list[Finding]:
             active = [lane for lane in acct.lanes if lane.model == model and lane.enabled and uses.get(lane.name)]
             if not active:
                 f.append(Finding("warning", "IDLE_PAIR", f"{acct.name} × {model}: quota declared, no enabled lane uses it"))
+    # W6 (L2) — per-process budgets times the worker slots that can reach a pair must fit the pair's quota
+    for acct in reg.accounts.values():
+        for model, quota in acct.quota.items():
+            lanes = [lane for lane in acct.lanes if lane.model == model and lane.enabled and uses.get(lane.name)]
+            for metric in ("rpd", "tpd", "tpm", "otpm"):
+                cap = quota.get(metric)
+                if not cap:
+                    continue
+                total = 0
+                for lane in lanes:
+                    per_process = (lane.limiter or {}).get(metric)
+                    if per_process:
+                        slots = sum(int((reg.slots.get(s) or {}).get("count", 1)) for s in uses.get(lane.name, []))
+                        total += int(per_process) * max(slots, 1)
+                if total > int(cap):
+                    f.append(Finding("warning", "BUDGET_EXCEEDS_QUOTA",
+                                     f"{acct.name} × {model}: {metric} budgets reach {total:,} against a quota of {int(cap):,}"))
     # W4 — credentials the registry names but the environment lacks (booleans only)
     for acct in reg.accounts.values():
         if not (env.get(acct.key_env) or "").strip():
