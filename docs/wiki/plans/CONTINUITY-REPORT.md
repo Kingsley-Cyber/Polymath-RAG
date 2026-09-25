@@ -23,23 +23,24 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-25 (K1 built; merge + bounce = the owner's Run button) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE AND LIVE (11.478–11.480); DOC-STEER-V1 DEPLOYED (11.482–11.483); the external Trail audit ADMITTED (11.484). K1 BUILT (11.485, the owner's "go K1"): knowledge roles + retrieval scope, enforced on every search; committed on `feat/k1-knowledge-scope`. The classifier denied the agent's merge (Production Deploy), so the merge + bounce is the owner's ONE Run-button command (Next Action 1). NEXT = verify K1 live → the owner's pick: the A-track or C1 (C1 now carries K-03).**
+## CURRENT — 2026-09-25 (K1 live) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE AND LIVE (11.478–11.480); DOC-STEER-V1 DEPLOYED (11.482–11.483); the external Trail audit ADMITTED (11.484). K1 BUILT AND LIVE (11.485–11.486, the owner's "go K1"): knowledge roles + retrieval scope, enforced on every search; the owner's Run button merged + bounced; `live_check.py` exit 0. NEXT = K1b (K-04: the scope echo + Trail's check) → the owner's pick: the A-track or C1 (C1 carries K-03).**
 
 ### Repository State
-- Branch `production` HEAD = `053e50c7` (11.484) = `origin/production` (the owner pushed `0e2451e4..053e50c7`).
-- **K1 = 2 commits on `feat/k1-knowledge-scope`** (worktree `/Users/king/Documents/polymath-rebuild/pmv4-k1`, based on
-  `053e50c7`): `64c70cb7` (code + tests + proof) + this close-out. **To tell whether the owner's merge ran:**
-  `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 log --oneline -1 production` shows this close-out. The fleet
-  check (one bundle hash, orchestrator start time) then tells whether the bounce ran.
-- **Fleet (the agent's bounce, 2026-09-25 00:45 MDT):** 26 / 13 / ONE bundle `8b823011b55b`, `/ready` true; the
-  orchestrator has `POLYMATH_CHAT_SEEALSO_BLEND=1`, `POLYMATH_GRAPH_FACT_RANK=1`, `POLYMATH_CHAT_DOC_STEER=1`. K1 adds no
-  flag (an explicit scope is always enforced).
+- Branch `production`. HEAD = this close-out (11.486), on top of `413f01dd`: the owner's fast-forward merge of
+  `feat/k1-knowledge-scope` (`64c70cb7` K1, `4fc6097e` close-out, `413f01dd` live check + K-04).
+- `origin/production` = `053e50c7` (11.484). Unpushed: the three K1 commits + this close-out
+  (`git rev-list --count origin/production..production`). Pushes are the owner's word:
+  `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
+- **Fleet (the owner's bounce, 2026-09-25 03:10 MDT):** 26 / 13 / ONE bundle `ff3bfaac2c61`, `/ready` true; the
+  orchestrator (started 03:10:38) has `POLYMATH_CHAT_SEEALSO_BLEND=1`, `POLYMATH_GRAPH_FACT_RANK=1`,
+  `POLYMATH_CHAT_DOC_STEER=1` (`ps eww`). Running code = committed code (`413f01dd`). K1 adds no flag (an explicit scope
+  is always enforced).
 - **Live `.env` (gitignored):** lines 146–151 = the SEEALSO-BLEND, D1 and DOC-STEER comments + flags (each: rollback = 0
   + a bounce). Unchanged: `POLYMATH_LLM_CLOUD_PRIMARY=0`; chat flags `SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`,
   `PROBE_GATE=1`, `SYNTH_ROLES=1`, `REASONING_POLICY=1` (S4 / S8 off); `CLOUDFLARE_ACCOUNT_ID_3..6` filled, account 1
   retired.
 - `corpora` = cinema, commerce-v1 (`l4-canary` deleted by the owner, 11.481; its leftovers = gap O-05).
-- **Other worktrees:** `pmv4-k1` (above; remove it after the merge). Carried forward: `pmv4-m1-repro`
+- **Other worktrees:** `pmv4-k1` and its branch are removed (merged). Carried forward: `pmv4-m1-repro`
   (`review/m1-reproductions`, kept on purpose); `pmv4-rag-ui` holds another stream's 14 uncommitted files (never add,
   stash or revert them); an old stash `PRE-LIBRARIAN-DEPLOY 2026-09-18` (leave it).
 
@@ -47,9 +48,10 @@ historical, never an instruction.
 - **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 6b K1 = DONE 11.485).
   Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (K-01, K-02 CLOSED 11.485; K-03 OPEN → C1). How to
   build code RAG: `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` (§4 K1 "As built").
-- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ (merge pending) → K1b (K-04) → [the A-track,
+- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ → K1b (K-04) → [the A-track,
   if the owner agrees] → C1 → C2 → C3 → L5 → C6+C7 → C9+C10 (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
-- **K1 (11.485; work-log `2026-09-25-k1-knowledge-scope.md`, evidence `docs/wiki/experiments/k1-knowledge-scope-2026-09-25/`):**
+- **K1 (11.485, LIVE 11.486; work-log `2026-09-25-k1-knowledge-scope.md`, evidence
+  `docs/wiki/experiments/k1-knowledge-scope-2026-09-25/`):**
   - `shared/polymath_shared/code/scope.py`: a request's `scope: {"roles": [...]}`. No scope = both roles, byte-identical
     to before. An explicit scope is ALWAYS enforced (no switch: the 11.471 fail-closed amendment). A malformed scope =
     HTTP 422 `invalid_scope`, never read as both roles.
@@ -76,8 +78,10 @@ historical, never an instruction.
   in the reconciliation.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) stays paused: S5–S7 and S9 wait (S9: 9 of 10 test queries used).
 
-### Completed Since Last Bootstrap (11.484–11.485)
-- **11.485 K1** (above): built, tested, replayed ($0); committed `64c70cb7`; merge + bounce = the owner's Run button.
+### Completed Since Last Bootstrap (11.484–11.486)
+- **11.486 K1 live:** the owner's Run button (merge `053e50c7..413f01dd` + bounce, 03:10) + `live_check.py` exit 0 →
+  LIVE_PATH_PROVEN. Implementation-only still sees reference graph facts (Postgres fact authorization, K-03).
+- **11.485 K1** (above): built, tested, replayed ($0). The live check's control run on the pre-K1 fleet found K-04.
 - **11.484** the external Trail audit admitted + reconciled (documents only).
 - Earlier: 11.477–11.483 (DOC-STEER replay + build, D1 + its post-merge fix + live check, the `l4-canary` delete, the
   lane G receipt): the register and the PRIOR block.
@@ -108,10 +112,9 @@ historical, never an instruction.
   files. Nothing BLOCKED.
 
 ### Proof Status
-- **11.485 K1:** UNIT_PROVEN · REPLAY ($0) · COMMITTED (branch). MERGED + DEPLOYED = after the owner's Run button.
-  LIVE_PATH_PROVEN needs (all $0): `/retrieve` with `scope: {"roles": ["reference"]}` → 200 and its receipt
-  `meta.knowledge_scope == {"roles": ["reference"]}`; the same without a scope → 200, no `knowledge_scope`; a malformed
-  scope → 422; `orchestrator.log` clean.
+- **11.485–11.486 K1:** UNIT_PROVEN · REPLAY ($0) · MERGED · DEPLOYED · **LIVE_PATH_PROVEN** (`live_check.py` exit 0,
+  2026-09-25 03:12 MDT: no scope unchanged; reference-only = the same 15 passages + receipt scope; malformed → 422 +
+  receipt; implementation-only → 0 passages; no new Traceback). Rerun any time with `.env` loaded ($0).
 - **11.478–11.480 D1:** LIVE_PATH_PROVEN (2026-09-25 00:10 MDT).
 - **11.475 SEE ALSO blend + 11.482 DOC-STEER + 11.483 lane G receipt:** DEPLOYED. LIVE_PATH_PROVEN needs one GRAPH or
   WILDCARD chat turn (the owner's word): `meta.retrieval_trace.seealso_fanout.blends` lists SEEALSO lines plus the mode's
@@ -137,24 +140,20 @@ historical, never an instruction.
   `contracts` green since 11.476.
 
 ### Working Tree
-- Main checkout clean. K1 lives in worktree `pmv4-k1` until the merge.
+- Main checkout clean after this close-out.
 
 ### Tooling State
-- graft refreshed at `9fc0956f`; guards 0 in `pmv4-k1` (preflight, repo_guard, wiki_worm); registry 0 errors / 4
-  warnings.
+- graft refreshed at `9fc0956f` (stale: refresh before the next code slice); guards 0 on production after the K1 merge
+  (preflight, repo_guard, wiki_worm) · bundle_integrity READY; registry 0 errors / 4 warnings.
 
 ### Next Action
-1. **The owner's Run button (merge + bounce, back to back):**
-   `cd /Users/king/Documents/polymath-rebuild/polymath-v4 && git merge --ff-only feat/k1-knowledge-scope && bash scripts/bounce_fleet.sh`
-   Then the agent: fleet 26 / 13 / ONE bundle + `/ready`; `docs/wiki/experiments/k1-knowledge-scope-2026-09-25/live_check.py`
-   (with `.env` loaded; exit 0 = LIVE_PATH_PROVEN; its control run on the pre-K1 fleet exited 1); commit `live_check.json`
-   + its TREE entry + a register row; remove worktree `pmv4-k1` (`git worktree remove`; the branch is merged).
+1. (done 03:10–03:12) The owner's Run button + the K1 live check: K1 LIVE_PATH_PROVEN (11.486).
 2. The blend + DOC-STEER live receipt: the owner's next GRAPH / WILDCARD chat.
 3. **The owner's pick:** the A-track (A-03, A-04, A-06, A-05, A-07) before C1, or C1 directly; the five audit questions.
-4. **K1b (K-04)**, then **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28);
+4. **K1b (K-04) next**, then **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28);
    C1 carries K-03.
 5. **L5** before C6 + C7. Fold in when touching the file: L-23 (`document_status.py:212`).
-6. Owner's step pending: the push (after the merge: 2 commits). Small slices when convenient: O-05 (the corpus delete also
+6. Owner's step pending: the push (4 commits). Small slices when convenient: O-05 (the corpus delete also
    sweeps the shared document-profile collections); `test_query_receipts.py` (the stale pin + its hard-coded DSN).
 
 ### Do Not Do
@@ -177,7 +176,6 @@ historical, never an instruction.
 - No permanent deletes by the agent.
 
 ### Live Qualification Queue
-- K1: the four $0 checks under Proof Status (after the owner's Run button).
 - The SEE ALSO blend + DOC-STEER first live receipt (the owner's next GRAPH / WILDCARD chat).
 - Document RAG S9: the owner's word + a bigger query allowance.
 - Benchmark G8 and the `/chat/evidence` probe: the owner's own words.

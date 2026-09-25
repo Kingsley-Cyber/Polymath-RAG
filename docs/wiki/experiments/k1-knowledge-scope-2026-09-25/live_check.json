@@ -1,0 +1,109 @@
+{
+ "question": "How do editors and directors build suspense without dialogue?",
+ "started": "2026-09-25 09:12:00.748985+00:00",
+ "runs": {
+  "none": {
+   "http": 200,
+   "wall_ms": 7461,
+   "evidence": [
+    "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f",
+    "chunk_02b9207a76b241692edb258f343444f2f36ff4219eabc43669958a73a38e28fc",
+    "chunk_1a81f466d51f9724b88f6b2eba5a361545641c01059696c57a318616e981470f",
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_054d0d468c892bd0bee93adbff3f4a946f5f8a763a3ab5c831dfadbeabc84a71",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_37da7c49a2dc9043a38dea6c65c769613580d2d68a3b3481e79906087593ae47",
+    "chunk_a72f1b0f99b235362cc7e6fcef463e9bddc6a11e56fe98307949d413d0dc0183",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_2fc8c26f4d66745732330fe6777ed66ad19d695277d43b18451a0b72be26b0b4",
+    "chunk_562bcdfa7efeee5ef308e52581a37d3f22ea93707ee2e66f4148bed63f703a36"
+   ],
+   "graph_facts": 20,
+   "error_code": null,
+   "receipt": {
+    "knowledge_scope": null,
+    "status": "ok",
+    "error": false
+   }
+  },
+  "reference": {
+   "http": 200,
+   "wall_ms": 2937,
+   "evidence": [
+    "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f",
+    "chunk_02b9207a76b241692edb258f343444f2f36ff4219eabc43669958a73a38e28fc",
+    "chunk_1a81f466d51f9724b88f6b2eba5a361545641c01059696c57a318616e981470f",
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_054d0d468c892bd0bee93adbff3f4a946f5f8a763a3ab5c831dfadbeabc84a71",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_37da7c49a2dc9043a38dea6c65c769613580d2d68a3b3481e79906087593ae47",
+    "chunk_a72f1b0f99b235362cc7e6fcef463e9bddc6a11e56fe98307949d413d0dc0183",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_2fc8c26f4d66745732330fe6777ed66ad19d695277d43b18451a0b72be26b0b4",
+    "chunk_562bcdfa7efeee5ef308e52581a37d3f22ea93707ee2e66f4148bed63f703a36"
+   ],
+   "graph_facts": 20,
+   "error_code": null,
+   "receipt": {
+    "knowledge_scope": {
+     "roles": [
+      "reference"
+     ]
+    },
+    "status": "ok",
+    "error": false
+   }
+  },
+  "malformed": {
+   "http": 422,
+   "wall_ms": 14,
+   "evidence": [],
+   "graph_facts": 0,
+   "error_code": "invalid_scope",
+   "receipt": {
+    "knowledge_scope": {
+     "invalid": true
+    },
+    "status": "error",
+    "error": true
+   }
+  },
+  "implementation": {
+   "http": 200,
+   "wall_ms": 1636,
+   "evidence": [],
+   "graph_facts": 20,
+   "error_code": null,
+   "receipt": {
+    "knowledge_scope": {
+     "roles": [
+      "implementation"
+     ]
+    },
+    "status": "ok",
+    "error": false
+   }
+  }
+ },
+ "checks": {
+  "four_receipts": true,
+  "none_ok_and_unchanged_receipt": true,
+  "reference_ok_and_recorded": true,
+  "malformed_refused_and_recorded": true,
+  "implementation_only_finds_nothing": true,
+  "no_new_traceback": true
+ },
+ "reference_vs_none": {
+  "same": true,
+  "new_in_reference": 0,
+  "of": 15
+ }
+}

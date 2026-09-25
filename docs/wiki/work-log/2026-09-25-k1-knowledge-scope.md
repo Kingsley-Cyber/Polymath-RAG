@@ -86,6 +86,18 @@ last_reviewed: 2026-09-25
   all answered 200 with the same 15 unscoped passages and no `knowledge_scope` on their receipts (the old request models
   drop the unknown field), so the check cannot pass without K1 live. That run also found gap K-04 (below). The run after
   the merge + bounce is the LIVE_PATH proof.
+- LIVE (EXECUTED 2026-09-25 03:12 MDT, register 11.486): the owner's Run button merged `053e50c7..413f01dd` and bounced
+  (READY after ~55 s: 26 workers / 13 types / ONE bundle `ff3bfaac2c61`; the three chat / graph flags unchanged in the
+  orchestrator's environment). `live_check.py` exit 0 (`live_check.json`):
+  - no scope → 200, 15 passages, no `knowledge_scope` on the receipt;
+  - reference-only → 200, the same 15 passages, receipt `knowledge_scope == {"roles": ["reference"]}`;
+  - malformed → 422 `invalid_scope` (14 ms, refused before any search), error receipt `{"invalid": true}`;
+  - implementation-only → 200 with 0 passages: the role clause reaches the live Qdrant searches. It still returned 20
+    graph facts from the books: graph facts are authorized in Postgres, which cannot filter by role before migration
+    0067 (K-03, C1). No implementation material exists, so today this only means an implementation-only request still
+    sees reference graph facts;
+  - no Traceback in orchestrator.log from the new process (the log's 4 older ones predate the 00:45 bounce).
+  Guards 0 on production after the merge; bundle_integrity READY.
 - The receipt change (tests in the same worktree): `test_knowledge_scope.py`, `test_query_receipts.py` (its one fleet
   database test deselected), `test_qualify_lane_and_query_receipts.py`, `test_chat_runtime.py`, `test_chat_funnel.py`,
   `test_chat_evidence_route.py`, `test_adapter_evidence_boundary.py`: all pass except `test_compiler_on…` (known) and

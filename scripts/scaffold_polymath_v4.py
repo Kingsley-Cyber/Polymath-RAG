@@ -2424,6 +2424,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/k1-knowledge-scope-2026-09-25/noise_check.py", "py", None),
     ("docs/wiki/experiments/k1-knowledge-scope-2026-09-25/noise_check.json", "json", None),
     ("docs/wiki/experiments/k1-knowledge-scope-2026-09-25/live_check.py", "py", None),
+    ("docs/wiki/experiments/k1-knowledge-scope-2026-09-25/live_check.json", "json", None),
     ("docs/wiki/work-log/2026-09-25-k1-knowledge-scope.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),
