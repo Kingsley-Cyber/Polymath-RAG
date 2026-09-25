@@ -34,6 +34,7 @@ guards, merge + bounce).
 | R9 | **One searchable corpus, several collections; no new public mode, no new service, no new scheduler.** | owner defaults |
 | R10 | **Documents stay byte-identical with every code flag off** (a test proves it per slice). No fleet-wide `worker_contracts()` key (it would mark every live corpus stale); the code contract travels per document. | feasibility review drift table |
 | R11 | **Code never goes through the document heading skeleton or its curation** (`build_parent_skeletons`). The language parser defines code units; each unit's description is written from its complete source (C-12). | owner 2026-09-24: "pmap does a determinsitic parse and curations of docuemnts headings and subheading but for codes i dont want thats" (11.471) |
+| R12 | **Code units come from the SAME deterministic parser pass that builds the code graph.** One symbol table per file (`code_symbols`) is both the graph's nodes and the enrichment's unit list: every function, method, class and module-init block (Python); function, method and event-handler bodies (Luau); screen, component, control and property formula (Power Fx); service / job / resource sections (YAML); tables and array-table entries (TOML). No second unit detector; coverage is checked against that table. **Names locate units; bodies establish behaviour** (never describe from a name). | owner 2026-09-24: "ensure that the codes identifies all proper functions in respect to the code type. i thinks it should use the same logic used to create th determinisitc graph" + note 8 (11.473) |
 
 **Amendments admitted 11.471 (external end-to-end audit, reconciled in
 `docs/wiki/reports/2026-09-24/CODE-RAG-E2E-AUDIT-RECONCILIATION.md`; they bind the slices below where they differ):**
@@ -48,6 +49,23 @@ guards, merge + bounce).
 - C9 / C10: every route joins one nomination → hydration contract; unit descriptions also reach the base section
   routing, so FAST finds them.
 - The audit's V-* verifiers are the slices' exit proofs.
+
+**Code pMAP contract (owner note 8, 2026-09-24, register 11.473; `docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTE_8_CODE_PMAP.md`):**
+- A code pMAP entry is a searchable, plain-English map entry for one R12 unit, generated from the unit's COMPLETE body, with
+  an exact link (symbol id, file, span, snapshot) back to the source. It replaces heading-based discovery (R11).
+- Process:
+  1. Parse the entire file: every unit, its enclosing context and its location, from the R12 symbol table (coverage
+     without headings).
+  2. Give the model complete bodies: the whole file when input + reserved output fit the lane's usable context
+     (L-track limits); otherwise every section in separate requests carrying the resolved definitions and dependencies.
+     An oversized unit is split on syntax boundaries with its enclosing conditions kept.
+  3. Build descriptions upward: unit descriptions and pMAP entries → screen / module / file profiles; every level keeps
+     its source links.
+- A reference outside the file goes with the request when resolved; otherwise it is named as missing.
+- A 400 KB Power Apps file is processed across its whole screen → control → formula hierarchy (with app variables, data
+  sources and referenced controls where available), never as samples.
+- DAX (measures, calculated columns / tables) and Power Query M (queries, functions, `let` bindings) unit shapes are
+  recorded with the note; they stay candidate languages (§6 item 4).
 
 ## 2. Data contracts
 
@@ -457,5 +475,5 @@ scripts/backfill_knowledge_role.py      idempotent Qdrant set_payload backfill w
 6. Reference books across projects (C-26, narrowed 11.471): a book used by ONE project goes into that project's corpus;
    only a book wanted in TWO corpora needs multi-corpus queries (FAST / HYBRID / GRAPH / WILDCARD / GNN take one corpus
    today). Will any book be shared?
-7. Per-unit plain-English descriptions for code (kept by R1 / R11 so plain questions find code). Keep them?
+7. Per-unit plain-English descriptions for code — **ANSWERED 11.473: yes**, generated from complete bodies (owner note 8).
 5. The live windows: migrations 0067 / 0068, the Qdrant `knowledge_role` backfill.

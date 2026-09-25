@@ -23,7 +23,7 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-24 (L3 close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1, track L (the provider backend). L1 + L2 + L3 DONE and live; L4a (the canary, 11.468) DONE: all 18 Groq pairs and 5 Cloudflare accounts answered live. Cloudflare account 1 RETIRED by the owner (11.469): 5 working Cloudflare accounts (2-6). NEXT = L4b (one document through the fleet): the owner picks the document. Code RAG (CODE-KNOWLEDGE-V1) resumes after L4: D1 → K1 → C1 …**
+## CURRENT — 2026-09-24 (L3 close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1, track L (the provider backend). L1 + L2 + L3 DONE and live; L4a (the canary, 11.468) DONE: all 18 Groq pairs and 5 Cloudflare accounts answered live. Cloudflare account 1 RETIRED by the owner (11.469): 5 working Cloudflare accounts (2-6). Every model tested (11.470). SEE ALSO hop LIVE for GRAPH + WILDCARD (11.472). THE OWNER'S STANDING WORD (2026-09-24): "i decide for all your deficiencies found to be resolved" — work the confirmed gaps in roadmap order. NEXT = L4b (one document through the fleet), then L5 → D1 → K1 → C1 … Code RAG (CODE-KNOWLEDGE-V1) resumes after L4: D1 → K1 → C1 …**
 
 ### Repository State
 - Branch `production`, HEAD = the merge of `fix/retire-cloudflare-account-1` (register 11.469) on top of the L4a records
@@ -69,7 +69,7 @@ historical, never an instruction.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) is paused, not dropped: S5–S7 and S9 wait (S9 needs the owner's
   query allowance; 9 of 10 used). Details: the PREVIOUS block.
 
-### Completed Since Last Bootstrap (11.467–11.471)
+### Completed Since Last Bootstrap (11.467–11.473)
 - **11.468 L4a the canary** (work-log `2026-09-24-llm-canary-l4a.md`, evidence
   `docs/wiki/experiments/llm-backend-l4-canary-2026-09-24/`): the five pasted Cloudflare ids were matched to tokens
   read-only. 3, 4, 5, 6 are wired; the fifth id was account 2's, so account 1 is still missing. 23 real calls, one per
@@ -79,6 +79,11 @@ historical, never an instruction.
 - **11.470 every model tested:** all 44 provider lanes and all 15 chat answer models answered. The only failures were
   transient capacity events: Mistral upstream 429 on OpenRouter, Google 503 on gemini-3.1-flash-lite for accounts 3-4.
   One L3 CI regression was fixed (a stale lane-count test).
+- **11.473 owner note 8:** code units come from the same parser pass as the deterministic graph (R12); code pMAP from
+  complete bodies (whole file when it fits, else every section with dependencies; upward rollups); §6 item 7 = yes.
+- **11.472 SEEALSO-HOP-V1 (LIVE, GRAPH + WILDCARD):** each top SEE ALSO item leads to the books it points at; the
+  question picks their passages. Replay: new evidence in 4 of 5 runs, direct evidence unchanged, +0.04–0.83 s. Also
+  corrected: SEE ALSO was already searched in full (696 cinema items) and ran every GRAPH / WILDCARD turn.
 - **11.471 external code RAG audit admitted:** reconciled item by item; R11 (no heading curation for code); gap C-28.
 - **11.469 retire Cloudflare account 1** (the owner: "dispose of it"): cloudflare_map1 is disabled and off the pMAP pin;
   the credential check skips accounts with no enabled lane; L-11 CLOSED. Working Cloudflare accounts: 2-6.
@@ -173,15 +178,22 @@ historical, never an instruction.
   regression (`test_control_plane_status`, a pre-L3 lane-count snapshot) → fixed in 11.470.
 
 ### Next Action
-1. **L4b: one document through the fleet.** The owner chooses how:
-   - (a) a one-document test corpus `l4-canary` with a small file; the agent first runs the corpus-filter checks the
-     standing rule asks for, and deleting the corpus later is the owner's step;
-   - or (b) the owner's next real upload. No test data; the agent checks that upload's receipts.
+The owner's standing word (2026-09-24): "i decide for all your deficiencies found to be resolved". Work the confirmed gaps
+in this order; live model spend and new corpora still follow the standing rules (staged, receipted, the owner told).
+1. **L4b: one document through the fleet.** The owner has not picked a or b; option (a) is the agent's recommendation:
+   - (a) a one-document `l4-canary` corpus after the corpus-filter checks; deleting it later is the owner's step;
+   - (b) the owner's next real upload.
 
-   Pass: its `doc_profile` attempt row is on the claiming slot's own key (`profile_groqN`, stage `doc_profile`); its pMAP
-   rows are on that slot's `map_groqN` / `map_groqNq` (stage `doc_parent_map`); `document_status` shows 0 unresolved
-   eligible parents (L-19); no call on another slot's key.
-2. Then D1 → K1 → C1 … (roadmap §3).
+   Pass: its profile on the claiming slot's own key, its pMAP rows on that slot's pairs, 0 unresolved eligible parents
+   (L-19).
+2. **L5:** shared budgets across processes (L-06 shared tier, L-22) + batched admissions (L-21).
+3. **D1:** GRAPH hop-1 facts ranked (D-01); MCP truncation marker (D-02).
+4. **K1:** knowledge roles + retrieval scope (K-01, K-02; the external audit's fail-closed rule). The owner's answer on
+   shared books (CODE-RAG-IMPLEMENTATION-V1 §6 item 6) decides whether K1 also adds multi-corpus queries.
+5. **C1 → C14** per the roadmap, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C1 branches
+   before byte normalization, C-28).
+6. Live check of SEEALSO-HOP-V1: the owner's next GRAPH / WILDCARD chat. The receipt's `trace.seealso_fanout.hops` names
+   each hop.
 
 ### Do Not Do
 - Never hand-edit `config/cloud_providers.json` or `config/extraction_models/limiter.yaml`: they are generated (edit the

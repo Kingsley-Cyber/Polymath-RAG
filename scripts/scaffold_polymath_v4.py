@@ -2399,6 +2399,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/seealso-hop-2026-09-24/replay.py", "py", None),
     ("docs/wiki/experiments/seealso-hop-2026-09-24/replay.json", "json", None),
     ("docs/wiki/work-log/2026-09-24-seealso-hop.md", "md", None),
+    ("docs/code-knowledge-v1/ADDENDUM_2026-09-24_OWNER_NOTE_8_CODE_PMAP.md", "md", None),
+    ("docs/wiki/work-log/2026-09-24-owner-note-8-code-pmap.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),
