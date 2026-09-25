@@ -349,8 +349,12 @@ def validate(reg: Registry, env: dict[str, str] | None = None) -> list[Finding]:
                 if total > int(cap):
                     f.append(Finding("warning", "BUDGET_EXCEEDS_QUOTA",
                                      f"{acct.name} × {model}: {metric} budgets reach {total:,} against a quota of {int(cap):,}"))
-    # W4 — credentials the registry names but the environment lacks (booleans only)
+    # W4 — credentials the registry names but the environment lacks (booleans only), for accounts still in use:
+    # an account whose lanes are all disabled is parked or retired (e.g. Cloudflare account 1, register 11.469) and
+    # nothing calls its credentials
     for acct in reg.accounts.values():
+        if not any(lane.enabled for lane in acct.lanes):
+            continue
         if not (env.get(acct.key_env) or "").strip():
             f.append(Finding("warning", "KEY_UNSET", f"{acct.name}: {acct.key_env} is not set"))
         if acct.account_id_env and not (env.get(acct.account_id_env) or "").strip():

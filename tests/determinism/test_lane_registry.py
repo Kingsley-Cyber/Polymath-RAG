@@ -145,11 +145,12 @@ def test_pool_lane_health_counts_active_lanes() -> None:
         assert h["active"] + h["credential_absent"] + h["disabled"] == h["total"]
         assert len(h["active_lanes"]) == h["active"]
     # PMAP total = every lane pinned to doc_parent_map (map_groq1..6 on gpt-oss-20b + map_groq1q..6q on qwen3.8-27b since
-    # LLM-BACKEND L3 + map_fallback_openrouter + cloudflare_map1..2) — pinned to the CONFIG, not a magic number.
+    # LLM-BACKEND L3 + map_fallback_openrouter + cloudflare_map2; cloudflare_map1 retired by the owner, 11.469) — pinned
+    # to the CONFIG, not a magic number.
     import json as _json
     import pathlib as _pl
     pin = _json.loads((_pl.Path(__file__).resolve().parents[2] / "config" / "cloud_providers.json").read_text())["stage_pins"]["doc_parent_map"]
-    assert health[LR.PMAP]["total"] == len(pin) == 15
+    assert health[LR.PMAP]["total"] == len(pin) == 14
 
 
 def test_inventory_flags_dark_pool_when_no_credentials(monkeypatch) -> None:

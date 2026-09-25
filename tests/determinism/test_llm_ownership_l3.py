@@ -149,9 +149,11 @@ def _endpoints(names):
     return [pool.CloudEndpoint(name=n, url="https://example.invalid", model="m", dedicated=True) for n in names]
 
 
-def test_a_pmap_slot_walks_its_own_account_then_the_cloudflare_pair_then_openrouter(monkeypatch):
+def test_a_pmap_slot_walks_its_own_account_then_the_cloudflare_tier_then_openrouter(monkeypatch):
     from workers import doc_parent_map_stage_worker as S
     pin = PROVIDERS["stage_pins"]["doc_parent_map"]
+    cf = [n for n in pin if n.startswith("cloudflare_map")]       # cloudflare_map2 since account 1 retired (11.469)
+    assert cf
     monkeypatch.setattr(pool, "cloud_endpoints", lambda: _endpoints(pin))
     for k in range(1, 7):
         monkeypatch.setenv("POLYMATH_DOC_PARENT_MAP_LANE_OFFSET", str(k))
@@ -159,14 +161,14 @@ def test_a_pmap_slot_walks_its_own_account_then_the_cloudflare_pair_then_openrou
         for i in range(20):
             names = [e.name for e in S._pmap_lanes(f"run_{i}")]
             assert set(names[:2]) == {f"map_groq{k}", f"map_groq{k}q"}
-            assert set(names[2:4]) == {"cloudflare_map1", "cloudflare_map2"}
-            assert names[4:] == ["map_fallback_openrouter"]
+            assert set(names[2:2 + len(cf)]) == set(cf)
+            assert names[2 + len(cf):] == ["map_fallback_openrouter"]
             firsts.add(names[0])
         assert firsts == {f"map_groq{k}", f"map_groq{k}q"}
     # slot 6's own account dark: it maps on the shared tier, never on another key
     monkeypatch.setattr(pool, "cloud_endpoints",
                         lambda: _endpoints([n for n in pin if n not in ("map_groq6", "map_groq6q")]))
-    assert {e.name for e in S._pmap_lanes("run_x")} == {"cloudflare_map1", "cloudflare_map2", "map_fallback_openrouter"}
+    assert {e.name for e in S._pmap_lanes("run_x")} == set(cf) | {"map_fallback_openrouter"}
     # without the index: every active pin lane, rotated by run (pre-L3)
     monkeypatch.delenv("POLYMATH_DOC_PARENT_MAP_LANE_OFFSET")
     monkeypatch.setattr(pool, "cloud_endpoints", lambda: _endpoints(pin))

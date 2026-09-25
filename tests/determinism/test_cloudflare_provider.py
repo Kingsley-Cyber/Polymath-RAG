@@ -221,7 +221,10 @@ def test_owner_split_two_map_lanes_four_extraction_lanes():
     for n in ("cloudflare3", "cloudflare4", "cloudflare5", "cloudflare6"):
         assert cf[n]["dedicated"] is False and cf[n]["structured"] == "json"
     pins = raw["stage_pins"]
-    assert pins["doc_parent_map"][-2:] == ["cloudflare_map1", "cloudflare_map2"]
+    assert pins["doc_parent_map"][-1:] == ["cloudflare_map2"]
+    # account 1 was RETIRED by the owner (2026-09-24, register 11.469; its account id was never found): the lane stays
+    # defined as the record, disabled and off the pin
+    assert "cloudflare_map1" not in pins["doc_parent_map"] and cf["cloudflare_map1"]["enabled"] is False
     assert not any(n.startswith("cloudflare") for n in pins["doc_profile"])           # 0 on profile
     for stage in ("parent_enrichment", "chat_compiler", "doc_profile"):
         assert not ({"cloudflare_map1", "cloudflare_map2"} & set(pins.get(stage) or []))

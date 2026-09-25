@@ -71,7 +71,6 @@
       "map_groq5q",
       "map_groq6q",
       "map_fallback_openrouter",
-      "cloudflare_map1",
       "cloudflare_map2"
     ]
   },
@@ -360,7 +359,7 @@
     },
     {
       "name": "cloudflare_map1",
-      "enabled": true,
+      "enabled": false,
       "url_template": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai",
       "model": "@cf/qwen/qwen3-30b-a3b-fp8",
       "reasoning_effort": null,

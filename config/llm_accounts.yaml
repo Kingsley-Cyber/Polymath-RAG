@@ -101,7 +101,6 @@ stage_pins:
   - map_groq5q
   - map_groq6q
   - map_fallback_openrouter
-  - cloudflare_map1
   - cloudflare_map2
 accounts:
   # Groq (GROQ-MODEL-SWAP-2026-09-23): provider limits are INDEPENDENT per model per key (RPM 30 / RPD 1K / TPM 8K /
@@ -585,14 +584,17 @@ accounts:
   # accounts 3-6 -> graph-extraction helpers (cloudflare3..6). Lane names carry the account number. The URL embeds
   # the account id (url_template + account_id_env): a lane parks until CLOUDFLARE_ACCOUNT_ID_N is set. The API tokens
   # are Workers-AI-scoped: GET /client/v4/accounts lists 0 accounts for all six (2026-09-13 and 2026-09-24), so the
-  # ids come from the owner (dashboard).
+  # ids come from the owner (dashboard). Ids 2-6 are set and answered live (register 11.468).
+  # Account 1 is RETIRED (the owner, 2026-09-24: "its okays for key 1 dispost of it"; its account id was never found —
+  # the id list sent for it was account 2's). cloudflare_map1 is disabled and off the pMAP pin; the account entry stays
+  # as the record (rollback: set its id, re-enable the lane, put it back on the pin, run the writer).
   cloudflare_1:
     provider: cloudflare
     key_env: CLOUDFLARE_API_TOKEN_1
     account_id_env: CLOUDFLARE_ACCOUNT_ID_1
     lanes:
       cloudflare_map1:
-        enabled: true
+        enabled: false
         url_template: https://api.cloudflare.com/client/v4/accounts/{account_id}/ai
         model: '@cf/qwen/qwen3-30b-a3b-fp8'
         reasoning_effort: null
