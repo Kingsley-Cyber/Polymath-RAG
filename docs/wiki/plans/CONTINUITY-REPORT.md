@@ -23,111 +23,99 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-25 (DOC-STEER built + live close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE AND LIVE (11.478–11.480). DOC-STEER-V1 BUILT AND DEPLOYED on the owner's word (11.482: GRAPH bridges + anchors, WILDCARD theories / concepts / latent patterns / tensions join the SEE ALSO blend; HYBRID unchanged) + the chat receipt now keeps lane G's steering lines (11.483). The agent's bounces ran (00:33, 00:45 MDT). LIVE_PATH for the blend + the steer = the owner's next GRAPH / WILDCARD chat. THE OWNER'S STANDING WORD (2026-09-24): "i decide for all your deficiencies found to be resolved". NEXT = K1 → C1 → C2 → C3 → L5 → C6+C7 …**
+## CURRENT — 2026-09-25 (K1 built; merge + bounce = the owner's Run button) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE AND LIVE (11.478–11.480); DOC-STEER-V1 DEPLOYED (11.482–11.483); the external Trail audit ADMITTED (11.484). K1 BUILT (11.485, the owner's "go K1"): knowledge roles + retrieval scope, enforced on every search; committed on `feat/k1-knowledge-scope`. The classifier denied the agent's merge (Production Deploy), so the merge + bounce is the owner's ONE Run-button command (Next Action 1). NEXT = verify K1 live → the owner's pick: the A-track or C1 (C1 now carries K-03).**
 
 ### Repository State
-- Branch `production`. HEAD = this close-out, on top of `a18f1a2e` (11.479 post-merge fix), `08528640` (merge of
-  `fix/d1-graph-fact-rank`, 11.478) and `c03890e5` (11.477 DOC-STEER replay).
-- `origin/production` = `f4b3bacc` (the owner pushed 11.477–11.480 on 2026-09-25 00:12 MDT). Unpushed: 11.481–11.483
-  and this close-out (`git rev-list --count origin/production..production`). Pushes are the owner's word:
-  `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
-- **Fleet (the agent's bounce, 2026-09-25 00:45 MDT; the classifier allowed it):** 26 / 13 / ONE bundle `8b823011b55b`,
-  `/ready` true; the orchestrator started 00:45:56 with `POLYMATH_CHAT_SEEALSO_BLEND=1`, `POLYMATH_GRAPH_FACT_RANK=1` and
-  `POLYMATH_CHAT_DOC_STEER=1` (`ps eww`). Running code = committed code (`ac9d677e`).
-- **D1 live check** (`docs/wiki/experiments/graph-fact-rank-2026-09-24/live_check.py`, $0; rerun any time with `.env`
-  loaded): exit 0 at 00:10 (`live_check.json`): `/retrieve` GRAPH `fact_order: "ranked"`, 20 facts, all three
-  questions; MCP rows: the 1 cut row of 114 marked, none unmarked at or over 1,200 (before: 2 of 116 cut unmarked).
-- **Live `.env` (gitignored):** lines 146–147 hold the SEEALSO-BLEND comment + `POLYMATH_CHAT_SEEALSO_BLEND=1`; lines
-  148–149 the D1 comment + `POLYMATH_GRAPH_FACT_RANK=1`; lines 150–151 the DOC-STEER comment + `POLYMATH_CHAT_DOC_STEER=1`
-  (each: rollback = 0 + a bounce). Unchanged:
-  `POLYMATH_LLM_CLOUD_PRIMARY=0`; chat flags `SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`, `PROBE_GATE=1`,
-  `SYNTH_ROLES=1`, `REASONING_POLICY=1` (S4 / S8 off); `CLOUDFLARE_ACCOUNT_ID_3..6` filled, account 1 retired.
-- **Test corpus `l4-canary`: DELETED by the owner (2026-09-25, 11.481).** `corpora` = cinema, commerce-v1. The delete
-  path leaves 32 points in the shared document-profile collections + rows in four derived tables → gap O-05 (Low, no
-  cross-corpus leak; the purge is the owner's step, the fix a small slice).
-- **Other worktrees:** the D1 and blend worktrees are removed (branches merged). Carried forward: `pmv4-m1-repro`
+- Branch `production` HEAD = `053e50c7` (11.484) = `origin/production` (the owner pushed `0e2451e4..053e50c7`).
+- **K1 = 2 commits on `feat/k1-knowledge-scope`** (worktree `/Users/king/Documents/polymath-rebuild/pmv4-k1`, based on
+  `053e50c7`): `64c70cb7` (code + tests + proof) + this close-out. **To tell whether the owner's merge ran:**
+  `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 log --oneline -1 production` shows this close-out. The fleet
+  check (one bundle hash, orchestrator start time) then tells whether the bounce ran.
+- **Fleet (the agent's bounce, 2026-09-25 00:45 MDT):** 26 / 13 / ONE bundle `8b823011b55b`, `/ready` true; the
+  orchestrator has `POLYMATH_CHAT_SEEALSO_BLEND=1`, `POLYMATH_GRAPH_FACT_RANK=1`, `POLYMATH_CHAT_DOC_STEER=1`. K1 adds no
+  flag (an explicit scope is always enforced).
+- **Live `.env` (gitignored):** lines 146–151 = the SEEALSO-BLEND, D1 and DOC-STEER comments + flags (each: rollback = 0
+  + a bounce). Unchanged: `POLYMATH_LLM_CLOUD_PRIMARY=0`; chat flags `SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`,
+  `PROBE_GATE=1`, `SYNTH_ROLES=1`, `REASONING_POLICY=1` (S4 / S8 off); `CLOUDFLARE_ACCOUNT_ID_3..6` filled, account 1
+  retired.
+- `corpora` = cinema, commerce-v1 (`l4-canary` deleted by the owner, 11.481; its leftovers = gap O-05).
+- **Other worktrees:** `pmv4-k1` (above; remove it after the merge). Carried forward: `pmv4-m1-repro`
   (`review/m1-reproductions`, kept on purpose); `pmv4-rag-ui` holds another stream's 14 uncommitted files (never add,
-  stash or revert them); an old stash `PRE-LIBRARIAN-DEPLOY 2026-09-18` belongs to that era (leave it).
+  stash or revert them); an old stash `PRE-LIBRARIAN-DEPLOY 2026-09-18` (leave it).
 
 ### Active Mission
-- **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 6 D1 = DONE 11.478).
-  Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (78 rows: 22 closed, 56 open). How to build code RAG:
-  `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md`.
-- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → **K1** → C1 → C2 → C3 → L5 → C6+C7 → C9+C10
-  (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
+- **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 6b K1 = DONE 11.485).
+  Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (K-01, K-02 CLOSED 11.485; K-03 OPEN → C1). How to
+  build code RAG: `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` (§4 K1 "As built").
+- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ (merge pending) → [the A-track, if the
+  owner agrees] → C1 → C2 → C3 → L5 → C6+C7 → C9+C10 (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
+- **K1 (11.485; work-log `2026-09-25-k1-knowledge-scope.md`, evidence `docs/wiki/experiments/k1-knowledge-scope-2026-09-25/`):**
+  - `shared/polymath_shared/code/scope.py`: a request's `scope: {"roles": [...]}`. No scope = both roles, byte-identical
+    to before. An explicit scope is ALWAYS enforced (no switch: the 11.471 fail-closed amendment). A malformed scope =
+    HTTP 422 `invalid_scope`, never read as both roles.
+  - Reference-only = Qdrant `must_not knowledge_role == "implementation"` (a point without the field is reference: no
+    backfill); implementation-only = `must`. `scope_kwargs(scope)` passes the scope only when it narrows.
+  - Every search and route takes it (FAST / HYBRID / GRAPH / WILDCARD / GNN, the profile scout, Corpus Explore, the
+    compiler, /retrieve, /retrieve/plan, /chat, /chat/evidence, /evidence, /ask, /compare). Trail sends
+    `{"roles": ["reference"]}` on every path (evidence body, legacy /retrieve, plan lane, graph fallback).
+  - Receipts: the recorder keeps the request's scope as `meta.knowledge_scope` (ok + error receipts; a response
+    cannot set it).
+  - Proof: 20 unit tests incl. a caller pin; tests/contracts 145 / 145; $0 replay (12 of 12 reference-only runs scoped
+    every search except the corpus readiness count; evidence identical in 10 of 12, the other 2 did not recur in 8
+    noise-check runs); cost 19–21 → 25 ms median per search on the 163k-point collection (no payload index).
 - **The owner's decisions on record (11.452–11.478):** code RAG languages and architecture (11.452–11.457); R11 (no
   heading curation for code, 11.471); R12 + the code pMAP contract (11.473); no reference book shared across projects
-  (11.474); SEE ALSO is document-level and never picks books (11.475). Details: the PRIOR block and the register.
-- **DOC-STEER-V1 (gap D-10, CLOSED) — BUILT + DEPLOYED 11.482** on the owner's word ("build it" … "i agree"; work-log
-  `2026-09-25-doc-steer-v1.md`): `skeleton_routes.DOC_STEER_KINDS` = GRAPH `BRIDGE` + `ANCHOR`, WILDCARD `THEORY` +
-  `CONCEPT` + `LATENT_PATTERN` + `TENSION`; HYBRID none; rides the blend flag. Build proof: the built steer equals the
-  replay's simulated steer in 5 of 6 runs (the sixth: upstream noise). The replay that chose it (11.477,
-  `2026-09-24-doc-steer-replay.md`): Steer vs the live SEE ALSO blend, each new / displaced passage read: GRAPH with
-  BRIDGE + ANCHOR lines 2 better / 1 same; WILDCARD with THEORY + CONCEPT + LATENT_PATTERN + TENSION 2 of 2 better
-  (adding INVERSION made 1 of 2 worse); HYBRID with CONCEPT no change; question weight 0.6 worse 2 of 2 (keep 0.7). Direct
-  evidence unchanged everywhere; lane G +0.5–1.2 s, retrieval wall within ±0.3 s. FAST untested (no stored FAST
-  question).
-- **External Trail Signal holistic audit (11.484)** — admitted: `docs/wiki/reports/2026-09-25/TRAIL-SIGNAL-HOLISTIC-AUDIT.md`
-  (verbatim) + `TRAIL-SIGNAL-AUDIT-RECONCILIATION.md`. Its FAIL judges the owner's full "wakes itself" vision, not the RAG.
-  11 of 17 findings are confirmed in code → gap section A (A-01..A-08). Proposed order (the owner decides): K1 → an A-track
-  of small correctness slices (A-03 no-signal ending, A-04 research limits, A-06 citation refs, A-05 gap closure, A-07
-  adapter entry) → automation (A-01, A-02, A-08) only after an owner mandate; T-01 needs the owner's word to change the M1
-  tests. Five owner questions are listed in the reconciliation.
-- **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) stays paused: S5–S7 and S9 wait (S9 needs the owner's query
-  allowance; 9 of 10 used).
+  (11.474); SEE ALSO is document-level and never picks books (11.475). Details: the register.
+- **DOC-STEER-V1 (D-10, CLOSED) — DEPLOYED 11.482:** GRAPH `BRIDGE` + `ANCHOR`, WILDCARD `THEORY` + `CONCEPT` +
+  `LATENT_PATTERN` + `TENSION` join the SEE ALSO blend; HYBRID none; rides the blend flag (work-log
+  `2026-09-25-doc-steer-v1.md`; replay 11.477).
+- **External Trail Signal audit (11.484):** `docs/wiki/reports/2026-09-25/TRAIL-SIGNAL-HOLISTIC-AUDIT.md` (verbatim) +
+  `TRAIL-SIGNAL-AUDIT-RECONCILIATION.md`. 11 of 17 findings confirmed → gap section A. Proposed after K1 (the owner
+  decides): the A-track (A-03 no-signal ending, A-04 research limits, A-06 citation refs, A-05 gap closure, A-07 adapter
+  entry); automation (A-01, A-02, A-08) only after an owner mandate; T-01 needs the owner's word. Five owner questions
+  in the reconciliation.
+- **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) stays paused: S5–S7 and S9 wait (S9: 9 of 10 test queries used).
 
-### Completed Since Last Bootstrap (11.477–11.483)
-- **11.483 the chat receipt keeps lane G's steering lines:** `retrieval_trace.seealso_fanout` (lines + kinds + candidate
-  counts, no clock readings). The 11.475 live-proof pointer ("trace.seealso_fanout.blends") named a field that was never
-  stored; the stored field is `query_receipts.meta.retrieval_trace.seealso_fanout`.
-- **11.482 DOC-STEER-V1 built + deployed** (above).
-- **11.481:** the owner deleted the `l4-canary` test corpus; the delete's leftovers became gap O-05.
-- **11.480 D1 live:** the owner's bounce (00:09) + `live_check.py` exit 0 → LIVE_PATH_PROVEN.
-- **11.479 D1 post-merge fix:** the bounce was denied, so the old orchestrator loaded the new `chat_retrieval.py` beside its
-  old in-memory `retrieve` and failed the new import (`/retrieve` GRAPH 500; chat would have failed). Guarded import
-  (fallback = the legacy order) + a test; `/retrieve` GRAPH 200 again. The bootstrap skill now warns about this pattern.
-- **11.478 D1** (work-log `2026-09-24-d1-graph-fact-rank.md`, evidence `docs/wiki/experiments/graph-fact-rank-2026-09-24/`):
-  - `POLYMATH_GRAPH_FACT_RANK`: the authorized hop-1 pool (≤ 500) ranked by `rank_graph_facts`: evidence on the page →
-    a specific predicate before `RELATED_TO` → the seeds take turns → `fact_id`; entity cards keep the probe's
-    best-first order;
-  - replay, 8 GRAPH questions: citable facts 12 → 30, `RELATED_TO` 10 → 2, direct evidence unchanged;
-  - a strict seed order was rejected: the off-topic top card "ADR" (matched on "without dialogue") filled the list;
-  - MCP Server A marks cut rows (`truncated` + `full_length`); gap D-01 CLOSED; D-02's marker done, its full-unit reader
-    stays with C9.
-- **11.477 DOC-STEER-V1 replay** (above).
-- Earlier: 11.467–11.476 (L3, L4a/b, Cloudflare account 1, every model tested, the external audit, owner note 8, the SEE
-  ALSO blend, the CI pin fix): the PRIOR block.
+### Completed Since Last Bootstrap (11.484–11.485)
+- **11.485 K1** (above): built, tested, replayed ($0); committed `64c70cb7`; merge + bounce = the owner's Run button.
+- **11.484** the external Trail audit admitted + reconciled (documents only).
+- Earlier: 11.477–11.483 (DOC-STEER replay + build, D1 + its post-merge fix + live check, the `l4-canary` delete, the
+  lane G receipt): the register and the PRIOR block.
 
 ### Current Contract State
+- **Knowledge scope (K1):** a new search function, or a new call of a scoped search, must thread the request's scope
+  (`**scope_kwargs(scope)`); the caller pin in `tests/determinism/test_knowledge_scope.py` fails otherwise (it walks
+  orchestrator / shared / workers / control / mcp_server). The scope comes from the request only: never from a plan or an
+  LLM output. Postgres-side reads are NOT role-filtered yet (K-03): C1 must land migration 0067 + `sql_predicate` on those
+  reads BEFORE its importer writes any implementation document.
+- **Trail's evidence body** is exactly five fields (`message`, `corpus_id`, `mode`, `corpus_explorer`, `scope`); pinned in
+  `tests/contracts/test_adapter_worker_evidence_surface.py` and `test_adapter_evidence_boundary.py`.
 - **Registry → generated runtime files:** edit `config/llm_accounts.yaml` only, then `scripts/llm_accounts.py write`.
 - **Ownership:** `pool.owned_lane_order` (own lanes → shared tier → "fallback"; never another slot's); slot index from
   the supervisor. **Limiter (L2):** per-process budgets; the shared tier's cross-process budget = L5 (L-06, L-21, L-22).
-- **Lane G (chat):** the global door + the SEE ALSO blend (`POLYMATH_CHAT_SEEALSO_BLEND=1`; knobs `_DOCS / _ITEMS /
-  _CHILDREN / _ALPHA` = 4 / 4 / 4 / 0.7) in every mode that opens lane G (HYBRID with nominated documents, GRAPH,
-  WILDCARD); receipt `trace.seealso_fanout.blends`. `/retrieve` does not apply the skeleton routes, so lane G stays off
-  there.
-- **Graph hop-1 (D1):** `retrieve._neo4j_expand` serves every graph caller (chat `_attach_graph`, lane H
-  `graph_dest_search`, `/retrieve`, `/chat/evidence`, graph browse). With the flag ON: the same Cypher (authorization
-  inside, before the limit) reads `LIMIT $pool` (500), `rank_graph_facts` keeps 20. Receipts: chat
-  `meta.graph_bounds.fact_order`, `/retrieve` legacy lane `graph_fact_order`. Lane H's destination documents follow the
-  ranked facts (replayed: 6 of 8 evidence sets identical, one within noise, one off-topic swap).
-- **MCP Server A:** `_trim_rows` (1,200) / `_trim_hit` (1,400 / 600) add `truncated: true` + `full_length` on a cut row
-  only. Server B (stdio) never trims.
+- **Lane G (chat):** the global door + the SEE ALSO blend (knobs `_DOCS / _ITEMS / _CHILDREN / _ALPHA` = 4 / 4 / 4 / 0.7)
+  + DOC-STEER in every mode that opens lane G (HYBRID with nominated documents, GRAPH, WILDCARD); receipt
+  `query_receipts.meta.retrieval_trace.seealso_fanout`. `/retrieve` does not apply the skeleton routes (lane G off there).
+- **Graph hop-1 (D1):** `retrieve._neo4j_expand` serves every graph caller; flag ON: `LIMIT $pool` (500),
+  `rank_graph_facts` keeps 20. Receipts: chat `meta.graph_bounds.fact_order`, `/retrieve` `graph_fact_order`.
+- **MCP Server A:** `_trim_rows` (1,200) / `_trim_hit` (1,400 / 600) mark a cut row (`truncated` + `full_length`).
 
 ### Active Impact Closure
-- 11.478: CANDIDATE_ENGINE + MCP_SURFACE UPDATED; ACCEPTANCE, PROFILE_YIELD_RECEIPT, RESOLUTION_STATE, RETRIEVAL_RECEIPT
-  TESTED_UNCHANGED (395 tests = production's 2 known failures); DEFERRED: `test_query_receipts.py`, the two integration
-  files. 11.479: CANDIDATE_ENGINE UPDATED (an import guard; 322 tests, the same 2 known failures). 11.477: none (replay).
-  Nothing BLOCKED.
+- 11.485: ADAPTER_RUNTIME, EVIDENCE_BOUNDARY_API, PROFILE_ATOM, PROFILE_PROJECTION, PROFILE_SCOUT_WIRING,
+  CANDIDATE_ENGINE UPDATED; ACCEPTANCE, EVIDENCE_PACKET, MCP_SURFACE, PROFILE_SCOUT_FUSION / INPUT / OUTPUT,
+  PROFILE_YIELD_RECEIPT, QUERY_PLANNER, RESOLUTION_STATE, RETRIEVAL_RECEIPT, SUBQUERY_PROVENANCE TESTED_UNCHANGED;
+  DEFERRED: `test_query_receipts.py`'s fleet-database test, `test_adapter_product_discovery_loop.py`, the integration
+  files. Nothing BLOCKED.
 
 ### Proof Status
-- **11.478–11.480 D1:** UNIT_PROVEN (13 tests) · REPLAY (8 questions, $0) · MERGED · DEPLOYED · **LIVE_PATH_PROVEN**
-  (`live_check.py` exit 0, 2026-09-25 00:10 MDT).
-- **11.475 SEE ALSO blend + 11.482 DOC-STEER:** DEPLOYED (env verified). LIVE_PATH_PROVEN needs one GRAPH or WILDCARD
-  chat turn (the owner's word): `query_receipts.meta.retrieval_trace.seealso_fanout.blends` must list SEEALSO lines plus
-  the mode's steer kinds, with `steer_candidates` ≥ 0 recorded (11.483 stores it).
-- **11.483 lane G receipt:** UNIT_PROVEN · DEPLOYED (the same chat turn proves it).
-- **11.477 DOC-STEER:** REPLAY only (no code).
+- **11.485 K1:** UNIT_PROVEN · REPLAY ($0) · COMMITTED (branch). MERGED + DEPLOYED = after the owner's Run button.
+  LIVE_PATH_PROVEN needs (all $0): `/retrieve` with `scope: {"roles": ["reference"]}` → 200 and its receipt
+  `meta.knowledge_scope == {"roles": ["reference"]}`; the same without a scope → 200, no `knowledge_scope`; a malformed
+  scope → 422; `orchestrator.log` clean.
+- **11.478–11.480 D1:** LIVE_PATH_PROVEN (2026-09-25 00:10 MDT).
+- **11.475 SEE ALSO blend + 11.482 DOC-STEER + 11.483 lane G receipt:** DEPLOYED. LIVE_PATH_PROVEN needs one GRAPH or
+  WILDCARD chat turn (the owner's word): `meta.retrieval_trace.seealso_fanout.blends` lists SEEALSO lines plus the mode's
+  steer kinds.
 - INVALIDATED: none.
 
 ### Runtime / Test Resolution
@@ -137,32 +125,39 @@ historical, never an instruction.
   --junitxml=<scratch>/r.xml`; compare with production. `tests/contracts/` is DB-free: run it whole before merging.
 - Exclude the fleet-DB files (`test_query_receipts.py`, `test_incremental_census.py`,
   `test_adapter_worker_registration.py`, `test_adapter_product_discovery_loop.py`); never run all of `tests/determinism`.
+  `test_query_receipts.py`'s pure tests can run with `-k "not test_record_then_read_back_through_both_surfaces"` (the only
+  test that opens its hard-coded fleet DSN).
 - **Merge → bounce window (11.479):** a new orchestrator file imported lazily can meet an old in-memory module. Guard
   imports of new cross-module symbols; after a merge the bounce did not follow, `curl` `/retrieve` GRAPH ($0) and read
-  `orchestrator.log` for a new Traceback.
+  `orchestrator.log` for a new Traceback. K1 adds no such import (new symbols live only in the new `code/scope.py` and in
+  `query_receipts`, which nothing else imports from).
 - Known pre-existing failures: `test_chat_modes::test_wildcard_sweep_overlaps…`, `test_chat_runtime::test_compiler_on…`,
-  `test_synthesis_attempt_telemetry::…` (order-dependent). CI `determinism` = 13 known failures (checked on `9fc0956f`:
-  identical by test id); CI `contracts` green since 11.476.
+  `test_synthesis_attempt_telemetry::…` (order-dependent), `test_query_receipts::test_all_three_query_handlers…` (pins 2
+  chat receipt writers; production has 4 since /chat/evidence). CI `determinism` = 13 known failures (on `9fc0956f`); CI
+  `contracts` green since 11.476.
 
 ### Working Tree
-- Main checkout clean after this close-out.
+- Main checkout clean. K1 lives in worktree `pmv4-k1` until the merge.
 
 ### Tooling State
-- graft refreshed at `9fc0956f` this session; guards 0 · bundle_integrity READY · registry 0 errors / 4 warnings.
+- graft refreshed at `9fc0956f`; guards 0 in `pmv4-k1` (preflight, repo_guard, wiki_worm); registry 0 errors / 4
+  warnings.
 
 ### Next Action
-1. (done 00:09–00:10) The owner's bounce + the D1 live check: D1 LIVE_PATH_PROVEN (11.480).
-2. (done 11.482–11.483) DOC-STEER built + deployed; the receipt keeps lane G's lines. After the owner's next GRAPH /
-   WILDCARD chat: read `meta.retrieval_trace.seealso_fanout` on that receipt and record LIVE_PATH_PROVEN.
-3. **K1** (roadmap row 6b): knowledge roles + retrieval scope (K-01, K-02; the external audits' fail-closed rule); no
-   multi-corpus query (no shared books). The Trail audit (11.484) also puts K1 before any code ingestion. Then, if the
-   owner agrees, the A-track (A-03, A-04, A-06, A-05, A-07) before C1.
-4. **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28).
+1. **The owner's Run button (merge + bounce, back to back):**
+   `cd /Users/king/Documents/polymath-rebuild/polymath-v4 && git merge --ff-only feat/k1-knowledge-scope && bash scripts/bounce_fleet.sh`
+   Then the agent: fleet 26 / 13 / ONE bundle + `/ready`; the K1 live checks under Proof Status; a register row for
+   LIVE_PATH_PROVEN; remove worktree `pmv4-k1` (`git worktree remove`; the branch is merged).
+2. The blend + DOC-STEER live receipt: the owner's next GRAPH / WILDCARD chat.
+3. **The owner's pick:** the A-track (A-03, A-04, A-06, A-05, A-07) before C1, or C1 directly; the five audit questions.
+4. **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28); C1 carries K-03.
 5. **L5** before C6 + C7. Fold in when touching the file: L-23 (`document_status.py:212`).
-6. Owner's step pending: the push. Small slice when convenient: O-05 (the corpus delete also sweeps the shared
-   document-profile collections by `corpus_id`).
+6. Owner's step pending: the push (after the merge: 2 commits). Small slices when convenient: O-05 (the corpus delete also
+   sweeps the shared document-profile collections); `test_query_receipts.py` (the stale pin + its hard-coded DSN).
 
 ### Do Not Do
+- Never add a switch that turns scope enforcement off, never let a plan or an LLM output set or widen a scope, and never
+  call a scoped search without the request's scope (K1, 11.471).
 - Never hand-edit `config/cloud_providers.json` or `config/extraction_models/limiter.yaml` (generated).
 - Never let a profile / pMAP slot fail over to another slot's key; keep the operator backfill on `--lanes` from the
   shared tier (L-22).
@@ -173,20 +168,23 @@ historical, never an instruction.
 - Never run all of `tests/determinism`; `test_live_*` and live chat turns only on the owner's word (9 of 10 used).
 - No LLM language detection or LLM code facts, no new chat mode, no second scheduler, no fixed fusion weights, no
   heading curation for code (R11), no second unit detector for code (R12).
-- Never touch `pmv4-rag-ui`'s uncommitted files. Never re-issue a command the owner or the classifier denied (bounces
-  are the owner's Run button).
-- No permanent deletes by the agent (the `l4-canary` corpus, the retired Cloudflare token).
+- Never touch `pmv4-rag-ui`'s uncommitted files. Never re-issue a command the owner or the classifier denied (merges and
+  bounces it denies are the owner's Run button).
+- No permanent deletes by the agent.
 
 ### Live Qualification Queue
-- The SEE ALSO blend + DOC-STEER first live receipt (the owner's next GRAPH / WILDCARD chat;
-  `meta.retrieval_trace.seealso_fanout`).
+- K1: the four $0 checks under Proof Status (after the owner's Run button).
+- The SEE ALSO blend + DOC-STEER first live receipt (the owner's next GRAPH / WILDCARD chat).
 - Document RAG S9: the owner's word + a bigger query allowance.
 - Benchmark G8 and the `/chat/evidence` probe: the owner's own words.
 
 ### Deferred Architecture
+- K-03: Postgres-side role filtering (migration 0067) → C1.
 - L5: budgets shared across processes (L-06, L-22) and batched admissions (L-21).
 - The joint code ↔ document graph walk: C8 → G1 + C11.
-- Gap rows O-01..O-04, T-01, T-02, D-03..D-09: open, not scheduled. GNN retrieval stays experimental.
+- Gap rows O-01..O-05, T-01, T-02, D-03..D-09, A-01..A-08: open, not scheduled. GNN retrieval stays experimental.
+
+## PRIOR — 2026-09-25 (DOC-STEER built + live close-out) — **the structured handoff after 11.477–11.483 (and the audit admission 11.484): K1 was next.** Superseded by the K1 block above; its facts are carried forward there (D1 live, DOC-STEER deployed, the 00:45 bounce on bundle `8b823011b55b`).
 
 ## PRIOR — 2026-09-24 (L4 + SEE ALSO blend close-out) — **the structured handoff after 11.474–11.476 (`9fc0956f`, pushed): the owner's bounce and D1 were next.** Superseded by the D1 close-out above; its facts are carried forward there (L1–L4 done, the SEE ALSO blend merged, gap D-10 = the owner's DOC-STEER idea).
 
