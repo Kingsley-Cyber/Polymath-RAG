@@ -2,7 +2,8 @@
 change_id: DOCUMENT-SCOPED-RETRIEVE-V1
 owner: orchestrator
 date: 2026-09-04
-status: DONE (pure suite green; not yet fleet-restarted / merged)
+status: complete
+status_note: "DONE (pure suite green; not yet fleet-restarted / merged)"
 architecture_impact: none — an ADDITIVE optional `document_ids` filter on the retrieval read path (POST /retrieve default lane + EXPLORE, POST /retrieve/plan), advertised in GET /capabilities. Ranking, fusion, scope resolution and the extraction pipeline are untouched; with the field absent every statement is byte-identical to before.
 last_reviewed: 2026-09-04
 ---

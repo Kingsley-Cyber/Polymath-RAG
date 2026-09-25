@@ -2,7 +2,8 @@
 change_id: FAMILY-INTERLEAVE-V1 + OPENROUTER-LANES-V1
 owner: governance
 date: 2026-09-01
-status: complete (live receipt below)
+status: complete
+status_note: "complete (live receipt below)"
 architecture_impact: shard ring order (pool.cloud_ring), provider roster (+2 lanes), enrichment pin (+2)
 last_reviewed: 2026-09-01
 ---

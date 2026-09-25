@@ -4,7 +4,8 @@ change_id: ELITE-MODE-RETRIEVAL-SYNTHESIS-V1
 date: 2026-09-17
 owner: orchestrator
 last_reviewed: 2026-09-17
-status: executing
+status: complete
+status_note: "Slice C shipped and live (register 11.277-11.279); its open items were closed by slices D-E (11.278) and the vNext pin (11.279). (was: executing)"
 architecture_impact: "Synthesis now consumes compiled document-profile ONE/SUMMARY + parent-map signatures (ORIENTATION) and WILDCARD bridges (DERIVED [A#]). Chat flags INTENT_POLICY / HIERARCHY_ROUTE_DOCUMENTS / SYNTH_ROLES enabled in fleet .env. Cinema Qdrant document profiles re-projected from stored v3.2 artifacts (no Groq). Frontend files Claude already added are TREE-declared. No new mode, no new collection."
 ---
 

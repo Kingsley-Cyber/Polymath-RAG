@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.83
 package: workers/workers/summary_worker_impl.py, shared/polymath_shared/latent/runtime.py
 architecture_impact: "Enrichment done-ness and identity reuse now require the row's parent chunk to exist: `_enrichment_row_done` (READY or terminal-INVALID on a LIVE parent; summary_jobs state is never proof), `persist_compiled_parent` deletes an orphan row under the same input_hash instead of answering EXISTING and re-points the row on an INVALID→READY upgrade, and both persistence sites in the sweep skip a parent whose chunk is gone (ENRICH_PERSIST_SKIPPED_DOC_GONE). One-off cleanup removed 922 orphan rows across 64 documents. No schema change."

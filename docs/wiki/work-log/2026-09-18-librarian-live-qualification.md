@@ -4,7 +4,8 @@ change_id: LIBRARIAN-LIVE-QUALIFICATION
 date: 2026-09-18
 owner: librarian
 last_reviewed: 2026-09-18
-status: in_progress
+status: complete
+status_note: "Qualified live (11.301). P10 wiring shipped as 11.303, GRAPH fail-open as 11.304, the final 64x4 in 11.311; res_shutter_motion is a known limit. (was: in_progress)"
 architecture_impact: "Qualifies the deployed Librarian retrieval path against the real cinema corpus through the production /chat/stream endpoint (mission §10-§27). No production code change — this is the evidence layer: harness + 64-query gold set + summary in eval/librarian_qualification/. Records what is LIVE-PROVEN (scout, P6 provenance, P11 profile-expansion + yield, the four modes, retrieval quality) vs the remaining live item (P10 resolution bundle-merge)."
 ---
 

@@ -4,7 +4,8 @@ change_id: U2-PERSISTENCE-CANARY-V1
 date: 2026-09-10
 owner: governance
 last_reviewed: 2026-09-10
-status: complete (canary executed); VERDICT = HOLD ACTIVE
+status: complete
+status_note: "complete (canary executed); VERDICT = HOLD ACTIVE"
 register: 11.200
 package: "scripts/u2_persistence_canary.py + docs/wiki/experiments/u2-persistence-canary-2026-09-10/"
 architecture_impact: "none — one bounded document through the REAL production path. No code changed, no backfill resumed, auto-mint scope untouched."

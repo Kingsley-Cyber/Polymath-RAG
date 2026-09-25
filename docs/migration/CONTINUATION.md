@@ -155,7 +155,7 @@ identity; `query_receipts.principal_id`. The pre-existing `POLYMATH_MCP_API_KEY`
   assumptions` (`hypotheses.py:31`); `K_revise.open_gaps` shadowed by `L_judge`'s; `K_questions.need` never reaches `K_retrieve` (`evidence_boundary.py:116` scope excludes `outputs`); the 60-row readable cap hid EVERY second / third-pass knowledge row from the
   agent in run 5; ledger `field_evidence_ids` stays empty; polarity = role `contradiction` or a leading negation word (`admission.py:28, 223`), global per observation; `content` axis structurally unreachable, `growth` = seasonality; seed CSV
   `shared_predicates` + `participant` constant on 1380 / 1380 rows; the dossier reads the 4-field view (empty mechanism / population columns, `bridges: []`); the host journal does not store `materials`.
-- Trail-side, inside the embedded code, reproduced not repaired: D1, M1-01..03. `trail.product_discovery` (unchanged by design): D2–D7, M1-04..12.
+- Trail-side, inside the embedded code, reproduced not repaired: M1-01..03 (D1 was repaired in register 11.382; M1-01..03 are gap-register row T-01, 2026-09-24). `trail.product_discovery` (unchanged by design): D2–D7, M1-04..12.
 - Registry: 236 of Trail's own seeds reference 10 friction families Trail's library never defines; the engine mirror defines them (M-014, owner decision open, not blocking).
 - First knowledge pass still sends hypothesis statements (D2). Pre-existing red determinism tests on `production` (incl. `test_query_receipts.py::test_all_three_query_handlers_and_read_surfaces_are_wired`).
 - Principal layer: queries made BY a friend's adapter run carry no principal (worker is outside the context) → not in its `history.read`. Server B `--http` has a host-path tool and is not served. Both deferred.

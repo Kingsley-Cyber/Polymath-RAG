@@ -2,7 +2,8 @@
 change_id: kimi-architecture-realignment-v1
 owner: worker
 date: 2026-08-17
-status: in-progress
+status: complete
+status_note: "Superseded by LLM-direct extraction (ADR-0017, register 11.62-11.64); the Kimi/GLiNER path was deleted in 11.64; its harnesses remain only under eval/. (was: in-progress)"
 architecture_impact: realigns-candidate-generation-to-kimi-ud-role-binding
 last_reviewed: 2026-08-17
 ---

@@ -4,7 +4,8 @@ change_id: OPERATIONAL-UI-V1
 date: 2026-09-09
 owner: frontend (ControlPlaneView) — renders CONTROL-PLANE-STATUS-V1, recomputes nothing, shows no secret
 last_reviewed: 2026-09-09
-status: complete (Slice 3 of the operational-UI frontend; Chat selectors + acceptance gate follow)
+status: complete
+status_note: "complete (Slice 3 of the operational-UI frontend; Chat selectors + acceptance gate follow)"
 register: 11.187
 package: frontend/src/components/ControlPlaneView.tsx, frontend/src/components/Sidebar.tsx, frontend/src/App.tsx, frontend/src/api.ts, frontend/src/types.ts, frontend/src/app.css, frontend/vite.config.ts, frontend/dist/*, scripts/scaffold_polymath_v4.py
 architecture_impact: "Frontend-only. Repurposes the existing 'Fleet' rail slot into the 'Control Plane' screen (§10 — Control Plane belongs in the rail; no navigation structure added or removed, the old fleet board is preserved as a drill-down inside it). Renders the CONTROL-PLANE-STATUS-V1 backend authority: corpus summary + the four functional pools (GRAPH_EXTRACTION / DOCUMENT_PROFILE / PMAP / CHAT), each drilling into its model→account/key lanes and (GRAPH) predicate distribution. No status math in React; no API-key value ever rendered. Committed dist rebuilt; scaffold dist-hash declaration updated."

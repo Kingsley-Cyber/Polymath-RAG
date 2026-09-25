@@ -4,7 +4,8 @@ change_id: U2-FORENSIC-CLOSURE-AUDIT-V1
 date: 2026-09-10
 owner: governance
 last_reviewed: 2026-09-10
-status: complete (audit); VERDICT = HOLD NOT CLEARED
+status: complete
+status_note: "complete (audit); VERDICT = HOLD NOT CLEARED"
 register: 11.196
 package: "docs/wiki/experiments/u2-forensic-closure-audit-2026-09-10/"
 architecture_impact: "none — read-only audit of durable state. No provider call, no cinema touch, no historical row rewritten."

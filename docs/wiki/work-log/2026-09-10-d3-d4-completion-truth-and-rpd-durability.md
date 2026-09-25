@@ -4,7 +4,8 @@ change_id: COMPLETION-TRUTH-AND-RPD-DURABILITY-V1
 date: 2026-09-10
 owner: worker
 last_reviewed: 2026-09-10
-status: complete (both fixed, unit-tested, and proven on three live bounded canaries)
+status: complete
+status_note: "complete (both fixed, unit-tested, and proven on three live bounded canaries)"
 register: 11.202
 package: "workers/workers/doc_parent_map_worker.py + shared/polymath_shared/llm_extraction/limiter.py + 2 test files"
 architecture_impact: "Completion authority for the pMAP stage moves from batch bookkeeping to CURRENT DURABLE STATE. Durable controller state becomes a property of the limiter REGISTRY rather than of one caller. No new accounting system; no schema change; no provider/lane/flag change."

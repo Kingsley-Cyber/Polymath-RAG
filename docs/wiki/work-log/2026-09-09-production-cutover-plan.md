@@ -4,7 +4,8 @@ change_id: PRODUCTION-RAG-MIGRATION-CUTOVER-V1
 date: 2026-09-09
 owner: governance
 last_reviewed: 2026-09-09
-status: complete (planning slice — plan materialized; no code/default/state changed)
+status: complete
+status_note: "complete (planning slice — plan materialized; no code/default/state changed)"
 register: 11.190
 package: "docs/wiki/plans/PRODUCTION-RAG-MIGRATION-CUTOVER-V1.md"
 architecture_impact: "None (planning + archaeology). Produces the cutover/retirement execution authority around the frozen final retrieval engine, with a per-component disposition matrix and a dependency-closure gate. No retrieval architecture change, no ranking/composition change, no default flip, no producer stop, no retirement. Establishes that the final engine is already the default legacy-state-free production runtime and that every remaining cutover step is transitively gated on U-2."

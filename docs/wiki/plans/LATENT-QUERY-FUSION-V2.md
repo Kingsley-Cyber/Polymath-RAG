@@ -2,7 +2,7 @@
 title: "LATENT-QUERY-FUSION-V2 — query-stratified multi-stage fusion with preserved local ranks"
 date: 2026-09-19
 last_reviewed: 2026-09-19
-status: "ADMITTED 2026-09-19 (owner /goal). Investigation done; executing F1→F4. WLK2C = V1 baseline (flagged, A/B target)."
+status: "DONE — F1-F4 built (register 11.328-11.334), checkpoint tag v4-latent-query-fusion-v2; live with the flag on (11.408). Status refreshed 2026-09-24 (11.463)."
 owner: "@king"
 scope: "Replace the flatten-too-early union (one global RRF dominated by q0) with query-stratified fusion: each query (q0 / subquery / BRIDGE) ranks its own evidence locally, those local ranks are preserved (a RankedLane per query), then a lineage-aware weighted RRF fuses across queries with bounded local-winner preservation — feeding the EXISTING C4→C5→CA4→synthesis spine. Behind POLYMATH_CHAT_LATENT_FUSION (default-off), A/B against WLK2C V1. Extends candidate representation + fusion; does NOT rewrite CandidateEngine unless investigation proves necessary."
 ---

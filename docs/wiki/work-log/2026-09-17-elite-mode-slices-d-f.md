@@ -4,7 +4,8 @@ change_id: ELITE-MODE-RETRIEVAL-SYNTHESIS-V1
 date: 2026-09-17
 owner: orchestrator
 last_reviewed: 2026-09-17
-status: executing
+status: complete
+status_note: "Slices D-F shipped (register 11.278); slice G followed (11.279-11.280). Later GRAPH/WILDCARD work moved to SKELETON-ROUTING-V1 (11.440). (was: executing)"
 architecture_impact: "GRAPH synthesis now emits labelled RELATIONS [G#] bound to a proving [S#] instead of tagless [fact:] lines mixed into EVIDENCE. Lane H localizes graph-destination docs through the parent map before hydrating children. WILDCARD sweep merges profile-atom nominations via the same map door (P12) without editing divergent.py. Derived [A#] blocks follow DIRECT evidence. No new store, no worker-tree edit, Claude frontend untouched."
 ---
 

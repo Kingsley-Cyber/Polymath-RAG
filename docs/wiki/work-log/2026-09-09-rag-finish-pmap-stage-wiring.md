@@ -4,7 +4,8 @@ change_id: RAG-PIPELINE-FINISH-V1
 date: 2026-09-09
 owner: worker (doc_parent_map stage) + control (flag-gated mint); governance for the plumbing
 last_reviewed: 2026-09-09
-status: complete (code + offline tests; goes live at the Phase 15 canary via a fleet restart + flag enable)
+status: complete
+status_note: "complete (code + offline tests; goes live at the Phase 15 canary via a fleet restart + flag enable)"
 register: 11.193 (pending)
 package: workers/workers/doc_parent_map_stage_worker.py, shared/polymath_shared/document_profile/map_trigger.py, control/control/scheduler.py, control/control/main.py, control/control/tickets.py, control/control/process_supervisor.py, tests/determinism/test_doc_parent_map_stage_worker.py, tests/determinism/test_doc_parent_map_trigger.py
 architecture_impact: "Makes PMAP a real drained functional pool for FRESH uploads — the step that lets a new document reach VNEXT_COMPLETE (readiness floor unresolved_eligible_parents==0). Adds a doc_parent_map STAGE worker (in-run cross-lane failover over the six map_groq accounts; the first healthy lane finishes a batch, all-dark defers TRANSIENT with no attempt burned) driving the frozen durable core (ParentSkeleton -> plaintext MAP DSL -> deterministic compiler -> durable maps -> projection). The stage is minted like parent_enrichment: OUTSIDE STAGE_DAG, by a FLAG-GATED scheduler phase (auto_map_parents_on_chunks), and is non-blocking. FROZEN STAGE_DAG unchanged; only NON_BLOCKING_STAGES gains doc_parent_map. FORENSIC-HOLD SAFE: POLYMATH_DOC_PARENT_MAP_ENABLED defaults OFF => zero tickets minted => byte-identical current behavior, zero provider spend; an optional POLYMATH_DOC_PARENT_MAP_CORPUS scope keeps the cinema corpus untouched during the bounded canary. The fleet gains an idle doc_parent_map slot. Not yet live: requires a fleet restart (loads the new control code + slot) AND the flag — both deferred to the Phase 15 canary after the Phase 14 offline gate."

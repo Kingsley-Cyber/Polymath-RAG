@@ -2,7 +2,8 @@
 change_id: CANONICAL-SURFACE-REGISTRY-V1
 owner: king
 date: 2026-09-17
-status: implemented
+status: complete
+status_note: "Done: one taxonomy source, behaviour-identical; group is used by the scout; graph_policy waits on the deferred graph work. (was: implemented)"
 architecture_impact: one deterministic registry becomes the single source for typed-surface treatment
 last_reviewed: 2026-09-17
 ---

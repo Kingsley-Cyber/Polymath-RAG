@@ -4,7 +4,8 @@ change_id: U1-INTENT-ROUTING-AB
 date: 2026-09-09
 owner: governance
 last_reviewed: 2026-09-09
-status: complete (QUALIFIED — evidence frozen; POLYMATH_CHAT_INTENT_POLICY stays OFF)
+status: complete
+status_note: "complete (QUALIFIED — evidence frozen; POLYMATH_CHAT_INTENT_POLICY stays OFF)"
 register: 11.189
 package: "docs/wiki/experiments/u1-intent-routing-ab-2026-09-09/ (evidence) + tests/determinism/test_u1_intent_routing_contract.py (contract guard)"
 architecture_impact: "None. Read-only measurement + a provider-free contract test + living-ledger updates. No code, config, retrieval architecture, or running default changed. No cutover authority created (the master production cutover plan is deferred to a dedicated dependency-closure slice). Records that intent routing reaches the live CHAT-RETRIEVAL-V2 runtime and is non-regressive, while final-evidence uplift remains unproven on the only covered corpus available (rag-canary)."

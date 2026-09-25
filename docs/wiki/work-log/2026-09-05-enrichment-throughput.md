@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.80
 package: workers/workers/summary_worker_impl.py
 architecture_impact: "Summary worker only. parent_enrichment no longer takes the corpus-wide sweep lock; each document is claimed with a transaction-scoped advisory try-lock so two workers sweep disjoint documents of one corpus concurrently (the summary_jobs keys they upsert are therefore disjoint — the 11.75 deadlock cannot recur). The semantic-failover and hard-case escape ladders fan their calls out on the same lane-cap-sized pool the microbatch pass already uses. No schema, contract, pin or API change."

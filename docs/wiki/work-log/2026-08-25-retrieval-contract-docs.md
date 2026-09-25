@@ -2,7 +2,8 @@
 change_id: RETRIEVAL-CONTRACT-DOCS-V1
 owner: governance
 date: 2026-08-25
-status: implemented
+status: complete
+status_note: "Superseded 08-25 snapshot: BM25 (11.3/11.6), the tier chunker (11.24) and the neural default replaced what it describes. Both docs marked HISTORICAL in 11.463. (was: implemented)"
 architecture_impact: none (documentation of actual behavior)
 last_reviewed: 2026-08-29
 ---

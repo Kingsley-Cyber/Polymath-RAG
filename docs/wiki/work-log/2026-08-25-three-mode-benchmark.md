@@ -2,7 +2,8 @@
 change_id: THREE-MODE-BENCHMARK-V1
 owner: governance
 date: 2026-08-25
-status: implemented
+status: complete
+status_note: "Harness and first run delivered. Lexical gap closed by 11.3/11.6, graph hop set in 11.173; quality now judged on the librarian gold set (11.311). (was: implemented)"
 architecture_impact: none
 last_reviewed: 2026-08-29
 ---

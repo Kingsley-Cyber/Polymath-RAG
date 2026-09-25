@@ -135,6 +135,9 @@ GRAPH = the full walk (FACT + STRUCTURE + MENTION + one SEMANTIC hop) · WILDCAR
 | 20 | **C5b** Power Fx | Power Fx rows | .NET approval + an owner app | formulas bound; navigation / data links | owner inputs |
 | 21 | **C14** qualification | all | everything | every card's test questions on real code, incl. a code + book question | live turns = the owner's word |
 
+Also owned by the gap register (bookkeeping 11.463): D-03..D-09, O-01..O-03, T-01, T-02 wait for small slices or the
+owner's decisions; L-19 is proven by L4.
+
 Why this order: the backend first (L1–L4), because code enrichment (C6 / C7) is the first heavy LLM user and today's
 limiter cannot hold Groq's limits; the document defects early (D1), because they affect the live book corpora now; then
 the code walking skeleton (C1 → C9 / C10) on this repository, then the graph work that needs structure edges (C8 →

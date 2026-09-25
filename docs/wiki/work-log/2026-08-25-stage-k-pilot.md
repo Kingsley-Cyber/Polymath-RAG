@@ -2,7 +2,8 @@
 change_id: STAGE-K-PILOT-RELEASE-BOOKS
 owner: governance
 date: 2026-08-25
-status: implemented
+status: complete
+status_note: "Measurement delivered. Scoping settled by QUERY-SCOPE-V1, artifact lanes proven on a fresh ingest 08-26; the release-books redrive is moot (corpus gone). (was: implemented)"
 architecture_impact: none (measurement + report)
 last_reviewed: 2026-08-29
 ---

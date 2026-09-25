@@ -2,7 +2,8 @@
 change_id: LLM-DIRECT-CANON (P0–P3, P5; P4 partial)
 owner: governance
 date: 2026-09-03
-status: P0–P6 (P6 launched 2026-09-03 — receipts below); owner findings resolved
+status: complete
+status_note: "Canon work done (register 11.62-11.65). Leftover moved to the gap register as D-03 (an extraction-only blue/green swap keeps the old run's facts). (was: P0–P6 (P6 launched 2026-09-03 — receipts below); owner findings resolved)"
 architecture_impact: LLM-direct extraction declared canon (ADR-0017); tiered endpoint attestation replaces the anchor-chunk veto; open vocabulary projected to the graph; replay and grading re-based on the raw-response ledger and gold questions
 last_reviewed: 2026-09-03
 ---

@@ -2,7 +2,8 @@
 change_id: LATENT-QUERY-FUSION-V2-F1
 owner: wildcard-investigation
 date: 2026-09-19
-status: worktree_integration_proven
+status: complete
+status_note: "Merged to production in ae10f5a (11.332); the live receipt check passed in F4 step 4; the flag is on. (was: worktree_integration_proven)"
 architecture_impact: "LATENT-QUERY-FUSION-V2 F1 — RankedLane representation + observability ONLY (shared, worktree `fusion/latent-query`, UNMERGED; flag `POLYMATH_CHAT_LATENT_FUSION` default-off ⇒ retrieval byte-identical). NEW pure `shared/polymath_shared/ranked_lane.py` (`RankedLane`/`LaneResult`, `build_ranked_lanes`, `lane_memberships`, `ranked_lanes_receipt`). `candidate_engine.retrieve_candidates` gains a flag-gated capture BEFORE the union that records each query's LOCAL ranked list (q0 / subquery / bridge), preserving local ranks + multi-lane membership per chunk, and attaches a JSON receipt `trace['ranked_lanes']`. NO selection change: flag-off adds nothing; flag-on leaves the union ids/order/fused_score identical. F2 will fuse over these lanes (lineage-aware weighted RRF + bounded local-winner preservation); F3 wires to the existing C4→C5→CA4 spine."
 last_reviewed: 2026-09-19
 ---

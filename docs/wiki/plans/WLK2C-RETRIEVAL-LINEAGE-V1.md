@@ -2,7 +2,7 @@
 title: "WLK2C-RETRIEVAL-LINEAGE-V1 — query-anchored evidence lineage + bounded bridge compiler"
 date: 2026-09-18
 last_reviewed: 2026-09-18
-status: "ADMITTED 2026-09-18 (owner /goal). Executing C0→C7 on worktree `wlk2c/retrieval-lineage`; merge+bounce+CA5 qual at the end. Grounded in WLK2A (bridge-primary VALIDATED)."
+status: "DONE — C0-C7 built (register 11.316-11.326), merged d904154; the bridge-reach limit went to LATENT-QUERY-FUSION-V2 (11.327); live with flags on (11.408). Status refreshed 2026-09-24 (11.463)."
 owner: "@king"
 scope: "Make Polymath remember WHY a candidate was retrieved (lineage) so it can answer q0 AND surface bounded complementary/latent knowledge with an explainable grounded bridge back to q0. Tiered bridge sources (reuse subquery → graph path → bounded LLM compiler → none). Role admission DIRECT/COMPLEMENTARY/DIVERGENT (q0 primary, NOT max). Extends CA3/CA4; does not reopen CA0–CA5. No hard-coded concepts; must generalize outside cinema."
 ---

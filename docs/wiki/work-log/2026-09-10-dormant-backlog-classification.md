@@ -4,7 +4,8 @@ change_id: DORMANT-BACKLOG-CLASSIFICATION-V1
 date: 2026-09-10
 owner: governance
 last_reviewed: 2026-09-10
-status: complete (classification only — nothing requeued, nothing cancelled)
+status: complete
+status_note: "complete (classification only — nothing requeued, nothing cancelled)"
 register: 11.197
 package: "docs/wiki/plans/DORMANT-BACKLOG-CLASSIFICATION-V1.md"
 architecture_impact: "none — read-only."

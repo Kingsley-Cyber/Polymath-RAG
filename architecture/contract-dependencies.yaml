@@ -181,7 +181,7 @@ contracts:
       - tests/determinism/test_projection_lifecycle_migration.py
       - tests/determinism/test_projection_reconcile.py
     migration: stores/postgres/migrations/0065_projection_lifecycle.sql
-    status: live                   # migration 0065 AUTHORED but UNAPPLIED (queue L3)
+    status: live                   # migration 0065 applied 2026-09-18; the writer (L4) and live reconcile (L5) are dormant: gap D-06
 
   QDRANT_PROJECTION:
     owner: worker

@@ -5,7 +5,8 @@ date: 2026-09-06
 owner: governance (goal 2026-09-06; CHAT-QUERY-COMPILER-PLAN §4 P1.e / §3.15 / §3.18 / §3.19 / §3.21 #5–#9, #16)
 last_reviewed: 2026-09-06
 last_touched: 2026-09-06
-status: gate-missed
+status: complete
+status_note: "Shipped. GRAPH gate met; WILDCARD latency gate missed and owner-accepted 2026-09-06 (register 11.97); the WILDCARD finish was reworked in 11.116. (was: gate-missed)"
 register: 11.97
 package: orchestrator/orchestrator/api/{chat_retrieval.py,retrieve.py,ui.py,chat.py}, shared/polymath_shared/{divergent.py,retrieval_modes.py,candidate_engine.py}, scripts/chat_m_replay.py, tests/determinism/test_chat_modes.py
 architecture_impact: "One function owns the compositions: `chat_retrieve_mode(mode, …)`. VECTOR/FAST = lanes A+B; HYBRID = A+B+C (byte-identical to `chat_retrieve_v2`); GRAPH = HYBRID → bounded hop-1 over the FINAL evidence (≤ 8 seeds, ≤ 2 when the compiler says the question is not relational, ≤ 20 facts, entity-card seeds from the primary vector without re-embedding, fail-open with a `graph_degraded` receipt); WILDCARD = HYBRID core with the latent sweep submitted to the same per-turn pool the moment the one embedding returns (no second embedding), `divergent_finish` after the core against the final evidence neighbourhood, ≤ 3 bridges never in the evidence list, bounded by `wildcard_deadline_s` (2.5 s). `/chat/stream` dispatches FAST/VECTOR, GRAPH, WILDCARD and HYBRID through it under the v2 flag (v1 engines stay behind `retrieval: v1` / `latent`); `/chat` FAST → VECTOR on v2 for a single corpus. `meta.mode` is truthful. Nothing under §3.23 touched."

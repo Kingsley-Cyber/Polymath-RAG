@@ -2,7 +2,8 @@
 change_id: RETRIEVE-EVIDENCE-ROWS-V1
 owner: governance
 date: 2026-09-03
-status: DONE (live-probed; tests green)
+status: complete
+status_note: "DONE (live-probed; tests green)"
 architecture_impact: /retrieve gains a contract-ready evidence view (`evidence: true`) and an ideation mode (`mode: EXPLORE`); documents carry parsed frontmatter (migration 0051); the MCP `retrieve` tool exposes both. Retrieval ranking is untouched.
 last_reviewed: 2026-09-03
 ---

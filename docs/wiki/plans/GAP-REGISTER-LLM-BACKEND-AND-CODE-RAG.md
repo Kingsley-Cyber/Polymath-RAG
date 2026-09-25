@@ -40,6 +40,15 @@ Severity: **Critical** = loses data or silently gives wrong results · **High** 
 | L-16 | qwen3.8-27b: some orgs enforce OTPM 1000 while pMAP asks `max_tokens` 2400 (canary: "Limit 1000, Requested 1750") | E canary 2026-09-23 result #11; R `doc_parent_map_stage_worker.py:55` | Medium | L2 + L3 | OPEN |
 | L-17 | Attribution: `stage` is empty on 96.7 % of `llm_provider_attempts` rows (9,255 of 9,567) | E ledger | Medium | L2 | OPEN |
 | L-18 | `POLYMATH_GROQ_ROUTER=1` is set live; its only reader (`document_profile/groq_routing.py:40`) has no production caller | E env; R | Low | L3 | OPEN |
+| L-19 | No upload since 2026-09-17 has been shown to mint parent maps; the pMAP lanes were dead for new documents until the 2026-09-23 swap, and nothing new has run since. New code corpora depend on it | R `docs/wiki/work-log/2026-09-23-groq-model-swap.md:52`; the pMAP wiring-gap work-log (bookkeeping 11.463) | High (for code RAG) | L4 (one small pMAP document) | OPEN |
+
+## O. Operations (fleet control plane)
+
+| ID | Gap | Evidence | Sev. | Fix | Status |
+|---|---|---|---|---|---|
+| O-01 | No real-Postgres full-tick test exists (`control.main.tick` is never called by a test), and the tick died twice since its arity fix (register 11.18: ~2 h; 11.256: 10,191 failed ticks) | R `tests/determinism/test_lock_contention_v2.py:99`, `control/control/main.py:87` | Medium | a throwaway-Postgres tick test | OPEN |
+| O-02 | The control tick takes ~55 s; census per-run receipt checks are 51.3 s of it (median of the last 200 ticks) and nobody owns them | E `/private/tmp/polymath_fleet/tick_phases.jsonl` (`census_receipt_checks`) | Medium | a slice (scope the census like BULK-RECEIPT did) | OPEN |
+| O-03 | Stuck runs: 63 cinema runs `reconciling` since 2026-09-05..07, 6 commerce-v1 runs `reconciling` since 2026-09-21 (held at the generation barrier behind siblings that failed extract), 1 cinema run in `intake` since 2026-09-07 | E `runs` (read-only) | Medium | owner: the corpus clean-up (commerce-v1 is in its scope) | OPEN |
 
 ## D. Document retrieval (independent of code; affects the live book corpora)
 
@@ -47,6 +56,13 @@ Severity: **Critical** = loses data or silently gives wrong results · **High** 
 |---|---|---|---|---|---|
 | D-01 | GRAPH hop-1 facts are `ORDER BY fact_id LIMIT 20`; `fact_id` is `fact_` + a 64-hex hash, so the 20 facts are an arbitrary pick, not the most relevant | R `orchestrator/api/retrieve.py:712`; E fact id format | Medium | D1 | OPEN |
 | D-02 | MCP `polymath_search` trims text at 1,200 characters with no truncation marker (`_trim_hit` 1,400) | R `mcp_server.py:141, 302-303, 323-329` | Medium | D1 (marker) + C9 (full-unit reader) | OPEN |
+| D-03 | An extraction-only blue/green re-ingest keeps the old run's facts: the swap purges chunk / evidence rows only for documents the successor re-chunked, so the previous run's facts stay in the fact tier and the graph | R `control/control/generation_swap.py:45-66` (the `EXISTS … n.chunk_contract_version = %s` guard); llm-direct-canon work-log | Medium (latent until the next extraction-only re-ingest) | new slice (owner) | OPEN |
+| D-04 | The vocabulary stage's NO-GO verdict is not enforced: co-occurrence alias families are still written, and cinema has one family with 71,087 aliases; /ask planning and the resolution lift read them | R `workers/workers/summary_worker_impl.py:399`, `corpus_map_planning.py:113`, `resolution_lift_gather.py:147`; E live counts (bookkeeping 11.463) | High (quality) | owner: a merge rule or retire the stage | OPEN |
+| D-05 | Canonical profile selection: the refusal path (keep last-known-good) never fired live, and no re-profile rearm passes `force=True` | R `workers/workers/doc_profile_worker.py:320`, `document_profile/projection.py:120`; E 10 of 10 selections were first projections (2026-09-21) | Medium (before the next re-profile) | a small slice | OPEN |
+| D-06 | Projection lifecycle writer (L4) and live reconcile (L5) are dormant: no projector writes lifecycle fields (0 of 633,131 receipt rows), `projection_reconcile.py` is imported only by its test | R `shared/polymath_shared/receipts.py:334, 359`, `projection_reconcile.py`; E receipt counts | Low | owner: wire or retire | OPEN |
+| D-07 | Interactive relief U3: the 40-turn after-check was never recorded; the judge deadline stays 12 s though the load it covered is gone | R `docs/wiki/reports/2026-09-07/UNFINISHED_WORK.md:69`; E `POLYMATH_RERANK_DEADLINE_S=12` | Low | owner: keep 12 s or return to 8 s | OPEN |
+| D-08 | The query side hard-codes the neural embedding contract; harmless while every corpus is neural | R `orchestrator/orchestrator/api/fast.py:249, 269` | Low (latent) | when a second contract exists | OPEN |
+| D-09 | Both live corpora are `purpose=probe`, so the `ALL_AUTHORIZED` scope resolves to zero corpora | R `query_scope.py:43`; E `corpora` rows | Low | owner: corpus purposes | OPEN |
 
 ## C. Code RAG (not built; confirmed gaps against CODE-KNOWLEDGE-V1)
 
@@ -97,6 +113,13 @@ Severity: **Critical** = loses data or silently gives wrong results · **High** 
 | C-26 | All five modes require one corpus, and a content-addressed `doc_id` belongs to one corpus: one reference book cannot join two project corpora | R `ui.py:3755-3766`, `intake_worker.py:172, 226-236` | Medium | C1 decision (documented) | OPEN |
 | C-27 | Profile and pMAP are non-blocking stages: `QUERY_READY` can be true while code descriptions are missing | R `control/tickets.py` (`NON_BLOCKING_STAGES`) | Medium | C12 | OPEN |
 
+## T. Trail core embedded in Polymath (from refactor 0015, closed by the 2026-09-24 bookkeeping pass)
+
+| ID | Gap | Evidence | Sev. | Fix | Status |
+|---|---|---|---|---|---|
+| T-01 | Trail judgement defects M1-01..03 are reproduced inside the embedded core and not fixed; they can end or corrupt a real ecommerce run, and the embedded core is the live mode | R `docs/migration/PARITY_MATRIX.md:37`, `docs/wiki/decisions/0021-trailsignal-core-embedded.md:31`, `tests/determinism/test_trail_core_recorded_equivalence.py:40` | High (before the next ecommerce run) | a Trail-repo fix, then a re-pin (owner) | OPEN |
+| T-02 | ~57 % of the vendored Trail lines are contract models unrelated to research (`data_os`, `discovery`, `platform`) | R `docs/wiki/decisions/0021-trailsignal-core-embedded.md:30` | Low (no behaviour change) | a trim + `PROVENANCE.json` re-pin | OPEN |
+
 ## K. Knowledge roles and retrieval scope (owner-shared proposal, 2026-09-24)
 
 | ID | Gap | Evidence | Sev. | Fix | Status |
@@ -123,3 +146,4 @@ Severity: **Critical** = loses data or silently gives wrong results · **High** 
 - Parser-resolution percentages (C0a: 93.8 % of product-code internal calls linked without type inference) measure
   COVERAGE of name resolution on this repository, not the accuracy of a deployed call graph.
 - Whether Groq reserves `max_tokens` against TPM: the L4 canary measures it.
+- Refactor 0011 rows 15 (the `facts` table has no corpus / run column, `0002_workflow.sql:83`) and 21 (canonicalize merge rate) were measured under the retired GLiNER pipeline and never re-measured.

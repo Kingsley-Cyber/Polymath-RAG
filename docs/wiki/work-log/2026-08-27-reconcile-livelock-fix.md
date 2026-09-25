@@ -2,7 +2,8 @@
 change_id: RECONCILE-LIVELOCK-FIX
 owner: governance
 date: 2026-08-27
-status: implemented
+status: complete
+status_note: "Done (5de70c22). Its one gap, launchd autoboot blocked by TCC, stays on the CONTINUITY deferred list (the owner's item). (was: implemented)"
 architecture_impact: none (repair/measurement log)
 last_reviewed: 2026-08-29
 ---

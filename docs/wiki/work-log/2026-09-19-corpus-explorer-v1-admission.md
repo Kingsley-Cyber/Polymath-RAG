@@ -2,7 +2,8 @@
 change_id: CORPUS-EXPLORER-V1-CE0
 owner: "@king"
 date: 2026-09-19
-status: admitted
+status: complete
+status_note: "CE1-CE7 built and live (11.336-11.339, merge e84d7cc); firing closed and frozen (11.349); leftover caveats sit in OWNER-BACKLOG B19/B20. (was: admitted)"
 architecture_impact: "CE0 admission only (docs + register + worktree). No code. Admits CORPUS-EXPLORER-V1: an optional, two-layer-gated (capability POLYMATH_CORPUS_EXPLORER x per-request corpus_explorer), non-generative concept-keyed corpus-activation path (CONCEPT/THEORY atoms via search_atoms, independent of Scout) that feeds the EXISTING WLK2C bridge compiler under a distinct CORPUS_EXPLORE origin into the existing V2 fusion + C4/C5/CA4 spine. Focused scope (atoms + Scout doc-nominations; parent-map/entity/graph deferred). Reuses bridge_compiler/bridge_integration unchanged (adds only an origin param). Flag-off = pre-feature-equivalent V2."
 last_reviewed: 2026-09-19
 ---

@@ -4,7 +4,8 @@ change_id: FRONTEND-V2-PLAN
 date: 2026-09-10
 owner: governance
 last_reviewed: 2026-09-10
-status: complete (plan ACTIVE; F1 shipped and browser-verified against the live backend)
+status: complete
+status_note: "complete (plan ACTIVE; F1 shipped and browser-verified against the live backend)"
 register: 11.199
 package: "docs/wiki/plans/FRONTEND-V2-PLAN.md + frontend-v2/"
 architecture_impact: "frontend only. Greenfield app beside the legacy one; NO backend contract changed; the legacy frontend/ is untouched."

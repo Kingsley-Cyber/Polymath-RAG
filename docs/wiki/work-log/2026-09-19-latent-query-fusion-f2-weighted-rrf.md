@@ -2,7 +2,8 @@
 change_id: LATENT-QUERY-FUSION-V2-F2
 owner: wildcard-investigation
 date: 2026-09-19
-status: unit_proven
+status: complete
+status_note: "Merged in ae10f5a (11.332). Weights stay at the defaults (owner rule, no tuning) and are settable from env (POLYMATH_FUSION_W_*). (was: unit_proven)"
 architecture_impact: "LATENT-QUERY-FUSION-V2 F2 — deterministic lineage-aware weighted RRF over RankedLanes (shared, worktree `fusion/latent-query`, UNMERGED). NEW pure `shared/polymath_shared/ranked_fusion.py`: `fuse_ranked_lanes(lanes, *, weights, k, preserve_top_n, cap)` = weighted RRF (`Σ weight(lineage_class)/(k+local_rank)` per lane) + bounded local-winner preservation (each query's intra-RRF top-N reserved through the cap). Produces a CANDIDATE ordering only — no seating (C4/C5 gate at F3). No existing contract changed (candidate_engine untouched in F2); the module is not yet wired (F3). Weights PROVISIONAL, measured at F4."
 last_reviewed: 2026-09-19
 ---

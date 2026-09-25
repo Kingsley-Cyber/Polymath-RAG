@@ -2,7 +2,8 @@
 change_id: QUERY-RECEIPTS-V1 (+ RUN-SCOPED-RECEIPTS-V1, STALL-TRACER-V1.2)
 owner: governance
 date: 2026-09-03
-status: complete (live receipts below; INCREMENTALITY measurement recorded in the same log)
+status: complete
+status_note: "complete (live receipts below; INCREMENTALITY measurement recorded in the same log)"
 architecture_impact: per-document stages are gated on their own document's receipts (corpus barrier only for corpus_summary/vocabulary); every served query leaves one durable row (query_receipts, migration 0047) read by GET /queries, MCP recent_queries and scripts/query_log.py; sidecars always resident; dead worker registrations pruned; two release-gate evidence producers added
 last_reviewed: 2026-09-03
 ---

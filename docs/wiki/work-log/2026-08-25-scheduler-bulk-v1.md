@@ -2,7 +2,8 @@
 change_id: SCHEDULER-BULK-V1
 owner: control
 date: 2026-08-25
-status: implemented
+status: complete
+status_note: "Done: bulk gap scheduling live (~13 ms per tick). The conditional advance_tickets follow-up is not needed (~2 s live). (was: implemented)"
 architecture_impact: none
 last_reviewed: 2026-08-29
 ---

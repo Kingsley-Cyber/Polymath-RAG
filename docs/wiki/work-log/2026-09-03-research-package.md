@@ -2,7 +2,8 @@
 change_id: RESEARCH-PACKAGE-V1
 owner: governance
 date: 2026-09-03
-status: DONE (package in tree; harness green from the new location)
+status: complete
+status_note: "DONE (package in tree; harness green from the new location)"
 architecture_impact: TRAIL OS (the opportunity-research control plane) lives in this repo as `research/`, its own package with its own harness, docs, worklog and registry; Polymath is its native corpus backend next door. No Polymath module imports it and it imports no Polymath module — the contracts (`contracts/retrieve/v1/*`, `/capabilities`, `/chat evidence=true`) stay the seam.
 last_reviewed: 2026-09-03
 ---
