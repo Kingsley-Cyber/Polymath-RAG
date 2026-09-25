@@ -182,6 +182,23 @@ def test_the_retrieve_route_says_which_order_served_it():
     assert 'out["graph_fact_order"] = "ranked"' in body and "if fact_rank_enabled():" in body
 
 
+def test_chat_retrieval_loads_beside_a_retrieve_module_from_before_d1(monkeypatch):
+    """Merge → bounce window: the running orchestrator keeps its OLD retrieve module in memory, and the NEW chat_retrieval
+    is loaded from disk on the first chat turn. It must load (2026-09-25: an unguarded import answered 500)."""
+    import importlib.util
+    import sys
+
+    from orchestrator.api import chat_retrieval as cr
+    old = types.ModuleType("orchestrator.api.retrieve")
+    old.graph_expand_or_502 = retrieve_mod.graph_expand_or_502          # the pre-D1 module had no fact_rank_enabled
+    monkeypatch.setitem(sys.modules, "orchestrator.api.retrieve", old)
+    spec = importlib.util.spec_from_file_location("chat_retrieval_beside_old_retrieve", cr.__file__)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    monkeypatch.setenv(retrieve_mod.FACT_RANK_FLAG, "1")
+    assert mod.fact_rank_enabled() is False                               # the old process serves the legacy order
+
+
 @pytest.mark.parametrize("value, on", [("1", True), ("0", False), ("", False), ("true", False)])
 def test_the_flag_reads_exactly_one(monkeypatch, value, on):
     monkeypatch.setenv(retrieve_mod.FACT_RANK_FLAG, value)

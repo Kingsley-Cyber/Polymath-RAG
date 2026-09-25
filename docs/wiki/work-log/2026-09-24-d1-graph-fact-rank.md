@@ -70,6 +70,20 @@ last_reviewed: 2026-09-24
   "lighting ACTS_ON eyes of the viewer", "softlight CAUSES illusion of reality"); "batteries" leads with nine citable
   facts ("led lights USES batteries", "camera prep ACTS_ON batteries", the LED makers).
 
+- Post-merge fix (register 11.479, EXECUTED 2026-09-25). The agent's bounce after the merge was denied (Production
+  Deploy). A $0 baseline of `live_check.py` then showed `/retrieve` GRAPH answering HTTP 500: `ImportError: cannot import
+  name 'fact_rank_enabled' from 'orchestrator.api.retrieve'` (orchestrator.log). The running orchestrator (started
+  23:21 MDT) keeps its pre-D1 `retrieve` module in memory, while `chat_retrieval.py` is loaded from disk on first use
+  (`retrieve.py:256-315`; every chat turn through `ui.py:3784`). So every chat turn would have failed until the bounce.
+  - Fix: `chat_retrieval.py` imports `fact_rank_enabled` behind `except ImportError`. The fallback reports the legacy
+    order, which is what the old process serves.
+  - Test: `test_chat_retrieval_loads_beside_a_retrieve_module_from_before_d1` (loads the file next to a stub pre-D1
+    module).
+  - After the fix, `/retrieve` GRAPH answered 200 on the same old process: 20 graph facts, no `fact_order` (legacy).
+- The live check (`live_check.py`, $0: `/retrieve` GRAPH `meta.graph_bounds.fact_order` + MCP `polymath_search`
+  markers) runs after the owner's bounce. Its pre-bounce baseline (`live_check_before_bounce.json`) recorded the MCP
+  defect live: 116 rows, 2 cut at exactly 1,200 characters with no marker.
+
 ## Rejected claims
 - "Rank strictly by seed" (the first design, `replay_strict_seed.json`): the entity-card probe ranked "ADR" top for
   "suspense WITHOUT dialogue" (it matched "dialogue"), so its facts filled the list and "shorter and shorter shots CAUSES

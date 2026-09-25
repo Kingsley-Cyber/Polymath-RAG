@@ -2415,6 +2415,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay.py", "py", None),
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay.json", "json", None),
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay_strict_seed.json", "json", None),
+    ("docs/wiki/experiments/graph-fact-rank-2026-09-24/live_check.py", "py", None),
+    ("docs/wiki/experiments/graph-fact-rank-2026-09-24/live_check_before_bounce.json", "json", None),
     ("docs/wiki/work-log/2026-09-24-d1-graph-fact-rank.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),

@@ -195,7 +195,16 @@ from orchestrator.api.fast import (
     entity_card_probe,
 )
 from orchestrator.api.graph import _selected_surfaces
-from orchestrator.api.retrieve import fact_rank_enabled, graph_expand_or_502
+from orchestrator.api.retrieve import graph_expand_or_502
+
+try:
+    from orchestrator.api.retrieve import fact_rank_enabled
+except ImportError:
+    # merge → bounce window: an orchestrator started before D1 keeps its old retrieve module in memory while this file is
+    # loaded fresh from disk (2026-09-25: the unguarded import made /retrieve GRAPH answer 500 and would have failed chat
+    # turns). Until the bounce the old process serves the legacy order, so the receipt says so.
+    def fact_rank_enabled() -> bool:
+        return False
 
 _FLAG_ENV = "POLYMATH_CHAT_RETRIEVAL"        # v1 | v2 (default v2 after the P1.a gate)
 
