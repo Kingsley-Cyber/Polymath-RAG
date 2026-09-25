@@ -5,7 +5,8 @@ date: 2026-09-06
 owner: governance (goal 2026-09-06; CHAT-QUERY-COMPILER-PLAN §4 P1.d / §3.16 / §3.21 #7–#9, #18)
 last_reviewed: 2026-09-06
 last_touched: 2026-09-06
-status: gate-missed
+status: complete
+status_note: "Shipped. HYBRID vs VECTOR latency gate missed; the owner accepted the deviation 2026-09-06 (register 11.96); the judge speed-up followed in 11.100. (was: gate-missed)"
 register: 11.96
 package: shared/polymath_shared/{candidate_engine.py,metal.py,clients.py,rerank.py}, orchestrator/orchestrator/api/{chat_retrieval.py,fast.py}, sidecars/embedder/server.py, sidecars/reranker/server.py, scripts/chat_m_replay.py, tests/determinism/{test_candidate_engine.py,test_chat_retrieval_v2.py,test_metal_lease.py}
 architecture_impact: "Two contracts. CONCURRENCY-DEADLINES-V1: `retrieve_candidates` submits every independent lane at T=0 to a bounded per-turn pool, fans the hierarchical deepening out per selected section, joins under ONE core wall-clock budget (`lane_deadline_s`) and fuses in a fixed lane order (byte-identical output when nothing times out); a lane still pending at the deadline is dropped and receipted as `<lane>_timeout`; the route starts lane C (BM25) before the single embedding call, runs exactly one judge call under `rerank_deadline_s` (expiry → fusion order + `rerank_timeout`), accepts `lanes=` (VECTOR = A+B, HYBRID = A+B+C) and receipts per-stage latency. METAL-LEASE-V1: a cross-process fcntl lease on the one Metal device with two classes — chat requests carry `X-Polymath-Priority: interactive` and are served as soon as the running batch releases; enrichment batches (background) yield to a registered interactive waiter; bounded waits, fail-open, receipted as `queued_ms`. Enrichment batch sizes and workers untouched (§3.23)."

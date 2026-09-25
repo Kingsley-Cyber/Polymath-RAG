@@ -4,7 +4,8 @@ change_id: RETRIEVE-ENGINE-MIGRATION-V1
 date: 2026-09-10
 owner: governance
 last_reviewed: 2026-09-10
-status: complete (reader migration; U-2-independent; v1 rollback flag; no legacy state touched)
+status: complete
+status_note: "complete (reader migration; U-2-independent; v1 rollback flag; no legacy state touched)"
 register: 11.191
 package: "orchestrator/orchestrator/api/retrieve.py + tests/determinism/test_retrieve_engine_migration.py + docs/wiki/experiments/retrieve-engine-migration-2026-09-10/"
 architecture_impact: "MIGRATE LEGACY READER (not DELETE STATE). /retrieve single-corpus HYBRID now rides the final chat_retrieve_mode core by default, behind POLYMATH_RETRIEVE_ENGINE (v1 rollback). Response contract byte-shape-identical (parity-proven). No summary/enrichment state touched; FAST/GRAPH/WILDCARD/legacy paths unchanged. Advances the steady-state 'one retrieval core, many surfaces'. Independent of U-2 (final core runs coverage-free)."

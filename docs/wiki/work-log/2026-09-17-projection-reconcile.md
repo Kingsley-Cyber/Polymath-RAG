@@ -2,7 +2,8 @@
 change_id: PROJECTION-RECONCILE-V1
 owner: king
 date: 2026-09-17
-status: implemented
+status: complete
+status_note: "Pure classifier only; live reconcile (L5) never wired. Leftover moved to the gap register as D-06 (wire or retire, with the writer). (was: implemented)"
 architecture_impact: deterministic reconciliation over the projection manifest (completeness, drift, rebuild set)
 last_reviewed: 2026-09-17
 ---

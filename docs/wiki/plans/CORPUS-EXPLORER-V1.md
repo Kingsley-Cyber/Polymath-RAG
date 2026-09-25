@@ -2,7 +2,7 @@
 title: "CORPUS-EXPLORER-V1 — bounded corpus-grounded agentic RAG (concept-keyed activation -> existing bridge machinery under a new CORPUS_EXPLORE origin)"
 date: 2026-09-19
 last_reviewed: 2026-09-19
-status: "ADMITTED 2026-09-19 (owner /goal). Executing CE0->CE7 + CE-UI. Reuses WLK2C bridge machinery; adds a non-generative CONCEPT/THEORY activation path under origin CORPUS_EXPLORE, two-layer gated (capability POLYMATH_CORPUS_EXPLORER x per-request corpus_explorer)."
+status: "DONE — CE1-CE7 + CE-UI built (register 11.336-11.339, merge e84d7cc); firing closed and frozen (11.349). Status refreshed 2026-09-24 (11.463)."
 owner: "@king"
 scope: "Add an optional, feature-gated concept-keyed corpus activation path (non-generative; CONCEPT/THEORY atoms via search_atoms, independent of Scout) feeding the existing WLK2C bridge compiler under a distinct CORPUS_EXPLORE origin into the existing V2 fusion + C4/C5/CA4 spine. Focused scope (atoms + Scout doc-nominations only; parent-map/entity/graph deferred). Additive; flag-off = pre-feature-equivalent V2."
 ---

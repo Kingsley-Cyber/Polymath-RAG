@@ -2,7 +2,7 @@
 title: "REASONING-BOUNDARY-V1 — evidence-only agent tool boundary + centralized model-role reasoning-budget policy"
 date: 2026-09-19
 last_reviewed: 2026-09-19
-status: "PLANNED (owner decisions locked). Two workstreams: (1) an EvidencePacket boundary so external agents get validated corpus evidence WITHOUT a nested Polymath synthesis LLM; (2) a semantic role->reasoning-budget policy so bounded RAG stages reason briefly and never truncate their structured output. Reuses the chat pipeline (short-circuit before synthesis) + the existing per-provider reasoning params; nothing rewrites retrieval."
+status: "DONE — RB1-RB4 live: evidence boundary merged 99d12cc (11.343), reasoning policy switched on (11.344). Status refreshed 2026-09-24 (11.463)."
 owner: "@king"
 scope: "Stop compounding/nested LLM reasoning. Expose Polymath to Claude Code/Hermes as an evidence-only retrieval service (search + explore) plus a human answer tool, on BOTH MCP servers, with retrieval-authority tool descriptions. Centralize reasoning as a semantic role-budget policy translated by API-surface-aware provider adapters, applied to the chat synthesis + reviewer + chat-compiler; leave bridge (off) and document-extraction (off, contract-hash-locked) untouched."
 ---

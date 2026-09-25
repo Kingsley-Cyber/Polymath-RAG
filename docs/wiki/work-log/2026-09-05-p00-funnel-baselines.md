@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance (executing CHAT-QUERY-COMPILER-PLAN §4 P0.0)
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.85
 package: shared/polymath_shared/{funnel.py,hybrid.py,pass1.py,query_receipts.py}, orchestrator/orchestrator/api/{ui.py,chat.py,hybrid.py,fast.py,graph.py}, scripts/{chat_funnel.py,chat_baseline.py}, eval/fixtures/{chat_baseline_B.json,chat_conversations/video_prompt_final.json}, docs/wiki/experiments/chat-baseline-p0-baseline.{json,md}
 architecture_impact: "Diagnostics only. The shared retrieval engines expose per-lane candidate ids and the pre-truncation union in their trace; the orchestrator builds a funnel (retrieved → union → pre_rerank → post_rerank → selected → cited) and writes it on the query receipt. /chat/stream now writes receipts (kind chat_stream) on every outcome, including errors. Receipt meta serialization is JSON-safe up to 64 KB (the old 8 KB text slice could drop receipts). No retrieval semantics, prompt, budget or contract changed."

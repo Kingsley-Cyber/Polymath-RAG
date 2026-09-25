@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance (executing CHAT-QUERY-COMPILER-PLAN §4 P0.d)
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.89
 package: orchestrator/orchestrator/api/ui.py, scripts/chat_baseline.py, tests/determinism/{test_chat_synthesis.py,test_chat_hygiene.py}
 architecture_impact: "The LLM grounding prompt (`_LLM_GROUNDING`) is replaced by SYNTHESIS-V2: the plan's authority block verbatim (USER INTENT HAS TASK AUTHORITY. CORPUS EVIDENCE HAS FACTUAL AUTHORITY …) plus the carried-over citation, completeness and generated-label rules; the v1 sentence 'everything you assert must come from the provided evidence' is gone. The request block the model sees now carries the request as written, the compiler's RESOLVED request, TASK / EVIDENCE POLICY / RESPONSE TYPE, MUST COVER, CONSTRAINTS, the compiler's antecedent summary and — for CONTINUE_PRIOR_ARTIFACT or an assistant-artifact antecedent — the prior artifact VERBATIM (§9.3 default; up to POLYMATH_PRIOR_ARTIFACT_CHARS = 16,000, beyond the 4,000-char history window). The answer event's result.meta names prompt_contract, task_type, evidence_policy, response_type, retrieval_required and compiler_fallback on both the LLM and the deterministic path. CORPUS-STYLE-V1, the [S#] legend, used_evidence, the funnel and the receipts are unchanged. In shadow/off compiler modes the request block is the v1 block byte-for-byte."

@@ -4,7 +4,8 @@ change_id: OPERATIONAL-UI-V1
 date: 2026-09-09
 owner: frontend (MessageBubble) — displays the compiler-DERIVED intent, adds no control
 last_reviewed: 2026-09-09
-status: complete (Slice 4 of the operational-UI frontend; acceptance gate + durability follow)
+status: complete
+status_note: "complete (Slice 4 of the operational-UI frontend; acceptance gate + durability follow)"
 register: 11.187
 package: frontend/src/components/MessageBubble.tsx, frontend/src/types.ts, frontend/src/app.css, frontend/dist/*, scripts/scaffold_polymath_v4.py
 architecture_impact: "Frontend-only, minimal (§9). The Chat screen already carries the three SETTABLE selectors — Query Type (retrieval mode VECTOR/HYBRID/GRAPH/WILDCARD), Chat Model (synthesizer picker), Reasoning (mode dropdown, default 'none'). Intent is compiler-DERIVED and has NO request-override contract, so no Intent *selector* is added (that would be a non-functional control, §14); instead the derived intent is surfaced READ-ONLY as a badge on the answer, from the existing chat_plan receipt. No pipeline/architecture change."

@@ -4,7 +4,8 @@ change_id: BOOTSTRAP-GAP-BACKFILL-2026-09-12
 date: 2026-09-12
 owner: governance
 last_reviewed: 2026-09-12
-status: complete (ledger reconciled to reality; one defect fixed)
+status: complete
+status_note: "complete (ledger reconciled to reality; one defect fixed)"
 register: 11.205, 11.208, 11.210
 architecture_impact: "none — ledger backfill plus test isolation for the attempt recorder. No production behaviour changed."
 ---

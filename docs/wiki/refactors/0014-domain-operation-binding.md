@@ -1,6 +1,7 @@
 ---
 triggered_by: ADR-0020 (DOMAIN_OPERATION — a manifest step binds a domain's own code)
-status: in_progress
+status: done
+status_note: "All steps done: seam 11.364, remaining capabilities bound in 11.365-11.372, merged 8ae4cf3 with one boot (11.378). (was: in_progress)"
 last_reviewed: 2026-09-20
 last_touched: 2026-09-20
 ---

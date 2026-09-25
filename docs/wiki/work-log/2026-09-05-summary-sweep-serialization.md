@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.75
 package: workers/, shared/polymath_shared/worker_runtime.py
 architecture_impact: "summary worker only: bounded lock wait on summary_jobs upserts, one sweep per (stage, corpus) via a transaction-scoped advisory lock, SIGUSR1 stack dump for every worker. No schema, contract, API, or extraction change."

@@ -2,7 +2,8 @@
 change_id: LATENT-QUERY-FUSION-V2
 owner: wildcard-investigation
 date: 2026-09-19
-status: admitted
+status: complete
+status_note: "F1-F4 done (11.328-11.334), checkpoint tag v4-latent-query-fusion-v2; V2 kept live with the flag on (11.408). (was: admitted)"
 architecture_impact: "DOCS-ONLY admission (no production/fleet/shared change, no bounce). Admits LATENT-QUERY-FUSION-V2 (owner /goal 2026-09-19): query-stratified multi-stage fusion — each query (q0/subquery/BRIDGE) ranks its own evidence locally, a RankedLane preserves those local ranks, a lineage-aware weighted RRF fuses across queries with bounded local-winner preservation, feeding the EXISTING C4→C5→CA4→synthesis spine. Behind POLYMATH_CHAT_LATENT_FUSION (default-off), A/B against WLK2C V1. Root cause of the V1 wc07 miss identified: fused_score=best-single-query RRF truncates bridge local winners at merged_candidate_max before the reranker/C4 see them. WLK2C V1 (11.315–326) COMPLETE + causally proven; NOT qualified as final; frozen baseline."
 last_reviewed: 2026-09-19
 ---

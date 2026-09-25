@@ -5,7 +5,8 @@ date: 2026-09-07
 owner: governance (owner reports 2026-09-07 while testing by hand: "rerank_timeout … I HAVE this major error"; "corpus retrieval can sometimes not retrieve anything"; "it generates too much and too long"; "every query the model is injected a large amount of context")
 last_reviewed: 2026-09-07
 last_touched: 2026-09-07
-status: implemented
+status: complete
+status_note: "Live since 09-07. Leftover moved to the gap register as D-07: the U3 40-turn after-check was never recorded; judge deadline 12 s vs 8 s is the owner's call. (was: implemented)"
 register: 11.124
 package: config/runtime_budget.yaml (embedder batch caps), .env (POLYMATH_CHAT_RERANK_DEADLINE_S=12, owner-held) + .env.example, orchestrator/orchestrator/api/ui.py (CARRY-ARTIFACT-V1, presentation-v2 length rule, POLYMATH_CHAT_MAX_TOKENS default 6000), tests/determinism/test_chat_{synthesis,runtime,generation_bound}.py
 architecture_impact: "Fleet: the embedder's batch caps halve (8 texts / 16 k tokens → 4 / 8 k) so projection batches fit the 3.5 GiB Metal cap on the first try instead of failing and splitting; the chat judge's deadline is 12 s (env) while the corpus re-projection runs on the shared GPU. Chat: a transform / continue turn (retrieval skipped by the compiler) now keeps the previous answer's cited passages in the bundle — admitted without a relevance gate, capped at 16 — so a rewrite stays grounded and citable; the presentation contract (v2) states length limits per task and forbids padding and closing summaries; the output ceiling drops 16 000 → 6 000 tokens. Nothing under §3.23 changes; the re-projection itself is left to finish."

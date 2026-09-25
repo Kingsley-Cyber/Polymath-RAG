@@ -2,7 +2,8 @@
 change_id: GAMBLING-E2E-0902 + COVERAGE-DROP-TOLERANCE-V1 + DEGRADE-IDEMPOTENCY-FIX
 owner: governance
 date: 2026-09-02
-status: complete (CLOUD-FIRST-V1 = owner gate)
+status: complete
+status_note: "complete (CLOUD-FIRST-V1 = owner gate)"
 architecture_impact: coverage barrier semantics (extraction_coverage.py), degrade application (scheduler.py); the E2E itself changed nothing
 last_reviewed: 2026-09-02
 ---

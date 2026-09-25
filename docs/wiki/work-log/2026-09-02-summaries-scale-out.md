@@ -2,7 +2,8 @@
 change_id: SUMMARIES-SCALE-OUT-V1
 owner: governance
 date: 2026-09-02
-status: complete (activates on the next ingest with ≥2 open summary tickets)
+status: complete
+status_note: "complete (activates on the next ingest with ≥2 open summary tickets)"
 architecture_impact: fleet slot summaries2; autopilot summary-lane scale-out rule; budget profiles
 last_reviewed: 2026-09-02
 ---

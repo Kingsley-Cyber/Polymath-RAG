@@ -2,7 +2,8 @@
 change_id: EVENT-ADAPTER-DICT-CURSOR-FIX
 owner: governance
 date: 2026-08-25
-status: implemented
+status: complete
+status_note: "Done: dict and tuple rows, typed fail-closed. Dead registrations pruned since 09-03 (REGISTRATION-RETENTION-V1). (was: implemented)"
 architecture_impact: none
 last_reviewed: 2026-08-29
 ---

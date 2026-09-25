@@ -1,6 +1,7 @@
 ---
 triggered_by: ADR-0016 (lexical-role realignment) + Phase 6 frozen-I4 measurement
-status: in_progress
+status: done
+status_note: "Superseded by LLM-direct extraction (ADR-0017, 11.62) and the tagger deletion (11.64). Rows 15 and 21 were never re-measured under the new pipeline (noted in the gap register's not-confirmed list). (was: in_progress)"
 last_reviewed: 2026-08-18
 last_touched: 2026-08-18
 ---

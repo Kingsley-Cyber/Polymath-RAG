@@ -1,6 +1,7 @@
 ---
 triggered_by: ADR-0019 (harness-executed hypothesis research)
-status: in_progress
+status: done
+status_note: "R0-R5 done: R5 acceptance 11.273, old research path removed 11.274, migration complete 11.276. (was: in_progress)"
 last_reviewed: 2026-09-13
 last_touched: 2026-09-13
 ---

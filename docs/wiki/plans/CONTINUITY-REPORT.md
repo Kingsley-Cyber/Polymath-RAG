@@ -63,8 +63,13 @@ R1–R10 (descriptions rank, code loads by identity, concrete bridges, context-a
 contracts (migrations 0067–0071, payloads, Neo4j), module layout, and per-slice modify points with file:line, tests and
 acceptance (K1 scope before C1; E2E-1 = the walking-skeleton proof).
 
-**Next action: L1** (account registry: accounts → models → limits, derived lanes, ownership report; byte-identical
-roster first), then L2 → L3 → L4 (the provider backend) → D1 → K1 → C1 … (roadmap §3).
+**Bookkeeping (11.463):** 21 superseded branches archived as local `archive/<branch>` tags and deleted
+(`review/m1-reproductions` kept); every open work-log and refactor record closed with an evidence note (wiki_worm: 0 open);
+leftovers are gap-register rows L-19, D-03..D-09, O-01..O-03, T-01, T-02 (62 rows).
+
+**Next action: LLM-BACKEND-BATCH1 (11.464)** on branch `fix/llm-backend-batch1` (code done and tested): merge, the two
+`.env` edits (remove `POLYMATH_GROQ_ROUTER=1`, add `POLYMATH_LLM_CLOUD_PRIMARY=0`), one bounce, check the live attempt rows.
+Then L1 → L2 → L3 → L4 (the provider backend) → D1 → K1 → C1 … (roadmap §3).
 
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs
   alreayd a md plan i beleive and i want to add upon it".
@@ -1270,7 +1275,7 @@ boot if needed). Owner decision: keep capability ON (opt-in, inert unless toggle
 
 **Do Not Do** — commit/stash/revert or lose the frontend/ELITE stash `49f57e0c`; `git add -A`; `git push`; lower a qualification gate or redefine gold to pass (§29); start the deferred Graph multi-hop/traversal refactor; reintroduce `_compiler_titles`; treat scout/profile-expansion/resolution as a gate (q0 stays authoritative; a miss never subtracts candidates); resume the cinema pMAP forensic backfill / Groq spend.
 
-**Live Qualification Queue** — L1–L5 effectively SATISFIED (scout+P6+P11+P10+GRAPH live-proven, 0065 applied, bounced, real-path qualified) except the FINAL authoritative artifact + its gate check (Next Action 1–3).
+**Live Qualification Queue** (corrected 2026-09-24, register 11.463: the projection-lifecycle writer and live reconcile never ran, gap D-06) — L1–L5 effectively SATISFIED (scout+P6+P11+P10+GRAPH live-proven, 0065 applied, bounced, real-path qualified) except the FINAL authoritative artifact + its gate check (Next Action 1–3).
 
 **Deferred Architecture** — Graph traversal / bounded multi-hop refactor stays deferred until Librarian DONE_AND_PROVEN (the separately-scoped next project).
 

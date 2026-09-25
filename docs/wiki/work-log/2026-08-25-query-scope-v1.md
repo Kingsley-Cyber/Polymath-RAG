@@ -2,7 +2,8 @@
 change_id: QUERY-SCOPE-V1
 owner: orchestrator
 date: 2026-08-25
-status: implemented
+status: complete
+status_note: "Done: every route resolves one scope and dense lanes use it. Both live corpora are purpose=probe, so ALL_AUTHORIZED resolves to 0 corpora: gap D-09. (was: implemented)"
 architecture_impact: /ask gains explicit fail-closed scoping; corpora gain purpose/query_enabled classification; workspaces table added
 last_reviewed: 2026-08-29
 ---

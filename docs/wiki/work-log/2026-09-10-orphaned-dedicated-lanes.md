@@ -4,7 +4,8 @@ change_id: ORPHANED-DEDICATED-LANES-V1
 date: 2026-09-10
 owner: governance
 last_reviewed: 2026-09-10
-status: complete (config fix; proven against the lane registry; lands on the next fleet bounce)
+status: complete
+status_note: "complete (config fix; proven against the lane registry; lands on the next fleet bounce)"
 register: 11.194
 package: "config/cloud_providers.json"
 architecture_impact: "none (no new topology). Restores the lane→function assignment that PROVIDER-LANE-REASSIGNMENT-V1 (11.193) already declared: gemini5/5b/6/6b + nvidia rejoin the general GRAPH_EXTRACTION ring instead of being dedicated to a stage pin that no longer exists."

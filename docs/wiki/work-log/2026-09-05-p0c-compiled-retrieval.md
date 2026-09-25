@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance (executing CHAT-QUERY-COMPILER-PLAN §4 P0.c)
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.88
 package: shared/polymath_shared/chat_plan.py, orchestrator/orchestrator/api/ui.py, scripts/chat_baseline.py, tests/determinism/{test_chat_compiler.py,test_chat_hygiene.py}
 architecture_impact: "POLYMATH_CHAT_COMPILER defaults to `on`: the streaming handler compiles first, then retrieves on `retrieval_text_for(plan)` (the PRIMARY compiled query plus any verbatim exact_terms the rewrite dropped) instead of the raw message, and skips corpus retrieval entirely when the plan says `retrieval_required=false` (evidence_policy `conversation`: TRANSFORM_USER_CONTENT, CONTINUE_PRIOR_ARTIFACT, CREATE_FROM_KNOWLEDGE, GENERAL_CONVERSATION). A skipped turn emits `retrieve_skipped`, an empty funnel, and `chat_plan.retrieval_skipped=true` in the answer event and the receipt. The fallback plan searches the raw message unchanged, so a compiler outage degrades to exactly the pre-P0.c behavior. Per-request override `compiler: off|shadow|on` for measurement. Nothing under §3.23 (ingestion, chunking, summaries, projections, extraction, Neo4j, latent enrichment) is touched."

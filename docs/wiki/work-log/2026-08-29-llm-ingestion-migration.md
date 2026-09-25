@@ -2,7 +2,8 @@
 change_id: LOCAL-LLM-INGESTION-MIGRATION
 owner: governance
 date: 2026-08-29
-status: in-progress
+status: complete
+status_note: "Superseded by LLM-DIRECT-CANON (register 1.3, 11.62-11.64); local 4B lane retired in 11.409; entity merge ladder stays open as register 4.4.4/4.4.5. (was: in-progress)"
 architecture_impact: extraction provider seam (LOCAL-LLM-EXTRACTION-V1)
 last_reviewed: 2026-08-29
 ---

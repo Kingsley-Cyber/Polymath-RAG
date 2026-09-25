@@ -4,7 +4,8 @@ change_id: PRELIVE-WIRING-P11-PROFILE-EXPANSION
 date: 2026-09-18
 owner: librarian
 last_reviewed: 2026-09-18
-status: implemented
+status: complete
+status_note: "Live gate met: yield > 0 in 11.301, q0 fix in 11.302, CA5 qualification 11.311; PROFILE subqueries still fire (8 of 9 turns on 09-24). (was: implemented)"
 architecture_impact: "Wires P11 profile-driven discovery + the killer metric into the live retrieval path. ui.py: _add_profile_expansion turns the top scout nominations into bounded PROFILE-origin subqueries (flag POLYMATH_CHAT_PROFILE_EXPANSION, default off, fail-open) added in _compile_chat_plan's _finish before annotate; they flow to retrieval through the existing subqueries= channel (ui.py:2978); _compute_profile_yield reads the post-retrieval aspect trace (aspect final>0) and emits profile_expansion_evidence_yield into the retrieval receipt (retrieval.profile_yield). Additive: q0 + its aspect subqueries untouched, scout informs never gates. orchestrator/ = not worktree-testable: IMPLEMENTED, live-qual pending (bounce with the flag on)."
 ---
 

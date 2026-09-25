@@ -2,7 +2,8 @@
 change_id: TICK-ARITY-FIX-AND-PHASE-TELEMETRY
 owner: control
 date: 2026-08-25
-status: implemented
+status: complete
+status_note: "Fix and phase telemetry live. Leftover moved to the gap register as O-01: no real-Postgres full-tick test, and the tick died twice since (11.18, 11.256). (was: implemented)"
 architecture_impact: none
 last_reviewed: 2026-08-29
 ---

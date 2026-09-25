@@ -2,7 +2,8 @@
 change_id: referential-admission-v2
 owner: worker
 date: 2026-08-18
-status: in-progress
+status: complete
+status_note: "Superseded by LLM-DIRECT-FACTS-V1 (register 1.3) and ADR-0017; Harbor admission no longer gates facts; its admission workers were deleted in 11.64. (was: in-progress)"
 architecture_impact: entity-harbor-admission-contract
 last_reviewed: 2026-08-18
 ---

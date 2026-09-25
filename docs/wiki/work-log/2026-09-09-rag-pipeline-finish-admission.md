@@ -5,7 +5,8 @@ date: 2026-09-09
 owner: governance (admission + runbook adoption); subsequent phases carry their own runtime owner
 last_reviewed: 2026-09-09
 last_touched: 2026-09-09
-status: in_progress
+status: complete
+status_note: "Admission done; its goal was achieved (register 11.186) and the forensic hold cleared (11.204). The stale AGENTS.md item-00 line was fixed in 11.463. (was: in_progress)"
 register: 11.186 (pending)
 package: RAG_PIPELINE_FINISH_PLAN.md, RAG_PIPELINE_AGENT_BOOTSTRAP_PROMPT.md, docs/wiki/reports/2026-09-09-rag-finish/
 architecture_impact: "Adopts the owner-supplied ordered execution runbook (PR #2 / origin/docs/rag-pipeline-finish-plan) into the active execution branch as a RUNBOOK, not a competing bootstrap authority. AGENTS.md / CONTINUITY-REPORT / PLAN-AUTHORITY-REGISTER / RETRIEVAL-MIGRATION-DEPENDENCY-V1 remain the repository authorities; the runbook defers to them for cutover/retirement and to later owner decisions. No code/schema/contract behavior changed by this admission commit."

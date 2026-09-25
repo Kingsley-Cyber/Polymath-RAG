@@ -2,7 +2,8 @@
 change_id: POLYMATH-MCP-V2 + DOCUMENT-STATUS-V1 + MCP-SUPERVISED-SLOT + ENV-INLINE-COMMENT-OUTAGE
 owner: governance
 date: 2026-09-02
-status: complete (E2E receipt appended below)
+status: complete
+status_note: "complete (E2E receipt appended below)"
 architecture_impact: MCP tool surface (8 tools, fail-closed auth, corpus-scoped queries); orchestrator GET /status; MCP moved from launchd to the fleet supervisor (ALWAYS slot); runtime budget profiles
 last_reviewed: 2026-09-02
 ---

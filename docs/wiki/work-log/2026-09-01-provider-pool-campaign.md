@@ -2,7 +2,8 @@
 change_id: PROVIDER-POOL-CAMPAIGN-0901
 owner: governance
 date: 2026-09-01
-status: complete (lane wiring = owner gate)
+status: complete
+status_note: "complete (lane wiring = owner gate)"
 architecture_impact: qualification method (provider_canary.py); no runtime change
 last_reviewed: 2026-09-01
 ---

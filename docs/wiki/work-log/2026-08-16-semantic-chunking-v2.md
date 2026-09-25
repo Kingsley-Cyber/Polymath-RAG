@@ -2,7 +2,8 @@
 change_id: semantic-chunking-v2
 owner: worker
 date: 2026-08-16
-status: in-progress
+status: complete
+status_note: "Superseded by TIER-CHUNKER-V3 (register 11.24); semantic_v2 failed the I4 check (kimi log A5) and stays only as a retired, non-default chunker option. (was: in-progress)"
 architecture_impact: adds-versioned-chunking-provider-contract
 last_reviewed: 2026-08-16
 ---

@@ -2,7 +2,8 @@
 change_id: CORPUS-PLAN-V1 + CAPABILITIES-V1
 owner: governance
 date: 2026-09-03
-status: DONE (parity tests green; live-probed after fleet restart)
+status: complete
+status_note: "DONE (parity tests green; live-probed after fleet restart)"
 architecture_impact: Polymath owns the research reformulation plan (`POST /retrieve/plan`) and advertises its contracts (`GET /capabilities`); MCP gains `capabilities`, `compile_plan`, `retrieve_evidence`. Retrieval ranking untouched. Consumers switch on contracts, never on the backend name.
 last_reviewed: 2026-09-03
 ---

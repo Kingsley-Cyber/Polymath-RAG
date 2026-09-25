@@ -2,7 +2,8 @@
 change_id: BULK-RECEIPT-COMPLETENESS-V1
 owner: control
 date: 2026-08-25
-status: implemented
+status: complete
+status_note: "Done: one corpus-scoped anti-join per tick, live (advance ~2 s). The census per-run receipt checks (~50 s of a ~55 s tick) are a separate unowned item: gap O-02. (was: implemented)"
 architecture_impact: advancement-phase receipt evaluation is now corpus-scoped set-based; verdict-store semantics unchanged
 last_reviewed: 2026-08-29
 ---

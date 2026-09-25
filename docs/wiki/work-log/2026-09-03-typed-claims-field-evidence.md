@@ -2,7 +2,8 @@
 change_id: FIELD-EVIDENCE-CORPUS-V1 + TYPED-CLAIMS-V1
 owner: governance
 date: 2026-09-03
-status: FIELD-EVIDENCE-CORPUS-V1 DONE; TYPED-CLAIMS-V1 REVERTED 2026-09-03 (owner: the RAG's extraction is not changed for a consumer)
+status: complete
+status_note: "Field-evidence corpus done (register 11.68); typed claims reverted by the owner (11.69). Freshness uses the export date, a known limitation. (was: FIELD-EVIDENCE-CORPUS-V1 DONE; TYPED-CLAIMS-V1 REVERTED 2026-09-03 (owner: the RAG's extraction is not changed for a con)"
 architecture_impact: a research skill's curated observations become a Polymath corpus with provenance frontmatter; the extractor labels lived claims (friction / behavior / workaround / purchase_language) in facts.qualifiers and EXPLORE returns them; /capabilities detects both from the stores. Semantic bundle re-frozen (llm_direct.py, gate.py changed).
 last_reviewed: 2026-09-03
 ---

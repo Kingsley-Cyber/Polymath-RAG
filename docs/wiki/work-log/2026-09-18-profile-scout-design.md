@@ -4,7 +4,8 @@ change_id: PROFILE-SCOUT-V1
 date: 2026-09-18
 owner: librarian
 last_reviewed: 2026-09-18
-status: design
+status: complete
+status_note: "Frozen P5 contract shipped: profile_scout.py (11.289, 11.293), wired with title injection retired (11.294), live-proven in 11.301. (was: design)"
 architecture_impact: "Freezes the P5 Profile Scout output schema + invariants BEFORE code, because the schema is a semantic contract P6 consumes. Design-only row (no runtime/schema change). Establishes: scout is ONE logical reconnaissance over TWO existing projections (DOCUMENT_PROFILE + PROFILE_ATOM), fused deterministically with per-hit provenance, no atom duplication into the profile point; the scout is the SOLE pre-plan recon — retires _compiler_titles / the title concept injection (B16); dualread untouched."
 ---
 

@@ -5,7 +5,8 @@ date: 2026-09-04
 owner: governance
 last_reviewed: 2026-09-04
 last_touched: 2026-09-04
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.72
 package: research/
 architecture_impact: "research/ product graph v2.0.0 — population discovery precedes hypotheses; seven new schemas; provenance verdicts at qualify; Polymath API and extraction untouched"

@@ -4,7 +4,8 @@ change_id: HARNESS-RESEARCH-MIGRATION-V1-HR4-PORTFOLIO-CONSUMER
 date: 2026-09-16
 owner: king
 last_reviewed: 2026-09-16
-status: in_progress
+status: complete
+status_note: "Merged in 7f232e0 (PR 29); the merged-main two-hypothesis proof passed (11.276). Owner-parked LOW item: the terminal envelope has an empty qualifications list. (was: in_progress)"
 register: 11.275
 architecture_impact: "Trail HR4 (ADR-064) turns opportunity.qualify / opportunity.score into a per-hypothesis portfolio: ResearchResultV1 carries `qualifications`, `trail_scores` and `score_refusals` tuples instead of the singular `qualification` / `trail_score`. Polymath's adapter is the only consumer of that wire. This slice makes the step worker forward every qualification record of every stage to the score request (Trail filters per hypothesis; the caller never selects a winner), joins every per-hypothesis score and refusal record id to the cross-system lineage, and evolves the trail.product_discovery manifest (2.0.0 → 2.1.0, output schema 2.1.0) so the terminal output carries the per-hypothesis records. The scripted acceptance now develops two live hypotheses, tags all field evidence to the non-first one, and asserts the portfolio outcome. Tolerant of the pre-HR4 singular shape, so it can land before or after the Trail merge. No model, harness, or Polymath code reads or ranks a score value (LAW 1). Touches workers/ and shared config → a fleet bounce lands it."
 ---

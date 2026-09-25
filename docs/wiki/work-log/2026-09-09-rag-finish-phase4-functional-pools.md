@@ -4,7 +4,8 @@ change_id: RAG-PIPELINE-FINISH-V1
 date: 2026-09-09
 owner: governance (assessment + a reusable pool-health primitive; no runtime behavior change)
 last_reviewed: 2026-09-09
-status: complete (extraction+profile PASS; PMAP-as-drained-pool deferred to Phase 7 wiring)
+status: complete
+status_note: "complete (extraction+profile PASS; PMAP-as-drained-pool deferred to Phase 7 wiring)"
 register: 11.189 (pending)
 package: shared/polymath_shared/llm_extraction/lane_registry.py, tests/determinism/test_lane_registry.py
 architecture_impact: "No runtime behavior change. Assesses the functional-pool drain invariant against existing implementation+tests and adds a provider-free STAGE→pool + per-pool lane-health primitive (feeds Phase 12 live queue metrics). Bundle hash unchanged; no fleet fence."

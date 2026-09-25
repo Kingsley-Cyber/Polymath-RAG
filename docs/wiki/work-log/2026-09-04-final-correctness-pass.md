@@ -5,7 +5,8 @@ date: 2026-09-04
 owner: governance
 last_reviewed: 2026-09-04
 last_touched: 2026-09-04
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.74
 package: research/
 architecture_impact: "research/ only — canary semantics split (open-field vs LATENT resolution, explicit SOURCE_AGNOSTIC_CALIBRATION mode), corpus-presence receipt via existing /documents + /retrieve, deterministic field origin, fail-closed document scope, controller admission fixes (hop refs, empty submitted lists, terminal verdict), transitions law (all bridges dead → NO_DEFENSIBLE_BRIDGE), L4 dossier lanes. Graph topology, prompts' laws, Polymath API and extraction untouched. One data-provenance fix in corpus ecom-meta-v1 (mislabeled novel re-ingested under its real title)."

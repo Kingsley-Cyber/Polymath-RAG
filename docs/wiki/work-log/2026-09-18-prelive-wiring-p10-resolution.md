@@ -4,7 +4,8 @@ change_id: PRELIVE-WIRING-P10-RESOLUTION
 date: 2026-09-18
 owner: librarian
 last_reviewed: 2026-09-18
-status: implemented
+status: complete
+status_note: "Live-proven (11.303) and qualified in CA5 (11.311); the res_shutter mode-ranking limit is deferred in 11.311. (was: implemented)"
 architecture_impact: "Wires the P10 evidence-resolution core into the LIVE retrieval/synthesis path. ui.py: after round 1, if a REQUIRED (origin=USER) aspect reached no final evidence, _maybe_resolve runs ONE bounded round 2 through the same chat_retrieve_mode engine and MERGES its new source children into fast['evidence'] before the bundle is built, so SYNTHESIS uses the new evidence; the resolution_receipt (hop_2_fired/reason/round2) rides on retrieval.resolution. Flag POLYMATH_CHAT_RESOLUTION (default off), fail-open, explicit single-round stop. Reuses the planner/engine — no second RAG pipeline. orchestrator/ = not worktree-testable: live-qualified."
 ---
 
