@@ -7,7 +7,8 @@ documents and abstract bridges; RAG handles surface semantics. Which doors a tur
   nominate extra documents through it. The SEEALSO fan-out (lane G) opens when the scout nominated documents for this
   question (the plan carries PROFILE / BRIDGE probes) — the skeleton already said which neighbours matter.
 - GRAPH: HYBRID plus SEEALSO fan-out and the graph destination (lane H): one hop through the relational skeleton
-  (owner decision D8 — "for graph see more can be used for hops").
+  (owner decision D8 — "for graph see more can be used for hops"). SEEALSO-HOP-V1 (`POLYMATH_CHAT_SEEALSO_HOP`, GRAPH and
+  WILDCARD): the fan-out also follows its top SEE ALSO items one hop to the documents they point at (`seealso_hop.py`).
 - WILDCARD: every abstract door (every atom kind, latent rescue, fan-out, graph destination) with more judged seats per
   route: the same question, searched and weighed differently, still grounded in real chunks.
 - FAST / VECTOR and GNN stay exactly as the owner defined them (A + B; the GNN route alone).
@@ -45,6 +46,7 @@ FLAG = "POLYMATH_CHAT_SKELETON_ROUTES"
 JUDGE_FLAG = "POLYMATH_CHAT_CONTEXTUAL_JUDGE"
 PROBES_FLAG = "POLYMATH_CHAT_SKELETON_PROBES"
 PROBE_GATE_FLAG = "POLYMATH_CHAT_PROBE_GATE"
+SEEALSO_HOP_FLAG = "POLYMATH_CHAT_SEEALSO_HOP"
 _SKIP_MODES = frozenset({"FAST", "VECTOR", "GNN"})
 _NOMINATING_ORIGINS = frozenset({"PROFILE", "BRIDGE"})
 
@@ -72,6 +74,9 @@ def apply_skeleton_routes(budget, *, mode: str, plan=None, env: Mapping[str, str
         "dualread_enabled": True,
         "latent_enabled": True if m == "WILDCARD" else bool(getattr(budget, "latent_enabled", False)),
         "seealso_fanout_enabled": m in ("GRAPH", "WILDCARD") or nominated,
+        # SEEALSO-HOP-V1 (D8, "for graph see more can be used for hops"): inside lane G, the top SEE ALSO items are followed
+        # one hop to the documents they point at (seealso_hop.py); GRAPH and WILDCARD only
+        "seealso_hop_enabled": m in ("GRAPH", "WILDCARD") and env.get(SEEALSO_HOP_FLAG, "0") == "1",
         "graph_dest_enabled": m in ("GRAPH", "WILDCARD"),
         "atom_kinds": tuple(k for k in ATOM_KINDS if k in kinds),
         "route_prefix_seats": 3 if m == "WILDCARD" else 2,

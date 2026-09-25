@@ -312,6 +312,13 @@ class CandidateBudget:
     seealso_fanout_enabled: bool = False
     seealso_fanout_atoms: int = 6            # relational atoms probed per turn
     seealso_fanout_children: int = 4         # children kept per probed atom
+    #: SEEALSO-HOP-V1 (owner decision D8; register 11.472): inside lane G, follow the top SEE ALSO items ONE hop to the
+    #: documents they point at (profile match, never the pointing document) → those documents' parent maps → original
+    #: children. Default OFF ⇒ lane G byte-identical. `seealso_hop.py`.
+    seealso_hop_enabled: bool = False
+    seealso_hop_items: int = 3               # SEE ALSO items followed per turn
+    seealso_hop_docs: int = 2                # neighbour documents per item
+    seealso_hop_children: int = 4            # children kept per item across its neighbour documents
     #: P7 graph destination (lane H): query entities → Neo4j hop → destination entities → their
     #: documents → ORIGINAL children (JUDGED). Source-attested relationship route ⇒ RELATIONAL role
     #: (ARRIVAL_GRAPH_DEST). Default OFF ⇒ lane H empty ⇒ union byte-identical. Additive, last.
@@ -994,6 +1001,9 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
             try:
                 rows = fanout_search(list(ctx.qvec)) or []   # dense-child rows ({payload, score}) from the atom-text probes
                 cap = budget.seealso_fanout_atoms * budget.seealso_fanout_children
+                if budget.seealso_hop_enabled:
+                    # SEEALSO-HOP-V1: the hop's rows come after the global-door rows, so the cap makes room for them
+                    cap += budget.seealso_hop_items * budget.seealso_hop_children
                 atom_by_chunk = {(r.get("payload") or {}).get("chunk_id"): str(r["fanout_atom"]) for r in rows if r.get("fanout_atom")}
                 for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, cap):
                     if h.chunk_id:
@@ -1003,6 +1013,18 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
                         if budget.skeleton_paths and atom_by_chunk.get(h.chunk_id):
                             needs.setdefault(h.chunk_id, atom_by_chunk[h.chunk_id])
                 fanout_trace["atoms"] = sorted({str(r.get("fanout_atom")) for r in rows if r.get("fanout_atom")})[:8]
+                if budget.seealso_hop_enabled:
+                    kept = {c.chunk_id for c in lane_g}
+                    hop_rows = [r for r in rows if r.get("seealso_hop")]
+                    hops: list[dict] = []
+                    for r in hop_rows:
+                        h = r["seealso_hop"]
+                        key = (str(h.get("item") or "")[:120], str(h.get("to_doc") or ""))
+                        if key not in [(x["item"], x["to_doc"]) for x in hops]:
+                            hops.append({"item": key[0], "from_doc": str(h.get("from_doc") or ""), "to_doc": key[1]})
+                    fanout_trace["hops"] = hops[:8]
+                    fanout_trace["hop_candidates"] = sum(1 for r in hop_rows
+                                                         if (r.get("payload") or {}).get("chunk_id") in kept)
             except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
                 fanout_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
             fanout_trace["candidates"] = len(lane_g)

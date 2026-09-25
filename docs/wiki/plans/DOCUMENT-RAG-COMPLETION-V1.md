@@ -226,7 +226,7 @@ default off. Merge + bounce happens on the owner's word.
 | S3 | E3 synthesis roles + coverage lines; E7 `target` fix | unit tests; prompt inspection |
 | S4 | Part B compiler contract, including merged bridge planning fed profile-item text and D2 always-retrieve | flag-gated; compile time + fallback measured; the plan-validation tests stay green |
 | S5 | Part C lineage end to end + concurrent lanes D–I + q0 during compilation | flag-gated; per-probe receipts; latency trace |
-| S6 | Part C concept routing: selection + global / home doors; neighbour door for GRAPH (one hop) | flag-gated; fixture 1 reach; D4 check (do the profile routes supply the concepts?) |
+| S6 | Part C concept routing: selection + global / home doors; neighbour door for GRAPH (one hop) — **neighbour door BUILT as SEEALSO-HOP-V1 (11.472, GRAPH + WILDCARD, ON)**; item-level select + global door are served by the atom store (lane G) | flag-gated; fixture 1 reach; D4 check (do the profile routes supply the concepts?) |
 | S7 | Part D: stage-1 signals + stage-2 judge candidates, A/B | fixtures 1–3 + metrics; latency against D6 |
 | S8 | Part E synthesis contract + WILDCARD alignment | fixtures 4–6; answer inspection |
 | S9 | Acceptance: 5–8 live turns, expanded only on the owner's word; flag defaults flipped only on the owner's word | the full fixture table + baselines |
