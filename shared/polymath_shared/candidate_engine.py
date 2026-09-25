@@ -320,6 +320,11 @@ class CandidateBudget:
     seealso_blend_items: int = 4             # see-also lines blended per turn (ranked by the question)
     seealso_blend_children: int = 4          # passages kept per blended line
     seealso_blend_alpha: float = 0.7         # question weight in the blend (1 = the question alone); 0.7 won the replay
+    #: DOC-STEER-V1 (owner 2026-09-25 "build it"; register 11.482; gap D-10): the same documents' lines of these kinds join
+    #: the blend — the document level steers the search, blended with the question. Set per mode by the skeleton routes;
+    #: empty ⇒ lane G byte-identical to the SEE ALSO blend alone.
+    doc_steer_kinds: tuple[str, ...] = ()
+    doc_steer_items: int = 4                 # extra lines blended per turn (ranked by the question)
     #: P7 graph destination (lane H): query entities → Neo4j hop → destination entities → their
     #: documents → ORIGINAL children (JUDGED). Source-attested relationship route ⇒ RELATIONAL role
     #: (ARRIVAL_GRAPH_DEST). Default OFF ⇒ lane H empty ⇒ union byte-identical. Additive, last.
@@ -1005,6 +1010,9 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
                 if budget.seealso_blend_enabled:
                     # SEEALSO-BLEND-V1: the blended probes' rows come after the global-door rows; the cap makes room for them
                     cap += budget.seealso_blend_items * budget.seealso_blend_children
+                    if budget.doc_steer_kinds:
+                        # DOC-STEER-V1: the steer lines' rows follow the SEE ALSO lines' rows
+                        cap += budget.doc_steer_items * budget.seealso_blend_children
                 atom_by_chunk = {(r.get("payload") or {}).get("chunk_id"): str(r["fanout_atom"]) for r in rows if r.get("fanout_atom")}
                 for h in _hits(REPRESENTATION_KIND_CHILD, rows, ctx.corpus_id, cap):
                     if h.chunk_id:
@@ -1021,11 +1029,18 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
                     for r in blend_rows:
                         b = r["seealso_blend"]
                         entry = {"item": str(b.get("item") or "")[:120], "from_doc": str(b.get("from_doc") or "")}
+                        if budget.doc_steer_kinds:
+                            entry["kind"] = str(b.get("kind") or "")      # DOC-STEER-V1: which line kind steered it
                         if entry not in blends:
                             blends.append(entry)
-                    fanout_trace["blends"] = blends[:8]
+                    fanout_trace["blends"] = blends[:12 if budget.doc_steer_kinds else 8]
                     fanout_trace["blend_candidates"] = sum(1 for r in blend_rows
                                                            if (r.get("payload") or {}).get("chunk_id") in kept)
+                    if budget.doc_steer_kinds:
+                        fanout_trace["steer_kinds"] = list(budget.doc_steer_kinds)
+                        fanout_trace["steer_candidates"] = sum(
+                            1 for r in blend_rows if (r.get("payload") or {}).get("chunk_id") in kept
+                            and str((r.get("seealso_blend") or {}).get("kind") or "SEEALSO") != "SEEALSO")
             except Exception as exc:  # noqa: BLE001 — the lane is optional; absence is receipted, never silent
                 fanout_trace["degraded"] = f"{type(exc).__name__}: {str(exc)[:80]}"
             fanout_trace["candidates"] = len(lane_g)

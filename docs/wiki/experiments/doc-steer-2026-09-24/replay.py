@@ -12,7 +12,10 @@ POLYMATH_CHAT_SEEALSO_BLEND_ITEMS=8 grows the lane cap by the same rule the engi
 does not pay the cold caches. Each question runs in its own stored mode and in GRAPH. Run from the main checkout with the
 main .env loaded. Writes replay.json next to this file.
 Follow-up switches (all optional): DOC_STEER_WILDCARD_KINDS (comma list; replaces WILDCARD's extra kinds),
-DOC_STEER_MODES (comma list; only these runs), DOC_STEER_CONFIGS (comma list), REPLAY_OUT (output file name)."""
+DOC_STEER_MODES (comma list; only these runs), DOC_STEER_CONFIGS (comma list), REPLAY_OUT (output file name).
+Build proof (register 11.482): the `built` config turns on the production flag POLYMATH_CHAT_DOC_STEER=1 with no wrapper
+lines, so the steer comes from the built code path; it must equal `steer` (same kinds) in GRAPH / WILDCARD and `blend` in
+HYBRID."""
 from __future__ import annotations
 
 import importlib.util
@@ -35,7 +38,7 @@ EXTRA = {"HYBRID": ("CONCEPT",), "GRAPH": ("BRIDGE", "ANCHOR"),
 MODES = tuple(m for m in (os.environ.get("DOC_STEER_MODES") or "").split(",") if m)
 #: config → (blend flag, question weight, lines, the mode's extra lines on)
 CONFIGS = {"base": ("0", "0.7", 4, False), "blend": ("1", "0.7", 4, False), "steer": ("1", "0.7", 8, True),
-           "steer60": ("1", "0.6", 8, True)}
+           "steer60": ("1", "0.6", 8, True), "built": ("1", "0.7", 4, False)}
 CONFIGS = {k: v for k, v in CONFIGS.items()
            if k in ("base", "blend") or not os.environ.get("DOC_STEER_CONFIGS")
            or k in os.environ["DOC_STEER_CONFIGS"].split(",")}
@@ -62,6 +65,8 @@ def _install_wrappers() -> None:
         rows, trace = orig_rows(items, item_vectors, **kw)
         for r in rows:
             STATE["found"].setdefault(str((r.get("payload") or {}).get("chunk_id") or ""), r.get("fanout_atom"))
+            if (r.get("seealso_blend") or {}).get("kind"):           # the built code tags each row with its line's kind
+                STATE.setdefault("kinds", {})[r.get("fanout_atom")] = r["seealso_blend"]["kind"]
         return rows, trace
 
     _pap.search_atoms, _sb.blend_rows = search_atoms, blend_rows
@@ -74,7 +79,11 @@ def _once(mode: str, question: str, cp: dict, cfg: str) -> dict:
                        "POLYMATH_CHAT_SEEALSO_BLEND": flag, "POLYMATH_CHAT_SEEALSO_BLEND_ALPHA": alpha,
                        "POLYMATH_CHAT_SEEALSO_BLEND_ITEMS": str(items)})
     os.environ.pop("POLYMATH_CHAT_SEEALSO_HOP", None)
-    STATE.update({"extra": EXTRA[mode] if extra else (), "lines": [], "found": {}})
+    if cfg == "built":
+        os.environ["POLYMATH_CHAT_DOC_STEER"] = "1"          # the production steer (11.482), no wrapper lines
+    else:
+        os.environ.pop("POLYMATH_CHAT_DOC_STEER", None)
+    STATE.update({"extra": EXTRA[mode] if extra else (), "lines": [], "found": {}, "kinds": {}})
     from orchestrator.api import chat_retrieval as _cr
     from orchestrator.api.chat_retrieval import chat_retrieve_mode, default_budget, intent_policy_enabled
     from polymath_shared.probe_gate import gate_probes
@@ -101,7 +110,7 @@ def _once(mode: str, question: str, cp: dict, cfg: str) -> dict:
     wall = round((time.perf_counter() - t0) * 1000, 1)
     ev = out.get("evidence") or []
     fan = (out.get("trace") or {}).get("seealso_fanout") or {}
-    kind_of = {ln["text"]: ln["kind"] for ln in STATE["lines"]}
+    kind_of = {**STATE.get("kinds", {}), **{ln["text"]: ln["kind"] for ln in STATE["lines"]}}
     found = dict(STATE["found"])
     return {"wall_ms": wall, "lane_g_ms": fan.get("lane_ms"), "alpha": budget.seealso_blend_alpha,
             "items": budget.seealso_blend_items, "blend_on": bool(budget.seealso_blend_enabled), "lines": STATE["lines"],
@@ -140,7 +149,7 @@ def main() -> int:
             except Exception as exc:  # noqa: BLE001 — a failed replay is a finding
                 rec[cfg] = {"error": f"{type(exc).__name__}: {exc}"[:300]}
         base, blend = rec["base"], rec["blend"]
-        for cfg in ("blend", "steer", "steer60"):
+        for cfg in ("blend", "steer", "steer60", "built"):
             b = rec.get(cfg)
             if not b or "error" in b or "error" in base:
                 continue
@@ -153,13 +162,18 @@ def main() -> int:
                                    "wall_delta_ms": round(b["wall_ms"] - base["wall_ms"], 1)}
         out.append(rec)
         line = [f"turn {turn} {mode:8s}"]
-        for cfg in ("blend", "steer", "steer60"):
+        if rec.get("built") and rec.get("steer") and "error" not in rec["built"] and "error" not in rec["steer"]:
+            rec["built_equals_steer"] = rec["built"]["final_chunks"] == rec["steer"]["final_chunks"]
+        if rec.get("built") and "error" not in rec["built"] and "error" not in blend:
+            rec["built_equals_blend"] = rec["built"]["final_chunks"] == blend["final_chunks"]
+        for cfg in ("blend", "steer", "steer60", "built"):
             d = rec.get(f"delta_{cfg}")
             if d:
                 line.append(f"{cfg}: new_vs_base={len(d['new_vs_base'])} new_vs_blend="
                             f"{'-' if d['new_vs_blend'] is None else len(d['new_vs_blend'])} direct={d['direct']} "
                             f"laneG_ms={d['lane_g_ms']} wallΔ={d['wall_delta_ms']}")
-        print(" | ".join(line), f"err={base.get('error')}", flush=True)
+        print(" | ".join(line), f"built=steer:{rec.get('built_equals_steer')} built=blend:{rec.get('built_equals_blend')}",
+              f"err={base.get('error')}", flush=True)
     (HERE / (os.environ.get("REPLAY_OUT") or "replay.json")).write_text(json.dumps(out, indent=1, default=str))
     return 0
 

@@ -224,6 +224,7 @@ _INT_KNOBS = ("rerank_max", "synthesis_max", "global_dense_k", "global_sparse_k"
               "hierarchy_route_documents",                                                              # SECTION-ROUTING-V1
               "seealso_fanout_enabled", "seealso_fanout_atoms", "seealso_fanout_children",              # P5 fan-out (lane G)
               "seealso_blend_docs", "seealso_blend_items", "seealso_blend_children",                    # SEEALSO-BLEND-V1 (lane G)
+              "doc_steer_items",                                                                        # DOC-STEER-V1 (lane G)
               "graph_dest_enabled", "graph_dest_children",                                             # P7 graph destination (lane H)
               "gnn_enabled", "gnn_parent_k", "gnn_children_per_parent", "gnn_children",               # GNN-RETRIEVAL-V1 (lane I)
               # EVIDENCE-DIET-V1 step 3: POLYMATH_CHAT_RERANK_ROUND_ROBIN (0/1), POLYMATH_CHAT_RERANK_DOC_CAP, POLYMATH_CHAT_RERANK_MAX_FAIR
@@ -441,6 +442,15 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                     blend_items = [a for a in _pap.search_atoms(client, atom_coll, qv, ("SEEALSO",),
                                                                 k=int(budget.seealso_blend_items), corpus_ids=[corpus_id],
                                                                 doc_ids=q_docs) if a.get("text")]
+                    # DOC-STEER-V1 (owner 2026-09-25 "build it"): the same documents' lines of the mode's kinds join the
+                    # blend, ranked by the question — the document level steers the search; it never picks books
+                    steer_kinds = tuple(getattr(budget, "doc_steer_kinds", ()) or ())
+                    if steer_kinds:
+                        have = {a["text"] for a in blend_items}
+                        blend_items += [a for a in _pap.search_atoms(client, atom_coll, qv, steer_kinds,
+                                                                     k=int(getattr(budget, "doc_steer_items", 4)),
+                                                                     corpus_ids=[corpus_id], doc_ids=q_docs)
+                                        if a.get("text") and a["text"] not in have]
             if not atoms and not blend_items:
                 return []
             texts = list(dict.fromkeys([a["text"] for a in atoms] + [a["text"] for a in blend_items]))

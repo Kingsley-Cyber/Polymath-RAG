@@ -36,7 +36,7 @@ def test_each_line_searches_the_whole_corpus_with_its_blended_probe():
                                 alpha=0.5, children_per_item=2)
     assert [r["payload"]["chunk_id"] for r in rows] == ["b1", "c1", "d1"]      # b1 is not repeated for the 2nd line
     assert rows[0]["fanout_atom"] == "Bayesian reasoning applications"
-    assert rows[0]["seealso_blend"] == {"item": "Bayesian reasoning applications", "from_doc": "A"}
+    assert rows[0]["seealso_blend"] == {"item": "Bayesian reasoning applications", "from_doc": "A", "kind": "SEEALSO"}
     assert trace == [{"item": "Bayesian reasoning applications", "from_doc": "A", "children": 2},
                      {"item": "decision theory", "from_doc": "A", "children": 1}]
     assert seen[0] == (tuple(round(x, 6) for x in sb.blend([1.0, 0.0], [0.0, 1.0], 0.5)), 4)   # the blend, k = 2 x kept
@@ -63,6 +63,33 @@ def test_the_blend_follows_lane_g_in_every_opened_mode_and_only_behind_its_flag(
     assert apply_skeleton_routes(CandidateBudget(), mode="FAST", plan=plan, env=on) == CandidateBudget()
     assert apply_skeleton_routes(CandidateBudget(), mode="GNN", plan=plan, env=on) == CandidateBudget()
     assert not CandidateBudget().seealso_blend_enabled and CandidateBudget().seealso_blend_alpha == 0.7   # the replay winner
+
+
+def test_doc_steer_adds_the_modes_document_lines_only_behind_both_flags():
+    # DOC-STEER-V1 (register 11.482; replay 11.477): GRAPH bridges + anchors, WILDCARD theories / concepts / latent patterns
+    # / tensions — never inversions; HYBRID keeps the SEE ALSO blend alone; the steer rides the blend
+    plan = SimpleNamespace(queries=[SimpleNamespace(id="x0", origin="PROFILE")])
+    both = {"POLYMATH_CHAT_SKELETON_ROUTES": "1", "POLYMATH_CHAT_SEEALSO_BLEND": "1", "POLYMATH_CHAT_DOC_STEER": "1"}
+    kinds = {m: apply_skeleton_routes(CandidateBudget(), mode=m, plan=plan, env=both).doc_steer_kinds
+             for m in ("HYBRID", "GRAPH", "WILDCARD")}
+    assert kinds == {"HYBRID": (), "GRAPH": ("BRIDGE", "ANCHOR"),
+                     "WILDCARD": ("THEORY", "CONCEPT", "LATENT_PATTERN", "TENSION")}
+    assert not any("INVERSION" in k for k in kinds.values())
+    steer_only = {"POLYMATH_CHAT_SKELETON_ROUTES": "1", "POLYMATH_CHAT_DOC_STEER": "1"}
+    blend_only = {"POLYMATH_CHAT_SKELETON_ROUTES": "1", "POLYMATH_CHAT_SEEALSO_BLEND": "1"}
+    for env in (steer_only, blend_only):
+        assert apply_skeleton_routes(CandidateBudget(), mode="GRAPH", plan=plan, env=env).doc_steer_kinds == ()
+    assert apply_skeleton_routes(CandidateBudget(), mode="FAST", plan=plan, env=both) == CandidateBudget()
+    assert CandidateBudget().doc_steer_kinds == () and CandidateBudget().doc_steer_items == 4
+
+
+def test_each_row_carries_its_line_kind():
+    items = [{"text": "linking cinematography to film editing", "doc_id": "A", "atom_kind": "BRIDGE"},
+             {"text": "decision theory", "doc_id": "A"}]
+    vecs = [[0.0, 1.0], [1.0, 0.0]]
+    rows, _ = sb.blend_rows(items, vecs, question_vector=[1.0, 0.0], alpha=0.7, children_per_item=1,
+                            search_children=lambda vec, k: [_child(f"c{round(vec[0], 3)}", "B")])
+    assert [r["seealso_blend"]["kind"] for r in rows] == ["BRIDGE", "SEEALSO"]
 
 
 def test_atom_search_can_be_limited_to_documents():
