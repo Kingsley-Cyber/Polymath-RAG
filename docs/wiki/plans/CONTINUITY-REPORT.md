@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-24
+last_reviewed: 2026-09-25
 ---
 
 
@@ -23,193 +23,163 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-24 (L4 + SEE ALSO blend close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L: L1–L4 DONE (L4b, 11.474: one test document through the fleet, every model stage on its owner's lane). SEE ALSO redesigned on the owner's word (11.475): the question's documents' SEE ALSO lines, each blended with the question, search passages corpus-wide; SEE ALSO never picks books. MERGED, `.env` swapped, BOUNCE PENDING (the owner's Run button). THE OWNER'S STANDING WORD (2026-09-24): "i decide for all your deficiencies found to be resolved": work the confirmed gaps in roadmap order. NEXT = the owner's bounce, then D1 → K1 → C1 → C2 → C3 → L5 → C6+C7 … The owner's new idea DOC-STEER-V1 (gap D-10: every document-level atom kind as a question-blended steer, per mode) waits on the owner's word: before D1 or after.**
+## CURRENT — 2026-09-25 (D1 + DOC-STEER replay close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE (11.478 + the post-merge fix 11.479): GRAPH hop-1 facts ranked behind `POLYMATH_GRAPH_FACT_RANK` (ON in `.env`), the MCP truncation marker. BOUNCE PENDING (the owner's Run button), then the $0 live check. The SEE ALSO blend is DEPLOYED (the owner bounced at 23:21 MDT). DOC-STEER-V1 replay done (11.477): the build waits on the owner's word. THE OWNER'S STANDING WORD (2026-09-24): "i decide for all your deficiencies found to be resolved". NEXT = the owner's bounce + `live_check.py`, then K1 → C1 → C2 → C3 → L5 → C6+C7 … (or DOC-STEER-V1 first, on the owner's word).**
 
 ### Repository State
-- Branch `production`. HEAD = this close-out, on top of `ee714c8e` (11.476 CI pin fix), `a3baacb4` (11.474 L4b
-  records), `95d7832a` (merge of `feat/seealso-blend`, 11.475) and `c36ac730` (11.473).
-- `origin/production` = `c36ac730` (pushed 2026-09-24 22:32 MDT). The owner's word "push and continue" covers the
-  close-out push: `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`. Check
-  `git rev-list --count origin/production..production` = 0; if the agent's push was blocked, that command is the owner's
-  Run button.
-- **Fleet: BOUNCE PENDING.** The agent's `bash scripts/bounce_fleet.sh` after the blend merge was denied as Production
-  Deploy (2026-09-24 ~22:55 MDT). State at close-out:
-  - 13 worker types / 26 healthy registrations; the fence re-registered 25 stage workers on the new bundle
-    `6be76d7719da` (22:52 MDT); `adapter_step` stays on `11a5aee360da`;
-  - the orchestrator (started 22:15:46 MDT) still runs the pre-merge code with `POLYMATH_CHAT_SEEALSO_HOP=1` in its
-    environment. The merge removed the hop's module file, which that process has not imported (0 chat turns since
-    22:15). So a HYBRID / GRAPH / WILDCARD turn before the bounce loses lane G for that turn (receipted as `degraded:
-    ModuleNotFoundError`, never silent);
-  - `/ready` true (embedder + reranker).
-  After the owner's bounce, expect 26 / 13 / ONE bundle, `/ready` true, and the orchestrator env
-  (`ps eww <pid> | tr ' ' '\n' | grep SEEALSO`) = `POLYMATH_CHAT_SEEALSO_BLEND=1` and no `_HOP`.
-- **Live `.env` (gitignored):** lines 146–147 now hold the SEEALSO-BLEND-V1 comment + `POLYMATH_CHAT_SEEALSO_BLEND=1`
-  (they replaced the hop's two lines). Unchanged: `POLYMATH_LLM_CLOUD_PRIMARY=0`; chat flags `SKELETON_ROUTES=1`,
-  `CONTEXTUAL_JUDGE=wildcard`, `PROBE_GATE=1`, `SYNTH_ROLES=1`, `REASONING_POLICY=1` (S4 / S8 unset = off);
-  `CLOUDFLARE_ACCOUNT_ID_3..6` filled, account 1 retired (its token unused).
-- **Test corpus `l4-canary`** (1 document, 11.474) stays until the owner deletes it: the UI's corpus delete
-  (`DELETE /corpora/{id}`, typed confirm).
-- **Other worktrees:** 20 (`pmv4-*` + `polymath-v4-main`) + `_graft_polymath`. The blend worktree is removed (its branch
-  is merged). Carried forward: all on merged branches except `pmv4-m1-repro` (`review/m1-reproductions`, kept on
-  purpose); `pmv4-rag-ui` holds another stream's 14 uncommitted files (never add, stash or revert them).
+- Branch `production`. HEAD = this close-out, on top of `a18f1a2e` (11.479 post-merge fix), `08528640` (merge of
+  `fix/d1-graph-fact-rank`, 11.478) and `c03890e5` (11.477 DOC-STEER replay).
+- `origin/production` = `9fc0956f` (pushed 2026-09-24). Unpushed: the four commits above + this close-out. The owner's
+  word for this session was "push only on my word", so the push is the owner's:
+  `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
+- **Fleet: BOUNCE PENDING.** The owner's bounce at 23:21 MDT is verified: 26 / 13 / ONE bundle `a755e35eadc1`,
+  `/ready` true, the orchestrator env `POLYMATH_CHAT_SEEALSO_BLEND=1` and no `_HOP`. The agent's bounce after the D1
+  merge was denied (Production Deploy). The state at close-out:
+  - stage workers are unaffected (the bundle is unchanged: D1 touched `orchestrator/` only);
+  - the orchestrator (pid started 23:21) holds the pre-D1 `retrieve` module in memory and loads the new
+    `chat_retrieval.py` through the guarded import (11.479). It serves the legacy fact order, and `/retrieve` GRAPH
+    answers 200 (checked);
+  - MCP Server A (started 23:21) runs the old code: no truncation marker until the bounce.
+- **After the owner's bounce**, run (from the main checkout, `.env` loaded; $0):
+  `.venv/bin/python docs/wiki/experiments/graph-fact-rank-2026-09-24/live_check.py`. Exit 0 = `/retrieve` GRAPH answers
+  `meta.graph_bounds.fact_order: "ranked"` with facts, and MCP `polymath_search` rows cut at 1,200 characters say
+  `truncated` + `full_length`. The pre-bounce baseline is `live_check_before_bounce.json`: 2 of 116 rows cut with no
+  marker.
+- **Live `.env` (gitignored):** lines 146–147 hold the SEEALSO-BLEND comment + `POLYMATH_CHAT_SEEALSO_BLEND=1`; lines
+  148–149 hold the D1 comment + `POLYMATH_GRAPH_FACT_RANK=1` (rollback = 0 + a bounce). Unchanged:
+  `POLYMATH_LLM_CLOUD_PRIMARY=0`; chat flags `SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`, `PROBE_GATE=1`,
+  `SYNTH_ROLES=1`, `REASONING_POLICY=1` (S4 / S8 off); `CLOUDFLARE_ACCOUNT_ID_3..6` filled, account 1 retired.
+- **Test corpus `l4-canary`** (1 document, 1 finished run): the owner asked on 2026-09-25 to delete it. A delete is the
+  owner's step; the agent handed over one Run-button command:
+  `curl -s -X DELETE "http://127.0.0.1:7200/corpora/l4-canary?confirm=l4-canary"`
+  (or the app: corpus menu → `l4-canary` → Delete corpus → type the name). Check afterwards: `corpora` has no
+  `l4-canary`.
+- **Other worktrees:** the D1 and blend worktrees are removed (branches merged). Carried forward: `pmv4-m1-repro`
+  (`review/m1-reproductions`, kept on purpose); `pmv4-rag-ui` holds another stream's 14 uncommitted files (never add,
+  stash or revert them); an old stash `PRE-LIBRARIAN-DEPLOY 2026-09-18` belongs to that era (leave it).
 
 ### Active Mission
-- **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 5 L4 = DONE 11.468 +
-  11.474). Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (69 rows: 20 closed, 49 open). How to build
-  code RAG: `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md`; background `CODE-KNOWLEDGE-V1-START-HERE.md`,
-  `CODE-LANGUAGE-REPRESENTATIONS-V1.md`.
-- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → **D1** → K1 → C1 → C2 → C3 → L5 → C6+C7 → C9+C10
-  (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14. (The L3 close-out's Next Action put L5 before D1;
-  the table puts L5 just before C6+C7, its first heavy user. The table wins.)
-- **The owner's decisions on record (11.452–11.475):**
-  - code RAG: Python, YAML + TOML, Luau / Roblox, Power Fx last; project = corpus; parsers only (no LLM language
-    detection, no LLM code facts); code ranked by its descriptions, loaded by identity; Postgres graph authority + a Neo4j
-    projection; no new chat mode; one reranker, no fixed weights; the code graph walked with the document graph (G1);
-  - R11 (11.471): code never goes through the heading skeleton or its curation;
-  - R12 + the code pMAP contract (11.473): code units come from the same parser pass as the deterministic graph; code
-    pMAP from complete bodies (whole file when it fits, else every section with its dependencies; upward rollups);
-    per-unit descriptions: yes;
-  - no reference book is shared across projects (11.474): C-26 closed, K1 needs no multi-corpus query;
-  - SEE ALSO is document-level: it widens the idea and never picks books (11.475).
+- **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 6 D1 = DONE 11.478).
+  Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (69 rows: 21 closed, 48 open). How to build code RAG:
+  `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md`.
+- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → **K1** → C1 → C2 → C3 → L5 → C6+C7 → C9+C10
+  (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
+- **The owner's decisions on record (11.452–11.478):** code RAG languages and architecture (11.452–11.457); R11 (no
+  heading curation for code, 11.471); R12 + the code pMAP contract (11.473); no reference book shared across projects
+  (11.474); SEE ALSO is document-level and never picks books (11.475). Details: the PRIOR block and the register.
+- **DOC-STEER-V1 (gap D-10, the owner's idea) — replay done, the build waits on the owner's word** (11.477, work-log
+  `2026-09-24-doc-steer-replay.md`). Steer vs the live SEE ALSO blend, each new / displaced passage read: GRAPH with
+  BRIDGE + ANCHOR lines 2 better / 1 same; WILDCARD with THEORY + CONCEPT + LATENT_PATTERN + TENSION 2 of 2 better
+  (adding INVERSION made 1 of 2 worse); HYBRID with CONCEPT no change; question weight 0.6 worse 2 of 2 (keep 0.7). Direct
+  evidence unchanged everywhere; lane G +0.5–1.2 s, retrieval wall within ±0.3 s. FAST untested (no stored FAST
+  question). The agent's recommendation = GRAPH + WILDCARD as above, HYBRID stays SEE ALSO only.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) stays paused: S5–S7 and S9 wait (S9 needs the owner's query
   allowance; 9 of 10 used).
 
-### Completed Since Last Bootstrap (11.467–11.476)
-- **11.476 CI fix:** CI `contracts` on `c36ac730` failed `test_search_atoms_callers_scoped` (the hop's fourth
-  `search_atoms` call; the pin expected three). The pin now expects four, each scoped to the request corpus, and checks
-  that only the blend's call filters by document. The contract map now covers `chat_retrieval.py` (CANDIDATE_ENGINE), so
-  the impact tool lists that pin. `pytest tests/contracts/` 145 / 0.
-- **11.475 SEEALSO-BLEND-V1** (work-log `2026-09-24-seealso-blend.md`; replaces 11.472). Pipeline:
-  1. the question's documents (the scout's profile nomination, k 4);
-  2. their SEE ALSO lines, ranked by the question (`search_atoms(…, doc_ids=…)`, k 4);
-  3. each line blended with the question, unit(0.7·q + 0.3·line);
-  4. each blend searches passages anywhere in the corpus (4 each).
-  - Replay: new on-point evidence in 7 of 7 runs, direct evidence unchanged, lane G +0.2–1.0 s.
-  - Contract suites (316 tests) match production.
-  - MERGED `95d7832a`; live after the bounce.
-- **11.474 L4b** (work-log `2026-09-24-llm-l4b-document.md`): the test corpus `l4-canary` (one synthetic incident note).
-  - One call per model stage, each HTTP 200 on its owner's lane: extract `gemini2`, pMAP `map_groq1q` (Groq key 1 =
-    slot 1's pair), profile `profile_groq5` (key 5 = slot 5's pair), enrichment `openrouter3`.
-  - pMAP 1 / 1 mapped, 0 unresolved (L-19 CLOSED).
-  - The corpus filters were read on graph, atoms, profiles and chunks.
-  - New gap L-23 (display): the status page's pMAP model label.
-- **11.473 owner note 8** (R12 + the code pMAP contract) · **11.472 SEEALSO-HOP-V1** (live 22:15–bounce, superseded by
-  11.475) · **11.471** external code RAG audit admitted (R11, C-28) · **11.470** every model tested (44 lanes + 15 chat
-  models) · **11.469** Cloudflare account 1 retired · **11.468** L4a canary (23 / 23 lanes) · **11.467** L3 ownership
-  (profile slot N owns `profile_groqN`; pMAP slot N owns `map_groqN` + `map_groqNq`; pMAP slots 4 → 6).
+### Completed Since Last Bootstrap (11.477–11.479)
+- **11.479 D1 post-merge fix:** the bounce was denied, so the old orchestrator loaded the new `chat_retrieval.py` beside its
+  old in-memory `retrieve` and failed the new import (`/retrieve` GRAPH 500; chat would have failed). Guarded import
+  (fallback = the legacy order) + a test; `/retrieve` GRAPH 200 again. The bootstrap skill now warns about this pattern.
+- **11.478 D1** (work-log `2026-09-24-d1-graph-fact-rank.md`, evidence `docs/wiki/experiments/graph-fact-rank-2026-09-24/`):
+  - `POLYMATH_GRAPH_FACT_RANK`: the authorized hop-1 pool (≤ 500) ranked by `rank_graph_facts`: evidence on the page →
+    a specific predicate before `RELATED_TO` → the seeds take turns → `fact_id`; entity cards keep the probe's
+    best-first order;
+  - replay, 8 GRAPH questions: citable facts 12 → 30, `RELATED_TO` 10 → 2, direct evidence unchanged;
+  - a strict seed order was rejected: the off-topic top card "ADR" (matched on "without dialogue") filled the list;
+  - MCP Server A marks cut rows (`truncated` + `full_length`); gap D-01 CLOSED; D-02's marker done, its full-unit reader
+    stays with C9.
+- **11.477 DOC-STEER-V1 replay** (above).
+- Earlier: 11.467–11.476 (L3, L4a/b, Cloudflare account 1, every model tested, the external audit, owner note 8, the SEE
+  ALSO blend, the CI pin fix): the PRIOR block.
 
 ### Current Contract State
-- **Registry → generated runtime files:** edit `config/llm_accounts.yaml` only, then `scripts/llm_accounts.py write`;
-  `validate` / `diff` flag drift and hand edits (`test_llm_accounts`, `test_llm_ownership_l3`).
-- **Ownership:** `pool.owned_lane_order(pin, owners, offset, run_key)`: own lanes → shared tier → "fallback" lanes, never
-  another slot's; the slot index comes from the supervisor (`LANE_OFFSET_ENV`). Proven live by L4b.
-- **Limiter (L2):** `admit(est_tokens, block, *, reserved_output=0.0)` / `settle(...)`; per-process budgets; an owned
-  Groq lane holds the whole pair (tpd 190,000, rpd 950, tpm 8,000; otpm 1,000 on `map_groq5q`). The shared tier still
-  holds a full budget per process (L-06 → L5); batched extraction admits `len / 4` (L-21); the operator backfill walks the
-  whole pMAP pin (L-22).
-- **Lane G (chat):** the global door (relational atoms → original children, unchanged) + the blend when
-  `POLYMATH_CHAT_SEEALSO_BLEND=1`, in every mode that opens lane G (HYBRID with nominated documents, GRAPH, WILDCARD;
-  never FAST / GNN). Knobs `POLYMATH_CHAT_SEEALSO_BLEND_DOCS / _ITEMS / _CHILDREN / _ALPHA` (4 / 4 / 4 / 0.7). Receipt:
-  `trace.seealso_fanout.blends` (line, document) + `blend_candidates`. Byte-identical with the flag off.
-  `POLYMATH_CHAT_SEEALSO_HOP` is retired (no code reads it).
-- **`search_atoms`** takes an optional `doc_ids` filter (an empty list → nothing); `corpus_ids` stays required.
+- **Registry → generated runtime files:** edit `config/llm_accounts.yaml` only, then `scripts/llm_accounts.py write`.
+- **Ownership:** `pool.owned_lane_order` (own lanes → shared tier → "fallback"; never another slot's); slot index from
+  the supervisor. **Limiter (L2):** per-process budgets; the shared tier's cross-process budget = L5 (L-06, L-21, L-22).
+- **Lane G (chat):** the global door + the SEE ALSO blend (`POLYMATH_CHAT_SEEALSO_BLEND=1`; knobs `_DOCS / _ITEMS /
+  _CHILDREN / _ALPHA` = 4 / 4 / 4 / 0.7) in every mode that opens lane G (HYBRID with nominated documents, GRAPH,
+  WILDCARD); receipt `trace.seealso_fanout.blends`. `/retrieve` does not apply the skeleton routes, so lane G stays off
+  there.
+- **Graph hop-1 (D1):** `retrieve._neo4j_expand` serves every graph caller (chat `_attach_graph`, lane H
+  `graph_dest_search`, `/retrieve`, `/chat/evidence`, graph browse). With the flag ON: the same Cypher (authorization
+  inside, before the limit) reads `LIMIT $pool` (500), `rank_graph_facts` keeps 20. Receipts: chat
+  `meta.graph_bounds.fact_order`, `/retrieve` legacy lane `graph_fact_order`. Lane H's destination documents follow the
+  ranked facts (replayed: 6 of 8 evidence sets identical, one within noise, one off-topic swap).
+- **MCP Server A:** `_trim_rows` (1,200) / `_trim_hit` (1,400 / 600) add `truncated: true` + `full_length` on a cut row
+  only. Server B (stdio) never trims.
 
 ### Active Impact Closure
-- 11.475: CANDIDATE_ENGINE + PROFILE_ATOM UPDATED; 14 transitive contracts TESTED_UNCHANGED; DEFERRED:
-  `test_adapter_product_discovery_loop.py` (writes the fleet DB), `test_query_receipts.py` (hard-coded DSN),
-  `tests/integration/test_cross_domain_routing.py` (skip-gated).
-- 11.476: the contract map only. 11.474: no code. Nothing BLOCKED.
+- 11.478: CANDIDATE_ENGINE + MCP_SURFACE UPDATED; ACCEPTANCE, PROFILE_YIELD_RECEIPT, RESOLUTION_STATE, RETRIEVAL_RECEIPT
+  TESTED_UNCHANGED (395 tests = production's 2 known failures); DEFERRED: `test_query_receipts.py`, the two integration
+  files. 11.479: CANDIDATE_ENGINE UPDATED (an import guard; 322 tests, the same 2 known failures). 11.477: none (replay).
+  Nothing BLOCKED.
 
 ### Proof Status
-- **11.474 L4b:** LIVE_PATH_PROVEN for the fleet slot path: ledger rows with stage `doc_profile` / `doc_parent_map` on
-  their slots' own pairs (2026-09-25 04:35 UTC).
-- **11.475 blend:** UNIT_PROVEN + REPLAY_PROVEN · MERGED · **NOT DEPLOYED** (bounce pending). LIVE_PATH_PROVEN needs a
-  HYBRID / GRAPH / WILDCARD chat after the bounce whose receipt shows `trace.seealso_fanout.blends` (live turns = the
-  owner's word).
-- **11.476:** `tests/contracts/` 145 / 0 locally; CI confirms after the push.
-- 11.472 hop: SUPERSEDED (code removed). INVALIDATED: none.
+- **11.478 / 11.479 D1:** UNIT_PROVEN (13 tests) · REPLAY (8 questions, $0) · MERGED · **NOT DEPLOYED** (bounce pending).
+  LIVE_PATH_PROVEN = `live_check.py` exit 0 after the bounce.
+- **11.475 SEE ALSO blend:** DEPLOYED (the owner's bounce, env verified). LIVE_PATH_PROVEN needs one HYBRID / GRAPH /
+  WILDCARD chat turn (receipt `trace.seealso_fanout.blends`); live chat turns are the owner's word.
+- **11.477 DOC-STEER:** REPLAY only (no code).
+- INVALIDATED: none.
 
 ### Runtime / Test Resolution
-- Use `.venv/bin/python`. In a worktree export `PYTHONPATH=$PWD/shared:$PWD/orchestrator:$PWD/workers:$PWD/control` and
-  check the origins; a worktree has no `.env`.
+- Use `.venv/bin/python`; worktree PYTHONPATH recipe + origin check; a worktree has no `.env`.
 - Safe unit recipe: `env -u POLYMATH_PG_DSN POLYMATH_TEST_DSN=postgresql://nobody@127.0.0.1:1/none
   POLYMATH_ATTEMPT_LEDGER=0 .venv/bin/python -m pytest -q -p no:cacheprovider -k "not test_live_" <files>
-  --junitxml=<scratch>/r.xml`; compare with a detached `production` worktree.
-- Exclude the fleet-DB files: `test_query_receipts.py`, `test_incremental_census.py`,
-  `test_adapter_worker_registration.py`, `test_adapter_product_discovery_loop.py`. Never run all of `tests/determinism`.
-  `tests/contracts/` is DB-free: run it whole (that is CI's `contracts` job).
-- **New rule (11.476):** when a slice adds or removes a call site, grep `tests/` for the callee's name: caller-count pins
-  live in `tests/contracts/` and the impact tool lists only the files the contract map knows.
-- Known pre-existing failures: `test_chat_runtime::test_compiler_on_drives…`; `test_synthesis_attempt_telemetry::…`
-  (order-dependent). CI `determinism` = 13 known failures (adapter ×9, chat_runtime, document_profile DB test,
-  gnn_offline, query_receipts): diff by test id before calling anything a regression.
+  --junitxml=<scratch>/r.xml`; compare with production. `tests/contracts/` is DB-free: run it whole before merging.
+- Exclude the fleet-DB files (`test_query_receipts.py`, `test_incremental_census.py`,
+  `test_adapter_worker_registration.py`, `test_adapter_product_discovery_loop.py`); never run all of `tests/determinism`.
+- **Merge → bounce window (11.479):** a new orchestrator file imported lazily can meet an old in-memory module. Guard
+  imports of new cross-module symbols; after a merge the bounce did not follow, `curl` `/retrieve` GRAPH ($0) and read
+  `orchestrator.log` for a new Traceback.
+- Known pre-existing failures: `test_chat_modes::test_wildcard_sweep_overlaps…`, `test_chat_runtime::test_compiler_on…`,
+  `test_synthesis_attempt_telemetry::…` (order-dependent). CI `determinism` = 13 known failures (checked on `9fc0956f`:
+  identical by test id); CI `contracts` green since 11.476.
 
 ### Working Tree
-- Main checkout clean after this close-out. `.env` backup of the swap: the session scratchpad only (not the repository).
+- Main checkout clean after this close-out.
 
 ### Tooling State
-- graft refreshed at `95d7832a` this session (docs / tests changed since).
-- Guards at close-out: agent_preflight 0 · repo_guard 0 · wiki_worm --check 0 · bundle_integrity READY.
-- Registry `validate` (with `.env` loaded in the same shell): 0 errors, 4 warnings (the shared tier → L5).
-- CI on `c36ac730`: agent-preflight ✓ · repo-governance ✓ · contracts ✗ (fixed by 11.476) · determinism = the 13 known.
+- graft refreshed at `9fc0956f` this session; guards 0 · bundle_integrity READY · registry 0 errors / 4 warnings.
 
 ### Next Action
-The owner's standing word (2026-09-24): "i decide for all your deficiencies found to be resolved". Live model spend, new
-corpora and live chat turns still follow the standing rules (staged, receipted, the owner told).
-0. **The owner's bounce** (Run button): `bash /Users/king/Documents/polymath-rebuild/polymath-v4/scripts/bounce_fleet.sh`
-   (exit 0 = READY). Then verify: 26 / 13 / ONE bundle, `/ready`, the orchestrator env shows
-   `POLYMATH_CHAT_SEEALSO_BLEND=1` and no `_HOP`.
-0b. **The owner's idea (2026-09-24, awaiting the word "before D1" or "after D1"): DOC-STEER-V1** (gap D-10). The owner:
-   "some of the skeletons should be done like that … like concepts and some more. with wildcards doing the same emphasis
-   on theory, concept on top of how it does things … the overall document level can be used as a steering search
-   association based on query, so its not detemrinsitic in a bda way". Today the dual-read lane and WILDCARD's atom
-   frontier use THEORY / CONCEPT / … atoms only to pick documents. The agent's proposal, the 11.475 blend generalized:
-   - the question's documents (the scout's nomination) → their atom lines of the mode's kinds, ranked by the question →
-     each blended with the question → passages anywhere in the corpus;
-   - per mode: FAST none (latency; at most one CONCEPT line if the replay pays); HYBRID CONCEPT + SEEALSO; GRAPH
-     SEEALSO + BRIDGE + ANCHOR; WILDCARD THEORY + CONCEPT + LATENT_PATTERN + TENSION / INVERSION first, then SEEALSO,
-     with a lower question weight to test (0.6);
-   - keep the book-picking nominators until the replay shows the blend beats them, then decide per mode (wire in,
-     never remove without evidence);
-   - proof first: the $0 replay (`docs/wiki/experiments/seealso-blend-2026-09-24/replay.py`, the five stored questions,
-     their mode + GRAPH): new on-point evidence, direct evidence unchanged, lane latency; then the owner's word to build.
-   Data: cinema has about 10 THEORY / CONCEPT / SEEALSO lines per book (642 / 695 / 696) plus about one of each rarer
-   kind; commerce-v1 has THEORY / CONCEPT / SEEALSO only (95 / 100 / 100).
-1. **D1** (roadmap row 6): GRAPH hop-1 facts ranked by seed rank × predicate tier × evidence in the selected set (D-01;
-   ties broken by `fact_id`; replay on saved GRAPH plans shows the change) + the MCP truncation marker (D-02).
-2. **K1:** knowledge roles + retrieval scope (K-01, K-02; the external audit's fail-closed rule). No multi-corpus query
-   (no shared books).
-3. **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C1 branches before byte
-   normalization, C-28).
-4. **L5** (shared budgets, L-06 / L-21 / L-22) before C6 + C7.
-5. Fold in when touching the file: L-23 (`document_status.py:212`, the pMAP label reads the registry's first lane).
-6. The blend's live check: the owner's next HYBRID / GRAPH / WILDCARD chat (`trace.seealso_fanout.blends`).
+1. **The owner's bounce** (Run button): `bash /Users/king/Documents/polymath-rebuild/polymath-v4/scripts/bounce_fleet.sh`.
+   Then verify 26 / 13 / ONE bundle, `/ready`, the orchestrator env has `POLYMATH_GRAPH_FACT_RANK=1`, and run
+   `live_check.py` (exit 0 → record D1 LIVE_PATH_PROVEN in the register and the D1 work-log).
+2. **The owner's DOC-STEER word** (build GRAPH + WILDCARD as recommended, or not). If yes: a slice that generalizes
+   `fanout_search`'s blend line lookup to per-mode kinds (no INVERSION), behind its own flag, replay-proven.
+3. **K1** (roadmap row 6b): knowledge roles + retrieval scope (K-01, K-02; the external audit's fail-closed rule); no
+   multi-corpus query (no shared books).
+4. **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28).
+5. **L5** before C6 + C7. Fold in when touching the file: L-23 (`document_status.py:212`).
+6. Owner's steps pending: the `l4-canary` delete (command above); the push.
 
 ### Do Not Do
 - Never hand-edit `config/cloud_providers.json` or `config/extraction_models/limiter.yaml` (generated).
-- Never let a profile / pMAP slot fail over to another slot's key. While the pMAP slots run, keep the operator backfill
-  on `--lanes` from the shared tier (L-22).
-- Never use SEE ALSO to pick books or documents (the owner, 11.475).
-- Never print or paste a key or token; SET booleans only (account ids are identifiers).
+- Never let a profile / pMAP slot fail over to another slot's key; keep the operator backfill on `--lanes` from the
+  shared tier (L-22).
+- Never use SEE ALSO (or any document line) to pick books; document lines steer the search (11.475, D-10).
+- Never add INVERSION lines to a steer without new evidence (11.477).
+- Never print or paste a key or token; SET booleans only.
 - Never `git push` without the owner's word; tags stay local; never `git add -A`.
 - Never run all of `tests/determinism`; `test_live_*` and live chat turns only on the owner's word (9 of 10 used).
 - No LLM language detection or LLM code facts, no new chat mode, no second scheduler, no fixed fusion weights, no
   heading curation for code (R11), no second unit detector for code (R12).
-- Never touch `pmv4-rag-ui`'s uncommitted files. Never re-issue a command the owner or the classifier denied (the
-  bounce is the owner's Run button).
-- No permanent deletes by the agent: the `l4-canary` corpus and the retired Cloudflare token are the owner's to delete.
+- Never touch `pmv4-rag-ui`'s uncommitted files. Never re-issue a command the owner or the classifier denied (bounces
+  are the owner's Run button).
+- No permanent deletes by the agent (the `l4-canary` corpus, the retired Cloudflare token).
 
 ### Live Qualification Queue
-- The blend's first live receipt (after the bounce; the owner's next chat).
-- Document RAG S9 (S4 + S8 on for 5–8 live questions): the owner's word + a bigger query allowance.
-- Benchmark G8 and the `/chat/evidence` probe: still the owner's own words (restoration, 2026-09-22).
+- D1 live check (`live_check.py`, $0) after the bounce.
+- The SEE ALSO blend's first live receipt (the owner's next HYBRID / GRAPH / WILDCARD chat).
+- Document RAG S9: the owner's word + a bigger query allowance.
+- Benchmark G8 and the `/chat/evidence` probe: the owner's own words.
 
 ### Deferred Architecture
-- L5: budgets shared across processes (L-06, L-22) and batched admissions (L-21); pMAP may then borrow idle
-  gpt-oss-120b budget.
+- L5: budgets shared across processes (L-06, L-22) and batched admissions (L-21).
 - The joint code ↔ document graph walk: C8 → G1 + C11.
-- Gap rows O-01..O-04, T-01, T-02, D-03..D-09: open, not scheduled.
-- GNN retrieval stays experimental.
+- Gap rows O-01..O-04, T-01, T-02, D-03..D-09: open, not scheduled. GNN retrieval stays experimental.
+
+## PRIOR — 2026-09-24 (L4 + SEE ALSO blend close-out) — **the structured handoff after 11.474–11.476 (`9fc0956f`, pushed): the owner's bounce and D1 were next.** Superseded by the D1 close-out above; its facts are carried forward there (L1–L4 done, the SEE ALSO blend merged, gap D-10 = the owner's DOC-STEER idea).
 
 ## PRIOR — 2026-09-24 (L3 close-out) — **the structured handoff after L3 (`a3df56b9`) and L4a / 11.469–11.473: L4b was next.** Superseded by the L4 + blend close-out above; its facts are carried forward there (26 workers on bundle `5e94c7bffa6c`; the SEE ALSO hop went live at the 22:15 bounce and is superseded by 11.475).
 
