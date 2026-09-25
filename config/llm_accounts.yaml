@@ -1,0 +1,1383 @@
+# LLM provider accounts — the single registry (register 11.465, LLM-BACKEND L1; gap L-01).
+#
+# One entry per ACCOUNT (one API key = one separate account). Under each account: the provider's own quota per model
+# (when known) and the lanes configured on it (a lane = account x model x stage use; its limiter entry sits with it).
+# Secrets stay in .env: this file only NAMES the variables (key_env, account_id_env).
+#
+# The runtime still reads config/cloud_providers.json and config/extraction_models/limiter.yaml. They must equal what
+# this file compiles to (tests/determinism/test_llm_accounts.py fails on any drift). Report and checks:
+#     .venv/bin/python scripts/llm_accounts.py report | validate | diff
+#
+# slots: worker processes per stage (control/control/process_supervisor.py FLEET); `extract` is the shared pool of
+# enabled, non-dedicated lanes. quota: Groq per key per model (owner 2026-09-23): 30 RPM / 1K RPD / 8K TPM / 200K TPD;
+# groq_5 enforces OTPM 1000 on qwen3.8-27b (canary 2026-09-23). Other providers' quotas are not recorded yet.
+version: 1
+slots:
+  doc_profile:
+    count: 6
+    lane_offset_env: POLYMATH_DOC_PROFILE_LANE_OFFSET
+  doc_parent_map:
+    count: 4
+  extract:
+    count: 3
+  parent_enrichment:
+    count: 2
+    via: summaries
+  chat_compiler:
+    count: 1
+    via: orchestrator
+stage_pins:
+  parent_enrichment:
+  - openrouter1
+  - openrouter2
+  - openrouter3
+  - openrouter5
+  chat_compiler:
+  - compiler_alibaba_deepseek
+  - compiler_ollama_gemma
+  - compiler_alt
+  doc_profile:
+  - profile_groq1
+  - profile_fallback_openrouter
+  doc_parent_map:
+  - map_groq2
+  - map_groq3
+  - map_groq4
+  - map_groq5
+  - map_groq6
+  - map_groq2q
+  - map_groq3q
+  - map_groq4q
+  - map_groq5q
+  - map_groq6q
+  - map_fallback_openrouter
+  - cloudflare_map1
+  - cloudflare_map2
+accounts:
+  groq_1:
+    provider: groq
+    key_env: GROQ_API_KEY_1
+    quota:
+      openai/gpt-oss-120b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      openai/gpt-oss-20b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      qwen/qwen3.8-27b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+    lanes:
+      profile_groq1:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-120b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        limiter:
+          kind: rate
+          family: groq_acct_1_gpt_oss_120b
+          rpd: 150
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+          min: 1
+          max: 2
+          init: 1
+      map_groq1:
+        enabled: false
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-20b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        limiter:
+          kind: rate
+          family: groq_acct_1_gpt_oss_20b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+  groq_2:
+    provider: groq
+    key_env: GROQ_API_KEY_2
+    quota:
+      openai/gpt-oss-120b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      openai/gpt-oss-20b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      qwen/qwen3.8-27b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+    lanes:
+      profile_groq2:
+        enabled: false
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-120b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        limiter:
+          kind: rate
+          family: groq_acct_2_gpt_oss_120b
+          rpd: 150
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+          min: 1
+          max: 2
+          init: 1
+      map_groq2:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-20b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        limiter:
+          kind: rate
+          family: groq_acct_2_gpt_oss_20b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+      map_groq2q:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: qwen/qwen3.8-27b
+        reasoning_effort: none
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        max_output_tokens: 900
+        limiter:
+          kind: rate
+          family: groq_acct_2_qwen3_8_27b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+  groq_3:
+    provider: groq
+    key_env: GROQ_API_KEY_3
+    quota:
+      openai/gpt-oss-120b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      openai/gpt-oss-20b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      qwen/qwen3.8-27b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+    lanes:
+      profile_groq3:
+        enabled: false
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-120b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        limiter:
+          kind: rate
+          family: groq_acct_3_gpt_oss_120b
+          rpd: 150
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+          min: 1
+          max: 2
+          init: 1
+      map_groq3:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-20b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        limiter:
+          kind: rate
+          family: groq_acct_3_gpt_oss_20b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+      map_groq3q:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: qwen/qwen3.8-27b
+        reasoning_effort: none
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        max_output_tokens: 900
+        limiter:
+          kind: rate
+          family: groq_acct_3_qwen3_8_27b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+  groq_4:
+    provider: groq
+    key_env: GROQ_API_KEY_4
+    quota:
+      openai/gpt-oss-120b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      openai/gpt-oss-20b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      qwen/qwen3.8-27b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+    lanes:
+      profile_groq4:
+        enabled: false
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-120b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        limiter:
+          kind: rate
+          family: groq_acct_4_gpt_oss_120b
+          rpd: 150
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+          min: 1
+          max: 2
+          init: 1
+      map_groq4:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-20b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        limiter:
+          kind: rate
+          family: groq_acct_4_gpt_oss_20b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+      map_groq4q:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: qwen/qwen3.8-27b
+        reasoning_effort: none
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        max_output_tokens: 900
+        limiter:
+          kind: rate
+          family: groq_acct_4_qwen3_8_27b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+  groq_5:
+    provider: groq
+    key_env: GROQ_API_KEY_5
+    quota:
+      openai/gpt-oss-120b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      openai/gpt-oss-20b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      qwen/qwen3.8-27b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+        otpm: 1000
+    lanes:
+      profile_groq5:
+        enabled: false
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-120b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        limiter:
+          kind: rate
+          family: groq_acct_5_gpt_oss_120b
+          rpd: 150
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+          min: 1
+          max: 2
+          init: 1
+      map_groq5:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-20b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        limiter:
+          kind: rate
+          family: groq_acct_5_gpt_oss_20b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+      map_groq5q:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: qwen/qwen3.8-27b
+        reasoning_effort: none
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        max_output_tokens: 900
+        limiter:
+          kind: rate
+          family: groq_acct_5_qwen3_8_27b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+  groq_6:
+    provider: groq
+    key_env: GROQ_API_KEY_6
+    quota:
+      openai/gpt-oss-120b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      openai/gpt-oss-20b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+      qwen/qwen3.8-27b:
+        rpm: 30
+        rpd: 1000
+        tpm: 8000
+        tpd: 200000
+    lanes:
+      profile_groq6:
+        enabled: false
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-120b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        limiter:
+          kind: rate
+          family: groq_acct_6_gpt_oss_120b
+          rpd: 150
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+          min: 1
+          max: 2
+          init: 1
+      map_groq6:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: openai/gpt-oss-20b
+        reasoning_effort: low
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        limiter:
+          kind: rate
+          family: groq_acct_6_gpt_oss_20b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+      map_groq6q:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: qwen/qwen3.8-27b
+        reasoning_effort: none
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        max_output_tokens: 900
+        limiter:
+          kind: rate
+          family: groq_acct_6_qwen3_8_27b
+          rpd: 200
+          rpm: 2
+          tpm: 8000
+          conc_cap: 1
+  cloudflare_1:
+    provider: cloudflare
+    key_env: CLOUDFLARE_API_TOKEN_1
+    account_id_env: CLOUDFLARE_ACCOUNT_ID_1
+    lanes:
+      cloudflare_map1:
+        enabled: true
+        url_template: https://api.cloudflare.com/client/v4/accounts/{account_id}/ai
+        model: '@cf/qwen/qwen3-30b-a3b-fp8'
+        reasoning_effort: null
+        structured: text
+        json_mode: false
+        think_suffix: null
+        dedicated: true
+        request_char_budget: 18000
+        map_batch_cap: 15
+        limiter:
+          kind: rate
+          family: cloudflare_acct_1
+          rpm: 30
+          tpm: 100000
+          conc_cap: 2
+          min: 1
+          max: 3
+          init: 1
+          adaptive: true
+  cloudflare_2:
+    provider: cloudflare
+    key_env: CLOUDFLARE_API_TOKEN_2
+    account_id_env: CLOUDFLARE_ACCOUNT_ID_2
+    lanes:
+      cloudflare_map2:
+        enabled: true
+        url_template: https://api.cloudflare.com/client/v4/accounts/{account_id}/ai
+        model: '@cf/qwen/qwen3-30b-a3b-fp8'
+        reasoning_effort: null
+        structured: text
+        json_mode: false
+        think_suffix: null
+        dedicated: true
+        request_char_budget: 18000
+        map_batch_cap: 15
+        limiter:
+          kind: rate
+          family: cloudflare_acct_2
+          rpm: 30
+          tpm: 100000
+          conc_cap: 2
+          min: 1
+          max: 3
+          init: 1
+          adaptive: true
+  cloudflare_3:
+    provider: cloudflare
+    key_env: CLOUDFLARE_API_TOKEN_3
+    account_id_env: CLOUDFLARE_ACCOUNT_ID_3
+    lanes:
+      cloudflare3:
+        enabled: true
+        url_template: https://api.cloudflare.com/client/v4/accounts/{account_id}/ai
+        model: '@cf/qwen/qwen3-30b-a3b-fp8'
+        reasoning_effort: null
+        structured: json
+        json_mode: true
+        think_suffix: null
+        dedicated: false
+        request_char_budget: 30000
+        limiter:
+          kind: rate
+          family: cloudflare_acct_3
+          rpm: 30
+          tpm: 100000
+          conc_cap: 2
+          min: 1
+          max: 3
+          init: 1
+          adaptive: true
+  cloudflare_4:
+    provider: cloudflare
+    key_env: CLOUDFLARE_API_TOKEN_4
+    account_id_env: CLOUDFLARE_ACCOUNT_ID_4
+    lanes:
+      cloudflare4:
+        enabled: true
+        url_template: https://api.cloudflare.com/client/v4/accounts/{account_id}/ai
+        model: '@cf/qwen/qwen3-30b-a3b-fp8'
+        reasoning_effort: null
+        structured: json
+        json_mode: true
+        think_suffix: null
+        dedicated: false
+        request_char_budget: 30000
+        limiter:
+          kind: rate
+          family: cloudflare_acct_4
+          rpm: 30
+          tpm: 100000
+          conc_cap: 2
+          min: 1
+          max: 3
+          init: 1
+          adaptive: true
+  cloudflare_5:
+    provider: cloudflare
+    key_env: CLOUDFLARE_API_TOKEN_5
+    account_id_env: CLOUDFLARE_ACCOUNT_ID_5
+    lanes:
+      cloudflare5:
+        enabled: true
+        url_template: https://api.cloudflare.com/client/v4/accounts/{account_id}/ai
+        model: '@cf/qwen/qwen3-30b-a3b-fp8'
+        reasoning_effort: null
+        structured: json
+        json_mode: true
+        think_suffix: null
+        dedicated: false
+        request_char_budget: 30000
+        limiter:
+          kind: rate
+          family: cloudflare_acct_5
+          rpm: 30
+          tpm: 100000
+          conc_cap: 2
+          min: 1
+          max: 3
+          init: 1
+          adaptive: true
+  cloudflare_6:
+    provider: cloudflare
+    key_env: CLOUDFLARE_API_TOKEN_6
+    account_id_env: CLOUDFLARE_ACCOUNT_ID_6
+    lanes:
+      cloudflare6:
+        enabled: true
+        url_template: https://api.cloudflare.com/client/v4/accounts/{account_id}/ai
+        model: '@cf/qwen/qwen3-30b-a3b-fp8'
+        reasoning_effort: null
+        structured: json
+        json_mode: true
+        think_suffix: null
+        dedicated: false
+        request_char_budget: 30000
+        limiter:
+          kind: rate
+          family: cloudflare_acct_6
+          rpm: 30
+          tpm: 100000
+          conc_cap: 2
+          min: 1
+          max: 3
+          init: 1
+          adaptive: true
+  gemini_1:
+    provider: gemini
+    key_env: GEMINI_API_KEY_1
+    lanes:
+      gemini1:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: schema
+        request_char_budget: 120000
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      gemini1b:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.5-flash-lite
+        reasoning_effort: null
+        structured: schema
+        request_char_budget: 120000
+        dedicated: false
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      compiler1:
+        enabled: false
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: json
+        dedicated: true
+        request_char_budget: 40000
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+  gemini_2:
+    provider: gemini
+    key_env: GEMINI_API_KEY_2
+    lanes:
+      gemini2:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: schema
+        request_char_budget: 120000
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      gemini2b:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.5-flash-lite
+        reasoning_effort: null
+        structured: schema
+        request_char_budget: 120000
+        dedicated: false
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      compiler2:
+        enabled: false
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: json
+        dedicated: true
+        request_char_budget: 40000
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+  gemini_3:
+    provider: gemini
+    key_env: GEMINI_API_KEY_3
+    lanes:
+      gemini3:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: schema
+        request_char_budget: 120000
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      gemini3b:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.5-flash-lite
+        reasoning_effort: null
+        structured: schema
+        request_char_budget: 120000
+        dedicated: false
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      compiler3:
+        enabled: false
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: json
+        dedicated: true
+        request_char_budget: 40000
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+  gemini_4:
+    provider: gemini
+    key_env: GEMINI_API_KEY_4
+    lanes:
+      gemini4:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: schema
+        request_char_budget: 120000
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      gemini4b:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.5-flash-lite
+        reasoning_effort: null
+        structured: schema
+        request_char_budget: 120000
+        dedicated: false
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      compiler4:
+        enabled: false
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: json
+        dedicated: true
+        request_char_budget: 40000
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+  gemini_5:
+    provider: gemini
+    key_env: GEMINI_API_KEY_5
+    lanes:
+      gemini5:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: schema
+        dedicated: false
+        request_char_budget: 120000
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      gemini5b:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.5-flash-lite
+        reasoning_effort: null
+        structured: schema
+        request_char_budget: 120000
+        dedicated: false
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      profile_fallback_gemini1:
+        enabled: false
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: text
+        dedicated: true
+        request_char_budget: 12000
+        json_mode: false
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 400
+          rpm: 8
+          tpm: 200000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+  gemini_6:
+    provider: gemini
+    key_env: GEMINI_API_KEY_6
+    lanes:
+      gemini6:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: schema
+        dedicated: false
+        request_char_budget: 120000
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      gemini6b:
+        enabled: true
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.5-flash-lite
+        reasoning_effort: null
+        structured: schema
+        request_char_budget: 120000
+        dedicated: false
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 500
+          rpm: 15
+          tpm: 250000
+          conc_cap: 3
+          min: 1
+          max: 3
+          init: 1
+      profile_fallback_gemini2:
+        enabled: false
+        url: https://generativelanguage.googleapis.com/v1beta/openai
+        model: gemini-3.1-flash-lite
+        reasoning_effort: null
+        structured: text
+        dedicated: true
+        request_char_budget: 12000
+        json_mode: false
+        limiter:
+          kind: rate
+          family: gemini
+          rpd: 400
+          rpm: 8
+          tpm: 200000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+  openrouter_1:
+    provider: openrouter
+    key_env: OPENROUTER_API_KEY
+    lanes:
+      openrouter1:
+        enabled: true
+        url: https://openrouter.ai/api
+        model: mistralai/mistral-small-2603
+        reasoning_effort: null
+        structured: schema
+        dedicated: false
+        request_char_budget: 100000
+        limiter:
+          kind: rate
+          family: openrouter_acct_1
+          rpm: 60
+          tpm: 500000
+          conc_cap: 4
+          min: 1
+          max: 4
+          init: 2
+      openrouter2:
+        enabled: true
+        url: https://openrouter.ai/api
+        model: mistralai/ministral-14b-2512
+        reasoning_effort: null
+        structured: schema
+        dedicated: false
+        request_char_budget: 100000
+        limiter:
+          kind: rate
+          family: openrouter_acct_1
+          rpm: 60
+          tpm: 500000
+          conc_cap: 4
+          min: 1
+          max: 4
+          init: 2
+      compiler_alt:
+        enabled: true
+        url: https://openrouter.ai/api
+        model: mistralai/mistral-small-2603
+        reasoning_effort: null
+        structured: json
+        dedicated: true
+        request_char_budget: 40000
+        limiter:
+          kind: rate
+          family: openrouter_acct_1
+          rpm: 60
+          tpm: 500000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+  openrouter_2:
+    provider: openrouter
+    key_env: OPENROUTER_API_KEY_2
+    lanes:
+      openrouter3:
+        enabled: true
+        url: https://openrouter.ai/api
+        model: qwen/qwen3.7-flash
+        reasoning_effort: none
+        structured: json
+        dedicated: false
+        request_char_budget: 100000
+        limiter:
+          kind: rate
+          family: openrouter_acct_2
+          rpm: 60
+          tpm: 500000
+          conc_cap: 4
+          min: 1
+          max: 4
+          init: 2
+      profile_fallback_openrouter:
+        enabled: true
+        url: https://openrouter.ai/api
+        model: mistralai/mistral-small-2603
+        reasoning_effort: null
+        structured: text
+        dedicated: true
+        request_char_budget: 12000
+        json_mode: false
+        limiter:
+          kind: rate
+          family: openrouter_acct_2
+          rpm: 20
+          tpm: 300000
+          conc_cap: 1
+          min: 1
+          max: 1
+          init: 1
+  openrouter_3:
+    provider: openrouter
+    key_env: OPENROUTER_API_KEY_3
+    lanes:
+      openrouter5:
+        enabled: true
+        url: https://openrouter.ai/api
+        model: mistralai/mistral-small-24b-instruct-2501
+        reasoning_effort: null
+        structured: json
+        dedicated: true
+        request_char_budget: 100000
+        limiter:
+          kind: rate
+          family: openrouter_acct_3
+          rpm: 60
+          tpm: 500000
+          conc_cap: 4
+          min: 1
+          max: 4
+          init: 2
+      map_fallback_openrouter:
+        enabled: true
+        url: https://openrouter.ai/api
+        model: mistralai/mistral-small-2603
+        reasoning_effort: null
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        limiter:
+          kind: rate
+          family: openrouter_acct_3
+          rpm: 60
+          tpm: 500000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+          adaptive: true
+  alibaba_1:
+    provider: alibaba
+    key_env: ALIBABA_MODEL_STUDIO_API_KEY
+    lanes:
+      compiler_alibaba_qwen:
+        enabled: true
+        url: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode
+        model: qwen3.8-flash
+        reasoning_effort: null
+        structured: json
+        dedicated: true
+        request_char_budget: 40000
+        limiter:
+          kind: rate
+          family: alibaba
+          rpm: 15
+          tpm: 500000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+          adaptive: true
+      compiler_alibaba_deepseek:
+        enabled: true
+        url: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode
+        model: deepseek-v4-flash-0731
+        reasoning_effort: null
+        structured: json
+        dedicated: true
+        request_char_budget: 40000
+        limiter:
+          kind: rate
+          family: alibaba
+          rpm: 15
+          tpm: 500000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+          adaptive: true
+  ollama_1:
+    provider: ollama
+    key_env: OLLAMA_API_KEY
+    lanes:
+      compiler_ollama_gemma:
+        enabled: true
+        url: http://127.0.0.1:11434
+        model: gemma4:31b-cloud
+        reasoning_effort: null
+        structured: json
+        dedicated: true
+        request_char_budget: 40000
+        limiter:
+          kind: rate
+          family: ollama
+          rpm: 30
+          tpm: 500000
+          conc_cap: 2
+          min: 1
+          max: 2
+          init: 1
+          adaptive: true
+  nvidia_1:
+    provider: nvidia
+    key_env: NVIDIA_API_KEY
+    lanes:
+      nvidia:
+        enabled: false
+        url: https://integrate.api.nvidia.com
+        model: nvidia/nemotron-3.5-lightning-30b-a3b
+        reasoning_effort: none
+        structured: json
+        dedicated: false
+        request_char_budget: 60000
+        limiter:
+          kind: rate
+          family: nvidia
+          rpm: 36
+          tpm: 150000
+          conc_cap: 4
+          min: 1
+          max: 4
+          init: 2
+          adaptive: true
+          use_headers: true
+  nvidia_2:
+    provider: nvidia
+    key_env: NVIDIA_API_KEY_2
+    lanes:
+      nvidia2:
+        enabled: false
+        url: https://integrate.api.nvidia.com
+        model: nvidia/nemotron-3-super-120b-a12b
+        reasoning_effort: none
+        structured: json
+        dedicated: false
+        request_char_budget: 60000
+        limiter:
+          kind: rate
+          family: nvidia
+          rpm: 36
+          tpm: 150000
+          conc_cap: 4
+          min: 1
+          max: 4
+          init: 2
+          adaptive: true
+          use_headers: true
+  siliconflow_1:
+    provider: siliconflow
+    key_env: SILICONFLOW_API_KEY_1
+    lanes:
+      siliconflow1:
+        enabled: false
+        url: https://api.siliconflow.com
+        model: Qwen/Qwen3-8B
+        reasoning_effort: null
+        enable_thinking: false
+        structured: json
+        dedicated: false
+        request_char_budget: 30000
+        limiter:
+          kind: concurrency
+          init: 12
+          min: 2
+          max: 24
+          adaptive: true
+          use_headers: false
+  siliconflow_2:
+    provider: siliconflow
+    key_env: SILICONFLOW_API_KEY_2
+    lanes:
+      siliconflow2:
+        enabled: false
+        url: https://api.siliconflow.com
+        model: Qwen/Qwen3-8B
+        reasoning_effort: null
+        enable_thinking: false
+        structured: json
+        dedicated: false
+        request_char_budget: 30000
+        limiter:
+          kind: concurrency
+          init: 12
+          min: 2
+          max: 24
+          adaptive: true
+          use_headers: false
+  siliconflow_3:
+    provider: siliconflow
+    key_env: SILICONFLOW_API_KEY_3
+    lanes:
+      siliconflow3:
+        enabled: false
+        url: https://api.siliconflow.com
+        model: Qwen/Qwen3-8B
+        reasoning_effort: null
+        enable_thinking: false
+        structured: json
+        dedicated: false
+        request_char_budget: 30000
+        limiter:
+          kind: concurrency
+          init: 12
+          min: 2
+          max: 24
+          adaptive: true
+          use_headers: false
+local_limiters:
+  mlx_local:
+    kind: concurrency
+    init: 2
+    min: 1
+    max: 4
+    adaptive: true
+  ollama_cloud:
+    kind: rate
+    rpm: 120
+    tpm: 200000
+    conc_cap: 18
+    min: 2
+    max: 18
+    adaptive: true
+    use_headers: true
+    init: 3
+docs:
+- EXTRACTION-POOL pre-configured cloud providers (MULTI-PROVIDER-AUTH-V1).
+- A provider JOINS the pool automatically when its api_key_env resolves
+- (process env first, then the repo .env) AND enabled is not false.
+- Setup for a new provider = paste its key into .env — nothing else.
+- NO SECRETS IN THIS FILE — api_key_env names the variable, never the value.
+- url omits /v1 (the client appends /v1/chat/completions).
+- reasoning_effort null = omit the field (strict APIs 400 on unsupported
+- 'params). structured = capability level: schema|json|text (strongest'
+- the provider supports; 'schema' dispatches as 'json' until a strict-
+- schema canary passes). Local validation always runs regardless.
+- The settings primary (Ollama daemon) is NOT listed here; it is always
+- in the roster. Models re-pinnable at will — a change shows up in the
+- extraction contract via pool_fingerprint().
+- 'stage_pins DEDICATES a stage to one provider (owner 2026-08-30:'
+- 'parent_enrichment -> nvidia). A pinned stage NEVER silently reroutes:'
+- if the pinned provider is parked/unavailable its jobs fail loudly
+- with PINNED_PROVIDER_UNAVAILABLE (enrichment is backfillable by
+- design). Unpinned stages shard across the pool as normal.
+- groq1..groq5 = five UNLINKED owner accounts (own rate each), the baseline extraction fleet on qwen/qwen3.8-27b, strict schema
+  (level-1, live-verified). nvidia/nvidia2 dedicated:true = enrichment only, excluded from extraction sharding.
+- 'CROSS-PROVIDER-V1 (owner 2026-08-30): one lane swapped each way — extraction shards over groq1-4 + nvidia2 + primary; enrichment
+  pin group = [nvidia, groq5]. A whole-provider outage never stalls either stage, and dispatch failover walks the ring.'
+- gemini1..gemini6 = Google AI Studio keys on gemini-3.1-flash-lite (owner 2026-09-01 re-pin — cheaper than 3.5-flash-lite,
+  strict-schema canary green; the 2.5-flash-lite the owner linked is retired for new users — 3.5-flash-lite is the current
+  cheapest lite tier, strict-schema canary GREEN via the OpenAI-compat endpoint; the compat layer tolerates the client's /v1
+  suffix so url ends at /v1beta/openai). gemini1-4 shard extraction; gemini5-6 are dedicated enrichment lanes added to the
+  parent_enrichment pin group.
+- 'request_char_budget (THROUGHPUT-V2): per-lane payload budget in chars; batch packing respects it so provider 413s cannot
+  happen (groq 18000 measured from the 2026-09-01 413 storm; gemini''s 1M-token context takes 120000; nvidia 60000).'
+- 'GEMINI-VARIANT-LANES (owner 2026-09-01 ''ensure all gemini keys call the available gemini models''): Google quotas are
+  PER MODEL per key, so gemini{n}b runs gemini-3.5-flash-lite on the SAME key as gemini{n} (3.1-flash-lite) with an independent
+  quota — 12 gemini lanes from 6 keys. 2.5-lite family retired upstream; non-lite flashes failed the strict-schema canary
+  (parked pending a json-mode canary). groq: request budget 7000 chars + limiter TPM 8000 = the PROVIDER-DECLARED truth (header
+  probe 2026-09-01); groq5 REMOVED from the enrichment pin (8K TPM = ~4 enrichment calls/min = pure failover churn).'
+- 'GROQ PARKED from the extraction ring (owner speed directive 2026-09-01): 8K TPM declared = a dead-weight slice under rank
+  slicing (one unlucky doc per pass drew an all-groq slice). dedicated:true with no pin = reserved; re-enters by flipping
+  the flag if the tier ever changes.'
+- 'PROVIDER-REMOVALS-0902: owner removed the groq host (groq1-5, qwen3.8-27b) and the gemma-3-4b candidate on 2026-09-02;
+  keys dropped from .env; limiter blocks removed.'
+- 'OPENROUTER-LANE-3 (owner 2026-09-02 ''which ones work well and should be wired''): qwen/qwen3.7-flash on the owner''s SECOND
+  OpenRouter key, reasoning_effort none is MANDATORY (a reasoning model: with thinking on it spends the whole output budget
+  on reasoning tokens and returns nothing). Canary PASS 70 s (8/8 extraction 5.3 s mean, 103-130 tok/s; enrichment 8/8 gist
+  1.00); structured ''json'' (strict schema not canaried). In the extraction ring AND the parent_enrichment pin.'
+- 'OPENROUTER-ENRICHMENT-LANES-V1 (owner 2026-09-02 ''both will be for enrichment lane since enrichment is slow''): openrouter5
+  = mistral-small-24b-instruct-2501 on the owner''s THIRD OpenRouter key, dedicated:true (enrichment pin only, never extraction
+  sharding), json; canary PASS on that key (8/8 + 8/8, 121 s). openrouter4 (ministral-3b-2512) is reserved for the same key
+  IF its canary passes enrichment (first run 4/8).'
+- 'NVIDIA-RETIRED-FROM-ENRICHMENT-PIN (2026-09-05, owner "enrichment is too slow"): nvidia (nemotron-3.5-lightning-30b-a3b)
+  removed from the parent_enrichment pin — measured 12:00–14:00Z on cinema: 102 s mean wall per call (others 17–42 s) and
+  51 % of its microbatch parents gated INVALID; with parent-sharding it sat in nearly every document wave and the ladder waves,
+  so it set the tail of all three. Provider block kept (dedicated:true, enabled) so re-adding the name to the pin restores
+  it; enrichment identity excludes the lane, nothing re-enriches.'
+- 'CHAT-COMPILER-LANES-V1 (2026-09-05, CHAT-QUERY-COMPILER-PLAN §3.2/§6, P0.b): compiler1..compiler4 = AI Studio keys 1–4
+  on gemini-3.1-flash-lite, dedicated:true (only the chat_compiler stage pin uses them), structured json_object (custom system
+  prompt; the plan is validated locally against CHAT-INTENT-PLAN-V1). Their LOCAL AIMD limiter keys are separate from gemini1..gemini4
+  so extraction saturation never blocks a compile; Google''s per-key-per-model quota is shared with those lanes by construction
+  (one call per chat turn, ≤ 600 output tokens).'
+- 'COMPILER-CROSS-FAMILY-V1 (2026-09-05): compiler_alt = OpenRouter key 1 @ mistral-small-2603 (dedicated, json) joins the
+  chat_compiler ring so a Gemini-wide 503 storm (measured: 78 enrichment 503s today, a 24 s hang on compiler2''s probe) never
+  zeroes the compiler; the compiler client uses a 6 s HTTP timeout and walks one ring step on a transport failure.'
+- 'DOCUMENT-PROFILE-V1 pool (owner 2026-09-07): profile_groq1..6 = six DEDICATED Groq accounts (groq/compound; RPM 30 / RPD
+  250 / TPM 70k each) as tier 0, rotated per run; profile_fallback_gemini1/2 (own keys 5/6) as fallback 1; profile_fallback_openrouter
+  as fallback 2. Plain-text labelled output (structured null). Never shared with extraction, enrichment or the chat compiler.'
+- 'SILICONFLOW-EXTRACTION-LANES-V1 (owner 2026-09-08): siliconflow1..3 = three SEPARATE SiliconFlow accounts on Qwen/Qwen3-8B,
+  added EXCLUSIVELY to assist GRAPH EXTRACTION. dedicated:false => they join the general (unpinned) extraction ring only;
+  the enrichment / doc_profile / chat_compiler / doc_parent_map stages are pinned and never spend them. enable_thinking:false
+  (THINKING-CONTROL-V1) is MANDATORY: Qwen3-8B is a reasoning model and with thinking ON burns the whole max_tokens budget
+  on reasoning tokens and returns empty extraction (SiliconFlow''s toggle is the top-level enable_thinking, not reasoning_effort,
+  so reasoning_effort:null). structured:json (json_object; upgrade to schema only after a strict-schema canary). request_char_budget
+  30000 (8B => keep batches modest). ACTIVATES when SILICONFLOW_API_KEY_1/2/3 resolve in .env; until then the three lanes
+  park (surfaced, never silent). Note: an 8B model is on the small side for relation extraction — watch the canary''s relation
+  yield before leaning on it. Canary: scripts/siliconflow_extraction_canary.py.'
+- 'GROQ-MODEL-SWAP-2026-09-23 (owner: compound / compound-mini are gone — canary 404 ''model does not exist''): profile_groq1
+  = openai/gpt-oss-120b (reasoning_effort low) on GROQ_API_KEY_1; map_groq2..6 = openai/gpt-oss-20b (low) and map_groq2q..6q
+  = qwen/qwen3.8-27b (reasoning_effort none) on GROQ_API_KEY_2..6. Groq limits are INDEPENDENT per model per key (30 RPM /
+  1K RPD / 8K TPM / 200K TPD), so a key carries one lane per model with its own limiter family. Canary (docs/wiki/experiments/groq-model-canary-2026-09-23):
+  16/17 calls valid — pMAP 15/15 and 8/8 maps, 0 rejected lines; profiles valid with full field counts; one qwen call refused
+  by an org-level OUTPUT-tokens-per-minute cap (OTPM 1000) — failover absorbs it. The pool batch cap stays 15 (batch identities
+  unchanged).'
+- 'LLM-BACKEND-BATCH1 (2026-09-24, register 11.464): nvidia, nvidia2, siliconflow1-3 parked (median ~100 s per call; 31 of
+  72 calls timed out); compiler_alibaba_qwen removed from the chat_compiler pin (11 of 12 calls timed out on 2026-09-23; the
+  lane stays defined); map_groq2q..6q max_output_tokens 900 (some orgs enforce OTPM 1000 on qwen3.8-27b).'

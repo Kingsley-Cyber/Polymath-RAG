@@ -71,7 +71,13 @@ leftovers are gap-register rows L-19, D-03..D-09, O-01..O-03, T-01, T-02 (62 row
 `.env`: `POLYMATH_GROQ_ROUTER` removed, `POLYMATH_LLM_CLOUD_PRIMARY=0` added; one bounce; live check = new attempt rows
 carry a stage and the pool roster omits `primary`, `nvidia*`, `siliconflow*`.
 
-**Next action: L1** (account registry).
+**L1 DONE (11.465):** `config/llm_accounts.yaml` names every account (28), its models and quota, its lanes (56) and their
+limiters; it compiles to exactly the runtime files (drift test). `scripts/llm_accounts.py report|validate|diff` shows who
+owns what (key / account-id SET booleans only). 31 warnings = the L3 worklist (gap L-20 new: gemini / nvidia families span
+accounts). Push of 27 commits waits on the owner's Run button (classifier).
+
+**Next action: L2** (limiter correctness: real-token admission, rolling daily-token budget, OTPM; gaps L-04, L-05, L-16
+remainder), then L3 (ownership: all 18 Groq pairs, 6 pMAP slots, Cloudflare ids, per-account Gemini families).
 Then L1 → L2 → L3 → L4 (the provider backend) → D1 → K1 → C1 … (roadmap §3).
 
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs

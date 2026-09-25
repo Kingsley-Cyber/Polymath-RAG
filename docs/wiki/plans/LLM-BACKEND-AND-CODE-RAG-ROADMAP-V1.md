@@ -113,7 +113,7 @@ GRAPH = the full walk (FACT + STRUCTURE + MENTION + one SEMANTIC hop) · WILDCAR
 | # | Slice | Closes | Depends on | Proof (exit) | Gates |
 |---|---|---|---|---|---|
 | 1 | **C0b** tooling runs — **DONE 11.461** | C0 open items | — | LibCST on this repository vs the C0a stdlib numbers; the official Luau zip (checksum, `luau-ast`, `luau-analyze`) on one GitHub Luau file; tree-sitter-toml spans on the 10 TOML files | downloads approved 2026-09-24 |
-| 2 | **L1** account registry | L-01, L-10 (families by account) | — | the registry regenerates today's lane roster byte-identically (no behaviour change); validator + ownership report green | none (config compile only) |
+| 2 | **L1** account registry — **DONE 11.465** | L-01, L-10 (families by account) | — | the registry regenerates today's lane roster byte-identically (no behaviour change); validator + ownership report green | none (config compile only) |
 | 3 | **L2** limiter correctness | L-04, L-05, L-08, L-09, L-16, L-17 | L1 | unit tests: real-token admission, rolling TPD, OTPM, clamp on restore, transient refusal; ledger rows carry stage / account / model | fence + bounce |
 | 4 | **L3** ownership + wiring | L-02, L-07, L-11, L-12, L-13, L-14, L-15, L-18 | L2 | registry: all 18 Groq pairs owned (6 profile + 6 pMAP slots), Cloudflare account ids discovered (read-only API) or supplied by the owner, dead lanes parked, the unused flag removed | `.env` edits (account ids) = owner-visible; fence + bounce |
 | 5 | **L4** canary + live proof | L-03 | L3 | ≤ 20 Groq + ≤ 6 Cloudflare calls (OTPM per org, TPM reservation, each pair reachable); then one profile ticket + one small pMAP document land only on their owning pairs | the owner's "fix all of this" (2026-09-24) |
