@@ -23,26 +23,25 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-25 (K1b built; merge + bounce = the owner's Run button) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE AND LIVE (11.478–11.480); DOC-STEER-V1 DEPLOYED (11.482–11.483); the external Trail audit ADMITTED (11.484); K1 LIVE (11.485–11.486). K1b BUILT (11.487, the owner's "go K1b"): every scoped JSON reply confirms its scope and Trail refuses an unconfirmed one on every path (gap K-04 closed); committed on `feat/k1b-scope-echo`. The merge + bounce is the owner's ONE Run-button command (the classifier blocks the agent's production merges). NEXT = verify K1b live → the owner's pick: the A-track or C1 (C1 carries K-03).**
+## CURRENT — 2026-09-25 (K1b live) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE AND LIVE (11.478–11.480); DOC-STEER-V1 DEPLOYED (11.482–11.483); the external Trail audit ADMITTED (11.484); K1 LIVE (11.485–11.486). K1b BUILT AND LIVE (11.487–11.488, the owner's "go K1b"): every scoped JSON reply confirms its scope and Trail refuses an unconfirmed one on every path (gap K-04 closed); the owner's Run button merged + bounced; `live_check.py` exit 0. NEXT = the owner's pick: the A-track or C1 (C1 carries K-03).**
 
 ### Repository State
-- Branch `production` HEAD = `63816479` (11.486, K1 live) = `origin/production` (the owner pushed `053e50c7..63816479`;
-  CI: contracts, preflight, repo-governance green; determinism = 13 failures, all in the previous run's 14).
-- **K1b = commits on `feat/k1b-scope-echo`** (worktree `/Users/king/Documents/polymath-rebuild/pmv4-k1b`, based on
-  `63816479`). **To tell whether the owner's merge ran:** `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 log
-  --oneline -1 production` shows the K1b close-out; the orchestrator's start time tells whether the bounce ran.
-- **Fleet (the owner's bounce, 2026-09-25 03:10 MDT):** 26 / 13 / ONE bundle `ff3bfaac2c61`, `/ready` true; the
-  orchestrator (started 03:10:38) has `POLYMATH_CHAT_SEEALSO_BLEND=1`, `POLYMATH_GRAPH_FACT_RANK=1`,
-  `POLYMATH_CHAT_DOC_STEER=1` (`ps eww`). Running code = K1 (`413f01dd`; `63816479` is docs only). K1 and K1b add no flag.
-- **Deploy order for K1b:** merge + bounce BACK TO BACK. The bounce restarts the orchestrator (which confirms) and
-  `adapter_step` (which now refuses an unconfirmed reply) together; the fence restarts neither. A K1b `adapter_step`
-  against a K1 orchestrator refuses every Trail lane (that is the live control run).
+- Branch `production`. HEAD = this close-out (11.488), on top of `6c52bc1c`: the owner's fast-forward merge of
+  `feat/k1b-scope-echo` (K1b, 11.487).
+- `origin/production` = `63816479` (11.486; CI: contracts, preflight, repo-governance green; determinism = 13 failures,
+  all in the previous run's 14). Unpushed: `6c52bc1c` + this close-out (`git rev-list --count origin/production..production`).
+  Pushes are the owner's word: `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
+- **Fleet (the owner's bounce, 2026-09-25 04:54 MDT):** 26 / 13 / ONE bundle `acc8f3e1c16f`, `/ready` true; the
+  orchestrator (started 04:54:38) has `POLYMATH_CHAT_SEEALSO_BLEND=1`, `POLYMATH_GRAPH_FACT_RANK=1`,
+  `POLYMATH_CHAT_DOC_STEER=1` (`ps eww`). Running code = committed code (`6c52bc1c`). K1 and K1b add no flag.
+- **Since K1b, rolling the orchestrator back alone** (to any pre-K1b commit) makes `adapter_step` refuse every Trail lane:
+  fail closed, by design. Roll both back together, or neither.
 - **Live `.env` (gitignored):** lines 146–151 = the SEEALSO-BLEND, D1 and DOC-STEER comments + flags (each: rollback = 0
   + a bounce). Unchanged: `POLYMATH_LLM_CLOUD_PRIMARY=0`; chat flags `SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`,
   `PROBE_GATE=1`, `SYNTH_ROLES=1`, `REASONING_POLICY=1` (S4 / S8 off); `CLOUDFLARE_ACCOUNT_ID_3..6` filled, account 1
   retired.
 - `corpora` = cinema, commerce-v1 (`l4-canary` deleted by the owner, 11.481; its leftovers = gap O-05).
-- **Other worktrees:** `pmv4-k1b` (K1b; remove after the merge). Carried forward: `pmv4-m1-repro`
+- **Other worktrees:** `pmv4-k1b` and its branch are removed (merged). Carried forward: `pmv4-m1-repro`
   (`review/m1-reproductions`, kept on purpose); `pmv4-rag-ui` holds another stream's 14 uncommitted files (never add,
   stash or revert them); an old stash `PRE-LIBRARIAN-DEPLOY 2026-09-18` (leave it).
 
@@ -51,7 +50,7 @@ historical, never an instruction.
   row 6c K1b = DONE 11.487). Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (K-01, K-02 CLOSED 11.485;
   K-04 CLOSED 11.487; K-03 OPEN → C1). How to build code RAG: `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` (§4 K1
   "As built" + the K1b note).
-- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ → K1b ✔ (merge pending) → [the A-track,
+- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ → K1b ✔ → [the A-track,
   if the owner agrees] → C1 → C2 → C3 → L5 → C6+C7 → C9+C10 (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
 - **K1 (11.485, LIVE 11.486; work-log `2026-09-25-k1-knowledge-scope.md`, evidence
   `docs/wiki/experiments/k1-knowledge-scope-2026-09-25/`):**
@@ -68,7 +67,7 @@ historical, never an instruction.
   - Proof: 20 unit tests incl. a caller pin; tests/contracts 145 / 145; $0 replay (12 of 12 reference-only runs scoped
     every search except the corpus readiness count; evidence identical in 10 of 12, the other 2 did not recur in 8
     noise-check runs); cost 19–21 → 25 ms median per search on the 163k-point collection (no payload index).
-- **K1b (11.487; work-log `2026-09-25-k1b-scope-echo.md`, evidence `docs/wiki/experiments/k1b-scope-echo-2026-09-25/`):**
+- **K1b (11.487, LIVE 11.488; work-log `2026-09-25-k1b-scope-echo.md`, evidence `docs/wiki/experiments/k1b-scope-echo-2026-09-25/`):**
   every JSON reply to a scoped request confirms it (top-level `knowledge_scope`, `scope.echo_scope`): /retrieve,
   /retrieve/plan, `run_chat` (behind /chat and /chat/evidence), /evidence, /ask, /compare; not the SSE stream (no stream
   client sends a scope). Trail's one outbound function `adapter_step_worker._orch_post` refuses a scoped reply without the
@@ -88,8 +87,10 @@ historical, never an instruction.
   in the reconciliation.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) stays paused: S5–S7 and S9 wait (S9: 9 of 10 test queries used).
 
-### Completed Since Last Bootstrap (11.484–11.487)
-- **11.487 K1b** (above): built, tested, live control run; merge + bounce = the owner's Run button.
+### Completed Since Last Bootstrap (11.484–11.488)
+- **11.488 K1b live:** the owner's Run button (merge `63816479..6c52bc1c` + bounce, 04:54) + `live_check.py` exit 0 →
+  LIVE_PATH_PROVEN.
+- **11.487 K1b** (above): built, tested, live control run.
 - **11.486 K1 live:** the owner's Run button (merge `053e50c7..413f01dd` + bounce, 03:10) + `live_check.py` exit 0 →
   LIVE_PATH_PROVEN. Implementation-only still sees reference graph facts (Postgres fact authorization, K-03).
 - **11.485 K1** (above): built, tested, replayed ($0). The live check's control run on the pre-K1 fleet found K-04.
@@ -127,10 +128,10 @@ historical, never an instruction.
 
 ### Proof Status
 - **11.487 K1b:** UNIT_PROVEN (17 tests; a mutation check: switching off the refusal or dropping one route's confirmation
-  fails 10) · LIVE CONTROL ($0: the branch's Trail code refused the K1 fleet) · COMMITTED (branch). LIVE_PATH_PROVEN =
-  after the owner's Run button: `docs/wiki/experiments/k1b-scope-echo-2026-09-25/live_check.py` exit 0 (/retrieve and
-  /retrieve/plan confirm; Trail's `_orch_post` accepts both lanes; no scope unchanged; no new Traceback). The evidence
-  route's confirmation is unit-proven (`run_chat`); a live /chat/evidence probe needs the owner's word.
+  fails 10) · LIVE CONTROL ($0: the branch's Trail code refused the K1 fleet) · MERGED · DEPLOYED · **LIVE_PATH_PROVEN**
+  (`docs/wiki/experiments/k1b-scope-echo-2026-09-25/live_check.py` exit 0, 04:57 MDT: /retrieve and /retrieve/plan
+  confirm; Trail's `_orch_post` accepts both lanes; no scope unchanged; no new Traceback). The evidence route's
+  confirmation is unit-proven (`run_chat`); a live /chat/evidence probe needs the owner's word.
 - **11.485–11.486 K1:** UNIT_PROVEN · REPLAY ($0) · MERGED · DEPLOYED · **LIVE_PATH_PROVEN** (`live_check.py` exit 0,
   2026-09-25 03:12 MDT: no scope unchanged; reference-only = the same 15 passages + receipt scope; malformed → 422 +
   receipt; implementation-only → 0 passages; no new Traceback). Rerun any time with `.env` loaded ($0).
@@ -166,23 +167,20 @@ historical, never an instruction.
   (preflight, repo_guard, wiki_worm) · bundle_integrity READY; registry 0 errors / 4 warnings.
 
 ### Next Action
-1. **The owner's Run button (merge + bounce, back to back):**
-   `cd /Users/king/Documents/polymath-rebuild/polymath-v4 && git merge --ff-only feat/k1b-scope-echo && bash scripts/bounce_fleet.sh`
-   Then the agent: fleet 26 / 13 / ONE bundle + `/ready`; the K1b live check (PYTHONPATH of the main checkout, `.env`
-   loaded); commit `live_check.json` + its TREE entry + a register row; remove worktree `pmv4-k1b` and its branch.
+1. (done 04:54–04:57) The owner's Run button + the K1b live check: K1b LIVE_PATH_PROVEN (11.488).
 2. The blend + DOC-STEER live receipt: the owner's next GRAPH / WILDCARD chat.
 3. **The owner's pick:** the A-track (A-03, A-04, A-06, A-05, A-07) before C1, or C1 directly; the five audit questions.
 4. **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28);
    C1 carries K-03.
 5. **L5** before C6 + C7. Fold in when touching the file: L-23 (`document_status.py:212`).
-6. Owner's step pending: the push (after the K1b merge). Small slices when convenient: O-05 (the corpus delete also
+6. Owner's step pending: the push (2 commits). Small slices when convenient: O-05 (the corpus delete also
    sweeps the shared document-profile collections); `test_query_receipts.py` (the stale pin + its hard-coded DSN).
 
 ### Do Not Do
 - Never add a switch that turns scope enforcement off, never let a plan or an LLM output set or widen a scope, and never
   call a scoped search without the request's scope (K1, 11.471).
-- Never let a consumer that sends a scope accept an unconfirmed reply (K1b); never merge K1b without the bounce right
-  after (a K1b `adapter_step` refuses every Trail lane of a K1 orchestrator).
+- Never let a consumer that sends a scope accept an unconfirmed reply (K1b); never roll the orchestrator back without
+  `adapter_step` (a K1b `adapter_step` refuses every Trail lane of an older orchestrator).
 - Never hand-edit `config/cloud_providers.json` or `config/extraction_models/limiter.yaml` (generated).
 - Never let a profile / pMAP slot fail over to another slot's key; keep the operator backfill on `--lanes` from the
   shared tier (L-22).

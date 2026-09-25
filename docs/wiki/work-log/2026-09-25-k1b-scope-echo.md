@@ -66,7 +66,17 @@ last_reviewed: 2026-09-25
   confirmation, and `_orch_post` refused both of Trail's lanes (`ScopeNotConfirmed`). No scope: unchanged (15 passages).
   This is what a rollback looks like from Trail's side, and it fails closed. It is also why the merge and the bounce must
   run back to back.
-- LIVE after the merge + bounce: the close-out records `live_check.py` (exit 0 required).
+- LIVE (EXECUTED 2026-09-25 04:57 MDT, register 11.488): the owner's Run button merged `63816479..6c52bc1c` and bounced
+  (READY after ~55 s: 26 workers / 13 types / ONE bundle `acc8f3e1c16f`; the three chat / graph flags unchanged).
+  `live_check.py` exit 0 (`live_check.json`), with the deployed worker file loaded from production:
+  - /retrieve without a scope → 200, 15 passages, no confirmation (unchanged);
+  - /retrieve with Trail's scope → 200, 15 passages, confirmed `{"roles": ["reference"]}`;
+  - /retrieve/plan with Trail's scope → 200, 119 rows, confirmed;
+  - Trail's `_orch_post` accepted the legacy lane (48 rows) and the plan lane (110 rows);
+  - no Traceback in orchestrator.log while the calls ran.
+  Guards 0 on production after the merge; bundle_integrity READY. Seen in passing: two identical /retrieve/plan calls a
+  few seconds apart returned 119 and 110 rows (123 in the control run). That is the EXPLORE lanes' run-to-run variance,
+  already present before K1b, and not a scope effect.
 
 ## Rejected claims
 - "Check the confirmation in `check_response`": that covers only the evidence route and leaves the legacy, plan and graph
