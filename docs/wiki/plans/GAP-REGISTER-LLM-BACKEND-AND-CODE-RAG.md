@@ -153,6 +153,29 @@ it). Every row was re-checked by reading the code at `0e2451e4`.
 | A-07 | Two adapters are listed to clients; the older `trail.product_discovery` does not opt into the restored meaning (`context.semantics.trail`), so a client picking it gets weaker reasoning over the same tools | R `config/adapters/trail.product_discovery.json` vs `ecommerce.product_research.json` (0.6.0) | Medium | state the preferred entry and each adapter's behaviour truthfully (no silent retirement) | OPEN |
 | A-08 | No cross-run learning: no corpus-wide exploration frontier, no governed feed into the maintenance review, no successor run when support goes stale or a capability returns | R the absences above (A-01) | Medium | after A-01, on the same trigger contract: frontier cells with dispositions, the maintenance projection, linked reassessment runs | OPEN |
 
+## S. Research sources (the owner, 2026-09-25: TikTok / video comments in the equations; CJ alongside Alibaba; plan AUTORESEARCH-SOURCES-AND-HARNESS-V1, register 11.489)
+
+| ID | Gap | Evidence | Sev. | Fix | Status |
+|---|---|---|---|---|---|
+| S-01 | TikTok field evidence is rejected: every `tiktok.com` URL routes to `src-tiktok-creative` (`social_trend`, `product_reality` only), so a friction / workaround comment in the field stage fails `SOURCE_STAGE_UNSUITABLE`, while the engine's `tiktok` channel collects exactly that | R `governance/trail/data/source_capabilities.csv:4`, `executors.py:216-221`; E in-memory admission on the pinned core | High (the owner's ask) | R1: Trail row `src-tiktok-comments` (pattern `tiktok.com/@`) + re-pin | OPEN |
+| S-02 | TikTok gets no research slot: round-robin over `evidence_channels` (tiktok 4th) under the 66-intent cap gave tiktok 0 intents with 4 live hypotheses | R `policies.yaml:23`, `binding.py:493-494`; E `binding.handle` in-process | High | R2: a per-channel minimum in the round-robin | OPEN |
+| S-03 | Comments are not a first-class input: an intent keeps only the first tool of a channel chain (YouTube's comment tool never reaches the agent); TikTok offers captions only; Instagram is not compiled | R `binding.py:418,490`, `executors.py:211-221,238` | High | R2: comment intents for TikTok / YouTube / Instagram Reels | OPEN |
+| S-04 | Instagram Reels has no Trail row: `community_discussion`-labelled instagram.com URLs are admitted through the forums wildcard (`forum:instagram.com`), others fail `SOURCE_UNREGISTERED` | E in-memory admission; R `admission.py:187-195` | Medium | R1: Trail row `src-instagram-comments` + re-pin | OPEN |
+| S-06 | Around CJ (already admitted next to Alibaba): supply intents carry Trail's `{product_territory}` templates unfilled; a supplier named `unresolved (<channel> listing)` passes the exact `unresolved` check; the standalone harvester's rows carry no dates, so the Hermes receipt builder drops them | R `binding.py:577,589,630`, `sourcing_exa.py:49-51`, `adapter_receipt.py:196-199` | Medium | R2 (templates, name check); the dateless harvester leaves the governed path (H-03) | OPEN |
+| S-07 | The manifest asks for source classes Trail does not know (`product_review`, `manufacturer_site`): observations filed under them fail `SOURCE_UNREGISTERED` (the 2026-09-21 run lost 4 + 6 + 4 this way) | R `config/adapters/ecommerce.product_research.json:2397,2514`; `source_capabilities.csv` | Medium | R2: classes from the Trail snapshot | OPEN |
+
+## H. Harness neutrality (the owner, 2026-09-25: OpenClaw, Hermes, Claude Code, Codex …; plan AUTORESEARCH-SOURCES-AND-HARNESS-V1)
+
+| ID | Gap | Evidence | Sev. | Fix | Status |
+|---|---|---|---|---|---|
+| H-01 | Neither MCP server publishes an operating guide for the research loop (`list_prompts` / `list_resources` empty; `instructions` cover knowledge search only) | E both servers imported in-process; R `mcp_server.py:101-119`, `polymath_mcp.py:55-65` | High | R3: one guide as an MCP prompt + resources on both servers | OPEN |
+| H-02 | A HARNESS_ACTION step carries `output_schema: {"type": "object"}`; the receipt contract is not in the step, and `adapter_submit` names 6 of its 9 required fields | R `transitions.py:154`, `mcp_server.py:506-510`, `contracts/adapter/v1/harness_receipt.schema.json` | High | R3 | OPEN |
+| H-03 | Research directives name host tools (`opencli …`, `mcporter call exa…`, `python3 python/sourcing_exa.py`) against the harness-action contract ("never names a search engine") | R `binding.py:418,490,587`, `executors.py:198-237,439-444,466`, `harness_action.schema.json:5` | High | R2: plain query + channel / site hints | OPEN |
+| H-04 | What Trail admits is invisible to the agent (source classes, stage, roles, freshness × 2, the per-stage `context` tags the domain reads) | R `admission.py:207-261`, `binding.py:625-636`, `adapter_receipt.py:217-240` | High | R3: admissible sources + tag grammar in the step and the guide | OPEN |
+| H-05 | The only step-by-step guide is Hermes-specific and names the older adapter (`trail.product_discovery`) | R `adapters/ecommerce/SKILL.md:24-58,112-116`, `adapters/ecommerce/docs/27_governed_entrypoint.md:14` | Medium | R5 | OPEN |
+| H-06 | Setup docs miss OpenClaw, Gemini CLI, OpenCode and Codex over HTTP; the Cloudflare edge's 403 to `Python-urllib` is undocumented there | R `CONNECTORS.md:21-73`, `docs/migration/CONTINUATION.md:143` | Medium | R5 | OPEN |
+| H-07 | `adapter_start` does not say `corpus_ids` is mandatory for a non-admin principal | R `mcp_principals.py:125-128` | Low | R3 | OPEN |
+
 ## Confirmed GOOD — keep (not gaps)
 
 - No cosine / `score_threshold` floor on the chat path; ranked top-k only (R `api/fast.py:137-147`,

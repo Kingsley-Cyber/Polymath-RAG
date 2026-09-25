@@ -23,11 +23,11 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-25 (K1b live) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE AND LIVE (11.478–11.480); DOC-STEER-V1 DEPLOYED (11.482–11.483); the external Trail audit ADMITTED (11.484); K1 LIVE (11.485–11.486). K1b BUILT AND LIVE (11.487–11.488, the owner's "go K1b"): every scoped JSON reply confirms its scope and Trail refuses an unconfirmed one on every path (gap K-04 closed); the owner's Run button merged + bounced; `live_check.py` exit 0. NEXT = the owner's pick: the A-track or C1 (C1 carries K-03).**
+## CURRENT — 2026-09-25 (autoresearch plan admitted; R1 next) — **ACTIVE MISSION: AUTORESEARCH-SOURCES-AND-HARNESS-V1 (register 11.489, roadmap row 6d; the owner's order 2026-09-25, before C1): TikTok / short-video comments admitted and counted by Trail, CJ Dropshipping alongside Alibaba, any MCP agent harness (Claude Code, Codex, Hermes, OpenClaw, Gemini, OpenCode) can run the governed product research, ONE real e2e run. Before it: K1 + K1b LIVE (11.485–11.488). NEXT = R1 (Trail rows in ~/trail-signal-os + re-pin) → R2 → R3 → R4 → R5 → R6 deploy (the owner's Run button) → R7 e2e.**
 
 ### Repository State
-- Branch `production`. HEAD = this close-out (11.488), on top of `6c52bc1c`: the owner's fast-forward merge of
-  `feat/k1b-scope-echo` (K1b, 11.487).
+- Branch `production`. HEAD = the plan admission (11.489), on top of `366fd8dc` (K1b live, 11.488) and `6c52bc1c`
+  (the owner's fast-forward merge of `feat/k1b-scope-echo`, K1b 11.487).
 - `origin/production` = `63816479` (11.486; CI: contracts, preflight, repo-governance green; determinism = 13 failures,
   all in the previous run's 14). Unpushed: `6c52bc1c` + this close-out (`git rev-list --count origin/production..production`).
   Pushes are the owner's word: `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
@@ -46,12 +46,25 @@ historical, never an instruction.
   stash or revert them); an old stash `PRE-LIBRARIAN-DEPLOY 2026-09-18` (leave it).
 
 ### Active Mission
+- **AUTORESEARCH-SOURCES-AND-HARNESS-V1 (11.489) — the plan of record:** `docs/wiki/plans/AUTORESEARCH-SOURCES-AND-HARNESS-V1.md`
+  (gap analysis §1, governance path §2, decisions D1–D8 §3, slices R0–R7 §4, owner questions §5); gap rows §S and §H in the
+  gap register. In one line each:
+  - TikTok field evidence is rejected by Trail today (S-01) → Trail DATA rows `src-tiktok-comments` + `src-instagram-comments`
+    in `~/trail-signal-os` (branch off the pinned `829a0ab`, its `agentctl` gate), then the re-pin (never edit
+    `governance/trail/` in place);
+  - CJ is already admitted next to Alibaba (S-06: fix the template / name defects only);
+  - harness neutrality = plain-query directives (no host tool commands), the receipt schema + admissible sources + tag
+    grammar in every HARNESS_ACTION step, one operating guide as an MCP prompt + resources on both servers, per-harness
+    setup docs;
+  - the A-track (A-03..A-07) is slice R4 of this plan;
+  - R7: Claude Code drives one full run over MCP and does the web research itself; the other harnesses get a
+    connect-and-discover smoke. OpenClaw is not installed (docs only).
 - **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 6b K1 = DONE 11.485,
   row 6c K1b = DONE 11.487). Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (K-01, K-02 CLOSED 11.485;
   K-04 CLOSED 11.487; K-03 OPEN → C1). How to build code RAG: `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` (§4 K1
   "As built" + the K1b note).
-- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ → K1b ✔ → [the A-track,
-  if the owner agrees] → C1 → C2 → C3 → L5 → C6+C7 → C9+C10 (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
+- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ → K1b ✔ → **6d AUTORESEARCH (R0 ✔, R1 next; the A-track is
+  its R4)** → C1 → C2 → C3 → L5 → C6+C7 → C9+C10 (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
 - **K1 (11.485, LIVE 11.486; work-log `2026-09-25-k1-knowledge-scope.md`, evidence
   `docs/wiki/experiments/k1-knowledge-scope-2026-09-25/`):**
   - `shared/polymath_shared/code/scope.py`: a request's `scope: {"roles": [...]}`. No scope = both roles, byte-identical
@@ -167,13 +180,16 @@ historical, never an instruction.
   (preflight, repo_guard, wiki_worm) · bundle_integrity READY; registry 0 errors / 4 warnings.
 
 ### Next Action
-1. (done 04:54–04:57) The owner's Run button + the K1b live check: K1b LIVE_PATH_PROVEN (11.488).
-2. The blend + DOC-STEER live receipt: the owner's next GRAPH / WILDCARD chat.
-3. **The owner's pick:** the A-track (A-03, A-04, A-06, A-05, A-07) before C1, or C1 directly; the five audit questions.
-4. **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28);
+1. **R1** (plan §4): the two comment rows in `~/trail-signal-os` (branch off `829a0ab`, agentctl task, fixtures
+   re-recorded), then the re-pin in polymath-v4 (PROVENANCE, the embedding test, the recorded-equivalence envelopes,
+   `embedded.py`, the scaffold, the ADR-0021 addendum). Trail pushes are the owner's word.
+2. **R2–R5** on one polymath-v4 branch (domain intents, runtime contract + MCP guide, the A-track, docs), then **R6**: merge
+   + bounce = the owner's Run button, live checks; then **R7**, the e2e run.
+3. The blend + DOC-STEER live receipt: the owner's next GRAPH / WILDCARD chat.
+4. After 6d: **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28);
    C1 carries K-03.
 5. **L5** before C6 + C7. Fold in when touching the file: L-23 (`document_status.py:212`).
-6. Owner's step pending: the push (2 commits). Small slices when convenient: O-05 (the corpus delete also
+6. Owner's step pending: the push (3 commits). Small slices when convenient: O-05 (the corpus delete also
    sweeps the shared document-profile collections); `test_query_receipts.py` (the stale pin + its hard-coded DSN).
 
 ### Do Not Do

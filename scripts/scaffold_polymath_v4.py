@@ -2431,6 +2431,9 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/k1b-scope-echo-2026-09-25/live_check.py", "py", None),
     ("docs/wiki/experiments/k1b-scope-echo-2026-09-25/live_check_control.json", "json", None),
     ("docs/wiki/experiments/k1b-scope-echo-2026-09-25/live_check.json", "json", None),
+    # AUTORESEARCH-SOURCES-AND-HARNESS-V1 (register 11.489): the owner's 2026-09-25 plan of record
+    ("docs/wiki/plans/AUTORESEARCH-SOURCES-AND-HARNESS-V1.md", "md", None),
+    ("docs/wiki/work-log/2026-09-25-autoresearch-plan-admitted.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-k1b-scope-echo.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),
