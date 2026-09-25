@@ -1,7 +1,7 @@
 ---
 owner: governance
-last_reviewed: 2026-09-20
-last_touched: 2026-09-20
+last_reviewed: 2026-09-25
+last_touched: 2026-09-25
 status: accepted
 ---
 # ADR-0021 — TrailSignal's deterministic research core runs in process (`governance/trail/`)
@@ -41,3 +41,22 @@ with the lexical path kept as the fallback, prior / territory meaning on the wir
 and the same clock (`tests/fixtures/trail_recorded_envelopes/*.json` carry `previous_trail_head` + `re_recorded`). Polymath's side: the closed
 extended wire (`semantic_view.trail_wire`, sent only by steps that opt in with `hypotheses_from: context.semantics.trail`), the four-copy
 receipt contract (`hypothesis_relations` on a receipt observation, kept only for a hypothesis the observation links). Source commit (full): `829a0abf853fdb0c3589c4162177beb8c836c515`.
+
+## Addendum 2026-09-25 — re-pinned to HR7 @ `494905a` (TrailSignal ADR-070)
+
+The embedded core is re-pinned through the SAME deterministic process (`git archive 494905a <the 30 pinned paths> | tar -x`;
+`PROVENANCE.json` rewritten with the new sha256 of every file and `previous_pin` naming the files the pin changed; the tool is
+`docs/wiki/experiments/autoresearch-r1-repin-2026-09-25/repin_trail_hr7.py`). TrailSignal ADR-070 (Accepted by the owner 2026-09-25)
+adds two DATA rows to `data/source_capabilities.csv`, no code:
+- `src-tiktok-comments`: class `video_platform`, pattern `tiktok.com/@` (video and comment permalinks; it sorts before
+  `src-tiktok-creative`, which keeps Creative Center and short links), stages `field_evidence;product_reality`, roles
+  `behavior;workaround;friction;competition;contradiction` (no `demand`), freshness `stable-behavior-365d`, independence group `tiktok`;
+- `src-instagram-comments`: the same shape, patterns `instagram.com/reel;instagram.com/p/`, group `instagram`.
+
+The registry snapshot therefore changes (`trs-da9942986e52f832` → `trs-629277494b724295`), and the three M1 recorded envelopes carry the snapshot id in
+their REQUESTS. The owner authorized re-recording them (2026-09-25): only the snapshot id / content hash in the requests and what the new
+rows route may change. `rerecord_envelopes_hr7.py` swaps exactly those, re-records at the same fixed clock and ASSERTS the recorded defects
+unchanged (M1-02 still raises the same error with the same message; `hypotheses.judge`, findings M1-01 / M1-03, identical once the
+snapshot is normalised). A response's `result_sha256` is the hash of its own result, which carries the snapshot id, so it
+moves with it: the re-recorder asserts it equals that hash on both recordings and compares the result bodies exactly. Each fixture
+keeps the earlier re-record in `re_recorded_history`. Source commit (full): `494905a1bfdfb2c8c7924a7baef103a91a5b3f1d`.

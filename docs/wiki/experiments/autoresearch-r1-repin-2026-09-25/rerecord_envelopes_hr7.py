@@ -10,6 +10,7 @@ change; the recorded defects stay identical). So:
     new rows route (their kinds are recorded).
 Run from the polymath-v4 worktree root AFTER the re-pin, with polymath's .venv python.
 usage: rerecord_envelopes_hr7.py <new_trail_sha7> <previous_trail_sha7>"""
+import hashlib
 import json
 import re
 import sys
@@ -29,8 +30,28 @@ snap = E.compile_registry_snapshot(E.ROOT / "data", E.ROOT / "config", E.ROOT / 
 NEW_ID, NEW_HASH = snap.snapshot_id, snap.content_hash
 
 
+def _canonical_sha(value) -> str:
+    """TrailSignal's own identity of a result: sha256 of its canonical JSON (research_operations.canonical_text / sha256_of)."""
+    return "sha256:" + hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
 def _norm(obj, id_, hash_) -> str:
+    """Normalise the snapshot id / hash. A response's `result_sha256` is the hash OF its result (asserted here, on both the old and the
+    new recording), so it necessarily moves with the snapshot id inside that result: it is checked, then left out of the comparison,
+    and the result BODY itself must match exactly."""
+    if isinstance(obj, dict) and "result_sha256" in obj:
+        assert obj["result_sha256"] == _canonical_sha(obj.get("result")), "result_sha256 is not the hash of the result"
+        obj = {k: v for k, v in obj.items() if k != "result_sha256"}
     return json.dumps(obj, sort_keys=True, ensure_ascii=False).replace(hash_, "<SNAPSHOT_HASH>").replace(id_, "<SNAPSHOT_ID>")
+
+
+def _like(new, old):
+    """`new` with the key order of the recording it replaces (new keys last), so a re-record diff shows changed VALUES only."""
+    if isinstance(new, dict) and isinstance(old, dict):
+        return {k: _like(new[k], old.get(k)) for k in [k for k in old if k in new] + [k for k in new if k not in old]}
+    if isinstance(new, list) and isinstance(old, list) and len(new) == len(old):
+        return [_like(n, o) for n, o in zip(new, old)]
+    return new
 
 
 def _swap(obj, old_id, old_hash):
@@ -67,8 +88,10 @@ for path in sorted(FIXTURES.glob("*.json")):
         if _norm(new, NEW_ID, NEW_HASH) != _norm(rec["responses"][kind], old_id, old_hash):
             assert kind not in MUST_NOT_MOVE, f"{path.name}: {kind} moved beyond the snapshot id — a recorded defect changed"
             beyond_snapshot.append(kind)
-        rec["responses"][kind] = new
+        rec["responses"][kind] = _like(new, rec["responses"][kind])        # the recording's own key order: the diff shows values only
     assert rec["trail_head"].startswith(PREVIOUS), (path.name, rec["trail_head"])
+    if rec.get("re_recorded"):                                  # the earlier re-record stays on file, with the head it moved from
+        rec["re_recorded_history"] = list(rec.get("re_recorded_history") or []) + [dict(rec["re_recorded"], from_trail_head=rec.get("previous_trail_head"))]
     rec["previous_trail_head"], rec["trail_head"] = rec["trail_head"], SHA
     rec["re_recorded"] = {"at_trail_head": SHA, "snapshot": {"from": old_id, "to": NEW_ID},
                           "responses_changed_beyond_the_snapshot_id": beyond_snapshot,

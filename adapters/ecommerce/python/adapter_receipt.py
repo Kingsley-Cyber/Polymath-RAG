@@ -65,14 +65,17 @@ DOMAIN_CLASS = {
     "ebay.com": "marketplace_listing", "homedepot.com": "retailer", "lowes.com": "retailer",
     "alibaba.com": "supplier_listing", "cjdropshipping.com": "supplier_listing", "1688.com": "supplier_listing",
 }
+#: URL patterns TrailSignal routes BEFORE its domain rows (data/source_capabilities.csv since HR7, ADR-070: the comment threads
+#: under a short video, cited by the video's canonical link). Checked before DOMAIN_CLASS; a Creative Center link stays a trend.
+PATTERN_CLASS = {"tiktok.com/@": "video_platform", "instagram.com/reel": "video_platform", "instagram.com/p/": "video_platform"}
 #: fallback by the skill's own source family / platform when the domain is not a registered one (class-level wildcard rows)
 FAMILY_CLASS = {"community": "community_discussion", "review": "retailer", "marketplace_listing": "marketplace_listing",
                 "supplier": "supplier_listing"}
 PLATFORM_CLASS = {"reddit": "community_discussion", "forum": "community_discussion", "twitter": "community_discussion",
                   "xiaohongshu": "community_discussion", "facebook": "community_discussion", "youtube": "video_platform",
-                  "tiktok": "social_trend", "amazon_reviews": "marketplace_listing", "amazon": "marketplace_listing",
-                  "alibaba": "supplier_listing", "cjdropshipping": "supplier_listing", "1688": "supplier_listing",
-                  "manufacturer": "supplier_listing", "retailer": "retailer"}
+                  "tiktok": "social_trend", "instagram": "video_platform", "amazon_reviews": "marketplace_listing",
+                  "amazon": "marketplace_listing", "alibaba": "supplier_listing", "cjdropshipping": "supplier_listing",
+                  "1688": "supplier_listing", "manufacturer": "supplier_listing", "retailer": "retailer"}
 #: families that are NOT harness observations at all: corpus knowledge is Polymath's, never field evidence
 NOT_FIELD_FAMILIES = {"corpus_evergreen"}
 _FORBIDDEN_KEY = re.compile(r"score|rank|weight", re.I)
@@ -161,6 +164,10 @@ def _domain(url: str) -> str:
 def source_class_for(url: str, source_identity: dict | None = None) -> str | None:
     """Registered domain first (a fact about the URL), then the skill's own platform / family (a fact about the channel the
     item came from). None = the builder does not know what kind of source this is and will not guess."""
+    lowered = str(url or "").lower()
+    for pattern, cls in PATTERN_CLASS.items():
+        if pattern in lowered:
+            return cls
     host = _domain(url)
     for dom, cls in DOMAIN_CLASS.items():
         if host == dom or host.endswith("." + dom):
@@ -270,6 +277,7 @@ def build_receipt(action: dict, *, observations: list | None = None, field_recor
         + [dict(x, _lane="field_record") for x in field_records or [] if isinstance(x, dict)] \
         + [dict(x, _lane="supplier_candidate") for x in _supplier_items(supplier_candidates or [])]
     sources: dict[str, dict] = {}
+    pages: set[str] = set()
     obs_out: list[dict] = []
     omitted: list[dict] = []
     notes: list[str] = []
@@ -291,14 +299,17 @@ def build_receipt(action: dict, *, observations: list | None = None, field_recor
             or ("duplicate observation id" if oid in seen_ids else None)
         if why:
             omitted.append({"id": oid, "lane": it["_lane"], "reason": why}); continue
-        sid = _sid("src_", url)
+        # ONE source row per (page, publish date): comments under one video each keep their OWN date (TrailSignal anchors
+        # freshness on the source's date), and no item's date is lent to another. The budget counts pages, not rows.
+        sid = _sid("src_", url, it["published_at_if_known"] or "")
         if sid not in sources:
-            if len(sources) >= max_sources:
+            if url not in pages and len(pages) >= max_sources:
                 omitted.append({"id": oid, "lane": it["_lane"], "reason": f"source budget reached ({max_sources})"}); continue
+            if len(sources) >= SCHEMA_MAX["sources"]:
+                omitted.append({"id": oid, "lane": it["_lane"], "reason": f"source rows at the contract maximum ({SCHEMA_MAX['sources']})"}); continue
+            pages.add(url)
             sources[sid] = {"source_id": sid, "url": url[:2000], "source_class": cls, "retrieved_at": it["retrieved_at"],
                             "published_at_if_known": it["published_at_if_known"]}
-        elif it["published_at_if_known"] and not sources[sid]["published_at_if_known"]:
-            sources[sid]["published_at_if_known"] = it["published_at_if_known"]        # a KNOWN publish date is never dropped
         if len(obs_out) >= max_obs:
             omitted.append({"id": oid, "lane": it["_lane"], "reason": f"observation budget reached ({max_obs})"}); continue
         tagged = [str(h) for h in it.get("hypothesis_ids") or []]

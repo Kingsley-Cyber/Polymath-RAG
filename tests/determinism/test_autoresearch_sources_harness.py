@@ -155,3 +155,45 @@ def test_every_source_class_a_manifest_names_exists_in_the_pinned_trail_registry
             for key in ("preferred_source_roles", "disallowed_source_roles"):
                 unknown = set(harness.get(key) or []) - known
                 assert not unknown, f"{m.adapter_id}:{sid}.{key} names classes Trail does not route: {sorted(unknown)} (gap S-07)"
+
+
+# ─────────────────────────────────────────────────────────── short-video comments: harvest → receipt → TrailSignal admission
+def test_comments_under_one_video_keep_their_own_dates_through_trail_admission():
+    """The Hermes skill's receipt builder lists the VIDEO (its canonical link) as the source and gives each comment its own row by
+    publish date; the pinned TrailSignal core routes those rows to its comment sources (ADR-070) and anchors each comment's
+    freshness on THAT comment's date. One platform = one independence group."""
+    from datetime import datetime, timezone
+    sys.path.insert(0, str(ROOT / "adapters" / "ecommerce" / "python"))
+    sys.path.insert(0, str(ROOT / "governance" / "trail"))
+    import adapter_receipt as AR
+    import embedded as E
+    for mod in (AR, E):
+        assert pathlib.Path(mod.__file__).resolve().is_relative_to(ROOT), mod.__file__
+    now = datetime(2026, 9, 25, 12, 0, tzinfo=timezone.utc)
+    snap = E.compile_registry_snapshot(E.ROOT / "data", E.ROOT / "config", E.ROOT / "data" / "source_capabilities.csv", compiled_at=now)
+    hyp, run = "hyp_" + "ab" * 12, "adr_" + "c0" * 16
+    action = {"action_id": "hact_c0ffee000001", "run_id": run, "hypothesis_ids": [hyp], "budget": {"max_queries": 10, "max_sources": 4, "max_observations": 10},
+              "search_intents": [{"intent_id": "si_comments", "intent": "tiktok (tiktok.com): comment threads — ankle weights"}]}
+    video, reel = "https://www.tiktok.com/@creator/video/7400000000000000001", "https://www.instagram.com/reel/C0ABCDEFGHI/"
+
+    def comment(i, url, published, role, platform):
+        return {"id": f"c{i}", "source": url, "quote_ref": f"verbatim comment {i}", "problem": f"comment claim {i}", "evidence_roles": [role],
+                "retrieved_at": "2026-09-25T11:00:00Z", "published_at_if_known": published, "hypothesis_ids": [hyp],
+                "source_identity": {"source_family": "community", "platform": platform}}
+    receipt, report = AR.build_receipt(action, observations=[comment(1, video, "2026-09-02T10:00:00Z", "FRICTION_EVIDENCE", "tiktok"),
+                                                             comment(2, video, "2026-09-20T08:30:00Z", "WORKAROUND_EVIDENCE", "tiktok"),
+                                                             comment(3, reel, "2026-09-12T12:00:00Z", "FRICTION_EVIDENCE", "instagram")],
+                                       harness_id="claude-code", started_at="2026-09-25T10:50:00Z", completed_at="2026-09-25T11:10:00Z",
+                                       tool_trace=[{"search_intent_id": "si_comments", "tool_class": "browser", "query_count": 2}])
+    assert report["errors"] == [] and len(receipt["sources"]) == 3 and {s["url"] for s in receipt["sources"]} == {video, reel}
+    ident = "adr-" + "c0" * 16
+    request = {"idempotency_key": f"idempotency:{ident}:admit:1", "operation_kind": "evidence.admit", "purpose_ref": "purpose:product-discovery",
+               "registry_snapshot_id": snap.snapshot_id, "request_id": f"request:{ident}:admit:1", "run_ref": f"run:{ident}",
+               "payload": {"action_id": action["action_id"], "admitted_evidence_ids": [], "stage": "field_evidence", "receipt": receipt,
+                           "hypotheses": [{"hypothesis_id": hyp, "revision": 0, "statement": "Walkers wearing ankle weights get chafed skin", "status": "proposed"}]}}
+    out = E.operate(E.build_service(clock=lambda: now), "evidence.admit", request)["result"]["evidence_admission"]
+    assert out["rejected"] == [], out["rejected"]
+    by = {a["observation_id"]: a for a in out["admitted"]}
+    assert [by[k]["anchored_at"] for k in ("c1", "c2", "c3")] == ["2026-09-02T10:00:00Z", "2026-09-20T08:30:00Z", "2026-09-12T12:00:00Z"]
+    assert {a["source_class"] for a in by.values()} == {"video_platform"} and [by[k]["evidence_role"] for k in ("c1", "c2", "c3")] == ["friction", "workaround", "friction"]
+    assert by["c1"]["independence_group"] == by["c2"]["independence_group"] == "tiktok" and by["c3"]["independence_group"] == "instagram"

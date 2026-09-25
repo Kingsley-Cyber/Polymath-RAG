@@ -97,7 +97,7 @@
     "stage": "field_evidence"
    },
    "purpose_ref": "purpose:product-discovery",
-   "registry_snapshot_id": "trs-da9942986e52f832",
+   "registry_snapshot_id": "trs-629277494b724295",
    "request_id": "request:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:J-admit:14",
    "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1"
   },
@@ -121,7 +121,7 @@
     "stage": "revision"
    },
    "purpose_ref": "purpose:product-discovery",
-   "registry_snapshot_id": "trs-da9942986e52f832",
+   "registry_snapshot_id": "trs-629277494b724295",
    "request_id": "request:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:L-judge:16",
    "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1"
   }
@@ -131,8 +131,8 @@
    "operation_id": "operation:73e179527e6c7a5e588c32c28825cae9",
    "operation_kind": "evidence.admit",
    "registry_snapshot": {
-    "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
-    "snapshot_id": "trs-da9942986e52f832"
+    "content_hash": "sha256:629277494b7242957716f31321b0fb393d4a8273d10b4384adb8290c0e1d93c0",
+    "snapshot_id": "trs-629277494b724295"
    },
    "result": {
     "evidence_admission": {
@@ -165,8 +165,8 @@
      ],
      "evaluated_at": "2026-09-15T02:00:00Z",
      "registry_snapshot": {
-      "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
-      "snapshot_id": "trs-da9942986e52f832"
+      "content_hash": "sha256:629277494b7242957716f31321b0fb393d4a8273d10b4384adb8290c0e1d93c0",
+      "snapshot_id": "trs-629277494b724295"
      },
      "rejected": [],
      "run_id": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
@@ -177,8 +177,8 @@
     "qualifications": [],
     "redundancy_groups": [],
     "registry_snapshot": {
-     "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
-     "snapshot_id": "trs-da9942986e52f832"
+     "content_hash": "sha256:629277494b7242957716f31321b0fb393d4a8273d10b4384adb8290c0e1d93c0",
+     "snapshot_id": "trs-629277494b724295"
     },
     "research_directive": null,
     "score_refusals": [],
@@ -187,15 +187,15 @@
     "unsupported_hypothesis_ids": [],
     "verdicts": []
    },
-   "result_sha256": "sha256:3c30231f40d4c5d8094547cf0d5084c17c6517d7856a3a1ae7224c0f4f4cdcd2",
+   "result_sha256": "sha256:3062b219df141e710f074ee5db36fa8e5e8931f4c3728d701f1dc4828abf093d",
    "status_revision": 1
   },
   "hypotheses.judge": {
    "operation_id": "operation:8ca67a7836cf3f44155859ca781db895",
    "operation_kind": "hypotheses.judge",
    "registry_snapshot": {
-    "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
-    "snapshot_id": "trs-da9942986e52f832"
+    "content_hash": "sha256:629277494b7242957716f31321b0fb393d4a8273d10b4384adb8290c0e1d93c0",
+    "snapshot_id": "trs-629277494b724295"
    },
    "result": {
     "evidence_admission": null,
@@ -204,8 +204,8 @@
     "qualifications": [],
     "redundancy_groups": [],
     "registry_snapshot": {
-     "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
-     "snapshot_id": "trs-da9942986e52f832"
+     "content_hash": "sha256:629277494b7242957716f31321b0fb393d4a8273d10b4384adb8290c0e1d93c0",
+     "snapshot_id": "trs-629277494b724295"
     },
     "research_directive": null,
     "score_refusals": [],
@@ -232,18 +232,30 @@
      }
     ]
    },
-   "result_sha256": "sha256:9111d5389bbfdb9ab358f4699315479beca9714a36531fecde4f02f194f8c9f4",
+   "result_sha256": "sha256:ec46fa947ded5689838e2b52be76f330beb4dd11c53fce0cdb28067a3f9a0dd0",
    "status_revision": 1
   }
  },
  "run_id": "adr_b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
  "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
  "statement": "Runners lose access to small items mid-stride because pockets bounce",
- "trail_head": "829a0ab",
- "previous_trail_head": "de64d84",
+ "trail_head": "494905a",
+ "previous_trail_head": "829a0ab",
  "re_recorded": {
-  "at_trail_head": "829a0ab",
-  "responses_changed": [],
-  "note": "ADR-069 re-pin: additive optional wire fields; requests unchanged"
- }
+  "at_trail_head": "494905a",
+  "snapshot": {
+   "from": "trs-da9942986e52f832",
+   "to": "trs-629277494b724295"
+  },
+  "responses_changed_beyond_the_snapshot_id": [],
+  "note": "HR7 re-pin (ADR-070: two short-video comment source rows). Authorized by the repository owner 2026-09-25: only the snapshot id / hash in the requests and what the new rows route change; the recorded defects (M1-01 challenge path, M1-02 error, M1-03 merge + weaken) are asserted unchanged."
+ },
+ "re_recorded_history": [
+  {
+   "at_trail_head": "829a0ab",
+   "responses_changed": [],
+   "note": "ADR-069 re-pin: additive optional wire fields; requests unchanged",
+   "from_trail_head": "de64d84"
+  }
+ ]
 }

@@ -1,6 +1,6 @@
 """Consolidation migration Phases 6 + 11 — the complete `ecommerce.product_research` run against the REAL embedded TrailSignal core
 (`POLYMATH_TRAIL_MODE=embedded`): the existing Polymath runtime, the imported ecommerce domain (out of process) and TrailSignal's own
-registry, admission, judgement, qualification and scoring code — byte-identical to HR6 @ 829a0ab (ADR-069 re-pin) — in ONE checkout. No daemon, no
+registry, admission, judgement, qualification and scoring code — byte-identical to HR7 @ 494905a (ADR-070 re-pin) — in ONE checkout. No daemon, no
 Postgres, no Temporal, no network. The agent, the harness and its sources are scripted; nothing here is real-world evidence.
 
 The scripted harness cites sources TrailSignal's registry has never heard of. The honest outcome is therefore a DEFENSIBLE REJECTION

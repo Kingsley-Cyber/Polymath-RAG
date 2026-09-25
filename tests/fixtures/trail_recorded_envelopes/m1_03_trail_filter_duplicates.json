@@ -34,7 +34,7 @@
     "stage": "filter"
    },
    "purpose_ref": "purpose:product-discovery",
-   "registry_snapshot_id": "trs-da9942986e52f832",
+   "registry_snapshot_id": "trs-629277494b724295",
    "request_id": "request:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1:E-filter:7",
    "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1"
   },
@@ -71,8 +71,8 @@
    "operation_id": "operation:67921bb342ec0de945df8e2c8f65f1ca",
    "operation_kind": "hypotheses.judge",
    "registry_snapshot": {
-    "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
-    "snapshot_id": "trs-da9942986e52f832"
+    "content_hash": "sha256:629277494b7242957716f31321b0fb393d4a8273d10b4384adb8290c0e1d93c0",
+    "snapshot_id": "trs-629277494b724295"
    },
    "result": {
     "evidence_admission": null,
@@ -81,8 +81,8 @@
     "qualifications": [],
     "redundancy_groups": [],
     "registry_snapshot": {
-     "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3",
-     "snapshot_id": "trs-da9942986e52f832"
+     "content_hash": "sha256:629277494b7242957716f31321b0fb393d4a8273d10b4384adb8290c0e1d93c0",
+     "snapshot_id": "trs-629277494b724295"
     },
     "research_directive": null,
     "score_refusals": [],
@@ -131,7 +131,7 @@
      }
     ]
    },
-   "result_sha256": "sha256:9f6c5ea98428404688eaa4b86460723cbfa7fa8f98c16f38d57d9b1731ca148f",
+   "result_sha256": "sha256:c6ae3620b16a259f6f9c4dc16b4b04f9d36d846391db9dc5b0078e8cf422030a",
    "status_revision": 1
   },
   "registry.project": {
@@ -139,13 +139,13 @@
    "operation_kind": "registry.project",
    "status_revision": 1,
    "registry_snapshot": {
-    "snapshot_id": "trs-da9942986e52f832",
-    "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3"
+    "snapshot_id": "trs-629277494b724295",
+    "content_hash": "sha256:629277494b7242957716f31321b0fb393d4a8273d10b4384adb8290c0e1d93c0"
    },
    "result": {
     "registry_snapshot": {
-     "snapshot_id": "trs-da9942986e52f832",
-     "content_hash": "sha256:da9942986e52f832a635dc8c3c4a5406a5f724fc2f0bdfd63ac2d1a1a0af2ec3"
+     "snapshot_id": "trs-629277494b724295",
+     "content_hash": "sha256:629277494b7242957716f31321b0fb393d4a8273d10b4384adb8290c0e1d93c0"
     },
     "priors": [
      {
@@ -432,19 +432,31 @@
     "trail_scores": [],
     "score_refusals": []
    },
-   "result_sha256": "sha256:585e53edb177d5082d0bc7e9dc43ea99461798454eb37ae5cf5a310e44afe7b8"
+   "result_sha256": "sha256:98c8297b47a508d2d111f61497ce95cd9c9ff3fa8386219a5ec9462cc3d94f3d"
   }
  },
  "run_id": "adr_b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
  "run_ref": "run:adr-b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1b1",
  "statement": "Runners lose access to small items",
- "trail_head": "829a0ab",
- "previous_trail_head": "de64d84",
+ "trail_head": "494905a",
+ "previous_trail_head": "829a0ab",
  "re_recorded": {
-  "at_trail_head": "829a0ab",
-  "responses_changed": [
-   "registry.project"
-  ],
-  "note": "ADR-069 re-pin: additive optional wire fields; requests unchanged"
- }
+  "at_trail_head": "494905a",
+  "snapshot": {
+   "from": "trs-da9942986e52f832",
+   "to": "trs-629277494b724295"
+  },
+  "responses_changed_beyond_the_snapshot_id": [],
+  "note": "HR7 re-pin (ADR-070: two short-video comment source rows). Authorized by the repository owner 2026-09-25: only the snapshot id / hash in the requests and what the new rows route change; the recorded defects (M1-01 challenge path, M1-02 error, M1-03 merge + weaken) are asserted unchanged."
+ },
+ "re_recorded_history": [
+  {
+   "at_trail_head": "829a0ab",
+   "responses_changed": [
+    "registry.project"
+   ],
+   "note": "ADR-069 re-pin: additive optional wire fields; requests unchanged",
+   "from_trail_head": "de64d84"
+  }
+ ]
 }

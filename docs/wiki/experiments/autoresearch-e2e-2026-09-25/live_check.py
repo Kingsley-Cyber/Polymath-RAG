@@ -5,7 +5,9 @@ Run from the main checkout after the merge + bounce, with the main .env loaded (
   2. adapter_list: ecommerce.product_research 0.7.0 PREFERRED, trail.product_discovery 2.2.1 LEGACY; adapter_start's description
      says corpus_ids is required for a non-admin key;
   3. the pinned TrailSignal core (the same files the fleet imports) ADMITS a TikTok comment and an Instagram reel comment as field
-     evidence, keeps a Creative Center link on the trend row, and refuses a short link in the field stage.
+     evidence, keeps a Creative Center link on the trend row, and refuses a short link in the field stage;
+  4. R8: `research_acquire` is listed; its catalog answers with the host's browser bridge ready (`opencli doctor`, $0); a read on
+     a TERMINAL run is refused NO_OPEN_RESEARCH_STEP (the owner key, the 2026-09-21 baseline run; nothing is read).
 Writes live_check.json next to this file; exit 0 only when every check holds."""
 from __future__ import annotations
 
@@ -23,6 +25,9 @@ import mcp_call  # noqa: E402
 from polymath_shared.adapter import harness_guide as HG  # noqa: E402
 
 
+BASELINE_RUN = "adr_c994b32a8c7287a9b0508f1f3a4c42e8"          # completed 2026-09-21 (the e2e baseline): no open research step
+
+
 async def _mcp() -> dict:
     c = await mcp_call._session()
     try:
@@ -33,6 +38,9 @@ async def _mcp() -> dict:
             texts[uri] = "".join(item.get("text", "") for item in (body.get("result") or {}).get("contents") or [])
         _, listed = await c.rpc("tools/call", {"name": "adapter_list", "arguments": {}})
         _, tools = await c.rpc("tools/list", {})
+        _, cat = await c.rpc("tools/call", {"name": "research_acquire", "arguments": {"run_id": BASELINE_RUN, "operation": "catalog"}})
+        _, closed = await c.rpc("tools/call", {"name": "research_acquire", "arguments": {
+            "run_id": BASELINE_RUN, "operation": "comments", "target": "https://www.tiktok.com/@creator/video/7400000000000000001"}})
     finally:
         await c.close()
     msgs = ((prompt.get("result") or {}).get("messages") or [])
@@ -40,12 +48,18 @@ async def _mcp() -> dict:
     adapters = mcp_call._structured(listed.get("result") or {})
     by_id = {a["adapter_id"]: a for a in (adapters or {}).get("adapters", [])}
     start_desc = next((t.get("description") or "" for t in (tools.get("result") or {}).get("tools") or [] if t.get("name") == "adapter_start"), "")
+    names = {t.get("name") for t in (tools.get("result") or {}).get("tools") or []}
+    catalog = mcp_call._structured(cat.get("result") or {}) or {}
+    refused = mcp_call._structured(closed.get("result") or {}) or {}
     return {"prompt_has_guide": HG.GUIDE.strip()[:200] in prompt_text,
             "resources_equal_the_repository": texts[HG.GUIDE_URI] == HG.GUIDE and all(texts[u] == (ROOT / rel).read_text(encoding="utf-8") for u, rel in HG.FILES.items()),
             "source_table_has_comment_rows": all(r in texts[HG.SOURCES_URI] for r in ("src-tiktok-comments", "src-instagram-comments")),
             "preferred_adapter": [by_id.get("ecommerce.product_research", {}).get("adapter_version"), str(by_id.get("ecommerce.product_research", {}).get("description", ""))[:9]],
             "legacy_adapter": [by_id.get("trail.product_discovery", {}).get("adapter_version"), str(by_id.get("trail.product_discovery", {}).get("description", ""))[:6]],
-            "start_says_corpus_ids_required": "REQUIRED for a non-admin key" in start_desc}
+            "start_says_corpus_ids_required": "REQUIRED for a non-admin key" in start_desc,
+            "research_acquire_listed": "research_acquire" in names,
+            "acquisition_catalog": {"owner_only": catalog.get("owner_only"), "read_only": catalog.get("read_only"), "host": catalog.get("host")},
+            "acquisition_on_a_terminal_run": {"status": refused.get("status"), "code": (refused.get("error") or {}).get("code") if isinstance(refused.get("error"), dict) else refused.get("error")}}
 
 
 def _admission() -> dict:
@@ -84,6 +98,9 @@ def main() -> int:
         "instagram_reel_routes_to_comments": adm["instagram_reel_routes"] == "src-instagram-comments",
         "creative_center_unchanged": adm["creative_center_routes"] == "src-tiktok-creative",
         "short_link_stays_on_the_trend_row": adm["short_link_routes"] == "src-tiktok-creative",
+        "research_acquire_listed": mcp["research_acquire_listed"],
+        "acquisition_host_ready": mcp["acquisition_catalog"]["owner_only"] is True and (mcp["acquisition_catalog"]["host"] or {}).get("available") is True,
+        "acquisition_needs_an_open_step": mcp["acquisition_on_a_terminal_run"] == {"status": 409, "code": "NO_OPEN_RESEARCH_STEP"},
     }
     report = {"mcp": mcp, "admission": adm, "checks": checks}
     (HERE / "live_check.json").write_text(json.dumps(report, indent=1, default=str))

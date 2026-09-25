@@ -3,6 +3,16 @@
 Dated diffs of every architectural change. Each entry links to the ADR
 that motivated it and the refactor that implemented it.
 
+## 2026-09-25 — embedded TrailSignal core re-pinned to HR7 @ `494905a` (TrailSignal ADR-070: short-video comment sources)
+
+`governance/trail/{src,config,data}` re-extracted with `git archive` from the HR7 commit (deterministic pin; `PROVENANCE.json` names the
+files the pin changed: one file, `data/source_capabilities.csv` (+2 rows)). Two registry DATA rows, no code: `src-tiktok-comments` (`tiktok.com/@`) and
+`src-instagram-comments` (`instagram.com/reel`, `instagram.com/p/`), class `video_platform`, field evidence + product reality, no demand
+role, 365-day behavior freshness, one independence group per platform. The registry snapshot id changes (`trs-629277494b724295`); the three M1
+recorded envelopes were re-recorded under the owner's word with the defects asserted unchanged. The Hermes skill's receipt builder now
+lists one source row per (page, publish date), so each comment keeps its own date. See the ADR-0021 addendum and work log
+2026-09-25-autoresearch-r1-repin.
+
 ## 2026-09-21 — embedded TrailSignal core re-pinned to HR6 @ `829a0ab` (TrailSignal ADR-069)
 
 `governance/trail/{src,config,data}` re-extracted with `git archive` from the HR6 commit (deterministic pin; `PROVENANCE.json` names the

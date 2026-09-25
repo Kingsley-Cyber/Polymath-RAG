@@ -3488,6 +3488,28 @@ ok(_rps24["errors"] == [] and set(_so24) == {"sc1:price", "sc1:moq", "sc2:price"
    and _so24["sc1:price"]["evidence_role_claimed"] == "price" and {s["source_class"] for s in _rs24["sources"]} == {"supplier_listing"} and len(_rs24["sources"]) == 2
    and sum(1 for o in _rps24["omitted"] if o["id"].startswith("sc3")) == 2,
    "supplier listings: price -> role price + metric, minimum order -> role supply + metric (the skill's own parsers); no MOQ stated = no MOQ observation; a listing without harvest provenance is omitted")
+# short-video comments (ADR-070): the VIDEO is the source, each comment keeps its OWN date, the source budget counts pages
+_A24c = dict(_A24, action_id="hact_5e2c1b7d9a06", budget={"max_queries": 10, "max_sources": 2, "max_observations": 20})
+_vid24 = "https://www.tiktok.com/@creator/video/7400000000000000001"
+_tt24 = {"source_family": "community", "platform": "tiktok"}
+_cm24 = [_o24(20, _vid24, ["FRICTION_EVIDENCE"], published_at_if_known="2026-09-01T10:00:00Z", source_identity=_tt24),
+         _o24(21, _vid24, ["WORKAROUND_EVIDENCE"], published_at_if_known="2026-09-18T08:30:00Z", source_identity=_tt24),
+         _o24(22, _vid24, ["FRICTION_EVIDENCE"], published_at_if_known="2026-09-18T08:30:00Z", source_identity=_tt24),
+         _o24(23, _vid24, ["BEHAVIOR_SUPPORT"], published_at_if_known=None, source_identity=_tt24),
+         _o24(24, "https://www.instagram.com/reel/C0ABCDEFGHI/", ["FRICTION_EVIDENCE"], published_at_if_known="2026-09-10T12:00:00Z",
+              source_identity={"source_family": "community", "platform": "instagram"}),
+         _o24(25, "https://www.reddit.com/r/coldplunge/comments/a9/", ["FRICTION_EVIDENCE"])]
+_rcc24, _rpc24 = _ar.build_receipt(_A24c, observations=_cm24, harness_id="claude-code", started_at="2026-09-20T17:00:00Z", completed_at="2026-09-20T17:20:00Z")
+_sb24 = {s["source_id"]: s for s in _rcc24["sources"]}
+_oc24 = {o["observation_id"]: _sb24[o["source_id"]] for o in _rcc24["observations"]}
+ok(_rpc24["errors"] == [] and sorted(_oc24) == ["obs_20", "obs_21", "obs_22", "obs_23", "obs_24"]
+   and [_oc24[k]["published_at_if_known"] for k in ("obs_20", "obs_21", "obs_22", "obs_23")] == ["2026-09-01T10:00:00Z", "2026-09-18T08:30:00Z", "2026-09-18T08:30:00Z", None]
+   and len({_oc24[k]["source_id"] for k in ("obs_20", "obs_21", "obs_22", "obs_23")}) == 3 and _oc24["obs_21"]["source_id"] == _oc24["obs_22"]["source_id"]
+   and {_oc24[k]["url"] for k in ("obs_20", "obs_21", "obs_22", "obs_23")} == {_vid24} and _rpc24["omitted_by_reason"] == {"source budget reached (2)": 1},
+   "comments under one video: the video is the source and each comment keeps its OWN date (one row per page + date; the same date shares a row); the source budget counts pages (a video + a reel = 2; the third page is omitted)")
+ok({_oc24[k]["source_class"] for k in _oc24} == {"video_platform"} and _ar.source_class_for("https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en") == "social_trend"
+   and _ar.source_class_for("https://www.instagram.com/p/C0ABCDEFGHI/") == "video_platform" and _ar.source_class_for("https://nowhere.example/x", {"platform": "instagram"}) == "video_platform",
+   "a TikTok video permalink and an Instagram reel / post are video platforms (TrailSignal's comment rows); a Creative Center link stays a trend")
 # the CLI: the whole adapter_next payload is accepted as --action; --strict turns an omission into exit 2
 _a24p, _o24p, _r24p = os.path.join(tmp, "next24.json"), os.path.join(tmp, "obs24.json"), os.path.join(tmp, "receipt24_cli.json")
 json.dump({"kind": "step", "step": {"step_id": "I_research", "step_type": "HARNESS_ACTION", "harness_action": _A24}}, open(_a24p, "w")); json.dump({"observations": _obs24}, open(_o24p, "w"))

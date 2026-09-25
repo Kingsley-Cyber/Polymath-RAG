@@ -21,7 +21,7 @@ def _files() -> set[str]:
 
 
 def test_every_imported_file_matches_its_pinned_sha256():
-    assert PROV["source_commit"] == "829a0ab" and len(PROV["files"]) == 30      # ADR-069 re-pin: HR6 on codex/r1-semantic-restoration
+    assert PROV["source_commit"] == "494905a" and len(PROV["files"]) == 30      # ADR-070 re-pin: HR7 on agent/HR7 (two source rows)
     wrong = [rel for rel, sha in PROV["files"].items() if hashlib.sha256((TRAIL / rel).read_bytes()).hexdigest() != sha]
     assert not wrong, f"embedded TrailSignal files differ from the source commit: {wrong}"
 

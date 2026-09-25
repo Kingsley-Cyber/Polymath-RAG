@@ -1,6 +1,6 @@
 """TrailSignal's deterministic research core, embedded (docs/migration/ADR-TRAIL-EMBEDDING.md, AUTO_DECISIONS M-012).
 
-Everything under `src/trail_signal/`, `config/` and `data/` is BYTE-IDENTICAL to TrailSignal HR6 @ 829a0ab (ADR-069 re-pin of A41 @ de64d84; `PROVENANCE.json`
+Everything under `src/trail_signal/`, `config/` and `data/` is BYTE-IDENTICAL to TrailSignal HR7 @ 494905a (ADR-070 re-pin of HR6 @ 829a0ab; `PROVENANCE.json`
 pins every sha256; `tests/contracts/test_trail_core_embedding.py` fails on any edit). This file is the ONLY Polymath-authored code
 here. It does what TrailSignal's daemon composition root does (`entrypoints/daemon/composition.py:1081`) and what its MCP tool layer
 does (`entrypoints/mcp/tools/research.py`) — nothing more:
@@ -128,7 +128,7 @@ def transport(service: ResearchOperationService | None = None) -> httpx.MockTran
         rid, method, params = body.get("id"), body.get("method"), body.get("params") or {}
         if method != "tools/call":                           # initialize / notifications: acknowledge, nothing to negotiate in process
             return httpx.Response(200, json={"jsonrpc": "2.0", "id": rid, "result": {"protocolVersion": "2025-03-26", "capabilities": {"tools": {}},
-                                                                                     "serverInfo": {"name": "trailsignal-embedded", "version": "HR6@829a0ab"}}})
+                                                                                     "serverInfo": {"name": "trailsignal-embedded", "version": "HR7@494905a"}}})
         name = str(params.get("name") or "")
         try:
             if name not in RESEARCH_OPERATIONS:
