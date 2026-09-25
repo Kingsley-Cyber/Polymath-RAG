@@ -165,9 +165,10 @@ def test_complete_one_reserves_system_user_and_output_and_settles_with_usage(mon
 
 # ---- the registry: daily budgets fit the quotas; per-minute budgets wait for L3's single owners
 
-def test_daily_budgets_fit_every_groq_quota_and_per_minute_overshoot_is_reported():
+def test_daily_and_per_minute_budgets_fit_every_groq_quota():
     reg = A.load_registry()
     assert A.runtime_drift(reg) == []
     over = [f.message for f in A.validate(reg, env={}) if f.code == "BUDGET_EXCEEDS_QUOTA"]
     assert not [m for m in over if ": tpd " in m or ": rpd " in m]
-    assert any(": tpm " in m for m in over)                  # shared pairs until L3
+    # L2 (11.466) reported per-minute overshoot on the SHARED pairs; L3 (11.467) gives every Groq pair one owner
+    assert not [m for m in over if m.startswith("groq_")]

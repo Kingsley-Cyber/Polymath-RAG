@@ -1,26 +1,66 @@
-# LLM provider accounts — the single registry (register 11.465, LLM-BACKEND L1; gap L-01).
+# LLM provider accounts — the single registry (register 11.465 L1; 11.467 L3; gaps L-01, L-02, L-07, L-14, L-20).
 #
 # One entry per ACCOUNT (one API key = one separate account). Under each account: the provider's own quota per model
 # (when known) and the lanes configured on it (a lane = account x model x stage use; its limiter entry sits with it).
 # Secrets stay in .env: this file only NAMES the variables (key_env, account_id_env).
 #
-# The runtime still reads config/cloud_providers.json and config/extraction_models/limiter.yaml. They must equal what
-# this file compiles to (tests/determinism/test_llm_accounts.py fails on any drift). Report and checks:
-#     .venv/bin/python scripts/llm_accounts.py report | validate | diff
+# This file is the AUTHORING surface. config/cloud_providers.json and config/extraction_models/limiter.yaml are
+# GENERATED from it (register 11.467): edit here, then run
+#     .venv/bin/python scripts/llm_accounts.py write      # regenerate both runtime files
+#     .venv/bin/python scripts/llm_accounts.py validate   # errors exit 1; warnings are policy findings
+# tests/determinism/test_llm_accounts.py fails on any drift between this file and the runtime files.
 #
-# slots: worker processes per stage (control/control/process_supervisor.py FLEET); `extract` is the shared pool of
-# enabled, non-dedicated lanes. quota: Groq per key per model (owner 2026-09-23): 30 RPM / 1K RPD / 8K TPM / 200K TPD;
-# groq_5 enforces OTPM 1000 on qwen3.8-27b (canary 2026-09-23). Other providers' quotas are not recorded yet.
-# Lane limiter tpd / otpm (register 11.466, L2): the rolling 24 h token budget per PROCESS = 95 % of the pair's TPD
-# divided by the worker slots that share the lane (profile 6, pMAP 4), the same rule the existing rpd values follow;
-# L3 raises them to the full pair budget when each pair gets one owner.
+# slots: worker processes per stage (control/control/process_supervisor.py FLEET; a test keeps the counts equal).
+# `extract` is the shared pool of enabled, non-dedicated lanes. OWNERSHIP (L3): `owners` maps a slot NAME to the lanes
+# it owns — its own account's lanes for that stage. The supervisor gives each slot its 1-based index in
+# `lane_offset_env` (doc_profile -> 1, doc_profile2 -> 2, ...); an owning slot calls ITS OWN lanes first, then the
+# shared tier (pin lanes no slot owns; names containing "fallback" last), and never another slot's own lanes. So each
+# owned (account, model) pair has exactly one calling process and its per-process budget can be the whole pair.
+#
+# quota: Groq per key per model (owner 2026-09-23): 30 RPM / 1K RPD / 8K TPM / 200K TPD; groq_5 enforces OTPM 1000
+# on qwen3.8-27b (canary 2026-09-23). Other providers' quotas are not recorded yet.
+# Lane limiter tpd / rpd (L2 11.466, L3 11.467): the budget per PROCESS = 95 % of the pair's quota divided by the
+# worker slots that can call the lane — an owned lane has one caller, so 190,000 tokens and 950 requests a day.
 version: 1
 slots:
   doc_profile:
     count: 6
     lane_offset_env: POLYMATH_DOC_PROFILE_LANE_OFFSET
+    owners:
+      doc_profile:
+      - profile_groq1
+      doc_profile2:
+      - profile_groq2
+      doc_profile3:
+      - profile_groq3
+      doc_profile4:
+      - profile_groq4
+      doc_profile5:
+      - profile_groq5
+      doc_profile6:
+      - profile_groq6
   doc_parent_map:
-    count: 4
+    count: 6
+    lane_offset_env: POLYMATH_DOC_PARENT_MAP_LANE_OFFSET
+    owners:
+      doc_parent_map:
+      - map_groq1
+      - map_groq1q
+      doc_parent_map2:
+      - map_groq2
+      - map_groq2q
+      doc_parent_map3:
+      - map_groq3
+      - map_groq3q
+      doc_parent_map4:
+      - map_groq4
+      - map_groq4q
+      doc_parent_map5:
+      - map_groq5
+      - map_groq5q
+      doc_parent_map6:
+      - map_groq6
+      - map_groq6q
   extract:
     count: 3
   parent_enrichment:
@@ -41,13 +81,20 @@ stage_pins:
   - compiler_alt
   doc_profile:
   - profile_groq1
+  - profile_groq2
+  - profile_groq3
+  - profile_groq4
+  - profile_groq5
+  - profile_groq6
   - profile_fallback_openrouter
   doc_parent_map:
+  - map_groq1
   - map_groq2
   - map_groq3
   - map_groq4
   - map_groq5
   - map_groq6
+  - map_groq1q
   - map_groq2q
   - map_groq3q
   - map_groq4q
@@ -57,6 +104,15 @@ stage_pins:
   - cloudflare_map1
   - cloudflare_map2
 accounts:
+  # Groq (GROQ-MODEL-SWAP-2026-09-23): provider limits are INDEPENDENT per model per key (RPM 30 / RPD 1K / TPM 8K /
+  # TPD 200K), so each key serves three pairs with their own budgets and their own limiter family.
+  # openai/gpt-oss-120b (reasoning_effort low) = the document profile; openai/gpt-oss-20b (low) and qwen/qwen3.8-27b
+  # (reasoning_effort none) = parent-map. One org enforces an output-tokens-per-minute cap of 1000 on qwen (canary 429
+  # 'OTPM', groq_5), hence max_output_tokens 900 on every qwen lane and otpm 1000 on map_groq5q.
+  # Measured (canary 2026-09-23): one profile call ~2.2-2.4K total tokens; a 15-parent map batch ~2.4-3.4K; AIMD
+  # halves on 429. The limiter is per PROCESS, so ownership decides the budget: L3 (register 11.467) enables all 18
+  # pairs and gives each exactly one calling process — profile slot N owns profile_groqN, pMAP slot N owns
+  # map_groqN + map_groqNq — so each lane's rpd / tpd is the whole pair's (95 %). rpm 2 keeps a process under TPM 8K.
   groq_1:
     provider: groq
     key_env: GROQ_API_KEY_1
@@ -89,16 +145,16 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_1_gpt_oss_120b
-          rpd: 150
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 31666
+          tpd: 190000
           conc_cap: 1
           min: 1
           max: 2
           init: 1
       map_groq1:
-        enabled: false
+        enabled: true
         url: https://api.groq.com/openai
         model: openai/gpt-oss-20b
         reasoning_effort: low
@@ -110,10 +166,29 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_1_gpt_oss_20b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
+          conc_cap: 1
+      map_groq1q:
+        enabled: true
+        url: https://api.groq.com/openai
+        model: qwen/qwen3.8-27b
+        reasoning_effort: none
+        structured: text
+        dedicated: true
+        request_char_budget: 18000
+        json_mode: false
+        map_batch_cap: 15
+        max_output_tokens: 900
+        limiter:
+          kind: rate
+          family: groq_acct_1_qwen3_8_27b
+          rpd: 950
+          rpm: 2
+          tpm: 8000
+          tpd: 190000
           conc_cap: 1
   groq_2:
     provider: groq
@@ -136,7 +211,7 @@ accounts:
         tpd: 200000
     lanes:
       profile_groq2:
-        enabled: false
+        enabled: true
         url: https://api.groq.com/openai
         model: openai/gpt-oss-120b
         reasoning_effort: low
@@ -147,10 +222,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_2_gpt_oss_120b
-          rpd: 150
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 31666
+          tpd: 190000
           conc_cap: 1
           min: 1
           max: 2
@@ -168,10 +243,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_2_gpt_oss_20b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
           conc_cap: 1
       map_groq2q:
         enabled: true
@@ -187,10 +262,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_2_qwen3_8_27b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
           conc_cap: 1
   groq_3:
     provider: groq
@@ -213,7 +288,7 @@ accounts:
         tpd: 200000
     lanes:
       profile_groq3:
-        enabled: false
+        enabled: true
         url: https://api.groq.com/openai
         model: openai/gpt-oss-120b
         reasoning_effort: low
@@ -224,10 +299,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_3_gpt_oss_120b
-          rpd: 150
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 31666
+          tpd: 190000
           conc_cap: 1
           min: 1
           max: 2
@@ -245,10 +320,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_3_gpt_oss_20b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
           conc_cap: 1
       map_groq3q:
         enabled: true
@@ -264,10 +339,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_3_qwen3_8_27b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
           conc_cap: 1
   groq_4:
     provider: groq
@@ -290,7 +365,7 @@ accounts:
         tpd: 200000
     lanes:
       profile_groq4:
-        enabled: false
+        enabled: true
         url: https://api.groq.com/openai
         model: openai/gpt-oss-120b
         reasoning_effort: low
@@ -301,10 +376,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_4_gpt_oss_120b
-          rpd: 150
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 31666
+          tpd: 190000
           conc_cap: 1
           min: 1
           max: 2
@@ -322,10 +397,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_4_gpt_oss_20b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
           conc_cap: 1
       map_groq4q:
         enabled: true
@@ -341,10 +416,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_4_qwen3_8_27b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
           conc_cap: 1
   groq_5:
     provider: groq
@@ -368,7 +443,7 @@ accounts:
         otpm: 1000
     lanes:
       profile_groq5:
-        enabled: false
+        enabled: true
         url: https://api.groq.com/openai
         model: openai/gpt-oss-120b
         reasoning_effort: low
@@ -379,10 +454,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_5_gpt_oss_120b
-          rpd: 150
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 31666
+          tpd: 190000
           conc_cap: 1
           min: 1
           max: 2
@@ -400,10 +475,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_5_gpt_oss_20b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
           conc_cap: 1
       map_groq5q:
         enabled: true
@@ -419,10 +494,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_5_qwen3_8_27b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
           otpm: 1000
           conc_cap: 1
   groq_6:
@@ -446,7 +521,7 @@ accounts:
         tpd: 200000
     lanes:
       profile_groq6:
-        enabled: false
+        enabled: true
         url: https://api.groq.com/openai
         model: openai/gpt-oss-120b
         reasoning_effort: low
@@ -457,10 +532,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_6_gpt_oss_120b
-          rpd: 150
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 31666
+          tpd: 190000
           conc_cap: 1
           min: 1
           max: 2
@@ -478,10 +553,10 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_6_gpt_oss_20b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
           conc_cap: 1
       map_groq6q:
         enabled: true
@@ -497,11 +572,20 @@ accounts:
         limiter:
           kind: rate
           family: groq_acct_6_qwen3_8_27b
-          rpd: 200
+          rpd: 950
           rpm: 2
           tpm: 8000
-          tpd: 47500
+          tpd: 190000
           conc_cap: 1
+  # Cloudflare Workers AI (CLOUDFLARE-WORKERS-AI-V1 / CLOUDFLARE-PMAP-V1, @cf/qwen/qwen3-30b-a3b-fp8).
+  # Six Free-plan accounts = six ISOLATED capacity domains (own family each, so a storm on one never cascades to the
+  # others). The daily free allocation is enforced by the 3036 park (limiter.park_provider_day), not a local rpd —
+  # Cloudflare bills in "neurons", not a published RPD; seeds are conservative and AIMD adapts to headers.
+  # Owner split (2026-09-13): accounts 1-2 -> PARENT-MAP lanes (cloudflare_map1..2, the pMAP shared tier since L3);
+  # accounts 3-6 -> graph-extraction helpers (cloudflare3..6). Lane names carry the account number. The URL embeds
+  # the account id (url_template + account_id_env): a lane parks until CLOUDFLARE_ACCOUNT_ID_N is set. The API tokens
+  # are Workers-AI-scoped: GET /client/v4/accounts lists 0 accounts for all six (2026-09-13 and 2026-09-24), so the
+  # ids come from the owner (dashboard).
   cloudflare_1:
     provider: cloudflare
     key_env: CLOUDFLARE_API_TOKEN_1
@@ -654,6 +738,11 @@ accounts:
           max: 3
           init: 1
           adaptive: true
+  # Google AI Studio keys (one key = one project = own quota). Limits are per project PER MODEL, so each
+  # (account, model) is its own limiter family (L3, gap L-20; one `gemini` family used to damp all six accounts
+  # together). gemini1..6 = gemini-3.1-flash-lite, gemini1b..6b = gemini-3.5-flash-lite (own per-model quota), both
+  # in the shared extraction ring. compiler1..4 (CHAT-COMPILER-LANES-V1, chat_compiler pin) and
+  # profile_fallback_gemini1..2 (DOCUMENT-PROFILE-V1 fallback 1, keys 5 and 6) are disabled.
   gemini_1:
     provider: gemini
     key_env: GEMINI_API_KEY_1
@@ -667,7 +756,7 @@ accounts:
         request_char_budget: 120000
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_1_gemini_3_1_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -685,7 +774,7 @@ accounts:
         dedicated: false
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_1_gemini_3_5_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -703,7 +792,7 @@ accounts:
         request_char_budget: 40000
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_1_gemini_3_1_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -724,7 +813,7 @@ accounts:
         request_char_budget: 120000
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_2_gemini_3_1_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -742,7 +831,7 @@ accounts:
         dedicated: false
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_2_gemini_3_5_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -760,7 +849,7 @@ accounts:
         request_char_budget: 40000
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_2_gemini_3_1_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -781,7 +870,7 @@ accounts:
         request_char_budget: 120000
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_3_gemini_3_1_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -799,7 +888,7 @@ accounts:
         dedicated: false
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_3_gemini_3_5_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -817,7 +906,7 @@ accounts:
         request_char_budget: 40000
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_3_gemini_3_1_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -838,7 +927,7 @@ accounts:
         request_char_budget: 120000
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_4_gemini_3_1_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -856,7 +945,7 @@ accounts:
         dedicated: false
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_4_gemini_3_5_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -874,7 +963,7 @@ accounts:
         request_char_budget: 40000
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_4_gemini_3_1_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -896,7 +985,7 @@ accounts:
         request_char_budget: 120000
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_5_gemini_3_1_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -914,7 +1003,7 @@ accounts:
         dedicated: false
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_5_gemini_3_5_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -933,7 +1022,7 @@ accounts:
         json_mode: false
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_5_gemini_3_1_flash_lite
           rpd: 400
           rpm: 8
           tpm: 200000
@@ -955,7 +1044,7 @@ accounts:
         request_char_budget: 120000
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_6_gemini_3_1_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -973,7 +1062,7 @@ accounts:
         dedicated: false
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_6_gemini_3_5_flash_lite
           rpd: 500
           rpm: 15
           tpm: 250000
@@ -992,7 +1081,7 @@ accounts:
         json_mode: false
         limiter:
           kind: rate
-          family: gemini
+          family: gemini_acct_6_gemini_3_1_flash_lite
           rpd: 400
           rpm: 8
           tpm: 200000
@@ -1000,6 +1089,10 @@ accounts:
           min: 1
           max: 2
           init: 1
+  # OpenRouter (paid keys, one account each; family per account — OpenRouter limits are per key, not per model).
+  # openrouter1 = mistral-small-2603 (Mistral first-party endpoints), openrouter2 = ministral-14b-2512: no published
+  # RPM, seeded conservatively, header ceiling adoption grows it. compiler_alt (COMPILER-CROSS-FAMILY-V1) =
+  # mistral-small-2603, chat_compiler pin only.
   openrouter_1:
     provider: openrouter
     key_env: OPENROUTER_API_KEY
@@ -1055,6 +1148,9 @@ accounts:
           min: 1
           max: 2
           init: 1
+  # openrouter3 = qwen/qwen3.7-flash (reasoning off), own account = own bucket, seeded like openrouter1.
+  # profile_fallback_openrouter (DOCUMENT-PROFILE-V1 fallback 2) = mistral-small-2603; sees only earlier-tier failures;
+  # the doc_profile shared tier (all six profile slots can reach it).
   openrouter_2:
     provider: openrouter
     key_env: OPENROUTER_API_KEY_2
@@ -1094,6 +1190,8 @@ accounts:
           min: 1
           max: 1
           init: 1
+  # openrouter5 = mistral-small-24b-instruct-2501, parent_enrichment pin only. map_fallback_openrouter = PARENT-MAP
+  # fallback (mistral-small-2603, MAP DSL), the last lane of the pMAP shared tier.
   openrouter_3:
     provider: openrouter
     key_env: OPENROUTER_API_KEY_3
@@ -1134,12 +1232,15 @@ accounts:
           max: 2
           init: 1
           adaptive: true
+  # Alibaba token-plan account (compatible mode), one family `alibaba` for both models on the SHARED token plan.
+  # compiler_alibaba_deepseek (deepseek-v4-flash-0731) is on the chat_compiler pin; compiler_alibaba_qwen
+  # (qwen3.8-flash) was unpinned by 11.464 (gap L-13: 510 / 530 timeouts) and is disabled since L3.
   alibaba_1:
     provider: alibaba
     key_env: ALIBABA_MODEL_STUDIO_API_KEY
     lanes:
       compiler_alibaba_qwen:
-        enabled: true
+        enabled: false
         url: https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode
         model: qwen3.8-flash
         reasoning_effort: null
@@ -1174,6 +1275,8 @@ accounts:
           max: 2
           init: 1
           adaptive: true
+  # compiler_ollama_gemma: the local Ollama daemon's gemma4:31b-cloud (OpenAI-compat, no-auth dummy key),
+  # chat_compiler pin.
   ollama_1:
     provider: ollama
     key_env: OLLAMA_API_KEY
@@ -1196,6 +1299,9 @@ accounts:
           max: 2
           init: 1
           adaptive: true
+  # NVIDIA (parked by 11.464, gap L-12: median ~100 s). nvidia (owner 2026-08-30: dedicated latent / enrichment),
+  # rpm 36 = the owner's ~35-38 RPM initial directive, conc_cap 4 = a small worker-controlled ceiling. nvidia2 is a
+  # second UNLINKED account with its own rate. One family per account since L3 (gap L-20).
   nvidia_1:
     provider: nvidia
     key_env: NVIDIA_API_KEY
@@ -1210,7 +1316,7 @@ accounts:
         request_char_budget: 60000
         limiter:
           kind: rate
-          family: nvidia
+          family: nvidia_acct_1
           rpm: 36
           tpm: 150000
           conc_cap: 4
@@ -1233,7 +1339,7 @@ accounts:
         request_char_budget: 60000
         limiter:
           kind: rate
-          family: nvidia
+          family: nvidia_acct_2
           rpm: 36
           tpm: 150000
           conc_cap: 4
@@ -1242,6 +1348,17 @@ accounts:
           init: 2
           adaptive: true
           use_headers: true
+  # SILICONFLOW-EXTRACTION-LANES-V1 (2026-09-08; parked by 11.464, gap L-12): 3 INDEPENDENT accounts (own balances),
+  # Qwen/Qwen3-8B, firing EXCLUSIVELY into the unpinned `extract` (graph) ring. kind=CONCURRENCY, not rate — MEASURED
+  # single-account probes (2026-09-08) found SiliconFlow exposes NO rate-limit headers (use_headers is a no-op) and
+  # returns NO 429/Retry-After even at 48 trivial-concurrent; the ONLY failure mode is ReadTimeout under
+  # heavy-request latency saturation. Heavy bursts (prod system prompt, max_tokens=2000, enable_thinking:false):
+  #     N=16 -> 16/16 clean       N=24 -> 24/24 clean (~32 req/min, highest CLEAN)
+  #     N=32 -> 30/32 (2 ReadTimeouts, still no 429) = tail saturates here.
+  # So ceiling max=24 (highest measured-clean per account), seed init=12 (climb, don't cold-open at the edge during
+  # a slow provider window). AIMD halves on timeout/503 and climbs +1/8-clean back to 24. NO `family` -> the 3
+  # accounts are fully independent lanes (a backoff on one never cools the others). Raise max only with a NEW
+  # measured burst. 3 x 24 = 72 aggregate concurrent graph-extraction slots.
   siliconflow_1:
     provider: siliconflow
     key_env: SILICONFLOW_API_KEY_1
@@ -1302,13 +1419,24 @@ accounts:
           max: 24
           adaptive: true
           use_headers: false
+# Limiter seeds that are not lanes (LOCAL-LLM-EXTRACTION-V1, 2026-08-29). Static numbers are seeds + ceilings;
+# adaptive=true lets the controller move the effective limit within [min, max] at runtime (AIMD: +1 per 8 clean
+# successes, x0.5 on 429/503/timeout, Retry-After honored). Per-ENDPOINT seeds (EXTRACTION-POOL): a pool endpoint
+# whose name matches a limiter key gets its own seed; otherwise it inherits ollama_cloud.
 local_limiters:
+  # the local bottleneck = GPU / VRAM concurrency
   mlx_local:
     kind: concurrency
     init: 2
     min: 1
     max: 4
     adaptive: true
+  # the cloud bottleneck = rate (RPM + TPM). rpm 120 is a seed bucket; header sync refines it live (use_headers).
+  # conc_cap 18 = a CEILING pinned just UNDER the measured provider edge (~19-20 concurrent triggers 429s). The 32-era
+  # probe policy found the edge but paid for every probe: burst past 19 -> 429 -> halve to ~5 -> minutes climbing
+  # back (receipts 2026-08-30: eff 5->19, 21 lifetime decreases). Capping at 18 trades a sliver of peak concurrency
+  # for zero 429 storms. The found value still persists in llm_controller_state; raise the cap only with a measured
+  # reason (new provider tier, second key). init 3: AIMD starts LOW and climbs to the ceiling on clean successes.
   ollama_cloud:
     kind: rate
     rpm: 120
@@ -1320,6 +1448,8 @@ local_limiters:
     use_headers: true
     init: 3
 docs:
+- GENERATED from config/llm_accounts.yaml by scripts/llm_accounts.py write (register 11.467) — edit the registry, not this
+  file.
 - EXTRACTION-POOL pre-configured cloud providers (MULTI-PROVIDER-AUTH-V1).
 - A provider JOINS the pool automatically when its api_key_env resolves
 - (process env first, then the repo .env) AND enabled is not false.

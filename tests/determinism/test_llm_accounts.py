@@ -43,9 +43,11 @@ def test_groq_is_six_accounts_with_three_models_each():
         assert all(q["tpd"] == 200_000 and q["tpm"] == 8_000 for q in a.quota.values())
 
 
-def test_the_real_registry_reports_the_known_idle_groq_pairs():
-    idle = {f.message.split(":")[0] for f in A.validate(REG, env={}) if f.code == "IDLE_PAIR"}
-    assert len(idle) == 7          # key 1: 20b + qwen; keys 2-6: 120b (the audit's 7 of 18)
+def test_the_real_registry_has_no_idle_groq_pair():
+    # L1 (11.465) reported the audit's 7 idle pairs (key 1: 20b + qwen; keys 2-6: 120b) as the L3 worklist;
+    # L3 (11.467) enables all 18 and gives each one owner.
+    idle = [f.message for f in A.validate(REG, env={}) if f.code == "IDLE_PAIR" and f.message.startswith("groq_")]
+    assert idle == []
 
 
 # ---- the checks, on a small registry

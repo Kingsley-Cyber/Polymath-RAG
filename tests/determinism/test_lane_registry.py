@@ -20,12 +20,11 @@ def test_functional_pools_map_to_their_pins() -> None:
     prof = {l.name for l in by_fn.get(LR.DOCUMENT_PROFILE, [])}
     pmap = {l.name for l in by_fn.get(LR.PMAP, [])}
     chat = {l.name for l in by_fn.get(LR.CHAT, [])}
-    # PROVIDER-LANE-REASSIGNMENT-V1 (11.193): the six Groq accounts are DE-SHARED —
-    # GROQ_API_KEY_1 serves doc_profile ONLY, KEY_2..6 serve pMAP ONLY.
-    assert {"profile_groq1", "profile_fallback_openrouter"} <= prof
-    assert {"map_groq2", "map_groq6", "map_fallback_openrouter"} <= pmap
-    assert "map_groq1" not in pmap        # retired with the de-sharing
-    assert "profile_groq6" not in prof    # ditto
+    # LLM-BACKEND L3 (11.467, the owner 2026-09-24: 3 models per key, all used): every Groq key serves doc_profile on
+    # gpt-oss-120b AND pMAP on gpt-oss-20b + qwen3.8-27b (11.193 had split the keys between the two functions).
+    assert {f"profile_groq{i}" for i in range(1, 7)} | {"profile_fallback_openrouter"} <= prof
+    assert {f"map_groq{i}" for i in range(1, 7)} | {f"map_groq{i}q" for i in range(1, 7)} <= pmap
+    assert "map_fallback_openrouter" in pmap
     assert any(n.startswith("compiler") for n in chat)
     # GRAPH_EXTRACTION is the unpinned ring: siliconflow (dedicated:false) lands there.
     graph = {l.name for l in by_fn.get(LR.GRAPH_EXTRACTION, [])}
@@ -40,19 +39,23 @@ def test_one_key_one_account_and_groq_sharing_is_visible() -> None:
     assert prof1.name != map2.name
     assert prof1.model != map2.model
     assert prof1.function == LR.DOCUMENT_PROFILE and map2.function == LR.PMAP
-    # PROVIDER-LANE-REASSIGNMENT-V1 (11.193) INVERTED the old S7 shared-budget rule:
-    # each Groq account now serves EXACTLY ONE function. One key = one account = one function.
     assert prof1.account_id == "GROQ_API_KEY_1"
     assert map2.account_id == "GROQ_API_KEY_2"
     assert prof1.account_id != map2.account_id
-    # No ENABLED lane pair may share one account across two PERMANENT functions.
+    # 11.193 made each Groq key serve ONE function; since GROQ-MODEL-SWAP-2026-09-23 Groq budgets are per (key, model),
+    # and LLM-BACKEND L3 (11.467, the owner 2026-09-24) runs all three models on every key. The rule is now per PAIR:
+    # no ENABLED (key, model) pair may serve two PERMANENT functions.
     PERMANENT = {LR.GRAPH_EXTRACTION, LR.DOCUMENT_PROFILE, LR.PMAP, LR.CHAT}
-    by_acct: dict[str, set] = {}
+    by_pair: dict[tuple, set] = {}
     for l in reg.lanes:
         if l.enabled and l.function in PERMANENT and l.api_key_env:
-            by_acct.setdefault(l.api_key_env, set()).add(l.function)
-    straddlers = {a: fns for a, fns in by_acct.items() if len(fns) > 1}
-    assert not straddlers, f"account shared across permanent functions: {straddlers}"
+            by_pair.setdefault((l.api_key_env, l.model), set()).add(l.function)
+    straddlers = {a: fns for a, fns in by_pair.items() if len(fns) > 1}
+    assert not straddlers, f"(key, model) pair shared across permanent functions: {straddlers}"
+    # ... and the per-KEY sharing stays VISIBLE in the audit view: every Groq key serves profile + pMAP
+    shared = reg.shared_accounts()
+    for i in range(1, 7):
+        assert {LR.DOCUMENT_PROFILE, LR.PMAP} <= shared[f"GROQ_API_KEY_{i}"]
 
 
 def test_distinct_keys_are_distinct_accounts() -> None:
@@ -141,12 +144,12 @@ def test_pool_lane_health_counts_active_lanes() -> None:
         assert h["total"] >= 1
         assert h["active"] + h["credential_absent"] + h["disabled"] == h["total"]
         assert len(h["active_lanes"]) == h["active"]
-    # PMAP total = every lane pinned to doc_parent_map (map_groq2..6 on gpt-oss-20b + map_groq2q..6q on qwen3.8-27b since
-    # GROQ-MODEL-SWAP-2026-09-23 + map_fallback_openrouter + cloudflare_map1..2) — pinned to the CONFIG, not a magic number.
+    # PMAP total = every lane pinned to doc_parent_map (map_groq1..6 on gpt-oss-20b + map_groq1q..6q on qwen3.8-27b since
+    # LLM-BACKEND L3 + map_fallback_openrouter + cloudflare_map1..2) — pinned to the CONFIG, not a magic number.
     import json as _json
     import pathlib as _pl
     pin = _json.loads((_pl.Path(__file__).resolve().parents[2] / "config" / "cloud_providers.json").read_text())["stage_pins"]["doc_parent_map"]
-    assert health[LR.PMAP]["total"] == len(pin) == 13
+    assert health[LR.PMAP]["total"] == len(pin) == 15
 
 
 def test_inventory_flags_dark_pool_when_no_credentials(monkeypatch) -> None:
@@ -162,12 +165,12 @@ def test_inventory_flags_dark_pool_when_no_credentials(monkeypatch) -> None:
 
 def test_pmap_pool_batch_cap_is_min_over_active_lanes() -> None:
     reg = _reg()
-    # config declares map_batch_cap=15 on the TEN Groq pMAP lanes (keys 2–6 × gpt-oss-20b / qwen3.8-27b; 11.193
-    # de-shared GROQ_API_KEY_1 to doc_profile); the OpenRouter last-resort fallback
+    # config declares map_batch_cap=15 on the TWELVE Groq pMAP lanes (keys 1–6 × gpt-oss-20b / qwen3.8-27b since
+    # LLM-BACKEND L3); the OpenRouter last-resort fallback
     # declares no cap, and the pool cap is the min over lanes that DO declare one.
     caps = {l.name: l.map_batch_cap for l in reg.by_function()[LR.PMAP]}
     groq_caps = {n: c for n, c in caps.items() if n.startswith("map_groq")}
-    assert len(groq_caps) == 10 and all(c == 15 for c in groq_caps.values())
+    assert len(groq_caps) == 12 and all(c == 15 for c in groq_caps.values())
     assert caps["map_fallback_openrouter"] is None
     assert LR.pmap_pool_batch_cap(reg) == 15
     assert LR.PMAP_DEFAULT_BATCH_CAP == 15

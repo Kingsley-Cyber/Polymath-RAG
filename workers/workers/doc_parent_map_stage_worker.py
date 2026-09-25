@@ -14,8 +14,8 @@ Shape (mirrors `doc_profile_worker`, drives the durable core in `doc_parent_map_
       → project active maps to Qdrant → write the `doc_parent_map` stage artifact.
 
 The INFER closure is the PMAP pool's in-run cross-lane failover (the Phase 4/7 drain
-gap): a batch walks the six `map_groq*` accounts (rotated per run) and the FIRST healthy
-lane finishes it; only if EVERY lane is unavailable does the batch defer (partial) and the
+gap): a batch walks this slot's own Groq account (two models; LLM-BACKEND L3), then the
+shared Cloudflare / OpenRouter tier, and the FIRST healthy lane finishes it; only if EVERY lane is unavailable does the batch defer (partial) and the
 stage hand its ticket back TRANSIENT (no attempt burned) for a later pass — never a
 document-level failure while a qualified lane could do the job. Architecture frozen:
 ParentSkeleton → plaintext MAP DSL → deterministic map_compiler → durable maps → projection.
@@ -109,15 +109,38 @@ def _load_inputs(conn: Connection, doc_id: str) -> tuple[dict, list[dict]]:
     return document, parents
 
 
+def lane_offset() -> int | None:
+    """LLM-BACKEND L3 (register 11.467): the 1-based slot index the supervisor gives each pMAP worker
+    (POLYMATH_DOC_PARENT_MAP_LANE_OFFSET: doc_parent_map -> 1, doc_parent_map2 -> 2, ...). None when unset (a
+    single worker, tests, the operator backfill) -> the whole pin, rotated by run."""
+    raw = os.environ.get("POLYMATH_DOC_PARENT_MAP_LANE_OFFSET", "").strip()
+    if not raw.isdigit() or int(raw) < 1:
+        return None
+    return int(raw)
+
+
 def _pmap_lanes(run_key: str):
-    """The ACTIVE doc_parent_map pin endpoints, rotated by run so consecutive documents
-    start on different accounts (spread). Empty when the whole pool is dark."""
-    from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
+    """The ACTIVE doc_parent_map pin endpoints in attempt order. Empty when the whole pool is dark.
+
+    LLM-BACKEND L3 (gap L-14): an owning slot walks ITS OWN account's two Groq lanes (gpt-oss-20b + qwen3.8-27b,
+    rotated by run), then the shared tier (the Cloudflare pMAP accounts rotated by run, the OpenRouter fallback last) —
+    never another slot's Groq key. Without a slot index: every active pin lane sorted by name, rotated by run so
+    consecutive documents start on different accounts (the pre-L3 spread)."""
+    from polymath_shared.llm_extraction.pool import (
+        cloud_endpoints,
+        owned_lane_order,
+        stage_owners,
+        stage_pin,
+    )
     pin = stage_pin(STAGE) or []
-    active = [e for e in cloud_endpoints() if e.name in pin]
-    active.sort(key=lambda e: e.name)
-    if not active:
+    by_name = {e.name: e for e in cloud_endpoints() if e.name in pin}
+    if not by_name:
         return []
+    owners = stage_owners(STAGE)
+    offset = lane_offset()
+    if owners and offset is not None:
+        return [by_name[n] for n in owned_lane_order(pin, owners, offset, run_key) if n in by_name]
+    active = sorted(by_name.values(), key=lambda e: e.name)
     start = int(hashlib.sha256((run_key or "").encode("utf-8")).hexdigest(), 16) % len(active)
     return active[start:] + active[:start]
 

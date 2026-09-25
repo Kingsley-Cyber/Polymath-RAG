@@ -1,10 +1,15 @@
-"""LLM-BACKEND L1 — the provider account registry (register 11.465; gap L-01).
+"""LLM-BACKEND L1 + L3 — the provider account registry (registers 11.465, 11.467; gaps L-01, L-02, L-07, L-14).
 
 `config/llm_accounts.yaml` is the one place that says which ACCOUNTS exist (one API key = one account), which models
 each account serves under which provider quota, and which lanes (account × model × stage use) are configured. The
-runtime still reads `config/cloud_providers.json` and `config/extraction_models/limiter.yaml`; this module compiles the
-registry into exactly those two structures and checks there is no drift, so the registry is the authoring surface and
-the runtime files are its output (L3 writes them from here; L1 changes no behaviour).
+runtime reads `config/cloud_providers.json` and `config/extraction_models/limiter.yaml`; this module compiles the
+registry into exactly those two structures, WRITES them (L3: `render_runtime` / `write_runtime`; the runtime files are
+generated, never hand-edited) and checks there is no drift.
+
+Ownership (L3): `slots.<stage>.owners` maps a worker slot name (`doc_profile`, `doc_profile2`, …) to the lanes that slot
+owns. The compile emits them as `stage_owners` (list index k-1 = slot k's own lanes); an owning slot calls its own lanes
+and the stage's shared tier (pin lanes no slot owns), never another slot's own lanes, so an owned (account, model) pair
+has exactly one calling process and that process's budget can be the whole pair.
 
 Secrets never live here: the registry names the env variables, and every check reports only whether a variable is set.
 """
@@ -25,6 +30,13 @@ LIMITER_FILE = REPO_ROOT / "config" / "extraction_models" / "limiter.yaml"
 
 #: lane fields that belong to the ACCOUNT, re-attached to every lane when compiling
 ACCOUNT_FIELDS = ("api_key_env", "account_id_env")
+
+#: the header of the generated limiter file (L3); the JSON file carries the same note in `_doc`
+LIMITER_HEADER = (
+    "# GENERATED from config/llm_accounts.yaml by scripts/llm_accounts.py write (register 11.467).\n"
+    "# Do not edit by hand: change the registry, then run the writer. The notes on seeds, measured ceilings and\n"
+    "# per-account families live in the registry next to each account.\n")
+_DUMP = {"sort_keys": False, "allow_unicode": True, "width": 120}
 
 
 @dataclass(frozen=True)
@@ -87,6 +99,40 @@ def load_registry(path: Path | str = REGISTRY_FILE) -> Registry:
                     dict(raw.get("slots") or {}), dict(raw.get("local_limiters") or {}), accounts, lanes)
 
 
+def _pin_list(pin: Any) -> list[str]:
+    return [str(n) for n in (pin if isinstance(pin, list) else [pin] if pin else [])]
+
+
+def slot_index(stage: str, slot_name: str) -> int | None:
+    """The 1-based index the supervisor gives a slot (`doc_profile` -> 1, `doc_profile2` -> 2, …); None when the name
+    is not one of the stage's slot names."""
+    if slot_name == stage:
+        return 1
+    suffix = slot_name[len(stage):] if slot_name.startswith(stage) else ""
+    return int(suffix) if suffix.isdigit() and int(suffix) >= 2 else None
+
+
+def stage_owner_groups(reg: Registry, stage: str) -> list[list[str]]:
+    """Slot k's own lanes at list index k-1 (k = 1 .. count); [] for a slot that owns nothing; [] for a stage with
+    no owners."""
+    spec = reg.slots.get(stage) or {}
+    owners = spec.get("owners") or {}
+    if not owners:
+        return []
+    by_idx = {slot_index(stage, str(name)): [str(n) for n in (lanes or [])] for name, lanes in owners.items()}
+    return [by_idx.get(k, []) for k in range(1, int(spec.get("count", 1)) + 1)]
+
+
+def owned_lanes(reg: Registry) -> dict[str, dict[str, str]]:
+    """stage -> {lane -> the slot name that owns it}."""
+    out: dict[str, dict[str, str]] = {}
+    for stage, spec in reg.slots.items():
+        for slot_name, lanes in ((spec or {}).get("owners") or {}).items():
+            for n in lanes or []:
+                out.setdefault(stage, {})[str(n)] = str(slot_name)
+    return out
+
+
 def compile_runtime(reg: Registry) -> tuple[dict, dict]:
     """(cloud_providers.json, limiter.yaml) as data, exactly what the runtime reads."""
     providers = []
@@ -100,8 +146,43 @@ def compile_runtime(reg: Registry) -> tuple[dict, dict]:
             if lane.limiter is not None:
                 limiter[lane.name] = dict(lane.limiter)
     limiter.update({k: dict(v) for k, v in reg.local_limiters.items()})
-    return ({"_doc": list(reg.docs), "stage_pins": dict(reg.stage_pins), "providers": providers},
+    stage_owners = {stage: stage_owner_groups(reg, stage) for stage in reg.slots
+                    if (reg.slots.get(stage) or {}).get("owners")}
+    return ({"_doc": list(reg.docs), "stage_pins": dict(reg.stage_pins), "stage_owners": stage_owners,
+             "providers": providers},
             {"providers": limiter})
+
+
+def render_runtime(reg: Registry) -> tuple[str, str]:
+    """The exact TEXT of both runtime files (L3: they are generated). The JSON keeps the registry's lane order; the
+    limiter file lists the local seeds first, then every lane."""
+    providers, limiter = compile_runtime(reg)
+    lim = limiter["providers"]
+    ordered = {k: lim[k] for k in reg.local_limiters}
+    ordered.update({k: v for k, v in lim.items() if k not in reg.local_limiters})
+    return (json.dumps(providers, indent=2) + "\n",
+            LIMITER_HEADER + yaml.safe_dump({"providers": ordered}, **_DUMP))
+
+
+def write_runtime(reg: Registry, providers_path: Path = PROVIDERS_FILE, limiter_path: Path = LIMITER_FILE) -> list[str]:
+    """Write both runtime files from the registry; returns the paths whose content changed."""
+    changed = []
+    for path, text in zip((providers_path, limiter_path), render_runtime(reg)):
+        path = Path(path)
+        if not path.exists() or path.read_text() != text:
+            path.write_text(text)
+            changed.append(str(path))
+    return changed
+
+
+def runtime_not_generated(reg: Registry, providers_path: Path = PROVIDERS_FILE,
+                          limiter_path: Path = LIMITER_FILE) -> list[str]:
+    """Runtime files whose bytes are not the writer's output (a hand edit, even one that keeps the data)."""
+    out = []
+    for path, text in zip((providers_path, limiter_path), render_runtime(reg)):
+        if not Path(path).exists() or Path(path).read_text() != text:
+            out.append(f"{Path(path).name} is not the writer's output (run scripts/llm_accounts.py write)")
+    return out
 
 
 def runtime_drift(reg: Registry, providers_path: Path = PROVIDERS_FILE, limiter_path: Path = LIMITER_FILE) -> list[str]:
@@ -115,6 +196,8 @@ def runtime_drift(reg: Registry, providers_path: Path = PROVIDERS_FILE, limiter_
         out.append("_doc differs")
     if want_p["stage_pins"] != have_p.get("stage_pins"):
         out.append("stage_pins differ")
+    if want_p["stage_owners"] != (have_p.get("stage_owners") or {}):
+        out.append("stage_owners differ")
     wp = {e["name"]: e for e in want_p["providers"]}
     hp = {e["name"]: e for e in have_p.get("providers") or []}
     for n in sorted(set(wp) | set(hp)):
@@ -142,7 +225,7 @@ class Finding:
 def _pinned(reg: Registry) -> dict[str, list[str]]:
     by_lane: dict[str, list[str]] = {}
     for stage, lanes in reg.stage_pins.items():
-        for n in lanes if isinstance(lanes, list) else [lanes]:
+        for n in _pin_list(lanes):
             by_lane.setdefault(n, []).append(stage)
     return by_lane
 
@@ -156,13 +239,67 @@ def lane_uses(reg: Registry) -> dict[str, list[str]]:
     return uses
 
 
+def lane_slots(reg: Registry) -> dict[str, int]:
+    """How many worker PROCESSES can call each lane: 1 per stage that OWNS it (one owning slot), the stage's slot count
+    per stage that reaches it as a shared lane (a pin lane nobody owns, or the extraction pool)."""
+    owned = owned_lanes(reg)
+    out: dict[str, int] = {}
+    for n, stages in lane_uses(reg).items():
+        out[n] = sum(1 if n in owned.get(s, {}) else int((reg.slots.get(s) or {}).get("count", 1)) for s in stages)
+    return out
+
+
+def _validate_owners(reg: Registry) -> list[Finding]:
+    f: list[Finding] = []
+    seen: dict[str, str] = {}
+    for stage, spec in reg.slots.items():
+        owners = (spec or {}).get("owners") or {}
+        if not owners:
+            continue
+        count = int(spec.get("count", 1))
+        if not spec.get("lane_offset_env"):
+            f.append(Finding("error", "OWNER_WITHOUT_OFFSET", f"{stage}: owners declared but no lane_offset_env, so a "
+                                                               f"worker cannot tell which slot it is"))
+        pin = set(_pin_list(reg.stage_pins.get(stage)))
+        named: set[int] = set()
+        owning: set[int] = set()
+        for slot_name, lanes in owners.items():
+            idx = slot_index(stage, str(slot_name))
+            if idx is None or not 1 <= idx <= count or idx in named:
+                f.append(Finding("error", "OWNER_BAD_SLOT", f"{stage}: owner {slot_name} is not one of the stage's "
+                                                            f"{count} slot names (or is named twice)"))
+                continue
+            named.add(idx)
+            if lanes:
+                owning.add(idx)
+            for n in lanes or []:
+                if n not in reg.lanes:
+                    f.append(Finding("error", "OWNER_UNKNOWN_LANE", f"{stage}: {slot_name} owns unknown lane {n}"))
+                elif n not in pin:
+                    f.append(Finding("error", "OWNER_NOT_PINNED", f"{stage}: {slot_name} owns {n}, which is not on "
+                                                                  f"the stage's pin"))
+                if n in seen:
+                    f.append(Finding("error", "OWNED_TWICE", f"lane {n} is owned by {seen[n]} and {slot_name}"))
+                seen[n] = str(slot_name)
+            accts = sorted({reg.lanes[n].account for n in lanes or [] if n in reg.lanes})
+            if len(accts) > 1:
+                f.append(Finding("warning", "OWNER_SPANS_ACCOUNTS", f"{stage}: {slot_name} owns lanes on "
+                                                                    f"{len(accts)} accounts: {', '.join(accts)}"))
+        missing = [k for k in range(1, count + 1) if k not in owning]
+        if missing:
+            f.append(Finding("warning", "SLOT_WITHOUT_OWN_LANE", f"{stage}: slot(s) {missing} own no lane and call "
+                                                                  f"only the shared tier"))
+    return f
+
+
 def validate(reg: Registry, env: dict[str, str] | None = None) -> list[Finding]:
     env = os.environ if env is None else env
     f: list[Finding] = []
     for stage, lanes in reg.stage_pins.items():
-        for n in lanes if isinstance(lanes, list) else [lanes]:
+        for n in _pin_list(lanes):
             if n not in reg.lanes:
                 f.append(Finding("error", "PIN_UNKNOWN_LANE", f"stage {stage} pins unknown lane {n}"))
+    f.extend(_validate_owners(reg))
     # W1 — a limiter family must not span accounts (one account's 429 storm must never freeze another account)
     fam_accounts: dict[str, set[str]] = {}
     for lane in reg.lanes.values():
@@ -173,12 +310,21 @@ def validate(reg: Registry, env: dict[str, str] | None = None) -> list[Finding]:
         if len(accts) > 1:
             f.append(Finding("warning", "FAMILY_SPANS_ACCOUNTS", f"limiter family {fam} spans {len(accts)} accounts: "
                                                                  f"{', '.join(sorted(accts))}"))
-    # W2 — a dedicated (account, model) pair reached by more than one worker slot at once
+    # W2 — a dedicated (account, model) pair reached by more than one worker process at once (an OWNED lane
+    # counts its one owning slot; a shared lane counts every slot of each stage that reaches it)
     uses = lane_uses(reg)
+    callers = lane_slots(reg)
+    owned = owned_lanes(reg)
     for (acct, model), lanes in sorted(_pairs(reg).items()):
-        stages = {s for n in lanes if reg.lanes[n].enabled and reg.lanes[n].dedicated for s in uses.get(n, [])}
-        slots = sum(int((reg.slots.get(s) or {}).get("count", 1)) for s in stages)
-        if slots > 1 and any(reg.lanes[n].dedicated for n in lanes):
+        live = [n for n in lanes if reg.lanes[n].enabled and reg.lanes[n].dedicated]
+        procs: dict[str, set[str]] = {}          # stage -> its owning slot names, or "*" = every slot of the stage
+        for n in live:
+            for s in uses.get(n, []):
+                procs.setdefault(s, set()).add(owned.get(s, {}).get(n) or "*")
+        stages = set(procs)
+        slots = sum(int((reg.slots.get(s) or {}).get("count", 1)) if "*" in names else len(names)
+                    for s, names in procs.items())
+        if slots > 1:
             f.append(Finding("warning", "PAIR_SHARED_BY_SLOTS", f"{acct} × {model}: up to {slots} worker slots "
                                                                 f"({', '.join(sorted(stages))}) share one quota"))
     # W3 — a quota the owner pays for with no enabled, used lane
@@ -199,8 +345,7 @@ def validate(reg: Registry, env: dict[str, str] | None = None) -> list[Finding]:
                 for lane in lanes:
                     per_process = (lane.limiter or {}).get(metric)
                     if per_process:
-                        slots = sum(int((reg.slots.get(s) or {}).get("count", 1)) for s in uses.get(lane.name, []))
-                        total += int(per_process) * max(slots, 1)
+                        total += int(per_process) * max(callers.get(lane.name, 0), 1)
                 if total > int(cap):
                     f.append(Finding("warning", "BUDGET_EXCEEDS_QUOTA",
                                      f"{acct.name} × {model}: {metric} budgets reach {total:,} against a quota of {int(cap):,}"))
@@ -229,6 +374,8 @@ def ownership_rows(reg: Registry, env: dict[str, str] | None = None) -> list[dic
     Values of secrets are never read into the output, only whether they are set."""
     env = os.environ if env is None else env
     uses = lane_uses(reg)
+    callers = lane_slots(reg)
+    owned = owned_lanes(reg)
     rows = []
     for acct in reg.accounts.values():
         models = list(dict.fromkeys([*acct.quota, *(lane.model for lane in acct.lanes)]))
@@ -236,6 +383,8 @@ def ownership_rows(reg: Registry, env: dict[str, str] | None = None) -> list[dic
             lanes = [lane for lane in acct.lanes if lane.model == model]
             active = [lane for lane in lanes if lane.enabled and uses.get(lane.name)]
             stages = sorted({s for lane in active for s in uses.get(lane.name, [])})
+            owners = sorted({owned[s][lane.name] for lane in active for s in uses.get(lane.name, [])
+                             if lane.name in owned.get(s, {})})
             key_set = bool((env.get(acct.key_env) or "").strip())
             acct_id_set = bool((env.get(acct.account_id_env) or "").strip()) if acct.account_id_env else None
             # the runtime parks a lane whose key or account id is unset (pool._configured_providers)
@@ -245,7 +394,8 @@ def ownership_rows(reg: Registry, env: dict[str, str] | None = None) -> list[dic
                 "account": acct.name, "provider": acct.provider, "model": model,
                 "lanes": [f"{lane.name}{'' if lane.enabled else ' (off)'}" for lane in lanes],
                 "stages": stages,
-                "slots": sum(int((reg.slots.get(s) or {}).get("count", 1)) for s in stages),
+                "slots": sum(callers.get(lane.name, 0) for lane in active),
+                "owners": owners,
                 "quota": acct.quota.get(model) or {},
                 "key_set": key_set,
                 "account_id_set": acct_id_set,

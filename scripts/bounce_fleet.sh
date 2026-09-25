@@ -5,7 +5,7 @@
 # Exit: 0 READY · 1 the old fleet would not stop · 2 not ready within 6 minutes · 3 another bounce is already running.
 set -u
 ROOT="${POLYMATH_FLEET_ROOT:-/Users/king/Documents/polymath-rebuild/polymath-v4}"
-EXPECT_WORKERS="${POLYMATH_EXPECT_WORKERS:-24}"
+EXPECT_WORKERS="${POLYMATH_EXPECT_WORKERS:-26}"
 EXPECT_TYPES="${POLYMATH_EXPECT_TYPES:-13}"
 cd "$ROOT" || { echo "fleet checkout not found: $ROOT"; exit 1; }
 # One bounce at a time: a second click while one runs would find the fleet already stopped and boot a second copy.

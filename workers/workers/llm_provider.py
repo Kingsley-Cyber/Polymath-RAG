@@ -243,6 +243,22 @@ def make_client(lane: str, doc_id: str = "",
     raise ValueError(f"unknown lane: {lane!r}")
 
 
+def batch_lane_indices(slice_idx: list[int], n_batches: int, doc_id: str) -> list[int]:
+    """LLM-BACKEND L3 (register 11.467, gap L-15): the ring position that serves each batch of one document.
+
+    Batch i goes to slice lane (i + h) mod n_lanes, where h is a hash of the document. The slice stays the document's
+    own (rank slices still cannot collide) and a replay picks the same lanes; what changes is the START: before, batch 0
+    always went to the slice's first lane, so a lone document with fewer batches than lanes used only the head of the
+    ring (ledger 2026-09-24: gemini1 155 attempts, gemini5 4, gemini6 0)."""
+    import hashlib
+
+    n = len(slice_idx)
+    if n == 0:
+        return []
+    h = int.from_bytes(hashlib.blake2b(("slice-start:" + (doc_id or "")).encode(), digest_size=8).digest(), "big") % n
+    return [slice_idx[(i + h) % n] for i in range(n_batches)]
+
+
 def spread_decision(queue_depth: int | None, doc_id: str,
                     n_neighborhoods: int) -> bool:
     """EXTRACT-DEPTH-SPREAD-V1 decision, pure: spread ONLY when lanes
@@ -605,7 +621,8 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                    if hasattr(client, "_lane_limiter") else None)
         controller_before = (_controller_snapshot(lane, limiter)
                              if limiter is not None else {})
-        work = ([(b, slice_idx[i % n_lanes]) for i, b in enumerate(batches)]
+        batch_lanes = batch_lane_indices(slice_idx, len(batches), doc_id)
+        work = ([(b, batch_lanes[i]) for i, b in enumerate(batches)]
                 + [([n], big_i) for n in oversize])
         pool_size = max(1, min(len(work), 4 * n_lanes, 24))
         _logging.getLogger("llm-provider").info(

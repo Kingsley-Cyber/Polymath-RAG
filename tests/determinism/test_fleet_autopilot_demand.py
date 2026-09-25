@@ -134,3 +134,15 @@ def test_doc_profile_scales_out_one_worker_per_open_ticket_capped_at_6():
     assert {"doc_profile", "doc_profile2", "doc_profile3"} <= three and "doc_profile4" not in three
     assert {f"doc_profile{i}" for i in range(2, 7)} | {"doc_profile", "sidecar_embedder", "qdrant"} <= many
     assert "doc_profile7" not in many
+
+
+def test_doc_parent_map_scales_out_one_worker_per_open_ticket_capped_at_6():
+    """PMAP-SCALE-OUT-V1 capped pMAP at four slots; LLM-BACKEND L3 (register 11.467) runs six, one per Groq account,
+    each owning its own (key, model) pairs."""
+    from control.fleet_autopilot import desired_slots
+    known = {"doc_parent_map"} | {f"doc_parent_map{i}" for i in range(2, 8)} | {"sidecar_embedder", "qdrant"}
+    one, _ = desired_slots(_FakeConn({"doc_parent_map": 1}), known)
+    many, _ = desired_slots(_FakeConn({"doc_parent_map": 40}), known)
+    assert "doc_parent_map" in one and "doc_parent_map2" not in one
+    assert {"doc_parent_map"} | {f"doc_parent_map{i}" for i in range(2, 7)} <= many
+    assert "doc_parent_map7" not in many
