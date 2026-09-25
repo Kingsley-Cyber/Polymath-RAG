@@ -48,9 +48,9 @@ def test_the_live_callers_pass_the_request_corpus_not_a_constant():
     ui_scopes = sorted(_scope_src(c) for c in _calls(ui))
     assert ui_scopes == ["[cid]", "[corpus_id]"], ui_scopes                        # Corpus Explore's _fetch(cid) and the scout's per-corpus loop
     chat_calls = list(_calls(chat))
-    assert sorted(_scope_src(c) for c in chat_calls) == ["[corpus_id]"] * 4       # dual-read atom lane, SEEALSO fan-out, SEEALSO blend lines (11.475), WILDCARD atom frontier
+    assert sorted(_scope_src(c) for c in chat_calls) == ["[corpus_id]"] * 5       # dual-read atom lane, SEEALSO fan-out, SEEALSO blend lines (11.475), DOC-STEER lines (11.482), WILDCARD atom frontier
     doc_scoped = [ast.unparse(k.value) for c in chat_calls for k in c.keywords if k.arg == "doc_ids"]
-    assert doc_scoped == ["q_docs"], doc_scoped                                     # the blend reads only the question's own documents' SEE ALSO lines
+    assert doc_scoped == ["q_docs", "q_docs"], doc_scoped                           # the blend and the steer read only the question's own documents' lines
 
 
 def test_corpus_explore_fetch_uses_its_own_argument():

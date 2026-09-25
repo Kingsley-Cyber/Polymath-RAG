@@ -2410,6 +2410,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/doc-steer-2026-09-24/replay.py", "py", None),
     ("docs/wiki/experiments/doc-steer-2026-09-24/replay.json", "json", None),
     ("docs/wiki/experiments/doc-steer-2026-09-24/replay_wildcard_no_inversion.json", "json", None),
+    ("docs/wiki/experiments/doc-steer-2026-09-24/replay_built.json", "json", None),
+    ("docs/wiki/work-log/2026-09-25-doc-steer-v1.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay.py", "py", None),

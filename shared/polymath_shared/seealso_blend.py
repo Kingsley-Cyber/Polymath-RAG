@@ -11,6 +11,10 @@ books. The line routes, the passages prove, the cross-encoder judges. No model c
 single batch embed).
 
 Pure orchestration over an injected search, so the lane's I/O stays with the caller (`chat_retrieval.fanout_search`).
+
+DOC-STEER-V1 (owner 2026-09-25 "build it", register 11.482; replay 11.477): the same documents' lines of other kinds join
+the blend per mode (the skeleton routes pick them: GRAPH bridges + anchors, WILDCARD theories, concepts, latent patterns and
+tensions — never inversions, which search for the question's opposite). Each row carries its line's kind.
 """
 from __future__ import annotations
 
@@ -64,7 +68,8 @@ def blend_rows(items: Sequence[Mapping], item_vectors: Sequence[Sequence[float]]
             seen.add(cid)
             r = dict(r)
             r["fanout_atom"] = text
-            r["seealso_blend"] = {"item": text, "from_doc": str(item.get("doc_id") or "")}
+            r["seealso_blend"] = {"item": text, "from_doc": str(item.get("doc_id") or ""),
+                                  "kind": str(item.get("atom_kind") or "SEEALSO")}
             rows.append(r)
             kept += 1
             if kept >= children_per_item:

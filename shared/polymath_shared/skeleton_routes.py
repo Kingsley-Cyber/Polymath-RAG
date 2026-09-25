@@ -48,6 +48,15 @@ JUDGE_FLAG = "POLYMATH_CHAT_CONTEXTUAL_JUDGE"
 PROBES_FLAG = "POLYMATH_CHAT_SKELETON_PROBES"
 PROBE_GATE_FLAG = "POLYMATH_CHAT_PROBE_GATE"
 SEEALSO_BLEND_FLAG = "POLYMATH_CHAT_SEEALSO_BLEND"
+DOC_STEER_FLAG = "POLYMATH_CHAT_DOC_STEER"
+#: DOC-STEER-V1 (owner 2026-09-25 "build it"; register 11.482): the document lines that join the SEE ALSO blend, per mode.
+#: Replay 11.477 (steer vs the blend alone, every passage read): GRAPH bridges + anchors 2 better / 1 same; WILDCARD
+#: theories + concepts + latent patterns + tensions 2 of 2 better, and adding INVERSION made one worse (it searches for the
+#: question's opposite); HYBRID concepts changed nothing, so HYBRID keeps the SEE ALSO blend alone. FAST / GNN open no lane G.
+DOC_STEER_KINDS: dict[str, tuple[str, ...]] = {
+    "GRAPH": ("BRIDGE", "ANCHOR"),
+    "WILDCARD": ("THEORY", "CONCEPT", "LATENT_PATTERN", "TENSION"),
+}
 _SKIP_MODES = frozenset({"FAST", "VECTOR", "GNN"})
 _NOMINATING_ORIGINS = frozenset({"PROFILE", "BRIDGE"})
 
@@ -78,6 +87,9 @@ def apply_skeleton_routes(budget, *, mode: str, plan=None, env: Mapping[str, str
         # SEEALSO-BLEND-V1 (owner 2026-09-24): wherever lane G runs, the question's documents' see-also lines, blended with
         # the question, search passages anywhere in the corpus (seealso_blend.py; replaces the 11.472 book-finding hop)
         "seealso_blend_enabled": env.get(SEEALSO_BLEND_FLAG, "0") == "1",
+        # DOC-STEER-V1: the mode's document lines join the blend (it rides the blend: both flags)
+        "doc_steer_kinds": (DOC_STEER_KINDS.get(m, ())
+                            if env.get(DOC_STEER_FLAG, "0") == "1" and env.get(SEEALSO_BLEND_FLAG, "0") == "1" else ()),
         "graph_dest_enabled": m in ("GRAPH", "WILDCARD"),
         "atom_kinds": tuple(k for k in ATOM_KINDS if k in kinds),
         "route_prefix_seats": 3 if m == "WILDCARD" else 2,

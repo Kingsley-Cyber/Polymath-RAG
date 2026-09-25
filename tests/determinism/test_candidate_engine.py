@@ -980,6 +980,35 @@ def test_seealso_blend_rows_get_room_in_lane_g_and_are_receipted():
     assert on.trace["seealso_fanout"]["blend_candidates"] == 2
 
 
+def test_doc_steer_rows_get_room_in_lane_g_and_the_receipt_names_their_kind():
+    # DOC-STEER-V1 (11.482): the steer lines' rows follow the SEE ALSO lines' rows; with the steer on, the lane cap grows by
+    # doc_steer_items x children, and the receipt names each line with its kind and counts the steered candidates
+    fake = Fake()
+    rows = [_row(CHILD, 0, "d1", chunk="d1-global", text="global door")]
+    rows += [dict(_row(CHILD, i, "d4", parent="d4-p1", chunk=f"d4-see{i}"), fanout_atom="Bayesian reasoning",
+                  seealso_blend={"item": "Bayesian reasoning", "from_doc": "d1", "kind": "SEEALSO"}) for i in range(2)]
+    rows += [dict(_row(CHILD, i, "d5", parent="d5-p1", chunk=f"d5-steer{i}"), fanout_atom="editing links cinematography",
+                  seealso_blend={"item": "editing links cinematography", "from_doc": "d1", "kind": "BRIDGE"}) for i in range(2)]
+
+    def fanout(qv):
+        return rows
+
+    base = dict(seealso_fanout_enabled=True, atom_kinds=("SEEALSO",), seealso_fanout_atoms=1, seealso_fanout_children=1,
+                seealso_blend_enabled=True, seealso_blend_items=1, seealso_blend_children=2)
+    blend = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(**base), dense_search=fake.dense, sparse_search=fake.sparse,
+                                   fanout_search=fanout)
+    assert "d5-steer0" not in [c.chunk_id for c in blend.union]                # cap 1 + 2: no room without the steer
+    assert blend.trace["seealso_fanout"]["blends"][0] == {"item": "Bayesian reasoning", "from_doc": "d1"}   # unchanged
+    assert "steer_candidates" not in blend.trace["seealso_fanout"]
+    steer = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(**base, doc_steer_kinds=("BRIDGE",), doc_steer_items=1),
+                                   dense_search=fake.dense, sparse_search=fake.sparse, fanout_search=fanout)
+    assert {"d1-global", "d4-see0", "d4-see1", "d5-steer0", "d5-steer1"} <= {c.chunk_id for c in steer.union}
+    fan = steer.trace["seealso_fanout"]
+    assert fan["blends"] == [{"item": "Bayesian reasoning", "from_doc": "d1", "kind": "SEEALSO"},
+                             {"item": "editing links cinematography", "from_doc": "d1", "kind": "BRIDGE"}]
+    assert fan["steer_kinds"] == ["BRIDGE"] and fan["steer_candidates"] == 2 and fan["blend_candidates"] == 4
+
+
 def test_graph_dest_lane_h_adds_relational_children_and_is_off_by_default():
     # P7 graph destination (lane H): destination-doc children enter the union tagged ARRIVAL_GRAPH_DEST
     # (RELATIONAL role — a source-attested relationship route), additive + unioned last; off by default.
