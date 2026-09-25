@@ -51,7 +51,7 @@ historical, never an instruction.
 
 ### Active Mission
 - **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 6 D1 = DONE 11.478).
-  Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (70 rows: 22 closed, 48 open). How to build code RAG:
+  Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (78 rows: 22 closed, 56 open). How to build code RAG:
   `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md`.
 - **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → **K1** → C1 → C2 → C3 → L5 → C6+C7 → C9+C10
   (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
@@ -67,6 +67,12 @@ historical, never an instruction.
   (adding INVERSION made 1 of 2 worse); HYBRID with CONCEPT no change; question weight 0.6 worse 2 of 2 (keep 0.7). Direct
   evidence unchanged everywhere; lane G +0.5–1.2 s, retrieval wall within ±0.3 s. FAST untested (no stored FAST
   question).
+- **External Trail Signal holistic audit (11.484)** — admitted: `docs/wiki/reports/2026-09-25/TRAIL-SIGNAL-HOLISTIC-AUDIT.md`
+  (verbatim) + `TRAIL-SIGNAL-AUDIT-RECONCILIATION.md`. Its FAIL judges the owner's full "wakes itself" vision, not the RAG.
+  11 of 17 findings are confirmed in code → gap section A (A-01..A-08). Proposed order (the owner decides): K1 → an A-track
+  of small correctness slices (A-03 no-signal ending, A-04 research limits, A-06 citation refs, A-05 gap closure, A-07
+  adapter entry) → automation (A-01, A-02, A-08) only after an owner mandate; T-01 needs the owner's word to change the M1
+  tests. Five owner questions are listed in the reconciliation.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) stays paused: S5–S7 and S9 wait (S9 needs the owner's query
   allowance; 9 of 10 used).
 
@@ -148,8 +154,9 @@ historical, never an instruction.
 1. (done 00:09–00:10) The owner's bounce + the D1 live check: D1 LIVE_PATH_PROVEN (11.480).
 2. (done 11.482–11.483) DOC-STEER built + deployed; the receipt keeps lane G's lines. After the owner's next GRAPH /
    WILDCARD chat: read `meta.retrieval_trace.seealso_fanout` on that receipt and record LIVE_PATH_PROVEN.
-3. **K1** (roadmap row 6b): knowledge roles + retrieval scope (K-01, K-02; the external audit's fail-closed rule); no
-   multi-corpus query (no shared books).
+3. **K1** (roadmap row 6b): knowledge roles + retrieval scope (K-01, K-02; the external audits' fail-closed rule); no
+   multi-corpus query (no shared books). The Trail audit (11.484) also puts K1 before any code ingestion. Then, if the
+   owner agrees, the A-track (A-03, A-04, A-06, A-05, A-07) before C1.
 4. **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28).
 5. **L5** before C6 + C7. Fold in when touching the file: L-23 (`document_status.py:212`).
 6. Owner's step pending: the push. Small slice when convenient: O-05 (the corpus delete also sweeps the shared
