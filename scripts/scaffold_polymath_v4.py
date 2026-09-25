@@ -2362,6 +2362,9 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/code-knowledge-c0b-2026-09-24/fixtures/Knit-LICENSE.txt", "txt", None),
     ("docs/wiki/experiments/code-knowledge-c0b-2026-09-24/fixtures/SOURCE.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-code-c0b-tooling.md", "md", None),
+    # Code RAG implementation file (register 11.462): how to build it, per slice
+    ("docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md", "md", None),
+    ("docs/wiki/work-log/2026-09-24-code-rag-implementation-file.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),

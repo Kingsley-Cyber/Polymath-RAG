@@ -125,6 +125,9 @@ Document ingestion stays byte-identical, and every slice ships behind a flag, de
 
 ## 4. Slice order (each slice = its own worktree branch, flag default off, tests, work-log, register row, guards)
 
+> **BUILD FROM `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` (register 11.462):** modules, data contracts, exact integration
+> points, flags, tests and acceptance per slice (K1 knowledge scope before C1).
+>
 > **ORDER SUPERSEDED (register 11.460):** the execution order across all tracks is
 > `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (C0b → L1 → L2 → L3 → L4 → D1 → C1 → C2 → C3 → L5 →
 > C6+C7 → C9+C10 → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14). The confirmed gaps each slice must close

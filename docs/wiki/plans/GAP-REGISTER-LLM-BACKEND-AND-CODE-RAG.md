@@ -97,6 +97,13 @@ Severity: **Critical** = loses data or silently gives wrong results · **High** 
 | C-26 | All five modes require one corpus, and a content-addressed `doc_id` belongs to one corpus: one reference book cannot join two project corpora | R `ui.py:3755-3766`, `intake_worker.py:172, 226-236` | Medium | C1 decision (documented) | OPEN |
 | C-27 | Profile and pMAP are non-blocking stages: `QUERY_READY` can be true while code descriptions are missing | R `control/tickets.py` (`NON_BLOCKING_STAGES`) | Medium | C12 | OPEN |
 
+## K. Knowledge roles and retrieval scope (owner-shared proposal, 2026-09-24)
+
+| ID | Gap | Evidence | Sev. | Fix | Status |
+|---|---|---|---|---|---|
+| K-01 | Trail's evidence requests carry no source-use scope: `request_body` returns only `message, corpus_id, mode, corpus_explorer`; the legacy `/retrieve` path sends `query, corpus_ids, limit, mode` | R `shared/polymath_shared/adapter/evidence_boundary.py:166`, `workers/workers/adapter_step_worker.py:172` | High (once code shares a corpus) | K1 | OPEN |
+| K-02 | No `knowledge_role` exists anywhere; `source_family` exists only as an accepted front-matter key | R `frontmatter.py:18`; grep of shared / workers / orchestrator / control | High | K1 | OPEN |
+
 ## Confirmed GOOD — keep (not gaps)
 
 - No cosine / `score_threshold` floor on the chat path; ranked top-k only (R `api/fast.py:137-147`,

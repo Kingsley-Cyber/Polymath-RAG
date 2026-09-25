@@ -4,7 +4,7 @@ date: 2026-09-24
 last_reviewed: 2026-09-24
 status: "PLAN OF RECORD (owner 2026-09-24: 'fix all of this … implement this in strategic slices and a plan way ahead'). Execution order across tracks. C0b done (11.461); L1 is next."
 owner: "@king"
-scope: "Closes every row of GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md. Supersedes the slice ORDER in CODE-KNOWLEDGE-V1-START-HERE.md §4 (the C-slice definitions there and in CODE-LANGUAGE-REPRESENTATIONS-V1.md still hold, amended here)."
+scope: "Closes every row of GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md. Supersedes the slice ORDER in CODE-KNOWLEDGE-V1-START-HERE.md §4 (the C-slice definitions there and in CODE-LANGUAGE-REPRESENTATIONS-V1.md still hold, amended here). The build instructions per slice are CODE-RAG-IMPLEMENTATION-V1.md."
 ---
 
 # Roadmap: LLM backend, document defects, code RAG, joint graph walk
@@ -118,6 +118,7 @@ GRAPH = the full walk (FACT + STRUCTURE + MENTION + one SEMANTIC hop) · WILDCAR
 | 4 | **L3** ownership + wiring | L-02, L-07, L-11, L-12, L-13, L-14, L-15, L-18 | L2 | registry: all 18 Groq pairs owned (6 profile + 6 pMAP slots), Cloudflare account ids discovered (read-only API) or supplied by the owner, dead lanes parked, the unused flag removed | `.env` edits (account ids) = owner-visible; fence + bounce |
 | 5 | **L4** canary + live proof | L-03 | L3 | ≤ 20 Groq + ≤ 6 Cloudflare calls (OTPM per org, TPM reservation, each pair reachable); then one profile ticket + one small pMAP document land only on their owning pairs | the owner's "fix all of this" (2026-09-24) |
 | 6 | **D1** document defects | D-01, D-02 (marker) | — | GRAPH hop-1 facts ranked by seed rank × predicate tier × evidence in the selected set (replay on saved GRAPH plans shows the change); MCP rows say `truncated` + full length | flag; fence + bounce |
+| 6b | **K1** knowledge roles + retrieval scope | K-01, K-02 | — | a reference-only request never sees implementation material in any lane, the profile scout or the compiler context; Trail always sends `roles: [reference]`; scope in cache identity (CODE-RAG-IMPLEMENTATION-V1 §4 K1) | Qdrant backfill in a live window |
 | 7 | **C1** code front door | C-01, C-02, C-05, C-06, C-07, C-08, C-26 (decision) | C0b | code extensions accepted behind a flag; code never reaches tier_v3; no front matter, no LLM extraction for code; empty files allowed; path → hash ledger with supersession; documents byte-identical with the flag off | fence + bounce |
 | 8 | **C2** structure store | C-09, C-22 (code sparse field), C-24 (storage) | C1 | `code_symbols` / `code_edges` / `code_symbol_parent_links` (+ `code_doc_mentions` table shape) on a throwaway Postgres first; the re-extraction reproducibility test | migration in a live window |
 | 9 | **C3** Python card | C-03, C-04, C-10, C-23 | C2 | this repository parsed with LibCST; children cover every byte; `region_role=code` set by the parser (exempt from noise drops); token budgets; CALLS / IMPORTS spot-checked | fence + bounce |
