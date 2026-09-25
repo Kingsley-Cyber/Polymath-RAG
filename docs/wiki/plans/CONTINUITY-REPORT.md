@@ -23,13 +23,12 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-24 (L3 close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1, track L (the provider backend). L1 + L2 + L3 DONE and live. NEXT = L4 (the canary), which waits on the owner's word; the owner also pastes 5 Cloudflare account ids. Code RAG (CODE-KNOWLEDGE-V1) resumes after L4: D1 → K1 → C1 …**
+## CURRENT — 2026-09-24 (L3 close-out) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1, track L (the provider backend). L1 + L2 + L3 DONE and live; L4a (the canary, 11.468) DONE: all 18 Groq pairs and 5 Cloudflare accounts answered live. NEXT = L4b (one document through the fleet): the owner picks the document; the owner also sends account 1's Cloudflare id. Code RAG (CODE-KNOWLEDGE-V1) resumes after L4: D1 → K1 → C1 …**
 
 ### Repository State
-- Branch `production`, HEAD = the L3 close-out commit on top of `a3df56b9` (merge of L3, register 11.467). Main checkout
-  clean.
-- `origin/production` = `a7e3e388`; **35 commits unpushed** (registers 11.452–11.467, the L2 close-out, this
-  close-out). The agent's push is blocked by the permission classifier; the owner pushes with the Run button:
+- Branch `production`, HEAD = the L4a records commit (register 11.468) on top of the L3 close-out and `a3df56b9` (merge of
+  L3, register 11.467). Main checkout clean.
+- `origin/production` = `a7e3e388`; **36 commits unpushed** (registers 11.452–11.468, the L2 and L3 close-outs). The agent's push is blocked by the permission classifier; the owner pushes with the Run button:
   `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
 - **Fleet:** 13 worker types / **26** registrations (doc_profile ×6, doc_parent_map ×6 since L3), all healthy, ONE
   bundle `5e94c7bffa6c`, `/ready` true (embedder + reranker). Bounced by the agent after the L3 merge
@@ -38,7 +37,8 @@ historical, never an instruction.
   `ps eww`).
 - **Live `.env` (gitignored), unchanged by L3:** `POLYMATH_LLM_CLOUD_PRIMARY=0`, no `POLYMATH_GROQ_ROUTER` (11.464);
   chat flags unchanged since 11.451 (`SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`, `PROBE_GATE=1`, `SYNTH_ROLES=1`,
-  `REASONING_POLICY=1`; S4 / S8 unset = off). `CLOUDFLARE_ACCOUNT_ID_1/3/4/5/6` are NOT set (gap L-11).
+  `REASONING_POLICY=1`; S4 / S8 unset = off). `CLOUDFLARE_ACCOUNT_ID_3..6` filled 2026-09-24 (11.468; the running workers
+  read them through from `.env`, no bounce); `CLOUDFLARE_ACCOUNT_ID_1` still empty (L-11).
 - **Other worktrees:** 19 (18 `pmv4-*` + `polymath-v4-main`) + `_graft_polymath`, all on branches merged into
   `production` except `pmv4-m1-repro` (`review/m1-reproductions`, kept on purpose). All clean except `pmv4-rag-ui`
   (`codex/rag-ui-integration`): 14 UNCOMMITTED files from another stream (2026-09-22). Not ours: never add, stash or
@@ -62,7 +62,13 @@ historical, never an instruction.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) is paused, not dropped: S5–S7 and S9 wait (S9 needs the owner's
   query allowance; 9 of 10 used). Details: the PREVIOUS block.
 
-### Completed Since Last Bootstrap (11.467; merged, not pushed)
+### Completed Since Last Bootstrap (11.467–11.468; not pushed)
+- **11.468 L4a the canary** (work-log `2026-09-24-llm-canary-l4a.md`, evidence
+  `docs/wiki/experiments/llm-backend-l4-canary-2026-09-24/`): the five pasted Cloudflare ids were matched to tokens
+  read-only. 3, 4, 5, 6 are wired; the fifth id was account 2's, so account 1 is still missing. 23 real calls, one per
+  active lane, through the production client: 23 / 23 OK (18 Groq pairs + 5 Cloudflare accounts). Groq's headers show
+  independent per-(key, model) limits (1K requests/day, 8K tokens/min) and TPM charged prompt + requested output (what
+  L2 reserves). The ledger shows 23 rows with stage `l4_canary` and real tokens. L-03 CLOSED; L-11 narrowed to account 1.
 - **11.467 L3 ownership + wiring** (work-log `2026-09-24-llm-ownership-l3.md`):
   - the registry `config/llm_accounts.yaml` gains `slots.<stage>.owners`: profile slot N owns `profile_groqN`, pMAP slot
     N owns `map_groqN` + `map_groqNq`; pMAP slots 4 → 6;
@@ -112,8 +118,11 @@ historical, never an instruction.
   MERGED · DEPLOYED (bounce, 26 / 13 / one bundle; slot indexes and live lane walks EXECUTED). **Not yet
   LIVE_PATH_PROVEN:** no model call since 2026-09-24 05:00 UTC; L4 proves that a profile ticket lands on its slot's own
   key and a pMAP document on its slot's pairs.
-- **11.464 BATCH1 / 11.466 L2:** stage tags on `llm_provider_attempts` and settle-to-usage still await real traffic
-  (L4). 11.465 L1: DEPLOYED (no behaviour change).
+- **11.468 L4a:** LIVE_PATH_PROVEN for the client path. Every Groq pair and 5 Cloudflare accounts answered through the
+  production client: L2 reservation → call → settle to real usage → ledger row with stage + function (EXECUTED,
+  2026-09-25 02:44 UTC). This closes the client-level half of the BATCH1 / L2 live checks. The FLEET slot path (a profile
+  ticket on its slot's own key, a pMAP document on its slot's pairs, stage tags `doc_profile` / `doc_parent_map`) is L4b.
+  11.465 L1: DEPLOYED (no behaviour change).
 - INVALIDATED: none.
 
 ### Runtime / Test Resolution
@@ -136,27 +145,25 @@ historical, never an instruction.
 - Structural: graft in `../_graft_polymath` at `a7eaa808` (one slice behind; refresh before the next code read:
   `cd ../_graft_polymath && git checkout -q --detach <production-sha> && graft build . && git checkout -q -- .gitignore`).
 - Guards at close-out: agent_preflight 0 · repo_guard 0 · wiki_worm --check 0 · bundle_integrity READY.
-- Registry: `scripts/llm_accounts.py validate` (with `.env` loaded in the same shell) = 0 errors, 10 warnings:
-  PAIR_SHARED_BY_SLOTS ×5 (the shared tier → L5) · ACCOUNT_ID_UNSET ×5 (L-11, the owner's ids). `report` shows the
+- Registry: `scripts/llm_accounts.py validate` (with `.env` loaded in the same shell) = 0 errors, 6 warnings:
+  PAIR_SHARED_BY_SLOTS ×5 (the shared tier → L5) · ACCOUNT_ID_UNSET ×1 (cloudflare_1, L-11). `report` shows the
   owning slot per (account, model).
-- CI: the 35 local commits have not run CI yet (push pending).
+- CI: the 36 local commits have not run CI yet (push pending).
 
 ### Next Action
-1. **Owner:** push the 35 commits (Run button; command in Repository State).
-2. **Owner: the 5 Cloudflare account ids.** For accounts 1, 3, 4, 5, 6 (each a separate Cloudflare login): open the
-   dashboard; the Account ID is in the URL (`dash.cloudflare.com/<account id>/…`) and on the account home page. Paste
-   them in chat as `1: …, 3: …`. The agent then:
-   1. adds `CLOUDFLARE_ACCOUNT_ID_N=<id>` lines to the live `.env`, with no inline comments;
-   2. runs `scripts/llm_accounts.py validate` (expect ACCOUNT_ID_UNSET 0) and `report`.
+1. **Owner:** push the 36 commits (Run button; command in Repository State).
+2. **Owner: Cloudflare account 1's id.** Log in to account 1 (the login its API token came from). Its 32-character id is in
+   the address bar (`dash.cloudflare.com/<id>/…`) or under AI → Workers AI → Use REST API. It is NOT the id ending `1efb`
+   (that is account 2's). The agent checks it against token 1 read-only, fills `CLOUDFLARE_ACCOUNT_ID_1=` in `.env` (no
+   bounce), and makes one canary call on cloudflare_map1 (1 of the 3 Cloudflare calls left in the L4 cap).
+3. **L4b: one document through the fleet.** The owner chooses how:
+   - (a) a one-document test corpus `l4-canary` with a small file; the agent first runs the corpus-filter checks the
+     standing rule asks for, and deleting the corpus later is the owner's step;
+   - or (b) the owner's next real upload. No test data; the agent checks that upload's receipts.
 
-   No bounce is needed: the pool reads `.env` at call time. `cloudflare3..6` then join the extraction ring and
-   `cloudflare_map1` joins the pMAP shared tier. L-11 closes with the first live call in L4.
-3. **L4 — the canary, only on the owner's word.** The planned cap is ≤ 20 Groq calls + ≤ 6 Cloudflare calls: one per
-   pair / account, with the smallest real prompt.
-   - Then one profile ticket and one small pMAP document (the owner picks the document).
-   - It proves L-03, L-19, ownership on the wire (each call's `lane` on `llm_provider_attempts` = the slot's own
-     lanes), stage tags and settle-to-usage.
-   - A 429 is a capacity event: record it and pace it; never retry blindly.
+   Pass: its `doc_profile` attempt row is on the claiming slot's own key (`profile_groqN`, stage `doc_profile`); its pMAP
+   rows are on that slot's `map_groqN` / `map_groqNq` (stage `doc_parent_map`); `document_status` shows 0 unresolved
+   eligible parents (L-19); no call on another slot's key.
 4. Then D1 → K1 → C1 … (roadmap §3).
 
 ### Do Not Do
@@ -173,10 +180,9 @@ historical, never an instruction.
 - No permanent deletes by the agent (branches → `archive/<branch>` tags first).
 
 ### Live Qualification Queue
-- L4 canary (the owner's word first): each Groq pair and each Cloudflare account reachable; OTPM per org; the TPM
-  reservation.
-- L4 real work: one profile ticket + one small pMAP document on their owning slots: L-03, L-19, stage tags,
-  settle-to-usage.
+- L4a canary: DONE 11.468 (23 / 23); cloudflare_map1 gets its one call when account 1's id arrives.
+- L4b real work: one document through the fleet on its owning slots (L-19, fleet stage tags). The owner picks the
+  document.
 - Document RAG S9 (S4 + S8 on for 5–8 live questions): the owner's word + a bigger query allowance.
 - Benchmark G8 and the `/chat/evidence` probe: still the owner's own words (restoration, 2026-09-22).
 

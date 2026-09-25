@@ -1,0 +1,326 @@
+[
+ {
+  "lane": "profile_groq1",
+  "model": "openai/gpt-oss-120b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 658,
+  "tokens_in": 93,
+  "tokens_out": 23,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "profile_groq2",
+  "model": "openai/gpt-oss-120b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 392,
+  "tokens_in": 93,
+  "tokens_out": 23,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "profile_groq3",
+  "model": "openai/gpt-oss-120b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 439,
+  "tokens_in": 93,
+  "tokens_out": 23,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "profile_groq4",
+  "model": "openai/gpt-oss-120b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 590,
+  "tokens_in": 93,
+  "tokens_out": 23,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "profile_groq5",
+  "model": "openai/gpt-oss-120b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 453,
+  "tokens_in": 93,
+  "tokens_out": 23,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "profile_groq6",
+  "model": "openai/gpt-oss-120b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 393,
+  "tokens_in": 93,
+  "tokens_out": 23,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "map_groq1",
+  "model": "openai/gpt-oss-20b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 525,
+  "tokens_in": 93,
+  "tokens_out": 34,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "map_groq2",
+  "model": "openai/gpt-oss-20b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 348,
+  "tokens_in": 93,
+  "tokens_out": 34,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "map_groq3",
+  "model": "openai/gpt-oss-20b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 339,
+  "tokens_in": 93,
+  "tokens_out": 34,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "map_groq4",
+  "model": "openai/gpt-oss-20b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 273,
+  "tokens_in": 93,
+  "tokens_out": 34,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "map_groq5",
+  "model": "openai/gpt-oss-20b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 319,
+  "tokens_in": 93,
+  "tokens_out": 34,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "map_groq6",
+  "model": "openai/gpt-oss-20b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 320,
+  "tokens_in": 93,
+  "tokens_out": 34,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7651"
+  }
+ },
+ {
+  "lane": "map_groq1q",
+  "model": "qwen/qwen3.8-27b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 253,
+  "tokens_in": 36,
+  "tokens_out": 2,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7753"
+  }
+ },
+ {
+  "lane": "map_groq2q",
+  "model": "qwen/qwen3.8-27b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 283,
+  "tokens_in": 36,
+  "tokens_out": 2,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7708"
+  }
+ },
+ {
+  "lane": "map_groq3q",
+  "model": "qwen/qwen3.8-27b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 305,
+  "tokens_in": 36,
+  "tokens_out": 2,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7708"
+  }
+ },
+ {
+  "lane": "map_groq4q",
+  "model": "qwen/qwen3.8-27b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 312,
+  "tokens_in": 36,
+  "tokens_out": 2,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7709"
+  }
+ },
+ {
+  "lane": "map_groq5q",
+  "model": "qwen/qwen3.8-27b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 284,
+  "tokens_in": 36,
+  "tokens_out": 2,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7708"
+  }
+ },
+ {
+  "lane": "map_groq6q",
+  "model": "qwen/qwen3.8-27b",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 321,
+  "tokens_in": 36,
+  "tokens_out": 2,
+  "headers": {
+   "x-ratelimit-limit-requests": "1000",
+   "x-ratelimit-limit-tokens": "8000",
+   "x-ratelimit-remaining-requests": "999",
+   "x-ratelimit-remaining-tokens": "7708"
+  }
+ },
+ {
+  "lane": "cloudflare_map1",
+  "result": "PARKED (not in the active roster)"
+ },
+ {
+  "lane": "cloudflare_map2",
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "result": "OK",
+  "reply": "OK",
+  "ms": 1061,
+  "tokens_in": 32,
+  "tokens_out": 137,
+  "headers": {}
+ },
+ {
+  "lane": "cloudflare3",
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "result": "OK",
+  "reply": "{ \"response\": \"OK\" }",
+  "ms": 1520,
+  "tokens_in": 32,
+  "tokens_out": 149,
+  "headers": {}
+ },
+ {
+  "lane": "cloudflare4",
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "result": "OK",
+  "reply": "{ \"response\": \"OK\" }",
+  "ms": 1232,
+  "tokens_in": 32,
+  "tokens_out": 143,
+  "headers": {}
+ },
+ {
+  "lane": "cloudflare5",
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "result": "OK",
+  "reply": "{ \"response\": \"OK\" }",
+  "ms": 1326,
+  "tokens_in": 32,
+  "tokens_out": 143,
+  "headers": {}
+ },
+ {
+  "lane": "cloudflare6",
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "result": "OK",
+  "reply": "{ \"response\": \"OK\" }",
+  "ms": 1115,
+  "tokens_in": 32,
+  "tokens_out": 143,
+  "headers": {}
+ }
+]
