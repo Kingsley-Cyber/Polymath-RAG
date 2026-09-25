@@ -1,0 +1,2194 @@
+[
+ {
+  "turn": 1,
+  "mode": "GRAPH",
+  "question": "What do my books say about making an animated character's movement feel weighty?",
+  "live": {
+   "wall_ms": 6268.3,
+   "hop_on": false,
+   "final_chunks": [
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+    "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+    "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "chunk_4a4549c9f8fbf90da7e97074695793ed70d5d22b1284e53b594136605af6cf81",
+    "chunk_73257537ea9aff27316717cac81a98b26e904ce3be3121cc4beb870a88101d1e"
+   ],
+   "final_docs": [
+    "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+    "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "direct_final": 15,
+   "lane_g_final": [
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388"
+   ],
+   "rows": {
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "When dealing with very heavy objects, therefore, the director must allow plenty of time to start, stop, or change their movements, in order to make their weight look convincing. The animator, for his part, must see that "
+    },
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "It is not the exaggeration of the weight of the object which is at the center of animation, but the exaggeration of the tendency of the weight\u2014any weight\u2014to move in a certain way.\n\nThe timing of a scene for animation has"
+    },
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc": {
+     "doc": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+     "source": "VES Handbook of Visual Effects.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "The speed at which an object moves also tends to convey its sense of size. The faster it moves, the smaller it will seem to be, especially if it shows no sense of momentum and weight. This becomes problematic when the di"
+    },
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "All objects in nature have their own weight, construction, and degree of flexibility, and therefore each behaves in its own individual way when a force acts upon it. This behavior, a combination of position and timing, i"
+    },
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "The way an object behaves on the screen, and the effect of weight that it gives, depends entirely on the spacing of the animation drawings and not on the drawing itself. It does not matter how beautifully drawn the canno"
+    },
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3": {
+     "doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+     "source": "Ed Hooks - Acting for Animators (2017).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "In 1937, Don Graham lectured at the old Hyperion Disney Studio about the importance of animating force rather than animating mere form. He pointed out that if you draw the form of a leg and then another bunch of forms of"
+    },
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "This is not strictly true, of course, with live characters because if the movement is slow enough, the muscles have time to contract and stop the arms straightening completely. Nevertheless the tendency is there, and it "
+    },
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "The way a movement is timed can contribute greatly to the feeling of size and scale of an object or character. When animating a man with naturalistic proportions, his movements may be timed as he would perform them in re"
+    },
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35": {
+     "doc": "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+     "source": "Making Meaning with Machines.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "182\t\nChapter 7\ndynamics of hardware, as robots (and humans) are. Moreover, talented \nartists create their motion profiles in context (using environment and \nnarrative to construct situations for characters) for the expre"
+    },
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294": {
+     "doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+     "source": "Ed Hooks - Acting for Animators (2017).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "Throughout the 1935 memo, Walt makes it obvious that he considered movement itself to be funny, that there are \u201cfunny\u201d things to be done with, for example, a fat person\u2019s walk. This is a throwback to cartoon thinking, an"
+    },
+    "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f": {
+     "doc": "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+     "source": "Force Dynamic Life Drawing.md",
+     "arrivals": [
+      "SHADOW_DUALREAD"
+     ],
+     "text": "When animating, or drawing, gravity is the invisible force you must always be aware of to bring reality to your work. Some pointers to think about when drawing the figure and considering our topic:"
+    },
+    "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822": {
+     "doc": "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+     "source": "Complete Guide to Drawing Dynamic Manga Sword Fighters.md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "In a static position\nSlightly twisted torso\nTwisted torso\nA\nThe central axis is a straight line. It \nmakes the character look static and rigid.\nB\nThe central axis is slightly bent \nto add movement. It makes the \ncharacte"
+    },
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Each actor strives constantly to develop their character in relation to the text. From all the clues scattered throughout the script, she decides scene by scene what her character wants, thinks, notices, remembers, and i"
+    },
+    "chunk_4a4549c9f8fbf90da7e97074695793ed70d5d22b1284e53b594136605af6cf81": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "FIG 13Animation consists of sequences of weightless drawings. The success of animation on the screen of animation on the screen depends largely on how well these drawings give the impression of reacting in an exaggerated"
+    },
+    "chunk_73257537ea9aff27316717cac81a98b26e904ce3be3121cc4beb870a88101d1e": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "LATENT_RESCUE"
+     ],
+     "text": "If it is a fairly gentle movement, the action might take about 16 frames to complete which on double frame animation, or \u201ctwos,\u201d would be eight drawings. If the arm is at rest at the beginning and end of the movement, th"
+    }
+   },
+   "fanout": {
+    "enabled": true,
+    "candidates": 24,
+    "hops": null,
+    "hop_candidates": null,
+    "lane_ms": 1151.9,
+    "degraded": null
+   }
+  },
+  "hop": {
+   "wall_ms": 6586.6,
+   "hop_on": true,
+   "final_chunks": [
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+    "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "chunk_73257537ea9aff27316717cac81a98b26e904ce3be3121cc4beb870a88101d1e"
+   ],
+   "final_docs": [
+    "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+    "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+    "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "direct_final": 15,
+   "lane_g_final": [
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294"
+   ],
+   "rows": {
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "A further advantage which animation can claim over live action is the ease with which character reactions can be controlled and exaggerated. Without some degree of exaggeration, cartoon animation would not look right. Th"
+    },
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "When dealing with very heavy objects, therefore, the director must allow plenty of time to start, stop, or change their movements, in order to make their weight look convincing. The animator, for his part, must see that "
+    },
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "It is not the exaggeration of the weight of the object which is at the center of animation, but the exaggeration of the tendency of the weight\u2014any weight\u2014to move in a certain way.\n\nThe timing of a scene for animation has"
+    },
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc": {
+     "doc": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+     "source": "VES Handbook of Visual Effects.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "The speed at which an object moves also tends to convey its sense of size. The faster it moves, the smaller it will seem to be, especially if it shows no sense of momentum and weight. This becomes problematic when the di"
+    },
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef": {
+     "doc": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+     "source": "handbook.html",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "Weight is perceived when movement has consequences: acceleration takes time, support limbs compress, contacts produce reactions, heavy objects continue moving, and braking takes distance.\n\nWeak\n\n> He lifts a heavy suitca"
+    },
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "All objects in nature have their own weight, construction, and degree of flexibility, and therefore each behaves in its own individual way when a force acts upon it. This behavior, a combination of position and timing, i"
+    },
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "The way an object behaves on the screen, and the effect of weight that it gives, depends entirely on the spacing of the animation drawings and not on the drawing itself. It does not matter how beautifully drawn the canno"
+    },
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "This is not strictly true, of course, with live characters because if the movement is slow enough, the muscles have time to contract and stop the arms straightening completely. Nevertheless the tendency is there, and it "
+    },
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294": {
+     "doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+     "source": "Ed Hooks - Acting for Animators (2017).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "Throughout the 1935 memo, Walt makes it obvious that he considered movement itself to be funny, that there are \u201cfunny\u201d things to be done with, for example, a fat person\u2019s walk. This is a throwback to cartoon thinking, an"
+    },
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35": {
+     "doc": "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+     "source": "Making Meaning with Machines.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "182\t\nChapter 7\ndynamics of hardware, as robots (and humans) are. Moreover, talented \nartists create their motion profiles in context (using environment and \nnarrative to construct situations for characters) for the expre"
+    },
+    "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f": {
+     "doc": "doc_b6e7af16218cdb0dce246ce152602d61ae5b18da3f9fa794e6612a6d926f6fdc",
+     "source": "Force Dynamic Life Drawing.md",
+     "arrivals": [
+      "SHADOW_DUALREAD"
+     ],
+     "text": "When animating, or drawing, gravity is the invisible force you must always be aware of to bring reality to your work. Some pointers to think about when drawing the figure and considering our topic:"
+    },
+    "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822": {
+     "doc": "doc_2d6319ceeaabdec1e74b3ce9e06c1f58ccac29033d3658f14b97a21ac0db5875",
+     "source": "Complete Guide to Drawing Dynamic Manga Sword Fighters.md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "In a static position\nSlightly twisted torso\nTwisted torso\nA\nThe central axis is a straight line. It \nmakes the character look static and rigid.\nB\nThe central axis is slightly bent \nto add movement. It makes the \ncharacte"
+    },
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Each actor strives constantly to develop their character in relation to the text. From all the clues scattered throughout the script, she decides scene by scene what her character wants, thinks, notices, remembers, and i"
+    },
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "The way a movement is timed can contribute greatly to the feeling of size and scale of an object or character. When animating a man with naturalistic proportions, his movements may be timed as he would perform them in re"
+    },
+    "chunk_73257537ea9aff27316717cac81a98b26e904ce3be3121cc4beb870a88101d1e": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "LATENT_RESCUE"
+     ],
+     "text": "If it is a fairly gentle movement, the action might take about 16 frames to complete which on double frame animation, or \u201ctwos,\u201d would be eight drawings. If the arm is at rest at the beginning and end of the movement, th"
+    }
+   },
+   "fanout": {
+    "enabled": true,
+    "candidates": 36,
+    "hops": [
+     {
+      "item": "Animation Techniques",
+      "from_doc": "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680",
+      "to_doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+     },
+     {
+      "item": "Animation Techniques",
+      "from_doc": "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680",
+      "to_doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+     },
+     {
+      "item": "Rhythm and timing in dance for animators",
+      "from_doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+      "to_doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+     },
+     {
+      "item": "Applications of affective movement in virtual reality avatars.",
+      "from_doc": "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+      "to_doc": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab"
+     }
+    ],
+    "hop_candidates": 12,
+    "lane_ms": 1941.7,
+    "degraded": null
+   }
+  },
+  "delta": {
+   "new_in_final": [
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef"
+   ],
+   "displaced": [
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_4a4549c9f8fbf90da7e97074695793ed70d5d22b1284e53b594136605af6cf81"
+   ],
+   "new_docs": [
+    "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab"
+   ],
+   "direct_live": 15,
+   "direct_hop": 15,
+   "wall_delta_ms": 318.3,
+   "hops": [
+    {
+     "item": "Animation Techniques",
+     "from_doc": "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680",
+     "to_doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+    },
+    {
+     "item": "Animation Techniques",
+     "from_doc": "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680",
+     "to_doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+    },
+    {
+     "item": "Rhythm and timing in dance for animators",
+     "from_doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+     "to_doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+    },
+    {
+     "item": "Applications of affective movement in virtual reality avatars.",
+     "from_doc": "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+     "to_doc": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab"
+    }
+   ],
+   "hop_candidates": 12
+  }
+ },
+ {
+  "turn": 2,
+  "mode": "WILDCARD",
+  "question": "What do my books say about making an animated character's movement feel weighty?",
+  "live": {
+   "wall_ms": 5312.9,
+   "hop_on": false,
+   "final_chunks": [
+    "chunk_066e7c2bb83a46b817222cdcb014a3403aa9c5a2b8bb90c2ce96740e6edf568c",
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+    "chunk_a66cb41c4d63b802e5662237065c2b876029df593bb27a1225d94b9ec80c666d",
+    "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060",
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4",
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce"
+   ],
+   "final_docs": [
+    "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+    "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+    "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "direct_final": 14,
+   "lane_g_final": [
+    "chunk_066e7c2bb83a46b817222cdcb014a3403aa9c5a2b8bb90c2ce96740e6edf568c",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388"
+   ],
+   "rows": {
+    "chunk_066e7c2bb83a46b817222cdcb014a3403aa9c5a2b8bb90c2ce96740e6edf568c": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "After many years in animation making films and commercials, I can now confess that I\u2019m a fully-fledged animation nerd. I am happiest when I\u2019m either animating, watching animation, teaching animation, or talking about ani"
+    },
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "When dealing with very heavy objects, therefore, the director must allow plenty of time to start, stop, or change their movements, in order to make their weight look convincing. The animator, for his part, must see that "
+    },
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "It is not the exaggeration of the weight of the object which is at the center of animation, but the exaggeration of the tendency of the weight\u2014any weight\u2014to move in a certain way.\n\nThe timing of a scene for animation has"
+    },
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc": {
+     "doc": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+     "source": "VES Handbook of Visual Effects.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "The speed at which an object moves also tends to convey its sense of size. The faster it moves, the smaller it will seem to be, especially if it shows no sense of momentum and weight. This becomes problematic when the di"
+    },
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "All objects in nature have their own weight, construction, and degree of flexibility, and therefore each behaves in its own individual way when a force acts upon it. This behavior, a combination of position and timing, i"
+    },
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "The way an object behaves on the screen, and the effect of weight that it gives, depends entirely on the spacing of the animation drawings and not on the drawing itself. It does not matter how beautifully drawn the canno"
+    },
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3": {
+     "doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+     "source": "Ed Hooks - Acting for Animators (2017).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "In 1937, Don Graham lectured at the old Hyperion Disney Studio about the importance of animating force rather than animating mere form. He pointed out that if you draw the form of a leg and then another bunch of forms of"
+    },
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "This is not strictly true, of course, with live characters because if the movement is slow enough, the muscles have time to contract and stop the arms straightening completely. Nevertheless the tendency is there, and it "
+    },
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35": {
+     "doc": "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+     "source": "Making Meaning with Machines.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "182\t\nChapter 7\ndynamics of hardware, as robots (and humans) are. Moreover, talented \nartists create their motion profiles in context (using environment and \nnarrative to construct situations for characters) for the expre"
+    },
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294": {
+     "doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+     "source": "Ed Hooks - Acting for Animators (2017).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "Throughout the 1935 memo, Walt makes it obvious that he considered movement itself to be funny, that there are \u201cfunny\u201d things to be done with, for example, a fat person\u2019s walk. This is a throwback to cartoon thinking, an"
+    },
+    "chunk_a66cb41c4d63b802e5662237065c2b876029df593bb27a1225d94b9ec80c666d": {
+     "doc": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+     "source": "handbook.html",
+     "arrivals": [
+      "LATENT_RESCUE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Quiet standing is not motionless. Postural sway contains universal and individual components related to balance control. [S038] For animation, a postural-tone model can include low-frequency ankle/hip strategy, respirati"
+    },
+    "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060": {
+     "doc": "doc_2acb893d565b71ae2396228795aac564efc3bb8434b3cfa2e995c9ccbe09528f",
+     "source": "The Laban Workbook for Actors.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Moving Into Character\t\n65\nexercise or two for each quality. Keep in mind that it is really impossible \nto isolate just one Effort quality in one\u2019s movement. In fact, all four are \npresent in all movement, but usually onl"
+    },
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "Each actor strives constantly to develop their character in relation to the text. From all the clues scattered throughout the script, she decides scene by scene what her character wants, thinks, notices, remembers, and i"
+    },
+    "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4": {
+     "doc": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+     "source": "handbook.html",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "SUB motion.force\n\n## Force dynamics\n\n08 \u2014 Force Dynamics: Physical and Perceived Force\nsrc: Additional/motion direction/08_force_dynamics.md \u00b7 words: 864\n\n### 08 \u2014 Force Dynamics: Physical and Perceived Force\n\n#### Execu"
+    },
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "A live actor faced with these problems moves his muscles and limbs and deals with gravity automatically from habit, and so can concentrate on acting. An animator has to worry about making his flat, weightless drawings mo"
+    }
+   },
+   "fanout": {
+    "enabled": true,
+    "candidates": 24,
+    "hops": null,
+    "hop_candidates": null,
+    "lane_ms": 1032.9,
+    "degraded": null
+   }
+  },
+  "hop": {
+   "wall_ms": 6143.6,
+   "hop_on": true,
+   "final_chunks": [
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_a66cb41c4d63b802e5662237065c2b876029df593bb27a1225d94b9ec80c666d",
+    "chunk_bf097e57ee1dc4ad96154bfff86450a67dd951f1aaca2f4af2156bfcf25e2781",
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4",
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce"
+   ],
+   "final_docs": [
+    "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+    "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+    "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+    "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+   ],
+   "direct_final": 14,
+   "lane_g_final": [
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+    "chunk_bf097e57ee1dc4ad96154bfff86450a67dd951f1aaca2f4af2156bfcf25e2781"
+   ],
+   "rows": {
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "A further advantage which animation can claim over live action is the ease with which character reactions can be controlled and exaggerated. Without some degree of exaggeration, cartoon animation would not look right. Th"
+    },
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "When dealing with very heavy objects, therefore, the director must allow plenty of time to start, stop, or change their movements, in order to make their weight look convincing. The animator, for his part, must see that "
+    },
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "It is not the exaggeration of the weight of the object which is at the center of animation, but the exaggeration of the tendency of the weight\u2014any weight\u2014to move in a certain way.\n\nThe timing of a scene for animation has"
+    },
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc": {
+     "doc": "doc_853e9df68e8846efb1a5c6609235ccd2a41170191adbece912fb4e2bb0b59a3a",
+     "source": "VES Handbook of Visual Effects.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "The speed at which an object moves also tends to convey its sense of size. The faster it moves, the smaller it will seem to be, especially if it shows no sense of momentum and weight. This becomes problematic when the di"
+    },
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef": {
+     "doc": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+     "source": "handbook.html",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "Weight is perceived when movement has consequences: acceleration takes time, support limbs compress, contacts produce reactions, heavy objects continue moving, and braking takes distance.\n\nWeak\n\n> He lifts a heavy suitca"
+    },
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "All objects in nature have their own weight, construction, and degree of flexibility, and therefore each behaves in its own individual way when a force acts upon it. This behavior, a combination of position and timing, i"
+    },
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "The way an object behaves on the screen, and the effect of weight that it gives, depends entirely on the spacing of the animation drawings and not on the drawing itself. It does not matter how beautifully drawn the canno"
+    },
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "This is not strictly true, of course, with live characters because if the movement is slow enough, the muscles have time to contract and stop the arms straightening completely. Nevertheless the tendency is there, and it "
+    },
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294": {
+     "doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+     "source": "Ed Hooks - Acting for Animators (2017).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "Throughout the 1935 memo, Walt makes it obvious that he considered movement itself to be funny, that there are \u201cfunny\u201d things to be done with, for example, a fat person\u2019s walk. This is a throwback to cartoon thinking, an"
+    },
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35": {
+     "doc": "doc_61484fe6c31e006a03c5aac0b78de3ba770eeb9fcd256d3445d31a0e11b84f2a",
+     "source": "Making Meaning with Machines.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "182\t\nChapter 7\ndynamics of hardware, as robots (and humans) are. Moreover, talented \nartists create their motion profiles in context (using environment and \nnarrative to construct situations for characters) for the expre"
+    },
+    "chunk_a66cb41c4d63b802e5662237065c2b876029df593bb27a1225d94b9ec80c666d": {
+     "doc": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+     "source": "handbook.html",
+     "arrivals": [
+      "LATENT_RESCUE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Quiet standing is not motionless. Postural sway contains universal and individual components related to balance control. [S038] For animation, a postural-tone model can include low-frequency ankle/hip strategy, respirati"
+    },
+    "chunk_bf097e57ee1dc4ad96154bfff86450a67dd951f1aaca2f4af2156bfcf25e2781": {
+     "doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+     "source": "Ed Hooks - Acting for Animators (2017).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "In lifting, for example \u2013 or other actions \u2013 we should drive at the fundamentals of the animation, and at the same time, incorporate the caricature. When someone is lifting a heavy weight, what do you feel? Do you feel t"
+    },
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "Each actor strives constantly to develop their character in relation to the text. From all the clues scattered throughout the script, she decides scene by scene what her character wants, thinks, notices, remembers, and i"
+    },
+    "chunk_3d95fef71fffb858588a33a914790de79204e4d93c978fa2437e61d325eb84b4": {
+     "doc": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab",
+     "source": "handbook.html",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "SUB motion.force\n\n## Force dynamics\n\n08 \u2014 Force Dynamics: Physical and Perceived Force\nsrc: Additional/motion direction/08_force_dynamics.md \u00b7 words: 864\n\n### 08 \u2014 Force Dynamics: Physical and Perceived Force\n\n#### Execu"
+    },
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce": {
+     "doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e",
+     "source": "Timing for Animation.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "A live actor faced with these problems moves his muscles and limbs and deals with gravity automatically from habit, and so can concentrate on acting. An animator has to worry about making his flat, weightless drawings mo"
+    }
+   },
+   "fanout": {
+    "enabled": true,
+    "candidates": 36,
+    "hops": [
+     {
+      "item": "Animation Techniques",
+      "from_doc": "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680",
+      "to_doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+     },
+     {
+      "item": "Animation Techniques",
+      "from_doc": "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680",
+      "to_doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+     },
+     {
+      "item": "Rhythm and timing in dance for animators",
+      "from_doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+      "to_doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+     },
+     {
+      "item": "Applications of affective movement in virtual reality avatars.",
+      "from_doc": "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+      "to_doc": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab"
+     }
+    ],
+    "hop_candidates": 12,
+    "lane_ms": 2147.4,
+    "degraded": null
+   }
+  },
+  "delta": {
+   "new_in_final": [
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+    "chunk_bf097e57ee1dc4ad96154bfff86450a67dd951f1aaca2f4af2156bfcf25e2781"
+   ],
+   "displaced": [
+    "chunk_066e7c2bb83a46b817222cdcb014a3403aa9c5a2b8bb90c2ce96740e6edf568c",
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060"
+   ],
+   "new_docs": [],
+   "direct_live": 14,
+   "direct_hop": 14,
+   "wall_delta_ms": 830.7,
+   "hops": [
+    {
+     "item": "Animation Techniques",
+     "from_doc": "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680",
+     "to_doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510"
+    },
+    {
+     "item": "Animation Techniques",
+     "from_doc": "doc_f9abfb57bc9fbc55cf5f934aae1a8340a16ac16d979fb4baf694f0b781925680",
+     "to_doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+    },
+    {
+     "item": "Rhythm and timing in dance for animators",
+     "from_doc": "doc_c3fabf239a927f0c8e28f1894d96ca2ed56e7215dac6d29967bf7aa4ea848510",
+     "to_doc": "doc_0730dc4586caa99d199708b8bc739972d2dfe9ed5c3429c13722d045146b8e4e"
+    },
+    {
+     "item": "Applications of affective movement in virtual reality avatars.",
+     "from_doc": "doc_6a3530004713125ce5873c541c5a1fdcad6991c00ff7aed3096bed284a1957f7",
+     "to_doc": "doc_63ba98021d349692d3e24ae5a0a9abb130076f310b873ab67a65a3342b580dab"
+    }
+   ],
+   "hop_candidates": 12
+  }
+ },
+ {
+  "turn": 3,
+  "mode": "GRAPH",
+  "question": "How do editors and directors build suspense without dialogue?",
+  "live": {
+   "wall_ms": 5930.5,
+   "hop_on": false,
+   "final_chunks": [
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+    "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480"
+   ],
+   "final_docs": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+   ],
+   "direct_final": 15,
+   "lane_g_final": [
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d"
+   ],
+   "rows": {
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf": {
+     "doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+     "source": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "By judicious\nuse of opposing screen travel, the audience will\nalways assume that the\ntwo opposite moving\nimages will meet -\nunless otherwise informed\nthrough dialogue or other means.\nContrasting screen direction may empl"
+    },
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec": {
+     "doc": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "source": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "A low-angle shot can make a character seem ominous and foreboding, as in Dr.\nStrangelove (Figure 3.20). When a character is approaching something as seen from a\nlow angle, little is revealed beyond what the character mig"
+    },
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "There are two forces at work for the audience. The first is _curiosity_ or the desire to know. This is why narrative questions drive the story. In this case the audience doesn\u2019t know. The second force is _fear_. For the "
+    },
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6": {
+     "doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "source": "The Anatomy of Story.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "**1.** It creates suspense, especially when you cut back and forth at an increasing pace, as when someone is rushing to save a victim in danger."
+    },
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "Before we discuss what suspense is, let\u2019s look at how it can be generated with just the looks and gazes of the characters. This next example is a scene from Edgar Allan Poe\u2019s _The Purloined Letter_ that tells the story o"
+    },
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c": {
+     "doc": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+     "source": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Alternately, there\u2019s suspense in knowing something\u2019s coming. In _Dunkirk_ we hear an enemy plane coming to attack troops trapped on the beach. We see soldiers hit the ground, and a line of bombs start walking its way tow"
+    },
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD"
+     ],
+     "text": "\u201cIf a director wants to take advantage of suspense and draw the spectator into the film, the director must understand how to tell the story so that the spectator\u2019s desires will be activated. In one sense, the spectator i"
+    },
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "Suspense: The Extreme Long Shot\n85\nHannay\u2019s apartment. In the background, we see the woman\u2019s body on the bed. The house-\nkeeper screams, but what we hear is the whistle of the train. In the next shot, the rushing \ntrain "
+    },
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55": {
+     "doc": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+     "source": "Manga in Theory and Practice.md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "Now, make a list of what kinds of dialogue would make you want to read on to the next page. I\u2019ll provide some examples.\n\n\u2022 Shocking dialogue\n\n\u2022 Mellow, calming dialogue\n\n\u2022 Comforting dialogue\n\n\u2022 Sad dialogue\n\n\u2022 Angry dia"
+    },
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "LATENT_RESCUE"
+     ],
+     "text": "In this version, the explosion is not a total surprise to the audience because they knew more than she did. By loosening the previously tight POV identification, we gain in dramatic suspense. When Anne approaches the spo"
+    },
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "86\nCHAPTER 7:\u2003 Experiments in Editing: Alfred Hitchcock\nsee his hands in closeup. Hitchcock then cuts to an extreme long shot of a man falling to \nthe ground. We don\u2019t know if it\u2019s Jones, but as the film cuts to pedestri"
+    },
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d": {
+     "doc": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+     "source": "Grammar of the Edit.md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "> ### \u261e \u2013 PIP #7 Hold Off on Adding Music to Dialogue Scenes\n> \n> #### Reason\n> \n> Dialogue should most often convey important information about the story, the characters, or the topics of discussion. Carefully performed"
+    },
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d": {
+     "doc": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+     "source": "Bruce Block - The Visual Story (2007).md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD"
+     ],
+     "text": "* **Story:** Building blocks of plot, character, and dialogue\n  * **Sound:** Building blocks of dialogue, sound effects, and music\n  * **Visuals:** What are the building blocks of the visuals? Scenery? Props? Costumes? T"
+    },
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Rather than simply relying on visual parallel action, Lang cuts on dialog at one point, \nstarting a sentence in the police camp and ending it in the criminal meeting. The cross-\ncutting is all driven by dialog. There are"
+    },
+    "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "LATENT_RESCUE"
+     ],
+     "text": "Open information, on the other hand, is a common strategy for genre films structured around suspense, like David Farr and Susanne Bier\u2019s six-part spy thriller _The Night Manager_ (2016), about Jonathan Pine, a covert MI6"
+    }
+   },
+   "fanout": {
+    "enabled": true,
+    "candidates": 24,
+    "hops": null,
+    "hop_candidates": null,
+    "lane_ms": 1038.5,
+    "degraded": null
+   }
+  },
+  "hop": {
+   "wall_ms": 6142.8,
+   "hop_on": true,
+   "final_chunks": [
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+    "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480"
+   ],
+   "final_docs": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+   ],
+   "direct_final": 15,
+   "lane_g_final": [
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d"
+   ],
+   "rows": {
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf": {
+     "doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+     "source": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "By judicious\nuse of opposing screen travel, the audience will\nalways assume that the\ntwo opposite moving\nimages will meet -\nunless otherwise informed\nthrough dialogue or other means.\nContrasting screen direction may empl"
+    },
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec": {
+     "doc": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "source": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "A low-angle shot can make a character seem ominous and foreboding, as in Dr.\nStrangelove (Figure 3.20). When a character is approaching something as seen from a\nlow angle, little is revealed beyond what the character mig"
+    },
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "There are two forces at work for the audience. The first is _curiosity_ or the desire to know. This is why narrative questions drive the story. In this case the audience doesn\u2019t know. The second force is _fear_. For the "
+    },
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6": {
+     "doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "source": "The Anatomy of Story.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "**1.** It creates suspense, especially when you cut back and forth at an increasing pace, as when someone is rushing to save a victim in danger."
+    },
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "Before we discuss what suspense is, let\u2019s look at how it can be generated with just the looks and gazes of the characters. This next example is a scene from Edgar Allan Poe\u2019s _The Purloined Letter_ that tells the story o"
+    },
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c": {
+     "doc": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+     "source": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Alternately, there\u2019s suspense in knowing something\u2019s coming. In _Dunkirk_ we hear an enemy plane coming to attack troops trapped on the beach. We see soldiers hit the ground, and a line of bombs start walking its way tow"
+    },
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "\u201cIf a director wants to take advantage of suspense and draw the spectator into the film, the director must understand how to tell the story so that the spectator\u2019s desires will be activated. In one sense, the spectator i"
+    },
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "Suspense: The Extreme Long Shot\n85\nHannay\u2019s apartment. In the background, we see the woman\u2019s body on the bed. The house-\nkeeper screams, but what we hear is the whistle of the train. In the next shot, the rushing \ntrain "
+    },
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55": {
+     "doc": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+     "source": "Manga in Theory and Practice.md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "Now, make a list of what kinds of dialogue would make you want to read on to the next page. I\u2019ll provide some examples.\n\n\u2022 Shocking dialogue\n\n\u2022 Mellow, calming dialogue\n\n\u2022 Comforting dialogue\n\n\u2022 Sad dialogue\n\n\u2022 Angry dia"
+    },
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "LATENT_RESCUE"
+     ],
+     "text": "In this version, the explosion is not a total surprise to the audience because they knew more than she did. By loosening the previously tight POV identification, we gain in dramatic suspense. When Anne approaches the spo"
+    },
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "86\nCHAPTER 7:\u2003 Experiments in Editing: Alfred Hitchcock\nsee his hands in closeup. Hitchcock then cuts to an extreme long shot of a man falling to \nthe ground. We don\u2019t know if it\u2019s Jones, but as the film cuts to pedestri"
+    },
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d": {
+     "doc": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+     "source": "Grammar of the Edit.md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "> ### \u261e \u2013 PIP #7 Hold Off on Adding Music to Dialogue Scenes\n> \n> #### Reason\n> \n> Dialogue should most often convey important information about the story, the characters, or the topics of discussion. Carefully performed"
+    },
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d": {
+     "doc": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+     "source": "Bruce Block - The Visual Story (2007).md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD"
+     ],
+     "text": "* **Story:** Building blocks of plot, character, and dialogue\n  * **Sound:** Building blocks of dialogue, sound effects, and music\n  * **Visuals:** What are the building blocks of the visuals? Scenery? Props? Costumes? T"
+    },
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Rather than simply relying on visual parallel action, Lang cuts on dialog at one point, \nstarting a sentence in the police camp and ending it in the criminal meeting. The cross-\ncutting is all driven by dialog. There are"
+    },
+    "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "LATENT_RESCUE"
+     ],
+     "text": "Open information, on the other hand, is a common strategy for genre films structured around suspense, like David Farr and Susanne Bier\u2019s six-part spy thriller _The Night Manager_ (2016), about Jonathan Pine, a covert MI6"
+    }
+   },
+   "fanout": {
+    "enabled": true,
+    "candidates": 36,
+    "hops": [
+     {
+      "item": "Resources on scene crafting and pacing in screenplays.",
+      "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+      "to_doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5"
+     },
+     {
+      "item": "Resources on scene crafting and pacing in screenplays.",
+      "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+      "to_doc": "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497"
+     },
+     {
+      "item": "Narrative structure in film",
+      "from_doc": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+      "to_doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+     },
+     {
+      "item": "\u201cSave the Cat\u201d by Blake Snyder \u2013 screenwriting structure guide.",
+      "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+      "to_doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+     }
+    ],
+    "hop_candidates": 12,
+    "lane_ms": 2307.0,
+    "degraded": null
+   }
+  },
+  "delta": {
+   "new_in_final": [],
+   "displaced": [],
+   "new_docs": [],
+   "direct_live": 15,
+   "direct_hop": 15,
+   "wall_delta_ms": 212.3,
+   "hops": [
+    {
+     "item": "Resources on scene crafting and pacing in screenplays.",
+     "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "to_doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5"
+    },
+    {
+     "item": "Resources on scene crafting and pacing in screenplays.",
+     "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "to_doc": "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497"
+    },
+    {
+     "item": "Narrative structure in film",
+     "from_doc": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+     "to_doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+    },
+    {
+     "item": "\u201cSave the Cat\u201d by Blake Snyder \u2013 screenwriting structure guide.",
+     "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "to_doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+    }
+   ],
+   "hop_candidates": 12
+  }
+ },
+ {
+  "turn": 4,
+  "mode": "WILDCARD",
+  "question": "How do editors and directors build suspense without dialogue?",
+  "live": {
+   "wall_ms": 5998.7,
+   "hop_on": false,
+   "final_chunks": [
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+    "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480",
+    "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+    "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb"
+   ],
+   "final_docs": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3"
+   ],
+   "direct_final": 15,
+   "lane_g_final": [
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d"
+   ],
+   "rows": {
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf": {
+     "doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+     "source": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "By judicious\nuse of opposing screen travel, the audience will\nalways assume that the\ntwo opposite moving\nimages will meet -\nunless otherwise informed\nthrough dialogue or other means.\nContrasting screen direction may empl"
+    },
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec": {
+     "doc": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "source": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "A low-angle shot can make a character seem ominous and foreboding, as in Dr.\nStrangelove (Figure 3.20). When a character is approaching something as seen from a\nlow angle, little is revealed beyond what the character mig"
+    },
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "There are two forces at work for the audience. The first is _curiosity_ or the desire to know. This is why narrative questions drive the story. In this case the audience doesn\u2019t know. The second force is _fear_. For the "
+    },
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "Before we discuss what suspense is, let\u2019s look at how it can be generated with just the looks and gazes of the characters. This next example is a scene from Edgar Allan Poe\u2019s _The Purloined Letter_ that tells the story o"
+    },
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c": {
+     "doc": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+     "source": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Alternately, there\u2019s suspense in knowing something\u2019s coming. In _Dunkirk_ we hear an enemy plane coming to attack troops trapped on the beach. We see soldiers hit the ground, and a line of bombs start walking its way tow"
+    },
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD"
+     ],
+     "text": "\u201cIf a director wants to take advantage of suspense and draw the spectator into the film, the director must understand how to tell the story so that the spectator\u2019s desires will be activated. In one sense, the spectator i"
+    },
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "Suspense: The Extreme Long Shot\n85\nHannay\u2019s apartment. In the background, we see the woman\u2019s body on the bed. The house-\nkeeper screams, but what we hear is the whistle of the train. In the next shot, the rushing \ntrain "
+    },
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55": {
+     "doc": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+     "source": "Manga in Theory and Practice.md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "Now, make a list of what kinds of dialogue would make you want to read on to the next page. I\u2019ll provide some examples.\n\n\u2022 Shocking dialogue\n\n\u2022 Mellow, calming dialogue\n\n\u2022 Comforting dialogue\n\n\u2022 Sad dialogue\n\n\u2022 Angry dia"
+    },
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "LATENT_RESCUE"
+     ],
+     "text": "In this version, the explosion is not a total surprise to the audience because they knew more than she did. By loosening the previously tight POV identification, we gain in dramatic suspense. When Anne approaches the spo"
+    },
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "86\nCHAPTER 7:\u2003 Experiments in Editing: Alfred Hitchcock\nsee his hands in closeup. Hitchcock then cuts to an extreme long shot of a man falling to \nthe ground. We don\u2019t know if it\u2019s Jones, but as the film cuts to pedestri"
+    },
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d": {
+     "doc": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+     "source": "Grammar of the Edit.md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "> ### \u261e \u2013 PIP #7 Hold Off on Adding Music to Dialogue Scenes\n> \n> #### Reason\n> \n> Dialogue should most often convey important information about the story, the characters, or the topics of discussion. Carefully performed"
+    },
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Rather than simply relying on visual parallel action, Lang cuts on dialog at one point, \nstarting a sentence in the police camp and ending it in the criminal meeting. The cross-\ncutting is all driven by dialog. There are"
+    },
+    "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "LATENT_RESCUE"
+     ],
+     "text": "Open information, on the other hand, is a common strategy for genre films structured around suspense, like David Farr and Susanne Bier\u2019s six-part spy thriller _The Night Manager_ (2016), about Jonathan Pine, a covert MI6"
+    },
+    "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585": {
+     "doc": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852",
+     "source": "The Filmmaker&_039_s Eye - The Language of the Lens _ The Power of Lenses and the Expressive Cinematic...{Mercado, Gustavo}(2019, Taylor &amp_ Francis Group){113109546} libgen.li.md",
+     "arrivals": [
+      "SHADOW_DUALREAD"
+     ],
+     "text": "There are several techniques that can suggest a special connection between characters before it is explicitly revealed through action or dialogue; one of them involves changing the appearance of relative distances betwee"
+    },
+    "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb": {
+     "doc": "doc_aba296ce45733ff009322ceab7a3e485938d9af151211e00028281a757b1d5b3",
+     "source": "Sound Design The Expressive Power of Music Voice and Sound Effects in Cinema.md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "or suspense by.not revealing the audio source. If this. style works well in pad and pen available for noting your first impressions, but avoid any\n\none scene, you and the editor might look for other crucial moments exten"
+    }
+   },
+   "fanout": {
+    "enabled": true,
+    "candidates": 24,
+    "hops": null,
+    "hop_candidates": null,
+    "lane_ms": 1208.3,
+    "degraded": null
+   }
+  },
+  "hop": {
+   "wall_ms": 6039.7,
+   "hop_on": true,
+   "final_chunks": [
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_a0e3284787ddf66ff52d34e2f85aa5b0249f10a5568ec7637c5392c03eec6af4",
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+    "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480"
+   ],
+   "final_docs": [
+    "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+    "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+    "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+    "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+    "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+   ],
+   "direct_final": 15,
+   "lane_g_final": [
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d"
+   ],
+   "rows": {
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf": {
+     "doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+     "source": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "By judicious\nuse of opposing screen travel, the audience will\nalways assume that the\ntwo opposite moving\nimages will meet -\nunless otherwise informed\nthrough dialogue or other means.\nContrasting screen direction may empl"
+    },
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec": {
+     "doc": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "source": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "A low-angle shot can make a character seem ominous and foreboding, as in Dr.\nStrangelove (Figure 3.20). When a character is approaching something as seen from a\nlow angle, little is revealed beyond what the character mig"
+    },
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "There are two forces at work for the audience. The first is _curiosity_ or the desire to know. This is why narrative questions drive the story. In this case the audience doesn\u2019t know. The second force is _fear_. For the "
+    },
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "Before we discuss what suspense is, let\u2019s look at how it can be generated with just the looks and gazes of the characters. This next example is a scene from Edgar Allan Poe\u2019s _The Purloined Letter_ that tells the story o"
+    },
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c": {
+     "doc": "doc_467df8b93e45bcf21d07f34a9edd825860e70aa1e676784548a16fb1f664179b",
+     "source": "The Screen Combat Handbook A Practical Guide for Filmmakers 1_9e6b68fb.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Alternately, there\u2019s suspense in knowing something\u2019s coming. In _Dunkirk_ we hear an enemy plane coming to attack troops trapped on the beach. We see soldiers hit the ground, and a line of bombs start walking its way tow"
+    },
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "\u201cIf a director wants to take advantage of suspense and draw the spectator into the film, the director must understand how to tell the story so that the spectator\u2019s desires will be activated. In one sense, the spectator i"
+    },
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "Suspense: The Extreme Long Shot\n85\nHannay\u2019s apartment. In the background, we see the woman\u2019s body on the bed. The house-\nkeeper screams, but what we hear is the whistle of the train. In the next shot, the rushing \ntrain "
+    },
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55": {
+     "doc": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+     "source": "Manga in Theory and Practice.md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "text": "Now, make a list of what kinds of dialogue would make you want to read on to the next page. I\u2019ll provide some examples.\n\n\u2022 Shocking dialogue\n\n\u2022 Mellow, calming dialogue\n\n\u2022 Comforting dialogue\n\n\u2022 Sad dialogue\n\n\u2022 Angry dia"
+    },
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "LATENT_RESCUE"
+     ],
+     "text": "In this version, the explosion is not a total surprise to the audience because they knew more than she did. By loosening the previously tight POV identification, we gain in dramatic suspense. When Anne approaches the spo"
+    },
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "86\nCHAPTER 7:\u2003 Experiments in Editing: Alfred Hitchcock\nsee his hands in closeup. Hitchcock then cuts to an extreme long shot of a man falling to \nthe ground. We don\u2019t know if it\u2019s Jones, but as the film cuts to pedestri"
+    },
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d": {
+     "doc": "doc_a30610986c8d2496bd543a279701664227f7016ec6ae0034c79c454f7263ba17",
+     "source": "Grammar of the Edit.md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "> ### \u261e \u2013 PIP #7 Hold Off on Adding Music to Dialogue Scenes\n> \n> #### Reason\n> \n> Dialogue should most often convey important information about the story, the characters, or the topics of discussion. Carefully performed"
+    },
+    "chunk_a0e3284787ddf66ff52d34e2f85aa5b0249f10a5568ec7637c5392c03eec6af4": {
+     "doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887",
+     "source": "Francis Glebas - Directing the Story (2008).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "In [Chapter 1](dummy_split_006.html#filepos13766), we saw that a story is like ventriloquism. The film story appears to tell itself without anyone having to tell it. There are certain tricks involved to achieve this. Let"
+    },
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d": {
+     "doc": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+     "source": "Bruce Block - The Visual Story (2007).md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD"
+     ],
+     "text": "* **Story:** Building blocks of plot, character, and dialogue\n  * **Sound:** Building blocks of dialogue, sound effects, and music\n  * **Visuals:** What are the building blocks of the visuals? Scenery? Props? Costumes? T"
+    },
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347": {
+     "doc": "doc_151925f95f9435ef292252ebd6a7b07791cf40aaa26495f5718000d65c9eb7f4",
+     "source": "Ken Dancyger - The technique of film & video editing (2019).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Rather than simply relying on visual parallel action, Lang cuts on dialog at one point, \nstarting a sentence in the police camp and ending it in the criminal meeting. The cross-\ncutting is all driven by dialog. There are"
+    },
+    "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480": {
+     "doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5",
+     "source": "Michael Rabiger, Mick Hurbis-Cherrier - Directing - Film Techniques and Aesthetics (2020).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "LATENT_RESCUE"
+     ],
+     "text": "Open information, on the other hand, is a common strategy for genre films structured around suspense, like David Farr and Susanne Bier\u2019s six-part spy thriller _The Night Manager_ (2016), about Jonathan Pine, a covert MI6"
+    }
+   },
+   "fanout": {
+    "enabled": true,
+    "candidates": 36,
+    "hops": [
+     {
+      "item": "Resources on scene crafting and pacing in screenplays.",
+      "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+      "to_doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5"
+     },
+     {
+      "item": "Resources on scene crafting and pacing in screenplays.",
+      "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+      "to_doc": "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497"
+     },
+     {
+      "item": "Narrative structure in film",
+      "from_doc": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+      "to_doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+     },
+     {
+      "item": "\u201cSave the Cat\u201d by Blake Snyder \u2013 screenwriting structure guide.",
+      "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+      "to_doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+     }
+    ],
+    "hop_candidates": 12,
+    "lane_ms": 1842.7,
+    "degraded": null
+   }
+  },
+  "delta": {
+   "new_in_final": [
+    "chunk_a0e3284787ddf66ff52d34e2f85aa5b0249f10a5568ec7637c5392c03eec6af4",
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d"
+   ],
+   "displaced": [
+    "chunk_8991543412e85075f622add7181e433ed5cdc966f0c8a1b3c8e14e8b68a21585",
+    "chunk_7975107e1f4fd5a806c497140e24d4ac0d7e483e60e714254e2bac360f5da2bb"
+   ],
+   "new_docs": [
+    "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+   ],
+   "direct_live": 15,
+   "direct_hop": 15,
+   "wall_delta_ms": 41.0,
+   "hops": [
+    {
+     "item": "Resources on scene crafting and pacing in screenplays.",
+     "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "to_doc": "doc_9992e6fbb627f6d8d22f0a29b9ef61a25bdaa9b82882d0e5f216f446e9ea5db5"
+    },
+    {
+     "item": "Resources on scene crafting and pacing in screenplays.",
+     "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "to_doc": "doc_4832e3833d520e27e8465687cfbb981c20694ea6514e584016c97249b78da497"
+    },
+    {
+     "item": "Narrative structure in film",
+     "from_doc": "doc_594d7f40c73ac9ef8aa160ca63602de24cfd264d337ef6325869d6adcad1eb0f",
+     "to_doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+    },
+    {
+     "item": "\u201cSave the Cat\u201d by Blake Snyder \u2013 screenwriting structure guide.",
+     "from_doc": "doc_9e93eca1dc22a6376b33850562db94ea9668789c7cfb7941d14ad952f066acc3",
+     "to_doc": "doc_82452d044f994276be77051589e114c79bc9734fcafe77262cf7467a8176f887"
+    }
+   ],
+   "hop_candidates": 12
+  }
+ },
+ {
+  "turn": 5,
+  "mode": "GRAPH",
+  "question": "How do lighting and color choices change how an audience reads a scene?",
+  "live": {
+   "wall_ms": 5627.6,
+   "hop_on": false,
+   "final_chunks": [
+    "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+    "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+    "chunk_c13623bda0afebe82606600b65077293111aba63c8a9949260d9e72df57c2558",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9",
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931",
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91"
+   ],
+   "final_docs": [
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+    "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+   ],
+   "direct_final": 15,
+   "lane_g_final": [
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9"
+   ],
+   "rows": {
+    "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "LATENT_RESCUE",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "PHOTO 10.5 Colored light accents on Cuyle Carvin and Ashley Taylor, The\nCold Equations, Ellipsis Films\nAudiences easily accept colored accents in sci-fi due to the idea\nthat high-tech panels are assumed to have various c"
+    },
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "First, we light them at the sofa.\nNow we light the area behind them. If that area is dark and murky,\nhow will that affect the perception of the viewer when listening to the\nactors talk? The viewer might suspect one of th"
+    },
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "10 WORKING WITH COLOR:\nUsing Color for Mood and Using\nGels\nAnyone wanting to master lighting for cinematography should study\ntheatrical lighting design for its use of color. In stage lighting design,\nwe use color extensi"
+    },
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "a feeling of dawn or sunset. This is all part of that international\nlanguage of light. The color of the light on the background will also\ntransmit a subliminal message to the viewer\u2014bluish light has\nbecome a worldwide ac"
+    },
+    "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "LATENT_RESCUE",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "Superhero movies,\nlike horror films, force the audience to suspend disbelief so far that\ncolor becomes more than acceptable. Look at the Batman and\nSpider-Man movies, and how vibrant the colors are. A lot of that has\nto "
+    },
+    "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "We all see the same colors of sunrise and\nsunset, of twilight and moonlight, of fire and streetlights. So color can\nbe used to help communicate visually to everyone, everywhere.\nUsing color and deciding how rich to make "
+    },
+    "chunk_c13623bda0afebe82606600b65077293111aba63c8a9949260d9e72df57c2558": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "11 LIGHT THE SCENE, NOT JUST\nTHE SHOT:\nHigh Key, Low Key, Contrast\nRatios, Exposure Choice,\nChiaroscuro Lighting, Rembrandt,\nand Butterfly Lighting\nWhen I told my friend DP Joseph di Gennaro that I was writing a\ntextbook"
+    },
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7": {
+     "doc": "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+     "source": "Scoppettuolo & Saccone - The Definitive Guide to DaVinci Resolve 15 (2018).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "Much has been said about the emotional power of color to shape audience mood, and nobody would argue that a scene lit by cool blue lighting is going to have a very different vibe than one that\u2019s lit by warm orange lighti"
+    },
+    "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9": {
+     "doc": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "source": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "The most commonly used terminology is front, 3/4 front, side,\n3/4 back, and backlight. The direction of the light is a major determinant not only of\nthe shadows, but it is also an important factor in the mood and emotion"
+    },
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63": {
+     "doc": "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+     "source": "Grammar of the Shot.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "There is a science to color and light and you should certainly explore more of that on \nyour own. Just be aware that bright colors will tend to appear closer to a viewer (as \nthough they were popping off the screen), whe"
+    },
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee": {
+     "doc": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "source": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "LIGHTING AS STORYTELLING\nIn visual storytelling, few elements are as effective and as powerful as light and color.\nThey have the ability to reach viewers at a purely emotion gut level. This gives them\nthe added advantage"
+    },
+    "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a": {
+     "doc": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "source": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Lighting and controlling color are what takes up most of\nthe director of photography\u2019s time on most sets and for good reason. They also have\na special power that is shared only by a very few art forms such as music and d"
+    },
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6": {
+     "doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+     "source": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "THE FIVE C's\nA\np[(lyer\nmay\n(/SS IIIII(!\ndo minance\nof\na\nWOII/! IJY\n,~ t a ll rl i ll g up, w hile tlwy rem ai n\nsea/rd.\nLIGHTING, TONAL VA LUE & COLORS\nViewer's eyes\nare\nnormally attracted\nto the\nmost brightly illumin at"
+    },
+    "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931": {
+     "doc": "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd",
+     "source": "Framed Ink.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Lighti\nIs what is in front of us and what we perceive actually the Lighting is the first answer. By changing the lighting we\nsame thing? change the reality in front of us, or, to be more precise, we\nradically change our "
+    },
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91": {
+     "doc": "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+     "source": "Scoppettuolo & Saccone - The Definitive Guide to DaVinci Resolve 15 (2018).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Of course, what these varied illuminants mean depends on the visual palette you develop. Warm lighting that denotes romance in one film may instead portray roiling, desert-bound discomfort in another. Their impact, depen"
+    }
+   },
+   "fanout": {
+    "enabled": true,
+    "candidates": 24,
+    "hops": null,
+    "hop_candidates": null,
+    "lane_ms": 1063.4,
+    "degraded": null
+   }
+  },
+  "hop": {
+   "wall_ms": 6186.0,
+   "hop_on": true,
+   "final_chunks": [
+    "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+    "chunk_c13623bda0afebe82606600b65077293111aba63c8a9949260d9e72df57c2558",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_cc17852146968016fafc175094a7fbee07558e3f0923dff97697fda4959a61ae",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9",
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a",
+    "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931"
+   ],
+   "final_docs": [
+    "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+    "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+    "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+    "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+    "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+    "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd"
+   ],
+   "direct_final": 15,
+   "lane_g_final": [
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_cc17852146968016fafc175094a7fbee07558e3f0923dff97697fda4959a61ae",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9"
+   ],
+   "rows": {
+    "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "LATENT_RESCUE",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "PHOTO 10.5 Colored light accents on Cuyle Carvin and Ashley Taylor, The\nCold Equations, Ellipsis Films\nAudiences easily accept colored accents in sci-fi due to the idea\nthat high-tech panels are assumed to have various c"
+    },
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "First, we light them at the sofa.\nNow we light the area behind them. If that area is dark and murky,\nhow will that affect the perception of the viewer when listening to the\nactors talk? The viewer might suspect one of th"
+    },
+    "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "We all see the same colors of sunrise and\nsunset, of twilight and moonlight, of fire and streetlights. So color can\nbe used to help communicate visually to everyone, everywhere.\nUsing color and deciding how rich to make "
+    },
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "10 WORKING WITH COLOR:\nUsing Color for Mood and Using\nGels\nAnyone wanting to master lighting for cinematography should study\ntheatrical lighting design for its use of color. In stage lighting design,\nwe use color extensi"
+    },
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SHADOW_DUALREAD",
+      "SEEALSO_FANOUT",
+      "GRAPH_DEST"
+     ],
+     "text": "a feeling of dawn or sunset. This is all part of that international\nlanguage of light. The color of the light on the background will also\ntransmit a subliminal message to the viewer\u2014bluish light has\nbecome a worldwide ac"
+    },
+    "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "LATENT_RESCUE",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "Superhero movies,\nlike horror films, force the audience to suspend disbelief so far that\ncolor becomes more than acceptable. Look at the Batman and\nSpider-Man movies, and how vibrant the colors are. A lot of that has\nto "
+    },
+    "chunk_c13623bda0afebe82606600b65077293111aba63c8a9949260d9e72df57c2558": {
+     "doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d",
+     "source": "David Landau - Lighting for Cinematography (2014).md",
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD",
+      "SHADOW_DUALREAD",
+      "GRAPH_DEST"
+     ],
+     "text": "11 LIGHT THE SCENE, NOT JUST\nTHE SHOT:\nHigh Key, Low Key, Contrast\nRatios, Exposure Choice,\nChiaroscuro Lighting, Rembrandt,\nand Butterfly Lighting\nWhen I told my friend DP Joseph di Gennaro that I was writing a\ntextbook"
+    },
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6": {
+     "doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+     "source": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "THE FIVE C's\nA\np[(lyer\nmay\n(/SS IIIII(!\ndo minance\nof\na\nWOII/! IJY\n,~ t a ll rl i ll g up, w hile tlwy rem ai n\nsea/rd.\nLIGHTING, TONAL VA LUE & COLORS\nViewer's eyes\nare\nnormally attracted\nto the\nmost brightly illumin at"
+    },
+    "chunk_cc17852146968016fafc175094a7fbee07558e3f0923dff97697fda4959a61ae": {
+     "doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+     "source": "Joseph V. Mascelli - The Five C's of Cinematography (1998).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "A bri ghter ob ject\nadvanc es from a darker backg round toward the\nviewer. It is, therefore, im portan t to sec that a\nsubordinate player or objec t does not Meal the\nscene unintentionally through these advantages .\nPlay"
+    },
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7": {
+     "doc": "doc_867ba698b4579557126ebb8aa6e83b5dce18656f5ca6c7eaade5cd1a5e8e2864",
+     "source": "Scoppettuolo & Saccone - The Definitive Guide to DaVinci Resolve 15 (2018).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "Much has been said about the emotional power of color to shape audience mood, and nobody would argue that a scene lit by cool blue lighting is going to have a very different vibe than one that\u2019s lit by warm orange lighti"
+    },
+    "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9": {
+     "doc": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "source": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD",
+      "SEEALSO_FANOUT"
+     ],
+     "text": "The most commonly used terminology is front, 3/4 front, side,\n3/4 back, and backlight. The direction of the light is a major determinant not only of\nthe shadows, but it is also an important factor in the mood and emotion"
+    },
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63": {
+     "doc": "doc_b7f25467da7b74f0d7f9a43323acd8de887e4a5971231ae884b31bb5f0e07584",
+     "source": "Grammar of the Shot.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "There is a science to color and light and you should certainly explore more of that on \nyour own. Just be aware that bright colors will tend to appear closer to a viewer (as \nthough they were popping off the screen), whe"
+    },
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee": {
+     "doc": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "source": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "LIGHTING AS STORYTELLING\nIn visual storytelling, few elements are as effective and as powerful as light and color.\nThey have the ability to reach viewers at a purely emotion gut level. This gives them\nthe added advantage"
+    },
+    "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a": {
+     "doc": "doc_7398fb1b0e1d6fe4b9b2280b427db5dbf6de630fa4bbcf684ece1a9dc5b55da8",
+     "source": "Blain Brown - Cinematography - Theory and Practice (2016).md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Lighting and controlling color are what takes up most of\nthe director of photography\u2019s time on most sets and for good reason. They also have\na special power that is shared only by a very few art forms such as music and d"
+    },
+    "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931": {
+     "doc": "doc_ea7bc57b3492b11fa6549764d180e1b423b32371300f3215005470c00f226ffd",
+     "source": "Framed Ink.md",
+     "arrivals": [
+      "HIERARCHICAL_ROUTE",
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "text": "Lighti\nIs what is in front of us and what we perceive actually the Lighting is the first answer. By changing the lighting we\nsame thing? change the reality in front of us, or, to be more precise, we\nradically change our "
+    }
+   },
+   "fanout": {
+    "enabled": true,
+    "candidates": 36,
+    "hops": [
+     {
+      "item": "Perception psychology in film",
+      "from_doc": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+      "to_doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed"
+     },
+     {
+      "item": "Perception psychology in film",
+      "from_doc": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+      "to_doc": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852"
+     },
+     {
+      "item": "Guides to lighting design for cinematic composition.",
+      "from_doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+      "to_doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+     },
+     {
+      "item": "Research on audience perception of visual rhythm.",
+      "from_doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+      "to_doc": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+     }
+    ],
+    "hop_candidates": 12,
+    "lane_ms": 1870.0,
+    "degraded": null
+   }
+  },
+  "delta": {
+   "new_in_final": [
+    "chunk_cc17852146968016fafc175094a7fbee07558e3f0923dff97697fda4959a61ae"
+   ],
+   "displaced": [
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91"
+   ],
+   "new_docs": [],
+   "direct_live": 15,
+   "direct_hop": 15,
+   "wall_delta_ms": 558.4,
+   "hops": [
+    {
+     "item": "Perception psychology in film",
+     "from_doc": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+     "to_doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed"
+    },
+    {
+     "item": "Perception psychology in film",
+     "from_doc": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3",
+     "to_doc": "doc_30fa95765113d57adc420e4e5dd4e3e5d57921f20dc6da197b051a6bc667c852"
+    },
+    {
+     "item": "Guides to lighting design for cinematic composition.",
+     "from_doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+     "to_doc": "doc_a5df8484b331e91cf2bccba57d28d01bfce440692a7f7467148255c5315dd12d"
+    },
+    {
+     "item": "Research on audience perception of visual rhythm.",
+     "from_doc": "doc_4832e163606df04f37ed4cd608b1e9917bb3c217185b42f3547eab93ebcbc4ed",
+     "to_doc": "doc_ffb3ad4326f17865b065d5a6abc9df4bee9f3bc290981d9e197b09bfffa7d7c3"
+    }
+   ],
+   "hop_candidates": 12
+  }
+ }
+]

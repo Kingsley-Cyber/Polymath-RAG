@@ -214,6 +214,7 @@ _INT_KNOBS = ("rerank_max", "synthesis_max", "global_dense_k", "global_sparse_k"
               "dualread_max_parents", "dualread_children_per_parent", "dualread_budget_ms",             # POLYMATH_CHAT_DUALREAD_*
               "hierarchy_route_documents",                                                              # SECTION-ROUTING-V1
               "seealso_fanout_enabled", "seealso_fanout_atoms", "seealso_fanout_children",              # P5 fan-out (lane G)
+              "seealso_hop_items", "seealso_hop_docs", "seealso_hop_children",                          # SEEALSO-HOP-V1 (lane G)
               "graph_dest_enabled", "graph_dest_children",                                             # P7 graph destination (lane H)
               "gnn_enabled", "gnn_parent_k", "gnn_children_per_parent", "gnn_children",               # GNN-RETRIEVAL-V1 (lane I)
               # EVIDENCE-DIET-V1 step 3: POLYMATH_CHAT_RERANK_ROUND_ROBIN (0/1), POLYMATH_CHAT_RERANK_DOC_CAP, POLYMATH_CHAT_RERANK_MAX_FAIR
@@ -408,21 +409,55 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             from polymath_shared.document_profile.profile_atom import RELATIONAL_KINDS as _REL
             from polymath_shared.embedding_contracts import active_contract as _ac
             kinds = tuple(k for k in (getattr(budget, "atom_kinds", ()) or ()) if k in _REL)
-            if not kinds:
+            hop_on = bool(getattr(budget, "seealso_hop_enabled", False))
+            if not kinds and not hop_on:
                 return []
             cid = _ac().contract_id
-            atoms = [a for a in _pap.search_atoms(client, _pap.collection_name(cid), qv, kinds,
-                                                  k=int(budget.seealso_fanout_atoms), corpus_ids=[corpus_id]) if a.get("text")]
-            if not atoms:
+            atom_coll = _pap.collection_name(cid)
+            atoms = ([a for a in _pap.search_atoms(client, atom_coll, qv, kinds,
+                                                   k=int(budget.seealso_fanout_atoms), corpus_ids=[corpus_id]) if a.get("text")]
+                     if kinds else [])
+            # SEEALSO-HOP-V1 (D8): the SEE ALSO items to follow one hop get their own search — the relational top-k above
+            # may hold only BRIDGE / ANCHOR atoms
+            hop_items = ([a for a in _pap.search_atoms(client, atom_coll, qv, ("SEEALSO",), k=int(budget.seealso_hop_items),
+                                                       corpus_ids=[corpus_id]) if a.get("text")] if hop_on else [])
+            if not atoms and not hop_items:
                 return []
+            texts = list(dict.fromkeys([a["text"] for a in atoms] + [a["text"] for a in hop_items]))
+            vec_by_text = dict(zip(texts, _embed_queries(texts)))   # ONE batch embed for the global door and the hop
             rows: list[dict] = []
-            for atom, tv in zip(atoms, _embed_queries([a["text"] for a in atoms])):
-                for r in searcher._search(collection, list(tv),
+            for atom in atoms:
+                for r in searcher._search(collection, list(vec_by_text[atom["text"]]),
                                           {"representation_kind": "routing_child", "corpus_id": corpus_id},
                                           limit=int(budget.seealso_fanout_children)):
                     r = dict(r)
                     r["fanout_atom"] = atom["text"]
                     rows.append(r)
+            if hop_items:
+                from polymath_shared import seealso_hop as _sh
+                from polymath_shared.document_profile import parent_map_projection as _pmp
+                from polymath_shared.document_profile import projection as _proj
+                prof_coll, map_coll = _proj.collection_name(cid), _pmp.collection_name(cid)
+
+                def _nominate(vec, k):
+                    return _proj.profile_nominate(client, prof_coll, list(vec), corpus_id, k=k, surfaces=_sh.HOP_SURFACES)
+
+                def _maps(vec, docs, k):
+                    return _pmp.search_parent_maps(client, map_coll, list(vec), docs, k=k)
+
+                def _children(vec, parents, k):
+                    # ONE search across the item's chosen sections (list filters → MatchAny, fast.py)
+                    return searcher._search(collection, list(vec),
+                                            {"representation_kind": "routing_child", "corpus_id": corpus_id,
+                                             "doc_id": sorted({d for d, _ in parents}), "parent_id": [p for _, p in parents]},
+                                            limit=k)
+
+                # the pointer chooses the documents; the QUESTION (qv) chooses the sections and children inside them
+                hop, _hops = _sh.hop_rows(hop_items, [vec_by_text[a["text"]] for a in hop_items], question_vector=list(qv),
+                                          nominate=_nominate, search_maps=_maps, search_children=_children,
+                                          docs_per_item=int(budget.seealso_hop_docs),
+                                          children_per_item=int(budget.seealso_hop_children))
+                rows.extend(hop)
             return rows
 
         gnn_search = None

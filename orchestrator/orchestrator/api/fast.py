@@ -94,8 +94,15 @@ class FastSearcher:
                            match=MatchValue(value=filters["representation_kind"])),
         ]
         for key in ("corpus_id", "doc_id", "parent_id"):
-            if filters.get(key):
-                must.append(FieldCondition(key=key, match=MatchValue(value=filters[key])))
+            v = filters.get(key)
+            if not v:
+                continue
+            if isinstance(v, (list, tuple, set, frozenset)):
+                # SEEALSO-HOP-V1: a list = any of these (one search across several parents instead of one per parent)
+                from qdrant_client.models import MatchAny
+                must.append(FieldCondition(key=key, match=MatchAny(any=[str(x) for x in v])))
+            else:
+                must.append(FieldCondition(key=key, match=MatchValue(value=v)))
         must_not = []
         # GENERATION-SWAP-V1: hide chunk generations a blue/green successor
         # is still building (legacy points without the field pass).

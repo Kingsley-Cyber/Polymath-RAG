@@ -955,6 +955,34 @@ def test_seealso_fanout_is_off_by_default_and_never_invokes_the_probe():
     assert res.trace["seealso_fanout"] == {"enabled": False} and res.trace["lane_sizes"]["seealso_fanout"] == 0
 
 
+def test_seealso_hop_rows_get_room_in_lane_g_and_are_receipted():
+    # SEEALSO-HOP-V1 (11.472): the hop's rows come after the global-door rows; with the hop on, the lane cap grows by
+    # items x children so they are kept, and the receipt names each hop (item, pointing doc, destination doc)
+    fake = Fake()
+    rows = [_row(CHILD, 0, "d1", chunk="d1-global", text="global door")]
+    rows += [dict(_row(CHILD, i, "d4", parent="d4-p1", chunk=f"d4-hop{i}"),
+                  fanout_atom="Bayesian reasoning",
+                  seealso_hop={"item": "Bayesian reasoning", "from_doc": "d1", "to_doc": "d4", "parent_id": "d4-p1"})
+             for i in range(2)]
+
+    def fanout(qv):
+        return rows
+
+    base = dict(seealso_fanout_enabled=True, atom_kinds=("SEEALSO",), seealso_fanout_atoms=1, seealso_fanout_children=1)
+    off = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(**base), dense_search=fake.dense, sparse_search=fake.sparse,
+                                 fanout_search=fanout)
+    assert "d4-hop0" not in [c.chunk_id for c in off.union] and "hops" not in off.trace["seealso_fanout"]   # cap 1: cut
+    on = ce.retrieve_candidates(_ctx(), ce.CandidateBudget(**base, seealso_hop_enabled=True, seealso_hop_items=1,
+                                                           seealso_hop_children=2),
+                                dense_search=fake.dense, sparse_search=fake.sparse, fanout_search=fanout)
+    ids = [c.chunk_id for c in on.union]
+    assert {"d1-global", "d4-hop0", "d4-hop1"} <= set(ids)
+    hop = next(c for c in on.union if c.chunk_id == "d4-hop0")
+    assert ce.LANE_G in hop.arrivals
+    assert on.trace["seealso_fanout"]["hops"] == [{"item": "Bayesian reasoning", "from_doc": "d1", "to_doc": "d4"}]
+    assert on.trace["seealso_fanout"]["hop_candidates"] == 2
+
+
 def test_graph_dest_lane_h_adds_relational_children_and_is_off_by_default():
     # P7 graph destination (lane H): destination-doc children enter the union tagged ARRIVAL_GRAPH_DEST
     # (RELATIONAL role — a source-attested relationship route), additive + unioned last; off by default.
