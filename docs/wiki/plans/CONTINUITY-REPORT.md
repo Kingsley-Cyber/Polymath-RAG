@@ -23,32 +23,35 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-25 (K1 live) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE AND LIVE (11.478–11.480); DOC-STEER-V1 DEPLOYED (11.482–11.483); the external Trail audit ADMITTED (11.484). K1 BUILT AND LIVE (11.485–11.486, the owner's "go K1"): knowledge roles + retrieval scope, enforced on every search; the owner's Run button merged + bounced; `live_check.py` exit 0. NEXT = K1b (K-04: the scope echo + Trail's check) → the owner's pick: the A-track or C1 (C1 carries K-03).**
+## CURRENT — 2026-09-25 (K1b built; merge + bounce = the owner's Run button) — **ACTIVE MISSION: LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1. Track L L1–L4 DONE; D1 DONE AND LIVE (11.478–11.480); DOC-STEER-V1 DEPLOYED (11.482–11.483); the external Trail audit ADMITTED (11.484); K1 LIVE (11.485–11.486). K1b BUILT (11.487, the owner's "go K1b"): every scoped JSON reply confirms its scope and Trail refuses an unconfirmed one on every path (gap K-04 closed); committed on `feat/k1b-scope-echo`. The merge + bounce is the owner's ONE Run-button command (the classifier blocks the agent's production merges). NEXT = verify K1b live → the owner's pick: the A-track or C1 (C1 carries K-03).**
 
 ### Repository State
-- Branch `production`. HEAD = this close-out (11.486), on top of `413f01dd`: the owner's fast-forward merge of
-  `feat/k1-knowledge-scope` (`64c70cb7` K1, `4fc6097e` close-out, `413f01dd` live check + K-04).
-- `origin/production` = `053e50c7` (11.484). Unpushed: the three K1 commits + this close-out
-  (`git rev-list --count origin/production..production`). Pushes are the owner's word:
-  `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
+- Branch `production` HEAD = `63816479` (11.486, K1 live) = `origin/production` (the owner pushed `053e50c7..63816479`;
+  CI: contracts, preflight, repo-governance green; determinism = 13 failures, all in the previous run's 14).
+- **K1b = commits on `feat/k1b-scope-echo`** (worktree `/Users/king/Documents/polymath-rebuild/pmv4-k1b`, based on
+  `63816479`). **To tell whether the owner's merge ran:** `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 log
+  --oneline -1 production` shows the K1b close-out; the orchestrator's start time tells whether the bounce ran.
 - **Fleet (the owner's bounce, 2026-09-25 03:10 MDT):** 26 / 13 / ONE bundle `ff3bfaac2c61`, `/ready` true; the
   orchestrator (started 03:10:38) has `POLYMATH_CHAT_SEEALSO_BLEND=1`, `POLYMATH_GRAPH_FACT_RANK=1`,
-  `POLYMATH_CHAT_DOC_STEER=1` (`ps eww`). Running code = committed code (`413f01dd`). K1 adds no flag (an explicit scope
-  is always enforced).
+  `POLYMATH_CHAT_DOC_STEER=1` (`ps eww`). Running code = K1 (`413f01dd`; `63816479` is docs only). K1 and K1b add no flag.
+- **Deploy order for K1b:** merge + bounce BACK TO BACK. The bounce restarts the orchestrator (which confirms) and
+  `adapter_step` (which now refuses an unconfirmed reply) together; the fence restarts neither. A K1b `adapter_step`
+  against a K1 orchestrator refuses every Trail lane (that is the live control run).
 - **Live `.env` (gitignored):** lines 146–151 = the SEEALSO-BLEND, D1 and DOC-STEER comments + flags (each: rollback = 0
   + a bounce). Unchanged: `POLYMATH_LLM_CLOUD_PRIMARY=0`; chat flags `SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`,
   `PROBE_GATE=1`, `SYNTH_ROLES=1`, `REASONING_POLICY=1` (S4 / S8 off); `CLOUDFLARE_ACCOUNT_ID_3..6` filled, account 1
   retired.
 - `corpora` = cinema, commerce-v1 (`l4-canary` deleted by the owner, 11.481; its leftovers = gap O-05).
-- **Other worktrees:** `pmv4-k1` and its branch are removed (merged). Carried forward: `pmv4-m1-repro`
+- **Other worktrees:** `pmv4-k1b` (K1b; remove after the merge). Carried forward: `pmv4-m1-repro`
   (`review/m1-reproductions`, kept on purpose); `pmv4-rag-ui` holds another stream's 14 uncommitted files (never add,
   stash or revert them); an old stash `PRE-LIBRARIAN-DEPLOY 2026-09-18` (leave it).
 
 ### Active Mission
-- **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 6b K1 = DONE 11.485).
-  Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (K-01, K-02 CLOSED 11.485; K-03 OPEN → C1). How to
-  build code RAG: `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` (§4 K1 "As built").
-- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ → K1b (K-04) → [the A-track,
+- **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 6b K1 = DONE 11.485,
+  row 6c K1b = DONE 11.487). Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (K-01, K-02 CLOSED 11.485;
+  K-04 CLOSED 11.487; K-03 OPEN → C1). How to build code RAG: `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` (§4 K1
+  "As built" + the K1b note).
+- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ → K1b ✔ (merge pending) → [the A-track,
   if the owner agrees] → C1 → C2 → C3 → L5 → C6+C7 → C9+C10 (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
 - **K1 (11.485, LIVE 11.486; work-log `2026-09-25-k1-knowledge-scope.md`, evidence
   `docs/wiki/experiments/k1-knowledge-scope-2026-09-25/`):**
@@ -65,6 +68,13 @@ historical, never an instruction.
   - Proof: 20 unit tests incl. a caller pin; tests/contracts 145 / 145; $0 replay (12 of 12 reference-only runs scoped
     every search except the corpus readiness count; evidence identical in 10 of 12, the other 2 did not recur in 8
     noise-check runs); cost 19–21 → 25 ms median per search on the 163k-point collection (no payload index).
+- **K1b (11.487; work-log `2026-09-25-k1b-scope-echo.md`, evidence `docs/wiki/experiments/k1b-scope-echo-2026-09-25/`):**
+  every JSON reply to a scoped request confirms it (top-level `knowledge_scope`, `scope.echo_scope`): /retrieve,
+  /retrieve/plan, `run_chat` (behind /chat and /chat/evidence), /evidence, /ask, /compare; not the SSE stream (no stream
+  client sends a scope). Trail's one outbound function `adapter_step_worker._orch_post` refuses a scoped reply without the
+  exact confirmation (`ScopeNotConfirmed` → the step fails, never a fallback) on every path: the evidence route, its
+  fallback, the kill-switch lane, the plan lane, the graph union. Live control ($0): the branch's Trail code refused the
+  non-confirming K1 fleet on both lanes.
 - **The owner's decisions on record (11.452–11.478):** code RAG languages and architecture (11.452–11.457); R11 (no
   heading curation for code, 11.471); R12 + the code pMAP contract (11.473); no reference book shared across projects
   (11.474); SEE ALSO is document-level and never picks books (11.475). Details: the register.
@@ -78,7 +88,8 @@ historical, never an instruction.
   in the reconciliation.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) stays paused: S5–S7 and S9 wait (S9: 9 of 10 test queries used).
 
-### Completed Since Last Bootstrap (11.484–11.486)
+### Completed Since Last Bootstrap (11.484–11.487)
+- **11.487 K1b** (above): built, tested, live control run; merge + bounce = the owner's Run button.
 - **11.486 K1 live:** the owner's Run button (merge `053e50c7..413f01dd` + bounce, 03:10) + `live_check.py` exit 0 →
   LIVE_PATH_PROVEN. Implementation-only still sees reference graph facts (Postgres fact authorization, K-03).
 - **11.485 K1** (above): built, tested, replayed ($0). The live check's control run on the pre-K1 fleet found K-04.
@@ -92,6 +103,9 @@ historical, never an instruction.
   orchestrator / shared / workers / control / mcp_server). The scope comes from the request only: never from a plan or an
   LLM output. Postgres-side reads are NOT role-filtered yet (K-03): C1 must land migration 0067 + `sql_predicate` on those
   reads BEFORE its importer writes any implementation document.
+- **Scope confirmation (K1b):** a new route whose request takes a `scope` must return through `echo_scope(…, req.scope)`
+  (the AST pin in `tests/determinism/test_knowledge_scope_echo.py` fails otherwise); a new consumer that sends a scope
+  must refuse an unconfirmed reply (`scope.echo_matches`), as `_orch_post` does.
 - **Trail's evidence body** is exactly five fields (`message`, `corpus_id`, `mode`, `corpus_explorer`, `scope`); pinned in
   `tests/contracts/test_adapter_worker_evidence_surface.py` and `test_adapter_evidence_boundary.py`.
 - **Registry → generated runtime files:** edit `config/llm_accounts.yaml` only, then `scripts/llm_accounts.py write`.
@@ -112,6 +126,11 @@ historical, never an instruction.
   files. Nothing BLOCKED.
 
 ### Proof Status
+- **11.487 K1b:** UNIT_PROVEN (17 tests; a mutation check: switching off the refusal or dropping one route's confirmation
+  fails 10) · LIVE CONTROL ($0: the branch's Trail code refused the K1 fleet) · COMMITTED (branch). LIVE_PATH_PROVEN =
+  after the owner's Run button: `docs/wiki/experiments/k1b-scope-echo-2026-09-25/live_check.py` exit 0 (/retrieve and
+  /retrieve/plan confirm; Trail's `_orch_post` accepts both lanes; no scope unchanged; no new Traceback). The evidence
+  route's confirmation is unit-proven (`run_chat`); a live /chat/evidence probe needs the owner's word.
 - **11.485–11.486 K1:** UNIT_PROVEN · REPLAY ($0) · MERGED · DEPLOYED · **LIVE_PATH_PROVEN** (`live_check.py` exit 0,
   2026-09-25 03:12 MDT: no scope unchanged; reference-only = the same 15 passages + receipt scope; malformed → 422 +
   receipt; implementation-only → 0 passages; no new Traceback). Rerun any time with `.env` loaded ($0).
@@ -147,20 +166,23 @@ historical, never an instruction.
   (preflight, repo_guard, wiki_worm) · bundle_integrity READY; registry 0 errors / 4 warnings.
 
 ### Next Action
-1. (done 03:10–03:12) The owner's Run button + the K1 live check: K1 LIVE_PATH_PROVEN (11.486).
+1. **The owner's Run button (merge + bounce, back to back):**
+   `cd /Users/king/Documents/polymath-rebuild/polymath-v4 && git merge --ff-only feat/k1b-scope-echo && bash scripts/bounce_fleet.sh`
+   Then the agent: fleet 26 / 13 / ONE bundle + `/ready`; the K1b live check (PYTHONPATH of the main checkout, `.env`
+   loaded); commit `live_check.json` + its TREE entry + a register row; remove worktree `pmv4-k1b` and its branch.
 2. The blend + DOC-STEER live receipt: the owner's next GRAPH / WILDCARD chat.
 3. **The owner's pick:** the A-track (A-03, A-04, A-06, A-05, A-07) before C1, or C1 directly; the five audit questions.
-4. **K1b (K-04) next**, then **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28);
+4. **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28);
    C1 carries K-03.
 5. **L5** before C6 + C7. Fold in when touching the file: L-23 (`document_status.py:212`).
-6. Owner's step pending: the push (4 commits). Small slices when convenient: O-05 (the corpus delete also
+6. Owner's step pending: the push (after the K1b merge). Small slices when convenient: O-05 (the corpus delete also
    sweeps the shared document-profile collections); `test_query_receipts.py` (the stale pin + its hard-coded DSN).
 
 ### Do Not Do
 - Never add a switch that turns scope enforcement off, never let a plan or an LLM output set or widen a scope, and never
   call a scoped search without the request's scope (K1, 11.471).
-- Once implementation material exists, never roll the orchestrator back to a pre-K1 commit (the recovery tags are
-  pre-K1): old code ignores `scope` silently (K-04, until K1b lands the echo + Trail's check).
+- Never let a consumer that sends a scope accept an unconfirmed reply (K1b); never merge K1b without the bounce right
+  after (a K1b `adapter_step` refuses every Trail lane of a K1 orchestrator).
 - Never hand-edit `config/cloud_providers.json` or `config/extraction_models/limiter.yaml` (generated).
 - Never let a profile / pMAP slot fail over to another slot's key; keep the operator backfill on `--lanes` from the
   shared tier (L-22).
@@ -182,7 +204,6 @@ historical, never an instruction.
 
 ### Deferred Architecture
 - K-03: Postgres-side role filtering (migration 0067) → C1.
-- K-04: the scope echo + Trail's check (K1b) → before C1's importer.
 - L5: budgets shared across processes (L-06, L-22) and batched admissions (L-21).
 - The joint code ↔ document graph walk: C8 → G1 + C11.
 - Gap rows O-01..O-05, T-01, T-02, D-03..D-09, A-01..A-08: open, not scheduled. GNN retrieval stays experimental.

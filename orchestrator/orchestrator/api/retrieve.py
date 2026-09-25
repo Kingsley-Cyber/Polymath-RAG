@@ -24,7 +24,7 @@ from polymath_shared.retrieval import graph_expansion, run_lanes
 from polymath_shared.settings import get_settings
 
 from polymath_shared.query_receipts import Timer, record_query_receipt
-from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
+from polymath_shared.code.scope import echo_scope, scope_kwargs  # K1: pass a role scope only when it narrows; K1b: confirm it
 
 router = APIRouter()
 
@@ -841,4 +841,4 @@ async def retrieve(req: RetrieveRequest, request: Request) -> dict:
     record_query_receipt(tx, kind="retrieve", question=question, req=req,
                          scope_corpora=scope_corpora, scope_kind=scope_kind,
                          wall_ms=t.ms, out=out, client=client)
-    return out
+    return echo_scope(out, req.scope)          # K1b: confirm the applied scope (K-04)

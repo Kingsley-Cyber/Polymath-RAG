@@ -17,6 +17,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from polymath_shared.code.scope import echo_scope
+
 
 def stable_id(*parts) -> str:
     return hashlib.sha256("|".join(str(p) for p in parts).encode()).hexdigest()[:12]
@@ -180,4 +182,4 @@ async def retrieve_plan(req: PlanRequest) -> dict:
            "corpus_ids": corpus_ids, "per_query": per_query, "errors": errors}
     if req.document_ids:
         out["document_ids"] = list(req.document_ids)  # the filter as applied (additive)
-    return out
+    return echo_scope(out, req.scope)          # K1b: confirm the applied scope (K-04)

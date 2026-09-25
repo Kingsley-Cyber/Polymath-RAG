@@ -1,0 +1,38 @@
+{
+ "control": true,
+ "worker_file": "/Users/king/Documents/polymath-rebuild/pmv4-k1b/workers/workers/adapter_step_worker.py",
+ "runs": {
+  "retrieve_no_scope": {
+   "http": 200,
+   "evidence": 15,
+   "confirmation": "<absent>"
+  },
+  "retrieve_reference": {
+   "http": 200,
+   "evidence": 15,
+   "confirmation": "<absent>"
+  },
+  "plan_reference": {
+   "http": 200,
+   "rows": 123,
+   "confirmation": "<absent>"
+  },
+  "trail_legacy_lane": {
+   "accepted": false,
+   "refused": "ScopeNotConfirmed",
+   "why": "orchestrator /retrieve: the response does not confirm the knowledge scope {'roles': ['reference']} (got None); its evidence is refused (an orchestrator that ignores scope may have searched every knowledge role)"
+  },
+  "trail_plan_lane": {
+   "accepted": false,
+   "refused": "ScopeNotConfirmed",
+   "why": "orchestrator /retrieve/plan: the response does not confirm the knowledge scope {'roles': ['reference']} (got None); its evidence is refused (an orchestrator that ignores scope may have searched every knowledge role)"
+  }
+ },
+ "checks": {
+  "no_scope_unchanged": true,
+  "retrieve_confirms": false,
+  "plan_confirms": false,
+  "trail_accepts_both_lanes": false,
+  "no_new_traceback": true
+ }
+}

@@ -136,13 +136,20 @@ class OrchRejected(RuntimeError):
     """The orchestrator refused the request (4xx): a caller defect, never an availability problem — so never a fallback."""
 
 
+class ScopeNotConfirmed(OrchRejected):
+    """K1b (gap K-04): the orchestrator answered a scoped request without confirming that exact scope. Pre-K1 code ignores
+    `scope` and searches every knowledge role, so the answer is refused like any contract defect: never a fallback, the step
+    fails (STEP_EXECUTOR_ERROR) instead of reasoning over possibly unscoped evidence."""
+
+
 def _ua(step: dict[str, Any], state: RunState) -> str:
     return EB.user_agent(state.run_id, step["step_id"], step["sequence"])
 
 
 def _orch_post(path: str, body: dict[str, Any], *, user_agent: str | None = None) -> dict[str, Any]:
     """POST to the orchestrator — ONLY to a path on the evidence-boundary allow-list. The User-Agent names run/step/sequence so
-    every call's query receipt is attributable to the adapter step that made it."""
+    every call's query receipt is attributable to the adapter step that made it. A scoped call whose answer does not confirm
+    that scope raises ScopeNotConfirmed (K1b)."""
     EB.assert_allowed_path(path)
     try:
         with httpx.Client(timeout=HTTP_TIMEOUT_S) as c:
@@ -153,7 +160,11 @@ def _orch_post(path: str, body: dict[str, Any], *, user_agent: str | None = None
         raise OrchUnavailable(f"orchestrator {path} -> {r.status_code}: {r.text[:300]}")
     if r.status_code >= 400:
         raise OrchRejected(f"orchestrator {path} -> {r.status_code}: {r.text[:300]}")
-    return r.json()
+    out = r.json()
+    why = EB.scope_violation(body, out)            # K1b: a scoped call must come back confirmed (fail closed)
+    if why:
+        raise ScopeNotConfirmed(f"orchestrator {path}: {why}"[:600])
+    return out
 
 
 def _legacy_mode(cfg: dict[str, Any]) -> str:

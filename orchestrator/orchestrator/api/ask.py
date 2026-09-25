@@ -24,6 +24,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from polymath_shared.code.scope import echo_scope
 from polymath_shared.db import tx
 from polymath_shared.query_receipts import Timer, record_query_receipt
 from polymath_shared.knowledge_objects.concept import object_name_admissible
@@ -386,4 +387,4 @@ def ask(req: AskRequest, request: Request):
     record_query_receipt(tx, kind="ask", question=req.question, req=req,
                          scope_corpora=scope_corpora, scope_kind=scope_kind,
                          wall_ms=t.ms, out=out, client=client)
-    return out
+    return echo_scope(out, req.scope)          # K1b: confirm the applied scope (K-04)

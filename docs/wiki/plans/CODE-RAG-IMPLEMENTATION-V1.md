@@ -266,6 +266,13 @@ scripts/backfill_knowledge_role.py      idempotent Qdrant set_payload backfill w
   - also scoped: `/ask`, `/evidence`, `/compare`, the plan route, the profile scout and Corpus Explore; no retrieval
     cache exists on the question path, so "scope in the cache key" needs nothing;
   - a malformed scope is refused (422) on every route, never read as both roles.
+- **K1b (register 11.487, gap K-04): the confirmation and Trail's check.** Pre-K1 code drops `scope` silently (200,
+  unscoped), so a scope that is only SENT is not enforced after a code rollback. Every JSON reply to a scoped request
+  now confirms it (`knowledge_scope`, top level, beside any EvidencePacket; `scope.echo_scope`), and Trail's one outbound
+  function (`adapter_step_worker._orch_post`) refuses a reply without the exact confirmation (`ScopeNotConfirmed`: the
+  step fails, never a fallback). A request without a scope is unchanged. An AST pin keeps every scoped route confirming.
+  The SSE stream does not confirm (no stream client sends a scope). Any new consumer that sends a scope must check the
+  confirmation the same way (`scope.echo_matches`).
 
 ### C1 — the code front door
 

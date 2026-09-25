@@ -24,6 +24,8 @@ from typing import Any, Iterable, Mapping
 
 import jsonschema
 
+from polymath_shared.code.scope import ECHO_KEY, echo_matches
+
 #: repository root = .../shared/polymath_shared/adapter/evidence_boundary.py -> parents[3]
 _REPO = Path(__file__).resolve().parents[3]
 PACKET_SCHEMA_PATH = _REPO / "contracts" / "evidence" / "v1" / "evidence_packet.schema.json"
@@ -178,6 +180,17 @@ def request_body(need: str, corpus_id: str, *, mode: str = "WILDCARD", corpus_ex
         raise ValueError("an evidence-boundary call needs a non-empty need and exactly one corpus_id")
     return {"message": need, "corpus_id": corpus_id, "mode": m, "corpus_explorer": bool(corpus_explorer),
             "scope": {"roles": list(TRAIL_SCOPE["roles"])}}
+
+
+def scope_violation(body: Mapping[str, Any], resp: Any) -> str | None:
+    """K1b (gap K-04): None when the call carried no scope, or when the response confirms exactly the scope it sent;
+    otherwise why the response must be refused. Pre-K1 code ignores `scope` and answers 200 with evidence from every
+    knowledge role, so an unconfirmed response is never used (fail closed), whatever it contains."""
+    if "scope" not in body or echo_matches(body["scope"], resp):
+        return None
+    got = resp.get(ECHO_KEY) if isinstance(resp, Mapping) else None
+    return (f"the response does not confirm the knowledge scope {body['scope']!r} (got {got!r}); its evidence is refused "
+            "(an orchestrator that ignores scope may have searched every knowledge role)")
 
 
 # ─────────────────────────────────────────────────────────── the packet contract (consumer side, fail-closed)

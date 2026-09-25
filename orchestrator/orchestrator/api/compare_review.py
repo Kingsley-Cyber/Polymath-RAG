@@ -28,6 +28,8 @@ from typing import Any, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from polymath_shared.code.scope import echo_scope
+
 router = APIRouter()
 
 #: The public modes (VECTOR is a backend primitive, never offered as a product mode).
@@ -92,8 +94,8 @@ def compare(req: CompareRequest) -> dict:
             arms.append({"mode": mode, "ok": False,
                          "latency_ms": int((time.time() - t0) * 1000),
                          "error": f"{type(exc).__name__}: {exc}"[:300]})
-    return {"contract": "compare-retrieval-v1", "corpus_id": req.corpus_id,
-            "question": req.message, "arms": arms}
+    return echo_scope({"contract": "compare-retrieval-v1", "corpus_id": req.corpus_id,
+                       "question": req.message, "arms": arms}, req.scope)     # K1b: confirm the applied scope (K-04)
 
 
 def _slim(out: dict) -> dict:

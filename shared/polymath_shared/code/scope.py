@@ -14,6 +14,9 @@ The rules:
   knowledge_role == "implementation"`.
 - **Postgres:** `sql_predicate` gives the same rule over `documents.knowledge_role` for when migration 0067 lands (K1b / C1).
 - An LLM plan never carries or widens a scope: the scope comes from the request only.
+- **K1b:** every JSON response to a scoped request confirms it under `knowledge_scope` (`echo_scope`), and the consumer
+  refuses a response without the exact confirmation (`echo_matches`): a rollback to pre-K1 code, which ignores `scope`,
+  then fails closed.
 
 Pure: no I/O (the §3 amendment: no database / filesystem / subprocess I/O in `shared/`).
 """
@@ -121,3 +124,30 @@ def scope_kwargs(scope: RetrievalScope | None) -> dict[str, RetrievalScope]:
 
 def roles_of(values: Iterable[str]) -> RetrievalScope:
     return RetrievalScope(frozenset(values))
+
+
+#: K1b (gap K-04, register 11.487): the key under which a response to a scoped request confirms the scope it applied.
+ECHO_KEY = "knowledge_scope"
+
+
+def echo_scope(out: Any, requested: Any) -> Any:
+    """Server side: `out` (a JSON response object) with `out[ECHO_KEY]` = the scope the request sent, parsed. A request
+    without a scope gets its response unchanged. Pre-K1 code ignores `scope` and answers 200 with unscoped evidence; the
+    consumer refuses a response without this confirmation (`echo_matches`), so a rollback to such code fails closed
+    instead of silently widening a reference-only request."""
+    if requested is None or not isinstance(out, dict):
+        return out
+    out[ECHO_KEY] = parse_scope(requested).as_dict()
+    return out
+
+
+def echo_matches(sent: Any, response: Any) -> bool:
+    """Consumer side: does `response` confirm exactly the scope `sent`? A missing, malformed or different confirmation
+    (a widened one included) is False."""
+    echoed = response.get(ECHO_KEY) if isinstance(response, Mapping) else None
+    if echoed is None:
+        return False
+    try:
+        return parse_scope(echoed) == parse_scope(sent)
+    except ScopeError:
+        return False

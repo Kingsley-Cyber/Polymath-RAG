@@ -2426,6 +2426,11 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/k1-knowledge-scope-2026-09-25/live_check.py", "py", None),
     ("docs/wiki/experiments/k1-knowledge-scope-2026-09-25/live_check.json", "json", None),
     ("docs/wiki/work-log/2026-09-25-k1-knowledge-scope.md", "md", None),
+    # K1b (register 11.487, gap K-04): every scoped reply confirms its scope; Trail refuses an unconfirmed one
+    ("tests/determinism/test_knowledge_scope_echo.py", "py", None),
+    ("docs/wiki/experiments/k1b-scope-echo-2026-09-25/live_check.py", "py", None),
+    ("docs/wiki/experiments/k1b-scope-echo-2026-09-25/live_check_control.json", "json", None),
+    ("docs/wiki/work-log/2026-09-25-k1b-scope-echo.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay.py", "py", None),

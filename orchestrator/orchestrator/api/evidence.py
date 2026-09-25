@@ -38,7 +38,7 @@ from .retrieve import (
     retrieve_engine_flag,
     single_corpus_or_422,
 )
-from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
+from polymath_shared.code.scope import echo_scope, scope_kwargs  # K1: pass a role scope only when it narrows; K1b: confirm it
 
 
 def _section_summaries_from_parent_ids(parent_ids: list[str]) -> list[dict]:
@@ -160,7 +160,7 @@ async def evidence(req: EvidenceRequest) -> dict:
                 "error_code": type(exc).__name__, "message": str(exc),
             }) from exc
         bundle["meta"]["mode"] = MODE_GRAPH
-        return bundle
+        return echo_scope(bundle, req.scope)          # K1b: confirm the applied scope (K-04)
     if mode in (MODE_FAST, MODE_HYBRID):
         if mode == MODE_FAST:
             from orchestrator.api.fast import fast_retrieve
@@ -212,7 +212,7 @@ async def evidence(req: EvidenceRequest) -> dict:
                 "error_code": type(exc).__name__, "message": str(exc),
             }) from exc
         bundle["meta"]["mode"] = mode
-        return bundle
+        return echo_scope(bundle, req.scope)          # K1b: confirm the applied scope (K-04)
 
     corpus_ids = list(scope.corpus_ids)
     with tx() as conn:
@@ -291,7 +291,7 @@ async def evidence(req: EvidenceRequest) -> dict:
             },
         ) from exc
 
-    return bundle
+    return echo_scope(bundle, req.scope)          # K1b: confirm the applied scope (K-04)
 
 
 def _resolve_fact(fact_id: str) -> Optional[dict]:

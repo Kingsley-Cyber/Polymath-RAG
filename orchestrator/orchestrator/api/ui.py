@@ -48,7 +48,7 @@ from polymath_shared.db import tx
 router = APIRouter()
 
 import os
-from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
+from polymath_shared.code.scope import echo_scope, scope_kwargs  # K1: pass a role scope only when it narrows; K1b: confirm it
 
 OLLAMA_URL = os.environ.get("POLYMATH_OLLAMA_URL",
                             "http://127.0.0.1:11434")
@@ -4538,4 +4538,4 @@ def run_chat(req: StreamChatRequest, *, route: str = "chat", receipt=None) -> di
     result["kind"] = answer.get("kind")
     result.setdefault("latency_ms", answer.get("latency_ms"))
     result["runtime"] = RUNTIME_CONTRACT
-    return result
+    return echo_scope(result, getattr(req, "scope", None))     # K1b: /chat and /chat/evidence confirm the applied scope (K-04)
