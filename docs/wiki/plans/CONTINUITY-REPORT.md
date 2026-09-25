@@ -180,6 +180,30 @@ historical, never an instruction.
   (preflight, repo_guard, wiki_worm) · bundle_integrity READY; registry 0 errors / 4 warnings.
 
 ### Next Action
+0. **RESUME HERE (written before a context compaction, 2026-09-25):**
+   a. The Trail agent (background) builds A47 → HR7 anchor → HR7 in `~/trail-signal-os-worktrees/HR7` (branch `agent/HR7`, base
+      `829a0ab`). When it reports: `git -C ~/trail-signal-os-worktrees/HR7 log --oneline -4`; in that worktree run
+      `.venv/bin/python scripts/architecture/validate_v2_governance.py --root . --check` AND `... --check --base-ref
+      de64d843c589ae79b80121aa975463a5755fb237` (both PASS); confirm snapshot `trs-629277494b724295` and the 3 commits. Never
+      push Trail (the owner's word).
+   b. Re-pin in `pmv4-autoresearch`: `python docs/wiki/experiments/autoresearch-r1-repin-2026-09-25/repin_trail_hr7.py
+      ~/trail-signal-os-worktrees/HR7 <HR7 sha>` (from the worktree root) → then `rerecord_envelopes_hr7.py <sha7> 829a0ab`
+      (swaps ONLY the snapshot id/hash in the 3 M1 requests — owner-authorized 2026-09-25 — and asserts M1-01/02/03 unchanged;
+      dry-run proven on a copy) → move the pins: `tests/contracts/test_trail_core_embedding.py` (commit), the heads in
+      `tests/determinism/test_trail_core_recorded_equivalence.py` (829a0ab → HR7, previous de64d84 → 829a0ab) + its docstring,
+      `governance/trail/embedded.py` comments, `scripts/scaffold_polymath_v4.py` comment, ADR-0021 addendum
+      (`docs/wiki/decisions/0021-trailsignal-core-embedded.md`), a work-log + register row; `test_trail_core_*` + tests/contracts
+      whole + the adapter suites green; then `live_check.py`'s admission half shows `src-tiktok-comments`.
+   c. Small fix promised to the owner: `adapters/ecommerce/python/adapter_receipt.py` (Hermes' receipt builder, ~line 294) keys
+      sources by URL, so comments under one video share one date — key by (url, published date) so each comment keeps its own.
+   d. Hand the owner ONE Run button: `cd /Users/king/Documents/polymath-rebuild/polymath-v4 && git merge --ff-only
+      feat/autoresearch-sources-harness && bash scripts/bounce_fleet.sh`; then `python3 scripts/deploy_ecommerce_skill.py
+      --target ~/.hermes/standalone/opportunity-research --execute` (Hermes skill copy); then
+      `docs/wiki/experiments/autoresearch-e2e-2026-09-25/live_check.py` (.env loaded; exit 0).
+   e. R7 e2e: drive ONE `ecommerce.product_research` run over MCP with `mcp_call.py` (loads POLYMATH_MCP_API_KEY from .env; the
+      ~/PolymathRuntime key file is stale → 401); do TikTok / YouTube / Instagram comment + CJ + Alibaba research with the
+      browser tools (a login wall / CAPTCHA = a receipt limitation, never bypassed); render the dossier; smoke Codex / Gemini /
+      OpenCode / Hermes (connect, list, get the prompt). Spend bound: ONE run.
 1. **R1** (plan §4): Trail's governed change is in progress — A47 (admits node HR7 under ADR-070, accepted by the owner
    2026-09-25) → HR7 anchor → HR7 (the two comment rows, the admission test, the re-recorded replay fixtures; the bytes were
    first built and proven in the abandoned `~/trail-signal-os-worktrees/SRC1`, which only failed the v2 governor's
