@@ -11,6 +11,9 @@
 # slots: worker processes per stage (control/control/process_supervisor.py FLEET); `extract` is the shared pool of
 # enabled, non-dedicated lanes. quota: Groq per key per model (owner 2026-09-23): 30 RPM / 1K RPD / 8K TPM / 200K TPD;
 # groq_5 enforces OTPM 1000 on qwen3.8-27b (canary 2026-09-23). Other providers' quotas are not recorded yet.
+# Lane limiter tpd / otpm (register 11.466, L2): the rolling 24 h token budget per PROCESS = 95 % of the pair's TPD
+# divided by the worker slots that share the lane (profile 6, pMAP 4), the same rule the existing rpd values follow;
+# L3 raises them to the full pair budget when each pair gets one owner.
 version: 1
 slots:
   doc_profile:
@@ -89,6 +92,7 @@ accounts:
           rpd: 150
           rpm: 2
           tpm: 8000
+          tpd: 31666
           conc_cap: 1
           min: 1
           max: 2
@@ -109,6 +113,7 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
           conc_cap: 1
   groq_2:
     provider: groq
@@ -145,6 +150,7 @@ accounts:
           rpd: 150
           rpm: 2
           tpm: 8000
+          tpd: 31666
           conc_cap: 1
           min: 1
           max: 2
@@ -165,6 +171,7 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
           conc_cap: 1
       map_groq2q:
         enabled: true
@@ -183,6 +190,7 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
           conc_cap: 1
   groq_3:
     provider: groq
@@ -219,6 +227,7 @@ accounts:
           rpd: 150
           rpm: 2
           tpm: 8000
+          tpd: 31666
           conc_cap: 1
           min: 1
           max: 2
@@ -239,6 +248,7 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
           conc_cap: 1
       map_groq3q:
         enabled: true
@@ -257,6 +267,7 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
           conc_cap: 1
   groq_4:
     provider: groq
@@ -293,6 +304,7 @@ accounts:
           rpd: 150
           rpm: 2
           tpm: 8000
+          tpd: 31666
           conc_cap: 1
           min: 1
           max: 2
@@ -313,6 +325,7 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
           conc_cap: 1
       map_groq4q:
         enabled: true
@@ -331,6 +344,7 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
           conc_cap: 1
   groq_5:
     provider: groq
@@ -368,6 +382,7 @@ accounts:
           rpd: 150
           rpm: 2
           tpm: 8000
+          tpd: 31666
           conc_cap: 1
           min: 1
           max: 2
@@ -388,6 +403,7 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
           conc_cap: 1
       map_groq5q:
         enabled: true
@@ -406,6 +422,8 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
+          otpm: 1000
           conc_cap: 1
   groq_6:
     provider: groq
@@ -442,6 +460,7 @@ accounts:
           rpd: 150
           rpm: 2
           tpm: 8000
+          tpd: 31666
           conc_cap: 1
           min: 1
           max: 2
@@ -462,6 +481,7 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
           conc_cap: 1
       map_groq6q:
         enabled: true
@@ -480,6 +500,7 @@ accounts:
           rpd: 200
           rpm: 2
           tpm: 8000
+          tpd: 47500
           conc_cap: 1
   cloudflare_1:
     provider: cloudflare

@@ -172,7 +172,7 @@ def test_complete_one_refused_dispatches_nothing_and_names_reason(monkeypatch):
     lane = c._lane_limiter()
     monkeypatch.setattr(
         lane, "admit",
-        lambda est_tokens=0.0, block=True: LimiterDecision(False, REFUSE_FAMILY_GATE))
+        lambda est_tokens=0.0, block=True, **_kw: LimiterDecision(False, REFUSE_FAMILY_GATE))  # L2: + reserved_output
     called = {"chat": False}
 
     def boom(*a, **k):

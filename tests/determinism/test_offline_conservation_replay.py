@@ -40,8 +40,11 @@ class _FakeLimiter:
     def __init__(self, decision):
         self._d = decision
 
-    def admit(self, est_tokens=0.0, block=True):
+    def admit(self, est_tokens=0.0, block=True, *, reserved_output=0.0):
         return self._d
+
+    def settle(self, decision, tokens_in=None, tokens_out=None, *, failed=False):
+        pass                       # LLM-BACKEND L2: the reservation true-up (no real lane here)
 
     def record_success(self, headers=None):
         pass

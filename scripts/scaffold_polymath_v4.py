@@ -2378,6 +2378,9 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/llm_accounts.py", "py", None),
     ("tests/determinism/test_llm_accounts.py", "py", None),
     ("docs/wiki/work-log/2026-09-24-llm-account-registry.md", "md", None),
+    # LLM-BACKEND L2 (register 11.466): limiter correctness
+    ("tests/determinism/test_llm_limiter_l2.py", "py", None),
+    ("docs/wiki/work-log/2026-09-24-llm-limiter-l2.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),
