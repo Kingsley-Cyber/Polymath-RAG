@@ -2,7 +2,8 @@
 change_id: ENRICH-IDENTITY-V2 + ENRICH-OWN-DOC-FIRST
 owner: governance
 date: 2026-09-02
-status: complete (live receipt below; tail receipt appended when the run settles)
+status: complete
+status_note: "complete (live receipt below; tail receipt appended when the run settles)"
 architecture_impact: enrichment identity (latent/runtime.py input_hash_for + enrichment_contract_id); summary worker sweep order; one-time DB re-key (scripts/migrate_enrichment_identity.py)
 last_reviewed: 2026-09-02
 ---

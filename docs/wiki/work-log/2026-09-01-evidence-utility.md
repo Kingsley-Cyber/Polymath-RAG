@@ -2,7 +2,8 @@
 change_id: EVIDENCE-UTILITY-V1
 owner: governance
 date: 2026-09-01
-status: complete (flag-gated; default-on is a separate owner GO)
+status: complete
+status_note: "complete (flag-gated; default-on is a separate owner GO)"
 architecture_impact: final evidence-set composition for HYBRID/GRAPH (flagged); latent seat semantics
 last_reviewed: 2026-09-01
 ---

@@ -1,6 +1,7 @@
 ---
 triggered_by: ADR-0021 (TrailSignal's deterministic research core runs in process)
-status: in_progress
+status: done
+status_note: "Embedded core live (steps 1-7, 11.370-11.373, 11.399; D1 11.382). Leftovers moved to the gap register: T-01 (Trail defects M1-01..03, fix in Trail then re-pin) and T-02 (trim unrelated vendored contract modules). (was: in_progress)"
 last_reviewed: 2026-09-20
 last_touched: 2026-09-20
 ---

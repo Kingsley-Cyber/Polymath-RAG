@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance (executing CHAT-QUERY-COMPILER-PLAN §4 P0.a)
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.86
 package: orchestrator/orchestrator/api/{ui.py,chat.py}, sidecars/reranker/server.py, tests/determinism/test_chat_hygiene.py
 architecture_impact: "Prompt: the study/exam layer leaves the grounding core and is selected per corpus (CORPUS-STYLE-V1: `corpora.profile->>'style'`, else POLYMATH_STUDY_STYLE_CORPORA = cysa-study-v1, else neutral). /chat: default mode HYBRID (CHAT-DEFAULT-HYBRID-V1); every answer carries the executed mode and the requested mode (CHAT-MODE-TRUTH-V1); /retrieve keeps retrieval_modes.DEFAULT_MODE. Reranker sidecar: batched scoring with OOM back-off, typed 503 instead of a bare 500 (RERANK-BATCHING-V1); request contract unchanged. Streaming receipts shipped in P0.0 (11.85)."

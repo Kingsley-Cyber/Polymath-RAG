@@ -2,7 +2,8 @@
 change_id: FINAL-BUILD-P0-REPAIRS
 owner: governance
 date: 2026-08-26
-status: implemented
+status: complete
+status_note: "Done: P0 repairs shipped with regression tests; the spoken-relation closeout turned the verdict to PRODUCTION GO. (was: implemented)"
 architecture_impact: none (repair/measurement log)
 last_reviewed: 2026-08-29
 ---

@@ -2,7 +2,8 @@
 change_id: PROJECTION-LIFECYCLE-V1
 owner: king
 date: 2026-09-17
-status: implemented
+status: complete
+status_note: "Done: migration 0065 applied 09-18 with the STALE relabel; contract-dependencies.yaml corrected in 11.463. (was: implemented)"
 architecture_impact: the projection_receipts manifest gains an explicit PENDING/PROJECTED/STALE/FAILED lifecycle + canonical linkage
 last_reviewed: 2026-09-17
 ---

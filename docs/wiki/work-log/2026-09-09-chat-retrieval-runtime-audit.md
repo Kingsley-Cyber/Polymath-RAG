@@ -4,7 +4,8 @@ change_id: CHAT-RETRIEVAL-RUNTIME-AUDIT
 date: 2026-09-09
 owner: governance (verification only — no code change)
 last_reviewed: 2026-09-09
-status: complete (verification; no runtime change made)
+status: complete
+status_note: "complete (verification; no runtime change made)"
 register: 11.187
 package: (verification — reads orchestrator/orchestrator/api/chat_retrieval.py, ui.py, shared/polymath_shared/query_intent.py; no file modified)
 architecture_impact: "None (read-only verification). Establishes the RUNTIME TRUTH that the FINAL-RETRIEVAL-ROUTING-SYNTHESIS-V1 intent policy (INTENT×FIELD×TECHNIQUE×BUDGET) is BUILT but flag-gated OFF on the live orchestrator: POLYMATH_CHAT_INTENT_POLICY is unset, so /chat classifies intent but routes baseline HYBRID. Recorded so the next session does not mistake code presence for live behavior."

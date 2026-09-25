@@ -2,7 +2,8 @@
 change_id: CANONICAL-PROFILE-SELECTION-V1
 owner: king
 date: 2026-09-17
-status: implemented
+status: complete
+status_note: "Guard live (10 first projections 09-21). Leftover moved to the gap register as D-05: the refusal path never fired live and no rearm passes force=True. (was: implemented)"
 architecture_impact: adds a fitness-gated canonical-selection guard before document-profile projection
 last_reviewed: 2026-09-17
 ---

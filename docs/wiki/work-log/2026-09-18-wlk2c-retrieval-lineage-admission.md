@@ -2,7 +2,8 @@
 change_id: WLK2C-RETRIEVAL-LINEAGE-V1
 owner: wildcard-investigation
 date: 2026-09-18
-status: admitted
+status: complete
+status_note: "C0-C7 done (11.316-11.326), merged d904154; the bridge-reach limit was handed to LATENT-QUERY-FUSION-V2 (11.327). Live with flags on (11.408). (was: admitted)"
 architecture_impact: "DOCS-ONLY admission (no production/fleet/shared change, no bounce). Admits the WLK2C mission (owner /goal): query-anchored evidence lineage + a tiered bridge-source policy (reuse subquery → GRAPH path → bounded concept-bridge compiler → none) + DIRECT/COMPLEMENTARY/DIVERGENT role admission (q0 primary, NOT max). Grounded in WLK2A (bridge-primary validated). Implementation executes C0–C7 on worktree `wlk2c/retrieval-lineage`, one merge+port-gated-bounce+CA5 qual at the end. Extends CA3/CA4 additively; does not reopen CA0–CA5; global rerank floor unchanged; WLK2B not reopened; no hard-coded concepts."
 last_reviewed: 2026-09-18
 ---

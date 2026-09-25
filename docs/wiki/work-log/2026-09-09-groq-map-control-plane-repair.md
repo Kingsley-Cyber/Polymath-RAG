@@ -5,7 +5,8 @@ date: 2026-09-09
 owner: governance (control-plane observability + accounting; no MAP architecture change)
 last_reviewed: 2026-09-09
 last_touched: 2026-09-09
-status: complete (offline repair) — live-probe gate OPEN, awaiting owner authorization
+status: complete
+status_note: "complete (offline repair) — live-probe gate OPEN, awaiting owner authorization"
 register: 11.185
 package: shared/polymath_shared/llm_extraction/limiter.py, shared/polymath_shared/llm_extraction/client.py, config/extraction_models/limiter.yaml, workers/workers/doc_parent_map_worker.py, scripts/parent_map_backfill.py, tests/determinism/test_limiter_control_plane.py, tests/determinism/test_groq_account_isolation.py, tests/determinism/test_offline_conservation_replay.py, tests/determinism/test_doc_parent_map_worker.py, tests/determinism/test_parent_map_backfill_spread.py, tests/determinism/test_fleet_v3_limits.py, scripts/scaffold_polymath_v4.py
 architecture_impact: "Turns the Parent-MAP control plane into an instrumented, testable conservation chain (local scheduling → limiter admission → actual HTTP dispatch → provider quota → MAP compiler → persisted maps). NO change to the frozen MAP architecture: ParentSkeleton → plaintext MAP DSL → deterministic map_compiler → durable maps → projection; no JSON/schema/function-calling; compiler untouched; chunker + parent boundaries untouched; strict parent identity preserved. NO provider quota spent. Backfill remains STOPPED — resume is gated behind a bounded, owner-authorized live probe."

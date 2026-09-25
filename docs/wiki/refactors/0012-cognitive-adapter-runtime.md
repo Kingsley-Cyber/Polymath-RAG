@@ -1,6 +1,7 @@
 ---
 triggered_by: ADR-0018 (cognitive-adapter boundary)
-status: in_progress
+status: done
+status_note: "E0-E2, E4, E7 done (11.257-11.264). E3, E5, E6 were replaced by ADR-0019 / refactor 0013 (11.265), which finished in 11.276. (was: in_progress)"
 last_reviewed: 2026-09-13
 last_touched: 2026-09-13
 ---

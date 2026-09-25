@@ -4,7 +4,8 @@ change_id: LANE-CONTRACT-TESTS-REALIGNED-V1
 date: 2026-09-10
 owner: governance
 last_reviewed: 2026-09-10
-status: complete (audit + test realignment; no config change, no restart required)
+status: complete
+status_note: "complete (audit + test realignment; no config change, no restart required)"
 register: 11.198
 package: "tests/determinism/{test_lane_registry,test_groq_routing,test_document_profile_stage,test_control_plane_status}.py"
 architecture_impact: "none — no provider, key, model, pin or flag changed. Tests that still asserted the PRE-11.193 topology now assert the owner-approved allocation."

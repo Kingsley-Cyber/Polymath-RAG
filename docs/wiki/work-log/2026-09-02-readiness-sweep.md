@@ -2,7 +2,8 @@
 change_id: READINESS-SWEEP-0902 + LLM-DIRECT-PRONOUN-GATE-V1
 owner: governance
 date: 2026-09-02
-status: complete (final suite numbers appended below)
+status: complete
+status_note: "complete (final suite numbers appended below)"
 architecture_impact: llm-direct fact path gains the pronoun gate (entities + endpoints, counted); 13 live facts retired; two same-day regressions fixed; test hygiene
 last_reviewed: 2026-09-02
 ---

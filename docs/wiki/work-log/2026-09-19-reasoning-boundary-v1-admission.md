@@ -2,7 +2,8 @@
 change_id: REASONING-BOUNDARY-V1-RB0
 owner: "@king"
 date: 2026-09-19
-status: admitted
+status: complete
+status_note: "RB1-RB4 done and live: evidence boundary merged 99d12cc (11.343), reasoning policy switched on (11.344). (was: admitted)"
 architecture_impact: "RB0 admission only (docs + register + worktree). No code. Admits REASONING-BOUNDARY-V1: (1) an EvidencePacket boundary — short-circuit the chat pipeline before synthesis so external agents (Claude Code/Hermes) get validated corpus evidence (roles/CA4/provenance/corpus_explore) with NO nested Polymath synthesis LLM; expose search/explore/answer on BOTH MCP servers, deprecate polymath_query. (2) A semantic role->reasoning-BUDGET policy translated by API-surface-aware provider adapters, applied to chat-synthesis + reviewer + chat-compiler; bridge (think:false) and document-extraction (contract-hash-locked) untouched. Reuses the retrieval spine; nothing rewrites retrieval."
 last_reviewed: 2026-09-19
 ---

@@ -2,7 +2,8 @@
 change_id: EXTRACTION-THROUGHPUT-V2
 owner: governance
 date: 2026-09-01
-status: complete (live benchmark = the ecom-meta-v1 re-extraction)
+status: complete
+status_note: "complete (live benchmark = the ecom-meta-v1 re-extraction)"
 architecture_impact: cloud extraction dispatch (rank slicing, size packing, receipts, 413 ladder); migration 0044
 last_reviewed: 2026-09-01
 ---

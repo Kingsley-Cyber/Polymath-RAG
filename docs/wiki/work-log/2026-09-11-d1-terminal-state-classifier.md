@@ -4,7 +4,8 @@ change_id: TERMINAL-STATE-V1
 date: 2026-09-11
 owner: worker
 last_reviewed: 2026-09-11
-status: complete (D-1 fixed + 18 regression cases; D-2 disproven as a defect)
+status: complete
+status_note: "complete (D-1 fixed + 18 regression cases; D-2 disproven as a defect)"
 register: 11.205
 package: "workers/workers/doc_parent_map_worker.py + tests/determinism/test_terminal_state_classifier.py"
 architecture_impact: "One terminal-state vocabulary for pMAP batch outcomes, classified from real dispatch metadata. No limiter behaviour changed, no schema change, no new table."

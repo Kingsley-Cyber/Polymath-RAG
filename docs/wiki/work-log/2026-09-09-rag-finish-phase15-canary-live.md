@@ -4,7 +4,8 @@ change_id: RAG-PIPELINE-FINISH-V1
 date: 2026-09-09
 owner: governance (live execution + evidence); the pipeline owners are worker/control per slice
 last_reviewed: 2026-09-09
-status: complete — GOAL ACHIEVED
+status: complete
+status_note: "complete — GOAL ACHIEVED"
 register: 11.186
 package: scripts/rag_pipeline_canary.py, workers/workers/doc_parent_map_stage_worker.py, control/control/scheduler.py, control/control/fleet_autopilot.py, shared/polymath_shared/document_status.py
 architecture_impact: "Live execution of the fresh-document pipeline finish. No new architecture beyond the earlier RAG-finish slices; this log records the live run, the bugs found+fixed under it, and the final 3-consecutive-canary evidence. No cinema data touched (canary scoped to rag-canary); forensic hold intact."

@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.82
 package: shared/polymath_shared/materializer.py, workers/workers/tier_chunker.py, eval/fixtures/native_docs/structured.html
 architecture_impact: "Materializer 1.0.0 → 1.1.0: the HTML extractor emits Markdown-shaped structure (list blocks of '- item' lines, tables as '| a | b |' rows, <pre> as fenced code, headings as '#' lines, <br> as a line break, <nav> dropped). Chunk contract chunk-structure-v3 → v3.1: consecutive sections whose body is between parent_stub_words and parent_min_words merge forward under their shared ancestry until the floor (sub-stub and heading-only sections still drop as layout evidence); a prose fragment under child_fragment_floor_words joins the next child (lead-in + list/code) else the previous; structured blocks stay atomic. Existing documents are unchanged until re-ingested; new ingests of every format get v3.1 parents/children. Chunk ids for re-ingested documents change (content-addressed)."

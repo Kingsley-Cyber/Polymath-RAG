@@ -4,7 +4,8 @@ change_id: RAG-PIPELINE-FINISH-V1
 date: 2026-09-09
 owner: governance (read-only status aggregate; no runtime behavior change)
 last_reviewed: 2026-09-09
-status: complete (per-document status builder; the canary diagnostic packet writer + the Files/status endpoint follow in the canary harness / Phase 18)
+status: complete
+status_note: "complete (per-document status builder; the canary diagnostic packet writer + the Files/status endpoint follow in the canary harness / Phase 18)"
 register: 11.194 (pending)
 package: shared/polymath_shared/document_status.py, tests/determinism/test_document_status.py
 architecture_impact: "Adds CANONICAL-DOCUMENT-STATUS-V1: one read-only per-document aggregate from durable Postgres (stage tickets + profile/pMAP artifacts + 0054 pMAP arithmetic + readiness verdicts + pool lane health) with an ordered blocker list a failed canary reads. No provider call; bundle unchanged; no fleet fence."

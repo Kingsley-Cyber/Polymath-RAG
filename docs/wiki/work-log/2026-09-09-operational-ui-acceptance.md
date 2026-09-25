@@ -4,7 +4,8 @@ change_id: OPERATIONAL-UI-V1
 date: 2026-09-09
 owner: governance (acceptance) + shared (document_status relations parity)
 last_reviewed: 2026-09-09
-status: complete (Slice 5 — operational-UI acceptance; OPERATIONAL-UI-V1 done)
+status: complete
+status_note: "complete (Slice 5 — operational-UI acceptance; OPERATIONAL-UI-V1 done)"
 register: 11.187
 package: shared/polymath_shared/document_status.py, docs/wiki/plans/CONTINUITY-REPORT.md, docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md
 architecture_impact: "Acceptance slice. One backend consistency FIX found by the acceptance test: the document-status DETAIL graph block omitted `relations` (the Files-summary path reads it), so the row's Graph column and the drawer disagreed for the same document. Added `relations` from the SAME extract-stats artifact — one authority, matching numbers. No other code change; no pipeline/architecture change."

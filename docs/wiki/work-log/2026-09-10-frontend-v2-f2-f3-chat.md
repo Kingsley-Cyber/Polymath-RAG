@@ -4,7 +4,8 @@ change_id: FRONTEND-V2-PLAN
 date: 2026-09-10
 owner: governance
 last_reviewed: 2026-09-10
-status: complete (F2, F3, and the lane-state core of F5; browser-verified on a real turn)
+status: complete
+status_note: "complete (F2, F3, and the lane-state core of F5; browser-verified on a real turn)"
 register: 11.201
 package: "frontend-v2/src/{screens/Chat.tsx, lib/chat.ts, components/LaneTable.tsx}"
 architecture_impact: "frontend only. No backend contract changed; no retrieval, ranking or readiness policy reimplemented."

@@ -4,7 +4,8 @@ change_id: FRONTEND-V2-CONTRACT-INVENTORY-V1
 date: 2026-09-10
 owner: governance
 last_reviewed: 2026-09-10
-status: complete (F0; inventory only — no endpoint added or changed)
+status: complete
+status_note: "complete (F0; inventory only — no endpoint added or changed)"
 register: 11.195
 package: "docs/wiki/plans/FRONTEND-V2-CONTRACT-INVENTORY-V1.md"
 architecture_impact: "none. Establishes which backend authority serves each V2 capability and names five gaps (GAP-1..5) that F4/F6/F7/F10 must close before those screens can be honest."

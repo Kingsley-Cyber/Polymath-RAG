@@ -2,7 +2,8 @@
 change_id: VOCABULARY-SEMANTIC-BRIDGE
 owner: governance
 date: 2026-08-28
-status: implemented
+status: complete
+status_note: "Stage live. Leftover moved to the gap register as D-04: the NO-GO is not enforced, co-occurrence families still written (cinema: one family has 71,087 aliases). (was: implemented)"
 architecture_impact: none (repair/measurement log)
 last_reviewed: 2026-08-29
 ---

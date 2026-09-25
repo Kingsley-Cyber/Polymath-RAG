@@ -4,7 +4,8 @@ change_id: OPERATIONAL-UI-V1
 date: 2026-09-09
 owner: frontend (FilesView) — renders the CANONICAL-DOCUMENT-STATUS-V1 / summary contract, recomputes nothing
 last_reviewed: 2026-09-09
-status: complete (Slice 2 of the operational-UI frontend; Control Plane screen + Chat selectors follow)
+status: complete
+status_note: "complete (Slice 2 of the operational-UI frontend; Control Plane screen + Chat selectors follow)"
 register: 11.187
 package: frontend/src/components/FilesView.tsx, frontend/src/api.ts, frontend/src/types.ts, frontend/src/app.css, frontend/dist/*, scripts/scaffold_polymath_v4.py
 architecture_impact: "Frontend-only. Wires the operational-UI backend contract (register 11.187 backend slice) into the existing Files screen — the §1 health columns and the §2 diagnostic drawer. No new screen, no navigation change, no status math in React: every number is the backend authority (GET /documents/summary + GET /documents/{id}/status detail). Committed dist rebuilt; scaffold dist-hash declaration updated."

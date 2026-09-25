@@ -2,7 +2,8 @@
 change_id: PROJECTION-LIFECYCLE-WRITER-V1
 owner: king
 date: 2026-09-17
-status: implemented
+status: complete
+status_note: "API exists; L4 never ran (0 of 633k receipt rows carry lifecycle fields). Leftover moved to the gap register as D-06 (wire or retire). (was: implemented)"
 architecture_impact: the projection writer records lifecycle state + canonical linkage; back-compatible, migration-safe
 last_reviewed: 2026-09-17
 ---

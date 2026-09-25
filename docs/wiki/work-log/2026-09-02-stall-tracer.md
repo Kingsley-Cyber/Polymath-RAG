@@ -2,7 +2,8 @@
 change_id: STALL-TRACER-V1
 owner: governance
 date: 2026-09-02
-status: complete (live receipt below)
+status: complete
+status_note: "complete (live receipt below)"
 architecture_impact: control tick gains an evidence-only phase (trace_stalls) + table stall_traces (migration 0046) + setting control.stall_threshold_s
 last_reviewed: 2026-09-02
 ---

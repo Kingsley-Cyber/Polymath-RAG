@@ -4,7 +4,8 @@ change_id: PROFILE-SCOUT-V1-REFINE
 date: 2026-09-18
 owner: librarian
 last_reviewed: 2026-09-18
-status: design
+status: complete
+status_note: "Refined contract built as P5a/P5b (11.289, 11.293, 11.294) and live-proven in 11.301; the scout flag is on. (was: design)"
 architecture_impact: "Additive follow-on to the frozen PROFILE-SCOUT-V1 design (that commit is left historically frozen, NOT amended). Tightens P5 per owner constraints: P5a is a GENUINELY pure fusion primitive (no injected search callables — that is still I/O; search + normalization move to P5b); RRF operates at projection-level DOCUMENT ranking with AT MOST ONE contribution per doc per projection (collapse to best rank first, so more atoms != more weight); the scout exposes verbatim representative_text/representative_surface + full provenance, NOT a derived semantic capability; the ScoutHit schema is grounded against the real producers (profile_nominate returns doc_ids only = thin; search_atoms is rich)."
 ---
 

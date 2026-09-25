@@ -2,7 +2,8 @@
 change_id: PRODUCTION-SPEED-SWEEP-0901
 owner: governance
 date: 2026-09-01
-status: complete (equivalence bench = separate artifact)
+status: complete
+status_note: "complete (equivalence bench = separate artifact)"
 architecture_impact: answer admission (v2), sidecar client breaker, runtime profiles (serve), microbatch concurrency, fleet process hygiene
 last_reviewed: 2026-09-01
 ---

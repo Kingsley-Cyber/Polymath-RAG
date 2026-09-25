@@ -2,7 +2,8 @@
 change_id: PROFILE-ATOM-DAG-WIRING-V1
 owner: king
 date: 2026-09-17
-status: implemented
+status: complete
+status_note: "Live-proven: 10 fleet doc_profile runs on 09-21 wrote 295 atoms, all projected; later defects fixed by ATOM-REPAIR-V1 (11.445). (was: implemented)"
 architecture_impact: the addressable profile_atom lane becomes pipeline-maintained, not canary-only
 last_reviewed: 2026-09-17
 ---

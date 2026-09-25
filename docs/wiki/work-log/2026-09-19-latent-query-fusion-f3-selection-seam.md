@@ -2,7 +2,8 @@
 change_id: LATENT-QUERY-FUSION-V2-F3
 owner: wildcard-investigation
 date: 2026-09-19
-status: worktree_integration_proven
+status: complete
+status_note: "Merged in ae10f5a; F4 items done in 11.331-11.334. The full CA5 64x4 never ran; the owner accepted the 18-question sentinel (11.333). (was: worktree_integration_proven)"
 architecture_impact: "LATENT-QUERY-FUSION-V2 F3 — the live SELECTION seam (shared, worktree `fusion/latent-query`, UNMERGED; flag `POLYMATH_CHAT_LATENT_FUSION` default-off ⇒ retrieval byte-identical). `candidate_engine.py:1066`: when flag-on, `_latent_fused_union(fused, ranked_lanes, budget, union)` replaces the flatten's `union = fused[:merged_candidate_max]` with the F2 query-stratified fused ordering + bounded local-winner preservation — reusing the SAME CandidateEvidence (one physical candidate per chunk, provenance intact), NEVER expanding the cap, fail-open. `SubQuery` gains `origin` (default '') so a plan-provided lineage class reaches the RankedLane; the orchestrator population (chat_retrieval sub_specs → SubQuery.origin) + the ui.py live path + C4→C5→CA4 are F4 (live-only). Output still flows into the EXISTING C4→C5→CA4 spine unchanged. No weight/K/preserve_top_n tuning (F2 defaults); calibration = F4."
 last_reviewed: 2026-09-19
 ---

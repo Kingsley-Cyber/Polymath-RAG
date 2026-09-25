@@ -2365,6 +2365,10 @@ TREE: list[tuple[str, str, str | None]] = [
     # Code RAG implementation file (register 11.462): how to build it, per slice
     ("docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-code-rag-implementation-file.md", "md", None),
+    # Bookkeeping 2026-09-24 (register 11.463): the idea-doors record restored from tag archive/feat/idea-doors
+    ("docs/wiki/experiments/idea-doors-2026-09-24/replay.json", "json", None),
+    ("docs/wiki/work-log/2026-09-24-idea-doors-experiment.md", "md", None),
+    ("docs/wiki/work-log/2026-09-24-bookkeeping-branches-and-paperwork.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),

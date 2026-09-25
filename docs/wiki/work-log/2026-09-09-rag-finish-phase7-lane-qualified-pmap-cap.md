@@ -4,7 +4,8 @@ change_id: RAG-PIPELINE-FINISH-V1
 date: 2026-09-09
 owner: governance (batch-planner policy + config; no runtime behavior change until the stage worker consumes it)
 last_reviewed: 2026-09-09
-status: complete (batch-cap qualification; in-run cross-lane failover lands with the stage worker)
+status: complete
+status_note: "complete (batch-cap qualification; in-run cross-lane failover lands with the stage worker)"
 register: 11.192 (pending)
 package: shared/polymath_shared/document_profile/map_batches.py, workers/workers/doc_parent_map_worker.py, shared/polymath_shared/llm_extraction/lane_registry.py, config/cloud_providers.json, tests/determinism/test_map_batches.py, tests/determinism/test_lane_registry.py
 architecture_impact: "The pMAP reliability cap is no longer a hard-coded global 15: plan_batches / run_document_mapping take a lane-qualified reliability_cap, and the registry exposes a per-lane map_batch_cap + pmap_pool_batch_cap() (min over active pMAP lanes, so every batch is drainable by every lane; architectural target 60 honored for a qualified pool). Default MAP_RELIABILITY_CAP=15 unchanged → byte-identical batch identities. No provider spend. Bundle hash unchanged; no fleet fence."

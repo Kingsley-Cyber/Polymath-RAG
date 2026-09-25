@@ -4,7 +4,8 @@ change_id: PROVIDER-LANE-REASSIGNMENT-V1
 date: 2026-09-10
 owner: governance (owner-directed API-env reconfiguration)
 last_reviewed: 2026-09-10
-status: complete (config written + validated; takes effect on next fleet bounce; NOT bounced)
+status: complete
+status_note: "complete (config written + validated; takes effect on next fleet bounce; NOT bounced)"
 register: 11.193
 package: "config/cloud_providers.json + config/extraction_models/limiter.yaml (+ local .env OLLAMA_API_KEY, gitignored)"
 architecture_impact: "Provider→function lane reassignment only (no code, no retrieval architecture change). Graph extraction = all Google (gemini*) + NVIDIA + SiliconFlow; doc_profile = 1 Groq key (compound) + OpenRouter fallback; pMAP = 5 Groq keys (compound-mini) + OpenRouter fallback; chat compiler = Alibaba-direct (compatible-mode) + Ollama gemma + OpenRouter backstop. De-shares the 6 Groq accounts (was doc_profile+pMAP shared). Inert until boot_polymath.sh; running fleet unchanged. Respects the cinema forensic hold (no backfill resumed)."

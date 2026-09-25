@@ -4,7 +4,8 @@ change_id: PMAP-SCALE-OUT-V1
 date: 2026-09-11
 owner: control
 last_reviewed: 2026-09-11
-status: complete (4 slots, demand-scaled; ~4x measured)
+status: complete
+status_note: "complete (4 slots, demand-scaled; ~4x measured)"
 register: 11.207
 package: "control/control/process_supervisor.py + control/control/fleet_autopilot.py"
 architecture_impact: "Fleet shape only. No change to MAP_RELIABILITY_CAP, lane topology, auto-mint scope or any retrieval path."

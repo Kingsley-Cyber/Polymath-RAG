@@ -4,7 +4,8 @@ change_id: PMAP-ABSTRACT-QUERY-WIRING-GAP
 date: 2026-09-17
 owner: governance
 last_reviewed: 2026-09-17
-status: measured
+status: complete
+status_note: "Audit done; gap closed by 11.279-11.280 (dualread=23). Leftover moved to the gap register as L-19 (no upload since 2026-09-17 has been shown to mint parent maps). (was: measured)"
 architecture_impact: none (read-only audit; no runtime change)
 ---
 

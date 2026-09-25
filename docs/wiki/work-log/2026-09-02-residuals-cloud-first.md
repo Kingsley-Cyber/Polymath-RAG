@@ -2,7 +2,8 @@
 change_id: CLOUD-FIRST-V1 + STATUS-MONOTONE-V1 + ENV-OVERLAY-ON-SPAWN-V1 + GRACEFUL-LEASE-HANDBACK-V1 + DROP-TOLERANCE-SETTING + DELETE-PURGES-EXTRACTION-RECEIPTS + SPLIT-KEEPS-PARTIAL
 owner: governance
 date: 2026-09-02
-status: complete (receipts appended below)
+status: complete
+status_note: "complete (receipts appended below)"
 architecture_impact: lane policy floor (policy.py/settings.py/.env), run-status write discipline (receipts.py), supervisor spawn env + fence lease handback, coverage tolerance as a setting, document delete cascade, dispatch split back-fill
 last_reviewed: 2026-09-02
 ---

@@ -2,7 +2,8 @@
 change_id: QUICK-MODEL-GRADE-V1
 owner: governance
 date: 2026-09-02
-status: complete (results table appended below)
+status: complete
+status_note: "complete (results table appended below)"
 architecture_impact: none in the pipeline — a standing eval tool (eval/v5/fleet/quick_model_grade.py + answer key); models graded outside the fleet
 last_reviewed: 2026-09-02
 ---

@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance (executing CHAT-QUERY-COMPILER-PLAN §4 P0.b)
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.87
 package: shared/polymath_shared/chat_plan.py, orchestrator/orchestrator/api/ui.py, config/cloud_providers.json, config/extraction_models/limiter.yaml, scripts/chat_compiler_canary.py, eval/fixtures/chat_conversations/*.json, tests/determinism/{test_chat_compiler.py,test_chat_hygiene.py}
 architecture_impact: "New deterministic policy module shared/polymath_shared/chat_plan.py (contract chat-intent-plan-v1: validation, task-class guard, corrections, fallback, prompt). New stage pin `chat_compiler` with five dedicated lanes (compiler1–4 = Gemini keys 1–4 @ gemini-3.1-flash-lite; compiler_alt = OpenRouter mistral-small-2603) on their own local limiter keys; the extraction roster is unchanged. The streaming handler compiles every turn behind POLYMATH_CHAT_COMPILER (off | shadow | on, default shadow): in shadow the compile runs beside retrieval and is only receipted and shown; `on` (P0.c) makes it the serial stage 0. No retrieval, prompt or budget behavior changes in this phase."

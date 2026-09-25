@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.77
 package: orchestrator/orchestrator/api/ui.py
 architecture_impact: "read-path only: the per-corpus document listing computes its per-document counts with correlated subqueries on the (doc_id) indexes instead of a chunks × parent_enrichments join. Same response shape, same numbers. No schema or contract change."

@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance (executing CHAT-QUERY-COMPILER-PLAN §4 P1.b)
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: qualification-open
+status: complete
+status_note: "Qualified by the R1 requalification (register 11.93); latency, composition, /chat and fixture follow-ups moved to P1.c-P1.g (11.95-11.99). (was: qualification-open)"
 register: 11.92
 package: shared/polymath_shared/candidate_engine.py, orchestrator/orchestrator/api/{chat_retrieval.py,fast.py,ui.py}, scripts/chat_baseline.py, eval/fixtures/chat_multi_M.json, tests/determinism/{test_candidate_engine.py,test_chat_retrieval_v2.py}
 architecture_impact: "The compiled plan's typed subqueries (≤ 3 besides PRIMARY) now retrieve: each runs lanes B (global dense child, K20) and C (global sparse child, K15) on its OWN vector and sparse query; document routing (lane A) runs once, on the primary. One batched embedder call embeds every distinct query text of the turn. Fusion is provenance-normalised (§3.10): every candidate carries `query_scores` per compiled query; under one subquery only a document's best chunk keeps the full contribution (others half), and a chunk's fused score is its best per-query contribution plus a bounded agreement term (≤ 2× total), so redundant subqueries cannot stack votes. Per-aspect coverage (`aspects`: lanes, union, final; `weak_aspects` = compiled queries with no evidence in the final set) rides the trace, `retrieval.aspects` / `retrieval.weak_aspects` in the answer event, the `retrieve_done` phase, and the synthesis request block (EVIDENCE COVERAGE BY ASPECT — a weak aspect is named to the model). One targeted second pass: the first aspect with zero candidates re-runs B + C at K × 2, once per turn. Nothing under §3.23 touched; /retrieve, /ask, TRAIL unchanged."

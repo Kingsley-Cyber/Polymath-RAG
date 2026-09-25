@@ -4,7 +4,8 @@ change_id: RAG-PIPELINE-FINISH-V1
 date: 2026-09-09
 owner: governance (gate assessment) + evaluation (canary harness)
 last_reviewed: 2026-09-09
-status: complete (offline gate green; the live canary loop is Phase 15)
+status: complete
+status_note: "complete (offline gate green; the live canary loop is Phase 15)"
 register: 11.195 (pending)
 package: scripts/rag_pipeline_canary.py
 architecture_impact: "Adds the Phase 15 canary harness (generate 3-5 KB .txt -> /upload -> poll document_status to VNEXT_COMPLETE under a 4-min cap -> diagnostic packet OUTSIDE the repo -> /retrieve probe with citation check). No runtime behavior change; the harness only RUNS live under the Phase 15 preconditions. Records the Phase 14 offline acceptance gate as GREEN."

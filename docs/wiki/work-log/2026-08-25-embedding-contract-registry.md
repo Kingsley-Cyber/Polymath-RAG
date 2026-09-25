@@ -2,7 +2,8 @@
 change_id: EMBEDDING-CONTRACT-REGISTRY-V1
 owner: governance
 date: 2026-08-25
-status: implemented
+status: complete
+status_note: "Done: per-corpus contract pin, neural default, worker honours it. Latent: the query side hard-codes neural (fast.py:249, 269): gap D-08. (was: implemented)"
 architecture_impact: embedding contract authority moves from application setting to per-corpus state in Postgres; production default flips to neural
 last_reviewed: 2026-08-29
 ---

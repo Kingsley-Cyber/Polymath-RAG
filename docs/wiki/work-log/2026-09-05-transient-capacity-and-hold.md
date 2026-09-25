@@ -5,7 +5,8 @@ date: 2026-09-05
 owner: governance
 last_reviewed: 2026-09-05
 last_touched: 2026-09-05
-status: shipped
+status: complete
+status_note: "shipped"
 register: 11.78
 package: shared/polymath_shared/worker_runtime.py, workers/workers/summary_worker_impl.py
 architecture_impact: "worker runtime failure classification only: an ExtractionTransportError carrying HTTP 429 / lane refused / LIMITER_REFUSED, and the new TransientStageHold, are handed back READY without consuming an attempt (60 s backoff for capacity events). The summary sweep lock yields with TransientStageHold after 30 s instead of blocking the lane slot. No schema, contract or API change."

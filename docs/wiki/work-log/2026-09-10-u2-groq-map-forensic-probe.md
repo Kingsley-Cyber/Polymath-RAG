@@ -4,7 +4,8 @@ change_id: GROQ-MAP-FORENSIC-PROBE-V1
 date: 2026-09-10
 owner: governance
 last_reviewed: 2026-09-10
-status: complete (bounded probe executed; acceptance gate substantially met; owner-review gate reached)
+status: complete
+status_note: "complete (bounded probe executed; acceptance gate substantially met; owner-review gate reached)"
 register: 11.192
 package: "scripts/groq_map_forensic_probe.py + docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/"
 architecture_impact: "None (read-only forensic observation). A cinema-free bounded Groq probe on SYNTHETIC parents through the production client + 11.185 conservation chain. No corpus/DB write, no cinema, no JSON mode, max_attempts=1. Answers the forensic hold's core question: provider RPD is NOT exhausted and local↔provider accounting reconciles; the historical +0/0-errors pass was a local LIMITER_REFUSED cascade. Cinema backfill resumption remains OWNER-GATED."

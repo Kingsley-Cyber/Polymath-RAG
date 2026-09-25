@@ -2,7 +2,8 @@
 change_id: EXTRACTION-FLEET-V3
 owner: governance
 date: 2026-09-01
-status: complete (equivalence bench running; tiering = owner gate)
+status: complete
+status_note: "complete (equivalence bench running; tiering = owner gate)"
 architecture_impact: limiter (RPD, family circuit, ceiling adoption), dispatch (semantic escape, truncation split), receipts (accepted_count), bench
 last_reviewed: 2026-09-01
 ---

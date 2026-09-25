@@ -1,3 +1,5 @@
+> **HISTORICAL (2026-08-25 snapshot; marked 2026-09-24, register 11.463).** Superseded by SPARSE-BM25-V1 (register 11.3 / 11.6), TIER-CHUNKER-V3 (11.24) and the neural embedding default. Do not build from it.
+
 # RETRIEVAL-STORAGE-CONTRACT-V1
 
 Status: **ACTUAL BEHAVIOR** (audited from production code + live stores

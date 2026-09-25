@@ -2,7 +2,8 @@
 change_id: FOREGROUND-UNDER-BACKLOG
 owner: governance
 date: 2026-08-25
-status: implemented
+status: complete
+status_note: "Done: fresh-run claim lane live, stale scale mass archived. The conditional set-based advancement slice is not needed (advance_tickets ~2 s live). (was: implemented)"
 architecture_impact: claim ordering policy change; stale scale mass archived
 last_reviewed: 2026-08-29
 ---
