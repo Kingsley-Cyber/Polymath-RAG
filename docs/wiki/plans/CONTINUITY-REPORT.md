@@ -67,8 +67,11 @@ acceptance (K1 scope before C1; E2E-1 = the walking-skeleton proof).
 (`review/m1-reproductions` kept); every open work-log and refactor record closed with an evidence note (wiki_worm: 0 open);
 leftovers are gap-register rows L-19, D-03..D-09, O-01..O-03, T-01, T-02 (62 rows).
 
-**Next action: LLM-BACKEND-BATCH1 (11.464)** on branch `fix/llm-backend-batch1` (code done and tested): merge, the two
-`.env` edits (remove `POLYMATH_GROQ_ROUTER=1`, add `POLYMATH_LLM_CLOUD_PRIMARY=0`), one bounce, check the live attempt rows.
+**LLM-BACKEND-BATCH1 (11.464) merged:** gap rows L-08, L-09, L-10, L-12, L-13, L-16, L-17, L-18 closed by tests; live
+`.env`: `POLYMATH_GROQ_ROUTER` removed, `POLYMATH_LLM_CLOUD_PRIMARY=0` added; one bounce; live check = new attempt rows
+carry a stage and the pool roster omits `primary`, `nvidia*`, `siliconflow*`.
+
+**Next action: L1** (account registry).
 Then L1 → L2 → L3 → L4 (the provider backend) → D1 → K1 → C1 … (roadmap §3).
 
 - **Owner, 2026-09-24:** "now since the rag for regular retrieval works i want to implement multi code langauge rag. theirs

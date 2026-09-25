@@ -1977,6 +1977,7 @@ def _bridge_cloud_clients() -> list:
                                     cloud_opts={**(ep.cloud_opts or {}), "json_mode": False},
                                     timeout_s=min(_BRIDGE_TIMEOUT_S, _COMPILER_HTTP_TIMEOUT_S), max_attempts=1)
             c.endpoint_name = ep.name
+            c.attempt_stage, c.attempt_function = "chat_bridge", "BRIDGE"   # gap L-17
             c.reasoning_role = "BRIDGE"
             out.append(c)
         return out
@@ -2457,6 +2458,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
                                          api_key=ep.api_key, cloud_opts=ep.cloud_opts,
                                          timeout_s=_COMPILER_HTTP_TIMEOUT_S, max_attempts=1)
             client.endpoint_name = ep.name
+            client.attempt_stage, client.attempt_function = "chat_compiler", "COMPILER"   # gap L-17
             # REASONING-BOUNDARY-V1: mark this as the chat-COMPILER (STRUCTURED_COMPILER) so _chat overlays
             # the reasoning-budget policy at runtime (no-op unless POLYMATH_REASONING_POLICY=1). Only the
             # compiler's dedicated client carries this attribute; document-extraction clients never do, so

@@ -32,7 +32,8 @@
     "COMPILER-CROSS-FAMILY-V1 (2026-09-05): compiler_alt = OpenRouter key 1 @ mistral-small-2603 (dedicated, json) joins the chat_compiler ring so a Gemini-wide 503 storm (measured: 78 enrichment 503s today, a 24 s hang on compiler2's probe) never zeroes the compiler; the compiler client uses a 6 s HTTP timeout and walks one ring step on a transport failure.",
     "DOCUMENT-PROFILE-V1 pool (owner 2026-09-07): profile_groq1..6 = six DEDICATED Groq accounts (groq/compound; RPM 30 / RPD 250 / TPM 70k each) as tier 0, rotated per run; profile_fallback_gemini1/2 (own keys 5/6) as fallback 1; profile_fallback_openrouter as fallback 2. Plain-text labelled output (structured null). Never shared with extraction, enrichment or the chat compiler.",
     "SILICONFLOW-EXTRACTION-LANES-V1 (owner 2026-09-08): siliconflow1..3 = three SEPARATE SiliconFlow accounts on Qwen/Qwen3-8B, added EXCLUSIVELY to assist GRAPH EXTRACTION. dedicated:false => they join the general (unpinned) extraction ring only; the enrichment / doc_profile / chat_compiler / doc_parent_map stages are pinned and never spend them. enable_thinking:false (THINKING-CONTROL-V1) is MANDATORY: Qwen3-8B is a reasoning model and with thinking ON burns the whole max_tokens budget on reasoning tokens and returns empty extraction (SiliconFlow's toggle is the top-level enable_thinking, not reasoning_effort, so reasoning_effort:null). structured:json (json_object; upgrade to schema only after a strict-schema canary). request_char_budget 30000 (8B => keep batches modest). ACTIVATES when SILICONFLOW_API_KEY_1/2/3 resolve in .env; until then the three lanes park (surfaced, never silent). Note: an 8B model is on the small side for relation extraction \u2014 watch the canary's relation yield before leaning on it. Canary: scripts/siliconflow_extraction_canary.py.",
-    "GROQ-MODEL-SWAP-2026-09-23 (owner: compound / compound-mini are gone \u2014 canary 404 'model does not exist'): profile_groq1 = openai/gpt-oss-120b (reasoning_effort low) on GROQ_API_KEY_1; map_groq2..6 = openai/gpt-oss-20b (low) and map_groq2q..6q = qwen/qwen3.8-27b (reasoning_effort none) on GROQ_API_KEY_2..6. Groq limits are INDEPENDENT per model per key (30 RPM / 1K RPD / 8K TPM / 200K TPD), so a key carries one lane per model with its own limiter family. Canary (docs/wiki/experiments/groq-model-canary-2026-09-23): 16/17 calls valid \u2014 pMAP 15/15 and 8/8 maps, 0 rejected lines; profiles valid with full field counts; one qwen call refused by an org-level OUTPUT-tokens-per-minute cap (OTPM 1000) \u2014 failover absorbs it. The pool batch cap stays 15 (batch identities unchanged)."
+    "GROQ-MODEL-SWAP-2026-09-23 (owner: compound / compound-mini are gone \u2014 canary 404 'model does not exist'): profile_groq1 = openai/gpt-oss-120b (reasoning_effort low) on GROQ_API_KEY_1; map_groq2..6 = openai/gpt-oss-20b (low) and map_groq2q..6q = qwen/qwen3.8-27b (reasoning_effort none) on GROQ_API_KEY_2..6. Groq limits are INDEPENDENT per model per key (30 RPM / 1K RPD / 8K TPM / 200K TPD), so a key carries one lane per model with its own limiter family. Canary (docs/wiki/experiments/groq-model-canary-2026-09-23): 16/17 calls valid \u2014 pMAP 15/15 and 8/8 maps, 0 rejected lines; profiles valid with full field counts; one qwen call refused by an org-level OUTPUT-tokens-per-minute cap (OTPM 1000) \u2014 failover absorbs it. The pool batch cap stays 15 (batch identities unchanged).",
+    "LLM-BACKEND-BATCH1 (2026-09-24, register 11.464): nvidia, nvidia2, siliconflow1-3 parked (median ~100 s per call; 31 of 72 calls timed out); compiler_alibaba_qwen removed from the chat_compiler pin (11 of 12 calls timed out on 2026-09-23; the lane stays defined); map_groq2q..6q max_output_tokens 900 (some orgs enforce OTPM 1000 on qwen3.8-27b)."
   ],
   "stage_pins": {
     "parent_enrichment": [
@@ -42,7 +43,6 @@
       "openrouter5"
     ],
     "chat_compiler": [
-      "compiler_alibaba_qwen",
       "compiler_alibaba_deepseek",
       "compiler_ollama_gemma",
       "compiler_alt"
@@ -70,7 +70,7 @@
   "providers": [
     {
       "name": "nvidia",
-      "enabled": true,
+      "enabled": false,
       "url": "https://integrate.api.nvidia.com",
       "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
       "api_key_env": "NVIDIA_API_KEY",
@@ -81,7 +81,7 @@
     },
     {
       "name": "nvidia2",
-      "enabled": true,
+      "enabled": false,
       "url": "https://integrate.api.nvidia.com",
       "model": "nvidia/nemotron-3-super-120b-a12b",
       "api_key_env": "NVIDIA_API_KEY_2",
@@ -514,7 +514,8 @@
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
-      "map_batch_cap": 15
+      "map_batch_cap": 15,
+      "max_output_tokens": 900
     },
     {
       "name": "map_groq3q",
@@ -527,7 +528,8 @@
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
-      "map_batch_cap": 15
+      "map_batch_cap": 15,
+      "max_output_tokens": 900
     },
     {
       "name": "map_groq4q",
@@ -540,7 +542,8 @@
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
-      "map_batch_cap": 15
+      "map_batch_cap": 15,
+      "max_output_tokens": 900
     },
     {
       "name": "map_groq5q",
@@ -553,7 +556,8 @@
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
-      "map_batch_cap": 15
+      "map_batch_cap": 15,
+      "max_output_tokens": 900
     },
     {
       "name": "map_groq6q",
@@ -566,11 +570,12 @@
       "dedicated": true,
       "request_char_budget": 18000,
       "json_mode": false,
-      "map_batch_cap": 15
+      "map_batch_cap": 15,
+      "max_output_tokens": 900
     },
     {
       "name": "siliconflow1",
-      "enabled": true,
+      "enabled": false,
       "url": "https://api.siliconflow.com",
       "model": "Qwen/Qwen3-8B",
       "reasoning_effort": null,
@@ -582,7 +587,7 @@
     },
     {
       "name": "siliconflow2",
-      "enabled": true,
+      "enabled": false,
       "url": "https://api.siliconflow.com",
       "model": "Qwen/Qwen3-8B",
       "reasoning_effort": null,
@@ -594,7 +599,7 @@
     },
     {
       "name": "siliconflow3",
-      "enabled": true,
+      "enabled": false,
       "url": "https://api.siliconflow.com",
       "model": "Qwen/Qwen3-8B",
       "reasoning_effort": null,

@@ -48,7 +48,7 @@ providers:
     use_headers: true
   openrouter1:             # OpenRouter paid key — mistral-small-2603 (Mistral
     kind: rate             # first-party endpoints); no published RPM: seeded
-    family: openrouter     # conservatively, header ceiling adoption grows it
+    family: openrouter_acct_1     # conservatively, header ceiling adoption grows it
     rpm: 60
     tpm: 500000
     conc_cap: 4
@@ -57,7 +57,7 @@ providers:
     init: 2
   openrouter2:             # OpenRouter paid key — ministral-14b-2512
     kind: rate
-    family: openrouter
+    family: openrouter_acct_1
     rpm: 60
     tpm: 500000
     conc_cap: 4
@@ -198,7 +198,7 @@ providers:
 
   openrouter3:             # OpenRouter SECOND key — qwen/qwen3.7-flash (reasoning off);
     kind: rate             # own account = own bucket; seeded like openrouter1
-    family: openrouter
+    family: openrouter_acct_2
     rpm: 60
     tpm: 500000
     conc_cap: 4
@@ -207,7 +207,7 @@ providers:
     init: 2
   openrouter5:             # OpenRouter THIRD key — mistral-small-24b-2501, enrichment pin only
     kind: rate
-    family: openrouter
+    family: openrouter_acct_3
     rpm: 60
     tpm: 500000
     conc_cap: 4
@@ -256,7 +256,7 @@ providers:
     init: 1
   compiler_alt:          # COMPILER-CROSS-FAMILY-V1: OpenRouter mistral-small-2603, chat_compiler pin only
     kind: rate
-    family: openrouter
+    family: openrouter_acct_1
     rpm: 60
     tpm: 500000
     conc_cap: 2
@@ -345,7 +345,7 @@ providers:
     init: 1
   profile_fallback_openrouter:   # DOCUMENT-PROFILE-V1 fallback 2: OpenRouter mistral-small-2603 on OPENROUTER_API_KEY_2 — sees only earlier-tier failures
     kind: rate
-    family: openrouter
+    family: openrouter_acct_2
     rpm: 20
     tpm: 300000
     conc_cap: 1
@@ -497,7 +497,7 @@ providers:
     adaptive: true
   map_fallback_openrouter:   # PARENT-MAP fallback: OpenRouter mistral-small-2603 (OPENROUTER_API_KEY_3), MAP DSL, fires only on groq-lane failure
     kind: rate
-    family: openrouter
+    family: openrouter_acct_3
     rpm: 60
     tpm: 500000
     conc_cap: 2

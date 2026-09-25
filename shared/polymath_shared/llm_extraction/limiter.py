@@ -28,6 +28,8 @@ runtime.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import os
 import re
@@ -464,6 +466,9 @@ class AdaptiveLimiter:
                     "last_dispatch_at": self._last_dispatch_at,
                     "adopted_rpm": self._adopted_rpm,
                     "adopted_tpm": self._adopted_tpm,
+                    # LLM-BACKEND-BATCH1 (gap L-08): which configured limits the adopted
+                    # ceilings were learned under; restore() reuses them only when unchanged
+                    "spec_fingerprint": self.spec_fingerprint(),
                     # provider truth (observed from headers; not restored — it is
                     # re-observed live each epoch so a stale value never binds)
                     "provider_rpd_limit": self._provider_rpd_limit,
@@ -499,6 +504,15 @@ class AdaptiveLimiter:
             "provider_rpd_remaining": self._provider_rpd_remaining,
         }
 
+    def spec_fingerprint(self) -> str:
+        """A short hash of the configured limits (kind, rates, concurrency, family). Stable while
+        the lane's limiter.yaml entry is unchanged; any edit (e.g. a model swap that renames the
+        family or changes tpm) yields a new fingerprint."""
+        s = self.spec
+        basis = json.dumps([s.kind, s.init, s.min, s.max, s.rpm, s.tpm, s.conc_cap, s.rpd, s.family],
+                           separators=(",", ":"))
+        return hashlib.sha256(basis.encode("utf-8")).hexdigest()[:16]
+
     def restore(self, state: dict | None) -> bool:
         """Adopt a persisted effective limit (clamped into [floor, ceil]).
         The persisted value is what the controller had FOUND before the
@@ -523,12 +537,18 @@ class AdaptiveLimiter:
                 # daily budget resets, and carrying it over would refuse live capacity.
                 lda = state.get("last_dispatch_at")
                 self._last_dispatch_at = str(lda) if lda else None
-            for attr, bucket in (("adopted_rpm", self._rpm),
-                                 ("adopted_tpm", self._tpm)):
-                val = state.get(attr)
-                if val and bucket is not None:
-                    bucket.adopt_capacity(float(val))
-                    setattr(self, "_" + attr, float(val))
+            # LLM-BACKEND-BATCH1 (gap L-08): a header-adopted ceiling belongs to the limits it was
+            # learned under. Measured 2026-09-24: `adopted_tpm: 70000` from the retired compound
+            # models sat on lanes now configured at 8,000 TPM and would have been restored as-is.
+            # A row without a fingerprint (written before this change) or with a different one is
+            # not reused: the configured limits apply until live headers re-adopt a ceiling.
+            if state.get("spec_fingerprint") == self.spec_fingerprint():
+                for attr, bucket in (("adopted_rpm", self._rpm),
+                                     ("adopted_tpm", self._tpm)):
+                    val = state.get(attr)
+                    if val and bucket is not None:
+                        bucket.adopt_capacity(float(val))
+                        setattr(self, "_" + attr, float(val))
             self._sem.set_limit(self._effective)
         return True
 
@@ -947,7 +967,9 @@ class LimiterRegistry:
         if not dsn:
             return
         try:
-            from polymath_shared.llm_extraction.state_store import PostgresControllerStore
+            from polymath_shared.llm_extraction.state_store import (
+                PostgresControllerStore,
+            )
             self.attach_store(PostgresControllerStore(dsn))
         except Exception:  # noqa: BLE001 — accounting must never block extraction
             log.debug("controller store unavailable; continuing in-memory")
