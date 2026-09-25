@@ -3197,6 +3197,12 @@ def _turn_receipt_extras(trace: dict | None, latent_selection: dict | None, wild
         rt["contextual"] = {k: v for k, v in judge.items() if k != "ms" and not _is_clock(k)}
         if judge.get("ms") is not None:
             ms["contextual"] = judge["ms"]
+    fan = trace.get("seealso_fanout")
+    if isinstance(fan, dict) and fan.get("enabled"):
+        # SEEALSO-BLEND / DOC-STEER (11.475 / 11.482; receipt 11.483): which document lines steered lane G this turn (each
+        # with its kind) and how many of their passages reached the candidates — the live proof of both; lane_ms stays in
+        # trace_ms
+        rt["seealso_fanout"] = {k: v for k, v in fan.items() if not _is_clock(k)}
     gate = trace.get("probe_gate")
     if isinstance(gate, dict) and gate.get("scored"):
         rt["probe_gate"] = {k: v for k, v in gate.items() if k != "ms" and not _is_clock(k)}
