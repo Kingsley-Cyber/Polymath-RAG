@@ -38,7 +38,7 @@ def point_id(doc_id: str) -> str:
 
 
 def profile_nominate(client, collection: str, query_vec, corpus_id: str, k: int = 8,
-                     *, surfaces: tuple[str, ...] = ANSWER_SURFACES) -> list[str]:
+                     *, surfaces: tuple[str, ...] = ANSWER_SURFACES, scope=None) -> list[str]:
     """RRF nomination over the profile collection → ordered doc_ids (the S8/S9 door).
 
     The SAME surfaces the self-retrieval gate qualified: dense `identity`/`theme`/`title`
@@ -46,7 +46,9 @@ def profile_nominate(client, collection: str, query_vec, corpus_id: str, k: int 
     — this is the reusable profile-search contract the shadow canary and the live dual-read
     lane both nominate through."""
     from qdrant_client.http import models as qm
-    flt = qm.Filter(must=[qm.FieldCondition(key="corpus_id", match=qm.MatchValue(value=corpus_id))])
+    from polymath_shared.code.scope import scope_or_all
+    flt = scope_or_all(scope).apply(      # K1: the knowledge-role scope rides every prefetch
+        qm.Filter(must=[qm.FieldCondition(key="corpus_id", match=qm.MatchValue(value=corpus_id))]))
     v = list(query_vec)
     pre = [qm.Prefetch(query=([v] if s in MULTI_SURFACES else v), using=s, limit=k, filter=flt)
            for s in surfaces]

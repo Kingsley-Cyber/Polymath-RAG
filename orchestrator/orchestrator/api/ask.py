@@ -45,6 +45,8 @@ class AskRequest(BaseModel):
     corpus_ids: Optional[list[str]] = None
     workspace: Optional[str] = None
     all_authorized: bool = False
+    # K1 (register 11.485): the knowledge-role scope; omitted = both roles; a malformed one is refused (422)
+    scope: Optional[dict] = None
 
 
 def _norm(s: str) -> str:
@@ -89,7 +91,7 @@ def _merge_terms(question: str, extra_terms=()) -> list[str]:
 
 
 
-def _vector_object_ranks(question: str, scope, kind: str) -> dict[str, int]:
+def _vector_object_ranks(question: str, scope, kind: str, role_scope=None) -> dict[str, int]:
     """VECTOR-OBJECT-MATCH-V1 (audit F3): rank concept/procedure objects
     by the SAME machinery FAST uses — dense + sparse over their routing
     points (routing_concept / routing_procedure) — instead of substring
@@ -111,12 +113,13 @@ def _vector_object_ranks(question: str, scope, kind: str) -> dict[str, int]:
         try:
             for corpus_id, collection in _corpus_collections(
                     list(scope.corpus_ids)).items():
-                flt = Filter(must=[
+                from polymath_shared.code.scope import scope_or_all
+                flt = scope_or_all(role_scope).apply(Filter(must=[     # K1: the knowledge-role scope
                     FieldCondition(key="representation_kind",
                                    match=MatchValue(value=kind)),
                     FieldCondition(key="corpus_id",
                                    match=MatchValue(value=corpus_id)),
-                ])
+                ]))
                 probes = [(qvec, None)]
                 if si:
                     probes.append((SparseVector(indices=si, values=svals),
@@ -144,7 +147,7 @@ def _vector_object_ranks(question: str, scope, kind: str) -> dict[str, int]:
 
 
 def _procedures(conn, scope: "QueryScope", question: str,
-                extra_terms=()) -> list[dict]:
+                extra_terms=(), role_scope=None) -> list[dict]:
     terms = _merge_terms(question, extra_terms)
     where = "WHERE corpus_id = ANY(%s)"
     args: list = [list(scope.corpus_ids)]
@@ -152,7 +155,7 @@ def _procedures(conn, scope: "QueryScope", question: str,
         f"""SELECT procedure_id, document_id, corpus_id, title, goal,
                    steps_json, tools_json, confidence, source_chunk_ids
               FROM procedure_artifacts {where}""", args).fetchall()
-    vec_ranks = _vector_object_ranks(question, scope, "routing_procedure")
+    vec_ranks = _vector_object_ranks(question, scope, "routing_procedure", role_scope=role_scope)
     scored = []
     for pid, did, cid, title, goal, steps, tools, conf, chunks in rows:
         steps_l = steps if isinstance(steps, list) else json.loads(steps or "[]")
@@ -193,7 +196,7 @@ def _procedures(conn, scope: "QueryScope", question: str,
 
 
 def _concepts(conn, scope: "QueryScope", question: str,
-              extra_terms=()) -> list[dict]:
+              extra_terms=(), role_scope=None) -> list[dict]:
     terms = _merge_terms(question, extra_terms)
     where = "WHERE corpus_id = ANY(%s)"
     args: list = [list(scope.corpus_ids)]
@@ -201,7 +204,7 @@ def _concepts(conn, scope: "QueryScope", question: str,
         f"""SELECT concept_id, document_id, corpus_id, name, description,
                    domain, confidence, supporting_chunks
               FROM concept_artifacts {where}""", args).fetchall()
-    vec_ranks = _vector_object_ranks(question, scope, "routing_concept")
+    vec_ranks = _vector_object_ranks(question, scope, "routing_concept", role_scope=role_scope)
     scored = []
     for cid_, did, cid, name, desc, domain, conf, chunks in rows:
         if not object_name_admissible(name or "")[0]:
@@ -302,7 +305,8 @@ def _ask_impl(req: AskRequest):
         # QUERY-SCOPE-V1: explicit, fail-closed. No scope → typed 422.
         # One canonical resolution path shared with /retrieve, /evidence
         # and /chat (never a second competing scope system).
-        from orchestrator.api.retrieve import resolve_http_scope
+        from orchestrator.api.retrieve import _role_scope_or_422, resolve_http_scope
+        role_scope = _role_scope_or_422(req)
 
         scope = resolve_http_scope(conn, req)
 
@@ -319,13 +323,13 @@ def _ask_impl(req: AskRequest):
 
         procedures = concepts = facts = families = []
         if route == ROUTE_PROCEDURE:
-            procedures = _procedures(conn, scope, question, extra)
+            procedures = _procedures(conn, scope, question, extra, role_scope=role_scope)
         elif route == ROUTE_CONCEPT:
-            concepts = _concepts(conn, scope, question, extra)
+            concepts = _concepts(conn, scope, question, extra, role_scope=role_scope)
         elif route == ROUTE_FACT:
             facts = _facts(conn, scope, question, extra)
         else:  # POLYMATH
-            concepts = _concepts(conn, scope, question, extra)[:6]
+            concepts = _concepts(conn, scope, question, extra, role_scope=role_scope)[:6]
             facts = _facts(conn, scope, question, extra)[:6]
             families = _concept_graph(conn, scope,
                                       [c["name"] for c in concepts])

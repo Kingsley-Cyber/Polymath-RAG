@@ -104,10 +104,13 @@ def test_one_corpus_per_call_bounded_and_the_skip_is_recorded():
     assert EB.plan_calls(["n0", "n1"], ["c0"]) == EB.plan_calls(["n0", "n1"], ["c0"])  # deterministic
 
 
-def test_request_body_is_exactly_four_fields():
+def test_request_body_is_exactly_five_fields():
+    # K1 (register 11.485): the fifth field is the reference-only scope — Trail ideation never reads implementation material
     body = EB.request_body("need", "cinema", mode="wildcard", corpus_explorer=True)
-    assert body == {"message": "need", "corpus_id": "cinema", "mode": "WILDCARD", "corpus_explorer": True}
-    assert set(EB.request_body("n", "c", mode="GRAPH", corpus_explorer=False)) == {"message", "corpus_id", "mode", "corpus_explorer"}
+    assert body == {"message": "need", "corpus_id": "cinema", "mode": "WILDCARD", "corpus_explorer": True,
+                    "scope": {"roles": ["reference"]}}
+    assert set(EB.request_body("n", "c", mode="GRAPH", corpus_explorer=False)) == {"message", "corpus_id", "mode", "corpus_explorer",
+                                                                                  "scope"}
     for bad in ("ASK", "LEGACY", "", "EXPLORE"):
         with pytest.raises(ValueError):
             EB.request_body("n", "c", mode=bad)

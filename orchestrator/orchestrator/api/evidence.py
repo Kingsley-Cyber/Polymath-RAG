@@ -38,6 +38,7 @@ from .retrieve import (
     retrieve_engine_flag,
     single_corpus_or_422,
 )
+from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
 
 
 def _section_summaries_from_parent_ids(parent_ids: list[str]) -> list[dict]:
@@ -66,6 +67,8 @@ class EvidenceRequest(BaseModel):
     all_authorized: bool = False
     limit: int = 10
     mode: Optional[str] = None
+    # K1 (register 11.485): the knowledge-role scope; omitted = both roles; a malformed one is refused (422)
+    scope: Optional[dict] = None
 
 
 @router.post("/evidence")
@@ -76,6 +79,8 @@ async def evidence(req: EvidenceRequest) -> dict:
 
     with tx() as conn:
         scope = resolve_http_scope(conn, req)
+    from orchestrator.api.retrieve import _role_scope_or_422
+    role_scope = _role_scope_or_422(req)
 
     # R1C: FAST mode = the same qualified Pass-1 result /retrieve and
     # /chat consume; the graph lane is empty by FAST contract.
@@ -96,7 +101,7 @@ async def evidence(req: EvidenceRequest) -> dict:
             _kw = {}
             if getattr(req, 'latent', None):
                 _kw["budget"] = _replace(default_budget(), latent_enabled=True)
-            g = chat_retrieve_mode("GRAPH", query, cid, **_kw)
+            g = chat_retrieve_mode("GRAPH", query, cid, **_kw, **scope_kwargs(role_scope))
             graph_facts = [
                 {"fact_id": f["fact_id"], "predicate": f["predicate"],
                  "subject": f["subject"], "object": f["object"]}
@@ -115,7 +120,7 @@ async def evidence(req: EvidenceRequest) -> dict:
         else:
             from orchestrator.api.graph import graph_retrieve
 
-            g = graph_retrieve(query, cid, latent=getattr(req, 'latent', None))
+            g = graph_retrieve(query, cid, latent=getattr(req, 'latent', None), **scope_kwargs(role_scope))
             graph_facts = [
                 {"fact_id": f["fact_id"], "predicate": f["predicate"],
                  "subject": f["subject"], "object": f["object"]}
@@ -160,7 +165,7 @@ async def evidence(req: EvidenceRequest) -> dict:
         if mode == MODE_FAST:
             from orchestrator.api.fast import fast_retrieve
 
-            fast = fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
+            fast = fast_retrieve(query, list(scope.corpus_ids), **scope_kwargs(role_scope))  # F8: multi-corpus
         else:
             cid = single_corpus_or_422(scope, mode)
             # Both engines already return the SAME flat evidence/selected_documents/
@@ -173,11 +178,11 @@ async def evidence(req: EvidenceRequest) -> dict:
                 _kw = {}
                 if getattr(req, 'latent', None):
                     _kw["budget"] = _replace(default_budget(), latent_enabled=True)
-                fast = chat_retrieve_mode("HYBRID", query, cid, **_kw)
+                fast = chat_retrieve_mode("HYBRID", query, cid, **_kw, **scope_kwargs(role_scope))
             else:
                 from orchestrator.api.hybrid import hybrid_fast_retrieve
 
-                fast = hybrid_fast_retrieve(query, cid, latent=getattr(req, 'latent', None))
+                fast = hybrid_fast_retrieve(query, cid, latent=getattr(req, 'latent', None), **scope_kwargs(role_scope))
         child_evidence = [
             {"chunk_id": c["chunk_id"], "doc_id": c["doc_id"], "parent_id": c["parent_id"]}
             for c in fast["evidence"]
@@ -225,7 +230,7 @@ async def evidence(req: EvidenceRequest) -> dict:
         fetch_profiles=lambda: profiles,
         fetch_parents=lambda: parents,
         fetch_children=lambda limit: children[:limit],
-        child_search=lambda limit: _qdrant_search(query, corpus_ids, limit),
+        child_search=lambda limit: _qdrant_search(query, corpus_ids, limit, **scope_kwargs(role_scope)),
     )
 
     graph_facts = graph_expansion(

@@ -1,0 +1,962 @@
+[
+ {
+  "question": "What do my books say about making an animated character's movement feel weighty?",
+  "mode": "FAST",
+  "none": {
+   "wall_ms": 3039.7,
+   "evidence": [
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+    "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060",
+    "chunk_f3ce3f13d2be5d2d31c06054b027df6cb992774f06cb1f31b83e714f58fccc91",
+    "chunk_4a4549c9f8fbf90da7e97074695793ed70d5d22b1284e53b594136605af6cf81",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+    "chunk_c25dd19bccb66077a78efe108227dfc25b0dbf268f9ffca1e3743119a94f49c2"
+   ],
+   "graph_facts": [],
+   "searches": 23,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points"
+   ]
+  },
+  "reference": {
+   "wall_ms": 2486.5,
+   "evidence": [
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+    "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060",
+    "chunk_f3ce3f13d2be5d2d31c06054b027df6cb992774f06cb1f31b83e714f58fccc91",
+    "chunk_4a4549c9f8fbf90da7e97074695793ed70d5d22b1284e53b594136605af6cf81",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388",
+    "chunk_c25dd19bccb66077a78efe108227dfc25b0dbf268f9ffca1e3743119a94f49c2"
+   ],
+   "graph_facts": [],
+   "searches": 23,
+   "with_role_clause": 22,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": true,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "What do my books say about making an animated character's movement feel weighty?",
+  "mode": "HYBRID",
+  "none": {
+   "wall_ms": 5392.1,
+   "evidence": [
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_69c10f4d23639d6830d74f73eca7bb1e95b6b1486865c908acf70845a0079721",
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+    "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+    "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388"
+   ],
+   "graph_facts": [],
+   "searches": 70,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points",
+    "query_points.prefetch"
+   ]
+  },
+  "reference": {
+   "wall_ms": 4939.5,
+   "evidence": [
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_69c10f4d23639d6830d74f73eca7bb1e95b6b1486865c908acf70845a0079721",
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_76dc6171e7aff396d245f181de1694d59e49645f3b6b23a3a2670976056973ef",
+    "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+    "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388"
+   ],
+   "graph_facts": [],
+   "searches": 70,
+   "with_role_clause": 69,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": true,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "What do my books say about making an animated character's movement feel weighty?",
+  "mode": "GRAPH",
+  "none": {
+   "wall_ms": 6380.1,
+   "evidence": [
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+    "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+    "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388"
+   ],
+   "graph_facts": [
+    "fact_c5860d40dccad177712b1b5b980f73693984858d79aee9fe98b1b6c93ee46789",
+    "fact_0b0cccca57ce4f111528da83897cd9b5c4ea0e08864dab4cc733b8fc575e1c54",
+    "fact_254de3ef791bcd2af8f4787ad174289df8e51867e53e6131d87c0a399d145efc",
+    "fact_344ac34d9345e32b987629a5a72bd58af4da82740f032e44f7fe4f0916cdf453",
+    "fact_26cec1881778d1caecf306a45c5109cac573f5d93e0044616d3f028566adfecd",
+    "fact_94be7e86a9361e717c9b781060b06940a4ce9a5759afd17a5cb9f8dbe46ccbfe",
+    "fact_38685a8876445cad99488e4026794cb17485809c1b8c69e3d4ee8acc4d799d25",
+    "fact_0e157b0a6d501129ea5dda1449fb622bac2bd35edd60f4ce4daad85479c34d03",
+    "fact_81fa59807cbef9d6d34d3aa3affa933298856d4e6897829025cd260cd2e74d7c",
+    "fact_93ac92e5af231f970f4cebedec90f9678eca38fc2e71eca2280aa459045866c1",
+    "fact_6fdfc86885f942f65ce3e566c6751a24683890ee78dc220be663b54b651d2641",
+    "fact_954b45abcf7c98ba1490a7d94ebfcaccded4ff78d4886698392e6e7e4af3277e",
+    "fact_ad290ca46dd0ce77710f631d9e5f23f654e4c907e7f13057bbe416f4fb772e73",
+    "fact_1e4c22b16af5716f40248ac35d827aa32d7bb34305dcaf89d640c09b5b16c96c",
+    "fact_9dd1e528fe1adb600c456484f3175e86b8e84e136d3d9129fac0218ee2904204",
+    "fact_b4797aa6d39854327e86ff105c72696bc7aa39d197c44b671d11f807c05c3898",
+    "fact_73a1fda9eea0a9ba78d2e6d27dc95ba9cfad99820e0b2e53e0b53ceb98c23d73",
+    "fact_984d3142b38d6b4e57adf4375c77ffcb4bb2f0ec2d641766b635c4d4cd207466",
+    "fact_f802a8a99b795e1c5ae631992a010c479825941de8719b1a986e3ba7678b8569",
+    "fact_27d365b159d14c5f4b827a550841bc959c2dc53233cf3643d75b89f54d91c31d"
+   ],
+   "searches": 84,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points",
+    "query_points.prefetch"
+   ]
+  },
+  "reference": {
+   "wall_ms": 6507.0,
+   "evidence": [
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+    "chunk_4a4549c9f8fbf90da7e97074695793ed70d5d22b1284e53b594136605af6cf81",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+    "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "chunk_73257537ea9aff27316717cac81a98b26e904ce3be3121cc4beb870a88101d1e"
+   ],
+   "graph_facts": [
+    "fact_c5860d40dccad177712b1b5b980f73693984858d79aee9fe98b1b6c93ee46789",
+    "fact_0b0cccca57ce4f111528da83897cd9b5c4ea0e08864dab4cc733b8fc575e1c54",
+    "fact_254de3ef791bcd2af8f4787ad174289df8e51867e53e6131d87c0a399d145efc",
+    "fact_344ac34d9345e32b987629a5a72bd58af4da82740f032e44f7fe4f0916cdf453",
+    "fact_26cec1881778d1caecf306a45c5109cac573f5d93e0044616d3f028566adfecd",
+    "fact_94be7e86a9361e717c9b781060b06940a4ce9a5759afd17a5cb9f8dbe46ccbfe",
+    "fact_38685a8876445cad99488e4026794cb17485809c1b8c69e3d4ee8acc4d799d25",
+    "fact_0e157b0a6d501129ea5dda1449fb622bac2bd35edd60f4ce4daad85479c34d03",
+    "fact_81fa59807cbef9d6d34d3aa3affa933298856d4e6897829025cd260cd2e74d7c",
+    "fact_93ac92e5af231f970f4cebedec90f9678eca38fc2e71eca2280aa459045866c1",
+    "fact_6fdfc86885f942f65ce3e566c6751a24683890ee78dc220be663b54b651d2641",
+    "fact_954b45abcf7c98ba1490a7d94ebfcaccded4ff78d4886698392e6e7e4af3277e",
+    "fact_ad290ca46dd0ce77710f631d9e5f23f654e4c907e7f13057bbe416f4fb772e73",
+    "fact_1e4c22b16af5716f40248ac35d827aa32d7bb34305dcaf89d640c09b5b16c96c",
+    "fact_9dd1e528fe1adb600c456484f3175e86b8e84e136d3d9129fac0218ee2904204",
+    "fact_b4797aa6d39854327e86ff105c72696bc7aa39d197c44b671d11f807c05c3898",
+    "fact_73a1fda9eea0a9ba78d2e6d27dc95ba9cfad99820e0b2e53e0b53ceb98c23d73",
+    "fact_984d3142b38d6b4e57adf4375c77ffcb4bb2f0ec2d641766b635c4d4cd207466",
+    "fact_f802a8a99b795e1c5ae631992a010c479825941de8719b1a986e3ba7678b8569",
+    "fact_27d365b159d14c5f4b827a550841bc959c2dc53233cf3643d75b89f54d91c31d"
+   ],
+   "searches": 84,
+   "with_role_clause": 83,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": false,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "What do my books say about making an animated character's movement feel weighty?",
+  "mode": "WILDCARD",
+  "none": {
+   "wall_ms": 8665.8,
+   "evidence": [
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_38c8e0261462783d2bd9cd2e1dbfedfb3ae90b6939bda4dbe51233349b08edf3",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+    "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+    "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388"
+   ],
+   "graph_facts": [],
+   "searches": 94,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points",
+    "query_points.prefetch"
+   ]
+  },
+  "reference": {
+   "wall_ms": 8288.1,
+   "evidence": [
+    "chunk_c6c9a046b481d8f0044cb46cd46c6e523cc2483a378fc9000ce493a666015915",
+    "chunk_25e52a6ba26977af7f3e7acfe6d81d69ebdfdb5147cf44dc0283e9310f7aa1c6",
+    "chunk_f2491b76632da53e6c7f6d9cf7ecad3de4f18ff7e51d7a9ce3a0af8547a59724",
+    "chunk_f12e25852bf47622b3b8ba33faa175e853e45ece4b8b6586eda78ce0b955fe43",
+    "chunk_e14d58bdf4a5052f554b7be9874363074a8a5a259798afc142999ee35eade78e",
+    "chunk_d0e942f08ea4fc2c958fdd22353335b1823f4d027fec4f41da30e17e0fde3331",
+    "chunk_9109fb5b91310d97828a44ce04558181d58f054208c88c5185655373f158b5ce",
+    "chunk_40a0e7098af171e044da089dc6bec81fa336fd2476f982fb2278584b983a2ddc",
+    "chunk_01a381356f351c551ee5675ef982938bf180d1c8e272008befe9021b616ecc35",
+    "chunk_39152f037f6a1933be942c057d9b0121d05bd7279f170b7ab7f1316e5146a294",
+    "chunk_bde5cef4e17c4e79b5d0252442595197d45590481347baa8ed8044ecfed5279f",
+    "chunk_efdab2f2dae080d665be71d1a3fd580432296b0a7dc9c64ddfc9b618e4863060",
+    "chunk_c97a29bb3a40897135b16c03d07c93a16d698a270c098cd7bfd652a2f8987822",
+    "chunk_a4f783a02a260aa39cb0a64598e220b6bff40aafa786a3b1fcfe9bf1f102c4cd",
+    "chunk_0500689acd387ea76af9bcb1f452e43a990e17e0bda0f8dfcfdbd1cb2983e388"
+   ],
+   "graph_facts": [],
+   "searches": 94,
+   "with_role_clause": 93,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": false,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "What do my books say about making an animated character's movement feel weighty?",
+  "scout_none": {
+   "searches": 6,
+   "with_role_clause": 0
+  },
+  "scout_reference": {
+   "searches": 6,
+   "with_role_clause": 6
+  }
+ },
+ {
+  "question": "How do editors and directors build suspense without dialogue?",
+  "mode": "FAST",
+  "none": {
+   "wall_ms": 2862.4,
+   "evidence": [
+    "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_1e28e14cdc517921bc26f0d79c6087a26e824a90f56ce754e9126d558a4acc69",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_d9b05b21d2e2d6a99d8b951c4eeeead6dfea8875a589c760ad3b6857de95f9f2",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_02b9207a76b241692edb258f343444f2f36ff4219eabc43669958a73a38e28fc",
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+    "chunk_5cfc8a490181b49d96e86f760059d603f1d3961a30fabf77d1a9d77647a8ba95"
+   ],
+   "graph_facts": [],
+   "searches": 23,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points"
+   ]
+  },
+  "reference": {
+   "wall_ms": 2374.4,
+   "evidence": [
+    "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_1e28e14cdc517921bc26f0d79c6087a26e824a90f56ce754e9126d558a4acc69",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_d9b05b21d2e2d6a99d8b951c4eeeead6dfea8875a589c760ad3b6857de95f9f2",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_02b9207a76b241692edb258f343444f2f36ff4219eabc43669958a73a38e28fc",
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+    "chunk_5cfc8a490181b49d96e86f760059d603f1d3961a30fabf77d1a9d77647a8ba95"
+   ],
+   "graph_facts": [],
+   "searches": 23,
+   "with_role_clause": 22,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": true,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "How do editors and directors build suspense without dialogue?",
+  "mode": "HYBRID",
+  "none": {
+   "wall_ms": 4882.6,
+   "evidence": [
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+    "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f"
+   ],
+   "graph_facts": [],
+   "searches": 66,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points",
+    "query_points.prefetch"
+   ]
+  },
+  "reference": {
+   "wall_ms": 5081.0,
+   "evidence": [
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_f68758387aae43ad876bc501ab1333dc11f90d7c4ab14e7f5b8c0d1ede97e1f3",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_c603b350e88fb725d3802dcb0415f4ea28248e05d3f676f55b842f29610da0ce",
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347",
+    "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f"
+   ],
+   "graph_facts": [],
+   "searches": 66,
+   "with_role_clause": 65,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": true,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "How do editors and directors build suspense without dialogue?",
+  "mode": "GRAPH",
+  "none": {
+   "wall_ms": 7385.3,
+   "evidence": [
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_836ec89bd4301ad681bc537ba17a73aed4bab618fa40177eed7c2679a3ae8596",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_02b9207a76b241692edb258f343444f2f36ff4219eabc43669958a73a38e28fc",
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347"
+   ],
+   "graph_facts": [
+    "fact_6b15796470704434af1799ed089f125189cac5a530aa00cfa2ea7b11d7e440e1",
+    "fact_7d2ee1660357d370ebf59306c84eb91bb0c2612f1b17f8b1184e7f6d514ac56d",
+    "fact_d639e5eb421659b41b93266d0686872de95bfa6fe6e0d05b871f9340c6beaa99",
+    "fact_4ebb7eaee4a525dc8ec19746961cc1a3e503e870cc7c45317ae04b8a2bec49b3",
+    "fact_09db4b113b6df3afaeef74c434c89c0a28db4fcd84ee910751b27e2a5869f817",
+    "fact_0cf040ecebc4194481693070cf7bce1b6d931d114256cfe93fb62c3207aac6ea",
+    "fact_558774e7b4a350192e454e8e1edd9aef81b2625cdd51250494f8f772d6423b4e",
+    "fact_6d7192e1e056167c396adaba03dbb1bb5da0f026c0a16a890d3656b0fd5d8fc8",
+    "fact_70fab41e9519aa1899f5ae43c301dce5b69a172a41c0c7761cb6fcccdf8adea2",
+    "fact_2a862192fd21e267b74ce7dce4ecae5922fed0b21251b36b1329b2f035224332",
+    "fact_9a66a918c09fa1245f8fd4f6fc3b96b431f9c249dd856cb3a0f48d6a49f8123c",
+    "fact_8f032dcbdbed47924bd17802dd9eafd7c94b43be035f87535ae7b72d2daaec1f",
+    "fact_2f169f74053ddd81fe88dd8222137dea2537dd05f8e60308b989befd9dbbdd3e",
+    "fact_c995190995a93c508a34591bb365c78356b35a3da48d39acbdc9a7b99e17a83b",
+    "fact_4e8cd0eaaed99c86eb729e9def53c9f7fc8ccfa5dac736957d883c7cc71dd7ef",
+    "fact_ee60b26700293c079c191e2f756219885caf5c1f3ceb603c4151ff5a35724c6b",
+    "fact_55183ce229ce3617cb2f8abf62c34f7dde042e30cf8f1b2468e3cccc46997034",
+    "fact_a67a2d174e8c6c6a4ac431cf8351a7fc80a2e68ee04eae6d3b5589712e7d15a2",
+    "fact_ba85f8b3800f016686e2475f190463518a3cc27d8866e47ccbc7ad3a6b09caa7",
+    "fact_cccb32752f3f7967aa071d81152db8128530b41c25b7404a554879cb44ff0454"
+   ],
+   "searches": 80,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points",
+    "query_points.prefetch"
+   ]
+  },
+  "reference": {
+   "wall_ms": 6217.1,
+   "evidence": [
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_836ec89bd4301ad681bc537ba17a73aed4bab618fa40177eed7c2679a3ae8596",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_02b9207a76b241692edb258f343444f2f36ff4219eabc43669958a73a38e28fc",
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+    "chunk_28b140b4396c9b00aa71a17ed68bc4a7753ee76e6999330a65416d2960c57347"
+   ],
+   "graph_facts": [
+    "fact_6b15796470704434af1799ed089f125189cac5a530aa00cfa2ea7b11d7e440e1",
+    "fact_7d2ee1660357d370ebf59306c84eb91bb0c2612f1b17f8b1184e7f6d514ac56d",
+    "fact_d639e5eb421659b41b93266d0686872de95bfa6fe6e0d05b871f9340c6beaa99",
+    "fact_4ebb7eaee4a525dc8ec19746961cc1a3e503e870cc7c45317ae04b8a2bec49b3",
+    "fact_09db4b113b6df3afaeef74c434c89c0a28db4fcd84ee910751b27e2a5869f817",
+    "fact_0cf040ecebc4194481693070cf7bce1b6d931d114256cfe93fb62c3207aac6ea",
+    "fact_558774e7b4a350192e454e8e1edd9aef81b2625cdd51250494f8f772d6423b4e",
+    "fact_6d7192e1e056167c396adaba03dbb1bb5da0f026c0a16a890d3656b0fd5d8fc8",
+    "fact_70fab41e9519aa1899f5ae43c301dce5b69a172a41c0c7761cb6fcccdf8adea2",
+    "fact_2a862192fd21e267b74ce7dce4ecae5922fed0b21251b36b1329b2f035224332",
+    "fact_9a66a918c09fa1245f8fd4f6fc3b96b431f9c249dd856cb3a0f48d6a49f8123c",
+    "fact_8f032dcbdbed47924bd17802dd9eafd7c94b43be035f87535ae7b72d2daaec1f",
+    "fact_2f169f74053ddd81fe88dd8222137dea2537dd05f8e60308b989befd9dbbdd3e",
+    "fact_c995190995a93c508a34591bb365c78356b35a3da48d39acbdc9a7b99e17a83b",
+    "fact_4e8cd0eaaed99c86eb729e9def53c9f7fc8ccfa5dac736957d883c7cc71dd7ef",
+    "fact_ee60b26700293c079c191e2f756219885caf5c1f3ceb603c4151ff5a35724c6b",
+    "fact_55183ce229ce3617cb2f8abf62c34f7dde042e30cf8f1b2468e3cccc46997034",
+    "fact_a67a2d174e8c6c6a4ac431cf8351a7fc80a2e68ee04eae6d3b5589712e7d15a2",
+    "fact_ba85f8b3800f016686e2475f190463518a3cc27d8866e47ccbc7ad3a6b09caa7",
+    "fact_cccb32752f3f7967aa071d81152db8128530b41c25b7404a554879cb44ff0454"
+   ],
+   "searches": 80,
+   "with_role_clause": 79,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": true,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "How do editors and directors build suspense without dialogue?",
+  "mode": "WILDCARD",
+  "none": {
+   "wall_ms": 9546.9,
+   "evidence": [
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_a0e3284787ddf66ff52d34e2f85aa5b0249f10a5568ec7637c5392c03eec6af4",
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+    "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f",
+    "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480"
+   ],
+   "graph_facts": [],
+   "searches": 94,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points",
+    "query_points.prefetch"
+   ]
+  },
+  "reference": {
+   "wall_ms": 8250.8,
+   "evidence": [
+    "chunk_88f0b013a793822b16e0c56d7019056e1c2ca93b5b3eddd3f4f18e683d000dcf",
+    "chunk_fa3d07f2fa9d4bb459baee3501bbc82e612f78c20092026139c49526487f60ec",
+    "chunk_3caa5f260208ee0d2a7cb8399fe8937ada2daba217febaa1972a3e8525db8aed",
+    "chunk_97e4d7a1dda93b5e3aa37fab004ded08efcdbf17f7b70f5a204b3757738b47b6",
+    "chunk_da695d7ea4082d5b58f9acbe372bef9bfb755fe9218edc36f6c9001a9bbf1cb6",
+    "chunk_62c263c175f3f3632abe3507239e50c81578e1716611ef8d076eaa0e658f3f1c",
+    "chunk_e4a407b64a30ef056a9e9be3c877e1afb862e0394c9a6c1698ebc514f9cae92d",
+    "chunk_cb6060cce0b0e4cb3b8534735bac37c089df4043f222d8a59f4e509405011c55",
+    "chunk_69a4b26b5f051e44284ee8fd5d39272df04bd964282ea3eb7acf59043cc84e50",
+    "chunk_ce0850a27e28271ae82da636935046e02a7122487e68bfc0e397be321f537e00",
+    "chunk_f0ba465cfc85eba05dd0c514f0a2096130eb8ba56c115dc4aef4f7869d9c118d",
+    "chunk_a0e3284787ddf66ff52d34e2f85aa5b0249f10a5568ec7637c5392c03eec6af4",
+    "chunk_4db00010c15985ac424bc1af72d6fab4569512352d17b068ad7eac864e77192d",
+    "chunk_2188c4c6afc75a9072188ee186e27ad94c6678620d15eb09da291a63a4352e8f",
+    "chunk_31e30016c8f9fd9f1e155732aa761f898213efb96ce1061fa1eea25641a3c480"
+   ],
+   "graph_facts": [],
+   "searches": 94,
+   "with_role_clause": 93,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": true,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "How do editors and directors build suspense without dialogue?",
+  "scout_none": {
+   "searches": 6,
+   "with_role_clause": 0
+  },
+  "scout_reference": {
+   "searches": 6,
+   "with_role_clause": 6
+  }
+ },
+ {
+  "question": "How do lighting and color choices change how an audience reads a scene?",
+  "mode": "FAST",
+  "none": {
+   "wall_ms": 2692.2,
+   "evidence": [
+    "chunk_d32d19ca2a51e601909c7943dda291942c966b370da120e617095239e2a456cf",
+    "chunk_8da46af2d997dc6d9cb8e53bdfa4128f73ddd7b2366a35072b9b3de798746b17",
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a",
+    "chunk_61940e6e57b146629bec2271d1a80379f299a2992022d6389f7eadea59e62053",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_cc17852146968016fafc175094a7fbee07558e3f0923dff97697fda4959a61ae",
+    "chunk_532490b79c273a3f234ea5c906326e323c6fdf4fa18733f3560dc6c8e40f0da0",
+    "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931",
+    "chunk_b4e1bcc329b2d5b748fd3403b7fccdad773acc48da62131034db3025958d20d1",
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7"
+   ],
+   "graph_facts": [],
+   "searches": 23,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points"
+   ]
+  },
+  "reference": {
+   "wall_ms": 2236.7,
+   "evidence": [
+    "chunk_d32d19ca2a51e601909c7943dda291942c966b370da120e617095239e2a456cf",
+    "chunk_8da46af2d997dc6d9cb8e53bdfa4128f73ddd7b2366a35072b9b3de798746b17",
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a",
+    "chunk_61940e6e57b146629bec2271d1a80379f299a2992022d6389f7eadea59e62053",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_cc17852146968016fafc175094a7fbee07558e3f0923dff97697fda4959a61ae",
+    "chunk_532490b79c273a3f234ea5c906326e323c6fdf4fa18733f3560dc6c8e40f0da0",
+    "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931",
+    "chunk_b4e1bcc329b2d5b748fd3403b7fccdad773acc48da62131034db3025958d20d1",
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7"
+   ],
+   "graph_facts": [],
+   "searches": 23,
+   "with_role_clause": 22,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": true,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "How do lighting and color choices change how an audience reads a scene?",
+  "mode": "HYBRID",
+  "none": {
+   "wall_ms": 5359.7,
+   "evidence": [
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_d32d19ca2a51e601909c7943dda291942c966b370da120e617095239e2a456cf",
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "chunk_5414df79a1d4bcc27775b95785459e69ebba5a6a09c7c7c424b6f6642a90e586",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+    "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931",
+    "chunk_af5fb56ab6497bef9ee1580462bc91d000e3605b2fc8d6085fd47d54b7acc27a",
+    "chunk_b4e1bcc329b2d5b748fd3403b7fccdad773acc48da62131034db3025958d20d1",
+    "chunk_b8589e899b7c4621b04ccfd11bec4b7626bdb46401c5c4c6675cd935faf54926"
+   ],
+   "graph_facts": [],
+   "searches": 68,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points",
+    "query_points.prefetch"
+   ]
+  },
+  "reference": {
+   "wall_ms": 4626.6,
+   "evidence": [
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_d32d19ca2a51e601909c7943dda291942c966b370da120e617095239e2a456cf",
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "chunk_5414df79a1d4bcc27775b95785459e69ebba5a6a09c7c7c424b6f6642a90e586",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+    "chunk_551b066823b96ef75ede2a8af3bfb728e5afc4cae036b1ab1a736f2333445931",
+    "chunk_af5fb56ab6497bef9ee1580462bc91d000e3605b2fc8d6085fd47d54b7acc27a",
+    "chunk_b4e1bcc329b2d5b748fd3403b7fccdad773acc48da62131034db3025958d20d1",
+    "chunk_b8589e899b7c4621b04ccfd11bec4b7626bdb46401c5c4c6675cd935faf54926"
+   ],
+   "graph_facts": [],
+   "searches": 68,
+   "with_role_clause": 67,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": true,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "How do lighting and color choices change how an audience reads a scene?",
+  "mode": "GRAPH",
+  "none": {
+   "wall_ms": 6023.6,
+   "evidence": [
+    "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "chunk_5414df79a1d4bcc27775b95785459e69ebba5a6a09c7c7c424b6f6642a90e586",
+    "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+    "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "chunk_5bbb0b17da92c878d35ee742667e3e4bbf45d8fbbd494ce849f178854df4a2ee",
+    "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9",
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63"
+   ],
+   "graph_facts": [
+    "fact_00636697d1d3ce380f15ee1648934d4bd9b7bfb7cd1338879634b7edd19d6336",
+    "fact_21cd55d994652b2268539bf7d506dacf7e90d598c6c57ce249d5e8bacb9ce496",
+    "fact_1fa1d4ec71abc9752890e9f3bed6e9724170ed51ff4f4c88cd8dc100db0f0bc3",
+    "fact_002e9f5af7081617b0ec6eb8923e46e2e9f7f3856c0f0cdf9d08239bb1129ea0",
+    "fact_01aa4622ccf4bdab293eec23457ad3db5ee1cdc788b9843365b96302aaa2b889",
+    "fact_29b79cfddcdd70bc866412d7ba6a1a7a32e11095712e823a1fdfeda291794ec3",
+    "fact_2e061440aa5e6a4574664de55dcaf0a3e471eb746532541ea28ba6c86d3ff58e",
+    "fact_96d400cfc18a460c0baa339cf473c22a6c4d584ba253f9a7f0f631c4c7c2cb4f",
+    "fact_13b4b40ec9fd2e31fcf0cfa8cb9828c1bcb066bfcd7027b383851452722e2789",
+    "fact_a24fe5ea94fa8589eca6e57364e71f8dff65e2a579c60ea3a01fb8457c3131d7",
+    "fact_83bfcfbb07dda5df6512929b9a1567d60738a3491edce4dea79cbe693672671c",
+    "fact_03b21711f070c4aa05d2ad428c83946167e6a536dedaf88a26e4459c6ba91fc9",
+    "fact_0fc5ed1f0310eac6a7e236bd5587680eacf7a1e34b4c58bfd2abebc0ca273528",
+    "fact_402fc4f1321cbc250c82aaf3c20eb3925487146ff2842234ade7521e6b47861b",
+    "fact_535dd4ea98c830a1cf693fc891f60b0884d7749421e61a1a4362c8140d41b302",
+    "fact_b226e6f0a621c8fc0355bf50c5e1eca10a7a51e37fc3ef1d4a2bff38aa03d765",
+    "fact_25fc3a3a699647141e3ecdeb33c2f99f19564dae2c84d6c0b257299579997611",
+    "fact_eab9febe9edffb38d30cf4ca62aad079058fd77d2d5f1c095c10c4eaf0bcee41",
+    "fact_a030e776a3483b17f38ca9008ec98956cb8b61b380504d72b039c6aaf700d1c0",
+    "fact_04630e1ca8c1e2ba4406d266e8c6b162559317999f033aa791c8d2e8b9e1c163"
+   ],
+   "searches": 82,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points",
+    "query_points.prefetch"
+   ]
+  },
+  "reference": {
+   "wall_ms": 5902.0,
+   "evidence": [
+    "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "chunk_5414df79a1d4bcc27775b95785459e69ebba5a6a09c7c7c424b6f6642a90e586",
+    "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+    "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "chunk_5bbb0b17da92c878d35ee742667e3e4bbf45d8fbbd494ce849f178854df4a2ee",
+    "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9",
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63"
+   ],
+   "graph_facts": [
+    "fact_00636697d1d3ce380f15ee1648934d4bd9b7bfb7cd1338879634b7edd19d6336",
+    "fact_21cd55d994652b2268539bf7d506dacf7e90d598c6c57ce249d5e8bacb9ce496",
+    "fact_1fa1d4ec71abc9752890e9f3bed6e9724170ed51ff4f4c88cd8dc100db0f0bc3",
+    "fact_002e9f5af7081617b0ec6eb8923e46e2e9f7f3856c0f0cdf9d08239bb1129ea0",
+    "fact_01aa4622ccf4bdab293eec23457ad3db5ee1cdc788b9843365b96302aaa2b889",
+    "fact_29b79cfddcdd70bc866412d7ba6a1a7a32e11095712e823a1fdfeda291794ec3",
+    "fact_2e061440aa5e6a4574664de55dcaf0a3e471eb746532541ea28ba6c86d3ff58e",
+    "fact_96d400cfc18a460c0baa339cf473c22a6c4d584ba253f9a7f0f631c4c7c2cb4f",
+    "fact_13b4b40ec9fd2e31fcf0cfa8cb9828c1bcb066bfcd7027b383851452722e2789",
+    "fact_a24fe5ea94fa8589eca6e57364e71f8dff65e2a579c60ea3a01fb8457c3131d7",
+    "fact_83bfcfbb07dda5df6512929b9a1567d60738a3491edce4dea79cbe693672671c",
+    "fact_03b21711f070c4aa05d2ad428c83946167e6a536dedaf88a26e4459c6ba91fc9",
+    "fact_0fc5ed1f0310eac6a7e236bd5587680eacf7a1e34b4c58bfd2abebc0ca273528",
+    "fact_402fc4f1321cbc250c82aaf3c20eb3925487146ff2842234ade7521e6b47861b",
+    "fact_535dd4ea98c830a1cf693fc891f60b0884d7749421e61a1a4362c8140d41b302",
+    "fact_b226e6f0a621c8fc0355bf50c5e1eca10a7a51e37fc3ef1d4a2bff38aa03d765",
+    "fact_25fc3a3a699647141e3ecdeb33c2f99f19564dae2c84d6c0b257299579997611",
+    "fact_eab9febe9edffb38d30cf4ca62aad079058fd77d2d5f1c095c10c4eaf0bcee41",
+    "fact_a030e776a3483b17f38ca9008ec98956cb8b61b380504d72b039c6aaf700d1c0",
+    "fact_04630e1ca8c1e2ba4406d266e8c6b162559317999f033aa791c8d2e8b9e1c163"
+   ],
+   "searches": 82,
+   "with_role_clause": 81,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": true,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "How do lighting and color choices change how an audience reads a scene?",
+  "mode": "WILDCARD",
+  "none": {
+   "wall_ms": 9398.8,
+   "evidence": [
+    "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "chunk_5414df79a1d4bcc27775b95785459e69ebba5a6a09c7c7c424b6f6642a90e586",
+    "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9",
+    "chunk_5bbb0b17da92c878d35ee742667e3e4bbf45d8fbbd494ce849f178854df4a2ee",
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+    "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a"
+   ],
+   "graph_facts": [],
+   "searches": 95,
+   "with_role_clause": 0,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": [
+    "query_points",
+    "query_points.prefetch"
+   ]
+  },
+  "reference": {
+   "wall_ms": 8554.5,
+   "evidence": [
+    "chunk_0a7826a23475fcff706c888087e8bc15d88a71572465d1de4eaf1829dd2648cc",
+    "chunk_9603f76d4303b39683964687adc40be36fa6edb0bc7a40d13f3721d8c99ac209",
+    "chunk_f13ca9df8344d30b75e5de45c18e8edc0b4fe26c161d9607b1127cc7c0a3168f",
+    "chunk_5a404a9129d501e9b1e87c57b32391c35e35395c525c34094b41b144a0a28b35",
+    "chunk_f78b6fdbb10c4382b68b3d170a66f1868d7a9d1ba06670b23f100ef895ee10d3",
+    "chunk_10e3c4c1022b38a72eb712a9463feea69e0a61bab7a6931707bc6e83b15b3cee",
+    "chunk_5414df79a1d4bcc27775b95785459e69ebba5a6a09c7c7c424b6f6642a90e586",
+    "chunk_0fd8a2de0c0ee78fe350eda953f9dbae984e416099e713da6481000d0dec8c34",
+    "chunk_7db7e9453602006667b24f60fb54757da692a3c4663098fa4b3de5f62d595ac6",
+    "chunk_fb655056f918311d78e1c4b42b2e4055853ea412346486435e9e8cec6ba1fe91",
+    "chunk_909daacd729f894814202e1b07990c5af6f2d69420d25437eeb00844c084ffe7",
+    "chunk_e7f085b0787f0db4b4b2a42eeb5537ee3e6ea8dcd72d7bfa08837ca3845037f9",
+    "chunk_5bbb0b17da92c878d35ee742667e3e4bbf45d8fbbd494ce849f178854df4a2ee",
+    "chunk_0a7648a6c718e8a1ec1acd77508369e65aa62f05d7b7052650cc47e641394d63",
+    "chunk_b64bc1109b98e1def5d324a9ead871b6b79bebc4bd0eefb0d394a1282809197a"
+   ],
+   "graph_facts": [],
+   "searches": 96,
+   "with_role_clause": 95,
+   "unfiltered": [
+    "count"
+   ],
+   "without_role_clause": []
+  },
+  "checks": {
+   "reference_all_searches_scoped": true,
+   "none_never_scoped": true,
+   "same_evidence": true,
+   "same_graph_facts": true
+  }
+ },
+ {
+  "question": "How do lighting and color choices change how an audience reads a scene?",
+  "scout_none": {
+   "searches": 6,
+   "with_role_clause": 0
+  },
+  "scout_reference": {
+   "searches": 6,
+   "with_role_clause": 6
+  }
+ }
+]

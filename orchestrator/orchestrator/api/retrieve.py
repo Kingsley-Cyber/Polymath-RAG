@@ -24,6 +24,7 @@ from polymath_shared.retrieval import graph_expansion, run_lanes
 from polymath_shared.settings import get_settings
 
 from polymath_shared.query_receipts import Timer, record_query_receipt
+from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
 
 router = APIRouter()
 
@@ -109,6 +110,9 @@ class RetrieveRequest(BaseModel):
     # facts their chunks attest. None or [] = no filter (the pre-filter path,
     # byte for byte); an id outside the scope yields nothing, never an error.
     document_ids: Optional[list[str]] = None
+    # K1 (register 11.485): the knowledge-role scope {"roles": ["reference"]} (Trail ideation) — omitted = both roles;
+    # an explicit scope is always enforced; a malformed one is refused (422)
+    scope: Optional[dict] = None
 
 
 def document_filter(req) -> Optional[list[str]]:
@@ -212,6 +216,15 @@ def retrieve_engine_flag(override: str | None = None) -> str:
     return v if v in ("v1", "v2") else "v2"
 
 
+def _role_scope_or_422(req):
+    """K1: the request's knowledge-role scope; a malformed scope is refused (422), never read as both roles."""
+    from polymath_shared.code.scope import ScopeError, parse_scope
+    try:
+        return parse_scope(getattr(req, "scope", None))
+    except ScopeError as exc:
+        raise HTTPException(status_code=422, detail={"error_code": "invalid_scope", "message": str(exc)}) from exc
+
+
 async def _retrieve_impl(req: RetrieveRequest) -> dict:
     query = req.query.strip()
     if not query:
@@ -219,6 +232,7 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
 
     with tx() as conn:
         scope = resolve_http_scope(conn, req)
+    role_scope = _role_scope_or_422(req)
 
     # R1C: explicit production modes. FAST maps deterministically to the
     # qualified pass1-retrieval-v1 engine; LEGACY is the frozen lane
@@ -245,7 +259,7 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
     if mode == MODE_FAST:
         from orchestrator.api.fast import fast_retrieve
 
-        return fast_retrieve(query, list(scope.corpus_ids))  # F8: multi-corpus
+        return fast_retrieve(query, list(scope.corpus_ids), **scope_kwargs(role_scope))  # F8: multi-corpus
     if mode == MODE_HYBRID:
         cid = single_corpus_or_422(scope, mode)
         # RETRIEVE-ENGINE-MIGRATION-V1: single-corpus HYBRID rides the FINAL core by default
@@ -258,12 +272,12 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
             _kw = {}
             if req.latent:
                 _kw["budget"] = _replace(default_budget(), latent_enabled=True)
-            return chat_retrieve_mode("HYBRID", query, cid, **_kw)
+            return chat_retrieve_mode("HYBRID", query, cid, **_kw, **scope_kwargs(role_scope))
         from orchestrator.api.hybrid import hybrid_fast_retrieve
 
         return hybrid_fast_retrieve(query, cid,
                                     latent=req.latent,
-                                    utility=req.utility)
+                                    utility=req.utility, **scope_kwargs(role_scope))
     if mode == MODE_GRAPH:
         cid = single_corpus_or_422(scope, mode)
         # RETRIEVE-ENGINE-MIGRATION-V1 (GRAPH): same pattern as HYBRID above. The final
@@ -280,10 +294,10 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
             _kw = {}
             if req.latent:
                 _kw["budget"] = _replace(default_budget(), latent_enabled=True)
-            return chat_retrieve_mode("GRAPH", query, cid, **_kw)
+            return chat_retrieve_mode("GRAPH", query, cid, **_kw, **scope_kwargs(role_scope))
         from orchestrator.api.graph import graph_retrieve
 
-        return graph_retrieve(query, cid, latent=req.latent, utility=req.utility)
+        return graph_retrieve(query, cid, latent=req.latent, utility=req.utility, **scope_kwargs(role_scope))
     from polymath_shared.retrieval_modes import MODE_WILDCARD
     if mode == MODE_WILDCARD:
         cid = single_corpus_or_422(scope, mode)
@@ -297,10 +311,10 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
             _kw = {}
             if req.latent:
                 _kw["budget"] = _replace(default_budget(), latent_enabled=True)
-            return chat_retrieve_mode("WILDCARD", query, cid, **_kw)
+            return chat_retrieve_mode("WILDCARD", query, cid, **_kw, **scope_kwargs(role_scope))
         from orchestrator.api.wildcard import wildcard_retrieve
 
-        return wildcard_retrieve(query, cid)
+        return wildcard_retrieve(query, cid, **scope_kwargs(role_scope))
 
     from polymath_shared.retrieval_modes import MODE_GNN
     if mode == MODE_GNN:
@@ -314,7 +328,7 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
                 "message": "GNN retrieval exists only on the v2 core (POLYMATH_RETRIEVE_ENGINE=v2, no utility)"})
         from orchestrator.api.chat_retrieval import chat_retrieve_mode
 
-        return chat_retrieve_mode("GNN", query, cid)
+        return chat_retrieve_mode("GNN", query, cid, **scope_kwargs(role_scope))
 
     corpus_ids = list(scope.corpus_ids)
     with tx() as conn:
@@ -336,7 +350,7 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
         return children[:limit]
 
     def child_search(limit):
-        return _qdrant_search(query, corpus_ids, limit, document_ids=doc_ids)
+        return _qdrant_search(query, corpus_ids, limit, document_ids=doc_ids, **scope_kwargs(role_scope))
 
     result = run_lanes(
         query,
@@ -485,7 +499,7 @@ def _fetch_children_rows(conn, corpus_ids: list[str],
 
 
 def _qdrant_search(query: str, corpus_ids: list[str], limit: int,
-                   document_ids: Optional[list[str]] = None) -> list[dict]:
+                   document_ids: Optional[list[str]] = None, scope=None) -> list[dict]:
     from polymath_shared.stores import qdrant_client as _qdrant_client
 
     contract = active_contract()
@@ -541,7 +555,8 @@ def _qdrant_search(query: str, corpus_ids: list[str], limit: int,
             # before `limit` — never a post-hoc trim of a full page.
             must.append(FieldCondition(key="doc_id",
                                        match=MatchAny(any=list(document_ids))))
-        child_filter = Filter(must=must)
+        from polymath_shared.code.scope import scope_or_all
+        child_filter = scope_or_all(scope).apply(Filter(must=must))      # K1: the knowledge-role scope
         for collection in targets:
             try:
                 hits = client.query_points(

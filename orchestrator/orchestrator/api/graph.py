@@ -50,6 +50,7 @@ from orchestrator.api.fast import (
     FastSearcher,
 )
 from orchestrator.api.hybrid import _lexical_search
+from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
 
 
 def _selected_surfaces(query: str, evidence: list[dict]) -> list[str]:
@@ -70,7 +71,7 @@ def _selected_surfaces(query: str, evidence: list[dict]) -> list[str]:
 
 def graph_retrieve(query: str, corpus_id: str,
                    latent: "bool | None" = None,
-                   utility: "bool | None" = None) -> dict:
+                   utility: "bool | None" = None, scope=None) -> dict:
     """Production GRAPH: one promoted HYBRID Pass-1 + qualified hop1."""
     _begin_retrieval()
     if corpus_id is None:
@@ -93,7 +94,7 @@ def graph_retrieve(query: str, corpus_id: str,
             "message": f"qdrant unavailable: {type(exc).__name__}",
         }) from exc
     try:
-        searcher = FastSearcher(client, collections, query=query)
+        searcher = FastSearcher(client, collections, query=query, **scope_kwargs(scope))
         t0 = time.time()
         from polymath_shared.retrieval_modes import apply_latent
         shaped = plan_for_query(
@@ -120,7 +121,7 @@ def graph_retrieve(query: str, corpus_id: str,
             plan=shaped,
             embed_query=_embed_query,
             routing_search=searcher,
-            lexical_search=lambda q, k: _lexical_search(q, corpus_id, k),
+            lexical_search=lambda q, k: _lexical_search(q, corpus_id, k, **scope_kwargs(scope)),
             rerank_children=_rerank_children if shaped.rerank_enabled else None,
             neighbor_lookup=_neighbor_lookup,
             region_lookup=_region_lookup,
@@ -148,7 +149,7 @@ def graph_retrieve(query: str, corpus_id: str,
                                     timeout=30)
         try:
             cards = entity_card_probe(_card_client, collections, corpus_id,
-                                      query, _embed_query(query))
+                                      query, _embed_query(query), **scope_kwargs(scope))
         finally:
             _card_client.close()
         card_seed_ids = [c["entity_id"] for c in cards if c.get("entity_id")]

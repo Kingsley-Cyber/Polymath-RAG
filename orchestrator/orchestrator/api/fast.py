@@ -36,6 +36,7 @@ from polymath_shared.query_shape import plan_for_query
 from polymath_shared.rerank import RerankUnavailable, apply_rerank
 from polymath_shared.retrieval_modes import MODE_FAST, mode_plan
 from polymath_shared.settings import get_settings
+from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
 
 log = logging.getLogger("orchestrator-retrieval")
 
@@ -48,9 +49,12 @@ class FastSearcher:
     """Corpus-filtered neural routing search (payload filters)."""
 
     def __init__(self, client: QdrantClient, collections: dict[str, str],
-                 query: str | None = None):
+                 query: str | None = None, scope=None):
         self.client = client
         self.collections = collections
+        # K1 (register 11.485): the request's knowledge-role scope; every search this searcher runs honours it
+        from polymath_shared.code.scope import scope_or_all
+        self.scope = scope_or_all(scope)
         self.latency: dict[str, float] = {}
         # P1.d (§3.21 #10): the chat route runs lanes on a thread pool through ONE searcher;
         # the per-kind latency sums are the only mutable state the lanes share.
@@ -113,6 +117,9 @@ class FastSearcher:
             from qdrant_client.models import MatchAny
             must_not.append(FieldCondition(
                 key="doc_id", match=MatchAny(any=list(filters["exclude_doc_ids"]))))
+        # K1: the knowledge-role scope (reference-only never sees implementation material; both roles adds nothing)
+        must += self.scope.qdrant_must()
+        must_not += self.scope.qdrant_must_not()
         return must, must_not
 
     def sparse_search(self, collection: str, sparse_query, filters: dict, limit: int) -> list[dict]:
@@ -204,7 +211,7 @@ class FastSearcher:
 
 def entity_card_probe(client, collections: dict[str, str], corpus_id: str,
                       query: str, qvec: list[float],
-                      limit: int = 8) -> list[dict]:
+                      limit: int = 8, scope=None) -> list[dict]:
     """ENTITY-CARD-PROBE (shared): dense + sparse search over
     routing_entity cards, deduped by card keeping the best score.
     Consumers: FAST's advisory lane, GRAPH seed resolution (F1). Returns
@@ -215,11 +222,12 @@ def entity_card_probe(client, collections: dict[str, str], corpus_id: str,
     from polymath_shared.sparse_bm25 import (
         SPARSE_VECTOR_NAME, sparse_vector as _sv,
     )
-    card_filter = Filter(must=[
+    from polymath_shared.code.scope import scope_or_all
+    card_filter = scope_or_all(scope).apply(Filter(must=[        # K1: the knowledge-role scope
         FieldCondition(key="representation_kind",
                        match=MatchValue(value="routing_entity")),
         FieldCondition(key="corpus_id", match=MatchValue(value=corpus_id)),
-    ])
+    ]))
     seen: dict[str, dict] = {}
     si, svals = _sv(query)
     for collection in collections.values():
@@ -535,6 +543,7 @@ def fast_retrieve(
     query: str,
     corpus_id,
     plan: Optional[Pass1RetrievalPlan] = None,
+    scope=None,
 ) -> dict:
     """Production FAST: one qualified Pass-1 execution with explicit
     readiness, corpus filtering, and a hierarchical trace.
@@ -569,7 +578,7 @@ def fast_retrieve(
             "message": f"qdrant unavailable: {type(exc).__name__}",
         }) from exc
     try:
-        searcher = FastSearcher(client, collections, query=query)
+        searcher = FastSearcher(client, collections, query=query, **scope_kwargs(scope))
 
         def routing_search(collection: str, vector: list[float], filters: dict) -> list[dict]:
             return searcher(collection, vector, filters)
@@ -603,7 +612,7 @@ def fast_retrieve(
         for cid in corpus_ids:
             try:
                 entity_cards.extend(entity_card_probe(
-                    client, collections, cid, query, qvec_cards))
+                    client, collections, cid, query, qvec_cards, **scope_kwargs(scope)))
             except Exception as exc:    # display lane: never fails the query
                 import logging as _logging
                 _logging.getLogger("fast").warning(

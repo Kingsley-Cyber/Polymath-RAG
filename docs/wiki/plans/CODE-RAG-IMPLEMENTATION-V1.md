@@ -254,11 +254,24 @@ scripts/backfill_knowledge_role.py      idempotent Qdrant set_payload backfill w
 - **Acceptance** (the proposal's): a highly relevant code profile stays invisible through Trail ideation while the
   same source is retrievable through the coding workflow (in-process replay on a mixed fixture corpus).
 - **Rollback:** flag off (filters default to both roles); columns have defaults.
+- **As built (register 11.485; these bind over the lines above):**
+  - no enforcement flag: an explicit scope is ALWAYS enforced (the 11.471 amendment — a rollback never widens a
+    reference-only request); a request without a scope keeps today's exact calls (`scope_kwargs` passes the scope only
+    when it narrows the roles);
+  - Qdrant reference-only = `must_not knowledge_role == "implementation"`: a point without the field counts as reference
+    (the column default), so the Qdrant backfill is NOT needed for correctness; a `knowledge_role` payload index is
+    optional (measured +4–6 ms per filtered search on the 163k-point collection, which has no payload index at all);
+  - migration 0067 and the Postgres predicate (`scope.sql_predicate`) move to C1, with the importer that writes
+    `knowledge_role=implementation` (gap K-03);
+  - also scoped: `/ask`, `/evidence`, `/compare`, the plan route, the profile scout and Corpus Explore; no retrieval
+    cache exists on the question path, so "scope in the cache key" needs nothing;
+  - a malformed scope is refused (422) on every route, never read as both roles.
 
 ### C1 — the code front door
 
 - **Goal:** code enters the pipeline as code, never through tier_v3.
-- **Gaps:** C-01, C-02, C-05, C-06, C-07, C-08, C-26 (documented decision).
+- **Gaps:** C-01, C-02, C-05, C-06, C-07, C-08, C-26 (documented decision), K-03 (migration 0067 + the Postgres role
+  predicate, from K1).
 - **Flag:** `POLYMATH_CODE_INGEST=1`.
 - **Create:** `code/detect.py`, `code/identity.py`, `workers/workers/code_import.py`, `scripts/code_import.py`.
 - **Modify:**

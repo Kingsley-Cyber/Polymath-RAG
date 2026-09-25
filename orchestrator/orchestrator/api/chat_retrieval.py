@@ -196,6 +196,7 @@ from orchestrator.api.fast import (
 )
 from orchestrator.api.graph import _selected_surfaces
 from orchestrator.api.retrieve import graph_expand_or_502
+from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
 
 try:
     from orchestrator.api.retrieve import fact_rank_enabled
@@ -261,7 +262,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                      budget: Optional[CandidateBudget] = None, query_id: str = "q0",
                      subqueries: tuple = (), lanes: Optional[tuple] = None,
                      latent_bridge_ids: tuple = (),
-                     on_context: Optional[Callable[[SearchContext, Executor], None]] = None) -> dict:
+                     on_context: Optional[Callable[[SearchContext, Executor], None]] = None,
+                     scope=None) -> dict:
     """`subqueries`: (id, type, text, weight) tuples from the compiled plan (non-PRIMARY);
     they run lanes B + C on their own vectors (one batched embedding call for all texts).
     `lanes` (P1.d/P1.e, evaluation and mode composition): restrict the engine to these lane
@@ -301,7 +303,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
     try:
         # §3.21 #1: built WITHOUT the query → no bm25 companion probe beside the dense lanes;
         # lane C is the one sparse search of the turn.
-        searcher = FastSearcher(client, collections)
+        searcher = FastSearcher(client, collections, **scope_kwargs(scope))
         hidden = tuple(searcher._hidden_for(corpus_id) or ())      # warm the generation cache ONCE, before any lane thread reads it
         # LATENT-QUERY-FUSION-V2 F4: specs may carry a 5th field (origin, from the plan's existing
         # provenance); pad legacy 4-tuples so unpacking stays uniform. origin is descriptive only.
@@ -343,7 +345,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             cid = _ac().contract_id
             docs = [str(d) for d in (docs or ()) if d]
             if nominate:
-                for d in _pj.profile_nominate(client, _pj.collection_name(cid), qv, corpus_id, k=budget.dualread_profile_docs):
+                for d in _pj.profile_nominate(client, _pj.collection_name(cid), qv, corpus_id, k=budget.dualread_profile_docs, **scope_kwargs(scope)):
                     if d not in docs:
                         docs.append(d)
             # R4 PROFILE_ATOM lane (§42): atoms of the intent-selected kinds nominate ADDITIONAL
@@ -353,13 +355,13 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                 from polymath_shared.document_profile import profile_atom_projection as _pap
                 try:
                     for h in _pap.search_atoms(client, _pap.collection_name(cid), qv, atom_kinds,
-                                               k=int(getattr(budget, "atom_k", 12)), corpus_ids=[corpus_id]):
+                                               k=int(getattr(budget, "atom_k", 12)), corpus_ids=[corpus_id], **scope_kwargs(scope)):
                         d = h.get("doc_id")
                         if d and d not in docs:
                             docs.append(d)
                 except Exception:  # noqa: BLE001 — the atom lane is optional; absence never breaks routing
                     pass
-            maps = _pmp.search_parent_maps(client, _pmp.collection_name(cid), qv, docs, k=budget.dualread_map_k)
+            maps = _pmp.search_parent_maps(client, _pmp.collection_name(cid), qv, docs, k=budget.dualread_map_k, **scope_kwargs(scope))
             if signatures and getattr(budget, "skeleton_paths", False) and maps:
                 # SKELETON-ROUTING-V1: the section's pMAP routing signature is the abstract need that found its children —
                 # the contextual judge scores them against it (Postgres is its authority; the map point carries no text)
@@ -386,7 +388,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             from polymath_shared.embedding_contracts import active_contract as _ac
             from polymath_shared.resolution_lift_gather import LiveLiftSources, gather_lift_candidates
             cid = _ac().contract_id
-            docs = _pj.profile_nominate(client, _pj.collection_name(cid), qv, corpus_id, k=budget.dualread_profile_docs)
+            docs = _pj.profile_nominate(client, _pj.collection_name(cid), qv, corpus_id, k=budget.dualread_profile_docs, **scope_kwargs(scope))
             if not docs:
                 return []
             try:
@@ -426,7 +428,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             cid = _ac().contract_id
             atom_coll = _pap.collection_name(cid)
             atoms = ([a for a in _pap.search_atoms(client, atom_coll, qv, kinds,
-                                                   k=int(budget.seealso_fanout_atoms), corpus_ids=[corpus_id]) if a.get("text")]
+                                                   k=int(budget.seealso_fanout_atoms), corpus_ids=[corpus_id], **scope_kwargs(scope)) if a.get("text")]
                      if kinds else [])
             # SEEALSO-BLEND-V1 (owner 2026-09-24: "see also is doc level"): the see-also lines OF the question's documents
             # (the scout's own profile nomination), ranked by the question
@@ -435,13 +437,13 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                 from polymath_shared.document_profile import projection as _proj
                 try:
                     q_docs = _proj.profile_nominate(client, _proj.collection_name(cid), list(qv), corpus_id,
-                                                    k=int(budget.seealso_blend_docs))
+                                                    k=int(budget.seealso_blend_docs), **scope_kwargs(scope))
                 except Exception:  # noqa: BLE001 — no documents → no blend; the global door still runs
                     q_docs = []
                 if q_docs:
                     blend_items = [a for a in _pap.search_atoms(client, atom_coll, qv, ("SEEALSO",),
                                                                 k=int(budget.seealso_blend_items), corpus_ids=[corpus_id],
-                                                                doc_ids=q_docs) if a.get("text")]
+                                                                doc_ids=q_docs, **scope_kwargs(scope)) if a.get("text")]
                     # DOC-STEER-V1 (owner 2026-09-25 "build it"): the same documents' lines of the mode's kinds join the
                     # blend, ranked by the question — the document level steers the search; it never picks books
                     steer_kinds = tuple(getattr(budget, "doc_steer_kinds", ()) or ())
@@ -449,7 +451,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                         have = {a["text"] for a in blend_items}
                         blend_items += [a for a in _pap.search_atoms(client, atom_coll, qv, steer_kinds,
                                                                      k=int(getattr(budget, "doc_steer_items", 4)),
-                                                                     corpus_ids=[corpus_id], doc_ids=q_docs)
+                                                                     corpus_ids=[corpus_id], doc_ids=q_docs, **scope_kwargs(scope))
                                         if a.get("text") and a["text"] not in have]
             if not atoms and not blend_items:
                 return []
@@ -494,7 +496,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                 def _child_search(vec, extra, limit):
                     return searcher._search(collection, list(vec), dict(extra), limit=int(limit))
                 return _gr.route(searcher.client, _coll, _child_search, qv, corpus_id=corpus_id, parent_k=int(budget.gnn_parent_k),
-                                 per_parent=int(budget.gnn_children_per_parent), cap=int(budget.gnn_children))
+                                 per_parent=int(budget.gnn_children_per_parent), cap=int(budget.gnn_children), **scope_kwargs(scope))
 
         def graph_dest_search(qv) -> list[dict]:
             # P7 graph destination (§39) + ELITE-MODE D: query entities → Neo4j hop-1 → dest
@@ -503,7 +505,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             # children prove; the cross-encoder judges. Zero cost when the lane is off.
             from polymath_shared.db import tx as _tx
             try:
-                cards = entity_card_probe(client, collections, corpus_id, query, list(qv), limit=budget.entity_card_k)
+                cards = entity_card_probe(client, collections, corpus_id, query, list(qv), limit=budget.entity_card_k, **scope_kwargs(scope))
             except Exception:  # noqa: BLE001 — seeding is optional
                 return []
             seeds = [c["entity_id"] for c in (cards or []) if c.get("entity_id")]
@@ -561,7 +563,7 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                 cid = _ac().contract_id
                 maps = _pmp.search_parent_maps(
                     client, _pmp.collection_name(cid), qv, dest_docs,
-                    k=max(8, int(budget.graph_dest_children) * 3))
+                    k=max(8, int(budget.graph_dest_children) * 3), **scope_kwargs(scope))
                 parents = graph_dest_parents_from_maps(maps, dest_docs, budget.graph_dest_children)
             except Exception:  # noqa: BLE001 — map miss must not kill lane H
                 parents = []
@@ -800,7 +802,7 @@ def _with_graph_assist(query: str, corpus_id: str, lanes, *, graph_useful: bool,
 
     out = chat_retrieve_v2(query, corpus_id, lanes=lanes, on_context=_capture, **kw)
     out["meta"]["mode"] = mode_stamp
-    _attach_graph(out, query, corpus_id, qvec=seen.get("qvec"), graph_useful=graph_useful)
+    _attach_graph(out, query, corpus_id, qvec=seen.get("qvec"), graph_useful=graph_useful, **scope_kwargs(kw.get("scope")))
     return out
 
 
@@ -875,7 +877,7 @@ def _retrieve_gnn(query: str, corpus_id: str, **kw) -> dict:
     return out
 
 
-def _attach_graph(out: dict, query: str, corpus_id: str, *, qvec, graph_useful: bool) -> None:
+def _attach_graph(out: dict, query: str, corpus_id: str, *, qvec, graph_useful: bool, scope=None) -> None:
     """Bounded G after evidence (§3.18): seeds are the FINAL evidence's surfaces (query terms first, then
     every final chunk — a GLOBAL_DENSE_CHILD winner seeds like a hierarchy winner) plus entity-card seeds
     resolved with the primary vector (no second embedding); the D2 resolver keeps card seeds first and caps
@@ -893,7 +895,7 @@ def _attach_graph(out: dict, query: str, corpus_id: str, *, qvec, graph_useful: 
         try:
             client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=30)
             try:
-                cards = entity_card_probe(client, _corpus_collections([corpus_id]), corpus_id, query, list(qvec), limit=seeds_max)
+                cards = entity_card_probe(client, _corpus_collections([corpus_id]), corpus_id, query, list(qvec), limit=seeds_max, **scope_kwargs(scope))
             finally:
                 client.close()
             card_seed_ids = [c["entity_id"] for c in cards if c.get("entity_id")][:seeds_max]
@@ -996,7 +998,7 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
     finish_pool: Optional[ThreadPoolExecutor] = None
     try:
         def _on_context(ctx: SearchContext, pool: Executor) -> None:
-            searcher = FastSearcher(client, collections)                     # no query → no companion probe (§3.21 #1)
+            searcher = FastSearcher(client, collections, **scope_kwargs(kw.get("scope")))                     # no query → no companion probe (§3.21 #1)
             searcher._hidden_cache = {corpus_id: list(ctx.hidden_generations)}   # the core's guard; no second DB read, no thread race
             qvec = tuple(ctx.qvec)
 
@@ -1016,10 +1018,10 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
                     from polymath_shared.embedding_contracts import active_contract as _ac
                     cid = _ac().contract_id
                     atoms = _pap.search_atoms(client, _pap.collection_name(cid), qvec, _WILDCARD_ATOM_KINDS, k=12,
-                                              corpus_ids=[corpus_id])
+                                              corpus_ids=[corpus_id], **scope_kwargs(kw.get("scope")))
                     atom_rec["atoms"] = len(atoms)
                     docs = list(dict.fromkeys(a.get("doc_id") for a in atoms if a.get("doc_id")))
-                    maps = (_pmp.search_parent_maps(client, _pmp.collection_name(cid), qvec, docs, k=16)
+                    maps = (_pmp.search_parent_maps(client, _pmp.collection_name(cid), qvec, docs, k=16, **scope_kwargs(kw.get("scope")))
                             if docs else [])
                     atom_rec["maps"] = len(maps)
                     before = len(parents or {})

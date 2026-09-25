@@ -38,6 +38,8 @@ class CompareRequest(BaseModel):
     message: str
     corpus_id: str
     modes: list[str] = Field(default_factory=lambda: list(COMPARABLE_MODES))
+    # K1 (register 11.485): the knowledge-role scope, the same for every arm; omitted = both roles
+    scope: Optional[dict] = None
 
 
 class ReviewRequest(BaseModel):
@@ -67,6 +69,9 @@ def compare(req: CompareRequest) -> dict:
         raise HTTPException(status_code=422, detail="no modes requested")
 
     from orchestrator.api.chat_retrieval import chat_retrieve_mode
+    from orchestrator.api.retrieve import _role_scope_or_422
+    from polymath_shared.code.scope import scope_kwargs
+    role_scope = _role_scope_or_422(req)       # K1: one scope for every arm (a malformed one is refused)
 
     arms: list[dict] = []
     for mode in modes:
@@ -75,7 +80,7 @@ def compare(req: CompareRequest) -> dict:
             # No knobs forwarded: each arm must differ ONLY by mode, or the
             # comparison stops being about the mode. WILDCARD runs its own latent
             # sweep internally; GRAPH its own hop-1 expansion.
-            out = chat_retrieve_mode(mode, req.message, req.corpus_id)
+            out = chat_retrieve_mode(mode, req.message, req.corpus_id, **scope_kwargs(role_scope))
             receipt = out if isinstance(out, dict) else {}
             arms.append({
                 "mode": mode,

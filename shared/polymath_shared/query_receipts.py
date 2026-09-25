@@ -15,9 +15,11 @@ import json
 import logging
 import time
 import uuid
+from collections.abc import Mapping
 from typing import Any
 
 from polymath_shared import principal_context
+from polymath_shared.code.scope import RetrievalScope, ScopeError, parse_scope
 
 log = logging.getLogger("polymath.query_receipts")
 
@@ -102,6 +104,19 @@ def summarize_response(kind: str, out: Any) -> dict:
     return d
 
 
+def knowledge_scope_of(req: Any) -> dict | None:
+    """K1 (register 11.485): the knowledge-role scope the REQUEST sent, as its receipt records it (`meta.knowledge_scope`),
+    on ok and error receipts alike. Read from the request only: a response can never set or widen it. None = no scope
+    sent (both roles; the receipt is unchanged). A malformed scope (refused with 422) is recorded as `{"invalid": true}`."""
+    raw = getattr(req, "scope", None)
+    if not isinstance(raw, (Mapping, RetrievalScope)):   # absent, or an unrelated `scope` field on another model
+        return None
+    try:
+        return parse_scope(raw).as_dict()
+    except ScopeError:
+        return {"invalid": True}
+
+
 META_MAX_CHARS = 64_000
 
 
@@ -141,6 +156,9 @@ def record_query_receipt(tx_factory, *, kind: str, question: str, req: Any,
         summ = summarize_response(kind, out) if error is None else {
             "status": "error", "verdict": None, "citations": None, "claims": None,
             "evidence": None, "source_docs": [], "meta": {}}
+        ks = knowledge_scope_of(req)
+        if ks is not None:
+            summ["meta"]["knowledge_scope"] = ks
         mode = getattr(req, "mode", None)
         latent = getattr(req, "latent", None)
         if summ["meta"].get("mode") and not mode:

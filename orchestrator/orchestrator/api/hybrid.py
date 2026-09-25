@@ -40,9 +40,10 @@ from orchestrator.api.fast import (
     note_sparse_fallback,
     FastSearcher,
 )
+from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
 
 
-def _sparse_lexical_search(query: str, corpus_id: str, top_k: int) -> list[LaneHit]:
+def _sparse_lexical_search(query: str, corpus_id: str, top_k: int, scope=None) -> list[LaneHit]:
     """SPARSE-BM25 child lexical lane (§11.6): query the routing
     collection's named `bm25` sparse vector with the SHARED tokenizer —
     server-side IDF scoring over the augmented index text (chunk text +
@@ -64,12 +65,13 @@ def _sparse_lexical_search(query: str, corpus_id: str, top_k: int) -> list[LaneH
         from polymath_shared.generation import hidden_generations
         with tx() as _conn:
             _hidden = hidden_generations(_conn, corpus_id)
-        flt = Filter(must=[
+        from polymath_shared.code.scope import scope_or_all
+        flt = scope_or_all(scope).apply(Filter(must=[                # K1: the knowledge-role scope
             FieldCondition(key="representation_kind",
                            match=MatchValue(value="routing_child")),
             FieldCondition(key="corpus_id", match=MatchValue(value=corpus_id)),
         ], must_not=[FieldCondition(key="chunk_contract_version",
-                                    match=MatchValue(value=g)) for g in _hidden])
+                                    match=MatchValue(value=g)) for g in _hidden]))
         for collection in collections.values():   # R2: dict maps corpus_id → collection NAME; iterating the keys
             pts = client.query_points(               # queried 'cinema' as a collection → 404 → silent Postgres scan every turn
                 collection_name=collection,
@@ -98,13 +100,13 @@ def _sparse_lexical_search(query: str, corpus_id: str, top_k: int) -> list[LaneH
         client.close()
 
 
-def _lexical_search(query: str, corpus_id: str, top_k: int) -> list[LaneHit]:
+def _lexical_search(query: str, corpus_id: str, top_k: int, scope=None) -> list[LaneHit]:
     """HYBRID child lexical lane: BM25 sparse first (§11.6 — uses the
     projected index, exact-name recall on the augmented text); the
     in-memory `lexical_score` scan remains the fallback for legacy
     dense-only collections."""
     try:
-        hits = _sparse_lexical_search(query, corpus_id, top_k)
+        hits = _sparse_lexical_search(query, corpus_id, top_k, **scope_kwargs(scope))
         if hits:
             return hits
         note_sparse_fallback("sparse_empty")            # R2: the scan is a counted degradation, never a silent twin
@@ -144,6 +146,7 @@ def hybrid_fast_retrieve(
     plan: Optional[HybridRetrievalPlan] = None,
     latent: "bool | None" = None,
     utility: "bool | None" = None,
+    scope=None,
 ) -> dict:
     """Production HYBRID: one qualified hybrid execution."""
     from polymath_shared.retrieval_modes import apply_latent, apply_utility
@@ -169,7 +172,7 @@ def hybrid_fast_retrieve(
             "message": f"qdrant unavailable: {type(exc).__name__}",
         }) from exc
     try:
-        searcher = FastSearcher(client, collections, query=query)
+        searcher = FastSearcher(client, collections, query=query, **scope_kwargs(scope))
         t0 = time.time()
         shaped = plan_for_query(
             query,
@@ -189,7 +192,7 @@ def hybrid_fast_retrieve(
             plan=shaped,
             embed_query=_embed_query,
             routing_search=searcher,
-            lexical_search=lambda q, k: _lexical_search(q, corpus_id, k),
+            lexical_search=lambda q, k: _lexical_search(q, corpus_id, k, **scope_kwargs(scope)),
             rerank_children=_rerank_children if shaped.rerank_enabled else None,
             summary_vectors=None,  # MMR rejected; lambda 1.0 promoted
             neighbor_lookup=_neighbor_lookup,

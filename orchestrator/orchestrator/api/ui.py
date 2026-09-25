@@ -48,6 +48,7 @@ from polymath_shared.db import tx
 router = APIRouter()
 
 import os
+from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
 
 OLLAMA_URL = os.environ.get("POLYMATH_OLLAMA_URL",
                             "http://127.0.0.1:11434")
@@ -1316,6 +1317,9 @@ class StreamChatRequest(BaseModel):
     # Corpus-chat clients explicitly request retrieval even when the compiler reads
     # their need as conversation. Other clients keep automatic routing by default.
     require_retrieval: bool = False
+    # K1 (register 11.485): the knowledge-role scope {"roles": ["reference"]} (Trail ideation) — omitted = both roles,
+    # today's behaviour; an explicit scope is always enforced and a malformed one is refused (422)
+    scope: Optional[dict] = None
 
 
 def _sse(event: str, data: dict) -> str:
@@ -1713,7 +1717,7 @@ def _run_compiler_lanes(attempts: list, compile_one, *, failed_at: dict | None =
     return plan
 
 
-def _profile_scout(message: str, corpus_ids) -> tuple[list[str], object | None, dict]:
+def _profile_scout(message: str, corpus_ids, scope=None) -> tuple[list[str], object | None, dict]:
     """PROFILE-SCOUT-V1 (P5b) - pre-plan corpus reconnaissance that REPLACES the retired B16 title
     injection. Flag POLYMATH_PROFILE_SCOUT (default off). Embeds the message once, runs the two
     existing profile projections (profile_nominate -> doc_ids, search_atoms -> atom hits) per
@@ -1755,10 +1759,10 @@ def _profile_scout(message: str, corpus_ids) -> tuple[list[str], object | None, 
         atom_hits: list = []
         try:
             for corpus_id in corpora:
-                doc_ids = _pj.profile_nominate(client, _pj.collection_name(contract_id), qv, corpus_id, k=8)
+                doc_ids = _pj.profile_nominate(client, _pj.collection_name(contract_id), qv, corpus_id, k=8, **scope_kwargs(scope))
                 profile_hits.extend(profile_hits_from_doc_ids(doc_ids))
                 rows = _pap.search_atoms(client, _pap.collection_name(contract_id), qv, ATOM_KINDS, k=12,
-                                         corpus_ids=[corpus_id])     # Item 2/D: the scout's atom lane is corpus-scoped
+                                         corpus_ids=[corpus_id], **scope_kwargs(scope))   # Item 2/D + K1: corpus and role scoped
                 atom_hits.extend(atom_hits_from_search(rows, group_of=_group_of))
         finally:
             client.close()
@@ -2129,7 +2133,7 @@ def _admit_plan_bridges(plan, scout_result) -> None:
 
 
 def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, enabled: bool,
-                                  upstream_error: str | None = None) -> None:
+                                  upstream_error: str | None = None, scope=None) -> None:
     """CORPUS-EXPLORER-V1 CE4 (live). TWO-LAYER GATE: the server capability `POLYMATH_CORPUS_EXPLORER`
     (default off) AND the per-request `enabled` flag (the "Corpus Explore" toggle) must BOTH be true; a
     fallback plan is skipped. Builds a NON-GENERATIVE, concept-keyed activation set from the corpus's own
@@ -2206,7 +2210,7 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
                 def _fetch(cid):
                     # Item 2/D: activation atoms come from THIS corpus only — the scope is inside the search, never after it
                     return _pap.search_atoms(client, _pap.collection_name(contract_id), qv,
-                                             CONCEPT_ATOM_KINDS, k=12, corpus_ids=[cid])
+                                             CONCEPT_ATOM_KINDS, k=12, corpus_ids=[cid], **scope_kwargs(scope))
                 activations = activate_corpus(
                     corpus_ids=corpora, fetch_atoms=_fetch,
                     scout_nominations=getattr(scout_result, "nominations", None),
@@ -2222,7 +2226,7 @@ def _add_corpus_explore_expansion(plan, message, corpus_ids, scout_result, *, en
                         # Item 2/D: the universe is THIS request's corpora — another corpus's atoms must not turn
                         # NO_ATOM_COVERAGE into ATOMS_EMPTY
                         st.atom_universe = _pap.count_atoms(client, _pap.collection_name(contract_id), CONCEPT_ATOM_KINDS,
-                                                            corpus_ids=corpora)
+                                                            corpus_ids=corpora, **scope_kwargs(scope))
                     except Exception:  # noqa: BLE001
                         st.atom_universe = None
             finally:
@@ -2388,7 +2392,7 @@ def _bridges_merged(plan) -> bool:
 
 
 def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | None = None,
-                       titles_rank: str | None = None, corpus_explorer: bool = False):
+                       titles_rank: str | None = None, corpus_explorer: bool = False, scope=None):
     """CHAT-INTENT-PLAN-V1 through the `chat_compiler` stage pin (plan §3.2):
     one cheap lane, one call, strict local validation, deterministic fallback.
     The lane is chosen per session key (ring), each lane self-gates through
@@ -2406,7 +2410,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
             steps[name] = round((time.perf_counter() - t) * 1000, 1)
 
     try:
-        titles, scout_result, scout_rec = _timed("scout", _profile_scout, message, corpus_ids)
+        titles, scout_result, scout_rec = _timed("scout", _profile_scout, message, corpus_ids, **scope_kwargs(scope))
     except Exception as exc:  # noqa: BLE001
         titles, scout_result, scout_rec = [], None, {"contract": "profile-scout-v1", "reason": f"scout:{type(exc).__name__}"}
 
@@ -2433,7 +2437,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
             # CORPUS-EXPLORE-FIRING-V1: an upstream finish failure still skips the explorer (unchanged
             # behavior) but is now COUNTED in the firing receipt instead of vanishing.
             _timed("explorer", _add_corpus_explore_expansion, plan, message, corpus_ids, scout_result,
-                   enabled=corpus_explorer, upstream_error=_upstream_err)
+                   enabled=corpus_explorer, upstream_error=_upstream_err, **scope_kwargs(scope))
         except Exception:  # noqa: BLE001
             pass
         if isinstance(getattr(plan, "compiler", None), dict):   # receipt-only; a plan always carries one
@@ -3621,6 +3625,13 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
     if synth != "deterministic-template-v3" and llm_model is None:
         raise HTTPException(422, {"error_code": "unknown_synthesizer",
                                   "message": f"{req.synthesizer!r}"})
+    # K1 (register 11.485): the knowledge-role scope, parsed ONCE and EAGERLY — a malformed scope is refused before the
+    # first frame, never read as "both roles"; every search of the turn (scout, Corpus Explore, lanes) honours it
+    from polymath_shared.code.scope import ScopeError, parse_scope
+    try:
+        _role_scope = parse_scope(getattr(req, "scope", None))
+    except ScopeError as exc:
+        raise HTTPException(422, {"error_code": "invalid_scope", "message": str(exc)}) from exc
     sink = receipt or _default_receipt_sink(route)
 
     def generate():
@@ -3695,7 +3706,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 _plan_future = ThreadPoolExecutor(max_workers=1).submit(
                     _compile_chat_plan, query, req.history, _corpora, session_key=_session_key,
                     titles_rank=getattr(req, "titles_rank", None),
-                    corpus_explorer=bool(getattr(req, "corpus_explorer", False)))
+                    corpus_explorer=bool(getattr(req, "corpus_explorer", False)), **scope_kwargs(_role_scope))
                 if _flag == "on":
                     _plan = _plan_future.result()
                     _plan_future = None
@@ -3820,7 +3831,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 yield _phase("retrieve", f"{ui_mode} retrieval over "
                                          f"{corpus_id}…", mode=ui_mode, query=_retrieval_text[:160])
                 from orchestrator.api.graph import graph_retrieve
-                g = graph_retrieve(_retrieval_text, corpus_id, latent=req.latent, utility=req.utility)
+                g = graph_retrieve(_retrieval_text, corpus_id, latent=req.latent, utility=req.utility, **scope_kwargs(_role_scope))
                 # the answer event reads the retrieval result through `fast` on every path
                 fast = {"meta": g.get("meta") or {}, "trace": g.get("trace") or {}, "evidence": [],
                         "selected_documents": [], "selected_sections": []}
@@ -3912,7 +3923,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         # WLK2C: the BRIDGE subquery ids, so chat_retrieve_v2 exposes their candidates in the
                         # latent pool regardless of fused rank (bridge candidates rarely top the q0-dominated union).
                         latent_bridge_ids=tuple(q.id for q in _plan.queries if getattr(q, "origin", "") in LATENT_ORIGINS and q.id not in _gated_out)
-                        if (_flag == "on" and _plan is not None) else ())
+                        if (_flag == "on" and _plan is not None) else (), **scope_kwargs(_role_scope))
                     if _probe_gate is not None:
                         fast.setdefault("trace", {})["probe_gate"] = _probe_gate          # receipted with the turn (S1d)
                     _aspects = (fast.get("meta") or {}).get("aspects") or {}
@@ -3928,18 +3939,18 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         ]
                 elif ui_mode == "FAST":
                     from orchestrator.api.fast import fast_retrieve
-                    fast = fast_retrieve(_retrieval_text, corpus_id)
+                    fast = fast_retrieve(_retrieval_text, corpus_id, **scope_kwargs(_role_scope))
                 elif ui_mode == "WILDCARD":
                     # DIVERGENT-RETRIEVAL-V1 (v1): the answer evidence IS
                     # FAST (wildcard never displaces it); the bridges
                     # ride the separate `wildcard` lane.
                     from orchestrator.api.wildcard import wildcard_retrieve
-                    fast = wildcard_retrieve(_retrieval_text, corpus_id)
+                    fast = wildcard_retrieve(_retrieval_text, corpus_id, **scope_kwargs(_role_scope))
                     wildcard_lane = fast.get("wildcard") or []
                 else:
                     from orchestrator.api.hybrid import hybrid_fast_retrieve
                     fast = hybrid_fast_retrieve(_retrieval_text, corpus_id,
-                                                latent=req.latent, utility=req.utility)
+                                                latent=req.latent, utility=req.utility, **scope_kwargs(_role_scope))
                 latent_meta = (fast.get("meta") or {}).get("latent")
                 _trace = fast.get("trace") or {}
                 # P10 EVIDENCE-RESOLUTION: a bounded round 2 for a still-unsupported need, merged
@@ -3949,7 +3960,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     if (os.environ.get("POLYMATH_CHAT_RESOLUTION", "0") == "1"
                             and _plan is not None and ui_mode in ("FAST", "HYBRID") and _aspects):
                         def _resolve_retrieve(_q: str):
-                            return chat_retrieve_mode("VECTOR" if ui_mode == "FAST" else ui_mode, _q, corpus_id)
+                            return chat_retrieve_mode("VECTOR" if ui_mode == "FAST" else ui_mode, _q, corpus_id,
+                                                      **scope_kwargs(_role_scope))
                         _resolution = _maybe_resolve(_plan, fast, _aspects, _weak, _resolve_retrieve)
                 except Exception:  # noqa: BLE001 — resolution is additive; never break the turn
                     _resolution = None

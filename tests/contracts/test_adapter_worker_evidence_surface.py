@@ -141,7 +141,8 @@ def test_b_retrieve_sends_the_original_seed_with_the_exact_body_and_an_attributa
     orch = Orch(evidence=[PACKET]); monkeypatch.setattr(worker, "_orch_post", orch)
     out = worker.exec_retrieve(_step("B_retrieve"), _state(), MANIFEST)
     assert [c["path"] for c in orch.calls] == [EB.EVIDENCE_PATH]
-    assert orch.calls[0]["body"] == {"message": SEED, "corpus_id": "cinema", "mode": "WILDCARD", "corpus_explorer": True}     # NOT the reformulation
+    assert orch.calls[0]["body"] == {"message": SEED, "corpus_id": "cinema", "mode": "WILDCARD", "corpus_explorer": True,
+                                     "scope": {"roles": ["reference"]}}     # NOT the reformulation; K1: reference-only
     assert REFORMULATION not in json.dumps(orch.calls) and orch.calls[0]["user_agent"] == f"polymath-adapter-step/adr_{'a' * 32}/B_retrieve/3"
     o = out["output"]
     assert (o["surface"], o["retrieval_completed"], o["evidence_contract"], o["needs"]) == ("evidence_boundary", True, "evidence-packet-v1", [SEED])
@@ -192,10 +193,13 @@ def test_the_kill_switch_reproduces_the_pre_boundary_legacy_call(worker, monkeyp
     orch = Orch(retrieve=[LEGACY]); monkeypatch.setattr(worker, "_orch_post", orch)
     out = worker.exec_retrieve(_step("B_retrieve"), _state(), MANIFEST)
     assert [c["path"] for c in orch.calls] == ["/retrieve"]
-    assert orch.calls[0]["body"] == {"query": SEED, "corpus_ids": ["cinema"], "limit": 24, "explore": True}     # == adapter 2.1.0's B_retrieve call
+    # == adapter 2.1.0's B_retrieve call + K1's reference-only scope: a rollback must never widen Trail's request (fail closed)
+    assert orch.calls[0]["body"] == {"query": SEED, "corpus_ids": ["cinema"], "limit": 24, "explore": True,
+                                     "scope": {"roles": ["reference"]}}
     assert (out["output"]["surface"], out["output"]["mode"], out["output"]["degraded_reasons"]) == ("retrieve", "EXPLORE", ["surface_forced_by_env"])
     graph = worker.exec_graph_expand(_step("B_graph", 4), _state(), MANIFEST)
-    assert orch.calls[-1]["body"] == {"query": SEED, "corpus_ids": ["cinema"], "explore": True, "limit": 20}
+    assert orch.calls[-1]["body"] == {"query": SEED, "corpus_ids": ["cinema"], "explore": True, "limit": 20,
+                                      "scope": {"roles": ["reference"]}}
     assert [r["id"] for r in graph["output"]["graph_rows"]] == ["f_legacy"] and graph["output"]["degraded_reasons"] == ["surface_forced_by_env"]
 
 
@@ -219,7 +223,8 @@ def test_a_partial_outage_keeps_the_validated_evidence_and_is_recorded(worker, m
 def test_graph_steps_union_the_graph_mode_packet_with_the_legacy_graph_facts(worker, monkeypatch):
     orch = Orch(evidence=[PACKET], retrieve=[LEGACY]); monkeypatch.setattr(worker, "_orch_post", orch)
     out = worker.exec_graph_expand(_step("B_graph", 4), _state(), MANIFEST)
-    assert orch.calls[0]["body"] == {"message": SEED, "corpus_id": "cinema", "mode": "GRAPH", "corpus_explorer": False}
+    assert orch.calls[0]["body"] == {"message": SEED, "corpus_id": "cinema", "mode": "GRAPH", "corpus_explorer": False,
+                                     "scope": {"roles": ["reference"]}}
     assert [c["path"] for c in orch.calls] == [EB.EVIDENCE_PATH, "/retrieve"]
     o = out["output"]
     assert [r["id"] for r in o["rows"]] == ["chunk_0001", "chunk_0002"] and [r["id"] for r in o["graph_rows"]] == ["f_legacy"] and o["graph_facts"] == 2

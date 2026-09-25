@@ -134,6 +134,8 @@ class PlanRequest(BaseModel):
     max_queries: int = 5
     # DOCUMENT-SCOPED-RETRIEVE-V1: threaded into every reformulation's retrieve
     document_ids: Optional[list[str]] = None
+    # K1 (register 11.485): the knowledge-role scope, threaded into every reformulation's retrieve
+    scope: Optional[dict] = None
 
 
 @router.post("/retrieve/plan")
@@ -146,6 +148,8 @@ async def retrieve_plan(req: PlanRequest) -> dict:
     corpus_ids = list(req.corpus_ids or ([req.corpus_id] if req.corpus_id else []))
     if not corpus_ids:
         raise HTTPException(status_code=422, detail="corpus_id or corpus_ids is required")
+    from orchestrator.api.retrieve import _role_scope_or_422
+    _role_scope_or_422(req)          # K1: a malformed scope is refused up front (each reformulation carries it on)
     plan = compile_plan(signal, req.communities, req.min_queries, req.max_queries)
     merged: dict[str, dict] = {}
     per_query, errors = [], []
@@ -153,7 +157,7 @@ async def retrieve_plan(req: PlanRequest) -> dict:
         for cid in corpus_ids:
             rreq = RetrieveRequest(query=q["query"], corpus_id=cid, limit=int(req.limit),
                                    mode="EXPLORE" if req.explore else None, evidence=True,
-                                   document_ids=req.document_ids)
+                                   document_ids=req.document_ids, scope=req.scope)
             try:
                 out = await _retrieve_impl(rreq)
             except HTTPException as exc:

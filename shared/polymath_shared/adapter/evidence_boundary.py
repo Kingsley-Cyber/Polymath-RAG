@@ -163,14 +163,21 @@ def plan_calls(needs: list[str], corpus_ids: list[str], *, max_calls: int = DEFA
             "truncated": [{"corpus_id": p["corpus_id"], "need_index": p["need_index"], "reason": "max_calls"} for p in pairs[cap:]]}
 
 
+#: K1 (R8, register 11.485): Trail ideation reads REFERENCE material only — every evidence request an adapter makes says so,
+#: and the orchestrator enforces it on every search of the turn (profile scout, Corpus Explore, every lane)
+TRAIL_SCOPE: dict[str, list[str]] = {"roles": ["reference"]}
+
+
 def request_body(need: str, corpus_id: str, *, mode: str = "WILDCARD", corpus_explorer: bool = True) -> dict[str, Any]:
-    """EXACTLY the four fields the evidence route needs. No synthesizer, no history, no pre-decomposed subqueries."""
+    """EXACTLY the five fields the evidence route needs: the need, one corpus, the mode, the explorer toggle and the
+    reference-only scope (K1). No synthesizer, no history, no pre-decomposed subqueries."""
     m = str(mode or "").upper()
     if m not in BOUNDARY_MODES:
         raise ValueError(f"unknown evidence-boundary mode {mode!r} (expected one of {', '.join(BOUNDARY_MODES)})")
     if not (isinstance(need, str) and need.strip()) or not (isinstance(corpus_id, str) and corpus_id.strip()):
         raise ValueError("an evidence-boundary call needs a non-empty need and exactly one corpus_id")
-    return {"message": need, "corpus_id": corpus_id, "mode": m, "corpus_explorer": bool(corpus_explorer)}
+    return {"message": need, "corpus_id": corpus_id, "mode": m, "corpus_explorer": bool(corpus_explorer),
+            "scope": {"roles": list(TRAIL_SCOPE["roles"])}}
 
 
 # ─────────────────────────────────────────────────────────── the packet contract (consumer side, fail-closed)

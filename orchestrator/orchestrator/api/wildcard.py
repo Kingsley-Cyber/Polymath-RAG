@@ -12,9 +12,10 @@ from polymath_shared.divergent import (
     DIVERGENT_DEFAULT_PLAN,
     divergent_retrieve,
 )
+from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
 
 
-def wildcard_retrieve(query: str, corpus_id: str) -> dict:
+def wildcard_retrieve(query: str, corpus_id: str, scope=None) -> dict:
     from qdrant_client import QdrantClient
 
     from polymath_shared.settings import get_settings
@@ -31,7 +32,7 @@ def wildcard_retrieve(query: str, corpus_id: str) -> dict:
             "message": "WILDCARD requires an explicit corpus_id"})
 
     # 1. the ANSWER: plain FAST — also defines the obvious neighborhood
-    fast = fast_retrieve(query, [corpus_id])
+    fast = fast_retrieve(query, [corpus_id], **scope_kwargs(scope))
     evidence = fast.get("evidence") or []
     baseline = {
         "doc_ids": {e.get("doc_id") for e in evidence if e.get("doc_id")},
@@ -46,7 +47,7 @@ def wildcard_retrieve(query: str, corpus_id: str) -> dict:
     coll = collections[corpus_id]
     client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)
     try:
-        searcher = FastSearcher(client, collections, query=query)
+        searcher = FastSearcher(client, collections, query=query, **scope_kwargs(scope))
 
         def _latent_search(kind, qvec, top_k):
             return searcher(coll, qvec, {

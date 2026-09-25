@@ -15,6 +15,7 @@ from __future__ import annotations
 import os
 import time
 from typing import Any, Callable, Mapping, Sequence
+from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope only when it narrows
 
 #: bump when the routing contract (payload, naming, hydration rule) changes — NOT when a model is retrained (that is `model_digest`)
 GNN_ROUTE_CONTRACT = "gnn-route-v1"
@@ -71,15 +72,18 @@ def verify_collection(client: Any, collection: str, *, expect_dim: int, embeddin
     return {"collection": collection, "dim": int(dim or 0), "points": getattr(info, "points_count", None)}
 
 
-def gnn_parent_search(client: Any, collection: str, qvec: Sequence[float], *, corpus_id: str, limit: int = 8) -> list[dict]:
+def gnn_parent_search(client: Any, collection: str, qvec: Sequence[float], *, corpus_id: str, limit: int = 8,
+                      scope=None) -> list[dict]:
     """Experimental PARENT nominations for ONE query vector, inside ONE corpus (G12). Routing metadata only — no source text,
     no claims, no evidence semantics: `parent_id, doc_id, score, rank, gnn_contract, graph_snapshot_id, model_digest`."""
     from qdrant_client import models as M  # local: keeps this module importable in the DB-free tests
 
     if not corpus_id:
         raise GnnRouteRefused("GNN_CORPUS_REQUIRED", "a corpus_id is required (no cross-corpus GNN retrieval)")
-    flt = M.Filter(must=[M.FieldCondition(key="representation_kind", match=M.MatchValue(value=PAYLOAD_KIND)),
-                         M.FieldCondition(key="corpus_id", match=M.MatchValue(value=corpus_id))])
+    from polymath_shared.code.scope import scope_or_all
+    flt = scope_or_all(scope).apply(      # K1: the knowledge-role scope
+        M.Filter(must=[M.FieldCondition(key="representation_kind", match=M.MatchValue(value=PAYLOAD_KIND)),
+                       M.FieldCondition(key="corpus_id", match=M.MatchValue(value=corpus_id))]))
     hits = client.search(collection_name=collection, query_vector=list(qvec), query_filter=flt, limit=int(limit), with_payload=True, with_vectors=False)
     out: list[dict] = []
     for rank, h in enumerate(hits, 1):
@@ -117,10 +121,10 @@ def hydrate_original_children(child_search: Callable[..., list[dict]], qvec: Seq
 
 
 def route(client: Any, collection: str, child_search: Callable[..., list[dict]], qvec: Sequence[float], *, corpus_id: str,
-          parent_k: int = 8, per_parent: int = 2, cap: int = 12) -> tuple[list[dict], dict]:
+          parent_k: int = 8, per_parent: int = 2, cap: int = 12, scope=None) -> tuple[list[dict], dict]:
     """The whole query-time route: parents → ORIGINAL children, with the receipt the engine attaches to `trace.gnn`."""
     t0 = time.perf_counter()
-    parents = gnn_parent_search(client, collection, qvec, corpus_id=corpus_id, limit=parent_k)
+    parents = gnn_parent_search(client, collection, qvec, corpus_id=corpus_id, limit=parent_k, **scope_kwargs(scope))
     children = hydrate_original_children(child_search, qvec, parents, corpus_id=corpus_id, per_parent=per_parent, cap=cap)
     receipt = {"contract": GNN_ROUTE_CONTRACT, "collection": collection, "parent_k": int(parent_k), "parents": [{k: p[k] for k in ("parent_id", "doc_id", "score", "rank")} for p in parents],
                "gnn_contract": parents[0]["gnn_contract"] if parents else None, "graph_snapshot_id": parents[0]["graph_snapshot_id"] if parents else None,

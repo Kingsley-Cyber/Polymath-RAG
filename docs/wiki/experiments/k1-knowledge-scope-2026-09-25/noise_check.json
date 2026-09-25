@@ -1,0 +1,46 @@
+[
+ {
+  "question": "What do my books say about making an animated character's movement feel weighty?",
+  "mode": "GRAPH",
+  "differs_from_first_none": [
+   [
+    "none",
+    0
+   ],
+   [
+    "none",
+    0
+   ],
+   [
+    "reference",
+    0
+   ],
+   [
+    "reference",
+    0
+   ]
+  ]
+ },
+ {
+  "question": "What do my books say about making an animated character's movement feel weighty?",
+  "mode": "WILDCARD",
+  "differs_from_first_none": [
+   [
+    "none",
+    0
+   ],
+   [
+    "none",
+    0
+   ],
+   [
+    "reference",
+    0
+   ],
+   [
+    "reference",
+    0
+   ]
+  ]
+ }
+]

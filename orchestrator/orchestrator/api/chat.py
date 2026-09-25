@@ -70,6 +70,8 @@ class ChatRequest(BaseModel):
     # synthesis. Both default off (historical /chat behaviour unchanged); miss the mapping below and they drop.
     corpus_explorer: bool = False
     evidence_only: bool = False
+    # K1 (register 11.485): the knowledge-role scope {"roles": ["reference"]} (Trail ideation); omitted = both roles.
+    scope: dict | None = None
 
 
 def stream_request(req: ChatRequest) -> StreamChatRequest:
@@ -91,6 +93,7 @@ def stream_request(req: ChatRequest) -> StreamChatRequest:
         carry_context      → carry_context (CarriedChunk, CARRY-V2)
         compiler           → compiler (off | shadow | on)
         reasoning, reasoning_blend → the same
+        scope              → scope (K1: the knowledge-role scope; the runtime validates and enforces it)
         evidence           → NOT a runtime input: a /chat response add-on applied
                              after the turn (`attach_evidence_rows`, built from
                              the answer's own citations — never a second retrieval)
@@ -107,6 +110,7 @@ def stream_request(req: ChatRequest) -> StreamChatRequest:
         reasoning_blend=list(req.reasoning_blend or []),
         corpus_explorer=bool(getattr(req, "corpus_explorer", False)),
         evidence_only=bool(getattr(req, "evidence_only", False)),
+        scope=getattr(req, "scope", None),
     )
 
 

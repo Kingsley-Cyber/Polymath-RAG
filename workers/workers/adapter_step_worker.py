@@ -172,7 +172,8 @@ def _with_degraded(outcome: service.ExecOutcome, reasons: list[str]) -> service.
 def _retrieve_legacy(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids: list[str]) -> service.ExecOutcome:
     cfg = m.step(step["step_id"]).get("config") or {}
     mode = _legacy_mode(cfg)
-    body = {"query": _query_text(step, state, m), "corpus_ids": corpus_ids, "limit": int(cfg.get("top_k", state.input.get("top_k") or 16))}
+    body = {"query": _query_text(step, state, m), "corpus_ids": corpus_ids, "limit": int(cfg.get("top_k", state.input.get("top_k") or 16)),
+            "scope": dict(EB.TRAIL_SCOPE)}          # K1: Trail ideation reads reference material only
     if mode == "EXPLORE":
         body["explore"] = True                 # contract rows (retrieve-evidence-rows-v1): the view an agent consumes
     else:
@@ -265,7 +266,8 @@ def exec_compile_plan(step: dict[str, Any], state: RunState, m: Manifest) -> ser
     corpus_ids = _corpus_ids(state)
     if not corpus_ids:
         return {"gap": {"code": "INPUT_SCOPE_MISSING", "message": "no corpus_ids in input or request_options"}}
-    out = _orch_post("/retrieve/plan", {"signal": _query_text(step, state, m), "corpus_ids": corpus_ids, "limit": 24, "explore": True},
+    out = _orch_post("/retrieve/plan", {"signal": _query_text(step, state, m), "corpus_ids": corpus_ids, "limit": 24, "explore": True,
+                                        "scope": dict(EB.TRAIL_SCOPE)},      # K1: reference material only
                      user_agent=_ua(step, state))
     rows = out.get("evidence_rows") or out.get("rows") or _rows(out, corpus_ids)
     return {"output": {"queries": out.get("queries") or out.get("plan") or [], "rows": _trim_rows(rows)}, "evidence_refs": _refs_from_rows(rows)}
@@ -274,7 +276,8 @@ def exec_compile_plan(step: dict[str, Any], state: RunState, m: Manifest) -> ser
 def _graph_legacy(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids: list[str]) -> service.ExecOutcome:
     cfg = m.step(step["step_id"]).get("config") or {}
     out = _orch_post("/retrieve", {"query": _query_text(step, state, m), "corpus_ids": corpus_ids, "explore": True,
-                                   "limit": int(cfg.get("max_facts", 20))}, user_agent=_ua(step, state))
+                                   "limit": int(cfg.get("max_facts", 20)), "scope": dict(EB.TRAIL_SCOPE)},   # K1
+                     user_agent=_ua(step, state))
     rows = [r for r in (out.get("evidence_rows") or []) if r.get("kind") in ("graph_fact", "graph_hop")]
     return {"output": {"surface": EB.SURFACE_LEGACY, "graph_rows": _trim_rows(rows), "graph_facts": len(out.get("graph_facts") or [])},
             "evidence_refs": _refs_from_rows(rows)}

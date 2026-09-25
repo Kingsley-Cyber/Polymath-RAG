@@ -43,14 +43,16 @@ def point_id(doc_id: str, parent_id: str, map_contract: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, f"polymath:parent_map:{map_contract}:{doc_id}:{parent_id}"))
 
 
-def search_parent_maps(client, collection: str, query_vec, doc_ids: Sequence[str], k: int = 24) -> list[dict]:
+def search_parent_maps(client, collection: str, query_vec, doc_ids: Sequence[str], k: int = 24, *, scope=None) -> list[dict]:
     """ONE routing-vector search filtered to the nominated docs (§17 performance rule:
     never one search per doc) → [{doc_id, parent_id, alias, score}] desc. Read-only — the
     reusable map-search contract the shadow canary and the live dual-read lane share."""
     from qdrant_client.http import models as qm
     if not doc_ids:
         return []
-    flt = qm.Filter(must=[qm.FieldCondition(key="doc_id", match=qm.MatchAny(any=list(doc_ids)))])
+    from polymath_shared.code.scope import scope_or_all
+    flt = scope_or_all(scope).apply(      # K1: the knowledge-role scope
+        qm.Filter(must=[qm.FieldCondition(key="doc_id", match=qm.MatchAny(any=list(doc_ids)))]))
     res = client.query_points(collection, query=list(query_vec), using=VECTOR_NAME, query_filter=flt,
                               limit=k, with_payload=["doc_id", "parent_id", "alias"])
     return [{"doc_id": p.payload.get("doc_id"), "parent_id": p.payload.get("parent_id"),
