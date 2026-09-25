@@ -1,0 +1,14 @@
+version: 1
+
+corpus:
+  corpus_id: l4-canary
+  title: L4 canary (one test document)
+  description: "LLM-BACKEND L4b (register 11.474): one small synthetic document through the live fleet, to prove the profile and pMAP slots call only their own Groq keys and that a new upload mints parent maps (L-19). Safe to delete afterwards (the owner's step)."
+
+defaults:
+  language: en
+  source_tier: primary
+  enabled: true
+
+documents:
+  - source: ../../../../eval/i3_5doc/corpus/01_harborpay_oauth_incident.md

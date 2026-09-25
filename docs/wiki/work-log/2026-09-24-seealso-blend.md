@@ -3,7 +3,7 @@ change_id: SEEALSO-BLEND-V1
 owner: "@king"
 date: 2026-09-24
 status: complete
-status_note: "Replaces the 11.472 book-finding hop on the owner's word. ON in the live .env (POLYMATH_CHAT_SEEALSO_BLEND=1, question weight 0.7); rollback = 0 + a bounce. Live confirmation: the owner's next HYBRID / GRAPH / WILDCARD chat whose lane G runs (receipt: trace.seealso_fanout.blends)."
+status_note: "Replaces the 11.472 book-finding hop on the owner's word. Merged 95d7832a; the live .env carries POLYMATH_CHAT_SEEALSO_BLEND=1 (question weight 0.7) and no longer the hop flag. LIVE AT THE NEXT FLEET BOUNCE: the agent's bounce was denied as Production Deploy (2026-09-24 22:5x MDT) and handed to the owner. Until then the running orchestrator (started 22:15:46) still holds the retired hop code, whose module file the merge removed: a GRAPH / WILDCARD turn that reaches the hop would lose lane G for that turn (receipted as degraded, never silent). Rollback = 0 + a bounce. Live confirmation: the next HYBRID / GRAPH / WILDCARD chat whose lane G runs (receipt: trace.seealso_fanout.blends)."
 architecture_impact: "shared (new seealso_blend.py replacing seealso_hop.py; candidate_engine lane G blend fields, cap + receipt; skeleton_routes switch; search_atoms doc_ids filter) + orchestrator (chat_retrieval fanout_search; the alpha knob). Lane G is byte-identical with the flag off. Fence + one bounce."
 last_reviewed: 2026-09-24
 ---

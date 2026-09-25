@@ -472,8 +472,7 @@ scripts/backfill_knowledge_role.py      idempotent Qdrant set_payload backfill w
 2. Default role for repository Markdown (proposal: `implementation`, since it documents the implementation).
 3. Whether FAST opens the description door (proposal: yes; it is cheap) and the exact door (proposal: yes).
 4. Candidate languages beyond V1 (DAX, Power Query M). The external audit (11.471) supplies their contracts; still candidates until the owner promotes them.
-6. Reference books across projects (C-26, narrowed 11.471): a book used by ONE project goes into that project's corpus;
-   only a book wanted in TWO corpora needs multi-corpus queries (FAST / HYBRID / GRAPH / WILDCARD / GNN take one corpus
-   today). Will any book be shared?
+6. Reference books across projects (C-26) — **ANSWERED 2026-09-24 (11.474): no book is shared across projects.** Each
+   project's reference books go into that project's corpus; no multi-corpus query work is needed for K1.
 7. Per-unit plain-English descriptions for code — **ANSWERED 11.473: yes**, generated from complete bodies (owner note 8).
 5. The live windows: migrations 0067 / 0068, the Qdrant `knowledge_role` backfill.
