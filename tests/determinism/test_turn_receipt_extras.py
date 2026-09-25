@@ -86,3 +86,18 @@ def test_s1d_the_path_aware_judge_and_each_probe_route_are_receipted_without_the
 def test_s1d_a_judge_that_did_not_run_is_not_receipted():
     x = ui._turn_receipt_extras({"contextual": {"enabled": False}, "aspects": {"q1": {}}}, None, None)
     assert "contextual" not in x["retrieval_trace"] and "probe_routes" not in x["retrieval_trace"]
+
+
+def test_lane_g_keeps_its_steering_lines_on_the_receipt_without_the_lane_time():
+    # 11.483: the blend (11.475) and the steer (11.482) are proven live only by the lines that steered lane G
+    fan = {"enabled": True, "atoms": ["timing"], "blends": [{"item": "Physics for Animators", "from_doc": "d1",
+                                                            "kind": "SEEALSO"},
+                                                           {"item": "timing importance in animation", "from_doc": "d1",
+                                                            "kind": "ANCHOR"}],
+           "blend_candidates": 6, "steer_kinds": ["BRIDGE", "ANCHOR"], "steer_candidates": 3, "candidates": 20,
+           "lane_ms": 2712.3}
+    x = ui._turn_receipt_extras({"seealso_fanout": fan}, None, None)
+    assert x["retrieval_trace"]["seealso_fanout"] == {k: v for k, v in fan.items() if k != "lane_ms"}
+    assert x["trace_ms"]["lanes"] == {"seealso_fanout": 2712.3}
+    off = ui._turn_receipt_extras({"seealso_fanout": {"enabled": False}}, None, None)
+    assert off["retrieval_trace"] is None                           # a lane that did not run is not receipted
