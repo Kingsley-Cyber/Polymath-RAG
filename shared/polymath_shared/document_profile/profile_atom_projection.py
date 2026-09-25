@@ -157,7 +157,7 @@ def corpus_scope(corpus_ids) -> list[str]:
 
 
 def search_atoms(client, collection: str, query_vec, kinds: Sequence[str], k: int = 12, *,
-                 corpus_ids: Sequence[str]) -> list[dict]:
+                 corpus_ids: Sequence[str], doc_ids: Sequence[str] | None = None) -> list[dict]:
     """Search the atom collection by the query vector, filtered to the given atom kinds AND to the given corpora →
     [{doc_id, corpus_id, atom_kind, text, atom_id, score}] desc. Read-only routing lookup.
 
@@ -173,6 +173,12 @@ def search_atoms(client, collection: str, query_vec, kinds: Sequence[str], k: in
     ks = tuple(kinds or ())
     if ks:
         must.append(qm.FieldCondition(key="atom_kind", match=qm.MatchAny(any=list(ks))))
+    if doc_ids is not None:
+        # SEEALSO-BLEND-V1: the atoms OF these documents (document-level see-also); an empty list means none
+        docs = [str(d) for d in doc_ids if d]
+        if not docs:
+            return []
+        must.append(qm.FieldCondition(key="doc_id", match=qm.MatchAny(any=docs)))
     res = client.query_points(collection, query=list(query_vec), using=VECTOR_NAME, query_filter=qm.Filter(must=must),
                               limit=k, with_payload=["doc_id", "corpus_id", "atom_kind", "text", "atom_id"])
     return [{"doc_id": p.payload.get("doc_id"), "corpus_id": p.payload.get("corpus_id"), "atom_kind": p.payload.get("atom_kind"),
