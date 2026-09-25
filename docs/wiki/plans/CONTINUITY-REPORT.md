@@ -28,9 +28,8 @@ historical, never an instruction.
 ### Repository State
 - Branch `production`. HEAD = this close-out, on top of `a18f1a2e` (11.479 post-merge fix), `08528640` (merge of
   `fix/d1-graph-fact-rank`, 11.478) and `c03890e5` (11.477 DOC-STEER replay).
-- `origin/production` = `9fc0956f` (pushed 2026-09-24). Unpushed at this close-out: 6 commits (11.477–11.480 + two
-  close-outs; count with `git rev-list --count origin/production..production`). The owner's word for this session was
-  "push only on my word", so the push is the owner's:
+- `origin/production` = `f4b3bacc` (the owner pushed 11.477–11.480 on 2026-09-25 00:12 MDT). Unpushed: the 11.481
+  record (`git rev-list --count origin/production..production`). Pushes are the owner's word:
   `git -C /Users/king/Documents/polymath-rebuild/polymath-v4 push origin production`.
 - **Fleet (the owner's bounce, 2026-09-25 00:09 MDT):** 26 / 13 / ONE bundle `c6687ef2365a`, `/ready` true; the
   orchestrator and MCP Server A started 00:09:08 with `POLYMATH_CHAT_SEEALSO_BLEND=1` and `POLYMATH_GRAPH_FACT_RANK=1`
@@ -42,18 +41,16 @@ historical, never an instruction.
   148–149 hold the D1 comment + `POLYMATH_GRAPH_FACT_RANK=1` (rollback = 0 + a bounce). Unchanged:
   `POLYMATH_LLM_CLOUD_PRIMARY=0`; chat flags `SKELETON_ROUTES=1`, `CONTEXTUAL_JUDGE=wildcard`, `PROBE_GATE=1`,
   `SYNTH_ROLES=1`, `REASONING_POLICY=1` (S4 / S8 off); `CLOUDFLARE_ACCOUNT_ID_3..6` filled, account 1 retired.
-- **Test corpus `l4-canary`** (1 document, 1 finished run): the owner asked on 2026-09-25 to delete it. A delete is the
-  owner's step; the agent handed over one Run-button command:
-  `curl -s -X DELETE "http://127.0.0.1:7200/corpora/l4-canary?confirm=l4-canary"`
-  (or the app: corpus menu → `l4-canary` → Delete corpus → type the name). Check afterwards: `corpora` has no
-  `l4-canary`.
+- **Test corpus `l4-canary`: DELETED by the owner (2026-09-25, 11.481).** `corpora` = cinema, commerce-v1. The delete
+  path leaves 32 points in the shared document-profile collections + rows in four derived tables → gap O-05 (Low, no
+  cross-corpus leak; the purge is the owner's step, the fix a small slice).
 - **Other worktrees:** the D1 and blend worktrees are removed (branches merged). Carried forward: `pmv4-m1-repro`
   (`review/m1-reproductions`, kept on purpose); `pmv4-rag-ui` holds another stream's 14 uncommitted files (never add,
   stash or revert them); an old stash `PRE-LIBRARIAN-DEPLOY 2026-09-18` belongs to that era (leave it).
 
 ### Active Mission
 - **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 6 D1 = DONE 11.478).
-  Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (69 rows: 21 closed, 48 open). How to build code RAG:
+  Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (70 rows: 21 closed, 49 open). How to build code RAG:
   `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md`.
 - **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → **K1** → C1 → C2 → C3 → L5 → C6+C7 → C9+C10
   (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
@@ -69,7 +66,8 @@ historical, never an instruction.
 - **Document RAG** (`DOCUMENT-RAG-COMPLETION-V1.md`) stays paused: S5–S7 and S9 wait (S9 needs the owner's query
   allowance; 9 of 10 used).
 
-### Completed Since Last Bootstrap (11.477–11.480)
+### Completed Since Last Bootstrap (11.477–11.481)
+- **11.481:** the owner deleted the `l4-canary` test corpus; the delete's leftovers became gap O-05.
 - **11.480 D1 live:** the owner's bounce (00:09) + `live_check.py` exit 0 → LIVE_PATH_PROVEN.
 - **11.479 D1 post-merge fix:** the bounce was denied, so the old orchestrator loaded the new `chat_retrieval.py` beside its
   old in-memory `retrieve` and failed the new import (`/retrieve` GRAPH 500; chat would have failed). Guarded import
@@ -144,7 +142,8 @@ historical, never an instruction.
    multi-corpus query (no shared books).
 4. **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28).
 5. **L5** before C6 + C7. Fold in when touching the file: L-23 (`document_status.py:212`).
-6. Owner's steps pending: the `l4-canary` delete (command above); the push.
+6. Owner's step pending: the push. Small slice when convenient: O-05 (the corpus delete also sweeps the shared
+   document-profile collections by `corpus_id`).
 
 ### Do Not Do
 - Never hand-edit `config/cloud_providers.json` or `config/extraction_models/limiter.yaml` (generated).
