@@ -113,6 +113,8 @@ app.include_router(graph_browse_router)
 app.include_router(compare_review_router)
 from orchestrator.api.adapter import router as adapter_router  # COGNITIVE-ADAPTER-V1 (ADR-0018)
 app.include_router(adapter_router)
+from orchestrator.api.acquisition import router as acquisition_router  # AUTORESEARCH R8: Polymath-hosted research reads
+app.include_router(acquisition_router)
 
 # Serve the built web UI at /ui when a build exists (single-port product).
 from pathlib import Path  # noqa: E402

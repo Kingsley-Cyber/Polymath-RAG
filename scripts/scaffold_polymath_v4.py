@@ -2442,6 +2442,13 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/autoresearch-e2e-2026-09-25/live_check.py", "py", None),
     ("docs/wiki/experiments/autoresearch-r1-repin-2026-09-25/repin_trail_hr7.py", "py", None),
     ("docs/wiki/experiments/autoresearch-r1-repin-2026-09-25/rerecord_envelopes_hr7.py", "py", None),
+    # AUTORESEARCH R8: Polymath-hosted research reads (the owner's worker-pack prompt 06)
+    ("shared/polymath_shared/acquisition/__init__.py", "py", None),
+    ("shared/polymath_shared/acquisition/service.py", "py", None),
+    ("shared/polymath_shared/acquisition/opencli.py", "py", None),
+    ("orchestrator/orchestrator/api/acquisition.py", "py", None),
+    ("tests/contracts/test_research_acquisition.py", "py", None),
+    ("docs/wiki/work-log/2026-09-25-autoresearch-r8-hosted-acquisition.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-k1b-scope-echo.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),

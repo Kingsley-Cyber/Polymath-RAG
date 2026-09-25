@@ -2,6 +2,7 @@
 invocation, so an agent in a shell (Claude Code here) can drive a governed adapter run exactly as any MCP client would.
 
     mcp_call.py tool <name> '<json arguments>'   -> the tool's structured result (JSON) on stdout
+    mcp_call.py tool <name> @args.json           -> the same, the arguments read from a file (large payloads: receipts)
     mcp_call.py prompt <name> '<json arguments>' -> the prompt's messages
     mcp_call.py resource <uri>                    -> the resource's text
     mcp_call.py tools                             -> the tool names this key may call
@@ -59,6 +60,13 @@ def _structured(result: dict) -> object:
     return result
 
 
+def _args(argv: list[str]) -> dict:
+    if len(argv) < 3:
+        return {}
+    raw = pathlib.Path(argv[2][1:]).read_text(encoding="utf-8") if argv[2].startswith("@") else argv[2]
+    return json.loads(raw)
+
+
 async def main(argv: list[str]) -> int:
     if not argv:
         print(__doc__)
@@ -69,7 +77,7 @@ async def main(argv: list[str]) -> int:
             _, body = await c.rpc("tools/list", {})
             print(json.dumps(sorted(t["name"] for t in (body.get("result") or {}).get("tools") or [])))
         elif argv[0] == "tool":
-            _, body = await c.rpc("tools/call", {"name": argv[1], "arguments": json.loads(argv[2]) if len(argv) > 2 else {}})
+            _, body = await c.rpc("tools/call", {"name": argv[1], "arguments": _args(argv)})
             if body.get("error"):
                 print(json.dumps({"rpc_error": body["error"]}, indent=1))
                 return 1
@@ -78,7 +86,7 @@ async def main(argv: list[str]) -> int:
             print(json.dumps(out, indent=1, ensure_ascii=False))
             return 1 if result.get("isError") else 0
         elif argv[0] == "prompt":
-            _, body = await c.rpc("prompts/get", {"name": argv[1], "arguments": json.loads(argv[2]) if len(argv) > 2 else {}})
+            _, body = await c.rpc("prompts/get", {"name": argv[1], "arguments": _args(argv)})
             print(json.dumps(body.get("result") or body, indent=1, ensure_ascii=False))
         elif argv[0] == "resource":
             _, body = await c.rpc("resources/read", {"uri": argv[1]})

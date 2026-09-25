@@ -284,8 +284,21 @@ contracts:
       - orchestrator/orchestrator/mcp_server.py
       - mcp_server/polymath_mcp.py
       - orchestrator/orchestrator/api/capabilities.py
-    depends_on: [ADAPTER_RUNTIME, EVIDENCE_BOUNDARY_API]
+    depends_on: [ADAPTER_RUNTIME, EVIDENCE_BOUNDARY_API, RESEARCH_ACQUISITION]
     consumed_by: []
     tests: [tests/contracts/test_mcp_adapter_parity.py, tests/determinism/test_mcp_server_v2.py, tests/contracts/test_hosted_mcp_acceptance.py, tests/determinism/test_mcp_principals_gate.py, tests/contracts/test_mcp_principals_registry.py]
     migration: null
     status: live                   # Server A (http :8930, bearer) and Server B (stdio) serve the same seven adapter_* tools + the canonical trio
+
+  RESEARCH_ACQUISITION:
+    owner: shared
+    spec: shared/polymath_shared/acquisition/service.py
+    paths:
+      - shared/polymath_shared/acquisition/service.py
+      - shared/polymath_shared/acquisition/opencli.py
+      - orchestrator/orchestrator/api/acquisition.py
+    depends_on: [ADAPTER_RUNTIME]
+    consumed_by: [MCP_SURFACE]
+    tests: [tests/contracts/test_research_acquisition.py, tests/determinism/test_mcp_principals_gate.py]
+    migration: null
+    status: live                   # AUTORESEARCH R8: `research_acquire` (both servers) — owner-only reads for the run's OPEN HARNESS_ACTION; OpenCLI on the browser host

@@ -160,6 +160,33 @@ Then, in the agent: "use the `run_governed_research` prompt", or call `adapter_l
 `corpus_ids` and optionally `geography` / `language` / `freshness_days` / `constraints` / `exclusions` / `category` (they reach
 every research step), and loop `adapter_next` → `adapter_submit` until `adapter_result`.
 
+**A harness with no browser: Polymath reads for it (`research_acquire`, R8).** At a HARNESS_ACTION step, call
+`research_acquire(run_id, operation, target, site, search_intent_id, limit)`:
+- `catalog` lists what this host can read.
+- `web_search` returns leads (url, title, snippet), never evidence.
+- `comments` reads the comments under a content permalink. Each comment keeps its own date and says how precise it is:
+  `exact`, `relative` (the site shows only "3 weeks ago"; the date stays null) or `none`.
+- `listings` searches a supported supplier site.
+- The answer is receipt-ready: `sources` (one per page and publish date), verbatim `items` bound to them, `completeness`,
+  `limitations`, and a `tool_trace` row. The harness still writes each observation's claim, role and hypotheses, and submits
+  the receipt with `adapter_submit`.
+
+How it works on the host:
+- It runs where the owner's browser is, through OpenCLI's browser bridge. OpenCLI is a separately installed tool, NOT part of
+  this repository; `opencli doctor` must show the daemon running and the extension connected. The client needs nothing
+  installed.
+- **Owner key only.** The browser carries the owner's sign-ins, so the MCP gate keeps the tool out of every principal's scope,
+  and the orchestrator refuses a principal as well.
+- The reads are fixed and read-only: content permalinks matched in full (never an account page, a feed or a short link), a
+  fresh background tab per read, and no post, like, follow or purchase command.
+- Each call spends one query of the step's budget. The count lives in the orchestrator process, so a bounce resets it.
+- `HUMAN_ACTION_REQUIRED` means the host browser needs a person: a sign-in, or a human check to pass. The owner acts and the
+  harness calls again, or the harness records the limitation.
+- Settings (in `.env`, live after a bounce):
+  - `POLYMATH_ACQUISITION=0` switches it off;
+  - `POLYMATH_ACQUISITION_OPENCLI` names the binary;
+  - `POLYMATH_ACQUISITION_CONCURRENCY` (default 2) bounds parallel reads.
+
 ## 4. Product connectors (Claude.ai / Grok / ChatGPT)
 
 All three ingest the same remote MCP URL:

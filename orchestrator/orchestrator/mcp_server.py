@@ -542,6 +542,23 @@ async def adapter_cancel(run_id: str) -> dict:
     return await _orch("POST", f"/adapter/{run_id}/cancel")
 
 
+# AUTORESEARCH-SOURCES-AND-HARNESS-V1 R8: Polymath-hosted research reads. NOT in the principals' TOOL_POLICY on purpose: the host
+# browser holds the owner's sign-ins, so the gate keeps this tool owner-only (and the orchestrator refuses any principal too).
+@mcp.tool()
+async def research_acquire(run_id: str, operation: str, target: str = "", site: Optional[str] = None,
+                           search_intent_id: Optional[str] = None, limit: Optional[int] = None) -> dict:
+    """Polymath reads the web FOR you at a HARNESS_ACTION step, for a harness with no browser or web tools of its own (owner key
+    only: the host's browser holds the owner's sign-ins). operation: `catalog` (what this host can read), `web_search` (target =
+    a query, optional site = one host name; results are leads, never evidence), `comments` (target = a content permalink; every
+    comment keeps its OWN date and says how precise it is: exact, relative or none), `listings` (target = a query, site = a
+    supported listing site). Returns receipt-ready `sources` (one per page and publish date), verbatim `items` bound to them,
+    `completeness` (read vs available), `limitations` and a `tool_trace` row for your receipt (pass the step's search_intent_id).
+    status HUMAN_ACTION_REQUIRED = the host's browser needs a person (a sign-in or a human check): call again after, or record
+    the limitation. Read-only: it never posts, likes, follows or buys. Each call spends one query of the step's budget."""
+    return await _orch("POST", f"/adapter/{run_id}/acquire", json={"operation": operation, "target": target, "site": site,
+                                                                  "search_intent_id": search_intent_id, "limit": limit})
+
+
 # ------------------------------------------------------- the operating guide for any agent harness
 # AUTORESEARCH-SOURCES-AND-HARNESS-V1 (gaps H-01, H-02, H-04): ONE guide, published identically by both MCP servers as a prompt
 # and resources (polymath_shared.adapter.harness_guide); the files are read per request, so a re-pinned Trail source table is live.
@@ -716,7 +733,7 @@ def build_app():
 
 
 _TOOL_NAMES = ("adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status",
-               "adapter_result", "adapter_cancel",
+               "adapter_result", "adapter_cancel", "research_acquire",
                "list_corpora", "list_documents", "upload_document", "upload_text",
                "document_status", "corpus_status", "retrieve", "ask",
                "recent_queries",

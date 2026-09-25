@@ -33,7 +33,8 @@ OWNER_KEY = "owner-sekrit-key"
 ACCEPT = {"Accept": "application/json, text/event-stream", "Content-Type": "application/json"}
 LOOPBACK, PUBLIC = "127.0.0.1:8930", "mcp.kingsleylab.xyz"
 ADAPTER = "polymath.knowledge_brief"
-ADMIN_ONLY_TOOLS = {"upload_document"}           # deliberately NOT in TOOL_POLICY: a host path is never a principal's
+ADMIN_ONLY_TOOLS = {"upload_document",           # deliberately NOT in TOOL_POLICY: a host path is never a principal's
+                    "research_acquire"}          # AUTORESEARCH R8: the host browser holds the OWNER's sign-ins, never a principal's
 
 
 def _build(monkeypatch, tmp_path):

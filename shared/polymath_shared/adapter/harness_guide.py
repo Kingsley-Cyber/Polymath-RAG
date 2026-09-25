@@ -66,6 +66,13 @@ tools. Nothing here requires a particular search engine, browser, scraper or mod
 - `search_intents[]`: `template` is the plain search string; `intent` says which channel, where it lives and what to read
   there (for example the comment threads under the top videos, or supplier listings for one concept). Use any tool you have:
   web search, fetch, a browser, an official API.
+- No browser or web tools of your own? `research_acquire(run_id, operation, target, site, search_intent_id)` reads for you
+  (owner key only; `operation="catalog"` lists what this host can read): `web_search` (a query; results are leads, never
+  evidence), `comments` (a content permalink; every comment keeps its own date and says how precise it is: `exact`, `relative`
+  or `none`), `listings` (a query on a supported listing site). Copy its `sources` and its `tool_trace` row into your receipt,
+  write each observation from its verbatim `items` (the claim, the role and the hypotheses are yours to state), and keep its
+  `limitations`. `HUMAN_ACTION_REQUIRED` means the host's browser needs a person (a sign-in or a human check): ask your
+  operator and call again, or record it as a limitation. Each call spends one query of the step's budget.
 - `evidence_gaps[]` (what the searches must answer), `preferred_source_roles` / `disallowed_source_roles` (source classes),
   `freshness_requirement.max_age_days`, `minimum_independent_sources`, `budget` (queries, sources, observations),
   `geography` / `language` (the requester's limits), `success_condition` / `falsification_condition`.

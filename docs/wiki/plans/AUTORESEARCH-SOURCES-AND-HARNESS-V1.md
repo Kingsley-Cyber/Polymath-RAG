@@ -2,7 +2,7 @@
 title: "AUTORESEARCH-SOURCES-AND-HARNESS-V1 — short-video comments + CJ alongside Alibaba in the governed product research, runnable by any agent harness, proven end to end"
 date: 2026-09-25
 last_reviewed: 2026-09-25
-status: "ACTIVE — plan of record (register 11.489); slices R0–R7 below"
+status: "ACTIVE — plan of record (register 11.489); slices R0–R8 below (R8 amended in by the owner 2026-09-25, built before R7)"
 owner: "@king"
 scope: "The governed product-research workflow (adapter `ecommerce.product_research`, manifest config/adapters/ecommerce.product_research.json), its ecommerce domain (adapters/ecommerce/), the embedded Trail core (governance/trail/, pinned from ~/trail-signal-os) and the two MCP servers. Not code RAG, not document RAG."
 ---
@@ -94,6 +94,22 @@ installed: setup docs only, no live test.
   NOT part of this plan. TikTok may require the owner's sign-in in the browser pane; a blocked platform is recorded as a
   limitation in the receipt (a finding), never bypassed.
 
+- **D9 Polymath-hosted research reads (the owner's amendment, 2026-09-25).** The owner's worker-pack prompt 06:
+  "Polymath should run OpenCLI on its browser host and expose authorized research through its existing MCP connection, so a
+  connected Hermes or other client does not need OpenCLI installed locally." The owner chose (AskUserQuestion) to build it
+  BEFORE the e2e, so that one bounce deploys R1 + R8 and the ONE e2e run researches through it. Its shape:
+  - one MCP tool, `research_acquire`, published by both servers with the same contract;
+  - the owner key only (the host browser carries the owner's sign-ins; a friend's principal can neither list nor call it);
+  - only for the run's OPEN HARNESS_ACTION, inside its disallowed classes, search intents and query budget;
+  - a fixed read-only catalog: web search (leads), the comments under a content permalink, listing searches on the
+    supported supplier sites;
+  - each item's own date with its precision (`exact` / `relative` / `none`, never invented); a sign-in wall or a human check
+    comes back as HUMAN_ACTION_REQUIRED, never worked around;
+  - receipt-ready output that is NOT evidence: the harness still states the claim, role and hypotheses, and TrailSignal
+    admits.
+  OpenCLI stays a separately installed host tool behind `polymath_shared/acquisition/opencli.py`; the adapter runtime and the
+  directives stay source- and harness-neutral.
+
 ## 4. Slices (each: worktree → tests → guards → commit; merges / bounces the classifier blocks are the owner's Run button)
 | # | Slice | Closes | Acceptance (proof) |
 |---|---|---|---|
@@ -104,6 +120,7 @@ installed: setup docs only, no live test.
 | R4 | A-track: A-03 (no signal → retained-knowledge end before population), A-06 (`*_refs` + `evidence_chain` checked), A-05 (gap closed across origins; a required unresolved gap visible at exit), A-07 (adapter_list says which entry is preferred) | A-03, A-05, A-06, A-07 | a test per row, on the real manifest |
 | R5 | Docs: harness guide (Claude Code, Codex stdio + HTTP, Hermes, OpenClaw, Gemini CLI, OpenCode, generic MCP), SKILL.md's governed section → `ecommerce.product_research`, the Cloudflare user-agent caveat | H-05, H-06 | docs reviewed against the live tool list |
 | R6 | Deploy: merge + bounce (back to back), live checks ($0): prompts / resources on Server A and B, a started run's first HARNESS_ACTION carries the receipt schema and no tool command | — | live check script exit 0 |
+| R8 | Polymath-hosted research reads (D9): `shared/polymath_shared/acquisition/` (the policy + the OpenCLI backend), `POST /adapter/{run_id}/acquire`, the MCP tool `research_acquire` on both servers (owner-only by the gate's default deny), the guide paragraph, CONNECTORS.md | the owner's prompt 06; gap S-08 | tests/contracts `test_research_acquisition.py` (owner-only, open step, catalog, per-date rows, precision, pseudonyms, walls, read-only commands, both servers, the route); the backend exercised against the owner's browser; then the e2e researches THROUGH it (an MCP client that runs no OpenCLI) |
 | R7 | E2E: Claude Code runs one full `ecommerce.product_research` run over MCP — TikTok + YouTube comments and CJ + Alibaba research done with its own tools, receipts submitted, a governed result + dossier; the other harnesses' smoke | the owner's "execute this e2e" | the run's result and receipts (TikTok comment observations ADMITTED, CJ + Alibaba listings admitted in supply), the dossier, a work-log |
 
 ## 5. Out of scope / owner questions (not blocking)
