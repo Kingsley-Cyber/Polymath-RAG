@@ -166,7 +166,7 @@ every research step), and loop `adapter_next` → `adapter_submit` until `adapte
 - `web_search` returns leads (url, title, snippet), never evidence.
 - `comments` reads the comments under a content permalink. Each comment keeps its own date and says how precise it is:
   `exact`, `relative` (the site shows only "3 weeks ago"; the date stays null) or `none`.
-- `listings` searches a supported supplier site.
+- `listings` searches a supported supplier or marketplace site.
 - The answer is receipt-ready: `sources` (one per page and publish date), verbatim `items` bound to them, `completeness`,
   `limitations`, and a `tool_trace` row. The harness still writes each observation's claim, role and hypotheses, and submits
   the receipt with `adapter_submit`.

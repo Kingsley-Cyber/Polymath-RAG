@@ -9,7 +9,7 @@ What a call may do, and nothing else:
     action's `budget.max_queries`, counted per action in this process (a restart forgets the count). A source class the action
     disallows is refused.
   * WHAT: a fixed, READ-ONLY catalog. Web search returns leads, never evidence. `comments` reads the comments under a CONTENT
-    PERMALINK. `listings` runs a listing search on a supported site. Targets must match strict patterns in full, so an account page, a
+    PERMALINK. `listings` runs a listing search on a supported supplier or marketplace site. Targets must match strict patterns in full, so an account page, a
     feed, a profile or a short link is never read. Nothing posts, likes, follows, buys or fills a form. No arbitrary URL, command or
     script is accepted.
   * WHAT IS TRUE: every item keeps its OWN date and says how precise it is:
@@ -52,7 +52,8 @@ COMMENT_PAGES = (
      "https://www.reddit.com/r/{0}/comments/{1}/", "community_discussion", "reddit_comments"),
 )
 #: listings: search pages on these sites only; the page URL is built HERE from the query, never taken from the caller
-LISTING_SITES = {"alibaba.com": ("supplier_listing", "alibaba_listings"), "cjdropshipping.com": ("supplier_listing", "cj_listings")}
+LISTING_SITES = {"alibaba.com": ("supplier_listing", "alibaba_listings"), "cjdropshipping.com": ("supplier_listing", "cj_listings"),
+                 "amazon.com": ("marketplace_listing", "amazon_listings")}
 _HOST = re.compile(r"^(?:www\.)?([a-z0-9-]+(?:\.[a-z0-9-]+)+)$")
 
 
@@ -187,7 +188,8 @@ def catalog(host: dict[str, Any] | None = None) -> dict[str, Any]:
                 "comments": {"target": "a content permalink", "accepted": forms,
                              "yields": "one source per (page, publish date) + verbatim comments, each with its own date and its precision"},
                 "listings": {"target": "a search query", "site": sorted(LISTING_SITES),
-                             "yields": "one source per listing + the listing as shown (title, price as listed, minimum order as listed, supplier)"}},
+                             "yields": "one source per listing + the listing as shown (title, price as listed; a supplier site adds the "
+                                       "minimum order and the supplier, a marketplace adds the rating and the ratings count as shown)"}},
             "host": host or {}}
 
 

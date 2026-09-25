@@ -33,7 +33,8 @@ last_reviewed: 2026-09-25
     - `web_search`: results are leads, never sources;
     - `comments`: under a content permalink matched in FULL (TikTok video, Instagram reel / post, YouTube watch / youtu.be, Reddit
       thread), rewritten to its canonical form;
-    - `listings`: on Alibaba / CJ, with the search URL built from the query and never taken from the caller.
+    - `listings`: on Alibaba / CJ (supplier sites) and Amazon (a marketplace, for the product-reality step), with the search URL
+      built from the query and never taken from the caller.
   - The result is receipt-ready and is not evidence:
     - `sources`: one row per (page, publish date);
     - `items`: verbatim, each with its OWN date and `date_precision` exact / relative / none (a relative age stays null, and
@@ -44,7 +45,8 @@ last_reviewed: 2026-09-25
     - `tool_trace`: one row.
   - A wall is `HUMAN_ACTION_REQUIRED` with a resumable instruction, and nothing is read.
 - `polymath_shared/acquisition/opencli.py`, the one backend (OpenCLI is a separately installed host tool):
-  - only `duckduckgo search`, `youtube comments` and the browser verbs `open` / `eval` / `close` (pinned by an AST test);
+  - only `duckduckgo search`, `youtube comments`, `amazon search` and the browser verbs `open` / `eval` / `close` (pinned by an
+    AST test);
   - a fresh background tab per read, always closed;
   - at most 2 reads at a time;
   - wall detection: a human-verification page, a login page.
@@ -53,6 +55,9 @@ last_reviewed: 2026-09-25
     - Instagram: the post view's `<time datetime>` per comment;
     - YouTube: OpenCLI's comments command, relative ages;
     - Reddit: the thread's JSON, exact `created_utc`;
+    - Amazon: OpenCLI's marketplace search (the canonical `amazon.com/dp/<ASIN>` link, the price, the rating and the ratings count
+      as shown, a sponsored slot flagged, a repeated product dropped); its review reader returns no review text, so reviews stay
+      out (gap S-10);
     - Alibaba / CJ: listing cards. The price is the last one before the minimum order (a card may show a coupon threshold first);
       the minimum order is a unit word; the supplier is a company-name pattern; CJ's page labels are dropped from the title; the
       card itself is kept, so the fields can be checked.
@@ -96,6 +101,7 @@ last_reviewed: 2026-09-25
   - YouTube: relative ages only;
   - Reddit: exact dates, 2,526 available;
   - Alibaba: price, minimum order and supplier parsed after the fix;
+  - Amazon: two listings with price, rating and ratings count (a repeated sponsored slot dropped);
   - CJ: listings read; the same day, an earlier probe hit CJ's human check, so the wall path is real.
 - `tests/contracts` whole: 182 / 182. Impacted determinism files (`-k "not test_live_"`, no database):
   - gate 13 / 13;

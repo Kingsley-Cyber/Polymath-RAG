@@ -90,7 +90,8 @@ def test_account_pages_feeds_profiles_short_links_and_other_sites_are_refused(ur
 def test_listings_run_only_on_the_supported_sites_and_queries_are_bounded():
     assert S.resolve("listings", "camera rain cover", "www.alibaba.com").query == "camera rain cover"
     assert S.resolve("listings", "camera rain cover", "https://cjdropshipping.com/").source_class == "supplier_listing"
-    for bad_site in ("amazon.com", "mail.google.com", None):
+    assert S.resolve("listings", "camera rain cover", "amazon.com").source_class == "marketplace_listing"
+    for bad_site in ("ebay.com", "mail.google.com", None):
         with pytest.raises(S.AcquisitionRefused) as exc:
             S.resolve("listings", "camera rain cover", bad_site)
         assert exc.value.code == "SITE_NOT_SUPPORTED"
@@ -207,7 +208,7 @@ def test_the_backend_calls_only_read_commands():
             elif first not in ("doctor",) and len(consts) >= 2 and re.fullmatch(r"[a-z0-9-]+", first):
                 site_cmds.add((first, consts[1]))
     assert verbs == {"open", "eval", "close"}, verbs
-    assert site_cmds == {("duckduckgo", "search"), ("youtube", "comments")}, site_cmds
+    assert site_cmds == {("duckduckgo", "search"), ("youtube", "comments"), ("amazon", "search")}, site_cmds
 
 
 def _load(name, rel):

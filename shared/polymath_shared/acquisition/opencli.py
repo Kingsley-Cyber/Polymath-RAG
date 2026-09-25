@@ -3,7 +3,8 @@
 OpenCLI runs on the host that holds the owner's browser: its bridge extension in that browser and its daemon on this machine. It is a
 SEPARATELY installed tool, not part of this repository: `POLYMATH_ACQUISITION_OPENCLI` names the binary, else the PATH, else
 Homebrew's path. What this module does with it, and nothing else:
-  * site commands that only READ (web search; YouTube comments), called with fixed arguments and never through a shell;
+  * site commands that only READ (web search; YouTube comments; marketplace search), called with fixed arguments and never through a
+    shell;
   * for other pages, a browser session of its OWN (a fresh background tab, always closed afterwards) that opens a validated URL and
     evaluates a fixed, read-only script: the site's own comment list, the page's timestamps, the listing cards;
   * at most POLYMATH_ACQUISITION_CONCURRENCY reads at a time (default 2), so the owner's browser is never flooded.
@@ -297,3 +298,26 @@ class OpenCLIBackend:
                 break
         return {"state": "ok" if records else "unavailable", "page_url": url, "retrieved_at": retrieved, "records": records, "total": None,
                 "complete": None, **({} if records else {"note": "no listing card was read on the search page"})}
+
+    def _amazon_listings(self, t: Target, limit: int) -> dict[str, Any]:
+        retrieved = now_iso()
+        rows = self._json(["amazon", "search", t.query or "", "--limit", str(limit), "-f", "json"], timeout=READ_TIMEOUT_S)
+        if not isinstance(rows, list):
+            return {"state": "unavailable", "retrieved_at": retrieved, "note": "the marketplace search returned nothing readable"}
+        records, seen = [], set()
+        for r in rows:
+            asin = str((r or {}).get("asin") or "")
+            if not re.fullmatch(r"[A-Z0-9]{10}", asin) or asin in seen:  # a sponsored slot can repeat an organic one
+                continue
+            seen.add(asin)
+            url = f"https://www.amazon.com/dp/{asin}"                    # the canonical listing permalink
+            r = dict(r, rating_text=re.sub(r",\s*rating details$", "", str(r.get("rating_text") or "")) or None)
+            listing = {"title": r.get("title"), "price_as_listed": r.get("price_text"), "rating_as_shown": r.get("rating_text"),
+                       "ratings_count_as_shown": r.get("review_count_text"), "sponsored": "yes" if r.get("is_sponsored") else "no",
+                       "supplier": None}
+            text = (f"{r.get('title') or ''} · price as listed: {r.get('price_text') or 'not shown'} · rating as shown: "
+                    f"{r.get('rating_text') or 'not shown'} · ratings as shown: {r.get('review_count_text') or 'not shown'}"
+                    + (" · sponsored listing" if r.get("is_sponsored") else ""))
+            records.append({"kind": "listing", "ref": asin, "url": url, "text": text, "published_at": None, "precision": "none", "listing": listing})
+        return {"state": "ok" if records else "unavailable", "retrieved_at": retrieved, "records": records[:limit], "total": None,
+                "complete": None, **({} if records else {"note": "no listing was read on the marketplace search"})}
