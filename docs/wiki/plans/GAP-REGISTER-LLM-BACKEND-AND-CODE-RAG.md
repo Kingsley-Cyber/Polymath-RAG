@@ -22,7 +22,7 @@ Severity: **Critical** = loses data or silently gives wrong results · **High** 
 
 | ID | Gap | Evidence | Sev. | Fix | Status |
 |---|---|---|---|---|---|
-| L-01 | **Accounts are not first-class.** 56 flat lane entries in `config/cloud_providers.json` plus per-lane specs in `config/extraction_models/limiter.yaml`, both keyed by lane name. An account exists only as an `api_key_env` string; models, limits and ownership are scattered. This is why "6 keys × 3 models" reads as "18 lanes, 11 on". | R `cloud_providers.json` (keys `_doc`, `stage_pins`, `providers`), `limiter.yaml` (`providers:` keyed by lane) | High | L1 | OPEN |
+| L-01 | **Accounts are not first-class.** 56 flat lane entries in `config/cloud_providers.json` plus per-lane specs in `config/extraction_models/limiter.yaml`, both keyed by lane name. An account exists only as an `api_key_env` string; models, limits and ownership are scattered. This is why "6 keys × 3 models" reads as "18 lanes, 11 on". | R `cloud_providers.json` (keys `_doc`, `stage_pins`, `providers`), `limiter.yaml` (`providers:` keyed by lane) | High | L1 | CLOSED 11.465 (registry `config/llm_accounts.yaml` + checks + report; the drift test keeps the runtime files equal; they become generated in L3) |
 | L-02 | 7 of 18 Groq (key, model) pairs idle: key 1 runs gpt-oss-120b only; keys 2–6 run gpt-oss-20b + qwen3.8-27b only (1.4M tokens/day unused) | E `audit_evidence.json` → `groq` | High | L3 | OPEN |
 | L-03 | The 2026-09-23 Groq setup has never run live: 0 calls on gpt-oss-120b / gpt-oss-20b / qwen3.8-27b; last Groq call 2026-09-21 05:20 UTC | E `llm_provider_attempts` | High | L4 | OPEN |
 | L-04 | Admission counts `len(user_prompt) / 4` tokens: no system prompt, no output | R `llm_extraction/client.py:510` | High | L2 | OPEN |
@@ -41,6 +41,7 @@ Severity: **Critical** = loses data or silently gives wrong results · **High** 
 | L-17 | Attribution: `stage` is empty on 96.7 % of `llm_provider_attempts` rows (9,255 of 9,567) | E ledger | Medium | L2 | CLOSED 11.464 (tests; live check after the bounce) |
 | L-18 | `POLYMATH_GROQ_ROUTER=1` is set live; its only reader (`document_profile/groq_routing.py:40`) has no production caller | E env; R | Low | L3 | CLOSED 11.464 (tests; live check after the bounce) |
 | L-19 | No upload since 2026-09-17 has been shown to mint parent maps; the pMAP lanes were dead for new documents until the 2026-09-23 swap, and nothing new has run since. New code corpora depend on it | R `docs/wiki/work-log/2026-09-23-groq-model-swap.md:52`; the pMAP wiring-gap work-log (bookkeeping 11.463) | High (for code RAG) | L4 (one small pMAP document) | OPEN |
+| L-20 | Two limiter families still span accounts: `gemini` covers all 6 Gemini accounts (18 lanes) and `nvidia` covers 2 (parked); one account's 429s damp every account in the family | E `scripts/llm_accounts.py validate` (FAMILY_SPANS_ACCOUNTS); R `config/extraction_models/limiter.yaml` | Medium | L3 | OPEN |
 
 ## O. Operations (fleet control plane)
 

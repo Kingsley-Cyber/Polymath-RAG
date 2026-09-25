@@ -2372,6 +2372,12 @@ TREE: list[tuple[str, str, str | None]] = [
     # LLM-BACKEND-BATCH1 (register 11.464): eight provider-backend fixes
     ("tests/determinism/test_llm_backend_batch1.py", "py", None),
     ("docs/wiki/work-log/2026-09-24-llm-backend-batch1.md", "md", None),
+    # LLM-BACKEND L1 (register 11.465): the provider account registry
+    ("config/llm_accounts.yaml", "yaml", None),
+    ("shared/polymath_shared/llm_extraction/accounts.py", "py", None),
+    ("scripts/llm_accounts.py", "py", None),
+    ("tests/determinism/test_llm_accounts.py", "py", None),
+    ("docs/wiki/work-log/2026-09-24-llm-account-registry.md", "md", None),
     ("tests/determinism/test_skeleton_routes.py", "py", None),
     ("docs/wiki/plans/SKELETON-ROUTING-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-23-skeleton-routing-v1.md", "md", None),
