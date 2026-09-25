@@ -81,6 +81,11 @@ last_reviewed: 2026-09-25
   - Time: the reference run always ran second (warmer caches), so the per-run wall times are not a cost comparison; the
     cost is the per-search figure above.
   - $0: `llm_provider_attempts` held 9,639 rows before and after both scripts (no model call).
+- Live check (`live_check.py`, $0: four /retrieve GRAPH calls, their receipts and orchestrator.log) — control run on the
+  pre-K1 fleet (2026-09-25 02:57 MDT): exit 1 as it must be. The reference-only, malformed and implementation-only calls
+  all answered 200 with the same 15 unscoped passages and no `knowledge_scope` on their receipts (the old request models
+  drop the unknown field), so the check cannot pass without K1 live. That run also found gap K-04 (below). The run after
+  the merge + bounce is the LIVE_PATH proof.
 - The receipt change (tests in the same worktree): `test_knowledge_scope.py`, `test_query_receipts.py` (its one fleet
   database test deselected), `test_qualify_lane_and_query_receipts.py`, `test_chat_runtime.py`, `test_chat_funnel.py`,
   `test_chat_evidence_route.py`, `test_adapter_evidence_boundary.py`: all pass except `test_compiler_on…` (known) and
@@ -108,3 +113,6 @@ last_reviewed: 2026-09-25
   fleet database), the integration files (skip-gated / not collectable under the worktree PYTHONPATH).
 - K-03 (OPEN, C1): Postgres-side reads cannot filter by role until migration 0067. Safe until then, because no
   implementation document can exist without that column.
+- K-04 (OPEN, K1b before C1's importer): pre-K1 code ignores `scope` without an error and Trail does not check that its
+  scope was applied, so a rollback of the orchestrator to a pre-K1 commit would widen Trail's requests once implementation
+  material exists. Fix: echo the applied scope on every scoped response; Trail refuses a response without the exact echo.

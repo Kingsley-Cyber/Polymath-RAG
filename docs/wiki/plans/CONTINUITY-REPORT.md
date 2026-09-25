@@ -47,8 +47,8 @@ historical, never an instruction.
 - **Plan of record for ORDER:** `docs/wiki/plans/LLM-BACKEND-AND-CODE-RAG-ROADMAP-V1.md` §3 (row 6b K1 = DONE 11.485).
   Gaps: `docs/wiki/plans/GAP-REGISTER-LLM-BACKEND-AND-CODE-RAG.md` (K-01, K-02 CLOSED 11.485; K-03 OPEN → C1). How to
   build code RAG: `docs/wiki/plans/CODE-RAG-IMPLEMENTATION-V1.md` (§4 K1 "As built").
-- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ (merge pending) → [the A-track, if the
-  owner agrees] → C1 → C2 → C3 → L5 → C6+C7 → C9+C10 (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
+- **Order (the §3 table):** C0b ✔ → L1 ✔ → L2 ✔ → L3 ✔ → L4 ✔ → D1 ✔ → K1 ✔ (merge pending) → K1b (K-04) → [the A-track,
+  if the owner agrees] → C1 → C2 → C3 → L5 → C6+C7 → C9+C10 (E2E-1) → C8 → G1+C11 → C4 → C5a → C12 → C13 → gates → C5b → C14.
 - **K1 (11.485; work-log `2026-09-25-k1-knowledge-scope.md`, evidence `docs/wiki/experiments/k1-knowledge-scope-2026-09-25/`):**
   - `shared/polymath_shared/code/scope.py`: a request's `scope: {"roles": [...]}`. No scope = both roles, byte-identical
     to before. An explicit scope is ALWAYS enforced (no switch: the 11.471 fail-closed amendment). A malformed scope =
@@ -146,11 +146,13 @@ historical, never an instruction.
 ### Next Action
 1. **The owner's Run button (merge + bounce, back to back):**
    `cd /Users/king/Documents/polymath-rebuild/polymath-v4 && git merge --ff-only feat/k1-knowledge-scope && bash scripts/bounce_fleet.sh`
-   Then the agent: fleet 26 / 13 / ONE bundle + `/ready`; the K1 live checks under Proof Status; a register row for
-   LIVE_PATH_PROVEN; remove worktree `pmv4-k1` (`git worktree remove`; the branch is merged).
+   Then the agent: fleet 26 / 13 / ONE bundle + `/ready`; `docs/wiki/experiments/k1-knowledge-scope-2026-09-25/live_check.py`
+   (with `.env` loaded; exit 0 = LIVE_PATH_PROVEN; its control run on the pre-K1 fleet exited 1); commit `live_check.json`
+   + its TREE entry + a register row; remove worktree `pmv4-k1` (`git worktree remove`; the branch is merged).
 2. The blend + DOC-STEER live receipt: the owner's next GRAPH / WILDCARD chat.
 3. **The owner's pick:** the A-track (A-03, A-04, A-06, A-05, A-07) before C1, or C1 directly; the five audit questions.
-4. **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28); C1 carries K-03.
+4. **K1b (K-04)**, then **C1 → C2 → C3**, bound by R11 / R12, the code pMAP contract and the 11.471 amendments (C-28);
+   C1 carries K-03.
 5. **L5** before C6 + C7. Fold in when touching the file: L-23 (`document_status.py:212`).
 6. Owner's step pending: the push (after the merge: 2 commits). Small slices when convenient: O-05 (the corpus delete also
    sweeps the shared document-profile collections); `test_query_receipts.py` (the stale pin + its hard-coded DSN).
@@ -158,6 +160,8 @@ historical, never an instruction.
 ### Do Not Do
 - Never add a switch that turns scope enforcement off, never let a plan or an LLM output set or widen a scope, and never
   call a scoped search without the request's scope (K1, 11.471).
+- Once implementation material exists, never roll the orchestrator back to a pre-K1 commit (the recovery tags are
+  pre-K1): old code ignores `scope` silently (K-04, until K1b lands the echo + Trail's check).
 - Never hand-edit `config/cloud_providers.json` or `config/extraction_models/limiter.yaml` (generated).
 - Never let a profile / pMAP slot fail over to another slot's key; keep the operator backfill on `--lanes` from the
   shared tier (L-22).
@@ -180,6 +184,7 @@ historical, never an instruction.
 
 ### Deferred Architecture
 - K-03: Postgres-side role filtering (migration 0067) → C1.
+- K-04: the scope echo + Trail's check (K1b) → before C1's importer.
 - L5: budgets shared across processes (L-06, L-22) and batched admissions (L-21).
 - The joint code ↔ document graph walk: C8 → G1 + C11.
 - Gap rows O-01..O-05, T-01, T-02, D-03..D-09, A-01..A-08: open, not scheduled. GNN retrieval stays experimental.
