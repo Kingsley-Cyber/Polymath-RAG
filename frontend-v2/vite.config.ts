@@ -18,6 +18,8 @@ const apiPaths = [
   "/intake", "/ui_pulse",
   // the cognitive-adapter surface (/adapter/list, /adapter/{run_id}/next, …)
   "/adapter",
+  // FRIENDS-ACCESS-V1: sign-in, my keys, the owner's friend admin
+  "/auth", "/keys", "/admin",
 ];
 
 // A backend path missing from the list above does NOT fail loudly — vite answers it

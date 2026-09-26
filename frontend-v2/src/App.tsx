@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./styles/app.css";
 import "./styles/themes.css";
-import { api } from "./lib/api";
+import { api, ApiError, AUTH_REQUIRED_EVENT } from "./lib/api";
+import { auth, LEGACY_OWNER, privateLibrary, type Me } from "./lib/auth";
 import { useAsync } from "./lib/useAsync";
 import { controlReady } from "./lib/readiness";
 import { Pill } from "./components/Pill";
-import { PhaseStub } from "./components/PhaseStub";
 import { Overview } from "./screens/Overview";
 import { Chat } from "./screens/Chat";
 import { stopStream } from "./lib/chat";
@@ -14,6 +14,8 @@ import { ControlPlane } from "./screens/ControlPlane";
 import { Graph } from "./screens/Graph";
 import { Compare } from "./screens/Compare";
 import { Models } from "./screens/Models";
+import { ChangePassword, Login } from "./screens/Login";
+import { Settings } from "./screens/Settings";
 import {
   emptySession, loadSessions, saveSessions, titleFor, type ChatSession,
 } from "./lib/chatStore";
@@ -33,6 +35,9 @@ const NAV = [
 ] as const;
 
 type ScreenId = (typeof NAV)[number]["id"];
+
+/** FRIENDS-ACCESS-V1: screens whose data is owner-only on the server (control plane, LLM providers) — hidden from friends. */
+const OWNER_SCREENS = new Set<ScreenId>(["overview", "control", "models"]);
 
 /** The nine palettes in styles/themes.css; the dot is that theme's accent. */
 const THEMES = [
@@ -57,8 +62,50 @@ const CORPUS_KEY = "polymath-v2.corpus";
  *  or non-existent id (FRONTEND-V2-CORPUS-RESOLUTION). Models/Settings are corpus-free. */
 const CORPUS_SCREENS = new Set<ScreenId>(["overview", "chat", "compare", "files", "control", "graph"]);
 
+/** FRIENDS-ACCESS-V1 — the sign-in gate. The server's web boundary decides who is calling; this asks `/auth/me`, shows
+ *  the sign-in screen on 401, the first-password change when required, and the workspace otherwise. The owner on
+ *  http://127.0.0.1:7200 is signed in by being local (no login exists there). */
 export function App() {
-  const [screen, setScreen] = useState<ScreenId>("overview");
+  const [me, setMe] = useState<Me | null>(null);
+  const [state, setState] = useState<"loading" | "signin" | "ready" | "error">("loading");
+  const [error, setError] = useState("");
+
+  const check = useCallback(async () => {
+    try {
+      setMe(await auth.me());
+      setState("ready");
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) { setMe(null); setState("signin"); return; }
+      if (e instanceof ApiError && e.status === 404) { setMe(LEGACY_OWNER); setState("ready"); return; }   // no logins on this backend
+      setError(e instanceof ApiError ? e.detailMessage : String(e));
+      setState("error");
+    }
+  }, []);
+
+  useEffect(() => { void check(); }, [check]);
+  useEffect(() => {
+    const onAuth = () => { setMe(null); setState("signin"); };
+    window.addEventListener(AUTH_REQUIRED_EVENT, onAuth);
+    return () => window.removeEventListener(AUTH_REQUIRED_EVENT, onAuth);
+  }, []);
+
+  async function signOut() {
+    try { await auth.logout(); } catch { /* the cookies are cleared either way */ }
+    setMe(null);
+    setState("signin");
+  }
+
+  if (state === "loading") return <div className="auth"><div className="card auth__card">Loading…</div></div>;
+  if (state === "error") return <div className="auth"><div className="card auth__card banner banner--bad">{error}</div></div>;
+  if (state === "signin" || !me) return <Login onSignedIn={(m) => { setMe(m); setState("ready"); }} />;
+  if (me.must_change_password) return <ChangePassword me={me} forced onChanged={setMe} onSignOut={() => void signOut()} />;
+  return <Workspace me={me} onMeChanged={setMe} onSignOut={() => void signOut()} />;
+}
+
+function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: Me) => void; onSignOut: () => void }) {
+  const owner = me.is_owner;
+  const nav = useMemo(() => NAV.filter((n) => owner || !OWNER_SCREENS.has(n.id)), [owner]);
+  const [screen, setScreen] = useState<ScreenId>(owner ? "overview" : "chat");
   // Never hardcode a corpus. Start from the persisted choice (validated against the
   // backend below); "" means "unresolved" until /corpora answers.
   const [corpusId, setCorpusId] = useState<string>(() => {
@@ -132,7 +179,12 @@ export function App() {
   const corpora = useAsync((s) => api.corpora(s), [corporaNonce]);
 
   // /corpora is the backend authority for which corpora exist and are query-enabled.
-  const corpusList = useMemo(() => corpora.data ?? [], [corpora.data]);
+  const corpusList = useMemo(() => {
+    const list = corpora.data ?? [];
+    const mine = privateLibrary(me);
+    if (!mine || list.some((c) => c.corpus_id === mine)) return list;
+    return [...list, { corpus_id: mine, purpose: "private", query_enabled: false, documents: 0, query_ready: false, name: mine }];
+  }, [corpora.data, me]);
   const corporaLoaded = corpora.data != null || corpora.error != null;
   const corpusValid = corpusId !== "" && corpusList.some((c) => c.corpus_id === corpusId);
 
@@ -150,10 +202,10 @@ export function App() {
   useEffect(() => {
     if (!corpora.data) return;              // wait for the backend authority
     if (corpusValid) return;                // a still-valid persisted/current id wins
-    const next = corpora.data.find((c) => c.query_ready)?.corpus_id
-      ?? corpora.data[0]?.corpus_id ?? "";  // "" only when the backend has no corpora
+    const next = corpusList.find((c) => c.query_ready)?.corpus_id
+      ?? corpusList[0]?.corpus_id ?? "";    // "" only when the backend has no corpora
     setCorpusId(next);
-  }, [corpora.data, corpusValid]);
+  }, [corpora.data, corpusValid, corpusList]);
 
   // Persist the resolved corpus so a refresh/deep-link re-resolves to it (priority 1).
   useEffect(() => {
@@ -182,8 +234,8 @@ export function App() {
   // Only probe control-plane readiness once a real corpus is resolved — never for the
   // unresolved "" or a stale persisted id (that was the transient 404 on cold load).
   const cp = useAsync(
-    (s) => (corpusValid ? api.controlPlane(corpusId, s) : Promise.resolve(null)),
-    [corpusId, corpusValid],
+    (s) => (corpusValid && owner ? api.controlPlane(corpusId, s) : Promise.resolve(null)),
+    [corpusId, corpusValid, owner],
   );
   const control = useMemo(() => controlReady(cp.data?.control_ready), [cp.data]);
 
@@ -207,7 +259,7 @@ export function App() {
           <span>＋ New chat</span>
         </button>
 
-        {NAV.map((n) =>
+        {nav.map((n) =>
           n.id === "rule" ? (
             <div className="nav__rule" key="rule" />
           ) : (
@@ -261,10 +313,12 @@ export function App() {
               </option>
             ))}
           </select>
-          <button className="btn nav__corpus-del" onClick={() => void deleteCorpus()}
-                  title={`Delete corpus ${corpusId}`} disabled={!corpusValid}>
-            Delete corpus
-          </button>
+          {owner && (
+            <button className="btn nav__corpus-del" onClick={() => void deleteCorpus()}
+                    title={`Delete corpus ${corpusId}`} disabled={!corpusValid}>
+              Delete corpus
+            </button>
+          )}
         </div>
 
         <div className="nav__themes">
@@ -284,10 +338,12 @@ export function App() {
           </div>
         </div>
 
-        <div className="nav__health">
-          <span className="label">Control</span>
-          <Pill v={control} />
-        </div>
+        {owner && (
+          <div className="nav__health">
+            <span className="label">Control</span>
+            <Pill v={control} />
+          </div>
+        )}
       </nav>
 
       <main className="main">
@@ -306,7 +362,7 @@ export function App() {
           </div>
         ) : (
           <>
-        {screen === "overview" && <Overview corpusId={corpusId} />}
+        {screen === "overview" && owner && <Overview corpusId={corpusId} />}
         {screen === "chat" && activeChat && (
           <Chat
             key={activeChat.id}
@@ -317,19 +373,11 @@ export function App() {
         )}
         {screen === "compare" && <Compare corpusId={corpusId} />}
         {screen === "files" && <Files corpusId={corpusId} />}
-        {screen === "control" && <ControlPlane corpusId={corpusId} />}
+        {screen === "control" && owner && <ControlPlane corpusId={corpusId} />}
         {screen === "graph" && <Graph corpusId={corpusId} />}
-        {screen === "models" && <Models />}
+        {screen === "models" && owner && <Models />}
 
-        {screen === "settings" && (
-          <div className="screen">
-            <div className="screen__head">
-              <h1 className="screen__title">{NAV.find((n) => n.id === screen)?.label}</h1>
-              <p className="screen__sub">Corpus <span className="mono">{corpusId || "—"}</span></p>
-            </div>
-            {screen === "settings" && <PhaseStub phase="F1" title="Settings — backend target, policy flags (read-only mirrors of the server's own state)" />}
-          </div>
-        )}
+        {screen === "settings" && <Settings me={me} onMeChanged={onMeChanged} onSignOut={onSignOut} />}
           </>
         )}
       </main>

@@ -453,3 +453,13 @@ button.btn:disabled { opacity: .5; cursor: not-allowed; }
 .chunk-chip:hover { color: var(--fg); border-color: var(--accent); }
 .latency { font-size: 11px; color: var(--fg-faint); margin-left: auto; font-family: var(--mono); }
 .evidence-drawer { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+
+/* FRIENDS-ACCESS-V1 — sign-in and Settings */
+.auth { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg); }
+.auth__card { width: min(420px, 100%); }
+.settings__title { font-size: 15px; margin: 0; }
+.settings__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.settings__table th, .settings__table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.settings__prompt { width: 100%; font-size: 12px; line-height: 1.45; resize: vertical; }
+.settings__secret { padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg-raised); word-break: break-all; }
+.settings__once { border-color: var(--accent); }

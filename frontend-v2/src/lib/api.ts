@@ -11,42 +11,96 @@ import type {
 } from "./contracts";
 
 export class ApiError extends Error {
-  constructor(readonly status: number, readonly path: string, message: string) {
-    super(`${path} -> ${status}: ${message}`);
+  constructor(readonly status: number, readonly path: string, readonly body: string) {
+    super(`${path} -> ${status}: ${body}`);
     this.name = "ApiError";
+  }
+
+  /** The backend's stable `detail.error_code` (FRIENDS-ACCESS-V1 routes), or null. */
+  get code(): string | null {
+    try {
+      const d = (JSON.parse(this.body) as { detail?: { error_code?: string } }).detail;
+      return d?.error_code ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** The backend's human message, else the raw body. */
+  get detailMessage(): string {
+    try {
+      const d = (JSON.parse(this.body) as { detail?: { message?: string } | string }).detail;
+      return typeof d === "string" ? d : d?.message ?? this.body;
+    } catch {
+      return this.body;
+    }
   }
 }
 
+/** FRIENDS-ACCESS-V1: the session's CSRF token (a readable cookie the server set at sign-in). Every state-changing
+ *  request echoes it in `X-Polymath-CSRF`; the web boundary refuses one that does not. Empty for the owner on 127.0.0.1. */
+export function csrfToken(): string {
+  const m = (typeof document === "undefined" ? "" : document.cookie).match(/(?:^|;\s*)polymath_csrf=([^;]+)/);
+  const raw = m?.[1];
+  return raw ? decodeURIComponent(raw) : "";
+}
+
+function csrfHeader(): Record<string, string> {
+  const t = csrfToken();
+  return t ? { "x-polymath-csrf": t } : {};
+}
+
+/** A 401 anywhere means the session ended: the app shell listens and shows the sign-in screen. */
+export const AUTH_REQUIRED_EVENT = "polymath:auth-required";
+
+async function checked(r: Response, path: string): Promise<Response> {
+  if (r.ok) return r;
+  const body = (await r.text()).slice(0, 600);
+  if (r.status === 401 && typeof window !== "undefined") window.dispatchEvent(new CustomEvent(AUTH_REQUIRED_EVENT));
+  throw new ApiError(r.status, path, body);
+}
+
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const r = await fetch(path, { signal, headers: { accept: "application/json" } });
-  if (!r.ok) throw new ApiError(r.status, path, (await r.text()).slice(0, 300));
+  const r = await checked(await fetch(path, { signal, headers: { accept: "application/json" } }), path);
+  return (await r.json()) as T;
+}
+
+async function send<T>(method: string, path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  const r = await checked(await fetch(path, {
+    method, signal,
+    headers: { "content-type": "application/json", accept: "application/json", ...csrfHeader() },
+    body: JSON.stringify(body),
+  }), path);
   return (await r.json()) as T;
 }
 
 async function post<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
-  const r = await fetch(path, {
-    method: "POST", signal,
-    headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!r.ok) throw new ApiError(r.status, path, (await r.text()).slice(0, 300));
-  return (await r.json()) as T;
+  return send<T>("POST", path, body, signal);
+}
+
+async function put<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  return send<T>("PUT", path, body, signal);
 }
 
 /** Multipart POST — the browser sets the `content-type` boundary itself, so we must
  *  NOT set a content-type header (doing so drops the boundary and the server rejects
  *  the body). `/upload` is the only multipart route. */
 async function postForm<T>(path: string, form: FormData, signal?: AbortSignal): Promise<T> {
-  const r = await fetch(path, { method: "POST", signal, headers: { accept: "application/json" }, body: form });
-  if (!r.ok) throw new ApiError(r.status, path, (await r.text()).slice(0, 300));
+  const r = await checked(await fetch(path, {
+    method: "POST", signal, headers: { accept: "application/json", ...csrfHeader() }, body: form,
+  }), path);
   return (await r.json()) as T;
 }
 
 async function del<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const r = await fetch(path, { method: "DELETE", signal, headers: { accept: "application/json" } });
-  if (!r.ok) throw new ApiError(r.status, path, (await r.text()).slice(0, 300));
+  const r = await checked(await fetch(path, {
+    method: "DELETE", signal, headers: { accept: "application/json", ...csrfHeader() },
+  }), path);
   return (await r.json()) as T;
 }
+
+/** The raw verbs, for the account / settings client (lib/auth.ts). Screens still call `api` or `auth`. */
+export const http = { get, post, put, del };
 
 export const api = {
   corpora: (s?: AbortSignal) => get<{ corpora: Corpus[] }>("/corpora", s).then((d) => d.corpora),
@@ -140,12 +194,12 @@ export interface SseFrame { event: string; data: unknown }
 export async function* chatStream(
   body: Record<string, unknown>, signal?: AbortSignal,
 ): AsyncGenerator<SseFrame> {
-  const r = await fetch("/chat/stream", {
+  const r = await checked(await fetch("/chat/stream", {
     method: "POST", signal,
-    headers: { "content-type": "application/json", accept: "text/event-stream" },
+    headers: { "content-type": "application/json", accept: "text/event-stream", ...csrfHeader() },
     body: JSON.stringify(body),
-  });
-  if (!r.ok || !r.body) throw new ApiError(r.status, "/chat/stream", (await r.text()).slice(0, 300));
+  }), "/chat/stream");
+  if (!r.body) throw new ApiError(r.status, "/chat/stream", "no response body");
   const reader = r.body.getReader();
   const dec = new TextDecoder();
   let buf = "";
