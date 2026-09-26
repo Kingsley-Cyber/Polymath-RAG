@@ -36,7 +36,7 @@ RULES: tuple[tuple[frozenset[str] | None, re.Pattern[str], str], ...] = tuple((m
     (_GET, r"^/health$", PUBLIC), (_GET, r"^/ready$", PUBLIC), (_POST, r"^/auth/login$", PUBLIC),
     # the signed-in user's own account and keys
     (_GET, r"^/auth/me$", USER), (_POST, r"^/auth/(logout|password)$", USER),
-    (frozenset({"GET", "POST"}), r"^/keys$", USER), (_DELETE, rf"^/keys/{_SEG}$", USER),
+    (frozenset({"GET", "POST"}), r"^/keys$", USER), (_GET, r"^/keys/prompt$", USER), (_DELETE, rf"^/keys/{_SEG}$", USER),
     # knowledge (narrowed to the principal's libraries inside the routes)
     (_POST, r"^/(chat|chat/stream|chat/evidence|ask|retrieve|retrieve/plan|evidence|compare|review)$", USER),
     (_GET, r"^/(corpora|documents|documents/summary|semantic_readiness|capabilities|synthesizers|reasoning_modes|queries|ui_pulse)$", USER),
