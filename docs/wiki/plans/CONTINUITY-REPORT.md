@@ -27,7 +27,7 @@ historical, never an instruction.
 
 ### Repository State
 - Branch `production` = the close-out commit on top of `b3daddd0` (R1 + R8 + the audit fixes, merged by the owner's Run button at
-  22:35 MDT, 2026-09-25). `origin/production` = `63816479`; unpushed on production: 13 commits. Pushes are the owner's word.
+  22:35 MDT, 2026-09-25). `origin/production` = `production`: the owner's "PUSH POLYMATH" (2026-09-26) pushed `63816479..de1734f8` and this record. Pushes are the owner's word, per push.
 - `feat/autoresearch-sources-harness` (worktree `pmv4-autoresearch`) = `b3daddd0`, fully merged; the owner decides whether to remove it.
 - **TrailSignal** `~/trail-signal-os-worktrees/HR7` (branch `agent/HR7`, `494905a`, clean, NOT pushed): the owner's word. Leave
   `~/trail-signal-os-worktrees/SRC1` alone. Never touch the Trail main checkout.
@@ -131,7 +131,7 @@ historical, never an instruction.
 ### Next Action
 1. Report to the owner (plain words): what was proven, the verdict, the high gaps, the decisions below.
 2. The owner's decisions (none is mine to take):
-   - the pushes: polymath-v4 `production` (13 commits) and Trail `agent/HR7`;
+   - the Trail push (`agent/HR7`); polymath-v4 `production` was pushed on the owner's word (2026-09-26);
    - S-19: a TrailSignal ADR for the Reddit / YouTube comment window (like ADR-070), or not;
    - S-20: clear Alibaba's and CJ's human checks in the host Chrome before a run's supply step;
    - O-08: find the client that keeps calling the public MCP URL without a valid key;
