@@ -29,7 +29,7 @@ historical, never an instruction.
 - Branch `production` = `845743ce` (the plan admission, 11.489) on top of `366fd8dc` (K1b live, 11.488). `origin/production` =
   `63816479`; unpushed on production: 3 commits. Pushes are the owner's word.
 - **Branch `feat/autoresearch-sources-harness`** (worktree `/Users/king/Documents/polymath-rebuild/pmv4-autoresearch`), on top of
-  `845743ce`: `e827f7e6` R2–R5 → `7ac2bebe` tooling → `11ee5115` + `c7b1c804` + `397c8fad` + `d2f48b1a` R8 → `285d51d7` R1 → the audit-fix commit (11.493, this close-out).
+  `845743ce`: `e827f7e6` R2–R5 → `7ac2bebe` tooling → `11ee5115` + `c7b1c804` + `397c8fad` + `d2f48b1a` R8 → `285d51d7` R1 → `167396ef` the audit fixes (11.493).
   A fast-forward merge.
 - **TrailSignal** `~/trail-signal-os-worktrees/HR7` (branch `agent/HR7`, clean, NOT pushed): `9a26dcb` A47 → `9f5c1ec` HR7 anchor
   → `494905a` HR7. The Trail push is the owner's word. `~/trail-signal-os-worktrees/SRC1` still holds the abandoned SRC1 edits
