@@ -23,7 +23,7 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-26 (AUTORESEARCH-SOURCES-AND-HARNESS-V1 COMPLETE: R6 live, the one R7 run done, smokes done) — **NO ACTIVE BUILD MISSION. The plan AUTORESEARCH-SOURCES-AND-HARNESS-V1 is complete (R0–R8, registers 11.489–11.495). R6 went live with the owner's Run button (11.494); the ONE authorized e2e run completed through MCP with every web read through `research_acquire` (11.495): TikTok + Instagram comments admitted as field evidence end to end; supply blocked by Alibaba / CJ human checks; TrailSignal refused to score; 17 gap rows. NEXT = the owner's decisions below, then admit the owner's ideation worker pack as the next plan of record (docs slice first), reconciled with the R7 gap rows.**
+## CURRENT — 2026-09-26 (FRIENDS-ACCESS-V1 admitted; AUTORESEARCH complete) — **ACTIVE MISSION: FRIENDS-ACCESS-V1 (register 11.497; the owner's live instruction 2026-09-26): friends use rag.kingsleylab.xyz, its tools and its MCP with their OWN logins (King = admin), a Settings tab to generate up to 3 API keys each and copy a connect prompt for their agent harness; friends may do everything; no daily cap; the three locks stay. Slices F0 ✔ → F1 accounts + sessions → F2 the web boundary → F3 keys + admin → F4 the Settings UI → F5 go-live kit → F6 live (the owner's Run button). Then the ideation worker pack.**
 
 ### Repository State
 - Branch `production` = the close-out commit on top of `b3daddd0` (R1 + R8 + the audit fixes, merged by the owner's Run button at
@@ -138,11 +138,7 @@ historical, never an instruction.
    - O-08: find the client that keeps calling the public MCP URL without a valid key;
    - H-09: upgrade Homebrew Codex; decide on Gemini (the account's CLI turns are refused);
    - a bounce at a quiet moment unifies the bundle hash (optional).
-3. **The owner's live instruction (2026-09-26), ahead of the worker pack:** friends use `rag.kingsleylab.xyz` with their
-   OWN login (today: one Caddy basic-auth user, and everything behind it runs as the owner: S-15), plus a Settings tab to
-   generate their own API keys and copy a connect prompt for their agent harness. Baseline: per-friend MCP keys already exist
-   (`orchestrator/mcp_principals.py`, `scripts/mcp_principals.py`, profile `friend`, 2026-09-21). Admit it as a plan of record
-   once the owner decides the login method, what friends may do, and the key limit.
+3. **FRIENDS-ACCESS-V1 (active, `docs/wiki/plans/FRIENDS-ACCESS-V1.md`):** build F1 → F5 on a branch in a worktree (`feat/friends-access`), each slice with its tests and paperwork; F6 = the owner's ONE Run button (merge + bounce + Caddy + frontend build), then the owner sets King's password privately and creates the first friend.
 4. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
    TREE, CONTINUITY), mapping the R7 gap rows (A-09..A-14, S-16..S-18, O-06, H-08) into its slices or naming them out of scope.
 
