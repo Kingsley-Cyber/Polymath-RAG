@@ -222,6 +222,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/hosted_mcp_acceptance.py", "py", None),
     ("scripts/mcp_principals.py", "py", None),
     ("scripts/web_accounts.py", "py", None),
+    ("scripts/friends_access_caddy.py", "py", None),
+    ("scripts/friends_access_go_live.sh", "sh", None),
     ("scripts/hooks/pre-commit.sh", "sh", None),
 
     # ── CI ────────────────────────────────────────────────────────────────
@@ -1070,6 +1072,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_web_accounts.py", "py", None),
     ("tests/contracts/test_web_boundary.py", "py", None),
     ("tests/contracts/test_web_settings.py", "py", None),
+    ("tests/contracts/test_friends_access_go_live.py", "py", None),
     ("tests/determinism/test_mcp_principals_gate.py", "py", None),
     ("tests/determinism/test_adapter_run_ownership.py", "py", None),
     ("tests/determinism/test_adapter_empty_admission_cause.py", "py", None),
@@ -2450,6 +2453,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/autoresearch-e2e-2026-09-25/mcp_call.py", "py", None),
     ("docs/wiki/experiments/autoresearch-e2e-2026-09-25/live_check.py", "py", None),
     ("docs/wiki/experiments/autoresearch-e2e-2026-09-25/live_check.json", "json", None),
+    ("docs/wiki/experiments/friends-access-2026-09-26/live_check.py", "py", None),
     ("docs/wiki/experiments/autoresearch-r1-repin-2026-09-25/repin_trail_hr7.py", "py", None),
     ("docs/wiki/experiments/autoresearch-r1-repin-2026-09-25/rerecord_envelopes_hr7.py", "py", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r1-repin.md", "md", None),
@@ -2469,6 +2473,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-26-friends-access-f2.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-friends-access-f3.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-friends-access-f4.md", "md", None),
+    ("docs/wiki/work-log/2026-09-26-friends-access-f5.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-k1b-scope-echo.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),

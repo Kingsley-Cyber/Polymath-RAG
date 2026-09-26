@@ -195,6 +195,12 @@ How it works on the host:
 
 ## 4. Product connectors (Claude.ai / Grok / ChatGPT)
 
+**Friends (FRIENDS-ACCESS-V1, 2026-09-26).** A friend signs in at `https://rag.kingsleylab.xyz` with the username and password the
+owner created for them, opens **Settings → API keys → Create key**, and copies the prompt shown (their key is already in it) into
+their agent. Each friend holds up to 3 active keys and can revoke them there; the owner manages friends (and can revoke any friend
+key) in the same Settings screen. A friend's key reaches the friend's libraries only, never `upload_document` or `research_acquire`.
+
+
 All three ingest the same remote MCP URL:
 
 1. Run the HTTP server (above) and expose it over public HTTPS:
