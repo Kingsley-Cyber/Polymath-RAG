@@ -1,8 +1,8 @@
 ---
 title: "AUTORESEARCH-SOURCES-AND-HARNESS-V1 — short-video comments + CJ alongside Alibaba in the governed product research, runnable by any agent harness, proven end to end"
 date: 2026-09-25
-last_reviewed: 2026-09-25
-status: "ACTIVE — plan of record (register 11.489); slices R0–R8 below (R8 amended in by the owner 2026-09-25, built before R7)"
+last_reviewed: 2026-09-26
+status: "COMPLETE — slices R0–R8 done (11.489–11.495); the e2e's findings are gap rows A-09..A-14, S-16..S-20, O-06..O-08, H-08..H-10"
 owner: "@king"
 scope: "The governed product-research workflow (adapter `ecommerce.product_research`, manifest config/adapters/ecommerce.product_research.json), its ecommerce domain (adapters/ecommerce/), the embedded Trail core (governance/trail/, pinned from ~/trail-signal-os) and the two MCP servers. Not code RAG, not document RAG."
 ---
@@ -122,9 +122,9 @@ installed: setup docs only, no live test.
 | R3 | Runtime contract: HARNESS_ACTION `output_schema` = the receipt schema; the step lists admissible sources (class → domains, stage, roles, freshness) from the Trail snapshot and the context-tag grammar; the run input's geography / language / freshness / constraints / exclusions overlaid on the issued action (A-04); tool descriptions fixed; ONE operating guide published as an MCP prompt + resources on BOTH servers | H-01, H-02, H-04, H-07, A-04 | tests: prompt + resources identical on A and B; a HARNESS_ACTION step validates a sample receipt against its own `output_schema`; the input's geography reaches the action |
 | R4 | A-track: A-03 (no signal → retained-knowledge end before population), A-06 (`*_refs` + `evidence_chain` checked), A-05 (gap closed across origins; a required unresolved gap visible at exit), A-07 (adapter_list says which entry is preferred) | A-03, A-05, A-06, A-07 | a test per row, on the real manifest |
 | R5 | Docs: harness guide (Claude Code, Codex stdio + HTTP, Hermes, OpenClaw, Gemini CLI, OpenCode, generic MCP), SKILL.md's governed section → `ecommerce.product_research`, the Cloudflare user-agent caveat | H-05, H-06 | docs reviewed against the live tool list |
-| R6 | Deploy: merge + bounce (back to back), live checks ($0): prompts / resources on Server A and B, a started run's first HARNESS_ACTION carries the receipt schema and no tool command | — | live check script exit 0 |
+| R6 | Deploy: merge + bounce (back to back), live checks ($0): prompts / resources on Server A and B, a started run's first HARNESS_ACTION carries the receipt schema and no tool command | — | live check script exit 0 — DONE 11.494 (the owner's Run button; live check 14/14) |
 | R8 | Polymath-hosted research reads (D9): `shared/polymath_shared/acquisition/` (the policy + the OpenCLI backend), `POST /adapter/{run_id}/acquire`, the MCP tool `research_acquire` on both servers (owner-only by the gate's default deny), the guide paragraph, CONNECTORS.md | the owner's prompt 06; gap S-08 | tests/contracts `test_research_acquisition.py` (owner-only, open step, catalog, per-date rows, precision, pseudonyms, walls, read-only commands, both servers, the route); the backend exercised against the owner's browser; then the e2e researches THROUGH it (an MCP client that runs no OpenCLI) |
-| R7 | E2E: Claude Code runs one full `ecommerce.product_research` run over MCP — TikTok + YouTube comments and CJ + Alibaba research done with its own tools, receipts submitted, a governed result + dossier; the other harnesses' smoke | the owner's "execute this e2e" | the run's result and receipts (TikTok comment observations ADMITTED, CJ + Alibaba listings admitted in supply), the dossier, a work-log |
+| R7 | E2E: Claude Code runs one full `ecommerce.product_research` run over MCP — TikTok + YouTube comments and CJ + Alibaba research done with its own tools, receipts submitted, a governed result + dossier; the other harnesses' smoke | the owner's "execute this e2e" | the run's result and receipts (TikTok comment observations ADMITTED, CJ + Alibaba listings admitted in supply), the dossier, a work-log — DONE 11.495 (run `adr_be4337c6…` completed: comments admitted end to end; supply blocked by human checks; TrailSignal refused to score; 17 gap rows) |
 
 ## 5. Out of scope / owner questions (not blocking)
 Autonomy (A-01, A-02, A-08: what may start or run without a human) · T-01 (changing the defect-preserving M1 tests) · a

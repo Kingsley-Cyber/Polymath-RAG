@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-25
+last_reviewed: 2026-09-26
 ---
 
 
@@ -23,54 +23,41 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-25 (autoresearch R1 + R8 + the audit's fixes built on the branch; the owner's Run button next) — **ACTIVE MISSION: AUTORESEARCH-SOURCES-AND-HARNESS-V1 (register 11.489, roadmap row 6d; the owner's order 2026-09-25, before C1). On branch `feat/autoresearch-sources-harness` (worktree `pmv4-autoresearch`, NOT merged): R2–R5 (11.490), R8 Polymath-hosted research reads (11.491, the owner's worker-pack prompt 06, built BEFORE the e2e by the owner's choice), R1 TikTok + Instagram comment rows re-pinned from Trail HR7 `494905a` (11.492), the owner's read-only intent audit and its fixes (11.493). NEXT = the owner's ONE Run button (merge + bounce) → the Hermes skill copy + the $0 live check → the ONE R7 e2e run researching THROUGH `research_acquire` → harness smokes → close-out → then the owner's ideation worker pack as the next plan of record.**
+## CURRENT — 2026-09-26 (AUTORESEARCH-SOURCES-AND-HARNESS-V1 COMPLETE: R6 live, the one R7 run done, smokes done) — **NO ACTIVE BUILD MISSION. The plan AUTORESEARCH-SOURCES-AND-HARNESS-V1 is complete (R0–R8, registers 11.489–11.495). R6 went live with the owner's Run button (11.494); the ONE authorized e2e run completed through MCP with every web read through `research_acquire` (11.495): TikTok + Instagram comments admitted as field evidence end to end; supply blocked by Alibaba / CJ human checks; TrailSignal refused to score; 17 gap rows. NEXT = the owner's decisions below, then admit the owner's ideation worker pack as the next plan of record (docs slice first), reconciled with the R7 gap rows.**
 
 ### Repository State
-- Branch `production` = `845743ce` (the plan admission, 11.489) on top of `366fd8dc` (K1b live, 11.488). `origin/production` =
-  `63816479`; unpushed on production: 3 commits. Pushes are the owner's word.
-- **Branch `feat/autoresearch-sources-harness`** (worktree `/Users/king/Documents/polymath-rebuild/pmv4-autoresearch`), on top of
-  `845743ce`: `e827f7e6` R2–R5 → `7ac2bebe` tooling → `11ee5115` + `c7b1c804` + `397c8fad` + `d2f48b1a` R8 → `285d51d7` R1 → `167396ef` the audit fixes (11.493).
-  A fast-forward merge.
-- **TrailSignal** `~/trail-signal-os-worktrees/HR7` (branch `agent/HR7`, clean, NOT pushed): `9a26dcb` A47 → `9f5c1ec` HR7 anchor
-  → `494905a` HR7. The Trail push is the owner's word. `~/trail-signal-os-worktrees/SRC1` still holds the abandoned SRC1 edits
-  (leave them; the owner decides). Never touch the Trail main checkout.
-- **Fleet (the owner's bounce, 04:54 MDT):** 26 / 13 / ONE bundle `acc8f3e1c16f`, `/ready` true, running `production`; R1 / R8
-  are NOT running until the merge + bounce.
-- **Live `.env` (gitignored):** unchanged (SEEALSO-BLEND, D1, DOC-STEER flags on). R8 needs no flag: it is on unless
-  `POLYMATH_ACQUISITION=0`; OpenCLI must be on the host's PATH (`/opt/homebrew/bin/opencli`, 1.8.6, bridge connected: `opencli doctor`).
+- Branch `production` = the close-out commit on top of `b3daddd0` (R1 + R8 + the audit fixes, merged by the owner's Run button at
+  22:35 MDT, 2026-09-25). `origin/production` = `63816479`; unpushed on production: 13 commits. Pushes are the owner's word.
+- `feat/autoresearch-sources-harness` (worktree `pmv4-autoresearch`) = `b3daddd0`, fully merged; the owner decides whether to remove it.
+- **TrailSignal** `~/trail-signal-os-worktrees/HR7` (branch `agent/HR7`, `494905a`, clean, NOT pushed): the owner's word. Leave
+  `~/trail-signal-os-worktrees/SRC1` alone. Never touch the Trail main checkout.
+- **Fleet:** 26 healthy / 13 types; 25 workers on bundle `15247f145355` (the 22:35 bounce) and `adapter_step` on `785fd9efedf4`: the
+  supervisor restarted it at 05:19Z after the Docker crash while an untracked file sat in the main checkout (`tree_dirty`); same code,
+  the next bounce unifies it — not a fence fault. `/ready` true. Docker Desktop was restarted at ~05:22Z (see Runtime).
+- **Live `.env` (gitignored):** unchanged (SEEALSO-BLEND, D1, DOC-STEER on; R8 on unless `POLYMATH_ACQUISITION=0`; OpenCLI
+  `/opt/homebrew/bin/opencli` 1.8.6, bridge connected).
 - `corpora` = cinema, commerce-v1. Other worktrees: `pmv4-m1-repro` (kept), `pmv4-rag-ui` (another stream's uncommitted files:
   never touch), an old stash (leave it).
 
 ### Active Mission
-- **AUTORESEARCH-SOURCES-AND-HARNESS-V1** (`docs/wiki/plans/AUTORESEARCH-SOURCES-AND-HARNESS-V1.md`: D1–D9, slices R0–R8):
-  - R0 ✔ 11.489 · R2–R5 ✔ 11.490 · **R8 ✔ BUILT 11.491** · **R1 ✔ BUILT 11.492** · **audit fixes ✔ 11.493** · R6 (deploy + live
-    check) and R7 (e2e) next.
-  - **R8** — `research_acquire` (both MCP servers) → `POST /adapter/{run_id}/acquire` → `polymath_shared/acquisition`:
-    - owner key only; only the run's OPEN HARNESS_ACTION, inside its budget;
-    - read-only catalog: `web_search` (leads), `comments` under a content permalink (TikTok, Instagram, YouTube, Reddit),
-      `listings` on Alibaba / CJ / Amazon;
-    - each item's own date and its precision; an item without its own date is dated by its PAGE's publish date or withheld
-      (`source_id` null) — never dated at read time (the audit's HIGH bug, 11.493); HUMAN_ACTION_REQUIRED for a wall, and a read
-      that returned nothing spends no budget; every read names a search intent; proxied callers refused;
-    - OpenCLI on the host through its browser bridge (the owner's Chrome, the owner's word 2026-09-25: "Yes, use my Chrome").
-  - **R1** — Trail HR7 (two data rows, ADR-070) re-pinned; the three M1 envelopes re-recorded (the owner's word). The Hermes
-    receipt builder keys sources by (page, publish date).
-- **The owner's decisions today:** ADR-070 accepted; re-record authorized; the e2e reads through the owner's Chrome (read only;
-  the owner clears any CAPTCHA); prompt 06 built BEFORE the e2e ("one bounce, one run"); the worker pack (prompts 01–05, the
-  wider ideation mission) is MINE after the e2e.
-- **After this mission:** admit the owner's worker pack as the next plan of record (docs slice first):
+- **None in build.** AUTORESEARCH-SOURCES-AND-HARNESS-V1 is COMPLETE (the plan's status line; R6 DONE 11.494, R7 DONE 11.495).
+- **The R7 run** `adr_be4337c6c5c5b1b9b51f781ff4c2b095` (its artifacts live OUTSIDE the repository, field quotes included:
+  `/Users/king/Documents/polymath-rebuild/handoff-drafts/e2e-runs/2026-09-25-r7/` — driver `r7.py`, one builder script per
+  submission, every acquisition result, `journal.json`, `result.json`, `dossier.html`): 3 field rounds (24 + 24 + 22 queries),
+  product reality 20, supply 0 of 16; 112 observations, 99 admitted, 13 refused (freshness only); 13 THIN clusters, 0 ANCHOR;
+  5 concepts (4 contested by an existing product, the fingertip mitten not); verdict GOVERNED — TRAIL REFUSED TO SCORE.
+- **High gaps from the run:** A-09 (an agent REVISE resets TrailSignal's `weakened` to an eligible `revised`), A-10 (clusters split
+  by friction wording), S-16 (no cluster can reach ANCHOR with the readable sources), S-17 (the live plan gives no channel intents).
+  Medium: A-11..A-14, S-18 (CJ's check undetected), O-06 (`/ready` misses Postgres), H-08. Owner: S-19, S-20, O-08, H-09.
+- **Next plan of record (the owner's word, 2026-09-25: "Me, after this e2e"):** the owner's ideation worker pack
   `/Users/king/.codex/.chatgpt-projects/g-p-6aa0db750e248191a904880fcd6f1c1c/polymath-ideation-worker-pack 2`
   (START-HERE.md, GOAL-PROMPT.md, prompts 01-RECONCILE … 05-QUALIFY; 06 = R8, done). Its texts are briefs, not authority.
-- **Order (roadmap §3):** … K1 ✔ → K1b ✔ → **6d AUTORESEARCH (R6, R7 left)** → the worker pack (the owner's word) → C1 → C2 →
-  C3 → L5 → …
+- **Order (roadmap §3):** … K1 ✔ → K1b ✔ → 6d AUTORESEARCH ✔ → the worker pack → C1 → C2 → C3 → L5 → …
 - Document RAG stays paused (S5–S7, S9).
 
-### Completed Since Last Bootstrap (11.489–11.493)
-- **11.493 the audit's fixes:** the owner's read-only intent audit (1 high, 5 medium, 1 low + exposure) → fixed with the owner's "yes".
-- **11.492 R1:** Trail HR7 re-pinned; M1 envelopes re-recorded; comment dates per comment in the Hermes receipt builder.
-- **11.491 R8:** Polymath-hosted research reads (+ Amazon listings, the reviewed subprocess call).
-- **11.490 R2–R5:** harness-neutral research, comment channels, CJ alongside Alibaba, the guide over MCP, the A-track.
-- **11.489:** the plan admitted.
+### Completed Since Last Bootstrap (11.494–11.495)
+- **11.495 R7:** the one e2e run + the harness smokes; gap rows A-09..A-14, S-16..S-20, O-06..O-08, H-08..H-10; S-13 corrected.
+- **11.494 R6:** merged + bounced (the owner's Run button); the Hermes skill copy; live check 14/14.
 
 ### Current Contract State
 - **Knowledge scope (K1):** a new search function, or a new call of a scoped search, must thread the request's scope
@@ -99,19 +86,15 @@ historical, never an instruction.
   TrailSignal anchors freshness on the source's date, and an undated source at its retrieval time (gap S-11).
 
 ### Active Impact Closure
-- 11.491: RESEARCH_ACQUISITION (new) + MCP_SURFACE UPDATED; ADAPTER_RUNTIME TESTED_UNCHANGED (guide text only).
-- 11.492: no mapped contract (governance/trail and adapters/ecommerce map to none); proven by the Trail / adapter suites.
+- 11.494 / 11.495: no code changed; ADAPTER_RUNTIME, ECOMMERCE_ENGINE, RESEARCH_ACQUISITION TESTED_UNCHANGED (their defects are rows).
 - DEFERRED as before: the fleet-DB test files; nothing BLOCKED.
 
 ### Proof Status
-- **11.493 audit fixes:** UNIT_PROVEN (42 + 7 + 612) + the stale-YouTube case REJECTED by the pinned TrailSignal core + readers
-  EXECUTED live read-only (YouTube, Instagram, TikTok). Not merged.
-- **11.492 R1:** UNIT_PROVEN + WORKTREE_INTEGRATION_PROVEN (486 tests incl. tests/contracts whole; the harvest → receipt →
-  TrailSignal test RED at 829a0ab, GREEN at 494905a; the live check's admission half at the new pin). Not merged.
-- **11.491 R8:** UNIT_PROVEN (37 tests, mutation-checked) + every reader EXECUTED read-only against the owner's Chrome (probes,
-  not run evidence). Not merged. LIVE_PATH_PROVEN = the R7 run researching through it.
-- **11.490 R2–R5:** UNIT_PROVEN. Not merged.
-- Earlier: K1 / K1b / D1 LIVE_PATH_PROVEN; the SEE ALSO blend + DOC-STEER wait for one GRAPH / WILDCARD chat. INVALIDATED: none.
+- **11.495 R7:** EXECUTED live. R8 LIVE_PATH_PROVEN (102 `research_acquire` calls from an MCP client that runs no OpenCLI: walls
+  refunded, per-comment dates, the page-date bound). R1 LIVE_PATH_PROVEN (TikTok + Instagram comments admitted as field evidence).
+- **11.494 R6:** EXECUTED live (fast-forward + READY; live check 14/14).
+- 11.490–11.493: live since 11.494. Earlier: K1 / K1b / D1 LIVE_PATH_PROVEN; the SEE ALSO blend + DOC-STEER wait for one GRAPH /
+  WILDCARD chat. INVALIDATED: none.
 
 ### Runtime / Test Resolution
 - Use `.venv/bin/python`; worktree PYTHONPATH recipe + origin check; a worktree has no `.env`.
@@ -130,32 +113,32 @@ historical, never an instruction.
   `test_synthesis_attempt_telemetry::…` (order-dependent), `test_query_receipts::test_all_three_query_handlers…` (pins 2
   chat receipt writers; production has 4 since /chat/evidence). CI `determinism` = 13 known failures (on `9fc0956f`); CI
   `contracts` green since 11.476.
+- **Docker Desktop crash (2026-09-26 05:15Z):** the VM powered off ("com.docker.virtualization: process terminated unexpectedly") and
+  Docker showed Quit / Reset. Recovery = `osascript -e 'quit app "Docker"'`, quit the "Docker Desktop" window and its error dialog,
+  `open -a Docker`; the stores return healthy in about a minute and the fleet reconnects on its own. NEVER "Reset to factory
+  defaults" (it deletes every container and volume). `/ready` does not check Postgres (O-06): check the DB directly.
+- An untracked file in the MAIN checkout makes any worker the supervisor restarts report `tree_dirty` (a second bundle hash, same
+  code): keep run artifacts outside the main checkout, or commit them before a bounce.
+- `codex exec` waits on stdin: give it `< /dev/null`. The ChatGPT app bundles a newer `codex`
+  (`/Applications/ChatGPT.app/Contents/Resources/codex`) than Homebrew's.
 
 ### Working Tree
-- Main checkout: clean (`production`). The branch worktree: clean after the R1 commit.
+- Main checkout: clean (`production`) after the close-out commit.
 
 ### Tooling State
-- graft refreshed at `845743ce`; guards 0 on the branch (preflight, repo_guard, wiki_worm); bundle_integrity READY on production.
+- graft refreshed at `b3daddd0`; guards 0 on the close-out (preflight, repo_guard, wiki_worm); bundle_integrity READY.
 
 ### Next Action
-1. **The owner's ONE Run button** (merge + bounce, back to back):
-   `cd /Users/king/Documents/polymath-rebuild/polymath-v4 && git merge --ff-only feat/autoresearch-sources-harness && bash scripts/bounce_fleet.sh`.
-   When the owner says done, verify `git log production` and the orchestrator's start time.
-2. The Hermes skill copy: `.venv/bin/python scripts/deploy_ecommerce_skill.py --target ~/.hermes/standalone/opportunity-research --execute`.
-3. `docs/wiki/experiments/autoresearch-e2e-2026-09-25/live_check.py` (.env loaded; $0; exit 0 = the guide on Server A, the
-   PREFERRED / LEGACY adapters, the comment rows admitted by the fleet's pinned core, `research_acquire` listed + host ready +
-   refusing a terminal run).
-4. **R7:** ONE `ecommerce.product_research` run over MCP (`mcp_call.py`; the key = `.env` `POLYMATH_MCP_API_KEY`).
-   - The harness researches THROUGH `research_acquire`: an MCP client that runs no OpenCLI itself.
-   - Seed = the 09-21 baseline's (`adr_c994b32a8c72…`: outdoor photographers, cold wet hands; corpus `cinema`, US,
-     freshness 730) for comparability.
-   - Comments (TikTok, Instagram, YouTube, Reddit), then CJ, Alibaba and Amazon listings. A wall = a limitation, or the
-     owner's action.
-   - Render the dossier with `governed_run.py`. Spend bound: ONE run.
-5. Harness smokes: Codex, Gemini CLI, OpenCode, Hermes (connect, list tools incl. `research_acquire`, get the
-   `run_governed_research` prompt), with temporary configs where possible (never print a key).
-6. Close-out: the work-logs, the register, CONTINUITY, memory, the skill. Then admit the worker pack (above).
-7. Pending owner steps: the pushes (polymath-v4 `production`, Trail `agent/HR7`).
+1. Report to the owner (plain words): what was proven, the verdict, the high gaps, the decisions below.
+2. The owner's decisions (none is mine to take):
+   - the pushes: polymath-v4 `production` (13 commits) and Trail `agent/HR7`;
+   - S-19: a TrailSignal ADR for the Reddit / YouTube comment window (like ADR-070), or not;
+   - S-20: clear Alibaba's and CJ's human checks in the host Chrome before a run's supply step;
+   - O-08: find the client that keeps calling the public MCP URL without a valid key;
+   - H-09: upgrade Homebrew Codex; decide on Gemini (the account's CLI turns are refused);
+   - a bounce at a quiet moment unifies the bundle hash (optional).
+3. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
+   TREE, CONTINUITY), mapping the R7 gap rows (A-09..A-14, S-16..S-18, O-06, H-08) into its slices or naming them out of scope.
 
 ### Do Not Do
 - Never add a switch that turns scope enforcement off, never let a plan or an LLM output set or widen a scope, and never
@@ -178,17 +161,21 @@ historical, never an instruction.
 - Never use `research_acquire`'s browser host for anything but its read catalog; never call OpenCLI's comment / like / follow /
   post / purchase commands; never give a principal the tool (the host browser holds the owner's sign-ins).
 - Never turn a relative date ("3 weeks ago") into a date; never lend one item's date to another source row.
+- Never click Docker Desktop's "Reset to factory defaults"; never clear a site's human check yourself (the owner does, in the host
+  browser); never present a concept contested by an existing product as an opportunity.
 
 ### Live Qualification Queue
-- R8 + R1: the R7 run (the owner authorized ONE).
 - The SEE ALSO blend + DOC-STEER first live receipt (the owner's next GRAPH / WILDCARD chat).
+- A fix to A-09 / A-10 / S-16 / S-17 is proven only by a new governed run (the owner's word; R7 used the one authorized run).
 - Document RAG S9; the benchmark G8 and the `/chat/evidence` probe: the owner's own words.
 
 ### Deferred Architecture
 - K-03: Postgres-side role filtering (migration 0067) → C1.
 - L5: budgets shared across processes (L-06, L-22) and batched admissions (L-21).
 - The joint code ↔ document graph walk: C8 → G1 + C11.
-- Gap rows O-01..O-05, T-01, T-02, D-03..D-09, A-01..A-08: open, not scheduled. GNN retrieval stays experimental.
+- Gap rows O-01..O-08, T-01, T-02, D-03..D-09, A-01..A-14, S-09..S-20, H-08..H-10: open, not scheduled. GNN retrieval stays experimental.
+
+## PRIOR — 2026-09-25 (autoresearch R1 + R8 + the audit's fixes built on the branch; the owner's Run button next) — **the handoff before the merge: R2–R5, R8, R1 and the audit fixes (11.490–11.493) on `feat/autoresearch-sources-harness`.** Superseded by the block above; its Next Action list (Run button → skill copy + live check → the R7 run → smokes → close-out) was executed.
 
 ## PRIOR — 2026-09-25 (autoresearch R2–R5 built; R1 in Trail's gate) — **the handoff written before a context compaction: R2–R5 were built (11.490) and Trail's HR7 was in progress.** Superseded by the block above; its resume list (items a–e) was executed: HR7 verified, the re-pin, the receipt fix, R8 (added by the owner), the Run button next.
 

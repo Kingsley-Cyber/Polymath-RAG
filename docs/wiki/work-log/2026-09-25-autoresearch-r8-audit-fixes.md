@@ -104,3 +104,6 @@ last_reviewed: 2026-09-25
   - S-14: MCP timeout vs slow reads, unverified;
   - S-15: the public web UI proxy reaches every other orchestrator route with its own login, pre-existing.
 - Not live until the owner's merge + bounce.
+
+## Correction (2026-09-26, register 11.495)
+- "The log line names the acquisition, the target and the sources" (Changes, and `architecture_impact`): the line is written with `log.info`, but the orchestrator configures no application logging, so it never reaches `orchestrator.log` (0 lines after 104 calls). Gap O-07; S-13 now says the server keeps nothing.

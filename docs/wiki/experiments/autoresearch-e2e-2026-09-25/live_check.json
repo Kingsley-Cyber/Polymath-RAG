@@ -1,0 +1,65 @@
+{
+ "mcp": {
+  "prompt_has_guide": true,
+  "resources_equal_the_repository": true,
+  "source_table_has_comment_rows": true,
+  "preferred_adapter": [
+   "0.7.0",
+   "PREFERRED"
+  ],
+  "legacy_adapter": [
+   "2.2.1",
+   "LEGACY"
+  ],
+  "start_says_corpus_ids_required": true,
+  "research_acquire_listed": true,
+  "acquisition_catalog": {
+   "owner_only": true,
+   "read_only": true,
+   "host": {
+    "backend": "opencli",
+    "available": true,
+    "note": "browser bridge connected"
+   }
+  },
+  "acquisition_on_a_terminal_run": {
+   "status": 409,
+   "code": "NO_OPEN_RESEARCH_STEP"
+  }
+ },
+ "admission": {
+  "snapshot_id": "trs-629277494b724295",
+  "tiktok_comment_routes": "src-tiktok-comments",
+  "instagram_reel_routes": "src-instagram-comments",
+  "creative_center_routes": "src-tiktok-creative",
+  "short_link_routes": "src-tiktok-creative",
+  "comment_row_serves_field_evidence": true,
+  "comment_row_roles": [
+   "behavior",
+   "competition",
+   "contradiction",
+   "friction",
+   "workaround"
+  ]
+ },
+ "proxied": {
+  "status": 403,
+  "code": "PROXIED_CALLER"
+ },
+ "checks": {
+  "prompt_has_guide": true,
+  "resources_equal_the_repository": true,
+  "source_table_has_comment_rows": true,
+  "preferred_adapter": true,
+  "legacy_adapter": true,
+  "start_says_corpus_ids_required": true,
+  "tiktok_comment_admitted_as_field_evidence": true,
+  "instagram_reel_routes_to_comments": true,
+  "creative_center_unchanged": true,
+  "short_link_stays_on_the_trend_row": true,
+  "research_acquire_listed": true,
+  "acquisition_host_ready": true,
+  "acquisition_needs_an_open_step": true,
+  "acquisition_refuses_a_proxied_caller": true
+ }
+}
