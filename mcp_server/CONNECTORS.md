@@ -52,7 +52,7 @@ did not address the loopback listener directly is REMOTE: `upload_document(path,
 `upload_text`. Hermes on this machine (loopback) is unchanged. Surface acceptance, read-only by default:
 
 ```bash
-.venv/bin/python scripts/hosted_mcp_acceptance.py --url https://mcp.kingsleylab.xyz --key-file ~/PolymathRuntime/polymath-v4-mcp.key --vantage host
+.venv/bin/python scripts/hosted_mcp_acceptance.py --url https://mcp.kingsleylab.xyz --key-file <a 0600 file holding the live key> --vantage host
 ```
 
 Run it from ANOTHER machine with `--vantage external:<label>` for external-access proof. The adapter lifecycle over the hosted
@@ -211,7 +211,7 @@ All three ingest the same remote MCP URL:
 Auth is a fixed API key (`Authorization: Bearer` or `X-API-Key`);
 without `POLYMATH_MCP_API_KEY` set the server runs local-trusted
 (stdio / localhost only — never tunnel an unauthenticated server).
-The key lives at `~/PolymathRuntime/polymath-v4-mcp.key` (0600).
+The OWNER key is `.env` `POLYMATH_MCP_API_KEY` (admin; never hand it to anyone). The file `~/PolymathRuntime/polymath-v4-mcp.key` is STALE: the server answers it 401. A friend gets a key of their own, scoped to their corpora: `scripts/mcp_principals.py add … --profile friend --key-out …` (see that script).
 
 Abstention semantics carry through every shape: `insufficient_evidence`
 is an honest verdict the agent must relay, not an error to retry.

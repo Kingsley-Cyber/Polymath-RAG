@@ -80,3 +80,6 @@ last_reviewed: 2026-09-26
   the readable sources), S-17 (no channel intents in the live plan).
 - Owner decisions / actions: S-19 (the Reddit / YouTube window), S-20 (clear the supply checks before a run), O-08 (a client of the
   owner's hammering the public MCP URL), H-09 (Codex upgrade, Gemini account), the pushes (production 13 commits, Trail `agent/HR7`).
+
+## Correction (register 11.496)
+- "The price checks read 0–1 of 3 because most listings were filed as competition" is wrong: TrailSignal's gates count independent PLATFORMS, so all Amazon prices count as one. With `research_acquire` alone no run can reach a score (S-21): the market check needs 3 stores, the supply check 3 supplier platforms, the risk check a manufacturer's own site. A-14 rewritten.

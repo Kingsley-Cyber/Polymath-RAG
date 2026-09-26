@@ -47,7 +47,8 @@ historical, never an instruction.
   product reality 20, supply 0 of 16; 112 observations, 99 admitted, 13 refused (freshness only); 13 THIN clusters, 0 ANCHOR;
   5 concepts (4 contested by an existing product, the fingertip mitten not); verdict GOVERNED — TRAIL REFUSED TO SCORE.
 - **High gaps from the run:** A-09 (an agent REVISE resets TrailSignal's `weakened` to an eligible `revised`), A-10 (clusters split
-  by friction wording), S-16 (no cluster can reach ANCHOR with the readable sources), S-17 (the live plan gives no channel intents).
+  by friction wording), S-16 (no cluster can reach ANCHOR with the readable sources), S-17 (the live plan gives no channel intents),
+  **S-21 (`research_acquire` alone can never meet Trail's price / risk gates: they count PLATFORMS; corrected 11.496)**.
   Medium: A-11..A-14, S-18 (CJ's check undetected), O-06 (`/ready` misses Postgres), H-08. Owner: S-19, S-20, O-08, H-09.
 - **Next plan of record (the owner's word, 2026-09-25: "Me, after this e2e"):** the owner's ideation worker pack
   `/Users/king/.codex/.chatgpt-projects/g-p-6aa0db750e248191a904880fcd6f1c1c/polymath-ideation-worker-pack 2`
@@ -137,7 +138,12 @@ historical, never an instruction.
    - O-08: find the client that keeps calling the public MCP URL without a valid key;
    - H-09: upgrade Homebrew Codex; decide on Gemini (the account's CLI turns are refused);
    - a bounce at a quiet moment unifies the bundle hash (optional).
-3. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
+3. **The owner's live instruction (2026-09-26), ahead of the worker pack:** friends use `rag.kingsleylab.xyz` with their
+   OWN login (today: one Caddy basic-auth user, and everything behind it runs as the owner: S-15), plus a Settings tab to
+   generate their own API keys and copy a connect prompt for their agent harness. Baseline: per-friend MCP keys already exist
+   (`orchestrator/mcp_principals.py`, `scripts/mcp_principals.py`, profile `friend`, 2026-09-21). Admit it as a plan of record
+   once the owner decides the login method, what friends may do, and the key limit.
+4. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
    TREE, CONTINUITY), mapping the R7 gap rows (A-09..A-14, S-16..S-18, O-06, H-08) into its slices or naming them out of scope.
 
 ### Do Not Do
