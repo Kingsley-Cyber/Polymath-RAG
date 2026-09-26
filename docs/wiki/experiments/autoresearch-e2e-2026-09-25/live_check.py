@@ -7,7 +7,8 @@ Run from the main checkout after the merge + bounce, with the main .env loaded (
   3. the pinned TrailSignal core (the same files the fleet imports) ADMITS a TikTok comment and an Instagram reel comment as field
      evidence, keeps a Creative Center link on the trend row, and refuses a short link in the field stage;
   4. R8: `research_acquire` is listed; its catalog answers with the host's browser bridge ready (`opencli doctor`, $0); a read on
-     a TERMINAL run is refused NO_OPEN_RESEARCH_STEP (the owner key, the 2026-09-21 baseline run; nothing is read).
+     a TERMINAL run is refused NO_OPEN_RESEARCH_STEP (the owner key, the 2026-09-21 baseline run; nothing is read); the orchestrator
+     refuses the same route when the request was relayed by a proxy (X-Forwarded-For: the public web UI proxy forwards every path).
 Writes live_check.json next to this file; exit 0 only when every check holds."""
 from __future__ import annotations
 
@@ -62,6 +63,14 @@ async def _mcp() -> dict:
             "acquisition_on_a_terminal_run": {"status": refused.get("status"), "code": (refused.get("error") or {}).get("code") if isinstance(refused.get("error"), dict) else refused.get("error")}}
 
 
+def _proxied() -> dict:
+    import httpx
+    r = httpx.post(f"http://127.0.0.1:7200/adapter/{BASELINE_RUN}/acquire", json={"operation": "catalog"},
+                   headers={"X-Forwarded-For": "203.0.113.9", "X-Forwarded-Host": "rag.kingsleylab.xyz"}, timeout=30)
+    detail = (r.json() if r.headers.get("content-type", "").startswith("application/json") else {}).get("detail")
+    return {"status": r.status_code, "code": detail.get("code") if isinstance(detail, dict) else detail}
+
+
 def _admission() -> dict:
     sys.path.insert(0, str(ROOT / "governance" / "trail"))
     import embedded as E
@@ -89,6 +98,7 @@ def _admission() -> dict:
 def main() -> int:
     mcp = asyncio.run(_mcp())
     adm = _admission()
+    proxied = _proxied()
     checks = {
         "prompt_has_guide": mcp["prompt_has_guide"], "resources_equal_the_repository": mcp["resources_equal_the_repository"],
         "source_table_has_comment_rows": mcp["source_table_has_comment_rows"],
@@ -101,8 +111,9 @@ def main() -> int:
         "research_acquire_listed": mcp["research_acquire_listed"],
         "acquisition_host_ready": mcp["acquisition_catalog"]["owner_only"] is True and (mcp["acquisition_catalog"]["host"] or {}).get("available") is True,
         "acquisition_needs_an_open_step": mcp["acquisition_on_a_terminal_run"] == {"status": 409, "code": "NO_OPEN_RESEARCH_STEP"},
+        "acquisition_refuses_a_proxied_caller": proxied == {"status": 403, "code": "PROXIED_CALLER"},
     }
-    report = {"mcp": mcp, "admission": adm, "checks": checks}
+    report = {"mcp": mcp, "admission": adm, "proxied": proxied, "checks": checks}
     (HERE / "live_check.json").write_text(json.dumps(report, indent=1, default=str))
     print(json.dumps(report, indent=1, default=str))
     ok = all(checks.values())

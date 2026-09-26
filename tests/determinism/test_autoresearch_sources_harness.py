@@ -197,3 +197,41 @@ def test_comments_under_one_video_keep_their_own_dates_through_trail_admission()
     assert [by[k]["anchored_at"] for k in ("c1", "c2", "c3")] == ["2026-09-02T10:00:00Z", "2026-09-20T08:30:00Z", "2026-09-12T12:00:00Z"]
     assert {a["source_class"] for a in by.values()} == {"video_platform"} and [by[k]["evidence_role"] for k in ("c1", "c2", "c3")] == ["friction", "workaround", "friction"]
     assert by["c1"]["independence_group"] == by["c2"]["independence_group"] == "tiktok" and by["c3"]["independence_group"] == "instagram"
+
+
+def test_a_youtube_comment_shown_only_as_years_ago_is_never_admitted_as_fresh():
+    """The audit's HIGH finding (2026-09-25): YouTube shows a comment's age only as relative text, and TrailSignal dates an UNDATED source
+    at the moment it was read, so a comment shown as "7 years ago" was admitted as fresh evidence. Polymath-hosted acquisition now dates
+    such a comment by its video's publish date (the earliest it can be) or hands it over with no receipt-ready source."""
+    from datetime import datetime, timezone
+    sys.path.insert(0, str(ROOT / "governance" / "trail"))
+    from polymath_shared.acquisition import service as S
+    import embedded as E
+    now = datetime(2026, 9, 25, 21, 0, tzinfo=timezone.utc)
+    snap = E.compile_registry_snapshot(E.ROOT / "data", E.ROOT / "config", E.ROOT / "data" / "source_capabilities.csv", compiled_at=now)
+    hyp, run = "hyp_" + "cd" * 12, "adr_" + "d0" * 16
+    action = {"action_id": "hact_d0d0d0d0d0d1", "run_id": run, "hypothesis_ids": [hyp], "budget": {"max_queries": 5}, "disallowed_source_roles": [],
+              "search_intents": [{"intent_id": "si_youtube", "intent": "youtube comments", "evidence_goal": "friction", "evidence_roles": ["friction"]}]}
+    t = S.resolve("comments", "https://www.youtube.com/watch?v=o1t-Km5cfo0")
+    comment = {"kind": "comment", "ref": "Ugx1", "text": "when it rains I have to pull the cover down to see through the eyepiece",
+               "published_at": None, "precision": "relative", "date_shown": "7 years ago", "author": "@viewer"}
+    base = {"state": "ok", "page_url": t.url, "retrieved_at": "2026-09-25T20:59:00Z", "records": [comment], "complete": False}
+    withheld = S.shape(t, base, action=action, search_intent_id="si_youtube", retrieved_at="2026-09-25T20:59:00Z", used=1, cap=5, limit=20)
+    assert withheld["sources"] == [] and withheld["items"][0]["source_id"] is None               # no date at all: nothing to submit
+    dated = S.shape(t, dict(base, page_published_at="2017-08-19T08:08:16Z"), action=action, search_intent_id="si_youtube",
+                    retrieved_at="2026-09-25T20:59:00Z", used=1, cap=5, limit=20)
+    item, source = dated["items"][0], dated["sources"][0]
+    assert source["published_at_if_known"] == "2017-08-19T08:08:16Z" and item["source_date"] == "page"
+    receipt = {"action_id": action["action_id"], "run_id": run, "harness_id": "claude-code", "started_at": "2026-09-25T20:58:00Z",
+               "completed_at": "2026-09-25T21:00:00Z", "sources": [source],
+               "observations": [{"observation_id": "o1", "source_id": item["source_id"], "claim": "the cover blocks the eyepiece in rain",
+                                 "paraphrase_or_excerpt": item["excerpt"], "metric_if_present": None, "context": "posted: 7 years ago (as shown)",
+                                 "evidence_role_claimed": "friction", "hypothesis_ids": [hyp]}],
+               "tool_trace": [dated["tool_trace"]], "limitations": dated["limitations"][:10]}
+    ident = "adr-" + "d0" * 16
+    request = {"idempotency_key": f"idempotency:{ident}:admit:1", "operation_kind": "evidence.admit", "purpose_ref": "purpose:product-discovery",
+               "registry_snapshot_id": snap.snapshot_id, "request_id": f"request:{ident}:admit:1", "run_ref": f"run:{ident}",
+               "payload": {"action_id": action["action_id"], "admitted_evidence_ids": [], "stage": "field_evidence", "receipt": receipt,
+                           "hypotheses": [{"hypothesis_id": hyp, "revision": 0, "statement": "photographers fight rain covers", "status": "proposed"}]}}
+    out = E.operate(E.build_service(clock=lambda: now), "evidence.admit", request)["result"]["evidence_admission"]
+    assert out["admitted"] == [] and [r["reason_code"] for r in out["rejected"]] == ["STALE_BEYOND_POLICY"], out

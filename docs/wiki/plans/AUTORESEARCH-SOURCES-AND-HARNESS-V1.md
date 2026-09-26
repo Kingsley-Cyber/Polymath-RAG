@@ -109,6 +109,9 @@ installed: setup docs only, no live test.
     admits.
   OpenCLI stays a separately installed host tool behind `polymath_shared/acquisition/opencli.py`; the adapter runtime and the
   directives stay source- and harness-neutral.
+  The owner's read-only audit (2026-09-25, before the merge) → fixes 11.493: an undated comment is dated by its page's publish
+  date (the earliest it can be) or withheld; YouTube read whole in our own tab; Instagram's date row is never a comment; walls spend
+  no budget; TikTok's login modal is a wall; every read names a search intent; proxied callers refused.
 
 ## 4. Slices (each: worktree → tests → guards → commit; merges / bounces the classifier blocks are the owner's Run button)
 | # | Slice | Closes | Acceptance (proof) |

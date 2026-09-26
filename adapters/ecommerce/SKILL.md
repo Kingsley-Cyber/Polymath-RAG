@@ -48,7 +48,9 @@ PREFERRED adapter; `trail.product_discovery` is legacy (it lacks the restored re
      its own date. Supplier listings: record `listing:`, `supplier:`, `price as listed:`, `MOQ as listed:`, `channel:`,
      `concept:` in the observation context.
      Write each item as the usual `observation` / `field_record` / `supplier_candidate` PLUS harvest provenance
-     (`retrieved_at`, `published_at_if_known` — `null` only when the page shows no date) and the action's
+     (`retrieved_at`, `published_at_if_known` — `null` only when the page shows no date; a comment whose date the page shows
+     only as relative text ("3 weeks ago") gets `null` plus `page_published_at` = the video's / post's own date, the earliest it
+     can be, so TrailSignal never counts it fresher than it is) and the action's
      `hypothesis_ids` it bears on. Then
      `python3 python/adapter_receipt.py build --action action.json --observations obs.json [--field-records …]
      [--supplier-candidates …] --tool-trace trace.json --harness-id <you> --started-at <t0> --out receipt.json`

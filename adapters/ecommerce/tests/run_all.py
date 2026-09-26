@@ -3510,6 +3510,19 @@ ok(_rpc24["errors"] == [] and sorted(_oc24) == ["obs_20", "obs_21", "obs_22", "o
 ok({_oc24[k]["source_class"] for k in _oc24} == {"video_platform"} and _ar.source_class_for("https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en") == "social_trend"
    and _ar.source_class_for("https://www.instagram.com/p/C0ABCDEFGHI/") == "video_platform" and _ar.source_class_for("https://nowhere.example/x", {"platform": "instagram"}) == "video_platform",
    "a TikTok video permalink and an Instagram reel / post are video platforms (TrailSignal's comment rows); a Creative Center link stays a trend")
+# a comment whose own date the page shows only as relative text carries its PAGE's date (the earliest it can be): TrailSignal dates an
+# undated source at the moment of reading, so without it a years-old comment would count as fresh (the audit of 2026-09-25)
+_yt24 = {"source_family": "community", "platform": "youtube"}
+_pd24 = [_o24(26, "https://www.youtube.com/watch?v=o1t-Km5cfo0", ["FRICTION_EVIDENCE"], published_at_if_known=None, page_published_at="2017-08-19T08:08:16Z",
+              source_identity=_yt24),
+         _o24(27, "https://www.youtube.com/watch?v=o1t-Km5cfo0", ["FRICTION_EVIDENCE"], published_at_if_known=None, source_identity=_yt24)]
+_rpd24, _rppd24 = _ar.build_receipt(dict(_A24, action_id="hact_5e2c1b7d9a07"), observations=_pd24, harness_id="claude-code",
+                                    started_at="2026-09-20T17:00:00Z", completed_at="2026-09-20T17:20:00Z")
+_spd24 = {s["source_id"]: s for s in _rpd24["sources"]}
+_opd24 = {o["observation_id"]: _spd24[o["source_id"]] for o in _rpd24["observations"]}
+ok(_rppd24["errors"] == [] and _opd24["obs_26"]["published_at_if_known"] == "2017-08-19T08:08:16Z" and _opd24["obs_27"]["published_at_if_known"] is None
+   and any("page's publish date" in l for l in _rpd24["limitations"]),
+   "a comment with no date of its own is dated by its page's publish date when the harvester recorded it (page_published_at); without it the row stays null")
 # the CLI: the whole adapter_next payload is accepted as --action; --strict turns an omission into exit 2
 _a24p, _o24p, _r24p = os.path.join(tmp, "next24.json"), os.path.join(tmp, "obs24.json"), os.path.join(tmp, "receipt24_cli.json")
 json.dump({"kind": "step", "step": {"step_id": "I_research", "step_type": "HARNESS_ACTION", "harness_action": _A24}}, open(_a24p, "w")); json.dump({"observations": _obs24}, open(_o24p, "w"))

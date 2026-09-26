@@ -23,13 +23,13 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-25 (autoresearch R1 + R8 built on the branch; the owner's Run button next) — **ACTIVE MISSION: AUTORESEARCH-SOURCES-AND-HARNESS-V1 (register 11.489, roadmap row 6d; the owner's order 2026-09-25, before C1). On branch `feat/autoresearch-sources-harness` (worktree `pmv4-autoresearch`, NOT merged): R2–R5 (11.490), R8 Polymath-hosted research reads (11.491, the owner's worker-pack prompt 06, built BEFORE the e2e by the owner's choice), R1 TikTok + Instagram comment rows re-pinned from Trail HR7 `494905a` (11.492). NEXT = the owner's ONE Run button (merge + bounce) → the Hermes skill copy + the $0 live check → the ONE R7 e2e run researching THROUGH `research_acquire` → harness smokes → close-out → then the owner's ideation worker pack as the next plan of record.**
+## CURRENT — 2026-09-25 (autoresearch R1 + R8 + the audit's fixes built on the branch; the owner's Run button next) — **ACTIVE MISSION: AUTORESEARCH-SOURCES-AND-HARNESS-V1 (register 11.489, roadmap row 6d; the owner's order 2026-09-25, before C1). On branch `feat/autoresearch-sources-harness` (worktree `pmv4-autoresearch`, NOT merged): R2–R5 (11.490), R8 Polymath-hosted research reads (11.491, the owner's worker-pack prompt 06, built BEFORE the e2e by the owner's choice), R1 TikTok + Instagram comment rows re-pinned from Trail HR7 `494905a` (11.492), the owner's read-only intent audit and its fixes (11.493). NEXT = the owner's ONE Run button (merge + bounce) → the Hermes skill copy + the $0 live check → the ONE R7 e2e run researching THROUGH `research_acquire` → harness smokes → close-out → then the owner's ideation worker pack as the next plan of record.**
 
 ### Repository State
 - Branch `production` = `845743ce` (the plan admission, 11.489) on top of `366fd8dc` (K1b live, 11.488). `origin/production` =
   `63816479`; unpushed on production: 3 commits. Pushes are the owner's word.
 - **Branch `feat/autoresearch-sources-harness`** (worktree `/Users/king/Documents/polymath-rebuild/pmv4-autoresearch`), on top of
-  `845743ce`: `e827f7e6` R2–R5 → `7ac2bebe` tooling → `11ee5115` + `c7b1c804` + `397c8fad` + `d2f48b1a` R8 → the R1 commit (this close-out).
+  `845743ce`: `e827f7e6` R2–R5 → `7ac2bebe` tooling → `11ee5115` + `c7b1c804` + `397c8fad` + `d2f48b1a` R8 → `285d51d7` R1 → the audit-fix commit (11.493, this close-out).
   A fast-forward merge.
 - **TrailSignal** `~/trail-signal-os-worktrees/HR7` (branch `agent/HR7`, clean, NOT pushed): `9a26dcb` A47 → `9f5c1ec` HR7 anchor
   → `494905a` HR7. The Trail push is the owner's word. `~/trail-signal-os-worktrees/SRC1` still holds the abandoned SRC1 edits
@@ -43,12 +43,15 @@ historical, never an instruction.
 
 ### Active Mission
 - **AUTORESEARCH-SOURCES-AND-HARNESS-V1** (`docs/wiki/plans/AUTORESEARCH-SOURCES-AND-HARNESS-V1.md`: D1–D9, slices R0–R8):
-  - R0 ✔ 11.489 · R2–R5 ✔ 11.490 · **R8 ✔ BUILT 11.491** · **R1 ✔ BUILT 11.492** · R6 (deploy + live check) and R7 (e2e) next.
+  - R0 ✔ 11.489 · R2–R5 ✔ 11.490 · **R8 ✔ BUILT 11.491** · **R1 ✔ BUILT 11.492** · **audit fixes ✔ 11.493** · R6 (deploy + live
+    check) and R7 (e2e) next.
   - **R8** — `research_acquire` (both MCP servers) → `POST /adapter/{run_id}/acquire` → `polymath_shared/acquisition`:
     - owner key only; only the run's OPEN HARNESS_ACTION, inside its budget;
     - read-only catalog: `web_search` (leads), `comments` under a content permalink (TikTok, Instagram, YouTube, Reddit),
       `listings` on Alibaba / CJ / Amazon;
-    - each item's own date and its precision; HUMAN_ACTION_REQUIRED for a wall;
+    - each item's own date and its precision; an item without its own date is dated by its PAGE's publish date or withheld
+      (`source_id` null) — never dated at read time (the audit's HIGH bug, 11.493); HUMAN_ACTION_REQUIRED for a wall, and a read
+      that returned nothing spends no budget; every read names a search intent; proxied callers refused;
     - OpenCLI on the host through its browser bridge (the owner's Chrome, the owner's word 2026-09-25: "Yes, use my Chrome").
   - **R1** — Trail HR7 (two data rows, ADR-070) re-pinned; the three M1 envelopes re-recorded (the owner's word). The Hermes
     receipt builder keys sources by (page, publish date).
@@ -62,7 +65,8 @@ historical, never an instruction.
   C3 → L5 → …
 - Document RAG stays paused (S5–S7, S9).
 
-### Completed Since Last Bootstrap (11.489–11.492)
+### Completed Since Last Bootstrap (11.489–11.493)
+- **11.493 the audit's fixes:** the owner's read-only intent audit (1 high, 5 medium, 1 low + exposure) → fixed with the owner's "yes".
 - **11.492 R1:** Trail HR7 re-pinned; M1 envelopes re-recorded; comment dates per comment in the Hermes receipt builder.
 - **11.491 R8:** Polymath-hosted research reads (+ Amazon listings, the reviewed subprocess call).
 - **11.490 R2–R5:** harness-neutral research, comment channels, CJ alongside Alibaba, the guide over MCP, the A-track.
@@ -100,6 +104,8 @@ historical, never an instruction.
 - DEFERRED as before: the fleet-DB test files; nothing BLOCKED.
 
 ### Proof Status
+- **11.493 audit fixes:** UNIT_PROVEN (42 + 7 + 612) + the stale-YouTube case REJECTED by the pinned TrailSignal core + readers
+  EXECUTED live read-only (YouTube, Instagram, TikTok). Not merged.
 - **11.492 R1:** UNIT_PROVEN + WORKTREE_INTEGRATION_PROVEN (486 tests incl. tests/contracts whole; the harvest → receipt →
   TrailSignal test RED at 829a0ab, GREEN at 494905a; the live check's admission half at the new pin). Not merged.
 - **11.491 R8:** UNIT_PROVEN (37 tests, mutation-checked) + every reader EXECUTED read-only against the owner's Chrome (probes,

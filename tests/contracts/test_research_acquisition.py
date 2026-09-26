@@ -7,6 +7,10 @@ no network):
     no write command;
   * WHAT IS TRUE: one source per (page, publish date), each comment's own date and its precision, no handle on the wire, a wall is
     HUMAN_ACTION_REQUIRED and never a read.
+The audit of 2026-09-25 (the owner's "yes") added: an undated comment is dated by its page (or withheld), never at the moment of
+reading; YouTube is read in our own tab (full text, the video's date, whether more exist); Instagram's post-date row is never a
+comment and a signed-out post view is a sign-in requirement; a read that returned nothing spends no query; every read names a search
+intent; TikTok's login modal is a wall; a request relayed by a proxy is refused.
 """
 import ast
 import asyncio
@@ -119,8 +123,11 @@ def test_a_read_needs_the_open_research_step_and_stays_inside_it():
     for _ in range(2):
         S.acquire(principal_id=None, action=budgeted, operation="comments", target=VIDEO, search_intent_id="si_comments", backend=ok)
     with pytest.raises(S.AcquisitionRefused) as exc:
-        S.acquire(principal_id=None, action=budgeted, operation="comments", target=VIDEO, backend=ok)
+        S.acquire(principal_id=None, action=budgeted, operation="comments", target=VIDEO, search_intent_id="si_comments", backend=ok)
     assert exc.value.status == 429 and exc.value.code == "QUERY_BUDGET_SPENT" and len(ok.reads) == 2
+    with pytest.raises(S.AcquisitionRefused) as exc:
+        S.acquire(principal_id=None, action=_action(tag="no-intent"), operation="comments", target=VIDEO, backend=ok)
+    assert exc.value.status == 422 and exc.value.code == "MISSING_SEARCH_INTENT"
     assert S.acquire(principal_id=None, action=None, operation="catalog", target="", backend=ok)["owner_only"] is True
 
 
@@ -143,7 +150,8 @@ def test_each_comment_keeps_its_own_date_and_says_how_precise_it_is():
     assert by["my lens fogged up in the rain"]["source_id"] == by["same, gave up and used a bag"]["source_id"]      # same page, same date: one row
     rel = by["3 years later still true"]
     assert rel["published_at"] is None and rel["date_precision"] == "relative" and rel["date_shown"] == "3 weeks ago"
-    assert src[rel["source_id"]]["published_at_if_known"] is None                                                    # never turned into a date
+    assert rel["source_id"] is None and rel["source_date"] == "none"            # never turned into a date, never dated at reading time
+    assert any("not receipt-ready" in x for x in out["limitations"]) and any("untrusted page text" in x for x in out["limitations"])
     assert {s["url"] for s in out["sources"]} == {VIDEO} and {s["source_class"] for s in out["sources"]} == {"video_platform"}
     assert all(s["retrieved_at"] == "2026-09-25T20:00:00Z" for s in out["sources"])
     wire = json.dumps(out)
@@ -152,26 +160,49 @@ def test_each_comment_keeps_its_own_date_and_says_how_precise_it_is():
     assert out["tool_trace"] == {"search_intent_id": "si_comments", "tool_class": "polymath.acquire/comments", "query_count": 1}
     assert re.fullmatch(r"acq_[0-9a-f]{24}", out["acquisition_id"]) and any("relative age" in x for x in out["limitations"])
     assert any("read 4 of 237" in x for x in out["limitations"])
+    dated = S.acquire(principal_id=None, action=_action(tag="page-dated"), operation="comments", target=VIDEO, search_intent_id="si_comments",
+                      backend=Recorded(dict(raw, page_published_at="2026-06-10T19:26:26Z")))
+    rel2 = next(i for i in dated["items"] if i["excerpt"] == "3 years later still true")
+    assert rel2["source_date"] == "page" and rel2["published_at"] is None
+    assert {s["source_id"]: s for s in dated["sources"]}[rel2["source_id"]]["published_at_if_known"] == "2026-06-10T19:26:26Z"
+    assert any("dated by the page's publish date" in x for x in dated["limitations"])
 
 
 @pytest.mark.parametrize("state,words", [("human_check", "human check"), ("sign_in", "sign-in")])
 def test_a_wall_is_a_human_action_and_never_a_read(state, words):
     out = S.acquire(principal_id=None, action=_action(tag=state), operation="listings", target="camera rain cover", site="cjdropshipping.com",
-                    backend=Recorded({"state": state, "page_url": "https://cjdropshipping.com/search/camera+rain+cover.html"}))
+                    search_intent_id="si_comments", backend=Recorded({"state": state, "page_url": "https://cjdropshipping.com/search/camera+rain+cover.html"}))
     assert out["status"] == "HUMAN_ACTION_REQUIRED" and out["items"] == [] and out["sources"] == []
     assert out["human_action"]["kind"] == state and out["human_action"]["retry"] is True and "cjdropshipping.com" in out["human_action"]["instruction"]
     assert any(words in x and "not bypassed" in x for x in out["limitations"])
+    assert out["budget"]["refunded"] is True and out["budget"]["queries_used_here"] == 0 and out["tool_trace"]["query_count"] == 0
+
+
+def test_a_person_can_act_and_the_caller_can_call_again_without_spending_the_budget():
+    step = _action(tag="waits", budget={"max_queries": 2})
+    wall = Recorded({"state": "human_check"})
+    for _ in range(5):                                                   # the owner has not passed the check yet
+        assert S.acquire(principal_id=None, action=step, operation="listings", target="rain cover", site="cjdropshipping.com",
+                         search_intent_id="si_comments", backend=wall)["status"] == "HUMAN_ACTION_REQUIRED"
+    read = S.acquire(principal_id=None, action=step, operation="listings", target="rain cover", site="cjdropshipping.com",
+                     search_intent_id="si_comments", backend=Recorded({"state": "ok", "records": []}))
+    assert read["status"] == "EMPTY" and read["budget"]["queries_used_here"] == 1       # the check passed: the read goes through
+    with pytest.raises(S.AcquisitionRefused) as exc:                                  # attempts stop at three times the budget
+        S.acquire(principal_id=None, action=step, operation="listings", target="rain cover", site="cjdropshipping.com",
+                  search_intent_id="si_comments", backend=wall)
+    assert exc.value.code == "ATTEMPTS_SPENT"
 
 
 def test_listings_are_one_source_each_and_search_results_are_never_sources():
     listing = O.OpenCLIBackend._listing("https://www.alibaba.com/product-detail/x_1.html", "Rain cover",
                                         "Rain cover\n$3.20 - $4.10\nMin. order: 500 pieces\nNingbo Example Trading Co., Ltd.\n5 yrs")
     out = S.acquire(principal_id=None, action=_action(tag=3), operation="listings", target="rain cover", site="alibaba.com",
-                    backend=Recorded({"state": "ok", "records": [listing, dict(listing, url="https://www.alibaba.com/product-detail/x_2.html", ref="x2")]}))
+                    search_intent_id="si_comments", backend=Recorded({"state": "ok", "records": [listing, dict(listing, url="https://www.alibaba.com/product-detail/x_2.html", ref="x2")]}))
     assert [s["source_class"] for s in out["sources"]] == ["supplier_listing"] * 2 and all(s["published_at_if_known"] is None for s in out["sources"])
+    assert "source_date" not in out["items"][0]                        # a listing is observed as it is when read: it keeps its source
     assert out["items"][0]["listing"]["price_as_listed"] == "$3.20 - $4.10" and out["items"][0]["date_precision"] == "none"
     found = S.acquire(principal_id=None, action=_action(tag=4), operation="web_search", target="rain cover lens fog",
-                      backend=Recorded({"state": "ok", "records": [{"url": "https://example.org/a", "title": "A", "snippet": "s"}]}))
+                      search_intent_id="si_comments", backend=Recorded({"state": "ok", "records": [{"url": "https://example.org/a", "title": "A", "snippet": "s"}]}))
     assert found["sources"] == [] and found["items"][0]["kind"] == "result" and any("leads, not evidence" in x for x in found["limitations"])
 
 
@@ -190,7 +221,8 @@ def test_listing_cards_parse_as_the_page_shows_them(card, expected):
 @pytest.mark.parametrize("page,expected", [
     ({"url": "https://frontend.cjdropshipping.com/egg/cj/validation.html?rd=x", "title": "Human verification", "text": "We would like to make sure you are not a robot."}, "human_check"),
     ({"url": "https://www.instagram.com/accounts/login/?next=%2Fp%2Fx%2F", "title": "Login", "text": ""}, "sign_in"),
-    ({"url": VIDEO, "title": "(3)TikTok - Make Your Day", "text": "it's still raining"}, None)])
+    ({"url": VIDEO, "title": "(3)TikTok - Make Your Day", "text": "it's still raining"}, None),
+    ({"url": VIDEO, "title": "TikTok - Make Your Day", "text": "it's still raining", "login_prompt": True}, "sign_in")])
 def test_walls_are_recognised_from_the_page_state(page, expected):
     assert O.blocked(page) == expected
 
@@ -208,7 +240,64 @@ def test_the_backend_calls_only_read_commands():
             elif first not in ("doctor",) and len(consts) >= 2 and re.fullmatch(r"[a-z0-9-]+", first):
                 site_cmds.add((first, consts[1]))
     assert verbs == {"open", "eval", "close"}, verbs
-    assert site_cmds == {("duckduckgo", "search"), ("youtube", "comments"), ("amazon", "search")}, site_cmds
+    assert site_cmds == {("duckduckgo", "search"), ("amazon", "search")}, site_cmds
+
+
+def _backend_with_tab(page, data):
+    b = O.OpenCLIBackend()
+    b._in_tab = lambda url, settle, js: (page, data, "2026-09-25T21:00:00Z")
+    return b
+
+
+def test_youtube_is_read_whole_with_the_video_date_and_says_when_more_exist():
+    yt = S.resolve("comments", "https://www.youtube.com/watch?v=o1t-Km5cfo0")
+    long_text = "the cover blocks the eyepiece " * 20                           # 600 characters: never cut at 300
+    data = {"status": 200, "published": "2017-08-19T01:08:16-07:00", "has_more": True,
+            "comments": [{"id": "Ugx1", "text": long_text, "age": "2 years ago", "author": "@viewer", "likes": "15"}]}
+    raw = _backend_with_tab({"url": yt.url, "title": "video", "text": "", "login_prompt": False}, data)._youtube_comments(yt, 50)
+    assert raw["complete"] is False and raw["page_published_at"] == "2017-08-19T08:08:16Z" and raw["records"][0]["text"] == long_text
+    out = S.shape(yt, raw, action=_action(tag="yt"), search_intent_id="si_comments", retrieved_at=raw["retrieved_at"], used=1, cap=3, limit=50)
+    item, src = out["items"][0], out["sources"][0]
+    assert out["status"] == "PARTIAL" and item["source_date"] == "page" and src["published_at_if_known"] == "2017-08-19T08:08:16Z"
+    assert len(item["excerpt"]) == len(long_text.strip()) and item["date_shown"] == "2 years ago"
+
+
+INSTAGRAM_SIGNED_IN = {"blocks": [
+    {"datetime": "2025-11-15T18:26:42.000Z", "shown": "44w", "block": "georges.camera\n \n44w\nWe ain't electronic engineers, but water is really bad for electronics."},
+    {"datetime": "2025-11-17T08:08:38.000Z", "shown": "44w", "block": "myownbeat\n \n44w\nAlso love the 3rd one!\n1 like\nReply"},
+    {"datetime": "2025-11-15T18:26:40.000Z", "shown": "November 15, 2025", "block": "233\n8\n2\nNovember 15, 2025"},
+    {"datetime": "2025-11-17T08:08:38.000Z", "shown": "44w", "block": "myownbeat\n \n44w\nAlso love the 3rd one!\n1 like\nReply"}]}
+INSTAGRAM_SIGNED_OUT = {"blocks": [
+    {"datetime": "2025-11-15T18:26:40.000Z", "shown": "November 15, 2025",
+     "block": "Log In\nSign Up\nNever miss a post from georges.camera\nSign up for Instagram to stay in the loop.\nSign up\nLog in\ngeorges.camera"}]}
+
+
+def test_instagram_post_date_row_is_the_page_date_and_a_signed_out_view_is_a_sign_in():
+    ig = S.resolve("comments", "https://www.instagram.com/p/DRFkr7rkvUJ/")
+    raw = _backend_with_tab({"url": ig.url, "title": "Instagram", "text": "georges.camera"}, INSTAGRAM_SIGNED_IN)._instagram_comments(ig, 20)
+    assert [(r["kind"], r["author"]) for r in raw["records"]] == [("caption", "georges.camera"), ("comment", "myownbeat"), ("comment", "myownbeat")]
+    assert raw["page_published_at"] == "2025-11-15T18:26:40Z"                  # the post's own date, never a comment
+    shaped = S.shape(ig, raw, action=_action(tag="ig"), search_intent_id="si_comments", retrieved_at=raw["retrieved_at"], used=1, cap=3, limit=20)
+    assert [i["excerpt"] for i in shaped["items"]].count("Also love the 3rd one!") == 1   # the post view renders it twice: one item
+    out = _backend_with_tab({"url": ig.url, "title": "Instagram", "text": "Log In Sign Up Never miss a post"}, INSTAGRAM_SIGNED_OUT)
+    assert out._instagram_comments(ig, 20)["state"] == "sign_in"
+
+
+def test_a_request_relayed_by_a_proxy_is_refused(monkeypatch):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from orchestrator.api import acquisition as R
+    monkeypatch.setattr(R, "tx", lambda: contextlib.nullcontext(None))
+    monkeypatch.setattr(R.service, "assert_owner", lambda conn, run_id, principal: None)
+    monkeypatch.setattr(R, "open_harness_action", lambda conn, run_id: _action(tag="proxy"))
+    monkeypatch.setattr(S, "default_backend", lambda: Recorded({"state": "ok", "records": []}))
+    app = FastAPI()
+    app.include_router(R.router)
+    client = TestClient(app)
+    for headers in ({"X-Forwarded-For": "203.0.113.9"}, {"X-Forwarded-Host": "rag.example"}, {"Forwarded": "for=203.0.113.9"}):
+        r = client.post("/adapter/adr_x/acquire", json={"operation": "catalog"}, headers=headers)
+        assert r.status_code == 403 and r.json()["detail"]["code"] == "PROXIED_CALLER"
+    assert client.post("/adapter/adr_x/acquire", json={"operation": "catalog"}).status_code == 200      # the MCP servers call directly
 
 
 def _load(name, rel):

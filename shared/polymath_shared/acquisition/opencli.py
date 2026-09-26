@@ -3,10 +3,12 @@
 OpenCLI runs on the host that holds the owner's browser: its bridge extension in that browser and its daemon on this machine. It is a
 SEPARATELY installed tool, not part of this repository: `POLYMATH_ACQUISITION_OPENCLI` names the binary, else the PATH, else
 Homebrew's path. What this module does with it, and nothing else:
-  * site commands that only READ (web search; YouTube comments; marketplace search), called with fixed arguments and never through a
-    shell;
+  * site commands that only READ (web search; marketplace search), called with fixed arguments and never through a shell;
   * for other pages, a browser session of its OWN (a fresh background tab, always closed afterwards) that opens a validated URL and
-    evaluates a fixed, read-only script: the site's own comment list, the page's timestamps, the listing cards;
+    evaluates a fixed, read-only script: the site's own comment list (YouTube too: OpenCLI's YouTube command reads one page and cuts
+    each comment at 300 characters), the page's timestamps, the listing cards;
+  * every comment reader also returns the PAGE's own publish date (`page_published_at`): an item whose own date is not shown is dated
+    by it (the earliest it can be), never by the moment it was read;
   * at most POLYMATH_ACQUISITION_CONCURRENCY reads at a time (default 2), so the owner's browser is never flooded.
 A sign-in wall or a human-verification page is DETECTED and reported (`state`), never worked around. The comment, like, follow,
 post and purchase commands OpenCLI also has are never called."""
@@ -53,9 +55,22 @@ def blocked(state: dict[str, Any]) -> str | None:
     url = str(state.get("url") or "").lower()
     if "human verification" in text or "not a robot" in text or "captcha" in text or "/validation" in url or "/captcha" in url:
         return "human_check"
-    if "/accounts/login" in url or "/login" in url.split("?")[0] or (state.get("wall") and not state.get("content")):
+    if "/accounts/login" in url or "/login" in url.split("?")[0] or state.get("login_prompt") or (state.get("wall") and not state.get("content")):
         return "sign_in"
     return None
+
+
+#: a sign-in prompt shown OVER the content (TikTok's modal: its comment list still answers a signed-out visitor, the owner's rule
+#: says a login wall is never read through). Matched in the page's whole visible text; hidden templates are not visible text.
+LOGIN_PROMPT = r"log in to tiktok|log in to continue|sign in to continue"
+
+
+def _iso_text(value: Any) -> str | None:
+    """An ISO-8601 date-time with an offset -> UTC `...Z` (a page's own publish date); anything else -> None."""
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except (TypeError, ValueError):
+        return None
 
 
 class Disabled:
@@ -109,7 +124,8 @@ class OpenCLIBackend:
         return value
 
     def _page(self, session: str) -> dict[str, Any]:
-        got = self._eval(session, "JSON.stringify({url: location.href, title: document.title, text: document.body ? document.body.innerText.slice(0, 600) : ''})")
+        got = self._eval(session, "JSON.stringify({url: location.href, title: document.title, text: document.body ? document.body.innerText.slice(0, 600) : '',"
+                                  " login_prompt: document.body ? /%s/i.test(document.body.innerText) : false})" % LOGIN_PROMPT)
         return got if isinstance(got, dict) else {}
 
     def _session(self) -> str:
@@ -186,7 +202,10 @@ class OpenCLIBackend:
             records.append({"kind": "comment", "ref": c.get("cid"), "text": c.get("text"), "published_at": _iso(c.get("created")),
                             "precision": "exact" if _iso(c.get("created")) else "none", "author": c.get("author"), "likes": _int(c.get("likes"))})
         return {"state": "ok", "page_url": t.url, "retrieved_at": retrieved, "records": records, "total": _int(data.get("total")),
-                "complete": (not data.get("has_more")) if data.get("has_more") is not None else None}
+                "complete": (not data.get("has_more")) if data.get("has_more") is not None else None, "page_published_at": _iso(video.get("created"))}
+
+    #: the post's own date row under a post ("November 15, 2025"); comment rows show a short age ("44w", "2d")
+    _FULL_DATE = re.compile(r"[A-Z][a-z]+ \d{1,2}(?:, \d{4})?|\d{1,2} [A-Z][a-z]+(?: \d{4})?")
 
     def _instagram_comments(self, t: Target, limit: int) -> dict[str, Any]:
         js = ("JSON.stringify({blocks: Array.from(document.querySelectorAll('time[datetime]')).map(t => { let n = t;"
@@ -195,34 +214,64 @@ class OpenCLIBackend:
         page, data, retrieved = self._in_tab(t.url or "", 5.0, js)
         if (why := blocked(page)):
             return {"state": why, "page_url": t.url, "retrieved_at": retrieved}
-        blocks = (data or {}).get("blocks") if isinstance(data, dict) else None
-        if not blocks:
-            text = str(page.get("text") or "").lower()
-            state = "sign_in" if ("log in" in text and "sign up" in text) else "unavailable"
-            return {"state": state, "page_url": t.url, "retrieved_at": retrieved, "note": "no dated comment on the page"}
+        blocks = [b for b in ((data or {}).get("blocks") if isinstance(data, dict) else None) or [] if isinstance(b, dict)]
+        # the post's own date row is the PAGE's date, never an item (its block is the likes / shares line)
+        footer = [b for b in blocks if self._FULL_DATE.fullmatch(str(b.get("shown") or "").strip())]
+        page_date = _iso_text(footer[-1].get("datetime")) if footer else None
+        rows = [b for b in blocks if b not in footer]
         records = []
-        for i, b in enumerate(blocks[: limit + 1]):
+        for i, b in enumerate(rows[: limit + 1]):
             lines = [ln.strip() for ln in str(b.get("block") or "").split("\n") if ln.strip()]
             shown = str(b.get("shown") or "").strip()
             author = lines[0] if lines else None
             body = [ln for ln in lines[1:] if ln != shown and ln not in ("Reply", "Edited", "•", "Follow")
                     and not re.fullmatch(r"(?:\d[\d,.]*[km]?\s+likes?|View all \d+ repl(?:y|ies)|See translation|Original audio)", ln, re.I)]
+            if not author or not re.search(r"[A-Za-z]", author) or not re.search(r"[A-Za-z]", " ".join(body)):
+                continue                                              # a counts line, never a comment
+            published = _iso_text(b.get("datetime"))
             records.append({"kind": "caption" if i == 0 else "comment", "ref": f"{b.get('datetime')}|{author}", "text": " ".join(body),
-                            "published_at": _iso(datetime.fromisoformat(str(b["datetime"]).replace("Z", "+00:00")).timestamp()) if b.get("datetime") else None,
-                            "precision": "exact" if b.get("datetime") else "none", "author": author})
-        records = [r for r in records if r["text"]]
+                            "published_at": published, "precision": "exact" if published else "none", "author": author})
+        if not records:
+            text = str(page.get("text") or "").lower()
+            signed_out = "log in" in text and "sign up" in text           # the signed-out post view shows no comment rows at all
+            return {"state": "sign_in" if signed_out else "unavailable", "page_url": t.url, "retrieved_at": retrieved,
+                    "note": "the post view shows no dated comment", "page_published_at": page_date}
         return {"state": "ok", "page_url": t.url, "retrieved_at": retrieved, "records": records, "total": None, "complete": None,
-                "notes": ["the comments the page shows without paging (usually the first few); the caption is the post's own text"]}
+                "page_published_at": page_date,
+                "notes": ["the comments the post view shows without paging (usually the first few); the caption is the post's own text"]}
 
     def _youtube_comments(self, t: Target, limit: int) -> dict[str, Any]:
-        retrieved = now_iso()
-        rows = self._json(["youtube", "comments", t.url or "", "--limit", str(limit), "-f", "json"], timeout=READ_TIMEOUT_S)
-        if not isinstance(rows, list):
-            return {"state": "unavailable", "page_url": t.url, "retrieved_at": retrieved, "note": "no comment list (comments off, or the page did not load)"}
-        records = [{"kind": "comment", "ref": r.get("rank"), "text": r.get("text"), "published_at": None, "precision": "relative",
-                    "date_shown": r.get("time"), "author": r.get("author"), "likes": _int(r.get("likes"))} for r in rows if isinstance(r, dict)]
+        """The watch page's OWN comment request, in a tab of our own: OpenCLI's YouTube command reads one page, cuts each comment at
+        300 characters and never says whether more exist. YouTube shows a comment's age only as relative text."""
+        js = ("(async () => { const find = (o, k) => { if (!o || typeof o !== 'object') return null; if (k in o) return o[k];"
+              " for (const v of Object.values(o)) { const r = find(v, k); if (r) return r; } return null; };"
+              " const sections = []; const walk = (o) => { if (!o || typeof o !== 'object') return;"
+              " if (o.itemSectionRenderer && o.itemSectionRenderer.sectionIdentifier === 'comment-item-section') sections.push(o.itemSectionRenderer);"
+              " for (const v of Object.values(o)) walk(v); }; walk(window.ytInitialData || {});"
+              " const published = (document.querySelector('meta[itemprop=\"datePublished\"], meta[itemprop=\"uploadDate\"]') || {}).content || null;"
+              " const token = sections.length ? find(sections[0], 'token') : null;"
+              " if (!token) return JSON.stringify({status: 0, published, comments: [], has_more: false});"
+              " const r = await fetch('/youtubei/v1/next?prettyPrint=false', {method: 'POST', credentials: 'include', headers: {'content-type': 'application/json'},"
+              " body: JSON.stringify({context: ytcfg.get('INNERTUBE_CONTEXT'), continuation: token})}); const d = await r.json().catch(() => ({}));"
+              " const items = (d.onResponseReceivedEndpoints || []).flatMap(e => ((e.reloadContinuationItemsCommand || e.appendContinuationItemsAction || {}).continuationItems) || []);"
+              " const out = []; for (const mu of ((d.frameworkUpdates || {}).entityBatchUpdate || {}).mutations || []) { const p = (mu.payload || {}).commentEntityPayload;"
+              " if (p) out.push({id: (p.properties || {}).commentId || null, text: ((p.properties || {}).content || {}).content || '', age: (p.properties || {}).publishedTime || null,"
+              " author: (p.author || {}).displayName || null, likes: (p.toolbar || {}).likeCountNotliked || null}); }"
+              " return JSON.stringify({status: r.status, published, comments: out.slice(0, %d), has_more: items.some(i => i.continuationItemRenderer) || out.length > %d}); })()"
+              % (limit, limit))
+        page, data, retrieved = self._in_tab(t.url or "", 5.0, js)
+        if (why := blocked(page)):
+            return {"state": why, "page_url": t.url, "retrieved_at": retrieved}
+        if not isinstance(data, dict):
+            return {"state": "unavailable", "page_url": t.url, "retrieved_at": retrieved, "note": "the watch page did not answer"}
+        page_date = _iso_text(data.get("published"))
+        if data.get("status") not in (0, 200) or (data.get("status") == 0 and not data.get("comments")):
+            return {"state": "unavailable", "page_url": t.url, "retrieved_at": retrieved, "page_published_at": page_date,
+                    "note": "no comment list (comments off, or the page did not load)"}
+        records = [{"kind": "comment", "ref": c.get("id"), "text": c.get("text"), "published_at": None, "precision": "relative",
+                    "date_shown": c.get("age"), "author": c.get("author"), "likes": _int(c.get("likes"))} for c in data.get("comments") or []]
         return {"state": "ok", "page_url": t.url, "retrieved_at": retrieved, "records": records, "total": None,
-                "complete": None if len(records) >= limit else True}
+                "complete": not data.get("has_more"), "page_published_at": page_date}
 
     def _reddit_comments(self, t: Target, limit: int) -> dict[str, Any]:
         js = ("(async () => { const r = await fetch(location.pathname.replace(/\\/$/, '') + '.json?limit=%d&depth=1&raw_json=1', {credentials: 'include'});"
@@ -243,7 +292,7 @@ class OpenCLIBackend:
                     for c in data.get("comments") or []]
         total = _int(post.get("comments"))
         return {"state": "ok", "page_url": t.url, "retrieved_at": retrieved, "records": records, "total": total,
-                "complete": (total is not None and len(records) - 1 >= total)}
+                "complete": (total is not None and len(records) - 1 >= total), "page_published_at": _iso(post.get("created"))}
 
     def _listing_cards(self, url: str, settle: float, link_selector: str, stop: str) -> tuple[dict[str, Any], Any, str]:
         js = ("JSON.stringify(Array.from(document.querySelectorAll('%s')).map(a => { let c = a; for (let i = 0; i < 8 && c && !(%s).test(c.innerText || ''); i++) c = c.parentElement;"

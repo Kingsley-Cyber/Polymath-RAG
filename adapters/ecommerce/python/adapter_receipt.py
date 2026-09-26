@@ -278,6 +278,7 @@ def build_receipt(action: dict, *, observations: list | None = None, field_recor
         + [dict(x, _lane="supplier_candidate") for x in _supplier_items(supplier_candidates or [])]
     sources: dict[str, dict] = {}
     pages: set[str] = set()
+    page_dated_ids: set[str] = set()
     obs_out: list[dict] = []
     omitted: list[dict] = []
     notes: list[str] = []
@@ -300,8 +301,14 @@ def build_receipt(action: dict, *, observations: list | None = None, field_recor
         if why:
             omitted.append({"id": oid, "lane": it["_lane"], "reason": why}); continue
         # ONE source row per (page, publish date): comments under one video each keep their OWN date (TrailSignal anchors
-        # freshness on the source's date), and no item's date is lent to another. The budget counts pages, not rows.
-        sid = _sid("src_", url, it["published_at_if_known"] or "")
+        # freshness on the source's date), and no item's date is lent to another. The budget counts pages, not rows. An item whose
+        # own date is not shown (null; e.g. only "3 weeks ago") may carry its PAGE's publish date (`page_published_at`): the
+        # earliest it can be, so TrailSignal never sees it fresher than it is (it dates an undated source at the moment of reading).
+        page_date = it.get("page_published_at") if not it["published_at_if_known"] and _iso_ok(it.get("page_published_at")) else None
+        source_date = it["published_at_if_known"] or page_date
+        if page_date:
+            page_dated_ids.add(oid[:200])
+        sid = _sid("src_", url, source_date or "")
         if sid not in sources:
             if url not in pages and len(pages) >= max_sources:
                 omitted.append({"id": oid, "lane": it["_lane"], "reason": f"source budget reached ({max_sources})"}); continue
@@ -309,7 +316,7 @@ def build_receipt(action: dict, *, observations: list | None = None, field_recor
                 omitted.append({"id": oid, "lane": it["_lane"], "reason": f"source rows at the contract maximum ({SCHEMA_MAX['sources']})"}); continue
             pages.add(url)
             sources[sid] = {"source_id": sid, "url": url[:2000], "source_class": cls, "retrieved_at": it["retrieved_at"],
-                            "published_at_if_known": it["published_at_if_known"]}
+                            "published_at_if_known": source_date}
         if len(obs_out) >= max_obs:
             omitted.append({"id": oid, "lane": it["_lane"], "reason": f"observation budget reached ({max_obs})"}); continue
         tagged = [str(h) for h in it.get("hypothesis_ids") or []]
@@ -347,6 +354,10 @@ def build_receipt(action: dict, *, observations: list | None = None, field_recor
     lim = [_clip(x, LIMITATION_MAX) for x in limitations or [] if str(x or "").strip()]
     lim += [_clip(f"{n} harvested item(s) omitted from this receipt: {reason}", LIMITATION_MAX) for reason, n in sorted(by_reason.items())]
     lim += [_clip(n, LIMITATION_MAX) for n in notes]
+    page_dated = sum(1 for o in obs_out if o["observation_id"] in page_dated_ids)
+    if page_dated:
+        lim.append(_clip(f"{page_dated} item(s) without a date of their own are dated by their page's publish date (page_published_at): "
+                         "the earliest they can be", LIMITATION_MAX))
     if not obs_out:
         lim.append("no observation in this receipt: nothing harvested met the provenance contract (a finding, not a failure to hide)")
     receipt = {"action_id": action.get("action_id"), "run_id": action.get("run_id"), "harness_id": _clip(harness_id, 100),

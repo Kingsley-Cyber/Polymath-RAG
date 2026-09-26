@@ -2450,6 +2450,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("orchestrator/orchestrator/api/acquisition.py", "py", None),
     ("tests/contracts/test_research_acquisition.py", "py", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-hosted-acquisition.md", "md", None),
+    ("docs/wiki/work-log/2026-09-25-autoresearch-r8-audit-fixes.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-k1b-scope-echo.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),
