@@ -137,7 +137,7 @@ def resolve_http_scope(conn, req) -> "QueryScope":
     )
 
     try:
-        return resolve_query_scope(
+        scope = resolve_query_scope(
             conn,
             corpus_id=getattr(req, "corpus_id", None),
             corpus_ids=getattr(req, "corpus_ids", None),
@@ -157,6 +157,10 @@ def resolve_http_scope(conn, req) -> "QueryScope":
         raise HTTPException(status_code=422, detail={
             "error_code": "QUERY_SCOPE_AMBIGUOUS", "message": str(exc),
         })
+    # FRIENDS-ACCESS-V1 D5: a principal (a friend through Server A or the web boundary) is narrowed to its libraries;
+    # no principal = the owner / a trusted local caller, unchanged
+    from orchestrator.web_scope import narrow_scope
+    return narrow_scope(scope)
 
 
 def graph_expand_or_502(

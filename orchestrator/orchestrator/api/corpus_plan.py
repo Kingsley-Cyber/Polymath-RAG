@@ -150,6 +150,8 @@ async def retrieve_plan(req: PlanRequest) -> dict:
     corpus_ids = list(req.corpus_ids or ([req.corpus_id] if req.corpus_id else []))
     if not corpus_ids:
         raise HTTPException(status_code=422, detail="corpus_id or corpus_ids is required")
+    from orchestrator.web_scope import require_corpora
+    require_corpora(corpus_ids)  # FRIENDS-ACCESS-V1 D5
     from orchestrator.api.retrieve import _role_scope_or_422
     _role_scope_or_422(req)          # K1: a malformed scope is refused up front (each reformulation carries it on)
     plan = compile_plan(signal, req.communities, req.min_queries, req.max_queries)

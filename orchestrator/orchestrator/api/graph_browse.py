@@ -21,6 +21,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 
 from polymath_shared.db import tx
+from orchestrator.web_scope import require_corpus
 
 router = APIRouter()
 
@@ -39,6 +40,7 @@ def graph_entities(
     counts are mentions and distinct documents, so the ranking is "what this corpus
     actually talks about", not graph degree.
     """
+    require_corpus(corpus_id)  # FRIENDS-ACCESS-V1 D5
     like = f"%{q.strip()}%" if q.strip() else "%"
     with tx() as conn:
         rows = conn.execute(
@@ -81,6 +83,7 @@ def graph_entity_relationships(
     only source-attested relationships may appear as canonical truth, and `dropped`
     reports how many were withheld so the count is never silently wrong.
     """
+    require_corpus(corpus_id)  # FRIENDS-ACCESS-V1 D5
     try:
         from polymath_shared.stores import neo4j_driver
         driver = neo4j_driver()

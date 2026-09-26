@@ -50,6 +50,8 @@ async def adapter_list() -> dict:
 
 @router.post("/adapter/start")
 async def adapter_start(req: StartRequest) -> dict:
+    from orchestrator.web_scope import require_adapter_start
+    require_adapter_start(req.adapter_id, req.input, req.request_options)  # FRIENDS-ACCESS-V1 D5
     try:
         with tx() as conn:
             return service.start(conn, adapter_id=req.adapter_id, input_payload=req.input, request_options=req.request_options,

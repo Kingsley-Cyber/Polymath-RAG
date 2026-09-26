@@ -18,6 +18,13 @@ router = APIRouter()
 def queries(corpus_id: Optional[str] = None, kind: Optional[str] = None,
             limit: int = Query(20, ge=1, le=200),
             since_h: float = Query(24.0, gt=0, le=24 * 30)) -> dict:
+    from fastapi import HTTPException
+
+    from orchestrator.web_scope import allowed_corpora, require_corpus
+    if corpus_id:
+        require_corpus(corpus_id)  # FRIENDS-ACCESS-V1 D5
+    elif allowed_corpora() is not None:
+        raise HTTPException(422, {"error_code": "CORPUS_ID_REQUIRED", "message": "name one of your libraries"})
     with tx() as conn:
         rows = recent_queries(conn, corpus_id=corpus_id, kind=kind, limit=limit, since_h=since_h)
         summary = query_summary(conn, corpus_id=corpus_id, kind=kind, since_h=since_h)

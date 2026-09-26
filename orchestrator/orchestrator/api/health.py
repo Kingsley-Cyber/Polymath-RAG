@@ -35,8 +35,10 @@ async def semantic_readiness(corpus_id: str) -> dict:
     FACT/PROCEDURE/CONCEPT execution, summaries, corpus map, artifact
     projections — completed. Zero yield is completion; failure is not.
     """
+    from orchestrator.web_scope import require_corpus
     from polymath_shared.db import tx
     from polymath_shared.semantic_readiness import semantic_completion
+    require_corpus(corpus_id)  # FRIENDS-ACCESS-V1 D5
 
     with tx() as conn:
         row = conn.execute(

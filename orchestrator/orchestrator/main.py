@@ -56,6 +56,11 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from polymath_shared.principal_context import PrincipalContextMiddleware  # noqa: E402
 
 app.add_middleware(PrincipalContextMiddleware)
+# FRIENDS-ACCESS-V1 D3: the web boundary sits OUTSIDE the principal context (added after = wraps it), so the principal it
+# forwards for a signed-in friend is the one the routes see; direct loopback callers pass through unchanged
+from orchestrator.web_boundary import WebBoundaryMiddleware  # noqa: E402
+
+app.add_middleware(WebBoundaryMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
@@ -115,6 +120,9 @@ from orchestrator.api.adapter import router as adapter_router  # COGNITIVE-ADAPT
 app.include_router(adapter_router)
 from orchestrator.api.acquisition import router as acquisition_router  # AUTORESEARCH R8: Polymath-hosted research reads
 app.include_router(acquisition_router)
+from orchestrator.api.web_auth import router as web_auth_router  # noqa: E402
+
+app.include_router(web_auth_router)
 
 # Serve the built web UI at /ui when a build exists (single-port product).
 from pathlib import Path  # noqa: E402

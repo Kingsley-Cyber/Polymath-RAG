@@ -29,6 +29,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from polymath_shared.code.scope import echo_scope
+from orchestrator.web_scope import require_corpus
 
 router = APIRouter()
 
@@ -61,6 +62,7 @@ def compare(req: CompareRequest) -> dict:
     them in parallel would make the latency numbers meaningless (measured 2026-09-05:
     parallel support passes took p50 12s -> 31s).
     """
+    require_corpus(req.corpus_id)  # FRIENDS-ACCESS-V1 D5
     # One arm per requested public mode; never silently drop the final mode.
     modes = list(dict.fromkeys(m.upper() for m in req.modes))
     bad = [m for m in modes if m not in COMPARABLE_MODES]

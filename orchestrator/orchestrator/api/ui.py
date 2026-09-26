@@ -49,6 +49,7 @@ router = APIRouter()
 
 import os
 from polymath_shared.code.scope import echo_scope, scope_kwargs  # K1: pass a role scope only when it narrows; K1b: confirm it
+from orchestrator.web_scope import can_see, require_corpus, require_document
 
 OLLAMA_URL = os.environ.get("POLYMATH_OLLAMA_URL",
                             "http://127.0.0.1:11434")
@@ -168,7 +169,7 @@ def corpora(all: bool = False) -> dict:
         {"corpus_id": r[0], "purpose": r[1], "query_enabled": r[2],
          "documents": r[3], "query_ready": r[4],
          "name": r[5] or r[0]}
-        for r in rows if all or r[3] > 0 or r[1] == "production"
+        for r in rows if (all or r[3] > 0 or r[1] == "production") and can_see(r[0])  # FRIENDS-ACCESS-V1 D5
     ]}
 
 
@@ -275,6 +276,7 @@ def document_sections(doc_id: str) -> dict:
     ingests) falls back to the card's summary head — the tree always
     renders (PRD §2)."""
     with tx() as conn:
+        require_document(conn, doc_id)  # FRIENDS-ACCESS-V1 D5
         rows = conn.execute(
             """
             SELECT rs.parent_id, rs.plain_summary, rs.summary_text,
@@ -316,6 +318,7 @@ def document_sections(doc_id: str) -> dict:
 
 @router.get("/documents")
 def documents(corpus_id: str) -> dict:
+    require_corpus(corpus_id)  # FRIENDS-ACCESS-V1 D5
     with tx() as conn:
         row = conn.execute("SELECT 1 FROM corpora WHERE corpus_id=%s",
                            (corpus_id,)).fetchone()
@@ -399,6 +402,7 @@ def document_status_view(doc_id: str) -> dict:
     lane health, and the ordered blocker list. Read-only durable Postgres; no provider call."""
     from polymath_shared.document_status import document_status
     with tx() as conn:
+        require_document(conn, doc_id)  # FRIENDS-ACCESS-V1 D5
         st = document_status(conn, doc_id=doc_id, detail=True)
     if not st.get("found"):
         raise HTTPException(404, {"error_code": "DOCUMENT_UNKNOWN",
@@ -451,6 +455,7 @@ def documents_summary(corpus_id: str) -> dict:
     Profile / Ready) — one bounded batch of corpus-level aggregates (no N+1). The frontend
     merges this into the /documents rows by doc_id."""
     from polymath_shared.document_status import corpus_document_summaries
+    require_corpus(corpus_id)  # FRIENDS-ACCESS-V1 D5
     with tx() as conn:
         return {"corpus_id": corpus_id, "summaries": corpus_document_summaries(conn, corpus_id=corpus_id)}
 
@@ -468,6 +473,7 @@ async def upload(corpus_id: str = Form(...),
     transport, never pipeline state, and Postgres never holds the
     bytes. Same submit_intake writer path as /intake; run identity
     stays content-addressed via the sha256 inside the payload."""
+    require_corpus(corpus_id, write=True)  # FRIENDS-ACCESS-V1 D5
     from polymath_shared.blob_spool import spool_write
     from polymath_shared.intake_submission import (
         canonical_intake_payload,
@@ -616,6 +622,8 @@ def _litellm_credentials(model: str) -> dict:
 def delete_document(doc_id: str, confirm: str = "") -> dict:
     """DELETE-LOCK-TIMEOUT-V1 wrapper: a bounded wait on in-flight stage
     locks, 409 `runs_in_flight` instead of a silent hang."""
+    with tx() as conn:
+        require_document(conn, doc_id, write=True)  # FRIENDS-ACCESS-V1 D5
     try:
         return _delete_document_tx(doc_id, confirm)
     except Exception as exc:                      # noqa: BLE001
