@@ -146,7 +146,7 @@ historical, never an instruction.
    in a terminal (ff-only merge, the session secret into `.env` once, UI build, bounce, King's password at a hidden prompt — 10+
    characters, never in chat — then the Caddy switch). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
    (must print `"ok": true`), the owner signs in and adds the first friend in Settings, the F6 close-out (register row, work-log,
-   CONTINUITY, memory). If a step fails the script stops there; re-running it skips the steps already done.
+   CONTINUITY, memory). If a step fails the script stops there; re-running is safe (done steps say so; the build and restart run again).
 4. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
    TREE, CONTINUITY), mapping the R7 gap rows (A-09..A-14, S-16..S-18, O-06, H-08) into its slices or naming them out of scope.
 

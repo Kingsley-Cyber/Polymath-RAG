@@ -6,7 +6,8 @@
 #   4 restart the fleet (waits until READY)
 #   5 King's password (asked at a hidden prompt; skipped when already set)
 #   6 Caddy: drop the shared basic-auth, strip any principal header a browser sends; restart the Caddy service
-# Idempotent: a step already done says so. Stops at the first failure (nothing later runs).
+# Safe to re-run: the merge, secret, password and Caddy steps say when they are already done (the build and restart run again).
+# Stops at the first failure (nothing later runs).
 set -euo pipefail
 ROOT=/Users/king/Documents/polymath-rebuild/polymath-v4
 CADDYFILE="${CADDYFILE:-$HOME/.hermes/rag-proxy/Caddyfile}"
@@ -37,7 +38,7 @@ say "4/6 restart the fleet"
 bash scripts/bounce_fleet.sh
 
 say "5/6 King's password"
-if "$PY" scripts/web_accounts.py --file "$REG" list | grep -q '"owner_login": "set"'; then
+if "$PY" scripts/web_accounts.py --file "$REG" list | grep '"owner_login": "set"' >/dev/null; then
   echo "already set"
 elif [ -t 0 ]; then
   "$PY" scripts/web_accounts.py --file "$REG" set-owner-password
