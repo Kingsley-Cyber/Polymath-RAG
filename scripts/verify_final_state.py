@@ -813,7 +813,8 @@ def check_frontend() -> None:
                  f"credential, which must not be guessed.")
         elif code2 == 200:
             gate("frontend_real_url_functionally_verified", PASS,
-                 f"{PUBLIC}/v2/ -> HTTP 200 (no auth wall); functional checks apply")
+                 f"{PUBLIC}/v2/ -> HTTP 200 (the app shell loads; since FRIENDS-ACCESS-V1 each person "
+                 f"signs in inside the app); functional checks apply")
         else:
             gate("frontend_real_url_functionally_verified", FAIL,
                  f"{PUBLIC}/v2/ -> HTTP {code2} (expected 200, or 401 for the auth wall)")

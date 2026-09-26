@@ -13,6 +13,9 @@ CADDYFILE="${CADDYFILE:-$HOME/.hermes/rag-proxy/Caddyfile}"
 CADDY_LABEL=com.hermes.rag-caddy
 PY="$ROOT/.venv/bin/python"
 cd "$ROOT"
+# the accounts file the orchestrator reads (from .env), so King's password lands where the server looks
+REG="$(grep -m1 '^POLYMATH_MCP_PRINCIPALS_FILE=' .env | cut -d= -f2- || true)"
+REG="${REG:-$HOME/PolymathRuntime/polymath-v4-mcp-principals.json}"
 say() { printf '\n== %s\n' "$*"; }
 
 say "1/6 merge feat/friends-access into production"
@@ -34,13 +37,13 @@ say "4/6 restart the fleet"
 bash scripts/bounce_fleet.sh
 
 say "5/6 King's password"
-if "$PY" scripts/web_accounts.py list | grep -q '"owner_login": "set"'; then
+if "$PY" scripts/web_accounts.py --file "$REG" list | grep -q '"owner_login": "set"'; then
   echo "already set"
 elif [ -t 0 ]; then
-  "$PY" scripts/web_accounts.py set-owner-password
+  "$PY" scripts/web_accounts.py --file "$REG" set-owner-password
 else
   echo "not set, and there is no terminal to ask in. Run this, then run this script again:"
-  echo "  cd $ROOT && .venv/bin/python scripts/web_accounts.py set-owner-password"
+  echo "  cd $ROOT && .venv/bin/python scripts/web_accounts.py --file $REG set-owner-password"
   exit 3
 fi
 

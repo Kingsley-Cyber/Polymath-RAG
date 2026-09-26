@@ -23,12 +23,14 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-26 (FRIENDS-ACCESS-V1 admitted; AUTORESEARCH complete) — **ACTIVE MISSION: FRIENDS-ACCESS-V1 (register 11.497; the owner's live instruction 2026-09-26): friends use rag.kingsleylab.xyz, its tools and its MCP with their OWN logins (King = admin), a Settings tab to generate up to 3 API keys each and copy a connect prompt for their agent harness; friends may do everything; no daily cap; the three locks stay. Slices F0 ✔ → F1 accounts + sessions → F2 the web boundary → F3 keys + admin → F4 the Settings UI → F5 go-live kit → F6 live (the owner's Run button). Then the ideation worker pack.**
+## CURRENT — 2026-09-26 (FRIENDS-ACCESS-V1 admitted; AUTORESEARCH complete) — **ACTIVE MISSION: FRIENDS-ACCESS-V1 (register 11.497; the owner's live instruction 2026-09-26): friends use rag.kingsleylab.xyz, its tools and its MCP with their OWN logins (King = admin), a Settings tab to generate up to 3 API keys each and copy a connect prompt for their agent harness; friends may do everything; no daily cap; the three locks stay. Slices F0 ✔ → F1 ✔ accounts + sessions → F2 ✔ the web boundary → F3 ✔ keys + admin → F4 ✔ the Settings UI → F5 ✔ go-live kit (all on `feat/friends-access`, registers 11.498–11.502) → **F6 live = the owner's ONE Run button** (`scripts/friends_access_go_live.sh`). Then the ideation worker pack.**
 
 ### Repository State
 - Branch `production` = the close-out commit on top of `b3daddd0` (R1 + R8 + the audit fixes, merged by the owner's Run button at
   22:35 MDT, 2026-09-25). `origin/production` = `production`: the owner's "PUSH POLYMATH" (2026-09-26) pushed `63816479..de1734f8` and this record. Pushes are the owner's word, per push.
 - `feat/autoresearch-sources-harness` (worktree `pmv4-autoresearch`) = `b3daddd0`, fully merged; the owner decides whether to remove it.
+- **`feat/friends-access` (worktree `pmv4-friends`)** = F1–F5 on top of `ccd97a4a`, NOT merged: fast-forward only, by the owner's
+  Run button. `production` has 2 unpushed commits (`2edd9e52`, `ccd97a4a`); the branch adds its own after the merge.
 - **TrailSignal** `~/trail-signal-os-worktrees/HR7` (branch `agent/HR7`, `494905a`, clean, NOT pushed): the owner's word. Leave
   `~/trail-signal-os-worktrees/SRC1` alone. Never touch the Trail main checkout.
 - **Fleet:** 26 healthy / 13 types; 25 workers on bundle `15247f145355` (the 22:35 bounce) and `adapter_step` on `785fd9efedf4`: the
@@ -40,7 +42,9 @@ historical, never an instruction.
   never touch), an old stash (leave it).
 
 ### Active Mission
-- **None in build.** AUTORESEARCH-SOURCES-AND-HARNESS-V1 is COMPLETE (the plan's status line; R6 DONE 11.494, R7 DONE 11.495).
+- **FRIENDS-ACCESS-V1** (`docs/wiki/plans/FRIENDS-ACCESS-V1.md`): F1–F5 built and tested on `feat/friends-access`; F6 waits for the
+  owner's Run button. Locks kept: `research_acquire` owner-only, no host-path uploads, admin owner-only.
+- AUTORESEARCH-SOURCES-AND-HARNESS-V1 is COMPLETE (the plan's status line; R6 DONE 11.494, R7 DONE 11.495).
 - **The R7 run** `adr_be4337c6c5c5b1b9b51f781ff4c2b095` (its artifacts live OUTSIDE the repository, field quotes included:
   `/Users/king/Documents/polymath-rebuild/handoff-drafts/e2e-runs/2026-09-25-r7/` — driver `r7.py`, one builder script per
   submission, every acquisition result, `journal.json`, `result.json`, `dossier.html`): 3 field rounds (24 + 24 + 22 queries),
@@ -138,7 +142,11 @@ historical, never an instruction.
    - O-08: find the client that keeps calling the public MCP URL without a valid key;
    - H-09: upgrade Homebrew Codex; decide on Gemini (the account's CLI turns are refused);
    - a bounce at a quiet moment unifies the bundle hash (optional).
-3. **FRIENDS-ACCESS-V1 (active, `docs/wiki/plans/FRIENDS-ACCESS-V1.md`):** build F1 → F5 on a branch in a worktree (`feat/friends-access`), each slice with its tests and paperwork; F6 = the owner's ONE Run button (merge + bounce + Caddy + frontend build), then the owner sets King's password privately and creates the first friend.
+3. **FRIENDS-ACCESS-V1 F6 (active):** the owner runs `bash /Users/king/Documents/polymath-rebuild/pmv4-friends/scripts/friends_access_go_live.sh`
+   in a terminal (ff-only merge, the session secret into `.env` once, UI build, bounce, King's password at a hidden prompt — 10+
+   characters, never in chat — then the Caddy switch). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
+   (must print `"ok": true`), the owner signs in and adds the first friend in Settings, the F6 close-out (register row, work-log,
+   CONTINUITY, memory). If a step fails the script stops there; re-running it skips the steps already done.
 4. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
    TREE, CONTINUITY), mapping the R7 gap rows (A-09..A-14, S-16..S-18, O-06, H-08) into its slices or naming them out of scope.
 

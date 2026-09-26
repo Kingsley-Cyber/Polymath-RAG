@@ -68,7 +68,7 @@ def _proxied() -> dict:
     r = httpx.post(f"http://127.0.0.1:7200/adapter/{BASELINE_RUN}/acquire", json={"operation": "catalog"},
                    headers={"X-Forwarded-For": "203.0.113.9", "X-Forwarded-Host": "rag.kingsleylab.xyz"}, timeout=30)
     detail = (r.json() if r.headers.get("content-type", "").startswith("application/json") else {}).get("detail")
-    return {"status": r.status_code, "code": detail.get("code") if isinstance(detail, dict) else detail}
+    return {"status": r.status_code, "code": (detail.get("code") or detail.get("error_code")) if isinstance(detail, dict) else detail}
 
 
 def _admission() -> dict:
@@ -111,7 +111,9 @@ def main() -> int:
         "research_acquire_listed": mcp["research_acquire_listed"],
         "acquisition_host_ready": mcp["acquisition_catalog"]["owner_only"] is True and (mcp["acquisition_catalog"]["host"] or {}).get("available") is True,
         "acquisition_needs_an_open_step": mcp["acquisition_on_a_terminal_run"] == {"status": 409, "code": "NO_OPEN_RESEARCH_STEP"},
-        "acquisition_refuses_a_proxied_caller": proxied == {"status": 403, "code": "PROXIED_CALLER"},
+        # since FRIENDS-ACCESS-V1 the web boundary refuses a proxied caller without a session first (401 LOGIN_REQUIRED);
+        # with the owner's session the route itself still answers 403 PROXIED_CALLER
+        "acquisition_refuses_a_proxied_caller": proxied in ({"status": 403, "code": "PROXIED_CALLER"}, {"status": 401, "code": "LOGIN_REQUIRED"}),
     }
     report = {"mcp": mcp, "admission": adm, "proxied": proxied, "checks": checks}
     (HERE / "live_check.json").write_text(json.dumps(report, indent=1, default=str))

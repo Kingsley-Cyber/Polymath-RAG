@@ -4,7 +4,7 @@ owner: "@king"
 date: 2026-09-26
 status: complete
 status_note: "The go-live kit is built and tested: ONE Run-button script (merge, session secret, UI build, bounce, King's password, Caddy) and a $0 read-only live check. F6 = the owner runs it."
-architecture_impact: "scripts/friends_access_caddy.py (new), scripts/friends_access_go_live.sh (new), docs/wiki/experiments/friends-access-2026-09-26/live_check.py (new), mcp_server/CONNECTORS.md (friends' path), scripts/README.md."
+architecture_impact: "scripts/friends_access_caddy.py (new), scripts/friends_access_go_live.sh (new), docs/wiki/experiments/friends-access-2026-09-26/live_check.py (new), mcp_server/CONNECTORS.md (friends' path), scripts/README.md; callers of the public site: docs/wiki/experiments/autoresearch-e2e-2026-09-25/live_check.py, scripts/verify_final_state.py."
 last_reviewed: 2026-09-26
 ---
 
@@ -25,6 +25,15 @@ last_reviewed: 2026-09-26
   without a forged principal header); `/llm/providers` closed; ONE wrong password → BAD_LOGIN; on the server itself `/auth/me` = the
   owner and a proxied-looking request gets LOGIN_REQUIRED (the boundary is loaded); MCP Server A answers the owner key.
 - `CONNECTORS.md` §4: the friends' path (sign in → Settings → Create key → copy the prompt).
+- Callers of rag.kingsleylab.xyz, checked before go-live (MCP Server A never forwards X-Forwarded-* headers, so every MCP call stays a
+  direct loopback caller the boundary leaves alone; no Hermes config names the site):
+  - `autoresearch-e2e-2026-09-25/live_check.py`: its proxied `/adapter/{run}/acquire` probe now meets the web boundary first, so it
+    accepts 401 LOGIN_REQUIRED (no session) as well as 403 PROXIED_CALLER (the route's own refusal, still what a signed-in owner gets),
+    and reads the code from `code` or `error_code`.
+  - `verify_final_state.py`: `/v2/` answering 200 is still PASS; the message now says the sign-in lives inside the app.
+  - `friends_access_go_live.sh`: steps 5 read the accounts file from `.env` (`POLYMATH_MCP_PRINCIPALS_FILE`, falling back to the
+    CLI's default) and pass it as `--file`, so King's password lands in the file the orchestrator reads. `list` on the live file
+    (read-only) answered `owner_login: NOT SET`, `friends: []`.
 
 ## Proof
 - UNIT_PROVEN: `tests/contracts/test_friends_access_go_live.py` 5 tests (the transform on the current Caddyfile shape; idempotence;
