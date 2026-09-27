@@ -11,6 +11,9 @@ The audit of 2026-09-25 (the owner's "yes") added: an undated comment is dated b
 reading; YouTube is read in our own tab (full text, the video's date, whether more exist); Instagram's post-date row is never a
 comment and a signed-out post view is a sign-in requirement; a read that returned nothing spends no query; every read names a search
 intent; TikTok's login modal is a wall; a request relayed by a proxy is refused.
+TRAIL-EXT-BUGHUNT-V1 (2026-09-26) added: a page that only MENTIONS a wall (its title, opening text, community name or slug) is read
+(B-17); a comment list whose HTTP-200 reply did not parse, or carried no comment section, is unavailable, never a read (B-18); only
+a request naming a loopback host reaches the route (B-28).
 """
 import ast
 import asyncio
@@ -20,6 +23,8 @@ import importlib.util
 import json
 import pathlib
 import re
+import shutil
+import subprocess
 import sys
 
 import pytest
@@ -252,7 +257,7 @@ def _backend_with_tab(page, data):
 def test_youtube_is_read_whole_with_the_video_date_and_says_when_more_exist():
     yt = S.resolve("comments", "https://www.youtube.com/watch?v=o1t-Km5cfo0")
     long_text = "the cover blocks the eyepiece " * 20                           # 600 characters: never cut at 300
-    data = {"status": 200, "published": "2017-08-19T01:08:16-07:00", "has_more": True,
+    data = {"status": 200, "parsed": True, "items": 21, "published": "2017-08-19T01:08:16-07:00", "has_more": True,
             "comments": [{"id": "Ugx1", "text": long_text, "age": "2 years ago", "author": "@viewer", "likes": "15"}]}
     raw = _backend_with_tab({"url": yt.url, "title": "video", "text": "", "login_prompt": False}, data)._youtube_comments(yt, 50)
     assert raw["complete"] is False and raw["page_published_at"] == "2017-08-19T08:08:16Z" and raw["records"][0]["text"] == long_text
@@ -293,7 +298,7 @@ def test_a_request_relayed_by_a_proxy_is_refused(monkeypatch):
     monkeypatch.setattr(S, "default_backend", lambda: Recorded({"state": "ok", "records": []}))
     app = FastAPI()
     app.include_router(R.router)
-    client = TestClient(app)
+    client = TestClient(app, base_url="http://127.0.0.1:7200")                 # how the MCP servers call it (B-28)
     for headers in ({"X-Forwarded-For": "203.0.113.9"}, {"X-Forwarded-Host": "rag.example"}, {"Forwarded": "for=203.0.113.9"}):
         r = client.post("/adapter/adr_x/acquire", json={"operation": "catalog"}, headers=headers)
         assert r.status_code == 403 and r.json()["detail"]["code"] == "PROXIED_CALLER"
@@ -332,7 +337,7 @@ def test_the_route_answers_with_the_policy(monkeypatch):
     app = FastAPI()
     app.add_middleware(principal_context.PrincipalContextMiddleware)
     app.include_router(R.router)
-    client = TestClient(app)
+    client = TestClient(app, base_url="http://127.0.0.1:7200")                 # how the MCP servers call it (B-28)
     body = {"operation": "comments", "target": VIDEO, "search_intent_id": "si_comments"}
     r = client.post("/adapter/adr_x/acquire", json=body)
     assert r.status_code == 409 and r.json()["detail"]["code"] == "NO_OPEN_RESEARCH_STEP"
@@ -343,3 +348,235 @@ def test_the_route_answers_with_the_policy(monkeypatch):
     assert r.status_code == 200 and r.json()["status"] == "OK" and r.json()["items"][0]["published_at"] == "2026-06-13T16:10:23Z"
     r = client.post("/adapter/adr_x/acquire", json={**body, "target": "https://vm.tiktok.com/ZMabcdefg/"})
     assert r.status_code == 422 and r.json()["detail"]["code"] == "TARGET_NOT_PERMITTED"
+
+
+# ----------------------------------------------------------------------------- TRAIL-EXT-BUGHUNT-V1: B-17, B-18, B-28 (2026-09-26)
+READ_AT = "2026-09-26T10:00:00Z"
+THREAD = "https://www.reddit.com/r/AskPhotography/comments/abc123/"
+THREAD_JSON = {"status": 200, "post": {"title": "Endless captcha loop on my camera app", "text": "it asks me to prove I am not a robot",
+                                        "created": 1758000000, "author": "op", "comments": 1},
+               "comments": [{"id": "c1", "text": "the app makes you Sign in to continue before you can fly", "created": 1758000100,
+                             "author": "someone", "score": 3}]}
+NODE = shutil.which("node")
+needs_node = pytest.mark.skipif(NODE is None, reason="node is not installed (the browser host runs OpenCLI, a Node program)")
+
+
+def _browser(page, answer):
+    """The REAL `_in_tab` over a stubbed browser: `_page` gives the recorded page state, the reader script answers `answer`."""
+    b = O.OpenCLIBackend(binary="/nonexistent/opencli")
+    calls = []
+    b._open = lambda session, url, settle: calls.append("open")
+    b._page = lambda session: dict(page)
+    b._eval = lambda session, js: calls.append("reader") or answer
+    b._close = lambda session: calls.append("close")
+    return b, calls
+
+
+#: readable pages whose title, opening text, slug, community name or search word only MENTIONS a wall (B-17)
+MENTIONS = [
+    {"url": THREAD, "title": "Why does my camera app keep showing a captcha? : r/AskPhotography", "text": "r/AskPhotography", "login_prompt": False},
+    {"url": THREAD, "title": "r/AskPhotography", "text": "Skip to main content r/AskPhotography Endless human verification: I am not a robot",
+     "login_prompt": False},
+    {"url": "https://www.reddit.com/r/SideProject/comments/abc123/validation_would_you_buy_this/", "title": "r/SideProject", "text": "x"},
+    {"url": "https://www.reddit.com/r/SideProject/comments/abc123/captcha/", "title": "r/SideProject", "text": "x"},
+    {"url": "https://www.reddit.com/r/loginhelp/comments/abc123/locked_out_of_my_account/", "title": "r/loginhelp", "text": "x"},
+    {"url": "https://cjdropshipping.com/search/validation.html", "title": "validation - search", "text": "x"}]
+
+
+@pytest.mark.parametrize("page", MENTIONS)
+def test_a_page_that_only_mentions_a_wall_is_not_a_wall(page):
+    assert O.blocked(page) is None
+
+
+@pytest.mark.parametrize("page", MENTIONS[:3])
+def test_the_reader_runs_on_such_a_page_and_its_read_is_kept(page):
+    b, calls = _browser(page, THREAD_JSON)
+    raw = b._reddit_comments(S.resolve("comments", THREAD), 20)
+    assert calls == ["open", "reader", "close"] and raw["state"] == "ok"
+    out = S.acquire(principal_id=None, action=_action(tag=["mentions", page["url"], page["title"]]), operation="comments", target=THREAD,
+                    search_intent_id="si_comments", backend=Recorded(raw))
+    assert out["status"] == "OK" and out["human_action"] is None and len(out["items"]) == 2 and "refunded" not in out["budget"]
+
+
+@pytest.mark.parametrize("page,why", [
+    ({"url": "https://frontend.cjdropshipping.com/egg/cj/validation.html?rd=x", "title": "Human verification", "text": ""}, "human_check"),
+    ({"url": "https://www.tiktok.com/login?redirect_url=x", "title": "Log in", "text": ""}, "sign_in"),
+    ({"url": "https://www.instagram.com/accounts/login/?next=%2Fp%2Fx%2F", "title": "Login", "text": ""}, "sign_in"),
+    ({"url": VIDEO, "title": "TikTok - Make Your Day", "text": "it's still raining", "login_prompt": True}, "sign_in")])
+def test_a_wall_route_or_a_sign_in_prompt_still_stops_the_reader_before_it_runs(page, why):
+    b, calls = _browser(page, THREAD_JSON)
+    assert b._reddit_comments(S.resolve("comments", THREAD), 20)["state"] == why and calls == ["open", "close"]
+
+
+def test_a_wall_word_still_names_the_wall_when_the_page_gave_nothing():
+    """A human check that keeps the page's own URL shows its words, and the reader finds nothing on it."""
+    page = {"url": "https://www.alibaba.com/trade/search?SearchText=rain+cover", "title": "Captcha Interception", "text": "slide to verify"}
+    b, calls = _browser(page, [])
+    raw = b._alibaba_listings(S.resolve("listings", "rain cover", "alibaba.com"), 20)
+    assert raw["state"] == "human_check" and calls == ["open", "reader", "close"]
+    b, _ = _browser(dict(page, url=THREAD, title="Captcha"), {"status": 403})
+    assert b._reddit_comments(S.resolve("comments", THREAD), 20)["state"] == "human_check"
+    b, _ = _browser(dict(page, title="Rain covers", text="no results"), [])
+    assert b._alibaba_listings(S.resolve("listings", "rain cover", "alibaba.com"), 20)["state"] == "unavailable"
+
+
+PROMPT_LINES = [("Log in to TikTok\nUse QR code\nUse phone / email / username", True),          # the modal's own heading
+                ("For You\nSign in to continue\nNot now", True),
+                ("the app makes you Sign in to continue before you can fly", False),        # a comment that mentions it
+                ("honestly, the 'log in to continue' popups are the worst part", False)]
+
+
+@pytest.mark.parametrize("text,prompt", PROMPT_LINES)
+def test_a_sign_in_prompt_is_a_whole_line_of_the_page_never_words_inside_a_comment(text, prompt):
+    assert bool(re.search(O.LOGIN_PROMPT, text, re.IGNORECASE | re.MULTILINE)) is prompt
+
+
+def _node(stub, *args):
+    got = subprocess.run([NODE, "-e", stub, *args], capture_output=True, text=True, timeout=30, check=False)
+    assert got.returncode == 0, got.stderr
+    return json.loads(got.stdout)
+
+
+def _page_js():
+    b = O.OpenCLIBackend(binary="/nonexistent/opencli")
+    seen = {}
+    b._eval = lambda session, js: seen.setdefault("js", js)
+    b._page("pm-acq-test")
+    return seen["js"]
+
+
+PAGE_STUB = r"""
+const [js, text] = [process.argv[1], process.argv[2]];
+globalThis.location = {href: 'https://www.tiktok.com/@creator/video/7400000000000000001'};
+globalThis.document = {title: 'TikTok', body: {innerText: text}};
+process.stdout.write(String(eval(js)));
+"""
+
+
+@needs_node
+@pytest.mark.parametrize("text,prompt", PROMPT_LINES)
+def test_the_page_script_flags_a_sign_in_prompt_only_as_a_whole_line(text, prompt):
+    assert _node(PAGE_STUB, _page_js(), text)["login_prompt"] is prompt
+
+
+#: the page scripts run in node with the browser's globals stubbed; `fetch` answers HTTP 200 with the given body (B-18)
+READER_STUB = r"""
+const [js, mode, body] = [process.argv[1], process.argv[2], process.argv[3]];
+globalThis.window = globalThis;
+globalThis.location = {pathname: '/x', href: 'https://x/'};
+globalThis.fetch = async () => ({status: 200, json: async () => JSON.parse(body)});
+if (mode === 'tiktok') {
+  const u = {__DEFAULT_SCOPE__: {'webapp.video-detail': {itemInfo: {itemStruct: {desc: 'rain again on my lens', createTime: 1718047586}}}}};
+  globalThis.document = {getElementById: () => ({textContent: JSON.stringify(u)}), querySelector: () => null};
+} else {
+  globalThis.ytInitialData = {contents: {a: {itemSectionRenderer: {sectionIdentifier: 'comment-item-section',
+      contents: [{continuationItemRenderer: {continuationEndpoint: {continuationCommand: {token: 'TOKEN123'}}}}]}}}};
+  globalThis.ytcfg = {get: () => ({client: {}})};
+  globalThis.document = {getElementById: () => null, querySelector: () => ({content: '2024-01-01T00:00:00-08:00'})};
+}
+Promise.resolve(eval(js)).then(r => process.stdout.write(r));
+"""
+YOUTUBE = "https://www.youtube.com/watch?v=o1t-Km5cfo0"
+
+
+def _reader_js(reader, target):
+    b = O.OpenCLIBackend(binary="/nonexistent/opencli")
+    seen = {}
+
+    def in_tab(url, settle, js):
+        seen["js"] = js
+        return {"url": url, "title": "t", "text": ""}, None, READ_AT
+    b._in_tab = in_tab
+    getattr(b, reader)(S.resolve("comments", target), 20)
+    return seen["js"]
+
+
+def _acquired(reader, target, data, tag):
+    t = S.resolve("comments", target)
+    raw = getattr(_backend_with_tab({"url": t.url, "title": "t", "text": ""}, data), reader)(t, 20)
+    return S.acquire(principal_id=None, action=_action(tag=tag), operation="comments", target=target, search_intent_id="si_comments",
+                     backend=Recorded(raw))
+
+
+@pytest.mark.parametrize("reader,target,data", [
+    ("_tiktok_comments", VIDEO, {"status": 200, "parsed": False, "code": None, "total": None, "has_more": None, "comments": [],
+                                 "video": {"desc": "rain again on my lens", "created": 1718047586}}),
+    ("_youtube_comments", YOUTUBE, {"status": 200, "parsed": False, "published": "2024-01-01T00:00:00-08:00", "comments": [],
+                                    "has_more": False, "items": 0}),
+    ("_youtube_comments", YOUTUBE, {"status": 200, "parsed": True, "published": "2024-01-01T00:00:00-08:00", "comments": [],
+                                    "has_more": False, "items": 0}),
+    ("_youtube_comments", YOUTUBE, {"status": 200, "parsed": True, "published": "2024-01-01T00:00:00-08:00", "comments": [],
+                                    "has_more": False, "items": 3, "threads": 2})])                  # threads whose text never came
+def test_a_comment_list_that_did_not_answer_is_unavailable_never_a_read(reader, target, data):
+    out = _acquired(reader, target, data, ["no-answer", reader, data["parsed"], data.get("threads")])
+    assert out["status"] == "UNAVAILABLE" and out["items"] == [] and out["completeness"]["complete"] is None
+    assert out["budget"]["refunded"] is True and any("comment list did not answer" in x for x in out["limitations"])
+
+
+def test_a_parsed_empty_comment_list_is_still_a_read():
+    tt = _acquired("_tiktok_comments", VIDEO, {"status": 200, "parsed": True, "code": 0, "total": 0, "has_more": 0, "comments": [],
+                                                "video": {"desc": "rain again on my lens", "created": 1718047586}}, "tt-empty")
+    assert tt["status"] == "OK" and [i["kind"] for i in tt["items"]] == ["caption"] and tt["completeness"]["complete"] is True
+    yt = _acquired("_youtube_comments", YOUTUBE, {"status": 200, "parsed": True, "published": "2024-01-01T00:00:00-08:00", "comments": [],
+                                                  "has_more": False, "items": 1}, "yt-empty")
+    assert yt["status"] == "EMPTY" and yt["completeness"]["complete"] is True and "refunded" not in yt["budget"]
+
+
+@needs_node
+def test_the_page_scripts_say_whether_the_comment_list_answered():
+    tt_js, yt_js = _reader_js("_tiktok_comments", VIDEO), _reader_js("_youtube_comments", YOUTUBE)
+    for js, mode in ((tt_js, "tiktok"), (yt_js, "youtube")):
+        data = _node(READER_STUB, js, mode, "")                                      # HTTP 200 with a body that does not parse
+        assert data["status"] == 200 and data["parsed"] is False
+        out = _acquired("_tiktok_comments" if mode == "tiktok" else "_youtube_comments", VIDEO if mode == "tiktok" else YOUTUBE, data,
+                        ["node", mode])
+        assert out["status"] == "UNAVAILABLE" and out["budget"]["refunded"] is True
+    tt = _node(READER_STUB, tt_js, "tiktok", json.dumps({"status_code": 0, "comments": [], "total": 0, "has_more": 0}))
+    assert tt["parsed"] is True and tt["code"] == 0
+    header_only = {"onResponseReceivedEndpoints": [{"reloadContinuationItemsCommand": {"continuationItems": [{"commentsHeaderRenderer": {}}]}}]}
+    yt = _node(READER_STUB, yt_js, "youtube", json.dumps(header_only))
+    assert yt["parsed"] is True and yt["items"] == 1 and yt["comments"] == [] and yt["has_more"] is False
+    assert _acquired("_youtube_comments", YOUTUBE, yt, "node-yt-empty")["status"] == "EMPTY"
+    assert _node(READER_STUB, yt_js, "youtube", json.dumps({"responseContext": {}}))["items"] == 0
+    unread = {"onResponseReceivedEndpoints": header_only["onResponseReceivedEndpoints"] + [
+        {"reloadContinuationItemsCommand": {"continuationItems": [{"commentThreadRenderer": {}}, {"commentThreadRenderer": {}}]}}]}
+    yt = _node(READER_STUB, yt_js, "youtube", json.dumps(unread))                  # threads listed, their text nowhere to be read
+    assert yt["threads"] == 2 and yt["comments"] == [] and _acquired("_youtube_comments", YOUTUBE, yt, "node-yt-unread")["status"] == "UNAVAILABLE"
+
+
+def _route_app(monkeypatch, reads, tag):
+    """The acquisition route behind the orchestrator's own middleware order (main.py: principal context, web boundary, CORS)."""
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+    from orchestrator.api import acquisition as R
+    from orchestrator.web_boundary import WebBoundaryMiddleware
+    from polymath_shared import principal_context
+    monkeypatch.setattr(R, "tx", lambda: contextlib.nullcontext(None))
+    monkeypatch.setattr(R.service, "assert_owner", lambda conn, run_id, principal: None)
+    monkeypatch.setattr(R, "open_harness_action", lambda conn, run_id: _action(tag=tag))
+    backend = Recorded({"state": "ok", "records": []})
+    backend.reads = reads
+    monkeypatch.setattr(S, "default_backend", lambda: backend)
+    app = FastAPI()
+    app.add_middleware(principal_context.PrincipalContextMiddleware)
+    app.add_middleware(WebBoundaryMiddleware)
+    app.add_middleware(CORSMiddleware, allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"], allow_methods=["*"], allow_headers=["*"])
+    app.include_router(R.router)
+    return app
+
+
+@pytest.mark.parametrize("host,status", [("rebind.attacker.example:7200", 403), ("192.168.1.20:7200", 403), ("127.0.0.1:7200", 200),
+                                         ("localhost:7200", 200), ("[::1]:7200", 200)])
+def test_only_a_request_naming_a_loopback_host_reaches_the_host_browser(monkeypatch, host, status):
+    """A page that re-binds its own name to 127.0.0.1 (DNS rebinding) reaches this listener directly, without proxy headers, but it
+    still sends ITS name as the Host: only the names the MCP servers call (127.0.0.1 / localhost) reach the owner's browser."""
+    from fastapi.testclient import TestClient
+    reads = []
+    client = TestClient(_route_app(monkeypatch, reads, ["rebind", host]))
+    body = {"operation": "comments", "target": VIDEO, "search_intent_id": "si_comments"}
+    r = client.post("/adapter/adr_x/acquire", json=body, headers={"Host": host, "Origin": f"http://{host}"})    # as the browser sends it
+    assert r.status_code == status, r.text
+    if status == 403:
+        assert r.json()["detail"]["code"] == "NON_LOOPBACK_HOST" and reads == []
+    else:
+        assert r.json()["status"] == "EMPTY" and len(reads) == 1

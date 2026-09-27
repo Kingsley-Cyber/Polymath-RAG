@@ -100,13 +100,15 @@ Then submit ONE receipt with `adapter_submit(run_id, step_id, payload, kind="rec
 ## 5. What TrailSignal admits (a rejection is a finding, not a failure)
 The resource `{SOURCES_URI}` is TrailSignal's pinned source table:
 - **routing**: an observation routes by its source URL to the first enabled row (in `source_id` order) whose
-  `domains_or_patterns` equals the host, is a parent domain of it, or appears in the URL; a `*` row matches any URL of its
-  `source_class`;
+  `domains_or_patterns` equals the host, is a parent domain of it, or appears in the URL. A URL that no row names goes to a
+  `*` or `-` row of the `source_class` you declared, so declare the class the page really is;
 - **stage**: the row must serve the step's research stage (`supported_research_stages`);
 - **role**: `evidence_role_claimed` must be one of the row's `supported_evidence_roles`; a supplier listing is supply
   evidence only, never demand;
 - **freshness**: the window in `freshness_policy` (`...-Nd`); older than twice the window is rejected;
-- **independence**: one `independence_group` counts as one voice however many observations it yields;
+- **independence**: one `independence_group` counts as one voice however many observations it yields. A group keyed by
+  `{{participant}}` (the `first_party` class: interviews you ran yourself) counts EACH observation as its own voice, so
+  never declare a public page `first_party`;
 - rejected observations stay on record with a reason code: `SOURCE_UNREGISTERED`, `SOURCE_STAGE_UNSUITABLE`,
   `SOURCE_ROLE_UNSUITABLE`, `SUPPLY_IS_NOT_DEMAND`, `HYPOTHESIS_LINK_MISSING`, `STALE_BEYOND_POLICY`.
 

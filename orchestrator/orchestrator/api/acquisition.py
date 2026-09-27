@@ -6,12 +6,15 @@ to status codes.
 
 Only the MCP servers on this host may call it. They call this listener directly; a request that came through a reverse proxy (it
 carries X-Forwarded-For / X-Forwarded-Host: the public web UI proxy forwards every path here) is refused, because the proxy's own
-login is not the MCP gate that keeps the host browser, which holds the owner's sign-ins, owner-only."""
+login is not the MCP gate that keeps the host browser, which holds the owner's sign-ins, owner-only. They call it by a loopback name
+(127.0.0.1:7200 by default), so a request whose Host names anything else is refused too: a web page that re-bound its own name to
+this machine (DNS rebinding) arrives direct and without proxy headers, but it still sends ITS name (TRAIL-EXT-BUGHUNT-V1 B-28)."""
 from __future__ import annotations
 
 import asyncio
 import logging
 from typing import Any, Optional
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
@@ -46,6 +49,16 @@ def open_harness_action(conn, run_id: str) -> dict[str, Any] | None:
 
 
 PROXY_HEADERS = ("x-forwarded-for", "x-forwarded-host", "forwarded")
+#: the names the MCP servers call this listener by (POLYMATH_ORCH_URL / POLYMATH_API default to http://127.0.0.1:7200)
+LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
+
+
+def loopback_host(host: str | None) -> bool:
+    """True when a Host header names this machine's loopback (any port)."""
+    try:
+        return urlsplit("//" + (host or "")).hostname in LOOPBACK_HOSTS
+    except ValueError:
+        return False
 
 
 @router.post("/adapter/{run_id}/acquire")
@@ -53,6 +66,10 @@ async def acquire(run_id: str, req: AcquireRequest, request: Request) -> dict:
     if any(request.headers.get(h) for h in PROXY_HEADERS):
         raise HTTPException(status_code=403, detail={"code": "PROXIED_CALLER", "message": "research acquisition answers only the MCP servers "
                                                      "on this host (their tool research_acquire), never a request relayed by a proxy"})
+    if not loopback_host(request.headers.get("host")):
+        raise HTTPException(status_code=403, detail={"code": "NON_LOOPBACK_HOST", "message": "research acquisition answers only the MCP "
+                                                     "servers on this host, which call it at 127.0.0.1 or localhost; a request naming another "
+                                                     "host (such as a web page that re-bound its own name to this machine) is refused"})
     principal = principal_context.current()
     try:
         with tx() as conn:

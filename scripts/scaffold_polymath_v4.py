@@ -2495,6 +2495,9 @@ TREE: list[tuple[str, str, str | None]] = [
     ("orchestrator/orchestrator/api/web_settings.py", "py", None),
     ("orchestrator/orchestrator/api/deep_research.py", "py", None),
     ("tests/contracts/test_research_acquisition.py", "py", None),
+    # TRAIL-EXT-BUGHUNT-V1 fixes, group acquisition (B-17, B-18, B-19, B-28)
+    ("tests/contracts/test_harness_guide_admission.py", "py", None),
+    ("docs/wiki/work-log/2026-09-26-trail-ext-fixes-acquisition.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-hosted-acquisition.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-audit-fixes.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-autoresearch-r7-e2e.md", "md", None),

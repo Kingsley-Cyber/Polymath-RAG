@@ -24,7 +24,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlsplit
 
 from polymath_shared.acquisition.service import Target, now_iso
 
@@ -49,20 +49,42 @@ def _int(v: Any) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def blocked(state: dict[str, Any]) -> str | None:
-    """`human_check` / `sign_in` when the page is a wall rather than the content (pure; tested on recorded page states)."""
-    text = f"{state.get('title', '')} {state.get('text', '')}".lower()
-    url = str(state.get("url") or "").lower()
-    if "human verification" in text or "not a robot" in text or "captcha" in text or "/validation" in url or "/captcha" in url:
+#: wall ROUTES, matched on the path of the page's own URL (a sign-in page, a captcha page, CJ's human-verification page). A slug, a
+#: community or a search word that merely contains the word ("/r/loginhelp/", ".../validation_would_you_buy_this/") is content.
+_SIGN_IN_ROUTE = re.compile(r"/(?:accounts/)?login(?:[/.]|$)")
+_HUMAN_CHECK_ROUTE = re.compile(r"/captcha(?:[/.]|$)|/egg/cj/validation\.html$")
+#: what a human-check page says. On a page that reads, these words are CONTENT (a thread about captchas), so they name a wall only
+#: when the reader got nothing from the page.
+WALL_WORDS = ("human verification", "not a robot", "captcha")
+
+
+def blocked(state: dict[str, Any], *, read_nothing: bool = False) -> str | None:
+    """`human_check` / `sign_in` when the page is a wall rather than the content (pure; tested on recorded page states). Before a
+    read, only a wall's ROUTE or a sign-in prompt shown over the content (`login_prompt`) counts; a wall word in the title or the
+    opening text counts once the reader got nothing from the page (`read_nothing`)."""
+    try:
+        path = urlsplit(str(state.get("url") or "")).path.lower()
+    except ValueError:
+        path = ""
+    if _HUMAN_CHECK_ROUTE.match(path):
         return "human_check"
-    if "/accounts/login" in url or "/login" in url.split("?")[0] or state.get("login_prompt") or (state.get("wall") and not state.get("content")):
+    if _SIGN_IN_ROUTE.match(path) or state.get("login_prompt") or (state.get("wall") and not state.get("content")):
         return "sign_in"
+    text = f"{state.get('title', '')} {state.get('text', '')}".lower()
+    if read_nothing and any(w in text for w in WALL_WORDS):
+        return "human_check"
     return None
 
 
+def _nothing(page: dict[str, Any]) -> str:
+    """The state of a read that got nothing from its page: a wall word on the page now names the wall, else `unavailable`."""
+    return blocked(page, read_nothing=True) or "unavailable"
+
+
 #: a sign-in prompt shown OVER the content (TikTok's modal: its comment list still answers a signed-out visitor, the owner's rule
-#: says a login wall is never read through). Matched in the page's whole visible text; hidden templates are not visible text.
-LOGIN_PROMPT = r"log in to tiktok|log in to continue|sign in to continue"
+#: says a login wall is never read through). Matched as a WHOLE LINE of the page's visible text (the prompt's own heading or
+#: button), so a comment or a post that uses the words is content; hidden templates are not visible text.
+LOGIN_PROMPT = r"^\s*(?:log in to tiktok|log in to continue|sign in to continue)\s*[.!]?\s*$"
 
 
 def _iso_text(value: Any) -> str | None:
@@ -125,7 +147,7 @@ class OpenCLIBackend:
 
     def _page(self, session: str) -> dict[str, Any]:
         got = self._eval(session, "JSON.stringify({url: location.href, title: document.title, text: document.body ? document.body.innerText.slice(0, 600) : '',"
-                                  " login_prompt: document.body ? /%s/i.test(document.body.innerText) : false})" % LOGIN_PROMPT)
+                                  " login_prompt: document.body ? /%s/im.test(document.body.innerText) : false})" % LOGIN_PROMPT)
         return got if isinstance(got, dict) else {}
 
     def _session(self) -> str:
@@ -184,15 +206,19 @@ class OpenCLIBackend:
         js = ("(async () => { const r = await fetch('/api/comment/list/?aid=1988&aweme_id=%s&count=%d&cursor=0', {credentials: 'include'});"
               " const d = await r.json().catch(() => null); let v = null; try { const u = JSON.parse(document.getElementById('__UNIVERSAL_DATA_FOR_REHYDRATION__').textContent);"
               " const s = u.__DEFAULT_SCOPE__['webapp.video-detail'].itemInfo.itemStruct; v = {desc: s.desc, created: s.createTime}; } catch (e) {}"
-              " return JSON.stringify({status: r.status, code: d ? d.status_code : null, total: d ? d.total : null, has_more: d ? d.has_more : null, video: v,"
+              " return JSON.stringify({status: r.status, parsed: !!d && typeof d === 'object', code: d ? d.status_code : null, total: d ? d.total : null,"
+              " has_more: d ? d.has_more : null, video: v,"
               " comments: ((d && d.comments) || []).map(c => ({cid: c.cid, text: c.text, created: c.create_time, likes: c.digg_count, author: (c.user || {}).unique_id}))}); })()"
               % (video_id, limit))
         page, data, retrieved = self._in_tab(t.url or "", 4.0, js)
         if (why := blocked(page)):
             return {"state": why, "page_url": t.url, "retrieved_at": retrieved}
-        if not isinstance(data, dict) or data.get("code") not in (0, None) or data.get("status") != 200:
-            return {"state": "unavailable", "page_url": t.url, "retrieved_at": retrieved,
-                    "note": f"the page's comment list did not answer (status {data.get('status') if isinstance(data, dict) else '?'})"}
+        # an HTTP 200 whose body did not parse (an empty reply to a throttled call) is no answer: never a caption-only "read"
+        if not isinstance(data, dict) or not data.get("parsed") or data.get("code") not in (0, None) or data.get("status") != 200:
+            status = data.get("status") if isinstance(data, dict) else "?"
+            return {"state": _nothing(page), "page_url": t.url, "retrieved_at": retrieved,
+                    "note": f"the page's comment list did not answer (status {status}"
+                            f"{', a reply that did not parse' if status == 200 and not data.get('parsed') else ''})"}
         records = []
         video = data.get("video") or {}
         if video.get("desc"):
@@ -234,7 +260,7 @@ class OpenCLIBackend:
         if not records:
             text = str(page.get("text") or "").lower()
             signed_out = "log in" in text and "sign up" in text           # the signed-out post view shows no comment rows at all
-            return {"state": "sign_in" if signed_out else "unavailable", "page_url": t.url, "retrieved_at": retrieved,
+            return {"state": "sign_in" if signed_out else _nothing(page), "page_url": t.url, "retrieved_at": retrieved,
                     "note": "the post view shows no dated comment", "page_published_at": page_date}
         return {"state": "ok", "page_url": t.url, "retrieved_at": retrieved, "records": records, "total": None, "complete": None,
                 "page_published_at": page_date,
@@ -252,26 +278,36 @@ class OpenCLIBackend:
               " const token = sections.length ? find(sections[0], 'token') : null;"
               " if (!token) return JSON.stringify({status: 0, published, comments: [], has_more: false});"
               " const r = await fetch('/youtubei/v1/next?prettyPrint=false', {method: 'POST', credentials: 'include', headers: {'content-type': 'application/json'},"
-              " body: JSON.stringify({context: ytcfg.get('INNERTUBE_CONTEXT'), continuation: token})}); const d = await r.json().catch(() => ({}));"
-              " const items = (d.onResponseReceivedEndpoints || []).flatMap(e => ((e.reloadContinuationItemsCommand || e.appendContinuationItemsAction || {}).continuationItems) || []);"
-              " const out = []; for (const mu of ((d.frameworkUpdates || {}).entityBatchUpdate || {}).mutations || []) { const p = (mu.payload || {}).commentEntityPayload;"
+              " body: JSON.stringify({context: ytcfg.get('INNERTUBE_CONTEXT'), continuation: token})}); const d = await r.json().catch(() => null);"
+              " const parsed = !!d && typeof d === 'object'; const reply = parsed ? d : {};"
+              " const items = (reply.onResponseReceivedEndpoints || []).flatMap(e => ((e.reloadContinuationItemsCommand || e.appendContinuationItemsAction || {}).continuationItems) || []);"
+              " const out = []; for (const mu of ((reply.frameworkUpdates || {}).entityBatchUpdate || {}).mutations || []) { const p = (mu.payload || {}).commentEntityPayload;"
               " if (p) out.push({id: (p.properties || {}).commentId || null, text: ((p.properties || {}).content || {}).content || '', age: (p.properties || {}).publishedTime || null,"
               " author: (p.author || {}).displayName || null, likes: (p.toolbar || {}).likeCountNotliked || null}); }"
-              " return JSON.stringify({status: r.status, published, comments: out.slice(0, %d), has_more: items.some(i => i.continuationItemRenderer) || out.length > %d}); })()"
+              " return JSON.stringify({status: r.status, parsed, items: items.length, threads: items.filter(i => i.commentThreadRenderer).length,"
+              " published, comments: out.slice(0, %d), has_more: items.some(i => i.continuationItemRenderer) || out.length > %d}); })()"
               % (limit, limit))
         page, data, retrieved = self._in_tab(t.url or "", 5.0, js)
         if (why := blocked(page)):
             return {"state": why, "page_url": t.url, "retrieved_at": retrieved}
         if not isinstance(data, dict):
-            return {"state": "unavailable", "page_url": t.url, "retrieved_at": retrieved, "note": "the watch page did not answer"}
+            return {"state": _nothing(page), "page_url": t.url, "retrieved_at": retrieved, "note": "the watch page did not answer"}
         page_date = _iso_text(data.get("published"))
         if data.get("status") not in (0, 200) or (data.get("status") == 0 and not data.get("comments")):
-            return {"state": "unavailable", "page_url": t.url, "retrieved_at": retrieved, "page_published_at": page_date,
+            return {"state": _nothing(page), "page_url": t.url, "retrieved_at": retrieved, "page_published_at": page_date,
                     "note": "no comment list (comments off, or the page did not load)"}
+        # an HTTP 200 answers only when its body parsed AND carried the comment section (its continuation items, the header at least)
+        # AND each comment thread it lists came with its text: anything else is no answer, never an empty thread read in full
+        if data.get("status") == 200 and (not (data.get("parsed") and (data.get("items") or data.get("comments")))
+                                          or (data.get("threads") and not data.get("comments"))):
+            return {"state": _nothing(page), "page_url": t.url, "retrieved_at": retrieved, "page_published_at": page_date,
+                    "note": "the comment list did not answer (a reply that did not parse, one without the comment section, or comment "
+                            "threads without their text)"}
         records = [{"kind": "comment", "ref": c.get("id"), "text": c.get("text"), "published_at": None, "precision": "relative",
                     "date_shown": c.get("age"), "author": c.get("author"), "likes": _int(c.get("likes"))} for c in data.get("comments") or []]
+        more = data.get("has_more")
         return {"state": "ok", "page_url": t.url, "retrieved_at": retrieved, "records": records, "total": None,
-                "complete": not data.get("has_more"), "page_published_at": page_date}
+                "complete": (not more) if data.get("items") else (False if more else None), "page_published_at": page_date}
 
     def _reddit_comments(self, t: Target, limit: int) -> dict[str, Any]:
         js = ("(async () => { const r = await fetch(location.pathname.replace(/\\/$/, '') + '.json?limit=%d&depth=1&raw_json=1', {credentials: 'include'});"
@@ -283,7 +319,7 @@ class OpenCLIBackend:
         if (why := blocked(page)):
             return {"state": why, "page_url": t.url, "retrieved_at": retrieved}
         if not isinstance(data, dict) or not data.get("post"):
-            return {"state": "unavailable", "page_url": t.url, "retrieved_at": retrieved, "note": "the thread did not answer"}
+            return {"state": _nothing(page), "page_url": t.url, "retrieved_at": retrieved, "note": "the thread did not answer"}
         post = data["post"]
         records = [{"kind": "post", "ref": "post", "text": f"{post.get('title') or ''}\n{post.get('text') or ''}".strip(),
                     "published_at": _iso(post.get("created")), "precision": "exact" if _iso(post.get("created")) else "none", "author": post.get("author")}]
@@ -333,7 +369,7 @@ class OpenCLIBackend:
             records.append(self._listing(r["href"], r.get("title") or "", r.get("card") or ""))
             if len(records) >= limit:
                 break
-        return {"state": "ok" if records else "unavailable", "page_url": url, "retrieved_at": retrieved, "records": records, "total": None,
+        return {"state": "ok" if records else _nothing(page), "page_url": url, "retrieved_at": retrieved, "records": records, "total": None,
                 "complete": None, **({} if records else {"note": "no listing card was read on the search page"})}
 
     def _cj_listings(self, t: Target, limit: int) -> dict[str, Any]:
@@ -349,7 +385,7 @@ class OpenCLIBackend:
             records.append(self._listing(r["href"], r.get("title") or "", r.get("card") or ""))
             if len(records) >= limit:
                 break
-        return {"state": "ok" if records else "unavailable", "page_url": url, "retrieved_at": retrieved, "records": records, "total": None,
+        return {"state": "ok" if records else _nothing(page), "page_url": url, "retrieved_at": retrieved, "records": records, "total": None,
                 "complete": None, **({} if records else {"note": "no listing card was read on the search page"})}
 
     def _amazon_listings(self, t: Target, limit: int) -> dict[str, Any]:
