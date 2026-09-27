@@ -1,7 +1,7 @@
 ---
 owner: sidecar-gpu
-last_reviewed: 2026-08-13
-last_touched: 2026-08-13
+last_reviewed: 2026-09-27
+last_touched: 2026-09-27
 status: accepted
 ---
 
@@ -50,3 +50,16 @@ Harder:
 
 - `docs/wiki/refactors/0004-compose-shrink-to-stores.md`
 - `docs/wiki/refactors/0005-sidecar-supervisor.md`
+
+## Amendment — 2026-09-27 (SUPPLIER-APIS, register 11.537)
+
+The owner added one auxiliary service. The rule this ADR protects, that GPU services are host-native, is unchanged:
+
+- Compose may also hold a **non-GPU auxiliary service behind an opt-in profile**. The first is `searxng` (profile `search`,
+  loopback `127.0.0.1:8888`, 0.5 CPU / 256 MB). It is the metasearch the supplier step uses to find Alibaba listings from
+  search-engine results, so Alibaba's own pages, and their human checks, are never loaded.
+- `make db-up` and a plain `docker compose up` still start exactly the four data stores. The owner starts the auxiliary service
+  with `docker compose --profile search up -d searxng`.
+- An auxiliary service never holds state Polymath depends on. When it is down, its caller falls back and says so (the Alibaba
+  listing step falls back to the browser path, noting it in `limitations`).
+
