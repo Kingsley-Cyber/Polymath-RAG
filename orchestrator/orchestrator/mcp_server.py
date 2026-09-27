@@ -126,6 +126,8 @@ async def _orch(method: str, path: str, **kw: Any) -> Any:
     # TRUSTED CONTEXT to the loopback orchestrator: WHO the request is for (a non-admin principal only — the owner key
     # stays the legacy / trusted-local caller) and WHICH SOFTWARE is calling (the caller's own User-Agent -> receipt.client)
     who = _PRINCIPAL.get()
+    if who is NOBODY:            # no gate ran for this call: nothing goes out under the sentinel, whose id a friend could hold
+        return {"error": "NO_PRINCIPAL: this call carries no authenticated principal (fail closed)", "status": 401}
     headers = {"User-Agent": _CALLER_AGENT.get(), **(kw.pop("headers", None) or {})}
     if not who.is_admin:
         headers[P.PRINCIPAL_HEADER] = who.principal_id
@@ -646,7 +648,19 @@ def build_app():
                 msg = json.loads(body) if body else None
             except ValueError:
                 msg = None                                   # not JSON: the MCP app answers the protocol error itself
-            denial = await _judge(who, msg)
+            except RecursionError:                           # nested past what the gate can judge: never passed on unjudged
+                await JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error: nested too deeply"}},
+                                   status_code=400)(scope, receive, send)
+                return
+            try:
+                denial = await _judge(who, msg)
+            except (httpx.HTTPError, ValueError):            # the run check could not reach the orchestrator: refuse, in JSON-RPC
+                log.warning("mcp run check unavailable principal=%s", who.principal_id)
+                await JSONResponse({"jsonrpc": "2.0", "id": msg.get("id") if isinstance(msg, dict) else None,
+                                    "error": {"code": -32003, "message": "UNAVAILABLE: Polymath could not check this run; try again",
+                                              "data": {"status": 503, "reason": "orchestrator_unavailable"}}},
+                                   status_code=503)(scope, receive, send)
+                return
             if denial is not None:
                 log.info("mcp deny principal=%s tool=%s reason=%s", who.principal_id, denial[2], denial[0].reason)
                 await JSONResponse({"jsonrpc": "2.0", "id": denial[1],

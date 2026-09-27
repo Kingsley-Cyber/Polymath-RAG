@@ -26,6 +26,8 @@ from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote_plus, urlsplit
 
+import yaml
+
 from polymath_shared.acquisition.service import Target, now_iso
 
 READ_TIMEOUT_S = 75
@@ -95,6 +97,24 @@ def _iso_text(value: Any) -> str | None:
         return None
 
 
+class CommandFailed(subprocess.SubprocessError):
+    """A site command that exited non-zero. OpenCLI writes its error envelope (YAML: `error.message`, `error.help`) on stderr."""
+
+    #: an envelope message that names a human check (OpenCLI's Amazon command: "amazon search hit a robot check")
+    HUMAN_CHECK = re.compile(r"robot check|captcha|human verification", re.IGNORECASE)
+
+    def __init__(self, returncode: int, stderr: str):
+        try:
+            error = (yaml.safe_load(stderr) or {}).get("error") or {}
+        except (yaml.YAMLError, AttributeError):
+            error = {}
+        self.message = " ".join(str(error.get("message") or "").split()) if isinstance(error, dict) else ""
+        hint = " ".join(str(error.get("help") or "").split()) if isinstance(error, dict) else ""
+        self.message = self.message or " ".join(str(stderr or "").split())[:200] or f"exit status {returncode}"
+        super().__init__(self.message + (f" ({hint})" if hint else ""))
+        self.state = "human_check" if self.HUMAN_CHECK.search(self.message) else "unavailable"
+
+
 class Disabled:
     def __init__(self, note: str):
         self.note = note
@@ -111,7 +131,7 @@ class OpenCLIBackend:
         self.binary = binary or os.environ.get("POLYMATH_ACQUISITION_OPENCLI") or shutil.which("opencli") or "/opt/homebrew/bin/opencli"
 
     # ----------------------------------------------------------------------------------------------------------- plumbing --
-    def _run(self, args: list[str], timeout: int = READ_TIMEOUT_S) -> str:
+    def _run(self, args: list[str], timeout: int = READ_TIMEOUT_S, *, check: bool = False) -> str:
         # reviewed (ruff S603): no shell; the binary is the host's OpenCLI; every argument is a fixed command word, a validated
         # permalink / id, a query passed as ONE argv item, or a fixed read-only script (test_the_backend_calls_only_read_commands)
         # OpenCLI is a Node program (`#!/usr/bin/env node`): its own directory goes first on PATH, so a fleet started with a thin PATH
@@ -119,10 +139,12 @@ class OpenCLIBackend:
         env = {**os.environ, "PATH": os.pathsep.join([os.path.dirname(os.path.realpath(shutil.which(self.binary) or self.binary)),
                                                      os.path.dirname(self.binary), os.environ.get("PATH", "")])}
         proc = subprocess.run([self.binary, *args], capture_output=True, text=True, timeout=timeout, env=env)  # noqa: S603
+        if check and proc.returncode != 0:                 # a site command that failed says why on stderr: keep it (CommandFailed)
+            raise CommandFailed(proc.returncode, proc.stderr or "")
         return "\n".join(ln for ln in (proc.stdout or "").splitlines() if not any(n in ln for n in _NOISE)).strip()
 
     def _json(self, args: list[str], timeout: int = READ_TIMEOUT_S) -> Any:
-        raw = self._run(args, timeout)
+        raw = self._run(args, timeout, check=True)
         try:
             return json.loads(raw)
         except json.JSONDecodeError:
@@ -195,7 +217,10 @@ class OpenCLIBackend:
 
     # ------------------------------------------------------------------------------------------------------------ readers --
     def _web_search(self, t: Target, limit: int) -> dict[str, Any]:
-        rows = self._json(["duckduckgo", "search", t.query or "", "--limit", str(min(limit, 10)), "-f", "json"])
+        try:
+            rows = self._json(["duckduckgo", "search", t.query or "", "--limit", str(min(limit, 10)), "-f", "json"])
+        except CommandFailed as exc:            # never a human action: a search engine's check is not on the site searched within
+            return {"state": "unavailable", "note": f"the web search failed: {exc}", "retrieved_at": now_iso()}
         if not isinstance(rows, list):
             return {"state": "unavailable", "note": "the web search returned nothing readable", "retrieved_at": now_iso()}
         return {"state": "ok", "retrieved_at": now_iso(),
@@ -255,7 +280,10 @@ class OpenCLIBackend:
             if not author or not re.search(r"[A-Za-z]", author) or not re.search(r"[A-Za-z]", " ".join(body)):
                 continue                                              # a counts line, never a comment
             published = _iso_text(b.get("datetime"))
-            records.append({"kind": "caption" if i == 0 else "comment", "ref": f"{b.get('datetime')}|{author}", "text": " ".join(body),
+            # the caption is the FIRST row and, unlike every comment, has no Reply button: on a post without a caption the first row
+            # is a comment, never the creator's own text
+            caption = i == 0 and "Reply" not in lines
+            records.append({"kind": "caption" if caption else "comment", "ref": f"{b.get('datetime')}|{author}", "text": " ".join(body),
                             "published_at": published, "precision": "exact" if published else "none", "author": author})
         if not records:
             text = str(page.get("text") or "").lower()
@@ -264,7 +292,8 @@ class OpenCLIBackend:
                     "note": "the post view shows no dated comment", "page_published_at": page_date}
         return {"state": "ok", "page_url": t.url, "retrieved_at": retrieved, "records": records, "total": None, "complete": None,
                 "page_published_at": page_date,
-                "notes": ["the comments the post view shows without paging (usually the first few); the caption is the post's own text"]}
+                "notes": ["the comments the post view shows without paging (usually the first few)"
+                          + ("; the caption is the post's own text" if any(r["kind"] == "caption" for r in records) else "")]}
 
     def _youtube_comments(self, t: Target, limit: int) -> dict[str, Any]:
         """The watch page's OWN comment request, in a tab of our own: OpenCLI's YouTube command reads one page, cuts each comment at
@@ -390,7 +419,10 @@ class OpenCLIBackend:
 
     def _amazon_listings(self, t: Target, limit: int) -> dict[str, Any]:
         retrieved = now_iso()
-        rows = self._json(["amazon", "search", t.query or "", "--limit", str(limit), "-f", "json"], timeout=READ_TIMEOUT_S)
+        try:
+            rows = self._json(["amazon", "search", t.query or "", "--limit", str(limit), "-f", "json"], timeout=READ_TIMEOUT_S)
+        except CommandFailed as exc:            # "amazon search hit a robot check" is a human check on amazon.com, never worked around
+            return {"state": exc.state, "retrieved_at": retrieved, "note": f"the marketplace search failed: {exc}"}
         if not isinstance(rows, list):
             return {"state": "unavailable", "retrieved_at": retrieved, "note": "the marketplace search returned nothing readable"}
         records, seen = [], set()

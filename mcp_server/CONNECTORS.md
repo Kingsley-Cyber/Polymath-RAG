@@ -72,11 +72,12 @@ corpora and adapters only. 401 = unknown / revoked / expired key · 403 = a tool
 `claude mcp add --transport http polymath https://mcp.kingsleylab.xyz/mcp --header "Authorization: Bearer <their key>"`.
 Revoking (`revoke`, `revoke-key`, `disable`) takes effect on the next request — no bounce.
 
-**Remote / custom agents → Server B over HTTP.** Start it (stateless HTTP, MCP 2026-07-28 core; Bearer-key auth):
+**Remote / custom agents → Server B over HTTP.** Start it (stateless HTTP, MCP 2026-07-28 core; Bearer-key auth). The key is
+the owner key in `.env`; with no key it does not start:
 
 ```bash
-export POLYMATH_MCP_API_KEY="$(cat ~/PolymathRuntime/polymath-v4-mcp.key)"
-.venv/bin/python mcp_server/polymath_mcp.py --http 7300
+export POLYMATH_MCP_API_KEY="$(sed -n 's/^POLYMATH_MCP_API_KEY=//p' .env | tr -d '"')"
+if [ -n "$POLYMATH_MCP_API_KEY" ]; then .venv/bin/python mcp_server/polymath_mcp.py --http 7300; else echo "no POLYMATH_MCP_API_KEY in .env: not starting"; fi
 ```
 
 Remote registration (any HTTP MCP client):
@@ -216,7 +217,9 @@ All three ingest the same remote MCP URL:
 
 Auth is a fixed API key (`Authorization: Bearer` or `X-API-Key`);
 without `POLYMATH_MCP_API_KEY` set the server runs local-trusted
-(stdio / localhost only — never tunnel an unauthenticated server).
+(stdio / localhost only — never tunnel an unauthenticated server). A
+keyless `--http` server answers only `127.0.0.1:<port>` and
+`localhost:<port>`: any other Host (a tunnel, a DNS-rebound page) gets 421.
 The OWNER key is `.env` `POLYMATH_MCP_API_KEY` (admin; never hand it to anyone). The file `~/PolymathRuntime/polymath-v4-mcp.key` is STALE: the server answers it 401. A friend gets a key of their own, scoped to their corpora: `scripts/mcp_principals.py add … --profile friend --key-out …` (see that script).
 
 Abstention semantics carry through every shape: `insufficient_evidence`

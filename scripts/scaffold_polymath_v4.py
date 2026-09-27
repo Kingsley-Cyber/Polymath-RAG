@@ -2504,6 +2504,10 @@ TREE: list[tuple[str, str, str | None]] = [
     # TRAIL-EXT-BUGHUNT-V1 fixes, group acquisition (B-17, B-18, B-19, B-28)
     ("tests/contracts/test_harness_guide_admission.py", "py", None),
     ("docs/wiki/work-log/2026-09-26-trail-ext-fixes-acquisition.md", "md", None),
+    # TRAIL-EXT-BUGHUNT-V1 fixes, group acquisition, batch C (B-41, B-42, B-43, B-45, B-46, B-47, B-56, B-63, B-65)
+    ("tests/contracts/test_harness_guide_loop_and_receipt.py", "py", None),
+    ("tests/contracts/test_mcp_server_hardening.py", "py", None),
+    ("docs/wiki/work-log/2026-09-26-trail-ext-fixes-acquisition-c.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-hosted-acquisition.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-audit-fixes.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-autoresearch-r7-e2e.md", "md", None),

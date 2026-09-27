@@ -13,7 +13,9 @@ comment and a signed-out post view is a sign-in requirement; a read that returne
 intent; TikTok's login modal is a wall; a request relayed by a proxy is refused.
 TRAIL-EXT-BUGHUNT-V1 (2026-09-26) added: a page that only MENTIONS a wall (its title, opening text, community name or slug) is read
 (B-17); a comment list whose HTTP-200 reply did not parse, or carried no comment section, is unavailable, never a read (B-18); only
-a request naming a loopback host reaches the route (B-28).
+a request naming a loopback host reaches the route (B-28). Batch C: a site command's own error says why it failed, and a robot check
+is a human action (B-41); a query spends its budget only on a read, never on a refused query or a failed backend (B-42); a post
+view labels a row the caption only when it is one (B-45).
 """
 import ast
 import asyncio
@@ -580,3 +582,98 @@ def test_only_a_request_naming_a_loopback_host_reaches_the_host_browser(monkeypa
         assert r.json()["detail"]["code"] == "NON_LOOPBACK_HOST" and reads == []
     else:
         assert r.json()["status"] == "EMPTY" and len(reads) == 1
+
+
+# ------------------------------------------------------------------------------- TRAIL-EXT-BUGHUNT-V1 batch C: B-41, B-42, B-45
+#: OpenCLI 1.8.6's error envelope on stderr (commanderAdapter.renderError: js-yaml, lineWidth 120), rendered with its own js-yaml
+ROBOT_CHECK = ("ok: false\nerror:\n  code: COMMAND_EXEC\n  message: amazon search hit a robot check\n  help: >-\n"
+               "    Open a clean Amazon search page in the shared Chrome profile and clear any robot check first. If you are using CDP,\n"
+               "    set OPENCLI_CDP_TARGET=amazon.com and avoid parallel Amazon commands against the same browser target.\n  exitCode: 1\n")
+NO_CARDS = ("ok: false\nerror:\n  code: COMMAND_EXEC\n  message: amazon search did not expose any product cards\n  help: >-\n"
+            "    The search page may have changed or hit a robot check. Open the same query in Chrome, verify the page is visible,\n"
+            "    and retry.\n  exitCode: 1\n")
+NO_RESULTS = ("ok: false\nerror:\n  code: EMPTY_RESULT\n  message: DuckDuckGo search returned no data\n"
+              "  help: No DuckDuckGo results matched \"rain cover\".\n  exitCode: 66\n")
+
+
+def _fake_opencli(tmp_path, stderr, code):
+    """A stand-in for the OpenCLI binary: prints an error envelope on stderr and exits with `code` (it never opens a browser)."""
+    (tmp_path / "envelope.txt").write_text(stderr)
+    fake = tmp_path / "opencli"
+    fake.write_text(f"#!/bin/sh\ncat '{tmp_path / 'envelope.txt'}' 1>&2\nexit {code}\n")
+    fake.chmod(0o755)
+    return O.OpenCLIBackend(binary=str(fake))
+
+
+def test_a_site_commands_robot_check_is_a_human_action_on_that_site(tmp_path):
+    out = S.acquire(principal_id=None, action=_action(tag="robot"), operation="listings", target="camera rain cover", site="amazon.com",
+                    search_intent_id="si_comments", backend=_fake_opencli(tmp_path, ROBOT_CHECK, 1))
+    assert out["status"] == "HUMAN_ACTION_REQUIRED" and out["human_action"]["kind"] == "human_check"
+    assert "amazon.com" in out["human_action"]["instruction"] and out["budget"]["refunded"] is True
+
+
+@pytest.mark.parametrize("operation,site,envelope,code,reason", [
+    ("listings", "amazon.com", NO_CARDS, 1, "did not expose any product cards"),
+    ("web_search", None, NO_RESULTS, 66, "DuckDuckGo search returned no data")])
+def test_a_site_commands_other_failure_says_why(tmp_path, operation, site, envelope, code, reason):
+    out = S.acquire(principal_id=None, action=_action(tag=["fails", operation]), operation=operation, target="camera rain cover", site=site,
+                    search_intent_id="si_comments", backend=_fake_opencli(tmp_path, envelope, code))
+    assert out["status"] == "UNAVAILABLE" and out["human_action"] is None and out["budget"]["refunded"] is True
+    assert any(reason in x for x in out["limitations"]), out["limitations"]
+
+
+@pytest.mark.parametrize("bad", ["rain\u0000cover", "rain\u0007cover", "rain\ud800cover"])
+def test_a_query_with_a_control_character_is_refused_before_it_spends_anything(monkeypatch, bad):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from orchestrator.api import acquisition as R
+    step = _action(tag=["control", bad.encode("utf-8", "surrogatepass").hex()])
+    monkeypatch.setattr(R, "tx", lambda: contextlib.nullcontext(None))
+    monkeypatch.setattr(R.service, "assert_owner", lambda conn, run_id, principal: None)
+    monkeypatch.setattr(R, "open_harness_action", lambda conn, run_id: step)
+    monkeypatch.setattr(S, "default_backend", lambda: O.OpenCLIBackend(binary="/bin/echo"))
+    app = FastAPI()
+    app.include_router(R.router)
+    client = TestClient(app, base_url="http://127.0.0.1:7200", raise_server_exceptions=False)
+    body = json.dumps({"operation": "web_search", "target": bad, "search_intent_id": "si_comments"})
+    r = client.post("/adapter/adr_x/acquire", content=body, headers={"content-type": "application/json"})
+    assert r.status_code == 422 and r.json()["detail"]["code"] == "BAD_QUERY", r.text
+    assert S._USED.get(step["action_id"], 0) == 0 and S._TRIED.get(step["action_id"], 0) == 0
+
+
+class Broken:
+    """A backend whose read raises (a bug in a reader, an argument the OS refuses)."""
+
+    def status(self):
+        return {}
+
+    def read(self, target, limit):
+        raise RuntimeError("the reader broke")
+
+
+def test_a_read_that_raised_gives_its_query_back_and_says_so():
+    step = _action(tag="raised", budget={"max_queries": 1})
+    out = S.acquire(principal_id=None, action=step, operation="comments", target=VIDEO, search_intent_id="si_comments", backend=Broken())
+    assert out["status"] == "UNAVAILABLE" and out["budget"]["refunded"] is True and out["budget"]["queries_used_here"] == 0
+    assert any("RuntimeError: the reader broke" in x for x in out["limitations"]), out["limitations"]
+    again = S.acquire(principal_id=None, action=step, operation="comments", target=VIDEO, search_intent_id="si_comments",
+                      backend=Recorded({"state": "ok", "records": []}))
+    assert again["status"] == "EMPTY"                                    # the one query of the budget was still there
+
+
+#: a post WITHOUT a caption: two comment rows (each with its Reply button) and the post's own date row (the skeptic's recording)
+INSTAGRAM_NO_CAPTION = {"blocks": [
+    {"datetime": "2025-11-17T08:08:38.000Z", "shown": "44w", "block": "viewer_one\n \n44w\nmy lens fogs every morning\n1 like\nReply"},
+    {"datetime": "2025-11-18T08:08:38.000Z", "shown": "44w", "block": "viewer_two\n \n44w\nsame problem here\nReply"},
+    {"datetime": "2025-11-19T08:08:38.000Z", "shown": "44w", "block": "georges.camera\n \n44w\nthanks, a fix is coming\nReply"},
+    {"datetime": "2025-11-15T18:26:40.000Z", "shown": "November 15, 2025", "block": "233\n8\n2\nNovember 15, 2025"}]}
+
+
+def test_a_post_without_a_caption_never_presents_a_comment_as_the_creators_text():
+    ig = S.resolve("comments", "https://www.instagram.com/p/DRFkr7rkvUJ/")
+    raw = _backend_with_tab({"url": ig.url, "title": "Instagram", "text": "x"}, INSTAGRAM_NO_CAPTION)._instagram_comments(ig, 20)
+    assert [(r["kind"], r["author"]) for r in raw["records"]] == [("comment", "viewer_one"), ("comment", "viewer_two"), ("comment", "georges.camera")]
+    assert not any("caption" in n for n in raw["notes"])
+    with_caption = _backend_with_tab({"url": ig.url, "title": "Instagram", "text": "x"}, INSTAGRAM_SIGNED_IN)._instagram_comments(ig, 20)
+    assert [r["kind"] for r in with_caption["records"]] == ["caption", "comment", "comment"]
+    assert any("the caption is the post's own text" in n for n in with_caption["notes"])

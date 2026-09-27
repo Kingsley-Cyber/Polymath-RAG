@@ -29,14 +29,17 @@ HarnessResearchReceiptV1 with adapter_submit. TrailSignal decides what is admitt
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import re
 import threading
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Protocol
 
 CONTRACT = "research-acquisition-v1"
+log = logging.getLogger("polymath.acquisition")
 OPERATIONS = ("catalog", "web_search", "comments", "listings")
 EXCERPT_MAX, TITLE_MAX, QUERY_MAX = 600, 300, 300
 #: items whose freshness is the date they were WRITTEN (a listing is observed as it is when read)
@@ -112,6 +115,8 @@ def _query(text: str) -> str:
     q = " ".join(str(text or "").split())
     if not 2 <= len(q) <= QUERY_MAX:
         raise AcquisitionRefused(422, "BAD_QUERY", f"a query is 2 to {QUERY_MAX} characters")
+    if any(unicodedata.category(c) in ("Cc", "Cs") for c in q):      # a control character or a lone surrogate: no read can take it
+        raise AcquisitionRefused(422, "BAD_QUERY", "a query holds no control characters and no lone surrogates")
     return q
 
 
@@ -331,9 +336,14 @@ def acquire(*, principal_id: str | None, action: dict[str, Any] | None, operatio
     n = _limit(limit)
     used, cap = take_query(action)
     started = now_iso()
-    raw = backend.read(t, n)
-    out = shape(t, raw, action=action, search_intent_id=search_intent_id, retrieved_at=str(raw.get("retrieved_at") or started),
-                used=used, cap=cap, limit=n)
+    try:
+        raw = backend.read(t, n)
+        out = shape(t, raw, action=action, search_intent_id=search_intent_id, retrieved_at=str(raw.get("retrieved_at") or started),
+                    used=used, cap=cap, limit=n)
+    except Exception as exc:     # a read that raised read nothing: its query is given back below, never spent on a 500
+        log.exception("acquisition read failed: operation=%s site=%s", t.operation, t.site)
+        out = shape(t, {"state": "unavailable", "note": f"the read failed ({type(exc).__name__}: {str(exc)[:200]})"}, action=action,
+                    search_intent_id=search_intent_id, retrieved_at=started, used=used, cap=cap, limit=n)
     if out["status"] in ("HUMAN_ACTION_REQUIRED", "UNAVAILABLE"):     # nothing was read: the query is given back
         out["budget"]["queries_used_here"] = refund_query(action)
         out["budget"]["refunded"] = True

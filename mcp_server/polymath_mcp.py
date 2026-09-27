@@ -429,15 +429,18 @@ def main() -> None:
         # tunnel (cloudflared) so TLS terminates outside this process.
         from mcp.server.transport_security import TransportSecuritySettings
 
-        app = server.streamable_http_app(
-            stateless_http=True,
-            # DNS-rebinding host pinning is deliberately OFF: the server
-            # binds localhost and is exposed only through an HTTPS tunnel
-            # with Bearer-key auth — the tunnel hostname is dynamic, and
-            # a rebinding attacker without the key gets 401 regardless.
-            transport_security=TransportSecuritySettings(
-                enable_dns_rebinding_protection=False),
-        )
+        if os.environ.get("POLYMATH_MCP_API_KEY", "").strip():
+            # WITH a key, DNS-rebinding host pinning is deliberately OFF: the
+            # server is exposed only through an HTTPS tunnel whose hostname
+            # is dynamic, and a caller without the key gets 401 regardless.
+            security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
+        else:
+            # WITHOUT a key (local-trusted), the server answers only this
+            # machine's own names: a DNS-rebound page or a tunnel gets 421.
+            local = [f"127.0.0.1:{port}", f"localhost:{port}"]
+            security = TransportSecuritySettings(
+                allowed_hosts=local, allowed_origins=[f"http://{h}" for h in local])
+        app = server.streamable_http_app(stateless_http=True, transport_security=security)
         uvicorn.run(_auth_wrapped(app), host="127.0.0.1", port=port)
     else:
         server.run("stdio")
