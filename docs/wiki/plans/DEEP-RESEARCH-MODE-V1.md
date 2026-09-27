@@ -89,7 +89,7 @@ The recursion is flattened into levels, so progress is easy to stream and budget
 2. **State.** `frontier = [{query: question, goal: "", depth, breadth}]`, plus shared `learnings[]`, `evidence{cid → row}`, `seen_queries`.
 3. **One level.** Concurrency 2, because the embedder and reranker share the Metal GPU. For each frontier node:
    1. **Plan.** One LLM call writes ≤ breadth `{query, goal}`, given the node and the top learnings so far. Near-duplicates of `seen_queries` are dropped.
-   2. **Retrieve.** Polymath's evidence retrieval in-process, inside the request's libraries only. It uses the reserved deep-research surfaces (ANCHOR, broad SEEALSO, broad BRIDGE, RECALLQ; DR0 finds their switches). The planner can never add a library.
+   2. **Retrieve.** Polymath's evidence retrieval in-process, inside the request's libraries only. It uses the reserved deep-research surfaces (ANCHOR, broad SEEALSO, broad BRIDGE, RECALLQ; DR0 finds their switches). DR0 (11.519): they switch on per query intent (`query_intent.py:149-158`), and only the chat path applies that policy (`ui.py:3897`); deep research's searches go through `/retrieve` with a mode and no plan, so they are off for it today. Turning them on is a later slice with a measured A/B. The planner can never add a library.
    3. **Extract.** One LLM call over the rows, each tagged `[cid]`, returns ≤ 3 learnings `{text, cids}`, ≤ ⌈breadth/2⌉ follow-ups, and `done`. A learning whose cids are not in those rows is dropped and counted.
    4. **Stream.** A `phase` frame: `{depth, completed/total, query, new_learnings}`.
    5. **Recurse.** If depth > 1, there are follow-ups, `done` is false and budget remains, queue a child: `{goal + follow-ups, depth − 1, ⌈breadth/2⌉}`.
@@ -134,7 +134,7 @@ Times are estimates from concurrency 2 and today's retrieval latency; DR4 measur
 ## 5. Slices
 | Slice | What | Proof ($0 unless marked) |
 |---|---|---|
-| **DR0** | Find the switches of the reserved deep surfaces; add the `deep_research` lanes through the registry; fix the frame and receipt shapes in this plan | `llm_accounts.py validate` / `diff` clean; the surfaces' switches named with file:line |
+| **DR0** — DONE 11.519 | Find the switches of the reserved deep surfaces; add the `deep_research` lanes through the registry; fix the frame and receipt shapes in this plan | `llm_accounts.py validate` / `diff` clean; the surfaces' switches named with file:line |
 | **DR1** — DONE 11.513 | The engine (`deep_research/`) with fake ports | Unit tests: breadth halves per level; stop at 85% budget; stop on no follow-ups; a learning with a foreign cid is dropped and counted; duplicate queries dropped; deadline respected; the report cites only known cids |
 | **DR2** — DONE 11.514 | `POST /research/deep` + boundary line + receipts | Contract tests: frame order (phase… token… answer, done), heartbeat, a friend's scope narrowed, a second concurrent run refused, a disconnect cancels, a receipt written |
 | **DR3** — DONE 11.516 | Composer switch, presets, progress tree, report | vitest: the switch routes to `/research/deep`; progress renders from phase frames; Stop cancels; citation chips resolve |

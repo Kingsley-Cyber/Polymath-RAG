@@ -95,13 +95,19 @@ def _retrieve_port(loop: asyncio.AbstractEventLoop, principal: str | None, mode:
     return retrieve
 
 
+def research_lane_names(stage_pin_fn, compiler_stage: str) -> list[str]:
+    """DR0: the `deep_research` stage pin (config/llm_accounts.yaml), else the chat compiler's lanes."""
+    return list(stage_pin_fn("deep_research") or stage_pin_fn(compiler_stage) or [])
+
+
 def _complete_port(key: str):
     """Planning and extraction on the chat compiler's governed lanes (limiter-admitted), two attempts across lanes."""
     from orchestrator.api.ui import _compiler_attempt_order
     from polymath_shared.chat_plan import COMPILER_STAGE
     from polymath_shared.llm_extraction.client import LLMExtractionClient
     from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
-    endpoints = [e for e in cloud_endpoints() if e.name in (stage_pin(COMPILER_STAGE) or [])]
+    names = research_lane_names(stage_pin, COMPILER_STAGE)
+    endpoints = [e for e in cloud_endpoints() if e.name in names]
     if not endpoints:
         raise HTTPException(503, {"error_code": "NO_RESEARCH_LANE", "message": "no model lane is configured for research"})
 

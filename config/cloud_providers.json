@@ -48,6 +48,11 @@
       "compiler_ollama_gemma",
       "compiler_alt"
     ],
+    "deep_research": [
+      "compiler_alibaba_deepseek",
+      "compiler_ollama_gemma",
+      "compiler_alt"
+    ],
     "doc_profile": [
       "profile_groq1",
       "profile_groq2",

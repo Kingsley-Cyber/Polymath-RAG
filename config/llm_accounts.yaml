@@ -69,6 +69,9 @@ slots:
   chat_compiler:
     count: 1
     via: orchestrator
+  deep_research:
+    count: 1
+    via: orchestrator
 stage_pins:
   parent_enrichment:
   - openrouter1
@@ -76,6 +79,12 @@ stage_pins:
   - openrouter3
   - openrouter5
   chat_compiler:
+  - compiler_alibaba_deepseek
+  - compiler_ollama_gemma
+  - compiler_alt
+  # DEEP-RESEARCH-MODE-V1 DR0: the research loop's planning / extraction lanes (POST /research/deep). The same lanes as the
+  # compiler for now (so they share its per-lane budgets); point this pin at dedicated lanes to give deep research its own.
+  deep_research:
   - compiler_alibaba_deepseek
   - compiler_ollama_gemma
   - compiler_alt

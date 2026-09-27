@@ -162,3 +162,17 @@ def test_a_slow_stream_sends_keep_alive_comments(rec, monkeypatch):
 def test_the_web_boundary_opens_it_to_signed_in_users():
     assert B.classify("POST", "/research/deep") == B.USER
     assert B.classify("GET", "/research/deep") is None
+
+
+def test_the_research_lanes_prefer_their_own_pin_then_the_compilers():
+    pins = {"deep_research": ["lane_a"], "chat_compiler": ["lane_c"]}
+    assert DRR.research_lane_names(pins.get, "chat_compiler") == ["lane_a"]
+    assert DRR.research_lane_names({"chat_compiler": ["lane_c"]}.get, "chat_compiler") == ["lane_c"]
+    assert DRR.research_lane_names({}.get, "chat_compiler") == []
+
+
+def test_the_registry_pins_deep_research():
+    import json
+    import pathlib
+    cfg = json.loads((pathlib.Path(__file__).resolve().parents[2] / "config" / "cloud_providers.json").read_text())
+    assert cfg["stage_pins"]["deep_research"], "config/llm_accounts.yaml must pin deep_research (generated into cloud_providers.json)"
