@@ -638,3 +638,17 @@ details.card[open] > summary::before { transform: rotate(90deg); }
 .sources__list { margin: 6px 0 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); }
 .sources__text { margin: 4px 0 0; color: var(--text-2); white-space: pre-wrap; }
 .cite-id { font-size: var(--fs-xs); padding: 0 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+
+/* ── citation markers with hover cards (U4b) ─────────────────────────────── */
+.cite { position: relative; display: inline-block; }
+.cite__btn {
+  appearance: none; border: 0; cursor: pointer; font: inherit; font-family: var(--font-mono); font-size: 11px; line-height: 1.6;
+  padding: 0 5px; margin: 0 1px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); vertical-align: 1px;
+}
+.cite__card {
+  display: none; position: absolute; z-index: 30; left: 0; top: calc(100% + 4px); width: min(340px, 80vw);
+  flex-direction: column; gap: 4px; padding: 10px 12px; font-size: var(--fs-sm); line-height: 1.45; white-space: normal;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2); box-shadow: var(--shadow-pop);
+}
+.cite:hover .cite__card, .cite__btn:focus-visible + .cite__card, .cite--open .cite__card { display: flex; }
+.cite__text { color: var(--text-2); }

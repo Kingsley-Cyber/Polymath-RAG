@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { CiteRef, chatCitations, deepCitations, remarkCitations } from "./Citations";
 import type { DeepAnswer } from "../lib/chat";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Turn } from "../lib/chat";
 import type { Synthesizer } from "../lib/contracts";
@@ -20,10 +21,14 @@ export function AnswerBody({ t, models }: { t: Turn; models: Synthesizer[] }) {
   const ec = typeof r?.evidence_count === "number" ? r.evidence_count : null;
   const gf = typeof r?.graph_fact_count === "number" ? r.graph_fact_count : 0;
   const verdict = t.verdict ?? "supported";
+  const cites = useMemo(() => (t.deep ? deepCitations(t.deep) : chatCitations(r)), [t.deep, r]);
   return (
     <div className="answer">
       <div className="md">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{t.answerText}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm, remarkCitations]}
+                       components={{ "cite-ref": ({ tag }: { tag?: string }) => <CiteRef tag={tag ?? ""} info={cites.get(tag ?? "")} /> } as Components}>
+          {t.answerText}
+        </ReactMarkdown>
       </div>
       {t.deep && <DeepSources deep={t.deep} />}
       {t.abstained && t.uncovered.length > 0 && (
