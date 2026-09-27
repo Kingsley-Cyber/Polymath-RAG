@@ -3241,7 +3241,8 @@ _LATENT_LABEL_RE = re.compile(r"^\[[^\]\n]+\] \([A-Z_]+ · (?:COMPLEMENTARY|DIVE
 #: S1a (DOCUMENT-RAG-COMPLETION-V1 Part F, E5): the retrieval-trace keys a receipt keeps — per-probe survival. Their values
 #: carry no clock readings; every timing moves to `trace_ms`.
 _TRACE_RECEIPT_KEYS = ("aspects", "aspect_final", "aspect_best", "aspect_prefix", "aspect_seated", "weak_aspects",
-                       "weak_reasons")
+                       "weak_reasons",
+                       "mapped_subqueries")     # FACET-RETRIEVAL-V1 F3: WILDCARD's second-pass counts (the rows ride `wildcard`)
 _LANE_TRACE_KEYS = ("latent", "dualread", "resolution_lift", "seealso_fanout", "graph_dest", "gnn")
 
 
@@ -4012,6 +4013,10 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         # FACET-RETRIEVAL-V1 F2: the plan's facets → the composer keeps seats per facet (absent = per-query seats)
                         **({"facets": tuple((f["id"], tuple(f.get("query_ids") or ())) for f in _plan.facets)}
                            if (_flag == "on" and _plan is not None and _rflag == "v2" and getattr(_plan, "facets", None)) else {}),
+                        # FACET-RETRIEVAL-V1 F3: WILDCARD gates its mapped subqueries against the user's ORIGINAL (resolved)
+                        # question — the compact retrieval text inverted the gate's verdicts (PROBE-GATE-V1); WILDCARD only
+                        **({"question": (_plan.resolved_request or query or "").strip()}
+                           if (ui_mode == "WILDCARD" and _flag == "on" and _plan is not None) else {}),
                         **scope_kwargs(_role_scope))
                     if _probe_gate is not None:
                         fast.setdefault("trace", {})["probe_gate"] = _probe_gate          # receipted with the turn (S1d)
@@ -4063,13 +4068,17 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 _latent_receipt = _apply_latent_selection(fast, _plan, _retrieval_text, mode=ui_mode)
                 evidence_rows = _evidence_rows(fast["evidence"])      # E3: role + latent seat kept
                 _mark("retrieve")
+                _mapped_pass = ((fast.get("meta") or {}).get("wildcard") or {}).get("mapped_pass") or {}
                 yield _phase("retrieve_done", "Evidence selected",
                              evidence_count=len(evidence_rows),
                              lane_sizes=fast["trace"].get("lane_sizes"),
                              plan=(fast.get("meta") or {}).get("plan_version"),
                              degraded=[d.get("component") for d in ((fast.get("meta") or {}).get("degraded") or [])] or None,
                              aspects=len(_aspects) or None, weak_aspects=_weak or None,
-                             facets_uncovered=((_facet_cov or {}).get("uncovered") or None))
+                             facets_uncovered=((_facet_cov or {}).get("uncovered") or None),
+                             # F3: WILDCARD's mapped subqueries this turn (searched / built), or why the pass was skipped
+                             **({"mapped_subqueries": _mapped_pass.get("searched"), "mapped_built": _mapped_pass.get("built"),
+                                 "mapped_skipped": _mapped_pass.get("skipped")} if _mapped_pass else {}))
                 if ui_mode == "GRAPH":
                     # P1.e: the bounded stage already ran inside the composition; the phases carry its receipts
                     yield _phase("graph", "Expanding the canonical fact "

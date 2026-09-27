@@ -1,0 +1,8238 @@
+{
+ "hybrid_subs_facets": {
+  "evidence": [
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c0",
+    "dense_rank": 0,
+    "dense_score": 1.0,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.027869,
+    "g3_score": 1.0,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c0",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009836,
+     "q0": 0.016393,
+     "q1": 0.013115
+    },
+    "region_role": null,
+    "rerank_score": 1.0,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c0",
+    "dense_rank": 1,
+    "dense_score": 1.0,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.027419,
+    "g3_score": 0.99,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c0",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009677,
+     "q0": 0.016129,
+     "q1": 0.012903
+    },
+    "region_role": null,
+    "rerank_score": 0.99,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c1",
+    "dense_rank": 2,
+    "dense_score": 0.99,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.021429,
+    "g3_score": 0.98,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c1",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004762,
+     "q0": 0.015873,
+     "q1": 0.006349
+    },
+    "region_role": null,
+    "rerank_score": 0.98,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c1",
+    "dense_rank": 3,
+    "dense_score": 0.99,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.021094,
+    "g3_score": 0.97,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c1",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004687,
+     "q0": 0.015625,
+     "q1": 0.00625
+    },
+    "region_role": null,
+    "rerank_score": 0.97,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c2",
+    "dense_rank": 4,
+    "dense_score": 0.98,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.020769,
+    "g3_score": 0.96,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c2",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004615,
+     "q0": 0.015385,
+     "q1": 0.006154
+    },
+    "region_role": null,
+    "rerank_score": 0.96,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c2",
+    "dense_rank": 5,
+    "dense_score": 0.98,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.020455,
+    "g3_score": 0.95,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c2",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004545,
+     "q0": 0.015152,
+     "q1": 0.006061
+    },
+    "region_role": null,
+    "rerank_score": 0.95,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c0",
+    "dense_rank": null,
+    "dense_score": 1.0,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.016393,
+    "g3_score": 0.94,
+    "heading_path": "",
+    "hierarchy_rank": 0,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c0",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 0.94,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-771685345",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.016393,
+    "g3_score": 0.9299999999999999,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-771685345",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 0.9299999999999999,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": 0,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c1",
+    "dense_rank": null,
+    "dense_score": 0.99,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.016129,
+    "g3_score": 0.92,
+    "heading_path": "",
+    "hierarchy_rank": 1,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c1",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016129
+    },
+    "region_role": null,
+    "rerank_score": 0.92,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c2",
+    "dense_rank": null,
+    "dense_score": 0.98,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.015873,
+    "g3_score": 0.91,
+    "heading_path": "",
+    "hierarchy_rank": 2,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c2",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015873
+    },
+    "region_role": null,
+    "rerank_score": 0.91,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c0",
+    "dense_rank": null,
+    "dense_score": 1.0,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015625,
+    "g3_score": 0.9,
+    "heading_path": "",
+    "hierarchy_rank": 3,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c0",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015625
+    },
+    "region_role": null,
+    "rerank_score": 0.9,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c1",
+    "dense_rank": null,
+    "dense_score": 0.99,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015385,
+    "g3_score": 0.89,
+    "heading_path": "",
+    "hierarchy_rank": 4,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c1",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015385
+    },
+    "region_role": null,
+    "rerank_score": 0.89,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-134953552-427952557-1312609739",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.013115,
+    "g3_score": 0.87,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-134953552-427952557-1312609739",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "q1"
+    ],
+    "query_scores": {
+     "q1": 0.013115
+    },
+    "region_role": null,
+    "rerank_score": 0.87,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.009836,
+    "g3_score": 0.86,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-427952557-1312609739-1673451213-2131635068",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009836
+    },
+    "region_role": null,
+    "rerank_score": 0.86,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c2",
+    "dense_rank": null,
+    "dense_score": 0.98,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015152,
+    "g3_score": 0.88,
+    "heading_path": "",
+    "hierarchy_rank": 5,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c2",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015152
+    },
+    "region_role": null,
+    "rerank_score": 0.88,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   }
+  ],
+  "latent_pool": null,
+  "meta": {
+   "aspect_best": {
+    "p0": 0.7311,
+    "q0": 0.7311,
+    "q1": 0.7311
+   },
+   "aspect_seated": [],
+   "aspects": {
+    "p0": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 7,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "prefix": 7,
+     "query": "prompt optimisation with reward models",
+     "type": "ENTITY",
+     "union": 7,
+     "weak": null,
+     "weight": 0.6
+    },
+    "q0": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 13,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1,
+      "HIERARCHICAL_ROUTE": 6
+     },
+     "prefix": null,
+     "query": "what does RAPO say about prompts",
+     "type": "PRIMARY",
+     "union": 13,
+     "weak": null,
+     "weight": 1.0
+    },
+    "q1": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 7,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "prefix": 7,
+     "query": "reward models for prompts",
+     "type": "MECHANISM",
+     "union": 7,
+     "weak": null,
+     "weight": 0.8
+    }
+   },
+   "budget": {
+    "agreement_bonus": 0.5,
+    "aspect_final_seats": 1,
+    "aspect_prefix_seats": 3,
+    "aspect_weak_floor": 0.5,
+    "atom_k": 12,
+    "atom_kinds": [],
+    "compose_agreement_boost": 0.02,
+    "compose_agreement_cap": 0.05,
+    "compose_aspect_slots": 3,
+    "compose_diversity_slots": 4,
+    "compose_doc_lane_max": 3,
+    "compose_doc_soft_max": 3,
+    "compose_dominance_share": 0.4,
+    "compose_relevance_slots": 8,
+    "compose_score_gap": 0.1,
+    "compose_sparse_slots": 3,
+    "contextual_at_risk": 0.5,
+    "contextual_conn_floor": 0.3,
+    "contextual_judge": false,
+    "contextual_max_needs": 4,
+    "contextual_per_need": 3,
+    "demote_noisy_regions": true,
+    "doc_steer_items": 4,
+    "doc_steer_kinds": [],
+    "dualread_children_per_parent": 3,
+    "dualread_enabled": false,
+    "dualread_map_k": 24,
+    "dualread_max_parents": 8,
+    "dualread_profile_docs": 8,
+    "embed_deadline_s": 2.5,
+    "entity_card_k": 8,
+    "entity_card_max_docs_per_card": 4,
+    "facet_seats": 2,
+    "global_dense_k": 50,
+    "global_sparse_k": 40,
+    "gnn_children": 12,
+    "gnn_children_per_parent": 2,
+    "gnn_enabled": false,
+    "gnn_family": "",
+    "gnn_parent_k": 8,
+    "gnn_variant": "real",
+    "graph_dest_children": 8,
+    "graph_dest_enabled": false,
+    "hierarchy_child_k": 3,
+    "hierarchy_doc_k": 16,
+    "hierarchy_max_documents": 6,
+    "hierarchy_max_sections_per_document": 2,
+    "hierarchy_route_documents": false,
+    "hierarchy_section_k": 24,
+    "lane_deadline_s": 3.0,
+    "lanes": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "latent_abstraction_top_k": 8,
+    "latent_children_per_parent": 3,
+    "latent_enabled": false,
+    "latent_max_parents": 6,
+    "latent_transfer_top_k": 8,
+    "max_subqueries": 10,
+    "max_workers": 8,
+    "merged_candidate_max": 120,
+    "mmr_lambda": 0.7,
+    "neighbor_expansion": 0,
+    "neighbor_expansion_max": 8,
+    "parallel_route_lanes": false,
+    "probe_gate_floor": 0.0,
+    "rerank_deadline_s": 8.0,
+    "rerank_doc_cap": 8,
+    "rerank_max": 24,
+    "rerank_max_fair": 32,
+    "rerank_round_robin": true,
+    "resolution_lift_children": 6,
+    "resolution_lift_enabled": false,
+    "route_prefix_seats": 2,
+    "rrf_k": 60,
+    "second_pass_factor": 2,
+    "seealso_blend_alpha": 0.7,
+    "seealso_blend_children": 4,
+    "seealso_blend_docs": 4,
+    "seealso_blend_enabled": false,
+    "seealso_blend_items": 4,
+    "seealso_fanout_atoms": 6,
+    "seealso_fanout_children": 4,
+    "seealso_fanout_enabled": false,
+    "skeleton_paths": false,
+    "skeleton_probe_children": 2,
+    "skeleton_probe_parents": 3,
+    "skeleton_probe_routes": 0,
+    "subquery_dense_k": 20,
+    "subquery_sparse_k": 15,
+    "synthesis_max": 24,
+    "wildcard_deadline_s": 2.5,
+    "wildcard_finish_budget_s": 4.0,
+    "wildcard_unverified_fill_s": 1.0
+   },
+   "candidates": 15,
+   "composition": {
+    "agreement_reordered": 0,
+    "aspect_seats": [],
+    "doc_counts": {
+     "d1": 6,
+     "d2": 6,
+     "d3": 3
+    },
+    "doc_share_top": 0.4,
+    "docs_within_gap": 3,
+    "dominance": false,
+    "dominance_avoidable": false,
+    "facet_seats": [
+     {
+      "chunk_ids": [],
+      "facet_id": "f1",
+      "represented": 8,
+      "seated": 0
+     },
+     {
+      "chunk_ids": [],
+      "facet_id": "f2",
+      "represented": 6,
+      "seated": 0
+     }
+    ],
+    "lane_quota": {
+     "by": "first_arrival",
+     "lifted": 0,
+     "max": 3,
+     "refused": 0
+    },
+    "mmr": {
+     "added_docs": [],
+     "changed": 0,
+     "lambda": 0.7,
+     "seats": 1,
+     "similarity": "lexical_cosine"
+    },
+    "slots": {
+     "aspect": 0,
+     "diversity": 4,
+     "facet": 0,
+     "fill": 0,
+     "mmr": 1,
+     "relevance": 8,
+     "sparse": 2
+    }
+   },
+   "corpus_id": "cinema",
+   "deadlines": {
+    "contract": "concurrency-deadlines-v1",
+    "embed_deadline_s": 2.5,
+    "lane_deadline_s": 3.0,
+    "max_workers": 8,
+    "rerank_deadline_s": 8.0
+   },
+   "degraded": [],
+   "engine": "candidate-retrieval-v1",
+   "evidence_count": 15,
+   "evidence_roles": {
+    "DIRECT": 15,
+    "LATENT": 0,
+    "PRECISION": 0,
+    "RELATIONAL": 0
+   },
+   "final_detail": [
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 1.0
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.99
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.98
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.97
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.96
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.95
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.94
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-771685345",
+     "doc_id": "d3",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9299999999999999
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.92
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.91
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.89
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-134953552-427952557-1312609739",
+     "doc_id": "d3",
+     "query_ids": [
+      "q1"
+     ],
+     "rerank_score": 0.87
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+     "doc_id": "d3",
+     "query_ids": [
+      "p0"
+     ],
+     "rerank_score": 0.86
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.88
+    }
+   ],
+   "lanes": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "latent": null,
+   "lexical_enabled": true,
+   "liveness": null,
+   "mmr": {
+    "added_docs": [],
+    "changed": 0,
+    "lambda": 0.7,
+    "seats": 1,
+    "similarity": "lexical_cosine"
+   },
+   "mode": "HYBRID",
+   "multi_lane": 0,
+   "plan_version": "chat-retrieval-v2",
+   "rrf_k": 60,
+   "selected_document_count": 2,
+   "selected_section_count": 2,
+   "subqueries": 2,
+   "weak_aspects": [],
+   "weak_reasons": {}
+  },
+  "query": "what does RAPO say about prompts",
+  "selected_documents": [
+   {
+    "aggregate_rank": 0,
+    "aggregate_score": 0.032787,
+    "corpus_id": "cinema",
+    "doc_id": "d1",
+    "document_summary": null,
+    "representation_kinds_present": [
+     "routing_section_summary",
+     "routing_child"
+    ],
+    "rrf_contributions": {
+     "routing_child": 0.016393,
+     "routing_section_summary": 0.016393
+    },
+    "why": {
+     "best_child_rank": 0,
+     "best_document_summary_rank": null,
+     "best_lexical_rank": null,
+     "best_section_summary_rank": 0
+    }
+   },
+   {
+    "aggregate_rank": 1,
+    "aggregate_score": 0.032258,
+    "corpus_id": "cinema",
+    "doc_id": "d2",
+    "document_summary": null,
+    "representation_kinds_present": [
+     "routing_section_summary",
+     "routing_child"
+    ],
+    "rrf_contributions": {
+     "routing_child": 0.016129,
+     "routing_section_summary": 0.016129
+    },
+    "why": {
+     "best_child_rank": 1,
+     "best_document_summary_rank": null,
+     "best_lexical_rank": null,
+     "best_section_summary_rank": 1
+    }
+   }
+  ],
+  "selected_sections": [
+   {
+    "best_section_rank": 0,
+    "doc_id": "d1",
+    "from": [
+     "child_rescue",
+     "section_summary"
+    ],
+    "parent_id": "d1-p",
+    "source_name": "",
+    "summary_id": "sec-d1"
+   },
+   {
+    "best_section_rank": 1,
+    "doc_id": "d2",
+    "from": [
+     "child_rescue",
+     "section_summary"
+    ],
+    "parent_id": "d2-p",
+    "source_name": "",
+    "summary_id": "sec-d2"
+   }
+  ],
+  "trace": {
+   "aspect_best": {
+    "p0": 0.7311,
+    "q0": 0.7311,
+    "q1": 0.7311
+   },
+   "aspect_final": {
+    "p0": 7,
+    "q0": 13,
+    "q1": 7
+   },
+   "aspect_prefix": {
+    "p0": 7,
+    "q1": 7
+   },
+   "aspect_seated": [],
+   "aspects": {
+    "p0": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "query": "prompt optimisation with reward models",
+     "type": "ENTITY",
+     "union": 7,
+     "weight": 0.6
+    },
+    "q0": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1,
+      "HIERARCHICAL_ROUTE": 6
+     },
+     "query": "what does RAPO say about prompts",
+     "type": "PRIMARY",
+     "union": 13,
+     "weight": 1.0
+    },
+    "q1": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "query": "reward models for prompts",
+     "type": "MECHANISM",
+     "union": 7,
+     "weight": 0.8
+    }
+   },
+   "budget": {
+    "agreement_bonus": 0.5,
+    "aspect_final_seats": 1,
+    "aspect_prefix_seats": 3,
+    "aspect_weak_floor": 0.5,
+    "atom_k": 12,
+    "atom_kinds": [],
+    "compose_agreement_boost": 0.02,
+    "compose_agreement_cap": 0.05,
+    "compose_aspect_slots": 3,
+    "compose_diversity_slots": 4,
+    "compose_doc_lane_max": 3,
+    "compose_doc_soft_max": 3,
+    "compose_dominance_share": 0.4,
+    "compose_relevance_slots": 8,
+    "compose_score_gap": 0.1,
+    "compose_sparse_slots": 3,
+    "contextual_at_risk": 0.5,
+    "contextual_conn_floor": 0.3,
+    "contextual_judge": false,
+    "contextual_max_needs": 4,
+    "contextual_per_need": 3,
+    "demote_noisy_regions": true,
+    "doc_steer_items": 4,
+    "doc_steer_kinds": [],
+    "dualread_children_per_parent": 3,
+    "dualread_enabled": false,
+    "dualread_map_k": 24,
+    "dualread_max_parents": 8,
+    "dualread_profile_docs": 8,
+    "embed_deadline_s": 2.5,
+    "entity_card_k": 8,
+    "entity_card_max_docs_per_card": 4,
+    "facet_seats": 2,
+    "global_dense_k": 50,
+    "global_sparse_k": 40,
+    "gnn_children": 12,
+    "gnn_children_per_parent": 2,
+    "gnn_enabled": false,
+    "gnn_family": "",
+    "gnn_parent_k": 8,
+    "gnn_variant": "real",
+    "graph_dest_children": 8,
+    "graph_dest_enabled": false,
+    "hierarchy_child_k": 3,
+    "hierarchy_doc_k": 16,
+    "hierarchy_max_documents": 6,
+    "hierarchy_max_sections_per_document": 2,
+    "hierarchy_route_documents": false,
+    "hierarchy_section_k": 24,
+    "lane_deadline_s": 3.0,
+    "lanes": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "latent_abstraction_top_k": 8,
+    "latent_children_per_parent": 3,
+    "latent_enabled": false,
+    "latent_max_parents": 6,
+    "latent_transfer_top_k": 8,
+    "max_subqueries": 10,
+    "max_workers": 8,
+    "merged_candidate_max": 120,
+    "mmr_lambda": 0.7,
+    "neighbor_expansion": 0,
+    "neighbor_expansion_max": 8,
+    "parallel_route_lanes": false,
+    "probe_gate_floor": 0.0,
+    "rerank_deadline_s": 8.0,
+    "rerank_doc_cap": 8,
+    "rerank_max": 24,
+    "rerank_max_fair": 32,
+    "rerank_round_robin": true,
+    "resolution_lift_children": 6,
+    "resolution_lift_enabled": false,
+    "route_prefix_seats": 2,
+    "rrf_k": 60,
+    "second_pass_factor": 2,
+    "seealso_blend_alpha": 0.7,
+    "seealso_blend_children": 4,
+    "seealso_blend_docs": 4,
+    "seealso_blend_enabled": false,
+    "seealso_blend_items": 4,
+    "seealso_fanout_atoms": 6,
+    "seealso_fanout_children": 4,
+    "seealso_fanout_enabled": false,
+    "skeleton_paths": false,
+    "skeleton_probe_children": 2,
+    "skeleton_probe_parents": 3,
+    "skeleton_probe_routes": 0,
+    "subquery_dense_k": 20,
+    "subquery_sparse_k": 15,
+    "synthesis_max": 24,
+    "wildcard_deadline_s": 2.5,
+    "wildcard_finish_budget_s": 4.0,
+    "wildcard_unverified_fill_s": 1.0
+   },
+   "capped_out": 0,
+   "composition": {
+    "agreement_reordered": 0,
+    "aspect_seats": [],
+    "doc_counts": {
+     "d1": 6,
+     "d2": 6,
+     "d3": 3
+    },
+    "doc_share_top": 0.4,
+    "docs_within_gap": 3,
+    "dominance": false,
+    "dominance_avoidable": false,
+    "facet_seats": [
+     {
+      "chunk_ids": [],
+      "facet_id": "f1",
+      "represented": 8,
+      "seated": 0
+     },
+     {
+      "chunk_ids": [],
+      "facet_id": "f2",
+      "represented": 6,
+      "seated": 0
+     }
+    ],
+    "lane_quota": {
+     "by": "first_arrival",
+     "lifted": 0,
+     "max": 3,
+     "refused": 0
+    },
+    "mmr": {
+     "added_docs": [],
+     "changed": 0,
+     "lambda": 0.7,
+     "seats": 1,
+     "similarity": "lexical_cosine"
+    },
+    "slots": {
+     "aspect": 0,
+     "diversity": 4,
+     "facet": 0,
+     "fill": 0,
+     "mmr": 1,
+     "relevance": 8,
+     "sparse": 2
+    }
+   },
+   "concurrency": {
+    "contract": "concurrency-deadlines-v1",
+    "lane_deadline_s": 3.0,
+    "max_workers": 8,
+    "prestarted": [
+     "global_sparse_child",
+     "sub_p0_sparse",
+     "sub_q1_sparse"
+    ],
+    "timed_out": []
+   },
+   "contextual": {
+    "enabled": false
+   },
+   "degraded": [],
+   "document_candidates": [
+    {
+     "aggregate_rank": 0,
+     "aggregate_score": 0.032787,
+     "doc_id": "d1",
+     "representation_kinds_present": [
+      "routing_section_summary",
+      "routing_child"
+     ],
+     "rrf_contributions": {
+      "routing_child": 0.016393,
+      "routing_section_summary": 0.016393
+     }
+    },
+    {
+     "aggregate_rank": 1,
+     "aggregate_score": 0.032258,
+     "doc_id": "d2",
+     "representation_kinds_present": [
+      "routing_section_summary",
+      "routing_child"
+     ],
+     "rrf_contributions": {
+      "routing_child": 0.016129,
+      "routing_section_summary": 0.016129
+     }
+    }
+   ],
+   "dualread": {
+    "enabled": false
+   },
+   "engine": "candidate-retrieval-v1",
+   "exact_terms": [
+    "RAPO"
+   ],
+   "final": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068",
+    "d2-d2-p-c2"
+   ],
+   "final_detail": [
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 1.0
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.99
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.98
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.97
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.96
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.95
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.94
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-771685345",
+     "doc_id": "d3",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9299999999999999
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.92
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.91
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.89
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-134953552-427952557-1312609739",
+     "doc_id": "d3",
+     "query_ids": [
+      "q1"
+     ],
+     "rerank_score": 0.87
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+     "doc_id": "d3",
+     "query_ids": [
+      "p0"
+     ],
+     "rerank_score": 0.86
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.88
+    }
+   ],
+   "funnel_lanes": {
+    "dualread": [],
+    "global_dense_child": [
+     "d1-g-c0",
+     "d2-g-c0",
+     "d1-g-c1",
+     "d2-g-c1",
+     "d1-g-c2",
+     "d2-g-c2"
+    ],
+    "global_sparse_child": [
+     "sp-771685345"
+    ],
+    "gnn_route": [],
+    "graph_dest": [],
+    "hierarchical": [
+     "d1-d1-p-c0",
+     "d1-d1-p-c1",
+     "d1-d1-p-c2",
+     "d2-d2-p-c0",
+     "d2-d2-p-c1",
+     "d2-d2-p-c2"
+    ],
+    "latent_rescue": [],
+    "resolution_lift": [],
+    "seealso_fanout": []
+   },
+   "funnel_union": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "g3_scores": {
+    "d1-d1-p-c0": 0.94,
+    "d1-d1-p-c1": 0.92,
+    "d1-d1-p-c2": 0.91,
+    "d1-g-c0": 1.0,
+    "d1-g-c1": 0.98,
+    "d1-g-c2": 0.96,
+    "d2-d2-p-c0": 0.9,
+    "d2-d2-p-c1": 0.89,
+    "d2-d2-p-c2": 0.88,
+    "d2-g-c0": 0.99,
+    "d2-g-c1": 0.97,
+    "d2-g-c2": 0.95,
+    "sp-134953552-427952557-1312609739": 0.87,
+    "sp-427952557-1312609739-1673451213-2131635068": 0.86,
+    "sp-771685345": 0.9299999999999999
+   },
+   "gnn": {
+    "enabled": false
+   },
+   "graph_dest": {
+    "enabled": false
+   },
+   "judge": "live",
+   "judged_docs": 3,
+   "lane_sizes": {
+    "document_summary": 0,
+    "dualread": 0,
+    "entity_card": 0,
+    "global_dense_child": 6,
+    "global_sparse_child": 1,
+    "gnn_route": 0,
+    "graph_dest": 0,
+    "hierarchical_children": 6,
+    "latent_rescue": 0,
+    "resolution_lift": 0,
+    "section_summary": 2,
+    "seealso_fanout": 0,
+    "union": 15,
+    "union_uncapped": 15
+   },
+   "latent": {
+    "enabled": false
+   },
+   "multi_lane": 0,
+   "neighbors_added": 0,
+   "noise_dropped": 0,
+   "noise_reasons": {},
+   "noise_sample": [],
+   "plan": "chat-retrieval-v2",
+   "post_g3_order": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "pre_g3_order": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "prefix_docs": {
+    "d1": 6,
+    "d2": 6,
+    "d3": 3
+   },
+   "prefix_policy": "round_robin:cap8",
+   "rerank_prefix": 15,
+   "resolution_lift": {
+    "enabled": false
+   },
+   "route_kinds": [
+    "section_summary",
+    "child",
+    "entity_card"
+   ],
+   "rrf_k": 60,
+   "second_pass": null,
+   "seealso_fanout": {
+    "enabled": false
+   },
+   "sparse_rule": "exact_terms",
+   "subqueries": 2,
+   "weak_aspects": [],
+   "weak_reasons": {}
+  }
+ },
+ "wildcard_atoms_subs_facets": {
+  "evidence": [
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c0",
+    "dense_rank": 0,
+    "dense_score": 1.0,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.027869,
+    "g3_score": 1.0,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c0",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009836,
+     "q0": 0.016393,
+     "q1": 0.013115
+    },
+    "region_role": null,
+    "rerank_score": 1.0,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c0",
+    "dense_rank": 1,
+    "dense_score": 1.0,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.027419,
+    "g3_score": 0.99,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c0",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009677,
+     "q0": 0.016129,
+     "q1": 0.012903
+    },
+    "region_role": null,
+    "rerank_score": 0.99,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c1",
+    "dense_rank": 2,
+    "dense_score": 0.99,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.021429,
+    "g3_score": 0.98,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c1",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004762,
+     "q0": 0.015873,
+     "q1": 0.006349
+    },
+    "region_role": null,
+    "rerank_score": 0.98,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c1",
+    "dense_rank": 3,
+    "dense_score": 0.99,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.021094,
+    "g3_score": 0.97,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c1",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004687,
+     "q0": 0.015625,
+     "q1": 0.00625
+    },
+    "region_role": null,
+    "rerank_score": 0.97,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c2",
+    "dense_rank": 4,
+    "dense_score": 0.98,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.020769,
+    "g3_score": 0.96,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c2",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004615,
+     "q0": 0.015385,
+     "q1": 0.006154
+    },
+    "region_role": null,
+    "rerank_score": 0.96,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c2",
+    "dense_rank": 5,
+    "dense_score": 0.98,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.020455,
+    "g3_score": 0.95,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c2",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004545,
+     "q0": 0.015152,
+     "q1": 0.006061
+    },
+    "region_role": null,
+    "rerank_score": 0.95,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c0",
+    "dense_rank": null,
+    "dense_score": 1.0,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.016393,
+    "g3_score": 0.94,
+    "heading_path": "",
+    "hierarchy_rank": 0,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c0",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 0.94,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-771685345",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.016393,
+    "g3_score": 0.9299999999999999,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-771685345",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 0.9299999999999999,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": 0,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c1",
+    "dense_rank": null,
+    "dense_score": 0.99,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.016129,
+    "g3_score": 0.92,
+    "heading_path": "",
+    "hierarchy_rank": 1,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c1",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016129
+    },
+    "region_role": null,
+    "rerank_score": 0.92,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c2",
+    "dense_rank": null,
+    "dense_score": 0.98,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.015873,
+    "g3_score": 0.91,
+    "heading_path": "",
+    "hierarchy_rank": 2,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c2",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015873
+    },
+    "region_role": null,
+    "rerank_score": 0.91,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c0",
+    "dense_rank": null,
+    "dense_score": 1.0,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015625,
+    "g3_score": 0.9,
+    "heading_path": "",
+    "hierarchy_rank": 3,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c0",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015625
+    },
+    "region_role": null,
+    "rerank_score": 0.9,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c1",
+    "dense_rank": null,
+    "dense_score": 0.99,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015385,
+    "g3_score": 0.89,
+    "heading_path": "",
+    "hierarchy_rank": 4,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c1",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015385
+    },
+    "region_role": null,
+    "rerank_score": 0.89,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-134953552-427952557-1312609739",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.013115,
+    "g3_score": 0.87,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-134953552-427952557-1312609739",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "q1"
+    ],
+    "query_scores": {
+     "q1": 0.013115
+    },
+    "region_role": null,
+    "rerank_score": 0.87,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.009836,
+    "g3_score": 0.86,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-427952557-1312609739-1673451213-2131635068",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009836
+    },
+    "region_role": null,
+    "rerank_score": 0.86,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c2",
+    "dense_rank": null,
+    "dense_score": 0.98,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015152,
+    "g3_score": 0.88,
+    "heading_path": "",
+    "hierarchy_rank": 5,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c2",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015152
+    },
+    "region_role": null,
+    "rerank_score": 0.88,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   }
+  ],
+  "latent_pool": null,
+  "meta": {
+   "aspect_best": {
+    "p0": 0.7311,
+    "q0": 0.7311,
+    "q1": 0.7311
+   },
+   "aspect_seated": [],
+   "aspects": {
+    "p0": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 7,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "prefix": 7,
+     "query": "prompt optimisation with reward models",
+     "type": "ENTITY",
+     "union": 7,
+     "weak": null,
+     "weight": 0.6
+    },
+    "q0": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 13,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1,
+      "HIERARCHICAL_ROUTE": 6
+     },
+     "prefix": null,
+     "query": "what does RAPO say about prompts",
+     "type": "PRIMARY",
+     "union": 13,
+     "weak": null,
+     "weight": 1.0
+    },
+    "q1": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 7,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "prefix": 7,
+     "query": "reward models for prompts",
+     "type": "MECHANISM",
+     "union": 7,
+     "weak": null,
+     "weight": 0.8
+    }
+   },
+   "budget": {
+    "agreement_bonus": 0.5,
+    "aspect_final_seats": 1,
+    "aspect_prefix_seats": 3,
+    "aspect_weak_floor": 0.5,
+    "atom_k": 12,
+    "atom_kinds": [],
+    "compose_agreement_boost": 0.02,
+    "compose_agreement_cap": 0.05,
+    "compose_aspect_slots": 3,
+    "compose_diversity_slots": 4,
+    "compose_doc_lane_max": 3,
+    "compose_doc_soft_max": 3,
+    "compose_dominance_share": 0.4,
+    "compose_relevance_slots": 8,
+    "compose_score_gap": 0.1,
+    "compose_sparse_slots": 3,
+    "contextual_at_risk": 0.5,
+    "contextual_conn_floor": 0.3,
+    "contextual_judge": false,
+    "contextual_max_needs": 4,
+    "contextual_per_need": 3,
+    "demote_noisy_regions": true,
+    "doc_steer_items": 4,
+    "doc_steer_kinds": [],
+    "dualread_children_per_parent": 3,
+    "dualread_enabled": false,
+    "dualread_map_k": 24,
+    "dualread_max_parents": 8,
+    "dualread_profile_docs": 8,
+    "embed_deadline_s": 2.5,
+    "entity_card_k": 8,
+    "entity_card_max_docs_per_card": 4,
+    "facet_seats": 2,
+    "global_dense_k": 50,
+    "global_sparse_k": 40,
+    "gnn_children": 12,
+    "gnn_children_per_parent": 2,
+    "gnn_enabled": false,
+    "gnn_family": "",
+    "gnn_parent_k": 8,
+    "gnn_variant": "real",
+    "graph_dest_children": 8,
+    "graph_dest_enabled": false,
+    "hierarchy_child_k": 3,
+    "hierarchy_doc_k": 16,
+    "hierarchy_max_documents": 6,
+    "hierarchy_max_sections_per_document": 2,
+    "hierarchy_route_documents": false,
+    "hierarchy_section_k": 24,
+    "lane_deadline_s": 3.0,
+    "lanes": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "latent_abstraction_top_k": 8,
+    "latent_children_per_parent": 3,
+    "latent_enabled": false,
+    "latent_max_parents": 6,
+    "latent_transfer_top_k": 8,
+    "max_subqueries": 10,
+    "max_workers": 8,
+    "merged_candidate_max": 120,
+    "mmr_lambda": 0.7,
+    "neighbor_expansion": 0,
+    "neighbor_expansion_max": 8,
+    "parallel_route_lanes": false,
+    "probe_gate_floor": 0.0,
+    "rerank_deadline_s": 8.0,
+    "rerank_doc_cap": 8,
+    "rerank_max": 24,
+    "rerank_max_fair": 32,
+    "rerank_round_robin": true,
+    "resolution_lift_children": 6,
+    "resolution_lift_enabled": false,
+    "route_prefix_seats": 2,
+    "rrf_k": 60,
+    "second_pass_factor": 2,
+    "seealso_blend_alpha": 0.7,
+    "seealso_blend_children": 4,
+    "seealso_blend_docs": 4,
+    "seealso_blend_enabled": false,
+    "seealso_blend_items": 4,
+    "seealso_fanout_atoms": 6,
+    "seealso_fanout_children": 4,
+    "seealso_fanout_enabled": false,
+    "skeleton_paths": false,
+    "skeleton_probe_children": 2,
+    "skeleton_probe_parents": 3,
+    "skeleton_probe_routes": 0,
+    "subquery_dense_k": 20,
+    "subquery_sparse_k": 15,
+    "synthesis_max": 24,
+    "wildcard_deadline_s": 2.5,
+    "wildcard_finish_budget_s": 4.0,
+    "wildcard_unverified_fill_s": 1.0
+   },
+   "candidates": 15,
+   "composition": {
+    "agreement_reordered": 0,
+    "aspect_seats": [],
+    "doc_counts": {
+     "d1": 6,
+     "d2": 6,
+     "d3": 3
+    },
+    "doc_share_top": 0.4,
+    "docs_within_gap": 3,
+    "dominance": false,
+    "dominance_avoidable": false,
+    "facet_seats": [
+     {
+      "chunk_ids": [],
+      "facet_id": "f1",
+      "represented": 8,
+      "seated": 0
+     },
+     {
+      "chunk_ids": [],
+      "facet_id": "f2",
+      "represented": 6,
+      "seated": 0
+     }
+    ],
+    "lane_quota": {
+     "by": "first_arrival",
+     "lifted": 0,
+     "max": 3,
+     "refused": 0
+    },
+    "mmr": {
+     "added_docs": [],
+     "changed": 0,
+     "lambda": 0.7,
+     "seats": 1,
+     "similarity": "lexical_cosine"
+    },
+    "slots": {
+     "aspect": 0,
+     "diversity": 4,
+     "facet": 0,
+     "fill": 0,
+     "mmr": 1,
+     "relevance": 8,
+     "sparse": 2
+    }
+   },
+   "corpus_id": "cinema",
+   "deadlines": {
+    "contract": "concurrency-deadlines-v1",
+    "embed_deadline_s": 2.5,
+    "lane_deadline_s": 3.0,
+    "max_workers": 8,
+    "rerank_deadline_s": 8.0
+   },
+   "degraded": [],
+   "engine": "candidate-retrieval-v1",
+   "evidence_count": 15,
+   "evidence_roles": {
+    "DIRECT": 15,
+    "LATENT": 0,
+    "PRECISION": 0,
+    "RELATIONAL": 0
+   },
+   "final_detail": [
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 1.0
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.99
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.98
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.97
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.96
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.95
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.94
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-771685345",
+     "doc_id": "d3",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9299999999999999
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.92
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.91
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.89
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-134953552-427952557-1312609739",
+     "doc_id": "d3",
+     "query_ids": [
+      "q1"
+     ],
+     "rerank_score": 0.87
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+     "doc_id": "d3",
+     "query_ids": [
+      "p0"
+     ],
+     "rerank_score": 0.86
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.88
+    }
+   ],
+   "lanes": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "latent": null,
+   "lexical_enabled": true,
+   "liveness": null,
+   "mmr": {
+    "added_docs": [],
+    "changed": 0,
+    "lambda": 0.7,
+    "seats": 1,
+    "similarity": "lexical_cosine"
+   },
+   "mode": "WILDCARD",
+   "multi_lane": 0,
+   "plan_version": "chat-retrieval-v2",
+   "rrf_k": 60,
+   "selected_document_count": 2,
+   "selected_section_count": 2,
+   "subqueries": 2,
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "wildcard": {
+    "atom_frontier": {
+     "atoms": 2,
+     "error": null,
+     "maps": 2,
+     "parents_added": 2
+    },
+    "baseline_chunks": 15,
+    "baseline_docs": 3,
+    "baseline_parents": 3,
+    "candidate_parents": 8,
+    "contract": "mode-composition-v1",
+    "deadline_s": 2.5,
+    "degraded": null,
+    "excluded_in_evidence": 0,
+    "excluded_obvious": 0,
+    "latent_candidates": 7,
+    "latent_top_k": 24,
+    "max_bridges": 3,
+    "parents_skipped": 0,
+    "parents_validated": 7,
+    "partial": false,
+    "plan": "divergent-retrieval-v1",
+    "reranker": true,
+    "returned": 3,
+    "support_filtered": 0,
+    "unverified_bridges": 0,
+    "verified_bridges": 3
+   },
+   "wildcard_plan": "divergent-retrieval-v1"
+  },
+  "query": "what does RAPO say about prompts",
+  "selected_documents": [
+   {
+    "aggregate_rank": 0,
+    "aggregate_score": 0.032787,
+    "corpus_id": "cinema",
+    "doc_id": "d1",
+    "document_summary": null,
+    "representation_kinds_present": [
+     "routing_section_summary",
+     "routing_child"
+    ],
+    "rrf_contributions": {
+     "routing_child": 0.016393,
+     "routing_section_summary": 0.016393
+    },
+    "why": {
+     "best_child_rank": 0,
+     "best_document_summary_rank": null,
+     "best_lexical_rank": null,
+     "best_section_summary_rank": 0
+    }
+   },
+   {
+    "aggregate_rank": 1,
+    "aggregate_score": 0.032258,
+    "corpus_id": "cinema",
+    "doc_id": "d2",
+    "document_summary": null,
+    "representation_kinds_present": [
+     "routing_section_summary",
+     "routing_child"
+    ],
+    "rrf_contributions": {
+     "routing_child": 0.016129,
+     "routing_section_summary": 0.016129
+    },
+    "why": {
+     "best_child_rank": 1,
+     "best_document_summary_rank": null,
+     "best_lexical_rank": null,
+     "best_section_summary_rank": 1
+    }
+   }
+  ],
+  "selected_sections": [
+   {
+    "best_section_rank": 0,
+    "doc_id": "d1",
+    "from": [
+     "child_rescue",
+     "section_summary"
+    ],
+    "parent_id": "d1-p",
+    "source_name": "",
+    "summary_id": "sec-d1"
+   },
+   {
+    "best_section_rank": 1,
+    "doc_id": "d2",
+    "from": [
+     "child_rescue",
+     "section_summary"
+    ],
+    "parent_id": "d2-p",
+    "source_name": "",
+    "summary_id": "sec-d2"
+   }
+  ],
+  "trace": {
+   "aspect_best": {
+    "p0": 0.7311,
+    "q0": 0.7311,
+    "q1": 0.7311
+   },
+   "aspect_final": {
+    "p0": 7,
+    "q0": 13,
+    "q1": 7
+   },
+   "aspect_prefix": {
+    "p0": 7,
+    "q1": 7
+   },
+   "aspect_seated": [],
+   "aspects": {
+    "p0": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "query": "prompt optimisation with reward models",
+     "type": "ENTITY",
+     "union": 7,
+     "weight": 0.6
+    },
+    "q0": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1,
+      "HIERARCHICAL_ROUTE": 6
+     },
+     "query": "what does RAPO say about prompts",
+     "type": "PRIMARY",
+     "union": 13,
+     "weight": 1.0
+    },
+    "q1": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "query": "reward models for prompts",
+     "type": "MECHANISM",
+     "union": 7,
+     "weight": 0.8
+    }
+   },
+   "budget": {
+    "agreement_bonus": 0.5,
+    "aspect_final_seats": 1,
+    "aspect_prefix_seats": 3,
+    "aspect_weak_floor": 0.5,
+    "atom_k": 12,
+    "atom_kinds": [],
+    "compose_agreement_boost": 0.02,
+    "compose_agreement_cap": 0.05,
+    "compose_aspect_slots": 3,
+    "compose_diversity_slots": 4,
+    "compose_doc_lane_max": 3,
+    "compose_doc_soft_max": 3,
+    "compose_dominance_share": 0.4,
+    "compose_relevance_slots": 8,
+    "compose_score_gap": 0.1,
+    "compose_sparse_slots": 3,
+    "contextual_at_risk": 0.5,
+    "contextual_conn_floor": 0.3,
+    "contextual_judge": false,
+    "contextual_max_needs": 4,
+    "contextual_per_need": 3,
+    "demote_noisy_regions": true,
+    "doc_steer_items": 4,
+    "doc_steer_kinds": [],
+    "dualread_children_per_parent": 3,
+    "dualread_enabled": false,
+    "dualread_map_k": 24,
+    "dualread_max_parents": 8,
+    "dualread_profile_docs": 8,
+    "embed_deadline_s": 2.5,
+    "entity_card_k": 8,
+    "entity_card_max_docs_per_card": 4,
+    "facet_seats": 2,
+    "global_dense_k": 50,
+    "global_sparse_k": 40,
+    "gnn_children": 12,
+    "gnn_children_per_parent": 2,
+    "gnn_enabled": false,
+    "gnn_family": "",
+    "gnn_parent_k": 8,
+    "gnn_variant": "real",
+    "graph_dest_children": 8,
+    "graph_dest_enabled": false,
+    "hierarchy_child_k": 3,
+    "hierarchy_doc_k": 16,
+    "hierarchy_max_documents": 6,
+    "hierarchy_max_sections_per_document": 2,
+    "hierarchy_route_documents": false,
+    "hierarchy_section_k": 24,
+    "lane_deadline_s": 3.0,
+    "lanes": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "latent_abstraction_top_k": 8,
+    "latent_children_per_parent": 3,
+    "latent_enabled": false,
+    "latent_max_parents": 6,
+    "latent_transfer_top_k": 8,
+    "max_subqueries": 10,
+    "max_workers": 8,
+    "merged_candidate_max": 120,
+    "mmr_lambda": 0.7,
+    "neighbor_expansion": 0,
+    "neighbor_expansion_max": 8,
+    "parallel_route_lanes": false,
+    "probe_gate_floor": 0.0,
+    "rerank_deadline_s": 8.0,
+    "rerank_doc_cap": 8,
+    "rerank_max": 24,
+    "rerank_max_fair": 32,
+    "rerank_round_robin": true,
+    "resolution_lift_children": 6,
+    "resolution_lift_enabled": false,
+    "route_prefix_seats": 2,
+    "rrf_k": 60,
+    "second_pass_factor": 2,
+    "seealso_blend_alpha": 0.7,
+    "seealso_blend_children": 4,
+    "seealso_blend_docs": 4,
+    "seealso_blend_enabled": false,
+    "seealso_blend_items": 4,
+    "seealso_fanout_atoms": 6,
+    "seealso_fanout_children": 4,
+    "seealso_fanout_enabled": false,
+    "skeleton_paths": false,
+    "skeleton_probe_children": 2,
+    "skeleton_probe_parents": 3,
+    "skeleton_probe_routes": 0,
+    "subquery_dense_k": 20,
+    "subquery_sparse_k": 15,
+    "synthesis_max": 24,
+    "wildcard_deadline_s": 2.5,
+    "wildcard_finish_budget_s": 4.0,
+    "wildcard_unverified_fill_s": 1.0
+   },
+   "capped_out": 0,
+   "composition": {
+    "agreement_reordered": 0,
+    "aspect_seats": [],
+    "doc_counts": {
+     "d1": 6,
+     "d2": 6,
+     "d3": 3
+    },
+    "doc_share_top": 0.4,
+    "docs_within_gap": 3,
+    "dominance": false,
+    "dominance_avoidable": false,
+    "facet_seats": [
+     {
+      "chunk_ids": [],
+      "facet_id": "f1",
+      "represented": 8,
+      "seated": 0
+     },
+     {
+      "chunk_ids": [],
+      "facet_id": "f2",
+      "represented": 6,
+      "seated": 0
+     }
+    ],
+    "lane_quota": {
+     "by": "first_arrival",
+     "lifted": 0,
+     "max": 3,
+     "refused": 0
+    },
+    "mmr": {
+     "added_docs": [],
+     "changed": 0,
+     "lambda": 0.7,
+     "seats": 1,
+     "similarity": "lexical_cosine"
+    },
+    "slots": {
+     "aspect": 0,
+     "diversity": 4,
+     "facet": 0,
+     "fill": 0,
+     "mmr": 1,
+     "relevance": 8,
+     "sparse": 2
+    }
+   },
+   "concurrency": {
+    "contract": "concurrency-deadlines-v1",
+    "lane_deadline_s": 3.0,
+    "max_workers": 8,
+    "prestarted": [
+     "global_sparse_child",
+     "sub_p0_sparse",
+     "sub_q1_sparse"
+    ],
+    "timed_out": []
+   },
+   "contextual": {
+    "enabled": false
+   },
+   "degraded": [],
+   "document_candidates": [
+    {
+     "aggregate_rank": 0,
+     "aggregate_score": 0.032787,
+     "doc_id": "d1",
+     "representation_kinds_present": [
+      "routing_section_summary",
+      "routing_child"
+     ],
+     "rrf_contributions": {
+      "routing_child": 0.016393,
+      "routing_section_summary": 0.016393
+     }
+    },
+    {
+     "aggregate_rank": 1,
+     "aggregate_score": 0.032258,
+     "doc_id": "d2",
+     "representation_kinds_present": [
+      "routing_section_summary",
+      "routing_child"
+     ],
+     "rrf_contributions": {
+      "routing_child": 0.016129,
+      "routing_section_summary": 0.016129
+     }
+    }
+   ],
+   "dualread": {
+    "enabled": false
+   },
+   "engine": "candidate-retrieval-v1",
+   "exact_terms": [
+    "RAPO"
+   ],
+   "final": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068",
+    "d2-d2-p-c2"
+   ],
+   "final_detail": [
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 1.0
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.99
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.98
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.97
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.96
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.95
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.94
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-771685345",
+     "doc_id": "d3",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9299999999999999
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.92
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.91
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.89
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-134953552-427952557-1312609739",
+     "doc_id": "d3",
+     "query_ids": [
+      "q1"
+     ],
+     "rerank_score": 0.87
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+     "doc_id": "d3",
+     "query_ids": [
+      "p0"
+     ],
+     "rerank_score": 0.86
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.88
+    }
+   ],
+   "funnel_lanes": {
+    "dualread": [],
+    "global_dense_child": [
+     "d1-g-c0",
+     "d2-g-c0",
+     "d1-g-c1",
+     "d2-g-c1",
+     "d1-g-c2",
+     "d2-g-c2"
+    ],
+    "global_sparse_child": [
+     "sp-771685345"
+    ],
+    "gnn_route": [],
+    "graph_dest": [],
+    "hierarchical": [
+     "d1-d1-p-c0",
+     "d1-d1-p-c1",
+     "d1-d1-p-c2",
+     "d2-d2-p-c0",
+     "d2-d2-p-c1",
+     "d2-d2-p-c2"
+    ],
+    "latent_rescue": [],
+    "resolution_lift": [],
+    "seealso_fanout": []
+   },
+   "funnel_union": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "g3_scores": {
+    "d1-d1-p-c0": 0.94,
+    "d1-d1-p-c1": 0.92,
+    "d1-d1-p-c2": 0.91,
+    "d1-g-c0": 1.0,
+    "d1-g-c1": 0.98,
+    "d1-g-c2": 0.96,
+    "d2-d2-p-c0": 0.9,
+    "d2-d2-p-c1": 0.89,
+    "d2-d2-p-c2": 0.88,
+    "d2-g-c0": 0.99,
+    "d2-g-c1": 0.97,
+    "d2-g-c2": 0.95,
+    "sp-134953552-427952557-1312609739": 0.87,
+    "sp-427952557-1312609739-1673451213-2131635068": 0.86,
+    "sp-771685345": 0.9299999999999999
+   },
+   "gnn": {
+    "enabled": false
+   },
+   "graph_dest": {
+    "enabled": false
+   },
+   "judge": "live",
+   "judged_docs": 3,
+   "lane_sizes": {
+    "document_summary": 0,
+    "dualread": 0,
+    "entity_card": 0,
+    "global_dense_child": 6,
+    "global_sparse_child": 1,
+    "gnn_route": 0,
+    "graph_dest": 0,
+    "hierarchical_children": 6,
+    "latent_rescue": 0,
+    "resolution_lift": 0,
+    "section_summary": 2,
+    "seealso_fanout": 0,
+    "union": 15,
+    "union_uncapped": 15
+   },
+   "latent": {
+    "enabled": false
+   },
+   "multi_lane": 0,
+   "neighbors_added": 0,
+   "noise_dropped": 0,
+   "noise_reasons": {},
+   "noise_sample": [],
+   "plan": "chat-retrieval-v2",
+   "post_g3_order": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "pre_g3_order": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "prefix_docs": {
+    "d1": 6,
+    "d2": 6,
+    "d3": 3
+   },
+   "prefix_policy": "round_robin:cap8",
+   "rerank_prefix": 15,
+   "resolution_lift": {
+    "enabled": false
+   },
+   "route_kinds": [
+    "section_summary",
+    "child",
+    "entity_card"
+   ],
+   "rrf_k": 60,
+   "second_pass": null,
+   "seealso_fanout": {
+    "enabled": false
+   },
+   "sparse_rule": "exact_terms",
+   "subqueries": 2,
+   "weak_aspects": [],
+   "weak_reasons": {}
+  },
+  "wildcard": [
+   {
+    "channels": [
+     "abstraction",
+     "transfer"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar0",
+    "principle": "principle of pfar0",
+    "scores": {
+     "latent_alignment": 0.9,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.658
+    },
+    "source_evidence": {
+     "chunk_id": "pfar0-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar0-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": "transfer of pfar0"
+   },
+   {
+    "channels": [
+     "abstraction"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar1",
+    "principle": "principle of pfar1",
+    "scores": {
+     "latent_alignment": 0.85,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.6214
+    },
+    "source_evidence": {
+     "chunk_id": "pfar1-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar1-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": ""
+   },
+   {
+    "channels": [
+     "abstraction"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar2",
+    "principle": "principle of pfar2",
+    "scores": {
+     "latent_alignment": 0.8,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.5848
+    },
+    "source_evidence": {
+     "chunk_id": "pfar2-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar2-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": ""
+   }
+  ]
+ },
+ "wildcard_plain": {
+  "evidence": [
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c0",
+    "dense_rank": null,
+    "dense_score": 1.0,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.016393,
+    "g3_score": 1.0,
+    "heading_path": "",
+    "hierarchy_rank": 0,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c0",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 1.0,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c0",
+    "dense_rank": 0,
+    "dense_score": 1.0,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.016393,
+    "g3_score": 0.99,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c0",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 0.99,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-771685345",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.016393,
+    "g3_score": 0.98,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-771685345",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 0.98,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": 0,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c1",
+    "dense_rank": null,
+    "dense_score": 0.99,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.016129,
+    "g3_score": 0.97,
+    "heading_path": "",
+    "hierarchy_rank": 1,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c1",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016129
+    },
+    "region_role": null,
+    "rerank_score": 0.97,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c0",
+    "dense_rank": 1,
+    "dense_score": 1.0,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.016129,
+    "g3_score": 0.96,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c0",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016129
+    },
+    "region_role": null,
+    "rerank_score": 0.96,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c2",
+    "dense_rank": null,
+    "dense_score": 0.98,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.015873,
+    "g3_score": 0.95,
+    "heading_path": "",
+    "hierarchy_rank": 2,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c2",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015873
+    },
+    "region_role": null,
+    "rerank_score": 0.95,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c1",
+    "dense_rank": 2,
+    "dense_score": 0.99,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.015873,
+    "g3_score": 0.94,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c1",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015873
+    },
+    "region_role": null,
+    "rerank_score": 0.94,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c0",
+    "dense_rank": null,
+    "dense_score": 1.0,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015625,
+    "g3_score": 0.9299999999999999,
+    "heading_path": "",
+    "hierarchy_rank": 3,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c0",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015625
+    },
+    "region_role": null,
+    "rerank_score": 0.9299999999999999,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c1",
+    "dense_rank": 3,
+    "dense_score": 0.99,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.015625,
+    "g3_score": 0.92,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c1",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015625
+    },
+    "region_role": null,
+    "rerank_score": 0.92,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c2",
+    "dense_rank": 4,
+    "dense_score": 0.98,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.015385,
+    "g3_score": 0.91,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c2",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015385
+    },
+    "region_role": null,
+    "rerank_score": 0.91,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c1",
+    "dense_rank": null,
+    "dense_score": 0.99,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015385,
+    "g3_score": 0.9,
+    "heading_path": "",
+    "hierarchy_rank": 4,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c1",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015385
+    },
+    "region_role": null,
+    "rerank_score": 0.9,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c2",
+    "dense_rank": null,
+    "dense_score": 0.98,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015152,
+    "g3_score": 0.89,
+    "heading_path": "",
+    "hierarchy_rank": 5,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c2",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015152
+    },
+    "region_role": null,
+    "rerank_score": 0.89,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c2",
+    "dense_rank": 5,
+    "dense_score": 0.98,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.015152,
+    "g3_score": 0.88,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c2",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015152
+    },
+    "region_role": null,
+    "rerank_score": 0.88,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   }
+  ],
+  "latent_pool": null,
+  "meta": {
+   "aspect_best": {
+    "q0": 0.7311
+   },
+   "aspect_seated": [],
+   "aspects": {
+    "q0": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 13,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1,
+      "HIERARCHICAL_ROUTE": 6
+     },
+     "prefix": null,
+     "query": "what does RAPO say about prompts",
+     "type": "PRIMARY",
+     "union": 13,
+     "weak": null,
+     "weight": 1.0
+    }
+   },
+   "budget": {
+    "agreement_bonus": 0.5,
+    "aspect_final_seats": 1,
+    "aspect_prefix_seats": 3,
+    "aspect_weak_floor": 0.5,
+    "atom_k": 12,
+    "atom_kinds": [],
+    "compose_agreement_boost": 0.02,
+    "compose_agreement_cap": 0.05,
+    "compose_aspect_slots": 3,
+    "compose_diversity_slots": 4,
+    "compose_doc_lane_max": 3,
+    "compose_doc_soft_max": 3,
+    "compose_dominance_share": 0.4,
+    "compose_relevance_slots": 8,
+    "compose_score_gap": 0.1,
+    "compose_sparse_slots": 3,
+    "contextual_at_risk": 0.5,
+    "contextual_conn_floor": 0.3,
+    "contextual_judge": false,
+    "contextual_max_needs": 4,
+    "contextual_per_need": 3,
+    "demote_noisy_regions": true,
+    "doc_steer_items": 4,
+    "doc_steer_kinds": [],
+    "dualread_children_per_parent": 3,
+    "dualread_enabled": false,
+    "dualread_map_k": 24,
+    "dualread_max_parents": 8,
+    "dualread_profile_docs": 8,
+    "embed_deadline_s": 2.5,
+    "entity_card_k": 8,
+    "entity_card_max_docs_per_card": 4,
+    "facet_seats": 2,
+    "global_dense_k": 50,
+    "global_sparse_k": 40,
+    "gnn_children": 12,
+    "gnn_children_per_parent": 2,
+    "gnn_enabled": false,
+    "gnn_family": "",
+    "gnn_parent_k": 8,
+    "gnn_variant": "real",
+    "graph_dest_children": 8,
+    "graph_dest_enabled": false,
+    "hierarchy_child_k": 3,
+    "hierarchy_doc_k": 16,
+    "hierarchy_max_documents": 6,
+    "hierarchy_max_sections_per_document": 2,
+    "hierarchy_route_documents": false,
+    "hierarchy_section_k": 24,
+    "lane_deadline_s": 3.0,
+    "lanes": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "latent_abstraction_top_k": 8,
+    "latent_children_per_parent": 3,
+    "latent_enabled": false,
+    "latent_max_parents": 6,
+    "latent_transfer_top_k": 8,
+    "max_subqueries": 10,
+    "max_workers": 8,
+    "merged_candidate_max": 120,
+    "mmr_lambda": 0.7,
+    "neighbor_expansion": 0,
+    "neighbor_expansion_max": 8,
+    "parallel_route_lanes": false,
+    "probe_gate_floor": 0.0,
+    "rerank_deadline_s": 8.0,
+    "rerank_doc_cap": 8,
+    "rerank_max": 24,
+    "rerank_max_fair": 32,
+    "rerank_round_robin": true,
+    "resolution_lift_children": 6,
+    "resolution_lift_enabled": false,
+    "route_prefix_seats": 2,
+    "rrf_k": 60,
+    "second_pass_factor": 2,
+    "seealso_blend_alpha": 0.7,
+    "seealso_blend_children": 4,
+    "seealso_blend_docs": 4,
+    "seealso_blend_enabled": false,
+    "seealso_blend_items": 4,
+    "seealso_fanout_atoms": 6,
+    "seealso_fanout_children": 4,
+    "seealso_fanout_enabled": false,
+    "skeleton_paths": false,
+    "skeleton_probe_children": 2,
+    "skeleton_probe_parents": 3,
+    "skeleton_probe_routes": 0,
+    "subquery_dense_k": 20,
+    "subquery_sparse_k": 15,
+    "synthesis_max": 24,
+    "wildcard_deadline_s": 2.5,
+    "wildcard_finish_budget_s": 4.0,
+    "wildcard_unverified_fill_s": 1.0
+   },
+   "candidates": 13,
+   "composition": {
+    "agreement_reordered": 0,
+    "aspect_seats": [],
+    "doc_counts": {
+     "d1": 6,
+     "d2": 6,
+     "d3": 1
+    },
+    "doc_share_top": 0.462,
+    "docs_within_gap": 3,
+    "dominance": true,
+    "dominance_avoidable": false,
+    "lane_quota": {
+     "by": "first_arrival",
+     "lifted": 0,
+     "max": 3,
+     "refused": 0
+    },
+    "mmr": {
+     "added_docs": [],
+     "changed": 0,
+     "lambda": 0.7,
+     "seats": 1,
+     "similarity": "lexical_cosine"
+    },
+    "slots": {
+     "aspect": 0,
+     "diversity": 4,
+     "fill": 0,
+     "mmr": 1,
+     "relevance": 8,
+     "sparse": 0
+    }
+   },
+   "corpus_id": "cinema",
+   "deadlines": {
+    "contract": "concurrency-deadlines-v1",
+    "embed_deadline_s": 2.5,
+    "lane_deadline_s": 3.0,
+    "max_workers": 8,
+    "rerank_deadline_s": 8.0
+   },
+   "degraded": [],
+   "engine": "candidate-retrieval-v1",
+   "evidence_count": 13,
+   "evidence_roles": {
+    "DIRECT": 13,
+    "LATENT": 0,
+    "PRECISION": 0,
+    "RELATIONAL": 0
+   },
+   "final_detail": [
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 1.0
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.99
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-771685345",
+     "doc_id": "d3",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.98
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.97
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.96
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.95
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.94
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9299999999999999
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.92
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.91
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.89
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.88
+    }
+   ],
+   "lanes": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "latent": null,
+   "lexical_enabled": true,
+   "liveness": null,
+   "mmr": {
+    "added_docs": [],
+    "changed": 0,
+    "lambda": 0.7,
+    "seats": 1,
+    "similarity": "lexical_cosine"
+   },
+   "mode": "WILDCARD",
+   "multi_lane": 0,
+   "plan_version": "chat-retrieval-v2",
+   "rrf_k": 60,
+   "selected_document_count": 2,
+   "selected_section_count": 2,
+   "subqueries": 0,
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "wildcard": {
+    "atom_frontier": {
+     "atoms": 0,
+     "error": "AttributeError",
+     "maps": 0,
+     "parents_added": 0
+    },
+    "baseline_chunks": 13,
+    "baseline_docs": 3,
+    "baseline_parents": 3,
+    "candidate_parents": 8,
+    "contract": "mode-composition-v1",
+    "deadline_s": 2.5,
+    "degraded": null,
+    "excluded_in_evidence": 0,
+    "excluded_obvious": 1,
+    "latent_candidates": 6,
+    "latent_top_k": 24,
+    "max_bridges": 3,
+    "parents_skipped": 0,
+    "parents_validated": 5,
+    "partial": false,
+    "plan": "divergent-retrieval-v1",
+    "reranker": true,
+    "returned": 3,
+    "support_filtered": 0,
+    "unverified_bridges": 0,
+    "verified_bridges": 3
+   },
+   "wildcard_plan": "divergent-retrieval-v1"
+  },
+  "query": "what does RAPO say about prompts",
+  "selected_documents": [
+   {
+    "aggregate_rank": 0,
+    "aggregate_score": 0.032787,
+    "corpus_id": "cinema",
+    "doc_id": "d1",
+    "document_summary": null,
+    "representation_kinds_present": [
+     "routing_section_summary",
+     "routing_child"
+    ],
+    "rrf_contributions": {
+     "routing_child": 0.016393,
+     "routing_section_summary": 0.016393
+    },
+    "why": {
+     "best_child_rank": 0,
+     "best_document_summary_rank": null,
+     "best_lexical_rank": null,
+     "best_section_summary_rank": 0
+    }
+   },
+   {
+    "aggregate_rank": 1,
+    "aggregate_score": 0.032258,
+    "corpus_id": "cinema",
+    "doc_id": "d2",
+    "document_summary": null,
+    "representation_kinds_present": [
+     "routing_section_summary",
+     "routing_child"
+    ],
+    "rrf_contributions": {
+     "routing_child": 0.016129,
+     "routing_section_summary": 0.016129
+    },
+    "why": {
+     "best_child_rank": 1,
+     "best_document_summary_rank": null,
+     "best_lexical_rank": null,
+     "best_section_summary_rank": 1
+    }
+   }
+  ],
+  "selected_sections": [
+   {
+    "best_section_rank": 0,
+    "doc_id": "d1",
+    "from": [
+     "child_rescue",
+     "section_summary"
+    ],
+    "parent_id": "d1-p",
+    "source_name": "",
+    "summary_id": "sec-d1"
+   },
+   {
+    "best_section_rank": 1,
+    "doc_id": "d2",
+    "from": [
+     "child_rescue",
+     "section_summary"
+    ],
+    "parent_id": "d2-p",
+    "source_name": "",
+    "summary_id": "sec-d2"
+   }
+  ],
+  "trace": {
+   "aspect_best": {
+    "q0": 0.7311
+   },
+   "aspect_final": {
+    "q0": 13
+   },
+   "aspect_prefix": {},
+   "aspect_seated": [],
+   "aspects": {
+    "q0": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1,
+      "HIERARCHICAL_ROUTE": 6
+     },
+     "query": "what does RAPO say about prompts",
+     "type": "PRIMARY",
+     "union": 13,
+     "weight": 1.0
+    }
+   },
+   "budget": {
+    "agreement_bonus": 0.5,
+    "aspect_final_seats": 1,
+    "aspect_prefix_seats": 3,
+    "aspect_weak_floor": 0.5,
+    "atom_k": 12,
+    "atom_kinds": [],
+    "compose_agreement_boost": 0.02,
+    "compose_agreement_cap": 0.05,
+    "compose_aspect_slots": 3,
+    "compose_diversity_slots": 4,
+    "compose_doc_lane_max": 3,
+    "compose_doc_soft_max": 3,
+    "compose_dominance_share": 0.4,
+    "compose_relevance_slots": 8,
+    "compose_score_gap": 0.1,
+    "compose_sparse_slots": 3,
+    "contextual_at_risk": 0.5,
+    "contextual_conn_floor": 0.3,
+    "contextual_judge": false,
+    "contextual_max_needs": 4,
+    "contextual_per_need": 3,
+    "demote_noisy_regions": true,
+    "doc_steer_items": 4,
+    "doc_steer_kinds": [],
+    "dualread_children_per_parent": 3,
+    "dualread_enabled": false,
+    "dualread_map_k": 24,
+    "dualread_max_parents": 8,
+    "dualread_profile_docs": 8,
+    "embed_deadline_s": 2.5,
+    "entity_card_k": 8,
+    "entity_card_max_docs_per_card": 4,
+    "facet_seats": 2,
+    "global_dense_k": 50,
+    "global_sparse_k": 40,
+    "gnn_children": 12,
+    "gnn_children_per_parent": 2,
+    "gnn_enabled": false,
+    "gnn_family": "",
+    "gnn_parent_k": 8,
+    "gnn_variant": "real",
+    "graph_dest_children": 8,
+    "graph_dest_enabled": false,
+    "hierarchy_child_k": 3,
+    "hierarchy_doc_k": 16,
+    "hierarchy_max_documents": 6,
+    "hierarchy_max_sections_per_document": 2,
+    "hierarchy_route_documents": false,
+    "hierarchy_section_k": 24,
+    "lane_deadline_s": 3.0,
+    "lanes": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "latent_abstraction_top_k": 8,
+    "latent_children_per_parent": 3,
+    "latent_enabled": false,
+    "latent_max_parents": 6,
+    "latent_transfer_top_k": 8,
+    "max_subqueries": 10,
+    "max_workers": 8,
+    "merged_candidate_max": 120,
+    "mmr_lambda": 0.7,
+    "neighbor_expansion": 0,
+    "neighbor_expansion_max": 8,
+    "parallel_route_lanes": false,
+    "probe_gate_floor": 0.0,
+    "rerank_deadline_s": 8.0,
+    "rerank_doc_cap": 8,
+    "rerank_max": 24,
+    "rerank_max_fair": 32,
+    "rerank_round_robin": true,
+    "resolution_lift_children": 6,
+    "resolution_lift_enabled": false,
+    "route_prefix_seats": 2,
+    "rrf_k": 60,
+    "second_pass_factor": 2,
+    "seealso_blend_alpha": 0.7,
+    "seealso_blend_children": 4,
+    "seealso_blend_docs": 4,
+    "seealso_blend_enabled": false,
+    "seealso_blend_items": 4,
+    "seealso_fanout_atoms": 6,
+    "seealso_fanout_children": 4,
+    "seealso_fanout_enabled": false,
+    "skeleton_paths": false,
+    "skeleton_probe_children": 2,
+    "skeleton_probe_parents": 3,
+    "skeleton_probe_routes": 0,
+    "subquery_dense_k": 20,
+    "subquery_sparse_k": 15,
+    "synthesis_max": 24,
+    "wildcard_deadline_s": 2.5,
+    "wildcard_finish_budget_s": 4.0,
+    "wildcard_unverified_fill_s": 1.0
+   },
+   "capped_out": 0,
+   "composition": {
+    "agreement_reordered": 0,
+    "aspect_seats": [],
+    "doc_counts": {
+     "d1": 6,
+     "d2": 6,
+     "d3": 1
+    },
+    "doc_share_top": 0.462,
+    "docs_within_gap": 3,
+    "dominance": true,
+    "dominance_avoidable": false,
+    "lane_quota": {
+     "by": "first_arrival",
+     "lifted": 0,
+     "max": 3,
+     "refused": 0
+    },
+    "mmr": {
+     "added_docs": [],
+     "changed": 0,
+     "lambda": 0.7,
+     "seats": 1,
+     "similarity": "lexical_cosine"
+    },
+    "slots": {
+     "aspect": 0,
+     "diversity": 4,
+     "fill": 0,
+     "mmr": 1,
+     "relevance": 8,
+     "sparse": 0
+    }
+   },
+   "concurrency": {
+    "contract": "concurrency-deadlines-v1",
+    "lane_deadline_s": 3.0,
+    "max_workers": 8,
+    "prestarted": [
+     "global_sparse_child"
+    ],
+    "timed_out": []
+   },
+   "contextual": {
+    "enabled": false
+   },
+   "degraded": [],
+   "document_candidates": [
+    {
+     "aggregate_rank": 0,
+     "aggregate_score": 0.032787,
+     "doc_id": "d1",
+     "representation_kinds_present": [
+      "routing_section_summary",
+      "routing_child"
+     ],
+     "rrf_contributions": {
+      "routing_child": 0.016393,
+      "routing_section_summary": 0.016393
+     }
+    },
+    {
+     "aggregate_rank": 1,
+     "aggregate_score": 0.032258,
+     "doc_id": "d2",
+     "representation_kinds_present": [
+      "routing_section_summary",
+      "routing_child"
+     ],
+     "rrf_contributions": {
+      "routing_child": 0.016129,
+      "routing_section_summary": 0.016129
+     }
+    }
+   ],
+   "dualread": {
+    "enabled": false
+   },
+   "engine": "candidate-retrieval-v1",
+   "exact_terms": [
+    "RAPO"
+   ],
+   "final": [
+    "d1-d1-p-c0",
+    "d1-g-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d2-g-c0",
+    "d1-d1-p-c2",
+    "d1-g-c1",
+    "d2-d2-p-c0",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "d2-g-c2"
+   ],
+   "final_detail": [
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 1.0
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.99
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-771685345",
+     "doc_id": "d3",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.98
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.97
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.96
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.95
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.94
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9299999999999999
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.92
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.91
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.89
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.88
+    }
+   ],
+   "funnel_lanes": {
+    "dualread": [],
+    "global_dense_child": [
+     "d1-g-c0",
+     "d2-g-c0",
+     "d1-g-c1",
+     "d2-g-c1",
+     "d1-g-c2",
+     "d2-g-c2"
+    ],
+    "global_sparse_child": [
+     "sp-771685345"
+    ],
+    "gnn_route": [],
+    "graph_dest": [],
+    "hierarchical": [
+     "d1-d1-p-c0",
+     "d1-d1-p-c1",
+     "d1-d1-p-c2",
+     "d2-d2-p-c0",
+     "d2-d2-p-c1",
+     "d2-d2-p-c2"
+    ],
+    "latent_rescue": [],
+    "resolution_lift": [],
+    "seealso_fanout": []
+   },
+   "funnel_union": [
+    "d1-d1-p-c0",
+    "d1-g-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d2-g-c0",
+    "d1-d1-p-c2",
+    "d1-g-c1",
+    "d2-d2-p-c0",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "d2-g-c2"
+   ],
+   "g3_scores": {
+    "d1-d1-p-c0": 1.0,
+    "d1-d1-p-c1": 0.97,
+    "d1-d1-p-c2": 0.95,
+    "d1-g-c0": 0.99,
+    "d1-g-c1": 0.94,
+    "d1-g-c2": 0.91,
+    "d2-d2-p-c0": 0.9299999999999999,
+    "d2-d2-p-c1": 0.9,
+    "d2-d2-p-c2": 0.89,
+    "d2-g-c0": 0.96,
+    "d2-g-c1": 0.92,
+    "d2-g-c2": 0.88,
+    "sp-771685345": 0.98
+   },
+   "gnn": {
+    "enabled": false
+   },
+   "graph_dest": {
+    "enabled": false
+   },
+   "judge": "live",
+   "judged_docs": 3,
+   "lane_sizes": {
+    "document_summary": 0,
+    "dualread": 0,
+    "entity_card": 0,
+    "global_dense_child": 6,
+    "global_sparse_child": 1,
+    "gnn_route": 0,
+    "graph_dest": 0,
+    "hierarchical_children": 6,
+    "latent_rescue": 0,
+    "resolution_lift": 0,
+    "section_summary": 2,
+    "seealso_fanout": 0,
+    "union": 13,
+    "union_uncapped": 13
+   },
+   "latent": {
+    "enabled": false
+   },
+   "multi_lane": 0,
+   "neighbors_added": 0,
+   "noise_dropped": 0,
+   "noise_reasons": {},
+   "noise_sample": [],
+   "plan": "chat-retrieval-v2",
+   "post_g3_order": [
+    "d1-d1-p-c0",
+    "d1-g-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d2-g-c0",
+    "d1-d1-p-c2",
+    "d1-g-c1",
+    "d2-d2-p-c0",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "d2-g-c2"
+   ],
+   "pre_g3_order": [
+    "d1-d1-p-c0",
+    "d1-g-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d2-g-c0",
+    "d1-d1-p-c2",
+    "d1-g-c1",
+    "d2-d2-p-c0",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "d2-g-c2"
+   ],
+   "prefix_docs": {
+    "d1": 6,
+    "d2": 6,
+    "d3": 1
+   },
+   "prefix_policy": "round_robin:cap8",
+   "rerank_prefix": 13,
+   "resolution_lift": {
+    "enabled": false
+   },
+   "route_kinds": [
+    "section_summary",
+    "child",
+    "entity_card"
+   ],
+   "rrf_k": 60,
+   "second_pass": null,
+   "seealso_fanout": {
+    "enabled": false
+   },
+   "sparse_rule": "exact_terms",
+   "subqueries": 0,
+   "weak_aspects": [],
+   "weak_reasons": {}
+  },
+  "wildcard": [
+   {
+    "channels": [
+     "abstraction",
+     "transfer"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar0",
+    "principle": "principle of pfar0",
+    "scores": {
+     "latent_alignment": 0.9,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.658
+    },
+    "source_evidence": {
+     "chunk_id": "pfar0-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar0-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": "transfer of pfar0"
+   },
+   {
+    "channels": [
+     "abstraction"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar1",
+    "principle": "principle of pfar1",
+    "scores": {
+     "latent_alignment": 0.85,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.6214
+    },
+    "source_evidence": {
+     "chunk_id": "pfar1-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar1-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": ""
+   },
+   {
+    "channels": [
+     "abstraction"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar2",
+    "principle": "principle of pfar2",
+    "scores": {
+     "latent_alignment": 0.8,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.5848
+    },
+    "source_evidence": {
+     "chunk_id": "pfar2-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar2-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": ""
+   }
+  ]
+ },
+ "wildcard_pnear": {
+  "evidence": [
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c0",
+    "dense_rank": 0,
+    "dense_score": 1.0,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.027869,
+    "g3_score": 1.0,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c0",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009836,
+     "q0": 0.016393,
+     "q1": 0.013115
+    },
+    "region_role": null,
+    "rerank_score": 1.0,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c0",
+    "dense_rank": 1,
+    "dense_score": 1.0,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.027419,
+    "g3_score": 0.99,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c0",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009677,
+     "q0": 0.016129,
+     "q1": 0.012903
+    },
+    "region_role": null,
+    "rerank_score": 0.99,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c1",
+    "dense_rank": 2,
+    "dense_score": 0.99,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.021429,
+    "g3_score": 0.98,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c1",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004762,
+     "q0": 0.015873,
+     "q1": 0.006349
+    },
+    "region_role": null,
+    "rerank_score": 0.98,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c1",
+    "dense_rank": 3,
+    "dense_score": 0.99,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.021094,
+    "g3_score": 0.97,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c1",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004687,
+     "q0": 0.015625,
+     "q1": 0.00625
+    },
+    "region_role": null,
+    "rerank_score": 0.97,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c2",
+    "dense_rank": 4,
+    "dense_score": 0.98,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.020769,
+    "g3_score": 0.96,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c2",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004615,
+     "q0": 0.015385,
+     "q1": 0.006154
+    },
+    "region_role": null,
+    "rerank_score": 0.96,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c2",
+    "dense_rank": 5,
+    "dense_score": 0.98,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.020455,
+    "g3_score": 0.95,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c2",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004545,
+     "q0": 0.015152,
+     "q1": 0.006061
+    },
+    "region_role": null,
+    "rerank_score": 0.95,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c0",
+    "dense_rank": null,
+    "dense_score": 1.0,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.016393,
+    "g3_score": 0.94,
+    "heading_path": "",
+    "hierarchy_rank": 0,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c0",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 0.94,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-771685345",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.016393,
+    "g3_score": 0.9299999999999999,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-771685345",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 0.9299999999999999,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": 0,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c1",
+    "dense_rank": null,
+    "dense_score": 0.99,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.016129,
+    "g3_score": 0.92,
+    "heading_path": "",
+    "hierarchy_rank": 1,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c1",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016129
+    },
+    "region_role": null,
+    "rerank_score": 0.92,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c2",
+    "dense_rank": null,
+    "dense_score": 0.98,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.015873,
+    "g3_score": 0.91,
+    "heading_path": "",
+    "hierarchy_rank": 2,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c2",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015873
+    },
+    "region_role": null,
+    "rerank_score": 0.91,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c0",
+    "dense_rank": null,
+    "dense_score": 1.0,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015625,
+    "g3_score": 0.9,
+    "heading_path": "",
+    "hierarchy_rank": 3,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c0",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015625
+    },
+    "region_role": null,
+    "rerank_score": 0.9,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c1",
+    "dense_rank": null,
+    "dense_score": 0.99,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015385,
+    "g3_score": 0.89,
+    "heading_path": "",
+    "hierarchy_rank": 4,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c1",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015385
+    },
+    "region_role": null,
+    "rerank_score": 0.89,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-134953552-427952557-1312609739",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.013115,
+    "g3_score": 0.87,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-134953552-427952557-1312609739",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "q1"
+    ],
+    "query_scores": {
+     "q1": 0.013115
+    },
+    "region_role": null,
+    "rerank_score": 0.87,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.009836,
+    "g3_score": 0.86,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-427952557-1312609739-1673451213-2131635068",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009836
+    },
+    "region_role": null,
+    "rerank_score": 0.86,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c2",
+    "dense_rank": null,
+    "dense_score": 0.98,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015152,
+    "g3_score": 0.88,
+    "heading_path": "",
+    "hierarchy_rank": 5,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c2",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015152
+    },
+    "region_role": null,
+    "rerank_score": 0.88,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   }
+  ],
+  "latent_pool": null,
+  "meta": {
+   "aspect_best": {
+    "p0": 0.7311,
+    "q0": 0.7311,
+    "q1": 0.7311
+   },
+   "aspect_seated": [],
+   "aspects": {
+    "p0": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 7,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "prefix": 7,
+     "query": "prompt optimisation with reward models",
+     "type": "ENTITY",
+     "union": 7,
+     "weak": null,
+     "weight": 0.6
+    },
+    "q0": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 13,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1,
+      "HIERARCHICAL_ROUTE": 6
+     },
+     "prefix": null,
+     "query": "what does RAPO say about prompts",
+     "type": "PRIMARY",
+     "union": 13,
+     "weak": null,
+     "weight": 1.0
+    },
+    "q1": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 7,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "prefix": 7,
+     "query": "reward models for prompts",
+     "type": "MECHANISM",
+     "union": 7,
+     "weak": null,
+     "weight": 0.8
+    }
+   },
+   "budget": {
+    "agreement_bonus": 0.5,
+    "aspect_final_seats": 1,
+    "aspect_prefix_seats": 3,
+    "aspect_weak_floor": 0.5,
+    "atom_k": 12,
+    "atom_kinds": [],
+    "compose_agreement_boost": 0.02,
+    "compose_agreement_cap": 0.05,
+    "compose_aspect_slots": 3,
+    "compose_diversity_slots": 4,
+    "compose_doc_lane_max": 3,
+    "compose_doc_soft_max": 3,
+    "compose_dominance_share": 0.4,
+    "compose_relevance_slots": 8,
+    "compose_score_gap": 0.1,
+    "compose_sparse_slots": 3,
+    "contextual_at_risk": 0.5,
+    "contextual_conn_floor": 0.3,
+    "contextual_judge": false,
+    "contextual_max_needs": 4,
+    "contextual_per_need": 3,
+    "demote_noisy_regions": true,
+    "doc_steer_items": 4,
+    "doc_steer_kinds": [],
+    "dualread_children_per_parent": 3,
+    "dualread_enabled": false,
+    "dualread_map_k": 24,
+    "dualread_max_parents": 8,
+    "dualread_profile_docs": 8,
+    "embed_deadline_s": 2.5,
+    "entity_card_k": 8,
+    "entity_card_max_docs_per_card": 4,
+    "facet_seats": 2,
+    "global_dense_k": 50,
+    "global_sparse_k": 40,
+    "gnn_children": 12,
+    "gnn_children_per_parent": 2,
+    "gnn_enabled": false,
+    "gnn_family": "",
+    "gnn_parent_k": 8,
+    "gnn_variant": "real",
+    "graph_dest_children": 8,
+    "graph_dest_enabled": false,
+    "hierarchy_child_k": 3,
+    "hierarchy_doc_k": 16,
+    "hierarchy_max_documents": 6,
+    "hierarchy_max_sections_per_document": 2,
+    "hierarchy_route_documents": false,
+    "hierarchy_section_k": 24,
+    "lane_deadline_s": 3.0,
+    "lanes": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "latent_abstraction_top_k": 8,
+    "latent_children_per_parent": 3,
+    "latent_enabled": false,
+    "latent_max_parents": 6,
+    "latent_transfer_top_k": 8,
+    "max_subqueries": 10,
+    "max_workers": 8,
+    "merged_candidate_max": 120,
+    "mmr_lambda": 0.7,
+    "neighbor_expansion": 0,
+    "neighbor_expansion_max": 8,
+    "parallel_route_lanes": false,
+    "probe_gate_floor": 0.0,
+    "rerank_deadline_s": 8.0,
+    "rerank_doc_cap": 8,
+    "rerank_max": 24,
+    "rerank_max_fair": 32,
+    "rerank_round_robin": true,
+    "resolution_lift_children": 6,
+    "resolution_lift_enabled": false,
+    "route_prefix_seats": 2,
+    "rrf_k": 60,
+    "second_pass_factor": 2,
+    "seealso_blend_alpha": 0.7,
+    "seealso_blend_children": 4,
+    "seealso_blend_docs": 4,
+    "seealso_blend_enabled": false,
+    "seealso_blend_items": 4,
+    "seealso_fanout_atoms": 6,
+    "seealso_fanout_children": 4,
+    "seealso_fanout_enabled": false,
+    "skeleton_paths": false,
+    "skeleton_probe_children": 2,
+    "skeleton_probe_parents": 3,
+    "skeleton_probe_routes": 0,
+    "subquery_dense_k": 20,
+    "subquery_sparse_k": 15,
+    "synthesis_max": 24,
+    "wildcard_deadline_s": 2.5,
+    "wildcard_finish_budget_s": 4.0,
+    "wildcard_unverified_fill_s": 1.0
+   },
+   "candidates": 15,
+   "composition": {
+    "agreement_reordered": 0,
+    "aspect_seats": [],
+    "doc_counts": {
+     "d1": 6,
+     "d2": 6,
+     "d3": 3
+    },
+    "doc_share_top": 0.4,
+    "docs_within_gap": 3,
+    "dominance": false,
+    "dominance_avoidable": false,
+    "lane_quota": {
+     "by": "first_arrival",
+     "lifted": 0,
+     "max": 3,
+     "refused": 0
+    },
+    "mmr": {
+     "added_docs": [],
+     "changed": 0,
+     "lambda": 0.7,
+     "seats": 1,
+     "similarity": "lexical_cosine"
+    },
+    "slots": {
+     "aspect": 0,
+     "diversity": 4,
+     "fill": 0,
+     "mmr": 1,
+     "relevance": 8,
+     "sparse": 2
+    }
+   },
+   "corpus_id": "cinema",
+   "deadlines": {
+    "contract": "concurrency-deadlines-v1",
+    "embed_deadline_s": 2.5,
+    "lane_deadline_s": 3.0,
+    "max_workers": 8,
+    "rerank_deadline_s": 8.0
+   },
+   "degraded": [],
+   "engine": "candidate-retrieval-v1",
+   "evidence_count": 15,
+   "evidence_roles": {
+    "DIRECT": 15,
+    "LATENT": 0,
+    "PRECISION": 0,
+    "RELATIONAL": 0
+   },
+   "final_detail": [
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 1.0
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.99
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.98
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.97
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.96
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.95
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.94
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-771685345",
+     "doc_id": "d3",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9299999999999999
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.92
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.91
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.89
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-134953552-427952557-1312609739",
+     "doc_id": "d3",
+     "query_ids": [
+      "q1"
+     ],
+     "rerank_score": 0.87
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+     "doc_id": "d3",
+     "query_ids": [
+      "p0"
+     ],
+     "rerank_score": 0.86
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.88
+    }
+   ],
+   "lanes": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "latent": null,
+   "lexical_enabled": true,
+   "liveness": null,
+   "mmr": {
+    "added_docs": [],
+    "changed": 0,
+    "lambda": 0.7,
+    "seats": 1,
+    "similarity": "lexical_cosine"
+   },
+   "mode": "WILDCARD",
+   "multi_lane": 0,
+   "plan_version": "chat-retrieval-v2",
+   "rrf_k": 60,
+   "selected_document_count": 2,
+   "selected_section_count": 2,
+   "subqueries": 2,
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "wildcard": {
+    "atom_frontier": {
+     "atoms": 0,
+     "error": "AttributeError",
+     "maps": 0,
+     "parents_added": 0
+    },
+    "baseline_chunks": 15,
+    "baseline_docs": 3,
+    "baseline_parents": 3,
+    "candidate_parents": 8,
+    "contract": "mode-composition-v1",
+    "deadline_s": 2.5,
+    "degraded": null,
+    "excluded_in_evidence": 1,
+    "excluded_obvious": 0,
+    "latent_candidates": 3,
+    "latent_top_k": 24,
+    "max_bridges": 3,
+    "parents_skipped": 0,
+    "parents_validated": 3,
+    "partial": false,
+    "plan": "divergent-retrieval-v1",
+    "reranker": true,
+    "returned": 2,
+    "support_filtered": 0,
+    "unverified_bridges": 0,
+    "verified_bridges": 2
+   },
+   "wildcard_plan": "divergent-retrieval-v1"
+  },
+  "query": "what does RAPO say about prompts",
+  "selected_documents": [
+   {
+    "aggregate_rank": 0,
+    "aggregate_score": 0.032787,
+    "corpus_id": "cinema",
+    "doc_id": "d1",
+    "document_summary": null,
+    "representation_kinds_present": [
+     "routing_section_summary",
+     "routing_child"
+    ],
+    "rrf_contributions": {
+     "routing_child": 0.016393,
+     "routing_section_summary": 0.016393
+    },
+    "why": {
+     "best_child_rank": 0,
+     "best_document_summary_rank": null,
+     "best_lexical_rank": null,
+     "best_section_summary_rank": 0
+    }
+   },
+   {
+    "aggregate_rank": 1,
+    "aggregate_score": 0.032258,
+    "corpus_id": "cinema",
+    "doc_id": "d2",
+    "document_summary": null,
+    "representation_kinds_present": [
+     "routing_section_summary",
+     "routing_child"
+    ],
+    "rrf_contributions": {
+     "routing_child": 0.016129,
+     "routing_section_summary": 0.016129
+    },
+    "why": {
+     "best_child_rank": 1,
+     "best_document_summary_rank": null,
+     "best_lexical_rank": null,
+     "best_section_summary_rank": 1
+    }
+   }
+  ],
+  "selected_sections": [
+   {
+    "best_section_rank": 0,
+    "doc_id": "d1",
+    "from": [
+     "child_rescue",
+     "section_summary"
+    ],
+    "parent_id": "d1-p",
+    "source_name": "",
+    "summary_id": "sec-d1"
+   },
+   {
+    "best_section_rank": 1,
+    "doc_id": "d2",
+    "from": [
+     "child_rescue",
+     "section_summary"
+    ],
+    "parent_id": "d2-p",
+    "source_name": "",
+    "summary_id": "sec-d2"
+   }
+  ],
+  "trace": {
+   "aspect_best": {
+    "p0": 0.7311,
+    "q0": 0.7311,
+    "q1": 0.7311
+   },
+   "aspect_final": {
+    "p0": 7,
+    "q0": 13,
+    "q1": 7
+   },
+   "aspect_prefix": {
+    "p0": 7,
+    "q1": 7
+   },
+   "aspect_seated": [],
+   "aspects": {
+    "p0": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "query": "prompt optimisation with reward models",
+     "type": "ENTITY",
+     "union": 7,
+     "weight": 0.6
+    },
+    "q0": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1,
+      "HIERARCHICAL_ROUTE": 6
+     },
+     "query": "what does RAPO say about prompts",
+     "type": "PRIMARY",
+     "union": 13,
+     "weight": 1.0
+    },
+    "q1": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "query": "reward models for prompts",
+     "type": "MECHANISM",
+     "union": 7,
+     "weight": 0.8
+    }
+   },
+   "budget": {
+    "agreement_bonus": 0.5,
+    "aspect_final_seats": 1,
+    "aspect_prefix_seats": 3,
+    "aspect_weak_floor": 0.5,
+    "atom_k": 12,
+    "atom_kinds": [],
+    "compose_agreement_boost": 0.02,
+    "compose_agreement_cap": 0.05,
+    "compose_aspect_slots": 3,
+    "compose_diversity_slots": 4,
+    "compose_doc_lane_max": 3,
+    "compose_doc_soft_max": 3,
+    "compose_dominance_share": 0.4,
+    "compose_relevance_slots": 8,
+    "compose_score_gap": 0.1,
+    "compose_sparse_slots": 3,
+    "contextual_at_risk": 0.5,
+    "contextual_conn_floor": 0.3,
+    "contextual_judge": false,
+    "contextual_max_needs": 4,
+    "contextual_per_need": 3,
+    "demote_noisy_regions": true,
+    "doc_steer_items": 4,
+    "doc_steer_kinds": [],
+    "dualread_children_per_parent": 3,
+    "dualread_enabled": false,
+    "dualread_map_k": 24,
+    "dualread_max_parents": 8,
+    "dualread_profile_docs": 8,
+    "embed_deadline_s": 2.5,
+    "entity_card_k": 8,
+    "entity_card_max_docs_per_card": 4,
+    "facet_seats": 2,
+    "global_dense_k": 50,
+    "global_sparse_k": 40,
+    "gnn_children": 12,
+    "gnn_children_per_parent": 2,
+    "gnn_enabled": false,
+    "gnn_family": "",
+    "gnn_parent_k": 8,
+    "gnn_variant": "real",
+    "graph_dest_children": 8,
+    "graph_dest_enabled": false,
+    "hierarchy_child_k": 3,
+    "hierarchy_doc_k": 16,
+    "hierarchy_max_documents": 6,
+    "hierarchy_max_sections_per_document": 2,
+    "hierarchy_route_documents": false,
+    "hierarchy_section_k": 24,
+    "lane_deadline_s": 3.0,
+    "lanes": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "latent_abstraction_top_k": 8,
+    "latent_children_per_parent": 3,
+    "latent_enabled": false,
+    "latent_max_parents": 6,
+    "latent_transfer_top_k": 8,
+    "max_subqueries": 10,
+    "max_workers": 8,
+    "merged_candidate_max": 120,
+    "mmr_lambda": 0.7,
+    "neighbor_expansion": 0,
+    "neighbor_expansion_max": 8,
+    "parallel_route_lanes": false,
+    "probe_gate_floor": 0.0,
+    "rerank_deadline_s": 8.0,
+    "rerank_doc_cap": 8,
+    "rerank_max": 24,
+    "rerank_max_fair": 32,
+    "rerank_round_robin": true,
+    "resolution_lift_children": 6,
+    "resolution_lift_enabled": false,
+    "route_prefix_seats": 2,
+    "rrf_k": 60,
+    "second_pass_factor": 2,
+    "seealso_blend_alpha": 0.7,
+    "seealso_blend_children": 4,
+    "seealso_blend_docs": 4,
+    "seealso_blend_enabled": false,
+    "seealso_blend_items": 4,
+    "seealso_fanout_atoms": 6,
+    "seealso_fanout_children": 4,
+    "seealso_fanout_enabled": false,
+    "skeleton_paths": false,
+    "skeleton_probe_children": 2,
+    "skeleton_probe_parents": 3,
+    "skeleton_probe_routes": 0,
+    "subquery_dense_k": 20,
+    "subquery_sparse_k": 15,
+    "synthesis_max": 24,
+    "wildcard_deadline_s": 2.5,
+    "wildcard_finish_budget_s": 4.0,
+    "wildcard_unverified_fill_s": 1.0
+   },
+   "capped_out": 0,
+   "composition": {
+    "agreement_reordered": 0,
+    "aspect_seats": [],
+    "doc_counts": {
+     "d1": 6,
+     "d2": 6,
+     "d3": 3
+    },
+    "doc_share_top": 0.4,
+    "docs_within_gap": 3,
+    "dominance": false,
+    "dominance_avoidable": false,
+    "lane_quota": {
+     "by": "first_arrival",
+     "lifted": 0,
+     "max": 3,
+     "refused": 0
+    },
+    "mmr": {
+     "added_docs": [],
+     "changed": 0,
+     "lambda": 0.7,
+     "seats": 1,
+     "similarity": "lexical_cosine"
+    },
+    "slots": {
+     "aspect": 0,
+     "diversity": 4,
+     "fill": 0,
+     "mmr": 1,
+     "relevance": 8,
+     "sparse": 2
+    }
+   },
+   "concurrency": {
+    "contract": "concurrency-deadlines-v1",
+    "lane_deadline_s": 3.0,
+    "max_workers": 8,
+    "prestarted": [
+     "global_sparse_child",
+     "sub_p0_sparse",
+     "sub_q1_sparse"
+    ],
+    "timed_out": []
+   },
+   "contextual": {
+    "enabled": false
+   },
+   "degraded": [],
+   "document_candidates": [
+    {
+     "aggregate_rank": 0,
+     "aggregate_score": 0.032787,
+     "doc_id": "d1",
+     "representation_kinds_present": [
+      "routing_section_summary",
+      "routing_child"
+     ],
+     "rrf_contributions": {
+      "routing_child": 0.016393,
+      "routing_section_summary": 0.016393
+     }
+    },
+    {
+     "aggregate_rank": 1,
+     "aggregate_score": 0.032258,
+     "doc_id": "d2",
+     "representation_kinds_present": [
+      "routing_section_summary",
+      "routing_child"
+     ],
+     "rrf_contributions": {
+      "routing_child": 0.016129,
+      "routing_section_summary": 0.016129
+     }
+    }
+   ],
+   "dualread": {
+    "enabled": false
+   },
+   "engine": "candidate-retrieval-v1",
+   "exact_terms": [
+    "RAPO"
+   ],
+   "final": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068",
+    "d2-d2-p-c2"
+   ],
+   "final_detail": [
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 1.0
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.99
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.98
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.97
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.96
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.95
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.94
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-771685345",
+     "doc_id": "d3",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9299999999999999
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.92
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.91
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.89
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-134953552-427952557-1312609739",
+     "doc_id": "d3",
+     "query_ids": [
+      "q1"
+     ],
+     "rerank_score": 0.87
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+     "doc_id": "d3",
+     "query_ids": [
+      "p0"
+     ],
+     "rerank_score": 0.86
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.88
+    }
+   ],
+   "funnel_lanes": {
+    "dualread": [],
+    "global_dense_child": [
+     "d1-g-c0",
+     "d2-g-c0",
+     "d1-g-c1",
+     "d2-g-c1",
+     "d1-g-c2",
+     "d2-g-c2"
+    ],
+    "global_sparse_child": [
+     "sp-771685345"
+    ],
+    "gnn_route": [],
+    "graph_dest": [],
+    "hierarchical": [
+     "d1-d1-p-c0",
+     "d1-d1-p-c1",
+     "d1-d1-p-c2",
+     "d2-d2-p-c0",
+     "d2-d2-p-c1",
+     "d2-d2-p-c2"
+    ],
+    "latent_rescue": [],
+    "resolution_lift": [],
+    "seealso_fanout": []
+   },
+   "funnel_union": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "g3_scores": {
+    "d1-d1-p-c0": 0.94,
+    "d1-d1-p-c1": 0.92,
+    "d1-d1-p-c2": 0.91,
+    "d1-g-c0": 1.0,
+    "d1-g-c1": 0.98,
+    "d1-g-c2": 0.96,
+    "d2-d2-p-c0": 0.9,
+    "d2-d2-p-c1": 0.89,
+    "d2-d2-p-c2": 0.88,
+    "d2-g-c0": 0.99,
+    "d2-g-c1": 0.97,
+    "d2-g-c2": 0.95,
+    "sp-134953552-427952557-1312609739": 0.87,
+    "sp-427952557-1312609739-1673451213-2131635068": 0.86,
+    "sp-771685345": 0.9299999999999999
+   },
+   "gnn": {
+    "enabled": false
+   },
+   "graph_dest": {
+    "enabled": false
+   },
+   "judge": "live",
+   "judged_docs": 3,
+   "lane_sizes": {
+    "document_summary": 0,
+    "dualread": 0,
+    "entity_card": 0,
+    "global_dense_child": 6,
+    "global_sparse_child": 1,
+    "gnn_route": 0,
+    "graph_dest": 0,
+    "hierarchical_children": 6,
+    "latent_rescue": 0,
+    "resolution_lift": 0,
+    "section_summary": 2,
+    "seealso_fanout": 0,
+    "union": 15,
+    "union_uncapped": 15
+   },
+   "latent": {
+    "enabled": false
+   },
+   "multi_lane": 0,
+   "neighbors_added": 0,
+   "noise_dropped": 0,
+   "noise_reasons": {},
+   "noise_sample": [],
+   "plan": "chat-retrieval-v2",
+   "post_g3_order": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "pre_g3_order": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "prefix_docs": {
+    "d1": 6,
+    "d2": 6,
+    "d3": 3
+   },
+   "prefix_policy": "round_robin:cap8",
+   "rerank_prefix": 15,
+   "resolution_lift": {
+    "enabled": false
+   },
+   "route_kinds": [
+    "section_summary",
+    "child",
+    "entity_card"
+   ],
+   "rrf_k": 60,
+   "second_pass": null,
+   "seealso_fanout": {
+    "enabled": false
+   },
+   "sparse_rule": "exact_terms",
+   "subqueries": 2,
+   "weak_aspects": [],
+   "weak_reasons": {}
+  },
+  "wildcard": [
+   {
+    "channels": [
+     "abstraction",
+     "transfer"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar0",
+    "principle": "principle of pfar0",
+    "scores": {
+     "latent_alignment": 0.9,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.658
+    },
+    "source_evidence": {
+     "chunk_id": "pfar0-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar0-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": "transfer of pfar0"
+   },
+   {
+    "channels": [
+     "abstraction"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar1",
+    "principle": "principle of pfar1",
+    "scores": {
+     "latent_alignment": 0.85,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.6214
+    },
+    "source_evidence": {
+     "chunk_id": "pfar1-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar1-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": ""
+   }
+  ]
+ },
+ "wildcard_subs_facets": {
+  "evidence": [
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c0",
+    "dense_rank": 0,
+    "dense_score": 1.0,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.027869,
+    "g3_score": 1.0,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c0",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009836,
+     "q0": 0.016393,
+     "q1": 0.013115
+    },
+    "region_role": null,
+    "rerank_score": 1.0,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c0",
+    "dense_rank": 1,
+    "dense_score": 1.0,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.027419,
+    "g3_score": 0.99,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c0",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009677,
+     "q0": 0.016129,
+     "q1": 0.012903
+    },
+    "region_role": null,
+    "rerank_score": 0.99,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c1",
+    "dense_rank": 2,
+    "dense_score": 0.99,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.021429,
+    "g3_score": 0.98,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c1",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004762,
+     "q0": 0.015873,
+     "q1": 0.006349
+    },
+    "region_role": null,
+    "rerank_score": 0.98,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c1",
+    "dense_rank": 3,
+    "dense_score": 0.99,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.021094,
+    "g3_score": 0.97,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c1",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004687,
+     "q0": 0.015625,
+     "q1": 0.00625
+    },
+    "region_role": null,
+    "rerank_score": 0.97,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d1-g-c2",
+    "dense_rank": 4,
+    "dense_score": 0.98,
+    "doc_id": "d1",
+    "document_rank": null,
+    "fused_score": 0.020769,
+    "g3_score": 0.96,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-g-c2",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004615,
+     "q0": 0.015385,
+     "q1": 0.006154
+    },
+    "region_role": null,
+    "rerank_score": 0.96,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_DENSE_CHILD",
+    "arrivals": [
+     "GLOBAL_DENSE_CHILD"
+    ],
+    "chunk_id": "d2-g-c2",
+    "dense_rank": 5,
+    "dense_score": 0.98,
+    "doc_id": "d2",
+    "document_rank": null,
+    "fused_score": 0.020455,
+    "g3_score": 0.95,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-g-c2",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0",
+     "q1",
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.004545,
+     "q0": 0.015152,
+     "q1": 0.006061
+    },
+    "region_role": null,
+    "rerank_score": 0.95,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c0",
+    "dense_rank": null,
+    "dense_score": 1.0,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.016393,
+    "g3_score": 0.94,
+    "heading_path": "",
+    "hierarchy_rank": 0,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c0",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 0.94,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-771685345",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.016393,
+    "g3_score": 0.9299999999999999,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-771685345",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016393
+    },
+    "region_role": null,
+    "rerank_score": 0.9299999999999999,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": 0,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c1",
+    "dense_rank": null,
+    "dense_score": 0.99,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.016129,
+    "g3_score": 0.92,
+    "heading_path": "",
+    "hierarchy_rank": 1,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c1",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.016129
+    },
+    "region_role": null,
+    "rerank_score": 0.92,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d1-d1-p-c2",
+    "dense_rank": null,
+    "dense_score": 0.98,
+    "doc_id": "d1",
+    "document_rank": 0,
+    "fused_score": 0.015873,
+    "g3_score": 0.91,
+    "heading_path": "",
+    "hierarchy_rank": 2,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d1-d1-p-c2",
+    "parent_id": "d1-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015873
+    },
+    "region_role": null,
+    "rerank_score": 0.91,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c0",
+    "dense_rank": null,
+    "dense_score": 1.0,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015625,
+    "g3_score": 0.9,
+    "heading_path": "",
+    "hierarchy_rank": 3,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c0",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015625
+    },
+    "region_role": null,
+    "rerank_score": 0.9,
+    "role": "DIRECT",
+    "similarity": 1.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c1",
+    "dense_rank": null,
+    "dense_score": 0.99,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015385,
+    "g3_score": 0.89,
+    "heading_path": "",
+    "hierarchy_rank": 4,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c1",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015385
+    },
+    "region_role": null,
+    "rerank_score": 0.89,
+    "role": "DIRECT",
+    "similarity": 0.99,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-134953552-427952557-1312609739",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.013115,
+    "g3_score": 0.87,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-134953552-427952557-1312609739",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "q1"
+    ],
+    "query_scores": {
+     "q1": 0.013115
+    },
+    "region_role": null,
+    "rerank_score": 0.87,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "GLOBAL_SPARSE_CHILD",
+    "arrivals": [
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+    "dense_rank": null,
+    "dense_score": null,
+    "doc_id": "d3",
+    "document_rank": null,
+    "fused_score": 0.009836,
+    "g3_score": 0.86,
+    "heading_path": "",
+    "hierarchy_rank": null,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:sp-427952557-1312609739-1673451213-2131635068",
+    "parent_id": "d3-p",
+    "query_ids": [
+     "p0"
+    ],
+    "query_scores": {
+     "p0": 0.009836
+    },
+    "region_role": null,
+    "rerank_score": 0.86,
+    "role": "DIRECT",
+    "similarity": 12.0,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": 12.0,
+    "text": "RAPO",
+    "title": ""
+   },
+   {
+    "arrival": "HIERARCHICAL_ROUTE",
+    "arrivals": [
+     "HIERARCHICAL_ROUTE"
+    ],
+    "chunk_id": "d2-d2-p-c2",
+    "dense_rank": null,
+    "dense_score": 0.98,
+    "doc_id": "d2",
+    "document_rank": 1,
+    "fused_score": 0.015152,
+    "g3_score": 0.88,
+    "heading_path": "",
+    "hierarchy_rank": 5,
+    "human_locator": "",
+    "is_neighbor": false,
+    "locator": "chunk:d2-d2-p-c2",
+    "parent_id": "d2-p",
+    "query_ids": [
+     "q0"
+    ],
+    "query_scores": {
+     "q0": 0.015152
+    },
+    "region_role": null,
+    "rerank_score": 0.88,
+    "role": "DIRECT",
+    "similarity": 0.98,
+    "source_name": "",
+    "sparse_rank": null,
+    "sparse_score": null,
+    "text": "reward models shape prompt optimization",
+    "title": ""
+   }
+  ],
+  "latent_pool": null,
+  "meta": {
+   "aspect_best": {
+    "p0": 0.7311,
+    "q0": 0.7311,
+    "q1": 0.7311
+   },
+   "aspect_seated": [],
+   "aspects": {
+    "p0": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 7,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "prefix": 7,
+     "query": "prompt optimisation with reward models",
+     "type": "ENTITY",
+     "union": 7,
+     "weak": null,
+     "weight": 0.6
+    },
+    "q0": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 13,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1,
+      "HIERARCHICAL_ROUTE": 6
+     },
+     "prefix": null,
+     "query": "what does RAPO say about prompts",
+     "type": "PRIMARY",
+     "union": 13,
+     "weak": null,
+     "weight": 1.0
+    },
+    "q1": {
+     "best": 0.7311,
+     "degraded": [],
+     "final": 7,
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "prefix": 7,
+     "query": "reward models for prompts",
+     "type": "MECHANISM",
+     "union": 7,
+     "weak": null,
+     "weight": 0.8
+    }
+   },
+   "budget": {
+    "agreement_bonus": 0.5,
+    "aspect_final_seats": 1,
+    "aspect_prefix_seats": 3,
+    "aspect_weak_floor": 0.5,
+    "atom_k": 12,
+    "atom_kinds": [],
+    "compose_agreement_boost": 0.02,
+    "compose_agreement_cap": 0.05,
+    "compose_aspect_slots": 3,
+    "compose_diversity_slots": 4,
+    "compose_doc_lane_max": 3,
+    "compose_doc_soft_max": 3,
+    "compose_dominance_share": 0.4,
+    "compose_relevance_slots": 8,
+    "compose_score_gap": 0.1,
+    "compose_sparse_slots": 3,
+    "contextual_at_risk": 0.5,
+    "contextual_conn_floor": 0.3,
+    "contextual_judge": false,
+    "contextual_max_needs": 4,
+    "contextual_per_need": 3,
+    "demote_noisy_regions": true,
+    "doc_steer_items": 4,
+    "doc_steer_kinds": [],
+    "dualread_children_per_parent": 3,
+    "dualread_enabled": false,
+    "dualread_map_k": 24,
+    "dualread_max_parents": 8,
+    "dualread_profile_docs": 8,
+    "embed_deadline_s": 2.5,
+    "entity_card_k": 8,
+    "entity_card_max_docs_per_card": 4,
+    "facet_seats": 2,
+    "global_dense_k": 50,
+    "global_sparse_k": 40,
+    "gnn_children": 12,
+    "gnn_children_per_parent": 2,
+    "gnn_enabled": false,
+    "gnn_family": "",
+    "gnn_parent_k": 8,
+    "gnn_variant": "real",
+    "graph_dest_children": 8,
+    "graph_dest_enabled": false,
+    "hierarchy_child_k": 3,
+    "hierarchy_doc_k": 16,
+    "hierarchy_max_documents": 6,
+    "hierarchy_max_sections_per_document": 2,
+    "hierarchy_route_documents": false,
+    "hierarchy_section_k": 24,
+    "lane_deadline_s": 3.0,
+    "lanes": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "latent_abstraction_top_k": 8,
+    "latent_children_per_parent": 3,
+    "latent_enabled": false,
+    "latent_max_parents": 6,
+    "latent_transfer_top_k": 8,
+    "max_subqueries": 10,
+    "max_workers": 8,
+    "merged_candidate_max": 120,
+    "mmr_lambda": 0.7,
+    "neighbor_expansion": 0,
+    "neighbor_expansion_max": 8,
+    "parallel_route_lanes": false,
+    "probe_gate_floor": 0.0,
+    "rerank_deadline_s": 8.0,
+    "rerank_doc_cap": 8,
+    "rerank_max": 24,
+    "rerank_max_fair": 32,
+    "rerank_round_robin": true,
+    "resolution_lift_children": 6,
+    "resolution_lift_enabled": false,
+    "route_prefix_seats": 2,
+    "rrf_k": 60,
+    "second_pass_factor": 2,
+    "seealso_blend_alpha": 0.7,
+    "seealso_blend_children": 4,
+    "seealso_blend_docs": 4,
+    "seealso_blend_enabled": false,
+    "seealso_blend_items": 4,
+    "seealso_fanout_atoms": 6,
+    "seealso_fanout_children": 4,
+    "seealso_fanout_enabled": false,
+    "skeleton_paths": false,
+    "skeleton_probe_children": 2,
+    "skeleton_probe_parents": 3,
+    "skeleton_probe_routes": 0,
+    "subquery_dense_k": 20,
+    "subquery_sparse_k": 15,
+    "synthesis_max": 24,
+    "wildcard_deadline_s": 2.5,
+    "wildcard_finish_budget_s": 4.0,
+    "wildcard_unverified_fill_s": 1.0
+   },
+   "candidates": 15,
+   "composition": {
+    "agreement_reordered": 0,
+    "aspect_seats": [],
+    "doc_counts": {
+     "d1": 6,
+     "d2": 6,
+     "d3": 3
+    },
+    "doc_share_top": 0.4,
+    "docs_within_gap": 3,
+    "dominance": false,
+    "dominance_avoidable": false,
+    "facet_seats": [
+     {
+      "chunk_ids": [],
+      "facet_id": "f1",
+      "represented": 8,
+      "seated": 0
+     },
+     {
+      "chunk_ids": [],
+      "facet_id": "f2",
+      "represented": 6,
+      "seated": 0
+     }
+    ],
+    "lane_quota": {
+     "by": "first_arrival",
+     "lifted": 0,
+     "max": 3,
+     "refused": 0
+    },
+    "mmr": {
+     "added_docs": [],
+     "changed": 0,
+     "lambda": 0.7,
+     "seats": 1,
+     "similarity": "lexical_cosine"
+    },
+    "slots": {
+     "aspect": 0,
+     "diversity": 4,
+     "facet": 0,
+     "fill": 0,
+     "mmr": 1,
+     "relevance": 8,
+     "sparse": 2
+    }
+   },
+   "corpus_id": "cinema",
+   "deadlines": {
+    "contract": "concurrency-deadlines-v1",
+    "embed_deadline_s": 2.5,
+    "lane_deadline_s": 3.0,
+    "max_workers": 8,
+    "rerank_deadline_s": 8.0
+   },
+   "degraded": [],
+   "engine": "candidate-retrieval-v1",
+   "evidence_count": 15,
+   "evidence_roles": {
+    "DIRECT": 15,
+    "LATENT": 0,
+    "PRECISION": 0,
+    "RELATIONAL": 0
+   },
+   "final_detail": [
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 1.0
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.99
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.98
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.97
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.96
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.95
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.94
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-771685345",
+     "doc_id": "d3",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9299999999999999
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.92
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.91
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.89
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-134953552-427952557-1312609739",
+     "doc_id": "d3",
+     "query_ids": [
+      "q1"
+     ],
+     "rerank_score": 0.87
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+     "doc_id": "d3",
+     "query_ids": [
+      "p0"
+     ],
+     "rerank_score": 0.86
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.88
+    }
+   ],
+   "lanes": [
+    "HIERARCHICAL_ROUTE",
+    "GLOBAL_DENSE_CHILD",
+    "GLOBAL_SPARSE_CHILD"
+   ],
+   "latent": null,
+   "lexical_enabled": true,
+   "liveness": null,
+   "mmr": {
+    "added_docs": [],
+    "changed": 0,
+    "lambda": 0.7,
+    "seats": 1,
+    "similarity": "lexical_cosine"
+   },
+   "mode": "WILDCARD",
+   "multi_lane": 0,
+   "plan_version": "chat-retrieval-v2",
+   "rrf_k": 60,
+   "selected_document_count": 2,
+   "selected_section_count": 2,
+   "subqueries": 2,
+   "weak_aspects": [],
+   "weak_reasons": {},
+   "wildcard": {
+    "atom_frontier": {
+     "atoms": 0,
+     "error": "AttributeError",
+     "maps": 0,
+     "parents_added": 0
+    },
+    "baseline_chunks": 15,
+    "baseline_docs": 3,
+    "baseline_parents": 3,
+    "candidate_parents": 8,
+    "contract": "mode-composition-v1",
+    "deadline_s": 2.5,
+    "degraded": null,
+    "excluded_in_evidence": 0,
+    "excluded_obvious": 1,
+    "latent_candidates": 6,
+    "latent_top_k": 24,
+    "max_bridges": 3,
+    "parents_skipped": 0,
+    "parents_validated": 5,
+    "partial": false,
+    "plan": "divergent-retrieval-v1",
+    "reranker": true,
+    "returned": 3,
+    "support_filtered": 0,
+    "unverified_bridges": 0,
+    "verified_bridges": 3
+   },
+   "wildcard_plan": "divergent-retrieval-v1"
+  },
+  "query": "what does RAPO say about prompts",
+  "selected_documents": [
+   {
+    "aggregate_rank": 0,
+    "aggregate_score": 0.032787,
+    "corpus_id": "cinema",
+    "doc_id": "d1",
+    "document_summary": null,
+    "representation_kinds_present": [
+     "routing_section_summary",
+     "routing_child"
+    ],
+    "rrf_contributions": {
+     "routing_child": 0.016393,
+     "routing_section_summary": 0.016393
+    },
+    "why": {
+     "best_child_rank": 0,
+     "best_document_summary_rank": null,
+     "best_lexical_rank": null,
+     "best_section_summary_rank": 0
+    }
+   },
+   {
+    "aggregate_rank": 1,
+    "aggregate_score": 0.032258,
+    "corpus_id": "cinema",
+    "doc_id": "d2",
+    "document_summary": null,
+    "representation_kinds_present": [
+     "routing_section_summary",
+     "routing_child"
+    ],
+    "rrf_contributions": {
+     "routing_child": 0.016129,
+     "routing_section_summary": 0.016129
+    },
+    "why": {
+     "best_child_rank": 1,
+     "best_document_summary_rank": null,
+     "best_lexical_rank": null,
+     "best_section_summary_rank": 1
+    }
+   }
+  ],
+  "selected_sections": [
+   {
+    "best_section_rank": 0,
+    "doc_id": "d1",
+    "from": [
+     "child_rescue",
+     "section_summary"
+    ],
+    "parent_id": "d1-p",
+    "source_name": "",
+    "summary_id": "sec-d1"
+   },
+   {
+    "best_section_rank": 1,
+    "doc_id": "d2",
+    "from": [
+     "child_rescue",
+     "section_summary"
+    ],
+    "parent_id": "d2-p",
+    "source_name": "",
+    "summary_id": "sec-d2"
+   }
+  ],
+  "trace": {
+   "aspect_best": {
+    "p0": 0.7311,
+    "q0": 0.7311,
+    "q1": 0.7311
+   },
+   "aspect_final": {
+    "p0": 7,
+    "q0": 13,
+    "q1": 7
+   },
+   "aspect_prefix": {
+    "p0": 7,
+    "q1": 7
+   },
+   "aspect_seated": [],
+   "aspects": {
+    "p0": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "query": "prompt optimisation with reward models",
+     "type": "ENTITY",
+     "union": 7,
+     "weight": 0.6
+    },
+    "q0": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1,
+      "HIERARCHICAL_ROUTE": 6
+     },
+     "query": "what does RAPO say about prompts",
+     "type": "PRIMARY",
+     "union": 13,
+     "weight": 1.0
+    },
+    "q1": {
+     "degraded": [],
+     "lanes": {
+      "GLOBAL_DENSE_CHILD": 6,
+      "GLOBAL_SPARSE_CHILD": 1
+     },
+     "query": "reward models for prompts",
+     "type": "MECHANISM",
+     "union": 7,
+     "weight": 0.8
+    }
+   },
+   "budget": {
+    "agreement_bonus": 0.5,
+    "aspect_final_seats": 1,
+    "aspect_prefix_seats": 3,
+    "aspect_weak_floor": 0.5,
+    "atom_k": 12,
+    "atom_kinds": [],
+    "compose_agreement_boost": 0.02,
+    "compose_agreement_cap": 0.05,
+    "compose_aspect_slots": 3,
+    "compose_diversity_slots": 4,
+    "compose_doc_lane_max": 3,
+    "compose_doc_soft_max": 3,
+    "compose_dominance_share": 0.4,
+    "compose_relevance_slots": 8,
+    "compose_score_gap": 0.1,
+    "compose_sparse_slots": 3,
+    "contextual_at_risk": 0.5,
+    "contextual_conn_floor": 0.3,
+    "contextual_judge": false,
+    "contextual_max_needs": 4,
+    "contextual_per_need": 3,
+    "demote_noisy_regions": true,
+    "doc_steer_items": 4,
+    "doc_steer_kinds": [],
+    "dualread_children_per_parent": 3,
+    "dualread_enabled": false,
+    "dualread_map_k": 24,
+    "dualread_max_parents": 8,
+    "dualread_profile_docs": 8,
+    "embed_deadline_s": 2.5,
+    "entity_card_k": 8,
+    "entity_card_max_docs_per_card": 4,
+    "facet_seats": 2,
+    "global_dense_k": 50,
+    "global_sparse_k": 40,
+    "gnn_children": 12,
+    "gnn_children_per_parent": 2,
+    "gnn_enabled": false,
+    "gnn_family": "",
+    "gnn_parent_k": 8,
+    "gnn_variant": "real",
+    "graph_dest_children": 8,
+    "graph_dest_enabled": false,
+    "hierarchy_child_k": 3,
+    "hierarchy_doc_k": 16,
+    "hierarchy_max_documents": 6,
+    "hierarchy_max_sections_per_document": 2,
+    "hierarchy_route_documents": false,
+    "hierarchy_section_k": 24,
+    "lane_deadline_s": 3.0,
+    "lanes": [
+     "HIERARCHICAL_ROUTE",
+     "GLOBAL_DENSE_CHILD",
+     "GLOBAL_SPARSE_CHILD"
+    ],
+    "latent_abstraction_top_k": 8,
+    "latent_children_per_parent": 3,
+    "latent_enabled": false,
+    "latent_max_parents": 6,
+    "latent_transfer_top_k": 8,
+    "max_subqueries": 10,
+    "max_workers": 8,
+    "merged_candidate_max": 120,
+    "mmr_lambda": 0.7,
+    "neighbor_expansion": 0,
+    "neighbor_expansion_max": 8,
+    "parallel_route_lanes": false,
+    "probe_gate_floor": 0.0,
+    "rerank_deadline_s": 8.0,
+    "rerank_doc_cap": 8,
+    "rerank_max": 24,
+    "rerank_max_fair": 32,
+    "rerank_round_robin": true,
+    "resolution_lift_children": 6,
+    "resolution_lift_enabled": false,
+    "route_prefix_seats": 2,
+    "rrf_k": 60,
+    "second_pass_factor": 2,
+    "seealso_blend_alpha": 0.7,
+    "seealso_blend_children": 4,
+    "seealso_blend_docs": 4,
+    "seealso_blend_enabled": false,
+    "seealso_blend_items": 4,
+    "seealso_fanout_atoms": 6,
+    "seealso_fanout_children": 4,
+    "seealso_fanout_enabled": false,
+    "skeleton_paths": false,
+    "skeleton_probe_children": 2,
+    "skeleton_probe_parents": 3,
+    "skeleton_probe_routes": 0,
+    "subquery_dense_k": 20,
+    "subquery_sparse_k": 15,
+    "synthesis_max": 24,
+    "wildcard_deadline_s": 2.5,
+    "wildcard_finish_budget_s": 4.0,
+    "wildcard_unverified_fill_s": 1.0
+   },
+   "capped_out": 0,
+   "composition": {
+    "agreement_reordered": 0,
+    "aspect_seats": [],
+    "doc_counts": {
+     "d1": 6,
+     "d2": 6,
+     "d3": 3
+    },
+    "doc_share_top": 0.4,
+    "docs_within_gap": 3,
+    "dominance": false,
+    "dominance_avoidable": false,
+    "facet_seats": [
+     {
+      "chunk_ids": [],
+      "facet_id": "f1",
+      "represented": 8,
+      "seated": 0
+     },
+     {
+      "chunk_ids": [],
+      "facet_id": "f2",
+      "represented": 6,
+      "seated": 0
+     }
+    ],
+    "lane_quota": {
+     "by": "first_arrival",
+     "lifted": 0,
+     "max": 3,
+     "refused": 0
+    },
+    "mmr": {
+     "added_docs": [],
+     "changed": 0,
+     "lambda": 0.7,
+     "seats": 1,
+     "similarity": "lexical_cosine"
+    },
+    "slots": {
+     "aspect": 0,
+     "diversity": 4,
+     "facet": 0,
+     "fill": 0,
+     "mmr": 1,
+     "relevance": 8,
+     "sparse": 2
+    }
+   },
+   "concurrency": {
+    "contract": "concurrency-deadlines-v1",
+    "lane_deadline_s": 3.0,
+    "max_workers": 8,
+    "prestarted": [
+     "global_sparse_child",
+     "sub_p0_sparse",
+     "sub_q1_sparse"
+    ],
+    "timed_out": []
+   },
+   "contextual": {
+    "enabled": false
+   },
+   "degraded": [],
+   "document_candidates": [
+    {
+     "aggregate_rank": 0,
+     "aggregate_score": 0.032787,
+     "doc_id": "d1",
+     "representation_kinds_present": [
+      "routing_section_summary",
+      "routing_child"
+     ],
+     "rrf_contributions": {
+      "routing_child": 0.016393,
+      "routing_section_summary": 0.016393
+     }
+    },
+    {
+     "aggregate_rank": 1,
+     "aggregate_score": 0.032258,
+     "doc_id": "d2",
+     "representation_kinds_present": [
+      "routing_section_summary",
+      "routing_child"
+     ],
+     "rrf_contributions": {
+      "routing_child": 0.016129,
+      "routing_section_summary": 0.016129
+     }
+    }
+   ],
+   "dualread": {
+    "enabled": false
+   },
+   "engine": "candidate-retrieval-v1",
+   "exact_terms": [
+    "RAPO"
+   ],
+   "final": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068",
+    "d2-d2-p-c2"
+   ],
+   "final_detail": [
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 1.0
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.99
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.98
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.97
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d1-g-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.96
+    },
+    {
+     "arrivals": [
+      "GLOBAL_DENSE_CHILD"
+     ],
+     "chunk_id": "d2-g-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0",
+      "q1",
+      "p0"
+     ],
+     "rerank_score": 0.95
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c0",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.94
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-771685345",
+     "doc_id": "d3",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9299999999999999
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c1",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.92
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d1-d1-p-c2",
+     "doc_id": "d1",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.91
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c0",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.9
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c1",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.89
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-134953552-427952557-1312609739",
+     "doc_id": "d3",
+     "query_ids": [
+      "q1"
+     ],
+     "rerank_score": 0.87
+    },
+    {
+     "arrivals": [
+      "GLOBAL_SPARSE_CHILD"
+     ],
+     "chunk_id": "sp-427952557-1312609739-1673451213-2131635068",
+     "doc_id": "d3",
+     "query_ids": [
+      "p0"
+     ],
+     "rerank_score": 0.86
+    },
+    {
+     "arrivals": [
+      "HIERARCHICAL_ROUTE"
+     ],
+     "chunk_id": "d2-d2-p-c2",
+     "doc_id": "d2",
+     "query_ids": [
+      "q0"
+     ],
+     "rerank_score": 0.88
+    }
+   ],
+   "funnel_lanes": {
+    "dualread": [],
+    "global_dense_child": [
+     "d1-g-c0",
+     "d2-g-c0",
+     "d1-g-c1",
+     "d2-g-c1",
+     "d1-g-c2",
+     "d2-g-c2"
+    ],
+    "global_sparse_child": [
+     "sp-771685345"
+    ],
+    "gnn_route": [],
+    "graph_dest": [],
+    "hierarchical": [
+     "d1-d1-p-c0",
+     "d1-d1-p-c1",
+     "d1-d1-p-c2",
+     "d2-d2-p-c0",
+     "d2-d2-p-c1",
+     "d2-d2-p-c2"
+    ],
+    "latent_rescue": [],
+    "resolution_lift": [],
+    "seealso_fanout": []
+   },
+   "funnel_union": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "g3_scores": {
+    "d1-d1-p-c0": 0.94,
+    "d1-d1-p-c1": 0.92,
+    "d1-d1-p-c2": 0.91,
+    "d1-g-c0": 1.0,
+    "d1-g-c1": 0.98,
+    "d1-g-c2": 0.96,
+    "d2-d2-p-c0": 0.9,
+    "d2-d2-p-c1": 0.89,
+    "d2-d2-p-c2": 0.88,
+    "d2-g-c0": 0.99,
+    "d2-g-c1": 0.97,
+    "d2-g-c2": 0.95,
+    "sp-134953552-427952557-1312609739": 0.87,
+    "sp-427952557-1312609739-1673451213-2131635068": 0.86,
+    "sp-771685345": 0.9299999999999999
+   },
+   "gnn": {
+    "enabled": false
+   },
+   "graph_dest": {
+    "enabled": false
+   },
+   "judge": "live",
+   "judged_docs": 3,
+   "lane_sizes": {
+    "document_summary": 0,
+    "dualread": 0,
+    "entity_card": 0,
+    "global_dense_child": 6,
+    "global_sparse_child": 1,
+    "gnn_route": 0,
+    "graph_dest": 0,
+    "hierarchical_children": 6,
+    "latent_rescue": 0,
+    "resolution_lift": 0,
+    "section_summary": 2,
+    "seealso_fanout": 0,
+    "union": 15,
+    "union_uncapped": 15
+   },
+   "latent": {
+    "enabled": false
+   },
+   "multi_lane": 0,
+   "neighbors_added": 0,
+   "noise_dropped": 0,
+   "noise_reasons": {},
+   "noise_sample": [],
+   "plan": "chat-retrieval-v2",
+   "post_g3_order": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "pre_g3_order": [
+    "d1-g-c0",
+    "d2-g-c0",
+    "d1-g-c1",
+    "d2-g-c1",
+    "d1-g-c2",
+    "d2-g-c2",
+    "d1-d1-p-c0",
+    "sp-771685345",
+    "d1-d1-p-c1",
+    "d1-d1-p-c2",
+    "d2-d2-p-c0",
+    "d2-d2-p-c1",
+    "d2-d2-p-c2",
+    "sp-134953552-427952557-1312609739",
+    "sp-427952557-1312609739-1673451213-2131635068"
+   ],
+   "prefix_docs": {
+    "d1": 6,
+    "d2": 6,
+    "d3": 3
+   },
+   "prefix_policy": "round_robin:cap8",
+   "rerank_prefix": 15,
+   "resolution_lift": {
+    "enabled": false
+   },
+   "route_kinds": [
+    "section_summary",
+    "child",
+    "entity_card"
+   ],
+   "rrf_k": 60,
+   "second_pass": null,
+   "seealso_fanout": {
+    "enabled": false
+   },
+   "sparse_rule": "exact_terms",
+   "subqueries": 2,
+   "weak_aspects": [],
+   "weak_reasons": {}
+  },
+  "wildcard": [
+   {
+    "channels": [
+     "abstraction",
+     "transfer"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar0",
+    "principle": "principle of pfar0",
+    "scores": {
+     "latent_alignment": 0.9,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.658
+    },
+    "source_evidence": {
+     "chunk_id": "pfar0-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar0-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": "transfer of pfar0"
+   },
+   {
+    "channels": [
+     "abstraction"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar1",
+    "principle": "principle of pfar1",
+    "scores": {
+     "latent_alignment": 0.85,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.6214
+    },
+    "source_evidence": {
+     "chunk_id": "pfar1-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar1-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": ""
+   },
+   {
+    "channels": [
+     "abstraction"
+    ],
+    "doc_id": "dfar",
+    "parent_id": "pfar2",
+    "principle": "principle of pfar2",
+    "scores": {
+     "latent_alignment": 0.8,
+     "novelty": 1.0,
+     "source_support": 0.7311,
+     "value": 0.5848
+    },
+    "source_evidence": {
+     "chunk_id": "pfar2-k0",
+     "source_name": "far.md",
+     "text": "grounding text of pfar2-k0 mechanism"
+    },
+    "source_name": "dfar.md",
+    "verified": true,
+    "why_it_may_transfer": ""
+   }
+  ]
+ }
+}

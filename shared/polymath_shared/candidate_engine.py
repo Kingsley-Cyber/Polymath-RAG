@@ -1201,50 +1201,13 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     for name in sub_names:
         timings[name] = sub_outs[name].ms
 
-    def _items_for(sq: SubQuery, outcomes: dict[str, _Outcome], dk: int, sk: int) -> tuple[list[CandidateEvidence], dict]:
-        items: list[CandidateEvidence] = []
-        info = {"type": sq.qtype, "query": sq.text, "weight": sq.weight, "lanes": {LANE_B: 0, LANE_C: 0}, "degraded": []}
-        if budget.skeleton_paths or budget.contextual_judge:
-            info["origin"] = str(getattr(sq, "origin", "") or "")
-        o = outcomes.get("dense")
-        if o is not None:
-            if o.error is not None:
-                info["degraded"].append(f"dense:{type(o.error).__name__}")
-            elif o.timeout:
-                info["degraded"].append("dense:timeout")
-            else:
-                hits = _sink_noisy(_hits(REPRESENTATION_KIND_CHILD, o.rows, ctx.corpus_id, dk), roles) if roles else _hits(REPRESENTATION_KIND_CHILD, o.rows, ctx.corpus_id, dk)
-                for h in hits:
-                    if h.chunk_id:
-                        items.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
-                                                       text=h.text, arrivals=[LANE_B], query_ids=[sq.query_id],
-                                                       query_scores={sq.query_id: sq.weight * _rrf_score(h.rank, budget.rrf_k)},
-                                                       dense_score=h.raw_similarity))
-                info["lanes"][LANE_B] = sum(1 for h in hits if h.chunk_id)
-        o = outcomes.get("sparse")
-        if o is not None:
-            if o.error is not None:
-                info["degraded"].append(f"sparse:{type(o.error).__name__}")
-            elif o.timeout:
-                info["degraded"].append("sparse:timeout")
-            else:
-                hits = _hits("child_lexical", o.rows, ctx.corpus_id, sk)
-                for h in hits:
-                    if h.chunk_id:
-                        items.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
-                                                       text=h.text, arrivals=[LANE_C], query_ids=[sq.query_id],
-                                                       query_scores={sq.query_id: sq.weight * _rrf_score(h.rank, budget.rrf_k)},
-                                                       sparse_score=h.raw_similarity))
-                info["lanes"][LANE_C] = sum(1 for h in hits if h.chunk_id)
-        return items, info
-
     for sq in subqueries:
         outcomes = {}
         if f"sub_{sq.query_id}_dense" in sub_outs:
             outcomes["dense"] = sub_outs[f"sub_{sq.query_id}_dense"]
         if f"sub_{sq.query_id}_sparse" in sub_outs:
             outcomes["sparse"] = sub_outs[f"sub_{sq.query_id}_sparse"]
-        items, info = _items_for(sq, outcomes, budget.subquery_dense_k, budget.subquery_sparse_k)
+        items, info = _subquery_items(ctx, budget, sq, outcomes, budget.subquery_dense_k, budget.subquery_sparse_k, roles)
         for lane_key, o in outcomes.items():
             if o.timeout:
                 degraded.append(_timeout_receipt(f"sub_{sq.query_id}_{lane_key}", budget, f"aspect {sq.query_id} loses its {lane_key} lane this turn", o))
@@ -1267,7 +1230,7 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
                 timings[f"sub_{sq.query_id}_{lane_key}"] = o.ms
                 if o.timeout:
                     degraded.append(_timeout_receipt(f"sub_{sq.query_id}_{lane_key}", budget, f"second pass for aspect {sq.query_id} dropped", o))
-            items, info2 = _items_for(sq, outs2, dk, sk)
+            items, info2 = _subquery_items(ctx, budget, sq, outs2, dk, sk, roles)
             second_pass = {"query_id": sq.query_id, "before": 0, "after": len(items)}
             aspects[sq.query_id] = {**info2, "second_pass": True}
             sub_items.extend(items)
@@ -1438,6 +1401,192 @@ def _retrieve_on(ctx: SearchContext, budget: CandidateBudget, pool: Executor, de
     return CandidateResult(context=ctx, budget=budget, documents=documents, selected_documents=selected_documents,
                            selected_sections=selected_sections, lane_a=lane_a, lane_b=lane_b, lane_c=lane_c,
                            union=union, union_ids_uncapped=union_ids_uncapped, degraded=degraded, timings_ms=timings, trace=trace)
+
+
+def _subquery_items(ctx: SearchContext, budget: CandidateBudget, sq: SubQuery, outcomes: dict[str, _Outcome], dk: int, sk: int,
+                    roles: dict) -> tuple[list[CandidateEvidence], dict]:
+    """One subquery's lane B + C outcomes → its candidates (weighted RRF per query, P1.b provenance) and its aspect
+    receipt. Shared by the plan's subqueries (`_retrieve_on`) and a mode's second-pass subqueries (`retrieve_extra_subqueries`)."""
+    items: list[CandidateEvidence] = []
+    info = {"type": sq.qtype, "query": sq.text, "weight": sq.weight, "lanes": {LANE_B: 0, LANE_C: 0}, "degraded": []}
+    if budget.skeleton_paths or budget.contextual_judge:
+        info["origin"] = str(getattr(sq, "origin", "") or "")
+    o = outcomes.get("dense")
+    if o is not None:
+        if o.error is not None:
+            info["degraded"].append(f"dense:{type(o.error).__name__}")
+        elif o.timeout:
+            info["degraded"].append("dense:timeout")
+        else:
+            hits = _sink_noisy(_hits(REPRESENTATION_KIND_CHILD, o.rows, ctx.corpus_id, dk), roles) if roles else _hits(REPRESENTATION_KIND_CHILD, o.rows, ctx.corpus_id, dk)
+            for h in hits:
+                if h.chunk_id:
+                    items.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                   text=h.text, arrivals=[LANE_B], query_ids=[sq.query_id],
+                                                   query_scores={sq.query_id: sq.weight * _rrf_score(h.rank, budget.rrf_k)},
+                                                   dense_score=h.raw_similarity))
+            info["lanes"][LANE_B] = sum(1 for h in hits if h.chunk_id)
+    o = outcomes.get("sparse")
+    if o is not None:
+        if o.error is not None:
+            info["degraded"].append(f"sparse:{type(o.error).__name__}")
+        elif o.timeout:
+            info["degraded"].append("sparse:timeout")
+        else:
+            hits = _hits("child_lexical", o.rows, ctx.corpus_id, sk)
+            for h in hits:
+                if h.chunk_id:
+                    items.append(CandidateEvidence(chunk_id=h.chunk_id, doc_id=h.doc_id, parent_id=h.parent_id, source_name=h.source_name,
+                                                   text=h.text, arrivals=[LANE_C], query_ids=[sq.query_id],
+                                                   query_scores={sq.query_id: sq.weight * _rrf_score(h.rank, budget.rrf_k)},
+                                                   sparse_score=h.raw_similarity))
+            info["lanes"][LANE_C] = sum(1 for h in hits if h.chunk_id)
+    return items, info
+
+
+def retrieve_extra_subqueries(ctx: SearchContext, budget: CandidateBudget, subqueries: Iterable[SubQuery], *,
+                              dense_search: Callable[..., list[dict]], sparse_search: Callable[..., list[dict]],
+                              executor: Executor, deadline: float,
+                              region_lookup: Callable[[list[str]], dict] | None = None
+                              ) -> tuple[list[CandidateEvidence], dict[str, dict], list[dict], dict[str, float]]:
+    """FACET-RETRIEVAL-V1 F3: lanes B + C for subqueries a mode adds AFTER the plan's lanes ran (WILDCARD's mapped
+    subqueries, §3.3) — the same per-subquery candidates and aspect receipts `_retrieve_on` builds, on the turn's pool,
+    under one absolute `deadline` (perf_counter; nothing is launched past it). Every aspect receipt names its `origin`.
+    Returns (items, aspects, degraded receipts, timings); the caller fuses them with `merge_extra_candidates`."""
+    lanes = set(budget.lanes)
+    subqueries = list(subqueries)
+    tasks: list[tuple[str, Callable[[], list]]] = []
+    for sq in subqueries:
+        if LANE_B in lanes:
+            tasks.append((f"sub_{sq.query_id}_dense", lambda sq=sq: _call_dense(dense_search, REPRESENTATION_KIND_CHILD, budget.subquery_dense_k, None, sq.qvec)))
+        if LANE_C in lanes and sq.sparse_query is not None:
+            tasks.append((f"sub_{sq.query_id}_sparse", lambda sq=sq: _call_sparse(sparse_search, budget.subquery_sparse_k, sq.sparse_query)))
+    outs = _run_stage(executor, tasks, deadline)
+    roles: dict = {}
+    if budget.demote_noisy_regions and region_lookup is not None:
+        ids = [str((row.get("payload") or {}).get("chunk_id") or "") for name, o in outs.items() if name.endswith("_dense")
+               for row in o.rows if isinstance(row, dict)]
+        ids = [i for i in dict.fromkeys(ids) if i]
+        if ids:
+            try:
+                roles = region_lookup(ids) or {}
+            except Exception:  # noqa: BLE001 — demotion is best-effort
+                roles = {}
+    items: list[CandidateEvidence] = []
+    aspects: dict[str, dict] = {}
+    degraded: list[dict] = []
+    timings: dict[str, float] = {}
+    for sq in subqueries:
+        outcomes = {k: outs[f"sub_{sq.query_id}_{k}"] for k in ("dense", "sparse") if f"sub_{sq.query_id}_{k}" in outs}
+        for lane_key, o in outcomes.items():
+            timings[f"sub_{sq.query_id}_{lane_key}"] = o.ms
+            if o.timeout:
+                degraded.append(_timeout_receipt(f"sub_{sq.query_id}_{lane_key}", budget,
+                                                 f"mapped subquery {sq.query_id} loses its {lane_key} lane this turn", o))
+        its, info = _subquery_items(ctx, budget, sq, outcomes, budget.subquery_dense_k, budget.subquery_sparse_k, roles)
+        info["origin"] = str(getattr(sq, "origin", "") or "")
+        aspects[sq.query_id] = info
+        items.extend(its)
+    return items, aspects, degraded, timings
+
+
+def merge_extra_candidates(result: CandidateResult, items: Iterable[CandidateEvidence], aspects: dict[str, dict],
+                           budget: CandidateBudget) -> dict:
+    """FACET-RETRIEVAL-V1 F3: fold a second pass's subquery candidates into a finished `CandidateResult` with the engine's
+    own union rules — dedupe by chunk with arrivals / query_ids / per-query scores merged, the primary's RRF contribution
+    unchanged, the §3.10 per-document normalisation for the NEW query ids only (the plan's were normalised once already),
+    the fused score recomputed for every candidate (unchanged where nothing was added), the fusion order and the noisy-role
+    demotion re-applied, structural noise dropped and receipted, the cap at `merged_candidate_max` re-applied. `aspects`
+    (query_id → receipt) join `trace.aspects` with their union counts, so the judge's prefix seats and the composer's facet
+    seats treat them like the plan's subqueries. Mutates `result` (union, union_ids_uncapped, trace) in place; returns the
+    small merge receipt."""
+    from polymath_shared.document_region import is_noisy
+    by_id: dict[str, CandidateEvidence] = {c.chunk_id: c for c in result.union}
+    added_ids: set[str] = set()
+    merged = 0
+    for c in items:
+        cur = by_id.get(c.chunk_id)
+        if cur is None:
+            by_id[c.chunk_id] = replace_candidate(c)
+            added_ids.add(c.chunk_id)
+            continue
+        merged += 1
+        for a in c.arrivals:
+            if a not in cur.arrivals:
+                cur.arrivals.append(a)
+        for q in c.query_ids:
+            if q not in cur.query_ids:
+                cur.query_ids.append(q)
+        if cur.hierarchy_rank is None:
+            cur.hierarchy_rank = c.hierarchy_rank
+        if cur.dense_rank is None:
+            cur.dense_rank, cur.dense_score = c.dense_rank, (c.dense_score if c.dense_score is not None else cur.dense_score)
+        if cur.sparse_rank is None:
+            cur.sparse_rank, cur.sparse_score = c.sparse_rank, c.sparse_score
+        if cur.document_rank is None:
+            cur.document_rank = c.document_rank
+        if not cur.text and c.text:
+            cur.text = c.text
+        for qid, sc in c.query_scores.items():
+            cur.query_scores[qid] = cur.query_scores.get(qid, 0.0) + sc
+    primary_id = result.context.query_id
+    for c in by_id.values():
+        primary = sum(_rrf_score(r, budget.rrf_k) for r in (c.hierarchy_rank, c.dense_rank, c.sparse_rank) if r is not None)
+        if primary:
+            c.query_scores[primary_id] = primary
+    for qid in list(aspects):
+        best_by_doc: dict[str, str] = {}
+        for c in sorted(by_id.values(), key=lambda c: -c.query_scores.get(qid, 0.0)):
+            if qid not in c.query_scores:
+                continue
+            if c.doc_id in best_by_doc:
+                c.query_scores[qid] *= 0.5
+            else:
+                best_by_doc[c.doc_id] = c.chunk_id
+    for c in by_id.values():
+        if not c.query_scores:
+            c.fused_score = 0.0
+            continue
+        best = max(c.query_scores.values())
+        extra = sum(c.query_scores.values()) - best
+        c.fused_score = best + min(best, budget.agreement_bonus * extra)
+    fused = sorted(by_id.values(), key=lambda c: (-c.fused_score, c.chunk_id))
+    if budget.demote_noisy_regions:
+        fused = sorted(fused, key=lambda c: 1 if is_noisy(c.region_role) else 0)   # stable: order kept within groups
+    noise: list[tuple[str, str]] = []
+    kept: list[CandidateEvidence] = []
+    for c in fused:
+        why = None
+        if c.chunk_id in added_ids:                       # the pass-1 candidates passed this test at their union
+            why = structural_noise_reason(c.text)
+            if not why and budget.demote_noisy_regions and is_noisy(getattr(c, "region_role", None)):
+                why = f"region:{c.region_role}"
+        if why:
+            noise.append((c.chunk_id, why))
+        else:
+            kept.append(c)
+    fused = kept
+    ids = [c.chunk_id for c in fused]
+    seen = set(ids)
+    result.union_ids_uncapped = ids + [x for x in result.union_ids_uncapped if x not in seen]
+    result.union = fused[:budget.merged_candidate_max]
+    trace = result.trace
+    trace.setdefault("aspects", {})
+    for qid, info in aspects.items():
+        info["union"] = sum(1 for c in result.union if qid in c.query_ids)     # in place: the caller's receipt reads it too
+        trace["aspects"][qid] = info
+    sizes = trace.setdefault("lane_sizes", {})
+    sizes["union"], sizes["union_uncapped"] = len(result.union), len(result.union_ids_uncapped)
+    trace["funnel_union"] = list(result.union_ids_uncapped)
+    trace["multi_lane"] = sum(1 for c in result.union if len(c.arrivals) > 1)
+    if noise:
+        trace["noise_dropped"] = int(trace.get("noise_dropped") or 0) + len(noise)
+        reasons = dict(trace.get("noise_reasons") or {})
+        for _, why in noise:
+            reasons[why] = reasons.get(why, 0) + 1
+        trace["noise_reasons"] = reasons
+    return {"added": len(added_ids) - len(noise), "merged": merged, "noise_dropped": len(noise),
+            "union": len(result.union), "union_uncapped": len(result.union_ids_uncapped)}
 
 
 def replace_candidate(c: CandidateEvidence) -> CandidateEvidence:

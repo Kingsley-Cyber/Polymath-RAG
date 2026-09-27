@@ -68,8 +68,23 @@ from polymath_shared.candidate_engine import (
     synthesis_role,
     shape_budget,
     sparse_vector_for, effective_score,
-    facet_diversity_budget, facet_diversity_enabled)
+    facet_diversity_budget, facet_diversity_enabled,
+    merge_extra_candidates, retrieve_extra_subqueries)
 from polymath_shared.divergent import DIVERGENT_DEFAULT_PLAN, divergent_finish, divergent_sweep
+from polymath_shared.wildcard_mapped import (
+    MAPPED_CONTRACT,
+    MAPPED_GATE_FLOOR,
+    MAPPED_ORIGIN,
+    MAPPED_QUERY_TYPE,
+    MAPPED_WEIGHT,
+    build_mapped_subqueries,
+    gate_mapped,
+    mapped_enabled,
+)
+#: FACET-RETRIEVAL-V1 F3: the mapped pass needs room for its gate, its embedding and its lanes — a window shorter than this
+#: after the sweep landed skips the pass (`skipped: deadline`); after the gate the lanes need at least MAPPED_MIN_LANES_S
+MAPPED_MIN_WINDOW_S = 0.35
+MAPPED_MIN_LANES_S = 0.2
 #: P1.e: the finish stops STARTING validations at the frontier deadline; a validation already in flight may overrun by
 #: at most one reranker call — the route waits this bounded grace for the partial result instead of abandoning it.
 WILDCARD_FINISH_GRACE_S = 1.5
@@ -271,11 +286,17 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                      subqueries: tuple = (), lanes: Optional[tuple] = None,
                      latent_bridge_ids: tuple = (),
                      on_context: Optional[Callable[[SearchContext, Executor], None]] = None,
-                     scope=None, facets: tuple = ()) -> dict:
+                     scope=None, facets: tuple = (), second_pass: Callable | None = None) -> dict:
     """`subqueries`: (id, type, text, weight) tuples from the compiled plan (non-PRIMARY);
     they run lanes B + C on their own vectors (one batched embedding call for all texts).
     `facets` (FACET-RETRIEVAL-V1 F2): ((facet_id, (query_ids…)), …) from the plan — the composer keeps seats per facet;
     empty (no plan: `/retrieve`, deep research) = the per-query aspect seats.
+    `second_pass` (FACET-RETRIEVAL-V1 F3): a mode-owned seam called ONCE, in this thread, BETWEEN the lanes and the one
+    judge with (ctx, pool, result) → (rows, receipt, deadline): the mode's extra subquery rows ({id, query, facet_id, …},
+    `kept` False = built but not searched), its receipt (`skipped` set = nothing is searched) and the absolute deadline
+    (perf_counter) its lanes must respect. The engine embeds the kept rows (one call), runs their lanes B + C on the turn's
+    pool and fuses them into the union exactly like the plan's subqueries, so the judge and the composer (F2's seats and
+    quotas) see them like any other; each row gains `union`. None (every other mode, the flag off) changes nothing.
     `lanes` (P1.d/P1.e, evaluation and mode composition): restrict the engine to these lane
     names — VECTOR = (HIERARCHICAL_ROUTE, GLOBAL_DENSE_CHILD), HYBRID = all three (default).
     `on_context` (P1.e): called ONCE, in this thread, with the immutable SearchContext (the
@@ -652,6 +673,13 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                                      dualread_search=dualread_search, lift_search=lift_search, fanout_search=fanout_search,
                                      graph_dest_search=graph_dest_search, gnn_search=gnn_search, region_lookup=_region_lookup, subqueries=subs,
                                      executor=pool, prestarted=prestarted)
+        # FACET-RETRIEVAL-V1 F3: a mode-owned second pass between the lanes and the ONE judge (WILDCARD's mapped subqueries);
+        # the mapped ids join their facets, so the composer below seats them like the plan's queries
+        mapped_trace: dict | None = None
+        mapped_ms: float | None = None
+        if second_pass is not None:
+            mapped_trace, facets, mapped_ms = _run_second_pass(second_pass, ctx, pool, result, budget, tuple(facets or ()), vecs,
+                                                               dense_search=dense_search, sparse_search=sparse_search)
 
         # STAGE 4: exactly ONE judge call per turn, under `rerank_deadline_s`. Past it the turn proceeds in
         # fusion order (a complete, correct answer — the judge only reorders) and says so; the late sidecar
@@ -697,8 +725,12 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
         "total": total_ms,
         **{f"lane_{k}": v for k, v in engine_t.items() if k not in ("core_wall", "lanes_wall", "union")},
     })
+    if mapped_ms is not None:
+        latency_ms["mapped_pass"] = mapped_ms                                 # F3: the second pass's own time (before the judge)
     _p = _presentation_joins([c.chunk_id for c in final], [c.doc_id for c in final])
     trace = {**result.trace, **sel, "latency_ms": latency_ms}
+    if mapped_trace is not None:
+        trace["mapped_subqueries"] = mapped_trace                             # F3: the counts (the rows ride the mode's receipt)
     # WLK2C C4-live: expose a BOUNDED latent pool — the fused-union candidates that q0-only selection
     # dropped (not in `final`) that were retrieved by a NON-PRIMARY subquery (aspect/profile/BRIDGE),
     # with their q0 rerank score (None if never judged). Bridge candidates rarely survive the doc-fair
@@ -788,6 +820,68 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
     }
 
 
+def _run_second_pass(second_pass: Callable, ctx: SearchContext, pool: Executor, result, budget: CandidateBudget, facets: tuple,
+                     vecs: dict, *, dense_search, sparse_search) -> tuple[dict, tuple, float]:
+    """FACET-RETRIEVAL-V1 F3: the engine side of a mode's second pass (`chat_retrieve_v2(second_pass=)`). The seam builds and
+    gates its rows; here the kept rows are embedded (ONE call for the texts not already in hand), run through lanes B + C on
+    the turn's pool under the seam's deadline (never past `lane_deadline_s`) and fused into the union like the plan's
+    subqueries (`merge_extra_candidates`); their ids join their facets so the composer's facet seats count them. Fail-open
+    at every step: the first pass stands and the counts say what happened. Returns (counts, facets, ms)."""
+    t0 = time.perf_counter()
+    rec: dict = {"contract": MAPPED_CONTRACT, "built": 0, "n": 0, "dropped": 0, "added": 0, "merged": 0, "skipped": None}
+    try:
+        rows, seam_rec, deadline = second_pass(ctx, pool, result)
+    except Exception as exc:  # noqa: BLE001 — the second pass is optional: the first pass stands
+        rows, seam_rec, deadline = [], {"skipped": f"seam_error:{type(exc).__name__}"}, None
+    rows = list(rows or [])
+    rec["built"] = len(rows)
+    rec["skipped"] = (seam_rec or {}).get("skipped")
+    kept = [] if rec["skipped"] else [r for r in rows if r.get("kept", True) and str(r.get("query") or "").strip()]
+    rec["dropped"] = len(rows) - len(kept)
+    for r in rows:
+        r.setdefault("union", 0)
+    if not kept:
+        return rec, facets, round((time.perf_counter() - t0) * 1000, 1)
+    new_texts = [t for t in dict.fromkeys(str(r["query"]) for r in kept) if t not in vecs]
+    if new_texts:
+        try:
+            vecs.update(zip(new_texts, _embed_queries(new_texts)))          # ONE call for the pass
+        except Exception as exc:  # noqa: BLE001 — no vector, no lanes: the pass is skipped, receipted
+            rec["skipped"] = f"embed_error:{type(exc).__name__}"
+            return rec, facets, round((time.perf_counter() - t0) * 1000, 1)
+    subs: list[SubQuery] = []
+    for r in kept:
+        text = str(r["query"])
+        try:
+            sv, srule = sparse_vector_for(text, ())
+        except Exception:  # noqa: BLE001 — lane C degrades in the engine
+            sv, srule = None, "raw"
+        subs.append(SubQuery(query_id=str(r["id"]), qtype=str(r.get("type") or MAPPED_QUERY_TYPE), text=text,
+                             weight=float(r.get("weight") or MAPPED_WEIGHT), qvec=tuple(vecs[text]), sparse_query=sv, sparse_rule=srule,
+                             origin=str(r.get("origin") or MAPPED_ORIGIN), derived_from=str(r.get("derived_from") or "")))
+    lane_deadline = time.perf_counter() + float(budget.lane_deadline_s)
+    if deadline is not None:
+        lane_deadline = min(lane_deadline, float(deadline))
+    items, aspects, degraded, timings = retrieve_extra_subqueries(ctx, budget, subs, dense_search=dense_search, sparse_search=sparse_search,
+                                                                  executor=pool, deadline=lane_deadline, region_lookup=_region_lookup)
+    merge = merge_extra_candidates(result, items, aspects, budget)
+    result.degraded.extend(degraded)
+    result.timings_ms.update(timings)
+    by_facet: dict[str, list[str]] = {}
+    for r in kept:
+        a = aspects.get(str(r["id"])) or {}
+        r["union"] = int(a.get("union") or 0)
+        r["lanes"] = dict(a.get("lanes") or {})
+        if a.get("degraded"):
+            r["degraded"] = list(a["degraded"])
+        if r.get("facet_id"):
+            by_facet.setdefault(str(r["facet_id"]), []).append(str(r["id"]))
+    facets_out = tuple((fid, tuple(qids) + tuple(by_facet.pop(str(fid), ()))) for fid, qids in facets)
+    facets_out += tuple((fid, tuple(ids)) for fid, ids in by_facet.items())
+    rec.update({"n": len(kept), **merge})
+    return rec, facets_out, round((time.perf_counter() - t0) * 1000, 1)
+
+
 # ---------------------------------------------------------------------------------------------------------
 # P1.e — MODE-COMPOSITION-V1 (§3.15, §3.18, §3.19, §3.21 #5–#9/#16): modes are compositions of the primitives
 # ---------------------------------------------------------------------------------------------------------
@@ -845,16 +939,19 @@ def chat_retrieve_mode(mode: str, query: str, corpus_id: str, *, graph_useful: b
         raise HTTPException(status_code=422, detail={
             "error_code": "unknown_mode",
             "message": f"unknown chat retrieval mode {mode!r}; compositions: {sorted(set(MODE_LANES))}"})
-    for reserved in ("lanes", "on_context"):
+    for reserved in ("lanes", "on_context", "second_pass"):
         if reserved in kw:
             raise TypeError(f"chat_retrieve_mode owns {reserved!r}; select a mode instead")
+    # FACET-RETRIEVAL-V1 F3: the user's ORIGINAL (resolved) question — WILDCARD gates its mapped subqueries against it; every
+    # other composition has no use for it and never sees it (their engine calls are unchanged)
+    question = kw.pop("question", None)
     lanes = MODE_LANES[m]
     if m == MODE_GNN:
         return _retrieve_gnn(query, corpus_id, **kw)
     if m in (MODE_VECTOR, MODE_FAST):
         kw["budget"] = _fast_budget(kw.pop("budget", None), keep_latent=keep_latent)
     if m == MODE_WILDCARD:
-        return _retrieve_wildcard(query, corpus_id, lanes=lanes, **kw)
+        return _retrieve_wildcard(query, corpus_id, lanes=lanes, question=question, **kw)
     if m == MODE_GRAPH:
         return _with_graph_assist(query, corpus_id, lanes, graph_useful=graph_useful, mode_stamp=MODE_GRAPH, kw=kw)
     # P6 (§37/§38): intent-conditioned graph ASSIST on a HYBRID turn — attach the bounded hop
@@ -985,7 +1082,19 @@ def _jaccard_tokens(qtoks: set, text: str) -> float:
     return (len(qtoks & toks) / len(qtoks | toks)) if (qtoks or toks) else 0.0
 
 
-def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Optional[CandidateBudget] = None, **kw) -> dict:
+def _facet_query_texts(query: str, kw: dict) -> list[tuple[str, list[str]]]:
+    """F3: the plan's facets as (facet_id, [the texts of its queries]) from the engine kwargs — q0 is `query`, the rest the
+    subquery specs (a probe the gate dropped is absent from the specs and so from its facet's texts)."""
+    texts = {str(kw.get("query_id") or "q0"): query}
+    for spec in kw.get("subqueries") or ():
+        s = tuple(spec)
+        if len(s) >= 3 and s[2]:
+            texts[str(s[0])] = str(s[2])
+    return [(str(fid), [texts[str(q)] for q in (qids or ()) if str(q) in texts]) for fid, qids in (kw.get("facets") or ())]
+
+
+def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Optional[CandidateBudget] = None,
+                       question: str | None = None, **kw) -> dict:
     """WILDCARD = HYBRID core ∥ W (§3.19). The latent sweep (`divergent_sweep`) is submitted to the core's
     per-turn pool from `on_context` — i.e. the moment the ONE embedding returns, beside the dense lanes, with
     the same vector (no second embedding call, §3.21 #8) through a searcher of its own that reuses the core's
@@ -995,9 +1104,22 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
     `wildcard` lane and never enter evidence ranking. The frontier is optional: everything after the core is
     bounded by `wildcard_deadline_s` (a late sweep or validation is abandoned, receipted `wildcard_timeout`)
     and every failure degrades to an empty lane with a reason in `meta.wildcard.degraded`. The vector is
-    closed over once (`children_of(parent_id)` reads a fixed tuple) — no function-attribute state (#9)."""
+    closed over once (`children_of(parent_id)` reads a fixed tuple) — no function-attribute state (#9).
+
+    FACET-RETRIEVAL-V1 F3 (§3.3; the owner 2026-09-27: "wildcard should use its lanes to create better mapped
+    subqueries"): between pass 1's lanes and the ONE judge, the sweep's findings — the atom frontier, lane G's see-also
+    blends, the top latent candidates — become ≤ 2 mapped subqueries per facet / ≤ 6 in total (origin WILDCARD,
+    `facet_id` set, short natural queries; `wildcard_mapped.build_mapped_subqueries`), gated against the ORIGINAL
+    `question` by the reranker (floor 0.2, fail-open, counted), then embedded, retrieved and fused by `chat_retrieve_v2`
+    exactly like the plan's subqueries — so their evidence competes in the one judged pool under F2's facet seats and
+    quotas. The pass runs inside `wildcard_deadline_s` measured from the moment pass 1's lanes are in hand: a sweep still
+    running past it, or a window too short for the lanes, skips it (`mapped_pass.skipped: deadline`); the first pass
+    stands. Receipt: `meta.wildcard.mapped_subqueries` (the rows: id, facet_id, query, from, gate_score, union, kept)
+    and `meta.wildcard.mapped_pass` (the counts, the gate, `skipped`); `trace.mapped_subqueries` carries the counts.
+    `POLYMATH_WILDCARD_MAPPED=0` = the pre-F3 composition byte for byte (no seam, no receipt keys)."""
     plan = DIVERGENT_DEFAULT_PLAN
     deadline_s = float((budget or default_budget()).wildcard_deadline_s)
+    mapped_on = mapped_enabled()
     collections = _corpus_collections([corpus_id])
     coll = collections[corpus_id]
     try:
@@ -1006,7 +1128,8 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
         raise HTTPException(status_code=502, detail={
             "error_code": "qdrant_unavailable", "message": f"qdrant unavailable: {type(exc).__name__}"}) from exc
     t_turn = time.perf_counter()
-    sweep: dict = {"future": None, "error": None, "searcher": None, "qvec": None, "started_ms": None, "atom_frontier": None}
+    sweep: dict = {"future": None, "error": None, "searcher": None, "qvec": None, "started_ms": None, "atom_frontier": None,
+                   "atoms": None, "mapped": None}
     finish_pool: Optional[ThreadPoolExecutor] = None
     try:
         def _on_context(ctx: SearchContext, pool: Executor) -> None:
@@ -1032,6 +1155,7 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
                     atoms = _pap.search_atoms(client, _pap.collection_name(cid), qvec, _WILDCARD_ATOM_KINDS, k=12,
                                               corpus_ids=[corpus_id], **scope_kwargs(kw.get("scope")))
                     atom_rec["atoms"] = len(atoms)
+                    sweep["atoms"] = [a for a in atoms if isinstance(a, dict)]      # F3: the frontier's atoms feed the mapped pass
                     docs = list(dict.fromkeys(a.get("doc_id") for a in atoms if a.get("doc_id")))
                     maps = (_pmp.search_parent_maps(client, _pmp.collection_name(cid), qvec, docs, k=16, **scope_kwargs(kw.get("scope")))
                             if docs else [])
@@ -1050,7 +1174,63 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
             except Exception as exc:  # noqa: BLE001 — the frontier is optional
                 sweep["error"] = f"sweep_not_submitted:{type(exc).__name__}"
 
-        out = chat_retrieve_v2(query, corpus_id, lanes=lanes, budget=budget, on_context=_on_context, **kw)
+        def _second_pass(ctx: SearchContext, pool: Executor, result) -> tuple[list[dict], dict, float | None]:
+            # F3: the seam `chat_retrieve_v2` calls once, between pass 1's lanes and the judge (see the docstring above).
+            # The rows are built and gated here (the mode owns its lanes); the engine embeds, searches and fuses the kept ones.
+            t_seam = time.perf_counter()
+            window = t_seam + deadline_s
+            rec: dict = {"contract": MAPPED_CONTRACT, "deadline_s": deadline_s, "skipped": None, "build": None, "gate": None,
+                         "wait_ms": None, "gate_ms": None}
+            rows: list[dict] = []
+            sweep["mapped"] = (rows, rec)
+            fut = sweep["future"]
+            if fut is None:
+                rec["skipped"] = sweep["error"] or "sweep_not_started"
+                return rows, rec, None
+            try:
+                parents, _sweep_ms = fut.result(timeout=max(0.0, window - time.perf_counter()))
+            except FutureTimeout:
+                rec["skipped"] = "deadline"                                     # pass 1 used the window; the sweep is still out
+                return rows, rec, None
+            except CancelledError:
+                rec["skipped"] = "sweep_cancelled"
+                return rows, rec, None
+            except Exception as exc:  # noqa: BLE001
+                rec["skipped"] = f"sweep_error:{type(exc).__name__}"
+                return rows, rec, None
+            rec["wait_ms"] = round((time.perf_counter() - t_seam) * 1000, 1)
+            fan = (getattr(result, "trace", None) or {}).get("seealso_fanout") or {}
+            seealso = [{"text": b.get("item"), "kind": b.get("kind") or "SEEALSO", "doc_id": b.get("from_doc")}
+                       for b in (fan.get("blends") or []) if isinstance(b, dict)]
+            seealso += [{"text": t, "kind": "FANOUT", "doc_id": ""} for t in (fan.get("atoms") or []) if isinstance(t, str)]
+            latent = sorted((s for s in (parents or {}).values() if isinstance(s, dict)),
+                            key=lambda s: (-float(s.get("hop1") or 0.0), str(s.get("parent_id") or "")))[:plan.candidate_parents]
+            built, rec["build"] = build_mapped_subqueries(
+                seealso=seealso, atoms=sweep.get("atoms") or [], latent=latent, facets=_facet_query_texts(query, kw),
+                plan_queries=[query] + [str(tuple(s)[2]) for s in (kw.get("subqueries") or ()) if len(tuple(s)) > 2])
+            rows.extend(built)
+            if not rows:
+                rec["skipped"] = "nothing_to_map"
+                return rows, rec, None
+            remaining = window - time.perf_counter()
+            if remaining < MAPPED_MIN_WINDOW_S:
+                rec["skipped"] = "deadline"                                     # built, never gated or searched
+                for r in rows:
+                    r["kept"] = False
+                return rows, rec, None
+            t_gate = time.perf_counter()
+            rec["gate"] = gate_mapped((question or query or "").strip(), rows, _rerank_children, floor=MAPPED_GATE_FLOOR,
+                                      timeout_s=max(0.05, min(3.0, remaining - MAPPED_MIN_LANES_S)))
+            rec["gate_ms"] = round((time.perf_counter() - t_gate) * 1000, 1)
+            if window - time.perf_counter() < MAPPED_MIN_LANES_S:
+                rec["skipped"] = "deadline"                                     # gated, never searched
+                for r in rows:
+                    r["kept"] = False
+                return rows, rec, None
+            return rows, rec, window
+
+        out = chat_retrieve_v2(query, corpus_id, lanes=lanes, budget=budget, on_context=_on_context,
+                               **({"second_pass": _second_pass} if mapped_on else {}), **kw)
         meta, trace = out["meta"], out["trace"]
         meta["mode"] = MODE_WILDCARD
         evidence = out.get("evidence") or []
@@ -1161,6 +1341,32 @@ def _retrieve_wildcard(query: str, corpus_id: str, *, lanes: tuple, budget: Opti
         receipt["returned"] = len(bridges)
         receipt.setdefault("verified_bridges", sum(1 for b in bridges if b.get("verified", True)))
         receipt.setdefault("unverified_bridges", sum(1 for b in bridges if b.get("verified", True) is False))
+        if mapped_on:
+            # F3 receipt: the rows (small: ≤ 6 short queries) and the pass's counts. A latent-sourced row whose parent the
+            # finish verified as a bridge says `from: bridge` — the bridge's principle IS that parent's abstraction text.
+            m_rows, m_rec = sweep.get("mapped") or ([], {"contract": MAPPED_CONTRACT, "deadline_s": deadline_s, "skipped": "no_pass",
+                                                        "build": None, "gate": None, "wait_ms": None, "gate_ms": None})
+            bridge_parents = {str(b.get("parent_id") or "") for b in bridges if b.get("verified", True)}
+            for r in m_rows:
+                if r.get("from") == "latent" and str((r.get("source") or {}).get("parent_id") or "") in bridge_parents:
+                    r["from"] = "bridge"
+            engine_rec = trace.get("mapped_subqueries") or {}
+            receipt["mapped_subqueries"] = [
+                {"id": r.get("id"), "facet_id": r.get("facet_id"), "query": r.get("query"), "from": r.get("from"),
+                 "gate_score": r.get("gate_score"), "union": int(r.get("union") or 0), "kept": bool(r.get("kept")),
+                 "attach": r.get("attach"), **({"degraded": r["degraded"]} if r.get("degraded") else {})}
+                for r in m_rows]
+            receipt["mapped_pass"] = {
+                "contract": MAPPED_CONTRACT, "deadline_s": deadline_s, "skipped": m_rec.get("skipped") or engine_rec.get("skipped"),
+                "built": len(m_rows), "kept": sum(1 for r in m_rows if r.get("kept")), "searched": int(engine_rec.get("n") or 0),
+                "added": int(engine_rec.get("added") or 0), "merged": int(engine_rec.get("merged") or 0),
+                "with_evidence": sum(1 for r in m_rows if r.get("union")),
+                "build": m_rec.get("build"), "gate": m_rec.get("gate"),
+                "per_facet": {fid: sum(1 for r in m_rows if r.get("facet_id") == fid)
+                              for fid in dict.fromkeys(r.get("facet_id") for r in m_rows if r.get("facet_id"))}}
+            receipt["mapped_wait_ms"] = m_rec.get("wait_ms")
+            receipt["mapped_gate_ms"] = m_rec.get("gate_ms")
+            receipt["mapped_pass_ms"] = (trace.get("latency_ms") or {}).get("mapped_pass")
         out["wildcard"] = bridges
         meta["wildcard"] = receipt
         meta["wildcard_plan"] = plan.plan_version

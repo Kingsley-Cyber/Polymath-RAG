@@ -37,6 +37,14 @@ from polymath_shared import divergent as dv  # noqa: E402
 QUERY = "what does RAPO say about prompts"
 EVIDENCE_CHUNK_OF_PNEAR = "d2-g-c0"      # a global-lane child that reaches the final evidence (see FakeSearcher)
 
+
+@pytest.fixture(autouse=True)
+def _pre_f3_wildcard(monkeypatch):
+    """These pin MODE-COMPOSITION-V1's WILDCARD (one embedding, one judge call, evidence == HYBRID's). FACET-RETRIEVAL-V1 F3
+    (default on) adds the mapped second pass — its own embedding call, a gate call, evidence the pass found — proven in
+    tests/determinism/test_wildcard_mapped.py; here the flag is off so the pre-F3 invariants are still checked."""
+    monkeypatch.setenv("POLYMATH_WILDCARD_MAPPED", "0")
+
 #: latent frontier fixtures: (parent_id, doc_id, hop1 score, kid chunk ids)
 FAR_FIVE = [(f"pfar{i}", "dfar", 0.9 - i * 0.05, [f"pfar{i}-k0", f"pfar{i}-k1"]) for i in range(5)]
 OBVIOUS = ("d1-p", "d1", 0.99, ["d1-p-k0"])                       # a FINAL-evidence parent → excluded as obvious

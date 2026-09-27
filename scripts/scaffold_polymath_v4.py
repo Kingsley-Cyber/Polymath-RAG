@@ -3358,6 +3358,10 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_facets.py", "py", None),                   # FACET-RETRIEVAL-V1 F1
     ("tests/determinism/test_facet_diversity.py", "py", None),          # FACET-RETRIEVAL-V1 F2
     ("tests/determinism/facet_diversity_head_pins.json", "json", None), # F2: the HEAD composer's pinned outputs (flags-off proof)
+    ("shared/polymath_shared/wildcard_mapped.py", "py", None),          # FACET-RETRIEVAL-V1 F3: WILDCARD's mapped subqueries (builder + gate)
+    ("tests/determinism/test_wildcard_mapped.py", "py", None),          # FACET-RETRIEVAL-V1 F3
+    ("tests/determinism/wildcard_mapped_head_pins.json", "json", None), # F3: the HEAD WILDCARD / HYBRID outputs pinned (flag-off proof)
+    ("docs/wiki/work-log/2026-09-27-facet-retrieval-f3.md", "md", None),
     ("tests/determinism/test_chat_retrieval_v2.py", "py", None),
     ("tests/determinism/test_chat_modes.py", "py", None),
     ("tests/determinism/test_chat_runtime.py", "py", None),
