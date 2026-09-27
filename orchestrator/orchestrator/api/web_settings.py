@@ -1,9 +1,10 @@
-"""SETTINGS ROUTES (FRIENDS-ACCESS-V1 F3): my API keys, the copy-paste connect prompt, and the owner's friend admin.
+"""SETTINGS ROUTES (FRIENDS-ACCESS-V1 F3): my API keys, the copy-paste connect prompt, and the owner's friend admin; INVITE-SIGNUP:
+the owner's invite code (read to share it, rotate it).
 
 Who is calling was decided by the web boundary (`request.state.web_identity`); a DIRECT loopback caller is the owner. Keys are
 principal keys in the registry Server A reads: a friend holds at most 3 active ones; the raw key is returned ONCE, in the create
 response (with the connect prompt already filled in), and never again. The owner's admin key is `POLYMATH_MCP_API_KEY` in `.env`;
-it is never shown here. `/admin/*` is owner-only at the boundary.
+it is never shown here. `/admin/*` and `/friends/invite*` are owner-only at the boundary.
 """
 from __future__ import annotations
 
@@ -27,7 +28,7 @@ class KeyBody(BaseModel):
 
 
 class FriendBody(BaseModel):
-    username: str = Field(min_length=3, max_length=31)
+    username: str = Field(min_length=2, max_length=32)
     display_name: str = Field(default="", max_length=80)
     corpus_ids: list[str] | None = None            # None = every shared library (the owner's "everything")
     adapter_ids: list[str] | None = None           # None = every adapter
@@ -160,6 +161,12 @@ def _adapters() -> list[str]:
     return sorted(a.get("adapter_id") for a in service.list_adapters() if a.get("adapter_id"))
 
 
+def friend_defaults() -> tuple[list[str], list[str]]:
+    """What a friend gets unless the owner narrows it: (every shared library, every adapter). The owner's Add friend and a
+    friend's own sign-up (web_auth /auth/register) start from the same two lists."""
+    return _shared_libraries(), _adapters()
+
+
 def _require_owner(request: Request) -> None:
     ident = _identity(request)
     if ident is not None and not ident.is_owner:                      # the boundary already refuses; belt and braces
@@ -214,6 +221,27 @@ def set_libraries(username: str, body: CorporaBody, request: Request) -> JSONRes
         return _no_store({"friend": W.set_friend_corpora(_path(), username, body.corpus_ids)})
     except W.AccountError as exc:
         raise _refuse(404, exc.code, str(exc)) from None
+
+
+def _invite_payload(doc: dict) -> dict:
+    rec = W.invite_record(doc) or {}
+    return {"code": rec.get("code") or None, "rotated_at": rec.get("rotated_at") or None}
+
+
+@router.get("/friends/invite")
+def get_invite(request: Request) -> JSONResponse:
+    """INVITE-SIGNUP: the owner reads the code to share it (`code` is null until the first rotate). Never cached, never logged."""
+    _require_owner(request)
+    return _no_store(_invite_payload(REGISTRY.get() or {}))
+
+
+@router.post("/friends/invite/rotate")
+def rotate_invite(request: Request) -> JSONResponse:
+    """A new code (the first one, or a replacement: friends who have not signed up yet need the new one)."""
+    _require_owner(request)
+    path = _path()
+    W.rotate_invite(path)
+    return _no_store(_invite_payload(W.read_registry(path)))
 
 
 @router.get("/admin/friends/{username}/keys")

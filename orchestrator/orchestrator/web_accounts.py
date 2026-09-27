@@ -9,7 +9,10 @@ web boundary that uses it lives in web_boundary.py.
   * sessions: an HMAC-SHA256-signed cookie (principal id, session version, expiry, a CSRF token) keyed by
     POLYMATH_WEB_SESSION_SECRET; a password change, a reset or disabling bumps the session version, which kills every
     earlier cookie of that account;
-  * guesses: at most 5 failed logins per username and per address in 15 minutes (in memory: one orchestrator process).
+  * guesses: at most 5 failed logins per username and per address in 15 minutes (in memory: one orchestrator process);
+  * the invite code (INVITE-SIGNUP, the owner 2026-09-27): ONE code on the registry document lets a friend create their own
+    account; the owner reads it in Settings to share it, and rotates it. Plain at rest by the owner's choice for this secret
+    (it only opens a limited friend account, it is rotatable, and the owner must be able to read it again); never logged.
 """
 from __future__ import annotations
 
@@ -33,8 +36,11 @@ from typing import Any
 
 from orchestrator import mcp_principals as P
 
-USERNAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{2,30}$")
+USERNAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{1,31}$")          # 2-32 characters (one rule for sign-up and the owner's Add friend)
+USERNAME_RULE = "a username is 2-32 characters: lowercase letters, digits, '-' or '_'"
 MIN_PASSWORD = 1                      # the owner, 2026-09-27: "it should be anything" — any non-empty password; the sign-in throttle (15 min after repeated failures) is the guard
+INVITE_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"                # no 0/o, 1/l/i: a code that reads aloud without doubt
+INVITE_GROUPS, INVITE_GROUP_LEN = 3, 4                             # k7mp-4xwq-9nfr: 31^12 ≈ 2^59 codes
 OWNER_USERNAME = "king"
 FRIEND_SCOPES = tuple(sorted({*P.FRIEND_PROFILE, P.UPLOAD_TEXT, P.HISTORY_READ, P.ADAPTER_CANCEL}))   # "everything" but admin
 MAX_ACTIVE_KEYS = 3
@@ -111,7 +117,7 @@ def read_registry(path: Path) -> dict[str, Any]:
 def normalize_username(username: str) -> str:
     name = str(username or "").strip().lower()
     if not USERNAME_RE.match(name):
-        raise AccountError("BAD_USERNAME", "a username is 3-31 characters: lowercase letters, digits, '-' or '_'")
+        raise AccountError("BAD_USERNAME", USERNAME_RULE)
     return name
 
 
@@ -168,18 +174,29 @@ def add_friend(path: Path, username: str, password: str, *, display_name: str = 
     name = normalize_username(username)
     if name == OWNER_USERNAME:
         raise AccountError("BAD_USERNAME", "that username is the owner's")
-    pid, private = principal_id_for(name), private_corpus_for(name)
+    pid = principal_id_for(name)
 
     def change(doc):
-        if _friend(doc, name) or any(r.get("principal_id") == pid for r in doc["principals"]):
+        if _taken(doc, name, pid):
             raise AccountError("EXISTS", f"{name} already has an account")
-        rec = {"principal_id": pid, "name": display_name or name, "profile": "friend", "enabled": True, "revoked_at": None,
-               "created_at": _now_iso(), "scopes": list(FRIEND_SCOPES),
-               "corpus_ids": sorted({*map(str, corpus_ids), private}), "writable_corpus_ids": [private],
-               "adapter_ids": sorted(set(map(str, adapter_ids))), "keys": [], "web": _new_web(name, password, must_change)}
+        rec = _friend_record(name, password, display_name=display_name, corpus_ids=corpus_ids, adapter_ids=adapter_ids,
+                             must_change=must_change)
         doc["principals"].append(rec)
         return public_record(rec)
     return update_registry(path, change)
+
+
+def _taken(doc: dict[str, Any], name: str, pid: str) -> bool:
+    return bool(_friend(doc, name)) or any(r.get("principal_id") == pid for r in doc["principals"])
+
+
+def _friend_record(name: str, password: str, *, display_name: str, corpus_ids, adapter_ids, must_change: bool) -> dict[str, Any]:
+    """The one shape of a friend: the owner's Add friend and a friend's own sign-up make exactly this record."""
+    private = private_corpus_for(name)
+    return {"principal_id": principal_id_for(name), "name": display_name or name, "profile": "friend", "enabled": True,
+            "revoked_at": None, "created_at": _now_iso(), "scopes": list(FRIEND_SCOPES),
+            "corpus_ids": sorted({*map(str, corpus_ids), private}), "writable_corpus_ids": [private],
+            "adapter_ids": sorted(set(map(str, adapter_ids))), "keys": [], "web": _new_web(name, password, must_change)}
 
 
 def set_friend_enabled(path: Path, username: str, enabled: bool) -> None:
@@ -227,6 +244,70 @@ def list_friends(doc: dict[str, Any]) -> list[dict[str, Any]]:
     return [public_record(r) for r in doc.get("principals") or [] if isinstance(r.get("web"), dict)]
 
 
+# ---- the invite code (INVITE-SIGNUP): `invite = {code, created_at, rotated_at}` on the registry document
+def new_invite_code() -> str:
+    """Three groups of four from the unambiguous alphabet, e.g. k7mp-4xwq-9nfr."""
+    return "-".join("".join(secrets.choice(INVITE_ALPHABET) for _ in range(INVITE_GROUP_LEN)) for _ in range(INVITE_GROUPS))
+
+
+def invite_record(doc: dict[str, Any]) -> dict[str, Any] | None:
+    rec = doc.get("invite")
+    return rec if isinstance(rec, dict) and rec.get("code") else None
+
+
+def invite_code(doc: dict[str, Any]) -> str | None:
+    rec = invite_record(doc)
+    return str(rec["code"]) if rec else None
+
+
+def rotate_invite(path: Path) -> str:
+    """The first code, or a replacement (the old one is refused from then on). Returns the new code; `created_at` stays."""
+    def change(doc):
+        old = doc.get("invite") if isinstance(doc.get("invite"), dict) else {}
+        now = _now_iso()
+        doc["invite"] = {"code": new_invite_code(), "created_at": old.get("created_at") or now, "rotated_at": now}
+        return doc["invite"]["code"]
+    return update_registry(path, change)
+
+
+def _signup_username(username: str) -> tuple[str, str]:
+    """(name, principal id) for a sign-up, with the codes a person sees: USERNAME_INVALID for the shape, USERNAME_TAKEN
+    for the owner's name and the reserved one."""
+    try:
+        name = normalize_username(username)
+    except AccountError:
+        raise AccountError("USERNAME_INVALID", USERNAME_RULE) from None
+    if name == OWNER_USERNAME:
+        raise AccountError("USERNAME_TAKEN", "that username is taken")
+    try:
+        return name, principal_id_for(name)
+    except AccountError:
+        raise AccountError("USERNAME_TAKEN", "that username is taken") from None
+
+
+def register_friend(path: Path, username: str, password: str, code: str, *, corpus_ids: list[str] | tuple[str, ...] = (),
+                    adapter_ids: list[str] | tuple[str, ...] = ()) -> dict[str, Any]:
+    """A friend creates their own account with the owner's invite code: the record `add_friend` makes, with the person's own
+    password (no forced change). In order, under the registry lock: a code exists (INVITES_OFF), the code matches in constant
+    time (INVITE_INVALID — checked before the username, so a stranger learns nothing about names), the username
+    (USERNAME_INVALID / USERNAME_TAKEN, case-insensitive), the password (WEAK_PASSWORD). Returns the record without the hash."""
+    typed = str(code or "").strip().lower()
+
+    def change(doc):
+        want = invite_code(doc)
+        if not want:
+            raise AccountError("INVITES_OFF", "sign-ups are not open: there is no invite code yet")
+        if not secrets.compare_digest(typed.encode(), want.encode()):
+            raise AccountError("INVITE_INVALID", "the invite code is wrong")
+        name, pid = _signup_username(username)
+        if _taken(doc, name, pid):
+            raise AccountError("USERNAME_TAKEN", "that username is taken")
+        rec = _friend_record(name, password, display_name="", corpus_ids=corpus_ids, adapter_ids=adapter_ids, must_change=False)
+        doc["principals"].append(rec)
+        return public_record(rec)
+    return update_registry(path, change)
+
+
 # ---- who is signing in / who holds a session
 @dataclass(frozen=True)
 class WebIdentity:
@@ -254,6 +335,13 @@ def _identity(doc: dict[str, Any], username: str) -> tuple[WebIdentity, str] | N
     w = rec["web"]
     return (WebIdentity(rec["principal_id"], w["username"], str(rec.get("name") or w["username"]), False,
                         int(w.get("session_version") or 0), bool(w.get("must_change_password"))), str(w.get("password_hash") or ""))
+
+
+def identity_for(doc: dict[str, Any], username: str) -> WebIdentity | None:
+    """The identity of an ACTIVE account, without a password check: for signing in a person who just proved themselves
+    another way (a sign-up with the invite code)."""
+    found = _identity(doc, username)
+    return found[0] if found else None
 
 
 def authenticate_password(doc: dict[str, Any], username: str, password: str) -> WebIdentity | None:

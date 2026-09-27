@@ -18,8 +18,8 @@ const apiPaths = [
   "/intake", "/ui_pulse",
   // the cognitive-adapter surface (/adapter/list, /adapter/{run_id}/next, …)
   "/adapter",
-  // FRIENDS-ACCESS-V1: sign-in, my keys, the owner's friend admin
-  "/auth", "/keys", "/admin",
+  // FRIENDS-ACCESS-V1: sign-in, my keys, the owner's friend admin; INVITE-SIGNUP: the owner's invite code
+  "/auth", "/keys", "/admin", "/friends",
   // DEEP-RESEARCH-MODE-V1: the research stream
   "/research",
 ];

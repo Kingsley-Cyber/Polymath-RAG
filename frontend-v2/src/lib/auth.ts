@@ -57,6 +57,12 @@ export interface FriendsAdmin {
   max_active_keys: number;
 }
 
+/** INVITE-SIGNUP — the owner's one invite code; `code` is null until the owner creates it. */
+export interface Invite {
+  code: string | null;
+  rotated_at: string | null;
+}
+
 const u = encodeURIComponent;
 
 /** A backend with no logins (older than FRIENDS-ACCESS-V1, or the brief merge -> bounce window, where /auth/me is a 404)
@@ -76,6 +82,9 @@ export const auth = {
   setOwnerPassword: (password: string) => http.post<{ owner_password: string; username: string }>("/auth/owner-password", { password }),
   me: (s?: AbortSignal) => http.get<unknown>("/auth/me", s).then(normalizeMe),
   login: (username: string, password: string) => http.post<Me>("/auth/login", { username, password }),
+  /** INVITE-SIGNUP: create my account with the owner's invite code; the answer is a signed-in `Me` (no first-password step). */
+  register: (username: string, password: string, invite_code: string) =>
+    http.post<Me>("/auth/register", { username, password, invite_code }),
   logout: () => http.post<{ signed_out: boolean }>("/auth/logout", {}),
   changePassword: (current_password: string, new_password: string) =>
     http.post<Me>("/auth/password", { current_password, new_password }),
@@ -95,6 +104,12 @@ export const auth = {
   friendKeys: (username: string, s?: AbortSignal) => http.get<{ keys: ApiKey[] }>(`/admin/friends/${u(username)}/keys`, s),
   revokeFriendKey: (username: string, keyId: string) =>
     http.del<{ revoked: string }>(`/admin/friends/${u(username)}/keys/${u(keyId)}`),
+};
+
+/** INVITE-SIGNUP — the owner's invite code (owner-only routes): read it to share it, regenerate it. */
+export const friends = {
+  invite: (s?: AbortSignal) => http.get<Invite>("/friends/invite", s),
+  rotateInvite: () => http.post<Invite>("/friends/invite/rotate", {}),
 };
 
 /** The private library the server creates for a friend on their first upload. */

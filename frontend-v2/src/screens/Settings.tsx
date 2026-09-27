@@ -4,7 +4,7 @@ import { ACCENTS, MODES, useAppearance, type Accent, type Mode } from "../lib/ap
 import { ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import {
-  auth, privateLibrary, type ApiKey, type CreatedKey, type Friend, type Me,
+  auth, friends, privateLibrary, type ApiKey, type CreatedKey, type Friend, type Invite, type Me,
 } from "../lib/auth";
 import { ChangePassword } from "./Login";
 import { DeepResearchSettings } from "../components/deep/DeepResearchSettings";
@@ -201,6 +201,58 @@ function FriendRow({ f, libraries, onChanged, confirm }: {
   );
 }
 
+/** INVITE-SIGNUP — the owner's one invite code: shown with the answers' hover copy button; Regenerate asks first (friends who
+ *  have not signed up yet need the new code); "Create invite code" until the first one exists. */
+function InviteCard() {
+  const [confirm, confirmDialog] = useConfirm();
+  const invite = useAsync((s) => friends.invite(s), []);
+  const [fresh, setFresh] = useState<Invite | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const current = fresh ?? invite.data;
+  const code = current?.code ?? null;
+
+  async function regenerate() {
+    if (code && !(await confirm({ title: "Regenerate the invite code?", action: "Regenerate",
+      body: "Friends who have not signed up yet will need the new code." }))) return;
+    setBusy(true); setError("");
+    try { setFresh(await friends.rotateInvite()); } catch (err) { setError(message(err)); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="card stack">
+      {confirmDialog}
+      <h2 className="settings__title">Invite</h2>
+      <p className="faint">Send a friend the website address and this code; they create their own account.</p>
+      {error && <div className="banner banner--bad" role="alert">{error}</div>}
+      {invite.error && !fresh && <div className="banner banner--bad">{invite.error}</div>}
+      {code ? (
+        <>
+          <div className="field">
+            <span className="label">Invite code</span>
+            <Secret value={code} what="invite code" />
+          </div>
+          <div className="row">
+            <button className="btn" type="button" disabled={busy} onClick={() => void regenerate()}>
+              {busy ? "Regenerating…" : "Regenerate"}
+            </button>
+            {current?.rotated_at && <span className="faint">Since {current.rotated_at}</span>}
+          </div>
+        </>
+      ) : (
+        !invite.loading && !invite.error && (
+          <div className="row">
+            <span className="faint">No invite code yet.</span>
+            <button className="btn btn--primary" type="button" disabled={busy} onClick={() => void regenerate()}>
+              {busy ? "Creating…" : "Create invite code"}
+            </button>
+          </div>
+        )
+      )}
+    </div>
+  );
+}
+
 function Friends() {
   const [confirm, confirmDialog] = useConfirm();
   const [nonce, setNonce] = useState(0);
@@ -227,7 +279,7 @@ function Friends() {
       <p className="faint">
         Each friend gets their own sign-in, every shared library by default, their own private library, and up to
         {` ${admin.data?.max_active_keys ?? 3}`} API keys. They can never use your admin key, your server's files, or your
-        browser's web reader.
+        browser's web reader. Friends create their own account with the invite code above; you can also add one here.
       </p>
       {error && <div className="banner banner--bad" role="alert">{error}</div>}
       {made && (
@@ -239,7 +291,7 @@ function Friends() {
       <div className="row">
         <input type="text" placeholder="username (lowercase)" value={username} onChange={(e) => setUsername(e.target.value)} />
         <input type="text" placeholder="display name (optional)" value={name} onChange={(e) => setName(e.target.value)} />
-        <button className="btn btn--primary" type="button" disabled={username.trim().length < 3} onClick={() => void add()}>Add friend</button>
+        <button className="btn btn--primary" type="button" disabled={username.trim().length < 2} onClick={() => void add()}>Add friend</button>
       </div>
       <table className="settings__table">
         <thead><tr><th>Friend</th><th>Status</th><th>Libraries</th><th>Keys</th><th /></tr></thead>
@@ -349,6 +401,7 @@ export function Settings({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: 
           </div>
         )}
         <MyKeys me={me} />
+        {me.is_owner && <InviteCard />}
         {me.is_owner && <Friends />}
       </div>
     </div>

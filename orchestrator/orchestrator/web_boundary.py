@@ -31,9 +31,9 @@ _SEG = r"[^/]+"
 
 # (methods or _ANY, path regex, class) — the FIRST match wins; unmatched = refused. FRIENDS-ACCESS-V1 §3.
 RULES: tuple[tuple[frozenset[str] | None, re.Pattern[str], str], ...] = tuple((m, re.compile(p), c) for m, p, c in (
-    # public: the app shell, the login, liveness
+    # public: the app shell, the login, the sign-up with the invite code (INVITE-SIGNUP), liveness
     (_GET, r"^/$", PUBLIC), (_GET, r"^/favicon\.ico$", PUBLIC), (_GET, r"^/v2(/.*)?$", PUBLIC),
-    (_GET, r"^/health$", PUBLIC), (_GET, r"^/ready$", PUBLIC), (_POST, r"^/auth/login$", PUBLIC),
+    (_GET, r"^/health$", PUBLIC), (_GET, r"^/ready$", PUBLIC), (_POST, r"^/auth/(login|register)$", PUBLIC),
     # the signed-in user's own account and keys
     (_GET, r"^/auth/me$", USER), (_POST, r"^/auth/(logout|password)$", USER),
     (frozenset({"GET", "POST"}), r"^/keys$", USER), (_GET, r"^/keys/prompt$", USER), (_DELETE, rf"^/keys/{_SEG}$", USER),
@@ -49,6 +49,7 @@ RULES: tuple[tuple[frozenset[str] | None, re.Pattern[str], str], ...] = tuple((m
     (_POST, r"^/upload$", WRITE), (_DELETE, rf"^/documents/{_SEG}$", WRITE),
     # the owner's
     (_POST, r"^/auth/owner-password$", OWNER),          # and the route itself refuses anything proxied
+    (_GET, r"^/friends/invite$", OWNER), (_POST, r"^/friends/invite/rotate$", OWNER),     # INVITE-SIGNUP: the owner's invite code
     (_ANY, r"^/admin(/.*)?$", OWNER), (_ANY, r"^/llm/.*$", OWNER), (_ANY, r"^/control_plane(/.*)?$", OWNER),
     (_ANY, r"^/(fleet|sidecars|health/semantic|health/pipeline|intake|status|generated)(/.*)?$", OWNER), (_ANY, rf"^/runs/{_SEG}$", OWNER),
     (_ANY, rf"^/corpora/{_SEG}(/.*)?$", OWNER), (_POST, rf"^/documents/{_SEG}/enrich$", OWNER),
