@@ -47,6 +47,44 @@ def run_owner(conn, run_id: str) -> tuple[bool, str | None]:
     return (True, row[0]) if row else (False, None)
 
 
+RUN_LIST_COLS = ("run_id", "adapter_id", "adapter_version", "status", "current_step_id", "steps_accepted", "harness_action_count",
+                 "input", "gap", "failure", "agent_identity", "owner_principal_id", "created_at", "updated_at", "terminal_at",
+                 "scores", "refusals")
+
+
+def list_runs(conn, *, owner_principal_id: str | None, status: str | None = None, adapter_id: str | None = None,
+              limit: int = 50, before: str | None = None) -> list[dict[str, Any]]:
+    """Newest first (TRAIL-INTERFACE-V1 T1). `owner_principal_id` set = only that principal's runs (a friend); None = every
+    run (the owner / trusted-local caller). `before` is a run_id cursor. The score and refusal COUNTS come from the stored
+    result (TrailSignal's records; a UI never reads the score value)."""
+    where, args = ["TRUE"], []
+    if owner_principal_id is not None:
+        where.append("r.owner_principal_id = %s"); args.append(owner_principal_id)
+    if status:
+        where.append("r.status = %s"); args.append(status)
+    if adapter_id:
+        where.append("r.adapter_id = %s"); args.append(adapter_id)
+    if before:
+        where.append("r.created_at < (SELECT created_at FROM adapter_runs WHERE run_id = %s)"); args.append(before)
+    rows = conn.execute(
+        f"""SELECT r.run_id, r.adapter_id, r.adapter_version, r.status, r.current_step_id, r.steps_accepted, r.harness_action_count,
+                   r.input, r.gap, r.failure, r.agent_identity, r.owner_principal_id, r.created_at, r.updated_at, r.terminal_at,
+                   CASE WHEN jsonb_typeof(res.result->'output'->'trail_scores') = 'array'
+                        THEN jsonb_array_length(res.result->'output'->'trail_scores') END,
+                   CASE WHEN jsonb_typeof(res.result->'output'->'score_refusals') = 'array'
+                        THEN jsonb_array_length(res.result->'output'->'score_refusals') END
+              FROM adapter_runs r LEFT JOIN adapter_results res ON res.run_id = r.run_id
+             WHERE {" AND ".join(where)}
+             ORDER BY r.created_at DESC, r.run_id DESC LIMIT %s""", (*args, max(1, min(int(limit), 200)))).fetchall()
+    out = []
+    for row in rows:
+        d = dict(zip(RUN_LIST_COLS, row))
+        for k in ("input", "gap", "failure"):
+            d[k] = _load(d[k])
+        out.append(d)
+    return out
+
+
 def find_run_by_idempotency(conn, key: str) -> str | None:
     row = conn.execute("SELECT run_id FROM adapter_runs WHERE idempotency_key=%s", (key,)).fetchone()
     return row[0] if row else None

@@ -43,8 +43,8 @@ RULES: tuple[tuple[frozenset[str] | None, re.Pattern[str], str], ...] = tuple((m
     (_GET, rf"^/documents/{_SEG}/(sections|status)$", USER),
     (_GET, r"^/graph/entities$", USER), (_GET, rf"^/graph/entity/{_SEG}/relationships$", USER),
     # governed runs (ownership is enforced by the adapter runtime from the principal context)
-    (_GET, r"^/adapter/list$", USER), (_POST, r"^/adapter/start$", USER),
-    (_GET, rf"^/adapter/{_SEG}/(next|status|result)$", USER), (_POST, rf"^/adapter/{_SEG}/(submit|cancel)$", USER),
+    (_GET, r"^/adapter/(list|runs)$", USER), (_POST, r"^/adapter/start$", USER),
+    (_GET, rf"^/adapter/{_SEG}/(next|status|result|view)$", USER), (_POST, rf"^/adapter/{_SEG}/(submit|cancel)$", USER),
     # writes into the principal's writable libraries
     (_POST, r"^/upload$", WRITE), (_DELETE, rf"^/documents/{_SEG}$", WRITE),
     # the owner's

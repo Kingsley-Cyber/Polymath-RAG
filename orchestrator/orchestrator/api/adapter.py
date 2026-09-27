@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from polymath_shared import principal_context
-from polymath_shared.adapter import service
+from polymath_shared.adapter import run_view, service
 from polymath_shared.adapter.contracts import ContractViolation
 from polymath_shared.adapter.transitions import SubmissionRejected
 from polymath_shared.db import tx
@@ -46,6 +46,16 @@ def _own(conn, run_id: str) -> None:
 @router.get("/adapter/list")
 async def adapter_list() -> dict:
     return {"adapters": service.list_adapters(), "contract": "adapter-v1"}
+
+
+@router.get("/adapter/runs")
+async def adapter_runs(status: str | None = None, adapter_id: str | None = None, limit: int = 50,
+                       before: str | None = None) -> dict:
+    """TRAIL-INTERFACE-V1 T1: newest first. A principal sees only its own runs (the web boundary forwards a signed-in friend
+    as one); no principal = the owner / trusted-local caller, every run."""
+    with tx() as conn:
+        return {"runs": run_view.list_runs(conn, principal_context.current(), status=status, adapter_id=adapter_id,
+                                           limit=limit, before=before)}
 
 
 @router.post("/adapter/start")
@@ -95,6 +105,18 @@ async def adapter_status(run_id: str) -> dict:
         with tx() as conn:
             _own(conn, run_id)
             return service.status(conn, run_id)
+    except service.UnknownRun:
+        raise _404(run_id)
+
+
+@router.get("/adapter/{run_id}/view")
+async def adapter_view(run_id: str) -> dict:
+    """TRAIL-INTERFACE-V1 T1: one run for the Research screens — progress, the recompiled output sections, contradictions and
+    unknowns. Read-only; the run owner's check as for every run route."""
+    try:
+        with tx() as conn:
+            _own(conn, run_id)
+            return run_view.build_view(conn, run_id)
     except service.UnknownRun:
         raise _404(run_id)
 
