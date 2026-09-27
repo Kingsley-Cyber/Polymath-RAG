@@ -144,11 +144,11 @@ Times are estimates from concurrency 2 and today's retrieval latency; DR4 measur
 | **DR6b** — DONE 11.531 | The route per move + `/retrieve`'s optional `intent` + the relevance gate on the reranker | Contract tests: each move builds its own search request; `intent` absent = unchanged, present = chat's intent budget, unknown = 422 |
 | **DR6c** — DONE 11.531 | UI: each search's move in the progress rail; the counter-evidence line under the report | vitest |
 | **DR6d** | Live A/B on the 5 DR4 questions, moves off vs on | §10.9 acceptance; the owner sees the table |
-| **DR7a** | Plan card backend: `POST /research/deep/plan`; `/research/deep` accepts the confirmed plan (§11.3) | Contract tests: one LLM call; the confirmed plan seeds level 1 with no planner call; user goals are never gated out |
-| **DR7b** | Evidence model + structured report: deterministic confidence, counter-evidence, open questions, sources, method; the sentence audit; `coverage_complete` stop (§11.4) | Unit + contract tests on fixed learnings; audit on crafted reports |
-| **DR7c** | Live research view: the goal checklist with coverage, the activity feed, **Finish now** (`POST /research/deep/finish`) | Contract test (finish writes the report, `finished_early`); vitest |
-| **DR7d** | Report view: TL;DR, Evidence, Sources and Method tabs; uncited-sentence marks; copy / download Markdown with footnotes; "Research this next" chips | vitest; screenshots at 3 widths |
-| **DR7e** | Reports list in the Research section, from this browser's chat history (like chats) | vitest |
+| **DR7a** — DONE 11.532 | Plan card backend: `POST /research/deep/plan`; `/research/deep` accepts the confirmed plan (§11.3) | Contract tests: one LLM call; the confirmed plan seeds level 1 with no planner call; user goals are never gated out |
+| **DR7b** — DONE 11.532 | Evidence model + structured report: deterministic confidence, counter-evidence, open questions, sources, method; the sentence audit; `coverage_complete` stop (§11.4) | Unit + contract tests on fixed learnings; audit on crafted reports |
+| **DR7c** — DONE 11.532 | Live research view: the goal checklist with coverage, the activity feed, **Finish now** (`POST /research/deep/finish`) | Contract test (finish writes the report, `finished_early`); vitest |
+| **DR7d** — DONE 11.532 | Report view: TL;DR, Evidence, Sources and Method tabs; uncited-sentence marks; copy / download Markdown with footnotes; "Research this next" chips | vitest; screenshots at 3 widths |
+| **DR7e** — DONE 11.532 | Reports list in the Research section, from this browser's chat history (like chats) | vitest |
 | **DR7f** | Live acceptance through the UI on the 5 DR4 questions (§11.6) | The owner sees the reports |
 
 DR1 can start at once. DR3 fits best after FRONTEND-REFRESH-V1 U4 (the new composer); on today's composer it is a small switch.

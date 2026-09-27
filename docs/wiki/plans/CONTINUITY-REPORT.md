@@ -153,32 +153,28 @@ historical, never an instruction.
    `web_password_set: false` until then). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
    must print `"ok": true`, the owner signs in and adds the first friend in Settings, and the F6 close-out follows (register row,
    work-log, CONTINUITY, memory).
-4. **FIX-IT-ALL progress (integration branch `feat/fix-it-all`, worktree `pmv4-fix`).** Production `a2b38e6a` (the owner's
-   merge + bounce, READY 26/13/1, `/retrieve` GRAPH 200, no new Traceback, live contract 5 passed). Merges AND bounces are
-   classifier-gated as Production Deploy: hand the owner ONE Run-button command
-   (`git merge --ff-only feat/fix-it-all && (cd frontend-v2 && npm run build) && bash scripts/bounce_fleet.sh` in the main checkout;
-   the UI build is needed because T5 changed the frontend).
-   - LIVE: T0 (11.505); FRONTEND-REFRESH complete (11.506–11.511, 11.517); TRAIL-INTERFACE T1–T4 (11.512, 11.515); DEEP-RESEARCH
-     DR1–DR3 (11.513, 11.514, 11.516); one login (11.518); DR0 its own lanes (11.519); the DR4 rows fix (`a2b38e6a`).
-   - ON THE BRANCH, NOT LIVE: DR4 report fix — chat's thinking rule + `REPORT_EMPTY` (11.520; after the deploy re-run DR4
-     question 4, commerce-v1 standard, to close DR4); bug-hunt fixes A+B from the acquisition and ecommerce groups (11.521,
-     11.522); T5 dossier route + the owner's Registry (11.523).
-   - IN FLIGHT (helper agents; each reports back, the orchestrator reviews, cherry-picks, runs contracts + the determinism set
-     + vitest, then writes register rows and marks the README table):
-     - runtime group `pmv4-bugrt` (`fix/trail-ext-bugrt`): batches A+B, plus the follow-ups the other groups need in its files
-       (B-09 / B-12 manifest inputs, B-14 `service.result`, B-11 / B-13 `semantic_view`, B-19 `validate_receipt`); its batch C
-       (B-48 B-49 B-50 B-51 B-53 B-57 B-66 B-67 B-68 B-69) goes to it next;
-     - acquisition group `pmv4-bugacq`: batch C (B-41..B-47, B-56, B-63, B-65);
-     - ecommerce group `pmv4-bugeco`: batch C part 1 (binding.py, executors.py, adapter_receipt.py, query_semantics.py);
-     - ecommerce group 2 `pmv4-bugeco2`: batch C part 2 (lived_world.py, report.py, graph.py, bridge.py, product_reality.py).
-   - Helper rules: `/Users/king/Documents/polymath-rebuild/handoff-drafts/bugfix_rules.md`. SET `POLYMATH_PG_DSN` to a dead DSN
-     and never unset it (`test_adapter_service_store.py` falls back to the LIVE database); never `git stash` (shared across
-     worktrees). Both incidents are recorded in 11.521 / 11.522; the live database had 0 orphan rows.
-   - OWNER DECISIONS pending: B-15 (C_hypotheses 1–8 vs the portfolio law's 3–6); an app-wide Host allowlist (B-28 covers only
-     the acquisition route); the deep-research "moves" design (broad / deep / adjacent / inverse, relevance gate) as DR6 —
-     proposed in chat 2026-09-26, waiting for "go".
-   - Frontend slices that add API calls go AFTER the backend they call is merged and bounced: the live contract test checks
-     every `api.ts` call against :7200.
+4. **FIX-IT-ALL progress (integration branch `feat/fix-it-all`, worktree `pmv4-fix`).** Production `a2b38e6a` (live).
+   Everything below is ON THE BRANCH, integrated and green (`tests/contracts` 597, the adapter/Trail determinism set 306,
+   vitest 131, tsc, guards 0), and WAITS FOR THE OWNER'S DEPLOY (merges and bounces are classifier-gated as Production Deploy;
+   the owner runs ONE Run-button command in the main checkout:
+   `git merge --ff-only feat/fix-it-all && (cd frontend-v2 && npm run build) && bash scripts/bounce_fleet.sh`):
+   - DR4 report fix (11.520); TRAIL-EXT-BUGHUNT-V1 fixes 11.521–11.528, 11.530 (56 FIXED, 7 PART, 5 OWNER, 1 REJECTED;
+     12 = batch D, dead code, listed only; B-05 = the owner's refusal decision); T5 dossier + Registry (11.523); DEEP-RESEARCH
+     DR6a–c research moves (11.531) and DR7a–e the research experience (11.532).
+   - AFTER THE DEPLOY (in order): `/ready` + 26/13/1 + `/retrieve` GRAPH 200 + no new Traceback in orchestrator.log + the live
+     contract vitest (the new `/research/deep/plan` and `/research/deep/finish` calls are checked there); then the live runs
+     with the probe `scratchpad/dr4/ab.py` (outside the repo): the 5 DR4 questions, moves off vs on — closes DR4 (question 4)
+     and DR6d (§10.9) and feeds DR7f (§11.6: plan card ≤ 3 s, uncited ≤ 10%, counter-evidence or "none found",
+     `coverage_complete`, deadlines; screenshots at 3 widths for the owner).
+   - OWNER DECISIONS pending: B-15, B-38, B-53, B-59, B-64 (each changes how research runs behave); the PART halves (B-12 legacy
+     manifest 2.2.2, B-25 worker lock, B-48 rejection history = a migration, B-50 legacy manifest, B-57 per-run manifest pin);
+     an app-wide Host allowlist (B-28); server-side report history (a migration after the reserved 0067–0071); multi-library
+     deep research (HYBRID answers one library per call).
+   - FRIENDS-ACCESS F6: King's web password is still NOT set (`web_password_set: false`); the owner sets it on the Mac
+     (Settings → Website sign-in; 10+ characters, 4+ different). The public site answers correctly (page 200, data 401).
+   - Helper hazards (in `handoff-drafts/bugfix_rules.md`): SET a dead `POLYMATH_PG_DSN`, never unset it
+     (`test_adapter_service_store.py` falls back to the LIVE database; `test_adapter_harness_action.py` fails with a dead DSN);
+     never `git stash` (shared across worktrees).
 5. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
    TREE, CONTINUITY), mapping the R7 gap rows (A-09..A-14, S-16..S-18, O-06, H-08) into its slices or naming them out of scope.
 
