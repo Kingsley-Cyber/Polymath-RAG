@@ -2607,6 +2607,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-26-deep-research-dr6d.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-deep-research-dr7-backend.md", "md", None),
     ("docs/wiki/work-log/2026-09-27-deep-research-tuning.md", "md", None),
+    ("docs/wiki/work-log/2026-09-27-facet-retrieval-f1-f2.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-frontend-refresh-u4b.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-friends-access-one-login.md", "md", None),
     ("docs/wiki/work-log/2026-09-27-invite-signup.md", "md", None),
@@ -3227,6 +3228,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-06-p1c-composition.md", "md", None),
     ("scripts/chat_compiler_canary.py", "py", None),
     ("shared/polymath_shared/chat_plan.py", "py", None),
+    ("shared/polymath_shared/facets.py", "py", None),                    # FACET-RETRIEVAL-V1 F1: the blind facet step
     ("shared/polymath_shared/subquery_provenance.py", "py", None),
     ("shared/polymath_shared/evidence_resolution.py", "py", None),
     ("shared/polymath_shared/profile_yield.py", "py", None),
@@ -3345,6 +3347,9 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/candidate_engine.py", "py", None),
     ("orchestrator/orchestrator/api/chat_retrieval.py", "py", None),
     ("tests/determinism/test_candidate_engine.py", "py", None),
+    ("tests/determinism/test_facets.py", "py", None),                   # FACET-RETRIEVAL-V1 F1
+    ("tests/determinism/test_facet_diversity.py", "py", None),          # FACET-RETRIEVAL-V1 F2
+    ("tests/determinism/facet_diversity_head_pins.json", "json", None), # F2: the HEAD composer's pinned outputs (flags-off proof)
     ("tests/determinism/test_chat_retrieval_v2.py", "py", None),
     ("tests/determinism/test_chat_modes.py", "py", None),
     ("tests/determinism/test_chat_runtime.py", "py", None),

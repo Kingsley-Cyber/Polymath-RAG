@@ -245,6 +245,21 @@ class CandidateBudget:
     compose_score_gap: float = 0.1
     #: dominance guard (P1.c gate): max share of the final set one document may fill when ≥ 3 documents are within the gap
     compose_dominance_share: float = 0.6
+    #: FACET-RETRIEVAL-V1 F2 (register 11.545; the owner 2026-09-27: "diversity is important", "maybe mmr, and max
+    #: documents lanes of 3 to be chosen", "if we need more retrieved chunks im open") — diversity BY CONSTRUCTION in
+    #: `compose_evidence`, the one composer every mode, `/retrieve` and deep research use. All three default OFF here so
+    #: a bare `CandidateBudget()` composes byte-identically; `facet_diversity_budget` (the `POLYMATH_CHAT_FACET_DIVERSITY`
+    #: profile `default_budget` applies, default on) sets them together with `synthesis_max` 24 and the dominance share 0.4.
+    #: `facet_seats`: reserved seats for every facet whose best judged candidate clears `aspect_weak_floor` (2 when on) —
+    #: the per-facet generalization of the per-query aspect seat, which stands when a turn carries no facets.
+    #: `compose_doc_lane_max`: a HARD per-document-per-lane quota (3 when on; 0 = off) counted on the chunk's first
+    #: arrival lane — every slot honours it and only the last fill lifts it, so seats are never left empty.
+    #: `mmr_lambda`: a maximal-marginal-relevance fill of the seats left after the slots (λ = 0.7 when on; 0 = the fill
+    #: in judge order). The similarity is lexical cosine over the candidates' own text: the child embeddings are NOT in
+    #: hand after the judge (the lanes return payloads, never vectors), and the receipt names the similarity used.
+    facet_seats: int = 0
+    compose_doc_lane_max: int = 0
+    mmr_lambda: float = 0.0
     #: bounded multi-lane agreement: +boost per extra lane, capped, applied to
     #: the sigmoid score for ORDERING inside composition only — never enough
     #: to pass a candidate with a clearly higher judge score (§5 #10c)
@@ -343,6 +358,24 @@ class CandidateBudget:
         d = asdict(self)
         d["lanes"] = list(self.lanes)
         return d
+
+
+#: F2: the diversity-by-construction profile (plan §3.2) and its switch. `default_budget` (chat_retrieval) applies it when
+#: the flag is on — every mode, `/retrieve`, deep research and the evidence route build their budget there — and the env
+#: knobs (POLYMATH_CHAT_SYNTHESIS_MAX, …) still override any single value afterwards.
+FACET_DIVERSITY_FLAG = "POLYMATH_CHAT_FACET_DIVERSITY"
+FACET_DIVERSITY_PROFILE: dict = {"synthesis_max": 24, "facet_seats": 2, "compose_doc_lane_max": 3,
+                                 "compose_dominance_share": 0.4, "mmr_lambda": 0.7}
+
+
+def facet_diversity_enabled(env=None) -> bool:
+    v = str((env if env is not None else os.environ).get(FACET_DIVERSITY_FLAG, "1") or "1").strip().lower()
+    return v not in ("0", "false", "no", "off")
+
+
+def facet_diversity_budget(budget: CandidateBudget) -> CandidateBudget:
+    """The F2 profile on a budget: 24 seats, 2 seats per strong facet, 3 seats per document per lane, dominance 0.4, MMR λ 0.7."""
+    return replace(budget, **FACET_DIVERSITY_PROFILE)
 
 
 def shape_budget(resolved_request: str, budget: CandidateBudget) -> CandidateBudget:
@@ -1434,14 +1467,48 @@ def judged_score(c: CandidateEvidence, budget: CandidateBudget) -> float:
     return _sig(c.rerank_score) + min(budget.compose_agreement_cap, budget.compose_agreement_boost * extra)
 
 
+_MMR_STOP = frozenset(["the", "a", "an", "and", "or", "of", "to", "in", "on", "for", "with", "by", "as", "at", "from", "is", "are",
+                       "was", "were", "be", "been", "that", "this", "these", "those", "it", "its", "not", "but", "they", "them",
+                       "their", "there", "then", "than", "can", "will", "would", "into", "also", "which", "what", "when", "who", "how"])
+_MMR_TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9'-]{2,}")
+
+
+def _mmr_vector(text: str) -> dict[str, float]:
+    """F2: the unit term-frequency vector of a candidate's own text (lexical; the child embedding is not in hand here)."""
+    import math
+    counts: dict[str, int] = {}
+    for tok in _MMR_TOKEN_RE.findall((text or "").lower()):
+        if tok not in _MMR_STOP:
+            counts[tok] = counts.get(tok, 0) + 1
+    norm = math.sqrt(sum(v * v for v in counts.values())) or 1.0
+    return {k: v / norm for k, v in counts.items()}
+
+
+def _mmr_cosine(a: dict[str, float], b: dict[str, float]) -> float:
+    if len(a) > len(b):
+        a, b = b, a
+    return sum(v * b.get(k, 0.0) for k, v in a.items())
+
+
 def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *, weak_aspects: Iterable[str] = (),
-                     primary_id: str = "q0") -> tuple[list[CandidateEvidence], dict]:
+                     primary_id: str = "q0", facets: Iterable[tuple] | None = None) -> tuple[list[CandidateEvidence], dict]:
     """EVIDENCE-COMPOSER-V1 (§3.17). `judged` = the reranked prefix in judge
     order (rerank_score set, or fusion order when the judge degraded).
     Returns (final, composition trace). A chunk may satisfy several slots;
-    the final list is deduped and may therefore be shorter than the cap."""
+    the final list is deduped and may therefore be shorter than the cap.
+
+    FACET-RETRIEVAL-V1 F2 (diversity by construction, every mode; each part behind its budget field, off = byte-identical):
+    `facets` = ((facet_id, (query_ids…)), …) from the plan — every facet whose best judged candidate clears the floor keeps
+    `facet_seats` seats right after the relevance slots (the per-query aspect seat stands for queries outside any facet
+    and for skeleton routes); `compose_doc_lane_max` is a hard per-document-per-lane quota every slot honours (the last
+    fill lifts it); `mmr_lambda` fills the seats the slots left by maximal marginal relevance over lexical cosine
+    similarity (receipted with what it changed). The dominance share is the budget's (0.4 under the F2 profile)."""
     cap = budget.synthesis_max
     weak = set(weak_aspects or ())
+    facet_list = [(str(fid), [str(q) for q in (qids or ())]) for fid, qids in (facets or ()) if fid]
+    facet_on = bool(facet_list) and int(budget.facet_seats) > 0
+    lane_max = max(0, int(budget.compose_doc_lane_max))
+    mmr_on = float(budget.mmr_lambda) > 0.0
     if not judged:
         return [], {"slots": {}, "doc_counts": {}, "doc_share_top": 0.0, "docs_within_gap": 0, "dominance": False, "aspect_seats": [], "agreement_reordered": 0}
     order = sorted(range(len(judged)), key=lambda i: (-judged_score(judged[i], budget), i))
@@ -1449,13 +1516,27 @@ def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *
     final: list[CandidateEvidence] = []
     seen: set[str] = set()
     slots = {"relevance": 0, "diversity": 0, "sparse": 0, "aspect": 0, "fill": 0}
+    if facet_on:
+        slots["facet"] = 0
+    if mmr_on:
+        slots["mmr"] = 0
     doc_count: dict[str, int] = {}
     aspect_seats: list[dict] = []
+    lane_seats: dict[tuple[str, str], int] = {}          # F2 per-document-per-lane quota, by the chunk's first arrival
+    lane_refused = 0
+
+    def lane_of(c: CandidateEvidence) -> str:
+        return c.arrivals[0] if c.arrivals else ""
+
+    def lane_capped(c: CandidateEvidence) -> bool:
+        return lane_max > 0 and lane_seats.get((c.doc_id, lane_of(c)), 0) >= lane_max
 
     def admit(c: CandidateEvidence, slot: str) -> bool:
         if c.chunk_id in seen or len(final) >= cap:
             return False
         seen.add(c.chunk_id); final.append(c); doc_count[c.doc_id] = doc_count.get(c.doc_id, 0) + 1; slots[slot] += 1
+        if lane_max > 0:
+            lane_seats[(c.doc_id, lane_of(c))] = lane_seats.get((c.doc_id, lane_of(c)), 0) + 1
         return True
 
     judged_any = any(c.rerank_score is not None for c in judged)
@@ -1468,6 +1549,18 @@ def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *
     def best_unrepresented() -> Optional[float]:
         return next((judged_score(c, budget) for c in order if c.doc_id not in doc_count and accepted(c)), None)
 
+    def path_accepted(c: CandidateEvidence) -> bool:
+        """A path's representative may be admitted on its rescue score (SKELETON-ROUTING-V1); relevance slots never are."""
+        s = effective_score(c)
+        return floor is None or s is None or _sig(s) >= floor
+
+    def serves_route(c: CandidateEvidence) -> bool:
+        return c.route_score is not None and (floor is None or _sig(c.route_score) >= floor)
+
+    def path_sig(c: CandidateEvidence) -> float:
+        s = effective_score(c)
+        return _sig(s) if s is not None else 0.0
+
     # DOMINANCE GUARD (P1.c gate): while ≥ 3 documents score within the gap of the top, no document may take more
     # than compose_dominance_share of the set through slots 2–5; the final fill pass lifts the cap so seats are never
     # left empty when only one document has evidence left (the receipt then says the dominance was not avoidable)
@@ -1479,15 +1572,56 @@ def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *
     def capped(c: CandidateEvidence) -> bool:
         return guard and doc_count.get(c.doc_id, 0) >= share_cap
 
-    # 1. pure relevance
-    for c in order[:budget.compose_relevance_slots]:
-        admit(c, "relevance")
+    # 1. pure relevance (under the F2 lane quota when it is on: the next-best chunk of another lane or document takes the seat)
+    if lane_max > 0:
+        n = 0
+        for c in order:
+            if n >= budget.compose_relevance_slots or len(final) >= cap:
+                break
+            if lane_capped(c):
+                lane_refused += 1
+                continue
+            if admit(c, "relevance"):
+                n += 1
+    else:
+        for c in order[:budget.compose_relevance_slots]:
+            admit(c, "relevance")
+    # 1b. F2 FACET SEATS: every facet whose best judged candidate clears the floor keeps `facet_seats` seats — counted
+    #     over the whole set, so a facet the relevance slots already seated twice takes nothing more; a weak facet
+    #     (best below the floor, or no candidate) is named and seated nowhere
+    facet_seats_rec: list[dict] = []
+    if facet_on:
+        for fid, qids in facet_list:
+            qset = set(qids)
+            pool = sorted((c for c in order if qset & set(c.query_ids)), key=lambda c: -path_sig(c))
+            best_c = pool[0] if pool else None
+            if best_c is None or not path_accepted(best_c):
+                facet_seats_rec.append({"facet_id": fid, "seated": 0, "represented": sum(1 for f in final if qset & set(f.query_ids)),
+                                        "weak": "no_candidates" if best_c is None else "below_floor"})
+                continue
+            have = sum(1 for f in final if qset & set(f.query_ids))
+            seated: list[str] = []
+            for c in pool:
+                if have >= int(budget.facet_seats) or len(final) >= cap or not path_accepted(c):
+                    break                                        # sorted by path score: the first rejected one ends the facet's pool
+                if c.chunk_id in seen or capped(c):
+                    continue
+                if lane_capped(c):
+                    lane_refused += 1
+                    continue
+                if admit(c, "facet"):
+                    have += 1
+                    seated.append(c.chunk_id)
+            facet_seats_rec.append({"facet_id": fid, "seated": len(seated), "represented": have, "chunk_ids": seated})
     # 2. source diversity (≤ compose_diversity_slots, judge-accepted only): soft max per document unless the
     #    score gap to the best unrepresented document is large
     for c in order:
         if len(final) >= cap or slots["diversity"] >= budget.compose_diversity_slots:
             break
         if c.chunk_id in seen or not accepted(c) or capped(c):
+            continue
+        if lane_capped(c):
+            lane_refused += 1
             continue
         bu = best_unrepresented()
         under_cap = doc_count.get(c.doc_id, 0) < budget.compose_doc_soft_max
@@ -1499,8 +1633,12 @@ def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *
     for c in order:
         if n >= budget.compose_sparse_slots or len(final) >= cap:
             break
-        if LANE_C in c.arrivals and c.chunk_id not in seen and accepted(c) and not capped(c) and admit(c, "sparse"):
-            n += 1
+        if LANE_C in c.arrivals and c.chunk_id not in seen and accepted(c) and not capped(c):
+            if lane_capped(c):
+                lane_refused += 1
+                continue
+            if admit(c, "sparse"):
+                n += 1
     # 4. aspect coverage: one seat per non-weak compiled query not yet represented (displacing the lowest
     #    item that is not another aspect's only representative when the set is full)
     represented = {q for c in final for q in c.query_ids}
@@ -1509,24 +1647,16 @@ def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *
         for q in c.query_ids:
             if q != primary_id and q not in weak and q not in aspects:
                 aspects.append(q)
-    def path_accepted(c: CandidateEvidence) -> bool:
-        """A path's representative may be admitted on its rescue score (SKELETON-ROUTING-V1); relevance slots never are."""
-        s = effective_score(c)
-        return floor is None or s is None or _sig(s) >= floor
-
-    def serves_route(c: CandidateEvidence) -> bool:
-        return c.route_score is not None and (floor is None or _sig(c.route_score) >= floor)
-
     for q in aspects[:budget.compose_aspect_slots]:
         is_route = str(q).startswith(ROUTE_PREFIX)
         if (any(q in f.query_ids and serves_route(f) for f in final) if is_route else q in represented):
             continue
         if is_route:                                     # SKELETON-ROUTING-V1: the need that found it decides, not the question
-            pool = sorted((c for c in order if q in c.query_ids and serves_route(c) and not capped(c)),
+            pool = sorted((c for c in order if q in c.query_ids and serves_route(c) and not capped(c) and not lane_capped(c)),
                           key=lambda c: -_sig(c.route_score))
         else:
-            pool = sorted((c for c in order if q in c.query_ids and path_accepted(c) and not capped(c)),
-                          key=lambda c: -(_sig(effective_score(c)) if effective_score(c) is not None else 0.0))
+            pool = sorted((c for c in order if q in c.query_ids and path_accepted(c) and not capped(c) and not lane_capped(c)),
+                          key=lambda c: -path_sig(c))
         best_c = pool[0] if pool else None
         if best_c is None or best_c.chunk_id in seen:
             continue
@@ -1539,23 +1669,87 @@ def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *
             if displaced is None:
                 continue
             final.remove(displaced); seen.discard(displaced.chunk_id); doc_count[displaced.doc_id] -= 1
+            if lane_max > 0:
+                lane_seats[(displaced.doc_id, lane_of(displaced))] = max(0, lane_seats.get((displaced.doc_id, lane_of(displaced)), 0) - 1)
         admit(best_c, "aspect"); represented.update(best_c.query_ids)
         aspect_seats.append({"query_id": q, "chunk_id": best_c.chunk_id, "displaced": (displaced.chunk_id if displaced else None)})
+    # 4b. F2 MMR: the seats the slots left are filled by maximal marginal relevance — λ · relevance − (1 − λ) · the
+    #     candidate's highest lexical cosine to anything already seated — over the judge-accepted pool under both quotas.
+    #     A turn the judge never scored keeps its fusion-order fill (relevance 0 for everyone would make MMR pure novelty).
+    mmr_rec: dict | None = None
+    if mmr_on:
+        lam = float(budget.mmr_lambda)
+        mmr_rec = {"lambda": lam, "similarity": "lexical_cosine", "seats": 0, "changed": 0, "added_docs": []}
+        if not judged_any:
+            mmr_rec["skipped"] = "unjudged"
+        elif len(final) < cap:
+            pool = [c for c in order if c.chunk_id not in seen and accepted(c) and not capped(c) and not lane_capped(c)]
+            plain = pool[: cap - len(final)]                       # what the fill in judge order would have seated
+            docs_before = set(doc_count)
+            vec = {c.chunk_id: _mmr_vector(c.text) for c in pool}
+            seated_vecs = [_mmr_vector(c.text) for c in final]
+            picks: list[CandidateEvidence] = []
+            while pool and len(final) < cap:
+                best_c, best_v = None, None
+                for c in pool:
+                    if capped(c) or lane_capped(c):                # the quotas move as seats fill
+                        continue
+                    sim = max((_mmr_cosine(vec[c.chunk_id], s) for s in seated_vecs), default=0.0)
+                    v = lam * judged_score(c, budget) - (1.0 - lam) * sim
+                    if best_v is None or v > best_v + 1e-12:       # ties keep the judge order
+                        best_c, best_v = c, v
+                if best_c is None:
+                    break
+                pool.remove(best_c)
+                if admit(best_c, "mmr"):
+                    picks.append(best_c)
+                    seated_vecs.append(vec[best_c.chunk_id])
+            plain_ids = {c.chunk_id for c in plain}
+            mmr_rec.update({"seats": len(picks), "changed": sum(1 for c in picks if c.chunk_id not in plain_ids),
+                            "added_docs": sorted({c.doc_id for c in picks} - docs_before - {c.doc_id for c in plain})})
     # 5. fill remaining seats in judge order — with the DOMINANCE GUARD (gate: no final set with > 60 % of its
     #    chunks from one document when ≥ 3 documents score within the gap of the top): while that holds, a document
     #    already at the share cap yields its fill seats to the other close documents; a second pass lifts the cap so
     #    seats are never left empty when only one document has evidence left
-    for c in order:
-        if len(final) >= cap:
-            break
-        if c.chunk_id in seen or capped(c):
-            continue
-        admit(c, "fill")
-    for c in order:
-        if len(final) >= cap:
-            break
-        if c.chunk_id not in seen:
+    lane_lifted = 0
+    if lane_max > 0:
+        # F2, under the lane quota: judge-accepted chunks first (under both caps, then with the caps lifted), and only
+        # then what the judge rejected — a quota never seats a rejected chunk ahead of an accepted one
+        for c in order:
+            if len(final) >= cap:
+                break
+            if c.chunk_id in seen or capped(c) or not accepted(c):
+                continue
+            if lane_capped(c):
+                lane_refused += 1
+                continue
             admit(c, "fill")
+        for c in order:
+            if len(final) >= cap:
+                break
+            if c.chunk_id not in seen and accepted(c):
+                if lane_capped(c):
+                    lane_lifted += 1
+                admit(c, "fill")
+        for c in order:
+            if len(final) >= cap:
+                break
+            if c.chunk_id not in seen:
+                if lane_capped(c):
+                    lane_lifted += 1
+                admit(c, "fill")
+    else:
+        for c in order:
+            if len(final) >= cap:
+                break
+            if c.chunk_id in seen or capped(c):
+                continue
+            admit(c, "fill")
+        for c in order:
+            if len(final) >= cap:
+                break
+            if c.chunk_id not in seen:
+                admit(c, "fill")
     # dominance receipt (gate: no final set with > 60 % from one document when ≥ 3 documents score within 0.1 of the top)
     top = judged_score(order[0], budget)
     docs_within = len({c.doc_id for c in order if top - judged_score(c, budget) <= budget.compose_score_gap})
@@ -1567,6 +1761,12 @@ def compose_evidence(judged: list[CandidateEvidence], budget: CandidateBudget, *
     trace = {"slots": slots, "doc_counts": dict(sorted(doc_count.items(), key=lambda kv: -kv[1])), "doc_share_top": round(share_top, 3),
              "docs_within_gap": docs_within, "dominance": literal, "dominance_avoidable": avoidable, "aspect_seats": aspect_seats,
              "agreement_reordered": sum(1 for i, c in enumerate(order) if c is not judged[i])}
+    if lane_max > 0:
+        trace["lane_quota"] = {"max": lane_max, "by": "first_arrival", "refused": lane_refused, "lifted": lane_lifted}
+    if facet_on:
+        trace["facet_seats"] = facet_seats_rec
+    if mmr_rec is not None:
+        trace["mmr"] = mmr_rec
     return final, trace
 
 
@@ -1802,12 +2002,14 @@ def _contextual_judge(prefix: list, scores: dict, result: CandidateResult, budge
 
 def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
                     rerank_children: Optional[Callable[[str, list[dict]], list[dict]]] = None,
-                    neighbor_lookup: Optional[Callable[[list[dict], int], list[dict]]] = None) -> tuple[list[CandidateEvidence], dict]:
+                    neighbor_lookup: Optional[Callable[[list[dict], int], list[dict]]] = None,
+                    facets: Iterable[tuple] | None = None) -> tuple[list[CandidateEvidence], dict]:
     """One cross-encoder judgement over the fusion-ordered prefix
     (`rerank_max`), pure relevance to `synthesis_max`, then the depth
     profile's neighbour expansion (additive, after the judge — the
     candidate set the reranker scored is never changed). P1.c owns the
-    composition slots; here relevance order is the whole law."""
+    composition slots; here relevance order is the whole law.
+    `facets` (F2): the plan's ((facet_id, (query_ids…)), …) for the composer's facet seats; None = per-query aspect seats."""
     import math
     union = result.union
     primary_id = result.context.query_id
@@ -1864,7 +2066,7 @@ def select_evidence(result: CandidateResult, budget: CandidateBudget, *,
         else:
             aspect_best[qid] = None
     # the composition sees only JUDGED verdicts (below_floor / no_candidates); an unjudged turn keeps fusion order
-    final, composition = compose_evidence(prefix, budget, weak_aspects=set(weak_reason), primary_id=primary_id)
+    final, composition = compose_evidence(prefix, budget, weak_aspects=set(weak_reason), primary_id=primary_id, facets=facets)
     # ACCEPTANCE FINDING A1 (2026-09-06): when a judge was expected (the route always passes one) but scored nothing —
     # `rerank_timeout` past the deadline, or a parked sidecar — no floor verdict exists, so nothing was flagged and every
     # aspect READ as covered (M system-honest 0.844 on judge-timeout turns vs 1.0 on judged turns). Coverage that the

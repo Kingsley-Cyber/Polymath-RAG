@@ -67,7 +67,8 @@ from polymath_shared.candidate_engine import (
     SYNTHESIS_ROLES,
     synthesis_role,
     shape_budget,
-    sparse_vector_for, effective_score)
+    sparse_vector_for, effective_score,
+    facet_diversity_budget, facet_diversity_enabled)
 from polymath_shared.divergent import DIVERGENT_DEFAULT_PLAN, divergent_finish, divergent_sweep
 #: P1.e: the finish stops STARTING validations at the frontier deadline; a validation already in flight may overrun by
 #: at most one reranker call — the route waits this bounded grace for the partial result instead of abandoning it.
@@ -219,6 +220,7 @@ def chat_retrieval_flag(override: str | None = None) -> str:
 #: env-tunable knobs on the one budget authority, POLYMATH_CHAT_<NAME> (measurement only; the defaults are the contract)
 _INT_KNOBS = ("rerank_max", "synthesis_max", "global_dense_k", "global_sparse_k", "merged_candidate_max", "max_workers",
               "max_subqueries",                                                                         # POLYMATH_CHAT_MAX_SUBQUERIES
+              "facet_seats", "compose_doc_lane_max",                                                    # FACET-RETRIEVAL-V1 F2
               "latent_enabled", "latent_max_parents", "latent_children_per_parent", "latent_budget_ms",   # B12 lane D
               "dualread_enabled", "dualread_profile_docs", "dualread_map_k",                            # S9 dual-read (lane E)
               "dualread_max_parents", "dualread_children_per_parent", "dualread_budget_ms",             # POLYMATH_CHAT_DUALREAD_*
@@ -233,14 +235,20 @@ _INT_KNOBS = ("rerank_max", "synthesis_max", "global_dense_k", "global_sparse_k"
 _FLOAT_KNOBS = ("embed_deadline_s", "lane_deadline_s", "rerank_deadline_s",     # P1.d wall-clock budgets
                 "wildcard_deadline_s",                                            # P1.e frontier budget
                 "wildcard_finish_budget_s", "wildcard_unverified_fill_s",        # B12 finish budget + unverified fill
-                "seealso_blend_alpha")                                            # SEEALSO-BLEND-V1 question weight
+                "seealso_blend_alpha",                                            # SEEALSO-BLEND-V1 question weight
+                "mmr_lambda", "compose_dominance_share")                          # FACET-RETRIEVAL-V1 F2
 
 
 _STR_KNOBS = ("gnn_family", "gnn_variant")                                        # GNN-RETRIEVAL-V1: POLYMATH_CHAT_GNN_FAMILY / _VARIANT
 
 
 def default_budget() -> CandidateBudget:
+    """The one budget every surface starts from (chat, `/retrieve`, the evidence route, deep research's searches, the mode
+    compositions). F2: the diversity-by-construction profile is applied first (POLYMATH_CHAT_FACET_DIVERSITY, default on;
+    0 = the pre-F2 budget byte for byte), then the env knobs override single values."""
     b = CandidateBudget()
+    if facet_diversity_enabled():
+        b = facet_diversity_budget(b)
     over = {}
     for name, cast in [(n, int) for n in _INT_KNOBS] + [(n, float) for n in _FLOAT_KNOBS] + [(n, str) for n in _STR_KNOBS]:
         raw = os.environ.get(f"POLYMATH_CHAT_{name.upper()}")
@@ -263,9 +271,11 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
                      subqueries: tuple = (), lanes: Optional[tuple] = None,
                      latent_bridge_ids: tuple = (),
                      on_context: Optional[Callable[[SearchContext, Executor], None]] = None,
-                     scope=None) -> dict:
+                     scope=None, facets: tuple = ()) -> dict:
     """`subqueries`: (id, type, text, weight) tuples from the compiled plan (non-PRIMARY);
     they run lanes B + C on their own vectors (one batched embedding call for all texts).
+    `facets` (FACET-RETRIEVAL-V1 F2): ((facet_id, (query_ids…)), …) from the plan — the composer keeps seats per facet;
+    empty (no plan: `/retrieve`, deep research) = the per-query aspect seats.
     `lanes` (P1.d/P1.e, evaluation and mode composition): restrict the engine to these lane
     names — VECTOR = (HIERARCHICAL_ROUTE, GLOBAL_DENSE_CHILD), HYBRID = all three (default).
     `on_context` (P1.e): called ONCE, in this thread, with the immutable SearchContext (the
@@ -666,7 +676,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             return out
 
         t2 = time.perf_counter()
-        final, sel = select_evidence(result, budget, rerank_children=_judge_with_deadline, neighbor_lookup=_neighbor_lookup)
+        final, sel = select_evidence(result, budget, rerank_children=_judge_with_deadline, neighbor_lookup=_neighbor_lookup,
+                                     facets=tuple(facets or ()) or None)
         select_ms = round((time.perf_counter() - t2) * 1000, 1)
     finally:
         pool.shutdown(wait=False, cancel_futures=True)   # a late lane or judge never holds the turn; queued work is dropped
@@ -734,7 +745,8 @@ def chat_retrieve_v2(query: str, corpus_id: str, *, exact_terms: tuple[str, ...]
             "mode": MODE_HYBRID, "plan_version": CHAT_RETRIEVAL_PLAN_VERSION, "engine": CANDIDATE_ENGINE_VERSION,
             "corpus_id": corpus_id, "rrf_k": budget.rrf_k, "budget": budget.to_dict(),
             "lanes": list(budget.lanes),
-            "lexical_enabled": LANE_C in budget.lanes, "mmr": "NOT_IN_V2",
+            # F2: the composer's MMR receipt (λ, the similarity used, seats changed, documents added) when the pass is on
+            "lexical_enabled": LANE_C in budget.lanes, "mmr": ((sel.get("composition") or {}).get("mmr") or "NOT_IN_V2"),
             "deadlines": {"contract": CONCURRENCY_CONTRACT, "embed_deadline_s": budget.embed_deadline_s,
                           "lane_deadline_s": budget.lane_deadline_s, "rerank_deadline_s": budget.rerank_deadline_s,
                           "max_workers": max(1, int(budget.max_workers))},
