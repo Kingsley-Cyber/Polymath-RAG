@@ -144,6 +144,12 @@ Times are estimates from concurrency 2 and today's retrieval latency; DR4 measur
 | **DR6b** | The route per move + `/retrieve`'s optional `intent` + the relevance gate on the reranker | Contract tests: each move builds its own search request; `intent` absent = unchanged, present = chat's intent budget, unknown = 422 |
 | **DR6c** | UI: each search's move in the progress rail; the counter-evidence line under the report | vitest |
 | **DR6d** | Live A/B on the 5 DR4 questions, moves off vs on | §10.9 acceptance; the owner sees the table |
+| **DR7a** | Plan card backend: `POST /research/deep/plan`; `/research/deep` accepts the confirmed plan (§11.3) | Contract tests: one LLM call; the confirmed plan seeds level 1 with no planner call; user goals are never gated out |
+| **DR7b** | Evidence model + structured report: deterministic confidence, counter-evidence, open questions, sources, method; the sentence audit; `coverage_complete` stop (§11.4) | Unit + contract tests on fixed learnings; audit on crafted reports |
+| **DR7c** | Live research view: the goal checklist with coverage, the activity feed, **Finish now** (`POST /research/deep/finish`) | Contract test (finish writes the report, `finished_early`); vitest |
+| **DR7d** | Report view: TL;DR, Evidence, Sources and Method tabs; uncited-sentence marks; copy / download Markdown with footnotes; "Research this next" chips | vitest; screenshots at 3 widths |
+| **DR7e** | Reports list in the Research section, from this browser's chat history (like chats) | vitest |
+| **DR7f** | Live acceptance through the UI on the 5 DR4 questions (§11.6) | The owner sees the reports |
 
 DR1 can start at once. DR3 fits best after FRONTEND-REFRESH-V1 U4 (the new composer); on today's composer it is a small switch.
 
@@ -295,3 +301,103 @@ The 5 DR4 questions, `moves: false` then `moves: true` (10 runs). Moves must:
 - on the evaluative or mechanism questions, show at least one inverse learning or the explicit "none found";
 - stay inside the preset deadline, with LLM calls ≤ the baseline + 10%.
 The owner sees the table; the default stays on only if it passes.
+
+## 11. The research experience (DR7) — DECIDED 2026-09-26 (the owner: "make this deepresearch comparable and better designed")
+### 11.1 What the best research tools do, and where they fall short
+Public descriptions of OpenAI Deep Research, Gemini Deep Research, Perplexity, Claude Research, and open source (STORM /
+Co-STORM, GPT Researcher, dzhng, LangChain open_deep_research) share one shape:
+- **Plan first.** Gemini shows an editable plan before it starts; OpenAI asks clarifying questions.
+- **Visible rounds.** An activity feed, and a way to stop early.
+- **Outline-first reports.** STORM builds the outline, then writes section by section, with citations you can open.
+- **History and export.**
+
+Where they are weak, and Polymath can be better:
+- Confidence is the model's tone, not the evidence.
+- Citations are not checked sentence by sentence.
+- Disagreement is buried.
+- The method is hidden.
+- Every search is a generic query.
+
+Polymath already has what those tools lack: typed library surfaces (§10), a reranker gate, deterministic receipts, and the
+learnings' own citations.
+
+### 11.2 The design, in five parts
+1. **Plan card (DR7a).** After Send, in about 2 s: "I'll research this in N parts", with the goals, each move in plain words
+   (Main answer / Deeper / Connections / Counter-evidence), the libraries, the preset and an estimate. Goals can be edited, removed
+   or added. **Start** runs it; the card starts by itself after 10 s unless the person touches it. The setting "Start without
+   showing the plan" is stored in the browser. Alignment by construction: the person confirms the sub-questions.
+2. **Live research view (DR7c).**
+   - A checklist of the goals with small coverage meters (findings · books).
+   - An activity feed of each search with its move, collapsible.
+   - Counters (books, passages, findings) and the elapsed time against the estimate.
+   - Two buttons: **Finish now** writes the report from what is found; **Stop** cancels.
+3. **The report (DR7b + DR7d).** The model writes prose only:
+   - an answer-first TL;DR of 2–4 cited sentences;
+   - one section per goal;
+   - "Where sources disagree" when there is counter-evidence.
+
+   Everything factual about the evidence is rendered from the deterministic evidence model, never from the model's tone:
+   - **Evidence tab:** per goal, the findings, each with a confidence badge; counter-evidence; open questions;
+   - **Sources tab:** by book, the passages used and how many findings each supports;
+   - **Method tab:** preset, question type, moves, searches, gate drops, stop reason, time, model, in plain words.
+
+   Every sentence of the prose is **audited**. One without a valid citation gets a dotted underline ("no citation"), and
+   the rate is in the receipt.
+4. **Actions (DR7d).**
+   - Copy or download Markdown, with citations as footnotes (`[^c1]: Title — where`).
+   - "Research this next" chips from the open questions: each fills the composer, with Deep research on and the Quick preset.
+5. **Reports list (DR7e).** A Reports tab in the Research section lists this browser's deep research turns: question, date,
+   libraries, preset, findings. It is built from the chat history, which is deliberately browser-only (CHAT-HISTORY-V1), so
+   reports follow the same rule. A server-side history would be a new owner decision and needs a migration after the
+   reserved 0067–0071.
+
+### 11.3 Contracts (backend)
+- **`POST /research/deep/plan`**
+  - Request: `{question, corpus_id | corpus_ids, preset, mode?, moves?}`.
+  - Response: `{intent, evaluative, preset, goals: [{id, goal, query, move}], estimate: {searches, llm_calls, seconds}}`.
+  - It makes exactly one LLM call (the level-1 planner with the controller's quota) and runs the same library checks.
+  - It is not part of the one-run lock. Boundary: USER.
+- **`POST /research/deep`** gains `plan: [{goal, query, move}] | null`:
+  - at most 2 × breadth items; query 3–300 characters; move in `MOVES`;
+  - a plan seeds level 1 and replaces its planner call;
+  - the gate still scores those queries, but a confirmed goal is never dropped (`gate.user_kept` counts them).
+- **`POST /research/deep/finish`**
+  - With a run: 202. It sets the caller's finish event; the loop stops after in-flight calls and writes the report, with
+    stop reason `finished_early`.
+  - Without a run: 404. Boundary: USER.
+- **Frames.**
+  - Plan and retrieve frames carry `goal_id` and `move`.
+  - After each level, a `coverage` frame: `{goals: [{id, learnings, documents}]}`.
+- **Answer meta.**
+  - `result.meta.deep_research.report_model`: `{goals: [{id, goal, findings: [{text, cids, confidence, move}], documents}],
+    counter: [{text, cids, goal_id}], open_questions: [..5], sources: [{doc_id, title, cids, findings}], method: {...}}`.
+  - `result.meta.deep_research.audit`: `{sentences, cited, uncited: [index], invalid_cids: [...]}`.
+
+### 11.4 The evidence model (deterministic, engine)
+- **Confidence per finding.**
+
+  | Badge | When |
+  |---|---|
+  | **Contested** | its goal also has an inverse finding (the inverse finding itself is listed as counter-evidence) |
+  | **Strong** | cites passages from ≥ 2 distinct documents, not contested |
+  | **Single source** | one document, not contested |
+
+- **Open questions.** Goals with fewer than 2 findings first, then the run's unexplored follow-ups; deduplicated; at most 5.
+- **Coverage stop** (moves on). After a level, if every goal has ≥ 2 findings from ≥ 2 distinct documents, the run stops with
+  `coverage_complete` and the rest of the budget is not spent.
+- **Report prompt.** TL;DR, then sections by goal, then disagreement. No sources list: the UI renders it. Every factual
+  sentence cites `[cN]`.
+- **Audit** (route, after the stream). Split the prose into sentences, skipping headings. A sentence with no valid `[cN]` is
+  uncited; an unknown id is already counted in `unknown_citations`.
+
+### 11.5 Build order
+DR6a–c first. Then DR7a + DR7b (engine and route), then DR7c–e (frontend) against the committed contracts. Then one deploy,
+then DR6d and DR7f live. No new retrieval mode, no migration, no new LLM lane.
+
+### 11.6 DR7f acceptance (live, through the UI)
+- The plan card appears in ≤ 3 s and auto-starts.
+- The audit's uncited sentences are ≤ 10% of the prose sentences.
+- Every evaluative or mechanism question shows a counter-evidence section or an honest "none found".
+- `coverage_complete` stops at least one easy question early.
+- Times stay inside the preset deadline.
+- Screenshots of one report at 3 widths go to the owner.
