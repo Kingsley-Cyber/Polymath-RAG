@@ -4,7 +4,7 @@ import { ACCENTS, MODES, useAppearance, type Accent, type Mode } from "../lib/ap
 import { ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import {
-  auth, copyText, privateLibrary, type ApiKey, type CreatedKey, type Friend, type Me,
+  auth, privateLibrary, type ApiKey, type CreatedKey, type Friend, type Me,
 } from "../lib/auth";
 import { ChangePassword } from "./Login";
 import { DeepResearchSettings } from "../components/deep/DeepResearchSettings";
@@ -14,14 +14,6 @@ function message(err: unknown): string {
   return err instanceof ApiError ? err.detailMessage : String(err);
 }
 
-function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
-  const [state, setState] = useState<"" | "ok" | "fail">("");
-  return (
-    <button className="btn" type="button" onClick={() => void copyText(text).then((ok) => setState(ok ? "ok" : "fail"))}>
-      {state === "ok" ? "Copied" : state === "fail" ? "Select and copy it" : label}
-    </button>
-  );
-}
 
 /** FRIENDS-ACCESS-V1 D7/D8 — shown ONCE: the new key and the prompt with it filled in. */
 function ShownOnce({ created, onDone }: { created: CreatedKey; onDone: () => void }) {
@@ -120,7 +112,6 @@ function MyKeys({ me }: { me: Me }) {
           Paste this into your agent. {me.is_owner ? "Replace the placeholder with a key." : "When you create a key, the prompt shown then already contains it; this copy has a placeholder."}
         </p>
         <Secret value={prompt.data?.prompt ?? ""} what="prompt" block rows={10} />
-        {prompt.data && <div className="row"><CopyButton text={prompt.data.prompt} label="Copy prompt" /></div>}
       </div>
     </div>
   );
