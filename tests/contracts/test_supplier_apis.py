@@ -147,7 +147,7 @@ def test_the_token_is_fetched_once_and_cached_until_it_expires():
     assert fake.paths() == [CJ.TOKEN, CJ.SEARCH, CJ.SEARCH, CJ.SEARCH]                  # one sign-in for three reads
     assert fake.calls[0]["method"] == "POST" and set(fake.calls[0]["body"]) == {"apiKey"}  # API 2.0: the key alone, no e-mail
     assert all(c["token"] == fake.token for c in fake.calls[1:]) and fake.calls[0]["token"] is None
-    assert fake.calls[1]["params"] == {"keyWord": "rain cover", "page": "1", "size": "20", "features": "enable_category"}
+    assert fake.calls[1]["params"] == {"keyWord": "rain cover", "page": "1", "size": "100", "features": "enable_category"}   # limit 20 -> a page of 100 to rank
     assert all(s <= CJ.MIN_INTERVAL_S for s in clock.sleeps) and len(clock.sleeps) == 3   # spaced 1.1 s apart: CJ's one a second
     clock.wall_now = CJ._epoch("2027-03-01T09:16:33+08:00") - 60                           # ten-minute margin before the expiry
     client.search("rain cover", 20)
@@ -445,6 +445,17 @@ def test_at_most_three_result_pages_are_read():
     pages = {p: [_product(p * 10 + i) for i in range(10)] for p in range(1, 6)}
     raw = _read(pages, 100, seen)
     assert len(seen) == 3 and len(raw["records"]) == 30
+
+
+def test_cj_results_are_ranked_by_the_querys_words_and_cjs_order_breaks_ties():
+    """SUPPLIER-RANK: CJ led with keyboard and welder's gloves for "touchscreen winter gloves"."""
+    name = lambda p: p.get("nameEn")  # noqa: E731
+    ps = [{"nameEn": "Keyboard gloves"}, {"nameEn": "Arthritis pressure gloves"}, {"nameEn": "Velvet Gloves Flip Touch Screen Winter"},
+          {"nameEn": "Winter gloves touchscreen warm"}]
+    assert [p["nameEn"] for p in CJ.rank_by_query(ps, "touchscreen winter gloves", name)] == [
+        "Winter gloves touchscreen warm", "Velvet Gloves Flip Touch Screen Winter", "Keyboard gloves", "Arthritis pressure gloves"]
+    assert CJ.rank_by_query(ps, "", name) == ps and CJ.rank_by_query([], "gloves", name) == []
+    assert CJ.query_words("Touch-screen WINTER gloves, a 2nd time") == ("touch", "screen", "winter", "gloves", "2nd", "time")
 
 
 def test_alibaba_listings_through_searxng_say_so_and_never_open_the_site():

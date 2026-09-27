@@ -45,6 +45,29 @@ TIMEOUT_S = 20.0
 TOKEN_MARGIN_S = 600
 TOKEN_FALLBACK_TTL_S = 3600            # an expiry date CJ did not give or that does not parse: sign in again within the hour
 SEARCH_SIZE_MAX = 100
+#: SUPPLIER-RANK (live, 2026-09-27): CJ's "best match" for "touchscreen winter gloves" led with keyboard and welder's gloves, so a
+#: search asks CJ for a larger page (at least SEARCH_PAGE_MIN) and keeps first the products whose names hold the most of the
+#: query's words; CJ's own order decides ties
+SEARCH_PAGE_MIN = 50
+_WORD = re.compile(r"[a-z0-9]+")
+
+
+def query_words(query: str) -> tuple[str, ...]:
+    """The query's distinct words of two or more characters, lower-case, in order."""
+    return tuple(dict.fromkeys(w for w in _WORD.findall((query or "").lower()) if len(w) >= 2))
+
+
+def rank_by_query(products: list[dict[str, Any]], query: str, name_of) -> list[dict[str, Any]]:
+    """Products ordered by how many of the query's words their name holds (most first); CJ's own order within ties."""
+    words = query_words(query)
+    if not words:
+        return list(products)
+
+    def score(product: dict[str, Any]) -> int:
+        name = str(name_of(product) or "").lower()
+        return sum(1 for w in words if w in name)
+    order = sorted(((-score(product), i) for i, product in enumerate(products)))
+    return [products[i] for _, i in order]
 AUTH_CODES = frozenset({1600001, 1600002, 1600003, 1601000})
 RATE_CODES = frozenset({1600200})
 QUOTA_CODES = frozenset({1600201, 16900500})
@@ -288,7 +311,8 @@ class CJListings:
         self.client = client
 
     def read(self, target: Target, limit: int) -> dict[str, Any]:
-        products, total = self.client.search(target.query or "", limit)
+        products, total = self.client.search(target.query or "", max(limit * 5, SEARCH_PAGE_MIN))
+        products = rank_by_query(products, target.query or "", lambda p: p.get("nameEn") or p.get("productNameEn"))
         retrieved = now_iso()
         records: list[dict[str, Any]] = []
         seen: set[str] = set()
@@ -304,7 +328,7 @@ class CJListings:
             records.append(rec)
             if len(records) >= limit:
                 break
-        notes = [SOURCE_NOTE]
+        notes = [SOURCE_NOTE, "ranked by how many of the query's words the product name holds; CJ's own order within ties"]
         if unusable:
             notes.append(f"{unusable} product(s) in CJ's answer had no usable id or name: left out")
         return {"state": "ok", "retrieved_at": retrieved, "records": records, "total": total,
