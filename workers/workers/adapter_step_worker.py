@@ -525,13 +525,13 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
     key = TC.identifier(state.run_id, step["step_id"], str(step["sequence"]))
     snap = (step.get("context") or {}).get("registry_snapshot") or {}
     payload = _payload_for(kind, step, state, cfg)
-    trimmed = None
     if kind == "evidence.admit":
-        # bug hunt B-05: a receipt within the harness budget can exceed Trail's request ceiling; send what fits, record what did not
-        payload, trimmed = TC.fit_admission_request(payload, key=key, run_ref=state.run_id, registry_snapshot_id=snap.get("snapshot_id"))
-        if trimmed:
-            log.warning("run %s %s: receipt trimmed to Trail's request ceiling (%s of %s observations sent)", state.run_id[:16], step["step_id"],
-                        trimmed["observations_sent"], trimmed["observations_submitted"])
+        # bug hunt B-05, owner decision 2026-09-26: a receipt over Trail's request ceiling is REFUSED at submit (the harness resubmits a
+        # smaller one); one that still arrives too big ends typed here — nothing is ever trimmed or sent
+        over = TC.admission_overflow(payload, key=key, run_ref=state.run_id, registry_snapshot_id=snap.get("snapshot_id"))
+        if over:
+            return {"gap": {"code": "RECEIPT_TOO_LARGE", "message": f"{kind}: the request would be {over['bytes']} bytes by TrailSignal's measure, over its "
+                                                                   f"{over['limit_bytes']}-byte limit ({over['observations']} observations); nothing was trimmed or sent"}}
     req = TC.bounded_request(kind, payload, key=key, run_ref=state.run_id, registry_snapshot_id=snap.get("snapshot_id"))
     retries: list[str] = []
     while True:
@@ -563,8 +563,6 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
         return {"gap": {"code": "TRAIL_RESPONSE_MISMATCH", "message": f"{kind}: Trail answered against snapshot {_resp_snap!r}, not {req['registry_snapshot_id']!r}"}}
     result = dict(resp.get("result") or {})
     output: dict[str, Any] = {"trail_operation_id": resp.get("operation_id"), "operation_kind": kind}
-    if trimmed:
-        output["receipt_trimmed"] = trimmed
     if retries:
         output["transport_retries"] = retries                                  # counted, never silent
     refs: list[dict[str, Any]] = []

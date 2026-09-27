@@ -260,22 +260,29 @@ def _reality_receipt(step, rid, n_obs=80, n_src=20):
     return rec
 
 
-def test_b05_a_budgeted_receipt_over_the_ceiling_is_trimmed_counted_and_admitted_and_the_run_goes_on(embedded):
+def test_b05_a_budgeted_receipt_over_the_ceiling_is_refused_at_submit_and_the_smaller_one_is_admitted(embedded):
+    """Owner decision 2026-09-26 ("keep refusal for oversized receipts, not trimming"): the manifest's own budget (80 observations) is
+    refused at submit — named size, limit and how many observations must go — the step stays open, and the harness's smaller receipt
+    is admitted whole: no run loses an observation it did not choose to drop."""
     store = embedded
+    shown: list[int] = []
 
     def harness(step, rid, attempt):
-        return _reality_receipt(step, rid) if step["harness_action"]["action_kind"] == "PRODUCT_REALITY_CHECK" else SCRIPT._harness(step, rid)
-    rid, st, actions, _r, leaked, at = _drive(SCRIPT.Agent(), harness)
+        if step["harness_action"]["action_kind"] != "PRODUCT_REALITY_CHECK":
+            return SCRIPT._harness(step, rid)
+        shown.append(service.status(None, rid)["status"])                                     # what the harness sees before each attempt
+        return _reality_receipt(step, rid, n_obs=80 if attempt == 0 else 40)
+    rid, st, actions, rejected, leaked, at = _drive(SCRIPT.Agent(), harness)
     assert leaked is None, (at, repr(leaked))
     assert actions["P_reality"][0]["budget"]["max_observations"] == 80                       # the manifest's own budget …
-    assert _rows(store, rid, "P_reality")[0]["status"] == "accepted"
+    refusal = " ".join(rejected.get("P_reality", [[]])[0])
+    assert "RECEIPT_TOO_LARGE" in refusal and "65536" in refusal and "keep at most" in refusal, rejected   # … the defect: accepted, then `failed`
+    assert shown == ["awaiting_harness", "awaiting_harness"]                                  # refused, the step stayed open for the smaller one
     q = _rows(store, rid, "Q_admit")[0]
-    assert q["status"] == "executed", (st.status, st.failure, st.gap)                        # … the defect: `failed` STEP_EXECUTOR_ERROR (65536) here
-    trim = q["output"]["receipt_trimmed"]
-    assert trim["observations_submitted"] == 80 and 0 < trim["observations_sent"] < 80 and len(trim["dropped_observation_ids"]) == 80 - trim["observations_sent"]
+    assert q["status"] == "executed" and "receipt_trimmed" not in q["output"]
     adm = q["output"]["evidence_admission"]
     judged = {a["observation_id"] for a in adm["admitted"]} | {r["observation_id"] for r in adm["rejected"]}
-    assert judged and not judged & set(trim["dropped_observation_ids"])                        # TrailSignal judged exactly what was sent
+    assert judged == {f"obs_{i}" for i in range(40)}                                          # TrailSignal judged the whole resubmitted receipt
     assert st.status == "completed", (st.status, st.gap, st.failure)
 
 

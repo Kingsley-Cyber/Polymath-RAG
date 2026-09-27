@@ -285,6 +285,11 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
     if step["step_type"] == "HARNESS_ACTION":
         # a HarnessResearchReceiptV1: provenance recorded, nothing admitted yet (TrailSignal admission is the next automatic step)
         rec = dict(sub["payload"])
+        too_large = _receipt_too_large(conn, run_id, state, m, step, rec)
+        if too_large:
+            receipt = _receipt(step, "rejected", started, evidence_ids=[], model=rec.get("harness_id") or who, validation={"ok": False, "errors": too_large})
+            store.finish_step(conn, run_id, row["sequence"], status="issued", receipt=receipt)      # the step stays open for a smaller receipt
+            raise SubmissionRejected(too_large)
         rhash = stable_hash(rec)
         store.record_receipt(conn, step["harness_action"]["action_id"], rec, rhash)
         output = {**rec, "_harness_action_id": step["harness_action"]["action_id"], "_receipt_hash": rhash}
@@ -321,6 +326,33 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
     store.finish_step(conn, run_id, row["sequence"], status="accepted", receipt=receipt, output=output, submission=sub)
     store.save_state(conn, new_state)
     return status(conn, run_id, directory)
+
+
+def _receipt_too_large(conn, run_id: str, state: RunState, m: Manifest, step: dict[str, Any], receipt: dict[str, Any]) -> list[str]:
+    """bug hunt B-05, owner decision 2026-09-26 ("keep refusal for oversized receipts, not trimming"): when the next step admits this
+    receipt, build the `evidence.admit` request it will send — the payload the worker assembles (its stage, the hypotheses it sends, every
+    admitted id, the action id, the receipt) in the envelope of that step — and measure it by TrailSignal's own rule. Over the limit: the
+    refusal names the size, the limit and how many observations must go, and the step stays open for a smaller receipt. [] = it fits."""
+    nxt = m.step(step["step_id"]).get("next")
+    admit = m.steps.get(nxt) if nxt else None
+    if not admit or admit.get("type") != "EXTERNAL_OPERATION" or (admit.get("external") or {}).get("operation_kind") != "evidence.admit":
+        return []
+    cfg = admit.get("config") or {}
+    hyps = H.context_view(store.current_hypotheses(conn, run_id))
+    if cfg.get("hypotheses_from") == "context.semantics.trail":             # the closed extended wire, as the worker sends it
+        hyps = list(_semantics(conn, run_id, state, m).get("trail") or []) or hyps
+    payload = {"stage": cfg.get("stage"), "hypotheses": hyps, "admitted_evidence_ids": [r["id"] for r in store.admitted_evidence_refs(conn, run_id)],
+               "action_id": step["harness_action"]["action_id"], "receipt": {k: v for k, v in receipt.items() if not str(k).startswith("_")}}
+    over = trail_client.admission_overflow(payload, key=trail_client.identifier(run_id, nxt, str(state.sequence + 1)), run_ref=run_id,
+                                           registry_snapshot_id=(_registry_snapshot(state) or {}).get("snapshot_id"))
+    if not over:
+        return []
+    fit = over["observations_that_fit"]
+    keep = (f"keep at most {fit} of its {over['observations']} observations (drop at least {over['observations'] - fit}, with the sources "
+            "only they cite)" if fit is not None else "cite fewer sources and merge repeated limitations")
+    message = (f"RECEIPT_TOO_LARGE: TrailSignal's admission of this receipt would be a {over['bytes']}-byte request and its limit is "
+               f"{over['limit_bytes']} bytes: {keep}, then resubmit (nothing is trimmed for you)")
+    return [message]
 
 
 def _apply_theta(conn, run_id: str, step: dict[str, Any], m: Manifest, state: RunState, payload: dict[str, Any], now: str) -> tuple[dict[str, Any], list[str]]:

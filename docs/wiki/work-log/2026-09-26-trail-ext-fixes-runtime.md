@@ -34,16 +34,18 @@ Batch A (crashes)
   `tool_trace[].query_count` must be integers, not `4.0`. The receipt rule the step carries now says "UTC ending in Z" and "4, not 4.0".
   Explicit checks, not a new dependency (the runtime venv has no `rfc3339-validator`, so the schema's `date-time` format is unchecked).
 - **B-05** (a receipt within the manifest's own budget exceeded TrailSignal's 64 KB request ceiling; the run failed after the research).
-  DESIGN CHOICE: trim at admission, counted and recorded. `trail_client.fit_admission_request` keeps the receipt's observations in the
-  harness's order up to what fits TrailSignal's own measure (the canonical request plus the model defaults Trail adds, plus the
-  JSON-RPC wrapper: measured on the pinned core at about 26 B per observation without relations, 200 B per hypothesis and 170 B per
-  payload; the headroom exceeds that), drops the rest and every source only they named, and returns the record
-  `{reason: REQUEST_CEILING, limit_bytes, observations_submitted, observations_sent, dropped_observation_ids, dropped_source_ids}`. The
-  worker stores it as `receipt_trimmed` on the admit step's output and logs a warning; the stored receipt is never changed; TrailSignal
-  judges exactly what was sent. A payload whose overflow is not the observations is left as it was (the existing error names it).
-  Not chosen: refusing the receipt at submit. The exact admit request (the hypotheses wire, every admitted id) is assembled later by
-  the worker, so a submit-time check would be an estimate in both directions; enforcing `budget.max_observations / max_sources` at
-  submit changes what a harness may send and is left to the owner.
+  OWNER DECISION 2026-09-26: "keep refusal for oversized receipts, not trimming" — this replaces the first design (trim at admission,
+  counted as `receipt_trimmed`), which is gone. Now:
+  - at submit, when the next step admits the receipt (`evidence.admit`), `service._receipt_too_large` builds the request that step will
+    send (its stage, the hypotheses it sends — the extended wire when it opts in —, every admitted id, the action id, the receipt, in that
+    step's envelope) and `trail_client.admission_overflow` measures it by TrailSignal's own rule (the canonical request plus the model
+    defaults Trail adds and the JSON-RPC wrapper: measured on the pinned core at about 26 B per observation without relations, 200 B per
+    hypothesis, 170 B per payload; the headroom exceeds that). Over the limit, the receipt is refused (`RECEIPT_TOO_LARGE`) naming the
+    request's size, the limit and how many observations must go (the most that would fit, in the harness's order, with only the sources
+    they cite — exact under the rule); the step stays `awaiting_harness` for a smaller receipt;
+  - at admission, a receipt that still measures too big (impossible after the submit check) ends the run with the typed gap
+    `RECEIPT_TOO_LARGE`; nothing is trimmed or sent.
+  Enforcing `budget.max_observations / max_sources` at submit, and sizing the manifest budgets below the ceiling, stay owner decisions.
 - **B-06** (no exception boundary in `process_one` / `main`). `process_one` rolls a raising unit back; a database failure
   (`psycopg.OperationalError` / `InterfaceError`) goes up to the loop, which backs off and claims again; anything else ends the run
   `failed` with a typed `STEP_RUNTIME_ERROR` in a fresh transaction, releases the lease and returns, so the next claim takes the next run.
@@ -122,6 +124,13 @@ Follow-ups the orchestrating session routed here from the other groups (separate
   - Where TrailSignal decides, the PINNED core under `governance/trail/` is asked: `HarnessResearchReceiptV1` (B-03), Trail's canonical
     request measure `canonical_text(BoundedResearchRequestV1)` (B-05), `ResearchPayloadV1` and the gap compiler's `EvidenceGap`
     (B-21 / B-22 / B-26), and the embedded core end to end (B-03, B-05, B-21, B-22 / B-26, B-24).
+- B-05 after the owner decision: the trim tests were REPLACED (not weakened) by four: `test_b05_an_admission_over_the_ceiling_is_measured_by_
+  trails_own_rule_and_names_how_many_observations_fit` (what the refusal says fits, fits by TrailSignal's own `canonical_text` measure and
+  in the JSON-RPC body; one observation more does not), `test_b05_an_admission_that_fits_measures_no_overflow`,
+  `test_b05_an_oversized_receipt_that_reaches_admission_ends_typed_and_is_never_trimmed_or_sent` and, end to end on the embedded core,
+  `test_b05_a_budgeted_receipt_over_the_ceiling_is_refused_at_submit_and_the_smaller_one_is_admitted` (80 observations refused with the
+  size, the limit and the count; the step stays open; the 40-observation receipt is admitted whole; the run completes). All four failed
+  on the trim version (no measure; trimmed and sent; accepted at submit).
 - Follow-ups: `test_b19_a_public_page_declared_as_a_no_web_class_is_refused_at_submit` failed on the code before it (accepted);
   `test_b13_the_view_shows_every_open_gap_before_its_cut_and_counts_them` and `test_b11_field_evidence_carries_trails_relation_to_each_hypothesis`
   failed before theirs (12 closed gaps shown, no open one; the relations dropped).
@@ -163,7 +172,7 @@ Follow-ups the orchestrating session routed here from the other groups (separate
 - B-25, worker half: the step worker still holds the run's row lock across its HTTP calls; a cancel now waits in a thread (never on the
   event loop) until the step commits. Restructuring the unit is a design decision.
 - B-05: enforcing the harness budget at submit (`max_observations`, `max_sources`) and sizing the manifest budgets below the ceiling are
-  owner decisions; until then an oversized receipt is trimmed, and the trim is recorded.
+  owner decisions; an oversized receipt is refused at submit (owner decision 2026-09-26), never trimmed.
 - B-23: the LEGACY `trail.product_discovery` manifest keeps `max_calls: 3` on F_retrieve / F_graph. Its identity is mirrored by the
   `contracts/adapter/v1` examples, so bumping it is a contract-example change; not done here.
 - B-03: `shared/polymath_shared/adapter/harness_guide.py:86` (the acquisition group's file) still says "ISO-8601"; it should say UTC

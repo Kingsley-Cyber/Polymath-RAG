@@ -148,7 +148,16 @@ def _rpc_body_bytes(req: dict) -> int:
     return len(json.dumps(body, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))
 
 
-def test_b05_an_admission_over_the_ceiling_is_trimmed_to_fit_trails_own_measure_and_the_trim_is_recorded():
+def _keep(payload: dict, n: int) -> dict:
+    """The receipt's first `n` observations with only the sources they cite (what the refusal asks a harness to resubmit)."""
+    rec = payload["receipt"]
+    cited = {o["source_id"] for o in rec["observations"][:n]}
+    return {**payload, "receipt": {**rec, "observations": rec["observations"][:n], "sources": [x for x in rec["sources"] if x["source_id"] in cited]}}
+
+
+def test_b05_an_admission_over_the_ceiling_is_measured_by_trails_own_rule_and_names_how_many_observations_fit():
+    """Owner decision 2026-09-26 ("keep refusal for oversized receipts, not trimming"): the measure behind the submit-time refusal. What
+    it says fits, fits by TrailSignal's OWN measure (and in the JSON-RPC body); one observation more does not."""
     pytest.importorskip("packageurl", reason="TrailSignal's platform contracts need packageurl")
     from trail_signal.contexts.workflow.application.research_operations import (
         canonical_text,
@@ -160,25 +169,34 @@ def test_b05_an_admission_over_the_ceiling_is_trimmed_to_fit_trails_own_measure_
     before = copy.deepcopy(payload)
     with pytest.raises(ValueError, match="65536"):                                              # the defect: a budgeted receipt cannot be sent at all
         TC.bounded_request("evidence.admit", payload, key=KEY, run_ref=RUN, registry_snapshot_id=SNAP)
-    fitted, trimmed = TC.fit_admission_request(payload, key=KEY, run_ref=RUN, registry_snapshot_id=SNAP)
-    assert payload == before                                                                    # the stored receipt is never mutated
-    req = TC.bounded_request("evidence.admit", fitted, key=KEY, run_ref=RUN, registry_snapshot_id=SNAP)
+    over = TC.admission_overflow(payload, key=KEY, run_ref=RUN, registry_snapshot_id=SNAP)
+    assert payload == before                                                                    # nothing is trimmed, nothing mutated
+    assert over["bytes"] > over["limit_bytes"] == TC.REQUEST_BYTES_MAX and over["observations"] == 80 and 0 < over["observations_that_fit"] < 80
+    fit = over["observations_that_fit"]
+    req = TC.bounded_request("evidence.admit", _keep(payload, fit), key=KEY, run_ref=RUN, registry_snapshot_id=SNAP)
     assert len(canonical_text(BoundedResearchRequestV1.model_validate(req)).encode("utf-8")) <= TC.REQUEST_BYTES_MAX   # Trail's measure, defaults included
     assert _rpc_body_bytes(req) <= TC.REQUEST_BYTES_MAX                                         # and the JSON-RPC body the client sends
-    kept = fitted["receipt"]["observations"]
-    assert 0 < len(kept) < 80 and kept == payload["receipt"]["observations"][:len(kept)]       # the harness's order: the tail is what is dropped
-    dropped = [o["observation_id"] for o in payload["receipt"]["observations"][len(kept):]]
-    assert trimmed["dropped_observation_ids"] == dropped and trimmed["observations_submitted"] == 80 and trimmed["observations_sent"] == len(kept)
-    assert trimmed["limit_bytes"] == TC.REQUEST_BYTES_MAX and trimmed["reason"] == "REQUEST_CEILING"
-    listed = {s["source_id"] for s in fitted["receipt"]["sources"]}
-    assert {o["source_id"] for o in kept} <= listed                                              # no observation names an unlisted source
-    assert _trail_refuses(fitted["receipt"]) is False
+    assert TC.admission_overflow(_keep(payload, fit), key=KEY, run_ref=RUN, registry_snapshot_id=SNAP) is None
+    assert TC.admission_overflow(_keep(payload, fit + 1), key=KEY, run_ref=RUN, registry_snapshot_id=SNAP) is not None   # the count is exact
+    assert _trail_refuses(_keep(payload, fit)["receipt"]) is False
 
 
-def test_b05_an_admission_that_fits_is_sent_untouched():
-    payload = _admit_payload(10)
-    fitted, trimmed = TC.fit_admission_request(payload, key=KEY, run_ref=RUN, registry_snapshot_id=SNAP)
-    assert trimmed is None and fitted == payload
+def test_b05_an_admission_that_fits_measures_no_overflow():
+    assert TC.admission_overflow(_admit_payload(10), key=KEY, run_ref=RUN, registry_snapshot_id=SNAP) is None
+
+
+def test_b05_an_oversized_receipt_that_reaches_admission_ends_typed_and_is_never_trimmed_or_sent(worker, monkeypatch):
+    calls: list = []
+    monkeypatch.setattr(worker, "_TRAIL", TC.TrailMCPClient("http://trail.test/mcp", "token",
+                                                           transport=httpx.MockTransport(lambda r: calls.append(r) or httpx.Response(500))))
+    payload = _admit_payload(80)
+    rec = payload["receipt"]
+    state = RunState(run_id=RUN, adapter_id=ECOM.adapter_id, status="running", output_order=("P_reality",),
+                     outputs={"P_reality": {**rec, "_harness_action_id": rec["action_id"], "_receipt_hash": "0" * 64}})
+    step = {"run_id": RUN, "step_id": "Q_admit", "sequence": 40, "context": {"hypotheses": payload["hypotheses"], "registry_snapshot": {"snapshot_id": SNAP},
+                                                                              "admitted_evidence_ids": payload["admitted_evidence_ids"]}}
+    out = worker.exec_external(step, state, ECOM)
+    assert out["gap"]["code"] == "RECEIPT_TOO_LARGE" and "65536" in out["gap"]["message"] and calls == []    # the defect: trimmed and sent
 
 
 # ═══════════════════════════════════════════════════════════ batch B

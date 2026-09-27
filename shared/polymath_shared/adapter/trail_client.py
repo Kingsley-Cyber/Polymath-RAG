@@ -183,40 +183,37 @@ def _trail_measure_headroom(payload: dict[str, Any]) -> int:
     return 1024 + 256 * len(payload.get("hypotheses") or []) + 32 * len((payload.get("receipt") or {}).get("observations") or [])
 
 
-def fit_admission_request(payload: dict[str, Any], *, key: str, run_ref: str, registry_snapshot_id: str | None = None,
-                          purpose_ref: str = PURPOSE_REF) -> tuple[dict[str, Any], dict[str, Any] | None]:
-    """bug hunt B-05: an `evidence.admit` payload whose request would pass TrailSignal's ceiling (a receipt within the manifest's own
-    harness budget can) keeps the receipt's observations in the harness's order up to what fits, drops the rest and every source only
-    they named, and RECORDS what it dropped — admission then judges exactly what was sent, and the run goes on instead of failing after
-    the research was accepted. A payload that fits (or that no trim of observations could make fit) is returned untouched. Pure: the
-    stored receipt is never mutated."""
-    def fits(p: dict[str, Any]) -> bool:
+def admission_overflow(payload: dict[str, Any], *, key: str, run_ref: str, registry_snapshot_id: str | None = None,
+                       purpose_ref: str = PURPOSE_REF) -> dict[str, Any] | None:
+    """bug hunt B-05, owner decision 2026-09-26 ("keep refusal for oversized receipts, not trimming"): None when the `evidence.admit`
+    request of this payload fits TrailSignal's ceiling by Trail's OWN measure (the canonical request plus the model defaults Trail adds and
+    the JSON-RPC wrapper); else what a harness needs to resubmit — `bytes`, `limit_bytes`, `observations`, and `observations_that_fit`:
+    the most observations, in the harness's order and with only the sources they cite, whose request fits (None when even none would:
+    the overflow is not the observations). Pure: nothing is trimmed, and the payload is never mutated."""
+    def size(p: dict[str, Any]) -> int:
         req = _envelope("evidence.admit", p, key=key, run_ref=run_ref, registry_snapshot_id=registry_snapshot_id, purpose_ref=purpose_ref)
-        return _canonical_bytes(req) + _trail_measure_headroom(p) <= REQUEST_BYTES_MAX
+        return _canonical_bytes(req) + _trail_measure_headroom(p)
 
-    rec = payload.get("receipt")
-    if not isinstance(rec, dict) or fits(payload):
-        return payload, None
-    observations = [o for o in rec.get("observations") or []]
+    measured = size(payload)
+    if measured <= REQUEST_BYTES_MAX:
+        return None
+    rec = payload["receipt"] if isinstance(payload.get("receipt"), dict) else {}
+    observations = list(rec.get("observations") or [])
     named = {o.get("source_id") for o in observations if isinstance(o, dict)}
 
     def keep(n: int) -> dict[str, Any]:
         still = {o.get("source_id") for o in observations[:n] if isinstance(o, dict)}
-        sources = [s for s in rec.get("sources") or [] if not (isinstance(s, dict) and s.get("source_id") in named - still)]
+        sources = [src for src in rec.get("sources") or [] if not (isinstance(src, dict) and src.get("source_id") in named - still)]
         return {**payload, "receipt": {**rec, "observations": observations[:n], "sources": sources}}
 
-    if not fits(keep(0)):
-        return payload, None                     # the observations are not what is too large: bounded_request reports it unchanged
-    lo, hi = 0, len(observations)                # invariant: keep(lo) fits, keep(hi) does not
-    while hi - lo > 1:
-        mid = (lo + hi) // 2
-        lo, hi = (mid, hi) if fits(keep(mid)) else (lo, mid)
-    fitted = keep(lo)
-    sent_sources = {s.get("source_id") for s in fitted["receipt"]["sources"] if isinstance(s, dict)}
-    return fitted, {"reason": "REQUEST_CEILING", "limit_bytes": REQUEST_BYTES_MAX, "observations_submitted": len(observations), "observations_sent": lo,
-                    "dropped_observation_ids": [str(o.get("observation_id")) for o in observations[lo:] if isinstance(o, dict)],
-                    "dropped_source_ids": sorted(str(s.get("source_id")) for s in rec.get("sources") or []
-                                                 if isinstance(s, dict) and s.get("source_id") not in sent_sources)}
+    fit: int | None = None
+    if rec and size(keep(0)) <= REQUEST_BYTES_MAX:
+        lo, hi = 0, len(observations)            # invariant: keep(lo) fits, keep(hi) does not
+        while hi - lo > 1:
+            mid = (lo + hi) // 2
+            lo, hi = (mid, hi) if size(keep(mid)) <= REQUEST_BYTES_MAX else (lo, mid)
+        fit = lo
+    return {"bytes": measured, "limit_bytes": REQUEST_BYTES_MAX, "observations": len(observations), "observations_that_fit": fit}
 
 
 def operation_reference(ref: dict[str, Any], *, minimum_revision: int = 0) -> dict[str, Any]:
