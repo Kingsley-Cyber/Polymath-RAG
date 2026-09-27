@@ -1,0 +1,148 @@
+/* DEEP-RESEARCH-MODE-V1 §11 (DR7) — the research experience: the plan card, the live research view, the report's tabs and
+   evidence, the audit's marks, the actions and the reports list. Colors, type and spacing come only from tokens.css; at phone
+   width every row wraps, so nothing here scrolls the page sideways. */
+
+/* ── the plan card (DR7a) ────────────────────────────────────────────────── */
+.plan-card {
+  border: 1px solid var(--border); border-radius: var(--radius-2); background: var(--surface);
+  padding: var(--space-4); margin: 0 0 var(--space-3); display: flex; flex-direction: column; gap: var(--space-3);
+  font-size: var(--fs-md); line-height: var(--lh); white-space: normal;
+}
+.plan-card__title { margin: 0; font-size: var(--fs-lg); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.plan-card__meta { margin: 0; color: var(--text-2); font-size: var(--fs-sm); display: flex; flex-wrap: wrap; gap: 2px 14px; }
+.plan-card__meta strong { color: var(--text); font-weight: 500; }
+.plan-card__goals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.plan-goal { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--space-2); align-items: start; }
+.plan-goal__n {
+  width: 24px; height: 24px; margin-top: 6px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent); font-size: var(--fs-xs); font-weight: 600;
+}
+.plan-goal__body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.plan-goal__text { width: 100%; resize: vertical; min-height: 2.4em; font-size: var(--fs-md); line-height: var(--lh); }
+.plan-goal__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0; }
+.plan-goal__row select { padding: 4px 8px; font-size: var(--fs-xs); max-width: 100%; }
+.plan-goal__query { flex: 1 1 180px; min-width: 0; font-size: var(--fs-xs); overflow-wrap: anywhere; }
+.plan-goal__remove { margin-left: auto; }
+.plan-goal__remove:disabled { opacity: .4; cursor: not-allowed; }
+.plan-card__add { align-self: flex-start; }
+.plan-card__problem { margin: 0; color: var(--warn); font-size: var(--fs-sm); }
+.plan-card__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.plan-card__count { font-variant-numeric: tabular-nums; }
+.plan-card__hint { font-size: var(--fs-xs); }
+.plan-card__skip { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-sm); color: var(--text-2); cursor: pointer; }
+.plan-card__skip input { margin: 0; accent-color: var(--accent); }
+.plan-card--loading .skeleton { padding: 0; }
+
+/* ── the live research view (DR7c) ───────────────────────────────────────── */
+.research-live {
+  border: 1px solid var(--border-soft); border-radius: var(--radius-2); background: var(--surface);
+  padding: 10px var(--space-3); margin: 0 0 var(--space-3); display: flex; flex-direction: column; gap: var(--space-2);
+  font-size: var(--fs-sm); line-height: var(--lh); white-space: normal;
+}
+.research-live__head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.research-live__toggle {
+  appearance: none; border: 0; background: transparent; padding: 0; font: inherit; color: var(--text); font-weight: 600;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-width: 0; text-align: left; border-radius: var(--radius-1);
+}
+.research-live--live .research-live__status { color: var(--accent); }
+.research-live__counters, .research-live__time { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.research-live__actions { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.research-live__actions .btn { padding: 4px 10px; font-size: var(--fs-xs); }
+.research-live__step { margin: 0; color: var(--text-3); font-size: var(--fs-xs); overflow-wrap: anywhere; }
+.research-live__note { margin: 0; color: var(--text-2); font-size: var(--fs-xs); }
+
+.research-goals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.research-goal { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.research-goal__icon { display: grid; place-items: center; color: var(--ok); }
+.research-goal__dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--border-strong); }
+.research-goal__text { min-width: 0; overflow-wrap: anywhere; color: var(--text); }
+.research-goal__move { color: var(--text-3); font-size: var(--fs-xs); }
+.research-goal__cov { display: inline-flex; align-items: center; gap: 8px; color: var(--text-2); font-size: var(--fs-xs); white-space: nowrap; }
+.meter { width: 56px; height: 6px; border-radius: var(--radius-pill); background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.meter__fill { display: block; height: 100%; background: var(--accent); }
+.research-goal--covered .meter__fill { background: var(--ok); }
+
+.research-feed__toggle { font-size: var(--fs-xs); color: var(--text-2); }
+.research-feed__list {
+  list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px;
+  max-height: 260px; overflow-y: auto;
+}
+.research-feed__item { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; font-size: var(--fs-xs); }
+.research-feed__icon { color: var(--ok); text-align: center; }
+.research-feed__item--empty .research-feed__icon, .research-feed__item--failed .research-feed__icon { color: var(--text-3); }
+.research-feed__what { min-width: 0; overflow-wrap: anywhere; color: var(--text); }
+.research-feed__move { font-weight: 600; }
+.research-feed__found { color: var(--text-3); white-space: nowrap; }
+.research-feed__note { padding-left: 22px; color: var(--text-3); font-size: var(--fs-xs); }
+
+/* ── the report (DR7d) ───────────────────────────────────────────────────── */
+.deep-report { white-space: normal; }
+.tabs { display: flex; gap: 2px; margin: 0 0 var(--space-3); border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; }
+.tab {
+  appearance: none; border: 0; background: transparent; color: var(--text-2); font: inherit; font-size: var(--fs-sm); font-weight: 500;
+  padding: 8px 12px; cursor: pointer; white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab[aria-selected="true"] { color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+.tabpanel { min-width: 0; }
+
+.tldr {
+  margin: 0 0 var(--space-4); padding: 10px 14px; border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: var(--radius-1); background: var(--surface-2);
+}
+.tldr__label { margin-bottom: 4px; color: var(--accent); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .04em; }
+.audit-note { margin: 0 0 var(--space-3); color: var(--text-2); font-size: var(--fs-sm); }
+.uncited { text-decoration: underline dotted var(--warn); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.uncited__note {
+  display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 4px; vertical-align: 1px; white-space: nowrap;
+  font-size: 11px; font-weight: 500; font-style: normal; line-height: 1.6; color: var(--warn); background: var(--warn-soft);
+}
+.deep-report .counter-evidence { margin: var(--space-3) 0 0; color: var(--text-2); font-size: var(--fs-sm); }
+
+.evidence { display: flex; flex-direction: column; gap: var(--space-5); }
+.evidence-goal { display: flex; flex-direction: column; gap: 8px; }
+.evidence-goal__title { margin: 0; font-size: var(--fs-lg); font-weight: 600; line-height: 1.35; }
+.evidence-goal__meta { margin: 0; font-size: var(--fs-xs); }
+.findings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.finding { font-size: var(--fs-md); line-height: var(--lh-read); overflow-wrap: anywhere; }
+.conf {
+  display: inline-block; margin-right: 8px; padding: 0 8px; border: 1px solid transparent; border-radius: var(--radius-pill);
+  font-size: var(--fs-xs); font-weight: 500; line-height: 1.8; vertical-align: 1px; white-space: nowrap;
+}
+.conf--strong { color: var(--ok); background: var(--ok-soft); }
+.conf--single { color: var(--text-2); background: var(--neutral-soft); border-color: var(--border); }
+.conf--contested { color: var(--warn); background: var(--warn-soft); }
+.conf--other { color: var(--text-2); background: var(--surface-2); border-color: var(--border); }
+.counter { padding: 2px 0 2px 12px; border-left: 3px solid var(--warn); }
+.counter__title { margin: 0 0 6px; font-size: var(--fs-sm); font-weight: 600; }
+
+.book-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.book { padding: 10px 12px; border: 1px solid var(--border-soft); border-radius: var(--radius-2); }
+.book__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; font-size: var(--fs-md); }
+.book__head strong { overflow-wrap: anywhere; }
+.book__passages { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); }
+
+.method { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-md); }
+
+.next-chips { margin-top: var(--space-4); display: flex; flex-direction: column; gap: 6px; }
+.next-chips__list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.next-chip { max-width: 100%; text-align: left; overflow-wrap: anywhere; }
+.report-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.report-actions .btn { padding: 5px 10px; font-size: var(--fs-xs); }
+
+/* ── the reports list (DR7e) and the Research section's tabs ─────────────── */
+.research-tabs { margin: 0 0 var(--space-4); }
+.report-row { display: flex; flex-direction: column; gap: 6px; width: 100%; text-align: left; cursor: pointer; font: inherit; color: var(--text); }
+.report-row:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.report-row__title { font-weight: 500; overflow-wrap: anywhere; }
+.report-row__meta { font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.reports-note { margin: 0 0 var(--space-3); font-size: var(--fs-sm); }
+
+@media (max-width: 759px) {
+  .research-goal { grid-template-columns: 16px minmax(0, 1fr); }
+  .research-goal__cov { grid-column: 2; }
+  .research-feed__item { grid-template-columns: 14px minmax(0, 1fr); }
+  .research-feed__found { grid-column: 2; white-space: normal; }
+  .research-live__actions { margin-left: 0; }
+  .plan-card { padding: var(--space-3); }
+}

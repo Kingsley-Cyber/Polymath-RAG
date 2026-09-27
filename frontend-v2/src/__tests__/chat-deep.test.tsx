@@ -56,6 +56,7 @@ beforeEach(() => {
   const dom = (globalThis as unknown as { jsdom: { window: Window } }).jsdom;
   vi.stubGlobal("localStorage", dom.window.localStorage);
   localStorage.clear();
+  localStorage.setItem("polymath.deep-research.skip-plan", "1");   // DR7a: these cases pin the direct send (the plan card's own: deep-research-ui)
   posts = [];
   deepStatus = 200;
   frames = FRAMES;

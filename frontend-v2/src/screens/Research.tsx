@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { api, ApiError } from "../lib/api";
+import type { ChatSession } from "../lib/chatStore";
 import type { Qualification, RunSummary, RunView } from "../lib/contracts";
 import { useAsync } from "../lib/useAsync";
+import { ReportsList, ResearchTabs, type ResearchTab } from "../components/deep/ReportsList";
 import { useConfirm } from "../ui/Dialog";
 import { Icon } from "../ui/icons";
 import { EmptyState, ErrorState, Skeleton } from "../ui/states";
@@ -44,12 +46,19 @@ function tone(status: string, outcome = ""): "ready" | "degraded" | "blocked" | 
   return "unknown";
 }
 
-export function Research() {
+/** DR7e: two tabs — the governed runs, and this browser's deep research reports (read from the chat history). */
+export function Research({ sessions, onOpenReport }: {
+  sessions?: ChatSession[];
+  onOpenReport?: (chatId: string, turnIndex: number) => void;
+}) {
   const [open, setOpen] = useState<string | null>(null);
-  return open ? <RunPage runId={open} onBack={() => setOpen(null)} /> : <RunList onOpen={setOpen} />;
+  const [tab, setTab] = useState<ResearchTab>("runs");
+  const tabs = <ResearchTabs tab={tab} onTab={setTab} />;
+  if (open) return <RunPage runId={open} onBack={() => setOpen(null)} />;
+  return tab === "reports" ? <ReportsList sessions={sessions} onOpen={onOpenReport} tabs={tabs} /> : <RunList onOpen={setOpen} tabs={tabs} />;
 }
 
-function RunList({ onOpen }: { onOpen: (id: string) => void }) {
+function RunList({ onOpen, tabs }: { onOpen: (id: string) => void; tabs?: ReactNode }) {
   const [nonce, setNonce] = useState(0);
   const runs = useAsync((s) => api.adapterRuns(50, s), [nonce]);
   return (
@@ -61,6 +70,7 @@ function RunList({ onOpen }: { onOpen: (id: string) => void }) {
         </div>
         <button type="button" className="btn" onClick={() => setNonce((n) => n + 1)}><Icon name="refresh" /> Refresh</button>
       </div>
+      {tabs}
       {runs.data == null && !runs.error ? (
         <div className="card"><Skeleton rows={4} label="Loading runs…" /></div>
       ) : runs.error && runs.data == null ? (

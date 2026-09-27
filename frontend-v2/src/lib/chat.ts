@@ -1,6 +1,7 @@
 /** Chat turn state machine over the `/chat/stream` SSE frames. */
 import { chatStream, type SseFrame } from "./api";
-import type { AnswerFrame, RetrievalReceipt } from "./contracts";
+import type { AnswerFrame, DeepCoverage, RetrievalReceipt } from "./contracts";
+import type { DeepRunState } from "./deep";
 
 /** One pipeline step from a `phase` frame. `data` keeps the raw fields so the
  *  process rail can show per-step detail (chunks, items, corpora, model…). */
@@ -28,6 +29,10 @@ export interface Turn {
   done: boolean;
   /** DEEP-RESEARCH-MODE-V1: the report's resolved citations and the run's counts (null for a chat answer). */
   deep?: DeepAnswer | null;
+  /** DR7: the research experience's own state (plan card, confirmed goals, start time, Finish now). Absent on older turns. */
+  deepRun?: DeepRunState | null;
+  /** DR7c: the latest `coverage` frame, each goal's findings and books so far. */
+  deepCoverage?: DeepCoverage | null;
 }
 
 export interface DeepCitation { cid: string; id?: string; title?: string; source?: string; text?: string; corpus_id?: string }
@@ -129,6 +134,10 @@ export async function runTurn(
           receipt: a.retrieval ?? null,
           latencyMs: a.latency_ms ?? Math.round(performance.now() - t0),
         });
+      } else if (frame.event === "coverage") {
+        // DR7c: after each research level, each goal's findings and books so far (the live view's checklist)
+        const d = (frame.data ?? {}) as DeepCoverage;
+        if (Array.isArray(d.goals)) onUpdate({ deepCoverage: d });
       } else if (frame.event === "error") {
         onUpdate({ error: JSON.stringify(frame.data).slice(0, 400) });
       } else if (frame.event === "reasoning") {

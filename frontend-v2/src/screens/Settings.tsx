@@ -7,6 +7,7 @@ import {
   auth, copyText, privateLibrary, type ApiKey, type CreatedKey, type Friend, type Me,
 } from "../lib/auth";
 import { ChangePassword } from "./Login";
+import { DeepResearchSettings } from "../components/deep/DeepResearchSettings";
 
 function message(err: unknown): string {
   return err instanceof ApiError ? err.detailMessage : String(err);
@@ -349,6 +350,7 @@ export function Settings({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: 
       </div>
       <div className="stack">
         <AppearanceCard />
+        <DeepResearchSettings />
         {me.local && me.is_owner && <OwnerWebPassword initiallySet={!!me.web_password_set} />}
         {!me.local && (
           <div className="card stack">

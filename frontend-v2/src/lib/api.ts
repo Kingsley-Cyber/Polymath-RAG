@@ -7,7 +7,7 @@ import type {
   CompareResponse, ControlPlane, Corpus, DocSummary, DocumentsResponse, GraphEntities,
   GraphRelationships, LlmProvider, LlmTestResult, PoolLanes, ProviderUpsertBody,
   ReasoningMode, RetrieveResponse, ReviewResponse, SemanticReadiness, Synthesizer,
-  UploadResult, RunSummary, RunView } from "./contracts";
+  UploadResult, RunSummary, RunView, DeepResearchPlan } from "./contracts";
 
 export class ApiError extends Error {
   constructor(readonly status: number, readonly path: string, readonly body: string) {
@@ -184,6 +184,11 @@ export const api = {
     question: string; answer: string; citations: string[];
     evidence: unknown[]; retrieval_meta: Record<string, unknown>; reviewer?: string;
   }, s?: AbortSignal) => post<ReviewResponse>("/review", body, s),
+  // DEEP-RESEARCH-MODE-V1 DR7a: the plan card's plan (one model call; no run, outside the one-run lock)
+  deepResearchPlan: (body: { question: string; corpus_id: string; preset: string; mode?: string }, s?: AbortSignal) =>
+    post<DeepResearchPlan>("/research/deep/plan", body, s),
+  // DR7c: Finish now — the caller's live run stops searching and writes its report (202; 404 when no run is live)
+  deepResearchFinish: (s?: AbortSignal) => post<{ status?: string }>("/research/deep/finish", {}, s),
 };
 
 /* ── SSE ──────────────────────────────────────────────────────────────────── */

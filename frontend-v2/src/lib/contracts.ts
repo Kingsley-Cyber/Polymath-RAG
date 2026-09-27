@@ -343,3 +343,28 @@ export interface RunView {
   report?: { available: boolean };                 // T5: GET /adapter/{id}/report exists for this run's adapter
   registry?: RunRegistry | null;
 }
+
+/* ── DEEP-RESEARCH-MODE-V1 §11.3 (DR7): the plan card, coverage frames, the report model, the sentence audit ─────────── */
+/** `POST /research/deep/plan` — the level-1 planner's queries with the controller's quota (one model call, no run). */
+export interface DeepResearchPlan {
+  intent?: string; evaluative?: boolean; preset?: string;
+  goals: DeepPlanGoal[];
+  estimate?: { searches?: number; llm_calls?: number; seconds?: number };
+}
+export interface DeepPlanGoal { id: string; goal: string; query: string; move: string }
+/** `event: coverage` after each level: each goal's findings and books so far (`documents` = a count, or the doc ids). */
+export interface DeepCoverage { goals: DeepCoverageGoal[]; documents?: number; passages?: number }
+export interface DeepCoverageGoal { id: string; learnings?: number; documents?: number | string[] }
+/** `result.meta.deep_research.report_model` — the deterministic evidence model (§11.4) the Evidence / Sources / Method tabs draw. */
+export interface DeepReportModel {
+  goals?: DeepReportGoal[]; counter?: DeepCounterFinding[];
+  open_questions?: (string | { question?: string; text?: string })[];
+  sources?: DeepReportSource[]; method?: Record<string, unknown>;
+}
+export interface DeepReportGoal { id: string; goal: string; findings?: DeepFinding[]; documents?: number | string[] }
+/** `confidence`: strong | single_source | contested (§11.4). */
+export interface DeepFinding { text: string; cids?: string[]; confidence?: string; move?: string }
+export interface DeepCounterFinding { text: string; cids?: string[]; goal_id?: string }
+export interface DeepReportSource { doc_id?: string; title?: string; cids?: string[]; findings?: number }
+/** `result.meta.deep_research.audit` — every prose sentence (headings skipped) checked for a valid [cN]; `uncited` = indices. */
+export interface DeepAudit { sentences?: number; cited?: number; uncited?: number[]; invalid_cids?: string[] }

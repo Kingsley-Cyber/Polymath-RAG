@@ -158,6 +158,13 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
     setDrawerOpen(false);
   }
 
+  /** DR7e: a report from Research → Reports opens its chat at its turn. */
+  const [focusTurn, setFocusTurn] = useState<{ chatId: string; index: number } | null>(null);
+  function openReport(chatId: string, index: number) {
+    setFocusTurn({ chatId, index });
+    openChat(chatId);
+  }
+
   function deleteChat(id: string) {
     stopStream(id);
     setSessions((xs) => xs.filter((s) => s.id !== id));
@@ -339,6 +346,8 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
                   corpusId={corpusId}
                   session={activeChat}
                   onUpdateTurns={(fn) => updateTurns(activeChat.id, fn)}
+                  focusTurn={focusTurn?.chatId === activeChat.id ? focusTurn.index : null}
+                  onFocusDone={() => setFocusTurn(null)}
                 />
               )}
               {screen === "compare" && <Compare corpusId={corpusId} />}
@@ -346,7 +355,7 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
               {screen === "control" && owner && <ControlPlane corpusId={corpusId} />}
               {screen === "graph" && <Graph corpusId={corpusId} />}
               {screen === "models" && owner && <Models />}
-              {screen === "research" && <Research />}
+              {screen === "research" && <Research sessions={sessions} onOpenReport={openReport} />}
               {screen === "settings" && <Settings me={me} onMeChanged={onMeChanged} onSignOut={onSignOut} />}
             </>
           )}
