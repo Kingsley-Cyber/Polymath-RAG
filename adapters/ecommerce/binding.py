@@ -177,10 +177,6 @@ def _op_lenses(req: dict[str, Any]) -> dict[str, Any]:
     return {"lenses": state["data"]["lenses"], "note": note}
 
 
-#: the interpretation's lists that population nomination reads as words
-_WORD_LISTS = ("frictions", "shared_predicates", "communities")
-
-
 def _op_validate_primitives(req: dict[str, Any]) -> dict[str, Any]:
     """The lineage law on a primitives submission (`lived_world.validate_primitives`, the same function the controller's submit
     path calls): interpretation objects are schema-valid and cite only corpus rows that exist, are CLASSIFIED and are not
@@ -194,14 +190,6 @@ def _op_validate_primitives(req: dict[str, Any]) -> dict[str, Any]:
         raise Refusal("PRIMITIVES_MISSING", "inputs.primitives must be the primitives object")
     state = _engine_state(corpus_evidence=_corpus_rows(ins.get("corpus_evidence")), row_relevance=ins.get("row_relevance"))
     errors = lived_world.validate_primitives(prim, state, graphmod.load_policies())
-    # population nomination reads these lists as WORDS (registry friction families, predicates, communities): a friction written as an
-    # object is a lawful-looking interpretation nomination cannot use — the law names it so reasoning can correct it (gap B-31)
-    for key in _WORD_LISTS:
-        words = prim.get(key)
-        if words is not None and not isinstance(words, list):
-            errors.append(f"primitives.{key}: expected a list of strings, got {type(words).__name__}")
-        elif words:
-            errors += [f"primitives.{key}[{i}]: expected a string, got {type(w).__name__} — write each item as plain words" for i, w in enumerate(words) if not isinstance(w, str)]
     out: dict[str, Any] = {"valid": not errors, "errors": errors}
     if not errors:
         lived_world.merge_relevance(state, prim.get("row_relevance") or {})
