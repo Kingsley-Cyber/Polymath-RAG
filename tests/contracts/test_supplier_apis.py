@@ -450,10 +450,12 @@ def test_at_most_three_result_pages_are_read():
 def test_cj_results_are_ranked_by_the_querys_words_and_cjs_order_breaks_ties():
     """SUPPLIER-RANK: CJ led with keyboard and welder's gloves for "touchscreen winter gloves"."""
     name = lambda p: p.get("nameEn")
-    ps = [{"nameEn": "Keyboard gloves"}, {"nameEn": "Arthritis pressure gloves"}, {"nameEn": "Velvet Gloves Flip Touch Screen Winter"},
-          {"nameEn": "Winter gloves touchscreen warm"}]
+    ps = [{"nameEn": "Keyboard gloves"}, {"nameEn": "Arthritis pressure gloves"}, {"nameEn": "Velvet Gloves Flip Touch Screen Half"},
+          {"nameEn": "Winter gloves touchscreen warm"}, {"nameEn": "Winter knitted gloves"}]
+    # "gloves" is on every name and decides nothing; "touchscreen" (rare, and "Touch Screen" holds it) outweighs "winter"
     assert [p["nameEn"] for p in CJ.rank_by_query(ps, "touchscreen winter gloves", name)] == [
-        "Winter gloves touchscreen warm", "Velvet Gloves Flip Touch Screen Winter", "Keyboard gloves", "Arthritis pressure gloves"]
+        "Winter gloves touchscreen warm", "Velvet Gloves Flip Touch Screen Half", "Winter knitted gloves", "Keyboard gloves",
+        "Arthritis pressure gloves"]
     assert CJ.rank_by_query(ps, "", name) == ps and CJ.rank_by_query([], "gloves", name) == []
     assert CJ.query_words("Touch-screen WINTER gloves, a 2nd time") == ("touch", "screen", "winter", "gloves", "2nd", "time")
 

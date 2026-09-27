@@ -20,6 +20,7 @@ Neither the key nor the token ever reaches a log, a result or an error text (`_s
 from __future__ import annotations
 
 import hashlib
+import math
 import re
 import threading
 import time
@@ -46,9 +47,9 @@ TOKEN_MARGIN_S = 600
 TOKEN_FALLBACK_TTL_S = 3600            # an expiry date CJ did not give or that does not parse: sign in again within the hour
 SEARCH_SIZE_MAX = 100
 #: SUPPLIER-RANK (live, 2026-09-27): CJ's "best match" for "touchscreen winter gloves" led with keyboard and welder's gloves, so a
-#: search asks CJ for a larger page (at least SEARCH_PAGE_MIN) and keeps first the products whose names hold the most of the
-#: query's words; CJ's own order decides ties
-SEARCH_PAGE_MIN = 50
+#: search asks CJ for a larger page (at least SEARCH_PAGE_MIN, the route's maximum) and keeps first the products whose names
+#: hold the query's rarest words; CJ's own order decides ties
+SEARCH_PAGE_MIN = 100
 _WORD = re.compile(r"[a-z0-9]+")
 
 
@@ -58,16 +59,19 @@ def query_words(query: str) -> tuple[str, ...]:
 
 
 def rank_by_query(products: list[dict[str, Any]], query: str, name_of) -> list[dict[str, Any]]:
-    """Products ordered by how many of the query's words their name holds (most first); CJ's own order within ties."""
+    """Products ordered by the query's words their names hold, each word weighted by how rare it is on this page (log(N / df)),
+    so a word every result carries ("gloves") decides nothing and a distinctive one ("winter") decides much; a name's spaces are
+    ignored, so "Touch Screen" holds "touchscreen". Ties keep CJ's own order (live, 2026-09-27: without the weights every
+    result tied at one word and keyboard gloves stayed first)."""
     words = query_words(query)
-    if not words:
+    if not words or not products:
         return list(products)
-
-    def score(product: dict[str, Any]) -> int:
-        name = str(name_of(product) or "").lower()
-        return sum(1 for w in words if w in name)
-    order = sorted(((-score(product), i) for i, product in enumerate(products)))
-    return [products[i] for _, i in order]
+    names = [str(name_of(product) or "").lower().replace(" ", "") for product in products]
+    df = {w: sum(1 for name in names if w in name) for w in words}
+    weight = {w: math.log((len(names) + 1) / (df[w] + 1)) for w in words}
+    scores = [sum(weight[w] for w in words if w in name) for name in names]
+    order = sorted(range(len(products)), key=lambda i: (-scores[i], i))
+    return [products[i] for i in order]
 AUTH_CODES = frozenset({1600001, 1600002, 1600003, 1601000})
 RATE_CODES = frozenset({1600200})
 QUOTA_CODES = frozenset({1600201, 16900500})
@@ -328,7 +332,7 @@ class CJListings:
             records.append(rec)
             if len(records) >= limit:
                 break
-        notes = [SOURCE_NOTE, "ranked by how many of the query's words the product name holds; CJ's own order within ties"]
+        notes = [SOURCE_NOTE, "ranked by the query's words the product name holds, the rarer the word the more it counts; CJ's own order within ties"]
         if unusable:
             notes.append(f"{unusable} product(s) in CJ's answer had no usable id or name: left out")
         return {"state": "ok", "retrieved_at": retrieved, "records": records, "total": total,
