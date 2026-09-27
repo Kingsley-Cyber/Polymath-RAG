@@ -2,12 +2,14 @@
 => same next step, same issued step dict, same acceptance verdict. Persistence is the caller's job (receipts/outbox)."""
 from __future__ import annotations
 
+import datetime as _dt
+import re
 from dataclasses import dataclass, field, replace
 from typing import Any
 
 import jsonschema
 
-from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, ORIGIN_ID_FIELDS, PRIOR_EVIDENCE_KINDS, TERMINAL_RUN_STATUSES, assert_valid, schema, stable_hash, validate
+from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, ORIGIN_ID_FIELDS, PRIOR_EVIDENCE_KINDS, TERMINAL_RUN_STATUSES, assert_valid, bounded_text, schema, stable_hash, validate
 from .manifest import Manifest
 
 
@@ -127,7 +129,8 @@ HARNESS_RECEIPT_RULES = (
     "Research with any tools you have; never invent a source, a quote, a date or a number. A page you could not read (login wall, CAPTCHA, rate "
     "limit, region block) is a limitation to report, never to bypass.",
     "sources[].url is the page the evidence is on, as its canonical permalink (routing is by URL: a short link can route to the wrong source); "
-    "published_at_if_known is that page's own date (a comment's own date), else null; timestamps are ISO-8601.",
+    "published_at_if_known is that page's own date (a comment's own date), else null; every timestamp is a full date-time in UTC ending in Z "
+    "(2026-09-21T06:15:00Z; never a date alone or a local offset) and every count is a whole number (4, not 4.0).",
     "source_class and evidence_role_claimed come from the source table (resource polymath://trail/source-capabilities.csv); an observation outside a "
     "source's stage, roles or freshness is rejected by admission: a finding, not a failure.",
     "paraphrase_or_excerpt quotes the evidence (at most 600 characters); never record a person's name or handle. Record in each observation's "
@@ -321,6 +324,43 @@ def validate_receipt(step: dict[str, Any], payload: Any) -> list[str]:
         started, completed = _instant(payload.get("started_at")), _instant(payload.get("completed_at"))
         if started and completed and completed < started:
             errors.append("completed_at precedes started_at")
+        errors += _trail_wire_value_errors(payload)
+    return errors
+
+
+#: bug hunt B-03, TRAIL PARITY for values: TrailSignal parses every receipt timestamp as a UTC datetime (its BoundaryModel refuses a
+#: naive or non-UTC value; a date alone is naive) and every count as a STRICT integer. This runtime cannot check either through the
+#: schema: the `date-time` format goes unchecked without an optional validator package, and JSON Schema's `integer` admits 4.0.
+_RFC3339 = re.compile(r"^\d{4}-\d{2}-\d{2}[Tt ]\d{2}:\d{2}:\d{2}(\.\d+)?([Zz]|[+-]\d{2}:\d{2})$")
+
+
+def _utc_instant_error(value: str) -> str | None:
+    if not _RFC3339.match(value):
+        return f"{value[:60]!r} is not an RFC 3339 date-time; write UTC ending in Z, e.g. 2026-09-21T06:15:00Z"
+    norm = value[:10] + "T" + value[11:]                                          # RFC 3339 allows `t`, ` ` and `z`; Python's parser wants T and an offset
+    t = _instant(norm[:-1] + "+00:00" if norm[-1] in "Zz" else norm)
+    if t is None:
+        return f"{value!r} is not a valid date-time"
+    if t.utcoffset() != _dt.timedelta(0):
+        return f"{value!r} is not UTC; convert it and end it with Z"
+    return None
+
+
+def _trail_wire_value_errors(payload: dict[str, Any]) -> list[str]:
+    errors = []
+    instants = [("started_at", payload.get("started_at")), ("completed_at", payload.get("completed_at"))]
+    for n, s in enumerate(payload.get("sources") or []):
+        if isinstance(s, dict):
+            instants += [(f"sources/{n}/retrieved_at", s.get("retrieved_at")), (f"sources/{n}/published_at_if_known", s.get("published_at_if_known"))]
+    for where, value in instants:
+        why = _utc_instant_error(value) if isinstance(value, str) else None          # a missing or non-string value is the schema's to report
+        if why:
+            errors.append(f"payload/{where}: {why}")
+    counts = [(f"observations/{n}/metric_if_present/sample_n", (o.get("metric_if_present") or {}).get("sample_n"))
+              for n, o in enumerate(payload.get("observations") or []) if isinstance(o, dict) and isinstance(o.get("metric_if_present"), dict)]
+    counts += [(f"tool_trace/{n}/query_count", t.get("query_count")) for n, t in enumerate(payload.get("tool_trace") or []) if isinstance(t, dict)]
+    # the schema refuses every other float here; an integer-valued one (4.0) is the only one it lets through
+    errors += [f"payload/{where}: {value!r} is not an integer; write {int(value)}" for where, value in counts if isinstance(value, float) and value.is_integer()]
     return errors
 
 
@@ -371,10 +411,16 @@ def cancel_run(state: RunState) -> RunState:
     return replace(state, status="cancelled")
 
 
+#: the gap contract's own bound (adapter_run_status / adapter_result `gap.message` maxLength)
+GAP_MESSAGE_MAX = 2000
+
+
 def terminal_gap(state: RunState, code: str, message: str, step_id: str | None = None) -> RunState:
     if state.terminal:
         return state
-    return replace(state, status="terminal_gap", gap={"code": code, "message": message, **({"step_id": step_id} if step_id else {})})
+    # bug hunt B-02: a gap message is a reason (a refusal, a verdict, an admission error) that can outgrow the gap contract; an unbounded
+    # one made every later status / result view of the run raise. Bounded here, head and tail kept, what was elided counted.
+    return replace(state, status="terminal_gap", gap={"code": code, "message": bounded_text(message, GAP_MESSAGE_MAX), **({"step_id": step_id} if step_id else {})})
 
 
 def complete_run(state: RunState) -> RunState:

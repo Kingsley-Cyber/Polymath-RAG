@@ -32,6 +32,7 @@ import time
 from typing import Any
 
 import httpx
+import psycopg
 
 from polymath_shared.adapter import evidence_boundary as EB, research_gaps as RG, service
 from polymath_shared.adapter.manifest import Manifest
@@ -146,16 +147,38 @@ def _ua(step: dict[str, Any], state: RunState) -> str:
     return EB.user_agent(state.run_id, step["step_id"], step["sequence"])
 
 
+#: bug hunt B-30: a TRANSIENT transport failure — the peer restarting (connection refused / dropped), a gateway in front of it answering
+#: 502 / 504 — is retried after these pauses before it counts as unavailable (one orchestrator bounce or Trail-daemon blip ended
+#: multi-hour runs). A read timeout (the peer had the request for the whole HTTP timeout), a 500, a 503 (the server itself says it is
+#: unavailable: the evidence boundary's fallback and `on_unavailable` policy answer that) and every refusal keep their meaning at once.
+TRANSIENT_BACKOFF_S = (2.0, 8.0, 30.0)
+TRANSIENT_STATUS = frozenset({502, 504})
+
+
 def _orch_post(path: str, body: dict[str, Any], *, user_agent: str | None = None) -> dict[str, Any]:
     """POST to the orchestrator — ONLY to a path on the evidence-boundary allow-list. The User-Agent names run/step/sequence so
     every call's query receipt is attributable to the adapter step that made it. A scoped call whose answer does not confirm
-    that scope raises ScopeNotConfirmed (K1b)."""
+    that scope raises ScopeNotConfirmed (K1b). A transient failure is retried within TRANSIENT_BACKOFF_S (bug hunt B-30)."""
     EB.assert_allowed_path(path)
-    try:
-        with httpx.Client(timeout=HTTP_TIMEOUT_S) as c:
-            r = c.post(f"{ORCH}{path}", json=body, headers=({"User-Agent": user_agent} if user_agent else None))
-    except httpx.HTTPError as exc:
-        raise OrchUnavailable(f"orchestrator {path} unreachable: {type(exc).__name__}: {exc}"[:400]) from exc
+    attempt = 0
+    while True:
+        try:
+            with httpx.Client(timeout=HTTP_TIMEOUT_S) as c:
+                r = c.post(f"{ORCH}{path}", json=body, headers=({"User-Agent": user_agent} if user_agent else None))
+        except httpx.HTTPError as exc:
+            if isinstance(exc, (httpx.NetworkError, httpx.RemoteProtocolError, httpx.ConnectTimeout, httpx.PoolTimeout)) and attempt < len(TRANSIENT_BACKOFF_S):
+                log.warning("orchestrator %s: %s (%s); retry %d in %.0fs", path, type(exc).__name__, user_agent, attempt + 1, TRANSIENT_BACKOFF_S[attempt])
+                time.sleep(TRANSIENT_BACKOFF_S[attempt])
+                attempt += 1
+                continue
+            tried = f" after {attempt + 1} attempts" if attempt else ""
+            raise OrchUnavailable(f"orchestrator {path} unreachable{tried}: {type(exc).__name__}: {exc}"[:400]) from exc
+        if r.status_code in TRANSIENT_STATUS and attempt < len(TRANSIENT_BACKOFF_S):
+            log.warning("orchestrator %s -> %s (%s); retry %d in %.0fs", path, r.status_code, user_agent, attempt + 1, TRANSIENT_BACKOFF_S[attempt])
+            time.sleep(TRANSIENT_BACKOFF_S[attempt])
+            attempt += 1
+            continue
+        break
     if r.status_code >= 500:
         raise OrchUnavailable(f"orchestrator {path} -> {r.status_code}: {r.text[:300]}")
     if r.status_code >= 400:
@@ -416,6 +439,14 @@ def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str
     if kind == "registry.project":
         payload["max_priors_per_hypothesis"] = int(cfg.get("max_priors_per_hypothesis", 12))
     elif kind == "gaps.compile":
+        if cfg.get("gaps_from") == RG.GATE_ORIGIN:
+            # bug hunt B-21: a stage compiled from TrailSignal's OWN gate gaps (the supply directive: the market qualification's open
+            # gaps) sends exactly those — never every field-stage gap an agent wrote earlier in the run
+            gate = next((o for o in reversed(_ordered_outputs(state)) if o.get("operation_kind") and TC.fills(o.get("operation_kind"), "open_gaps")
+                         and isinstance(o.get("open_gaps"), list)), None)
+            payload["knowledge_gaps"] = []
+            payload["open_gaps"] = [RG.wire_gap(g) for g in (gate or {}).get("open_gaps") or [] if isinstance(g, dict)][:100]
+            return payload
         # a step that opted in (`config.gaps_from: context.semantics.research_gaps`) sends the HARVESTED per-hypothesis gaps: ledger +
         # step + agent open gaps + bridge gaps, each owned and stably identified, Trail's gate gaps beside them (research_gaps.py)
         harvested = RG.trail_gap_payload(ctx.get("semantics")) if cfg.get("gaps_from") else None
@@ -425,8 +456,9 @@ def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str
         gaps = []
         for out in _ordered_outputs(state):
             gaps += [g for g in (out.get("knowledge_gaps") or []) if isinstance(g, dict)]
-        payload["knowledge_gaps"] = gaps[-100:]
-        payload["open_gaps"] = list((_newest_output_with(state, "open_gaps") or {}).get("open_gaps") or [])[:100]
+        # bug hunt B-21 / B-26: Trail's gap is CLOSED (extra="forbid"): never an agent's raw dict
+        payload["knowledge_gaps"] = [RG.wire_gap(g) for g in gaps[-100:]]
+        payload["open_gaps"] = [RG.wire_gap(g) for g in list((_newest_output_with(state, "open_gaps") or {}).get("open_gaps") or [])[:100] if isinstance(g, dict)]
     elif kind == "evidence.admit":
         rec = _newest_output_with(state, "_harness_action_id")
         if not rec:
@@ -437,7 +469,9 @@ def _payload_for(kind: str, step: dict[str, Any], state: RunState, cfg: dict[str
         payload["redundancy_groups"] = list((_newest_output_with(state, "redundancy_groups") or {}).get("redundancy_groups") or [])
         payload["latest_admission_id"] = ((_newest_output_with(state, "evidence_admission") or {}).get("evidence_admission") or {}).get("admission_id")
     elif kind == "territory.project":
-        payload["physical_jobs"] = list((_newest_output_with(state, "physical_jobs") or {}).get("physical_jobs") or [])[:100]
+        # bug hunt B-26: Trail's physical job is CLOSED (hypothesis_id, job, mechanism); an agent's extra key ended the run TRAIL_REFUSED
+        payload["physical_jobs"] = [{k: j.get(k) for k in ("hypothesis_id", "job", "mechanism")}
+                                    for j in list((_newest_output_with(state, "physical_jobs") or {}).get("physical_jobs") or [])[:100] if isinstance(j, dict)]
     elif kind == "opportunity.qualify":
         payload["latest_admission_id"] = ((_newest_output_with(state, "evidence_admission") or {}).get("evidence_admission") or {}).get("admission_id")
     elif kind == "opportunity.score":
@@ -473,13 +507,31 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
     principal = os.environ.get("POLYMATH_TRAIL_PRINCIPAL", "polymath")
     key = TC.identifier(state.run_id, step["step_id"], str(step["sequence"]))
     snap = (step.get("context") or {}).get("registry_snapshot") or {}
-    req = TC.bounded_request(kind, _payload_for(kind, step, state, cfg), key=key, run_ref=state.run_id, registry_snapshot_id=snap.get("snapshot_id"))
-    try:
-        resp = client.operate(kind, req)
-    except TC.TrailToolError as exc:
-        return {"gap": {"code": "TRAIL_REFUSED", "message": f"{kind}: {exc}"}}
-    except (TC.TrailTransportError, TC.TrailProtocolError) as exc:
-        raise RuntimeError(f"trail transport: {exc}") from exc              # typed STEP_EXECUTOR_ERROR (retryable by re-run)
+    payload = _payload_for(kind, step, state, cfg)
+    trimmed = None
+    if kind == "evidence.admit":
+        # bug hunt B-05: a receipt within the harness budget can exceed Trail's request ceiling; send what fits, record what did not
+        payload, trimmed = TC.fit_admission_request(payload, key=key, run_ref=state.run_id, registry_snapshot_id=snap.get("snapshot_id"))
+        if trimmed:
+            log.warning("run %s %s: receipt trimmed to Trail's request ceiling (%s of %s observations sent)", state.run_id[:16], step["step_id"],
+                        trimmed["observations_sent"], trimmed["observations_submitted"])
+    req = TC.bounded_request(kind, payload, key=key, run_ref=state.run_id, registry_snapshot_id=snap.get("snapshot_id"))
+    retries: list[str] = []
+    while True:
+        try:
+            resp = client.operate(kind, req)
+            break
+        except TC.TrailToolError as exc:
+            return {"gap": {"code": "TRAIL_REFUSED", "message": f"{kind}: {exc}"}}
+        except (TC.TrailTransportError, TC.TrailProtocolError, TC.TrailUnreachable) as exc:
+            # bug hunt B-30: a daemon restarting is retried with the SAME request (its idempotency key makes the replay safe), bounded
+            transient = isinstance(exc, TC.TrailUnreachable) or (isinstance(exc, TC.TrailTransportError) and exc.status in TRANSIENT_STATUS)
+            if transient and len(retries) < len(TRANSIENT_BACKOFF_S):
+                log.warning("trail %s: %s; retry %d in %.0fs", kind, exc, len(retries) + 1, TRANSIENT_BACKOFF_S[len(retries)])
+                time.sleep(TRANSIENT_BACKOFF_S[len(retries)])
+                retries.append(f"{type(exc).__name__}: {exc}"[:200])
+                continue
+            raise RuntimeError(f"trail transport: {exc}") from exc          # typed STEP_EXECUTOR_ERROR (retryable by re-run)
     # Trail response identity: the answer must belong to the request we sent, checked BEFORE we relabel or persist anything.
     # A wrong operation_kind, a result computed against a different registry snapshot, or an admission echoing another run's
     # run_ref is a typed refusal, never silently relabelled onto this run. (Same-key/different-payload is refused server-side.)
@@ -493,6 +545,10 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
         return {"gap": {"code": "TRAIL_RESPONSE_MISMATCH", "message": f"{kind}: Trail answered against snapshot {_resp_snap!r}, not {req['registry_snapshot_id']!r}"}}
     result = dict(resp.get("result") or {})
     output: dict[str, Any] = {"trail_operation_id": resp.get("operation_id"), "operation_kind": kind}
+    if trimmed:
+        output["receipt_trimmed"] = trimmed
+    if retries:
+        output["transport_retries"] = retries                                  # counted, never silent
     refs: list[dict[str, Any]] = []
     record_ids: list[str] = []
     if kind == "registry.project":
@@ -617,8 +673,20 @@ EXECUTORS: dict[str, service.Executor] = {
 
 
 # ─────────────────────────────────────────────────────────── loop
+#: how long the loop waits after an iteration raised (a database outage, a failure that could not even be recorded) before claiming again
+ERROR_BACKOFF_S = 10.0
+
+
+def _transient(exc: BaseException) -> bool:
+    """A database that is unreachable or busy (connection lost, pool exhausted, lock / deadlock) says nothing about the run: the loop
+    backs off and the run is claimed again. Anything else a step unit raises would raise again on every claim (bug hunt B-06)."""
+    return isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError))
+
+
 def process_one(owner: str, lease_s: int, *, max_steps: int | None = None, crash_after: int | None = None) -> str | None:
-    """Claim + drive one run. Returns the run_id worked on (None = nothing claimable)."""
+    """Claim + drive one run. Returns the run_id worked on (None = nothing claimable). A step unit that raises is rolled back and,
+    unless the database itself failed, its run ends `failed` with a typed STEP_RUNTIME_ERROR in a fresh transaction — a
+    deterministic error is never re-claimed forever ahead of every healthy run (bug hunt B-06)."""
     with tx() as conn:
         run_id = service.store.claim_run(conn, owner, lease_s)
     if not run_id:
@@ -626,14 +694,22 @@ def process_one(owner: str, lease_s: int, *, max_steps: int | None = None, crash
     steps_done = 0
     try:
         while True:
-            with tx() as conn:
-                if not service.store.renew_lease(conn, run_id, owner, lease_s):
-                    log.warning("lease lost on %s; stopping", run_id)
-                    return run_id
-                before_state = service.store.load_run(conn, run_id)[0]
-                before_row = service.store.current_step(conn, run_id)
-                state = service.advance(conn, run_id, EXECUTORS, max_steps=1)
-                after_row = service.store.current_step(conn, run_id)
+            try:
+                with tx() as conn:
+                    if not service.store.renew_lease(conn, run_id, owner, lease_s):
+                        log.warning("lease lost on %s; stopping", run_id)
+                        return run_id
+                    before_state = service.store.load_run(conn, run_id)[0]
+                    before_row = service.store.current_step(conn, run_id)
+                    state = service.advance(conn, run_id, EXECUTORS, max_steps=1)
+                    after_row = service.store.current_step(conn, run_id)
+            except Exception as exc:
+                if _transient(exc):
+                    raise
+                log.exception("run %s: the step unit raised; recording a typed failure", run_id)
+                with tx() as conn:
+                    service.fail_run(conn, run_id, code="STEP_RUNTIME_ERROR", message=f"{type(exc).__name__}: {exc}")
+                return run_id
             progressed = state.terminal or state.sequence != before_state.sequence or \
                 (after_row or {}).get("status") != (before_row or {}).get("status")
             steps_done += 1 if progressed else 0
@@ -668,9 +744,18 @@ def main(argv: list[str] | None = None) -> int:
         register_worker(conn, identity)
     log.info("registered %s (bundle %s)", identity["worker_id"], identity.get("execution_bundle_id"))
     while True:
-        worked = process_one(args.owner, args.lease_s, max_steps=args.max_steps, crash_after=args.crash_after)
-        with tx() as conn:
-            heartbeat(conn, identity["worker_id"], processed_count=1 if worked else None)
+        try:
+            worked = process_one(args.owner, args.lease_s, max_steps=args.max_steps, crash_after=args.crash_after)
+            with tx() as conn:
+                heartbeat(conn, identity["worker_id"], processed_count=1 if worked else None)
+        except Exception:
+            # bug hunt B-06: one failed iteration (the database away, a failure that could not be recorded) never takes the supervised
+            # slot down — an exit made the supervisor restart it, re-claim the same run and quarantine the slot after 5 exits
+            if args.once:
+                raise
+            log.exception("adapter step iteration failed; backing off %.0fs", ERROR_BACKOFF_S)
+            time.sleep(ERROR_BACKOFF_S)
+            continue
         if worked is None:
             if args.once:
                 return 0

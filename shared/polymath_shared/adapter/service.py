@@ -11,7 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
-from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, assert_valid, stable_hash, validate
+from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, ContractViolation, assert_valid, bounded_text, stable_hash, validate
 from .manifest import ADAPTER_DIR, Manifest, list_manifests
 from . import evidence_boundary as EB, hypotheses as H, research_gaps as RG, semantic_view as SV, store, trail_client, transitions as T
 from .hypotheses import HypothesisRejected
@@ -287,8 +287,10 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
         store.finish_step(conn, run_id, row["sequence"], status="accepted", receipt=receipt, output=output, submission=sub)
         store.save_state(conn, new_state)
         return status(conn, run_id, directory)
-    # reference §9.2: a research gap belongs to exactly one LIVE hypothesis — refused here, typed, so Trail never has to guess an owner
-    gap_errors = RG.unowned_gap_errors(sub["payload"], [h for h, s_ in store.current_hypotheses(conn, run_id).items() if s_["status"] not in H.ABSORBED_STATUSES])
+    # reference §9.2: a research gap belongs to exactly one LIVE hypothesis — refused here, typed, so Trail never has to guess an owner;
+    # and (bug hunt B-22) its role must be one Trail's gap compiler accepts, or the next Trail step ends the run
+    gap_errors = RG.unowned_gap_errors(sub["payload"], [h for h, s_ in store.current_hypotheses(conn, run_id).items() if s_["status"] not in H.ABSORBED_STATUSES]) \
+        + RG.gap_wire_errors(sub["payload"])
     if gap_errors:
         receipt = _receipt(step, "rejected", started, evidence_ids=[], model=who, validation={"ok": False, "errors": gap_errors})
         store.finish_step(conn, run_id, row["sequence"], status="issued", receipt=receipt)
@@ -435,7 +437,9 @@ def result(conn, run_id: str) -> dict[str, Any]:
         raise NotTerminal(state.status)
     res = store.load_result(conn, run_id)
     if res is None:                       # cancelled / failed / gap before COMPILE_RESULT: synthesise the terminal result
-        res = _compile_result(conn, run_id, state, manifest_for(state.adapter_id), output={}, persist=True)
+        # bug hunt B-29 / B-14: from what the run DID produce (the terminal step's includes over its step outputs), never an empty
+        # output beside a lineage that counts admitted evidence; the status and the typed gap stay what they are
+        res = _compile_result(conn, run_id, state, manifest_for(state.adapter_id), output=None, persist=True)
     return res
 
 
@@ -444,7 +448,52 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
             directory: Path | None = None) -> RunState:
     """Drive a RUNNING run forward: issue the next step; execute automatic steps through `executors`; stop at an
     AGENT_REASON step (awaiting_agent), at COMPILE_RESULT (completed + result), at a typed gap, or after `max_steps`.
-    Each step commits as one unit through the caller's transaction discipline (the worker wraps each call in tx())."""
+    Each step commits as one unit through the caller's transaction discipline (the worker wraps each call in tx()).
+    A record that would break its OWN contract (the step to issue, a receipt, a result) never leaves this function: the unit ends
+    with a durable typed failure naming the contract, the fields and the rules (external review M1-04; bug hunt B-02)."""
+    try:
+        return _advance(conn, run_id, executors, max_steps=max_steps, directory=directory)
+    except ContractViolation as exc:
+        # a pure validation error: the transaction is healthy, so the reason is recorded in the SAME unit (never left `running`)
+        return fail_run(conn, run_id, code="STEP_CONTRACT_VIOLATION", message=_violation_reason(exc), directory=directory)
+
+
+def _violation_reason(exc: ContractViolation) -> str:
+    """Which contract, which fields, which rules — each validator message bounded so an oversized value is never echoed whole."""
+    more = f" (+{len(exc.errors) - 5} more)" if len(exc.errors) > 5 else ""
+    return f"{exc.name}: " + "; ".join(bounded_text(e, 300) for e in exc.errors[:5]) + more
+
+
+def fail_run(conn, run_id: str, *, code: str, message: str, directory: Path | None = None) -> RunState:
+    """A DURABLE typed failure for a run whose step could not complete as one lawful unit (M1-04; bug hunt B-02 / B-06): an issued step
+    is closed `failed` with its receipt, the run ends `failed` with the reason and the step it concerns (the issued step, else the one
+    that could not be issued). A terminal run is left untouched. Runs inside the caller's transaction."""
+    loaded = store.load_run(conn, run_id, for_update=True)
+    if not loaded:
+        raise UnknownRun(run_id)
+    state, _ = loaded
+    if state.terminal:
+        return state
+    row = store.current_step(conn, run_id)
+    issued = row if row and row["status"] == "issued" else None
+    step_id = issued["step_id"] if issued else None
+    if step_id is None:
+        try:
+            step_id = T.next_step_id(manifest_for(state.adapter_id, directory), state)
+        except Exception:  # noqa: BLE001 — the manifest itself may be what failed (a redeploy renamed the step); name where the run stands
+            step_id = state.current_step_id
+    failure = {"code": code, "message": bounded_text(message, FAILURE_MESSAGE_MAX), **({"step_id": step_id} if step_id else {})}
+    if issued:
+        store.finish_step(conn, run_id, issued["sequence"], status="failed",
+                          receipt=_receipt(issued["step"], "failed", now_iso(), evidence_ids=[], model=None,
+                                           validation={"ok": False, "errors": [failure["message"]]}, failure=failure))
+    state = T.replace(state, status="failed", failure=failure)
+    store.save_state(conn, state)
+    return state
+
+
+def _advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int | None = None,
+             directory: Path | None = None) -> RunState:
     loaded = store.load_run(conn, run_id, for_update=True)
     if not loaded:
         raise UnknownRun(run_id)
@@ -642,8 +691,18 @@ def _apply_phi_outputs(conn, run_id: str, step: dict[str, Any], m: Manifest, sta
     return None
 
 
+#: the receipt contract's own bounds (adapter_step_receipt: validation.errors[] maxLength 1000, failure.message maxLength 2000)
+RECEIPT_ERROR_MAX, FAILURE_MESSAGE_MAX = 1000, 2000
+
+
 def _receipt(step: dict[str, Any], status_: str, started: str, *, evidence_ids: list[str], model: str | None,
              validation: dict[str, Any], failure: dict[str, Any] | None = None, external_ids: list[str] | None = None) -> dict[str, Any]:
+    # bug hunt B-02 / B-04: the reasons a receipt copies (a domain refusal up to 2000 chars, an executor error, a validator message that
+    # echoes an oversized value) outgrew its 1000-char error bound, and the receipt's own assert escaped `advance`. The receipt keeps a
+    # BOUNDED copy (head + tail, the elision counted); the full reason stays on the run's gap / failure and in the rejection's errors.
+    validation = {**validation, "errors": [bounded_text(e, RECEIPT_ERROR_MAX) for e in validation.get("errors") or []]} if "errors" in validation else validation
+    if failure is not None:
+        failure = {**failure, "message": bounded_text(failure.get("message", ""), FAILURE_MESSAGE_MAX)}
     ended = now_iso()
     r = {"run_id": step["run_id"], "step_id": step["step_id"], "step_type": step["step_type"], "sequence": step["sequence"],
          "status": status_, "started_at": started, "ended_at": ended,
@@ -721,11 +780,18 @@ def _compile_result(conn, run_id: str, state: RunState, m: Manifest, *, output: 
             v = _gather(state.outputs, key, state.output_order)
             if v is not None:
                 output[key] = v
+    # bug hunt B-24: the lineage names EVERY knowledge ref the run produced — every pass of a looped step (state.outputs keeps only the
+    # newest) and beyond the 200-ref display window (`_context_refs`, what a step shows) — and every knowledge id the ledger cites
     evidence_ids, query_ids, ext_ops = [], [], []
-    for r in _context_refs(conn, state):
-        (query_ids if r["kind"] == "query_receipt" else evidence_ids if r["kind"] in KNOWLEDGE_KINDS else []).append(r["id"])
+    for s in steps:
+        for r in (s["output"].get("_evidence_refs") or []) if isinstance(s.get("output"), dict) else []:
+            (query_ids if r.get("kind") == "query_receipt" else evidence_ids if r.get("kind") in KNOWLEDGE_KINDS else []).append(r["id"])
     actions = store.list_harness_actions(conn, run_id)
     hyps = store.current_hypotheses(conn, run_id)
+    for h in hyps.values():
+        for item in h.get("knowledge_support") or []:
+            evidence_ids += [item[f] for f in ("chunk_id", "document_id", "graph_fact_id") if item.get(f)]
+            query_ids += [item["retrieval_trace_id"]] if item.get("retrieval_trace_id") else []
     snapshots = sorted({str((_gather({sid: o}, "registry_snapshot") or {}).get("snapshot_id")) for sid, o in state.outputs.items()
                         if isinstance(_gather({sid: o}, "registry_snapshot"), dict)} - {"None"})
     score_ids = [str(x) for x in _collect_lists(state, "trail_score_record_ids") if isinstance(x, str)]

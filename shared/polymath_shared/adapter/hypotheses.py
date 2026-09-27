@@ -7,6 +7,7 @@ hypothesis are never lost. A registry prior (`trail_prior`) may be attached as a
 from __future__ import annotations
 
 import hashlib
+import re
 from typing import Any
 
 from .contracts import (CITABLE_EVIDENCE_KINDS, HYPOTHESIS_STATUSES, ORIGIN_ID_FIELDS, PRIOR_EVIDENCE_KINDS, TRANSITION_KINDS,
@@ -36,13 +37,22 @@ REVISABLE_FIELDS = ("statement", "mechanism", "population", "activity", "task", 
 REVISABLE_LIST_FIELDS = ("assumptions", "falsifiers", "knowledge_gaps", "contradictions", "lead_ids", "latent_structure_ids")
 ORIGIN_FIELDS = ORIGIN_ID_FIELDS
 GAP_STATUSES = ("open", "researched", "closed")
+#: a gap id crosses TrailSignal's closed wire (`ResearchKnowledgeGapV1.gap_id` is its Identifier): the ledger refuses what Trail would refuse
+TRAIL_IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
+
+
+def _gap_id_errors(gaps: Any, *, label: str) -> list[str]:
+    """bug hunt B-22: an agent-chosen gap id was stored verbatim and sent to Trail, whose wire refused it at the next gaps.compile."""
+    return [f"{label}: knowledge gap id {g['gap_id']!r} is not an identifier TrailSignal accepts (letters, digits and . _ : / - only, no spaces)"
+            for g in (gaps if isinstance(gaps, list) else []) if isinstance(g, dict) and g.get("gap_id") is not None
+            and not (isinstance(g["gap_id"], str) and TRAIL_IDENTIFIER.match(g["gap_id"]))]
 
 
 def _h(*parts: Any) -> str:
     return hashlib.sha256(":".join(str(p) for p in parts).encode("utf-8")).hexdigest()
 
 
-def hypothesis_id(run_id: str, step_id: str, ordinal: int) -> str:
+def hypothesis_id(run_id: str, step_id: str, ordinal: int | str) -> str:
     return "hyp_" + _h(run_id, step_id, ordinal)[:24]
 
 
@@ -128,6 +138,10 @@ def _merge_gaps(hid: str, existing: list[dict[str, Any]], incoming: Any, errors:
         if g.get("status") is not None and g["status"] not in GAP_STATUSES:
             errors.append(f"{label}: gap status {g['status']!r} is not one of {', '.join(GAP_STATUSES)}")
             continue
+        bad_id = _gap_id_errors([g], label=label)
+        if bad_id:
+            errors += bad_id
+            continue
         hit = next((x for x in gaps if g.get("gap_id") and x["gap_id"] == g["gap_id"]), None) \
             or next((x for x in gaps if not g.get("gap_id") and norm(x["question"]) == norm(g.get("question"))), None)
         if hit is not None:
@@ -196,6 +210,7 @@ def generate(run_id: str, step: dict[str, Any], proposals: list[dict[str, Any]],
             continue
         hid = hypothesis_id(run_id, step["step_id"], ordinal_base + n)
         origin = _origin(prop, known_origin_ids, errors, label=f"hypothesis {n}")
+        errors += _gap_id_errors(prop.get("knowledge_gaps"), label=f"hypothesis {n}")
         st = _state(hid, run_id, prop, parents=parents or [], support=support, priors=priors, field=field, recorded_at=recorded_at, origin=origin)
         assert_valid("hypothesis_state", st)
         states.append(st)
@@ -261,10 +276,15 @@ def apply(run_id: str, step: dict[str, Any], current: dict[str, dict[str, Any]],
                 errors.append(f"{label}: SPLIT would exceed max_hypotheses {max_hypotheses}"); continue
             child_ids = []
             for k, child in enumerate(children):
-                cid = hypothesis_id(run_id, step["step_id"], 100 * (n + 1) + k)
+                # bug hunt B-20: minted from the ISSUANCE — a step re-entered through a bounded loop issues a new sequence, so a SPLIT in a
+                # later round never reuses round one's child ids (the store keeps the first revision 0 and dropped the new child)
+                cid = hypothesis_id(run_id, step["step_id"], f"{int(step['sequence'])}:{100 * (n + 1) + k}")
+                if cid in live:
+                    errors.append(f"{label} child {k}: {cid} already exists in the ledger (a SPLIT is applied once per issuance)"); continue
                 allowed_refs = [{"kind": v, "id": i} for i, v in allowed_causes.items()]
                 cs, cf, cc = _split_cited(list(child.get("supporting_evidence_ids") or []), _allowed(allowed_refs), errors, label=f"{label} child {k}")
                 inherited = {f: list(prev[f]) for f in ORIGIN_FIELDS if prev.get(f)}
+                errors += _gap_id_errors(child.get("knowledge_gaps"), label=f"{label} child {k}")
                 st = _state(cid, run_id, {**child, "statement": child.get("statement") or prev["statement"]}, parents=[hid],
                             support=cs or list(prev["knowledge_support"]), priors=list(prev["trail_priors"]), field=cf + list(prev["field_evidence_ids"]), recorded_at=recorded_at,
                             origin={**inherited, **_origin(child, known_origin_ids, errors, label=f"{label} child {k}")})

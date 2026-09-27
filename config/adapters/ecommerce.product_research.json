@@ -1,6 +1,6 @@
 {
  "adapter_id": "ecommerce.product_research",
- "adapter_version": "0.7.0",
+ "adapter_version": "0.7.1",
  "workflow_version": "0.1.0",
  "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
@@ -763,7 +763,7 @@
     "surface": "evidence_boundary",
     "mode": "WILDCARD",
     "corpus_explorer": true,
-    "max_calls": 3,
+    "max_calls": 8,
     "max_rows": 40,
     "fallback": "retrieve",
     "on_unavailable": "gap",
@@ -782,7 +782,7 @@
     "surface": "evidence_boundary",
     "mode": "GRAPH",
     "corpus_explorer": false,
-    "max_calls": 3,
+    "max_calls": 8,
     "max_rows": 40,
     "fallback": "retrieve",
     "on_unavailable": "gap",
@@ -2193,13 +2193,18 @@
        ],
        "properties": {
         "hypothesis_id": {
-         "type": "string"
+         "type": "string",
+         "pattern": "^hyp_[0-9a-f]{8,64}$"
         },
         "job": {
-         "type": "string"
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 512
         },
         "mechanism": {
-         "type": "string"
+         "type": "string",
+         "minLength": 1,
+         "maxLength": 512
         }
        }
       }
@@ -2506,6 +2511,7 @@
    },
    "config": {
     "stage": "supply",
+    "gaps_from": "trail_gate",
     "hypotheses_from": "context.semantics.trail"
    }
   },

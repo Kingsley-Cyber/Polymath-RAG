@@ -158,7 +158,9 @@ def original_needs(config: Mapping[str, Any] | None, inputs: Mapping[str, Any] |
 
 def plan_calls(needs: list[str], corpus_ids: list[str], *, max_calls: int = DEFAULT_MAX_CALLS) -> dict[str, Any]:
     """One corpus per call (every chat mode is single-corpus), bounded. Order is deterministic: every need against the first
-    corpus, then the next corpus — so a tight budget drops whole CORPORA last-first, and what was skipped is recorded."""
+    corpus, then the next corpus — so a tight budget drops the later CORPORA first, and a budget below the number of needs drops the
+    later NEEDS of the first corpus too (a `query_from: hypotheses` step therefore sets `max_calls` to cover its live hypotheses; bug
+    hunt B-23). What was skipped is recorded."""
     cap = max(1, int(max_calls))
     pairs = [{"need_index": i, "need": need, "corpus_id": cid} for cid in corpus_ids for i, need in enumerate(needs)]
     return {"calls": pairs[:cap],

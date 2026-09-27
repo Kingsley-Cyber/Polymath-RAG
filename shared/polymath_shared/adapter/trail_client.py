@@ -80,6 +80,11 @@ class TrailProtocolError(TrailError):
     """A JSON-RPC `error` object — the request envelope was wrong."""
 
 
+class TrailUnreachable(TrailError):
+    """The daemon could not be reached (connection refused or dropped, connect / pool timeout): transient by nature, so a caller may
+    retry the SAME request (its idempotency key makes a replay safe). A read timeout is not this: the daemon had the request."""
+
+
 class TrailToolError(TrailError):
     """`result.isError` — Trail refused the operation (policy, validation, permission, unknown tool)."""
 
@@ -132,17 +137,68 @@ def _utc_now() -> str:
     return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def _envelope(kind: str, payload: dict[str, Any], *, key: str, run_ref: str, registry_snapshot_id: str | None, purpose_ref: str) -> dict[str, Any]:
+    return {"request_id": identifier("request", key), "idempotency_key": identifier("idempotency", key), "purpose_ref": purpose_ref,
+            "run_ref": identifier("run", run_ref), "operation_kind": kind, "registry_snapshot_id": registry_snapshot_id, "payload": payload}
+
+
+def _canonical_bytes(value: Any) -> int:
+    return len(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))
+
+
 def bounded_request(kind: str, payload: dict[str, Any], *, key: str, run_ref: str, registry_snapshot_id: str | None = None,
                     purpose_ref: str = PURPOSE_REF) -> dict[str, Any]:
     """The request envelope of a bounded synchronous Trail operation: identity, idempotency, purpose, the Polymath run
     reference, the registry snapshot the caller reasons against (null before `registry.project`) and the typed payload."""
     if kind not in BOUNDED_OPERATIONS:
         raise ValueError(kind)
-    req = {"request_id": identifier("request", key), "idempotency_key": identifier("idempotency", key), "purpose_ref": purpose_ref,
-           "run_ref": identifier("run", run_ref), "operation_kind": kind, "registry_snapshot_id": registry_snapshot_id, "payload": payload}
-    if len(json.dumps(req, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")) > REQUEST_BYTES_MAX:
+    req = _envelope(kind, payload, key=key, run_ref=run_ref, registry_snapshot_id=registry_snapshot_id, purpose_ref=purpose_ref)
+    if _canonical_bytes(req) > REQUEST_BYTES_MAX:
         raise ValueError(f"{kind} request exceeds Trail's {REQUEST_BYTES_MAX}-byte canonical JSON ceiling — bound the payload")
     return req
+
+
+def _trail_measure_headroom(payload: dict[str, Any]) -> int:
+    """TrailSignal measures the PARSED request with its model defaults (an observation without `hypothesis_relations` gains `[]`, a
+    hypothesis view its unset candidate fields, the payload its empty lists) and the client wraps it in a JSON-RPC body. Measured on the
+    pinned core: ~26 B per such observation, ~200 B per hypothesis, ~170 B per payload, ~110 B of wrapper; this leaves more than that."""
+    return 1024 + 256 * len(payload.get("hypotheses") or []) + 32 * len((payload.get("receipt") or {}).get("observations") or [])
+
+
+def fit_admission_request(payload: dict[str, Any], *, key: str, run_ref: str, registry_snapshot_id: str | None = None,
+                          purpose_ref: str = PURPOSE_REF) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """bug hunt B-05: an `evidence.admit` payload whose request would pass TrailSignal's ceiling (a receipt within the manifest's own
+    harness budget can) keeps the receipt's observations in the harness's order up to what fits, drops the rest and every source only
+    they named, and RECORDS what it dropped — admission then judges exactly what was sent, and the run goes on instead of failing after
+    the research was accepted. A payload that fits (or that no trim of observations could make fit) is returned untouched. Pure: the
+    stored receipt is never mutated."""
+    def fits(p: dict[str, Any]) -> bool:
+        req = _envelope("evidence.admit", p, key=key, run_ref=run_ref, registry_snapshot_id=registry_snapshot_id, purpose_ref=purpose_ref)
+        return _canonical_bytes(req) + _trail_measure_headroom(p) <= REQUEST_BYTES_MAX
+
+    rec = payload.get("receipt")
+    if not isinstance(rec, dict) or fits(payload):
+        return payload, None
+    observations = [o for o in rec.get("observations") or []]
+    named = {o.get("source_id") for o in observations if isinstance(o, dict)}
+
+    def keep(n: int) -> dict[str, Any]:
+        still = {o.get("source_id") for o in observations[:n] if isinstance(o, dict)}
+        sources = [s for s in rec.get("sources") or [] if not (isinstance(s, dict) and s.get("source_id") in named - still)]
+        return {**payload, "receipt": {**rec, "observations": observations[:n], "sources": sources}}
+
+    if not fits(keep(0)):
+        return payload, None                     # the observations are not what is too large: bounded_request reports it unchanged
+    lo, hi = 0, len(observations)                # invariant: keep(lo) fits, keep(hi) does not
+    while hi - lo > 1:
+        mid = (lo + hi) // 2
+        lo, hi = (mid, hi) if fits(keep(mid)) else (lo, mid)
+    fitted = keep(lo)
+    sent_sources = {s.get("source_id") for s in fitted["receipt"]["sources"] if isinstance(s, dict)}
+    return fitted, {"reason": "REQUEST_CEILING", "limit_bytes": REQUEST_BYTES_MAX, "observations_submitted": len(observations), "observations_sent": lo,
+                    "dropped_observation_ids": [str(o.get("observation_id")) for o in observations[lo:] if isinstance(o, dict)],
+                    "dropped_source_ids": sorted(str(s.get("source_id")) for s in rec.get("sources") or []
+                                                 if isinstance(s, dict) and s.get("source_id") not in sent_sources)}
 
 
 def operation_reference(ref: dict[str, Any], *, minimum_revision: int = 0) -> dict[str, Any]:
@@ -229,8 +285,11 @@ class TrailMCPClient:
             raise TrailError(f"request body {len(raw)} bytes exceeds Trail's {REQUEST_BYTES_MAX}-byte ceiling")
         headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json",
                    "Accept": "application/json, text/event-stream"}
-        with httpx.Client(timeout=self.timeout_s, transport=self._transport, follow_redirects=False, trust_env=False) as c:
-            r = c.post(self.url, content=raw, headers=headers)
+        try:
+            with httpx.Client(timeout=self.timeout_s, transport=self._transport, follow_redirects=False, trust_env=False) as c:
+                r = c.post(self.url, content=raw, headers=headers)
+        except (httpx.NetworkError, httpx.RemoteProtocolError, httpx.ConnectTimeout, httpx.PoolTimeout) as exc:
+            raise TrailUnreachable(f"{type(exc).__name__}: {exc}"[:300]) from exc
         if r.status_code >= 400:
             raise TrailTransportError(r.status_code, r.text)
         try:

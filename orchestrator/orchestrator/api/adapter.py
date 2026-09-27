@@ -53,6 +53,19 @@ def _own(conn, run_id: str) -> None:
         raise HTTPException(status_code=403, detail="no such run for this principal")
 
 
+async def _off_the_event_loop(fn):
+    """bug hunt B-25: `submit` and `cancel` take the run's row lock (FOR UPDATE), which the step worker holds for a whole step — HTTP
+    calls back into THIS server included. Waiting for it on the event loop froze every other request (the worker's own /chat/evidence
+    call among them) until the health probes failed and the orchestrator was restarted. The wait runs in a worker thread instead; the
+    request's principal is carried explicitly (a context variable does not cross threads by itself)."""
+    principal = principal_context.current()
+
+    def call():
+        with principal_context.acting_as(principal):
+            return fn()
+    return await run_in_threadpool(call)
+
+
 @router.get("/adapter/list")
 async def adapter_list() -> dict:
     return {"adapters": service.list_adapters(), "contract": "adapter-v1"}
@@ -97,10 +110,12 @@ async def adapter_submit(run_id: str, req: SubmitRequest) -> dict:
     submission = {"run_id": run_id, "step_id": req.step_id, "payload": req.payload,
                   "submitted_by": {"agent_identity": req.agent_identity, **({"model": req.model} if req.model else {})},
                   **({"kind": req.kind} if req.kind else {})}
-    try:
+    def _submit() -> dict:
         with tx() as conn:
             _own(conn, run_id)
             return service.submit(conn, run_id, submission)
+    try:
+        return await _off_the_event_loop(_submit)
     except service.UnknownRun:
         raise _404(run_id)
     except SubmissionRejected as exc:
@@ -196,9 +211,11 @@ def _external_cancel(ext: dict) -> dict | None:
 
 @router.post("/adapter/{run_id}/cancel")
 async def adapter_cancel(run_id: str) -> dict:
-    try:
+    def _cancel() -> dict:
         with tx() as conn:
             _own(conn, run_id)
             return service.cancel(conn, run_id, external_cancel=_external_cancel)
+    try:
+        return await _off_the_event_loop(_cancel)
     except service.UnknownRun:
         raise _404(run_id)

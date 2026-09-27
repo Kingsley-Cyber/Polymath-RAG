@@ -76,6 +76,18 @@ def assert_valid(name: str, instance: Any) -> None:
         raise ContractViolation(name, errors)
 
 
+def bounded_text(text: Any, limit: int) -> str:
+    """A diagnostic that must fit a contract's own `maxLength` (a receipt error, a failure or gap message): kept whole when it fits;
+    otherwise its HEAD and TAIL around a marker counting what was elided. A validator's message names the field first and the rule
+    last (`evidence_gaps/0/question: '…' is too long`), so both survive and an oversized value is never echoed whole. Pure."""
+    text = str(text)
+    if len(text) <= limit:
+        return text
+    keep = limit - len(f" …[+{len(text)} chars elided]… ")          # the marker's longest form: the result never exceeds `limit`
+    head = keep * 2 // 3
+    return f"{text[:head]} …[+{len(text) - keep} chars elided]… {text[len(text) - (keep - head):]}"
+
+
 def stable_hash(obj: Any) -> str:
     """sha256 over canonical JSON (sorted keys, no whitespace) — the receipt/submission hash."""
     return hashlib.sha256(json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()

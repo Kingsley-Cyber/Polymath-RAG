@@ -18,14 +18,19 @@ question from governance text ("corroborate from a second independent source") a
 from __future__ import annotations
 
 import hashlib
+import re
 from typing import Any, Iterable, Mapping
 
+from .contracts import EVIDENCE_ROLE_PATTERN
 from .hypotheses import ABSORBED_STATUSES
 
 MAX_GAPS = 100
 SEMANTIC_ORIGINS = ("ledger", "step", "agent_open", "bridge")
 GATE_ORIGIN = "trail_gate"
 TRAIL_GAP_FIELDS = ("gap_id", "hypothesis_id", "question", "evidence_role")
+#: the harness action's own bound on a gap question (harness_action.evidence_gaps[].question maxLength); Trail's wire allows 4096
+QUESTION_MAX = 2000
+_ROLE = re.compile(EVIDENCE_ROLE_PATTERN)
 REFUSAL_MISSING, REFUSAL_NOT_LIVE = "GAP_OWNER_MISSING", "GAP_OWNER_NOT_LIVE"
 
 
@@ -78,7 +83,7 @@ def harvest(current: Mapping[str, Mapping[str, Any]], outputs: Mapping[str, Any]
         if key in seen:
             return
         seen.add(key)
-        bucket.append({"gap_id": str(given_id) if given_id else gap_id(str(hid), origin, q), "hypothesis_id": str(hid), "question": q[:2000],
+        bucket.append({"gap_id": str(given_id) if given_id else gap_id(str(hid), origin, q), "hypothesis_id": str(hid), "question": q[:QUESTION_MAX],
                        "evidence_role": str(role or default_role), "origin": origin})
 
     for hid, state in current.items():
@@ -117,6 +122,16 @@ def trail_gap(gap: Mapping[str, Any]) -> dict[str, Any]:
     return {k: gap[k] for k in TRAIL_GAP_FIELDS}
 
 
+def wire_gap(gap: Mapping[str, Any]) -> dict[str, Any]:
+    """CLOSED like `trail_gap`, for a gap that was never harvested (the legacy gather, TrailSignal's own gate gaps): only the fields of
+    Trail's `ResearchKnowledgeGapV1` that carry a value, the question bounded as `harvest` bounds it. An agent's own keys (`note`,
+    `priority`, …) never reach Trail's `extra="forbid"` wire, where they ended the run TRAIL_REFUSED (bug hunt B-21 / B-26)."""
+    out = {k: gap[k] for k in TRAIL_GAP_FIELDS if gap.get(k) is not None}
+    if isinstance(out.get("question"), str):
+        out["question"] = out["question"][:QUESTION_MAX]
+    return out
+
+
 def trail_gap_payload(semantics: Mapping[str, Any] | None) -> dict[str, list[dict[str, Any]]] | None:
     """The `knowledge_gaps` / `open_gaps` of a `gaps.compile` payload from a harvested set — or None when the step did not opt in
     (the caller then keeps its previous behaviour)."""
@@ -144,4 +159,21 @@ def unowned_gap_errors(payload: Any, live_hypothesis_ids: Iterable[str]) -> list
                 errors.append(f"{REFUSAL_MISSING}: {key}[{n}] names no hypothesis_id — a research gap belongs to exactly one live hypothesis")
             elif str(hid) not in live:
                 errors.append(f"{REFUSAL_NOT_LIVE}: {key}[{n}] names {hid!r}, which is not a live hypothesis of this run")
+    return errors
+
+
+def gap_wire_errors(payload: Any) -> list[str]:
+    """Submit-time law (bug hunt B-22 / B-26): a top-level gap's `evidence_role` crosses TrailSignal's closed wire, whose gap compiler
+    accepts only a role id (the manifest's evidence-role shape, ^[a-z][a-z0-9_]{1,40}$). Refused here, typed, while the agent can still
+    correct it — never forwarded to end the run at the next Trail step. A gap without a role takes the harvest default."""
+    errors: list[str] = []
+    if not isinstance(payload, Mapping):
+        return errors
+    for key in ("knowledge_gaps", "open_gaps"):
+        items = payload.get(key)
+        for n, g in enumerate(items if isinstance(items, list) else []):
+            role = g.get("evidence_role") if isinstance(g, Mapping) else None
+            if role is not None and not (isinstance(role, str) and _ROLE.match(role)):
+                errors.append(f"GAP_ROLE_INVALID: {key}[{n}] evidence_role {role!r} is not an evidence role id (lowercase letters, digits and _, "
+                              "e.g. 'behavior')")
     return errors
