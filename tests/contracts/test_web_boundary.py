@@ -60,6 +60,8 @@ def test_every_route_of_the_orchestrator_is_classified():
 @pytest.mark.parametrize("method,path,cls", [
     ("GET", "/v2/files", B.PUBLIC), ("GET", "/health", B.PUBLIC), ("POST", "/auth/login", B.PUBLIC),
     ("POST", "/chat/stream", B.USER), ("GET", "/corpora", B.USER), ("GET", "/documents/d1/status", B.USER),
+    ("POST", "/research/deep", B.USER), ("POST", "/research/deep/plan", B.USER), ("POST", "/research/deep/finish", B.USER),
+    ("GET", "/research/deep/plan", None), ("GET", "/research/deep/finish", None),
     ("POST", "/adapter/start", B.USER), ("GET", "/adapter/r1/result", B.USER),
     ("POST", "/upload", B.WRITE), ("DELETE", "/documents/d1", B.WRITE),
     ("POST", "/llm/test", B.OWNER), ("GET", "/llm/providers", B.OWNER), ("GET", "/control_plane", B.OWNER),
@@ -276,6 +278,7 @@ GUARDS = {
     "api/retrieve.py": ["narrow_scope(scope)"],
     "api/compare_review.py": ["require_corpus(req.corpus_id)"],
     "api/corpus_plan.py": ["require_corpora(corpus_ids)"],
+    "api/deep_research.py": ["require_corpora(ids)", "libraries = _libraries(req)", "libraries = _libraries(req)"],
     "api/graph_browse.py": ["require_corpus(corpus_id)", "require_corpus(corpus_id)"],
     "api/queries.py": ["require_corpus(corpus_id)", "allowed_corpora() is not None"],
     "api/health.py": ["require_corpus(corpus_id)"],

@@ -12,7 +12,6 @@ import threading
 
 import pytest
 from polymath_shared.deep_research import (
-    SENTENCE_PATTERN,
     STOP_REASONS,
     Config,
     Goal,
@@ -218,6 +217,7 @@ def test_coverage_follows_each_level_and_a_covered_run_stops_early():
     out, _, events = run(LLM(extract=two_doc_extract), concurrency=1)              # standard 3 × 2
     cov = [e for e in events if e["stage"] == "coverage"]
     assert len(cov) == 1 and cov[0]["goals"] == [{"id": f"1.{i}", "learnings": 2, "documents": 2} for i in (1, 2, 3)]
+    assert (cov[0]["documents"], cov[0]["passages"]) == (6, 6)          # the run's distinct cited documents, rows read
     assert out.stop_reason == "coverage_complete" and out.levels == 1 and out.retrievals == 3
     assert len(out.open_followups) == 3                          # the queued children's directions stay open questions
     # one goal with a single document is not covered: the run goes on to level 2
@@ -343,14 +343,13 @@ def test_the_method_says_how_the_run_went():
     method = evidence_model(outcome_with(lns), intent="MECHANISM", evaluative=True, preset="standard",
                             model="litellm:m")["method"]
     assert method == {
-        "preset": "standard", "model": "litellm:m", "intent": "MECHANISM", "evaluative": True, "moves": True,
-        "plan": "planned", "levels": 2, "searches": 5, "searches_by_move": {"broad": 1, "deep": 2, "adjacent": 1, "inverse": 1},
-        "llm_calls": 8, "learnings": 1, "passages": 1, "documents": 1,
+        "preset": "standard", "model": "litellm:m", "intent": "MECHANISM", "evaluative": True,
+        "moves": {"broad": 1, "deep": 2, "adjacent": 1, "inverse": 1},                 # the page reads it as searches per move
+        "plan": "planned", "levels": 2, "searches": 5, "llm_calls": 8, "learnings": 1, "passages": 1, "documents": 1,
         "gate": {"scored": 4, "dropped": 1, "user_kept": 0, "failed_open": 0}, "gap_nodes": 1, "drift_stopped": 0,
         "dropped_learnings": 1, "empty_searches": 1, "errors": 1, "stop_reason": "frontier_empty", "elapsed_s": 61.5}
     off = evidence_model(outcome_with(lns, moves=False))["method"]
-    assert (off["moves"], off["searches_by_move"], off["gate"], off["gap_nodes"], off["drift_stopped"]) == (
-        False, None, None, None, None)
+    assert (off["moves"], off["gate"], off["gap_nodes"], off["drift_stopped"]) == (None, None, None, None)
 
 
 def test_a_moves_run_carries_everything_the_evidence_model_reads():
@@ -362,39 +361,74 @@ def test_a_moves_run_carries_everything_the_evidence_model_reads():
     assert all(len(s["cids"]) == 1 and s["findings"] == 1 for s in model["sources"]) and len(model["sources"]) == 6
 
 
-# ─────────────────────────────────────────────────────────── DR7b: the sentence audit
-def test_the_sentence_split_rule():
-    report = ("## TL;DR\n"
-              "Effort has four factors [c1]. Notation writes time and weight. [c2] Both matter [c9].\n"
-              "\n"
-              "# Where sources disagree\n"
-              "- A list item without a citation\n"
-              "1. A numbered item, e.g. this one, stays whole [c2]!\n"
-              "> Quoted: a sentence ends here [c1] and 3.5 is one number.\n"
-              "```\n"
-              "code. Is. Skipped.\n"
-              "```\n"
-              "| a table | row [c1] |\n"
-              "---\n"
-              "Words etc. Then more [c1].\n"
-              "A last line with no end")
-    assert split_sentences(report) == [
-        "Effort has four factors [c1].", "Notation writes time and weight. [c2]", "Both matter [c9].",
-        "A list item without a citation", "A numbered item, e.g. this one, stays whole [c2]!",
-        "Quoted: a sentence ends here [c1] and 3.5 is one number.", "Words etc.", "Then more [c1].",
-        "A last line with no end"]
+# ─────────────────────────────────────────────────────────── DR7b: the sentence audit (the page's split, rule by rule)
+def test_split_skips_blank_lines_headings_fences_tables_and_rules():
+    report = ("## TL;DR\n#hashtag line\n\n   \nKept one.\n```\nCode. Not prose.\n```\n~~~\nMore code.\n~~~\n"
+              "| a | b |\n  | c |\n---\n***\n___\n===\n- - -\nKept two.")
+    # a heading needs "# " (CommonMark), so "#hashtag line" is prose; "===" is a setext underline and is skipped
+    assert split_sentences(report) == ["#hashtag line", "Kept one.", "Kept two."]
     assert split_sentences("") == [] and split_sentences("## only a heading\n\n") == []
-    q = chr(0x201d)                                                  # a closing curly quote stays with its sentence
-    assert split_sentences(f'He said "stop." Next [c1]. She wrote \u201cgo.{q} [c2] Done') == [
-        'He said "stop."', "Next [c1].", f"She wrote \u201cgo.{q} [c2]", "Done"]
-    assert re.compile(SENTENCE_PATTERN, re.IGNORECASE | re.DOTALL).pattern == SENTENCE_PATTERN
+
+
+def test_split_strips_blockquote_marks_and_one_list_marker():
+    assert split_sentences("> Quoted line. Another.\n> > Nested.\n- Dash item\n* Star item\n+ Plus item\n"
+                           "1. Numbered item\n12) Paren item\n1.5 metres is not a marker.") == [
+        "Quoted line.", "Another.", "Nested.", "Dash item", "Star item", "Plus item", "Numbered item", "Paren item",
+        "1.5 metres is not a marker."]
+    assert split_sentences("- 1. Nested marker") == ["1.", "Nested marker"]          # one marker only: "1." stays prose
+    assert split_sentences("> - quoted item. Next.") == ["quoted item.", "Next."]
+
+
+def test_split_breaks_after_terminal_punctuation_and_its_closers_before_whitespace():
+    q, s = chr(0x201D), chr(0x2019)                                  # closing curly quotes
+    assert split_sentences("One. Two! Three? Four") == ["One.", "Two!", "Three?", "Four"]
+    assert split_sentences(f'He said "stop." Then (left.) Next [x.] More **bold.** _it._ Curly{q}. X.{s} End') == [
+        'He said "stop."', "Then (left.)", "Next [x.] More **bold.**", "_it._", f"Curly{q}.", f"X.{s}", "End"]
+    assert split_sentences("Pi is 3.14 today.x not split. e.g. this splits") == [
+        "Pi is 3.14 today.x not split.", "e.g. this splits"]              # no whitespace, no split; an abbreviation never ends one
+    assert split_sentences("A.   B.\tC.") == ["A.", "B.", "C."]
+    # NBSP and the ideographic space split in both languages. (U+0085 is whitespace to Python's \\s and not to JavaScript's:
+    # a report carrying it audits to a different count on the page, which then shows the counts alone.)
+    assert split_sentences("One." + chr(0xA0) + "Two." + chr(0x3000) + "Three.") == ["One.", "Two.", "Three."]
+
+
+def test_split_gives_a_leading_citation_group_to_the_sentence_before():
+    assert split_sentences("A fact. [c1] Next. [c2, c3] [c4] Last.") == ["A fact. [c1]", "Next. [c2, c3] [c4]", "Last."]
+    assert split_sentences("Only citations. [c1] [c2]") == ["Only citations. [c1] [c2]"]
+    assert split_sentences("See it. [the site](https://example.org) now.") == [
+        "See it.", "[the site](https://example.org) now."]                # a link is not a citation group
+    assert split_sentences("[c1] at the start of a line stays.") == ["[c1] at the start of a line stays."]
+
+
+def test_split_never_spans_lines_and_drops_empty_pieces():
+    assert split_sentences("First line without an end\ncontinues here.\r\nWindows line.  \n") == [
+        "First line without an end", "continues here.", "Windows line."]
+
+
+def test_the_split_is_the_pages_own():
+    """The report view's own cases (frontend-v2 deep-report.test.tsx), which it checks against `auditSentences`."""
+    md = ("# Title\nOne fact [c1]. Two facts. [c2] Three?\n\n- Item one [c3].\n- Item two\n```\nCode. Not prose.\n```\n"
+          "| a | b |\n---\n> Quoted line. Another.")
+    assert split_sentences(md) == ["One fact [c1].", "Two facts. [c2]", "Three?", "Item one [c3].", "Item two",
+                                   "Quoted line.", "Another."]
+    assert split_sentences('He said "stop." Then left [c1].\n**Bold claim.** Next one.') == [
+        'He said "stop."', "Then left [c1].", "**Bold claim.**", "Next one."]
 
 
 def test_the_audit_lists_the_sentences_without_a_valid_citation():
-    report = ("## TL;DR\nEffort has four factors [c1]. Notation writes time and weight. [c2] Both matter [c9].\n\n"
-              "## Detail\nA claim with a link [the site](https://example.org). Two sources agree [c9, c1].\n")
-    audit = audit_report(report, {"c1", "c2"})
-    assert audit == {"sentences": 5, "cited": 3, "uncited": [2, 3], "invalid_cids": ["c9"]}
+    prose = ("## TL;DR\n"
+             "Laban effort has four factors: weight, time, space and flow [c1]. Teachers use effort notation to train "
+             "expressive movement [c2]. It is taught mostly in dance schools.\n\n"
+             "## The four factors\n"
+             "Weight, time, space and flow each run between two poles [c1][c3]. **Flow is the hardest to observe.** Some "
+             "writers add a fifth factor [c9].\n\n"
+             "## Where sources disagree\n"
+             "Critics say the notation is too coarse for film acting [c4].")
+    # the page's fixture and the audit it expects (deep-report.test.tsx)
+    assert audit_report(prose, {"c1", "c2", "c3", "c4"}) == {"sentences": 7, "cited": 4, "uncited": [2, 4, 5],
+                                                              "invalid_cids": ["c9"]}
+    assert audit_report("A claim [the site](https://example.org). Two agree [c9, c1].", {"c1"}) == {
+        "sentences": 2, "cited": 1, "uncited": [0], "invalid_cids": ["c9"]}
     assert audit_report("", {"c1"}) == {"sentences": 0, "cited": 0, "uncited": [], "invalid_cids": []}
 
 

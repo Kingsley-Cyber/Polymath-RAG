@@ -410,7 +410,7 @@ const CITATION = /\[([^[\]]+)\](?!\()/g;
  * and `tests/contracts/test_deep_research_sentence_split.py` pin both sides to one fixture. */
 const FENCE = /^\s{0,3}(?:```|~~~)/;
 const HEADING = /^\s{0,3}#{1,6}(?:\s|$)/;
-const RULE = /^\s{0,3}(?:(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,})$/;
+const RULE = /^\s{0,3}(?:(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,}|(?:=\s*){3,})$/;
 const TABLE = /^\s*\|/;
 const MARKER = /^\s*(?:>\s?)*\s*(?:(?:[-*+]|\d{1,3}[.)])\s+)?/;
 /** One sentence (the backend's SENTENCE_PATTERN, run with the flags "gis"). */

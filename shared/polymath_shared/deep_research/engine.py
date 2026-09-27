@@ -528,11 +528,13 @@ class _Run:
                                  "searched": dict(zero), "learnings": dict(zero)})
 
     def _covered(self, level: int) -> bool:
-        """DR7b (moves): after a level, the `coverage` event (per goal: learnings, distinct documents), and whether every
-        goal the gate kept is covered (§11.4: ≥ 2 findings from ≥ 2 documents)."""
+        """DR7b (moves): after a level, the `coverage` event (per goal: learnings, distinct documents; the run's totals: the
+        distinct documents all learnings cite, the passages read), and whether every goal the gate kept is covered
+        (§11.4: ≥ 2 findings from ≥ 2 documents)."""
         goals = [br for br in self.branches if br.node.level == 1]
         cov = E.coverage([br.id for br in goals], self.learnings)
-        self._emit("coverage", level, goals=cov)
+        cited = {d for ln in self.learnings for d in ln.doc_ids}
+        self._emit("coverage", level, goals=cov, documents=len(cited), passages=len(self.rows))
         kept = {br.id for br in goals if br.status != "gated"}
         return E.coverage_complete([c for c in cov if c["id"] in kept])
 

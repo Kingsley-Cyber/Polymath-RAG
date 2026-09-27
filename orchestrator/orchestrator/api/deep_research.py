@@ -45,7 +45,7 @@ MOVES_ENV = "POLYMATH_DEEP_RESEARCH_MOVES"   # "0" forces moves off for every re
 #: §10.1: the canonical §33 intent a move's search runs under (the reserved surfaces DR0 named reach deep research here)
 MOVE_INTENT = {"adjacent": "RELATIONSHIP", "inverse": "COMPARISON"}
 GATE_ORIGIN = "DEEP_RESEARCH"                # the probe gate's origin for a deep research query (§10.4)
-PLAN_QUERY_CHARS, PLAN_GOAL_CHARS = (3, 300), 1000
+PLAN_QUERY_CHARS, PLAN_GOAL_CHARS = (3, 300), 2000   # a goal: at most the question's own length (the report prompt holds it)
 _RUNNING: dict[str, threading.Event] = {}     # the caller's run: its cancel event
 _FINISH: dict[str, threading.Event] = {}      # the caller's run: its Finish-now event (DR7c)
 _LOCK = threading.Lock()
@@ -86,26 +86,23 @@ def moves_enabled(req: DeepResearchRequest | DeepPlanRequest) -> bool:
 
 def confirmed_plan(req: DeepResearchRequest, breadth: int) -> tuple[tuple[str, str, str], ...] | None:
     """The request's confirmed plan as (goal, query, move) items, or None. §11.3: at most 2 × breadth goals, each query 3-300
-    characters (spaces trimmed), each move in MOVES; also refused: an empty plan, a goal over 1000 characters, the same query
-    twice (ignoring case and spacing). Any of these is one typed 422 PLAN_INVALID listing every problem."""
+    characters (spaces trimmed), each move in MOVES; also refused: an empty plan (the page's own rule) and a goal longer than
+    the question may be. Any of these is one typed 422 PLAN_INVALID listing every problem. A repeated query is allowed, as
+    the page allows it: every confirmed goal is searched."""
     if req.plan is None:
         return None
     problems = [] if req.plan else ["the plan has no goals"]
     if len(req.plan) > 2 * breadth:
         problems.append(f"at most {2 * breadth} goals for this preset, got {len(req.plan)}")
-    seen: set[str] = set()
     lo, hi = PLAN_QUERY_CHARS
     for n, item in enumerate(req.plan, 1):
-        query, key = item.query.strip(), " ".join(item.query.casefold().split())
+        query = item.query.strip()
         if not lo <= len(query) <= hi:
             problems.append(f"goal {n}: the query must be {lo}-{hi} characters")
         if item.move not in DR.MOVES:
             problems.append(f"goal {n}: the move must be one of {list(DR.MOVES)}")
         if len(item.goal) > PLAN_GOAL_CHARS:
             problems.append(f"goal {n}: the goal must be at most {PLAN_GOAL_CHARS} characters")
-        if key in seen:
-            problems.append(f"goal {n}: the same query as an earlier goal")
-        seen.add(key)
     if problems:
         raise HTTPException(422, {"error_code": "PLAN_INVALID", "message": "; ".join(problems)})
     return tuple((item.goal.strip(), item.query.strip(), item.move) for item in req.plan)
@@ -316,6 +313,7 @@ def _phase(ev: dict[str, Any], t0: float) -> dict[str, Any]:
              **{k: v for k, v in ev.items() if k in _PHASE_FIELDS}}
     if "move" in ev and ev.get("query"):
         frame["query"] = str(ev["query"])[:120]         # the rail labels a search by its move: "Broad · <query>"
+        frame.update({k: ev[k] for k in ("rows", "status") if k in ev})   # DR7c's feed: passages, empty / error
     return frame
 
 
@@ -331,7 +329,8 @@ def _worker(req: DeepResearchRequest, libraries: list[str], synth: str, principa
 
         def on_event(ev: dict[str, Any]) -> None:
             if ev.get("stage") == "coverage":             # DR7b (moves): after each level, the goals' meters in their own frame
-                out.put(("coverage", {"goals": ev["goals"], "level": ev["depth"]}))
+                out.put(("coverage", {"goals": ev["goals"], "documents": ev["documents"], "passages": ev["passages"],
+                                      "level": ev["depth"]}))
             else:
                 out.put(("phase", _phase(ev, t0)))
         outcome = DR.run_research(req.question, tuple(libraries),
@@ -492,12 +491,13 @@ async def deep_research_plan(req: DeepPlanRequest) -> dict[str, Any]:
 
 @router.post("/research/deep/finish", status_code=202)
 async def deep_research_finish() -> dict[str, Any]:
-    """DR7c (§11.3): Finish now. The caller's run starts nothing new, lets the calls in flight finish, and writes the report
-    from what it found (stop reason `finished_early`). 404 NO_DEEP_RESEARCH_RUN when the caller has no run."""
+    """DR7c (§11.3): Finish now (the page posts `{}`). The caller's run starts nothing new, lets the calls in flight finish,
+    and writes the report from what it found (stop reason `finished_early`): 202 `{"finishing": true}`. 404
+    NO_DEEP_RESEARCH_RUN when the caller has no run."""
     who = principal_context.current() or "owner"
     with _LOCK:
         finish = _FINISH.get(who)
     if finish is None:
         raise HTTPException(404, {"error_code": "NO_DEEP_RESEARCH_RUN", "message": "you have no deep research run to finish"})
     finish.set()
-    return {"status": "finishing"}
+    return {"finishing": True}

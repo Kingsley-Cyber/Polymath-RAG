@@ -537,13 +537,18 @@ def test_a_confirmed_plan_seeds_level_one_and_the_gate_never_drops_it(wire, monk
     ([dict(PLAN[0], query="ab")], "3-300 characters"),
     ([dict(PLAN[0], query="x" * 301)], "3-300 characters"),
     ([dict(PLAN[0], move="sideways")], "the move must be one of"),
-    ([PLAN[0], dict(PLAN[0], query="  LABAN effort   factors notation ")], "the same query"),
-    ([dict(PLAN[0], goal="g" * 1001)], "at most 1000 characters"),
+    ([dict(PLAN[0], goal="g" * 2001)], "at most 2000 characters"),
     ([], "no goals")])
 def test_a_bad_plan_is_refused_before_any_work(rec, plan, problem):
     r = _client().post("/research/deep", json={"question": EVALUATIVE, "corpus_id": "cinema", "preset": "quick", "plan": plan})
     assert r.status_code == 422 and r.json()["detail"]["error_code"] == "PLAN_INVALID"
     assert problem in r.json()["detail"]["message"] and rec.searches == [] and DRR._RUNNING == {}
+
+
+def test_a_plan_may_repeat_a_query_as_the_page_allows(wire):
+    frames = _deep({"question": EVALUATIVE, "preset": "quick", "plan": [PLAN[0], dict(PLAN[0], goal="again")]})
+    assert [d for k, d in frames if k == "error"] == []
+    assert [r.query for r in wire.requests] == [PLAN[0]["query"]] * 2              # every confirmed goal is searched
 
 
 def test_finish_without_a_run_is_404_and_with_one_202(rec):
@@ -554,7 +559,8 @@ def test_finish_without_a_run_is_404_and_with_one_202(rec):
     try:
         assert _client().post("/research/deep/finish").status_code == 404                 # the owner's own run: none
         r = _client("prn_fred").post("/research/deep/finish")
-        assert r.status_code == 202 and r.json() == {"status": "finishing"} and fred.is_set()
+        assert r.status_code == 202 and r.json() == {"finishing": True} and fred.is_set()
+        assert _client("prn_fred").post("/research/deep/finish", json={}).status_code == 202        # the page posts {}
     finally:
         DRR._FINISH.clear()
 
@@ -588,6 +594,7 @@ def test_coverage_frames_follow_each_level_with_moves_only(wire):
     coverage = [d for k, d in frames if k == "coverage"]
     assert [c["level"] for c in coverage] == [1, 2]                  # every row is in one book: never covered, both levels run
     assert coverage[0]["goals"] == [{"id": f"1.{i}", "learnings": 1, "documents": 1} for i in (1, 2, 3)]
+    assert (coverage[0]["documents"], coverage[0]["passages"]) == (1, 6)     # run totals: one book (d1), 3 searches × 2 rows
     kinds = [k for k, _ in frames]
     assert kinds.index("coverage") < kinds.index("token")
     frames = _deep({"question": EVALUATIVE, "preset": "standard", "moves": False})
@@ -601,7 +608,9 @@ def test_plan_and_search_frames_carry_goal_ids(wire):
     assert [g["id"] for g in plans[0]["goals"]] == ["1.1", "1.2", "1.3"]
     assert sorted(d["goal_id"] for d in plans[1:]) == ["1.1", "1.2", "1.3"] and all("goals" not in d for d in plans[1:])
     searches = [d for d in phases if d["stage"] == "deep_retrieve"]
-    assert searches and all(d["goal_id"] in ("1.1", "1.2", "1.3") and d["move"] for d in searches)
+    assert searches and all(d["goal_id"] in ("1.1", "1.2", "1.3") and d["move"] and d["rows"] == 2 for d in searches)
+    reads = [d for d in phases if d["stage"] == "deep_extract"]
+    assert reads and all(d["status"] == "ok" and d["new_learnings"] == 1 and d["rows"] == 2 for d in reads)
 
 
 def test_the_answer_carries_the_evidence_model_and_the_audit(wire, monkeypatch):

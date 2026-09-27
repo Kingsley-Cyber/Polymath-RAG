@@ -110,16 +110,17 @@ def evidence_model(outcome: Any, *, intent: str = "", evaluative: bool = False, 
 
 
 def _method(outcome: Any, *, intent: str, evaluative: bool, preset: str, model: str, documents: int) -> dict[str, Any]:
-    """The Method tab's facts: {preset, model, intent, evaluative, moves, plan, levels, searches, searches_by_move,
-    llm_calls, learnings, passages, documents, gate, gap_nodes, drift_stopped, dropped_learnings, empty_searches,
-    errors, stop_reason, elapsed_s}. With moves off `searches_by_move`, `gate`, `gap_nodes` and `drift_stopped` are None."""
+    """The Method tab's facts: {preset, model, intent, evaluative, moves, plan, levels, searches, llm_calls, learnings,
+    passages, documents, gate, gap_nodes, drift_stopped, dropped_learnings, empty_searches, errors, stop_reason,
+    elapsed_s}. `moves` is the searches per move ({broad, deep, adjacent, inverse}); with moves off it, `gate`, `gap_nodes`
+    and `drift_stopped` are None."""
     moves = outcome.moves
     by_move = None
     if moves is not None:
         by_move = {m: sum(level["searched"][m] for level in moves["levels"]) for m in MOVES}
-    return {"preset": preset, "model": model, "intent": intent, "evaluative": evaluative, "moves": moves is not None,
+    return {"preset": preset, "model": model, "intent": intent, "evaluative": evaluative, "moves": by_move,
             "plan": "confirmed" if outcome.confirmed_plan else "planned", "levels": outcome.levels,
-            "searches": outcome.retrievals, "searches_by_move": by_move, "llm_calls": outcome.llm_calls,
+            "searches": outcome.retrievals, "llm_calls": outcome.llm_calls,
             "learnings": len(outcome.learnings), "passages": len(outcome.evidence), "documents": documents,
             "gate": None if moves is None else moves["gate"],
             "gap_nodes": None if moves is None else moves["gap_nodes"],
@@ -133,7 +134,7 @@ def _method(outcome: Any, *, intent: str, evaluative: bool, preset: str, model: 
 #: A line is skipped when it is blank, a heading, a horizontal rule, a table row, or inside (or on) a ``` / ~~~ fence.
 FENCE = re.compile(r"^\s{0,3}(?:```|~~~)")
 HEADING = re.compile(r"^\s{0,3}#{1,6}(?:\s|$)")
-RULE = re.compile(r"^\s{0,3}(?:(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,})$")
+RULE = re.compile(r"^\s{0,3}(?:(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,}|(?:=\s*){3,})$")      # === = a setext underline
 TABLE = re.compile(r"^\s*\|")
 #: stripped from the start of a kept line: blockquote marks, then one list marker ("- ", "* ", "+ ", "1. ", "1) ")
 MARKER = re.compile(r"^\s*(?:>\s?)*\s*(?:(?:[-*+]|\d{1,3}[.)])\s+)?")
