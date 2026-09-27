@@ -11,13 +11,14 @@ and the only score stay TrailSignal's.
                 concept_id, variation_id, hypothesis_id, mechanism_id
     join   admitted observations -> existing products, linked to a concept ONLY through the explicit `concept:` tag the job asked
              the harness to record (the supply lane's convention). No tag, no link: ownership is never inferred from a name.
-             A product the harness marks `relation: solves` (or TrailSignal admits as contradicting) CONTESTS that concept — and
-             only that concept."""
+             A product the harness marks `relation: solves` (or TrailSignal counts as contradicting ITS hypothesis) CONTESTS that
+             concept — and only that concept."""
 from __future__ import annotations
 
 from typing import Any, Mapping
 
 import query_semantics as QS
+from adapter_receipt import polarity_for
 
 RELATIONS = ("competitor", "substitute", "current_solution", "validates", "solves")
 #: what an untagged observation's relation defaults to, by the evidence role TrailSignal admitted it under
@@ -139,12 +140,14 @@ def join(admitted: list[Mapping[str, Any]], observations: Mapping[str, Mapping[s
             relation = ROLE_DEFAULT_RELATION.get(str(a.get("evidence_role")), "competitor")
         src = sources.get(o.get("source_id")) or {}
         mech = mech_by_id.get(str(concept_by_id[cid].get("mechanism_id"))) or {}
-        contests = relation == "solves" or a.get("polarity") == "contradicting"
+        # what TrailSignal counts this record as FOR THIS CONCEPT'S hypothesis (ADR-069 relation, else the global polarity — gap B-11)
+        polarity = polarity_for(a, mech.get("hypothesis_id"))
+        contests = relation == "solves" or polarity == "contradicting"
         products.append({"id": a.get("admitted_evidence_id"), "concept_id": cid, "variation_id": vid if vid in variations else None,
                          "hypothesis_id": mech.get("hypothesis_id"), "hypothesis_ids": list(a.get("hypothesis_ids") or []), "mechanism_id": mech.get("id"),
                          "relation": relation, "contests_concept": contests, "product_name": context_field(ctx, "product"),
                          "price_raw": context_field(ctx, "price as listed"), "url": src.get("url"), "claim": str(o.get("claim") or "")[:400],
-                         "evidence_role": a.get("evidence_role"), "polarity": a.get("polarity"), "metric": o.get("metric_if_present"),
+                         "evidence_role": a.get("evidence_role"), "polarity": polarity, "metric": o.get("metric_if_present"),
                          "job_id": (context_field(ctx, "intent") if context_field(ctx, "intent") in job_ids else None)})   # PROVENANCE HOOK: the job that found it
         stats["joined"] += 1
     planned = {}

@@ -21,6 +21,9 @@ def validate_concepts(concepts: list[dict], state: dict, policies: dict) -> list
     errors: list[str] = []
     if not (lo <= len(concepts) <= hi):
         errors.append(f"portfolio law: {lo}–{hi} distinct product concepts required, got {len(concepts)}")
+    # one id names ONE concept: sourcing jobs, product-reality jobs, joins and coverage all key on it (a repeat silently loses one)
+    ids = [str(c.get("id")) for c in concepts if c.get("id") is not None]
+    errors += [f"{cid}: {ids.count(cid)} concepts share this id — every concept needs its own id" for cid in dict.fromkeys(ids) if ids.count(cid) > 1]
     supported = {m["id"] for m in state["data"].get("mechanisms") or [] if m.get("status") == "SUPPORTED"}
     obs_ids = {o["id"] for o in state["data"].get("observations") or []}
     obs_ids |= {r["id"] for r in state["data"].get("field_records") or [] if isinstance(r, dict) and r.get("id")}   # docs/25: field records ground concepts too

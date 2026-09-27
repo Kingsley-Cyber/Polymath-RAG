@@ -76,10 +76,14 @@ def validate_hop_refs(hyp: dict, policies: dict, known_ids: set | None) -> list[
     except ValueError:
         return []  # validate_bridge already rejects a boundary that is not a hop
     refs = hyp.get("hop_refs") or {}
+    if not isinstance(refs, dict):          # a shape the law cannot read is an error the agent can correct, never a crash (gap B-01)
+        return [f"{hyp.get('id', '?')}: hop_refs must be an object {{\"<hop index>\": [evidence ids]}}, got {type(refs).__name__}"]
     errs = []
     for i in range(b):
         ids = refs.get(str(i)) or refs.get(i) or []
-        if not ids:
+        if not isinstance(ids, list) or not all(isinstance(r, str) for r in ids):
+            errs.append(f"{hyp.get('id', '?')}: hop {i + 1} hop_refs must list evidence id strings, got {ids!r}"[:300])
+        elif not ids:
             errs.append(f"{hyp.get('id', '?')}: hop {i + 1} is before the evidence boundary but cites no corpus/observation id (hop_refs)")
         elif known_ids is not None:
             bad = [r for r in ids if r not in known_ids]

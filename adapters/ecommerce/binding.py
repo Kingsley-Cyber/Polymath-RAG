@@ -16,6 +16,7 @@ ledger: the runtime owns state, this file only computes. Anything the engine pri
 """
 from __future__ import annotations
 
+import collections
 import contextlib
 import json
 import os
@@ -61,6 +62,22 @@ def _op_validate_bridge(req: dict[str, Any]) -> dict[str, Any]:
     policies = graphmod.load_policies()
     bridge_errors = bridge.validate_all(hyps, policies, known)
     portfolio_errors = bridge.validate_portfolio(hyps, policies)
+    # ONE bridge per live hypothesis, no others (gap B-09). A repeated id is always visible; a phantom or an unbridged hypothesis only
+    # against the LEDGER (`live_hypotheses` = context.hypotheses) — as is a generation the portfolio bounds can never admit, which no
+    # bridge can repair: `portfolio_unreachable` says so, so a manifest can route it to generation instead of back to the bridges.
+    named = [str(h.get("hypothesis_id") or "") for h in hyps]
+    bridge_errors += [f"{hid}: {n} bridges name this hypothesis — write ONE bridge per live hypothesis"
+                      for hid, n in collections.Counter(named).items() if hid and n > 1]
+    unreachable = False
+    if isinstance(ins.get("live_hypotheses"), list):
+        live = [str(h["hypothesis_id"]) for h in ins["live_hypotheses"] if isinstance(h, dict) and h.get("hypothesis_id") and h.get("status") not in ("killed", "merged")]
+        bridge_errors += [f"{hid}: not a live hypothesis in the ledger — bridge only the hypotheses in context.hypotheses" for hid in dict.fromkeys(named) if hid and hid not in live]
+        bridge_errors += [f"{hid}: live hypothesis without a bridge — every live hypothesis needs its own" for hid in live if hid not in named]
+        pp = policies.get("portfolio") or {}
+        lo, hi = pp.get("min_hypotheses", 3), pp.get("max_hypotheses", 6)
+        if not lo <= len(live) <= hi:
+            unreachable = True
+            portfolio_errors.append(f"portfolio: the ledger holds {len(live)} live hypotheses — need {lo}-{hi}; no bridge can change that (generate or merge hypotheses)")
     anchor_errors: list[str] = []
     clusters = (req.get("inputs") or {}).get("lived_clusters")
     if isinstance(clusters, list):                 # after admission: a hypothesis names ANCHOR clusters or declares CORPUS_ONLY
@@ -68,7 +85,7 @@ def _op_validate_bridge(req: dict[str, Any]) -> dict[str, Any]:
         state = _engine_state(lived_clusters=clusters)
         anchor_errors = lived_world.validate_hypothesis_anchors(hyps, state, policies) + lived_world.validate_portfolio_anchors(hyps, state, policies)
     return {"admissible": not bridge_errors and not portfolio_errors and not anchor_errors, "bridge_errors": bridge_errors,
-            "portfolio_errors": portfolio_errors, "anchor_errors": anchor_errors, "hypotheses_checked": len(hyps)}
+            "portfolio_errors": portfolio_errors, "anchor_errors": anchor_errors, "hypotheses_checked": len(hyps), "portfolio_unreachable": unreachable}
 
 
 def _inputs(req: dict[str, Any]) -> dict[str, Any]:
@@ -269,7 +286,12 @@ def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, 
             src = sources.get(o.get("source_id")) or {}
             host = (urlparse(str(src.get("url") or "")).hostname or "").removeprefix("www.") or str(a.get("source_class") or "?")
             community = _context_field(str(o.get("context") or ""), "community")
-            linked = [hyps[h] for h in a.get("hypothesis_ids") or [] if h in hyps]
+            linked_ids = [h for h in a.get("hypothesis_ids") or [] if h in hyps]
+            linked = [hyps[h] for h in linked_ids]
+            # the hypothesis whose friction keys this record's cluster; whether the record CONTRADICTS is TrailSignal's relation to THAT
+            # hypothesis (ADR-069), not the global flag (gap B-11)
+            keyed = next((h for h in linked_ids if hyps[h].get("suspected_friction")), None)
+            polarity = adapter_receipt.polarity_for(a, keyed or next(iter(a.get("hypothesis_ids") or []), None))
             if not community:
                 # WHO this record is about, in the order the run knows it: the lead the harness researched, else the population of the
                 # hypothesis it is linked to. The source HOST is a last resort and is said to be one — a host is a place, not a community
@@ -282,12 +304,12 @@ def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, 
             excerpt = str(o.get("paraphrase_or_excerpt") or "")
             out.append({"id": a["admitted_evidence_id"], "observation_id": a.get("observation_id"), "source": src.get("url") or o.get("source_id"),
                         "source_identity": {"platform": host.split(".")[0] if "." in host else host, "thread_key": src.get("url") or o.get("source_id")},
-                        "community": community or host, "friction_family": next((str(h["suspected_friction"]) for h in linked if h.get("suspected_friction")), "unassigned"),
+                        "community": community or host, "friction_family": str(hyps[keyed]["suspected_friction"]) if keyed else "unassigned",
                         "evidence_roles": [role] if role else [], "problem": str(o.get("claim") or "")[:300], "quote_ref": excerpt[:300],
                         # the workaround is WHAT THE PERSON DOES (the claim); the excerpt is their quote and already rides in `quote_ref`
                         "workaround": str(o.get("claim") or "")[:200] if a.get("evidence_role") == "workaround" else "", "moment": _context_field(str(o.get("context") or ""), "moment"),
                         "freshness": {"class": a.get("freshness")}, "independence_group": a.get("independence_group"),
-                        "hypothesis_ids": list(a.get("hypothesis_ids") or []), "contradicts": a.get("polarity") == "contradicting",
+                        "hypothesis_ids": list(a.get("hypothesis_ids") or []), "contradicts": polarity == "contradicting", "polarity": polarity,
                         "lead_id": _context_field(str(o.get("context") or ""), "lead"),
                         # PROVENANCE HOOK: which compiled intent found this observation — and through the intent id, which gap of which
                         # hypothesis it answers. The receipt's tool_trace counts queries per intent but never says which observation
@@ -330,8 +352,11 @@ def _op_validate_situations(req: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(items, list) or not items:
         raise Refusal("LIVED_SITUATIONS_MISSING", "inputs.lived_situations must be a non-empty list")
     state = _engine_state(lived_clusters=ins.get("lived_clusters") or [], field_records=ins.get("field_records") or [])
-    errors = [f"lived_situations[{i}]: {e}" for i, x in enumerate(items) for e in models.validate(x, "lived_situation")]
-    errors += lived_world.validate_situations(items, state, graphmod.load_policies())
+    shape = [models.validate(x, "lived_situation") for x in items]
+    errors = [f"lived_situations[{i}]: {e}" for i, errs in enumerate(shape) for e in errs]
+    # the law reads ids as keys: it judges the situations whose shape is lawful (a malformed one is already an error above and never
+    # a crash — a crash fails the run instead of returning it to reasoning, gap B-01)
+    errors += lived_world.validate_situations([x for x, errs in zip(items, shape) if not errs], state, graphmod.load_policies())
     return {"valid": not errors, "errors": errors, "situations_checked": len(items)}
 
 
@@ -561,13 +586,23 @@ def _mechanisms(ins: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str]]:
         if not isinstance(m, dict):
             continue
         mid = str(m.get("id") or m.get("mechanism_id") or f"mech_{i + 1}")
-        st = status.get(m.get("hypothesis_id"))
+        st = status.get(m["hypothesis_id"]) if isinstance(m.get("hypothesis_id"), str) else None     # a list / object names no hypothesis
         ok = st in ELIGIBLE_HYPOTHESIS_STATUSES
         if not ok:
             notes.append(f"{mid}: hypothesis {m.get('hypothesis_id')!r} is {st or 'not live'} in the ledger — not eligible")
         out.append({**m, "id": mid, "name": str(m.get("name") or m.get("mechanism") or mid), "status": "SUPPORTED" if ok else "UNSUPPORTED",
                     "supporting_observation_ids": list(m.get("supporting_observation_ids") or m.get("evidence_refs") or [])})
     return out, notes
+
+
+def _unique_concepts(concepts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Plans, joins and coverage key on the concept id. The portfolio law refuses a repeated id; one that still arrives is refused
+    here — never merged into, or labelled with, another concept (gap B-07)."""
+    ids = [str(c.get("id")) for c in concepts]
+    repeated = sorted({i for i in ids if ids.count(i) > 1})
+    if repeated:
+        raise Refusal("CONCEPT_IDS_NOT_UNIQUE", f"product concept ids must be unique; repeated: {repeated[:10]}")
+    return concepts
 
 
 def _op_validate_concepts(req: dict[str, Any]) -> dict[str, Any]:
@@ -584,7 +619,12 @@ def _op_validate_concepts(req: dict[str, Any]) -> dict[str, Any]:
         raise Refusal("PRODUCT_CONCEPTS_MISSING", "inputs.product_concepts must be a non-empty list")
     mechs, notes = _mechanisms(ins)
     state = _engine_state(mechanisms=mechs, field_records=[{"id": i} for i in ins.get("field_evidence_ids") or []] + list(ins.get("field_records") or []))
-    errors = [f"product_concepts[{i}]: {e}" for i, c in enumerate(concepts) for e in models.validate(c, "product_concept")]
+    errors = [f"mechanisms[{i}].hypothesis_id: expected one live hypothesis id string, got {type(m.get('hypothesis_id')).__name__}"
+              for i, m in enumerate(ins.get("mechanisms") or []) if isinstance(m, dict) and not isinstance(m.get("hypothesis_id"), str)]
+    # one id names ONE mechanism (gap B-07): concepts, plans and joins look mechanisms up by id — a reused id hides one of them
+    errors += [f"mechanisms: {n} mechanisms share the id {mid!r} — every mechanism needs its own id"
+               for mid, n in collections.Counter(m["id"] for m in mechs).items() if n > 1]
+    errors += [f"product_concepts[{i}]: {e}" for i, c in enumerate(concepts) for e in models.validate(c, "product_concept")]
     errors += ideation.validate_concepts([c for c in concepts if isinstance(c, dict)], state, graphmod.load_policies())
     return {"valid": not errors, "errors": errors, "mechanism_notes": notes, "concepts_checked": len(concepts),
             "variations_checked": sum(len(c.get("variations") or []) for c in concepts if isinstance(c, dict))}
@@ -600,7 +640,7 @@ def _op_supply_plan(req: dict[str, Any]) -> dict[str, Any]:
     import graph as graphmod
 
     ins = _inputs(req)
-    concepts = [c for c in ins.get("product_concepts") or [] if isinstance(c, dict)]
+    concepts = _unique_concepts([c for c in ins.get("product_concepts") or [] if isinstance(c, dict)])
     if not concepts:
         raise Refusal("PRODUCT_CONCEPTS_MISSING", "inputs.product_concepts must be the validated concepts")
     mechs, _ = _mechanisms(ins)
@@ -672,7 +712,7 @@ def _op_supply_leads(req: dict[str, Any]) -> dict[str, Any]:
     import graph as graphmod
 
     ins = _inputs(req)
-    concepts = [c for c in ins.get("product_concepts") or [] if isinstance(c, dict)]
+    concepts = _unique_concepts([c for c in ins.get("product_concepts") or [] if isinstance(c, dict)])
     mechs, notes = _mechanisms(ins)
     obs, sources = {}, {}
     for rec in ins.get("receipts") or []:
@@ -738,7 +778,7 @@ def _op_product_reality_plan(req: dict[str, Any]) -> dict[str, Any]:
     directive = ins.get("research_directive")
     if not isinstance(directive, dict) or not directive.get("search_intents"):
         raise Refusal("REALITY_DIRECTIVE_MISSING", "inputs.research_directive must be the product-reality directive TrailSignal compiled (with search_intents)")
-    concepts = [c for c in ins.get("product_concepts") or [] if isinstance(c, dict)]
+    concepts = _unique_concepts([c for c in ins.get("product_concepts") or [] if isinstance(c, dict)])
     if not concepts:
         raise Refusal("PRODUCT_CONCEPTS_MISSING", "inputs.product_concepts must be the validated concepts")
     mechs, notes = _mechanisms(ins)
@@ -764,12 +804,12 @@ def _op_product_reality_plan(req: dict[str, Any]) -> dict[str, Any]:
 def _op_product_reality_join(req: dict[str, Any]) -> dict[str, Any]:
     """The product-reality half of `supply.leads` (restoration reference §10.4 / §10.5): ADMITTED product-reality observations ->
     existing products joined to the concept (and variation) whose job found them, by the explicit `concept:` tag only. A product
-    marked `relation: solves` — or admitted by TrailSignal as contradicting — CONTESTS that one concept; its siblings are untouched.
-    NO score and NO verdict: qualification and the only score are TrailSignal's."""
+    marked `relation: solves` — or counted by TrailSignal as contradicting the concept's hypothesis — CONTESTS that one concept; its
+    siblings are untouched. NO score and NO verdict: qualification and the only score are TrailSignal's."""
     import product_reality as PR
 
     ins = _inputs(req)
-    concepts = [c for c in ins.get("product_concepts") or [] if isinstance(c, dict)]
+    concepts = _unique_concepts([c for c in ins.get("product_concepts") or [] if isinstance(c, dict)])
     mechs, notes = _mechanisms(ins)
     obs, sources = {}, {}
     for rec in ins.get("receipts") or []:
@@ -837,6 +877,26 @@ OPERATIONS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
 }
 
 
+#: the domain LAWS: their verdict is an OUTPUT the manifest branches on (back to reasoning, or to a typed refusal once the repair budget
+#: is spent). A submission the law cannot read is an unlawful submission, never a crash — the runtime records a crash as
+#: STEP_EXECUTOR_ERROR, a failed run whose repair loop never runs (gaps B-01 / B-08). operation -> the verdict output it answers with.
+LAW_VERDICTS: dict[str, dict[str, Any]] = {
+    "understanding.validate_primitives": {"valid": False, "errors": []},
+    "population.validate_situations": {"valid": False, "errors": []},
+    "hypotheses.validate_bridge": {"admissible": False, "bridge_errors": [], "portfolio_errors": [], "anchor_errors": [], "portfolio_unreachable": False},
+    "products.validate_concepts": {"valid": False, "errors": [], "mechanism_notes": []},
+}
+
+
+def _unreadable(operation: str, exc: Exception) -> dict[str, Any]:
+    """The verdict of a law that could not read the submission: unlawful, with a reason the agent can act on."""
+    verdict = {k: (list(v) if isinstance(v, list) else v) for k, v in LAW_VERDICTS[operation].items()}
+    verdict["bridge_errors" if "bridge_errors" in verdict else "errors"] = [
+        f"shape: the law could not read this submission ({type(exc).__name__}: {exc})"[:400]
+        + " — cite every id as a plain string, every refs value as a list of id strings, every map as an object"]
+    return verdict
+
+
 def handle(req: Any) -> dict[str, Any]:
     if not isinstance(req, dict) or req.get("schema_version") != REQUEST_VERSION:
         return {"ok": False, "code": "DOMAIN_REQUEST_INVALID", "message": f"expected a {REQUEST_VERSION} object"}
@@ -848,6 +908,10 @@ def handle(req: Any) -> dict[str, Any]:
             output = op(req)
     except Refusal as exc:
         return {"ok": False, "code": exc.code, "message": exc.message}
+    except (TypeError, AttributeError, KeyError, ValueError) as exc:
+        if str(req.get("operation")) not in LAW_VERDICTS:
+            raise
+        return {"ok": True, "output": _unreadable(str(req.get("operation")), exc)}
     return {"ok": True, "output": output}
 
 

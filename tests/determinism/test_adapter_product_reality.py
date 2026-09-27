@@ -174,3 +174,26 @@ def test_the_manifest_adds_a_plan_and_a_join_step_and_moves_no_stage():
     assert m.steps["O_plan"]["config"]["inputs"]["semantics"] == "context.semantics.product_reality" and m.steps["Q_join"]["config"]["inputs"]["reality_plan"] == "outputs.O_plan.reality_plan"
     assert {"reality_plan", "mechanisms"} <= set(m.steps["P_reality"]["config"]["show"]) and {"existing_products", "concept_reality"} <= set(m.steps["W_interpret"]["config"]["show"])
     assert {"existing_products", "concept_reality"} <= {k for k in m.steps["X_compile"]["config"]["include"] if isinstance(k, str)}
+
+
+# ─────────────────────────────────────────────────────────── TRAIL-EXT-BUGHUNT-V1 B-11: TrailSignal's per-hypothesis relation (ADR-069)
+def test_the_contest_reads_trailsignals_relation_to_the_concepts_hypothesis_not_the_global_polarity(planned):
+    receipt, admission = _receipt_and_admission()
+    rows = {a["admitted_evidence_id"]: a for a in admission["admitted"]}
+    rows["fev_o3"]["hypothesis_relations"] = [{"hypothesis_id": H1, "relation": "CONTRADICTS"}]          # globally supporting, contradicts pc_2's hypothesis
+    rows["fev_o1"]["polarity"] = "contradicting"                                                        # globally contradicting, SUPPORTS pc_1's hypothesis
+    rows["fev_o1"]["hypothesis_relations"] = [{"hypothesis_id": H1, "relation": "SUPPORTS"}, {"hypothesis_id": H2, "relation": "CONTRADICTS"}]
+    out = _binding("product_reality.join", {"admissions": [admission], "receipts": [receipt], "product_concepts": CONCEPTS, "mechanisms": MECHANISMS,
+                                            "live_hypotheses": LIVE, "reality_plan": planned["reality_plan"]})["output"]
+    reality = {c["concept_id"]: c for c in out["concept_reality"]}
+    products = {p["id"]: p for p in out["existing_products"]}
+    assert reality["pc_2"]["status"] == "EXISTING_PRODUCT_CONTESTS" and reality["pc_2"]["contested_by"] == ["fev_o3"]
+    assert products["fev_o3"]["polarity"] == "contradicting" and products["fev_o3"]["contests_concept"] is True
+    assert reality["pc_1"]["contested_by"] == ["fev_o2"] and products["fev_o1"]["polarity"] == "supporting" and products["fev_o1"]["contests_concept"] is False
+    # NEUTRAL for the concept's hypothesis: neither supports nor contradicts it, so it contests nothing (a stated `solves` still does)
+    rows["fev_o3"]["hypothesis_relations"] = [{"hypothesis_id": H1, "relation": "NEUTRAL"}]
+    rows["fev_o3"]["polarity"] = "contradicting"
+    neutral = _binding("product_reality.join", {"admissions": [admission], "receipts": [receipt], "product_concepts": CONCEPTS, "mechanisms": MECHANISMS,
+                                                "live_hypotheses": LIVE, "reality_plan": planned["reality_plan"]})["output"]
+    assert {c["concept_id"]: c["status"] for c in neutral["concept_reality"]}["pc_2"] == "EXISTING_PRODUCTS_FOUND"
+    assert {p["id"]: p["polarity"] for p in neutral["existing_products"]}["fev_o3"] is None

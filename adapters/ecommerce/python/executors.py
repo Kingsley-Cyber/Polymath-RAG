@@ -408,13 +408,16 @@ def comments(state: dict, policies: dict) -> str:
 
 
 # ---------------------------------------------------------------- supplier --
-_PRICE = re.compile(r"(?:US?\s*\$|USD\s*)?([\d,]+(?:\.\d+)?)(?:\s*[-–~]\s*(?:US?\s*\$|USD\s*)?([\d,]+(?:\.\d+)?))?")
+_PRICE = re.compile(r"(?:US?\s*\$|USD\s*)?([\d,]+(?:\.\d+)?)(?:\s*[-–~]\s*(?:US?\s*\$|USD\s*|\$\s*)?([\d,]+(?:\.\d+)?))?")
 # A price is USD only when it says so (or carries a bare `$`); any other
 # currency marker means "not parsed" rather than "25 dollars". A quantity
 # is a number WITH a unit (the last one wins: "1-10 pieces" is MOQ 10) or a
 # lone integer; a price-looking string is never a quantity.
 _NON_USD = re.compile(r"(?:¥|€|£|₹|₩|(?:\bA|\bC|\bHK|\bNZ|\bS)\$|\b(?:RMB|CNY|EUR|GBP|JPY|INR|AUD|CAD|KRW)\b)", re.I)
-_USD_MARK = re.compile(r"(?:(?:\bUS?\s*)?\$|\bUSD\b)", re.I)
+#: every X$ dollar that is not the US dollar (HK$, NZ$, A$, C$, CA$, AU$, S$, SG$, NT$, R$ …): its `$` is not a bare dollar sign
+_FOREIGN_DOLLAR = re.compile(r"\b(?!U(?:SD?)?\$)[A-Z]{1,3}\$", re.IGNORECASE)
+#: an amount the listing STATES in US dollars (US$ / USD) — read where it stands, whatever other currency the string also quotes
+_USD_AMOUNT = re.compile(r"(?:\bUS?\s*\$|\bUSD\b\s*\$?)\s*([\d,]+(?:\.\d+)?)(?:\s*[-–~]\s*(?:US?\s*\$|USD\s*\$?|\$)?\s*([\d,]+(?:\.\d+)?))?", re.IGNORECASE)
 _MOQ_UNIT = re.compile(r"(\d[\d,]*)\s*(?:pcs?|pieces?|sets?|units?|pairs?|bags?|boxes?|cartons?|packs?|rolls?|kgs?|kilograms?|meters?)\b", re.I)
 _INT = re.compile(r"\d[\d,]*")
 _MOQ = _MOQ_UNIT  # kept for callers that imported the old name
@@ -422,7 +425,11 @@ _MOQ = _MOQ_UNIT  # kept for callers that imported the old name
 
 def _parse_price(raw) -> tuple[float | None, float | None]:
     raw = str(raw or "")
-    if _NON_USD.search(raw) and not _USD_MARK.search(raw):
+    usd = _USD_AMOUNT.search(raw)
+    if usd:                           # "¥18.50 (≈ US$2.60)" is 2.60 dollars, not 18.50
+        lo = _num(usd.group(1))
+        return lo, (_num(usd.group(2)) if usd.group(2) else lo)
+    if _NON_USD.search(raw) or _FOREIGN_DOLLAR.search(raw):
         return None, None
     pm = _PRICE.search(raw)
     if not pm:

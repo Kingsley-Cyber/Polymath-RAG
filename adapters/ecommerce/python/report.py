@@ -31,6 +31,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph as graphmod  # noqa: E402
 import models  # noqa: E402
+from adapter_receipt import polarity_for
 
 
 # ------------------------------------------------------------------ build --
@@ -106,6 +107,35 @@ def build_model(state: dict) -> dict:
     }
 
 
+def _qualifications(out: dict) -> list[dict]:
+    """TrailSignal's qualification records, EVERY qualify stage the result carries (gap B-12): a manifest that collects each qualify
+    step (`{"collect_all": "qualifications", "as": "qualifications_by_step"}`) keeps market delta beside supply, where the plain include
+    keeps only the newest step's list. One record once; market delta before supply."""
+    rows = [q for step in out.get("qualifications_by_step") or [] if isinstance(step, list) for q in step] + list(out.get("qualifications") or [])
+    seen: set = set()
+    quals = []
+    for q in rows:
+        if isinstance(q, dict):
+            key = q.get("record_id") or json.dumps(q, sort_keys=True, default=str)
+            if key not in seen:
+                seen.add(key)
+                quals.append(q)
+    stage_order = {"market_delta": 0, "supply": 1}
+    return sorted(quals, key=lambda q: stage_order.get(str(q.get("stage") or q.get("qualification_stage")), 2))
+
+
+def _distinct_questions(questions: list) -> list[str]:
+    """Questions once each; the derived view clips long texts, so two copies of one question can differ only past the clip."""
+    seen: set = set()
+    out = []
+    for q in questions:
+        key = " ".join(str(q).split())[:380].lower()
+        if key not in seen:
+            seen.add(key)
+            out.append(str(q))
+    return out
+
+
 def _seed_of(inp: dict) -> str:
     for k in ("seed", "seed_idea", "question", "signal", "topic", "problem"):
         if isinstance(inp.get(k), str) and inp[k].strip():
@@ -126,7 +156,7 @@ def build_model_from_governed(journal: dict) -> dict:
     adms = [a for a in out.get("evidence_admissions") or [] if isinstance(a, dict)]
     scores = [x for x in out.get("trail_scores") or [] if isinstance(x, dict)]
     refusals = [x for x in out.get("score_refusals") or [] if isinstance(x, dict)]
-    quals = [x for x in out.get("qualifications") or [] if isinstance(x, dict)]
+    quals = _qualifications(out)
     kind_of = {(s["step"].get("harness_action") or {}).get("action_id"): (s["step"].get("harness_action") or {}).get("action_kind")
                for s in steps if s["step"].get("step_type") == "HARNESS_ACTION"}
     receipts = [s for s in subs if s.get("kind") == "receipt" and s.get("accepted")]
@@ -148,9 +178,24 @@ def build_model_from_governed(journal: dict) -> dict:
                 "role": x.get("evidence_role") or o.get("evidence_role_claimed"), "polarity": x.get("polarity"), "freshness": x.get("freshness"),
                 "independence_group": x.get("independence_group"), "stage": x.get("stage_relevance"), "suitability": x.get("source_suitability"),
                 "hypothesis_ids": x.get("hypothesis_ids") or o.get("hypothesis_ids") or [], "admitted_evidence_id": x.get("admitted_evidence_id"),
-                "reason_code": x.get("reason_code"), "detail": x.get("detail")}
+                "reason_code": x.get("reason_code"), "detail": x.get("detail"),
+                "hypothesis_relations": [r for r in x.get("hypothesis_relations") or [] if isinstance(r, dict)]}
     admitted = [_row(a, x) for a in adms for x in a.get("admitted") or [] if isinstance(x, dict)]
     rejected = [_row(a, x) for a in adms for x in a.get("rejected") or [] if isinstance(x, dict)]
+    # Field + / − beside a hypothesis, counted as TrailSignal counts it (gaps B-13 / B-11): every admitted FIELD-stage record linked to
+    # the hypothesis, duplicates excluded, by TrailSignal's relation to THAT hypothesis — never the derived view's 24-row sample (all
+    # stages) or the global polarity. The view's sample is used only when the result carries no admission at all.
+    field_records = [x for a in adms for x in a.get("admitted") or [] if isinstance(x, dict) and not x.get("duplicate_of")
+                     and x.get("stage_relevance", "field_evidence") == "field_evidence"]
+
+    def _field_counts(hid: str) -> dict:
+        if not adms:
+            return {}
+        pols = [polarity_for(x, hid) for x in field_records if hid in (x.get("hypothesis_ids") or [])]
+        return {"field_evidence": len(pols), "field_supporting": pols.count("supporting"), "field_contradicting": pols.count("contradicting"),
+                "field_counts_from": "ADMISSIONS"}
+    # the research loop's record of what it left open (M_unresolved: every hypothesis, every origin, uncapped)
+    loop_gaps = [g for g in out.get("unresolved_research_gaps") or [] if isinstance(g, dict) and g.get("question")]
     hyps: dict = {}
     for s in steps:                                           # the newest view of each hypothesis the adapter showed the agent
         for h in (s["step"].get("context") or {}).get("hypotheses") or []:
@@ -177,15 +222,20 @@ def build_model_from_governed(journal: dict) -> dict:
             return {"hypothesis_id": hid, "statement": h.get("statement"), "mechanism": h.get("mechanism"), "population": h.get("population"),
                     "activity": h.get("activity"), "suspected_friction": h.get("suspected_friction"), "status": h.get("status"), "state_from": "STEP_CONTEXT_4_FIELDS",
                     "field_evidence": len(h.get("field_evidence_ids") or []), "knowledge_support": len(h.get("knowledge_support") or []),
-                    "contradictions": len(h.get("contradictions") or []), "trail_score": score_by.get(hid), "trail_refusal": refusal_by.get(hid)}
+                    "contradictions": len(h.get("contradictions") or []), "trail_score": score_by.get(hid), "trail_refusal": refusal_by.get(hid),
+                    **(_field_counts(hid) or {"field_counts_from": "STEP_CONTEXT"})}
         hy, se, kn, fe = v["hypothesis"], v.get("semantics") or {}, v.get("knowledge") or {}, [e for e in v.get("field_evidence") or [] if isinstance(e, dict)]
+        # the view carries the FIRST 12 ledger gaps, open or closed; the loop's record carries every open ledger gap (gap B-13)
+        view_open = [g_.get("question") for g_ in kn.get("knowledge_gaps") or [] if isinstance(g_, dict) and g_.get("status", "open") == "open"]
+        loop_open = [g_["question"] for g_ in loop_gaps if g_.get("hypothesis_id") == hid and g_.get("origin") == "ledger"]
         return {"hypothesis_id": hid, "statement": hy.get("statement"), "revision": hy.get("revision"), "status": hy.get("status"), "state_from": views_from,
                 "mechanism": se.get("mechanism"), "population": se.get("population"), "activity": se.get("activity"), "task": se.get("task"), "context": se.get("context"),
                 "suspected_friction": se.get("suspected_friction"), "assumptions": se.get("assumptions") or [], "falsifiers": se.get("falsifiers") or [],
-                "open_gaps": [g_.get("question") for g_ in kn.get("knowledge_gaps") or [] if isinstance(g_, dict) and g_.get("status", "open") == "open"],
+                "open_gaps": _distinct_questions(view_open + loop_open),
                 "field_evidence": len(fe), "field_supporting": sum(1 for e in fe if e.get("polarity") == "supporting"),
                 "field_contradicting": sum(1 for e in fe if e.get("polarity") == "contradicting"), "knowledge_support": kn.get("knowledge_support_count") or 0,
-                "contradictions": len(se.get("contradictions") or []), "trail_score": score_by.get(hid), "trail_refusal": refusal_by.get(hid)}
+                "contradictions": len(se.get("contradictions") or []), "trail_score": score_by.get(hid), "trail_refusal": refusal_by.get(hid),
+                **(_field_counts(hid) or {"field_counts_from": "VIEW_SAMPLE"})}
     hyp_rows = [_hyp_row(hid, hyps.get(hid) or {}) for hid in dict.fromkeys(list(view_by) + list(hyps))]
     transduction = _transduction_block(out, views)
     reality = _product_reality_block(out)
@@ -230,8 +280,15 @@ def build_model_from_governed(journal: dict) -> dict:
                   "mechanism": l.get("mechanism") or "", "mechanism_id": l.get("mechanism_id"), "supplier_name": l.get("supplier_name") or "supplier not named on the listing",
                   "trail_admission": [str(admitted_role.get(l.get("admitted_evidence_id")) or "supply")]} for l in out.get("leads") or [] if isinstance(l, dict)]
     limitations = [l for r in receipts for l in (r.get("payload") or {}).get("limitations") or []]
-    unresolved = [str(u.get("about") if isinstance(u, dict) else u) for u in (result or {}).get("unknowns") or []] \
+    # Unresolved = what the research left OPEN, the loop's own questions first (gap B-16); the steps' `unknowns` (mostly per-cluster
+    # templates) are a separate, counted list — neither is cut here: the renderer says how much it shows
+    unresolved = [f"{g['question']} — {g.get('hypothesis_id')} ({g.get('origin')})" for g in loop_gaps] \
         + [str(x) for x in po.get("remaining_uncertainty") or []] + [f"harness limitation: {l}" for l in limitations]
+    unknowns = [str(u.get("about") if isinstance(u, dict) else u) for u in (result or {}).get("unknowns") or []]
+    # a run that ended before COMPILE_RESULT: its result carries no step outputs while its lineage still lists the admitted ids — the
+    # evidence is ABSENT from this result, never zero (gap B-14)
+    admitted_ids = lineage.get("admitted_evidence_ids") if isinstance(lineage.get("admitted_evidence_ids"), list) else []
+    evidence_absent = {"admitted_evidence_ids": len(admitted_ids), "terminal_status": terminal} if result is not None and not adms and admitted_ids else None
     dead = ("killed", "contradicted", "merged", "weakened")
     return {
         "run": {"run_id": journal.get("run_id"), "created_at": journal.get("created_at"), "status": terminal or "running", "verdict": verdict,
@@ -246,11 +303,13 @@ def build_model_from_governed(journal: dict) -> dict:
                                "differentiator": pc.get("mechanism_explanation"), "mechanism_id": "governed", "variations": [], "evidence_refs": po.get("field_evidence_ids") or []}] if pc.get("title") else []),
         "sourcing_coverage": [c for c in out.get("sourcing_coverage") or [] if isinstance(c, dict)], "utilization": {}, "provenance": [], "excluded_leads": [], "corpus_packets": packets, "corpus_answers": [],
         "held_rejected": [{"id": h["hypothesis_id"], "mechanism": h.get("mechanism") or h.get("statement"), "status": h.get("status")} for h in hyp_rows if h.get("status") in dead],
-        "unresolved": list(dict.fromkeys(unresolved))[:12], "intelligence": None, "market_discovery": None, "product_anchored": None,
+        "unresolved": list(dict.fromkeys(unresolved)), "intelligence": None, "market_discovery": None, "product_anchored": None,
         "capability_failures": [], "settings": None,
         "governed": {"adapter": f"{journal.get('adapter_id')} {journal.get('adapter_version')}", "agent_identity": journal.get("agent_identity"), "harness_ids": lineage.get("harness_ids") or [journal.get("harness_id")],
                      "terminal_status": terminal, "gap": gap, "hypotheses": hyp_rows, "trail_scores": scores, "score_refusals": refusals, "qualifications": quals,
-                     "admitted": admitted, "rejected": rejected,
+                     "admitted": admitted, "rejected": rejected, "evidence_absent": evidence_absent,
+                     "result_without_outputs": result is not None and not out and terminal in ("terminal_gap", "failed", "cancelled"),
+                     "unresolved_research_gaps": loop_gaps, "unknowns": {"distinct": list(dict.fromkeys(unknowns)), "recorded": len(unknowns)},
                      "rejected_by_reason": {c: sum(1 for r in rejected if r.get("reason_code") == c) for c in sorted({str(r.get("reason_code")) for r in rejected})},
                      "receipt_omissions": [{"action_kind": (r.get("receipt_report") or {}).get("action_kind"), "omitted_by_reason": (r.get("receipt_report") or {}).get("omitted_by_reason") or {}}
                                            for r in receipts if (r.get("receipt_report") or {}).get("omitted_by_reason")],
@@ -546,6 +605,15 @@ def _auth(*keys: str) -> str:
     return " ".join(f"<span class='auth' style='font:600 10px/1 ui-monospace,monospace;letter-spacing:.06em;border:1px solid currentColor;border-radius:3px;padding:2px 5px;opacity:.75'>{AUTHORITY[k]}</span>" for k in keys)
 
 
+#: how many unresolved items / distinct step unknowns a page lists before it says "showing N of M"
+UNRESOLVED_SHOWN, UNKNOWNS_SHOWN = 100, 60
+
+
+def _showing(shown: int, total: int, what: str) -> str:
+    """A list cut for the page says so (gap B-16); the ReportModel keeps every item."""
+    return f"<p class='why'>showing {shown} of {total} {what}</p>" if total > shown else ""
+
+
 def _render_lived_world(g: dict) -> list[str]:
     """Population leads, lived clusters and lived situations — the engine's lived world, computed in governed mode from what TrailSignal ADMITTED."""
     out: list[str] = []
@@ -555,14 +623,14 @@ def _render_lived_world(g: dict) -> list[str]:
                    "and registry situations. Ranked by value of information.</p><div class='scroll'><table><tr><th>Lead</th><th>Lane</th><th>VOI</th><th>Restates the seed?</th><th>Why</th></tr>")
         for l in sorted(leads, key=lambda x: -(x.get("voi") or 0))[:14]:
             out.append(f"<tr><td>{_e(l.get('name'))}</td><td class='num'>{_e(l.get('source_lane'))}</td><td class='num'>{l.get('voi')}</td><td class='num'>{'yes' if l.get('seed_population') else 'no'}</td><td>{_e(l.get('why') or '')}</td></tr>")
-        out.append("</table></div>")
+        out.append("</table></div>" + _showing(14, len(leads), "leads (highest value of information first)"))
     if clusters:
         out.append(f"<h2>Lived Clusters {_auth('FIELD', 'TRAIL')}</h2><p class='why'>Built only from observations TrailSignal admitted; the voice count is TrailSignal's independence groups. "
                    "ANCHOR = enough records, threads and independent voices to anchor reasoning; THIN = not yet.</p><div class='scroll'><table><tr><th>Community</th><th>Friction</th><th>Authority</th><th>Records / threads / voices</th><th>Unknowns</th></tr>")
         for c in clusters[:12]:
             out.append(f"<tr><td>{_e(c.get('community'))}</td><td>{_e(c.get('friction_family'))}</td><td class='num'><strong>{_e(c.get('authority'))}</strong></td>"
                        f"<td class='num'>{c.get('record_count')} / {c.get('thread_count')} / {c.get('independent_voices')}</td><td>{_e('; '.join(c.get('unknowns') or []))}</td></tr>")
-        out.append("</table></div>")
+        out.append("</table></div>" + _showing(12, len(clusters), "clusters"))
     if sits:
         out.append(f"<h2>Lived Situations {_auth('AGENT')}</h2><p class='why'>One moment in one real world, reconstructed from admitted records — never a persona. FIELD_ANCHORED sits on an ANCHOR cluster and cites its records; "
                    "RECONSTRUCTED lists what the records do not say; SIMULATED is never evidence.</p>")
@@ -570,6 +638,7 @@ def _render_lived_world(g: dict) -> list[str]:
             fr = "; ".join(f"{_e(f.get('text'))} [{_e(f.get('authority'))}: {_e(', '.join(map(str, f.get('refs') or [])))}]" for f in x.get("frictions") or [] if isinstance(f, dict))
             out.append(f"<div class='card'><h3>{_e(x.get('participants') or x.get('community') or x.get('id'))} — {_e(x.get('activity') or '')} · {_e(x.get('moment') or '')} · <span class='num'>{_e(x.get('authority'))}</span></h3>"
                        f"<div class='why'>{fr or '—'}</div><div class='econ'>unknowns: {_e('; '.join(map(str, x.get('unknowns') or [])) or 'none listed')}</div></div>")
+        out.append(_showing(10, len(sits), "situations"))
     return out
 
 
@@ -639,6 +708,14 @@ def _render_product_reality(pr: dict | None) -> list[str]:
     return out
 
 
+def _polarity_cell(r: dict) -> str:
+    """The record's global polarity and, for every hypothesis where TrailSignal's stated relation differs from it (ADR-069), what the
+    record counts as FOR that hypothesis (gap B-11)."""
+    differs = [f"{rel.get('hypothesis_id')}: {polarity_for(r, rel.get('hypothesis_id')) or 'neutral'}" for rel in r.get("hypothesis_relations") or []
+               if polarity_for(r, rel.get("hypothesis_id")) != r.get("polarity")]
+    return _e(r.get("polarity")) + "".join(f"<br>{_e(d)}" for d in differs)
+
+
 def _render_governed(g: dict) -> list[str]:
     """The governed block (docs/27): TrailSignal's record VERBATIM, the hypotheses as the adapter's ledger holds them, and
     every field observation as TrailSignal left it — admitted, or rejected with its reason code. Nothing here is computed."""
@@ -653,7 +730,10 @@ def _render_governed(g: dict) -> list[str]:
     if snap:
         out.append(f"<p class='why'>{_auth('REGISTRY')} registry snapshot <span class='num'>{_e(snap.get('snapshot_id'))}</span> — source roles, freshness windows, independence groups and hard gates are registry data, never code.</p>")
     out.append(f"<h2>TrailSignal's Record {_auth('TRAIL')}</h2>")
-    if not (g.get("trail_scores") or g.get("score_refusals") or g.get("qualifications")):
+    if g.get("result_without_outputs"):
+        out.append(f"<p class='why'>The run ended {_e(g.get('terminal_status'))} before compiling its result: the result carries no step outputs, so TrailSignal's "
+                   "records, the admitted evidence, the lived world and the product set are ABSENT from it below — absent, not zero.</p>")
+    elif not (g.get("trail_scores") or g.get("score_refusals") or g.get("qualifications")):
         out.append("<p>No score, refusal or qualification record reached the result.</p>")
     for sc in g.get("trail_scores") or []:
         subs = ", ".join(f"{_e(x.get('axis'))} {x.get('value')}" for x in sc.get("subscores") or [] if isinstance(x, dict))
@@ -665,7 +745,12 @@ def _render_governed(g: dict) -> list[str]:
         out.append(f"""<div class="card"><h3>{_e(rf.get('hypothesis_id'))} — <span style="color:#b00">REFUSED: {_e(rf.get('reason_code'))}</span></h3>
 <div class="why">{_e(rf.get('detail') or '')}</div><div class="econ">{_e(rf.get('record_id'))} · as of {_e(rf.get('as_of'))}</div></div>""")
     for q in g.get("qualifications") or []:
-        out.append(f"<p class='why'>qualification {_e(q.get('stage') or q.get('qualification_stage'))}: <strong>{_e(q.get('verdict') or q.get('status'))}</strong> · {_e(', '.join(map(str, q.get('hypothesis_ids') or [])))}</p>")
+        # QualificationV1 carries `state` (gap B-12); `verdict` / `status` are older records' words
+        gates = "; ".join(f"{_e(r.get('name') or r.get('gate_id'))} {_e(r.get('observed'))}/{_e(r.get('minimum'))} {'passed' if r.get('passed') else 'unmet'}"
+                          for r in q.get("gate_results") or [] if isinstance(r, dict))
+        out.append(f"<p class='why'>qualification {_e(q.get('stage') or q.get('qualification_stage'))}: <strong>{_e(q.get('state') or q.get('verdict') or q.get('status'))}</strong> · "
+                   f"{_e(', '.join(map(str, q.get('hypothesis_ids') or [])))}" + (f" · gates: {gates}" if gates else "")
+                   + f" · {len(q.get('open_gaps') or [])} open gap(s)</p>")
     out += _render_lived_world(g)
     out += _render_transduction(g.get("transduction"))
     out.append(f"<h2>Reasoning Bridge (governed hypotheses) {_auth('AGENT', 'TRAIL')}</h2><p class='why'>Hypothesis state read from: <strong>{_e(g.get('hypothesis_state_from'))}</strong>"
@@ -679,7 +764,9 @@ def _render_governed(g: dict) -> list[str]:
                    f"<td class='num'>{_e(h.get('status'))} ({_e(h.get('revision') if h.get('revision') is not None else '—')})</td>"
                    f"<td class='num'>{h.get('field_supporting', h.get('field_evidence', 0))} / {h.get('field_contradicting', 0)} · {h.get('knowledge_support', 0)} · {h.get('contradictions', 0)}</td><td class='num'>{ts}</td></tr>")
         if h.get("open_gaps") or h.get("falsifiers"):
-            out.append("<tr><td></td><td colspan='7' class='why'>" + (f"open gaps: {_e('; '.join(map(str, h['open_gaps'][:4])))}" if h.get("open_gaps") else "")
+            n_open = len(h.get("open_gaps") or [])
+            out.append("<tr><td></td><td colspan='7' class='why'>" + (f"open gaps ({n_open}): {_e('; '.join(map(str, h['open_gaps'][:4])))}"
+                                                                       + (f" (+{n_open - 4} more)" if n_open > 4 else "") if n_open else "")
                        + (" · " if h.get("open_gaps") and h.get("falsifiers") else "") + (f"falsifiers: {_e('; '.join(map(str, h['falsifiers'][:3])))}" if h.get("falsifiers") else "") + "</td></tr>")
     out.append("</table></div>")
     out += _render_product_reality(g.get("product_reality"))
@@ -689,7 +776,12 @@ def _render_governed(g: dict) -> list[str]:
                    + _e("; ".join(f"{p.get('registry_record_id') or p.get('record_id')} ({p.get('label') or p.get('prior_role')})" for p in (coords.get('priors') or [])[:16]))
                    + (" · territories: " + _e("; ".join(f"{t.get('territory_id')} ({t.get('territory_name') or t.get('territory')})" for t in (coords.get('territories') or [])[:12])) if coords.get("territories") else "") + "</p>")
     adm, rej = g.get("admitted") or [], g.get("rejected") or []
-    out.append(f"<h2>Field Observations — admitted {len(adm)} · rejected {len(rej)} {_auth('FIELD', 'TRAIL')}</h2>")
+    if g.get("evidence_absent"):
+        out.append(f"<h2>Field Observations — {g['evidence_absent'].get('admitted_evidence_ids')} admitted evidence id(s) in the lineage; their records are not in this result "
+                   f"{_auth('FIELD', 'TRAIL')}</h2><p class='why'>The run ended {_e(g['evidence_absent'].get('terminal_status'))} before compiling its result, so the "
+                   "admitted observations are not shown here — they were admitted, not zero.</p>")
+    else:
+        out.append(f"<h2>Field Observations — admitted {len(adm)} · rejected {len(rej)} {_auth('FIELD', 'TRAIL')}</h2>")
     if g.get("rejected_by_reason"):
         out.append("<p class='why'>Rejections by TrailSignal reason code: " + _e(", ".join(f"{k} × {v}" for k, v in g["rejected_by_reason"].items())) + " — rejections are findings, shown as recorded.</p>")
     for ro in g.get("receipt_omissions") or []:
@@ -697,7 +789,7 @@ def _render_governed(g: dict) -> list[str]:
     if adm:
         out.append("<div class='scroll'><table><tr><th>Stage</th><th>Role</th><th>Polarity</th><th>Freshness</th><th>Independence group</th><th>Quote</th><th>Source</th></tr>")
         for r in adm[:40]:
-            out.append(f"<tr><td class='num'>{_e(r.get('stage'))}</td><td class='num'>{_e(r.get('role'))}</td><td class='num'>{_e(r.get('polarity'))}</td><td class='num'>{_e(r.get('freshness'))}</td>"
+            out.append(f"<tr><td class='num'>{_e(r.get('stage'))}</td><td class='num'>{_e(r.get('role'))}</td><td class='num'>{_polarity_cell(r)}</td><td class='num'>{_e(r.get('freshness'))}</td>"
                        f"<td class='num'>{_e(r.get('independence_group'))}</td><td>“{_e(r.get('quote') or r.get('claim') or '')}”</td><td class='num'>{_e(r.get('url') or '')}</td></tr>")
         out.append("</table></div>")
     if rej:
@@ -887,9 +979,15 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
             out.append("</table></div>")
         if model["unresolved"]:
             out.append("<h2>Unresolved</h2><ul>")
-            for u in model["unresolved"]:
+            for u in model["unresolved"][:UNRESOLVED_SHOWN]:
                 out.append(f"<li>{_e(u)}</li>")
-            out.append("</ul>")
+            out.append("</ul>" + _showing(UNRESOLVED_SHOWN, len(model["unresolved"]), "unresolved items"))
+        unknowns = (model.get("governed") or {}).get("unknowns") or {}
+        if unknowns.get("distinct"):
+            # the steps' own `unknowns` (gap B-16): kept apart from what the research left open, and counted
+            out.append(f"<h3 class='subhead'>Unknowns the run's steps recorded — {len(unknowns['distinct'])} distinct of {unknowns.get('recorded')} recorded</h3><ul class='claims'>"
+                       + "".join(f"<li>{_e(u)}</li>" for u in unknowns["distinct"][:UNKNOWNS_SHOWN]) + "</ul>"
+                       + _showing(UNKNOWNS_SHOWN, len(unknowns["distinct"]), "distinct unknowns"))
 
     md = model.get("market_discovery")
     if md:

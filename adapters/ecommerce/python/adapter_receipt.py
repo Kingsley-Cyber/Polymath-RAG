@@ -80,6 +80,19 @@ PLATFORM_CLASS = {"reddit": "community_discussion", "forum": "community_discussi
 NOT_FIELD_FAMILIES = {"corpus_evergreen"}
 _FORBIDDEN_KEY = re.compile(r"score|rank|weight", re.I)
 _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$")
+#: ADR-069 stated relation -> polarity (NEUTRAL maps to None: the observation neither supports nor contradicts that hypothesis)
+RELATION_POLARITY = {"SUPPORTS": "supporting", "CONTRADICTS": "contradicting"}
+
+
+def polarity_for(admitted: dict, hypothesis_id: str | None) -> str | None:
+    """TrailSignal's `relation_polarity` (ADR-069) over an ADMITTED record: what it means for ONE hypothesis — the stated relation
+    when the record carries one for that hypothesis, else the record's global polarity. TrailSignal's qualification and judgement
+    count evidence this way; the domain reads admitted records the same way, never by the global flag alone (gap B-11)."""
+    relations = (admitted.get("hypothesis_relations") or []) if hypothesis_id else []
+    for r in relations:
+        if isinstance(r, dict) and r.get("hypothesis_id") == hypothesis_id:
+            return RELATION_POLARITY.get(r.get("relation"))
+    return admitted.get("polarity")
 
 
 # ------------------------------------------------------------------ schema --

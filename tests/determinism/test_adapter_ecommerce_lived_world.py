@@ -132,3 +132,17 @@ def test_corpus_questions_come_from_lived_clusters_never_from_hypothesis_stateme
     assert any("access interruption" in q["question"] for q in qs) and all(HYPOTHESES[0]["statement"] not in q["question"] for q in qs)   # the fix for defect D2
     assert out["need"] and len(out["need"]) <= 2000
     assert _exec("knowledge.corpus_questions", {"lived_clusters": []})["output"]["need"] == ""              # no cluster: the knowledge step keeps its seed need
+
+
+# ─────────────────────────────────────────────────────────── TRAIL-EXT-BUGHUNT-V1 B-11: TrailSignal's per-hypothesis relation (ADR-069)
+def test_a_record_counts_in_the_cluster_by_trailsignals_relation_to_its_hypothesis_not_the_global_polarity():
+    world = _world(6, groups=3, threads=2)
+    admitted = world["admissions"][0]["admitted"]
+    admitted[0].update(polarity="contradicting", hypothesis_relations=[{"hypothesis_id": HYP, "relation": "SUPPORTS"}])     # a negation word, yet SUPPORTS H
+    admitted[1].update(hypothesis_relations=[{"hypothesis_id": HYP, "relation": "CONTRADICTS"}])                           # globally supporting, CONTRADICTS H
+    out = _exec("population.evidence_cards", world)["output"]
+    recs = {r["id"]: r for r in out["field_records"]}
+    assert (recs["fev_0000"]["contradicts"], recs["fev_0000"]["polarity"]) == (False, "supporting")
+    assert (recs["fev_0001"]["contradicts"], recs["fev_0001"]["polarity"]) == (True, "contradicting")
+    cluster = out["lived_clusters"][0]
+    assert "fev_0000" in cluster["record_ids"] and "fev_0001" not in cluster["record_ids"] and cluster["record_count"] == 5

@@ -90,6 +90,13 @@ def _is_seed(name: str, extra: list, seed_terms: set) -> bool:
     return bool({t for t in toks if len(t) >= 5} & seed_terms)
 
 
+def _strs(value) -> list[str]:
+    """An agent-written list of words (frictions, activities, contexts, evidence refs) as a list of strings: one string is a list of
+    one, an object or a nested list is not a word and is skipped — it never reaches a set, a dict key or a list concatenation."""
+    items = [value] if isinstance(value, str) else value if isinstance(value, list) else []
+    return [str(x) for x in items if isinstance(x, (str, int, float)) and not isinstance(x, bool) and str(x).strip()]
+
+
 def _lead(kind: str, name: str, lane: str, nominated_by: list, seed_terms: set, **extra) -> dict:
     lead = {"id": stable_id("lead", kind, lane, name.strip().lower()), "kind": kind, "name": name.strip(),
             "source_lane": lane, "nominated_by": sorted({str(x) for x in nominated_by if x})[:10] or [lane.lower()],
@@ -114,8 +121,8 @@ def _registry_nominations(state: dict, policies: dict, seed_terms: set) -> list[
         snap = None
     if not snap:
         return []
-    preds = [str(x).lower() for x in prim.get("shared_predicates") or []]
-    fams = [str(x) for x in (prim.get("frictions") or []) if x in (snap.get("friction_families") or [])]
+    preds = [x.lower() for x in _strs(prim.get("shared_predicates"))]
+    fams = [x for x in _strs(prim.get("frictions")) if x in (snap.get("friction_families") or [])]     # a friction written as an object names no family id
     idx = []
     for pred in preds:
         for fam in fams or [None]:
@@ -153,9 +160,9 @@ def _corpus_nominations(state: dict, seed_terms: set) -> list[dict]:
         if not isinstance(item, dict) or not item.get("name"):
             continue
         kind = "COMMUNITY" if item.get("community_key") else "POPULATION"
-        out.append(_lead(kind, str(item["name"]), "CORPUS", item.get("evidence_refs") or ["primitives"], seed_terms,
-                         why=item.get("why"), activities=item.get("activities") or [], contexts=item.get("contexts") or [],
-                         expected_frictions=item.get("frictions") or item.get("expected_frictions") or [],
+        out.append(_lead(kind, str(item["name"]), "CORPUS", _strs(item.get("evidence_refs")) or ["primitives"], seed_terms,
+                         why=item.get("why"), activities=_strs(item.get("activities")), contexts=_strs(item.get("contexts")),
+                         expected_frictions=_strs(item.get("frictions")) or _strs(item.get("expected_frictions")),
                          community_key=item.get("community_key"), platform=item.get("platform")))
     return out
 
@@ -480,9 +487,13 @@ def lineage_ref_errors(refs, state: dict, relevance: dict, label: str) -> list[s
     rows = {r.get("id") for r in d.get("corpus_evidence") or [] if isinstance(r, dict)}
     other = {x.get("id") for key in ("observations", "field_records", "lived_clusters", "latent_structures", "corpus_observations")
              for x in d.get(key) or [] if isinstance(x, dict)}
+    if refs and not isinstance(refs, (list, tuple)):
+        return [f"{label}: expected a list of evidence ids, got {type(refs).__name__}"]
     errs = []
     for ref in refs or []:
-        if ref in rows:
+        if not isinstance(ref, str):
+            errs.append(f"{label}: {ref!r} is not an evidence id — cite each id as a plain string")
+        elif ref in rows:
             cls = (relevance or {}).get(ref)
             if cls is None:
                 errs.append(f"{label}: corpus row {ref!r} is UNCLASSIFIED — classify it in row_relevance before it becomes lineage (fail-closed)")
@@ -496,9 +507,11 @@ def lineage_ref_errors(refs, state: dict, relevance: dict, label: str) -> list[s
 def validate_relevance_map(rel: dict, state: dict, policies: dict) -> list[str]:
     classes = set((policies.get("corpus") or {}).get("relevance_classes") or [])
     rows = {r.get("id") for r in state["data"].get("corpus_evidence") or [] if isinstance(r, dict)}
+    if not isinstance(rel or {}, dict):
+        return [f"row_relevance: expected an object {{evidence id: relevance class}}, got {type(rel).__name__}"]
     errs = []
     for rid, cls in (rel or {}).items():
-        if cls not in classes:
+        if not isinstance(cls, str) or cls not in classes:
             errs.append(f"row_relevance[{rid}]: {cls!r} not in {sorted(classes)}")
         elif rid not in rows:
             errs.append(f"row_relevance[{rid}]: unknown corpus row")
@@ -509,15 +522,28 @@ def validate_primitives(prim: dict, state: dict, policies: dict) -> list[str]:
     """The primitives submission check, in one place (the controller's submit path and the governed binding both call it):
     the relevance map is well-formed, every interpretation object is schema-valid, and every evidence_ref obeys the lineage law."""
     import models
-    rel = {**(state["data"].get("row_relevance") or {}), **(prim.get("row_relevance") or {})}
+    given = prim.get("row_relevance") if isinstance(prim.get("row_relevance"), dict) else {}
+    rel = {**(state["data"].get("row_relevance") or {}), **given}
     errors = validate_relevance_map(prim.get("row_relevance") or {}, state, policies)
-    for i, x in enumerate(prim.get("latent_structures") or []):
+    # a shape the law cannot read is an ERROR the agent can correct, never a crash (a crash fails the run: gap B-01)
+    listed = {}
+    for key in ("latent_structures", "corpus_observations"):
+        items = prim.get(key)
+        if items and not isinstance(items, list):
+            errors.append(f"{key}: expected a list of objects, got {type(items).__name__}")
+        listed[key] = items if isinstance(items, list) else []
+    for i, x in enumerate(listed["latent_structures"]):
         errors += [f"latent_structures[{i}]: {e}" for e in models.validate(x, "latent_structure")]
-        errors += lineage_ref_errors((x or {}).get("evidence_refs"), state, rel, f"latent_structures[{i}]")
-    for i, x in enumerate(prim.get("corpus_observations") or []):
+        if isinstance(x, dict):
+            errors += lineage_ref_errors(x.get("evidence_refs"), state, rel, f"latent_structures[{i}]")
+    for i, x in enumerate(listed["corpus_observations"]):
         errors += [f"corpus_observations[{i}]: {e}" for e in models.validate(x, "corpus_observation")]
-        errors += lineage_ref_errors((x or {}).get("evidence_refs"), state, rel, f"corpus_observations[{i}]")
-    for k, refs in (prim.get("evidence_refs") or {}).items():
+        if isinstance(x, dict):
+            errors += lineage_ref_errors(x.get("evidence_refs"), state, rel, f"corpus_observations[{i}]")
+    refs_by_field = prim.get("evidence_refs")
+    if refs_by_field and not isinstance(refs_by_field, dict):
+        errors.append(f"primitives.evidence_refs: expected an object {{field: [evidence ids]}}, got {type(refs_by_field).__name__}")
+    for k, refs in (refs_by_field if isinstance(refs_by_field, dict) else {}).items():
         errors += lineage_ref_errors(refs, state, rel, f"primitives.evidence_refs.{k}")
     return errors
 

@@ -143,3 +143,28 @@ def test_no_admitted_supply_is_a_state_for_trailsignal_to_refuse_and_a_dead_hypo
     assert _exec("supply.plan", {"product_concepts": CONCEPTS, "mechanisms": MECHS, "live_hypotheses": LIVE})["output"]["sourcing_plan"]
     dead = _exec("supply.leads", {**world, "live_hypotheses": [{"hypothesis_id": H1, "status": "contradicted"}]})["output"]
     assert dead["leads"] == [] and dead["supplier_candidates"] and any("contradicted" in n for n in dead["mechanism_notes"])
+
+
+# ─────────────────────────────────────────────────────────── TRAIL-EXT-BUGHUNT-V1 B-07: one id names one concept (and one mechanism)
+DUPLICATE_IDS = [_concept(1, "magnetic belt clip"), {**_concept(1, "wrist pouch"), "name": "stride wrist pouch"}, _concept(3, "shoe-lace key holder")]
+
+
+def test_the_portfolio_law_refuses_a_repeated_concept_id():
+    out = _validate(DUPLICATE_IDS)
+    assert out["valid"] is False and any(e.startswith("pc_1: 2 concepts share this id") for e in out["errors"]), out["errors"]
+
+
+def test_the_portfolio_law_refuses_a_repeated_mechanism_id():
+    mechs = [{"id": "m_clip", "name": "oversized zip pull", "hypothesis_id": H2}, dict(MECHS[0])]            # the ineligible one hides behind a reused id
+    out = _exec("products.validate_concepts", {"product_concepts": CONCEPTS, "mechanisms": mechs, "live_hypotheses": LIVE, "field_evidence_ids": EVIDENCE})["output"]
+    assert out["valid"] is False and any(e.startswith("mechanisms: 2 mechanisms share the id 'm_clip'") for e in out["errors"]), out["errors"]
+
+
+def test_a_repeated_concept_id_that_still_arrives_is_refused_downstream_never_merged():
+    reality_directive = {"search_intents": [{"intent_id": "ti_comp", "evidence_goal": "competition", "evidence_roles": ["competition"], "intent": "who sells it",
+                                             "template": "existing products"}], "budget": {"max_queries": 24}}
+    base = {"product_concepts": DUPLICATE_IDS, "mechanisms": MECHS, "live_hypotheses": LIVE}
+    for operation, extra in (("supply.plan", {"research_directive": SUPPLY_DIRECTIVE}), ("product_reality.plan", {"research_directive": reality_directive, "semantics": []}),
+                             ("product_reality.join", {"admissions": [], "receipts": [], "reality_plan": []}), ("supply.leads", {"admissions": [], "receipts": []})):
+        gap = _exec(operation, {**base, **extra}).get("gap") or {}
+        assert gap.get("code") == "CONCEPT_IDS_NOT_UNIQUE" and "pc_1" in gap.get("message", ""), (operation, gap)
