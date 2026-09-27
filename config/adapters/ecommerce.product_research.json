@@ -1,6 +1,6 @@
 {
  "adapter_id": "ecommerce.product_research",
- "adapter_version": "0.7.1",
+ "adapter_version": "0.7.2",
  "workflow_version": "0.1.0",
  "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
@@ -673,7 +673,8 @@
     "operation": "hypotheses.validate_bridge",
     "inputs": {
      "hypotheses": "outputs.C_bridge.bridges",
-     "corpus_evidence": "outputs.B_intake.corpus_evidence"
+     "corpus_evidence": "outputs.B_intake.corpus_evidence",
+     "live_hypotheses": "context.hypotheses"
     }
    }
   },
@@ -2844,6 +2845,10 @@
      "hypothesis_ids",
      "qualification",
      "qualifications",
+     {
+      "collect_all": "qualifications",
+      "as": "qualifications_by_step"
+     },
      "trail_scores",
      "score_refusals",
      {

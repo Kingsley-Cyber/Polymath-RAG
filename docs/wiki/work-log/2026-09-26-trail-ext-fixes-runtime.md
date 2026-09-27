@@ -4,7 +4,7 @@ owner: "@king"
 date: 2026-09-26
 status: complete
 status_note: "TRAIL-EXT-BUGHUNT-V1, group runtime (adapter runtime + step worker): 14 findings. Batch A (crashes) B-02..B-06 and batch B (wrong results) B-20..B-26, B-29, B-30 fixed; every fix has a test that failed on the unfixed code. B-25 is fixed on the orchestrator side only (the worker's lock scope is left for a design decision)."
-architecture_impact: "shared/polymath_shared/adapter/{contracts,transitions,service,hypotheses,research_gaps,trail_client,evidence_boundary}.py, workers/workers/adapter_step_worker.py, orchestrator/orchestrator/api/adapter.py, config/adapters/ecommerce.product_research.json (0.7.0 -> 0.7.1), tests/determinism/test_adapter_trail_wire.py (the version pin), tests/contracts/test_trail_ext_runtime_fixes.py (new), tests/determinism/test_adapter_trail_ext_runtime_fixes.py (new)."
+architecture_impact: "shared/polymath_shared/adapter/{contracts,transitions,service,hypotheses,research_gaps,trail_client,evidence_boundary}.py, workers/workers/adapter_step_worker.py, orchestrator/orchestrator/api/adapter.py, config/adapters/ecommerce.product_research.json (0.7.0 -> 0.7.2), tests/determinism/test_adapter_trail_wire.py (the version pin), tests/contracts/test_trail_ext_runtime_fixes.py (new), tests/determinism/test_adapter_trail_ext_runtime_fixes.py (new)."
 last_reviewed: 2026-09-26
 ---
 
@@ -97,6 +97,15 @@ Follow-ups the orchestrating session routed here from the other groups (separate
   - the view's `knowledge.knowledge_gaps` holds the hypothesis's OPEN gaps, chosen before the 12-item cut, and
     `knowledge.open_knowledge_gap_count` counts them all (a hypothesis whose first 12 gaps were closed showed no open gap). The agent
     materials say "open knowledge gaps", and research planning reads the same list; the ledger keeps the closed ones.
+- **B-09 / B-12** (ecommerce group) manifest `ecommerce.product_research` 0.7.1 -> 0.7.2:
+  - `C_bridge_law.config.inputs.live_hypotheses = "context.hypotheses"`: the bridge law (their binding now reads it) sees the live
+    ledger, so phantom, duplicate and missing bridges are named;
+  - `X_compile` adds `{"collect_all": "qualifications", "as": "qualifications_by_step"}` beside the plain key: the market-delta
+    qualifications reach the result beside the supply ones (their `report.py` reads `qualifications_by_step`).
+  - NOT done: the same include in the LEGACY `trail.product_discovery` manifest (bump 2.2.1 -> 2.2.2, the identity in five
+    `contracts/adapter/v1` examples and the pin in `test_adapter_evidence_boundary.py`: a contract-example change) and the optional
+    B-01 / B-08 schema typing (the ecommerce binding now reads object `frictions`, so typing them as strings would refuse lawful
+    answers; their binding already turns a bad shape into a law refusal).
 
 ## Proof
 - New tests: `tests/contracts/test_trail_ext_runtime_fixes.py` (42) and `tests/determinism/test_adapter_trail_ext_runtime_fixes.py` (18).
@@ -110,6 +119,8 @@ Follow-ups the orchestrating session routed here from the other groups (separate
 - Follow-ups: `test_b19_a_public_page_declared_as_a_no_web_class_is_refused_at_submit` failed on the code before it (accepted);
   `test_b13_the_view_shows_every_open_gap_before_its_cut_and_counts_them` and `test_b11_field_evidence_carries_trails_relation_to_each_hypothesis`
   failed before theirs (12 closed gaps shown, no open one; the relations dropped).
+  `test_b09_the_bridge_law_is_given_the_live_ledger`, `test_b12_the_result_keeps_every_qualify_stage` and
+  `test_b12_a_completed_run_result_keeps_the_market_and_the_supply_qualifications` failed before the manifest edit.
 - `tests/contracts -k "not test_live_"`: 354 passed. Every `tests/determinism/test_*adapter*` / `test_*trail*` file except the
   fleet-database ones: 236 passed. The other determinism files that import changed code (`test_autoresearch_*`,
   `test_evidence_packet_text_excerpt`, `test_hypothesis_state_machine`, `test_knowledge_scope*`, `test_mcp_principals_gate`,
@@ -126,8 +137,8 @@ Follow-ups the orchestrating session routed here from the other groups (separate
 ## Contract dispositions
 - ADAPTER_RUNTIME (`contracts/adapter/v1/adapter_step.schema.json`): TESTED_UNCHANGED. No schema under `contracts/adapter/v1` changed;
   the fixes keep every record inside its existing bounds (receipt 1000 / 2000, gap 2000) and add two typed failure codes within the
-  existing code pattern (`STEP_CONTRACT_VIOLATION`, `STEP_RUNTIME_ERROR`). The ecommerce manifest moved to 0.7.1 (every earlier edit of it bumped
-  `adapter_version`; the only pin, `test_adapter_trail_wire.py`, follows). Tests: the whole contracts suite (incl.
+  existing code pattern (`STEP_CONTRACT_VIOLATION`, `STEP_RUNTIME_ERROR`). The ecommerce manifest moved to 0.7.1, then 0.7.2 (every earlier edit of it
+  bumped `adapter_version`; the only pin, `test_adapter_trail_wire.py`, follows). Tests: the whole contracts suite (incl.
   `test_adapter_contract_v1.py`, `test_adapter_worker_evidence_surface.py`), `test_adapter_evidence_boundary.py`,
   `test_adapter_runtime_pure.py`. `test_adapter_product_discovery_loop.py` is a fleet-database test, not run (standing rule).
 - MCP_SURFACE (transitive): TESTED_UNCHANGED. `test_mcp_adapter_parity.py`, `test_hosted_mcp_acceptance.py`,

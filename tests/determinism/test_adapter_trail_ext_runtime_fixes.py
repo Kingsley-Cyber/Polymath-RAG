@@ -576,3 +576,11 @@ def test_b14_a_run_refused_after_research_keeps_its_admitted_evidence_in_the_res
     admitted = [a["admitted_evidence_id"] for adm in res["output"].get("evidence_admissions") or [] for a in adm["admitted"]]
     assert admitted and sorted(admitted) == res["lineage"]["admitted_evidence_ids"]   # the defect: "admitted 0" beside a lineage that counts them
     assert res["output"]["lived_clusters"] and res["gap"]["code"] == "PRODUCT_PORTFOLIO_LAW_UNSATISFIED"
+
+
+# ─────────────────────────────────────────────────────────── B-12: both qualify stages reach the result
+def test_b12_a_completed_run_result_keeps_the_market_and_the_supply_qualifications(stub):
+    rid, st, _a, _r, leaked, at = _drive(SCRIPT.Agent())
+    assert leaked is None and st.status == "completed", (at, leaked, st.status, st.gap)
+    by_step = service.result(None, rid)["output"]["qualifications_by_step"]
+    assert [sorted({q["stage"] for q in step}) for step in by_step] == [["market_delta"], ["supply"]]   # the defect: market_delta never reached it

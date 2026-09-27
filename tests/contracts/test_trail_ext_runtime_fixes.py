@@ -507,3 +507,25 @@ def test_b11_field_evidence_carries_trails_relation_to_each_hypothesis():
     views = SV.build({H1: _view_state(H1, []), H2: _view_state(H2, [])}, {}, step_outputs=steps)["hypotheses"]
     assert [v["field_evidence"][0]["hypothesis_relations"] for v in views] == [relations, relations]
     assert views[0]["field_evidence"][0]["polarity"] == "supporting"                              # the global polarity is still what Trail said
+
+
+# ─────────────────────────────────────────────────────────── B-09 / B-12: what the ecommerce manifest hands the bridge law and the result
+def test_b09_the_bridge_law_is_given_the_live_ledger(worker, monkeypatch):
+    cfg = ECOM.step("C_bridge_law")["config"]
+    assert cfg["inputs"].get("live_hypotheses") == "context.hypotheses"                     # the defect: the law never saw the ledger
+    sent = {}
+
+    def run(argv, input, **kw):                                                             # the out-of-process binding, captured
+        sent.update(json.loads(input))
+        return type("P", (), {"returncode": 0, "stdout": json.dumps({"ok": True, "output": {"admissible": True}}), "stderr": ""})()
+    monkeypatch.setattr(worker.subprocess, "run", run)
+    live = [{"hypothesis_id": H1, "revision": 0, "status": "proposed", "statement": "s1"}, {"hypothesis_id": H2, "revision": 1, "status": "revised", "statement": "s2"}]
+    state = RunState(run_id=RUN, adapter_id=ECOM.adapter_id, status="running", outputs={"C_bridge": {"bridges": []}}, output_order=("C_bridge",))
+    worker.exec_domain({"run_id": RUN, "step_id": "C_bridge_law", "sequence": 30, "context": {"hypotheses": live}}, state, ECOM)
+    assert sent["inputs"]["live_hypotheses"] == live
+
+
+def test_b12_the_result_keeps_every_qualify_stage():
+    include = ECOM.step(ECOM.terminal_step_id)["config"]["include"]
+    assert {"collect_all": "qualifications", "as": "qualifications_by_step"} in include      # the defect: only the newest stage's list survived
+    assert "qualifications" in include                                                         # the plain key stays for existing readers
