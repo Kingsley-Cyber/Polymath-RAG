@@ -10,6 +10,17 @@ touched — this stage only ADDS an artifact and a point in its own collection.
 
 Rollout phase A: the stage sits among the background stages (non-blocking) so existing corpora keep serving;
 phase B (after the backfill) moves it ahead of `verify_projections`, which makes QUERY_READY require it.
+
+FACET-RETRIEVAL-V1 F4 (plan §3.4, giant documents): a document with more than
+`giant_profile.GIANT_PARENT_THRESHOLD` parents gets one SECTION profile per top-level heading
+(`build_section_profiles`: the same prompt, compiler, projection and atom lane as the document profile, one
+point per section beside the document point, `scope: section`), built BEFORE the document profile in short
+transactions (never a transaction across an LLM call, the pMAP rule §28), at most
+`POLYMATH_DOC_PROFILE_SECTIONS_PER_PASS` per ticket pass — the rest hands the ticket back READY
+(TransientStageHold) and the next pass resumes, skipping sections whose input has not changed. The document
+profile of a giant is then built from `giant_profile.build_giant_fingerprint` (a stratified sample across ALL
+sections, never the first pages). `POLYMATH_DOC_PROFILE_GIANT=0` is the rollback switch: byte-identical to
+the pre-F4 stage for every document.
 """
 from __future__ import annotations
 
@@ -23,6 +34,7 @@ import time
 from polymath_shared.document_profile import compiler as C
 from polymath_shared.document_profile import context as CX
 from polymath_shared.document_profile import fingerprint as FP
+from polymath_shared.document_profile import giant_profile as GP
 from polymath_shared.document_profile import profile_prompt_vnext as PP
 from polymath_shared.document_profile import projection as PJ
 from polymath_shared.document_profile.prompt import (
@@ -53,8 +65,28 @@ _TRANSIENT_ERR = re.compile(r"^(?:HTTP_(?:408|413|425|429|5\d\d)|TRANSPORT_.*|.*
 
 log = logging.getLogger("doc_profile")
 
-#: dependency hooks (tests inject; production wires the pool, the embedder sidecar and Qdrant)
-HOOKS: dict = {"complete": None, "embed": None, "qdrant": None}
+#: dependency hooks (tests inject; production wires the pool, the embedder sidecar and Qdrant; F4: `tx` is the
+#: short-transaction factory the section loop commits through — `polymath_shared.db.tx` in production)
+HOOKS: dict = {"complete": None, "embed": None, "qdrant": None, "tx": None}
+#: F4: section profiles built per ticket pass before the ticket is handed back (env override; ≥ 1)
+DEFAULT_SECTIONS_PER_PASS = 8
+
+
+def _giant_enabled() -> bool:
+    """F4 rollback switch (`POLYMATH_DOC_PROFILE_GIANT`, default ON): off ⇒ no section profiles, the
+    document profile of a giant is built exactly as before F4 (a config change, never a re-ingest)."""
+    return os.environ.get("POLYMATH_DOC_PROFILE_GIANT", "1").strip().lower() not in ("0", "false", "no", "off")
+
+
+def sections_per_pass() -> int:
+    raw = os.environ.get("POLYMATH_DOC_PROFILE_SECTIONS_PER_PASS", "").strip()
+    return max(1, int(raw)) if raw.isdigit() else DEFAULT_SECTIONS_PER_PASS
+
+
+def _force_sections() -> bool:
+    """`POLYMATH_DOC_PROFILE_FORCE_SECTIONS=1` (the rebuild script's `--force`): rebuild every section, even one whose
+    input is unchanged under the live prompt."""
+    return os.environ.get("POLYMATH_DOC_PROFILE_FORCE_SECTIONS", "").strip().lower() in ("1", "true", "yes", "on")
 
 
 def _vnext_enabled() -> bool:
@@ -68,15 +100,17 @@ def _vnext_enabled() -> bool:
 
 
 def contract() -> str:
+    giant = {"giant": GP.GIANT_PROFILE_VERSION} if _giant_enabled() else {}
     if _vnext_enabled():
         return stage_contract_hash(STAGE, {
             "schema": C.SCHEMA_VERSION, "prompt": PP.PROFILE_VNEXT_PROMPT_VERSION, "compiler": C.COMPILER_VERSION,
             "builder": FP.FINGERPRINT_BUILDER_VERSION, "projection": PJ.PROJECTION_VERSION,
-            "budget_tokens": FP.DEFAULT_BUDGET_TOKENS, "vnext": True,
+            "budget_tokens": FP.DEFAULT_BUDGET_TOKENS, "vnext": True, **giant,
         })
     return stage_contract_hash(STAGE, {
         "schema": C.SCHEMA_VERSION, "prompt": PROMPT_VERSION, "compiler": C.COMPILER_VERSION,
         "builder": CX.BUILDER_VERSION, "projection": PJ.PROJECTION_VERSION, "budget_tokens": CONTEXT_BUDGET_TOKENS,
+        **giant,
     })
 
 
@@ -114,9 +148,10 @@ def _load_inputs(conn: Connection, doc_id: str, *, want_terms: bool = True) -> t
     document = {"doc_id": d[0], "corpus_id": d[1], "source_name": d[2], "media_type": d[3],
                 "frontmatter": d[4] or {}, "content_hash": d[5]}
     parents = [
-        {"chunk_index": r[0], "char_start": r[1], "char_end": r[2], "heading_path": r[3], "text": r[4], "region_role": r[5]}
+        {"chunk_index": r[0], "char_start": r[1], "char_end": r[2], "heading_path": r[3], "text": r[4], "region_role": r[5],
+         "chunk_id": r[6]}
         for r in conn.execute(
-            "SELECT chunk_index, char_start, char_end, heading_path, text, region_role FROM chunks "
+            "SELECT chunk_index, char_start, char_end, heading_path, text, region_role, chunk_id FROM chunks "
             "WHERE doc_id=%s AND tier='parent' ORDER BY chunk_index", (doc_id,)).fetchall()]
     terms: list[str] = []
     # GAP-04: the vNext fingerprint derives its own vocabulary, so the vNext path passes
@@ -255,13 +290,165 @@ def _embed_atom_texts(texts: list[str]) -> list[list[float]]:
         client.close()
 
 
+def _prompt_for(fp, *, vnext: bool) -> tuple[str, str, str, str]:
+    """(system, user, prompt_version, builder_version) for a fingerprint-shaped input under the live prompt."""
+    if vnext:
+        system_prompt, user_prompt = PP.build_vnext_profile_prompt(fp)
+        return system_prompt, user_prompt, PP.PROFILE_VNEXT_PROMPT_VERSION, fp.builder_version
+    structure, excerpts = GP.base_prompt_blocks(fp)
+    return SYSTEM, build_user_prompt(fp.title, structure, excerpts), PROMPT_VERSION, fp.builder_version
+
+
+def _complete(system_prompt: str, user_prompt: str, run_key: str) -> tuple[str, str | None, dict]:
+    complete = HOOKS.get("complete")
+    if complete is None:
+        return _pool_complete(system_prompt, user_prompt, MAX_OUTPUT_TOKENS, run_key=run_key)
+    return complete(system_prompt, user_prompt, MAX_OUTPUT_TOKENS)
+
+
+def _open_qdrant():
+    client = HOOKS.get("qdrant")
+    if client is not None:
+        return client, False
+    from polymath_shared.settings import get_settings
+    from qdrant_client import QdrantClient
+    return QdrantClient(url=get_settings().stores.qdrant_url, timeout=60), True
+
+
+def build_section_profiles(tx_factory, *, run_id: str, doc_id: str, corpus_id: str, document: dict,
+                           groups: list, vnext: bool, per_pass: int | None = None, force: bool = False,
+                           budget_tokens: int = GP.SECTION_BUDGET_TOKENS, client=None) -> dict:
+    """F4: build / refresh the SECTION profiles of a giant document — one LLM call, one compile, one profile
+    point (`scope: section`, the section's `parent_ids`) and one atom set per section, each committed in its
+    own short transaction. Resumable and idempotent: a section whose point already carries this input's hash
+    under the live prompt is skipped (unless `force`); at most `per_pass` sections are built per call and the
+    rest are reported as `pending`; a transient pool error stops the pass and is reported, never raised.
+    Orphan section points (a re-cut document) are purged once every section is done. Returns the receipt the
+    stage artifact carries under `doc_profile_sections`."""
+    from polymath_shared.document_profile import profile_atom_projection as PAP
+    from polymath_shared.embedding_contracts import active_contract
+    per_pass = per_pass if per_pass is not None else sections_per_pass()
+    contract_obj = active_contract()
+    cid, dim = contract_obj.contract_id, contract_obj.dimension
+    embed = HOOKS.get("embed") or _embed_texts
+    atom_embed = HOOKS.get("embed") or _embed_atom_texts
+    owned = client is None
+    if owned:
+        client, owned = _open_qdrant()
+    prompt_ver = PP.PROFILE_VNEXT_PROMPT_VERSION if vnext else PROMPT_VERSION
+    rec: dict = {"version": GP.GIANT_PROFILE_VERSION, "threshold": GP.GIANT_PARENT_THRESHOLD, "scope": "section",
+                 "sections_total": len(groups), "budget_tokens": budget_tokens, "prompt_version": prompt_ver,
+                 "built": [], "skipped": [], "failed": [], "pending": [], "transient_error": None, "orphans_purged": 0}
+    try:
+        existing = PJ.list_section_points(client, cid, doc_id)
+        keys = [g.key for g in groups]
+        for i, g in enumerate(groups, start=1):
+            fp = GP.build_section_fingerprint(document, g, ordinal=i, total=len(groups), budget_tokens=budget_tokens)
+            input_hash = fp.input_hash(g.content_hash())
+            title = fp.title
+            ex = existing.get(g.key)
+            head = {"ordinal": i, "key": g.key, "title": g.title, "heading_path": list(g.heading_path),
+                    "parent_count": g.parent_count, "first_parent_id": g.parent_ids[0] if g.parent_ids else None,
+                    "last_parent_id": g.parent_ids[-1] if g.parent_ids else None, "input_hash": input_hash}
+            if ex and not force and ex.get("input_hash") == input_hash and ex.get("prompt_version") == prompt_ver:
+                # the point carries its compiled surfaces, so a pass that skips a section still receipts them
+                rec["skipped"].append({**head, "compiled_hash": ex.get("compiled_hash"), "point_id": ex.get("point_id"),
+                                       "compiled": ex.get("compiled"), "reason": "unchanged"})
+                continue
+            if len(rec["built"]) >= per_pass or rec["transient_error"]:
+                rec["pending"].append(g.key)
+                continue
+            system_prompt, user_prompt, _pv, builder_ver = _prompt_for(fp, vnext=vnext)
+            raw, err, pool_rec = _complete(system_prompt, user_prompt, run_key=f"{run_id}:{g.key}")
+            if err or not (raw or "").strip():
+                if transient_pool_error(pool_rec, err):
+                    rec["transient_error"] = f"{err} ({len(pool_rec.get('attempts') or [])} lanes tried)"
+                    rec["pending"].append(g.key)
+                else:
+                    rec["failed"].append({**head, "error": err or "empty_response", "attempts": pool_rec.get("attempts")})
+                continue
+            source_text = "\n".join(p.get("text") or "" for p in g.parents)
+            result = C.compile_llm_output(raw, source_text=source_text, grounding_mode="warn")
+            r = result.record
+            valid, missing = C.profile_valid(r)
+            artifact = C.semantic_artifact(r)
+            emitted = C.emit(r, doc_id)
+            compiled_hash = _sha(artifact)
+            entry = {**head, "builder_version": builder_ver, "used_tokens": fp.used_tokens, "model": pool_rec.get("model"),
+                     "lane": pool_rec.get("lane"), "attempts": pool_rec.get("attempts"), "raw_response_hash": _sha(raw),
+                     "compiled_hash": compiled_hash, "quality": round(result.quality, 3), "ok": result.ok, "valid": valid,
+                     "missing": missing, "truncated": result.truncated, "compiled": artifact, "raw": raw[:2000]}
+            if not result.ok or not valid:
+                rec["failed"].append({**entry, "error": f"DOC_PROFILE_INVALID: ok={result.ok} missing={missing}"})
+                continue
+            section = {"key": g.key, "title": g.title, "heading_path": g.heading_path, "parent_ids": g.parent_ids,
+                       "parent_count": g.parent_count, "ordinal": i}
+            existing_surfaces = PJ.fetch_existing_surfaces(client, cid, doc_id, section_key=g.key)
+            receipt = PJ.project_profile(
+                client, embed=embed, embedding_contract_id=cid, dim=dim, doc_id=doc_id, corpus_id=corpus_id,
+                title=title, representations=emitted["representations"],
+                payload_extra={"topics": r.topics, "terms": r.terms, "quality": round(result.quality, 3),
+                               "source_name": document.get("source_name"), "compiled": artifact},
+                existing_surfaces=existing_surfaces, force=force,
+                source_doc_hash=g.content_hash(), schema_version=C.SCHEMA_VERSION, prompt_version=prompt_ver,
+                compiled_hash=compiled_hash, section=section, input_hash=input_hash)
+            entry["projection"] = {k: v for k, v in receipt.items() if k in
+                                   ("point_id", "projection_key", "projection_hash", "vectors", "kept_last_known_good",
+                                    "selection", "collection")}
+            if not receipt.get("kept_last_known_good"):
+                try:
+                    with tx_factory() as conn:
+                        entry["atoms"] = PAP.ingest_section_atoms(
+                            conn, client, embed=atom_embed, embedding_contract_id=cid, dim=dim, doc_id=doc_id,
+                            corpus_id=corpus_id, compiled=artifact, profile_contract=C.SCHEMA_VERSION,
+                            section_key=g.key, parent_ids=g.parent_ids, compiled_hash=compiled_hash)
+                except Exception as atom_err:  # noqa: BLE001 — atoms are additive; the projected section point stands
+                    entry["atoms"] = {"ok": False, "error": str(atom_err)[:200]}
+                    log.warning("doc_profile section atoms failed run=%s doc=%s section=%s err=%s",
+                                run_id[:16], doc_id[:16], g.key, atom_err)
+            rec["built"].append(entry)
+            log.info("doc_profile section done run=%s doc=%s section=%s/%s quality=%.2f lane=%s", run_id[:16],
+                     doc_id[:16], i, len(groups), result.quality, pool_rec.get("lane"))
+        if not rec["pending"]:
+            rec["orphans_purged"] = PJ.purge_section_points(client, cid, doc_id, keep_keys=keys)
+    finally:
+        if owned:
+            client.close()
+    return rec
+
+
 def process_event(conn: Connection, event: dict) -> None:
     run_id = event["run_id"]
+    vnext = _vnext_enabled()
+    # F4: resolve + load OUTSIDE the stage transaction (the pMAP rule §28: never a transaction across an LLM call),
+    # so a giant's section loop commits per section through `tx_factory` while `conn` stays idle.
+    doc_id, corpus_id = _resolve_document(conn, run_id)
+    document, parents, terms = _load_inputs(conn, doc_id, want_terms=not vnext)
+    conn.commit()
+    groups = GP.section_groups(parents) if _giant_enabled() else []
+    sections_rec: dict | None = None
+    if groups:
+        from polymath_shared.db import tx as _db_tx
+        tx_factory = HOOKS.get("tx") or _db_tx
+        sections_rec = build_section_profiles(tx_factory, run_id=run_id, doc_id=doc_id, corpus_id=corpus_id,
+                                              document=document, groups=groups, vnext=vnext, force=_force_sections())
+        if sections_rec["pending"]:
+            done = len(sections_rec["built"]) + len(sections_rec["skipped"])
+            log.info("doc_profile sections pending run=%s doc=%s done=%s/%s built=%s transient=%s", run_id[:16],
+                     doc_id[:16], done, len(groups), len(sections_rec["built"]), sections_rec["transient_error"])
+            raise TransientStageHold(f"DOC_PROFILE_SECTIONS_PENDING: {done}/{len(groups)} done, "
+                                     f"{len(sections_rec['pending'])} pending"
+                                     + (f", pool: {sections_rec['transient_error']}" if sections_rec["transient_error"] else ""))
     with stage_transaction(conn, run_id=run_id, stage=STAGE, contract_hash=contract()) as writer:
-        doc_id, corpus_id = _resolve_document(conn, run_id)
-        vnext = _vnext_enabled()
-        document, parents, terms = _load_inputs(conn, doc_id, want_terms=not vnext)
-        if vnext:
+        if groups:
+            # F4: a giant's document profile — the stratified sample across ALL sections (never the first pages)
+            fp = GP.build_giant_fingerprint(document, parents, groups)
+            input_hash = fp.input_hash(document.get("content_hash") or "")
+            system_prompt, user_prompt, prompt_ver, builder_ver = _prompt_for(fp, vnext=vnext)
+            title = fp.title
+            ctx_meta = {"builder_version": fp.builder_version, "title": fp.title, "identity": fp.identity,
+                        "used_tokens": fp.used_tokens, "sources": fp.sources, "budget_tokens": fp.budget_tokens}
+        elif vnext:
             fp = FP.build_fingerprint(document, parents)   # budget = canary-selected default (500)
             input_hash = fp.input_hash(document.get("content_hash") or "")
             system_prompt, user_prompt = PP.build_vnext_profile_prompt(fp)
@@ -279,11 +466,7 @@ def process_event(conn: Connection, event: dict) -> None:
             ctx_meta = {k: v for k, v in ctx.to_dict().items()
                         if k in ("title", "identity", "structure", "used_tokens", "sources", "allocation", "budget_tokens")}
 
-        complete = HOOKS.get("complete")
-        if complete is None:
-            raw, err, pool_rec = _pool_complete(system_prompt, user_prompt, MAX_OUTPUT_TOKENS, run_key=run_id)
-        else:
-            raw, err, pool_rec = complete(system_prompt, user_prompt, MAX_OUTPUT_TOKENS)
+        raw, err, pool_rec = _complete(system_prompt, user_prompt, run_key=run_id)
         if err or not (raw or "").strip():
             tried = len(pool_rec.get("attempts") or [])
             log.warning("doc_profile pool failed run=%s doc=%s err=%s attempts=%s",
@@ -313,8 +496,11 @@ def process_event(conn: Connection, event: dict) -> None:
             "issues": [{"severity": i.severity, "code": i.code, "message": i.message[:160]} for i in result.issues][:24],
             "context": ctx_meta,
             "raw": raw[:8000], "compiled": artifact, "representations": emitted["representations"],
+            **({"giant": True, "sections": len(groups)} if groups else {}),
         }
         writer.artifact({"doc_profile": profile_record})
+        if sections_rec is not None:
+            writer.artifact({"doc_profile_sections": sections_rec})
         if not result.ok or not valid:
             raise RuntimeError(f"DOC_PROFILE_INVALID: ok={result.ok} missing={missing} quality={result.quality:.2f}")
 
@@ -322,12 +508,7 @@ def process_event(conn: Connection, event: dict) -> None:
         from polymath_shared.embedding_contracts import active_contract
         contract_obj = active_contract()
         embed = HOOKS.get("embed") or _embed_texts
-        client = HOOKS.get("qdrant")
-        owned = client is None
-        if owned:
-            from polymath_shared.settings import get_settings
-            from qdrant_client import QdrantClient
-            client = QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)
+        client, owned = _open_qdrant()
         atom_receipt = None
         try:
             # CANONICAL-PROFILE-SELECTION-V1 (checklist P4): fetch the active point's surface
@@ -340,7 +521,7 @@ def process_event(conn: Connection, event: dict) -> None:
                                "source_name": document.get("source_name")},
                 existing_surfaces=existing_surfaces,
                 source_doc_hash=document.get("content_hash") or "", schema_version=C.SCHEMA_VERSION,
-                prompt_version=prompt_ver, compiled_hash=compiled_hash)
+                prompt_version=prompt_ver, compiled_hash=compiled_hash, input_hash=input_hash)
             if not receipt.get("kept_last_known_good"):
                 # PROFILE-ATOM ingest wiring (checklist P4a): the addressable atom lane is now
                 # pipeline-maintained (not canary). Atoms track the projected profile; skip on a
@@ -378,8 +559,9 @@ def process_event(conn: Connection, event: dict) -> None:
             writer.artifact({"doc_profile_atoms": {**atom_receipt, "compiled_hash": compiled_hash}})
         if not vec_ok:
             raise RuntimeError(f"DOC_PROFILE_VECTORS_INCOMPLETE: {vmissing}")
-        log.info("doc_profile done run=%s doc=%s quality=%.2f vectors=%s atoms=%s lane=%s", run_id[:16], doc_id[:16],
-                 result.quality, receipt.get("vectors"), (atom_receipt or {}).get("active"), pool_rec.get("lane"))
+        log.info("doc_profile done run=%s doc=%s quality=%.2f vectors=%s atoms=%s lane=%s sections=%s", run_id[:16],
+                 doc_id[:16], result.quality, receipt.get("vectors"), (atom_receipt or {}).get("active"),
+                 pool_rec.get("lane"), len(groups))
 
 
 def main() -> None:

@@ -45,10 +45,16 @@ contracts:
   PROFILE_PROJECTION:
     owner: shared
     spec: shared/polymath_shared/document_profile/projection.py
-    paths: [shared/polymath_shared/document_profile/projection.py]
+    paths:
+      - shared/polymath_shared/document_profile/projection.py
+      - shared/polymath_shared/document_profile/giant_profile.py      # F4: section plan + stratified giant input
+      - shared/polymath_shared/document_profile/profile_coverage.py   # F4: the coverage audit scorer
     depends_on: [SURFACE_REGISTRY, PROFILE_COMPILER, PROJECTION_LIFECYCLE]
     consumed_by: [PROFILE_SCOUT_INPUT, CANDIDATE_ENGINE]
-    tests: [tests/determinism/test_document_profile_projection.py]
+    tests:
+      - tests/determinism/test_document_profile_projection.py
+      - tests/determinism/test_giant_profile.py             # F4: section points (scope: section) beside document points
+      - tests/determinism/test_section_profile_lanes.py     # F4: the lanes read the section shape
     migration: null
     status: live
 
@@ -65,6 +71,7 @@ contracts:
       - tests/determinism/test_profile_atom_ingest.py
       - tests/determinism/test_profile_atom_corpus_scope.py
       - tests/contracts/test_search_atoms_callers_scoped.py   # pins every search_atoms caller's corpus scope (11.476)
+      - tests/determinism/test_section_profile_lanes.py       # F4: the `section` family (one tag per section of a giant)
     migration: stores/postgres/migrations/0055_document_profile_atoms.sql
     status: live
 

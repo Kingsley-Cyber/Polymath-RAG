@@ -1218,6 +1218,9 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/document_profile/profile_atom_projection.py", "py", None),
     ("shared/polymath_shared/document_profile/map_prompt.py", "py", None),
     ("shared/polymath_shared/document_profile/profile_prompt_vnext.py", "py", None),
+    # FACET-RETRIEVAL-V1 F4: profiles that match giant documents (section profiles + the coverage audit)
+    ("shared/polymath_shared/document_profile/giant_profile.py", "py", None),
+    ("shared/polymath_shared/document_profile/profile_coverage.py", "py", None),
     ("shared/polymath_shared/embedding_contracts.py", "py", None),
 
     # stores: Neo4j uniqueness constraints + document profile columns
@@ -2608,6 +2611,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-26-deep-research-dr7-backend.md", "md", None),
     ("docs/wiki/work-log/2026-09-27-deep-research-tuning.md", "md", None),
     ("docs/wiki/work-log/2026-09-27-facet-retrieval-f1-f2.md", "md", None),
+    ("docs/wiki/work-log/2026-09-27-facet-retrieval-f4.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-frontend-refresh-u4b.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-friends-access-one-login.md", "md", None),
     ("docs/wiki/work-log/2026-09-27-invite-signup.md", "md", None),
@@ -2847,6 +2851,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/reingest_corpus.py", "py", None),
     ("scripts/backfill_document_profiles.py", "py", None),
     ("scripts/document_profile_gate.py", "py", None),
+    ("scripts/profile_audit.py", "py", None),
+    ("scripts/rebuild_profile.py", "py", None),
     ("scripts/sweep_orphan_derivatives.py", "py", None),
     ("scripts/backfill_frontmatter.py", "py", None),
     ("scripts/ingest_field_evidence.py", "py", None),
@@ -3121,6 +3127,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_parent_map_projection.py", "py", None),
     ("tests/determinism/test_map_prompt.py", "py", None),
     ("tests/determinism/test_profile_prompt_vnext.py", "py", None),
+    ("tests/determinism/test_giant_profile.py", "py", None),
+    ("tests/determinism/test_section_profile_lanes.py", "py", None),
     ("tests/determinism/test_legacy_dependency_census.py", "py", None),
     ("tests/determinism/test_vnext_readiness_report.py", "py", None),
     ("tests/determinism/test_document_parent_maps_store.py", "py", None),

@@ -43,8 +43,12 @@ def vectors_config(dim: int):
 
 
 def build_payload(atom: ProfileAtom) -> dict:
-    return {"doc_id": atom.doc_id, "corpus_id": atom.corpus_id, "atom_kind": atom.kind,
-            "text": atom.text, "ordinal": atom.ordinal, "atom_id": atom.atom_id}
+    payload = {"doc_id": atom.doc_id, "corpus_id": atom.corpus_id, "atom_kind": atom.kind,
+               "text": atom.text, "ordinal": atom.ordinal, "atom_id": atom.atom_id}
+    if getattr(atom, "scope", "document") == "section":
+        # F4: a section atom still routes to its DOCUMENT (doc_id); the marker names the section it came from
+        payload.update({"scope": "section", "section_key": atom.section_key, "parent_ids": list(atom.parent_ids)})
+    return payload
 
 
 def ensure_collection(client, name: str, dim: int) -> bool:
@@ -146,6 +150,43 @@ def ingest_document_atoms(conn, client, *, embed, embedding_contract_id: str, di
         by_kind[a.kind] = by_kind.get(a.kind, 0) + 1
     return {"ok": True, "active": len(atoms), "persisted": persisted, "purged_points": purged,
             "projected_points": proj["points"], "collection": proj["collection"],
+            "by_kind": by_kind, "profile_contract": profile_contract, "source": source}
+
+
+def purge_section_atoms(client, embedding_contract_id: str, doc_id: str, section_key: str) -> int:
+    """F4: delete ONE section's projected atom points (`doc_id` + `section_key`) before the section's fresh set
+    is projected — the other sections' and the document's points stand. Returns removed."""
+    from qdrant_client.http import models as qm
+    name = collection_name(embedding_contract_id)
+    if not client.collection_exists(name):
+        return 0
+    flt = qm.Filter(must=[qm.FieldCondition(key="doc_id", match=qm.MatchValue(value=doc_id)),
+                          qm.FieldCondition(key="section_key", match=qm.MatchValue(value=section_key))])
+    before = client.count(name, count_filter=flt, exact=True).count
+    if before:
+        client.delete(collection_name=name, points_selector=qm.FilterSelector(filter=flt), wait=True)
+    return before
+
+
+def ingest_section_atoms(conn, client, *, embed, embedding_contract_id: str, dim: int,
+                         doc_id: str, corpus_id: str | None, compiled: dict, profile_contract: str,
+                         section_key: str, parent_ids: Sequence[str], compiled_hash: str) -> dict:
+    """F4: the per-SECTION analogue of `ingest_document_atoms` — extract the section profile's atom surfaces
+    (scope "section", ids keyed by the section, the document's `doc_id`), persist them family-scoped to THIS
+    section (`section:<key>:<hash>`), purge the section's stale points and project the fresh set. Additive:
+    the document's base / vNext atoms and every other section's atoms are untouched."""
+    from polymath_shared.document_profile.profile_atom import extract_atoms, persist_atoms, source_tag
+    atoms = extract_atoms(compiled, doc_id=doc_id, corpus_id=corpus_id, profile_contract=profile_contract,
+                          section_key=section_key, parent_ids=parent_ids)
+    source = source_tag("section", compiled_hash, section_key)
+    persisted = persist_atoms(conn, doc_id=doc_id, profile_contract=profile_contract, atoms=atoms, source=source)
+    purged = purge_section_atoms(client, embedding_contract_id, doc_id, section_key)
+    proj = project_atoms(client, embed=embed, embedding_contract_id=embedding_contract_id, dim=dim, atoms=atoms)
+    by_kind: dict[str, int] = {}
+    for a in atoms:
+        by_kind[a.kind] = by_kind.get(a.kind, 0) + 1
+    return {"ok": True, "scope": "section", "section_key": section_key, "active": len(atoms), "persisted": persisted,
+            "purged_points": purged, "projected_points": proj["points"], "collection": proj["collection"],
             "by_kind": by_kind, "profile_contract": profile_contract, "source": source}
 
 

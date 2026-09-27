@@ -20,6 +20,13 @@ research-index profile (one item per kind, incl. the latent kinds). A `source` t
 (`family:compiled_hash`, kept in `source_profile_hash`) scopes supersession to ONE family, so a
 fresh vNext profile never deactivates the base atoms (the 2026-09-08 regression) and a fresh base
 profile never deactivates the vNext atoms. Untagged (legacy) rows are superseded as before.
+
+FACET-RETRIEVAL-V1 F4 (giant documents, plan §3.4): a THIRD family, ``section``, holds the atoms of
+one SECTION profile of a giant document — ``source_profile_hash`` = ``section:<section_key>:<hash>``.
+Section atoms keep the DOCUMENT's ``doc_id`` (routing lands on the document; the point's payload
+names the section and its parents), their ``atom_id`` mixes in the section key (two sections may
+state the same concept), and supersession is scoped to ONE section: rebuilding a section never
+deactivates another section's atoms nor the document's base / vNext atoms, and vice versa.
 """
 from __future__ import annotations
 
@@ -38,9 +45,17 @@ def _norm(text: str) -> str:
     return " ".join((text or "").split())
 
 
-def atom_id(doc_id: str, profile_contract: str, kind: str, text: str) -> str:
-    """Content identity — same (doc, contract, kind, normalized text) ⇒ same id (idempotent)."""
+SCOPE_DOCUMENT = "document"
+SCOPE_SECTION = "section"
+
+
+def atom_id(doc_id: str, profile_contract: str, kind: str, text: str, section_key: str | None = None) -> str:
+    """Content identity — same (doc, contract, kind, normalized text) ⇒ same id (idempotent).
+    F4: a SECTION atom mixes in its section key, so two sections stating the same idea keep their own rows;
+    without a section key the id is byte-identical to before."""
     key = f"{doc_id}|{profile_contract}|{kind}|{_norm(text).lower()}"
+    if section_key:
+        key += f"|section:{section_key}"
     return "atom_" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:24]
 
 
@@ -53,35 +68,54 @@ class ProfileAtom:
     kind: str
     text: str
     ordinal: int
+    #: F4: "document" (the default, every atom before F4) or "section" — the atom came from one section
+    #: profile of a giant document; `section_key` names it, `parent_ids` are that section's parents (known at
+    #: build time; a re-projection from rows carries the key and an empty tuple).
+    scope: str = SCOPE_DOCUMENT
+    section_key: str | None = None
+    parent_ids: tuple[str, ...] = ()
 
 
 def extract_atoms(compiled: dict, *, doc_id: str, corpus_id: str | None,
-                  profile_contract: str) -> list[ProfileAtom]:
+                  profile_contract: str, section_key: str | None = None,
+                  parent_ids: Sequence[str] = ()) -> list[ProfileAtom]:
     """One ProfileAtom per non-empty atom item across the 10 kinds, deduped by (kind, text).
-    `compiled` is the artifact's `doc_profile.compiled` dict (or a compiler Record's dict)."""
+    `compiled` is the artifact's `doc_profile.compiled` dict (or a compiler Record's dict).
+    F4: with `section_key` the atoms are that section's (scope "section", ids keyed by the section)."""
     out: list[ProfileAtom] = []
     seen: set[str] = set()
+    pids = tuple(str(x) for x in parent_ids)
     for attr, kind in _ATTR_TO_KIND.items():
         for i, raw in enumerate(compiled.get(attr) or []):
             t = _norm(raw)
             if not t:
                 continue
-            aid = atom_id(doc_id, profile_contract, kind, t)
+            aid = atom_id(doc_id, profile_contract, kind, t, section_key)
             if aid in seen:
                 continue
             seen.add(aid)
-            out.append(ProfileAtom(aid, doc_id, corpus_id, profile_contract, kind, t, i))
+            if section_key:
+                out.append(ProfileAtom(aid, doc_id, corpus_id, profile_contract, kind, t, i,
+                                       scope=SCOPE_SECTION, section_key=section_key, parent_ids=pids))
+            else:
+                out.append(ProfileAtom(aid, doc_id, corpus_id, profile_contract, kind, t, i))
     return out
 
 
-#: ATOM-REPAIR-V1: the profile families whose atoms live side by side (D4 "alongside").
-PROFILE_FAMILIES = ("base", "vnext")
+#: ATOM-REPAIR-V1: the profile families whose atoms live side by side (D4 "alongside");
+#: F4 adds `section` (one family tag per SECTION of a giant document).
+PROFILE_FAMILIES = ("base", "vnext", "section")
 
 
-def source_tag(family: str, compiled_hash: str) -> str:
-    """The provenance an atom row keeps in `source_profile_hash`: `family:compiled_hash`."""
+def source_tag(family: str, compiled_hash: str, section_key: str | None = None) -> str:
+    """The provenance an atom row keeps in `source_profile_hash`: `family:compiled_hash`, or for the
+    `section` family `section:<section_key>:<compiled_hash>` (F4)."""
     if family not in PROFILE_FAMILIES:
         raise ValueError(f"unknown profile family {family!r}")
+    if family == "section":
+        if not section_key:
+            raise ValueError("a section source needs its section_key")
+        return f"section:{section_key}:{compiled_hash or ''}"
     return f"{family}:{compiled_hash or ''}"
 
 
@@ -89,6 +123,14 @@ def family_of(source: str | None) -> str | None:
     """The family of a `source_profile_hash`; None for an untagged (legacy) row."""
     fam = str(source or "").split(":", 1)[0] if ":" in str(source or "") else ""
     return fam if fam in PROFILE_FAMILIES else None
+
+
+def section_key_of(source: str | None) -> str | None:
+    """The section key of a `section:<key>:<hash>` source; None for any other row (F4)."""
+    if family_of(source) != "section":
+        return None
+    parts = str(source).split(":", 2)
+    return parts[1] if len(parts) >= 2 and parts[1] else None
 
 
 def persist_atoms(conn, *, doc_id: str, profile_contract: str, atoms: Sequence[ProfileAtom],
@@ -108,7 +150,12 @@ def persist_atoms(conn, *, doc_id: str, profile_contract: str, atoms: Sequence[P
             "WHERE doc_id=%s AND profile_contract=%s AND active",
             (doc_id, profile_contract),
         ).fetchall()
-        doomed = [r[0] for r in rows if family_of(r[1]) in (fam, None)]
+        if fam == "section":
+            # F4: only THIS section's rows are superseded; every other section and both document families stand
+            skey = section_key_of(source)
+            doomed = [r[0] for r in rows if family_of(r[1]) == "section" and section_key_of(r[1]) == skey]
+        else:
+            doomed = [r[0] for r in rows if family_of(r[1]) in (fam, None)]
         if doomed:
             conn.execute(
                 "UPDATE document_profile_atoms SET active=FALSE, updated_at=now() WHERE atom_id = ANY(%s)",
@@ -158,12 +205,19 @@ def active_atoms(conn, *, corpus_id: str | None = None, doc_id: str | None = Non
         where.append("atom_kind = ANY(%s)")
         params.append(list(ks))
     rows = conn.execute(
-        "SELECT atom_id, doc_id, corpus_id, profile_contract, atom_kind, atom_text, ordinal "
+        "SELECT atom_id, doc_id, corpus_id, profile_contract, atom_kind, atom_text, ordinal, source_profile_hash "
         "FROM document_profile_atoms WHERE " + " AND ".join(where) +
         " ORDER BY doc_id, atom_kind, ordinal",
         tuple(params),
     ).fetchall()
-    return [ProfileAtom(r[0], r[1], r[2], r[3], r[4], r[5], r[6]) for r in rows]
+    out: list[ProfileAtom] = []
+    for r in rows:
+        skey = section_key_of(r[7] if len(r) > 7 else None)
+        if skey:
+            out.append(ProfileAtom(r[0], r[1], r[2], r[3], r[4], r[5], r[6], scope=SCOPE_SECTION, section_key=skey))
+        else:
+            out.append(ProfileAtom(r[0], r[1], r[2], r[3], r[4], r[5], r[6]))
+    return out
 
 
 def active_atom_count(conn, *, corpus_id: str) -> int:
