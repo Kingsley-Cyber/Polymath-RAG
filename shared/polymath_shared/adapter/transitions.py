@@ -372,19 +372,49 @@ def _trail_wire_value_errors(payload: dict[str, Any]) -> list[str]:
         if isinstance(s, dict) and s.get("source_class") in _no_web_classes() and re.match(r"(?i)^https?://", str(s.get("url") or "")):
             errors.append(f"payload/sources/{n}/source_class: {s['source_class']!r} is a first-hand source that TrailSignal counts once per "
                           "observation; a public page is not one — declare the class its host routes to (the source table)")
+        # bug hunt B-44: TrailSignal routes a URL to the first row (source_id order) whose pattern is its host OR appears ANYWHERE in it,
+        # so a real account handle in a path that happens to contain another platform's domain was admitted as that platform's evidence
+        routed = _misrouted(str(s.get("url") or "")) if isinstance(s, dict) else None
+        if routed:
+            errors.append(f"payload/sources/{n}/url: TrailSignal would route this page to {routed[0]} because {routed[1]!r} appears in its path, "
+                          "not its host; it cannot be admitted as its own platform's evidence — leave it out and report it as a limitation")
     return errors
+
+
+@lru_cache(maxsize=1)
+def _source_table() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
+    """TrailSignal's PINNED source table as its admission routes it: (source_id, source_class, patterns) of every enabled row, in
+    source_id order (the registry compiler sorts the snapshot's source roles by id)."""
+    table = Path(__file__).resolve().parents[3] / _GUIDE_FILES[_SOURCES_URI]
+    with table.open(encoding="utf-8") as fh:
+        rows = [r for r in csv.DictReader(fh) if str(r.get("enabled") or "").strip().lower() == "true"]
+    return tuple(sorted((str(r.get("source_id") or ""), str(r.get("source_class") or ""),
+                         tuple(p.strip() for p in str(r.get("domains_or_patterns") or "").split(";") if p.strip())) for r in rows))
 
 
 @lru_cache(maxsize=1)
 def _no_web_classes() -> frozenset[str]:
     """Source classes whose every enabled row in TrailSignal's PINNED source table routes through `-` (no web domain at all)."""
-    table = Path(__file__).resolve().parents[3] / _GUIDE_FILES[_SOURCES_URI]
     patterns: dict[str, set[str]] = {}
-    with table.open(encoding="utf-8") as fh:
-        for row in csv.DictReader(fh):
-            if str(row.get("enabled") or "").strip().lower() == "true":
-                patterns.setdefault(str(row.get("source_class") or ""), set()).update(p.strip() for p in str(row.get("domains_or_patterns") or "").split(";"))
+    for _sid, cls, pats in _source_table():
+        patterns.setdefault(cls, set()).update(pats)
     return frozenset(c for c, p in patterns.items() if c and p == {"-"})
+
+
+def _misrouted(url: str) -> tuple[str, str] | None:
+    """(source_id, pattern) when TrailSignal's routing sends `url` to a row none of whose patterns names the url's HOST — the row was
+    matched by text elsewhere in the url; None when the url routes on its own host (or by class, or not at all)."""
+    if not re.match(r"(?i)^https?://", url):
+        return None
+    host = re.sub(r"^[a-z]+://", "", url.lower()).split("/", 1)[0].split("@")[-1].split(":")[0]      # TrailSignal's own host_of
+    host = host.removeprefix("www.")
+    for source_id, _cls, patterns in _source_table():
+        concrete = [p for p in patterns if p not in ("*", "-")]
+        hit = next((p for p in concrete if host == p or host.endswith("." + p) or p in url), None)
+        if hit is not None:
+            on_host = any(host == p.split("/", 1)[0] or host.endswith("." + p.split("/", 1)[0]) for p in concrete)
+            return None if on_host else (source_id, hit)
+    return None
 
 
 def _instant(value: Any):

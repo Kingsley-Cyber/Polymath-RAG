@@ -529,3 +529,42 @@ def test_b12_the_result_keeps_every_qualify_stage():
     include = ECOM.step(ECOM.terminal_step_id)["config"]["include"]
     assert {"collect_all": "qualifications", "as": "qualifications_by_step"} in include      # the defect: only the newest stage's list survived
     assert "qualifications" in include                                                         # the plain key stays for existing readers
+
+
+# ─────────────────────────────────────────────────────────── B-44: a URL TrailSignal would route to another platform by text in its path
+def _trail_routes(url: str, source_class: str) -> str | None:
+    """TrailSignal's OWN routing (the embedded core's admission policy, pinned table, `route_source`)."""
+    pytest.importorskip("packageurl", reason="TrailSignal's platform contracts need packageurl")
+    from trail_signal.contexts.evidence.domain.admission import (
+        ReceiptSource,
+        route_source,
+    )
+    spec = importlib.util.spec_from_file_location("trail_embedded_bughunt", ROOT / "governance" / "trail" / "embedded.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    policy = mod.build_service(store=mod.SqliteResearchStore(None)).policy
+    row = route_source(policy, ReceiptSource.model_validate_json(json.dumps({"source_id": "s1", "url": url, "source_class": source_class,
+                                                                              "retrieved_at": "2026-09-26T05:40:00Z", "published_at_if_known": None})))
+    return row.source_id if row else None
+
+
+@pytest.mark.parametrize("handle, routed", [("amazon.deals", "src-amazon-manual"), ("fredd.italy", "src-reddit-manual"),
+                                            ("etsy.community", "src-etsy"), ("creator", "src-tiktok-comments")])
+def test_b44_a_comment_url_routed_by_text_in_its_path_is_refused_at_submit(handle, routed):
+    url = f"https://www.tiktok.com/@{handle}/video/7412345678901234567"
+    assert _trail_routes(url, "video_platform") == routed                               # TrailSignal's pinned routing (substring, source_id order)
+    rec = copy.deepcopy(EXAMPLE_RECEIPT)
+    rec["sources"] = [{**rec["sources"][0], "url": url, "source_class": "video_platform"}, rec["sources"][1]]
+    errors = T.validate_receipt(RECEIPT_STEP, rec)
+    if routed == "src-tiktok-comments":
+        assert errors == []                                                             # a comment on its own platform is untouched
+    else:
+        assert any("sources/0/url" in e and routed in e for e in errors), errors         # the defect: admitted under another platform
+
+
+def test_b44_urls_on_their_own_hosts_are_untouched():
+    rec = copy.deepcopy(EXAMPLE_RECEIPT)
+    for url in ("https://www.amazon.de/dp/B0TEST1234", "https://old.reddit.com/r/running/comments/abc/keys/", "https://www.etsy.com/listing/1/clip",
+                "https://m.tiktok.com/@creator/video/1"):
+        rec["sources"][0]["url"] = url
+        assert T.validate_receipt(RECEIPT_STEP, rec) == [], url

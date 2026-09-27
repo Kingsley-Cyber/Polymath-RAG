@@ -3,8 +3,8 @@ change_id: TRAIL-EXT-FIXES-RUNTIME
 owner: "@king"
 date: 2026-09-26
 status: complete
-status_note: "TRAIL-EXT-BUGHUNT-V1, group runtime (adapter runtime + step worker): 14 findings. Batch A (crashes) B-02..B-06 and batch B (wrong results) B-20..B-26, B-29, B-30 fixed; every fix has a test that failed on the unfixed code. B-25 is fixed on the orchestrator side only (the worker's lock scope is left for a design decision)."
-architecture_impact: "shared/polymath_shared/adapter/{contracts,transitions,service,hypotheses,research_gaps,trail_client,evidence_boundary}.py, workers/workers/adapter_step_worker.py, orchestrator/orchestrator/api/adapter.py, config/adapters/ecommerce.product_research.json (0.7.0 -> 0.7.2), tests/determinism/test_adapter_trail_wire.py (the version pin), tests/contracts/test_trail_ext_runtime_fixes.py (new), tests/determinism/test_adapter_trail_ext_runtime_fixes.py (new)."
+status_note: "TRAIL-EXT-BUGHUNT-V1, group runtime (adapter runtime + step worker): 14 findings. Batch A (crashes) B-02..B-06 and batch B (wrong results) B-20..B-26, B-29, B-30 fixed; every fix has a test that failed on the unfixed code. B-25 is fixed on the orchestrator side only (the worker's lock scope is left for a design decision). Follow-ups routed from the other groups: B-19, B-11 / B-13, B-09 / B-12 (ecommerce manifest only), B-44 fixed; B-14 by the B-29 change; B-01 / B-08 (optional) skipped."
+architecture_impact: "shared/polymath_shared/adapter/{contracts,transitions,service,hypotheses,research_gaps,trail_client,evidence_boundary,semantic_view}.py, workers/workers/adapter_step_worker.py, orchestrator/orchestrator/api/adapter.py, config/adapters/ecommerce.product_research.json (0.7.0 -> 0.7.2), tests/determinism/test_adapter_trail_wire.py (the version pin), tests/contracts/test_trail_ext_runtime_fixes.py (new), tests/determinism/test_adapter_trail_ext_runtime_fixes.py (new)."
 last_reviewed: 2026-09-26
 ---
 
@@ -106,6 +106,12 @@ Follow-ups the orchestrating session routed here from the other groups (separate
     `contracts/adapter/v1` examples and the pin in `test_adapter_evidence_boundary.py`: a contract-example change) and the optional
     B-01 / B-08 schema typing (the ecommerce binding now reads object `frictions`, so typing them as strings would refuse lawful
     answers; their binding already turns a bad shape into a law refusal).
+- **B-44** (acquisition group, batch C) `validate_receipt` refuses a source whose URL TrailSignal's routing would send to a row
+  matched by text in its PATH, not its host. Trail's pinned `route_source` takes the first enabled row (in `source_id` order: the
+  registry compiler sorts them) whose pattern equals the host, ends it, or appears anywhere in the URL, so a real comment-page handle
+  containing another platform's domain was admitted as that platform's evidence (another independence group and freshness window).
+  The check reads the pinned table and mirrors that routing; a URL routed on its own host, by class, or not at all passes. The
+  harness is told to leave such a source out and report it as a limitation.
 
 ## Proof
 - New tests: `tests/contracts/test_trail_ext_runtime_fixes.py` (42) and `tests/determinism/test_adapter_trail_ext_runtime_fixes.py` (18).
@@ -121,13 +127,17 @@ Follow-ups the orchestrating session routed here from the other groups (separate
   failed before theirs (12 closed gaps shown, no open one; the relations dropped).
   `test_b09_the_bridge_law_is_given_the_live_ledger`, `test_b12_the_result_keeps_every_qualify_stage` and
   `test_b12_a_completed_run_result_keeps_the_market_and_the_supply_qualifications` failed before the manifest edit.
+  `test_b44_a_comment_url_routed_by_text_in_its_path_is_refused_at_submit` (3 of its 4 cases; each case first asserts TrailSignal's own
+  `route_source` on the embedded core's policy) failed before the check; `test_b44_urls_on_their_own_hosts_are_untouched` guards it.
+- Every follow-up commit re-ran the same gates (contracts, adapter/trail determinism, the other impacted determinism files, the three
+  guards, ruff); the last one: contracts 364 passed, adapter/trail determinism 237 passed, other impacted files 116 passed.
 - `tests/contracts -k "not test_live_"`: 354 passed. Every `tests/determinism/test_*adapter*` / `test_*trail*` file except the
   fleet-database ones: 236 passed. The other determinism files that import changed code (`test_autoresearch_*`,
   `test_evidence_packet_text_excerpt`, `test_hypothesis_state_machine`, `test_knowledge_scope*`, `test_mcp_principals_gate`,
   `test_mcp_server_v2`, `test_semantic_restoration_gate`, `test_worker_call_sites_merged`): 116 passed.
   - Left out: `test_adapter_worker_registration.py`, `test_adapter_product_discovery_loop.py`, `test_adapter_service_store.py` (fleet
-    database, standing rule) and `test_adapter_harness_action.py`: with the dead `POLYMATH_PG_DSN` it no longer skips; each test fails on a
-    30 s pool timeout (it needs a database).
+    database, standing rule) and `test_adapter_harness_action.py` (excluded by the rules since: with the dead `POLYMATH_PG_DSN` each test
+    fails on a 30 s pool timeout, on HEAD too).
 - ruff: no new findings in any changed file (compared with `git show HEAD:<file>` at the same path); the two new test files are clean.
 - RESOURCE DISCLOSURE: my FIRST baseline run (about 20:43, before the dead-DSN rule) ran `tests/determinism/test_adapter_service_store.py`
   with `POLYMATH_PG_DSN` unset, so its hard-coded fallback reached the live fleet database: it created probe runs and its teardown deleted
@@ -161,3 +171,4 @@ Follow-ups the orchestrating session routed here from the other groups (separate
 - B-30: an outage longer than the ~40 s retry window still ends the step as before (evidence fallback, `on_unavailable`,
   STEP_EXECUTOR_ERROR). Retrying across claims needs a back-off in the claim loop.
 - `test_adapter_harness_action.py` fails rather than skips under the dead DSN (see Proof).
+- B-44, upstream: TrailSignal's routing should anchor a path pattern to the host (a note for a Trail ADR, not the pinned copy).
