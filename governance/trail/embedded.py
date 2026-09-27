@@ -120,7 +120,9 @@ def operate(service: ResearchOperationService, operation_kind: str, request: dic
 
 def transport(service: ResearchOperationService | None = None) -> httpx.MockTransport:
     """An httpx transport answering the daemon's JSON-RPC surface in process. A refusal or an invalid request is a tool ERROR
-    (`isError: true`), exactly as the daemon reports it — never an exception into the caller."""
+    (`isError: true`), exactly as the daemon reports it — never an exception into the caller. A fault of the core itself (its audit store
+    locked, an I/O error) is NOT a refusal: it is answered as a JSON-RPC internal error (-32603), which the caller may retry with the same
+    idempotent request (Polymath bug hunt B-68; before, a locked store ended runs as a Trail refusal)."""
     svc = service or build_service()
 
     def handle(req: httpx.Request) -> httpx.Response:
@@ -137,8 +139,10 @@ def transport(service: ResearchOperationService | None = None) -> httpx.MockTran
             result = {"content": [{"type": "text", "text": json.dumps(value)}], "structuredContent": value, "isError": False}
         except ResearchRefused as exc:
             result = {"content": [{"type": "text", "text": f"{exc.code}: {exc}"}], "isError": True}
-        except Exception as exc:  # noqa: BLE001 — validation / permission errors are tool errors on the wire, as in the daemon
+        except (PermissionError, ValueError) as exc:  # validation / permission errors (and domain refusals) are tool errors, as in the daemon
             result = {"content": [{"type": "text", "text": f"{type(exc).__name__}: {exc}"[:2000]}], "isError": True}
+        except Exception as exc:  # noqa: BLE001 — the core itself failed: an internal error, never a refusal
+            return httpx.Response(200, json={"jsonrpc": "2.0", "id": rid, "error": {"code": -32603, "message": f"{type(exc).__name__}: {exc}"[:2000]}})
         return httpx.Response(200, json={"jsonrpc": "2.0", "id": rid, "result": result})
 
     return httpx.MockTransport(handle)

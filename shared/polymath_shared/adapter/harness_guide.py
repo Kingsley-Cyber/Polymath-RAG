@@ -87,16 +87,17 @@ Then submit ONE receipt with `adapter_submit(run_id, step_id, payload, kind="rec
 100 sources, 200 observations and 50 limitations: list only the sources your observations cite (stay within
 `budget.max_sources`), and merge repeated limitation lines into one.
 - top level: `action_id` (= `step.harness_action.action_id`), `run_id`, `harness_id` (your `<harness>/<label>`),
-  `started_at`, `completed_at` (ISO-8601; completed at or after started), `sources`, `observations`, `tool_trace`,
-  `limitations`;
+  `started_at`, `completed_at` (completed at or after started), `sources`, `observations`, `tool_trace`, `limitations`;
+  every timestamp in the receipt is a full date-time in UTC ending in `Z` (`2026-09-21T06:15:00Z`): a date alone or a local
+  offset is refused;
 - each source: `source_id` (yours, unique in the receipt), `url` (the page the evidence is on, as its canonical permalink:
   never a short link, because routing is by URL), `source_class`, `retrieved_at`, `published_at_if_known` (the page's own
   date; for a comment, the comment's date; else null);
 - each observation: `observation_id`, `source_id`, `claim` (what the source says, one sentence), `paraphrase_or_excerpt`
-  (the quote, at most 600 characters), `metric_if_present` (one `{{name, value, unit, sample_n}}` or null), `context` (the
-  tags), `evidence_role_claimed`, `hypothesis_ids` (the live hypotheses it bears on);
+  (the quote, at most 600 characters), `metric_if_present` (one `{{name, value, unit, sample_n}}` or null; `sample_n` is a whole
+  number), `context` (the tags), `evidence_role_claimed`, `hypothesis_ids` (the live hypotheses it bears on);
 - `tool_trace[]`: `{{search_intent_id, tool_class, query_count}}`, where `tool_class` is a neutral word such as `web_search`,
-  `web_fetch`, `browser` or `api`;
+  `web_fetch`, `browser` or `api`, and `query_count` is a whole number (`4`, not `4.0`);
 - `limitations[]`: what you could not do (a login wall, a CAPTCHA, a rate limit, a region block). Say so; never bypass it
   and never invent a substitute.
 - Never record a person's name or handle: quote the words, cite the page.

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, ContractViolation, assert_valid, bounded_text, stable_hash, validate
-from .manifest import ADAPTER_DIR, Manifest, list_manifests
+from .manifest import ADAPTER_DIR, Manifest, ManifestError, ManifestInvalid, list_manifests
 from . import evidence_boundary as EB, hypotheses as H, research_gaps as RG, semantic_view as SV, store, trail_client, transitions as T
 from .hypotheses import HypothesisRejected
 from .transitions import BudgetExhausted, RunState, SubmissionRejected
@@ -147,7 +147,8 @@ def status(conn, run_id: str, directory: Path | None = None) -> dict[str, Any]:
     state, meta = loaded
     m = manifest_for(state.adapter_id, directory)
     return T.run_status_view(m, state, started_at=_ts(meta["created_at"]), updated_at=_ts(meta["updated_at"]),
-                             terminal_at=_ts(meta["terminal_at"]), agent_identity=meta.get("agent_identity"))
+                             terminal_at=_ts(meta["terminal_at"]), agent_identity=meta.get("agent_identity"),
+                             identity={k: meta.get(k) for k in m.identity})          # B-57: the versions the RUN started under, as run_ref says
 
 
 def next_step(conn, run_id: str, directory: Path | None = None) -> dict[str, Any]:
@@ -266,7 +267,14 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
     sub.setdefault("submission_hash", stable_hash(submission.get("payload")))
     started = now_iso()
     try:
-        new_state = T.accept_submission(m, state, step, sub)
+        try:
+            new_state = T.accept_submission(m, state, step, sub)
+        except ManifestError as exc:
+            if isinstance(exc, ManifestInvalid):
+                raise
+            # bug hunt B-57: a redeploy renamed or removed the step this run awaits; nothing can accept an answer for it. Refused, typed,
+            # and the run stays parked (a rollback of the deploy resumes it; cancel ends it)
+            raise SubmissionRejected([f"MANIFEST_VERSION_UNAVAILABLE: {_drift(exc, m, meta)}"]) from None
     except SubmissionRejected as exc:
         receipt = _receipt(step, "rejected", started, evidence_ids=[], model=sub.get("submitted_by", {}).get("model"),
                            validation={"ok": False, "errors": exc.errors})
@@ -323,14 +331,16 @@ def _apply_theta(conn, run_id: str, step: dict[str, Any], m: Manifest, state: Ru
     max_h = int(m.budgets.get("max_hypotheses", 8))
     snapshot = _registry_snapshot(state)
     current = store.current_hypotheses(conn, run_id)
+    # bug hunt B-48: all or nothing — both halves are validated before anything is written, so a refused submission (whose rejection
+    # receipt the route now commits) never leaves generated hypotheses behind
+    writes: list[tuple[list[dict[str, Any]], list[dict[str, Any]]]] = []
     if isinstance(payload.get("hypotheses"), list) and step.get("theta_op") in (None, "generate_hypotheses", "split_hypotheses", "derive_mechanisms",
                                                                                 "cross_map_frictions", "derive_physical_jobs", "derive_analogies", "generate_product_mechanisms") \
             and (step.get("cognitive_op") == "theta" or step.get("theta_op")):
         states, trs = H.generate(run_id, step, payload["hypotheses"], registry_snapshot_id=(snapshot or {}).get("snapshot_id"), recorded_at=now,
                                  max_hypotheses=max(0, max_h - len([h for h in current.values() if h["status"] not in H.ABSORBED_STATUSES])) or 1,
                                  ordinal_base=len(current), known_origin_ids=SV.known_origin_ids(state.outputs, state.output_order))
-        store.insert_hypothesis_revisions(conn, states)
-        store.insert_transitions(conn, trs)
+        writes.append((states, trs))
         out["hypothesis_ids"] = [s_["hypothesis_id"] for s_ in states]
         tids += [t["transition_id"] for t in trs]
         current.update({s_["hypothesis_id"]: s_ for s_ in states})
@@ -339,10 +349,12 @@ def _apply_theta(conn, run_id: str, step: dict[str, Any], m: Manifest, state: Ru
         states, trs = H.apply(run_id, step, current, payload["transitions"], actor="theta", allowed_causes=allowed, recorded_at=now,
                               registry_snapshot_id=(snapshot or {}).get("snapshot_id"), max_hypotheses=max_h,
                               known_origin_ids=SV.known_origin_ids(state.outputs, state.output_order))
-        store.insert_hypothesis_revisions(conn, states)
-        store.insert_transitions(conn, trs)
+        writes.append((states, trs))
         out["hypothesis_transition_ids"] = [t["transition_id"] for t in trs]
         tids += out["hypothesis_transition_ids"]
+    for states, trs in writes:
+        store.insert_hypothesis_revisions(conn, states)
+        store.insert_transitions(conn, trs)
     return out, tids
 
 
@@ -456,6 +468,38 @@ def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int
     except ContractViolation as exc:
         # a pure validation error: the transaction is healthy, so the reason is recorded in the SAME unit (never left `running`)
         return fail_run(conn, run_id, code="STEP_CONTRACT_VIOLATION", message=_violation_reason(exc), directory=directory)
+    except ManifestInvalid:
+        raise                              # the manifest SET does not load: a deploy error, never a reason to end this run
+    except (ManifestError, UnknownAdapter) as exc:
+        # bug hunt B-57: a redeploy renamed or removed the step this run stands at (or its adapter): it cannot go on under the loaded
+        # manifest — a typed gap naming both versions, never an exception out of the unit
+        return _manifest_gap(conn, run_id, exc, directory)
+
+
+def _drift(exc: Exception, m: Manifest | None, meta: dict[str, Any]) -> str:
+    loaded = f"the loaded manifest is {m.adapter_version}" if m is not None else "no manifest of that adapter is admitted now"
+    return f"{exc}: this run started under {meta.get('adapter_id')} {meta.get('adapter_version')}; {loaded}"
+
+
+def _manifest_gap(conn, run_id: str, exc: Exception, directory: Path | None) -> RunState:
+    loaded = store.load_run(conn, run_id, for_update=True)
+    if not loaded:
+        raise UnknownRun(run_id)
+    state, meta = loaded
+    if state.terminal:
+        return state
+    try:
+        m: Manifest | None = manifest_for(state.adapter_id, directory)
+    except UnknownAdapter:
+        m = None
+    message = _drift(exc, m, meta)
+    row = store.current_step(conn, run_id)
+    if row and row["status"] == "issued" and row["step"].get("step_type") not in AGENT_ANSWERED_STEP_TYPES:
+        store.finish_step(conn, run_id, row["sequence"], status="skipped",
+                          receipt=_receipt(row["step"], "skipped", now_iso(), evidence_ids=[], model=None, validation={"ok": False, "errors": [message]}))
+    state = T.terminal_gap(state, "MANIFEST_VERSION_UNAVAILABLE", message, step_id=state.current_step_id)
+    store.save_state(conn, state)
+    return state
 
 
 def _violation_reason(exc: ContractViolation) -> str:

@@ -272,7 +272,9 @@ def apply(run_id: str, step: dict[str, Any], current: dict[str, dict[str, Any]],
             children = req.get("children") or []
             if not children:
                 errors.append(f"{label}: SPLIT needs children"); continue
-            if len(live) + len(children) > max_hypotheses:
+            # bug hunt B-49: the cap counts the hypotheses that are ALIVE (as generate's headroom does), never killed / merged ones
+            alive = sum(1 for h, s in live.items() if (new_states.get(h) or s)["status"] not in ABSORBED_STATUSES)
+            if alive + len(children) > max_hypotheses:
                 errors.append(f"{label}: SPLIT would exceed max_hypotheses {max_hypotheses}"); continue
             child_ids = []
             for k, child in enumerate(children):

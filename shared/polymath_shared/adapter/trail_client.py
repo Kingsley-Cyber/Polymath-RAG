@@ -17,6 +17,7 @@ Env (worker side):  POLYMATH_TRAIL_MCP_URL (default http://127.0.0.1:8767/mcp)
 """
 from __future__ import annotations
 
+import base64
 import datetime as _dt
 import hashlib
 import json
@@ -62,6 +63,7 @@ def fills(operation_kind: str | None, key: str) -> bool:
 POLICY_REF, BUDGET_REF = "public-static-v1", "p1-static-default-v1"
 PURPOSE_REF = "purpose:product-discovery"
 REQUEST_BYTES_MAX = 65536                   # config/v2/limits.yaml mcp.maximum_request_bytes
+JSONRPC_INTERNAL_ERROR = -32603
 _IDENT_BAD = re.compile(r"[^A-Za-z0-9._:/-]")
 _URL_BAD_QUERY_KEYS = ("apikey", "authorization", "auth", "bearer", "jwt", "key", "session", "sid", "sig")
 
@@ -78,6 +80,11 @@ class TrailTransportError(TrailError):
 
 class TrailProtocolError(TrailError):
     """A JSON-RPC `error` object — the request envelope was wrong."""
+
+
+class TrailInternalError(TrailProtocolError):
+    """A JSON-RPC internal error (-32603): the Trail core itself failed (its audit store locked, an I/O fault), not the request — so it
+    is never a refusal, and the SAME request may be retried (its idempotency key makes a replay safe; bug hunt B-68)."""
 
 
 class TrailUnreachable(TrailError):
@@ -119,6 +126,17 @@ def mint_principal_jwt(secret: str, *, principal_id: str = "polymath", audit_ide
               "credential_binding_hash": binding_hash or credential_binding_hash(principal_id),
               "iat": iat, "exp": iat + int(ttl_s), "iss": ISSUER, "aud": AUDIENCE}
     return jwt.encode(claims, secret, algorithm="HS256")
+
+
+def token_expires_within(token: str | None, seconds: float) -> bool:
+    """True when `token` is a JWT whose `exp` falls within `seconds` from now (bug hunt B-67: a token minted from the secret lives an hour;
+    a long-lived worker re-mints it before then). Anything that is not a JWT with an `exp` (the embedded core's token) never expires."""
+    try:
+        body = str(token).split(".")[1]
+        exp = json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4))).get("exp")
+    except (IndexError, ValueError, TypeError, AttributeError):
+        return False
+    return isinstance(exp, (int, float)) and not isinstance(exp, bool) and exp - time.time() < seconds
 
 
 def token_from_env(env: dict[str, str] | None = None) -> str | None:
@@ -297,7 +315,8 @@ class TrailMCPClient:
         except ValueError:
             raise TrailProtocolError(f"non-JSON response: {r.text[:200]}")
         if env.get("error"):
-            raise TrailProtocolError(json.dumps(env["error"])[:400])
+            internal = isinstance(env["error"], dict) and env["error"].get("code") == JSONRPC_INTERNAL_ERROR
+            raise (TrailInternalError if internal else TrailProtocolError)(json.dumps(env["error"])[:400])
         result = env.get("result") or {}
         if result.get("isError"):
             msg = "; ".join(str(c.get("text", "")) for c in result.get("content") or [] if isinstance(c, dict)) or "tool error"

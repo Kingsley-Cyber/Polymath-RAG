@@ -27,6 +27,11 @@ class ManifestError(ValueError):
     pass
 
 
+class ManifestInvalid(ManifestError):
+    """The admitted manifest SET cannot be loaded (a malformed file, a duplicate adapter id): a deploy error that says nothing about any
+    one run — a caller never ends a run for it (bug hunt B-57)."""
+
+
 @dataclass(frozen=True)
 class Manifest:
     adapter_id: str
@@ -138,10 +143,13 @@ def graph_integrity_errors(raw: dict[str, Any]) -> list[str]:
 
 
 def load_manifest(path: Path) -> Manifest:
-    raw = json.loads(Path(path).read_text())
+    try:
+        raw = json.loads(Path(path).read_text())
+    except json.JSONDecodeError as exc:
+        raise ManifestInvalid(f"{Path(path).name}: not JSON: {exc}") from exc
     errors = validate("adapter_manifest", raw) + graph_integrity_errors(raw)
     if errors:
-        raise ManifestError(f"{path.name}: " + "; ".join(errors[:5]))
+        raise ManifestInvalid(f"{path.name}: " + "; ".join(errors[:5]))
     return Manifest(adapter_id=raw["adapter_id"], adapter_version=raw["adapter_version"], workflow_version=raw["workflow_version"],
                     retrieval_policy_version=raw["retrieval_policy_version"], input_schema_version=raw["input_schema_version"],
                     output_schema_version=raw["output_schema_version"], entry_step_id=raw["entry_step_id"],
@@ -154,5 +162,5 @@ def list_manifests(directory: Path = ADAPTER_DIR) -> list[Manifest]:
     out = [load_manifest(p) for p in sorted(Path(directory).glob("*.json"))]
     ids = [m.adapter_id for m in out]
     if len(ids) != len(set(ids)):
-        raise ManifestError(f"duplicate adapter_id in {directory}: {ids}")
+        raise ManifestInvalid(f"duplicate adapter_id in {directory}: {ids}")
     return sorted(out, key=lambda m: m.adapter_id)

@@ -1,6 +1,6 @@
 {
  "adapter_id": "ecommerce.product_research",
- "adapter_version": "0.7.2",
+ "adapter_version": "0.7.3",
  "workflow_version": "0.1.0",
  "retrieval_policy_version": "2.0.0",
  "input_schema_version": "1.0.0",
@@ -2752,7 +2752,12 @@
      "concept_reality": "outputs.Q_join.concept_reality",
      "unresolved_research_gaps": "outputs.M_unresolved.unresolved_research_gaps"
     },
-    "refs_must_resolve": true
+    "refs_must_resolve": {
+     "trail_score_refs": [
+      "trail_scores",
+      "score_refusals"
+     ]
+    }
    }
   },
   {

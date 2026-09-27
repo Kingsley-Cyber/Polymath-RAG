@@ -35,7 +35,7 @@ import httpx
 import psycopg
 
 from polymath_shared.adapter import evidence_boundary as EB, research_gaps as RG, service
-from polymath_shared.adapter.manifest import Manifest
+from polymath_shared.adapter.manifest import Manifest, ManifestInvalid
 from polymath_shared.adapter.transitions import RunState
 from polymath_shared.db import tx
 from polymath_shared.execution import heartbeat, register_worker, worker_identity
@@ -381,10 +381,20 @@ from polymath_shared.adapter import trail_client as TC  # noqa: E402  (shared ty
 _TRAIL: TC.TrailMCPClient | None = None
 
 
+class TrailStoreMissing(RuntimeError):
+    """Embedded mode without POLYMATH_TRAIL_STORE (bug hunt B-66)."""
+
+
 def _embedded_trail() -> TC.TrailMCPClient:
     """POLYMATH_TRAIL_MODE=embedded (docs/migration/ADR-TRAIL-EMBEDDING.md): the SAME client, over an in-process transport that reaches
     TrailSignal's deterministic core under `governance/trail/` — no daemon, no network. Loaded by file path so this module never imports
-    it by name; its audit store persists at POLYMATH_TRAIL_STORE (a file path; in memory when unset)."""
+    it by name; its audit store persists at POLYMATH_TRAIL_STORE (a file path). Unset is refused (bug hunt B-66): an in-memory store
+    loses Trail's admitted evidence at every worker restart, and judge / qualify / score then run on nothing. `:memory:` only when
+    asked for explicitly (tests)."""
+    store_path = (os.environ.get("POLYMATH_TRAIL_STORE") or "").strip()
+    if not store_path:
+        raise TrailStoreMissing("POLYMATH_TRAIL_MODE=embedded needs POLYMATH_TRAIL_STORE (the audit store's file path; `:memory:` only when "
+                                "asked for explicitly): an unset store would keep Trail's admitted evidence in memory and lose it at a restart")
     import importlib.util
     path = pathlib.Path(__file__).resolve().parents[2] / "governance" / "trail" / "embedded.py"
     spec = importlib.util.spec_from_file_location("polymath_governance_trail_embedded", path)
@@ -392,13 +402,17 @@ def _embedded_trail() -> TC.TrailMCPClient:
         raise RuntimeError(f"embedded Trail core not found at {path}")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    store = mod.SqliteResearchStore(os.environ.get("POLYMATH_TRAIL_STORE") or None)
+    store = mod.SqliteResearchStore(store_path)
     return TC.TrailMCPClient("http://trail.embedded/mcp", "in-process", transport=mod.transport(mod.build_service(store=store)))
+
+
+#: bug hunt B-67: a token minted from the daemon secret lives an hour; the cached client is rebuilt (re-minted) this long before it expires
+TOKEN_REFRESH_S = 300
 
 
 def trail() -> TC.TrailMCPClient:
     global _TRAIL
-    if _TRAIL is None:
+    if _TRAIL is None or TC.token_expires_within(_TRAIL.token, TOKEN_REFRESH_S):
         _TRAIL = _embedded_trail() if os.environ.get("POLYMATH_TRAIL_MODE", "daemon").strip().lower() == "embedded" else TC.TrailMCPClient.from_env()
     return _TRAIL
 
@@ -500,7 +514,10 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
                         "message": f"{kind} is not yet a TrailSignal production capability (graph node {ext.get('planned_node')})"}}
     if kind not in TC.BOUNDED_OPERATIONS:
         return {"gap": {"code": "TRAIL_OPERATION_UNSUPPORTED", "message": f"{kind}: not a bounded TrailSignal operation of this build"}}
-    client = trail()
+    try:
+        client = trail()
+    except TrailStoreMissing as exc:
+        return {"gap": {"code": "TRAIL_STORE_MISSING", "message": str(exc)}}
     if not client.configured:
         return {"gap": {"code": "TRAIL_PRINCIPAL_MISSING", "message": "no Trail principal token/secret configured for Polymath (owner action O1)"}}
     cfg = spec.get("config") or {}
@@ -525,7 +542,8 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
             return {"gap": {"code": "TRAIL_REFUSED", "message": f"{kind}: {exc}"}}
         except (TC.TrailTransportError, TC.TrailProtocolError, TC.TrailUnreachable) as exc:
             # bug hunt B-30: a daemon restarting is retried with the SAME request (its idempotency key makes the replay safe), bounded
-            transient = isinstance(exc, TC.TrailUnreachable) or (isinstance(exc, TC.TrailTransportError) and exc.status in TRANSIENT_STATUS)
+            transient = isinstance(exc, (TC.TrailUnreachable, TC.TrailInternalError)) or \
+                (isinstance(exc, TC.TrailTransportError) and exc.status in TRANSIENT_STATUS)
             if transient and len(retries) < len(TRANSIENT_BACKOFF_S):
                 log.warning("trail %s: %s; retry %d in %.0fs", kind, exc, len(retries) + 1, TRANSIENT_BACKOFF_S[len(retries)])
                 time.sleep(TRANSIENT_BACKOFF_S[len(retries)])
@@ -617,6 +635,11 @@ _DOMAIN_RE = re.compile(r"^[a-z][a-z0-9_]{1,40}$")
 DOMAIN_REQUEST_VERSION = "domain_operation_request.v1"
 DOMAIN_TIMEOUT_S = float(os.environ.get("POLYMATH_DOMAIN_OPERATION_TIMEOUT_S", "120"))
 DOMAIN_OUTPUT_MAX_BYTES = 1_000_000
+#: bug hunt B-69 (ADR-0020: the domain computes, it never decides): output keys the runtime reads as TrailSignal's — its result fields,
+#: the admission it records, the φ verdicts it applies, its operation kind — or as its own (`_…`, `trail_…`, the transition ids). A
+#: domain enriches Trail's `research_directive` with HOW (governance fields untouched) by design, so that one key stays allowed.
+RESERVED_DOMAIN_KEYS = (frozenset(TC.RESULT_FIELDS) - {"research_directive"}) | {"hypothesis_verdicts", "hypothesis_transition_ids",
+                                                                                 "operation_kind", "qualification"}
 
 
 def exec_domain(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:
@@ -662,6 +685,9 @@ def exec_domain(step: dict[str, Any], state: RunState, m: Manifest) -> service.E
     if not isinstance(resp.get("output"), dict):
         raise RuntimeError(f"domain operation {operation} returned ok without an output object")
     output = dict(resp["output"])
+    reserved = sorted(k for k in output if k.startswith(("_", "trail_")) or k in RESERVED_DOMAIN_KEYS)
+    if reserved:
+        raise RuntimeError(f"domain operation {operation} wrote keys only TrailSignal or the runtime may write: {', '.join(reserved[:10])}")
     output["_domain"] = {"domain": domain, "operation": operation, "binding_sha256": hashlib.sha256(binding.read_bytes()).hexdigest()}
     return {"output": output}
 
@@ -679,8 +705,10 @@ ERROR_BACKOFF_S = 10.0
 
 def _transient(exc: BaseException) -> bool:
     """A database that is unreachable or busy (connection lost, pool exhausted, lock / deadlock) says nothing about the run: the loop
-    backs off and the run is claimed again. Anything else a step unit raises would raise again on every claim (bug hunt B-06)."""
-    return isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError))
+    backs off and the run is claimed again. So does an admitted manifest SET that does not load (a deploy error, bug hunt B-57): it
+    breaks every adapter at once and is fixed by the next deploy. Anything else a step unit raises would raise again on every claim
+    (bug hunt B-06)."""
+    return isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError, ManifestInvalid))
 
 
 def process_one(owner: str, lease_s: int, *, max_steps: int | None = None, crash_after: int | None = None) -> str | None:

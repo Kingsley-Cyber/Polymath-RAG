@@ -113,7 +113,13 @@ async def adapter_submit(run_id: str, req: SubmitRequest) -> dict:
     def _submit() -> dict:
         with tx() as conn:
             _own(conn, run_id)
-            return service.submit(conn, run_id, submission)
+            try:
+                return service.submit(conn, run_id, submission)
+            except SubmissionRejected as exc:
+                # bug hunt B-48: the refusal is receipted on the step row; the transaction COMMITS that receipt (service.submit writes
+                # nothing else before a refusal) instead of rolling it back with the exception
+                rejected = exc
+        raise rejected
     try:
         return await _off_the_event_loop(_submit)
     except service.UnknownRun:

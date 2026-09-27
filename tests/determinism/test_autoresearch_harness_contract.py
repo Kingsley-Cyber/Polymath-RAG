@@ -230,4 +230,6 @@ def test_the_reference_check_is_opt_in_per_step_and_the_final_interpretations_op
     from polymath_shared.adapter.manifest import ADAPTER_DIR, list_manifests
     for m in list_manifests(ADAPTER_DIR):
         if m.adapter_id in ("ecommerce.product_research", "trail.product_discovery"):
-            assert (m.step("W_interpret").get("config") or {}).get("refs_must_resolve") is True, m.adapter_id
+            rule = (m.step("W_interpret").get("config") or {}).get("refs_must_resolve")
+            # opted in; TRAIL-EXT-BUGHUNT-V1 B-50: the preferred adapter also TYPES trail_score_refs to Trail's score / refusal records
+            assert rule is True or rule == {"trail_score_refs": ["trail_scores", "score_refusals"]}, m.adapter_id

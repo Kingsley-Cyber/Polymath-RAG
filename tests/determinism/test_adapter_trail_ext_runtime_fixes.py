@@ -339,18 +339,22 @@ def _running(store, adapter_id):
     return rid
 
 
-def test_b06_a_run_whose_step_unit_raises_ends_failed_and_the_worker_takes_the_next_run(worker_rig):
+def test_b06_a_run_whose_step_unit_raises_ends_failed_and_the_worker_takes_the_next_run(worker_rig, monkeypatch):
     d, store = worker_rig
-    _fixture_manifest(d, "fixture.drift", [{"step_id": "prep", "type": "VALIDATE", "title": "prep", "next": "X_compile"}], "prep")
+    _fixture_manifest(d, "fixture.poison", [{"step_id": "prep", "type": "VALIDATE", "title": "prep", "next": "X_compile"}], "prep")
     service.reset_registry()
-    poisoned = _running(store, "fixture.drift")
-    service.advance(None, poisoned, W.EXECUTORS, max_steps=1)                                 # `prep` executed; the run is running at it
-    _fixture_manifest(d, "fixture.drift", [{"step_id": "prep2", "type": "VALIDATE", "title": "prep", "next": "X_compile"}], "prep2")   # a redeploy renames it
-    service.reset_registry()
+    poisoned = _running(store, "fixture.poison")
     healthy = _running(store, "fixture.healthy")
-    assert W.process_one("worker-1", 120) == poisoned                                         # the defect: ManifestError escaped (worker exit, re-claim, quarantine)
+    real = store.insert_step
+
+    def insert_step(conn, step):                          # a deterministic database refusal of THIS run's rows (JSONB refuses \u0000)
+        if step["run_id"] == poisoned:
+            raise psycopg.DataError("unsupported Unicode escape sequence")
+        return real(conn, step)
+    monkeypatch.setattr(store, "insert_step", insert_step)
+    assert W.process_one("worker-1", 120) == poisoned                                         # the defect: the error escaped (worker exit, re-claim, quarantine)
     st, _ = store.load_run(None, poisoned)
-    assert st.status == "failed" and st.failure["code"] == "STEP_RUNTIME_ERROR" and "prep" in st.failure["message"]
+    assert st.status == "failed" and st.failure["code"] == "STEP_RUNTIME_ERROR" and "DataError" in st.failure["message"]
     assert store.runs[poisoned]["meta"]["lease_owner"] is None
     assert W.process_one("worker-1", 120) == healthy                                          # the next claim takes the healthy run …
     assert store.load_run(None, healthy)[0].status == "awaiting_agent"                          # … and drives it

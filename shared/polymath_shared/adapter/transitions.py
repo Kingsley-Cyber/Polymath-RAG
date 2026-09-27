@@ -241,18 +241,6 @@ def _ref_strings(value: Any) -> set[str]:
     return set()
 
 
-def _cited_refs(payload: Any) -> set[str]:
-    """Every record id under a key that ends with `_refs` (gap A-06: `*_refs` fields escaped the citation check)."""
-    out: set[str] = set()
-    if isinstance(payload, dict):
-        for k, v in payload.items():
-            out |= _ref_strings(v) if k.endswith("_refs") else _cited_refs(v)
-    elif isinstance(payload, list):
-        for v in payload:
-            out |= _cited_refs(v)
-    return out
-
-
 def _id_values(node: Any) -> set[str]:
     """Every id recorded in a run's outputs: values of `id` / `*_id` keys and items of `*_ids` lists, at any depth."""
     out: set[str] = set()
@@ -280,10 +268,47 @@ def run_record_ids(state: RunState, step: dict[str, Any]) -> set[str]:
     return {i for i in ids if isinstance(i, str) and i}
 
 
-def validate_submission(step: dict[str, Any], payload: Any, *, known_refs: set[str] | None = None) -> list[str]:
+def _cited_refs_by_field(payload: Any, out: dict[str, set[str]] | None = None) -> dict[str, set[str]]:
+    """Every record id under a key that ends with `_refs` (gap A-06: `*_refs` fields escaped the citation check), by field name (at any
+    depth) so a typed field can be checked against its own records (bug hunt B-50)."""
+    out = {} if out is None else out
+    if isinstance(payload, dict):
+        for k, v in payload.items():
+            if k.endswith("_refs"):
+                out.setdefault(k, set()).update(_ref_strings(v))
+            else:
+                _cited_refs_by_field(v, out)
+    elif isinstance(payload, list):
+        for v in payload:
+            _cited_refs_by_field(v, out)
+    return out
+
+
+def typed_record_ids(state: RunState, rule: dict[str, Any]) -> dict[str, tuple[list[str], set[str]]]:
+    """bug hunt B-50: a manifest may TYPE a `*_refs` field (`config.refs_must_resolve: {"trail_score_refs": ["trail_scores",
+    "score_refusals"]}`): it then resolves only against the records found under those output keys (a list of ids, or of records carrying
+    their `record_id`) in any step output of the run. -> {field: (output keys, ids)}."""
+    typed: dict[str, tuple[list[str], set[str]]] = {}
+    for field_name, keys in rule.items():
+        keys = [str(k) for k in (keys if isinstance(keys, list) else [keys])]
+        ids: set[str] = set()
+        for out in state.outputs.values():
+            for key in keys:
+                value = out.get(key) if isinstance(out, dict) else None
+                for item in value if isinstance(value, list) else [value]:
+                    rid = item.get("record_id") if isinstance(item, dict) else item
+                    if isinstance(rid, str) and rid:
+                        ids.add(rid)
+        typed[str(field_name)] = (keys, ids)
+    return typed
+
+
+def validate_submission(step: dict[str, Any], payload: Any, *, known_refs: set[str] | None = None,
+                        typed_refs: dict[str, tuple[list[str], set[str]]] | None = None) -> list[str]:
     """The step's output_schema + the machine-checkable acceptance invariant: every cited `*_ids` value must be an
     id from context.evidence_refs (an agent may never cite evidence it was not given); with `known_refs`, every `*_refs`
-    value must name a record the run produced (gap A-06)."""
+    value must name a record the run produced (gap A-06) — and a field the manifest TYPED (`typed_refs`, bug hunt B-50) only a record
+    of its own kind."""
     errors = [("payload/" + "/".join(map(str, e.path)) if e.path else "payload") + ": " + e.message
               for e in sorted(jsonschema.Draft202012Validator(step["output_schema"]).iter_errors(payload),
                               key=lambda e: (list(map(str, e.path)), e.message))]
@@ -298,9 +323,17 @@ def validate_submission(step: dict[str, Any], payload: Any, *, known_refs: set[s
     if uncited:
         errors.append("cited ids not in context.evidence_refs: " + ", ".join(uncited[:10]))
     if known_refs is not None:
-        unknown = sorted(_cited_refs(payload) - known_refs - allowed - priors)
+        typed_refs = typed_refs or {}
+        by_field = _cited_refs_by_field(payload)
+        unknown = sorted(set().union(*(ids for f, ids in by_field.items() if f not in typed_refs)) - known_refs - allowed - priors)
         if unknown:
             errors.append("referenced records this run never produced: " + ", ".join(unknown[:10]))
+        for f in sorted(set(typed_refs) & set(by_field)):
+            keys, ids = typed_refs[f]
+            wrong = sorted(by_field[f] - ids)
+            if wrong:
+                errors.append(f"{f} may name only {' / '.join(keys)} records of this run ({', '.join(sorted(ids)[:10]) or 'none yet'}), "
+                              f"not: {', '.join(wrong[:10])}")
     return errors
 
 
@@ -437,10 +470,12 @@ def accept_submission(manifest: Manifest, state: RunState, step: dict[str, Any],
         raise SubmissionRejected([f"step {submission['step_id']!r} is not the awaiting step {state.current_step_id!r}"])
     if submission.get("kind") and submission["kind"] != expected[1]:
         raise SubmissionRejected([f"submission kind {submission['kind']!r} does not fit a {step['step_type']} step (expected {expected[1]!r})"])
-    # gap A-06, opt-in per step (manifest data `config.refs_must_resolve`): its `*_refs` values must name records the run produced
-    checks_refs = bool((manifest.step(step["step_id"]).get("config") or {}).get("refs_must_resolve"))
+    # gap A-06, opt-in per step (manifest data `config.refs_must_resolve`): its `*_refs` values must name records the run produced; a map
+    # (bug hunt B-50) also types named fields: each resolves only against the records of the output keys it lists
+    refs_rule = (manifest.step(step["step_id"]).get("config") or {}).get("refs_must_resolve")
     errors = (validate_receipt(step, submission["payload"]) if step["step_type"] == "HARNESS_ACTION"
-              else validate_submission(step, submission["payload"], known_refs=run_record_ids(state, step) if checks_refs else None))
+              else validate_submission(step, submission["payload"], known_refs=run_record_ids(state, step) if refs_rule else None,
+                                       typed_refs=typed_record_ids(state, refs_rule) if isinstance(refs_rule, dict) else None))
     if errors:
         raise SubmissionRejected(errors)
     # A step id re-entered through a bounded loop is a NEW issuance: its payload may legitimately differ from the earlier pass
@@ -483,10 +518,14 @@ def complete_run(state: RunState) -> RunState:
 
 
 def run_status_view(manifest: Manifest, state: RunState, *, started_at: str, updated_at: str,
-                    terminal_at: str | None = None, agent_identity: str | None = None) -> dict[str, Any]:
-    """The AdapterRunStatusV1 projection of a state (validated)."""
-    spec = manifest.step(state.current_step_id) if state.current_step_id else None
-    view = {"run_id": state.run_id, **manifest.identity, "status": state.status, "current_step_id": state.current_step_id,
+                    terminal_at: str | None = None, agent_identity: str | None = None,
+                    identity: dict[str, Any] | None = None) -> dict[str, Any]:
+    """The AdapterRunStatusV1 projection of a state (validated). `identity`: the versions the RUN was started under (the caller's
+    stored record), else the manifest's. A current step the loaded manifest no longer has (a redeploy renamed or removed it; bug hunt
+    B-57) has no type to report: None, never an exception — the run stays readable and cancellable."""
+    spec = manifest.steps.get(state.current_step_id) if state.current_step_id else None
+    view = {"run_id": state.run_id, **manifest.identity, **{k: v for k, v in (identity or {}).items() if k in manifest.identity and v},
+            "status": state.status, "current_step_id": state.current_step_id,
             "current_step_type": spec["type"] if spec else None, "steps_issued": state.sequence,
             "steps_accepted": state.steps_accepted, "branch_loops": state.branch_loops, "harness_actions": state.harness_action_count,
             "started_at": started_at,
