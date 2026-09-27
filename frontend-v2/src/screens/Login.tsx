@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Icon } from "../ui/icons";
 import { ApiError } from "../lib/api";
 import { auth, type Me } from "../lib/auth";
 
@@ -32,6 +33,7 @@ export function Login({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
   return (
     <div className="auth">
       <form className="card auth__card stack" onSubmit={(e) => void submit(e)}>
+        <div className="auth__mark" aria-hidden="true"><Icon name="research" size={22} /></div>
         <h1 className="screen__title">Polymath</h1>
         <p className="screen__sub">Sign in to continue.</p>
         {error && <div className="banner banner--bad" role="alert">{error}</div>}

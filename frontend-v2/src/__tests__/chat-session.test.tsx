@@ -107,7 +107,7 @@ function savedTurn(question: string) {
   return loadSessions().find((s) => s.turns[0]?.question === question)?.turns[0];
 }
 
-it.each(["Chat", "＋ New chat"])("keeps the first streamed answer when entered through %s", async (entry) => {
+it.each(["Chat", "New chat"])("keeps the first streamed answer when entered through %s", async (entry) => {
   await act(async () => root.render(<App />));
   await act(async () => button(entry).click());
   await ask("How do camera crews work?");
@@ -132,9 +132,9 @@ it.each(["Chat", "＋ New chat"])("keeps the first streamed answer when entered 
 // had navigated away from landed in a Chat component that was already unmounted.
 it("an answer lands in its own chat after you open another chat mid-stream", async () => {
   await act(async () => root.render(<App />));
-  await act(async () => button("＋ New chat").click());
+  await act(async () => button("New chat").click());
   await ask("GNN: hat prompt?", "GNN");
-  await act(async () => button("＋ New chat").click());   // the first chat leaves the screen; its stream does not end
+  await act(async () => button("New chat").click());   // the first chat leaves the screen; its stream does not end
   await ask("GRAPH: hat prompt?", "GRAPH");
   expect(streams.map((s) => s.body.mode)).toEqual(["GNN", "GRAPH"]);
   await act(async () => finish(0, "The GNN answer [S1]."));   // lands while the GRAPH chat is on screen
@@ -149,9 +149,9 @@ it("an answer lands in its own chat after you open another chat mid-stream", asy
 
 it("a chat reopened mid-stream keeps streaming live, and Stop still cancels it", async () => {
   await act(async () => root.render(<App />));
-  await act(async () => button("＋ New chat").click());
+  await act(async () => button("New chat").click());
   await ask("Still streaming?");
-  await act(async () => button("＋ New chat").click());
+  await act(async () => button("New chat").click());
   await act(async () => chatNamed("Still streaming?").click());
   // busy belongs to the turn, not to the screen that sent it: Stop stands where Send was
   expect(host.querySelector('button[aria-label="Send"]')).toBeNull();
@@ -177,7 +177,7 @@ it("a turn a reload cut off reads as interrupted, and its chat is usable again",
 // Owner, 2026-09-22: "the textbox is weird with that scroll feature; why can't it be more like Claude".
 it("composer: Enter sends, Shift+Enter does not, and you can type the next question while an answer streams", async () => {
   await act(async () => root.render(<App />));
-  await act(async () => button("＋ New chat").click());
+  await act(async () => button("New chat").click());
   const textarea = host.querySelector<HTMLTextAreaElement>("textarea.composer__input")!;
   expect(textarea).not.toBeNull();
   expect(button("Send").disabled).toBe(true);            // nothing to send yet

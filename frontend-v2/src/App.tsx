@@ -7,6 +7,7 @@ import { auth, LEGACY_OWNER, privateLibrary, type Me } from "./lib/auth";
 import { useAsync } from "./lib/useAsync";
 import { controlReady } from "./lib/readiness";
 import { Pill } from "./components/Pill";
+import { Icon, IconButton, type IconName } from "./ui/icons";
 import { Overview } from "./screens/Overview";
 import { Chat } from "./screens/Chat";
 import { stopStream } from "./lib/chat";
@@ -21,21 +22,21 @@ import {
   emptySession, loadSessions, saveSessions, titleFor, type ChatSession,
 } from "./lib/chatStore";
 
-/** FRONTEND-V2-PLAN §1 — Chat · Files · Graph │ Control Plane · Settings.
- *  `glyph` is the collapsed-rail label (owner request 2026-09-12: side panel collapse). */
-const NAV = [
-  { id: "overview", label: "Overview", glyph: "◎" },
-  { id: "chat", label: "Chat", glyph: "✦" },
-  { id: "compare", label: "Compare", glyph: "⇄" },
-  { id: "files", label: "Files", glyph: "▤" },
-  { id: "graph", label: "Graph", glyph: "◈" },
-  { id: "rule", label: "", glyph: "" },
-  { id: "control", label: "Control Plane", glyph: "⚙" },
-  { id: "models", label: "Models", glyph: "❋" },
-  { id: "settings", label: "Settings", glyph: "⋯" },
+/** FRONTEND-V2-PLAN §1 — Chat · Files · Graph │ Control Plane · Settings. On the collapsed rail only the icon shows and
+ *  the label becomes the button's accessible name (FRONTEND-REFRESH-V1 U3). */
+const NAV: readonly { id: string; label: string; icon: IconName | null }[] = [
+  { id: "overview", label: "Overview", icon: "overview" },
+  { id: "chat", label: "Chat", icon: "chat" },
+  { id: "compare", label: "Compare", icon: "compare" },
+  { id: "files", label: "Files", icon: "files" },
+  { id: "graph", label: "Graph", icon: "graph" },
+  { id: "rule", label: "", icon: null },
+  { id: "control", label: "Control Plane", icon: "control" },
+  { id: "models", label: "Models", icon: "models" },
+  { id: "settings", label: "Settings", icon: "settings" },
 ] as const;
 
-type ScreenId = (typeof NAV)[number]["id"];
+type ScreenId = "overview" | "chat" | "compare" | "files" | "graph" | "rule" | "control" | "models" | "settings";
 
 /** FRIENDS-ACCESS-V1: screens whose data is owner-only on the server (control plane, LLM providers) — hidden from friends. */
 const OWNER_SCREENS = new Set<ScreenId>(["overview", "control", "models"]);
@@ -91,7 +92,7 @@ export function App() {
 
 function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: Me) => void; onSignOut: () => void }) {
   const owner = me.is_owner;
-  const nav = useMemo(() => NAV.filter((n) => owner || !OWNER_SCREENS.has(n.id)), [owner]);
+  const nav = useMemo(() => NAV.filter((n) => owner || !OWNER_SCREENS.has(n.id as ScreenId)), [owner]);
   const [screen, setScreen] = useState<ScreenId>(owner ? "overview" : "chat");
   // Never hardcode a corpus. Start from the persisted choice (validated against the
   // backend below); "" means "unresolved" until /corpora answers.
@@ -231,19 +232,17 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
       <nav className="nav" aria-label="Main" id="main-nav">
         <div className="nav__top">
           <div className="nav__brand">Polymath</div>
-          <button
+          <IconButton
             className="nav__collapse"
+            icon={drawerOpen ? "x" : collapsed ? "expand" : "collapse"}
+            label={drawerOpen ? "Close menu" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
             onClick={() => (drawerOpen ? setDrawerOpen(false) : setCollapsed((c) => !c))}
-            title={drawerOpen ? "Close menu" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-label={drawerOpen ? "Close menu" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {drawerOpen ? "✕" : collapsed ? "»" : "«"}
-          </button>
+          />
         </div>
 
-        <button className="nav__newchat" data-glyph="＋" onClick={startChat}
+        <button className="nav__newchat" onClick={startChat}
                 title={collapsed ? "New chat" : undefined} aria-label={collapsed ? "New chat" : undefined}>
-          <span>＋ New chat</span>
+          <Icon name="plus" /><span>New chat</span>
         </button>
 
         {nav.map((n) =>
@@ -253,13 +252,12 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
             <button
               key={n.id}
               className="nav__item"
-              data-glyph={n.glyph}
               title={collapsed ? n.label : undefined}
               aria-label={collapsed ? n.label : undefined}
               aria-current={screen === n.id ? "page" : undefined}
-              onClick={() => go(n.id)}
+              onClick={() => go(n.id as ScreenId)}
             >
-              <span>{n.label}</span>
+              {n.icon && <Icon name={n.icon} />}<span>{n.label}</span>
             </button>
           ),
         )}
@@ -278,7 +276,7 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
                 </button>
                 <button className="nav__chat-del" title="Delete chat"
                         aria-label={`Delete ${s.title}`} onClick={() => deleteChat(s.id)}>
-                  ✕
+                  <Icon name="x" size={14} />
                 </button>
               </div>
             ))}
@@ -289,10 +287,8 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
 
       <div className="main-col">
         <header className="topbar">
-          <button className="icon-btn topbar__menu" aria-label="Open menu" aria-controls="main-nav"
-                  aria-expanded={drawerOpen} onClick={() => setDrawerOpen(true)}>
-            ☰
-          </button>
+          <IconButton className="topbar__menu" icon="menu" label="Open menu" aria-controls="main-nav"
+                      aria-expanded={drawerOpen} onClick={() => setDrawerOpen(true)} />
           <label className="topbar__library">
             <span className="sr-only">Library</span>
             <select value={corpusValid ? corpusId : ""} onChange={(e) => setCorpusId(e.target.value)}>
@@ -362,11 +358,7 @@ function ThemeToggle() {
   const [a, setA] = useAppearance();
   const dark = resolveMode(a.mode) === "dark";
   const label = dark ? "Switch to light mode" : "Switch to dark mode";
-  return (
-    <button className="icon-btn" aria-label={label} title={label} onClick={() => setA({ ...a, mode: dark ? "light" : "dark" })}>
-      {dark ? "☀" : "☾"}
-    </button>
-  );
+  return <IconButton icon={dark ? "sun" : "moon"} label={label} onClick={() => setA({ ...a, mode: dark ? "light" : "dark" })} />;
 }
 
 /** The signed-in person: name, Settings, Sign out (no sign-out on the server itself). */
