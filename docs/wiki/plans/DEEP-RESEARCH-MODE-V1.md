@@ -140,6 +140,10 @@ Times are estimates from concurrency 2 and today's retrieval latency; DR4 measur
 | **DR3** — DONE 11.516 | Composer switch, presets, progress tree, report | vitest: the switch routes to `/research/deep`; progress renders from phase frames; Stop cancels; citation chips resolve |
 | **DR4** — PARTIAL 11.520 (4/5 live; the 5th's fix awaits the next deploy) | Live proof — **on the owner's word** | 5 smoke questions (testing policy 5–8) across cinema and commerce-v1: every cited cid resolves, stop reasons are sensible, cost matches §3 |
 | **DR5** *(optional)* | The adapter for MCP agents; owner-only web branch | Only if the owner wants it |
+| **DR6a** | Research moves in the engine (§10): the MOVE grammar, the controller, anchors, the gate and spawn floor as ports, gap nodes, dry moves, receipts | Unit tests with fake ports (§10.8); moves off = today's behaviour, byte for byte |
+| **DR6b** | The route per move + `/retrieve`'s optional `intent` + the relevance gate on the reranker | Contract tests: each move builds its own search request; `intent` absent = unchanged, present = chat's intent budget, unknown = 422 |
+| **DR6c** | UI: each search's move in the progress rail; the counter-evidence line under the report | vitest |
+| **DR6d** | Live A/B on the 5 DR4 questions, moves off vs on | §10.9 acceptance; the owner sees the table |
 
 DR1 can start at once. DR3 fits best after FRONTEND-REFRESH-V1 U4 (the new composer); on today's composer it is a small switch.
 
@@ -172,3 +176,122 @@ Friends may use it: the owner's decision is "everything" and "no daily cap". Saf
 5. **Web:** libraries only in v1 (recommended); owner-only web research later through the adapter.
 6. **Report model:** the model chosen in the composer (recommended), or a fixed lane.
 7. **Live proof:** 5 live questions for DR4 when the owner says so (they count toward the live-turn allowance).
+
+## 10. Research moves (DR6) — DECIDED 2026-09-26 (the owner: "go for the deep research moves design")
+Today every search is the same HYBRID search, breadth and depth are fixed by the preset, and a level's follow-ups are the only
+way down (DR4: runs went 1–2 levels and ended `frontier_empty`). DR6 gives every planned search a **move**, sends each move to the
+retrieval surface built for it, lets a small deterministic controller choose the mix, and keeps every move tied to the question.
+
+### 10.1 The moves
+| Move | Asks | Search (all already built) |
+|---|---|---|
+| `broad` | another part of the question | HYBRID over the libraries; rows built with the EXPLORE cap (2 per document) so they spread |
+| `deep` | drill into a strong finding | the default lane with `document_ids` = the anchor documents (DOCUMENT-SCOPED-RETRIEVE-V1); without anchors, HYBRID with the normal cap (4 per document) |
+| `adjacent` | nearby ideas that connect | HYBRID with `intent: RELATIONSHIP` (CONCEPT, THEORY, SEEALSO, BRIDGE, ANCHOR, TENSION atoms; SEEALSO fan-out; graph destinations; graph assist `auto`) |
+| `inverse` | limits, exceptions, failure cases, critiques, opposite cases | HYBRID with `intent: COMPARISON` (CONCEPT, BOUNDARY, TENSION, INVERSION atoms; MULTI_REQUIRED breadth) + a query phrased against the finding |
+
+`/retrieve` gains an optional `intent` (a canonical §33 intent) honoured on the v2 engine path of HYBRID / GRAPH / WILDCARD: the
+budget becomes `apply_intent_policy(intent, default_budget())` (with `latent` still honoured) and the graph assist follows the
+policy, exactly as chat applies it (`ui.py` P2b / P6). Absent = byte-identical; unknown = typed 422 `unknown_intent`. This is how
+the reserved surfaces DR0 named (11.519) reach deep research without changing chat.
+
+### 10.2 The planner
+- Grammar: `QUERY: <q> || GOAL: <g> || MOVE: <broad|deep|adjacent|inverse>`. MOVE is optional: missing = `broad` at level 1 and
+  `deep` below (today's meaning); an unknown value = that default, counted as a repair.
+- The plan prompt carries the controller's quota ("write 1 broad, 1 deep and 1 inverse query") with one line per move. An
+  inverse query keeps the key terms of the finding or goal it tests ("when does habit stacking fail?", never "criticisms of
+  psychology").
+- Acceptance: per move up to its quota, in plan order; slots left empty are filled by the remaining queries in order, so a
+  level never runs under its breadth because the model ignored the quota. An inverse query that shares no content term with its
+  goal / anchor finding is dropped (`inverse_unanchored`).
+
+### 10.3 The controller (pure, `deep_research/moves.py`)
+- The question's intent comes from `query_intent.classify_intent(question)` (deterministic, no model call). Starting weights
+  (broad / deep / adjacent / inverse):
+
+  | Intent | Weights |
+  |---|---|
+  | EXACT, DEFINITION | 1 / 3 / 0 / 0 |
+  | MECHANISM, PROCEDURE, APPLICATION | 1 / 2 / 0 / 1 |
+  | COMPARISON | 2 / 0 / 0 / 2 |
+  | RELATIONSHIP | 1 / 0 / 3 / 0 |
+  | SYNTHESIS, EXPLORATORY | 2 / 0 / 2 / 0 |
+  | RECALL | 2 / 1 / 1 / 0 |
+
+- An evaluative question ("should", "worth", "best", "does it work", "is it true", "effective", "pros and cons") reserves one
+  inverse slot on every level.
+- `allocate(weights, n)`: largest-remainder rounding, ties in move order, sum = n, deterministic.
+- Level ≥ 2 (a child node plans `ceil(breadth / 2)` queries from its parent branch's follow-ups): the child starts from its
+  parent's move (a broad or deep parent → deep-heavy, adjacent → adjacent + deep, inverse → inverse + deep), then the signals:
+  - **repeat**: ≥ 50% of the parent's rows were already seen in the run → one slot moves from deep to adjacent;
+  - **concentration**: the parent's learnings cite rows from ≤ 2 documents → its deep queries anchor to those documents;
+  - **one-sided**: ≥ 3 learnings so far and none from an inverse search, and the question is evaluative or MECHANISM /
+    PROCEDURE / APPLICATION → the child with the most learnings gets one inverse slot;
+  - **dry**: a move that produced 0 learnings on two levels gets weight 0 for the rest of the run.
+- **Gap nodes:** a level-1 branch that ended empty or with 0 learnings, when depth remains, spawns one child with the same goal and
+  one `broad` reformulation, inside the run's retrieval budget.
+
+### 10.4 Staying aligned with the question
+1. **Relevance gate** before a search: the reranker scores each planned query against the ORIGINAL question
+   (`probe_gate.gate_probes`, with a new optional `gated_origins` so deep research uses origin `DEEP_RESEARCH`; floor 0.2, the
+   probe gate's default). Dropped queries are counted; a reranker error or timeout keeps them (fail-open, counted).
+2. **No drift chains:** a query whose gate score is under the spawn floor (0.35) keeps its learnings but spawns no children
+   (`drift_stopped`).
+3. Every query carries its goal and move; learnings carry their move, so the report can group them.
+
+### 10.5 The report
+- The learnings are grouped: **What the libraries say** (broad + deep), **How it connects** (adjacent), **What cuts against it**
+  (inverse).
+- When inverse searches ran and found nothing, the report says "The libraries hold no counter-evidence on this". The answer's
+  meta carries `moves.inverse = {searched, learnings}`, so the UI can show it whatever the model writes.
+
+### 10.6 Engine and route interfaces
+- `Row` gains `doc_id: str = ""`; `Learning` gains `move: str = "broad"`; `Config` gains `moves: bool = False`, `gate_floor = 0.2`,
+  `spawn_floor = 0.35`. With `moves=False`, the engine is today's engine.
+- Ports: `retrieve(query, scope, /, *, move, anchor_docs)` is called with the keywords only when `moves` is on, so the two-argument
+  fakes keep working. `gate(question, [(id, text)]) -> {id: score}` is optional (`None` = no gate).
+- Route: `DeepResearchRequest.moves: bool = True`; `POLYMATH_DEEP_RESEARCH_MOVES=0` forces it off. The port builds each move's
+  `RetrieveRequest` (§10.1) and rows (`evidence_rows_of(..., explore=True)` for broad). The gate port wraps
+  `chat_retrieval._rerank_children`.
+
+### 10.7 Receipts and UI
+- `summary()["moves"]`:
+  - the intent and whether the question is evaluative;
+  - per level: `asked` / `planned` / `searched` / `learnings` per move;
+  - the gate (`scored`, `dropped`, `failed_open`);
+  - `drift_stopped`, `gap_nodes`, `dry_moves`, `inverse_unanchored`;
+  - deep anchored / unanchored.
+- Phase frames for plan / retrieve carry `move`.
+- The progress rail labels each search "Broad · / Deep · / Adjacent · / Inverse · <query>", in text, not only icons.
+- Under the report, a line reads "Counter-evidence: N findings" or "Counter-evidence: none found in the libraries".
+
+### 10.8 Tests (DR6a–c)
+- Grammar:
+  - MOVE optional, with the default by level;
+  - an unknown MOVE is a repair;
+  - quotas are filled in order, and a short level is filled from the leftovers.
+- Controller:
+  - `allocate` sums to n and is deterministic;
+  - each intent's mix;
+  - the evaluative reserve;
+  - each signal: repeat, concentration anchors, one-sided, dry;
+  - gap nodes stay inside the budget.
+- Gate:
+  - drops below the floor;
+  - fails open on an error;
+  - spawn floor stops children.
+- Engine: `moves=False` gives the same queries, calls and outcome as today (the existing DR1 tests pass unchanged).
+- Route:
+  - each move's request (a fake `_retrieve_impl` records them): deep uses `document_ids` on the default lane, adjacent and inverse
+    pass `intent`, broad uses the EXPLORE cap;
+  - `/retrieve` `intent` absent / present / unknown;
+  - the receipt's `moves` block.
+- UI: the rail labels and the counter-evidence line.
+
+### 10.9 DR6d acceptance (live, after the deploy)
+The 5 DR4 questions, `moves: false` then `moves: true` (10 runs). Moves must:
+- cite ≥ the baseline's distinct documents on at least 4 of 5 questions;
+- cover ≥ the baseline's goals (goals with a learning / goals planned);
+- on the evaluative or mechanism questions, show at least one inverse learning or the explicit "none found";
+- stay inside the preset deadline, with LLM calls ≤ the baseline + 10%.
+The owner sees the table; the default stays on only if it passes.
