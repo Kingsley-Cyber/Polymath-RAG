@@ -8,6 +8,7 @@ import {
 } from "../lib/auth";
 import { ChangePassword } from "./Login";
 import { DeepResearchSettings } from "../components/deep/DeepResearchSettings";
+import { Secret } from "../ui/Secret";
 
 function message(err: unknown): string {
   return err instanceof ApiError ? err.detailMessage : String(err);
@@ -31,12 +32,11 @@ function ShownOnce({ created, onDone }: { created: CreatedKey; onDone: () => voi
       </div>
       <div className="field">
         <span className="label">Your new key{created.label ? ` — ${created.label}` : ""}</span>
-        <div className="row"><code className="mono settings__secret">{created.key}</code><CopyButton text={created.key} /></div>
+        <Secret value={created.key} what="key" />
       </div>
       <div className="field">
         <span className="label">Prompt for your agent (key included)</span>
-        <textarea className="mono settings__prompt" readOnly rows={12} value={created.prompt} />
-        <div className="row"><CopyButton text={created.prompt} label="Copy prompt" /></div>
+        <Secret value={created.prompt} what="prompt" block rows={12} />
       </div>
       <div className="row"><button className="btn btn--primary" type="button" onClick={onDone}>I've saved it</button></div>
     </div>
@@ -119,7 +119,7 @@ function MyKeys({ me }: { me: Me }) {
         <p className="faint">
           Paste this into your agent. {me.is_owner ? "Replace the placeholder with a key." : "When you create a key, the prompt shown then already contains it; this copy has a placeholder."}
         </p>
-        <textarea className="mono settings__prompt" readOnly rows={10} value={prompt.data?.prompt ?? ""} />
+        <Secret value={prompt.data?.prompt ?? ""} what="prompt" block rows={10} />
         {prompt.data && <div className="row"><CopyButton text={prompt.data.prompt} label="Copy prompt" /></div>}
       </div>
     </div>
@@ -168,8 +168,8 @@ function FriendRow({ f, libraries, onChanged, confirm }: {
           {error && <div className="banner banner--bad">{error}</div>}
           {secret && (
             <div className="banner banner--info row">
-              New password for {f.username} (shown once): <code className="mono">{secret}</code>
-              <CopyButton text={secret} /><button className="btn" type="button" onClick={() => setSecret("")}>Done</button>
+              New password for {f.username} (shown once): <Secret value={secret} what="password" />
+              <button className="btn" type="button" onClick={() => setSecret("")}>Done</button>
             </div>
           )}
           {open === "libraries" && (
@@ -241,8 +241,8 @@ function Friends() {
       {error && <div className="banner banner--bad" role="alert">{error}</div>}
       {made && (
         <div className="banner banner--info row">
-          Created <strong>{made.username}</strong>. First password (shown once): <code className="mono">{made.password}</code>
-          <CopyButton text={made.password} /><button className="btn" type="button" onClick={() => setMade(null)}>Done</button>
+          Created <strong>{made.username}</strong>. First password (shown once): <Secret value={made.password} what="password" />
+          <button className="btn" type="button" onClick={() => setMade(null)}>Done</button>
         </div>
       )}
       <div className="row">

@@ -422,6 +422,13 @@ button.btn:disabled { opacity: .55; cursor: not-allowed; }
   background: var(--surface-2); font-family: var(--font-mono); font-size: var(--fs-xs); word-break: break-all;
 }
 .settings__once { border-color: var(--accent); }
+/* A secret or prompt with the answers' hover copy button: shown on hover or focus, always on a touch screen */
+.secret { position: relative; display: flex; align-items: center; gap: var(--space-2); max-width: 100%; }
+.secret--block { display: block; }
+.secret--block .secret__copy { position: absolute; top: 6px; right: 6px; }
+.secret__copy { opacity: 0; transition: opacity var(--dur-1, 120ms) ease; }
+.secret:hover .secret__copy, .secret:focus-within .secret__copy, .secret__copy:focus-visible { opacity: 1; }
+@media (hover: none) { .secret__copy { opacity: 1; } }
 
 /* Appearance: a segmented control for the mode and round swatches for the accent */
 .seg { display: inline-flex; width: fit-content; border: 1px solid var(--border-strong); border-radius: var(--radius-1); overflow: hidden; }
