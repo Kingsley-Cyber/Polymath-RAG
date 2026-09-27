@@ -153,18 +153,17 @@ historical, never an instruction.
    `web_password_set: false` until then). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
    must print `"ok": true`, the owner signs in and adds the first friend in Settings, and the F6 close-out follows (register row,
    work-log, CONTINUITY, memory).
-4. **FIX-IT-ALL — LIVE on production `8c13e8f0`** (two owner Run-button deploys on 2026-09-26/27, READY 26/13/1, live contract
+4. **FIX-IT-ALL — LIVE on production `bfdfbe0e`** (three owner Run-button deploys on 2026-09-26/27, READY 26/13/1, live contract
    green). Merges and bounces are classifier-gated as Production Deploy: hand the owner ONE command in the main checkout,
    `git merge --ff-only feat/fix-it-all && (cd frontend-v2 && npm run build) && bash scripts/bounce_fleet.sh`. Integrate helper work
    on a side branch and fast-forward `feat/fix-it-all` only when green: the owner may run the command at any moment.
    - LIVE: the TRAIL-EXT bug fixes (11.521–11.528, 11.530: 56 FIXED, 7 PART, 5 OWNER, 1 REJECTED; 12 = batch D dead code,
      listed only; B-05 = refusal, per the owner); T5 dossier + the owner's Registry (11.523); DEEP-RESEARCH DR0, DR4 (closed),
      DR6a–d moves (§10.9 passed 4/5), DR7a–f the research experience (11.519–11.534).
-   - The docs commits after `8c13e8f0` (this block, 11.534) ride the next deploy.
-   - NEXT (small, each a slice): widen `moves.is_evaluative` ("useful", "helpful", "good", "better", "recommend"…); calibrate
-     the relevance gate on real plans (q5 lost 5 of 12 follow-ups at floor 0.2 — score follow-ups against their thread, or a
-     lower floor for level ≥ 2); collapse the composer's option chips on phones; server-side report history only on the owner's
-     word (a migration after the reserved 0067–0071); multi-library deep research (HYBRID answers one library per call).
+   - LIVE since 11.535 / 11.536 (`bfdfbe0e`): the deep research tuning (evaluative words, the gate's thread check, the folded
+     phone composer); moves cite ≥ the old loop's books on 5 of 5 DR4 questions.
+   - NEXT (only on the owner's word): server-side report history (a migration after the reserved 0067–0071); multi-library deep
+     research (HYBRID answers one library per call); the gate's floors measured on more real plans.
    - OWNER DECISIONS pending: B-15, B-38, B-53, B-59, B-64; the PART halves (B-12 legacy manifest 2.2.2, B-25 worker lock, B-48
      rejection history = a migration, B-50 legacy manifest, B-57 per-run manifest pin); an app-wide Host allowlist (B-28).
    - FRIENDS-ACCESS F6: King's web password is still NOT set (`web_password_set: false`): the owner sets it on the Mac
