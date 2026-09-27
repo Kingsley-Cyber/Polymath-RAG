@@ -2694,11 +2694,13 @@ def _coverage_lines(coverage: dict | None, *, skip_ids: frozenset = frozenset())
     return ["EVIDENCE COVERAGE BY ASPECT:\n" + "\n".join(parts)] if parts else []
 
 
-def _request_block(query: str, plan, history, coverage: dict | None = None, *, learning: bool = False) -> str:
+def _request_block(query: str, plan, history, coverage: dict | None = None, *, learning: bool = False,
+                   synthesis: str | None = None) -> str:
     """SYNTHESIS-V2 request framing: the request as written, the RESOLVED
     request, the compiled task/evidence policy/response type, coverage,
     constraints, the compiler's antecedent summary and the prior artifact
-    verbatim. Without a plan (compiler off) the v1 block is unchanged."""
+    verbatim. Without a plan (compiler off) the v1 block is unchanged.
+    `synthesis` (FACET-RETRIEVAL-V1 F5): the CROSS-DOCUMENT SYNTHESIS block of a synthesis task, after the coverage lines."""
     if plan is None:
         return f"REQUEST:\n{query}"
     lines = [f"REQUEST (as written):\n{query}"]
@@ -2720,6 +2722,8 @@ def _request_block(query: str, plan, history, coverage: dict | None = None, *, l
                          "their premises; address each the sources support; say which they cannot settle):\n"
                          + "\n".join(f"{i}. {t}" for i, t in enumerate(targets, 1)))
     lines.extend(_coverage_lines(coverage, skip_ids=_exploration_query_ids(plan)))
+    if synthesis:
+        lines.append(synthesis)
     ante = plan.antecedent if isinstance(plan.antecedent, dict) else None
     if ante and ante.get("summary"):
         lines.append(f"ANTECEDENT ({ante.get('kind') or 'topic'}, turn {ante.get('turn')}): {ante['summary']}")
@@ -3088,8 +3092,22 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
                              "content": turn.content[:4000]})
     from orchestrator.api.reasoning import apply_reasoning
 
+    # FACET-RETRIEVAL-V1 F5 (plan §3.5): a GROUNDED_SYNTHESIS / CREATE_FROM_KNOWLEDGE turn with evidence asks for the principles
+    # first (cited across documents), then the specifics per facet naming the documents, one honest sentence per uncovered
+    # facet; the block lists the DOCUMENTS IN EVIDENCE with their tags. Never on QA / a lookup; flag off = no block.
+    _xs = None
+    if plan is not None and _entries and isinstance(bundle, dict):
+        from polymath_shared.synthesis_model import CONTRACT as _XS_CONTRACT
+        from polymath_shared.synthesis_model import enabled as _xs_enabled
+        from polymath_shared.synthesis_model import synthesis_block as _xs_block
+        if _xs_enabled():
+            _xs = _xs_block(plan, _entries, uncovered=bundle.get("facets_uncovered") or ())
+            if _xs:
+                bundle["cross_synthesis"] = {"contract": _XS_CONTRACT, "documents": len({e.get("doc_id") for e in _entries if e.get("doc_id")}),
+                                             "facets": len(getattr(plan, "facets", None) or []),
+                                             "uncovered": len(bundle.get("facets_uncovered") or [])}
     user_content = apply_reasoning(
-        f"{context_block}\n\n{_request_block(query, plan, history, coverage, learning=_contract)}",
+        f"{context_block}\n\n{_request_block(query, plan, history, coverage, learning=_contract, synthesis=_xs)}",
         mode=reasoning or os.environ.get("POLYMATH_REASONING_MODE", "none"),
         blend=reasoning_blend)
     messages.append({"role": "user", "content": user_content})
@@ -3327,7 +3345,9 @@ def _litellm_generate(model: str, query: str, bundle: dict,
     yield {"prompt": {**_prompt_stats(messages, carry_context,
                                       sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", ""))),
                       **({"synthesis_contract": bundle["synth_contract"]}
-                         if isinstance(bundle, dict) and bundle.get("synth_contract") else {})}}
+                         if isinstance(bundle, dict) and bundle.get("synth_contract") else {}),
+                      **({"cross_synthesis": bundle["cross_synthesis"]}                       # F5: what the block put in front of the model
+                         if isinstance(bundle, dict) and bundle.get("cross_synthesis") else {})}}
     # GENERATION-BOUND-V1 (measured 2026-09-06): LiteLLM sends Anthropic-format
     # providers DEFAULT_MAX_TOKENS = 4096 when no bound is given; deepseek-v4-flash
     # (Alibaba Model Studio) spends most of that on reasoning, so long artifacts
@@ -3524,7 +3544,9 @@ def _ollama_generate(model: str, query: str, bundle: dict,
     yield {"prompt": {**_prompt_stats(messages, carry_context,
                                       sum(1 for c in (carry_context or [])[:30] if getattr(c, "preview", ""))),
                       **({"synthesis_contract": bundle["synth_contract"]}
-                         if isinstance(bundle, dict) and bundle.get("synth_contract") else {})}}
+                         if isinstance(bundle, dict) and bundle.get("synth_contract") else {}),
+                      **({"cross_synthesis": bundle["cross_synthesis"]}                       # F5: what the block put in front of the model
+                         if isinstance(bundle, dict) and bundle.get("cross_synthesis") else {})}}
 
     # PROVIDER-ATTEMPT-LEDGER-V4: the daemon is local, but the MODEL need not be —
     # `gemma4:31b-cloud` is in the default catalog and routes through this same daemon to
@@ -3646,6 +3668,20 @@ def _ollama_stream_plain_inner(_out, model: str, messages: list[dict]):
         _out.failed(type(exc).__name__)
         yield {"error": True, "error_code": "ollama_unavailable",
                "message": f"{type(exc).__name__}: {exc}"[:300]}
+
+
+def _synthesis_meta(answer_text: str, legend: list[dict], plan, bundle, facet_cov: dict | None, composition) -> dict | None:
+    """FACET-RETRIEVAL-V1 F5: `meta.synthesis` — the graded evidence of a synthesis answer (per facet the cited documents and
+    confidence, sources by document, the document share). None on QA / a lookup / flag off."""
+    from polymath_shared.synthesis_model import enabled as _xs_enabled
+    from polymath_shared.synthesis_model import is_synthesis_task, synthesis_model
+    if not _xs_enabled() or not is_synthesis_task(plan):
+        return None
+    comp = composition if isinstance(composition, dict) else {}
+    return synthesis_model(answer_text, legend, plan=plan,
+                           evidence_paths=(bundle.get("evidence_paths") if isinstance(bundle, dict) else None),
+                           facets_covered=(facet_cov or {}).get("covered"), facets_uncovered=(facet_cov or {}).get("uncovered"),
+                           doc_counts=comp.get("doc_counts"), doc_share_top=comp.get("doc_share_top"))
 
 
 def _phase(stage: str, label: str, **detail) -> str:
@@ -4188,6 +4224,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             # S8: the planned searches / skeleton routes that found each passage (read only under the synthesis contract)
             bundle["evidence_paths"] = {c["chunk_id"]: list(c.get("query_ids") or [])
                                         for c in evidence_rows if c.get("chunk_id") and c.get("query_ids")}
+            # FACET-RETRIEVAL-V1 F5: the facets this turn's searches left uncovered, for the synthesis block's honest sentence
+            bundle["facets_uncovered"] = list((_facet_cov or {}).get("uncovered") or [])
             # CA4: per-chunk support grades + the epistemic verdict ride the bundle. `epistemic`
             # drives render_answer's multi-signal answerability gate (grounded in ≥1 DIRECT/PARTIAL).
             if _epistemic is not None:
@@ -4460,6 +4498,10 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                                      task_type=_plan.task_type, retrieval_required=_plan.retrieval_required,
                                      queries=len(_plan.queries), fallback=_plan.fallback, mode=_flag,
                                      wall_ms=_plan.compiler.get("wall_ms"))
+                # FACET-RETRIEVAL-V1 F5: the graded evidence of a synthesis answer (per facet, sources by document, the share) — on
+                # the answer frame for the UI's "Sources by document" panel and on the receipt; None on QA / a lookup / flag off
+                _synth = _synthesis_meta(answer_text, _legend, (_plan if _flag == "on" else None), bundle, _facet_cov,
+                                         retrieval.get("composition"))
                 _phase_ms["total"] = round((time.perf_counter() - t0) * 1000, 1)
                 yield _sse("answer", {
                     "kind": "llm",
@@ -4475,6 +4517,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                             "prompt": _prompt_meta,
                             "generation": _gen_meta or None,
                             "carry": {k: v for k, v in _carry_meta.items() if k != "scores"},
+                            **({"synthesis": _synth} if _synth else {}),
                         },
                     },
                     "retrieval": retrieval,
@@ -4491,6 +4534,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                           "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan"),
                           "chat_plan": _plan_receipt or None, "prompt": _prompt_meta or None, "carry": _carry_meta,
                           "generation": _gen_meta or None, "composition": retrieval.get("composition"),
+                          **({"synthesis": _synth} if _synth else {}),
                           **_turn_receipt_extras(_trace, _latent_receipt, retrieval.get("wildcard_diagnostics"))})
                 return
 

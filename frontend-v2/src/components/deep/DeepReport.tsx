@@ -215,8 +215,16 @@ function sourcesOf(report: DeepReportModel, deep: DeepAnswer | null): DeepReport
 }
 
 function SourcesTab({ report, deep, cites }: { report: DeepReportModel; deep: DeepAnswer | null; cites: Map<string, CiteInfo> }) {
-  const books = sourcesOf(report, deep);
-  if (!books.length) return <p className="faint" style={{ margin: 0 }}>The report cites no passage.</p>;
+  return <SourcesByBook books={sourcesOf(report, deep)} cites={cites} empty="The report cites no passage." />;
+}
+
+/** The sources by document: one entry per book with the passages it lent, each id a citation chip. Shared by the deep report's
+ *  Sources tab and the chat answer's "Sources by document" panel (FACET-RETRIEVAL-V1 F5 — `meta.synthesis.sources`, whose
+ *  cids are the answer's [S#] tags resolved through the chat receipt). */
+export function SourcesByBook({ books, cites, empty = "The answer cites no passage." }: {
+  books: DeepReportSource[]; cites: Map<string, CiteInfo>; empty?: string;
+}) {
+  if (!books.length) return <p className="faint" style={{ margin: 0 }}>{empty}</p>;
   return (
     <ol className="book-list">
       {books.map((b, i) => {

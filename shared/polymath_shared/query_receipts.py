@@ -54,7 +54,10 @@ def summarize_response(kind: str, out: Any) -> dict:
                           "generation",
                           # S1a / S1c (DOCUMENT-RAG-COMPLETION-V1 Part F): what the turn measured — per-probe survival,
                           # latent selection, the WILDCARD sweep (atom frontier) and every clock reading
-                          "retrieval_trace", "latent_selection", "wildcard", "trace_ms")}
+                          "retrieval_trace", "latent_selection", "wildcard", "trace_ms",
+                          # FACET-RETRIEVAL-V1 F5 / F6: the graded evidence of a synthesis answer and the gap check's
+                          # claims / searches — both small; absent on every turn that did not run them
+                          "synthesis", "gap_check")}
     cits = out.get("citations")
     if isinstance(cits, list):
         d["citations"] = len(cits)

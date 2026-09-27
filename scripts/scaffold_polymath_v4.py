@@ -1152,6 +1152,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/integration/test_frontend_v2_contracts.py", "py", None),
     ("frontend-v2/src/screens/Compare.tsx", "tsx", None),
     ("frontend-v2/src/components/AnswerReview.tsx", "tsx", None),
+    ("frontend-v2/src/components/SynthesisPanel.tsx", "tsx", None),       # FACET-RETRIEVAL-V1 F5: facet badges + sources by document
     ("docs/wiki/experiments/u2-groq-map-forensic-probe-2026-09-10/README.md", "md", None),
     ("docs/wiki/experiments/u2-forensic-closure-audit-2026-09-10/README.md", "md", None),
     ("docs/wiki/experiments/u2-forensic-closure-audit-2026-09-10/closure-audit.json", "json", None),
@@ -2286,6 +2287,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("frontend-v2/src/components/Citations.tsx", "tsx", None),
     ("frontend-v2/src/components/ProcessRail.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/chat-surface.test.tsx", "tsx", None),
+    ("frontend-v2/src/__tests__/chat-synthesis.test.tsx", "tsx", None),   # FACET-RETRIEVAL-V1 F5
     ("frontend-v2/src/__tests__/live-contract.test.ts", "ts", None),
     # DEEP-RESEARCH-MODE-V1 slices DR7c-e (frontend): plan card, live research view, report view, reports list
     ("frontend-v2/src/lib/deep.ts", "ts", None),
@@ -3237,6 +3239,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/chat_compiler_canary.py", "py", None),
     ("shared/polymath_shared/chat_plan.py", "py", None),
     ("shared/polymath_shared/facets.py", "py", None),                    # FACET-RETRIEVAL-V1 F1: the blind facet step
+    ("shared/polymath_shared/synthesis_model.py", "py", None),           # FACET-RETRIEVAL-V1 F5: cross-document synthesis
     ("shared/polymath_shared/subquery_provenance.py", "py", None),
     ("shared/polymath_shared/evidence_resolution.py", "py", None),
     ("shared/polymath_shared/profile_yield.py", "py", None),
@@ -3356,6 +3359,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("orchestrator/orchestrator/api/chat_retrieval.py", "py", None),
     ("tests/determinism/test_candidate_engine.py", "py", None),
     ("tests/determinism/test_facets.py", "py", None),                   # FACET-RETRIEVAL-V1 F1
+    ("tests/determinism/test_synthesis_model.py", "py", None),          # FACET-RETRIEVAL-V1 F5
     ("tests/determinism/test_facet_diversity.py", "py", None),          # FACET-RETRIEVAL-V1 F2
     ("tests/determinism/facet_diversity_head_pins.json", "json", None), # F2: the HEAD composer's pinned outputs (flags-off proof)
     ("shared/polymath_shared/wildcard_mapped.py", "py", None),          # FACET-RETRIEVAL-V1 F3: WILDCARD's mapped subqueries (builder + gate)

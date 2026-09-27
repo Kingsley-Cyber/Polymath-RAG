@@ -368,3 +368,25 @@ export interface DeepCounterFinding { text: string; cids?: string[]; goal_id?: s
 export interface DeepReportSource { doc_id?: string; title?: string; cids?: string[]; findings?: number }
 /** `result.meta.deep_research.audit` — every prose sentence (headings skipped) checked for a valid [cN]; `uncited` = indices. */
 export interface DeepAudit { sentences?: number; cited?: number; uncited?: number[]; invalid_cids?: string[] }
+
+/* ── chat answers of a synthesis task (FACET-RETRIEVAL-V1 F5 / F6) ───────────────── */
+
+/** `result.meta.synthesis` on a chat answer of a GROUNDED_SYNTHESIS / CREATE_FROM_KNOWLEDGE turn: the graded evidence per
+ *  facet of the request (`confidence` as §11.4: strong = two or more books, single_source, contested), the sources by document
+ *  in the deep report's shape (the cids are the answer's own [S#] tags, resolved through the chat receipt) and the document
+ *  share the composer measured. Absent on a QA / lookup turn and on every turn saved before F5. */
+export interface ChatSynthesisFacet {
+  id: string; name?: string; covered?: boolean | null; docs?: string[]; tags?: string[]; sentences?: number; confidence?: string | null;
+}
+export interface ChatSynthesis {
+  contract?: string; task_type?: string; facets?: ChatSynthesisFacet[]; sources?: DeepReportSource[];
+  documents?: { in_evidence?: number; cited?: number; multi_doc_sentences?: number };
+  share?: { top_doc?: string | null; top_title?: string | null; top_share?: number | null; doc_counts?: Record<string, number> } | null;
+  sentences?: number; uncited?: number;
+}
+/** `result.meta.gap_check` — the answer's "not covered" claims the check searched again: what each found, whether it was
+ *  refuted (the "More on this" addition carries the citations) and how its wording was edited. */
+export interface ChatGapClaim {
+  text?: string; source?: string; query?: string; found?: number; cited_added?: string[]; refuted?: boolean; edited?: string | null;
+}
+export interface ChatGapCheck { contract?: string; claims?: ChatGapClaim[]; searches?: unknown[]; section_added?: boolean; error?: string }

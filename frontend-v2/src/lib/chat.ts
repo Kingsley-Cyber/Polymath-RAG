@@ -1,6 +1,6 @@
 /** Chat turn state machine over the `/chat/stream` SSE frames. */
 import { chatStream, type SseFrame } from "./api";
-import type { AnswerFrame, DeepCoverage, RetrievalReceipt } from "./contracts";
+import type { AnswerFrame, ChatGapCheck, ChatSynthesis, DeepCoverage, RetrievalReceipt } from "./contracts";
 import type { DeepRunState } from "./deep";
 
 /** One pipeline step from a `phase` frame. `data` keeps the raw fields so the
@@ -33,6 +33,11 @@ export interface Turn {
   deepRun?: DeepRunState | null;
   /** DR7c: the latest `coverage` frame, each goal's findings and books so far. */
   deepCoverage?: DeepCoverage | null;
+  /** FACET-RETRIEVAL-V1 F5: `meta.synthesis` of a synthesis answer (the facet badges and the sources by document). Absent on
+   *  a QA turn and on turns saved before F5, which render as before. */
+  synthesis?: ChatSynthesis | null;
+  /** F6: `meta.gap_check` — the "not covered" claims searched again. */
+  gapCheck?: ChatGapCheck | null;
 }
 
 export interface DeepCitation { cid: string; id?: string; title?: string; source?: string; text?: string; corpus_id?: string }
@@ -133,6 +138,9 @@ export async function runTurn(
           uncovered: Array.isArray(meta.uncovered_query_terms) ? (meta.uncovered_query_terms as string[]) : [],
           receipt: a.retrieval ?? null,
           latencyMs: a.latency_ms ?? Math.round(performance.now() - t0),
+          // FACET-RETRIEVAL-V1 F5 / F6: the graded evidence of a synthesis answer and the gap check, when the turn ran them
+          synthesis: (typeof meta.synthesis === "object" && meta.synthesis ? meta.synthesis : null) as ChatSynthesis | null,
+          gapCheck: (typeof meta.gap_check === "object" && meta.gap_check ? meta.gap_check : null) as ChatGapCheck | null,
         });
       } else if (frame.event === "coverage") {
         // DR7c: after each research level, each goal's findings and books so far (the live view's checklist)

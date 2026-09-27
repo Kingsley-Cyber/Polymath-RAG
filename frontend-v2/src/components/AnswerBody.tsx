@@ -8,6 +8,7 @@ import type { Synthesizer } from "../lib/contracts";
 import { EvidenceInspector } from "./EvidenceInspector";
 import { QueryTrace } from "./QueryTrace";
 import { AnswerReview } from "./AnswerReview";
+import { SynthesisPanel } from "./SynthesisPanel";
 
 /** The synthesis surface (ported from the original Polymath UI): the answer as
  *  real Markdown (GFM tables, emphasis, lists, code), then a quiet meta row
@@ -32,6 +33,8 @@ export function AnswerBody({ t, models }: { t: Turn; models: Synthesizer[] }) {
       </div>
       {t.deep && <CounterEvidence deep={t.deep} />}
       {t.deep && <DeepSources deep={t.deep} />}
+      {/* FACET-RETRIEVAL-V1 F5: a synthesis answer's facet badges and sources by document (absent on QA and older turns) */}
+      {!t.deep && t.synthesis && <SynthesisPanel synthesis={t.synthesis} gap={t.gapCheck ?? null} cites={cites} />}
       {t.abstained && t.uncovered.length > 0 && (
         <div className="uncovered-note">nothing in this corpus covers: {t.uncovered.join(", ")}</div>
       )}

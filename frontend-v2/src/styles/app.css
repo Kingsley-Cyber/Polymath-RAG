@@ -688,6 +688,16 @@ details.card[open] > summary::before { transform: rotate(90deg); }
 .cite-id { font-size: var(--fs-xs); padding: 0 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
 .counter-evidence { margin: var(--space-3) 0 0; color: var(--text-2); font-size: var(--fs-sm); }
 
+/* ── a synthesis answer's facets + sources by document (FACET-RETRIEVAL-V1 F5 / F6) ── */
+.synthesis__facets { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-bottom: var(--space-3); }
+.facet-chip {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 3px 10px; border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill); font-size: var(--fs-sm); max-width: 100%;
+}
+.facet-chip__name { overflow-wrap: anywhere; }
+.facet-chip .conf { margin-right: 0; }
+.gap-check { margin: var(--space-3) 0 0; font-size: var(--fs-sm); }
+
 /* ── citation markers with hover cards (U4b) ─────────────────────────────── */
 .cite { position: relative; display: inline-block; }
 .cite__btn {
