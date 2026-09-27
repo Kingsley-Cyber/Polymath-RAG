@@ -85,6 +85,12 @@ Batch B (wrong results)
   it is unavailable: the evidence boundary's fallback and `on_unavailable` answer that) and every refusal. Not chosen: the runtime's
   pending path across claims (it would survive longer outages, but the claim loop has no back-off for a pending step and would spin).
 
+Follow-ups the orchestrating session routed here from the other groups (separate commits)
+- **B-19** (acquisition group; their guide half is in `fix/trail-ext-bugacq`) `validate_receipt` refuses a source whose declared class the
+  PINNED source table routes only through `-` rows (read from the table: today `first_party`, participant interviews, one independence
+  group per observation) when its url is an http(s) page. A public page declared that way minted one voice per observation and
+  anchored a lived cluster. A first-hand source without a web url (e.g. `urn:interview:…`) is still accepted.
+
 ## Proof
 - New tests: `tests/contracts/test_trail_ext_runtime_fixes.py` (42) and `tests/determinism/test_adapter_trail_ext_runtime_fixes.py` (18).
   - Run against the UNFIXED code: batch A 22 failed / 7 passed; batch B 24 failed / 4 passed; B-29 / B-14 2 failed. The passes are
@@ -94,6 +100,7 @@ Batch B (wrong results)
   - Where TrailSignal decides, the PINNED core under `governance/trail/` is asked: `HarnessResearchReceiptV1` (B-03), Trail's canonical
     request measure `canonical_text(BoundedResearchRequestV1)` (B-05), `ResearchPayloadV1` and the gap compiler's `EvidenceGap`
     (B-21 / B-22 / B-26), and the embedded core end to end (B-03, B-05, B-21, B-22 / B-26, B-24).
+- Follow-ups: `test_b19_a_public_page_declared_as_a_no_web_class_is_refused_at_submit` failed on the code before it (accepted).
 - `tests/contracts -k "not test_live_"`: 354 passed. Every `tests/determinism/test_*adapter*` / `test_*trail*` file except the
   fleet-database ones: 236 passed. The other determinism files that import changed code (`test_autoresearch_*`,
   `test_evidence_packet_text_excerpt`, `test_hypothesis_state_machine`, `test_knowledge_scope*`, `test_mcp_principals_gate`,

@@ -441,3 +441,33 @@ def test_b30_a_trail_refusal_is_never_retried(worker, monkeypatch):
     refusal = httpx.Response(200, json={"jsonrpc": "2.0", "id": 1, "result": {"content": [{"type": "text", "text": "REQUEST_TOO_LARGE"}], "isError": True}})
     script, out = _trail_step(worker, monkeypatch, refusal)
     assert out["gap"]["code"] == "TRAIL_REFUSED" and script.calls == 1
+
+
+# ═══════════════════════════════════════════════════════════ follow-ups from the other groups
+import csv
+
+from polymath_shared.adapter import harness_guide as HG
+
+
+# ─────────────────────────────────────────────────────────── B-19: a public page declared as a first-party class
+def _receipt_with_class(source_class: str, url_of=lambda i: f"https://blog{i}.example/post/{i}") -> dict:
+    rec = copy.deepcopy(EXAMPLE_RECEIPT)
+    rec["sources"] = [{**rec["sources"][0], "source_id": f"src_{i}", "url": url_of(i), "source_class": source_class} for i in range(2)]
+    rec["observations"] = [{**rec["observations"][1], "observation_id": f"obs_{i}", "source_id": f"src_{i % 2}", "evidence_role_claimed": "friction"}
+                           for i in range(5)]
+    return rec
+
+
+def test_b19_a_public_page_declared_as_a_no_web_class_is_refused_at_submit():
+    rows = list(csv.DictReader((ROOT / HG.FILES[HG.SOURCES_URI]).open(encoding="utf-8")))
+    patterns: dict[str, set] = {}
+    for r in rows:
+        if r["enabled"].strip().lower() == "true":
+            patterns.setdefault(r["source_class"], set()).update(p.strip() for p in r["domains_or_patterns"].split(";"))
+    no_web = {c for c, p in patterns.items() if p == {"-"}}
+    assert no_web == {"first_party"}                                               # read from the PINNED table (a re-pin changes it here)
+    assert all("{participant}" in r["independence_group"] for r in rows if r["source_class"] in no_web)   # one voice per observation
+    errors = T.validate_receipt(RECEIPT_STEP, _receipt_with_class("first_party"))
+    assert any("sources/0/source_class" in e and "first_party" in e and "public page" in e for e in errors), errors   # the defect: accepted
+    assert T.validate_receipt(RECEIPT_STEP, _receipt_with_class("community_discussion")) == []
+    assert T.validate_receipt(RECEIPT_STEP, _receipt_with_class("first_party", lambda i: f"urn:interview:participant-{i}")) == []   # a real interview

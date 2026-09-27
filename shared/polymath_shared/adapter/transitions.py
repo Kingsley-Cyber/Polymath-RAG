@@ -2,14 +2,18 @@
 => same next step, same issued step dict, same acceptance verdict. Persistence is the caller's job (receipts/outbox)."""
 from __future__ import annotations
 
+import csv
 import datetime as _dt
 import re
 from dataclasses import dataclass, field, replace
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 import jsonschema
 
 from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, ORIGIN_ID_FIELDS, PRIOR_EVIDENCE_KINDS, TERMINAL_RUN_STATUSES, assert_valid, bounded_text, schema, stable_hash, validate
+from .harness_guide import FILES as _GUIDE_FILES, SOURCES_URI as _SOURCES_URI
 from .manifest import Manifest
 
 
@@ -361,7 +365,26 @@ def _trail_wire_value_errors(payload: dict[str, Any]) -> list[str]:
     counts += [(f"tool_trace/{n}/query_count", t.get("query_count")) for n, t in enumerate(payload.get("tool_trace") or []) if isinstance(t, dict)]
     # the schema refuses every other float here; an integer-valued one (4.0) is the only one it lets through
     errors += [f"payload/{where}: {value!r} is not an integer; write {int(value)}" for where, value in counts if isinstance(value, float) and value.is_integer()]
+    # bug hunt B-19: a class the pinned source table routes only through a `-` row is not a web source (today `first_party`, a
+    # participant interview, counted one independence group PER OBSERVATION); a public page declared as one minted a voice per
+    # observation — five observations on two pages anchored a lived cluster
+    for n, s in enumerate(payload.get("sources") or []):
+        if isinstance(s, dict) and s.get("source_class") in _no_web_classes() and re.match(r"(?i)^https?://", str(s.get("url") or "")):
+            errors.append(f"payload/sources/{n}/source_class: {s['source_class']!r} is a first-hand source that TrailSignal counts once per "
+                          "observation; a public page is not one — declare the class its host routes to (the source table)")
     return errors
+
+
+@lru_cache(maxsize=1)
+def _no_web_classes() -> frozenset[str]:
+    """Source classes whose every enabled row in TrailSignal's PINNED source table routes through `-` (no web domain at all)."""
+    table = Path(__file__).resolve().parents[3] / _GUIDE_FILES[_SOURCES_URI]
+    patterns: dict[str, set[str]] = {}
+    with table.open(encoding="utf-8") as fh:
+        for row in csv.DictReader(fh):
+            if str(row.get("enabled") or "").strip().lower() == "true":
+                patterns.setdefault(str(row.get("source_class") or ""), set()).update(p.strip() for p in str(row.get("domains_or_patterns") or "").split(";"))
+    return frozenset(c for c, p in patterns.items() if c and p == {"-"})
 
 
 def _instant(value: Any):
