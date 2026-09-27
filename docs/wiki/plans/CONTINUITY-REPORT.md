@@ -42,12 +42,12 @@ historical, never an instruction.
   never touch), an old stash (leave it).
 
 ### Active Mission
-- **FRIENDS-ACCESS-V1** (`docs/wiki/plans/FRIENDS-ACCESS-V1.md`): F1–F5 built and tested on `feat/friends-access`; F6 waits for the
-  owner's Run button. Locks kept: `research_acquire` owner-only, no host-path uploads, admin owner-only.
-- **FIX-IT-ALL (register 11.504; the owner, 2026-09-26: "i agree please fix it all"):** the three plans below are now ACTIVE plans of
-  record with the recommended decisions. Order: T0 (gap A-15) → the verified bugs from TRAIL-EXT-BUGHUNT-V1
-  (`docs/wiki/experiments/trail-ext-bughunt-2026-09-26/`) → U0–U6 → T1–T5 → DR0–DR3. DR4 (5 live questions) waits for the
-  owner's word. Each slice: tests, paperwork, guards; merges and bounces as usual.
+- **FRIENDS-ACCESS-V1** (`docs/wiki/plans/FRIENDS-ACCESS-V1.md`): F1–F5 live, one login live (11.518); F6 waits for the owner to
+  set King's web password in Settings (Next Action 3). Locks kept: `research_acquire` owner-only, no host-path uploads, admin owner-only.
+- **FIX-IT-ALL (register 11.504; the owner, 2026-09-26: "i agree please fix it all", then "finish the incompletes ones"):** the
+  three plans below are ACTIVE plans of record with the recommended decisions. Done: T0–T5, U0–U6, DR0–DR3; DR4 4/5 live (the
+  5th closes after the next deploy). Now: the verified bugs from TRAIL-EXT-BUGHUNT-V1 (`docs/wiki/experiments/trail-ext-bughunt-2026-09-26/`),
+  batches A+B+C, by helper agents (Next Action 4). Each slice: tests, paperwork, guards.
 - **The three plans (register 11.503):** `FRONTEND-REFRESH-V1.md` (U0–U6), `TRAIL-INTERFACE-V1.md` (T0–T6; T0 = gap A-15), `DEEP-RESEARCH-MODE-V1.md`
   (DR0–DR5). None is a plan of record until the owner chooses. The friends' and owner's guide: `docs/runbooks/friends-access.md`.
 - AUTORESEARCH-SOURCES-AND-HARNESS-V1 is COMPLETE (the plan's status line; R6 DONE 11.494, R7 DONE 11.495).
@@ -148,26 +148,35 @@ historical, never an instruction.
    - O-08: find the client that keeps calling the public MCP URL without a valid key;
    - H-09: upgrade Homebrew Codex; decide on Gemini (the account's CLI turns are refused);
    - a bounce at a quiet moment unifies the bundle hash (optional).
-3. **FRIENDS-ACCESS-V1 F6 (active):** the owner runs `bash /Users/king/Documents/polymath-rebuild/pmv4-friends/scripts/friends_access_go_live.sh`
-   in a terminal (ff-only merge, the session secret into `.env` once, UI build, bounce, King's password at a hidden prompt — 10+
-   characters, never in chat — then the Caddy switch). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
-   (must print `"ok": true`), the owner signs in and adds the first friend in Settings, the F6 close-out (register row, work-log,
-   CONTINUITY, memory). If a step fails the script stops there; re-running is safe (done steps say so; the build and restart run again).
-4. **FIX-IT-ALL progress (integration branch `feat/fix-it-all`, worktree `pmv4-fix`; production = the branch after two
-   merge + bounce rounds on 2026-09-26, both READY 26/13/1, live contract checks green):**
-   - DONE and LIVE: T0 A-15 class (11.505); FRONTEND-REFRESH U1–U6 + U4b — the plan is complete (11.506–11.511, 11.517);
-     TRAIL-INTERFACE T1–T4: read model, Research screens, gates from every qualify step (11.512, 11.515); DEEP-RESEARCH
-     DR1 engine, DR2 route, DR3 composer switch (11.513, 11.514, 11.516).
-   - LIVE since 11.518: ONE login on the website (Caddy basic-auth removed, backup kept; live check 9/9). OWNER STEP: open
-     http://127.0.0.1:7200/v2/ on the Mac → Settings → "Website sign-in" → set King's password (the terminal script is gone).
-   - NEXT: the 81 verified bugs, table in `docs/wiki/experiments/trail-ext-bughunt-2026-09-26/README.md` (IDs B-01..B-81):
-     batch A (6, live+high, crashes) → batch B (24, live+medium) → batch C (39, live-low + latent); D (12) = dead code, listed
-     only. Each fix: a failing test first; mark the fixed IDs in the table with the closing register row.
-   - DEFERRED with reasons: T5 (the server-rendered dossier needs the harness journal — what each step showed and what the
-     agent answered — which the server does not keep; the Research page shows the same records); DR0 (a dedicated
-     `deep_research` lane stage + the reserved deep retrieval surfaces).
-   - OWNER: DR4 (5 live deep-research questions); FRIENDS-ACCESS F6 close-out once King's password is typed (step 5 of the
-     go-live script is still waiting in the owner's terminal; Caddy still has basic_auth until then).
+3. **FRIENDS-ACCESS-V1 F6 (active):** one login is live (11.518). OWNER STEP: on the Mac, open http://127.0.0.1:7200/v2/ →
+   Settings → "Website sign-in" and set King's password (10+ characters, never in chat; `/auth/me` shows
+   `web_password_set: false` until then). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
+   must print `"ok": true`, the owner signs in and adds the first friend in Settings, and the F6 close-out follows (register row,
+   work-log, CONTINUITY, memory).
+4. **FIX-IT-ALL progress (integration branch `feat/fix-it-all`, worktree `pmv4-fix`).** Production `a2b38e6a` (the owner's
+   merge + bounce, READY 26/13/1, `/retrieve` GRAPH 200, no new Traceback, live contract 5 passed). Merges AND bounces are
+   classifier-gated as Production Deploy: hand the owner ONE Run-button command
+   (`git merge --ff-only feat/fix-it-all && (cd frontend-v2 && npm run build) && bash scripts/bounce_fleet.sh` in the main checkout;
+   the UI build is needed because T5 changed the frontend).
+   - LIVE: T0 (11.505); FRONTEND-REFRESH complete (11.506–11.511, 11.517); TRAIL-INTERFACE T1–T4 (11.512, 11.515); DEEP-RESEARCH
+     DR1–DR3 (11.513, 11.514, 11.516); one login (11.518); DR0 its own lanes (11.519); the DR4 rows fix (`a2b38e6a`).
+   - ON THE BRANCH, NOT LIVE: DR4 report fix — chat's thinking rule + `REPORT_EMPTY` (11.520; after the deploy re-run DR4
+     question 4, commerce-v1 standard, to close DR4); bug-hunt fixes A+B from the acquisition and ecommerce groups (11.521,
+     11.522); T5 dossier route + the owner's Registry (11.523).
+   - IN FLIGHT (helper agents; each reports back, the orchestrator reviews, cherry-picks, runs contracts + the determinism set
+     + vitest, then writes register rows and marks the README table):
+     - runtime group `pmv4-bugrt` (`fix/trail-ext-bugrt`): batches A+B, plus the follow-ups the other groups need in its files
+       (B-09 / B-12 manifest inputs, B-14 `service.result`, B-11 / B-13 `semantic_view`, B-19 `validate_receipt`); its batch C
+       (B-48 B-49 B-50 B-51 B-53 B-57 B-66 B-67 B-68 B-69) goes to it next;
+     - acquisition group `pmv4-bugacq`: batch C (B-41..B-47, B-56, B-63, B-65);
+     - ecommerce group `pmv4-bugeco`: batch C part 1 (binding.py, executors.py, adapter_receipt.py, query_semantics.py);
+     - ecommerce group 2 `pmv4-bugeco2`: batch C part 2 (lived_world.py, report.py, graph.py, bridge.py, product_reality.py).
+   - Helper rules: `/Users/king/Documents/polymath-rebuild/handoff-drafts/bugfix_rules.md`. SET `POLYMATH_PG_DSN` to a dead DSN
+     and never unset it (`test_adapter_service_store.py` falls back to the LIVE database); never `git stash` (shared across
+     worktrees). Both incidents are recorded in 11.521 / 11.522; the live database had 0 orphan rows.
+   - OWNER DECISIONS pending: B-15 (C_hypotheses 1–8 vs the portfolio law's 3–6); an app-wide Host allowlist (B-28 covers only
+     the acquisition route); the deep-research "moves" design (broad / deep / adjacent / inverse, relevance gate) as DR6 —
+     proposed in chat 2026-09-26, waiting for "go".
    - Frontend slices that add API calls go AFTER the backend they call is merged and bounced: the live contract test checks
      every `api.ts` call against :7200.
 5. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
