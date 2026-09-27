@@ -138,7 +138,7 @@ function Section({ title, rows, open, setOpen }: {
                 </tr>
                 {open === r.chunkId && (
                   <tr>
-                    <td colSpan={7} style={{ background: "var(--bg-sunken)" }}>
+                    <td colSpan={7} style={{ background: "var(--sunken)" }}>
                       <div className="mono faint" style={{ marginBottom: 6 }}>
                         {r.humanLocator ?? r.locator ?? r.chunkId}
                       </div>

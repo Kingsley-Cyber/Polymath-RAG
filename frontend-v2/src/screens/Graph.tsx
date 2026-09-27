@@ -91,7 +91,7 @@ export function Graph({ corpusId }: { corpusId: string }) {
                 </div>
               )}
               {rels.data.relationships.map((r) => (
-                <div key={r.fact_id} style={{ borderBottom: "1px solid var(--line-soft)", padding: "9px 0" }}>
+                <div key={r.fact_id} style={{ borderBottom: "1px solid var(--border-soft)", padding: "9px 0" }}>
                   <div className="row" style={{ gap: 8 }}>
                     <span className="mono">{r.subject.replace(/\s+/g, " ")}</span>
                     <span className="pill pill--unknown">{r.predicate}</span>

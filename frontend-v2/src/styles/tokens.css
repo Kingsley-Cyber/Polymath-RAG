@@ -129,23 +129,4 @@
   --swatch-amber: #B45309;
   --swatch-rose: #BE123C;
 
-  /* Legacy names still read by some inline styles in the screens. They alias the tokens above;
-     U6 removes them once no screen uses them. */
-  --bg-raised: var(--surface);
-  --bg-sunken: var(--sunken);
-  --line: var(--border);
-  --line-soft: var(--border-soft);
-  --fg: var(--text);
-  --fg-dim: var(--text-2);
-  --fg-faint: var(--text-3);
-  --accent-dim: var(--accent-soft);
-  --ok-bg: var(--ok-soft);
-  --warn-bg: var(--warn-soft);
-  --bad-bg: var(--bad-soft);
-  --unknown: var(--neutral);
-  --unknown-bg: var(--neutral-soft);
-  --mono: var(--font-mono);
-  --sans: var(--font-ui);
-  --prose: var(--font-ui);
-  --r: var(--radius-1);
 }

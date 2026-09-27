@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useConfirm, type ConfirmOptions } from "../ui/Dialog";
 import { ACCENTS, MODES, useAppearance, type Accent, type Mode } from "../lib/appearance";
 import { ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
@@ -42,6 +43,7 @@ function ShownOnce({ created, onDone }: { created: CreatedKey; onDone: () => voi
 }
 
 function MyKeys({ me }: { me: Me }) {
+  const [confirm, confirmDialog] = useConfirm();
   const [nonce, setNonce] = useState(0);
   const keys = useAsync((s) => auth.keys(s), [nonce]);
   const prompt = useAsync((s) => auth.prompt(s), []);
@@ -66,12 +68,14 @@ function MyKeys({ me }: { me: Me }) {
   }
 
   async function revoke(k: ApiKey) {
-    if (!window.confirm(`Revoke the key "${k.label || k.key_id}"? Agents using it stop working at once.`)) return;
+    if (!(await confirm({ title: `Revoke the key ${k.label || k.key_id}?`, action: "Revoke key", danger: true,
+      body: "Agents using this key stop working at once." }))) return;
     try { await auth.revokeKey(k.key_id); setNonce((n) => n + 1); } catch (err) { setError(message(err)); }
   }
 
   return (
     <div className="card stack">
+      {confirmDialog}
       <h2 className="settings__title">API keys for your agents</h2>
       {me.is_owner ? (
         <p className="faint">
@@ -121,7 +125,9 @@ function MyKeys({ me }: { me: Me }) {
   );
 }
 
-function FriendRow({ f, libraries, onChanged }: { f: Friend; libraries: string[]; onChanged: () => void }) {
+function FriendRow({ f, libraries, onChanged, confirm }: {
+  f: Friend; libraries: string[]; onChanged: () => void; confirm: (o: ConfirmOptions) => Promise<boolean>;
+}) {
   const [open, setOpen] = useState<"" | "libraries" | "keys">("");
   const [chosen, setChosen] = useState<string[]>(f.corpus_ids.filter((c) => !c.startsWith("fr-")));
   const [secret, setSecret] = useState("");
@@ -129,7 +135,8 @@ function FriendRow({ f, libraries, onChanged }: { f: Friend; libraries: string[]
   const keys = useAsync((s) => (open === "keys" ? auth.friendKeys(f.username, s) : Promise.resolve(null)), [open]);
 
   async function act(action: "enable" | "disable" | "reset-password") {
-    if (action === "reset-password" && !window.confirm(`Reset ${f.username}'s password? They must choose a new one at next sign-in.`)) return;
+    if (action === "reset-password" && !(await confirm({ title: `Reset ${f.username}'s password?`, action: "Reset password",
+      body: "They get a new first password, shown once, and must choose their own at next sign-in." }))) return;
     try {
       const r = await auth.friendAction(f.username, action);
       if (r.first_password) setSecret(r.first_password);
@@ -203,6 +210,7 @@ function FriendRow({ f, libraries, onChanged }: { f: Friend; libraries: string[]
 }
 
 function Friends() {
+  const [confirm, confirmDialog] = useConfirm();
   const [nonce, setNonce] = useState(0);
   const admin = useAsync((s) => auth.friends(s), [nonce]);
   const [username, setUsername] = useState("");
@@ -222,6 +230,7 @@ function Friends() {
 
   return (
     <div className="card stack">
+      {confirmDialog}
       <h2 className="settings__title">Friends</h2>
       <p className="faint">
         Each friend gets their own sign-in, every shared library by default, their own private library, and up to
@@ -244,7 +253,7 @@ function Friends() {
         <thead><tr><th>Friend</th><th>Status</th><th>Libraries</th><th>Keys</th><th /></tr></thead>
         <tbody>
           {(admin.data?.friends ?? []).map((f) => (
-            <FriendRow key={f.username} f={f} libraries={admin.data?.libraries ?? []} onChanged={() => setNonce((n) => n + 1)} />
+            <FriendRow key={f.username} f={f} libraries={admin.data?.libraries ?? []} onChanged={() => setNonce((n) => n + 1)} confirm={confirm} />
           ))}
         </tbody>
       </table>

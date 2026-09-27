@@ -114,7 +114,7 @@ export function AnswerReview({ question, answer, receipt, models }: {
       )}
       {res?.raw && !r && (
         <pre className="mono" style={{ fontSize: 11.5, whiteSpace: "pre-wrap",
-             background: "var(--bg-sunken)", padding: 10, borderRadius: 6, maxHeight: 240, overflow: "auto" }}>
+             background: "var(--sunken)", padding: 10, borderRadius: 6, maxHeight: 240, overflow: "auto" }}>
           {res.raw}
         </pre>
       )}

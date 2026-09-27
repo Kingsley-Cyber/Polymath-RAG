@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useConfirm } from "../ui/Dialog";
 import { api, ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { StatePill } from "../components/Pill";
@@ -21,6 +22,7 @@ function keyLabel(p: LlmProvider): string {
 }
 
 export function Models() {
+  const [confirm, confirmDialog] = useConfirm();
   const [nonce, setNonce] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -85,7 +87,8 @@ export function Models() {
   }
 
   async function onDelete(p: LlmProvider) {
-    if (!window.confirm(`Delete provider "${p.provider}"?\n\nThis removes its configuration (endpoint, key reference, model list). Chats using its models will fall back to another provider.`)) return;
+    if (!(await confirm({ title: `Delete the provider ${p.provider}?`, action: "Delete provider", danger: true,
+      body: "This removes its configuration (endpoint, key reference, model list). Chats using its models fall back to another provider." }))) return;
     setBusy(`Deleting ${p.provider}…`); setErr(null); setNotice(null);
     try {
       await api.deleteProvider(p.provider_id);
@@ -114,6 +117,7 @@ export function Models() {
 
   return (
     <div className="screen screen--wide">
+      {confirmDialog}
       <div className="screen__head">
         <h1 className="screen__title">Models</h1>
         <p className="screen__sub">

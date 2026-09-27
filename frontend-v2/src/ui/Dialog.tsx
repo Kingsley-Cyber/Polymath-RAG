@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 /** FRONTEND-REFRESH-V1 §5 — a modal built on the native <dialog>: the browser traps focus, Esc closes it, and the page behind
  *  is inert. Replaces window.prompt / confirm / alert. */
@@ -56,4 +56,25 @@ export function ConfirmByName({ open, title, name, what, action, onConfirm, onCl
       {error && <p className="banner banner--bad">{error}</p>}
     </Dialog>
   );
+}
+
+export interface ConfirmOptions { title: string; body: ReactNode; action: string; danger?: boolean }
+
+/** `const [confirm, confirmDialog] = useConfirm()`; render `confirmDialog`, then `if (!(await confirm({…}))) return;`.
+ *  The promise answers true only for the action button; Cancel, Esc and the backdrop answer false. */
+export function useConfirm(): [(o: ConfirmOptions) => Promise<boolean>, ReactNode] {
+  const [pending, setPending] = useState<{ o: ConfirmOptions; resolve: (ok: boolean) => void } | null>(null);
+  const confirm = useCallback((o: ConfirmOptions) => new Promise<boolean>((resolve) => setPending({ o, resolve })), []);
+  const answer = (ok: boolean) => { pending?.resolve(ok); setPending(null); };
+  const element = (
+    <Dialog open={!!pending} title={pending?.o.title ?? ""} onClose={() => answer(false)} actions={<>
+      <button type="button" className="btn" onClick={() => answer(false)}>Cancel</button>
+      <button type="button" className={`btn ${pending?.o.danger ? "btn--danger-solid" : "btn--primary"}`} onClick={() => answer(true)}>
+        {pending?.o.action}
+      </button>
+    </>}>
+      <p className="dialog__text">{pending?.o.body}</p>
+    </Dialog>
+  );
+  return [confirm, element];
 }

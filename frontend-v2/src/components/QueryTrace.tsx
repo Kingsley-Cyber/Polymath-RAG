@@ -40,7 +40,7 @@ export function QueryTrace({ receipt, requestedMode }: {
         <details style={{ marginTop: 12 }}>
           <summary className="label" style={{ cursor: "pointer" }}>Compiler / query plan</summary>
           <pre className="mono" style={{ marginTop: 8, whiteSpace: "pre-wrap", fontSize: 11.5,
-                                          background: "var(--bg-sunken)", padding: 10, borderRadius: 6,
+                                          background: "var(--sunken)", padding: 10, borderRadius: 6,
                                           maxHeight: 320, overflow: "auto" }}>
             {JSON.stringify(plan, null, 2)}
           </pre>

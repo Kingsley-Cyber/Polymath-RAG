@@ -162,7 +162,7 @@ Every slice:
 | **U3** UI pieces + icons — DONE 11.508 | `src/ui/*`; Settings and Login adopt them first (the newest screens). | Unit tests for Button, Dialog (focus trap, Esc), Status (tooltip text = enum). |
 | **U4** Chat — DONE 11.509 (citation hover cards → U4b) | Composer chips, the reading column, citation hover cards, Stop, Copy, the empty state. | `chat-session.test.tsx` and the streaming tests stay green; one real owner question on :7200 (on the owner's word — live chat turns are counted). |
 | **U5** Files, Graph, Compare, Overview — DONE 11.510 | Loading, empty and error states; column sets; the danger-zone dialog; stacked layouts on phones. | A test that loading never renders "0 documents"; a type-to-confirm delete test. |
-| **U6** owner screens + polish | Control Plane and Models on the shared pieces; focus rings; keyboard for dialogs and the drawer; reduced motion. | The live contract check (`npx vitest run src/__tests__/live-contract.test.ts`) on :7200; final screenshots. |
+| **U6** owner screens + polish — DONE 11.511 | Control Plane and Models on the shared pieces; focus rings; keyboard for dialogs and the drawer; reduced motion. | The live contract check (`npx vitest run src/__tests__/live-contract.test.ts`) on :7200; final screenshots. |
 
 ## 8. Measured baseline
 Code facts read on 2026-09-26 (production `7e1918c2`). U0 adds the screenshots and re-measures the bundle.
