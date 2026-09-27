@@ -124,13 +124,13 @@ it("a second run at the same time is reported, not swallowed", async () => {
   expect(host.textContent).toContain("one deep research run at a time");
 });
 
-it("labels each search in the process rail by its move, in words", async () => {
+it("labels each search in the research view's activity feed by its move, in words", async () => {
   frames = movesFrames({ searched: 1, learnings: 1 });
   await askDeep("Is Laban effort notation worth learning?");
-  const rows = [...host.querySelectorAll(".phase-label")].map((e) => e.textContent);
-  expect(rows).toContain("Broad · laban effort factors");
-  expect(rows).toContain("Inverse · when does effort notation fail");
-  expect(rows).toContain("Reading what came back: laban effort factors");      // only a search takes the move label
+  await act(async () => (host.querySelector(".research-live__toggle") as HTMLButtonElement).click());   // a finished run folds
+  await act(async () => [...host.querySelectorAll("button")].find((b) => b.textContent?.startsWith("Show activity"))!.click());
+  const rows = [...host.querySelectorAll(".research-feed__what")].map((e) => e.textContent);
+  expect(rows).toEqual(["Main answer · laban effort factors", "Counter-evidence · when does effort notation fail"]);
 });
 
 it("says under the report what the counter-evidence searches found", async () => {
