@@ -7,7 +7,8 @@ import { Research } from "../screens/Research";
 
 /** TRAIL-INTERFACE-V1 T2–T4 — the Research screen watches and reads runs: outcomes in words, TrailSignal's refusals with the
  *  hypothesis they refuse, gates as "observed of minimum", evidence counts by platform, polling that stops when the run ends,
- *  and Cancel only while a run can still be cancelled. Field text renders as text, never HTML. */
+ *  and Cancel only while a run can still be cancelled. Field text renders as text, never HTML. T5: the dossier is a plain link to
+ *  the page the server renders (a new tab, or a download), and the owner's view carries the registry the run met. */
 
 let host: HTMLDivElement;
 let root: Root;
@@ -104,6 +105,46 @@ it("a finished run offers no Cancel and is not polled", async () => {
   const before = calls.filter((c) => c.path.endsWith("/view")).length;
   await act(async () => { vi.advanceTimersByTime(12_000); });
   expect(calls.filter((c) => c.path.endsWith("/view")).length).toBe(before);
+});
+
+it("offers the dossier as a link that opens a new tab, and as a download — never fetched by the page", async () => {
+  view = { ...makeView(), report: { available: true } };
+  await openRun();
+  const links = [...host.querySelectorAll("a")];
+  const open = links.find((a) => a.textContent?.includes("Dossier"))!;
+  expect(open.getAttribute("href")).toBe("/adapter/adr_1/report");
+  expect(open.getAttribute("target")).toBe("_blank");
+  expect(open.getAttribute("rel")).toBe("noopener noreferrer");
+  const download = links.find((a) => a.textContent?.includes("Download"))!;
+  expect(download.getAttribute("href")).toBe("/adapter/adr_1/report?download=1");
+  expect(calls.some((c) => c.path.includes("/report"))).toBe(false);
+});
+
+it("offers no dossier for an adapter that has none", async () => {
+  view = { ...makeView(), report: { available: false } };
+  await openRun();
+  expect([...host.querySelectorAll("a")].some((a) => a.textContent?.includes("Dossier"))).toBe(false);
+});
+
+it("shows the owner the registry the run met; a view without one shows no Registry section", async () => {
+  view = { ...makeView(), registry: {
+    snapshot: { snapshot_id: "trs_2026_09_26", content_hash: "sha256:abab" }, snapshot_ids: ["trs_2026_09_26", "trs_2026_09_20"],
+    priors: [{ registry_record_id: "reg_friction_07", prior_role: "friction_primitive", label: "<i>access</i> interruption", hypothesis_ids: ["hyp_a"] }],
+    territories: [{ territory_id: "ter_03", territory: "friction_primitive", territory_name: "Cold-weather handling", hypothesis_ids: ["hyp_a"] }] } };
+  await openRun();
+  const registry = [...host.querySelectorAll("section")].find((s) => s.querySelector("h2")?.textContent?.startsWith("Registry"))!;
+  expect(registry.textContent).toContain("trs_2026_09_26");
+  expect(registry.textContent).toContain("sha256:abab");
+  expect(registry.textContent).toContain("2 snapshots");
+  expect(registry.textContent).toContain("<i>access</i> interruption");                          // registry text, as text
+  expect(registry.querySelector("i")).toBeNull();
+  expect(registry.textContent).toContain("Friction primitive");
+  expect(registry.textContent).toContain("Cold-weather handling");
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  view = makeView();
+  await openRun();
+  expect([...host.querySelectorAll("h2")].some((h) => h.textContent?.startsWith("Registry"))).toBe(false);
 });
 
 it("a live run is followed and can be cancelled after confirming", async () => {

@@ -1,4 +1,5 @@
-"""TRAIL-INTERFACE-V1 T1 — the read model behind the web UI's Research section: the runs list and one run's view.
+"""TRAIL-INTERFACE-V1 T1 — the read model behind the web UI's Research section: the runs list and one run's view (T5: with the owner's
+registry coordinates, and the journal a run's dossier is rendered from).
 
 It only OBSERVES: nothing here writes, scores or decides (TrailSignal's score is its own, LAW 1). A run's output is recompiled
 from its step outputs through the fixed readers (gap A-15), so a run stored before that fix shows its real qualifications; the
@@ -8,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from . import service, store, trail_client
+from . import dossier, service, store, trail_client
 from .transitions import RunState
 
 _TITLE_KEYS = ("seed", "seed_idea", "question", "topic", "brief")
@@ -115,7 +116,44 @@ def all_qualifications(stored_steps: list[dict[str, Any]]) -> list[dict[str, Any
     return out
 
 
-def build_view(conn, run_id: str, directory: Path | None = None) -> dict[str, Any]:
+def registry_of(state: RunState, lineage: dict[str, Any]) -> dict[str, Any] | None:
+    """TrailSignal's registry as this run met it (T5, the owner's Registry section): the snapshot its Trail operations were decided
+    against (id and content hash, from the run's own Trail outputs), every snapshot id the lineage names, and the priors and territories
+    Trail projected the hypotheses onto — coordinates, never evidence. None when no Trail operation reported any."""
+    snapshot = service._registry_snapshot(state)
+    priors = service._gather(state.outputs, "priors", state.output_order)
+    territories = service._gather(state.outputs, "territories", state.output_order)
+    out = {"snapshot": snapshot, "snapshot_ids": [str(x) for x in lineage.get("registry_snapshot_ids") or []],
+           "priors": [p for p in priors if isinstance(p, dict)] if isinstance(priors, list) else [],
+           "territories": [t for t in territories if isinstance(t, dict)] if isinstance(territories, list) else []}
+    return out if snapshot or out["snapshot_ids"] or out["priors"] or out["territories"] else None
+
+
+def dossier_journal(conn, run_id: str, directory: Path | None = None) -> dict[str, Any]:
+    """T5: the run's governed journal for the dossier renderer, rebuilt from its stored rows (dossier.journal_from_store). A finished run
+    carries the result this view reads — recompiled through the fixed readers, with the gates of every qualify step — so the dossier and
+    the Research page show one record (the stored result stays the untouched record); a live run has none yet and reads as in progress.
+    Read-only. Raises service.UnknownRun, dossier.NoDossier."""
+    loaded = store.load_run(conn, run_id)
+    if not loaded:
+        raise service.UnknownRun(run_id)
+    state, meta = loaded
+    if state.adapter_id not in dossier.DOSSIER_ADAPTERS:
+        raise dossier.NoDossier(state.adapter_id)
+    steps = store.list_steps(conn, run_id)
+    result = None
+    if state.terminal:
+        result = service._compile_result(conn, run_id, state, service.manifest_for(state.adapter_id, directory), output=None, persist=False)
+        if quals := all_qualifications(steps):
+            result = {**result, "output": {**(result.get("output") or {}), "qualifications": quals}}
+    run = {"run_id": run_id, "adapter_id": state.adapter_id, "adapter_version": meta.get("adapter_version"),
+           "workflow_version": meta.get("workflow_version"), "created_at": service._ts(meta.get("created_at")),
+           "updated_at": service._ts(meta.get("updated_at")), "agent_identity": meta.get("agent_identity"), "input": state.input}
+    return dossier.journal_from_store(run, steps, result)
+
+
+def build_view(conn, run_id: str, directory: Path | None = None, *, owner: bool = False) -> dict[str, Any]:
+    """`owner`: the caller is the owner (no principal), who also sees the run's registry coordinates."""
     loaded = store.load_run(conn, run_id)
     if not loaded:
         raise service.UnknownRun(run_id)
@@ -141,4 +179,6 @@ def build_view(conn, run_id: str, directory: Path | None = None) -> dict[str, An
         "unknowns": recompiled.get("unknowns") or [],
         # true when the stored result lost qualifications the steps hold (runs stored before the A-15 fix)
         "stored_result_shadowed": bool(stored) and not stored_quals and bool(output.get("qualifications")),
+        "report": {"available": state.adapter_id in dossier.DOSSIER_ADAPTERS},          # GET /adapter/{id}/report (T5)
+        **({"registry": registry_of(state, recompiled.get("lineage") or {})} if owner else {}),
     }

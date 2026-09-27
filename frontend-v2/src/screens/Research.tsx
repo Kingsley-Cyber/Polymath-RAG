@@ -26,6 +26,11 @@ function words(id: string | null | undefined): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/** T5: the dossier is a page the server renders under its own CSP — a plain link, never fetched into this app. */
+function reportHref(runId: string): string {
+  return `/adapter/${encodeURIComponent(runId)}/report`;
+}
+
 function when(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -132,6 +137,12 @@ function RunBody({ v, onCancel, error }: { v: RunView; onCancel: () => void; err
           <span className={`pill pill--${tone(v.run.status)}`}><span className="pill__dot" />{words(v.run.status)}</span>
           <span>{words(v.run.adapter_id.split(".").pop())} {v.run.adapter_version ?? ""} · started {when(v.run.started_at)}
             {v.run.finished_at ? ` · finished ${when(v.run.finished_at)}` : ""}{v.run.agent_identity ? ` · agent ${v.run.agent_identity}` : ""}</span>
+          {v.report?.available && <>
+            <a className="btn" href={reportHref(v.run.run_id)} target="_blank" rel="noopener noreferrer" title="The full dossier, in a new tab">
+              <Icon name="external" /> Dossier</a>
+            <a className="btn" href={`${reportHref(v.run.run_id)}?download=1`} rel="noopener noreferrer" title="The dossier as an HTML file">
+              <Icon name="download" /> Download</a>
+          </>}
           {!v.run.terminal && <button type="button" className="btn btn--danger" onClick={onCancel}>Cancel run</button>}
         </p>
         {v.run.gap?.code && <div className="banner banner--bad" style={{ marginTop: 10 }}>Stopped: {v.run.gap.code}{v.run.gap.message ? ` — ${v.run.gap.message}` : ""}</div>}
@@ -241,6 +252,48 @@ function RunBody({ v, onCancel, error }: { v: RunView; onCancel: () => void; err
             {(s.unresolved_research_gaps ?? []).map((g, i) => <li key={g.gap_id ?? i}>{g.question} <span className="faint">({words(g.evidence_role)})</span></li>)}
           </ul>
         </details>
+      )}
+
+      {v.registry && (
+        <section className="card stack" aria-labelledby="registry-h">
+          <h2 className="settings__title" id="registry-h">Registry <span className="authority authority--trail">Trail registry</span></h2>
+          <p className="dim" style={{ margin: 0 }}>The registry snapshot TrailSignal decided this run against, and the coordinates it placed the hypotheses on. Coordinates are never evidence.</p>
+          <p style={{ margin: 0 }}>Snapshot <span className="mono">{v.registry.snapshot?.snapshot_id ?? "—"}</span>
+            {v.registry.snapshot?.content_hash && <span className="mono faint" style={{ overflowWrap: "anywhere" }}> · {v.registry.snapshot.content_hash}</span>}</p>
+          {v.registry.snapshot_ids.length > 1 && (
+            <p className="faint" style={{ margin: 0 }}>This run met {v.registry.snapshot_ids.length} snapshots: {v.registry.snapshot_ids.join(" · ")}</p>
+          )}
+          {v.registry.priors.length > 0 && (
+            <div className="table-wrap">
+              <table className="t">
+                <thead><tr><th>Prior</th><th>Role</th><th>Hypotheses</th></tr></thead>
+                <tbody>
+                  {v.registry.priors.map((p, i) => (
+                    <tr key={`${p.registry_record_id ?? ""}-${i}`}>
+                      <td>{p.label ?? p.registry_record_id ?? "—"}{p.label && p.registry_record_id ? <span className="faint mono"> {p.registry_record_id}</span> : null}</td>
+                      <td>{words(p.prior_role)}</td><td>{p.hypothesis_ids?.length ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {v.registry.territories.length > 0 && (
+            <div className="table-wrap">
+              <table className="t">
+                <thead><tr><th>Territory</th><th>Role</th><th>Hypotheses</th></tr></thead>
+                <tbody>
+                  {v.registry.territories.map((t, i) => (
+                    <tr key={`${t.territory_id ?? ""}-${i}`}>
+                      <td>{t.territory_name ?? t.territory_id ?? "—"}{t.territory_name && t.territory_id ? <span className="faint mono"> {t.territory_id}</span> : null}</td>
+                      <td>{words(t.territory)}</td><td>{t.hypothesis_ids?.length ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       )}
 
       <details className="card" open={!v.run.terminal}>

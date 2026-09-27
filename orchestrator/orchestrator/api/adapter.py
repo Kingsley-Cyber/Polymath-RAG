@@ -2,18 +2,28 @@
 All authority lives in polymath_shared.adapter.service; this module only maps HTTP ↔ service and errors ↔ status codes."""
 from __future__ import annotations
 
+import logging
+import re
 from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from polymath_shared import principal_context
-from polymath_shared.adapter import run_view, service
+from polymath_shared.adapter import dossier, run_view, service
 from polymath_shared.adapter.contracts import ContractViolation
 from polymath_shared.adapter.transitions import SubmissionRejected
 from polymath_shared.db import tx
 
 router = APIRouter()
+log = logging.getLogger("orchestrator.adapter")
+
+#: the dossier page: inline styles only — no script, no fetch, no form, no base, no framing by another site
+REPORT_HEADERS = {
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'",
+    "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "Cache-Control": "no-store"}
 
 
 class StartRequest(BaseModel):
@@ -112,13 +122,48 @@ async def adapter_status(run_id: str) -> dict:
 @router.get("/adapter/{run_id}/view")
 async def adapter_view(run_id: str) -> dict:
     """TRAIL-INTERFACE-V1 T1: one run for the Research screens — progress, the recompiled output sections, contradictions and
-    unknowns. Read-only; the run owner's check as for every run route."""
+    unknowns, whether it has a dossier; the owner (no principal) also gets the registry block (T5). Read-only; the run owner's
+    check as for every run route."""
     try:
         with tx() as conn:
             _own(conn, run_id)
-            return run_view.build_view(conn, run_id)
+            return run_view.build_view(conn, run_id, owner=principal_context.current() is None)
     except service.UnknownRun:
         raise _404(run_id)
+
+
+def _report_html(run_id: str, layout: str, principal: str | None) -> str:
+    """In a worker thread, under the request's own principal: the run's rows are read in one short transaction, then the engine
+    renders them in a subprocess after the transaction has closed."""
+    with principal_context.acting_as(principal):
+        try:
+            with tx() as conn:
+                _own(conn, run_id)
+                journal = run_view.dossier_journal(conn, run_id)
+        except service.UnknownRun:
+            raise _404(run_id)
+        except dossier.NoDossier as exc:
+            raise HTTPException(status_code=404, detail={"error_code": "NO_DOSSIER", "message": f"adapter {exc.args[0]!r} has no dossier"})
+    try:
+        return dossier.render_dossier(journal, layout, title=f"Dossier · {run_view.title_of(journal.get('input'))}")
+    except dossier.DossierError as exc:
+        log.warning("dossier run=%s layout=%s %s: %s", run_id, layout, exc.code, exc)
+        raise HTTPException(status_code=504 if exc.code == "DOSSIER_TIMEOUT" else 500,
+                            detail={"error_code": exc.code, "message": "the dossier could not be rendered"})
+
+
+@router.get("/adapter/{run_id}/report")
+async def adapter_report(run_id: str, layout: str = "FULL_RESEARCH", download: bool = False) -> HTMLResponse:
+    """TRAIL-INTERFACE-V1 T5: the run's research dossier — the engine's own renderer, run out of process on the journal rebuilt from the
+    stored run, sanitized, and sent under a CSP that allows no script. The run owner's check as for every run route; `download=1`
+    sends it as a file."""
+    if layout not in dossier.LAYOUTS:
+        raise HTTPException(status_code=422, detail={"error_code": "UNKNOWN_LAYOUT", "message": f"layout is one of {', '.join(dossier.LAYOUTS)}"})
+    page = await run_in_threadpool(_report_html, run_id, layout, principal_context.current())
+    headers = dict(REPORT_HEADERS)
+    if download:
+        headers["Content-Disposition"] = f'attachment; filename="dossier-{re.sub(r"[^A-Za-z0-9_.-]", "_", run_id)}.html"'
+    return HTMLResponse(page, headers=headers)
 
 
 @router.get("/adapter/{run_id}/result")

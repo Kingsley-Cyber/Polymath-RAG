@@ -142,7 +142,7 @@ table.t tr:hover td { background: var(--surface-2); }
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-2); background: var(--surface); }
 .table-wrap table.t th:first-child { border-top-left-radius: var(--radius-2); }
 
-select, input[type="text"], input[type="password"], input[type="search"], textarea, button.btn {
+select, input[type="text"], input[type="password"], input[type="search"], textarea, button.btn, a.btn {
   background: var(--surface); color: var(--text);
   border: 1px solid var(--border-control); border-radius: var(--radius-1);
   padding: 7px 10px; font: inherit; font-size: var(--fs-sm); line-height: 1.4;
@@ -151,12 +151,13 @@ select option { background: var(--surface); color: var(--text); }
 input::placeholder, textarea::placeholder { color: var(--text-3); }
 select:hover, input:hover, textarea:hover { border-color: var(--text-3); }
 select:focus-visible, input:focus-visible, textarea:focus-visible { border-color: var(--accent); }
-button.btn {
+button.btn, a.btn {
   cursor: pointer; border-color: var(--border-strong); font-weight: 500;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   transition: background var(--dur), border-color var(--dur);
 }
-button.btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--border-control); }
+button.btn:hover:not(:disabled), a.btn:hover { background: var(--surface-2); border-color: var(--border-control); }
+a.btn { text-decoration: none; }             /* a link that looks like a button (e.g. a page the server renders) */
 button.btn--primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 button.btn--primary:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); filter: brightness(1.08); }
 button.btn--danger { color: var(--bad); }

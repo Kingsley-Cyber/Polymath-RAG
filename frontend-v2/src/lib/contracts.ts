@@ -320,6 +320,13 @@ export interface LivedCluster {
 export interface ProductConcept { id?: string; name?: string; buyer?: string; form_factor?: string; differentiator?: string }
 export interface ConceptReality { concept_id?: string; concept?: string; status?: string; existing_products?: number }
 export interface HypothesisView { hypothesis?: { hypothesis_id?: string; statement?: string; status?: string } }
+/** T5: TrailSignal's registry as the run met it — the owner's view only (a friend's view has no `registry` key). */
+export interface RegistryPrior { registry_record_id?: string; prior_role?: string; label?: string | null; hypothesis_ids?: string[] }
+export interface RegistryTerritory { territory_id?: string; territory?: string; territory_name?: string | null; hypothesis_ids?: string[] }
+export interface RunRegistry {
+  snapshot: { snapshot_id?: string; content_hash?: string } | null; snapshot_ids: string[];
+  priors: RegistryPrior[]; territories: RegistryTerritory[];
+}
 export interface RunView {
   run: {
     run_id: string; adapter_id: string; adapter_version: string | null; title: string; status: string; terminal: boolean;
@@ -333,4 +340,6 @@ export interface RunView {
     concept_reality?: ConceptReality[]; unresolved_research_gaps?: OpenGap[]; hypothesis_semantics?: HypothesisView[];
   };
   other_output_keys: string[]; contradictions: unknown[]; unknowns: unknown[]; stored_result_shadowed: boolean;
+  report?: { available: boolean };                 // T5: GET /adapter/{id}/report exists for this run's adapter
+  registry?: RunRegistry | null;
 }
