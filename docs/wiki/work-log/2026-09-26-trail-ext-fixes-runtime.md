@@ -90,6 +90,13 @@ Follow-ups the orchestrating session routed here from the other groups (separate
   PINNED source table routes only through `-` rows (read from the table: today `first_party`, participant interviews, one independence
   group per observation) when its url is an http(s) page. A public page declared that way minted one voice per observation and
   anchored a lived cluster. A first-hand source without a web url (e.g. `urn:interview:…`) is still accepted.
+- **B-11 / B-13** (ecommerce group; their report side is in `fix/trail-ext-bugeco`) the derived semantic view:
+  - `evidence_boundary._index_rows` (and the readable evidence rows) carry TrailSignal's per-hypothesis `hypothesis_relations`
+    (ADR-069) beside the global polarity; the view's `field_evidence` rows carry them too, so a record that supports one hypothesis and
+    contradicts another is no longer shown with one polarity for both;
+  - the view's `knowledge.knowledge_gaps` holds the hypothesis's OPEN gaps, chosen before the 12-item cut, and
+    `knowledge.open_knowledge_gap_count` counts them all (a hypothesis whose first 12 gaps were closed showed no open gap). The agent
+    materials say "open knowledge gaps", and research planning reads the same list; the ledger keeps the closed ones.
 
 ## Proof
 - New tests: `tests/contracts/test_trail_ext_runtime_fixes.py` (42) and `tests/determinism/test_adapter_trail_ext_runtime_fixes.py` (18).
@@ -100,7 +107,9 @@ Follow-ups the orchestrating session routed here from the other groups (separate
   - Where TrailSignal decides, the PINNED core under `governance/trail/` is asked: `HarnessResearchReceiptV1` (B-03), Trail's canonical
     request measure `canonical_text(BoundedResearchRequestV1)` (B-05), `ResearchPayloadV1` and the gap compiler's `EvidenceGap`
     (B-21 / B-22 / B-26), and the embedded core end to end (B-03, B-05, B-21, B-22 / B-26, B-24).
-- Follow-ups: `test_b19_a_public_page_declared_as_a_no_web_class_is_refused_at_submit` failed on the code before it (accepted).
+- Follow-ups: `test_b19_a_public_page_declared_as_a_no_web_class_is_refused_at_submit` failed on the code before it (accepted);
+  `test_b13_the_view_shows_every_open_gap_before_its_cut_and_counts_them` and `test_b11_field_evidence_carries_trails_relation_to_each_hypothesis`
+  failed before theirs (12 closed gaps shown, no open one; the relations dropped).
 - `tests/contracts -k "not test_live_"`: 354 passed. Every `tests/determinism/test_*adapter*` / `test_*trail*` file except the
   fleet-database ones: 236 passed. The other determinism files that import changed code (`test_autoresearch_*`,
   `test_evidence_packet_text_excerpt`, `test_hypothesis_state_machine`, `test_knowledge_scope*`, `test_mcp_principals_gate`,

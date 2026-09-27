@@ -471,3 +471,39 @@ def test_b19_a_public_page_declared_as_a_no_web_class_is_refused_at_submit():
     assert any("sources/0/source_class" in e and "first_party" in e and "public page" in e for e in errors), errors   # the defect: accepted
     assert T.validate_receipt(RECEIPT_STEP, _receipt_with_class("community_discussion")) == []
     assert T.validate_receipt(RECEIPT_STEP, _receipt_with_class("first_party", lambda i: f"urn:interview:participant-{i}")) == []   # a real interview
+
+
+# ─────────────────────────────────────────────────────────── B-11 / B-13: what the derived view carries about field evidence and gaps
+from polymath_shared.adapter import semantic_view as SV
+
+H1, H2 = "hyp_" + "1" * 24, "hyp_" + "2" * 24
+
+
+def _view_state(hid: str, gaps: list[dict]) -> dict:
+    return {"hypothesis_id": hid, "revision": 2, "status": "revised", "statement": "runners lose small items mid stride", "parent_hypothesis_ids": [],
+            "knowledge_support": [], "field_evidence_ids": [], "knowledge_gaps": gaps, "assumptions": [], "falsifiers": [], "contradictions": []}
+
+
+def test_b13_the_view_shows_every_open_gap_before_its_cut_and_counts_them():
+    closed = [{"gap_id": f"gap_c{i}", "question": f"closed question {i}", "evidence_role": "behavior", "status": "closed"} for i in range(12)]
+    opened = [{"gap_id": f"gap_o{i}", "question": f"open question {i}", "evidence_role": "behavior", "status": "open"} for i in range(2)]
+    view = SV.for_hypothesis(_view_state(H1, closed + opened), {})
+    assert [g["question"] for g in view["knowledge"]["knowledge_gaps"]] == ["open question 0", "open question 1"]   # the defect: 12 closed, 0 open
+    assert view["knowledge"]["open_knowledge_gap_count"] == 2
+    many = [{"gap_id": f"gap_o{i}", "question": f"open question {i}", "evidence_role": "behavior"} for i in range(15)]   # no status = open
+    view = SV.for_hypothesis(_view_state(H1, many), {})
+    assert len(view["knowledge"]["knowledge_gaps"]) == SV.MAX_ITEMS and view["knowledge"]["open_knowledge_gap_count"] == 15   # "N more" is sayable
+
+
+def test_b11_field_evidence_carries_trails_relation_to_each_hypothesis():
+    receipt = {"action_id": "hact_1", "observations": [{"observation_id": "obs_1", "source_id": "s1", "claim": "my keys bounced out again"}],
+               "sources": [{"source_id": "s1", "url": "https://forum.example/t/1", "source_class": "community_discussion"}]}
+    relations = [{"hypothesis_id": H1, "relation": "CONTRADICTS"}, {"hypothesis_id": H2, "relation": "SUPPORTS"}]
+    admission = {"evidence_admission": {"action_id": "hact_1", "admitted": [
+        {"admitted_evidence_id": "fev_1", "observation_id": "obs_1", "source_id": "s1", "evidence_role": "friction", "polarity": "supporting",
+         "hypothesis_ids": [H1, H2], "hypothesis_relations": relations}]}}
+    steps = [{"step_id": "I_research", "sequence": 23, "output": receipt}, {"step_id": "J_admit", "sequence": 24, "output": admission}]
+    assert EB._index_rows(steps)["fev_1"]["hypothesis_relations"] == relations                   # the defect: dropped, only the global polarity kept
+    views = SV.build({H1: _view_state(H1, []), H2: _view_state(H2, [])}, {}, step_outputs=steps)["hypotheses"]
+    assert [v["field_evidence"][0]["hypothesis_relations"] for v in views] == [relations, relations]
+    assert views[0]["field_evidence"][0]["polarity"] == "supporting"                              # the global polarity is still what Trail said

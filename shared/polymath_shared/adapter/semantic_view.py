@@ -137,6 +137,9 @@ def for_hypothesis(state: Mapping[str, Any], outputs: Mapping[str, Any], *, orde
     priors = [p for p in _dicts(_newest(outputs, "priors", order)) if hid in [str(x) for x in p.get("hypothesis_ids") or []]]
     territories = [t for t in _dicts(_newest(outputs, "territories", order)) if hid in [str(x) for x in t.get("hypothesis_ids") or []]]
     evidence = [r for r in field_rows or [] if hid in [str(x) for x in r.get("hypothesis_ids") or []]]
+    # bug hunt B-13: the OPEN gaps (what the ledger still asks) are chosen before the per-list cut, and counted, so a hypothesis whose
+    # first dozen gaps were closed never shows none; the ledger stays the record of the closed ones
+    open_gaps = [dict(g) for g in state.get("knowledge_gaps") or [] if isinstance(g, Mapping) and g.get("status", "open") == "open"]
 
     return {
         "view_version": VIEW_VERSION,
@@ -149,7 +152,7 @@ def for_hypothesis(state: Mapping[str, Any], outputs: Mapping[str, Any], *, orde
                       "assumptions": _clip(list(state.get("assumptions") or [])), "falsifiers": _clip(list(state.get("falsifiers") or [])),
                       "contradictions": _clip([dict(c) for c in state.get("contradictions") or []])},
         "knowledge": {"supporting_evidence_ids": support[:MAX_FIELD_EVIDENCE], "knowledge_support_count": len(support),
-                      "knowledge_gaps": _clip([dict(g) for g in state.get("knowledge_gaps") or []]),
+                      "knowledge_gaps": _clip(open_gaps), "open_knowledge_gap_count": len(open_gaps),
                       "field_evidence_ids": list(state.get("field_evidence_ids") or [])[:MAX_FIELD_EVIDENCE]},
         "transduction": {"latent_structures": [_structure_ref(structures[i], "DECLARED") for i in declared][:MAX_ITEMS]
                                               + [_structure_ref(structures[i], "SHARED_EVIDENCE") for i in overlap][:MAX_ITEMS],
@@ -163,6 +166,7 @@ def for_hypothesis(state: Mapping[str, Any], outputs: Mapping[str, Any], *, orde
         "trail": {"priors": _clip([{k: p[k] for k in ("registry_record_id", "record_id", "prior_role", "label", "section") if p.get(k)} for p in priors]),
                   "territories": _clip([{k: t[k] for k in ("territory_id", "territory", "territory_name") if t.get(k)} for t in territories])},
         "field_evidence": [_clip({"evidence_id": r.get("id"), "evidence_role": r.get("evidence_role"), "polarity": r.get("polarity"),
+                                  "hypothesis_relations": list(r.get("hypothesis_relations") or []),      # B-11: Trail's relation to each hypothesis
                                   "source": r.get("source"), "source_class": r.get("source_class"), "text": r.get("text")})
                            for r in evidence][-MAX_FIELD_EVIDENCE:],
         "missing": missing,

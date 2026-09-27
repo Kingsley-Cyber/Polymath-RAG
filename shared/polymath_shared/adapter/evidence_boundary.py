@@ -411,6 +411,9 @@ def _index_rows(step_outputs: Iterable[Mapping[str, Any]]) -> dict[str, dict[str
             row = {"id": str(a["admitted_evidence_id"]), "kind": "field_evidence", "text": text, "source": s.get("url"),
                    "source_class": a.get("source_class") or s.get("source_class"), "evidence_role": a.get("evidence_role"),
                    "polarity": a.get("polarity"), "hypothesis_ids": list(a.get("hypothesis_ids") or []),
+                   # bug hunt B-11 (ADR-069): what the observation means for EACH hypothesis; Trail qualifies, judges and scores by it,
+                   # and the global polarity alone mislabels an observation that supports one hypothesis and contradicts another
+                   "hypothesis_relations": [dict(r) for r in a.get("hypothesis_relations") or [] if isinstance(r, Mapping)],
                    "independence_group": a.get("independence_group"), "freshness": a.get("freshness"),
                    "published_at_if_known": s.get("published_at_if_known"), "metric_if_present": o.get("metric_if_present")}
             index[row["id"]] = {k: v for k, v in row.items() if v not in (None, "", [])}
@@ -418,7 +421,7 @@ def _index_rows(step_outputs: Iterable[Mapping[str, Any]]) -> dict[str, dict[str
 
 
 _ROW_KEYS = ("id", "kind", "doc_id", "corpus_id", "title", "source", "heading_path", "text", "text_truncated", "text_chars", "score", "utility_role", "synthesis_role",
-             "ca4_grade", "c4_valid", "origin", "relation_to_q0", "source_class", "evidence_role", "polarity", "hypothesis_ids",
+             "ca4_grade", "c4_valid", "origin", "relation_to_q0", "source_class", "evidence_role", "polarity", "hypothesis_ids", "hypothesis_relations",
              "independence_group", "freshness", "published_at_if_known", "metric_if_present")
 
 
