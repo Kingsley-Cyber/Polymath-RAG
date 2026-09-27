@@ -100,7 +100,7 @@ The orchestrator changes need a bounce after merge; the frontend only needs `npm
 | **T2** — DONE 11.515 | Runs list + run header + progress (polling, cancel) | vitest (list states, polling stops at a terminal status, Cancel only for the owner of the run); screenshots at 3 widths. |
 | **T3** — DONE 11.515 | Outcome, gates, evidence | vitest (refusal wording per reason code; gate cell text; field text rendered as text, never HTML). |
 | **T4** — DONE 11.515 (opportunity: unresolved questions only) | Lived world, concepts, opportunity | vitest against a fixture built from R7's shapes (no field quotes in the repo). |
-| **T5** | Report route + tab; registry tab (owner) | A CSP header test; a sanitizer test (a script in a receipt is rendered as text); an owner-only test. |
+| **T5** — DONE 11.523 | Report route + tab; registry tab (owner) | A CSP header test; a sanitizer test (a script in a receipt is rendered as text); an owner-only test. |
 | **T6** *(optional)* | Start a run from the web, then "hand it to your agent": copy the run id and a ready prompt, since agent steps need a connected agent | Only if the owner wants it (§8). |
 
 Order: T0 and T1 can run alongside the frontend refresh; T2–T5 come after its U1–U3, so the new screens are built once, on the new pieces.
