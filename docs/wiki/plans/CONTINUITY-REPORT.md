@@ -153,9 +153,15 @@ historical, never an instruction.
    characters, never in chat — then the Caddy switch). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
    (must print `"ok": true`), the owner signs in and adds the first friend in Settings, the F6 close-out (register row, work-log,
    CONTINUITY, memory). If a step fails the script stops there; re-running is safe (done steps say so; the build and restart run again).
-4. **FIX-IT-ALL, in order:** T0 (A-15 read-side fix + worker guard) → the confirmed TRAIL-EXT-BUGHUNT-V1 bugs (a failing test
-   first, then the fix) → FRONTEND-REFRESH U0–U6 → TRAIL-INTERFACE T1–T5 → DEEP-RESEARCH DR0–DR3. Check `git worktree list` for
-   the integration branch before starting any slice.
+4. **FIX-IT-ALL progress (integration branch `feat/fix-it-all`, worktree `pmv4-fix`):**
+   - DONE: T0 A-15 class (11.505); FRONTEND-REFRESH U1–U6 (11.506–11.511); TRAIL-INTERFACE T1 read model (11.512);
+     DEEP-RESEARCH DR1 engine (11.513) + DR2 route (11.514).
+   - NEXT: T2–T5 Research screens + `/adapter/{id}/report`; DR3 composer switch; the verified TRAIL-EXT-BUGHUNT-V1 bugs (the
+     workflow's synthesis; a failing test first, then the fix); U4b citation hover cards.
+   - LATER / OWNER: DR0 (a dedicated `deep_research` lane stage + the reserved deep retrieval surfaces); DR4 (5 live questions,
+     the owner's word); FRIENDS-ACCESS F6 close-out once the owner types King's password (step 5 of the go-live script).
+   - Frontend slices that add API calls go AFTER the backend they call is merged and bounced: the live contract test checks
+     every `api.ts` call against :7200.
 5. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
    TREE, CONTINUITY), mapping the R7 gap rows (A-09..A-14, S-16..S-18, O-06, H-08) into its slices or naming them out of scope.
 
