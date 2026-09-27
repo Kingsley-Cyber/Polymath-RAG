@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import "./styles/tokens.css";
 import "./styles/app.css";
 import { api, ApiError, AUTH_REQUIRED_EVENT } from "./lib/api";
-import { useAppearance } from "./lib/appearance";
+import { resolveMode, useAppearance } from "./lib/appearance";
 import { auth, LEGACY_OWNER, privateLibrary, type Me } from "./lib/auth";
 import { useAsync } from "./lib/useAsync";
 import { controlReady } from "./lib/readiness";
@@ -99,8 +99,27 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
     try { return localStorage.getItem(CORPUS_KEY) ?? ""; } catch { return ""; }
   });
   const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try { return localStorage.getItem(COLLAPSE_KEY) === "1"; } catch { return false; }
+    try {
+      const stored = localStorage.getItem(COLLAPSE_KEY);
+      if (stored != null) return stored === "1";
+    } catch { /* private mode */ }
+    return typeof window !== "undefined" && window.innerWidth < 1100;   // tablets start with the icon rail
   });
+  const [drawerOpen, setDrawerOpen] = useState(false);                 // phones: the sidebar is a drawer
+  const phone = useMediaQuery("(max-width: 759px)");                   // the drawer never shows the icon-only rail
+
+  /** Navigate and close the phone drawer. */
+  function go(id: ScreenId) {
+    setScreen(id);
+    setDrawerOpen(false);
+  }
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setDrawerOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [drawerOpen]);
 
   useEffect(() => {
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? "1" : "0"); } catch { /* private mode */ }
@@ -127,11 +146,13 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
     setSessions((xs) => [s, ...xs]);
     setActiveChatId(s.id);
     setScreen("chat");
+    setDrawerOpen(false);
   }
 
   function openChat(id: string) {
     setActiveChatId(id);
     setScreen("chat");
+    setDrawerOpen(false);
   }
 
   function deleteChat(id: string) {
@@ -190,23 +211,11 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
     if (corpusId) { try { localStorage.setItem(CORPUS_KEY, corpusId); } catch { /* private mode */ } }
   }, [corpusId]);
 
-  // OWNER-DESTRUCTIVE: wipe a corpus and everything derived from it. The backend requires
-  // confirm==corpus_id, so we make the user type the corpus name — a typed confirm, not a
-  // one-click delete. On success we refetch the list and switch to another corpus.
-  async function deleteCorpus() {
-    const typed = window.prompt(
-      `Permanently delete corpus "${corpusId}" and EVERYTHING in it — documents, vectors, ` +
-      `graph substrate? This cannot be undone.\n\nType the corpus name to confirm:`);
-    if (typed == null) return;
-    if (typed !== corpusId) { window.alert(`"${typed}" does not match "${corpusId}" — nothing deleted.`); return; }
-    try {
-      await api.deleteCorpus(corpusId, corpusId);
-      const remaining = (corpora.data ?? []).filter((c) => c.corpus_id !== corpusId);
-      setCorporaNonce((n) => n + 1);
-      if (remaining[0]) setCorpusId(remaining[0].corpus_id);
-    } catch (e) {
-      window.alert(`Delete failed: ${e instanceof Error ? e.message : String(e)}`);
-    }
+  /** Files deleted the current library (owner, typed confirmation): refetch the list and move to another one. */
+  function onLibraryDeleted(id: string) {
+    const remaining = (corpora.data ?? []).filter((c) => c.corpus_id !== id);
+    setCorporaNonce((n) => n + 1);
+    setCorpusId(remaining[0]?.corpus_id ?? "");
   }
 
   // Only probe control-plane readiness once a real corpus is resolved — never for the
@@ -218,22 +227,22 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
   const control = useMemo(() => controlReady(cp.data?.control_ready), [cp.data]);
 
   return (
-    <div className={`shell${collapsed ? " shell--collapsed" : ""}`}>
-      <nav className="nav">
+    <div className={`shell${collapsed && !phone ? " shell--collapsed" : ""}${drawerOpen ? " shell--drawer" : ""}`}>
+      <nav className="nav" aria-label="Main" id="main-nav">
         <div className="nav__top">
           <div className="nav__brand">Polymath</div>
           <button
             className="nav__collapse"
-            onClick={() => setCollapsed((c) => !c)}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => (drawerOpen ? setDrawerOpen(false) : setCollapsed((c) => !c))}
+            title={drawerOpen ? "Close menu" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={drawerOpen ? "Close menu" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {collapsed ? "»" : "«"}
+            {drawerOpen ? "✕" : collapsed ? "»" : "«"}
           </button>
         </div>
 
         <button className="nav__newchat" data-glyph="＋" onClick={startChat}
-                title={collapsed ? "New chat" : undefined}>
+                title={collapsed ? "New chat" : undefined} aria-label={collapsed ? "New chat" : undefined}>
           <span>＋ New chat</span>
         </button>
 
@@ -246,8 +255,9 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
               className="nav__item"
               data-glyph={n.glyph}
               title={collapsed ? n.label : undefined}
+              aria-label={collapsed ? n.label : undefined}
               aria-current={screen === n.id ? "page" : undefined}
-              onClick={() => setScreen(n.id)}
+              onClick={() => go(n.id)}
             >
               <span>{n.label}</span>
             </button>
@@ -256,7 +266,7 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
 
         {sessions.length > 0 && (
           <div className="nav__chats">
-            <span className="label">Chats</span>
+            <span className="label">Recent</span>
             {sessions.map((s) => (
               <div
                 key={s.id}
@@ -274,74 +284,141 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
             ))}
           </div>
         )}
+      </nav>
+      {drawerOpen && <div className="scrim" onClick={() => setDrawerOpen(false)} aria-hidden="true" />}
 
-        <div className="nav__spacer" />
-
-        <div className="field nav__corpus" style={{ padding: "0 10px 10px" }}>
-          <span className="label">Corpus</span>
-          <select value={corpusValid ? corpusId : ""} onChange={(e) => setCorpusId(e.target.value)}>
-            {!corpusValid && (
-              <option value="" disabled>
-                {!corporaLoaded ? "Loading…" : corpusList.length ? "Select corpus…" : "No corpora"}
-              </option>
-            )}
-            {corpusList.map((c) => (
-              <option key={c.corpus_id} value={c.corpus_id}>
-                {c.corpus_id} ({c.documents})
-              </option>
-            ))}
-          </select>
+      <div className="main-col">
+        <header className="topbar">
+          <button className="icon-btn topbar__menu" aria-label="Open menu" aria-controls="main-nav"
+                  aria-expanded={drawerOpen} onClick={() => setDrawerOpen(true)}>
+            ☰
+          </button>
+          <label className="topbar__library">
+            <span className="sr-only">Library</span>
+            <select value={corpusValid ? corpusId : ""} onChange={(e) => setCorpusId(e.target.value)}>
+              {!corpusValid && (
+                <option value="" disabled>
+                  {!corporaLoaded ? "Loading…" : corpusList.length ? "Select a library…" : "No libraries"}
+                </option>
+              )}
+              {corpusList.map((c) => (
+                <option key={c.corpus_id} value={c.corpus_id}>
+                  {c.corpus_id} ({c.documents})
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="topbar__spacer" />
           {owner && (
-            <button className="btn nav__corpus-del" onClick={() => void deleteCorpus()}
-                    title={`Delete corpus ${corpusId}`} disabled={!corpusValid}>
-              Delete corpus
+            <button className="topbar__status" onClick={() => go("control")} title="Control plane" aria-label="Control plane status">
+              <Pill v={control} />
             </button>
           )}
-        </div>
+          <ThemeToggle />
+          <AccountMenu me={me} onSettings={() => go("settings")} onSignOut={onSignOut} />
+        </header>
 
-        {owner && (
-          <div className="nav__health">
-            <span className="label">Control</span>
-            <Pill v={control} />
-          </div>
-        )}
-      </nav>
-
-      <main className="main">
-        {CORPUS_SCREENS.has(screen) && !corpusValid ? (
-          <div className="screen">
-            <div className="screen__head">
-              <h1 className="screen__title">
-                {corporaLoaded && !corpusList.length ? "No corpora yet" : "Resolving corpus…"}
-              </h1>
-              <p className="screen__sub">
-                {corporaLoaded && !corpusList.length
-                  ? "Nothing is indexed on this backend yet — ingest a corpus to begin."
-                  : "Reading the corpus list from the backend."}
-              </p>
+        <main className="main">
+          {CORPUS_SCREENS.has(screen) && !corpusValid ? (
+            <div className="screen">
+              <div className="screen__head">
+                <h1 className="screen__title">
+                  {corporaLoaded && !corpusList.length ? "No libraries yet" : "Loading your libraries…"}
+                </h1>
+                <p className="screen__sub">
+                  {corporaLoaded && !corpusList.length
+                    ? "Nothing is indexed on this server yet. Add files to a library to begin."
+                    : "Reading the list of libraries from the server."}
+                </p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <>
-        {screen === "overview" && owner && <Overview corpusId={corpusId} />}
-        {screen === "chat" && activeChat && (
-          <Chat
-            key={activeChat.id}
-            corpusId={corpusId}
-            session={activeChat}
-            onUpdateTurns={(fn) => updateTurns(activeChat.id, fn)}
-          />
-        )}
-        {screen === "compare" && <Compare corpusId={corpusId} />}
-        {screen === "files" && <Files corpusId={corpusId} />}
-        {screen === "control" && owner && <ControlPlane corpusId={corpusId} />}
-        {screen === "graph" && <Graph corpusId={corpusId} />}
-        {screen === "models" && owner && <Models />}
-
-        {screen === "settings" && <Settings me={me} onMeChanged={onMeChanged} onSignOut={onSignOut} />}
-          </>
-        )}
-      </main>
+          ) : (
+            <>
+              {screen === "overview" && owner && <Overview corpusId={corpusId} />}
+              {screen === "chat" && activeChat && (
+                <Chat
+                  key={activeChat.id}
+                  corpusId={corpusId}
+                  session={activeChat}
+                  onUpdateTurns={(fn) => updateTurns(activeChat.id, fn)}
+                />
+              )}
+              {screen === "compare" && <Compare corpusId={corpusId} />}
+              {screen === "files" && <Files corpusId={corpusId} isOwner={owner} canWrite={owner || corpusId === privateLibrary(me)} onLibraryDeleted={onLibraryDeleted} />}
+              {screen === "control" && owner && <ControlPlane corpusId={corpusId} />}
+              {screen === "graph" && <Graph corpusId={corpusId} />}
+              {screen === "models" && owner && <Models />}
+              {screen === "settings" && <Settings me={me} onMeChanged={onMeChanged} onSignOut={onSignOut} />}
+            </>
+          )}
+        </main>
+      </div>
     </div>
   );
+}
+
+/** Light ⇄ dark in one click (Settings → Appearance also offers System and the accent). */
+function ThemeToggle() {
+  const [a, setA] = useAppearance();
+  const dark = resolveMode(a.mode) === "dark";
+  const label = dark ? "Switch to light mode" : "Switch to dark mode";
+  return (
+    <button className="icon-btn" aria-label={label} title={label} onClick={() => setA({ ...a, mode: dark ? "light" : "dark" })}>
+      {dark ? "☀" : "☾"}
+    </button>
+  );
+}
+
+/** The signed-in person: name, Settings, Sign out (no sign-out on the server itself). */
+function AccountMenu({ me, onSettings, onSignOut }: { me: Me; onSettings: () => void; onSignOut: () => void }) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: Event) => {
+      if (e instanceof KeyboardEvent && e.key !== "Escape") return;
+      if (e instanceof MouseEvent && (e.target as HTMLElement | null)?.closest(".account")) return;
+      setOpen(false);
+    };
+    window.addEventListener("keydown", close);
+    window.addEventListener("mousedown", close);
+    return () => { window.removeEventListener("keydown", close); window.removeEventListener("mousedown", close); };
+  }, [open]);
+  const name = me.display_name || me.username || "Owner";
+  const initials = name.split(/\s+/).map((w) => w[0] ?? "").join("").slice(0, 2).toUpperCase() || "?";
+  return (
+    <div className="account">
+      <button className="account__btn" aria-haspopup="menu" aria-expanded={open} aria-label={`Account: ${name}`}
+              onClick={() => setOpen((o) => !o)}>
+        {initials}
+      </button>
+      {open && (
+        <div className="account__menu" role="menu">
+          <div className="account__who">
+            <strong>{name}</strong>
+            <span className="faint">{me.local ? "on the server itself" : me.username}{me.is_owner ? " · owner" : ""}</span>
+          </div>
+          <button role="menuitem" className="account__item" onClick={() => { setOpen(false); onSettings(); }}>Settings</button>
+          {!me.local && (
+            <button role="menuitem" className="account__item" onClick={() => { setOpen(false); onSignOut(); }}>Sign out</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** True while the media query matches (updates live; false where matchMedia is missing, e.g. some tests). */
+function useMediaQuery(query: string): boolean {
+  const [match, setMatch] = useState(() => {
+    try { return typeof matchMedia === "function" && matchMedia(query).matches; } catch { return false; }
+  });
+  useEffect(() => {
+    let mql: MediaQueryList;
+    try { mql = matchMedia(query); } catch { return; }
+    const on = () => setMatch(mql.matches);
+    on();
+    mql.addEventListener("change", on);
+    return () => mql.removeEventListener("change", on);
+  }, [query]);
+  return match;
 }

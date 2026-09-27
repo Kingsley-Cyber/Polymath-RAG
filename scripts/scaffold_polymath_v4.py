@@ -2131,6 +2131,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("frontend-v2/src/lib/api.ts", "ts", None),
     ("frontend-v2/src/lib/auth.ts", "ts", None),
     ("frontend-v2/src/lib/appearance.ts", "ts", None),
+    ("frontend-v2/src/ui/Dialog.tsx", "tsx", None),
     ("frontend-v2/src/lib/contracts.ts", "ts", None),
     ("frontend-v2/src/lib/readiness.ts", "ts", None),
     ("frontend-v2/src/lib/useAsync.ts", "ts", None),
@@ -2234,6 +2235,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("frontend-v2/src/__tests__/friends-access.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/tokens-contrast.test.ts", "ts", None),
     ("frontend-v2/src/__tests__/appearance.test.ts", "ts", None),
+    ("frontend-v2/src/__tests__/shell.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/node-fs.d.ts", "ts", None),
     # CHAT-UI-RESTORE (2026-09-22): the ELITE chat surface, recovered from stash@{0} (2026-09-18) and committed
     ("frontend-v2/src/components/AnswerBody.tsx", "tsx", None),
@@ -2488,6 +2490,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/experiments/trail-ext-bughunt-2026-09-26/README.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-trail-t0-a15.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-frontend-refresh-u1.md", "md", None),
+    ("docs/wiki/work-log/2026-09-26-frontend-refresh-u2.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-k1b-scope-echo.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),

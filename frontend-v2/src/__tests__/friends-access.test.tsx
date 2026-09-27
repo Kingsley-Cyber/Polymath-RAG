@@ -98,7 +98,7 @@ it("shows the sign-in screen on 401 and a friend's workspace after signing in", 
   expect(labels).toContain("Chat");
   expect(labels).toContain("Settings");
   for (const hidden of ["Overview", "Control Plane", "Models"]) expect(labels).not.toContain(hidden);
-  expect(host.textContent).not.toContain("Delete corpus");
+  expect(host.textContent).not.toContain("Delete library");                          // the owner-only library delete
   expect(calls.some((c) => c.path.startsWith("/control_plane"))).toBe(false);          // owner-only data is never requested
 })
 

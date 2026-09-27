@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { ConfirmByName } from "../ui/Dialog";
 import { api, ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { controlReady, docVnext, semanticReady, vnextReady } from "../lib/readiness";
@@ -40,14 +41,19 @@ function typeOf(sourceName: string, mediaType: string): string {
  * A just-uploaded document appears immediately from /documents even before it has a
  * summary. Nothing here is manufactured green.
  */
-export function Files({ corpusId }: { corpusId: string }) {
+/** `isOwner`: pipeline status and continuation (owner-only routes) and the library's danger zone. `canWrite`: adding and
+ *  deleting files (the owner everywhere; a friend only in their private library). Controls a person cannot use are not shown. */
+export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDeleted }: {
+  corpusId: string; isOwner?: boolean; canWrite?: boolean; onLibraryDeleted?: (id: string) => void;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [nonce, setNonce] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const cp = useAsync((s) => api.controlPlane(corpusId, s), [corpusId, nonce]);
+  const cp = useAsync((s) => (isOwner ? api.controlPlane(corpusId, s) : Promise.resolve(null)), [corpusId, nonce, isOwner]);
   const sr = useAsync((s) => api.semanticReadiness(corpusId, s), [corpusId, nonce]);
   const docs = useAsync((s) => api.documents(corpusId, s), [corpusId, nonce]);
   const sum = useAsync((s) => api.documentSummaries(corpusId, s), [corpusId, nonce]);
@@ -157,7 +163,7 @@ export function Files({ corpusId }: { corpusId: string }) {
             hidden
             onChange={(e) => void onFilesPicked(e.target.files)}
           />
-          <button
+          {isOwner && <button
             className="btn"
             disabled={!!busy || !incompleteCount}
             title={incompleteCount
@@ -166,22 +172,27 @@ export function Files({ corpusId }: { corpusId: string }) {
             onClick={() => void onContinueCorpus()}
           >
             ▸ Continue corpus{incompleteCount ? ` (${incompleteCount})` : ""}
-          </button>
-          <button
+          </button>}
+          {canWrite && <button
             className="btn btn--primary"
             disabled={!!busy}
             onClick={() => fileInput.current?.click()}
           >
             ＋ Add Files
-          </button>
+          </button>}
         </div>
       </div>
 
-      <ReadinessTriad
+      {isOwner && <ReadinessTriad
         control={controlReady(cp.data?.control_ready)}
         semantic={semanticReady(sr.data)}
         vnext={vnextReady(sr.data)}
-      />
+      />}
+      {!canWrite && (
+        <div className="banner banner--info" style={{ marginTop: 14 }}>
+          This library is shared with you to read. You can add files to your own private library.
+        </div>
+      )}
 
       {busy && <div className="banner" style={{ marginTop: 14 }}>{busy}</div>}
       {notice && <div className="banner banner--ok" style={{ marginTop: 14 }}>{notice}</div>}
@@ -230,7 +241,7 @@ export function Files({ corpusId }: { corpusId: string }) {
                   <td className="mono">{d ? d.graph_relations : "—"}</td>
                   <td>
                     <div className="row" style={{ gap: 6 }}>
-                      {!d?.vnext_ready && (
+                      {isOwner && !d?.vnext_ready && (
                         <button
                           className="btn files__continue"
                           disabled={!!busy}
@@ -240,14 +251,14 @@ export function Files({ corpusId }: { corpusId: string }) {
                           ▸ Continue
                         </button>
                       )}
-                      <button
+                      {canWrite && <button
                         className="btn files__del"
                         disabled={!!busy}
                         title={`Delete ${r.source_name || r.doc_id}`}
                         onClick={() => void onDelete(r.doc_id, r.source_name)}
                       >
                         Delete
-                      </button>
+                      </button>}
                     </div>
                   </td>
                 </tr>
@@ -264,6 +275,27 @@ export function Files({ corpusId }: { corpusId: string }) {
         Accepted: .md .txt .html .pdf .epub .docx. Atoms and pMAP are ROUTING artifacts —
         they explain why a source is findable, not what an answer rests on.
       </div>
+
+      {isOwner && (
+        <section className="card danger-zone" aria-labelledby="danger-zone-title">
+          <div>
+            <h2 className="settings__title" id="danger-zone-title">Delete this library</h2>
+            <p className="dim" style={{ margin: "4px 0 0" }}>
+              Removes <span className="mono">{corpusId}</span> and everything in it: documents, vectors and graph. This can't be undone.
+            </p>
+          </div>
+          <button type="button" className="btn btn--danger" onClick={() => setConfirmDelete(true)}>Delete library…</button>
+        </section>
+      )}
+      {isOwner && <ConfirmByName
+        open={confirmDelete}
+        title={`Delete the library ${corpusId}?`}
+        name={corpusId}
+        what={<>Every document in <span className="mono">{corpusId}</span>, its vectors and its graph are deleted for good.</>}
+        action="Delete library"
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={async () => { await api.deleteCorpus(corpusId, corpusId); onLibraryDeleted?.(corpusId); }}
+      />}
     </div>
   );
 }
