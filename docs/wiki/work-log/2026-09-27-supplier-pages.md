@@ -33,6 +33,15 @@ last_reviewed: 2026-09-27
 - `tests/contracts` 770 passed; ruff clean on the changed files.
 - Live after the deploy: `/supplier/search` source `alibaba`, limit 10, for the same query.
 
+## Contract dispositions
+- RESEARCH_ACQUISITION — UPDATED: the SearXNG listing backend reads up to three result pages; the request for page 1, the record
+  shape and the notes' first lines are unchanged (`test_supplier_apis.py`).
+- ADAPTER_RUNTIME — TESTED_UNCHANGED: `test_adapter_ecommerce_supply_join_api_records.py`, `test_adapter_evidence_boundary.py`,
+  `test_adapter_runtime_pure.py` (65 passed with `test_mcp_*`); `test_adapter_product_discovery_loop.py` is a fleet-database test,
+  not run.
+- MCP_SURFACE — TESTED_UNCHANGED: `test_mcp_principals_gate.py`, `test_mcp_server_v2.py`, `test_supplier_tools.py`,
+  `test_mcp_adapter_parity.py`, `test_hosted_mcp_acceptance.py` (in the 770 contract passes).
+
 ## Rejected claims
 - "Showroom and category pages are listings": they are not product pages; they stay out (counted in the notes).
 
