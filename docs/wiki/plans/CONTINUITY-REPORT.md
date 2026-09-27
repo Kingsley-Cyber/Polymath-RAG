@@ -153,25 +153,25 @@ historical, never an instruction.
    `web_password_set: false` until then). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
    must print `"ok": true`, the owner signs in and adds the first friend in Settings, and the F6 close-out follows (register row,
    work-log, CONTINUITY, memory).
-4. **FIX-IT-ALL progress (integration branch `feat/fix-it-all`, worktree `pmv4-fix`).** Production `a2b38e6a` (live).
-   Everything below is ON THE BRANCH, integrated and green (`tests/contracts` 597, the adapter/Trail determinism set 306,
-   vitest 131, tsc, guards 0), and WAITS FOR THE OWNER'S DEPLOY (merges and bounces are classifier-gated as Production Deploy;
-   the owner runs ONE Run-button command in the main checkout:
-   `git merge --ff-only feat/fix-it-all && (cd frontend-v2 && npm run build) && bash scripts/bounce_fleet.sh`):
-   - DR4 report fix (11.520); TRAIL-EXT-BUGHUNT-V1 fixes 11.521–11.528, 11.530 (56 FIXED, 7 PART, 5 OWNER, 1 REJECTED;
-     12 = batch D, dead code, listed only; B-05 = the owner's refusal decision); T5 dossier + Registry (11.523); DEEP-RESEARCH
-     DR6a–c research moves (11.531) and DR7a–e the research experience (11.532).
-   - AFTER THE DEPLOY (in order): `/ready` + 26/13/1 + `/retrieve` GRAPH 200 + no new Traceback in orchestrator.log + the live
-     contract vitest (the new `/research/deep/plan` and `/research/deep/finish` calls are checked there); then the live runs
-     with the probe `scratchpad/dr4/ab.py` (outside the repo): the 5 DR4 questions, moves off vs on — closes DR4 (question 4)
-     and DR6d (§10.9) and feeds DR7f (§11.6: plan card ≤ 3 s, uncited ≤ 10%, counter-evidence or "none found",
-     `coverage_complete`, deadlines; screenshots at 3 widths for the owner).
-   - OWNER DECISIONS pending: B-15, B-38, B-53, B-59, B-64 (each changes how research runs behave); the PART halves (B-12 legacy
-     manifest 2.2.2, B-25 worker lock, B-48 rejection history = a migration, B-50 legacy manifest, B-57 per-run manifest pin);
-     an app-wide Host allowlist (B-28); server-side report history (a migration after the reserved 0067–0071); multi-library
-     deep research (HYBRID answers one library per call).
-   - FRIENDS-ACCESS F6: King's web password is still NOT set (`web_password_set: false`); the owner sets it on the Mac
-     (Settings → Website sign-in; 10+ characters, 4+ different). The public site answers correctly (page 200, data 401).
+4. **FIX-IT-ALL — LIVE on production `8c13e8f0`** (two owner Run-button deploys on 2026-09-26/27, READY 26/13/1, live contract
+   green). Merges and bounces are classifier-gated as Production Deploy: hand the owner ONE command in the main checkout,
+   `git merge --ff-only feat/fix-it-all && (cd frontend-v2 && npm run build) && bash scripts/bounce_fleet.sh`. Integrate helper work
+   on a side branch and fast-forward `feat/fix-it-all` only when green: the owner may run the command at any moment.
+   - LIVE: the TRAIL-EXT bug fixes (11.521–11.528, 11.530: 56 FIXED, 7 PART, 5 OWNER, 1 REJECTED; 12 = batch D dead code,
+     listed only; B-05 = refusal, per the owner); T5 dossier + the owner's Registry (11.523); DEEP-RESEARCH DR0, DR4 (closed),
+     DR6a–d moves (§10.9 passed 4/5), DR7a–f the research experience (11.519–11.534).
+   - The docs commits after `8c13e8f0` (this block, 11.534) ride the next deploy.
+   - NEXT (small, each a slice): widen `moves.is_evaluative` ("useful", "helpful", "good", "better", "recommend"…); calibrate
+     the relevance gate on real plans (q5 lost 5 of 12 follow-ups at floor 0.2 — score follow-ups against their thread, or a
+     lower floor for level ≥ 2); collapse the composer's option chips on phones; server-side report history only on the owner's
+     word (a migration after the reserved 0067–0071); multi-library deep research (HYBRID answers one library per call).
+   - OWNER DECISIONS pending: B-15, B-38, B-53, B-59, B-64; the PART halves (B-12 legacy manifest 2.2.2, B-25 worker lock, B-48
+     rejection history = a migration, B-50 legacy manifest, B-57 per-run manifest pin); an app-wide Host allowlist (B-28).
+   - FRIENDS-ACCESS F6: King's web password is still NOT set (`web_password_set: false`): the owner sets it on the Mac
+     (http://127.0.0.1:7200/v2/ → Settings → Website sign-in; 10+ characters, 4+ different). Never store the one typed in chat.
+   - Connecting agents (the owner's question, 2026-09-27): friends paste the prompt from Settings → API keys; the owner adds the
+     local stdio server once (`claude mcp add --scope user polymath -- <venv python> <repo>/mcp_server/polymath_mcp.py`, the same
+     for `codex mcp add`) and pastes a starter prompt (read `run_governed_research`, then `ecommerce.product_research`).
    - Helper hazards (in `handoff-drafts/bugfix_rules.md`): SET a dead `POLYMATH_PG_DSN`, never unset it
      (`test_adapter_service_store.py` falls back to the LIVE database; `test_adapter_harness_action.py` fails with a dead DSN);
      never `git stash` (shared across worktrees).
