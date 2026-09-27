@@ -30,6 +30,7 @@ export function AnswerBody({ t, models }: { t: Turn; models: Synthesizer[] }) {
           {t.answerText}
         </ReactMarkdown>
       </div>
+      {t.deep && <CounterEvidence deep={t.deep} />}
       {t.deep && <DeepSources deep={t.deep} />}
       {t.abstained && t.uncovered.length > 0 && (
         <div className="uncovered-note">nothing in this corpus covers: {t.uncovered.join(", ")}</div>
@@ -75,6 +76,22 @@ export function AnswerBody({ t, models }: { t: Turn; models: Synthesizer[] }) {
         </>
       )}
     </div>
+  );
+}
+
+/** DEEP-RESEARCH-MODE-V1 §10.7: under the report, what the counter-evidence (inverse) searches found. Read from the run's
+ *  counts (`moves.inverse`), so it holds whatever the model wrote; shown only when such searches ran. */
+function CounterEvidence({ deep }: { deep: DeepAnswer }) {
+  const moves = deep.summary?.moves;
+  const inverse = (moves && typeof moves === "object" ? (moves as Record<string, unknown>).inverse : null) as
+    { searched?: unknown; learnings?: unknown } | null | undefined;
+  const searched = typeof inverse?.searched === "number" ? inverse.searched : 0;
+  const found = typeof inverse?.learnings === "number" ? inverse.learnings : 0;
+  if (searched < 1) return null;
+  return (
+    <p className="counter-evidence">
+      Counter-evidence: {found > 0 ? `${found} finding${found === 1 ? "" : "s"}` : "none found in the libraries"}
+    </p>
   );
 }
 

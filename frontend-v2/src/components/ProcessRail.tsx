@@ -7,6 +7,16 @@ import type { Phase } from "../lib/chat";
  *  the turn ends it lingers, then collapses to "Worked for Ns · N steps". */
 const COLLAPSE_DELAY_MS = 1800;
 
+/** DEEP-RESEARCH-MODE-V1 §10.7: a deep research search is labelled by its move, in words ("Broad · <query>"). */
+const MOVE_LABEL: Record<string, string> = { broad: "Broad", deep: "Deep", adjacent: "Adjacent", inverse: "Inverse" };
+
+function stepLabel(p: Phase): string {
+  const d = p.data ?? {};
+  const move = typeof d.move === "string" ? MOVE_LABEL[d.move] : undefined;
+  if (move && p.stage === "deep_retrieve" && typeof d.query === "string") return `${move} · ${d.query}`;
+  return p.label ?? (p as unknown as { name?: string }).name ?? p.stage;
+}
+
 export function ProcessRail({
   phases, live, reasoning,
 }: { phases: Phase[]; live: boolean; reasoning?: string }) {
@@ -56,7 +66,7 @@ export function ProcessRail({
             Worked for {formatDuration(startedAt.current, finishedAt.current)} · {stepWord}
           </span>
         )}
-        {live && steps > 0 && <span className="phase-current">{phases[steps - 1]?.label ?? ""}</span>}
+        {live && steps > 0 && <span className="phase-current">{stepLabel(phases[steps - 1]!)}</span>}
       </div>
       {(live || open) && reasoning && (
         <div className="reasoning-pane" ref={paneRef}>
@@ -71,7 +81,7 @@ export function ProcessRail({
             return (
               <div key={`${p.stage}-${i}`} className={`phase-line${isActive ? " active" : ""}`}>
                 <span className="phase-icon">{isActive ? <span className="spinner" /> : "✓"}</span>
-                <span className="phase-label">{p.label ?? (p as unknown as { name?: string }).name ?? p.stage}</span>
+                <span className="phase-label">{stepLabel(p)}</span>
                 <span className="phase-detail">{detail(p)}</span>
               </div>
             );

@@ -639,6 +639,7 @@ details.card[open] > summary::before { transform: rotate(90deg); }
 .sources__list { margin: 6px 0 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); }
 .sources__text { margin: 4px 0 0; color: var(--text-2); white-space: pre-wrap; }
 .cite-id { font-size: var(--fs-xs); padding: 0 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.counter-evidence { margin: var(--space-3) 0 0; color: var(--text-2); font-size: var(--fs-sm); }
 
 /* ── citation markers with hover cards (U4b) ─────────────────────────────── */
 .cite { position: relative; display: inline-block; }
