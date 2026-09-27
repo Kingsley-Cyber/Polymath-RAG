@@ -7,6 +7,8 @@ import { auth, LEGACY_OWNER, privateLibrary, type Me } from "./lib/auth";
 import { useAsync } from "./lib/useAsync";
 import { controlReady, settled } from "./lib/readiness";
 import { Pill } from "./components/Pill";
+import { ChatControls } from "./components/ChatControls";
+import type { Synthesizer } from "./lib/contracts";
 import { Icon, IconButton, type IconName } from "./ui/icons";
 import { Overview } from "./screens/Overview";
 import { Chat } from "./screens/Chat";
@@ -45,6 +47,7 @@ const OWNER_SCREENS = new Set<ScreenId>(["overview", "control", "models"]);
 
 const COLLAPSE_KEY = "polymath-v2.nav-collapsed";
 const CORPUS_KEY = "polymath-v2.corpus";
+const NO_MODELS: Synthesizer[] = [];       // one reference while the catalog loads, so effects keyed on it do not re-run
 
 /** Screens whose data is scoped to a corpus. These render only once a valid corpus is
  *  resolved from `/corpora`, so no corpus-scoped request ever fires for an unresolved
@@ -236,6 +239,14 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
   );
   const control = useMemo(() => settled(cp, (d) => controlReady(d?.control_ready)), [cp]);
 
+  // HEADER-CONTROLS: the model catalog and the server's capabilities are read once here, for the top bar's chat controls
+  // and the Chat screen alike. CORPUS-EXPLORER-V1: the Corpus Explore toggle shows only when the server advertises the
+  // capability (the deployment kill switch POLYMATH_CORPUS_EXPLORER), and the per-request flag is sent only then.
+  const synths = useAsync((s) => api.synthesizers(s), []);
+  const caps = useAsync((s) => api.capabilities(s), []);
+  const models = synths.data ?? NO_MODELS;
+  const corpusExploreAvailable = Boolean(((caps.data?.contracts ?? {}) as Record<string, unknown>)["corpus-explorer"]);
+
   return (
     <div className={`shell${collapsed && !phone ? " shell--collapsed" : ""}${drawerOpen ? " shell--drawer" : ""}`}>
       <nav className="nav" aria-label="Main" id="main-nav">
@@ -313,6 +324,8 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
               ))}
             </select>
           </label>
+          {/* HEADER-CONTROLS: Retrieval, Model and Corpus Explore, right after the library, on the Chat screen only. */}
+          {screen === "chat" && <ChatControls models={models} corpusExploreAvailable={corpusExploreAvailable} />}
           <div className="topbar__spacer" />
           {owner && (
             <button className="topbar__status" onClick={() => go("control")} title="Control plane" aria-label="Control plane status">
@@ -346,6 +359,8 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
                   corpusId={corpusId}
                   session={activeChat}
                   onUpdateTurns={(fn) => updateTurns(activeChat.id, fn)}
+                  models={models}
+                  corpusExploreAvailable={corpusExploreAvailable}
                   focusTurn={focusTurn?.chatId === activeChat.id ? focusTurn.index : null}
                   onFocusDone={() => setFocusTurn(null)}
                 />

@@ -2297,6 +2297,12 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-26-deep-research-dr7-ui.md", "md", None),
     # DEEP-RESEARCH tuning (2026-09-27): the folded composer on phones
     ("frontend-v2/src/__tests__/chat-composer.test.tsx", "tsx", None),
+    # HEADER-CONTROLS (2026-09-27): Retrieval, Model and Corpus Explore in the top bar, a per-browser store
+    ("frontend-v2/src/lib/composerSettings.ts", "ts", None),
+    ("frontend-v2/src/components/ChatControls.tsx", "tsx", None),
+    ("frontend-v2/src/__tests__/composer-settings.test.ts", "ts", None),
+    ("frontend-v2/src/__tests__/header-controls.test.tsx", "tsx", None),
+    ("docs/wiki/work-log/2026-09-27-header-controls.md", "md", None),
     ("tests/determinism/test_retrieve_gnn_routing.py", "py", None),
     ("docs/wiki/work-log/2026-09-22-frontend-backend-contract.md", "md", None),
     ("docs/wiki/work-log/2026-09-22-chat-ui-restore.md", "md", None),

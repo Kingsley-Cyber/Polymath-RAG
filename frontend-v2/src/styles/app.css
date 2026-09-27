@@ -453,12 +453,13 @@ button.btn:disabled { opacity: .55; cursor: not-allowed; }
 .main-col > .main { flex: 1; min-height: 0; }
 
 .topbar {
-  flex: none; height: var(--topbar-h); display: flex; align-items: center; gap: var(--space-2);
+  position: relative; flex: none; height: var(--topbar-h); display: flex; align-items: center; gap: var(--space-2);
   padding: 0 var(--space-4); border-bottom: 1px solid var(--border); background: var(--bg);
 }
 .topbar__spacer { flex: 1; }
 .topbar .topbar__menu { display: none; }
-.topbar__library select { border-color: var(--border-strong); font-weight: 500; max-width: 260px; }
+.topbar__library { min-width: 120px; }                                 /* gives way to the chat controls, down to this */
+.topbar__library select { width: 100%; border-color: var(--border-strong); font-weight: 500; max-width: 260px; }
 .topbar__status { appearance: none; background: transparent; border: 0; padding: 0; cursor: pointer; border-radius: var(--radius-pill); }
 
 .icon-btn {
@@ -576,7 +577,6 @@ button.btn--danger-solid:hover:not(:disabled) { background: var(--bad); border-c
 .chip-field--toggle { padding: 0 10px; cursor: pointer; }
 .chip-field--toggle input { margin: 0; accent-color: var(--accent); }
 .chip-field--toggle .label { color: var(--text-2); }
-.composer .mp__menu { top: auto; bottom: calc(100% + 6px); }
 
 .starters { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); margin-top: var(--space-3); }
 .starter {
@@ -593,22 +593,44 @@ button.btn--danger-solid:hover:not(:disabled) { background: var(--bad); border-c
   .chip-field--model .mp__button { max-width: 150px; }
 }
 
-/* ── the folded composer (tuning 2026-09-27): at 375 px the option chips took ~40% of the height. At ≤ 560 px they fold
-   behind one "Options" button with a one-line summary and open under it; wider screens never show the button. ── */
-.composer__options { display: flex; flex-direction: column; gap: 6px; min-width: 0; cursor: default; }
-.composer__fold {
-  display: none; align-items: center; gap: 6px; height: 30px; max-width: 100%; min-width: 0; padding: 0 12px 0 10px;
-  border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface-2); color: var(--text-3);
-  font: inherit; font-size: var(--fs-xs); text-align: left; cursor: pointer;
-}
-.composer__fold:hover { border-color: var(--border-strong); }
-.composer__fold-label { color: var(--text); font-weight: 500; white-space: nowrap; }
-.composer__fold-summary { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
+/* HEADER-CONTROLS: on a phone (≤ 560 px) the composer's two chips (Deep research, Reasoning: 288 px) do not fit beside the
+   Send button (267 px left at 375 px) and would stack. So there the Send button sits beside the text box and the chips get
+   the whole width below: one 30 px row, the height of yesterday's closed "Options" fold, with both chips in reach. Depth
+   (while deep research is on) or a long reasoning label wraps the row; nothing scrolls sideways. */
 @media (max-width: 560px) {
-  .composer__fold { display: inline-flex; align-self: flex-start; }
-  .composer__chips { display: none; }
-  .composer__chips--open { display: flex; }
+  .composer { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 4px var(--space-2); }
+  .composer__bar { display: contents; }
+  .composer__input { grid-area: 1 / 1; }
+  .composer__send { grid-area: 1 / 2; }
+  .composer__chips { grid-area: 2 / 1 / 3 / 3; }
+}
+
+/* ── HEADER-CONTROLS (2026-09-27): Retrieval, Model and Corpus Explore sit in the top bar right after the library while the
+   Chat screen is active; the composer keeps Deep research (+ Depth) and Reasoning. Inline on a desktop (≥ 1100 px, where
+   the bar has room even with the sidebar open and a long library name: the model name gives way first). Below that — the
+   shell's tablet and phone widths; a 760 px window with the sidebar open leaves ~530 px of bar, which the ~780 px row cannot
+   fit — the three go behind one "Chat options" button and open in a panel under the bar, one control per row. ── */
+.topbar__chat { display: flex; align-items: center; min-width: 0; }
+.topbar .topbar__chat-btn { display: none; }
+.topbar__controls { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.topbar__controls .chip-field { flex: none; }
+.topbar__controls .chip-field--model { flex: 0 1 auto; min-width: 120px; }       /* the only chip that gives way */
+.topbar__controls .chip-field--model .mp__button { max-width: 200px; }
+.topbar__controls .mp__button > span:first-child { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 1099px) {
+  .topbar .topbar__chat-btn { display: inline-grid; }
+  .topbar__controls {
+    display: none; position: absolute; z-index: 60; top: calc(100% + 4px); left: var(--space-2); right: var(--space-2);
+    max-width: 360px; flex-direction: column; align-items: stretch; gap: var(--space-2); padding: var(--space-3);
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-2); box-shadow: var(--shadow-pop);
+  }
+  .topbar__controls--open { display: flex; }
+  .topbar__controls .chip-field { width: 100%; justify-content: space-between; height: 36px; }
+  .topbar__controls .chip-field--toggle { justify-content: flex-start; }
+  .topbar__controls .chip-field--model .mp { margin-left: auto; max-width: 70%; }
+  .topbar__controls .chip-field--model .mp__button { max-width: none; }
+  .topbar__controls .mp__menu { left: auto; right: 0; }
 }
 
 /* ── U5: link-like buttons (keyboard-usable table rows), details cards ───── */

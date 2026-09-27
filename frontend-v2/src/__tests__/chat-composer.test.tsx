@@ -4,29 +4,31 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Chat } from "../screens/Chat";
 import { emptySession } from "../lib/chatStore";
-import type { Synthesizer } from "../lib/contracts";
+import { setComposerSettings } from "../lib/composerSettings";
 
-/** Tuning after DR7f (live, 2026-09-27): at 375 px the composer's option chips (Retrieval, Model, Reasoning, Deep research,
- *  Corpus Explore, Depth) took about 40% of the screen height. On a narrow screen (≤ 560 px, a media query in app.css) they
- *  fold behind one "Options" button with a one-line summary; wider screens never show the button. jsdom has no media
- *  queries, so this pins the structure and the state: the button, `aria-expanded`, the open class, the summary. */
-
-const CATALOG: Synthesizer[] = [
-  { id: "litellm:openai/glm-5-free", kind: "litellm", provider: "opencode", provider_label: "OpenCode", model: "glm-5-free" },
-  { id: "litellm:anthropic/deepseek-v4-flash-0731", kind: "litellm", provider: "anthropic", provider_label: "Anthropic",
-    model: "deepseek-v4-flash-0731", default: true },
-];
+/** HEADER-CONTROLS (owner, 2026-09-27): the composer keeps ONLY Deep research (with its depth while on) and Reasoning;
+ *  Retrieval, Model and Corpus Explore moved to the top bar (header-controls.test.tsx) and reach this screen through the
+ *  per-browser store. The phone "Options" fold of DR7f went with them: two chips fit one row at 375 px, and the row wraps
+ *  (app.css `.composer__chips`) rather than scrolling sideways when Depth joins. */
 
 let host: HTMLDivElement;
 let root: Root;
+let posts: { path: string; body: Record<string, unknown> }[];
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const dom = (globalThis as unknown as { jsdom: { window: Window } }).jsdom;
   vi.stubGlobal("localStorage", dom.window.localStorage);
   localStorage.clear();
-  vi.stubGlobal("fetch", vi.fn(async (path: string) => Response.json(
-    path === "/synthesizers" ? { synthesizers: CATALOG } : path === "/reasoning_modes" ? { modes: [], default: "none" } : {})));
+  posts = [];
+  vi.stubGlobal("fetch", vi.fn(async (path: string, init?: RequestInit) => {
+    if (init?.method === "POST") posts.push({ path, body: JSON.parse(String(init.body)) as Record<string, unknown> });
+    if (path === "/chat/stream") return new Response(new ReadableStream<Uint8Array>({ start(c) {
+      c.enqueue(new TextEncoder().encode('event: answer\ndata: {"result":{"answer":"An answer."},"retrieval":{"mode":"HYBRID"}}\n\nevent: done\ndata: {}\n\n'));
+      c.close();
+    } }));
+    return Response.json(path === "/reasoning_modes" ? { modes: [{ id: "low", label: "Low", description: "a little" }], default: "none" } : {});
+  }));
   host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);
@@ -38,61 +40,54 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-async function showChat() {
-  await act(async () => root.render(<Chat corpusId="cinema" session={emptySession("cinema")} onUpdateTurns={() => {}} />));
+async function showChat(corpusExploreAvailable = false) {
+  await act(async () => root.render(
+    <Chat corpusId="cinema" session={emptySession("cinema")} onUpdateTurns={() => {}} models={[]} corpusExploreAvailable={corpusExploreAvailable} />));
   await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
 }
 
-const fold = () => host.querySelector<HTMLButtonElement>("button.composer__fold")!;
-const chips = () => host.querySelector<HTMLDivElement>(".composer__chips")!;
-const summary = () => fold().querySelector(".composer__fold-summary")!.textContent;
+const chipLabels = () => [...host.querySelectorAll(".composer .chip-field .label")].map((l) => l.textContent);
 
-function selectWith(value: string): HTMLSelectElement {
-  return [...host.querySelectorAll("select")].find((s) => [...s.options].some((o) => o.value === value))!;
+async function send(q: string) {
+  const box = host.querySelector("textarea.composer__input") as HTMLTextAreaElement;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(box, q);
+    box.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await act(async () => (host.querySelector('button[aria-label="Send"]') as HTMLButtonElement).click());
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
 }
 
-async function choose(select: HTMLSelectElement, value: string) {
-  await act(async () => { select.value = value; select.dispatchEvent(new Event("change", { bubbles: true })); });
-}
-
-async function click(el: HTMLElement) {
-  await act(async () => el.click());
-}
-
-it("folds the option chips behind one Options button that opens and closes them", async () => {
-  await showChat();
-  const button = fold();
-  expect(button.tagName).toBe("BUTTON");
-  expect(button.type).toBe("button");                                      // a real button: focusable, Enter and Space
-  expect(button.querySelector(".composer__fold-label")!.textContent).toBe("Options");
-  expect(chips().id).not.toBe("");
-  expect(button.getAttribute("aria-controls")).toBe(chips().id);
-  expect(button.getAttribute("aria-expanded")).toBe("false");
-  expect(chips().classList.contains("composer__chips--open")).toBe(false);
-  expect(chips().querySelector("select")).not.toBeNull();                  // the chips are all still there, only folded
-  await click(button);
-  expect(button.getAttribute("aria-expanded")).toBe("true");
-  expect(chips().classList.contains("composer__chips--open")).toBe(true);
-  expect(document.activeElement).not.toBe(host.querySelector("textarea")); // the tap never lands in the message box
-  await click(button);
-  expect(button.getAttribute("aria-expanded")).toBe("false");
-  expect(chips().classList.contains("composer__chips--open")).toBe(false);
+it("the composer's chips are Deep research and Reasoning only, with Depth while deep research is on, and no fold", async () => {
+  await showChat(true);                                                     // even with Corpus Explore on offer
+  expect(chipLabels()).toEqual(["Deep research", "Reasoning"]);
+  expect(host.querySelector(".composer__fold")).toBeNull();                 // the phone "Options" button is gone
+  expect(host.querySelector(".composer__chips")).not.toBeNull();            // one wrapping row
+  const deep = [...host.querySelectorAll("label")].find((l) => l.textContent?.includes("Deep research"))!.querySelector("input")!;
+  await act(async () => deep.click());
+  expect(chipLabels()).toEqual(["Deep research", "Depth", "Reasoning"]);
+  await act(async () => deep.click());
+  expect(chipLabels()).toEqual(["Deep research", "Reasoning"]);
 });
 
-it("the folded summary names the mode, a short model name, and the depth while deep research is on", async () => {
+it("sends the top bar's stored mode, model and Corpus Explore, the last only when the server offers it", async () => {
+  setComposerSettings({ mode: "GRAPH", model: "litellm:openai/glm-5-free", corpusExplore: true });
+  await showChat(true);
+  await send("How do crews work?");
+  expect(posts[0]!.body).toEqual({ message: "How do crews work?", corpus_id: "cinema", mode: "GRAPH", require_retrieval: true,
+                                   synthesizer: "litellm:openai/glm-5-free", corpus_explorer: true });
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  await showChat(false);                                                    // the capability is off: the stored switch is ignored
+  await send("How do crews work?");
+  expect(posts[1]!.body).toEqual({ message: "How do crews work?", corpus_id: "cinema", mode: "GRAPH", require_retrieval: true,
+                                   synthesizer: "litellm:openai/glm-5-free" });
+});
+
+it("Reasoning stays the composer's own and rides on the same request", async () => {
   await showChat();
-  expect(summary()).toBe("HYBRID · deepseek-v4-flash-0731");               // nothing picked: the backend's default, named
-  await choose(selectWith("GNN"), "GRAPH");
-  expect(summary()).toBe("GRAPH · deepseek-v4-flash-0731");
-  await click(host.querySelector<HTMLButtonElement>(".mp__button")!);
-  await click([...host.querySelectorAll<HTMLButtonElement>(".mp__group")].find((b) => b.textContent?.includes("OpenCode"))!);
-  await click([...host.querySelectorAll<HTMLButtonElement>(".mp__item")].find((b) => b.textContent === "glm-5-free")!);
-  expect(summary()).toBe("GRAPH · glm-5-free");
-  const deep = [...host.querySelectorAll("label")].find((l) => l.textContent?.includes("Deep research"))!.querySelector("input")!;
-  await click(deep);
-  expect(summary()).toBe("GRAPH · glm-5-free · Deep · Standard");
-  await choose(selectWith("thorough"), "thorough");
-  expect(summary()).toBe("GRAPH · glm-5-free · Deep · Thorough");
-  await click(deep);
-  expect(summary()).toBe("GRAPH · glm-5-free");
+  const reasoning = [...host.querySelectorAll("select")].find((s) => [...s.options].some((o) => o.value === "low"))!;
+  await act(async () => { reasoning.value = "low"; reasoning.dispatchEvent(new Event("change", { bubbles: true })); });
+  await send("Why?");
+  expect(posts[0]!.body).toEqual({ message: "Why?", corpus_id: "cinema", mode: "HYBRID", require_retrieval: true, reasoning: "low" });
 });
