@@ -184,11 +184,23 @@ last_reviewed: 2026-09-26
   - `rows` and `status` on retrieve / extract frames (DR6b's `_phase` drops them today);
   - run totals `documents` / `passages` in coverage frames (without them the books and passages counters appear only once
     the answer is in).
-- **At the merge with DR6c (`fea64ecb` on feat/fix-it-all):**
-  - Its test "labels each search in the process rail by its move, in words" reads `.phase-label`. New deep turns no longer
-    render it: the live view's feed supersedes the rail labels, as the coordinator allowed. The test needs retargeting to
-    `.research-feed__item` ("Main answer · <query>", "Counter-evidence · <query>"), or it can check a saved turn without
-    `deepRun`.
-  - Its other three tests go through AnswerBody unchanged. `beforeEach` merges cleanly (different lines).
+- **At the merge with DR6c (`fea64ecb` on feat/fix-it-all).** A trial merge was computed with
+  `git merge-tree --write-tree feat/deep-research-ui feat/fix-it-all`, which leaves the worktree alone, and its
+  `frontend-v2` was run from the scratchpad.
+  - The merge has no conflicts. `tsc` is clean. 128 of 129 tests pass.
+  - The one failure is DR6c's "labels each search in the process rail by its move, in words", which reads `.phase-label`.
+    New deep turns no longer render the rail: the live view's feed supersedes its labels, as the coordinator allowed.
+  - This replacement makes it 129 of 129 on the merge tree:
+    ```tsx
+    it("labels each search in the research view's activity feed by its move, in words", async () => {
+      frames = movesFrames({ searched: 1, learnings: 1 });
+      await askDeep("Is Laban effort notation worth learning?");
+      await act(async () => (host.querySelector(".research-live__toggle") as HTMLButtonElement).click());   // a finished run folds
+      await act(async () => [...host.querySelectorAll("button")].find((b) => b.textContent?.startsWith("Show activity"))!.click());
+      const rows = [...host.querySelectorAll(".research-feed__what")].map((e) => e.textContent);
+      expect(rows).toEqual(["Main answer · laban effort factors", "Counter-evidence · when does effort notation fail"]);
+    });
+    ```
+  - Its other three tests go through AnswerBody unchanged, and `beforeEach` merges cleanly (different lines).
 - DR7f, the live acceptance through the UI on the five DR4 questions, waits for the deploy and the owner's word. The
   screenshots at three widths for the owner belong there.
