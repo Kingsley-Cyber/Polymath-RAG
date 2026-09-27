@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "../ui/icons";
 import { copyText } from "../lib/auth";
 import { api, ApiError, deepResearchStream } from "../lib/api";
@@ -10,7 +10,7 @@ import { ProcessRail } from "../components/ProcessRail";
 import { AnswerBody } from "../components/AnswerBody";
 import { ModelPicker } from "../components/ModelPicker";
 import type { ChatSession } from "../lib/chatStore";
-import { isResearchTurn, loadSkipPlan, olderPlanBackend, presetSeconds, type DeepGoal, type DeepRunRequest, type DeepRunState } from "../lib/deep";
+import { isResearchTurn, loadSkipPlan, olderPlanBackend, presetLabel, presetSeconds, type DeepGoal, type DeepRunRequest, type DeepRunState } from "../lib/deep";
 import { ResearchTurnView, type ResearchHandlers } from "../components/deep/ResearchTurn";
 
 /**
@@ -32,6 +32,15 @@ const STARTERS = [
   "What are the key concepts, and how do they relate?",
   "Where do the sources disagree, and on what?",
 ];
+
+/** The folded composer's one line (phones, ≤ 560 px): the retrieval mode, a short model name (nothing picked = the
+ *  backend's default, named as the model picker names it), and "Deep · <depth>" while deep research is on. */
+function optionsSummary(mode: string, model: string, synths: Synthesizer[], deep: boolean, preset: string): string {
+  const picked = model ? synths.find((s) => (s.id ?? s.name) === model) : synths.find((s) => s.default);
+  const name = picked?.model || picked?.label
+    || (model ? model.replace(/^(litellm|ollama):/, "").split("/").pop() : "") || "default model";
+  return [mode, name, ...(deep ? ["Deep", presetLabel(preset)] : [])].join(" · ");
+}
 
 export function Chat({
   corpusId,
@@ -55,6 +64,8 @@ export function Chat({
   const [corpusExplore, setCorpusExplore] = useState(false);
   const [deep, setDeep] = useState(false);                        // DEEP-RESEARCH-MODE-V1: the composer switch
   const [preset, setPreset] = useState("standard");
+  const [optionsOpen, setOptionsOpen] = useState(false);         // phones: the option chips folded behind "Options"
+  const chipsId = useId();
   const [question, setQuestion] = useState("");
   const turns = session.turns;
   // Busy is the chat's, not this screen's: a chat reopened mid-answer is still streaming.
@@ -236,48 +247,58 @@ export function Chat({
             }}
           />
           <div className="composer__bar">
-            <div className="composer__chips" onClick={(e) => e.stopPropagation()}>
-              <label className="chip-field" title="How the library is searched">
-                <span className="label">Retrieval</span>
-                <select value={mode} onChange={(e) => setMode(e.target.value as PublicMode)}>
-                  {PUBLIC_MODES.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </label>
-              <div className="chip-field chip-field--model">
-                <span className="label">Model</span>
-                <ModelPicker synthesizers={synths.data ?? []} value={model} onChange={setModel} />
-              </div>
-              <label className="chip-field" title="How much the model reasons before answering">
-                <span className="label">Reasoning</span>
-                <select value={reasoning} onChange={(e) => setReasoning(e.target.value)}>
-                  <option value="">{reasons.data?.default ?? "default"}</option>
-                  {(reasons.data?.modes ?? []).map((m) => (
-                    <option key={m.id} value={m.id} title={m.description}>{m.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="chip-field chip-field--toggle"
-                     title="Several rounds of searching and reading your library, then a report that cites every claim (about 1-3 minutes)">
-                <input type="checkbox" checked={deep} onChange={(e) => setDeep(e.target.checked)} />
-                <span className="label">Deep research</span>
-              </label>
-              {deep && (
-                <label className="chip-field" title="How far the research goes">
-                  <span className="label">Depth</span>
-                  <select value={preset} onChange={(e) => setPreset(e.target.value)}>
-                    <option value="quick">Quick</option>
-                    <option value="standard">Standard</option>
-                    <option value="thorough">Thorough</option>
+            {/* On a phone (≤ 560 px, app.css) the chips fold behind "Options" and its one-line summary; a tap opens them
+                under it. Wider screens never show the button, so the chips are always there. */}
+            <div className="composer__options" onClick={(e) => e.stopPropagation()}>
+              <button type="button" className="composer__fold" aria-expanded={optionsOpen} aria-controls={chipsId}
+                      onClick={() => setOptionsOpen((o) => !o)}>
+                <span className={`disclosure${optionsOpen ? " open" : ""}`} aria-hidden="true">▸</span>
+                <span className="composer__fold-label">Options</span>
+                <span className="composer__fold-summary">{optionsSummary(mode, model, synths.data ?? [], deep, preset)}</span>
+              </button>
+              <div id={chipsId} className={`composer__chips${optionsOpen ? " composer__chips--open" : ""}`}>
+                <label className="chip-field" title="How the library is searched">
+                  <span className="label">Retrieval</span>
+                  <select value={mode} onChange={(e) => setMode(e.target.value as PublicMode)}>
+                    {PUBLIC_MODES.map((m) => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </label>
-              )}
-              {corpusExploreAvailable && !deep && (
-                <label className="chip-field chip-field--toggle"
-                       title="Bounded, corpus-grounded exploration: activate related concepts from your library and retrieve through a few grounded sub-questions.">
-                  <input type="checkbox" checked={corpusExplore} onChange={(e) => setCorpusExplore(e.target.checked)} />
-                  <span className="label">Corpus Explore</span>
+                <div className="chip-field chip-field--model">
+                  <span className="label">Model</span>
+                  <ModelPicker synthesizers={synths.data ?? []} value={model} onChange={setModel} />
+                </div>
+                <label className="chip-field" title="How much the model reasons before answering">
+                  <span className="label">Reasoning</span>
+                  <select value={reasoning} onChange={(e) => setReasoning(e.target.value)}>
+                    <option value="">{reasons.data?.default ?? "default"}</option>
+                    {(reasons.data?.modes ?? []).map((m) => (
+                      <option key={m.id} value={m.id} title={m.description}>{m.label}</option>
+                    ))}
+                  </select>
                 </label>
-              )}
+                <label className="chip-field chip-field--toggle"
+                       title="Several rounds of searching and reading your library, then a report that cites every claim (about 1-3 minutes)">
+                  <input type="checkbox" checked={deep} onChange={(e) => setDeep(e.target.checked)} />
+                  <span className="label">Deep research</span>
+                </label>
+                {deep && (
+                  <label className="chip-field" title="How far the research goes">
+                    <span className="label">Depth</span>
+                    <select value={preset} onChange={(e) => setPreset(e.target.value)}>
+                      <option value="quick">Quick</option>
+                      <option value="standard">Standard</option>
+                      <option value="thorough">Thorough</option>
+                    </select>
+                  </label>
+                )}
+                {corpusExploreAvailable && !deep && (
+                  <label className="chip-field chip-field--toggle"
+                         title="Bounded, corpus-grounded exploration: activate related concepts from your library and retrieve through a few grounded sub-questions.">
+                    <input type="checkbox" checked={corpusExplore} onChange={(e) => setCorpusExplore(e.target.checked)} />
+                    <span className="label">Corpus Explore</span>
+                  </label>
+                )}
+              </div>
             </div>
             {busy ? (
               <button className="composer__send composer__send--stop" aria-label="Stop" title="Stop the answer"

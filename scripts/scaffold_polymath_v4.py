@@ -2293,6 +2293,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("frontend-v2/src/__tests__/deep-research-ui.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/deep-report.test.tsx", "tsx", None),
     ("docs/wiki/work-log/2026-09-26-deep-research-dr7-ui.md", "md", None),
+    # DEEP-RESEARCH tuning (2026-09-27): the folded composer on phones
+    ("frontend-v2/src/__tests__/chat-composer.test.tsx", "tsx", None),
     ("tests/determinism/test_retrieve_gnn_routing.py", "py", None),
     ("docs/wiki/work-log/2026-09-22-frontend-backend-contract.md", "md", None),
     ("docs/wiki/work-log/2026-09-22-chat-ui-restore.md", "md", None),
@@ -2578,6 +2580,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-26-deep-research-dr6.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-deep-research-dr6d.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-deep-research-dr7-backend.md", "md", None),
+    ("docs/wiki/work-log/2026-09-27-deep-research-tuning.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-frontend-refresh-u4b.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-friends-access-one-login.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-trail-ext-fixes-runtime.md", "md", None),

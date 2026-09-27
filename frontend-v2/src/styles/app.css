@@ -586,6 +586,24 @@ button.btn--danger-solid:hover:not(:disabled) { background: var(--bad); border-c
   .chip-field--model .mp__button { max-width: 150px; }
 }
 
+/* ── the folded composer (tuning 2026-09-27): at 375 px the option chips took ~40% of the height. At ≤ 560 px they fold
+   behind one "Options" button with a one-line summary and open under it; wider screens never show the button. ── */
+.composer__options { display: flex; flex-direction: column; gap: 6px; min-width: 0; cursor: default; }
+.composer__fold {
+  display: none; align-items: center; gap: 6px; height: 30px; max-width: 100%; min-width: 0; padding: 0 12px 0 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface-2); color: var(--text-3);
+  font: inherit; font-size: var(--fs-xs); text-align: left; cursor: pointer;
+}
+.composer__fold:hover { border-color: var(--border-strong); }
+.composer__fold-label { color: var(--text); font-weight: 500; white-space: nowrap; }
+.composer__fold-summary { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 560px) {
+  .composer__fold { display: inline-flex; align-self: flex-start; }
+  .composer__chips { display: none; }
+  .composer__chips--open { display: flex; }
+}
+
 /* ── U5: link-like buttons (keyboard-usable table rows), details cards ───── */
 .linklike {
   appearance: none; background: transparent; border: 0; padding: 0; font: inherit; color: var(--text); text-align: left;
