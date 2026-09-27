@@ -20,6 +20,8 @@ const apiPaths = [
   "/adapter",
   // FRIENDS-ACCESS-V1: sign-in, my keys, the owner's friend admin
   "/auth", "/keys", "/admin",
+  // DEEP-RESEARCH-MODE-V1: the research stream
+  "/research",
 ];
 
 // A backend path missing from the list above does NOT fail loudly — vite answers it

@@ -9,9 +9,11 @@ identity: `agent_identity` and a receipt's `client` keep meaning "which program 
 """
 from __future__ import annotations
 
+import contextlib
 import contextvars
 import json
 import re
+from collections.abc import Iterator
 
 HEADER = "x-polymath-principal"
 PRINCIPAL_ID_RE = re.compile(r"^prn_[a-z0-9][a-z0-9_-]{1,58}$")
@@ -21,6 +23,18 @@ _current: contextvars.ContextVar[str | None] = contextvars.ContextVar("polymath_
 def current() -> str | None:
     """The principal this request acts for, or None for a legacy / trusted-local caller."""
     return _current.get()
+
+
+@contextlib.contextmanager
+def acting_as(principal_id: str | None) -> Iterator[None]:
+    """Carry a request's principal onto work the request started elsewhere (a worker thread's call back into the event loop):
+    a context variable does not cross threads by itself, and a missing principal would read as the trusted-local caller.
+    Pass only the request's OWN principal — this never widens anything."""
+    token = _current.set(principal_id)
+    try:
+        yield
+    finally:
+        _current.reset(token)
 
 
 def parse(value: str | None) -> str | None:

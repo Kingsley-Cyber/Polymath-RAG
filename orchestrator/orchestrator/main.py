@@ -126,6 +126,9 @@ app.include_router(web_auth_router)
 from orchestrator.api.web_settings import router as web_settings_router  # noqa: E402
 
 app.include_router(web_settings_router)
+from orchestrator.api.deep_research import router as deep_research_router
+
+app.include_router(deep_research_router)          # DEEP-RESEARCH-MODE-V1 DR2: POST /research/deep
 
 # Serve the built web UI at /ui when a build exists (single-port product).
 from pathlib import Path  # noqa: E402
