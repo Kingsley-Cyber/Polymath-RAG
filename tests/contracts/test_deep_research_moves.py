@@ -24,11 +24,7 @@ from polymath_shared.deep_research import (
     run_research,
 )
 from polymath_shared.deep_research import moves as M
-from polymath_shared.deep_research.prompts import (
-    NO_COUNTER_EVIDENCE,
-    REPORT_SYSTEM,
-    REPORT_SYSTEM_MOVES,
-)
+from polymath_shared.deep_research.prompts import REPORT_SYSTEM, REPORT_SYSTEM_GOALS
 
 MECHANISM_Q = "How does habit stacking change daily routines?"     # MECHANISM, not evaluative
 EVALUATIVE_Q = "Is habit stacking worth it?"                        # EXPLORATORY, evaluative
@@ -349,7 +345,8 @@ def test_the_gate_drops_a_query_under_its_floor_before_it_is_searched():
                                                 "inverse q1s2 habit stacking"]
     assert sorted(ret.moves()) == ["broad", "deep"] and [q.status for q in out.queries] == ["ok", "ok", "gated"]
     m = out.summary()["moves"]
-    assert m["gate"] == {"scored": 3, "dropped": 1, "failed_open": 0} and m["levels"][0]["searched"]["inverse"] == 0
+    assert m["gate"] == {"scored": 3, "dropped": 1, "user_kept": 0, "failed_open": 0}
+    assert m["levels"][0]["searched"]["inverse"] == 0
     assert next(e for e in events if e["stage"] == "gate")["dropped"] == 1
     assert events[-1]["completed"] == events[-1]["total"] == 3
 
@@ -360,7 +357,7 @@ def test_the_gate_fails_open_and_counts_it():
 
     out, ret, _ = run(LLM(), gate=broken, breadth=3, depth=1)
     assert len(ret.calls) == 3 and {q.status for q in out.queries} == {"ok"}
-    assert out.summary()["moves"]["gate"] == {"scored": 0, "dropped": 0, "failed_open": 3}
+    assert out.summary()["moves"]["gate"] == {"scored": 0, "dropped": 0, "user_kept": 0, "failed_open": 3}
     assert "gate:TimeoutError" in out.errors
     out, ret, _ = run(LLM(), gate=lambda question, items: {}, breadth=3, depth=1)      # a judge that scores nothing
     assert len(ret.calls) == 3 and out.summary()["moves"]["gate"]["failed_open"] == 3
@@ -396,13 +393,14 @@ def test_a_query_under_the_spawn_floor_keeps_its_learnings_but_spawns_nothing():
 
 
 # ─────────────────────────────────────────────────────────── receipts, events, the report
-def test_the_receipt_carries_the_moves_block_and_the_report_its_sections():
+def test_the_receipt_carries_the_moves_block_and_the_report_its_goals():
     out, _, events = run(LLM(), question=EVALUATIVE_Q, gate=lambda q, items: {i: 0.9 for i, _ in items}, breadth=3,
                          depth=1, concurrency=1)
     m = out.summary()["moves"]
     assert set(m) == {"intent", "evaluative", "levels", "gate", "drift_stopped", "gap_nodes", "dry_moves",
                       "inverse_unanchored", "deep", "inverse", "signals"}
-    assert (m["intent"], m["evaluative"], m["gate"]) == ("EXPLORATORY", True, {"scored": 3, "dropped": 0, "failed_open": 0})
+    assert (m["intent"], m["evaluative"]) == ("EXPLORATORY", True)
+    assert m["gate"] == {"scored": 3, "dropped": 0, "user_kept": 0, "failed_open": 0}
     mix = {"broad": 1, "deep": 0, "adjacent": 1, "inverse": 1}
     assert m["levels"] == [{"level": 1, "asked": mix, "planned": mix, "searched": mix, "learnings": mix}]
     assert m["inverse"] == {"searched": 1, "learnings": 1} and {ln.move for ln in out.learnings} == {"broad", "adjacent", "inverse"}
@@ -410,27 +408,26 @@ def test_the_receipt_carries_the_moves_block_and_the_report_its_sections():
     assert plan["moves"] == ["broad", "adjacent", "inverse"]
     searches = [e for e in events if e["stage"] in ("retrieve", "extract")]
     assert searches and all(e["query"].split()[0] == e["move"] for e in searches)
+    # DR7b replaced §10.5's move sections: a TL;DR, one section per goal in plan order, the inverse findings apart
     system, prompt = out.report_prompt(EVALUATIVE_Q)
-    assert system == REPORT_SYSTEM_MOVES.format(today="2026-09-26") != REPORT_SYSTEM.format(today="2026-09-26")
-    assert "What cuts against it" in system and NO_COUNTER_EVIDENCE in system
-    says, connects, against = (prompt.index(f"SECTION: {s}") for s in ("What the libraries say", "How it connects",
-                                                                       "What cuts against it"))
-    assert says < prompt.index("on broad q1s0") < connects < prompt.index("on adjacent q1s1") < against
-    assert against < prompt.index("on inverse q1s2") < prompt.index("</data>")
+    assert system == REPORT_SYSTEM_GOALS.format(today="2026-09-26") != REPORT_SYSTEM.format(today="2026-09-26")
+    assert "## TL;DR" in system and "## Where sources disagree" in system and "Do not list the sources" in system
+    first, second = prompt.index("GOAL: goal1s0\n"), prompt.index("GOAL: goal1s1\n")
+    against = prompt.index("COUNTER-EVIDENCE")
+    assert first < prompt.index("on broad q1s0") < second < prompt.index("on adjacent q1s1") < against
+    assert against < prompt.index("- (goal: goal1s2) finding") < prompt.index("on inverse q1s2") < prompt.index("</data>")
+    assert "GOAL: goal1s2" not in prompt and "SEARCHED, NOTHING FOUND" not in prompt
 
 
-def test_inverse_searches_that_found_nothing_make_the_report_say_so():
+def test_counter_evidence_that_found_nothing_is_none_in_the_report_and_counted_for_the_page():
     def extract(prompt, cids, n):
         query = section(prompt, "SEARCH QUERY")
         return "DONE: yes" if query.startswith("inverse") else f"LEARNING: finding{n} on {query} [{cids[0]}]\nDONE: yes"
 
     out, _, _ = run(LLM(extract=extract), question=EVALUATIVE_Q, breadth=3, depth=1)
-    assert out.summary()["moves"]["inverse"] == {"searched": 1, "learnings": 0}
+    assert out.summary()["moves"]["inverse"] == {"searched": 1, "learnings": 0}      # the page's "none found" line reads it
     _, prompt = out.report_prompt(EVALUATIVE_Q)
-    assert "SECTION: What cuts against it" in prompt and NO_COUNTER_EVIDENCE in prompt
-    out, _, _ = run(LLM(extract=extract), question=DEFINITION_Q, breadth=3, depth=1)       # no inverse search at all
-    _, prompt = out.report_prompt(DEFINITION_Q)
-    assert "What cuts against it" not in prompt and NO_COUNTER_EVIDENCE not in prompt
+    assert "COUNTER-EVIDENCE (learnings that cut against the findings above):\n(none)" in prompt
 
 
 def test_the_moves_never_depend_on_timing():

@@ -7,6 +7,8 @@ with fakes:
     retrieve(query, scope) -> [Row]                   evidence retrieval inside the request's libraries
     complete(prompt, *, system, max_tokens) -> str    one budgeted LLM call
     gate(question, [(id, text)]) -> {id: score}       optional, moves only: each planned query's relevance to the question
+Two optional inputs come from the person (DR7): `plan`, the confirmed level-1 plan that replaces the level-1 planner call,
+and `finish`, an event that ends the run early while keeping what was found. `plan_goals` makes that plan alone, in one call.
 
 WHY levels, not recursion: dzhng recurses per branch. Here the tree is walked one level at a time, so progress streams as
 "level k, completed/total", the budget and the deadline are checked before EVERY port call, and each level's plans see the
@@ -38,14 +40,19 @@ from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
+from . import evidence as E
 from . import moves as M
 from . import prompts as P
 
 #: breadth × depth presets (plan §3). The route maps the composer's preset name through PRESETS / Config.preset.
 QUICK, STANDARD, THOROUGH = (3, 1), (3, 2), (4, 2)
 PRESETS: dict[str, tuple[int, int]] = {"quick": QUICK, "standard": STANDARD, "thorough": THOROUGH}
-#: frontier_empty / no_new_followups end a run naturally; budget / deadline / cancelled cut it short
-STOP_REASONS = ("frontier_empty", "no_new_followups", "budget", "deadline", "cancelled")
+#: frontier_empty / no_new_followups / coverage_complete end a run naturally; budget / deadline / finished_early (the person
+#: pressed Finish now) / cancelled cut it short
+STOP_REASONS = ("frontier_empty", "no_new_followups", "coverage_complete", "budget", "deadline", "finished_early",
+                "cancelled")
+#: DR7a's time estimate, from DR4's five live runs (2026-09-26): 38-47 s for 3 searches, 98-115 s for 9, 132 s for 12
+ESTIMATE_BASE_S, ESTIMATE_PER_SEARCH_S = 10.0, 11.0
 DEADLINE_HARD_MAX_S = 360.0
 MAX_BREADTH, MAX_DEPTH, MAX_CONCURRENCY = 6, 4, 8
 HEADROOM = 1.25                      # derived call and retrieval limits sit this far above a full run
@@ -70,6 +77,7 @@ class Row:
     source: str               # title / section label shown to the model beside the row
     score: float
     doc_id: str = ""          # DR6: the row's document ("" = unknown); the concentration signal reads it
+    title: str = ""           # DR7: the document's title, for the evidence model's sources
 
     def __post_init__(self) -> None:
         if not isinstance(self.cid, str) or not _CID.fullmatch(self.cid):
@@ -78,8 +86,8 @@ class Row:
             raise TypeError("Row.text and Row.source must be str")
         if isinstance(self.score, bool) or not isinstance(self.score, (int, float)):
             raise TypeError(f"Row.score must be a number, got {type(self.score).__name__}")
-        if not isinstance(self.doc_id, str):
-            raise TypeError("Row.doc_id must be str")
+        if not isinstance(self.doc_id, str) or not isinstance(self.title, str):
+            raise TypeError("Row.doc_id and Row.title must be str")
 
 
 @dataclass(frozen=True)
@@ -131,15 +139,17 @@ class GatePort(Protocol):
     def __call__(self, question: str, items: Sequence[tuple[str, str]], /) -> Mapping[str, float]: ...
 
 
-def preset_cost(breadth: int, depth: int) -> tuple[int, int, int]:
+def preset_cost(breadth: int, depth: int, first: int | None = None) -> tuple[int, int, int]:
     """(plan calls, retrievals, extract calls) of a FULL run, where every extract returns follow-ups and DONE: no. Nothing can
-    exceed it: a plan keeps ≤ breadth queries and each query spawns ≤ 1 child. The report call is the route's, not counted."""
+    exceed it: a plan keeps ≤ breadth queries and each query spawns ≤ 1 child. The report call is the route's, not counted.
+    `first` (DR7a): level 1's width when a confirmed plan sets it; the levels below keep the preset's halving breadth."""
     plans = retrievals = 0
-    nodes, width = 1, breadth
+    nodes, width, node_breadth = 1, breadth if first is None else first, breadth
     for _ in range(depth):
         plans += nodes
         retrievals += nodes * width
-        nodes, width = nodes * width, math.ceil(width / 2)
+        node_breadth = math.ceil(node_breadth / 2)
+        nodes, width = nodes * width, node_breadth
     return plans, retrievals, retrievals
 
 
@@ -166,12 +176,15 @@ class Config:
     moves: bool = False                # DR6 research moves (plan §10); False = DR1's engine, byte for byte
     gate_floor: float = 0.2            # moves: a planned query the gate scores under this is dropped before its search
     spawn_floor: float = 0.35          # moves: a query scored under this keeps its learnings but spawns no child
+    first_width: int | None = None     # DR7a: level 1's width when a confirmed plan sets it (the limits grow with it)
 
     def __post_init__(self) -> None:
         if not 1 <= self.breadth <= MAX_BREADTH or not 1 <= self.depth <= MAX_DEPTH:
             raise ValueError(f"breadth must be 1..{MAX_BREADTH} and depth 1..{MAX_DEPTH}")
         if not 0 <= self.gate_floor <= 1 or not 0 <= self.spawn_floor <= 1:
             raise ValueError("gate_floor and spawn_floor must be in [0, 1]")
+        if self.first_width is not None and not 1 <= self.first_width <= 2 * MAX_BREADTH:
+            raise ValueError(f"first_width must be 1..{2 * MAX_BREADTH} or None")
         if not 1 <= self.concurrency <= MAX_CONCURRENCY:
             raise ValueError(f"concurrency must be 1..{MAX_CONCURRENCY}")
         if not 0 < self.deadline_s <= DEADLINE_HARD_MAX_S:
@@ -198,20 +211,20 @@ class Config:
     def retrieval_limit(self) -> int:
         if self.max_retrievals is not None:
             return self.max_retrievals
-        return math.ceil(preset_cost(self.breadth, self.depth)[1] * HEADROOM)
+        return math.ceil(preset_cost(self.breadth, self.depth, self.first_width)[1] * HEADROOM)
 
     @property
     def llm_call_limit(self) -> int:
         if self.max_llm_calls is not None:
             return self.max_llm_calls
-        plans, _, extracts = preset_cost(self.breadth, self.depth)
+        plans, _, extracts = preset_cost(self.breadth, self.depth, self.first_width)
         return math.ceil((plans + extracts) * HEADROOM)
 
     @property
     def token_limit(self) -> int:
         if self.max_tokens is not None:
             return self.max_tokens
-        plans, _, extracts = preset_cost(self.breadth, self.depth)
+        plans, _, extracts = preset_cost(self.breadth, self.depth, self.first_width)
         plan_call = PLAN_PROMPT_TOKENS_EST + self.plan_max_tokens
         extract_call = (EXTRACT_PROMPT_TOKENS_EST + self.max_rows_per_query * (self.max_row_chars // 4 + 16)
                         + self.extract_max_tokens)
@@ -221,6 +234,15 @@ class Config:
     def stop_tokens(self) -> int:
         """The engine's share: at or past this estimate no new call starts."""
         return int(round(self.token_limit * (1 - self.report_reserve), 6))
+
+
+def estimate(config: Config, *, planned: bool = False) -> dict[str, int]:
+    """DR7a's plan-card estimate of a FULL run of this shape: {searches, llm_calls, seconds}. The report call is counted;
+    `planned` = a confirmed plan replaces the level-1 planner call. The seconds follow DR4's live runs (ESTIMATE_*_S) and
+    never pass the deadline."""
+    plans, retrievals, extracts = preset_cost(config.breadth, config.depth, config.first_width)
+    seconds = min(config.deadline_s, ESTIMATE_BASE_S + ESTIMATE_PER_SEARCH_S * retrievals)
+    return {"searches": retrievals, "llm_calls": plans + extracts + 1 - (1 if planned else 0), "seconds": round(seconds)}
 
 
 def top_learnings(learnings: Sequence[Learning], n: int) -> list[Learning]:
@@ -256,18 +278,14 @@ class ResearchOutcome:
     report_max_learnings: int = 30
     moves: dict[str, Any] | None = None   # DR6: the moves block of the receipt (§10.7); None = moves were off
     goals: tuple[Goal, ...] = ()          # the level-1 searches in plan order: the goals every learning's goal_id names
+    confirmed_plan: bool = False          # DR7a: level 1 was the person's confirmed plan, not the planner's
 
     def report_prompt(self, question: str, *, max_learnings: int | None = None) -> tuple[str, str]:
-        """(system, prompt) for the report call the route makes: the top learnings by citation coverage, grouped by goal
-        (with moves: under the three sections of §10.5, first)."""
+        """(system, prompt) for the report call the route makes: the top learnings by citation coverage, grouped by goal.
+        With moves (DR7b, §11.4): a TL;DR, one section per goal in plan order, then where sources disagree."""
         chosen = top_learnings(self.learnings, self.report_max_learnings if max_learnings is None else max_learnings)
-        if self.moves is None:
-            return P.report_prompt(question, today=self.today, learnings=chosen, empty_threads=self.empty_threads,
-                                   open_followups=self.open_followups)
-        inverse = self.moves["inverse"]
         return P.report_prompt(question, today=self.today, learnings=chosen, empty_threads=self.empty_threads,
-                               open_followups=self.open_followups, moves=True, inverse_searched=inverse["searched"],
-                               inverse_learnings=inverse["learnings"])
+                               open_followups=self.open_followups, goals=None if self.moves is None else self.goals)
 
     def summary(self) -> dict[str, Any]:
         """The receipt's numbers: counts, the stop reason and every fallback (plan §3, §6); with moves, the moves block."""
@@ -291,11 +309,57 @@ def validate_report_citations(report_text: str, outcome: ResearchOutcome) -> tup
 
 def run_research(question: str, scope: Any, *, retrieve: RetrievePort, complete: CompletePort, config: Config | None = None,
                  on_event: Callable[[dict[str, Any]], None] | None = None,
-                 cancel: threading.Event | None = None, gate: GatePort | None = None) -> ResearchOutcome:
+                 cancel: threading.Event | None = None, gate: GatePort | None = None,
+                 finish: threading.Event | None = None,
+                 plan: Sequence[tuple[str, str, str]] | None = None) -> ResearchOutcome:
     """Run the loop to a stop reason. `on_event` is called from THIS thread only, never from the pool. Setting `cancel` stops
     the run within ~_POLL_S: in-flight port calls are abandoned, not awaited, and the outcome says "cancelled". `gate` is
-    read only with `config.moves` (None = no relevance gate)."""
-    return _Run(question, scope, retrieve, complete, config or Config(), on_event, cancel, gate).execute()
+    read only with `config.moves` (None = no relevance gate).
+    `finish` (DR7c): once set, nothing new starts, the calls in flight finish and merge, and the outcome says
+    "finished_early"; the route then writes the report from what was found.
+    `plan` (DR7a): the confirmed level 1 as (goal, query, move) items, at most 2 × breadth. It replaces the level-1 planner
+    call, every item is searched (the gate scores it but never drops it), and the run's limits grow with its width."""
+    cfg = config or Config()
+    seed = None
+    if plan is not None:
+        seed = _check_plan(plan, cfg)
+        if cfg.first_width is None:
+            cfg = replace(cfg, first_width=len(seed))
+    return _Run(question, scope, retrieve, complete, cfg, on_event, cancel, gate, finish, seed).execute()
+
+
+@dataclass(frozen=True)
+class PlanDraft:
+    """DR7a: a run's level-1 plan, made alone for the person to confirm (the plan card)."""
+    goals: tuple[Goal, ...]
+    parse_repairs: int
+    unparsed_lines: int
+    duplicate_queries: int
+    inverse_unanchored: int
+
+
+def plan_goals(question: str, *, complete: CompletePort, config: Config | None = None) -> PlanDraft:
+    """DR7a: exactly one planner call, the level-1 plan a run of this config would make (with moves: under the controller's
+    quota), accepted exactly as the run accepts it (quota order, leftovers, duplicates, unanchored inverse queries). An
+    error of the complete port propagates."""
+    run = _Run(question, None, _no_search, complete, config or Config(), None, None)
+    return run.draft()
+
+
+def _no_search(query: str, scope: Any, /, **_kw: Any) -> Sequence[Row]:
+    raise RuntimeError("plan_goals never searches")
+
+
+def _check_plan(plan: Sequence[tuple[str, str, str]], cfg: Config) -> tuple[tuple[str, str, str], ...]:
+    items = tuple((str(goal).strip(), str(query).strip(), str(move)) for goal, query, move in plan)
+    if not 1 <= len(items) <= 2 * cfg.breadth:
+        raise ValueError(f"a confirmed plan holds 1..{2 * cfg.breadth} goals, got {len(items)}")
+    for _goal, query, move in items:
+        if not query:
+            raise ValueError("every goal of a confirmed plan needs a query")
+        if cfg.moves and move not in M.MOVES:
+            raise ValueError(f"unknown move {move!r}; expected one of {M.MOVES}")
+    return items
 
 
 # ─────────────────────────────────────────────────────────── internals
@@ -350,6 +414,7 @@ class _Branch:
     move: str = ""                        # moves: what kind of search it is
     cids: tuple[str, ...] = ()            # the rows its search returned (the repeat signal reads them)
     drift: bool = False                   # moves: scored under the spawn floor, so its thread ends with it
+    confirmed: bool = False               # DR7a: a goal of the person's confirmed plan (the gate never drops it)
 
 
 @dataclass
@@ -362,7 +427,8 @@ class _Job:
 class _Run:
     def __init__(self, question: str, scope: Any, retrieve: RetrievePort, complete: CompletePort, cfg: Config,
                  on_event: Callable[[dict[str, Any]], None] | None, cancel: threading.Event | None,
-                 gate: GatePort | None = None) -> None:
+                 gate: GatePort | None = None, finish: threading.Event | None = None,
+                 seed: tuple[tuple[str, str, str], ...] | None = None) -> None:
         if not isinstance(question, str) or not question.strip():
             raise ValueError("question must be a non-empty string")
         self.question, self.scope, self.cfg = question.strip(), scope, cfg
@@ -390,14 +456,13 @@ class _Run:
         self.dry: set[str] = set()
         self.signals = dict.fromkeys(("repeat", "concentration", "one_sided"), 0)
         self.gate_scored = self.gate_dropped = self.gate_failed_open = self.drift_stopped = self.gap_nodes = 0
-        self.inverse_unanchored = self.deep_anchored = self.deep_unanchored = 0
+        self.inverse_unanchored = self.deep_anchored = self.deep_unanchored = self.gate_user_kept = 0
+        # ── the person's inputs (DR7): the confirmed level-1 plan, and Finish now
+        self.finish, self.seed = finish, seed
 
     # ── the level loop
     def execute(self) -> ResearchOutcome:
-        root = _Node("1", self.question, "", self.cfg.depth, self.cfg.breadth, 1)
-        if self.moves:
-            root = replace(root, quota=M.root_quota(self.intent, root.breadth, evaluative=self.evaluative))
-        frontier = [root]
+        frontier = [self._root()]
         levels, stop = 0, "frontier_empty"
         pool = ThreadPoolExecutor(max_workers=self.cfg.concurrency, thread_name_prefix="deep-research")
         try:
@@ -407,6 +472,9 @@ class _Run:
                 frontier, new_followups = self._level(pool, frontier)
                 if not frontier and could_recurse and not new_followups:
                     stop = "no_new_followups"
+                if self.moves and self._covered(levels) and frontier and not self._halted():
+                    stop = "coverage_complete"                   # every goal is covered: the rest of the budget stays unspent
+                    break
             for node in frontier:                                 # queued, never planned: a halt came first
                 self.open_followups.extend(node.followups)
         finally:
@@ -415,12 +483,36 @@ class _Run:
         self._emit("stopped", levels, stop_reason=stop, learnings=len(self.learnings))
         return self._outcome(stop, levels)
 
+    def _root(self) -> _Node:
+        root = _Node("1", self.question, "", self.cfg.depth, self.cfg.breadth, 1)
+        if self.moves and self.seed is not None:            # the confirmed plan is level 1's mix
+            return replace(root, quota=tuple(sum(1 for *_, move in self.seed if move == m) for m in M.MOVES))
+        if self.moves:
+            return replace(root, quota=M.root_quota(self.intent, root.breadth, evaluative=self.evaluative))
+        return root
+
+    def draft(self) -> PlanDraft:
+        """`plan_goals`: level 1's one planner call and its acceptance, nothing else."""
+        root = self._root()
+        if self.moves:
+            self._open_level([root])
+        system, prompt = self._plan_text(root)
+        self._admit_llm(system, prompt)
+        reply = self._reply(self.complete(prompt, system=system, max_tokens=self.cfg.plan_max_tokens))
+        self.tokens += len(reply) // 4
+        branches = self._accept_plan(root, reply)
+        return PlanDraft(tuple(Goal(br.id, br.goal, br.query, br.move or M.BROAD) for br in branches), self.repairs,
+                         self.unparsed, self.duplicates, self.inverse_unanchored)
+
     def _level(self, pool: ThreadPoolExecutor, frontier: list[_Node]) -> tuple[list[_Node], int]:
         plans: dict[str, str | None] = {}
         if self.moves:
             self._open_level(frontier)
-        self._drive(pool, deque(self._plan_job(node, plans) for node in frontier))
-        branches = [br for node in frontier if node.id in plans for br in self._accept_plan(node, plans[node.id])]
+        if frontier[0].level == 1 and self.seed is not None:
+            branches = self._accept_seed(frontier[0])
+        else:
+            self._drive(pool, deque(self._plan_job(node, plans) for node in frontier))
+            branches = [br for node in frontier if node.id in plans for br in self._accept_plan(node, plans[node.id])]
         if self.moves and self.gate is not None and branches:
             self._drive(pool, deque([self._gate_job(frontier[0].level, branches)]))
         self._drive(pool, deque(self._retrieve_job(br) for br in branches if br.status != "gated"))
@@ -434,6 +526,15 @@ class _Run:
                 asked[move] += n
         self.level_stats.append({"level": frontier[0].level, "asked": asked, "planned": dict(zero),
                                  "searched": dict(zero), "learnings": dict(zero)})
+
+    def _covered(self, level: int) -> bool:
+        """DR7b (moves): after a level, the `coverage` event (per goal: learnings, distinct documents), and whether every
+        goal the gate kept is covered (§11.4: ≥ 2 findings from ≥ 2 documents)."""
+        goals = [br for br in self.branches if br.node.level == 1]
+        cov = E.coverage([br.id for br in goals], self.learnings)
+        self._emit("coverage", level, goals=cov)
+        kept = {br.id for br in goals if br.status != "gated"}
+        return E.coverage_complete([c for c in cov if c["id"] in kept])
 
     # ── the scheduler: port calls on the pool, everything else here
     def _drive(self, pool: ThreadPoolExecutor, jobs: deque[_Job]) -> None:
@@ -464,6 +565,8 @@ class _Run:
         if self.halt is None:
             if self.cancel is not None and self.cancel.is_set():
                 self.halt = "cancelled"
+            elif self.finish is not None and self.finish.is_set():
+                self.halt = "finished_early"                     # like budget: calls in flight finish, nothing new starts
             elif self.cfg.clock() - self.t0 >= self.cfg.deadline_s:
                 self.halt = "deadline"
             elif self.tokens >= self.cfg.stop_tokens:
@@ -471,7 +574,7 @@ class _Run:
         return self.halt
 
     def _hard_stop(self) -> bool:
-        """Cancel or deadline, checked even after a budget halt: a budget halt lets in-flight calls finish, but none of them
+        """Cancel or deadline, checked even after a budget or finish halt: those let in-flight calls finish, but none of them
         may outlive the deadline or a cancel. The first halt stays the stop reason."""
         hit = (self.cancel is not None and self.cancel.is_set()) or self.cfg.clock() - self.t0 >= self.cfg.deadline_s
         if hit:
@@ -498,11 +601,14 @@ class _Run:
         return True
 
     # ── plan
-    def _plan_job(self, node: _Node, out: dict[str, str | None]) -> _Job:
-        system, prompt = P.plan_prompt(
+    def _plan_text(self, node: _Node) -> tuple[str, str]:
+        return P.plan_prompt(
             self.question, today=self.today, breadth=node.breadth, thread=node.query if node.level > 1 else "",
             goal=node.goal, known=top_learnings(self.learnings, P.PLAN_KNOWN), searched=self.searched_text,
             moves=list(zip(M.MOVES, node.quota)) if self.moves else None, gap=node.gap)
+
+    def _plan_job(self, node: _Node, out: dict[str, str | None]) -> _Job:
+        system, prompt = self._plan_text(node)
 
         def done(result: Any, exc: BaseException | None) -> None:
             if exc is not None:
@@ -537,9 +643,37 @@ class _Run:
                 bid = f"{node.id}.{len(accepted) + 1}"
                 accepted.append(_Branch(bid, node, item.query, item.goal, goal_id=node.goal_id or bid))
         self.branches.extend(accepted)
-        self._emit("plan", node.level, node=node.id, query=node.query, queries=[br.query for br in accepted],
-                   error=reply is None)
+        self._plan_event(node, accepted, error=reply is None)
         return accepted
+
+    def _accept_seed(self, node: _Node) -> list[_Branch]:
+        """DR7a: the confirmed plan is level 1, with no planner call. The person chose these goals, so no quota, duplicate or
+        anchor check applies; each query still joins the searched list, so no later plan repeats it."""
+        accepted: list[_Branch] = []
+        for goal, query, move in self.seed or ():
+            bid = f"{node.id}.{len(accepted) + 1}"
+            self.searched.append(_tokens(query))
+            self.searched_text.append(query)
+            accepted.append(_Branch(bid, node, query, goal, goal_id=bid, move=move if self.moves else "", confirmed=True))
+        self.branches.extend(accepted)
+        if self.moves:
+            planned = self.level_stats[-1]["planned"]
+            for br in accepted:
+                planned[br.move] += 1
+        self._plan_event(node, accepted, error=False, confirmed=True)
+        return accepted
+
+    def _plan_event(self, node: _Node, accepted: list[_Branch], *, error: bool, confirmed: bool = False) -> None:
+        """The `plan` event. With moves it also carries each query's move, the node's goal id (None at level 1, whose
+        queries ARE the goals) and, at level 1, the goals themselves and whether the person confirmed them (DR7a)."""
+        fields: dict[str, Any] = {"node": node.id, "query": node.query, "queries": [br.query for br in accepted]}
+        if self.moves:
+            fields["moves"] = [br.move for br in accepted]
+            fields["goal_id"] = node.goal_id or None
+            if node.level == 1:
+                fields["goals"] = [{"id": br.id, "goal": br.goal, "query": br.query, "move": br.move} for br in accepted]
+                fields["confirmed"] = confirmed
+        self._emit("plan", node.level, **fields, error=error)
 
     def _accept_moves(self, node: _Node, reply: str | None) -> list[_Branch]:
         """§10.2: each move up to its quota, in plan order; slots left empty are then filled by the remaining queries in
@@ -569,8 +703,7 @@ class _Run:
         planned = self.level_stats[-1]["planned"]
         for br in accepted:
             planned[br.move] += 1
-        self._emit("plan", node.level, node=node.id, query=node.query, queries=[br.query for br in accepted],
-                   moves=[br.move for br in accepted], error=reply is None)
+        self._plan_event(node, accepted, error=reply is None)
         return accepted
 
     def _take_query(self, node: _Node, item: P.PlanItem, move: str, anchor: frozenset[str],
@@ -601,6 +734,7 @@ class _Run:
     def _gate_job(self, level: int, branches: list[_Branch]) -> _Job:
         """§10.4: one call per level, before any of its searches: every planned query against the ORIGINAL question. Under
         `gate_floor` = dropped, never searched; under `spawn_floor` = searched, learnings kept, no child (no drift chains).
+        A goal of the confirmed plan is never dropped (DR7a, counted as `user_kept`), but the spawn floor holds for it too.
         A gate that raises, or a query it leaves unscored, keeps the query (fail-open) and is counted."""
         items = [(br.id, br.query) for br in branches]
 
@@ -608,11 +742,11 @@ class _Run:
             if exc is not None:
                 self._error("gate", exc)
                 self.gate_failed_open += len(branches)
-                self._emit("gate", level, scored=0, dropped=0, failed_open=len(branches))
+                self._emit("gate", level, scored=0, dropped=0, failed_open=len(branches), user_kept=0)
                 return
             if not isinstance(result, Mapping):
                 raise TypeError(f"gate() must return a mapping of id to score, got {type(result).__name__}")
-            scored = dropped = unscored = 0
+            scored = dropped = unscored = kept = 0
             for br in branches:
                 score = result.get(br.id)
                 if score is None:
@@ -621,7 +755,10 @@ class _Run:
                 if isinstance(score, bool) or not isinstance(score, (int, float)):
                     raise TypeError(f"gate() scores must be numbers, got {type(score).__name__}")
                 scored += 1
-                if score < self.cfg.gate_floor:
+                if score < self.cfg.gate_floor and br.confirmed:
+                    kept += 1                                     # the person confirmed it: searched anyway
+                    br.drift = True
+                elif score < self.cfg.gate_floor:
                     dropped += 1
                     br.status = "gated"
                     self.completed += 1
@@ -630,7 +767,8 @@ class _Run:
             self.gate_scored += scored
             self.gate_dropped += dropped
             self.gate_failed_open += unscored
-            self._emit("gate", level, scored=scored, dropped=dropped, failed_open=unscored)
+            self.gate_user_kept += kept
+            self._emit("gate", level, scored=scored, dropped=dropped, failed_open=unscored, user_kept=kept)
 
         return _Job(lambda: not self._halted(), lambda: self.gate(self.question, items), done)
 
@@ -649,7 +787,7 @@ class _Run:
                 self.empty += 1
                 self._finish(br, "empty", "retrieve")
                 return None
-            self._emit("retrieve", br.node.level, id=br.id, query=br.query, rows=len(rows), **self._move_field(br))
+            self._emit("retrieve", br.node.level, id=br.id, query=br.query, rows=len(rows), **self._move_fields(br))
             return self._extract_job(br, rows[: self.cfg.max_rows_per_query])
 
         if not self.moves:
@@ -700,11 +838,11 @@ class _Run:
     def _finish(self, br: _Branch, status: str, stage: str, **fields: Any) -> None:
         br.status = status
         self.completed += 1
-        self._emit(stage, br.node.level, id=br.id, query=br.query, rows=br.rows, status=status, **self._move_field(br),
+        self._emit(stage, br.node.level, id=br.id, query=br.query, rows=br.rows, status=status, **self._move_fields(br),
                    **fields)
 
-    def _move_field(self, br: _Branch) -> dict[str, str]:
-        return {"move": br.move} if self.moves else {}
+    def _move_fields(self, br: _Branch) -> dict[str, str]:
+        return {"move": br.move, "goal_id": br.goal_id} if self.moves else {}
 
     # ── merge a finished level, in plan order
     def _merge(self, level: int, branches: list[_Branch]) -> tuple[list[_Node], int]:
@@ -830,13 +968,19 @@ class _Run:
                 and self.llm_calls + len(queued) + width + 2 <= self.cfg.llm_call_limit)
 
     def _add_learning(self, new: Learning) -> int:
+        """Each learning names the documents its cids come from, kept current when a repeat pools more citations in (the
+        live coverage and the evidence model read them)."""
         key = " ".join(new.text.casefold().split())
         for i, old in enumerate(self.learnings):
             if " ".join(old.text.casefold().split()) == key:              # same finding again: pool the citations
-                self.learnings[i] = replace(old, cids=tuple(dict.fromkeys(old.cids + new.cids)))
+                cids = tuple(dict.fromkeys(old.cids + new.cids))
+                self.learnings[i] = replace(old, cids=cids, doc_ids=self._doc_ids(cids))
                 return 0
-        self.learnings.append(new)
+        self.learnings.append(replace(new, doc_ids=self._doc_ids(new.cids)))
         return 1
+
+    def _doc_ids(self, cids: Sequence[str]) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(d for c in cids if (d := self.rows[c].doc_id)))
 
     # ── port results: a wrong TYPE is the route's bug and raises; a port that raises is counted and ends its branch
     @staticmethod
@@ -872,16 +1016,13 @@ class _Run:
                 evidence.setdefault(cid, self.rows[cid])
         queries = tuple(QueryRecord(br.id, br.node.id, br.query, br.goal, br.node.level, br.rows, br.status, br.move,
                                     br.goal_id) for br in self.branches)
-        # each learning names the documents it cites (DR7 reads them; pooled citations included), and the goals list the
-        # level-1 searches in plan order
-        learnings = tuple(replace(ln, doc_ids=tuple(dict.fromkeys(d for c in ln.cids if (d := self.rows[c].doc_id))))
-                          for ln in self.learnings)
         goals = tuple(Goal(br.id, br.goal, br.query, br.move or M.BROAD) for br in self.branches if br.node.level == 1)
         moves = None
         if self.moves:                                            # the receipt's moves block (§10.7)
             moves = {
                 "intent": self.intent, "evaluative": self.evaluative, "levels": copy.deepcopy(self.level_stats),
                 "gate": None if self.gate is None else {"scored": self.gate_scored, "dropped": self.gate_dropped,
+                                                        "user_kept": self.gate_user_kept,
                                                         "failed_open": self.gate_failed_open},
                 "drift_stopped": self.drift_stopped, "gap_nodes": self.gap_nodes,
                 "dry_moves": [m for m in M.MOVES if m in self.dry], "inverse_unanchored": self.inverse_unanchored,
@@ -890,7 +1031,7 @@ class _Run:
                             "learnings": sum(1 for ln in self.learnings if ln.move == M.INVERSE)},
                 "signals": dict(self.signals)}
         return ResearchOutcome(
-            learnings=learnings, evidence=evidence, seen_rows=len(self.rows), queries=queries,
+            learnings=tuple(self.learnings), evidence=evidence, seen_rows=len(self.rows), queries=queries,
             stop_reason=stop, levels=levels, retrievals=self.retrievals, llm_calls=self.llm_calls, tokens_est=self.tokens,
             token_limit=self.cfg.token_limit, dropped_learnings=self.dropped, parse_repairs=self.repairs,
             unparsed_lines=self.unparsed, empty_retrievals=self.empty, duplicate_queries=self.duplicates,
@@ -898,4 +1039,5 @@ class _Run:
             empty_threads=tuple(br.query for br in self.branches if br.status == "empty"),
             open_followups=tuple(self.open_followups),
             elapsed_s=round(self.cfg.clock() - self.t0, 3), today=self.today,
-            report_max_learnings=self.cfg.report_max_learnings, moves=moves, goals=goals)
+            report_max_learnings=self.cfg.report_max_learnings, moves=moves, goals=goals,
+            confirmed_plan=self.seed is not None)

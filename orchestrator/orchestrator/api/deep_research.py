@@ -10,7 +10,12 @@ composer's model, like a chat answer. One deep run at a time per person. A clien
 
 Research moves (DR6, plan §10; on unless the request or POLYMATH_DEEP_RESEARCH_MOVES=0 turns them off): each planned search
 is broad / deep / adjacent / inverse and goes to the search built for it (`move_request`), and the reranker drops a planned
-search that misses the question before it runs (`_gate_port`, fail-open). The request's `mode` stays the base mode."""
+search that misses the question before it runs (`_gate_port`, fail-open). The request's `mode` stays the base mode.
+
+The research experience (DR7, plan §11.3): `POST /research/deep/plan` makes the plan card (the level-1 plan alone, one LLM
+call); the run takes the confirmed `plan` in place of its level-1 planner; `POST /research/deep/finish` ends the caller's run
+early and still writes the report; with moves, a `coverage` frame follows each level; the answer carries the deterministic
+evidence model (`report_model`) and the sentence audit of the report (`audit`)."""
 from __future__ import annotations
 
 import asyncio
@@ -21,6 +26,7 @@ import queue as _queue
 import threading
 import time
 from collections.abc import Sequence
+from dataclasses import replace
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -39,9 +45,18 @@ MOVES_ENV = "POLYMATH_DEEP_RESEARCH_MOVES"   # "0" forces moves off for every re
 #: §10.1: the canonical §33 intent a move's search runs under (the reserved surfaces DR0 named reach deep research here)
 MOVE_INTENT = {"adjacent": "RELATIONSHIP", "inverse": "COMPARISON"}
 GATE_ORIGIN = "DEEP_RESEARCH"                # the probe gate's origin for a deep research query (§10.4)
-_RUNNING: dict[str, threading.Event] = {}
+PLAN_QUERY_CHARS, PLAN_GOAL_CHARS = (3, 300), 1000
+_RUNNING: dict[str, threading.Event] = {}     # the caller's run: its cancel event
+_FINISH: dict[str, threading.Event] = {}      # the caller's run: its Finish-now event (DR7c)
 _LOCK = threading.Lock()
 _END = object()
+
+
+class DeepPlanGoal(BaseModel):
+    """One goal of a confirmed plan (§11.3): its query is searched at level 1 with its move."""
+    goal: str = ""
+    query: str
+    move: str = "broad"
 
 
 class DeepResearchRequest(BaseModel):
@@ -52,10 +67,48 @@ class DeepResearchRequest(BaseModel):
     mode: str = "HYBRID"                     # the retrieval mode every search uses (with moves: the base mode)
     synthesizer: str | None = None           # the composer's model writes the report (like chat)
     moves: bool = True                       # DR6 research moves (§10); POLYMATH_DEEP_RESEARCH_MOVES=0 forces them off
+    plan: list[DeepPlanGoal] | None = None   # DR7a: the confirmed plan; it replaces the level-1 planner call
 
 
-def moves_enabled(req: DeepResearchRequest) -> bool:
+class DeepPlanRequest(BaseModel):
+    """`POST /research/deep/plan` (§11.3). `mode` is accepted for the same shape as a run; planning searches nothing."""
+    question: str = Field(min_length=3, max_length=2000)
+    corpus_id: str | None = None
+    corpus_ids: list[str] | None = None
+    preset: str = "standard"
+    mode: str = "HYBRID"
+    moves: bool = True
+
+
+def moves_enabled(req: DeepResearchRequest | DeepPlanRequest) -> bool:
     return bool(req.moves) and os.environ.get(MOVES_ENV, "1").strip().lower() not in ("0", "false", "off", "no")
+
+
+def confirmed_plan(req: DeepResearchRequest, breadth: int) -> tuple[tuple[str, str, str], ...] | None:
+    """The request's confirmed plan as (goal, query, move) items, or None. §11.3: at most 2 × breadth goals, each query 3-300
+    characters (spaces trimmed), each move in MOVES; also refused: an empty plan, a goal over 1000 characters, the same query
+    twice (ignoring case and spacing). Any of these is one typed 422 PLAN_INVALID listing every problem."""
+    if req.plan is None:
+        return None
+    problems = [] if req.plan else ["the plan has no goals"]
+    if len(req.plan) > 2 * breadth:
+        problems.append(f"at most {2 * breadth} goals for this preset, got {len(req.plan)}")
+    seen: set[str] = set()
+    lo, hi = PLAN_QUERY_CHARS
+    for n, item in enumerate(req.plan, 1):
+        query, key = item.query.strip(), " ".join(item.query.casefold().split())
+        if not lo <= len(query) <= hi:
+            problems.append(f"goal {n}: the query must be {lo}-{hi} characters")
+        if item.move not in DR.MOVES:
+            problems.append(f"goal {n}: the move must be one of {list(DR.MOVES)}")
+        if len(item.goal) > PLAN_GOAL_CHARS:
+            problems.append(f"goal {n}: the goal must be at most {PLAN_GOAL_CHARS} characters")
+        if key in seen:
+            problems.append(f"goal {n}: the same query as an earlier goal")
+        seen.add(key)
+    if problems:
+        raise HTTPException(422, {"error_code": "PLAN_INVALID", "message": "; ".join(problems)})
+    return tuple((item.goal.strip(), item.query.strip(), item.move) for item in req.plan)
 
 
 def _sse(event: str, data: dict[str, Any]) -> str:
@@ -79,7 +132,7 @@ class _Aliases:
             return self._by_id[rid]
 
 
-def _libraries(req: DeepResearchRequest) -> list[str]:
+def _libraries(req: DeepResearchRequest | DeepPlanRequest) -> list[str]:
     from orchestrator.web_scope import require_corpora
     ids = [c for c in ([req.corpus_id] if req.corpus_id else []) + list(req.corpus_ids or []) if c]
     ids = list(dict.fromkeys(ids))
@@ -148,7 +201,8 @@ def _retrieve_port(loop: asyncio.AbstractEventLoop, principal: str | None, mode:
             if not r.get("id") or not text:
                 continue
             rows.append(DR.Row(cid=aliases.alias(r), text=text, source=str(r.get("source") or r.get("title") or ""),
-                               score=float(r.get("score") or 0.0), doc_id=str(r.get("doc_id") or "")))
+                               score=float(r.get("score") or 0.0), doc_id=str(r.get("doc_id") or ""),
+                               title=str(r.get("title") or "")))
         return rows[:ROWS_PER_SEARCH]
     return retrieve
 
@@ -241,8 +295,10 @@ def _report_tokens(synth: str, system: str, prompt: str, cancel: threading.Event
 _STAGE_LABEL = {"plan": "Planning searches", "retrieve": "Searching", "extract": "Reading what came back",
                 "level_done": "Finished a round", "stopped": "Research stopped",
                 "gate": "Checked the planned searches against the question"}
-#: engine event fields a phase frame carries (moves: `move` on a search, `moves` on a plan, the gate's counts)
-_PHASE_FIELDS = ("depth", "completed", "total", "new_learnings", "reason", "move", "moves", "scored", "dropped", "failed_open")
+#: engine event fields a phase frame carries (moves: `move` + `goal_id` on a search; `moves`, `goal_id` and, at level 1,
+#: `goals` + `confirmed` on a plan; the gate's counts)
+_PHASE_FIELDS = ("depth", "completed", "total", "new_learnings", "reason", "move", "moves", "scored", "dropped", "failed_open",
+                 "goal_id", "goals", "confirmed", "user_kept")
 
 
 def _phase(ev: dict[str, Any], t0: float) -> dict[str, Any]:
@@ -264,18 +320,24 @@ def _phase(ev: dict[str, Any], t0: float) -> dict[str, Any]:
 
 
 def _worker(req: DeepResearchRequest, libraries: list[str], synth: str, principal: str | None, loop: asyncio.AbstractEventLoop,
-            out: _queue.Queue, cancel: threading.Event) -> None:
+            out: _queue.Queue, cancel: threading.Event, finish: threading.Event | None = None,
+            plan: tuple[tuple[str, str, str], ...] | None = None) -> None:
     """The run, on its own thread: research events, then the report, then the answer, then _END."""
     t0 = time.monotonic()
     try:
         aliases = _Aliases()
         moves = moves_enabled(req)
         config = DR.Config.preset(req.preset, score_floor=float("-inf"), moves=moves)
+
+        def on_event(ev: dict[str, Any]) -> None:
+            if ev.get("stage") == "coverage":             # DR7b (moves): after each level, the goals' meters in their own frame
+                out.put(("coverage", {"goals": ev["goals"], "level": ev["depth"]}))
+            else:
+                out.put(("phase", _phase(ev, t0)))
         outcome = DR.run_research(req.question, tuple(libraries),
                                   retrieve=_retrieve_port(loop, principal, req.mode.upper(), aliases),
-                                  complete=_complete_port(req.question), config=config,
-                                  on_event=lambda ev: out.put(("phase", _phase(ev, t0))), cancel=cancel,
-                                  gate=_gate_port(config.gate_floor) if moves else None)
+                                  complete=_complete_port(req.question), config=config, on_event=on_event, cancel=cancel,
+                                  gate=_gate_port(config.gate_floor) if moves else None, finish=finish, plan=plan)
         summary = outcome.summary()
         if cancel.is_set() or outcome.stop_reason == "cancelled":
             out.put(("error", {"error_code": "CANCELLED", "message": "the research was stopped"}))
@@ -300,6 +362,11 @@ def _worker(req: DeepResearchRequest, libraries: list[str], synth: str, principa
                                "message": "the model returned an empty report; try again or pick another model"}))
             return
         valid, unknown = DR.validate_report_citations(text, outcome)
+        # DR7b: the evidence model the page renders (never the model's tone), and which report sentences carry no valid cid
+        summary["report_model"] = DR.evidence_model(outcome, intent=DR.question_intent(req.question),
+                                                    evaluative=DR.is_evaluative(req.question),
+                                                    preset=req.preset.strip().lower(), model=synth)
+        summary["audit"] = DR.audit_report(text, outcome.evidence)
         citations = [{"cid": c, **{k: (aliases.rows.get(c) or {}).get(k) for k in ("id", "kind", "doc_id", "corpus_id", "title", "source")},
                       "text": str((aliases.rows.get(c) or {}).get("text_clean") or "")[:600]} for c in valid]
         out.put(("answer", {"kind": "deep", "latency_ms": int((time.monotonic() - t0) * 1000),
@@ -321,15 +388,17 @@ async def deep_research(req: DeepResearchRequest) -> StreamingResponse:
     if not synth.startswith(("litellm:", "ollama:")):
         raise HTTPException(422, {"error_code": "UNKNOWN_SYNTHESIZER", "message": f"{synth!r}"})
     try:
-        DR.Config.preset(req.preset)
+        shape = DR.Config.preset(req.preset)
     except ValueError as exc:
         raise HTTPException(422, {"error_code": "UNKNOWN_PRESET", "message": str(exc)}) from None
+    plan = confirmed_plan(req, shape.breadth)
     who = principal or "owner"
-    cancel = threading.Event()
+    cancel, finish = threading.Event(), threading.Event()
     with _LOCK:
         if who in _RUNNING:
             raise HTTPException(409, {"error_code": "DEEP_RESEARCH_BUSY", "message": "one deep research run at a time; stop the other first"})
         _RUNNING[who] = cancel
+        _FINISH[who] = finish
 
     async def events():
         loop = asyncio.get_running_loop()
@@ -337,8 +406,8 @@ async def deep_research(req: DeepResearchRequest) -> StreamingResponse:
         t0 = time.monotonic()
         answer: dict[str, Any] | None = None
         failure: str | None = None
-        worker = threading.Thread(target=_worker, args=(req, libraries, synth, principal, loop, out, cancel), daemon=True,
-                                  name="deep-research")
+        worker = threading.Thread(target=_worker, args=(req, libraries, synth, principal, loop, out, cancel, finish, plan),
+                                  daemon=True, name="deep-research")
         try:
             yield _sse("phase", {"stage": "deep_start", "label": f"Deep research over {', '.join(libraries)}", "t": 0,
                                  "preset": req.preset})
@@ -362,11 +431,12 @@ async def deep_research(req: DeepResearchRequest) -> StreamingResponse:
             with _LOCK:
                 if _RUNNING.get(who) is cancel:
                     del _RUNNING[who]
+                if _FINISH.get(who) is finish:
+                    del _FINISH[who]
             try:
                 from polymath_shared.db import tx
                 from polymath_shared.query_receipts import record_query_receipt
-                meta = {"route": "research/deep", "model": synth,
-                        "deep_research": ((answer or {}).get("result") or {}).get("meta", {}).get("deep_research")}
+                meta = {"route": "research/deep", "model": synth, "deep_research": receipt_block(answer)}
                 record_query_receipt(tx, kind="deep_research", question=req.question, req=req, scope_corpora=libraries,
                                      scope_kind="explicit", wall_ms=(time.monotonic() - t0) * 1000.0,
                                      out={"meta": meta}, error=failure)
@@ -375,3 +445,59 @@ async def deep_research(req: DeepResearchRequest) -> StreamingResponse:
 
     return StreamingResponse(events(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+def receipt_block(answer: dict[str, Any] | None) -> dict[str, Any] | None:
+    """The receipt's `deep_research`: the answer's run counts and audit. The evidence model's texts stay out, only its counts
+    go in (`report_model_counts`): the receipt's meta is capped at 64 KB, and past the cap the whole meta is lost."""
+    block = ((answer or {}).get("result") or {}).get("meta", {}).get("deep_research")
+    if not isinstance(block, dict) or "report_model" not in block:
+        return block
+    model = block["report_model"]
+    findings = [f for goal in model["goals"] for f in goal["findings"]]
+    return {**{k: v for k, v in block.items() if k != "report_model"},
+            "report_model_counts": {"goals": len(model["goals"]), "findings": len(findings),
+                                    "confidence": {c: sum(1 for f in findings if f["confidence"] == c)
+                                                   for c in ("strong", "single_source", "contested")},
+                                    "counter": len(model["counter"]), "open_questions": len(model["open_questions"]),
+                                    "sources": len(model["sources"])}}
+
+
+@router.post("/research/deep/plan")
+async def deep_research_plan(req: DeepPlanRequest) -> dict[str, Any]:
+    """DR7a (§11.3): the plan card. The run's level-1 plan made alone, in ONE planner call on the research lanes, after the
+    same library and preset checks as a run, with the question's type and an estimate of the run it would start. Not part of
+    the one-run lock: a person may plan while a run streams. A failed or empty plan is a 502 (PLAN_FAILED / PLAN_EMPTY):
+    the page can still start the run without one."""
+    libraries = _libraries(req)
+    try:
+        config = DR.Config.preset(req.preset, moves=moves_enabled(req))
+    except ValueError as exc:
+        raise HTTPException(422, {"error_code": "UNKNOWN_PRESET", "message": str(exc)}) from None
+    complete = _complete_port(req.question)
+    try:
+        draft = await asyncio.to_thread(DR.plan_goals, req.question, complete=complete, config=config)
+    except Exception as exc:  # noqa: BLE001 — the card says planning failed; the class only, never the message
+        log.warning("deep research plan failed: %s", type(exc).__name__)
+        raise HTTPException(502, {"error_code": "PLAN_FAILED",
+                                  "message": f"the planner failed ({type(exc).__name__}); start without a plan"}) from None
+    if not draft.goals:
+        raise HTTPException(502, {"error_code": "PLAN_EMPTY", "message": "the planner wrote no usable search; start without a plan"})
+    return {"intent": DR.question_intent(req.question), "evaluative": DR.is_evaluative(req.question),
+            "preset": req.preset.strip().lower(),
+            "goals": [{"id": g.id, "goal": g.goal, "query": g.query, "move": g.move} for g in draft.goals],
+            "estimate": DR.estimate(replace(config, first_width=len(draft.goals)), planned=True),
+            "libraries": libraries, "moves": config.moves}
+
+
+@router.post("/research/deep/finish", status_code=202)
+async def deep_research_finish() -> dict[str, Any]:
+    """DR7c (§11.3): Finish now. The caller's run starts nothing new, lets the calls in flight finish, and writes the report
+    from what it found (stop reason `finished_early`). 404 NO_DEEP_RESEARCH_RUN when the caller has no run."""
+    who = principal_context.current() or "owner"
+    with _LOCK:
+        finish = _FINISH.get(who)
+    if finish is None:
+        raise HTTPException(404, {"error_code": "NO_DEEP_RESEARCH_RUN", "message": "you have no deep research run to finish"})
+    finish.set()
+    return {"status": "finishing"}

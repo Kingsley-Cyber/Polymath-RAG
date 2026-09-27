@@ -1093,6 +1093,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_deep_research_route.py", "py", None),
     # DEEP-RESEARCH-MODE-V1 slices DR6a-b: research moves (engine) and /retrieve's optional intent
     ("tests/contracts/test_deep_research_moves.py", "py", None),
+    # DEEP-RESEARCH-MODE-V1 slices DR7a-c (backend): the plan card, the evidence model, the sentence audit, Finish now
+    ("tests/contracts/test_deep_research_experience.py", "py", None),
     ("tests/contracts/test_retrieve_intent.py", "py", None),
     ("tests/determinism/test_mcp_principals_gate.py", "py", None),
     ("tests/determinism/test_adapter_run_ownership.py", "py", None),
@@ -2524,6 +2526,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/deep_research/prompts.py", "py", None),
     # DEEP-RESEARCH-MODE-V1 slice DR6a: the research moves controller (pure)
     ("shared/polymath_shared/deep_research/moves.py", "py", None),
+    # DEEP-RESEARCH-MODE-V1 slice DR7b: the deterministic evidence model and the report's sentence audit
+    ("shared/polymath_shared/deep_research/evidence.py", "py", None),
     ("orchestrator/orchestrator/api/acquisition.py", "py", None),
     ("orchestrator/orchestrator/api/web_auth.py", "py", None),
     ("orchestrator/orchestrator/api/web_settings.py", "py", None),
@@ -2569,6 +2573,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-26-deep-research-dr6-admission.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-deep-research-dr7-admission.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-deep-research-dr6.md", "md", None),
+    ("docs/wiki/work-log/2026-09-26-deep-research-dr7-backend.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-frontend-refresh-u4b.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-friends-access-one-login.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-trail-ext-fixes-runtime.md", "md", None),

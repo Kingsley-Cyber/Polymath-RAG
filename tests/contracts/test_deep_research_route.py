@@ -367,7 +367,7 @@ def test_the_receipt_and_the_answer_carry_the_moves_block(wire):
             "deep", "inverse"} <= set(moves)
     assert (moves["intent"], moves["evaluative"]) == ("EXPLORATORY", True)
     assert moves["inverse"] == {"searched": 2, "learnings": 2} and moves["deep"] == {"anchored": 4, "unanchored": 0}
-    assert moves["gate"] == {"scored": 9, "dropped": 0, "failed_open": 0} and len(moves["levels"]) == 2
+    assert moves["gate"] == {"scored": 9, "dropped": 0, "user_kept": 0, "failed_open": 0} and len(moves["levels"]) == 2
 
 
 def test_phase_frames_carry_each_searchs_move(wire):
@@ -456,3 +456,175 @@ def test_the_probe_gate_scores_only_the_origins_it_is_given():
     gate_probes("How does Laban write effort?", probes, judge)                                 # chat: its own origins
     gate_probes("How does Laban write effort?", probes, judge, gated_origins=("DEEP_RESEARCH",))
     assert seen == [["p1"], ["d1"]]
+
+
+# ─────────────────────────────────────────────────────────── DR7a-c: the research experience on the route (plan §11.3)
+PLAN = [{"goal": "how effort is written", "query": "laban effort factors notation", "move": "broad"},
+        {"goal": "where it fails", "query": "when does laban effort notation fail", "move": "inverse"}]
+
+
+def _counting(port, calls: list[str]):
+    """A complete port recording each call's kind (plan / extract) around another port."""
+    def make(key):
+        inner = port(key)
+
+        def complete(prompt, *, system, max_tokens):
+            calls.append("plan" if "QUERY:" in system else "extract")
+            return inner(prompt, system=system, max_tokens=max_tokens)
+        return complete
+    return make
+
+
+def test_the_plan_card_is_one_model_call_after_the_library_checks(rec, monkeypatch):
+    calls: list[str] = []
+    monkeypatch.setattr(DRR, "_complete_port", _counting(_moves_complete, calls))
+    r = _client("prn_fred").post("/research/deep/plan", json={"question": EVALUATIVE, "corpus_id": "cinema", "preset": "quick"})
+    assert r.status_code == 200 and calls == ["plan"] and rec.searches == []        # one call, no search
+    body = r.json()
+    assert set(body) == {"intent", "evaluative", "preset", "goals", "estimate", "libraries", "moves"}
+    assert (body["intent"], body["evaluative"], body["preset"], body["libraries"], body["moves"]) == (
+        "EXPLORATORY", True, "quick", ["cinema"], True)
+    root = _tag("root")
+    assert body["goals"] == [{"id": f"1.{i + 1}", "goal": f"g{i}", "query": f"{move} laban {root} {i}", "move": move}
+                             for i, move in enumerate(("broad", "adjacent", "inverse"))]
+    assert body["estimate"] == {"searches": 3, "llm_calls": 4, "seconds": 43}      # 3 extracts + the report; no planner
+    DRR._RUNNING["prn_fred"] = threading.Event()                                    # not part of the one-run lock
+    assert _client("prn_fred").post("/research/deep/plan", json={"question": EVALUATIVE, "corpus_id": "cinema"}).status_code == 200
+    DRR._RUNNING.clear()
+    calls.clear()
+    assert _client("prn_fred").post("/research/deep/plan", json={"question": EVALUATIVE, "corpus_ids": ["cinema", "secret"]}
+                                    ).status_code == 403 and calls == []            # the same library checks, first
+    r = _client().post("/research/deep/plan", json={"question": EVALUATIVE, "corpus_id": "cinema", "preset": "huge"})
+    assert r.status_code == 422 and r.json()["detail"]["error_code"] == "UNKNOWN_PRESET" and calls == []
+    r = _client().post("/research/deep/plan", json={"question": EVALUATIVE, "corpus_id": "cinema", "moves": False})
+    assert {g["move"] for g in r.json()["goals"]} == {"broad"} and r.json()["moves"] is False
+
+
+@pytest.mark.parametrize("reply, code", [(None, "PLAN_FAILED"), ("no query lines at all", "PLAN_EMPTY")])
+def test_a_failed_or_empty_plan_is_a_502(rec, monkeypatch, reply, code):
+    def port(key):
+        def complete(prompt, *, system, max_tokens):
+            if reply is None:
+                raise RuntimeError("research lanes failed: 429")
+            return reply
+        return complete
+    monkeypatch.setattr(DRR, "_complete_port", port)
+    r = _client().post("/research/deep/plan", json={"question": EVALUATIVE, "corpus_id": "cinema"})
+    assert r.status_code == 502 and r.json()["detail"]["error_code"] == code
+    assert "429" not in r.json()["detail"]["message"]                               # the class only, never the message
+
+
+def test_a_confirmed_plan_seeds_level_one_and_the_gate_never_drops_it(wire, monkeypatch):
+    calls: list[str] = []
+    monkeypatch.setattr(DRR, "_complete_port", _counting(_moves_complete, calls))
+    monkeypatch.setattr(DRR, "_gate_port", lambda floor: lambda question, items: {
+        qid: (0.05 if "fail" in text else 0.9) for qid, text in items})
+    frames = _deep({"question": EVALUATIVE, "preset": "quick", "plan": PLAN})
+    assert "plan" not in calls and calls.count("extract") == 2                       # quick: level 1 only, and it was given
+    assert [(r.query, r.intent) for r in wire.requests] == [("laban effort factors notation", None),
+                                                            ("when does laban effort notation fail", "COMPARISON")]
+    first = next(d for k, d in frames if k == "phase" and d["stage"] == "deep_plan")
+    assert first["confirmed"] is True and [g["query"] for g in first["goals"]] == [p["query"] for p in PLAN]
+    meta = next(d for k, d in frames if k == "answer")["result"]["meta"]["deep_research"]
+    assert meta["moves"]["gate"]["user_kept"] == 1 and meta["moves"]["gate"]["dropped"] == 0
+    assert meta["report_model"]["method"]["plan"] == "confirmed"
+    assert [(g["id"], g["goal"], g["move"]) for g in meta["report_model"]["goals"]] == [
+        ("1.1", "how effort is written", "broad"), ("1.2", "where it fails", "inverse")]
+
+
+@pytest.mark.parametrize("plan, problem", [
+    ([dict(PLAN[0], query=f"laban effort angle {i}") for i in range(7)], "at most 6 goals"),
+    ([dict(PLAN[0], query="ab")], "3-300 characters"),
+    ([dict(PLAN[0], query="x" * 301)], "3-300 characters"),
+    ([dict(PLAN[0], move="sideways")], "the move must be one of"),
+    ([PLAN[0], dict(PLAN[0], query="  LABAN effort   factors notation ")], "the same query"),
+    ([dict(PLAN[0], goal="g" * 1001)], "at most 1000 characters"),
+    ([], "no goals")])
+def test_a_bad_plan_is_refused_before_any_work(rec, plan, problem):
+    r = _client().post("/research/deep", json={"question": EVALUATIVE, "corpus_id": "cinema", "preset": "quick", "plan": plan})
+    assert r.status_code == 422 and r.json()["detail"]["error_code"] == "PLAN_INVALID"
+    assert problem in r.json()["detail"]["message"] and rec.searches == [] and DRR._RUNNING == {}
+
+
+def test_finish_without_a_run_is_404_and_with_one_202(rec):
+    r = _client().post("/research/deep/finish")
+    assert r.status_code == 404 and r.json()["detail"]["error_code"] == "NO_DEEP_RESEARCH_RUN"
+    fred = threading.Event()
+    DRR._FINISH["prn_fred"] = fred
+    try:
+        assert _client().post("/research/deep/finish").status_code == 404                 # the owner's own run: none
+        r = _client("prn_fred").post("/research/deep/finish")
+        assert r.status_code == 202 and r.json() == {"status": "finishing"} and fred.is_set()
+    finally:
+        DRR._FINISH.clear()
+
+
+def test_finish_now_ends_the_run_and_still_writes_the_report(wire, monkeypatch):
+    pressed: list[int] = []
+    once = threading.Lock()
+
+    def port(key):
+        inner = _moves_complete(key)
+
+        def complete(prompt, *, system, max_tokens):
+            with once:                                                              # the person presses it once
+                if "QUERY:" not in system and not pressed:                          # during the first extract
+                    pressed.append(_client().post("/research/deep/finish").status_code)
+            return inner(prompt, system=system, max_tokens=max_tokens)
+        return complete
+    monkeypatch.setattr(DRR, "_complete_port", port)
+    frames = _deep({"question": EVALUATIVE, "preset": "standard"})
+    assert pressed == [202]
+    answer = next(d for k, d in frames if k == "answer")
+    summary = answer["result"]["meta"]["deep_research"]
+    assert summary["stop_reason"] == "finished_early" and summary["levels"] == 1 and summary["retrievals"] < 9
+    assert answer["result"]["text"] and [k for k, _ in frames][-1] == "done"         # the report was still written
+    assert DRR._FINISH == {} and DRR._RUNNING == {}
+    assert wire.receipts[-1]["out"]["meta"]["deep_research"]["stop_reason"] == "finished_early"
+
+
+def test_coverage_frames_follow_each_level_with_moves_only(wire):
+    frames = _deep({"question": EVALUATIVE, "preset": "standard"})
+    coverage = [d for k, d in frames if k == "coverage"]
+    assert [c["level"] for c in coverage] == [1, 2]                  # every row is in one book: never covered, both levels run
+    assert coverage[0]["goals"] == [{"id": f"1.{i}", "learnings": 1, "documents": 1} for i in (1, 2, 3)]
+    kinds = [k for k, _ in frames]
+    assert kinds.index("coverage") < kinds.index("token")
+    frames = _deep({"question": EVALUATIVE, "preset": "standard", "moves": False})
+    assert not any(k == "coverage" for k, _ in frames)
+
+
+def test_plan_and_search_frames_carry_goal_ids(wire):
+    phases = [d for k, d in _deep({"question": EVALUATIVE, "preset": "standard"}) if k == "phase"]
+    plans = [d for d in phases if d["stage"] == "deep_plan"]
+    assert plans[0]["goal_id"] is None and plans[0]["confirmed"] is False
+    assert [g["id"] for g in plans[0]["goals"]] == ["1.1", "1.2", "1.3"]
+    assert sorted(d["goal_id"] for d in plans[1:]) == ["1.1", "1.2", "1.3"] and all("goals" not in d for d in plans[1:])
+    searches = [d for d in phases if d["stage"] == "deep_retrieve"]
+    assert searches and all(d["goal_id"] in ("1.1", "1.2", "1.3") and d["move"] for d in searches)
+
+
+def test_the_answer_carries_the_evidence_model_and_the_audit(wire, monkeypatch):
+    monkeypatch.setattr(DRR, "_report_tokens", lambda synth, system, prompt, cancel: iter([
+        "## TL;DR\nEffort is written as four factors [c1]. ", "A sentence with no citation.\n\n## Detail\nMore [c404]."]))
+    frames = _deep({"question": EVALUATIVE, "preset": "standard"})
+    summary = next(d for k, d in frames if k == "answer")["result"]["meta"]["deep_research"]
+    assert summary["audit"] == {"sentences": 3, "cited": 1, "uncited": [1, 2], "invalid_cids": ["c404"]}
+    model = summary["report_model"]
+    assert set(model) == {"goals", "counter", "open_questions", "sources", "method"}
+    assert (model["method"]["preset"], model["method"]["model"], model["method"]["plan"]) == (
+        "standard", "litellm:fake/model", "planned")
+    assert [g["id"] for g in model["goals"]] == ["1.1", "1.2", "1.3"] and model["sources"][0]["doc_id"] == "d1"
+    # EXPLORATORY + evaluative: the inverse goal's thread found counter-evidence, so its other findings are contested
+    inverse_goal = next(g for g in model["goals"] if g["move"] == "inverse")
+    assert model["counter"] and {c["goal_id"] for c in model["counter"]} == {inverse_goal["id"]}
+    assert {f["confidence"] for f in inverse_goal["findings"]} <= {"contested"}
+    assert {f["confidence"] for g in model["goals"] if g is not inverse_goal for f in g["findings"]} == {"single_source"}
+    receipt = wire.receipts[-1]["out"]["meta"]["deep_research"]
+    assert "report_model" not in receipt and receipt["audit"] == summary["audit"]
+    assert receipt["report_model_counts"]["goals"] == 3 and receipt["report_model_counts"]["counter"] == len(model["counter"])
+
+
+def test_the_web_boundary_opens_the_plan_and_finish_to_signed_in_users():
+    for path in ("/research/deep/plan", "/research/deep/finish"):
+        assert B.classify("POST", path) == B.USER and B.classify("GET", path) is None
