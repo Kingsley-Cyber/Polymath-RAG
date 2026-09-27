@@ -2614,6 +2614,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-27-deep-research-tuning.md", "md", None),
     ("docs/wiki/work-log/2026-09-27-facet-retrieval-f1-f2.md", "md", None),
     ("docs/wiki/work-log/2026-09-27-facet-retrieval-f4.md", "md", None),
+    ("docs/wiki/work-log/2026-09-27-facet-retrieval-f5-f6.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-frontend-refresh-u4b.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-friends-access-one-login.md", "md", None),
     ("docs/wiki/work-log/2026-09-27-invite-signup.md", "md", None),
@@ -3240,6 +3241,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/chat_plan.py", "py", None),
     ("shared/polymath_shared/facets.py", "py", None),                    # FACET-RETRIEVAL-V1 F1: the blind facet step
     ("shared/polymath_shared/synthesis_model.py", "py", None),           # FACET-RETRIEVAL-V1 F5: cross-document synthesis
+    ("shared/polymath_shared/gap_check.py", "py", None),                 # FACET-RETRIEVAL-V1 F6: the gap check
     ("shared/polymath_shared/subquery_provenance.py", "py", None),
     ("shared/polymath_shared/evidence_resolution.py", "py", None),
     ("shared/polymath_shared/profile_yield.py", "py", None),
@@ -3360,6 +3362,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_candidate_engine.py", "py", None),
     ("tests/determinism/test_facets.py", "py", None),                   # FACET-RETRIEVAL-V1 F1
     ("tests/determinism/test_synthesis_model.py", "py", None),          # FACET-RETRIEVAL-V1 F5
+    ("tests/determinism/test_gap_check.py", "py", None),                # FACET-RETRIEVAL-V1 F6
     ("tests/determinism/test_facet_diversity.py", "py", None),          # FACET-RETRIEVAL-V1 F2
     ("tests/determinism/facet_diversity_head_pins.json", "json", None), # F2: the HEAD composer's pinned outputs (flags-off proof)
     ("shared/polymath_shared/wildcard_mapped.py", "py", None),          # FACET-RETRIEVAL-V1 F3: WILDCARD's mapped subqueries (builder + gate)

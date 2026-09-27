@@ -3670,6 +3670,129 @@ def _ollama_stream_plain_inner(_out, model: str, messages: list[dict]):
                "message": f"{type(exc).__name__}: {exc}"[:300]}
 
 
+def _complete_plain(backend: str, model: str, messages: list[dict], max_tokens: int, *, timeout_s: float = 60.0,
+                    stage: str = "gap_check") -> str:
+    """FACET-RETRIEVAL-V1 F6: the gap check's ONE bounded, non-streaming call on the turn's own synthesizer (LiteLLM or the
+    Ollama daemon), recorded in the provider attempt ledger like answer synthesis (PROVIDER-ATTEMPT-LEDGER-V4: an external
+    model attempt is never silent). Raises on failure — the caller falls back to the deterministic cited stub."""
+    from contextlib import suppress
+
+    from polymath_shared.conformance.attempts import Attempt as _At
+    from polymath_shared.conformance.attempts import attempt_context as _actx
+    from polymath_shared.conformance.attempts import current_context as _curctx
+    from polymath_shared.conformance.attempts import record as _rec
+    _lane = f"chat_{stage}:{model.split('/')[0]}" if "/" in model else f"chat_{stage}"
+    _abase = {"lane": _lane, "model": model, "provider": (model.split("/")[0] if "/" in model else None),
+              "limiter_admitted": False, "limiter_bypassed": True, "http_dispatched": True}
+    _corr = _curctx().get("correlation_id") or uuid.uuid4().hex[:24]
+    t0 = time.perf_counter()
+    try:
+        if backend == "litellm":
+            import litellm
+            kwargs = dict(model=model, messages=messages, stream=False, timeout=timeout_s, max_tokens=max_tokens,
+                          **_litellm_credentials(model))
+            with suppress(Exception):                                   # the reasoning overlay is additive
+                from polymath_shared.reasoning_policy import CHAT_SYNTHESIS as _RB_CS
+                from polymath_shared.reasoning_policy import apply_litellm as _RB_apply
+                _RB_apply(kwargs, _RB_CS, model)
+            resp = litellm.completion(**kwargs)
+            text = str(resp.choices[0].message.content or "")
+        else:
+            import httpx
+            from polymath_shared.reasoning_policy import ollama_think as _ollama_think
+            body = {"model": model, "messages": messages, "stream": False, "think": _ollama_think(model),
+                    "options": {"num_predict": max_tokens}}
+            r = httpx.post(f"{OLLAMA_URL}/api/chat", json=body, timeout=httpx.Timeout(timeout_s, connect=10))
+            if r.status_code != 200 and "think" in r.text.lower():           # a model without a thinking mode: once more without it
+                body.pop("think", None)
+                r = httpx.post(f"{OLLAMA_URL}/api/chat", json=body, timeout=httpx.Timeout(timeout_s, connect=10))
+            r.raise_for_status()
+            text = str(((r.json() or {}).get("message") or {}).get("content") or "")
+    except Exception as exc:
+        with _actx(function="CHAT", stage=stage, correlation_id=_corr):
+            _rec(_At(success=False, error_class=type(exc).__name__, latency_ms=int((time.perf_counter() - t0) * 1000), **_abase))
+        raise
+    with _actx(function="CHAT", stage=stage, correlation_id=_corr):
+        _rec(_At(success=True, http_status=200, response_hash=(hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:32] if text else None),
+                 latency_ms=int((time.perf_counter() - t0) * 1000), **_abase))
+    return text
+
+
+def _gap_check_claims(answer_text: str, plan, facets_uncovered) -> int:
+    """F6: how many claims the gap check would search (0 = it will not run: flag off, not eligible, nothing claimed)."""
+    from polymath_shared import gap_check as _gc
+    if not _gc.enabled() or not _gc.eligible(plan):
+        return 0
+    n = len(_gc.gap_sentences(answer_text)) + len([f for f in (facets_uncovered or ()) if f])
+    return min(n, _gc.limits()["max_claims"])
+
+
+def _gap_check_turn(answer_text: str, *, plan, legend: list[dict], chunk_inventory: list[dict], mode: str, corpus_id: str,
+                    role_scope, facets_uncovered, llm_backend: str, llm_model: str) -> tuple[dict | None, str]:
+    """FACET-RETRIEVAL-V1 F6 (plan §3.6): the gap check on the generated answer — every "doesn't cover / not covered / no
+    source / the corpus lacks" sentence and every uncovered facet becomes ONE targeted retrieval through `chat_retrieve_mode`
+    in the turn's mode, corpus and role scope (the default budget, `synthesis_max` = the check's limit — no new lane); found
+    passages join the legend and the chunk inventory (so their [S#] chips resolve) and ONE bounded call on the turn's
+    synthesizer writes the "More on this" addition; not found → the honest rewrite. Returns (meta.gap_check | None, text).
+    Fail-open: any failure outside the pure check leaves the answer untouched and is receipted."""
+    from polymath_shared import gap_check as _gc
+    if not _gc.enabled() or not _gc.eligible(plan):
+        return None, answer_text
+    from dataclasses import replace as _replace
+
+    from orchestrator.api.chat_retrieval import chat_retrieve_mode as _retrieve_mode
+    from orchestrator.api.chat_retrieval import default_budget as _default_budget
+    from orchestrator.api.evidence import _resolve_chunk as _rchunk
+    from orchestrator.api.evidence import _resolve_document as _rdoc
+    from polymath_shared.evidence_assembly import _presentation
+    lim = _gc.limits()
+    budget = _replace(_default_budget(), synthesis_max=max(1, lim["limit"]))
+
+    def _retrieve(q: str) -> list[dict]:
+        out = _retrieve_mode(mode, q, corpus_id, budget=budget, **scope_kwargs(role_scope))
+        rows = list((out.get("meta") or {}).get("final_detail") or [])           # the judged final rows (chunk, doc, score)
+        if not rows:                                                             # a composition without the detail: the evidence rows, unjudged
+            rows = [{"chunk_id": c.get("chunk_id"), "doc_id": c.get("doc_id"), "rerank_score": c.get("rerank_score")}
+                    for c in (out.get("evidence") or [])]
+        return rows
+
+    def _hydrate(row) -> dict | None:
+        cid = str(row.get("chunk_id") or "")
+        ch = _rchunk(cid) if cid else None
+        if not ch or not (ch.get("text") or "").strip():
+            return None
+        doc = _rdoc(ch.get("doc_id") or row.get("doc_id") or "") or {}
+        pres = _presentation(doc, ch, None)
+        crumb = _breadcrumb({"presentation": pres, "applicability": {"source_name": doc.get("source_name") or ""}})
+        loc = f"chunk:{cid}@{ch.get('char_start')}:{ch.get('char_end')}" if ch.get("char_start") is not None else f"chunk:{cid}"
+        return {"text": ch["text"], "doc_id": ch.get("doc_id") or row.get("doc_id"), "locator": loc, "breadcrumb": crumb,
+                "source_name": doc.get("source_name") or "", "title": pres.get("title") or "",
+                "heading_path": pres.get("heading_path") or "", "human_locator": pres.get("human_locator") or ""}
+
+    def _complete(messages: list[dict], max_tokens: int) -> str:
+        return _complete_plain(llm_backend, llm_model, messages, max_tokens)
+
+    by_id = {q.id: q for q in (getattr(plan, "queries", None) or [])}
+    uncovered = {str(x) for x in (facets_uncovered or ())}
+    facets = []
+    for f in (getattr(plan, "facets", None) or []):
+        if str(f.get("id")) not in uncovered:
+            continue
+        q = next((by_id[qid].query for qid in (f.get("query_ids") or []) if qid in by_id and getattr(by_id[qid], "origin", "USER") == "USER"), None)
+        facets.append({"id": f["id"], "name": f.get("name") or "", "query": q or f.get("name") or ""})
+    res = _gc.run_gap_check(answer_text, resolved_request=(getattr(plan, "resolved_request", "") or ""), legend=legend,
+                            retrieve=_retrieve, hydrate=_hydrate, complete=_complete, floor=float(budget.aspect_weak_floor),
+                            facets_uncovered=facets)
+    for e in res["legend_added"]:
+        legend.append({k: e.get(k) for k in ("tag", "locator", "chunk_id", "doc_id", "text", "breadcrumb", "carried", "carry_score")})
+        chunk_inventory.append({"locator": e["locator"], "doc_id": e.get("doc_id"), "kind": "gap_check", "carried": False,
+                                "preview": (e.get("text") or "")[:220], "source_name": e.get("source_name") or "",
+                                "title": e.get("title") or "", "heading_path": e.get("heading_path") or "",
+                                "human_locator": e.get("human_locator") or ""})
+    res["receipt"]["mode"] = mode
+    return res["receipt"], res["text"]
+
+
 def _synthesis_meta(answer_text: str, legend: list[dict], plan, bundle, facet_cov: dict | None, composition) -> dict | None:
     """FACET-RETRIEVAL-V1 F5: `meta.synthesis` — the graded evidence of a synthesis answer (per facet the cited documents and
     confidence, sources by document, the document share). None on QA / a lookup / flag off."""
@@ -4476,6 +4599,32 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 _join_plan()
                 _prompt_meta.update({"carry_in": _carry_meta.get("in", 0), "carry_in_prompt": _carry_meta.get("admitted", 0)})
                 answer_text = "".join(full)
+                # FACET-RETRIEVAL-V1 F6 (plan §3.6): the gap check — the answer's "doesn't cover / no source" sentences and the
+                # uncovered facets each become one targeted retrieval on this turn's mode; found → a cited "More on this"
+                # addition (the found passages join the legend and the inventory), not found → the honest wording. Only on a
+                # v2 turn with a compiled plan that searched, never on a lookup; POLYMATH_CHAT_GAP_CHECK=0 = none of this.
+                _gap: dict | None = None
+                _gap_unc = list((_facet_cov or {}).get("uncovered") or [])
+                if _flag == "on" and _plan is not None and not _skip_retrieval and _v2_mode:
+                    _n_claims = _gap_check_claims(answer_text, _plan, _gap_unc)
+                    if _n_claims:
+                        yield _phase("gap_check", f"Checking {_n_claims} gap claim(s) against the library…", claims=_n_claims)
+                        try:
+                            _gap, answer_text = _gap_check_turn(
+                                answer_text, plan=_plan, legend=_legend, chunk_inventory=chunk_inventory,
+                                mode=("VECTOR" if ui_mode == "FAST" else ui_mode), corpus_id=corpus_id, role_scope=_role_scope,
+                                facets_uncovered=_gap_unc, llm_backend=llm_backend, llm_model=llm_model)
+                        except Exception as exc:  # noqa: BLE001 — the check is additive; the answer stands, the failure is receipted
+                            _gap = {"contract": "chat-gap-check-v1", "claims": [], "searches": [], "section_added": False,
+                                    "error": f"{type(exc).__name__}: {str(exc)[:160]}"}
+                        _mark("gap_check")
+                        yield _phase("gap_check_done",
+                                     (f"Gap check: {sum(1 for c in (_gap or {}).get('claims') or [] if c.get('found'))} of "
+                                      f"{len((_gap or {}).get('claims') or [])} claim(s) found more in the library"),
+                                     claims=len((_gap or {}).get("claims") or []),
+                                     found=sum(1 for c in (_gap or {}).get("claims") or [] if c.get("found")),
+                                     searches=len((_gap or {}).get("searches") or []),
+                                     section_added=bool((_gap or {}).get("section_added")), error=(_gap or {}).get("error"))
                 from polymath_shared.funnel import funnel_from_trace
                 used = _cited_chunk_ids(answer_text, _legend)
                 funnel = funnel_from_trace(
@@ -4518,6 +4667,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                             "generation": _gen_meta or None,
                             "carry": {k: v for k, v in _carry_meta.items() if k != "scores"},
                             **({"synthesis": _synth} if _synth else {}),
+                            **({"gap_check": _gap} if _gap else {}),
                         },
                     },
                     "retrieval": retrieval,
@@ -4535,6 +4685,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                           "chat_plan": _plan_receipt or None, "prompt": _prompt_meta or None, "carry": _carry_meta,
                           "generation": _gen_meta or None, "composition": retrieval.get("composition"),
                           **({"synthesis": _synth} if _synth else {}),
+                          **({"gap_check": _gap} if _gap else {}),
                           **_turn_receipt_extras(_trace, _latent_receipt, retrieval.get("wildcard_diagnostics"))})
                 return
 
