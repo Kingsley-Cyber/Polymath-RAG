@@ -381,10 +381,11 @@ def trail() -> TC.TrailMCPClient:
 
 
 def _newest_output_with(state: RunState, key: str) -> dict[str, Any] | None:
-    """The most recently accepted step output carrying `key` (acceptance order, not dict order — JSONB drops it)."""
+    """The most recently accepted step output carrying `key` (acceptance order, not dict order — JSONB drops it). An output of a
+    Trail operation that does not fill `key` is skipped: runs stored before the A-15 fix carry every unfilled envelope field."""
     for sid in reversed(state.output_order or tuple(state.outputs)):
         out = state.outputs.get(sid)
-        if isinstance(out, dict) and key in out:
+        if isinstance(out, dict) and key in out and TC.fills(out.get("operation_kind"), key):
             return out
     return None
 
@@ -507,10 +508,11 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
                 r.pop("note")
         record_ids = [r["id"] for r in refs]
     for k, v in result.items():
-        # Trail's ResearchResultV1 envelope always carries every optional field; a given operation leaves the ones it does not
-        # produce null. Skip the nulls so an operation's empty `research_directive`/`evidence_admission`/… never shadows a real
-        # value an earlier step produced (the step context gathers the NEWEST occurrence of each key).
-        if k in ("priors", "registry_snapshot") or v is None:
+        # Trail's ResearchResultV1 envelope always carries every field: the ones an operation does not fill arrive as null or as
+        # an EMPTY tuple ([]). Keep only the fields this operation fills (TC.FIELDS_BY_OPERATION), so an operation's unfilled
+        # `qualifications`/`open_gaps`/`redundancy_groups`/… never shadows a real value an earlier step produced (the step
+        # context and the compiled result gather the NEWEST occurrence of each key; gap A-15). A filled empty list is kept.
+        if k in ("priors", "registry_snapshot") or v is None or not TC.fills(kind, k):
             continue
         if k == "verdicts":
             # Trail's φ verdict carries its own VerdictKind (REJECT, CHALLENGE, DEDUPLICATE, REQUIRE_EVIDENCE, …) plus the

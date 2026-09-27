@@ -33,6 +33,32 @@ BOUNDED_OPERATIONS = ("registry.project", "gaps.compile", "evidence.admit", "hyp
                       "opportunity.qualify", "opportunity.score")
 #: the `polymath` principal's capability set (Trail ADR-063 / PrincipalCapabilityV6): the seven bounded operations + lifecycle
 POLYMATH_CAPABILITIES = ("operation.get", "operation.command") + BOUNDED_OPERATIONS
+#: Which ResearchResultV1 fields each bounded operation FILLS (Trail `research_operations.py`, pinned; a test re-derives this map
+#: from the pinned source). Every other field still arrives, as null or an EMPTY tuple ([] on the wire), so it says nothing: a
+#: consumer that treats it as an answer lets a later operation's empty list shadow an earlier operation's real one (gap A-15).
+RESULT_FIELDS = ("registry_snapshot", "priors", "redundancy_groups", "unsupported_hypothesis_ids", "research_directive",
+                 "evidence_admission", "verdicts", "open_gaps", "territories", "qualifications", "trail_scores", "score_refusals")
+FIELDS_BY_OPERATION: dict[str, frozenset[str]] = {
+    "registry.project": frozenset({"registry_snapshot", "priors", "redundancy_groups", "unsupported_hypothesis_ids"}),
+    "gaps.compile": frozenset({"registry_snapshot", "research_directive"}),
+    "evidence.admit": frozenset({"registry_snapshot", "evidence_admission"}),
+    "hypotheses.judge": frozenset({"registry_snapshot", "verdicts", "open_gaps"}),
+    "territory.project": frozenset({"registry_snapshot", "research_directive", "territories"}),
+    "opportunity.qualify": frozenset({"registry_snapshot", "qualifications", "open_gaps"}),
+    "opportunity.score": frozenset({"registry_snapshot", "trail_scores", "score_refusals"}),
+}
+#: step-output keys Polymath derives from a result field (the worker stores `verdicts` translated as `hypothesis_verdicts`)
+_DERIVED_FROM = {"hypothesis_verdicts": "verdicts"}
+
+
+def fills(operation_kind: str | None, key: str) -> bool:
+    """True when a step output's `key` is a real answer of `operation_kind`: the key is not a Trail result field (Polymath's own
+    keys), the step is not a Trail operation (no kind), or the operation fills that field. False = an unfilled envelope default
+    that must never shadow an earlier operation's value."""
+    field = _DERIVED_FROM.get(key, key)
+    if not operation_kind or field not in RESULT_FIELDS:
+        return True
+    return field in FIELDS_BY_OPERATION.get(operation_kind, frozenset(RESULT_FIELDS))
 POLICY_REF, BUDGET_REF = "public-static-v1", "p1-static-default-v1"
 PURPOSE_REF = "purpose:product-discovery"
 REQUEST_BYTES_MAX = 65536                   # config/v2/limits.yaml mcp.maximum_request_bytes

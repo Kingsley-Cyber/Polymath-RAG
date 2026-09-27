@@ -13,7 +13,7 @@ from typing import Any, Callable
 
 from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, assert_valid, stable_hash, validate
 from .manifest import ADAPTER_DIR, Manifest, list_manifests
-from . import evidence_boundary as EB, hypotheses as H, research_gaps as RG, semantic_view as SV, store, transitions as T
+from . import evidence_boundary as EB, hypotheses as H, research_gaps as RG, semantic_view as SV, store, trail_client, transitions as T
 from .hypotheses import HypothesisRejected
 from .transitions import BudgetExhausted, RunState, SubmissionRejected
 
@@ -657,11 +657,12 @@ def _receipt(step: dict[str, Any], status_: str, started: str, *, evidence_ids: 
 
 def _gather(outputs: dict[str, Any], key: str, order: tuple[str, ...] = ()) -> Any:
     """First value named `key` found in step outputs, NEWEST accepted step first (top level, then one level down). `order` is the
-    run's acceptance order — JSONB does not keep dict order, so callers pass `state.output_order`."""
+    run's acceptance order — JSONB does not keep dict order, so callers pass `state.output_order`. A Trail operation's output that
+    does not FILL `key` is skipped (gap A-15: runs stored before the fix carry every unfilled envelope field as [] or null)."""
     for sid in reversed(order or tuple(outputs)):
         out = outputs.get(sid) or {}
         if isinstance(out, dict):
-            if key in out:
+            if key in out and trail_client.fills(out.get("operation_kind"), key):
                 return out[key]
             for v in out.values():
                 if isinstance(v, dict) and key in v:
