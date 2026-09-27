@@ -88,7 +88,7 @@ deepening timed out (lane deadline 3 s).
 | **F1** — DONE 11.546 | Facets in the compiler + `facet_id` on queries + the receipt fields | Contract tests: the receipt's question yields ≥ 4 facets incl. "directing the AI video model"; a lookup yields 1; no library name in the prompt |
 | **F2** — DONE 11.546 | Seats per facet, the per-lane document quota, dominance 0.4, MMR, 24 seats — in `compose_final` for every mode | Unit tests on fixed pools; `/retrieve` and every chat mode byte-identical when the flags are off |
 | **F3** | WILDCARD's mapped subqueries | Tests with fake lanes: atoms → gated subqueries → a second pass; the receipt |
-| **F4** | Section profiles for giant documents + the audit + the handbook / VES rebuild | The audit before/after; the handbook's profile names motion, camera, prompting |
+| **F4** — BUILT 11.548 (the rebuilds run after the deploy, on the owner's word) | Section profiles for giant documents + the audit + the handbook / VES rebuild | The audit before/after; the handbook's profile names motion, camera, prompting |
 | **F5** | Cross-document synthesis prompt + sources by document + graded evidence | Tests on the prompt and the answer model |
 | **F6** | The gap check | Tests: a claimed gap with passages becomes citations |
 | **F7** | Live proof: the receipt's question, the two "anime" questions of 2026-09-27, three more of the owner's — documents cited, facets covered, seats per document, before/after | The owner sees the table and the answers |
