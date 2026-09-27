@@ -53,6 +53,7 @@ RULES: tuple[tuple[frozenset[str] | None, re.Pattern[str], str], ...] = tuple((m
     (_ANY, r"^/(fleet|sidecars|health/semantic|health/pipeline|intake|status|generated)(/.*)?$", OWNER), (_ANY, rf"^/runs/{_SEG}$", OWNER),
     (_ANY, rf"^/corpora/{_SEG}(/.*)?$", OWNER), (_POST, rf"^/documents/{_SEG}/enrich$", OWNER),
     (_POST, rf"^/adapter/{_SEG}/acquire$", OWNER), (_ANY, r"^/ui(/.*)?$", OWNER),
+    (_ANY, r"^/supplier/(search|product|freight|warehouses)$", OWNER),     # SUPPLIER-APIS: the owner's CJ account and quota
     (_ANY, r"^/(docs|redoc|openapi\.json)(/.*)?$", OWNER),
 ))
 

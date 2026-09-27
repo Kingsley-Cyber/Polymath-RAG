@@ -8,7 +8,12 @@ Only the MCP servers on this host may call it. They call this listener directly;
 carries X-Forwarded-For / X-Forwarded-Host: the public web UI proxy forwards every path here) is refused, because the proxy's own
 login is not the MCP gate that keeps the host browser, which holds the owner's sign-ins, owner-only. They call it by a loopback name
 (127.0.0.1:7200 by default), so a request whose Host names anything else is refused too: a web page that re-bound its own name to
-this machine (DNS rebinding) arrives direct and without proxy headers, but it still sends ITS name (TRAIL-EXT-BUGHUNT-V1 B-28)."""
+this machine (DNS rebinding) arrives direct and without proxy headers, but it still sends ITS name (TRAIL-EXT-BUGHUNT-V1 B-28).
+
+SUPPLIER-APIS (owner-approved 2026-09-27): the READ-ONLY supplier routes behind the MCP tools supplier_search / supplier_product /
+supplier_freight / supplier_warehouses live here too, under the same rules: the MCP servers on this host only (no proxy, a
+loopback Host), the owner only (they spend the owner's CJ account and quota: a principal gets 403). The policy is
+polymath_shared.acquisition.supplier; nothing here orders, pays, lists or disputes."""
 from __future__ import annotations
 
 import asyncio
@@ -21,6 +26,7 @@ from pydantic import BaseModel
 
 from polymath_shared import principal_context
 from polymath_shared.acquisition import service as acquisition
+from polymath_shared.acquisition import supplier
 from polymath_shared.adapter import service, store
 from polymath_shared.db import tx
 
@@ -61,15 +67,20 @@ def loopback_host(host: str | None) -> bool:
         return False
 
 
-@router.post("/adapter/{run_id}/acquire")
-async def acquire(run_id: str, req: AcquireRequest, request: Request) -> dict:
+def refuse_unless_direct(request: Request, what: str = "research acquisition", tools: str = "tool research_acquire") -> None:
+    """403 unless the MCP servers on this host called directly: no proxy header, a loopback Host (B-28)."""
     if any(request.headers.get(h) for h in PROXY_HEADERS):
-        raise HTTPException(status_code=403, detail={"code": "PROXIED_CALLER", "message": "research acquisition answers only the MCP servers "
-                                                     "on this host (their tool research_acquire), never a request relayed by a proxy"})
+        raise HTTPException(status_code=403, detail={"code": "PROXIED_CALLER", "message": f"{what} answers only the MCP servers "
+                                                     f"on this host (their {tools}), never a request relayed by a proxy"})
     if not loopback_host(request.headers.get("host")):
-        raise HTTPException(status_code=403, detail={"code": "NON_LOOPBACK_HOST", "message": "research acquisition answers only the MCP "
+        raise HTTPException(status_code=403, detail={"code": "NON_LOOPBACK_HOST", "message": f"{what} answers only the MCP "
                                                      "servers on this host, which call it at 127.0.0.1 or localhost; a request naming another "
                                                      "host (such as a web page that re-bound its own name to this machine) is refused"})
+
+
+@router.post("/adapter/{run_id}/acquire")
+async def acquire(run_id: str, req: AcquireRequest, request: Request) -> dict:
+    refuse_unless_direct(request)
     principal = principal_context.current()
     try:
         with tx() as conn:
@@ -88,3 +99,56 @@ async def acquire(run_id: str, req: AcquireRequest, request: Request) -> dict:
              (action or {}).get("action_id"), req.operation, out.get("site"), str(out.get("target") or "")[:300], out.get("status"),
              len(out.get("items") or []), ",".join(s_["source_id"] for s_ in out.get("sources") or [])[:600])
     return out
+
+
+# ------------------------------------------------------------------------------------------ SUPPLIER-APIS: the supplier tools --
+class SupplierSearchRequest(BaseModel):
+    query: str
+    source: str = "cj"
+    limit: int | None = supplier.SEARCH_LIMIT_DEFAULT
+
+
+class SupplierProductRequest(BaseModel):
+    product_id: str
+
+
+class SupplierFreightRequest(BaseModel):
+    variant_id: str
+    country: str
+    quantity: int = 1
+    from_country: str = "CN"
+
+
+_SUPPLIER_WHAT, _SUPPLIER_TOOLS = "supplier lookup", "tools " + ", ".join(supplier.TOOLS)
+
+
+async def _supplier(request: Request, tool: str, fn, **kw: Any) -> dict:
+    refuse_unless_direct(request, _SUPPLIER_WHAT, _SUPPLIER_TOOLS)
+    try:
+        out = await asyncio.to_thread(fn, principal_id=principal_context.current(), **kw)
+    except acquisition.AcquisitionRefused as exc:
+        raise HTTPException(status_code=exc.status, detail={"code": exc.code, "message": exc.message})
+    log.info("supplier %s source=%s status=%s rows=%s", tool, out.get("source"), out.get("status"),
+             len(out.get("items") or out.get("variants") or out.get("options") or out.get("warehouses") or []))
+    return out
+
+
+@router.post("/supplier/search")
+async def supplier_search(req: SupplierSearchRequest, request: Request) -> dict:
+    return await _supplier(request, "supplier_search", supplier.search, query=req.query, source=req.source, limit=req.limit)
+
+
+@router.post("/supplier/product")
+async def supplier_product(req: SupplierProductRequest, request: Request) -> dict:
+    return await _supplier(request, "supplier_product", supplier.product, product_id=req.product_id)
+
+
+@router.post("/supplier/freight")
+async def supplier_freight(req: SupplierFreightRequest, request: Request) -> dict:
+    return await _supplier(request, "supplier_freight", supplier.freight, variant_id=req.variant_id, country=req.country,
+                           quantity=req.quantity, from_country=req.from_country)
+
+
+@router.get("/supplier/warehouses")
+async def supplier_warehouses(request: Request) -> dict:
+    return await _supplier(request, "supplier_warehouses", supplier.warehouses)

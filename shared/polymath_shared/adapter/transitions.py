@@ -12,6 +12,8 @@ from typing import Any
 
 import jsonschema
 
+from polymath_shared.acquisition.challenge import looks_like_challenge
+
 from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, ORIGIN_ID_FIELDS, PRIOR_EVIDENCE_KINDS, TERMINAL_RUN_STATUSES, assert_valid, bounded_text, schema, stable_hash, validate
 from .harness_guide import FILES as _GUIDE_FILES, SOURCES_URI as _SOURCES_URI
 from .manifest import Manifest
@@ -358,6 +360,14 @@ def validate_receipt(step: dict[str, Any], payload: Any) -> list[str]:
                 unlinked = sorted({str(r.get("hypothesis_id")) for r in o["hypothesis_relations"] if isinstance(r, dict) and r.get("hypothesis_id") not in (o.get("hypothesis_ids") or [])})
                 if unlinked:
                     errors.append(f"observation {o.get('observation_id')} states a relation to a hypothesis it does not link: " + ", ".join(unlinked[:5]))
+        # SUPPLIER-APIS (2026-09-27): a fetched page that is a verification wall is not evidence; the harness drops the observation,
+        # or hands the source to its user to pass the check, and reads it again
+        for o in payload.get("observations") or []:
+            wall = looks_like_challenge(o.get("paraphrase_or_excerpt")) if isinstance(o, dict) and isinstance(o.get("paraphrase_or_excerpt"), str) else None
+            if wall:
+                errors.append(f"CHALLENGE_PAGE_AS_EVIDENCE: observation {o.get('observation_id')} (source {o.get('source_id')}) quotes a "
+                              f"verification page ({wall}), not evidence: leave it out and record the source in limitations as needing "
+                              "your user, who can pass the check in their own browser before it is read again")
         started, completed = _instant(payload.get("started_at")), _instant(payload.get("completed_at"))
         if started and completed and completed < started:
             errors.append("completed_at precedes started_at")

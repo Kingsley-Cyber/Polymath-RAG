@@ -1,6 +1,9 @@
 # compose.yaml: Polymath v4
 # Only the data stores run in Docker. The orchestrator, workers,
 # control plane, and sidecars are host-native. See ADR-0003.
+# One exception, opt-in (the owner's decision of 2026-09-27, SUPPLIER-APIS):
+# `searxng`, a local metasearch, not a store and not a model. Its profile
+# keeps it out of a plain `docker compose up`; start it by name.
 
 services:
   postgres:
@@ -60,4 +63,26 @@ services:
       - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
+    restart: unless-stopped
+
+  # SUPPLIER-APIS (the owner's decision of 2026-09-27): a LOCAL SearXNG that turns a query into search-engine result snippets as
+  # JSON, so research acquisition and supplier_search find alibaba.com listings without opening the site's pages (which show
+  # human checks). Loopback only, half a CPU, 256 MB. Its settings are deployment/searxng/settings.yml (read-only in the
+  # container, never chowned); its secret is SEARXNG_SECRET, passed through from .env and never written here (unset, SearXNG
+  # refuses to start). Opt-in: `docker compose up -d searxng` (the profile keeps it out of `make db-up`).
+  searxng:
+    image: searxng/searxng:2026.9.25-12f8b6515
+    profiles: ["search"]
+    environment:
+      - SEARXNG_SECRET
+      - FORCE_OWNERSHIP=false
+    volumes:
+      - ./deployment/searxng/settings.yml:/etc/searxng/settings.yml:ro
+    ports:
+      - "127.0.0.1:8888:8080"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
     restart: unless-stopped

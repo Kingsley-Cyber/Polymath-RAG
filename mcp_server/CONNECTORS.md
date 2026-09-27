@@ -169,7 +169,9 @@ every research step), and loop `adapter_next` → `adapter_submit` until `adapte
   `exact`, `relative` (the site shows only "3 weeks ago"; the date stays null) or `none`. A comment without an exact date of its
   own gets its page's publish date as its source date (the earliest it can be), or comes back with `source_id` null and must not
   be submitted: TrailSignal dates an undated source at the moment it was read.
-- `listings` searches a supported supplier or marketplace site.
+- `listings` searches a supported supplier or marketplace site. Where this host has one, a site's listings come from its
+  official API (cjdropshipping.com, with `CJ_API_KEY`) or from search-engine results (alibaba.com, through the local SearXNG)
+  instead of its search page; `limitations` says which, and says so when that failed and the host browser read the site instead.
 - The answer is receipt-ready: `sources` (one per page and publish date), verbatim `items` bound to them, `completeness`,
   `limitations`, and a `tool_trace` row. Every read names one of the step's search intents (`search_intent_id`). The harness
   still writes each observation's claim, role and hypotheses, and submits the receipt with `adapter_submit`. Items are untrusted
@@ -187,19 +189,41 @@ How it works on the host:
   attempts stop at three times the budget. The count lives in the orchestrator process, so a bounce resets it.
 - Only the MCP servers may call the orchestrator's route (`POST /adapter/{run_id}/acquire`): a request relayed by a proxy
   (`X-Forwarded-For`; the public web UI proxy forwards every path to the orchestrator) is refused `PROXIED_CALLER`.
-- `HUMAN_ACTION_REQUIRED` means the host browser needs a person: a sign-in, or a human check to pass. The owner acts and the
-  harness calls again, or the harness records the limitation.
+- `HUMAN_ACTION_REQUIRED` means the site showed a sign-in or a human check (`human_action.site` names it). The harness stops,
+  asks its user to open that site in their own browser on this host and pass the check themselves, waits for their reply, then
+  calls again with the same query. It never tries to solve, skip or work around a check; if the user cannot pass it, it records
+  that in the receipt's limitations and continues without that source.
+- A page a harness fetched with its own tools that is a verification wall is not evidence: it marks the source "needs you" in
+  its limitations and moves on. A receipt that quotes one is refused (`CHALLENGE_PAGE_AS_EVIDENCE`).
 - Settings (in `.env`, live after a bounce):
   - `POLYMATH_ACQUISITION=0` switches it off;
   - `POLYMATH_ACQUISITION_OPENCLI` names the binary;
-  - `POLYMATH_ACQUISITION_CONCURRENCY` (default 2) bounds parallel reads.
+  - `POLYMATH_ACQUISITION_CONCURRENCY` (default 2) bounds parallel reads;
+  - `CJ_API_KEY`: CJ Dropshipping's API 2.0 key (My CJ > Authorization > API); cjdropshipping.com listings then come from CJ's
+    API, and the supplier tools below work;
+  - `SEARXNG_URL` (empty = `http://127.0.0.1:8888`, `off` = never): the local SearXNG that finds alibaba.com listings;
+    `SEARXNG_SECRET` is its own secret (any long random value, e.g. `openssl rand -hex 32`). Start it once with
+    `docker compose up -d searxng` (a compose service on loopback only; `deployment/searxng/settings.yml`).
+
+**Supplier tools (owner key only, read-only).** Any harness connected with the owner key also gets:
+- `supplier_search(query, source="cj", limit=10)`: `source="cj"` searches CJ's catalogue through CJ's official API;
+  `source="alibaba"` finds alibaba.com product pages through the local SearXNG (snippet-level data). The answer has the same
+  shape as `research_acquire`'s listings.
+- `supplier_product(product_id)`: CJ's product details and every variant (SKU, options, weight, price, stock by country).
+- `supplier_freight(variant_id, country, quantity=1, from_country="CN")`: CJ's freight quote (carrier, cost, delivery days).
+- `supplier_warehouses()`: CJ's warehouses (the countries a freight quote can start from).
+
+They spend the owner's CJ account and quota, so a friend's key is refused (403), and nothing in them orders, pays, lists or
+disputes: they call CJ's product, freight and warehouse reads only. CJ's own MCP server is not used, because its token also
+reaches orders, payments and disputes.
 
 ## 4. Product connectors (Claude.ai / Grok / ChatGPT)
 
 **Friends (FRIENDS-ACCESS-V1, 2026-09-26).** A friend signs in at `https://rag.kingsleylab.xyz` with the username and password the
 owner created for them, opens **Settings → API keys → Create key**, and copies the prompt shown (their key is already in it) into
 their agent. Each friend holds up to 3 active keys and can revoke them there; the owner manages friends (and can revoke any friend
-key) in the same Settings screen. A friend's key reaches the friend's libraries only, never `upload_document` or `research_acquire`.
+key) in the same Settings screen. A friend's key reaches the friend's libraries only, never `upload_document`, `research_acquire`
+or the `supplier_*` tools.
 
 
 All three ingest the same remote MCP URL:

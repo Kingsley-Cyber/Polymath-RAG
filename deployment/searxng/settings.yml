@@ -1,0 +1,38 @@
+# SearXNG for Polymath's supplier search (SUPPLIER-APIS, the owner's decision of 2026-09-27). Read by the compose service `searxng`
+# (compose.yaml: loopback only, 127.0.0.1:8888, half a CPU, 256 MB; started with `docker compose up -d searxng`).
+#
+# What it is for: Polymath asks it `GET /search?q=site:alibaba.com <query>&format=json` and reads only the search engines' result
+# URLs, titles and snippets, so alibaba.com listings are found without opening the site's own pages (which show human checks).
+# What it never does: evade a check. No proxies, no Tor, nothing rotated; an engine that answers with its own check is reported
+# by SearXNG as unresponsive, and Polymath says so and falls back to the host browser (never around the check).
+#
+# The secret: server.secret_key is NOT written here. The container reads it from the environment variable SEARXNG_SECRET, which
+# compose passes through from the repository's .env (never committed). Unset, SearXNG keeps its placeholder key and refuses to
+# start ("server.secret_key is not changed"): it fails closed.
+use_default_settings:
+  engines:
+    keep_only:
+      - bing
+      - duckduckgo
+      - brave
+
+general:
+  instance_name: "polymath-searxng"
+  debug: false
+
+server:
+  limiter: false          # local only: no public visitors to rate-limit (the limiter would also need a valkey store)
+  public_instance: false
+  image_proxy: false
+  method: "GET"
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  formats:
+    - html
+    - json                # Polymath's reader asks for format=json; without it SearXNG answers 403
+
+engines:
+  - name: bing            # bing is off in SearXNG's defaults: switched on here (duckduckgo and brave are on already)
+    disabled: false

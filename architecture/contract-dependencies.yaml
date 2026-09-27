@@ -296,9 +296,17 @@ contracts:
     paths:
       - shared/polymath_shared/acquisition/service.py
       - shared/polymath_shared/acquisition/opencli.py
+      - shared/polymath_shared/acquisition/challenge.py
+      - shared/polymath_shared/acquisition/listing_apis.py
+      - shared/polymath_shared/acquisition/cj_api.py
+      - shared/polymath_shared/acquisition/searxng.py
+      - shared/polymath_shared/acquisition/supplier.py
       - orchestrator/orchestrator/api/acquisition.py
+      - deployment/searxng/settings.yml
     depends_on: [ADAPTER_RUNTIME]
-    consumed_by: [MCP_SURFACE]
-    tests: [tests/contracts/test_research_acquisition.py, tests/determinism/test_mcp_principals_gate.py]
+    consumed_by: [MCP_SURFACE, ADAPTER_RUNTIME]     # ADAPTER_RUNTIME: validate_receipt refuses a quoted verification wall (challenge.py)
+    tests: [tests/contracts/test_research_acquisition.py, tests/determinism/test_mcp_principals_gate.py, tests/contracts/test_supplier_apis.py,
+            tests/contracts/test_supplier_tools.py, tests/contracts/test_acquisition_challenge.py,
+            tests/contracts/test_harness_guide_human_check_handoff.py, tests/determinism/test_adapter_ecommerce_supply_join_api_records.py]
     migration: null
-    status: live                   # AUTORESEARCH R8: `research_acquire` (both servers) — owner-only reads for the run's OPEN HARNESS_ACTION; OpenCLI on the browser host
+    status: live                   # AUTORESEARCH R8: `research_acquire` (both servers) — owner-only reads for the run's OPEN HARNESS_ACTION; OpenCLI on the browser host. SUPPLIER-APIS (2026-09-27): listings via CJ's API / SearXNG first (browser fallback, said and counted), the challenge detector, the owner-only read-only supplier_* tools

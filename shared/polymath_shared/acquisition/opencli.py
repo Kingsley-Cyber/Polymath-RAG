@@ -28,6 +28,7 @@ from urllib.parse import quote_plus, urlsplit
 
 import yaml
 
+from polymath_shared.acquisition.challenge import looks_like_challenge
 from polymath_shared.acquisition.service import Target, now_iso
 
 READ_TIMEOUT_S = 75
@@ -63,7 +64,8 @@ WALL_WORDS = ("human verification", "not a robot", "captcha")
 def blocked(state: dict[str, Any], *, read_nothing: bool = False) -> str | None:
     """`human_check` / `sign_in` when the page is a wall rather than the content (pure; tested on recorded page states). Before a
     read, only a wall's ROUTE or a sign-in prompt shown over the content (`login_prompt`) counts; a wall word in the title or the
-    opening text counts once the reader got nothing from the page (`read_nothing`)."""
+    opening text counts once the reader got nothing from the page (`read_nothing`), and so does a title and opening text that ARE a
+    verification interstitial (`challenge.looks_like_challenge`: a slider, "verify you are human", a bot block; SUPPLIER-APIS)."""
     try:
         path = urlsplit(str(state.get("url") or "")).path.lower()
     except ValueError:
@@ -73,7 +75,7 @@ def blocked(state: dict[str, Any], *, read_nothing: bool = False) -> str | None:
     if _SIGN_IN_ROUTE.match(path) or state.get("login_prompt") or (state.get("wall") and not state.get("content")):
         return "sign_in"
     text = f"{state.get('title', '')} {state.get('text', '')}".lower()
-    if read_nothing and any(w in text for w in WALL_WORDS):
+    if read_nothing and (any(w in text for w in WALL_WORDS) or looks_like_challenge(f"{state.get('title') or ''}\n{state.get('text') or ''}")):
         return "human_check"
     return None
 

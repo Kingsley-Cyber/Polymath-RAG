@@ -34,7 +34,9 @@ ACCEPT = {"Accept": "application/json, text/event-stream", "Content-Type": "appl
 LOOPBACK, PUBLIC = "127.0.0.1:8930", "mcp.kingsleylab.xyz"
 ADAPTER = "polymath.knowledge_brief"
 ADMIN_ONLY_TOOLS = {"upload_document",           # deliberately NOT in TOOL_POLICY: a host path is never a principal's
-                    "research_acquire"}          # AUTORESEARCH R8: the host browser holds the OWNER's sign-ins, never a principal's
+                    "research_acquire",          # AUTORESEARCH R8: the host browser holds the OWNER's sign-ins, never a principal's
+                    # SUPPLIER-APIS (owner-approved 2026-09-27): the owner's CJ account and quota, never a principal's
+                    "supplier_search", "supplier_product", "supplier_freight", "supplier_warehouses"}
 
 
 def _build(monkeypatch, tmp_path):

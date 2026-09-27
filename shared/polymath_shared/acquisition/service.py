@@ -25,7 +25,11 @@ What a call may do, and nothing else:
     call again after a person acts. It is never worked around.
 The result is receipt-ready: `sources` holds one row per (page, publish date), verbatim `items` point at them, and `tool_trace` holds
 one row. It is NOT evidence. The harness still states each observation's claim, role and hypotheses and submits a
-HarnessResearchReceiptV1 with adapter_submit. TrailSignal decides what is admitted."""
+HarnessResearchReceiptV1 with adapter_submit. TrailSignal decides what is admitted.
+SUPPLIER-APIS (2026-09-27): a supplier site's listings may come from its official API or from search-engine results instead of its
+own search page (`listing_apis`): the backend says how it read (`backend_notes`, kept in `limitations` in every state) and a failed
+API falls back to the host browser, said and counted. A verification wall's text is never a listing or a search row
+(`challenge.looks_like_challenge`)."""
 from __future__ import annotations
 
 import hashlib
@@ -37,6 +41,8 @@ import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Protocol
+
+from polymath_shared.acquisition.challenge import looks_like_challenge
 
 CONTRACT = "research-acquisition-v1"
 log = logging.getLogger("polymath.acquisition")
@@ -238,16 +244,32 @@ def shape(t: Target, raw: dict[str, Any], *, action: dict[str, Any], search_inte
         "budget": {"queries_used_here": used, "max_queries": cap}}
     out["acquisition_id"] = "acq_" + _sha(f"{action.get('action_id')}|{t.operation}|{out['target']}|{t.site}|{retrieved_at}")[:24]
     where = t.site or "the page"
+    # how the backend read (a site's API, search-engine results, a fallback to the host browser): said in every state (SUPPLIER-APIS)
+    via = [_clip(n, 300) for n in raw.get("backend_notes") or [] if _clip(n, 300)]
+    walls = 0
+    if state == "ok" and t.operation in ("listings", "web_search"):
+        # a verification wall's text is never a listing or a search row; a listing read that held nothing else met a wall
+        rows = [r for r in raw.get("records") or [] if isinstance(r, dict)]
+        kept = [r for r in rows if not looks_like_challenge(
+            "\n".join(str(x or "") for x in (r.get("title"), r.get("snippet"), r.get("text"), (r.get("listing") or {}).get("card"))))]
+        walls = len(rows) - len(kept)
+        if walls:
+            raw = {**raw, "records": kept}
+            if not kept and t.operation == "listings":
+                state = "human_check"
     if state in _HUMAN:
         need, how = _HUMAN[state]
         out["status"] = "HUMAN_ACTION_REQUIRED"
         out["human_action"] = {"kind": state, "site": where, "instruction": how.format(site=where), "retry": True}
         out["limitations"].append(f"{where}: {need} is required in the host browser; nothing was read (not bypassed)")
+        out["limitations"] += via
         return out
     if state != "ok":
         out["status"] = "UNAVAILABLE"
         out["limitations"].append(f"{where}: {_clip(raw.get('note') or 'the host browser could not read it', 300)}")
+        out["limitations"] += via
         return out
+    wall_note = f"{walls} row(s) held a verification page's text instead of content: left out (never evidence)"
     records = [r for r in raw.get("records") or [] if isinstance(r, dict)][: limit + 1]      # + the page's own post / caption
     if t.operation == "web_search":
         out["items"] = [{"item_id": "itm_" + _sha(str(r.get("url")))[:12], "kind": "result", "url": str(r.get("url") or ""),
@@ -255,6 +277,7 @@ def shape(t: Target, raw: dict[str, Any], *, action: dict[str, Any], search_inte
                         for r in records if str(r.get("url") or "").startswith("http")]
         out["completeness"] = {"read": len(out["items"]), "available": None, "complete": None}
         out["limitations"].append("search results are leads, not evidence: read a lead's page before citing it")
+        out["limitations"] += ([wall_note] if walls else []) + via
         out["status"] = "OK" if out["items"] else "EMPTY"
         return out
     sources: dict[str, dict[str, Any]] = {}
@@ -313,16 +336,19 @@ def shape(t: Target, raw: dict[str, Any], *, action: dict[str, Any], search_inte
         out["limitations"].append(f"read {len(out['items'])} of {total if isinstance(total, int) else 'more'} (the first page in the site's own order)")
     for note in raw.get("notes") or []:
         out["limitations"].append(_clip(note, 300))
+    out["limitations"] += ([wall_note] if walls else []) + via
     out["status"] = "EMPTY" if not out["items"] else ("PARTIAL" if complete is False or (isinstance(total, int) and total > len(out["items"])) else "OK")
     return out
 
 
 # ------------------------------------------------------------------------------------------------------------------ entry --
 def default_backend() -> Backend:
-    from polymath_shared.acquisition import opencli
+    """The host browser (OpenCLI), with the listing APIs this host is configured for in front of it (SUPPLIER-APIS: CJ's API with
+    `CJ_API_KEY`, SearXNG unless `SEARXNG_URL=off`); none configured = the browser backend itself, as before."""
+    from polymath_shared.acquisition import listing_apis, opencli
     if os.environ.get("POLYMATH_ACQUISITION", "1").strip() in ("0", "false", "off"):
         return opencli.Disabled("research acquisition is switched off on this host (POLYMATH_ACQUISITION=0)")
-    return opencli.OpenCLIBackend()
+    return listing_apis.wrap(opencli.OpenCLIBackend(), os.environ)
 
 
 def acquire(*, principal_id: str | None, action: dict[str, Any] | None, operation: str, target: str, site: str | None = None,

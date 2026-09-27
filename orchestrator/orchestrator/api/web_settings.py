@@ -87,7 +87,8 @@ How to use it
 2. Questions: polymath_search = quick evidence; polymath_explore = planned evidence to reason over yourself; polymath_answer = a written, cited answer.
 3. {own}
 4. Product research: first read the prompt run_governed_research (or the resource polymath://adapter/guide). Then adapter_list, adapter_start (put the libraries in request_options.corpus_ids), loop adapter_next / adapter_submit, then adapter_result. Research steps need your OWN web tools (search, browse); Polymath's web reader is not shared.
-5. "insufficient_evidence" is an honest answer: report it, do not retry blindly.
+5. The supplier tools (supplier_search, supplier_product, supplier_freight, supplier_warehouses) are read-only and owner-only: they use my CJ account and quota, so another key is refused (403).
+6. "insufficient_evidence" is an honest answer: report it, do not retry blindly.
 
 Keep the key private: whoever holds it acts as me. I can revoke it in Settings."""
 
