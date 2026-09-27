@@ -1091,6 +1091,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_adapter_dossier.py", "py", None),
     ("tests/contracts/test_deep_research_engine.py", "py", None),
     ("tests/contracts/test_deep_research_route.py", "py", None),
+    # DEEP-RESEARCH-MODE-V1 slices DR6a-b: research moves (engine) and /retrieve's optional intent
+    ("tests/contracts/test_deep_research_moves.py", "py", None),
     ("tests/determinism/test_mcp_principals_gate.py", "py", None),
     ("tests/determinism/test_adapter_run_ownership.py", "py", None),
     ("tests/determinism/test_adapter_empty_admission_cause.py", "py", None),
@@ -2506,6 +2508,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),
     ("shared/polymath_shared/deep_research/prompts.py", "py", None),
+    # DEEP-RESEARCH-MODE-V1 slice DR6a: the research moves controller (pure)
+    ("shared/polymath_shared/deep_research/moves.py", "py", None),
     ("orchestrator/orchestrator/api/acquisition.py", "py", None),
     ("orchestrator/orchestrator/api/web_auth.py", "py", None),
     ("orchestrator/orchestrator/api/web_settings.py", "py", None),
