@@ -97,6 +97,24 @@ _TYPE_ROLE = {
 }
 
 
+#: FACET-RETRIEVAL-V1 F1 (register 11.545; the owner 2026-09-27: "the compiler should be corpus agnostic for subqueries").
+#: A FACET is a part of the request that could be answered on its own. The facet step (`facets.py`) names 1–5 of them from the
+#: question alone — no library titles, no profile matches — each with one USER-origin query; the aspect types above are then
+#: the WAY a facet is asked, never the reason a query exists. Every query carries `facet_id`; PROFILE / BRIDGE / WILDCARD /
+#: CORPUS_EXPLORE queries attach to the facet they serve (or None). A single-facet question (a lookup) is one facet = q0.
+#: `POLYMATH_CHAT_FACETS=0` restores the pre-facet compiler byte for byte (no facet step, no facet fields on the receipt).
+MAX_FACETS = 5
+MAX_QUERIES_FACETS = MAX_FACETS + ADJACENT_MAX     # one USER query per facet + the one ADJACENT restatement
+FACETS_FLAG = "POLYMATH_CHAT_FACETS"
+FACET_EXTRA_OUTPUT_TOKENS = 160                    # measured shape: +"facet_id" per query and up to two more queries
+
+
+def facets_enabled(env=None) -> bool:
+    """F1: the facet step runs and every plan carries facets (default on)."""
+    v = str((env if env is not None else os.environ).get(FACETS_FLAG, "1") or "1").strip().lower()
+    return v not in ("0", "false", "no", "off")
+
+
 def derive_role(qtype: str) -> str:
     """Deterministic query-type → provenance role. Unknown types are `complement`
     (a supplementary aspect), never `direct` — only a PRIMARY query is q0."""
@@ -162,6 +180,9 @@ class CompiledQuery:
     #: it. Hypotheses carried into admission and synthesis, never verdicts. None = unexplained (never invented).
     expected_contribution: str | None = None
     evidence_requirement: str | None = None
+    #: F1: the facet this query answers (`f1`…`f5`); None = attached to no single facet (an indirect probe with no overlap,
+    #: or the pre-facet compiler). Set by `validate_plan` from the model's claim and by `sync_facets` for every other query.
+    facet_id: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.inspired_by_profile, list):
@@ -172,6 +193,8 @@ class CompiledQuery:
             self.reason = default_reason(self.type, self.role)
         if self.origin not in ORIGIN_TYPES:
             self.origin = "USER"
+        if self.facet_id is not None:
+            self.facet_id = str(self.facet_id).strip().lower() or None
 
 
 @dataclass
@@ -204,6 +227,8 @@ class ChatPlan:
     #: the questions the answer must explain / connect / reconcile — outcomes open. Empty on the v1 contract.
     inquiry: dict = field(default_factory=dict)
     synthesis_targets: list[str] = field(default_factory=list)
+    #: F1: [{id, name, query_ids}] in facet order (f1 = the request's core). Empty on the pre-facet compiler.
+    facets: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -312,6 +337,8 @@ def fallback_plan(message: str, *, reason: str, history_turns: int = 0, wall_ms:
                   "history_turns": history_turns})
     plan.intent = intent_of_plan(plan)
     plan.explicit_constraints = detect_explicit_constraints(msg)
+    if facets_enabled():
+        plan.compiler["facets"] = sync_facets(plan)       # F1: one facet = q0 (the lookup shape), derived, receipted
     return plan
 
 
@@ -441,10 +468,12 @@ def apply_corrections(plan: "ChatPlan", message: str, history: Iterable | None,
                 keep = [q for q in plan.queries if q.type != "PRIMARY" and not (_content_words(q.query) & wa and _content_words(q.query) & wb)]
                 rebuilt = [CompiledQuery(id="q0", type="PRIMARY", query=primary, weight=1.0),
                            CompiledQuery(id="q1", type="COMPARISON", query=second, weight=1.0)]
+                cap = MAX_QUERIES_FACETS if plan.facets else MAX_QUERIES
                 for i, q in enumerate(keep):
-                    if len(rebuilt) >= MAX_QUERIES:
+                    if len(rebuilt) >= cap:
                         break
-                    rebuilt.append(CompiledQuery(id=f"q{len(rebuilt)}", type=q.type, query=q.query, weight=q.weight))
+                    rebuilt.append(CompiledQuery(id=f"q{len(rebuilt)}", type=q.type, query=q.query, weight=q.weight,
+                                                 facet_id=q.facet_id))          # F1: a kept aspect keeps its facet; the two sides re-attach by overlap
                 fixes.append(f"compare_sides:{len(plan.queries)}->{len(rebuilt)}")
                 plan.queries = rebuilt
                 plan.semantic_queries = [q.query for q in rebuilt]
@@ -472,15 +501,21 @@ def apply_corrections(plan: "ChatPlan", message: str, history: Iterable | None,
 
 
 def validate_plan(raw: dict, message: str, *, contract: bool = False,
-                  matches=None) -> tuple[ChatPlan | None, str | None]:
+                  matches=None, facets: list[dict] | None = None) -> tuple[ChatPlan | None, str | None]:
     """Strict contract check + law 1. Returns (plan, None) or (None, reason).
 
     `contract` (S4, v2): the grounded-learning fields are read — every one optional; a missing one marks context as
     missing (a request without an expected contribution is `unexplained`), never skips retrieval — plus D2 (a knowledge
     question always retrieves; small talk and an explicit "don't search" are the exceptions) and the concept bridges,
-    each admitted only when its `ref` names one of the supplied `matches` (never an invented concept)."""
+    each admitted only when its `ref` names one of the supplied `matches` (never an invented concept).
+    `facets` (F1): the facet step's [{id, name, query, type}]; each query's `facet_id` claim is checked against them, one
+    USER query per facet is kept (the ADJACENT restatement may ride beside), and a facet the model left without a query
+    gets the facet step's own query. None = the pre-facet contract, byte-identical."""
     if not isinstance(raw, dict):
         return None, "not_an_object"
+    facets = [f for f in (facets or []) if isinstance(f, dict) and f.get("id")][:MAX_FACETS] or None
+    facet_ids = {f["id"] for f in facets} if facets else set()
+    max_queries = MAX_QUERIES_FACETS if facets else MAX_QUERIES
     resolved = str(raw.get("resolved_request") or "").strip()
     if len(resolved) < 8:
         return None, "resolved_request_missing"
@@ -538,6 +573,7 @@ def validate_plan(raw: dict, message: str, *, contract: bool = False,
         surface_in = q.get("profile_surface")
         target_in = q.get("target")
         origin_in = str(q.get("origin") or "").strip().upper()
+        facet_in = str(q.get("facet_id") or "").strip().lower() if facets else ""
         cq = CompiledQuery(
             id=f"q{len(queries)}", type=qtype, query=text, weight=max(0.1, min(1.0, weight)),
             role=role_in, reason=reason_in, inspired_by_profile=inspired,
@@ -545,13 +581,14 @@ def validate_plan(raw: dict, message: str, *, contract: bool = False,
             target=(str(target_in).strip()[:160] or None) if target_in else None,
             origin=origin_in if origin_in in ORIGIN_TYPES else "USER",
             expected_contribution=_short(q.get("expected_contribution"), 240) if contract else None,
-            evidence_requirement=_short(q.get("evidence_requirement"), 200) if contract else None)
+            evidence_requirement=_short(q.get("evidence_requirement"), 200) if contract else None,
+            facet_id=facet_in if facet_in in facet_ids else None)
         queries.append(cq)
         if role_in:
             explicit_roles.add(id(cq))
         if reason_in:
             explicit_reasons.add(id(cq))
-        if len(queries) >= MAX_QUERIES:
+        if len(queries) >= max_queries:
             break
     if rr:
         if not queries and d2_override:                     # D2: the model saw no search; the question gets one anyway
@@ -578,6 +615,9 @@ def validate_plan(raw: dict, message: str, *, contract: bool = False,
                 q.reason = default_reason(q.type, q.role)
     else:
         queries = []
+    facet_rows, facet_diag = ([], {})
+    if facets and queries:
+        queries, facet_rows, facet_diag = _apply_facets(queries, facets)
     # law 1: the task class of the original survives in the resolved request
     orig_classes = task_classes(message)
     if orig_classes and not (orig_classes & task_classes(resolved)):
@@ -598,16 +638,127 @@ def validate_plan(raw: dict, message: str, *, contract: bool = False,
     plan = ChatPlan(contract=CONTRACT, original_request=(message or "").strip(), resolved_request=resolved,
                     task_type=task, evidence_policy=policy, retrieval_required=bool(rr),
                     retrieval_goal=(str(raw.get("retrieval_goal")).strip() or None) if raw.get("retrieval_goal") else None,
-                    queries=queries, semantic_queries=sem[:MAX_QUERIES], exact_terms=exact[:16],
+                    queries=queries, semantic_queries=sem[:max_queries], exact_terms=exact[:16],
                     entities=_strs("entities"), must_answer=_strs("must_answer", 8), user_constraints=_strs("user_constraints", 8),
-                    response_type=resp, antecedent=ant, graph_useful=bool(raw.get("graph_useful", False)))
+                    response_type=resp, antecedent=ant, graph_useful=bool(raw.get("graph_useful", False)),
+                    facets=facet_rows)
     if contract:
         plan.contract = CONTRACT_V2
         _apply_contract_fields(plan, raw, matches, d2_override=d2_override, no_search=no_search, retyped=retyped)
     plan.intent = intent_of_plan(plan)
     plan.explicit_constraints = detect_explicit_constraints(message or "")
     plan._validation_fixes = [task_fix] if task_fix else []    # type: ignore[attr-defined] — compile_plan receipts them
+    plan._facet_diag = facet_diag                              # type: ignore[attr-defined] — receipt-only, merged by compile_plan
     return plan, None
+
+
+# ---------------------------------------------------------------------------
+# F1 — facets on the plan (pure helpers; the LLM facet step lives in facets.py)
+# ---------------------------------------------------------------------------
+
+def _facet_words(f: dict) -> set[str]:
+    return _content_words(f"{f.get('name') or ''} {f.get('query') or ''}")
+
+
+def best_facet_for(text: str, facets: Iterable[dict]) -> str | None:
+    """The facet whose name (+ query hint) shares the most content words with `text` — ties to the earlier facet; None
+    without any overlap. Deterministic; no model."""
+    words = _content_words(text)
+    best, best_n = None, 0
+    for f in facets:
+        n = len(words & _facet_words(f))
+        if n > best_n:
+            best, best_n = str(f.get("id")), n
+    return best
+
+
+def _apply_facets(queries: list[CompiledQuery], facets: list[dict]) -> tuple[list[CompiledQuery], list[dict], dict]:
+    """The facet step's facets applied to the model's queries: an unclaimed or mis-claimed `facet_id` is assigned by
+    overlap (else f1 — a USER query is the request's own); one query per facet (the first wins; the ADJACENT restatement
+    may ride beside its facet); a facet without a query gets the facet step's own query (USER origin, its own type)
+    while the cap allows; ids are renumbered q0…qn (nothing references them yet). Returns (queries, rows, receipt)."""
+    ids = [str(f["id"]) for f in facets]
+    assigned = 0
+    for q in queries:
+        if q.facet_id not in ids:
+            q.facet_id = best_facet_for(q.query, facets) or ids[0]
+            assigned += 1
+    kept: list[CompiledQuery] = []
+    seen_facet: set[str] = set()
+    dropped = 0
+    for q in queries:
+        if q.type == "ADJACENT" or q.facet_id not in seen_facet:
+            kept.append(q)
+            if q.type != "ADJACENT":
+                seen_facet.add(q.facet_id)
+        else:
+            dropped += 1
+    inserted: list[str] = []
+    unqueried: list[str] = []
+    for f in facets:
+        fid = str(f["id"])
+        if fid in seen_facet:
+            continue
+        text = _clean_query(f.get("query") or f.get("name"))
+        if not text or _has_instruction_tokens(text) or len(kept) >= MAX_QUERIES_FACETS:
+            unqueried.append(fid)
+            continue
+        qtype = str(f.get("type") or "MECHANISM").strip().upper()
+        if qtype not in QUERY_TYPES or qtype in ("PRIMARY", "BRIDGE", "ADJACENT"):
+            qtype = "MECHANISM"
+        kept.append(CompiledQuery(id="", type=qtype, query=text, weight=0.9, facet_id=fid))
+        seen_facet.add(fid)
+        inserted.append(fid)
+    for i, q in enumerate(kept):
+        q.id = f"q{i}"
+    rows = [{"id": str(f["id"]), "name": str(f.get("name") or "")[:80], "query_ids": [q.id for q in kept if q.facet_id == str(f["id"])]}
+            for f in facets]
+    return kept, rows, {"n": len(facets), "source": "facet_step", "assigned": assigned, "dropped": dropped,
+                        "inserted": inserted, "unqueried": unqueried}
+
+
+def sync_facets(plan: ChatPlan) -> dict:
+    """Pure, idempotent. A plan without facets gets the DERIVED ones — one per USER query, in query order (today's
+    decomposition, unchanged: a lookup is one facet = q0). Then every query without a `facet_id` is attached: a USER
+    query to the facet whose name and attached queries overlap it most, else f1 (the request's core); an indirect probe
+    (PROFILE / BRIDGE / WILDCARD / CORPUS_EXPLORE / GRAPH / EVIDENCE_GAP) only on overlap, else None — it serves no single
+    facet. `plan.facets[*].query_ids` is rebuilt from the queries (a correction may have renumbered them). Returns a
+    small receipt; called again after every expansion (ui.py) so late probes attach too."""
+    derived = False
+    if not plan.facets:
+        rows: list[dict] = []
+        for q in plan.queries:
+            if q.origin != "USER":
+                continue
+            fid = f"f{len(rows) + 1}"
+            q.facet_id = fid
+            rows.append({"id": fid, "name": q.query[:80], "query_ids": [q.id]})
+            if len(rows) >= MAX_FACETS:
+                break
+        plan.facets = rows
+        derived = True
+    if not plan.facets:
+        return {"n": 0, "source": "derived" if derived else "facet_step", "attached": 0, "unattached": []}
+    ids = [str(f["id"]) for f in plan.facets]
+    live = {f_id: {"id": f_id, "name": str(f.get("name") or ""),
+                   "query": " ".join(q.query for q in plan.queries if q.facet_id == f_id)}
+            for f_id, f in zip(ids, plan.facets)}
+    attached, unattached = 0, []
+    for q in plan.queries:
+        if q.facet_id in live:
+            continue
+        hit = best_facet_for(q.query, live.values())
+        if hit is None and q.origin == "USER":
+            hit = ids[0]
+        q.facet_id = hit
+        if hit is None:
+            unattached.append(q.id)
+        else:
+            attached += 1
+            live[hit]["query"] += " " + q.query
+    for f in plan.facets:
+        f["query_ids"] = [q.id for q in plan.queries if q.facet_id == str(f["id"])]
+    return {"n": len(plan.facets), "source": "derived" if derived else "facet_step", "attached": attached, "unattached": unattached}
 
 
 def _apply_contract_fields(plan: ChatPlan, raw: dict, matches, *, d2_override: bool, no_search: bool,
@@ -726,8 +877,30 @@ GROUNDED-LEARNING FIELDS (add these to the same JSON object; every added string 
 Output ONLY the JSON object. No prose, no markdown fences."""
 
 
-def system_prompt(contract: bool = False) -> str:
-    return SYSTEM_PROMPT + ("\n" + CONTRACT_ADDENDUM if contract else "")
+#: F1 (FACET-RETRIEVAL-V1 §3.1): the facets were named from the question alone (facets.py — no titles, no profile matches in
+#: that prompt); this call may only WORD each facet's query, never decide which facets exist.
+FACETS_ADDENDUM = """
+FACETS OF THE REQUEST: the message lists the request's facets — the parts of the question that could each be answered
+on their own — named from the question alone, before any book was listed. Rules:
+- Write exactly ONE query per listed facet, in the listed order, and give every query "facet_id" (the facet's id).
+  The first facet's query is the PRIMARY. At most 6 queries: the facets plus the one ADJACENT restatement, which also
+  names the facet whose principle it restates.
+- Never drop a facet because no listed book seems to cover it, never add a facet the list does not name, never merge
+  two facets into one query. The library list may only sharpen a facet's WORDING.
+Output ONLY the JSON object. No prose, no markdown fences."""
+
+
+def system_prompt(contract: bool = False, facets: bool = False) -> str:
+    return SYSTEM_PROMPT + ("\n" + CONTRACT_ADDENDUM if contract else "") + ("\n" + FACETS_ADDENDUM if facets else "")
+
+
+def facets_block(facets: Iterable[dict] | None) -> str:
+    """F1: the facet step's facets as TEXT for the wording call — id, name and the facet's own query hint."""
+    lines = [f"  [{f['id']}] {_short(f.get('name'), 80)} — query hint: \"{_short(f.get('query'), 160)}\""
+             for f in (facets or []) if isinstance(f, dict) and f.get("id")]
+    if not lines:
+        return ""
+    return "FACETS OF THE REQUEST (named from the question alone; one query each, in this order):\n" + "\n".join(lines)
 
 
 def _history_block(history: Iterable, turns: int = HISTORY_TURNS) -> tuple[str, int]:
@@ -743,15 +916,18 @@ def _history_block(history: Iterable, turns: int = HISTORY_TURNS) -> tuple[str, 
 
 
 def user_prompt(message: str, history: Iterable, corpus_ids: Iterable[str] | None = None,
-                titles: Iterable[str] | None = None, matches=None) -> tuple[str, int]:
+                titles: Iterable[str] | None = None, matches=None, facets: Iterable[dict] | None = None) -> tuple[str, int]:
     """`titles` (COMPILER-CORPUS-CONTEXT-V1, B16): the library's book TITLES for this message, most relevant first —
     never summaries; rendered as one block between the scope line and the conversation. `matches` (S4, v2): the
-    Scout's matched profile items as text with refs, rendered right after the titles."""
+    Scout's matched profile items as text with refs, rendered right after the titles. `facets` (F1): the facet step's
+    facets, rendered before the library so the wording call reads the question's parts first."""
     hist, n = _history_block(history)
     corpora = ", ".join(c for c in (corpus_ids or []) if c) or "the user's corpus"
     from polymath_shared.compiler_context import titles_block
+    fblock = facets_block(facets)
+    library = f"{fblock}\n\n" if fblock else ""
     block = titles_block(titles or [])
-    library = f"{block}\n\n" if block else ""
+    library += f"{block}\n\n" if block else ""
     mblock = profile_matches_block(matches)
     library += f"{mblock}\n\n" if mblock else ""
     return (f"CORPUS IN SCOPE: {corpora}\n\n{library}RECENT CONVERSATION:\n{hist}\n\n"
@@ -781,7 +957,7 @@ def compile_plan(message: str, history: Iterable, corpus_ids: Iterable[str] | No
                  complete: Callable[[str, str, int], tuple[str, str | None]],
                  *, budget_s: float = COMPILER_BUDGET_S, hard_budget_s: float | None = None,
                  model: str | None = None, titles: Iterable[str] | None = None, matches=None,
-                 contract: bool | None = None) -> ChatPlan:
+                 contract: bool | None = None, facets: list[dict] | None = None) -> ChatPlan:
     """Run the compiler through `complete` (system_prompt, user_prompt,
     max_tokens) -> (text, error). Every failure path returns the fallback
     plan with a reason; the wall time is recorded either way.
@@ -790,13 +966,20 @@ def compile_plan(message: str, history: Iterable, corpus_ids: Iterable[str] | No
     (`compiler.over_budget`); `hard_budget_s` (default 2× soft, env
     POLYMATH_CHAT_COMPILER_HARD_BUDGET_S) is where a late plan is discarded
     for the fallback — a plan that lands at 2.9 s is still worth more than
-    losing it, but a turn never waits on the compiler indefinitely."""
+    losing it, but a turn never waits on the compiler indefinitely.
+
+    `facets` (F1): the facet step's facets (facets.compile_facets, run BEFORE this call without any library input);
+    the prompt lists them, every query claims one, and the plan carries them. None = no facet step (its failure, or the
+    flag off): the call is byte-identical to before, and with the flag on the facets are DERIVED from the compiled
+    queries (one per USER query) so downstream seats and receipts still see facets."""
     hard = float(hard_budget_s if hard_budget_s is not None else max(COMPILER_HARD_BUDGET_S, 2 * budget_s))
     v2 = contract_enabled() if contract is None else bool(contract)
+    facets = [f for f in (facets or []) if isinstance(f, dict) and f.get("id")][:MAX_FACETS] or None
     t0 = time.perf_counter()
-    prompt, n_hist = user_prompt(message, history, corpus_ids, titles=titles, matches=matches if v2 else None)
+    prompt, n_hist = user_prompt(message, history, corpus_ids, titles=titles, matches=matches if v2 else None, facets=facets)
+    max_tokens = (COMPILER_MAX_OUTPUT_TOKENS_V2 if v2 else COMPILER_MAX_OUTPUT_TOKENS) + (FACET_EXTRA_OUTPUT_TOKENS if facets else 0)
     try:
-        text, err = complete(system_prompt(v2), prompt, COMPILER_MAX_OUTPUT_TOKENS_V2 if v2 else COMPILER_MAX_OUTPUT_TOKENS)
+        text, err = complete(system_prompt(v2, facets=bool(facets)), prompt, max_tokens)
     except Exception as exc:  # noqa: BLE001 — the transport never breaks a turn
         text, err = "", f"{type(exc).__name__}"
     wall_ms = (time.perf_counter() - t0) * 1000
@@ -807,7 +990,7 @@ def compile_plan(message: str, history: Iterable, corpus_ids: Iterable[str] | No
     raw = _parse_json_object(text)
     if raw is None:
         return fallback_plan(message, reason="invalid_json", history_turns=n_hist, wall_ms=wall_ms, model=model)
-    plan, reason = validate_plan(raw, message, contract=v2, matches=matches)
+    plan, reason = validate_plan(raw, message, contract=v2, matches=matches, facets=facets)
     if plan is None:
         return fallback_plan(message, reason=f"invalid_plan:{reason}", history_turns=n_hist, wall_ms=wall_ms, model=model)
     fixes = [*getattr(plan, "_validation_fixes", []), *apply_corrections(plan, message, history, corpus_ids=corpus_ids)]
@@ -816,6 +999,10 @@ def compile_plan(message: str, history: Iterable, corpus_ids: Iterable[str] | No
                      "corrections": fixes}
     if v2 and getattr(plan, "_contract_diag", None):
         plan.compiler["contract"] = plan._contract_diag
+    if facets or facets_enabled():
+        # F1: the facet receipt — the step's verdicts (assigned / dropped / inserted / unqueried), then the attachment
+        # after the corrections (a rebuilt query re-attaches by overlap)
+        plan.compiler["facets"] = {**(getattr(plan, "_facet_diag", None) or {}), **sync_facets(plan)}
     return plan
 
 
@@ -825,8 +1012,10 @@ def plan_receipt(plan: ChatPlan) -> dict:
         "contract": plan.contract, "task_type": plan.task_type, "evidence_policy": plan.evidence_policy,
         "retrieval_required": plan.retrieval_required, "response_type": plan.response_type,
         "resolved_request": plan.resolved_request[:400],
-        # S4: the v2 purpose fields ride only when present, so a v1 receipt stays byte-identical
-        "queries": [{k: v for k, v in asdict(q).items() if not (k in _V2_QUERY_FIELDS and v is None)} for q in plan.queries],
+        # S4: the v2 purpose fields ride only when present, so a v1 receipt stays byte-identical; F1: `facet_id` rides on a
+        # facet plan even when None (a probe that serves no single facet), and never on a pre-facet plan
+        "queries": [{k: v for k, v in asdict(q).items()
+                     if not ((k in _V2_QUERY_FIELDS and v is None) or (k == "facet_id" and not plan.facets))} for q in plan.queries],
         "semantic_queries": plan.semantic_queries, "exact_terms": plan.exact_terms,
         "must_answer": plan.must_answer, "antecedent": plan.antecedent, "graph_useful": plan.graph_useful,
         "intent": plan.intent, "compiler": plan.compiler,
@@ -834,6 +1023,8 @@ def plan_receipt(plan: ChatPlan) -> dict:
         "subquery_provenance": plan.compiler.get("subquery_provenance"),
         **({"learning_need": plan.retrieval_goal, "inquiry": plan.inquiry, "synthesis_targets": plan.synthesis_targets}
            if plan.contract == CONTRACT_V2 else {}),
+        # F1: [{id, name, query_ids}] — small; only when the plan carries facets (the pre-facet receipt is unchanged)
+        **({"facets": plan.facets} if plan.facets else {}),
     }
 
 

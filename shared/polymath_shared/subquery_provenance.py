@@ -76,6 +76,9 @@ def annotate_subquery_provenance(plan: ChatPlan, scout: ProfileScoutResult | Non
             "inspired_by_profile": list(q.inspired_by_profile),
             "profile_surface": q.profile_surface, "target": q.target, "derived_from": q.derived_from,
             "origin": q.origin,
+            # FACET-RETRIEVAL-V1 F1: the facet this subquery serves — present only on a plan that carries facets, so the
+            # pre-facet receipt is unchanged (None on a facet plan = the probe serves no single facet)
+            **({"facet_id": q.facet_id} if getattr(plan, "facets", None) else {}),
         })
     block = {
         "contract": "subquery-provenance-v1",

@@ -151,6 +151,7 @@ class _Resp:
 
 def _wire(monkeypatch, *, contract: bool, profile_query=None):
     monkeypatch.setenv(cp.CONTRACT_FLAG, "1" if contract else "0")
+    monkeypatch.setenv(cp.FACETS_FLAG, "0")               # FACET-RETRIEVAL-V1 F1 adds its own (facet) call; this suite counts the S4 ones
     monkeypatch.setenv("POLYMATH_CHAT_BRIDGE_COMPILER", "1")
     monkeypatch.delenv("POLYMATH_CHAT_PROFILE_EXPANSION", raising=False)
     noms = (SimpleNamespace(doc_id="doc_rabiger", representative_text="Withheld information creates suspense",

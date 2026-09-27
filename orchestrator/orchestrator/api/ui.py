@@ -2399,6 +2399,65 @@ def _bridges_merged(plan) -> bool:
     return getattr(plan, "contract", "") == CONTRACT_V2 and not getattr(plan, "fallback", True)
 
 
+def _start_facet_step(message: str, history, key: str):
+    """FACET-RETRIEVAL-V1 F1: the blind facet call on its own thread — the go-to compiler lane (the same attempt order the
+    wording call uses), one attempt, fail-open. Returns a future (its result is `facets.compile_facets`' receipt) or None
+    when the step is off or no lane is pinned. The call's prompt is built by `facet_user_prompt`, which has no parameter
+    for a corpus, a title list or a profile match: the facets come from the question alone."""
+    from polymath_shared.facets import facets_enabled
+    if not facets_enabled():
+        return None
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+
+        from polymath_shared.chat_plan import COMPILER_STAGE
+        from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
+        endpoints = [e for e in cloud_endpoints() if e.name in (stage_pin(COMPILER_STAGE) or [])]
+        order = _compiler_attempt_order(endpoints, key)
+        if not order:
+            return None
+        ep = order[0]
+
+        def _run() -> dict:
+            from polymath_shared.facets import compile_facets
+            from polymath_shared.llm_extraction.client import LLMExtractionClient
+            client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
+                                         api_key=ep.api_key, cloud_opts=ep.cloud_opts,
+                                         timeout_s=_COMPILER_HTTP_TIMEOUT_S, max_attempts=1)
+            client.endpoint_name = ep.name
+            client.attempt_stage, client.attempt_function = "chat_compiler", "FACETS"
+            client.reasoning_role = "STRUCTURED_COMPILER"
+
+            def _complete(system_prompt: str, user_prompt: str, max_tokens: int, _c=client):
+                return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
+            return compile_facets(message, history, _complete, model=f"{ep.name}:{ep.model}")
+        return ThreadPoolExecutor(max_workers=1, thread_name_prefix="chat-facets").submit(_run)
+    except Exception:  # noqa: BLE001 — the facet step is additive; the plan derives its facets without it
+        return None
+
+
+def _join_facet_step(job) -> dict | None:
+    """The facet step's receipt, or None when the step did not run. A late or failed step is a receipted `facets: None`."""
+    if job is None:
+        return None
+    from polymath_shared.facets import FACET_BUDGET_S, FACET_CONTRACT
+    try:
+        return job.result(timeout=FACET_BUDGET_S + 0.5)
+    except Exception as exc:  # noqa: BLE001
+        return {"contract": FACET_CONTRACT, "facets": None, "n": 0, "fallback": True, "reason": f"join:{type(exc).__name__}"}
+
+
+def _attach_facets(plan) -> None:
+    """F1: attach every query without a facet (the probes the expansions just added) and rebuild the facet rows; the
+    receipt's `attach` block is the last attachment. No-op when the facet step is off (no facets on the plan)."""
+    from polymath_shared.chat_plan import facets_enabled, sync_facets
+    if not facets_enabled() and not getattr(plan, "facets", None):
+        return
+    rec = sync_facets(plan)
+    if isinstance(getattr(plan, "compiler", None), dict):
+        plan.compiler.setdefault("facets", {})["attach"] = {k: rec[k] for k in ("attached", "unattached") if k in rec}
+
+
 def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | None = None,
                        titles_rank: str | None = None, corpus_explorer: bool = False, scope=None):
     """CHAT-INTENT-PLAN-V1 through the `chat_compiler` stage pin (plan §3.2):
@@ -2417,23 +2476,38 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
         finally:
             steps[name] = round((time.perf_counter() - t) * 1000, 1)
 
+    # FACET-RETRIEVAL-V1 F1: the blind facet step starts FIRST, on its own thread, beside the scout — its prompt holds the
+    # message and the conversation only (no corpus, no titles, no profile matches); the wording call below reads its facets
+    facet_job = _start_facet_step(message, history, session_key or message[:64])
     try:
         titles, scout_result, scout_rec = _timed("scout", _profile_scout, message, corpus_ids, **scope_kwargs(scope))
     except Exception as exc:  # noqa: BLE001
         titles, scout_result, scout_rec = [], None, {"contract": "profile-scout-v1", "reason": f"scout:{type(exc).__name__}"}
+    facet_rec = _timed("facets", _join_facet_step, facet_job)
+    facets = (facet_rec or {}).get("facets") or None
+
+    def _stamp_facets(plan):
+        """The facet step's receipt rides every plan (real or fallback) under compiler.facets.step — never the facet list."""
+        if facet_rec is not None and isinstance(getattr(plan, "compiler", None), dict):
+            plan.compiler.setdefault("facets", {})["step"] = {k: v for k, v in facet_rec.items() if k != "facets"}
+        return plan
 
     def _finish(plan):
         """P6/P11: (1) optionally add bounded PROFILE-origin subqueries from the scout's
         nominations (profile-driven discovery), then (2) annotate every subquery with
         deterministic provenance (q0 authority, scout links validated). Fail-open — never a turn
-        breaker; q0 and its aspects are untouched."""
+        breaker; q0 and its aspects are untouched. F1: every added probe attaches to the facet it
+        serves (`sync_facets`, by overlap; None when it serves no single facet) before provenance
+        records it, and again after the explorer."""
         _upstream_err = None
+        _stamp_facets(plan)
         try:
             _timed("profile_expansion", _add_profile_expansion, plan, scout_result)
             if _bridges_merged(plan):
                 _timed("bridges", _admit_plan_bridges, plan, scout_result)    # S4 (D5): the compiler's own bridges, same admission
             else:
                 _timed("bridges", _add_bridge_expansion, plan, scout_result)   # WLK2C C3: bounded concept-bridge compiler (flag-gated, fail-open)
+            _attach_facets(plan)
             from polymath_shared.subquery_provenance import annotate_subquery_provenance
             _timed("provenance", annotate_subquery_provenance, plan, scout_result)
             _timed("constraints", _resolve_plan_constraints, plan, scout_result, corpus_ids)   # CA2: identity resolution, no ranking effect
@@ -2446,6 +2520,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
             # behavior) but is now COUNTED in the firing receipt instead of vanishing.
             _timed("explorer", _add_corpus_explore_expansion, plan, message, corpus_ids, scout_result,
                    enabled=corpus_explorer, upstream_error=_upstream_err, **scope_kwargs(scope))
+            _attach_facets(plan)
         except Exception:  # noqa: BLE001
             pass
         if isinstance(getattr(plan, "compiler", None), dict):   # receipt-only; a plan always carries one
@@ -2480,7 +2555,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
             def _complete(system_prompt: str, user_prompt: str, max_tokens: int, _c=client):
                 return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
             one = compile_plan(message, history, corpus_ids, _complete, model=f"{ep.name}:{ep.model}", titles=titles,
-                               matches=matches)
+                               matches=matches, facets=facets)
             one.compiler["scout"] = scout_rec
             one.compiler["reasoning"] = getattr(client, "last_reasoning", None) or None   # S1b: what this attempt sent
             return one
@@ -3798,6 +3873,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             _arrivals: dict = {}
             _aspects: dict = {}
             _weak: list = []
+            _facet_cov: dict | None = None    # FACET-RETRIEVAL-V1 F1: {covered, uncovered, judge} per facet (v2 turns with a plan)
             _resolution: dict | None = None   # P10 evidence-resolution receipt (bounded round 2)
             _constraint_align: dict | None = None   # CA3 constraint-alignment receipt (post-rerank partition)
             _grades_by_chunk: dict = {}              # CA4 per-chunk support_role (DIRECT/PARTIAL/RELATED)
@@ -3889,6 +3965,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     # GRAPH adds the bounded hop-1 over the FINAL evidence (§3.18), WILDCARD the parallel latent
                     # frontier (§3.19) — bridges ride `fast["wildcard"]`, never the evidence list.
                     from orchestrator.api.chat_retrieval import default_budget as _default_budget, intent_policy_enabled as _ip_on
+                    from polymath_shared.facets import facet_coverage as _facet_coverage
                     from polymath_shared.query_intent import apply_intent_policy as _apply_intent, policy_for as _policy_for
                     from polymath_shared.skeleton_routes import apply_skeleton_routes as _skeleton_routes
                     from dataclasses import replace as _replace
@@ -3931,11 +4008,19 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         # WLK2C: the BRIDGE subquery ids, so chat_retrieve_v2 exposes their candidates in the
                         # latent pool regardless of fused rank (bridge candidates rarely top the q0-dominated union).
                         latent_bridge_ids=tuple(q.id for q in _plan.queries if getattr(q, "origin", "") in LATENT_ORIGINS and q.id not in _gated_out)
-                        if (_flag == "on" and _plan is not None) else (), **scope_kwargs(_role_scope))
+                        if (_flag == "on" and _plan is not None) else (),
+                        # FACET-RETRIEVAL-V1 F2: the plan's facets → the composer keeps seats per facet (absent = per-query seats)
+                        **({"facets": tuple((f["id"], tuple(f.get("query_ids") or ())) for f in _plan.facets)}
+                           if (_flag == "on" and _plan is not None and _rflag == "v2" and getattr(_plan, "facets", None)) else {}),
+                        **scope_kwargs(_role_scope))
                     if _probe_gate is not None:
                         fast.setdefault("trace", {})["probe_gate"] = _probe_gate          # receipted with the turn (S1d)
                     _aspects = (fast.get("meta") or {}).get("aspects") or {}
                     _weak = (fast.get("meta") or {}).get("weak_aspects") or []
+                    if _flag == "on" and _plan is not None and getattr(_plan, "facets", None):
+                        # F1: the receipt's verdict per facet — covered when ≥ 1 of its queries returned final evidence above the floor
+                        _facet_cov = _facet_coverage(_plan.facets, (fast.get("meta") or {}).get("final_detail") or [],
+                                                     floor=float(getattr(_budget, "aspect_weak_floor", 0.5)))
                     if ui_mode == "WILDCARD":
                         wildcard_lane = fast.get("wildcard") or []
                     if ui_mode == "GRAPH" or fast.get("graph_relationships"):   # P6: surface graph-assist facts too
@@ -3983,7 +4068,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                              lane_sizes=fast["trace"].get("lane_sizes"),
                              plan=(fast.get("meta") or {}).get("plan_version"),
                              degraded=[d.get("component") for d in ((fast.get("meta") or {}).get("degraded") or [])] or None,
-                             aspects=len(_aspects) or None, weak_aspects=_weak or None)
+                             aspects=len(_aspects) or None, weak_aspects=_weak or None,
+                             facets_uncovered=((_facet_cov or {}).get("uncovered") or None))
                 if ui_mode == "GRAPH":
                     # P1.e: the bounded stage already ran inside the composition; the phases carry its receipts
                     yield _phase("graph", "Expanding the canonical fact "
@@ -4197,6 +4283,10 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 # P1.b aspect coverage: per compiled query, candidates in union / final; weak = none in final
                 "aspects": _aspects,
                 "weak_aspects": _weak,
+                # FACET-RETRIEVAL-V1 F1: per facet (the plan's `facets` rows), covered = ≥ 1 of its queries returned final
+                # evidence above the judge floor; None when the turn carried no facets (compiler off, v1 retrieval, no plan)
+                "facets_covered": (_facet_cov or {}).get("covered") if _facet_cov else None,
+                "facets_uncovered": (_facet_cov or {}).get("uncovered") if _facet_cov else None,
                 # CONSTRAINT-AWARE-RETRIEVAL-V1 CA2: explicit SOURCE constraints detected in q0 +
                 # their deterministically resolved corpus doc_ids. RECEIPT ONLY — no ranking effect
                 # until CA3. Empty for the common (unconstrained) query.
