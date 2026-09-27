@@ -403,21 +403,25 @@ export function liveState(t: Turn): LiveState {
 /** One prose sentence: [start, end) in the report text, and its text. */
 export interface Sentence { start: number; end: number; text: string }
 
-const CLOSERS = "\"'”’)]*_";
-const LEAD = /^[ \t]*(?:>[ \t]*)*(?:(?:[-*+]|\d{1,9}[.)])[ \t]+)?/;
-const CITE_GROUP = /^\[[^[\]\n]+\](?!\()[ \t]*/;
 const CITATION = /\[([^[\]]+)\](?!\()/g;
 
+/* The audit's sentence split mirrors the backend's `deep_research.evidence.split_sentences` exactly — `audit.uncited` indexes
+ * its list. The line rules and the sentence pattern are the backend's own strings; `src/__tests__/deep-sentence-split.test.ts`
+ * and `tests/contracts/test_deep_research_sentence_split.py` pin both sides to one fixture. */
+const FENCE = /^\s{0,3}(?:```|~~~)/;
+const HEADING = /^\s{0,3}#{1,6}(?:\s|$)/;
+const RULE = /^\s{0,3}(?:(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,})$/;
+const TABLE = /^\s*\|/;
+const MARKER = /^\s*(?:>\s?)*\s*(?:(?:[-*+]|\d{1,3}[.)])\s+)?/;
+/** One sentence (the backend's SENTENCE_PATTERN, run with the flags "gis"). */
+export const SENTENCE_PATTERN = String.raw`\S.*?(?:(?<!\be\.g)(?<!\bi\.e)(?<!\bvs)(?<!\bcf)(?<!\bdr)(?<!\bmr)(?<!\bmrs)(?<!\bpp)(?<!\bch)(?<!\bvol)(?<!\bfig)(?<!\bapprox)[.!?]+[\"'\u201d\u2019)*_]*(?:\s*\[[^\[\]]*\])*(?=\s|$)|$)`;
+
 /**
- * The audit's sentence split (DR7b/d — the backend's `audit.uncited` indices count these sentences, in this order):
- *  1. The prose is read line by line. Skipped: blank lines, headings (first non-blank character `#`), fenced code (``` or ~~~,
- *     fences included), table rows (first non-blank character `|`) and rules (---, ***, ___, ===).
- *  2. A kept line loses its leading blockquote (`>`) and list marker (`-`, `*`, `+`, `1.`, `1)`).
- *  3. It is split at each run of whitespace that follows `.`, `!` or `?` — optionally followed by closing quotes, `)`, `]`,
- *     `*` or `_`.
- *  4. A piece that begins with citation groups (`[c3]`, `[c3, c4]`: brackets not followed by `(`) gives them to the sentence
- *     before it on the same line: "… a fact. [c3] Next." is two sentences, the first cited.
- *  5. Empty pieces are dropped. A sentence never spans two lines.
+ * The audit's sentences, in order (DR7b/d):
+ *  1. Lines (a trailing "\r" dropped). Skipped: a line on or inside a ``` / ~~~ fence, a blank line, a heading (`#`), a
+ *     horizontal rule, a table row.
+ *  2. A kept line loses its leading blockquote marks and one list marker.
+ *  3. Its sentences are the matches of SENTENCE_PATTERN, each trimmed; a sentence never spans lines.
  */
 export function auditSentences(md: string): Sentence[] {
   const out: Sentence[] = [];
@@ -427,40 +431,15 @@ export function auditSentences(md: string): Sentence[] {
     const base = at;
     at += raw.length + 1;
     const line = raw.endsWith("\r") ? raw.slice(0, -1) : raw;
-    const t = line.trim();
-    if (/^(```|~~~)/.test(t)) { fence = !fence; continue; }
-    if (fence || !t || t.startsWith("#") || t.startsWith("|") || /^([-*_=])(?:[ \t]*\1){2,}$/.test(t)) continue;
-    const pieces: [number, number][] = [];
-    let start = LEAD.exec(line)?.[0].length ?? 0;
-    for (let i = start; i < line.length; i++) {
-      if (!/\s/.test(line[i]!)) continue;
-      let j = i - 1;
-      while (j > start && CLOSERS.includes(line[j]!)) j--;
-      if (j >= start && ".!?".includes(line[j]!)) {
-        pieces.push([start, i]);
-        while (i + 1 < line.length && /\s/.test(line[i + 1]!)) i++;
-        start = i + 1;
-      }
-    }
-    if (start < line.length) pieces.push([start, line.length]);
-    for (let k = 1; k < pieces.length; k++) {
-      const piece = pieces[k]!;
-      let moved = false;
-      for (let m = CITE_GROUP.exec(line.slice(piece[0], piece[1])); m && piece[0] < piece[1];
-        m = CITE_GROUP.exec(line.slice(piece[0], piece[1]))) {
-        piece[0] += m[0].length;
-        moved = true;
-      }
-      if (moved) {
-        let end = piece[0];
-        while (end > 0 && /\s/.test(line[end - 1]!)) end--;
-        pieces[k - 1]![1] = end;
-      }
-    }
-    for (const [s, e0] of pieces) {
-      let e = e0;
-      while (e > s && /\s/.test(line[e - 1]!)) e--;
-      if (e > s) out.push({ start: base + s, end: base + e, text: line.slice(s, e) });
+    if (FENCE.test(line)) { fence = !fence; continue; }
+    if (fence || !line.trim() || HEADING.test(line) || RULE.test(line) || TABLE.test(line)) continue;
+    const lead = MARKER.exec(line)?.[0].length ?? 0;
+    for (const m of line.slice(lead).matchAll(new RegExp(SENTENCE_PATTERN, "gis"))) {
+      const piece = m[0];
+      const text = piece.trim();
+      if (!text) continue;
+      const start = base + lead + (m.index ?? 0) + (piece.length - piece.trimStart().length);
+      out.push({ start, end: start + text.length, text });
     }
   }
   return out;

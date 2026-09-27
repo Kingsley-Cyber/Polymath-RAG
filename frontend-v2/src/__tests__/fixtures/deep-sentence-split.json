@@ -1,0 +1,22 @@
+{
+ "note": "DR7 sentence audit: ONE fixture pinned by both splits — shared/polymath_shared/deep_research/evidence.py split_sentences (tests/contracts/test_deep_research_sentence_split.py) and frontend-v2/src/lib/deep.ts auditSentences (src/__tests__/deep-sentence-split.test.ts).",
+ "pattern": "\\S.*?(?:(?<!\\be\\.g)(?<!\\bi\\.e)(?<!\\bvs)(?<!\\bcf)(?<!\\bdr)(?<!\\bmr)(?<!\\bmrs)(?<!\\bpp)(?<!\\bch)(?<!\\bvol)(?<!\\bfig)(?<!\\bapprox)[.!?]+[\\\"'\\u201d\\u2019)*_]*(?:\\s*\\[[^\\[\\]]*\\])*(?=\\s|$)|$)",
+ "fixture": "# Heading is skipped\nLight from the side models a face [c1]. Hard light reads as tension [c2, c3]! Is soft light calmer? [c4]\n- A list item, e.g. a key light, stays one sentence (see fig. 3) [c5].\n> Quoted: \"the cut is the rhythm.\" Then more [c6]\n1) Numbered claim without a citation.\n```\ncode. is. skipped.\n```\n| table | row |\n---\nA **bold claim.** And a last one [c7]\n#hashtag lines are prose here.\nEnds with approx. ten shots vs. one take [c8].\n   ## An indented heading is skipped\nWindows line end here. [c9]\r\nTwo cites [c1] [c2]. Then a closing quote “done.” Next",
+ "expected": [
+  "Light from the side models a face [c1].",
+  "Hard light reads as tension [c2, c3]!",
+  "Is soft light calmer? [c4]",
+  "A list item, e.g. a key light, stays one sentence (see fig. 3) [c5].",
+  "Quoted: \"the cut is the rhythm.\"",
+  "Then more [c6]",
+  "Numbered claim without a citation.",
+  "A **bold claim.**",
+  "And a last one [c7]",
+  "#hashtag lines are prose here.",
+  "Ends with approx. ten shots vs. one take [c8].",
+  "Windows line end here. [c9]",
+  "Two cites [c1] [c2].",
+  "Then a closing quote “done.”",
+  "Next"
+ ]
+}

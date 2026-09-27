@@ -138,11 +138,12 @@ TABLE = re.compile(r"^\s*\|")
 #: stripped from the start of a kept line: blockquote marks, then one list marker ("- ", "* ", "+ ", "1. ", "1) ")
 MARKER = re.compile(r"^\s*(?:>\s?)*\s*(?:(?:[-*+]|\d{1,3}[.)])\s+)?")
 #: one sentence: from a non-space character, lazily, to a run of . ! ? (not right after the abbreviations e.g / i.e / vs /
-#: cf / dr / mr / mrs / pp / ch / vol / fig / approx), then closing quotes or brackets, then any [..] citation groups, then
+#: cf / dr / mr / mrs / pp / ch / vol / fig / approx), then closing quotes, brackets or Markdown emphasis (`**Claim.** Next`
+#: is two sentences, so a bold claim cannot borrow the next sentence's citation), then any [..] citation groups, then
 #: whitespace or the line's end; or else to the line's end. Case-insensitive. The same pattern string runs unchanged in
 #: JavaScript with the flags "gis" (dotAll, so "." matches every character of a line in both languages).
 SENTENCE_PATTERN = (r"\S.*?(?:(?<!\be\.g)(?<!\bi\.e)(?<!\bvs)(?<!\bcf)(?<!\bdr)(?<!\bmr)(?<!\bmrs)(?<!\bpp)(?<!\bch)"
-                    r"(?<!\bvol)(?<!\bfig)(?<!\bapprox)[.!?]+[\"'\u201d\u2019)]*(?:\s*\[[^\[\]]*\])*(?=\s|$)|$)")
+                    r"(?<!\bvol)(?<!\bfig)(?<!\bapprox)[.!?]+[\"'\u201d\u2019)*_]*(?:\s*\[[^\[\]]*\])*(?=\s|$)|$)")
 SENTENCE = re.compile(SENTENCE_PATTERN, re.IGNORECASE | re.DOTALL)
 
 

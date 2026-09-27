@@ -1091,6 +1091,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_adapter_dossier.py", "py", None),
     ("tests/contracts/test_deep_research_engine.py", "py", None),
     ("tests/contracts/test_deep_research_route.py", "py", None),
+    ("tests/contracts/test_deep_research_sentence_split.py", "py", None),
     # DEEP-RESEARCH-MODE-V1 slices DR6a-b: research moves (engine) and /retrieve's optional intent
     ("tests/contracts/test_deep_research_moves.py", "py", None),
     # DEEP-RESEARCH-MODE-V1 slices DR7a-c (backend): the plan card, the evidence model, the sentence audit, Finish now
@@ -2269,6 +2270,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("frontend-v2/src/__tests__/refresh-guards.test.ts", "ts", None),
     ("frontend-v2/src/__tests__/research.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/chat-deep.test.tsx", "tsx", None),
+    ("frontend-v2/src/__tests__/deep-sentence-split.test.ts", "ts", None),
+    ("frontend-v2/src/__tests__/fixtures/deep-sentence-split.json", "json", None),
     ("frontend-v2/src/__tests__/citations.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/node-fs.d.ts", "ts", None),
     # CHAT-UI-RESTORE (2026-09-22): the ELITE chat surface, recovered from stash@{0} (2026-09-18) and committed
