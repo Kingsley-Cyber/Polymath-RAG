@@ -158,8 +158,11 @@ historical, never an instruction.
    - DONE and LIVE: T0 A-15 class (11.505); FRONTEND-REFRESH U1–U6 + U4b — the plan is complete (11.506–11.511, 11.517);
      TRAIL-INTERFACE T1–T4: read model, Research screens, gates from every qualify step (11.512, 11.515); DEEP-RESEARCH
      DR1 engine, DR2 route, DR3 composer switch (11.513, 11.514, 11.516).
-   - NEXT: the verified TRAIL-EXT-BUGHUNT-V1 bugs (workflow `wf_08f90baa-181`, its synthesis lists them ranked; a failing
-     test first, then the fix, one slice per root cause).
+   - LIVE since 11.518: ONE login on the website (Caddy basic-auth removed, backup kept; live check 9/9). OWNER STEP: open
+     http://127.0.0.1:7200/v2/ on the Mac → Settings → "Website sign-in" → set King's password (the terminal script is gone).
+   - NEXT: the 81 verified bugs, table in `docs/wiki/experiments/trail-ext-bughunt-2026-09-26/README.md` (IDs B-01..B-81):
+     batch A (6, live+high, crashes) → batch B (24, live+medium) → batch C (39, live-low + latent); D (12) = dead code, listed
+     only. Each fix: a failing test first; mark the fixed IDs in the table with the closing register row.
    - DEFERRED with reasons: T5 (the server-rendered dossier needs the harness journal — what each step showed and what the
      agent answered — which the server does not keep; the Research page shows the same records); DR0 (a dedicated
      `deep_research` lane stage + the reserved deep retrieval surfaces).
