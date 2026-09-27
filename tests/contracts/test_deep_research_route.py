@@ -210,3 +210,49 @@ def test_rows_come_from_evidence_rows_first_and_nothing_builds_nothing(monkeypat
     assert DRR.evidence_rows_of({"evidence_rows": ROWS, "evidence": [{"chunk_id": "x"}]}, ["cinema"], 5) == ROWS
     assert DRR.evidence_rows_of({"evidence_rows": [], "evidence": []}, ["cinema"], 5) == []
     assert calls == []
+
+
+def test_an_empty_report_is_an_error_not_a_blank_answer(rec, monkeypatch):
+    """DR4 (live, 2026-09-26): 1 of 5 runs streamed a blank "unsupported" answer after 23 learnings — the report model
+    returned nothing and no error was raised."""
+    monkeypatch.setattr(DRR, "_report_tokens", lambda synth, system, prompt, cancel: iter(["", "  "]))
+    frames = _frames(_client().post("/research/deep", json={"question": "How does Laban write effort?", "corpus_id": "cinema",
+                                                            "preset": "quick"}).text)
+    errors = [d for k, d in frames if k == "error"]
+    assert errors and errors[0]["error_code"] == "REPORT_EMPTY" and errors[0]["summary"]["learnings"] >= 1
+    assert not [d for k, d in frames if k == "answer"] and frames[-1][0] == "done"
+    assert rec.receipts and rec.receipts[-1]["error"] == "REPORT_EMPTY"
+
+
+def test_the_report_step_applies_chats_thinking_rule(monkeypatch):
+    """The report is the composer model's synthesis, so it takes chat's reasoning policy (CHAT_SYNTHESIS): DeepSeek v4 with
+    thinking left on can spend the whole token budget thinking and answer nothing."""
+    import threading as _th
+
+    import litellm
+    import orchestrator.api.ui as UI
+    from polymath_shared.reasoning_policy import CHAT_SYNTHESIS, apply_litellm
+    monkeypatch.setenv("POLYMATH_REASONING_POLICY", "1")
+    monkeypatch.setattr(UI, "_chat_max_tokens", lambda: 1000)
+    monkeypatch.setattr(UI, "_litellm_credentials", lambda model: {})
+    sent = {}
+
+    class _Delta:
+        content = "Report [c1]."
+
+    class _Choice:
+        delta = _Delta()
+
+    class _Chunk:
+        choices = (_Choice(),)
+
+    def fake_completion(**kw):
+        sent.update(kw)
+        return iter([_Chunk()])
+    monkeypatch.setattr(litellm, "completion", fake_completion)
+    model = "anthropic/deepseek-v4-flash-0731"
+    assert "".join(DRR._report_tokens("litellm:" + model, "sys", "prompt", _th.Event())) == "Report [c1]."
+    expected = {"model": model, "messages": sent["messages"], "stream": True, "timeout": 300, "max_tokens": 1000}
+    applied = apply_litellm(expected, CHAT_SYNTHESIS, model)
+    assert applied, "the policy must say something about this model, or the test proves nothing"
+    assert sent == expected

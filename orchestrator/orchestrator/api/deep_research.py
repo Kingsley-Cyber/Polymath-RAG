@@ -153,8 +153,14 @@ def _report_tokens(synth: str, system: str, prompt: str, cancel: threading.Event
         import litellm
         from orchestrator.api.ui import _chat_max_tokens, _litellm_credentials
         model = synth[len("litellm:"):]
-        stream = litellm.completion(model=model, messages=messages, stream=True, timeout=300, max_tokens=_chat_max_tokens(),
-                                    **_litellm_credentials(model))
+        kwargs = {"model": model, "messages": messages, "stream": True, "timeout": 300, "max_tokens": _chat_max_tokens(),
+                  **_litellm_credentials(model)}
+        try:
+            from polymath_shared.reasoning_policy import CHAT_SYNTHESIS, apply_litellm
+            apply_litellm(kwargs, CHAT_SYNTHESIS, model)   # chat's thinking rule: DeepSeek v4 thinking on can answer nothing
+        except Exception as exc:  # noqa: BLE001 — the overlay is additive, as in chat
+            log.warning("deep research report: reasoning policy not applied: %s", type(exc).__name__)
+        stream = litellm.completion(**kwargs)
         for chunk in stream:
             if cancel.is_set():
                 return
@@ -222,6 +228,13 @@ def _worker(req: DeepResearchRequest, libraries: list[str], synth: str, principa
         for piece in _report_tokens(synth, system, prompt, cancel):
             text += piece
             out.put(("token", {"token": piece}))
+        if cancel.is_set():
+            out.put(("error", {"error_code": "CANCELLED", "message": "the research was stopped"}))
+            return
+        if not text.strip():
+            out.put(("error", {"error_code": "REPORT_EMPTY", "summary": summary,
+                               "message": "the model returned an empty report; try again or pick another model"}))
+            return
         valid, unknown = DR.validate_report_citations(text, outcome)
         citations = [{"cid": c, **{k: (aliases.rows.get(c) or {}).get(k) for k in ("id", "kind", "doc_id", "corpus_id", "title", "source")},
                       "text": str((aliases.rows.get(c) or {}).get("text_clean") or "")[:600]} for c in valid]

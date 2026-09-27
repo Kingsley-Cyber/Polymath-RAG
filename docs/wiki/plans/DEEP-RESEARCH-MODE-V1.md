@@ -138,7 +138,7 @@ Times are estimates from concurrency 2 and today's retrieval latency; DR4 measur
 | **DR1** — DONE 11.513 | The engine (`deep_research/`) with fake ports | Unit tests: breadth halves per level; stop at 85% budget; stop on no follow-ups; a learning with a foreign cid is dropped and counted; duplicate queries dropped; deadline respected; the report cites only known cids |
 | **DR2** — DONE 11.514 | `POST /research/deep` + boundary line + receipts | Contract tests: frame order (phase… token… answer, done), heartbeat, a friend's scope narrowed, a second concurrent run refused, a disconnect cancels, a receipt written |
 | **DR3** — DONE 11.516 | Composer switch, presets, progress tree, report | vitest: the switch routes to `/research/deep`; progress renders from phase frames; Stop cancels; citation chips resolve |
-| **DR4** | Live proof — **on the owner's word** | 5 smoke questions (testing policy 5–8) across cinema and commerce-v1: every cited cid resolves, stop reasons are sensible, cost matches §3 |
+| **DR4** — PARTIAL 11.520 (4/5 live; the 5th's fix awaits the next deploy) | Live proof — **on the owner's word** | 5 smoke questions (testing policy 5–8) across cinema and commerce-v1: every cited cid resolves, stop reasons are sensible, cost matches §3 |
 | **DR5** *(optional)* | The adapter for MCP agents; owner-only web branch | Only if the owner wants it |
 
 DR1 can start at once. DR3 fits best after FRONTEND-REFRESH-V1 U4 (the new composer); on today's composer it is a small switch.
