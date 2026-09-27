@@ -362,6 +362,13 @@ def _sx_backend(transport, browser_raw=None):
 
 # ── SUPPLIER-PAGES (the owner, 2026-09-27: "with alibaba it should be multiple products"): the engines answer mostly with category
 # pages, so a search reads more result pages while the listings are short of the limit
+@pytest.fixture(autouse=True)
+def _no_real_pacing(monkeypatch):
+    """SUPPLIER-PACING: every test runs unpaced (a fake or zero pace); the pacing test sets its own interval."""
+    monkeypatch.setattr(SX, "MIN_INTERVAL_S", 0.0)
+    monkeypatch.setattr(SX, "_last_call", 0.0)
+
+
 def _product(n: int, title: str = "Gloves") -> dict:
     return {"url": f"https://www.alibaba.com/product-detail/{title}_16000000000{n:02d}.html", "title": f"{title} {n} | Alibaba.com",
             "content": "US$1.00 MOQ: 10 pcs"}
@@ -411,6 +418,26 @@ def test_a_later_page_that_fails_keeps_what_the_earlier_pages_gave():
     raw = _read({1: [_category(i) for i in range(7)] + [_product(n) for n in (1, 2, 3)]}, 20, seen, fail_at=2)
     assert len(seen) == 2 and [r["ref"] for r in raw["records"]] == [f"16000000000{n:02d}" for n in (1, 2, 3)]
     assert any(n.startswith("result page 2 was not read") for n in raw["backend_notes"])
+
+
+def test_searches_are_paced_two_seconds_apart_across_pages_and_calls(monkeypatch):
+    """SUPPLIER-PACING: the engines are asked no faster than one search every 2 s from this process."""
+    monkeypatch.setattr(SX, "MIN_INTERVAL_S", 2.0)
+    now, slept = [1000.0], []
+
+    def clock():
+        return now[0]
+
+    def sleep(s):
+        slept.append(round(s, 3))
+        now[0] += s
+    pages = {p: [_product(p * 10 + i) for i in range(10)] for p in range(1, 4)}
+    backend = SX.SearXNGListings("http://127.0.0.1:8888", transport=_pages(pages, []), sleep=sleep, clock=clock)
+    backend.read(S.resolve("listings", "gloves", "alibaba.com"), 100)
+    assert slept == [2.0, 2.0]                                              # page 1 at once (the last call was long ago), then 2 s gaps
+    now[0] += 0.5
+    backend.read(S.resolve("listings", "hats", "alibaba.com"), 5)          # a new search 0.5 s later waits the rest of the 2 s
+    assert slept[2] == 1.5
 
 
 def test_at_most_three_result_pages_are_read():
@@ -475,7 +502,7 @@ def test_the_searxng_service_is_local_capped_pinned_and_opt_in():
 def test_the_searxng_settings_serve_json_from_five_engines_with_no_limiter_and_no_secret():
     text = (ROOT / "deployment/searxng/settings.yml").read_text()
     s = yaml.safe_load(text)
-    assert s["use_default_settings"]["engines"]["keep_only"] == ["bing", "duckduckgo", "brave", "qwant", "mojeek"]
+    assert s["use_default_settings"]["engines"]["keep_only"] == ["bing", "duckduckgo", "brave", "qwant", "yahoo"]
     assert "json" in s["search"]["formats"] and s["server"]["limiter"] is False and s["server"]["public_instance"] is False
     assert "secret_key" not in s["server"] and "ultrasecretkey" not in text
     assert "outgoing" not in s and "proxies" not in text.replace("No proxies", "") and "using_tor_proxy" not in text

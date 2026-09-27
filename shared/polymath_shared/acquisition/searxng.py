@@ -13,6 +13,8 @@ as before, said and counted (`listing_apis`). `SEARXNG_URL` unset or empty = htt
 from __future__ import annotations
 
 import re
+import threading
+import time
 from collections.abc import Mapping
 from typing import Any
 from urllib.parse import urlsplit
@@ -32,6 +34,11 @@ TIMEOUT_S = 20.0
 #: result pages while the listings are still short of the limit; a page with fewer than FULL_PAGE results is the engines' last
 MAX_PAGES = 3
 FULL_PAGE = 10
+#: SUPPLIER-PACING (live, 2026-09-27): a burst of searches had Brave suspend SearXNG for 180 s and DuckDuckGo / Qwant show it
+#: their checks; the engines are asked no faster than one search every MIN_INTERVAL_S from this process (never worked around)
+MIN_INTERVAL_S = 2.0
+_pace_lock = threading.Lock()
+_last_call = 0.0
 #: the notes every SearXNG answer carries into `limitations` (the first is the owner's wording)
 SOURCE_NOTE = "found through search-engine results (SearXNG); snippet-level data"
 INDEX_NOTE = ("each listing's title, price and minimum order are the search engines' snippet as indexed: the listing page itself was not "
@@ -95,14 +102,24 @@ class SearXNGListings:
 
     reader, label = "alibaba_listings", LABEL
 
-    def __init__(self, base: str, *, transport: httpx.BaseTransport | None = None):
-        self.base, self.transport = base.rstrip("/"), transport
+    def __init__(self, base: str, *, transport: httpx.BaseTransport | None = None, sleep=time.sleep, clock=time.monotonic):
+        self.base, self.transport, self.sleep, self.clock = base.rstrip("/"), transport, sleep, clock
+
+    def _pace(self) -> None:
+        """Wait until MIN_INTERVAL_S has passed since this process's last search (one pace for every SearXNGListings)."""
+        global _last_call
+        with _pace_lock:
+            wait = _last_call + MIN_INTERVAL_S - self.clock()
+            if wait > 0:
+                self.sleep(wait)
+            _last_call = self.clock()
 
     def _page(self, query: str, pageno: int) -> tuple[list[Any], list[str]]:
         """One result page: (results, the engines that did not answer). Raises ApiFailed."""
         params: dict[str, Any] = {"q": f"site:{SITE} {query}", "format": "json"}
         if pageno > 1:
             params["pageno"] = pageno
+        self._pace()
         try:
             with httpx.Client(transport=self.transport, timeout=TIMEOUT_S) as client:
                 r = client.get(f"{self.base}/search", params=params, headers={"Accept": "application/json"})

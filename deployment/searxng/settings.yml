@@ -16,7 +16,7 @@ use_default_settings:
       - duckduckgo
       - brave
       - qwant           # SUPPLIER-PAGES: two more general engines, so one engine's check or outage leaves listings
-      - mojeek
+      - yahoo           # (mojeek and startpage are `inactive` upstream: proof-of-work captchas, which Polymath never solves)
 
 general:
   instance_name: "polymath-searxng"
@@ -40,5 +40,5 @@ engines:
     disabled: false
   - name: qwant
     disabled: false
-  - name: mojeek
+  - name: yahoo
     disabled: false
