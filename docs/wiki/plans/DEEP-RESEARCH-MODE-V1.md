@@ -140,9 +140,9 @@ Times are estimates from concurrency 2 and today's retrieval latency; DR4 measur
 | **DR3** — DONE 11.516 | Composer switch, presets, progress tree, report | vitest: the switch routes to `/research/deep`; progress renders from phase frames; Stop cancels; citation chips resolve |
 | **DR4** — PARTIAL 11.520 (4/5 live; the 5th's fix awaits the next deploy) | Live proof — **on the owner's word** | 5 smoke questions (testing policy 5–8) across cinema and commerce-v1: every cited cid resolves, stop reasons are sensible, cost matches §3 |
 | **DR5** *(optional)* | The adapter for MCP agents; owner-only web branch | Only if the owner wants it |
-| **DR6a** | Research moves in the engine (§10): the MOVE grammar, the controller, anchors, the gate and spawn floor as ports, gap nodes, dry moves, receipts | Unit tests with fake ports (§10.8); moves off = today's behaviour, byte for byte |
-| **DR6b** | The route per move + `/retrieve`'s optional `intent` + the relevance gate on the reranker | Contract tests: each move builds its own search request; `intent` absent = unchanged, present = chat's intent budget, unknown = 422 |
-| **DR6c** | UI: each search's move in the progress rail; the counter-evidence line under the report | vitest |
+| **DR6a** — DONE 11.531 | Research moves in the engine (§10): the MOVE grammar, the controller, anchors, the gate and spawn floor as ports, gap nodes, dry moves, receipts | Unit tests with fake ports (§10.8); moves off = today's behaviour, byte for byte |
+| **DR6b** — DONE 11.531 | The route per move + `/retrieve`'s optional `intent` + the relevance gate on the reranker | Contract tests: each move builds its own search request; `intent` absent = unchanged, present = chat's intent budget, unknown = 422 |
+| **DR6c** — DONE 11.531 | UI: each search's move in the progress rail; the counter-evidence line under the report | vitest |
 | **DR6d** | Live A/B on the 5 DR4 questions, moves off vs on | §10.9 acceptance; the owner sees the table |
 | **DR7a** | Plan card backend: `POST /research/deep/plan`; `/research/deep` accepts the confirmed plan (§11.3) | Contract tests: one LLM call; the confirmed plan seeds level 1 with no planner call; user goals are never gated out |
 | **DR7b** | Evidence model + structured report: deterministic confidence, counter-evidence, open questions, sources, method; the sentence audit; `coverage_complete` stop (§11.4) | Unit + contract tests on fixed learnings; audit on crafted reports |
