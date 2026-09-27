@@ -95,11 +95,15 @@ Plus `--radius-1: 6px`, `--radius-2: 10px`, `--space-1…7`, `--font-ui`, `--fon
 
 | Old theme ids | New mode + accent |
 |---|---|
-| default, obsidian, graphite, slate | Dark + Indigo |
+| the never-chosen default (`""`) | System + Indigo (no preference was ever expressed) |
+| obsidian, graphite | Dark + Indigo |
 | nord | Dark + Teal |
 | espresso, solar | Dark + Amber |
 | rose | Dark + Rose |
-| paper, champagne | Light + Indigo |
+| slate | Light + Indigo |
+| paper, champagne | Light + Amber |
+
+_(Corrected in U1: slate, paper and champagne were LIGHT palettes, and paper's / champagne's accents are amber.)_
 
 ## 4. Layout
 - **Desktop (≥ 1100 px).** Sidebar 232 px (collapsible to 56-px icons), a 52-px top bar, content. Reading screens (Chat, a run report) keep a 760-px column; data screens use the full width.
@@ -153,7 +157,7 @@ Every slice:
 | Slice | What | Proof |
 |---|---|---|
 | **U0** baseline | Screenshots of every screen (3 widths × 2 modes), bundle sizes, the §8 accessibility list. | `docs/wiki/experiments/frontend-refresh-<date>/README.md` with the numbers; images kept outside the repo. |
-| **U1** tokens + themes | `styles/tokens.css`; Light / Dark / System + accents; the old-id migration; Settings → Appearance; every hard-coded color replaced by a token. | A vitest contrast test computes WCAG ratios from `tokens.css` and fails any pair under its threshold, in both modes; a migration test for all ten old ids. |
+| **U1** tokens + themes — DONE 11.506 | `styles/tokens.css`; Light / Dark / System + accents; the old-id migration; Settings → Appearance; every hard-coded color replaced by a token. | A vitest contrast test computes WCAG ratios from `tokens.css` and fails any pair under its threshold, in both modes; a migration test for all ten old ids. |
 | **U2** shell | Sidebar, top bar, phone drawer. Moves the library picker, the theme control, Delete corpus and the control dot. Every nav button gets an accessible name. | Shell tests (friend vs owner nav, drawer open/close); 375-px screenshots show no clipping and no horizontal scroll. |
 | **U3** UI pieces + icons | `src/ui/*`; Settings and Login adopt them first (the newest screens). | Unit tests for Button, Dialog (focus trap, Esc), Status (tooltip text = enum). |
 | **U4** Chat | Composer chips, the reading column, citation hover cards, Stop, Copy, the empty state. | `chat-session.test.tsx` and the streaming tests stay green; one real owner question on :7200 (on the owner's word — live chat turns are counted). |

@@ -1,0 +1,151 @@
+/* FRONTEND-REFRESH-V1 §3.1 — design tokens: the only colors any CSS may use.
+   Light / dark come from [data-mode] on <html>, the accent from [data-accent]; index.html sets both before the first paint
+   and src/lib/appearance.ts keeps them in sync. The contrast test (src/__tests__/tokens-contrast.test.ts) parses THIS file:
+   keep one declaration per line and the four selector shapes below. */
+
+/* ── base colors ─────────────────────────────────────────────────────────── */
+:root, :root[data-mode="light"] {
+  color-scheme: light;
+  --bg: #F7F7F5;
+  --surface: #FFFFFF;
+  --surface-2: #F1F1EE;
+  --sunken: #EFEFEB;
+  --border: #E3E3DE;
+  --border-soft: #ECECE8;
+  --border-strong: #CFCFC8;
+  --border-control: #8A8A82;
+  --text: #1C1C1A;
+  --text-2: #55554F;
+  --text-3: #6B6B64;
+  --accent: #4F46E5;
+  --accent-soft: #EEF0FF;
+  --on-accent: #FFFFFF;
+  --ok: #166534;
+  --ok-soft: #E8F5EC;
+  --warn: #92400E;
+  --warn-soft: #FDF3E4;
+  --bad: #B91C1C;
+  --bad-soft: #FDECEC;
+  --neutral: #6B6B64;
+  --neutral-soft: #F1F1EE;
+  --shadow-pop: 0 12px 32px -12px rgba(0, 0, 0, .18), 0 2px 6px rgba(0, 0, 0, .06);
+  --overlay: rgba(20, 20, 18, .36);
+}
+
+:root[data-mode="dark"] {
+  color-scheme: dark;
+  --bg: #111113;
+  --surface: #18181B;
+  --surface-2: #222226;
+  --sunken: #0C0C0E;
+  --border: #2C2C31;
+  --border-soft: #232327;
+  --border-strong: #3A3A40;
+  --border-control: #6E6E77;
+  --text: #EDEDEF;
+  --text-2: #B4B4BB;
+  --text-3: #8B8B93;
+  --accent: #818CF8;
+  --accent-soft: #262A4A;
+  --on-accent: #0B0B12;
+  --ok: #4ADE80;
+  --ok-soft: #16301F;
+  --warn: #FBBF24;
+  --warn-soft: #33280F;
+  --bad: #F87171;
+  --bad-soft: #3A1717;
+  --neutral: #8B8B93;
+  --neutral-soft: #222226;
+  --shadow-pop: 0 16px 40px -12px rgba(0, 0, 0, .6), 0 2px 8px rgba(0, 0, 0, .4);
+  --overlay: rgba(0, 0, 0, .55);
+}
+
+/* ── accents (indigo is the base above) ──────────────────────────────────── */
+:root[data-mode="light"][data-accent="teal"] {
+  --accent: #0F766E;
+  --accent-soft: #E6F4F2;
+  --on-accent: #FFFFFF;
+}
+:root[data-mode="dark"][data-accent="teal"] {
+  --accent: #2DD4BF;
+  --accent-soft: #15302D;
+  --on-accent: #04201D;
+}
+:root[data-mode="light"][data-accent="amber"] {
+  --accent: #92400E;
+  --accent-soft: #FDF3E4;
+  --on-accent: #FFFFFF;
+}
+:root[data-mode="dark"][data-accent="amber"] {
+  --accent: #FBBF24;
+  --accent-soft: #33280F;
+  --on-accent: #1F1600;
+}
+:root[data-mode="light"][data-accent="rose"] {
+  --accent: #BE123C;
+  --accent-soft: #FDECF0;
+  --on-accent: #FFFFFF;
+}
+:root[data-mode="dark"][data-accent="rose"] {
+  --accent: #FB7185;
+  --accent-soft: #3A1720;
+  --on-accent: #22060C;
+}
+
+/* ── type, space, shape, motion ──────────────────────────────────────────── */
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 24px;
+  --lh: 1.5;
+  --lh-read: 1.65;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-1: 6px;
+  --radius-2: 10px;
+  --radius-3: 14px;
+  --radius-pill: 999px;
+  --focus: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+  --dur: 150ms;
+  --nav-w: 232px;
+  --nav-w-collapsed: 56px;
+  --topbar-h: 52px;
+  --pm-answer-size: 16px;
+  --pm-answer-line: 1.65;
+  --pm-answer-width: 72ch;
+  /* accent samples for the picker (decorative: each swatch also carries its name) */
+  --swatch-indigo: #4F46E5;
+  --swatch-teal: #0F766E;
+  --swatch-amber: #B45309;
+  --swatch-rose: #BE123C;
+
+  /* Legacy names still read by some inline styles in the screens. They alias the tokens above;
+     U6 removes them once no screen uses them. */
+  --bg-raised: var(--surface);
+  --bg-sunken: var(--sunken);
+  --line: var(--border);
+  --line-soft: var(--border-soft);
+  --fg: var(--text);
+  --fg-dim: var(--text-2);
+  --fg-faint: var(--text-3);
+  --accent-dim: var(--accent-soft);
+  --ok-bg: var(--ok-soft);
+  --warn-bg: var(--warn-soft);
+  --bad-bg: var(--bad-soft);
+  --unknown: var(--neutral);
+  --unknown-bg: var(--neutral-soft);
+  --mono: var(--font-mono);
+  --sans: var(--font-ui);
+  --prose: var(--font-ui);
+  --r: var(--radius-1);
+}

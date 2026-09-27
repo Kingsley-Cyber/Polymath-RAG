@@ -3,7 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>Polymath</title>
+    <script>
+      // FRONTEND-REFRESH-V1: apply the stored appearance before the first paint (no dark flash in light mode).
+      // src/lib/appearance.ts owns the value afterwards and migrates the pre-refresh theme key once.
+      (function () {
+        var root = document.documentElement, mode = "system", accent = "indigo";
+        try {
+          var a = JSON.parse(localStorage.getItem("polymath.appearance") || "null");
+          if (a && /^(light|dark|system)$/.test(a.mode)) mode = a.mode;
+          if (a && /^(indigo|teal|amber|rose)$/.test(a.accent)) accent = a.accent;
+        } catch (e) { /* private mode or bad JSON: defaults */ }
+        if (mode === "system") {
+          try { mode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } catch (e) { mode = "light"; }
+        }
+        root.setAttribute("data-mode", mode);
+        root.setAttribute("data-accent", accent);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ACCENTS, MODES, useAppearance, type Accent, type Mode } from "../lib/appearance";
 import { ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import {
@@ -253,6 +254,40 @@ function Friends() {
   );
 }
 
+const MODE_LABEL: Record<Mode, string> = { light: "Light", dark: "Dark", system: "System" };
+const ACCENT_LABEL: Record<Accent, string> = { indigo: "Indigo", teal: "Teal", amber: "Amber", rose: "Rose" };
+
+/** FRONTEND-REFRESH-V1 §3.2 — the mode and the accent, stored in this browser. */
+function AppearanceCard() {
+  const [a, setA] = useAppearance();
+  return (
+    <div className="card stack">
+      <h2 className="settings__title">Appearance</h2>
+      <div className="field">
+        <span className="label" id="appearance-mode">Mode</span>
+        <div className="seg" role="group" aria-labelledby="appearance-mode">
+          {MODES.map((m) => (
+            <button key={m} type="button" className="seg__btn" aria-pressed={a.mode === m} onClick={() => setA({ ...a, mode: m })}>
+              {MODE_LABEL[m]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="field">
+        <span className="label" id="appearance-accent">Accent</span>
+        <div className="swatches" role="group" aria-labelledby="appearance-accent">
+          {ACCENTS.map((c) => (
+            <button key={c} type="button" className="swatch" aria-pressed={a.accent === c} onClick={() => setA({ ...a, accent: c })}>
+              <span className="swatch__dot" style={{ background: `var(--swatch-${c})` }} aria-hidden="true" />
+              {ACCENT_LABEL[c]}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** FRIENDS-ACCESS-V1 F4 — Settings: my account, my API keys + the connect prompt, and (owner) the friends. */
 export function Settings({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: Me) => void; onSignOut: () => void }) {
   const lib = privateLibrary(me);
@@ -266,6 +301,7 @@ export function Settings({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: 
         </p>
       </div>
       <div className="stack">
+        <AppearanceCard />
         {!me.local && (
           <div className="card stack">
             <h2 className="settings__title">Account</h2>

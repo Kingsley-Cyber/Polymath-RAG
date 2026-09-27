@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import "./styles/tokens.css";
 import "./styles/app.css";
-import "./styles/themes.css";
 import { api, ApiError, AUTH_REQUIRED_EVENT } from "./lib/api";
+import { useAppearance } from "./lib/appearance";
 import { auth, LEGACY_OWNER, privateLibrary, type Me } from "./lib/auth";
 import { useAsync } from "./lib/useAsync";
 import { controlReady } from "./lib/readiness";
@@ -39,21 +40,6 @@ type ScreenId = (typeof NAV)[number]["id"];
 /** FRIENDS-ACCESS-V1: screens whose data is owner-only on the server (control plane, LLM providers) — hidden from friends. */
 const OWNER_SCREENS = new Set<ScreenId>(["overview", "control", "models"]);
 
-/** The nine palettes in styles/themes.css; the dot is that theme's accent. */
-const THEMES = [
-  { id: "", color: "#4c9aff", label: "V2 default" },
-  { id: "obsidian", color: "#7da2f5", label: "Obsidian" },
-  { id: "espresso", color: "#d29a63", label: "Espresso" },
-  { id: "graphite", color: "#9db4d8", label: "Graphite" },
-  { id: "champagne", color: "#a67c37", label: "Champagne" },
-  { id: "nord", color: "#88c0d0", label: "Nord" },
-  { id: "solar", color: "#b58900", label: "Solar" },
-  { id: "rose", color: "#ea9ac6", label: "Rose" },
-  { id: "slate", color: "#3b6fe0", label: "Slate" },
-  { id: "paper", color: "#a4661b", label: "Paper" },
-];
-
-const THEME_KEY = "polymath-v2.theme";
 const COLLAPSE_KEY = "polymath-v2.nav-collapsed";
 const CORPUS_KEY = "polymath-v2.corpus";
 
@@ -66,6 +52,7 @@ const CORPUS_SCREENS = new Set<ScreenId>(["overview", "chat", "compare", "files"
  *  the sign-in screen on 401, the first-password change when required, and the workspace otherwise. The owner on
  *  http://127.0.0.1:7200 is signed in by being local (no login exists there). */
 export function App() {
+  useAppearance();                           // keeps System mode in step with the OS setting, on every screen incl. sign-in
   const [me, setMe] = useState<Me | null>(null);
   const [state, setState] = useState<"loading" | "signin" | "ready" | "error">("loading");
   const [error, setError] = useState("");
@@ -111,18 +98,9 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
   const [corpusId, setCorpusId] = useState<string>(() => {
     try { return localStorage.getItem(CORPUS_KEY) ?? ""; } catch { return ""; }
   });
-  const [theme, setTheme] = useState<string>(() => {
-    try { return localStorage.getItem(THEME_KEY) ?? ""; } catch { return ""; }
-  });
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem(COLLAPSE_KEY) === "1"; } catch { return false; }
   });
-
-  useEffect(() => {
-    if (theme) document.documentElement.dataset.theme = theme;
-    else delete document.documentElement.dataset.theme;
-    try { localStorage.setItem(THEME_KEY, theme); } catch { /* private mode */ }
-  }, [theme]);
 
   useEffect(() => {
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? "1" : "0"); } catch { /* private mode */ }
@@ -319,23 +297,6 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
               Delete corpus
             </button>
           )}
-        </div>
-
-        <div className="nav__themes">
-          <span className="label">Theme</span>
-          <div className="themes">
-            {THEMES.map((t) => (
-              <button
-                key={t.id || "default"}
-                className="theme-swatch"
-                style={{ background: t.color }}
-                aria-pressed={theme === t.id}
-                title={t.label}
-                aria-label={t.label}
-                onClick={() => setTheme(t.id)}
-              />
-            ))}
-          </div>
         </div>
 
         {owner && (
