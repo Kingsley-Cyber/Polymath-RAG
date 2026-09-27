@@ -113,6 +113,43 @@ class RetrieveRequest(BaseModel):
     # K1 (register 11.485): the knowledge-role scope {"roles": ["reference"]} (Trail ideation) — omitted = both roles;
     # an explicit scope is always enforced; a malformed one is refused (422)
     scope: Optional[dict] = None
+    # DEEP-RESEARCH-MODE-V1 §10.1: a canonical §33 query intent (query_intent.INTENTS). On the v2 engine path of HYBRID /
+    # GRAPH / WILDCARD the budget and the graph assist follow its policy, exactly as chat applies it (ui.py P2b / P6).
+    # None = unchanged, byte for byte; unknown = 422 unknown_intent; any other path = 422 intent_unsupported.
+    intent: str | None = None
+
+
+#: the modes whose v2 engine path honours `intent`
+INTENT_MODES = ("HYBRID", "GRAPH", "WILDCARD")
+
+
+def intent_or_422(req) -> str | None:
+    """The request's canonical intent (upper-cased), or None when absent or blank. An unknown one is a typed 422."""
+    raw = (getattr(req, "intent", None) or "").strip()
+    if not raw:
+        return None
+    from polymath_shared.query_intent import INTENTS
+    if raw.upper() not in INTENTS:
+        raise HTTPException(status_code=422, detail={
+            "error_code": "unknown_intent", "message": f"unknown intent {raw!r}; canonical intents: {list(INTENTS)}"})
+    return raw.upper()
+
+
+def _engine_kwargs(req, intent: str | None) -> dict:
+    """The v2 core's kwargs for HYBRID / GRAPH / WILDCARD. No intent = exactly the pre-intent kwargs (the ✨ latent budget
+    or nothing). An intent = chat's own application: `apply_intent_policy(intent, default_budget())`, the explicit ✨ still
+    winning the latent lane (P2b), and the policy's graph assist (P6)."""
+    from dataclasses import replace as _replace
+    from orchestrator.api.chat_retrieval import default_budget
+
+    if intent is None:
+        return {"budget": _replace(default_budget(), latent_enabled=True)} if req.latent else {}
+    from polymath_shared.query_intent import apply_intent_policy, policy_for
+
+    budget = apply_intent_policy(intent, default_budget())
+    if req.latent:
+        budget = _replace(budget, latent_enabled=True)
+    return {"budget": budget, "graph_assist": policy_for(intent).graph}
 
 
 def document_filter(req) -> Optional[list[str]]:
@@ -260,6 +297,14 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
             "message": "document_ids is honoured by the default lane and "
                        f"mode=EXPLORE; mode {mode!r} does not support it",
         })
+    # DEEP-RESEARCH-MODE-V1 §10.1: like document_ids, an intent a path cannot honour fails closed — never a silent no-op
+    intent = intent_or_422(req)
+    if intent is not None and not (mode in INTENT_MODES and retrieve_engine_flag() == "v2" and not req.utility):
+        raise HTTPException(status_code=422, detail={
+            "error_code": "intent_unsupported",
+            "message": f"intent is honoured by the v2 engine path of {list(INTENT_MODES)}; mode {mode!r} "
+                       f"(engine {retrieve_engine_flag()}, utility {bool(req.utility)}) does not support it",
+        })
     if mode == MODE_FAST:
         from orchestrator.api.fast import fast_retrieve
 
@@ -270,13 +315,9 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
         # (one retrieval core, many surfaces). Shape-identical to hybrid_fast_retrieve (parity-proven).
         # `utility` keeps the v1 utility path; `latent` maps to the final latent lane via the budget.
         if retrieve_engine_flag() == "v2" and not req.utility:
-            from dataclasses import replace as _replace
-            from orchestrator.api.chat_retrieval import chat_retrieve_mode, default_budget
+            from orchestrator.api.chat_retrieval import chat_retrieve_mode
 
-            _kw = {}
-            if req.latent:
-                _kw["budget"] = _replace(default_budget(), latent_enabled=True)
-            return chat_retrieve_mode("HYBRID", query, cid, **_kw, **scope_kwargs(role_scope))
+            return chat_retrieve_mode("HYBRID", query, cid, **_engine_kwargs(req, intent), **scope_kwargs(role_scope))
         from orchestrator.api.hybrid import hybrid_fast_retrieve
 
         return hybrid_fast_retrieve(query, cid,
@@ -292,13 +333,9 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
         # contract"). `utility` stays a v1-only knob (ui.py: "utility remains a v1 knob"), so
         # its presence keeps the turn on v1 — identical gate to the HYBRID migration above.
         if retrieve_engine_flag() == "v2" and not req.utility:
-            from dataclasses import replace as _replace
-            from orchestrator.api.chat_retrieval import chat_retrieve_mode, default_budget
+            from orchestrator.api.chat_retrieval import chat_retrieve_mode
 
-            _kw = {}
-            if req.latent:
-                _kw["budget"] = _replace(default_budget(), latent_enabled=True)
-            return chat_retrieve_mode("GRAPH", query, cid, **_kw, **scope_kwargs(role_scope))
+            return chat_retrieve_mode("GRAPH", query, cid, **_engine_kwargs(req, intent), **scope_kwargs(role_scope))
         from orchestrator.api.graph import graph_retrieve
 
         return graph_retrieve(query, cid, latent=req.latent, utility=req.utility, **scope_kwargs(role_scope))
@@ -309,13 +346,9 @@ async def _retrieve_impl(req: RetrieveRequest) -> dict:
         # _retrieve_wildcard) returns FAST's own flat shape plus a `wildcard` bridge lane —
         # the identical top-level contract v1 already produced via `{**fast, "wildcard": [...]}`.
         if retrieve_engine_flag() == "v2" and not req.utility:
-            from dataclasses import replace as _replace
-            from orchestrator.api.chat_retrieval import chat_retrieve_mode, default_budget
+            from orchestrator.api.chat_retrieval import chat_retrieve_mode
 
-            _kw = {}
-            if req.latent:
-                _kw["budget"] = _replace(default_budget(), latent_enabled=True)
-            return chat_retrieve_mode("WILDCARD", query, cid, **_kw, **scope_kwargs(role_scope))
+            return chat_retrieve_mode("WILDCARD", query, cid, **_engine_kwargs(req, intent), **scope_kwargs(role_scope))
         from orchestrator.api.wildcard import wildcard_retrieve
 
         return wildcard_retrieve(query, cid, **scope_kwargs(role_scope))

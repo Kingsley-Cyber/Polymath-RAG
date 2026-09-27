@@ -1093,6 +1093,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_deep_research_route.py", "py", None),
     # DEEP-RESEARCH-MODE-V1 slices DR6a-b: research moves (engine) and /retrieve's optional intent
     ("tests/contracts/test_deep_research_moves.py", "py", None),
+    ("tests/contracts/test_retrieve_intent.py", "py", None),
     ("tests/determinism/test_mcp_principals_gate.py", "py", None),
     ("tests/determinism/test_adapter_run_ownership.py", "py", None),
     ("tests/determinism/test_adapter_empty_admission_cause.py", "py", None),

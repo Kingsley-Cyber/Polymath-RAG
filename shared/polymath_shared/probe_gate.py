@@ -32,11 +32,14 @@ def _sig(x) -> float:
 
 
 def gate_probes(question: str, probes: Iterable[tuple[str, str, str]], rerank: Callable[[str, list[dict]], list[dict]], *,
-                floor: float = DEFAULT_FLOOR, timeout_s: float | None = 3.0) -> tuple[set[str], dict]:
-    """`probes` = (id, origin, text). Returns (the ids to drop, the receipt). Only GATED_ORIGINS are scored; a probe the
+                floor: float = DEFAULT_FLOOR, timeout_s: float | None = 3.0,
+                gated_origins: Iterable[str] | None = None) -> tuple[set[str], dict]:
+    """`probes` = (id, origin, text). Returns (the ids to drop, the receipt). Only `gated_origins` are scored (None =
+    GATED_ORIGINS, the chat plan's probes; deep research gates its own planned queries as DEEP_RESEARCH); a probe the
     judge did not score is kept. `timeout_s` bounds the one judge call (None = no bound); past it, nothing is dropped."""
     t0 = time.perf_counter()
-    gated = [(pid, origin, text) for pid, origin, text in probes if origin in GATED_ORIGINS and (text or "").strip()]
+    origins = GATED_ORIGINS if gated_origins is None else frozenset(gated_origins)
+    gated = [(pid, origin, text) for pid, origin, text in probes if origin in origins and (text or "").strip()]
     receipt: dict = {"version": PROBE_GATE_VERSION, "floor": floor, "scored": len(gated), "dropped": [], "scores": {}}
     if not gated or floor <= 0 or not (question or "").strip():
         receipt["ms"] = round((time.perf_counter() - t0) * 1000, 1)

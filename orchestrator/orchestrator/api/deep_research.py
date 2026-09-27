@@ -6,7 +6,11 @@ proxy never sees a silent stream.
 Scope: the libraries are resolved and checked once, here, for the caller (a friend only reaches libraries they may read);
 every search then names exactly those libraries AND runs under the caller's principal, so no step can widen the scope (K1).
 The planning and extraction calls use the chat compiler's governed lanes (per-lane limiter); the report is written by the
-composer's model, like a chat answer. One deep run at a time per person. A client that disconnects cancels the run."""
+composer's model, like a chat answer. One deep run at a time per person. A client that disconnects cancels the run.
+
+Research moves (DR6, plan §10; on unless the request or POLYMATH_DEEP_RESEARCH_MOVES=0 turns them off): each planned search
+is broad / deep / adjacent / inverse and goes to the search built for it (`move_request`), and the reranker drops a planned
+search that misses the question before it runs (`_gate_port`, fail-open). The request's `mode` stays the base mode."""
 from __future__ import annotations
 
 import asyncio
@@ -16,6 +20,7 @@ import os
 import queue as _queue
 import threading
 import time
+from collections.abc import Sequence
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -30,6 +35,10 @@ log = logging.getLogger(__name__)
 HEARTBEAT_S = float(os.environ.get("POLYMATH_DEEP_RESEARCH_HEARTBEAT_S", "15"))
 PORT_TIMEOUT_S = 60.0
 ROWS_PER_SEARCH = 10
+MOVES_ENV = "POLYMATH_DEEP_RESEARCH_MOVES"   # "0" forces moves off for every request
+#: §10.1: the canonical §33 intent a move's search runs under (the reserved surfaces DR0 named reach deep research here)
+MOVE_INTENT = {"adjacent": "RELATIONSHIP", "inverse": "COMPARISON"}
+GATE_ORIGIN = "DEEP_RESEARCH"                # the probe gate's origin for a deep research query (§10.4)
 _RUNNING: dict[str, threading.Event] = {}
 _LOCK = threading.Lock()
 _END = object()
@@ -40,8 +49,13 @@ class DeepResearchRequest(BaseModel):
     corpus_id: str | None = None
     corpus_ids: list[str] | None = None
     preset: str = "standard"                 # quick 3×1 · standard 3×2 · thorough 4×2
-    mode: str = "HYBRID"                     # the retrieval mode every search uses
+    mode: str = "HYBRID"                     # the retrieval mode every search uses (with moves: the base mode)
     synthesizer: str | None = None           # the composer's model writes the report (like chat)
+    moves: bool = True                       # DR6 research moves (§10); POLYMATH_DEEP_RESEARCH_MOVES=0 forces them off
+
+
+def moves_enabled(req: DeepResearchRequest) -> bool:
+    return bool(req.moves) and os.environ.get(MOVES_ENV, "1").strip().lower() not in ("0", "false", "off", "no")
 
 
 def _sse(event: str, data: dict[str, Any]) -> str:
@@ -75,44 +89,84 @@ def _libraries(req: DeepResearchRequest) -> list[str]:
     return ids
 
 
-def _build_rows(response: dict[str, Any], corpus_ids: list[str], limit: int) -> list[dict[str, Any]]:
+def _build_rows(response: dict[str, Any], corpus_ids: list[str], limit: int, explore: bool = False) -> list[dict[str, Any]]:
     from orchestrator.api.evidence_rows import build_evidence_rows
     from polymath_shared.db import tx
     with tx() as conn:
-        return build_evidence_rows(conn, response, corpus_ids, limit=limit, explore=False)
+        return build_evidence_rows(conn, response, corpus_ids, limit=limit, explore=explore)
 
 
-def evidence_rows_of(out: dict[str, Any], corpus_ids: list[str], limit: int) -> list[dict[str, Any]]:
+def evidence_rows_of(out: dict[str, Any], corpus_ids: list[str], limit: int, *, explore: bool = False) -> list[dict[str, Any]]:
     """DR4: `/retrieve` builds `evidence_rows` only on the default lane; the engine modes (HYBRID, FAST, GRAPH, WILDCARD,
     GNN) answer with a flat `evidence` list and ignore `evidence: true`. Build the same rows from that list, in its order,
-    the way chat does (`chat.attach_evidence_rows`), so a search in any mode feeds the research."""
+    the way chat does (`chat.attach_evidence_rows`), so a search in any mode feeds the research. `explore` (a broad move):
+    the EXPLORE cap, 2 rows per document, interleaved, so the rows spread."""
     if out.get("evidence_rows"):
         return list(out["evidence_rows"])
     ids = list(dict.fromkeys(e["chunk_id"] for e in out.get("evidence") or [] if isinstance(e, dict) and e.get("chunk_id")))
     if not ids:
         return []
     return _build_rows({"child_evidence": [{"chunk_id": cid, "rerank_score": float(len(ids) - i)} for i, cid in enumerate(ids)],
-                        "selected_documents": [], "graph_facts": []}, corpus_ids, limit)
+                        "selected_documents": [], "graph_facts": []}, corpus_ids, limit, explore=explore)
+
+
+def move_request(query: str, libraries: Sequence[str], mode: str, move: str | None = None,
+                 anchor_docs: Sequence[str] = ()) -> tuple[Any, bool]:
+    """(the `/retrieve` request, whether its rows take the EXPLORE cap) for one planned search (§10.1):
+        broad     the base mode; rows with the EXPLORE cap (2 per document) so they spread
+        deep      anchored: the default lane inside the anchor documents (DOCUMENT-SCOPED-RETRIEVE-V1); else the base mode
+        adjacent  the base mode with intent RELATIONSHIP;  inverse  the base mode with intent COMPARISON
+    The intent rides only a base mode whose v2 path honours it (HYBRID / GRAPH / WILDCARD); in FAST or GNN the move searches
+    without it. `move` None (moves off) = DR4's request, field for field."""
+    from orchestrator.api.retrieve import (
+        INTENT_MODES,
+        RetrieveRequest,
+        retrieve_engine_flag,
+    )
+    base = {"query": query, "corpus_ids": list(libraries), "limit": ROWS_PER_SEARCH, "evidence": True}
+    if move == "deep" and anchor_docs:
+        return RetrieveRequest(**base, document_ids=list(anchor_docs)), False
+    intent = MOVE_INTENT.get(move or "")
+    if intent and mode in INTENT_MODES and retrieve_engine_flag() == "v2":
+        return RetrieveRequest(**base, mode=mode, intent=intent), False
+    return RetrieveRequest(**base, mode=mode), move == "broad"
 
 
 def _retrieve_port(loop: asyncio.AbstractEventLoop, principal: str | None, mode: str, aliases: _Aliases):
-    from orchestrator.api.retrieve import RetrieveRequest, _retrieve_impl
+    from orchestrator.api.retrieve import _retrieve_impl
 
-    def retrieve(query: str, scope: Any) -> list[DR.Row]:
+    def retrieve(query: str, scope: Any, *, move: str | None = None, anchor_docs: Sequence[str] = ()) -> list[DR.Row]:
+        req, explore = move_request(query, list(scope), mode, move, anchor_docs)
+
         async def call() -> dict:
             with principal_context.acting_as(principal):
-                return await _retrieve_impl(RetrieveRequest(query=query, corpus_ids=list(scope), mode=mode,
-                                                            limit=ROWS_PER_SEARCH, evidence=True))
+                return await _retrieve_impl(req)
         out = asyncio.run_coroutine_threadsafe(call(), loop).result(timeout=PORT_TIMEOUT_S)
         rows = []
-        for r in evidence_rows_of(out or {}, list(scope), ROWS_PER_SEARCH):
+        for r in evidence_rows_of(out or {}, list(scope), ROWS_PER_SEARCH, explore=explore):
             text = str(r.get("text_clean") or r.get("text") or "").strip()
             if not r.get("id") or not text:
                 continue
             rows.append(DR.Row(cid=aliases.alias(r), text=text, source=str(r.get("source") or r.get("title") or ""),
-                               score=float(r.get("score") or 0.0)))
+                               score=float(r.get("score") or 0.0), doc_id=str(r.get("doc_id") or "")))
         return rows[:ROWS_PER_SEARCH]
     return retrieve
+
+
+def _gate_port(floor: float):
+    """§10.4: the relevance gate. The reranker scores each planned search against the ORIGINAL question, through chat's
+    probe gate (one bounded cross-encoder call, origin DEEP_RESEARCH). A judge error or timeout raises, so the engine keeps
+    the searches and counts them (fail-open); a search the judge left unscored (reranker parked) comes back without a score."""
+    from orchestrator.api import chat_retrieval
+    from polymath_shared.probe_gate import gate_probes
+
+    def gate(question: str, items: Sequence[tuple[str, str]]) -> dict[str, float]:
+        _dropped, receipt = gate_probes(question, [(qid, GATE_ORIGIN, text) for qid, text in items],
+                                        chat_retrieval._rerank_children, floor=floor, gated_origins=(GATE_ORIGIN,))
+        if receipt.get("error"):
+            raise RuntimeError(f"relevance gate: {receipt['error']}")
+        return {qid: float(s["score"]) for qid, s in receipt["scores"].items()}
+    return gate
 
 
 def research_lane_names(stage_pin_fn, compiler_stage: str) -> list[str]:
@@ -185,7 +239,10 @@ def _report_tokens(synth: str, system: str, prompt: str, cancel: threading.Event
 
 
 _STAGE_LABEL = {"plan": "Planning searches", "retrieve": "Searching", "extract": "Reading what came back",
-                "level_done": "Finished a round", "stopped": "Research stopped"}
+                "level_done": "Finished a round", "stopped": "Research stopped",
+                "gate": "Checked the planned searches against the question"}
+#: engine event fields a phase frame carries (moves: `move` on a search, `moves` on a plan, the gate's counts)
+_PHASE_FIELDS = ("depth", "completed", "total", "new_learnings", "reason", "move", "moves", "scored", "dropped", "failed_open")
 
 
 def _phase(ev: dict[str, Any], t0: float) -> dict[str, Any]:
@@ -197,8 +254,13 @@ def _phase(ev: dict[str, Any], t0: float) -> dict[str, Any]:
         label = f"{label}: {ev['new_learnings']} new findings"
     if stage == "stopped" and ev.get("reason"):
         label = f"{label} ({ev['reason']})"
-    return {"stage": f"deep_{stage}", "label": label, "t": int((time.monotonic() - t0) * 1000),
-            **{k: v for k, v in ev.items() if k in ("depth", "completed", "total", "new_learnings", "reason")}}
+    if stage == "gate" and ev.get("dropped"):
+        label = f"{label}: {ev['dropped']} dropped as off the question"
+    frame = {"stage": f"deep_{stage}", "label": label, "t": int((time.monotonic() - t0) * 1000),
+             **{k: v for k, v in ev.items() if k in _PHASE_FIELDS}}
+    if "move" in ev and ev.get("query"):
+        frame["query"] = str(ev["query"])[:120]         # the rail labels a search by its move: "Broad · <query>"
+    return frame
 
 
 def _worker(req: DeepResearchRequest, libraries: list[str], synth: str, principal: str | None, loop: asyncio.AbstractEventLoop,
@@ -207,11 +269,13 @@ def _worker(req: DeepResearchRequest, libraries: list[str], synth: str, principa
     t0 = time.monotonic()
     try:
         aliases = _Aliases()
-        config = DR.Config.preset(req.preset, score_floor=float("-inf"))
+        moves = moves_enabled(req)
+        config = DR.Config.preset(req.preset, score_floor=float("-inf"), moves=moves)
         outcome = DR.run_research(req.question, tuple(libraries),
                                   retrieve=_retrieve_port(loop, principal, req.mode.upper(), aliases),
                                   complete=_complete_port(req.question), config=config,
-                                  on_event=lambda ev: out.put(("phase", _phase(ev, t0))), cancel=cancel)
+                                  on_event=lambda ev: out.put(("phase", _phase(ev, t0))), cancel=cancel,
+                                  gate=_gate_port(config.gate_floor) if moves else None)
         summary = outcome.summary()
         if cancel.is_set() or outcome.stop_reason == "cancelled":
             out.put(("error", {"error_code": "CANCELLED", "message": "the research was stopped"}))

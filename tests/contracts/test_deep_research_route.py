@@ -1,7 +1,8 @@
 """DEEP-RESEARCH-MODE-V1 DR2 — `POST /research/deep` over a real route with fake search results and fake model replies:
 the chat's frame types in order, citations resolved from per-run aliases to evidence rows, every search run under the
 caller's principal and exactly the requested libraries, one run at a time per person, refusals before any work, a receipt,
-and keep-alive comments on a slow stream."""
+and keep-alive comments on a slow stream. DR6b (moves on by default): each move's own search request, the relevance gate
+port, the receipt's moves block, and moves off by request or switch."""
 from __future__ import annotations
 
 import json
@@ -53,6 +54,8 @@ def rec(monkeypatch):
         return complete
     monkeypatch.setattr(DRR, "_complete_port", fake_complete_port)
     monkeypatch.setattr(DRR, "_report_tokens", lambda synth, system, prompt, cancel: iter(["Effort has four factors ", "[c1]."]))
+    # DR6: moves are on by default and their relevance gate calls the reranker; no test may reach the live sidecar
+    monkeypatch.setattr(DRR, "_gate_port", lambda floor: lambda question, items: {qid: 0.9 for qid, _ in items})
 
     import orchestrator.api.ui as UI
     monkeypatch.setattr(UI, "_default_synthesizer", lambda: "litellm:fake/model")
@@ -191,7 +194,7 @@ def test_an_engine_mode_search_feeds_the_research(rec, monkeypatch):
                 "selected_documents": [{"doc_id": "d1", "corpus_id": "cinema"}], "meta": {"mode": "HYBRID"}}
     monkeypatch.setattr(RT, "_retrieve_impl", engine_shape)
 
-    def fake_build(response, corpus_ids, limit):
+    def fake_build(response, corpus_ids, limit, **kw):
         built.append(([c["chunk_id"] for c in response["child_evidence"]], list(corpus_ids), limit))
         by_id = {r["id"]: r for r in ROWS}
         return [by_id[c["chunk_id"]] for c in response["child_evidence"]]
@@ -256,3 +259,200 @@ def test_the_report_step_applies_chats_thinking_rule(monkeypatch):
     applied = apply_litellm(expected, CHAT_SYNTHESIS, model)
     assert applied, "the policy must say something about this model, or the test proves nothing"
     assert sent == expected
+
+
+# ─────────────────────────────────────────────────────────── DR6b: research moves on the route (plan §10.1, §10.6, §10.7)
+EVALUATIVE = "Is Laban effort notation worth learning?"      # EXPLORATORY + evaluative: broad, adjacent, inverse, then deep
+_SLOT = re.compile(r"^- (\d+) (broad|deep|adjacent|inverse): ", re.MULTILINE)
+
+
+def _tag(text: str) -> str:
+    import hashlib
+    return hashlib.sha1(text.encode()).hexdigest()[:8]
+
+
+def _moves_complete(key):
+    """Plans exactly the moves the quota asks for, each query named "<move> laban <thread tag> <slot>"; every extract finds
+    one learning and one fresh follow-up, so a standard run goes two levels."""
+    def complete(prompt, *, system, max_tokens):
+        if "QUERY:" in system:
+            block = prompt.split("MOVES: write ", 1)[1].split("\n\n", 1)[0] if "MOVES: write " in prompt else ""
+            slots = [move for n, move in _SLOT.findall(block) for _ in range(int(n))] or ["broad", "broad"]
+            head = "THREAD (the search this plan follows up):\n"
+            thread = prompt.split(head, 1)[1].split("\n\n", 1)[0] if head in prompt else "root"
+            return "\n".join(f"QUERY: {move} laban {_tag(thread)} {i} || GOAL: g{i} || MOVE: {move}"
+                             for i, move in enumerate(slots))
+        cids = re.findall(r'cid="([^"]+)"', prompt)
+        query = prompt.split("SEARCH QUERY:\n", 1)[1].split("\n\n", 1)[0]
+        return f"LEARNING: effort finding on {query} [{cids[0]}]\nFOLLOWUP: what else about {_tag(query)}?\nDONE: no"
+    return complete
+
+
+@pytest.fixture()
+def wire(rec, monkeypatch):
+    """`rec` plus a `/retrieve` fake that answers like the real one: the default lane with `evidence_rows`, an engine mode
+    with a flat `evidence` list whose rows `_build_rows` builds (recording whether with the EXPLORE cap). Every row is in
+    one book (d1), so each thread is concentrated and its child's deep queries anchor there."""
+    import orchestrator.api.retrieve as RT
+    rec.requests, rec.built = [], []
+
+    def row(cid):
+        return {"id": cid, "kind": "chunk", "doc_id": "d1", "corpus_id": "cinema", "title": "Laban", "source": "Laban · ch. 1",
+                "text": f"passage {cid}", "text_clean": f"passage {cid}", "score": 0.9}
+
+    async def fake_retrieve_impl(req):
+        rec.requests.append(req)
+        rec.searches.append((req.query, list(req.corpus_ids or []), principal_context.current()))
+        if req.mode is None:
+            return {"evidence_rows": [row(f"ch_{_tag(req.query)}_{k}") for k in "ab"]}
+        return {"evidence": [{"chunk_id": f"ch_{_tag(req.query)}_{k}"} for k in "ab"], "meta": {"mode": req.mode}}
+
+    def fake_build(response, corpus_ids, limit, explore=False):
+        ids = [c["chunk_id"] for c in response["child_evidence"]]
+        rec.built.append((ids[0].split("_")[1], explore))
+        return [row(cid) for cid in ids]
+
+    monkeypatch.setattr(RT, "_retrieve_impl", fake_retrieve_impl)
+    monkeypatch.setattr(DRR, "_build_rows", fake_build)
+    monkeypatch.setattr(DRR, "_complete_port", _moves_complete)
+    return rec
+
+
+def _deep(body: dict, principal: str | None = None) -> list[tuple[str, dict | str]]:
+    return _frames(_client(principal).post("/research/deep", json={"corpus_id": "cinema", **body}).text)
+
+
+def test_each_move_builds_its_own_search_request(monkeypatch):
+    from orchestrator.api.retrieve import RetrieveRequest
+    monkeypatch.delenv("POLYMATH_RETRIEVE_ENGINE", raising=False)
+    dr4 = RetrieveRequest(query="q", corpus_ids=["cinema"], mode="HYBRID", limit=10, evidence=True)
+    assert DRR.move_request("q", ["cinema"], "HYBRID") == (dr4, False)                     # moves off: DR4's request
+    assert DRR.move_request("q", ["cinema"], "HYBRID", "broad") == (dr4, True)             # + the EXPLORE cap on its rows
+    assert DRR.move_request("q", ["cinema"], "HYBRID", "deep") == (dr4, False)             # no anchors: the normal cap
+    req, explore = DRR.move_request("q", ["cinema"], "HYBRID", "deep", ("d1", "d2"))
+    assert (req.mode, req.document_ids, req.intent, explore) == (None, ["d1", "d2"], None, False)   # the default lane
+    for move, intent in (("adjacent", "RELATIONSHIP"), ("inverse", "COMPARISON")):
+        req, explore = DRR.move_request("q", ["cinema"], "HYBRID", move)
+        assert (req.mode, req.intent, req.document_ids, explore) == ("HYBRID", intent, None, False)
+        req, _ = DRR.move_request("q", ["cinema"], "FAST", move)                           # FAST cannot honour an intent
+        assert (req.mode, req.intent) == ("FAST", None)
+    monkeypatch.setenv("POLYMATH_RETRIEVE_ENGINE", "v1")                                    # nor can the v1 rollback
+    assert DRR.move_request("q", ["cinema"], "HYBRID", "inverse")[0].intent is None
+
+
+def test_a_moves_run_sends_each_move_to_its_search(wire):
+    frames = _deep({"question": EVALUATIVE, "preset": "standard"}, "prn_fred")
+    assert [d for k, d in frames if k == "error"] == [] and any(k == "answer" for k, _ in frames)
+    by_move: dict[str, list] = {}
+    for req in wire.requests:
+        by_move.setdefault(req.query.split()[0], []).append(req)
+    assert {m: len(v) for m, v in by_move.items()} == {"broad": 1, "adjacent": 2, "inverse": 2, "deep": 4}
+    assert all(r.mode == "HYBRID" and r.intent is None and r.document_ids is None for r in by_move["broad"])
+    assert all(r.mode is None and r.document_ids == ["d1"] and r.intent is None for r in by_move["deep"])
+    assert all(r.mode == "HYBRID" and r.intent == "RELATIONSHIP" for r in by_move["adjacent"])
+    assert all(r.mode == "HYBRID" and r.intent == "COMPARISON" for r in by_move["inverse"])
+    assert all(r.corpus_ids == ["cinema"] and r.limit == 10 and r.evidence for r in wire.requests)
+    assert all(libs == ["cinema"] and who == "prn_fred" for _, libs, who in wire.searches)
+    explore = dict(wire.built)                          # broad rows take the EXPLORE cap, every other engine search the normal one
+    assert {explore[_tag(r.query)] for r in by_move["broad"]} == {True}
+    assert {explore[_tag(r.query)] for m in ("adjacent", "inverse") for r in by_move[m]} == {False}
+
+
+def test_the_receipt_and_the_answer_carry_the_moves_block(wire):
+    frames = _deep({"question": EVALUATIVE, "preset": "standard"})
+    meta = next(d for k, d in frames if k == "answer")["result"]["meta"]["deep_research"]
+    moves = wire.receipts[-1]["out"]["meta"]["deep_research"]["moves"]
+    assert moves == meta["moves"]
+    assert {"intent", "evaluative", "levels", "gate", "drift_stopped", "gap_nodes", "dry_moves", "inverse_unanchored",
+            "deep", "inverse"} <= set(moves)
+    assert (moves["intent"], moves["evaluative"]) == ("EXPLORATORY", True)
+    assert moves["inverse"] == {"searched": 2, "learnings": 2} and moves["deep"] == {"anchored": 4, "unanchored": 0}
+    assert moves["gate"] == {"scored": 9, "dropped": 0, "failed_open": 0} and len(moves["levels"]) == 2
+
+
+def test_phase_frames_carry_each_searchs_move(wire):
+    phases = [d for k, d in _deep({"question": EVALUATIVE, "preset": "quick"}) if k == "phase"]
+    plan = next(d for d in phases if d["stage"] == "deep_plan")
+    assert plan["moves"] == ["broad", "adjacent", "inverse"]
+    searches = [d for d in phases if d["stage"] == "deep_retrieve"]
+    assert sorted(d["move"] for d in searches) == ["adjacent", "broad", "inverse"]
+    assert all(d["query"].split()[0] == d["move"] for d in searches)
+    gate = next(d for d in phases if d["stage"] == "deep_gate")
+    assert (gate["scored"], gate["dropped"], gate["failed_open"]) == (3, 0, 0)
+
+
+def test_a_search_the_gate_drops_never_runs(wire, monkeypatch):
+    monkeypatch.setattr(DRR, "_gate_port", lambda floor: lambda question, items: {
+        qid: (0.05 if text.startswith("inverse") else 0.9) for qid, text in items})
+    phases = [d for k, d in _deep({"question": EVALUATIVE, "preset": "quick"}) if k == "phase"]
+    assert sorted(r.query.split()[0] for r in wire.requests) == ["adjacent", "broad"]
+    assert "1 dropped as off the question" in next(d for d in phases if d["stage"] == "deep_gate")["label"]
+
+
+@pytest.mark.parametrize("how", ["request", "switch"])
+def test_moves_off_sends_dr4s_requests(rec, monkeypatch, how):
+    import orchestrator.api.retrieve as RT
+    from orchestrator.api.retrieve import RetrieveRequest
+    requests, gated, systems = [], [], []
+
+    async def recording(req):
+        requests.append(req)
+        return {"evidence_rows": ROWS}
+    monkeypatch.setattr(RT, "_retrieve_impl", recording)
+    monkeypatch.setattr(DRR, "_gate_port", lambda floor: lambda question, items: gated.append(items) or {})
+    plain = DRR._complete_port
+
+    def recording_port(key):
+        inner = plain(key)
+
+        def complete(prompt, *, system, max_tokens):
+            systems.append(system + prompt)
+            return inner(prompt, system=system, max_tokens=max_tokens)
+        return complete
+    monkeypatch.setattr(DRR, "_complete_port", recording_port)
+    body = {"question": "How does Laban write effort?", "corpus_id": "cinema", "preset": "quick"}
+    if how == "request":
+        body["moves"] = False
+    else:
+        monkeypatch.setenv(DRR.MOVES_ENV, "0")
+    frames = _frames(_client().post("/research/deep", json=body).text)
+    assert requests and all(r == RetrieveRequest(query=r.query, corpus_ids=["cinema"], mode="HYBRID", limit=10, evidence=True)
+                            for r in requests)
+    assert gated == [] and all("MOVE" not in text for text in systems)
+    assert "moves" not in next(d for k, d in frames if k == "answer")["result"]["meta"]["deep_research"]
+    assert all("move" not in d and "moves" not in d for k, d in frames if k == "phase")
+
+
+def test_the_gate_port_asks_the_reranker_about_the_original_question(monkeypatch):
+    import orchestrator.api.chat_retrieval as CR
+    seen = []
+
+    def judge(question, rows):
+        seen.append((question, [r["chunk_id"] for r in rows]))
+        return [dict(r, rerank_score={"1.1": 3.0, "1.2": -3.0}[r["chunk_id"]]) for r in rows]
+    monkeypatch.setattr(CR, "_rerank_children", judge)
+    gate = DRR._gate_port(0.2)
+    assert gate("How does Laban write effort?", [("1.1", "laban effort factors"), ("1.2", "sourdough starters")]) == {
+        "1.1": 0.9526, "1.2": 0.0474}                                     # σ(logit), as the probe gate reports it
+    assert seen == [("How does Laban write effort?", ["1.1", "1.2"])]
+    monkeypatch.setattr(CR, "_rerank_children", lambda question, rows: rows)      # a parked reranker scores nothing
+    assert gate("How does Laban write effort?", [("1.1", "laban effort factors")]) == {}
+
+    def down(question, rows):
+        raise ConnectionError("reranker down")
+    monkeypatch.setattr(CR, "_rerank_children", down)
+    with pytest.raises(RuntimeError, match="ConnectionError"):             # the engine keeps the searches and counts them
+        gate("How does Laban write effort?", [("1.1", "laban effort factors")])
+
+
+def test_the_probe_gate_scores_only_the_origins_it_is_given():
+    from polymath_shared.probe_gate import gate_probes
+    probes = [("d1", "DEEP_RESEARCH", "laban effort"), ("p1", "PROFILE", "a profile probe"), ("u1", "USER", "a facet")]
+    seen = []
+
+    def judge(question, rows):
+        seen.append([r["chunk_id"] for r in rows])
+        return [dict(r, rerank_score=0.0) for r in rows]
+    gate_probes("How does Laban write effort?", probes, judge)                                 # chat: its own origins
+    gate_probes("How does Laban write effort?", probes, judge, gated_origins=("DEEP_RESEARCH",))
+    assert seen == [["p1"], ["d1"]]
