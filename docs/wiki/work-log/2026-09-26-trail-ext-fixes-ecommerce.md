@@ -63,8 +63,11 @@ last_reviewed: 2026-09-26
   "showing N of M" when the page cuts them.
 
 ## Proof
-- Fail first: the 37 new tests were run against the unfixed sources (the 8 changed engine files at HEAD, the new tests in
-  place): 34 failed, 3 passed (three control cases that pin lawful inputs). With the fix: all pass.
+- Environment of every run below: `POLYMATH_PG_DSN` and `POLYMATH_TEST_DSN` both set to a dead port
+  (`postgresql://nobody@127.0.0.1:1/none`), never unset (see Incidents).
+- Fail first: the 37 new tests were run against the unfixed sources — a scratch export of the parent commit `4c261d72` with
+  the new tests laid on top, run with that export's own packages (no `git stash`): 34 failed, 3 passed (three control cases
+  that pin lawful inputs). With the fix: all 37 pass.
   - `tests/determinism/test_adapter_ecommerce_domain_laws.py` (23: B-01, B-08, B-09), through the real `exec_domain` with
     the binding out of process.
   - `tests/determinism/test_adapter_ecommerce_products_supply.py` +3 (B-07); `test_adapter_product_reality.py` +1 and
@@ -75,11 +78,27 @@ last_reviewed: 2026-09-26
 - `tests/contracts -k "not test_live_"`: 321 passed (incl. the engine's own `tests/run_all.py` via
   `test_ecommerce_engine_import.py`).
 - Adapter / Trail determinism files (25 files: every `test_*adapter*` / `test_*trail*` except the two fleet-database files and
-  `test_adapter_service_store.py`, plus the new file): 246 passed, 1 skipped. `test_adapter_service_store.py` was not re-run
-  (see the note under Rejected claims).
+  `test_adapter_harness_action.py`, incl. the new file; `test_http_routes_are_thin_wrappers` deselected): 246 passed,
+  5 skipped — the 5 are `test_adapter_service_store.py`'s database tests, skipped on the dead port.
+  `test_adapter_harness_action.py` is a database test that skips only when `POLYMATH_PG_DSN` is unset; with the dead DSN it
+  would error on connect, so it was left out. Every file run was grepped first for a hard-coded fallback (`5432`,
+  `polymath-dev`): only `test_adapter_service_store.py` has one, and it reads `POLYMATH_PG_DSN` first.
 - `scripts/agent_preflight.py`, `scripts/repo_guard.py`, `scripts/wiki_worm.py --check`: exit 0.
 - ruff (apples-to-apples, HEAD copy vs working copy of every changed file): no new findings (61 now vs 62 at HEAD); the
   three new test files are clean.
+- Incidents:
+  - DATABASE: the session's first baseline run (2026-09-26 20:45:41–20:46:20 -0600) used the handoff's `-u POLYMATH_PG_DSN`,
+    so `tests/determinism/test_adapter_service_store.py` fell back to the LIVE fleet database
+    (`postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath`). Its 5 non-deselected tests created committed
+    `polymath.knowledge_brief` probe runs (question "does cold water immersion reduce soreness?", corpus `probe`, agent
+    `test-agent`), leased, submitted, cancelled and compiled them; the fixture's teardown deletes every run it tracked.
+    `test_worker_leases_claim_renew_release_and_expire` FAILED: after the 1.2 s lease expiry the third claim of run
+    `adr_ff0c3db08c4ba0b5127cf5cedece1516` returned None (another claimant — possibly a live worker — may hold it). The live
+    database was not touched to clean up; the orchestrating session checks it. No later run reached any database.
+  - STASH: this session's `git stash push` (21:14:03, for the first fail-first run) collided with the acquisition agent's stash
+    on the shared stack; the two `pop`s swapped contents. Restored at 21:15:28 from this session's stash commit `a125f151`
+    (commit `6ab3704d` = that snapshot + two lint-only edits, byte-checked; the acquisition agent's recovery patch matches it
+    file for file). The fail-first check was then redone as above, without any stash.
 
 ## Contract dispositions
 - `scripts/contract_impact.py --files <changed files>`: CONTRACT IMPACT: none. No changed file maps to an architecture contract.
@@ -90,10 +109,8 @@ last_reviewed: 2026-09-26
 
 ## Rejected claims
 - None of the eleven findings was rejected; B-15 is skipped for an owner decision, not rejected.
-- Note for the gate list: `tests/determinism/test_adapter_service_store.py` connects to the fleet Postgres through its default
-  DSN (`POLYMATH_PG_DSN` unset → `127.0.0.1:5432/polymath`) and writes and deletes probe runs. At baseline (before any change
-  here) `test_worker_leases_claim_renew_release_and_expire` failed at the lease-expiry claim. It was not re-run after the fix
-  (no database writes); nothing in this change touches `service` / `store`.
+- The handoff's environment line (`env -u POLYMATH_PG_DSN`) is unsafe: with the variable unset,
+  `test_adapter_service_store.py` falls back to the live fleet database. Set it to a dead port instead (see Incidents).
 
 ## Open contract gaps
 - **B-15 (owner decision)**: C_hypotheses allows 1–8 hypotheses while the bridge portfolio law needs 3–6, and
