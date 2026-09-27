@@ -30,6 +30,7 @@ from polymath_shared.deep_research import (
 )
 
 MECHANISM_Q = "How does habit stacking change daily routines?"     # MECHANISM, not evaluative
+LOOKUP_Q = "What is habit stacking, and is it worth it?"         # DEFINITION + evaluative: the same quota as MECHANISM_Q
 THREAD = "THREAD (the search this plan follows up)"
 ASKED = re.compile(r"Write at most (\d+) QUERY lines")
 SLOT = re.compile(r"^- (\d+) (broad|deep|adjacent|inverse): ", re.MULTILINE)
@@ -214,7 +215,7 @@ def test_finish_now_stops_after_the_calls_in_flight_and_keeps_what_was_found():
 
 # ─────────────────────────────────────────────────────────── DR7b: coverage
 def test_coverage_follows_each_level_and_a_covered_run_stops_early():
-    out, _, events = run(LLM(extract=two_doc_extract), concurrency=1)              # standard 3 × 2
+    out, _, events = run(LLM(extract=two_doc_extract), question=LOOKUP_Q, concurrency=1)   # standard 3 × 2; a lookup
     cov = [e for e in events if e["stage"] == "coverage"]
     assert len(cov) == 1 and cov[0]["goals"] == [{"id": f"1.{i}", "learnings": 2, "documents": 2} for i in (1, 2, 3)]
     assert (cov[0]["documents"], cov[0]["passages"]) == (6, 6)          # the run's distinct cited documents, rows read
@@ -227,7 +228,7 @@ def test_coverage_follows_each_level_and_a_covered_run_stops_early():
             return [Row(f"{slug}-a", "a", "Doc", 0.9, doc_id="one"), Row(f"{slug}-b", "b", "Doc", 0.8, doc_id="one")]
         return None
 
-    out, _, events = run(LLM(extract=two_doc_extract), Retriever(rows_for), concurrency=1)
+    out, _, events = run(LLM(extract=two_doc_extract), Retriever(rows_for), question=LOOKUP_Q, concurrency=1)
     assert out.stop_reason == "frontier_empty" and out.levels == 2
     assert [c["documents"] for c in next(e for e in events if e["stage"] == "coverage")["goals"]] == [2, 1, 2]
     assert sum(e["stage"] == "coverage" for e in events) == 2                      # after every level, the last included
@@ -237,9 +238,19 @@ def test_a_goal_the_gate_dropped_does_not_block_coverage():
     def gate(question, items):
         return {qid: (0.05 if text.startswith("inverse") else 0.9) for qid, text in items}
 
-    out, _, events = run(LLM(extract=two_doc_extract), gate=gate, concurrency=1)
+    out, _, events = run(LLM(extract=two_doc_extract), gate=gate, question=LOOKUP_Q, concurrency=1)
     goals = next(e for e in events if e["stage"] == "coverage")["goals"]
     assert goals[2] == {"id": "1.3", "learnings": 0, "documents": 0} and out.stop_reason == "coverage_complete"
+
+
+def test_a_covered_first_level_never_cuts_the_depth_of_a_how_question():
+    """DR6d (live, 2026-09-26): with the early stop open to every question, the standard and thorough runs stopped after level
+    1 and read 6 and 5 books where the old loop read 9 and 12. A MECHANISM question keeps the depth the person chose."""
+    out, _, events = run(LLM(extract=two_doc_extract), concurrency=1)              # MECHANISM_Q, standard 3 × 2, covered at 1
+    first = next(e for e in events if e["stage"] == "coverage")["goals"]
+    assert all(g["learnings"] >= 2 and g["documents"] >= 2 for g in first)          # level 1 IS covered ...
+    assert out.stop_reason != "coverage_complete" and out.levels == 2               # ... and the run still goes to level 2
+    assert out.retrievals > 3
 
 
 def test_moves_off_has_no_coverage_and_no_coverage_stop():

@@ -49,6 +49,9 @@ QUICK, STANDARD, THOROUGH = (3, 1), (3, 2), (4, 2)
 PRESETS: dict[str, tuple[int, int]] = {"quick": QUICK, "standard": STANDARD, "thorough": THOROUGH}
 #: frontier_empty / no_new_followups / coverage_complete end a run naturally; budget / deadline / finished_early (the person
 #: pressed Finish now) / cancelled cut it short
+#: DR6d (live, 2026-09-26): a covered level ends a LOOKUP early (EXACT / DEFINITION: one level answers it); any other question
+#: keeps the depth the person chose until its second level (thorough runs had stopped after level 1 and read 5 books, not 12)
+COVERAGE_STOP_INTENTS = frozenset({"EXACT", "DEFINITION"})
 STOP_REASONS = ("frontier_empty", "no_new_followups", "coverage_complete", "budget", "deadline", "finished_early",
                 "cancelled")
 #: DR7a's time estimate, from DR4's five live runs (2026-09-26): 38-47 s for 3 searches, 98-115 s for 9, 132 s for 12
@@ -461,6 +464,10 @@ class _Run:
         self.finish, self.seed = finish, seed
 
     # ── the level loop
+    def _may_stop_early(self, levels: int) -> bool:
+        """DR6d: `coverage_complete` may end a lookup after any level, anything else only from its second level on."""
+        return self.intent in COVERAGE_STOP_INTENTS or levels >= 2
+
     def execute(self) -> ResearchOutcome:
         frontier = [self._root()]
         levels, stop = 0, "frontier_empty"
@@ -472,7 +479,8 @@ class _Run:
                 frontier, new_followups = self._level(pool, frontier)
                 if not frontier and could_recurse and not new_followups:
                     stop = "no_new_followups"
-                if self.moves and self._covered(levels) and frontier and not self._halted():
+                # `_covered` emits the level's coverage event, so it runs first, whatever the stop rule says
+                if self.moves and self._covered(levels) and self._may_stop_early(levels) and frontier and not self._halted():
                     stop = "coverage_complete"                   # every goal is covered: the rest of the budget stays unspent
                     break
             for node in frontier:                                 # queued, never planned: a halt came first
