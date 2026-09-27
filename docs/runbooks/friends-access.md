@@ -7,7 +7,7 @@ admin) runs it. Design and proof: `docs/wiki/plans/FRIENDS-ACCESS-V1.md`, regist
 
 **Sign in**
 1. Open https://rag.kingsleylab.xyz and sign in with the username and first password King sent you.
-2. You are asked to choose your own password (10 characters or more) before anything else.
+2. You are asked to choose your own password before anything else.
 3. You stay signed in for 7 days on that browser. Changing your password signs out your other browsers.
 
 **What you can do**
@@ -92,7 +92,7 @@ A first password goes to a NEW owner-only file, never to the screen (unless `--p
 | `LOGIN_REQUIRED` | No session, or it expired | Sign in again. |
 | `BAD_LOGIN` | Wrong username or password | Check both; King can reset the password. |
 | `TOO_MANY_ATTEMPTS` (429) | 5 failed tries in 15 minutes | Wait 15 minutes. |
-| `PASSWORD_CHANGE_REQUIRED` | First sign-in, or after a reset | Choose a new password (10+ characters). |
+| `PASSWORD_CHANGE_REQUIRED` | First sign-in, or after a reset | Choose a new password. |
 | `CSRF_FAILED` | The page's security token is stale | Reload the page. |
 | `OWNER_ONLY` | A friend opened an admin action | Only King can do it. |
 | `KEY_LIMIT` | Already 3 active keys | Revoke one, then create a new one. |

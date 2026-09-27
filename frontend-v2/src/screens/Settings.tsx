@@ -296,7 +296,6 @@ function OwnerWebPassword({ initiallySet }: { initiallySet: boolean }) {
   const [again, setAgain] = useState("");
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
-  const short = pw.length > 0 && pw.length < 10;
   const mismatch = again.length > 0 && again !== pw;
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -313,15 +312,14 @@ function OwnerWebPassword({ initiallySet }: { initiallySet: boolean }) {
       <p className="dim" style={{ margin: 0 }}>
         {isSet ? "Your website password is set. You can change it here." : "Set the password you use on the website. Your username there is king."}
       </p>
-      <label className="field"><span className="label">New password (10+ characters)</span>
+      <label className="field"><span className="label">New password</span>
         <input type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} /></label>
       <label className="field"><span className="label">Type it again</span>
         <input type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} /></label>
-      {short && <p className="faint" style={{ margin: 0 }}>At least 10 characters.</p>}
       {mismatch && <p className="faint" style={{ margin: 0 }}>The two entries differ.</p>}
       {msg && <div className="banner banner--ok">{msg}</div>}
       {err && <div className="banner banner--bad">{err}</div>}
-      <div className="row"><button className="btn btn--primary" type="submit" disabled={pw.length < 10 || again !== pw}>
+      <div className="row"><button className="btn btn--primary" type="submit" disabled={pw.length === 0 || again !== pw}>
         {isSet ? "Change password" : "Save password"}</button></div>
     </form>
   );

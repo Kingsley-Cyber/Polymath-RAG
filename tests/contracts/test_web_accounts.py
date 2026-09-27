@@ -41,11 +41,14 @@ def test_passwords_are_salted_scrypt_and_verify_in_constant_time():
     assert not W.verify_password(GOOD, "not-a-hash") and not W.verify_password(GOOD, None)
 
 
-@pytest.mark.parametrize("pw", ["short", "aaaaaaaaaaaa", "123123123123"])
-def test_weak_passwords_are_refused(tmp_path, pw):
+def test_only_an_empty_password_is_refused(tmp_path):
+    """The owner, 2026-09-27: "it should be anything" — a short, repetitive or numeric password is the person's choice; only
+    nothing at all is refused. The sign-in throttle is the guard against guessing."""
     with pytest.raises(W.AccountError) as err:
-        W.set_owner_password(_reg(tmp_path), pw)
+        W.set_owner_password(_reg(tmp_path), "")
     assert err.value.code == "WEAK_PASSWORD"
+    for pw in ("short", "aaaaaaaaaaaa", "123123123123", "013100", "x"):
+        W.set_owner_password(_reg(tmp_path), pw)                         # accepted
 
 
 def test_owner_login_is_case_insensitive_and_wrong_passwords_fail(tmp_path):

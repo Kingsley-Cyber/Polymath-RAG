@@ -34,7 +34,7 @@ from typing import Any
 from orchestrator import mcp_principals as P
 
 USERNAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{2,30}$")
-MIN_PASSWORD = 10
+MIN_PASSWORD = 1                      # the owner, 2026-09-27: "it should be anything" — any non-empty password; the sign-in throttle (15 min after repeated failures) is the guard
 OWNER_USERNAME = "king"
 FRIEND_SCOPES = tuple(sorted({*P.FRIEND_PROFILE, P.UPLOAD_TEXT, P.HISTORY_READ, P.ADAPTER_CANCEL}))   # "everything" but admin
 MAX_ACTIVE_KEYS = 3
@@ -53,10 +53,9 @@ class AccountError(ValueError):
 
 # ---- passwords
 def password_problem(password: str) -> str | None:
+    """Any password the person chooses is accepted; only nothing at all is refused (the owner's rule, 2026-09-27)."""
     if not isinstance(password, str) or len(password) < MIN_PASSWORD:
-        return f"a password needs at least {MIN_PASSWORD} characters"
-    if len(set(password)) < 4:
-        return "a password needs at least 4 different characters"
+        return "a password cannot be empty"
     return None
 
 

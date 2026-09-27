@@ -59,12 +59,13 @@ def test_it_is_refused_through_the_proxy_even_with_an_owner_session(app):
     assert r.status_code == 403 and r.json()["detail"]["error_code"] == "LOCAL_ONLY"
 
 
-def test_a_friend_session_cannot_reach_it_and_a_short_password_is_refused(app):
+def test_a_friend_session_cannot_reach_it_and_only_an_empty_password_is_refused(app):
     reg, a = app
     web = TestClient(a, base_url="https://testserver")
     web.post("/auth/login", json={"username": "fred", "password": "correct horse battery"}, headers=PROXY)
     csrf = web.cookies.get(W.CSRF_COOKIE)
     r = web.post("/auth/owner-password", json={"password": "friend takeover attempt"}, headers={**PROXY, W.CSRF_HEADER: csrf})
     assert r.status_code == 403 and r.json()["detail"]["error_code"] == "OWNER_ONLY"
-    assert TestClient(a).post("/auth/owner-password", json={"password": "short"}).status_code == 422
+    assert TestClient(a).post("/auth/owner-password", json={"password": ""}).status_code == 422       # nothing at all
+    assert TestClient(a).post("/auth/owner-password", json={"password": "short"}).status_code == 200  # the owner's choice
     assert B.classify("POST", "/auth/owner-password") == B.OWNER
