@@ -29,6 +29,7 @@ function route(path: string, init?: RequestInit): Response {
   ] });
   if (path.startsWith("/documents/summary")) return Response.json({ summaries: {} });
   if (path.startsWith("/corpora/") && method === "DELETE") return Response.json({ deleted: true });
+  if (path === "/auth/owner-password") return Response.json({ owner_password: "set", username: "king" });
   if (path === "/keys") return Response.json({ is_owner: me.is_owner, keys: [], max_active: 3, mcp_url: "https://mcp.example.test/mcp" });
   if (path === "/keys/prompt") return Response.json({ prompt: "Header: Authorization: Bearer <YOUR_KEY>", placeholder: "<YOUR_KEY>", mcp_url: "x" });
   if (path === "/admin/friends") return Response.json({ friends: [], libraries: ["cinema"], adapters: [], max_active_keys: 3 });
@@ -164,4 +165,29 @@ it("a friend can add and delete files in their private library", async () => {
   expect(host.textContent).toContain("Add Files");
   expect(host.querySelectorAll(".files__del").length).toBeGreaterThan(0);
   expect(host.textContent).not.toContain("Delete library");
+});
+
+
+it("the owner sets the website password in Settings on the server itself (one login on the website)", async () => {
+  await render({ ...OWNER, web_password_set: false });
+  await act(async () => openScreen("Settings"));
+  await settle();
+  const card = [...host.querySelectorAll("form")].find((f) => f.textContent?.includes("Website sign-in"))!;
+  expect(card.textContent).toContain("Your username there is king");
+  const inputs = [...card.querySelectorAll('input[type="password"]')] as HTMLInputElement[];
+  const pw = inputs[0]!, again = inputs[1]!;
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+  await act(async () => { setter.call(pw, "a long enough pass"); pw.dispatchEvent(new Event("input", { bubbles: true })); });
+  await act(async () => { setter.call(again, "a long enough pass"); again.dispatchEvent(new Event("input", { bubbles: true })); });
+  await act(async () => (card.querySelector('button[type="submit"]') as HTMLButtonElement).click());
+  await settle();
+  expect(calls.some((c) => c.method === "POST" && c.path === "/auth/owner-password")).toBe(true);
+  expect(card.textContent).toContain("sign in as king");
+});
+
+it("a friend never sees the website-password card", async () => {
+  await render(FRIEND);
+  await act(async () => openScreen("Settings"));
+  await settle();
+  expect(host.textContent).not.toContain("Website sign-in");
 });

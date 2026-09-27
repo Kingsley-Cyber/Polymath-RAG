@@ -297,6 +297,44 @@ function AppearanceCard() {
   );
 }
 
+/** On the server itself: set King's password for signing in on the website (one login there; no terminal needed). */
+function OwnerWebPassword({ initiallySet }: { initiallySet: boolean }) {
+  const [isSet, setIsSet] = useState(initiallySet);
+  const [pw, setPw] = useState("");
+  const [again, setAgain] = useState("");
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+  const short = pw.length > 0 && pw.length < 10;
+  const mismatch = again.length > 0 && again !== pw;
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(""); setMsg("");
+    try {
+      await auth.setOwnerPassword(pw);
+      setIsSet(true); setPw(""); setAgain("");
+      setMsg("Saved. On the website, sign in as king with this password.");
+    } catch (x) { setErr(message(x)); }
+  }
+  return (
+    <form className="card stack" onSubmit={(e) => void save(e)}>
+      <h2 className="settings__title">Website sign-in</h2>
+      <p className="dim" style={{ margin: 0 }}>
+        {isSet ? "Your website password is set. You can change it here." : "Set the password you use on the website. Your username there is king."}
+      </p>
+      <label className="field"><span className="label">New password (10+ characters)</span>
+        <input type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} /></label>
+      <label className="field"><span className="label">Type it again</span>
+        <input type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} /></label>
+      {short && <p className="faint" style={{ margin: 0 }}>At least 10 characters.</p>}
+      {mismatch && <p className="faint" style={{ margin: 0 }}>The two entries differ.</p>}
+      {msg && <div className="banner banner--ok">{msg}</div>}
+      {err && <div className="banner banner--bad">{err}</div>}
+      <div className="row"><button className="btn btn--primary" type="submit" disabled={pw.length < 10 || again !== pw}>
+        {isSet ? "Change password" : "Save password"}</button></div>
+    </form>
+  );
+}
+
 /** FRIENDS-ACCESS-V1 F4 — Settings: my account, my API keys + the connect prompt, and (owner) the friends. */
 export function Settings({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: Me) => void; onSignOut: () => void }) {
   const lib = privateLibrary(me);
@@ -311,6 +349,7 @@ export function Settings({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: 
       </div>
       <div className="stack">
         <AppearanceCard />
+        {me.local && me.is_owner && <OwnerWebPassword initiallySet={!!me.web_password_set} />}
         {!me.local && (
           <div className="card stack">
             <h2 className="settings__title">Account</h2>

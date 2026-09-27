@@ -45,8 +45,10 @@ def client_address(request: Request) -> str:
 
 def me_payload(ident: W.WebIdentity | None, *, local: bool = False) -> dict:
     if ident is None:                                    # a direct loopback caller: the owner, as before
+        doc = REGISTRY.get() or {}
         return {"username": W.OWNER_USERNAME, "display_name": "King", "is_owner": True, "must_change_password": False,
-                "principal_id": P.OWNER_ID, "local": local}
+                "principal_id": P.OWNER_ID, "local": local,
+                "web_password_set": bool((doc.get("owner_web") or {}).get("password_hash"))}
     return {"username": ident.username, "display_name": ident.display_name, "is_owner": ident.is_owner,
             "must_change_password": ident.must_change_password, "principal_id": ident.principal_id, "local": False}
 
@@ -96,6 +98,30 @@ def me(request: Request) -> JSONResponse:
     response = JSONResponse(me_payload(ident, local=ident is None))
     response.headers["cache-control"] = "no-store"
     return response
+
+
+class OwnerPasswordBody(BaseModel):
+    password: str = Field(min_length=1, max_length=256)
+
+
+@router.post("/auth/owner-password")
+def set_owner_password(body: OwnerPasswordBody, request: Request) -> JSONResponse:
+    """The owner sets King's web sign-in password FROM THE SERVER ITSELF (http://127.0.0.1:7200, where no sign-in exists):
+    one login on the website, no terminal. Refused through the proxy (a signed-in owner uses /auth/password there) and for any
+    principal."""
+    from polymath_shared import principal_context
+
+    from orchestrator.web_boundary import proxied
+    if proxied(request.scope.get("headers") or []) or principal_context.current():
+        raise _refuse(403, "LOCAL_ONLY", "set the owner password on the server itself")
+    path = W.registry_path()
+    if path is None:
+        raise _refuse(503, "ACCOUNTS_NOT_CONFIGURED", "POLYMATH_MCP_PRINCIPALS_FILE is not set on this server")
+    problem = W.password_problem(body.password)
+    if problem:
+        raise _refuse(422, "WEAK_PASSWORD", problem)
+    W.set_owner_password(path, body.password)
+    return JSONResponse({"owner_password": "set", "username": W.OWNER_USERNAME})
 
 
 @router.post("/auth/password")

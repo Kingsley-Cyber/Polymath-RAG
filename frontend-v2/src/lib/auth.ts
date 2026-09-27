@@ -12,6 +12,8 @@ export interface Me {
   principal_id: string;
   /** true when the owner opened the app on the server itself (http://127.0.0.1:7200): no sign-in exists there */
   local: boolean;
+  /** on the server itself: whether King's web sign-in password exists yet */
+  web_password_set?: boolean;
 }
 
 export interface ApiKey {
@@ -70,6 +72,8 @@ export function normalizeMe(raw: unknown): Me {
 }
 
 export const auth = {
+  /** On the server itself only: King's web sign-in password (the website then asks for username king + this password). */
+  setOwnerPassword: (password: string) => http.post<{ owner_password: string; username: string }>("/auth/owner-password", { password }),
   me: (s?: AbortSignal) => http.get<unknown>("/auth/me", s).then(normalizeMe),
   login: (username: string, password: string) => http.post<Me>("/auth/login", { username, password }),
   logout: () => http.post<{ signed_out: boolean }>("/auth/logout", {}),

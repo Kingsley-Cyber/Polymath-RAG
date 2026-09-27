@@ -48,6 +48,7 @@ RULES: tuple[tuple[frozenset[str] | None, re.Pattern[str], str], ...] = tuple((m
     # writes into the principal's writable libraries
     (_POST, r"^/upload$", WRITE), (_DELETE, rf"^/documents/{_SEG}$", WRITE),
     # the owner's
+    (_POST, r"^/auth/owner-password$", OWNER),          # and the route itself refuses anything proxied
     (_ANY, r"^/admin(/.*)?$", OWNER), (_ANY, r"^/llm/.*$", OWNER), (_ANY, r"^/control_plane(/.*)?$", OWNER),
     (_ANY, r"^/(fleet|sidecars|health/semantic|health/pipeline|intake|status|generated)(/.*)?$", OWNER), (_ANY, rf"^/runs/{_SEG}$", OWNER),
     (_ANY, rf"^/corpora/{_SEG}(/.*)?$", OWNER), (_POST, rf"^/documents/{_SEG}/enrich$", OWNER),
