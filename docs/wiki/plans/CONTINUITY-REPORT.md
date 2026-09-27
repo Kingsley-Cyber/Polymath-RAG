@@ -153,7 +153,7 @@ historical, never an instruction.
    `web_password_set: false` until then). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
    must print `"ok": true`, the owner signs in and adds the first friend in Settings, and the F6 close-out follows (register row,
    work-log, CONTINUITY, memory).
-4. **FIX-IT-ALL — LIVE on production `bfdfbe0e`** (three owner Run-button deploys on 2026-09-26/27, READY 26/13/1, live contract
+4. **FIX-IT-ALL — LIVE on production `5c42ce96`** (eight owner Run-button deploys on 2026-09-26/27, READY 26/13/1, live contract
    green). Merges and bounces are classifier-gated as Production Deploy: hand the owner ONE command in the main checkout,
    `git merge --ff-only feat/fix-it-all && (cd frontend-v2 && npm run build) && bash scripts/bounce_fleet.sh`. Integrate helper work
    on a side branch and fast-forward `feat/fix-it-all` only when green: the owner may run the command at any moment.
@@ -162,8 +162,22 @@ historical, never an instruction.
      DR6a–d moves (§10.9 passed 4/5), DR7a–f the research experience (11.519–11.534).
    - LIVE since 11.535 / 11.536 (`bfdfbe0e`): the deep research tuning (evaluative words, the gate's thread check, the folded
      phone composer); moves cite ≥ the old loop's books on 5 of 5 DR4 questions.
-   - NEXT (only on the owner's word): server-side report history (a migration after the reserved 0067–0071); multi-library deep
-     research (HYBRID answers one library per call); the gate's floors measured on more real plans.
+   - LIVE since 11.537–11.542 (`5c42ce96`): SUPPLIER-APIS — CJ listings / product / freight / warehouses through CJ's official
+     REST API (`CJ_API_KEY` in `.env`, stored by a command that never displayed it), Alibaba listings through the local SearXNG
+     (compose profile `search`, `docker compose --profile search up -d searxng`; five engines; up to three result pages; searches
+     paced 2 s apart), a challenge-page detector (detect, never solve; a quoted check page is refused as evidence), the human-check
+     handoff in every agent guide, four OWNER-only read tools in both MCP servers (`supplier_search / product / freight /
+     warehouses`; CJ's own MCP is not used — its token reaches orders and payments), CJ results ranked by the query's rarest words
+     (a page of 100); the friend key + connect prompt proven live over `https://mcp.kingsleylab.xyz/mcp` (a probe friend, now
+     disabled); Settings keys / passwords / prompt carry the answers' hover copy button. NEVER build anything that solves or
+     bypasses a check.
+   - NEXT (only on the owner's word), in the order proposed: (1) the stalled background jobs (`/control_plane?corpus_id=cinema`:
+     64 of 67 cinema documents `processing_stalled`, 269 dormant stalls — PENDING_ON_PREDECESSOR ×207, PENDING_ADVANCE_BLOCKED
+     ×32, RUN_SETTLED_NOT_PROMOTED ×30; 8 failed tickets: project_qdrant 5, extract 2, intake 1); (2) a "been there" memory so a
+     new product-research run sees what earlier runs explored (34 runs, 7 distinct seeds, no cross-run memory today); (3) one
+     fresh product-research session from the owner's Claude / Codex on a new idea, watched end to end; (4) the Fable bug hunt on
+     search / chat / ingestion / deep research (a workflow, on the owner's "use a workflow"); later: server-side report history
+     (a migration after the reserved 0067–0071); multi-library deep research; the gate's floors on more real plans.
    - OWNER DECISIONS pending: B-15, B-38, B-53, B-59, B-64; the PART halves (B-12 legacy manifest 2.2.2, B-25 worker lock, B-48
      rejection history = a migration, B-50 legacy manifest, B-57 per-run manifest pin); an app-wide Host allowlist (B-28).
    - FRIENDS-ACCESS F6: King's web password is still NOT set (`web_password_set: false`): the owner sets it on the Mac
