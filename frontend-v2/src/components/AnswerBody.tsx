@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { DeepAnswer } from "../lib/chat";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Turn } from "../lib/chat";
@@ -24,6 +25,7 @@ export function AnswerBody({ t, models }: { t: Turn; models: Synthesizer[] }) {
       <div className="md">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{t.answerText}</ReactMarkdown>
       </div>
+      {t.deep && <DeepSources deep={t.deep} />}
       {t.abstained && t.uncovered.length > 0 && (
         <div className="uncovered-note">nothing in this corpus covers: {t.uncovered.join(", ")}</div>
       )}
@@ -67,6 +69,31 @@ export function AnswerBody({ t, models }: { t: Turn; models: Synthesizer[] }) {
           </details>
         </>
       )}
+    </div>
+  );
+}
+
+/** DEEP-RESEARCH-MODE-V1: the sources a deep research report cites, resolved from its per-run ids (c1, c2 …). */
+function DeepSources({ deep }: { deep: DeepAnswer }) {
+  const s = deep.summary ?? {};
+  const n = (k: string) => (typeof s[k] === "number" ? (s[k] as number) : null);
+  return (
+    <div className="sources">
+      <div className="label">
+        Sources{deep.citations.length ? ` (${deep.citations.length})` : ""}
+        {n("learnings") != null && <span className="faint"> · {n("learnings")} findings from {n("retrievals")} searches{typeof s.stop_reason === "string" ? `, stopped: ${String(s.stop_reason).replace(/_/g, " ")}` : ""}</span>}
+      </div>
+      {deep.citations.length === 0 && <p className="faint" style={{ margin: "4px 0 0" }}>The report cites no passage.</p>}
+      <ol className="sources__list">
+        {deep.citations.map((c) => (
+          <li key={c.cid}>
+            <span className="cite-id mono">{c.cid}</span> <strong>{c.title ?? c.id}</strong>
+            {c.source && <span className="faint"> · {c.source}</span>}
+            {c.text && <details><summary className="faint">Passage</summary><p className="sources__text">{c.text}</p></details>}
+          </li>
+        ))}
+      </ol>
+      {deep.unknown.length > 0 && <p className="faint">Cited but not found in the research: {deep.unknown.join(", ")}</p>}
     </div>
   );
 }

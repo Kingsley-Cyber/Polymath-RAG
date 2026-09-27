@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "../ui/icons";
 import { copyText } from "../lib/auth";
-import { api } from "../lib/api";
+import { api, deepResearchStream } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { PUBLIC_MODES } from "../lib/contracts";
 import type { PublicMode, Synthesizer } from "../lib/contracts";
@@ -46,6 +46,8 @@ export function Chat({
   const [model, setModel] = useState<string>("");
   const [reasoning, setReasoning] = useState<string>("");
   const [corpusExplore, setCorpusExplore] = useState(false);
+  const [deep, setDeep] = useState(false);                        // DEEP-RESEARCH-MODE-V1: the composer switch
+  const [preset, setPreset] = useState("standard");
   const [question, setQuestion] = useState("");
   const turns = session.turns;
   // Busy is the chat's, not this screen's: a chat reopened mid-answer is still streaming.
@@ -84,6 +86,7 @@ export function Chat({
     const q = question.trim();
     if (!q || busy) return;
     setQuestion("");
+    if (deep) { void sendDeep(q); return; }
     const idx = turns.length;
     onUpdateTurns((t) => [...t, newTurn(q, mode)]);
     const body: Record<string, unknown> = { message: q, corpus_id: corpusId, mode, require_retrieval: true };
@@ -96,6 +99,23 @@ export function Chat({
       await runTurn(body, (patch) => {
         onUpdateTurns((ts) => ts.map((t, i) => (i === idx ? { ...t, ...patch } : t)));
       }, ac.signal);
+    } finally {
+      endStream(id, ac);
+    }
+  }
+
+  /** A deep research turn: the same thread and frames, its own route and request. */
+  async function sendDeep(q: string) {
+    const idx = turns.length;
+    onUpdateTurns((ts) => [...ts, newTurn(q, `DEEP · ${preset}`)]);
+    const deepRequest: Record<string, unknown> = { question: q, corpus_id: corpusId, preset, mode };
+    if (model) deepRequest.synthesizer = model;
+    const id = session.id;
+    const ac = beginStream(id);
+    try {
+      await runTurn(deepRequest, (patch) => {
+        onUpdateTurns((ts) => ts.map((t, i) => (i === idx ? { ...t, ...patch } : t)));
+      }, ac.signal, deepResearchStream);
     } finally {
       endStream(id, ac);
     }
@@ -134,7 +154,7 @@ export function Chat({
             ref={inputRef}
             className="composer__input"
             rows={1}
-            placeholder={`Ask ${corpusId}…`}
+            placeholder={deep ? `Research ${corpusId} in depth…` : `Ask ${corpusId}…`}
             aria-label="Message"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -167,7 +187,22 @@ export function Chat({
                   ))}
                 </select>
               </label>
-              {corpusExploreAvailable && (
+              <label className="chip-field chip-field--toggle"
+                     title="Several rounds of searching and reading your library, then a report that cites every claim (about 1-3 minutes)">
+                <input type="checkbox" checked={deep} onChange={(e) => setDeep(e.target.checked)} />
+                <span className="label">Deep research</span>
+              </label>
+              {deep && (
+                <label className="chip-field" title="How far the research goes">
+                  <span className="label">Depth</span>
+                  <select value={preset} onChange={(e) => setPreset(e.target.value)}>
+                    <option value="quick">Quick</option>
+                    <option value="standard">Standard</option>
+                    <option value="thorough">Thorough</option>
+                  </select>
+                </label>
+              )}
+              {corpusExploreAvailable && !deep && (
                 <label className="chip-field chip-field--toggle"
                        title="Bounded, corpus-grounded exploration: activate related concepts from your library and retrieve through a few grounded sub-questions.">
                   <input type="checkbox" checked={corpusExplore} onChange={(e) => setCorpusExplore(e.target.checked)} />

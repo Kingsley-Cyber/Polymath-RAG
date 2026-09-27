@@ -196,15 +196,25 @@ export interface SseFrame { event: string; data: unknown }
  * (the SSE-gzip buffering bug is a backend concern, but a streaming reader is the
  * only way the phases are visible as they happen).
  */
-export async function* chatStream(
-  body: Record<string, unknown>, signal?: AbortSignal,
+/** The chat's SSE stream (`/chat/stream`). */
+export function chatStream(body: Record<string, unknown>, signal?: AbortSignal): AsyncGenerator<SseFrame> {
+  return sseStream("/chat/stream", body, signal);
+}
+
+/** DEEP-RESEARCH-MODE-V1: the research loop's stream (`/research/deep`), on the chat's own frame types. */
+export function deepResearchStream(body: Record<string, unknown>, signal?: AbortSignal): AsyncGenerator<SseFrame> {
+  return sseStream("/research/deep", body, signal);
+}
+
+async function* sseStream(
+  path: string, body: Record<string, unknown>, signal?: AbortSignal,
 ): AsyncGenerator<SseFrame> {
-  const r = await checked(await fetch("/chat/stream", {
+  const r = await checked(await fetch(path, {
     method: "POST", signal,
     headers: { "content-type": "application/json", accept: "text/event-stream", ...csrfHeader() },
     body: JSON.stringify(body),
-  }), "/chat/stream");
-  if (!r.body) throw new ApiError(r.status, "/chat/stream", "no response body");
+  }), path);
+  if (!r.body) throw new ApiError(r.status, path, "no response body");
   const reader = r.body.getReader();
   const dec = new TextDecoder();
   let buf = "";

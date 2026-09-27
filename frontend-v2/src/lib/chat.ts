@@ -1,5 +1,5 @@
 /** Chat turn state machine over the `/chat/stream` SSE frames. */
-import { chatStream } from "./api";
+import { chatStream, type SseFrame } from "./api";
 import type { AnswerFrame, RetrievalReceipt } from "./contracts";
 
 /** One pipeline step from a `phase` frame. `data` keeps the raw fields so the
@@ -26,13 +26,18 @@ export interface Turn {
   latencyMs: number | null;
   error: string | null;
   done: boolean;
+  /** DEEP-RESEARCH-MODE-V1: the report's resolved citations and the run's counts (null for a chat answer). */
+  deep?: DeepAnswer | null;
 }
+
+export interface DeepCitation { cid: string; id?: string; title?: string; source?: string; text?: string; corpus_id?: string }
+export interface DeepAnswer { citations: DeepCitation[]; unknown: string[]; summary: Record<string, unknown> | null }
 
 export function newTurn(question: string, mode: string): Turn {
   return {
     question, mode, phases: [], reasoningText: "", answerText: "",
     model: null, verdict: null, abstained: false, uncovered: [],
-    receipt: null, latencyMs: null, error: null, done: false,
+    receipt: null, latencyMs: null, error: null, done: false, deep: null,
   };
 }
 
@@ -74,13 +79,14 @@ export async function runTurn(
   body: Record<string, unknown>,
   onUpdate: (patch: Partial<Turn>) => void,
   signal?: AbortSignal,
+  stream: (body: Record<string, unknown>, signal?: AbortSignal) => AsyncGenerator<SseFrame> = chatStream,
 ): Promise<void> {
   const t0 = performance.now();
   const phases: Phase[] = [];
   let streamed = "";               // accumulates `token` frames so the answer renders live
   let reasoning = "";              // accumulates `reasoning` frames so the wait shows live thinking
   try {
-    for await (const frame of chatStream(body, signal)) {
+    for await (const frame of stream(body, signal)) {
       if (frame.event === "phase") {
         const d = (frame.data ?? {}) as Record<string, unknown>;
         const stage = String(d.stage ?? d.phase ?? d.name ?? "phase");
@@ -92,6 +98,22 @@ export async function runTurn(
         const d = (frame.data ?? {}) as Record<string, unknown>;
         const tok = typeof d.token === "string" ? d.token : typeof d.text === "string" ? d.text : "";
         if (tok) { streamed += tok; onUpdate({ answerText: streamed }); }
+      } else if (frame.event === "answer" && (frame.data as { kind?: string })?.kind === "deep") {
+        // A deep research report: its text, the citations resolved to their rows, and the run's counts (no chat receipt).
+        const result = ((frame.data as { result?: unknown }).result ?? {}) as Record<string, unknown>;
+        const meta = (typeof result.meta === "object" && result.meta ? result.meta : {}) as Record<string, unknown>;
+        onUpdate({
+          answerText: pickAnswer(result) || streamed,
+          model: typeof result.model === "string" ? result.model : null,
+          verdict: typeof meta.verdict === "string" ? meta.verdict : null,
+          receipt: null,
+          latencyMs: (frame.data as { latency_ms?: number }).latency_ms ?? Math.round(performance.now() - t0),
+          deep: {
+            citations: Array.isArray(result.citations) ? (result.citations as DeepCitation[]) : [],
+            unknown: Array.isArray(result.unknown_citations) ? (result.unknown_citations as string[]) : [],
+            summary: (typeof meta.deep_research === "object" && meta.deep_research ? meta.deep_research : null) as Record<string, unknown> | null,
+          },
+        });
       } else if (frame.event === "answer") {
         // The final answer frame is authoritative — prefer its clean text, fall back to what we streamed.
         const a = frame.data as AnswerFrame;

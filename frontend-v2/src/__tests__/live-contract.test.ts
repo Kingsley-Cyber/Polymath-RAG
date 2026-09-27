@@ -166,18 +166,20 @@ function clientCalls(): ClientCall[] {
     }
   });
   calls.push({ name: "chatStream", method: "POST", path: "/chat/stream", query: [], sends: chatBodyKeys() });
+  calls.push({ name: "deepResearchStream", method: "POST", path: "/research/deep", query: [], sends: chatBodyKeys("deepRequest") });
   return calls;
 }
 
-/** The fields Chat.tsx's send() puts in the /chat/stream body: the object literal + every `body.x = …` assignment. */
-function chatBodyKeys(): string[] {
+/** The fields Chat.tsx puts in a stream's request: the object literal named `name` + every `name.x = …` assignment. The chat
+ *  (send → /chat/stream) builds `body`; deep research (sendDeep → /research/deep) builds `deepRequest`. */
+function chatBodyKeys(name = "body"): string[] {
   const keys = new Set<string>();
   const visit = (n: ts.Node): void => {
-    if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.name.text === "body" && n.initializer && ts.isObjectLiteralExpression(n.initializer)) {
+    if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.name.text === name && n.initializer && ts.isObjectLiteralExpression(n.initializer)) {
       n.initializer.properties.forEach((x) => keys.add(propName(x.name)));
     }
     if (ts.isBinaryExpression(n) && n.operatorToken.kind === ts.SyntaxKind.EqualsToken && ts.isPropertyAccessExpression(n.left)
-        && ts.isIdentifier(n.left.expression) && n.left.expression.text === "body") keys.add(n.left.name.text);
+        && ts.isIdentifier(n.left.expression) && n.left.expression.text === name) keys.add(n.left.name.text);
     n.forEachChild(visit);
   };
   visit(src("Chat.tsx", chatSrc));

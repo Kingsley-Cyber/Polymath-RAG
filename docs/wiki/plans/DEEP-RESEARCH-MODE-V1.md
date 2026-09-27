@@ -137,7 +137,7 @@ Times are estimates from concurrency 2 and today's retrieval latency; DR4 measur
 | **DR0** | Find the switches of the reserved deep surfaces; add the `deep_research` lanes through the registry; fix the frame and receipt shapes in this plan | `llm_accounts.py validate` / `diff` clean; the surfaces' switches named with file:line |
 | **DR1** — DONE 11.513 | The engine (`deep_research/`) with fake ports | Unit tests: breadth halves per level; stop at 85% budget; stop on no follow-ups; a learning with a foreign cid is dropped and counted; duplicate queries dropped; deadline respected; the report cites only known cids |
 | **DR2** — DONE 11.514 | `POST /research/deep` + boundary line + receipts | Contract tests: frame order (phase… token… answer, done), heartbeat, a friend's scope narrowed, a second concurrent run refused, a disconnect cancels, a receipt written |
-| **DR3** | Composer switch, presets, progress tree, report | vitest: the switch routes to `/research/deep`; progress renders from phase frames; Stop cancels; citation chips resolve |
+| **DR3** — DONE 11.516 | Composer switch, presets, progress tree, report | vitest: the switch routes to `/research/deep`; progress renders from phase frames; Stop cancels; citation chips resolve |
 | **DR4** | Live proof — **on the owner's word** | 5 smoke questions (testing policy 5–8) across cinema and commerce-v1: every cited cid resolves, stop reasons are sensible, cost matches §3 |
 | **DR5** *(optional)* | The adapter for MCP agents; owner-only web branch | Only if the owner wants it |
 
