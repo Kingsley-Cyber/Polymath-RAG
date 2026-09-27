@@ -2526,6 +2526,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-26-fix-it-all-admission.md", "md", None),
     ("docs/wiki/experiments/trail-ext-bughunt-2026-09-26/README.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-trail-ext-fixes-ecommerce.md", "md", None),
+    ("docs/wiki/work-log/2026-09-26-trail-ext-fixes-ecommerce-c1.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-trail-t0-a15.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-frontend-refresh-u1.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-frontend-refresh-u2.md", "md", None),
