@@ -2519,6 +2519,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/plans/FRONTEND-REFRESH-V1.md", "md", None),
     ("docs/wiki/plans/TRAIL-INTERFACE-V1.md", "md", None),
     ("docs/wiki/plans/DEEP-RESEARCH-MODE-V1.md", "md", None),
+    ("docs/wiki/plans/FACET-RETRIEVAL-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-plan-admitted.md", "md", None),
     ("shared/polymath_shared/adapter/harness_guide.py", "py", None),
     ("tests/determinism/test_autoresearch_sources_harness.py", "py", None),
