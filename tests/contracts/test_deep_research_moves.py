@@ -246,6 +246,41 @@ def test_an_evaluative_question_reserves_an_inverse_slot_on_every_level():
     assert out.summary()["moves"]["signals"]["one_sided"] == 0                 # 2 learnings: the reserve, not the signal
 
 
+LABAN_Q = "What is Laban's effort theory, and is it useful for film actors?"    # DEFINITION; DR7f (live) planned no inverse
+
+
+@pytest.mark.parametrize("question", [
+    "Is habit stacking useful for students?", "Does the usefulness of a light meter last?", "Is a shot list helpful on set?",
+    "Is a second camera valuable on a documentary?", "Would you recommend a gimbal to a beginner?",
+    "Is a gimbal recommended for beginners?", "What is the usual recommendation for a first lens?",
+    "Is it a good idea to shoot handheld?", "Is Laban's effort theory any good for actors?", "Is it good for film actors?",
+    "Is 35mm better than 50mm for portraits?", "Is digital worse than film for skin tones?", "Are light meters reliable in snow?",
+    "Is the Method a trustworthy way to teach acting?", "Is Stanislavski overrated?", "Is Michael Chekhov underrated?",
+    "Does habit stacking work well for night owls?", "Which lens works well in low light?"])
+def test_a_judgement_asked_in_other_words_is_evaluative(question):
+    """Tuning after DR7f (live, 2026-09-27): "is it useful for film actors?" asked for a judgement, and no counter-evidence
+    part was planned for it."""
+    assert M.is_evaluative(question)
+
+
+@pytest.mark.parametrize("question", ["How does light shape mood?", "What makes a good shot?",
+                                      "How do good actors prepare a role?", "What is the bestiary about?"])
+def test_a_neutral_question_stays_neutral(question):
+    assert not M.is_evaluative(question)                  # "good" alone asks for no judgement
+
+
+def test_the_laban_question_plans_a_counter_evidence_part():
+    intent = M.question_intent(LABAN_Q)
+    assert (intent, M.is_evaluative(LABAN_Q)) == ("DEFINITION", True)
+    assert M.root_quota(intent, 3, evaluative=False) == (1, 2, 0, 0)          # what the live run got: no inverse slot
+    assert M.root_quota(intent, 3, evaluative=M.is_evaluative(LABAN_Q)) == (1, 1, 0, 1)
+    llm = LLM()
+    out, _, _ = run(llm, question=LABAN_Q, breadth=3, depth=1)
+    assert "MOVES: write 1 broad, 1 deep and 1 inverse query." in llm.plans()[0][1]
+    assert out.summary()["moves"]["evaluative"] is True
+    assert out.summary()["moves"]["levels"][0]["asked"] == {"broad": 1, "deep": 1, "adjacent": 0, "inverse": 1}
+
+
 def test_repeat_moves_a_slot_from_deep_to_adjacent():
     shared = [Row("same-a", "the same passage", "Doc", 0.9, doc_id="d1"), Row("same-b", "another", "Doc", 0.8, doc_id="d2"),
               Row("same-c", "a third", "Doc", 0.7, doc_id="d3")]

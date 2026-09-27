@@ -36,8 +36,12 @@ REPEAT_SHARE = 0.5          # this share of a parent's rows already seen in the 
 CONCENTRATION_DOCS = 2      # a parent's learnings citing rows of at most this many documents → its deep queries anchor there
 ONE_SIDED_LEARNINGS = 3     # this many learnings so far, none from an inverse search → the richest child gets an inverse slot
 DRY_LEVELS = 2              # a move searched on this many levels without a learning gets weight 0 for the rest of the run
+#: a question asking for a judgement. Tuning after DR7f (live, 2026-09-27: "…is it useful for film actors?" planned no inverse
+#: part): the words a judgement is asked in, kept narrow; "good" alone stays out ("What makes a good shot?" asks for none)
 _EVALUATIVE = re.compile(
-    r"\b(?:should|worth(?:while)?|best|does it work|is it true|effective(?:ness)?|pros and cons)\b", re.IGNORECASE)
+    r"\b(?:should|worth(?:while)?|best|does it work|is it true|effective(?:ness)?|pros and cons"
+    r"|useful(?:ness)?|helpful|valuable|recommend(?:ed|ation)?|good idea|any good|is it good|(?:better|worse) than"
+    r"|reliable|trustworthy|overrated|underrated|works? well)\b", re.IGNORECASE)
 _INVERSE = MOVES.index(INVERSE)
 _DEEP = MOVES.index(DEEP)
 _ADJACENT = MOVES.index(ADJACENT)
@@ -51,7 +55,10 @@ def question_intent(question: str) -> str:
 
 
 def is_evaluative(question: str) -> bool:
-    """"should", "worth", "best", "does it work", "is it true", "effective", "pros and cons": one inverse slot on every level."""
+    """A question that asks for a judgement gets one inverse slot on every level. The words: "should", "worth(while)",
+    "best", "does it work", "is it true", "effective(ness)", "pros and cons", "useful(ness)", "helpful", "valuable",
+    "recommend(ed)", "recommendation", "good idea", "any good", "is it good", "better than", "worse than", "reliable",
+    "trustworthy", "overrated", "underrated", "work well", "works well". "good" alone is not one."""
     return bool(_EVALUATIVE.search(question or ""))
 
 
