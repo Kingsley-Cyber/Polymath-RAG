@@ -20,6 +20,7 @@ from polymath_shared.deep_research import (
     Config,
     Row,
     allocate,
+    evidence_model,
     parse_plan,
     run_research,
 )
@@ -380,7 +381,7 @@ def test_the_gate_drops_a_query_under_its_floor_before_it_is_searched():
                                                 "inverse q1s2 habit stacking"]
     assert sorted(ret.moves()) == ["broad", "deep"] and [q.status for q in out.queries] == ["ok", "ok", "gated"]
     m = out.summary()["moves"]
-    assert m["gate"] == {"scored": 3, "dropped": 1, "user_kept": 0, "failed_open": 0}
+    assert m["gate"] == {"scored": 3, "dropped": 1, "user_kept": 0, "thread_kept": 0, "failed_open": 0}
     assert m["levels"][0]["searched"]["inverse"] == 0
     assert next(e for e in events if e["stage"] == "gate")["dropped"] == 1
     assert events[-1]["completed"] == events[-1]["total"] == 3
@@ -392,7 +393,7 @@ def test_the_gate_fails_open_and_counts_it():
 
     out, ret, _ = run(LLM(), gate=broken, breadth=3, depth=1)
     assert len(ret.calls) == 3 and {q.status for q in out.queries} == {"ok"}
-    assert out.summary()["moves"]["gate"] == {"scored": 0, "dropped": 0, "user_kept": 0, "failed_open": 3}
+    assert out.summary()["moves"]["gate"] == {"scored": 0, "dropped": 0, "user_kept": 0, "thread_kept": 0, "failed_open": 3}
     assert "gate:TimeoutError" in out.errors
     out, ret, _ = run(LLM(), gate=lambda question, items: {}, breadth=3, depth=1)      # a judge that scores nothing
     assert len(ret.calls) == 3 and out.summary()["moves"]["gate"]["failed_open"] == 3
@@ -427,6 +428,112 @@ def test_a_query_under_the_spawn_floor_keeps_its_learnings_but_spawns_nothing():
     assert "next2 detail2?" not in out.open_followups          # a drifting thread's follow-ups are not open questions
 
 
+# ─────────────────────────────────────────────────────────── the relevance gate: a follow-up that fits its thread
+class Gate:
+    """Records every call as (against, ids). Against the question: the ids in `low` score 0.1, the rest 0.9. Against anything
+    else (a thread): `thread` is a score, a {id: score} map (an id left out is unscored), or an exception to raise. `log`
+    records the end of each thread call; `delay` slows the thread calls down."""
+
+    def __init__(self, question, low, thread=0.5, *, log=None, delay=0.0):
+        self.question, self.low, self.thread, self.log, self.delay = question, set(low), thread, log, delay
+        self.calls: list[tuple[str, list[str]]] = []
+        self._lock = threading.Lock()
+
+    def __call__(self, against, items):
+        with self._lock:
+            self.calls.append((against, [qid for qid, _ in items]))
+        if against == self.question:
+            return {qid: (0.1 if qid in self.low else 0.9) for qid, _ in items}
+        time.sleep(self.delay)
+        if self.log is not None:
+            self.log.append(("check", against))
+        if isinstance(self.thread, BaseException):
+            raise self.thread
+        if isinstance(self.thread, dict):
+            return {qid: self.thread[qid] for qid, _ in items if qid in self.thread}
+        return {qid: self.thread for qid, _ in items}
+
+
+def one_book() -> Retriever:
+    """Every row in one book, so no goal is ever covered (2 findings from 2 books) and a run keeps its whole depth."""
+    return Retriever(rows_for=lambda q: [Row(re.sub(r"\W+", "-", q) + k, f"text {k}", "Doc", 0.9, doc_id="book-1")
+                                         for k in ("-a", "-b")])
+
+
+def test_a_follow_up_that_fits_its_thread_is_searched_but_spawns_nothing():
+    """Tuning after DR6d (live, 2026-09-27): the thorough question 5 lost 5 of its 12 planned searches, level-2 follow-ups that
+    scored low against the WHOLE question while drilling into their own thread. Breadth 2 × depth 3: 1.1 and 1.2, then
+    1.1.1 and 1.2.1, then 1.2.1's child."""
+    gate = Gate(MECHANISM_Q, low={"1.1.1"}, thread=0.5)
+    llm = LLM()
+    out, ret, _ = run(llm, one_book(), gate=gate, breadth=2, depth=3, concurrency=1)
+    record = {q.id: q for q in out.queries}
+    assert gate.calls == [(MECHANISM_Q, ["1.1", "1.2"]), (MECHANISM_Q, ["1.1.1", "1.2.1"]),
+                          (record["1.1"].query, ["1.1.1"]),                    # its thread: the search it follows up
+                          (MECHANISM_Q, ["1.2.1.1"])]
+    assert record["1.1.1"].status == "ok" and record["1.1.1"].query in [q for q, _, _ in ret.calls]
+    assert any(ln.query == record["1.1.1"].query for ln in out.learnings)
+    assert not any(q.node == "1.1.1" for q in out.queries)                    # one step, never a chain: no child
+    assert record["1.2.1.1"].node == "1.2.1"                                  # its sibling, over the floor, goes on
+    assert out.summary()["moves"]["drift_stopped"] == 1
+    assert out.summary()["moves"]["gate"] == {"scored": 5, "dropped": 0, "user_kept": 0, "thread_kept": 1, "failed_open": 0}
+
+
+def test_a_follow_up_low_against_its_thread_too_is_dropped():
+    gate = Gate(MECHANISM_Q, low={"1.1.1"}, thread=0.1)
+    out, ret, _ = run(LLM(), one_book(), gate=gate, breadth=2, depth=3, concurrency=1)
+    record = {q.id: q for q in out.queries}
+    assert [against for against, _ in gate.calls] == [MECHANISM_Q, MECHANISM_Q, record["1.1"].query, MECHANISM_Q]
+    assert record["1.1.1"].status == "gated" and record["1.1.1"].query not in [q for q, _, _ in ret.calls]
+    assert out.summary()["moves"]["gate"] == {"scored": 5, "dropped": 1, "user_kept": 0, "thread_kept": 0, "failed_open": 0}
+
+
+def test_a_first_level_search_has_no_thread_and_is_never_rescued():
+    gate = Gate(MECHANISM_Q, low={"1.2"}, thread=0.9)            # a thread check would keep it: none is made
+    out, ret, events = run(LLM(), gate=gate, breadth=2, depth=2, concurrency=1)
+    assert gate.calls == [(MECHANISM_Q, ["1.1", "1.2"]), (MECHANISM_Q, ["1.1.1"])]
+    assert {q.id: q.status for q in out.queries} == {"1.1": "ok", "1.2": "gated", "1.1.1": "ok"}
+    assert "deep q1s1 habit stacking" not in [q for q, _, _ in ret.calls]
+    assert out.summary()["moves"]["gate"] == {"scored": 3, "dropped": 1, "user_kept": 0, "thread_kept": 0, "failed_open": 0}
+    assert [(e["dropped"], e["thread_kept"]) for e in events if e["stage"] == "gate"] == [(1, 0), (0, 0)]
+
+
+@pytest.mark.parametrize("thread", [TimeoutError("reranker parked"), {}], ids=["raises", "unscored"])
+def test_a_thread_check_that_fails_keeps_the_follow_up_and_counts_it(thread):
+    gate = Gate(MECHANISM_Q, low={"1.1.1"}, thread=thread)
+    out, ret, _ = run(LLM(), one_book(), gate=gate, breadth=2, depth=3, concurrency=1)
+    record = {q.id: q for q in out.queries}
+    assert record["1.1.1"].status == "ok" and record["1.1.1"].query in [q for q, _, _ in ret.calls]
+    assert not any(q.node == "1.1.1" for q in out.queries)                    # kept under the floor: still no child
+    assert out.summary()["moves"]["gate"] == {"scored": 5, "dropped": 0, "user_kept": 0, "thread_kept": 0, "failed_open": 1}
+    assert ("gate:TimeoutError" in out.errors) is isinstance(thread, TimeoutError)
+
+
+def test_each_thread_gets_one_check_and_the_level_searches_only_after_the_last():
+    """Breadth 4 × depth 2: every level-1 search plans 2 follow-ups. Three are low against the question, two from 1.1's
+    thread and one from 1.3's: one thread call each, in plan order, and no level-2 search starts before the last returns."""
+    log: list[tuple[str, str]] = []
+    gate = Gate(MECHANISM_Q, low={"1.1.1", "1.1.2", "1.3.1"}, thread={"1.1.1": 0.5, "1.1.2": 0.1, "1.3.1": 0.5},
+                log=log, delay=0.05)
+    out, ret, _ = run(LLM(), Retriever(rows_for=lambda q: log.append(("search", q))), gate=gate, breadth=4, depth=2,
+                      concurrency=3)
+    record = {q.id: q for q in out.queries}
+    assert gate.calls[2:] == [(record["1.1"].query, ["1.1.1", "1.1.2"]), (record["1.3"].query, ["1.3.1"])]
+    assert [record[i].status for i in ("1.1.1", "1.1.2", "1.3.1")] == ["ok", "gated", "ok"]
+    level_two = {q.query for q in out.queries if q.depth == 2}
+    last_check = max(i for i, (kind, _) in enumerate(log) if kind == "check")
+    assert all(i > last_check for i, (kind, what) in enumerate(log) if kind == "search" and what in level_two)
+    assert len([q for q, _, _ in ret.calls if q in level_two]) == 7
+    assert out.summary()["moves"]["gate"] == {"scored": 12, "dropped": 1, "user_kept": 0, "thread_kept": 2, "failed_open": 0}
+
+
+def test_thread_kept_is_counted_in_the_gate_event_the_receipt_and_the_method():
+    out, _, events = run(LLM(), one_book(), gate=Gate(MECHANISM_Q, low={"1.1.1"}), breadth=2, depth=3, concurrency=1)
+    assert [e["thread_kept"] for e in events if e["stage"] == "gate"] == [0, 1, 0]
+    gate = out.summary()["moves"]["gate"]
+    assert gate["thread_kept"] == 1 and evidence_model(out)["method"]["gate"] == gate
+
+
 # ─────────────────────────────────────────────────────────── receipts, events, the report
 def test_the_receipt_carries_the_moves_block_and_the_report_its_goals():
     out, _, events = run(LLM(), question=EVALUATIVE_Q, gate=lambda q, items: {i: 0.9 for i, _ in items}, breadth=3,
@@ -435,7 +542,7 @@ def test_the_receipt_carries_the_moves_block_and_the_report_its_goals():
     assert set(m) == {"intent", "evaluative", "levels", "gate", "drift_stopped", "gap_nodes", "dry_moves",
                       "inverse_unanchored", "deep", "inverse", "signals"}
     assert (m["intent"], m["evaluative"]) == ("EXPLORATORY", True)
-    assert m["gate"] == {"scored": 3, "dropped": 0, "user_kept": 0, "failed_open": 0}
+    assert m["gate"] == {"scored": 3, "dropped": 0, "user_kept": 0, "thread_kept": 0, "failed_open": 0}
     mix = {"broad": 1, "deep": 0, "adjacent": 1, "inverse": 1}
     assert m["levels"] == [{"level": 1, "asked": mix, "planned": mix, "searched": mix, "learnings": mix}]
     assert m["inverse"] == {"searched": 1, "learnings": 1} and {ln.move for ln in out.learnings} == {"broad", "adjacent", "inverse"}

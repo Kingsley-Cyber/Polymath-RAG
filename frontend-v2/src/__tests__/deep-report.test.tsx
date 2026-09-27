@@ -182,6 +182,20 @@ describe("the evidence, sources and method tabs", () => {
     ]);
   });
 
+  it("Method: follow-ups kept because they follow their own thread are named (gate.thread_kept)", async () => {
+    const withGate = (gate: Record<string, number>): Turn => turn({ report: { ...REPORT, method: { ...REPORT.method, gate } } });
+    const relevance = (t: Turn) => methodLines(t).find((l) => l.startsWith("Relevance check:"));
+    await show(withGate({ scored: 12, dropped: 3, failed_open: 0, user_kept: 0, thread_kept: 2 }));
+    await act(async () => tab("Method").click());
+    expect([...host.querySelectorAll(".method li")].map((l) => l.textContent)).toContain(
+      "Relevance check: 12 planned searches scored against your question, 3 dropped as off the question, 2 kept because they follow their thread.");
+    expect(relevance(withGate({ scored: 9, dropped: 0, failed_open: 1, user_kept: 1, thread_kept: 1 }))).toBe(
+      "Relevance check: 9 planned searches scored against your question, none dropped, 1 kept because it follows its thread; "
+      + "1 of your own parts kept even so; 1 went ahead unchecked when the check failed.");
+    expect(relevance(withGate({ scored: 9, dropped: 1, failed_open: 0, user_kept: 0, thread_kept: 0 }))).toBe(
+      "Relevance check: 9 planned searches scored against your question, 1 dropped as off the question.");
+  });
+
   it("the tabs follow the arrow keys", async () => {
     await show(turn());
     tab("Report").focus();

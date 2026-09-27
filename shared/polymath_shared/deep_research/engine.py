@@ -23,8 +23,9 @@ cancel) can cut a level short, and they are reported as the stop reason.
 WHY moves (DR6, plan §10): with `Config.moves` every planned query carries a MOVE (broad / deep / adjacent / inverse), the
 controller (`moves.py`) sets each plan's quota from the question's intent and what the run found so far, the retrieve port is
 told the move (and a deep query's anchor documents) so the route can send it to the search built for it, and an optional gate
-drops a planned query that misses the ORIGINAL question before it is searched. The signals read counts merged in plan order,
-so they are as deterministic as the rest. With moves off (the default) none of it runs: DR1's prompts, calls and outcome.
+drops a planned query that misses the ORIGINAL question before it is searched (a follow-up that still fits its own thread is
+searched, but ends its thread). The signals read counts merged in plan order, so they are as deterministic as the rest. With
+moves off (the default) none of it runs: DR1's prompts, calls and outcome.
 """
 from __future__ import annotations
 
@@ -138,7 +139,8 @@ class CompletePort(Protocol):
 
 
 class GatePort(Protocol):
-    """DR6 §10.4: each (id, planned query) scored against the original question, in [0, 1]; an id left out is unscored."""
+    """DR6 §10.4: each (id, planned query) scored against the original question, in [0, 1]; an id left out is unscored. A
+    follow-up under the gate floor is scored once more with its thread (the search it follows up) in the question's place."""
     def __call__(self, question: str, items: Sequence[tuple[str, str]], /) -> Mapping[str, float]: ...
 
 
@@ -459,7 +461,7 @@ class _Run:
         self.dry: set[str] = set()
         self.signals = dict.fromkeys(("repeat", "concentration", "one_sided"), 0)
         self.gate_scored = self.gate_dropped = self.gate_failed_open = self.drift_stopped = self.gap_nodes = 0
-        self.inverse_unanchored = self.deep_anchored = self.deep_unanchored = self.gate_user_kept = 0
+        self.inverse_unanchored = self.deep_anchored = self.deep_unanchored = self.gate_user_kept = self.gate_thread_kept = 0
         # ── the person's inputs (DR7): the confirmed level-1 plan, and Finish now
         self.finish, self.seed = finish, seed
 
@@ -521,7 +523,7 @@ class _Run:
         else:
             self._drive(pool, deque(self._plan_job(node, plans) for node in frontier))
             branches = [br for node in frontier if node.id in plans for br in self._accept_plan(node, plans[node.id])]
-        if self.moves and self.gate is not None and branches:
+        if self.moves and self.gate is not None and branches:           # the gate and its thread checks, all of them first
             self._drive(pool, deque([self._gate_job(frontier[0].level, branches)]))
         self._drive(pool, deque(self._retrieve_job(br) for br in branches if br.status != "gated"))
         return self._merge(frontier[0].level, branches)
@@ -745,42 +747,101 @@ class _Run:
         """§10.4: one call per level, before any of its searches: every planned query against the ORIGINAL question. Under
         `gate_floor` = dropped, never searched; under `spawn_floor` = searched, learnings kept, no child (no drift chains).
         A goal of the confirmed plan is never dropped (DR7a, counted as `user_kept`), but the spawn floor holds for it too.
-        A gate that raises, or a query it leaves unscored, keeps the query (fail-open) and is counted."""
+        A follow-up (level ≥ 2) under `gate_floor` gets a second chance against its own thread first (`_thread_job`); level
+        1 has no thread. A gate that raises, or a query it leaves unscored, keeps the query (fail-open) and is counted."""
         items = [(br.id, br.query) for br in branches]
+        tally = dict.fromkeys(("scored", "dropped", "user_kept", "thread_kept", "failed_open"), 0)
 
-        def done(result: Any, exc: BaseException | None) -> None:
+        def done(result: Any, exc: BaseException | None) -> _Job | None:
             if exc is not None:
                 self._error("gate", exc)
-                self.gate_failed_open += len(branches)
-                self._emit("gate", level, scored=0, dropped=0, failed_open=len(branches), user_kept=0)
-                return
-            if not isinstance(result, Mapping):
-                raise TypeError(f"gate() must return a mapping of id to score, got {type(result).__name__}")
-            scored = dropped = unscored = kept = 0
+                tally["failed_open"] = len(branches)
+                return self._close_gate(level, tally, [], {})
+            scores = self._gate_scores(result, [br.id for br in branches])
+            low: list[_Branch] = []
             for br in branches:
-                score = result.get(br.id)
+                score = scores.get(br.id)
                 if score is None:
-                    unscored += 1
+                    tally["failed_open"] += 1
                     continue
-                if isinstance(score, bool) or not isinstance(score, (int, float)):
-                    raise TypeError(f"gate() scores must be numbers, got {type(score).__name__}")
-                scored += 1
+                tally["scored"] += 1
                 if score < self.cfg.gate_floor and br.confirmed:
-                    kept += 1                                     # the person confirmed it: searched anyway
+                    tally["user_kept"] += 1                       # the person confirmed it: searched anyway
                     br.drift = True
                 elif score < self.cfg.gate_floor:
-                    dropped += 1
-                    br.status = "gated"
-                    self.completed += 1
+                    low.append(br)                                # dropped, unless a follow-up's own thread keeps it
                 elif score < self.cfg.spawn_floor:
                     br.drift = True
-            self.gate_scored += scored
-            self.gate_dropped += dropped
-            self.gate_failed_open += unscored
-            self.gate_user_kept += kept
-            self._emit("gate", level, scored=scored, dropped=dropped, failed_open=unscored, user_kept=kept)
+            if level == 1 or not low:
+                return self._close_gate(level, tally, low, {})             # level 1 has no thread: dropped, as before
+            threads: dict[str, list[_Branch]] = {}                         # the low follow-ups by thread, in plan order
+            for br in low:
+                threads.setdefault(br.node.id, []).append(br)
+            return self._thread_job(level, tally, low, list(threads.values()), {})
 
         return _Job(lambda: not self._halted(), lambda: self.gate(self.question, items), done)
+
+    def _thread_job(self, level: int, tally: dict[str, int], low: list[_Branch], threads: list[list[_Branch]],
+                    kept: dict[str, str]) -> _Job:
+        """Tuning after DR6d (live, 2026-09-27: a follow-up drilling correctly into its thread scored low against the whole
+        question, and the thorough run lost 5 of its 12 searches): the follow-ups ONE thread planned that scored under
+        `gate_floor` against the question, scored in one more gate call against the thread itself (the search they follow
+        up). At or over `gate_floor` = kept (`thread_kept`); a call that raises, or an item it leaves unscored, keeps the
+        item too (fail-open, counted); the rest are dropped. One job per thread (a job makes one port call): each hands
+        back the next thread's, the last closes the level's gate, and `_level` starts no search before the chain ends."""
+        group, rest = threads[0], threads[1:]
+        items = [(br.id, br.query) for br in group]
+
+        def done(result: Any, exc: BaseException | None) -> _Job | None:
+            if exc is not None:
+                self._error("gate", exc)
+            scores = {} if exc is not None else self._gate_scores(result, [qid for qid, _ in items])
+            for br in group:
+                score = scores.get(br.id)
+                if score is None:
+                    kept[br.id] = "failed_open"
+                elif score >= self.cfg.gate_floor:
+                    kept[br.id] = "thread_kept"
+            if rest:
+                return self._thread_job(level, tally, low, rest, kept)
+            return self._close_gate(level, tally, low, kept)
+
+        return _Job(lambda: not self._halted(), lambda: self.gate(group[0].node.query, items), done)
+
+    def _close_gate(self, level: int, tally: dict[str, int], low: list[_Branch], kept: Mapping[str, str]) -> None:
+        """The level's gate is final. A query under `gate_floor` that its thread kept (or whose thread check failed) is
+        searched but spawns no child: a thread's second chance is one step, never a chain, and the spawn floor stays on the
+        question's score. Every other query under the floor is dropped. The counts join the run's; one `gate` event."""
+        for br in low:
+            why = kept.get(br.id)
+            if why is None:
+                tally["dropped"] += 1
+                br.status = "gated"
+                self.completed += 1
+            else:
+                tally[why] += 1
+                br.drift = True
+        self.gate_scored += tally["scored"]
+        self.gate_dropped += tally["dropped"]
+        self.gate_user_kept += tally["user_kept"]
+        self.gate_thread_kept += tally["thread_kept"]
+        self.gate_failed_open += tally["failed_open"]
+        self._emit("gate", level, **tally)
+
+    @staticmethod
+    def _gate_scores(result: Any, ids: Sequence[str]) -> dict[str, float]:
+        """The gate's score of each id it scored (an id left out is unscored). A wrong type is the route's bug and raises."""
+        if not isinstance(result, Mapping):
+            raise TypeError(f"gate() must return a mapping of id to score, got {type(result).__name__}")
+        scores: dict[str, float] = {}
+        for qid in ids:
+            score = result.get(qid)
+            if score is None:
+                continue
+            if isinstance(score, bool) or not isinstance(score, (int, float)):
+                raise TypeError(f"gate() scores must be numbers, got {type(score).__name__}")
+            scores[qid] = score
+        return scores
 
     # ── retrieve → extract
     def _retrieve_job(self, br: _Branch) -> _Job:
@@ -1033,6 +1094,7 @@ class _Run:
                 "intent": self.intent, "evaluative": self.evaluative, "levels": copy.deepcopy(self.level_stats),
                 "gate": None if self.gate is None else {"scored": self.gate_scored, "dropped": self.gate_dropped,
                                                         "user_kept": self.gate_user_kept,
+                                                        "thread_kept": self.gate_thread_kept,
                                                         "failed_open": self.gate_failed_open},
                 "drift_stopped": self.drift_stopped, "gap_nodes": self.gap_nodes,
                 "dry_moves": [m for m in M.MOVES if m in self.dry], "inverse_unanchored": self.inverse_unanchored,

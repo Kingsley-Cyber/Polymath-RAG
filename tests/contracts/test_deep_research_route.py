@@ -367,7 +367,8 @@ def test_the_receipt_and_the_answer_carry_the_moves_block(wire):
             "deep", "inverse"} <= set(moves)
     assert (moves["intent"], moves["evaluative"]) == ("EXPLORATORY", True)
     assert moves["inverse"] == {"searched": 2, "learnings": 2} and moves["deep"] == {"anchored": 4, "unanchored": 0}
-    assert moves["gate"] == {"scored": 9, "dropped": 0, "user_kept": 0, "failed_open": 0} and len(moves["levels"]) == 2
+    assert moves["gate"] == {"scored": 9, "dropped": 0, "user_kept": 0, "thread_kept": 0, "failed_open": 0}
+    assert len(moves["levels"]) == 2
 
 
 def test_phase_frames_carry_each_searchs_move(wire):
@@ -387,6 +388,34 @@ def test_a_search_the_gate_drops_never_runs(wire, monkeypatch):
     phases = [d for k, d in _deep({"question": EVALUATIVE, "preset": "quick"}) if k == "phase"]
     assert sorted(r.query.split()[0] for r in wire.requests) == ["adjacent", "broad"]
     assert "1 dropped as off the question" in next(d for d in phases if d["stage"] == "deep_gate")["label"]
+
+
+def test_follow_ups_their_thread_keeps_are_searched_and_counted_everywhere(wire, monkeypatch):
+    """Tuning after DR6d (live, 2026-09-27): a level-2 follow-up that scores low against the question gets a second chance
+    against its own thread, the search it follows up. Here every follow-up scores 0.1 against the question and 0.5 against
+    its thread: all 9 searches run, one thread call per thread, and `thread_kept` reaches the deep_gate frame (its label
+    too), the receipt's moves block and the Method tab's facts (`report_model.method.gate`)."""
+    against: list[str] = []
+
+    def gate(question, items):
+        against.append(question)
+        if question == EVALUATIVE:
+            return {qid: (0.1 if qid.count(".") == 2 else 0.9) for qid, _ in items}
+        return {qid: 0.5 for qid, _ in items}
+    monkeypatch.setattr(DRR, "_gate_port", lambda floor: gate)
+    frames = _deep({"question": EVALUATIVE, "preset": "standard"})
+    assert against[:2] == [EVALUATIVE, EVALUATIVE] and len(against) == 5 and EVALUATIVE not in against[2:]
+    assert len(wire.requests) == 9
+    gates = [d for k, d in frames if k == "phase" and d["stage"] == "deep_gate"]
+    assert [(g["dropped"], g["thread_kept"]) for g in gates] == [(0, 0), (0, 6)]
+    assert gates[0]["label"] == "Checked the planned searches against the question"
+    assert gates[1]["label"] == "Checked the planned searches against the question: 6 kept because they follow their thread"
+    meta = next(d for k, d in frames if k == "answer")["result"]["meta"]["deep_research"]
+    counts = {"scored": 9, "dropped": 0, "user_kept": 0, "thread_kept": 6, "failed_open": 0}
+    assert meta["moves"]["gate"] == counts == wire.receipts[-1]["out"]["meta"]["deep_research"]["moves"]["gate"]
+    assert meta["report_model"]["method"]["gate"] == counts
+    assert DRR._phase({"stage": "gate", "dropped": 2, "thread_kept": 1}, 0.0)["label"].endswith(
+        ": 2 dropped as off the question, 1 kept because it follows its thread")
 
 
 @pytest.mark.parametrize("how", ["request", "switch"])

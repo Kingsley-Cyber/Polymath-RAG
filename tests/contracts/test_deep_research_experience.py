@@ -195,7 +195,7 @@ def test_the_gate_never_drops_a_confirmed_goal():
     # a query the planner wrote is still dropped: level 2 scored under the floor
     out, ret, _ = run(LLM(), plan=plan[:1], breadth=2, depth=2, gate=lambda q, items: {
         qid: (0.05 if not text.startswith("habit") else 0.9) for qid, text in items})
-    assert out.summary()["moves"]["gate"] == {"scored": 2, "dropped": 1, "user_kept": 0, "failed_open": 0}
+    assert out.summary()["moves"]["gate"] == {"scored": 2, "dropped": 1, "user_kept": 0, "thread_kept": 0, "failed_open": 0}
 
 
 # ─────────────────────────────────────────────────────────── DR7c: Finish now

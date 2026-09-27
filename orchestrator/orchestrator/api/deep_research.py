@@ -206,8 +206,10 @@ def _retrieve_port(loop: asyncio.AbstractEventLoop, principal: str | None, mode:
 
 def _gate_port(floor: float):
     """§10.4: the relevance gate. The reranker scores each planned search against the ORIGINAL question, through chat's
-    probe gate (one bounded cross-encoder call, origin DEEP_RESEARCH). A judge error or timeout raises, so the engine keeps
-    the searches and counts them (fail-open); a search the judge left unscored (reranker parked) comes back without a score."""
+    probe gate (one bounded cross-encoder call, origin DEEP_RESEARCH); the engine calls it once more per thread with the
+    thread's search in the question's place, for the follow-ups under the floor. A judge error or timeout raises, so the
+    engine keeps the searches and counts them (fail-open); a search the judge left unscored (reranker parked) comes back
+    without a score."""
     from orchestrator.api import chat_retrieval
     from polymath_shared.probe_gate import gate_probes
 
@@ -295,7 +297,7 @@ _STAGE_LABEL = {"plan": "Planning searches", "retrieve": "Searching", "extract":
 #: engine event fields a phase frame carries (moves: `move` + `goal_id` on a search; `moves`, `goal_id` and, at level 1,
 #: `goals` + `confirmed` on a plan; the gate's counts)
 _PHASE_FIELDS = ("depth", "completed", "total", "new_learnings", "reason", "move", "moves", "scored", "dropped", "failed_open",
-                 "goal_id", "goals", "confirmed", "user_kept")
+                 "goal_id", "goals", "confirmed", "user_kept", "thread_kept")
 
 
 def _phase(ev: dict[str, Any], t0: float) -> dict[str, Any]:
@@ -307,8 +309,12 @@ def _phase(ev: dict[str, Any], t0: float) -> dict[str, Any]:
         label = f"{label}: {ev['new_learnings']} new findings"
     if stage == "stopped" and ev.get("reason"):
         label = f"{label} ({ev['reason']})"
-    if stage == "gate" and ev.get("dropped"):
-        label = f"{label}: {ev['dropped']} dropped as off the question"
+    if stage == "gate":
+        said = [f"{ev['dropped']} dropped as off the question"] if ev.get("dropped") else []
+        if kept := ev.get("thread_kept"):
+            said.append(f"{kept} kept because {'it follows its' if kept == 1 else 'they follow their'} thread")
+        if said:
+            label = f"{label}: {', '.join(said)}"
     frame = {"stage": f"deep_{stage}", "label": label, "t": int((time.monotonic() - t0) * 1000),
              **{k: v for k, v in ev.items() if k in _PHASE_FIELDS}}
     if "move" in ev and ev.get("query"):

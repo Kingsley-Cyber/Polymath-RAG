@@ -609,11 +609,13 @@ export function methodLines(t: Turn): string[] {
   const scored = num(gate?.scored);
   if (gate && scored !== null) {
     const dropped = num(gate.dropped) ?? 0;
+    const thread = num(gate.thread_kept) ?? 0;          // follow-ups low on the question, kept because they fit their thread
     const kept = num(gate.user_kept) ?? 0;
     const open = num(gate.failed_open) ?? 0;
     out.push(`Relevance check: ${plural(scored, "planned search")} scored against your question, ${dropped
-      ? `${dropped} dropped as off the question` : "none dropped"}${kept ? `; ${kept} of your own parts kept even so` : ""}${
-      open ? `; ${open} went ahead unchecked when the check failed` : ""}.`);
+      ? `${dropped} dropped as off the question` : "none dropped"}${thread
+      ? `, ${thread} kept because ${thread === 1 ? "it follows its" : "they follow their"} thread` : ""}${
+      kept ? `; ${kept} of your own parts kept even so` : ""}${open ? `; ${open} went ahead unchecked when the check failed` : ""}.`);
   }
   const droppedLearnings = num(s.dropped_learnings);
   if (droppedLearnings) {
