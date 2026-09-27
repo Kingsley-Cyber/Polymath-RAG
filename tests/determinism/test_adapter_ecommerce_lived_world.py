@@ -58,7 +58,7 @@ def test_the_code_under_test_is_this_checkout():
 def test_only_admitted_observations_become_field_records_under_the_field_evidence_id():
     out = _exec("population.evidence_cards", _world(5, groups=3, threads=2, rejected=4))["output"]
     assert [r["id"] for r in out["field_records"]] == [f"fev_{i:04d}" for i in range(5)]                    # the ids the agent can cite; the 4 unadmitted observations do not exist here
-    assert out["joined"] == {"admitted": 5, "without_observation": 0, "without_community": 0}
+    assert out["joined"] == {"admitted": 5, "without_observation": 0, "without_community": 0, "duplicates": 0}
     rec = out["field_records"][1]
     assert rec["community"] == "r/running" and rec["moment"] == "during" and rec["friction_family"] == "access_interruption"       # friction family comes from the LINKED ledger hypothesis
     assert rec["evidence_roles"] == ["FRICTION_EVIDENCE"] and rec["independence_group"] == "grp_1" and rec["freshness"] == {"class": "fresh"}

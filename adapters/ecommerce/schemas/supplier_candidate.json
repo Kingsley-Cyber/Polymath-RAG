@@ -51,6 +51,18 @@
     "type": "string"
    },
    "description": "docs/27: GOVERNED mode only — the adapter's hyp_… ids this item bears on (a subset of the HarnessActionV1's)."
+  },
+  "concept_id": {
+   "type": "string",
+   "description": "the product concept this listing was found for (the sourcing job's concept id); the receipt builder writes it as `concept:` so the supply join never attributes the listing by name overlap"
+  },
+  "channel": {
+   "type": "string",
+   "description": "the sourcing channel (alibaba, cjdropshipping, 1688, ...); written as `channel:`"
+  },
+  "intent_id": {
+   "type": "string",
+   "description": "GOVERNED mode only — the search intent that found this listing; written as `intent:`"
   }
  }
 }

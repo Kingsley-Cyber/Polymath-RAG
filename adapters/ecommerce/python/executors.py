@@ -9,6 +9,7 @@ from __future__ import annotations
 import csv
 import os
 import re
+import unicodedata
 
 import yaml
 
@@ -261,12 +262,31 @@ _GAP_STOP = {"evidence", "missing", "intermediate", "does", "do", "they", "their
              "actually", "these", "those", "than", "then", "there", "still", "just", "also", "any", "how", "whether"}
 
 
+def _words(text: str) -> list[str]:
+    """Words in ANY script (gap B-55): a run that starts with a letter (Unicode category L) and goes on through letters, combining
+    marks, hyphens and apostrophes. ASCII text splits exactly as the old `[a-zA-Z][a-zA-Z\\-']` rule did; an accent no longer cuts a
+    word in two. Scripts written without spaces (Chinese, Japanese) come out as whole runs — a semantic field is a short phrase."""
+    out, buf = [], []
+    for ch in unicodedata.normalize("NFC", text or "") + " ":
+        cat = unicodedata.category(ch)
+        if cat[0] == "L" or (buf and (cat[0] == "M" or ch in "-'")):
+            buf.append(ch)
+        elif buf:
+            out.append("".join(buf))
+            buf = []
+    return out
+
+
+def _dense_script(word: str) -> bool:
+    """Kana, CJK ideographs, Hangul syllables: one character carries a syllable or a morpheme, so a word counts from 2 characters."""
+    return any("぀" <= c <= "ヿ" or "㐀" <= c <= "鿿" or "가" <= c <= "힣" or "豈" <= c <= "﫿" for c in word)
+
+
 def _gap_keywords(question: str, n: int = 8) -> list[str]:
-    toks = re.findall(r"[a-zA-Z][a-zA-Z\-']{2,}", question or "")
     out: list[str] = []
-    for t in toks:
+    for t in _words(question):
         tl = t.lower()
-        if tl in _GAP_STOP or tl in out or len(tl) < 3:
+        if tl in _GAP_STOP or tl in out or len(tl) < (2 if _dense_script(tl) else 3):
             continue
         out.append(tl)
     return out[:n]
@@ -535,12 +555,20 @@ def sourcing_coverage(state: dict) -> list[dict]:
 
 
 def supplier(state: dict, policies: dict) -> str:
-    seen, normalized = set(), []
+    # ONE listing = one candidate (gap B-33): the observations of one listing (its price, its MOQ) merge — same concept, same URL, same
+    # title and supplier — and the first fills what it lacks from its twins. The same title under ANOTHER concept or at ANOTHER URL
+    # is another listing, never dropped.
+    listings: dict[tuple, list[dict]] = {}
     for s in state["data"]["supplier_candidates"]:
-        key = (s.get("product_name", "").strip().lower(), s.get("supplier_name", "").strip().lower())
-        if key in seen:
-            continue
-        seen.add(key)
+        key = (str(s.get("concept_id") or ""), str(s.get("url") or ""), s.get("product_name", "").strip().lower(), s.get("supplier_name", "").strip().lower())
+        listings.setdefault(key, []).append(s)
+    normalized = []
+    for s, *twins in listings.values():
+        for t in twins:
+            if _parse_price(s.get("price_raw", ""))[0] is None and _parse_price(t.get("price_raw", ""))[0] is not None:
+                s["price_raw"] = t["price_raw"]
+            if not _parse_moq(s.get("moq_raw", "")) and _parse_moq(t.get("moq_raw", "")):
+                s["moq_raw"] = t["moq_raw"]
         lo, hi = _parse_price(s.get("price_raw", ""))
         s["price_usd_low"], s["price_usd_high"] = lo, hi
         s["moq_units"] = _parse_moq(s.get("moq_raw", ""))

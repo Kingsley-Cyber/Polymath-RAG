@@ -122,7 +122,7 @@ ROWS = [("https://www.alibaba.com/product-detail/a1.html", "listing: magnetic be
 def test_admitted_supply_observations_become_parsed_candidates_coverage_and_leads_without_a_score():
     out = _exec("supply.leads", _supply_world(ROWS))["output"]
     by = {c["id"]: c for c in out["supplier_candidates"]}
-    assert out["joined"] == {"admitted_supply": 4, "without_observation": 0, "without_supplier_name": 1, "without_listing": 1}     # the friction admission is not supply; the listing-less row is counted
+    assert out["joined"] == {"admitted_supply": 4, "without_observation": 0, "without_supplier_name": 1, "without_listing": 1, "unknown_concept": 0, "merged_duplicates": 0}     # the friction admission is not supply; the listing-less row is counted
     assert (by["fev_s0"]["price_usd_low"], by["fev_s0"]["price_usd_high"], by["fev_s0"]["moq_units"]) == (1.2, 1.8, 500)           # the engine's own parsers
     assert (by["fev_s1"]["price_usd_low"], by["fev_s1"]["moq_units"], by["fev_s1"]["moq_note"]) == (4.35, 1, "cjdropshipping default MOQ 1")   # a DEFAULT MOQ says so
     assert by["fev_s1"]["supplier_name"] is None                                                           # "unresolved" is not a name; none is invented

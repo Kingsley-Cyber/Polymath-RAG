@@ -177,6 +177,10 @@ def _op_lenses(req: dict[str, Any]) -> dict[str, Any]:
     return {"lenses": state["data"]["lenses"], "note": note}
 
 
+#: the interpretation's lists that population nomination reads as words
+_WORD_LISTS = ("frictions", "shared_predicates", "communities")
+
+
 def _op_validate_primitives(req: dict[str, Any]) -> dict[str, Any]:
     """The lineage law on a primitives submission (`lived_world.validate_primitives`, the same function the controller's submit
     path calls): interpretation objects are schema-valid and cite only corpus rows that exist, are CLASSIFIED and are not
@@ -190,6 +194,14 @@ def _op_validate_primitives(req: dict[str, Any]) -> dict[str, Any]:
         raise Refusal("PRIMITIVES_MISSING", "inputs.primitives must be the primitives object")
     state = _engine_state(corpus_evidence=_corpus_rows(ins.get("corpus_evidence")), row_relevance=ins.get("row_relevance"))
     errors = lived_world.validate_primitives(prim, state, graphmod.load_policies())
+    # population nomination reads these lists as WORDS (registry friction families, predicates, communities): a friction written as an
+    # object is a lawful-looking interpretation nomination cannot use — the law names it so reasoning can correct it (gap B-31)
+    for key in _WORD_LISTS:
+        words = prim.get(key)
+        if words is not None and not isinstance(words, list):
+            errors.append(f"primitives.{key}: expected a list of strings, got {type(words).__name__}")
+        elif words:
+            errors += [f"primitives.{key}[{i}]: expected a string, got {type(w).__name__} — write each item as plain words" for i, w in enumerate(words) if not isinstance(w, str)]
     out: dict[str, Any] = {"valid": not errors, "errors": errors}
     if not errors:
         lived_world.merge_relevance(state, prim.get("row_relevance") or {})
@@ -230,14 +242,33 @@ def _op_population_nominate(req: dict[str, Any]) -> dict[str, Any]:
 
 
 _CONTEXT_FIELD = r"(?:^|·|\||;|\n)\s*{key}\s*:\s*([^·|;\n]+)"
+#: the tags the writers of an observation context use (the receipt builder, the supply and product-reality intents, the field harness)
+_CONTEXT_TAGS = ("community", "activity", "moment", "workaround", "desired outcome", "lead", "intent", "listing", "product", "supplier",
+                 "price as listed", "MOQ as listed", "channel", "concept", "variation", "relation")
+#: a TITLE tag's value is listing text: it may hold '|' or ';' (marketplace titles do) and ends at ' · ', a line break, or a separator
+#: that starts another known tag (gap B-52)
+_TITLE_TAGS = ("listing", "product")
+_TITLE_FIELD = (r"(?:^|·|\||;|\n)\s*{key}\s*:\s*([^·\n]+?)(?=\s*(?:·|\n|[|;]\s*(?:" + "|".join(re.escape(t) for t in _CONTEXT_TAGS)
+                + r")\s*:)|\s*$)")
+_TITLE_START = r"(?:^|·|\||;|\n)\s*(?:listing|product)\s*:"
 
 
 def _context_field(context: str, key: str) -> str | None:
     """The engine's receipt builder writes `community: … · activity: … · moment: …` into an observation's free-text context; any
-    host may. Read it back tolerantly; absent stays absent."""
+    host may. Read it back tolerantly; absent stays absent. A title (`listing:` / `product:`) is untrusted listing text: it keeps its
+    '|' and ';', and a tag it appears to carry never overrides the writer's own — a tag whose every occurrence follows the title is
+    read at its LAST occurrence (the writer's, after the title), one written before the title at its first (gap B-52)."""
     import re
-    m = re.search(_CONTEXT_FIELD.format(key=key), context or "", re.I)
-    return m.group(1).strip() or None if m else None
+    text = context or ""
+    if key.lower() in _TITLE_TAGS:
+        m = re.search(_TITLE_FIELD.format(key=key), text, re.IGNORECASE)
+        return m.group(1).strip() or None if m else None
+    found = list(re.finditer(_CONTEXT_FIELD.format(key=key), text, re.IGNORECASE))
+    if not found:
+        return None
+    title = re.search(_TITLE_START, text, re.IGNORECASE)
+    m = found[-1] if title is not None and found[0].start() > title.start() else found[0]
+    return m.group(1).strip() or None
 
 
 def _intent_lineage(context: str) -> dict[str, Any]:
@@ -274,7 +305,7 @@ def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, 
         if isinstance(v, dict) and v.get("hypothesis_id"):
             hyps[v["hypothesis_id"]] = {**hyps.get(v["hypothesis_id"], {}), **{k: v[k] for k in ("population", "activity", "task", "suspected_friction") if v.get(k)}}
     lead_names = {str(l.get("id")): str(l.get("name")) for key in ("population_leads", "community_leads") for l in ins.get(key) or [] if isinstance(l, dict) and l.get("id") and l.get("name")}
-    out, stats = [], {"admitted": 0, "without_observation": 0, "without_community": 0}
+    out, stats = [], {"admitted": 0, "without_observation": 0, "without_community": 0, "duplicates": 0}
     basis = {"lead": 0, "population": 0, "host": 0}                # how a record without a stated community got one
     for adm in ins.get("admissions") or []:
         for a in (adm or {}).get("admitted") or []:
@@ -288,10 +319,12 @@ def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, 
             community = _context_field(str(o.get("context") or ""), "community")
             linked_ids = [h for h in a.get("hypothesis_ids") or [] if h in hyps]
             linked = [hyps[h] for h in linked_ids]
-            # the hypothesis whose friction keys this record's cluster; whether the record CONTRADICTS is TrailSignal's relation to THAT
-            # hypothesis (ADR-069), not the global flag (gap B-11)
-            keyed = next((h for h in linked_ids if hyps[h].get("suspected_friction")), None)
+            # the hypothesis whose friction keys this record's cluster: one TrailSignal says the record SUPPORTS (ADR-069) before one it
+            # contradicts; whether the record CONTRADICTS is TrailSignal's relation to THAT hypothesis, not the global flag (B-11, B-54)
+            with_friction = [h for h in linked_ids if hyps[h].get("suspected_friction")]
+            keyed = next((h for h in with_friction if adapter_receipt.polarity_for(a, h) == "supporting"), None) or next(iter(with_friction), None)
             polarity = adapter_receipt.polarity_for(a, keyed or next(iter(a.get("hypothesis_ids") or []), None))
+            stats["duplicates"] += 1 if a.get("duplicate_of") else 0
             if not community:
                 # WHO this record is about, in the order the run knows it: the lead the harness researched, else the population of the
                 # hypothesis it is linked to. The source HOST is a last resort and is said to be one — a host is a place, not a community
@@ -310,6 +343,9 @@ def _field_records_from_admissions(ins: dict[str, Any]) -> tuple[list[dict[str, 
                         "workaround": str(o.get("claim") or "")[:200] if a.get("evidence_role") == "workaround" else "", "moment": _context_field(str(o.get("context") or ""), "moment"),
                         "freshness": {"class": a.get("freshness")}, "independence_group": a.get("independence_group"),
                         "hypothesis_ids": list(a.get("hypothesis_ids") or []), "contradicts": polarity == "contradicting", "polarity": polarity,
+                        "contradicts_hypothesis_ids": [h for h in a.get("hypothesis_ids") or [] if adapter_receipt.polarity_for(a, h) == "contradicting"],
+                        # TrailSignal's duplicate (gap B-60): still an id the agent may cite, counted once in the lived world
+                        "duplicate_of": a.get("duplicate_of"),
                         "lead_id": _context_field(str(o.get("context") or ""), "lead"),
                         # PROVENANCE HOOK: which compiled intent found this observation — and through the intent id, which gap of which
                         # hypothesis it answers. The receipt's tool_trace counts queries per intent but never says which observation
@@ -326,14 +362,16 @@ def _op_evidence_cards(req: dict[str, Any]) -> dict[str, Any]:
 
     ins = _inputs(req)
     records, stats = _field_records_from_admissions(ins)
-    community_basis = stats.pop("_community_basis")                # `joined` keeps its three counters; the basis is its own output key
+    community_basis = stats.pop("_community_basis")                # `joined` keeps its counters; the basis is its own output key
     seen = {r["id"] for r in records}
     records = [r for r in ins.get("prior_field_records") or [] if isinstance(r, dict) and r.get("id") not in seen] + records      # research rounds accumulate
     rounds = int(ins.get("prior_round") or 0) + 1
     if not records:                                      # nothing admitted is a STATE TrailSignal still judges — never a dead run
         return {"field_records": [], "participant_cards": [], "lived_clusters": [], "anchors": [], "joined": stats, "round": rounds,
                 "community_basis": community_basis, "note": "no admitted field evidence — no card, no cluster, nothing to anchor on"}
-    state = _engine_state(field_records=records, population_leads=list(ins.get("population_leads") or []), community_leads=list(ins.get("community_leads") or []))
+    # a record TrailSignal marks `duplicate_of` another stays citable (returned below) but is never a second record, thread or voice (gap B-60)
+    state = _engine_state(field_records=[r for r in records if not r.get("duplicate_of")], population_leads=list(ins.get("population_leads") or []),
+                          community_leads=list(ins.get("community_leads") or []))
     note = lived_world.cards(state, graphmod.load_policies())
     d = state["data"]
     return {"field_records": records, "participant_cards": d["participant_cards"], "lived_clusters": d["lived_clusters"], "joined": stats, "note": note, "round": rounds,
@@ -701,13 +739,37 @@ def _op_supply_plan(req: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _concept_ref(tag: str | None, ids: dict[str, str]) -> str | None:
+    """`concept: pc_1` / `PC_1` / `pc_1 (heated glove liner)` -> the concept id the tag names; None when it names none (gap B-34)."""
+    t = str(tag or "").strip()
+    if t.lower() in ids:
+        return ids[t.lower()]
+    m = re.match(r"[A-Za-z0-9][\w.\-]*", t)
+    return ids.get(m.group(0).rstrip(".-").lower()) if m else None
+
+
+def _supply_channel(tag: str | None, url: str | None) -> str:
+    """The channel a listing belongs to (gap B-35): the harness's tag normalised (`CJ Dropshipping` is cjdropshipping), else the site
+    the URL belongs to (`m.alibaba.com` is alibaba) — a host's first label (`m`, `app`) only for a site the engine does not know."""
+    from urllib.parse import urlparse
+
+    import executors
+    t = re.sub(r"[^a-z0-9]", "", str(tag or "").lower())
+    for ch, site in executors.SOURCING_SITES.items():
+        if t in (ch, re.sub(r"[^a-z0-9]", "", site)):
+            return ch
+    host = (urlparse(str(url or "")).hostname or "").lower().removeprefix("www.")
+    for ch, site in executors.SOURCING_SITES.items():
+        if host == site or host.endswith("." + site):
+            return ch
+    return t or host.split(".")[0]
+
+
 def _op_supply_leads(req: dict[str, Any]) -> dict[str, Any]:
     """ADMITTED supply observations -> supplier candidates -> `executors.supplier` (the engine's own price / MOQ parsers, channel
     MOQ defaults, concept resolution, per-concept coverage) -> `executors.join_leads` (mechanism × supplier, fit required) ->
     `interleave_leads`. NO score and NO verdict: qualification and the only score are TrailSignal's. A listing without a supplier
     name keeps `supplier_name: null` and is counted — a name is never invented."""
-    from urllib.parse import urlparse
-
     import executors
     import graph as graphmod
 
@@ -719,7 +781,9 @@ def _op_supply_leads(req: dict[str, Any]) -> dict[str, Any]:
         if isinstance(rec, dict):
             obs.update({o.get("observation_id"): o for o in rec.get("observations") or [] if isinstance(o, dict)})
             sources.update({s.get("source_id"): s for s in rec.get("sources") or [] if isinstance(s, dict)})
-    cands, stats = [], {"admitted_supply": 0, "without_observation": 0, "without_supplier_name": 0, "without_listing": 0}
+    cands, stats = [], {"admitted_supply": 0, "without_observation": 0, "without_supplier_name": 0, "without_listing": 0, "unknown_concept": 0, "merged_duplicates": 0}
+    concept_ids = {str(c["id"]).lower(): str(c["id"]) for c in concepts if c.get("id")}
+    claimed: dict[str, str] = {}                           # admitted id -> a concept tag that names no concept of this run
     for adm in ins.get("admissions") or []:
         for a in (adm or {}).get("admitted") or []:
             if a.get("evidence_role") not in ("supply", "price"):
@@ -738,29 +802,40 @@ def _op_supply_leads(req: dict[str, Any]) -> dict[str, Any]:
             if not name or re.match(r"(?:none|unknown|unresolved)\b", name.strip().lower()):      # also "unresolved (alibaba listing)" (gap S-06)
                 name = None
                 stats["without_supplier_name"] += 1
-            host = (urlparse(str(src.get("url") or "")).hostname or "").removeprefix("www.")
+            # an annotated or re-cased tag names its concept; an unknown one is counted and left to name overlap, never kept as a
+            # concept id no concept has (gap B-34)
+            tag = _context_field(ctx, "concept")
+            cid = _concept_ref(tag, concept_ids)
+            if tag and cid is None:
+                stats["unknown_concept"] += 1
+                claimed[a["admitted_evidence_id"]] = tag
             cands.append({"id": a["admitted_evidence_id"], "product_name": listing, "supplier_name": name or "", "price_raw": _context_field(ctx, "price as listed") or "",
-                          "moq_raw": _context_field(ctx, "MOQ as listed") or "", "url": src.get("url"), "channel": _context_field(ctx, "channel") or host.split(".")[0],
-                          "concept_id": _context_field(ctx, "concept"), "retrieved_at": src.get("retrieved_at"), "published_at_if_known": src.get("published_at_if_known"),
+                          "moq_raw": _context_field(ctx, "MOQ as listed") or "", "url": src.get("url"), "channel": _supply_channel(_context_field(ctx, "channel"), src.get("url")),
+                          "concept_id": cid, "retrieved_at": src.get("retrieved_at"), "published_at_if_known": src.get("published_at_if_known"),
                           "hypothesis_ids": list(a.get("hypothesis_ids") or [])})
     if not cands:                                         # TrailSignal's qualification / score refusal is the verdict on missing supply, not a dead run
         return {"supplier_candidates": [], "leads": [], "sourcing_coverage": [{"concept_id": c.get("id"), "concept": c.get("name"), "status": "unsourced"} for c in concepts],
-                "joined": stats, "mechanism_notes": notes, "note": "no admitted supply observation names a listing",
+                "joined": stats, "unjoined": [], "mechanism_notes": notes, "note": "no admitted supply observation names a listing",
                 "authority": "DOMAIN_JOIN_ONLY — qualification and score are TrailSignal's"}
     policies = graphmod.load_policies()
     state = _engine_state(supplier_candidates=cands, product_concepts=concepts, mechanisms=mechs, leads=[])
     note = executors.supplier(state, policies)
     d = state["data"]
+    stats["merged_duplicates"] = len(cands) - len(d["supplier_candidates"])      # a listing's other observations, merged into it (gap B-33)
     leads = [l for m in mechs if m["status"] == "SUPPORTED" for l in executors.join_leads(m, d, policies)]
     leads = executors.interleave_leads(leads)[: int(policies["supplier"]["max_leads"])]
     for l in leads:
         l["supplier_name"] = l["supplier_name"] or None
-        l["admitted_evidence_id"] = next((s["id"] for s in d["supplier_candidates"] if s.get("url") == l.get("url") and s.get("product_name") == l.get("product_name")), None)
+        # one title at one URL may be a listing of two concepts (gap B-33): the lead names the observation of ITS concept
+        same = [s for s in d["supplier_candidates"] if s.get("url") == l.get("url") and s.get("product_name") == l.get("product_name")]
+        l["admitted_evidence_id"] = next((s["id"] for s in same if s.get("concept_id") == l.get("concept_id")), same[0]["id"] if same else None)
     d["leads"] = leads
     for s in d["supplier_candidates"]:
         s["supplier_name"] = s["supplier_name"] or None
+    unjoined = [{"admitted_evidence_id": s["id"], "reason": "UNKNOWN_CONCEPT" if s["id"] in claimed else "NO_CONCEPT_TAG", "claimed": claimed.get(s["id"]),
+                 "product_name": s.get("product_name")} for s in d["supplier_candidates"] if not s.get("concept_id")]
     return {"supplier_candidates": d["supplier_candidates"], "leads": leads, "sourcing_coverage": executors.sourcing_coverage(state), "joined": stats,
-            "mechanism_notes": notes, "note": note, "authority": "DOMAIN_JOIN_ONLY — qualification and score are TrailSignal's"}
+            "unjoined": unjoined[:50], "mechanism_notes": notes, "note": note, "authority": "DOMAIN_JOIN_ONLY — qualification and score are TrailSignal's"}
 
 
 def _op_product_reality_plan(req: dict[str, Any]) -> dict[str, Any]:
@@ -786,6 +861,10 @@ def _op_product_reality_plan(req: dict[str, Any]) -> dict[str, Any]:
     out = copy.deepcopy(directive)
     trail_intents = [i for i in out["search_intents"] if isinstance(i, dict)]
     per_concept, unresolved = PR.plan(concepts, mechs, views, trail_intents)
+    # a job whose search compiled to no word is REPORTED, never issued with an empty template (gap B-55)
+    unresolved += [{"concept_id": j["concept_id"], "intent_id": j["job_id"], "missing": ["market_phrase"]}
+                   for group in per_concept for j in group if not str(j.get("query") or "").strip()]
+    per_concept = [[j for j in group if str(j.get("query") or "").strip()] for group in per_concept]
     names = {str(c.get("id")): str(c.get("name") or c.get("id")) for c in concepts}
     unslotted = [ti for ti in trail_intents if not PR.QS.has_unbound_slot(ti.get("template"))]
     cap = max(len(unslotted), min(100, int((directive.get("budget") or {}).get("max_queries") or 24)))

@@ -258,7 +258,9 @@ def _supplier_items(candidates: list[dict]) -> list[dict]:
         base = {"source": c.get("url"), "retrieved_at": c.get("retrieved_at"), "hypothesis_ids": c.get("hypothesis_ids") or [],
                 "community": c.get("supplier_name"), "source_identity": {"source_family": "supplier", "platform": str(c.get("channel") or "").lower()},
                 "context": f"listing: {c.get('product_name')} · supplier: {c.get('supplier_name')} · price as listed: {c.get('price_raw')} · MOQ as listed: {c.get('moq_raw')}"
-                           + (" · customizable" if c.get("customizable") else "")}
+                           + (" · customizable" if c.get("customizable") else "")
+                           # the tags the supply join reads (gap B-32): without them a listing is attributed by name overlap, or lost
+                           + "".join(f" · {tag}: {c[key]}" for tag, key in (("channel", "channel"), ("concept", "concept_id"), ("intent", "intent_id")) if c.get(key))}
         if "published_at_if_known" in c:
             base["published_at_if_known"] = c["published_at_if_known"]
         name = _clip(c.get("product_name"), 300)
