@@ -85,8 +85,8 @@ deepening timed out (lane deadline 3 s).
 ## 4. Slices
 | Slice | What | Proof |
 |---|---|---|
-| **F1** | Facets in the compiler + `facet_id` on queries + the receipt fields | Contract tests: the receipt's question yields ≥ 4 facets incl. "directing the AI video model"; a lookup yields 1; no library name in the prompt |
-| **F2** | Seats per facet, the per-lane document quota, dominance 0.4, MMR, 24 seats — in `compose_final` for every mode | Unit tests on fixed pools; `/retrieve` and every chat mode byte-identical when the flags are off |
+| **F1** — DONE 11.546 | Facets in the compiler + `facet_id` on queries + the receipt fields | Contract tests: the receipt's question yields ≥ 4 facets incl. "directing the AI video model"; a lookup yields 1; no library name in the prompt |
+| **F2** — DONE 11.546 | Seats per facet, the per-lane document quota, dominance 0.4, MMR, 24 seats — in `compose_final` for every mode | Unit tests on fixed pools; `/retrieve` and every chat mode byte-identical when the flags are off |
 | **F3** | WILDCARD's mapped subqueries | Tests with fake lanes: atoms → gated subqueries → a second pass; the receipt |
 | **F4** | Section profiles for giant documents + the audit + the handbook / VES rebuild | The audit before/after; the handbook's profile names motion, camera, prompting |
 | **F5** | Cross-document synthesis prompt + sources by document + graded evidence | Tests on the prompt and the answer model |
