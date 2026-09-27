@@ -94,3 +94,23 @@ deepening timed out (lane deadline 3 s).
 | **F7** | Live proof: the receipt's question, the two "anime" questions of 2026-09-27, three more of the owner's — documents cited, facets covered, seats per document, before/after | The owner sees the table and the answers |
 
 Order: F1 + F2 + F4 in parallel; then F3, F5, F6; then F7 after one deploy.
+
+## 5. F7: the held-out proof (fixed here BEFORE any run; the owner: "please tell me you didnt reward hack")
+The question that triggered this plan (the ecommerce AI video ad) is NOT in the set. Ten questions across both libraries and every
+task type, written before any result was looked at. Each runs twice — the flags at `0` (the old compiler and composer) and at
+their defaults — in the same mode, and is scored only on what the receipt records: facets covered / uncovered, distinct
+documents cited, the top document's share of the seats, the uncited-sentence rate; the owner reads two answers. If the set fails,
+the fix is re-proven on a FRESH set, never by tuning to this one. Live turns run only on the owner's word (20 turns).
+
+| # | Library | Type | Question |
+|---|---|---|---|
+| 1 | cinema | lookup | What is the 180-degree rule? |
+| 2 | cinema | mechanism | How does lighting direction change the way a face reads on camera? |
+| 3 | cinema | comparison | How do Laban's effort factors differ from FACS as ways to describe a performance? |
+| 4 | cinema | synthesis | What makes a fight scene readable to an audience: choreography, camera or editing? |
+| 5 | cinema | create | Plan the shots and cuts for a 30-second scene where a character receives bad news in silence. |
+| 6 | cinema | counterpoint | When does breaking continuity editing help a story rather than hurt it? |
+| 7 | commerce-v1 | lookup | What is a "job to be done"? |
+| 8 | commerce-v1 | mechanism | Why do disruptive innovations start at the low end of a market? |
+| 9 | commerce-v1 | synthesis | How should a new brand combine habit formation with a clear message to win repeat customers? |
+| 10 | commerce-v1 | create | Design a first-week onboarding for a subscription app using what these books say about habits and stories. |
