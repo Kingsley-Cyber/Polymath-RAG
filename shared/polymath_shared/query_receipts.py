@@ -101,9 +101,7 @@ def summarize_response(kind: str, out: Any) -> dict:
     answer = out.get("answer")
     if kind in ("chat", "ask"):
         if isinstance(answer, str) and answer.strip().lower().startswith(
-                ("i don't have enough grounded evidence", "i cannot answer", "insufficient evidence")):
-            d["status"] = "abstained"
-        elif isinstance(verdict, str) and "insufficient" in verdict.lower():
+                ("i don't have enough grounded evidence", "i cannot answer", "insufficient evidence")) or isinstance(verdict, str) and "insufficient" in verdict.lower():
             d["status"] = "abstained"
     d["verdict"] = str(verdict) if verdict is not None else None
     return d
@@ -123,24 +121,50 @@ def knowledge_scope_of(req: Any) -> dict | None:
 
 
 META_MAX_CHARS = 64_000
+#: RECEIPT-SHRINK-ORDER (live, 2026-09-27): a WILDCARD turn's receipt kept 32 KB of raw chunk ids and lost its plan (the facets),
+#: its legend and its used evidence — the three fields a forensic reads first. Over budget, the diagnostic bulk goes first:
+#: the funnel's id lists are cut to FUNNEL_MAX_CHARS, then the long lists inside the traces are cut to LIST_MAX_ITEMS, then whole
+#: keys are dropped in DROP_ORDER — the forensic core (legend, used_evidence, chat_plan) last of all.
+FUNNEL_MAX_CHARS = 8_000
+LIST_MAX_ITEMS = 8
+SHRINK_LISTS_IN = ("wildcard", "latent_selection", "retrieval_trace", "latent")
+DROP_ORDER = ("funnel", "prompt", "carry", "latent", "latent_selection", "retrieval_trace", "wildcard", "lanes", "timings",
+              "legend", "used_evidence", "chat_plan")
+
+
+def _shrink_lists(obj, max_items: int = LIST_MAX_ITEMS):
+    """Lists longer than `max_items` keep their head and say how many they held; dicts are walked; everything else is kept."""
+    if isinstance(obj, list):
+        if len(obj) > max_items:
+            return [_shrink_lists(x, max_items) for x in obj[:max_items]] + [{"truncated": True, "held": len(obj)}]
+        return [_shrink_lists(x, max_items) for x in obj]
+    if isinstance(obj, dict):
+        return {k: _shrink_lists(v, max_items) for k, v in obj.items()}
+    return obj
 
 
 def _meta_json(meta: dict) -> str:
     """JSON-SAFE-META-V1: the old `json.dumps(meta)[:8000]` sliced the text
     and produced INVALID JSON for any meta over 8 KB — the INSERT then
     failed and the receipt was silently dropped. Shrink structurally
-    (funnel ids first, then whole keys) and never slice a JSON string."""
+    (funnel ids, then long lists, then whole keys — the forensic core last) and never slice a JSON string."""
     m = dict(meta or {})
     txt = json.dumps(m, default=str)
     if len(txt) <= META_MAX_CHARS:
         return txt
     if isinstance(m.get("funnel"), dict):
         from polymath_shared.funnel import compact
-        m["funnel"] = compact(m["funnel"], max_chars=META_MAX_CHARS // 2)
+        m["funnel"] = compact(m["funnel"], max_chars=FUNNEL_MAX_CHARS)
         txt = json.dumps(m, default=str)
         if len(txt) <= META_MAX_CHARS:
             return txt
-    for key in ("legend", "used_evidence", "chat_plan", "lanes", "timings", "funnel"):
+    for key in SHRINK_LISTS_IN:
+        if isinstance(m.get(key), (dict, list)):
+            m[key] = _shrink_lists(m[key])
+    txt = json.dumps(m, default=str)
+    if len(txt) <= META_MAX_CHARS:
+        return txt
+    for key in DROP_ORDER:
         if key in m:
             m[key] = {"truncated": True}
             txt = json.dumps(m, default=str)

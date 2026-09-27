@@ -1093,6 +1093,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_deep_research_engine.py", "py", None),
     ("tests/contracts/test_deep_research_route.py", "py", None),
     ("tests/contracts/test_deep_research_sentence_split.py", "py", None),
+    ("tests/contracts/test_receipt_shrink_order.py", "py", None),
     # DEEP-RESEARCH-MODE-V1 slices DR6a-b: research moves (engine) and /retrieve's optional intent
     ("tests/contracts/test_deep_research_moves.py", "py", None),
     # DEEP-RESEARCH-MODE-V1 slices DR7a-c (backend): the plan card, the evidence model, the sentence audit, Finish now
