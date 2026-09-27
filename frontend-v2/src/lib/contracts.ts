@@ -294,3 +294,43 @@ export interface ReviewResponse {
   contract: string; reviewer: string;
   review: ReviewScores | null; parse_error: string | null; raw: string | null;
 }
+
+/* ── TRAIL-INTERFACE-V1 (GET /adapter/runs, GET /adapter/{id}/view) ─────────────────────────────────────────────────── */
+export interface RunSummary {
+  run_id: string; adapter_id: string; adapter_version: string | null; title: string; status: string;
+  current_step_id: string | null; steps_accepted: number; harness_actions: number;
+  started_at: string | null; updated_at: string | null; finished_at: string | null;
+  agent_identity: string | null; owner: string | null; outcome: string;
+}
+export interface RunProgressRow { step_id: string; type: string | null; title: string; state: string; visits: number }
+export interface GateResult { gate_id?: string; name?: string | null; minimum?: number; observed?: number; passed?: boolean }
+export interface OpenGap { gap_id?: string; question?: string; evidence_role?: string; hypothesis_id?: string }
+export interface Qualification {
+  record_id?: string; stage?: string; state?: string; hypothesis_ids?: string[]; gate_results?: GateResult[]; open_gaps?: OpenGap[];
+}
+export interface ScoreRefusal { record_id?: string; reason_code?: string; hypothesis_id?: string; detail?: string }
+export interface Admission {
+  admission_id?: string; admitted?: { evidence_role?: string; independence_group?: string; source_class?: string }[];
+  rejected?: { reason_code?: string; detail?: string; observation_id?: string }[];
+}
+export interface LivedCluster {
+  id?: string; community?: string; friction_family?: string; authority?: string; record_count?: number; thread_count?: number;
+  threshold?: { min_records?: number; min_threads?: number; min_independent_voices?: number };
+}
+export interface ProductConcept { id?: string; name?: string; buyer?: string; form_factor?: string; differentiator?: string }
+export interface ConceptReality { concept_id?: string; concept?: string; status?: string; existing_products?: number }
+export interface HypothesisView { hypothesis?: { hypothesis_id?: string; statement?: string; status?: string } }
+export interface RunView {
+  run: {
+    run_id: string; adapter_id: string; adapter_version: string | null; title: string; status: string; terminal: boolean;
+    current_step_id: string | null; started_at: string | null; updated_at: string | null; finished_at: string | null;
+    agent_identity: string | null; gap: { code?: string; message?: string } | null; steps_accepted: number; harness_actions: number;
+  };
+  progress: RunProgressRow[];
+  sections: {
+    qualifications?: Qualification[]; trail_scores?: { record_id?: string; hypothesis_id?: string }[]; score_refusals?: ScoreRefusal[];
+    evidence_admissions?: Admission[]; lived_clusters?: LivedCluster[]; product_concepts?: ProductConcept[];
+    concept_reality?: ConceptReality[]; unresolved_research_gaps?: OpenGap[]; hypothesis_semantics?: HypothesisView[];
+  };
+  other_output_keys: string[]; contradictions: unknown[]; unknowns: unknown[]; stored_result_shadowed: boolean;
+}

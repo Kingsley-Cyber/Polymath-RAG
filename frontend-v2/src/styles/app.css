@@ -153,6 +153,7 @@ select:hover, input:hover, textarea:hover { border-color: var(--text-3); }
 select:focus-visible, input:focus-visible, textarea:focus-visible { border-color: var(--accent); }
 button.btn {
   cursor: pointer; border-color: var(--border-strong); font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   transition: background var(--dur), border-color var(--dur);
 }
 button.btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--border-control); }
@@ -607,3 +608,27 @@ details.card[open] > summary::before { transform: rotate(90deg); }
 .models__test { margin-top: 6px; font-size: var(--fs-xs); padding: 4px 8px; border-radius: var(--radius-1); }
 .models__test.ok { color: var(--ok); background: var(--ok-soft); }
 .models__test.bad { color: var(--bad); background: var(--bad-soft); }
+
+/* ── Research (TRAIL-INTERFACE-V1) ───────────────────────────────────────── */
+.run-row { display: flex; flex-direction: column; gap: 6px; text-align: left; cursor: pointer; font: inherit; color: var(--text); width: 100%; }
+.run-row:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.run-row__title { font-weight: 500; }
+.run-row__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: var(--fs-sm); }
+.back-link { margin-bottom: var(--space-3); display: inline-block; }
+.authority { font-size: var(--fs-xs); font-weight: 500; padding: 2px 8px; border-radius: var(--radius-pill); border: 1px solid var(--border-strong); color: var(--text-2); margin-left: 8px; vertical-align: 2px; }
+.authority--trail { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.authority--field { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.outcome-row { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.gates { display: flex; flex-wrap: wrap; gap: 6px; }
+.gate { font-size: var(--fs-xs); padding: 2px 8px; border-radius: var(--radius-pill); white-space: nowrap; }
+.gate--pass { background: var(--ok-soft); color: var(--ok); }
+.gate--fail { background: var(--bad-soft); color: var(--bad); }
+.plain-list { margin: 6px 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 4px; }
+.mini-card { border: 1px solid var(--border); border-radius: var(--radius-2); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; background: var(--surface); }
+.timeline { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.timeline__step { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; font-size: var(--fs-sm); padding: 3px 0; }
+.timeline__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); transform: translateY(-1px); }
+.timeline__step--done .timeline__dot { background: var(--ok); }
+.timeline__step--current .timeline__dot, .timeline__step--waiting_agent .timeline__dot, .timeline__step--waiting_harness .timeline__dot { background: var(--warn); }
+.timeline__step--failed .timeline__dot { background: var(--bad); }
+.timeline__step--pending { color: var(--text-3); }

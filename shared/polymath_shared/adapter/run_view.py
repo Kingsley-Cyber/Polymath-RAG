@@ -8,7 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from . import service, store
+from . import service, store, trail_client
 from .transitions import RunState
 
 _TITLE_KEYS = ("seed", "seed_idea", "question", "topic", "brief")
@@ -96,6 +96,25 @@ def progress_of(manifest_steps: dict[str, dict[str, Any]], stored_steps: list[di
     return rows
 
 
+def all_qualifications(stored_steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Every qualification from EVERY qualify step, in step order, once per record: a run qualifies per stage (market delta,
+    then supply), and the compiled result keeps only the newest step's list — the score step itself reads them all."""
+    out, seen = [], set()
+    for s in stored_steps:
+        o = s.get("output")
+        if not isinstance(o, dict) or not trail_client.fills(o.get("operation_kind"), "qualifications"):
+            continue
+        items = [q for q in (o.get("qualifications") or []) if isinstance(q, dict)]
+        if isinstance(o.get("qualification"), dict):                       # the pre-HR4 singular record
+            items.append(o["qualification"])
+        for q in items:
+            key = q.get("record_id") or id(q)
+            if key not in seen:
+                seen.add(key)
+                out.append(q)
+    return out
+
+
 def build_view(conn, run_id: str, directory: Path | None = None) -> dict[str, Any]:
     loaded = store.load_run(conn, run_id)
     if not loaded:
@@ -115,7 +134,8 @@ def build_view(conn, run_id: str, directory: Path | None = None) -> dict[str, An
                 "agent_identity": meta.get("agent_identity"), "gap": state.gap, "failure": state.failure,
                 "input": state.input, "steps_accepted": state.steps_accepted, "harness_actions": state.harness_action_count},
         "progress": progress_of(m.steps, steps, state),
-        "sections": {k: output[k] for k in SECTION_KEYS if k in output},
+        "sections": {**{k: output[k] for k in SECTION_KEYS if k in output},
+                     **({"qualifications": quals} if (quals := all_qualifications(steps)) else {})},
         "other_output_keys": sorted(k for k in output if k not in SECTION_KEYS),
         "contradictions": recompiled.get("contradictions") or [],
         "unknowns": recompiled.get("unknowns") or [],

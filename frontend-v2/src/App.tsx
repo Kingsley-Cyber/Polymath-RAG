@@ -18,6 +18,7 @@ import { Compare } from "./screens/Compare";
 import { Models } from "./screens/Models";
 import { ChangePassword, Login } from "./screens/Login";
 import { Settings } from "./screens/Settings";
+import { Research } from "./screens/Research";
 import {
   emptySession, loadSessions, saveSessions, titleFor, type ChatSession,
 } from "./lib/chatStore";
@@ -30,13 +31,14 @@ const NAV: readonly { id: string; label: string; icon: IconName | null }[] = [
   { id: "compare", label: "Compare", icon: "compare" },
   { id: "files", label: "Files", icon: "files" },
   { id: "graph", label: "Graph", icon: "graph" },
+  { id: "research", label: "Research", icon: "research" },
   { id: "rule", label: "", icon: null },
   { id: "control", label: "Control Plane", icon: "control" },
   { id: "models", label: "Models", icon: "models" },
   { id: "settings", label: "Settings", icon: "settings" },
 ] as const;
 
-type ScreenId = "overview" | "chat" | "compare" | "files" | "graph" | "rule" | "control" | "models" | "settings";
+type ScreenId = "overview" | "chat" | "compare" | "files" | "graph" | "research" | "rule" | "control" | "models" | "settings";
 
 /** FRIENDS-ACCESS-V1: screens whose data is owner-only on the server (control plane, LLM providers) — hidden from friends. */
 const OWNER_SCREENS = new Set<ScreenId>(["overview", "control", "models"]);
@@ -344,6 +346,7 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
               {screen === "control" && owner && <ControlPlane corpusId={corpusId} />}
               {screen === "graph" && <Graph corpusId={corpusId} />}
               {screen === "models" && owner && <Models />}
+              {screen === "research" && <Research />}
               {screen === "settings" && <Settings me={me} onMeChanged={onMeChanged} onSignOut={onSignOut} />}
             </>
           )}

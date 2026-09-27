@@ -87,3 +87,16 @@ def test_the_web_boundary_opens_both_routes_to_signed_in_users():
     assert B.classify("GET", "/adapter/runs") == B.USER
     assert B.classify("GET", "/adapter/adr_1/view") == B.USER
     assert B.classify("POST", "/adapter/runs") is None                          # nothing else under that path
+
+
+def test_the_gates_come_from_every_qualify_step_once():
+    steps = [
+        {"step_id": "R_qualify", "output": {"operation_kind": "opportunity.qualify",
+                                             "qualifications": [{"record_id": "q_m1", "stage": "market_delta"}]}},
+        {"step_id": "V_score", "output": {"operation_kind": "opportunity.score", "qualifications": []}},      # unfilled
+        {"step_id": "U_qualify", "output": {"operation_kind": "opportunity.qualify",
+                                             "qualifications": [{"record_id": "q_s1", "stage": "supply"}, {"record_id": "q_m1", "stage": "market_delta"}]}},
+        {"step_id": "old", "output": {"operation_kind": "opportunity.qualify", "qualification": {"record_id": "q_legacy", "stage": "supply"}}},
+        {"step_id": "W", "output": {"interpretation": "agent text"}},
+    ]
+    assert [q["record_id"] for q in run_view.all_qualifications(steps)] == ["q_m1", "q_s1", "q_legacy"]

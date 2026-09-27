@@ -7,8 +7,7 @@ import type {
   CompareResponse, ControlPlane, Corpus, DocSummary, DocumentsResponse, GraphEntities,
   GraphRelationships, LlmProvider, LlmTestResult, PoolLanes, ProviderUpsertBody,
   ReasoningMode, RetrieveResponse, ReviewResponse, SemanticReadiness, Synthesizer,
-  UploadResult,
-} from "./contracts";
+  UploadResult, RunSummary, RunView } from "./contracts";
 
 export class ApiError extends Error {
   constructor(readonly status: number, readonly path: string, readonly body: string) {
@@ -103,6 +102,12 @@ async function del<T>(path: string, signal?: AbortSignal): Promise<T> {
 export const http = { get, post, put, del };
 
 export const api = {
+  // TRAIL-INTERFACE-V1: governed runs, newest first (a friend sees only their own), and one run's view
+  adapterRuns: (limit = 50, s?: AbortSignal) =>
+    get<{ runs: RunSummary[] }>(`/adapter/runs?limit=${limit}`, s).then((d) => d.runs),
+  adapterView: (runId: string, s?: AbortSignal) => get<RunView>(`/adapter/${encodeURIComponent(runId)}/view`, s),
+  adapterCancel: (runId: string, s?: AbortSignal) =>
+    post<Record<string, unknown>>(`/adapter/${encodeURIComponent(runId)}/cancel`, {}, s),
   corpora: (s?: AbortSignal) => get<{ corpora: Corpus[] }>("/corpora", s).then((d) => d.corpora),
   // DELETE /corpora/{id} — OWNER-DESTRUCTIVE: wipes the corpus and everything derived
   // (PG rows, Qdrant collection, Neo4j substrate). The backend requires confirm==corpus_id,

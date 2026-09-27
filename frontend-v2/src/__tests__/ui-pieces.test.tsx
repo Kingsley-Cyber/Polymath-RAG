@@ -56,7 +56,7 @@ it("the collapsed icon rail keeps every item's name", async () => {
   await act(async () => root.render(<App />));
   await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
   const names = [...host.querySelectorAll(".nav__item")].map((b) => b.getAttribute("aria-label"));
-  expect(names).toEqual(["Overview", "Chat", "Compare", "Files", "Graph", "Control Plane", "Models", "Settings"]);
+  expect(names).toEqual(["Overview", "Chat", "Compare", "Files", "Graph", "Research", "Control Plane", "Models", "Settings"]);
   expect(host.querySelector(".nav__newchat")!.getAttribute("aria-label")).toBe("New chat");
 });
 
