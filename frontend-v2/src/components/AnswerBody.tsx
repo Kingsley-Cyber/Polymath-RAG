@@ -35,7 +35,7 @@ export function AnswerBody({ t, models }: { t: Turn; models: Synthesizer[] }) {
           </span>
         )}
         <span className={`badge ${t.abstained ? "badge-abstained" : "badge-supported"}`}>
-          {t.abstained ? "ABSTAINED" : verdict.toUpperCase()}
+          {t.abstained ? "Abstained" : verdict.charAt(0).toUpperCase() + verdict.slice(1)}
         </span>
         {t.model && (
           <span className="badge badge-generated" title={t.model}>{t.model.split("/").pop()}</span>

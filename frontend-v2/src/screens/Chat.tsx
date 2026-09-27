@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Icon } from "../ui/icons";
+import { copyText } from "../lib/auth";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import { PUBLIC_MODES } from "../lib/contracts";
@@ -22,6 +24,13 @@ import type { ChatSession } from "../lib/chatStore";
  * `onUpdateTurns`. Opening another chat unmounts this screen but not its stream, and the
  * answer must still land in this chat (owner report 2026-09-22, "only graph worked").
  */
+/** Starter questions for an empty chat; clicking one fills the box (nothing is sent until you press Enter). */
+const STARTERS = [
+  "Give me an overview of this library",
+  "What are the key concepts, and how do they relate?",
+  "Where do the sources disagree, and on what?",
+];
+
 export function Chat({
   corpusId,
   session,
@@ -94,57 +103,19 @@ export function Chat({
 
   return (
     <div className="screen screen--wide screen--chat chat">
-      <div className="screen__head">
-        <h1 className="screen__title">Chat</h1>
-        <p className="screen__sub">
-          Corpus <span className="mono">{corpusId}</span> · every message searches this corpus
-        </p>
-      </div>
-
-      <div className="card" style={{ marginBottom: 12 }}>
-        <div className="row" style={{ gap: 14, alignItems: "flex-end" }}>
-          <div className="field">
-            <span className="label">Retrieval</span>
-            <select value={mode} onChange={(e) => setMode(e.target.value as PublicMode)}>
-              {PUBLIC_MODES.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
-          <div className="field" style={{ minWidth: 260 }}>
-            <span className="label">Model</span>
-            <ModelPicker synthesizers={synths.data ?? []} value={model} onChange={setModel} />
-          </div>
-          <div className="field">
-            <span className="label">Reasoning</span>
-            <select value={reasoning} onChange={(e) => setReasoning(e.target.value)}>
-              <option value="">{reasons.data?.default ?? "default"}</option>
-              {(reasons.data?.modes ?? []).map((m) => (
-                <option key={m.id} value={m.id} title={m.description}>{m.label}</option>
-              ))}
-            </select>
-          </div>
-          {corpusExploreAvailable && (
-            <div className="field">
-              <span className="label">Corpus Explore</span>
-              <label
-                style={{ display: "flex", alignItems: "center", gap: 6, height: 32 }}
-                title="Bounded, corpus-grounded exploration: activate related concepts from your library and retrieve through a few grounded sub-questions."
-              >
-                <input type="checkbox" checked={corpusExplore} onChange={(e) => setCorpusExplore(e.target.checked)} />
-                <span>{corpusExplore ? "On" : "Off"}</span>
-              </label>
-            </div>
-          )}
-        </div>
-      </div>
-
+      <h1 className="sr-only">Chat with {corpusId}</h1>
       <div className="chat__scroll" ref={scrollRef}>
         {turns.length === 0 ? (
           <div className="chat__welcome">
-            <h2>Grounded answers, exact evidence.</h2>
-            <p>
-              Ask <span className="mono">{corpusId}</span> anything. Unsupported questions
-              abstain — by design.
-            </p>
+            <h2>Ask {corpusId}</h2>
+            <p>Every answer cites the passages it rests on. When the library doesn't cover a question, the answer says so.</p>
+            <div className="starters">
+              {STARTERS.map((s) => (
+                <button key={s} type="button" className="starter" onClick={() => { setQuestion(s); inputRef.current?.focus(); }}>
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="chat__thread">
@@ -176,23 +147,48 @@ export function Chat({
             }}
           />
           <div className="composer__bar">
-            <span className="composer__meta">{mode} · {corpusId}</span>
+            <div className="composer__chips" onClick={(e) => e.stopPropagation()}>
+              <label className="chip-field" title="How the library is searched">
+                <span className="label">Retrieval</span>
+                <select value={mode} onChange={(e) => setMode(e.target.value as PublicMode)}>
+                  {PUBLIC_MODES.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </label>
+              <div className="chip-field chip-field--model">
+                <span className="label">Model</span>
+                <ModelPicker synthesizers={synths.data ?? []} value={model} onChange={setModel} />
+              </div>
+              <label className="chip-field" title="How much the model reasons before answering">
+                <span className="label">Reasoning</span>
+                <select value={reasoning} onChange={(e) => setReasoning(e.target.value)}>
+                  <option value="">{reasons.data?.default ?? "default"}</option>
+                  {(reasons.data?.modes ?? []).map((m) => (
+                    <option key={m.id} value={m.id} title={m.description}>{m.label}</option>
+                  ))}
+                </select>
+              </label>
+              {corpusExploreAvailable && (
+                <label className="chip-field chip-field--toggle"
+                       title="Bounded, corpus-grounded exploration: activate related concepts from your library and retrieve through a few grounded sub-questions.">
+                  <input type="checkbox" checked={corpusExplore} onChange={(e) => setCorpusExplore(e.target.checked)} />
+                  <span className="label">Corpus Explore</span>
+                </label>
+              )}
+            </div>
             {busy ? (
               <button className="composer__send composer__send--stop" aria-label="Stop" title="Stop the answer"
                       onClick={(e) => { e.stopPropagation(); stopStream(session.id); }}>
-                <span aria-hidden="true">■</span>
+                <Icon name="stop" size={14} />
               </button>
             ) : (
               <button className="composer__send" aria-label="Send" title="Send (Enter)" disabled={!question.trim()}
                       onClick={(e) => { e.stopPropagation(); void send(); }}>
-                <span aria-hidden="true">↑</span>
+                <Icon name="send" />
               </button>
             )}
           </div>
         </div>
-        <div className="chat__hint">
-          Enter to send · Shift+Enter for a newline · answers cite exact source spans
-        </div>
+        <div className="chat__hint">Enter to send · Shift+Enter for a new line</div>
       </div>
     </div>
   );
@@ -208,7 +204,10 @@ function TurnView({ t, models }: { t: Turn; models: Synthesizer[] }) {
         <ProcessRail phases={t.phases} live={!t.done} reasoning={t.reasoningText} />
         {t.error && <div className="answer answer-error">{t.error}</div>}
         {t.answerText ? (
-          <AnswerBody t={t} models={models} />
+          <>
+            <AnswerBody t={t} models={models} />
+            {t.done && <AnswerActions text={t.answerText} />}
+          </>
         ) : t.done && !t.error ? (
           <div className="answer empty-answer">
             The model returned no answer text — it spent its token budget reasoning
@@ -217,5 +216,18 @@ function TurnView({ t, models }: { t: Turn; models: Synthesizer[] }) {
         ) : null}
       </div>
     </>
+  );
+}
+
+/** Copy the answer (Markdown as written). The confirmation fades after two seconds. */
+function AnswerActions({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="answer-actions">
+      <button type="button" className="icon-btn icon-btn--sm" aria-label={copied ? "Copied" : "Copy answer"} title={copied ? "Copied" : "Copy answer"}
+              onClick={() => { void copyText(text).then((ok) => { if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); } }); }}>
+        <Icon name={copied ? "check" : "copy"} size={15} />
+      </button>
+    </div>
   );
 }
