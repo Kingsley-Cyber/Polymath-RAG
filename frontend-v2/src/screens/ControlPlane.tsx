@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { controlReady } from "../lib/readiness";
+import { controlReady, settled } from "../lib/readiness";
 import { Pill } from "../components/Pill";
 
 const FUNCTIONS = ["GRAPH_EXTRACTION", "DOCUMENT_PROFILE", "PMAP", "CHAT"] as const;
@@ -27,7 +27,7 @@ export function ControlPlane({ corpusId }: { corpusId: string }) {
   const cp = useAsync((s) => api.controlPlane(corpusId, s), [corpusId]);
   const lanes = useAsync((s) => (fn ? api.poolLanes(fn, s) : Promise.resolve(null)), [fn]);
 
-  const control = controlReady(cp.data?.control_ready);
+  const control = settled(cp, (d) => controlReady(d?.control_ready));
   const p = (cp.data?.control_ready?.pipeline ?? {}) as Record<string, unknown>;
   const causes = (p.causes as string[] | undefined) ?? [];
   const stallsActive = typeof p.stalls_active === "number" ? p.stalls_active : null;

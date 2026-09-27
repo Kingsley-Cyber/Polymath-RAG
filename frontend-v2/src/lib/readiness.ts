@@ -66,3 +66,11 @@ export function docVnext(d: DocSummary): Verdict {
   return { state: "blocked", label: "BLOCKED", detail: why.join(" · ") || undefined };
 }
 
+
+/** Loading is not failure (FRONTEND-REFRESH-V1 P4): while the data has not arrived and nothing failed, the verdict reads
+ *  "Checking", never "UNKNOWN — /control_plane not reachable". */
+export const CHECKING: Verdict = { state: "unknown", label: "CHECKING" };
+
+export function settled<T>(a: { data: T | null; error: string | null }, verdict: (d: T | null) => Verdict): Verdict {
+  return a.data == null && !a.error ? CHECKING : verdict(a.data);
+}

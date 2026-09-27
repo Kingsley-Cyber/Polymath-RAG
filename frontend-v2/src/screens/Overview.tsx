@@ -1,6 +1,6 @@
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { controlReady, semanticReady, vnextReady } from "../lib/readiness";
+import { controlReady, semanticReady, vnextReady, settled } from "../lib/readiness";
 import { ReadinessTriad } from "../components/ReadinessTriad";
 
 /**
@@ -28,14 +28,14 @@ export function Overview({ corpusId }: { corpusId: string }) {
       {err && <div className="banner banner--bad" style={{ marginBottom: 14 }}>{err}</div>}
 
       <ReadinessTriad
-        control={controlReady(cp.data?.control_ready)}
-        semantic={semanticReady(sr.data)}
-        vnext={vnextReady(sr.data)}
+        control={settled(cp, (d) => controlReady(d?.control_ready))}
+        semantic={settled(sr, semanticReady)}
+        vnext={settled(sr, vnextReady)}
       />
 
       {corpus && (
-        <div className="card" style={{ marginTop: 14 }}>
-          <div className="label" style={{ marginBottom: 8 }}>Why the legacy badge is not used</div>
+        <details className="card" style={{ marginTop: 14 }}>
+          <summary className="label" style={{ cursor: "pointer" }}>Details: why the old query_ready badge is not used</summary>
           <div className="row">
             <span className="mono dim">query_ready</span>
             <span className="mono">{String(corpus.query_ready)}</span>
@@ -51,7 +51,7 @@ export function Overview({ corpusId }: { corpusId: string }) {
             semantically incomplete. V2 never uses it as a readiness signal — the three verdicts above are the
             contract (FRONTEND-V2-PLAN §7).
           </div>
-        </div>
+        </details>
       )}
 
       {sr.data && (

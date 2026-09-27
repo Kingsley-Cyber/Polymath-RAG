@@ -583,3 +583,14 @@ button.btn--danger-solid:hover:not(:disabled) { background: var(--bad); border-c
   .chip-field select { max-width: 120px; }
   .chip-field--model .mp__button { max-width: 150px; }
 }
+
+/* ── U5: link-like buttons (keyboard-usable table rows), details cards ───── */
+.linklike {
+  appearance: none; background: transparent; border: 0; padding: 0; font: inherit; color: var(--text); text-align: left;
+  cursor: pointer; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px;
+}
+.linklike:hover, .linklike[aria-pressed="true"] { color: var(--accent); text-decoration-color: currentColor; }
+details.card > summary { list-style: none; }
+details.card > summary::-webkit-details-marker { display: none; }
+details.card > summary::before { content: "▸"; display: inline-block; margin-right: 6px; color: var(--text-3); transition: transform var(--dur); }
+details.card[open] > summary::before { transform: rotate(90deg); }

@@ -46,7 +46,7 @@ export function Compare({ corpusId }: { corpusId: string }) {
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="row" style={{ marginBottom: 10 }}>
           <input type="text" style={{ flex: 1, minWidth: 300 }}
-                 placeholder="Question to compare…" value={q}
+                 aria-label="Question to compare" placeholder="Question to compare…" value={q}
                  onChange={(e) => setQ(e.target.value)}
                  onKeyDown={(e) => { if (e.key === "Enter") void run(); }} />
           <button className="btn btn--primary" onClick={() => void run()} disabled={busy || !q.trim()}>

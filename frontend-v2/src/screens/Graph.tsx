@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Skeleton } from "../ui/states";
 import { api } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type { GraphEntity } from "../lib/contracts";
@@ -35,7 +36,7 @@ export function Graph({ corpusId }: { corpusId: string }) {
       <div className="card" style={{ marginBottom: 14 }}>
         <div className="row">
           <input type="text" style={{ flex: 1, minWidth: 260 }}
-                 placeholder="Search entities by surface…"
+                 aria-label="Search entities" placeholder="Search entities by name…"
                  value={q} onChange={(e) => setQ(e.target.value)}
                  onKeyDown={(e) => { if (e.key === "Enter") setTerm(q); }} />
           <button className="btn btn--primary" onClick={() => setTerm(q)}>Search</button>
@@ -49,16 +50,21 @@ export function Graph({ corpusId }: { corpusId: string }) {
             Entities {term ? <>matching <span className="mono">{term}</span></> : "(most attested)"}
           </div>
           {ents.error && <div className="banner banner--bad">{ents.error}</div>}
-          {ents.loading && <div className="faint">loading…</div>}
+          {ents.loading && <Skeleton rows={4} label="Loading entities…" />}
           <table className="t">
             <thead><tr><th>Surface</th><th>Type</th><th>Mentions</th><th>Docs</th></tr></thead>
             <tbody>
               {(ents.data?.entities ?? []).map((e) => (
                 <tr key={e.normalized_surface}
-                    style={{ cursor: e.entity_id ? "pointer" : "default",
-                             background: picked?.normalized_surface === e.normalized_surface ? "var(--accent-dim)" : undefined }}
-                    onClick={() => e.entity_id && setPicked(e)}>
-                  <td>{e.surface.replace(/\s+/g, " ")}</td>
+                    style={{ background: picked?.normalized_surface === e.normalized_surface ? "var(--accent-soft)" : undefined }}>
+                  <td>
+                    {e.entity_id ? (
+                      <button type="button" className="linklike" aria-pressed={picked?.normalized_surface === e.normalized_surface}
+                              onClick={() => setPicked(e)}>
+                        {e.surface.replace(/\s+/g, " ")}
+                      </button>
+                    ) : e.surface.replace(/\s+/g, " ")}
+                  </td>
                   <td className="mono faint">{e.core_type ?? "—"}</td>
                   <td className="mono">{e.mentions}</td>
                   <td className="mono">{e.documents}</td>
@@ -75,7 +81,7 @@ export function Graph({ corpusId }: { corpusId: string }) {
           </div>
           {!picked && <div className="empty">Pick an entity to see its source-attested relationships.</div>}
           {rels.error && <div className="banner banner--bad">{rels.error}</div>}
-          {rels.loading && picked && <div className="faint">loading…</div>}
+          {rels.loading && picked && <Skeleton rows={3} label="Loading relationships…" />}
           {rels.data && (
             <>
               {rels.data.dropped_unattested > 0 && (

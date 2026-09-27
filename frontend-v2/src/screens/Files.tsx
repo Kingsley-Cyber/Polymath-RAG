@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
-import { ConfirmByName } from "../ui/Dialog";
+import { ConfirmByName, Dialog } from "../ui/Dialog";
+import { EmptyState, ErrorState, Skeleton } from "../ui/states";
 import { api, ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { controlReady, docVnext, semanticReady, vnextReady } from "../lib/readiness";
+import { controlReady, docVnext, semanticReady, vnextReady, settled } from "../lib/readiness";
 import { ReadinessTriad } from "../components/ReadinessTriad";
 import { Pill, StatePill } from "../components/Pill";
 import type { DocSummary } from "../lib/contracts";
@@ -47,6 +48,8 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
   corpusId: string; isOwner?: boolean; canWrite?: boolean; onLibraryDeleted?: (id: string) => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ docId: string; sourceName: string } | null>(null);
+  const [details, setDetails] = useState(false);                     // owner: the pipeline columns
   const [nonce, setNonce] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -98,7 +101,6 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
 
   async function onDelete(docId: string, sourceName: string) {
     const label = sourceName || docId;
-    if (!window.confirm(`Delete "${label}"?\n\nThis removes the document and everything derived from it (chunks, vectors, graph substrate, receipts). It cannot be undone.`)) return;
     setErr(null); setNotice(null);
     setBusy(`Deleting ${label}…`);
     try {
@@ -150,8 +152,8 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
         <div>
           <h1 className="screen__title">Files</h1>
           <p className="screen__sub">
-            <span className="mono">{corpusId}</span> — {rows.length} documents,{" "}
-            <b>{readyCount}</b> vNext-ready, <b>{rows.length - readyCount}</b> not ready
+            <span className="mono">{corpusId}</span> ·{" "}
+            {docs.data == null ? "loading documents…" : <>{rows.length} documents · <b>{readyCount}</b> ready{rows.length - readyCount ? <>, <b>{rows.length - readyCount}</b> still processing</> : null}</>}
           </p>
         </div>
         <div className="files__actions">
@@ -184,9 +186,9 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
       </div>
 
       {isOwner && <ReadinessTriad
-        control={controlReady(cp.data?.control_ready)}
-        semantic={semanticReady(sr.data)}
-        vnext={vnextReady(sr.data)}
+        control={settled(cp, (d) => controlReady(d?.control_ready))}
+        semantic={settled(sr, semanticReady)}
+        vnext={settled(sr, vnextReady)}
       />}
       {!canWrite && (
         <div className="banner banner--info" style={{ marginTop: 14 }}>
@@ -197,16 +199,33 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
       {busy && <div className="banner" style={{ marginTop: 14 }}>{busy}</div>}
       {notice && <div className="banner banner--ok" style={{ marginTop: 14 }}>{notice}</div>}
       {err && <div className="banner banner--bad" style={{ marginTop: 14 }}>{err}</div>}
-      {docs.error && <div className="banner banner--bad" style={{ marginTop: 14 }}>{docs.error}</div>}
 
+      {isOwner && rows.length > 0 && (
+        <label className="chip-field chip-field--toggle" style={{ marginTop: 14 }}>
+          <input type="checkbox" checked={details} onChange={(e) => setDetails(e.target.checked)} />
+          <span className="label">Pipeline details</span>
+        </label>
+      )}
+      {docs.data == null && !docs.error ? (
+        <div className="card" style={{ marginTop: 14 }}><Skeleton rows={5} label="Loading documents…" /></div>
+      ) : docs.error && docs.data == null ? (
+        <div className="card" style={{ marginTop: 14 }}><ErrorState message={docs.error} onRetry={refresh} /></div>
+      ) : !rows.length ? (
+        <div className="card" style={{ marginTop: 14 }}>
+          <EmptyState title="No documents yet"
+                      action={canWrite ? <button className="btn btn--primary" onClick={() => fileInput.current?.click()}>Add files</button> : undefined}>
+            {canWrite ? "Add Markdown, text, HTML, PDF, EPUB or Word files to this library." : "Nothing has been added to this library yet."}
+          </EmptyState>
+        </div>
+      ) : (
       <div className="card" style={{ marginTop: 14, overflowX: "auto" }}>
         <table className="t">
           <thead>
             <tr>
               <th>File</th><th>Type</th><th>Added</th><th>Size</th><th>Status</th>
-              <th>Parents</th><th>Children</th>
+              {details && <><th>Parents</th><th>Children</th>
               <th>pMAP mapped</th><th>excluded</th><th>unresolved</th>
-              <th>Profile</th><th>Graph ent.</th><th>Graph rel.</th><th></th>
+              <th>Profile</th><th>Graph ent.</th><th>Graph rel.</th></>}<th></th>
             </tr>
           </thead>
           <tbody>
@@ -224,6 +243,7 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
                   <td className="mono">{fmtDate(r.created_at)}</td>
                   <td className="mono">{fmtBytes(r.bytes)}</td>
                   <td>{d ? <Pill v={docVnext(d)} /> : <StatePill state="degraded" label="PROCESSING" />}</td>
+                  {details && <>
                   <td className="mono">{d ? d.parents : r.parents}</td>
                   <td className="mono">{d ? d.children : r.chunks}</td>
                   <td className="mono">{d ? d.map_active : r.map_active}</td>
@@ -239,6 +259,7 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
                   </td>
                   <td className="mono">{d ? d.graph_entities : "—"}</td>
                   <td className="mono">{d ? d.graph_relations : "—"}</td>
+                  </>}
                   <td>
                     <div className="row" style={{ gap: 6 }}>
                       {isOwner && !d?.vnext_ready && (
@@ -255,7 +276,7 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
                         className="btn files__del"
                         disabled={!!busy}
                         title={`Delete ${r.source_name || r.doc_id}`}
-                        onClick={() => void onDelete(r.doc_id, r.source_name)}
+                        onClick={() => setPendingDelete({ docId: r.doc_id, sourceName: r.source_name })}
                       >
                         Delete
                       </button>}
@@ -266,10 +287,8 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
             })}
           </tbody>
         </table>
-        {!rows.length && !docs.loading && (
-          <div className="empty">No documents in this corpus yet — use ＋ Add Files to ingest one.</div>
-        )}
       </div>
+      )}
 
       <div className="faint" style={{ marginTop: 10, fontSize: 12 }}>
         Accepted: .md .txt .html .pdf .epub .docx. Atoms and pMAP are ROUTING artifacts —
@@ -287,6 +306,15 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
           <button type="button" className="btn btn--danger" onClick={() => setConfirmDelete(true)}>Delete library…</button>
         </section>
       )}
+      <Dialog open={!!pendingDelete} title={`Delete ${pendingDelete?.sourceName || pendingDelete?.docId || ""}?`}
+              onClose={() => setPendingDelete(null)} actions={<>
+        <button type="button" className="btn" onClick={() => setPendingDelete(null)}>Cancel</button>
+        <button type="button" className="btn btn--danger-solid" onClick={() => {
+          const p = pendingDelete; setPendingDelete(null); if (p) void onDelete(p.docId, p.sourceName);
+        }}>Delete</button>
+      </>}>
+        <p className="dialog__text">This removes the document and everything made from it: chunks, vectors, graph and receipts. It can't be undone.</p>
+      </Dialog>
       {isOwner && <ConfirmByName
         open={confirmDelete}
         title={`Delete the library ${corpusId}?`}

@@ -5,7 +5,7 @@ import { api, ApiError, AUTH_REQUIRED_EVENT } from "./lib/api";
 import { resolveMode, useAppearance } from "./lib/appearance";
 import { auth, LEGACY_OWNER, privateLibrary, type Me } from "./lib/auth";
 import { useAsync } from "./lib/useAsync";
-import { controlReady } from "./lib/readiness";
+import { controlReady, settled } from "./lib/readiness";
 import { Pill } from "./components/Pill";
 import { Icon, IconButton, type IconName } from "./ui/icons";
 import { Overview } from "./screens/Overview";
@@ -225,7 +225,7 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
     (s) => (corpusValid && owner ? api.controlPlane(corpusId, s) : Promise.resolve(null)),
     [corpusId, corpusValid, owner],
   );
-  const control = useMemo(() => controlReady(cp.data?.control_ready), [cp.data]);
+  const control = useMemo(() => settled(cp, (d) => controlReady(d?.control_ready)), [cp]);
 
   return (
     <div className={`shell${collapsed && !phone ? " shell--collapsed" : ""}${drawerOpen ? " shell--drawer" : ""}`}>
