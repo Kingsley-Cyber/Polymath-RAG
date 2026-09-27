@@ -70,11 +70,12 @@ def validate_hop_refs(hyp: dict, policies: dict, known_ids: set | None) -> list[
     if not (policies.get("bridge") or {}).get("require_hop_refs"):
         return []
     path = hyp.get("path") or []
-    boundary = (hyp.get("evidence_boundary") or {}).get("first_inference_at")
-    try:
-        b = path.index(boundary)
-    except ValueError:
-        return []  # validate_bridge already rejects a boundary that is not a hop
+    # the boundary is read exactly as validate_bridge reads it (stripped): read raw, a trailing newline made it "not a hop" here while
+    # validate_bridge admitted it — the hop-ref check was skipped and the dossier called every hop evidence-backed (gap B-36)
+    boundary = ((hyp.get("evidence_boundary") or {}).get("first_inference_at") or "").strip()
+    if not isinstance(path, list) or boundary not in path:     # fail closed: hops whose refs cannot be placed are never passed
+        return [f"{hyp.get('id', '?')}: hop_refs cannot be checked — first_inference_at {boundary!r} is not a hop in path"]
+    b = path.index(boundary)
     refs = hyp.get("hop_refs") or {}
     if not isinstance(refs, dict):          # a shape the law cannot read is an error the agent can correct, never a crash (gap B-01)
         return [f"{hyp.get('id', '?')}: hop_refs must be an object {{\"<hop index>\": [evidence ids]}}, got {type(refs).__name__}"]

@@ -12,7 +12,8 @@ and the only score stay TrailSignal's.
     join   admitted observations -> existing products, linked to a concept ONLY through the explicit `concept:` tag the job asked
              the harness to record (the supply lane's convention). No tag, no link: ownership is never inferred from a name.
              A product the harness marks `relation: solves` (or TrailSignal counts as contradicting ITS hypothesis) CONTESTS that
-             concept — and only that concept."""
+             concept — and only that concept, except that what the ONE substitute job of a hypothesis finds counts for every sibling
+             concept that job was planned for (`applies_to_concepts`)."""
 from __future__ import annotations
 
 from typing import Any, Mapping
@@ -118,7 +119,8 @@ def join(admitted: list[Mapping[str, Any]], observations: Mapping[str, Mapping[s
     mech_by_id = {str(m.get("id")): m for m in mechanisms if isinstance(m, Mapping)}
     variations = {variation_id(cid, n): str(v.get("name")) for cid, c in concept_by_id.items() for n, v in enumerate(c.get("variations") or []) if isinstance(v, Mapping)}
     products: list[dict[str, Any]] = []
-    job_ids = {str(j.get("job_id")) for j in jobs if j.get("job_id")}
+    job_by_id = {str(j.get("job_id")): j for j in jobs if j.get("job_id")}
+    job_ids = set(job_by_id)
     stats = {"admitted": 0, "without_observation": 0, "without_concept_tag": 0, "unknown_concept": 0, "joined": 0}
     unjoined: list[dict[str, Any]] = []
     for a in admitted:
@@ -143,19 +145,26 @@ def join(admitted: list[Mapping[str, Any]], observations: Mapping[str, Mapping[s
         # what TrailSignal counts this record as FOR THIS CONCEPT'S hypothesis (ADR-069 relation, else the global polarity — gap B-11)
         polarity = polarity_for(a, mech.get("hypothesis_id"))
         contests = relation == "solves" or polarity == "contradicting"
-        products.append({"id": a.get("admitted_evidence_id"), "concept_id": cid, "variation_id": vid if vid in variations else None,
+        job_id = context_field(ctx, "intent") if context_field(ctx, "intent") in job_ids else None      # PROVENANCE HOOK: the job that found it
+        # a SUBSTITUTE job is ONE search for the job the hypothesis's concepts share, planned once for all of them (`applies_to_concepts`):
+        # what it finds counts for every sibling of the tagged concept it was planned for, not for the tag alone (gap B-37)
+        applies = [cid]
+        if job_id and job_by_id[job_id].get("job_class") == "substitute":
+            applies += [str(x) for x in job_by_id[job_id].get("applies_to_concepts") or [] if str(x) != cid and str(x) in concept_by_id
+                        and (mech_by_id.get(str(concept_by_id[str(x)].get("mechanism_id"))) or {}).get("hypothesis_id") == mech.get("hypothesis_id")]
+        products.append({"id": a.get("admitted_evidence_id"), "concept_id": cid, "applies_to_concepts": list(dict.fromkeys(applies)),
+                         "variation_id": vid if vid in variations else None,
                          "hypothesis_id": mech.get("hypothesis_id"), "hypothesis_ids": list(a.get("hypothesis_ids") or []), "mechanism_id": mech.get("id"),
                          "relation": relation, "contests_concept": contests, "product_name": context_field(ctx, "product"),
                          "price_raw": context_field(ctx, "price as listed"), "url": src.get("url"), "claim": str(o.get("claim") or "")[:400],
-                         "evidence_role": a.get("evidence_role"), "polarity": polarity, "metric": o.get("metric_if_present"),
-                         "job_id": (context_field(ctx, "intent") if context_field(ctx, "intent") in job_ids else None)})   # PROVENANCE HOOK: the job that found it
+                         "evidence_role": a.get("evidence_role"), "polarity": polarity, "metric": o.get("metric_if_present"), "job_id": job_id})
         stats["joined"] += 1
     planned = {}
     for j in jobs:
         planned[j.get("concept_id")] = planned.get(j.get("concept_id"), 0) + 1
     reality = []
     for cid, c in concept_by_id.items():
-        mine = [p for p in products if p["concept_id"] == cid]
+        mine = [p for p in products if cid in p["applies_to_concepts"]]
         solved = [p["id"] for p in mine if p["contests_concept"]]
         status = "EXISTING_PRODUCT_CONTESTS" if solved else "EXISTING_PRODUCTS_FOUND" if mine else "NO_EXISTING_PRODUCT_JOINED" if planned.get(cid) else "NOT_RESEARCHED"
         by_relation: dict[str, int] = {}

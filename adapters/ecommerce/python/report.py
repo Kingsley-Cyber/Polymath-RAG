@@ -26,7 +26,9 @@ import argparse
 import html
 import json
 import os
+import re
 import sys
+from urllib.parse import urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph as graphmod  # noqa: E402
@@ -143,6 +145,36 @@ def _seed_of(inp: dict) -> str:
     return next((v.strip() for v in inp.values() if isinstance(v, str) and v.strip()), "")
 
 
+def _context_field(context, key: str) -> str | None:
+    """`key: value · key: value` from an observation's free-text context — the binding's tolerant reader (`binding._context_field`).
+    Absent stays absent."""
+    m = re.search(r"(?:^|·|\||;|\n)\s*" + re.escape(key) + r"\s*:\s*([^·|;\n]+)", str(context or ""), re.IGNORECASE)
+    return m.group(1).strip() or None if m else None
+
+
+def _named_supplier(value) -> str | None:
+    """A supplier the listing NAMES — the builder's `supplier: None` and an `unknown` / `unresolved (…)` placeholder name nobody (the
+    binding's `supply.leads` rule, gap S-06)."""
+    return value if value and not re.match(r"(?:none|unknown|unresolved)\b", value.strip().lower()) else None
+
+
+def _host(url) -> str:
+    return (urlparse(str(url or "")).hostname or "").removeprefix("www.")
+
+
+def _alternate(rows: list[dict], key, cap: int) -> list[dict]:
+    """Up to `cap` rows taken in turn from each `key` group (groups in order of first appearance, rows in their own order)."""
+    groups: dict = {}
+    for r in rows:
+        groups.setdefault(key(r), []).append(r)
+    queues, out = list(groups.values()), []
+    while len(out) < cap and any(queues):
+        for q in queues:
+            if q and len(out) < cap:
+                out.append(q.pop(0))
+    return out
+
+
 def build_model_from_governed(journal: dict) -> dict:
     """ReportModel from a governed run journal (docs/27). Deterministic given the journal; reads nothing else. The
     adapter's AdapterResultV1 is the authority for everything TrailSignal decided; the journal's receipts supply what the
@@ -178,7 +210,9 @@ def build_model_from_governed(journal: dict) -> dict:
                 "role": x.get("evidence_role") or o.get("evidence_role_claimed"), "polarity": x.get("polarity"), "freshness": x.get("freshness"),
                 "independence_group": x.get("independence_group"), "stage": x.get("stage_relevance"), "suitability": x.get("source_suitability"),
                 "hypothesis_ids": x.get("hypothesis_ids") or o.get("hypothesis_ids") or [], "admitted_evidence_id": x.get("admitted_evidence_id"),
-                "reason_code": x.get("reason_code"), "detail": x.get("detail"),
+                "reason_code": x.get("reason_code"), "detail": x.get("detail"), "duplicate_of": x.get("duplicate_of"),
+                # WHO spoke and WHO sells, as the observation names them (gaps B-39 / B-40) — the independence group is the platform
+                "community": _context_field(o.get("context"), "community"), "supplier": _context_field(o.get("context"), "supplier"),
                 "hypothesis_relations": [r for r in x.get("hypothesis_relations") or [] if isinstance(r, dict)]}
     admitted = [_row(a, x) for a in adms for x in a.get("admitted") or [] if isinstance(x, dict)]
     rejected = [_row(a, x) for a in adms for x in a.get("rejected") or [] if isinstance(x, dict)]
@@ -251,10 +285,14 @@ def build_model_from_governed(journal: dict) -> dict:
     for url in dict.fromkeys(r.get("url") for r in supply if r.get("url")):
         rows = [r for r in supply if r.get("url") == url]
         m = {(r.get("metric") or {}).get("name"): (r.get("metric") or {}).get("value") for r in rows if isinstance(r.get("metric"), dict)}
+        # the supplier is who the LISTING names (`supplier:` in the observation context), never TrailSignal's independence group — that
+        # is the platform, shown as the channel; a metric under another name than the receipt builder's two is shown raw (gap B-39)
+        raw = [" ".join(str(v) for v in (x.get("name"), x.get("value"), x.get("unit")) if v not in (None, ""))
+               for x in (r.get("metric") for r in rows) if isinstance(x, dict) and x.get("name") not in ("unit_price_low", "minimum_order_quantity")]
         leads.append({"governed": True, "concept_id": "governed_concept", "product_name": (rows[0].get("claim") or url)[:160], "url": url,
                       "channel": rows[0].get("independence_group") or rows[0].get("source_class"), "price_usd_low": m.get("unit_price_low"),
-                      "moq_units": m.get("minimum_order_quantity"), "mechanism": pc.get("mechanism_explanation") or "",
-                      "trail_admission": sorted({str(r.get("role")) for r in rows}), "supplier_name": rows[0].get("independence_group") or ""})
+                      "moq_units": m.get("minimum_order_quantity"), "listing_metrics": raw, "mechanism": pc.get("mechanism_explanation") or "",
+                      "trail_admission": sorted({str(r.get("role")) for r in rows}), "supplier_name": next((r["supplier"] for r in rows if _named_supplier(r.get("supplier"))), "")})
     packets = []
     for s in steps:
         for rc in (s.get("evidence") or {}).get("receipts") or []:
@@ -289,6 +327,15 @@ def build_model_from_governed(journal: dict) -> dict:
     # evidence is ABSENT from this result, never zero (gap B-14)
     admitted_ids = lineage.get("admitted_evidence_ids") if isinstance(lineage.get("admitted_evidence_ids"), list) else []
     evidence_absent = {"admitted_evidence_ids": len(admitted_ids), "terminal_status": terminal} if result is not None and not adms and admitted_ids else None
+    # What the Field Actually Said (gap B-40): FIELD-stage records only (never a product-reality or supplier row), a TrailSignal
+    # duplicate once, labelled by the community the observation names (else the source host) — the independence group is the
+    # platform, not who spoke — and taken in turn with the records that CONTRADICT a hypothesis (TrailSignal's relation to it), which
+    # are marked and never crowded out by admission order
+    quotes = _alternate([{"quote": r.get("quote"), "source": r.get("url"), "community": r.get("community") or _host(r.get("url")) or r.get("source_class"),
+                          "roles": [r.get("role")], "polarity": r.get("polarity"), "stage": r.get("stage"),
+                          "contradicts": [h for h in r.get("hypothesis_ids") or [] if polarity_for(r, h) == "contradicting"]}
+                         for r in admitted if (r.get("stage") or "field_evidence") == "field_evidence" and not r.get("duplicate_of")],
+                        lambda q: bool(q["contradicts"]), 14)
     dead = ("killed", "contradicted", "merged", "weakened")
     return {
         "run": {"run_id": journal.get("run_id"), "created_at": journal.get("created_at"), "status": terminal or "running", "verdict": verdict,
@@ -297,7 +344,7 @@ def build_model_from_governed(journal: dict) -> dict:
         "coverage": {}, "independence": None, "l4_receipts": [],
         "bridges": [{"id": b.get("hypothesis_id"), "path": b.get("path"), "boundary": (b.get("evidence_boundary") or {}).get("first_inference_at"), "mechanism": b.get("target_mechanism"),
                      "status": b.get("status"), "invariant": None, "exploratory": False} for b in out.get("bridges") or [] if isinstance(b, dict)],
-        "quotes": [{"quote": r.get("quote"), "source": r.get("url"), "community": r.get("independence_group") or r.get("source_class"), "roles": [r.get("role")]} for r in admitted][:14],
+        "quotes": quotes,
         "mechanisms": [], "leads": leads,
         "product_concepts": real_concepts or ([{"id": "governed_concept", "name": pc.get("title"), "form_factor": pc.get("problem"), "target_moment": pc.get("context"), "buyer": pc.get("population"),
                                "differentiator": pc.get("mechanism_explanation"), "mechanism_id": "governed", "variations": [], "evidence_refs": po.get("field_evidence_ids") or []}] if pc.get("title") else []),
@@ -614,6 +661,13 @@ def _showing(shown: int, total: int, what: str) -> str:
     return f"<p class='why'>showing {shown} of {total} {what}</p>" if total > shown else ""
 
 
+def _first_inferred_hop(path: list, boundary) -> int:
+    """Index of the first INFERRED hop: the hop `first_inference_at` names, compared stripped as the bridge law compares it. A
+    boundary that names no hop marks every hop inferred — the dossier never calls a hop evidence-backed it cannot place (gap B-36)."""
+    hops, b = [str(h).strip() for h in path or []], str(boundary or "").strip()
+    return hops.index(b) if b in hops else 0
+
+
 def _render_lived_world(g: dict) -> list[str]:
     """Population leads, lived clusters and lived situations — the engine's lived world, computed in governed mode from what TrailSignal ADMITTED."""
     out: list[str] = []
@@ -667,10 +721,9 @@ def _render_transduction(t: dict | None) -> list[str]:
         b = h.get("bridge")
         if b:
             out.append(f"<p style='margin:6px 0 2px'><strong>{_e(b.get('target_mechanism'))}</strong> <span class='pill'>{_e(b.get('status'))} · {_e(b.get('grounding'))}</span></p><ul class='bridge'>")
-            crossed = False
-            for hop in b.get("path") or []:
-                crossed = crossed or hop == b.get("first_inference_at")
-                cls, tag = (" class='inferred'", "inferred") if crossed else ("", "evidence-backed")
+            first_inferred = _first_inferred_hop(b.get("path") or [], b.get("first_inference_at"))
+            for i, hop in enumerate(b.get("path") or []):
+                cls, tag = (" class='inferred'", "inferred") if i >= first_inferred else ("", "evidence-backed")
                 out.append(f"<li{cls}>{_e(hop)}<span class='tag'>{tag}</span></li>")
             out.append("</ul>")
             for label, key in (("speculative gaps", "gaps"), ("alternatives", "alternatives"), ("falsifiers", "falsifiers")):
@@ -690,7 +743,8 @@ def _render_product_reality(pr: dict | None) -> list[str]:
            "A concept is the run's own idea; an existing product is something a real seller lists today. They are joined only by the concept tag the research job asked for.</p>"]
     by_concept: dict = {}
     for p in pr.get("existing_products") or []:
-        by_concept.setdefault(p.get("concept_id"), []).append(p)
+        for cid in p.get("applies_to_concepts") or [p.get("concept_id")]:     # a substitute counts for every sibling its job served (gap B-37)
+            by_concept.setdefault(cid, []).append(p)
     for c in pr.get("concepts") or []:
         contested = c.get("status") == "EXISTING_PRODUCT_CONTESTS"
         out.append(f"<div class='card'><h3>GENERATED CONCEPT {_e(c.get('concept_id'))} — {_e(c.get('concept'))} "
@@ -842,10 +896,9 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
             out.append(f'<p style="margin:0 0 6px"><strong>{_e(b["mechanism"])}</strong>'
                        + (' <span class="pill">exploratory transfer</span>' if b["exploratory"] else "")
                        + "</p><ul class='bridge'>")
-            crossed = False
-            for hop in b["path"] or []:
-                if hop == b["boundary"]:
-                    crossed = True
+            first_inferred = _first_inferred_hop(b["path"] or [], b["boundary"])
+            for i, hop in enumerate(b["path"] or []):
+                crossed = i >= first_inferred
                 cls = ' class="inferred"' if crossed else ""
                 tag = "inferred" if crossed else "evidence-backed"
                 out.append(f"<li{cls}>{_e(hop.replace('_', ' '))}<span class='tag'>{tag}</span></li>")
@@ -869,8 +922,9 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
     if layout != "SOURCING" and model["quotes"]:
         out.append("<h2>What the Field Actually Said</h2>")
         for q in model["quotes"][:8 if layout == "EXECUTIVE" else 14]:
+            against = f" · <strong style='color:#b00'>contradicts {_e(', '.join(q['contradicts']))}</strong>" if q.get("contradicts") else ""
             out.append(f"<blockquote>“{_e(q['quote'])}”<span class='src'>{_e(q['community'])} — "
-                       f"{_e(q['source'])}</span></blockquote>")
+                       f"{_e(q['source'])}{against}</span></blockquote>")
 
     if model.get("product_concepts"):
         out.append("<h2>Product Directions" + (f" {_auth('AGENT')}" if model.get("governed") else "") + "</h2>")
@@ -954,8 +1008,9 @@ def render(model: dict, layout: str = "FULL_RESEARCH", summary_md: str | None = 
             # the receipt). There is NO evidence score here — the only score in a governed dossier is TrailSignal's, shown above.
             _price = f"${l['price_usd_low']} / unit" if l.get("price_usd_low") is not None else "price not parsed"
             _moq = f"MOQ {l['moq_units']:,}" if isinstance(l.get("moq_units"), (int, float)) else "MOQ not parsed"
+            _raw = f" · listing metric: {'; '.join(map(str, l['listing_metrics']))}" if l.get("listing_metrics") else ""
             out.append(f"""<div class="card"><h3>{i}. {_e(l.get('product_name'))}</h3>
-<div class="econ">{_e(_price)} · {_e(_moq)}</div>
+<div class="econ">{_e(_price)} · {_e(_moq)}{_e(_raw)}</div>
 <div class="why">{_e(l.get('concept') or l.get('concept_id') or '')} · mechanism: {_e(l.get('mechanism') or '—')} · supplier: {_e(l.get('supplier_name') or 'not named on the listing')}<br>
 {_e(l.get('channel') or '')} · admitted by TrailSignal as {_e(', '.join(l.get('trail_admission') or []))}<br>{_e(l.get('url') or '')}</div></div>""")
             continue

@@ -370,7 +370,9 @@ def _ident(rec: dict) -> tuple:
 def cards(state: dict, policies: dict) -> str:
     """Executor python.evidence_cards — deterministic recompute from records."""
     d = state["data"]
-    recs = [r for r in d.get("field_records") or [] if isinstance(r, dict) and not r.get("contradicts")]
+    # a record TrailSignal marks `duplicate_of` (same independence group, same claim) is not another record: TrailSignal leaves it out
+    # of qualification and scoring, and it never counts toward a cluster's records, threads or voices here (gap B-62)
+    recs = [r for r in d.get("field_records") or [] if isinstance(r, dict) and not r.get("contradicts") and not r.get("duplicate_of")]
     by_id = lead_by_id(state)
     thr = anchor_threshold(state, policies)
     # participant cards: one per real (platform, author)
@@ -612,6 +614,15 @@ def validate_situations(items: list[dict], state: dict, policies: dict) -> list[
                             f"{cl.get('independent_voices')} voices) — below the anchor threshold it may only feed RECONSTRUCTED")
             if not any(isinstance(fr, dict) and fr.get("authority") == "FIELD_OBSERVATION" for fr in s.get("frictions") or []):
                 errs.append(f"{sid}: FIELD_ANCHORED needs at least one friction carrying FIELD_OBSERVATION refs")
+            elif cl:
+                # anchored means anchored in THAT cluster: its field observations cite the cluster's own records — never a record of
+                # another (THIN) cluster, nor a contradicting one, which cards() keeps out of every cluster (gap B-61)
+                own = set(cl.get("record_ids") or [])
+                outside = [x for fr in s.get("frictions") or [] if isinstance(fr, dict) and fr.get("authority") == "FIELD_OBSERVATION"
+                           for x in fr.get("refs") or [] if x in known and x not in own]
+                if outside:
+                    errs.append(f"{sid}: FIELD_ANCHORED on {cl['id']} cites record(s) outside that cluster {outside[:3]} — cite the cluster's own "
+                                f"records; a friction seen elsewhere is RECONSTRUCTED here or belongs to a situation on its own cluster")
         elif auth == "RECONSTRUCTED":
             if not cl and not [x for x in (s.get("evidence_refs") or []) if x in known]:
                 errs.append(f"{sid}: RECONSTRUCTED must sit on a cluster_id or cite known evidence_refs — otherwise it is SIMULATED")

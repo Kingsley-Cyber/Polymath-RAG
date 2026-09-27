@@ -49,13 +49,28 @@ def load_graph(name: str = "control_graph.yaml") -> dict:
     return load_yaml_file(os.path.join(ROOT, "graph", os.path.basename(name)))
 
 
+def _overlay(base: dict, extra: dict, where: str, prefix: str = "") -> dict:
+    """The overlay EXTENDS the policies and never replaces one: a block both files declare is merged key by key, and a key both
+    declare is a hard error (the loader's own law). `dict.update` let loadout_policies.yaml's `portfolio` (the loadout set-selection
+    weights) replace policies.yaml's hypothesis portfolio law — min/max_hypotheses, max_exploratory, distinct_target_mechanisms and
+    min_lived_anchored were silently gone on every call (gap B-58)."""
+    for key, value in extra.items():
+        if key not in base:
+            base[key] = value
+        elif isinstance(base[key], dict) and isinstance(value, dict):
+            _overlay(base[key], value, where, f"{prefix}{key}.")
+        else:
+            raise yaml.YAMLError(f"{where}: {prefix}{key} is already declared in policies.yaml — fail closed, never last-wins")
+    return base
+
+
 def load_policies() -> dict:
     pol = load_yaml_file(os.path.join(ROOT, "graph", "policies.yaml"))
     try:  # mode policies overlay (loadout math weights etc.)
-        pol.update(load_yaml_file(os.path.join(ROOT, "graph", "loadout_policies.yaml")) or {})
+        extra = load_yaml_file(os.path.join(ROOT, "graph", "loadout_policies.yaml")) or {}
     except OSError:
-        pass
-    return pol
+        extra = {}
+    return _overlay(pol, extra, "loadout_policies.yaml")
 
 
 def validate_graph(g: dict) -> list[str]:
