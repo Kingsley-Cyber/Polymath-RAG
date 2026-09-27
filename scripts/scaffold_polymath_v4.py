@@ -2539,6 +2539,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_harness_guide_human_check_handoff.py", "py", None),
     ("tests/determinism/test_adapter_ecommerce_supply_join_api_records.py", "py", None),
     ("docs/wiki/work-log/2026-09-27-supplier-apis.md", "md", None),
+    ("docs/wiki/work-log/2026-09-27-supplier-pages.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),

@@ -27,6 +27,11 @@ DEFAULT_URL = "http://127.0.0.1:8888"
 LABEL = "SearXNG search"
 SITE = "alibaba.com"
 TIMEOUT_S = 20.0
+#: SUPPLIER-PAGES (the owner, 2026-09-27: "with alibaba it should be multiple products"): the engines answer mostly with Alibaba's
+#: category and showroom pages (live: 1 product page in 40 results on page 1, 5 more on page 2), so a search reads up to MAX_PAGES
+#: result pages while the listings are still short of the limit; a page with fewer than FULL_PAGE results is the engines' last
+MAX_PAGES = 3
+FULL_PAGE = 10
 #: the notes every SearXNG answer carries into `limitations` (the first is the owner's wording)
 SOURCE_NOTE = "found through search-engine results (SearXNG); snippet-level data"
 INDEX_NOTE = ("each listing's title, price and minimum order are the search engines' snippet as indexed: the listing page itself was not "
@@ -93,11 +98,14 @@ class SearXNGListings:
     def __init__(self, base: str, *, transport: httpx.BaseTransport | None = None):
         self.base, self.transport = base.rstrip("/"), transport
 
-    def read(self, target: Target, limit: int) -> dict[str, Any]:
+    def _page(self, query: str, pageno: int) -> tuple[list[Any], list[str]]:
+        """One result page: (results, the engines that did not answer). Raises ApiFailed."""
+        params: dict[str, Any] = {"q": f"site:{SITE} {query}", "format": "json"}
+        if pageno > 1:
+            params["pageno"] = pageno
         try:
             with httpx.Client(transport=self.transport, timeout=TIMEOUT_S) as client:
-                r = client.get(f"{self.base}/search", params={"q": f"site:{SITE} {target.query or ''}", "format": "json"},
-                               headers={"Accept": "application/json"})
+                r = client.get(f"{self.base}/search", params=params, headers={"Accept": "application/json"})
         except httpx.TimeoutException:
             raise ApiFailed("unreachable", f"SearXNG at {self.base} did not answer in time") from None
         except httpx.TransportError as exc:
@@ -116,31 +124,54 @@ class SearXNGListings:
         failed = [f"{e[0]} ({e[1]})" for e in data.get("unresponsive_engines") or [] if isinstance(e, (list, tuple)) and len(e) >= 2]
         if not results and failed:
             raise ApiFailed("unreachable", "every search engine failed: " + "; ".join(failed)[:300])
+        return results, failed
+
+    def read(self, target: Target, limit: int) -> dict[str, Any]:
         records: list[dict[str, Any]] = []
         seen: set[str] = set()
-        other, walls = 0, 0
-        for res in results:
-            found = listing_url(res.get("url")) if isinstance(res, dict) else None
-            if found is None:
-                other += 1
-                continue
-            url, number = found
-            if number in seen:
-                continue
-            title, snippet = str(res.get("title") or ""), str(res.get("content") or "")
-            if looks_like_challenge(f"{title}\n{snippet}"):         # the engine indexed a verification page: never a listing
-                walls += 1
-                continue
-            seen.add(number)
-            slug = _PRODUCT_PATH.fullmatch(urlsplit(url).path).group(1)
-            listing = parse_snippet(title, snippet, slug)
-            text = (f"{listing['title']} · price as listed: {listing['price_as_listed'] or 'not shown'} · minimum order as listed: "
-                    f"{listing['minimum_order_as_listed'] or 'not shown'} · supplier: {listing['supplier'] or 'unresolved'}")
-            records.append({"kind": "listing", "ref": number, "url": url, "text": text, "published_at": None, "precision": "none",
-                            "listing": listing})
-            if len(records) >= limit:
+        failed: dict[str, None] = {}
+        other, walls, pages = 0, 0, 0
+        page_error: str | None = None
+        for pageno in range(1, MAX_PAGES + 1):
+            try:
+                results, page_failed = self._page(target.query or "", pageno)
+            except ApiFailed as exc:
+                if pageno == 1:
+                    raise
+                page_error = f"result page {pageno} was not read ({exc})"      # what the earlier pages gave is kept
                 break
+            pages += 1
+            failed.update(dict.fromkeys(page_failed))
+            added = 0
+            for res in results:
+                found = listing_url(res.get("url")) if isinstance(res, dict) else None
+                if found is None:
+                    other += 1
+                    continue
+                url, number = found
+                if number in seen:                                       # the same product on a later page, or twice on one
+                    continue
+                title, snippet = str(res.get("title") or ""), str(res.get("content") or "")
+                if looks_like_challenge(f"{title}\n{snippet}"):         # the engine indexed a verification page: never a listing
+                    walls += 1
+                    continue
+                seen.add(number)
+                slug = _PRODUCT_PATH.fullmatch(urlsplit(url).path).group(1)
+                listing = parse_snippet(title, snippet, slug)
+                text = (f"{listing['title']} · price as listed: {listing['price_as_listed'] or 'not shown'} · minimum order as listed: "
+                        f"{listing['minimum_order_as_listed'] or 'not shown'} · supplier: {listing['supplier'] or 'unresolved'}")
+                records.append({"kind": "listing", "ref": number, "url": url, "text": text, "published_at": None, "precision": "none",
+                                "listing": listing})
+                added += 1
+                if len(records) >= limit:
+                    break
+            if len(records) >= limit or len(results) < FULL_PAGE or not added:
+                break                                                    # enough, the engines' last page, or a page of nothing new
         notes = [SOURCE_NOTE, INDEX_NOTE]
+        if pages > 1:
+            notes.append(f"{pages} result pages read")
+        if page_error:
+            notes.append(page_error)
         if other:
             notes.append(f"{other} search result(s) were not alibaba.com product pages: left out")
         if walls:

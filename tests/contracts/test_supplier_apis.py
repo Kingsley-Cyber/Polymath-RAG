@@ -360,6 +360,66 @@ def _sx_backend(transport, browser_raw=None):
     return LA.ListingAPIs(browser, {"alibaba_listings": SX.SearXNGListings("http://127.0.0.1:8888", transport=transport)}), browser
 
 
+# ── SUPPLIER-PAGES (the owner, 2026-09-27: "with alibaba it should be multiple products"): the engines answer mostly with category
+# pages, so a search reads more result pages while the listings are short of the limit
+def _product(n: int, title: str = "Gloves") -> dict:
+    return {"url": f"https://www.alibaba.com/product-detail/{title}_16000000000{n:02d}.html", "title": f"{title} {n} | Alibaba.com",
+            "content": "US$1.00 MOQ: 10 pcs"}
+
+
+def _category(n: int) -> dict:
+    return {"url": f"https://www.alibaba.com/showroom/thing-{n}.html", "title": "showroom", "content": "many suppliers"}
+
+
+def _pages(pages: dict[int, list[dict]], seen: list, fail_at: int | None = None):
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        pageno = int(request.url.params.get("pageno") or 1)
+        if fail_at == pageno:
+            raise httpx.ConnectError("gone")
+        return httpx.Response(200, json={"results": pages.get(pageno, []), "unresponsive_engines": []})
+    return httpx.MockTransport(handler)
+
+
+def _read(pages, limit, seen, **kw):
+    return SX.SearXNGListings("http://127.0.0.1:8888", transport=_pages(pages, seen, **kw)).read(S.resolve("listings", "gloves", "alibaba.com"), limit)
+
+
+def test_more_result_pages_are_read_until_the_limit_with_no_product_twice():
+    seen: list = []
+    pages = {1: [_category(i) for i in range(9)] + [_product(1)],
+             2: [_category(i) for i in range(5)] + [_product(n) for n in (1, 2, 3, 4, 5)],          # product 1 again
+             3: [_category(i) for i in range(5)] + [_product(n) for n in (6, 7, 8, 9, 10)]}
+    raw = _read(pages, 8, seen)
+    assert [r.url.params.get("pageno") for r in seen] == [None, "2", "3"]                   # page 1 is asked exactly as before
+    refs = [r["ref"] for r in raw["records"]]
+    assert len(refs) == 8 and len(set(refs)) == 8 and refs[:5] == [f"16000000000{n:02d}" for n in (1, 2, 3, 4, 5)]
+    assert "3 result pages read" in raw["backend_notes"]
+
+
+def test_a_short_page_is_the_engines_last_and_a_page_of_nothing_new_ends_the_search():
+    seen: list = []
+    raw = _read({1: [_category(i) for i in range(7)] + [_product(1)]}, 20, seen)                # 8 results: not a full page
+    assert len(seen) == 1 and [r["ref"] for r in raw["records"]] == ["1600000000001"]
+    seen = []
+    raw = _read({1: [_category(i) for i in range(9)] + [_product(1)], 2: [_category(i) for i in range(9)] + [_product(1)]}, 20, seen)
+    assert len(seen) == 2 and len(raw["records"]) == 1                                          # page 2 repeated page 1: stop
+
+
+def test_a_later_page_that_fails_keeps_what_the_earlier_pages_gave():
+    seen: list = []
+    raw = _read({1: [_category(i) for i in range(7)] + [_product(n) for n in (1, 2, 3)]}, 20, seen, fail_at=2)
+    assert len(seen) == 2 and [r["ref"] for r in raw["records"]] == [f"16000000000{n:02d}" for n in (1, 2, 3)]
+    assert any(n.startswith("result page 2 was not read") for n in raw["backend_notes"])
+
+
+def test_at_most_three_result_pages_are_read():
+    seen: list = []
+    pages = {p: [_product(p * 10 + i) for i in range(10)] for p in range(1, 6)}
+    raw = _read(pages, 100, seen)
+    assert len(seen) == 3 and len(raw["records"]) == 30
+
+
 def test_alibaba_listings_through_searxng_say_so_and_never_open_the_site():
     backend, browser = _sx_backend(_searx())
     out = _acquire(backend, "alibaba.com", "searx-ok")
@@ -412,10 +472,10 @@ def test_the_searxng_service_is_local_capped_pinned_and_opt_in():
         assert "profiles" not in services[name]
 
 
-def test_the_searxng_settings_serve_json_from_three_engines_with_no_limiter_and_no_secret():
+def test_the_searxng_settings_serve_json_from_five_engines_with_no_limiter_and_no_secret():
     text = (ROOT / "deployment/searxng/settings.yml").read_text()
     s = yaml.safe_load(text)
-    assert s["use_default_settings"]["engines"]["keep_only"] == ["bing", "duckduckgo", "brave"]
+    assert s["use_default_settings"]["engines"]["keep_only"] == ["bing", "duckduckgo", "brave", "qwant", "mojeek"]
     assert "json" in s["search"]["formats"] and s["server"]["limiter"] is False and s["server"]["public_instance"] is False
     assert "secret_key" not in s["server"] and "ultrasecretkey" not in text
     assert "outgoing" not in s and "proxies" not in text.replace("No proxies", "") and "using_tor_proxy" not in text

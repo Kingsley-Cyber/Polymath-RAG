@@ -15,6 +15,8 @@ use_default_settings:
       - bing
       - duckduckgo
       - brave
+      - qwant           # SUPPLIER-PAGES: two more general engines, so one engine's check or outage leaves listings
+      - mojeek
 
 general:
   instance_name: "polymath-searxng"
@@ -35,4 +37,8 @@ search:
 
 engines:
   - name: bing            # bing is off in SearXNG's defaults: switched on here (duckduckgo and brave are on already)
+    disabled: false
+  - name: qwant
+    disabled: false
+  - name: mojeek
     disabled: false
