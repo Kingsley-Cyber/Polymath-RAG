@@ -118,6 +118,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/refactors/0005-c2-canonical-kg.md", "md", None),
     ("docs/runbooks/operator.md", "md", "RUNBOOK_OPERATOR"),
     ("docs/runbooks/agent-onboarding.md", "md", "RUNBOOK_AGENT_ONBOARDING"),
+    ("docs/runbooks/friends-access.md", "md", None),
 
     # ── Contracts (the load-bearing layer) ──────────────────────────────────
     ("contracts/README.md", "md", "CONTRACTS_README"),
@@ -2445,6 +2446,9 @@ TREE: list[tuple[str, str, str | None]] = [
     # AUTORESEARCH-SOURCES-AND-HARNESS-V1 (register 11.489): the owner's 2026-09-25 plan of record
     ("docs/wiki/plans/AUTORESEARCH-SOURCES-AND-HARNESS-V1.md", "md", None),
     ("docs/wiki/plans/FRIENDS-ACCESS-V1.md", "md", None),
+    ("docs/wiki/plans/FRONTEND-REFRESH-V1.md", "md", None),
+    ("docs/wiki/plans/TRAIL-INTERFACE-V1.md", "md", None),
+    ("docs/wiki/plans/DEEP-RESEARCH-MODE-V1.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-plan-admitted.md", "md", None),
     ("shared/polymath_shared/adapter/harness_guide.py", "py", None),
     ("tests/determinism/test_autoresearch_sources_harness.py", "py", None),
@@ -2474,6 +2478,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-26-friends-access-f3.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-friends-access-f4.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-friends-access-f5.md", "md", None),
+    ("docs/wiki/work-log/2026-09-26-ui-trail-research-plans.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-k1b-scope-echo.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),
