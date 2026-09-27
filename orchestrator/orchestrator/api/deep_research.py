@@ -75,6 +75,26 @@ def _libraries(req: DeepResearchRequest) -> list[str]:
     return ids
 
 
+def _build_rows(response: dict[str, Any], corpus_ids: list[str], limit: int) -> list[dict[str, Any]]:
+    from orchestrator.api.evidence_rows import build_evidence_rows
+    from polymath_shared.db import tx
+    with tx() as conn:
+        return build_evidence_rows(conn, response, corpus_ids, limit=limit, explore=False)
+
+
+def evidence_rows_of(out: dict[str, Any], corpus_ids: list[str], limit: int) -> list[dict[str, Any]]:
+    """DR4: `/retrieve` builds `evidence_rows` only on the default lane; the engine modes (HYBRID, FAST, GRAPH, WILDCARD,
+    GNN) answer with a flat `evidence` list and ignore `evidence: true`. Build the same rows from that list, in its order,
+    the way chat does (`chat.attach_evidence_rows`), so a search in any mode feeds the research."""
+    if out.get("evidence_rows"):
+        return list(out["evidence_rows"])
+    ids = list(dict.fromkeys(e["chunk_id"] for e in out.get("evidence") or [] if isinstance(e, dict) and e.get("chunk_id")))
+    if not ids:
+        return []
+    return _build_rows({"child_evidence": [{"chunk_id": cid, "rerank_score": float(len(ids) - i)} for i, cid in enumerate(ids)],
+                        "selected_documents": [], "graph_facts": []}, corpus_ids, limit)
+
+
 def _retrieve_port(loop: asyncio.AbstractEventLoop, principal: str | None, mode: str, aliases: _Aliases):
     from orchestrator.api.retrieve import RetrieveRequest, _retrieve_impl
 
@@ -85,7 +105,7 @@ def _retrieve_port(loop: asyncio.AbstractEventLoop, principal: str | None, mode:
                                                             limit=ROWS_PER_SEARCH, evidence=True))
         out = asyncio.run_coroutine_threadsafe(call(), loop).result(timeout=PORT_TIMEOUT_S)
         rows = []
-        for r in (out or {}).get("evidence_rows") or []:
+        for r in evidence_rows_of(out or {}, list(scope), ROWS_PER_SEARCH):
             text = str(r.get("text_clean") or r.get("text") or "").strip()
             if not r.get("id") or not text:
                 continue

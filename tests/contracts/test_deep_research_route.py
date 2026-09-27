@@ -176,3 +176,37 @@ def test_the_registry_pins_deep_research():
     import pathlib
     cfg = json.loads((pathlib.Path(__file__).resolve().parents[2] / "config" / "cloud_providers.json").read_text())
     assert cfg["stage_pins"]["deep_research"], "config/llm_accounts.yaml must pin deep_research (generated into cloud_providers.json)"
+
+
+def test_an_engine_mode_search_feeds_the_research(rec, monkeypatch):
+    """DR4 (live, 2026-09-26): HYBRID answers `/retrieve` with a flat `evidence` list and no `evidence_rows` (only the default
+    lane builds those), so all 20 live searches came back empty. The route now builds the rows from that list, like chat."""
+    import orchestrator.api.retrieve as RT
+    built = []
+
+    async def engine_shape(req):
+        return {"evidence": [{"chunk_id": "chunk_aaa", "text": "Effort has four factors.", "rerank_score": 0.4},
+                             {"chunk_id": "chunk_bbb", "text": "Notation writes time and weight.", "rerank_score": 0.2},
+                             {"chunk_id": "chunk_aaa", "text": "Effort has four factors.", "rerank_score": 0.1}],
+                "selected_documents": [{"doc_id": "d1", "corpus_id": "cinema"}], "meta": {"mode": "HYBRID"}}
+    monkeypatch.setattr(RT, "_retrieve_impl", engine_shape)
+
+    def fake_build(response, corpus_ids, limit):
+        built.append(([c["chunk_id"] for c in response["child_evidence"]], list(corpus_ids), limit))
+        by_id = {r["id"]: r for r in ROWS}
+        return [by_id[c["chunk_id"]] for c in response["child_evidence"]]
+    monkeypatch.setattr(DRR, "_build_rows", fake_build, raising=False)
+    frames = _frames(_client().post("/research/deep", json={"question": "How does Laban write effort?", "corpus_id": "cinema",
+                                                            "preset": "quick"}).text)
+    assert [d for k, d in frames if k == "error"] == []
+    answer = next(d for k, d in frames if k == "answer")
+    assert answer["result"]["citations"][0]["id"] == "chunk_aaa"
+    assert built and built[0][0] == ["chunk_aaa", "chunk_bbb"] and built[0][1] == ["cinema"]
+
+
+def test_rows_come_from_evidence_rows_first_and_nothing_builds_nothing(monkeypatch):
+    calls = []
+    monkeypatch.setattr(DRR, "_build_rows", lambda *a: calls.append(a) or [], raising=False)
+    assert DRR.evidence_rows_of({"evidence_rows": ROWS, "evidence": [{"chunk_id": "x"}]}, ["cinema"], 5) == ROWS
+    assert DRR.evidence_rows_of({"evidence_rows": [], "evidence": []}, ["cinema"], 5) == []
+    assert calls == []
