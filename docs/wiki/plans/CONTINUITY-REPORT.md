@@ -162,6 +162,14 @@ historical, never an instruction.
      DR6a–d moves (§10.9 passed 4/5), DR7a–f the research experience (11.519–11.534).
    - LIVE since 11.535 / 11.536 (`bfdfbe0e`): the deep research tuning (evaluative words, the gate's thread check, the folded
      phone composer); moves cite ≥ the old loop's books on 5 of 5 DR4 questions.
+   - LIVE since 11.545–11.552 (`d79bfb7e`): FACET-RETRIEVAL-V1 F1–F7 — corpus-agnostic facets, diversity by construction in the one
+     core (24 seats, 2 per facet, 3 per document per lane, dominance 0.4, MMR), WILDCARD's mapped subqueries, section profiles for
+     giant documents (the handbook 0.34 → 0.91, VES 0.43 → 0.78; nine giants still to rebuild), cross-document synthesis with the
+     sources-by-document panel, the gap check; the held-out proof PASSED (documents cited 37 → 58, uncited 58 % → 35 %, top share
+     0.51 → 0.40). ON THE BRANCH: RECEIPT-SHRINK-ORDER (`261635b6`). NEXT on the owner's word: the nine remaining giant rebuilds
+     (`scripts/rebuild_profile.py --execute --vnext`), `POLYMATH_CHAT_FACETS_BUDGET_S` 4 → 8 for the compiler lane, the
+     template-driven "Build from template" mode (the owner's Atomic Control Stack), the stalled ingestion jobs, the "been there"
+     memory for product research, the Fable bug hunt.
    - LIVE since 11.537–11.542 (`5c42ce96`): SUPPLIER-APIS — CJ listings / product / freight / warehouses through CJ's official
      REST API (`CJ_API_KEY` in `.env`, stored by a command that never displayed it), Alibaba listings through the local SearXNG
      (compose profile `search`, `docker compose --profile search up -d searxng`; five engines; up to three result pages; searches

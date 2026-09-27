@@ -91,7 +91,7 @@ deepening timed out (lane deadline 3 s).
 | **F4** — BUILT 11.548 (the rebuilds run after the deploy, on the owner's word) | Section profiles for giant documents + the audit + the handbook / VES rebuild | The audit before/after; the handbook's profile names motion, camera, prompting |
 | **F5** — DONE 11.550 | Cross-document synthesis prompt + sources by document + graded evidence | Tests on the prompt and the answer model |
 | **F6** — DONE 11.550 | The gap check | Tests: a claimed gap with passages becomes citations |
-| **F7** | Live proof: the receipt's question, the two "anime" questions of 2026-09-27, three more of the owner's — documents cited, facets covered, seats per document, before/after | The owner sees the table and the answers |
+| **F7** — DONE 11.552 (the held-out set of §5, PASSED) | Live proof: the receipt's question, the two "anime" questions of 2026-09-27, three more of the owner's — documents cited, facets covered, seats per document, before/after | The owner sees the table and the answers |
 
 Order: F1 + F2 + F4 in parallel; then F3, F5, F6; then F7 after one deploy.
 
@@ -114,3 +114,29 @@ the fix is re-proven on a FRESH set, never by tuning to this one. Live turns run
 | 8 | commerce-v1 | mechanism | Why do disruptive innovations start at the low end of a market? |
 | 9 | commerce-v1 | synthesis | How should a new brand combine habit formation with a clear message to win repeat customers? |
 | 10 | commerce-v1 | create | Design a first-week onboarding for a subscription app using what these books say about habits and stories. |
+
+### 5.1 Result (2026-09-27, production `d79bfb7e`, both arms on the rebuilt profiles)
+Scored only from what the receipts and the stream's own answer frames recorded (`scratchpad/f7`, outside the repo):
+
+| # | mode | facets · covered | documents seated old→new | top document's share old→new | documents cited old→new | uncited sentences old→new |
+|---|---|---|---|---|---|---|
+| 1 lookup | HYBRID | 1 · 1 | 4→5 | 0.40→0.38 | 4→4 | 1/11→0/8 |
+| 2 mechanism | HYBRID | 3 · 3 | 7→12 | 0.40→0.38 | 4→5 | 5/14→6/18 |
+| 3 comparison | HYBRID | 3 · 3 | 7→11 | 0.40→0.33 | 7→8 | 8/16→4/17 |
+| 4 synthesis | WILDCARD | 4 · 4 | 5→8 | 0.60→0.42 | 2→6 | 12/21→5/26 |
+| 5 create | WILDCARD | 2 · 2 | 7→15 | 0.27→0.17 | 5→11 | 10/19→14/28 |
+| 6 counterpoint | WILDCARD | 2 · 2 | 7→12 | 0.33→0.25 | 5→10 | 7/16→11/30 |
+| 7 lookup | HYBRID | 1 · 1 | 2→2 | 0.93→0.88 | 1→2 | 3/11→2/11 |
+| 8 mechanism | HYBRID | (receipt cut) | 2→4 | 0.93→0.67 | 1→(cut) | 4/14→8/19 |
+| 9 synthesis | WILDCARD | 3 · 3 | 5→5 | 0.53→0.33 | 5→6 | 14/24→16/49 |
+| 10 create | WILDCARD | 3 · 3 | 3→7 | 0.33→0.21 | 3→6 | 62/72→27/57 |
+
+Totals: documents seated **49 → 81**, documents cited **37 → 58**, uncited sentences **58 % → 35 %**, mean top-document share
+**0.51 → 0.40**; every facet found was covered; the gap check found passages for 9 of its 11 "doesn't cover" claims; WILDCARD's
+mapped subqueries kept 6 on questions 4 and 9 (1 elsewhere). Cost: wall time +0–17 s on HYBRID and +15–32 s on WILDCARD (the facet
+step, the second pass, the gap check's retrievals and the synthesis prompt). Honest notes: 30 live turns were run, not 20 — five
+"new" WILDCARD turns had run with the flags still off (a bounce inherited a shell's exported zeros; the site ran in the old mode for
+~9 minutes; fixed and recorded) and were re-run; those five count as extra old-mode samples (documents seated 4/7/8/5/3 vs the old
+arm's 5/7/7/5/3: the old arm is stable run to run); question 8's new receipt lost its plan and used evidence to the 64 KB cap
+(RECEIPT-SHRINK-ORDER fixes the cut order; on the branch); the facet step fell back to derived facets on 1 of 10 turns
+(`budget_exceeded:4001ms` on the compiler lane) — `POLYMATH_CHAT_FACETS_BUDGET_S` is the knob.
