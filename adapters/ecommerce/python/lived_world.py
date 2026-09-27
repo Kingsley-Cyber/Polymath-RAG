@@ -24,6 +24,7 @@ from __future__ import annotations
 import collections
 import datetime as _dt
 import re
+import unicodedata
 
 import verifiers as _ver
 from models import now, stable_id
@@ -34,8 +35,29 @@ _STOP = {"that", "this", "with", "from", "they", "their", "what", "when", "have"
 _CORE_ROLES = ("FRICTION_EVIDENCE", "WORKAROUND_EVIDENCE", "BEHAVIOR_SUPPORT", "PURCHASE_INTENT")
 
 
+def _dense(word: str) -> bool:
+    """Kana, CJK ideographs, Hangul syllables: one character carries a syllable or a morpheme (executors' B-55 rule)."""
+    return any("぀" <= c <= "ヿ" or "㐀" <= c <= "鿿" or "가" <= c <= "힣" or "豈" <= c <= "﫿" for c in word)
+
+
 def _toks(text) -> set:
-    return {t for t in re.findall(r"[a-z][a-z\-]{3,}", str(text or "").lower()) if t not in _STOP}
+    """Words of 4+ letters (2+ in a dense script), lower-cased, stop words out. Letters in ANY script (Unicode category L, after NFC;
+    combining marks and hyphens continue a word): `fotógrafos` is one word, not `grafos`, and a Chinese run is a word (gap B-55).
+    ASCII text tokenises exactly as the old `[a-z][a-z\\-]{3,}` rule did."""
+    out, buf = set(), []
+    for ch in unicodedata.normalize("NFC", str(text or "")).lower() + " ":
+        cat = unicodedata.category(ch)
+        if cat[0] == "L" or (buf and (cat[0] == "M" or ch == "-")):
+            buf.append(ch)
+            continue
+        word, buf = "".join(buf), []
+        if len(word) >= (2 if _dense(word) else 4) and word not in _STOP:
+            out.add(word)
+    return out
+
+
+def _seed_word(t: str) -> bool:
+    return len(t) >= (2 if _dense(t) else 5)
 
 
 def _norm_community(name) -> str:
@@ -82,12 +104,12 @@ def _seed_terms(state: dict) -> set:
     terms = _toks(sig[:600])
     for c in d.get("communities") or []:
         terms |= _toks(_norm_community(c)) | {_norm_community(c)}
-    return {t for t in terms if len(t) >= 5}
+    return {t for t in terms if _seed_word(t)}
 
 
 def _is_seed(name: str, extra: list, seed_terms: set) -> bool:
     toks = _toks(name) | {t for x in extra or [] for t in _toks(x)}
-    return bool({t for t in toks if len(t) >= 5} & seed_terms)
+    return bool({t for t in toks if _seed_word(t)} & seed_terms)
 
 
 def _strs(value) -> list[str]:
@@ -230,7 +252,13 @@ def _compile_lead_queries(lead: dict, state: dict, policies: dict) -> list[dict]
     else:
         parts = [lead["name"]] + list(lead.get("expected_frictions") or [])[:2] + list(lead.get("activities") or [])[:1]
     question = " ".join(str(p).replace("_", " ").replace("—", " ") for p in parts if p)
-    qs = _ex.channel_queries(lead["id"], question, state, policies, id_prefix="pq")
+    # a lead whose every word is short or common ("VR users": `vr` is under the keyword floor, `users` a stop word) compiled a BLANK
+    # search on every channel: its own words are the search then, and a lead with no word at all gets no query (gap B-55)
+    keywords = _ex._gap_keywords(question)
+    own_words = " ".join(w for w in question.split() if any(ch.isalnum() for ch in w))[:120]
+    if not keywords and not own_words:
+        return []
+    qs = _ex.channel_queries(lead["id"], question, state, policies, id_prefix="pq", short=None if keywords else own_words)
     for q in qs:
         q["lead_id"] = lead["id"]
         if lead.get("community_key") and q.get("channel") == "reddit":
@@ -547,6 +575,15 @@ def validate_primitives(prim: dict, state: dict, policies: dict) -> list[str]:
         errors.append(f"primitives.evidence_refs: expected an object {{field: [evidence ids]}}, got {type(refs_by_field).__name__}")
     for k, refs in (refs_by_field if isinstance(refs_by_field, dict) else {}).items():
         errors += lineage_ref_errors(refs, state, rel, f"primitives.evidence_refs.{k}")
+    # population nomination reads these lists as WORDS (registry friction families, predicates, communities): an item written as an
+    # object passed the law and was silently skipped (standalone) — the law names it so reasoning can correct it (gap B-31)
+    for key in ("frictions", "shared_predicates", "communities"):
+        words = prim.get(key)
+        if words is not None and not isinstance(words, list):
+            errors.append(f"primitives.{key}: expected a list of strings, got {type(words).__name__}")
+        elif words:
+            errors += [f"primitives.{key}[{i}]: expected a string, got {type(w).__name__} — write each item as plain words"
+                       for i, w in enumerate(words) if not isinstance(w, str)]
     return errors
 
 

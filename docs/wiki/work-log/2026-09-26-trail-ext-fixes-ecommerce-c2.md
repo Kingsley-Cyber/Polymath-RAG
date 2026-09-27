@@ -3,7 +3,7 @@ change_id: TRAIL-EXT-BUGHUNT-V1-FIXES-ECOMMERCE-C2
 owner: "@king"
 date: 2026-09-26
 status: complete
-status_note: "Ecommerce adapter bug-hunt, batch C (second helper): lived world, bridge, graph, product reality, dossier. Fixed: B-36, B-37, B-39 (legacy half), B-40, B-58, B-61, B-62 (engine half; the binding half landed as B-60 in 2337bc53). Skipped for an owner decision: B-38, B-59. Rejected: B-39's ecommerce half (unreachable)."
+status_note: "Ecommerce adapter bug-hunt, batch C (second helper): lived world, bridge, graph, product reality, dossier. Fixed: B-36, B-37, B-39 (legacy half), B-40, B-58, B-61, B-62 (engine half; the binding half landed as B-60 in 2337bc53). Skipped for an owner decision: B-38, B-59. Rejected: B-39's ecommerce half (unreachable). The first helper's notes on these files: B-31, B-55 and B-34 halves fixed; the B-54 note skipped (cluster design decision)."
 architecture_impact: "adapters/ecommerce/python/{bridge,graph,lived_world,product_reality,report}.py; tests: tests/determinism/test_adapter_ecommerce_law_edges.py (new), tests/contracts/test_ecommerce_dossier_labels.py (new), tests/contracts/test_ecommerce_policy_overlay.py (new). No file of the runtime group (config/adapters/, shared/polymath_shared/adapter/, workers/) and none of binding.py / executors.py / adapter_receipt.py / query_semantics.py was edited."
 last_reviewed: 2026-09-26
 ---
@@ -55,6 +55,25 @@ last_reviewed: 2026-09-26
   `duplicate_of` into the field record — is `binding.py` (not this helper's file); it landed as B-60 in `2337bc53` on
   `fix/trail-ext-bugeco`, which also filters duplicates before `cards()`. Once both branches merge, the governed path is covered by
   both, and the engine rule covers every other caller.
+- **The first batch-C helper's notes on these files** (its commits `2337bc53` / `07ed8431`; one separate commit here):
+  - **B-31 in the law itself.** `lived_world.validate_primitives` names a `frictions` / `shared_predicates` / `communities` item that
+    is not a string (and a non-list), with the binding loop's exact messages. The standalone controller's submit path
+    (`controller.py`) calls this function and had no such check; the governed path now has it twice until the binding's copy is
+    dropped (see Open contract gaps).
+  - **B-55 in the lived world.** `lived_world._toks` (lead VOI, seed matching, corpus-question words) reads letters in any script
+    (Unicode category L after NFC; combining marks and hyphens continue a word; dense scripts count from 2 characters, the
+    executors' rule): `fotógrafos` is no longer cut to `grafos`, a Chinese run is a word. ASCII text tokenises exactly as the old
+    `[a-z][a-z\-]{3,}` rule (pinned by the test); the seed filters take the same dense-script length. The "VR users" blank search
+    does not come from `_toks`: `executors._gap_keywords` keeps no word (`vr` is under its 3-letter floor, `users` a stop word) and
+    every channel template got `{q}` = "". `_compile_lead_queries` now searches for the lead's own words when no keyword survives
+    ("VR users", "VR users forum"), and compiles no query for a lead with no word at all; a lead with keywords is unchanged.
+  - **B-34 in the reality join.** `product_reality.concept_ref` reads `PC_2` and `pc_1 (universal strap mount)` as the concept they
+    name — the supply join's rule (exact id first, then the first id-shaped token, case-insensitively); an unknown tag is still
+    UNKNOWN_CONCEPT with the raw tag as `claimed`.
+  - **The B-54 note (skipped, design decision):** `cards()` clusters by community × friction family, not by hypothesis. When two
+    hypotheses share a family, one cluster serves both; a record that supports H2 and contradicts H1 cannot leave "H1's cluster"
+    without leaving H2's (the same cluster). Using `contradicts_hypothesis_ids` there needs per-hypothesis membership or counts (or
+    the hypothesis in the cluster key, which changes cluster ids) — an owner decision, not a narrow fix.
 
 ## Proof
 - Environment of every run: `POLYMATH_PG_DSN` and `POLYMATH_TEST_DSN` set to a dead port (`postgresql://nobody@127.0.0.1:1/none`),
@@ -68,12 +87,15 @@ last_reviewed: 2026-09-26
   - `tests/contracts/test_ecommerce_dossier_labels.py` (7: B-36 dossier, B-37 dossier, B-39, B-40) — synthetic journals and a
     standalone state rendered out of process through the engine's own `report` module.
   - `tests/contracts/test_ecommerce_policy_overlay.py` (3: B-58) — the checkout's policies, and scratch copies whose YAML the test edits.
+- The notes' fixes (second commit): 5 more tests in `test_adapter_ecommerce_law_edges.py` (B-31 law, B-55 words + ASCII pin, B-55
+  corpus questions, B-55 lead search, B-34 reality tags), run against a `git archive` export of the first commit `c551df58`: 5 failed
+  (the ASCII pin inside the words test passed there, as it must); with the fix all 14 in the file pass.
 - `tests/contracts -k "not test_live_"`: 373 passed (incl. the engine's own `tests/run_all.py` via `test_ecommerce_engine_import.py`).
 - Adapter / Trail determinism files (25: every `test_*adapter*` / `test_*trail*` except `test_adapter_worker_registration.py`,
   `test_adapter_product_discovery_loop.py`, `test_adapter_service_store.py`, `test_adapter_harness_action.py`; each grepped first
-  for `5432` / `polymath-dev`, none found): 255 passed. The other determinism files that drive the ecommerce engine
-  (`test_semantic_restoration_gate.py`, `test_conformance_agnostic.py`, `test_autoresearch_harness_contract.py`,
-  `test_autoresearch_sources_harness.py`, `test_worker_call_sites_merged.py`): 58 passed.
+  for `5432` / `polymath-dev`, none found): 255 passed at the first commit, 260 with the notes' tests. The other determinism files
+  that drive the ecommerce engine (`test_semantic_restoration_gate.py`, `test_conformance_agnostic.py`,
+  `test_autoresearch_harness_contract.py`, `test_autoresearch_sources_harness.py`, `test_worker_call_sites_merged.py`): 58 passed.
 - `scripts/agent_preflight.py`, `scripts/repo_guard.py`, `scripts/wiki_worm.py --check`: exit 0.
 - ruff (HEAD copy vs working copy of each changed file): bridge 0/0, graph 0/0, lived_world 3/3, product_reality 1/1, report 10/10;
   the three new test files are clean.
@@ -108,3 +130,11 @@ last_reviewed: 2026-09-26
   admits any known ref there). Tightening that is a contract change beyond the finding.
 - `binding._op_product_reality_join`'s docstring still says a contested concept's "siblings are untouched" — true now only for a
   product found by a concept's own job (B-37). `binding.py` belongs to the other helper.
+- **At the merge with `fix/trail-ext-bugeco`**: drop `binding._op_validate_primitives`' `_WORD_LISTS` loop (B-31) — the law now names
+  those words itself, so the governed verdict would list each bad word twice. Optional consolidation: `binding._concept_ref` and
+  `product_reality.concept_ref` are the same rule, and `executors._words` / `lived_world._toks` share the letter rule (different
+  length floors and apostrophe handling, each pinned to its old ASCII behaviour).
+- **The B-54 note** (owner decision): per-hypothesis cluster membership — see Changes.
+- Seen, not changed: `compile_corpus_questions` fills an unassigned cluster's friction slot from `Counter` over `_toks` SETS, so
+  words that tie on count come out in set-iteration order, which string hashing varies per process — the same records can give a
+  differently worded corpus question on another run (the module promises "same input state + policies → same output").

@@ -16,6 +16,7 @@ and the only score stay TrailSignal's.
              concept that job was planned for (`applies_to_concepts`)."""
 from __future__ import annotations
 
+import re
 from typing import Any, Mapping
 
 import query_semantics as QS
@@ -111,6 +112,17 @@ def intent_for(job: Mapping[str, Any], concept_name: str) -> dict[str, Any]:
             "intent": f"{job['job_class']} for concept {job['concept_id']} ({concept_name}) — {convention}"[:500], "template": str(job["query"])[:500]}
 
 
+def concept_ref(tag: str | None, concept_ids) -> str | None:
+    """`concept: pc_1` / `PC_1` / `pc_1 (heated glove liner)` -> the concept id the tag names; None when it names none. The supply
+    join's rule (`binding._concept_ref`, gap B-34): an exact id first, else the tag's first id-shaped token, case-insensitively."""
+    t = str(tag or "").strip()
+    if t in concept_ids:
+        return t
+    lower = {str(c).lower(): str(c) for c in concept_ids}
+    m = re.match(r"[A-Za-z0-9][\w.\-]*", t)
+    return lower.get(t.lower()) or (lower.get(m.group(0).rstrip(".-").lower()) if m else None)
+
+
 def join(admitted: list[Mapping[str, Any]], observations: Mapping[str, Mapping[str, Any]], sources: Mapping[str, Mapping[str, Any]],
          concepts: list[Mapping[str, Any]], mechanisms: list[Mapping[str, Any]], jobs: list[Mapping[str, Any]], context_field) -> dict[str, Any]:
     """Admitted product-reality observations -> existing products per concept. `context_field(context, key)` is the binding's
@@ -130,10 +142,11 @@ def join(admitted: list[Mapping[str, Any]], observations: Mapping[str, Mapping[s
             stats["without_observation"] += 1
             continue
         ctx = str(o.get("context") or "")
-        cid = context_field(ctx, "concept")
-        if not cid or cid not in concept_by_id:
-            stats["without_concept_tag" if not cid else "unknown_concept"] += 1
-            unjoined.append({"admitted_evidence_id": a.get("admitted_evidence_id"), "reason": "NO_CONCEPT_TAG" if not cid else "UNKNOWN_CONCEPT", "claimed": cid,
+        tag = context_field(ctx, "concept")
+        cid = concept_ref(tag, concept_by_id)          # an annotated or re-cased tag names its concept, as in the supply join (gap B-34)
+        if not cid:
+            stats["without_concept_tag" if not tag else "unknown_concept"] += 1
+            unjoined.append({"admitted_evidence_id": a.get("admitted_evidence_id"), "reason": "NO_CONCEPT_TAG" if not tag else "UNKNOWN_CONCEPT", "claimed": tag,
                              "claim": str(o.get("claim") or "")[:200]})
             continue
         vid = context_field(ctx, "variation")

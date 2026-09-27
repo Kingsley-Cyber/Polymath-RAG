@@ -6,13 +6,20 @@ B-61  a FIELD_ANCHORED situation cites the records of ITS ANCHOR cluster — nev
       contradicting one.
 B-62  a record TrailSignal marks `duplicate_of` does not count toward a cluster's records, threads or voices.
 B-37  what the ONE substitute job of a hypothesis finds counts for every sibling concept the job was planned for.
+And the other batch-C helper's notes on these files: B-31 (the lineage law itself names a word written as an object — the
+standalone controller calls it too), B-55 (the lived world reads words in any script; a lead with no keyword never searches for
+nothing), B-34 (the reality join reads an annotated or re-cased concept tag as the concept it names).
 
-One operation at a time through the REAL executor (`exec_domain`, the binding out of process). No database, no network. Text is
-synthetic.
+One operation at a time through the REAL executor (`exec_domain`, the binding out of process), or the engine's own module out of
+process. No database, no network. Text is synthetic.
 """
 from __future__ import annotations
 
+import json
+import os
 import pathlib
+import re
+import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -211,3 +218,89 @@ def test_a_product_its_own_concept_job_found_still_contests_that_concept_only():
         reality = {c["concept_id"]: c for c in out["concept_reality"]}
         assert reality["pc_1"]["status"] == "EXISTING_PRODUCT_CONTESTS" and reality["pc_2"]["status"] == "NO_EXISTING_PRODUCT_JOINED", (context, reality)
         assert out["existing_products"][0]["applies_to_concepts"] == ["pc_1"]
+
+
+# ─────────────────────────────────────────────────────────── notes from the other batch-C helper (B-31 / B-55 / B-34, these files' half)
+ENGINE = ROOT / "adapters" / "ecommerce"
+LAWFUL_PRIMITIVES = {"generative_signal": True, "row_relevance": {"ch_0": "SEMANTIC_MATCH", "ch_1": "LEXICAL_MATCH"},
+                     "evidence_refs": {"frictions": ["ch_0"]}, "frictions": ["access_interruption"], "shared_predicates": ["access"]}
+
+
+def _engine(code: str) -> object:
+    """The engine's own modules, out of process — the standalone controller's path (its flat module names never enter this interpreter)."""
+    env = {"PATH": os.environ.get("PATH", ""), "LANG": "en_US.UTF-8", "PYTHONDONTWRITEBYTECODE": "1"}
+    proc = subprocess.run([sys.executable, "-c", "import json, sys; sys.path.insert(0, 'python'); import graph, lived_world; " + code],
+                          cwd=ENGINE, env=env, capture_output=True, text=True, check=False, timeout=120)
+    assert proc.returncode == 0, proc.stderr[-800:]
+    return json.loads(proc.stdout)
+
+
+def test_the_lineage_law_itself_names_a_word_written_as_an_object():
+    """B-31: the standalone controller's submit path calls `lived_world.validate_primitives` — the law, not the binding, names it."""
+    cases = [({"frictions": [{"text": "gloves block fine dial control"}]}, "primitives.frictions[0]: expected a string"),
+             ({"shared_predicates": [["access", "retain"]]}, "primitives.shared_predicates[0]: expected a string"),
+             ({"communities": [{"name": "r/photography"}]}, "primitives.communities[0]: expected a string"),
+             ({"frictions": "gloves block fine dial control"}, "primitives.frictions: expected a list of strings")]
+    state = {"data": {"corpus_evidence": ROWS, "row_relevance": {}}}
+    for change, needle in cases:
+        errors = _engine(f"print(json.dumps(lived_world.validate_primitives({dict(LAWFUL_PRIMITIVES, **change)!r}, {state!r}, graph.load_policies())))")
+        assert any(e.startswith(needle) for e in errors), (needle, errors)
+        out = _exec("understanding.validate_primitives", {"primitives": dict(LAWFUL_PRIMITIVES, **change), "corpus_evidence": ROWS})
+        assert out["valid"] is False and any(e.startswith(needle) for e in out["errors"]), (needle, out["errors"])
+    lawful = _exec("understanding.validate_primitives", {"primitives": LAWFUL_PRIMITIVES, "corpus_evidence": ROWS})
+    assert lawful["valid"] is True and lawful["errors"] == []
+
+
+def test_the_lived_world_reads_words_in_any_script_and_ascii_exactly_as_before():
+    """B-55: `_toks` (lead VOI, seed matching, corpus-question words) was `[a-z][a-z\\-]{3,}`: `fotógrafos` became `grafos` and a
+    Chinese run no word at all. ASCII text is pinned to the old rule."""
+    ascii_samples = ["Runners lose KEYS mid-stride", "state-of-the-art e-bike x4s mp3 don't", "access_interruption / well- --abcd a---",
+                     "The community's members, users & people: 1234 abc abcd", "Cold-hands; small dials (gloved) 'quoted' tl;dr"]
+    got = _engine(f"print(json.dumps([sorted(lived_world._toks(x)) for x in {ascii_samples!r}] + [sorted(lived_world._STOP)]))")
+    stop = set(got.pop())
+    assert got == [sorted({t for t in re.findall(r"[a-z][a-z\-]{3,}", x.lower()) if t not in stop}) for x in ascii_samples]
+    assert _engine("print(json.dumps(sorted(lived_world._toks('Los fotógrafos pierden la tapa'))))") == ["fotógrafos", "pierden", "tapa"]
+    assert _engine("print(json.dumps(sorted(lived_world._toks('徒步摄影师 镜头盖'))))") == ["徒步摄影师", "镜头盖"]
+
+
+def test_a_corpus_question_carries_the_problem_words_whatever_their_script():
+    def questions(problems: list[str], community: str) -> list[str]:
+        records = [{"id": f"fr_{i}", "problem": p, "community": community, "friction_family": "unassigned", "evidence_roles": ["FRICTION_EVIDENCE"]}
+                   for i, p in enumerate(problems)]
+        cluster = {"id": "cl_1", "community": community, "friction_family": "unassigned", "authority": "THIN", "record_ids": [r["id"] for r in records],
+                   "independent_voices": 1}
+        return [q["question"] for q in _exec("knowledge.corpus_questions", {"lived_clusters": [cluster], "field_records": records})["corpus_questions"]]
+    spanish = questions(["fotógrafos pierden tapa", "fotógrafos pierden tapa en el viento", "fotógrafos pierden tapa otra vez"], "fotografía de paisaje")
+    # the three words tie on count; their order follows set iteration (string hashing is per process), so only the words are pinned
+    assert spanish and all(re.search(r"(?<!\w)grafos", q) is None for q in spanish), spanish         # was: `fotógrafos` cut to `grafos`
+    assert any({"fotógrafos", "pierden", "tapa"} <= set(q.split()) for q in spanish), spanish
+    chinese = questions(["镜头盖被风吹走", "镜头盖被风吹走"], "风光摄影")
+    assert chinese and any("镜头盖被风吹走" in q for q in chinese), chinese                    # was: no word, no question at all
+
+
+def test_a_lead_with_no_keyword_searches_for_its_own_words_never_for_nothing():
+    prim = {**LAWFUL_PRIMITIVES, "population_leads": [{"name": "VR users", "why": "named in the passage"},
+                                                      {"name": "trail runners", "why": "named", "frictions": ["keys bounce"]}]}
+    out = _exec("population.nominate", {"signal": "synthetic seed about headsets", "primitives": prim, "corpus_evidence": ROWS})
+    leads = {l["name"]: l for l in out["population_leads"]}
+    vr = {q["channel"]: q["query"] for q in leads["VR users"]["channel_queries"]}
+    assert vr["reddit"] == "VR users" and vr["forum"] == "VR users forum" and all(q.startswith("VR users") for q in vr.values()), vr   # was: "" and " forum"
+    runners = {q["channel"]: q["query"] for q in leads["trail runners"]["channel_queries"]}
+    assert runners["reddit"] == "trail runners keys bounce" and runners["forum"] == "trail runners keys bounce forum"   # a lead with keywords: unchanged
+
+
+def test_the_reality_join_reads_an_annotated_or_recased_concept_tag_as_its_concept():
+    plan = _exec("product_reality.plan", {"research_directive": DIRECTIVE, "product_concepts": CONCEPTS, "mechanisms": MECHANISMS, "live_hypotheses": LIVE, "semantics": SEMANTICS})
+    tags = {"o1": "concept: PC_2 · relation: competitor · product: strap holster A", "o2": "concept: pc_1 (universal strap mount) · relation: solves · product: clamp B",
+            "o3": "concept: pc_9 · relation: competitor · product: C"}
+    receipt = {"action_id": "hact_pr", "observations": [{"observation_id": o, "source_id": "s1", "claim": f"synthetic claim {o}", "context": ctx, "paraphrase_or_excerpt": ""}
+                                                        for o, ctx in tags.items()],
+               "sources": [{"source_id": "s1", "url": "https://www.amazon.com/s?k=strap", "source_class": "marketplace_listing"}]}
+    admission = {"admitted": [{"admitted_evidence_id": f"fev_{o}", "observation_id": o, "evidence_role": "competition", "polarity": "supporting", "hypothesis_ids": [H1]}
+                              for o in tags]}
+    out = _exec("product_reality.join", {"admissions": [admission], "receipts": [receipt], "product_concepts": CONCEPTS, "mechanisms": MECHANISMS,
+                                         "live_hypotheses": LIVE, "reality_plan": plan["reality_plan"]})
+    assert {p["id"]: p["concept_id"] for p in out["existing_products"]} == {"fev_o1": "pc_2", "fev_o2": "pc_1"}
+    assert out["unjoined"] == [{"admitted_evidence_id": "fev_o3", "reason": "UNKNOWN_CONCEPT", "claimed": "pc_9", "claim": "synthetic claim o3"}]
+    assert out["joined"]["unknown_concept"] == 1 and out["joined"]["joined"] == 2
+    assert {c["concept_id"]: c["status"] for c in out["concept_reality"]}["pc_1"] == "EXISTING_PRODUCT_CONTESTS"
