@@ -153,13 +153,18 @@ historical, never an instruction.
    characters, never in chat — then the Caddy switch). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
    (must print `"ok": true`), the owner signs in and adds the first friend in Settings, the F6 close-out (register row, work-log,
    CONTINUITY, memory). If a step fails the script stops there; re-running is safe (done steps say so; the build and restart run again).
-4. **FIX-IT-ALL progress (integration branch `feat/fix-it-all`, worktree `pmv4-fix`):**
-   - DONE: T0 A-15 class (11.505); FRONTEND-REFRESH U1–U6 (11.506–11.511); TRAIL-INTERFACE T1 read model (11.512);
-     DEEP-RESEARCH DR1 engine (11.513) + DR2 route (11.514).
-   - NEXT: T2–T5 Research screens + `/adapter/{id}/report`; DR3 composer switch; the verified TRAIL-EXT-BUGHUNT-V1 bugs (the
-     workflow's synthesis; a failing test first, then the fix); U4b citation hover cards.
-   - LATER / OWNER: DR0 (a dedicated `deep_research` lane stage + the reserved deep retrieval surfaces); DR4 (5 live questions,
-     the owner's word); FRIENDS-ACCESS F6 close-out once the owner types King's password (step 5 of the go-live script).
+4. **FIX-IT-ALL progress (integration branch `feat/fix-it-all`, worktree `pmv4-fix`; production = the branch after two
+   merge + bounce rounds on 2026-09-26, both READY 26/13/1, live contract checks green):**
+   - DONE and LIVE: T0 A-15 class (11.505); FRONTEND-REFRESH U1–U6 + U4b — the plan is complete (11.506–11.511, 11.517);
+     TRAIL-INTERFACE T1–T4: read model, Research screens, gates from every qualify step (11.512, 11.515); DEEP-RESEARCH
+     DR1 engine, DR2 route, DR3 composer switch (11.513, 11.514, 11.516).
+   - NEXT: the verified TRAIL-EXT-BUGHUNT-V1 bugs (workflow `wf_08f90baa-181`, its synthesis lists them ranked; a failing
+     test first, then the fix, one slice per root cause).
+   - DEFERRED with reasons: T5 (the server-rendered dossier needs the harness journal — what each step showed and what the
+     agent answered — which the server does not keep; the Research page shows the same records); DR0 (a dedicated
+     `deep_research` lane stage + the reserved deep retrieval surfaces).
+   - OWNER: DR4 (5 live deep-research questions); FRIENDS-ACCESS F6 close-out once King's password is typed (step 5 of the
+     go-live script is still waiting in the owner's terminal; Caddy still has basic_auth until then).
    - Frontend slices that add API calls go AFTER the backend they call is merged and bounced: the live contract test checks
      every `api.ts` call against :7200.
 5. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
