@@ -2,7 +2,7 @@
 title: "FRONTEND-REFRESH-V1 — a calmer, consistent, responsive Polymath web UI without adding weight"
 date: 2026-09-26
 last_reviewed: 2026-09-26
-status: "PROPOSED — the owner's request 2026-09-26; waits for the owner's decisions in §9"
+status: "ACTIVE — plan of record (register 11.504); the owner agreed to every §9 recommendation on 2026-09-26"
 owner: "@king"
 scope: "frontend-v2 only: design tokens and themes, the app shell, a small in-house set of UI pieces, per-screen passes. No backend change, no new route, no UI framework."
 ---
@@ -178,6 +178,8 @@ Code facts read on 2026-09-26 (production `7e1918c2`). U0 adds the screenshots a
 | `live-contract`, `proxy-covers-backend`, `retrieval-modes` | no DOM assertions (API contract only) |
 
 ## 9. Owner decisions
+**DECIDED 2026-09-26** (the owner: "i agree please fix it all"): Light / Dark / System + accent; Indigo by default; the system font stack; the order U0 → U6.
+
 1. **Themes:** collapse the ten themes to Light / Dark / System plus an accent (recommended), or keep a few named themes.
 2. **Default accent:** Indigo (recommended), Teal, Amber or Rose.
 3. **Font:** the system stack (recommended, 0 KB), or Inter self-hosted (about 100 KB).

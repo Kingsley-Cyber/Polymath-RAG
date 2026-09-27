@@ -2,7 +2,7 @@
 title: "TRAIL-INTERFACE-V1 — a Research section in the Polymath web UI for watching and reading governed TrailSignal runs"
 date: 2026-09-26
 last_reviewed: 2026-09-26
-status: "PROPOSED — the owner's request 2026-09-26; waits for the owner's decisions in §8"
+status: "ACTIVE — plan of record (register 11.504); the owner agreed to every §8 recommendation on 2026-09-26"
 owner: "@king"
 scope: "Polymath only: two read-only orchestrator routes, one read-side fix (gap A-15), new frontend-v2 screens. Nothing inside TrailSignal (governance/trail stays byte-identical to its pin); no change to how runs reason or score."
 ---
@@ -114,6 +114,8 @@ Order: T0 and T1 can run alongside the frontend refresh; T2–T5 come after its 
 - A standalone `trail-signal-v2-daemon` (127.0.0.1:8767) still runs from the older A41 worktree. Its latest log line is a 401 invalid_token: something local calls it with a bad token. Polymath does not use it (embedded mode). Whether it should keep running is the owner's call.
 
 ## 8. Owner decisions
+**DECIDED 2026-09-26** (the owner: "i agree please fix it all"): a Research section in the Polymath web UI, named "Research"; watch and read only in v1; friends see only their own runs; the report rendered on the server; A-15 fixed first (T0).
+
 1. **Where:** a Research section in the Polymath web UI (recommended), or a separate TrailSignal app (needs ADRs and a build-graph node in TrailSignal).
 2. **Name in the nav:** "Research" (recommended), "Signals" or "Trail".
 3. **Scope of v1:** watch and read only (recommended); starting runs from the web (T6) later.

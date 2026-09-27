@@ -44,8 +44,11 @@ historical, never an instruction.
 ### Active Mission
 - **FRIENDS-ACCESS-V1** (`docs/wiki/plans/FRIENDS-ACCESS-V1.md`): F1–F5 built and tested on `feat/friends-access`; F6 waits for the
   owner's Run button. Locks kept: `research_acquire` owner-only, no host-path uploads, admin owner-only.
-- **Three PROPOSED plans (register 11.503; the owner's request 2026-09-26), each waiting for the owner's decisions in its last
-  section:** `FRONTEND-REFRESH-V1.md` (U0–U6), `TRAIL-INTERFACE-V1.md` (T0–T6; T0 = gap A-15), `DEEP-RESEARCH-MODE-V1.md`
+- **FIX-IT-ALL (register 11.504; the owner, 2026-09-26: "i agree please fix it all"):** the three plans below are now ACTIVE plans of
+  record with the recommended decisions. Order: T0 (gap A-15) → the verified bugs from TRAIL-EXT-BUGHUNT-V1
+  (`docs/wiki/experiments/trail-ext-bughunt-2026-09-26/`) → U0–U6 → T1–T5 → DR0–DR3. DR4 (5 live questions) waits for the
+  owner's word. Each slice: tests, paperwork, guards; merges and bounces as usual.
+- **The three plans (register 11.503):** `FRONTEND-REFRESH-V1.md` (U0–U6), `TRAIL-INTERFACE-V1.md` (T0–T6; T0 = gap A-15), `DEEP-RESEARCH-MODE-V1.md`
   (DR0–DR5). None is a plan of record until the owner chooses. The friends' and owner's guide: `docs/runbooks/friends-access.md`.
 - AUTORESEARCH-SOURCES-AND-HARNESS-V1 is COMPLETE (the plan's status line; R6 DONE 11.494, R7 DONE 11.495).
 - **The R7 run** `adr_be4337c6c5c5b1b9b51f781ff4c2b095` (its artifacts live OUTSIDE the repository, field quotes included:
@@ -150,8 +153,9 @@ historical, never an instruction.
    characters, never in chat — then the Caddy switch). Then: `.venv/bin/python docs/wiki/experiments/friends-access-2026-09-26/live_check.py`
    (must print `"ok": true`), the owner signs in and adds the first friend in Settings, the F6 close-out (register row, work-log,
    CONTINUITY, memory). If a step fails the script stops there; re-running is safe (done steps say so; the build and restart run again).
-4. **The owner's decisions on the three proposed plans** (FRONTEND-REFRESH-V1 §9, TRAIL-INTERFACE-V1 §8, DEEP-RESEARCH-MODE-V1 §9)
-   and their order against the worker pack; then admit the chosen plan(s) as plan of record and start the first slice.
+4. **FIX-IT-ALL, in order:** T0 (A-15 read-side fix + worker guard) → the confirmed TRAIL-EXT-BUGHUNT-V1 bugs (a failing test
+   first, then the fix) → FRONTEND-REFRESH U0–U6 → TRAIL-INTERFACE T1–T5 → DEEP-RESEARCH DR0–DR3. Check `git worktree list` for
+   the integration branch before starting any slice.
 5. Admit the worker pack as the next plan of record (docs slice: plan under `docs/wiki/plans/`, work-log, register row, scaffold
    TREE, CONTINUITY), mapping the R7 gap rows (A-09..A-14, S-16..S-18, O-06, H-08) into its slices or naming them out of scope.
 

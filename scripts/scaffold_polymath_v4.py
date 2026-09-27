@@ -2479,6 +2479,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-26-friends-access-f4.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-friends-access-f5.md", "md", None),
     ("docs/wiki/work-log/2026-09-26-ui-trail-research-plans.md", "md", None),
+    ("docs/wiki/work-log/2026-09-26-fix-it-all-admission.md", "md", None),
+    ("docs/wiki/experiments/trail-ext-bughunt-2026-09-26/README.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-k1b-scope-echo.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),

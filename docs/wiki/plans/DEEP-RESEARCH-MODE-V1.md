@@ -2,7 +2,7 @@
 title: "DEEP-RESEARCH-MODE-V1 — multi-round research reports over your libraries, built on dzhng/deep-research's loop and Polymath's own retrieval"
 date: 2026-09-26
 last_reviewed: 2026-09-26
-status: "PROPOSED — the owner's request 2026-09-26; waits for the owner's decisions in §9"
+status: "ACTIVE — plan of record (register 11.504); the owner agreed to every §9 recommendation on 2026-09-26"
 owner: "@king"
 scope: "A research loop in shared/ (pure, ports injected), one streaming orchestrator route, a switch in the Chat composer, receipts. Uses the existing retrieval engine, the governed LLM lanes and the chat stream's frame types. Not in scope: web acquisition for non-owners, new retrieval modes, TrailSignal."
 ---
@@ -163,6 +163,8 @@ DR1 can start at once. DR3 fits best after FRONTEND-REFRESH-V1 U4 (the new compo
 Friends may use it: the owner's decision is "everything" and "no daily cap". Safety comes from the per-run presets and one run at a time per person. An owner-set daily count is available but off by default. Web research stays owner-only.
 
 ## 9. Owner decisions
+**DECIDED 2026-09-26** (the owner: "i agree please fix it all"): a Deep research switch in the Chat composer with its own route; dzhng's loop; presets Quick 3×1 · Standard 3×2 (default) · Thorough 4×2, 4-minute deadline; friends allowed with presets and one run at a time; libraries only in v1; the composer's model writes the report; DR4's five live questions wait for the owner's word.
+
 1. **Surface:** a Deep research switch in the Chat composer with its own route (recommended; the retrieval modes stay as they are), a sixth chat mode "DEEP", or the adapter only (MCP agents drive it).
 2. **Base:** dzhng's loop (recommended) or deep-searcher's style.
 3. **Presets and default:** Quick 3×1 · Standard 3×2 (default) · Thorough 4×2 (recommended); deadline 4 minutes.
