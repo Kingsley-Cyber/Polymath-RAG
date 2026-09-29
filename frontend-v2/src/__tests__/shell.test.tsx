@@ -15,7 +15,7 @@ const OWNER: Me = { username: "king", display_name: "King", is_owner: true, must
 let host: HTMLDivElement;
 let root: Root;
 let me: Me;
-let calls: { path: string; method: string }[];
+let calls: { path: string; method: string; body?: unknown }[];
 
 function route(path: string, init?: RequestInit): Response {
   const method = init?.method ?? "GET";
@@ -44,7 +44,7 @@ beforeEach(() => {
   localStorage.setItem("polymath-v2.nav-collapsed", "0");
   calls = [];
   vi.stubGlobal("fetch", vi.fn(async (path: string, init?: RequestInit) => {
-    calls.push({ path, method: init?.method ?? "GET" });
+    calls.push({ path, method: init?.method ?? "GET", body: typeof init?.body === "string" ? JSON.parse(init.body) : undefined });
     return route(path, init);
   }));
   host = document.createElement("div");
@@ -168,26 +168,46 @@ it("a friend can add and delete files in their private library", async () => {
 });
 
 
-it("the owner sets the website password in Settings on the server itself (one login on the website)", async () => {
+it("the owner sets the website password in Settings on the server itself: one field with Show, first while unset", async () => {
   await render({ ...OWNER, web_password_set: false });
   await act(async () => openScreen("Settings"));
   await settle();
-  const card = [...host.querySelectorAll("form")].find((f) => f.textContent?.includes("Website sign-in"))!;
-  expect(card.textContent).toContain("Your username there is king");
-  const inputs = [...card.querySelectorAll('input[type="password"]')] as HTMLInputElement[];
-  const pw = inputs[0]!, again = inputs[1]!;
+  const cards = [...host.querySelectorAll(".settings__cards > .card")];
+  expect(cards[0]!.getAttribute("aria-label")).toBe("Profile");
+  const card = cards[1] as HTMLFormElement;                                           // unset: the password comes first
+  expect(card.textContent).toContain("Website password");
+  expect(card.textContent).toContain("Username: King");
+  expect(card.querySelector(".pill")!.textContent).toBe("Not set");
+  const inputs = [...card.querySelectorAll("input")] as HTMLInputElement[];
+  expect(inputs).toHaveLength(1);
+  const pw = inputs[0]!;
+  expect(pw.type).toBe("password");
+  await act(async () => (card.querySelector('button[aria-label="Show password"]') as HTMLButtonElement).click());
+  expect(pw.type).toBe("text");
   const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
-  await act(async () => { setter.call(pw, "a long enough pass"); pw.dispatchEvent(new Event("input", { bubbles: true })); });
-  await act(async () => { setter.call(again, "a long enough pass"); again.dispatchEvent(new Event("input", { bubbles: true })); });
+  await act(async () => { setter.call(pw, "any password at all"); pw.dispatchEvent(new Event("input", { bubbles: true })); });
   await act(async () => (card.querySelector('button[type="submit"]') as HTMLButtonElement).click());
   await settle();
-  expect(calls.some((c) => c.method === "POST" && c.path === "/auth/owner-password")).toBe(true);
-  expect(card.textContent).toContain("sign in as king");
+  const post = calls.find((c) => c.method === "POST" && c.path === "/auth/owner-password");
+  expect(post?.body).toEqual({ password: "any password at all" });
+  expect(card.textContent).toContain("sign in with username King");
+  expect(card.querySelector(".pill")!.textContent).toBe("Set");
 });
 
-it("a friend never sees the website-password card", async () => {
+it("once the password is set, connecting the agents comes first", async () => {
+  await render({ ...OWNER, web_password_set: true });
+  await act(async () => openScreen("Settings"));
+  await settle();
+  const cards = [...host.querySelectorAll(".settings__cards > .card")];
+  expect(cards[1]!.textContent).toContain("Connect Claude Code and Codex");
+  expect(cards[2]!.textContent).toContain("Website password");
+});
+
+it("a friend changes their own password and never sees the owner's password form", async () => {
   await render(FRIEND);
   await act(async () => openScreen("Settings"));
   await settle();
-  expect(host.textContent).not.toContain("Website sign-in");
+  expect(host.textContent).toContain("Change the password for fred");
+  expect(host.textContent).not.toContain("Username: King");
+  expect(host.querySelector("#owner-password")).toBeNull();
 });

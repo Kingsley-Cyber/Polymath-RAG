@@ -3,8 +3,15 @@
 The web boundary (web_boundary.py) has already decided who a proxied caller is: `request.state.web_identity`. A DIRECT loopback
 caller (the owner at http://127.0.0.1:7200) is the owner without a login, as before. Cookies: the session is HttpOnly + Secure +
 SameSite=Strict; the CSRF cookie is readable by the page (it echoes it in `X-Polymath-CSRF`), Secure + SameSite=Strict.
+
+ONE-PROFILE (the owner, 2026-09-28: "rn just for simplicity universal log in is King ... just keep it 1 profile"): new accounts
+only when `POLYMATH_WEB_SIGNUPS=1` (default off: `/auth/register` answers SIGNUPS_CLOSED and counts nothing); accounts that exist
+still sign in. A sign-in as King before King's password was ever set answers OWNER_PASSWORD_NOT_SET (where to set it), not
+"wrong password", and counts nothing: no password exists to guess.
 """
 from __future__ import annotations
+
+import os
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -18,6 +25,17 @@ router = APIRouter()
 THROTTLE = W.LoginThrottle()
 INVITE_KEY = "invite"                                    # the throttle key every wrong invite code counts against, whoever sent it
 REGISTER_STATUS = {"INVITE_INVALID": 403, "USERNAME_TAKEN": 409, "USERNAME_INVALID": 422, "WEAK_PASSWORD": 422, "INVITES_OFF": 503}
+SIGNUPS_FLAG = "POLYMATH_WEB_SIGNUPS"
+
+
+def signups_open(env=None) -> bool:
+    """ONE-PROFILE: new web accounts only when POLYMATH_WEB_SIGNUPS is 1 / true / yes / on (default off)."""
+    v = str((env if env is not None else os.environ).get(SIGNUPS_FLAG, "0") or "0").strip().lower()
+    return v in ("1", "true", "yes", "on")
+
+
+def owner_password_set(doc: dict | None) -> bool:
+    return bool(((doc or {}).get("owner_web") or {}).get("password_hash"))
 
 
 class LoginBody(BaseModel):
@@ -58,7 +76,8 @@ def me_payload(ident: W.WebIdentity | None, *, local: bool = False) -> dict:
                 "principal_id": P.OWNER_ID, "local": local,
                 "web_password_set": bool((doc.get("owner_web") or {}).get("password_hash"))}
     return {"username": ident.username, "display_name": ident.display_name, "is_owner": ident.is_owner,
-            "must_change_password": ident.must_change_password, "principal_id": ident.principal_id, "local": False}
+            "must_change_password": ident.must_change_password, "principal_id": ident.principal_id, "local": False,
+            **({"web_password_set": True} if ident.is_owner else {})}
 
 
 def identity(request: Request) -> W.WebIdentity | None:
@@ -86,6 +105,9 @@ def login(body: LoginBody, request: Request) -> JSONResponse:
         raise _refuse(429, "TOO_MANY_ATTEMPTS", "too many failed sign-ins; wait 15 minutes")
     ident = W.authenticate_password(doc, body.username, body.password)
     if ident is None:
+        if body.username.strip().lower() == W.OWNER_USERNAME and not owner_password_set(doc):
+            raise _refuse(409, "OWNER_PASSWORD_NOT_SET",
+                          "King's website password is not set yet: set it in Polymath on the Mac (Settings, Website password)")
         THROTTLE.failed(keys)
         raise _refuse(401, "BAD_LOGIN", "wrong username or password")
     THROTTLE.succeeded(keys[:1])
@@ -101,6 +123,8 @@ def register(body: RegisterBody, request: Request) -> JSONResponse:
     gets today's defaults: every shared library and every adapter (web_settings.friend_defaults)."""
     from orchestrator.api import web_settings
 
+    if not signups_open():
+        raise _refuse(403, "SIGNUPS_CLOSED", "this site has one account: sign-ups are closed")
     doc, path = REGISTRY.get(), W.registry_path()
     if doc is None or path is None or W.session_secret() is None:
         raise _refuse(503, "LOGIN_NOT_CONFIGURED", "web logins are not configured on this server")
@@ -146,9 +170,8 @@ def set_owner_password(body: OwnerPasswordBody, request: Request) -> JSONRespons
     """The owner sets King's web sign-in password FROM THE SERVER ITSELF (http://127.0.0.1:7200, where no sign-in exists):
     one login on the website, no terminal. Refused through the proxy (a signed-in owner uses /auth/password there) and for any
     principal."""
-    from polymath_shared import principal_context
-
     from orchestrator.web_boundary import proxied
+    from polymath_shared import principal_context
     if proxied(request.scope.get("headers") or []) or principal_context.current():
         raise _refuse(403, "LOCAL_ONLY", "set the owner password on the server itself")
     path = W.registry_path()

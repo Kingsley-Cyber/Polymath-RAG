@@ -5,11 +5,18 @@ Who is calling was decided by the web boundary (`request.state.web_identity`); a
 principal keys in the registry Server A reads: a friend holds at most 3 active ones; the raw key is returned ONCE, in the create
 response (with the connect prompt already filled in), and never again. The owner's admin key is `POLYMATH_MCP_API_KEY` in `.env`;
 it is never shown here. `/admin/*` and `/friends/invite*` are owner-only at the boundary.
+
+ONE-PROFILE (the owner, 2026-09-28: "just keep it 1 profile ... copy and paste should work without creating a api, logging in
+should be good enough"): the owner's Settings offer ONE command, `scripts/connect_agents.sh`, that connects the Mac's Claude Code and
+Codex with the admin key read from `.env` on the Mac itself (the key never reaches a browser), and a key-free prompt to paste into
+the agent. Nothing is created.
 """
 from __future__ import annotations
 
 import os
 import secrets
+import shlex
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -63,11 +70,47 @@ def mcp_url() -> str:
     return os.environ.get("POLYMATH_PUBLIC_MCP_URL", "https://mcp.kingsleylab.xyz/mcp")
 
 
-def connect_prompt(key: str, libraries: list[str], private: str | None, url: str | None = None) -> str:
-    """The text a user pastes into their agent harness. Harness-neutral; the setup lines follow mcp_server/CONNECTORS.md."""
-    url = url or mcp_url()
+REPO_ROOT = Path(__file__).resolve().parents[3]
+CONNECT_SCRIPT = REPO_ROOT / "scripts" / "connect_agents.sh"
+
+
+def connect_command() -> str:
+    """ONE-PROFILE: the one command that connects this Mac's Claude Code and Codex (it reads the key itself; no secret in it)."""
+    return f"bash {shlex.quote(str(CONNECT_SCRIPT))}"
+
+
+def usage_lines(libraries: list[str], private: str | None, *, owner: bool) -> str:
+    """The "How to use it" steps, the same for the owner's key-free prompt and a friend's connect prompt."""
     libs = ", ".join(libraries) if libraries else "(none yet)"
     own = f"Add documents to your own library ({private}) with upload_text." if private else "Add documents with upload_text or upload_document."
+    web = ("Research steps need your own web tools (search, browse)." if owner
+           else "Research steps need your OWN web tools (search, browse); Polymath's web reader is not shared.")
+    supplier = ("The supplier tools (supplier_search, supplier_product, supplier_freight, supplier_warehouses) are read-only: they "
+                "use my CJ account and quota." if owner else
+                "The supplier tools (supplier_search, supplier_product, supplier_freight, supplier_warehouses) are read-only and "
+                "owner-only: they use my CJ account and quota, so another key is refused (403).")
+    return f"""How to use it
+1. Call list_corpora to see the libraries open to me: {libs}. Always pass one of them as corpus_id.
+2. Questions: polymath_search = quick evidence; polymath_explore = planned evidence to reason over yourself; polymath_answer = a written, cited answer.
+3. {own}
+4. Product research: first read the prompt run_governed_research (or the resource polymath://adapter/guide). Then adapter_list, adapter_start (put the libraries in request_options.corpus_ids), loop adapter_next / adapter_submit, then adapter_result. {web}
+5. {supplier}
+6. "insufficient_evidence" is an honest answer: report it, do not retry blindly."""
+
+
+def owner_prompt(libraries: list[str]) -> str:
+    """ONE-PROFILE: what the owner pastes into an agent the connect command has set up. It carries no key."""
+    return f"""You can use my Polymath research library: it is connected to you as the MCP server "polymath". Use its tools for my questions.
+If you do not see the polymath tools, ask me to run the connect command from Polymath's Settings page, then restart.
+
+{usage_lines(libraries, None, owner=True)}"""
+
+
+def connect_prompt(key: str, libraries: list[str], private: str | None, url: str | None = None) -> str:
+    """A friend's text to paste into their agent harness, their own key in it. Harness-neutral; the setup lines follow
+    mcp_server/CONNECTORS.md (each command is safe to run again: the old entry is replaced; Codex keeps the key as a fixed header,
+    so the Codex app sends it too)."""
+    url = url or mcp_url()
     return f"""You can use my Polymath research library through MCP. Connect to it, then use its tools for my questions.
 
 Connect
@@ -75,21 +118,16 @@ Connect
 - Transport: Streamable HTTP
 - Header: Authorization: Bearer {key}
 
-Setup (pick your harness)
-- Claude Code: claude mcp add --transport http polymath {url} --header "Authorization: Bearer {key}"
-- Codex: export POLYMATH_MCP_KEY={key}   then   codex mcp add polymath --url {url} --bearer-token-env-var POLYMATH_MCP_KEY
+Setup (pick your harness; each command is safe to run again)
+- Claude Code: claude mcp remove polymath -s user; claude mcp add -s user -t http polymath {url} -H "Authorization: Bearer {key}"
+- Codex: codex mcp remove polymath; then add to ~/.codex/config.toml:  [mcp_servers.polymath]  url = "{url}"  http_headers = {{ Authorization = "Bearer {key}" }}
 - Gemini CLI: gemini mcp add --transport http --scope user --header "Authorization: Bearer {key}" polymath {url}
 - OpenCode: opencode mcp add polymath --url {url} --header "Authorization=Bearer {key}"
 - Hermes, Claude.ai, ChatGPT or any other MCP client: add a remote MCP server with the URL and header above.
+- After adding it, restart the agent (Claude Code: /mcp shows it connected) so the tools load.
 - If you get HTTP 403 before any login, your client's User-Agent looks like a bot to Cloudflare: use a normal client or set a User-Agent.
 
-How to use it
-1. Call list_corpora to see the libraries open to me: {libs}. Always pass one of them as corpus_id.
-2. Questions: polymath_search = quick evidence; polymath_explore = planned evidence to reason over yourself; polymath_answer = a written, cited answer.
-3. {own}
-4. Product research: first read the prompt run_governed_research (or the resource polymath://adapter/guide). Then adapter_list, adapter_start (put the libraries in request_options.corpus_ids), loop adapter_next / adapter_submit, then adapter_result. Research steps need your OWN web tools (search, browse); Polymath's web reader is not shared.
-5. The supplier tools (supplier_search, supplier_product, supplier_freight, supplier_warehouses) are read-only and owner-only: they use my CJ account and quota, so another key is refused (403).
-6. "insufficient_evidence" is an honest answer: report it, do not retry blindly.
+{usage_lines(libraries, private, owner=False)}
 
 Keep the key private: whoever holds it acts as me. I can revoke it in Settings."""
 
@@ -138,10 +176,16 @@ def revoke_my_key(key_id: str, request: Request) -> JSONResponse:
 
 @router.get("/keys/prompt")
 def prompt_template(request: Request) -> JSONResponse:
-    """The connect prompt with a placeholder (to re-copy it; the key itself is shown only when it is created)."""
+    """A friend: the connect prompt with a placeholder (their key is shown only when it is created). ONE-PROFILE, the owner: the
+    one connect command (it reads the key on the Mac) and the key-free prompt; the key itself is never in this answer."""
     ident = _identity(request)
     if ident is None or ident.is_owner:
-        text = connect_prompt(KEY_PLACEHOLDER, [], None)
+        try:
+            libraries = _shared_libraries()
+        except Exception:  # noqa: BLE001 — the prompt still works without the list (list_corpora names them)
+            libraries = []
+        return _no_store({"prompt": owner_prompt(libraries), "connect_command": connect_command(), "key_included": False,
+                          "placeholder": None, "mcp_url": mcp_url()})
     else:
         rec = _record(REGISTRY.get() or {}, ident.principal_id) or {}
         text = connect_prompt(KEY_PLACEHOLDER, sorted(rec.get("corpus_ids") or []), W.private_corpus_for(ident.username))

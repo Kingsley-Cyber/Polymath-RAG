@@ -1,6 +1,8 @@
 /**
- * FRIENDS-ACCESS-V1 — the account and Settings client: sign-in, my API keys, the connect prompt, the owner's friend admin.
- * Same rules as lib/api.ts: screens call these and render what comes back; the backend decides who may do what.
+ * FRIENDS-ACCESS-V1 — the account and Settings client: sign-in, my password, the connect prompt, a friend's own API keys.
+ * ONE-PROFILE (the owner, 2026-09-28): the owner's Settings get one connect command + a key-free prompt; the friend admin and the
+ * invite sign-up left the page (their routes still exist on the server). Same rules as lib/api.ts: screens call these and render
+ * what comes back; the backend decides who may do what.
  */
 import { http } from "./api";
 
@@ -29,19 +31,6 @@ export interface CreatedKey extends ApiKey {
   shown_once: boolean;
 }
 
-export interface Friend {
-  principal_id: string;
-  username: string;
-  name: string;
-  enabled: boolean;
-  corpus_ids: string[];
-  writable_corpus_ids: string[];
-  adapter_ids: string[];
-  must_change_password: boolean;
-  created_at: string | null;
-  active_keys: number;
-}
-
 export interface MyKeys {
   is_owner: boolean;
   keys: ApiKey[];
@@ -50,17 +39,14 @@ export interface MyKeys {
   note?: string;
 }
 
-export interface FriendsAdmin {
-  friends: Friend[];
-  libraries: string[];
-  adapters: string[];
-  max_active_keys: number;
-}
-
-/** INVITE-SIGNUP — the owner's one invite code; `code` is null until the owner creates it. */
-export interface Invite {
-  code: string | null;
-  rotated_at: string | null;
+/** GET /keys/prompt. The owner: `connect_command` (it reads the key on the Mac) and a key-free `prompt`; a friend: the prompt
+ *  with `placeholder` where their key goes. The owner's key is never in this answer. */
+export interface ConnectPrompt {
+  prompt: string;
+  placeholder: string | null;
+  mcp_url: string;
+  key_included?: boolean;
+  connect_command?: string;
 }
 
 const u = encodeURIComponent;
@@ -82,9 +68,6 @@ export const auth = {
   setOwnerPassword: (password: string) => http.post<{ owner_password: string; username: string }>("/auth/owner-password", { password }),
   me: (s?: AbortSignal) => http.get<unknown>("/auth/me", s).then(normalizeMe),
   login: (username: string, password: string) => http.post<Me>("/auth/login", { username, password }),
-  /** INVITE-SIGNUP: create my account with the owner's invite code; the answer is a signed-in `Me` (no first-password step). */
-  register: (username: string, password: string, invite_code: string) =>
-    http.post<Me>("/auth/register", { username, password, invite_code }),
   logout: () => http.post<{ signed_out: boolean }>("/auth/logout", {}),
   changePassword: (current_password: string, new_password: string) =>
     http.post<Me>("/auth/password", { current_password, new_password }),
@@ -92,24 +75,7 @@ export const auth = {
   keys: (s?: AbortSignal) => http.get<MyKeys>("/keys", s),
   createKey: (label: string) => http.post<CreatedKey>("/keys", { label }),
   revokeKey: (keyId: string) => http.del<{ revoked: string }>(`/keys/${u(keyId)}`),
-  prompt: (s?: AbortSignal) => http.get<{ prompt: string; placeholder: string; mcp_url: string }>("/keys/prompt", s),
-
-  friends: (s?: AbortSignal) => http.get<FriendsAdmin>("/admin/friends", s),
-  addFriend: (username: string, display_name: string) =>
-    http.post<{ friend: Friend; first_password: string }>("/admin/friends", { username, display_name }),
-  friendAction: (username: string, action: "enable" | "disable" | "reset-password") =>
-    http.post<{ first_password?: string }>(`/admin/friends/${u(username)}/${action}`, {}),
-  setLibraries: (username: string, corpus_ids: string[]) =>
-    http.put<{ friend: Friend }>(`/admin/friends/${u(username)}/libraries`, { corpus_ids }),
-  friendKeys: (username: string, s?: AbortSignal) => http.get<{ keys: ApiKey[] }>(`/admin/friends/${u(username)}/keys`, s),
-  revokeFriendKey: (username: string, keyId: string) =>
-    http.del<{ revoked: string }>(`/admin/friends/${u(username)}/keys/${u(keyId)}`),
-};
-
-/** INVITE-SIGNUP — the owner's invite code (owner-only routes): read it to share it, regenerate it. */
-export const friends = {
-  invite: (s?: AbortSignal) => http.get<Invite>("/friends/invite", s),
-  rotateInvite: () => http.post<Invite>("/friends/invite/rotate", {}),
+  prompt: (s?: AbortSignal) => http.get<ConnectPrompt>("/keys/prompt", s),
 };
 
 /** The private library the server creates for a friend on their first upload. */

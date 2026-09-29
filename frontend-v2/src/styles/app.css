@@ -409,10 +409,88 @@ button.btn:disabled { opacity: .55; cursor: not-allowed; }
 
 /* ── sign-in and Settings ─────────────────────────────────────────────────── */
 
-.auth { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: var(--space-5); background: var(--bg); }
-.auth__card { width: min(400px, 100%); padding: var(--space-5); }
-.auth__brand { font-size: var(--fs-xl); font-weight: 600; margin: 0 0 4px; }
+/* ONE-PROFILE (the owner, 2026-09-28: "its not designed well"): the sign-in panel, the password field with Show, the copy
+   fields with a visible button, and Settings as one readable column of cards. */
+.auth {
+  min-height: 100vh; display: grid; place-items: center; padding: var(--space-5) var(--space-4);
+  background: radial-gradient(900px 520px at 50% -8%, var(--accent-soft), transparent 62%), var(--bg);
+}
+.auth__panel { width: min(380px, 100%); display: flex; flex-direction: column; gap: var(--space-5); }
+.auth__brand { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.auth__mark {
+  width: 52px; height: 52px; border-radius: var(--radius-3); display: grid; place-items: center; margin-bottom: 6px;
+  background: var(--accent-soft); color: var(--accent); border: 1px solid var(--border);
+}
+.auth__title { font-size: var(--fs-2xl); font-weight: 650; letter-spacing: -0.01em; line-height: 1.2; margin: 0; }
+.auth__sub { margin: 0; color: var(--text-2); font-size: var(--fs-sm); }
+.auth__card { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5); border-radius: var(--radius-3); box-shadow: var(--shadow-pop); }
+.auth__field { display: flex; flex-direction: column; gap: 6px; }
+.auth__label { font-size: var(--fs-sm); font-weight: 500; color: var(--text-2); }
+.auth__card input[type="text"], .auth__card input[type="password"] { width: 100%; padding: 10px 12px; font-size: var(--fs-md); }
+.auth__card .pw__input { padding-right: 44px; }
+button.btn.auth__submit { width: 100%; padding: 10px 12px; font-size: var(--fs-md); margin-top: 2px; }
+.auth__foot { margin: 0; display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--text-3); font-size: var(--fs-xs); }
+
+.pw { position: relative; display: flex; width: 100%; min-width: 0; }
+.pw .pw__input { flex: 1; width: 100%; min-width: 0; padding-right: 40px; }
+.pw__eye {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px;
+  display: grid; place-items: center; border: 0; border-radius: var(--radius-1); background: transparent; color: var(--text-3); cursor: pointer;
+}
+.pw__eye:hover { color: var(--text); background: var(--surface-2); }
+.pw__eye:focus-visible { outline: none; box-shadow: var(--focus); }
+
+.copyfield { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.copyfield__text {
+  flex: 1; min-width: 0; margin: 0; padding: 9px 12px; overflow-x: auto; white-space: nowrap;
+  background: var(--sunken); border: 1px solid var(--border); border-radius: var(--radius-1);
+  font-family: var(--font-mono); font-size: var(--fs-xs); line-height: 1.55; color: var(--text);
+}
+.copyfield__btn { flex: none; }
+.copyfield--block { flex-direction: column; align-items: flex-start; }
+.copyfield--block .copyfield__text { width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; padding: 12px 14px; }
+.copyfield--block .copyfield__text:focus-visible { outline: none; box-shadow: var(--focus); }
+.copyfield__fail { margin: 0; color: var(--bad); font-size: var(--fs-xs); flex-basis: 100%; }
+
+.settings { max-width: 780px; }
+.settings__cards { display: flex; flex-direction: column; gap: var(--space-4); }
+.settings__card { display: flex; flex-direction: column; gap: 14px; padding: 20px 22px; }
+.settings__card--todo { border-color: var(--warn); box-shadow: inset 3px 0 0 var(--warn); }
+.settings__head { display: flex; align-items: flex-start; gap: var(--space-3); }
+.settings__icon {
+  flex: none; width: 36px; height: 36px; border-radius: var(--radius-2); display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent);
+}
+.settings__headtext { flex: 1; min-width: 0; }
 .settings__title { font-size: var(--fs-lg); font-weight: 600; margin: 0; }
+.settings__lead { margin: 2px 0 0; color: var(--text-2); font-size: var(--fs-sm); }
+.settings__todo { margin: 0; color: var(--warn); font-size: var(--fs-sm); font-weight: 500; }
+.settings__pwrow { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.settings__pwrow .pw { flex: 1 1 240px; max-width: 380px; }
+
+.profile { display: flex; align-items: center; gap: 14px; padding: var(--space-4) 20px; }
+.profile__avatar {
+  flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: var(--fs-lg);
+}
+.profile__who { flex: 1; min-width: 0; }
+.profile__name { font-size: var(--fs-lg); font-weight: 600; }
+.profile__meta { font-size: var(--fs-sm); color: var(--text-2); }
+
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
+.step { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--space-3); }
+.step__num {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: var(--fs-sm);
+}
+.step__body { min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.step__title { margin: 3px 0 0; font-size: var(--fs-md); font-weight: 600; }
+.step__text { margin: 0; color: var(--text-2); font-size: var(--fs-sm); }
+@media (max-width: 600px) {
+  .settings__card { padding: var(--space-4); }
+  .copyfield:not(.copyfield--block) { flex-wrap: wrap; }
+  .copyfield:not(.copyfield--block) .copyfield__text { flex-basis: 100%; }
+}
 .settings__table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .settings__table th { font-size: var(--fs-xs); font-weight: 500; color: var(--text-2); }
 .settings__table th, .settings__table td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
@@ -551,7 +629,6 @@ button.btn--danger-solid:hover:not(:disabled) { background: var(--bad); border-c
 .state__text { margin: 0 auto; max-width: 52ch; font-size: var(--fs-sm); }
 .state__action { margin-top: var(--space-3); }
 .state--error .state__title { color: var(--bad); }
-.auth__mark { width: 40px; height: 40px; border-radius: var(--radius-2); display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); margin-bottom: 4px; }
 
 /* ── U4 chat: settings as chips inside the composer, starters, answer actions ── */
 .screen--chat { padding-top: var(--space-4); }

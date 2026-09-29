@@ -69,3 +69,33 @@ def test_a_friend_session_cannot_reach_it_and_only_an_empty_password_is_refused(
     assert TestClient(a).post("/auth/owner-password", json={"password": ""}).status_code == 422       # nothing at all
     assert TestClient(a).post("/auth/owner-password", json={"password": "short"}).status_code == 200  # the owner's choice
     assert B.classify("POST", "/auth/owner-password") == B.OWNER
+
+
+# ---------------------------------------------------------------- ONE-PROFILE (the owner, 2026-09-28: "universal log in is King")
+def test_king_before_a_password_exists_is_told_where_to_set_it_and_nothing_is_counted(app):
+    _, a = app
+    c = TestClient(a, base_url="https://testserver", headers=PROXY)
+    for username in ("King", "king", " KING "):
+        for _ in range(3):
+            r = c.post("/auth/login", json={"username": username, "password": "anything"})
+            assert r.status_code == 409, r.text
+            detail = r.json()["detail"]
+            assert detail["error_code"] == "OWNER_PASSWORD_NOT_SET" and "Settings" in detail["message"]
+
+
+def test_king_signs_in_with_any_capitalisation_and_a_wrong_password_is_still_a_wrong_password(app):
+    reg, a = app
+    W.set_owner_password(reg, "a password with spaces!")
+    c = TestClient(a, base_url="https://testserver", headers=PROXY)
+    wrong = c.post("/auth/login", json={"username": "King", "password": "nope"})
+    assert wrong.status_code == 401 and wrong.json()["detail"]["error_code"] == "BAD_LOGIN"
+    ok = c.post("/auth/login", json={"username": "King", "password": "a password with spaces!"})
+    assert ok.status_code == 200 and ok.json()["is_owner"] and ok.json()["web_password_set"] is True
+    assert ok.json()["username"] == "king" and ok.json()["local"] is False
+
+
+def test_a_friend_with_a_wrong_password_is_not_told_about_king(app):
+    _, a = app
+    c = TestClient(a, base_url="https://testserver", headers=PROXY)
+    r = c.post("/auth/login", json={"username": "fred", "password": "nope"})
+    assert r.status_code == 401 and r.json()["detail"]["error_code"] == "BAD_LOGIN"

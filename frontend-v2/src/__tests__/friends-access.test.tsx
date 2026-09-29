@@ -31,10 +31,12 @@ function route(path: string, init?: RequestInit): Response {
     return Response.json({ key: "pmk_abcdef123456_SECRET", key_id: "abcdef123456", label: "laptop", created_at: "2026-09-26T00:00:00Z",
                            revoked_at: null, shown_once: true, prompt: "Connect with Authorization: Bearer pmk_abcdef123456_SECRET" }, { status: 201 });
   }
-  if (path === "/keys/prompt") return Response.json({ prompt: "Header: Authorization: Bearer <YOUR_KEY>", placeholder: "<YOUR_KEY>", mcp_url: "x" });
-  if (path === "/admin/friends" && method === "GET") return Response.json({ friends: [], libraries: ["cinema"], adapters: [], max_active_keys: 3 });
-  if (path === "/admin/friends" && method === "POST") {
-    return Response.json({ friend: { username: "ann" }, first_password: "FIRST-PASS-123", shown_once: true }, { status: 201 });
+  if (path === "/keys/prompt") {
+    return me !== 401 && me !== 404 && me.is_owner
+      ? Response.json({ prompt: 'You can use my Polymath research library: it is connected to you as the MCP server "polymath".',
+                        connect_command: "bash /Users/king/polymath-v4/scripts/connect_agents.sh", key_included: false,
+                        placeholder: null, mcp_url: "x" })
+      : Response.json({ prompt: "Header: Authorization: Bearer <YOUR_KEY>", placeholder: "<YOUR_KEY>", mcp_url: "x" });
   }
   if (path === "/synthesizers") return Response.json({ synthesizers: [] });
   if (path === "/reasoning_modes") return Response.json({ modes: [], default: "none" });
@@ -88,7 +90,7 @@ function type(input: HTMLInputElement, value: string) {
 it("shows the sign-in screen on 401 and a friend's workspace after signing in", async () => {
   me = 401;
   await render();
-  expect(host.textContent).toContain("Sign in to continue.");
+  expect(host.querySelector('form[aria-label="Sign in"]')).not.toBeNull();
   const [user, pass] = host.querySelectorAll("input");
   await act(async () => { type(user as HTMLInputElement, "fred"); type(pass as HTMLInputElement, "correct horse battery"); });
   await act(async () => { button("Sign in").click(); });
@@ -107,7 +109,7 @@ it("returns to the sign-in screen when any request answers 401", async () => {
   await render();
   expect(navLabels()).toContain("Chat");
   await act(async () => { window.dispatchEvent(new CustomEvent(AUTH_REQUIRED_EVENT)); });
-  expect(host.textContent).toContain("Sign in to continue.");
+  expect(host.querySelector('form[aria-label="Sign in"]')).not.toBeNull();
 });
 
 it("asks for a new password before anything else when the first one must change", async () => {
@@ -144,21 +146,27 @@ it("shows a friend's new key once, with the prompt filled in", async () => {
   expect(host.textContent).not.toContain("Friends");                                 // no admin for a friend
 });
 
-it("gives the owner the friends manager and shows a new friend's first password once", async () => {
+it("ONE-PROFILE: gives the owner one command and one prompt to copy, and no key, friends or invite to manage", async () => {
+  const writeText = vi.fn(async () => undefined);
+  vi.stubGlobal("navigator", { clipboard: { writeText } });
   me = OWNER;
   await render();
   expect(navLabels()).toContain("Control Plane");
   await act(async () => { button("Settings").click(); });
   await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
-  expect(host.textContent).toContain("Friends");
-  expect(host.textContent).toContain("POLYMATH_MCP_API_KEY");
-  const username = host.querySelector('input[placeholder="username (lowercase)"]') as HTMLInputElement;
-  await act(async () => { type(username, "ann"); });
-  await act(async () => { button("Add friend").click(); });
-  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
-  expect(host.textContent).toContain("FIRST-PASS-123");
-  await act(async () => { button("Done").click(); });
-  expect(host.textContent).not.toContain("FIRST-PASS-123");
+  expect(host.textContent).toContain("Connect Claude Code and Codex");
+  expect(host.textContent).toContain("There is no key to create");
+  for (const gone of ["Friends", "Invite", "Add friend", "Create key", "API keys", "<YOUR_KEY>", "Bearer"]) {
+    expect(host.textContent).not.toContain(gone);
+  }
+  const copyCommand = host.querySelector('button[aria-label="Copy command"]') as HTMLButtonElement;
+  await act(async () => { copyCommand.click(); await Promise.resolve(); });
+  expect(writeText).toHaveBeenLastCalledWith("bash /Users/king/polymath-v4/scripts/connect_agents.sh");
+  const copyPrompt = host.querySelector('button[aria-label="Copy prompt"]') as HTMLButtonElement;
+  expect(copyPrompt.classList.contains("btn--primary")).toBe(true);
+  await act(async () => { copyPrompt.click(); await Promise.resolve(); });
+  expect(writeText).toHaveBeenLastCalledWith('You can use my Polymath research library: it is connected to you as the MCP server "polymath".');
+  expect(calls.some((c) => c.path.startsWith("/admin/") || c.path.startsWith("/friends/"))).toBe(false);
 });
 
 it("treats a backend without logins as the owner, as before", async () => {

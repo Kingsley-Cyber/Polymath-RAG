@@ -1085,6 +1085,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_friends_access_go_live.py", "py", None),
     ("tests/contracts/test_web_owner_password.py", "py", None),
     ("tests/contracts/test_web_invite_signup.py", "py", None),
+    ("tests/contracts/test_connect_agents.py", "py", None),
     ("tests/contracts/test_trail_unfilled_fields.py", "py", None),
     ("tests/contracts/test_trail_ext_runtime_fixes.py", "py", None),
     ("tests/contracts/test_trail_ext_runtime_fixes_c.py", "py", None),
@@ -2167,6 +2168,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("frontend-v2/src/ui/Dialog.tsx", "tsx", None),
     ("frontend-v2/src/ui/icons.tsx", "tsx", None),
     ("frontend-v2/src/ui/Secret.tsx", "tsx", None),
+    ("frontend-v2/src/ui/CopyField.tsx", "tsx", None),              # ONE-PROFILE: copy with a visible button (11.553)
+    ("frontend-v2/src/ui/PasswordInput.tsx", "tsx", None),          # ONE-PROFILE: a password with Show (11.553)
     ("frontend-v2/src/ui/states.tsx", "tsx", None),
     ("frontend-v2/src/lib/contracts.ts", "ts", None),
     ("frontend-v2/src/lib/readiness.ts", "ts", None),
@@ -2235,6 +2238,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("scripts/backfill_document_regions.py", "py", None),
     ("scripts/boot_polymath.sh", "sh", None),
     ("scripts/bounce_fleet.sh", "sh", None),   # 11.456: the one-click fleet restart (lock, readiness wait)
+    ("scripts/connect_agents.sh", "sh", None),  # 11.553: ONE-PROFILE, connects the Mac's Claude Code + Codex (key read locally)
     ("scripts/mission_next.py", "py", None),
     ("scripts/retire_pronoun_facts.py", "py", None),
     ("scripts/run_fleet_supervised.sh", "sh", None),
@@ -2269,7 +2273,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-22-rag-ui-integration.md", "md", None),
     ("frontend-v2/src/__tests__/chat-session.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/friends-access.test.tsx", "tsx", None),
-    ("frontend-v2/src/__tests__/invite-signup.test.tsx", "tsx", None),
+    ("frontend-v2/src/__tests__/one-profile-signin.test.tsx", "tsx", None),   # ONE-PROFILE: the sign-in page (11.553)
     ("frontend-v2/src/__tests__/tokens-contrast.test.ts", "ts", None),
     ("frontend-v2/src/__tests__/appearance.test.ts", "ts", None),
     ("frontend-v2/src/__tests__/shell.test.tsx", "tsx", None),
@@ -2557,6 +2561,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_adapter_ecommerce_supply_join_api_records.py", "py", None),
     ("docs/wiki/work-log/2026-09-27-supplier-apis.md", "md", None),
     ("docs/wiki/work-log/2026-09-27-supplier-pages.md", "md", None),
+    ("docs/wiki/work-log/2026-09-28-one-profile.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),

@@ -81,14 +81,25 @@ def test_keys_need_the_csrf_header(world):
     assert c.post("/keys", json={}).json()["detail"]["error_code"] == "CSRF_FAILED"
 
 
-def test_the_owner_key_is_never_shown_and_the_prompt_has_a_placeholder(world):
+def test_the_owner_gets_one_connect_command_and_a_key_free_prompt_never_the_key(world, monkeypatch):
+    """ONE-PROFILE (the owner, 2026-09-28): nothing to create; the admin key never reaches a browser, here or on the server."""
+    monkeypatch.setenv("POLYMATH_MCP_API_KEY", "admin-key-that-must-never-leave-the-mac")
     _, app = world
     c = _signed_in(app, "king")
     body = c.get("/keys").json()
     assert body["is_owner"] and body["keys"] == [] and "POLYMATH_MCP_API_KEY" in body["note"]
     assert c.post("/keys", json={}).json()["detail"]["error_code"] == "OWNER_USES_ENV_KEY"
-    prompt = c.get("/keys/prompt").json()
-    assert prompt["placeholder"] in prompt["prompt"] and "claude mcp add" in prompt["prompt"]
+    local = TestClient(app, base_url="http://testserver")                     # the owner on the server itself
+    for r in (c.get("/keys/prompt"), local.get("/keys/prompt")):
+        assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
+        assert "admin-key-that-must-never-leave-the-mac" not in r.text
+        prompt = r.json()
+        assert prompt["key_included"] is False and prompt["connect_command"].endswith("scripts/connect_agents.sh")
+        assert prompt["connect_command"].startswith("bash ")
+        for needle in ('MCP server "polymath"', "list_corpora", "cinema, commerce-v1", "polymath_search", "run_governed_research",
+                       "supplier_search", "connect command"):
+            assert needle in prompt["prompt"], needle
+        assert "Bearer" not in prompt["prompt"] and "fr-someone" not in prompt["prompt"]
 
 
 def test_the_owner_runs_the_friend_admin_and_friends_cannot(world):
@@ -129,7 +140,9 @@ def test_the_owner_revokes_a_friends_key(world):
 def test_the_prompt_names_every_harness_and_the_guide():
     from orchestrator.api.web_settings import connect_prompt
     text = connect_prompt("pmk_abc", ["cinema"], "fr-fred", url="https://mcp.example.test/mcp")
-    for needle in ("claude mcp add --transport http polymath", "codex mcp add polymath", "gemini mcp add", "opencode mcp add",
-                   "run_governed_research", "polymath://adapter/guide", "upload_text", "Authorization: Bearer pmk_abc",
-                   "Polymath's web reader is not shared"):
+    for needle in ("claude mcp remove polymath -s user; claude mcp add -s user -t http polymath https://mcp.example.test/mcp",
+                   "codex mcp remove polymath", 'http_headers = { Authorization = "Bearer pmk_abc" }', "gemini mcp add",
+                   "opencode mcp add", "run_governed_research", "polymath://adapter/guide", "upload_text",
+                   "Authorization: Bearer pmk_abc", "Polymath's web reader is not shared", "fr-fred", "I can revoke it in Settings"):
         assert needle in text, needle
+    assert "bearer-token-env-var" not in text                                 # the Codex app never sees a shell's exports

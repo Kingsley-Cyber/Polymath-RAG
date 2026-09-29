@@ -1,12 +1,25 @@
 import { useState, type FormEvent } from "react";
 import { Icon } from "../ui/icons";
+import { PasswordInput } from "../ui/PasswordInput";
 import { ApiError } from "../lib/api";
 import { auth, type Me } from "../lib/auth";
 
-/** FRIENDS-ACCESS-V1 — the sign-in screen (rag.kingsleylab.xyz). The server decides; this only asks. INVITE-SIGNUP: the same
- *  page offers "Create your account" (username, password, the owner's invite code); a success is a signed-in friend. */
+/** A refused sign-in in the app's words (the codes /auth/login answers). */
+export function signInProblem(err: unknown): string {
+  const code = err instanceof ApiError ? err.code : null;
+  switch (code) {
+    case "BAD_LOGIN": return "Wrong username or password.";
+    case "TOO_MANY_ATTEMPTS": return "Too many tries. Wait 15 minutes, then try again.";
+    case "OWNER_PASSWORD_NOT_SET":
+      return "King's password isn't set yet. On the Mac, open Polymath, go to Settings and set it under Website password.";
+    case "LOGIN_NOT_CONFIGURED": return "Sign-in isn't set up on the server yet.";
+    default: return `Couldn't sign in: ${err instanceof ApiError ? err.detailMessage : String(err)}`;
+  }
+}
+
+/** ONE-PROFILE (the owner, 2026-09-28: "universal log in is King ... just keep it 1 profile") — the sign-in screen
+ *  (rag.kingsleylab.xyz): a username and a password, nothing else. The server decides; this only asks. */
 export function Login({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -19,119 +32,39 @@ export function Login({ onSignedIn }: { onSignedIn: (me: Me) => void }) {
     try {
       onSignedIn(await auth.login(username.trim(), password));
     } catch (err) {
-      const code = err instanceof ApiError ? err.code : null;
-      setError(
-        code === "BAD_LOGIN" ? "Wrong username or password."
-          : code === "TOO_MANY_ATTEMPTS" ? "Too many failed sign-ins. Wait 15 minutes and try again."
-          : code === "LOGIN_NOT_CONFIGURED" ? "Sign-in is not set up on the server yet."
-          : `Sign-in failed: ${err instanceof ApiError ? err.detailMessage : String(err)}`,
-      );
-    } finally {
-      setBusy(false);
+      setError(signInProblem(err));
       setPassword("");
-    }
-  }
-
-  if (mode === "signup") return <CreateAccount onSignedIn={onSignedIn} onBack={() => setMode("signin")} />;
-  return (
-    <div className="auth">
-      <form className="card auth__card stack" onSubmit={(e) => void submit(e)}>
-        <div className="auth__mark" aria-hidden="true"><Icon name="research" size={22} /></div>
-        <h1 className="screen__title">Polymath</h1>
-        <p className="screen__sub">Sign in to continue.</p>
-        {error && <div className="banner banner--bad" role="alert">{error}</div>}
-        <label className="field">
-          <span className="label">Username</span>
-          <input type="text" autoComplete="username" autoFocus value={username}
-                 onChange={(e) => setUsername(e.target.value)} />
-        </label>
-        <label className="field">
-          <span className="label">Password</span>
-          <input type="password" autoComplete="current-password" value={password}
-                 onChange={(e) => setPassword(e.target.value)} />
-        </label>
-        <button className="btn btn--primary" type="submit" disabled={busy || !username.trim() || !password}>
-          {busy ? "Signing in…" : "Sign in"}
-        </button>
-        <button className="linklike" type="button" onClick={() => setMode("signup")}>New here? Create your account</button>
-      </form>
-    </div>
-  );
-}
-
-/** The backend's refusal, in the app's words (the codes /auth/register answers). */
-function signUpProblem(err: unknown): string {
-  const code = err instanceof ApiError ? err.code : null;
-  switch (code) {
-    case "INVITE_INVALID": return "The invite code is wrong.";
-    case "USERNAME_TAKEN": return "That username is taken.";
-    case "USERNAME_INVALID": return "Usernames are 2–32 characters: lowercase letters, digits, - or _.";
-    case "WEAK_PASSWORD": return "Choose a password.";
-    case "INVITES_OFF": return "Sign-ups are not open yet. Ask King for an invite code.";
-    case "TOO_MANY_ATTEMPTS": return "Too many failed tries. Wait 15 minutes and try again.";
-    case "LOGIN_NOT_CONFIGURED": return "Sign-in is not set up on the server yet.";
-    default: return `Could not create the account: ${err instanceof ApiError ? err.detailMessage : String(err)}`;
-  }
-}
-
-/** INVITE-SIGNUP — Create your account: username, password (twice), the invite code King sent. On success the person is
- *  signed in as a friend at once: they chose the password, so there is no first-password step. */
-function CreateAccount({ onSignedIn, onBack }: { onSignedIn: (me: Me) => void; onBack: () => void }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [again, setAgain] = useState("");
-  const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const mismatch = again.length > 0 && again !== password;
-  const ready = username.trim().length > 0 && password.length > 0 && again === password && code.trim().length > 0;
-
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      onSignedIn(await auth.register(username.trim(), password, code.trim()));
-    } catch (err) {
-      setError(signUpProblem(err));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="auth">
-      <form className="card auth__card stack" onSubmit={(e) => void submit(e)}>
-        <div className="auth__mark" aria-hidden="true"><Icon name="research" size={22} /></div>
-        <h1 className="screen__title">Polymath</h1>
-        <p className="screen__sub">Create your account with the invite code King sent you.</p>
-        {error && <div className="banner banner--bad" role="alert">{error}</div>}
-        <label className="field">
-          <span className="label">Username</span>
-          <input type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} autoFocus value={username}
-                 onChange={(e) => setUsername(e.target.value)} />
-          <span className="faint">Lowercase letters, digits, - or _ (2–32 characters).</span>
-        </label>
-        <label className="field">
-          <span className="label">Password</span>
-          <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        </label>
-        <label className="field">
-          <span className="label">Type it again</span>
-          <input type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} />
-        </label>
-        {mismatch && <div className="faint">The two passwords differ.</div>}
-        <label className="field">
-          <span className="label">Invite code</span>
-          <input type="text" autoComplete="off" autoCapitalize="none" spellCheck={false} value={code}
-                 onChange={(e) => setCode(e.target.value)} />
-        </label>
-        <button className="btn btn--primary" type="submit" disabled={busy || !ready}>
-          {busy ? "Creating…" : "Create account"}
-        </button>
-        <button className="linklike" type="button" onClick={onBack}>Back to sign in</button>
-      </form>
-    </div>
+    <main className="auth">
+      <div className="auth__panel">
+        <div className="auth__brand">
+          <div className="auth__mark" aria-hidden="true"><Icon name="research" size={26} /></div>
+          <h1 className="auth__title">Polymath</h1>
+          <p className="auth__sub">Sign in to your research library.</p>
+        </div>
+        <form className="card auth__card" aria-label="Sign in" onSubmit={(e) => void submit(e)}>
+          {error && <div className="banner banner--bad" role="alert">{error}</div>}
+          <div className="auth__field">
+            <label className="auth__label" htmlFor="signin-username">Username</label>
+            <input id="signin-username" type="text" autoComplete="username" autoCapitalize="none" autoCorrect="off"
+                   spellCheck={false} autoFocus value={username} onChange={(e) => setUsername(e.target.value)} />
+          </div>
+          <div className="auth__field">
+            <label className="auth__label" htmlFor="signin-password">Password</label>
+            <PasswordInput id="signin-password" value={password} onChange={setPassword} autoComplete="current-password" />
+          </div>
+          <button className="btn btn--primary auth__submit" type="submit" disabled={busy || !username.trim() || !password}>
+            {busy ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
+        <p className="auth__foot"><Icon name="lock" size={13} /> Private site · one account</p>
+      </div>
+    </main>
   );
 }
 
@@ -144,20 +77,19 @@ export function ChangePassword({ me, forced, onChanged, onSignOut }: {
 }) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
-  const [again, setAgain] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
-  const mismatch = again.length > 0 && again !== next;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError("");
+    setDone(false);
     try {
       const updated = await auth.changePassword(current, next);
       setDone(true);
-      setCurrent(""); setNext(""); setAgain("");
+      setCurrent(""); setNext("");
       onChanged(updated);
     } catch (err) {
       const code = err instanceof ApiError ? err.code : null;
@@ -169,7 +101,7 @@ export function ChangePassword({ me, forced, onChanged, onSignOut }: {
   }
 
   const form = (
-    <form className="stack" onSubmit={(e) => void submit(e)}>
+    <form className="stack" aria-label="Change password" onSubmit={(e) => void submit(e)}>
       {forced && (
         <div className="banner banner--info">
           Welcome, {me.display_name}. Choose your own password to continue.
@@ -179,22 +111,14 @@ export function ChangePassword({ me, forced, onChanged, onSignOut }: {
       {done && !forced && <div className="banner banner--ok">Password changed. Other devices are signed out.</div>}
       <label className="field">
         <span className="label">{forced ? "The password you were given" : "Current password"}</span>
-        <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
+        <PasswordInput value={current} onChange={setCurrent} autoComplete="current-password" />
       </label>
       <label className="field">
         <span className="label">New password</span>
-        <input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
+        <PasswordInput value={next} onChange={setNext} autoComplete="new-password" />
       </label>
-      <label className="field">
-        <span className="label">New password again</span>
-        <input type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} />
-      </label>
-      {mismatch && (
-        <div className="faint">The two new passwords differ.</div>
-      )}
       <div className="row">
-        <button className="btn btn--primary" type="submit"
-                disabled={busy || !current || next.length === 0 || next !== again}>
+        <button className="btn btn--primary" type="submit" disabled={busy || !current || next.length === 0}>
           {busy ? "Saving…" : "Change password"}
         </button>
         {forced && onSignOut && <button className="btn" type="button" onClick={onSignOut}>Sign out</button>}
@@ -204,11 +128,14 @@ export function ChangePassword({ me, forced, onChanged, onSignOut }: {
 
   if (!forced) return form;
   return (
-    <div className="auth">
-      <div className="card auth__card stack">
-        <h1 className="screen__title">Polymath</h1>
-        {form}
+    <main className="auth">
+      <div className="auth__panel">
+        <div className="auth__brand">
+          <div className="auth__mark" aria-hidden="true"><Icon name="research" size={26} /></div>
+          <h1 className="auth__title">Polymath</h1>
+        </div>
+        <div className="card auth__card">{form}</div>
       </div>
-    </div>
+    </main>
   );
 }

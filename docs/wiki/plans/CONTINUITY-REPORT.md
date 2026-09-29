@@ -162,6 +162,10 @@ historical, never an instruction.
      DR6a–d moves (§10.9 passed 4/5), DR7a–f the research experience (11.519–11.534).
    - LIVE since 11.535 / 11.536 (`bfdfbe0e`): the deep research tuning (evaluative words, the gate's thread check, the folded
      phone composer); moves cite ≥ the old loop's books on 5 of 5 DR4 questions.
+   - ON THE BRANCH (11.553): ONE-PROFILE — one sign-in (King), a redesigned sign-in page and Settings, sign-ups closed
+     (`POLYMATH_WEB_SIGNUPS=1` reopens them), `scripts/connect_agents.sh` (connects the Mac's Claude Code + Codex, key read
+     locally). OWNER STEP after the deploy: set King's website password on the Mac (Settings, Website password), then run the
+     connect command from Settings once.
    - LIVE since 11.545–11.552 (`d79bfb7e`): FACET-RETRIEVAL-V1 F1–F7 — corpus-agnostic facets, diversity by construction in the one
      core (24 seats, 2 per facet, 3 per document per lane, dominance 0.4, MMR), WILDCARD's mapped subqueries, section profiles for
      giant documents (the handbook 0.34 → 0.91, VES 0.43 → 0.78; nine giants still to rebuild), cross-document synthesis with the

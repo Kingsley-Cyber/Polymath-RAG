@@ -40,6 +40,7 @@ def world(tmp_path, monkeypatch):
     reg = tmp_path / "principals.json"
     monkeypatch.setenv("POLYMATH_MCP_PRINCIPALS_FILE", str(reg))
     monkeypatch.setenv("POLYMATH_WEB_SESSION_SECRET", SECRET)
+    monkeypatch.setenv("POLYMATH_WEB_SIGNUPS", "1")                  # ONE-PROFILE: sign-ups are off unless the owner opens them
     W.set_owner_password(reg, GOOD)
     W.add_friend(reg, "fred", GOOD, corpus_ids=["cinema"], adapter_ids=[], must_change=False)
     from orchestrator.api import web_auth, web_settings
@@ -258,3 +259,24 @@ def test_the_code_never_appears_in_me_or_in_the_logs(world, caplog):
                  owner.get("/admin/friends").text, friend.get("/keys").text]
     assert all(code not in t for t in texts)
     assert code not in caplog.text
+
+
+# ---------------------------------------------------------------- ONE-PROFILE (the owner, 2026-09-28: "just keep it 1 profile")
+@pytest.mark.parametrize("value,open_", [(None, False), ("", False), ("0", False), ("no", False), ("1", True), ("true", True),
+                                         ("ON", True), ("yes", True)])
+def test_sign_ups_are_open_only_when_the_owner_says_so(value, open_):
+    from orchestrator.api import web_auth
+    assert web_auth.signups_open({} if value is None else {"POLYMATH_WEB_SIGNUPS": value}) is open_
+
+
+def test_closed_sign_ups_refuse_even_a_valid_code_and_count_nothing(world, monkeypatch):
+    _, app = world
+    code = _code(app)
+    monkeypatch.delenv("POLYMATH_WEB_SIGNUPS")
+    c = _web(app)
+    for _ in range(6):
+        r = _register(c, "ann", "any password", code)
+        assert r.status_code == 403 and r.json()["detail"]["error_code"] == "SIGNUPS_CLOSED"
+    assert "ann" not in [f["username"] for f in W.list_friends(W.read_registry(world[0]))]
+    monkeypatch.setenv("POLYMATH_WEB_SIGNUPS", "1")                          # nothing was counted: the valid code still works
+    assert _register(_web(app), "ann", "any password", code).status_code == 201
