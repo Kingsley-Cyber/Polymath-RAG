@@ -56,12 +56,22 @@ export function vnextReady(sr: SemanticReadiness | null): Verdict {
     : { state: "blocked", label: sr.vnext.verdict, detail };
 }
 
-/** Per-document vNext, with the backend's own blocking counts. */
+/** FILES-READY-LABEL (the owner, 2026-09-29: "why are files blocked?") — a file whose parents are all mapped and which has a
+ *  profile is SEARCHABLE, whichever profile it has. Since 2026-09-17 the fleet writes the base profile for new files
+ *  (`POLYMATH_DOC_PROFILE_VNEXT=0`), so a missing vNext profile alone is never "Blocked". */
+export function docSearchable(d: DocSummary | null | undefined): boolean {
+  return !!d && (d.vnext_ready || (d.map_unresolved === 0 && d.profile_present));
+}
+
+/** Per-document readiness, from the backend's own counts: Ready (the vNext profile) · Ready · basic profile (searchable, the
+ *  richer vNext profile not built) · Blocked (unresolved parents or no profile: retrieval misses part of the file). */
 export function docVnext(d: DocSummary): Verdict {
-  if (d.vnext_ready) return { state: "ready", label: "VNEXT READY" };
+  if (d.vnext_ready) return { state: "ready", label: "READY" };
+  if (docSearchable(d)) {
+    return { state: "degraded", label: "READY · BASIC PROFILE", detail: "searchable; the richer vNext profile is not built" };
+  }
   const why: string[] = [];
   if (d.map_unresolved > 0) why.push(`${d.map_unresolved.toLocaleString()} unresolved parents`);
-  if (!d.profile_vnext) why.push("profile not vNext");
   if (!d.profile_present) why.push("no profile");
   return { state: "blocked", label: "BLOCKED", detail: why.join(" · ") || undefined };
 }

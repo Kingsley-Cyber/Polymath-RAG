@@ -111,3 +111,53 @@ it("status words are the backend's own, formatted for reading", () => {
   expect(readable("IDLE")).toBe("Idle");
   expect(readable(undefined)).toBe("Unknown");
 });
+
+// FILES-READY-LABEL (the owner, 2026-09-29: "why are files blocked?"): a searchable file is never "Blocked"
+const SUMMARY = { children: 2, parents: 1, map_eligible: 1, map_active: 1, map_excluded: 0, map_unresolved: 0, profile_present: true,
+                  profile_vnext: false, graph_entities: 3, graph_relations: 1, vnext_ready: false };
+
+async function renderWith(summary: Record<string, unknown>) {
+  vi.stubGlobal("fetch", vi.fn(async (path: string, init?: RequestInit) => {
+    calls.push({ path, method: init?.method ?? "GET" });
+    if (path.startsWith("/documents?")) return documents();
+    if (path.startsWith("/documents/summary")) return Response.json({ summaries: { doc_1: { ...SUMMARY, ...summary } } });
+    return Response.json({});
+  }));
+  await render({ isOwner: true });
+}
+
+function statusPill(): HTMLElement {
+  return host.querySelector("tbody .pill") as HTMLElement;
+}
+
+it("a fully processed file with the base profile reads 'Ready · basic profile', offers no Continue, and counts as ready", async () => {
+  await renderWith({});
+  expect(statusPill().textContent).toBe("Ready · basic profile");
+  expect(statusPill().classList.contains("pill--degraded")).toBe(true);
+  expect(host.textContent).not.toContain("Blocked");
+  expect([...host.querySelectorAll("tbody button")].map((b) => b.textContent?.trim())).not.toContain("▸ Continue");
+  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 ready (1 with a basic profile)");
+  expect(host.querySelector(".screen__sub")!.textContent).not.toContain("still processing");
+  expect(button("▸ Continue corpus").disabled).toBe(true);
+});
+
+it("a file with the vNext profile reads 'Ready'", async () => {
+  await renderWith({ profile_vnext: true, vnext_ready: true });
+  expect(statusPill().textContent).toBe("Ready");
+  expect(statusPill().classList.contains("pill--ready")).toBe(true);
+  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 ready");
+  expect(host.querySelector(".screen__sub")!.textContent).not.toContain("basic profile");
+});
+
+it("unresolved parents or no profile still read 'Blocked' with the reason, and offer Continue", async () => {
+  await renderWith({ map_unresolved: 4, map_active: 0 });
+  expect(statusPill().textContent).toBe("Blocked");
+  expect(statusPill().getAttribute("title")).toContain("4 unresolved parents");
+  expect(button("▸ Continue").disabled).toBe(false);
+  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 still processing");
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  await renderWith({ profile_present: false });
+  expect(statusPill().textContent).toBe("Blocked");
+  expect(statusPill().getAttribute("title")).toContain("no profile");
+});

@@ -3,7 +3,7 @@ import { ConfirmByName, Dialog } from "../ui/Dialog";
 import { EmptyState, ErrorState, Skeleton } from "../ui/states";
 import { api, ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { controlReady, docVnext, semanticReady, vnextReady, settled } from "../lib/readiness";
+import { controlReady, docSearchable, docVnext, semanticReady, vnextReady, settled } from "../lib/readiness";
 import { ReadinessTriad } from "../components/ReadinessTriad";
 import { Pill, StatePill } from "../components/Pill";
 import type { DocSummary } from "../lib/contracts";
@@ -64,7 +64,8 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
   const rows = docs.data?.documents ?? [];
   const summaries: Record<string, DocSummary> = sum.data?.summaries ?? {};
   const refresh = () => setNonce((n) => n + 1);
-  const readyCount = rows.filter((r) => summaries[r.doc_id]?.vnext_ready).length;
+  const readyCount = rows.filter((r) => docSearchable(summaries[r.doc_id])).length;
+  const basicCount = rows.filter((r) => docSearchable(summaries[r.doc_id]) && !summaries[r.doc_id]?.vnext_ready).length;
 
   function describeError(e: unknown): string {
     if (e instanceof ApiError) {
@@ -144,7 +145,8 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
     }
   }
 
-  const incompleteCount = rows.filter((r) => !summaries[r.doc_id]?.vnext_ready).length;
+  // Continue re-runs parent enrichment: it helps a file that is not searchable yet, never one that only lacks the vNext profile
+  const incompleteCount = rows.filter((r) => !docSearchable(summaries[r.doc_id])).length;
 
   return (
     <div className="screen screen--wide">
@@ -153,7 +155,7 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
           <h1 className="screen__title">Files</h1>
           <p className="screen__sub">
             <span className="mono">{corpusId}</span> ·{" "}
-            {docs.data == null ? "loading documents…" : <>{rows.length} documents · <b>{readyCount}</b> ready{rows.length - readyCount ? <>, <b>{rows.length - readyCount}</b> still processing</> : null}</>}
+            {docs.data == null ? "loading documents…" : <>{rows.length} documents · <b>{readyCount}</b> ready{basicCount ? <> ({basicCount} with a basic profile)</> : null}{rows.length - readyCount ? <>, <b>{rows.length - readyCount}</b> still processing</> : null}</>}
           </p>
         </div>
         <div className="files__actions">
@@ -262,7 +264,7 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
                   </>}
                   <td>
                     <div className="row" style={{ gap: 6 }}>
-                      {isOwner && !d?.vnext_ready && (
+                      {isOwner && !docSearchable(d) && (
                         <button
                           className="btn files__continue"
                           disabled={!!busy}
