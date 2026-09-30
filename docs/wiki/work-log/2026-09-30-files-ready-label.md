@@ -34,14 +34,17 @@ last_reviewed: 2026-09-30
   `scripts/profile_atom_canary.py --corpus cinema --project`. That 2026-09-08 tool supersedes a document's atoms WHOLE (no
   families; it predates ATOM-REPAIR-V1 and F4) and purges + re-projects the corpus's points. In one transaction
   (2026-09-30 05:55:03.664213 UTC) it switched off 3,133 live cinema atoms (the base family on every file, the 10 new files'
-  299, and the handbook / VES section atoms from F4) and created 120 (100 from the 10 refused thin vNext profiles, 20 on older
-  files), leaving 709 active (reconcile true). Found by comparing kinds per file before and after.
+  base atoms, and the handbook / VES section atoms from F4), created 119 (99 from the 10 refused thin vNext profiles, 20 on older
+  files) and re-used 590 that already existed, leaving 709 active (reconcile true). Found by comparing kinds per file before and after.
   - Restored by the agent: the 120 atoms of the 12 file/kind groups that had vanished entirely (re-activated + projected;
     reconcile 829 = 829).
   - NOT restored: the other 3,013. The agent's restore (re-activate them, switch off the 120 tool-made rows, upsert / delete the
     points, reconcile) was refused by the harness as a write to shared live resources. It is a script for the owner:
     `restore_cinema_atoms.py` in the session scratchpad (exact timestamp match; stops unchanged if the counts differ; says so
-    if it already ran). Until then cinema's atom lane (routing / expansion only, never evidence) holds 829 of its 3,722 entries.
+    if it already ran). Until then cinema's atom lane (routing / expansion only, never evidence) holds 829 of its 3,723 entries.
+  - The owner's first run STOPPED with nothing changed: the script expected 120 tool-made rows, the database holds 119 (the
+    first count had included one pre-existing row the tool re-used). Recounted (read-only): 119 made, 3,013 still off, 590
+    re-used, 0 off for any other reason, 3,723 rows existed before the tool; the script now expects 119.
 
 ## Proof
 - `files-states.test.tsx` 9 passed (+3: basic profile reads "Ready · basic profile" with no Continue and counts as ready; vNext
@@ -62,7 +65,7 @@ last_reviewed: 2026-09-30
   lives in the worker path (`PAP.ingest_document_atoms` with a `source`). The tool should not be run on a corpus with families.
 
 ## Open contract gaps
-- The owner runs the atom restore (above). After it: reconcile 3,722 = 3,722, the 10 new files back to their 299 base atoms.
+- The owner runs the atom restore (above). After it: reconcile 3,723 = 3,723, the 10 new files back to their base atoms.
 - `scripts/profile_atom_canary.py` should refuse a corpus whose atoms carry families (or take a `--source`), so it cannot do
   this again.
 - vNext thinness on small files (2-3 direct surfaces) is the 2026-09-17 collapse, still open; the label no longer depends on it.
