@@ -1,9 +1,9 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { Fragment, useState, type FormEvent, type ReactNode } from "react";
 import { useConfirm } from "../ui/Dialog";
 import { ACCENTS, MODES, useAppearance, type Accent, type Mode } from "../lib/appearance";
 import { ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { auth, privateLibrary, type ApiKey, type CreatedKey, type Me } from "../lib/auth";
+import { auth, copyText, privateLibrary, type ApiKey, type CreatedKey, type Me, type OwnerKey } from "../lib/auth";
 import { ChangePassword } from "./Login";
 import { DeepResearchSettings } from "../components/deep/DeepResearchSettings";
 import { CopyField } from "../ui/CopyField";
@@ -77,6 +77,71 @@ function ConnectCard() {
           </div>
         </li>
       </ol>
+    </section>
+  );
+}
+
+/** OWNER-KEY-VISIBLE (the owner, 2026-09-30: "i need them to have access to main key. so in the settings have a api key
+ *  visibility settings, to copy and paste to get key") — the main key for an agent on another computer: hidden until Show, a Copy
+ *  button, and the ready prompt with the key in it. The key is fetched only on the first Show or Copy, never on page load. */
+function OwnerKeyCard() {
+  const [data, setData] = useState<OwnerKey | null>(null);
+  const [shown, setShown] = useState(false);
+  const [copied, setCopied] = useState<"" | "key" | "prompt" | "url">("");
+  const [error, setError] = useState("");
+
+  async function load(): Promise<OwnerKey | null> {
+    if (data) return data;
+    setError("");
+    try {
+      const d = await auth.ownerKey();
+      setData(d);
+      return d;
+    } catch (err) {
+      setError(err instanceof ApiError && err.code === "OWNER_KEY_NOT_SET"
+        ? "The server has no main key yet (POLYMATH_MCP_API_KEY in its .env)." : message(err));
+      return null;
+    }
+  }
+
+  async function copy(what: "key" | "prompt" | "url") {
+    const d = await load();
+    if (!d) return;
+    const ok = await copyText(what === "key" ? d.key : what === "prompt" ? d.prompt : d.mcp_url);
+    if (!ok) { setError("The browser blocked copying: click Show, select the key and press ⌘C."); return; }
+    setCopied(what);
+    setTimeout(() => setCopied(""), 2000);
+  }
+
+  async function toggle() {
+    if (shown) { setShown(false); return; }
+    if (await load()) setShown(true);
+  }
+
+  const masked = "•".repeat(24);
+  return (
+    <section className="card settings__card" aria-labelledby="owner-key-title">
+      <CardHead icon="key" id="owner-key-title" title="API key for another computer"
+                lead="Your main key. Paste it (or the prompt that contains it) into Codex, Claude Code or any agent on another computer." />
+      <p className="settings__warn">Full access: anyone with this key can use everything, including your CJ supplier account.</p>
+      {error && <div className="banner banner--bad" role="alert">{error}</div>}
+      <div className="keyrow">
+        <code className="keyrow__value" aria-label="Main API key">{shown && data ? data.key : masked}</code>
+        <button type="button" className="btn" aria-pressed={shown} onClick={() => void toggle()}>
+          <Icon name={shown ? "eyeOff" : "eye"} size={15} />{shown ? "Hide" : "Show"}
+        </button>
+        <button type="button" className="btn btn--primary" aria-label={copied === "key" ? "Copied" : "Copy key"} onClick={() => void copy("key")}>
+          <Icon name={copied === "key" ? "check" : "copy"} size={15} />{copied === "key" ? "Copied" : "Copy key"}
+        </button>
+      </div>
+      <div className="row">
+        <button type="button" className="btn" aria-label={copied === "prompt" ? "Copied" : "Copy prompt with key"} onClick={() => void copy("prompt")}>
+          <Icon name={copied === "prompt" ? "check" : "copy"} size={15} />{copied === "prompt" ? "Copied" : "Copy prompt with key"}
+        </button>
+        <button type="button" className="btn" aria-label={copied === "url" ? "Copied" : "Copy server address"} onClick={() => void copy("url")}>
+          <Icon name={copied === "url" ? "check" : "copy"} size={15} />{copied === "url" ? "Copied" : "Copy server address"}
+        </button>
+      </div>
     </section>
   );
 }
@@ -259,7 +324,9 @@ function AppearanceCard() {
 export function Settings({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: Me) => void; onSignOut: () => void }) {
   const [passwordSet, setPasswordSet] = useState(!!me.web_password_set);
   const ownerHere = me.local && me.is_owner;
-  const connect = me.is_owner ? <ConnectCard key="connect" /> : <FriendKeysCard key="keys" />;
+  const connect = me.is_owner
+    ? <Fragment key="connect"><ConnectCard /><OwnerKeyCard /></Fragment>
+    : <FriendKeysCard key="keys" />;
   const password = ownerHere
     ? <OwnerPasswordCard key="password" isSet={passwordSet} onSaved={() => setPasswordSet(true)} />
     : !me.local ? <AccountPasswordCard key="password" me={me} onMeChanged={onMeChanged} /> : null;

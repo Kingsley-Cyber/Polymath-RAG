@@ -49,6 +49,7 @@ RULES: tuple[tuple[frozenset[str] | None, re.Pattern[str], str], ...] = tuple((m
     (_POST, r"^/upload$", WRITE), (_DELETE, rf"^/documents/{_SEG}$", WRITE),
     # the owner's
     (_POST, r"^/auth/owner-password$", OWNER),          # and the route itself refuses anything proxied
+    (_GET, r"^/keys/owner$", OWNER),                    # OWNER-KEY-VISIBLE: the main key, for the owner to copy
     (_GET, r"^/friends/invite$", OWNER), (_POST, r"^/friends/invite/rotate$", OWNER),     # INVITE-SIGNUP: the owner's invite code
     (_ANY, r"^/admin(/.*)?$", OWNER), (_ANY, r"^/llm/.*$", OWNER), (_ANY, r"^/control_plane(/.*)?$", OWNER),
     (_ANY, r"^/(fleet|sidecars|health/semantic|health/pipeline|intake|status|generated)(/.*)?$", OWNER), (_ANY, rf"^/runs/{_SEG}$", OWNER),

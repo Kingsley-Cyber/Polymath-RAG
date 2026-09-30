@@ -146,3 +146,37 @@ def test_the_prompt_names_every_harness_and_the_guide():
                    "Authorization: Bearer pmk_abc", "Polymath's web reader is not shared", "fr-fred", "I can revoke it in Settings"):
         assert needle in text, needle
     assert "bearer-token-env-var" not in text                                 # the Codex app never sees a shell's exports
+
+
+# ---------------------------------------------------------------- OWNER-KEY-VISIBLE (the owner, 2026-09-30)
+def test_only_the_owner_gets_the_main_key_with_a_prompt_for_another_computer(world, monkeypatch):
+    """"i need them to have access to main key ... api key visibility settings, to copy and paste": the signed-in King (or the
+    server itself) gets the key, the public URL and a ready prompt with the key in it; nobody else does; nothing is cached."""
+    monkeypatch.setenv("POLYMATH_MCP_API_KEY", "main-key-for-copy-0123456789")
+    _, app = world
+    king = _signed_in(app, "King")
+    local = TestClient(app, base_url="http://testserver")
+    for r in (king.get("/keys/owner"), local.get("/keys/owner")):
+        assert r.status_code == 200, r.text
+        assert r.headers["cache-control"] == "no-store"
+        body = r.json()
+        assert body["key"] == "main-key-for-copy-0123456789" and body["mcp_url"] == "https://mcp.example.test/mcp"
+        prompt = body["prompt"]
+        for needle in ("Authorization: Bearer main-key-for-copy-0123456789", "https://mcp.example.test/mcp", "claude mcp add -s user",
+                       'http_headers = { Authorization = "Bearer main-key-for-copy-0123456789" }', "cinema, commerce-v1",
+                       "whoever holds it has my full access", "use my CJ account and quota."):
+            assert needle in prompt, needle
+        assert "<YOUR_KEY>" not in prompt and "fr-someone" not in prompt and "I can revoke it in Settings" not in prompt
+    fred = _signed_in(app, "fred")
+    refused = fred.get("/keys/owner")
+    assert refused.status_code == 403 and "main-key" not in refused.text
+    anonymous = TestClient(app, base_url="https://testserver", headers=PROXY).get("/keys/owner")
+    assert anonymous.status_code == 401 and "main-key" not in anonymous.text
+    assert "main-key" not in king.get("/keys/prompt").text                    # the everyday prompt still never carries it
+
+
+def test_no_main_key_on_the_server_says_so(world, monkeypatch):
+    monkeypatch.delenv("POLYMATH_MCP_API_KEY", raising=False)
+    _, app = world
+    r = _signed_in(app, "king").get("/keys/owner")
+    assert r.status_code == 404 and r.json()["detail"]["error_code"] == "OWNER_KEY_NOT_SET"

@@ -61,6 +61,7 @@ def test_every_route_of_the_orchestrator_is_classified():
     ("GET", "/v2/files", B.PUBLIC), ("GET", "/health", B.PUBLIC), ("POST", "/auth/login", B.PUBLIC),
     ("POST", "/auth/register", B.PUBLIC), ("GET", "/auth/register", None),                                     # INVITE-SIGNUP
     ("GET", "/friends/invite", B.OWNER), ("POST", "/friends/invite/rotate", B.OWNER),
+    ("GET", "/keys/owner", B.OWNER), ("POST", "/keys/owner", None),                                            # OWNER-KEY-VISIBLE
     ("POST", "/friends/invite", None), ("GET", "/friends/invite/rotate", None), ("GET", "/friends", None),
     ("POST", "/chat/stream", B.USER), ("GET", "/corpora", B.USER), ("GET", "/documents/d1/status", B.USER),
     ("POST", "/research/deep", B.USER), ("POST", "/research/deep/plan", B.USER), ("POST", "/research/deep/finish", B.USER),

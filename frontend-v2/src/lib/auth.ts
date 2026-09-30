@@ -49,6 +49,13 @@ export interface ConnectPrompt {
   connect_command?: string;
 }
 
+/** OWNER-KEY-VISIBLE — GET /keys/owner (the owner only): the main key, the public MCP URL, a prompt with the key in it. */
+export interface OwnerKey {
+  key: string;
+  mcp_url: string;
+  prompt: string;
+}
+
 const u = encodeURIComponent;
 
 /** A backend with no logins (older than FRIENDS-ACCESS-V1, or the brief merge -> bounce window, where /auth/me is a 404)
@@ -76,6 +83,8 @@ export const auth = {
   createKey: (label: string) => http.post<CreatedKey>("/keys", { label }),
   revokeKey: (keyId: string) => http.del<{ revoked: string }>(`/keys/${u(keyId)}`),
   prompt: (s?: AbortSignal) => http.get<ConnectPrompt>("/keys/prompt", s),
+  /** OWNER-KEY-VISIBLE: asked for only when someone clicks Show or Copy, never on page load. */
+  ownerKey: () => http.get<OwnerKey>("/keys/owner"),
 };
 
 /** The private library the server creates for a friend on their first upload. */

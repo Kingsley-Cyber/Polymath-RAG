@@ -200,7 +200,8 @@ it("once the password is set, connecting the agents comes first", async () => {
   await settle();
   const cards = [...host.querySelectorAll(".settings__cards > .card")];
   expect(cards[1]!.textContent).toContain("Connect Claude Code and Codex");
-  expect(cards[2]!.textContent).toContain("Website password");
+  expect(cards[2]!.textContent).toContain("API key for another computer");        // OWNER-KEY-VISIBLE
+  expect(cards[3]!.textContent).toContain("Website password");
 });
 
 it("a friend changes their own password and never sees the owner's password form", async () => {

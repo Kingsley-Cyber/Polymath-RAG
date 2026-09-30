@@ -31,6 +31,10 @@ function route(path: string, init?: RequestInit): Response {
     return Response.json({ key: "pmk_abcdef123456_SECRET", key_id: "abcdef123456", label: "laptop", created_at: "2026-09-26T00:00:00Z",
                            revoked_at: null, shown_once: true, prompt: "Connect with Authorization: Bearer pmk_abcdef123456_SECRET" }, { status: 201 });
   }
+  if (path === "/keys/owner") {
+    return Response.json({ key: "main-key-XYZ-0123456789", mcp_url: "https://mcp.example.test/mcp",
+                           prompt: "Connect with Authorization: Bearer main-key-XYZ-0123456789" });
+  }
   if (path === "/keys/prompt") {
     return me !== 401 && me !== 404 && me.is_owner
       ? Response.json({ prompt: 'You can use my Polymath research library: it is connected to you as the MCP server "polymath".',
@@ -174,4 +178,38 @@ it("treats a backend without logins as the owner, as before", async () => {
   me = 404;
   await render();
   expect(navLabels()).toContain("Overview");
+});
+
+it("OWNER-KEY-VISIBLE: the main key stays hidden and unfetched until Show; Copy key and Copy prompt with key copy it", async () => {
+  const writeText = vi.fn(async () => undefined);
+  vi.stubGlobal("navigator", { clipboard: { writeText } });
+  me = OWNER;
+  await render();
+  await act(async () => { button("Settings").click(); });
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+  expect(host.textContent).toContain("API key for another computer");
+  expect(host.textContent).toContain("Full access");
+  expect(host.textContent).not.toContain("main-key-XYZ");
+  expect(calls.some((c) => c.path === "/keys/owner")).toBe(false);                    // never fetched on page load
+  await act(async () => { button("Show").click(); });
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+  expect(host.querySelector('[aria-label="Main API key"]')!.textContent).toBe("main-key-XYZ-0123456789");
+  await act(async () => { button("Hide").click(); });
+  expect(host.textContent).not.toContain("main-key-XYZ");
+  await act(async () => { (host.querySelector('button[aria-label="Copy key"]') as HTMLButtonElement).click(); });
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+  expect(writeText).toHaveBeenLastCalledWith("main-key-XYZ-0123456789");
+  await act(async () => { (host.querySelector('button[aria-label="Copy prompt with key"]') as HTMLButtonElement).click(); });
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+  expect(writeText).toHaveBeenLastCalledWith("Connect with Authorization: Bearer main-key-XYZ-0123456789");
+  expect(calls.filter((c) => c.path === "/keys/owner")).toHaveLength(1);              // fetched once, then kept
+});
+
+it("OWNER-KEY-VISIBLE: a friend never sees the main-key card and never asks for it", async () => {
+  me = FRIEND;
+  await render();
+  await act(async () => { button("Settings").click(); });
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+  expect(host.textContent).not.toContain("API key for another computer");
+  expect(calls.some((c) => c.path === "/keys/owner")).toBe(false);
 });

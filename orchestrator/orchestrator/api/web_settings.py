@@ -106,11 +106,13 @@ If you do not see the polymath tools, ask me to run the connect command from Pol
 {usage_lines(libraries, None, owner=True)}"""
 
 
-def connect_prompt(key: str, libraries: list[str], private: str | None, url: str | None = None) -> str:
-    """A friend's text to paste into their agent harness, their own key in it. Harness-neutral; the setup lines follow
-    mcp_server/CONNECTORS.md (each command is safe to run again: the old entry is replaced; Codex keeps the key as a fixed header,
-    so the Codex app sends it too)."""
+def connect_prompt(key: str, libraries: list[str], private: str | None, url: str | None = None, *, owner: bool = False) -> str:
+    """The text to paste into an agent harness, the key in it: a friend's own key, or (`owner`, OWNER-KEY-VISIBLE) the owner's
+    main key for another computer. Harness-neutral; the setup lines follow mcp_server/CONNECTORS.md (each command is safe to run
+    again: the old entry is replaced; Codex keeps the key as a fixed header, so the Codex app sends it too)."""
     url = url or mcp_url()
+    care = ("Keep the key private: whoever holds it has my full access (Settings on the Mac shows it; changing it means a new key "
+            "in the server's .env)." if owner else "Keep the key private: whoever holds it acts as me. I can revoke it in Settings.")
     return f"""You can use my Polymath research library through MCP. Connect to it, then use its tools for my questions.
 
 Connect
@@ -127,9 +129,9 @@ Setup (pick your harness; each command is safe to run again)
 - After adding it, restart the agent (Claude Code: /mcp shows it connected) so the tools load.
 - If you get HTTP 403 before any login, your client's User-Agent looks like a bot to Cloudflare: use a normal client or set a User-Agent.
 
-{usage_lines(libraries, private, owner=False)}
+{usage_lines(libraries, private, owner=owner)}
 
-Keep the key private: whoever holds it acts as me. I can revoke it in Settings."""
+{care}"""
 
 
 def _record(doc: dict, principal_id: str) -> dict | None:
@@ -190,6 +192,25 @@ def prompt_template(request: Request) -> JSONResponse:
         rec = _record(REGISTRY.get() or {}, ident.principal_id) or {}
         text = connect_prompt(KEY_PLACEHOLDER, sorted(rec.get("corpus_ids") or []), W.private_corpus_for(ident.username))
     return _no_store({"prompt": text, "placeholder": KEY_PLACEHOLDER, "mcp_url": mcp_url()})
+
+
+@router.get("/keys/owner")
+def owner_key_for_copy(request: Request) -> JSONResponse:
+    """OWNER-KEY-VISIBLE (the owner, 2026-09-30: "i need them to have access to main key. so in the settings have a api key
+    visibility settings, to copy and paste to get key"): the main key (`POLYMATH_MCP_API_KEY`), the public MCP URL and a
+    ready-to-paste prompt with the key in it, for an agent on another computer. Owner only (the boundary refuses anyone else; a
+    direct loopback caller is the owner); never cached; the Settings page asks for it only when someone clicks Show or Copy."""
+    ident = _identity(request)
+    if ident is not None and not ident.is_owner:                      # the boundary already refuses; belt and braces
+        raise _refuse(403, "OWNER_ONLY", "only the owner can do that")
+    key = str(os.environ.get("POLYMATH_MCP_API_KEY") or "").strip()
+    if not key:
+        raise _refuse(404, "OWNER_KEY_NOT_SET", "the server has no POLYMATH_MCP_API_KEY in its .env")
+    try:
+        libraries = _shared_libraries()
+    except Exception:  # noqa: BLE001 — the prompt still works without the list (list_corpora names them)
+        libraries = []
+    return _no_store({"key": key, "mcp_url": mcp_url(), "prompt": connect_prompt(key, libraries, None, owner=True)})
 
 
 # ---- the owner's friend admin (owner-only at the boundary; a direct loopback caller is the owner)
