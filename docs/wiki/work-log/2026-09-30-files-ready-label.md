@@ -2,8 +2,8 @@
 change_id: FILES-READY-LABEL
 owner: "@king"
 date: 2026-09-30
-status: partial
-status_note: "The Files screen stops calling a searchable file 'Blocked' (branch; live after the owner's deploy). The 10 new cinema files' vNext profiles were built and the index REFUSED them as far thinner (kept the base profiles). An atom rebuild run to give them the full index-entry kinds switched off 3,133 live cinema atoms; 120 were restored by hand; restoring the other 3,013 was refused to the agent by the harness and waits for the owner's run."
+status: complete
+status_note: "The Files screen stops calling a searchable file 'Blocked' (live 80d7cf62). The 10 new cinema files' vNext profiles were built and the index REFUSED them as far thinner (kept the base profiles), so the vNext pin stays. An atom rebuild switched off 3,133 live cinema atoms; the agent restored 120, the owner ran the restore of the other 3,013 and the batched index sync: reconcile 3,723 = 3,723, every file back to its pre-incident atoms (CLOSED 2026-09-30)."
 architecture_impact: "frontend-v2/src/lib/readiness.ts (docSearchable; docVnext: Ready / Ready · basic profile / Blocked); frontend-v2/src/screens/Files.tsx (ready count, Continue only for files that are not searchable); tests: files-states.test.tsx (+3). Live data: 10 doc_profile artifacts (vNext, kept last-known-good); cinema document_profile_atoms + the atom collection (see Changes)."
 last_reviewed: 2026-09-30
 ---
@@ -46,6 +46,13 @@ last_reviewed: 2026-09-30
     first count had included one pre-existing row the tool re-used). Recounted (read-only): 119 made, 3,013 still off, 590
     re-used, 0 off for any other reason, 3,723 rows existed before the tool; the script now expects 119.
 
+  - **CLOSED (2026-09-30, the owner's runs).** `restore_cinema_atoms.py`: the database step committed (3,013 back on, 119
+    tool-made off), then its ONE upsert of all 3,013 points timed out (`httpx.WriteTimeout`, qdrant `ResponseHandlingException`)
+    after embedding them all, so the index kept 829 (119 stale). `sync_cinema_atom_index.py` (read-only `--check` run by the
+    agent first: 710 present, 3,013 missing, 119 stale) removed the 119 and added the 3,013 in upserts of 32 with retries:
+    **reconcile 3,723 = 3,723**. Kinds per file equal the pre-incident counts (older 67: 3,423 atoms; the 10 new files: their
+    300 base atoms); a live WILDCARD search: 24 passages from 12 files.
+
 ## Proof
 - `files-states.test.tsx` 9 passed (+3: basic profile reads "Ready · basic profile" with no Continue and counts as ready; vNext
   reads "Ready"; unresolved parents / no profile read "Blocked" with the reason and offer Continue). Fail first: the first two
@@ -65,7 +72,6 @@ last_reviewed: 2026-09-30
   lives in the worker path (`PAP.ingest_document_atoms` with a `source`). The tool should not be run on a corpus with families.
 
 ## Open contract gaps
-- The owner runs the atom restore (above). After it: reconcile 3,723 = 3,723, the 10 new files back to their base atoms.
 - `scripts/profile_atom_canary.py` should refuse a corpus whose atoms carry families (or take a `--source`), so it cannot do
-  this again.
+  this again; and `PAP.project_atoms` upserts every point in ONE request, which times out past a few thousand points (batch it).
 - vNext thinness on small files (2-3 direct surfaces) is the 2026-09-17 collapse, still open; the label no longer depends on it.

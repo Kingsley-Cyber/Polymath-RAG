@@ -162,9 +162,8 @@ historical, never an instruction.
      DR6a–d moves (§10.9 passed 4/5), DR7a–f the research experience (11.519–11.534).
    - LIVE since 11.535 / 11.536 (`bfdfbe0e`): the deep research tuning (evaluative words, the gate's thread check, the folded
      phone composer); moves cite ≥ the old loop's books on 5 of 5 DR4 questions.
-   - OPEN INCIDENT (11.554): cinema's atom lane holds 829 of its 3,723 entries since 2026-09-30 05:55 UTC (the agent ran
-     `profile_atom_canary.py`); the OWNER runs the restore script named in `2026-09-30-files-ready-label.md`, then check
-     reconcile 3,723 = 3,723. Do not run `profile_atom_canary.py` on a corpus with atom families.
+   - CLOSED (11.556): the 2026-09-30 cinema atom incident (reconcile 3,723 = 3,723). Never run `profile_atom_canary.py` on a
+     corpus with atom families.
    - ON THE BRANCH (11.555): OWNER-KEY-VISIBLE (Settings: the main key for another computer, hidden until Show, owner only).
    - ON THE BRANCH (11.554): FILES-READY-LABEL (a searchable file reads Ready / Ready · basic profile, never Blocked).
    - ON THE BRANCH (11.553): ONE-PROFILE — one sign-in (King), a redesigned sign-in page and Settings, sign-ups closed
