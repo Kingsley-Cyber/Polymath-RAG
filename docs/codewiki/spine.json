@@ -67045,14 +67045,14 @@
    "files": [
     "shared/polymath_shared/mcp_retrieval.py"
    ],
-   "hash": "529f8191c73b6491",
+   "hash": "5fa441850bedd886",
    "importers": [
     "mcp_server/polymath_mcp.py",
     "orchestrator/orchestrator/api/_small-modules",
     "orchestrator/orchestrator/mcp_server.py"
    ],
    "imports": [],
-   "lines": 318,
+   "lines": 324,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/shared/polymath_shared/mcp_retrieval.py.md",
@@ -67224,11 +67224,22 @@
      "args": [
       "out"
      ],
-     "doc": "",
-     "end": 161,
+     "doc": "The mode that ran, in the public name: the runtime stamps FAST as VECTOR (its internal name; seen live 2026-10-01).",
+     "end": 162,
      "file": "shared/polymath_shared/mcp_retrieval.py",
      "kind": "def",
      "line": 159,
+     "name": "_executed_mode"
+    },
+    {
+     "args": [
+      "out"
+     ],
+     "doc": "",
+     "end": 167,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 165,
      "name": "_degraded"
     },
     {
@@ -67237,10 +67248,10 @@
       "max_evidence"
      ],
      "doc": "polymath_search's answer: the executed mode, the evidence rows (chunk rows first, graph facts after), and the",
-     "end": 185,
+     "end": 191,
      "file": "shared/polymath_shared/mcp_retrieval.py",
      "kind": "def",
-     "line": 164,
+     "line": 170,
      "name": "shape_search"
     },
     {
@@ -67248,10 +67259,10 @@
       "out"
      ],
      "doc": "polymath_explore's answer: the EvidencePacket (already bounded), the executed mode, the graph facts and the",
-     "end": 209,
+     "end": 215,
      "file": "shared/polymath_shared/mcp_retrieval.py",
      "kind": "def",
-     "line": 188,
+     "line": 194,
      "name": "shape_explore"
     },
     {
@@ -67260,10 +67271,10 @@
       "max_rows"
      ],
      "doc": "polymath_compare's answer: per mode the latency, counts, documents and its top rows, plus what every mode found",
-     "end": 238,
+     "end": 244,
      "file": "shared/polymath_shared/mcp_retrieval.py",
      "kind": "def",
-     "line": 212,
+     "line": 218,
      "name": "shape_compare"
     },
     {
@@ -67271,10 +67282,10 @@
       "out"
      ],
      "doc": "",
-     "end": 247,
+     "end": 253,
      "file": "shared/polymath_shared/mcp_retrieval.py",
      "kind": "def",
-     "line": 241,
+     "line": 247,
      "name": "shape_models"
     },
     {
@@ -67282,10 +67293,10 @@
       "lines"
      ],
      "doc": "(event, data) for every frame of a text/event-stream; keep-alive comments and malformed frames are skipped.",
-     "end": 274,
+     "end": 280,
      "file": "shared/polymath_shared/mcp_retrieval.py",
      "kind": "def",
-     "line": 252,
+     "line": 258,
      "name": "parse_sse"
     },
     {
@@ -67295,10 +67306,10 @@
       "mode"
      ],
      "doc": "polymath_deep_research's answer from the stream: the cited report, its citations, the coverage, the run's counts.",
-     "end": 317,
+     "end": 323,
      "file": "shared/polymath_shared/mcp_retrieval.py",
      "kind": "def",
-     "line": 277,
+     "line": 283,
      "name": "shape_deep"
     }
    ]

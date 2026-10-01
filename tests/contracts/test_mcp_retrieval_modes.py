@@ -222,6 +222,13 @@ def test_deep_research_returns_the_cited_report_or_a_typed_error(server_a):
     assert asyncio.run(server_a.mod.polymath_deep_research("q", "cinema"))["status"] == 502
 
 
+def test_fast_comes_back_as_fast_not_the_runtimes_internal_vector(server_a):
+    """Seen live 2026-10-01: the runtime stamps an executed FAST turn `VECTOR`; the tools report the public name."""
+    server_a.replies["/chat/evidence"] = _rows_reply("VECTOR")
+    assert asyncio.run(server_a.mod.polymath_search("q", "cinema", mode="FAST"))["mode"] == "FAST"
+    assert asyncio.run(server_a.mod.polymath_explore("q", "cinema", mode="FAST"))["mode"] == "FAST"
+
+
 def test_the_event_stream_parser_skips_keep_alives_and_broken_frames():
     raw = ["event: phase\n", 'data: {"label": "a"}\n', "\n", ": keep-alive\n", "\n", "event: token\n", "data: {not json\n", "\n",
            "event: answer\n", 'data: {"kind": "deep"}\n']

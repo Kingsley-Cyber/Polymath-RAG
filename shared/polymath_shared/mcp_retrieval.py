@@ -156,6 +156,12 @@ def shape_wildcard(items: Any) -> list[dict]:
     return out
 
 
+def _executed_mode(out: dict) -> str | None:
+    """The mode that ran, in the public name: the runtime stamps FAST as VECTOR (its internal name; seen live 2026-10-01)."""
+    mode = (out.get("meta") or {}).get("mode")
+    return _ALIASES.get(mode, mode) if isinstance(mode, str) else mode
+
+
 def _degraded(out: dict) -> Any:
     retrieval = out.get("retrieval") if isinstance(out.get("retrieval"), dict) else {}
     return retrieval.get("degraded") or (out.get("meta") or {}).get("degraded") or None
@@ -169,7 +175,7 @@ def shape_search(out: dict, max_evidence: int) -> dict:
     rows = [r for r in out.get("evidence_rows") or [] if isinstance(r, dict)]
     chunks = [r for r in rows if r.get("kind") != "graph_fact"][:max(1, int(max_evidence))]
     facts = [r for r in rows if r.get("kind") == "graph_fact"][:GRAPH_FACTS_MAX]
-    shaped: dict[str, Any] = {"mode": (out.get("meta") or {}).get("mode"),
+    shaped: dict[str, Any] = {"mode": _executed_mode(out),
                               "evidence_rows": trim_rows(chunks + facts),
                               "evidence_contract": out.get("evidence_contract"),
                               "graph_facts": len(facts)}
@@ -191,7 +197,7 @@ def shape_explore(out: dict) -> dict:
     if "error" in out:
         return out
     retrieval = out.get("retrieval") if isinstance(out.get("retrieval"), dict) else {}
-    shaped: dict[str, Any] = {"mode": (out.get("meta") or {}).get("mode"),
+    shaped: dict[str, Any] = {"mode": _executed_mode(out),
                               "evidence_packet": out.get("evidence_packet"),
                               "synthesis_performed": out.get("synthesis_performed", False)}
     facts = [f for f in out.get("graph_facts") or [] if isinstance(f, dict)][:GRAPH_FACTS_MAX]

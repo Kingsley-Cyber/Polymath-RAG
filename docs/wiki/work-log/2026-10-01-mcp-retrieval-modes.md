@@ -3,7 +3,7 @@ change_id: MCP-RETRIEVAL-MODES-V1
 owner: "@king"
 date: 2026-10-01
 status: complete
-status_note: "Both MCP servers offer the app's own retrieval: the five public modes (FAST, HYBRID, GRAPH, WILDCARD, GNN) on search / explore / answer, plus compare, deep research and models, from ONE shared module; polymath_search no longer reaches /retrieve's frozen LEGACY lane path; the four legacy tools are callable but no longer listed. Live after the owner's deploy."
+status_note: "Both MCP servers offer the app's own retrieval: the five public modes (FAST, HYBRID, GRAPH, WILDCARD, GNN) on search / explore / answer, plus compare, deep research and models, from ONE shared module; polymath_search no longer reaches /retrieve's frozen LEGACY lane path; the four legacy tools are callable but no longer listed. LIVE (f7d893d4, pushed) and proven through the public connector URL (every mode, compare, explore, answer, models, a quick deep research). Follow-up 11.563: FAST is reported as FAST, not the runtime's internal VECTOR."
 architecture_impact: "shared/polymath_shared/mcp_retrieval.py (new: modes, request bodies, answer shaping); orchestrator/orchestrator/mcp_server.py + mcp_server/polymath_mcp.py (tools, hidden legacy tools, instructions); orchestrator/orchestrator/api/chat.py (attach_packet_rows: /chat/evidence evidence=true); orchestrator/orchestrator/api/ui.py (the evidence frame carries graph_facts); orchestrator/orchestrator/mcp_principals.py (knowledge.research scope + 3 policies); orchestrator/orchestrator/api/capabilities.py; orchestrator/orchestrator/api/web_settings.py (agent prompt line 2); mcp_server/CONNECTORS.md; tests."
 last_reviewed: 2026-10-01
 ---
@@ -74,6 +74,16 @@ last_reviewed: 2026-10-01
   is registered.
 - The code wiki refreshed (257 units: the new module has its page; 6 flows regenerated); `verify.py --strict-anchors` 2,229 /
   2,229 on 342 pages.
+- **Live, after the owner deployed and pushed `f7d893d4` (READY 26 / 13 / one bundle)**, through
+  `https://mcp.kingsleylab.xyz/k/<key>/mcp` with the owner key (read from `.env`, never printed), library `cinema`, "How do
+  filmmakers light a night exterior scene?": tools/list = the six `polymath_*` tools and no legacy tool; `polymath_search`
+  FAST 7.5 s / HYBRID 5.5 s / GRAPH 6.6 s (8 chunk rows + 20 attested graph-fact rows) / WILDCARD 12.8 s (+ 3 wildcard items) /
+  GNN 2.2 s (4 rows), each executed in its mode; `polymath_compare` all five arms ok (1.5–6.5 s each, 3 chunks found by every
+  mode) in 14.4 s; `polymath_explore` 13.6 s, a 24-row packet and nothing else bulky; `polymath_models` 15 models;
+  `polymath_answer` (analytical) 21.1 s, supported, 38 citations; the unlisted `retrieve` still answers; `polymath_deep_research`
+  quick 33.8 s, supported, 8 citations, 3 goals / 6 findings / 4 sources, stop `frontier_empty`, a 2,565-character report.
+- Seen live and fixed (11.563): an executed FAST turn reports `mode: VECTOR` (the runtime's internal name); the tools now say
+  FAST (`_executed_mode`; +1 test).
 
 ## Contract impact (pre-commit)
 - MCP_SURFACE [live] (`mcp_server.py`): UPDATED — the tools above; the legacy tools stay callable.
