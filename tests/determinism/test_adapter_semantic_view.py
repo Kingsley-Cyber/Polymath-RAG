@@ -315,6 +315,14 @@ def test_passes_are_runs_of_adjacent_knowledge_outputs_and_a_row_belongs_to_the_
     assert passes["b_001"] == 0 and passes["bg_000"] == 0 and passes["f_000"] == 1 and passes["k_000"] == 2 and passes["b_000"] == 2
 
 
+def test_a_step_output_whose_rows_is_not_a_list_never_crashes_the_run():
+    """CI-GREEN-V1 (2026-10-01): a harness may submit any JSON; `{"rows": 2}` (a count) raised TypeError in every later step."""
+    outs = [{"rows": 2}, {"rows": [{"id": "a"}], "graph_rows": "x"}, {"other": 1}, {"graph_rows": [{"id": "g"}]}]
+    assert EB.knowledge_passes(outs) == {"a": 0, "g": 1}                    # still a pass boundary; only its rows are none
+    view = EB._receipt_view({"step_id": "s1", "sequence": 1, "output": {"rows": 2, "graph_rows": [{"id": "g"}]}})
+    assert view is not None and view["n_rows"] == 1
+
+
 def test_run5_shape_a_later_retrieval_is_readable_inside_the_unchanged_caps():
     steps = _run5_shaped_steps()
     out = EB.hydrate(_refs(steps), steps)

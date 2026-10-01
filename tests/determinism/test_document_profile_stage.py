@@ -189,8 +189,12 @@ def test_worker_writes_the_profile_and_projection_artifacts_with_the_receipt_cha
     assert p["valid"] is True and p["ok"] is True and p["quality"] >= 0.7 and p["missing"] == []
     assert p["compiled"]["theories"] and p["compiled"]["concepts"] and len(p["representations"]["questions"]) == 3
     assert pq["valid"] is True and pq["vectors"]["identity"] == 1 and pq["vectors"]["questions"] == 3 and pq["dim"] == dim
-    assert pq["collection"].startswith("polymath_document_profiles_") and len(q.upserts) == 1
-    pt = q.upserts[0][1][0]
+    profile_upserts = [points for name, points in q.upserts if name == pq["collection"]]
+    atom_upserts = [name for name, _ in q.upserts if name.startswith("polymath_document_profile_atoms_")]
+    assert pq["collection"].startswith("polymath_document_profiles_") and len(profile_upserts) == 1
+    # PROFILE-ATOM-DAG-WIRING-V1 (2026-09-17): the same step writes the atom lane, into its own collection; nothing else
+    assert len(atom_upserts) == 1 and len(q.upserts) == 2 and art["doc_profile_atoms"]["ok"] is True
+    pt = profile_upserts[0][0]
     assert pt.payload["doc_id"] == doc[0] and pt.payload["corpus_id"] == CORPUS and len(pt.vector["searches"]) == 3
     # the run's status and chunk rows are untouched (invariants)
     with _db()() as conn:

@@ -344,6 +344,13 @@ def _hydrate_class(kind: str) -> str:
     return kind if kind in ("field_evidence", "chunk", "graph_fact") else "other"
 
 
+def _row_list(out: Mapping[str, Any], key: str) -> list[Any] | tuple[Any, ...]:
+    """The rows a step output holds under `key`; () when it holds anything else (a count, a string, a dict). A harness may
+    submit any JSON: `{"rows": 2}` used to crash every later step of the run (CI-GREEN-V1, 2026-10-01)."""
+    rows = out.get(key)
+    return rows if isinstance(rows, (list, tuple)) else ()
+
+
 def knowledge_passes(outputs: Iterable[Mapping[str, Any] | None]) -> dict[str, int]:
     """row id -> index of the NEWEST retrieval pass that returned it (0 = the first pass). `outputs` = step outputs in run order
     (every step, knowledge or not). A pass is a maximal run of ADJACENT knowledge outputs (an output with a `rows` / `graph_rows`
@@ -358,7 +365,7 @@ def knowledge_passes(outputs: Iterable[Mapping[str, Any] | None]) -> dict[str, i
         if not inside:
             index, inside = index + 1, True
         for key in KNOWLEDGE_ROW_KEYS:
-            for row in out.get(key) or []:
+            for row in _row_list(out, key):
                 if isinstance(row, Mapping) and row.get("id"):
                     passes[str(row["id"])] = index
     return passes
@@ -440,7 +447,7 @@ def _receipt_view(entry: Mapping[str, Any]) -> dict[str, Any] | None:
         return None
     view: dict[str, Any] = {"step_id": entry.get("step_id"), "sequence": entry.get("sequence"),
                             "surface": out.get("surface") or SURFACE_LEGACY, "mode": out.get("mode"),
-                            "n_rows": len(out.get("rows") or []) + len(out.get("graph_rows") or [])}
+                            "n_rows": len(_row_list(out, "rows")) + len(_row_list(out, "graph_rows"))}
     for k in ("query", "needs", "corpus_ids", "retrieval_completed", "degraded", "degraded_reasons", "truncated", "evidence_contract"):
         if out.get(k) not in (None, [], ""):
             view[k] = out[k]

@@ -413,7 +413,11 @@ def test_compiler_on_drives_the_same_retrieval_decision_on_both_routes(monkeypat
     assert b["task_type"] == "GROUNDED_QA" and b["retrieval_skipped"] is False and b["plan"]["retrieval_query"] == "RAPO prompts"
     assert hs.calls == hc.calls == [{"mode": "HYBRID", "query": "RAPO prompts", "corpus_id": "cinema", "graph_useful": False,
                                      "graph_assist": "off",  # P6: intent-policy off ⇒ no graph assist
-                                     "exact_terms": ("RAPO",), "subqueries": (("q1", "MECHANISM", "reward models for prompts", 0.8),)}]
+                                     "keep_latent": False,   # the latent second pass (WLK2C) stays off for this plan
+                                     "exact_terms": ("RAPO",),
+                                     # each subquery carries its origin + derived_from since the bridge pass (2026-09-22)
+                                     "subqueries": (("q1", "MECHANISM", "reward models for prompts", 0.8, "USER", ""),),
+                                     "latent_bridge_ids": ()}]
     assert set(b["aspects"]) == {"q0", "q1"} and out["meta"]["task_type"] == "GROUNDED_QA" and out["meta"]["retrieval_required"] is True
     # a conversation-policy plan: no retrieval fired, on either route
     body2 = dict(body, carry_context=CARRY, history=HISTORY)

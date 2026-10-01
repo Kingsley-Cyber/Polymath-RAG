@@ -2572,6 +2572,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-30-code-wiki-v1.md", "md", None),
     ("docs/wiki/work-log/2026-09-30-receipt-funnel-counts.md", "md", None),
     ("docs/wiki/work-log/2026-10-01-claude-connector-url.md", "md", None),
+    ("docs/wiki/work-log/2026-10-01-ci-green.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),

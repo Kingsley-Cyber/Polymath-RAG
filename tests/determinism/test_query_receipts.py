@@ -1,6 +1,7 @@
 """QUERY-RECEIPTS-V1: every served query leaves one durable row; a receipt
 failure never becomes a request failure; the read surfaces are wired.
 Before 2026-09-03 a query left only an access-log line and a timestamp."""
+import ast
 import contextlib
 import pathlib
 import sys
@@ -99,13 +100,27 @@ def test_receipt_failure_is_swallowed_never_raised():
                                 scope_kind=None, wall_ms=1, out={}) is None
 
 
+def _receipting_routes(src: str, kind: str) -> dict[str, int]:
+    """route handler -> its `record_query_receipt(tx, kind=<kind>)` calls (the nested `_sink` included)."""
+    found = {}
+    for node in ast.parse(src).body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and any(
+                isinstance(d, ast.Call) and getattr(d.func, "attr", "") in ("post", "get") for d in node.decorator_list):
+            calls = [c for c in ast.walk(node) if isinstance(c, ast.Call) and getattr(c.func, "id", "") == "record_query_receipt"
+                     and any(k.arg == "kind" and isinstance(k.value, ast.Constant) and k.value.value == kind for k in c.keywords)]
+            if calls:
+                found[node.name] = len(calls)
+    return found
+
+
 def test_all_three_query_handlers_and_read_surfaces_are_wired():
     api = ROOT / "orchestrator" / "orchestrator" / "api"
-    for name, kind in (("chat", "chat"), ("retrieve", "retrieve"), ("ask", "ask")):
+    # per ROUTE, not per file: chat.py holds two receipted routes since REASONING-BOUNDARY-V1 (/chat and /chat/evidence)
+    for name, kind, routes in (("chat", "chat", {"chat", "chat_evidence"}), ("retrieve", "retrieve", {"retrieve"}), ("ask", "ask", {"ask"})):
         src = (api / f"{name}.py").read_text()
         assert f"def _{name}_impl(" in src, f"{name}: handler body not split from the receipt wrapper"
         assert f'record_query_receipt(tx, kind="{kind}"' in src
-        assert src.count(f'record_query_receipt(tx, kind="{kind}"') == 2, "success AND error paths record"
+        assert _receipting_routes(src, kind) == {route: 2 for route in routes}, "success AND error paths record, on every route"
     main = (ROOT / "orchestrator" / "orchestrator" / "main.py").read_text()
     assert "app.include_router(queries_router)" in main
     assert '@router.get("/queries")' in (api / "queries.py").read_text()

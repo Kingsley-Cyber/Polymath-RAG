@@ -39690,7 +39690,7 @@
     },
     {
      "file": "shared/polymath_shared/adapter/evidence_boundary.py",
-     "line": 423,
+     "line": 430,
      "name": "_ROW_KEYS",
      "value": [
       "id",
@@ -39735,7 +39735,7 @@
    "files": [
     "shared/polymath_shared/adapter/evidence_boundary.py"
    ],
-   "hash": "503afaa6e6ffa86f",
+   "hash": "88815189abc32183",
    "importers": [
     "shared/polymath_shared/adapter/dossier.py",
     "shared/polymath_shared/adapter/semantic_view.py",
@@ -39747,7 +39747,7 @@
     "polymath_shared.code.scope.ECHO_KEY",
     "polymath_shared.code.scope.echo_matches"
    ],
-   "lines": 507,
+   "lines": 514,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/shared/polymath_shared/adapter/evidence_boundary.py.md",
@@ -40007,13 +40007,25 @@
     },
     {
      "args": [
-      "outputs"
+      "out",
+      "key"
      ],
-     "doc": "row id -> index of the NEWEST retrieval pass that returned it (0 = the first pass). `outputs` = step outputs in run order",
-     "end": 364,
+     "doc": "The rows a step output holds under `key`; () when it holds anything else (a count, a string, a dict). A harness may",
+     "end": 351,
      "file": "shared/polymath_shared/adapter/evidence_boundary.py",
      "kind": "def",
      "line": 347,
+     "name": "_row_list"
+    },
+    {
+     "args": [
+      "outputs"
+     ],
+     "doc": "row id -> index of the NEWEST retrieval pass that returned it (0 = the first pass). `outputs` = step outputs in run order",
+     "end": 371,
+     "file": "shared/polymath_shared/adapter/evidence_boundary.py",
+     "kind": "def",
+     "line": 354,
      "name": "knowledge_passes"
     },
     {
@@ -40024,10 +40036,10 @@
       "share"
      ],
      "doc": "`take` items of `bucket` (already in its baseline order). Up to ceil(take x share) slots go to items of a LATER pass, newest",
-     "end": 379,
+     "end": 386,
      "file": "shared/polymath_shared/adapter/evidence_boundary.py",
      "kind": "def",
-     "line": 367,
+     "line": 374,
      "name": "reserve_recent"
     },
     {
@@ -40035,10 +40047,10 @@
       "step_outputs"
      ],
      "doc": "id -> the stored row. Knowledge rows come from `rows` / `graph_rows`; field evidence is rebuilt from a Trail admission",
-     "end": 420,
+     "end": 427,
      "file": "shared/polymath_shared/adapter/evidence_boundary.py",
      "kind": "def",
-     "line": 382,
+     "line": 389,
      "name": "_index_rows"
     },
     {
@@ -40047,10 +40059,10 @@
       "max_chars"
      ],
      "doc": "",
-     "end": 434,
+     "end": 441,
      "file": "shared/polymath_shared/adapter/evidence_boundary.py",
      "kind": "def",
-     "line": 428,
+     "line": 435,
      "name": "_readable"
     },
     {
@@ -40058,10 +40070,10 @@
       "entry"
      ],
      "doc": "",
-     "end": 451,
+     "end": 458,
      "file": "shared/polymath_shared/adapter/evidence_boundary.py",
      "kind": "def",
-     "line": 437,
+     "line": 444,
      "name": "_receipt_view"
     },
     {
@@ -40072,10 +40084,10 @@
       "max_chars"
      ],
      "doc": "READABLE evidence for exactly the ids in an issued step's `context.evidence_refs`.",
-     "end": 506,
+     "end": 513,
      "file": "shared/polymath_shared/adapter/evidence_boundary.py",
      "kind": "def",
-     "line": 454,
+     "line": 461,
      "name": "hydrate"
     }
    ]
@@ -84271,7 +84283,7 @@
     }
    ],
    "file": "shared/polymath_shared/adapter/evidence_boundary.py",
-   "line": 423,
+   "line": 430,
    "name": "_ROW_KEYS",
    "slug": "_ROW_KEYS",
    "values": [

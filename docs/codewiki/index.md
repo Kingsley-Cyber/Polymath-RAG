@@ -7,7 +7,7 @@ live code (CI runs it); `scripts/codewiki/pages.py refresh` regenerates what cha
 
 ## dashboard
 - units: 256 · pages ok 256 · partial 0 (some VERIFY lines or anchors dropped) · not generated 0
-- provenance on unit pages: DERIVED 7570 · INFERRED 572
+- provenance on unit pages: DERIVED 7523 · INFERRED 570
 - flows: 8 · invariants: 1858 · vocabularies: 60 · routes: 94 · flags: 157 · tables: 79
 - partial pages: none
 
