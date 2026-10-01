@@ -40,6 +40,11 @@ def _server(monkeypatch, key=KEY):
     async def fake_orch(method, path, **kw):
         if path == "/corpora":
             return {"corpora": [{"corpus_id": "cinema", "query_ready": True}]}
+        if path == "/chat/evidence":               # MCP-RETRIEVAL-MODES-V1: polymath_search rides the app's evidence route
+            if kw["json"]["corpus_id"] != "cinema":
+                return {"error": "unknown corpus", "status": 404}
+            return {"evidence_packet": {"evidence": []}, "meta": {"mode": kw["json"]["mode"]}, "graph_facts": [],
+                    "evidence_rows": [{"id": "ev_1", "kind": "chunk", "text": "a row"}], "evidence_contract": "retrieve-evidence-rows-v1"}
         if path == "/retrieve":
             if kw["json"]["corpus_id"] != "cinema":
                 return {"error": "unknown corpus", "status": 404}

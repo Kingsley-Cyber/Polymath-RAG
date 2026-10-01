@@ -4534,7 +4534,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 _phase_ms["total"] = round((time.perf_counter() - t0) * 1000, 1)
                 yield _sse("answer", {
                     "kind": "evidence",
-                    "result": {"evidence_packet": _packet, "synthesis_performed": False},
+                    # MCP-RETRIEVAL-MODES-V1: the turn's graph facts ride beside the packet (GRAPH, or a HYBRID graph assist),
+                    # so an agent's search / explore sees what GRAPH found and /chat/evidence can attest them as rows
+                    "result": {"evidence_packet": _packet, "synthesis_performed": False, "graph_facts": graph_facts[:40]},
                     "retrieval": retrieval,
                     "latency_ms": _phase_ms["total"],
                 })

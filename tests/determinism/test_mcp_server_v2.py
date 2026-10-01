@@ -62,9 +62,11 @@ def test_workflow_tools_exist_and_query_requires_scope(monkeypatch):
         assert r.status_code == 200
         tools = {t["name"]: t for t in _tools(r)}
     for name in ("list_corpora", "list_documents", "upload_document", "upload_text",
-                 "document_status", "corpus_status", "retrieve", "ask"):
+                 "document_status", "corpus_status", "polymath_search", "polymath_explore", "polymath_answer",
+                 "polymath_compare", "polymath_deep_research", "polymath_models"):
         assert name in tools, name
-    for name in ("ask", "retrieve"):
+    assert not {"retrieve", "ask", "compile_plan", "retrieve_evidence"} & set(tools)    # MCP-RETRIEVAL-MODES-V1: not offered
+    for name in ("polymath_search", "polymath_explore", "polymath_answer", "polymath_compare", "polymath_deep_research"):
         assert "corpus_id" in (tools[name]["inputSchema"].get("required") or []), name
     assert "corpus_id" in (tools["upload_document"]["inputSchema"].get("required") or [])
     assert "path" in (tools["upload_document"]["inputSchema"].get("required") or [])

@@ -7,12 +7,21 @@ Two MCP servers share one canonical tool surface (REASONING-BOUNDARY-V1):
   (Bearer key; `/health` open). **Hermes uses Server A** (`http://127.0.0.1:8930/mcp`); it is also the public
   `mcp.kingsleylab.xyz`.
 
-Canonical query tools (prefer these): **polymath_search** (q0-only evidence rows), **polymath_explore**
-(full planning + Corpus Explore → EvidencePacket, NO answer — you reason over it yourself), **polymath_answer**
-(Polymath writes the grounded answer; humans/UI). Submit the ORIGINAL question — do NOT pre-decompose it;
-Polymath owns retrieval planning. DEPRECATED, kept working for existing callers: Server B `polymath_query` /
-`polymath_retrieve`; Server A `ask` / `retrieve` / `compile_plan` / `retrieve_evidence`. Agent work never goes through
-an answer tool (`polymath_answer`, `ask`, `polymath_query`) — that nests a second synthesis under the agent's own.
+Canonical query tools (prefer these; MCP-RETRIEVAL-MODES-V1, 2026-10-01 — both servers build them from ONE module,
+`shared/polymath_shared/mcp_retrieval.py`): **polymath_search** (one direct search in the chosen mode → contract evidence
+rows; the app's evidence route with planning off), **polymath_explore** (full planning + Corpus Explore → EvidencePacket,
+NO answer — you reason over it yourself), **polymath_answer** (Polymath writes the grounded answer, with a reasoning style
+and a model; humans/UI), **polymath_compare** (one question through several modes side by side), **polymath_deep_research**
+(the app's deep research: quick / standard / thorough → a cited report; minutes; scope `knowledge.research` for a
+friend), **polymath_models** (the ids `model` may name). Every query tool takes `mode` = the app's five public modes:
+FAST (dense vectors, quickest), HYBRID (FAST + keywords; the default), GRAPH (HYBRID + the knowledge graph; graph facts
+come back), WILDCARD (the evidence + a separate lane of surprising, source-grounded passages), GNN (experimental
+graph-neural routing). One library (`corpus_id`) per call. Submit the ORIGINAL question — do NOT pre-decompose it;
+Polymath owns retrieval planning. DEPRECATED, still callable for existing callers but NO LONGER LISTED (an agent is never
+offered them): Server B `polymath_query` / `polymath_retrieve`; Server A `ask` / `retrieve` / `compile_plan` /
+`retrieve_evidence` (`polymath_search` used to reach `/retrieve`'s frozen LEGACY lane path because it sent no mode). Agent
+work never goes through an answer tool (`polymath_answer`, `ask`, `polymath_query`) — that nests a second synthesis under
+the agent's own.
 Plus corpus ops: list_corpora, list_documents, upload_file, upload_text, readiness, delete_corpus,
 delete_document (Server A also: capabilities). Both servers serve the seven cognitive-adapter tools
 `adapter_list / adapter_start / adapter_next / adapter_submit / adapter_status / adapter_result / adapter_cancel`

@@ -135,7 +135,7 @@
   ],
   "POLYMATH_API": [
    {
-    "at": "mcp_server/polymath_mcp.py:52",
+    "at": "mcp_server/polymath_mcp.py:53",
     "default": "'http://127.0.0.1:7200'"
    }
   ],
@@ -501,7 +501,7 @@
   ],
   "POLYMATH_CORPUS_EXPLORER": [
    {
-    "at": "orchestrator/orchestrator/api/capabilities.py:74",
+    "at": "orchestrator/orchestrator/api/capabilities.py:78",
     "default": "'0'"
    },
    {
@@ -797,31 +797,31 @@
   ],
   "POLYMATH_MCP_API_KEY": [
    {
-    "at": "mcp_server/polymath_mcp.py:440",
+    "at": "mcp_server/polymath_mcp.py:506",
     "default": "''"
    },
    {
-    "at": "mcp_server/polymath_mcp.py:475",
+    "at": "mcp_server/polymath_mcp.py:541",
     "default": "''"
    },
    {
-    "at": "orchestrator/orchestrator/api/web_settings.py:213",
+    "at": "orchestrator/orchestrator/api/web_settings.py:215",
     "default": null
    },
    {
-    "at": "orchestrator/orchestrator/mcp_server.py:60",
+    "at": "orchestrator/orchestrator/mcp_server.py:67",
     "default": "''"
    }
   ],
   "POLYMATH_MCP_PORT": [
    {
-    "at": "orchestrator/orchestrator/mcp_server.py:59",
+    "at": "orchestrator/orchestrator/mcp_server.py:66",
     "default": "'8930'"
    }
   ],
   "POLYMATH_MCP_PRINCIPALS_FILE": [
    {
-    "at": "orchestrator/orchestrator/mcp_principals.py:266",
+    "at": "orchestrator/orchestrator/mcp_principals.py:271",
     "default": "''"
    },
    {
@@ -831,7 +831,7 @@
   ],
   "POLYMATH_MCP_PUBLIC_HOST": [
    {
-    "at": "orchestrator/orchestrator/mcp_server.py:61",
+    "at": "orchestrator/orchestrator/mcp_server.py:68",
     "default": "'mcp.kingsleylab.xyz'"
    }
   ],
@@ -855,7 +855,7 @@
   ],
   "POLYMATH_ORCH_URL": [
    {
-    "at": "orchestrator/orchestrator/mcp_server.py:58",
+    "at": "orchestrator/orchestrator/mcp_server.py:65",
     "default": "'http://127.0.0.1:7200'"
    },
    {
@@ -1474,7 +1474,7 @@
    "class": "owner",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "list_friends",
-   "line": 250,
+   "line": 252,
    "method": "GET",
    "path": "/admin/friends",
    "ui": []
@@ -1483,7 +1483,7 @@
    "class": "owner",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "add_friend",
-   "line": 257,
+   "line": 259,
    "method": "POST",
    "path": "/admin/friends",
    "ui": []
@@ -1492,7 +1492,7 @@
    "class": "owner",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "friend_keys",
-   "line": 321,
+   "line": 323,
    "method": "GET",
    "path": "/admin/friends/{username}/keys",
    "ui": []
@@ -1501,7 +1501,7 @@
    "class": "owner",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "revoke_friend_key",
-   "line": 327,
+   "line": 329,
    "method": "DELETE",
    "path": "/admin/friends/{username}/keys/{key_id}",
    "ui": []
@@ -1510,7 +1510,7 @@
    "class": "owner",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "set_libraries",
-   "line": 289,
+   "line": 291,
    "method": "PUT",
    "path": "/admin/friends/{username}/libraries",
    "ui": []
@@ -1519,7 +1519,7 @@
    "class": "owner",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "friend_action",
-   "line": 273,
+   "line": 275,
    "method": "POST",
    "path": "/admin/friends/{username}/{action}",
    "ui": []
@@ -1601,7 +1601,7 @@
    "class": "user",
    "file": "orchestrator/orchestrator/api/capabilities.py",
    "handler": "capabilities",
-   "line": 84,
+   "line": 91,
    "method": "GET",
    "path": "/capabilities",
    "ui": []
@@ -1619,7 +1619,7 @@
    "class": "user",
    "file": "orchestrator/orchestrator/api/chat.py",
    "handler": "chat_evidence",
-   "line": 222,
+   "line": 254,
    "method": "POST",
    "path": "/chat/evidence",
    "ui": []
@@ -1628,7 +1628,7 @@
    "class": "user",
    "file": "orchestrator/orchestrator/api/ui.py",
    "handler": "chat_stream",
-   "line": 4758,
+   "line": 4760,
    "method": "POST",
    "path": "/chat/stream",
    "ui": []
@@ -1790,7 +1790,7 @@
    "class": "owner",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "get_invite",
-   "line": 305,
+   "line": 307,
    "method": "GET",
    "path": "/friends/invite",
    "ui": []
@@ -1799,7 +1799,7 @@
    "class": "owner",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "rotate_invite",
-   "line": 312,
+   "line": 314,
    "method": "POST",
    "path": "/friends/invite/rotate",
    "ui": []
@@ -1907,7 +1907,7 @@
    "class": "user",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "my_keys",
-   "line": 150,
+   "line": 152,
    "method": "GET",
    "path": "/keys",
    "ui": [
@@ -1918,7 +1918,7 @@
    "class": "user",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "create_my_key",
-   "line": 161,
+   "line": 163,
    "method": "POST",
    "path": "/keys",
    "ui": [
@@ -1929,7 +1929,7 @@
    "class": "owner",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "owner_key_for_copy",
-   "line": 205,
+   "line": 207,
    "method": "GET",
    "path": "/keys/owner",
    "ui": [
@@ -1940,7 +1940,7 @@
    "class": "user",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "prompt_template",
-   "line": 187,
+   "line": 189,
    "method": "GET",
    "path": "/keys/prompt",
    "ui": [
@@ -1951,7 +1951,7 @@
    "class": "user",
    "file": "orchestrator/orchestrator/api/web_settings.py",
    "handler": "revoke_my_key",
-   "line": 176,
+   "line": 178,
    "method": "DELETE",
    "path": "/keys/{key_id}",
    "ui": []
@@ -2918,7 +2918,7 @@
     "orchestrator/orchestrator/api/ui.py:147",
     "orchestrator/orchestrator/api/ui.py:1475",
     "orchestrator/orchestrator/api/ui.py:323",
-    "orchestrator/orchestrator/api/web_settings.py:228",
+    "orchestrator/orchestrator/api/web_settings.py:230",
     "shared/polymath_shared/query_scope.py:83",
     "shared/polymath_shared/query_scope.py:91",
     "workers/workers/canonicalize_worker.py:66",
@@ -4369,7 +4369,7 @@
     "control/control/tickets.py:625",
     "control/control/tickets.py:736",
     "control/control/tickets.py:805",
-    "orchestrator/orchestrator/api/capabilities.py:64",
+    "orchestrator/orchestrator/api/capabilities.py:68",
     "orchestrator/orchestrator/api/fast.py:274",
     "orchestrator/orchestrator/api/intake.py:100",
     "orchestrator/orchestrator/api/intake.py:54",
@@ -20385,18 +20385,63 @@
    "collections": [
     {
      "file": "mcp_server/polymath_mcp.py",
-     "line": 61,
-     "name": "polymath_search"
+     "line": 197,
+     "name": "polymath_answer"
     },
     {
      "file": "mcp_server/polymath_mcp.py",
-     "line": 61,
+     "line": 197,
+     "name": "polymath_deep_research"
+    },
+    {
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 113,
      "name": "polymath_explore"
     },
     {
      "file": "mcp_server/polymath_mcp.py",
-     "line": 61,
+     "line": 69,
+     "name": "polymath_search"
+    },
+    {
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 69,
+     "name": "polymath_explore"
+    },
+    {
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 69,
      "name": "polymath_answer"
+    },
+    {
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 69,
+     "name": "polymath_compare"
+    },
+    {
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 69,
+     "name": "polymath_deep_research"
+    },
+    {
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 173,
+     "name": "polymath_models"
+    },
+    {
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 143,
+     "name": "polymath_models"
+    },
+    {
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 139,
+     "name": "polymath_search"
+    },
+    {
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 139,
+     "name": "polymath_explore"
     }
    ],
    "constants": [],
@@ -20405,19 +20450,19 @@
     {
      "default": "'http://127.0.0.1:7200'",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 52,
+     "line": 53,
      "name": "POLYMATH_API"
     },
     {
      "default": "''",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 440,
+     "line": 506,
      "name": "POLYMATH_MCP_API_KEY"
     },
     {
      "default": "''",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 475,
+     "line": 541,
      "name": "POLYMATH_MCP_API_KEY"
     }
    ],
@@ -20425,175 +20470,201 @@
     {
      "does": "SWALLOWED: return {'error': r.text[:400]}",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 86,
+     "line": 97,
      "type": "Exception"
     },
     {
      "does": "SWALLOWED: return {'error': r.text[:400]}",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 242,
+     "line": 308,
      "type": "Exception"
     },
     {
      "does": "handled: assign",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 270,
+     "line": 336,
+     "type": "Exception"
+    },
+    {
+     "does": "handled: assign",
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 189,
      "type": "Exception"
     }
    ],
    "files": [
     "mcp_server/polymath_mcp.py"
    ],
-   "hash": "5b05ec1a3573dda5",
+   "hash": "c388e8b09d1eef1b",
    "importers": [],
    "imports": [
+    "polymath_shared",
     "polymath_shared.adapter",
-    "polymath_shared.adapter.harness_guide"
+    "polymath_shared.adapter.harness_guide",
+    "polymath_shared.mcp_retrieval"
    ],
-   "lines": 494,
+   "lines": 560,
    "mcp_tools": [
     {
      "doc": "List the user's knowledge corpora with document counts and",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 92,
+     "line": 103,
      "name": "polymath_list_corpora"
     },
     {
-     "doc": "Lightweight EVIDENCE retrieval for one corpus \u2014 q0-only, no planning, no Corpus Explore, no answer.",
+     "doc": "",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 99,
+     "line": 117,
      "name": "polymath_search"
     },
     {
-     "doc": "Full Polymath retrieval PLANNING + grounded query expansion (+ optional Corpus Explore) returning a",
+     "doc": "",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 109,
+     "line": 130,
      "name": "polymath_explore"
     },
     {
-     "doc": "Have POLYMATH write a grounded, cited answer (its OWN synthesis) \u2014 for humans/UI, or when you",
+     "doc": "",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 123,
+     "line": 145,
      "name": "polymath_answer"
+    },
+    {
+     "doc": "",
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 162,
+     "name": "polymath_compare"
+    },
+    {
+     "doc": "",
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 175,
+     "name": "polymath_deep_research"
+    },
+    {
+     "doc": "",
+     "file": "mcp_server/polymath_mcp.py",
+     "line": 199,
+     "name": "polymath_models"
     },
     {
      "doc": "DEPRECATED \u2014 use polymath_answer (identical behaviour: Polymath's own grounded answer) or, for",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 141,
+     "line": 207,
      "name": "polymath_query"
     },
     {
      "doc": "DEPRECATED \u2014 use polymath_search (contract evidence rows) or polymath_explore (full planning +",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 163,
+     "line": 229,
      "name": "polymath_retrieve"
     },
     {
      "doc": "List documents (name, size, chunk count) and recent ingestion",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 180,
+     "line": 246,
      "name": "polymath_list_documents"
     },
     {
      "doc": "Ingest a local file (md/txt/html/pdf/epub/docx) into a corpus",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 187,
+     "line": 253,
      "name": "polymath_upload_file"
     },
     {
      "doc": "Ingest raw text/markdown content into a corpus.",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 207,
+     "line": 273,
      "name": "polymath_upload_text"
     },
     {
      "doc": "Semantic-completion verdict for a corpus: SEMANTIC_COMPLETE /",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 225,
+     "line": 291,
      "name": "polymath_readiness"
     },
     {
      "doc": "DESTRUCTIVE: delete a corpus and everything derived from it",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 233,
+     "line": 299,
      "name": "polymath_delete_corpus"
     },
     {
      "doc": "Delete ONE document from its corpus everywhere (vectors, graph,",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 248,
+     "line": 314,
      "name": "polymath_delete_document"
     },
     {
      "doc": "COGNITIVE-ADAPTER-V1: the admitted adapters (id, versions, description, input_schema, step counts, which",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 277,
+     "line": 343,
      "name": "adapter_list"
     },
     {
      "doc": "Start ONE durable adapter run (AdapterRunRefV1). `input` must satisfy the adapter's input_schema (adapter_list): at",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 286,
+     "line": 352,
      "name": "adapter_start"
     },
     {
      "doc": "What the run needs from you now: {kind:\"step\", step: AdapterStepV1} when a step awaits you \u2014 an AGENT_REASON",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 297,
+     "line": 363,
      "name": "adapter_next"
     },
     {
      "doc": "Submit your answer for the awaiting step. AGENT_REASON: kind=\"reasoning\" (default) \u2014 validated against the step's",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 312,
+     "line": 378,
      "name": "adapter_submit"
     },
     {
      "doc": "AdapterRunStatusV1 for a run (status, current step, counters, typed failure/gap).",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 328,
+     "line": 394,
      "name": "adapter_status"
     },
     {
      "doc": "AdapterResultV1 of a TERMINAL run: the domain output plus lineage (Polymath evidence ids, step receipt",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 334,
+     "line": 400,
      "name": "adapter_result"
     },
     {
      "doc": "Cancel a run (terminal, idempotent; accepted work is kept). Returns AdapterRunStatusV1.",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 342,
+     "line": 408,
      "name": "adapter_cancel"
     },
     {
      "doc": "Polymath reads the web FOR you at a HARNESS_ACTION step, for a harness with no browser or web tools of its own (owner key",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 349,
+     "line": 415,
      "name": "research_acquire"
     },
     {
      "doc": "READ-ONLY supplier search (owner key only: it spends the owner's CJ account and quota). source=\"cj\" searches CJ",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 372,
+     "line": 438,
      "name": "supplier_search"
     },
     {
      "doc": "READ-ONLY CJ product details (owner key only): the product (title, SKU, URL, images, weight in grams, category, sell price",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 384,
+     "line": 450,
      "name": "supplier_product"
     },
     {
      "doc": "READ-ONLY CJ freight quote (owner key only): the shipping options for `quantity` units of one variant from `from_country`",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 393,
+     "line": 459,
      "name": "supplier_freight"
     },
     {
      "doc": "READ-ONLY list of CJ's warehouses (owner key only): id, name, country and whether it is in use. Their country codes are",
      "file": "mcp_server/polymath_mcp.py",
-     "line": 402,
+     "line": 468,
      "name": "supplier_warehouses"
     }
    ],
@@ -20602,43 +20673,55 @@
      "call": "httpx.get",
      "file": "mcp_server/polymath_mcp.py",
      "kind": "network",
-     "line": 76
+     "line": 87
     },
     {
      "call": "httpx.post",
      "file": "mcp_server/polymath_mcp.py",
      "kind": "network",
-     "line": 82
+     "line": 93
     },
     {
      "call": "httpx.post",
      "file": "mcp_server/polymath_mcp.py",
      "kind": "network",
-     "line": 213
+     "line": 279
     },
     {
      "call": "httpx.delete",
      "file": "mcp_server/polymath_mcp.py",
      "kind": "network",
-     "line": 237
+     "line": 303
     },
     {
      "call": "httpx.delete",
      "file": "mcp_server/polymath_mcp.py",
      "kind": "network",
-     "line": 252
+     "line": 318
     },
     {
      "call": "httpx.request",
      "file": "mcp_server/polymath_mcp.py",
      "kind": "network",
-     "line": 266
+     "line": 332
+    },
+    {
+     "call": "httpx.stream",
+     "file": "mcp_server/polymath_mcp.py",
+     "kind": "network",
+     "line": 183
     },
     {
      "call": "httpx.post",
      "file": "mcp_server/polymath_mcp.py",
      "kind": "network",
-     "line": 195
+     "line": 261
+    },
+    {
+     "call": "httpx.Timeout",
+     "file": "mcp_server/polymath_mcp.py",
+     "kind": "network",
+     "line": 184
     }
    ],
    "page": "units/mcp_server/polymath_mcp.py.md",
@@ -20648,14 +20731,25 @@
    "sql_writes": [],
    "symbols": [
     {
+     "doc": "MCP-RETRIEVAL-MODES-V1: the deprecated tools stay callable for old callers but are never LISTED.",
+     "end": 59,
+     "file": "mcp_server/polymath_mcp.py",
+     "kind": "class",
+     "line": 55,
+     "methods": [
+      "list_tools"
+     ],
+     "name": "_ListedMCPServer"
+    },
+    {
      "args": [
       "path"
      ],
      "doc": "",
-     "end": 78,
+     "end": 89,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 75,
+     "line": 86,
      "name": "_get"
     },
     {
@@ -20665,32 +20759,33 @@
       "timeout"
      ],
      "doc": "",
-     "end": 88,
+     "end": 99,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 81,
+     "line": 92,
      "name": "_post"
     },
     {
      "args": [],
      "doc": "List the user's knowledge corpora with document counts and",
-     "end": 95,
+     "end": 106,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 92,
+     "line": 103,
      "name": "polymath_list_corpora"
     },
     {
      "args": [
       "query",
       "corpus_id",
+      "mode",
       "max_evidence"
      ],
-     "doc": "Lightweight EVIDENCE retrieval for one corpus \u2014 q0-only, no planning, no Corpus Explore, no answer.",
-     "end": 105,
+     "doc": "",
+     "end": 121,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 99,
+     "line": 117,
      "name": "polymath_search"
     },
     {
@@ -20700,11 +20795,11 @@
       "corpus_explorer",
       "mode"
      ],
-     "doc": "Full Polymath retrieval PLANNING + grounded query expansion (+ optional Corpus Explore) returning a",
-     "end": 119,
+     "doc": "",
+     "end": 135,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 109,
+     "line": 130,
      "name": "polymath_explore"
     },
     {
@@ -20712,14 +20807,53 @@
       "question",
       "corpus_id",
       "mode",
+      "reasoning",
+      "model",
       "latent"
      ],
-     "doc": "Have POLYMATH write a grounded, cited answer (its OWN synthesis) \u2014 for humans/UI, or when you",
-     "end": 137,
+     "doc": "",
+     "end": 155,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 123,
+     "line": 145,
      "name": "polymath_answer"
+    },
+    {
+     "args": [
+      "question",
+      "corpus_id",
+      "modes"
+     ],
+     "doc": "",
+     "end": 167,
+     "file": "mcp_server/polymath_mcp.py",
+     "kind": "def",
+     "line": 162,
+     "name": "polymath_compare"
+    },
+    {
+     "args": [
+      "question",
+      "corpus_id",
+      "depth",
+      "mode",
+      "model"
+     ],
+     "doc": "",
+     "end": 194,
+     "file": "mcp_server/polymath_mcp.py",
+     "kind": "def",
+     "line": 175,
+     "name": "polymath_deep_research"
+    },
+    {
+     "args": [],
+     "doc": "",
+     "end": 203,
+     "file": "mcp_server/polymath_mcp.py",
+     "kind": "def",
+     "line": 199,
+     "name": "polymath_models"
     },
     {
      "args": [
@@ -20729,10 +20863,10 @@
       "latent"
      ],
      "doc": "DEPRECATED \u2014 use polymath_answer (identical behaviour: Polymath's own grounded answer) or, for",
-     "end": 159,
+     "end": 225,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 141,
+     "line": 207,
      "name": "polymath_query"
     },
     {
@@ -20743,10 +20877,10 @@
       "latent"
      ],
      "doc": "DEPRECATED \u2014 use polymath_search (contract evidence rows) or polymath_explore (full planning +",
-     "end": 176,
+     "end": 242,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 163,
+     "line": 229,
      "name": "polymath_retrieve"
     },
     {
@@ -20754,10 +20888,10 @@
       "corpus_id"
      ],
      "doc": "List documents (name, size, chunk count) and recent ingestion",
-     "end": 183,
+     "end": 249,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 180,
+     "line": 246,
      "name": "polymath_list_documents"
     },
     {
@@ -20766,10 +20900,10 @@
       "corpus_id"
      ],
      "doc": "Ingest a local file (md/txt/html/pdf/epub/docx) into a corpus",
-     "end": 203,
+     "end": 269,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 187,
+     "line": 253,
      "name": "polymath_upload_file"
     },
     {
@@ -20779,10 +20913,10 @@
       "source_name"
      ],
      "doc": "Ingest raw text/markdown content into a corpus.",
-     "end": 221,
+     "end": 287,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 207,
+     "line": 273,
      "name": "polymath_upload_text"
     },
     {
@@ -20790,10 +20924,10 @@
       "corpus_id"
      ],
      "doc": "Semantic-completion verdict for a corpus: SEMANTIC_COMPLETE /",
-     "end": 229,
+     "end": 295,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 225,
+     "line": 291,
      "name": "polymath_readiness"
     },
     {
@@ -20802,10 +20936,10 @@
       "confirm"
      ],
      "doc": "DESTRUCTIVE: delete a corpus and everything derived from it",
-     "end": 244,
+     "end": 310,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 233,
+     "line": 299,
      "name": "polymath_delete_corpus"
     },
     {
@@ -20814,10 +20948,10 @@
       "confirm"
      ],
      "doc": "Delete ONE document from its corpus everywhere (vectors, graph,",
-     "end": 255,
+     "end": 321,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 248,
+     "line": 314,
      "name": "polymath_delete_document"
     },
     {
@@ -20827,19 +20961,19 @@
       "payload"
      ],
      "doc": "Server A's `_orch` error mapping: a 4xx/5xx becomes {\"error\": detail, \"status\": code} so the agent",
-     "end": 273,
+     "end": 339,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 263,
+     "line": 329,
      "name": "_adapter"
     },
     {
      "args": [],
      "doc": "COGNITIVE-ADAPTER-V1: the admitted adapters (id, versions, description, input_schema, step counts, which",
-     "end": 282,
+     "end": 348,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 277,
+     "line": 343,
      "name": "adapter_list"
     },
     {
@@ -20849,10 +20983,10 @@
       "request_options"
      ],
      "doc": "Start ONE durable adapter run (AdapterRunRefV1). `input` must satisfy the adapter's input_schema (adapter_list): at",
-     "end": 293,
+     "end": 359,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 286,
+     "line": 352,
      "name": "adapter_start"
     },
     {
@@ -20860,10 +20994,10 @@
       "run_id"
      ],
      "doc": "What the run needs from you now: {kind:\"step\", step: AdapterStepV1} when a step awaits you \u2014 an AGENT_REASON",
-     "end": 308,
+     "end": 374,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 297,
+     "line": 363,
      "name": "adapter_next"
     },
     {
@@ -20876,10 +21010,10 @@
       "kind"
      ],
      "doc": "Submit your answer for the awaiting step. AGENT_REASON: kind=\"reasoning\" (default) \u2014 validated against the step's",
-     "end": 324,
+     "end": 390,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 312,
+     "line": 378,
      "name": "adapter_submit"
     },
     {
@@ -20887,10 +21021,10 @@
       "run_id"
      ],
      "doc": "AdapterRunStatusV1 for a run (status, current step, counters, typed failure/gap).",
-     "end": 330,
+     "end": 396,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 328,
+     "line": 394,
      "name": "adapter_status"
     },
     {
@@ -20898,10 +21032,10 @@
       "run_id"
      ],
      "doc": "AdapterResultV1 of a TERMINAL run: the domain output plus lineage (Polymath evidence ids, step receipt",
-     "end": 338,
+     "end": 404,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 334,
+     "line": 400,
      "name": "adapter_result"
     },
     {
@@ -20909,10 +21043,10 @@
       "run_id"
      ],
      "doc": "Cancel a run (terminal, idempotent; accepted work is kept). Returns AdapterRunStatusV1.",
-     "end": 344,
+     "end": 410,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 342,
+     "line": 408,
      "name": "adapter_cancel"
     },
     {
@@ -20925,10 +21059,10 @@
       "limit"
      ],
      "doc": "Polymath reads the web FOR you at a HARNESS_ACTION step, for a harness with no browser or web tools of its own (owner key",
-     "end": 366,
+     "end": 432,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 349,
+     "line": 415,
      "name": "research_acquire"
     },
     {
@@ -20938,10 +21072,10 @@
       "limit"
      ],
      "doc": "READ-ONLY supplier search (owner key only: it spends the owner's CJ account and quota). source=\"cj\" searches CJ",
-     "end": 380,
+     "end": 446,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 372,
+     "line": 438,
      "name": "supplier_search"
     },
     {
@@ -20949,10 +21083,10 @@
       "product_id"
      ],
      "doc": "READ-ONLY CJ product details (owner key only): the product (title, SKU, URL, images, weight in grams, category, sell price",
-     "end": 389,
+     "end": 455,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 384,
+     "line": 450,
      "name": "supplier_product"
     },
     {
@@ -20963,28 +21097,28 @@
       "from_country"
      ],
      "doc": "READ-ONLY CJ freight quote (owner key only): the shipping options for `quantity` units of one variant from `from_country`",
-     "end": 398,
+     "end": 464,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 393,
+     "line": 459,
      "name": "supplier_freight"
     },
     {
      "args": [],
      "doc": "READ-ONLY list of CJ's warehouses (owner key only): id, name, country and whether it is in use. Their country codes are",
-     "end": 405,
+     "end": 471,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 402,
+     "line": 468,
      "name": "supplier_warehouses"
     },
     {
      "args": [],
      "doc": "",
-     "end": 415,
+     "end": 481,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 414,
+     "line": 480,
      "name": "_guide_resources"
     },
     {
@@ -20992,10 +21126,10 @@
       "uri"
      ],
      "doc": "",
-     "end": 421,
+     "end": 487,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 418,
+     "line": 484,
      "name": "_guide_reader"
     },
     {
@@ -21004,10 +21138,10 @@
       "seed"
      ],
      "doc": "The operating guide, then where to begin (optionally a given adapter and seed).",
-     "end": 431,
+     "end": 497,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 429,
+     "line": 495,
      "name": "run_governed_research"
     },
     {
@@ -21015,19 +21149,19 @@
       "app"
      ],
      "doc": "MCP-CONNECTOR-AUTH-V1: fixed API key in request headers, the",
-     "end": 458,
+     "end": 524,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 434,
+     "line": 500,
      "name": "_auth_wrapped"
     },
     {
      "args": [],
      "doc": "",
-     "end": 489,
+     "end": 555,
      "file": "mcp_server/polymath_mcp.py",
      "kind": "def",
-     "line": 461,
+     "line": 527,
      "name": "main"
     }
    ]
@@ -21436,18 +21570,33 @@
    "collections": [
     {
      "file": "orchestrator/orchestrator/api/capabilities.py",
-     "line": 42,
+     "line": 45,
      "name": "polymath_search"
     },
     {
      "file": "orchestrator/orchestrator/api/capabilities.py",
-     "line": 42,
+     "line": 45,
      "name": "polymath_explore"
     },
     {
      "file": "orchestrator/orchestrator/api/capabilities.py",
-     "line": 42,
+     "line": 45,
      "name": "polymath_answer"
+    },
+    {
+     "file": "orchestrator/orchestrator/api/capabilities.py",
+     "line": 45,
+     "name": "polymath_compare"
+    },
+    {
+     "file": "orchestrator/orchestrator/api/capabilities.py",
+     "line": 46,
+     "name": "polymath_deep_research"
+    },
+    {
+     "file": "orchestrator/orchestrator/api/capabilities.py",
+     "line": 46,
+     "name": "polymath_models"
     }
    ],
    "constants": [
@@ -21482,6 +21631,9 @@
       "/capabilities",
       "/chat",
       "/chat/evidence",
+      "/compare",
+      "/research/deep",
+      "/synthesizers",
       "/ask",
       "/adapter/list",
       "/adapter/start",
@@ -21494,7 +21646,7 @@
     },
     {
      "file": "orchestrator/orchestrator/api/capabilities.py",
-     "line": 41,
+     "line": 42,
      "name": "ADAPTER_MCP_TOOLS",
      "value": [
       "adapter_list",
@@ -21505,6 +21657,17 @@
       "adapter_result",
       "adapter_cancel"
      ]
+    },
+    {
+     "file": "orchestrator/orchestrator/api/capabilities.py",
+     "line": 47,
+     "name": "MCP_HIDDEN_TOOLS",
+     "value": [
+      "compile_plan",
+      "retrieve_evidence",
+      "retrieve",
+      "ask"
+     ]
     }
    ],
    "doc": "CAPABILITIES-V1 (2026-09-03) \u2014 what this Polymath is, for agents and skills. FLEET-BOARD-V1 \u2014 the control plane's live answer to \"who is doing\nwhat, and how many jobs\" (owner 2026-09-01). QUERY-RECEIPTS-V1 read surface: `GET /queries` \u2014 the last N served queries\n(latency, scope, mode, status ok/abstained/error, citations, error text) plus\nper-mode p50/p95 and abstention/error counts over the window. Backed by the\n`query_receipts` table every /chat, /ask and /retrieve writes to. WILDCARD mode service (DIVERGENT-RETRIEVAL-V1, owner-blessed\n2026-09-01): the answer evidence comes from FAST \u2014 untou",
@@ -21512,7 +21675,7 @@
     {
      "default": "'0'",
      "file": "orchestrator/orchestrator/api/capabilities.py",
-     "line": 74,
+     "line": 78,
      "name": "POLYMATH_CORPUS_EXPLORER"
     }
    ],
@@ -21520,13 +21683,13 @@
     {
      "does": "SWALLOWED: return 'unknown'",
      "file": "orchestrator/orchestrator/api/capabilities.py",
-     "line": 51,
+     "line": 55,
      "type": "Exception"
     },
     {
      "does": "SWALLOWED: pass",
      "file": "orchestrator/orchestrator/api/capabilities.py",
-     "line": 69,
+     "line": 73,
      "type": "Exception"
     }
    ],
@@ -21536,7 +21699,7 @@
     "orchestrator/orchestrator/api/queries.py",
     "orchestrator/orchestrator/api/wildcard.py"
    ],
-   "hash": "42d3cbdd6c582ee7",
+   "hash": "4764c7c84a6d0117",
    "importers": [
     "orchestrator/orchestrator/api/retrieve.py",
     "orchestrator/orchestrator/api/ui.py",
@@ -21545,6 +21708,9 @@
    "imports": [
     "polymath_shared.db",
     "polymath_shared.db.tx",
+    "polymath_shared.mcp_retrieval",
+    "polymath_shared.mcp_retrieval.MODE_GUIDE",
+    "polymath_shared.mcp_retrieval.RETRIEVAL_MODES",
     "polymath_shared.db",
     "polymath_shared.db.tx",
     "polymath_shared.llm_extraction.pool",
@@ -21573,14 +21739,14 @@
     "polymath_shared.settings",
     "polymath_shared.settings.get_settings"
    ],
-   "lines": 300,
+   "lines": 307,
    "mcp_tools": [],
    "nondeterminism": [
     {
      "call": "subprocess.run",
      "file": "orchestrator/orchestrator/api/capabilities.py",
      "kind": "subprocess",
-     "line": 50
+     "line": 54
     },
     {
      "call": "time.time",
@@ -21595,7 +21761,7 @@
     {
      "file": "orchestrator/orchestrator/api/capabilities.py",
      "handler": "capabilities",
-     "line": 84,
+     "line": 91,
      "method": "GET",
      "path": "/capabilities"
     },
@@ -21617,7 +21783,7 @@
    "sql_reads": [
     {
      "file": "orchestrator/orchestrator/api/capabilities.py",
-     "line": 64,
+     "line": 68,
      "table": "runs"
     },
     {
@@ -21656,37 +21822,37 @@
     {
      "args": [],
      "doc": "",
-     "end": 52,
+     "end": 56,
      "file": "orchestrator/orchestrator/api/capabilities.py",
      "kind": "def",
-     "line": 47,
+     "line": 51,
      "name": "_version"
     },
     {
      "args": [],
      "doc": "Contracts that depend on what the stores hold: the field-evidence corpus",
-     "end": 75,
+     "end": 79,
      "file": "orchestrator/orchestrator/api/capabilities.py",
      "kind": "def",
-     "line": 55,
+     "line": 59,
      "name": "_live_contracts"
     },
     {
      "args": [],
      "doc": "",
-     "end": 80,
+     "end": 87,
      "file": "orchestrator/orchestrator/api/capabilities.py",
      "kind": "def",
-     "line": 78,
+     "line": 82,
      "name": "capabilities_payload"
     },
     {
      "args": [],
      "doc": "",
-     "end": 85,
+     "end": 92,
      "file": "orchestrator/orchestrator/api/capabilities.py",
      "kind": "def",
-     "line": 84,
+     "line": 91,
      "name": "capabilities"
     },
     {
@@ -22601,6 +22767,12 @@
      "type": "Exception"
     },
     {
+     "does": "handled: assign, assign",
+     "file": "orchestrator/orchestrator/api/chat.py",
+     "line": 247,
+     "type": "Exception"
+    },
+    {
      "does": "handled: if, raise",
      "file": "orchestrator/orchestrator/api/chat.py",
      "line": 199,
@@ -22609,14 +22781,14 @@
     {
      "does": "handled: if, raise",
      "file": "orchestrator/orchestrator/api/chat.py",
-     "line": 236,
+     "line": 268,
      "type": "Exception"
     }
    ],
    "files": [
     "orchestrator/orchestrator/api/chat.py"
    ],
-   "hash": "8ee6f038e315fee1",
+   "hash": "26d541ed9e5274cd",
    "importers": [
     "orchestrator/orchestrator/main.py"
    ],
@@ -22637,7 +22809,7 @@
     "polymath_shared.retrieval_modes.MODE_HYBRID",
     "polymath_shared.retrieval_modes.validate_mode"
    ],
-   "lines": 248,
+   "lines": 280,
    "mcp_tools": [],
    "nondeterminism": [
     {
@@ -22650,7 +22822,7 @@
      "call": "time.perf_counter",
      "file": "orchestrator/orchestrator/api/chat.py",
      "kind": "clock",
-     "line": 244
+     "line": 276
     }
    ],
    "page": "units/orchestrator/orchestrator/api/chat.py.md",
@@ -22666,7 +22838,7 @@
     {
      "file": "orchestrator/orchestrator/api/chat.py",
      "handler": "chat_evidence",
-     "line": 222,
+     "line": 254,
      "method": "POST",
      "path": "/chat/evidence"
     }
@@ -22747,7 +22919,7 @@
       "receipt"
      ],
      "doc": "/chat/evidence body: the SAME runtime turn, forced evidence-only \u2014 the pipeline short-circuits",
-     "end": 218,
+     "end": 221,
      "file": "orchestrator/orchestrator/api/chat.py",
      "kind": "def",
      "line": 213,
@@ -22755,14 +22927,26 @@
     },
     {
      "args": [
+      "out",
+      "req"
+     ],
+     "doc": "MCP-RETRIEVAL-MODES-V1: `/chat/evidence` with `evidence: true` also returns the packet's evidence as RETRIEVE-",
+     "end": 250,
+     "file": "orchestrator/orchestrator/api/chat.py",
+     "kind": "def",
+     "line": 224,
+     "name": "attach_packet_rows"
+    },
+    {
+     "args": [
       "req",
       "request"
      ],
      "doc": "REASONING-BOUNDARY-V1 \u2014 the evidence boundary. Runs the FULL retrieval/planning pipeline (compiler",
-     "end": 247,
+     "end": 279,
      "file": "orchestrator/orchestrator/api/chat.py",
      "kind": "def",
-     "line": 222,
+     "line": 254,
      "name": "chat_evidence"
     }
    ]
@@ -27224,7 +27408,7 @@
     },
     {
      "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 4769,
+     "line": 4771,
      "name": "_ERROR_STATUS",
      "value": {
       "litellm_error": 502,
@@ -27733,7 +27917,7 @@
     {
      "does": "handled: expr, expr",
      "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 4748,
+     "line": 4750,
      "type": "Exception"
     },
     {
@@ -27811,7 +27995,7 @@
     {
      "does": "SWALLOWED: continue",
      "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 4815,
+     "line": 4817,
      "type": "Exception"
     },
     {
@@ -27823,14 +28007,14 @@
     {
      "does": "handled: assign",
      "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 4617,
+     "line": 4619,
      "type": "Exception"
     }
    ],
    "files": [
     "orchestrator/orchestrator/api/ui.py"
    ],
-   "hash": "5ca683ca515c1977",
+   "hash": "8792df00bfcd2c4c",
    "importers": [
     "orchestrator/orchestrator/api/chat.py",
     "orchestrator/orchestrator/api/compare_review.py",
@@ -28015,7 +28199,7 @@
     "polymath_shared.synthesis_model.synthesis_block",
     "polymath_shared.synthesis_model.synthesis_model"
    ],
-   "lines": 4844,
+   "lines": 4846,
    "mcp_tools": [],
    "nondeterminism": [
     {
@@ -28178,7 +28362,7 @@
      "call": "time.perf_counter",
      "file": "orchestrator/orchestrator/api/ui.py",
      "kind": "clock",
-     "line": 4724
+     "line": 4726
     },
     {
      "call": "time.perf_counter",
@@ -28196,7 +28380,7 @@
      "call": "time.perf_counter",
      "file": "orchestrator/orchestrator/api/ui.py",
      "kind": "clock",
-     "line": 4654
+     "line": 4656
     },
     {
      "call": "time.perf_counter",
@@ -28220,13 +28404,13 @@
      "call": "time.perf_counter",
      "file": "orchestrator/orchestrator/api/ui.py",
      "kind": "clock",
-     "line": 4746
+     "line": 4748
     },
     {
      "call": "time.perf_counter",
      "file": "orchestrator/orchestrator/api/ui.py",
      "kind": "clock",
-     "line": 4751
+     "line": 4753
     },
     {
      "call": "time.perf_counter",
@@ -28262,13 +28446,13 @@
      "call": "time.perf_counter",
      "file": "orchestrator/orchestrator/api/ui.py",
      "kind": "clock",
-     "line": 4586
+     "line": 4588
     },
     {
      "call": "time.perf_counter",
      "file": "orchestrator/orchestrator/api/ui.py",
      "kind": "clock",
-     "line": 4675
+     "line": 4677
     }
    ],
    "page": "units/orchestrator/orchestrator/api/ui.py.md",
@@ -28438,7 +28622,7 @@
     {
      "file": "orchestrator/orchestrator/api/ui.py",
      "handler": "chat_stream",
-     "line": 4758,
+     "line": 4760,
      "method": "POST",
      "path": "/chat/stream"
     }
@@ -30517,7 +30701,7 @@
       "receipt"
      ],
      "doc": "CHAT-RUNTIME-V1 (plan \u00a73.7 / \u00a74 P1.f): the ONE chat runtime \u2014 scope,",
-     "end": 4754,
+     "end": 4756,
      "file": "orchestrator/orchestrator/api/ui.py",
      "kind": "def",
      "line": 3830,
@@ -30528,10 +30712,10 @@
       "req"
      ],
      "doc": "The SSE transport of the chat runtime (CHAT-RUNTIME-V1): the frames of",
-     "end": 4763,
+     "end": 4765,
      "file": "orchestrator/orchestrator/api/ui.py",
      "kind": "def",
-     "line": 4758,
+     "line": 4760,
      "name": "chat_stream"
     },
     {
@@ -30539,10 +30723,10 @@
       "data"
      ],
      "doc": "",
-     "end": 4782,
+     "end": 4784,
      "file": "orchestrator/orchestrator/api/ui.py",
      "kind": "def",
-     "line": 4773,
+     "line": 4775,
      "name": "_error_status"
     },
     {
@@ -30552,10 +30736,10 @@
       "receipt"
      ],
      "doc": "CHAT-RUNTIME-V1: drain the runtime's frames and return the answer as",
-     "end": 4843,
+     "end": 4845,
      "file": "orchestrator/orchestrator/api/ui.py",
      "kind": "def",
-     "line": 4785,
+     "line": 4787,
      "name": "run_chat"
     }
    ]
@@ -30862,17 +31046,32 @@
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "line": 99,
+     "name": "polymath_deep_research"
+    },
+    {
+     "file": "orchestrator/orchestrator/api/web_settings.py",
+     "line": 100,
+     "name": "polymath_deep_research"
+    },
+    {
+     "file": "orchestrator/orchestrator/api/web_settings.py",
+     "line": 101,
      "name": "polymath_search"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
-     "line": 99,
+     "line": 101,
      "name": "polymath_explore"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
-     "line": 99,
+     "line": 101,
      "name": "polymath_answer"
+    },
+    {
+     "file": "orchestrator/orchestrator/api/web_settings.py",
+     "line": 101,
+     "name": "polymath_compare"
     }
    ],
    "constants": [
@@ -30894,7 +31093,7 @@
     {
      "default": null,
      "file": "orchestrator/orchestrator/api/web_settings.py",
-     "line": 213,
+     "line": 215,
      "name": "POLYMATH_MCP_API_KEY"
     }
    ],
@@ -30902,20 +31101,20 @@
     {
      "does": "handled: assign",
      "file": "orchestrator/orchestrator/api/web_settings.py",
-     "line": 218,
+     "line": 220,
      "type": "Exception"
     },
     {
      "does": "handled: assign",
      "file": "orchestrator/orchestrator/api/web_settings.py",
-     "line": 194,
+     "line": 196,
      "type": "Exception"
     }
    ],
    "files": [
     "orchestrator/orchestrator/api/web_settings.py"
    ],
-   "hash": "e4b31b1384d152c7",
+   "hash": "ae2e1ac1a97cf32a",
    "importers": [
     "orchestrator/orchestrator/api/web_auth.py",
     "orchestrator/orchestrator/main.py"
@@ -30930,20 +31129,20 @@
     "polymath_shared.db",
     "polymath_shared.db.tx"
    ],
-   "lines": 334,
+   "lines": 336,
    "mcp_tools": [],
    "nondeterminism": [
     {
      "call": "secrets.token_urlsafe",
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "random",
-     "line": 264
+     "line": 266
     },
     {
      "call": "secrets.token_urlsafe",
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "random",
-     "line": 280
+     "line": 282
     }
    ],
    "page": "units/orchestrator/orchestrator/api/web_settings.py.md",
@@ -30952,91 +31151,91 @@
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "my_keys",
-     "line": 150,
+     "line": 152,
      "method": "GET",
      "path": "/keys"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "create_my_key",
-     "line": 161,
+     "line": 163,
      "method": "POST",
      "path": "/keys"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "revoke_my_key",
-     "line": 176,
+     "line": 178,
      "method": "DELETE",
      "path": "/keys/{key_id}"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "prompt_template",
-     "line": 187,
+     "line": 189,
      "method": "GET",
      "path": "/keys/prompt"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "owner_key_for_copy",
-     "line": 205,
+     "line": 207,
      "method": "GET",
      "path": "/keys/owner"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "list_friends",
-     "line": 250,
+     "line": 252,
      "method": "GET",
      "path": "/admin/friends"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "add_friend",
-     "line": 257,
+     "line": 259,
      "method": "POST",
      "path": "/admin/friends"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "friend_action",
-     "line": 273,
+     "line": 275,
      "method": "POST",
      "path": "/admin/friends/{username}/{action}"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "set_libraries",
-     "line": 289,
+     "line": 291,
      "method": "PUT",
      "path": "/admin/friends/{username}/libraries"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "get_invite",
-     "line": 305,
+     "line": 307,
      "method": "GET",
      "path": "/friends/invite"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "rotate_invite",
-     "line": 312,
+     "line": 314,
      "method": "POST",
      "path": "/friends/invite/rotate"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "friend_keys",
-     "line": 321,
+     "line": 323,
      "method": "GET",
      "path": "/admin/friends/{username}/keys"
     },
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "handler": "revoke_friend_key",
-     "line": 327,
+     "line": 329,
      "method": "DELETE",
      "path": "/admin/friends/{username}/keys/{key_id}"
     }
@@ -31044,7 +31243,7 @@
    "sql_reads": [
     {
      "file": "orchestrator/orchestrator/api/web_settings.py",
-     "line": 228,
+     "line": 230,
      "table": "corpora"
     }
    ],
@@ -31158,7 +31357,7 @@
       "owner"
      ],
      "doc": "The \"How to use it\" steps, the same for the owner's key-free prompt and a friend's connect prompt.",
-     "end": 105,
+     "end": 107,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
      "line": 89,
@@ -31169,10 +31368,10 @@
       "libraries"
      ],
      "doc": "ONE-PROFILE: what the owner pastes into an agent the connect command has set up. It carries no key.",
-     "end": 113,
+     "end": 115,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 108,
+     "line": 110,
      "name": "owner_prompt"
     },
     {
@@ -31184,10 +31383,10 @@
       "owner"
      ],
      "doc": "The text to paste into an agent harness, the key in it: a friend's own key, or (`owner`, OWNER-KEY-VISIBLE) the owner's",
-     "end": 141,
+     "end": 143,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 116,
+     "line": 118,
      "name": "connect_prompt"
     },
     {
@@ -31196,10 +31395,10 @@
       "principal_id"
      ],
      "doc": "",
-     "end": 145,
+     "end": 147,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 144,
+     "line": 146,
      "name": "_record"
     },
     {
@@ -31207,10 +31406,10 @@
       "request"
      ],
      "doc": "",
-     "end": 157,
+     "end": 159,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 150,
+     "line": 152,
      "name": "my_keys"
     },
     {
@@ -31219,10 +31418,10 @@
       "request"
      ],
      "doc": "",
-     "end": 172,
+     "end": 174,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 161,
+     "line": 163,
      "name": "create_my_key"
     },
     {
@@ -31231,10 +31430,10 @@
       "request"
      ],
      "doc": "",
-     "end": 183,
+     "end": 185,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 176,
+     "line": 178,
      "name": "revoke_my_key"
     },
     {
@@ -31242,10 +31441,10 @@
       "request"
      ],
      "doc": "A friend: the connect prompt with a placeholder (their key is shown only when it is created). ONE-PROFILE, the owner: the",
-     "end": 201,
+     "end": 203,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 187,
+     "line": 189,
      "name": "prompt_template"
     },
     {
@@ -31253,37 +31452,37 @@
       "request"
      ],
      "doc": "OWNER-KEY-VISIBLE (the owner, 2026-09-30: \"i need them to have access to main key. so in the settings have a api key",
-     "end": 221,
+     "end": 223,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 205,
+     "line": 207,
      "name": "owner_key_for_copy"
     },
     {
      "args": [],
      "doc": "Every library a friend may be given: the owner's, never another friend's private `fr-*` library.",
-     "end": 229,
+     "end": 231,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 225,
+     "line": 227,
      "name": "_shared_libraries"
     },
     {
      "args": [],
      "doc": "",
-     "end": 234,
+     "end": 236,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 232,
+     "line": 234,
      "name": "_adapters"
     },
     {
      "args": [],
      "doc": "What a friend gets unless the owner narrows it: (every shared library, every adapter). The owner's Add friend and a",
-     "end": 240,
+     "end": 242,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 237,
+     "line": 239,
      "name": "friend_defaults"
     },
     {
@@ -31291,10 +31490,10 @@
       "request"
      ],
      "doc": "",
-     "end": 246,
+     "end": 248,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 243,
+     "line": 245,
      "name": "_require_owner"
     },
     {
@@ -31302,10 +31501,10 @@
       "request"
      ],
      "doc": "",
-     "end": 253,
+     "end": 255,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 250,
+     "line": 252,
      "name": "list_friends"
     },
     {
@@ -31314,10 +31513,10 @@
       "request"
      ],
      "doc": "",
-     "end": 269,
+     "end": 271,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 257,
+     "line": 259,
      "name": "add_friend"
     },
     {
@@ -31327,10 +31526,10 @@
       "request"
      ],
      "doc": "",
-     "end": 285,
+     "end": 287,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 273,
+     "line": 275,
      "name": "friend_action"
     },
     {
@@ -31340,10 +31539,10 @@
       "request"
      ],
      "doc": "",
-     "end": 296,
+     "end": 298,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 289,
+     "line": 291,
      "name": "set_libraries"
     },
     {
@@ -31351,10 +31550,10 @@
       "doc"
      ],
      "doc": "",
-     "end": 301,
+     "end": 303,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 299,
+     "line": 301,
      "name": "_invite_payload"
     },
     {
@@ -31362,10 +31561,10 @@
       "request"
      ],
      "doc": "INVITE-SIGNUP: the owner reads the code to share it (`code` is null until the first rotate). Never cached, never logged.",
-     "end": 308,
+     "end": 310,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 305,
+     "line": 307,
      "name": "get_invite"
     },
     {
@@ -31373,10 +31572,10 @@
       "request"
      ],
      "doc": "A new code (the first one, or a replacement: friends who have not signed up yet need the new one).",
-     "end": 317,
+     "end": 319,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 312,
+     "line": 314,
      "name": "rotate_invite"
     },
     {
@@ -31385,10 +31584,10 @@
       "request"
      ],
      "doc": "",
-     "end": 323,
+     "end": 325,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 321,
+     "line": 323,
      "name": "friend_keys"
     },
     {
@@ -31398,10 +31597,10 @@
       "request"
      ],
      "doc": "",
-     "end": 333,
+     "end": 335,
      "file": "orchestrator/orchestrator/api/web_settings.py",
      "kind": "def",
-     "line": 327,
+     "line": 329,
      "name": "revoke_friend_key"
     }
    ]
@@ -31546,18 +31745,33 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_principals.py",
-     "line": 57,
+     "line": 60,
      "name": "polymath_search"
     },
     {
      "file": "orchestrator/orchestrator/mcp_principals.py",
-     "line": 58,
+     "line": 61,
      "name": "polymath_explore"
     },
     {
      "file": "orchestrator/orchestrator/mcp_principals.py",
-     "line": 59,
+     "line": 62,
      "name": "polymath_answer"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_principals.py",
+     "line": 63,
+     "name": "polymath_compare"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_principals.py",
+     "line": 63,
+     "name": "polymath_deep_research"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_principals.py",
+     "line": 64,
+     "name": "polymath_models"
     }
    ],
    "constants": [
@@ -31578,6 +31792,12 @@
      "line": 39,
      "name": "PRINCIPAL_HEADER",
      "value": "x-polymath-principal"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_principals.py",
+     "line": 48,
+     "name": "KNOWLEDGE_RESEARCH",
+     "value": "knowledge.research"
     }
    ],
    "doc": "HOSTED-MCP PRINCIPALS (owner decision 2026-09-21, docs/migration/OWNER_DECISION_2026-09-21_MERGE_AND_PRINCIPALS.md).",
@@ -31585,7 +31805,7 @@
     {
      "default": "''",
      "file": "orchestrator/orchestrator/mcp_principals.py",
-     "line": 266,
+     "line": 271,
      "name": "POLYMATH_MCP_PRINCIPALS_FILE"
     }
    ],
@@ -31593,7 +31813,7 @@
    "files": [
     "orchestrator/orchestrator/mcp_principals.py"
    ],
-   "hash": "390f3cb75e617cde",
+   "hash": "28676caaf2f33962",
    "importers": [
     "orchestrator/orchestrator/_small-modules",
     "orchestrator/orchestrator/api/web_auth.py",
@@ -31601,38 +31821,38 @@
     "orchestrator/orchestrator/web_accounts.py"
    ],
    "imports": [],
-   "lines": 317,
+   "lines": 322,
    "mcp_tools": [],
    "nondeterminism": [
     {
      "call": "secrets.token_hex",
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "random",
-     "line": 273
+     "line": 278
     },
     {
      "call": "time.time",
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "clock",
-     "line": 253
+     "line": 258
     },
     {
      "call": "secrets.token_urlsafe",
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "random",
-     "line": 274
-    },
-    {
-     "call": "datetime.now",
-     "file": "orchestrator/orchestrator/mcp_principals.py",
-     "kind": "clock",
      "line": 279
     },
     {
      "call": "datetime.now",
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "clock",
-     "line": 234
+     "line": 284
+    },
+    {
+     "call": "datetime.now",
+     "file": "orchestrator/orchestrator/mcp_principals.py",
+     "kind": "clock",
+     "line": 239
     }
    ],
    "page": "units/orchestrator/orchestrator/mcp_principals.py.md",
@@ -31643,19 +31863,19 @@
    "symbols": [
     {
      "doc": "",
-     "end": 80,
+     "end": 85,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "class",
-     "line": 72,
+     "line": 77,
      "methods": [],
      "name": "Principal"
     },
     {
      "doc": "",
-     "end": 91,
+     "end": 96,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "class",
-     "line": 88,
+     "line": 93,
      "methods": [],
      "name": "Decision"
     },
@@ -31665,10 +31885,10 @@
       "message"
      ],
      "doc": "",
-     "end": 98,
+     "end": 103,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 97,
+     "line": 102,
      "name": "_deny"
     },
     {
@@ -31676,10 +31896,10 @@
       "raw"
      ],
      "doc": "",
-     "end": 102,
+     "end": 107,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 101,
+     "line": 106,
      "name": "hash_key"
     },
     {
@@ -31689,10 +31909,10 @@
       "arguments"
      ],
      "doc": "Static authorization of ONE tools/call: action scope, then resource scope. Run ownership (resource kind RUN) is",
-     "end": 131,
+     "end": 136,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 105,
+     "line": 110,
      "name": "authorize"
     },
     {
@@ -31701,10 +31921,10 @@
       "allowed"
      ],
      "doc": "",
-     "end": 135,
+     "end": 140,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 134,
+     "line": 139,
      "name": "_allowed"
     },
     {
@@ -31712,10 +31932,10 @@
       "value"
      ],
      "doc": "",
-     "end": 139,
+     "end": 144,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 138,
+     "line": 143,
      "name": "_ids"
     },
     {
@@ -31723,10 +31943,10 @@
       "rec"
      ],
      "doc": "",
-     "end": 157,
+     "end": 162,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 142,
+     "line": 147,
      "name": "principal_from_record"
     },
     {
@@ -31735,18 +31955,18 @@
       "now"
      ],
      "doc": "",
-     "end": 172,
+     "end": 177,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 160,
+     "line": 165,
      "name": "_active"
     },
     {
      "doc": "The principals file, re-read when its mtime changes. A missing file = no principals (the owner key still works);",
-     "end": 240,
+     "end": 245,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "class",
-     "line": 176,
+     "line": 181,
      "methods": [
       "_load",
       "authenticate"
@@ -31755,10 +31975,10 @@
     },
     {
      "doc": "Basic per-principal fixed-window limiter (requests per minute), in memory: Server A is one process.",
-     "end": 262,
+     "end": 267,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "class",
-     "line": 243,
+     "line": 248,
      "methods": [
       "__init__",
       "allow"
@@ -31770,28 +31990,28 @@
       "owner_key"
      ],
      "doc": "",
-     "end": 267,
+     "end": 272,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 265,
+     "line": 270,
      "name": "store_from_env"
     },
     {
      "args": [],
      "doc": "",
-     "end": 275,
+     "end": 280,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 271,
+     "line": 276,
      "name": "new_bearer"
     },
     {
      "args": [],
      "doc": "",
-     "end": 279,
+     "end": 284,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 278,
+     "line": 283,
      "name": "_now_iso"
     },
     {
@@ -31799,10 +32019,10 @@
       "path"
      ],
      "doc": "",
-     "end": 288,
+     "end": 293,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 282,
+     "line": 287,
      "name": "read_registry"
     },
     {
@@ -31811,10 +32031,10 @@
       "doc"
      ],
      "doc": "Atomic: a complete temp file in the same directory, mode 0600, then os.replace. A reader sees old or new, never half.",
-     "end": 308,
+     "end": 313,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 291,
+     "line": 296,
      "name": "write_registry"
     },
     {
@@ -31823,10 +32043,10 @@
       "raw"
      ],
      "doc": "The raw bearer goes to a NEW owner-only file and nowhere else. Refuses to overwrite.",
-     "end": 316,
+     "end": 321,
      "file": "orchestrator/orchestrator/mcp_principals.py",
      "kind": "def",
-     "line": 311,
+     "line": 316,
      "name": "write_secret_file"
     }
    ]
@@ -31835,54 +32055,124 @@
    "collections": [
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 83,
+     "line": 90,
      "name": "polymath_mcp_caller_is_local"
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 94,
+     "line": 101,
      "name": "polymath_mcp_principal"
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 95,
+     "line": 102,
      "name": "polymath_mcp_caller_agent"
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 839,
+     "line": 907,
+     "name": "polymath_compare"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 907,
+     "name": "polymath_deep_research"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 907,
+     "name": "polymath_models"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 915,
      "name": "polymath_search"
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 839,
+     "line": 915,
      "name": "polymath_explore"
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 839,
+     "line": 915,
      "name": "polymath_answer"
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 109,
+     "line": 523,
+     "name": "polymath_answer"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 523,
+     "name": "polymath_deep_research"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 438,
+     "name": "polymath_explore"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 124,
      "name": "polymath_search"
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 109,
+     "line": 124,
      "name": "polymath_explore"
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 109,
+     "line": 124,
      "name": "polymath_answer"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 124,
+     "name": "polymath_compare"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 124,
+     "name": "polymath_deep_research"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 469,
+     "name": "polymath_models"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 492,
+     "name": "polymath_search"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 492,
+     "name": "polymath_explore"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 509,
+     "name": "polymath_models"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 466,
+     "name": "polymath_search"
+    },
+    {
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 466,
+     "name": "polymath_explore"
     }
    ],
    "constants": [
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 62,
+     "line": 69,
      "name": "UPLOAD_EXTENSIONS",
      "value": [
       ".docx",
@@ -31895,7 +32185,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 84,
+     "line": 91,
      "name": "REMOTE_PATH_UPLOAD_DISABLED",
      "value": {
       "error": "REMOTE_PATH_UPLOAD_DISABLED: upload_document reads a path on the Polymath HOST, and a remote caller has no host paths. Send the content instead: upload_text(text, corpus_id, source_name).",
@@ -31904,9 +32194,12 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 832,
+     "line": 907,
      "name": "_TOOL_NAMES",
      "value": [
+      "polymath_compare",
+      "polymath_deep_research",
+      "polymath_models",
       "adapter_list",
       "adapter_start",
       "adapter_next",
@@ -31942,25 +32235,25 @@
     {
      "default": "''",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 60,
+     "line": 67,
      "name": "POLYMATH_MCP_API_KEY"
     },
     {
      "default": "'mcp.kingsleylab.xyz'",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 61,
+     "line": 68,
      "name": "POLYMATH_MCP_PUBLIC_HOST"
     },
     {
      "default": "'8930'",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 59,
+     "line": 66,
      "name": "POLYMATH_MCP_PORT"
     },
     {
      "default": "'http://127.0.0.1:7200'",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 58,
+     "line": 65,
      "name": "POLYMATH_ORCH_URL"
     }
    ],
@@ -31968,195 +32261,221 @@
     {
      "does": "handled: assign",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 216,
+     "line": 255,
      "type": "Exception"
     },
     {
      "does": "handled: assign",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 241,
+     "line": 280,
      "type": "Exception"
     },
     {
      "does": "handled: assign",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 143,
+     "line": 157,
+     "type": "Exception"
+    },
+    {
+     "does": "handled: assign",
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 179,
      "type": "Exception"
     }
    ],
    "files": [
     "orchestrator/orchestrator/mcp_server.py"
    ],
-   "hash": "8d9f7e31d1e5d631",
+   "hash": "58c1e62e780a138f",
    "importers": [],
    "imports": [
     "orchestrator",
     "orchestrator.mcp_principals",
+    "polymath_shared",
     "polymath_shared.adapter",
-    "polymath_shared.adapter.harness_guide"
+    "polymath_shared.adapter.harness_guide",
+    "polymath_shared.mcp_retrieval"
    ],
-   "lines": 853,
+   "lines": 929,
    "mcp_tools": [
     {
      "doc": "List every corpus: id, name, purpose, document count, and",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 171,
+     "line": 210,
      "name": "list_corpora"
     },
     {
      "doc": "Documents of a corpus (name, bytes, chunk/parent counts,",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 183,
+     "line": 222,
      "name": "list_documents"
     },
     {
      "doc": "Ingest a LOCAL file (md, txt, html, pdf, epub, docx) into a corpus",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 193,
+     "line": 232,
      "name": "upload_document"
     },
     {
      "doc": "Ingest raw text/markdown as a document named source_name (keep",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 226,
+     "line": 265,
      "name": "upload_text"
     },
     {
      "doc": "Where a document is in the pipeline: run status and query_ready,",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 253,
+     "line": 292,
      "name": "document_status"
     },
     {
      "doc": "Corpus-level view: document count and query_ready (control",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 269,
+     "line": 308,
      "name": "corpus_status"
     },
     {
      "doc": "DEPRECATED for agent work \u2014 use polymath_search (q0-only evidence rows) or polymath_explore (full planning +",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 291,
+     "line": 330,
      "name": "retrieve"
     },
     {
      "doc": "What this Polymath serves (CAPABILITIES-V1): version and the contracts",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 323,
+     "line": 362,
      "name": "capabilities"
     },
     {
      "doc": "DEPRECATED for agent work \u2014 use polymath_explore (Polymath's full retrieval planning; submit the ORIGINAL need",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 347,
+     "line": 375,
      "name": "compile_plan"
     },
     {
      "doc": "DEPRECATED \u2014 use polymath_search (the same contract rows under the canonical name). Kept for existing callers.",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 365,
+     "line": 393,
      "name": "retrieve_evidence"
     },
     {
      "doc": "DEPRECATED \u2014 use polymath_answer when a HUMAN wants Polymath's own answer; for agent work use polymath_search /",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 381,
+     "line": 409,
      "name": "ask"
     },
     {
-     "doc": "Canonical EVIDENCE search: q0-only contract evidence rows (no planning, no Corpus Explore, no",
+     "doc": "",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 407,
+     "line": 442,
      "name": "polymath_search"
     },
     {
-     "doc": "Full retrieval PLANNING + grounded expansion (+ optional Corpus Explore) -> a versioned",
+     "doc": "",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 420,
+     "line": 456,
      "name": "polymath_explore"
     },
     {
-     "doc": "Polymath's OWN grounded, cited answer (humans/UI, or when you explicitly want Polymath's answer",
+     "doc": "",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 434,
+     "line": 471,
      "name": "polymath_answer"
+    },
+    {
+     "doc": "",
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 496,
+     "name": "polymath_compare"
+    },
+    {
+     "doc": "",
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 511,
+     "name": "polymath_deep_research"
+    },
+    {
+     "doc": "",
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "line": 525,
+     "name": "polymath_models"
     },
     {
      "doc": "What was asked of this corpus recently and how it went (QUERY-RECEIPTS-V1):",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 457,
+     "line": 532,
      "name": "recent_queries"
     },
     {
      "doc": "COGNITIVE-ADAPTER-V1: the admitted adapters (id, versions, description, input_schema, step counts, which",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 476,
+     "line": 551,
      "name": "adapter_list"
     },
     {
      "doc": "Start ONE durable adapter run (AdapterRunRefV1). `input` must satisfy the adapter's input_schema (adapter_list): at",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 489,
+     "line": 564,
      "name": "adapter_start"
     },
     {
      "doc": "What the run needs from you now: {kind:\"step\", step: AdapterStepV1} when a step awaits you \u2014 an AGENT_REASON",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 501,
+     "line": 576,
      "name": "adapter_next"
     },
     {
      "doc": "Submit your answer for the awaiting step. AGENT_REASON: kind=\"reasoning\" (default) \u2014 validated against the step's",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 516,
+     "line": 591,
      "name": "adapter_submit"
     },
     {
      "doc": "AdapterRunStatusV1 for a run (status, current step, counters, typed failure/gap).",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 532,
+     "line": 607,
      "name": "adapter_status"
     },
     {
      "doc": "AdapterResultV1 of a TERMINAL run: the domain output plus lineage (Polymath evidence ids, step receipt",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 538,
+     "line": 613,
      "name": "adapter_result"
     },
     {
      "doc": "Cancel a run (terminal, idempotent; accepted work is kept). Returns AdapterRunStatusV1.",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 546,
+     "line": 621,
      "name": "adapter_cancel"
     },
     {
      "doc": "Polymath reads the web FOR you at a HARNESS_ACTION step, for a harness with no browser or web tools of its own (owner key",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 554,
+     "line": 629,
      "name": "research_acquire"
     },
     {
      "doc": "READ-ONLY supplier search (owner key only: it spends the owner's CJ account and quota). source=\"cj\" searches CJ",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 578,
+     "line": 653,
      "name": "supplier_search"
     },
     {
      "doc": "READ-ONLY CJ product details (owner key only): the product (title, SKU, URL, images, weight in grams, category, sell price",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 590,
+     "line": 665,
      "name": "supplier_product"
     },
     {
      "doc": "READ-ONLY CJ freight quote (owner key only): the shipping options for `quantity` units of one variant from `from_country`",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 599,
+     "line": 674,
      "name": "supplier_freight"
     },
     {
      "doc": "READ-ONLY list of CJ's warehouses (owner key only): id, name, country and whether it is in use. Their country codes are",
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 608,
+     "line": 683,
      "name": "supplier_warehouses"
     }
    ],
@@ -32165,19 +32484,25 @@
      "call": "httpx.AsyncClient",
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "network",
-     "line": 138
+     "line": 152
     },
     {
      "call": "httpx.AsyncClient",
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "network",
-     "line": 209
+     "line": 173
     },
     {
      "call": "httpx.AsyncClient",
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "network",
-     "line": 234
+     "line": 248
+    },
+    {
+     "call": "httpx.AsyncClient",
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "kind": "network",
+     "line": 273
     }
    ],
    "page": "units/orchestrator/orchestrator/mcp_server.py.md",
@@ -32191,11 +32516,22 @@
       "headers"
      ],
      "doc": "",
-     "end": 103,
+     "end": 110,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 101,
+     "line": 108,
      "name": "_is_local_caller"
+    },
+    {
+     "doc": "MCP-RETRIEVAL-MODES-V1: the deprecated tools stay callable for old callers but are never LISTED, so no agent is",
+     "end": 118,
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "kind": "class",
+     "line": 113,
+     "methods": [
+      "list_tools"
+     ],
+     "name": "_ListedMCPServer"
     },
     {
      "args": [
@@ -32203,11 +32539,24 @@
       "path"
      ],
      "doc": "",
-     "end": 146,
+     "end": 160,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 128,
+     "line": 142,
      "name": "_orch"
+    },
+    {
+     "args": [
+      "path",
+      "body",
+      "timeout"
+     ],
+     "doc": "POST `body` to a text/event-stream route and collect its frames, with the same trusted context as `_orch`. A",
+     "end": 185,
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "kind": "def",
+     "line": 163,
+     "name": "_orch_events"
     },
     {
      "args": [
@@ -32215,19 +32564,19 @@
       "max_chars"
      ],
      "doc": "A slim hit. D-02: a cut text says so \u2014 `truncated: true` + `full_length` (characters before the cut); a hit that",
-     "end": 165,
+     "end": 204,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 149,
+     "line": 188,
      "name": "_trim_hit"
     },
     {
      "args": [],
      "doc": "List every corpus: id, name, purpose, document count, and",
-     "end": 179,
+     "end": 218,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 171,
+     "line": 210,
      "name": "list_corpora"
     },
     {
@@ -32235,10 +32584,10 @@
       "corpus_id"
      ],
      "doc": "Documents of a corpus (name, bytes, chunk/parent counts,",
-     "end": 187,
+     "end": 226,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 183,
+     "line": 222,
      "name": "list_documents"
     },
     {
@@ -32247,10 +32596,10 @@
       "corpus_id"
      ],
      "doc": "Ingest a LOCAL file (md, txt, html, pdf, epub, docx) into a corpus",
-     "end": 222,
+     "end": 261,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 193,
+     "line": 232,
      "name": "upload_document"
     },
     {
@@ -32260,10 +32609,10 @@
       "source_name"
      ],
      "doc": "Ingest raw text/markdown as a document named source_name (keep",
-     "end": 247,
+     "end": 286,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 226,
+     "line": 265,
      "name": "upload_text"
     },
     {
@@ -32273,10 +32622,10 @@
       "run_id"
      ],
      "doc": "Where a document is in the pipeline: run status and query_ready,",
-     "end": 265,
+     "end": 304,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 253,
+     "line": 292,
      "name": "document_status"
     },
     {
@@ -32284,10 +32633,10 @@
       "corpus_id"
      ],
      "doc": "Corpus-level view: document count and query_ready (control",
-     "end": 285,
+     "end": 324,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 269,
+     "line": 308,
      "name": "corpus_status"
     },
     {
@@ -32300,30 +32649,30 @@
       "explore"
      ],
      "doc": "DEPRECATED for agent work \u2014 use polymath_search (q0-only evidence rows) or polymath_explore (full planning +",
-     "end": 319,
+     "end": 358,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 291,
+     "line": 330,
      "name": "retrieve"
     },
     {
      "args": [],
      "doc": "What this Polymath serves (CAPABILITIES-V1): version and the contracts",
-     "end": 327,
+     "end": 366,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 323,
+     "line": 362,
      "name": "capabilities"
     },
     {
      "args": [
       "rows"
      ],
-     "doc": "Contract rows with `text` / `text_clean` cut at 1,200 characters. D-02: a cut row says so \u2014 `truncated: true` +",
-     "end": 343,
+     "doc": "Contract rows with `text` / `text_clean` cut at 1,200 characters (D-02; the shared rule, MR.trim_rows).",
+     "end": 371,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 330,
+     "line": 369,
      "name": "_trim_rows"
     },
     {
@@ -32335,10 +32684,10 @@
       "communities"
      ],
      "doc": "DEPRECATED for agent work \u2014 use polymath_explore (Polymath's full retrieval planning; submit the ORIGINAL need",
-     "end": 361,
+     "end": 389,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 347,
+     "line": 375,
      "name": "compile_plan"
     },
     {
@@ -32349,10 +32698,10 @@
       "explore"
      ],
      "doc": "DEPRECATED \u2014 use polymath_search (the same contract rows under the canonical name). Kept for existing callers.",
-     "end": 377,
+     "end": 405,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 365,
+     "line": 393,
      "name": "retrieve_evidence"
     },
     {
@@ -32364,23 +32713,24 @@
       "evidence"
      ],
      "doc": "DEPRECATED \u2014 use polymath_answer when a HUMAN wants Polymath's own answer; for agent work use polymath_search /",
-     "end": 402,
+     "end": 430,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 381,
+     "line": 409,
      "name": "ask"
     },
     {
      "args": [
       "query",
       "corpus_id",
+      "mode",
       "max_evidence"
      ],
-     "doc": "Canonical EVIDENCE search: q0-only contract evidence rows (no planning, no Corpus Explore, no",
-     "end": 416,
+     "doc": "",
+     "end": 447,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 407,
+     "line": 442,
      "name": "polymath_search"
     },
     {
@@ -32390,11 +32740,11 @@
       "corpus_explorer",
       "mode"
      ],
-     "doc": "Full retrieval PLANNING + grounded expansion (+ optional Corpus Explore) -> a versioned",
-     "end": 430,
+     "doc": "",
+     "end": 462,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 420,
+     "line": 456,
      "name": "polymath_explore"
     },
     {
@@ -32402,14 +32752,53 @@
       "question",
       "corpus_id",
       "mode",
+      "reasoning",
+      "model",
       "latent"
      ],
-     "doc": "Polymath's OWN grounded, cited answer (humans/UI, or when you explicitly want Polymath's answer",
-     "end": 451,
+     "doc": "",
+     "end": 488,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 434,
+     "line": 471,
      "name": "polymath_answer"
+    },
+    {
+     "args": [
+      "question",
+      "corpus_id",
+      "modes"
+     ],
+     "doc": "",
+     "end": 502,
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "kind": "def",
+     "line": 496,
+     "name": "polymath_compare"
+    },
+    {
+     "args": [
+      "question",
+      "corpus_id",
+      "depth",
+      "mode",
+      "model"
+     ],
+     "doc": "",
+     "end": 520,
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "kind": "def",
+     "line": 511,
+     "name": "polymath_deep_research"
+    },
+    {
+     "args": [],
+     "doc": "",
+     "end": 526,
+     "file": "orchestrator/orchestrator/mcp_server.py",
+     "kind": "def",
+     "line": 525,
+     "name": "polymath_models"
     },
     {
      "args": [
@@ -32419,19 +32808,19 @@
       "kind"
      ],
      "doc": "What was asked of this corpus recently and how it went (QUERY-RECEIPTS-V1):",
-     "end": 469,
+     "end": 544,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 457,
+     "line": 532,
      "name": "recent_queries"
     },
     {
      "args": [],
      "doc": "COGNITIVE-ADAPTER-V1: the admitted adapters (id, versions, description, input_schema, step counts, which",
-     "end": 485,
+     "end": 560,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 476,
+     "line": 551,
      "name": "adapter_list"
     },
     {
@@ -32441,10 +32830,10 @@
       "request_options"
      ],
      "doc": "Start ONE durable adapter run (AdapterRunRefV1). `input` must satisfy the adapter's input_schema (adapter_list): at",
-     "end": 497,
+     "end": 572,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 489,
+     "line": 564,
      "name": "adapter_start"
     },
     {
@@ -32452,10 +32841,10 @@
       "run_id"
      ],
      "doc": "What the run needs from you now: {kind:\"step\", step: AdapterStepV1} when a step awaits you \u2014 an AGENT_REASON",
-     "end": 512,
+     "end": 587,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 501,
+     "line": 576,
      "name": "adapter_next"
     },
     {
@@ -32468,10 +32857,10 @@
       "kind"
      ],
      "doc": "Submit your answer for the awaiting step. AGENT_REASON: kind=\"reasoning\" (default) \u2014 validated against the step's",
-     "end": 528,
+     "end": 603,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 516,
+     "line": 591,
      "name": "adapter_submit"
     },
     {
@@ -32479,10 +32868,10 @@
       "run_id"
      ],
      "doc": "AdapterRunStatusV1 for a run (status, current step, counters, typed failure/gap).",
-     "end": 534,
+     "end": 609,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 532,
+     "line": 607,
      "name": "adapter_status"
     },
     {
@@ -32490,10 +32879,10 @@
       "run_id"
      ],
      "doc": "AdapterResultV1 of a TERMINAL run: the domain output plus lineage (Polymath evidence ids, step receipt",
-     "end": 542,
+     "end": 617,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 538,
+     "line": 613,
      "name": "adapter_result"
     },
     {
@@ -32501,10 +32890,10 @@
       "run_id"
      ],
      "doc": "Cancel a run (terminal, idempotent; accepted work is kept). Returns AdapterRunStatusV1.",
-     "end": 548,
+     "end": 623,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 546,
+     "line": 621,
      "name": "adapter_cancel"
     },
     {
@@ -32517,10 +32906,10 @@
       "limit"
      ],
      "doc": "Polymath reads the web FOR you at a HARNESS_ACTION step, for a harness with no browser or web tools of its own (owner key",
-     "end": 571,
+     "end": 646,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 554,
+     "line": 629,
      "name": "research_acquire"
     },
     {
@@ -32530,10 +32919,10 @@
       "limit"
      ],
      "doc": "READ-ONLY supplier search (owner key only: it spends the owner's CJ account and quota). source=\"cj\" searches CJ",
-     "end": 586,
+     "end": 661,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 578,
+     "line": 653,
      "name": "supplier_search"
     },
     {
@@ -32541,10 +32930,10 @@
       "product_id"
      ],
      "doc": "READ-ONLY CJ product details (owner key only): the product (title, SKU, URL, images, weight in grams, category, sell price",
-     "end": 595,
+     "end": 670,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 590,
+     "line": 665,
      "name": "supplier_product"
     },
     {
@@ -32555,28 +32944,28 @@
       "from_country"
      ],
      "doc": "READ-ONLY CJ freight quote (owner key only): the shipping options for `quantity` units of one variant from `from_country`",
-     "end": 604,
+     "end": 679,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 599,
+     "line": 674,
      "name": "supplier_freight"
     },
     {
      "args": [],
      "doc": "READ-ONLY list of CJ's warehouses (owner key only): id, name, country and whether it is in use. Their country codes are",
-     "end": 611,
+     "end": 686,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 608,
+     "line": 683,
      "name": "supplier_warehouses"
     },
     {
      "args": [],
      "doc": "",
-     "end": 621,
+     "end": 696,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 620,
+     "line": 695,
      "name": "_guide_resources"
     },
     {
@@ -32584,10 +32973,10 @@
       "uri"
      ],
      "doc": "",
-     "end": 627,
+     "end": 702,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 624,
+     "line": 699,
      "name": "_guide_reader"
     },
     {
@@ -32596,18 +32985,18 @@
       "seed"
      ],
      "doc": "The operating guide, then where to begin (optionally a given adapter and seed).",
-     "end": 637,
+     "end": 712,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 635,
+     "line": 710,
      "name": "run_governed_research"
     },
     {
      "doc": "",
-     "end": 667,
+     "end": 742,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "class",
-     "line": 650,
+     "line": 725,
      "methods": [
       "__init__",
       "__call__"
@@ -32617,19 +33006,19 @@
     {
      "args": [],
      "doc": "ASGI app: FastMCP streamable-http + FAIL-CLOSED bearer gate +",
-     "end": 829,
+     "end": 904,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 670,
+     "line": 745,
      "name": "build_app"
     },
     {
      "args": [],
      "doc": "",
-     "end": 848,
+     "end": 924,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 843,
+     "line": 919,
      "name": "main"
     }
    ]
@@ -33713,6 +34102,7 @@
     "control/control/reconciliation.py",
     "control/control/scheduler.py",
     "control/control/tickets.py",
+    "mcp_server/polymath_mcp.py",
     "orchestrator/orchestrator/_small-modules",
     "orchestrator/orchestrator/api/_small-modules",
     "orchestrator/orchestrator/api/acquisition.py",
@@ -33734,6 +34124,7 @@
     "orchestrator/orchestrator/api/web_auth.py",
     "orchestrator/orchestrator/api/web_settings.py",
     "orchestrator/orchestrator/main.py",
+    "orchestrator/orchestrator/mcp_server.py",
     "shared/polymath_shared/_small-modules-2",
     "shared/polymath_shared/_small-modules-3",
     "shared/polymath_shared/admission_interpreter.py",
@@ -66503,6 +66894,415 @@
     }
    ]
   },
+  "shared/polymath_shared/mcp_retrieval.py": {
+   "collections": [
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 43,
+     "name": "polymath_query"
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 43,
+     "name": "polymath_retrieve"
+    }
+   ],
+   "constants": [
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 19,
+     "name": "RETRIEVAL_MODES",
+     "value": [
+      "FAST",
+      "HYBRID",
+      "GRAPH",
+      "WILDCARD",
+      "GNN"
+     ]
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 20,
+     "name": "DEFAULT_MODE",
+     "value": "HYBRID"
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 21,
+     "name": "MODE_GUIDE",
+     "value": {
+      "FAST": "semantic (dense-vector) search over the passages; the quickest. Good for a direct lookup.",
+      "GNN": "experimental: a graph-neural model picks the sections, their original passages prove it, the reranker judges.",
+      "GRAPH": "HYBRID plus the knowledge graph: the entities in the evidence and how they relate. Returns graph facts beside the passages. Use it for how things connect.",
+      "HYBRID": "FAST plus keyword matching; the default and the best all-round choice.",
+      "WILDCARD": "the normal evidence plus a separate WILDCARD lane of surprising, still source-grounded passages from elsewhere in the library (it never displaces the evidence). Use it for ideas, analogies and lateral angles."
+     }
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 30,
+     "name": "_ALIASES",
+     "value": {
+      "VECTOR": "FAST"
+     }
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 33,
+     "name": "REASONING_STYLES",
+     "value": [
+      "none",
+      "step_by_step",
+      "branching",
+      "creative",
+      "analytical",
+      "self_correct",
+      "atomic",
+      "planning",
+      "graph_reason",
+      "debate",
+      "deep_research",
+      "concise",
+      "meta"
+     ]
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 37,
+     "name": "DEPTHS",
+     "value": {
+      "quick": "3 goals x 1 round, the fastest (minutes)",
+      "standard": "3 goals x 2 rounds",
+      "thorough": "4 goals x 2 rounds, the slowest"
+     }
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 39,
+     "name": "DEFAULT_DEPTH",
+     "value": "quick"
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 42,
+     "name": "HIDDEN_TOOLS_A",
+     "value": [
+      "ask",
+      "compile_plan",
+      "retrieve",
+      "retrieve_evidence"
+     ]
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 43,
+     "name": "HIDDEN_TOOLS_B",
+     "value": [
+      "polymath_query",
+      "polymath_retrieve"
+     ]
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 45,
+     "name": "MAX_TEXT",
+     "value": 1200
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 46,
+     "name": "WILDCARD_MAX",
+     "value": 8
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 47,
+     "name": "WILDCARD_TEXT",
+     "value": 600
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 48,
+     "name": "GRAPH_FACTS_MAX",
+     "value": 20
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 49,
+     "name": "COMPARE_ROWS",
+     "value": 6
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 50,
+     "name": "REPORT_CITATION_TEXT",
+     "value": 400
+    }
+   ],
+   "doc": "MCP-RETRIEVAL-MODES-V1 (the owner, 2026-10-01: \"tools are stale and outdated. polymath has different types of retrieval\").",
+   "env": [],
+   "fallbacks": [],
+   "files": [
+    "shared/polymath_shared/mcp_retrieval.py"
+   ],
+   "hash": "529f8191c73b6491",
+   "importers": [
+    "mcp_server/polymath_mcp.py",
+    "orchestrator/orchestrator/api/_small-modules",
+    "orchestrator/orchestrator/mcp_server.py"
+   ],
+   "imports": [],
+   "lines": 318,
+   "mcp_tools": [],
+   "nondeterminism": [],
+   "page": "units/shared/polymath_shared/mcp_retrieval.py.md",
+   "prompts": [],
+   "routes": [],
+   "sql_reads": [],
+   "sql_writes": [],
+   "symbols": [
+    {
+     "args": [],
+     "doc": "",
+     "end": 54,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 53,
+     "name": "mode_lines"
+    },
+    {
+     "args": [
+      "mode"
+     ],
+     "doc": "The canonical mode name, or None when `mode` is not one of the five public modes.",
+     "end": 61,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 57,
+     "name": "normalize_mode"
+    },
+    {
+     "args": [
+      "mode"
+     ],
+     "doc": "",
+     "end": 66,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 64,
+     "name": "mode_error"
+    },
+    {
+     "args": [
+      "style"
+     ],
+     "doc": "",
+     "end": 71,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 69,
+     "name": "normalize_reasoning"
+    },
+    {
+     "args": [
+      "depth"
+     ],
+     "doc": "",
+     "end": 76,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 74,
+     "name": "normalize_depth"
+    },
+    {
+     "args": [
+      "query",
+      "corpus_id",
+      "mode"
+     ],
+     "doc": "ONE query on the app's retrieval for `mode`: the chat runtime's evidence route with the query compiler OFF (no",
+     "end": 85,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 81,
+     "name": "search_body"
+    },
+    {
+     "args": [
+      "query",
+      "corpus_id",
+      "mode",
+      "corpus_explorer"
+     ],
+     "doc": "",
+     "end": 89,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 88,
+     "name": "explore_body"
+    },
+    {
+     "args": [
+      "question",
+      "corpus_id",
+      "mode",
+      "reasoning",
+      "model",
+      "latent"
+     ],
+     "doc": "",
+     "end": 101,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 92,
+     "name": "answer_body"
+    },
+    {
+     "args": [
+      "question",
+      "corpus_id",
+      "modes"
+     ],
+     "doc": "",
+     "end": 105,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 104,
+     "name": "compare_body"
+    },
+    {
+     "args": [
+      "question",
+      "corpus_id",
+      "depth",
+      "mode",
+      "model"
+     ],
+     "doc": "",
+     "end": 112,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 108,
+     "name": "deep_body"
+    },
+    {
+     "args": [
+      "rows",
+      "max_chars"
+     ],
+     "doc": "Contract rows with `text` / `text_clean` cut at `max_chars`. D-02: a cut row says so \u2014 `truncated: true` +",
+     "end": 130,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 117,
+     "name": "trim_rows"
+    },
+    {
+     "args": [
+      "text",
+      "n"
+     ],
+     "doc": "",
+     "end": 135,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 133,
+     "name": "_clip"
+    },
+    {
+     "args": [
+      "items"
+     ],
+     "doc": "The WILDCARD lane, at most WILDCARD_MAX items: identity + why it was offered + a bounded excerpt.",
+     "end": 156,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 138,
+     "name": "shape_wildcard"
+    },
+    {
+     "args": [
+      "out"
+     ],
+     "doc": "",
+     "end": 161,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 159,
+     "name": "_degraded"
+    },
+    {
+     "args": [
+      "out",
+      "max_evidence"
+     ],
+     "doc": "polymath_search's answer: the executed mode, the evidence rows (chunk rows first, graph facts after), and the",
+     "end": 185,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 164,
+     "name": "shape_search"
+    },
+    {
+     "args": [
+      "out"
+     ],
+     "doc": "polymath_explore's answer: the EvidencePacket (already bounded), the executed mode, the graph facts and the",
+     "end": 209,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 188,
+     "name": "shape_explore"
+    },
+    {
+     "args": [
+      "out",
+      "max_rows"
+     ],
+     "doc": "polymath_compare's answer: per mode the latency, counts, documents and its top rows, plus what every mode found",
+     "end": 238,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 212,
+     "name": "shape_compare"
+    },
+    {
+     "args": [
+      "out"
+     ],
+     "doc": "",
+     "end": 247,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 241,
+     "name": "shape_models"
+    },
+    {
+     "args": [
+      "lines"
+     ],
+     "doc": "(event, data) for every frame of a text/event-stream; keep-alive comments and malformed frames are skipped.",
+     "end": 274,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 252,
+     "name": "parse_sse"
+    },
+    {
+     "args": [
+      "events",
+      "depth",
+      "mode"
+     ],
+     "doc": "polymath_deep_research's answer from the stream: the cited report, its citations, the coverage, the run's counts.",
+     "end": 317,
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "kind": "def",
+     "line": 277,
+     "name": "shape_deep"
+    }
+   ]
+  },
   "shared/polymath_shared/metal.py": {
    "collections": [
     {
@@ -82915,7 +83715,7 @@
     },
     {
      "file": "mcp_server/polymath_mcp.py",
-     "line": 104,
+     "line": 148,
      "missing": [
       "id",
       "doc_id",
@@ -82950,6 +83750,25 @@
       "c4_valid"
      ],
      "present": 3
+    },
+    {
+     "file": "orchestrator/orchestrator/api/chat.py",
+     "line": 166,
+     "missing": [
+      "kind",
+      "corpus_id",
+      "title",
+      "source",
+      "heading_path",
+      "text",
+      "text_truncated",
+      "text_chars",
+      "score",
+      "synthesis_role",
+      "c4_valid",
+      "origin"
+     ],
+     "present": 4
     },
     {
      "file": "orchestrator/orchestrator/api/chat_retrieval.py",
@@ -83200,7 +84019,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 152,
+     "line": 191,
      "missing": [
       "title",
       "text_truncated",
@@ -83862,6 +84681,25 @@
       "c4_valid"
      ],
      "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 84,
+     "missing": [
+      "text_truncated",
+      "text_chars",
+      "utility_role",
+      "synthesis_role",
+      "ca4_grade",
+      "c4_valid",
+      "origin",
+      "relation_to_q0",
+      "source_class",
+      "evidence_role",
+      "polarity",
+      "hypothesis_ids"
+     ],
+     "present": 9
     },
     {
      "file": "shared/polymath_shared/pass1.py",
@@ -84794,7 +85632,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 160,
+     "line": 199,
      "missing": [
       "absorb",
       "according",
@@ -85304,6 +86142,25 @@
       "allows"
      ],
      "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 144,
+     "missing": [
+      "absorb",
+      "according",
+      "accuracy",
+      "acquire",
+      "adapt",
+      "adapted",
+      "adopt",
+      "adoption",
+      "affect",
+      "aka",
+      "allow",
+      "allows"
+     ],
+     "present": 4
     },
     {
      "file": "shared/polymath_shared/pipeline_health.py",
@@ -86677,7 +87534,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 87,
+     "line": 94,
      "missing": [
       "target_mechanism",
       "invariant",
@@ -86792,6 +87649,22 @@
       "alternatives",
       "falsifiers",
       "status",
+      "exploratory"
+     ],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 65,
+     "missing": [
+      "path",
+      "target_mechanism",
+      "invariant",
+      "evidence_boundary",
+      "hop_refs",
+      "gaps",
+      "alternatives",
+      "falsifiers",
       "exploratory"
      ],
      "present": 3
@@ -88666,7 +89539,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 212,
+     "line": 251,
      "missing": [
       "application",
       "component",
@@ -89041,7 +89914,7 @@
     },
     {
      "file": "mcp_server/polymath_mcp.py",
-     "line": 264,
+     "line": 154,
      "missing": [
       "run_id",
       "adapter_version",
@@ -89117,7 +89990,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_principals.py",
-     "line": 122,
+     "line": 127,
      "missing": [
       "run_id",
       "adapter_version",
@@ -89136,7 +90009,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 87,
+     "line": 94,
      "missing": [
       "adapter_version",
       "current_step_id",
@@ -93492,6 +94365,25 @@
      "present": 5
     },
     {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 85,
+     "missing": [
+      "admission",
+      "admitted",
+      "corroborate",
+      "corroboration",
+      "far",
+      "independence",
+      "independent",
+      "observation",
+      "observations",
+      "record",
+      "records",
+      "second"
+     ],
+     "present": 3
+    },
+    {
      "file": "workers/workers/adapter_step_worker.py",
      "line": 68,
      "missing": [
@@ -93648,7 +94540,7 @@
     },
     {
      "file": "mcp_server/polymath_mcp.py",
-     "line": 264,
+     "line": 154,
      "missing": [
       "run_id",
       "current_step_id",
@@ -93667,7 +94559,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_principals.py",
-     "line": 122,
+     "line": 127,
      "missing": [
       "run_id",
       "status",
@@ -93686,7 +94578,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 87,
+     "line": 94,
      "missing": [
       "current_step_id",
       "sequence",
@@ -95875,7 +96767,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 87,
+     "line": 94,
      "missing": [
       "start",
       "submission",
@@ -96564,6 +97456,64 @@
   {
    "consumers": [
     {
+     "file": "frontend-v2/src/lib/contracts.ts",
+     "line": 177,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "orchestrator/orchestrator/api/compare_review.py",
+     "line": 37,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "orchestrator/orchestrator/api/retrieve.py",
+     "line": 123,
+     "missing": [
+      "FAST"
+     ],
+     "present": 3
+    },
+    {
+     "file": "orchestrator/orchestrator/api/ui.py",
+     "line": 1290,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 19,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "shared/polymath_shared/retrieval_modes.py",
+     "line": 19,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "shared/polymath_shared/skeleton_routes.py",
+     "line": 57,
+     "missing": [],
+     "present": 4
+    }
+   ],
+   "file": "shared/polymath_shared/adapter/evidence_boundary.py",
+   "line": 44,
+   "name": "BOUNDARY_MODES",
+   "slug": "BOUNDARY_MODES",
+   "values": [
+    "FAST",
+    "HYBRID",
+    "GRAPH",
+    "WILDCARD"
+   ]
+  },
+  {
+   "consumers": [
+    {
      "file": "adapters/ecommerce/python/corpus_polymath.py",
      "line": 228,
      "missing": [
@@ -96734,6 +97684,67 @@
   {
    "consumers": [
     {
+     "file": "frontend-v2/src/lib/contracts.ts",
+     "line": 176,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "orchestrator/orchestrator/api/retrieve.py",
+     "line": 123,
+     "missing": [
+      "FAST"
+     ],
+     "present": 4
+    },
+    {
+     "file": "orchestrator/orchestrator/api/ui.py",
+     "line": 1290,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "shared/polymath_shared/adapter/evidence_boundary.py",
+     "line": 44,
+     "missing": [
+      "GNN"
+     ],
+     "present": 4
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 19,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "shared/polymath_shared/retrieval_modes.py",
+     "line": 19,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "shared/polymath_shared/skeleton_routes.py",
+     "line": 57,
+     "missing": [],
+     "present": 5
+    }
+   ],
+   "file": "orchestrator/orchestrator/api/compare_review.py",
+   "line": 37,
+   "name": "COMPARABLE_MODES",
+   "slug": "COMPARABLE_MODES",
+   "values": [
+    "FAST",
+    "HYBRID",
+    "GRAPH",
+    "WILDCARD",
+    "GNN"
+   ]
+  },
+  {
+   "consumers": [
+    {
      "file": "adapters/ecommerce/binding.py",
      "line": 234,
      "missing": [
@@ -96830,6 +97841,122 @@
     "falsification",
     "community",
     "seasonality"
+   ]
+  },
+  {
+   "consumers": [
+    {
+     "file": "frontend-v2/src/lib/contracts.ts",
+     "line": 177,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "orchestrator/orchestrator/api/compare_review.py",
+     "line": 37,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "orchestrator/orchestrator/api/ui.py",
+     "line": 1290,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/adapter/evidence_boundary.py",
+     "line": 44,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 19,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/retrieval_modes.py",
+     "line": 20,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/skeleton_routes.py",
+     "line": 57,
+     "missing": [],
+     "present": 3
+    }
+   ],
+   "file": "orchestrator/orchestrator/api/retrieve.py",
+   "line": 123,
+   "name": "INTENT_MODES",
+   "slug": "INTENT_MODES",
+   "values": [
+    "HYBRID",
+    "GRAPH",
+    "WILDCARD"
+   ]
+  },
+  {
+   "consumers": [
+    {
+     "file": "frontend-v2/src/lib/contracts.ts",
+     "line": 176,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "orchestrator/orchestrator/api/compare_review.py",
+     "line": 37,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "orchestrator/orchestrator/api/retrieve.py",
+     "line": 123,
+     "missing": [
+      "FAST"
+     ],
+     "present": 4
+    },
+    {
+     "file": "orchestrator/orchestrator/api/ui.py",
+     "line": 1290,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "shared/polymath_shared/adapter/evidence_boundary.py",
+     "line": 44,
+     "missing": [
+      "GNN"
+     ],
+     "present": 4
+    },
+    {
+     "file": "shared/polymath_shared/retrieval_modes.py",
+     "line": 19,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "shared/polymath_shared/skeleton_routes.py",
+     "line": 57,
+     "missing": [],
+     "present": 5
+    }
+   ],
+   "file": "shared/polymath_shared/mcp_retrieval.py",
+   "line": 21,
+   "name": "MODE_GUIDE",
+   "slug": "MODE_GUIDE",
+   "values": [
+    "FAST",
+    "HYBRID",
+    "GRAPH",
+    "WILDCARD",
+    "GNN"
    ]
   },
   {
@@ -97336,6 +98463,67 @@
   {
    "consumers": [
     {
+     "file": "frontend-v2/src/lib/contracts.ts",
+     "line": 176,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "orchestrator/orchestrator/api/compare_review.py",
+     "line": 37,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "orchestrator/orchestrator/api/retrieve.py",
+     "line": 123,
+     "missing": [
+      "FAST"
+     ],
+     "present": 4
+    },
+    {
+     "file": "orchestrator/orchestrator/api/ui.py",
+     "line": 1290,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "shared/polymath_shared/adapter/evidence_boundary.py",
+     "line": 44,
+     "missing": [
+      "GNN"
+     ],
+     "present": 4
+    },
+    {
+     "file": "shared/polymath_shared/retrieval_modes.py",
+     "line": 19,
+     "missing": [],
+     "present": 5
+    },
+    {
+     "file": "shared/polymath_shared/skeleton_routes.py",
+     "line": 57,
+     "missing": [],
+     "present": 5
+    }
+   ],
+   "file": "shared/polymath_shared/mcp_retrieval.py",
+   "line": 19,
+   "name": "RETRIEVAL_MODES",
+   "slug": "RETRIEVAL_MODES",
+   "values": [
+    "FAST",
+    "HYBRID",
+    "GRAPH",
+    "WILDCARD",
+    "GNN"
+   ]
+  },
+  {
+   "consumers": [
+    {
      "file": "adapters/ecommerce/python/executors.py",
      "line": 204,
      "missing": [
@@ -97574,108 +98762,147 @@
   {
    "consumers": [
     {
-     "file": "frontend-v2/src/lib/contracts.ts",
-     "line": 177,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "orchestrator/orchestrator/api/compare_review.py",
-     "line": 37,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "orchestrator/orchestrator/api/retrieve.py",
-     "line": 123,
+     "file": "orchestrator/orchestrator/api/chat_retrieval.py",
+     "line": 657,
      "missing": [
-      "FAST"
+      "depth",
+      "completed",
+      "new_learnings",
+      "move",
+      "moves",
+      "scored",
+      "failed_open",
+      "goal_id",
+      "goals",
+      "confirmed",
+      "user_kept",
+      "thread_kept"
      ],
      "present": 3
     },
     {
      "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 1290,
-     "missing": [],
-     "present": 4
+     "line": 1720,
+     "missing": [
+      "depth",
+      "completed",
+      "new_learnings",
+      "move",
+      "moves",
+      "dropped",
+      "failed_open",
+      "goal_id",
+      "goals",
+      "confirmed",
+      "user_kept",
+      "thread_kept"
+     ],
+     "present": 3
     },
     {
-     "file": "shared/polymath_shared/retrieval_modes.py",
-     "line": 19,
-     "missing": [],
-     "present": 4
+     "file": "shared/polymath_shared/chat_plan.py",
+     "line": 43,
+     "missing": [
+      "completed",
+      "total",
+      "new_learnings",
+      "move",
+      "moves",
+      "scored",
+      "failed_open",
+      "goal_id",
+      "goals",
+      "confirmed",
+      "user_kept",
+      "thread_kept"
+     ],
+     "present": 3
     },
     {
-     "file": "shared/polymath_shared/skeleton_routes.py",
-     "line": 57,
-     "missing": [],
-     "present": 4
+     "file": "shared/polymath_shared/deep_research/engine.py",
+     "line": 305,
+     "missing": [
+      "new_learnings",
+      "reason"
+     ],
+     "present": 13
+    },
+    {
+     "file": "shared/polymath_shared/deep_research/evidence.py",
+     "line": 78,
+     "missing": [
+      "depth",
+      "completed",
+      "total",
+      "new_learnings",
+      "reason",
+      "scored",
+      "dropped",
+      "failed_open",
+      "user_kept",
+      "thread_kept"
+     ],
+     "present": 5
+    },
+    {
+     "file": "shared/polymath_shared/mcp_retrieval.py",
+     "line": 145,
+     "missing": [
+      "completed",
+      "total",
+      "new_learnings",
+      "move",
+      "moves",
+      "scored",
+      "dropped",
+      "failed_open",
+      "goal_id",
+      "confirmed",
+      "user_kept",
+      "thread_kept"
+     ],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/wildcard_mapped.py",
+     "line": 162,
+     "missing": [
+      "depth",
+      "completed",
+      "new_learnings",
+      "reason",
+      "move",
+      "moves",
+      "failed_open",
+      "goal_id",
+      "goals",
+      "confirmed",
+      "user_kept",
+      "thread_kept"
+     ],
+     "present": 3
     }
    ],
-   "file": "shared/polymath_shared/adapter/evidence_boundary.py",
-   "line": 44,
-   "name": "BOUNDARY_MODES",
-   "slug": "BOUNDARY_MODES",
+   "file": "orchestrator/orchestrator/api/deep_research.py",
+   "line": 299,
+   "name": "_PHASE_FIELDS",
+   "slug": "_PHASE_FIELDS",
    "values": [
-    "FAST",
-    "HYBRID",
-    "GRAPH",
-    "WILDCARD"
-   ]
-  },
-  {
-   "consumers": [
-    {
-     "file": "frontend-v2/src/lib/contracts.ts",
-     "line": 176,
-     "missing": [],
-     "present": 5
-    },
-    {
-     "file": "orchestrator/orchestrator/api/retrieve.py",
-     "line": 123,
-     "missing": [
-      "FAST"
-     ],
-     "present": 4
-    },
-    {
-     "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 1290,
-     "missing": [],
-     "present": 5
-    },
-    {
-     "file": "shared/polymath_shared/adapter/evidence_boundary.py",
-     "line": 44,
-     "missing": [
-      "GNN"
-     ],
-     "present": 4
-    },
-    {
-     "file": "shared/polymath_shared/retrieval_modes.py",
-     "line": 19,
-     "missing": [],
-     "present": 5
-    },
-    {
-     "file": "shared/polymath_shared/skeleton_routes.py",
-     "line": 57,
-     "missing": [],
-     "present": 5
-    }
-   ],
-   "file": "orchestrator/orchestrator/api/compare_review.py",
-   "line": 37,
-   "name": "COMPARABLE_MODES",
-   "slug": "COMPARABLE_MODES",
-   "values": [
-    "FAST",
-    "HYBRID",
-    "GRAPH",
-    "WILDCARD",
-    "GNN"
+    "depth",
+    "completed",
+    "total",
+    "new_learnings",
+    "reason",
+    "move",
+    "moves",
+    "scored",
+    "dropped",
+    "failed_open",
+    "goal_id",
+    "goals",
+    "confirmed",
+    "user_kept",
+    "thread_kept"
    ]
   },
   {
@@ -97829,55 +99056,6 @@
     "subsidiary_of",
     "transforms_into",
     "uses"
-   ]
-  },
-  {
-   "consumers": [
-    {
-     "file": "frontend-v2/src/lib/contracts.ts",
-     "line": 177,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "orchestrator/orchestrator/api/compare_review.py",
-     "line": 37,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 1290,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/adapter/evidence_boundary.py",
-     "line": 44,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/retrieval_modes.py",
-     "line": 20,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/skeleton_routes.py",
-     "line": 57,
-     "missing": [],
-     "present": 3
-    }
-   ],
-   "file": "orchestrator/orchestrator/api/retrieve.py",
-   "line": 123,
-   "name": "INTENT_MODES",
-   "slug": "INTENT_MODES",
-   "values": [
-    "HYBRID",
-    "GRAPH",
-    "WILDCARD"
    ]
   },
   {
@@ -98188,223 +99366,6 @@
     "ENTITY",
     "BRIDGE",
     "ADJACENT"
-   ]
-  },
-  {
-   "consumers": [
-    {
-     "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 1942,
-     "missing": [
-      "PROCEDURE",
-      "DEFINITION",
-      "EXAMPLE",
-      "MECHANISM",
-      "CAUSAL",
-      "COMPARISON",
-      "COUNTERPOINT",
-      "ADJACENT"
-     ],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/bridge_integration.py",
-     "line": 63,
-     "missing": [
-      "PROCEDURE",
-      "DEFINITION",
-      "EXAMPLE",
-      "MECHANISM",
-      "CAUSAL",
-      "COMPARISON",
-      "COUNTERPOINT",
-      "ADJACENT"
-     ],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/deep_research/moves.py",
-     "line": 23,
-     "missing": [
-      "EXAMPLE",
-      "ENTITY",
-      "PRIMARY",
-      "CAUSAL",
-      "COUNTERPOINT",
-      "BRIDGE",
-      "ADJACENT"
-     ],
-     "present": 4
-    },
-    {
-     "file": "shared/polymath_shared/document_profile/compiler.py",
-     "line": 91,
-     "missing": [
-      "PROCEDURE",
-      "DEFINITION",
-      "EXAMPLE",
-      "PRIMARY",
-      "CAUSAL",
-      "COMPARISON",
-      "COUNTERPOINT",
-      "ADJACENT"
-     ],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/facets.py",
-     "line": 44,
-     "missing": [
-      "PROCEDURE",
-      "DEFINITION",
-      "EXAMPLE",
-      "ENTITY",
-      "CAUSAL",
-      "COMPARISON",
-      "COUNTERPOINT"
-     ],
-     "present": 4
-    },
-    {
-     "file": "shared/polymath_shared/query_intent.py",
-     "line": 32,
-     "missing": [
-      "EXAMPLE",
-      "ENTITY",
-      "PRIMARY",
-      "ADJACENT"
-     ],
-     "present": 7
-    }
-   ],
-   "file": "shared/polymath_shared/chat_plan.py",
-   "line": 73,
-   "name": "QUERY_TYPE_AS_TASK",
-   "slug": "QUERY_TYPE_AS_TASK",
-   "values": [
-    "PROCEDURE",
-    "DEFINITION",
-    "EXAMPLE",
-    "ENTITY",
-    "PRIMARY",
-    "MECHANISM",
-    "CAUSAL",
-    "COMPARISON",
-    "COUNTERPOINT",
-    "BRIDGE",
-    "ADJACENT"
-   ]
-  },
-  {
-   "consumers": [
-    {
-     "file": "adapters/ecommerce/python/corpus_polymath.py",
-     "line": 228,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "orchestrator/orchestrator/api/evidence_rows.py",
-     "line": 276,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "shared/polymath_shared/adapter/contracts.py",
-     "line": 35,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "shared/polymath_shared/adapter/hypotheses.py",
-     "line": 28,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "shared/polymath_shared/adapter/service.py",
-     "line": 24,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "workers/workers/adapter_step_worker.py",
-     "line": 93,
-     "missing": [],
-     "present": 4
-    }
-   ],
-   "file": "shared/polymath_shared/adapter/evidence_boundary.py",
-   "line": 53,
-   "name": "REF_KINDS",
-   "slug": "REF_KINDS",
-   "values": [
-    "chunk",
-    "document",
-    "graph_fact",
-    "graph_hop"
-   ]
-  },
-  {
-   "consumers": [
-    {
-     "file": "adapters/ecommerce/python/adapter_receipt.py",
-     "line": 49,
-     "missing": [],
-     "present": 5
-    },
-    {
-     "file": "adapters/ecommerce/python/executors.py",
-     "line": 204,
-     "missing": [
-      "CONTRADICTION"
-     ],
-     "present": 4
-    },
-    {
-     "file": "adapters/ecommerce/python/lived_world.py",
-     "line": 35,
-     "missing": [
-      "CONTRADICTION"
-     ],
-     "present": 4
-    },
-    {
-     "file": "adapters/ecommerce/python/market_discovery.py",
-     "line": 15,
-     "missing": [
-      "PURCHASE_INTENT",
-      "CONTRADICTION"
-     ],
-     "present": 3
-    },
-    {
-     "file": "adapters/ecommerce/python/product_anchored.py",
-     "line": 13,
-     "missing": [
-      "CONTRADICTION"
-     ],
-     "present": 4
-    },
-    {
-     "file": "adapters/ecommerce/python/registry.py",
-     "line": 44,
-     "missing": [
-      "PURCHASE_INTENT"
-     ],
-     "present": 4
-    }
-   ],
-   "file": "adapters/ecommerce/python/maintenance.py",
-   "line": 42,
-   "name": "ROLE_GOAL",
-   "slug": "ROLE_GOAL",
-   "values": [
-    "FRICTION_EVIDENCE",
-    "WORKAROUND_EVIDENCE",
-    "PURCHASE_INTENT",
-    "BEHAVIOR_SUPPORT",
-    "CONTRADICTION"
    ]
   }
  ]

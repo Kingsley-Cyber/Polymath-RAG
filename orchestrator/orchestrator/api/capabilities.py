@@ -31,7 +31,8 @@ CONTRACTS = {
     "field-evidence-corpus": None,       # corpus_id of the ingested field-evidence ledger — none yet
     "adapter": "v1",                     # COGNITIVE-ADAPTER-V1 (ADR-0018): /adapter/* + the adapter_* MCP tools
 }
-ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/chat/evidence", "/ask", "/adapter/list", "/adapter/start",
+ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/chat/evidence", "/compare", "/research/deep",
+             "/synthesizers", "/ask", "/adapter/list", "/adapter/start",
              "/adapter/{run_id}/next", "/adapter/{run_id}/submit", "/adapter/{run_id}/status", "/adapter/{run_id}/result",
              "/adapter/{run_id}/cancel"]
 # The seven adapter_* tools are served by BOTH MCP surfaces with identical names and parameters: Server A
@@ -39,8 +40,11 @@ ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/chat/evi
 # (mcp_server/polymath_mcp.py, stdio, no credential — Claude Code / Codex). Parity is pinned by
 # tests/contracts/test_mcp_adapter_parity.py (GOVERNED-CONVERGENCE-V1 TG1). The rest of MCP_TOOLS is Server A's list.
 ADAPTER_MCP_TOOLS = ["adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status", "adapter_result", "adapter_cancel"]
-MCP_TOOLS = ["capabilities", "polymath_search", "polymath_explore", "polymath_answer",
-             "compile_plan", "retrieve_evidence", "retrieve", "ask", "list_corpora", "corpus_status"] + ADAPTER_MCP_TOOLS
+# MCP-RETRIEVAL-MODES-V1: the LISTED retrieval tools. compile_plan / retrieve_evidence / retrieve / ask still answer old
+# callers but are no longer listed (MCP_HIDDEN_TOOLS); every retrieval tool takes one of RETRIEVAL_MODES.
+MCP_TOOLS = ["capabilities", "polymath_search", "polymath_explore", "polymath_answer", "polymath_compare",
+             "polymath_deep_research", "polymath_models", "list_corpora", "corpus_status"] + ADAPTER_MCP_TOOLS
+MCP_HIDDEN_TOOLS = ["compile_plan", "retrieve_evidence", "retrieve", "ask"]
 
 
 @lru_cache(maxsize=1)
@@ -76,8 +80,11 @@ def _live_contracts() -> dict:
 
 
 def capabilities_payload() -> dict:
+    from polymath_shared.mcp_retrieval import MODE_GUIDE, RETRIEVAL_MODES
     return {"backend": "polymath", "version": _version(), "api": API_DATE,
-            "contracts": _live_contracts(), "endpoints": list(ENDPOINTS), "mcp_tools": list(MCP_TOOLS)}
+            "contracts": _live_contracts(), "endpoints": list(ENDPOINTS), "mcp_tools": list(MCP_TOOLS),
+            "mcp_hidden_tools": list(MCP_HIDDEN_TOOLS),
+            "retrieval_modes": {m: MODE_GUIDE[m] for m in RETRIEVAL_MODES}}
 
 
 @router.get("/capabilities")

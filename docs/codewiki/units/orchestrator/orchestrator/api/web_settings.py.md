@@ -1,132 +1,139 @@
 # unit: orchestrator/orchestrator/api/web_settings.py
-anchor: orchestrator/orchestrator/api/web_settings.py:1-333
+anchor: orchestrator/orchestrator/api/web_settings.py:1-335
 
 ## purpose
-FastAPI router for the Settings page: principal API keys (list/create/revoke; raw key returned once), the copy-paste MCP connect prompt, the owner's one-command connect (ONE-PROFILE), owner-only friend admin, and the INVITE-SIGNUP code (read/rotate). Caller identity was already decided at the web boundary (`request.state.web_identity`); a DIRECT loopback caller is the owner; `/admin/*` and `/friends/invite*` are owner-only at the boundary. [DERIVED — orchestrator/orchestrator/api/web_settings.py:1-12]
+FastAPI settings router (FRIENDS-ACCESS-V1 F3 + INVITE-SIGNUP): a friend's own API keys and copy-paste connect prompt, and the owner's friend admin (list/add/enable/disable/reset-password/set-libraries/revoke-keys, invite code read/rotate) — `orchestrator/orchestrator/api/web_settings.py:1-7` [DERIVED]. Identity is decided upstream at the web boundary via `request.state.web_identity`; a DIRECT loopback caller is the owner — `orchestrator/orchestrator/api/web_settings.py:4-7` [DERIVED]. ONE-PROFILE: the owner gets one connect command (`scripts/connect_agents.sh`) and a key-free prompt instead of web-made keys — `orchestrator/orchestrator/api/web_settings.py:9-12` [DERIVED].
 
 ## public surface
 
-Module importers (FACTS.importers): `orchestrator/orchestrator/api/web_auth.py`, `orchestrator/orchestrator/main.py`.
-
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `router` | APIRouter | 13 routes below | web_settings.py:29 | main.py mounts it [INFERRED: only non-API importer] |
-| `mcp_url` | def | () -> str | web_settings.py:69-70 | — |
-| `connector_url` | def | (key: str) -> str | web_settings.py:73-77 | — |
-| `connect_command` | def | () -> str | web_settings.py:84-86 | — |
-| `usage_lines` | def | (libraries: list[str], private: str \| None, *, owner: bool) -> str | web_settings.py:89-105 | — |
-| `owner_prompt` | def | (libraries: list[str]) -> str | web_settings.py:108-113 | — |
-| `connect_prompt` | def | (key: str, libraries: list[str], private: str \| None, url: str \| None = None, *, owner: bool = False) -> str | web_settings.py:116-141 | — |
-| `friend_defaults` | def | () -> tuple[list[str], list[str]] | web_settings.py:237-240 | web_auth.py [INFERRED: docstring says /auth/register starts from the same two lists, web_settings.py:238-239] |
-| `KEY_PLACEHOLDER` | constant | `"<YOUR_KEY>"` | web_settings.py:30 | — |
-| `KeyBody` / `FriendBody` / `CorporaBody` | pydantic models | request bodies | web_settings.py:33-34, 37-41, 44-45 | routes below |
+| `router` | var | `APIRouter()` | web_settings.py:29 | orchestrator/orchestrator/main.py (module importer; mounts routes) [INFERRED] |
+| `KEY_PLACEHOLDER` | const | `= "<YOUR_KEY>"` | web_settings.py:30 | — |
+| `KeyBody` | class | `label: str = Field(default="", max_length=60)` | web_settings.py:33-34 | — |
+| `FriendBody` | class | `username (2..32), display_name (≤80), corpus_ids: list[str] \| None, adapter_ids: list[str] \| None` | web_settings.py:37-41 | — |
+| `CorporaBody` | class | `corpus_ids: list[str]` | web_settings.py:44-45 | — |
+| `mcp_url` | def | `() -> str` | web_settings.py:69-70 | — |
+| `connector_url` | def | `(key: str) -> str` | web_settings.py:73-77 | — |
+| `connect_command` | def | `() -> str` | web_settings.py:84-86 | — |
+| `usage_lines` | def | `(libraries: list[str], private: str \| None, *, owner: bool) -> str` | web_settings.py:89-107 | — |
+| `owner_prompt` | def | `(libraries: list[str]) -> str` | web_settings.py:110-115 | — |
+| `connect_prompt` | def | `(key: str, libraries: list[str], private: str \| None, url: str \| None = None, *, owner: bool = False) -> str` | web_settings.py:118-143 | — |
+| `friend_defaults` | def | `() -> tuple[list[str], list[str]]` | web_settings.py:239-242 | orchestrator/orchestrator/api/web_auth.py (module importer; `/auth/register` starts from the same lists per docstring web_settings.py:240-241) [INFERRED] |
+| `my_keys` / `create_my_key` / `revoke_my_key` / `prompt_template` / `owner_key_for_copy` | route | GET/POST `/keys`, DELETE `/keys/{key_id}`, GET `/keys/prompt`, GET `/keys/owner` | web_settings.py:151, 162, 177, 188, 206 | — |
+| `list_friends` / `add_friend` / `friend_action` / `set_libraries` | route | GET/POST `/admin/friends`, POST `/admin/friends/{username}/{action}`, PUT `/admin/friends/{username}/libraries` | web_settings.py:251, 258, 274, 290 | — |
+| `get_invite` / `rotate_invite` | route | GET `/friends/invite`, POST `/friends/invite/rotate` | web_settings.py:306, 313 | — |
+| `friend_keys` / `revoke_friend_key` | route | GET `/admin/friends/{username}/keys`, DELETE `/admin/friends/{username}/keys/{key_id}` | web_settings.py:322, 328 | — |
 
-Routes:
-
-| method | path | handler | anchor |
-|---|---|---|---|
-| GET | `/keys` | my_keys | web_settings.py:150 |
-| POST | `/keys` | create_my_key | web_settings.py:161 |
-| DELETE | `/keys/{key_id}` | revoke_my_key | web_settings.py:176 |
-| GET | `/keys/prompt` | prompt_template | web_settings.py:187 |
-| GET | `/keys/owner` | owner_key_for_copy | web_settings.py:205 |
-| GET | `/admin/friends` | list_friends | web_settings.py:250 |
-| POST | `/admin/friends` | add_friend | web_settings.py:257 |
-| POST | `/admin/friends/{username}/{action}` | friend_action | web_settings.py:273 |
-| PUT | `/admin/friends/{username}/libraries` | set_libraries | web_settings.py:289 |
-| GET | `/friends/invite` | get_invite | web_settings.py:305 |
-| POST | `/friends/invite/rotate` | rotate_invite | web_settings.py:312 |
-| GET | `/admin/friends/{username}/keys` | friend_keys | web_settings.py:321 |
-| DELETE | `/admin/friends/{username}/keys/{key_id}` | revoke_friend_key | web_settings.py:327 |
+Module importers (FACTS): `orchestrator/orchestrator/api/web_auth.py`, `orchestrator/orchestrator/main.py`.
 
 ## contracts
 
-- `mcp_url` — out: `os.environ.get("POLYMATH_PUBLIC_MCP_URL", "https://mcp.kingsleylab.xyz/mcp")`. web_settings.py:69-70
-- `connector_url(key)` — out: `mcp_url().rstrip("/")`, one trailing `/mcp` removed if present, then `/k/{key}/mcp` appended; with the default URL → `https://mcp.kingsleylab.xyz/k/<key>/mcp`. Counterpart: MCP Server A `mcp_server.KeyInPath` moves the key into the Authorization header. web_settings.py:73-77
-- `connect_command()` — out: `bash ` + shlex.quote of `REPO_ROOT/scripts/connect_agents.sh` (`REPO_ROOT = Path(__file__).resolve().parents[3]`); carries no secret. web_settings.py:80-86
-- `GET /keys` — owner or no identity → `{"is_owner": True, "keys": [], "max_active": None, "note": ...}`; friend → `W.list_keys(...)`, `max_active: W.MAX_ACTIVE_KEYS`. web_settings.py:150-157
-- `POST /keys` — in: `label` (default `""`, max_length 60). pre: friend identity (owner/None → 409 `OWNER_USES_ENV_KEY`); registry path set (else 503 `ACCOUNTS_NOT_CONFIGURED`). out 201: `{"key": raw, ..., "shown_once": True, "prompt": connect_prompt(raw, sorted(corpus_ids), private)}`. `W.AccountError` → 409 iff code == `"KEY_LIMIT"` else 400. post: raw key never shown again. web_settings.py:161-172, 56-60
-- `DELETE /keys/{key_id}` — owner → 409 `OWNER_USES_ENV_KEY`; key_id not among own keys → 404 `NOT_FOUND`; else `{"revoked": key_id}`. web_settings.py:176-183
-- `GET /keys/prompt` — owner/None → `owner_prompt(libraries)` + `connect_command`, `"key_included": False`; friend → `connect_prompt(KEY_PLACEHOLDER, sorted(corpus_ids), private)`, `"placeholder": "<YOUR_KEY>"`. web_settings.py:187-201
-- `GET /keys/owner` — pre: owner (403 `OWNER_ONLY` belt-and-braces); `POLYMATH_MCP_API_KEY` empty → 404 `OWNER_KEY_NOT_SET`. out: `key`, `mcp_url`, `connector_url`, `connect_prompt(..., owner=True)`, no-store. web_settings.py:205-221
-- `POST /admin/friends` — in: FriendBody (username 2–32 chars; `corpus_ids`/`adapter_ids` `None` = every shared library / every adapter). any `"fr-"` corpus → 400 `PRIVATE_LIBRARY`. out 201: friend record + `first_password` = `secrets.token_urlsafe(12)`, `"shown_once": True`. AccountError → 409 iff `"EXISTS"` else 400. web_settings.py:256-269
-- `POST /admin/friends/{username}/{action}` — action ∈ `enable`, `disable`, `reset-password`; else 404 `UNKNOWN_ACTION`; reset-password returns fresh `secrets.token_urlsafe(12)`; AccountError → 404 iff `"NOT_FOUND"` else 400. web_settings.py:272-285
-- `PUT /admin/friends/{username}/libraries` — any `"fr-"` corpus → 400 `PRIVATE_LIBRARY`; any AccountError → 404 with exc.code. web_settings.py:288-296
-- `GET /friends/invite` / `POST /friends/invite/rotate` — out: `{"code": rec.get("code") or None, "rotated_at": ...}`; code is null until the first rotate; rotate issues a replacement (friends not yet signed up need the new one). web_settings.py:299-317
-- `GET/DELETE /admin/friends/{username}/keys[/{key_id}]` — owner-only; list via `W.principal_id_for(username)`; revoke AccountError → 404. web_settings.py:320-333
-- `_shared_libraries()` — `SELECT corpus_id FROM corpora ORDER BY corpus_id` inside `tx()`, minus every id starting `"fr-"`. `friend_defaults()` = `(_shared_libraries(), _adapters())`; `_adapters()` = sorted `adapter_id` from `polymath_shared.adapter.service.list_adapters()`. web_settings.py:225-240
+**`mcp_url`** — web_settings.py:69-70
+- in: env `POLYMATH_PUBLIC_MCP_URL`, default `"https://mcp.kingsleylab.xyz/mcp"`; out: `str`.
+- post: value used verbatim as the MCP server URL in every prompt — web_settings.py:122, 128.
+
+**`connector_url(key)`** — web_settings.py:73-77
+- in: `key: str`; out: `f"{base}/k/{key}/mcp"` where `base = mcp_url().rstrip("/")` minus a trailing `"/mcp"` suffix when present.
+- pre: assumes MCP Server A `mcp_server.KeyInPath` relocates the path key into the Authorization header before anything else sees the request — web_settings.py:74-75.
+
+**`connect_prompt(key, libraries, private, url=None, *, owner=False)`** — web_settings.py:118-143
+- in: `url` defaults to `mcp_url()` (web_settings.py:122); out: text containing `Authorization: Bearer {key}` (web_settings.py:130), harness setup lines for Claude Code / Codex / Gemini CLI / OpenCode (web_settings.py:133-136), `usage_lines(...)` and a keep-private warning differing by `owner` (web_settings.py:123-124, 141, 143).
+
+**`create_my_key(body: KeyBody, request)`** — web_settings.py:162-174
+- pre: caller is a signed-in friend (`ident is None or ident.is_owner` → `409 OWNER_USES_ENV_KEY`, web_settings.py:164-166).
+- out: `201` `{key: raw, **key, shown_once: True, prompt: connect_prompt(raw, ...)}` — raw key returned ONCE, never again — web_settings.py:173-174.
+- post: `W.AccountError` with code `KEY_LIMIT` → `409`, any other code → `400` — web_settings.py:168-170.
+
+**`revoke_my_key(key_id, request)`** — web_settings.py:177-185
+- pre: `key_id` must appear in `W.list_keys(...)` for the caller, else `404 NOT_FOUND "no such key"` — web_settings.py:182-183.
+
+**`prompt_template(request)`** — web_settings.py:188-203
+- out owner/None: `{prompt: owner_prompt(libraries), connect_command, key_included: False, placeholder: None, mcp_url}` — no key ever in the answer — web_settings.py:198-199.
+- out friend: prompt built with `KEY_PLACEHOLDER` — web_settings.py:202-203.
+
+**`owner_key_for_copy(request)`** — web_settings.py:206-223
+- pre: owner only (non-owner → `403 OWNER_ONLY`, belt and braces, web_settings.py:213-214); `POLYMATH_MCP_API_KEY` non-empty else `404 OWNER_KEY_NOT_SET` — web_settings.py:215-217.
+- out: `{key, mcp_url, connector_url, prompt: connect_prompt(key, ..., owner=True)}`, `no-store` — web_settings.py:222-223.
+
+**`_shared_libraries()`** — web_settings.py:227-231
+- out: `SELECT corpus_id FROM corpora ORDER BY corpus_id`, every `corpus_id` not starting with `"fr-"` — web_settings.py:229-231.
+
+**`add_friend(body: FriendBody, request)`** — web_settings.py:258-271
+- in: `corpus_ids is None` → all shared libraries; `adapter_ids is None` → all adapters — web_settings.py:261, 265.
+- pre: no corpus starting `"fr-"` else `400 PRIVATE_LIBRARY "another friend's private library cannot be shared"` — web_settings.py:262-264.
+- out: `201 {friend, first_password: secrets.token_urlsafe(12), shown_once: True}`; `EXISTS` → `409`, else `400` — web_settings.py:266, 268-270, 271.
+
+**`friend_action(username, action, request)`** — web_settings.py:274-287
+- in: `action` ∈ `enable | disable | reset-password`; anything else → `404 UNKNOWN_ACTION "use enable, disable or reset-password"` — web_settings.py:278-284, 287.
+- out (reset): `first_password = secrets.token_urlsafe(12)`, `shown_once: True` — web_settings.py:282-284.
+
+**`set_libraries(username, body: CorporaBody, request)`** — web_settings.py:290-298
+- pre: no `"fr-"` corpus else `400 PRIVATE_LIBRARY`; `W.AccountError` → `404` with the account code — web_settings.py:293-294, 297-298.
+
+**`get_invite` / `rotate_invite`** — web_settings.py:306-319
+- pre: `_require_owner`; out: `{code, rotated_at}` where `code` is `null` until the first rotate — web_settings.py:302-303, 308, 310.
+
+**`_path()`** — web_settings.py:56-60
+- post: raises `503 ACCOUNTS_NOT_CONFIGURED` when `W.registry_path()` is `None` (`POLYMATH_MCP_PRINCIPALS_FILE` unset).
 
 ## effect surface
-
-| effect | detail | anchor |
-|---|---|---|
-| Postgres read | table `corpora`, column `corpus_id` | web_settings.py:227-228 |
-| Postgres write | none (FACTS.tables_written = []) | — |
-| Registry file | principals JSON via `W.registry_path()`; unset → 503 naming `POLYMATH_MCP_PRINCIPALS_FILE`; mutated only through W.* helpers (create_key, revoke_key, add_friend, set_friend_enabled, reset_friend_password, set_friend_corpora, rotate_invite) | web_settings.py:56-60, 166, 182, 265, 276-281, 294, 316 |
-| env | `POLYMATH_PUBLIC_MCP_URL` = `'https://mcp.kingsleylab.xyz/mcp'`; `POLYMATH_MCP_API_KEY` = null | web_settings.py:70, 213 |
-| files | path built for `scripts/connect_agents.sh`; never executed here — string only | web_settings.py:80-86 |
-| randomness | `secrets.token_urlsafe(12)` ×2 | web_settings.py:264, 280 |
-| collections | `polymath_search`, `polymath_explore`, `polymath_answer` appear only as tool names in prompt copy; no vector-store access in this unit | web_settings.py:101 |
-| network | none initiated; URLs returned as strings | web_settings.py:70, 77 |
-| cache header | every response `cache-control: no-store` via `_no_store` | web_settings.py:63-66 |
+- Postgres: reads table `corpora` (`SELECT corpus_id FROM corpora ORDER BY corpus_id`) — web_settings.py:229-230; tables written: none (FACTS `tables_written: []`).
+- Principal registry file: all writes go through `W.create_key / W.revoke_key / W.add_friend / W.set_friend_enabled / W.reset_friend_password / W.set_friend_corpora / W.rotate_invite` on the path from `W.registry_path()` — web_settings.py:168, 184, 268, 279, 283, 296, 318.
+- Env: `POLYMATH_PUBLIC_MCP_URL` = `"https://mcp.kingsleylab.xyz/mcp"` (web_settings.py:70); `POLYMATH_MCP_API_KEY` = null default (web_settings.py:215); `POLYMATH_MCP_PRINCIPALS_FILE` presence checked indirectly (web_settings.py:59).
+- Filesystem: references `REPO_ROOT / "scripts" / "connect_agents.sh"` in the returned command string only; no subprocess is executed — web_settings.py:80-81, 86.
+- Qdrant: none. Collection names `polymath_deep_research`, `polymath_search`, `polymath_explore`, `polymath_answer`, `polymath_compare` appear only as prose inside `usage_lines` — web_settings.py:99-101.
+- Network: none directly (in-process `polymath_shared.adapter.service.list_adapters`, web_settings.py:234-236).
 
 ## invariants
-
-INVARIANT: raw key/password exposure == the create/reset response only — `"shown_once": True` at web_settings.py:171, 268, 281; docstring "returned ONCE ... never again" web_settings.py:5-6 [DERIVED]
-  fails-if: a raw secret surfaces in any GET → unrecoverable from this UI (owner must change `.env`).
-INVARIANT: every corpus_id starting `"fr-"` is excluded from sharing — filter web_settings.py:229, add-time check web_settings.py:260, update-time check web_settings.py:291 [DERIVED]
-  fails-if: one friend is granted another friend's private library.
-INVARIANT: owner + POST /keys == 409 `OWNER_USES_ENV_KEY` — web_settings.py:163-164, 178-179 [DERIVED]
-  fails-if: a registry-grown owner key competes with the `.env` admin key (web_settings.py:5-7).
-INVARIANT: active-key limit surfaced as `W.MAX_ACTIVE_KEYS` (web_settings.py:156, 252) == the "at most 3 active ones" the docstring states (web_settings.py:5); the literal `3` lives only in prose [DERIVED]
-  fails-if: docstring/UI copy drifts if `W.MAX_ACTIVE_KEYS` changes.
-INVARIANT: every route response carries `cache-control: no-store` — web_settings.py:63-66 used by all handler returns [DERIVED]
-  fails-if: invite code (web_settings.py:305-308) or owner key (web_settings.py:220) cached by an intermediary.
-INVARIANT: `connector_url(x)` == mcp_url minus one trailing `/mcp`, plus `/k/{x}/mcp` — web_settings.py:76-77 [DERIVED]
-  fails-if: MCP Server A `KeyInPath` (web_settings.py:74-75) can no longer extract the key.
-INVARIANT: prompt corpus lists are `sorted(...)` — web_settings.py:171, 200 [DERIVED]
-  fails-if: prompt text flaps between calls (cosmetic).
+INVARIANT: `KEY_PLACEHOLDER` == `"<YOUR_KEY>"` — web_settings.py:30 [DERIVED]
+  fails-if: friend prompt template no longer matches the frontend's substitution target.
+INVARIANT: every JSON response header `cache-control` == `"no-store"` — web_settings.py:63-66 [DERIVED]
+  fails-if: keys/invite codes land in any cache.
+INVARIANT: owner's `my_keys` response == `{is_owner: True, keys: [], max_active: None}` — web_settings.py:154-156 [DERIVED]
+  fails-if: owner is shown web-made keys that do not exist.
+INVARIANT: friend `max_active` == `W.MAX_ACTIVE_KEYS` in both `my_keys` and `list_friends` — web_settings.py:158, 255 [DERIVED]
+  fails-if: UI limit display disagrees with enforcement in `W.create_key`.
+INVARIANT: `secrets.token_urlsafe` arg == `12` at both password sites — web_settings.py:266, 282 [DERIVED]
+  fails-if: divergent first-password entropy between add-friend and reset-password.
+INVARIANT: `_shared_libraries()` excludes every `corpus_id` starting `"fr-"` — web_settings.py:231 [DERIVED]
+  fails-if: one friend's private library is offered to another.
+INVARIANT: `connector_url(key)` output ends with `"/k/{key}/mcp"` — web_settings.py:76-77 [DERIVED]
+  fails-if: Server A `KeyInPath` no longer finds the key in the path.
+INVARIANT: tool names in prompts == `polymath_search, polymath_explore, polymath_answer, polymath_compare, polymath_deep_research` — web_settings.py:99-101 [DERIVED]
+  fails-if: prompt references a tool name that no longer exists on the MCP server.
 
 ## determinism & idempotency
-
-determinism: NONDETERMINISTIC (random `secrets.token_urlsafe(12)` web_settings.py:264, 280; env `POLYMATH_PUBLIC_MCP_URL` web_settings.py:70 and `POLYMATH_MCP_API_KEY` web_settings.py:213; db read of `corpora` web_settings.py:227-228)
-idempotency: UNSAFE (POST /keys mints a new key per call; repeated POST /admin/friends → 409 `EXISTS` web_settings.py:267-268; rotate_invite replaces the code every call web_settings.py:316; DELETEs converge but repeats get 404 — web_settings.py:180-181, 331-332; enable/disable converge via `W.set_friend_enabled` web_settings.py:276-278)
+determinism: NONDETERMINISTIC (random `secrets.token_urlsafe` web_settings.py:266, 282; env `POLYMATH_PUBLIC_MCP_URL` web_settings.py:70 and `POLYMATH_MCP_API_KEY` web_settings.py:215; db read of `corpora` web_settings.py:229-231; registry file state via `REGISTRY.get()` web_settings.py:157, 171, 182, 201, 254)
+idempotency: UNSAFE — `rotate_invite` yields a new code on every call (web_settings.py:314-318) and `reset-password` yields a new password each call (web_settings.py:282-284); `add_friend` on an existing username returns `409 EXISTS` rather than duplicating (web_settings.py:268-270) [INFERRED from the `EXISTS` code path]; GET endpoints and revocations are repeatable.
 
 ## failure behaviour
-
-- `except Exception` ×2 (web_settings.py:194, 218): `_shared_libraries()` failure swallowed → `libraries = []`; caller still gets a prompt, so "no libraries" and "DB down" become indistinguishable [swallow DERIVED; indistinguishability INFERRED].
-- `W.AccountError` status mapping differs by handler: 409 iff `KEY_LIMIT`/`EXISTS` else 400 at web_settings.py:167-168, 267-268, 283-284; flat 404 with exc.code at web_settings.py:295-296, 331-332.
-- Error shape: `HTTPException(status_code, detail={"error_code": code, "message": message})`. web_settings.py:48-49
-- Codes raised: 503 `ACCOUNTS_NOT_CONFIGURED` (59); 409 `OWNER_USES_ENV_KEY` (164, 179); 403 `OWNER_ONLY` (212, 246); 404 `OWNER_KEY_NOT_SET` (215); 404 `NOT_FOUND` (181); 400 `PRIVATE_LIBRARY` (262, 292); 404 `UNKNOWN_ACTION` (285). web_settings.py:59-285
+- Broad `except Exception` → `libraries = []` in `prompt_template` (owner branch) web_settings.py:194-197 and `owner_key_for_copy` web_settings.py:218-221: any DB failure listing libraries is swallowed; the caller still receives a full prompt — the `noqa: BLE001` comments note `list_corpora` names the libraries anyway (web_settings.py:196, 220).
+- `W.AccountError` surfaced as HTTP via `_refuse`: `KEY_LIMIT`/`EXISTS` → `409`, other codes → `400` (web_settings.py:168-170, 268-270, 285-286) or `404` (web_settings.py:297-298, 333-334).
+- Error codes raised here: `ACCOUNTS_NOT_CONFIGURED` 503 (web_settings.py:59), `OWNER_USES_ENV_KEY` 409 (web_settings.py:166, 181), `NOT_FOUND` 404 (web_settings.py:183), `OWNER_ONLY` 403 (web_settings.py:214, 248), `OWNER_KEY_NOT_SET` 404 (web_settings.py:217), `PRIVATE_LIBRARY` 400 (web_settings.py:264, 294), `UNKNOWN_ACTION` 404 (web_settings.py:287).
 
 ## dumb-code flags
-
-- Literal `"fr-"` repeated in three places, no shared constant — web_settings.py:229, 260, 291.
-- Docstring "at most 3 active ones" vs code constant `W.MAX_ACTIVE_KEYS` — web_settings.py:5 vs 156, 252.
-- Duplicated swallow blocks (`except Exception` → `libraries = []`, identical comment) — web_settings.py:192-195, 216-219.
-- Owner belt-and-braces check duplicated: inline in owner_key_for_copy vs `_require_owner` — web_settings.py:210-212 vs 243-246.
-- Magic sizes: `max_length=60` (34), `min_length=2` / `max_length=32` (38), `max_length=80` (39), `token_urlsafe(12)` (264, 280).
-- `connector_url` strips only one trailing `/mcp` — web_settings.py:76.
-- `prompt_template`: `text` bound only in the `else` branch, returned at web_settings.py:201 after the owner path returned at 196 — a third identity class would raise NameError [INFERRED].
+- Magic number `12` in `secrets.token_urlsafe(12)`, duplicated — web_settings.py:266, 282.
+- Two structurally identical `try: _shared_libraries() except Exception: libraries = []` blocks — web_settings.py:194-197 vs 218-221.
+- Duplicated `"fr-"` guard: `add_friend` web_settings.py:262-264 vs `set_libraries` web_settings.py:293-294.
+- Duplicated owner belt-and-braces check: `owner_key_for_copy` web_settings.py:213-214 vs `_require_owner` web_settings.py:245-248, same comment "the boundary already refuses; belt and braces".
+- `connector_url` string surgery `base[:-len('/mcp')] if base.endswith('/mcp') else base` — a public URL not ending in `/mcp` silently yields `"<base>/k/<key>/mcp"` — web_settings.py:76-77.
+- `friend_defaults()` returns fresh lists on each call; no caching, so adapter/library lists can drift between two calls in one flow — web_settings.py:239-242 [INFERRED: two DB/service reads are not transactional].
 
 ## refactor notes
-
-- Route paths, error codes, and response keys (`shown_once`, `first_password`, `placeholder`, `connector_url`, `key_included`) are the Settings frontend contract — web_settings.py:148-333.
-- `KEY_PLACEHOLDER` value `"<YOUR_KEY>"` is handed to clients (web_settings.py:200-201, 30); changing it breaks clients that substitute the placeholder [INFERRED].
-- `/k/{key}/mcp` must stay in lockstep with MCP Server A `mcp_server.KeyInPath` — web_settings.py:74-75, 77.
-- Prompt copy (usage_lines/owner_prompt/connect_prompt) gets pasted into agent harness configs; edits propagate to every friend's setup instructions — web_settings.py:99-141.
-- W.* surface used (web_accounts): `registry_path`, `WebIdentity`, `list_keys`, `create_key`, `revoke_key`, `AccountError`, `MAX_ACTIVE_KEYS`, `private_corpus_for`, `list_friends`, `add_friend`, `set_friend_enabled`, `reset_friend_password`, `normalize_username`, `set_friend_corpora`, `invite_record`, `rotate_invite`, `read_registry`, `principal_id_for` — web_settings.py:52-57, 155-156, 166-167, 182, 252, 265-267, 276-281, 294-295, 300, 316-317, 322-323, 329-331; signature changes there ripple through this file.
-- Importers `web_auth.py` and `main.py` (FACTS.importers) must be updated if `friend_defaults` or `router` move — web_settings.py:29, 237-240.
+- Route paths/methods are the public API: `main.py` mounts this router (FACTS importer); renaming `/keys`, `/admin/friends`, `/friends/invite` breaks the Settings UI and any scripts.
+- `friend_defaults()` output feeds both the owner's Add friend and web_auth `/auth/register` (web_settings.py:240-241; web_auth.py is an importer) — changing defaults changes what new friends can see.
+- `connector_url` is coupled to Server A `mcp_server.KeyInPath` and the `/k/<key>/mcp` path convention — web_settings.py:74-75, 77.
+- `KEY_PLACEHOLDER` is the contract for the friend prompt substitution in the UI — web_settings.py:30, 202.
+- The `"fr-"` prefix convention is shared with `W.private_corpus_for(username)` (web_settings.py:172, 202); renaming the prefix requires changing `corpora` row naming and web_accounts together.
+- `usage_lines` embeds tool names and mode names (`FAST`, `HYBRID`, `GRAPH`, `WILDCARD`, `GNN`) that must track the MCP server's tool descriptions — web_settings.py:101-107.
 
 ## VERIFY
-
 ```verify
 grep -Fq 'KEY_PLACEHOLDER = "<YOUR_KEY>"' orchestrator/orchestrator/api/web_settings.py
-grep -Fq 'https://mcp.kingsleylab.xyz/mcp' orchestrator/orchestrator/api/web_settings.py
-grep -Fq 'cache-control' orchestrator/orchestrator/api/web_settings.py
-grep -Eq 'secrets\.token_urlsafe\(12\)' orchestrator/orchestrator/api/web_settings.py
-grep -Fq 'OWNER_USES_ENV_KEY' orchestrator/orchestrator/api/web_settings.py
-grep -Fq 'startswith("fr-")' orchestrator/orchestrator/api/web_settings.py
-grep -Fq '/k/{key}/mcp' orchestrator/orchestrator/api/web_settings.py
-! grep -Fq 'print(' orchestrator/orchestrator/api/web_settings.py
+grep -Fq 'secrets.token_urlsafe(12)' orchestrator/orchestrator/api/web_settings.py
+grep -Fq 'SELECT corpus_id FROM corpora ORDER BY corpus_id' orchestrator/orchestrator/api/web_settings.py
+grep -Eq 'POLYMATH_PUBLIC_MCP_URL.*mcp.kingsleylab.xyz/mcp' orchestrator/orchestrator/api/web_settings.py
+! grep -Fq 'INSERT INTO' orchestrator/orchestrator/api/web_settings.py
+test "$(grep -c -F 'except Exception' orchestrator/orchestrator/api/web_settings.py)" -ge 2
 ```

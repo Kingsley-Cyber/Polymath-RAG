@@ -85,6 +85,25 @@ def _build(monkeypatch, tmp_path):
     async def retrieve(body: dict):
         return {"evidence_rows": [{"evidence_id": "ev_1", "text": f"a row from {body['corpus_id']}"}], "evidence_contract": "v1", "graph_facts": []}
 
+    @orch.post("/compare")
+    async def compare(body: dict):
+        return {"contract": "compare-retrieval-v1", "corpus_id": body["corpus_id"], "question": body["message"],
+                "arms": [{"mode": m, "ok": True, "latency_ms": 1, "retrieval": {"evidence_count": 1, "rows": [{"chunk_id": "c1"}]}}
+                         for m in body["modes"]]}
+
+    @orch.post("/research/deep")
+    async def deep(body: dict):
+        from fastapi.responses import StreamingResponse
+        answer = {"kind": "deep", "latency_ms": 5, "result": {"text": f"a report on {body['corpus_id']} [c1]", "citations": [],
+                                                              "meta": {"verdict": "supported", "deep_research": {}}}}
+        frames = f"event: phase\ndata: {json.dumps({'label': 'start'})}\n\n: keep-alive\n\nevent: answer\ndata: {json.dumps(answer)}\n\n"
+        return StreamingResponse(iter([frames]), media_type="text/event-stream")
+
+    @orch.post("/chat/evidence")                 # MCP-RETRIEVAL-MODES-V1: polymath_search rides the app's evidence route
+    async def chat_evidence(body: dict):
+        return {"evidence_packet": {"evidence": []}, "meta": {"mode": body.get("mode")}, "evidence_contract": "retrieve-evidence-rows-v1",
+                "evidence_rows": [{"id": "ev_1", "kind": "chunk", "text": f"a row from {body['corpus_id']}"}]}
+
     @orch.middleware("http")
     async def record(request, call_next):
         seen.append({"path": request.url.path, "principal": request.headers.get("x-polymath-principal"), "agent": request.headers.get("user-agent")})
@@ -220,7 +239,8 @@ def test_every_registered_tool_is_classified(world):
     w = world
     assert set(w.mod._TOOL_NAMES) == set(w.P.TOOL_POLICY) | ADMIN_ONLY_TOOLS
     listed = {t["name"] for t in json.loads(_post(w, w.keys["prn_alice"], {"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}).text)["result"]["tools"]}
-    assert listed == {t for t, (any_of, _) in w.P.TOOL_POLICY.items() if set(any_of) & set(w.P.FRIEND_PROFILE)}
+    assert listed == {t for t, (any_of, _) in w.P.TOOL_POLICY.items() if set(any_of) & set(w.P.FRIEND_PROFILE)} - w.mod.MR.HIDDEN_TOOLS_A
+    assert "polymath_deep_research" not in listed and {"polymath_compare", "polymath_models"} <= listed   # research = its own scope
     assert not listed & {"upload_text", "upload_document", "recent_queries", "adapter_cancel"}
 
 
@@ -279,7 +299,7 @@ def test_the_orchestrator_enforces_ownership_even_without_the_gate(world):
 def test_the_trusted_context_carries_the_principal_and_the_callers_software_identity(world):
     w = world
     _payload(_call(w, w.keys["prn_alice"], "polymath_search", {"query": "carts", "corpus_id": "commerce-v1"}))
-    assert w.seen[-1] == {"path": "/retrieve", "principal": "prn_alice", "agent": "claude-code/2.1"}
+    assert w.seen[-1] == {"path": "/chat/evidence", "principal": "prn_alice", "agent": "claude-code/2.1"}
     _payload(_call(w, OWNER_KEY, "polymath_search", {"query": "carts", "corpus_id": "owner-private"}, host=LOOPBACK))
     assert w.seen[-1]["principal"] is None and w.seen[-1]["agent"] == "claude-code/2.1"         # the owner = the legacy caller
 
@@ -345,3 +365,23 @@ def test_the_hosted_harness_proves_the_owners_per_friend_acceptance_list(monkeyp
     assert w.mod.P.TOOL_POLICY["adapter_cancel"]                                          # …and the harness cancelled it with the owner key
     from polymath_shared.adapter import service
     assert service.status(None, run_id)["status"] == "cancelled"
+
+
+def test_a_friend_compares_only_its_own_libraries_and_deep_research_is_granted_per_friend(world):
+    """MCP-RETRIEVAL-MODES-V1: polymath_compare is a search (the friend's libraries only); polymath_deep_research is its own
+    scope `knowledge.research`, NOT in the friend profile (minutes of model calls on the owner's accounts) — the owner grants
+    it per friend, and the granted friend still reaches only its libraries; polymath_models needs the answer scope."""
+    w = world
+    alice = w.keys["prn_alice"]
+    out = _payload(_call(w, alice, "polymath_compare", {"question": "carts", "corpus_id": "commerce-v1", "modes": ["fast", "graph"]}))
+    assert [a["mode"] for a in out["arms"]] == ["FAST", "GRAPH"] and out["found_by_every_mode"] == ["c1"]
+    assert w.seen[-1] == {"path": "/compare", "principal": "prn_alice", "agent": "claude-code/2.1"}
+    _denied(_call(w, alice, "polymath_compare", {"question": "carts", "corpus_id": "owner-private"}), "corpus_not_allowed")
+    _denied(_call(w, alice, "polymath_deep_research", {"question": "carts", "corpus_id": "commerce-v1"}), "insufficient_scope")
+    rita = w.add("prn_rita", scopes=(*w.P.FRIEND_PROFILE, w.P.KNOWLEDGE_RESEARCH))
+    report = _payload(_call(w, rita, "polymath_deep_research", {"question": "carts", "corpus_id": "commerce-v1"}))
+    assert report["report"] == "a report on commerce-v1 [c1]" and report["depth"] == "quick"
+    assert w.seen[-1] == {"path": "/research/deep", "principal": "prn_rita", "agent": "claude-code/2.1"}
+    _denied(_call(w, rita, "polymath_deep_research", {"question": "carts", "corpus_id": "owner-private"}), "corpus_not_allowed")
+    nosy = w.add("prn_nosy", scopes=(w.P.KNOWLEDGE_SEARCH,))
+    _denied(_call(w, nosy, "polymath_models", {}), "insufficient_scope")

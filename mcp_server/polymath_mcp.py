@@ -47,11 +47,19 @@ from mcp.server.mcpserver import MCPServer
 _SHARED = Path(__file__).resolve().parents[1] / "shared"
 if _SHARED.is_dir() and str(_SHARED) not in sys.path:          # the repository's shared package (normally already on the path)
     sys.path.insert(0, str(_SHARED))
+from polymath_shared import mcp_retrieval as MR
 from polymath_shared.adapter import harness_guide as HG  # noqa: E402
 
 BASE = os.environ.get("POLYMATH_API", "http://127.0.0.1:7200")
 
-server = MCPServer(
+class _ListedMCPServer(MCPServer):
+    """MCP-RETRIEVAL-MODES-V1: the deprecated tools stay callable for old callers but are never LISTED."""
+
+    async def list_tools(self):
+        return [t for t in await super().list_tools() if t.name not in MR.HIDDEN_TOOLS_B]
+
+
+server = _ListedMCPServer(
     name="polymath",
     title="Polymath",
     description="Evidence-first RAG/KAG: grounded answers with exact "
@@ -61,10 +69,13 @@ server = MCPServer(
         "Query the user's Polymath knowledge corpora. Always pass an explicit corpus_id (list them "
         "first) — missing scope fails closed by design. Submit the user's ORIGINAL information need; do "
         "NOT pre-decompose it into speculative retrieval subqueries — Polymath owns corpus retrieval "
-        "planning and grounded query expansion. Choose a tool by what you need: polymath_search = quick "
-        "q0-only corpus evidence; polymath_explore = full planning + Corpus Explore, returns validated "
-        "EVIDENCE (no answer) that you reason over yourself; polymath_answer = have Polymath write the "
-        "grounded answer (humans/UI). Prefer search/explore for agent work and synthesize yourself. "
+        "planning and grounded query expansion. One library per call. Choose a tool by what you need: "
+        "polymath_search = one direct search in the mode you choose (evidence rows, no planning); polymath_explore = "
+        "full planning + Corpus Explore, returns validated EVIDENCE (no answer) that you reason over yourself; "
+        "polymath_answer = have Polymath write the grounded answer (humans/UI); polymath_compare = one question "
+        "through several modes side by side; polymath_deep_research = a multi-step research run that returns a cited "
+        "report (minutes). Prefer search/explore for agent work and synthesize yourself. Retrieval modes (the app's "
+        "own): " + MR.mode_lines() + " "
         "verdict=insufficient_evidence / an empty evidence set means the corpus does not support the "
         "question; report that honestly instead of substituting your own knowledge. "
         "Governed research (e.g. product research): adapter_list -> adapter_start -> loop adapter_next / adapter_submit -> adapter_result; the operating guide for any agent harness and any tools is the prompt run_governed_research and the resource polymath://adapter/guide."
@@ -95,46 +106,101 @@ def polymath_list_corpora() -> dict:
     return _get("/corpora")
 
 
-@server.tool()
-def polymath_search(query: str, corpus_id: str, max_evidence: int = 10) -> dict:
-    """Lightweight EVIDENCE retrieval for one corpus — q0-only, no planning, no Corpus Explore, no answer.
-    Returns contract evidence rows (human source, timecodes, attested facts). Use when you just need corpus
-    facts quickly. Pass your ORIGINAL question; do NOT pre-decompose it — Polymath owns retrieval planning.
-    Reason over the returned evidence yourself."""
-    return _post("/retrieve", {"query": query, "corpus_id": corpus_id,
-                               "evidence": True, "limit": max_evidence})
+_MODE_ARG = "mode: " + " | ".join(MR.RETRIEVAL_MODES) + f" (default {MR.DEFAULT_MODE}). " + MR.mode_lines()
 
 
-@server.tool()
+@server.tool(description=(
+    "ONE direct search of one library in the retrieval mode you choose: no query planning, no Corpus Explore, no answer. "
+    "Returns contract evidence rows (passages with their source, utility_role and ca4_grade; GRAPH adds attested graph "
+    "facts) and, in WILDCARD, the separate wildcard lane. Pass the ORIGINAL question; Polymath owns retrieval planning "
+    "(use polymath_explore for that). " + _MODE_ARG))
+def polymath_search(query: str, corpus_id: str, mode: str = MR.DEFAULT_MODE, max_evidence: int = 10) -> dict:
+    m = MR.normalize_mode(mode)
+    if m is None:
+        return MR.mode_error(mode)
+    return MR.shape_search(_post("/chat/evidence", MR.search_body(query, corpus_id, m)), max_evidence)
+
+
+@server.tool(description=(
+    "Full retrieval PLANNING + grounded expansion (+ optional Corpus Explore) in the mode you choose -> a versioned "
+    "EvidencePacket (evidence with roles DIRECT/COMPLEMENTARY/DIVERGENT, CA4 grades, provenance, receipts) with NO "
+    "Polymath answer, plus graph facts (GRAPH) and the wildcard lane (WILDCARD). Discover hidden/adjacent corpus knowledge, "
+    "then do your OWN final reasoning. Do NOT pre-decompose. corpus_explorer=true runs the concept-activation explorer. "
+    + _MODE_ARG))
 def polymath_explore(query: str, corpus_id: str, corpus_explorer: bool = True,
-                     mode: str = "HYBRID") -> dict:
-    """Full Polymath retrieval PLANNING + grounded query expansion (+ optional Corpus Explore) returning a
-    versioned EvidencePacket: evidence with roles (DIRECT/COMPLEMENTARY/DIVERGENT), CA4 grades
-    (DIRECT/PARTIAL/RELATED), provenance and receipts — and NO Polymath answer (synthesis_performed=false).
-    Use this to discover hidden/adjacent corpus knowledge, then do your OWN final reasoning over the
-    evidence. Pass your ORIGINAL information need; do NOT pre-decompose it — Polymath owns retrieval
-    planning; you own the answer. corpus_explorer=true runs the concept-activation explorer."""
-    m = "FAST" if mode.upper() == "VECTOR" else mode.upper()
-    return _post("/chat/evidence", {"message": query, "corpus_id": corpus_id, "mode": m,
-                                    "corpus_explorer": bool(corpus_explorer)})
+                     mode: str = MR.DEFAULT_MODE) -> dict:
+    m = MR.normalize_mode(mode)
+    if m is None:
+        return MR.mode_error(mode)
+    return MR.shape_explore(_post("/chat/evidence", MR.explore_body(query, corpus_id, m, corpus_explorer)))
 
 
-@server.tool()
-def polymath_answer(question: str, corpus_id: str, mode: str = "HYBRID",
-                    latent: bool | None = None) -> dict:
-    """Have POLYMATH write a grounded, cited answer (its OWN synthesis) — for humans/UI, or when you
-    explicitly want Polymath's answer rather than raw evidence. For agent-to-agent work prefer
-    polymath_search / polymath_explore and synthesize yourself (avoids a nested synthesis pass).
-    verdict=insufficient_evidence means the corpus cannot support the question — relay it, do not fill the
-    gap. mode: VECTOR (dense) | HYBRID (default) | GRAPH (+ fact graph) | ASK (stored knowledge objects)."""
-    mode = mode.upper()
-    if mode == "ASK":
+@server.tool(description=(
+    "Have POLYMATH write a grounded, cited answer (its OWN synthesis), exactly as the app's chat writes it — for "
+    "humans/UI, or when you explicitly want Polymath's answer rather than raw evidence. For agent-to-agent work prefer "
+    "polymath_search / polymath_explore and synthesize yourself. verdict=insufficient_evidence means the library cannot "
+    "support the question — relay it, do not fill the gap. reasoning = the answer's reasoning style: "
+    + ", ".join(MR.REASONING_STYLES) + " (default none). model = a model id from polymath_models. " + _MODE_ARG
+    + " (Also accepted here: ASK = an answer from stored knowledge objects.)"))
+def polymath_answer(question: str, corpus_id: str, mode: str = MR.DEFAULT_MODE, reasoning: str = "none",
+                    model: str | None = None, latent: bool | None = None) -> dict:
+    if str(mode).strip().upper() == "ASK":
         return _post("/ask", {"question": question, "corpus_id": corpus_id})
-    m = "FAST" if mode == "VECTOR" else mode
-    body = {"message": question, "corpus_id": corpus_id, "mode": m}
-    if latent is not None:
-        body["latent"] = latent
-    return _post("/chat", body)
+    m = MR.normalize_mode(mode)
+    if m is None:
+        return MR.mode_error(mode)
+    style = MR.normalize_reasoning(reasoning)
+    if style is None:
+        return {"error": f"unknown reasoning style {reasoning!r}", "status": 422, "styles": list(MR.REASONING_STYLES)}
+    return _post("/chat", MR.answer_body(question, corpus_id, m, reasoning=style, model=model, latent=latent))
+
+
+@server.tool(description=(
+    "Run ONE question through several retrieval modes of one library, side by side (retrieval only, no answer; the app's "
+    "Compare screen). Per mode: latency, evidence count, the documents it reached and its top rows; plus the chunks every "
+    "mode found and how many only one mode found. modes = any of " + ", ".join(MR.RETRIEVAL_MODES) + " (default: all five)."))
+def polymath_compare(question: str, corpus_id: str, modes: list[str] | None = None) -> dict:
+    wanted = list(modes or MR.RETRIEVAL_MODES)
+    normal = [MR.normalize_mode(x) for x in wanted]
+    if None in normal:
+        return MR.mode_error(wanted[normal.index(None)])
+    return MR.shape_compare(_post("/compare", MR.compare_body(question, corpus_id, list(dict.fromkeys(normal))), timeout=600))
+
+
+@server.tool(description=(
+    "The app's DEEP RESEARCH on one library: Polymath plans research goals, searches in rounds, follows leads and writes a "
+    "cited report. It takes MINUTES and spends model calls; one run at a time. depth = "
+    + "; ".join(f"{k}: {v}" for k, v in MR.DEPTHS.items()) + f" (default {MR.DEFAULT_DEPTH}). mode = the retrieval mode "
+    f"every search uses (default {MR.DEFAULT_MODE}). model = a model id from polymath_models."))
+def polymath_deep_research(question: str, corpus_id: str, depth: str = MR.DEFAULT_DEPTH, mode: str = MR.DEFAULT_MODE,
+                           model: str | None = None) -> dict:
+    m = MR.normalize_mode(mode)
+    if m is None:
+        return MR.mode_error(mode)
+    d = MR.normalize_depth(depth)
+    if d is None:
+        return {"error": f"unknown depth {depth!r}", "status": 422, "depths": dict(MR.DEPTHS)}
+    with httpx.stream("POST", f"{BASE}/research/deep", json=MR.deep_body(question, corpus_id, d, m, model),
+                      headers={"Accept": "text/event-stream"}, timeout=httpx.Timeout(1800.0, connect=10.0)) as r:
+        if r.status_code >= 400:
+            r.read()
+            try:
+                detail = r.json().get("detail")
+            except Exception:  # noqa: BLE001
+                detail = r.text[:400]
+            d_ = detail if isinstance(detail, dict) else {"message": str(detail)}
+            return {"error": f"{d_.get('error_code') or r.status_code}: {d_.get('message') or d_}", "status": r.status_code}
+        lines = [ln + "\n" for ln in r.iter_lines()] + ["\n"]
+    return MR.shape_deep(MR.parse_sse(lines), depth=d, mode=m)
+
+
+@server.tool(description="The models Polymath can write with (ids for polymath_answer / polymath_deep_research `model`); "
+                         "`default` is the one used when you name none.")
+def polymath_models() -> dict:
+    try:
+        return MR.shape_models(_get("/synthesizers"))
+    except httpx.HTTPError as exc:
+        return {"error": f"{type(exc).__name__}: {exc}"[:300]}
 
 
 @server.tool()

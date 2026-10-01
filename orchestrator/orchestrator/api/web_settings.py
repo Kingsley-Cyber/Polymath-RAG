@@ -96,9 +96,11 @@ def usage_lines(libraries: list[str], private: str | None, *, owner: bool) -> st
                 "use my CJ account and quota." if owner else
                 "The supplier tools (supplier_search, supplier_product, supplier_freight, supplier_warehouses) are read-only and "
                 "owner-only: they use my CJ account and quota, so another key is refused (403).")
+    research = ("; polymath_deep_research = a cited research report (it takes minutes)" if owner else
+                "; polymath_deep_research = a cited research report (minutes; only when my key allows it)")
     return f"""How to use it
 1. Call list_corpora to see the libraries open to me: {libs}. Always pass one of them as corpus_id.
-2. Questions: polymath_search = quick evidence; polymath_explore = planned evidence to reason over yourself; polymath_answer = a written, cited answer.
+2. Questions: polymath_search = one direct search; polymath_explore = planned evidence to reason over yourself; polymath_answer = a written, cited answer; polymath_compare = one question through several modes{research}. Each takes a mode: FAST, HYBRID (default), GRAPH, WILDCARD or GNN (the tool descriptions say what each does).
 3. {own}
 4. Product research: first read the prompt run_governed_research (or the resource polymath://adapter/guide). Then adapter_list, adapter_start (put the libraries in request_options.corpus_ids), loop adapter_next / adapter_submit, then adapter_result. {web}
 5. {supplier}

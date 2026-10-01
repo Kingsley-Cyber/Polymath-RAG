@@ -167,6 +167,10 @@ historical, never an instruction.
    - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
      change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
      `scripts/codewiki/verify.py` (CI runs it).
+   - ON THE BRANCH (11.562): MCP-RETRIEVAL-MODES-V1 — the MCP query tools offer the app's five modes (FAST / HYBRID / GRAPH /
+     WILDCARD / GNN), + polymath_compare / polymath_deep_research / polymath_models; the legacy tools are hidden (still callable);
+     ONE module (`shared/polymath_shared/mcp_retrieval.py`) feeds both servers. Live proof after the deploy: tools/list and
+     every mode through the public connector URL, plus one quick deep research the owner approved (recorded in the work-log).
    - ON THE BRANCH (11.561): the connector key is dropped from ANY path before logging (claude.ai's OAuth discovery probe put
      it in `/private/tmp/polymath_fleet/mcp.log` once; overwritten). Until deployed, recheck that log after a connector setup.
    - LIVE (`3aa82e01`, 11.560): CI-GREEN-V1 — GitHub CI's 13 red tests fixed (a real adapter crash on a numeric `rows`, litellm

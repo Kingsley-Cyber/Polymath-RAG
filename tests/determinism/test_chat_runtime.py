@@ -657,3 +657,36 @@ def test_probe_gate_an_off_topic_probe_never_reaches_retrieval_and_the_receipt_s
     gate = hs.receipts[0]["out"]["meta"]["retrieval_trace"]["probe_gate"]
     assert gate["dropped"] == ["p0"] and gate["scores"]["br0"]["score"] > 0.8
     assert "probe_gate" in hs.receipts[0]["out"]["meta"]["trace_ms"]
+
+
+def test_the_evidence_route_gives_an_agent_graph_facts_and_contract_rows(monkeypatch):
+    """MCP-RETRIEVAL-MODES-V1: polymath_search = /chat/evidence with the compiler off and evidence=true. A GRAPH turn returns
+    the turn's graph facts beside the packet, and the contract rows are built from the packet's own chunks (its order, its
+    utility_role / ca4_grade) plus those facts — never a second retrieval. Without evidence=true there are no rows."""
+    Runtime(monkeypatch)
+    from orchestrator.api import evidence_rows as rows_mod
+    seen: dict = {}
+
+    def fake_rows(conn, response, corpus_ids, *, limit=12, explore=False, document_ids=None):
+        seen.update(response=response, corpus_ids=corpus_ids, explore=explore)
+        return ([{"id": c["chunk_id"], "kind": "chunk"} for c in response["child_evidence"]]
+                + [{"id": f"fact:{f['fact_id']}", "kind": "graph_fact"} for f in response["graph_facts"]])
+    monkeypatch.setattr(rows_mod, "build_evidence_rows", fake_rows)
+    monkeypatch.setattr(chat_mod, "tx", _fake_tx)
+    monkeypatch.setattr("polymath_shared.db.tx", _fake_tx)  # GRAPH binds facts to chunks in Postgres (a lazy import): no database here
+    body = {"message": QUERY, "corpus_id": "cinema", "mode": "GRAPH", "compiler": "off", "corpus_explorer": False, "evidence": True}
+    out = TestClient(_app()).post("/chat/evidence", json=body).json()
+    packet = out["evidence_packet"]["evidence"]
+    order = list(dict.fromkeys(e["chunk_id"] for e in packet))
+    assert out["meta"]["mode"] == "GRAPH" and order and out["synthesis_performed"] is False
+    facts = out["graph_facts"]
+    assert facts and {f["fact_id"] for f in facts} <= {"f0", "f1", "f2", "f3"} and all(f["predicate"] == "causes" for f in facts)
+    assert [c["chunk_id"] for c in seen["response"]["child_evidence"]] == order and seen["response"]["graph_facts"] == facts
+    assert seen["corpus_ids"] == ["cinema"] and seen["explore"] is False and seen["response"]["selected_documents"] == []
+    rows = out["evidence_rows"]
+    assert [r["id"] for r in rows] == order + [f"fact:{f['fact_id']}" for f in facts]
+    by_id = {e["chunk_id"]: e for e in packet}
+    assert all(r["utility_role"] == by_id[r["id"]]["utility_role"] for r in rows if r["kind"] == "chunk")
+    assert out["evidence_contract"] == "retrieve-evidence-rows-v1"
+    plain = TestClient(_app()).post("/chat/evidence", json={**body, "evidence": False}).json()
+    assert "evidence_rows" not in plain and plain["graph_facts"] == facts

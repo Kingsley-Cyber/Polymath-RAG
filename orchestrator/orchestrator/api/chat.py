@@ -215,7 +215,39 @@ def _evidence_impl(req: ChatRequest, *, receipt=None) -> dict:
     before synthesis and returns the EvidencePacket (`run_chat` surfaces the answer frame's result)."""
     sreq = stream_request(req)
     sreq.evidence_only = True
-    return run_chat(sreq, route="chat/evidence", receipt=receipt)
+    out = run_chat(sreq, route="chat/evidence", receipt=receipt)
+    if req.evidence:
+        attach_packet_rows(out, req)
+    return out
+
+
+def attach_packet_rows(out: dict, req: "ChatRequest") -> dict:
+    """MCP-RETRIEVAL-MODES-V1: `/chat/evidence` with `evidence: true` also returns the packet's evidence as RETRIEVE-
+    EVIDENCE-ROWS-V1 rows — the packet's chunks in the packet's order (each with its `utility_role` and `ca4_grade`),
+    then the turn's graph facts with the chunks that attest them. polymath_search returns these rows; before, it read
+    them from /retrieve's frozen LEGACY lane path. Built from ids the turn already chose: never a second retrieval."""
+    from orchestrator.api.evidence_rows import build_evidence_rows
+
+    items = [e for e in ((out.get("evidence_packet") or {}).get("evidence") or []) if isinstance(e, dict) and e.get("chunk_id")]
+    chunk_ids = list(dict.fromkeys(str(e["chunk_id"]) for e in items))
+    graded = {str(e["chunk_id"]): {"utility_role": e.get("utility_role"), "ca4_grade": e.get("ca4_grade")} for e in items}
+    facts = [f for f in out.get("graph_facts") or [] if isinstance(f, dict) and f.get("fact_id")]
+    corpus_ids = list(req.corpus_ids or ([req.corpus_id] if req.corpus_id else []))
+    try:
+        with tx() as conn:
+            rows = build_evidence_rows(
+                conn,
+                {"child_evidence": [{"chunk_id": cid, "rerank_score": float(len(chunk_ids) - i)} for i, cid in enumerate(chunk_ids)],
+                 "selected_documents": [], "graph_facts": facts},
+                corpus_ids, limit=max(12, len(chunk_ids)), explore=False)
+        for r in rows:
+            r.update({k: v for k, v in graded.get(str(r.get("id")), {}).items() if v})
+        out["evidence_rows"] = rows
+        out["evidence_contract"] = "retrieve-evidence-rows-v1"
+    except Exception as exc:  # noqa: BLE001 — rows are an add-on; the packet already stands
+        out["evidence_rows"] = []
+        out["evidence_rows_error"] = f"{type(exc).__name__}: {exc}"[:200]
+    return out
 
 
 @router.post("/chat/evidence")

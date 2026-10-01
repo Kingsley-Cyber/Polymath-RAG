@@ -27,6 +27,7 @@ AUTHORITY: `adapters/ecommerce/python/query_semantics.py:33` :: `GOVERNANCE_TERM
 | `shared/polymath_shared/adapter/evidence_boundary.py` | `shared/polymath_shared/adapter/evidence_boundary.py:31` | 5/20 | `admission`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `record`, `records`, `second`, `thread`, `threads` |
 | `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:162` | 3/20 | `admission`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `record`, `records`, `second`, `source`, `sources` |
 | `shared/polymath_shared/gap_check.py` | `shared/polymath_shared/gap_check.py:72` | 5/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `observations`, `record`, `records`, `thread` |
+| `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:85` | 3/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `observations`, `record`, `records`, `second` |
 | `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:68` | 4/20 | `admission`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `record`, `records`, `second`, `sources`, `thread` |
 
 ## VERIFY

@@ -43,9 +43,12 @@ KNOWLEDGE_SEARCH, KNOWLEDGE_EXPLORE, KNOWLEDGE_ANSWER = "knowledge.search", "kno
 ADAPTER_LIST, ADAPTER_START, ADAPTER_NEXT, ADAPTER_SUBMIT = "adapter.list", "adapter.start", "adapter.next", "adapter.submit"
 ADAPTER_STATUS, ADAPTER_RESULT, ADAPTER_CANCEL = "adapter.status", "adapter.result", "adapter.cancel"
 HISTORY_READ, UPLOAD_TEXT, ADMIN = "history.read", "upload.text", "admin"
+# MCP-RETRIEVAL-MODES-V1: deep research is a minutes-long run of many model calls on the owner's accounts — its own scope,
+# NOT in the friend profile (the owner grants it per friend)
+KNOWLEDGE_RESEARCH = "knowledge.research"
 ANY_KNOWLEDGE = (KNOWLEDGE_SEARCH, KNOWLEDGE_EXPLORE, KNOWLEDGE_ANSWER)
 SCOPES = (*ANY_KNOWLEDGE, ADAPTER_LIST, ADAPTER_START, ADAPTER_NEXT, ADAPTER_SUBMIT, ADAPTER_STATUS, ADAPTER_RESULT,
-          ADAPTER_CANCEL, HISTORY_READ, UPLOAD_TEXT, ADMIN)
+          ADAPTER_CANCEL, HISTORY_READ, UPLOAD_TEXT, ADMIN, KNOWLEDGE_RESEARCH)
 # owner decision §8: the conservative friend profile — no upload, no history, no admin. `adapter.cancel` exists and is
 # grantable; it only ever reaches a run the calling principal owns.
 FRIEND_PROFILE = (*ANY_KNOWLEDGE, ADAPTER_LIST, ADAPTER_START, ADAPTER_NEXT, ADAPTER_SUBMIT, ADAPTER_STATUS, ADAPTER_RESULT)
@@ -57,6 +60,8 @@ TOOL_POLICY: dict[str, tuple[tuple[str, ...], str]] = {
     "polymath_search": ((KNOWLEDGE_SEARCH,), CORPUS), "retrieve": ((KNOWLEDGE_SEARCH,), CORPUS), "retrieve_evidence": ((KNOWLEDGE_SEARCH,), CORPUS),
     "polymath_explore": ((KNOWLEDGE_EXPLORE,), CORPUS), "compile_plan": ((KNOWLEDGE_EXPLORE,), CORPUS),
     "polymath_answer": ((KNOWLEDGE_ANSWER,), CORPUS), "ask": ((KNOWLEDGE_ANSWER,), CORPUS),
+    "polymath_compare": ((KNOWLEDGE_SEARCH,), CORPUS), "polymath_deep_research": ((KNOWLEDGE_RESEARCH,), CORPUS),
+    "polymath_models": ((KNOWLEDGE_ANSWER, KNOWLEDGE_RESEARCH), NONE),
     "list_corpora": (ANY_KNOWLEDGE, CORPUS_FILTER), "capabilities": (ANY_KNOWLEDGE + (ADAPTER_LIST,), NONE),
     "list_documents": (ANY_KNOWLEDGE, CORPUS), "corpus_status": (ANY_KNOWLEDGE, CORPUS), "document_status": (ANY_KNOWLEDGE, CORPUS),
     "recent_queries": ((HISTORY_READ,), CORPUS),

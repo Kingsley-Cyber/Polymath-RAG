@@ -119,7 +119,13 @@ def test_every_route_that_takes_a_scope_confirms_it():
     run_chat = next(n for n in ast.walk(ast.parse((API / "ui.py").read_text())) if isinstance(n, ast.FunctionDef) and n.name == "run_chat")
     _assert_every_return_confirms("ui.py:run_chat", run_chat)
     chat_src = (API / "chat.py").read_text()
-    assert "out = run_chat(" in chat_src and "return run_chat(" in chat_src                 # _chat_impl / _evidence_impl
+    # _chat_impl / _evidence_impl return run_chat's own (scope-confirming) reply; the evidence rows add-ons only ADD keys
+    # (MCP-RETRIEVAL-MODES-V1 gave _evidence_impl the same out = run_chat(...) / return out shape as _chat_impl)
+    for name in ("_chat_impl", "_evidence_impl"):
+        fn = next(n for n in ast.walk(ast.parse(chat_src)) if isinstance(n, ast.FunctionDef) and n.name == name)
+        body = ast.unparse(fn)
+        assert "out = run_chat(" in body and body.rstrip().endswith("return out"), name
+        assert not any(isinstance(n, ast.Delete) for n in ast.walk(fn)) and ".pop(" not in body, name
 
 
 def test_retrieve_confirms_the_scope_and_leaves_an_unscoped_reply_unchanged(monkeypatch):

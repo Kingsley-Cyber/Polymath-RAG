@@ -3751,7 +3751,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "bad5cb32a731020a",
+  "input_hash": "4966f96ab3dfc60e",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3760,7 +3760,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "2cccdcf3073890f0",
+  "input_hash": "a75efe4efcadd509",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3769,7 +3769,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "51e822abc442232c",
+  "input_hash": "668b6a507312d3f4",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3783,11 +3783,11 @@
   "status": "ok"
  },
  "flows/mcp-call.md": {
-  "attempts": 3,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "cff56e5dcdaf72aa",
+  "input_hash": "b81797ac6c2b6fdc",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3805,7 +3805,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "673867f448892b07",
+  "input_hash": "cda6f83c77c39bf3",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3814,7 +3814,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "ad782cfb5924c124",
+  "input_hash": "42f076f0ef12fea4",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4370,8 +4370,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "f691f7530339c524",
+  "generated": "2026-10-01",
+  "input_hash": "5a25e654690ba99e",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4388,8 +4388,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "2f58c5fecdb50c15",
+  "generated": "2026-10-01",
+  "input_hash": "2433d2316864d2c2",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4421,11 +4421,11 @@
   "status": "ok"
  },
  "units/orchestrator/orchestrator/api/chat.py.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "8ee1bfb9ec782d8a",
+  "generated": "2026-10-01",
+  "input_hash": "5a26e3015e45e58e",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4568,8 +4568,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "fc923dafbdc789c8",
+  "generated": "2026-10-01",
+  "input_hash": "23a496a12a7ec5b1",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4587,7 +4587,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "a2fa9f24d7de2d53",
+  "input_hash": "600a0c3aaa8814d2",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4604,17 +4604,17 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "2a51fc1f09c9db7f",
+  "generated": "2026-10-01",
+  "input_hash": "b9265d35f4306a69",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
  "units/orchestrator/orchestrator/mcp_server.py.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "e172b074619c2a32",
+  "input_hash": "5a6a08a8ca87c554",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5614,6 +5614,15 @@
   "dropped_verify": 0,
   "generated": "2026-10-01",
   "input_hash": "a3af1b244374c36a",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/shared/polymath_shared/mcp_retrieval.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-10-01",
+  "input_hash": "117dfcf6619d7c16",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

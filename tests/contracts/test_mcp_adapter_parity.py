@@ -33,6 +33,11 @@ def _tools(server) -> dict:
     return {t.name: t for t in asyncio.run(server.list_tools())}
 
 
+def _registered(server) -> dict:
+    """Every tool a tools/call can reach, listed or not (MCP-RETRIEVAL-MODES-V1 hides the legacy ones from tools/list)."""
+    return {t.name: t for t in server._tool_manager.list_tools()}
+
+
 def _both() -> tuple[dict, dict]:
     return _tools(_load("parity_mcp_server_a", SERVER_A).mcp), _tools(_load("parity_mcp_server_b", SERVER_B).server)
 
@@ -99,14 +104,20 @@ LEGACY = {"a": {"ask": ("polymath_answer", "polymath_explore"), "retrieve": ("po
 
 
 def test_legacy_query_tools_lead_with_deprecated_and_name_the_canonical_tool():
-    a, b = _both()
-    for tools, legacy in ((a, LEGACY["a"]), (b, LEGACY["b"])):
+    """MCP-RETRIEVAL-MODES-V1: a legacy tool is no longer LISTED (no agent is offered it) but stays registered, so an
+    existing caller's tools/call still works; its description still leads with DEPRECATED and names the canonical tool."""
+    sa, sb = _load("parity_mcp_server_a", SERVER_A).mcp, _load("parity_mcp_server_b", SERVER_B).server
+    a = None
+    for server, legacy in ((sa, LEGACY["a"]), (sb, LEGACY["b"])):
+        tools, listed = _registered(server), _tools(server)
+        a = a or tools
         for name, replacements in legacy.items():
             assert name in tools, f"{name} must keep working for existing callers"
+            assert name not in listed, f"{name} must not be offered to agents any more"
             desc = " ".join((tools[name].description or "").split())
             assert desc.startswith("DEPRECATED"), (name, desc[:60])
             for canonical in replacements:
                 assert canonical in desc, (name, canonical)
         for name in CANONICAL_TRIO:
-            assert not (tools[name].description or "").lstrip().startswith("DEPRECATED"), name
+            assert name in listed and not (tools[name].description or "").lstrip().startswith("DEPRECATED"), name
     assert "Prefer this over retrieve" not in " ".join((a["ask"].description or "").split())     # the old steer toward synthesis is gone

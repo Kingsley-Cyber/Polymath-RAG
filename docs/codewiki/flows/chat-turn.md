@@ -1,90 +1,95 @@
 # flow: chat-turn
-A chat turn end to end: the browser posts /chat/stream (modes FAST, HYBRID, GRAPH, WILDCARD, GNN — plus ASK), the query compiler plans subqueries and facets, retrieval composes evidence, the model synthesises a cited answer, the receipt is written, the SSE frames reach the UI.
+
+A chat turn end to end: the browser posts `/chat/stream`, the query compiler plans subqueries and facets, retrieval composes evidence, the bundle is assembled, and SSE frames stream back. All anchors are in `orchestrator/orchestrator/api/ui.py` unless another path is given. The excerpt ends at the evidence boundary (line 4492); synthesis/tokens frames are documented only in the `chat_events` docstring.
 
 ## hops
 
 | # | what happens | where (anchor) | data in -> data out | can fail how |
 |---|---|---|---|---|
-| 1 | `chat_stream` wraps `chat_events(req)` in a `StreamingResponse`, `media_type="text/event-stream"`, headers `Cache-Control: no-cache`, `X-Accel-Buffering: no` | orchestrator/orchestrator/api/ui.py:4758-4763 | `StreamChatRequest` -> SSE frame stream (`phase`, `token`, `reasoning`, `answer`, `done`, `error`) | transport only; validation is downstream |
-| 2 | Eager validation before the first frame: `message` required; mode whitelist `FAST`/`HYBRID`/`GRAPH`/`ASK`/`WILDCARD`/`GNN` with alias `VECTOR`->`FAST`; synthesizer must be `ollama:`/`litellm:` prefixed or `deterministic-template-v3`; `parse_scope` once; receipt sink bound | ui.py:3852-3878 | req fields -> validated `query`, `ui_mode`, `synth`, `_role_scope`, `sink` | typed `HTTPException` 422: `message is required` / `unknown_mode` / `unknown_synthesizer` / `invalid_scope` |
-| 3 | `scope` phase: `resolve_http_scope(conn, req)` inside `tx()`; `scope_ok` frame carries `mode` + `corpora` | ui.py:3912-3917 | req -> `scope.mode`, `scope.corpus_ids` | not shown in slice |
-| 4 | Compiler dispatch: `_compiler_flag(req.compiler)` in off/shadow/on; `!= "off"` submits `_compile_chat_plan(query, req.history, corpora, session_key, titles_rank, corpus_explorer, scope kwargs)` on `ThreadPoolExecutor(max_workers=1)` | ui.py:3919-3952 | query + history + corpora -> plan future | shadow runs beside retrieval (no added latency); failures surface only at join (row 5) |
-| 5 | `on`: serial join, `_mark("compile")`; `evidence_only` / `require_retrieval` overrides via `plan_for_evidence_route`; `_skip_retrieval` decision (COMPILED-RETRIEVAL-V1); `_stamp_firing()` writes the turn's ONE firing receipt; `compile` frame. Shadow joins later via `_join_plan` | ui.py:3953-3991 | plan -> `task_type`, `queries`, `facets`, `retrieval_required`, `graph_useful`, `exact_terms`, `resolved_request`, `explicit_constraints`, `intent` | join failure after `timeout=8.0` -> `fallback_plan(query, reason="join_failed:<ExcType>")` (silent fallback); fallback announced in the `compile` frame |
-| 6 | ASK mode: `ask(AskRequest(...))` over stored knowledge objects; `ask_done`; `answer` frame `kind: "ask"`; `done`; return | ui.py:3993-4017 | question -> object counts per kind + `route` | returns before retrieval; errors not shown in slice |
-| 7 | Corpus guard: non-ASK modes need `len(scope.corpus_ids) == 1` | ui.py:4019-4027 | scope -> single `corpus_id` | SSE `error` frame `mode_requires_single_corpus` + receipt `error`; HTTP status can no longer change |
-| 8 | Engine flag: `_rflag = chat_retrieval_flag(req.retrieval)`; `_v2_mode = _rflag in ("v2", "v2-single") and not req.utility`; GNN requires v2; `_graph_useful` follows the plan verdict (skeleton routes force `True` on GRAPH) | ui.py:4045-4060 | `req.retrieval`, `req.utility`, plan -> `_v2_mode`, `_graph_useful` | `HTTPException` 422 `gnn_requires_v2` raised inside the generator |
-| 9 | `_skip_retrieval` path (evidence_policy=conversation): corpus not searched, empty evidence, `retrieve_skipped` frame | ui.py:4061-4072 | plan verdict -> `evidence_rows=[]`, empty `fast` | by design; carried evidence still admitted later in artifact mode (row 19) |
-| 10 | GRAPH on v1 engines (rollback boundary `retrieval: v1` / `latent`): `graph_retrieve(...)`; `fast` rebuilt from `meta`/`trace`; evidence rows from `documents -> sections -> evidence`; `graph_facts`; doc/section summaries | ui.py:4073-4117 | retrieval text -> evidence rows + graph facts + summaries | lane degradations ride `meta`, not exceptions |
-| 11 | v2 composition (MODE-COMPOSITION-V1): budget = intent policy + `req.latent` -> `latent_enabled=True` (lane D) + skeleton routes; PROBE-GATE-V1 drops non-PRIMARY probes missing `resolved_request` (one `_rerank_children` call, fail-open); `chat_retrieve_mode(...)` with `exact_terms`, typed `subqueries` (origin/derived_from lineage), `latent_bridge_ids` (`LATENT_ORIGINS`), `facets`, WILDCARD `question`; `_facet_coverage` verdict | ui.py:4122-4187 | plan + budget -> fused `fast`, `_aspects`, `_weak`, `_facet_cov`, `probe_gate` receipt in `fast["trace"]` | gated probes dropped before spending retrieval; FAST/GNN never gated (budget floor) |
-| 12 | v1 lanes: FAST -> `fast_retrieve`; WILDCARD -> `wildcard_retrieve` (evidence IS FAST, bridges ride the separate `wildcard` lane); else `hybrid_fast_retrieve(latent, utility)` | ui.py:4197-4210 | retrieval text + corpus -> `fast` | wildcard never displaces answer evidence |
-| 13 | P10 evidence-resolution: `POLYMATH_CHAT_RESOLUTION=1` -> `_maybe_resolve(_plan, fast, _aspects, _weak, retriever)`; bounded round 2, same engine, merged into `fast["evidence"]` before the bundle | ui.py:4213-4224 | weak aspects -> round-2 evidence + `_resolution` receipt | fail-open: any exception -> `_resolution = None` |
-| 14 | WLK2C latent second pass `_apply_latent_selection` (runs before CA3/CA4, reassigns `fast["evidence"]`); `evidence_rows = _evidence_rows(fast["evidence"])`; `retrieve_done` frame; GRAPH `graph`/`graph_done` frames (bounds, seeds); arrivals map; `wildcard` frame | ui.py:4226-4260 | fast -> evidence rows, `_arrivals`, `wildcard_lane`, `latent_meta` | degradations reported in the frame, never raised |
-| 15 | Summaries + orientation: `SELECT chunk_id, doc_id, summary FROM chunks WHERE chunk_id = ANY(%s)` over section parents; `_load_orientation(conn, doc_ids, parent_ids)` | ui.py:4261-4284 | parent_ids -> `section_summaries`, `orientation` docs/maps | orientation exception -> `{"docs": [], "maps": []}` (silent) |
-| 16 | CA3 constraint alignment: `POLYMATH_CHAT_CONSTRAINT_ALIGN=1` + resolved constraints -> `align_evidence_for_constraints` reorders reranked evidence by strength; semantic order kept within each portfolio | ui.py:4286-4304 | evidence rows + `explicit_constraints` -> reordered rows + `_constraint_align` receipt | flag off or no resolved constraint -> byte-identical |
-| 17 | CA4 grading: `POLYMATH_CHAT_EVIDENCE_ROLES=1` -> `grade_evidence(fast["evidence"], _plan)` | ui.py:4306-4314 | evidence + plan -> `_grades_by_chunk` (DIRECT/PARTIAL/RELATED), `_epistemic` | flag off -> no grades, byte-identical |
-| 18 | Bundle assembly: `assemble_evidence_bundle(query, graph_facts, evidence_rows, evidence_order, resolvers, doc/section summaries, unresolved=stale)` | ui.py:4316-4336 | all evidence -> `bundle` (+ `stale` list) | `AssemblyError` -> SSE `error` frame (`error_code` = class name, `message[:300]`) + receipt, turn ends |
-| 19 | Bundle enrichment: `evidence_roles`, `evidence_latent` (seat COMPLEMENTARY/DIVERGENT + via origin_query), `evidence_paths`, `facets_uncovered`, `support_roles`/`epistemic`, `orientation`, `derived_insights`; CARRY-V2 admission — `judged` mode scored against the resolved request, or `artifact` mode when skipping retrieval (scorer all `1.0`, `floor=0.0`, `cap=_CARRY_ARTIFACT_CAP`); legend; `assemble_done` frame | ui.py:4338-4387 | bundle + `req.carry_context` -> enriched bundle + `_carry_meta` | artifact mode admits without relevance gate (by design); carry never displaces corpus evidence |
-| 20 | UI receipts: chunk inventory (`locator`, `preview[:220]`, `source_name`, `title`, `heading_path`, `human_locator`) and the `retrieval` dict (`engine`, `arrivals`, `lane_sizes`, `gnn`, `latency_ms`, `aspects`, `facets_covered`/`facets_uncovered`, `explicit_constraints`, `constraint_alignment`, `epistemic`, `latent_selection`, `profile_yield`, `resolution`, `composition`, `degraded`) | ui.py:4389-4489 | bundle + fast -> `retrieval` receipt payload | `degraded` list always says WHY evidence differs (never silent) |
-| 21 | `evidence_only` short-circuit: REASONING-BOUNDARY-V1, the evidence boundary | ui.py:4491-4492 | retrieval dict -> evidence-only output | slice ends here; downstream not in SOURCE |
-| 22 | Synthesis + close: SYNTHESIS-V2 via `grounded_answer`; `token`/`reasoning`/`answer`/`done` frames per the CHAT-RUNTIME-V1 contract; then the turn's one receipt `sink(_receipt_payload(req, question=query, scope=scope, route=route, **kw))` | ui.py:3834-3838, 3881, 3905-3910 | bundle -> answer frames + receipt (keys `wall_ms`, `ui_mode`, `answer`, `meta`, `error` visible at 4025-4026, 4334-4335) | receipt writer wrapped in `except Exception: pass` — never breaks a turn; frame emission code past the slice cap [INFERRED: contract stated in docstring, code beyond 4492 not shown] |
+| 1 | `chat_stream` wraps `chat_events(req)` in a `StreamingResponse`, `media_type="text/event-stream"`, headers `Cache-Control: no-cache`, `X-Accel-Buffering: no` | ui.py:4760-4765 [DERIVED] | `StreamChatRequest` -> SSE stream | transport-level only; frames come from the generator |
+| 2 | Eager validation: empty message -> 422 `"message is required"`; `mode` default `"HYBRID"`, `"VECTOR"` remapped to `"FAST"`; mode must be in `("FAST","HYBRID","GRAPH","ASK","WILDCARD","GNN")` else 422 `unknown_mode`; synthesizer must be `deterministic-template-v3` or `ollama:`/`litellm:`-prefixed else 422 `unknown_synthesizer`; `parse_scope` failure -> 422 `invalid_scope` — all typed HTTPExceptions before the first frame | ui.py:3852-3877 [DERIVED] | `req` fields -> validated `query`, `ui_mode`, `synth`, `_role_scope` | 422s listed; a streaming response cannot change status after the first frame (ui.py:3842-3844 [DERIVED]) |
+| 3 | Receipt sink bound: `sink = receipt or _default_receipt_sink(route)`; `route` and `receipt` are transport tags only | ui.py:3846-3851, 3878 [DERIVED] | `route`, optional `receipt` -> `sink` | sink exceptions swallowed later (never breaks a turn) |
+| 4 | `scope` phase: `with tx() as conn: scope = resolve_http_scope(conn, req)`; emits `scope_ok` with `mode`, `corpora`; `_mark("scope")` | ui.py:3912-3917 [DERIVED] | `req` + Postgres conn -> `scope` (`.corpus_ids`, `.mode`) | scope resolution error (not caught here) |
+| 5 | Compiler launched if `_flag != "off"`: `ThreadPoolExecutor(max_workers=1).submit(_compile_chat_plan, query, req.history, _corpora, ...)`; session key = `req.workspace or req.corpus_id or query[:64]`; `shadow` runs beside retrieval (no added latency) | ui.py:3923, 3943-3952 [DERIVED] | query + history + corpora -> plan future | compiler failure surfaces at join (hop 7) |
+| 6 | Compiler `on`: plan joined synchronously; `evidence_only` -> `plan_for_evidence_route(_plan)`; `require_retrieval` -> same with `override_rule="corpus_chat:retrieval_required"`; `_skip_retrieval = (not _plan.retrieval_required) and ui_mode != "ASK"`; `_retrieval_text = query if _skip_retrieval else retrieval_text_for(_plan)`; firing stamped; `compile` frame | ui.py:3953-3975 [DERIVED] | plan future -> `_plan`, `_plan_receipt`, `_skip_retrieval`, `_retrieval_text` | `fallback=True` reported in the `compile` frame (ui.py:3970) |
+| 7 | `_join_plan()` for the shadow future: `result(timeout=8.0)`; any exception -> `fallback_plan(query, reason=f"join_failed:{type(exc).__name__}")` | ui.py:3977-3991 [DERIVED] | future -> `_plan` | silent fallback to a fallback plan on join failure/timeout |
+| 8 | ASK short-circuit: `ask(AskRequest(question=query, corpus_id=..., corpus_ids=..., workspace=..., all_authorized=...))`; emits `ask`, `ask_done`, `answer` (kind `"ask"`), `done`; returns | ui.py:3993-4017 [DERIVED] | query -> stored objects result | error inside `ask` (not caught here) |
+| 9 | Single-corpus guard: `len(scope.corpus_ids) != 1` -> `error` frame `mode_requires_single_corpus`, receipt with error, return | ui.py:4019-4027 [DERIVED] | `scope.corpus_ids` -> error frame | mid-stream error frame (status already sent) |
+| 10 | Engine selection: `_rflag = chat_retrieval_flag(getattr(req, "retrieval", None))`; `_v2_mode = _rflag in ("v2","v2-single") and not req.utility`; `ui_mode == "GNN" and not _v2_mode` -> 422 `gnn_requires_v2` | ui.py:4045-4053 [DERIVED] | `req.retrieval`, `req.utility`, `ui_mode` -> `_v2_mode` | GNN 422 raised after `scope`/`scope_ok` frames were yielded (ui.py:3912, 3916 vs 4052) [DERIVED] |
+| 11 | Graph bounds: `_graph_useful` defaults true when compiler off / no plan / fallback, else `plan.graph_useful`; skeleton routes on + GRAPH mode forces True (compiler verdict does not veto the owner's GRAPH choice) | ui.py:4056-4060 [DERIVED] | plan -> `_graph_useful` | — |
+| 12 | No-retrieval routing (`_skip_retrieval`): `evidence_rows = []`, empty `fast` shape, `retrieve_skipped` frame ("answered from the conversation") | ui.py:4061-4070 [DERIVED] | — -> empty evidence set | corpus never searched; intentional |
+| 13 | GRAPH on v1 (`retrieval: v1` / `latent`): `graph_retrieve(_retrieval_text, corpus_id, latent=req.latent, utility=req.utility, **scope_kwargs(_role_scope))`; builds `fast`, `evidence_rows`, `graph_facts`, document/section summaries; emits `retrieve_done`, `graph`, `graph_done` | ui.py:4073-4117 [DERIVED] | retrieval text -> v1 graph result | engine-internal degradation rides `meta` |
+| 14 | v2 composition: budget built (`_apply_intent` when intent policy on; `req.latent` -> `latent_enabled=True` (lane D); `_skeleton_routes(budget, mode, plan)`); PROBE-GATE-V1 drops non-PRIMARY probes missing the resolved question via `gate_probes(..., _cr_mod._rerank_children, floor=_budget.probe_gate_floor)`; `fast = chat_retrieve_mode("VECTOR" if ui_mode == "FAST" else ui_mode, _retrieval_text, corpus_id, ...)` with `subqueries` (id/type/query/weight/origin/derived_from), `latent_bridge_ids`, `facets`, WILDCARD `question` | ui.py:4122-4179 [DERIVED] | plan + budget -> composed `fast` | probe gate is fail-open, default off (ui.py:4146-4147) |
+| 15 | Post-retrieval receipts: `fast.setdefault("trace", {})["probe_gate"]`; facet coverage `_facet_coverage(_plan.facets, final_detail, floor=float(getattr(_budget, "aspect_weak_floor", 0.5)))`; wildcard lane and graph facts extracted from `fast` | ui.py:4180-4196 [DERIVED] | `fast` -> `_facet_cov`, `wildcard_lane`, `graph_facts` | — |
+| 16 | v1 engines: FAST -> `fast_retrieve`; WILDCARD -> `wildcard_retrieve` (bridges ride the separate `wildcard` lane, never displace evidence); else `hybrid_fast_retrieve(..., latent=req.latent, utility=req.utility, ...)` | ui.py:4197-4210 [DERIVED] | retrieval text -> `fast` | engine-internal degradation |
+| 17 | P10 resolution (flag-gated, fail-open, one bounded round) + WLK2C latent second pass `_apply_latent_selection(fast, _plan, _retrieval_text, mode=ui_mode)` before CA3/CA4; `evidence_rows = _evidence_rows(fast["evidence"])`; `retrieve_done` frame | ui.py:4216-4240 [DERIVED] | `fast` + plan -> final `evidence_rows`, `_resolution`, `_latent_receipt` | resolution exception -> `_resolution = None` (turn continues) |
+| 18 | Orientation + section summaries: parent_ids from `fast["selected_sections"]`; Postgres `SELECT chunk_id, doc_id, summary FROM chunks WHERE chunk_id = ANY(%s)`; `_load_orientation(conn, doc_ids, parent_ids)` | ui.py:4267-4284 [DERIVED] | parent/doc ids -> `orientation`, `section_summaries` | orientation exception -> `{"docs": [], "maps": []}` (silent, additive) |
+| 19 | CA3 constraint alignment (flag): `align_evidence_for_constraints(evidence_rows, _plan.explicit_constraints)` — reorder only, semantic order preserved within each portfolio | ui.py:4291-4304 [DERIVED] | evidence + resolved SOURCE constraints -> reordered evidence | only reorders when a resolved constraint is present |
+| 20 | CA4 evidence roles (flag): `grade_evidence(fast.get("evidence") or [], _plan)` -> `_grades_by_chunk`, `_epistemic`; epistemic state drives the answerability gate | ui.py:4311-4314 [DERIVED] | evidence + plan -> grades + epistemic | default off -> no grades, byte-identical |
+| 21 | Bundle assembly: `assemble_evidence_bundle(query, graph_facts, evidence_rows, ... resolvers ..., document_summaries, section_summaries, unresolved=stale)`; `AssemblyError` -> `error` frame + receipt + return | ui.py:4316-4336 [DERIVED] | evidence + summaries -> `bundle`, `stale` | `AssemblyError` terminates the turn with an error frame |
+| 22 | Bundle enrichment: `evidence_roles`, `evidence_latent` (seat/via), `evidence_paths`, `facets_uncovered`, `support_roles` + `epistemic`, `orientation`, `derived_insights = wildcard_lane`; CARRY-V2 admission (`_carry_candidates` + `_admit_carry`; artifact mode on skip-retrieval: constant scorer `[1.0]*len(texts)`, `floor=0.0`, cap `_CARRY_ARTIFACT_CAP`; else judged against resolved request); legend + `_render_derived`/`_render_relations`; `assemble_done` frame | ui.py:4338-4387 [DERIVED] | bundle + `req.carry_context` -> enriched bundle, `_carry_meta`, `_legend` | — |
+| 23 | Retrieval receipt dict: mode, counts, `graph_bounds`/`graph_seeds`/`graph_degraded`, `wildcard_diagnostics`, `latent`, `carry`, `engine`, `arrivals`, `lane_sizes`, `gnn` (GNN only), `latency_ms`, `aspects`/`weak_aspects`, facets, `explicit_constraints`, `constraint_alignment`, `epistemic`, `latent_selection`, `profile_yield`, `resolution`, `final_detail`, `composition`, `degraded` (`_merged_degraded(fast, stale)`) | ui.py:4416-4489 [DERIVED] | fast/bundle state -> `retrieval` payload | degraded lanes listed, never silent |
+| 24 | Evidence boundary: `if getattr(req, "evidence_only", False):` — REASONING-BOUNDARY-V1; excerpt ends here. Docstring: the generator emits `phase`, `token`, `reasoning`, `answer`, `done`, `error` frames; `/chat` drains them through `run_chat` | ui.py:4491-4492, 3835-3838 [DERIVED] | bundle + retrieval -> answer frames | synthesis stage not in excerpt |
 
 ## state written
 
-- SSE frame stream to the browser — the transport itself; frame set `phase`/`token`/`reasoning`/`answer`/`done`/`error` — ui.py:4757-4763, 3834-3836 [DERIVED]
-- Firing receipt: exactly one per turn, appended to the JSONL rate ledger via `polymath_shared.corpus_explore_firing.record` — ui.py:3928-3938 [DERIVED]
-- Turn receipt: one per turn that ran, `sink(_receipt_payload(req, question=query, scope=scope, route=route, **kw))`; default `_default_receipt_sink(route)` adds the transport's `kind` and `client`; storage backend not in slice — ui.py:3846-3851, 3905-3910 [DERIVED]
-- Postgres reads on this path (no writes visible in slice): `chunks` (`chunk_id`, `doc_id`, `summary`) at ui.py:4269-4273; `tx()` connection for scope at ui.py:3913-3914 [DERIVED]
+- SSE frame stream to the client: frames `phase`, `token`, `reasoning`, `answer`, `done`, `error` (ui.py:3835-3836 [DERIVED]).
+- Turn receipt, built once in the runtime: `sink(_receipt_payload(req, question=query, scope=scope, route=route, **kw))`; default sink `_default_receipt_sink(route)` adds the transport's `kind` and `client` (ui.py:3847-3851, 3878, 3905-3910 [DERIVED]). Sink exceptions swallowed.
+- Corpus-explore firing receipt, "recorded once to the JSONL rate ledger": `polymath_shared.corpus_explore_firing.record(rec, q0=query)` (ui.py:3928-3935 [DERIVED]). Exceptions swallowed.
+- Postgres on this path is read-only in the excerpt: `tx()` for scope resolution (ui.py:3913-3914) and the `chunks` select (ui.py:4270-4273). No table write is visible in the excerpt [DERIVED].
 
 ## flags that change this flow
 
 | flag | default | effect | read at |
 |---|---|---|---|
-| `compiler` (request) | not shown; `off` skips compile entirely | `shadow` = plan receipted beside retrieval, changes nothing downstream; `on` = serial stage 0 driving skip-retrieval, subqueries, facets | ui.py:3919-3921, 3943-3969 |
-| `retrieval` (request, via `chat_retrieval_flag`) | not shown | `v2`/`v2-single` -> composition on the v2 engine; `v1`/`latent` keep the v1 engines (rollback boundary) | ui.py:4045-4050 |
-| `utility` (request) | not shown | v1 plan knob; forces `_v2_mode` False, blocks GNN | ui.py:4049-4053 |
-| `latent` (request, ✨) | not shown | no longer drops to v1; enables lane D (`latent_enabled=True`) in the v2 budget | ui.py:4048-4049, 4136-4137 |
-| `POLYMATH_CHAT_RESOLUTION` (env) | `"0"` | bounded round-2 evidence resolution on FAST/HYBRID | ui.py:4217-4218 |
-| `POLYMATH_CHAT_CONSTRAINT_ALIGN` (env) | `"0"` | CA3 post-rerank portfolio reorder on resolved constraints | ui.py:4291-4293 |
-| `POLYMATH_CHAT_EVIDENCE_ROLES` (env) | `"0"` | CA4 DIRECT/PARTIAL/RELATED grading + epistemic state on the bundle | ui.py:4311-4313 |
-| `POLYMATH_CHAT_SYNTH_ROLES` (env, named in comment) | default-off per comment | role-aware synthesis reads `bundle["evidence_roles"]`; off => grounded prompt byte-identical | ui.py:4338-4342 |
-| intent policy (`intent_policy_enabled`) | default off | intent -> budget policy; byte-identical when off | ui.py:4132-4135 |
-| skeleton routes (`skeleton_routes.enabled`) | default off | skeleton doors follow plan + mode; GRAPH forces `_graph_useful = True` | ui.py:4058-4060, 4139-4141 |
-| `probe_gate_floor` (budget field) | `0.0` (off) | one cross-encoder call per non-PRIMARY probe; failing probes dropped before retrieval; FAST/GNN never gated | ui.py:4146-4158 |
-| `evidence_only` (request) | not shown | plan forced onto the evidence route; turn ends at the evidence boundary | ui.py:3958-3960, 4491-4492 |
-| `require_retrieval` (request) | not shown | `plan_for_evidence_route(..., override_rule="corpus_chat:retrieval_required")` | ui.py:3961-3962 |
-| `carry_context` (request) | not shown (empty -> skip) | CARRY-V2 admission: `judged` (scored vs resolved request) or `artifact` (all `1.0`, `floor=0.0`, cap) | ui.py:4360-4374 |
+| `req.mode` | `"HYBRID"` | selects FAST/HYBRID/GRAPH/ASK/WILDCARD/GNN; `VECTOR` remapped to `FAST` | ui.py:3855-3860 |
+| `req.compiler` -> `_compiler_flag` | not shown in excerpt | `off` = no plan; `shadow` = plan receipted beside retrieval, changes nothing downstream; `on` = serial stage 0, drives `_skip_retrieval` and typed subqueries | ui.py:3923, 3943-3975 |
+| `req.retrieval` -> `chat_retrieval_flag` | not shown in excerpt | `"v2"`/`"v2-single"` = v2 composition (unless `req.utility`); `v1`/`latent`/`utility` keep v1 engines; GNN needs v2 | ui.py:4044-4053 |
+| `req.latent` (✨) | falsy | no longer drops to v1 — enables lane D: `latent_enabled=True`, `keep_latent=True` | ui.py:4136-4137, 4161 |
+| `req.utility` | falsy | keeps the turn on the v1 engines (`_v2_mode` forced false) | ui.py:4050 |
+| `POLYMATH_CHAT_RESOLUTION` | `"0"` | P10 bounded round-2 evidence resolution, fail-open, at most one round | ui.py:4217-4224 |
+| `POLYMATH_CHAT_CONSTRAINT_ALIGN` | `"0"` | CA3 post-rerank portfolio partition; default-off is byte-identical | ui.py:4291-4292 |
+| `POLYMATH_CHAT_EVIDENCE_ROLES` | `"0"` | CA4 grading + epistemic state on the bundle; default-off is byte-identical | ui.py:4311-4312 |
+| intent policy (`intent_policy_enabled`) | off ("default off, byte-identical when off") | intent-conditioned budget + graph ASSIST (`RELATIONSHIP` -> graph=auto) | ui.py:4132-4145 |
+| skeleton routes (`skeleton_routes.enabled`) | off ("default off, byte-identical when off") | skeleton doors follow plan+mode; GRAPH mode owner choice overrides compiler verdict | ui.py:4058-4060, 4139-4142 |
+| `probe_gate_floor` (budget) | `0.0` | PROBE-GATE-V1: drop probes missing the resolved question; fail-open; FAST/GNN never gated | ui.py:4146-4158 |
+| `req.evidence_only` | falsy | evidence-route plan override + REASONING-BOUNDARY-V1 return path | ui.py:3958-3960, 4491 |
+| `req.require_retrieval` | falsy | forces `override_rule="corpus_chat:retrieval_required"` | ui.py:3961-3962 |
+| `req.carry_context` | empty | CARRY-V2 admission (artifact vs judged) | ui.py:4360-4375 |
+| `POLYMATH_CHAT_SYNTH_ROLES` | not shown in excerpt | role-aware synthesis presentation reading `bundle["evidence_roles"]` | ui.py:4338-4342 (comment) |
 
 ## failure modes
 
-1. Symptom: 422 JSON before any frame. Cause: empty `message`, mode outside the whitelist, synthesizer without a provider prefix, malformed scope. Look: ui.py:3852-3877 [DERIVED]
-2. Symptom: SSE `error` frame `mode_requires_single_corpus`, no answer. Cause: non-ASK mode with `len(scope.corpus_ids) != 1`; the streaming status cannot change after the first frame. Look: ui.py:4019-4027 [DERIVED]
-3. Symptom: stream aborts with 422 `gnn_requires_v2`. Cause: `ui_mode == "GNN"` without `_v2_mode` (v2 flag unset, or a `utility` turn). Look: ui.py:4051-4053 [DERIVED]
-4. Symptom: `compile` frame says "Query compiler fell back", `fallback` set. Cause: shadow join failed after `timeout=8.0` -> `fallback_plan(query, reason="join_failed:<ExcType>")`. Silent: retrieval proceeds on the fallback plan with default graph breadth. Look: ui.py:3965-3970, 3977-3989 [DERIVED]
-5. Symptom: `error` frame with `error_code` = assembly exception class. Cause: `assemble_evidence_bundle` raised `AssemblyError`; receipt records `error` truncated to 200 chars. Look: ui.py:4319-4336 [DERIVED]
-6. Silent fallbacks: `_receipt`, `_stamp_firing`, orientation, and P10 resolution are each wrapped in broad `except` — a broken sink or ledger never fails the turn, so receipts can be missing with no visible error. Look: ui.py:3905-3910, 3928-3941, 4216-4224, 4277-4280 [DERIVED]
-7. Symptom: fewer/weaker chunks than expected but the answer still returns. Cause: lane degradation (e.g. reranker parked behind extraction); the reason rides the `degraded` list in the answer event, the `/chat` JSON and the query receipt (NEVER-ERROR-ON-A-COLD-MODEL). Look: ui.py:4481-4488 [DERIVED]
-8. Symptom: turn answered with zero corpus chunks. Cause: `_skip_retrieval` — the compiled plan's evidence policy is conversation; the `retrieve_skipped` frame announces it. Look: ui.py:4061-4072 [DERIVED]
-9. Symptom: probes missing from the subquery set. Cause: PROBE-GATE-V1 dropped them below `probe_gate_floor`; receipt at `fast["trace"]["probe_gate"]`. Look: ui.py:4146-4158, 4180-4181 [DERIVED]
+1. 422 before any frame — empty message, unknown mode, unknown synthesizer, invalid scope -> typed HTTPException; look at ui.py:3852-3877.
+2. `mode_requires_single_corpus` — FAST/HYBRID/GRAPH/WILDCARD/GNN over a multi-corpus scope -> `error` SSE frame + error receipt, turn ends; ui.py:4019-4027.
+3. `gnn_requires_v2` — GNN with v1 retrieval or a utility turn -> 422 raised inside the generator after `scope`/`scope_ok` frames were already yielded (status can no longer change, ui.py:3842-3844); ui.py:4051-4053.
+4. Silent plan fallback — shadow join timeout (>8.0s) or compiler exception -> `fallback_plan(query, reason="join_failed:...")`, turn continues with default breadth; ui.py:3982-3985.
+5. Silent receipt loss — `_receipt` and `_stamp_firing` wrap their writers in `except Exception: pass`; a broken sink or ledger drops the record without failing the turn; ui.py:3905-3910, 3939-3940.
+6. Silent resolution/orientation loss — P10 resolution exception -> `_resolution = None`; orientation exception -> empty `{"docs": [], "maps": []}`; ui.py:4223-4224, 4279-4280.
+7. `AssemblyError` — bundle assembly failure -> `error` frame (`error_code` = exception class name), error receipt, return; ui.py:4331-4336.
+8. Degraded lane (e.g. reranker parked behind extraction, "NEVER-ERROR-ON-A-COLD-MODEL") — the turn still answers; `degraded` lists why via `_merged_degraded(fast, stale)`; ui.py:4481-4488.
 
 ## invariants
 
-- INVARIANT same request => same plan, same evidence ids, same synthesis contract on every route (`/chat/stream` streams the frames; `/chat` and MCP `ask` drain them through `run_chat`). ui.py:3834-3838 [DERIVED]
-- INVARIANT request validation is eager and typed, before the first frame, so both transports reject the same requests with the same status. ui.py:3840-3844 [DERIVED]
-- INVARIANT exactly one receipt per turn that ran, through the transport's writer; `route` and `receipt` are transport tags and never change the plan, retrieval decision, evidence ids or synthesis. ui.py:3846-3851 [DERIVED]
-- INVARIANT exactly one firing receipt per turn, exactly one cause per miss, recorded once to the JSONL rate ledger. ui.py:3928-3930 [DERIVED]
-- INVARIANT non-ASK modes retrieve over exactly one corpus. ui.py:4020-4023 [DERIVED]
-- INVARIANT wildcard bridges never enter the evidence list; they ride `fast["wildcard"]` / `derived_insights`. ui.py:4124-4126, 4201-4206, 4430-4434 [DERIVED]
-- INVARIANT every final candidate in a v2 turn carries lane-provenance arrivals (P1.a gate: 100% have arrivals). ui.py:4442-4445 [DERIVED]
-- INVARIANT flag-gated stages (intent policy, skeleton routes, CA3, CA4, synth roles) are byte-identical when off. ui.py:4132-4139, 4289-4291, 4310-4311, 4339-4341 [DERIVED]
-- INVARIANT additive stages (receipts, firing, orientation, resolution, carry) fail open and never break a turn. ui.py:3905-3910, 3928-3941, 4216-4224, 4277-4280, 4361-4380 [DERIVED]
+- INVARIANT same request ⇒ same plan, same evidence ids, same synthesis contract on every route (ui.py:3836-3838).
+- INVARIANT request validation is eager, typed HTTPExceptions before the first frame (ui.py:3840-3843).
+- INVARIANT the scope is parsed once, eagerly; a malformed scope is refused, never read as "both roles"; every search of the turn honours it (ui.py:3871-3873).
+- INVARIANT exactly one receipt per turn, through the transport's writer; it never breaks a turn (ui.py:3847-3848, 3905-3910).
+- INVARIANT one firing receipt per turn, exactly one cause per miss, observation only (ui.py:3928-3929).
+- INVARIANT wildcard bridges ride `fast["wildcard"]`, never the evidence list; wildcard never displaces answer evidence (ui.py:4125-4126, 4201-4203).
+- INVARIANT `_skip_retrieval` means the corpus is not searched — the task lives in the conversation (ui.py:4061-4063).
+- INVARIANT a degraded lane still answers; the answer event, /chat JSON and receipt all say why (ui.py:4481-4488).
+- INVARIANT `route` and `receipt` are transport tags only — neither changes plan, retrieval decision, evidence ids or synthesis (ui.py:3846-3851).
+- INVARIANT flag-gated additions (CA3, CA4) are default-off and byte-identical when off (ui.py:4289-4292, 4310-4312).
 
 ## VERIFY
 
 ```verify
 grep -Fq 'async def chat_stream(req: StreamChatRequest) -> StreamingResponse:' orchestrator/orchestrator/api/ui.py
-grep -Fq 'text/event-stream' orchestrator/orchestrator/api/ui.py
+grep -Fq 'raise HTTPException(422, "message is required")' orchestrator/orchestrator/api/ui.py
 grep -Fq 'mode_requires_single_corpus' orchestrator/orchestrator/api/ui.py
-grep -Fq 'POLYMATH_CHAT_EVIDENCE_ROLES' orchestrator/orchestrator/api/ui.py
-grep -Fq 'SELECT chunk_id, doc_id, summary FROM chunks ' orchestrator/orchestrator/api/ui.py
-test "$(grep -c -F 'yield _phase(' orchestrator/orchestrator/api/ui.py)" -ge 8
+grep -Eq 'POLYMATH_CHAT_(RESOLUTION|CONSTRAINT_ALIGN|EVIDENCE_ROLES)", "0"' orchestrator/orchestrator/api/ui.py
+grep -Fq 'timeout=8.0' orchestrator/orchestrator/api/ui.py
+! grep -Fq 'chat_events_v2' orchestrator/orchestrator/api/ui.py
+test "$(grep -c -F 'yield _phase(' orchestrator/orchestrator/api/ui.py)" -ge 10
 ```

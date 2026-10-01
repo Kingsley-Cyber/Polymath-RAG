@@ -12,8 +12,14 @@ Tools
   upload_text(text, corpus_id, name)   ingest raw text/markdown
   document_status(corpus_id, …)        run status, stages, enrichment, open stalls
   corpus_status(corpus_id)             corpus row + semantic readiness verdict
-  retrieve(query, corpus_id, …)        raw evidence chunks
-  ask(question, corpus_id, …)          grounded, cited answer (the chat path)
+  polymath_search(query, corpus_id, mode)       one direct search in a mode -> evidence rows (no planning)
+  polymath_explore(query, corpus_id, mode, …)   planning + Corpus Explore -> EvidencePacket (no answer)
+  polymath_answer(question, corpus_id, mode, …) the app's own grounded, cited answer (reasoning style, model)
+  polymath_compare(question, corpus_id, modes)  one question through several modes, side by side
+  polymath_deep_research(question, corpus_id, depth, mode)  the app's deep research -> a cited report (minutes)
+  polymath_models()                    the model ids `model` may name
+  Modes (MCP-RETRIEVAL-MODES-V1, polymath_shared/mcp_retrieval.py): FAST | HYBRID | GRAPH | WILDCARD | GNN.
+  retrieve / retrieve_evidence / compile_plan / ask: DEPRECATED, still callable, no longer listed.
 
 Auth: Authorization: Bearer <key> on every /mcp request, or the key in the URL (/k/<key>/mcp: claude.ai's custom connector
 cannot send a header; KeyInPath turns it into the same header). $POLYMATH_MCP_API_KEY is the OWNER (admin) key; every other
@@ -22,7 +28,7 @@ private adapter runs, 401 unknown/revoked key, 403 not permitted, 429 over its r
 FAIL-CLOSED (V2): with no key configured the server answers 503 on /mcp
 instead of running open — measured 2026-09-02: the V1 process had booted
 without the key and the public mirror answered tools/call to anyone.
-Scope (V2): retrieve/ask REQUIRE corpus_id — the unscoped all-corpora
+Scope (V2): every query tool REQUIRES corpus_id — the unscoped all-corpora
 path took 20 s and abstained on a question the scoped path answered in
 3 s with 16 citations.
 
@@ -51,6 +57,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 
 from orchestrator import mcp_principals as P
+from polymath_shared import mcp_retrieval as MR
 from polymath_shared.adapter import harness_guide as HG
 
 log = logging.getLogger("polymath.mcp")
@@ -103,7 +110,15 @@ def _is_local_caller(headers: dict) -> bool:
     return host in _LOOPBACK_HOSTS and not any(h in headers for h in _EDGE_HEADERS)
 
 
-mcp = MCPServer(
+class _ListedMCPServer(MCPServer):
+    """MCP-RETRIEVAL-MODES-V1: the deprecated tools stay callable for old callers but are never LISTED, so no agent is
+    offered them (polymath_search used to reach the frozen LEGACY route through them)."""
+
+    async def list_tools(self):
+        return [t for t in await super().list_tools() if t.name not in MR.HIDDEN_TOOLS_A]
+
+
+mcp = _ListedMCPServer(
     name="polymath",
     instructions=(
         "Polymath v4 — evidence-first RAG over King's corpora. Workflow: "
@@ -113,14 +128,13 @@ mcp = MCPServer(
         "book takes ~5 minutes; 'stalls' lists anything the control plane "
         "sees stuck, with a diagnosis). To query: submit the ORIGINAL "
         "information need — do NOT pre-decompose it into subqueries; Polymath "
-        "owns retrieval planning + grounded expansion. Pick a tool: "
-        "polymath_search = quick q0-only evidence; polymath_explore = full "
-        "planning + Corpus Explore returning validated EVIDENCE (no answer) "
+        "owns retrieval planning + grounded expansion. One library (corpus_id) per call. Pick a tool: "
+        "polymath_search = one direct search in the mode you choose (evidence rows, no planning); "
+        "polymath_explore = full planning + Corpus Explore returning validated EVIDENCE (no answer) "
         "that you reason over yourself; polymath_answer = Polymath writes the "
-        "grounded, cited answer (humans/UI). Prefer search/explore for agent "
-        "work and synthesize yourself. corpus_id is REQUIRED. Modes: FAST "
-        "(cheap baseline), HYBRID (default; includes the latent cross-domain "
-        "lane), GRAPH (adds fact relationships). "
+        "grounded, cited answer (humans/UI); polymath_compare = one question through several modes side by side; "
+        "polymath_deep_research = a multi-step research run that returns a cited report (minutes). Prefer "
+        "search/explore for agent work and synthesize yourself. Retrieval modes (the app's own): " + MR.mode_lines() + " "
         "Governed research (e.g. product research): adapter_list -> adapter_start -> loop adapter_next / adapter_submit -> adapter_result; the operating guide for any agent harness and any tools is the prompt run_governed_research and the resource polymath://adapter/guide."),
 )
 
@@ -144,6 +158,31 @@ async def _orch(method: str, path: str, **kw: Any) -> Any:
                 detail = r.text[:400]
             return {"error": detail, "status": r.status_code}
         return r.json()
+
+
+async def _orch_events(path: str, body: dict, timeout: float = 1800.0) -> list[tuple[str, dict]]:
+    """POST `body` to a text/event-stream route and collect its frames, with the same trusted context as `_orch`. A
+    refusal before the stream starts comes back as one ("error", {...}) frame."""
+    who = _PRINCIPAL.get()
+    if who is NOBODY:
+        return [("error", {"error_code": "NO_PRINCIPAL", "message": "this call carries no authenticated principal (fail closed)"})]
+    headers = {"User-Agent": _CALLER_AGENT.get(), "Accept": "text/event-stream"}
+    if not who.is_admin:
+        headers[P.PRINCIPAL_HEADER] = who.principal_id
+    frames: list[tuple[str, dict]] = []
+    async with (httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=10.0), headers=headers) as client,
+                client.stream("POST", f"{ORCH}{path}", json=body) as r):
+        if r.status_code >= 400:
+            raw = await r.aread()
+            try:
+                detail = json.loads(raw).get("detail")
+            except Exception:  # noqa: BLE001
+                detail = raw[:400].decode("utf-8", "replace")
+            d = detail if isinstance(detail, dict) else {"message": str(detail)}
+            return [("error", {"error_code": d.get("error_code") or f"HTTP_{r.status_code}", "message": d.get("message") or str(d)})]
+        lines = [line async for line in r.aiter_lines()]
+    frames.extend(MR.parse_sse([ln + "\n" for ln in lines] + ["\n"]))
+    return frames
 
 
 def _trim_hit(h: dict, max_chars: int = 1400) -> dict:
@@ -328,19 +367,8 @@ async def capabilities() -> dict:
 
 
 def _trim_rows(rows: list) -> list:
-    """Contract rows with `text` / `text_clean` cut at 1,200 characters. D-02: a cut row says so — `truncated: true` +
-    `full_length` (the untrimmed `text`, else `text_clean`, in characters); a row that fits is unchanged."""
-    out = []
-    for r in rows or []:
-        r = dict(r)
-        full = {k: len(r[k]) for k in ("text", "text_clean") if isinstance(r.get(k), str) and len(r[k]) > 1200}
-        for k in full:
-            r[k] = r[k][:1200]
-        if full:
-            r["truncated"] = True
-            r["full_length"] = full.get("text", full.get("text_clean"))
-        out.append(r)
-    return out
+    """Contract rows with `text` / `text_clean` cut at 1,200 characters (D-02; the shared rule, MR.trim_rows)."""
+    return MR.trim_rows(rows)
 
 
 @mcp.tool()
@@ -403,44 +431,53 @@ async def ask(question: str, corpus_id: str, mode: str = "HYBRID",
 
 
 # REASONING-BOUNDARY-V1 canonical surface (search / explore / answer) — mirrors Server B.
-@mcp.tool()
-async def polymath_search(query: str, corpus_id: str, max_evidence: int = 12) -> dict:
-    """Canonical EVIDENCE search: q0-only contract evidence rows (no planning, no Corpus Explore, no
-    answer). Pass the ORIGINAL question; do NOT pre-decompose it — Polymath owns retrieval planning."""
-    out = await _orch("POST", "/retrieve", json={"query": query, "corpus_id": corpus_id,
-                                                 "limit": max_evidence, "evidence": True})
-    if "error" in out:
-        return out
-    return {"evidence_rows": _trim_rows(out.get("evidence_rows")),
-            "evidence_contract": out.get("evidence_contract"),
-            "graph_facts": len(out.get("graph_facts") or [])}
+_MODE_ARG = "mode: " + " | ".join(MR.RETRIEVAL_MODES) + f" (default {MR.DEFAULT_MODE}). " + MR.mode_lines()
 
 
-@mcp.tool()
+@mcp.tool(description=(
+    "ONE direct search of one library in the retrieval mode you choose: no query planning, no Corpus Explore, no answer. "
+    "Returns contract evidence rows (passages with their source, utility_role and ca4_grade; GRAPH adds attested graph "
+    "facts) and, in WILDCARD, the separate wildcard lane. Pass the ORIGINAL question; Polymath owns retrieval planning "
+    "(use polymath_explore for that). " + _MODE_ARG))
+async def polymath_search(query: str, corpus_id: str, mode: str = MR.DEFAULT_MODE, max_evidence: int = 12) -> dict:
+    m = MR.normalize_mode(mode)
+    if m is None:
+        return MR.mode_error(mode)
+    out = await _orch("POST", "/chat/evidence", json=MR.search_body(query, corpus_id, m))
+    return MR.shape_search(out, max_evidence)
+
+
+@mcp.tool(description=(
+    "Full retrieval PLANNING + grounded expansion (+ optional Corpus Explore) in the mode you choose -> a versioned "
+    "EvidencePacket (evidence with roles DIRECT/COMPLEMENTARY/DIVERGENT, CA4 grades, provenance, receipts) with NO "
+    "Polymath answer, plus graph facts (GRAPH) and the wildcard lane (WILDCARD). Discover hidden/adjacent corpus knowledge, "
+    "then do your OWN final reasoning. Do NOT pre-decompose. corpus_explorer=true runs the concept-activation explorer. "
+    + _MODE_ARG))
 async def polymath_explore(query: str, corpus_id: str, corpus_explorer: bool = True,
-                           mode: str = "HYBRID") -> dict:
-    """Full retrieval PLANNING + grounded expansion (+ optional Corpus Explore) -> a versioned
-    EvidencePacket (evidence with roles DIRECT/COMPLEMENTARY/DIVERGENT, CA4 grades, provenance, receipts)
-    with NO Polymath answer (synthesis_performed=false). Discover hidden/adjacent corpus knowledge, then do
-    your OWN final reasoning over the evidence. Do NOT pre-decompose — Polymath owns retrieval planning; you
-    own the answer. corpus_explorer=true runs the concept-activation explorer."""
-    out = await _orch("POST", "/chat/evidence",
-                      json={"message": query, "corpus_id": corpus_id, "mode": mode,
-                            "corpus_explorer": bool(corpus_explorer)})
-    return out
+                           mode: str = MR.DEFAULT_MODE) -> dict:
+    m = MR.normalize_mode(mode)
+    if m is None:
+        return MR.mode_error(mode)
+    out = await _orch("POST", "/chat/evidence", json=MR.explore_body(query, corpus_id, m, corpus_explorer))
+    return MR.shape_explore(out)
 
 
-@mcp.tool()
-async def polymath_answer(question: str, corpus_id: str, mode: str = "HYBRID",
+@mcp.tool(description=(
+    "Polymath's OWN grounded, cited answer, exactly as the app's chat writes it (humans/UI, or when you explicitly want "
+    "Polymath's answer rather than raw evidence). For agent work prefer polymath_search / polymath_explore and synthesize "
+    "yourself. verdict=insufficient_evidence means the library cannot support the question — relay it, do not fill the gap. "
+    "reasoning = the answer's reasoning style: " + ", ".join(MR.REASONING_STYLES) + " (default none). model = a model id "
+    "from polymath_models (default: the app's default). " + _MODE_ARG))
+async def polymath_answer(question: str, corpus_id: str, mode: str = MR.DEFAULT_MODE,
+                          reasoning: str = "none", model: Optional[str] = None,
                           latent: Optional[bool] = None) -> dict:
-    """Polymath's OWN grounded, cited answer (humans/UI, or when you explicitly want Polymath's answer
-    rather than raw evidence). For agent work prefer polymath_search / polymath_explore and synthesize
-    yourself (avoids a nested synthesis pass). verdict=insufficient_evidence means the corpus cannot support
-    the question — relay it, do not fill the gap."""
-    body: dict[str, Any] = {"message": question, "mode": mode, "corpus_id": corpus_id}
-    if latent is not None:
-        body["latent"] = latent
-    out = await _orch("POST", "/chat", json=body)
+    m = MR.normalize_mode(mode)
+    if m is None:
+        return MR.mode_error(mode)
+    style = MR.normalize_reasoning(reasoning)
+    if style is None:
+        return {"error": f"unknown reasoning style {reasoning!r}", "status": 422, "styles": list(MR.REASONING_STYLES)}
+    out = await _orch("POST", "/chat", json=MR.answer_body(question, corpus_id, m, reasoning=style, model=model, latent=latent))
     if "error" in out:
         return out
     slim = dict(out)
@@ -449,6 +486,44 @@ async def polymath_answer(question: str, corpus_id: str, mode: str = "HYBRID",
         if isinstance(val, list):
             slim[key] = [_trim_hit(h, 600) if isinstance(h, dict) else h for h in val[:12]]
     return slim
+
+
+@mcp.tool(description=(
+    "Run ONE question through several retrieval modes of one library, side by side (retrieval only, no answer; the app's "
+    "Compare screen). Per mode: latency, evidence count, the documents it reached and its top rows; plus the chunks every "
+    "mode found and how many only one mode found. Use it to pick a mode before polymath_search / polymath_explore. "
+    "modes = any of " + ", ".join(MR.RETRIEVAL_MODES) + " (default: all five; they run one after another)."))
+async def polymath_compare(question: str, corpus_id: str, modes: Optional[list[str]] = None) -> dict:
+    wanted = list(modes or MR.RETRIEVAL_MODES)
+    normal = [MR.normalize_mode(x) for x in wanted]
+    if None in normal:
+        return MR.mode_error(wanted[normal.index(None)])
+    out = await _orch("POST", "/compare", json=MR.compare_body(question, corpus_id, list(dict.fromkeys(normal))), timeout=600)
+    return MR.shape_compare(out)
+
+
+@mcp.tool(description=(
+    "The app's DEEP RESEARCH on one library: Polymath plans research goals, searches in rounds, follows leads and writes a "
+    "cited report (report text with [cid] markers, the citations, the run's counts and stop reason). It takes MINUTES and "
+    "spends model calls; one run per caller at a time. depth = " + "; ".join(f"{k}: {v}" for k, v in MR.DEPTHS.items())
+    + f" (default {MR.DEFAULT_DEPTH}). mode = the retrieval mode every search uses (default {MR.DEFAULT_MODE}). model = a "
+    "model id from polymath_models (default: the app's default)."))
+async def polymath_deep_research(question: str, corpus_id: str, depth: str = MR.DEFAULT_DEPTH,
+                                 mode: str = MR.DEFAULT_MODE, model: Optional[str] = None) -> dict:
+    m = MR.normalize_mode(mode)
+    if m is None:
+        return MR.mode_error(mode)
+    d = MR.normalize_depth(depth)
+    if d is None:
+        return {"error": f"unknown depth {depth!r}", "status": 422, "depths": dict(MR.DEPTHS)}
+    frames = await _orch_events("/research/deep", MR.deep_body(question, corpus_id, d, m, model))
+    return MR.shape_deep(frames, depth=d, mode=m)
+
+
+@mcp.tool(description="The models Polymath can write with (ids for polymath_answer / polymath_deep_research `model`); "
+                      "`default` is the one used when you name none.")
+async def polymath_models() -> dict:
+    return MR.shape_models(await _orch("GET", "/synthesizers"))
 
 
 # -------------------------------------------------------------------- app
@@ -829,7 +904,8 @@ def build_app():
     return app
 
 
-_TOOL_NAMES = ("adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status",
+_TOOL_NAMES = ("polymath_compare", "polymath_deep_research", "polymath_models",
+               "adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status",
                "adapter_result", "adapter_cancel", "research_acquire",
                "supplier_search", "supplier_product", "supplier_freight", "supplier_warehouses",
                "list_corpora", "list_documents", "upload_document", "upload_text",
