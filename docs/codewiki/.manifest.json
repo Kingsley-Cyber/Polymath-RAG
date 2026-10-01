@@ -3783,11 +3783,11 @@
   "status": "ok"
  },
  "flows/mcp-call.md": {
-  "attempts": 1,
+  "attempts": 3,
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "7234de6f0f0ea205",
+  "input_hash": "cff56e5dcdaf72aa",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4610,11 +4610,11 @@
   "status": "ok"
  },
  "units/orchestrator/orchestrator/mcp_server.py.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "1e1bfcd86f0b0d1a",
+  "input_hash": "e172b074619c2a32",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

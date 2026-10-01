@@ -1,127 +1,153 @@
 # unit: orchestrator/orchestrator/mcp_server.py
-anchor: orchestrator/orchestrator/mcp_server.py:1-846
+anchor: orchestrator/orchestrator/mcp_server.py:1-853
 
 ## purpose
-POLYMATH-MCP-V2: the v4 MCP server (streamable-http) that lets an agent (Hermes, the claude.ai connector) drive the whole document lifecycle — upload → status until queryable → ask — plus governed adapter research and owner-only supplier tools. Every tool is a thin, trimmed call to the orchestrator API on `http://127.0.0.1:7200`, so MCP cannot bypass the pipeline's gates. orchestrator/orchestrator/mcp_server.py:1-31,759-764 [DERIVED]
+POLYMATH-MCP-V2: the v4 MCP server (streamable-http) that lets an agent (Hermes, the claude.ai connector) drive the whole document lifecycle — upload → status until queryable → ask — plus the canonical evidence surface (`polymath_search` / `polymath_explore` / `polymath_answer`), governed-research adapter runs, and owner-only supplier tools. Every tool is a thin, trimmed call to the orchestrator API on `127.0.0.1:7200`, so MCP cannot bypass the pipeline's gates. [DERIVED] (orchestrator/orchestrator/mcp_server.py:1-31)
+
+Auth model: `Authorization: Bearer <key>` on every `/mcp`, or the key in the URL (`/k/<key>/mcp`, translated by `KeyInPath`). `$POLYMATH_MCP_API_KEY` is the OWNER (admin) key; other callers are PRINCIPALS from `mcp_principals.py` (default-deny scopes, 401/403/429). FAIL-CLOSED V2: no key configured → 503 on `/mcp` instead of running open. [DERIVED] (orchestrator/orchestrator/mcp_server.py:18-27)
 
 ## public surface
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| list_corpora | mcp tool | () -> dict | :171-179 | — |
-| list_documents | mcp tool | (corpus_id) -> dict | :183-187 | — |
-| upload_document | mcp tool | (path, corpus_id) -> dict | :193-222 | — |
-| upload_text | mcp tool | (text, corpus_id, source_name="agent_upload.md") -> dict | :226-247 | — |
-| document_status | mcp tool | (corpus_id, source_name?, run_id?) -> dict | :253-265 | — |
-| corpus_status | mcp tool | (corpus_id) -> dict | :269-285 | — |
-| retrieve | mcp tool (DEPRECATED) | (query, corpus_id, mode="HYBRID", limit=10, latent?, explore=False) -> dict | :291-319 | — |
-| capabilities | mcp tool | () -> dict | :323-327 | — |
-| compile_plan | mcp tool (DEPRECATED) | (signal, corpus_id, limit=24, explore=True, communities?) -> dict | :347-361 | — |
-| retrieve_evidence | mcp tool (DEPRECATED) | (query, corpus_id, limit=12, explore=False) -> dict | :365-377 | — |
-| ask | mcp tool (DEPRECATED) | (question, corpus_id, mode="HYBRID", latent?, evidence=False) -> dict | :381-402 | — |
-| polymath_search | mcp tool | (query, corpus_id, max_evidence=12) -> dict | :407-416 | — |
-| polymath_explore | mcp tool | (query, corpus_id, corpus_explorer=True, mode="HYBRID") -> dict | :420-430 | — |
-| polymath_answer | mcp tool | (question, corpus_id, mode="HYBRID", latent?) -> dict | :434-451 | — |
-| recent_queries | mcp tool | (corpus_id, limit=20, since_h=24.0, kind?) -> dict | :457-469 | — |
-| adapter_list | mcp tool | () -> dict | :476-485 | — |
-| adapter_start | mcp tool | (adapter_id, input, request_options?) -> dict | :489-497 | — |
-| adapter_next | mcp tool | (run_id) -> dict | :501-512 | — |
-| adapter_submit | mcp tool | (run_id, step_id, payload, agent_identity="connected-agent", model?, kind?) -> dict | :516-528 | — |
-| adapter_status | mcp tool | (run_id) -> dict | :532-534 | — |
-| adapter_result | mcp tool | (run_id) -> dict | :538-542 | — |
-| adapter_cancel | mcp tool | (run_id) -> dict | :546-548 | — |
-| research_acquire | mcp tool (owner key only) | (run_id, operation, target, site, search_intent_id?, limit?) -> dict | :554-571 | — |
-| supplier_search | mcp tool (owner key only) | (query, source, limit) -> dict | :578-586 | — |
-| supplier_product | mcp tool (owner key only) | (product_id) -> dict | :590-595 | — |
-| supplier_freight | mcp tool (owner key only) | (variant_id, country, quantity, from_country) -> dict | :599-604 | — |
-| supplier_warehouses | mcp tool (owner key only) | () -> dict | :608-611 | — |
-| run_governed_research | mcp prompt | (adapter_id?, seed?) -> dict | :635-637 | — |
-| KeyInPath | class | methods `__init__`, `__call__` | :647-660 | — |
-| build_app | def | () -> ASGI app (FastMCP streamable-http + fail-closed bearer gate) | :663-822 | — |
-| main | def | () -> None (entrypoint) | :836-841 | — |
-| _orch | helper | (method, path, **kw) -> Any | :128-146 | internal |
-| _trim_hit | helper | (h, max_chars=1400) -> dict | :149-165 | internal |
-| _trim_rows | helper | (rows) -> list | :330-343 | internal |
-| _is_local_caller | helper | (headers) -> bool | :101-103 | internal |
+| list_corpora | def (tool) | () -> dict | orchestrator/orchestrator/mcp_server.py:171 | — |
+| list_documents | def (tool) | (corpus_id) -> dict | orchestrator/orchestrator/mcp_server.py:183 | — |
+| upload_document | def (tool) | (path, corpus_id) -> dict | orchestrator/orchestrator/mcp_server.py:193 | — |
+| upload_text | def (tool) | (text, corpus_id, source_name="agent_upload.md") -> dict | orchestrator/orchestrator/mcp_server.py:226 | — |
+| document_status | def (tool) | (corpus_id, source_name=None, run_id=None) -> dict | orchestrator/orchestrator/mcp_server.py:253 | — |
+| corpus_status | def (tool) | (corpus_id) -> dict | orchestrator/orchestrator/mcp_server.py:269 | — |
+| retrieve | def (tool, DEPRECATED) | (query, corpus_id, mode="HYBRID", limit=10, latent=None, explore=False) -> dict | orchestrator/orchestrator/mcp_server.py:291 | — |
+| capabilities | def (tool) | () -> dict | orchestrator/orchestrator/mcp_server.py:323 | — |
+| compile_plan | def (tool, DEPRECATED) | (signal, corpus_id, limit=24, explore=True, communities=None) -> dict | orchestrator/orchestrator/mcp_server.py:347 | — |
+| retrieve_evidence | def (tool, DEPRECATED) | (query, corpus_id, limit=12, explore=False) -> dict | orchestrator/orchestrator/mcp_server.py:365 | — |
+| ask | def (tool, DEPRECATED) | (question, corpus_id, mode="HYBRID", latent=None, evidence=False) -> dict | orchestrator/orchestrator/mcp_server.py:381 | — |
+| polymath_search | def (tool) | (query, corpus_id, max_evidence=12) -> dict | orchestrator/orchestrator/mcp_server.py:407 | — |
+| polymath_explore | def (tool) | (query, corpus_id, corpus_explorer=True, mode="HYBRID") -> dict | orchestrator/orchestrator/mcp_server.py:420 | — |
+| polymath_answer | def (tool) | (question, corpus_id, mode="HYBRID", latent=None) -> dict | orchestrator/orchestrator/mcp_server.py:434 | — |
+| recent_queries | def (tool) | (corpus_id, limit=20, since_h=24.0, kind=None) -> dict | orchestrator/orchestrator/mcp_server.py:457 | — |
+| adapter_list | def (tool) | () -> dict | orchestrator/orchestrator/mcp_server.py:476 | — |
+| adapter_start | def (tool) | (adapter_id, input, request_options=None) -> dict | orchestrator/orchestrator/mcp_server.py:489 | — |
+| adapter_next | def (tool) | (run_id) -> dict | orchestrator/orchestrator/mcp_server.py:501 | — |
+| adapter_submit | def (tool) | (run_id, step_id, payload, agent_identity="connected-agent", model=None, kind=None) -> dict | orchestrator/orchestrator/mcp_server.py:516 | — |
+| adapter_status | def (tool) | (run_id) -> dict | orchestrator/orchestrator/mcp_server.py:532 | — |
+| adapter_result | def (tool) | (run_id) -> dict | orchestrator/orchestrator/mcp_server.py:538 | — |
+| adapter_cancel | def (tool) | (run_id) -> dict | orchestrator/orchestrator/mcp_server.py:546 | — |
+| research_acquire | def (tool, owner-only) | (run_id, operation, target, site, search_intent_id, limit) -> dict | orchestrator/orchestrator/mcp_server.py:554 | — |
+| supplier_search | def (tool, owner-only) | (query, source, limit) -> dict | orchestrator/orchestrator/mcp_server.py:578 | — |
+| supplier_product | def (tool, owner-only) | (product_id) -> dict | orchestrator/orchestrator/mcp_server.py:590 | — |
+| supplier_freight | def (tool, owner-only) | (variant_id, country, quantity, from_country) -> dict | orchestrator/orchestrator/mcp_server.py:599 | — |
+| supplier_warehouses | def (tool, owner-only) | () -> dict | orchestrator/orchestrator/mcp_server.py:608 | — |
+| run_governed_research | def (prompt) | (adapter_id, seed) -> guide | orchestrator/orchestrator/mcp_server.py:635 | — |
+| KeyInPath | class | (__init__, __call__) | orchestrator/orchestrator/mcp_server.py:650 | — |
+| build_app | def | () -> ASGI app | orchestrator/orchestrator/mcp_server.py:670 | — |
+| main | def | () -> None | orchestrator/orchestrator/mcp_server.py:843 | — |
+
+Imports of this unit (its own dependencies): `orchestrator.mcp_principals`, `polymath_shared.adapter.harness_guide`. No importer list in FACTS. [DERIVED] (orchestrator/orchestrator/mcp_server.py:53-54)
 
 ## contracts
-- `_orch(method, path, **kw)` — pre: `_PRINCIPAL.get()` is not `NOBODY`, else returns `{"error": "NO_PRINCIPAL: ...", "status": 401}`; non-admin principals get header `P.PRINCIPAL_HEADER` = `principal_id` (:130-137). in: `timeout` default `180` (:129). out: parsed JSON, or `{"error": detail, "status": r.status_code}` for any `>= 400` (:140-145). orchestrator/orchestrator/mcp_server.py:128-146 [DERIVED]
-- `upload_document(path, corpus_id)` — pre: `_CALLER_IS_LOCAL.get()` AND `_PRINCIPAL.get().is_admin`, else `REMOTE_PATH_UPLOAD_DISABLED` (status 403) returned BEFORE any filesystem access (:201-202); file exists else 404 (:204-205); suffix in `UPLOAD_EXTENSIONS` else 422 (:206-208). post: response JSON plus `out["next"]` polling hint (:219-220). orchestrator/orchestrator/mcp_server.py:193-222 [DERIVED]
-- `upload_text(text, corpus_id, source_name)` — pre: `source_name` suffix in `UPLOAD_EXTENSIONS` else `{"error": "source_name needs one of ...", "status": 422}` (:231-232). post: same `out["next"]` hint (:245-246). orchestrator/orchestrator/mcp_server.py:226-247 [DERIVED]
-- `polymath_search(query, corpus_id, max_evidence=12)` — POST `/retrieve` with `{"query", "corpus_id", "limit": max_evidence, "evidence": True}`; out: `{"evidence_rows": _trim_rows(...), "evidence_contract": ..., "graph_facts": len(...)}` (:410-416). q0-only: no planning, no Corpus Explore, no answer (:408-409). orchestrator/orchestrator/mcp_server.py:407-416 [DERIVED]
-- `polymath_explore(query, corpus_id, corpus_explorer=True, mode="HYBRID")` — POST `/chat/evidence`; returns orchestrator JSON unchanged (:427-430); EvidencePacket with NO Polymath answer, `synthesis_performed=false` (:422-424). orchestrator/orchestrator/mcp_server.py:420-430 [DERIVED]
-- `polymath_answer(question, corpus_id, mode="HYBRID", latent?)` — POST `/chat`; post: `evidence`/`chunks`/`bundle` lists cut to first 12 items, each `_trim_hit(h, 600)` (:446-450); `verdict=insufficient_evidence` must be relayed, not filled (:437-438). orchestrator/orchestrator/mcp_server.py:434-451 [DERIVED]
-- `adapter_start(adapter_id, input, request_options?)` — pre: `input` satisfies the adapter `input_schema`; `corpus_ids` REQUIRED in `request_options` for a non-admin key; `idempotency_key` makes retries not start a second run (:490-493). orchestrator/orchestrator/mcp_server.py:489-497 [DERIVED]
-- `adapter_result(run_id)` — 409 while the run is still running or awaiting a step (:539). orchestrator/orchestrator/mcp_server.py:538-542 [DERIVED]
-- `recent_queries(corpus_id, limit=20, since_h=24.0, kind?)` — pre: `corpus_id` non-empty, else `raise ValueError("corpus_id is required")` (:464-465); a principal's context narrows results to its OWN receipts (:469). orchestrator/orchestrator/mcp_server.py:457-469 [DERIVED]
-- `build_app()` — ASGI app: FastMCP streamable-http + FAIL-CLOSED bearer gate (:663-664); no key configured ⇒ 503 on `/mcp` instead of running open (:22-24). orchestrator/orchestrator/mcp_server.py:663-822 [DERIVED]
-- `KeyInPath` — turns a key in the URL (`/k/<key>/mcp`) into the same `Authorization: Bearer` header, for claude.ai's connector that cannot send a header (:18-19, :647-660). orchestrator/orchestrator/mcp_server.py:647-660 [DERIVED]
-- `_trim_hit` / `_trim_rows` — D-02: a cut hit/row carries `truncated: true` + `full_length`; a hit that fits keeps exactly its old keys (:150-151, :331-332). orchestrator/orchestrator/mcp_server.py:149-165,330-343 [DERIVED]
+
+**_orch(method, path, \*\*kw) — orchestrator/orchestrator/mcp_server.py:128-146**
+- pre: `_PRINCIPAL.get()` must not be `NOBODY`, else returns `{"error": "NO_PRINCIPAL: this call carries no authenticated principal (fail closed)", "status": 401}` before any request. [DERIVED] (133-134)
+- in: default `timeout=180`; non-admin principals get header `P.PRINCIPAL_HEADER = who.principal_id`; `User-Agent` from `_CALLER_AGENT`. [DERIVED] (129-137)
+- post: HTTP >= 400 → `{"error": detail, "status": code}` where `detail = r.json().get("detail")` or `r.text[:400]`; else the parsed JSON. [DERIVED] (139-145)
+
+**upload_document(path, corpus_id) — orchestrator/orchestrator/mcp_server.py:193-222**
+- pre: caller must be local (loopback host, no edge headers) AND admin, else `REMOTE_PATH_UPLOAD_DISABLED` (status 403) returned before ANY filesystem access ("no existence oracle either"). [DERIVED] (201-202, 84-87)
+- pre: `Path(path).expanduser().is_file()` else 404 `file not found: {path}`; suffix must be in `UPLOAD_EXTENSIONS` else 422. [DERIVED] (203-208)
+- post: success → orchestrator `/upload` response plus `out["next"] = "document_status(corpus_id=..., source_name=...) until query_ready"`. Same bytes → existing run with `already_exists` true; content in another corpus → 409 `CROSS_CORPUS_CONTENT_COLLISION` (orchestrator-side, stated in docstring). [DERIVED] (195-198, 220-221)
+
+**upload_text(text, corpus_id, source_name) — orchestrator/orchestrator/mcp_server.py:226-247**
+- pre: `source_name` suffix in `UPLOAD_EXTENSIONS` else 422. [DERIVED] (231-233)
+- post: posts to `/upload` as `text/markdown`, 600 s timeout, adds the same `next` key. [DERIVED] (234-246)
+
+**polymath_search(query, corpus_id, max_evidence=12) — orchestrator/orchestrator/mcp_server.py:407-416**
+- in: POST `/retrieve` with `{"query", "corpus_id", "limit": max_evidence, "evidence": True}` — q0-only rows, no planning, no answer. [DERIVED] (410-411)
+- post: `{"evidence_rows": _trim_rows(...), "evidence_contract", "graph_facts": len(...)}`; `"error" in out` passes through unchanged. [DERIVED] (412-416)
+
+**polymath_explore(query, corpus_id, corpus_explorer=True, mode="HYBRID") — orchestrator/orchestrator/mcp_server.py:420-430**
+- in: POST `/chat/evidence` with `{"message", "corpus_id", "mode", "corpus_explorer"}`. [DERIVED] (427-429)
+- post: versioned EvidencePacket (`synthesis_performed=false`, roles DIRECT/COMPLEMENTARY/DIVERGENT, CA4 grades) — NO Polymath answer; the response is returned untrimmed. [DERIVED] (422-430)
+
+**polymath_answer(question, corpus_id, ...) — orchestrator/orchestrator/mcp_server.py:434-451**
+- in: POST `/chat` with `{"message", "mode", "corpus_id"}` (+ optional `latent`). [DERIVED] (440-443)
+- post: answer passed through; bulky evidence lists (`evidence`/`chunks`/`bundle`) trimmed to `[:12]` hits at 600 chars. `verdict=insufficient_evidence` means the corpus cannot support the question — relay it. [DERIVED] (444-451, 436-439)
+
+**list_corpora() — orchestrator/orchestrator/mcp_server.py:171-179**
+- post: non-admin principals see only corpora whose `corpus_id` is in `who.corpus_ids`. [DERIVED] (176-178)
+
+**recent_queries(corpus_id, ...) — orchestrator/orchestrator/mcp_server.py:457-469**
+- pre: blank `corpus_id` raises `ValueError("corpus_id is required")`. [DERIVED] (464-465)
+- post: GET `/queries`; a principal's context narrows results to its OWN receipts. [DERIVED] (469)
+
+**adapter_next(run_id) / adapter_submit(run_id, step_id, payload, ...) — orchestrator/orchestrator/mcp_server.py:501-528**
+- post: next returns `{kind:"step", step: AdapterStepV1}` with sibling `evidence` rows capped at 60 rows x 600 chars, or `{kind:"status", ...}`. [DERIVED] (502-512)
+- pre: submit for AGENT_REASON cites ONLY ids from `context.evidence_refs`; rejection returns errors and the step stays open. [DERIVED] (518-525)
 
 ## effect surface
-- Network: `httpx.AsyncClient` to `ORCH` at :138 (`_orch`, timeout default `180`), :209 (`upload_document`, timeout `600`), :234 (`upload_text`, timeout `600`). orchestrator/orchestrator/mcp_server.py:129,138,209,234 [DERIVED]
-- Files: reads a caller-supplied local path `p.open("rb")` for upload, gated to local+admin callers (:210, :201-202). orchestrator/orchestrator/mcp_server.py:209-212 [DERIVED]
-- Env: `POLYMATH_ORCH_URL` = `'http://127.0.0.1:7200'` (:58), `POLYMATH_MCP_PORT` = `'8930'` (:59), `POLYMATH_MCP_API_KEY` = `''` (:60), `POLYMATH_MCP_PUBLIC_HOST` = `'mcp.kingsleylab.xyz'` (:61). orchestrator/orchestrator/mcp_server.py:58-61 [DERIVED]
-- Postgres tables: none read/written in this unit (FACTS `tables_read`/`tables_written` empty); persistence lives behind the orchestrator API. [DERIVED]
-- Qdrant collections: none; FACTS "collections" are `contextvars.ContextVar` names (`polymath_mcp_caller_is_local`, `polymath_mcp_principal`, `polymath_mcp_caller_agent`). orchestrator/orchestrator/mcp_server.py:83-95 [DERIVED]
-- Imports from other units: `orchestrator.mcp_principals` (as `P`), `polymath_shared.adapter.harness_guide` (as `HG`). orchestrator/orchestrator/mcp_server.py:53-54 [DERIVED]
+| effect | detail | anchor |
+|---|---|---|
+| network | `httpx.AsyncClient` to `ORCH` (loopback orchestrator): `_orch` (180 s default), `/upload` from upload_document (600 s), `/upload` from upload_text (600 s) | orchestrator/orchestrator/mcp_server.py:138, 209, 234 |
+| network | supplier/research tools proxy to orchestrator `/adapter/*`, research and CJ endpoints (owner-only) | orchestrator/orchestrator/mcp_server.py:554, 578, 590, 599, 608 |
+| files | upload_document reads a HOST-local file (`p.open("rb")`, `p.is_file()` check) — local admin callers only | orchestrator/orchestrator/mcp_server.py:203-212 |
+| env | `POLYMATH_ORCH_URL` = `'http://127.0.0.1:7200'`; `POLYMATH_MCP_PORT` = `'8930'`; `POLYMATH_MCP_API_KEY` = `''`; `POLYMATH_MCP_PUBLIC_HOST` = `'mcp.kingsleylab.xyz'` | orchestrator/orchestrator/mcp_server.py:58-61 |
+| env | `$POLYMATH_MCP_PRINCIPALS_FILE` consumed by `mcp_principals.store_from_env(API_KEY)` (docstring + `_STORE = P.store_from_env(API_KEY)`) | orchestrator/orchestrator/mcp_server.py:20, 96 |
+| db | no tables read/written directly (`tables_read`/`tables_written` empty in FACTS) — all persistence goes through the orchestrator HTTP API | orchestrator/orchestrator/mcp_server.py:128-146 |
+| contextvars | `polymath_mcp_caller_is_local`, `polymath_mcp_principal`, `polymath_mcp_caller_agent` set per request (defaults: `False`, `NOBODY`, `"polymath-mcp"`) | orchestrator/orchestrator/mcp_server.py:83-95 |
 
 ## invariants
-- INVARIANT: upload path tools require `_CALLER_IS_LOCAL.get()` AND `_PRINCIPAL.get().is_admin` — :201 [DERIVED]
-  fails-if: a remote or non-admin caller could make the server read (existence-oracle) host filesystem paths.
-- INVARIANT: `_PRINCIPAL == NOBODY` ⇒ `_orch` returns status `401`, sends nothing upstream — :133-134 [DERIVED]
-  fails-if: an unauthenticated call would reach the trusted loopback orchestrator under the sentinel principal.
-- INVARIANT: `P.PRINCIPAL_HEADER` is attached iff `not who.is_admin` — :136-137 [DERIVED]
-  fails-if: orchestrator would mis-attribute run ownership / query receipts between owner and principals.
-- INVARIANT: `MAX_GATED_BODY == 2 * 1024 * 1024` (2 MiB) — :98 [DERIVED]
-  fails-if: oversized gated requests bypass or break the bearer gate in `build_app`.
-- INVARIANT: `_is_local_caller` ⇔ host in `_LOOPBACK_HOSTS` AND none of `_EDGE_HEADERS` present — :101-103 [DERIVED]
-  fails-if: a tunnel-forwarded request with a spoofed loopback Host would count as local; default is already False (fail closed, :80-83).
-- INVARIANT: text-cut thresholds are `_trim_hit` `1400`, `_trim_rows` `1200`, ask/answer evidence `600`, adapter_next evidence `60 rows x 600 chars` — :149, :336-338, :400/:450, :508 [DERIVED]
-  fails-if: MCP payloads exceed the client/context budget or D-02 `truncated`/`full_length` markers disagree with actual lengths.
-- INVARIANT: `ask`/`polymath_answer` cap evidence lists at `val[:12]` — :400, :450 [DERIVED]
-  fails-if: unbounded evidence bodies blow the tool-response size for chat callers.
-- INVARIANT: `UPLOAD_EXTENSIONS == {".md", ".txt", ".html", ".pdf", ".epub", ".docx"}` enforced in both `upload_document` (:206) and `upload_text` (:231) — :62 [DERIVED]
-  fails-if: the two upload tools accept different file types.
-- INVARIANT: `corpus_id` is a required parameter (no default) on `retrieve` (:291), `ask` (:381), `polymath_search` (:407), `polymath_explore` (:420), `polymath_answer` (:434) — per the V2 scope rule (:25-27) [DERIVED]
-  fails-if: the unscoped all-corpora path returns (20 s, abstained) instead of the scoped path (3 s, 16 citations).
-- INVARIANT: non-admin `list_corpora` filters to `who.corpus_ids` (:177-178); non-admin `adapter_list` filters to `who.adapter_ids` (:483-484) [DERIVED]
-  fails-if: principals see corpora/adapters outside their granted scopes.
-- INVARIANT: `_ALLOWED_HOSTS` = loopback host:port pairs + `PUBLIC_HOST` + `PUBLIC_HOST:443`; origins include `https://claude.ai` and `https://claude.com` — :64-65, :70-75 [DERIVED]
-  fails-if: DNS-rebinding attack or claude.ai connector origin rejected.
+INVARIANT: `_trim_hit` cut length 1400 > `_trim_rows` cut length 1200 — orchestrator/orchestrator/mcp_server.py:149,336 [DERIVED]
+  fails-if: evidence rows and raw hits silently get different max text lengths; consumers assuming one budget overflow context.
+INVARIANT: ask/polymath_answer evidence lists capped at `val[:12]` entries, each hit trimmed to 600 chars — orchestrator/orchestrator/mcp_server.py:400,450 [DERIVED]
+  fails-if: answer payloads grow unbounded; citation identity preserved but bodies exceed the agent's context budget.
+INVARIANT: `UPLOAD_EXTENSIONS` has exactly 6 members `{".md", ".txt", ".html", ".pdf", ".epub", ".docx"}` and gates both upload tools — orchestrator/orchestrator/mcp_server.py:62,206,231 [DERIVED]
+  fails-if: adding an extension in one place only makes upload_document and upload_text disagree on accepted types.
+INVARIANT: `MAX_GATED_BODY = 2 * 1024 * 1024` bytes for the gated body — orchestrator/orchestrator/mcp_server.py:98 [DERIVED]
+  fails-if: oversized uploads rejected by the gate; clients see an unexpected limit.
+INVARIANT: orchestrator error text forwarded as detail is capped at `r.text[:400]` chars in all three handlers — orchestrator/orchestrator/mcp_server.py:144,217,242 [DERIVED]
+  fails-if: error payloads of unbounded size leak to MCP clients.
+INVARIANT: adapter_next readable evidence capped at 60 rows x 600 chars for exactly the ids in `step.context.evidence_refs` — orchestrator/orchestrator/mcp_server.py:507 [DERIVED]
+  fails-if: step context exceeds the awaiting agent's budget or cites non-admitted evidence.
+INVARIANT: `_is_local_caller` requires Host in `_LOOPBACK_HOSTS` AND none of `_EDGE_HEADERS` (`cf-connecting-ip`, `cf-ray`, `cdn-loop`, `x-forwarded-for`, `forwarded`) — orchestrator/orchestrator/mcp_server.py:101-103,81-82 [DERIVED]
+  fails-if: a tunneled request mistaken for local gains host-filesystem access via upload_document.
+INVARIANT: upload_document reaches the filesystem only after the local+admin gate; the 403 body is returned first — orchestrator/orchestrator/mcp_server.py:201-203 [DERIVED]
+  fails-if: remote callers get a file-existence oracle on the Polymath host.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (network: `httpx.AsyncClient` :138, :209, :234; env: :58-61; per-request `contextvars` :83-95; rate limiting via `P.RateLimiter()` :97) [DERIVED]
-idempotency: SAFE for read tools (thin proxies). Writes delegate to the orchestrator: uploads are content-addressed (same bytes return the existing run, `already_exists` true, :194-196); `adapter_start` supports `idempotency_key` (:493); `adapter_cancel` is documented terminal + idempotent (:547). orchestrator/orchestrator/mcp_server.py:194-196,493,547 [DERIVED]
+determinism: NONDETERMINISTIC (network: `httpx.AsyncClient` calls at orchestrator/orchestrator/mcp_server.py:138,209,234; env: config read at :58-61; per-request contextvars/concurrency at :83-95)
+idempotency: SAFE (read tools are pure proxies; `adapter_cancel` documented "terminal, idempotent; accepted work is kept" at :547; uploads are content-addressed — same bytes return the existing run with `already_exists` true per docstring :195-196, enforced orchestrator-side)
 
 ## failure behaviour
-- Three broad `except Exception` handlers (:143, :216, :241) swallow JSON-parse failures on orchestrator error responses and assign `detail = r.text[:400]`; the caller then sees `{"error": detail, "status": <http code>}` (:140-145, :213-218, :238-243). orchestrator/orchestrator/mcp_server.py:143,216,241 [DERIVED]
-- Typed error returns: `401` `NO_PRINCIPAL` (:134); `403` `REMOTE_PATH_UPLOAD_DISABLED` (:84-87); `404` file not found (:205); `422` unsupported extension / bad `source_name` (:207-208, :232); `409` `CROSS_CORPUS_CONTENT_COLLISION` on upload (:198) and `adapter_result` while running (:539); `429` over principal rate (:21); `503` fail-closed when no key configured (:22-24). orchestrator/orchestrator/mcp_server.py:21-24,84-87,134,198,205,232,539 [DERIVED]
-- `recent_queries` raises `ValueError("corpus_id is required")` instead of returning an error dict (:464-465). orchestrator/orchestrator/mcp_server.py:464-465 [DERIVED]
-- `corpus_status` returns `{"error": "corpus ... not found", "status": 404, "semantic_readiness": ...}` rather than raising (:282-284). orchestrator/orchestrator/mcp_server.py:282-284 [DERIVED]
+- Three identical `except Exception` handlers swallow JSON-parse failures on orchestrator error responses and assign `detail = r.text[:400]`; the caller sees `{"error": detail, "status": r.status_code}` — orchestrator/orchestrator/mcp_server.py:141-144, 214-217, 239-242 [DERIVED]
+- `401` `NO_PRINCIPAL` returned by `_orch` when no gate ran (principal is the `NOBODY` sentinel) — orchestrator/orchestrator/mcp_server.py:93,133-134 [DERIVED]
+- `403` `REMOTE_PATH_UPLOAD_DISABLED` for non-local/non-admin `upload_document`, before any filesystem access — orchestrator/orchestrator/mcp_server.py:84-87,201-202 [DERIVED]
+- `404` `file not found: {path}` (upload_document) and `corpus {corpus_id!r} not found` (corpus_status, with `semantic_readiness` still attached) — orchestrator/orchestrator/mcp_server.py:204-205,282-284 [DERIVED]
+- `422` unsupported extension (upload_document) / bad `source_name` (upload_text) — orchestrator/orchestrator/mcp_server.py:206-208,231-233 [DERIVED]
+- `ValueError("corpus_id is required")` raised (not returned) by recent_queries on blank corpus_id — orchestrator/orchestrator/mcp_server.py:464-465 [DERIVED]
+- Gate-level codes stated in the module docstring: 401 unknown/revoked key, 403 not permitted, 429 over rate, 503 fail-closed when no key is configured (V1 incident 2026-09-02: the V1 process booted keyless and the public mirror answered tools/call to anyone) — orchestrator/orchestrator/mcp_server.py:18-24 [DERIVED]
+- `409 CROSS_CORPUS_CONTENT_COLLISION` on uploading bytes that already live in another corpus (orchestrator-enforced, documented here) — orchestrator/orchestrator/mcp_server.py:197-198 [DERIVED]
 
 ## dumb-code flags
-- Magic truncation constants `1400` (:149), `1200` (:336/:338), `600` (:400, :450), `60 rows x 600 chars` (:508) — no shared named constant. orchestrator/orchestrator/mcp_server.py:149,336,400,450,508 [DERIVED]
-- Triplicated error-parse block with identical shape (`r.json().get("detail")` → `r.text[:400]`): :140-145, :213-218, :238-243. orchestrator/orchestrator/mcp_server.py:140-145,213-218,238-243 [DERIVED]
-- `REMOTE_PATH_UPLOAD_DISABLED` is also returned to a LOCAL non-admin caller (:201-202), but the message says "a remote caller has no host paths" — misdescribes that case. orchestrator/orchestrator/mcp_server.py:84-87,201-202 [INFERRED] (condition is `not local OR not admin`; message only covers the remote case)
-- Module docstring tool list (:9-16) names `retrieve`/`ask` while the canonical surface is `polymath_search`/`polymath_explore`/`polymath_answer` (:405) — doc drift with four DEPRECATED tools kept in the file. orchestrator/orchestrator/mcp_server.py:9-16,291,347,365,381,405 [INFERRED] (docstring predates the canonical rename)
-- `_ALLOWED_HOSTS` lists `PUBLIC_HOST` twice — bare and as `f"{PUBLIC_HOST}:443"` (:64-65). orchestrator/orchestrator/mcp_server.py:64-65 [DERIVED]
+- Three trim budgets with no shared constant: `1400` (`_trim_hit` default), `1200` (`_trim_rows`), `600` (ask/polymath_answer hits) — orchestrator/orchestrator/mcp_server.py:149,336,400 [DERIVED]
+- The detail-extraction `try/except` block is copy-pasted three times — orchestrator/orchestrator/mcp_server.py:141-144,214-217,239-242 [DERIVED]
+- `val[:12]` cap duplicated in ask and polymath_answer — orchestrator/orchestrator/mcp_server.py:400,450 [DERIVED]
+- Timeout defaults disagree: `180` in `_orch` vs `600` on both upload paths — orchestrator/orchestrator/mcp_server.py:129,209,234 [DERIVED]
+- Deprecated surface kept alongside the canonical one: `retrieve` (291), `compile_plan` (347), `retrieve_evidence` (365), `ask` (381) duplicate `polymath_search`/`polymath_explore`/`polymath_answer` — orchestrator/orchestrator/mcp_server.py:291,347,365,381,405 [DERIVED]
+- `_ALLOWED_HOSTS` allows both bare `PUBLIC_HOST` and `PUBLIC_HOST:443` plus loopback variants; `allowed_origins` includes speculative `"https://claude.ai"`, `"https://claude.com"` ("not observed; an absent Origin already passes") — orchestrator/orchestrator/mcp_server.py:64-75 [DERIVED]
 
 ## refactor notes
-- Renaming any `@mcp.tool` function changes the MCP tool surface and must be reflected in `_TOOL_NAMES` (:825); external holders of the surface: Hermes and the claude.ai connector (:3-4, :18-19). orchestrator/orchestrator/mcp_server.py:18-19,825 [DERIVED]
-- Removing `retrieve` (:291), `compile_plan` (:347), `retrieve_evidence` (:365) or `ask` (:381) breaks existing callers — each docstring says "Kept for existing callers". orchestrator/orchestrator/mcp_server.py:294,349,366,384 [DERIVED]
-- The forwarded `P.PRINCIPAL_HEADER` becomes `adapter_runs.owner_principal_id` in the orchestrator runtime (:496) — changing the header or the forwarding rule breaks run ownership and query-receipt attribution. orchestrator/orchestrator/mcp_server.py:130-137,496 [DERIVED]
-- `REMOTE_PATH_UPLOAD_DISABLED` error text instructs callers to switch to `upload_text` (:85-86) — treat the string as agent-facing API text. orchestrator/orchestrator/mcp_server.py:84-87 [DERIVED]
-- `TransportSecuritySettings` allowed hosts/origins gate the claude.ai connector; removing `https://claude.ai`/`https://claude.com` risks rejecting the connector's Origin (:70-75). orchestrator/orchestrator/mcp_server.py:64-75 [DERIVED]
-- The loopback/edge-header local-caller gate (:79-103) is the HOSTED-SURFACE ISOLATION contract; loosening `_EDGE_HEADERS` or the default-False contextvar reopens the host-filesystem oracle. orchestrator/orchestrator/mcp_server.py:77-103 [DERIVED]
+- Every tool hardcodes its orchestrator route (`/corpora`, `/documents`, `/upload`, `/status`, `/semantic_readiness`, `/retrieve`, `/retrieve/plan`, `/chat`, `/chat/evidence`, `/queries`, `/capabilities`, `/adapter/*`) — renaming any orchestrator endpoint breaks this file — orchestrator/orchestrator/mcp_server.py:175,187,211,235,265,280,281,308,314,327,369,391,410,427,443,469,481,495,512,526 [DERIVED]
+- `_TOOL_NAMES` at build time must enumerate the tool set the gate authorizes; adding an `@mcp.tool()` without updating it changes gate behaviour — orchestrator/orchestrator/mcp_server.py:832 [DERIVED]
+- `_orch` forwards `P.PRINCIPAL_HEADER = who.principal_id` only for non-admin principals; `mcp_principals` and the orchestrator both depend on this contract — orchestrator/orchestrator/mcp_server.py:130-137 [DERIVED]
+- `KeyInPath` must keep translating `/k/<key>/mcp` into the bearer header — the claude.ai connector cannot send headers — orchestrator/orchestrator/mcp_server.py:18-19,650 [DERIVED]
+- Upload responses embed a `next` instruction string naming `document_status(corpus_id=..., source_name=...)`; changing tool names/params breaks documented agent workflows and the MCPServer instructions text — orchestrator/orchestrator/mcp_server.py:220-221,245-246,109-124 [DERIVED]
+- Principal filtering happens in-tool (`who.corpus_ids` at :177-178, `who.adapter_ids` at :483-484) in addition to the gate's default-deny; moving scoping to one layer requires touching both — orchestrator/orchestrator/mcp_server.py:91-92,177-178,483-484 [DERIVED]
 
 ## VERIFY
 ```verify
-grep -Fq 'POLYMATH-MCP-V2 — the v4 MCP server' orchestrator/orchestrator/mcp_server.py
-grep -Fq 'MAX_GATED_BODY = 2 * 1024 * 1024' orchestrator/orchestrator/mcp_server.py
+grep -Fq 'UPLOAD_EXTENSIONS = {".md", ".txt", ".html", ".pdf", ".epub", ".docx"}' orchestrator/orchestrator/mcp_server.py
 grep -Fq 'def _trim_hit(h: dict, max_chars: int = 1400)' orchestrator/orchestrator/mcp_server.py
-grep -Fq 'r[k] = r[k][:1200]' orchestrator/orchestrator/mcp_server.py
-grep -Fq 'principal_id="prn_nobody"' orchestrator/orchestrator/mcp_server.py
-test "$(grep -c -F 'REMOTE_PATH_UPLOAD_DISABLED' orchestrator/orchestrator/mcp_server.py)" -ge 2
-test "$(grep -c -F 'async def polymath_' orchestrator/orchestrator/mcp_server.py)" -ge 3
-! grep -Fq 'POLYMATH-MCP-V1' orchestrator/orchestrator/mcp_server.py
+grep -Fq 'len(r[k]) > 1200' orchestrator/orchestrator/mcp_server.py
+grep -Fq 'MAX_GATED_BODY = 2 * 1024 * 1024' orchestrator/orchestrator/mcp_server.py
+grep -Fq 'def polymath_explore(query: str, corpus_id: str, corpus_explorer: bool = True,' orchestrator/orchestrator/mcp_server.py
+grep -Fq 'for h in val[:12]' orchestrator/orchestrator/mcp_server.py
+! grep -Fq 'NO_PRINCIPAL: this call carries no authenticated principal (fail open)' orchestrator/orchestrator/mcp_server.py
 ```

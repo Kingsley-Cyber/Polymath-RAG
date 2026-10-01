@@ -85,6 +85,20 @@ def test_the_key_leaves_the_path_before_anything_below_sees_it(server_a):
     assert scope["path"] == "/mcp"                                                   # in place: the access log reads this dict
 
 
+def test_a_key_further_down_a_path_never_reaches_any_layer(server_a):
+    """Seen live 2026-10-01: claude.ai probes /.well-known/oauth-protected-resource/k/<key>/mcp and the access log printed it."""
+    seen = {}
+
+    async def inner(scope, receive, send):
+        seen.update(path=scope["path"], raw=scope["raw_path"], headers=dict(scope["headers"]))
+
+    probe = f"/.well-known/oauth-protected-resource/k/{OWNER_KEY}/mcp"
+    scope = {"type": "http", "path": probe, "raw_path": probe.encode(), "headers": [(b"host", b"mcp.example.test")]}
+    asyncio.run(server_a.mod.KeyInPath(inner)(scope, None, None))
+    assert seen["path"] == "/.well-known/oauth-protected-resource/k/redacted/mcp" and seen["raw"] == seen["path"].encode()
+    assert OWNER_KEY not in scope["path"] and b"authorization" not in seen["headers"]           # never treated as a key call
+
+
 def test_oauth_discovery_probes_get_a_plain_404(server_a):
     with TestClient(server_a.mod.build_app(), raise_server_exceptions=False) as c:
         for path in ("/.well-known/oauth-protected-resource", "/.well-known/oauth-authorization-server",

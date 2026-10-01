@@ -642,6 +642,9 @@ def run_governed_research(adapter_id: str = "", seed: str = "") -> str:
 # it into the Authorization header and rewrites the path to /mcp in place, so the access log and every layer below see /mcp, never
 # the key, and the bearer gate judges it exactly like a header key (owner or principal, same scopes, same rate limit).
 _KEY_PATH = re.compile(r"^/k/([A-Za-z0-9._~+=-]{16,256})(/mcp(?:/.*)?)$")
+# the same key form further down a path: claude.ai's OAuth discovery appends the connector's resource path, key included, to
+# /.well-known/oauth-protected-resource (seen live 2026-10-01: the access log printed the key)
+_KEY_SEGMENT = re.compile(r"/k/[A-Za-z0-9._~+=-]{16,256}(?=/mcp(?:/|$))")
 
 
 class KeyInPath:
@@ -657,6 +660,10 @@ class KeyInPath:
                 scope["raw_path"] = rest.encode()
                 scope["headers"] = [(k, v) for k, v in scope.get("headers") or [] if k.lower() != b"authorization"] + [
                     (b"authorization", b"Bearer " + key.encode())]
+            elif _KEY_SEGMENT.search(scope.get("path") or ""):
+                # not a connector call: drop the key so no layer and no log line holds it (that path is a 404 anyway)
+                scope["path"] = _KEY_SEGMENT.sub("/k/redacted", scope["path"])
+                scope["raw_path"] = scope["path"].encode()
         await self.app(scope, receive, send)
 
 

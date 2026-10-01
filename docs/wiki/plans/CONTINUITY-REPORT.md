@@ -167,12 +167,14 @@ historical, never an instruction.
    - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
      change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
      `scripts/codewiki/verify.py` (CI runs it).
-   - ON THE BRANCH (11.560): CI-GREEN-V1 — GitHub CI's 13 red tests fixed (a real adapter crash on a numeric `rows`, litellm
+   - ON THE BRANCH (11.561): the connector key is dropped from ANY path before logging (claude.ai's OAuth discovery probe put
+     it in `/private/tmp/polymath_fleet/mcp.log` once; overwritten). Until deployed, recheck that log after a connector setup.
+   - LIVE (`3aa82e01`, 11.560): CI-GREEN-V1 — GitHub CI's 13 red tests fixed (a real adapter crash on a numeric `rows`, litellm
      declared, CPU torch in CI, three stale tests); green is proven when GitHub runs the pushed commit. NEVER run
      `tests/determinism/` on the Mac: ~20 files hard-code the live DSN; reproduce CI in the sealed container (work-log).
-   - ON THE BRANCH (11.559): CLAUDE-CONNECTOR-URL — claude.ai's custom connector at `https://mcp.kingsleylab.xyz/k/<key>/mcp`
-     (Settings → Copy Claude connector URL; the key is moved into the header before anything logs it). After the deploy the
-     owner adds it in Claude (Settings → Connectors → Add custom connector); its first `POST /mcp … 200` is the live proof.
+   - LIVE (`3aa82e01`, 11.559): CLAUDE-CONNECTOR-URL — claude.ai's custom connector at `https://mcp.kingsleylab.xyz/k/<key>/mcp`
+     (Settings → Copy Claude connector URL; the key is moved into the header before anything logs it). PROVEN: the owner's
+     connector works ("it worked"); in claude.ai pick "No sign-in".
    - LIVE since the 2026-09-30 deploys (11.555): OWNER-KEY-VISIBLE (Settings: the main key for another computer, hidden until Show, owner only).
    - LIVE (11.554): FILES-READY-LABEL (a searchable file reads Ready / Ready · basic profile, never Blocked).
    - LIVE (11.553): ONE-PROFILE — one sign-in (King), a redesigned sign-in page and Settings, sign-ups closed

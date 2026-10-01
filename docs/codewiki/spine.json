@@ -31850,17 +31850,17 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 832,
+     "line": 839,
      "name": "polymath_search"
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 832,
+     "line": 839,
      "name": "polymath_explore"
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 832,
+     "line": 839,
      "name": "polymath_answer"
     },
     {
@@ -31904,7 +31904,7 @@
     },
     {
      "file": "orchestrator/orchestrator/mcp_server.py",
-     "line": 825,
+     "line": 832,
      "name": "_TOOL_NAMES",
      "value": [
       "adapter_list",
@@ -31987,7 +31987,7 @@
    "files": [
     "orchestrator/orchestrator/mcp_server.py"
    ],
-   "hash": "7dbcfbfde3908eb1",
+   "hash": "8d9f7e31d1e5d631",
    "importers": [],
    "imports": [
     "orchestrator",
@@ -31995,7 +31995,7 @@
     "polymath_shared.adapter",
     "polymath_shared.adapter.harness_guide"
    ],
-   "lines": 846,
+   "lines": 853,
    "mcp_tools": [
     {
      "doc": "List every corpus: id, name, purpose, document count, and",
@@ -32604,10 +32604,10 @@
     },
     {
      "doc": "",
-     "end": 660,
+     "end": 667,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "class",
-     "line": 647,
+     "line": 650,
      "methods": [
       "__init__",
       "__call__"
@@ -32617,19 +32617,19 @@
     {
      "args": [],
      "doc": "ASGI app: FastMCP streamable-http + FAIL-CLOSED bearer gate +",
-     "end": 822,
+     "end": 829,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 663,
+     "line": 670,
      "name": "build_app"
     },
     {
      "args": [],
      "doc": "",
-     "end": 841,
+     "end": 848,
      "file": "orchestrator/orchestrator/mcp_server.py",
      "kind": "def",
-     "line": 836,
+     "line": 843,
      "name": "main"
     }
    ]
