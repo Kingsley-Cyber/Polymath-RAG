@@ -3,7 +3,7 @@ change_id: LIBRARY-READY-LABEL
 owner: "@king"
 date: 2026-10-01
 status: complete
-status_note: "A library whose files are all searchable on the basic profile no longer reads red: the Files / Overview vNext card says 'Searchable · basic profiles' (amber) and the Control Plane summary counts those files as ready (basic profile), not blocked. Same commit: GNN-DEGRADED-LIST — a GNN turn on a library without its GNN index answered 500; it now answers with a typed degradation. Live after the deploy."
+status_note: "A library whose files are all searchable on the basic profile no longer reads red: the Files / Overview vNext card says 'Searchable · basic profiles' (amber) and the Control Plane summary counts those files as ready (basic profile), not blocked. Same commit: GNN-DEGRADED-LIST — a GNN turn on a library without its GNN index answered 500; it now answers with a typed degradation. LIVE at 438e4af8 (deployed, pushed, proven through Cloudflare)."
 architecture_impact: "shared/polymath_shared/control_plane_status.py (summary: basic_profile; blocked = not searchable); shared/polymath_shared/semantic_readiness.py (vnext.profiled, display-only); orchestrator/orchestrator/api/chat_retrieval.py (_retrieve_gnn appends to meta.degraded); frontend-v2 lib/readiness.ts (vnextReady), lib/contracts.ts, screens/ControlPlane.tsx; tests."
 last_reviewed: 2026-10-01
 ---
@@ -56,6 +56,14 @@ last_reviewed: 2026-10-01
   nothing else reachable): contracts **863 passed**, 5 skipped, 0 failed; determinism **3,288 passed**, 35 skipped, 1 failed =
   `test_wrong_credentials_fail_at_startup_with_a_code`, the container's own artifact (its database trusts a login on its own
   127.0.0.1; it passes on GitHub). Code wiki refreshed (the 4 changed units, the chat-turn flow): 2,229 / 2,229.
+
+- **Live, after deploying `438e4af8`** (merge, UI build, bounce READY 26 / 13 / one bundle, push; local = origin =
+  `438e4af8`, bundle READY): `social-media-taste` — vNext verdict still `VNEXT_INCOMPLETE` (the gates are unchanged) with
+  `profiled` 21 / 21 and 150 / 150 parents mapped, so the card reads "Searchable · basic profiles"; Control Plane summary
+  `semantic_ready 0, basic_profile 21, blocked 0`. `cinema` — `VNEXT_COMPLETE` (77 / 77), summary `semantic_ready 77,
+  basic_profile 0, blocked 0`. `rag.kingsleylab.xyz` serves the new build (`index-CyUHqtL6.js` = the local `dist`, carrying the
+  new label). Through the public connector URL: `polymath_search` GNN on the taste library 200 in 1.0 s with the
+  `gnn_route` / `GNN_NO_CANDIDATES` degradation (was 500); HYBRID 200, 5 rows.
 
 ## Contract impact (pre-commit)
 - CANDIDATE_ENGINE [live] (its spec family includes `api/chat_retrieval.py`): UPDATED — `_retrieve_gnn` appends its
