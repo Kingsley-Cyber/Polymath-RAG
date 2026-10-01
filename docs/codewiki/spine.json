@@ -4143,12 +4143,12 @@
    "created": "stores/postgres/migrations/0047_query_receipts.sql:7",
    "reads": [
     "shared/polymath_shared/conformance/evidence.py:48",
-    "shared/polymath_shared/query_receipts.py:246",
-    "shared/polymath_shared/query_receipts.py:259"
+    "shared/polymath_shared/query_receipts.py:248",
+    "shared/polymath_shared/query_receipts.py:261"
    ],
    "writes": [
-    "shared/polymath_shared/query_receipts.py:197",
-    "shared/polymath_shared/query_receipts.py:211"
+    "shared/polymath_shared/query_receipts.py:199",
+    "shared/polymath_shared/query_receipts.py:213"
    ]
   },
   "query_workspaces": {
@@ -68404,14 +68404,14 @@
     {
      "does": "SWALLOWED: log, return None",
      "file": "shared/polymath_shared/query_receipts.py",
-     "line": 213,
+     "line": 215,
      "type": "Exception"
     }
    ],
    "files": [
     "shared/polymath_shared/query_receipts.py"
    ],
-   "hash": "6ae4acc487103fb6",
+   "hash": "1ce1a60e3e076707",
    "importers": [
     "orchestrator/orchestrator/api/_small-modules",
     "orchestrator/orchestrator/api/ask.py",
@@ -68430,26 +68430,26 @@
     "polymath_shared.funnel.compact",
     "polymath_shared.principal_context"
    ],
-   "lines": 278,
+   "lines": 280,
    "mcp_tools": [],
    "nondeterminism": [
     {
      "call": "time.perf_counter",
      "file": "shared/polymath_shared/query_receipts.py",
      "kind": "clock",
-     "line": 273
+     "line": 275
     },
     {
      "call": "uuid.uuid4",
      "file": "shared/polymath_shared/query_receipts.py",
      "kind": "uuid",
-     "line": 183
+     "line": 185
     },
     {
      "call": "time.perf_counter",
      "file": "shared/polymath_shared/query_receipts.py",
      "kind": "clock",
-     "line": 276
+     "line": 278
     }
    ],
    "page": "units/shared/polymath_shared/query_receipts.py.md",
@@ -68458,24 +68458,24 @@
    "sql_reads": [
     {
      "file": "shared/polymath_shared/query_receipts.py",
-     "line": 246,
+     "line": 248,
      "table": "query_receipts"
     },
     {
      "file": "shared/polymath_shared/query_receipts.py",
-     "line": 259,
+     "line": 261,
      "table": "query_receipts"
     }
    ],
    "sql_writes": [
     {
      "file": "shared/polymath_shared/query_receipts.py",
-     "line": 197,
+     "line": 199,
      "table": "query_receipts"
     },
     {
      "file": "shared/polymath_shared/query_receipts.py",
-     "line": 211,
+     "line": 213,
      "table": "query_receipts"
     }
    ],
@@ -68532,7 +68532,7 @@
       "meta"
      ],
      "doc": "JSON-SAFE-META-V1: the old `json.dumps(meta)[:8000]` sliced the text",
-     "end": 173,
+     "end": 175,
      "file": "shared/polymath_shared/query_receipts.py",
      "kind": "def",
      "line": 146,
@@ -68552,10 +68552,10 @@
       "client"
      ],
      "doc": "Write the receipt. `tx_factory` is polymath_shared.db.tx (a context",
-     "end": 216,
+     "end": 218,
      "file": "shared/polymath_shared/query_receipts.py",
      "kind": "def",
-     "line": 176,
+     "line": 178,
      "name": "record_query_receipt"
     },
     {
@@ -68564,10 +68564,10 @@
       "r"
      ],
      "doc": "",
-     "end": 227,
+     "end": 229,
      "file": "shared/polymath_shared/query_receipts.py",
      "kind": "def",
-     "line": 219,
+     "line": 221,
      "name": "_row"
     },
     {
@@ -68578,10 +68578,10 @@
       "principal_id"
      ],
      "doc": "",
-     "end": 239,
+     "end": 241,
      "file": "shared/polymath_shared/query_receipts.py",
      "kind": "def",
-     "line": 230,
+     "line": 232,
      "name": "_where"
     },
     {
@@ -68593,10 +68593,10 @@
       "since_h"
      ],
      "doc": "",
-     "end": 251,
+     "end": 253,
      "file": "shared/polymath_shared/query_receipts.py",
      "kind": "def",
-     "line": 242,
+     "line": 244,
      "name": "recent_queries"
     },
     {
@@ -68607,18 +68607,18 @@
       "since_h"
      ],
      "doc": "Per (kind, mode): count, p50/p95/max wall, abstained, errors, avg citations.",
-     "end": 268,
+     "end": 270,
      "file": "shared/polymath_shared/query_receipts.py",
      "kind": "def",
-     "line": 254,
+     "line": 256,
      "name": "query_summary"
     },
     {
      "doc": "",
-     "end": 277,
+     "end": 279,
      "file": "shared/polymath_shared/query_receipts.py",
      "kind": "class",
-     "line": 271,
+     "line": 273,
      "methods": [
       "__enter__",
       "__exit__"

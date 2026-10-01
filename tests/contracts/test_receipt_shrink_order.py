@@ -52,3 +52,13 @@ def test_when_even_the_core_is_too_big_the_row_still_holds_valid_json():
     meta = {"chat_plan": {"blob": "x" * (META_MAX_CHARS * 2)}, "legend": [], "used_evidence": []}
     out = json.loads(_meta_json(meta))                                          # valid JSON, the oversized core marked, never sliced
     assert out["chat_plan"] == {"truncated": True} and len(json.dumps(out)) <= META_MAX_CHARS
+
+
+def test_a_dropped_funnel_keeps_its_counts():
+    """The funnel goes first, but only its id lists: its counts survive whatever else must be cut (test_chat_funnel)."""
+    meta = {"funnel": {"version": "retrieval-funnel-v1", "counts": {"cited": 1, "union": 9}, "lane_counts": {"dense": 3},
+                       "stages": {"union": ["c" * 60] * 50}},
+            "legend": [{"tag": f"S{i}", "locator": "chunk:" + "x" * 80} for i in range(3000)], "mode": "HYBRID"}
+    out = json.loads(_meta_json(meta))
+    assert out["mode"] == "HYBRID" and out["funnel"]["counts"] == {"cited": 1, "union": 9}
+    assert out["funnel"]["lane_counts"] == {"dense": 3} and "stages" not in out["funnel"]

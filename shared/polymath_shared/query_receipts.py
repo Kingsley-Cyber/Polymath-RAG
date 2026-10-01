@@ -166,7 +166,9 @@ def _meta_json(meta: dict) -> str:
         return txt
     for key in DROP_ORDER:
         if key in m:
-            m[key] = {"truncated": True}
+            # the funnel's id lists go, its counts stay (they are what a forensic reads first: test_chat_funnel)
+            m[key] = ({"truncated": "ids_dropped", **{k: m[key].get(k) for k in ("version", "counts", "lane_counts") if k in m[key]}}
+                      if key == "funnel" and isinstance(m[key], dict) else {"truncated": True})
             txt = json.dumps(m, default=str)
             if len(txt) <= META_MAX_CHARS:
                 return txt

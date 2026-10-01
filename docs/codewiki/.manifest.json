@@ -3769,7 +3769,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "99b2d7dd0c6fe4a4",
+  "input_hash": "51e822abc442232c",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5693,8 +5693,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "ec0625ea7c1dc8ee",
+  "generated": "2026-10-01",
+  "input_hash": "07eaac4bb322a912",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
