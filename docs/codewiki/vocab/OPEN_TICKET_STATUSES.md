@@ -18,7 +18,7 @@ AUTHORITY: `control/control/stall_tracer.py:37` :: `OPEN_TICKET_STATUSES` (count
 | `control/control/tickets.py` | `control/control/tickets.py:114` | 3/3 | — |
 | `orchestrator/orchestrator/api/fleet.py` | `orchestrator/orchestrator/api/fleet.py:63` | 3/3 | — |
 | `orchestrator/orchestrator/api/intake.py` | `orchestrator/orchestrator/api/intake.py:145` | 3/3 | — |
-| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:925` | 3/3 | — |
+| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:943` | 3/3 | — |
 | `shared/polymath_shared/control_plane_status.py` | `shared/polymath_shared/control_plane_status.py:42` | 3/3 | — |
 | `workers/workers/extract_worker.py` | `workers/workers/extract_worker.py:179` | 3/3 | — |
 

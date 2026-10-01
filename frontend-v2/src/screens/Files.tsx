@@ -3,7 +3,7 @@ import { ConfirmByName, Dialog } from "../ui/Dialog";
 import { EmptyState, ErrorState, Skeleton } from "../ui/states";
 import { api, ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { controlReady, docSearchable, docVnext, semanticReady, vnextReady, settled } from "../lib/readiness";
+import { controlReady, docSearchable, docVnext, semanticReady, servedWriter, servesVnext, vnextReady, settled } from "../lib/readiness";
 import { ReadinessTriad } from "../components/ReadinessTriad";
 import { Pill, StatePill } from "../components/Pill";
 import type { DocSummary } from "../lib/contracts";
@@ -65,7 +65,7 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
   const summaries: Record<string, DocSummary> = sum.data?.summaries ?? {};
   const refresh = () => setNonce((n) => n + 1);
   const readyCount = rows.filter((r) => docSearchable(summaries[r.doc_id])).length;
-  const basicCount = rows.filter((r) => docSearchable(summaries[r.doc_id]) && !summaries[r.doc_id]?.vnext_ready).length;
+  const basicCount = rows.filter((r) => docSearchable(summaries[r.doc_id]) && !servesVnext(summaries[r.doc_id])).length;
 
   function describeError(e: unknown): string {
     if (e instanceof ApiError) {
@@ -255,8 +255,10 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
                   </td>
                   <td className="mono">
                     {!d ? <span className="pill pill--degraded">pending</span>
-                      : d.profile_vnext ? <span className="pill pill--ready">vNext</span>
-                      : d.profile_present ? <span className="pill pill--degraded">legacy</span>
+                      : servedWriter(d) === "vnext" ? <span className="pill pill--ready">vNext</span>
+                      : servedWriter(d) === "basic"
+                        ? <span className="pill pill--degraded" title={d.profile_vnext
+                            ? "a vNext card was written; search uses the richer basic card" : "search uses the basic card"}>basic</span>
                       : <span className="pill pill--blocked">none</span>}
                   </td>
                   <td className="mono">{d ? d.graph_entities : "—"}</td>

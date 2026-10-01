@@ -72,7 +72,7 @@ export function ControlPlane({ corpusId }: { corpusId: string }) {
           <div className="label" style={{ marginBottom: 8 }}>Corpus summary ({cp.data.contract})</div>
           <div className="row" style={{ gap: 20 }}>
             <Stat label="documents" value={cp.data.summary.documents} />
-            <Stat label="ready (vNext)" value={cp.data.summary.semantic_ready} />
+            <Stat label="ready (vNext)" value={cp.data.summary.vnext_served ?? cp.data.summary.semantic_ready} />
             <Stat label="ready (basic profile)" value={cp.data.summary.basic_profile ?? 0} />
             <Stat label="blocked" value={cp.data.summary.blocked} bad={cp.data.summary.blocked > 0} />
             <Stat label="processing" value={cp.data.summary.processing_active}

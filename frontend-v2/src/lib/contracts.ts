@@ -24,6 +24,9 @@ export interface SemanticReadiness {
     vnext_profiles?: number;
     /** documents with ANY profile, base or vNext (LIBRARY-READY-LABEL); absent on an older backend */
     profiled?: number | null;
+    /** SERVED-PROFILE-LABEL: files SEARCH serves with a vNext card (the verdict above counts WRITTEN cards); absent when
+     *  the profile index could not be read */
+    vnext_served?: number | null;
     documents?: number;
   };
   warnings?: unknown[];
@@ -39,10 +42,15 @@ export interface DocSummary {
   map_excluded: number;
   map_unresolved: number;
   profile_present: boolean;
+  /** the LATEST card was written by the vNext writer (not necessarily the card search uses) */
   profile_vnext: boolean;
   graph_entities: number;
   graph_relations: number;
+  /** mapped + the latest card is vNext (written state; scripts read it) */
   vnext_ready: boolean;
+  /** SERVED-PROFILE-LABEL: the writer of the card SEARCH serves ("vnext" | "basic"; null = none served). Absent when the
+   *  profile index could not be read — the labels then keep the written state. */
+  profile_served?: "vnext" | "basic" | null;
 }
 
 /** `GET /documents?corpus_id=` — the IDENTITY authority for the Files screen.
@@ -130,7 +138,7 @@ export interface ControlPlane {
                     pipeline?: Record<string, unknown> };
   /** semantic_ready = files with the vNext profile; basic_profile = searchable on the base profile; blocked = files
    *  retrieval would miss part of (unresolved parents or no profile) — LIBRARY-READY-LABEL */
-  summary: { documents: number; semantic_ready: number; basic_profile?: number; processing: number;
+  summary: { documents: number; semantic_ready: number; vnext_served?: number | null; basic_profile?: number; processing: number;
              processing_active: number; processing_stalled: number; blocked: number };
   pools: Record<string, ControlPlanePool>;
 }

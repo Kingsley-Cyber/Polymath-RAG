@@ -18,7 +18,7 @@ AUTHORITY: `control/control/reconciliation.py:45` :: `_RECONCILABLE_RUN_STATUSES
 | `control/control/scheduler.py` | `control/control/scheduler.py:111` | 3/3 | — |
 | `control/control/tickets.py` | `control/control/tickets.py:25` | 3/3 | — |
 | `shared/polymath_shared/contracts.py` | `shared/polymath_shared/contracts.py:393` | 3/3 | — |
-| `shared/polymath_shared/control_plane_status.py` | `shared/polymath_shared/control_plane_status.py:143` | 3/3 | — |
+| `shared/polymath_shared/control_plane_status.py` | `shared/polymath_shared/control_plane_status.py:150` | 3/3 | — |
 | `shared/polymath_shared/generation.py` | `shared/polymath_shared/generation.py:23` | 3/3 | — |
 | `shared/polymath_shared/receipts.py` | `shared/polymath_shared/receipts.py:213` | 3/3 | — |
 

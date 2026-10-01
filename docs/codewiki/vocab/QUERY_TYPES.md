@@ -12,7 +12,7 @@ AUTHORITY: `shared/polymath_shared/chat_plan.py:59` :: `QUERY_TYPES` (count: 11)
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1942` | 3/11 | `DEFINITION`, `MECHANISM`, `CAUSAL`, `COMPARISON`, `COUNTERPOINT`, `PROCEDURE`, `EXAMPLE`, `ADJACENT` |
+| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1960` | 3/11 | `DEFINITION`, `MECHANISM`, `CAUSAL`, `COMPARISON`, `COUNTERPOINT`, `PROCEDURE`, `EXAMPLE`, `ADJACENT` |
 | `shared/polymath_shared/bridge_integration.py` | `shared/polymath_shared/bridge_integration.py:63` | 3/11 | `DEFINITION`, `MECHANISM`, `CAUSAL`, `COMPARISON`, `COUNTERPOINT`, `PROCEDURE`, `EXAMPLE`, `ADJACENT` |
 | `shared/polymath_shared/deep_research/moves.py` | `shared/polymath_shared/deep_research/moves.py:23` | 4/11 | `PRIMARY`, `CAUSAL`, `COUNTERPOINT`, `EXAMPLE`, `ENTITY`, `BRIDGE`, `ADJACENT` |
 | `shared/polymath_shared/document_profile/compiler.py` | `shared/polymath_shared/document_profile/compiler.py:91` | 3/11 | `PRIMARY`, `DEFINITION`, `CAUSAL`, `COMPARISON`, `COUNTERPOINT`, `PROCEDURE`, `EXAMPLE`, `ADJACENT` |

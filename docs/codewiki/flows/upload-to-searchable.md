@@ -2,98 +2,101 @@
 
 A file uploaded on the Files screen becomes searchable: POST /upload, intake, the stage DAG (extract, canonicalize, project to Qdrant / Neo4j, summaries, document profile, parent map), readiness.
 
-ENTRY: `POST /upload` → `orchestrator/orchestrator/api/ui.py:467` `upload` (write scope).
+ENTRY: POST /upload -> `upload` (orchestrator/orchestrator/api/ui.py:485)
 
 ## hops
 
 | # | what happens | where (anchor) | data in -> data out | can fail how |
 |---|---|---|---|---|
-| 1 | Entry: form fields `corpus_id`, `file`, `allow_near_duplicate` (default `""`) | `orchestrator/orchestrator/api/ui.py:467-469` | multipart form -> handler | — |
-| 2 | Write-scope gate: `require_corpus(corpus_id, write=True)` -> `can_see` -> `allowed_corpora(write)`; principal `None` = every library, else membership in `p.writable_corpus_ids` | `orchestrator/orchestrator/api/ui.py:476`, `orchestrator/orchestrator/web_scope.py:85-87`, `web_scope.py:80-82`, `web_scope.py:72-77` | corpus_id -> allow/refuse | 403 `CORPUS_NOT_ALLOWED` via `_refuse` (`web_scope.py:57-58`) |
-| 3 | Filename gate: `os.path.basename`, ext lowercased, must be in `_UPLOAD_EXTENSIONS` | `orchestrator/orchestrator/api/ui.py:483-488` | filename -> ext | 422 `unsupported extension` |
-| 4 | Size cap: `POLYMATH_UPLOAD_MAX_MB` (default `"200"`) × 1024 × 1024; seek-END/tell check on the Starlette temp file | `orchestrator/orchestrator/api/ui.py:489-498` | file handle -> byte count | 413 `file exceeds ... bytes` |
-| 5 | Spool write: `spool_write` off-thread via `anyio.to_thread.run_sync`, 1 MiB chunks, sha256 computed in flight (SPOOL-CLAIM-CHECK-V1); bytes never sit in process memory | `orchestrator/orchestrator/api/ui.py:495-500` | `file.file` -> `content_ref` `{store, key, sha256, bytes}` | 422 `empty file` when `ref["bytes"] == 0` (`ui.py:501-502`) |
-| 6 | DUPLICATE-DOCUMENT-GUARD-V1 layer 1 (byte-identical): `SELECT source_name FROM documents WHERE corpus_id = %s AND source_hash = %s` | `orchestrator/orchestrator/api/ui.py:511-520` | (corpus_id, raw sha256) -> dup row | 409 `duplicate_document`; layer 1 never overridable |
-| 7 | NEAR-DUPLICATE-GUARD-V1 override: `allow_near_duplicate.strip().lower()` in `("1","true","yes","on")` -> `config={"allow_near_duplicate": True}` rides in the payload so worker layer 3 sees it | `orchestrator/orchestrator/api/ui.py:521-531` | form flag -> payload config | layers 1 and 2 are never overridable |
-| 8 | `canonical_intake_payload`: base `{corpus_id, source_name, media_type, config}` + exactly one of `content_b64` / `content_ref`; validates `store,key,sha256,bytes` fields | `shared/polymath_shared/intake_submission.py:24-57` | fields -> canonical payload dict | `ValueError` "exactly one of content_b64 / content_ref is required" (:41-43) or "content_ref missing {field!r}" (:53-56) |
-| 9 | Transaction: `tx()` takes a pooled connection (`min_size=1`, `max_size=8`, `autocommit=False`); commits on clean exit, rolls back on exception | `shared/polymath_shared/db.py:44-54`, `db.py:34-40`, `db.py:23-31` | payload -> Connection | any exception rolls back run+outbox together |
-| 10 | `submit_intake` (idempotent): `run_id = "run_" + content_hash({'corpus','intake'})` where hash = sha256 of canonicalized JSON (sort_keys, compact separators, `ensure_ascii=False`, UTF-8); existing run row -> `already_exists=True`; else `INSERT INTO runs (... status 'intake' ...)` + `INSERT INTO outbox_events (... 'intake.v1' ... ON CONFLICT (idempotency_key) DO NOTHING)` | `shared/polymath_shared/intake_submission.py:60-101`, `shared/polymath_shared/identity.py:59-62`, `identity.py:28-30`, `identity.py:16-25` | payload -> `{run_id, accepted, already_exists}` | `ValueError` "content_b64 is not valid base64" / "payload carries neither..." (:67-73); replay is a no-op |
-| 11 | Response: submit result plus `corpus_id`, `source_name`, `bytes`, `sha256`, `near_duplicate_override` | `orchestrator/orchestrator/api/ui.py:535-537` | out -> JSON | — |
-| 12 | Census picks the run up: `compute_census` selects runs with `status IN ('intake','reconciling','degraded')` ordered by `created_at, run_id`; mode `auto` -> `incremental` if a watermark exists else `full` | `control/control/census.py:140-179` | runs rows -> Census | cold controller without watermark falls back to full pass (:162-167) |
-| 13 | Dirty selection (incremental): `stage_attempts.started_at` and `stage_tickets.updated_at` within lookback (watermark + 1 s overlap), plus new runs and any active run with no cached verdict | `control/control/census.py:182-217` | watermark -> changed set | missed dirty signal pins run at `reconciling` (guards at :186-217) |
-| 14 | `chain_verdict` first-gap walk over `STAGE_CHAIN = ["intake","extract","profile_document","project_qdrant","project_neo4j","canonicalize","project_canonical","verify_projections"]`: stops at first non-ok stage; `failed` under `max_attempts=3` -> retry gap; `failed` at budget -> run fails; missing -> one gap, nothing after emitted | `control/control/census.py:386-410`, `census.py:19` | attempts -> (gaps, complete, failed) | run lands in `census.fail` (:406-407, :310-311) |
-| 15 | Each gap re-arms its stage's outbox event via `STAGE_EVENTS` (`intake.v1`, `chunked.v1`, `profile_document.v1`, `project_qdrant.v1`, `project_neo4j.v1`, `canonicalize.v1`, `project_canonical.v1`, `verify.v1`) | `control/control/census.py:304-309`, `census.py:28-37` | Gap -> outbox event | cached gap verdict would re-arm unclaimable events forever — guard: gap verdicts never cached (:343-348) |
-| 16 | `ensure_run_tickets` mints the per-run ticket chain from `STAGE_DAG`; intake born `ready` (work event emitted immediately, `_emit_ticket_event`); stages whose latest attempt is `ok` or that hold a `done` ticket are born DONE (SUMMARY-ATTEMPT-EQUIVALENCE) | `control/control/tickets.py:93-137`, `tickets.py:140-163`, `tickets.py:24-58` | run -> stage_tickets rows | minting completed stages PENDING forced full model re-execution (:99-104) |
-| 17 | DAG progression, each gated on predecessor artifacts + receipts: `extract`(`manifest`) -> `profile_document`(`documents_profiled`) -> `project_qdrant`(`chunk_count`, receipt `qdrant`) -> `project_neo4j`(`facts`, receipt `neo4j`) -> `canonicalize`(`canonical_entities`) -> `project_canonical`(`memberships`, receipt `neo4j`) -> `verify_projections`(artifacts `qdrant, routing_qdrant, neo4j, canonical`) | `control/control/tickets.py:24-39` | artifacts + receipts -> next ticket ready | stale declared key `docs` blocked every post-rewrite run (:32-38) |
-| 18 | Background stages after settlement: `compile_objects`, `parent_summary`, `document_summary`, `corpus_summary`, `vocabulary`, `doc_profile` — all in `NON_BLOCKING_STAGES`; failure degrades summaries, never blocks QUERY_READY | `control/control/tickets.py:40-77`, `tickets.py:80-81` | admitted mentions + chunk text -> summaries / concepts / procedures | degraded summaries only |
-| 19 | Owner/auto-minted extras: `parent_enrichment` (enrichment buttons) and `doc_parent_map` (flag-gated `auto_map_parents_on_chunks` phase) are absent from STAGE_DAG and non-blocking | `control/control/tickets.py:67-76` | trigger -> ticket | lingering ticket cannot hold promotion |
-| 20 | Receipt census on complete chains: qdrant — run-scoped chunk receipts (`_run_doc_ids`, legacy falls back corpus-wide) + routing kinds (`routing_document_summary`, `routing_section_summary`, `routing_child`, `routing_procedure`, `routing_concept`) via one set-based anti-join; neo4j — eligible facts + chunks; canonical — `canonical_entities`, `canonical_memberships`, `evidence_chunk` | `control/control/census.py:433-576` | want-set vs `projection_receipts` -> missing ids | missing receipts -> gap re-drives the projector (:322-328); per-entity loop variant held ticks open for minutes (:452-456) |
-| 21 | EXTRACTION-COVERAGE-V1 barrier: complete chain's extract stats (`artifacts.payload->'llm_extraction'->'stats'`) run through `coverage_verdict(floor, drop_tolerance)`; reasons -> `census.degrade`, else `census.promote`; verdict cache + watermark (`scheduler_cursors` stage `__census__`, corpus `__global__`) written inside the caller's transaction | `control/control/census.py:326-339`, `census.py:413-430`, `census.py:341-378`, `census.py:91-92` | extract stats -> promote / degrade | dropped/unaccounted neighborhoods -> degraded, never query_ready |
+| 1 | POST /upload enters `upload(corpus_id: Form, file: UploadFile, allow_near_duplicate: Form(""))` | orchestrator/orchestrator/api/ui.py:485-487 | multipart form -> handler; Starlette parser already streamed body to a disk-spooled temp file | malformed multipart handled upstream of the handler (ui.py:509-512) |
+| 2 | Write-scope check `require_corpus(corpus_id, write=True)` -> `can_see` -> `allowed_corpora` | orchestrator/orchestrator/api/ui.py:494; orchestrator/orchestrator/web_scope.py:80-87, 72-77 | corpus_id + `current_principal()` -> ok / raise | 403 `CORPUS_NOT_ALLOWED` ("not open to this account for writing") |
+| 3 | Extension gate: `ext` must be in `_UPLOAD_EXTENSIONS` | orchestrator/orchestrator/api/ui.py:501-506 | filename -> ext | 422 `unsupported extension {ext!r}` |
+| 4 | Size gate: `POLYMATH_UPLOAD_MAX_MB` * 1024 * 1024 | orchestrator/orchestrator/api/ui.py:507, 513-516 | temp file size -> bool | 413 `file exceeds {max_bytes} bytes` |
+| 5 | `spool_write` re-streams 1 MiB chunks to the spool volume, sha256 in flight (SPOOL-CLAIM-CHECK-V1) | orchestrator/orchestrator/api/ui.py:488-492, 518 | `file.file` -> `ref = {store, key, sha256, bytes}` | any spool error aborts before any DB write [INFERRED: no tx opened yet] |
+| 6 | Empty-file gate | orchestrator/orchestrator/api/ui.py:519-520 | `ref["bytes"] == 0` | 422 `empty file` |
+| 7 | DUPLICATE-DOCUMENT-GUARD-V1 layer 1: `SELECT source_name FROM documents WHERE corpus_id=%s AND source_hash=%s` | orchestrator/orchestrator/api/ui.py:521-538 | (corpus_id, sha256) -> dup row or none | 409 `duplicate_document`; layers 1 and 2 are never overridable (ui.py:539-542) |
+| 8 | `keep_both` parse: `allow_near_duplicate` in ("1","true","yes","on"); override rides in payload `config={"allow_near_duplicate": True}` | orchestrator/orchestrator/api/ui.py:542-549 | form string -> bool + config | near-duplicate refusal surfaces later in the intake worker (layer 3) |
+| 9 | `canonical_intake_payload` builds the canonical dict | shared/polymath_shared/intake_submission.py:24-57 | fields -> payload with `content_ref` | `ValueError` "exactly one of content_b64 / content_ref is required" or "content_ref missing {field!r}" |
+| 10 | `submit_intake` computes `rid = run_id(corpus_id, payload)` = `run_<content_hash({'corpus':..., 'intake':...})>` | shared/polymath_shared/intake_submission.py:75-76; shared/polymath_shared/identity.py:59-62 | payload -> run_id | none (pure hash) |
+| 11 | Idempotency probe: `SELECT 1 FROM runs WHERE run_id = %s` | shared/polymath_shared/intake_submission.py:79-81 | rid -> existing row? | silent no-op: returns `already_exists: True`, no new work |
+| 12 | `INSERT INTO runs (status 'intake', metadata = {source_name, intake_payload})` + `INSERT INTO outbox_events ('intake.v1', idempotency_key) ON CONFLICT DO NOTHING`, one `tx()` | shared/polymath_shared/intake_submission.py:83-101; shared/polymath_shared/db.py:44-54 | payload -> run row + outbox event | any exception -> `conn.rollback()` |
+| 13 | Response `{**out, corpus_id, source_name, bytes, sha256, near_duplicate_override}` | orchestrator/orchestrator/api/ui.py:553-555 | out + ref -> JSON dict | — |
+| 14 | Census tick: `SELECT ... FROM runs WHERE r.status IN ('intake','reconciling','degraded') ORDER BY r.created_at, r.run_id` | control/control/census.py:170-179 | runs table -> candidate set | cold controller with no watermark falls back to full mode (census.py:163-167) |
+| 15 | Dirty select (incremental): `stage_attempts.started_at` + `stage_tickets.updated_at` inside lookback (1 s overlap) + new runs + uncached active runs | control/control/census.py:182-217 | watermark -> changed set | miss = run keeps prior cached verdict (fixed by CENSUS-UNCACHED-DIRTY-V1) |
+| 16 | `chain_verdict` first-gap walk over STAGE_CHAIN with retry budget `max_attempts=3` | control/control/census.py:386-410 | last/count by stage -> (gaps, complete, failed) | failed beyond budget -> run in `census.fail`; only the FIRST non-ok stage becomes a gap |
+| 17 | Each gap re-arms the stage's outbox event via `STAGE_EVENTS[stage]` | control/control/census.py:28-37, 304-309 | gap -> event type (intake.v1, chunked.v1, ...) | — |
+| 18 | `ensure_run_tickets` mints the chain: intake born `ready` (event emitted immediately); stages with an ok attempt born `done`; others `pending` | control/control/tickets.py:93-137 | run -> `stage_tickets` rows | minting `pending` for already-ok stages forced full model re-execution (fixed, tickets.py:99-104) |
+| 19 | Stage DAG handoff: extract(`manifest`) -> profile_document(`documents_profiled`) -> project_qdrant(`chunk_count` + qdrant receipts) -> project_neo4j(`facts` + neo4j) -> canonicalize(`canonical_entities`) -> project_canonical(`memberships` + neo4j) -> verify_projections(`qdrant`,`routing_qdrant`,`neo4j`,`canonical`) | control/control/tickets.py:24-39; control/control/census.py:19, 22-27 | ticket -> work event only after predecessor artifacts + receipts verified | stale declared artifact key blocked advancement (VERIFY-DAG-KEYS-V2, tickets.py:32-38) |
+| 20 | Receipt census on a complete chain: qdrant chunks + routing kinds (`routing_document_summary`,`routing_section_summary`,`routing_child`,`routing_procedure`,`routing_concept`); neo4j facts + chunks + canonical entities/memberships/evidence | control/control/census.py:313-328, 433-576 | want-set -> missing list | any missing -> gap "N projection receipts missing", `complete = False`, projector re-drives |
+| 21 | EXTRACTION-COVERAGE-V1 barrier: `coverage_verdict(extraction_stats(...))` | control/control/census.py:330-339, 413-430 | extract stats -> reasons | silent degrade: chain complete but run lands in `census.degrade`, never promoted |
+| 22 | Verdict: complete + not failed + no barrier reasons -> `census.promote`; gap verdicts never cached | control/control/census.py:330-339, 341-355 | chain state -> promote/degrade/fail | cached gap would re-arm unclaimable events forever (guard, census.py:76-80) |
+| 23 | Watermark advance over max(stage_attempt time, ticket `updated_at`, run `created_at`), written in the caller's transaction | control/control/census.py:361-378 | max_seen_us -> `scheduler_cursors` | crash rolls watermark back with the tick's work (safe replay) |
+| 24 | Background non-blocking stages after settlement: `compile_objects`, `parent_summary`, `document_summary`, `corpus_summary`, `vocabulary`, `doc_profile` (rollout phase A) | control/control/tickets.py:40-66 | admitted mentions + chunk text -> artifacts | failure degrades summaries to DEGRADED, never blocks QUERY_READY |
+| 25 | `doc_parent_map` and `parent_enrichment` tickets minted ONLY by the flag-gated `auto_map_parents_on_chunks` scheduler phase / enrichment buttons; absent from STAGE_DAG | control/control/tickets.py:67-77 | owner action -> ticket | lingering ticket can never hold promotion |
 
 ## state written
 
 | store | what | anchor |
 |---|---|---|
-| spool volume | blob file referenced by `content_ref` `{store, key, sha256, bytes}`; Postgres never holds the bytes | `orchestrator/orchestrator/api/ui.py:470-475`, `ui.py:500` |
-| Postgres `runs` | `run_id`, `corpus_id`, `status 'intake'`, `metadata` carrying `source_name` + full `intake_payload` | `shared/polymath_shared/intake_submission.py:83-92` |
-| Postgres `outbox_events` | `intake.v1` event with `idempotency_key` = content hash of `{run, type, payload}` | `shared/polymath_shared/intake_submission.py:93-100` |
-| Postgres `documents.source_hash` | original-bytes hash recorded by the intake worker; matched by upload layer-1 guard | `orchestrator/orchestrator/api/ui.py:503-515` |
-| Postgres `stage_attempts` | written inside stage transactions; the census's mutator signal | `control/control/census.py:60-65` |
-| Postgres `stage_tickets` | full per-run DAG; intake `ready`, others `pending`/`done` | `control/control/tickets.py:119-127` |
-| Postgres `projection_receipts` | rows `(projection 'qdrant'/'neo4j', entity_kind, entity_id, active)` for chunks, routing ids, facts, canonical entities/memberships, evidence | `control/control/census.py:457-475`, `census.py:509-575` |
-| Postgres `scheduler_cursors` | census watermark (`stage='__census__'`, `corpus_id='__global__'`, `last_seq` epoch-micros), written in the tick transaction | `control/control/census.py:91-92`, `census.py:122-128`, `census.py:374-378` |
-| Postgres `artifacts` | per-stage artifacts incl. extract stats under `payload->'llm_extraction'->'stats'`; verify writes `{qdrant, routing_qdrant, neo4j, canonical}` | `control/control/census.py:416-423`, `control/control/tickets.py:32-38` |
-| Qdrant / Neo4j | projection stores whose convergence is proven by the receipts above | `control/control/census.py:313-328` [INFERRED: receipts are the observable; the writes live in worker code not shown] |
+| spool volume (blob store) | streamed file bytes; `content_ref = {store, key, sha256, bytes}` via `spool_write` | orchestrator/orchestrator/api/ui.py:488-492, 518 |
+| Postgres `runs` | (run_id, corpus_id, status `'intake'`, metadata = `{source_name, intake_payload}`) | shared/polymath_shared/intake_submission.py:83-92 |
+| Postgres `outbox_events` | (run_id, event_type `'intake.v1'`, payload, idempotency_key = content_hash of {run, type, payload}) | shared/polymath_shared/intake_submission.py:77, 93-100 |
+| Postgres `documents.source_hash` | original-bytes hash recorded by the intake worker (read here for the duplicate guard) | orchestrator/orchestrator/api/ui.py:521-524 |
+| Postgres `stage_tickets` | (ticket_id = `tkt_` + hash[:32], run_id, corpus_id, stage, event_type, status) | control/control/tickets.py:89-90, 119-127 |
+| Postgres `stage_attempts` | written inside stage transactions; read as census history | control/control/census.py:60-63, 224-237, 280-284 |
+| Postgres `scheduler_cursors` | stage `'__census__'`, corpus_id `'__global__'`, last_seq = epoch-micros watermark | control/control/census.py:91-92, 122-128, 374-378 |
+| Postgres `projection_receipts` | projection `'qdrant'` (chunk + routing kinds) and `'neo4j'` (`fact`, `chunk`, `canonical_entity`, `canonical_membership`, `evidence_chunk`); cleared by VERIFY on store loss | control/control/census.py:313-316, 493-497, 517-534, 546-560 |
+| Qdrant | chunk vectors + neural routing representations (document/section/child/procedure/concept) — production dependencies for query-ready (R1B) | control/control/census.py:450-456, 459-491 |
+| Neo4j | eligible facts + chunk nodes (I3R-R5), canonical entities/memberships, evidence chunks | control/control/census.py:505-507, 540-560 |
 
 ## flags that change this flow
 
 | flag | default | effect | read at |
 |---|---|---|---|
-| `POLYMATH_UPLOAD_MAX_MB` | `"200"` | upload size cap in MiB (×1024×1024 bytes) | `orchestrator/orchestrator/api/ui.py:489` |
-| `allow_near_duplicate` (form) | `""` | truthy in `("1","true","yes","on")` sets `config={"allow_near_duplicate": True}` for worker layer 3 | `orchestrator/orchestrator/api/ui.py:469`, `ui.py:525-531` |
-| `POLYMATH_CENSUS_MODE` | `"auto"` | `auto` -> incremental when watermark exists, else full; `full` forces full sweep | `control/control/census.py:158-163` |
-| `POLYMATH_CENSUS_AUDIT` | unset | `"1"` forces full mode | `control/control/census.py:159-160` |
-| `max_attempts` | `3` | per-stage retry budget before a failed run enters `census.fail` | `control/control/census.py:141`, `census.py:402-407` |
-| `coverage_floor` | `0.0` | extraction coverage floor for the promotion barrier | `control/control/census.py:142`, `census.py:426-430` |
-| `drop_tolerance` | `None` | tolerance passed to `coverage_verdict` | `control/control/census.py:143` |
-| `DEFAULT_HIGH_WATERMARK` | `64` | per-stage pending high watermarks pause new intake tickets (backpressure) | `control/control/tickets.py:86`, `tickets.py:2-7` |
+| `POLYMATH_UPLOAD_MAX_MB` | `"200"` | upload cap in MiB (*1024*1024); larger -> 413 | orchestrator/orchestrator/api/ui.py:507 |
+| `allow_near_duplicate` (form) | `""` | in ("1","true","yes","on") sets payload config `{"allow_near_duplicate": True}`; overrides only layer 3 (near-duplicate) | orchestrator/orchestrator/api/ui.py:487, 539-549 |
+| `POLYMATH_CENSUS_MODE` | `"auto"` | auto -> incremental if watermark exists else full; `"full"` forces full sweep | control/control/census.py:158-167 |
+| `POLYMATH_CENSUS_AUDIT` | unset | `"1"` forces mode full (recovery/audit) | control/control/census.py:159-160 |
+| `auto_map_parents_on_chunks` | not stated in SOURCE | flag-gated scheduler phase that auto-mints `doc_parent_map` tickets (never chain advancement) | control/control/tickets.py:73-75 |
 
 ## failure modes
 
-1. 403 `CORPUS_NOT_ALLOWED` -> corpus not in the principal's `writable_corpus_ids` (principal `None` = owner, all allowed) -> `orchestrator/orchestrator/web_scope.py:85-87`, `web_scope.py:72-77`.
-2. 422 `unsupported extension` -> ext not in `_UPLOAD_EXTENSIONS` -> `orchestrator/orchestrator/api/ui.py:485-488`.
-3. 413 `file exceeds ... bytes` -> spooled temp file larger than cap -> `orchestrator/orchestrator/api/ui.py:496-498`.
-4. 422 `empty file` -> `ref["bytes"] == 0` after spool -> `orchestrator/orchestrator/api/ui.py:501-502`.
-5. 409 `duplicate_document` -> byte-identical file already in corpus under `documents.source_hash`; not overridable -> `orchestrator/orchestrator/api/ui.py:511-520`.
-6. `ValueError` on payload shape -> both/neither of `content_b64`/`content_ref`, or `content_ref` missing a field -> `shared/polymath_shared/intake_submission.py:41-43`, `:53-56`, `:67-73`.
-7. Run pinned at `reconciling` forever -> summary stages complete tickets without `stage_attempts`, so a cached non-promote verdict replayed indefinitely -> guards: dirtiness also tracks `stage_tickets.updated_at` and gap verdicts are never cached -> `control/control/census.py:60-80`, `:186-200`, `:343-348`.
-8. Stuck active run while a sibling promotes -> run with no cached verdict whose last ticket close fell under the lookback after the global watermark advanced -> guard: uncached actives are dirty by definition -> `control/control/census.py:207-217`.
-9. Ticket advancement blocked after verifier rewrite -> stale declared artifact key `docs`; verifier actually writes `{qdrant, routing_qdrant, neo4j, canonical}` -> `control/control/tickets.py:32-38`.
-10. Whole-tick stall -> receipt census as a per-entity SELECT loop inside the tick transaction (hundreds of round trips, ticks held open for minutes) -> replaced by one set-based anti-join -> `control/control/census.py:452-456`.
-11. Silent degradation instead of promotion -> complete chain but extract recorded dropped/unaccounted neighborhoods -> run enters `census.degrade` with reasons, never `query_ready` -> `control/control/census.py:54-57`, `:331-339`.
-12. Legacy-history replay -> minting already-completed stages PENDING forced full model re-execution and barrier-blocked the corpus -> ok-attempt / done-ticket stages now born DONE -> `control/control/tickets.py:99-104`, `:140-163`.
-13. Same text, different container (layer 2) and near-duplicate (layer 3) -> decided in the intake worker where extracted text exists, not on this path -> `orchestrator/orchestrator/api/ui.py:508-510`, `:521-524`.
+1. 403 `CORPUS_NOT_ALLOWED` -> principal's `writable_corpus_ids` excludes the corpus -> orchestrator/orchestrator/web_scope.py:72-87
+2. 422 `unsupported extension` / `empty file` -> ext outside `_UPLOAD_EXTENSIONS`, or `ref["bytes"] == 0` -> orchestrator/orchestrator/api/ui.py:502-506, 519-520
+3. 413 `file exceeds` -> size over `POLYMATH_UPLOAD_MAX_MB` MiB -> orchestrator/orchestrator/api/ui.py:507, 513-516
+4. 409 `duplicate_document` -> byte-identical file already in corpus (`documents.source_hash` match); layers 1/2 never overridable -> orchestrator/orchestrator/api/ui.py:521-542
+5. Silent replay no-op -> same canonical payload -> same `run_id` -> `already_exists: True`, no new run/outbox row -> shared/polymath_shared/intake_submission.py:79-81; shared/polymath_shared/identity.py:59-62
+6. Run pinned at `reconciling` forever -> verdict cached while summary tickets still pending (summary stages write no `stage_attempts`); guards: ticket `updated_at` tracked + gap verdicts never cached (CENSUS-DIRTY-SIGNAL-V2) -> control/control/census.py:60-80, 341-345
+7. Active run never re-evaluated -> sibling's later ticket advanced the global watermark past its close within one tick; guard: uncached active runs are dirty (CENSUS-UNCACHED-DIRTY-V1) -> control/control/census.py:207-217
+8. Chain complete but corpus never query_ready (silent) -> extraction coverage reasons -> `census.degrade` instead of promote -> control/control/census.py:54-57, 330-339, 426-430
+9. Ok stage with missing receipts -> store loss cleared by VERIFY -> gap "N projection receipts missing" re-drives the projector -> control/control/census.py:313-328
+10. Stage failed at/after `max_attempts` (default 3) -> run fails, not retried -> control/control/census.py:402-407
+11. Ticket advancement blocked after the verifier rewrite -> stale declared artifact key `'docs'` vs actual `{qdrant, routing_qdrant, neo4j, canonical}` -> control/control/tickets.py:32-38
+12. Forced full model re-execution on chain creation -> stages minted `pending` despite ok attempts; fix: born `done` -> control/control/tickets.py:99-104, 115-117
 
 ## invariants
 
-- INVARIANT Postgres never holds the uploaded bytes; the request body is transport, content lives behind `content_ref` — SPOOL-CLAIM-CHECK-V1 (`orchestrator/orchestrator/api/ui.py:470-475`).
-- INVARIANT Run identity is content-addressed: `run_` + sha256 of the canonical payload; replaying the same intake over a corpus yields the same run id, so re-intake is a no-op at the Postgres level (`shared/polymath_shared/identity.py:59-62`).
-- INVARIANT A payload carries exactly one content variant: `content_b64` or `content_ref` (`shared/polymath_shared/intake_submission.py:34-43`).
-- INVARIANT The run row and the `intake.v1` outbox event commit in a single transaction, idempotent by content identity (`shared/polymath_shared/intake_submission.py:64-66`, `:79-100`).
-- INVARIANT Duplicate layers 1 (identical bytes) and 2 (identical text) are never overridable; only near-duplicate layer 3 is (`orchestrator/orchestrator/api/ui.py:521-524`).
-- INVARIANT A verdict carrying gaps is never cached; gaps are transient by definition (`control/control/census.py:343-348`).
-- INVARIANT The census watermark is written in the same transaction as the tick's resulting work — a crash rolls both back together (`control/control/census.py:374-378`, `:86-90`).
-- INVARIANT A stage's work event exists only after the control plane verifies the predecessor's artifacts, receipts, and contract (`control/control/tickets.py:2-7`).
-- INVARIANT Stages in `NON_BLOCKING_STAGES` can never hold promotion: knowledge=READY while summaries=DEGRADED (`control/control/tickets.py:60-77`).
-- INVARIANT A complete chain whose extract stage dropped or lost track of neighborhoods is never query_ready (`control/control/census.py:331-339`).
+- INVARIANT the request body is transport, never pipeline state; Postgres never holds the bytes (orchestrator/orchestrator/api/ui.py:488-492) [DERIVED]
+- INVARIANT run identity is content-addressed: `run_id = f"run_{content_hash({'corpus': corpus_id, 'intake': intake_payload})}"`; replaying the same intake is a Postgres-level no-op (shared/polymath_shared/identity.py:59-62)
+- INVARIANT a payload carries exactly one of `content_b64` / `content_ref`; `content_ref` must contain `store`, `key`, `sha256`, `bytes` (shared/polymath_shared/intake_submission.py:41-43, 52-56)
+- INVARIANT the run row and the `intake.v1` outbox event commit in a single transaction; the outbox insert is idempotent on `idempotency_key` (shared/polymath_shared/intake_submission.py:64-65, 95-98)
+- INVARIANT census is deterministic: runs sorted by `created_at, run_id`; attempts by `run_id, stage, started_at` (control/control/census.py:144-148, 170-178, 224-229)
+- INVARIANT the chain walk stops at the first non-ok stage — exactly one gap, nothing after it (control/control/census.py:388-396)
+- INVARIANT a verdict carrying gaps is never cached (control/control/census.py:76-79, 341-345)
+- INVARIANT a complete chain with extraction coverage reasons is degraded, never promoted (control/control/census.py:54-57, 330-339)
+- INVARIANT a stage's work event exists only after the control plane verifies predecessor artifacts, receipts, and contract (control/control/tickets.py:2-7)
+- INVARIANT `canonicalize`/`project_canonical` run before `verify_projections` (control/control/census.py:22-27)
+- INVARIANT summary/vocabulary/`doc_profile` (phase A) failures degrade summaries, never block QUERY_READY (control/control/tickets.py:60-66)
 
 ## VERIFY
 
 ```verify
 grep -Fq 'POLYMATH_UPLOAD_MAX_MB' orchestrator/orchestrator/api/ui.py
 grep -Fq 'duplicate_document' orchestrator/orchestrator/api/ui.py
-grep -Fq 'intake.v1' shared/polymath_shared/intake_submission.py
+grep -Fq 'content_ref' shared/polymath_shared/intake_submission.py
+grep -Fq 'run_{content_hash' shared/polymath_shared/identity.py
 grep -Fq 'POLYMATH_CENSUS_MODE' control/control/census.py
 grep -Fq 'NON_BLOCKING_STAGES' control/control/tickets.py
-grep -Fq 'DEFAULT_HIGH_WATERMARK = 64' control/control/tickets.py
+test "$(grep -c -F 'projection_receipts' control/control/census.py)" -ge 5
+grep -Fq 'CORPUS_NOT_ALLOWED' orchestrator/orchestrator/web_scope.py
 ```

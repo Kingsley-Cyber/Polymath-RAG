@@ -164,6 +164,8 @@ def document_status(conn, *, doc_id: str, detail: bool = False) -> dict[str, Any
         "prompt_version": prof.get("prompt_version") if prof else None,
         "compiler_version": prof.get("compiler_version") if prof else None,
         "model": (prof.get("model") or prof.get("lane")) if prof else None,
+        "compiled_hash": prof.get("compiled_hash") if prof else None,
+        # the API layer replaces this with the profile index's answer (SERVED-PROFILE-LABEL); here: the card is valid
         "projected": bool(prof) and prof.get("valid") is not None,  # doc_profile stage projects inline
     }
 

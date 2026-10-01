@@ -1202,6 +1202,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("shared/polymath_shared/document_profile/context.py", "py", None),
     ("shared/polymath_shared/document_profile/projection.py", "py", None),
     ("shared/polymath_shared/document_profile/selection.py", "py", None),
+    ("shared/polymath_shared/document_profile/served.py", "py", None),
     ("shared/polymath_shared/document_profile/profile_scout.py", "py", None),
     ("shared/polymath_shared/document_profile/parent_skeleton.py", "py", None),
     ("shared/polymath_shared/document_profile/map_compiler.py", "py", None),
@@ -2576,6 +2577,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-10-01-ci-green.md", "md", None),
     ("docs/wiki/work-log/2026-10-01-mcp-retrieval-modes.md", "md", None),
     ("docs/wiki/work-log/2026-10-01-library-ready-label.md", "md", None),
+    ("docs/wiki/work-log/2026-10-01-served-profile-label.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),
@@ -2597,6 +2599,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_mcp_server_hardening.py", "py", None),
     ("tests/contracts/test_mcp_connector_url.py", "py", None),
     ("tests/contracts/test_mcp_retrieval_modes.py", "py", None),
+    ("tests/contracts/test_served_profile_label.py", "py", None),
     ("docs/wiki/work-log/2026-09-26-trail-ext-fixes-acquisition-c.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-hosted-acquisition.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-audit-fixes.md", "md", None),

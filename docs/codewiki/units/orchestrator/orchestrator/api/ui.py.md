@@ -1,118 +1,130 @@
 # unit: orchestrator/orchestrator/api/ui.py
-anchor: orchestrator/orchestrator/api/ui.py:1-4846
-
+anchor: orchestrator/orchestrator/api/ui.py:1-4863
 ## purpose
-UI support layer (POLYMATH-UI-V1): the thin HTTP endpoints the web chat adds on top of the existing query product — corpus picker, file-manager listing, spool-streaming upload, synthesizer registry, and the CHAT-RUNTIME-V1 chat turn emitted as phase/token/answer frames so the UI can show what the engine is doing (orchestrator/orchestrator/api/ui.py:1-31) [DERIVED]. `chat_events` is the single authority for a chat turn; `/chat/stream` streams its frames, `/chat` (and MCP `ask`) drains them into one JSON answer (orchestrator/orchestrator/api/ui.py:24-31) [DERIVED].
+UI support layer (POLYMATH-UI-V1): thin FastAPI endpoints the web chat needs on top of the query product — corpus/document management, upload, model catalog, and the single CHAT-RUNTIME-V1 chat turn exposed both as SSE (`/chat/stream`) and one JSON body (`/chat`, MCP `ask`) (orchestrator/orchestrator/api/ui.py:1-31). [DERIVED]
 
 ## public surface
-
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| GET /corpora | route | corpora(all: bool = False) -> dict | ui.py:142 | web chat corpus picker (ui.py:4) |
-| PATCH /corpora/{corpus_id} | route | rename_corpus(corpus_id, req) -> dict | ui.py:181 | — |
-| PATCH /corpora/{corpus_id}/query_enabled | route | set_query_enabled(corpus_id, req) -> dict | ui.py:213 | — |
-| POST /corpora/{corpus_id}/enrich | route | enrich_corpus(corpus_id) -> dict | ui.py:249 | — |
-| POST /documents/{doc_id}/enrich | route | enrich_document(doc_id) -> dict | ui.py:257 | — |
-| GET /documents/{doc_id}/sections | route | document_sections(doc_id) -> dict | ui.py:272 | — |
-| GET /documents | route | documents(corpus_id) -> dict | ui.py:320 | file manager (ui.py:5) |
-| GET /documents/{doc_id}/status | route | document_status_view(doc_id) -> dict | ui.py:397 | — |
-| POST /upload | route | upload(corpus_id, file, allow_near_duplicate) -> dict | ui.py:467 | spool intake (ui.py:6-10) |
-| GET /synthesizers | route | synthesizers() -> dict | ui.py:882 | frontend App.tsx takes synths[0] (ui.py:57-58) |
-| ui_pulse | route | ui_pulse() -> dict | ui.py:865 | frontend pings it (ui.py:865 doc) |
-| delete_document | route | delete_document(doc_id, confirm) -> dict | ui.py:622 | — |
-| delete_corpus | route | delete_corpus(corpus_id, confirm) -> dict | ui.py:1068 | — |
-| chat_events | def | chat_events(req, route, receipt) -> frames | ui.py:3830-4756 | chat_stream, run_chat (ui.py:24-27) |
-| chat_stream | route | chat_stream(req) -> SSE frames | ui.py:4760 | POST /chat/stream (ui.py:15) |
-| run_chat | def | run_chat(req, route, receipt) -> JSON answer | ui.py:4787 | /chat and MCP ask (ui.py:26) |
-| RenameCorpusRequest / QueryEnableRequest / ProviderUpsert / LlmTest / HistoryTurn / CarriedChunk / StreamChatRequest / GeneratedPage | class | pydantic request models | ui.py:176, 208, 906, 963, 1271, 1276, 1284, 814 | chat/upload/provider endpoints |
+| router | var | `APIRouter()` | orchestrator/orchestrator/api/ui.py:48 | FastAPI app (mounts routes) |
+| corpora | def (GET /corpora) | `all: bool = False -> dict` | orchestrator/orchestrator/api/ui.py:142 | web chat corpus picker |
+| rename_corpus | def (PATCH /corpora/{corpus_id}) | `corpus_id: str, req: RenameCorpusRequest -> dict` | orchestrator/orchestrator/api/ui.py:181 | — |
+| set_query_enabled | def (PATCH /corpora/{corpus_id}/query_enabled) | `corpus_id: str, req: QueryEnableRequest -> dict` | orchestrator/orchestrator/api/ui.py:213 | — |
+| enrich_corpus | def (POST /corpora/{corpus_id}/enrich) | `corpus_id: str -> dict` | orchestrator/orchestrator/api/ui.py:249 | — |
+| enrich_document | def (POST /documents/{doc_id}/enrich) | `doc_id: str -> dict` | orchestrator/orchestrator/api/ui.py:257 | — |
+| document_sections | def (GET /documents/{doc_id}/sections) | `doc_id: str -> dict` | orchestrator/orchestrator/api/ui.py:272 | — |
+| documents | def (GET /documents) | `corpus_id: str -> dict` | orchestrator/orchestrator/api/ui.py:320 | file-manager listing |
+| document_status_view | def (GET /documents/{doc_id}/status) | `doc_id: str -> dict` | orchestrator/orchestrator/api/ui.py:397 | — |
+| upload | def (POST /upload) | `corpus_id, file, allow_near_duplicate -> dict` | orchestrator/orchestrator/api/ui.py:485 | spool intake |
+| synthesizers | def (GET /synthesizers) | `-> dict` | orchestrator/orchestrator/api/ui.py:900 | model selector |
+| llm_providers / llm_provider_upsert / llm_provider_delete | def | provider CRUD | orchestrator/orchestrator/api/ui.py:933-978 | — |
+| llm_test | def | `req: LlmTest -> dict` | orchestrator/orchestrator/api/ui.py:986 | — |
+| delete_document | def | `doc_id: str, confirm -> dict` | orchestrator/orchestrator/api/ui.py:640 | — |
+| delete_corpus | def | `corpus_id: str, confirm -> dict` | orchestrator/orchestrator/api/ui.py:1086 | — |
+| chat_events | def | `req, route, receipt -> frames` | orchestrator/orchestrator/api/ui.py:3848 | chat_stream, run_chat |
+| chat_stream | def (POST /chat/stream) | `req -> StreamingResponse` | orchestrator/orchestrator/api/ui.py:4778 | SSE transport |
+| run_chat | def | `req, route, receipt -> dict` | orchestrator/orchestrator/api/ui.py:4805 | `/chat`, MCP `ask` (module docstring) (orchestrator/orchestrator/api/ui.py:26-27) |
+| ui_pulse | def | `-> dict` | orchestrator/orchestrator/api/ui.py:883 | frontend keepalive ping |
+| save_generated | def | `req: GeneratedPage -> dict` | orchestrator/orchestrator/api/ui.py:838 | — |
+| reasoning_modes | def | `-> dict` | orchestrator/orchestrator/api/ui.py:861 | UI dropdown |
 
 ## contracts
+**corpora(all=False)** — orchestrator/orchestrator/api/ui.py:142-173
+- in: query param `all: bool = False`
+- out: `{"corpora": [...]}` rows of `corpus_id, purpose, query_enabled, documents, query_ready, name` (name falls back to corpus_id) (orchestrator/orchestrator/api/ui.py:168-172)
+- pre: aggregates computed in separate LEFT JOINs, never one joined query (cross-multiplies; measured 60s+ on 12k runs) (orchestrator/orchestrator/api/ui.py:144-146)
+- post: default listing hides empty non-production corpora; `all=true` lifts filter; every row passes `can_see(corpus_id)` (FRIENDS-ACCESS-V1 D5) (orchestrator/orchestrator/api/ui.py:163-172)
 
-**corpora(all=False)** — in: optional `all` flag. Reads `corpora` with pre-aggregated `documents` and `runs` subqueries (never a direct triple join; measured 60s+ on 12k runs) (ui.py:144-162). Out: `{"corpora": [{corpus_id, purpose, query_enabled, documents, query_ready, name}]}` filtered by `(all or documents > 0 or purpose == "production") and can_see(corpus_id)` (ui.py:168-173). Pre: `all=true` required for the corpus manager to see empty non-production rows (ui.py:163-167) [DERIVED].
+**rename_corpus(corpus_id, req)** — orchestrator/orchestrator/api/ui.py:181-205
+- in: `name` stripped; non-empty, ≤ 120 chars else 422 `error_code: "invalid_name"` (orchestrator/orchestrator/api/ui.py:186-194)
+- out: `{"corpus_id", "name"}` from RETURNING (orchestrator/orchestrator/api/ui.py:200-205)
+- pre: only `corpora.name` + `updated_at = now()` mutated; `corpus_id` immutable (keys FK chains, run scoping, Qdrant collection names) (orchestrator/orchestrator/api/ui.py:182-185, 197)
+- post: unknown corpus → 404 `error_code: "QUERY_SCOPE_UNKNOWN"` (orchestrator/orchestrator/api/ui.py:201-204)
 
-**rename_corpus(corpus_id, req)** — in: `name: str`. Pre: stripped name non-empty and ≤ 120 chars, else 422 `invalid_name` (ui.py:186-194). Post: only `name` + `updated_at` written; `corpus_id` never changes (ui.py:182-185, 197-199). 404 `QUERY_SCOPE_UNKNOWN` when the corpus is absent (ui.py:201-204).
+**set_query_enabled(corpus_id, req)** — orchestrator/orchestrator/api/ui.py:213-229
+- in: `query_enabled: bool`; flips ONLY `query_enabled`, never `purpose` (orchestrator/orchestrator/api/ui.py:214-218, 221)
+- post: unknown corpus → 404 `"QUERY_SCOPE_UNKNOWN"` (orchestrator/orchestrator/api/ui.py:226-228)
 
-**set_query_enabled(corpus_id, req)** — in: `query_enabled: bool`. Flips only `query_enabled`, never `purpose`; new uploads default to `purpose='probe'`, `query_enabled=false` (ui.py:214-218, 221-223). 404 `QUERY_SCOPE_UNKNOWN` if missing (ui.py:226-228).
+**enrich_corpus / enrich_document** — orchestrator/orchestrator/api/ui.py:249-268
+- out: `{"status": "queued", **mint}` (orchestrator/orchestrator/api/ui.py:253, 268)
+- pre: shared `_mint_enrichment` → `mint_parent_enrichment` from `polymath_shared.latent.trigger` — same path AUTO-ENRICH uses (orchestrator/orchestrator/api/ui.py:232-235)
+- post: no run → 404 `"no_run_for_corpus"`; unknown doc → 404 `"unknown_document"` (orchestrator/orchestrator/api/ui.py:240-243, 263-266)
 
-**enrich_corpus / enrich_document** — out: `{"status": "queued", **mint}` (ui.py:253, 268). Shared mint via `polymath_shared.latent.trigger.mint_parent_enrichment` on the corpus's latest run, preferring `status='query_ready'` (ui.py:232-245). Errors: 404 `no_run_for_corpus` (ui.py:241-243), 404 `unknown_document` (ui.py:264-266).
+**document_sections(doc_id)** — orchestrator/orchestrator/api/ui.py:272-316
+- in: `require_document` visibility gate (orchestrator/orchestrator/api/ui.py:279)
+- out: sections ordered by `COALESCE(c.chunk_index, 0), rs.parent_id`; per section `parent_id, title, heading_path, summary[:400], keywords[:8], coverage, children` (orchestrator/orchestrator/api/ui.py:289, 307-315)
+- pre: reads only `retrieval_summaries` rows with `kind = 'section_retrieval_summary' AND rs.active` (ONE-SUMMARY-AUTHORITY) (orchestrator/orchestrator/api/ui.py:285-288)
+- post: NULL heading_path (legacy ingests) falls back to summary head so the tree always renders (orchestrator/orchestrator/api/ui.py:275-277, 305-306)
 
-**document_sections(doc_id)** — access-gated by `require_document` (ui.py:279). Reads `retrieval_summaries` rows with `kind = 'section_retrieval_summary' AND active`, joined to parent chunks for `heading_path` (ui.py:280-292). Title chain: heading_path last segment → summary first sentence[:80] → `pid[:16]` (ui.py:305-306). Summary capped at 400 chars, keywords at 8 (ui.py:311-312).
+**documents(corpus_id)** — orchestrator/orchestrator/api/ui.py:320-393
+- in: `require_corpus` gate; unknown corpus → 404 `"QUERY_SCOPE_UNKNOWN"` (orchestrator/orchestrator/api/ui.py:321, 325-327)
+- out: per-document `children/parents/enriched/enrich_failed/map_active` as correlated subqueries + last 25 runs with latest error from `receipts`/`stage_tickets` (orchestrator/orchestrator/api/ui.py:335-377)
+- pre: DOCUMENTS-LIST-SUBQUERY-V1 — correlated `(doc_id)`-indexed subqueries, 25 ms vs 80 s for the old JOIN+DISTINCT form (measured 2026-09-05, corpus `cinema`, 67 docs / 79,787 chunks / 1,968 enrichments) (orchestrator/orchestrator/api/ui.py:328-334)
 
-**documents(corpus_id)** — access-gated by `require_corpus` (ui.py:321). Per-document counts as correlated subqueries (children/parents/enriched/enrich_failed/map_active), not joins — measured 80 s → 25 ms on corpus `cinema` (67 docs / 79,787 chunks / 1,968 enrichments) (ui.py:328-360). Runs list capped at 25 with last error from `receipts` or `stage_tickets` (ui.py:361-376).
-
-**upload(corpus_id, file, allow_near_duplicate)** — streams bytes to the spool volume in 1 MiB chunks; Postgres never holds the bytes; same `submit_intake` writer path as `/intake` (ui.py:6-10, 467 doc) [DERIVED].
-
-**_default_synthesizer()** — returns the first id of `_PREFERRED_DEFAULTS` that appears in the offered list (`_litellm_models()` + `_ollama_models()`), else `offered[0]`, else the raw first preference; a provider whose key is missing is skipped so an empty synthesizer can never land on a hidden provider (measured failure: `litellm:openai/glm-5-free` with the OpenCode key unset → LiteLLM "Missing credentials") (ui.py:83-92).
-
-**chat_events / chat_stream / run_chat** — same request yields the same compiled plan, retrieval decision, evidence ids, carry admission, executed mode, degraded list and synthesis contract on every route; only the transport differs (ui.py:27-31). Scope stays fail-closed through the shared resolver (ui.py:30-31).
+**chat_events / chat_stream / run_chat** — orchestrator/orchestrator/api/ui.py:3848, 4778, 4805
+- one runtime: scope → compiler → retrieval composition → graph/wildcard → assemble → carry → synthesize → answer, as phase/token/answer frames (orchestrator/orchestrator/api/ui.py:15-22, 3848)
+- post: same request yields same compiled plan, retrieval decision, evidence ids, carry admission, executed mode, degraded list, synthesis contract on every route; only transport differs (frames vs body; receipt `kind`/`client`); scope fail-closed through shared resolver (orchestrator/orchestrator/api/ui.py:24-31)
 
 ## effect surface
-
-- Postgres read: `corpora` (ui.py:147-160, 323), `documents` (ui.py:261, 335-357), `runs` (ui.py:236-238, 361-376), `chunks` (ui.py:286, 293-295, 339-342), `retrieval_summaries` (ui.py:280-291), `receipts` (ui.py:364-368), `stage_tickets` (ui.py:369-372), `parent_enrichments` (ui.py:343-349), `document_parent_maps` (ui.py:354-355) [DERIVED]
-- Postgres write: `UPDATE corpora SET name, updated_at` (ui.py:197-199), `UPDATE corpora SET query_enabled, updated_at` (ui.py:221-223); enrichment mint through `mint_parent_enrichment` (ui.py:244-245); document/corpus cascade deletes in `_delete_document_tx` / `_delete_corpus_tx` (ui.py:634-811, 1093-1266) [DERIVED]
-- Qdrant: no direct call in this unit; only referenced as the reason `corpus_id` is immutable (derived collection names) (ui.py:184) [DERIVED]
-- Network: `httpx.get(f"{OLLAMA_URL}/api/tags", timeout=3)` (ui.py:111); Ollama streaming generation with a plain-stream fallback (ui.py:3529, 3623); LiteLLM streaming for any provider (ui.py:3330) and one bounded non-streaming gap-check call (ui.py:3673); bridge generator tries Ollama then cloud attempts (ui.py:2000)
-- Files: spool volume writes in upload (ui.py:6-10, 467); generated HTML persisted by `save_generated` (ui.py:820)
-- Env: `POLYMATH_OLLAMA_URL = "http://127.0.0.1:11434"` (ui.py:54-55); `POLYMATH_DEFAULT_SYNTHESIZER = "litellm:anthropic/deepseek-v4-flash-0731,litellm:openai/big-pickle,litellm:openai/mimo-v2.5-free,litellm:openai/nemotron-3.5-lightning-free,ollama:gemma4:31b-cloud"` (ui.py:77-79); `POLYMATH_OLLAMA_MODELS` default `""` (ui.py:101); `POLYMATH_CHAT_BRIDGE_COMPILER` (ui.py:2044 doc); `POLYMATH_CORPUS_EXPLORER` (ui.py:2143 doc); provider keys via `env:NAME` indirection (ui.py:566 doc), e.g. `env:OPENCODE_API_KEY` (ui.py:68)
+- Postgres read: `corpora`, `documents`, `runs`, `chunks`, `retrieval_summaries`, `parent_enrichments`, `document_parent_maps`, `receipts`, `stage_tickets` (orchestrator/orchestrator/api/ui.py:146-160, 196-199, 221-224, 237-239, 261, 282-296, 323-376)
+- Postgres write: `corpora` (`name`, `query_enabled`, `updated_at = now()`) (orchestrator/orchestrator/api/ui.py:197-199, 221-223); delete paths via `_delete_document_tx` (652-829) and `_delete_corpus_tx` (1111-1284)
+- Network: `httpx.get(f"{OLLAMA_URL}/api/tags", timeout=3)` to the local Ollama daemon (orchestrator/orchestrator/api/ui.py:108-112)
+- Files: upload streams bytes to the spool volume in 1 MiB blocks (SPOOL-CLAIM-CHECK-V1); Postgres never holds the bytes (orchestrator/orchestrator/api/ui.py:6-10, 485)
+- Env: `POLYMATH_OLLAMA_URL` = `"http://127.0.0.1:11434"` (orchestrator/orchestrator/api/ui.py:54-55); `POLYMATH_DEFAULT_SYNTHESIZER` = `"litellm:anthropic/deepseek-v4-flash-0731,litellm:openai/big-pickle,litellm:openai/mimo-v2.5-free,litellm:openai/nemotron-3.5-lightning-free,ollama:gemma4:31b-cloud"` (orchestrator/orchestrator/api/ui.py:77-79); `POLYMATH_OLLAMA_MODELS` = `""` (empty → builtin 6-name list) (orchestrator/orchestrator/api/ui.py:100-103); `POLYMATH_CHAT_BRIDGE_COMPILER` (orchestrator/orchestrator/api/ui.py:2062 doc); `POLYMATH_CORPUS_EXPLORER` (orchestrator/orchestrator/api/ui.py:2161 doc)
 
 ## invariants
-
-INVARIANT: len(OLLAMA_FREE_CLOUD_MODELS) == 6, matching the comment "the six names below" — ui.py:70, 96-97 [DERIVED]; fails-if: dropdown drifts from the fixed free-tier catalog the owner pinned.
-INVARIANT: _default_synthesizer() ∈ offered ids whenever any preference is offered; never a keyless provider — ui.py:88-92 [DERIVED]; fails-if: empty-synthesizer requests hit "Missing credentials" (ui.py:87).
-INVARIANT: corpora row visible ⇔ (all or documents > 0 or purpose == "production") and can_see(corpus_id) — ui.py:172 [DERIVED]; fails-if: empty husks become invisible/undeletable (ui.py:163-167).
-INVARIANT: rename_corpus writes only (name, updated_at); corpus_id never in any SET — ui.py:197-199 [DERIVED]; fails-if: FK chains and Qdrant collections orphan (ui.py:182-185).
-INVARIANT: display name length ≤ 120 — ui.py:191-194 [DERIVED]; fails-if: 422 invalid_name.
-INVARIANT: document_sections rows restricted to kind = 'section_retrieval_summary' AND active — ui.py:288 [DERIVED]; fails-if: legacy/retired summaries leak into the tree.
-INVARIANT: runs list length ≤ 25 (LIMIT 25) — ui.py:376 [DERIVED]; fails-if: unbounded listing cost per Files request.
-INVARIANT: section summary ≤ 400 chars, keywords ≤ 8, title ≤ summary-head[:80] else pid[:16] — ui.py:305-314 [DERIVED]; fails-if: payload bloat breaks the section tree UI.
-INVARIANT: identical chat request ⇒ identical plan / evidence ids / executed mode / degraded list across /chat/stream and /chat — ui.py:27-31 [DERIVED]; fails-if: the two transports disagree and MCP answers diverge from the UI.
-INVARIANT: Ollama tags probe timeout = 3 s and any failure ⇒ empty set — ui.py:111-114 [DERIVED]; fails-if: a dead daemon stalls the model list.
+INVARIANT: len(OLLAMA_FREE_CLOUD_MODELS) == 6 — orchestrator/orchestrator/api/ui.py:96-97 [DERIVED]
+  fails-if: dropdown/catalog drifts from the daemon's free tier the code promises.
+INVARIANT: Ollama tags timeout == 3 seconds — orchestrator/orchestrator/api/ui.py:111 [DERIVED]
+  fails-if: a hung daemon blocks every `/synthesizers` request beyond 3 s per call.
+INVARIANT: corpus rename name length <= 120 — orchestrator/orchestrator/api/ui.py:191-194 [DERIVED]
+  fails-if: 422 `invalid_name` returned to the caller.
+INVARIANT: section summary length <= 400, keywords count <= 8 — orchestrator/orchestrator/api/ui.py:311-312 [DERIVED]
+  fails-if: oversized cards leak into the section tree payload.
+INVARIANT: `_default_synthesizer()` never returns a provider id missing from the offered list unless the offered list is empty — orchestrator/orchestrator/api/ui.py:88-92 [DERIVED]
+  fails-if: empty-synthesizer requests route to a hidden provider → LiteLLM "Missing credentials" (incident, 2026-09-06) (orchestrator/orchestrator/api/ui.py:86-87).
+INVARIANT: documents-listing counts come from correlated subqueries, not one joined DISTINCT — orchestrator/orchestrator/api/ui.py:328-340 [DERIVED]
+  fails-if: regressing to the join form returns the 80 s/row-cross-multiplied Files view.
+INVARIANT: `/chat/stream` frames and `/chat` body come from the same `chat_events` runtime — orchestrator/orchestrator/api/ui.py:24-31 [DERIVED]
+  fails-if: the two transports disagree on plan, evidence ids, or receipts.
 
 ## determinism & idempotency
-
-determinism: NONDETERMINISTIC (env `POLYMATH_OLLAMA_URL`/`POLYMATH_DEFAULT_SYNTHESIZER`/`POLYMATH_OLLAMA_MODELS` ui.py:54, 77-79, 101; Ollama HTTP probe ui.py:111; LLM streams ui.py:3330, 3529; `now()` in both UPDATEs ui.py:197, 221; facet call runs on its own thread ui.py:2402 doc; `time`/`uuid` imported ui.py:38-39)
-idempotency: UNSAFE mixed — rename_corpus/set_query_enabled converge on the same stored value (only `updated_at` moves, ui.py:197-199, 221-223); enrich_* queue new work on every call (`"status": "queued"` ui.py:253, 268); each chat turn writes ONE receipt payload per turn (ui.py:2574 doc), and the delete endpoints are destructive cascades (ui.py:634-811, 1093-1266 docs).
+determinism: NONDETERMINISTIC (env: `POLYMATH_OLLAMA_URL`/`POLYMATH_DEFAULT_SYNTHESIZER`/`POLYMATH_OLLAMA_MODELS` at 54, 77, 101; network: Ollama `/api/tags` probe at 111; db: reads/writes through `tx()` at 143, 195, 219, 251; `updated_at = now()` at 197, 221)
+idempotency: UNSAFE (rename/toggle rewrite `updated_at` each call at 197, 221; enrich endpoints queue new enrichment mints at 253, 268; delete paths remove rows)
 
 ## failure behaviour
-
-- Ollama daemon unreachable: `except Exception: return set()` — swallowed; allowlisted models still list with `available: false` and a `ollama pull` hint (ui.py:106-114, 117-131) [DERIVED]
-- Compiler lanes: attempts tried in order, first REAL plan wins; a transport failure or empty answer is not accepted (ui.py:1669-1725 docs) [DERIVED]
-- Facet step late/failed: receipted `facets: None`, not an error (ui.py:2439-2447 doc) [DERIVED]
-- Ollama model rejecting `think`: fallback stream without `think` (ui.py:3623-3630) [DERIVED]
-- Provider rejecting the token bound (e.g. 'max_tokens: 16000 > 8192'): detected by `_bound_rejected` (ui.py:3460-3464 doc) [DERIVED]
-- Stage lock timeout during delete: surfaced via `_lock_timeout_or_409` as an HTTP 409 path (ui.py:1003-1008; name + DELETE-LOCK-TIMEOUT-V1 doc) [INFERRED — handler name says 409]
-- HTTP errors raised: 422 `invalid_name` (ui.py:188-194); 404 `QUERY_SCOPE_UNKNOWN` (ui.py:202-204, 226-228, 326-327); 404 `no_run_for_corpus` (ui.py:241-243); 404 `unknown_document` (ui.py:264-266); chat-stream errors mapped by `_error_status` (ui.py:4775)
+- `_ollama_registered` swallows every `Exception` → returns `set()`; daemon-down degrades to all models flagged `available: false` with pull instructions (orchestrator/orchestrator/api/ui.py:113-114, 123-131)
+- 404 `error_code: "QUERY_SCOPE_UNKNOWN"` — rename_corpus, set_query_enabled, documents on unknown corpus (orchestrator/orchestrator/api/ui.py:202-204, 226-228, 325-327)
+- 422 `error_code: "invalid_name"` — empty or >120-char rename (orchestrator/orchestrator/api/ui.py:188-194)
+- 404 `error_code: "no_run_for_corpus"` — enrich on corpus without runs (orchestrator/orchestrator/api/ui.py:241-243)
+- 404 `error_code: "unknown_document"` — enrich on missing doc (orchestrator/orchestrator/api/ui.py:264-266)
+- delete paths: DELETE-LOCK-TIMEOUT-V1 bounded wait → 409 on stage-lock timeout via `_lock_timeout_or_409`/`_raise_if_lock_timeout` (orchestrator/orchestrator/api/ui.py:1021-1037); DELETE-WINS supersedes in-flight tickets via `_quiesce_doc`/`_quiesce_corpus` (1040-1081)
+- compiler lanes: `_run_compiler_lanes` returns the first REAL plan; transport failure/empty falls through to next attempt (COMPILER-WORKS-WITHOUT-OLLAMA) (orchestrator/orchestrator/api/ui.py:1723-1743)
 
 ## dumb-code flags
-
-- Comment claims "OpenCode's glm-5-free is the owner's first choice" (ui.py:74-75) but `_PREFERRED_DEFAULTS[0]` is `litellm:anthropic/deepseek-v4-flash-0731` and no `glm-5-free` entry exists in the list (ui.py:77-79) [DERIVED]
-- Docstring says _default_synthesizer is "Same rule as the dropdown's default" (ui.py:85), but the function returns the first *preference* found in offered while the dropdown takes `synths[0]` = offered[0] (ui.py:57-58, 88-92) — they diverge whenever offered[0] is not the first offered preference [INFERRED]
-- `_PREFERRED_DEFAULT` fallback literal `"ollama:gemma4:31b-cloud"` duplicates the last entry of the default list (ui.py:79-80) [DERIVED]
-- The `deterministic-template-v3` stitcher is no longer OFFERED but its execution path is kept (ui.py:62-65) — retained-by-owner-request dead branch for the dropdown [DERIVED]
-- Inline magic numbers: 3 s probe timeout (ui.py:111), 120-char name cap (ui.py:191), 400/80/8/16 truncations (ui.py:305-314), LIMIT 25 (ui.py:376) [DERIVED]
-- "New chats take the FIRST" rule stated three times in one comment block (ui.py:57-58, 72-73) [DERIVED]
-- 404 responses reuse `error_code: "QUERY_SCOPE_UNKNOWN"` for plain missing-corpus cases like rename (ui.py:202-204) — scope-error vocabulary on a not-found condition [DERIVED]
+- Comment drift: the `POLYMATH_DEFAULT_SYNTHESIZER` comment says "OpenCode's glm-5-free is the owner's first choice" but the actual default list's first entry is `litellm:anthropic/deepseek-v4-flash-0731` (orchestrator/orchestrator/api/ui.py:73-79)
+- Dead-ish branch: `deterministic-template-v3` no longer OFFERED (owner request 2026-08-27) but execution path kept for API callers naming it explicitly (orchestrator/orchestrator/api/ui.py:62-65)
+- Fallback literal `ollama:gemma4:31b-cloud` appears twice — `_PREFERRED_DEFAULT` (line 80) and as last list entry (line 79) (orchestrator/orchestrator/api/ui.py:77-80)
+- Magic numbers: 3 (Ollama timeout, line 111), 120 (name cap, 191), 400 (summary cap, 311), 8 (keywords cap, 312), 80 (title cap, 306), 25 (runs LIMIT, 376), 90 (`_clean_crumb` cap, 1610)
+- `_ollama_registered` bare `except Exception` hides all daemon errors identically (orchestrator/orchestrator/api/ui.py:113-114)
 
 ## refactor notes
-
-- `corpus_id` is immutable identity (FK chains, run scoping, derived Qdrant collection names) — any rename-the-id change orphans the stores (ui.py:182-185) [DERIVED]
-- `corpora()` must keep the two pre-aggregated LEFT JOIN subqueries; joining documents AND runs directly cross-multiplies (measured 60s+ on 12k runs) (ui.py:144-146) [DERIVED]
-- `documents()` must keep correlated per-document subqueries; the LEFT JOIN + DISTINCT form cost 80 s vs 25 ms on identical data (ui.py:328-334) [DERIVED]
-- The `(all or docs>0 or purpose=="production")` filter is load-bearing for the corpus manager; removing `all` hides empty husks (ui.py:163-167, 172) [DERIVED]
-- FRIENDS-ACCESS-V1 gates (`can_see`, `require_corpus`, `require_document`) sit on every listing/read path — new endpoints must add them (ui.py:52, 172, 279, 321) [DERIVED]
-- `chat_events` is the single authority; `chat_stream` (ui.py:4760) and `run_chat` (ui.py:4787) plus MCP `ask` (ui.py:26) all change behavior together [DERIVED]
-- `_mint_enrichment` shares the AUTO-ENRICH promotion mint (`latent/trigger.mint_parent_enrichment`) — changing that signature breaks both the buttons and auto promotion (ui.py:232-235) [DERIVED]
-- `/synthesizers` ordering is a frontend contract: App.tsx takes `synths[0]` as the study default (ui.py:57-58) [DERIVED]
-- `_receipt_payload` emits ONE payload per turn (ui.py:2574 doc) — receipt consumers depend on that cardinality [DERIVED]
+- `corpus_id` is identity: renaming it would orphan FK chains, run scoping and Qdrant collection names — only `name` may change (orchestrator/orchestrator/api/ui.py:182-185)
+- `/chat`, `/chat/stream` and MCP `ask` all drain `chat_events`; splitting the runtime breaks the same-plan/same-receipt guarantee (orchestrator/orchestrator/api/ui.py:24-31, 3848, 4778, 4805)
+- `documents` performance fix depends on correlated `(doc_id)`-indexed subqueries; a JOIN rewrite reintroduces the cross-multiplied 80 s form (orchestrator/orchestrator/api/ui.py:328-334)
+- `corpora` aggregates must stay independent subqueries (measured 60s+ joined) (orchestrator/orchestrator/api/ui.py:144-146)
+- `_mint_enrichment` shares the AUTO-ENRICH mint in `polymath_shared.latent.trigger`; changing either side changes both buttons and promotion (orchestrator/orchestrator/api/ui.py:232-235)
+- `can_see`/`require_corpus`/`require_document` (FRIENDS-ACCESS-V1 D5) gate every listing; new endpoints must add them or leak cross-corpus rows (orchestrator/orchestrator/api/ui.py:172, 279, 321)
+- Default-list `_PREFERRED_DEFAULTS` is env-overridable; frontend `App.tsx` takes `synths[0]` as the new-chat default, so list order is user-visible (orchestrator/orchestrator/api/ui.py:57-59, 73)
 
 ## VERIFY
-
 ```verify
 grep -Fq 'POLYMATH_DEFAULT_SYNTHESIZER' orchestrator/orchestrator/api/ui.py
-grep -Fq 'OLLAMA_FREE_CLOUD_MODELS = ("gemma4:31b-cloud", "gpt-oss:120b-cloud", "gpt-oss:20b-cloud"' orchestrator/orchestrator/api/ui.py
-grep -Fq 'httpx.get(f"{OLLAMA_URL}/api/tags", timeout=3)' orchestrator/orchestrator/api/ui.py
-grep -Fq '"error_code": "QUERY_SCOPE_UNKNOWN"' orchestrator/orchestrator/api/ui.py
-grep -Fq 'ORDER BY r.created_at DESC LIMIT 25' orchestrator/orchestrator/api/ui.py
-! grep -Fq 'UPDATE corpora SET corpus_id' orchestrator/orchestrator/api/ui.py
-test "$(grep -c -F 'invalid_name' orchestrator/orchestrator/api/ui.py)" -ge 2
+grep -Fq 'litellm:anthropic/deepseek-v4-flash-0731,litellm:openai/big-pickle,litellm:openai/mimo-v2.5-free,litellm:openai/nemotron-3.5-lightning-free,ollama:gemma4:31b-cloud' orchestrator/orchestrator/api/ui.py
+grep -Fq 'http://127.0.0.1:11434' orchestrator/orchestrator/api/ui.py
+grep -Fq 'nemotron-3-ultra:cloud' orchestrator/orchestrator/api/ui.py
+grep -Eq 'timeout=3' orchestrator/orchestrator/api/ui.py
+grep -Fq 'section_retrieval_summary' orchestrator/orchestrator/api/ui.py
+grep -Fq 'name must be 120 characters or fewer' orchestrator/orchestrator/api/ui.py
+grep -Fq 'QUERY_SCOPE_UNKNOWN' orchestrator/orchestrator/api/ui.py
 ```

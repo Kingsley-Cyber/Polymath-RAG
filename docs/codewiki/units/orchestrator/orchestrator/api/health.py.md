@@ -1,101 +1,101 @@
 # unit: orchestrator/orchestrator/api/health.py
-anchor: orchestrator/orchestrator/api/health.py:1-149
-short form `health.py:NN` below = the full path above.
+anchor: orchestrator/orchestrator/api/health.py:1-158
 
 ## purpose
-FastAPI router exposing six read-only health endpoints: liveness `/health`, traffic readiness `/ready`, sidecar inventory `/sidecars`, per-corpus semantic completion `/semantic_readiness`, semantic-lane health `/health/semantic`, and pipeline stall detection `/health/pipeline`. Consumers are ops/autoheal (liveness-readiness split per ISSUES_REPORT §3.3) and operators checking lane/pipeline state. [DERIVED] — routes health.py:15-149, docstring health.py:1-6.
+FastAPI router of operator/health endpoints: liveness (`/health`), traffic readiness (`/ready`), sidecar registry detail (`/sidecars`), per-corpus semantic-completion verdict (`/semantic_readiness`), semantic-lane health (`/health/semantic`), and pipeline BLOCKED-vs-IDLE (`/health/pipeline`). Liveness/readiness split is the ISSUES_REPORT §3.3 fix — autoheal acts only on `/live` failures, `/ready` reports sidecar readiness without punishing startup. — orchestrator/orchestrator/api/health.py:1-6 [DERIVED]
 
 ## public surface
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| router | APIRouter | module-level instance, 6 GET routes | health.py:11 | orchestrator/orchestrator/main.py |
-| health | def, GET /health | () -> dict | health.py:15-16 | via router |
-| ready | def, GET /ready | (request: Request) -> dict | health.py:20-26 | via router |
-| semantic_readiness | def, GET /semantic_readiness | (corpus_id: str) -> dict | health.py:30-54 | via router |
-| sidecars | def, GET /sidecars | (request: Request) -> dict | health.py:58-71 | via router |
-| semantic_health | def, GET /health/semantic | (corpus_id: str \| None = None) -> dict | health.py:75-134 | via router |
-| pipeline | def, GET /health/pipeline | () -> dict | health.py:138-149 | via router |
-
-Only importer in FACTS: orchestrator/orchestrator/main.py.
+| `router` | module attr | `APIRouter()` | orchestrator/orchestrator/api/health.py:11 | orchestrator/orchestrator/main.py (FACTS.importers) |
+| `health` | def + route | `() -> dict` — GET `/health` | orchestrator/orchestrator/api/health.py:14-16 | HTTP |
+| `ready` | def + route | `(request: Request) -> dict` — GET `/ready` | orchestrator/orchestrator/api/health.py:19-26 | HTTP |
+| `semantic_readiness` | def + route | `(corpus_id: str) -> dict` — GET `/semantic_readiness` | orchestrator/orchestrator/api/health.py:29-63 | HTTP |
+| `sidecars` | def + route | `(request: Request) -> dict` — GET `/sidecars` | orchestrator/orchestrator/api/health.py:66-80 | HTTP |
+| `semantic_health` | def + route | `(corpus_id: str | None = None) -> dict` — GET `/health/semantic` | orchestrator/orchestrator/api/health.py:83-143 | HTTP |
+| `pipeline` | def + route | `() -> dict` — GET `/health/pipeline` | orchestrator/orchestrator/api/health.py:146-158 | HTTP |
 
 ## contracts
 
-**health** — health.py:15-16
-- out: `{"status": "ok"}` constant; no inputs, no side effects. [DERIVED]
+**`semantic_readiness(corpus_id)`** — SEMANTIC-READINESS-V1 verdict (orchestrator/orchestrator/api/health.py:31-37)
+- pre: `require_corpus(corpus_id)` runs before any DB access — FRIENDS-ACCESS-V1 D5 — orchestrator/orchestrator/api/health.py:41
+- pre: corpus row must exist in `corpora` (`SELECT 1 FROM corpora WHERE corpus_id = %s`) — orchestrator/orchestrator/api/health.py:44-46
+- out: dict from `semantic_completion(conn, corpus_id)` — orchestrator/orchestrator/api/health.py:54
+- post: if `out["vnext"]` is a dict and `served_profiles(corpus_id)` returns non-None, `vnext["vnext_served"] = min(int(v.get("documents") or 0), sum(1 for c in served.values() if c.get("writer") == "vnext"))` — orchestrator/orchestrator/api/health.py:60-62
+- effect: `served_profiles` executed off the event loop via `run_in_threadpool` — orchestrator/orchestrator/api/health.py:58-59
 
-**ready** — health.py:20-26
-- in: reads `request.app.state.sidecars`; missing attribute treated as `{}`. health.py:21-24
-- out: `{"ready": True, "sidecars": {name: s.is_ready()}}`; `"ready"` is literal `True` regardless of sidecar results. health.py:25-26
+**`semantic_health(corpus_id)`** — POLYMATH-HEALTH-SURFACE-V1 (orchestrator/orchestrator/api/health.py:85-92)
+- in: `corpus_id` optional; when set, lane query filtered `WHERE corpus_id = %s` — orchestrator/orchestrator/api/health.py:97-98
+- out: `{"contract": "polymath-health-surface-v1", "lanes": {...}}`; per lane: `status`, `opportunities`, `accepted`, `capture_ratio`, `documents`, `capped_documents`, `last_attempt_at` — orchestrator/orchestrator/api/health.py:116-128
+- out: lane `status` from `semantic_lane_status(opportunities=opps, accepted=acc, capped_documents=capped, documents=docs)` — orchestrator/orchestrator/api/health.py:119-121
+- out: `capture_ratio = round(acc / opps, 4) if opps else None` — orchestrator/orchestrator/api/health.py:124
+- out: `out["lanes"]["fact"]` rebuilt from the durable funnel (relation_candidates → fact_admission_decisions → facts, plus evidence) with `semantic_lane_status(opportunities=candidates, accepted=facts)` — orchestrator/orchestrator/api/health.py:129-140
+- post: `out["suspect"]` = every lane name with `status == "SUSPECT"` — orchestrator/orchestrator/api/health.py:141-142
 
-**semantic_readiness** — health.py:30-54
-- pre: `require_corpus(corpus_id)` must pass (FRIENDS-ACCESS-V1 D5). health.py:41
-- pre: `SELECT 1 FROM corpora WHERE corpus_id = %s` must return a row, else HTTPException 404 with `detail={"error_code": "QUERY_SCOPE_UNKNOWN", "message": f"corpus {corpus_id!r} not found"}`. health.py:44-53
-- out: `semantic_completion(conn, corpus_id)`; shape owned by polymath_shared.semantic_readiness. health.py:54
+**`pipeline()`** — PIPELINE-BLOCKED-HEALTH-V1: makes a stalled pipeline say BLOCKED with cause vs IDLE — orchestrator/orchestrator/api/health.py:148-153
+- out: dict from `pipeline_health(conn)` — orchestrator/orchestrator/api/health.py:158
 
-**sidecars** — health.py:58-71
-- in: reads `request.app.state.sidecars`; missing → `{}`. health.py:59-62
-- out per name: `release` = `s.manifest.get("identity", {}).get("version")`, `model` = `...get("model")`, `base_url` = `s.base_url`, `ready` = `s.is_ready()`. health.py:63-70
-
-**semantic_health** — health.py:75-134
-- in: optional `corpus_id`; when set, lane query gets `WHERE corpus_id = %s` with scope `(corpus_id,)`, else `""`. health.py:88-89
-- per-lane row (grouped from `knowledge_lane_attempts`): `status` = `semantic_lane_status(opportunities=..., accepted=..., capped_documents=..., documents=...)`, `opportunities`, `accepted`, `capture_ratio` = `round(acc / opps, 4)` (None iff opps == 0), `documents`, `capped_documents`, `last_attempt_at` = `str(last)` or None. health.py:108-119
-- fact lane (assignment always overwrites any loop-produced `"fact"` key): `status` = `semantic_lane_status(opportunities=candidates, accepted=facts)`, `opportunities` = count(relation_candidates), `decisions` = count(fact_admission_decisions), `accepted` = count(facts), `evidence_rows` = count(evidence), `capture_ratio` = `round(facts / candidates, 4)` (None iff candidates == 0). Counts are global, not corpus-scoped. health.py:100-105, 122-131
-- out: `{"contract": "polymath-health-surface-v1", "lanes": {...}, "suspect": [names where status == "SUSPECT"]}`. health.py:107, 132-134
-
-**pipeline** — health.py:138-149
-- out: `pipeline_health(conn)`; shape owned by polymath_shared.pipeline_health. health.py:148-149
+**`ready(request)`**
+- out: `{"ready": True, "sidecars": {name: s.is_ready()}}` — always `True`; sidecar readiness reported, not gating — orchestrator/orchestrator/api/health.py:25-26
 
 ## effect surface
-- Postgres reads via `polymath_shared.db.tx`: `corpora` (health.py:45), `knowledge_lane_attempts` (health.py:91-99), `relation_candidates`, `fact_admission_decisions`, `facts`, `evidence` (health.py:100-105). Writes: none (FACTS tables_written = []). [DERIVED]
-- App state: `request.app.state.sidecars` read in ready and sidecars. health.py:22, 60 [DERIVED]
-- No env flags, files, Qdrant, network calls, subprocesses (none in SOURCE; FACTS.constants = []). [DERIVED]
+- Postgres read via `polymath_shared.db.tx`: `corpora` (:45), `knowledge_lane_attempts` (:106), `relation_candidates` (:111), `fact_admission_decisions` (:112), `facts` (:113), `evidence` (:114) — orchestrator/orchestrator/api/health.py:43-114
+- Postgres written: none — FACTS `tables_written: []`
+- App state read: `request.app.state.sidecars` — orchestrator/orchestrator/api/health.py:22, :69
+- Threadpool: `run_in_threadpool(served_profiles, corpus_id)` — orchestrator/orchestrator/api/health.py:59
+- Env flags: none visible.
 
 ## invariants
-INVARIANT: tables_written == ∅ (only SELECT statements in module) — health.py:44-45, 91-105 [DERIVED]
-  fails-if: monitoring polls mutate state; SAFE idempotency claim breaks.
-INVARIANT: /health response == `{"status": "ok"}` for all inputs — health.py:15-16 [DERIVED]
-  fails-if: liveness flaps → autoheal restarts a healthy process (split defined at health.py:3-5).
-INVARIANT: capture_ratio == None iff opportunities == 0 (per-lane and fact lane) — health.py:115, 130 [DERIVED]
-  fails-if: guard removed → ZeroDivisionError on empty lanes.
-INVARIANT: suspect ⊆ lanes.keys(), membership iff status == "SUSPECT" — health.py:132-133 [DERIVED]
-  fails-if: consumers treating suspect as a separate lane set misread dead lanes.
-INVARIANT: `out["lanes"]["fact"]` always comes from funnel counts, never from knowledge_lane_attempts — health.py:123 [DERIVED]
-  fails-if: attempts-based "fact" row survives → contradictory fact-lane verdict.
+INVARIANT: `/health` response == `{"status": "ok"}` unconditionally — orchestrator/orchestrator/api/health.py:16 [DERIVED]
+  fails-if: liveness probe sees anything else; autoheal contract (§3.3) breaks.
+INVARIANT: `/ready` always returns `"ready": True` — orchestrator/orchestrator/api/health.py:26 [DERIVED]
+  fails-if: if a failing sidecar ever flipped `ready` to False, startup would be punished, undoing the §3.3 split.
+INVARIANT: `vnext_served` <= `vnext.documents` — enforced by `min()` — orchestrator/orchestrator/api/health.py:62 [DERIVED]
+  fails-if: badge could show more served vNext files than documents claimed complete.
+INVARIANT: `vnext_served` <= count of served cards with `writer == "vnext"` — orchestrator/orchestrator/api/health.py:62 [DERIVED]
+  fails-if: a refused vNext card would paint the library green.
+INVARIANT: `capture_ratio` == `round(accepted/opportunities, 4)` or `None` iff `opportunities == 0` — orchestrator/orchestrator/api/health.py:124, :139 [DERIVED]
+  fails-if: ZeroDivisionError on empty lanes.
+INVARIANT: `out["suspect"]` == set of lane names where `status == "SUSPECT"` — orchestrator/orchestrator/api/health.py:141-142 [DERIVED]
+  fails-if: operator alerting misses dead lanes.
+INVARIANT: `out["lanes"]["fact"]` after the handler equals the funnel-derived dict, not the `knowledge_lane_attempts` row — orchestrator/orchestrator/api/health.py:132 [INFERRED: dict assignment overwrites any same-key lane from the loop]
+  fails-if: if the overwrite is removed, fact liveness falls back to the attempts table, bypassing the candidates→decisions→facts funnel.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (db reads via `tx()` at health.py:43, 87, 148; sidecar probes `s.is_ready()` at health.py:25, 68; `app.state.sidecars` at health.py:22, 60; only `/health` returns a constant, health.py:15-16) [DERIVED]
-idempotency: SAFE — every handler is a pure read; no writes anywhere in SOURCE (FACTS tables_written = []) [DERIVED]
+determinism: NONDETERMINISTIC (DB contents via `tx()` :43, :96, :157; `request.app.state.sidecars` :22, :69; threadpool execution of `served_profiles` :59). Response shape and key names are fixed literals.
+idempotency: SAFE — all handlers are GET routes; `tables_written` is empty (FACTS); no mutation of app state.
 
 ## failure behaviour
-- AttributeError on `request.app.state.sidecars` swallowed → empty registry; /ready still answers `{"ready": True, "sidecars": {}}`, /sidecars answers `{}`. health.py:21-24, 59-62 [DERIVED]
-- Unknown corpus on /semantic_readiness → HTTPException status_code=404, `error_code` `"QUERY_SCOPE_UNKNOWN"`. health.py:47-53 [DERIVED]
-- No other try/except: DB errors from `conn.execute` and exceptions from `require_corpus`, `semantic_completion`, `semantic_lane_status`, `pipeline_health` propagate to FastAPI. health.py:41-54, 90-105, 148-149 [DERIVED]
+- `AttributeError` on missing `request.app.state.sidecars` is swallowed → defaults to `{}`; `/ready` then returns `{"ready": True, "sidecars": {}}` — orchestrator/orchestrator/api/health.py:23-24; same pattern in `sidecars` :70-71.
+- Unknown corpus in `semantic_readiness` raises `HTTPException(status_code=404)` with `detail {"error_code": "QUERY_SCOPE_UNKNOWN", "message": f"corpus {corpus_id!r} not found"}` — orchestrator/orchestrator/api/health.py:50-53.
+- If `served_profiles` returns `None`, `vnext_served` is silently not set — the `vnext` dict keeps its original shape — orchestrator/orchestrator/api/health.py:61-62.
+- No handlers around `semantic_health`/`pipeline` bodies; DB errors propagate to the router — orchestrator/orchestrator/api/health.py:96-114, :157-158.
 
 ## dumb-code flags
-- `"ready": True` hardcoded — /ready never reports not-ready even if every sidecar `is_ready()` is False, though the docstring promises "can I serve traffic now" including sidecar readiness. health.py:26 vs health.py:4-5 [DERIVED]
-- `corpus_id` scopes the lane query but NOT the fact funnel: relation_candidates/fact_admission_decisions/facts/evidence counts are global in every scoped response. health.py:88-89 vs 100-105 [DERIVED]
-- Fact-lane dict shape differs from other lanes: missing `documents`, `capped_documents`, `last_attempt_at`; adds `decisions`, `evidence_rows`. health.py:109-119 vs 123-131 [DERIVED]
-- Docstring says autoheal acts on `/live` failures; no `/live` route exists in this file (routes are `/health`, `/ready`, ...). health.py:3 vs 15-149 [DERIVED]
-- Sidecar-registry fetch + AttributeError fallback duplicated verbatim in ready and sidecars. health.py:21-24 vs 59-62 [DERIVED]
-- `from polymath_shared.db import tx` imported inline three times; `HTTPException` imported inside the 404 branch. health.py:39, 84, 145; health.py:48 [DERIVED]
-- SQL assembled via f-string `{where}` — safe today because both variants are code-controlled literals, but the pattern invites a non-parameterized variant later. health.py:89-98 [INFERRED: no injection possible now; risk is future edits]
-- Style mix: `semantic_health` and `pipeline` are sync `def` while the other four are `async def`. health.py:75, 138 vs 15, 20, 30, 58 [DERIVED]
+- Corpus-scoping asymmetry: lane aggregates filter by `corpus_id` (:97-98, :106) but the fact-funnel subqueries over `relation_candidates`/`fact_admission_decisions`/`facts`/`evidence` have no WHERE — a per-corpus call mixes scoped lanes with fleet-wide fact counts — orchestrator/orchestrator/api/health.py:110-114 [DERIVED]
+- Duplicated sidecar-registry fallback: identical try/AttributeError/`{}` block in `ready` and `sidecars` — orchestrator/orchestrator/api/health.py:22-24 vs :69-71 [DERIVED]
+- `from polymath_shared.db import tx` repeated inline in three handlers — orchestrator/orchestrator/api/health.py:39, :93, :154 [DERIVED]
+- `HTTPException` imported lazily inside the 404 branch while `APIRouter`/`Request` are top-level imports — orchestrator/orchestrator/api/health.py:48 vs :9 [DERIVED]
+- Magic rounding constant `4` in both capture_ratio sites — orchestrator/orchestrator/api/health.py:124, :139 [DERIVED]
+- `int(v.get("documents") or 0)` collapses `None` and `0` identically — orchestrator/orchestrator/api/health.py:62 [DERIVED]
+- f-string SQL interpolation `{where}` — safe here because `where` is only `""` or the parameterized literal, but the pattern invites injection if extended — orchestrator/orchestrator/api/health.py:100-107 [INFERRED]
 
 ## refactor notes
-- `router` (health.py:11) is the only import surface; orchestrator/orchestrator/main.py includes it (FACTS.importers). Renaming `router`, changing route paths, or moving handlers breaks app wiring.
-- Autoheal contract: liveness/readiness split per health.py:3-5 — do not make `/health` depend on db/sidecars, nor `/ready` fail closed, without revisiting autoheal behavior.
-- Versioned contract literal `"polymath-health-surface-v1"` (health.py:107) and status string `"SUSPECT"` (must match `semantic_lane_status` output, health.py:110/125 vs 133) are consumed downstream; changing either is a breaking API change.
-- 404 + `QUERY_SCOPE_UNKNOWN` detail shape (health.py:50-53) and the `require_corpus` gate (health.py:41) are API/access surface.
-- Lazy imports pin names in polymath_shared (`tx`, `semantic_completion`, `semantic_lane_status`, `pipeline_health`) and `orchestrator.web_scope.require_corpus` (health.py:38-40, 84-85, 145-146); changes there break at call time, not import time.
-- Any fix to the fact-funnel corpus scoping (health.py:100-105) changes `/health/semantic` output values for scoped calls — update consumers of `capture_ratio`/`suspect` accordingly.
+- `router` is mounted by `orchestrator/orchestrator/main.py` (FACTS.importers); adding/removing/renaming any of the 6 GET paths changes the externally served surface — orchestrator/orchestrator/api/health.py:14-146.
+- `"contract": "polymath-health-surface-v1"` (:116) and the `vnext_served` key (:62) are consumed downstream — the comment states "the badge reads this" (:55-56); renaming either breaks readers.
+- `require_corpus(corpus_id)` must stay first, before the corpora SELECT — FRIENDS-ACCESS-V1 D5 — orchestrator/orchestrator/api/health.py:41-46.
+- The `out["lanes"]["fact"]` overwrite must stay after the lane loop, or the funnel-derived status is clobbered — orchestrator/orchestrator/api/health.py:117-132.
+- `served_profiles` must remain off the event loop (`run_in_threadpool`) per the None-safe comment — orchestrator/orchestrator/api/health.py:55-59.
 
 ## VERIFY
 ```verify
 grep -Fq '{"status": "ok"}' orchestrator/orchestrator/api/health.py
 grep -Fq 'QUERY_SCOPE_UNKNOWN' orchestrator/orchestrator/api/health.py
 grep -Fq 'polymath-health-surface-v1' orchestrator/orchestrator/api/health.py
-grep -Fq '"ready": True' orchestrator/orchestrator/api/health.py
+grep -Fq 'vnext_served' orchestrator/orchestrator/api/health.py
+grep -Eq 'router\.get\("/(health|ready|semantic_readiness|sidecars|health/semantic|health/pipeline)"\)' orchestrator/orchestrator/api/health.py
+test "$(grep -c -F 'semantic_lane_status' orchestrator/orchestrator/api/health.py)" -ge 3
+test "$(grep -c -F 'request.app.state.sidecars' orchestrator/orchestrator/api/health.py)" -ge 2
 ! grep -Fq 'INSERT INTO' orchestrator/orchestrator/api/health.py
-test "$(grep -c -F 'from polymath_shared.db import tx' orchestrator/orchestrator/api/health.py)" -ge 3
 ```

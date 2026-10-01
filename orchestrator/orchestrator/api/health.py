@@ -51,7 +51,16 @@ async def semantic_readiness(corpus_id: str) -> dict:
                 "error_code": "QUERY_SCOPE_UNKNOWN",
                 "message": f"corpus {corpus_id!r} not found",
             })
-        return semantic_completion(conn, corpus_id)
+        out = semantic_completion(conn, corpus_id)
+    # SERVED-PROFILE-LABEL (2026-10-01): beside the vNext verdict (WRITTEN cards; unchanged), how many files SEARCH serves with
+    # a vNext card — the badge reads this so a refused vNext card never paints a library green. Off the event loop; None-safe.
+    from polymath_shared.document_profile.served import served_profiles
+    from starlette.concurrency import run_in_threadpool
+    served = await run_in_threadpool(served_profiles, corpus_id)
+    v = out.get("vnext")
+    if isinstance(v, dict) and served is not None:
+        v["vnext_served"] = min(int(v.get("documents") or 0), sum(1 for c in served.values() if c.get("writer") == "vnext"))
+    return out
 
 
 @router.get("/sidecars")

@@ -407,6 +407,19 @@ def document_status_view(doc_id: str) -> dict:
     if not st.get("found"):
         raise HTTPException(404, {"error_code": "DOCUMENT_UNKNOWN",
                                   "message": f"document {doc_id!r} not found"})
+    # SERVED-PROFILE-LABEL (2026-10-01): `profile.projected` used to read "the card is valid", so a vNext card the selection
+    # guard refused showed projected: true. With the profile index's answer: `served` = the writer of the card search uses,
+    # `projected` = the LATEST card is that card (compiled hashes match). Index unread: both stay as before.
+    from polymath_shared.document_profile.served import served_profiles
+    prof = st.get("profile") or {}
+    served = served_profiles(str((st.get("identity") or {}).get("corpus_id") or ""))
+    if served is not None and isinstance(prof, dict):
+        card = served.get(doc_id) or {}
+        prof["served"] = card.get("writer")
+        if prof.get("compiled_hash") and card.get("compiled_hash"):
+            prof["projected"] = prof["compiled_hash"] == card["compiled_hash"]
+        elif not card:
+            prof["projected"] = False
     return st
 
 
@@ -423,8 +436,10 @@ def control_plane(corpus_id: str, request: Request) -> dict:
         sidecars = {name: s.is_ready() for name, s in request.app.state.sidecars.items()}
     except AttributeError:
         sidecars = {}
+    from polymath_shared.document_profile.served import served_profiles
+    served = served_profiles(corpus_id)                 # SERVED-PROFILE-LABEL: what search serves (None = index unread)
     with tx() as conn:
-        return control_plane_status(conn, corpus_id=corpus_id, sidecars=sidecars)
+        return control_plane_status(conn, corpus_id=corpus_id, sidecars=sidecars, served=served)
 
 
 @router.get("/control_plane/pool/{function}")
@@ -454,10 +469,13 @@ def documents_summary(corpus_id: str) -> dict:
     """Per-document OPERATIONAL summary for the Files list (Parents / pMAP / Graph /
     Profile / Ready) — one bounded batch of corpus-level aggregates (no N+1). The frontend
     merges this into the /documents rows by doc_id."""
+    from polymath_shared.document_profile.served import apply_served, served_profiles
     from polymath_shared.document_status import corpus_document_summaries
     require_corpus(corpus_id)  # FRIENDS-ACCESS-V1 D5
     with tx() as conn:
-        return {"corpus_id": corpus_id, "summaries": corpus_document_summaries(conn, corpus_id=corpus_id)}
+        summaries = corpus_document_summaries(conn, corpus_id=corpus_id)
+    apply_served(summaries, served_profiles(corpus_id))   # SERVED-PROFILE-LABEL: `profile_served` = the card search uses
+    return {"corpus_id": corpus_id, "summaries": summaries}
 
 
 _UPLOAD_EXTENSIONS = {".md", ".txt", ".html", ".pdf", ".epub", ".docx"}

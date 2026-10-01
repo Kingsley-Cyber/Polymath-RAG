@@ -189,7 +189,7 @@ it("a library searchable on basic profiles reads amber 'Searchable · basic prof
   await renderReadiness(TASTE_VNEXT);
   expect(vnextCard().textContent).toBe("Searchable · basic profiles");
   expect(vnextCard().classList.contains("pill--degraded")).toBe(true);
-  expect(vnextCard().getAttribute("title")).toContain("0/21 files have the vNext profile · 150/150 parents mapped");
+  expect(vnextCard().getAttribute("title")).toContain("0/21 files use the vNext profile · 150/150 parents mapped");
 });
 
 it("unresolved parents, an unprofiled file or an older backend keep the red vNext verdict", async () => {
@@ -207,4 +207,42 @@ it("unresolved parents, an unprofiled file or an older backend keep the red vNex
 it("a complete vNext library stays green", async () => {
   await renderReadiness({ ...TASTE_VNEXT, verdict: "VNEXT_COMPLETE", vnext_profiles: 21, pending: [] });
   expect(vnextCard().classList.contains("pill--ready")).toBe(true);
+});
+
+
+// SERVED-PROFILE-LABEL (the owner, 2026-10-01: "fix the cinema badge so this confusion doesnt happen"): "vNext" means the card
+// SEARCH serves. Cinema: a vNext card written on 77 / 77 files, 0 served (the selection guard kept the richer basic cards).
+it("a file whose vNext card was written but not used by search reads 'Ready · basic profile', its Profile column 'basic'", async () => {
+  await renderWith({ profile_vnext: true, vnext_ready: true, profile_served: "basic" });
+  expect(statusPill().textContent).toBe("Ready · basic profile");
+  expect(statusPill().getAttribute("title")).toContain("a vNext card was written, but the selection guard kept the richer basic one");
+  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 ready (1 with a basic profile)");
+  await act(async () => { (host.querySelector('input[type="checkbox"]') as HTMLInputElement).click(); });   // Pipeline details
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+  const profileCell = [...host.querySelectorAll("tbody .pill")].find((p) => p.textContent === "basic") as HTMLElement;
+  expect(profileCell.getAttribute("title")).toContain("a vNext card was written");
+});
+
+it("a file search serves with its vNext card reads 'Ready'; without the index's answer the written state stands", async () => {
+  await renderWith({ profile_vnext: true, vnext_ready: true, profile_served: "vnext" });
+  expect(statusPill().textContent).toBe("Ready");
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  await renderWith({ profile_vnext: true, vnext_ready: true });                       // an older backend: no profile_served
+  expect(statusPill().textContent).toBe("Ready");
+});
+
+it("a library whose vNext cards are written but not used reads amber, not green", async () => {
+  const cinema = { verdict: "VNEXT_COMPLETE", pending: [], vnext_profiles: 77, profiled: 77, documents: 77, vnext_served: 0,
+                   parents: { eligible: 12079, mapped: 12079, excluded: 369, unresolved: 0 } };
+  await renderReadiness(cinema);
+  expect(vnextCard().textContent).toBe("Searchable · basic profiles");
+  expect(vnextCard().classList.contains("pill--degraded")).toBe(true);
+  expect(vnextCard().getAttribute("title")).toContain("vNext cards written for 77/77 files · search uses 0");
+  for (const vnext of [{ ...cinema, vnext_served: 77 }, { ...cinema, vnext_served: undefined }]) {   // all used / older backend
+    await act(async () => root.unmount());
+    root = createRoot(host);
+    await renderReadiness(vnext);
+    expect(vnextCard().classList.contains("pill--ready")).toBe(true);
+  }
 });

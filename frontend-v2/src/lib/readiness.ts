@@ -55,11 +55,20 @@ export function vnextReady(sr: SemanticReadiness | null): Verdict {
     ? `${p.mapped.toLocaleString()}/${p.eligible.toLocaleString()} parents mapped` +
       (p.unresolved ? ` · ${p.unresolved.toLocaleString()} unresolved` : "")
     : undefined;
-  if (v.verdict === "VNEXT_COMPLETE") return { state: "ready", label: v.verdict, detail };
   const docs = v.documents ?? 0;
+  const served = typeof v.vnext_served === "number" ? v.vnext_served : null;
+  if (v.verdict === "VNEXT_COMPLETE") {
+    // SERVED-PROFILE-LABEL: green only when search USES the vNext cards (cinema: 77 written, 0 used — the guard kept the basic)
+    if (served !== null && docs > 0 && served < docs) {
+      return { state: "degraded", label: "SEARCHABLE · BASIC PROFILES",
+               detail: `vNext cards written for ${(v.vnext_profiles ?? docs).toLocaleString()}/${docs.toLocaleString()} files · ` +
+                       `search uses ${served.toLocaleString()} (the selection guard kept the richer basic cards) · ${detail}` };
+    }
+    return { state: "ready", label: v.verdict, detail };
+  }
   if (p && p.unresolved === 0 && docs > 0 && typeof v.profiled === "number" && v.profiled >= docs) {
     return { state: "degraded", label: "SEARCHABLE · BASIC PROFILES",
-             detail: `${(v.vnext_profiles ?? 0).toLocaleString()}/${docs.toLocaleString()} files have the vNext profile · ${detail}` };
+             detail: `${(served ?? v.vnext_profiles ?? 0).toLocaleString()}/${docs.toLocaleString()} files use the vNext profile · ${detail}` };
   }
   return { state: "blocked", label: v.verdict, detail };
 }
@@ -71,12 +80,31 @@ export function docSearchable(d: DocSummary | null | undefined): boolean {
   return !!d && (d.vnext_ready || (d.map_unresolved === 0 && d.profile_present));
 }
 
-/** Per-document readiness, from the backend's own counts: Ready (the vNext profile) · Ready · basic profile (searchable, the
- *  richer vNext profile not built) · Blocked (unresolved parents or no profile: retrieval misses part of the file). */
+/** SERVED-PROFILE-LABEL (the owner, 2026-10-01: "fix the cinema badge so this confusion doesnt happen"): a file is vNext
+ *  only when SEARCH serves its vNext card. A written vNext card the selection guard refused (thinner than the basic card it
+ *  would replace) does not count. Without the index's answer (older backend / index unread) the written state stands. */
+export function servesVnext(d: DocSummary | null | undefined): boolean {
+  if (!d) return false;
+  return d.profile_served === undefined ? d.vnext_ready : d.vnext_ready && d.profile_served === "vnext";
+}
+
+/** The writer of the card search serves for a file ("vnext" | "basic" | null = no card); without the index's answer, the
+ *  latest card's writer (the written state). The Profile column shows this — a card property, not the file's readiness. */
+export function servedWriter(d: DocSummary | null | undefined): "vnext" | "basic" | null {
+  if (!d) return null;
+  if (d.profile_served !== undefined) return d.profile_served;
+  return d.profile_vnext ? "vnext" : d.profile_present ? "basic" : null;
+}
+
+/** Per-document readiness, from the backend's own counts: Ready (search uses the vNext card) · Ready · basic profile
+ *  (searchable on the basic card) · Blocked (unresolved parents or no profile: retrieval misses part of the file). */
 export function docVnext(d: DocSummary): Verdict {
-  if (d.vnext_ready) return { state: "ready", label: "READY" };
+  if (servesVnext(d)) return { state: "ready", label: "READY" };
   if (docSearchable(d)) {
-    return { state: "degraded", label: "READY · BASIC PROFILE", detail: "searchable; the richer vNext profile is not built" };
+    return { state: "degraded", label: "READY · BASIC PROFILE",
+             detail: d.profile_vnext && d.profile_served === "basic"
+               ? "searchable; search uses the basic card (a vNext card was written, but the selection guard kept the richer basic one)"
+               : "searchable; search uses the basic card (no vNext card built)" };
   }
   const why: string[] = [];
   if (d.map_unresolved > 0) why.push(`${d.map_unresolved.toLocaleString()} unresolved parents`);

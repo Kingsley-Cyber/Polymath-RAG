@@ -121,7 +121,8 @@ def pool_lanes_detail(conn, *, function: str) -> dict[str, Any]:
 
 
 def control_plane_status(conn, *, corpus_id: str,
-                          sidecars: dict[str, bool] | None = None) -> dict[str, Any]:
+                          sidecars: dict[str, bool] | None = None,
+                          served: dict[str, dict] | None = None) -> dict[str, Any]:
     from polymath_shared.document_status import corpus_document_summaries
     from polymath_shared.pipeline_health import DORMANT_RUN_AGE_SECONDS, control_ready
     summaries = corpus_document_summaries(conn, corpus_id=corpus_id)
@@ -130,8 +131,14 @@ def control_plane_status(conn, *, corpus_id: str,
     # LIBRARY-READY-LABEL (the owner, 2026-10-01: "why is a corpus for taste showing files as red"): the per-file rule of
     # FILES-READY-LABEL (frontend lib/readiness.ts docSearchable) — every eligible parent mapped and ANY profile = searchable.
     # Only a file retrieval would miss part of is `blocked`; a searchable file without the vNext profile is `basic_profile`.
-    searchable = sum(1 for v in summaries.values() if v["vnext_ready"] or (v["map_unresolved"] == 0 and v["profile_present"]))
-    basic_profile = searchable - semantic_ready
+    searchable_ids = [d for d, v in summaries.items() if v["vnext_ready"] or (v["map_unresolved"] == 0 and v["profile_present"])]
+    searchable = len(searchable_ids)
+    # SERVED-PROFILE-LABEL (2026-10-01): with the profile index's answer (`served`, document_profile.served), "ready (vNext)"
+    # counts files SEARCH serves with a vNext card — a written vNext card the selection guard refused is not one (cinema:
+    # 77 written, 0 served). `semantic_ready` keeps counting written cards (scripts read it); None = the index was unread.
+    from polymath_shared.document_profile.served import served_vnext_count
+    vnext_served = served_vnext_count(searchable_ids, served)
+    basic_profile = searchable - (semantic_ready if vnext_served is None else vnext_served)
     blocked = documents - searchable
     # GAP-4: in-flight runs (any non-terminal run for the corpus), age-qualified by the
     # same dormancy window pipeline_health uses — "processing" must not count a run
@@ -176,7 +183,8 @@ def control_plane_status(conn, *, corpus_id: str,
         # GAP-1: the one CONTROL READY verdict (sidecars + fleet state composed HERE,
         # once) — callers render `control_ready.state`, they do not derive it.
         "control_ready": control_ready(conn, sidecars=sidecars),
-        "summary": {"documents": documents, "semantic_ready": semantic_ready, "basic_profile": basic_profile,
+        "summary": {"documents": documents, "semantic_ready": semantic_ready, "vnext_served": vnext_served,
+                    "basic_profile": basic_profile,
                     "processing": processing, "processing_active": processing_active,
                     "processing_stalled": processing_stalled, "blocked": blocked},
         "pools": pools,

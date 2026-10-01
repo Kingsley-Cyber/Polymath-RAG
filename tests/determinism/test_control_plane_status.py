@@ -72,7 +72,7 @@ def test_corpus_summaries_apply_vnext_ready_rule():
 def test_control_plane_status_four_pools_and_refused_vs_429():
     cp = CPS.control_plane_status(_Conn(), corpus_id="c")
     assert cp["summary"] == {
-        "documents": 2, "semantic_ready": 1, "basic_profile": 0,
+        "documents": 2, "semantic_ready": 1, "vnext_served": None, "basic_profile": 0,
         "processing": 1, "processing_active": 1, "processing_stalled": 0,
         "blocked": 1,                                       # docB: 4 unresolved parents — retrieval misses part of it
     }
@@ -116,6 +116,19 @@ def test_a_searchable_file_without_the_vnext_profile_is_not_counted_blocked():
     s = cp["summary"]
     assert (s["documents"], s["semantic_ready"], s["basic_profile"], s["blocked"]) == (3, 1, 1, 1)     # docA vNext, docB basic, docC no profile
     assert s["semantic_ready"] + s["basic_profile"] + s["blocked"] == s["documents"]
+
+
+def test_ready_vnext_counts_cards_search_serves_when_the_index_answered():
+    """SERVED-PROFILE-LABEL (2026-10-01): cinema had a vNext card written on every file and served on none — "ready (vNext)"
+    must count what search serves; `semantic_ready` (written cards; scripts read it) is unchanged; no index answer = the
+    previous counting."""
+    cp = CPS.control_plane_status(_BaseProfileConn(), corpus_id="c", served={"docA": {"writer": "basic"}, "docB": {"writer": "basic"}})
+    s = cp["summary"]
+    assert (s["semantic_ready"], s["vnext_served"], s["basic_profile"], s["blocked"]) == (1, 0, 2, 1)
+    s = CPS.control_plane_status(_BaseProfileConn(), corpus_id="c", served={"docA": {"writer": "vnext"}})["summary"]
+    assert (s["vnext_served"], s["basic_profile"]) == (1, 1)
+    s = CPS.control_plane_status(_BaseProfileConn(), corpus_id="c")["summary"]
+    assert (s["vnext_served"], s["basic_profile"]) == (None, 1)
 
 
 def test_pool_lanes_detail_is_secret_free_and_model_grouped():

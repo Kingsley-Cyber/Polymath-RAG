@@ -12,7 +12,7 @@ AUTHORITY: `shared/polymath_shared/chat_plan.py:91` :: `ORIGIN_TYPES` (count: 7)
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1835` | 6/7 | `EVIDENCE_GAP` |
+| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1853` | 6/7 | `EVIDENCE_GAP` |
 | `shared/polymath_shared/bridge_integration.py` | `shared/polymath_shared/bridge_integration.py:63` | 3/7 | `PROFILE`, `GRAPH`, `EVIDENCE_GAP`, `WILDCARD` |
 | `shared/polymath_shared/candidate_engine.py` | `shared/polymath_shared/candidate_engine.py:483` | 4/7 | `USER`, `GRAPH`, `EVIDENCE_GAP` |
 | `shared/polymath_shared/probe_gate.py` | `shared/polymath_shared/probe_gate.py:24` | 3/7 | `USER`, `GRAPH`, `EVIDENCE_GAP`, `WILDCARD` |

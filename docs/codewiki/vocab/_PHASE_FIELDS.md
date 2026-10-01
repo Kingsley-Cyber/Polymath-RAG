@@ -13,7 +13,7 @@ AUTHORITY: `orchestrator/orchestrator/api/deep_research.py:299` :: `_PHASE_FIELD
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
 | `orchestrator/orchestrator/api/chat_retrieval.py` | `orchestrator/orchestrator/api/chat_retrieval.py:657` | 3/15 | `depth`, `completed`, `new_learnings`, `move`, `moves`, `scored`, `failed_open`, `goal_id`, `goals`, `confirmed`, `user_kept`, `thread_kept` |
-| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1720` | 3/15 | `depth`, `completed`, `new_learnings`, `move`, `moves`, `dropped`, `failed_open`, `goal_id`, `goals`, `confirmed`, `user_kept`, `thread_kept` |
+| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1738` | 3/15 | `depth`, `completed`, `new_learnings`, `move`, `moves`, `dropped`, `failed_open`, `goal_id`, `goals`, `confirmed`, `user_kept`, `thread_kept` |
 | `shared/polymath_shared/chat_plan.py` | `shared/polymath_shared/chat_plan.py:43` | 3/15 | `completed`, `total`, `new_learnings`, `move`, `moves`, `scored`, `failed_open`, `goal_id`, `goals`, `confirmed`, `user_kept`, `thread_kept` |
 | `shared/polymath_shared/deep_research/engine.py` | `shared/polymath_shared/deep_research/engine.py:305` | 13/15 | `new_learnings`, `reason` |
 | `shared/polymath_shared/deep_research/evidence.py` | `shared/polymath_shared/deep_research/evidence.py:78` | 5/15 | `depth`, `completed`, `total`, `new_learnings`, `reason`, `scored`, `dropped`, `failed_open`, `user_kept`, `thread_kept` |

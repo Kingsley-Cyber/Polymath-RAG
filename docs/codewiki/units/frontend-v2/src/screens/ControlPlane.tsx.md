@@ -2,83 +2,83 @@
 anchor: frontend-v2/src/screens/ControlPlane.tsx:1-172
 
 ## purpose
-F10 screen (FRONTEND-V2-PLAN §9): corpus health console asking "Is the machinery healthy?" — frontend-v2/src/screens/ControlPlane.tsx:10,45 [DERIVED]
-One `api.controlPlane` fetch drives a readiness pill, live/queued/blocked counters, a corpus summary card, four function-pool cards, and an on-demand lane drill-down — frontend-v2/src/screens/ControlPlane.tsx:27-28 [DERIVED]
-Enforces two display honesty rules: local `limiter_refused` stays distinct from a real HTTP 429; dormant stalls are not shown as current pipeline failures — frontend-v2/src/screens/ControlPlane.tsx:12-19 [DERIVED]
+React operator screen (feature "F10 — Control Plane", FRONTEND-V2-PLAN §9) showing per-corpus machinery health: readiness badge, worker/stall counters, per-function pool stats, and a per-lane drill-down table. Enforces two honesty rules: local `limiter_refused` must stay visually distinct from a real HTTP 429, and dormant stalls must not be shown as live failures. — frontend-v2/src/screens/ControlPlane.tsx:9-24 [DERIVED]
 
 ## public surface
+
 | symbol | kind | signature (params -> return) | anchor | used by |
-| ControlPlane | exported function component | ({ corpusId }: { corpusId: string }) -> JSX | frontend-v2/src/screens/ControlPlane.tsx:25 | frontend-v2/src/App.tsx |
-| Stat | module-private function component (not exported) | ({ label, value, note?, bad? }) -> JSX | frontend-v2/src/screens/ControlPlane.tsx:163 | — (local helper) |
+|---|---|---|---|---|
+| ControlPlane | function, named export (React component) | ({ corpusId: string }) -> JSX element | frontend-v2/src/screens/ControlPlane.tsx:25 | frontend-v2/src/App.tsx (FACTS.importers) |
+| Stat | function, module-private (not exported) | ({ label: string; value: number; note?: string; bad?: boolean }) -> JSX element | frontend-v2/src/screens/ControlPlane.tsx:163 | ControlPlane only |
 
 ## contracts
-ControlPlane — frontend-v2/src/screens/ControlPlane.tsx:25
-- in: `corpusId: string` (only prop) — frontend-v2/src/screens/ControlPlane.tsx:25
-- state: `fn: string | null`, initial `null` (selected pool for lane drill-down) — frontend-v2/src/screens/ControlPlane.tsx:26
-- post: health data from exactly one fetch `api.controlPlane(corpusId, s)` with deps `[corpusId]` — frontend-v2/src/screens/ControlPlane.tsx:27
-- post: lanes fetched via `api.poolLanes(fn, s)` with deps `[fn]` only when `fn` truthy, else `Promise.resolve(null)` — frontend-v2/src/screens/ControlPlane.tsx:28
-- post: readiness = `settled(cp, (d) => controlReady(d?.control_ready))`, semantics delegated to `../lib/readiness` — frontend-v2/src/screens/ControlPlane.tsx:4,30
 
-Stat — frontend-v2/src/screens/ControlPlane.tsx:163
-- in: `label: string; value: number; note?: string; bad?: boolean` — frontend-v2/src/screens/ControlPlane.tsx:163
-- post: value colored `var(--bad)` iff `bad` — frontend-v2/src/screens/ControlPlane.tsx:167
+**ControlPlane** — frontend-v2/src/screens/ControlPlane.tsx:25
+- in: prop `corpusId: string` (:25); data from `api.controlPlane(corpusId, s)` re-run on deps `[corpusId]` (:27); `api.poolLanes(fn, s)` re-run on deps `[fn]`, skipped with `Promise.resolve(null)` while `fn === null` (:28).
+- out: rendered screen; readiness badge = `settled(cp, (d) => controlReady(d?.control_ready))` (:30).
+- pre: `api`, `useAsync`, `controlReady`, `settled`, `Pill` importable from ../lib/api, ../lib/useAsync, ../lib/readiness, ../components/Pill (:1-5).
+- post: every pipeline numeric is rendered only if `typeof === "number"`, else coerced to null and its row/stat hidden (:33-37, :50-52).
+
+Response shape consumed from the backend:
+- `control_ready.pipeline`: `causes: string[]`, `stalls_active`, `stalls_dormant`, `queued_tickets`, `live_workers`, `blocked_workers` (:31-37).
+- `contract`, `summary.documents`, `summary.vnext_served ?? summary.semantic_ready`, `summary.basic_profile`, `summary.blocked`, `summary.processing_active`, `summary.processing_stalled` (:72-81).
+- `pools[f]`: `queued`, `processing`, `retry`, `failed`, `lanes.active`, `lanes.total`, `provider.{limiter_refused, http_429, provider_requests, valid_maps_persisted}` (:88-121); each provider stat renders only when the literal key is present (`"limiter_refused" in prov` :112, `"http_429" in prov` :116, `"provider_requests" in prov` :120, `"valid_maps_persisted" in prov` :121).
+- lanes drill-down: `models[].model`, `models[].lanes[].{lane, account_env, role, reachability, capacity.rpd}` (:131-140).
 
 ## effect surface
-- network: `api.controlPlane(corpusId, s)` — frontend-v2/src/screens/ControlPlane.tsx:27; GAP-1 comment declares `/control_plane` the ONLY health call (replaced `/ready` + `/health/pipeline`) — frontend-v2/src/screens/ControlPlane.tsx:21-23
-- network: `api.poolLanes(fn, s)` (on demand) — frontend-v2/src/screens/ControlPlane.tsx:28
-- Postgres: none (FACTS tables_read = [], tables_written = [])
-- env: none read client-side; only env NAMES from payload `l.account_env` — frontend-v2/src/screens/ControlPlane.tsx:135,146
-- local UI state: `useState<string | null>(null)` — frontend-v2/src/screens/ControlPlane.tsx:26
+- network: `api.controlPlane(corpusId, s)` — frontend-v2/src/screens/ControlPlane.tsx:27 [DERIVED]; `api.poolLanes(fn, s)` — frontend-v2/src/screens/ControlPlane.tsx:28 [DERIVED]. Per GAP-1 comment, `/control_plane` is the ONLY health call this screen makes (:21-23).
+- browser state: `useState<string | null>` holding selected pool `fn` (:26).
+- Postgres: none read, none written (FACTS tables_read = [], tables_written = []).
+- Qdrant / files / subprocesses / env flags: none in this unit.
 
 ## invariants
-INVARIANT: pool cards rendered = 4 = |`["GRAPH_EXTRACTION", "DOCUMENT_PROFILE", "PMAP", "CHAT"]`| — frontend-v2/src/screens/ControlPlane.tsx:7,87 [DERIVED]
-  fails-if: a new backend pool gets no card; `parent_enrichment` is deliberately pinned as not a fifth pool — frontend-v2/src/screens/ControlPlane.tsx:157
-INVARIANT: `api.poolLanes` fires iff `fn !== null` — frontend-v2/src/screens/ControlPlane.tsx:28 [DERIVED]
-  fails-if: fetch would run with `null` fn.
-INVARIANT: `limiter_refused` note = "LOCAL refusal — zero HTTP, no provider request spent" and `http_429` note = "a REAL provider request that was throttled" are always separate stats — frontend-v2/src/screens/ControlPlane.tsx:112-119 [DERIVED]
-  fails-if: merging them violates honesty rule 1 — frontend-v2/src/screens/ControlPlane.tsx:14-15
-INVARIANT: dormant banner renders iff `stallsDormant != null && stallsDormant > 0`; records are not cleared — frontend-v2/src/screens/ControlPlane.tsx:55,63-64 [DERIVED]
-  fails-if: clearing to force green destroys backlog-classification evidence — frontend-v2/src/screens/ControlPlane.tsx:63-64
-INVARIANT: `basic_profile ?? 0` is the only summary fallback; `documents`, `semantic_ready`, `blocked`, `processing_active`, `processing_stalled` have none — frontend-v2/src/screens/ControlPlane.tsx:74-78 [DERIVED]
-  fails-if: absent field renders blank while absent `basic_profile` renders 0 — inconsistent display.
-INVARIANT: pipeline counters render only when `typeof p.X === "number"`, else hidden — frontend-v2/src/screens/ControlPlane.tsx:32-37 [DERIVED]
-  fails-if: non-numeric values silently hide live/queued/blocked counters.
-INVARIANT: lane table prints `l.account_env` names only, never secret values — frontend-v2/src/screens/ControlPlane.tsx:135,146 [DERIVED]
-  fails-if: secret exfiltration to the browser.
+
+INVARIANT: length(FUNCTIONS) = 4, exactly `["GRAPH_EXTRACTION", "DOCUMENT_PROFILE", "PMAP", "CHAT"]` — frontend-v2/src/screens/ControlPlane.tsx:7 [DERIVED]
+  fails-if: a fifth backend pool is invisible, or a card renders for a nonexistent pool.
+INVARIANT: selected fn ∈ FUNCTIONS ∪ {null} — only writer is `setFn(fn === f ? null : f)` — frontend-v2/src/screens/ControlPlane.tsx:96 [DERIVED]
+  fails-if: `api.poolLanes(fn)` is called with an unknown function name.
+INVARIANT: readiness = backend verdict via `controlReady(d?.control_ready)`, not re-derived from queued/blocked counts — frontend-v2/src/screens/ControlPlane.tsx:18-19,30 [DERIVED]
+  fails-if: frontend and backend disagree on DEGRADED.
+INVARIANT: each pipeline counter type ∈ {number, null} via `typeof p.X === "number" ? p.X : null` — frontend-v2/src/screens/ControlPlane.tsx:33-37 [DERIVED]
+  fails-if: undefined/NaN reaches the DOM as a stat.
+INVARIANT: absent pool counters render 0 (`pool?.queued ?? 0`), absent basic profile renders `basic_profile ?? 0`, vNext readiness falls back `vnext_served ?? semantic_ready` — frontend-v2/src/screens/ControlPlane.tsx:75-76,101-104 [DERIVED]
+  fails-if: a missing field blanks the card instead of showing 0.
+INVARIANT: `reachability === "active"` is the only value rendered `pill--ready`; every other value renders `pill--blocked` — frontend-v2/src/screens/ControlPlane.tsx:137-139 [DERIVED]
+  fails-if: an unknown reachability string looks healthy.
+INVARIANT: lane table shows `account_env` names only — frontend-v2/src/screens/ControlPlane.tsx:135,146-148 [DERIVED]
+  fails-if: secret values leak to the browser.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (network via `api.controlPlane` / `api.poolLanes` — frontend-v2/src/screens/ControlPlane.tsx:27-28; render depends on server state)
-idempotency: SAFE (read-only fetches plus local `setFn` toggle — frontend-v2/src/screens/ControlPlane.tsx:26,97) [INFERRED — no mutating API call appears in SOURCE]
+determinism: NONDETERMINISTIC (network via api.controlPlane/api.poolLanes frontend-v2/src/screens/ControlPlane.tsx:27-28; async arrival order through useAsync)
+idempotency: SAFE — read-only display; only mutation is local UI state `fn` (:26); no store writes.
 
 ## failure behaviour
-- `cp.error` rendered as `banner banner--bad` — frontend-v2/src/screens/ControlPlane.tsx:68
-- `lanes.loading` shows "loading lanes…" placeholder — frontend-v2/src/screens/ControlPlane.tsx:126
-- lane table renders only when `lanes.data` present — frontend-v2/src/screens/ControlPlane.tsx:127
-- missing pipeline fields default to `null` (hidden) via typeof guards; `pools` falls back `?? {}`; pool stats fall back `?? 0` — frontend-v2/src/screens/ControlPlane.tsx:31-39,101-104
-- no error codes raised here; error text originates in `useAsync`/api layer (not visible in this file)
+- `cp.error` rendered in `banner banner--bad`; rest of screen still renders — frontend-v2/src/screens/ControlPlane.tsx:68 [DERIVED].
+- lanes drill-down: `lanes.loading` -> "loading lanes…" placeholder (:126); fetch skipped entirely when `fn === null` via `Promise.resolve(null)` (:28).
+- missing numeric pipeline fields degrade to null and hide their span (`liveWorkers != null && ...`) instead of rendering garbage (:50-52).
+- dormant stall records deliberately NOT cleared — banner: clearing them "would destroy the evidence the backlog classification depends on" (:63-64).
+- FACTS lists no fallbacks or raised error codes for this unit.
 
 ## dumb-code flags
-- Threshold literal `>3min since last move` hardcoded as UI copy; the actual stall classification is not computed here — frontend-v2/src/screens/ControlPlane.tsx:80 [INFERRED — screen only displays the note]
-- Inconsistent defaulting: pool stats use `?? 0` but summary stats (except `basic_profile`) do not — frontend-v2/src/screens/ControlPlane.tsx:74-78 vs 101-104
-- Duplicated pluralization `=== 1 ? "" : "s"` twice in one banner — frontend-v2/src/screens/ControlPlane.tsx:57,60
-- Repeated inline magic styles: `marginBottom: 14` (three times), `fontSize: 12`, `fontSize: 11`, `fontSize: 11.5`, `maxWidth: 210` — frontend-v2/src/screens/ControlPlane.tsx:56,68,71,95,146,156,168
-- Dormant-stall state names (`PENDING_ON_PREDECESSOR`, `PENDING_ADVANCE_BLOCKED`, `PENDING_OWNER_STAGE`, `RUN_SETTLED_NOT_PROMOTED`) exist only in a comment, referenced by no code — frontend-v2/src/screens/ControlPlane.tsx:16-17
-- Static footer about `parent_enrichment` is dead copy, driven by no data — frontend-v2/src/screens/ControlPlane.tsx:157
+- Stall-state names (PENDING_ON_PREDECESSOR / PENDING_ADVANCE_BLOCKED / PENDING_OWNER_STAGE / RUN_SETTLED_NOT_PROMOTED) appear only in the comment (:16-17); code never branches on them. — frontend-v2/src/screens/ControlPlane.tsx:16-17 [DERIVED]
+- Hardcoded display threshold ">3min since last move" duplicates a backend stall definition — frontend-v2/src/screens/ControlPlane.tsx:80 [INFERRED: wording mirrors backend classification].
+- Pluralization ternary duplicated verbatim: `stallsDormant === 1 ? "" : "s"` (:57) and `stallsActive === 1 ? "" : "s"` (:60). — frontend-v2/src/screens/ControlPlane.tsx:57,60 [DERIVED]
+- Inline magic styles: fontSize 11 + maxWidth 210 (:168), fontSize 11.5 (:146), fontSize 12 (:157), fontSize 16 (:167), padding "2px 8px" (:95). — [DERIVED]
+- `laneCounts = pool?.lanes` collides in name with the `lanes` drill-down fetch; disambiguated only by a comment (:90). — frontend-v2/src/screens/ControlPlane.tsx:90 [DERIVED]
 
 ## refactor notes
-- Single-health-call contract (GAP-1, closed 2026-09-12): re-adding `/ready` or `/health/pipeline` fetches regresses the gap; both strings still appear in the comment, so absence-greps must exclude comments — frontend-v2/src/screens/ControlPlane.tsx:21-23
-- Prop shape `{ corpusId: string }`; sole importer is frontend-v2/src/App.tsx (FACTS.importers) — changing it breaks App — frontend-v2/src/screens/ControlPlane.tsx:25
-- Backend payload fields consumed verbatim: `control_ready`, `control_ready.pipeline.{causes,stalls_active,stalls_dormant,queued_tickets,live_workers,blocked_workers}`, `pools[f].{queued,processing,retry,failed,lanes.{active,total},provider.{limiter_refused,http_429,provider_requests,valid_maps_persisted}}`, `summary.{documents,semantic_ready,basic_profile,blocked,processing_active,processing_stalled}`, `contract` — frontend-v2/src/screens/ControlPlane.tsx:31-39,72-81,89-121. Renames fail silently (guards render null), not loudly.
-- `poolLanes` response shape consumed: `models[].model` + `models[].lanes[].{lane, account_env, role, reachability, capacity.rpd}`; `"active"` is the only reachability value styled positive — frontend-v2/src/screens/ControlPlane.tsx:129-140
-- Readiness semantics live in `../lib/readiness` (`controlReady`, `settled`); fetching in `../lib/useAsync` — frontend-v2/src/screens/ControlPlane.tsx:2-4
+- Do not re-add `/ready` or `/health/pipeline` calls: GAP-1 (closed 2026-09-12) makes `/control_plane` the only health fetch — frontend-v2/src/screens/ControlPlane.tsx:21-23. Blast radius: badge honesty for the whole screen.
+- Every consumed member name is a literal (`stalls_active`, `stalls_dormant`, `queued_tickets`, `live_workers`, `blocked_workers`, `vnext_served`, `semantic_ready`, `basic_profile`, `processing_active`, `processing_stalled`, `limiter_refused`, `http_429`, `provider_requests`, `valid_maps_persisted`, `account_env`, `capacity.rpd`) — backend renames silently hide stats. — frontend-v2/src/screens/ControlPlane.tsx:31-39,72-81,110-121,131-140
+- Keep `limiter_refused` (note "LOCAL refusal — zero HTTP, no provider request spent" :114) visually separate from `http_429` (note "a REAL provider request that was throttled" :118); merging breaks honesty rule 1 (:14-15).
+- `parent_enrichment` is documented as "a legacy stage pin, not a fifth pool" (:156-158); adding it to FUNCTIONS contradicts that note.
+- Prop/signature changes to ControlPlane propagate to frontend-v2/src/App.tsx (FACTS.importers).
 
 ## VERIFY
 ```verify
-grep -Fq 'const FUNCTIONS = ["GRAPH_EXTRACTION", "DOCUMENT_PROFILE", "PMAP", "CHAT"] as const;' frontend-v2/src/screens/ControlPlane.tsx
+grep -Fq '"GRAPH_EXTRACTION", "DOCUMENT_PROFILE", "PMAP", "CHAT"' frontend-v2/src/screens/ControlPlane.tsx
 grep -Fq 'api.controlPlane(corpusId, s)' frontend-v2/src/screens/ControlPlane.tsx
 grep -Fq 'api.poolLanes(fn, s)' frontend-v2/src/screens/ControlPlane.tsx
-grep -Fq 'LOCAL refusal — zero HTTP, no provider request spent' frontend-v2/src/screens/ControlPlane.tsx
 grep -Fq 'no secret value is ever sent to the browser' frontend-v2/src/screens/ControlPlane.tsx
-test "$(grep -c -F 'useAsync(' frontend-v2/src/screens/ControlPlane.tsx)" -ge 2
 ! grep -Fq 'fetch(' frontend-v2/src/screens/ControlPlane.tsx
+test "$(grep -c -F 'useAsync(' frontend-v2/src/screens/ControlPlane.tsx)" -ge 2
 ```
