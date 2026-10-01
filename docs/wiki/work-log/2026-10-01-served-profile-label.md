@@ -3,7 +3,7 @@ change_id: SERVED-PROFILE-LABEL
 owner: "@king"
 date: 2026-10-01
 status: complete
-status_note: "'vNext' in the labels now means the document card SEARCH serves, read from the profile index — not the latest card written. Cinema (vNext card written on 77 / 77 files, served on 0) reads amber 'Searchable · basic profiles', its files 'Ready · basic profile', its Control Plane 'ready (vNext) 0'. The written-card fields and the vNext verdict are unchanged. Live after the deploy."
+status_note: "'vNext' in the labels now means the document card SEARCH serves, read from the profile index — not the latest card written. Cinema (vNext card written on 77 / 77 files, served on 0) reads amber 'Searchable · basic profiles', its files 'Ready · basic profile', its Control Plane 'ready (vNext) 0'. The written-card fields and the vNext verdict are unchanged. LIVE at 6466e8a1 (deployed, pushed, seen in the app)."
 architecture_impact: "shared/polymath_shared/document_profile/served.py (new: the served card per file, read-only, fail-open); orchestrator/orchestrator/api/ui.py (/documents/summary profile_served, /documents/{id}/status served + corrected projected, /control_plane served); orchestrator/orchestrator/api/health.py (/semantic_readiness vnext.vnext_served); shared/polymath_shared/control_plane_status.py (summary vnext_served, basic_profile from it); shared/polymath_shared/document_status.py (profile.compiled_hash); frontend-v2 lib/readiness.ts (servesVnext, servedWriter, docVnext, vnextReady), lib/contracts.ts, screens/Files.tsx, screens/ControlPlane.tsx; tests."
 last_reviewed: 2026-10-01
 ---
@@ -54,6 +54,17 @@ last_reviewed: 2026-10-01
   slice's wiki refresh (18 / 18 on the refreshed tree); determinism **3,289 passed**, 35 skipped, 1 failed = the container's own
   trusted-login artifact (passes on GitHub). Code wiki refreshed: 2,235 / 2,235 on 342 pages.
 
+- **Live, after deploying `6466e8a1`** (merge, UI build, bounce READY 26 / 13 / one bundle, push; local = origin; bundle
+  READY): cinema — vNext verdict COMPLETE (unchanged), 77 written, `vnext_served` 0; Control Plane `vnext_served 0, basic 77,
+  blocked 0, semantic_ready 77` (unchanged); `/documents/summary` `profile_served` basic on 77 / 77; a cinema file's status
+  "latest card doc-profile-vnext-v1, served basic, projected false". Taste 21 and commerce 10: basic, served. The app (owner
+  view, screenshots): cinema Overview and Files "vNext ready: Searchable · basic profiles — vNext cards written for 77/77
+  files · search uses 0 (the selection guard kept the richer basic cards) · 12,079/12,079 parents mapped"; Files "77 ready
+  (77 with a basic profile)", every file "Ready · basic profile". `rag.kingsleylab.xyz` serves the new build.
+- Seen right after the bounce and cleared on its own within a minute: Control ready read BLOCKED "25 of 52 live workers are
+  quarantined (BUNDLE_STALE_CODE_DRIFT)" — the previous fleet's 26 registrations still inside the heartbeat window; it read
+  IDLE once they aged out (one supervisor, 26 worker processes throughout).
+
 ## Contract impact (pre-commit)
 - EVIDENCE_BOUNDARY_API [live] and PROFILE_SCOUT_WIRING [live] (their spec families include `api/ui.py`): NOT_AFFECTED —
   the ui.py changes are confined to `/documents/summary`, `/documents/{id}/status` and `/control_plane` (labels); the evidence
@@ -67,5 +78,7 @@ last_reviewed: 2026-10-01
   beside it, so nothing that reads the verdict changes.
 
 ## Open contract gaps
+- Cinema's separate red "Semantic incomplete" predates this slice: `pending` = 1,600 unprojected procedures and 703
+  unprojected concepts; 73 of its runs sit in `reconciling` (the Control Plane's `processing_stalled`). Not touched here.
 - The vNext writer still produces thin cards (2–6 direct surfaces against ~30); until it is fixed, the guard keeps the basic
   cards and no library turns green honestly.

@@ -167,8 +167,9 @@ historical, never an instruction.
    - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
      change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
      `scripts/codewiki/verify.py` (CI runs it).
-   - ON THE BRANCH (11.566): SERVED-PROFILE-LABEL — "vNext" in every label = the card search serves (cinema: written 77,
-     served 0 → amber). Written-card fields and the vNext verdict unchanged.
+   - LIVE (`6466e8a1`, 11.566): SERVED-PROFILE-LABEL — "vNext" in every label = the card search serves (cinema: written 77,
+     served 0 → amber). Written-card fields and the vNext verdict unchanged. Local = GitHub = Cloudflare.
+     OPEN (pre-existing): cinema SEMANTIC_INCOMPLETE — 1,600 procedures + 703 concepts unprojected, 73 runs in `reconciling`.
    - LIVE (`438e4af8`, 11.565): LIBRARY-READY-LABEL — a library searchable on basic profiles reads amber, not red (vNext card
      + Control Plane summary); GNN-DEGRADED-LIST — a GNN turn without a GNN index answers with a typed degradation, not 500.
      Local = GitHub = Cloudflare; nothing on the branch waits for a deploy.
