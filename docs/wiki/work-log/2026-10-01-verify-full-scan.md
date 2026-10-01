@@ -3,8 +3,8 @@ change_id: VERIFY-FULL-SCAN-V1
 owner: "@king"
 date: 2026-10-01
 status: complete
-status_note: "Verification reads the WHOLE Qdrant collection (it read one page of 100,000 and switched off the receipts of every point past it: cinema has 165,939) and never clears or deletes on a failed read; a pending ticket behind a failed predecessor no longer blocks a corpus's receipt-gap re-drive (DEAD-CHAIN-NOT-IN-FLIGHT-V1); scripts/restore_verified_receipts.py switches back on the receipts of points proven present (cinema: 91,273). Built and proven in the sealed CI reproduction; the restore and the deploy follow."
-architecture_impact: "workers/workers/verify_worker.py (_scan_points, VerifyStoreUnreadable; reconcile_routing_qdrant and reconcile_qdrant read every page, the orphan sweep reuses the scan); control/control/scheduler.py (_reopen_receipt_gap_tickets: a pending ticket behind a failed predecessor is not in flight); scripts/restore_verified_receipts.py (new, owner repair, dry run by default); tests."
+status_note: "Verification reads the WHOLE Qdrant collection (it read one page of 100,000 and switched off the receipts of every point past it: cinema has 165,939) and never clears or deletes on a failed read; a pending ticket behind a failed predecessor is not a re-drive in flight (the scheduler) and not open work (the generation barrier) — DEAD-CHAIN-NOT-IN-FLIGHT-V1; scripts/restore_verified_receipts.py switched back on 91,273 cinema receipts of points proven present. LIVE at be533cd8 (the owner restored, deployed and pushed): cinema SEMANTIC_COMPLETE, six live verifications cleared 0. The barrier half follows (register 11.568)."
+architecture_impact: "workers/workers/verify_worker.py (_scan_points, VerifyStoreUnreadable; reconcile_routing_qdrant and reconcile_qdrant read every page, the orphan sweep reuses the scan); control/control/scheduler.py (_reopen_receipt_gap_tickets: a pending ticket behind a failed predecessor is not in flight); scripts/restore_verified_receipts.py (new, owner repair, dry run by default); tests.; control/control/tickets.py (generation_barrier: a pending ticket behind a failed predecessor is not open work)."
 last_reviewed: 2026-10-01
 ---
 
@@ -68,6 +68,26 @@ last_reviewed: 2026-10-01
   passed**, 5 skipped, 1 failed = the code-wiki check on a snapshot taken before this slice's wiki refresh (2,235 / 2,235 on the
   refreshed tree, `verify.py --strict-anchors` 0); determinism **3,292 passed**, 35 skipped, 1 failed = the container's own
   trusted-login artifact (passes on GitHub). Guards: repo_guard 0, agent_preflight 0, wiki_worm 0.
+
+- **Live, after the owner's restore and deploy of `be533cd8`** (2026-10-01; the restore, then the merge at 23:02 UTC, bounce and push; local =
+  origin): the restore switched on exactly the dry run's 91,273 (chunk 28,739, routing_child 28,739, procedure 1,600, concept 703,
+  document summary 30, section summary 4,693, entity card 17,410, latent 9,359); cinema reads **SEMANTIC_COMPLETE**, nothing
+  pending. The fleet restarted on the new code at 23:02:27 UTC; the six cinema verifications since (23:02:43–23:08:54) switched off
+  **0** routing and **0** chunk receipts and deleted 0 points (each one before switched off 0–33,827 + 0–28,739).
+
+## Follow-up: the generation barrier (register 11.568)
+- Measured after the restore (read-only): every receipt present, the census found nothing missing for a held run (chain complete,
+  0 / 0 / 0 projection gaps), yet no run was promoted: `generation_barrier` blocks EVERY promotion of a corpus while any of its
+  tickets is pending / ready / leased, and counted 27 tickets that never run — the refused duplicate's 7 behind its failed intake
+  and 20 behind the five embedder-failed projections (`open_tickets` 37 with the five uploads still finishing).
+- Fix (`control/tickets.py` `generation_barrier`): a PENDING ticket whose run has a FAILED ticket at an earlier `DAG_ORDER` stage
+  is not open work — the same reading BARRIER-OPEN-WORK-V2 gave failed history rows. A live chain's pending, ready and leased
+  tickets still block. On the live state (read-only): cinema 37 → 11 open (only the five uploads still finishing), commerce-v1 and
+  social-media-taste pass as before.
+- Test (`test_receipt_gap_dead_chain.py`, Postgres): a dead chain no longer holds the barrier; a live chain still does.
+- Fail first on the deployed code (`be533cd8`, sealed container): the barrier test fails (4 open tickets, blocked); the other
+  three pass. Sealed CI reproduction on this tree: contracts **876 passed**, 5 skipped, 0 failed; determinism **3,293 passed**,
+  35 skipped, 1 failed = the container's own trusted-login artifact (passes on GitHub). Code wiki 2,233 / 2,233; guards 0.
 
 ## Contract impact (pre-commit)
 - `contract_impact.py --check --staged`: none (no changed file maps to an architecture contract). The census, the claim gate and

@@ -614,12 +614,25 @@ def generation_barrier(conn: Connection, corpus_id: str,
     #    once any promotion existed. `!= ALL(list)` binds correctly.
     # 2) superseded/failed HISTORY rows are not open work; counting them
     #    kept reconciled corpora permanently barrier-blocked.
+    # 3) DEAD-CHAIN-NOT-IN-FLIGHT-V1 (measured live 2026-10-01, cinema): a
+    #    PENDING ticket whose run has a FAILED ticket at an earlier stage
+    #    never runs until an owner retry revives that predecessor — it is
+    #    not open work either. Cinema's refused duplicate upload (intake
+    #    failed 3/3, 2026-09-07) left 7 such tickets and five runs whose
+    #    projection failed on embedder 500s left 20 more: with every
+    #    receipt present the barrier still held 73 settled runs at
+    #    reconciling. A live chain's pending tickets still block.
     pending = conn.execute(
-        "SELECT stage, status, COUNT(*) FROM stage_tickets "
-        "WHERE corpus_id=%s AND status IN ('pending','ready','leased') "
-        "AND archived_at IS NULL "
-        "AND stage != ALL(%s) GROUP BY 1,2",
-        (corpus_id, sorted(NON_BLOCKING_STAGES)),
+        "SELECT t.stage, t.status, COUNT(*) FROM stage_tickets t "
+        "WHERE t.corpus_id=%s AND t.status IN ('pending','ready','leased') "
+        "AND t.archived_at IS NULL "
+        "AND t.stage != ALL(%s) "
+        "AND NOT (t.status = 'pending' AND EXISTS ("
+        "    SELECT 1 FROM stage_tickets f"
+        "     WHERE f.run_id = t.run_id AND f.archived_at IS NULL AND f.status = 'failed'"
+        "       AND array_position(%s::text[], f.stage) < array_position(%s::text[], t.stage))) "
+        "GROUP BY 1,2",
+        (corpus_id, sorted(NON_BLOCKING_STAGES), DAG_ORDER, DAG_ORDER),
     ).fetchall()
     runs = conn.execute(
         "SELECT run_id FROM runs WHERE corpus_id=%s", (corpus_id,)

@@ -144,3 +144,28 @@ def test_the_restore_switches_on_only_off_receipts_with_todays_hash():
             assert got[ids["on"]] == (True, "PROJECTED")
         finally:
             conn.execute("DELETE FROM projection_receipts WHERE entity_id = ANY(%s)", (list(ids.values()),))
+
+
+def test_the_generation_barrier_ignores_a_dead_chain_but_not_a_live_one():
+    """With every receipt present, cinema's barrier still counted the refused duplicate's PENDING chain
+    (7 tickets behind its failed intake) and five embedder-failed runs' (20 behind a failed projection)
+    as open work, so none of its 73 settled runs could be promoted."""
+    import psycopg
+
+    from control.tickets import generation_barrier
+
+    none_missing = {"qdrant": set(), "neo4j": set()}
+    with psycopg.connect(DSN, autocommit=True) as conn:
+        _setup(conn, DEAD, {"intake": "failed", "extract": "pending", "profile_document": "pending",
+                            "project_qdrant": "pending", "verify_projections": "pending"})
+        try:
+            dead = generation_barrier(conn, CORPUS, none_missing)
+            assert dead["passed"] and dead["open_tickets"] == 0, dead      # was: 4 open tickets, forever
+            conn.execute("INSERT INTO runs (run_id, corpus_id, status) VALUES (%s, %s, 'intake')", (LIVE, CORPUS))
+            _ticket(conn, LIVE, "intake", "done")
+            _ticket(conn, LIVE, "extract", "ready")
+            _ticket(conn, LIVE, "profile_document", "pending")
+            live = generation_barrier(conn, CORPUS, none_missing)
+            assert not live["passed"] and live["open_by_status"] == {"extract/ready": 1, "profile_document/pending": 1}, live
+        finally:
+            _cleanup(conn)

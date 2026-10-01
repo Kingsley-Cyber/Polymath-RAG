@@ -2470,7 +2470,7 @@
     "control/control/scheduler.py:243",
     "control/control/scheduler.py:271",
     "control/control/scheduler.py:348",
-    "control/control/tickets.py:776",
+    "control/control/tickets.py:789",
     "orchestrator/orchestrator/api/ui.py:1234"
    ],
    "writes": [
@@ -2911,8 +2911,8 @@
     "control/control/census.py:172",
     "control/control/fleet_autopilot.py:111",
     "control/control/stall_tracer.py:336",
-    "control/control/tickets.py:736",
-    "control/control/tickets.py:805",
+    "control/control/tickets.py:749",
+    "control/control/tickets.py:818",
     "orchestrator/orchestrator/api/health.py:45",
     "orchestrator/orchestrator/api/ui.py:1114",
     "orchestrator/orchestrator/api/ui.py:1236",
@@ -2944,12 +2944,12 @@
    ],
    "created": "stores/postgres/migrations/0028_corpus_runtime_state.sql:6",
    "reads": [
-    "control/control/tickets.py:745",
-    "control/control/tickets.py:776"
+    "control/control/tickets.py:758",
+    "control/control/tickets.py:789"
    ],
    "writes": [
-    "control/control/tickets.py:756",
-    "control/control/tickets.py:802"
+    "control/control/tickets.py:769",
+    "control/control/tickets.py:815"
    ]
   },
   "corpus_snapshots": {
@@ -4367,9 +4367,9 @@
     "control/control/tickets.py:238",
     "control/control/tickets.py:283",
     "control/control/tickets.py:514",
-    "control/control/tickets.py:625",
-    "control/control/tickets.py:736",
-    "control/control/tickets.py:805",
+    "control/control/tickets.py:638",
+    "control/control/tickets.py:749",
+    "control/control/tickets.py:818",
     "orchestrator/orchestrator/api/capabilities.py:68",
     "orchestrator/orchestrator/api/fast.py:274",
     "orchestrator/orchestrator/api/intake.py:100",
@@ -4486,16 +4486,16 @@
    "reads": [
     "control/control/census.py:116",
     "control/control/tickets.py:367",
-    "control/control/tickets.py:698"
+    "control/control/tickets.py:711"
    ],
    "writes": [
     "control/control/census.py:124",
     "control/control/tickets.py:355",
     "control/control/tickets.py:378",
     "control/control/tickets.py:386",
-    "control/control/tickets.py:684",
-    "control/control/tickets.py:709",
-    "control/control/tickets.py:714"
+    "control/control/tickets.py:697",
+    "control/control/tickets.py:722",
+    "control/control/tickets.py:727"
    ]
   },
   "semantic_embedding_cache": {
@@ -4646,13 +4646,13 @@
     "control/control/tickets.py:372",
     "control/control/tickets.py:431",
     "control/control/tickets.py:565",
-    "control/control/tickets.py:618",
-    "control/control/tickets.py:648",
-    "control/control/tickets.py:662",
-    "control/control/tickets.py:702",
-    "control/control/tickets.py:730",
-    "control/control/tickets.py:736",
-    "control/control/tickets.py:805",
+    "control/control/tickets.py:626",
+    "control/control/tickets.py:661",
+    "control/control/tickets.py:675",
+    "control/control/tickets.py:715",
+    "control/control/tickets.py:743",
+    "control/control/tickets.py:749",
+    "control/control/tickets.py:818",
     "orchestrator/orchestrator/api/fleet.py:62",
     "orchestrator/orchestrator/api/intake.py:112",
     "orchestrator/orchestrator/api/intake.py:142",
@@ -17655,13 +17655,13 @@
     },
     {
      "file": "control/control/tickets.py",
-     "line": 642,
+     "line": 655,
      "name": "GLOBAL_EXTRACT_LIMIT",
      "value": 256
     },
     {
      "file": "control/control/tickets.py",
-     "line": 643,
+     "line": 656,
      "name": "CORPUS_EXTRACT_WATERMARK",
      "value": 64
     }
@@ -17672,7 +17672,7 @@
    "files": [
     "control/control/tickets.py"
    ],
-   "hash": "091ee1dfa1603aab",
+   "hash": "47b625598a25a105",
    "importers": [
     "control/control/census.py",
     "control/control/main.py",
@@ -17689,7 +17689,7 @@
     "polymath_shared.projection_want.corpora_with_missing_chunk_receipts",
     "polymath_shared.projection_want.missing_chunk_receipts_for_docs"
    ],
-   "lines": 820,
+   "lines": 833,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/control/control/tickets.py.md",
@@ -17768,52 +17768,57 @@
     },
     {
      "file": "control/control/tickets.py",
-     "line": 618,
+     "line": 626,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 625,
+     "line": 626,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "control/control/tickets.py",
+     "line": 638,
      "table": "runs"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 648,
+     "line": 661,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 662,
+     "line": 675,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 698,
+     "line": 711,
      "table": "scheduler_cursors"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 702,
+     "line": 715,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 730,
+     "line": 743,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 736,
+     "line": 749,
      "table": "runs"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 736,
+     "line": 749,
      "table": "corpora"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 736,
+     "line": 749,
      "table": "stage_tickets"
     },
     {
@@ -17843,22 +17848,22 @@
     },
     {
      "file": "control/control/tickets.py",
-     "line": 745,
+     "line": 758,
      "table": "corpus_runtime_state"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 805,
+     "line": 818,
      "table": "runs"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 805,
+     "line": 818,
      "table": "corpora"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 805,
+     "line": 818,
      "table": "stage_tickets"
     },
     {
@@ -17873,12 +17878,12 @@
     },
     {
      "file": "control/control/tickets.py",
-     "line": 776,
+     "line": 789,
      "table": "corpus_runtime_state"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 776,
+     "line": 789,
      "table": "archived_corpora"
     }
    ],
@@ -17900,17 +17905,17 @@
     },
     {
      "file": "control/control/tickets.py",
-     "line": 684,
+     "line": 697,
      "table": "scheduler_cursors"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 714,
+     "line": 727,
      "table": "scheduler_cursors"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 714,
+     "line": 727,
      "table": "set"
     },
     {
@@ -17950,22 +17955,22 @@
     },
     {
      "file": "control/control/tickets.py",
-     "line": 709,
+     "line": 722,
      "table": "scheduler_cursors"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 756,
+     "line": 769,
      "table": "corpus_runtime_state"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 756,
+     "line": 769,
      "table": "set"
     },
     {
      "file": "control/control/tickets.py",
-     "line": 802,
+     "line": 815,
      "table": "corpus_runtime_state"
     },
     {
@@ -18214,7 +18219,7 @@
       "missing_by_projection"
      ],
      "doc": "QUERY_READY for a corpus generation requires: all tickets DONE,",
-     "end": 639,
+     "end": 652,
      "file": "control/control/tickets.py",
      "kind": "def",
      "line": 599,
@@ -18225,10 +18230,10 @@
       "conn"
      ],
      "doc": "",
-     "end": 651,
+     "end": 664,
      "file": "control/control/tickets.py",
      "kind": "def",
-     "line": 646,
+     "line": 659,
      "name": "extract_active_count"
     },
     {
@@ -18237,10 +18242,10 @@
       "corpus_id"
      ],
      "doc": "Two-tier hierarchy (owner D7 fix): GLOBAL resource ceiling first,",
-     "end": 667,
+     "end": 680,
      "file": "control/control/tickets.py",
      "kind": "def",
-     "line": 654,
+     "line": 667,
      "name": "backpressure_decision"
     },
     {
@@ -18250,10 +18255,10 @@
       "watermark"
      ],
      "doc": "High watermark: pause NEW intake ticket creation when a downstream",
-     "end": 677,
+     "end": 690,
      "file": "control/control/tickets.py",
      "kind": "def",
-     "line": 670,
+     "line": 683,
      "name": "backpressure_paused"
     },
     {
@@ -18263,10 +18268,10 @@
       "corpus_id"
      ],
      "doc": "Wrap-around: after a full pass, restart from the beginning so no",
-     "end": 686,
+     "end": 699,
      "file": "control/control/tickets.py",
      "kind": "def",
-     "line": 680,
+     "line": 693,
      "name": "_reset_cursor"
     },
     {
@@ -18277,10 +18282,10 @@
       "limit"
      ],
      "doc": "D7-H1: keyset page over the ELIGIBLE WORK SET.",
-     "end": 719,
+     "end": 732,
      "file": "control/control/tickets.py",
      "kind": "def",
-     "line": 689,
+     "line": 702,
      "name": "eligible_page"
     },
     {
@@ -18289,10 +18294,10 @@
       "watermark"
      ],
      "doc": "Recompute per-corpus active extract counts and apply the sticky",
-     "end": 767,
+     "end": 780,
      "file": "control/control/tickets.py",
      "kind": "def",
-     "line": 724,
+     "line": 737,
      "name": "refresh_corpus_runtime_state"
     },
     {
@@ -18301,10 +18306,10 @@
       "window"
      ],
      "doc": "Fair share: non-paused, non-archived corpora round-robin by",
-     "end": 782,
+     "end": 795,
      "file": "control/control/tickets.py",
      "kind": "def",
-     "line": 770,
+     "line": 783,
      "name": "eligible_creation_corpora"
     },
     {
@@ -18313,10 +18318,10 @@
       "window"
      ],
      "doc": "D7-5d entry point: refresh hysteresis state, distribute the",
-     "end": 819,
+     "end": 832,
      "file": "control/control/tickets.py",
      "kind": "def",
-     "line": 785,
+     "line": 798,
      "name": "fair_ensure_tickets_backpressure_gated"
     }
    ]
@@ -96083,10 +96088,8 @@
     {
      "file": "control/control/tickets.py",
      "line": 114,
-     "missing": [
-      "failed"
-     ],
-     "present": 3
+     "missing": [],
+     "present": 4
     },
     {
      "file": "orchestrator/orchestrator/api/fleet.py",
