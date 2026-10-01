@@ -70,6 +70,13 @@ def mcp_url() -> str:
     return os.environ.get("POLYMATH_PUBLIC_MCP_URL", "https://mcp.kingsleylab.xyz/mcp")
 
 
+def connector_url(key: str) -> str:
+    """CLAUDE-CONNECTOR-URL: claude.ai's custom connector takes only a URL, so the key rides in the path (`/k/<key>/mcp`);
+    MCP Server A moves it into the Authorization header before anything else sees the request (`mcp_server.KeyInPath`)."""
+    base = mcp_url().rstrip("/")
+    return f"{base[:-len('/mcp')] if base.endswith('/mcp') else base}/k/{key}/mcp"
+
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONNECT_SCRIPT = REPO_ROOT / "scripts" / "connect_agents.sh"
 
@@ -210,7 +217,8 @@ def owner_key_for_copy(request: Request) -> JSONResponse:
         libraries = _shared_libraries()
     except Exception:  # noqa: BLE001 — the prompt still works without the list (list_corpora names them)
         libraries = []
-    return _no_store({"key": key, "mcp_url": mcp_url(), "prompt": connect_prompt(key, libraries, None, owner=True)})
+    return _no_store({"key": key, "mcp_url": mcp_url(), "connector_url": connector_url(key),
+                      "prompt": connect_prompt(key, libraries, None, owner=True)})
 
 
 # ---- the owner's friend admin (owner-only at the boundary; a direct loopback caller is the owner)

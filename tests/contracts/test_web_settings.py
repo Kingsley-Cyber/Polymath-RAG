@@ -161,6 +161,7 @@ def test_only_the_owner_gets_the_main_key_with_a_prompt_for_another_computer(wor
         assert r.headers["cache-control"] == "no-store"
         body = r.json()
         assert body["key"] == "main-key-for-copy-0123456789" and body["mcp_url"] == "https://mcp.example.test/mcp"
+        assert body["connector_url"] == "https://mcp.example.test/k/main-key-for-copy-0123456789/mcp"   # CLAUDE-CONNECTOR-URL
         prompt = body["prompt"]
         for needle in ("Authorization: Bearer main-key-for-copy-0123456789", "https://mcp.example.test/mcp", "claude mcp add -s user",
                        'http_headers = { Authorization = "Bearer main-key-for-copy-0123456789" }', "cinema, commerce-v1",

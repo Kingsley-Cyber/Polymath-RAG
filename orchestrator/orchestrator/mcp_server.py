@@ -15,7 +15,8 @@ Tools
   retrieve(query, corpus_id, …)        raw evidence chunks
   ask(question, corpus_id, …)          grounded, cited answer (the chat path)
 
-Auth: Authorization: Bearer <key> on every /mcp request. $POLYMATH_MCP_API_KEY is the OWNER (admin) key; every other
+Auth: Authorization: Bearer <key> on every /mcp request, or the key in the URL (/k/<key>/mcp: claude.ai's custom connector
+cannot send a header; KeyInPath turns it into the same header). $POLYMATH_MCP_API_KEY is the OWNER (admin) key; every other
 caller is a PRINCIPAL from $POLYMATH_MCP_PRINCIPALS_FILE (mcp_principals.py): default-deny action + resource scopes,
 private adapter runs, 401 unknown/revoked key, 403 not permitted, 429 over its rate.
 FAIL-CLOSED (V2): with no key configured the server answers 503 on /mcp
@@ -68,7 +69,10 @@ _SECURITY = TransportSecuritySettings(
     allowed_hosts=_ALLOWED_HOSTS,
     allowed_origins=[f"https://{PUBLIC_HOST}",
                      f"http://127.0.0.1:{PORT}",
-                     f"http://localhost:{PORT}"])
+                     f"http://localhost:{PORT}",
+                     # CLAUDE-CONNECTOR-URL: in case the claude.ai connector's client sends its Origin (not observed; an absent
+                     # Origin already passes). Harmless: every /mcp request still needs a key.
+                     "https://claude.ai", "https://claude.com"])
 
 # HOSTED-SURFACE ISOLATION (migration Phase 13): this ONE process serves Hermes on the loopback listener AND the public
 # hostname through the tunnel. A tool that reads the HOST filesystem is lawful only for a caller that addressed the
@@ -633,10 +637,34 @@ def run_governed_research(adapter_id: str = "", seed: str = "") -> str:
     return HG.prompt_text(adapter_id, seed)
 
 
+# CLAUDE-CONNECTOR-URL (the owner, 2026-10-01: "how do i connect polymath mcp to claude connector i need the url"): claude.ai's
+# custom connector sends no headers, only a URL. https://<host>/k/<key>/mcp carries the key in the path; the OUTERMOST layer moves
+# it into the Authorization header and rewrites the path to /mcp in place, so the access log and every layer below see /mcp, never
+# the key, and the bearer gate judges it exactly like a header key (owner or principal, same scopes, same rate limit).
+_KEY_PATH = re.compile(r"^/k/([A-Za-z0-9._~+=-]{16,256})(/mcp(?:/.*)?)$")
+
+
+class KeyInPath:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http":
+            m = _KEY_PATH.match(scope.get("path") or "")
+            if m:
+                key, rest = m.group(1), m.group(2)
+                scope["path"] = rest                         # in place: uvicorn's access log reads this same dict
+                scope["raw_path"] = rest.encode()
+                scope["headers"] = [(k, v) for k, v in scope.get("headers") or [] if k.lower() != b"authorization"] + [
+                    (b"authorization", b"Bearer " + key.encode())]
+        await self.app(scope, receive, send)
+
+
 def build_app():
     """ASGI app: FastMCP streamable-http + FAIL-CLOSED bearer gate +
-    open /health."""
+    open /health; the key-in-path form for connectors that cannot send a header (KeyInPath)."""
     from starlette.applications import Starlette
+    from starlette.middleware import Middleware
     from starlette.responses import JSONResponse, Response
     from starlette.routing import Mount, Route
 
@@ -785,8 +813,10 @@ def build_app():
 
     app = Starlette(routes=[
         Route("/health", health),
+        # no OAuth here: a connector probing for it gets a plain 404, not the gate's 401 (which reads as "OAuth required")
+        Route("/.well-known/{rest:path}", lambda _request: JSONResponse({"error": "not found"}, status_code=404)),
         Mount("/", app=BearerGate(inner)),
-    ])
+    ], middleware=[Middleware(KeyInPath)])                   # before routing: the key leaves the path before anything logs it
     # the inner app manages the streamable-http session lifecycle
     app.router.lifespan_context = inner.router.lifespan_context
     return app

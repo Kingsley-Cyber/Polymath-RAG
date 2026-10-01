@@ -33,6 +33,7 @@ function route(path: string, init?: RequestInit): Response {
   }
   if (path === "/keys/owner") {
     return Response.json({ key: "main-key-XYZ-0123456789", mcp_url: "https://mcp.example.test/mcp",
+                           connector_url: "https://mcp.example.test/k/main-key-XYZ-0123456789/mcp",
                            prompt: "Connect with Authorization: Bearer main-key-XYZ-0123456789" });
   }
   if (path === "/keys/prompt") {
@@ -202,6 +203,9 @@ it("OWNER-KEY-VISIBLE: the main key stays hidden and unfetched until Show; Copy 
   await act(async () => { (host.querySelector('button[aria-label="Copy prompt with key"]') as HTMLButtonElement).click(); });
   await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
   expect(writeText).toHaveBeenLastCalledWith("Connect with Authorization: Bearer main-key-XYZ-0123456789");
+  await act(async () => { (host.querySelector('button[aria-label="Copy Claude connector URL"]') as HTMLButtonElement).click(); });
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+  expect(writeText).toHaveBeenLastCalledWith("https://mcp.example.test/k/main-key-XYZ-0123456789/mcp");   // CLAUDE-CONNECTOR-URL
   expect(calls.filter((c) => c.path === "/keys/owner")).toHaveLength(1);              // fetched once, then kept
 });
 

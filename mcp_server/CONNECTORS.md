@@ -231,10 +231,14 @@ All three ingest the same remote MCP URL:
 1. Run the HTTP server (above) and expose it over public HTTPS:
    quick test: `cloudflared tunnel --url http://127.0.0.1:7300`
    production: a named cloudflared tunnel on your own domain.
-2. **Claude.ai / Desktop** → Settings → Connectors → Add custom
-   connector → URL `https://<host>/mcp`, auth header
-   `Authorization: Bearer <key>`. (Messages-API alternative: the MCP
-   connector feature calls the same URL server-side with allow/deny
+2. **Claude.ai / Claude Desktop** (CLAUDE-CONNECTOR-URL, 2026-10-01) → Settings → Connectors → Add custom connector → name
+   `Polymath`, URL `https://mcp.kingsleylab.xyz/k/<key>/mcp`, OAuth fields left empty. That dialog cannot send a header, so the
+   key rides in the path: Server A's outermost layer (`KeyInPath`) moves it into `Authorization: Bearer <key>` and rewrites the
+   path to `/mcp` before anything logs it, so the gate judges it exactly like a header key (the owner key = full access; a
+   friend's key = that friend's scopes). The owner copies the finished URL from **Settings → API key for another computer →
+   Copy Claude connector URL**; a friend builds it from their own key. The URL IS the key: whoever holds it has that key's
+   access. `/.well-known/*` answers 404 (no OAuth here), so the connector does not go looking for an OAuth login.
+   (Messages-API alternative: the MCP connector feature calls `https://<host>/mcp` server-side with the header and allow/deny
    tool lists.)
 3. **Grok**: xAI Remote MCP Tools / Connectors — same URL + header.
 4. **ChatGPT**: OpenAI connector flow — same URL + header.

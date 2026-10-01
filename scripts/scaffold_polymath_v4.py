@@ -2571,6 +2571,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-30-owner-key-visible.md", "md", None),
     ("docs/wiki/work-log/2026-09-30-code-wiki-v1.md", "md", None),
     ("docs/wiki/work-log/2026-09-30-receipt-funnel-counts.md", "md", None),
+    ("docs/wiki/work-log/2026-10-01-claude-connector-url.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),
@@ -2590,6 +2591,7 @@ TREE: list[tuple[str, str, str | None]] = [
     # TRAIL-EXT-BUGHUNT-V1 fixes, group acquisition, batch C (B-41, B-42, B-43, B-45, B-46, B-47, B-56, B-63, B-65)
     ("tests/contracts/test_harness_guide_loop_and_receipt.py", "py", None),
     ("tests/contracts/test_mcp_server_hardening.py", "py", None),
+    ("tests/contracts/test_mcp_connector_url.py", "py", None),
     ("docs/wiki/work-log/2026-09-26-trail-ext-fixes-acquisition-c.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-hosted-acquisition.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-audit-fixes.md", "md", None),

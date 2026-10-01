@@ -167,9 +167,12 @@ historical, never an instruction.
    - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
      change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
      `scripts/codewiki/verify.py` (CI runs it).
-   - ON THE BRANCH (11.555): OWNER-KEY-VISIBLE (Settings: the main key for another computer, hidden until Show, owner only).
-   - ON THE BRANCH (11.554): FILES-READY-LABEL (a searchable file reads Ready / Ready · basic profile, never Blocked).
-   - ON THE BRANCH (11.553): ONE-PROFILE — one sign-in (King), a redesigned sign-in page and Settings, sign-ups closed
+   - ON THE BRANCH (11.559): CLAUDE-CONNECTOR-URL — claude.ai's custom connector at `https://mcp.kingsleylab.xyz/k/<key>/mcp`
+     (Settings → Copy Claude connector URL; the key is moved into the header before anything logs it). After the deploy the
+     owner adds it in Claude (Settings → Connectors → Add custom connector); its first `POST /mcp … 200` is the live proof.
+   - LIVE since the 2026-09-30 deploys (11.555): OWNER-KEY-VISIBLE (Settings: the main key for another computer, hidden until Show, owner only).
+   - LIVE (11.554): FILES-READY-LABEL (a searchable file reads Ready / Ready · basic profile, never Blocked).
+   - LIVE (11.553): ONE-PROFILE — one sign-in (King), a redesigned sign-in page and Settings, sign-ups closed
      (`POLYMATH_WEB_SIGNUPS=1` reopens them), `scripts/connect_agents.sh` (connects the Mac's Claude Code + Codex, key read
      locally). OWNER STEP after the deploy: set King's website password on the Mac (Settings, Website password), then run the
      connect command from Settings once.

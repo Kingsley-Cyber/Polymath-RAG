@@ -1,80 +1,94 @@
 # unit: frontend-v2/src/screens/Settings.tsx
-anchor: frontend-v2/src/screens/Settings.tsx:1-348
+anchor: frontend-v2/src/screens/Settings.tsx:1-352
 
 ## purpose
-Settings screen for the frontend-v2 web app. Renders profile, agent-connect instructions/API keys, website password, appearance and deep-research cards, with layout chosen by `me.local` / `me.is_owner` (owner on server vs owner on website vs friend account) — frontend-v2/src/screens/Settings.tsx:324-347. [DERIVED]
+Settings screen for the Polymath web UI (frontend-v2), built around the ONE-PROFILE model: shows who is signed in, lets the owner connect Claude Code/Codex by copy-paste (connect command, main key, prompts), sets the website password, and picks appearance and deep-research options. Non-owner ("friend") accounts instead get a create/revoke API-key card. [DERIVED] — comments at frontend-v2/src/screens/Settings.tsx:53-54, 84-86, 237-238, 325-327.
 
 ## public surface
 | symbol | kind | signature (params -> return) | anchor | used by |
-| Settings | function (only export) | `({ me: Me; onMeChanged: (me: Me) => void; onSignOut: () => void })` -> JSX | frontend-v2/src/screens/Settings.tsx:324 | frontend-v2/src/App.tsx |
+| Settings | function component | ({ me: Me; onMeChanged: (me: Me) => void; onSignOut: () => void }) -> JSX | frontend-v2/src/screens/Settings.tsx:328-351 | frontend-v2/src/App.tsx |
 
-All other components (`CardHead`, `ProfileCard`, `ConnectCard`, `OwnerKeyCard`, `ShownOnce`, `FriendKeysCard`, `OwnerPasswordCard`, `AccountPasswordCard`, `AppearanceCard`, `message`) are module-local — frontend-v2/src/screens/Settings.tsx:14-319. [DERIVED]
+All other helpers (message, CardHead, ProfileCard, ConnectCard, OwnerKeyCard, ShownOnce, FriendKeysCard, OwnerPasswordCard, AccountPasswordCard, AppearanceCard) are module-private — no `export` keyword. [DERIVED] — frontend-v2/src/screens/Settings.tsx:14-323.
 
 ## contracts
 
-**Settings** — frontend-v2/src/screens/Settings.tsx:324-347
-- in: `me: Me`; callbacks `onMeChanged: (me: Me) => void`, `onSignOut: () => void` — :324
-- out: `<div className="screen settings">` with `ProfileCard`, `{first}`, `AppearanceCard`, `DeepResearchSettings` — :335-345
-- pre: `ownerHere = me.local && me.is_owner` — :326; connect = owner ? `ConnectCard`+`OwnerKeyCard` : `FriendKeysCard` — :327-329; password = ownerHere ? `OwnerPasswordCard` : (`!me.local` ? `AccountPasswordCard` : `null`) — :330-332
-- post: order is `[password, connect]` when `ownerHere && !passwordSet`, else `[connect, password]` — :333; `OwnerPasswordCard.onSaved` sets `passwordSet` true and reorders — :331, :325
+### Settings — frontend-v2/src/screens/Settings.tsx:328-351
+- in: `me: Me` (reads `display_name`, `username`, `local`, `is_owner`, `web_password_set`), `onMeChanged: (me: Me) => void`, `onSignOut: () => void` — frontend-v2/src/screens/Settings.tsx:328, 33-35, 329-330 [DERIVED]
+- out: ProfileCard, then connect cards, then a password card (conditionally), then AppearanceCard, then DeepResearchSettings — frontend-v2/src/screens/Settings.tsx:344-347 [DERIVED]
+- post: `ownerHere = me.local && me.is_owner`; owner gets `ConnectCard` + `OwnerKeyCard`, everyone else `FriendKeysCard`; password card renders FIRST while `ownerHere && !passwordSet` (`first = ownerHere && !passwordSet ? [password, connect] : [connect, password]`) and drops back after save sets `passwordSet` — frontend-v2/src/screens/Settings.tsx:330-337 [DERIVED]
 
-**OwnerKeyCard** — frontend-v2/src/screens/Settings.tsx:87-147
-- fetches `auth.ownerKey()` lazily; cached: `if (data) return data` — :94-98; never fetched on page load — :88-91, :116-119
-- out: masked value `shown && data ? data.key : masked` — :129
+### OwnerKeyCard — frontend-v2/src/screens/Settings.tsx:87-151
+- out: main key masked as `"•".repeat(24)` until Show; copy buttons for key / prompt / server address / Claude connector URL — frontend-v2/src/screens/Settings.tsx:121, 129-147 [DERIVED]
+- post: key fetched lazily — `load()` is called only from `copy()` and `toggle()`, never on mount — frontend-v2/src/screens/Settings.tsx:93-119 [DERIVED]
 
-**FriendKeysCard** — frontend-v2/src/screens/Settings.tsx:170-231
-- in: none; lists `auth.keys(s)` keyed by `nonce` — :173, :172
-- create sends `label.trim()`, max `maxLength={60}` — :184, :208; revoke requires confirm dialog — :195
-
-**OwnerPasswordCard** — frontend-v2/src/screens/Settings.tsx:235-275
-- submits `auth.setOwnerPassword(pw)`, disabled when `busy || pw.length === 0` — :245, :267
+### FriendKeysCard — frontend-v2/src/screens/Settings.tsx:174-235
+- in: none; loads via `auth.keys(s)` keyed by a `nonce` state — frontend-v2/src/screens/Settings.tsx:176-177 [DERIVED]
+- post: create and revoke both bump `nonce` to refetch the list — frontend-v2/src/screens/Settings.tsx:190, 201 [DERIVED]
 
 ## effect surface
-- Network (all via `../lib/auth`): `auth.prompt(s)` :56; `auth.ownerKey()` :97; `auth.keys(s)` :173; `auth.createKey(label.trim())` :184; `auth.revokeKey(k.key_id)` :197; `auth.setOwnerPassword(pw)` :245.
-- Clipboard: `copyText(...)` for key/prompt/mcp_url — :110.
-- Browser-local appearance state via `useAppearance()` — :292.
-- Postgres tables: none (FACTS.tables_read/tables_written empty). Env: none read here; `"POLYMATH_MCP_API_KEY in its .env"` appears only inside an error-message string — :102.
+No Postgres tables, Qdrant collections, files, or subprocesses — FACTS `tables_read: []`, `tables_written: []` and the import list contains no db/storage client — frontend-v2/src/screens/Settings.tsx:1-12 [DERIVED].
+
+| effect | detail | anchor |
+| network | `auth.prompt(s)` | frontend-v2/src/screens/Settings.tsx:56 |
+| network | `auth.ownerKey()` | frontend-v2/src/screens/Settings.tsx:97 |
+| network | `auth.keys(s)` | frontend-v2/src/screens/Settings.tsx:177 |
+| network | `auth.createKey(label.trim())` | frontend-v2/src/screens/Settings.tsx:188 |
+| network | `auth.revokeKey(k.key_id)` | frontend-v2/src/screens/Settings.tsx:201 |
+| network | `auth.setOwnerPassword(pw)` | frontend-v2/src/screens/Settings.tsx:249 |
+| clipboard | `copyText({ key, prompt, url, connector }[what])` | frontend-v2/src/screens/Settings.tsx:110 |
+| timer | `setTimeout(() => setCopied(""), 2000)` | frontend-v2/src/screens/Settings.tsx:113 |
+| browser storage | `useAppearance` — mode/accent, "stored in this browser" | frontend-v2/src/screens/Settings.tsx:294-296 |
+| env (server-side, named in UI string only) | `POLYMATH_MCP_API_KEY` in the server's `.env` | frontend-v2/src/screens/Settings.tsx:102 |
 
 ## invariants
-INVARIANT: masked key display length == 24 — `"•".repeat(24)` :121 vs real key length (unknown); fails-if: masked width leaks/implies wrong key length. [DERIVED]
-INVARIANT: `copied` resets after 2000 ms — `setTimeout(() => setCopied(""), 2000)` :113; fails-if: stuck "Copied" label. [DERIVED]
-INVARIANT: label input max == 60 chars — `maxLength={60}` :208; fails-if: longer labels reach `auth.createKey` truncated or rejected elsewhere. [DERIVED]
-INVARIANT: create disabled when `max != null && active.length >= max` — :210 with `active = keys.filter(k => !k.revoked_at)` :178 and `max = keys.data?.max_active ?? null` :179; fails-if: KEY_LIMIT error at :188. [DERIVED]
-INVARIANT: initials length <= 2 — `.slice(0, 2).toUpperCase() || "?"` :34; fails-if: avatar overflow for 3+ word names. [DERIVED]
-INVARIANT: `ownerKey` fetched at most once per mount — cache check :94; fails-if: repeated network calls / error flicker per button press. [DERIVED]
+INVARIANT: masked key length == 24 (`"•".repeat(24)`) — frontend-v2/src/screens/Settings.tsx:121 [DERIVED]
+  fails-if: mask stops suggesting real key length; cosmetic only.
+INVARIANT: copied-feedback timeout == 2000 ms — frontend-v2/src/screens/Settings.tsx:113 [DERIVED]
+  fails-if: "Copied" label sticks or clears too early.
+INVARIANT: create disabled iff `max != null && active.length >= max`, where active = keys with `!k.revoked_at` — frontend-v2/src/screens/Settings.tsx:214, 182 [DERIVED]
+  fails-if: over-limit create reaches the server and surfaces `KEY_LIMIT` — frontend-v2/src/screens/Settings.tsx:192.
+INVARIANT: label input `maxLength={60}` — frontend-v2/src/screens/Settings.tsx:212 [DERIVED]
+INVARIANT: initials length <= 2, uppercase, fallback `"?"` — frontend-v2/src/screens/Settings.tsx:34 [DERIVED]
+INVARIANT: owner key fetched only on first Show or Copy (`load()` reachable only from `copy()`/`toggle()`) — frontend-v2/src/screens/Settings.tsx:93-119 [DERIVED]
+  fails-if: key leaves the server on page load, breaking the privacy contract at frontend-v2/src/screens/Settings.tsx:84-86.
+INVARIANT: password card precedes connect cards iff `ownerHere && !passwordSet` — frontend-v2/src/screens/Settings.tsx:337 [DERIVED]
+  fails-if: owner misses the mandatory password step ("nothing on the website works without it") — frontend-v2/src/screens/Settings.tsx:325-327.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (network :56, :97, :173, :184, :197, :245; timer :113)
-idempotency: UNSAFE (`auth.createKey` mints a new key per call :184; `auth.revokeKey` is one-way :197; copy/show/render paths are SAFE — load is cached :94)
+determinism: NONDETERMINISTIC (network via `auth.*` — frontend-v2/src/screens/Settings.tsx:56, 97, 177, 188, 201, 249; clipboard — frontend-v2/src/screens/Settings.tsx:110; timer — frontend-v2/src/screens/Settings.tsx:113; browser-stored appearance — frontend-v2/src/screens/Settings.tsx:296)
+idempotency: UNSAFE (`auth.createKey` mints a new key per submit — frontend-v2/src/screens/Settings.tsx:188; revoke is gated by a confirm dialog because "Agents using this key stop working at once" — frontend-v2/src/screens/Settings.tsx:199-200)
 
 ## failure behaviour
-- `ApiError.code === "OWNER_KEY_NOT_SET"` → message `"The server has no main key yet (POLYMATH_MCP_API_KEY in its .env)."` — :101-102
-- `ApiError.code === "KEY_LIMIT"` → `` `You already have ${max} active keys: revoke one first.` `` — :188
-- clipboard blocked → `"The browser blocked copying: click Show, select the key and press ⌘C."` — :111
-- generic: `message(err)` = `err instanceof ApiError ? err.detailMessage : String(err)` — :14-16; all swallowed into `setError`/banner, callers never see throws — :61, :127, :197, :205, :250/:272
-- success path shown as `banner banner--ok` with `role="status"` — :271; errors as `banner banner--bad` with `role="alert"` — :61, :127, :205, :272
+- `message(err)`: `ApiError` → `err.detailMessage`, else `String(err)` — frontend-v2/src/screens/Settings.tsx:14-16 [DERIVED]
+- `err.code === "OWNER_KEY_NOT_SET"` → "The server has no main key yet (POLYMATH_MCP_API_KEY in its .env)." — frontend-v2/src/screens/Settings.tsx:101-102 [DERIVED]
+- `err.code === "KEY_LIMIT"` → `` `You already have ${max} active keys: revoke one first.` `` — frontend-v2/src/screens/Settings.tsx:192 [DERIVED]
+- Clipboard rejection → "The browser blocked copying: click Show, select the key and press ⌘C." — frontend-v2/src/screens/Settings.tsx:111 [DERIVED]
+- All errors render as `banner banner--bad` with `role="alert"` — frontend-v2/src/screens/Settings.tsx:61, 127, 209, 276; success uses `banner banner--ok` with `role="status"` — frontend-v2/src/screens/Settings.tsx:275 [DERIVED]
+- Revoke failure → `setError(message(err))`, list not refetched — frontend-v2/src/screens/Settings.tsx:201 [DERIVED]
 
 ## dumb-code flags
-- Magic numbers: `24` mask :121, `2000` ms :113, `60` maxLength :208, `rows={12}` :162.
-- Username `"King"` hardcoded in two UI strings — :247, :260 (also in comment :233) while the account itself is data (`me.username` :281).
-- Three near-identical copy buttons (key/prompt/url) duplicated in OwnerKeyCard — :133-135, :138-139, :141-142.
-- `ACCENT_LABEL`/`MODE_LABEL` literal records (`indigo/teal/amber/rose`, `light/dark/system`) duplicate the type domain from `../lib/appearance` — :287-288; adding an Accent there requires editing here.
-- `pill--ready`/`pill--degraded` classes reused to mean set/not-set — :261.
+- Magic numbers: 24 (mask — frontend-v2/src/screens/Settings.tsx:121), 2000 ms (frontend-v2/src/screens/Settings.tsx:113), maxLength 60 (frontend-v2/src/screens/Settings.tsx:212), initials `slice(0, 2)` (frontend-v2/src/screens/Settings.tsx:34), `rows={12}` on the Secret prompt (frontend-v2/src/screens/Settings.tsx:198), icon sizes 18/15 hardcoded (frontend-v2/src/screens/Settings.tsx:21, 47).
+- Duplicated literal: title "Website password" on both OwnerPasswordCard (frontend-v2/src/screens/Settings.tsx:263) and AccountPasswordCard (frontend-v2/src/screens/Settings.tsx:285).
+- Foreign class reuse: revoke button uses `btn files__del`, a Files-screen class, inside Settings — frontend-v2/src/screens/Settings.tsx:227.
+- Four near-identical copy buttons in OwnerKeyCard differing only in `what`/icon/label — frontend-v2/src/screens/Settings.tsx:133-146.
+- Icon "plug" shared by ConnectCard, FriendKeysCard, and the connector button — frontend-v2/src/screens/Settings.tsx:59, 207, 145.
+- Legacy branch: FriendKeysCard still served for "an account made before ONE-PROFILE" despite the ONE-PROFILE comments — frontend-v2/src/screens/Settings.tsx:173, 325.
 
 ## refactor notes
-- `Settings` signature is consumed by `frontend-v2/src/App.tsx` (FACTS.importers) — changing props/:324 ripples into App.tsx.
-- `ChangePassword` is imported from `./Login` :39 — moving it touches both screens (used at :282).
-- Error-code strings `"OWNER_KEY_NOT_SET"` :101 and `"KEY_LIMIT"` :188 are a contract with the server/`ApiError`; changing one side silently degrades to the generic `message(err)` — :14-16.
-- Data shapes assumed: `OwnerKey { key, prompt, mcp_url }` :110/:129; `CreatedKey { key, prompt, label }` :157-162; `ApiKey { key_id, label, created_at, revoked_at }` :218-224; `Me { local, is_owner, username, display_name, web_password_set }` :34/:74/:325-326.
-- Design-marker comments (ONE-PROFILE, OWNER-KEY-VISIBLE, dated 2026-09-28/2026-09-30) document owner decisions tied to this layout — :53-54, :84-86, :321-323.
+- `Settings` is the only export and App.tsx its only importer — prop-signature changes require updating frontend-v2/src/App.tsx — frontend-v2/src/screens/Settings.tsx:328, FACTS.importers.
+- Binds the full auth client surface: `prompt`, `ownerKey`, `keys`, `createKey`, `revokeKey`, `setOwnerPassword`, `copyText`, `privateLibrary` plus types `ApiKey`/`CreatedKey`/`Me`/`OwnerKey` — frontend-v2/src/screens/Settings.tsx:6, 56, 97, 177, 188, 201, 249.
+- Server error-code strings `"OWNER_KEY_NOT_SET"` and `"KEY_LIMIT"` are hard dependencies — frontend-v2/src/screens/Settings.tsx:101, 192.
+- `ChangePassword` is imported from Login.tsx — moving it touches both screens — frontend-v2/src/screens/Settings.tsx:7.
+- Card ordering and password-card selection depend on `Me.local`, `Me.is_owner`, `Me.web_password_set` semantics — frontend-v2/src/screens/Settings.tsx:329-337.
+- OwnerKeyCard's lazy-fetch privacy contract must survive any refactor — frontend-v2/src/screens/Settings.tsx:84-86, 93-119.
 
 ## VERIFY
 ```verify
 grep -Fq 'export function Settings' frontend-v2/src/screens/Settings.tsx
 grep -Fq 'OWNER_KEY_NOT_SET' frontend-v2/src/screens/Settings.tsx
 grep -Fq 'KEY_LIMIT' frontend-v2/src/screens/Settings.tsx
+grep -Fq 'POLYMATH_MCP_API_KEY' frontend-v2/src/screens/Settings.tsx
 grep -Fq '"•".repeat(24)' frontend-v2/src/screens/Settings.tsx
-grep -Fq 'setTimeout(() => setCopied(""), 2000)' frontend-v2/src/screens/Settings.tsx
-! grep -Fq 'useEffect' frontend-v2/src/screens/Settings.tsx
-test "$(grep -c -F 'auth.' frontend-v2/src/screens/Settings.tsx)" -ge 6
+test "$(grep -c -F 'banner banner--bad' frontend-v2/src/screens/Settings.tsx)" -ge 4
+! grep -Fq 'export default' frontend-v2/src/screens/Settings.tsx
 ```

@@ -53,6 +53,8 @@ export interface ConnectPrompt {
 export interface OwnerKey {
   key: string;
   mcp_url: string;
+  /** The URL for claude.ai's "Add custom connector" (the key rides in the path: that dialog cannot send a header). */
+  connector_url: string;
   prompt: string;
 }
 

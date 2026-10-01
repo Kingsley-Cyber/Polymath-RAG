@@ -87,7 +87,7 @@ function ConnectCard() {
 function OwnerKeyCard() {
   const [data, setData] = useState<OwnerKey | null>(null);
   const [shown, setShown] = useState(false);
-  const [copied, setCopied] = useState<"" | "key" | "prompt" | "url">("");
+  const [copied, setCopied] = useState<"" | "key" | "prompt" | "url" | "connector">("");
   const [error, setError] = useState("");
 
   async function load(): Promise<OwnerKey | null> {
@@ -104,10 +104,10 @@ function OwnerKeyCard() {
     }
   }
 
-  async function copy(what: "key" | "prompt" | "url") {
+  async function copy(what: "key" | "prompt" | "url" | "connector") {
     const d = await load();
     if (!d) return;
-    const ok = await copyText(what === "key" ? d.key : what === "prompt" ? d.prompt : d.mcp_url);
+    const ok = await copyText({ key: d.key, prompt: d.prompt, url: d.mcp_url, connector: d.connector_url }[what]);
     if (!ok) { setError("The browser blocked copying: click Show, select the key and press ⌘C."); return; }
     setCopied(what);
     setTimeout(() => setCopied(""), 2000);
@@ -141,7 +141,11 @@ function OwnerKeyCard() {
         <button type="button" className="btn" aria-label={copied === "url" ? "Copied" : "Copy server address"} onClick={() => void copy("url")}>
           <Icon name={copied === "url" ? "check" : "copy"} size={15} />{copied === "url" ? "Copied" : "Copy server address"}
         </button>
+        <button type="button" className="btn" aria-label={copied === "connector" ? "Copied" : "Copy Claude connector URL"} onClick={() => void copy("connector")}>
+          <Icon name={copied === "connector" ? "check" : "plug"} size={15} />{copied === "connector" ? "Copied" : "Copy Claude connector URL"}
+        </button>
       </div>
+      <p className="settings__lead">Claude app or claude.ai: Settings → Connectors → Add custom connector, paste the connector URL. It contains the key, so treat it like the key.</p>
     </section>
   );
 }
