@@ -981,8 +981,12 @@ def _retrieve_gnn(query: str, corpus_id: str, **kw) -> dict:
     out["meta"]["mode"] = MODE_GNN
     out["meta"]["gnn"] = {**gnn, "mode": MODE_GNN, "arrival": ARRIVAL_GNN_ROUTE}
     if gnn.get("degraded") or not gnn.get("candidates"):
-        out["meta"]["degraded"] = {"component": "gnn_route", "code": gnn.get("code") or "GNN_NO_CANDIDATES",
-                                   "message": gnn.get("degraded") or "the GNN route nominated no original children"}
+        # GNN-DEGRADED-LIST (2026-10-01): meta.degraded is a LIST of {component, code, message} everywhere else (_attach_graph,
+        # the composer); assigning a dict here crashed every consumer that iterates it (ui.py: 'str' object has no attribute
+        # 'get') — a GNN turn on a library without its GNN index answered 500 instead of this typed degraded receipt
+        out["meta"]["degraded"] = list(out["meta"].get("degraded") or []) + [{
+            "component": "gnn_route", "code": gnn.get("code") or "GNN_NO_CANDIDATES",
+            "message": gnn.get("degraded") or "the GNN route nominated no original children"}]
     return out
 
 

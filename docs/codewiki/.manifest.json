@@ -3760,7 +3760,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "a75efe4efcadd509",
+  "input_hash": "91c1f2e9cc7f8fa3",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4254,7 +4254,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "90118fa6b1ee9593",
+  "input_hash": "38d59cd978be5e29",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4280,8 +4280,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "080d7ee3b2b14037",
+  "generated": "2026-10-01",
+  "input_hash": "53b5c99ed6dcb61d",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4307,8 +4307,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "ed7d01392b2447ff",
+  "generated": "2026-10-01",
+  "input_hash": "c1e98f94e4916c9a",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4430,11 +4430,11 @@
   "status": "ok"
  },
  "units/orchestrator/orchestrator/api/chat_retrieval.py.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "c4d02af91ffd2476",
+  "generated": "2026-10-01",
+  "input_hash": "1145ea4e6d5d4d4b",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5024,11 +5024,11 @@
   "status": "ok"
  },
  "units/shared/polymath_shared/control_plane_status.py.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "3541d3d6777a16bb",
+  "input_hash": "2c237f0293130ea8",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5829,7 +5829,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "e95f4f9e61155814",
+  "input_hash": "cbb4a92c538eac35",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

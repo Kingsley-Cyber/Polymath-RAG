@@ -43,17 +43,25 @@ export function semanticReady(sr: SemanticReadiness | null): Verdict {
     : { state: "blocked", label: sr.verdict };
 }
 
-/** VNEXT READY — can this corpus answer from source? */
+/** VNEXT READY — can this corpus answer from source? LIBRARY-READY-LABEL (the owner, 2026-10-01: "why is a corpus for taste
+ *  showing files as red"): the per-file rule (`docSearchable`) at library level — every parent mapped and every file profiled
+ *  means the library is searchable and only the richer vNext profiles are missing: amber, never red. Red stays for a library
+ *  retrieval would miss part of (unresolved parents, a file with no profile). The backend verdict itself is unchanged. */
 export function vnextReady(sr: SemanticReadiness | null): Verdict {
   if (!sr?.vnext) return { state: "unknown", label: "UNKNOWN" };
-  const p = sr.vnext.parents;
+  const v = sr.vnext;
+  const p = v.parents;
   const detail = p
     ? `${p.mapped.toLocaleString()}/${p.eligible.toLocaleString()} parents mapped` +
       (p.unresolved ? ` · ${p.unresolved.toLocaleString()} unresolved` : "")
     : undefined;
-  return sr.vnext.verdict === "VNEXT_COMPLETE"
-    ? { state: "ready", label: sr.vnext.verdict, detail }
-    : { state: "blocked", label: sr.vnext.verdict, detail };
+  if (v.verdict === "VNEXT_COMPLETE") return { state: "ready", label: v.verdict, detail };
+  const docs = v.documents ?? 0;
+  if (p && p.unresolved === 0 && docs > 0 && typeof v.profiled === "number" && v.profiled >= docs) {
+    return { state: "degraded", label: "SEARCHABLE · BASIC PROFILES",
+             detail: `${(v.vnext_profiles ?? 0).toLocaleString()}/${docs.toLocaleString()} files have the vNext profile · ${detail}` };
+  }
+  return { state: "blocked", label: v.verdict, detail };
 }
 
 /** FILES-READY-LABEL (the owner, 2026-09-29: "why are files blocked?") — a file whose parents are all mapped and which has a

@@ -19,7 +19,7 @@ AUTHORITY: `shared/polymath_shared/generation.py:23` :: `IN_FLIGHT_STATUSES` (co
 | `control/control/scheduler.py` | `control/control/scheduler.py:111` | 3/3 | — |
 | `control/control/tickets.py` | `control/control/tickets.py:25` | 3/3 | — |
 | `shared/polymath_shared/contracts.py` | `shared/polymath_shared/contracts.py:393` | 3/3 | — |
-| `shared/polymath_shared/control_plane_status.py` | `shared/polymath_shared/control_plane_status.py:139` | 3/3 | — |
+| `shared/polymath_shared/control_plane_status.py` | `shared/polymath_shared/control_plane_status.py:143` | 3/3 | — |
 | `shared/polymath_shared/receipts.py` | `shared/polymath_shared/receipts.py:213` | 3/3 | — |
 
 ## VERIFY

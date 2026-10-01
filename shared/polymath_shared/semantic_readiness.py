@@ -67,6 +67,14 @@ def vnext_readiness(conn, corpus_id: str, documents: int) -> dict:
             "AND a.payload->'doc_profile'->>'vnext'='true'", (corpus_id,)).fetchone()[0]
     except Exception as exc:  # noqa: BLE001 — availability-neutral; never blocks the legacy verdict
         return {"verdict": VNEXT_NOT_STARTED, "reason": f"read_error:{type(exc).__name__}"}
+    # LIBRARY-READY-LABEL (2026-10-01): documents with ANY profile (base or vNext) — display only, so the library badge can say
+    # "searchable, basic profiles" instead of red. Its own read: a failure leaves it None and never touches the verdict below.
+    try:
+        profiled = conn.execute(
+            "SELECT COUNT(DISTINCT a.payload->'doc_profile'->>'doc_id') FROM artifacts a "
+            "JOIN runs r ON r.run_id=a.run_id WHERE r.corpus_id=%s AND a.stage='doc_profile'", (corpus_id,)).fetchone()[0]
+    except Exception:  # noqa: BLE001 — display-only count
+        profiled = None
     unresolved = max(0, eligible - mapped - excluded)
     reasons: list[str] = []
     if unresolved:
@@ -81,7 +89,7 @@ def vnext_readiness(conn, corpus_id: str, documents: int) -> dict:
         verdict = VNEXT_INCOMPLETE
     return {"verdict": verdict, "pending": reasons,
             "parents": {"eligible": eligible, "mapped": mapped, "excluded": excluded, "unresolved": unresolved},
-            "vnext_profiles": vnext_profiles, "documents": documents}
+            "vnext_profiles": vnext_profiles, "profiled": profiled, "documents": documents}
 
 
 def semantic_completion(conn, corpus_id: str) -> dict:

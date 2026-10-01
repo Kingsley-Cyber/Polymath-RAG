@@ -72,9 +72,9 @@ def test_corpus_summaries_apply_vnext_ready_rule():
 def test_control_plane_status_four_pools_and_refused_vs_429():
     cp = CPS.control_plane_status(_Conn(), corpus_id="c")
     assert cp["summary"] == {
-        "documents": 2, "semantic_ready": 1,
+        "documents": 2, "semantic_ready": 1, "basic_profile": 0,
         "processing": 1, "processing_active": 1, "processing_stalled": 0,
-        "blocked": 1,
+        "blocked": 1,                                       # docB: 4 unresolved parents — retrieval misses part of it
     }
     # GAP-1: composed once, here — never left for the UI to derive from two calls.
     assert cp["control_ready"]["state"] == "ready"
@@ -90,6 +90,32 @@ def test_control_plane_status_four_pools_and_refused_vs_429():
     assert cp["pools"]["PMAP"]["processing"] == 1
     # CHAT is a latency pool, not an ingestion queue
     assert cp["pools"]["CHAT"].get("latency_pool") is True
+
+
+class _BaseProfileConn(_Conn):
+    """docB fully mapped with only the BASE profile (the fleet's default since 2026-09-17), docC never profiled."""
+    def execute(self, sql, params=()):
+        s = " ".join(sql.split())
+        if "SELECT doc_id FROM documents WHERE corpus_id" in s:
+            return _Cur([("docA",), ("docB",), ("docC",)])
+        if "child_count, parent_count, map_eligible_count" in s:
+            return _Cur([("docA", 8, 3, 3), ("docB", 6, 5, 5), ("docC", 4, 2, 2)])
+        if "COUNT(DISTINCT parent_id) FROM document_parent_maps" in s:
+            return _Cur([("docA", 3), ("docB", 5), ("docC", 2)])
+        if "a.stage='doc_profile'" in s and "DISTINCT ON" in s:
+            return _Cur([("docA", "true"), ("docB", "false")])
+        if "a.stage='extract'" in s and "DISTINCT ON" in s:
+            return _Cur([])
+        return super().execute(sql, params)
+
+
+def test_a_searchable_file_without_the_vnext_profile_is_not_counted_blocked():
+    """LIBRARY-READY-LABEL (the owner, 2026-10-01: "why is a corpus for taste showing files as red"): the summary follows the
+    per-file rule — mapped + any profile = searchable; only a file retrieval would miss part of is blocked."""
+    cp = CPS.control_plane_status(_BaseProfileConn(), corpus_id="c")
+    s = cp["summary"]
+    assert (s["documents"], s["semantic_ready"], s["basic_profile"], s["blocked"]) == (3, 1, 1, 1)     # docA vNext, docB basic, docC no profile
+    assert s["semantic_ready"] + s["basic_profile"] + s["blocked"] == s["documents"]
 
 
 def test_pool_lanes_detail_is_secret_free_and_model_grouped():

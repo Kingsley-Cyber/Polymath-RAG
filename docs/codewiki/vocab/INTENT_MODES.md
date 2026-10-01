@@ -12,7 +12,7 @@ AUTHORITY: `orchestrator/orchestrator/api/retrieve.py:123` :: `INTENT_MODES` (co
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `frontend-v2/src/lib/contracts.ts` | `frontend-v2/src/lib/contracts.ts:177` | 3/3 | — |
+| `frontend-v2/src/lib/contracts.ts` | `frontend-v2/src/lib/contracts.ts:181` | 3/3 | — |
 | `orchestrator/orchestrator/api/compare_review.py` | `orchestrator/orchestrator/api/compare_review.py:37` | 3/3 | — |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1290` | 3/3 | — |
 | `shared/polymath_shared/adapter/evidence_boundary.py` | `shared/polymath_shared/adapter/evidence_boundary.py:44` | 3/3 | — |

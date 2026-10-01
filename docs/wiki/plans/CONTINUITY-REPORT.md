@@ -167,6 +167,8 @@ historical, never an instruction.
    - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
      change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
      `scripts/codewiki/verify.py` (CI runs it).
+   - ON THE BRANCH (11.565): LIBRARY-READY-LABEL — a library searchable on basic profiles reads amber, not red (vNext card +
+     Control Plane summary); GNN-DEGRADED-LIST — a GNN turn without a GNN index answers with a typed degradation, not 500.
    - LIVE (`602528a8`, 11.564): everything below is deployed, pushed and served through Cloudflare; the MCP tools report an
      executed FAST turn as FAST (11.563). Local = GitHub = public; nothing on the branch waits for a deploy.
    - LIVE (`f7d893d4`, 11.562, proven 11.563): MCP-RETRIEVAL-MODES-V1 — the MCP query tools offer the app's five modes (FAST / HYBRID / GRAPH /

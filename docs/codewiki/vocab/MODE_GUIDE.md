@@ -12,7 +12,7 @@ AUTHORITY: `shared/polymath_shared/mcp_retrieval.py:21` :: `MODE_GUIDE` (count: 
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `frontend-v2/src/lib/contracts.ts` | `frontend-v2/src/lib/contracts.ts:176` | 5/5 | — |
+| `frontend-v2/src/lib/contracts.ts` | `frontend-v2/src/lib/contracts.ts:180` | 5/5 | — |
 | `orchestrator/orchestrator/api/compare_review.py` | `orchestrator/orchestrator/api/compare_review.py:37` | 5/5 | — |
 | `orchestrator/orchestrator/api/retrieve.py` | `orchestrator/orchestrator/api/retrieve.py:123` | 4/5 | `FAST` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1290` | 5/5 | — |

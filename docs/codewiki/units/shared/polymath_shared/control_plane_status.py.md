@@ -1,93 +1,88 @@
 # unit: shared/polymath_shared/control_plane_status.py
-anchor: shared/polymath_shared/control_plane_status.py:1-179
+anchor: shared/polymath_shared/control_plane_status.py:1-184
 
 ## purpose
-Read-only, corpus-scoped aggregate of functional-pool ingestion health for the operational UI: document summary, per-pool queue depth, lane health, and provider-request accounting — explicitly separating local `limiter_refused` (0 HTTP) from real `http_429` (GROQ-MAP-CONTROL-PLANE-REPAIR-V1) — shared/polymath_shared/control_plane_status.py:1-13 [DERIVED]. Every counter is one corpus-scoped aggregate query, never per-document scans; this module is the single backend authority the UI renders, never recomputes — shared/polymath_shared/control_plane_status.py:10-13 [DERIVED].
+Read-only, corpus-scoped aggregate of functional-pool health for the operational UI: document summary (documents / semantic-ready / processing / blocked) plus per-pool (GRAPH_EXTRACTION, DOCUMENT_PROFILE, PMAP, CHAT) queue depth, lane health, and provider-request accounting — distinguishing local `limiter_refused` (0 HTTP) from real `http_429` — shared/polymath_shared/control_plane_status.py:1-13 [DERIVED]. Single backend authority; the UI renders it, never recomputes it — shared/polymath_shared/control_plane_status.py:11-12 [DERIVED]. Sole known importer: `orchestrator/orchestrator/api/ui.py` (module-level, from FACTS.importers).
 
 ## public surface
+
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `control_plane_status` | def | `(conn, *, corpus_id: str, sidecars: dict[str, bool] \| None = None) -> dict[str, Any]` | shared/polymath_shared/control_plane_status.py:123-179 | orchestrator/orchestrator/api/ui.py |
-| `pool_lanes_detail` | def | `(conn, *, function: str) -> dict[str, Any]` | shared/polymath_shared/control_plane_status.py:89-120 | orchestrator/orchestrator/api/ui.py [INFERRED: module-level importer per FACTS; exact symbol not in FACTS] |
+| `control_plane_status` | def | (conn, *, corpus_id: str, sidecars: dict[str, bool] \| None = None) -> dict[str, Any] | shared/polymath_shared/control_plane_status.py:123-183 | orchestrator/orchestrator/api/ui.py (module import) |
+| `pool_lanes_detail` | def | (conn, *, function: str) -> dict[str, Any] | shared/polymath_shared/control_plane_status.py:89-120 | orchestrator/orchestrator/api/ui.py (module import) |
 
-Internal: `_queue_by_pool` (30-49), `_pmap_provider` (52-63), `_graph_provider` (66-86); constants `CONTROL_PLANE_STATUS_VERSION` (19), `_POOL_STAGES` (22-26), `_ALL_STAGES` (27).
+Module-private helpers, internal only: `_queue_by_pool` :30-49, `_pmap_provider` :52-63, `_graph_provider` :66-86.
 
 ## contracts
 
-### `control_plane_status`
-- in: keyword-only `corpus_id: str`; optional `sidecars: dict[str, bool] | None = None` — shared/polymath_shared/control_plane_status.py:123-124 [DERIVED]
-- out: keys `"contract"` (= `CONTROL_PLANE_STATUS_VERSION`), `"corpus_id"`, `"control_ready"`, `"summary"` (`documents`, `semantic_ready`, `processing`, `processing_active`, `processing_stalled`, `blocked`), `"pools"` (`GRAPH_EXTRACTION`, `DOCUMENT_PROFILE`, `PMAP`, `CHAT`) — shared/polymath_shared/control_plane_status.py:169-179 [DERIVED]
-- pre: `conn` executes `%s`-placeholder SQL with tuple params (psycopg-style) — shared/polymath_shared/control_plane_status.py:33-35 [INFERRED: every query uses `%s` + `ANY(%s)`]
-- post: CHAT pool carries `"latency_pool": True`; GRAPH_EXTRACTION and PMAP pools carry a `"provider"` dict, DOCUMENT_PROFILE does not — shared/polymath_shared/control_plane_status.py:162-168 [DERIVED]
-- post: control-ready verdict is composed exactly once via `control_ready(conn, sidecars=sidecars)`; callers render `control_ready.state` and never derive it — shared/polymath_shared/control_plane_status.py:172-174 [DERIVED]
+**control_plane_status** — shared/polymath_shared/control_plane_status.py:123-183
+- in: `conn` (DB `.execute`), keyword-only `corpus_id: str`, keyword-only `sidecars: dict[str, bool] | None = None` (:123-124).
+- out: dict keys `contract` (= `"control-plane-status-v1"` :19, :174), `corpus_id` (:175), `control_ready` (:178), `summary` {documents, semantic_ready, basic_profile, processing, processing_active, processing_stalled, blocked} (:179-181), `pools` {GRAPH_EXTRACTION, DOCUMENT_PROFILE, PMAP, CHAT} (:166-171); CHAT carries `"latency_pool": True` (:171).
+- pre: readable schema — `stage_tickets(corpus_id, stage, status, attempt)` (:33-34), `artifacts(run_id, stage, payload, extract_*) + extract_stats_present` (:58-59, :77-82), `runs(run_id, corpus_id, status, updated_at, superseded_by_run_id)` (:58, :81, :140-145).
+- post: the one control-ready verdict composed here via `pipeline_health.control_ready(conn, sidecars=sidecars)`; callers render `control_ready.state`, never derive it (:126, :177-178).
 
-### `pool_lanes_detail`
-- in: keyword-only `function: str` — shared/polymath_shared/control_plane_status.py:89 [DERIVED]
-- out: `{"function": function, "models": [{"model": m, "lanes": [...]}]}` with models `sorted()` — shared/polymath_shared/control_plane_status.py:120 [DERIVED]
-- post: each lane exposes `lane`, `account_env`, `configured`, `reachability`, `role`, `family`, `capacity` (`rpm`, `tpm`, `rpd`, `concurrency`, `map_batch_cap`), `live` (`day_count`, `effective`, `ceiling`, `decreases`, `increases`, `last_updated`) — shared/polymath_shared/control_plane_status.py:113-118 [DERIVED]
-- post: credential is the ENV NAME only (`l.api_key_env`), never the value — shared/polymath_shared/control_plane_status.py:90-92, 114 [DERIVED]
+**pool_lanes_detail** — shared/polymath_shared/control_plane_status.py:89-120
+- in: `conn`, keyword-only `function: str` (pool name, e.g. matched against `l.function`) (:89, :97).
+- out: `{"function": function, "models": [{"model": m, "lanes": [...]}]}`, models sorted (:110-120); each lane: `lane`, `account_env`, `configured`, `reachability`, `role`, `family`, `capacity` {rpm, tpm, rpd, concurrency, map_batch_cap}, `live` {day_count, effective, ceiling, decreases, increases, last_updated} (:113-118).
+- pre: `polymath_shared.llm_extraction.lane_registry` importable (:95); `llm_controller_state(key, state, updated_at)` readable (:101-102).
+- post: contains credential ENV **names** only, never values (:91-92, :114).
 
-### `_queue_by_pool`
-- Maps ticket status: `("pending", "ready")` → `queued`; `"leased"` → `processing`; `"failed"` → `failed`; `retry` += rows with `attempt>0` — shared/polymath_shared/control_plane_status.py:33, 42-48 [DERIVED]
-
-### `_pmap_provider`
-- Sums `doc_parent_map` payload fields `http_dispatches`, `limiter_refusals`, `http_429`, `http_failures`, `parents_mapped`, `empty_completions`; `maps_per_request = round(mapped / disp, 2) if disp else None` — shared/polymath_shared/control_plane_status.py:55-63 [DERIVED]
-
-### `_graph_provider`
-- Sums scalar columns `extract_llm_calls`, `extract_neighborhoods_sent`, `extract_neighborhoods_unaccounted`, `extract_neighborhoods_dropped`, `extract_entity_count`, `extract_relation_count` filtered by `a.extract_stats_present` (migration 0057 projection); never reads `artifacts.payload` — shared/polymath_shared/control_plane_status.py:67-83 [DERIVED]
+Helper one-liners: `_queue_by_pool` buckets stage_tickets per pool (pending|ready→queued, leased→processing, failed→failed, retry = attempt>0) (:37-48); `_pmap_provider` sums `payload->'doc_parent_map'` JSON counters (:54-63); `_graph_provider` sums `extract_*` scalar columns WHERE `extract_stats_present` (:77-86).
 
 ## effect surface
-- Postgres read: `stage_tickets` (33-35), `artifacts` (58, 80-81), `runs` (58-59, 81-82, 136-141), `llm_controller_state` (101-103) [DERIVED]
-- Postgres write: none — FACTS `tables_written: []`; no write SQL in source [DERIVED]
-- Network/provider calls: none — "no provider call, no secrets" — shared/polymath_shared/control_plane_status.py:11 [DERIVED]
-- Env: none read directly; lane credential ENV names surfaced as strings via `l.api_key_env` (114), values excluded [DERIVED]
-- Deferred imports: `polymath_shared.llm_extraction.lane_registry` (95, 146), `polymath_shared.document_status.corpus_document_summaries` (125), `polymath_shared.pipeline_health.{DORMANT_RUN_AGE_SECONDS, control_ready}` (126) [DERIVED]
+- Postgres read: `stage_tickets` (:33-34); `artifacts` JOIN `runs` — doc_parent_map payload (:58-59) and extract_* columns (:81-82); `runs` (:140-145); `llm_controller_state` (:101-102, `pool_lanes_detail` only).
+- Postgres written: none — FACTS.tables_written empty; every statement is SELECT. [DERIVED]
+- Network / Qdrant / files / subprocess: none — "no provider call, no secrets" (:11). [DERIVED]
+- Config/env: lane registry exposes credential ENV names + `credential_present` (:95-97, :113-115); `sidecars` argument feeds `control_ready` (:124, :178).
 
 ## invariants
-INVARIANT: `processing == processing_active + processing_stalled` — shared/polymath_shared/control_plane_status.py:142 [DERIVED]
-  fails-if: summary double-counts or drops in-flight runs.
-INVARIANT: a run counts as stalled iff `updated_at <= now() - make_interval(secs => DORMANT_RUN_AGE_SECONDS)` among statuses `('intake','reconciling','degraded')` with `superseded_by_run_id IS NULL` — shared/polymath_shared/control_plane_status.py:137-140 [DERIVED]
-  fails-if: dormant runs reported as actively processing (GAP-4 comment: 64 frozen runs since 2026-09-07 were previously shown as processing) — shared/polymath_shared/control_plane_status.py:132-135 [DERIVED]
-INVARIANT: `_ALL_STAGES` == flatten of `_POOL_STAGES` (`extract`, `profile_document`, `doc_profile`, `doc_parent_map`) — shared/polymath_shared/control_plane_status.py:22-27 [DERIVED]
-  fails-if: a pool's queue counters silently miss its stage.
-INVARIANT: `maps_per_request` is None iff summed `http_dispatches` == 0 — shared/polymath_shared/control_plane_status.py:63 [DERIVED]
-  fails-if: division by zero on an empty corpus.
-INVARIANT: response `"contract"` == `"control-plane-status-v1"` — shared/polymath_shared/control_plane_status.py:19, 170 [DERIVED]
-  fails-if: UI contract check fails.
-INVARIANT: every pool's `lanes` block defaults to `{active: 0, total: 0, credential_absent: 0, disabled: 0, active_lanes: []}` when registry health is unavailable — shared/polymath_shared/control_plane_status.py:153-156 [DERIVED]
-  fails-if: config failure crashes the polled endpoint instead of degrading to zeros.
+INVARIANT: blocked == documents − searchable — shared/polymath_shared/control_plane_status.py:135 [DERIVED]
+  fails-if: red-file count diverges from the searchable rule at :133.
+INVARIANT: basic_profile == searchable − semantic_ready — shared/polymath_shared/control_plane_status.py:134 [DERIVED]
+  fails-if: double-counts searchable files lacking the vNext profile.
+INVARIANT: processing == processing_active + processing_stalled — shared/polymath_shared/control_plane_status.py:146 [DERIVED]
+  fails-if: summary shows fewer in-flight runs than the runs table query returned.
+INVARIANT: searchable counts summaries where `vnext_ready` OR (`map_unresolved` == 0 AND `profile_present`) — shared/polymath_shared/control_plane_status.py:133 [DERIVED]
+  fails-if: frontend `docSearchable` rule and backend blocked count disagree (LIBRARY-READY-LABEL :130-132).
+INVARIANT: maps_per_request == None whenever http_dispatches == 0; else round(mapped/disp, 2) — shared/polymath_shared/control_plane_status.py:63 [DERIVED]
+  fails-if: zero-division on an idle corpus.
+INVARIANT: stage_tickets statuses outside {pending, ready, leased, failed} contribute only to `retry`, never to queued/processing/failed — shared/polymath_shared/control_plane_status.py:41-47 [DERIVED]
+  fails-if: a newly introduced ticket status silently disappears from queue accounting.
+INVARIANT: queue keys exist only for pools in _POOL_STAGES (GRAPH_EXTRACTION, DOCUMENT_PROFILE, PMAP); CHAT has no queued/processing/retry/failed keys — shared/polymath_shared/control_plane_status.py:22-26, :37, :161 [DERIVED]
+  fails-if: a consumer assuming uniform pool shape reads missing keys on CHAT.
+INVARIANT: _graph_provider sums only artifacts rows with `extract_stats_present` — shared/polymath_shared/control_plane_status.py:82 [DERIVED]
+  fails-if: rows without extract stats inflate/deflate GRAPH_EXTRACTION accounting vs the old JSONB derivation (:73-76).
+INVARIANT: active/stalled split uses DORMANT_RUN_AGE_SECONDS, the same window pipeline_health uses — shared/polymath_shared/control_plane_status.py:126, :140-145 [DERIVED]
+  fails-if: frozen runs counted as processing again (GAP-4: 64 runs frozen since 2026-09-07, :138-139).
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (db reads of `stage_tickets`/`artifacts`/`runs`/`llm_controller_state` at 33-35, 54-59, 77-83, 101-103, 136-141; SQL `now()` at 137-138; lane-registry config at 96 and 146-147) [DERIVED]
-idempotency: SAFE (read-only; no table writes, no state mutation — FACTS `tables_written: []`) [DERIVED]
+determinism: NONDETERMINISTIC (db contents: :33-34, :58-59, :81-82, :101-102, :140-145; SQL clock `now()` :141-142; lane-registry config/env :95-97, :113-115)
+idempotency: SAFE (read-only; all statements SELECT, no tables written)
 
 ## failure behaviour
-- `except Exception` at shared/polymath_shared/control_plane_status.py:149 (`# noqa: BLE001 — never crash on a config read`): registry/config failures are swallowed; `health, LR = {}, None`; all pools then report zeroed lane blocks (153-156) and the caller still receives the full response [DERIVED]
-- SQL failures from `conn.execute` are not guarded (only the registry read is inside `try`) and propagate to the caller — shared/polymath_shared/control_plane_status.py:145-150 [DERIVED]
-- Empty/absent corpus result sets yield 0, not errors, via `COALESCE(SUM(...),0)` — shared/polymath_shared/control_plane_status.py:55-57, 78-80 [DERIVED]
+- `except Exception` around `build_registry()` / `pool_lane_health()` — shared/polymath_shared/control_plane_status.py:149-154 (FACTS.fallbacks line 153). Any config-read failure is swallowed; `health = {}`, `LR = None`. Downstream `pool()` then defaults lanes to `active 0 / total 0 / credential_absent 0 / disabled 0 / active_lanes []` (:156-160), so callers receive a zeroed-lane payload, not an error. `# noqa: BLE001` on :153.
+- No other handlers; SQL/DB errors propagate to the caller.
 
 ## dumb-code flags
-- CHAT is absent from `_POOL_STAGES` (22-26), so `queue.get("CHAT", {})` (157) returns `{}` and the CHAT pool dict has **no** `queued`/`processing`/`retry`/`failed` keys, unlike the other three pools which are zero-initialized (37) — shared/polymath_shared/control_plane_status.py:37, 157, 167 [DERIVED]
-- Dead assignment `LR = None` in the except branch; `LR` is never referenced after line 147 — shared/polymath_shared/control_plane_status.py:150 [DERIVED]
-- `retry` counts `attempt>0` rows independently of status (33, 48): a failed retrying ticket is counted in both `failed` and `retry` — shared/polymath_shared/control_plane_status.py:46-48 [DERIVED]
-- Duplicated literals: `doc_parent_map` in `_POOL_STAGES` (25) and again in `_pmap_provider` SQL (58); `extract` in `_POOL_STAGES` (23) and `_graph_provider` SQL (82) [DERIVED]
-- Inline status lists, no shared constant: `("pending", "ready")` / `"leased"` / `"failed"` (42-46) and `('intake','reconciling','degraded')` (139) [DERIVED]
-- Magic rounding `round(mapped / disp, 2)` and model sentinel `"(unset)"` — shared/polymath_shared/control_plane_status.py:63, 113 [DERIVED]
+- Literal `"llm_cloud["` duplicated: key construction :99 and manual strip :104 — prefix change must touch both. [DERIVED]
+- Dead assignment: `LR = None` in the except arm (:154); neither `LR` nor `reg` is used after the try block. [DERIVED]
+- `round(mapped / disp, 2)` — magic precision for maps_per_request (:63). [DERIVED]
+- CHAT omits queue counters while :170 (FRONTEND-BACKEND-CONTRACT-V1) claims the same lane shape as every pool — queue shape still differs (:171 vs :37). [INFERRED: keys absent because CHAT is not in _POOL_STAGES]
+- runs in-flight filter is the literal status set `('intake','reconciling','degraded')` plus `superseded_by_run_id IS NULL` (:143-144) — any other non-terminal status name is invisible here. [DERIVED]
 
 ## refactor notes
-- orchestrator/orchestrator/api/ui.py imports this module (FACTS.importers); it renders the output and "never recomputes it" (12-13) — renaming output keys, pools, or `latency_pool` breaks the UI without a UI change — shared/polymath_shared/control_plane_status.py:166-179 [DERIVED]
-- `_graph_provider` depends on migration-0057 scalar columns and `extract_stats_present`; reverting to a `payload` JSONB filter reintroduces the ~45,000-buffer TOAST detoast measured at 490-605 ms per call — shared/polymath_shared/control_plane_status.py:67-76 [DERIVED]
-- `DORMANT_RUN_AGE_SECONDS` is imported from `pipeline_health` (126) and used twice in one query (141); changing the shared constant shifts the active/stalled split here and there simultaneously — shared/polymath_shared/control_plane_status.py:126, 137-141 [DERIVED]
-- `control_ready` verdict composed once here (GAP-1); moving that composition to callers violates the stated contract — shared/polymath_shared/control_plane_status.py:172-174 [DERIVED]
-- `pool_lanes_detail` must keep `account_env` as ENV name only; leaking credential values violates the "NEVER a secret" contract — shared/polymath_shared/control_plane_status.py:90-92, 114 [DERIVED]
+- Payload shape is a UI contract: `contract` string (:19, :174), summary keys (:179-181), pools keys incl. CHAT `latency_pool` (:166-171) — sole known importer is orchestrator/orchestrator/api/ui.py (FACTS.importers).
+- `control_ready` must stay composed here once; callers render `control_ready.state` (:11-12, :177-178).
+- `_graph_provider` depends on migration 0057 scalar columns (`extract_llm_calls`, `extract_neighborhoods_sent`, `extract_neighborhoods_unaccounted`, `extract_neighborhoods_dropped`, `extract_entity_count`, `extract_relation_count`, `extract_stats_present`) — schema drift breaks it and reintroduces the ~45,000-buffer TOAST detoast (490-605 ms) of the old JSONB path (:67-76, :77-82).
+- DORMANT_RUN_AGE_SECONDS must remain imported from pipeline_health (:126) or the stalled/active split diverges from control_ready's dormancy window (:140-145).
 
 ## VERIFY
 ```verify
 grep -Fq 'CONTROL_PLANE_STATUS_VERSION = "control-plane-status-v1"' shared/polymath_shared/control_plane_status.py
-grep -Fq 'DORMANT_RUN_AGE_SECONDS' shared/polymath_shared/control_plane_status.py
-grep -Fq 'extract_stats_present' shared/polymath_shared/control_plane_status.py
-grep -Fq 'llm_controller_state' shared/polymath_shared/control_plane_status.py
-grep -Fq 'latency_pool' shared/polymath_shared/control_plane_status.py
-! grep -Fq 'INSERT INTO' shared/polymath_shared/control_plane_status.py
-test "$(grep -c -F 'COALESCE' shared/polymath_shared/control_plane_status.py)" -ge 6
+grep -Fq 'searchable = sum(1 for v in summaries.values() if v["vnext_ready"] or (v["map_unresolved"] == 0 and v["profile_present"]))' shared/polymath_shared/control_plane_status.py
+grep -Fq 'processing = processing_active + processing_stalled' shared/polymath_shared/control_plane_status.py
+grep -Fq 'round(mapped / disp, 2) if disp else None' shared/polymath_shared/control_plane_status.py
+grep -Fq 'AND a.extract_stats_present' shared/polymath_shared/control_plane_status.py
+grep -Eq 'status IN \(.intake.,.reconciling.,.degraded.\)' shared/polymath_shared/control_plane_status.py
+test "$(grep -c -F 'COALESCE(SUM(' shared/polymath_shared/control_plane_status.py)" -ge 7
 ```

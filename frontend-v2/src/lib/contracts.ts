@@ -22,6 +22,8 @@ export interface SemanticReadiness {
     pending: string[];
     parents: { eligible: number; mapped: number; excluded: number; unresolved: number };
     vnext_profiles?: number;
+    /** documents with ANY profile, base or vNext (LIBRARY-READY-LABEL); absent on an older backend */
+    profiled?: number | null;
     documents?: number;
   };
   warnings?: unknown[];
@@ -126,7 +128,9 @@ export interface ControlPlane {
   corpus_id: string;
   control_ready: { state: "ready" | "blocked" | "degraded"; label: string; detail?: string;
                     pipeline?: Record<string, unknown> };
-  summary: { documents: number; semantic_ready: number; processing: number;
+  /** semantic_ready = files with the vNext profile; basic_profile = searchable on the base profile; blocked = files
+   *  retrieval would miss part of (unresolved parents or no profile) — LIBRARY-READY-LABEL */
+  summary: { documents: number; semantic_ready: number; basic_profile?: number; processing: number;
              processing_active: number; processing_stalled: number; blocked: number };
   pools: Record<string, ControlPlanePool>;
 }

@@ -85,3 +85,10 @@ def test_s11proper_vnext_readiness_verdict_and_generation_invariant():
     assert vnext_readiness(_Conn([S, 0, 0, 0, 0]), "x", 5)["verdict"] == VNEXT_NOT_STARTED
     # no substrate schema -> NOT_STARTED (fail-open, availability-neutral)
     assert vnext_readiness(_Conn([None]), "x", 5)["verdict"] == VNEXT_NOT_STARTED
+    # LIBRARY-READY-LABEL: files with ANY profile ride along for the badge; the verdict ignores them (5 vNext of 5 = COMPLETE,
+    # 0 vNext with 5 base profiles = INCOMPLETE), and a failed read of that count is None, never a different verdict
+    done = vnext_readiness(_Conn([S, 100, 90, 10, 0, 5]), "x", 5)
+    assert done["verdict"] == VNEXT_INCOMPLETE and done["profiled"] == 5 and done["vnext_profiles"] == 0
+    assert done["pending"] == ["vnext_profiles_0_of_5"]
+    failed_count = vnext_readiness(_Conn([S, 100, 90, 10, 5]), "x", 5)          # the 6th read raises inside the fake
+    assert failed_count["verdict"] == VNEXT_COMPLETE and failed_count["profiled"] is None

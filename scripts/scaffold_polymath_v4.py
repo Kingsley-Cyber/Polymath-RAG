@@ -2283,6 +2283,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("frontend-v2/src/__tests__/shell.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/ui-pieces.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/files-states.test.tsx", "tsx", None),
+    ("frontend-v2/src/__tests__/control-plane-summary.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/refresh-guards.test.ts", "ts", None),
     ("frontend-v2/src/__tests__/research.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/chat-deep.test.tsx", "tsx", None),
@@ -2574,6 +2575,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-10-01-claude-connector-url.md", "md", None),
     ("docs/wiki/work-log/2026-10-01-ci-green.md", "md", None),
     ("docs/wiki/work-log/2026-10-01-mcp-retrieval-modes.md", "md", None),
+    ("docs/wiki/work-log/2026-10-01-library-ready-label.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),

@@ -690,3 +690,22 @@ def test_the_evidence_route_gives_an_agent_graph_facts_and_contract_rows(monkeyp
     assert out["evidence_contract"] == "retrieve-evidence-rows-v1"
     plain = TestClient(_app()).post("/chat/evidence", json={**body, "evidence": False}).json()
     assert "evidence_rows" not in plain and plain["graph_facts"] == facts
+
+
+def test_a_gnn_turn_without_a_gnn_index_answers_with_a_typed_degradation(monkeypatch):
+    """GNN-DEGRADED-LIST (seen live 2026-10-01 on social-media-taste): when the GNN route nominates nothing (a library without
+    its GNN index) the turn must answer — the evidence route with an empty packet and the GNN degradation, the chat route
+    with its abstention — never a 500 ('str' object has no attribute 'get' from a dict-shaped meta.degraded)."""
+    Runtime(monkeypatch)
+    monkeypatch.setattr("polymath_shared.db.tx", _fake_tx)
+    monkeypatch.setattr(chat_mod, "tx", _fake_tx)
+    client = TestClient(_app())
+    ev = client.post("/chat/evidence", json={"message": QUERY, "corpus_id": "cinema", "mode": "GNN", "compiler": "off"})
+    assert ev.status_code == 200, ev.text[:300]
+    out = ev.json()
+    assert out["meta"]["mode"] == "GNN" and out["evidence_packet"]["evidence"] == []
+    degraded = out["retrieval"]["degraded"]
+    assert isinstance(degraded, list) and any(isinstance(d, dict) and d.get("component") == "gnn_route" for d in degraded), degraded
+    chat = client.post("/chat", json={**BASE, "mode": "GNN"})
+    assert chat.status_code == 200, chat.text[:300]
+    assert chat.json()["meta"]["mode"] == "GNN"

@@ -161,3 +161,50 @@ it("unresolved parents or no profile still read 'Blocked' with the reason, and o
   expect(statusPill().textContent).toBe("Blocked");
   expect(statusPill().getAttribute("title")).toContain("no profile");
 });
+
+// LIBRARY-READY-LABEL (the owner, 2026-10-01: "why is a corpus for taste showing files as red"): the library's vNext card
+// follows the per-file rule — every parent mapped and every file profiled is searchable (amber); red only when retrieval
+// would miss part of the library
+const TASTE_VNEXT = { verdict: "VNEXT_INCOMPLETE", pending: ["vnext_profiles_0_of_21"], vnext_profiles: 0, profiled: 21, documents: 21,
+                      parents: { eligible: 150, mapped: 150, excluded: 2, unresolved: 0 } };
+
+async function renderReadiness(vnext: Record<string, unknown>) {
+  vi.stubGlobal("fetch", vi.fn(async (path: string, init?: RequestInit) => {
+    calls.push({ path, method: init?.method ?? "GET" });
+    if (path.startsWith("/documents?")) return documents();
+    if (path.startsWith("/documents/summary")) return Response.json({ summaries: { doc_1: SUMMARY } });
+    if (path.startsWith("/semantic_readiness")) return Response.json({ verdict: "SEMANTIC_COMPLETE", counts: {}, vnext });
+    return Response.json({});
+  }));
+  await render({ isOwner: true });
+}
+
+function vnextCard(): HTMLElement {
+  const card = [...host.querySelectorAll(".card")].find((c) => c.querySelector(".label")?.textContent === "vNext ready");
+  if (!card) throw new Error("no vNext ready card");
+  return card.querySelector(".pill") as HTMLElement;
+}
+
+it("a library searchable on basic profiles reads amber 'Searchable · basic profiles', not a red vNext verdict", async () => {
+  await renderReadiness(TASTE_VNEXT);
+  expect(vnextCard().textContent).toBe("Searchable · basic profiles");
+  expect(vnextCard().classList.contains("pill--degraded")).toBe(true);
+  expect(vnextCard().getAttribute("title")).toContain("0/21 files have the vNext profile · 150/150 parents mapped");
+});
+
+it("unresolved parents, an unprofiled file or an older backend keep the red vNext verdict", async () => {
+  for (const vnext of [{ ...TASTE_VNEXT, parents: { ...TASTE_VNEXT.parents, mapped: 146, unresolved: 4 } },
+                       { ...TASTE_VNEXT, profiled: 20 },
+                       { ...TASTE_VNEXT, profiled: undefined }]) {
+    await renderReadiness(vnext);
+    expect(vnextCard().textContent).toBe("vNext incomplete");
+    expect(vnextCard().classList.contains("pill--blocked")).toBe(true);
+    await act(async () => root.unmount());
+    root = createRoot(host);
+  }
+});
+
+it("a complete vNext library stays green", async () => {
+  await renderReadiness({ ...TASTE_VNEXT, verdict: "VNEXT_COMPLETE", vnext_profiles: 21, pending: [] });
+  expect(vnextCard().classList.contains("pill--ready")).toBe(true);
+});

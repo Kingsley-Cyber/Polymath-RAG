@@ -127,8 +127,12 @@ def control_plane_status(conn, *, corpus_id: str,
     summaries = corpus_document_summaries(conn, corpus_id=corpus_id)
     documents = len(summaries)
     semantic_ready = sum(1 for v in summaries.values() if v["vnext_ready"])
-    blocked = sum(1 for v in summaries.values()
-                  if not v["vnext_ready"] and (v["map_unresolved"] or not v["profile_vnext"]))
+    # LIBRARY-READY-LABEL (the owner, 2026-10-01: "why is a corpus for taste showing files as red"): the per-file rule of
+    # FILES-READY-LABEL (frontend lib/readiness.ts docSearchable) — every eligible parent mapped and ANY profile = searchable.
+    # Only a file retrieval would miss part of is `blocked`; a searchable file without the vNext profile is `basic_profile`.
+    searchable = sum(1 for v in summaries.values() if v["vnext_ready"] or (v["map_unresolved"] == 0 and v["profile_present"]))
+    basic_profile = searchable - semantic_ready
+    blocked = documents - searchable
     # GAP-4: in-flight runs (any non-terminal run for the corpus), age-qualified by the
     # same dormancy window pipeline_health uses — "processing" must not count a run
     # whose `updated_at` stopped moving (measured live: 64 runs frozen since 2026-09-07
@@ -172,7 +176,7 @@ def control_plane_status(conn, *, corpus_id: str,
         # GAP-1: the one CONTROL READY verdict (sidecars + fleet state composed HERE,
         # once) — callers render `control_ready.state`, they do not derive it.
         "control_ready": control_ready(conn, sidecars=sidecars),
-        "summary": {"documents": documents, "semantic_ready": semantic_ready,
+        "summary": {"documents": documents, "semantic_ready": semantic_ready, "basic_profile": basic_profile,
                     "processing": processing, "processing_active": processing_active,
                     "processing_stalled": processing_stalled, "blocked": blocked},
         "pools": pools,

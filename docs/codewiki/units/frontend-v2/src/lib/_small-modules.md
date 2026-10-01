@@ -1,150 +1,180 @@
 # unit: frontend-v2/src/lib/_small-modules
 anchor: frontend-v2/src/lib/appearance.ts:1-105
+anchor: frontend-v2/src/lib/auth.ts:1-122
+anchor: frontend-v2/src/lib/chatStore.ts:1-84
+anchor: frontend-v2/src/lib/chunkid.ts:1-26
+anchor: frontend-v2/src/lib/composerSettings.ts:1-79
+anchor: frontend-v2/src/lib/readiness.ts:1-94
+anchor: frontend-v2/src/lib/useAsync.ts:1-22
 
-Seven small client modules of the `frontend-v2` React app: appearance theming, auth/API-key client, chat-session persistence, receipt chunk-id normalization, shared composer settings, readiness-verdict presentation, and a fetch-on-mount hook. Unit-level importers per FACTS: `frontend-v2/src/App.tsx`, `frontend-v2/src/_small-modules`, `frontend-v2/src/lib/deep.ts` — per-symbol attribution is not available, so "used by" below is either the unit importers or "—". [DERIVED]
+## purpose
+Seven small frontend-v2 client modules: per-browser appearance theming (mode + accent, localStorage, applied to `<html>` dataset), the auth/Settings HTTP client (sign-in, password, API keys), chat session persistence in localStorage, chunk-id extraction from receipt rows, a shared composer-settings store (top-bar controls ↔ composer), pure painting of backend readiness verdicts, and a minimal fetch-on-mount hook. Screens render what these return; the backend decides policy. [DERIVED]
 
 ## public surface
+Unit-level importers per FACTS.importers: `frontend-v2/src/App.tsx`, `frontend-v2/src/lib/deep.ts`, and the unit itself (`_small-modules`). Per-symbol consumers are not in FACTS → "—".
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `useAppearance` | function | `() -> [Appearance, (a: Appearance) => void]` | frontend-v2/src/lib/appearance.ts:90-92 | unit importers |
-| `initAppearance` | function | `() -> Appearance` | frontend-v2/src/lib/appearance.ts:96-104 | unit importers |
-| `loadAppearance` | function | `() -> Appearance` | frontend-v2/src/lib/appearance.ts:44-53 | unit importers |
-| `setAppearance` | function | `(next: Appearance) -> void` | frontend-v2/src/lib/appearance.ts:74-80 | unit importers |
-| `resolveMode` | function | `(mode: Mode, dark = prefersDark()) -> "light" \| "dark"` | frontend-v2/src/lib/appearance.ts:59-61 | unit importers |
-| `migrateLegacy` | function | `(id: string \| null \| undefined) -> Appearance` | frontend-v2/src/lib/appearance.ts:30-32 | unit importers |
-| `applyAppearance` | function | `(a: Appearance, root = document.documentElement) -> void` | frontend-v2/src/lib/appearance.ts:63-66 | unit importers |
-| `auth` | const | object of endpoint methods (see effect surface) | frontend-v2/src/lib/auth.ts:75-90 | unit importers |
-| `normalizeMe` | function | `(raw: unknown) -> Me` | frontend-v2/src/lib/auth.ts:69-73 | unit importers |
-| `privateLibrary` | function | `(me: Me) -> string \| null` | frontend-v2/src/lib/auth.ts:93-95 | unit importers |
-| `copyText` | function | `async (text: string) -> Promise<boolean>` | frontend-v2/src/lib/auth.ts:98-121 | unit importers |
-| `loadSessions` | function | `() -> ChatSession[]` | frontend-v2/src/lib/chatStore.ts:49-70 | unit importers |
-| `saveSessions` | function | `(sessions: ChatSession[]) -> void` | frontend-v2/src/lib/chatStore.ts:72-84 | unit importers |
-| `newSessionId` | function | `() -> string` | frontend-v2/src/lib/chatStore.ts:33-35 | unit importers |
-| `emptySession` | function | `(corpusId: string) -> ChatSession` | frontend-v2/src/lib/chatStore.ts:37-40 | unit importers |
-| `titleFor` | function | `(s: ChatSession) -> string` | frontend-v2/src/lib/chatStore.ts:43-47 | unit importers |
-| `chunkIdOf` | function | `(row: Record<string, unknown> \| null \| undefined) -> string` | frontend-v2/src/lib/chunkid.ts:14-26 | unit importers |
-| `useComposerSettings` | function | `() -> [ComposerSettings, (patch: Partial<ComposerSettings>) => void]` | frontend-v2/src/lib/composerSettings.ts:77-79 | unit importers |
-| `getComposerSettings` | function | `() -> ComposerSettings` | frontend-v2/src/lib/composerSettings.ts:51-56 | unit importers |
-| `setComposerSettings` | function | `(next: ComposerSettings) -> void` | frontend-v2/src/lib/composerSettings.ts:58-63 | unit importers |
-| `controlReady` | function | `(cr: ControlPlane["control_ready"] \| null \| undefined) -> Verdict` | frontend-v2/src/lib/readiness.ts:33-36 | unit importers |
-| `semanticReady` | function | `(sr: SemanticReadiness \| null) -> Verdict` | frontend-v2/src/lib/readiness.ts:39-44 | unit importers |
-| `vnextReady` | function | `(sr: SemanticReadiness \| null) -> Verdict` | frontend-v2/src/lib/readiness.ts:47-57 | unit importers |
-| `docSearchable` | function | `(d: DocSummary \| null \| undefined) -> boolean` | frontend-v2/src/lib/readiness.ts:62-64 | unit importers |
-| `docVnext` | function | `(d: DocSummary) -> Verdict` | frontend-v2/src/lib/readiness.ts:68-77 | unit importers |
-| `settled` | function | `<T>(a: {data, error}, verdict: (d) -> Verdict) -> Verdict` | frontend-v2/src/lib/readiness.ts:84-86 | unit importers |
-| `useAsync` | function | `<T>(fn: (signal) -> Promise<T>, deps: unknown[]) -> Async<T>` | frontend-v2/src/lib/useAsync.ts:6-21 | unit importers |
-| Types/values | — | `Mode`, `Accent`, `Appearance`, `DEFAULT_APPEARANCE`, `APPEARANCE_KEY`, `LEGACY_THEME_KEY`, `MODES`, `ACCENTS`; `Me`, `ApiKey`, `CreatedKey`, `MyKeys`, `ConnectPrompt`, `OwnerKey`, `LEGACY_OWNER`; `ChatSession`, `INTERRUPTED`; `ComposerSettings`, `COMPOSER_SETTINGS_KEY`, `DEFAULT_COMPOSER_SETTINGS`; `ReadyState`, `Verdict`, `CHECKING`; `Async` | frontend-v2/src/lib/appearance.ts:6-14, frontend-v2/src/lib/auth.ts:9-67, frontend-v2/src/lib/chatStore.ts:19-31, frontend-v2/src/lib/composerSettings.ts:11-15, frontend-v2/src/lib/readiness.ts:14-21, frontend-v2/src/lib/useAsync.ts:3 | unit importers |
+| Mode | type | "light" \| "dark" \| "system" | appearance.ts:6 | — |
+| Accent | type | "indigo" \| "teal" \| "amber" \| "rose" | appearance.ts:7 | — |
+| Appearance | interface | { mode: Mode; accent: Accent } | appearance.ts:8 | — |
+| APPEARANCE_KEY | const | "polymath.appearance" | appearance.ts:10 | — |
+| LEGACY_THEME_KEY | const | "polymath-v2.theme" | appearance.ts:11 | — |
+| MODES | const | ["light","dark","system"] | appearance.ts:12 | — |
+| ACCENTS | const | ["indigo","teal","amber","rose"] | appearance.ts:13 | — |
+| DEFAULT_APPEARANCE | const | { mode: "system", accent: "indigo" } | appearance.ts:14 | — |
+| migrateLegacy | function | (id: string \| null \| undefined) -> Appearance | appearance.ts:30-32 | — |
+| loadAppearance | function | () -> Appearance | appearance.ts:44-53 | — |
+| resolveMode | function | (mode: Mode, dark = prefersDark()) -> "light" \| "dark" | appearance.ts:59-61 | — |
+| applyAppearance | function | (a: Appearance, root = document.documentElement) -> void | appearance.ts:63-66 | — |
+| getAppearance | function | () -> Appearance | appearance.ts:72 | — |
+| setAppearance | function | (next: Appearance) -> void | appearance.ts:74-80 | — |
+| useAppearance | function | () -> [Appearance, (a: Appearance) => void] | appearance.ts:90-92 | — |
+| initAppearance | function | () -> Appearance | appearance.ts:96-104 | — |
+| Me | interface | owner/auth identity record | auth.ts:9-19 | — |
+| ApiKey | interface | { key_id, label, created_at, revoked_at } | auth.ts:21-26 | — |
+| CreatedKey | interface | ApiKey & { key, prompt, shown_once } | auth.ts:28-32 | — |
+| MyKeys | interface | { is_owner, keys, max_active, mcp_url, note? } | auth.ts:34-40 | — |
+| ConnectPrompt | interface | { prompt, placeholder, mcp_url, key_included?, connect_command? } | auth.ts:44-50 | — |
+| OwnerKey | interface | { key, mcp_url, connector_url, prompt } | auth.ts:53-59 | — |
+| LEGACY_OWNER | const | Me (username "king", principal_id "prn_owner") | auth.ts:65-67 | — |
+| normalizeMe | function | (raw: unknown) -> Me | auth.ts:69-73 | — |
+| auth | const | object of 10 endpoint functions | auth.ts:75-90 | — |
+| privateLibrary | function | (me: Me) -> string \| null | auth.ts:93-95 | — |
+| copyText | function | (text: string) -> Promise<boolean> | auth.ts:98-121 | — |
+| ChatSession | interface | { id, title, corpusId, createdAt, updatedAt, turns } | chatStore.ts:19-26 | — |
+| INTERRUPTED | const | "interrupted: the page was reloaded or closed..." | chatStore.ts:29-30 | — |
+| newSessionId | function | () -> string | chatStore.ts:33-35 | — |
+| emptySession | function | (corpusId: string) -> ChatSession | chatStore.ts:37-40 | — |
+| titleFor | function | (s: ChatSession) -> string | chatStore.ts:43-47 | — |
+| loadSessions | function | () -> ChatSession[] | chatStore.ts:49-70 | — |
+| saveSessions | function | (sessions: ChatSession[]) -> void | chatStore.ts:72-84 | — |
+| chunkIdOf | function | (row: Record<string, unknown> \| null \| undefined) -> string | chunkid.ts:14-26 | — |
+| ComposerSettings | interface | { mode: PublicMode; model: string; corpusExplore: boolean } | composerSettings.ts:11 | — |
+| COMPOSER_SETTINGS_KEY | const | "polymath-v2.chat-settings" | composerSettings.ts:13 | — |
+| DEFAULT_COMPOSER_SETTINGS | const | { mode: "HYBRID", model: "", corpusExplore: false } | composerSettings.ts:15 | — |
+| getComposerSettings | function | () -> ComposerSettings | composerSettings.ts:51-56 | — |
+| setComposerSettings | function | (next: ComposerSettings) -> void | composerSettings.ts:58-63 | — |
+| updateComposerSettings | function | (patch: Partial<ComposerSettings>) -> void | composerSettings.ts:65-67 | — |
+| useComposerSettings | function | () -> [ComposerSettings, (patch) => void] | composerSettings.ts:77-79 | — |
+| ReadyState | type | "ready" \| "blocked" \| "degraded" \| "unknown" | readiness.ts:14 | — |
+| Verdict | interface | { state, label, detail? } | readiness.ts:16-21 | — |
+| controlReady | function | (cr: ControlPlane["control_ready"] \| null \| undefined) -> Verdict | readiness.ts:33-36 | — |
+| semanticReady | function | (sr: SemanticReadiness \| null) -> Verdict | readiness.ts:39-44 | — |
+| vnextReady | function | (sr: SemanticReadiness \| null) -> Verdict | readiness.ts:50-65 | — |
+| docSearchable | function | (d: DocSummary \| null \| undefined) -> boolean | readiness.ts:70-72 | — |
+| docVnext | function | (d: DocSummary) -> Verdict | readiness.ts:76-85 | — |
+| CHECKING | const | { state: "unknown", label: "CHECKING" } | readiness.ts:90 | — |
+| settled | function | (a: { data, error }, verdict: (d) -> Verdict) -> Verdict | readiness.ts:92-94 | — |
+| Async | interface | { data: T \| null; error: string \| null; loading: boolean } | useAsync.ts:3 | — |
+| useAsync | function | (fn: (signal) -> Promise<T>, deps: unknown[]) -> Async<T> | useAsync.ts:6-21 | — |
 
 ## contracts
 
-`loadAppearance()` — in: none; out: `Appearance`. Pre: localStorage may be missing/private. Post: never throws; returns stored value if `valid`, else migrated `LEGACY_THEME_KEY` value, else `DEFAULT_APPEARANCE = { mode: "system", accent: "indigo" }`. [DERIVED] frontend-v2/src/lib/appearance.ts:44-53,14
-- `valid` = mode in `MODES` (`["light","dark","system"]`) and accent in `ACCENTS` (`["indigo","teal","amber","rose"]`). [DERIVED] frontend-v2/src/lib/appearance.ts:34-37,12-13
+**loadAppearance() -> Appearance** (appearance.ts:44-53)
+- in: none. reads localStorage `APPEARANCE_KEY` = "polymath.appearance" (appearance.ts:48).
+- pre: none (works with no storage, bad JSON).
+- post: valid stored {mode, accent}; else legacy key "polymath-v2.theme" mapped via `migrateLegacy` (appearance.ts:51-52); else DEFAULT_APPEARANCE. Never throws.
 
-`setAppearance(next)` — post: writes `APPEARANCE_KEY`, removes `LEGACY_THEME_KEY`, applies dataset attrs, notifies listeners; write failure swallowed. [DERIVED] frontend-v2/src/lib/appearance.ts:74-80
+**setAppearance(next)** (appearance.ts:74-80)
+- post: JSON written to APPEARANCE_KEY, LEGACY_THEME_KEY removed, `applyAppearance` called, all listeners fired. Write failure (private mode) swallowed — value still applied in memory.
 
-`resolveMode(mode, dark)` — `"system"` → `dark ? "dark" : "light"`; else mode unchanged. [DERIVED] frontend-v2/src/lib/appearance.ts:59-61
+**resolveMode(mode, dark)** (appearance.ts:59-61)
+- post: "system" -> dark ? "dark" : "light"; explicit mode returned as-is.
 
-`migrateLegacy(id)` — LEGACY map of 10 keys (`""`, `obsidian`, `graphite`, `nord`, `espresso`, `solar`, `rose`, `slate`, `paper`, `champagne`) → nearest `{mode, accent}`; unknown/null → `DEFAULT_APPEARANCE`. [DERIVED] frontend-v2/src/lib/appearance.ts:17-32
+**normalizeMe(raw: unknown) -> Me** (auth.ts:69-73)
+- pre: raw is any /auth/me payload.
+- post: `!m || typeof m.is_owner !== "boolean" || typeof m.username !== "string"` -> LEGACY_OWNER; else `{ ...LEGACY_OWNER, ...m, local: Boolean(m.local) }`.
 
-`normalizeMe(raw)` — in: unknown JSON; out: `Me`. Post: non-object, non-boolean `is_owner`, or non-string `username` → `LEGACY_OWNER` (`username: "king"`, `is_owner: true`, `principal_id: "prn_owner"`, `local: true`); else spread over `LEGACY_OWNER` with `local: Boolean(m.local)`. [DERIVED] frontend-v2/src/lib/auth.ts:69-73,65-67
+**chunkIdOf(row) -> string** (chunkid.ts:14-26)
+- in: receipt row that carries either `chunk_id` (string) or `locator` "chunk:<id>@<start>:<end>".
+- post: the chunk id; "" when neither field is a non-empty string.
 
-`privateLibrary(me)` — owner → `null`; friend → `` `fr-${me.username}` ``. [DERIVED] frontend-v2/src/lib/auth.ts:93-95
+**loadSessions() -> ChatSession[]** (chatStore.ts:49-70)
+- post: parses "polymath-v2.chats"; non-array or throw -> []. Rows kept only when `typeof s.id === "string" && Array.isArray(s.turns)` (chatStore.ts:56-59). Every turn with `done` falsy is rewritten to `{ ...t, done: true, error: t.error ?? INTERRUPTED }` (chatStore.ts:63-66).
 
-`copyText(text)` — try `navigator.clipboard.writeText`; on absence/throw, hidden-textarea + `document.execCommand("copy")`; returns `false` if both fail. [DERIVED] frontend-v2/src/lib/auth.ts:98-121
+**saveSessions(sessions)** (chatStore.ts:72-84)
+- post: drops `turns.length === 0` rows, sorts by `updatedAt` desc, slices to MAX_SESSIONS = 50, writes JSON. Any failure swallowed.
 
-`loadSessions()` — post: `[]` on missing/unparsable/non-array; rows kept only if `typeof s.id === "string" && Array.isArray(s.turns)`; every turn with `done !== true` is rewritten to `{...t, done: true, error: t.error ?? INTERRUPTED}`. [DERIVED] frontend-v2/src/lib/chatStore.ts:49-70
+**getComposerSettings() -> ComposerSettings** (composerSettings.ts:51-56)
+- post: re-reads the stored string every call; re-parses only when the raw string changed (stable reference, `useSyncExternalStore` requirement); returns session-memory value when storage is unreadable.
 
-`saveSessions(sessions)` — post: drops sessions with `turns.length === 0`, sorts by `updatedAt` descending, keeps first `MAX_SESSIONS` (`50`), writes JSON under `"polymath-v2.chats"`; failure swallowed. [DERIVED] frontend-v2/src/lib/chatStore.ts:72-84,28,31
+**controlReady(cr)** (readiness.ts:33-36)
+- post: null/undefined -> `{ state: "unknown", label: "UNKNOWN", detail: "/control_plane not reachable" }`; otherwise passes through backend `state`/`label`/`detail` verbatim.
 
-`titleFor(s)` — first turn's trimmed question; `> 42` chars → `` `${q.slice(0, 41)}…` ``; empty → `"New chat"`. [DERIVED] frontend-v2/src/lib/chatStore.ts:43-47
+**vnextReady(sr)** (readiness.ts:50-65)
+- post: no `sr.vnext` -> UNKNOWN; verdict "VNEXT_COMPLETE" -> ready; degraded label "SEARCHABLE · BASIC PROFILES" only when `p.unresolved === 0 && docs > 0 && typeof v.profiled === "number" && v.profiled >= docs` (readiness.ts:60); else blocked with backend verdict.
 
-`chunkIdOf(row)` — non-empty string `row.chunk_id` returned as-is; else `locator` parsed as `"chunk:<id>@<start>:<end>"` → `<id>` (leading `"chunk:"` stripped, cut at first `"@"`); else `""`. [DERIVED] frontend-v2/src/lib/chunkid.ts:14-26
+**docSearchable(d)** (readiness.ts:70-72)
+- post: `!!d && (d.vnext_ready || (d.map_unresolved === 0 && d.profile_present))`.
 
-`getComposerSettings()` — re-reads the stored string each call; reparses only when the raw string changed (stable reference for `useSyncExternalStore`); no storage → session-cached value. Post: every field individually defaulted by `clean` (`mode` must be in `PUBLIC_MODES`, `model` string, `corpusExplore === true`). [DERIVED] frontend-v2/src/lib/composerSettings.ts:21-31,51-56
-
-`controlReady(cr)` — `null`/undefined → `{state:"unknown", label:"UNKNOWN", detail:"/control_plane not reachable"}`; else passes through `cr.state/label/detail` verbatim. [DERIVED] frontend-v2/src/lib/readiness.ts:33-36
-
-`semanticReady(sr)` — `null` → unknown; `"SEMANTIC_COMPLETE"` → ready; any other verdict → blocked (label = backend's verdict string). [DERIVED] frontend-v2/src/lib/readiness.ts:39-44
-
-`vnextReady(sr)` — `sr?.vnext` missing → unknown; `"VNEXT_COMPLETE"` → ready, else blocked; detail = `"<mapped>/<eligible> parents mapped"` plus `" · <unresolved> unresolved"` when unresolved > 0. [DERIVED] frontend-v2/src/lib/readiness.ts:47-57
-
-`docSearchable(d)` — `!!d && (d.vnext_ready || (d.map_unresolved === 0 && d.profile_present))`. [DERIVED] frontend-v2/src/lib/readiness.ts:62-64
-
-`docVnext(d)` — `vnext_ready` → `READY`; searchable → `degraded`, label `"READY · BASIC PROFILE"`; else `blocked` with detail from `"<n> unresolved parents"` / `"no profile"`. [DERIVED] frontend-v2/src/lib/readiness.ts:68-77
-
-`settled(a, verdict)` — `a.data == null && !a.error` → `CHECKING`; else `verdict(a.data)`. [DERIVED] frontend-v2/src/lib/readiness.ts:84-86,82
-
-`useAsync(fn, deps)` — sets `loading:true, error:null` on dep change; resolves to `{data, error:null, loading:false}` or `{data:null, error: message, loading:false}`; aborted/unmounted results discarded; cleanup aborts the controller. [DERIVED] frontend-v2/src/useAsync placeholder — frontend-v2/src/lib/useAsync.ts:6-21
+**useAsync(fn, deps) -> Async<T>** (useAsync.ts:6-21)
+- post: sets loading, resolves to `{ data, error: null, loading: false }` or `{ data: null, error: message, loading: false }`; errors after abort/unmount are discarded (`if (!live || ac.signal.aborted) return`, useAsync.ts:15).
 
 ## effect surface
-
-- localStorage keys read/written: `"polymath.appearance"` (rw, appearance.ts:10,48,77), `"polymath-v2.theme"` (read + removed on save, appearance.ts:11,51-52,77), `"polymath-v2.chats"` (rw, chatStore.ts:28,51,80), `"polymath-v2.chat-settings"` (rw, composerSettings.ts:13,42,60). [DERIVED]
-- DOM writes: `document.documentElement.dataset.mode` / `.dataset.accent` (appearance.ts:63-66); temporary hidden `<textarea>` appended to `document.body` (auth.ts:108-116). [DERIVED]
-- `matchMedia("(prefers-color-scheme: dark)")` reads + change listener (appearance.ts:55-57,85-87); `window` `"storage"` event listener for cross-window sync (composerSettings.ts:71-72); `navigator.clipboard.writeText` (auth.ts:100-101). [DERIVED]
-- Network via `http` from `./api`: POST `/auth/owner-password` (auth.ts:77), GET `/auth/me` (78), POST `/auth/login` (79), POST `/auth/logout` (80), POST `/auth/password` (82), GET `/keys` (84), POST `/keys` (85), DELETE `/keys/{keyId}` (86), GET `/keys/prompt` (87), GET `/keys/owner` (89). [DERIVED]
-- No Postgres tables, Qdrant collections, subprocesses, or env flags: `tables_read`/`tables_written`/`constants` are empty in FACTS. [DERIVED]
+- Network (all via `http` from ./api, auth.ts:7): POST /auth/owner-password (auth.ts:77), GET /auth/me (auth.ts:78), POST /auth/login (auth.ts:79), POST /auth/logout (auth.ts:80), POST /auth/password (auth.ts:82), GET /keys (auth.ts:84), POST /keys (auth.ts:85), DELETE /keys/{keyId} (auth.ts:86), GET /keys/prompt (auth.ts:87), GET /keys/owner (auth.ts:89). Matches FACTS.api_calls (10 calls).
+- localStorage keys written/read: "polymath.appearance" (appearance.ts:10), "polymath-v2.theme" read + removed (appearance.ts:51, 77), "polymath-v2.chats" (chatStore.ts:28), "polymath-v2.chat-settings" (composerSettings.ts:13).
+- DOM: `document.documentElement.dataset.mode/.accent` (appearance.ts:63-66); `matchMedia("(prefers-color-scheme: dark)")` polled and subscribed (appearance.ts:56, 86); hidden-textarea `document.execCommand("copy")` fallback (auth.ts:108-116); `navigator.clipboard.writeText` (auth.ts:100).
+- Postgres tables read/written: none (FACTS.tables_read / tables_written empty). Qdrant collections: none. Subprocesses: none. Env flags: none (FACTS.constants empty).
+- Browser events: `window` "storage" listener for cross-window composer sync (composerSettings.ts:71).
 
 ## invariants
-
-INVARIANT: persisted chat count ≤ `MAX_SESSIONS = 50` — frontend-v2/src/lib/chatStore.ts:79,31 [DERIVED]
-  fails-if: reload mints a new blank "New chat" each time and blanks evict real conversations (stated at chatStore.ts:74-76).
-INVARIANT: every `Turn` in a loaded session has `done === true` — frontend-v2/src/lib/chatStore.ts:63-65 [DERIVED]
-  fails-if: an unfinished turn would render its chat as busy forever after reload (comment, chatStore.ts:61-63).
-INVARIANT: sidebar title length ≤ 42 chars (`slice(0, 41)` + `"…"`) — frontend-v2/src/lib/chatStore.ts:46 [DERIVED]
-  fails-if: long first questions blow out the sidebar label layout.
-INVARIANT: whenever `setAppearance` writes `APPEARANCE_KEY` it also removes `LEGACY_THEME_KEY` — frontend-v2/src/lib/appearance.ts:77 [DERIVED]
-  fails-if: stale legacy key keeps winning/interfering on next `loadAppearance` fallback path.
-INVARIANT: `docSearchable(d)` ⇔ `d.vnext_ready || (d.map_unresolved === 0 && d.profile_present)` — frontend-v2/src/lib/readiness.ts:63 [DERIVED]
-  fails-if: a file with a base profile only is painted "Blocked" (the FILES-READY-LABEL complaint, readiness.ts:59-61).
-INVARIANT: owner `privateLibrary` = `null`, friend = `fr-<username>` — frontend-v2/src/lib/auth.ts:94 [DERIVED]
-  fails-if: friend uploads land outside the server-created private library.
-INVARIANT: `chunkIdOf` returns `""` only when neither a string `chunk_id` nor a string `locator` exists — frontend-v2/src/lib/chunkid.ts:15-25 [DERIVED]
-  fails-if: receipt sections keyed by `locator` stop merging with sections keyed by `chunk_id` (the 0/5 UNSUPPORTED bug, chunkid.ts:7-13).
-INVARIANT: `normalizeMe` output always has boolean `is_owner`, string `username`, boolean `local` — frontend-v2/src/lib/auth.ts:70-72 [DERIVED]
-  fails-if: malformed `/auth/me` bodies crash Settings rendering.
+INVARIANT: MAX_SESSIONS = 50 persisted sessions max — chatStore.ts:31, chatStore.ts:79 [DERIVED]
+  fails-if: >50 real conversations exist — oldest by `updatedAt` silently evicted.
+INVARIANT: persisted sessions all have turns.length ≥ 1 (empty "New chat" filtered before write) — chatStore.ts:76-78 [DERIVED]
+  fails-if: blanks accumulate and evict real conversations at the 50 cap (stated reason, chatStore.ts:74-75).
+INVARIANT: every turn returned by loadSessions has done === true — chatStore.ts:63-66 [DERIVED]
+  fails-if: a stored unfinished turn would render its chat busy forever after reload.
+INVARIANT: titleFor label length ≤ 42 (`q.length > 42` → `q.slice(0, 41) + "…"`) — chatStore.ts:44-47 [DERIVED]
+  fails-if: sidebar labels overflow; truncation boundary shifts.
+INVARIANT: vnextReady degraded requires p.unresolved === 0 AND docs > 0 AND v.profiled >= docs — readiness.ts:60 [DERIVED]
+  fails-if: a library with unresolved parents is painted amber instead of red (owner complaint, readiness.ts:46-49).
+INVARIANT: docSearchable === (vnext_ready || (map_unresolved === 0 && profile_present)) — readiness.ts:71 [DERIVED]
+  fails-if: a searchable file with only the base profile shows "Blocked" (owner complaint, readiness.ts:67-69).
+INVARIANT: LEGACY maps 10 ids ("", obsidian, graphite, nord, espresso, solar, rose, slate, paper, champagne) — appearance.ts:17-28 [DERIVED]
+  fails-if: a pre-refresh theme falls to DEFAULT_APPEARANCE instead of its nearest mode/accent.
+INVARIANT: auth endpoint count = 10 — auth.ts:77-89 [DERIVED] (= FACTS.api_calls length)
+  fails-if: a screen calls a key/auth route that no longer exists in `auth`.
+INVARIANT: normalizeMe fallback identity is username "king", principal_id "prn_owner" — auth.ts:65-67 [DERIVED]
+  fails-if: old backends (404 on /auth/me) display as a non-owner.
 
 ## determinism & idempotency
-
-determinism: NONDETERMINISTIC (localStorage reads appearance.ts:45-52, chatStore.ts:51, composerSettings.ts:39-43; `matchMedia` appearance.ts:56; `Date.now()` + `Math.random()` in `newSessionId` chatStore.ts:34; network in auth.ts:77-89 and useAsync.ts:12-17; cross-window `storage` events composerSettings.ts:71). Pure/deterministic subset: `migrateLegacy`, `resolveMode` (given `dark`), `titleFor`, `chunkIdOf`, all readiness.ts functions, `clean`/`parse`. [DERIVED]
-idempotency: SAFE — `setAppearance`, `initAppearance`, `applyAppearance`, `saveSessions`, `setComposerSettings` re-apply/re-write the same state. UNSAFE — `newSessionId` (fresh id each call, chatStore.ts:33-35) and `auth.createKey` (POST `/keys`, auth.ts:85) mint new values per call. [INFERRED — from call shapes]
+determinism: NONDETERMINISTIC — `newSessionId` uses Date.now + Math.random (chatStore.ts:33-35); network in all `auth` calls (auth.ts:75-90); `matchMedia` system preference + its change event (appearance.ts:56, 86); localStorage availability (appearance.ts:39-41). All other functions are pure mappings over their inputs. [DERIVED]
+idempotency: SAFE — setAppearance overwrites the same key and removes the legacy key (appearance.ts:77); saveSessions is filter/sort/slice of its input (chatStore.ts:76-80); loadSessions is a read + in-memory rewrite. One-way note: initAppearance's migration deletes "polymath-v2.theme" once (appearance.ts:99-101). [DERIVED]
 
 ## failure behaviour
-
-- All localStorage access is guarded: `storage()` returns `null` on throw (appearance.ts:39-41, composerSettings.ts:17-19); reads/writes inside `try { } catch` fall back to defaults or drop silently (appearance.ts:47-52,77; chatStore.ts:67-69,81-83; composerSettings.ts:35,42,60). Caller sees defaults, never an exception. [DERIVED]
-- `loadSessions` returns `[]` on any parse failure; individual malformed rows filtered out, not the whole list (chatStore.ts:54-59,67-69). [DERIVED]
-- `copyText` degrades: clipboard API → textarea + `execCommand("copy")` → `false` (auth.ts:99-120). [DERIVED]
-- `useAsync` puts `e.message` (or `String(e)`) into `error`; errors after abort/unmount are ignored (useAsync.ts:14-17). [DERIVED]
-- `normalizeMe` maps malformed/404-era `/auth/me` payloads to `LEGACY_OWNER` — display-only; the server enforces rules itself (auth.ts:63-73). [DERIVED]
-- Readiness: unreachable backend → `unknown`/"UNKNOWN" (readiness.ts:34,40,48); in-flight data → `CHECKING`, never an error verdict (readiness.ts:80-86). [DERIVED]
+- localStorage unavailable/private mode: `storage()` returns null → DEFAULT_APPEARANCE (appearance.ts:39-41, 46); setAppearance write swallowed (appearance.ts:77); composer value kept in memory for the session (composerSettings.ts:60); saveSessions swallow → history dropped (chatStore.ts:81-83).
+- Bad JSON: loadAppearance catch → legacy key path (appearance.ts:50-52); parse() → DEFAULT_COMPOSER_SETTINGS (composerSettings.ts:33-36); loadSessions catch → [] (chatStore.ts:67-69).
+- Malformed shapes: normalizeMe → LEGACY_OWNER (auth.ts:71-72); loadSessions row filter drops bad rows instead of the whole list (chatStore.ts:55-59).
+- copyText: clipboard API failure falls through to execCommand textarea copy; both failing returns `false` (auth.ts:99-121).
+- useAsync: errors after abort or unmount discarded (useAsync.ts:15); live errors become `e.message` or `String(e)` (useAsync.ts:16).
+- No error codes raised anywhere; all handlers swallow to a default/empty value.
 
 ## dumb-code flags
-
-- Storage-key namespace split: `"polymath.appearance"` (appearance.ts:10) vs `"polymath-v2.chats"` (chatStore.ts:28) and `"polymath-v2.chat-settings"` (composerSettings.ts:13). [DERIVED]
-- Redundant map entry: `LEGACY[""] = DEFAULT_APPEARANCE` (appearance.ts:19) duplicates the `|| DEFAULT_APPEARANCE` fallback in `migrateLegacy` (appearance.ts:31-32). [DERIVED]
-- `INTERRUPTED` is a full UI sentence persisted into stored turns as `error` data (chatStore.ts:29-30,65) — copy change rewrites stored history semantics. [DERIVED]
-- FACTS.imports lists `"frontend-v2/src/lib/contracts.ts"` twice (material lines 330-332). [DERIVED]
-- FACTS.api_calls records the delete route as `"/keys/"` because the path is a template literal `` `/keys/${u(keyId)}` `` (auth.ts:86). [DERIVED]
-- Magic numbers: `42`/`41` title truncation (chatStore.ts:46), `50` session cap (chatStore.ts:31), `slice(2, 8)` id suffix (chatStore.ts:34). [DERIVED]
+- Storage-key prefix drift: "polymath.appearance" (appearance.ts:10) vs "polymath-v2.theme"/"polymath-v2.chats"/"polymath-v2.chat-settings" (appearance.ts:11, chatStore.ts:28, composerSettings.ts:13). [DERIVED]
+- `model: ""` sentinel meaning "backend default model, nothing picked" (composerSettings.ts:14-15). [DERIVED]
+- INTERRUPTED is a user-facing sentence doubling as the persisted error marker (chatStore.ts:29-30). [DERIVED]
+- FACTS.imports lists "frontend-v2/src/lib/contracts.ts" twice (FACTS.imports) — duplicated import edge. [DERIVED]
+- Magic numbers 42/41 in titleFor (chatStore.ts:46); MAX_SESSIONS = 50 unnamed (chatStore.ts:31). [DERIVED]
+- `query_ready` appears only in the rejecting comment; no function in readiness.ts accepts it (readiness.ts:8-11). [DERIVED]
 
 ## refactor notes
-
-- Renaming any storage key orphans persisted user state: `APPEARANCE_KEY`, `LEGACY_THEME_KEY`, `"polymath-v2.chats"`, `COMPOSER_SETTINGS_KEY` (appearance.ts:10-11, chatStore.ts:28, composerSettings.ts:13); a migration path like `migrateLegacy` would be needed. [INFERRED — same pattern as appearance.ts:17-32]
-- `Turn` shape comes from `./chat`; only redraw fields are persisted, so a receipt schema change degrades stored turns' panels by design (chatStore.ts:12-16). Changing `Turn` affects every stored thread. [DERIVED]
-- `chunkIdOf` is the single join point for receipt sections; changing the `"chunk:<id>@<start>:<end>"` locator format or the bare `chunk_id` field re-breaks section merging (chunkid.ts:4-13). [DERIVED]
-- readiness.ts intentionally composes nothing: verdicts must keep coming pre-composed from `/control_plane` etc. — recomposing in the UI is the drift GAP-1 closed (readiness.ts:24-31). `ControlPlane`, `SemanticReadiness`, `DocSummary` come from `./contracts`. [DERIVED]
-- `DEFAULT_COMPOSER_SETTINGS.mode = "HYBRID"` must remain a member of `PUBLIC_MODES` or `clean` silently resets it (composerSettings.ts:15,21,27). [DERIVED]
-- The 10 `auth` endpoints must stay in lockstep with backend routes; FACTS.importers (`App.tsx`, `_small-modules`, `lib/deep.ts`) are the blast radius for any signature change here. [DERIVED]
-- `LEGACY_OWNER` fallback means a broken `/auth/me` paints the visitor as owner; display-only today — removing that guard changes visible behavior on old backends (auth.ts:63-72). [DERIVED]
+- APPEARANCE_KEY is a cross-page contract: index.html reads the stored choice before first paint (appearance.ts:3-4). Renaming the key orphans every stored appearance and breaks pre-paint application. [DERIVED]
+- `useSyncExternalStore` snapshot identity: getAppearance returns the module-level `current` replaced only on set/init (appearance.ts:69-79); getComposerSettings caches the parsed object and re-parses only on raw-string change (composerSettings.ts:47-56). Returning fresh objects per call breaks React rendering. [DERIVED]
+- chunkIdOf encodes the receipt-section mismatch (final_detail[]/legend[] bare `chunk_id`; chunks[] `locator` only). Joining sections on `chunk_id` without it produced 0 matches and duplicate Evidence rows (chunkid.ts:4-13). [DERIVED]
+- Verdict labels are user-visible verbatim strings: "SEARCHABLE · BASIC PROFILES" (readiness.ts:61), "READY · BASIC PROFILE" (readiness.ts:79), "BLOCKED" (readiness.ts:85), "CHECKING" (readiness.ts:90); backend verdict words are shown unparaphrased (readiness.ts:18-20). Changing them changes every screen painting readiness. [DERIVED]
+- LEGACY_OWNER fallback makes a backend without /auth/me display as owner (auth.ts:63-72) — removing it changes display-only behavior for old backends. [DERIVED]
+- Type/dependency edges: `http` from ./api (auth.ts:7), `Turn` from ./chat (chatStore.ts:17), PUBLIC_MODES/PublicMode/ControlPlane/DocSummary/SemanticReadiness from ./contracts (composerSettings.ts:2, readiness.ts:12). Renaming those upstream exports hits this unit; renaming this unit's exports hits App.tsx and lib/deep.ts (FACTS.importers). [DERIVED]
+- composerSettings subscribe treats `e.key === null` (storage cleared) as a change (composerSettings.ts:71) — keep that when refactoring the listener. [DERIVED]
 
 ## VERIFY
-
 ```verify
 grep -Fq 'polymath.appearance' frontend-v2/src/lib/appearance.ts
-grep -Fq 'const MAX_SESSIONS = 50' frontend-v2/src/lib/chatStore.ts
+grep -Fq 'polymath-v2.chats' frontend-v2/src/lib/chatStore.ts
 grep -Fq 'polymath-v2.chat-settings' frontend-v2/src/lib/composerSettings.ts
-grep -Fq 'd.vnext_ready || (d.map_unresolved === 0 && d.profile_present)' frontend-v2/src/lib/readiness.ts
+grep -Fq 'SEARCHABLE · BASIC PROFILES' frontend-v2/src/lib/readiness.ts
 grep -Fq 'chunk:chunk_abc123@365:564' frontend-v2/src/lib/chunkid.ts
 grep -Fq 'prn_owner' frontend-v2/src/lib/auth.ts
-test "$(grep -c -F 'http.post' frontend-v2/src/lib/auth.ts)" -ge 5
+grep -Fq 'useSyncExternalStore' frontend-v2/src/lib/composerSettings.ts
+test "$(grep -c -F '/keys' frontend-v2/src/lib/auth.ts)" -ge 5
 ```
