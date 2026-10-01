@@ -32,6 +32,11 @@ Before making any code, schema, data, architecture, or evaluation change:
    decision-oriented, smallest sufficient stratified test, control confounds
    before adding runs, reuse frozen baselines, and emit the §11 mini-plan
    before launching. A scoped gate is a SENTINEL, never reported as full CA5.
+8. **To understand or change code, start at `docs/codewiki/index.md`** (CODE-WIKI-V1, register 11.557): how the code works
+   NOW, as checkable facts anchored to `path:LINE` — one page per source file, 8 end-to-end flows, the invariant ledger, the
+   failure-pattern ledger, every route / flag / table / MCP tool / broad `except`. `docs/wiki/` says WHY; the code wiki says
+   HOW. Trust the code over a page: open the anchor. After a code change run
+   `.venv/bin/python scripts/codewiki/pages.py refresh` (regenerates only what changed), then `scripts/codewiki/verify.py`.
 
 ## Current Repository State (dated handoff — read before architectural work)
 

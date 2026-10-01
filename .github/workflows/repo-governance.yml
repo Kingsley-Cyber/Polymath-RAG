@@ -15,3 +15,5 @@ jobs:
       - if: github.event_name != 'pull_request'
         run: python3 scripts/repo_guard.py
       - run: python3 scripts/wiki_worm.py --check
+      - name: Code wiki in step with the code (CODE-WIKI-V1)
+        run: python3 scripts/codewiki/verify.py

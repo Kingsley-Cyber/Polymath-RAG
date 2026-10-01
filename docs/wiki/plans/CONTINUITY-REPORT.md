@@ -164,6 +164,9 @@ historical, never an instruction.
      phone composer); moves cite ≥ the old loop's books on 5 of 5 DR4 questions.
    - CLOSED (11.556): the 2026-09-30 cinema atom incident (reconcile 3,723 = 3,723). Never run `profile_atom_canary.py` on a
      corpus with atom families.
+   - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
+     change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
+     `scripts/codewiki/verify.py` (CI runs it).
    - ON THE BRANCH (11.555): OWNER-KEY-VISIBLE (Settings: the main key for another computer, hidden until Show, owner only).
    - ON THE BRANCH (11.554): FILES-READY-LABEL (a searchable file reads Ready / Ready · basic profile, never Blocked).
    - ON THE BRANCH (11.553): ONE-PROFILE — one sign-in (King), a redesigned sign-in page and Settings, sign-ups closed
