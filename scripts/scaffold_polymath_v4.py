@@ -2578,6 +2578,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-10-01-mcp-retrieval-modes.md", "md", None),
     ("docs/wiki/work-log/2026-10-01-library-ready-label.md", "md", None),
     ("docs/wiki/work-log/2026-10-01-served-profile-label.md", "md", None),
+    ("docs/wiki/work-log/2026-10-01-verify-full-scan.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),
@@ -2600,6 +2601,8 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/contracts/test_mcp_connector_url.py", "py", None),
     ("tests/contracts/test_mcp_retrieval_modes.py", "py", None),
     ("tests/contracts/test_served_profile_label.py", "py", None),
+    ("tests/contracts/test_verify_full_scan.py", "py", None),
+    ("tests/contracts/test_restore_verified_receipts.py", "py", None),
     ("docs/wiki/work-log/2026-09-26-trail-ext-fixes-acquisition-c.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-hosted-acquisition.md", "md", None),
     ("docs/wiki/work-log/2026-09-25-autoresearch-r8-audit-fixes.md", "md", None),
@@ -2838,6 +2841,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_query_scope.py", "py", None),
     ("tests/determinism/test_raw_evidence_ledger.py", "py", None),
     ("tests/determinism/test_receipt_gap_reopen.py", "py", None),
+    ("tests/determinism/test_receipt_gap_dead_chain.py", "py", None),
     ("tests/determinism/test_receipt_verdict_store.py", "py", None),
     ("tests/determinism/test_runtime_config_contract.py", "py", None),
     ("tests/determinism/test_scheduler_bulk.py", "py", None),
@@ -2916,6 +2920,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_throughput_v2.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-throughput-v2.md", "md", None),
     ("scripts/retry_failed_stage.py", "py", None),
+    ("scripts/restore_verified_receipts.py", "py", None),
     # EXTRACTION-FLEET-V3
     ("stores/postgres/migrations/0045_receipt_gate_status.sql", "sql", None),
     ("stores/postgres/migrations/0046_stall_traces.sql", "sql", None),

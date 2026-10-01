@@ -139,18 +139,37 @@ def _reopen_receipt_gap_tickets(conn: Connection, census: Census) -> int:
             flagged.setdefault(key, set()).add(g.run_id)
     if not flagged:
         return 0
+    from control.tickets import DAG_ORDER
     reopened = 0
     for (corpus_id, stage), run_ids in sorted(flagged.items()):
         # A re-drive already in flight (any open ticket for this
         # corpus+stage) covers the corpus-scoped desired state; do not
         # stack duplicates behind it.
+        #
+        # DEAD-CHAIN-NOT-IN-FLIGHT-V1 (measured live 2026-10-01, cinema): a
+        # PENDING ticket is in flight only while its run can still reach
+        # it. Cinema's duplicate upload ("Sound Design ... (1).md", intake
+        # refused NEAR_DUPLICATE_DOCUMENT 3/3 on 2026-09-07) left its chain
+        # PENDING behind the failed intake; its project_qdrant ticket read
+        # as in flight here and blocked every receipt-gap re-drive of the
+        # corpus for 24 days (73 runs held at reconciling). A pending
+        # ticket behind a FAILED predecessor never runs until an owner
+        # retry (scripts/retry_failed_stage.py) or the medic revives that
+        # predecessor; from then on it counts again.
+        predecessors = DAG_ORDER[:DAG_ORDER.index(stage)]
         open_row = conn.execute(
-            """SELECT 1 FROM stage_tickets
-                WHERE corpus_id = %s AND stage = %s
-                  AND archived_at IS NULL
-                  AND status IN ('pending', 'ready', 'leased', 'repair')
+            """SELECT 1 FROM stage_tickets t
+                WHERE t.corpus_id = %s AND t.stage = %s
+                  AND t.archived_at IS NULL
+                  AND (t.status IN ('ready', 'leased', 'repair')
+                       OR (t.status = 'pending' AND NOT EXISTS (
+                           SELECT 1 FROM stage_tickets f
+                            WHERE f.run_id = t.run_id
+                              AND f.archived_at IS NULL
+                              AND f.status = 'failed'
+                              AND f.stage = ANY(%s))))
                 LIMIT 1""",
-            (corpus_id, stage)).fetchone()
+            (corpus_id, stage, predecessors)).fetchone()
         if open_row:
             continue
         reopened += conn.execute(

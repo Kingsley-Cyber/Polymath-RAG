@@ -24,7 +24,7 @@ AUTHORITY: `shared/polymath_shared/logging.py:11` :: `CONTEXT_FIELDS` (count: 9)
 | `workers/workers/extract_worker.py` | `workers/workers/extract_worker.py:68` | 3/9 | `trace_id`, `attempt_id`, `model_release`, `device`, `duration_ms`, `error_code` |
 | `workers/workers/project_qdrant_worker.py` | `workers/workers/project_qdrant_worker.py:214` | 4/9 | `trace_id`, `attempt_id`, `provider`, `model_release`, `device` |
 | `workers/workers/summary_worker_impl.py` | `workers/workers/summary_worker_impl.py:173` | 3/9 | `trace_id`, `attempt_id`, `provider`, `model_release`, `device`, `duration_ms` |
-| `workers/workers/verify_worker.py` | `workers/workers/verify_worker.py:781` | 3/9 | `trace_id`, `attempt_id`, `provider`, `model_release`, `device`, `duration_ms` |
+| `workers/workers/verify_worker.py` | `workers/workers/verify_worker.py:813` | 3/9 | `trace_id`, `attempt_id`, `provider`, `model_release`, `device`, `duration_ms` |
 
 ## VERIFY
 

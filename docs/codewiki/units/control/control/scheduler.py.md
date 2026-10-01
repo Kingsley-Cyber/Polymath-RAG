@@ -1,138 +1,124 @@
 # unit: control/control/scheduler.py
-anchor: control/control/scheduler.py:1-479
+anchor: control/control/scheduler.py:1-497
 
 ## purpose
-Outbox scheduling for the control loop: materializes census gaps as `outbox_events` rows (idempotent, same tick transaction as the census), re-opens receipt-gap stage tickets, auto-mints enrichment / doc-parent-map / doc_profile-early events, and applies census promote/degrade/fail transitions to `runs`. Consumed by `control/control/main.py` (sole importer, FACTS.importers). [DERIVED — scheduler.py:1-14, 32-103, 397-467]
+Materializes `control.census` decisions into Postgres: turns census gaps into idempotent outbox events, re-opens receipt-gap stage tickets, auto-mints `parent_enrichment` / `doc_parent_map` tickets once intake is done, and applies promote/degrade/fail run-status transitions. Module docstring: "Outbox scheduling: materialize census gaps as outbox events." — control/control/scheduler.py:1-15 [DERIVED]. Imported by `control/control/main.py` (FACTS.importers) — control/control/scheduler.py [DERIVED].
 
 ## public surface
-
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `schedule_gaps` | def | `(conn: Connection, census: Census) -> int` | scheduler.py:32-103 | control/control/main.py (module importer) |
-| `_reopen_receipt_gap_tickets` | def (private) | `(conn: Connection, census: Census) -> int` | scheduler.py:133-170 | `schedule_gaps` (scheduler.py:102) |
-| `_bulk_first_outbox_payload` | def (private) | `(conn: Connection, event_type: str, run_ids: list[str]) -> dict[str, dict]` | scheduler.py:173-193 | `schedule_gaps` (scheduler.py:60, 68) |
-| `_bulk_intake_metadata` | def (private) | `(conn: Connection, run_ids: list[str]) -> dict[str, dict]` | scheduler.py:196-212 | `schedule_gaps` (scheduler.py:70) |
-| `_archived_run_ids` | def (private) | `(conn: Connection, run_ids: list[str]) -> set[str]` | scheduler.py:215-232 | `schedule_gaps` (scheduler.py:41) |
-| `auto_enrich_on_chunks` | def | `(conn: Connection) -> int` | scheduler.py:235-298 | control/control/main.py (module importer) |
-| `auto_map_parents_on_chunks` | def | `(conn: Connection) -> int` | scheduler.py:301-394 | control/control/main.py (module importer) |
-| `apply_promotions` | def | `(conn: Connection, census: Census) -> None` | scheduler.py:397-431 | control/control/main.py (module importer) |
-| `apply_degrades` | def | `(conn: Connection, census: Census) -> int` | scheduler.py:434-459 | control/control/main.py (module importer) |
-| `apply_failures` | def | `(conn: Connection, census: Census) -> None` | scheduler.py:462-467 | control/control/main.py (module importer) |
-| `_loads` / `_dumps` | def (private) | `(text: str) -> dict` / `(payload: dict) -> str` | scheduler.py:470-478 | internal |
+| `schedule_gaps` | def | `(conn: Connection, census: Census) -> int` | control/control/scheduler.py:32-103 | — (module imported by control/control/main.py) |
+| `auto_enrich_on_chunks` | def | `(conn: Connection) -> int` | control/control/scheduler.py:254-317 | — |
+| `auto_map_parents_on_chunks` | def | `(conn: Connection) -> int` | control/control/scheduler.py:320-413 | — |
+| `apply_promotions` | def | `(conn: Connection, census: Census) -> None` | control/control/scheduler.py:416-450 | — |
+| `apply_degrades` | def | `(conn: Connection, census: Census) -> int` | control/control/scheduler.py:453-478 | — |
+| `apply_failures` | def | `(conn: Connection, census: Census) -> None` | control/control/scheduler.py:481-486 | — |
 
-FACTS list only the importing module, not per-symbol call sites. [DERIVED]
+Private helpers: `_reopen_receipt_gap_tickets` (133-189), `_bulk_first_outbox_payload` (192-212), `_bulk_intake_metadata` (215-231), `_archived_run_ids` (234-251), `_loads` (489-491), `_dumps` (494-497). Per-symbol callers not in FACTS; only the module-level import by `control/control/main.py` is known.
 
 ## contracts
 
-**schedule_gaps** — scheduler.py:32-103
-- in: `census.gaps` — Gap objects with `.run_id`, `.event_type` (scheduler.py:40, 45)
-- out: `int` — summed `rowcount` of the chunked INSERTs (scheduler.py:87, 100)
-- pre: census computed in the same tick transaction; a crash between census and schedule re-computes identical gaps next tick (scheduler.py:3-5)
-- post: one `outbox_events` row per (run, type, payload) with `idempotency_key = content_hash({"run": rid, "type": event_type, "payload": payload})` (scheduler.py:50-52); conflict only re-arms when `delivered_at IS NOT NULL` (scheduler.py:95-97); runs in `_archived_run_ids` skipped (scheduler.py:41-44); `_reopen_receipt_gap_tickets` always runs (scheduler.py:102)
-- payload sources: `_IDENTITY_ONLY` types get `{"run_id": rid}` with zero reads (scheduler.py:54-58); `chunked.v1` from first outbox payload (scheduler.py:59-66); `intake.v1` from first outbox payload, else `runs.metadata.intake_payload` (scheduler.py:67-76)
+**`schedule_gaps(conn, census) -> int`**
+- in: `conn` psycopg `Connection` (18), `census` a `control.census.Census` whose `.gaps` hold `Gap` with `run_id`, `event_type`, `corpus_id`, `reason` — control/control/scheduler.py:40-45,135-139 [DERIVED]
+- pre: gaps for runs in `_archived_run_ids` (superseded tickets or `archived_corpora` membership) are skipped before any write — control/control/scheduler.py:41-44,234-251 [DERIVED]
+- post: every non-archived gap of event type in `_IDENTITY_ONLY`, `"chunked.v1"`, or `"intake.v1"` has an `outbox_events` row keyed by `content_hash({"run": rid, "type": event_type, "payload": payload})`; conflicting rows only get `delivered_at = NULL` when previously delivered — control/control/scheduler.py:50-76,87-100 [DERIVED]
+- out: `int` = summed `rowcount` of the chunked INSERTs (inserts + re-arms) — control/control/scheduler.py:87,100,102 [DERIVED]
 
-**_reopen_receipt_gap_tickets** — scheduler.py:133-170
-- in: gaps with `event_type in _RECEIPT_GAP_STAGES` and `"receipts missing" in g.reason` (scheduler.py:136-138)
-- out: count of tickets flipped `done -> ready` (scheduler.py:156-168, 170)
-- pre: none
-- post: skipped entirely if any open ticket (`status IN ('pending','ready','leased','repair')`, `archived_at IS NULL`) exists for the `(corpus_id, stage)` (scheduler.py:147-155); the one reopened ticket gets `lease_owner = NULL, lease_expires_at = NULL` (scheduler.py:158-160)
+**`apply_promotions(conn, census) -> None`**
+- in: `census.promote` run_ids — control/control/scheduler.py:416-417 [DERIVED]
+- post: run set to `status = 'query_ready'` only when `status != 'query_ready'`; on success, `control.generation_swap.swap` runs in the same transaction — control/control/scheduler.py:418-429 [DERIVED]
+- post: promotion-time enrichment mint attempted when `enrichment_auto` truthy and `enrichment_provider != "disabled"`; mint failure swallowed — control/control/scheduler.py:435-450 [DERIVED]
 
-**auto_enrich_on_chunks** — scheduler.py:235-298
-- in: none (reads DB)
-- out: `int` minted count; `0` if `worker.enrichment_auto` falsy or `worker.enrichment_provider == "disabled"` (scheduler.py:246-250)
-- post: first-mint only (`NOT EXISTS` on `stage_tickets.stage = 'parent_enrichment'`, scheduler.py:260-262) plus rescue of stranded `ready`/`failed` tickets with no undelivered event (scheduler.py:273-283); archived corpora and superseded runs excluded (scheduler.py:259-265)
+**`apply_degrades(conn, census) -> int`**
+- in: `census.degrade` mapping run_id -> reasons — control/control/scheduler.py:459 [DERIVED]
+- post: run set `status = 'degraded'` with `metadata.degraded_reasons = json.dumps(sorted(reasons))` and `metadata.degraded_contract = 'extraction-coverage-v1'`; only from statuses `('intake','reconciling','degraded')` — control/control/scheduler.py:460-468 [DERIVED]
+- post: no-op when already `'degraded'` with identical `degraded_reasons` (`IS DISTINCT FROM` guard, DEGRADE-IDEMPOTENCY-FIX 2026-09-02) — control/control/scheduler.py:469-475 [DERIVED]
+- out: `int` changed row count — control/control/scheduler.py:477 [DERIVED]
 
-**auto_map_parents_on_chunks** — scheduler.py:301-394
-- in: none; gated by `doc_parent_map_enabled()`, scoped by `doc_parent_map_corpus_scope()` / `doc_parent_map_since()` (scheduler.py:309-318)
-- out: `int` pMAP mint count (profile-early emits are NOT counted, scheduler.py:394)
-- post: pMAP mint mirrors `auto_enrich_on_chunks` (scheduler.py:328-367); additionally emits `doc_profile` events for scoped runs whose `doc_profile` ticket is `pending` via `_emit_ticket_event` (scheduler.py:374-393); disabled flag = zero tickets, byte-identical behavior (scheduler.py:305-307)
+**`apply_failures(conn, census) -> None`** — sets `status = 'failed'` per `census.fail` run_id, unconditional — control/control/scheduler.py:481-486 [DERIVED]
 
-**apply_promotions** — scheduler.py:397-431
-- in: `census.promote` run ids
-- out: `None`
-- post: `runs.status = 'query_ready'` only when it differed (scheduler.py:398-405); on success runs `generation_swap.swap` in the same transaction (scheduler.py:409-410); then promotion-time `mint_parent_enrichment` backstop, same settings gate, fail-open (scheduler.py:411-431)
+**`auto_enrich_on_chunks(conn) -> int`** — returns 0 when `enrichment_auto` falsy or `enrichment_provider == "disabled"`; else mints `parent_enrichment` for intake-done runs (NOT EXISTS ticket guard) plus stranded ready/failed tickets with no undelivered `parent_enrichment.v1` event; returns mint count — control/control/scheduler.py:265-317 [DERIVED]
 
-**apply_degrades** — scheduler.py:434-459
-- in: `census.degrade` — `{run_id: reasons}`
-- out: `int` changed rows
-- post: `status = 'degraded'`, metadata merged with `degraded_reasons` (sorted JSON) and `degraded_contract = 'extraction-coverage-v1'`; no-op when already degraded with identical reason set (scheduler.py:441-457)
-
-**apply_failures** — scheduler.py:462-467
-- post: `runs.status = 'failed'` for each `census.fail` run id, unguarded UPDATE (scheduler.py:464-466)
+**`auto_map_parents_on_chunks(conn) -> int`** — returns 0 when `doc_parent_map_enabled()` false; else mints `doc_parent_map` under optional corpus scope + `created_at > since` filters, rescues stranded tickets, and early-emits `doc_profile` ticket events for pending `doc_profile` tickets; returns mint count (early emits not counted) — control/control/scheduler.py:320-413 [DERIVED]
 
 ## effect surface
-
-| surface | detail | anchor |
+| kind | target | anchor |
 |---|---|---|
-| Postgres read | `outbox_events` (DISTINCT ON first payload) | scheduler.py:179-185 |
-| Postgres read | `runs` (metadata; auto-mint candidate scans) | scheduler.py:201-207, 251-265, 328-340, 374-385 |
-| Postgres read | `stage_tickets` (open-ticket check; superseded; NOT EXISTS guards; stranded) | scheduler.py:147-153, 223-231, 255-262, 273-283, 331-338, 345-357, 377-384 |
-| Postgres read | `archived_corpora` | scheduler.py:227-230, 263-264, 338-339 |
-| Postgres write | `outbox_events` — chunked INSERT via `unnest`, ON CONFLICT re-arm | scheduler.py:88-100 |
-| Postgres write | `stage_tickets` — reopen UPDATE | scheduler.py:158-168 |
-| Postgres write | `runs` — promote / degrade / fail UPDATEs | scheduler.py:399-401, 443-457, 464-466 |
-| Settings/env | `get_settings().worker.enrichment_auto` (getattr default `True`), `worker.enrichment_provider` (getattr default `"disabled"`) | scheduler.py:247-249, 417-421 |
-| Settings/env | `doc_parent_map_enabled()`, `doc_parent_map_corpus_scope()`, `doc_parent_map_since()` from `polymath_shared.document_profile.map_trigger` | scheduler.py:309-318 |
-| Delegated writes | `mint_parent_enrichment`, `mint_doc_parent_map`, `_emit_ticket_event` receive `conn` — effects live outside this unit | scheduler.py:287-291, 361, 388 |
+| PG read | `runs` | control/control/scheduler.py:221-226,272-284,348-359,395-404 |
+| PG read | `stage_tickets` | control/control/scheduler.py:161-172,242-248,272-284,294-302,351-358,368-376,397-402 |
+| PG read | `outbox_events` | control/control/scheduler.py:198-204,298-302,372-376 |
+| PG read | `archived_corpora` | control/control/scheduler.py:246-248,282-283,357-358,479-480 |
+| PG write | `outbox_events` (chunked INSERT via `unnest`) | control/control/scheduler.py:87-100 |
+| PG write | `stage_tickets` (reopen `done` -> `ready`) | control/control/scheduler.py:175-188 |
+| PG write | `runs` (promote/degrade/fail) | control/control/scheduler.py:418-420,461-476,483-486 |
+| settings flag | `worker.enrichment_auto` = `True` (getattr default), `worker.enrichment_provider` = `"disabled"` (getattr default) | control/control/scheduler.py:267-268,438-439 |
+| settings flag | `doc_parent_map_enabled()` / `doc_parent_map_corpus_scope()` / `doc_parent_map_since()` (defaults live in `polymath_shared.document_profile.map_trigger`, not here) | control/control/scheduler.py:328-337 |
+| side effect | mints via imported `mint_parent_enrichment` and `mint_doc_parent_map` (their tables not visible here) | control/control/scheduler.py:309-310,380,444-445 |
 
-No files, network, or subprocess in this unit. [DERIVED — absent from SOURCE]
+No file, network, or subprocess access visible in this unit.
 
 ## invariants
-
-INVARIANT: `_INSERT_CHUNK == 1000` — scheduler.py:23 [DERIVED]
-  fails-if: INSERT batch size changes; no correctness impact, only statement size.
-INVARIANT: idempotency_key == `content_hash({"run": rid, "type": event_type, "payload": payload})` — scheduler.py:50-52 [DERIVED]
-  fails-if: key shape drifts → same gap mints a second outbox row instead of re-arming (byte-identical requirement stated at scheduler.py:12-14).
-INVARIANT: `_IDENTITY_ONLY` payloads are exactly `{"run_id": rid}` — scheduler.py:26-29, 56-57 [DERIVED]
-  fails-if: adding a field changes the content hash → duplicate events.
-INVARIANT: conflict update fires only `WHERE outbox_events.delivered_at IS NOT NULL` — scheduler.py:95-97 [DERIVED]
-  fails-if: every gap rewrites its row every tick — measured 206 MB bloat over 204 live rows, id sequence past 155M (scheduler.py:83-86).
-INVARIANT: ≤ 1 open re-drive ticket per `(corpus_id, stage)` — scheduler.py:147-155 [DERIVED]
-  fails-if: identical corpus-wide projection dispatched N× — measured 286k receipt writes over 14.6k entities per 15 min (scheduler.py:117-125).
-INVARIANT: run in `_archived_run_ids` ⟹ zero outbox rows — scheduler.py:41-44 [DERIVED]
-  fails-if: 44k armed debris events reclaim the claim FIFO after archival (scheduler.py:36-39).
-INVARIANT: first payload per (run, type) = row with MIN `event_id` (`DISTINCT ON ... ORDER BY run_id, event_id`) — scheduler.py:180-184 [DERIVED]
-  fails-if: a later payload is reused → different hash → duplicate outbox row.
-INVARIANT: degrade write is no-op ⟺ `status == 'degraded'` AND `metadata->'degraded_reasons' == sorted(reasons)` — scheduler.py:455-456 [DERIVED]
-  fails-if: pre-2026-09-02 behavior — runs stuck at `reconciling` with reasons already recorded (scheduler.py:450-454).
-INVARIANT: early-enrich mint fires only when no `stage_tickets` row `stage = 'parent_enrichment'` exists — scheduler.py:260-262 [DERIVED]
-  fails-if: finished enrichment reopened every tick (scheduler.py:243-245).
+INVARIANT: `_INSERT_CHUNK` == `1000` rows per INSERT statement — control/control/scheduler.py:23 [DERIVED]
+  fails-if: bigger arrays per `unnest` bind / smaller means more round trips per tick.
+INVARIANT: idempotency_key == `content_hash({"run": rid, "type": event_type, "payload": payload})` — control/control/scheduler.py:50-52 [DERIVED]
+  fails-if: key drift orphans existing `outbox_events` rows (never re-armed) and duplicates get inserted.
+INVARIANT: payload for every `_IDENTITY_ONLY` type == `{"run_id": rid}` — control/control/scheduler.py:26-29,54-58 [DERIVED]
+  fails-if: any payload change alters the content hash -> duplicate events for the same gap.
+INVARIANT: ON CONFLICT re-arm fires only `WHERE outbox_events.delivered_at IS NOT NULL` — control/control/scheduler.py:95-96 [DERIVED]
+  fails-if: every gap rewrites its row every tick — measured 206 MB table over 204 live rows, id sequence past 155M (STALL-2026-08-27) — control/control/scheduler.py:83-86.
+INVARIANT: reopened tickets per `(corpus_id, stage)` per tick <= 1 (subquery `ORDER BY run_id LIMIT 1`) — control/control/scheduler.py:180-185 [DERIVED]
+  fails-if: N runs re-drive the identical corpus-wide projection — measured cysa-study-v1, ~20x entity rewrites, 286k receipt writes — control/control/scheduler.py:117-125.
+INVARIANT: a `'pending'` ticket counts as in-flight only when no unarchived `'failed'` ticket exists at an earlier `DAG_ORDER` stage for the same run — control/control/scheduler.py:159-170 [DERIVED]
+  fails-if: dead chain reads as in-flight and blocks every receipt-gap re-drive — measured cinema, 73 runs held at reconciling 24 days — control/control/scheduler.py:149-158.
+INVARIANT: degrade fires only when `status <> 'degraded'` OR `metadata->'degraded_reasons' IS DISTINCT FROM` the sorted-reasons JSON — control/control/scheduler.py:474-475 [DERIVED]
+  fails-if: runs reset to `reconciling` with stale reasons never re-marked degraded (the 2026-09-02 bug) — control/control/scheduler.py:469-473.
+INVARIANT: `degraded_reasons` stored as `json.dumps(sorted(reasons))` — control/control/scheduler.py:460,475 [DERIVED]
+  fails-if: unsorted reasons break the DISTINCT FROM no-op comparison, causing a write every tick.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (DB state: outbox first-payload scheduler.py:179-185, ticket/run tables throughout; SQL `now()` in UPDATEs scheduler.py:160, 400, 445, 465; settings flags scheduler.py:247-249, 315-318). `_dumps` uses `json.dumps` without `sort_keys` — scheduler.py:478 [INFERRED: key order follows dict insertion; stable only for the single-key identity payload].
-idempotency: SAFE — inserts keyed by unique `idempotency_key` with guarded ON CONFLICT (scheduler.py:88-97); degrade/promote/fail guarded by status predicates (scheduler.py:399-401, 448-456, 464-466); auto-mints guarded by NOT EXISTS (scheduler.py:260-262, 336-338). `apply_failures` UPDATE is unguarded but sets the same value repeatedly — scheduler.py:464-466.
+determinism: NONDETERMINISTIC (db: results depend on live `outbox_events`/`runs`/`stage_tickets`/`archived_corpora` state — control/control/scheduler.py:41,60-70,270-302; SQL `now()` timestamps on writes — control/control/scheduler.py:179,419,463,484). No Python clock/random/uuid/network use.
+idempotency: SAFE (content-hash keys + guarded `ON CONFLICT ... WHERE delivered_at IS NOT NULL` — control/control/scheduler.py:50-52,95-96; degrade guarded — control/control/scheduler.py:474-475; promotion guarded by `status != 'query_ready'` — control/control/scheduler.py:419; mint sweeps guarded by `NOT EXISTS` ticket checks — control/control/scheduler.py:279-283,355-358).
 
 ## failure behaviour
-- Four broad `except Exception` handlers, all fail-open per run ("handled: import, log", FACTS.fallbacks): early-enrich mint scheduler.py:293, pMAP mint scheduler.py:363, doc_profile-early emit scheduler.py:389, promotion-time enrich mint scheduler.py:427. Tick continues; caller sees a warning log only.
-- Logged error codes: `AUTO_ENRICH_MINT_FAILED` (scheduler.py:528, 431 numbering per SOURCE: 297-298, 431), `AUTO_PMAP_MINT_FAILED` (scheduler.py:367), `AUTO_PROFILE_EARLY_FAILED` (scheduler.py:393) — all via `logging.getLogger("control-schedule")`.
-- `apply_promotions` generation swap is NOT wrapped: a swap failure rolls back the whole tick transaction and the successor stays hidden (scheduler.py:406-410).
-- Unhandled exceptions in `schedule_gaps`/`apply_*` SQL propagate to the tick transaction; crash-safety comes from re-computing gaps next tick (scheduler.py:3-5).
+All 4 handlers are `except Exception` (FACTS.fallbacks), fail-open, log a warning to logger `"control-schedule"`, and never re-raise:
+
+| site | swallows | logged error_code | caller sees | anchor |
+|---|---|---|---|---|
+| enrich mint, per run | any mint error | `AUTO_ENRICH_MINT_FAILED` | lower `minted` count, tick continues | control/control/scheduler.py:312-316 |
+| pMAP mint, per run | any mint error | `AUTO_PMAP_MINT_FAILED` | lower `minted` count | control/control/scheduler.py:382-386 |
+| doc_profile early emit, per run | any emit error | `AUTO_PROFILE_EARLY_FAILED` | chain advancement remains backstop | control/control/scheduler.py:408-412 |
+| promotion-time enrich mint | any mint error | `AUTO_ENRICH_MINT_FAILED` | promotion still commits | control/control/scheduler.py:446-450 |
+
+No error codes are raised by this module; SQL/psycopg errors outside those handlers propagate to the caller's `conn` transaction.
 
 ## dumb-code flags
-- FACTS `tables_written` includes `"set"` — no such table; static-analysis artifact of `UPDATE ... SET` (scheduler.py:158, 399, 443, 464). Same class of artifact: `"unnest"` listed under `tables_read` is a set-returning function (scheduler.py:93). [DERIVED from FACTS vs SOURCE]
-- Settings gate duplicated verbatim: `getattr(w, "enrichment_auto", True)` / `getattr(w, "enrichment_provider", "disabled")` at scheduler.py:248-249 AND scheduler.py:419-421 — defaults must stay in sync.
-- Run-status tuple `('intake', 'reconciling', 'degraded', 'query_ready')` repeated 3× — scheduler.py:257-258, 334, 383.
-- Substring coupling: `"receipts missing" in (g.reason or "")` — scheduler.py:137 [INFERRED: silently breaks if census rewords its reason strings].
-- `_loads`/`_dumps` re-`import json` on every call — scheduler.py:471, 477.
-- Logger fetched per-exception instead of module-level — scheduler.py:295, 365, 391, 429.
-- `apply_degrades` sorts reasons before dumping (scheduler.py:441); `_dumps` does not sort — two serialization conventions in one file (scheduler.py:441 vs 478).
+- `getattr(w, "enrichment_auto", True)` / `getattr(w, "enrichment_provider", "disabled")` default pair duplicated verbatim in two functions — control/control/scheduler.py:267-268,438-439.
+- Stage/event string pairs repeated with no shared constant: `'parent_enrichment'` vs `'parent_enrichment.v1'` (279-281,297,300) and `'doc_parent_map'` vs `'doc_parent_map.v1'` (356,370,374).
+- `_IDENTITY_ONLY` (26-29) and `_RECEIPT_GAP_STAGES` keys (126-130) both enumerate the three `project_*` types; consistency is manual.
+- Event-type dispatch in `schedule_gaps` is `if _IDENTITY_ONLY / elif "chunked.v1" / elif "intake.v1"` with no else — a new payload-bearing event type yields zero rows silently — control/control/scheduler.py:47-77.
+- `run_id[:20]` truncation magic number in all 4 log lines — control/control/scheduler.py:315,385,411,449.
+- `logging.getLogger("control-schedule")` plus local `import logging` rebuilt inside every handler — control/control/scheduler.py:313-314,383-384,409-410,447-448.
+- `key()` closure re-defined on every iteration of the `by_type` loop — control/control/scheduler.py:50-52.
+- `_loads`/`_dumps` are bare `json.loads`/`json.dumps` wrappers — control/control/scheduler.py:489-497.
+- `scheduled` counts inserts and re-arms identically (`rowcount` of the guarded upsert) — control/control/scheduler.py:87-100.
+- FACTS.tables_written lists `"set"`; no such table appears in SOURCE — it is the SQL keyword / type-annotation artifact of the analyzer — control/control/scheduler.py:175-179 [INFERRED].
 
 ## refactor notes
-- Sole importer is `control/control/main.py` (FACTS.importers) — every rename/delete must update it.
-- Idempotency-key dict shape `{"run", "type", "payload"}` is frozen: changing it orphans all armed rows and duplicates work (scheduler.py:12-14, 50-52).
-- The `WHERE outbox_events.delivered_at IS NOT NULL` guard and the one-open-ticket-per-`(corpus, stage)` check are load-bearing against measured incidents (scheduler.py:83-86, 117-125) — do not "simplify" them away.
-- `_RECEIPT_GAP_STAGES` values must equal `stage_tickets.stage` names (`project_qdrant`, `project_neo4j`, `project_canonical`) used in the open-ticket and reopen queries (scheduler.py:126-130, 149, 163).
-- doc_profile-early must keep using `control.tickets._emit_ticket_event` — it is the canonical idempotent emission the chain advancement later observes (scheduler.py:372-374, 388).
-- Census contract consumed here: `Gap.run_id`, `Gap.event_type`, `Gap.corpus_id`, `Gap.reason`; `Census.gaps/promote/degrade/fail` (scheduler.py:40, 45, 136-139, 398, 440, 463) — changes to `control.census` ripple directly.
+- `control/control/main.py` imports this module (FACTS.importers); signature changes to any public function ripple there — control/control/scheduler.py [DERIVED].
+- Idempotency keys must stay byte-identical (docstring: "Idempotency keys are byte-identical to the per-gap loop"); changing `key()` inputs, payload shape, or `_dumps` serialization orphans existing outbox rows — control/control/scheduler.py:50-52,245-246.
+- Do not drop the `WHERE outbox_events.delivered_at IS NOT NULL` guard on the upsert; measured 206 MB bloat / sequence past 155M without it — control/control/scheduler.py:83-96.
+- `_RECEIPT_GAP_STAGES` values must remain members of `control.tickets.DAG_ORDER` (`DAG_ORDER.index(stage)` raises `ValueError` otherwise) — control/control/scheduler.py:126-130,159.
+- `control.tickets._emit_ticket_event` is imported private; renaming it in `control.tickets` breaks the doc_profile early emit — control/control/scheduler.py:393,407.
+- `schedule_gaps`/`_reopen_receipt_gap_tickets` read `Gap` fields `run_id`, `event_type`, `corpus_id`, `reason` and match the literal substring `"receipts missing"` in `reason` — census reason-text change silently stops ticket reopens — control/control/scheduler.py:40-45,135-139.
+- `auto_map_parents_on_chunks` mirrors `auto_enrich_on_chunks` "exactly" per its docstring; behavior-changing edits to one should be checked against the other — control/control/scheduler.py:320-327.
 
 ## VERIFY
-
 ```verify
 grep -Fq '_INSERT_CHUNK = 1000' control/control/scheduler.py
-grep -Fq 'DO UPDATE SET delivered_at = NULL' control/control/scheduler.py
+grep -Fq 'ON CONFLICT (idempotency_key) DO UPDATE SET delivered_at = NULL' control/control/scheduler.py
 grep -Fq 'WHERE outbox_events.delivered_at IS NOT NULL' control/control/scheduler.py
-grep -Fq '"receipts missing"' control/control/scheduler.py
-grep -Fq 'extraction-coverage-v1' control/control/scheduler.py
+grep -Fq 'receipts missing' control/control/scheduler.py
+grep -Eq 'def (schedule_gaps|apply_promotions|apply_degrades|apply_failures|auto_enrich_on_chunks|auto_map_parents_on_chunks)\(conn: Connection' control/control/scheduler.py
 test "$(grep -c -F 'AUTO_ENRICH_MINT_FAILED' control/control/scheduler.py)" -ge 2
-! grep -Fq 'sort_keys' control/control/scheduler.py
+! grep -Fq 'VALUES' control/control/scheduler.py
 ```

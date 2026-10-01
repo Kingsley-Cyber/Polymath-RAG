@@ -167,9 +167,15 @@ historical, never an instruction.
    - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
      change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
      `scripts/codewiki/verify.py` (CI runs it).
+   - BUILT (11.567, `feat/fix-it-all`): VERIFY-FULL-SCAN-V1 — cinema's SEMANTIC_INCOMPLETE was verification reading one page
+     of 100,000 points (cinema has 165,939) and switching off the receipts past it; a refused duplicate upload's PENDING chain
+     blocked the re-drive for 24 days. Fix: every page, no clearing on a failed read, a dead pending chain is not in flight.
+     Repair: `scripts/restore_verified_receipts.py cinema --execute` (91,273 receipts of points proven present; run it from a
+     checkout that has the fix BEFORE the bounce, so no corpus-wide re-embed starts). Then the owner's strike reset for the 5
+     cinema `project_qdrant` tickets that failed on embedder 500s (2026-09-06/07): `scripts/retry_failed_stage.py cinema
+     project_qdrant --execute`.
    - LIVE (`6466e8a1`, 11.566): SERVED-PROFILE-LABEL — "vNext" in every label = the card search serves (cinema: written 77,
      served 0 → amber). Written-card fields and the vNext verdict unchanged. Local = GitHub = Cloudflare.
-     OPEN (pre-existing): cinema SEMANTIC_INCOMPLETE — 1,600 procedures + 703 concepts unprojected, 73 runs in `reconciling`.
    - LIVE (`438e4af8`, 11.565): LIBRARY-READY-LABEL — a library searchable on basic profiles reads amber, not red (vNext card
      + Control Plane summary); GNN-DEGRADED-LIST — a GNN turn without a GNN index answers with a typed degradation, not 500.
      Local = GitHub = Cloudflare; nothing on the branch waits for a deploy.

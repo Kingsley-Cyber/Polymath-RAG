@@ -34,12 +34,54 @@ from polymath_shared.receipts import (
 )
 from polymath_shared.settings import get_settings
 from polymath_shared.stores import neo4j_driver as _neo4j_driver
+from polymath_shared.worker_runtime import TransientStageHold
 
 STAGE = "verify_projections"
 EVENT_TYPE = "verify.v1"
 CONTRACT_VERSION = "1.0.0"
 
 log = logging.getLogger("verify-projections")
+
+#: VERIFY-FULL-SCAN-V1 (measured live 2026-10-01, cinema). Both Qdrant
+#: reconcilers read the store with ONE scroll call of 100,000 points and
+#: judged it as the whole collection. Cinema's collection holds 165,939
+#: points, so every point past the first page read as LOST: each
+#: verification superseded 25-34k routing receipts and 20-29k chunk
+#: receipts of points that were present (its own artifacts, 2026-09-30 to
+#: 10-01), the census flagged them missing, a new upload's projector
+#: re-embedded them (89,946 texts, 2.9 h, 2026-10-01) and the next
+#: verification cleared them again. A failed read was judged an EMPTY
+#: store: one Qdrant hiccup cleared every receipt of the corpus.
+#: Now the store is read page by page to its end, and a read that fails
+#: anywhere raises VerifyStoreUnreadable — a transient hold: nothing is
+#: cleared or deleted, the ticket goes back READY without consuming an
+#: attempt, and verification runs again after the backoff. A collection
+#: that does not exist IS a lost store (receipts clear, as before).
+_SCROLL_PAGE = 10_000
+
+
+class VerifyStoreUnreadable(TransientStageHold):
+    """The store could not be read to its end: no reconciler may judge a partial view."""
+
+
+def _scan_points(client, collection: str, payload_keys: list[str]):
+    """Every point of `collection` (its id and the named payload keys), page by page.
+    A collection that does not exist yields nothing. Raises VerifyStoreUnreadable when any
+    read fails, so a caller never acts on part of the store."""
+    try:
+        exists = getattr(client, "collection_exists", None)
+        if exists is not None and not exists(collection):
+            return
+        offset = None
+        while True:
+            points, offset = client.scroll(collection_name=collection, limit=_SCROLL_PAGE, offset=offset,
+                                           with_payload=payload_keys, with_vectors=False)
+            yield from points
+            if offset is None:
+                return
+    except Exception as exc:  # noqa: BLE001 — every read failure means "not read", never "empty"
+        raise VerifyStoreUnreadable(
+            f"VERIFY_STORE_UNREADABLE: {collection}: {type(exc).__name__}: {exc}"[:300]) from exc
 
 
 def _run_identity(conn: Connection, run_id: str) -> str | None:
@@ -271,18 +313,14 @@ def reconcile_routing_qdrant(conn: Connection, corpus: str) -> dict:
     client = _qdrant_client()
     try:
         collection = qdrant_collection_name(corpus, NEURAL_EMBED_CONTRACT.contract_id)
-        store: dict[str, dict[str, set[str]]] = {k: set() for k in ROUTING_KINDS}
-        try:
-            points, _ = client.scroll(collection_name=collection, limit=100_000,
-                                      with_payload=True, with_vectors=False)
-            for p in points:
-                if not p.payload:
-                    continue
-                kind = p.payload.get("representation_kind")
-                if kind in store:
-                    store[kind].add(str(p.payload.get("summary_id") or p.payload.get("chunk_id")))
-        except Exception:
-            store = {k: set() for k in ROUTING_KINDS}
+        store: dict[str, set[str]] = {k: set() for k in ROUTING_KINDS}
+        # VERIFY-FULL-SCAN-V1: the whole collection, or VerifyStoreUnreadable before anything is cleared.
+        for p in _scan_points(client, collection, ["representation_kind", "summary_id", "chunk_id"]):
+            if not p.payload:
+                continue
+            kind = p.payload.get("representation_kind")
+            if kind in store:
+                store[kind].add(str(p.payload.get("summary_id") or p.payload.get("chunk_id")))
     finally:
         client.close()
 
@@ -328,8 +366,10 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
     client = _qdrant_client()
     try:
         store_ids: set[str] = set()
-        try:
-            points, _ = client.scroll(collection_name=collection, limit=100_000, with_vectors=False)
+        unreceipted: list[tuple[str, object]] = []   # (chunk_id, point id) of points without a receipt
+        # VERIFY-FULL-SCAN-V1: the whole collection, or VerifyStoreUnreadable before anything is
+        # cleared or deleted. The same scan gives the orphan sweep its point ids (it re-read one page).
+        for p in _scan_points(client, collection, ["chunk_id"]):
             # CHUNK-SWEEP-SCOPE-V1 (measured live 2026-08-30 15:14): this
             # reconciler owns CHUNK points only. Entity cards, routing
             # summaries and knowledge-object cards carry chunk_id=None;
@@ -339,41 +379,33 @@ def reconcile_qdrant(conn: Connection, run_id: str, corpus: str) -> dict:
             # projection once both lanes resolved to one collection.
             # A point without a chunk_id is another lane's point: the
             # routing reconciler owns it; this sweep must not see it.
-            store_ids = {str(p.payload.get("chunk_id")) for p in points
-                         if p.payload and p.payload.get("chunk_id")}
-        except Exception:
-            store_ids = set()
+            chunk_id = p.payload.get("chunk_id") if p.payload else None
+            if not chunk_id:
+                continue
+            store_ids.add(str(chunk_id))
+            if str(chunk_id) not in receipts:
+                unreceipted.append((str(chunk_id), p.id))
+
+        # Store lost artifacts -> clear receipts so the census re-drives.
+        missing_in_store = receipts - store_ids
+        if missing_in_store:
+            _clear_receipts(conn, "qdrant", sorted(missing_in_store))
+
+        # I3R-R5B orphan semantics: a store point is an orphan ONLY when no
+        # authoritative source artifact desires it anymore. Points whose
+        # chunk row still exists but whose receipt is temporarily absent
+        # are IN-FLIGHT, not orphans — keep them; the missing-receipts gap
+        # below re-drives the projector instead.
+        orphans_in_store = store_ids - receipts
+        true_orphans = orphans_in_store - desired
+        in_flight = orphans_in_store & desired
+        # CHUNK-SWEEP-SCOPE-V1: deletion candidates are chunk-lane
+        # points ONLY (non-null chunk_id) — see the guard above.
+        orphan_point_ids = [pid for cid, pid in unreceipted if cid in true_orphans]
+        if orphan_point_ids:
+            client.delete(collection_name=collection, points_selector=orphan_point_ids)
     finally:
         client.close()
-
-    # Store lost artifacts -> clear receipts so the census re-drives.
-    missing_in_store = receipts - store_ids
-    if missing_in_store:
-        _clear_receipts(conn, "qdrant", sorted(missing_in_store))
-
-    # I3R-R5B orphan semantics: a store point is an orphan ONLY when no
-    # authoritative source artifact desires it anymore. Points whose
-    # chunk row still exists but whose receipt is temporarily absent
-    # are IN-FLIGHT, not orphans — keep them; the missing-receipts gap
-    # below re-drives the projector instead.
-    orphans_in_store = store_ids - receipts
-    true_orphans = orphans_in_store - desired
-    in_flight = orphans_in_store & desired
-    if true_orphans:
-        client = _qdrant_client()
-        try:
-            points, _ = client.scroll(collection_name=collection, limit=100_000, with_vectors=False)
-            # CHUNK-SWEEP-SCOPE-V1: deletion candidates are chunk-lane
-            # points ONLY (non-null chunk_id) — see the guard above.
-            orphan_point_ids = [
-                p.id for p in points
-                if p.payload and p.payload.get("chunk_id")
-                and str(p.payload.get("chunk_id")) in true_orphans
-            ]
-            if orphan_point_ids:
-                client.delete(collection_name=collection, points_selector=orphan_point_ids)
-        finally:
-            client.close()
 
     orphan_receipts = _delete_orphan_receipts(conn, "qdrant")
     # Recompute AFTER clearing: every desired chunk still lacking a

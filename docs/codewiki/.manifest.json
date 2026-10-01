@@ -4154,8 +4154,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "4a18907fe3985388",
+  "generated": "2026-10-01",
+  "input_hash": "7587a959f65b2d2d",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -6144,7 +6144,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-01",
-  "input_hash": "5fb24749c7d37fa4",
+  "input_hash": "3acdc0bf3f52885a",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  }

@@ -2467,9 +2467,9 @@
    "created": "stores/postgres/migrations/0036_archived_corpora.sql:10",
    "reads": [
     "control/control/reconciliation.py:114",
-    "control/control/scheduler.py:224",
-    "control/control/scheduler.py:252",
-    "control/control/scheduler.py:329",
+    "control/control/scheduler.py:243",
+    "control/control/scheduler.py:271",
+    "control/control/scheduler.py:348",
     "control/control/tickets.py:776",
     "orchestrator/orchestrator/api/ui.py:1234"
    ],
@@ -2523,7 +2523,7 @@
     "shared/polymath_shared/semantic_readiness.py:65",
     "shared/polymath_shared/semantic_readiness.py:74",
     "workers/workers/profile_worker.py:112",
-    "workers/workers/verify_worker.py:742"
+    "workers/workers/verify_worker.py:774"
    ],
    "writes": [
     "control/control/reconciliation.py:428",
@@ -2547,8 +2547,8 @@
     "shared/polymath_shared/receipts.py:408",
     "workers/workers/canonicalize_worker.py:95",
     "workers/workers/project_canonical_worker.py:120",
-    "workers/workers/verify_worker.py:546",
-    "workers/workers/verify_worker.py:603"
+    "workers/workers/verify_worker.py:578",
+    "workers/workers/verify_worker.py:635"
    ],
    "writes": [
     "workers/workers/canonicalize_worker.py:100",
@@ -2573,8 +2573,8 @@
     "control/control/census.py:542",
     "workers/workers/canonicalize_worker.py:91",
     "workers/workers/project_canonical_worker.py:129",
-    "workers/workers/verify_worker.py:554",
-    "workers/workers/verify_worker.py:606"
+    "workers/workers/verify_worker.py:586",
+    "workers/workers/verify_worker.py:638"
    ],
    "writes": [
     "workers/workers/canonicalize_worker.py:112",
@@ -2704,12 +2704,12 @@
     "workers/workers/summary_worker_impl.py:508",
     "workers/workers/summary_worker_impl.py:60",
     "workers/workers/summary_worker_impl.py:73",
-    "workers/workers/verify_worker.py:110",
-    "workers/workers/verify_worker.py:177",
-    "workers/workers/verify_worker.py:310",
-    "workers/workers/verify_worker.py:410",
-    "workers/workers/verify_worker.py:59",
-    "workers/workers/verify_worker.py:690"
+    "workers/workers/verify_worker.py:101",
+    "workers/workers/verify_worker.py:152",
+    "workers/workers/verify_worker.py:219",
+    "workers/workers/verify_worker.py:348",
+    "workers/workers/verify_worker.py:442",
+    "workers/workers/verify_worker.py:722"
    ],
    "writes": [
     "control/control/generation_swap.py:60",
@@ -2775,8 +2775,8 @@
     "shared/polymath_shared/semantic_readiness.py:167",
     "shared/polymath_shared/semantic_readiness.py:188",
     "workers/workers/project_qdrant_worker.py:541",
-    "workers/workers/verify_worker.py:122",
-    "workers/workers/verify_worker.py:196"
+    "workers/workers/verify_worker.py:164",
+    "workers/workers/verify_worker.py:238"
    ],
    "writes": [
     "control/control/generation_swap.py:70",
@@ -3358,15 +3358,15 @@
     "workers/workers/project_qdrant_worker.py:583",
     "workers/workers/summary_worker_impl.py:347",
     "workers/workers/summary_worker_impl.py:43",
-    "workers/workers/verify_worker.py:110",
-    "workers/workers/verify_worker.py:177",
-    "workers/workers/verify_worker.py:447",
-    "workers/workers/verify_worker.py:562",
-    "workers/workers/verify_worker.py:59",
-    "workers/workers/verify_worker.py:690",
-    "workers/workers/verify_worker.py:731",
-    "workers/workers/verify_worker.py:752",
-    "workers/workers/verify_worker.py:916"
+    "workers/workers/verify_worker.py:101",
+    "workers/workers/verify_worker.py:152",
+    "workers/workers/verify_worker.py:219",
+    "workers/workers/verify_worker.py:479",
+    "workers/workers/verify_worker.py:594",
+    "workers/workers/verify_worker.py:722",
+    "workers/workers/verify_worker.py:763",
+    "workers/workers/verify_worker.py:784",
+    "workers/workers/verify_worker.py:948"
    ],
    "writes": [
     "orchestrator/orchestrator/api/ui.py:1231",
@@ -3407,13 +3407,13 @@
     "workers/workers/project_neo4j_worker.py:139",
     "workers/workers/project_qdrant_worker.py:404",
     "workers/workers/summary_worker_impl.py:242",
-    "workers/workers/verify_worker.py:927",
-    "workers/workers/verify_worker.py:966",
-    "workers/workers/verify_worker.py:993"
+    "workers/workers/verify_worker.py:1025",
+    "workers/workers/verify_worker.py:959",
+    "workers/workers/verify_worker.py:998"
    ],
    "writes": [
     "workers/workers/llm_direct.py:219",
-    "workers/workers/verify_worker.py:966"
+    "workers/workers/verify_worker.py:998"
    ]
   },
   "entity_admission_decisions": {
@@ -3512,21 +3512,21 @@
     "workers/workers/summary_worker_impl.py:242",
     "workers/workers/summary_worker_impl.py:350",
     "workers/workers/summary_worker_impl.py:354",
-    "workers/workers/verify_worker.py:464",
-    "workers/workers/verify_worker.py:562",
-    "workers/workers/verify_worker.py:608",
-    "workers/workers/verify_worker.py:759",
-    "workers/workers/verify_worker.py:916",
-    "workers/workers/verify_worker.py:920",
+    "workers/workers/verify_worker.py:496",
+    "workers/workers/verify_worker.py:594",
+    "workers/workers/verify_worker.py:640",
+    "workers/workers/verify_worker.py:791",
+    "workers/workers/verify_worker.py:948",
     "workers/workers/verify_worker.py:952",
-    "workers/workers/verify_worker.py:958"
+    "workers/workers/verify_worker.py:984",
+    "workers/workers/verify_worker.py:990"
    ],
    "writes": [
     "orchestrator/orchestrator/api/ui.py:1178",
     "orchestrator/orchestrator/api/ui.py:708",
     "workers/workers/llm_direct.py:261",
-    "workers/workers/verify_worker.py:952",
-    "workers/workers/verify_worker.py:958"
+    "workers/workers/verify_worker.py:984",
+    "workers/workers/verify_worker.py:990"
    ]
   },
   "execution_bundles": {
@@ -3666,17 +3666,17 @@
     "workers/workers/project_qdrant_worker.py:404",
     "workers/workers/summary_worker_impl.py:242",
     "workers/workers/summary_worker_impl.py:350",
-    "workers/workers/verify_worker.py:456",
-    "workers/workers/verify_worker.py:920",
-    "workers/workers/verify_worker.py:927",
+    "workers/workers/verify_worker.py:1024",
+    "workers/workers/verify_worker.py:488",
+    "workers/workers/verify_worker.py:952",
     "workers/workers/verify_worker.py:959",
-    "workers/workers/verify_worker.py:992"
+    "workers/workers/verify_worker.py:991"
    ],
    "writes": [
     "orchestrator/orchestrator/api/ui.py:1181",
     "orchestrator/orchestrator/api/ui.py:710",
     "workers/workers/llm_direct.py:253",
-    "workers/workers/verify_worker.py:959"
+    "workers/workers/verify_worker.py:991"
    ]
   },
   "knowledge_lane_attempts": {
@@ -3842,9 +3842,9 @@
     "workers/workers/project_qdrant_worker.py:387",
     "workers/workers/project_qdrant_worker.py:573",
     "workers/workers/summary_worker_impl.py:261",
-    "workers/workers/verify_worker.py:127",
-    "workers/workers/verify_worker.py:211",
-    "workers/workers/verify_worker.py:927"
+    "workers/workers/verify_worker.py:169",
+    "workers/workers/verify_worker.py:253",
+    "workers/workers/verify_worker.py:959"
    ],
    "writes": [
     "orchestrator/orchestrator/api/ui.py:1185",
@@ -3883,9 +3883,9 @@
     "control/control/reconciliation.py:450",
     "control/control/reconciliation.py:484",
     "control/control/reconciliation.py:489",
-    "control/control/scheduler.py:179",
-    "control/control/scheduler.py:274",
-    "control/control/scheduler.py:348",
+    "control/control/scheduler.py:198",
+    "control/control/scheduler.py:293",
+    "control/control/scheduler.py:367",
     "control/control/stall_tracer.py:243",
     "control/control/stall_tracer.py:294",
     "control/control/tickets.py:335",
@@ -3953,8 +3953,8 @@
     "shared/polymath_shared/latent/runtime.py:59",
     "shared/polymath_shared/latent/runtime.py:68",
     "workers/workers/summary_worker_impl.py:60",
-    "workers/workers/verify_worker.py:135",
-    "workers/workers/verify_worker.py:230"
+    "workers/workers/verify_worker.py:177",
+    "workers/workers/verify_worker.py:272"
    ],
    "writes": [
     "orchestrator/orchestrator/api/ui.py:728",
@@ -4024,8 +4024,8 @@
     "shared/polymath_shared/semantic_readiness.py:164",
     "shared/polymath_shared/semantic_readiness.py:179",
     "workers/workers/project_qdrant_worker.py:514",
-    "workers/workers/verify_worker.py:118",
-    "workers/workers/verify_worker.py:187"
+    "workers/workers/verify_worker.py:160",
+    "workers/workers/verify_worker.py:229"
    ],
    "writes": [
     "control/control/generation_swap.py:77",
@@ -4088,16 +4088,16 @@
     "shared/polymath_shared/semantic_readiness.py:188",
     "workers/workers/project_neo4j_worker.py:239",
     "workers/workers/project_qdrant_worker.py:637",
-    "workers/workers/verify_worker.py:159",
-    "workers/workers/verify_worker.py:168",
-    "workers/workers/verify_worker.py:177",
-    "workers/workers/verify_worker.py:187",
-    "workers/workers/verify_worker.py:196",
-    "workers/workers/verify_worker.py:217",
-    "workers/workers/verify_worker.py:239",
-    "workers/workers/verify_worker.py:310",
-    "workers/workers/verify_worker.py:535",
-    "workers/workers/verify_worker.py:59"
+    "workers/workers/verify_worker.py:101",
+    "workers/workers/verify_worker.py:201",
+    "workers/workers/verify_worker.py:210",
+    "workers/workers/verify_worker.py:219",
+    "workers/workers/verify_worker.py:229",
+    "workers/workers/verify_worker.py:238",
+    "workers/workers/verify_worker.py:259",
+    "workers/workers/verify_worker.py:281",
+    "workers/workers/verify_worker.py:348",
+    "workers/workers/verify_worker.py:567"
    ],
    "writes": [
     "orchestrator/orchestrator/api/ui.py:1193",
@@ -4111,8 +4111,8 @@
     "shared/polymath_shared/receipts.py:318",
     "shared/polymath_shared/receipts.py:326",
     "shared/polymath_shared/receipts.py:346",
-    "workers/workers/verify_worker.py:480",
-    "workers/workers/verify_worker.py:499"
+    "workers/workers/verify_worker.py:512",
+    "workers/workers/verify_worker.py:531"
    ]
   },
   "query_receipts": {
@@ -4204,8 +4204,8 @@
    "created": "stores/postgres/migrations/0017_raw_evidence_ledger.sql:34",
    "reads": [
     "shared/polymath_shared/raw_evidence.py:133",
-    "workers/workers/verify_worker.py:731",
-    "workers/workers/verify_worker.py:759"
+    "workers/workers/verify_worker.py:763",
+    "workers/workers/verify_worker.py:791"
    ],
    "writes": [
     "shared/polymath_shared/raw_evidence.py:63"
@@ -4298,11 +4298,11 @@
     "shared/polymath_shared/receipts.py:405",
     "workers/workers/project_qdrant_worker.py:461",
     "workers/workers/summary_worker_impl.py:272",
-    "workers/workers/verify_worker.py:103",
-    "workers/workers/verify_worker.py:159",
-    "workers/workers/verify_worker.py:168",
-    "workers/workers/verify_worker.py:696",
-    "workers/workers/verify_worker.py:96"
+    "workers/workers/verify_worker.py:138",
+    "workers/workers/verify_worker.py:145",
+    "workers/workers/verify_worker.py:201",
+    "workers/workers/verify_worker.py:210",
+    "workers/workers/verify_worker.py:728"
    ],
    "writes": [
     "orchestrator/orchestrator/api/ui.py:746",
@@ -4356,11 +4356,11 @@
     "control/control/reconciliation.py:296",
     "control/control/reconciliation.py:340",
     "control/control/reconciliation.py:471",
-    "control/control/scheduler.py:202",
-    "control/control/scheduler.py:224",
-    "control/control/scheduler.py:252",
-    "control/control/scheduler.py:329",
-    "control/control/scheduler.py:376",
+    "control/control/scheduler.py:221",
+    "control/control/scheduler.py:243",
+    "control/control/scheduler.py:271",
+    "control/control/scheduler.py:348",
+    "control/control/scheduler.py:395",
     "control/control/snapshots.py:21",
     "control/control/snapshots.py:47",
     "control/control/stall_tracer.py:336",
@@ -4434,8 +4434,8 @@
     "workers/workers/project_qdrant_worker.py:583",
     "workers/workers/summary_worker_impl.py:33",
     "workers/workers/summary_worker_impl.py:43",
-    "workers/workers/verify_worker.py:46",
-    "workers/workers/verify_worker.py:752"
+    "workers/workers/verify_worker.py:784",
+    "workers/workers/verify_worker.py:88"
    ],
    "writes": [
     "adapters/ecommerce/python/memory.py:174",
@@ -4446,9 +4446,9 @@
     "control/control/reconciliation.py:211",
     "control/control/reconciliation.py:222",
     "control/control/reconciliation.py:311",
-    "control/control/scheduler.py:400",
-    "control/control/scheduler.py:443",
-    "control/control/scheduler.py:465",
+    "control/control/scheduler.py:419",
+    "control/control/scheduler.py:462",
+    "control/control/scheduler.py:484",
     "control/control/tickets.py:134",
     "orchestrator/orchestrator/api/ui.py:1233",
     "orchestrator/orchestrator/api/ui.py:771",
@@ -4623,14 +4623,14 @@
     "control/control/reconciliation.py:114",
     "control/control/reconciliation.py:368",
     "control/control/reconciliation.py:388",
-    "control/control/scheduler.py:148",
-    "control/control/scheduler.py:157",
-    "control/control/scheduler.py:224",
-    "control/control/scheduler.py:252",
-    "control/control/scheduler.py:274",
-    "control/control/scheduler.py:329",
+    "control/control/scheduler.py:161",
+    "control/control/scheduler.py:176",
+    "control/control/scheduler.py:243",
+    "control/control/scheduler.py:271",
+    "control/control/scheduler.py:293",
     "control/control/scheduler.py:348",
-    "control/control/scheduler.py:376",
+    "control/control/scheduler.py:367",
+    "control/control/scheduler.py:395",
     "control/control/snapshots.py:26",
     "control/control/snapshots.py:51",
     "control/control/stall_tracer.py:192",
@@ -4665,7 +4665,7 @@
     "shared/polymath_shared/worker_runtime.py:134",
     "workers/workers/extract_worker.py:177",
     "workers/workers/extract_worker.py:181",
-    "workers/workers/verify_worker.py:858"
+    "workers/workers/verify_worker.py:890"
    ],
    "writes": [
     "control/control/generation_swap.py:41",
@@ -4674,7 +4674,7 @@
     "control/control/reconciliation.py:194",
     "control/control/reconciliation.py:226",
     "control/control/reconciliation.py:388",
-    "control/control/scheduler.py:157",
+    "control/control/scheduler.py:176",
     "control/control/tickets.py:120",
     "control/control/tickets.py:546",
     "control/control/tickets.py:565",
@@ -16708,32 +16708,32 @@
     {
      "does": "handled: import, log",
      "file": "control/control/scheduler.py",
-     "line": 293,
+     "line": 312,
      "type": "Exception"
     },
     {
      "does": "handled: import, log",
      "file": "control/control/scheduler.py",
-     "line": 363,
+     "line": 382,
      "type": "Exception"
     },
     {
      "does": "handled: import, log",
      "file": "control/control/scheduler.py",
-     "line": 389,
+     "line": 408,
      "type": "Exception"
     },
     {
      "does": "handled: import, log",
      "file": "control/control/scheduler.py",
-     "line": 427,
+     "line": 446,
      "type": "Exception"
     }
    ],
    "files": [
     "control/control/scheduler.py"
    ],
-   "hash": "ecbabe88f6ac1da7",
+   "hash": "4686328223f60703",
    "importers": [
     "control/control/main.py"
    ],
@@ -16744,6 +16744,7 @@
     "control.generation_swap",
     "control.generation_swap.swap",
     "control.tickets",
+    "control.tickets.DAG_ORDER",
     "control.tickets._emit_ticket_event",
     "control.tickets.ticket_id",
     "polymath_shared.document_profile.map_trigger",
@@ -16758,7 +16759,7 @@
     "polymath_shared.settings",
     "polymath_shared.settings.get_settings"
    ],
-   "lines": 479,
+   "lines": 498,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/control/control/scheduler.py.md",
@@ -16772,88 +16773,78 @@
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 157,
+     "line": 176,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 179,
+     "line": 198,
      "table": "outbox_events"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 202,
+     "line": 221,
      "table": "runs"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 224,
+     "line": 243,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 224,
+     "line": 243,
      "table": "runs"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 224,
+     "line": 243,
      "table": "archived_corpora"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 252,
+     "line": 271,
      "table": "runs"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 252,
+     "line": 271,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 252,
+     "line": 271,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 252,
+     "line": 271,
      "table": "archived_corpora"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 274,
+     "line": 293,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 274,
+     "line": 293,
      "table": "outbox_events"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 148,
+     "line": 161,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 329,
+     "line": 161,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 348,
      "table": "runs"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 329,
-     "table": "stage_tickets"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 329,
-     "table": "stage_tickets"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 329,
-     "table": "archived_corpora"
     },
     {
      "file": "control/control/scheduler.py",
@@ -16863,38 +16854,53 @@
     {
      "file": "control/control/scheduler.py",
      "line": 348,
-     "table": "outbox_events"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 376,
-     "table": "runs"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 376,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 376,
+     "line": 348,
+     "table": "archived_corpora"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 367,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 367,
+     "table": "outbox_events"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 395,
+     "table": "runs"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 395,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 395,
      "table": "stage_tickets"
     }
    ],
    "sql_writes": [
     {
      "file": "control/control/scheduler.py",
-     "line": 400,
+     "line": 419,
      "table": "runs"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 443,
+     "line": 462,
      "table": "runs"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 465,
+     "line": 484,
      "table": "runs"
     },
     {
@@ -16909,7 +16915,7 @@
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 157,
+     "line": 176,
      "table": "stage_tickets"
     }
    ],
@@ -16932,7 +16938,7 @@
       "census"
      ],
      "doc": "",
-     "end": 170,
+     "end": 189,
      "file": "control/control/scheduler.py",
      "kind": "def",
      "line": 133,
@@ -16945,10 +16951,10 @@
       "run_ids"
      ],
      "doc": "First recorded payload per run for this event type, ONE query.",
-     "end": 193,
+     "end": 212,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 173,
+     "line": 192,
      "name": "_bulk_first_outbox_payload"
     },
     {
@@ -16957,10 +16963,10 @@
       "run_ids"
      ],
      "doc": "Crashed-first-event repair source: runs.metadata.intake_payload.",
-     "end": 212,
+     "end": 231,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 196,
+     "line": 215,
      "name": "_bulk_intake_metadata"
     },
     {
@@ -16969,10 +16975,10 @@
       "run_ids"
      ],
      "doc": "Runs whose scheduling lifecycle is deliberately closed: either a",
-     "end": 232,
+     "end": 251,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 215,
+     "line": 234,
      "name": "_archived_run_ids"
     },
     {
@@ -16980,10 +16986,10 @@
       "conn"
      ],
      "doc": "ENRICH-EARLY-KICK-V1 (owner 2026-09-01 \"enrichment should auto",
-     "end": 298,
+     "end": 317,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 235,
+     "line": 254,
      "name": "auto_enrich_on_chunks"
     },
     {
@@ -16991,10 +16997,10 @@
       "conn"
      ],
      "doc": "DOC-PARENT-MAP AUTO-MINT (RAG-PIPELINE-FINISH): mint the pMAP stage for a run",
-     "end": 394,
+     "end": 413,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 301,
+     "line": 320,
      "name": "auto_map_parents_on_chunks"
     },
     {
@@ -17003,10 +17009,10 @@
       "census"
      ],
      "doc": "",
-     "end": 431,
+     "end": 450,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 397,
+     "line": 416,
      "name": "apply_promotions"
     },
     {
@@ -17015,10 +17021,10 @@
       "census"
      ],
      "doc": "EXTRACTION-COVERAGE-V1: a run the census refused to promote is",
-     "end": 459,
+     "end": 478,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 434,
+     "line": 453,
      "name": "apply_degrades"
     },
     {
@@ -17027,10 +17033,10 @@
       "census"
      ],
      "doc": "",
-     "end": 467,
+     "end": 486,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 462,
+     "line": 481,
      "name": "apply_failures"
     },
     {
@@ -17038,10 +17044,10 @@
       "text"
      ],
      "doc": "",
-     "end": 472,
+     "end": 491,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 470,
+     "line": 489,
      "name": "_loads"
     },
     {
@@ -17049,10 +17055,10 @@
       "payload"
      ],
      "doc": "",
-     "end": 478,
+     "end": 497,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 475,
+     "line": 494,
      "name": "_dumps"
     }
    ]
@@ -82675,25 +82681,31 @@
    "constants": [
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 38,
+     "line": 39,
      "name": "STAGE",
      "value": "verify_projections"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 39,
+     "line": 40,
      "name": "EVENT_TYPE",
      "value": "verify.v1"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 40,
+     "line": 41,
      "name": "CONTRACT_VERSION",
      "value": "1.0.0"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 70,
+     "line": 60,
+     "name": "_SCROLL_PAGE",
+     "value": 10000
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 112,
      "name": "ROUTING_KINDS",
      "value": [
       "routing_document_summary",
@@ -82708,25 +82720,25 @@
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 914,
+     "line": 946,
      "name": "RESIDUE_CONTRACT",
      "value": "semantic-residue-reconciliation-v1"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 916,
+     "line": 948,
      "name": "_DANGLING_EVIDENCE",
      "value": "\n    SELECT evidence_id FROM evidence e\n     WHERE NOT EXISTS (SELECT 1 FROM documents d WHERE d.doc_id = e.doc_id)\n"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 920,
+     "line": 952,
      "name": "_UNSUPPORTED_FACTS",
      "value": "\n    SELECT fact_id FROM facts f\n     WHERE NOT EXISTS (SELECT 1 FROM evidence e WHERE e.fact_id = f.fact_id)\n"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 927,
+     "line": 959,
      "name": "_UNREFERENCED_ENTITIES",
      "value": "\n    SELECT entity_id FROM entities e\n     WHERE NOT EXISTS (SELECT 1 FROM mentions m WHERE m.entity_id = e.entity_id)\n       AND NOT EXISTS (SELECT 1 FROM facts f\n                        WHERE (f.subject_id = e.entity_id\n                               OR f.object_id = e.entity_id)\n                          AND NOT (f.fact_id = ANY(%s)))\n"
     }
@@ -82735,22 +82747,16 @@
    "env": [],
    "fallbacks": [
     {
-     "does": "handled: assign",
+     "does": "handled: raise",
      "file": "workers/workers/verify_worker.py",
-     "line": 284,
-     "type": "Exception"
-    },
-    {
-     "does": "handled: assign",
-     "file": "workers/workers/verify_worker.py",
-     "line": 344,
+     "line": 82,
      "type": "Exception"
     }
    ],
    "files": [
     "workers/workers/verify_worker.py"
    ],
-   "hash": "3294c47fc6a40b6b",
+   "hash": "d8ea59dc66b8844f",
    "importers": [],
    "imports": [
     "polymath_shared.db",
@@ -82788,11 +82794,12 @@
     "polymath_shared.stores.neo4j_driver",
     "polymath_shared.stores.qdrant_client",
     "polymath_shared.worker_runtime",
+    "polymath_shared.worker_runtime.TransientStageHold",
     "polymath_shared.worker_runtime.run_worker",
     "workers.project_neo4j_worker",
     "workers.project_neo4j_worker._driver"
    ],
-   "lines": 1032,
+   "lines": 1064,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/workers/workers/verify_worker.py.md",
@@ -82801,37 +82808,17 @@
    "sql_reads": [
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 916,
+     "line": 948,
      "table": "evidence"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 916,
+     "line": 948,
      "table": "documents"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 920,
-     "table": "facts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 920,
-     "table": "evidence"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 927,
-     "table": "entities"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 927,
-     "table": "mentions"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 927,
+     "line": 952,
      "table": "facts"
     },
     {
@@ -82841,8 +82828,13 @@
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 958,
-     "table": "evidence"
+     "line": 959,
+     "table": "entities"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 959,
+     "table": "mentions"
     },
     {
      "file": "workers/workers/verify_worker.py",
@@ -82851,323 +82843,360 @@
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 966,
-     "table": "entities"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 46,
-     "table": "runs"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 59,
-     "table": "projection_receipts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 59,
-     "table": "chunks"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 59,
-     "table": "documents"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 96,
-     "table": "retrieval_summaries"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 103,
-     "table": "retrieval_summaries"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 110,
-     "table": "chunks"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 110,
-     "table": "documents"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 118,
-     "table": "procedure_artifacts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 122,
-     "table": "concept_artifacts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 127,
-     "table": "mentions"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 135,
-     "table": "parent_enrichments"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 159,
-     "table": "projection_receipts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 159,
-     "table": "retrieval_summaries"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 168,
-     "table": "projection_receipts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 168,
-     "table": "retrieval_summaries"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 177,
-     "table": "projection_receipts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 177,
-     "table": "chunks"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 177,
-     "table": "documents"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 187,
-     "table": "projection_receipts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 187,
-     "table": "procedure_artifacts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 196,
-     "table": "projection_receipts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 196,
-     "table": "concept_artifacts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 230,
-     "table": "parent_enrichments"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 310,
-     "table": "projection_receipts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 310,
-     "table": "chunks"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 535,
-     "table": "projection_receipts"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 546,
-     "table": "canonical_entities"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 554,
-     "table": "canonical_memberships"
-    },
-    {
-     "file": "workers/workers/verify_worker.py",
-     "line": 562,
+     "line": 984,
      "table": "evidence"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 562,
-     "table": "documents"
+     "line": 990,
+     "table": "evidence"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 690,
+     "line": 991,
+     "table": "facts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 998,
+     "table": "entities"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 88,
+     "table": "runs"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 101,
+     "table": "projection_receipts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 101,
      "table": "chunks"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 690,
+     "line": 101,
      "table": "documents"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 696,
+     "line": 138,
      "table": "retrieval_summaries"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 731,
-     "table": "raw_predicate_evidence"
+     "line": 145,
+     "table": "retrieval_summaries"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 731,
+     "line": 152,
+     "table": "chunks"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 152,
      "table": "documents"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 742,
+     "line": 160,
+     "table": "procedure_artifacts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 164,
+     "table": "concept_artifacts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 169,
+     "table": "mentions"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 177,
+     "table": "parent_enrichments"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 201,
+     "table": "projection_receipts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 201,
+     "table": "retrieval_summaries"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 210,
+     "table": "projection_receipts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 210,
+     "table": "retrieval_summaries"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 219,
+     "table": "projection_receipts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 219,
+     "table": "chunks"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 219,
+     "table": "documents"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 229,
+     "table": "projection_receipts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 229,
+     "table": "procedure_artifacts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 238,
+     "table": "projection_receipts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 238,
+     "table": "concept_artifacts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 272,
+     "table": "parent_enrichments"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 348,
+     "table": "projection_receipts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 348,
+     "table": "chunks"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 567,
+     "table": "projection_receipts"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 578,
+     "table": "canonical_entities"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 586,
+     "table": "canonical_memberships"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 594,
+     "table": "evidence"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 594,
+     "table": "documents"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 722,
+     "table": "chunks"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 722,
+     "table": "documents"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 728,
+     "table": "retrieval_summaries"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 763,
+     "table": "raw_predicate_evidence"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 763,
+     "table": "documents"
+    },
+    {
+     "file": "workers/workers/verify_worker.py",
+     "line": 774,
      "table": "artifacts"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 217,
+     "line": 259,
      "table": "projection_receipts"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 239,
+     "line": 281,
      "table": "projection_receipts"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 752,
+     "line": 784,
      "table": "documents"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 752,
+     "line": 784,
      "table": "runs"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 211,
+     "line": 253,
      "table": "mentions"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 992,
+     "line": 1024,
      "table": "facts"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 993,
+     "line": 1025,
      "table": "entities"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 603,
+     "line": 635,
      "table": "canonical_entities"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 606,
+     "line": 638,
      "table": "canonical_memberships"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 608,
+     "line": 640,
      "table": "evidence"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 858,
+     "line": 890,
      "table": "stage_tickets"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 410,
+     "line": 442,
      "table": "chunks"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 447,
+     "line": 479,
      "table": "documents"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 456,
+     "line": 488,
      "table": "facts"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 464,
+     "line": 496,
      "table": "evidence"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 759,
+     "line": 791,
      "table": "raw_predicate_evidence"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 759,
+     "line": 791,
      "table": "evidence"
     }
    ],
    "sql_writes": [
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 952,
+     "line": 984,
      "table": "evidence"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 958,
+     "line": 990,
      "table": "evidence"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 959,
+     "line": 991,
      "table": "facts"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 966,
+     "line": 998,
      "table": "entities"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 480,
+     "line": 512,
      "table": "projection_receipts"
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 499,
+     "line": 531,
      "table": "projection_receipts"
     }
    ],
    "symbols": [
+    {
+     "doc": "The store could not be read to its end: no reconciler may judge a partial view.",
+     "end": 64,
+     "file": "workers/workers/verify_worker.py",
+     "kind": "class",
+     "line": 63,
+     "methods": [],
+     "name": "VerifyStoreUnreadable"
+    },
+    {
+     "args": [
+      "client",
+      "collection",
+      "payload_keys"
+     ],
+     "doc": "Every point of `collection` (its id and the named payload keys), page by page.",
+     "end": 84,
+     "file": "workers/workers/verify_worker.py",
+     "kind": "def",
+     "line": 67,
+     "name": "_scan_points"
+    },
     {
      "args": [
       "conn",
       "run_id"
      ],
      "doc": "",
-     "end": 47,
+     "end": 89,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 45,
+     "line": 87,
      "name": "_run_identity"
     },
     {
@@ -83176,10 +83205,10 @@
       "run_id"
      ],
      "doc": "",
-     "end": 54,
+     "end": 96,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 50,
+     "line": 92,
      "name": "_desired_chunk_ids"
     },
     {
@@ -83189,10 +83218,10 @@
       "projection"
      ],
      "doc": "",
-     "end": 67,
+     "end": 109,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 57,
+     "line": 99,
      "name": "_receipt_chunk_ids"
     },
     {
@@ -83201,10 +83230,10 @@
       "corpus"
      ],
      "doc": "R1B reconciliation: authoritative routing representation ids per",
-     "end": 152,
+     "end": 194,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 91,
+     "line": 133,
      "name": "_desired_routing_ids"
     },
     {
@@ -83213,10 +83242,10 @@
       "corpus"
      ],
      "doc": "Active qdrant routing receipts scoped to the corpus's",
-     "end": 256,
+     "end": 298,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 155,
+     "line": 197,
      "name": "_routing_receipts"
     },
     {
@@ -83225,10 +83254,10 @@
       "corpus"
      ],
      "doc": "R1B: neural routing projections cannot silently disappear.",
-     "end": 299,
+     "end": 337,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 259,
+     "line": 301,
      "name": "reconcile_routing_qdrant"
     },
     {
@@ -83238,10 +83267,10 @@
       "entity_ids"
      ],
      "doc": "Supersede active claims (history survives in projection_attempts).",
-     "end": 304,
+     "end": 342,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 302,
+     "line": 340,
      "name": "_clear_receipts"
     },
     {
@@ -83250,10 +83279,10 @@
       "projection"
      ],
      "doc": "Supersede claims whose source entity no longer exists.",
-     "end": 319,
+     "end": 357,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 307,
+     "line": 345,
      "name": "_delete_orphan_receipts"
     },
     {
@@ -83263,10 +83292,10 @@
       "corpus"
      ],
      "doc": "",
-     "end": 389,
+     "end": 421,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 322,
+     "line": 360,
      "name": "reconcile_qdrant"
     },
     {
@@ -83276,10 +83305,10 @@
       "corpus"
      ],
      "doc": "",
-     "end": 523,
+     "end": 555,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 392,
+     "line": 424,
      "name": "reconcile_neo4j"
     },
     {
@@ -83287,10 +83316,10 @@
       "conn"
      ],
      "doc": "",
-     "end": 530,
+     "end": 562,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 526,
+     "line": 558,
      "name": "_ineligible_fact_ids"
     },
     {
@@ -83301,10 +83330,10 @@
       "kind"
      ],
      "doc": "",
-     "end": 541,
+     "end": 573,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 533,
+     "line": 565,
      "name": "_receipt_kind_ids"
     },
     {
@@ -83313,10 +83342,10 @@
       "corpus"
      ],
      "doc": "",
-     "end": 549,
+     "end": 581,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 544,
+     "line": 576,
      "name": "_desired_canonical_ids"
     },
     {
@@ -83325,10 +83354,10 @@
       "corpus"
      ],
      "doc": "",
-     "end": 557,
+     "end": 589,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 552,
+     "line": 584,
      "name": "_desired_membership_ids"
     },
     {
@@ -83337,10 +83366,10 @@
       "corpus"
      ],
      "doc": "",
-     "end": 569,
+     "end": 601,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 560,
+     "line": 592,
      "name": "_desired_evidence_ids"
     },
     {
@@ -83349,10 +83378,10 @@
       "entity_ids"
      ],
      "doc": "Supersede active claims (history survives in projection_attempts).",
-     "end": 574,
+     "end": 606,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 572,
+     "line": 604,
      "name": "_supersede_receipts"
     },
     {
@@ -83362,10 +83391,10 @@
       "corpus"
      ],
      "doc": "Reconcile the C2 canonical projection (nodes, memberships,",
-     "end": 681,
+     "end": 713,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 577,
+     "line": 609,
      "name": "reconcile_canonical"
     },
     {
@@ -83374,10 +83403,10 @@
       "corpus"
      ],
      "doc": "SUMMARY-COVERAGE-CHECK-V1: every prose-bearing parent has an ACTIVE",
-     "end": 714,
+     "end": 746,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 684,
+     "line": 716,
      "name": "reconcile_summaries"
     },
     {
@@ -83387,10 +83416,10 @@
       "corpus"
      ],
      "doc": "ONTOLOGY-DURABLE-CHECK-V1 (owner 2026-08-30): the gate normalizes",
-     "end": 777,
+     "end": 809,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 717,
+     "line": 749,
      "name": "reconcile_ontology"
     },
     {
@@ -83399,10 +83428,10 @@
       "event"
      ],
      "doc": "",
-     "end": 874,
+     "end": 906,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 780,
+     "line": 812,
      "name": "process_event"
     },
     {
@@ -83411,10 +83440,10 @@
       "batch_size"
      ],
      "doc": "LONG-STAGE-LEASE-CORRECTNESS-V1: claim depth 1.",
-     "end": 888,
+     "end": 920,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 877,
+     "line": 909,
      "name": "run_forever"
     },
     {
@@ -83423,10 +83452,10 @@
       "apply"
      ],
      "doc": "Find (and optionally remove) semantic rows with a broken provenance",
-     "end": 975,
+     "end": 1007,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 937,
+     "line": 969,
      "name": "reconcile_semantic_residue"
     },
     {
@@ -83435,10 +83464,10 @@
       "apply"
      ],
      "doc": "Propagate semantic-residue removal into Neo4j.",
-     "end": 1031,
+     "end": 1063,
      "file": "workers/workers/verify_worker.py",
      "kind": "def",
-     "line": 978,
+     "line": 1010,
      "name": "reconcile_graph_residue"
     }
    ]
@@ -95176,7 +95205,7 @@
     },
     {
      "file": "workers/workers/verify_worker.py",
-     "line": 781,
+     "line": 813,
      "missing": [
       "trace_id",
       "attempt_id",
@@ -99338,7 +99367,7 @@
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 262,
+     "line": 281,
      "missing": [
       "compile_objects",
       "corpus_summary",

@@ -15,7 +15,7 @@ AUTHORITY: `control/control/tickets.py:63` :: `NON_BLOCKING_STAGES` (count: 8) [
 | `control/control/fleet_autopilot.py` | `control/control/fleet_autopilot.py:60` | 8/8 | — |
 | `control/control/process_supervisor.py` | `control/control/process_supervisor.py:95` | 3/8 | `corpus_summary`, `document_summary`, `parent_enrichment`, `parent_summary`, `vocabulary` |
 | `control/control/reconciliation.py` | `control/control/reconciliation.py:68` | 5/8 | `doc_parent_map`, `doc_profile`, `parent_enrichment` |
-| `control/control/scheduler.py` | `control/control/scheduler.py:262` | 3/8 | `compile_objects`, `corpus_summary`, `document_summary`, `parent_summary`, `vocabulary` |
+| `control/control/scheduler.py` | `control/control/scheduler.py:281` | 3/8 | `compile_objects`, `corpus_summary`, `document_summary`, `parent_summary`, `vocabulary` |
 | `shared/polymath_shared/llm_extraction/lane_registry.py` | `shared/polymath_shared/llm_extraction/lane_registry.py:51` | 3/8 | `compile_objects`, `corpus_summary`, `document_summary`, `parent_summary`, `vocabulary` |
 | `workers/workers/summary_worker_impl.py` | `workers/workers/summary_worker_impl.py:289` | 5/8 | `compile_objects`, `doc_parent_map`, `doc_profile` |
 
