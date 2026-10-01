@@ -84,6 +84,13 @@ last_reviewed: 2026-10-01
   quick 33.8 s, supported, 8 citations, 3 goals / 6 findings / 4 sources, stop `frontier_empty`, a 2,565-character report.
 - Seen live and fixed (11.563): an executed FAST turn reports `mode: VECTOR` (the runtime's internal name); the tools now say
   FAST (`_executed_mode`; +1 test).
+- **Deployed `602528a8` (11.564, the owner: "deploy the FAST label fix too … fully on github working if pulled, current local
+  and cloudflare version running the latest")**: before it, contracts + the MCP determinism tests 889 passed on the branch;
+  merge `f7d893d4..602528a8`, UI build, bounce READY (26 healthy / 13 types / one bundle), push `f7d893d4..602528a8`. After it:
+  local HEAD = origin/production = `602528a8`, nothing unpushed; `bundle_integrity` READY; :7200 and :8930 restarted after the
+  merge; through Cloudflare `mcp.kingsleylab.xyz` lists the six tools and `polymath_search` FAST now reports FAST (HYBRID
+  HYBRID); `rag.kingsleylab.xyz` (`/` and `/v2/`) serves the same UI build as the local `dist` (`index-DggSQshH.js`). GitHub CI
+  at `f7d893d4`: all four workflows success.
 
 ## Contract impact (pre-commit)
 - MCP_SURFACE [live] (`mcp_server.py`): UPDATED — the tools above; the legacy tools stay callable.
