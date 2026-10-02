@@ -2911,7 +2911,7 @@
    "reads": [
     "control/control/census.py:172",
     "control/control/fleet_autopilot.py:111",
-    "control/control/stall_tracer.py:342",
+    "control/control/stall_tracer.py:357",
     "control/control/tickets.py:749",
     "control/control/tickets.py:818",
     "orchestrator/orchestrator/api/health.py:45",
@@ -3889,7 +3889,7 @@
     "control/control/scheduler.py:364",
     "control/control/scheduler.py:438",
     "control/control/stall_tracer.py:243",
-    "control/control/stall_tracer.py:300",
+    "control/control/stall_tracer.py:315",
     "control/control/tickets.py:335",
     "control/control/tickets.py:526",
     "orchestrator/orchestrator/api/ui.py:1044",
@@ -4369,7 +4369,7 @@
     "control/control/scheduler.py:466",
     "control/control/snapshots.py:21",
     "control/control/snapshots.py:47",
-    "control/control/stall_tracer.py:342",
+    "control/control/stall_tracer.py:357",
     "control/control/tickets.py:238",
     "control/control/tickets.py:283",
     "control/control/tickets.py:514",
@@ -4645,9 +4645,10 @@
     "control/control/stall_tracer.py:192",
     "control/control/stall_tracer.py:208",
     "control/control/stall_tracer.py:243",
-    "control/control/stall_tracer.py:300",
-    "control/control/stall_tracer.py:342",
-    "control/control/stall_tracer.py:369",
+    "control/control/stall_tracer.py:286",
+    "control/control/stall_tracer.py:315",
+    "control/control/stall_tracer.py:357",
+    "control/control/stall_tracer.py:384",
     "control/control/tickets.py:109",
     "control/control/tickets.py:157",
     "control/control/tickets.py:322",
@@ -4699,8 +4700,8 @@
     "shared/polymath_shared/worker_runtime.py:270",
     "shared/polymath_shared/worker_runtime.py:330",
     "shared/polymath_shared/worker_runtime.py:348",
-    "shared/polymath_shared/worker_runtime.py:603",
-    "shared/polymath_shared/worker_runtime.py:621",
+    "shared/polymath_shared/worker_runtime.py:607",
+    "shared/polymath_shared/worker_runtime.py:625",
     "workers/workers/summary_worker_impl.py:794"
    ]
   },
@@ -4726,8 +4727,8 @@
     "shared/polymath_shared/pipeline_health.py:78"
    ],
    "writes": [
-    "control/control/stall_tracer.py:401",
-    "control/control/stall_tracer.py:416"
+    "control/control/stall_tracer.py:416",
+    "control/control/stall_tracer.py:431"
    ]
   },
   "summary_artifacts": {
@@ -4776,7 +4777,7 @@
    ],
    "created": "stores/postgres/migrations/0024_summary_intelligence.sql:8",
    "reads": [
-    "control/control/stall_tracer.py:369",
+    "control/control/stall_tracer.py:384",
     "orchestrator/orchestrator/api/ui.py:762",
     "shared/polymath_shared/summary_runtime.py:23",
     "workers/workers/summary_worker_impl.py:200",
@@ -4842,7 +4843,8 @@
     "control/control/process_supervisor.py:560",
     "control/control/stall_tracer.py:192",
     "control/control/stall_tracer.py:243",
-    "control/control/stall_tracer.py:300",
+    "control/control/stall_tracer.py:286",
+    "control/control/stall_tracer.py:315",
     "control/control/tickets.py:565",
     "control/control/worker_supervisor.py:42",
     "control/control/worker_supervisor.py:65",
@@ -17221,7 +17223,7 @@
    "files": [
     "control/control/stall_tracer.py"
    ],
-   "hash": "eb3e4fff2059116d",
+   "hash": "de28dc91e90a3820",
    "importers": [
     "control/control/main.py"
    ],
@@ -17236,7 +17238,7 @@
     "control.tickets._stage_attempt_ok",
     "control.tickets.receipt_scope_for"
    ],
-   "lines": 437,
+   "lines": 452,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/control/control/stall_tracer.py.md",
@@ -17290,37 +17292,37 @@
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 342,
+     "line": 357,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 342,
+     "line": 357,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 342,
+     "line": 357,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 342,
+     "line": 357,
      "table": "corpora"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 342,
+     "line": 357,
      "table": "runs"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 369,
+     "line": 384,
      "table": "summary_jobs"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 369,
+     "line": 384,
      "table": "stage_tickets"
     },
     {
@@ -17340,46 +17342,61 @@
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 300,
+     "line": 286,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "control/control/stall_tracer.py",
+     "line": 286,
+     "table": "worker_registrations"
+    },
+    {
+     "file": "control/control/stall_tracer.py",
+     "line": 315,
      "table": "outbox_events"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 300,
+     "line": 315,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 300,
+     "line": 315,
      "table": "worker_registrations"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 300,
+     "line": 315,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 300,
+     "line": 315,
      "table": "worker_registrations"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 300,
+     "line": 315,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 300,
+     "line": 315,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 300,
+     "line": 315,
      "table": "worker_registrations"
     }
    ],
    "sql_writes": [
+    {
+     "file": "control/control/stall_tracer.py",
+     "line": 431,
+     "table": "stall_traces"
+    },
     {
      "file": "control/control/stall_tracer.py",
      "line": 416,
@@ -17387,12 +17404,7 @@
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 401,
-     "table": "stall_traces"
-    },
-    {
-     "file": "control/control/stall_tracer.py",
-     "line": 401,
+     "line": 416,
      "table": "set"
     }
    ],
@@ -17537,7 +17549,7 @@
       "slots_alive"
      ],
      "doc": "",
-     "end": 390,
+     "end": 405,
      "file": "control/control/stall_tracer.py",
      "kind": "def",
      "line": 237,
@@ -17549,10 +17561,10 @@
       "stalls"
      ],
      "doc": "Upsert one row per stall episode; resolve episodes that cleared.",
-     "end": 421,
+     "end": 436,
      "file": "control/control/stall_tracer.py",
      "kind": "def",
-     "line": 395,
+     "line": 410,
      "name": "persist_traces"
     },
     {
@@ -17563,10 +17575,10 @@
       "fleet_state_path"
      ],
      "doc": "",
-     "end": 436,
+     "end": 451,
      "file": "control/control/stall_tracer.py",
      "kind": "def",
-     "line": 424,
+     "line": 439,
      "name": "trace_stalls"
     }
    ]
@@ -20078,14 +20090,14 @@
    "files": [
     "frontend-v2/src/lib/readiness.ts"
    ],
-   "hash": "5a0dae157b4eef87",
+   "hash": "c1f30c391d5e60df",
    "importers": [
     "frontend-v2/src/App.tsx"
    ],
    "imports": [
     "frontend-v2/src/lib/contracts.ts"
    ],
-   "lines": 185,
+   "lines": 187,
    "page": "units/frontend-v2/src/lib/readiness.ts.md",
    "symbols": [
     {
@@ -20151,25 +20163,25 @@
     {
      "file": "frontend-v2/src/lib/readiness.ts",
      "kind": "function",
-     "line": 151,
+     "line": 153,
      "name": "docPmap"
     },
     {
      "file": "frontend-v2/src/lib/readiness.ts",
      "kind": "function",
-     "line": 162,
+     "line": 164,
      "name": "docProfile"
     },
     {
      "file": "frontend-v2/src/lib/readiness.ts",
      "kind": "const",
-     "line": 180,
+     "line": 182,
      "name": "CHECKING"
     },
     {
      "file": "frontend-v2/src/lib/readiness.ts",
      "kind": "function",
-     "line": 182,
+     "line": 184,
      "name": "settled"
     }
    ]
@@ -74715,18 +74727,20 @@
     },
     {
      "file": "shared/polymath_shared/worker_runtime.py",
-     "line": 548,
+     "line": 551,
      "name": "_CAPACITY_MARKERS",
      "value": [
       "HTTP 429",
       "429 Too Many Requests",
+      "HTTP 503",
+      "503 Service Unavailable",
       "lane refused",
       "LIMITER_REFUSED"
      ]
     },
     {
      "file": "shared/polymath_shared/worker_runtime.py",
-     "line": 549,
+     "line": 553,
      "name": "_CAPACITY_BACKOFF_S",
      "value": 60.0
     }
@@ -74750,13 +74764,13 @@
     {
      "does": "SWALLOWED: pass",
      "file": "shared/polymath_shared/worker_runtime.py",
-     "line": 611,
+     "line": 615,
      "type": "Exception"
     },
     {
      "does": "SWALLOWED: pass",
      "file": "shared/polymath_shared/worker_runtime.py",
-     "line": 631,
+     "line": 635,
      "type": "Exception"
     },
     {
@@ -74793,7 +74807,7 @@
    "files": [
     "shared/polymath_shared/worker_runtime.py"
    ],
-   "hash": "cd0c46fbc49d9e28",
+   "hash": "02848780bab3cf27",
    "importers": [
     "workers/workers/_small-modules",
     "workers/workers/canonicalize_worker.py",
@@ -74836,7 +74850,7 @@
     "polymath_shared.settings",
     "polymath_shared.settings.get_settings"
    ],
-   "lines": 633,
+   "lines": 637,
    "mcp_tools": [],
    "nondeterminism": [
     {
@@ -74896,12 +74910,12 @@
     },
     {
      "file": "shared/polymath_shared/worker_runtime.py",
-     "line": 603,
+     "line": 607,
      "table": "stage_tickets"
     },
     {
      "file": "shared/polymath_shared/worker_runtime.py",
-     "line": 621,
+     "line": 625,
      "table": "stage_tickets"
     },
     {
@@ -75032,22 +75046,11 @@
       "exc"
      ],
      "doc": "",
-     "end": 560,
+     "end": 564,
      "file": "shared/polymath_shared/worker_runtime.py",
      "kind": "def",
-     "line": 552,
+     "line": 556,
      "name": "_is_provider_capacity"
-    },
-    {
-     "args": [
-      "exc"
-     ],
-     "doc": "",
-     "end": 570,
-     "file": "shared/polymath_shared/worker_runtime.py",
-     "kind": "def",
-     "line": 563,
-     "name": "_is_transient_hold"
     },
     {
      "args": [
@@ -75057,7 +75060,18 @@
      "end": 574,
      "file": "shared/polymath_shared/worker_runtime.py",
      "kind": "def",
-     "line": 573,
+     "line": 567,
+     "name": "_is_transient_hold"
+    },
+    {
+     "args": [
+      "exc"
+     ],
+     "doc": "",
+     "end": 578,
+     "file": "shared/polymath_shared/worker_runtime.py",
+     "kind": "def",
+     "line": 577,
      "name": "transient_backoff_s"
     },
     {
@@ -75065,10 +75079,10 @@
       "exc"
      ],
      "doc": "Transient = hand the ticket back without consuming an attempt:",
-     "end": 589,
+     "end": 593,
      "file": "shared/polymath_shared/worker_runtime.py",
      "kind": "def",
-     "line": 577,
+     "line": 581,
      "name": "_is_sidecar_unavailable"
     },
     {
@@ -75077,10 +75091,10 @@
       "reason"
      ],
      "doc": "Hand a leased ticket back to READY without consuming an attempt \u2014",
-     "end": 612,
+     "end": 616,
      "file": "shared/polymath_shared/worker_runtime.py",
      "kind": "def",
-     "line": 592,
+     "line": 596,
      "name": "_release_ticket_transient"
     },
     {
@@ -75089,10 +75103,10 @@
       "reason"
      ],
      "doc": "",
-     "end": 632,
+     "end": 636,
      "file": "shared/polymath_shared/worker_runtime.py",
      "kind": "def",
-     "line": 615,
+     "line": 619,
      "name": "_fail_ticket"
     }
    ]
@@ -79737,7 +79751,7 @@
     },
     {
      "file": "workers/workers/llm_provider.py",
-     "line": 744,
+     "line": 762,
      "name": "_REISSUE_DISPOSITIONS",
      "value": [
       "incomplete",
@@ -79748,7 +79762,7 @@
     },
     {
      "file": "workers/workers/llm_provider.py",
-     "line": 828,
+     "line": 846,
      "name": "_STORE_ATTACHED",
      "value": false
     }
@@ -79777,14 +79791,14 @@
     {
      "does": "SWALLOWED: pass",
      "file": "workers/workers/llm_provider.py",
-     "line": 574,
+     "line": 582,
      "type": "Exception"
     }
    ],
    "files": [
     "workers/workers/llm_provider.py"
    ],
-   "hash": "6d4efcf1fee9c731",
+   "hash": "05476afc2de7e4e5",
    "importers": [
     "workers/workers/extract_worker.py"
    ],
@@ -79838,20 +79852,20 @@
     "workers.chunk_kind.classify_heading",
     "workers.chunk_kind.is_noisy"
    ],
-   "lines": 935,
+   "lines": 953,
    "mcp_tools": [],
    "nondeterminism": [
     {
      "call": "ThreadPoolExecutor",
      "file": "workers/workers/llm_provider.py",
      "kind": "concurrency",
-     "line": 634
+     "line": 642
     },
     {
      "call": "ThreadPoolExecutor",
      "file": "workers/workers/llm_provider.py",
      "kind": "concurrency",
-     "line": 819
+     "line": 837
     }
    ],
    "page": "units/workers/workers/llm_provider.py.md",
@@ -80009,7 +80023,7 @@
       "call_cache"
      ],
      "doc": "Extract every neighborhood through the gate.",
-     "end": 741,
+     "end": 759,
      "file": "workers/workers/llm_provider.py",
      "kind": "def",
      "line": 295,
@@ -80021,10 +80035,10 @@
       "lane"
      ],
      "doc": "",
-     "end": 752,
+     "end": 770,
      "file": "workers/workers/llm_provider.py",
      "kind": "def",
-     "line": 747,
+     "line": 765,
      "name": "_raise_if_refused"
     },
     {
@@ -80033,10 +80047,10 @@
       "sent_ids"
      ],
      "doc": "Per-neighborhood disposition for one pass.",
-     "end": 793,
+     "end": 811,
      "file": "workers/workers/llm_provider.py",
      "kind": "def",
-     "line": 755,
+     "line": 773,
      "name": "_dispose"
     },
     {
@@ -80051,19 +80065,19 @@
       "call"
      ],
      "doc": "Second pass: ONE neighborhood per call (the truncation failure mode",
-     "end": 825,
+     "end": 843,
      "file": "workers/workers/llm_provider.py",
      "kind": "def",
-     "line": 796,
+     "line": 814,
      "name": "_reissue"
     },
     {
      "args": [],
      "doc": "Attach the Postgres-backed controller store once per process, so",
-     "end": 841,
+     "end": 859,
      "file": "workers/workers/llm_provider.py",
      "kind": "def",
-     "line": 831,
+     "line": 849,
      "name": "_ensure_controller_store"
     },
     {
@@ -80072,10 +80086,10 @@
       "limiter"
      ],
      "doc": "",
-     "end": 853,
+     "end": 871,
      "file": "workers/workers/llm_provider.py",
      "kind": "def",
-     "line": 844,
+     "line": 862,
      "name": "_controller_snapshot"
     },
     {
@@ -80085,10 +80099,10 @@
       "all_chunk_ids"
      ],
      "doc": "Shape validated entities into the PHASE B2 precomputed form:",
-     "end": 879,
+     "end": 897,
      "file": "workers/workers/llm_provider.py",
      "kind": "def",
-     "line": 856,
+     "line": 874,
      "name": "to_precomputed_entities"
     },
     {
@@ -80096,10 +80110,10 @@
       "merged"
      ],
      "doc": "",
-     "end": 892,
+     "end": 910,
      "file": "workers/workers/llm_provider.py",
      "kind": "def",
-     "line": 882,
+     "line": 900,
      "name": "to_evidence_spans"
     },
     {
@@ -80107,10 +80121,10 @@
       "merged"
      ],
      "doc": "Raw-ledger items carrying the model's observations EXACTLY as",
-     "end": 915,
+     "end": 933,
      "file": "workers/workers/llm_provider.py",
      "kind": "def",
-     "line": 895,
+     "line": 913,
      "name": "ledger_items"
     },
     {
@@ -80118,10 +80132,10 @@
       "results"
      ],
      "doc": "Per-call receipts. `limiter_effective` / `batch_tokens_cap` are the",
-     "end": 934,
+     "end": 952,
      "file": "workers/workers/llm_provider.py",
      "kind": "def",
-     "line": 918,
+     "line": 936,
      "name": "call_receipts"
     }
    ]

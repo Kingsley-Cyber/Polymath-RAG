@@ -1,126 +1,107 @@
 # unit: shared/polymath_shared/worker_runtime.py
-anchor: shared/polymath_shared/worker_runtime.py:1-632
+anchor: shared/polymath_shared/worker_runtime.py:1-637
 
 ## purpose
-CONTROL-PLANE-V2 worker runtime (ADR-0014): one generic loop for every worker type in the fleet — register identity, heartbeat, claim only ticket-gated events that are `ready` and compatible with the run's pinned execution contract, execute, complete the ticket. Workers are dumb executors; the control plane owns sequencing. — shared/polymath_shared/worker_runtime.py:1-12 [DERIVED]
-
-Used by 12 worker modules (FACTS.importers): intake, extract, profile, canonicalize, doc_profile, doc_parent_map_stage, summary_impl, project_canonical, project_neo4j, project_qdrant, verify, `_small-modules` — FACTS.importers [DERIVED]
+CONTROL-PLANE-V2 (ADR-0014) worker runtime: one loop for the whole worker fleet — register identity, heartbeat, claim ONLY ticket-gated events that are `ready` and compatible with the run's pinned execution contract, execute the stage, mark the ticket done — shared/polymath_shared/worker_runtime.py:1-12 [DERIVED]. Workers are dumb executors of exactly-scoped legal work units; the control plane owns what happens next — shared/polymath_shared/worker_runtime.py:3-6 [DERIVED].
 
 ## public surface
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| run_worker | def | (worker_type: str, event_types: list[str], process_event: Callable[..., None], poll_interval_s: float = 2.0, batch_size: int = 1, extra_env_check: Callable[[], None] \| None = None) -> None | 359-362 | worker entry scripts [INFERRED: importers import the module; per-symbol split not in FACTS] |
-| claim_ticket_events | def | (conn, identity: dict, event_types: list[str], limit: int, lane_affinity: str \| None = None) -> list[dict] | 107-108 | run_worker + workers [INFERRED: same reason] |
-| complete_ticket | def | (conn, ticket_id: str \| None) -> None | 266-268 | run_worker + workers [INFERRED] |
-| transient_backoff_s | def | (exc: BaseException) -> float | 573-574 | run_worker (491, 509) |
-| TransientStageHold | class | RuntimeError subclass; stage raises to yield ticket | 535-541 | stage workers raise it [INFERRED] |
-| _refused_set / _era_exempt / _lease_keeper / _is_provider_capacity / _is_transient_hold / _is_sidecar_unavailable / _release_ticket_transient / _fail_ticket | def | internal | 67-72, 93-104, 289-291, 552-560, 563-570, 577-589, 592-612, 615-632 | — |
+| `run_worker` | def | (worker_type, event_types, process_event, poll_interval_s=2.0, batch_size=1, extra_env_check=None) -> None | 359-526 | 12 importer modules in FACTS.importers (intake, extract, profile, doc_profile, canonicalize, project_canonical, project_neo4j, project_qdrant, summary_worker_impl, verify, doc_parent_map_stage_worker, _small-modules) |
+| `claim_ticket_events` | def | (conn, identity, event_types, limit, lane_affinity=None) -> list[dict] | 107-263 | — |
+| `complete_ticket` | def | (conn, ticket_id) -> None | 266-273 | — |
+| `TransientStageHold` | class | RuntimeError subclass | 535-541 | raised by stage code (importers) |
+| `transient_backoff_s` | def | (exc: BaseException) -> float | 577-578 | — |
+| `LEASE_SECONDS` | const | 300 | 33 | — |
+| `CONTRACT_EXEMPT_EVENTS` | const | frozenset({"parent_enrichment.v1", "verify.v1"}) | 81-90 | — |
 
 ## contracts
 
-**run_worker** (359-526)
-- pre: `process_event(conn, event)` keeps its existing signature and stage logic — 363-365 [DERIVED]
-- pre: `POLYMATH_EXTRACT_AFFINITY` honored only when `worker_type == "extract"`; must be `"local"` or `"cloud"`, else `ValueError` — 396-402 [DERIVED]
-- in: `register_worker(conn, identity)` once per process, then `heartbeat` every loop tick — 410-418 [DERIVED]
-- in: bundle fence — pins `fast_code_fingerprint()` + `semantic_file_hashes()` at boot; drift sets `bundle_stale_reason` (`BUNDLE_STALE_CODE_DRIFT` / `BUNDLE_STALE_SEMANTIC_FILE_DRIFT`), writes `worker_registrations.status = 'quarantined'`, refuses all claims — 383-394, 419-446 [DERIVED]
-- post success: one tx runs `process_event` + `complete_ticket`, then heartbeat with `current_ticket=None, processed_count=1`, log `"ticket processed"` — 477-487 [DERIVED]
-- post failure: `StageFailed` or generic `Exception` → if `_is_sidecar_unavailable(exc)`: `_release_ticket_transient` + `time.sleep(transient_backoff_s(exc))`; else `_fail_ticket` — 488-518 [DERIVED]
-- out: never returns (`while True` at 407); the only process exit is `os._exit(70)` from the keeper thread — 344 [DERIVED]
+### run_worker — 359-526
+- in: `process_event(conn, event)` keeps its existing signature and stage logic (364-365); called at 479.
+- pre: if `worker_type == "extract"` and `POLYMATH_EXTRACT_AFFINITY` set, value must be `local` or `cloud`, else `ValueError` (397-402).
+- effect: registers worker once (410-417); heartbeats each loop (418); per-loop bundle-drift check against boot fingerprint (393-394, 419-427); claims `batch_size` events (447-449); per-event lease-keeper daemon thread (455-461); pre-stage heartbeat in its own short tx before the long stage tx (471-476).
+- post: success ⇒ `process_event` + `complete_ticket` in one tx (477-480) then heartbeat with `processed_count=1` (481-483); `StageFailed`/`Exception` ⇒ transient release (no attempt) or `_fail_ticket` (attempt+1) (488-518).
+- out: never returns (`while True` at 407).
 
-**claim_ticket_events** (107-263)
-- in: SELECT undelivered `outbox_events` of the given types, joined to `stage_tickets` and `runs`, gate `((t.status = 'ready' AND t.archived_at IS NULL) OR (t.ticket_id IS NULL AND e.event_type = 'intake.v1'))` — fail-closed for every non-intake event — 158-159, 175-176 [DERIVED]
-- pre: non-era-exempt events with a non-empty contract require `compatible(identity["contracts"], contract)`; refusals are remembered per worker_type for `_REFUSED_TTL_S = 900.0` s so the scan advances — 180-195, 63 [DERIVED]
-- out: claim = `UPDATE stage_tickets SET status='leased', lease_owner=%s, lease_expires_at = now() + make_interval(secs => %s)` with `LEASE_SECONDS` = 300, `WHERE ... status='ready'`; `rowcount == 0` → skip (lost race) — 204-214, 33 [DERIVED]
-- post: claimed events get `outbox_events.delivered_at=now()` — 248-250 [DERIVED]
-- post: `LegacyEventUnrecoverable` during `normalize_event` → ticket set `status='failed', attempt = attempt + 1`, event NOT returned — 228-245 [DERIVED]
-- lane: affinity pass filters runs by `EXISTS (... d.byte_length > threshold)` with `threshold = effective_threshold(_gs().worker.cloud_min_bytes)`; empty home lane → recursive global steal, logged `LANE_STEAL_CLAIM` — 121-130, 252-262 [DERIVED]
+### claim_ticket_events — 107-263
+- in: `identity` keys used: `worker_type` (131), `worker_id` (191), `contracts` (183); `lane_affinity` ∈ {"local","cloud",None}.
+- pre: lane filter built as `EXISTS (… documents d … d.byte_length > %s)` with threshold `effective_threshold(_gs().worker.cloud_min_bytes)` (121-130).
+- out: claimed event dicts with payload passed through `normalize_event` (224-226).
+- post: leased tickets `status='leased'`, `lease_expires_at = now() + LEASE_SECONDS` (204-211); claimed outbox rows `delivered_at=now()` (248-250); contract-refused event_ids recorded per worker_type, forgotten after `_REFUSED_TTL_S = 900.0` (63, 131, 186-195).
+- fail-closed: ticketless events skipped unless `event_type == 'intake.v1'` (158-159, 175-176); `LegacyEventUnrecoverable` ⇒ ticket failed once with typed note, attempt+1 (227-245).
+- steal: home lane dry ⇒ recursive global claim, logged `LANE_STEAL_CLAIM` (252-262).
 
-**complete_ticket** (266-273)
-- no-op when `ticket_id` falsy; otherwise `status='done'`, lease cleared — 267-272 [DERIVED]
-- no `AND status='leased'` guard, unlike every other ticket UPDATE in this file — 269-272 [DERIVED]
+### complete_ticket — 266-273
+- post: `ticket_id` falsy ⇒ no-op (267-268); else `status='done'`, lease cleared, `WHERE ticket_id=%s` only — no `status='leased'` guard (269-272).
 
-**_lease_keeper** (289-356, daemon thread)
-- renews ALL tickets `WHERE lease_owner = %s AND status = 'leased'` every `interval_s = 60.0`, plus heartbeat — 292-295, 348-352 [DERIVED]
-- deadline defaults to `_STAGE_DEADLINE_S` from env `POLYMATH_STAGE_DEADLINE_S` = `"14400"` — 286, 316-317 [DERIVED]
-- post on exceed: `attempt + 1`, `'failed'` if `attempt + 1 >= 3` else `'ready'`, `heartbeat(last_error=...)`, `os._exit(70)` — 320-344 [DERIVED]
-
-**transient classification** (535-632)
-- `_is_sidecar_unavailable` = `SidecarUnavailable` in ≤8-deep `__cause__`/`__context__` chain, OR `_is_provider_capacity`, OR `_is_transient_hold` — 577-589 [DERIVED]
-- `_is_provider_capacity`: `ExtractionTransportError` whose str contains one of `("HTTP 429", "429 Too Many Requests", "lane refused", "LIMITER_REFUSED")` — 548, 552-560 [DERIVED]
-- `transient_backoff_s` returns `_CAPACITY_BACKOFF_S` 60.0 for capacity, else `_TRANSIENT_BACKOFF_S` 15.0 — 532, 549, 573-574 [DERIVED]
-- `_release_ticket_transient`: back to `status='ready'`, lease cleared, NO attempt change, only `WHERE ... status='leased'` — 604-609 [DERIVED]
-- `_fail_ticket`: `attempt + 1`, `CASE WHEN attempt + 1 >= 3 THEN 'failed' ELSE 'ready' END`, only `WHERE ... status='leased'` — 621-628 [DERIVED]
+### _lease_keeper — 289-356
+- renews EVERY ticket with `lease_owner = %s AND status = 'leased'` each `interval_s=60.0` (292-295, 319, 348-350), heartbeats with `current_ticket` (351-352).
+- past `deadline_s` (default 14400): `attempt+1`, `failed` at cap 3 else `ready`, heartbeat `last_error`, `os._exit(70)` (320-344).
 
 ## effect surface
-- Postgres read: `outbox_events` (SELECT 134-168), `stage_tickets` (join 139-140), `runs` (join 141, `r.execution_contract` 137), `documents` (EXISTS lane check 126-127) — [DERIVED]
-- Postgres written: `stage_tickets` (lease 204-212, done 269-272, deadline-fail 331-339, transient release 603-609, fail 621-628), `outbox_events.delivered_at` (249), `worker_registrations` (`last_error`, `status = 'quarantined'` 437-442) — [DERIVED]
-- FACTS.tables_written also lists `of` — artifact of parsing `FOR UPDATE OF e` (168) [INFERRED: that literal is the only `of` in the SQL]
-- Own Postgres connections per keeper tick: `_psycopg.connect(dsn, connect_timeout=5)` — 327, 347 [DERIVED]
-- env: `POLYMATH_STAGE_DEADLINE_S` = `'14400'` (286); `POLYMATH_EXTRACT_AFFINITY` = `''` (398) — [DERIVED]
-- process/signals: faulthandler dump on SIGUSR1, all threads (375-378); `os._exit(70)` (344) — [DERIVED]
-- no files written, no Qdrant/Neo4j calls in this unit — absence across 1-632 [DERIVED]
+- Postgres read: `documents` (126-127), `outbox_events` (135), `stage_tickets` (139-140), `runs` (141).
+- Postgres write: `stage_tickets` (204-211, 229-238, 329-339, 348-350, 606-613, 624-632), `outbox_events.delivered_at` (248-250), `worker_registrations` (quarantine, 437-442).
+- Network: direct psycopg connects in keeper thread, `connect_timeout=5` (327, 346).
+- Process: `os._exit(70)` (344); faulthandler stack dump on SIGUSR1 (375-378).
+- Env: `POLYMATH_STAGE_DEADLINE_S = '14400'` (286, read once at import); `POLYMATH_EXTRACT_AFFINITY = ''` (398, read only when `worker_type == "extract"`, 399).
+- Imports from: `polymath_shared.db`, `.execution`, `.logging`, `.receipts` (23-31); `.llm_extraction.policy`, `.settings` (123-124); `.event_adapter` (219-222); `.execution_bundle` (388-392); `.llm_extraction.client` (557); `.clients` (585).
 
 ## invariants
-INVARIANT: LEASE_SECONDS = 300 — 33; initial lease window at claim — 207 [DERIVED]
-  fails-if: renewal uses `settings.worker.claim_ttl_s` (459), a different source for the same lease; a settings value < stage duration lets the reaper revoke a healthy worker (documented CP2.1 failure, 298-304)
-INVARIANT: retry cap identical at both fail sites: `attempt + 1 >= 3 THEN 'failed'` — 333, 624 [DERIVED]
-  fails-if: changing one site gives deadline-failed and stage-failed tickets different retry budgets
-INVARIANT: transient release never increments `attempt` (no attempt column in 604-609) while `_fail_ticket` always does (623) [DERIVED]
-  fails-if: a booting sidecar would burn the 3-attempt budget (documented: 3 attempts in 8 s, 529-531)
-INVARIANT: `_REFUSED_TTL_S` = 900.0 s refusal memory (63) and claim recency window `interval '15 minutes'` = 900 s (162) are equal but unlinked literals [DERIVED]
-  fails-if: retuning one without the other makes refused-head skipping and new-run priority disagree
-INVARIANT: only `intake.v1` may claim with `t.ticket_id IS NULL`; every other ticketless event is skipped — 158-159, 175-176 [DERIVED]
-  fails-if: legacy harness events become permanently unclaimable (documented SC-200, TICKET-GATE-FAIL-CLOSED-V1 144-157)
-INVARIANT: exception-chain walk depth ≤ 8 at all three classifiers — 555, 565, 583 [DERIVED]
-  fails-if: a transient wrapped deeper than 8 is misclassified as a real failure and burns an attempt
-INVARIANT: `batch_size` default 1; parallelism comes from multiple worker processes — 361, 367-371 [DERIVED]
-  fails-if: batching >1 resurrects queued-ticket lease expiry (LONG-STAGE-LEASE-CORRECTNESS-V1, 197-203)
-INVARIANT: era exemption set = frozenset `{"parent_enrichment.v1", "verify.v1"}` plus `project_qdrant.v1` events with `payload["reason"] == "latent_projection"` — 81-90, 101-103 [DERIVED]
-  fails-if: era-refusing verify.v1 leaves old corpora stuck in reconciling (documented 2026-08-31, 83-89)
+INVARIANT: initial lease window `LEASE_SECONDS = 300` (33, 211) vs keeper renewal `ttl_s = _gs().worker.claim_ttl_s` (458-459) — two independent lease lengths [DERIVED]
+  fails-if: `claim_ttl_s` ≠ 300 makes renewal disagree with the granted lease; a stage longer than the renewed TTL gets reaped mid-run.
+INVARIANT: `_STAGE_DEADLINE_S` default 14400 s (4 h) > documented longest legitimate stage ~2.3 h (284-286) [DERIVED]
+  fails-if: deadline below the longest legit stage kills healthy workers via `os._exit(70)` (344).
+INVARIANT: retry terminal condition `attempt + 1 >= 3` ⇒ `'failed'` else `'ready'` — duplicated verbatim at 333 and 628 [DERIVED]
+  fails-if: the two literals diverge ⇒ keeper deadline path and `_fail_ticket` disagree on retry budget.
+INVARIANT: claimable ⇔ `(t.status = 'ready' AND t.archived_at IS NULL) OR (t.ticket_id IS NULL AND e.event_type = 'intake.v1')` (158-159) [DERIVED]
+  fails-if: strict gate starves intake uploads; loose gate ran SC-200 stages before extract (comment 144-158).
+INVARIANT: transient release sets `status='ready'` with NO attempt increment (606-613) [DERIVED]
+  fails-if: capacity 429/503 or booting sidecar counted as failure burns the 3-attempt budget (comment 544-550).
+INVARIANT: `_REFUSED_TTL_S = 900.0` s refusal memory per worker_type (63, 67-72) [DERIVED]
+  fails-if: too long stalls a lane after a semantic cutover; too short re-starves the scan head (comment 47-59).
+INVARIANT: exception cause-chain walk bounded `seen < 8` (559, 568, 588) [DERIVED]
+  fails-if: wrapping deeper than 8 hides `TransientStageHold`/`SidecarUnavailable` ⇒ transient treated as real failure.
+INVARIANT: `_CAPACITY_BACKOFF_S = 60.0` > `_TRANSIENT_BACKOFF_S = 15.0` (553, 532) [DERIVED]
+  fails-if: swapped values hammer a 429-ing provider pool or over-delay a booting sidecar.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (clock: `time.time` 68, `time.monotonic` 318/320; db: SELECT/UPDATE on 4 tables 134-250; concurrency: `FOR UPDATE OF e SKIP LOCKED` 168 + rowcount race 213-214; env: 286, 398; process: `os._exit(70)` 344; signal: SIGUSR1 377-378) [DERIVED]
-idempotency: SAFE for leasing (guarded `WHERE status='ready'` + rowcount check, 204-214); UNSAFE for `complete_ticket` replay (no status guard, 269-272) and for `delivered_at=now()` (blind overwrite, 249) [DERIVED]
+determinism: NONDETERMINISTIC (clock `time.time` 68, `time.monotonic` 318/320; sleeps 491, 509, 526; env 286, 398; DB row races `FOR UPDATE OF e SKIP LOCKED` 168 and lease-race `rowcount == 0` check 213-214)
+idempotency: SAFE (claim is conditional `UPDATE … WHERE ticket_id=%s AND status='ready'` plus race check 204-214; failure/deadline transitions guarded `WHERE … status='leased'` 235, 337, 611, 631) — except `complete_ticket`, which is unguarded (269-272)
 
 ## failure behaviour
-- `Exception` → `pass` in `_release_ticket_transient` (611-612): transient release silently lost; ticket stays `leased` until TTL/reaper; loop continues [DERIVED]
-- `Exception` → `pass` in `_fail_ticket` (631-632): failure not recorded, attempt not burned; ticket returns via lease expiry [DERIVED]
-- `Exception` → `pass` in the deadline branch (342-343): DB write skipped, but `os._exit(70)` still runs — 344 [DERIVED]
-- `Exception` → log `lease_renew_failed`, retried next 60 s tick — 354-356 [DERIVED]
-- `Exception` → log `heartbeat_failed`, stage still executes — 471-476 [DERIVED]
-- `psycopg.errors.OperationalError` → log `pg_unavailable`, back off `poll_interval_s`; any other loop exception → `log.exception`, loop continues — 521-526 [DERIVED]
-- generic `Exception` from the stage handled by branch at 498-518: sidecar-unavailable → transient release + backoff; else `_fail_ticket` [DERIVED]
-- `LegacyEventUnrecoverable` → ticket failed once with typed note, event skipped — 227-245 [DERIVED]
-- error codes emitted: `LEGACY_EVENT_UNRECOVERABLE` (241), `LANE_STEAL_CLAIM` (261), `STAGE_DEADLINE_EXCEEDED` (324), `BUNDLE_STALE_CODE_DRIFT` (422), `BUNDLE_STALE_SEMANTIC_FILE_DRIFT` (426), `lease_renew_failed` (355), `heartbeat_failed` (476), `pg_unavailable` (523), `stage_failed` (493-496), `TICKET_TRANSIENT_RELEASE` (599) [DERIVED]
+- Swallowed with `pass`: keeper deadline cleanup failure (342-343) — exit proceeds regardless; `_release_ticket_transient` UPDATE failure (615-616) and `_fail_ticket` UPDATE failure (635-636) — caller sees nothing, ticket stays `leased` until the reaper.
+- Swallowed with log: keeper renewal retry `lease_renew_failed` (354-356); pre-stage heartbeat `heartbeat_failed` (474-476); worker-loop generic `log.exception` (524-525); `psycopg.errors.OperationalError` backoff `pg_unavailable` (521-523).
+- Handled branch: generic stage exception branches on `_is_sidecar_unavailable(exc)` ⇒ transient release + `time.sleep(transient_backoff_s(exc))` (498-509).
+- Error codes emitted: `STAGE_DEADLINE_EXCEEDED` (324), `LEGACY_EVENT_UNRECOVERABLE` (241), `LANE_STEAL_CLAIM` (261), `TICKET_TRANSIENT_RELEASE` (603), `BUNDLE_STALE_CODE_DRIFT` (422), `BUNDLE_STALE_SEMANTIC_FILE_DRIFT` (426), `stage_failed` (495).
+- Raised: `ValueError` on bad lane affinity (400-402); process exit code 70 on stage deadline (344).
 
 ## dumb-code flags
-- `bundle_id` imported with the fence helpers but never used — 388-392 [DERIVED]
-- `extra_env_check` parameter declared, never called anywhere in 359-526 — 361 [DERIVED]
-- lease length set from constant `LEASE_SECONDS` = 300 at claim (211) but renewed with `settings.worker.claim_ttl_s` (459) — two sources for one lease [DERIVED both; divergence risk INFERRED]
-- retry cap `3` duplicated (333, 624); reason truncation `[:500]` at 235, 338, 508, 609, 629 and `[:200]` at 244; chain cap `8` ×3 (555, 565, 583) [DERIVED]
-- `complete_ticket` lacks the `AND status='leased'` guard used by 204-214, 337, 607, 627 — 269-272 [DERIVED]
-- module logger `log = logging.getLogger("worker-runtime")` (45) shadowed by local `log` in `run_worker` (382); `claim_ticket_events` builds `logging.getLogger("worker-runtime")` inline 3× (189, 239, 257) — the exact shadowing class that caused the documented keeper NameError (37-44) [DERIVED]
-- `_lease_keeper(deadline_s=...)` never receives a deadline from its only call site — always the env default — 290, 456-460 [DERIVED]
-- mangled whitespace on the latent-projection check line — 103 [DERIVED]
-- FACTS render `CONTRACT_EXEMPT_EVENTS` and `_CAPACITY_MARKERS` as lists; the code has a `frozenset` (81) and a tuple (548) [DERIVED]
+- Retry cap literal `3` duplicated in two SQL strings (333, 628).
+- `LEASE_SECONDS = 300` at claim (33, 211) vs `claim_ttl_s` from settings in the keeper (458-459) — nothing ties the two lease durations together [INFERRED — separate sources with no shared constant].
+- `extra_env_check` parameter (362) has no call site anywhere in this unit [INFERRED — absent from the body].
+- `run_worker` rebinds `log = logging.getLogger(f"worker-{worker_type}")` (382), shadowing the module-level `log` (45) that exists specifically because `_lease_keeper` needs it (36-45).
+- `complete_ticket` sets `status='done'` with no `status='leased'` guard (269-272), unlike every other ticket transition.
+- `_fail_ticket` SQL duplicated by the keeper's deadline branch (329-339 vs 624-632).
+- `POLYMATH_STAGE_DEADLINE_S` read once at module import (286) — env change requires a process restart.
+- FACTS.constants records `CONTRACT_EXEMPT_EVENTS` as a list; SOURCE defines it as `frozenset({…})` (81).
 
 ## refactor notes
-- 12 worker modules import this module (FACTS.importers); any change to `run_worker`'s signature or the `process_event(conn, event)` contract touches all of them — FACTS.importers, 363-365 [DERIVED]
-- ticket state literals `'ready'`/`'leased'`/`'done'`/`'failed'` are inline SQL in five UPDATEs plus the claim gate (158-159, 204-212, 269-272, 331-339, 603-609, 621-628); reaper and lease semantics referenced at 197-203 and 308-313 depend on them [DERIVED]
-- `claim_ticket_events` recurses without `lane_affinity` for the steal pass (255) — the function must stay callable with the affinity parameter defaulted [DERIVED]
-- lazy imports inside functions: `effective_threshold`/`get_settings` (123-124), `normalize_event` (219-222), `ExtractionTransportError` (553), `SidecarUnavailable` (581), `get_settings`/`threading` (452-454) — moving those modules changes runtime, not import-time, failure modes [DERIVED]
-- any logging refactor around `_lease_keeper` must use the module-level `log`; the local `log` in `run_worker` does not exist in the keeper thread (regression documented 37-44) [DERIVED]
-- the `_lease_keeper` args tuple at 456-460 is the sole call site; its params (`ttl_s`, `deadline_s`) are effectively pinned to settings/env defaults [DERIVED]
+- All 12 FACTS.importers modules call `run_worker` and rely on the `process_event(conn, event)` contract (364-365, 479) — signature changes ripple across the entire fleet.
+- Retry-cap `3`, lease durations, and backoff values are inline/duplicated in SQL — extract shared constants before touching retry or lease semantics (333, 628, 211, 459).
+- Transient detection walks `__cause__`/`__context__` max depth 8 (556-593) — deeper exception re-wrapping in stages or clients silently breaks it.
+- `CONTRACT_EXEMPT_EVENTS` + `_era_exempt` gate cross-era claims (81-104, 181) — adding an exempt event changes provenance fencing for mixed-era corpora.
+- `claim_ticket_events` recurses for the lane steal (253-255) — any refactor must keep the steal logged (`LANE_STEAL_CLAIM`, 257-261) per silent-fallback accounting.
+- `complete_ticket` unguarded UPDATE (269-272) — adding a status guard changes behaviour for tickets already reaped or re-leased.
 
 ## VERIFY
 ```verify
 grep -Fq 'LEASE_SECONDS = 300' shared/polymath_shared/worker_runtime.py
-grep -Fq 'attempt + 1 >= 3' shared/polymath_shared/worker_runtime.py
+test "$(grep -c -F 'attempt + 1 >= 3' shared/polymath_shared/worker_runtime.py)" -ge 2
 grep -Fq 'FOR UPDATE OF e SKIP LOCKED' shared/polymath_shared/worker_runtime.py
 grep -Fq 'os._exit(70)' shared/polymath_shared/worker_runtime.py
-grep -Fq '"POLYMATH_STAGE_DEADLINE_S", "14400"' shared/polymath_shared/worker_runtime.py
-grep -Fq 'TransientStageHold(RuntimeError)' shared/polymath_shared/worker_runtime.py
-! grep -Fq 'extra_env_check(' shared/polymath_shared/worker_runtime.py
-test "$(grep -c -F 'logging.getLogger' shared/polymath_shared/worker_runtime.py)" -ge 5
+grep -Eq 'POLYMATH_STAGE_DEADLINE_S., .14400' shared/polymath_shared/worker_runtime.py
+! grep -Fq 'extra_env_check()' shared/polymath_shared/worker_runtime.py
+grep -Fq 'parent_enrichment.v1' shared/polymath_shared/worker_runtime.py
 ```

@@ -1,134 +1,122 @@
 # unit: frontend-v2/src/lib/readiness.ts
-anchor: frontend-v2/src/lib/readiness.ts:1-185
+anchor: frontend-v2/src/lib/readiness.ts:1-187
 
 ## purpose
-Presentation-only verdict painters for the FRONTEND-V2 UI. They read backend verdicts (control plane, semantic, vNext, per-file status) and choose which of ready/blocked/degraded/unknown/working to paint, plus the backend's own blocker word — frontend-v2/src/lib/readiness.ts:4-6. The module decides nothing: "the backend owns that" — frontend-v2/src/lib/readiness.ts:4-5. It deliberately refuses the legacy `query_ready` boolean — frontend-v2/src/lib/readiness.ts:8-10.
+Pure presentational module: converts backend readiness verdicts (control plane, semantic corpus, vNext searchability, per-file status) into `Verdict { state, label, detail }` objects for the UI. The backend owns readiness decisions; these functions only paint ready/blocked/degraded/unknown/working and echo the backend's own words verbatim. Sole importer is `frontend-v2/src/App.tsx`. The legacy `query_ready` boolean is deliberately not accepted by any function here. — frontend-v2/src/lib/readiness.ts:4-10 [DERIVED]
 
 ## public surface
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `ReadyState` | type | `"ready" \| "blocked" \| "degraded" \| "unknown" \| "working"` | readiness.ts:15 | App.tsx (sole importer) |
-| `Verdict` | interface | `{ state: ReadyState; label: string; detail?: string }` | readiness.ts:17-22 | App.tsx (sole importer) |
-| `controlReady` | function | `(cr: ControlPlane["control_ready"] \| null \| undefined) -> Verdict` | readiness.ts:34 | App.tsx (sole importer) |
-| `semanticReady` | function | `(sr: SemanticReadiness \| null) -> Verdict` | readiness.ts:40 | App.tsx (sole importer) |
-| `vnextReady` | function | `(sr: SemanticReadiness \| null) -> Verdict` | readiness.ts:53 | App.tsx (sole importer) |
-| `docSearchable` | function | `(d: DocSummary \| null \| undefined) -> boolean` | readiness.ts:82 | App.tsx (sole importer) |
-| `servesVnext` | function | `(d: DocSummary \| null \| undefined) -> boolean` | readiness.ts:89 | App.tsx (sole importer) |
-| `servedWriter` | function | `(d: DocSummary \| null \| undefined) -> "vnext" \| "basic" \| null` | readiness.ts:96 | App.tsx (sole importer) |
-| `stageWords` | function | `(stage: string) -> string` | readiness.ts:111 | App.tsx (sole importer) |
-| `docStatus` | function | `(d: DocSummary) -> Verdict` | readiness.ts:124 | App.tsx (sole importer) |
-| `docPmap` | function | `(d: DocSummary) -> Verdict` | readiness.ts:151 | App.tsx (sole importer) |
-| `docProfile` | function | `(d: DocSummary) -> Verdict` | readiness.ts:162 | App.tsx (sole importer) |
-| `CHECKING` | const | `Verdict = { state: "unknown", label: "CHECKING" }` | readiness.ts:180 | App.tsx (sole importer) |
-| `settled` | function | `<T>(a: { data: T \| null; error: string \| null }, verdict: (d: T \| null) => Verdict) -> Verdict` | readiness.ts:182 | App.tsx (sole importer) |
-
-Sole importer per FACTS.importers: `frontend-v2/src/App.tsx`. Only import: types from `./contracts` — readiness.ts:12.
+| `ReadyState` | type | union `"ready" \| "blocked" \| "degraded" \| "unknown" \| "working"` | frontend-v2/src/lib/readiness.ts:15 | frontend-v2/src/App.tsx |
+| `Verdict` | interface | `{ state: ReadyState; label: string; detail?: string }` | frontend-v2/src/lib/readiness.ts:17-22 | frontend-v2/src/App.tsx |
+| `controlReady` | function | `(cr: ControlPlane["control_ready"] \| null \| undefined) -> Verdict` | frontend-v2/src/lib/readiness.ts:34-37 | frontend-v2/src/App.tsx |
+| `semanticReady` | function | `(sr: SemanticReadiness \| null) -> Verdict` | frontend-v2/src/lib/readiness.ts:40-45 | frontend-v2/src/App.tsx |
+| `vnextReady` | function | `(sr: SemanticReadiness \| null) -> Verdict` | frontend-v2/src/lib/readiness.ts:53-77 | frontend-v2/src/App.tsx |
+| `docSearchable` | function | `(d: DocSummary \| null \| undefined) -> boolean` | frontend-v2/src/lib/readiness.ts:82-84 | frontend-v2/src/App.tsx |
+| `servesVnext` | function | `(d: DocSummary \| null \| undefined) -> boolean` | frontend-v2/src/lib/readiness.ts:89-92 | frontend-v2/src/App.tsx |
+| `servedWriter` | function | `(d: DocSummary \| null \| undefined) -> "vnext" \| "basic" \| null` | frontend-v2/src/lib/readiness.ts:96-100 | frontend-v2/src/App.tsx |
+| `stageWords` | function | `(stage: string) -> string` | frontend-v2/src/lib/readiness.ts:111-113 | frontend-v2/src/App.tsx |
+| `docStatus` | function | `(d: DocSummary) -> Verdict` | frontend-v2/src/lib/readiness.ts:124-148 | frontend-v2/src/App.tsx |
+| `docPmap` | function | `(d: DocSummary) -> Verdict` | frontend-v2/src/lib/readiness.ts:153-159 | frontend-v2/src/App.tsx |
+| `docProfile` | function | `(d: DocSummary) -> Verdict` | frontend-v2/src/lib/readiness.ts:164-178 | frontend-v2/src/App.tsx |
+| `CHECKING` | const | `Verdict` = `{ state: "unknown", label: "CHECKING" }` | frontend-v2/src/lib/readiness.ts:182 | frontend-v2/src/App.tsx |
+| `settled` | function | `<T>(a: { data: T \| null; error: string \| null }, verdict: (d: T \| null) => Verdict) -> Verdict` | frontend-v2/src/lib/readiness.ts:184-186 | frontend-v2/src/App.tsx |
 
 ## contracts
 
-**controlReady** — readiness.ts:34-37
-- in: `cr: ControlPlane["control_ready"] | null | undefined` (null while fetch in flight, readiness.ts:32)
-- out: null/undefined → `{ state: "unknown", label: "UNKNOWN", detail: "/control_plane not reachable" }` — readiness.ts:35
-- post: non-null → copies `cr.state`, `cr.label`, `cr.detail` verbatim; label is never paraphrased — readiness.ts:36, readiness.ts:19-20
+**controlReady** — frontend-v2/src/lib/readiness.ts:34-37
+- in: composed `control_ready` object from `/control_plane`, or `null`/`undefined` while fetch is in flight (frontend-v2/src/lib/readiness.ts:32).
+- out: falsy input → `{ state: "unknown", label: "UNKNOWN", detail: "/control_plane not reachable" }` (:35); else echoes `cr.state`, `cr.label`, `cr.detail` verbatim (:36).
+- post: never composes `/ready` + `/health/pipeline` itself — that arithmetic lives in `shared/polymath_shared/pipeline_health.py::control_ready` (frontend-v2/src/lib/readiness.ts:27-32).
 
-**semanticReady** — readiness.ts:40-45
-- in: `sr: SemanticReadiness | null`
-- out: null → `{ state: "unknown", label: "UNKNOWN" }` — readiness.ts:41
-- post: `sr.verdict === "SEMANTIC_COMPLETE"` → state `"ready"`; any other verdict → state `"blocked"`; label = the verdict string — readiness.ts:42-44
+**semanticReady** — frontend-v2/src/lib/readiness.ts:40-45
+- in: `SemanticReadiness | null`.
+- out: `null` → `{ state: "unknown", label: "UNKNOWN" }` (:41); `sr.verdict === "SEMANTIC_COMPLETE"` → state `"ready"` (:42-43); any other verdict → state `"blocked"`, label = `sr.verdict` (:44).
 
-**vnextReady** — readiness.ts:53-77
-- in: `sr: SemanticReadiness | null`
-- out: null or no `sr.vnext` → `{ state: "unknown", label: "UNKNOWN" }` — readiness.ts:54
-- post: `v.verdict === "VNEXT_COMPLETE"` plus `served !== null && docs > 0 && served < docs` → state `"ready"`, label `"SEARCHABLE · BASIC PROFILES"` — readiness.ts:63-69
-- post: `VNEXT_COMPLETE` otherwise → `{ state: "ready", label: v.verdict }` — readiness.ts:70
-- post: not complete but `p.unresolved === 0 && docs > 0 && v.profiled >= docs` → `"ready"`, label `"SEARCHABLE · BASIC PROFILES"` — readiness.ts:72-75
-- post: everything else → `{ state: "blocked", label: v.verdict }` — readiness.ts:76
+**vnextReady** — frontend-v2/src/lib/readiness.ts:53-77
+- in: `SemanticReadiness | null`; reads `sr.vnext.parents.{mapped,eligible,unresolved}`, `sr.vnext.documents`, `vnext_served`, `vnext_profiles`, `verdict` (:54-62).
+- out: no `vnext` → `{ state: "unknown", label: "UNKNOWN" }` (:54); `VNEXT_COMPLETE` + `served !== null && docs > 0 && served < docs` → ready, label `"SEARCHABLE · BASIC PROFILES"` (:63-69); `VNEXT_COMPLETE` otherwise → ready with `v.verdict` (:70); non-complete but `p.unresolved === 0 && docs > 0 && profiled >= docs` → ready `"SEARCHABLE · BASIC PROFILES"` (:72-74); else blocked with `v.verdict` (:76).
 
-**docSearchable** — readiness.ts:82-84
-- out: `!!d && (d.vnext_ready || (d.map_unresolved === 0 && d.profile_present))` — readiness.ts:83
-- post: missing vNext profile alone is never "Blocked" (base profile is the default card since `POLYMATH_DOC_PROFILE_VNEXT=0`, 2026-09-17) — readiness.ts:79-81
+**docSearchable** — frontend-v2/src/lib/readiness.ts:82-84
+- out: `true` iff `d` truthy AND (`d.vnext_ready` OR (`d.map_unresolved === 0` AND `d.profile_present`)) (:83).
+- post: missing vNext profile alone never blocks, since base profile is fleet default since 2026-09-17 (:79-81).
 
-**servesVnext** — readiness.ts:89-92
-- out: `d.profile_served === undefined ? d.vnext_ready : d.vnext_ready && d.profile_served === "vnext"` — readiness.ts:91
-- post: a written vNext card the selection guard refused does not count — readiness.ts:86-88
+**servesVnext** — frontend-v2/src/lib/readiness.ts:89-92
+- out: `d.profile_served === undefined` → `d.vnext_ready`; else `d.vnext_ready && d.profile_served === "vnext"` (:91). A written-but-unserved vNext card does not count (:86-88).
 
-**servedWriter** — readiness.ts:96-100
-- out: `d.profile_served !== undefined` → return it; else `d.profile_vnext ? "vnext" : d.profile_present ? "basic" : null` — readiness.ts:98-99
+**servedWriter** — frontend-v2/src/lib/readiness.ts:96-100
+- out: `d.profile_served !== undefined` → return it; else `d.profile_vnext ? "vnext" : d.profile_present ? "basic" : null` (:98-99).
 
-**stageWords** — readiness.ts:111-113
-- post: known stage → `STAGE_WORDS` value (16 keys, readiness.ts:102-108); unknown stage → `stage.replace(/_/g, " ")` — readiness.ts:112
+**stageWords** — frontend-v2/src/lib/readiness.ts:111-113
+- in: backend stage name, e.g. `"project_neo4j"`.
+- out: `STAGE_WORDS[stage] ?? stage.replace(/_/g, " ")` (:112); table has 16 entries (`intake` … `doc_parent_map`) (:102-108).
 
-**docStatus** — readiness.ts:124-148, first match wins:
-1. `!docSearchable(d)` → blocked `NOT SEARCHABLE`, detail = unresolved count and/or `"no profile"` — readiness.ts:125-130
-2. `(d.work_failed ?? []).length` → degraded `NEEDS RETRY`, detail lists failed stages via `stageWords` — readiness.ts:131-136
-3. `d.run_status === "degraded" || d.run_status === "failed"` → degraded, label `d.run_status.toUpperCase()` — readiness.ts:137-141
-4. `d.run_status && d.run_status !== "query_ready"` → working `PROCESSING` — readiness.ts:142-145
-5. else → ready `READY` — readiness.ts:146-147
+**docStatus** — frontend-v2/src/lib/readiness.ts:124-148 — fixed ladder, first match wins:
+1. `!docSearchable(d)` → blocked `"NOT SEARCHABLE"`, detail from `why[]` (`unresolved parents` / `no profile`) (:125-129).
+2. `work_failed` non-empty → degraded `"NEEDS RETRY"`, detail lists failed stages via `stageWords` + `" · the file is searchable meanwhile"` (:131-135).
+3. `run_status === "degraded" || run_status === "failed"` → degraded, label `d.run_status.toUpperCase()` (:137-140).
+4. `run_status && run_status !== "query_ready"` → working `"PROCESSING"` (:142-144).
+5. else → ready `"READY"` (:146-147).
 
-**docPmap** — readiness.ts:151-157
-- pre: `map_eligible` may be 0 → `{ state: "unknown", label: "—", detail: "no parents to map" }` — readiness.ts:152
-- post: label = `${(d.map_active + d.map_excluded).toLocaleString()}/${d.map_eligible.toLocaleString()}`; state blocked iff `map_unresolved > 0` else ready — readiness.ts:153, readiness.ts:156
+**docPmap** — frontend-v2/src/lib/readiness.ts:153-159
+- out: `!d.map_eligible` → unknown `"—"` "no parents to map" (:154); label `max(0, map_eligible − map_unresolved)/map_eligible` (:155); state blocked iff `map_unresolved > 0` (:158).
+- post: label shows covered, not mapped + excluded — excluded parents sit outside the eligible set (:150-152).
 
-**docProfile** — readiness.ts:162-176, first match wins:
-1. `!d.profile_present && w === null` → blocked `NONE` — readiness.ts:164
-2. `d.profile_served === undefined` → unknown `VNEXT`/`BASIC` ("index was not read") — readiness.ts:165-168
-3. `w === null` → degraded `NOT IN INDEX` — readiness.ts:169-172
-4. else → ready `VNEXT · IN USE` / `BASIC · IN USE` — readiness.ts:173-175
+**docProfile** — frontend-v2/src/lib/readiness.ts:164-178
+- out ladder: `!profile_present && w === null` → blocked `"NONE"` (:166); `profile_served === undefined` → unknown `VNEXT`/`BASIC` (:167-169); `w === null` → degraded `"NOT IN INDEX"` (:171-173); else ready `"VNEXT · IN USE"` / `"BASIC · IN USE"` (:175-177).
 
-**settled** — readiness.ts:182-184
-- post: returns `CHECKING` only when `a.data == null && !a.error`; otherwise delegates to `verdict(a.data)` (which may receive null when error is set) — readiness.ts:183
+**settled** — frontend-v2/src/lib/readiness.ts:184-186
+- out: `a.data == null && !a.error` → `CHECKING`; else `verdict(a.data)` (:185).
 
 ## effect surface
-- Postgres tables read/written: none (FACTS `tables_read: []`, `tables_written: []`).
-- Qdrant/Neo4j/files/network/subprocesses/env flags: none. Type-only import from `frontend-v2/src/lib/contracts.ts` — readiness.ts:12.
+- No Postgres tables read/written, no Qdrant collections, no network calls, no subprocesses, no env flags (FACTS: `tables_read: []`, `tables_written: []`, `constants: []`). — frontend-v2/src/lib/readiness.ts:1-98 [DERIVED]
+- Single type-only import: `import type { ControlPlane, DocSummary, SemanticReadiness } from "./contracts"` (FACTS.imports). — frontend-v2/src/lib/readiness.ts:12 [DERIVED]
 
 ## invariants
-INVARIANT: ReadyState members = 5 (`"ready"`, `"blocked"`, `"degraded"`, `"unknown"`, `"working"`) — readiness.ts:15 [DERIVED]
-  fails-if: a state added here without App.tsx support paints nothing.
-INVARIANT: functions accepting `query_ready` as input = 0 — readiness.ts:8-10 [DERIVED]
-  fails-if: the measured drift returns — cinema `query_ready = true` while SEMANTIC and VNEXT INCOMPLETE, 10,176 unresolved parents, 14/67 documents ready — readiness.ts:9-10.
-INVARIANT: `docSearchable(d)` = `d.vnext_ready` OR (`d.map_unresolved` = 0 AND `d.profile_present` = true) — readiness.ts:83 [DERIVED]
-  fails-if: a file with unresolved parents or no profile is painted searchable; retrieval then silently misses part of it.
-INVARIANT: `"SEARCHABLE · BASIC PROFILES"` literal count >= 2 — readiness.ts:66, readiness.ts:73 [DERIVED]
-  fails-if: editing one copy diverges the VNEXT_COMPLETE-partial branch from the parents-mapped fallback branch.
-INVARIANT: `CHECKING` returned only when data = null AND error = null — readiness.ts:183 [DERIVED]
-  fails-if: a failed fetch paints "Checking" forever instead of `UNKNOWN — /control_plane not reachable`.
-INVARIANT: docPmap state = blocked iff `map_unresolved > 0` — readiness.ts:156 [DERIVED]
-  fails-if: fully mapped files show red pMAP coverage.
-INVARIANT: docStatus label priority NOT SEARCHABLE > NEEDS RETRY > run-status > PROCESSING > READY — readiness.ts:125-147 [DERIVED]
-  fails-if: a searchable-but-failed file hides its retry need behind green (the pre-fix cinema behavior, readiness.ts:121-123).
+INVARIANT: `docSearchable` true cases == `vnext_ready || (map_unresolved === 0 && profile_present)` — frontend-v2/src/lib/readiness.ts:83 [DERIVED]
+  fails-if: per-file red/green flips; a profiled file with 0 unresolved parents would wrongly read NOT SEARCHABLE in `docStatus`.
+INVARIANT: vnextReady green-branch guard == `served !== null && docs > 0 && served < docs` — frontend-v2/src/lib/readiness.ts:65 [DERIVED]
+  fails-if: libraries whose search serves fewer vNext cards than written would show `VNEXT_COMPLETE` instead of `SEARCHABLE · BASIC PROFILES`.
+INVARIANT: vnextReady non-complete green condition == `p.unresolved === 0 && docs > 0 && profiled >= docs` — frontend-v2/src/lib/readiness.ts:72 [DERIVED]
+  fails-if: a working basic-profile library (vNext writing off since 2026-09-17) reads blocked/amber (:48-52).
+INVARIANT: docPmap numerator == `Math.max(0, d.map_eligible - d.map_unresolved)` — frontend-v2/src/lib/readiness.ts:155 [DERIVED]
+  fails-if: negative coverage displays (the live "8/7" class of confusion, :150-152).
+INVARIANT: `STAGE_WORDS` entries == 16 (`intake`…`doc_parent_map`) — frontend-v2/src/lib/readiness.ts:102-108 [DERIVED]
+  fails-if: a renamed backend stage falls through to `replace(/_/g, " ")` and its plain-word rendering silently changes.
+INVARIANT: settled CHECKING condition == `a.data == null && !a.error` — frontend-v2/src/lib/readiness.ts:185 [DERIVED]
+  fails-if: in-flight loads show "UNKNOWN — /control_plane not reachable" instead of "CHECKING" (:180-181).
 
 ## determinism & idempotency
-determinism: DETERMINISTIC — pure functions of arguments; no clock/random/uuid/network/db calls (only the type import, readiness.ts:12). Number text via `toLocaleString()` (e.g. readiness.ts:58, readiness.ts:153) varies with runtime locale — env-dependent formatting only, states do not.
-idempotency: SAFE — no writes or side effects; repeated calls with equal inputs return equal verdicts.
+determinism: DETERMINISTIC (pure functions of their arguments; no clock/random/uuid/network/db/env access anywhere in the unit) — frontend-v2/src/lib/readiness.ts:1-187 [DERIVED]
+idempotency: SAFE (no side effects; same input always yields the same `Verdict`) — frontend-v2/src/lib/readiness.ts:1-187 [DERIVED]
 
 ## failure behaviour
-No `try`/`catch`, no throws anywhere in the module. Every null/undefined input degrades to a verdict instead of raising:
-- `controlReady(null/undefined)` → `unknown` `"/control_plane not reachable"` — readiness.ts:35
-- `semanticReady(null)` / `vnextReady(null` or no `.vnext)` → `unknown` `UNKNOWN` — readiness.ts:41, readiness.ts:54
-- `docSearchable(null)`, `servesVnext(null)` → `false` — readiness.ts:83, readiness.ts:90
-- `servedWriter(null)` → `null` — readiness.ts:97
-- `settled`: error set + data null skips `CHECKING` and calls `verdict(null)`, so the caller sees each function's unknown branch — readiness.ts:183
+- Null/undefined inputs degrade to `state: "unknown"` verdicts, never throws: `controlReady` (:35), `semanticReady` (:41), `vnextReady` (:54), `docSearchable`/`servesVnext` → `false` (:83, :90), `servedWriter` → `null` (:97).
+- Missing optional fields fall back via `??` chains: `v.documents ?? 0` (:61), `v.vnext_profiles ?? docs` (:67), `served ?? v.vnext_profiles ?? 0` (:74).
+- Older backend (no `profile_served`): written state stands — `servedWriter` falls back to latest-card writer (:98-99), `docProfile` shows grey unknown (:167-169).
+- Older backend (no run fields): a searchable file still reads Ready in `docStatus` (:122-123).
+- No try/catch, no error codes raised; `settled` distinguishes "loading" from "unreachable" only via the caller-supplied `error` string (:184-186).
 
 ## dumb-code flags
-- Duplicated literal `"SEARCHABLE · BASIC PROFILES"` at readiness.ts:66 and readiness.ts:73, with differently-built detail strings — easy to diverge on edit.
-- Fallback chains: `v.vnext_profiles ?? docs` (readiness.ts:67), `served ?? v.vnext_profiles ?? 0` (readiness.ts:74), `v.documents ?? 0` (readiness.ts:61). Missing counts silently become 0; with `docs = 0` the ready branch at readiness.ts:72 is unreachable (`docs > 0` required), so a missing `documents` count paints `blocked` — [INFERRED] from the guards at readiness.ts:61 and readiness.ts:72.
-- `STAGE_WORDS`: 16 magic keys; `doc_parent_map: "pMAP"` is the only abbreviation among plain-word labels — readiness.ts:102-108.
-- Historical measurements hardcoded in comments only: 10,176 unresolved parents / 14/67 docs (readiness.ts:10); cinema 77 written / 0 used (readiness.ts:64).
-- `"query_ready"` appears in logic exactly once, negated for the per-file PROCESSING check — readiness.ts:142 — while being refused as a corpus-level input at readiness.ts:8-10.
+- Duplicated literal `"SEARCHABLE · BASIC PROFILES"` in two branches of `vnextReady` — frontend-v2/src/lib/readiness.ts:66 and :73 [DERIVED].
+- Same displayed count uses two different fallback chains: `(v.vnext_profiles ?? docs)` at :67 vs `(served ?? v.vnext_profiles ?? 0)` at :74 — frontend-v2/src/lib/readiness.ts:67,74 [DERIVED].
+- Header comment bans the legacy `query_ready` boolean (:8-10) while `docStatus` compares the string `d.run_status !== "query_ready"` at :142 — same word, different field — frontend-v2/src/lib/readiness.ts:8-10,142 [INFERRED: confusion risk for readers, not a bug].
+- Label built by `d.run_status.toUpperCase()` passes the backend string straight into UI text — frontend-v2/src/lib/readiness.ts:139 [DERIVED].
+- `stageWords` silently space-joins unknown stage names, so typos in stage keys are invisible — frontend-v2/src/lib/readiness.ts:112 [INFERRED: no validation branch exists].
 
 ## refactor notes
-- Sole importer is `frontend-v2/src/App.tsx` (FACTS.importers); label strings here are UI copy — `"NOT SEARCHABLE"`, `"NEEDS RETRY"`, `"PROCESSING"`, `"READY"`, `"CHECKING"`, `"SEARCHABLE · BASIC PROFILES"`, `"VNEXT · IN USE"`, `"BASIC · IN USE"` — renaming them changes what App.tsx renders — readiness.ts:129, readiness.ts:133, readiness.ts:143, readiness.ts:146, readiness.ts:180, readiness.ts:66, readiness.ts:173.
-- All input shapes come from `contracts.ts` — readiness.ts:12. Fields consumed: `ControlPlane["control_ready"]{state,label,detail}`; `SemanticReadiness{verdict, vnext}` with `vnext{verdict, parents{mapped,eligible,unresolved}, documents, vnext_served, vnext_profiles, profiled}`; `DocSummary{vnext_ready, map_unresolved, map_eligible, map_active, map_excluded, profile_present, profile_served, profile_vnext, work_failed[{stage,note}], work_open, run_status}`. Renames in contracts.ts break every function — readiness.ts:34-184.
-- Do not reintroduce `query_ready` as an input (measured lie, readiness.ts:8-11) and do not recompose `/ready` + `/health/pipeline` client-side — `/control_plane` returns one composed `control_ready` verdict (`shared/polymath_shared/pipeline_health.py::control_ready`); this module only paints it — readiness.ts:26-32.
+- Only importer is `frontend-v2/src/App.tsx` (FACTS.importers) — label/state changes ripple there, but every label string is pinned by owner decisions recorded in comments: FILES-STATUS-TRUTH-V1 (:48-52, :115-123), FILES-READY-LABEL (:79-81), SERVED-PROFILE-LABEL (:64, :86-88). — frontend-v2/src/lib/readiness.ts:48-123 [DERIVED]
+- `docStatus` check order encodes the action priority red → amber → blue → green (:116-123); reordering the ladder changes file colors. — frontend-v2/src/lib/readiness.ts:124-148 [DERIVED]
+- `vnextReady`'s two green branches (:65, :72) implement the "basic profile is the default card" policy; altering the guards changes library-level readiness painting. — frontend-v2/src/lib/readiness.ts:63-75 [DERIVED]
+- `servesVnext`/`servedWriter` fallback semantics when `profile_served === undefined` support older backends — removing them breaks the pre-index-read display. — frontend-v2/src/lib/readiness.ts:91,98-99 [DERIVED]
+- Adding/removing a `ReadyState` member changes every consumer's switch surface; `Verdict.label` is shown verbatim by contract ("the UI never paraphrases a verdict"). — frontend-v2/src/lib/readiness.ts:15,19-20 [DERIVED]
 
 ## VERIFY
 ```verify
-grep -Fq 'export type ReadyState = "ready" | "blocked" | "degraded" | "unknown" | "working"' frontend-v2/src/lib/readiness.ts
+grep -Fq 'export type ReadyState = "ready" | "blocked" | "degraded" | "unknown" | "working";' frontend-v2/src/lib/readiness.ts
+grep -Fq 'SEARCHABLE · BASIC PROFILES' frontend-v2/src/lib/readiness.ts
 test "$(grep -c -F 'SEARCHABLE · BASIC PROFILES' frontend-v2/src/lib/readiness.ts)" -ge 2
-grep -Fq 'return d.profile_served === undefined ? d.vnext_ready : d.vnext_ready && d.profile_served === "vnext";' frontend-v2/src/lib/readiness.ts
-grep -Eq 'd\.run_status !== "query_ready"' frontend-v2/src/lib/readiness.ts
+grep -Fq 'return STAGE_WORDS[stage] ?? stage.replace(/_/g, " ");' frontend-v2/src/lib/readiness.ts
 grep -Fq 'export const CHECKING: Verdict = { state: "unknown", label: "CHECKING" };' frontend-v2/src/lib/readiness.ts
-test "$(grep -c -F 'toLocaleString' frontend-v2/src/lib/readiness.ts)" -ge 9
-! grep -Fq 'fetch(' frontend-v2/src/lib/readiness.ts
+! grep -Fq 'localStorage' frontend-v2/src/lib/readiness.ts
 ```

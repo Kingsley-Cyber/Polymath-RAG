@@ -310,6 +310,39 @@ def test_a_lane_busy_on_other_stages_is_saturated(conn):
     assert _by_id(collect_stalls(conn, threshold_s=180), t_queued).diagnosis == "READY_UNCLAIMED"   # an idle worker exists
 
 
+def test_a_stage_without_a_recent_lease_reads_its_lane_from_the_lane_table(conn):
+    """LANE-BUSY-ANY-STAGE-V1, second half (measured live 2026-10-02): parent_summary tickets last ran before the workers
+    restarted, so no ticket of the stage names a worker type; both summaries workers held vocabulary leases and 19
+    summary tickets still traced READY_UNCLAIMED. The lane table names the stage's workers (summary lane -> summaries)."""
+    runs = [_run(conn) for _ in range(3)]
+    for wid in ("summaries-7171-a", "summaries-7172-b"):
+        conn.execute(
+            """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
+               VALUES (%s, 'summaries', 7171, 'probe')
+               ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""", (wid,))
+    for rid in runs:
+        _ticket(conn, rid, "intake", "done")
+    busy = [_ticket(conn, runs[0], "vocabulary", "leased", lease_owner="summaries-7171-a"),
+            _ticket(conn, runs[1], "vocabulary", "leased", lease_owner="summaries-7172-b")]
+    conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min', updated_at = now() "
+                 "WHERE ticket_id = ANY(%s)", (busy,))
+    conn.execute("UPDATE stage_tickets SET lease_owner = NULL WHERE stage = 'parent_summary' AND lease_owner IS NOT NULL")
+    t_queued = _ticket(conn, runs[2], "parent_summary", "ready")
+    conn.execute(
+        """INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
+           VALUES (%s, 'parent_summary.v1', %s::jsonb, %s)""",
+        (runs[2], '{"run_id": "%s"}' % runs[2], "idem_probe_" + uuid.uuid4().hex[:12]))
+    live_summaries = conn.execute("SELECT count(*) FROM worker_registrations WHERE worker_type = 'summaries' "
+                                  "AND heartbeat_at > now() - interval '90 seconds'").fetchone()[0]
+    if live_summaries == 2:                                            # a sealed database: only the two probe workers
+        assert t_queued not in {s.unit_id for s in collect_stalls(conn, threshold_s=180)}
+    conn.execute(
+        """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
+           VALUES ('summaries-7173-c', 'summaries', 7173, 'probe')
+           ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
+    assert _by_id(collect_stalls(conn, threshold_s=180), t_queued).diagnosis == "READY_UNCLAIMED"   # an idle worker exists
+
+
 def test_dependents_of_a_queued_predecessor_are_not_traced(conn):
     """STALL-TRACER-V1.3: pending tickets behind a READY predecessor that is
     itself queued behind a saturated lane are waiting on live work."""

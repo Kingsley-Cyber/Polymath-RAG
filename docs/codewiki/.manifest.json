@@ -3805,7 +3805,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-02",
-  "input_hash": "6a8de4709d547243",
+  "input_hash": "370f2fd893448ba9",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4164,7 +4164,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-02",
-  "input_hash": "ce24bfb7901edd24",
+  "input_hash": "e9e8c10006461ade",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4295,11 +4295,11 @@
   "status": "ok"
  },
  "units/frontend-v2/src/lib/readiness.ts.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-10-02",
-  "input_hash": "6dbbd16085dcb7db",
+  "input_hash": "9014e0139066b784",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5927,8 +5927,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-10-01",
-  "input_hash": "69870539cf18b2df",
+  "generated": "2026-10-02",
+  "input_hash": "579766bca026be84",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -6077,11 +6077,11 @@
   "status": "ok"
  },
  "units/workers/workers/llm_provider.py.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-10-01",
-  "input_hash": "4b71cc870bb594ec",
+  "generated": "2026-10-02",
+  "input_hash": "9293b8f781933024",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

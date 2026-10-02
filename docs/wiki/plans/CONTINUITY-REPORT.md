@@ -167,6 +167,9 @@ historical, never an instruction.
    - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
      change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
      `scripts/codewiki/verify.py` (CI runs it).
+   - BUILT (11.572, `feat/fix-it-all`): MULTI-HOP-FAILOVER-V1 — extraction batches walk on to every untried provider (the
+     reissue too); a provider 503 does not spend attempts; pMAP column covered/eligible; stall lanes from the lane table.
+     Owner: deploy, then `scripts/retry_failed_stage.py commerce-v1 extract --execute` for "The Innovator's Dilemma".
    - BUILT (11.571, `feat/fix-it-all`): OBJECT-PROJECTION-REDRIVE-V1 — knowledge objects compiled after a run's promotion
      get indexed (a control phase reopens one projection per corpus, 10-minute cooldown). Deploys with 11.570.
    - BUILT (11.570, `feat/fix-it-all`): FILES-STATUS-TRUTH-V1 — the Files list paints each file's real state (green Ready,

@@ -545,7 +545,11 @@ class TransientStageHold(RuntimeError):
 #: seven extraction tickets FAILED after three consecutive HTTP 429s inside ten
 #: minutes each. A 429 / "lane refused" is a capacity event of the provider pool,
 #: never an execution failure of the document — it must not consume an attempt.
-_CAPACITY_MARKERS = ("HTTP 429", "429 Too Many Requests", "lane refused", "LIMITER_REFUSED")
+#: PROVIDER-503-IS-CAPACITY-V1 (measured 2026-09-21 and 2026-10-02): "The Innovator's Dilemma" failed its extraction twice on
+#: Gemini "503 Service Unavailable" (the model is overloaded) while the same pool's OpenRouter and Cloudflare lanes answered
+#: 200 — a capacity event of the provider, exactly like a 429, never a failure of the document: it must not spend an attempt.
+_CAPACITY_MARKERS = ("HTTP 429", "429 Too Many Requests", "HTTP 503", "503 Service Unavailable",
+                     "lane refused", "LIMITER_REFUSED")
 _CAPACITY_BACKOFF_S = 60.0
 
 

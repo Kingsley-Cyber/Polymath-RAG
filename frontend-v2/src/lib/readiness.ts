@@ -147,10 +147,12 @@ export function docStatus(d: DocSummary): Verdict {
            detail: open.length ? `searchable; still writing: ${open.map(stageWords).join(", ")}` : "searchable; every step done" };
 }
 
-/** pMAP coverage of a file: mapped + excluded out of the eligible parents; red while any parent is unresolved. */
+/** pMAP coverage of a file: the eligible parents covered (eligible − unresolved) out of the eligible; red while any parent is
+ *  unresolved. Covered, not mapped + excluded: an excluded parent is usually a noisy-region parent OUTSIDE the eligible set
+ *  (measured live 2026-10-02: 7 eligible, 7 mapped, 1 excluded read "8/7"); `map_unresolved` is the backend's own arithmetic. */
 export function docPmap(d: DocSummary): Verdict {
   if (!d.map_eligible) return { state: "unknown", label: "—", detail: "no parents to map" };
-  const label = `${(d.map_active + d.map_excluded).toLocaleString()}/${d.map_eligible.toLocaleString()}`;
+  const label = `${Math.max(0, d.map_eligible - d.map_unresolved).toLocaleString()}/${d.map_eligible.toLocaleString()}`;
   const detail = `mapped ${d.map_active.toLocaleString()} · excluded ${d.map_excluded.toLocaleString()} · ` +
                  `unresolved ${d.map_unresolved.toLocaleString()} of ${d.map_eligible.toLocaleString()} eligible parents`;
   return { state: d.map_unresolved > 0 ? "blocked" : "ready", label, detail };

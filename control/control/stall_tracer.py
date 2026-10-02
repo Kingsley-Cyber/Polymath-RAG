@@ -278,9 +278,24 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
          ORDER BY t.updated_at
          LIMIT %s
         """, (OWNER_STALE_S, threshold_s, _LIMIT)))
+    # LANE-BUSY-ANY-STAGE-V1: live workers per worker type and how many hold a lease (one lease per worker). The SQL
+    # above names a stage's worker type from its most recent lease; a stage whose tickets were last run before the
+    # workers restarted has none (measured 2026-10-02: 19 parent / document summary tickets traced READY_UNCLAIMED
+    # while both summaries workers held vocabulary leases), so the lane table's worker types answer instead.
+    lane_load = {wt: (int(live), int(busy)) for wt, live, busy in conn.execute(
+        """SELECT w.worker_type, count(*),
+                  count(*) FILTER (WHERE EXISTS (SELECT 1 FROM stage_tickets b
+                                                  WHERE b.lease_owner = w.worker_id AND b.status = 'leased'))
+             FROM worker_registrations w
+            WHERE w.heartbeat_at > now() - make_interval(secs => %s)
+            GROUP BY 1""", (OWNER_STALE_S,)).fetchall()}
     chains: dict[str, dict[str, str]] = {}
     for row in tickets:
         if row["status"] == "ready":
+            if not int(row.get("stage_capacity_live") or 0):
+                _lane, lane_types = lane_slots(row["stage"])
+                row["stage_capacity_live"] = sum(lane_load.get(wt, (0, 0))[0] for wt in lane_types)
+                row["stage_busy_live"] = sum(lane_load.get(wt, (0, 0))[1] for wt in lane_types)
             res = diagnose_ready(row, slots_alive)
             if res is None:
                 continue        # claimable, queued behind a saturated lane (V1.3)

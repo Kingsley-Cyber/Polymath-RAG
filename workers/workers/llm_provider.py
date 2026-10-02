@@ -477,7 +477,7 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
         # escape cross-host, like 413's terminal path.
         _dead: set = set()
 
-        def _dispatch(batch, lane_i, depth=0):
+        def _dispatch(batch, lane_i, depth=0, tried_hosts=frozenset()):
             client = _client_abs(lane_i)
             try:
                 r = _call(client, batch)
@@ -500,14 +500,14 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                         if urlparse(getattr(alt, "base_url", "")
                                     or "").netloc != home:
                             _stats["escapes"] += 1
-                            return _dispatch(batch, lane_i + off, depth)
+                            return _dispatch(batch, lane_i + off, depth, tried_hosts)
                     raise
                 if "413" in str(exc):
                     _stats["splits"] += 1
                     if len(batch) > 1:
                         half = len(batch) // 2
-                        return (_dispatch(batch[:half], lane_i, depth)
-                                + _dispatch(batch[half:], lane_i, depth))
+                        return (_dispatch(batch[:half], lane_i, depth, tried_hosts)
+                                + _dispatch(batch[half:], lane_i, depth, tried_hosts))
                     from urllib.parse import urlparse
                     home = urlparse(getattr(client, "base_url", "")
                                     or "").netloc
@@ -518,23 +518,31 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                             _stats["escapes"] += 1
                             return [_call(alt, batch)]
                     raise
-                if depth >= 1:
-                    raise
                 # TRANSPORT-FAILOVER-CROSS-HOST (2026-09-01, live: a lone
                 # document's n_lanes == ring, so lane_i + n_lanes wrapped
                 # to the SAME lane and one transient gemini 503 failed
                 # the whole attempt). Fail over to the first live lane
                 # on a DIFFERENT host — a 5xx is a host condition.
+                # MULTI-HOP-FAILOVER-V1 (the owner, 2026-10-02: "GOOGLE IS
+                # EXPECTED TO FAIL BUT AS LONG AS SILICON AND THE OTHERS ONES
+                # ARE WORKING IT CAN ABSORB UNFINISHED WORK"): the batch walks
+                # on to a host it has NOT tried, until every host has failed
+                # it. One hop let a timeout on the fallback, or a fallback
+                # that landed back on gemini, fail the whole document —
+                # measured 2026-10-02: "The Innovator's Dilemma" failed 3 / 3
+                # on a gemini 503 while openrouter and cloudflare answered
+                # 128 calls with 200.
                 from urllib.parse import urlparse
                 home = urlparse(getattr(client, "base_url", "")
                                 or "").netloc
+                tried = frozenset(tried_hosts) | {home}
                 fb = None
                 for off in range(1, ring_n):
                     cand = _client_abs(lane_i + off)
                     if cand.endpoint_name in _dead:
                         continue
                     if urlparse(getattr(cand, "base_url", "")
-                                or "").netloc != home:
+                                or "").netloc not in tried:
                         fb, fb_off = cand, off
                         break
                 if fb is None:
@@ -543,7 +551,7 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                     "lane failover: %s -> %s after transport failure (%s)",
                     client.endpoint_name, fb.endpoint_name, str(exc)[:120],
                     extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
-                return _dispatch(batch, lane_i + fb_off, depth + 1)
+                return _dispatch(batch, lane_i + fb_off, depth + 1, tried)
             if (getattr(r, "finish_reason", None) == "length"
                     and len(batch) > 1):
                 # OUTPUT-AWARE SPLIT (fleet review 2026-09-01): a dense
@@ -552,8 +560,8 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                 # condition (split), never provider health.
                 _stats["splits"] += 1
                 half = len(batch) // 2
-                halves = (_dispatch(batch[:half], lane_i, depth)
-                          + _dispatch(batch[half:], lane_i, depth))
+                halves = (_dispatch(batch[:half], lane_i, depth, tried_hosts)
+                          + _dispatch(batch[half:], lane_i, depth, tried_hosts))
                 # SPLIT-KEEPS-PARTIAL (2026-09-02): the truncated call
                 # already returned complete items for every neighborhood
                 # before its cut point; discarding them lost data when
@@ -611,7 +619,7 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
                         "lane failover: %s -> %s after limiter refusal",
                         client.endpoint_name, fb.endpoint_name,
                         extra={"error_code": "EXTRACTION_LANE_FAILOVER"})
-                    return _dispatch(batch, lane_i + n_lanes, depth + 1)
+                    return _dispatch(batch, lane_i + n_lanes, depth + 1, tried_hosts)
             return [r]
 
         # the doc's BASE lane serves the shared tail (reissues +
@@ -663,6 +671,16 @@ def run_proposals(neighborhoods: list[Neighborhood], *, lane: str,
             _reissue_call = _call                    # bound on the receipted (cloud) path
         except (NameError, UnboundLocalError):
             _reissue_call = None
+        # MULTI-HOP-FAILOVER-V1: a reissue goes through the same cross-host failover as a first-pass batch (depth 1: no
+        # semantic escape, no limiter hop — the reissue stays one pass). It called the doc's BASE lane bare, so a gemini
+        # base lane's 503 on one reissued neighborhood raised out of the pool and failed the whole stage, and every retry
+        # re-sent the same neighborhoods to the same lane (measured 2026-10-02: "The Innovator's Dilemma" failed 3 / 3).
+        try:
+            _failover, _reissue_base = _dispatch, base
+        except (NameError, UnboundLocalError):
+            _failover = None
+        if _failover is not None and _reissue_call is not None:
+            _reissue_call = lambda _client, batch: _failover(batch, _reissue_base, 1)[0]
         reissue_results = _reissue(
             client, todo, lane=lane, source_bytes=source_bytes,
             threshold_bytes=s.cloud_min_bytes, assist=assist, call=_reissue_call,

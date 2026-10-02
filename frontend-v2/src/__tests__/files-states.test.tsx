@@ -299,4 +299,9 @@ it("pMAP shows mapped out of eligible (red while any parent is unresolved), Prof
   expect(cellPill("Not in index").getAttribute("title")).toContain("retrieval and routing cannot use it");
   const graphCell = [...host.querySelectorAll("tbody td")].find((td) => td.getAttribute("title")?.includes("no extraction"));
   expect(graphCell?.textContent?.trim()).toBe("—");
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  // measured live: 7 eligible, 7 mapped, 1 excluded (a noisy-region parent outside the eligible set) read "8/7"
+  await renderWith({ map_eligible: 7, map_active: 7, map_excluded: 1, map_unresolved: 0, profile_served: "basic" });
+  expect(cellPill("7/7").classList.contains("pill--ready")).toBe(true);
 });

@@ -16,6 +16,8 @@ from polymath_shared.llm_extraction.client import (
 from polymath_shared.llm_extraction.gate import SanitizeResult
 from workers.llm_provider import Neighborhood
 
+REAL_REISSUE = llm._reissue                 # the coverage pass's own reissue (the fixture stubs it)
+
 
 class FakeEp:
     def __init__(self, name, host, budget):
@@ -265,3 +267,60 @@ def test_receipt_accepted_count_counts_packet_items(monkeypatch):
     # as a 7th argument (older 6-arg cache doubles still accepted by the provider)
     assert all(len(a) in (6, 7, 8) and a[5] >= 1 for a in puts), puts
     assert all(len(a) == 8 for a in puts), "finish_reason and contract_ident must be offered to the ledger"
+
+
+# MULTI-HOP-FAILOVER-V1 (the owner, 2026-10-02: "GOOGLE IS EXPECTED TO FAIL BUT AS LONG AS SILICON AND THE OTHERS ONES ARE
+# WORKING IT CAN ABSORB UNFINISHED WORK"). Measured: "The Innovator's Dilemma" failed 3 / 3 on a gemini 503 while openrouter
+# and cloudflare answered 128 calls with 200 — one failover hop, and a reissue pass with no failover at all.
+def _packet_for(payload):
+    from polymath_shared.llm_extraction.contract import EntityProposal, ExtractionItem, ExtractionPacket
+    r = _result()
+    r.packet = ExtractionPacket(items=[
+        ExtractionItem(neighborhood_id=nid, entities=[EntityProposal(surface="Acme", type="ORG", quote="Acme")])
+        for nid, _chunks in payload])
+    return r
+
+
+def test_a_failed_batch_walks_on_through_every_untried_host(monkeypatch):
+    class TwoHostsDown(FakeClient):
+        def extract(self, payload, **_kw):
+            CALLS.append((self.endpoint_name, len(payload)))
+            if self.base_url.endswith(("groq.test", "gemini.test")):
+                raise ExtractionTransportError("cloud transport failed: HTTP 503 <- Server error")
+            return _packet_for(payload)
+
+    monkeypatch.setattr(llm, "LLMExtractionClient", TwoHostsDown)
+    results, merged = _run(n=4, active_rank=0, active_docs=4)                    # slice g0, g1: the batch starts on groq
+    assert all(d["disposition"] == "returned" for d in merged.dispositions)      # was: the stage raised on the 2nd host
+    assert [name[0] for name, _ in CALLS][:2] == ["g", "m"]                       # groq, then gemini, both down
+    hosts_per_call = [name[0] for name, _ in CALLS]
+    assert "n" in hosts_per_call or "p" in hosts_per_call                         # a third host absorbed the work
+
+
+def test_when_every_host_fails_the_batch_still_raises(monkeypatch):
+    class AllDown(FakeClient):
+        def extract(self, payload, **_kw):
+            CALLS.append((self.endpoint_name, len(payload)))
+            raise ExtractionTransportError("cloud transport failed: HTTP 503 <- Server error")
+
+    monkeypatch.setattr(llm, "LLMExtractionClient", AllDown)
+    with pytest.raises(ExtractionTransportError):
+        _run(n=1, active_rank=0, active_docs=1)
+    tried = [name[0] for name, _ in CALLS]
+    assert len(tried) == len(set(tried)) == 4                                     # each host once: g, m, n, p
+
+
+def test_a_reissue_fails_over_off_a_down_base_lane(monkeypatch):
+    class BaseLaneDown(FakeClient):
+        def extract(self, payload, **_kw):
+            CALLS.append((self.endpoint_name, len(payload)))
+            if self.base_url.endswith("groq.test"):
+                raise ExtractionTransportError("cloud transport failed: HTTP 503 <- Server error")
+            # a batch answers only its FIRST neighborhood (the measured truncation pattern); singles answer whole
+            return _packet_for(payload[:1])
+
+    monkeypatch.setattr(llm, "LLMExtractionClient", BaseLaneDown)
+    monkeypatch.setattr(llm, "_reissue", REAL_REISSUE)
+    results, merged = _run(n=4, active_rank=0, active_docs=1)                    # base lane = g0 (groq, down)
+    seen = [d["disposition"] for d in merged.dispositions]
+    assert "reissued_returned" in seen and set(seen) <= {"returned", "reissued_returned"}   # was: the reissue's 503 failed the stage

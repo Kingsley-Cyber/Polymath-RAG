@@ -39,6 +39,18 @@ def test_provider_capacity_errors_are_transient():
     assert rt._is_sidecar_unavailable(wrapped) is True, "capacity events are recognised anywhere in the cause chain"
 
 
+def test_a_provider_503_is_a_capacity_event():
+    """PROVIDER-503-IS-CAPACITY-V1 (measured 2026-09-21 and 2026-10-02): a Gemini "503 Service Unavailable" failed
+    "The Innovator's Dilemma" twice while the pool's other lanes answered 200 — provider capacity, not the document."""
+    e503 = ExtractionTransportError("cloud transport failed: HTTP 503 <- httpx.HTTPStatusError: Server error "
+                                    "'503 Service Unavailable' for url 'https://generativelanguage.googleapis.com/v1beta/'")
+    assert rt._is_sidecar_unavailable(e503) is True
+    assert rt.transient_backoff_s(e503) == rt._CAPACITY_BACKOFF_S
+    wrapped = RuntimeError("stage extract failed"); wrapped.__cause__ = e503
+    assert rt._is_sidecar_unavailable(wrapped) is True
+    assert rt._is_sidecar_unavailable(ExtractionTransportError("cloud transport failed: HTTP 500")) is False   # still a failure
+
+
 def test_real_transport_failures_still_fail():
     garbage = ExtractionTransportError("endpoint repeatedly returned garbage")
     assert rt._is_sidecar_unavailable(garbage) is False
