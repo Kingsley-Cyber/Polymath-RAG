@@ -3,7 +3,7 @@ change_id: VERIFY-FULL-SCAN-V1
 owner: "@king"
 date: 2026-10-01
 status: complete
-status_note: "Verification reads the WHOLE Qdrant collection (it read one page of 100,000 and switched off the receipts of every point past it: cinema has 165,939) and never clears or deletes on a failed read; a pending ticket behind a failed predecessor is not a re-drive in flight (the scheduler) and not open work (the generation barrier) — DEAD-CHAIN-NOT-IN-FLIGHT-V1; scripts/restore_verified_receipts.py switched back on 91,273 cinema receipts of points proven present. LIVE at be533cd8 (the owner restored, deployed and pushed): cinema SEMANTIC_COMPLETE, six live verifications cleared 0. The barrier half follows (register 11.568)."
+status_note: "Verification reads the WHOLE Qdrant collection (it read one page of 100,000 and switched off the receipts of every point past it: cinema has 165,939) and never clears or deletes on a failed read; a pending ticket behind a failed predecessor is neither a re-drive in flight (the scheduler) nor open work (the generation barrier). The owner restored 91,273 cinema receipts and deployed both halves: LIVE at 92f570e2 — cinema SEMANTIC_COMPLETE, 72 of 77 runs query_ready (was 4), stalled 74 -> 6 (the five embedder-failed files waiting for the owner's strike reset, and the refused duplicate)."
 architecture_impact: "workers/workers/verify_worker.py (_scan_points, VerifyStoreUnreadable; reconcile_routing_qdrant and reconcile_qdrant read every page, the orphan sweep reuses the scan); control/control/scheduler.py (_reopen_receipt_gap_tickets: a pending ticket behind a failed predecessor is not in flight); scripts/restore_verified_receipts.py (new, owner repair, dry run by default); tests.; control/control/tickets.py (generation_barrier: a pending ticket behind a failed predecessor is not open work)."
 last_reviewed: 2026-10-01
 ---
@@ -88,6 +88,14 @@ last_reviewed: 2026-10-01
 - Fail first on the deployed code (`be533cd8`, sealed container): the barrier test fails (4 open tickets, blocked); the other
   three pass. Sealed CI reproduction on this tree: contracts **876 passed**, 5 skipped, 0 failed; determinism **3,293 passed**,
   35 skipped, 1 failed = the container's own trusted-login artifact (passes on GitHub). Code wiki 2,233 / 2,233; guards 0.
+- **Live, after the owner's deploy of `92f570e2`** (merge, build, bounce READY 26 / 13 / one bundle in ~55 s, push; local =
+  origin): cinema's barrier passed with 0 open tickets; within one control tick **72 of 77 runs query_ready** (was 4), the
+  Control Plane `processing_stalled` 74 → **6**, SEMANTIC_COMPLETE, and the control tick fell from ~103 s (the census re-checked
+  74 held runs every tick) to ~4 s. Left: the five runs whose projection failed on embedder 500s (2026-09-06/07) wait for the
+  owner's strike reset (`scripts/retry_failed_stage.py cinema project_qdrant --execute`); the refused duplicate stays at
+  `intake`, blocking nothing. Promotion minted cinema's 68 `parent_enrichment` sweeps (AUTO-ENRICH-ON-INGEST, the designed
+  trigger): input-hash idempotent, so only the 671 of 12,448 parents without a READY enrichment can call the pinned
+  OpenRouter lanes (mistral-small / ministral-14b / qwen3.7-flash).
 
 ## Contract impact (pre-commit)
 - `contract_impact.py --check --staged`: none (no changed file maps to an architecture contract). The census, the claim gate and
