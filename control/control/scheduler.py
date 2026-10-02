@@ -130,6 +130,26 @@ _RECEIPT_GAP_STAGES = {
 }
 
 
+def _redrive_in_flight(conn: Connection, corpus_id: str, stage: str) -> bool:
+    """A re-drive of `stage` is already in flight for the corpus: a ready / leased / repair ticket, or a pending one whose
+    run can still reach it (DEAD-CHAIN-NOT-IN-FLIGHT-V1: no FAILED ticket at an earlier stage of its run)."""
+    from control.tickets import DAG_ORDER
+    predecessors = DAG_ORDER[:DAG_ORDER.index(stage)]
+    return conn.execute(
+        """SELECT 1 FROM stage_tickets t
+            WHERE t.corpus_id = %s AND t.stage = %s
+              AND t.archived_at IS NULL
+              AND (t.status IN ('ready', 'leased', 'repair')
+                   OR (t.status = 'pending' AND NOT EXISTS (
+                       SELECT 1 FROM stage_tickets f
+                        WHERE f.run_id = t.run_id
+                          AND f.archived_at IS NULL
+                          AND f.status = 'failed'
+                          AND f.stage = ANY(%s))))
+            LIMIT 1""",
+        (corpus_id, stage, predecessors)).fetchone() is not None
+
+
 def _reopen_receipt_gap_tickets(conn: Connection, census: Census) -> int:
     flagged: dict[tuple[str, str], set[str]] = {}
     for g in census.gaps:
@@ -139,7 +159,6 @@ def _reopen_receipt_gap_tickets(conn: Connection, census: Census) -> int:
             flagged.setdefault(key, set()).add(g.run_id)
     if not flagged:
         return 0
-    from control.tickets import DAG_ORDER
     reopened = 0
     for (corpus_id, stage), run_ids in sorted(flagged.items()):
         # A re-drive already in flight (any open ticket for this
@@ -156,21 +175,7 @@ def _reopen_receipt_gap_tickets(conn: Connection, census: Census) -> int:
         # ticket behind a FAILED predecessor never runs until an owner
         # retry (scripts/retry_failed_stage.py) or the medic revives that
         # predecessor; from then on it counts again.
-        predecessors = DAG_ORDER[:DAG_ORDER.index(stage)]
-        open_row = conn.execute(
-            """SELECT 1 FROM stage_tickets t
-                WHERE t.corpus_id = %s AND t.stage = %s
-                  AND t.archived_at IS NULL
-                  AND (t.status IN ('ready', 'leased', 'repair')
-                       OR (t.status = 'pending' AND NOT EXISTS (
-                           SELECT 1 FROM stage_tickets f
-                            WHERE f.run_id = t.run_id
-                              AND f.archived_at IS NULL
-                              AND f.status = 'failed'
-                              AND f.stage = ANY(%s))))
-                LIMIT 1""",
-            (corpus_id, stage, predecessors)).fetchone()
-        if open_row:
+        if _redrive_in_flight(conn, corpus_id, stage):
             continue
         reopened += conn.execute(
             """
@@ -186,6 +191,72 @@ def _reopen_receipt_gap_tickets(conn: Connection, census: Census) -> int:
             """,
             (corpus_id, stage, sorted(run_ids)),
         ).rowcount
+    return reopened
+
+
+#: OBJECT-PROJECTION-REDRIVE-V1 (measured live 2026-10-02, cinema). The knowledge-object stage (compile_objects) runs
+#: AFTER verify_projections and never blocks promotion, so procedures and concepts compiled after a file's run is promoted
+#: are not indexed until some later upload's project_qdrant pass: the census only re-checks runs that are not yet
+#: query_ready. Cinema's five retried files compiled 119 procedures + 10 concepts at promotion and the library read
+#: SEMANTIC_INCOMPLETE with no work left to do it. This phase finds every corpus with such objects (whose document still
+#: exists — the projector's own join) and reopens ONE done project_qdrant ticket there, unless a re-drive is already in
+#: flight or the corpus's projection ran in the last OBJECT_REDRIVE_COOLDOWN_S (bounds any loop: an object the projector
+#: cannot index is retried at most once per cooldown). The projector is corpus-wide and incremental: it embeds only the
+#: rows without a receipt.
+OBJECT_REDRIVE_COOLDOWN_S = 600
+
+
+def redrive_unprojected_objects(conn: Connection) -> int:
+    rows = conn.execute(
+        """
+        SELECT x.corpus_id, count(*) FROM (
+            SELECT p.corpus_id FROM procedure_artifacts p
+              JOIN documents d ON d.doc_id = p.document_id
+             WHERE NOT EXISTS (SELECT 1 FROM projection_receipts pr
+                                WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_procedure'
+                                  AND pr.entity_id = p.procedure_id AND pr.active)
+            UNION ALL
+            SELECT c.corpus_id FROM concept_artifacts c
+              JOIN documents d ON d.doc_id = c.document_id
+             WHERE NOT EXISTS (SELECT 1 FROM projection_receipts pr
+                                WHERE pr.projection = 'qdrant' AND pr.entity_kind = 'routing_concept'
+                                  AND pr.entity_id = c.concept_id AND pr.active)
+        ) x GROUP BY 1 ORDER BY 1
+        """).fetchall()
+    reopened = 0
+    for corpus_id, missing in rows:
+        if _redrive_in_flight(conn, corpus_id, "project_qdrant"):
+            continue
+        recent = conn.execute(
+            """SELECT 1 FROM stage_tickets
+                WHERE corpus_id = %s AND stage = 'project_qdrant' AND archived_at IS NULL
+                  AND updated_at > now() - make_interval(secs => %s)
+                LIMIT 1""", (corpus_id, OBJECT_REDRIVE_COOLDOWN_S)).fetchone()
+        if recent:
+            continue
+        row = conn.execute(
+            """UPDATE stage_tickets
+                  SET status = 'ready', lease_owner = NULL, lease_expires_at = NULL, updated_at = now()
+                WHERE ticket_id = (SELECT ticket_id FROM stage_tickets
+                                    WHERE corpus_id = %s AND stage = 'project_qdrant'
+                                      AND status = 'done' AND archived_at IS NULL
+                                    ORDER BY updated_at DESC LIMIT 1)
+                RETURNING run_id""", (corpus_id,)).fetchone()
+        if row is None:
+            continue
+        payload = {"run_id": row[0]}
+        conn.execute(
+            """INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
+               VALUES (%s, 'project_qdrant.v1', %s::jsonb, %s)
+               ON CONFLICT (idempotency_key) DO UPDATE SET delivered_at = NULL
+               WHERE outbox_events.delivered_at IS NOT NULL""",
+            (row[0], _dumps(payload),
+             content_hash({"run": row[0], "type": "project_qdrant.v1", "payload": payload})))
+        import logging
+        logging.getLogger("control-schedule").info(
+            "object projection re-drive: %s knowledge objects of %s without a receipt; reopened %s",
+            missing, corpus_id, row[0][:20], extra={"error_code": "OBJECT_PROJECTION_REDRIVE"})
+        reopened += 1
     return reopened
 
 

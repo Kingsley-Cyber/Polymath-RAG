@@ -13,7 +13,7 @@ AUTHORITY: `shared/polymath_shared/logging.py:11` :: `CONTEXT_FIELDS` (count: 9)
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
 | `control/control/generation_swap.py` | `control/control/generation_swap.py:96` | 3/9 | `trace_id`, `attempt_id`, `provider`, `model_release`, `device`, `duration_ms` |
-| `control/control/main.py` | `control/control/main.py:129` | 3/9 | `trace_id`, `run_id`, `attempt_id`, `provider`, `model_release`, `device` |
+| `control/control/main.py` | `control/control/main.py:132` | 3/9 | `trace_id`, `run_id`, `attempt_id`, `provider`, `model_release`, `device` |
 | `control/control/medic.py` | `control/control/medic.py:68` | 3/9 | `trace_id`, `attempt_id`, `provider`, `model_release`, `device`, `duration_ms` |
 | `control/control/reconciliation.py` | `control/control/reconciliation.py:259` | 4/9 | `trace_id`, `provider`, `model_release`, `device`, `duration_ms` |
 | `control/control/stall_tracer.py` | `control/control/stall_tracer.py:85` | 3/9 | `trace_id`, `attempt_id`, `provider`, `model_release`, `device`, `duration_ms` |

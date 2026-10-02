@@ -2580,6 +2580,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-10-01-served-profile-label.md", "md", None),
     ("docs/wiki/work-log/2026-10-01-verify-full-scan.md", "md", None),
     ("docs/wiki/work-log/2026-10-02-files-status-truth.md", "md", None),
+    ("docs/wiki/work-log/2026-10-02-object-projection-redrive.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),
@@ -2844,6 +2845,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_raw_evidence_ledger.py", "py", None),
     ("tests/determinism/test_receipt_gap_reopen.py", "py", None),
     ("tests/determinism/test_receipt_gap_dead_chain.py", "py", None),
+    ("tests/determinism/test_object_projection_redrive.py", "py", None),
     ("tests/determinism/test_receipt_verdict_store.py", "py", None),
     ("tests/determinism/test_runtime_config_contract.py", "py", None),
     ("tests/determinism/test_scheduler_bulk.py", "py", None),

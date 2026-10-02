@@ -31,6 +31,7 @@ from control.scheduler import (
     apply_promotions,
     auto_enrich_on_chunks,
     auto_map_parents_on_chunks,
+    redrive_unprojected_objects,
     schedule_gaps,
 )
 
@@ -94,6 +95,8 @@ def tick() -> dict:
         # The legacy scheduler still drives FAILED-stage retries (its
         # events are idempotent against ticket events by content hash).
         scheduled = _phase("schedule_gaps", schedule_gaps, conn, census)
+        # OBJECT-PROJECTION-REDRIVE-V1: knowledge objects compiled after a run's promotion get indexed
+        _phase("object_redrive", redrive_unprojected_objects, conn)
         # BARRIER-V2: evaluate open barriers ONCE (the previous shape
         # computed the per-corpus barrier set twice — once for the
         # verdict and again inside the blocked branch; measured 3.8-4.8s

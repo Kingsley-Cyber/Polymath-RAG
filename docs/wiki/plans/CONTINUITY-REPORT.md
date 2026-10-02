@@ -167,6 +167,8 @@ historical, never an instruction.
    - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
      change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
      `scripts/codewiki/verify.py` (CI runs it).
+   - BUILT (11.571, `feat/fix-it-all`): OBJECT-PROJECTION-REDRIVE-V1 — knowledge objects compiled after a run's promotion
+     get indexed (a control phase reopens one projection per corpus, 10-minute cooldown). Deploys with 11.570.
    - BUILT (11.570, `feat/fix-it-all`): FILES-STATUS-TRUTH-V1 — the Files list paints each file's real state (green Ready,
      blue Processing, amber Needs retry with the failed step, red Not searchable) and always shows pMAP, Profile (in use by
      retrieval and routing) and Graph nodes; LANE-BUSY-ANY-STAGE-V1 stops a draining summary queue reading Degraded. Needs the

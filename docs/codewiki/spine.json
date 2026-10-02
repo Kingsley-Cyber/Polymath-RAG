@@ -2467,9 +2467,9 @@
    "created": "stores/postgres/migrations/0036_archived_corpora.sql:10",
    "reads": [
     "control/control/reconciliation.py:114",
-    "control/control/scheduler.py:243",
-    "control/control/scheduler.py:271",
-    "control/control/scheduler.py:348",
+    "control/control/scheduler.py:314",
+    "control/control/scheduler.py:342",
+    "control/control/scheduler.py:419",
     "control/control/tickets.py:789",
     "orchestrator/orchestrator/api/ui.py:1234"
    ],
@@ -2770,6 +2770,7 @@
    "reads": [
     "control/control/census.py:458",
     "control/control/generation_swap.py:70",
+    "control/control/scheduler.py:211",
     "orchestrator/orchestrator/api/ask.py:205",
     "orchestrator/orchestrator/api/ui.py:1133",
     "shared/polymath_shared/semantic_readiness.py:167",
@@ -3280,6 +3281,7 @@
     "control/control/manifest_ingest.py:107",
     "control/control/manifest_ingest.py:144",
     "control/control/reconciliation.py:340",
+    "control/control/scheduler.py:211",
     "control/control/snapshots.py:31",
     "control/control/snapshots.py:32",
     "control/control/snapshots.py:33",
@@ -3883,9 +3885,9 @@
     "control/control/reconciliation.py:450",
     "control/control/reconciliation.py:484",
     "control/control/reconciliation.py:489",
-    "control/control/scheduler.py:198",
-    "control/control/scheduler.py:293",
-    "control/control/scheduler.py:367",
+    "control/control/scheduler.py:269",
+    "control/control/scheduler.py:364",
+    "control/control/scheduler.py:438",
     "control/control/stall_tracer.py:243",
     "control/control/stall_tracer.py:300",
     "control/control/tickets.py:335",
@@ -3906,6 +3908,7 @@
     "control/control/reconciliation.py:319",
     "control/control/reconciliation.py:450",
     "control/control/reconciliation.py:489",
+    "control/control/scheduler.py:249",
     "control/control/scheduler.py:88",
     "control/control/tickets.py:537",
     "shared/polymath_shared/document_profile/map_trigger.py:58",
@@ -4019,6 +4022,7 @@
    "reads": [
     "control/control/census.py:458",
     "control/control/generation_swap.py:77",
+    "control/control/scheduler.py:211",
     "orchestrator/orchestrator/api/ask.py:156",
     "orchestrator/orchestrator/api/ui.py:1132",
     "shared/polymath_shared/corpus_mapping.py:158",
@@ -4074,6 +4078,7 @@
     "control/control/census.py:526",
     "control/control/census.py:542",
     "control/control/census.py:589",
+    "control/control/scheduler.py:211",
     "control/control/tickets.py:283",
     "orchestrator/orchestrator/api/ui.py:1193",
     "orchestrator/orchestrator/api/ui.py:1196",
@@ -4348,7 +4353,7 @@
     "control/control/census.py:583",
     "control/control/fleet_autopilot.py:111",
     "control/control/generation_swap.py:25",
-    "control/control/main.py:201",
+    "control/control/main.py:204",
     "control/control/manifest_ingest.py:58",
     "control/control/reconciliation.py:114",
     "control/control/reconciliation.py:184",
@@ -4357,11 +4362,11 @@
     "control/control/reconciliation.py:296",
     "control/control/reconciliation.py:340",
     "control/control/reconciliation.py:471",
-    "control/control/scheduler.py:221",
-    "control/control/scheduler.py:243",
-    "control/control/scheduler.py:271",
-    "control/control/scheduler.py:348",
-    "control/control/scheduler.py:395",
+    "control/control/scheduler.py:292",
+    "control/control/scheduler.py:314",
+    "control/control/scheduler.py:342",
+    "control/control/scheduler.py:419",
+    "control/control/scheduler.py:466",
     "control/control/snapshots.py:21",
     "control/control/snapshots.py:47",
     "control/control/stall_tracer.py:342",
@@ -4448,9 +4453,9 @@
     "control/control/reconciliation.py:211",
     "control/control/reconciliation.py:222",
     "control/control/reconciliation.py:311",
-    "control/control/scheduler.py:419",
-    "control/control/scheduler.py:462",
-    "control/control/scheduler.py:484",
+    "control/control/scheduler.py:490",
+    "control/control/scheduler.py:533",
+    "control/control/scheduler.py:555",
     "control/control/tickets.py:134",
     "orchestrator/orchestrator/api/ui.py:1233",
     "orchestrator/orchestrator/api/ui.py:771",
@@ -4625,14 +4630,16 @@
     "control/control/reconciliation.py:114",
     "control/control/reconciliation.py:368",
     "control/control/reconciliation.py:388",
-    "control/control/scheduler.py:161",
-    "control/control/scheduler.py:176",
-    "control/control/scheduler.py:243",
-    "control/control/scheduler.py:271",
-    "control/control/scheduler.py:293",
-    "control/control/scheduler.py:348",
-    "control/control/scheduler.py:367",
-    "control/control/scheduler.py:395",
+    "control/control/scheduler.py:139",
+    "control/control/scheduler.py:181",
+    "control/control/scheduler.py:231",
+    "control/control/scheduler.py:238",
+    "control/control/scheduler.py:314",
+    "control/control/scheduler.py:342",
+    "control/control/scheduler.py:364",
+    "control/control/scheduler.py:419",
+    "control/control/scheduler.py:438",
+    "control/control/scheduler.py:466",
     "control/control/snapshots.py:26",
     "control/control/snapshots.py:51",
     "control/control/stall_tracer.py:192",
@@ -4677,7 +4684,8 @@
     "control/control/reconciliation.py:194",
     "control/control/reconciliation.py:226",
     "control/control/reconciliation.py:388",
-    "control/control/scheduler.py:176",
+    "control/control/scheduler.py:181",
+    "control/control/scheduler.py:238",
     "control/control/tickets.py:120",
     "control/control/tickets.py:546",
     "control/control/tickets.py:565",
@@ -15123,7 +15131,7 @@
    "collections": [
     {
      "file": "control/control/main.py",
-     "line": 227,
+     "line": 230,
      "name": "polymath_fleet"
     }
    ],
@@ -15134,32 +15142,32 @@
     {
      "does": "SWALLOWED: log",
      "file": "control/control/main.py",
-     "line": 128,
+     "line": 131,
      "type": "Exception"
     },
     {
      "does": "SWALLOWED: log",
      "file": "control/control/main.py",
-     "line": 141,
+     "line": 144,
      "type": "Exception"
     },
     {
      "does": "SWALLOWED: log",
      "file": "control/control/main.py",
-     "line": 244,
+     "line": 247,
      "type": "Exception"
     },
     {
      "does": "SWALLOWED: pass",
      "file": "control/control/main.py",
-     "line": 235,
+     "line": 238,
      "type": "Exception"
     }
    ],
    "files": [
     "control/control/main.py"
    ],
-   "hash": "a5e9b275b5cc2326",
+   "hash": "d9ccd457630e5bd1",
    "importers": [],
    "imports": [
     "control",
@@ -15180,6 +15188,7 @@
     "control.scheduler.apply_promotions",
     "control.scheduler.auto_enrich_on_chunks",
     "control.scheduler.auto_map_parents_on_chunks",
+    "control.scheduler.redrive_unprojected_objects",
     "control.scheduler.schedule_gaps",
     "control.stall_tracer",
     "control.stall_tracer.trace_stalls",
@@ -15196,20 +15205,20 @@
     "polymath_shared.settings",
     "polymath_shared.settings.get_settings"
    ],
-   "lines": 251,
+   "lines": 254,
    "mcp_tools": [],
    "nondeterminism": [
     {
      "call": "time.monotonic",
      "file": "control/control/main.py",
      "kind": "clock",
-     "line": 209
+     "line": 212
     },
     {
      "call": "time.monotonic",
      "file": "control/control/main.py",
      "kind": "clock",
-     "line": 240
+     "line": 243
     }
    ],
    "page": "units/control/control/main.py.md",
@@ -15218,7 +15227,7 @@
    "sql_reads": [
     {
      "file": "control/control/main.py",
-     "line": 201,
+     "line": 204,
      "table": "runs"
     }
    ],
@@ -15227,10 +15236,10 @@
     {
      "args": [],
      "doc": "",
-     "end": 156,
+     "end": 159,
      "file": "control/control/main.py",
      "kind": "def",
-     "line": 40,
+     "line": 41,
      "name": "tick"
     },
     {
@@ -15238,10 +15247,10 @@
       "conn"
      ],
      "doc": "D7-5d: creation fairness + sticky hysteresis.",
-     "end": 169,
+     "end": 172,
      "file": "control/control/main.py",
      "kind": "def",
-     "line": 159,
+     "line": 162,
      "name": "_ensure_tickets_backpressure_gated"
     },
     {
@@ -15250,10 +15259,10 @@
       "census"
      ],
      "doc": "Generation barrier (ADR-0014): block promotion of any corpus whose",
-     "end": 176,
+     "end": 179,
      "file": "control/control/main.py",
      "kind": "def",
-     "line": 171,
+     "line": 174,
      "name": "_barrier_or_none"
     },
     {
@@ -15262,10 +15271,10 @@
       "census"
      ],
      "doc": "",
-     "end": 197,
+     "end": 200,
      "file": "control/control/main.py",
      "kind": "def",
-     "line": 179,
+     "line": 182,
      "name": "_corpora_with_open_barriers"
     },
     {
@@ -15274,19 +15283,19 @@
       "run_id"
      ],
      "doc": "",
-     "end": 202,
+     "end": 205,
      "file": "control/control/main.py",
      "kind": "def",
-     "line": 200,
+     "line": 203,
      "name": "_corpus_of_run"
     },
     {
      "args": [],
      "doc": "",
-     "end": 246,
+     "end": 249,
      "file": "control/control/main.py",
      "kind": "def",
-     "line": 205,
+     "line": 208,
      "name": "run_forever"
     }
    ]
@@ -16703,6 +16712,12 @@
       "project_neo4j.v1": "project_neo4j",
       "project_qdrant.v1": "project_qdrant"
      }
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 206,
+     "name": "OBJECT_REDRIVE_COOLDOWN_S",
+     "value": 600
     }
    ],
    "doc": "Outbox scheduling: materialize census gaps as outbox events.",
@@ -16711,32 +16726,32 @@
     {
      "does": "handled: import, log",
      "file": "control/control/scheduler.py",
-     "line": 312,
+     "line": 383,
      "type": "Exception"
     },
     {
      "does": "handled: import, log",
      "file": "control/control/scheduler.py",
-     "line": 382,
+     "line": 453,
      "type": "Exception"
     },
     {
      "does": "handled: import, log",
      "file": "control/control/scheduler.py",
-     "line": 408,
+     "line": 479,
      "type": "Exception"
     },
     {
      "does": "handled: import, log",
      "file": "control/control/scheduler.py",
-     "line": 446,
+     "line": 517,
      "type": "Exception"
     }
    ],
    "files": [
     "control/control/scheduler.py"
    ],
-   "hash": "4686328223f60703",
+   "hash": "842b01ceaedbbf98",
    "importers": [
     "control/control/main.py"
    ],
@@ -16762,7 +16777,7 @@
     "polymath_shared.settings",
     "polymath_shared.settings.get_settings"
    ],
-   "lines": 498,
+   "lines": 569,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/control/control/scheduler.py.md",
@@ -16776,121 +16791,114 @@
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 176,
+     "line": 181,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 198,
+     "line": 211,
+     "table": "procedure_artifacts"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 211,
+     "table": "documents"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 211,
+     "table": "projection_receipts"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 211,
+     "table": "concept_artifacts"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 211,
+     "table": "documents"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 211,
+     "table": "projection_receipts"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 269,
      "table": "outbox_events"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 221,
+     "line": 292,
      "table": "runs"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 243,
+     "line": 314,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 243,
+     "line": 314,
      "table": "runs"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 243,
+     "line": 314,
      "table": "archived_corpora"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 271,
+     "line": 342,
      "table": "runs"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 271,
+     "line": 342,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 271,
+     "line": 342,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 271,
+     "line": 342,
      "table": "archived_corpora"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 293,
+     "line": 364,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 293,
+     "line": 364,
      "table": "outbox_events"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 161,
+     "line": 139,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 161,
+     "line": 139,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 348,
-     "table": "runs"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 348,
+     "line": 231,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 348,
+     "line": 238,
      "table": "stage_tickets"
     },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 348,
-     "table": "archived_corpora"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 367,
-     "table": "stage_tickets"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 367,
-     "table": "outbox_events"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 395,
-     "table": "runs"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 395,
-     "table": "stage_tickets"
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 395,
-     "table": "stage_tickets"
-    }
-   ],
-   "sql_writes": [
     {
      "file": "control/control/scheduler.py",
      "line": 419,
@@ -16898,12 +16906,69 @@
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 462,
+     "line": 419,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 419,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 419,
+     "table": "archived_corpora"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 438,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 438,
+     "table": "outbox_events"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 466,
      "table": "runs"
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 484,
+     "line": 466,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 466,
+     "table": "stage_tickets"
+    }
+   ],
+   "sql_writes": [
+    {
+     "file": "control/control/scheduler.py",
+     "line": 249,
+     "table": "outbox_events"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 249,
+     "table": "set"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 490,
+     "table": "runs"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 533,
+     "table": "runs"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 555,
      "table": "runs"
     },
     {
@@ -16918,7 +16983,12 @@
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 176,
+     "line": 181,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 238,
      "table": "stage_tickets"
     }
    ],
@@ -16938,14 +17008,38 @@
     {
      "args": [
       "conn",
-      "census"
+      "corpus_id",
+      "stage"
      ],
-     "doc": "",
-     "end": 189,
+     "doc": "A re-drive of `stage` is already in flight for the corpus: a ready / leased / repair ticket, or a pending one whose",
+     "end": 150,
      "file": "control/control/scheduler.py",
      "kind": "def",
      "line": 133,
+     "name": "_redrive_in_flight"
+    },
+    {
+     "args": [
+      "conn",
+      "census"
+     ],
+     "doc": "",
+     "end": 194,
+     "file": "control/control/scheduler.py",
+     "kind": "def",
+     "line": 153,
      "name": "_reopen_receipt_gap_tickets"
+    },
+    {
+     "args": [
+      "conn"
+     ],
+     "doc": "",
+     "end": 260,
+     "file": "control/control/scheduler.py",
+     "kind": "def",
+     "line": 209,
+     "name": "redrive_unprojected_objects"
     },
     {
      "args": [
@@ -16954,10 +17048,10 @@
       "run_ids"
      ],
      "doc": "First recorded payload per run for this event type, ONE query.",
-     "end": 212,
+     "end": 283,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 192,
+     "line": 263,
      "name": "_bulk_first_outbox_payload"
     },
     {
@@ -16966,10 +17060,10 @@
       "run_ids"
      ],
      "doc": "Crashed-first-event repair source: runs.metadata.intake_payload.",
-     "end": 231,
+     "end": 302,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 215,
+     "line": 286,
      "name": "_bulk_intake_metadata"
     },
     {
@@ -16978,10 +17072,10 @@
       "run_ids"
      ],
      "doc": "Runs whose scheduling lifecycle is deliberately closed: either a",
-     "end": 251,
+     "end": 322,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 234,
+     "line": 305,
      "name": "_archived_run_ids"
     },
     {
@@ -16989,10 +17083,10 @@
       "conn"
      ],
      "doc": "ENRICH-EARLY-KICK-V1 (owner 2026-09-01 \"enrichment should auto",
-     "end": 317,
+     "end": 388,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 254,
+     "line": 325,
      "name": "auto_enrich_on_chunks"
     },
     {
@@ -17000,10 +17094,10 @@
       "conn"
      ],
      "doc": "DOC-PARENT-MAP AUTO-MINT (RAG-PIPELINE-FINISH): mint the pMAP stage for a run",
-     "end": 413,
+     "end": 484,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 320,
+     "line": 391,
      "name": "auto_map_parents_on_chunks"
     },
     {
@@ -17012,10 +17106,10 @@
       "census"
      ],
      "doc": "",
-     "end": 450,
+     "end": 521,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 416,
+     "line": 487,
      "name": "apply_promotions"
     },
     {
@@ -17024,10 +17118,10 @@
       "census"
      ],
      "doc": "EXTRACTION-COVERAGE-V1: a run the census refused to promote is",
-     "end": 478,
+     "end": 549,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 453,
+     "line": 524,
      "name": "apply_degrades"
     },
     {
@@ -17036,10 +17130,10 @@
       "census"
      ],
      "doc": "",
-     "end": 486,
+     "end": 557,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 481,
+     "line": 552,
      "name": "apply_failures"
     },
     {
@@ -17047,10 +17141,10 @@
       "text"
      ],
      "doc": "",
-     "end": 491,
+     "end": 562,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 489,
+     "line": 560,
      "name": "_loads"
     },
     {
@@ -17058,10 +17152,10 @@
       "payload"
      ],
      "doc": "",
-     "end": 497,
+     "end": 568,
      "file": "control/control/scheduler.py",
      "kind": "def",
-     "line": 494,
+     "line": 565,
      "name": "_dumps"
     }
    ]
@@ -95136,7 +95230,7 @@
     },
     {
      "file": "control/control/main.py",
-     "line": 129,
+     "line": 132,
      "missing": [
       "trace_id",
       "run_id",
@@ -99513,7 +99607,7 @@
     },
     {
      "file": "control/control/scheduler.py",
-     "line": 281,
+     "line": 352,
      "missing": [
       "compile_objects",
       "corpus_summary",
