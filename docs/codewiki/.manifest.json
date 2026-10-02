@@ -4163,8 +4163,8 @@
   "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "8df7da9f31d75d60",
+  "generated": "2026-10-02",
+  "input_hash": "ce24bfb7901edd24",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4253,8 +4253,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-10-01",
-  "input_hash": "ca961ec879b60313",
+  "generated": "2026-10-02",
+  "input_hash": "24d9ce36111802a9",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4280,8 +4280,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-10-01",
-  "input_hash": "81c3f61895897d34",
+  "generated": "2026-10-02",
+  "input_hash": "bf787cbeddf2b337",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4291,6 +4291,15 @@
   "dropped_verify": 0,
   "generated": "2026-09-30",
   "input_hash": "3c222a9dbd450e88",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/frontend-v2/src/lib/readiness.ts.md": {
+  "attempts": 2,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-10-02",
+  "input_hash": "6dbbd16085dcb7db",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4313,11 +4322,11 @@
   "status": "ok"
  },
  "units/frontend-v2/src/screens/Files.tsx.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-10-01",
-  "input_hash": "867ae482d4651d66",
+  "generated": "2026-10-02",
+  "input_hash": "b7755f202cfc235a",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5276,11 +5285,11 @@
   "status": "ok"
  },
  "units/shared/polymath_shared/document_status.py.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-10-01",
-  "input_hash": "f3cc1fb6d94f606b",
+  "generated": "2026-10-02",
+  "input_hash": "b489937b52879c1f",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

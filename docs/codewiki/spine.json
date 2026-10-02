@@ -2510,11 +2510,11 @@
     "orchestrator/orchestrator/api/ui.py:2885",
     "shared/polymath_shared/control_plane_status.py:55",
     "shared/polymath_shared/control_plane_status.py:78",
-    "shared/polymath_shared/document_status.py:155",
-    "shared/polymath_shared/document_status.py:196",
-    "shared/polymath_shared/document_status.py:264",
-    "shared/polymath_shared/document_status.py:289",
-    "shared/polymath_shared/document_status.py:303",
+    "shared/polymath_shared/document_status.py:193",
+    "shared/polymath_shared/document_status.py:234",
+    "shared/polymath_shared/document_status.py:302",
+    "shared/polymath_shared/document_status.py:327",
+    "shared/polymath_shared/document_status.py:341",
     "shared/polymath_shared/document_status.py:78",
     "shared/polymath_shared/document_status.py:92",
     "shared/polymath_shared/event_adapter.py:66",
@@ -2671,9 +2671,9 @@
     "orchestrator/orchestrator/api/ui.py:4289",
     "orchestrator/orchestrator/api/ui.py:682",
     "orchestrator/orchestrator/api/ui.py:750",
-    "shared/polymath_shared/document_status.py:140",
-    "shared/polymath_shared/document_status.py:142",
     "shared/polymath_shared/document_status.py:178",
+    "shared/polymath_shared/document_status.py:180",
+    "shared/polymath_shared/document_status.py:216",
     "shared/polymath_shared/document_status.py:56",
     "shared/polymath_shared/document_status.py:61",
     "shared/polymath_shared/latent/runtime.py:59",
@@ -2910,7 +2910,7 @@
    "reads": [
     "control/control/census.py:172",
     "control/control/fleet_autopilot.py:111",
-    "control/control/stall_tracer.py:336",
+    "control/control/stall_tracer.py:342",
     "control/control/tickets.py:749",
     "control/control/tickets.py:818",
     "orchestrator/orchestrator/api/health.py:45",
@@ -3077,7 +3077,7 @@
    ],
    "created": "stores/postgres/migrations/0054_document_parent_maps.sql:85",
    "reads": [
-    "shared/polymath_shared/document_status.py:184",
+    "shared/polymath_shared/document_status.py:222",
     "shared/polymath_shared/document_status.py:72",
     "shared/polymath_shared/semantic_readiness.py:62"
    ],
@@ -3113,7 +3113,7 @@
    "created": "stores/postgres/migrations/0054_document_parent_maps.sql:24",
    "reads": [
     "shared/polymath_shared/conformance/attempts.py:276",
-    "shared/polymath_shared/document_status.py:186",
+    "shared/polymath_shared/document_status.py:224",
     "workers/workers/doc_parent_map_worker.py:524"
    ],
    "writes": [
@@ -3149,7 +3149,7 @@
     "orchestrator/orchestrator/api/chat_retrieval.py:405",
     "orchestrator/orchestrator/api/ui.py:2915",
     "orchestrator/orchestrator/api/ui.py:336",
-    "shared/polymath_shared/document_status.py:181",
+    "shared/polymath_shared/document_status.py:219",
     "shared/polymath_shared/document_status.py:67",
     "shared/polymath_shared/resolution_lift_gather.py:123",
     "shared/polymath_shared/semantic_readiness.py:58",
@@ -3315,8 +3315,8 @@
     "orchestrator/orchestrator/api/ui.py:670",
     "orchestrator/orchestrator/api/ui.py:773",
     "orchestrator/orchestrator/web_scope.py:121",
-    "shared/polymath_shared/document_status.py:115",
-    "shared/polymath_shared/document_status.py:224",
+    "shared/polymath_shared/document_status.py:153",
+    "shared/polymath_shared/document_status.py:262",
     "shared/polymath_shared/document_status.py:33",
     "shared/polymath_shared/latent/projection.py:21",
     "shared/polymath_shared/projection_want.py:101",
@@ -3497,7 +3497,7 @@
     "orchestrator/orchestrator/api/ui.py:701",
     "orchestrator/orchestrator/api/ui.py:707",
     "orchestrator/orchestrator/api/ui.py:708",
-    "shared/polymath_shared/document_status.py:269",
+    "shared/polymath_shared/document_status.py:307",
     "shared/polymath_shared/receipts.py:411",
     "shared/polymath_shared/semantic_readiness.py:170",
     "workers/workers/canonicalize_worker.py:45",
@@ -3653,7 +3653,7 @@
     "orchestrator/orchestrator/api/ui.py:1181",
     "orchestrator/orchestrator/api/ui.py:461",
     "orchestrator/orchestrator/api/ui.py:710",
-    "shared/polymath_shared/document_status.py:269",
+    "shared/polymath_shared/document_status.py:307",
     "shared/polymath_shared/neo4j_eligibility.py:79",
     "shared/polymath_shared/neo4j_eligibility.py:84",
     "shared/polymath_shared/semantic_readiness.py:170",
@@ -3887,11 +3887,12 @@
     "control/control/scheduler.py:293",
     "control/control/scheduler.py:367",
     "control/control/stall_tracer.py:243",
-    "control/control/stall_tracer.py:294",
+    "control/control/stall_tracer.py:300",
     "control/control/tickets.py:335",
     "control/control/tickets.py:526",
     "orchestrator/orchestrator/api/ui.py:1044",
-    "shared/polymath_shared/document_status.py:127",
+    "shared/polymath_shared/document_status.py:124",
+    "shared/polymath_shared/document_status.py:165",
     "shared/polymath_shared/document_status.py:92",
     "shared/polymath_shared/receipts.py:447",
     "shared/polymath_shared/worker_runtime.py:134",
@@ -4363,7 +4364,7 @@
     "control/control/scheduler.py:395",
     "control/control/snapshots.py:21",
     "control/control/snapshots.py:47",
-    "control/control/stall_tracer.py:336",
+    "control/control/stall_tracer.py:342",
     "control/control/tickets.py:238",
     "control/control/tickets.py:283",
     "control/control/tickets.py:514",
@@ -4386,12 +4387,13 @@
     "shared/polymath_shared/control_plane_status.py:148",
     "shared/polymath_shared/control_plane_status.py:55",
     "shared/polymath_shared/control_plane_status.py:78",
-    "shared/polymath_shared/document_status.py:127",
-    "shared/polymath_shared/document_status.py:134",
-    "shared/polymath_shared/document_status.py:155",
-    "shared/polymath_shared/document_status.py:196",
-    "shared/polymath_shared/document_status.py:289",
-    "shared/polymath_shared/document_status.py:303",
+    "shared/polymath_shared/document_status.py:124",
+    "shared/polymath_shared/document_status.py:165",
+    "shared/polymath_shared/document_status.py:172",
+    "shared/polymath_shared/document_status.py:193",
+    "shared/polymath_shared/document_status.py:234",
+    "shared/polymath_shared/document_status.py:327",
+    "shared/polymath_shared/document_status.py:341",
     "shared/polymath_shared/document_status.py:78",
     "shared/polymath_shared/event_adapter.py:131",
     "shared/polymath_shared/event_adapter.py:148",
@@ -4636,9 +4638,9 @@
     "control/control/stall_tracer.py:192",
     "control/control/stall_tracer.py:208",
     "control/control/stall_tracer.py:243",
-    "control/control/stall_tracer.py:294",
-    "control/control/stall_tracer.py:336",
-    "control/control/stall_tracer.py:363",
+    "control/control/stall_tracer.py:300",
+    "control/control/stall_tracer.py:342",
+    "control/control/stall_tracer.py:369",
     "control/control/tickets.py:109",
     "control/control/tickets.py:157",
     "control/control/tickets.py:322",
@@ -4660,7 +4662,8 @@
     "orchestrator/orchestrator/api/ui.py:362",
     "orchestrator/orchestrator/api/ui.py:762",
     "shared/polymath_shared/control_plane_status.py:33",
-    "shared/polymath_shared/document_status.py:148",
+    "shared/polymath_shared/document_status.py:134",
+    "shared/polymath_shared/document_status.py:186",
     "shared/polymath_shared/pipeline_health.py:125",
     "shared/polymath_shared/worker_runtime.py:134",
     "workers/workers/extract_worker.py:177",
@@ -4715,8 +4718,8 @@
     "shared/polymath_shared/pipeline_health.py:78"
    ],
    "writes": [
-    "control/control/stall_tracer.py:395",
-    "control/control/stall_tracer.py:410"
+    "control/control/stall_tracer.py:401",
+    "control/control/stall_tracer.py:416"
    ]
   },
   "summary_artifacts": {
@@ -4765,7 +4768,7 @@
    ],
    "created": "stores/postgres/migrations/0024_summary_intelligence.sql:8",
    "reads": [
-    "control/control/stall_tracer.py:363",
+    "control/control/stall_tracer.py:369",
     "orchestrator/orchestrator/api/ui.py:762",
     "shared/polymath_shared/summary_runtime.py:23",
     "workers/workers/summary_worker_impl.py:200",
@@ -4831,7 +4834,7 @@
     "control/control/process_supervisor.py:560",
     "control/control/stall_tracer.py:192",
     "control/control/stall_tracer.py:243",
-    "control/control/stall_tracer.py:294",
+    "control/control/stall_tracer.py:300",
     "control/control/tickets.py:565",
     "control/control/worker_supervisor.py:42",
     "control/control/worker_supervisor.py:65",
@@ -17124,7 +17127,7 @@
    "files": [
     "control/control/stall_tracer.py"
    ],
-   "hash": "ad83aee5cd855e8c",
+   "hash": "eb3e4fff2059116d",
    "importers": [
     "control/control/main.py"
    ],
@@ -17139,7 +17142,7 @@
     "control.tickets._stage_attempt_ok",
     "control.tickets.receipt_scope_for"
    ],
-   "lines": 431,
+   "lines": 437,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/control/control/stall_tracer.py.md",
@@ -17193,37 +17196,37 @@
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 336,
+     "line": 342,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 336,
+     "line": 342,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 336,
+     "line": 342,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 336,
+     "line": 342,
      "table": "corpora"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 336,
+     "line": 342,
      "table": "runs"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 363,
+     "line": 369,
      "table": "summary_jobs"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 363,
+     "line": 369,
      "table": "stage_tickets"
     },
     {
@@ -17243,59 +17246,59 @@
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 294,
+     "line": 300,
      "table": "outbox_events"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 294,
+     "line": 300,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 294,
+     "line": 300,
      "table": "worker_registrations"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 294,
+     "line": 300,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 294,
+     "line": 300,
      "table": "worker_registrations"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 294,
+     "line": 300,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 294,
+     "line": 300,
      "table": "stage_tickets"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 294,
+     "line": 300,
      "table": "worker_registrations"
     }
    ],
    "sql_writes": [
     {
      "file": "control/control/stall_tracer.py",
-     "line": 410,
+     "line": 416,
      "table": "stall_traces"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 395,
+     "line": 401,
      "table": "stall_traces"
     },
     {
      "file": "control/control/stall_tracer.py",
-     "line": 395,
+     "line": 401,
      "table": "set"
     }
    ],
@@ -17440,7 +17443,7 @@
       "slots_alive"
      ],
      "doc": "",
-     "end": 384,
+     "end": 390,
      "file": "control/control/stall_tracer.py",
      "kind": "def",
      "line": 237,
@@ -17452,10 +17455,10 @@
       "stalls"
      ],
      "doc": "Upsert one row per stall episode; resolve episodes that cleared.",
-     "end": 415,
+     "end": 421,
      "file": "control/control/stall_tracer.py",
      "kind": "def",
-     "line": 389,
+     "line": 395,
      "name": "persist_traces"
     },
     {
@@ -17466,10 +17469,10 @@
       "fleet_state_path"
      ],
      "doc": "",
-     "end": 430,
+     "end": 436,
      "file": "control/control/stall_tracer.py",
      "kind": "def",
-     "line": 418,
+     "line": 424,
      "name": "trace_stalls"
     }
    ]
@@ -18809,17 +18812,16 @@
      "path": "/keys/owner"
     }
    ],
-   "doc": "      ",
+   "doc": "     ",
    "files": [
     "frontend-v2/src/lib/appearance.ts",
     "frontend-v2/src/lib/auth.ts",
     "frontend-v2/src/lib/chatStore.ts",
     "frontend-v2/src/lib/chunkid.ts",
     "frontend-v2/src/lib/composerSettings.ts",
-    "frontend-v2/src/lib/readiness.ts",
     "frontend-v2/src/lib/useAsync.ts"
    ],
-   "hash": "07f2e002fe0f72fa",
+   "hash": "be355066f476ff9b",
    "importers": [
     "frontend-v2/src/App.tsx",
     "frontend-v2/src/_small-modules",
@@ -18828,10 +18830,9 @@
    "imports": [
     "frontend-v2/src/lib/api.ts",
     "frontend-v2/src/lib/chat.ts",
-    "frontend-v2/src/lib/contracts.ts",
     "frontend-v2/src/lib/contracts.ts"
    ],
-   "lines": 565,
+   "lines": 442,
    "page": "units/frontend-v2/src/lib/_small-modules.md",
    "symbols": [
     {
@@ -19087,72 +19088,6 @@
      "name": "useComposerSettings"
     },
     {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "type",
-     "line": 14,
-     "name": "ReadyState"
-    },
-    {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "interface",
-     "line": 16,
-     "name": "Verdict"
-    },
-    {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "function",
-     "line": 33,
-     "name": "controlReady"
-    },
-    {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "function",
-     "line": 39,
-     "name": "semanticReady"
-    },
-    {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "function",
-     "line": 50,
-     "name": "vnextReady"
-    },
-    {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "function",
-     "line": 79,
-     "name": "docSearchable"
-    },
-    {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "function",
-     "line": 86,
-     "name": "servesVnext"
-    },
-    {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "function",
-     "line": 93,
-     "name": "servedWriter"
-    },
-    {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "function",
-     "line": 101,
-     "name": "docVnext"
-    },
-    {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "const",
-     "line": 118,
-     "name": "CHECKING"
-    },
-    {
-     "file": "frontend-v2/src/lib/readiness.ts",
-     "kind": "function",
-     "line": 120,
-     "name": "settled"
-    },
-    {
      "file": "frontend-v2/src/lib/useAsync.ts",
      "kind": "interface",
      "line": 3,
@@ -19317,16 +19252,17 @@
    "files": [
     "frontend-v2/src/lib/contracts.ts"
    ],
-   "hash": "1015d3d5ca3327dc",
+   "hash": "0dd66a9beae42e4b",
    "importers": [
     "frontend-v2/src/App.tsx",
     "frontend-v2/src/lib/_small-modules",
     "frontend-v2/src/lib/api.ts",
     "frontend-v2/src/lib/chat.ts",
-    "frontend-v2/src/lib/deep.ts"
+    "frontend-v2/src/lib/deep.ts",
+    "frontend-v2/src/lib/readiness.ts"
    ],
    "imports": [],
-   "lines": 405,
+   "lines": 412,
    "page": "units/frontend-v2/src/lib/contracts.ts.md",
    "symbols": [
     {
@@ -19344,343 +19280,343 @@
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 60,
+     "line": 67,
      "name": "DocumentRow"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 73,
+     "line": 80,
      "name": "DocumentRun"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 80,
+     "line": 87,
      "name": "DocumentsResponse"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 87,
+     "line": 94,
      "name": "UploadResult"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 99,
+     "line": 106,
      "name": "LlmProvider"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 112,
+     "line": 119,
      "name": "ProviderUpsertBody"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 121,
+     "line": 128,
      "name": "LlmTestResult"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 134,
+     "line": 141,
      "name": "ControlPlane"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 146,
+     "line": 153,
      "name": "ControlPlanePool"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 157,
+     "line": 164,
      "name": "PoolLanes"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 162,
+     "line": 169,
      "name": "PoolLane"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 174,
+     "line": 181,
      "name": "Corpus"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "const",
-     "line": 189,
+     "line": 196,
      "name": "PUBLIC_MODES"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "type",
-     "line": 190,
+     "line": 197,
      "name": "PublicMode"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 195,
+     "line": 202,
      "name": "Synthesizer"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 200,
+     "line": 207,
      "name": "ReasoningMode"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 206,
+     "line": 213,
      "name": "RetrievalReceipt"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 235,
+     "line": 242,
      "name": "AnswerFrame"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 244,
+     "line": 251,
      "name": "RetrieveResponse"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 255,
+     "line": 262,
      "name": "GraphEntity"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 259,
+     "line": 266,
      "name": "GraphEntities"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 262,
+     "line": 269,
      "name": "GraphSource"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 265,
+     "line": 272,
      "name": "GraphRelationship"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 272,
+     "line": 279,
      "name": "GraphRelationships"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 281,
+     "line": 288,
      "name": "CompareArm"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 296,
+     "line": 303,
      "name": "CompareResponse"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 300,
+     "line": 307,
      "name": "ReviewScores"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 305,
+     "line": 312,
      "name": "ReviewResponse"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 311,
+     "line": 318,
      "name": "RunSummary"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 317,
+     "line": 324,
      "name": "RunProgressRow"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 318,
+     "line": 325,
      "name": "GateResult"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 319,
+     "line": 326,
      "name": "OpenGap"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 320,
+     "line": 327,
      "name": "Qualification"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 323,
+     "line": 330,
      "name": "ScoreRefusal"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 324,
+     "line": 331,
      "name": "Admission"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 328,
+     "line": 335,
      "name": "LivedCluster"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 332,
+     "line": 339,
      "name": "ProductConcept"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 333,
+     "line": 340,
      "name": "ConceptReality"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 334,
+     "line": 341,
      "name": "HypothesisView"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 336,
+     "line": 343,
      "name": "RegistryPrior"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 337,
+     "line": 344,
      "name": "RegistryTerritory"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 338,
+     "line": 345,
      "name": "RunRegistry"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 342,
+     "line": 349,
      "name": "RunView"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 361,
+     "line": 368,
      "name": "DeepResearchPlan"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 366,
+     "line": 373,
      "name": "DeepPlanGoal"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 368,
+     "line": 375,
      "name": "DeepCoverage"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 369,
+     "line": 376,
      "name": "DeepCoverageGoal"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 371,
+     "line": 378,
      "name": "DeepReportModel"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 376,
+     "line": 383,
      "name": "DeepReportGoal"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 378,
+     "line": 385,
      "name": "DeepFinding"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 379,
+     "line": 386,
      "name": "DeepCounterFinding"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 380,
+     "line": 387,
      "name": "DeepReportSource"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 382,
+     "line": 389,
      "name": "DeepAudit"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 390,
+     "line": 397,
      "name": "ChatSynthesisFacet"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 393,
+     "line": 400,
      "name": "ChatSynthesis"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 401,
+     "line": 408,
      "name": "ChatGapClaim"
     },
     {
      "file": "frontend-v2/src/lib/contracts.ts",
      "kind": "interface",
-     "line": 404,
+     "line": 411,
      "name": "ChatGapCheck"
     }
    ]
@@ -20042,6 +19978,108 @@
     }
    ]
   },
+  "frontend-v2/src/lib/readiness.ts": {
+   "api_calls": [],
+   "doc": "",
+   "files": [
+    "frontend-v2/src/lib/readiness.ts"
+   ],
+   "hash": "5a0dae157b4eef87",
+   "importers": [
+    "frontend-v2/src/App.tsx"
+   ],
+   "imports": [
+    "frontend-v2/src/lib/contracts.ts"
+   ],
+   "lines": 185,
+   "page": "units/frontend-v2/src/lib/readiness.ts.md",
+   "symbols": [
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "type",
+     "line": 15,
+     "name": "ReadyState"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "interface",
+     "line": 17,
+     "name": "Verdict"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 34,
+     "name": "controlReady"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 40,
+     "name": "semanticReady"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 53,
+     "name": "vnextReady"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 82,
+     "name": "docSearchable"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 89,
+     "name": "servesVnext"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 96,
+     "name": "servedWriter"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 111,
+     "name": "stageWords"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 124,
+     "name": "docStatus"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 151,
+     "name": "docPmap"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 162,
+     "name": "docProfile"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "const",
+     "line": 180,
+     "name": "CHECKING"
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "kind": "function",
+     "line": 182,
+     "name": "settled"
+    }
+   ]
+  },
   "frontend-v2/src/screens/Chat.tsx": {
    "api_calls": [],
    "doc": "",
@@ -20110,7 +20148,7 @@
    "files": [
     "frontend-v2/src/screens/Files.tsx"
    ],
-   "hash": "831719a5c9c92a8a",
+   "hash": "56bc06992934a191",
    "importers": [
     "frontend-v2/src/App.tsx"
    ],
@@ -20124,7 +20162,7 @@
     "frontend-v2/src/screens/../components/Pill.tsx",
     "frontend-v2/src/screens/../lib/contracts.ts"
    ],
-   "lines": 334,
+   "lines": 339,
    "page": "units/frontend-v2/src/screens/Files.tsx.md",
    "symbols": [
     {
@@ -57590,26 +57628,26 @@
     {
      "does": "handled: assign",
      "file": "shared/polymath_shared/document_status.py",
-     "line": 231,
+     "line": 269,
      "type": "Exception"
     },
     {
      "does": "SWALLOWED: pass",
      "file": "shared/polymath_shared/document_status.py",
-     "line": 218,
+     "line": 256,
      "type": "Exception"
     },
     {
      "does": "handled: assign",
      "file": "shared/polymath_shared/document_status.py",
-     "line": 310,
+     "line": 348,
      "type": "Exception"
     }
    ],
    "files": [
     "shared/polymath_shared/document_status.py"
    ],
-   "hash": "c0aa2213da3c97bd",
+   "hash": "7bf46736d454194b",
    "importers": [
     "orchestrator/orchestrator/api/ui.py",
     "shared/polymath_shared/control_plane_status.py"
@@ -57623,20 +57661,20 @@
     "polymath_shared.llm_extraction.lane_registry.build_registry",
     "polymath_shared.semantic_readiness"
    ],
-   "lines": 335,
+   "lines": 373,
    "mcp_tools": [],
    "nondeterminism": [
     {
      "call": "_dt.datetime.now",
      "file": "shared/polymath_shared/document_status.py",
      "kind": "clock",
-     "line": 300
+     "line": 338
     },
     {
      "call": "_dt.datetime.utcnow",
      "file": "shared/polymath_shared/document_status.py",
      "kind": "clock",
-     "line": 301
+     "line": 339
     }
    ],
    "page": "units/shared/polymath_shared/document_status.py.md",
@@ -57670,27 +57708,42 @@
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 115,
-     "table": "documents"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 127,
+     "line": 124,
      "table": "runs"
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 127,
+     "line": 124,
      "table": "outbox_events"
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 155,
+     "line": 134,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 153,
+     "table": "documents"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 165,
+     "table": "runs"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 165,
+     "table": "outbox_events"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 193,
      "table": "artifacts"
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 155,
+     "line": 193,
      "table": "runs"
     },
     {
@@ -57720,62 +57773,7 @@
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 134,
-     "table": "runs"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 140,
-     "table": "chunks"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 142,
-     "table": "chunks"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 148,
-     "table": "stage_tickets"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 186,
-     "table": "document_parent_map_batches"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 196,
-     "table": "artifacts"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 196,
-     "table": "runs"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 224,
-     "table": "documents"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 269,
-     "table": "facts"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 269,
-     "table": "evidence"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 289,
-     "table": "artifacts"
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 289,
+     "line": 172,
      "table": "runs"
     },
     {
@@ -57785,27 +57783,82 @@
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 181,
+     "line": 180,
+     "table": "chunks"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 186,
+     "table": "stage_tickets"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 224,
+     "table": "document_parent_map_batches"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 234,
+     "table": "artifacts"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 234,
+     "table": "runs"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 262,
+     "table": "documents"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 307,
+     "table": "facts"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 307,
+     "table": "evidence"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 327,
+     "table": "artifacts"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 327,
+     "table": "runs"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 216,
+     "table": "chunks"
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 219,
      "table": "document_parent_maps"
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 184,
+     "line": 222,
      "table": "document_parent_exclusions"
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 264,
+     "line": 302,
      "table": "artifacts"
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 303,
+     "line": 341,
      "table": "artifacts"
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 303,
+     "line": 341,
      "table": "runs"
     }
    ],
@@ -57828,7 +57881,7 @@
       "corpus_id"
      ],
      "doc": "Per-document OPERATIONAL summary for the whole corpus in a bounded, N+1-free way:",
-     "end": 105,
+     "end": 106,
      "file": "shared/polymath_shared/document_status.py",
      "kind": "def",
      "line": 25,
@@ -57837,14 +57890,26 @@
     {
      "args": [
       "conn",
+      "out"
+     ],
+     "doc": "FILES-STATUS-TRUTH-V1 (the owner, 2026-10-02: \"THE UI MAY NEED TO BE UPDATED ESPECIALLY FILES COLOR AND STATUSES\"):",
+     "end": 143,
+     "file": "shared/polymath_shared/document_status.py",
+     "kind": "def",
+     "line": 109,
+     "name": "_attach_run_work"
+    },
+    {
+     "args": [
+      "conn",
       "doc_id",
       "detail"
      ],
      "doc": "The canonical status for one document. `conn` is a live psycopg connection.",
-     "end": 334,
+     "end": 372,
      "file": "shared/polymath_shared/document_status.py",
      "kind": "def",
-     "line": 108,
+     "line": 146,
      "name": "document_status"
     }
    ]
@@ -86112,7 +86177,7 @@
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 118,
+     "line": 156,
      "missing": [
       "absorb",
       "according",
@@ -95147,7 +95212,7 @@
     },
     {
      "file": "shared/polymath_shared/document_status.py",
-     "line": 150,
+     "line": 141,
      "missing": [
       "trace_id",
       "attempt_id",
@@ -95236,6 +95301,180 @@
     "device",
     "duration_ms",
     "error_code"
+   ]
+  },
+  {
+   "consumers": [
+    {
+     "file": "control/control/census.py",
+     "line": 19,
+     "missing": [
+      "compile_objects",
+      "parent_summary",
+      "document_summary",
+      "corpus_summary",
+      "vocabulary"
+     ],
+     "present": 8
+    },
+    {
+     "file": "control/control/fleet_autopilot.py",
+     "line": 43,
+     "missing": [],
+     "present": 13
+    },
+    {
+     "file": "control/control/process_supervisor.py",
+     "line": 78,
+     "missing": [
+      "project_qdrant",
+      "project_neo4j",
+      "verify_projections",
+      "parent_summary",
+      "document_summary",
+      "corpus_summary",
+      "vocabulary"
+     ],
+     "present": 6
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 127,
+     "missing": [
+      "extract",
+      "profile_document",
+      "compile_objects",
+      "canonicalize",
+      "verify_projections",
+      "parent_summary",
+      "document_summary",
+      "corpus_summary",
+      "vocabulary"
+     ],
+     "present": 4
+    },
+    {
+     "file": "control/control/tickets.py",
+     "line": 25,
+     "missing": [],
+     "present": 13
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "line": 103,
+     "missing": [
+      "extract",
+      "profile_document",
+      "compile_objects",
+      "project_qdrant",
+      "canonicalize",
+      "project_canonical",
+      "verify_projections",
+      "parent_summary",
+      "document_summary",
+      "corpus_summary"
+     ],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/control_plane_status.py",
+     "line": 23,
+     "missing": [
+      "compile_objects",
+      "project_qdrant",
+      "project_neo4j",
+      "canonicalize",
+      "project_canonical",
+      "verify_projections",
+      "parent_summary",
+      "document_summary",
+      "corpus_summary",
+      "vocabulary"
+     ],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 90,
+     "missing": [
+      "intake",
+      "profile_document",
+      "compile_objects",
+      "canonicalize",
+      "project_canonical",
+      "verify_projections",
+      "parent_summary",
+      "document_summary",
+      "corpus_summary",
+      "vocabulary"
+     ],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/receipts.py",
+     "line": 226,
+     "missing": [
+      "extract",
+      "profile_document",
+      "compile_objects",
+      "canonicalize",
+      "parent_summary",
+      "document_summary",
+      "corpus_summary",
+      "vocabulary"
+     ],
+     "present": 5
+    },
+    {
+     "file": "shared/polymath_shared/runtime_budget.py",
+     "line": 143,
+     "missing": [
+      "profile_document",
+      "compile_objects",
+      "project_qdrant",
+      "project_neo4j",
+      "verify_projections",
+      "parent_summary",
+      "document_summary",
+      "corpus_summary",
+      "vocabulary"
+     ],
+     "present": 4
+    },
+    {
+     "file": "workers/workers/summary_worker_impl.py",
+     "line": 289,
+     "missing": [
+      "intake",
+      "extract",
+      "profile_document",
+      "compile_objects",
+      "project_neo4j",
+      "canonicalize",
+      "project_canonical",
+      "verify_projections"
+     ],
+     "present": 5
+    }
+   ],
+   "file": "control/control/reconciliation.py",
+   "line": 55,
+   "name": "STAGE_CONTRACT_DEPENDENCIES",
+   "slug": "STAGE_CONTRACT_DEPENDENCIES",
+   "values": [
+    "intake",
+    "extract",
+    "profile_document",
+    "compile_objects",
+    "project_qdrant",
+    "project_neo4j",
+    "canonicalize",
+    "project_canonical",
+    "verify_projections",
+    "parent_summary",
+    "document_summary",
+    "corpus_summary",
+    "vocabulary"
    ]
   },
   {
@@ -95477,6 +95716,167 @@
     "within",
     "without",
     "your"
+   ]
+  },
+  {
+   "consumers": [
+    {
+     "file": "control/control/fleet_autopilot.py",
+     "line": 115,
+     "missing": [
+      "failed"
+     ],
+     "present": 3
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 110,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "control/control/stall_tracer.py",
+     "line": 36,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "control/control/tickets.py",
+     "line": 114,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "orchestrator/orchestrator/api/fleet.py",
+     "line": 63,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "orchestrator/orchestrator/api/intake.py",
+     "line": 145,
+     "missing": [
+      "failed"
+     ],
+     "present": 3
+    },
+    {
+     "file": "orchestrator/orchestrator/api/ui.py",
+     "line": 366,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "shared/polymath_shared/control_plane_status.py",
+     "line": 37,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 135,
+     "missing": [],
+     "present": 4
+    },
+    {
+     "file": "shared/polymath_shared/worker_runtime.py",
+     "line": 178,
+     "missing": [
+      "pending"
+     ],
+     "present": 3
+    },
+    {
+     "file": "workers/workers/extract_worker.py",
+     "line": 179,
+     "missing": [
+      "failed"
+     ],
+     "present": 3
+    }
+   ],
+   "file": "control/control/reconciliation.py",
+   "line": 49,
+   "name": "_OPEN_TICKET_STATES",
+   "slug": "_OPEN_TICKET_STATES",
+   "values": [
+    "pending",
+    "ready",
+    "leased",
+    "failed"
+   ]
+  },
+  {
+   "consumers": [
+    {
+     "file": "control/control/fleet_autopilot.py",
+     "line": 115,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "control/control/reconciliation.py",
+     "line": 49,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "control/control/scheduler.py",
+     "line": 110,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "control/control/tickets.py",
+     "line": 114,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "orchestrator/orchestrator/api/fleet.py",
+     "line": 63,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "orchestrator/orchestrator/api/intake.py",
+     "line": 145,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "orchestrator/orchestrator/api/ui.py",
+     "line": 943,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/control_plane_status.py",
+     "line": 42,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/document_status.py",
+     "line": 135,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "workers/workers/extract_worker.py",
+     "line": 179,
+     "missing": [],
+     "present": 3
+    }
+   ],
+   "file": "control/control/stall_tracer.py",
+   "line": 37,
+   "name": "OPEN_TICKET_STATUSES",
+   "slug": "OPEN_TICKET_STATUSES",
+   "values": [
+    "pending",
+    "ready",
+    "leased"
    ]
   },
   {
@@ -95909,245 +96309,6 @@
   {
    "consumers": [
     {
-     "file": "control/control/census.py",
-     "line": 19,
-     "missing": [
-      "compile_objects",
-      "parent_summary",
-      "document_summary",
-      "corpus_summary",
-      "vocabulary"
-     ],
-     "present": 8
-    },
-    {
-     "file": "control/control/fleet_autopilot.py",
-     "line": 43,
-     "missing": [],
-     "present": 13
-    },
-    {
-     "file": "control/control/process_supervisor.py",
-     "line": 78,
-     "missing": [
-      "project_qdrant",
-      "project_neo4j",
-      "verify_projections",
-      "parent_summary",
-      "document_summary",
-      "corpus_summary",
-      "vocabulary"
-     ],
-     "present": 6
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 127,
-     "missing": [
-      "extract",
-      "profile_document",
-      "compile_objects",
-      "canonicalize",
-      "verify_projections",
-      "parent_summary",
-      "document_summary",
-      "corpus_summary",
-      "vocabulary"
-     ],
-     "present": 4
-    },
-    {
-     "file": "control/control/tickets.py",
-     "line": 25,
-     "missing": [],
-     "present": 13
-    },
-    {
-     "file": "shared/polymath_shared/control_plane_status.py",
-     "line": 23,
-     "missing": [
-      "compile_objects",
-      "project_qdrant",
-      "project_neo4j",
-      "canonicalize",
-      "project_canonical",
-      "verify_projections",
-      "parent_summary",
-      "document_summary",
-      "corpus_summary",
-      "vocabulary"
-     ],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/document_status.py",
-     "line": 90,
-     "missing": [
-      "intake",
-      "profile_document",
-      "compile_objects",
-      "canonicalize",
-      "project_canonical",
-      "verify_projections",
-      "parent_summary",
-      "document_summary",
-      "corpus_summary",
-      "vocabulary"
-     ],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/receipts.py",
-     "line": 226,
-     "missing": [
-      "extract",
-      "profile_document",
-      "compile_objects",
-      "canonicalize",
-      "parent_summary",
-      "document_summary",
-      "corpus_summary",
-      "vocabulary"
-     ],
-     "present": 5
-    },
-    {
-     "file": "shared/polymath_shared/runtime_budget.py",
-     "line": 143,
-     "missing": [
-      "profile_document",
-      "compile_objects",
-      "project_qdrant",
-      "project_neo4j",
-      "verify_projections",
-      "parent_summary",
-      "document_summary",
-      "corpus_summary",
-      "vocabulary"
-     ],
-     "present": 4
-    },
-    {
-     "file": "workers/workers/summary_worker_impl.py",
-     "line": 289,
-     "missing": [
-      "intake",
-      "extract",
-      "profile_document",
-      "compile_objects",
-      "project_neo4j",
-      "canonicalize",
-      "project_canonical",
-      "verify_projections"
-     ],
-     "present": 5
-    }
-   ],
-   "file": "control/control/reconciliation.py",
-   "line": 55,
-   "name": "STAGE_CONTRACT_DEPENDENCIES",
-   "slug": "STAGE_CONTRACT_DEPENDENCIES",
-   "values": [
-    "intake",
-    "extract",
-    "profile_document",
-    "compile_objects",
-    "project_qdrant",
-    "project_neo4j",
-    "canonicalize",
-    "project_canonical",
-    "verify_projections",
-    "parent_summary",
-    "document_summary",
-    "corpus_summary",
-    "vocabulary"
-   ]
-  },
-  {
-   "consumers": [
-    {
-     "file": "control/control/fleet_autopilot.py",
-     "line": 115,
-     "missing": [
-      "failed"
-     ],
-     "present": 3
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 110,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "control/control/stall_tracer.py",
-     "line": 36,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "control/control/tickets.py",
-     "line": 114,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "orchestrator/orchestrator/api/fleet.py",
-     "line": 63,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "orchestrator/orchestrator/api/intake.py",
-     "line": 145,
-     "missing": [
-      "failed"
-     ],
-     "present": 3
-    },
-    {
-     "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 366,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "shared/polymath_shared/control_plane_status.py",
-     "line": 37,
-     "missing": [],
-     "present": 4
-    },
-    {
-     "file": "shared/polymath_shared/worker_runtime.py",
-     "line": 178,
-     "missing": [
-      "pending"
-     ],
-     "present": 3
-    },
-    {
-     "file": "workers/workers/extract_worker.py",
-     "line": 179,
-     "missing": [
-      "failed"
-     ],
-     "present": 3
-    }
-   ],
-   "file": "control/control/reconciliation.py",
-   "line": 49,
-   "name": "_OPEN_TICKET_STATES",
-   "slug": "_OPEN_TICKET_STATES",
-   "values": [
-    "pending",
-    "ready",
-    "leased",
-    "failed"
-   ]
-  },
-  {
-   "consumers": [
-    {
      "file": "adapters/ecommerce/python/lived_world.py",
      "line": 33,
      "missing": [
@@ -96459,73 +96620,6 @@
     "intake",
     "reconciling",
     "degraded"
-   ]
-  },
-  {
-   "consumers": [
-    {
-     "file": "control/control/fleet_autopilot.py",
-     "line": 115,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "control/control/reconciliation.py",
-     "line": 49,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "control/control/scheduler.py",
-     "line": 110,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "control/control/tickets.py",
-     "line": 114,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "orchestrator/orchestrator/api/fleet.py",
-     "line": 63,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "orchestrator/orchestrator/api/intake.py",
-     "line": 145,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 943,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/control_plane_status.py",
-     "line": 42,
-     "missing": [],
-     "present": 3
-    },
-    {
-     "file": "workers/workers/extract_worker.py",
-     "line": 179,
-     "missing": [],
-     "present": 3
-    }
-   ],
-   "file": "control/control/stall_tracer.py",
-   "line": 37,
-   "name": "OPEN_TICKET_STATUSES",
-   "slug": "OPEN_TICKET_STATUSES",
-   "values": [
-    "pending",
-    "ready",
-    "leased"
    ]
   },
   {
@@ -97612,7 +97706,7 @@
    "consumers": [
     {
      "file": "frontend-v2/src/lib/contracts.ts",
-     "line": 189,
+     "line": 196,
      "missing": [],
      "present": 4
     },
@@ -97840,7 +97934,7 @@
    "consumers": [
     {
      "file": "frontend-v2/src/lib/contracts.ts",
-     "line": 188,
+     "line": 195,
      "missing": [],
      "present": 5
     },
@@ -98002,7 +98096,7 @@
    "consumers": [
     {
      "file": "frontend-v2/src/lib/contracts.ts",
-     "line": 189,
+     "line": 196,
      "missing": [],
      "present": 3
     },
@@ -98057,7 +98151,7 @@
    "consumers": [
     {
      "file": "frontend-v2/src/lib/contracts.ts",
-     "line": 188,
+     "line": 195,
      "missing": [],
      "present": 5
     },
@@ -98619,7 +98713,7 @@
    "consumers": [
     {
      "file": "frontend-v2/src/lib/contracts.ts",
-     "line": 188,
+     "line": 195,
      "missing": [],
      "present": 5
     },
@@ -99063,6 +99157,55 @@
   {
    "consumers": [
     {
+     "file": "frontend-v2/src/components/AnswerReview.tsx",
+     "line": 92,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "frontend-v2/src/lib/contracts.ts",
+     "line": 144,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "frontend-v2/src/lib/readiness.ts",
+     "line": 15,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "frontend-v2/src/screens/Files.tsx",
+     "line": 72,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "frontend-v2/src/screens/Research.tsx",
+     "line": 42,
+     "missing": [],
+     "present": 3
+    },
+    {
+     "file": "shared/polymath_shared/control_plane_status.py",
+     "line": 42,
+     "missing": [],
+     "present": 3
+    }
+   ],
+   "file": "shared/polymath_shared/pipeline_health.py",
+   "line": 188,
+   "name": "CONTROL_READY_STATES",
+   "slug": "CONTROL_READY_STATES",
+   "values": [
+    "blocked",
+    "degraded",
+    "ready"
+   ]
+  },
+  {
+   "consumers": [
+    {
      "file": "shared/polymath_shared/endpoint_binding.py",
      "line": 37,
      "missing": [
@@ -99416,111 +99559,6 @@
     "parent_enrichment",
     "parent_summary",
     "vocabulary"
-   ]
-  },
-  {
-   "consumers": [
-    {
-     "file": "orchestrator/orchestrator/api/ui.py",
-     "line": 1960,
-     "missing": [
-      "DEFINITION",
-      "MECHANISM",
-      "CAUSAL",
-      "COMPARISON",
-      "COUNTERPOINT",
-      "PROCEDURE",
-      "EXAMPLE",
-      "ADJACENT"
-     ],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/bridge_integration.py",
-     "line": 63,
-     "missing": [
-      "DEFINITION",
-      "MECHANISM",
-      "CAUSAL",
-      "COMPARISON",
-      "COUNTERPOINT",
-      "PROCEDURE",
-      "EXAMPLE",
-      "ADJACENT"
-     ],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/deep_research/moves.py",
-     "line": 23,
-     "missing": [
-      "PRIMARY",
-      "CAUSAL",
-      "COUNTERPOINT",
-      "EXAMPLE",
-      "ENTITY",
-      "BRIDGE",
-      "ADJACENT"
-     ],
-     "present": 4
-    },
-    {
-     "file": "shared/polymath_shared/document_profile/compiler.py",
-     "line": 91,
-     "missing": [
-      "PRIMARY",
-      "DEFINITION",
-      "CAUSAL",
-      "COMPARISON",
-      "COUNTERPOINT",
-      "PROCEDURE",
-      "EXAMPLE",
-      "ADJACENT"
-     ],
-     "present": 3
-    },
-    {
-     "file": "shared/polymath_shared/facets.py",
-     "line": 44,
-     "missing": [
-      "DEFINITION",
-      "CAUSAL",
-      "COMPARISON",
-      "COUNTERPOINT",
-      "PROCEDURE",
-      "EXAMPLE",
-      "ENTITY"
-     ],
-     "present": 4
-    },
-    {
-     "file": "shared/polymath_shared/query_intent.py",
-     "line": 32,
-     "missing": [
-      "PRIMARY",
-      "EXAMPLE",
-      "ENTITY",
-      "ADJACENT"
-     ],
-     "present": 7
-    }
-   ],
-   "file": "shared/polymath_shared/chat_plan.py",
-   "line": 59,
-   "name": "QUERY_TYPES",
-   "slug": "QUERY_TYPES",
-   "values": [
-    "PRIMARY",
-    "DEFINITION",
-    "MECHANISM",
-    "CAUSAL",
-    "COMPARISON",
-    "COUNTERPOINT",
-    "PROCEDURE",
-    "EXAMPLE",
-    "ENTITY",
-    "BRIDGE",
-    "ADJACENT"
    ]
   }
  ]

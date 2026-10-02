@@ -3,7 +3,7 @@ import { ConfirmByName, Dialog } from "../ui/Dialog";
 import { EmptyState, ErrorState, Skeleton } from "../ui/states";
 import { api, ApiError } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
-import { controlReady, docSearchable, docVnext, semanticReady, servedWriter, servesVnext, vnextReady, settled } from "../lib/readiness";
+import { controlReady, docPmap, docProfile, docSearchable, docStatus, semanticReady, vnextReady, settled } from "../lib/readiness";
 import { ReadinessTriad } from "../components/ReadinessTriad";
 import { Pill, StatePill } from "../components/Pill";
 import type { DocSummary } from "../lib/contracts";
@@ -64,8 +64,13 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
   const rows = docs.data?.documents ?? [];
   const summaries: Record<string, DocSummary> = sum.data?.summaries ?? {};
   const refresh = () => setNonce((n) => n + 1);
-  const readyCount = rows.filter((r) => docSearchable(summaries[r.doc_id])).length;
-  const basicCount = rows.filter((r) => docSearchable(summaries[r.doc_id]) && !servesVnext(summaries[r.doc_id])).length;
+  // FILES-STATUS-TRUTH-V1: the header counts the same per-file status the Status column paints
+  const counts = { ready: 0, working: 0, degraded: 0, blocked: 0 };
+  for (const r of rows) {
+    const d = summaries[r.doc_id];
+    const st = d ? docStatus(d).state : "working";
+    if (st === "ready" || st === "working" || st === "degraded" || st === "blocked") counts[st] += 1;
+  }
 
   function describeError(e: unknown): string {
     if (e instanceof ApiError) {
@@ -155,7 +160,10 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
           <h1 className="screen__title">Files</h1>
           <p className="screen__sub">
             <span className="mono">{corpusId}</span> ·{" "}
-            {docs.data == null ? "loading documents…" : <>{rows.length} documents · <b>{readyCount}</b> ready{basicCount ? <> ({basicCount} with a basic profile)</> : null}{rows.length - readyCount ? <>, <b>{rows.length - readyCount}</b> still processing</> : null}</>}
+            {docs.data == null ? "loading documents…" : <>{rows.length} documents · <b>{counts.ready}</b> ready
+              {counts.working ? <> · <b>{counts.working}</b> processing</> : null}
+              {counts.degraded ? <> · <b>{counts.degraded}</b> need retry</> : null}
+              {counts.blocked ? <> · <b>{counts.blocked}</b> not searchable</> : null}</>}
           </p>
         </div>
         <div className="files__actions">
@@ -225,9 +233,10 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
           <thead>
             <tr>
               <th>File</th><th>Type</th><th>Added</th><th>Size</th><th>Status</th>
-              {details && <><th>Parents</th><th>Children</th>
-              <th>pMAP mapped</th><th>excluded</th><th>unresolved</th>
-              <th>Profile</th><th>Graph ent.</th><th>Graph rel.</th></>}<th></th>
+              <th title="parents mapped (or excluded) out of the parents eligible for pMAP">pMAP</th>
+              <th title="the document profile, and whether the profile index serves it to retrieval and routing">Profile</th>
+              <th title="graph nodes (entities) and relations extracted from the file">Graph</th>
+              {details && <><th>Parents</th><th>Children</th><th>excluded</th><th>unresolved</th></>}<th></th>
             </tr>
           </thead>
           <tbody>
@@ -244,25 +253,21 @@ export function Files({ corpusId, isOwner = true, canWrite = true, onLibraryDele
                   <td className="mono">{typeOf(r.source_name, r.media_type)}</td>
                   <td className="mono">{fmtDate(r.created_at)}</td>
                   <td className="mono">{fmtBytes(r.bytes)}</td>
-                  <td>{d ? <Pill v={docVnext(d)} /> : <StatePill state="degraded" label="PROCESSING" />}</td>
+                  <td>{d ? <Pill v={docStatus(d)} /> : <StatePill state="working" label="PROCESSING" />}</td>
+                  <td className="files__cell">{d ? <Pill v={docPmap(d)} /> : <span className="faint">—</span>}</td>
+                  <td className="files__cell">{d ? <Pill v={docProfile(d)} /> : <span className="faint">—</span>}</td>
+                  <td className="mono files__cell" title={d && d.graph_entities != null
+                      ? "graph nodes (entities) and relations extracted from the file" : "no extraction has finished for this file"}>
+                    {d && d.graph_entities != null
+                      ? `${d.graph_entities.toLocaleString()} nodes · ${(d.graph_relations ?? 0).toLocaleString()} relations` : "—"}
+                  </td>
                   {details && <>
                   <td className="mono">{d ? d.parents : r.parents}</td>
                   <td className="mono">{d ? d.children : r.chunks}</td>
-                  <td className="mono">{d ? d.map_active : r.map_active}</td>
                   <td className="mono">{d ? d.map_excluded : "—"}</td>
                   <td className="mono" style={{ color: d && d.map_unresolved > 0 ? "var(--bad)" : undefined }}>
                     {d ? d.map_unresolved : "—"}
                   </td>
-                  <td className="mono">
-                    {!d ? <span className="pill pill--degraded">pending</span>
-                      : servedWriter(d) === "vnext" ? <span className="pill pill--ready">vNext</span>
-                      : servedWriter(d) === "basic"
-                        ? <span className="pill pill--degraded" title={d.profile_vnext
-                            ? "a vNext card was written; search uses the richer basic card" : "search uses the basic card"}>basic</span>
-                      : <span className="pill pill--blocked">none</span>}
-                  </td>
-                  <td className="mono">{d ? d.graph_entities : "—"}</td>
-                  <td className="mono">{d ? d.graph_relations : "—"}</td>
                   </>}
                   <td>
                     <div className="row" style={{ gap: 6 }}>

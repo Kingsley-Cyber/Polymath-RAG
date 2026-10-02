@@ -20,6 +20,7 @@ AUTHORITY: `control/control/reconciliation.py:49` :: `_OPEN_TICKET_STATES` (coun
 | `orchestrator/orchestrator/api/intake.py` | `orchestrator/orchestrator/api/intake.py:145` | 3/4 | `failed` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:366` | 4/4 | — |
 | `shared/polymath_shared/control_plane_status.py` | `shared/polymath_shared/control_plane_status.py:37` | 4/4 | — |
+| `shared/polymath_shared/document_status.py` | `shared/polymath_shared/document_status.py:135` | 4/4 | — |
 | `shared/polymath_shared/worker_runtime.py` | `shared/polymath_shared/worker_runtime.py:178` | 3/4 | `pending` |
 | `workers/workers/extract_worker.py` | `workers/workers/extract_worker.py:179` | 3/4 | `failed` |
 

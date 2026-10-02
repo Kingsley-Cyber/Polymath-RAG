@@ -44,13 +44,20 @@ export interface DocSummary {
   profile_present: boolean;
   /** the LATEST card was written by the vNext writer (not necessarily the card search uses) */
   profile_vnext: boolean;
-  graph_entities: number;
-  graph_relations: number;
+  /** from the file's extraction report; null when no extraction finished */
+  graph_entities: number | null;
+  graph_relations: number | null;
   /** mapped + the latest card is vNext (written state; scripts read it) */
   vnext_ready: boolean;
   /** SERVED-PROFILE-LABEL: the writer of the card SEARCH serves ("vnext" | "basic"; null = none served). Absent when the
    *  profile index could not be read — the labels then keep the written state. */
   profile_served?: "vnext" | "basic" | null;
+  /** FILES-STATUS-TRUTH-V1: the file's own run status (`query_ready` = every required step done); absent on an older backend */
+  run_status?: string | null;
+  /** stages still queued or running for the file (ready / leased / pending) */
+  work_open?: string[];
+  /** stages that failed with their retries spent, with the failure note */
+  work_failed?: { stage: string; note: string | null }[];
 }
 
 /** `GET /documents?corpus_id=` — the IDENTITY authority for the Files screen.

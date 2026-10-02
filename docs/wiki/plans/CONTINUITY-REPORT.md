@@ -167,6 +167,10 @@ historical, never an instruction.
    - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
      change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
      `scripts/codewiki/verify.py` (CI runs it).
+   - BUILT (11.570, `feat/fix-it-all`): FILES-STATUS-TRUTH-V1 — the Files list paints each file's real state (green Ready,
+     blue Processing, amber Needs retry with the failed step, red Not searchable) and always shows pMAP, Profile (in use by
+     retrieval and routing) and Graph nodes; LANE-BUSY-ANY-STAGE-V1 stops a draining summary queue reading Degraded. Needs the
+     owner's deploy (merge, UI build, bounce, push).
    - LIVE (`92f570e2`, 11.567–11.569): VERIFY-FULL-SCAN-V1 + DEAD-CHAIN-NOT-IN-FLIGHT-V1 — verification reads every page of a
      Qdrant collection (it read one page of 100,000; cinema has 165,939) and never clears on a failed read; a pending ticket
      behind a FAILED earlier-stage ticket is neither a re-drive in flight nor open work for the generation barrier. The owner

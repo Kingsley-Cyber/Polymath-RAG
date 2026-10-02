@@ -280,6 +280,36 @@ def test_ready_queued_behind_a_saturated_lane_is_not_a_stall(conn):
     assert s.diagnosis == "READY_UNCLAIMED"          # per-run event counted as a pending claim event
 
 
+def test_a_lane_busy_on_other_stages_is_saturated(conn):
+    """LANE-BUSY-ANY-STAGE-V1 (measured live 2026-10-02, cinema): the summaries workers run several stages and hold one
+    lease at a time. Both busy (one on vocabulary, one on parent_enrichment) -> a queued parent_enrichment ticket waits on
+    live work; counting only same-stage leases traced 61 of them READY_UNCLAIMED and read the pipeline as Degraded."""
+    run_a = _run(conn); run_b = _run(conn); run_c = _run(conn)
+    for wid in ("summprobe-6161-a", "summprobe-6162-b"):
+        conn.execute(
+            """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
+               VALUES (%s, 'summprobe', 6161, 'probe')
+               ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""", (wid,))
+    for rid in (run_a, run_b, run_c):
+        _ticket(conn, rid, "intake", "done")
+    t_vocab = _ticket(conn, run_a, "vocabulary", "leased", lease_owner="summprobe-6161-a")
+    t_enrich = _ticket(conn, run_b, "parent_enrichment", "leased", lease_owner="summprobe-6162-b")
+    conn.execute("UPDATE stage_tickets SET lease_expires_at = now() + interval '10 min', updated_at = now() "
+                 "WHERE ticket_id = ANY(%s)", ([t_vocab, t_enrich],))
+    t_queued = _ticket(conn, run_c, "parent_enrichment", "ready")
+    conn.execute(
+        """INSERT INTO outbox_events (run_id, event_type, payload, idempotency_key)
+           VALUES (%s, 'parent_enrichment.v1', %s::jsonb, %s)""",
+        (run_c, '{"run_id": "%s"}' % run_c, "idem_probe_" + uuid.uuid4().hex[:12]))
+    ids = {s.unit_id for s in collect_stalls(conn, threshold_s=180)}
+    assert t_queued not in ids, "both workers of the lane are busy (on two stages): queued, not stalled"
+    conn.execute(
+        """INSERT INTO worker_registrations (worker_id, worker_type, pid, host)
+           VALUES ('summprobe-6163-c', 'summprobe', 6163, 'probe')
+           ON CONFLICT (worker_id) DO UPDATE SET heartbeat_at = now()""")
+    assert _by_id(collect_stalls(conn, threshold_s=180), t_queued).diagnosis == "READY_UNCLAIMED"   # an idle worker exists
+
+
 def test_dependents_of_a_queued_predecessor_are_not_traced(conn):
     """STALL-TRACER-V1.3: pending tickets behind a READY predecessor that is
     itself queued behind a saturated lane are waiting on live work."""

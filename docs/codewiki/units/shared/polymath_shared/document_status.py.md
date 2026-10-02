@@ -1,93 +1,98 @@
 # unit: shared/polymath_shared/document_status.py
-anchor: shared/polymath_shared/document_status.py:1-334
+anchor: shared/polymath_shared/document_status.py:1-373
 
 ## purpose
-CANONICAL-DOCUMENT-STATUS-V1 (RAG-PIPELINE-FINISH Phase 12): one authoritative per-document aggregate computed from durable Postgres state only — stage tickets, doc_profile + pMAP artifacts, pMAP arithmetic (migration-0054 tables), readiness verdicts (legacy + vNext), functional-pool lane health → exact counts + an ordered blocker list — document_status.py:1-11 [DERIVED].
-Read-only, no provider call; reused by the Files/status API (Phase 18) and the canary diagnostic packet (Phase 15); blocker list follows the plan's triage order so the FIRST blocker names the exact stage/lane — document_status.py:9-11 [DERIVED].
+ONE authoritative per-document status aggregate (CANONICAL-DOCUMENT-STATUS-V1), computed from durable Postgres state only — run stage tickets, profile + pMAP artifacts, pMAP arithmetic (migration-0054 tables), readiness verdicts, lane health — into exact counts + an ordered blocker list shared/polymath_shared/document_status.py:126-132 [DERIVED]. Read-only, no provider call; reused by the Files/status API (Phase 18) and the canary diagnostic packet (Phase 15); first blocker names the exact stage/lane to triage shared/polymath_shared/document_status.py:134-136 [DERIVED].
 
 ## public surface
+
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `DOCUMENT_STATUS_VERSION` | const | `= "canonical-document-status-v1"` | document_status.py:18 | emitted as `contract` in every return (document_status.py:118,314) |
-| `corpus_document_summaries` | def | `(conn, *, corpus_id: str) -> dict[str, dict]` | document_status.py:25-105 | module importers below |
-| `document_status` | def | `(conn, *, doc_id: str, detail: bool = False) -> dict[str, Any]` | document_status.py:108-334 | module importers below |
-| `_j` | def | `(v)` internal JSON normalizer | document_status.py:21-22 | internal only |
-
-Module imported by `orchestrator/orchestrator/api/ui.py` and `shared/polymath_shared/control_plane_status.py` (FACTS.importers).
+| `DOCUMENT_STATUS_VERSION` | constant | `= "canonical-document-status-v1"` | shared/polymath_shared/document_status.py:18 | emitted in every return (:156, :352) |
+| `corpus_document_summaries` | def | `(conn, *, corpus_id: str) -> dict[str, dict]` | shared/polymath_shared/document_status.py:25-106 | module-level importers: `orchestrator/orchestrator/api/ui.py`, `shared/polymath_shared/control_plane_status.py` (FACTS.importers; per-symbol split unknown) |
+| `document_status` | def | `(conn, *, doc_id: str, detail: bool = False) -> dict[str, Any]` | shared/polymath_shared/document_status.py:146-372 | same two importers (FACTS.importers) |
+| `_j` | def | `(v) -> dict/list/None or json.loads(v)` | shared/polymath_shared/document_status.py:21-22 | — (private) |
+| `_attach_run_work` | def | `(conn, out: dict[str, dict]) -> None` | shared/polymath_shared/document_status.py:109-143 | `corpus_document_summaries` (:105) only |
 
 ## contracts
-**document_status(conn, \*, doc_id, detail=False)** — document_status.py:108
-- in: `conn` is a live psycopg connection (document_status.py:109); keyword-only `doc_id: str`, `detail: bool = False` (document_status.py:108).
-- pre: a `documents` row must exist; else out = `{"contract": DOCUMENT_STATUS_VERSION, "doc_id": ..., "found": False, "blockers": ["no_document"]}` — document_status.py:114-119.
-- out: keys `contract, found, vnext_ready, identity, state, chunks, profile, pmap, readiness_vnext, graph, projections, elapsed_s, stages, functional_pools, blockers, complete` — document_status.py:313-333.
-- post: `vnext_ready == pmap_ok and profile_ok`, `pmap_ok = pmap["schema"]=="present" and (eligible==0 or not unresolved)` (document_status.py:239), `profile_ok = present and valid and vnext` (document_status.py:240) [DERIVED].
-- post: `complete == not blockers` — document_status.py:333.
-- post: light path leaves `graph`, `projections`, `elapsed_s` as `None` (document_status.py:260-261); `detail=True` fills them (document_status.py:262-311) [DERIVED].
-- run identity: the doc's own run via `outbox_events` `event_type='chunked.v1'` `payload->>'doc_id'` (document_status.py:126-129), falling back to the corpus's newest non-superseded run (document_status.py:132-136).
 
-**corpus_document_summaries(conn, \*, corpus_id)** — document_status.py:25
-- in: keyword-only `corpus_id: str`.
-- out: per-doc counters `children, parents, map_eligible, map_active, map_excluded, profile_present, profile_vnext, graph_entities, graph_relations` (document_status.py:34-36) plus `map_unresolved` (document_status.py:102) and `vnext_ready` (document_status.py:104).
-- post: `map_unresolved = max(0, map_eligible - map_active - map_excluded)` — document_status.py:102.
-- post: `vnext_ready = (map_eligible==0 or map_unresolved==0) and profile_present and profile_vnext` — document_status.py:103-104 (no `profile.valid` check).
-- bound: each counter is ONE corpus-level aggregate query joined in Python by doc_id, never a per-document scan — document_status.py:26-30.
+**`corpus_document_summaries`** — shared/polymath_shared/document_status.py:25-106
+- in: `conn` live psycopg connection; `corpus_id` str, keyword-only shared/polymath_shared/document_status.py:25 [DERIVED]
+- out: per-doc dict keys `children, parents, map_eligible, map_active, map_excluded, profile_present, profile_vnext, graph_entities, graph_relations` (:34-36) + `map_unresolved, vnext_ready` (:102-104) + `run_status, work_open, work_failed` (:120-121) shared/polymath_shared/document_status.py:34-36 [DERIVED]
+- pre: `document_chunk_summary` and `document_parent_maps` may be absent; presence checked via `to_regclass`, falls back to live `chunks` scans shared/polymath_shared/document_status.py:44,65 [DERIVED]
+- post: every `doc_id` of the corpus is a key; each counter is one corpus-level aggregate joined in Python (N+1-free) shared/polymath_shared/document_status.py:33,26-28 [DERIVED]
 
-**_j(v)** — returns `v` unchanged if already `(dict, list)` or `None`, else `json.loads(v)` — document_status.py:22.
+**`document_status`** — shared/polymath_shared/document_status.py:146-372
+- in: `conn` live psycopg; `doc_id`; `detail` defaults to `False` shared/polymath_shared/document_status.py:146 [DERIVED]
+- out: keys `contract, found, vnext_ready, identity, state, chunks, profile, pmap, readiness_vnext, graph, projections, elapsed_s, stages, functional_pools, blockers, complete`; `graph/projections/elapsed_s` are `None` in the light path shared/polymath_shared/document_status.py:351-371,298-299 [DERIVED]
+- pre: pMAP section populated only when `public.document_parent_maps` exists shared/polymath_shared/document_status.py:212 [DERIVED]
+- post: `complete == not blockers` (:371); blockers ordered failed stages → pmap → profile (:282-295); not-found returns `{contract, doc_id, found: False, blockers: ["no_document"]}` (:156-157) shared/polymath_shared/document_status.py:371 [DERIVED]
 
 ## effect surface
-- Postgres read (FACTS.tables_read + visible SQL): `documents` document_status.py:33,114,223; `runs` :80,127,134,303; `outbox_events` :94,128; `chunks` :56,61,140,142,178,186; `document_chunk_summary` :46; `document_parent_maps` :67,181,294; `document_parent_exclusions` :72,184; `artifacts` :80,156,197,264,289,303; `stage_tickets` :148; `document_parent_map_batches` :186; `facts`+`evidence` (detail path) :268-271.
-- Postgres written: none — FACTS.tables_written = `[]`; "Read-only; no provider call" document_status.py:9.
-- No Qdrant/Neo4j client here — projection status is read from stage ticket names `project_qdrant` / `project_neo4j` — document_status.py:293-294.
-- Schema gates via `to_regclass`: `public.document_chunk_summary` document_status.py:44; `public.document_parent_maps` :65,174.
-- No env flags, files, subprocesses, or network calls in this unit.
+
+| effect | detail | anchor |
+|---|---|---|
+| PG read | `documents` | shared/polymath_shared/document_status.py:33,152,261 [DERIVED] |
+| PG read | `chunks` (incl. fallback scans with `document_region.NOISY_ROLES`) | shared/polymath_shared/document_status.py:55,61,177,179,215-216 [DERIVED] |
+| PG read | `document_chunk_summary` (conditional, `to_regclass`) | shared/polymath_shared/document_status.py:44-47 [DERIVED] |
+| PG read | `document_parent_maps` (conditional), `document_parent_exclusions`, `document_parent_map_batches` | shared/polymath_shared/document_status.py:65-68,212,219,222,223-225 [DERIVED] |
+| PG read | `artifacts`, `runs`, `outbox_events` (`event_type='chunked.v1'`), `stage_tickets` | shared/polymath_shared/document_status.py:77-82,233-236,301-304,340-344; :165-167,185-187 [DERIVED] |
+| PG read | `facts` JOIN `evidence` (`f.decision='ACCEPT'`), detail-only | shared/polymath_shared/document_status.py:306-309 [DERIVED] |
+| PG write | none — FACTS `tables_written: []`; docstring "Read-only; no provider call" | shared/polymath_shared/document_status.py:134 [DERIVED] |
+| Qdrant/Neo4j | none directly; projection done-ness reported from stage tickets/artifacts only | shared/polymath_shared/document_status.py:330-334 [DERIVED] |
+| network / files / subprocess / env | none visible | — |
 
 ## invariants
-INVARIANT: `max(0, eligible - mapped - excluded)` (document_status.py:189) equals `max(0, map_eligible - map_active - map_excluded)` (document_status.py:102) — same unresolved formula in both functions — [DERIVED]
-  fails-if: Files-list `vnext_ready` disagrees with the drawer's for the same doc.
-INVARIANT: `complete == not blockers` — document_status.py:333 — [DERIVED]
-  fails-if: doc reports complete while a blocker string is still listed.
-INVARIANT: `contract` in every return == `DOCUMENT_STATUS_VERSION` == `"canonical-document-status-v1"` — document_status.py:18,118,314 — [DERIVED]
-  fails-if: downstream contract checks reject the status packet.
-INVARIANT: blocker order = stage_failed → pmap_unresolved/pmap_not_started → profile_missing/profile_invalid/profile_not_vnext — document_status.py:245-257 — [DERIVED]
-  fails-if: first blocker no longer names the stage/lane to triage (document_status.py:10-11).
-INVARIANT: drawer `relations` (document_status.py:281) and Files `graph_relations` (document_status.py:92-93) come from the same extract-stats artifact so the counts match — document_status.py:279-280 — [DERIVED for the stated intent]
-  fails-if: drawer Graph numbers diverge from the Files row's Graph column.
+- INVARIANT: `map_unresolved == max(0, map_eligible - map_active - map_excluded)` — shared/polymath_shared/document_status.py:102,227 [DERIVED]
+  fails-if: over-mapping or exclusion drift is masked as 0 unresolved.
+- INVARIANT: `vnext_ready` (batched) `== pmap_ok AND profile_present AND profile_vnext` — shared/polymath_shared/document_status.py:103-104 [DERIVED]
+  fails-if: Files list marks Ready without checking profile `valid` (canonical does, :278).
+- INVARIANT: `vnext_ready` (canonical) `== (pmap.schema=="present" AND (eligible==0 OR unresolved==0)) AND (profile.present AND profile.valid AND profile.vnext)` — shared/polymath_shared/document_status.py:277-279 [DERIVED]
+  fails-if: canary gates on a different predicate than the Files list (see dumb-code flags).
+- INVARIANT: tickets with `status='pending'` in a run holding any `failed` ticket are excluded from `work_open` — shared/polymath_shared/document_status.py:137,142-143 [DERIVED]
+  fails-if: file reads Processing instead of Needs retry.
+- INVARIANT: every error/note string truncated at 200 chars (`[:200]`) — shared/polymath_shared/document_status.py:141,189 [DERIVED]
+  fails-if: payload sizes drift between the two call sites.
+- INVARIANT: `coverage_pct == round(100.0 * mapped / eligible, 1)`, `None` iff `eligible == 0` — shared/polymath_shared/document_status.py:229 [DERIVED]
+  fails-if: division-by-zero or wrong coverage in drawer.
+- INVARIANT: elapsed `end` = last `doc_profile`/`doc_parent_map` artifact time only when `vnext_ready`, else wall clock — shared/polymath_shared/document_status.py:345 [DERIVED]
+  fails-if: finished docs report growing elapsed times (and vice versa).
+- INVARIANT: `contract == "canonical-document-status-v1"` on every return, found or not — shared/polymath_shared/document_status.py:18,156,352 [DERIVED]
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (clock: `_dt.datetime.now` document_status.py:300, `_dt.datetime.utcnow` :301, used only as the `elapsed_s` end fallback when not `vnext_ready` :307; db: all outputs derive from live Postgres reads) [DERIVED]
-idempotency: SAFE — zero table writes (FACTS.tables_written = `[]`), "Read-only; no provider call" document_status.py:9.
+determinism: NONDETERMINISTIC (clock `_dt.datetime.now` shared/polymath_shared/document_status.py:338 and `_dt.datetime.utcnow` shared/polymath_shared/document_status.py:339 drive `elapsed_s` for non-ready docs; otherwise a pure function of DB state, no provider/network call shared/polymath_shared/document_status.py:134 [DERIVED])
+idempotency: SAFE (zero table writes, FACTS `tables_written: []`; pure reads shared/polymath_shared/document_status.py:134 [DERIVED])
 
 ## failure behaviour
-- `except Exception: pass` document_status.py:218-219 — PMAP lane-registry config read fails silently; caller sees `pmap` without `model` / `qualified_batch` / `architectural_target` (set only inside the try, document_status.py:211-217).
-- `except Exception: pool_health = {}` document_status.py:231-232 — "status must never crash on a config read" (:230); caller sees `functional_pools: {}`.
-- `except Exception: elapsed_s = None` document_status.py:310-311 — detail drawer gets null elapsed time.
-- Unknown `doc_id` → `found: False`, `blockers: ["no_document"]` — document_status.py:117-119.
-- Missing `document_chunk_summary` table → falls back to live `chunks` GROUP BY scans — document_status.py:52-64 (rationale :42-43: pre-migration checkout or mid-rollback).
-- Doc without its own `chunked.v1` event → falls back to corpus's newest non-superseded run — document_status.py:132-136.
+- `except Exception` → `pass`: pMAP lane-registry read silently swallowed; `pmap["model"]`, `pmap["qualified_batch"]`, `pmap["architectural_target"]` just absent from the dict — shared/polymath_shared/document_status.py:249-257 [DERIVED]
+- `except Exception` → `pool_health = {}`: config read can never crash status; caller sees empty `functional_pools` — shared/polymath_shared/document_status.py:266-270 [DERIVED]
+- `except Exception` → `elapsed_s = None`: timestamp subtraction failure degrades to None; naive `utcnow()` vs aware `now(tzinfo)` can mix here — shared/polymath_shared/document_status.py:338-339,346-349 [INFERRED] (naive/aware subtraction raises TypeError)
+- Unknown `doc_id` → structured `{"found": False, "blockers": ["no_document"]}`, no exception — shared/polymath_shared/document_status.py:155-157 [DERIVED]
+- Missing migration tables (`to_regclass` guards) → fallback paths, never hard-fail pre-migration — shared/polymath_shared/document_status.py:42-44,52-64,212 [DERIVED]
 
 ## dumb-code flags
-- Magic number `pmap["architectural_target"] = 60` — document_status.py:217.
-- Duplicate output keys: `state.corpus_vnext_verdict` and `state.vnext_verdict` both `vnext.get("verdict")`, latter "kept for compatibility (corpus-level)" — document_status.py:320-321.
-- Rule drift: batch readiness checks only `profile_present and profile_vnext` (document_status.py:104) and no pmap schema gate; single-doc requires `profile["valid"]` and `pmap["schema"]=="present"` (document_status.py:239-240) — a doc with an invalid profile can be `vnext_ready` in the Files list but not in the drawer [INFERRED from the two literal formulas].
-- `profile["projected"] = bool(prof) and prof.get("valid") is not None` — document_status.py:169 — true for any profile carrying the `valid` key; comment :168 says the API layer replaces it (SERVED-PROFILE-LABEL).
-- Legacy-key fallback `st.get("neighborhoods") or st.get("neighborhoods_sent")` — document_status.py:273 — two names for one counter.
-- `last_error` truncated: `(err or "")[:200] or None` — document_status.py:151.
-- `_j` tolerates both parsed and JSON-string payloads rather than one encoding — document_status.py:21-22.
+- Magic number `"architectural_target": 60` hard-coded — shared/polymath_shared/document_status.py:255 [DERIVED]
+- Predicate asymmetry #1: batched `pmap_ok` (:103) has no `schema=="present"` check; canonical (:277) requires it — with the 0054 table absent and `map_eligible==0`, Files list says ready, drawer says not — shared/polymath_shared/document_status.py:103 vs :277 [INFERRED] (direct comparison of the two visible lines)
+- Predicate asymmetry #2: batched readiness (:104) checks `profile_present AND profile_vnext` but not `profile["valid"]`; canonical (:278) requires `valid` — a profile with `vnext=true, valid=false` reads ready in the list, not-ready in the drawer — shared/polymath_shared/document_status.py:104 vs :277-278 [INFERRED]
+- Duplicated truthy set `("true", "1")` — shared/polymath_shared/document_status.py:85,200 [DERIVED]
+- Duplicated eligible-parent SQL `tier='parent' AND COALESCE(region_role,'') <> ALL(%s)` — shared/polymath_shared/document_status.py:61-62,215-216 [DERIVED]
+- Two read paths for graph counts: projection columns `extract_entity_count/extract_relation_count` (:92-93) vs artifact payload `llm_extraction.stats` (:301-304); comment claims one authority — shared/polymath_shared/document_status.py:317-319 [DERIVED]
+- Compat duplicate key: `state.vnext_verdict` mirrors `corpus_vnext_verdict`, "kept for compatibility" — shared/polymath_shared/document_status.py:358-359 [DERIVED]
 
 ## refactor notes
-- Output-key renames (`contract`, `vnext_ready`, `blockers`, `complete`, `state.*`) hit both importers `orchestrator/orchestrator/api/ui.py` and `shared/polymath_shared/control_plane_status.py` (FACTS.importers); docstring also names the Files/status API (Phase 18) and canary packet (Phase 15) — document_status.py:9-10.
-- `corpus_document_summaries` defers to `document_status` as "the single readiness authority" (document_status.py:29-30) — changing the readiness formula in only one function breaks that claim.
-- `to_regclass` gates (document_status.py:44,65,174) must stay until `document_chunk_summary` / `document_parent_maps` are guaranteed present; removing them hard-fails pre-migration checkouts (:42-43,156).
-- Entity/relation counts must keep coming from the same extract-stats artifact/projection columns (document_status.py:91-96,264-267,279-281) or the drawer and the Files Graph column diverge.
-- `DOCUMENT_STATUS_VERSION` literal `"canonical-document-status-v1"` (document_status.py:18) is a wire contract — bump it and every consumer of `contract` must update.
+- Response key set and `DOCUMENT_STATUS_VERSION` are consumed by `orchestrator/orchestrator/api/ui.py` and `shared/polymath_shared/control_plane_status.py` (FACTS.importers) — renaming either breaks both shared/polymath_shared/document_status.py:18,351-371 [DERIVED]
+- Re-aligning the two `vnext_ready` predicates (:104 vs :277-279) changes Files-list colors/statuses — the owner flagged exactly that on 2026-10-02 shared/polymath_shared/document_status.py:110-114 [DERIVED]
+- Keep the `to_regclass` fallbacks until migrations 0054/0058 are guaranteed present (pre-migration checkout / mid-rollback) shared/polymath_shared/document_status.py:42-44,65,212 [DERIVED]
+- `_attach_run_work`'s chunked.v1 run lookup (:123-127) duplicates `document_status`'s own-run lookup (:164-167) — change both together or run/ticket attribution splits shared/polymath_shared/document_status.py:123-127,164-167 [DERIVED]
+- Removing the `state.vnext_verdict` compat alias requires auditing both importers first shared/polymath_shared/document_status.py:359 [DERIVED]
 
 ## VERIFY
 ```verify
-grep -Fq 'DOCUMENT_STATUS_VERSION = "canonical-document-status-v1"' shared/polymath_shared/document_status.py
-grep -Fq 'def document_status(conn, *, doc_id: str, detail: bool = False) -> dict[str, Any]:' shared/polymath_shared/document_status.py
-grep -Fq 'def corpus_document_summaries(conn, *, corpus_id: str) -> dict[str, dict]:' shared/polymath_shared/document_status.py
-grep -Fq 'pmap["architectural_target"] = 60' shared/polymath_shared/document_status.py
-grep -Fq 'blockers.append("pmap_not_started")' shared/polymath_shared/document_status.py
-! grep -Eq 'INSERT INTO|UPDATE |DELETE FROM' shared/polymath_shared/document_status.py
-test "$(grep -c -F 'except Exception' shared/polymath_shared/document_status.py)" -ge 3
+grep -Fq 'canonical-document-status-v1' shared/polymath_shared/document_status.py
+grep -Fq 'bool(pmap_ok and s["profile_present"] and s["profile_vnext"])' shared/polymath_shared/document_status.py
+grep -Fq 'architectural_target' shared/polymath_shared/document_status.py
+grep -Fq 'in ("true", "1")' shared/polymath_shared/document_status.py
+test "$(grep -c -F '[:200]' shared/polymath_shared/document_status.py)" -ge 2
+! grep -Fq 'INSERT INTO' shared/polymath_shared/document_status.py
+grep -Eq 'datetime.now|datetime.utcnow' shared/polymath_shared/document_status.py
 ```

@@ -249,9 +249,15 @@ def collect_stalls(conn, *, census=None, threshold_s: int = STALL_THRESHOLD_S,
                           AND e.delivered_at IS NULL
                           AND (e.payload->>'ticket_id' = t.ticket_id
                                OR e.payload->>'ticket_id' IS NULL)) AS claim_event_pending,
-               (SELECT count(*) FROM stage_tickets b
+               -- LANE-BUSY-ANY-STAGE-V1 (measured live 2026-10-02, cinema): one worker type serves
+               -- several stages (the summaries workers run parent / document / corpus summaries,
+               -- vocabulary and parent_enrichment) and holds ONE lease at a time. Counting only
+               -- leases on THIS stage read a lane whose two workers were busy on vocabulary and
+               -- enrichment as half idle, so 61 queued enrichment tickets traced READY_UNCLAIMED
+               -- and the Control ready card read Degraded for a queue that was draining.
+               (SELECT count(DISTINCT b.lease_owner) FROM stage_tickets b
                   JOIN worker_registrations bw ON bw.worker_id = b.lease_owner
-                 WHERE b.stage = t.stage AND b.status = 'leased'
+                 WHERE b.status = 'leased'
                    AND bw.heartbeat_at > now() - make_interval(secs => 90)
                    AND split_part(b.lease_owner, '-', 1) = COALESCE(
                          (SELECT split_part(b3.lease_owner, '-', 1) FROM stage_tickets b3

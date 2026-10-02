@@ -6,9 +6,9 @@ live code (CI runs it); `scripts/codewiki/pages.py refresh` regenerates what cha
 `docs/wiki/` (plans, the register, work-logs); this wiki says HOW the code works NOW.
 
 ## dashboard
-- units: 257 · pages ok 257 · partial 0 (some VERIFY lines or anchors dropped) · not generated 0
-- provenance on unit pages: DERIVED 7560 · INFERRED 571
-- flows: 8 · invariants: 1857 · vocabularies: 60 · routes: 94 · flags: 157 · tables: 79
+- units: 258 · pages ok 258 · partial 0 (some VERIFY lines or anchors dropped) · not generated 0
+- provenance on unit pages: DERIVED 7665 · INFERRED 575
+- flows: 8 · invariants: 1860 · vocabularies: 60 · routes: 94 · flags: 157 · tables: 79
 - partial pages: none
 
 ## start here (by task)
@@ -62,7 +62,7 @@ live code (CI runs it); `scripts/codewiki/pages.py refresh` regenerates what cha
 [DeepReport.tsx](units/frontend-v2/src/components/deep/DeepReport.tsx.md) · [LiveResearch.tsx](units/frontend-v2/src/components/deep/LiveResearch.tsx.md) · [_small-modules](units/frontend-v2/src/components/deep/_small-modules.md)
 
 **frontend-v2/src/lib/**  
-[_small-modules](units/frontend-v2/src/lib/_small-modules.md) · [api.ts](units/frontend-v2/src/lib/api.ts.md) · [chat.ts](units/frontend-v2/src/lib/chat.ts.md) · [contracts.ts](units/frontend-v2/src/lib/contracts.ts.md) · [deep.ts](units/frontend-v2/src/lib/deep.ts.md)
+[_small-modules](units/frontend-v2/src/lib/_small-modules.md) · [api.ts](units/frontend-v2/src/lib/api.ts.md) · [chat.ts](units/frontend-v2/src/lib/chat.ts.md) · [contracts.ts](units/frontend-v2/src/lib/contracts.ts.md) · [deep.ts](units/frontend-v2/src/lib/deep.ts.md) · [readiness.ts](units/frontend-v2/src/lib/readiness.ts.md)
 
 **frontend-v2/src/screens/**  
 [Chat.tsx](units/frontend-v2/src/screens/Chat.tsx.md) · [ControlPlane.tsx](units/frontend-v2/src/screens/ControlPlane.tsx.md) · [Files.tsx](units/frontend-v2/src/screens/Files.tsx.md) · [Models.tsx](units/frontend-v2/src/screens/Models.tsx.md) · [Research.tsx](units/frontend-v2/src/screens/Research.tsx.md) · [Settings.tsx](units/frontend-v2/src/screens/Settings.tsx.md) · [_small-modules](units/frontend-v2/src/screens/_small-modules.md)

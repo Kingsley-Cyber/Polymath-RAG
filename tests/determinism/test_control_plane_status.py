@@ -58,6 +58,11 @@ class _Conn:
             return _Cur([])                                # no live workers -> IDLE
         if "WHERE status IN ('ready','leased')" in s:
             return _Cur([(0,)])                             # nothing queued fleet-wide
+        # FILES-STATUS-TRUTH-V1: each file's own run and its open / failed tickets
+        if "FROM runs r JOIN outbox_events e" in s and "chunked.v1" in s:
+            return _Cur([("docA", "run_a", "query_ready"), ("docB", "run_b", "reconciling")])
+        if "FROM stage_tickets" in s and "run_id = ANY" in s:
+            return _Cur([("run_b", "project_neo4j", "ready", None)])
         raise AssertionError(f"unscripted SQL: {s[:80]}")
 
 
@@ -67,6 +72,8 @@ def test_corpus_summaries_apply_vnext_ready_rule():
     assert s["docB"]["vnext_ready"] is False                # 1/5 mapped -> unresolved 4
     assert s["docA"]["graph_entities"] == 42 and s["docA"]["graph_relations"] == 17
     assert s["docB"]["map_unresolved"] == 4
+    assert (s["docA"]["run_status"], s["docA"]["work_open"]) == ("query_ready", [])
+    assert (s["docB"]["run_status"], s["docB"]["work_open"], s["docB"]["work_failed"]) == ("reconciling", ["project_neo4j"], [])
 
 
 def test_control_plane_status_four_pools_and_refused_vs_429():

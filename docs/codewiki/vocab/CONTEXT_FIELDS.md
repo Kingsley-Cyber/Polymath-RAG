@@ -19,7 +19,7 @@ AUTHORITY: `shared/polymath_shared/logging.py:11` :: `CONTEXT_FIELDS` (count: 9)
 | `control/control/stall_tracer.py` | `control/control/stall_tracer.py:85` | 3/9 | `trace_id`, `attempt_id`, `provider`, `model_release`, `device`, `duration_ms` |
 | `orchestrator/orchestrator/api/intake.py` | `orchestrator/orchestrator/api/intake.py:46` | 3/9 | `trace_id`, `attempt_id`, `provider`, `model_release`, `device`, `duration_ms` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:134` | 4/9 | `trace_id`, `attempt_id`, `model_release`, `device`, `duration_ms` |
-| `shared/polymath_shared/document_status.py` | `shared/polymath_shared/document_status.py:150` | 3/9 | `trace_id`, `attempt_id`, `model_release`, `device`, `duration_ms`, `error_code` |
+| `shared/polymath_shared/document_status.py` | `shared/polymath_shared/document_status.py:141` | 3/9 | `trace_id`, `attempt_id`, `model_release`, `device`, `duration_ms`, `error_code` |
 | `shared/polymath_shared/worker_runtime.py` | `shared/polymath_shared/worker_runtime.py:193` | 4/9 | `trace_id`, `provider`, `model_release`, `device`, `duration_ms` |
 | `workers/workers/extract_worker.py` | `workers/workers/extract_worker.py:68` | 3/9 | `trace_id`, `attempt_id`, `model_release`, `device`, `duration_ms`, `error_code` |
 | `workers/workers/project_qdrant_worker.py` | `workers/workers/project_qdrant_worker.py:214` | 4/9 | `trace_id`, `attempt_id`, `provider`, `model_release`, `device` |

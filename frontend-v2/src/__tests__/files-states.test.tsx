@@ -81,14 +81,14 @@ it("an empty library invites the first file only to someone who can add one", as
   expect([...host.querySelectorAll("button")].some((b) => b.textContent === "Add files")).toBe(false);
 });
 
-it("pipeline columns are opt-in for the owner", async () => {
+it("pMAP, profile and graph are always shown; the raw pipeline counts are opt-in for the owner", async () => {
   await render({ isOwner: true });
   const headers = () => [...host.querySelectorAll("th")].map((h) => h.textContent);
-  expect(headers()).toEqual(["File", "Type", "Added", "Size", "Status", ""]);
+  expect(headers()).toEqual(["File", "Type", "Added", "Size", "Status", "pMAP", "Profile", "Graph", ""]);
   const toggle = [...host.querySelectorAll("label")].find((l) => l.textContent?.includes("Pipeline details"))!.querySelector("input")!;
   await act(async () => toggle.click());
-  expect(headers()).toContain("pMAP mapped");
-  expect(headers()).toContain("Graph rel.");
+  expect(headers()).toContain("Parents");
+  expect(headers()).toContain("unresolved");
 });
 
 it("deleting a file asks first; Cancel deletes nothing", async () => {
@@ -130,14 +130,20 @@ function statusPill(): HTMLElement {
   return host.querySelector("tbody .pill") as HTMLElement;
 }
 
-it("a fully processed file with the base profile reads 'Ready · basic profile', offers no Continue, and counts as ready", async () => {
+function cellPill(text: string): HTMLElement {
+  const pill = [...host.querySelectorAll("tbody .pill")].find((p) => p.textContent === text);
+  if (!pill) throw new Error(`no pill "${text}" in ${[...host.querySelectorAll("tbody .pill")].map((p) => p.textContent)}`);
+  return pill as HTMLElement;
+}
+
+it("a fully processed file with the base profile reads green 'Ready', offers no Continue, and counts as ready", async () => {
   await renderWith({});
-  expect(statusPill().textContent).toBe("Ready · basic profile");
-  expect(statusPill().classList.contains("pill--degraded")).toBe(true);
-  expect(host.textContent).not.toContain("Blocked");
+  expect(statusPill().textContent).toBe("Ready");
+  expect(statusPill().classList.contains("pill--ready")).toBe(true);            // FILES-STATUS-TRUTH-V1: was amber
+  expect(host.textContent).not.toContain("Not searchable");
   expect([...host.querySelectorAll("tbody button")].map((b) => b.textContent?.trim())).not.toContain("▸ Continue");
-  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 ready (1 with a basic profile)");
-  expect(host.querySelector(".screen__sub")!.textContent).not.toContain("still processing");
+  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 ready");
+  expect(host.querySelector(".screen__sub")!.textContent).not.toContain("processing");
   expect(button("▸ Continue corpus").disabled).toBe(true);
 });
 
@@ -149,16 +155,17 @@ it("a file with the vNext profile reads 'Ready'", async () => {
   expect(host.querySelector(".screen__sub")!.textContent).not.toContain("basic profile");
 });
 
-it("unresolved parents or no profile still read 'Blocked' with the reason, and offer Continue", async () => {
+it("unresolved parents or no profile read red 'Not searchable' with the reason, and offer Continue", async () => {
   await renderWith({ map_unresolved: 4, map_active: 0 });
-  expect(statusPill().textContent).toBe("Blocked");
+  expect(statusPill().textContent).toBe("Not searchable");
+  expect(statusPill().classList.contains("pill--blocked")).toBe(true);
   expect(statusPill().getAttribute("title")).toContain("4 unresolved parents");
   expect(button("▸ Continue").disabled).toBe(false);
-  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 still processing");
+  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 not searchable");
   await act(async () => root.unmount());
   root = createRoot(host);
   await renderWith({ profile_present: false });
-  expect(statusPill().textContent).toBe("Blocked");
+  expect(statusPill().textContent).toBe("Not searchable");
   expect(statusPill().getAttribute("title")).toContain("no profile");
 });
 
@@ -185,10 +192,10 @@ function vnextCard(): HTMLElement {
   return card.querySelector(".pill") as HTMLElement;
 }
 
-it("a library searchable on basic profiles reads amber 'Searchable · basic profiles', not a red vNext verdict", async () => {
+it("a library searchable on basic profiles reads green 'Searchable · basic profiles', not a red vNext verdict", async () => {
   await renderReadiness(TASTE_VNEXT);
   expect(vnextCard().textContent).toBe("Searchable · basic profiles");
-  expect(vnextCard().classList.contains("pill--degraded")).toBe(true);
+  expect(vnextCard().classList.contains("pill--ready")).toBe(true);             // FILES-STATUS-TRUTH-V1: the default card
   expect(vnextCard().getAttribute("title")).toContain("0/21 files use the vNext profile · 150/150 parents mapped");
 });
 
@@ -212,15 +219,14 @@ it("a complete vNext library stays green", async () => {
 
 // SERVED-PROFILE-LABEL (the owner, 2026-10-01: "fix the cinema badge so this confusion doesnt happen"): "vNext" means the card
 // SEARCH serves. Cinema: a vNext card written on 77 / 77 files, 0 served (the selection guard kept the richer basic cards).
-it("a file whose vNext card was written but not used by search reads 'Ready · basic profile', its Profile column 'basic'", async () => {
+it("a file whose vNext card was written but not used by search reads 'Ready', its Profile 'Basic · in use'", async () => {
   await renderWith({ profile_vnext: true, vnext_ready: true, profile_served: "basic" });
-  expect(statusPill().textContent).toBe("Ready · basic profile");
-  expect(statusPill().getAttribute("title")).toContain("a vNext card was written, but the selection guard kept the richer basic one");
-  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 ready (1 with a basic profile)");
-  await act(async () => { (host.querySelector('input[type="checkbox"]') as HTMLInputElement).click(); });   // Pipeline details
-  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
-  const profileCell = [...host.querySelectorAll("tbody .pill")].find((p) => p.textContent === "basic") as HTMLElement;
-  expect(profileCell.getAttribute("title")).toContain("a vNext card was written");
+  expect(statusPill().textContent).toBe("Ready");
+  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 ready");
+  const profile = cellPill("Basic · in use");
+  expect(profile.classList.contains("pill--ready")).toBe(true);
+  expect(profile.getAttribute("title")).toContain("retrieval and routing use it");
+  expect(profile.getAttribute("title")).toContain("a vNext card was written");
 });
 
 it("a file search serves with its vNext card reads 'Ready'; without the index's answer the written state stands", async () => {
@@ -232,12 +238,12 @@ it("a file search serves with its vNext card reads 'Ready'; without the index's 
   expect(statusPill().textContent).toBe("Ready");
 });
 
-it("a library whose vNext cards are written but not used reads amber, not green", async () => {
+it("a library whose vNext cards are written but not used reads 'Searchable · basic profiles' in green", async () => {
   const cinema = { verdict: "VNEXT_COMPLETE", pending: [], vnext_profiles: 77, profiled: 77, documents: 77, vnext_served: 0,
                    parents: { eligible: 12079, mapped: 12079, excluded: 369, unresolved: 0 } };
   await renderReadiness(cinema);
   expect(vnextCard().textContent).toBe("Searchable · basic profiles");
-  expect(vnextCard().classList.contains("pill--degraded")).toBe(true);
+  expect(vnextCard().classList.contains("pill--ready")).toBe(true);
   expect(vnextCard().getAttribute("title")).toContain("vNext cards written for 77/77 files · search uses 0");
   for (const vnext of [{ ...cinema, vnext_served: 77 }, { ...cinema, vnext_served: undefined }]) {   // all used / older backend
     await act(async () => root.unmount());
@@ -245,4 +251,52 @@ it("a library whose vNext cards are written but not used reads amber, not green"
     await renderReadiness(vnext);
     expect(vnextCard().classList.contains("pill--ready")).toBe(true);
   }
+});
+
+
+// FILES-STATUS-TRUTH-V1 (the owner, 2026-10-02: "THE UI MAY NEED TO BE UPDATED ESPECIALLY FILES COLOR AND STATUSES IDK WHATS
+// WRONG", then "I NEED TO KNOW PMAPS PER DOCUMENTS AND IF DOCUMENT PROFILE IS COMPELTED AND REGISTERED FOR RETRIEVAL AND
+// ROUTING ALSO AND GRAPH NODES NUMBER PER FILE"). Measured before: every cinema file read amber "Ready · basic profile" —
+// including five whose graph steps were running again after a failure — and commerce's two books whose extraction failed.
+it("a file whose required steps are still running reads blue 'Processing' with the steps in plain words", async () => {
+  await renderWith({ run_status: "reconciling", work_open: ["project_neo4j", "canonicalize"], work_failed: [] });
+  expect(statusPill().textContent).toBe("Processing");
+  expect(statusPill().classList.contains("pill--working")).toBe(true);
+  expect(statusPill().getAttribute("title")).toContain("running: graph, entity merge");
+  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 processing");
+});
+
+it("a failed step reads amber 'Needs retry' with the step and the reason, and counts as need retry", async () => {
+  await renderWith({ run_status: "reconciling", work_open: [],
+                     work_failed: [{ stage: "extract", note: "cloud transport failed: HTTP 503" }] });
+  expect(statusPill().textContent).toBe("Needs retry");
+  expect(statusPill().classList.contains("pill--degraded")).toBe(true);
+  expect(statusPill().getAttribute("title")).toContain("fact extraction failed: cloud transport failed: HTTP 503");
+  expect(statusPill().getAttribute("title")).toContain("searchable meanwhile");
+  expect(host.querySelector(".screen__sub")!.textContent).toContain("1 need retry");
+});
+
+it("a ready file still writing its summaries stays green and says so in the title", async () => {
+  await renderWith({ run_status: "query_ready", work_open: ["vocabulary"], work_failed: [] });
+  expect(statusPill().textContent).toBe("Ready");
+  expect(statusPill().classList.contains("pill--ready")).toBe(true);
+  expect(statusPill().getAttribute("title")).toContain("still writing: vocabulary");
+});
+
+it("pMAP shows mapped out of eligible (red while any parent is unresolved), Profile says whether search uses it, Graph counts nodes", async () => {
+  await renderWith({ map_eligible: 190, map_active: 188, map_excluded: 2, map_unresolved: 0, profile_served: "basic",
+                     graph_entities: 263, graph_relations: 84 });
+  expect(cellPill("190/190").classList.contains("pill--ready")).toBe(true);
+  expect(cellPill("190/190").getAttribute("title")).toContain("mapped 188 · excluded 2 · unresolved 0 of 190 eligible parents");
+  expect(cellPill("Basic · in use").classList.contains("pill--ready")).toBe(true);
+  expect(host.textContent).toContain("263 nodes · 84 relations");
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  await renderWith({ map_eligible: 10, map_active: 6, map_excluded: 0, map_unresolved: 4, profile_present: true, profile_served: null,
+                     graph_entities: null, graph_relations: null });
+  expect(cellPill("6/10").classList.contains("pill--blocked")).toBe(true);
+  expect(cellPill("Not in index").classList.contains("pill--degraded")).toBe(true);
+  expect(cellPill("Not in index").getAttribute("title")).toContain("retrieval and routing cannot use it");
+  const graphCell = [...host.querySelectorAll("tbody td")].find((td) => td.getAttribute("title")?.includes("no extraction"));
+  expect(graphCell?.textContent?.trim()).toBe("—");
 });

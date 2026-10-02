@@ -1,85 +1,78 @@
 # unit: frontend-v2/src/screens/Files.tsx
-anchor: frontend-v2/src/screens/Files.tsx:1-334
+anchor: frontend-v2/src/screens/Files.tsx:1-338
 
 ## purpose
-F8 — Files screen (FRONTEND-V2-PLAN §7 + FRONTEND-V2-FILES-OPS-01). Lists a corpus's documents using `GET /documents` as the identity authority (`source_name` primary column), merged by `doc_id` with `/documents/summary` for pipeline detail; wires upload, per-row delete, continuation, and the library danger zone. Owner sees pipeline status/controls; "Nothing here is manufactured green." — Files.tsx:34-44 [DERIVED]
+F8 "Files" screen: lists a corpus's documents with pipeline status, and wires the lifecycle controls — upload (`+ Add Files`), per-document Delete, corpus- and per-document Continue, and library deletion (frontend-v2/src/screens/Files.tsx:34-44). `GET /documents` is the identity authority (human `source_name` primary); `/documents/summary` is merged by `doc_id` for operational detail (frontend-v2/src/screens/Files.tsx:37-39). Owner sees pipeline columns and the danger zone; a read-only friend sees neither write control (frontend-v2/src/screens/Files.tsx:45-46).
 
 ## public surface
-
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `Files` | exported React component (function) | `({ corpusId: string; isOwner?: boolean = true; canWrite?: boolean = true; onLibraryDeleted?: (id: string) => void }) -> JSX.Element` | Files.tsx:47-49 | frontend-v2/src/App.tsx (FACTS.importers) |
-| `fmtBytes` | local function | `(n: number) -> string` | Files.tsx:13-19 | — (module-local) |
-| `fmtDate` | local function | `(iso: string) -> string` | Files.tsx:21-25 | — (module-local) |
-| `typeOf` | local function | `(sourceName: string, mediaType: string) -> string` | Files.tsx:27-32 | — (module-local) |
+| `Files` | function (React component, exported) | `({ corpusId: string; isOwner?: boolean = true; canWrite?: boolean = true; onLibraryDeleted?: (id: string) => void }) -> JSX` | frontend-v2/src/screens/Files.tsx:47-49 | frontend-v2/src/App.tsx |
 
 ## contracts
-
-**`Files(props)`**
-- in: `corpusId` is passed to every data/mutation call — `api.controlPlane(corpusId, s)`, `api.semanticReadiness`, `api.documents`, `api.documentSummaries` (Files.tsx:59-62), `api.upload(corpusId, f)` (Files.tsx:90), `api.enrichCorpus(corpusId)` (Files.tsx:124), `api.deleteCorpus(corpusId, corpusId)` (Files.tsx:329).
-- in: defaults `isOwner = true`, `canWrite = true` (Files.tsx:47-48).
-- pre: `controlPlane` is only fetched when `isOwner`; otherwise resolved to `null` without a request (Files.tsx:59).
-- pre: `describeError` expects `ApiError.message` may embed a JSON body starting at the first `{` (Files.tsx:71-76).
-- post: `onLibraryDeleted?.(corpusId)` fires only after `api.deleteCorpus` resolves (Files.tsx:329).
-- gating: `isOwner` → ReadinessTriad (Files.tsx:190), "Pipeline details" toggle (Files.tsx:205), "▸ Continue corpus" (Files.tsx:170), per-row "▸ Continue" (Files.tsx:269), danger zone (Files.tsx:302), ConfirmByName (Files.tsx:322). `canWrite` → "＋ Add Files" (Files.tsx:180), per-row Delete (Files.tsx:279), empty-state "Add files" (Files.tsx:217-218), read-only banner when absent (Files.tsx:195-198).
-- out: render states — skeleton while `docs.data == null && !docs.error` (Files.tsx:211-212), ErrorState with `onRetry={refresh}` on load failure (Files.tsx:213-214), EmptyState when `!rows.length` (Files.tsx:215-221).
-
-**`fmtBytes(n)`**: `n` falsy -> `"—"` (Files.tsx:14); else divides by `1024` through units `["B", "KB", "MB", "GB"]`, prints `Math.round(v)` when `v >= 10 || i === 0` else `v.toFixed(1)` (Files.tsx:15-18).
-
-**`fmtDate(iso)`**: `Date.parse` NaN -> `"—"`; else `toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })` (Files.tsx:22-24).
-
-**`typeOf(sourceName, mediaType)`**: extension from `sourceName.split(".").pop()!.toUpperCase()` if a dot exists; else regex `/([a-z0-9.-]+)$/i` over `mediaType`; final fallback `"—"` (Files.tsx:28-31).
+**Files**
+- in: `corpusId: string` required; `isOwner` default `true`; `canWrite` default `true`; optional `onLibraryDeleted` callback — frontend-v2/src/screens/Files.tsx:47-49
+- pre: `api.controlPlane`, `api.semanticReadiness`, `api.documents`, `api.documentSummaries` reachable (controlPlane only fetched when `isOwner`) — frontend-v2/src/screens/Files.tsx:59-62
+- post: writes go through `api.upload(corpusId, f)` per picked file — frontend-v2/src/screens/Files.tsx:95; `api.deleteDocument(docId, sourceName || docId)` — frontend-v2/src/screens/Files.tsx:115; `api.enrichCorpus(corpusId)` — frontend-v2/src/screens/Files.tsx:129; `api.enrichDocument(docId)` — frontend-v2/src/screens/Files.tsx:143; `api.deleteCorpus(corpusId, corpusId)` then `onLibraryDeleted?.(corpusId)` — frontend-v2/src/screens/Files.tsx:334
+- post: every mutation path ends with `refresh()` (nonce bump re-runs all four fetches) — frontend-v2/src/screens/Files.tsx:66, 105, 121, 135, 150
 
 ## effect surface
-- Network (all via `../lib/api`): `api.controlPlane(corpusId, s)` (Files.tsx:59), `api.semanticReadiness(corpusId, s)` (Files.tsx:60), `api.documents(corpusId, s)` (Files.tsx:61), `api.documentSummaries(corpusId, s)` (Files.tsx:62), `api.upload(corpusId, f)` = POST /upload (Files.tsx:41, 90), `api.deleteDocument(docId, sourceName || docId)` = DELETE /documents/{doc_id} (Files.tsx:41, 110), `api.enrichCorpus(corpusId)` (Files.tsx:124), `api.enrichDocument(docId)` (Files.tsx:138), `api.deleteCorpus(corpusId, corpusId)` (Files.tsx:329).
-- Postgres tables: none directly — FACTS `tables_read: []`, `tables_written: []`; all persistence sits behind the api layer.
-- Files/Qdrant/subprocess/env flags: none read in this unit.
+- network (all via imported `api`): `controlPlane(corpusId, s)` owner-only — frontend-v2/src/screens/Files.tsx:59; `semanticReadiness(corpusId, s)` — frontend-v2/src/screens/Files.tsx:60; `documents(corpusId, s)` — frontend-v2/src/screens/Files.tsx:61; `documentSummaries(corpusId, s)` — frontend-v2/src/screens/Files.tsx:62; `upload(corpusId, f)` — frontend-v2/src/screens/Files.tsx:95; `deleteDocument(docId, sourceName || docId)` — frontend-v2/src/screens/Files.tsx:115; `enrichCorpus(corpusId)` — frontend-v2/src/screens/Files.tsx:129; `enrichDocument(docId)` — frontend-v2/src/screens/Files.tsx:143; `deleteCorpus(corpusId, corpusId)` — frontend-v2/src/screens/Files.tsx:334
+- Postgres tables: none directly (`tables_read`/`tables_written` empty in FACTS)
+- env flags: none read
+- DOM: hidden `<input type="file" accept=".md,.txt,.html,.pdf,.epub,.docx" multiple>` — frontend-v2/src/screens/Files.tsx:170-176
 
 ## invariants
-INVARIANT: basicCount ≤ readyCount — both count `docSearchable(summaries[r.doc_id])` rows, basicCount adds `!servesVnext(...)` — Files.tsx:67-68 [DERIVED]
-  fails-if: header shows more basic-profile docs than ready docs, or negative "still processing".
-INVARIANT: incompleteCount = rows.length − readyCount — one counts `!docSearchable(...)`, the other `docSearchable(...)` over the same `rows` — Files.tsx:67, 149 [DERIVED]
-  fails-if: "Continue corpus (N)" badge contradicts the header's "still processing" count.
-INVARIANT: "Continue corpus" disabled ⇔ `!incompleteCount` (or busy) — `disabled={!!busy || !incompleteCount}` — Files.tsx:172 [DERIVED]
-  fails-if: owner can queue a no-op corpus continuation.
-INVARIANT: ok + failures.length = files.length — upload loop increments exactly one of `ok` / `failures` per file — Files.tsx:87-95 [DERIVED]
-  fails-if: notice/err undercount submitted uploads.
-INVARIANT: delete confirm token = `sourceName || docId` — Files.tsx:108-110 [DERIVED]
-  fails-if: backend rejects deletion of documents with no human name.
-INVARIANT: fmtBytes loop exits only when `v < 1024` or `i === u.length - 1` (i.e. GB cap) — Files.tsx:17 [DERIVED]
-  fails-if: sizes ≥ 1024 GB render in a nonexistent unit.
+INVARIANT: header counts source === Status column source — both compute `docStatus(summaries[r.doc_id])`, comment `FILES-STATUS-TRUTH-V1` — frontend-v2/src/screens/Files.tsx:67-73, 256 [DERIVED]
+  fails-if: header and rows disagree about how many docs are ready/processing.
+INVARIANT: doc without summary → state `"working"` in counts and `StatePill state="working" label="PROCESSING"` in row — frontend-v2/src/screens/Files.tsx:71, 256 [DERIVED]
+  fails-if: just-uploaded doc (present in `/documents`, absent from summaries) renders as failed instead of processing.
+INVARIANT: counted state ∈ {`ready`,`working`,`degraded`,`blocked`} only; anything else is skipped by the counter — frontend-v2/src/screens/Files.tsx:71-72 [DERIVED]
+  fails-if: a new state string silently drops out of the header totals.
+INVARIANT: per-row `▸ Continue` visible iff `isOwner && !docSearchable(summaries[r.doc_id])` — frontend-v2/src/screens/Files.tsx:274 [DERIVED]
+  fails-if: non-owner sees owner-only controls, or a fully searchable doc shows a pointless Continue.
+INVARIANT: `▸ Continue corpus` disabled iff `!!busy || !incompleteCount`, and `incompleteCount` = rows where `!docSearchable(summaries[r.doc_id])` — same predicate as the per-row button — frontend-v2/src/screens/Files.tsx:154, 180, 274 [DERIVED]
+  fails-if: corpus-level count and row-level buttons disagree on which docs are incomplete.
+INVARIANT: delete confirm token is always non-empty — `sourceName || docId` — frontend-v2/src/screens/Files.tsx:115 [DERIVED]
+  fails-if: backend confirm-by-name rejects empty token for unnamed docs.
+INVARIANT: `fmtBytes(0)` → `"—"`; `fmtDate` on unparseable ISO → `"—"` — frontend-v2/src/screens/Files.tsx:14, 22-23 [DERIVED]
+  fails-if: zero-byte file or bad timestamp renders `NaN`/`Invalid Date`.
+INVARIANT: Graph cell renders counts only when `d.graph_entities != null`; relations default `d.graph_relations ?? 0` — frontend-v2/src/screens/Files.tsx:261-262 [DERIVED]
+  fails-if: `null` entities renders "null nodes".
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (network via `api.*` Files.tsx:59-62, 90, 110, 124, 138, 329; `Date.parse`/`toLocaleDateString` Files.tsx:22-24; per-file upload iteration order Files.tsx:87)
-idempotency: UNSAFE — `deleteDocument`/`deleteCorpus` destroy documents, vectors and graph (Files.tsx:110, 329, dialog text Files.tsx:320); `enrichCorpus`/`enrichDocument` are re-drive calls meant to be repeated (Files.tsx:124, 138); `refresh()` re-runs all four `useAsync` fetches via the `nonce` counter (Files.tsx:53, 66, 95).
+determinism: NONDETERMINISTIC (network via `api.*` fetches/mutations — frontend-v2/src/screens/Files.tsx:59-62, 95, 115, 129, 143, 334; `Date.parse`/`toLocaleDateString` in `fmtDate` — frontend-v2/src/screens/Files.tsx:21-25; upload loop interleaves state updates per file — frontend-v2/src/screens/Files.tsx:92-100)
+idempotency: UNSAFE (document and library deletes are irreversible per dialog copy "It can't be undone" — frontend-v2/src/screens/Files.tsx:312, 325; upload creates new ingestion work per call — frontend-v2/src/screens/Files.tsx:95)
 
 ## failure behaviour
-- `describeError`: swallows JSON parse failure of the `ApiError` body with comment `/* not a JSON body — fall through to the raw message */`, then returns the raw `e.message` (Files.tsx:71-76). Parsed body -> `` `${body.error_code ?? "error"}: ${body.message}` `` (Files.tsx:74). Non-`Error` -> `String(e)` (Files.tsx:78).
-- Upload: per-file failures collected as `` `${f.name}: ${describeError(e)}` `` and joined with `"  ·  "` into one `err` banner; partial success still sets a `notice` (Files.tsx:92-98).
-- Delete/continue handlers: single error string into `err`; `setBusy(null)` + `refresh()` always run in `finally` (Files.tsx:112-117, 126-131, 140-145).
-- Initial load failure: `docs.error && docs.data == null` -> `ErrorState` with retry (Files.tsx:213-214). Missing summary is not an error: row renders `<StatePill state="degraded" label="PROCESSING" />` (Files.tsx:247).
+- `describeError`: for `ApiError`, parses the JSON embedded in `e.message` from the first `{`; uses `` `${body.error_code ?? "error"}: ${body.message}` `` when `body.message` exists, else the raw message; non-`Error` values → `String(e)` — frontend-v2/src/screens/Files.tsx:75-84
+- upload: per-file try/catch; failures collected as `name: describeError(e)` and joined with `"  ·  "` into `err`; successes produce notice `` `${ok} file${ok > 1 ? "s" : ""} submitted for ingestion — processing.` `` — frontend-v2/src/screens/Files.tsx:96-103
+- delete/continue corpus/continue doc: try/catch sets `err` via `describeError`; `finally` clears `busy` and `refresh()` — frontend-v2/src/screens/Files.tsx:108-123, 126-137, 140-151
+- list load: `docs.error && docs.data == null` → `ErrorState` with `onRetry={refresh}`; `docs.data == null && !docs.error` → `Skeleton rows={5}` — frontend-v2/src/screens/Files.tsx:219-222
+- library delete `onConfirm`: `await api.deleteCorpus(corpusId, corpusId)` has no local catch — failure handling is delegated to `ConfirmByName` — frontend-v2/src/screens/Files.tsx:334 [INFERRED: no try/catch in the handler, so behavior depends on the ConfirmByName contract]
 
 ## dumb-code flags
-- Two truncations of the same id in one cell: `r.doc_id.slice(0, 18)}…` (name fallback) vs `r.doc_id.slice(0, 12)}…` (subline) — Files.tsx:240-242.
-- Accepted-format list duplicated in two forms: `ACCEPT = ".md,.txt,.html,.pdf,.epub,.docx"` vs prose `"Accepted: .md .txt .html .pdf .epub .docx"` — Files.tsx:11, 298.
-- `api.deleteCorpus(corpusId, corpusId)` passes the same value as id and confirm token — Files.tsx:329.
-- Tooltip wording mismatch: disabled-state title says "All documents are vNext ready" but the gating predicate is `docSearchable`, and the code comment says Continue "never one that only lacks the vNext profile" — Files.tsx:148, 173-175 [INFERRED: title overstates the readiness condition the code actually checks].
-- `style={{ marginTop: 14 }}` repeated on banners/cards ~8 times (Files.tsx:196, 201-203, 209, 212, 215, 223) — no shared class.
-- Status pill derives from `docVnext(d)` (Files.tsx:247) while the details "Profile" column re-derives display from `servedWriter(d)` string compares `"vnext"`/`"basic"` (Files.tsx:258-261) — two readiness encodings for one row.
+- Magic truncation lengths: `r.doc_id.slice(0, 18)` and `r.doc_id.slice(0, 12)` in adjacent cells — frontend-v2/src/screens/Files.tsx:249-250
+- Accepted-extension list written three times: `ACCEPT = ".md,.txt,.html,.pdf,.epub,.docx"` — frontend-v2/src/screens/Files.tsx:11; footnote "Accepted: .md .txt .html .pdf .epub .docx." — frontend-v2/src/screens/Files.tsx:303; EmptyState copy "Add Markdown, text, HTML, PDF, EPUB or Word files" — frontend-v2/src/screens/Files.tsx:227
+- `sourceName || docId` label fallback repeated at lines 109, 115, 141, 143 comment, 170, 278, 317 — frontend-v2/src/screens/Files.tsx:109-317
+- `describeError` heuristic `e.message.slice(e.message.indexOf("{"))`: when no `{` exists, `indexOf` returns `-1` and `slice(-1)` yields the last character, guaranteeing the `JSON.parse` throw (caught at line 80) — frontend-v2/src/screens/Files.tsx:78 [INFERRED: slice(-1) behavior makes the catch the normal path for plain-text messages]
+- Two stacked doc comments on the same export (F8 spec block + `isOwner`/`canWrite` block) — frontend-v2/src/screens/Files.tsx:34-46
+- Pipeline-details fallbacks read different shapes: summary path uses `d.parents`/`d.children`, fallback uses row `r.parents`/`r.chunks` — field names differ between the two response types — frontend-v2/src/screens/Files.tsx:265-266
 
 ## refactor notes
-- Sole importer is `frontend-v2/src/App.tsx` (FACTS.importers) — changing the props signature or the `isOwner`/`canWrite` defaults (Files.tsx:47-48) ripples only there, but behavior gating is pervasive (Files.tsx:170, 180, 190, 195, 205, 269, 279, 302, 322).
-- Readiness predicate semantics are load-bearing: `docSearchable` gates both Continue controls and all three counts (Files.tsx:67-68, 149, 172, 269); `servedWriter` return values `"vnext"`/`"basic"` are literal-compared (Files.tsx:258-259); `docVnext` feeds the row Pill (Files.tsx:247). Renames in `../lib/readiness` break this file silently.
-- `DocSummary` field consumption: `parents, children, map_active, map_excluded, map_unresolved, profile_vnext, graph_entities, graph_relations`, with fallbacks to documents-endpoint fields `r.parents / r.children / r.chunks / r.map_active` — Files.tsx:249-265. Schema changes to `../lib/contracts` or `/documents/summary` must update these columns.
-- Backend contract: the delete confirm token accepts the `source_name`, falling back to `doc_id` — Files.tsx:108-110. Changing the token rule breaks deletes of nameless documents.
-- `onLibraryDeleted` must remain a post-success side effect of `deleteCorpus`, not fire on cancel (Files.tsx:322-330).
+- Sole importer is `frontend-v2/src/App.tsx` (FACTS.importers); prop-shape changes ripple only there, but its call site is not in this material — frontend-v2/src/screens/Files.tsx:47-49
+- All four fetches share the `[corpusId, nonce]` key (controlPlane adds `isOwner`); `refresh` works by bumping `nonce` — changing refresh strategy touches all four — frontend-v2/src/screens/Files.tsx:59-66
+- `docSearchable` gating is load-bearing in two places (corpus button count, per-row button) — must stay a single predicate — frontend-v2/src/screens/Files.tsx:154, 180, 274
+- `DocSummary` fields consumed: `graph_entities`, `graph_relations`, `parents`, `children`, `map_excluded`, `map_unresolved` — renaming any breaks the details columns and graph cell — frontend-v2/src/screens/Files.tsx:261-269
+- Row fields consumed from `/documents`: `doc_id`, `source_name`, `media_type`, `created_at`, `bytes`, `parents`, `chunks` — frontend-v2/src/screens/Files.tsx:248-266
+- Backend confirm-by-name contract (`deleteDocument(docId, sourceName || docId)`, `deleteCorpus(corpusId, corpusId)`) passes the human name as token — frontend-v2/src/screens/Files.tsx:113-115, 334
 
 ## VERIFY
 ```verify
-grep -Fq 'const ACCEPT = ".md,.txt,.html,.pdf,.epub,.docx"' frontend-v2/src/screens/Files.tsx
-grep -Fq 'await api.deleteDocument(docId, sourceName || docId)' frontend-v2/src/screens/Files.tsx
-grep -Fq 'await api.deleteCorpus(corpusId, corpusId)' frontend-v2/src/screens/Files.tsx
-grep -Eq 'disabled=\{!!busy \|\| !incompleteCount\}' frontend-v2/src/screens/Files.tsx
-grep -Fq '<StatePill state="degraded" label="PROCESSING" />' frontend-v2/src/screens/Files.tsx
-! grep -Fq 'useEffect' frontend-v2/src/screens/Files.tsx
+grep -Fq 'const ACCEPT = ".md,.txt,.html,.pdf,.epub,.docx";' frontend-v2/src/screens/Files.tsx
+grep -Fq 'isOwner = true, canWrite = true' frontend-v2/src/screens/Files.tsx
+grep -Fq 'await api.deleteDocument(docId, sourceName || docId);' frontend-v2/src/screens/Files.tsx
+grep -Fq 'FILES-STATUS-TRUTH-V1' frontend-v2/src/screens/Files.tsx
+! grep -Fq 'toast(' frontend-v2/src/screens/Files.tsx
+test "$(grep -c -F 'useAsync(' frontend-v2/src/screens/Files.tsx)" -ge 4
 ```

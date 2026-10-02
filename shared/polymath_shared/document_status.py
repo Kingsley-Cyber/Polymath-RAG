@@ -102,7 +102,45 @@ def corpus_document_summaries(conn, *, corpus_id: str) -> dict[str, dict]:
         s["map_unresolved"] = max(0, s["map_eligible"] - s["map_active"] - s["map_excluded"])
         pmap_ok = s["map_eligible"] == 0 or s["map_unresolved"] == 0
         s["vnext_ready"] = bool(pmap_ok and s["profile_present"] and s["profile_vnext"])
+    _attach_run_work(conn, out)
     return out
+
+
+def _attach_run_work(conn, out: dict[str, dict]) -> None:
+    """FILES-STATUS-TRUTH-V1 (the owner, 2026-10-02: "THE UI MAY NEED TO BE UPDATED ESPECIALLY FILES COLOR AND STATUSES"):
+    each file's own run — the `document_status` rule, the newest live run that chunked it — with its status and its open
+    and failed stage tickets, so the Files list says Processing / Needs retry instead of "Ready" for a file whose steps
+    are still running or failed (measured 2026-10-02: cinema's five embedder-failed files and commerce's two books whose
+    extraction failed on a provider 503 all read "Ready"). Two indexed reads (~20 ms for cinema's 77 files).
+
+      run_status    the run's status (`query_ready` = every required step done and promoted); None without a run
+      work_open     stages whose ticket is ready / leased / pending — in a run with a FAILED ticket the pending ones
+                    wait on that failure (the file reads Needs retry), so they are not listed
+      work_failed   [{stage, note}] of tickets that failed with their retries spent"""
+    for s in out.values():
+        s.update({"run_status": None, "work_open": [], "work_failed": []})
+    docs_of_run: dict[str, list[str]] = {}
+    for did, rid, status in conn.execute(
+            "SELECT DISTINCT ON (e.payload->>'doc_id') e.payload->>'doc_id', r.run_id, r.status "
+            "FROM runs r JOIN outbox_events e ON e.run_id = r.run_id AND e.event_type = 'chunked.v1' "
+            "WHERE e.payload->>'doc_id' = ANY(%s) AND r.superseded_by_run_id IS NULL "
+            "ORDER BY e.payload->>'doc_id', r.created_at DESC", (list(out),)).fetchall():
+        if did in out:
+            out[did]["run_status"] = status
+            docs_of_run.setdefault(rid, []).append(did)
+    if not docs_of_run:
+        return
+    rows = conn.execute(
+        "SELECT run_id, stage, status, last_error_note FROM stage_tickets "
+        "WHERE run_id = ANY(%s) AND archived_at IS NULL AND status IN ('pending', 'ready', 'leased', 'failed') "
+        "ORDER BY run_id, seq", (list(docs_of_run),)).fetchall()
+    failed_runs = {rid for rid, _stage, status, _note in rows if status == "failed"}
+    for rid, stage, status, note in rows:
+        for did in docs_of_run.get(rid, ()):
+            if status == "failed":
+                out[did]["work_failed"].append({"stage": stage, "note": (note or "")[:200] or None})
+            elif not (status == "pending" and rid in failed_runs):
+                out[did]["work_open"].append(stage)
 
 
 def document_status(conn, *, doc_id: str, detail: bool = False) -> dict[str, Any]:

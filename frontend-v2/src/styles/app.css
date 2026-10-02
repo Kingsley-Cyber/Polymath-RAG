@@ -100,6 +100,8 @@ a { color: var(--accent); }
 .pill--blocked  { color: var(--bad);  background: var(--bad-soft); }
 .pill--degraded { color: var(--warn); background: var(--warn-soft); }
 .pill--unknown  { color: var(--text-2); background: var(--neutral-soft); border-color: var(--border); }
+/* FILES-STATUS-TRUTH-V1: in progress, expected to finish on its own — neither done (green) nor a problem (amber / red) */
+.pill--working  { color: var(--accent); background: var(--accent-soft); }
 .pill__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
 /* Banner text is always --text; the status shows in the left edge and a soft tint. */
@@ -116,6 +118,7 @@ a { color: var(--accent); }
 .files__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
 .files__actions { flex: none; padding-top: 2px; }
 .files__name { font-weight: 500; }
+.files__cell { white-space: nowrap; }
 .files__docid { font-size: var(--fs-xs); color: var(--text-3); font-family: var(--font-mono); }
 .files__del { padding: 3px 10px; font-size: var(--fs-xs); color: var(--bad); }
 .files__del:hover:not(:disabled) { background: var(--bad-soft); border-color: var(--bad); }
