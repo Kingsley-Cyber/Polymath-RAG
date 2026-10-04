@@ -1,129 +1,98 @@
 # unit: frontend-v2/src/ui/_small-modules
-anchor: frontend-v2/src/ui/CopyField.tsx:1-51
+anchor: frontend-v2/src/ui/CopyButton.tsx:1-29
 
 ## purpose
-Presentational widget kit for the single-profile frontend-v2 app: copy-to-clipboard fields (CopyField, Secret), native-`<dialog>` modals and confirm flows (Dialog, ConfirmByName, useConfirm), a password field with show/hide (PasswordInput), an inline Lucide-derived SVG icon set (icons.tsx), and the loading/empty/error states every data view needs (states.tsx) — CopyField.tsx:4-7, Dialog.tsx:3-4, states.tsx:4-5 [DERIVED]. The unit exists so "still loading", "nothing here" and "failed" never look alike (states.tsx:4-5) and so `window.prompt/confirm/alert` are replaced (Dialog.tsx:3-4) [DERIVED]. Sole importer: `frontend-v2/src/App.tsx` — FACTS.importers [DERIVED].
+Seven presentational modules for the frontend-v2 React app: copy affordances (`CopyButton`, `CopyField`, `Secret`), native-`<dialog>` modals and confirm flows (`Dialog`, `ConfirmByName`, `useConfirm`), a password field with reveal (`PasswordInput`), inline outline icons copied from Lucide (`Icon`, `IconButton`), and `Skeleton`/`EmptyState`/`ErrorState` for data views. frontend-v2/src/ui/CopyButton.tsx:1-3, frontend-v2/src/ui/Dialog.tsx:3-4, frontend-v2/src/ui/states.tsx:3-5 [DERIVED]
+Sole external importer: `frontend-v2/src/App.tsx`. material-6110425088-1194001861777541.md:89-101 [DERIVED]
 
 ## public surface
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| CopyField | function | ({ value: string, what: string, block?: boolean = false, primary?: boolean = false }) -> JSX | frontend-v2/src/ui/CopyField.tsx:8 | App.tsx (unit-level) |
-| Dialog | function | ({ open: boolean, title: string, onClose: () => void, children: ReactNode, actions: ReactNode }) -> JSX | frontend-v2/src/ui/Dialog.tsx:5 | App.tsx (unit-level) |
-| ConfirmByName | function | ({ open, title, name: string, what: ReactNode, action: string, onConfirm: () => Promise<void> \| void, onClose }) -> JSX | frontend-v2/src/ui/Dialog.tsx:27 | App.tsx (unit-level) |
-| ConfirmOptions | interface | { title: string; body: ReactNode; action: string; danger?: boolean } | frontend-v2/src/ui/Dialog.tsx:61 | App.tsx (unit-level) |
-| useConfirm | hook | () -> [(o: ConfirmOptions) => Promise<boolean>, ReactNode] | frontend-v2/src/ui/Dialog.tsx:65 | App.tsx (unit-level) |
-| PasswordInput | function | ({ id?, value, onChange, autoComplete: "current-password" \| "new-password", placeholder?, autoFocus? }) -> JSX | frontend-v2/src/ui/PasswordInput.tsx:5 | App.tsx (unit-level) |
-| Secret | function | ({ value: string, what: string, block?: boolean = false, rows?: number = 10 }) -> JSX | frontend-v2/src/ui/Secret.tsx:8 | App.tsx (unit-level) |
-| IconName | type | keyof typeof PATHS (38 keys) | frontend-v2/src/ui/icons.tsx:55 | App.tsx (unit-level) |
-| Icon | function | ({ name: IconName, size?: number = 16 } & SVGProps\<SVGSVGElement\>) -> JSX | frontend-v2/src/ui/icons.tsx:58 | App.tsx; CopyField.tsx:3, PasswordInput.tsx:2, Secret.tsx:3, states.tsx:2 |
-| IconButton | function | ({ icon: IconName, label: string } & Omit\<ButtonHTMLAttributes, "aria-label"\|"title"\|"children"\>) -> JSX | frontend-v2/src/ui/icons.tsx:68 | App.tsx (unit-level) |
-| Skeleton | function | ({ rows?: number = 4, label?: string = "Loading…" }) -> JSX | frontend-v2/src/ui/states.tsx:7 | App.tsx (unit-level) |
-| EmptyState | function | ({ title: string, children?: ReactNode, action?: ReactNode }) -> JSX | frontend-v2/src/ui/states.tsx:16 | App.tsx (unit-level) |
-| ErrorState | function | ({ message: string, onRetry?: () => void }) -> JSX | frontend-v2/src/ui/states.tsx:26 | App.tsx (unit-level) |
-
-FACTS.importers is unit-level; per-symbol attribution is not proven. Dialog.tsx imports only React (Dialog.tsx:1) — no intra-unit dependency [DERIVED].
+| `CopyButton` | function | `({ text: string; label: string; className?: string })` -> button | frontend-v2/src/ui/CopyButton.tsx:9 | App.tsx |
+| `CopyField` | function | `({ value: string; what: string; block?: boolean; primary?: boolean })` -> JSX | frontend-v2/src/ui/CopyField.tsx:8 | App.tsx |
+| `Dialog` | function | `({ open: boolean; title: string; onClose: () => void; children: ReactNode; actions: ReactNode })` -> JSX \| null | frontend-v2/src/ui/Dialog.tsx:5 | App.tsx, ConfirmByName, useConfirm |
+| `ConfirmByName` | function | `({ open, title, name, what, action, onConfirm, onClose })` -> JSX | frontend-v2/src/ui/Dialog.tsx:27 | App.tsx |
+| `ConfirmOptions` | interface | `{ title: string; body: ReactNode; action: string; danger?: boolean }` | frontend-v2/src/ui/Dialog.tsx:61 | useConfirm |
+| `useConfirm` | function | `()` -> `[(o: ConfirmOptions) => Promise<boolean>, ReactNode]` | frontend-v2/src/ui/Dialog.tsx:65 | App.tsx |
+| `PasswordInput` | function | `({ id?, value, onChange, autoComplete, placeholder?, autoFocus? })` -> JSX | frontend-v2/src/ui/PasswordInput.tsx:5 | App.tsx |
+| `Secret` | function | `({ value: string; what: string; block?: boolean; rows?: number })` -> JSX | frontend-v2/src/ui/Secret.tsx:8 | App.tsx |
+| `IconName` | type | `keyof typeof PATHS` (closed union) | frontend-v2/src/ui/icons.tsx:55 | siblings |
+| `Icon` | function | `({ name: IconName; size?: number } & SVGProps<SVGSVGElement>)` -> svg | frontend-v2/src/ui/icons.tsx:58 | App.tsx; CopyButton/CopyField/PasswordInput/Secret/states (intra-unit) |
+| `IconButton` | function | `({ icon: IconName; label: string } & Omit<ButtonHTMLAttributes, "aria-label"\|"title"\|"children">)` -> button | frontend-v2/src/ui/icons.tsx:68 | App.tsx |
+| `Skeleton` | function | `({ rows?: number; label?: string })` -> JSX | frontend-v2/src/ui/states.tsx:7 | App.tsx |
+| `EmptyState` | function | `({ title: string; children?: ReactNode; action?: ReactNode })` -> JSX | frontend-v2/src/ui/states.tsx:16 | App.tsx |
+| `ErrorState` | function | `({ message: string; onRetry?: () => void })` -> JSX | frontend-v2/src/ui/states.tsx:26 | App.tsx |
 
 ## contracts
-
-**Dialog** — Dialog.tsx:5-23
-- in: `open`, `title`, `onClose`, `children`, `actions` — Dialog.tsx:5-6 [DERIVED]
-- post: when `open && !d.open`, calls `showModal()`; if `showModal` is not a function, falls back to `setAttribute("open", "")` — Dialog.tsx:12-13 [DERIVED]
-- post: `!open` renders `null` — closed dialog is not in the page — Dialog.tsx:16 [DERIVED]
-- Esc: `onCancel` is `preventDefault()`ed then routed to `onClose()` — Dialog.tsx:18 [DERIVED]
-
-**ConfirmByName** — Dialog.tsx:27-58
-- pre: confirm button `disabled={!match || busy}` where `match = typed === name` — Dialog.tsx:36,45 [DERIVED]
-- pre: `name` is a token the backend also requires — Dialog.tsx:26 [DERIVED]
-- post: `open` turning true resets `typed`/`error`/`busy` — Dialog.tsx:35 [DERIVED]
-- post: `onConfirm()` throw → `e.message` in `banner banner--bad`, dialog stays open, `busy` cleared in `finally`; success → `onClose()` — Dialog.tsx:40-41 [DERIVED]
-- Enter key submits — Dialog.tsx:54 [DERIVED]
-
-**useConfirm** — Dialog.tsx:65-80
-- out: `[confirm, element]`; caller renders `element`, awaits `confirm(options)` — Dialog.tsx:63,79 [DERIVED]
-- post: promise resolves `true` only from the action button; Cancel/Esc/backdrop answer `false` (per doc) — Dialog.tsx:63-64,70-72 [DERIVED]
-
-**CopyField** — CopyField.tsx:8-50
-- in: `value: string`, `what: string`, `block = false`, `primary = false` — CopyField.tsx:8-12 [DERIVED]
-- pre: button `disabled={!value}` — CopyField.tsx:27 [DERIVED]
-- post: success → `copied` for 2000 ms, label "Copied", icon `check` — CopyField.tsx:19-21,24,28-29 [DERIVED]
-- post: failure → `role="alert"` text "The browser blocked copying: select the text and press ⌘C." — CopyField.tsx:32 [DERIVED]
-
-**Secret** — Secret.tsx:8-21
-- in: `value`, `what`, `block = false`, `rows = 10` — Secret.tsx:8 [DERIVED]
-- post: success → `copied` for 2000 ms — Secret.tsx:10 [DERIVED]
-- failure: `ok === false` produces no state change and no message — Secret.tsx:10 [DERIVED]
-
-**PasswordInput** — PasswordInput.tsx:5-25
-- in: `autoComplete` limited to `"current-password" | "new-password"` — PasswordInput.tsx:9 [DERIVED]
-- post: eye button toggles input `type` text/password; `aria-pressed` mirrors `show` — PasswordInput.tsx:15-19 [DERIVED]
-
-**Icon / IconButton** — icons.tsx:55-75
-- in: `Icon` takes `name: IconName` (one of the 38 `PATHS` keys, lines 15-52), `size = 16` — icons.tsx:14-53,58 [DERIVED]
-- post: svg is `aria-hidden="true" focusable="false"`, `viewBox="0 0 24 24"`, `strokeWidth={2}` — icons.tsx:60-61 [DERIVED]
-- pre: `IconButton` requires `label`; it becomes both `aria-label` and `title` — icons.tsx:68-71 [DERIVED]
-
-**Skeleton / EmptyState / ErrorState** — states.tsx:7-34
-- Skeleton: `role="status" aria-live="polite"`, sr-only `label` default "Loading…", `rows = 4` — states.tsx:9-11 [DERIVED]
-- ErrorState: `role="alert"`, fixed title "Couldn't load this", Retry button only when `onRetry` provided — states.tsx:28-31 [DERIVED]
+- `CopyButton` — in: `text` copied via `copyText(text)`; post on ok: `copied=true` for `2000` ms, icon swaps `"copy"` -> `"check"`, class gains `copy-btn--done`; pre/post: pending timer cleared on unmount via ref. frontend-v2/src/ui/CopyButton.tsx:12,18-22,25 [DERIVED]
+- `CopyField` — pre: button `disabled={!value}`; post ok: "Copied" for `2000` ms; post fail: `failed=true` renders `role="alert"` hint; `block` renders `<pre tabIndex={0}>`, else `<code>`. frontend-v2/src/ui/CopyField.tsx:21,28,33,38,45 [DERIVED]
+- `Dialog` — pre: none; post: `open===false` renders `null`; `open` flip calls `showModal()` (fallback `setAttribute("open", "")`); Esc fires `onCancel` -> `preventDefault()` + `onClose()`. frontend-v2/src/ui/Dialog.tsx:13,16,18 [DERIVED]
+- `ConfirmByName` — pre: danger button `disabled={!match || busy}` where `match = typed === name`; state (`typed`,`error`,`busy`) reset when `open` turns true; Enter key triggers confirm. post: `onConfirm` success -> `onClose()`; throw -> error into `banner banner--bad`, `busy` reset in `finally`. frontend-v2/src/ui/Dialog.tsx:35-36,40,45,54,56 [DERIVED]
+- `useConfirm` — out: `[confirm, element]`; promise resolves `true` only from the action button, `false` from Cancel/Esc (`onClose` -> `answer(false)`). frontend-v2/src/ui/Dialog.tsx:68,70-72 [DERIVED]
+- `PasswordInput` — toggles `type={show ? "text" : "password"}`; `autoComplete` restricted to `"current-password" | "new-password"`; eye button has `aria-pressed={show}`. frontend-v2/src/ui/PasswordInput.tsx:9,16,19-21 [DERIVED]
+- `Secret` — `block` renders `<textarea readOnly rows={rows}>` (default `rows = 10`), else `<code>`; copy ok -> "Copied" check for `2000` ms; no failure surface. frontend-v2/src/ui/Secret.tsx:8,10,14-15 [DERIVED]
+- `Icon` — default `size = 16`; svg `viewBox="0 0 24 24"`, `strokeWidth={2}`, `aria-hidden="true"`, `focusable="false"`. frontend-v2/src/ui/icons.tsx:58,60-61 [DERIVED]
+- `IconButton` — `label` required; it is both `aria-label` and `title` (both omitted from the prop type). frontend-v2/src/ui/icons.tsx:67-69,71 [DERIVED]
+- `Skeleton` — default `rows = 4`; `role="status"` + `aria-live="polite"`; row widths `92 - (i % 3) * 14` %. frontend-v2/src/ui/states.tsx:7,9-11 [DERIVED]
+- `ErrorState` — `role="alert"`; Retry button only when `onRetry` given. frontend-v2/src/ui/states.tsx:28,31 [DERIVED]
 
 ## effect surface
-- Clipboard write via `copyText(value)` imported from `frontend-v2/src/lib/auth.ts` — CopyField.tsx:2,16; Secret.tsx:2,10 [DERIVED]
-- Browser timers: `setTimeout(..., 2000)` — CopyField.tsx:20; Secret.tsx:10 [DERIVED]
-- Postgres tables read/written: none — FACTS `tables_read: []`, `tables_written: []` [DERIVED]
-- Network, files, subprocesses, env flags: none in this unit [DERIVED]
+- Clipboard write via `copyText` from `frontend-v2/src/lib/auth` — frontend-v2/src/ui/CopyButton.tsx:2, frontend-v2/src/ui/CopyField.tsx:2, frontend-v2/src/ui/Secret.tsx:2 [DERIVED]
+- DOM modal: `d.showModal()` / `setAttribute("open", "")` — frontend-v2/src/ui/Dialog.tsx:13 [DERIVED]
+- Timers: `window.setTimeout(..., 2000)` (CopyButton), bare `setTimeout(..., 2000)` (CopyField, Secret) — frontend-v2/src/ui/CopyButton.tsx:22, frontend-v2/src/ui/CopyField.tsx:21, frontend-v2/src/ui/Secret.tsx:10 [DERIVED]
+- Postgres tables read/written: none (FACTS `tables_read`/`tables_written` empty; module imports are only react, `../lib/auth`, `./icons`) — frontend-v2/src/ui/CopyButton.tsx:1-3, frontend-v2/src/ui/Dialog.tsx:1, frontend-v2/src/ui/states.tsx:1-2 [DERIVED]
+- Qdrant / files / network / subprocess / env flags: none read anywhere in the seven files. frontend-v2/src/ui/icons.tsx:1, frontend-v2/src/ui/PasswordInput.tsx:1-2 [DERIVED]
 
 ## invariants
-INVARIANT: copied-reset delay in CopyField (2000) = copied-reset delay in Secret (2000) — CopyField.tsx:20 / Secret.tsx:10 [DERIVED]
-  fails-if: the two copy widgets give inconsistent "Copied" feedback durations
-INVARIANT: ConfirmByName confirm enabled iff `typed === name` AND `!busy` — Dialog.tsx:36,45 [DERIVED]
-  fails-if: destructive action fires on a partial or mistyped token
-INVARIANT: Dialog renders null when `!open` — Dialog.tsx:16 [DERIVED]
-  fails-if: stray text or stale state leaks into the page behind a closed modal
-INVARIANT: useConfirm resolves `true` only from the action button; every dismissal path resolves `false` — Dialog.tsx:70-72 [DERIVED]
-  fails-if: callers would read a Cancel/Esc as consent
-INVARIANT: Skeleton row width % = `92 - (i % 3) * 14` (cycle 92/78/64) — states.tsx:11 [DERIVED]
-  fails-if: skeleton silhouette stops approximating loaded-content widths
-INVARIANT: every icon renders `viewBox="0 0 24 24"` with `strokeWidth={2}` regardless of `name` — icons.tsx:60 [DERIVED]
-  fails-if: any PATHS geometry drawn outside the 24×24 grid clips or scales oddly
-INVARIANT: IconButton always sets `aria-label` and `title` to `label` — icons.tsx:71 [DERIVED]
-  fails-if: icon-only control loses its accessible name
+INVARIANT: copied-feedback dwell = `2000` ms in CopyButton, CopyField and Secret — frontend-v2/src/ui/CopyButton.tsx:22, frontend-v2/src/ui/CopyField.tsx:21, frontend-v2/src/ui/Secret.tsx:10 [DERIVED]
+  fails-if: check-icon/label dwell diverges between copy surfaces.
+INVARIANT: ConfirmByName confirm enabled iff `typed === name` && `!busy` (exact string match) — frontend-v2/src/ui/Dialog.tsx:36,45 [DERIVED]
+  fails-if: destructive action runs on partial/trimmed match, desyncing with the backend token check.
+INVARIANT: Dialog output = `null` when `open === false` — frontend-v2/src/ui/Dialog.tsx:16 [DERIVED]
+  fails-if: stale modal text/state leaks into the page behind a closed dialog.
+INVARIANT: `PATHS` key count = 38 (lines 15-52, one key each) — frontend-v2/src/ui/icons.tsx:15-52 [DERIVED]
+  fails-if: `IconName` union changes and a `name="…"` literal at a call site stops compiling.
+INVARIANT: CopyField button `disabled` iff `value === ""` — frontend-v2/src/ui/CopyField.tsx:28 [DERIVED]
+  fails-if: empty-string copy attempts hit the clipboard API.
+INVARIANT: every icon-only control gets its accessible name from the wrapper (`IconButton` label, or `aria-label`/`title` on raw buttons), never from `Icon` — frontend-v2/src/ui/icons.tsx:61,71, frontend-v2/src/ui/CopyButton.tsx:16 [DERIVED]
+  fails-if: screen readers encounter unnamed buttons.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (clipboard outcome via `copyText` — CopyField.tsx:16-18, Secret.tsx:10; 2000 ms timer resets — CopyField.tsx:20, Secret.tsx:10; `ConfirmByName` awaits caller-supplied `onConfirm` — Dialog.tsx:40). All markup is otherwise a pure function of props. [DERIVED]
-idempotency: SAFE (no writes; repeated copy clicks re-run `copyText` and re-arm the same 2000 ms timeout — CopyField.tsx:15-23; re-render with `open=false` unmounts cleanly — Dialog.tsx:16) [DERIVED]
+determinism: DETERMINISTIC markup from props/state; NONDETERMINISTIC inputs are the clipboard result of `copyText` (frontend-v2/src/ui/CopyButton.tsx:18, frontend-v2/src/ui/CopyField.tsx:17, frontend-v2/src/ui/Secret.tsx:10) and `showModal` availability (frontend-v2/src/ui/Dialog.tsx:13). [DERIVED]
+idempotency: SAFE — no persistence; repeat clicks re-enter the same states; ConfirmByName resets per open (frontend-v2/src/ui/Dialog.tsx:35); CopyButton clears the prior timer before arming a new one (frontend-v2/src/ui/CopyButton.tsx:21-22). [DERIVED]
 
 ## failure behaviour
-- `copyText` false → CopyField sets `failed`, renders `role="alert"` hand-copy instruction — CopyField.tsx:17-18,32 [DERIVED]
-- `copyText` false in Secret is swallowed: no state set, no message — Secret.tsx:10 [DERIVED]
-- `ConfirmByName`: `onConfirm` throw → `e.message` (or `String(e)`) in `banner banner--bad`; `busy` reset in `finally`; dialog stays open — Dialog.tsx:40-41,56 [DERIVED]
-- `showModal` unavailable → `setAttribute("open", "")`: dialog displays but without native focus trap / background inert — Dialog.tsx:13 [INFERRED: attribute-only open is non-modal]
-- No error codes are raised; FACTS has no fallbacks list for this unit [DERIVED]
+- `copyText` resolves false: CopyButton returns early with no feedback (frontend-v2/src/ui/Dialog.tsx n/a — frontend-v2/src/ui/CopyButton.tsx:19); CopyField shows `role="alert"` "The browser blocked copying: select the text and press ⌘C." (frontend-v2/src/ui/CopyField.tsx:33); Secret silently skips (frontend-v2/src/ui/Secret.tsx:10). [DERIVED]
+- `onConfirm` rejection: message string into `banner banner--bad`; `busy` reset in `finally`; dialog stays open. frontend-v2/src/ui/Dialog.tsx:40,56 [DERIVED]
+- No `showModal` support: fallback `setAttribute("open", "")`. frontend-v2/src/ui/Dialog.tsx:13 [DERIVED]
+- Esc in any Dialog: `onCancel` -> `preventDefault()` + `onClose`; for `useConfirm` that resolves the promise `false`. frontend-v2/src/ui/Dialog.tsx:18,70 [DERIVED]
+- `ErrorState`: `role="alert"`, Retry offered only when `onRetry` provided. frontend-v2/src/ui/states.tsx:28,31 [DERIVED]
 
 ## dumb-code flags
-- Literal `2000` duplicated with no shared constant — CopyField.tsx:20, Secret.tsx:10 [DERIVED]
-- Copy/"Copied"/`check`-icon logic duplicated in CopyField and Secret under different CSS contracts (`btn copyfield__btn` vs `icon-btn icon-btn--sm secret__copy`) — CopyField.tsx:26-30 / Secret.tsx:16-18 [DERIVED]
-- Inconsistent failure defaults: CopyField reports clipboard failure, Secret silently drops it — CopyField.tsx:14,32 vs Secret.tsx:10 [DERIVED]
-- Busy label `"Deleting…"` is hardcoded although `action` is a parameter — Dialog.tsx:46 [DERIVED]
-- useConfirm doc claims "the backdrop answer false" but Dialog wires no backdrop-click handler, only `onCancel` (Esc) — Dialog.tsx:63-64 vs 18-23 [INFERRED: no onClick on the dialog element in SOURCE]
-- Magic numbers `92` and `14` in the Skeleton width formula — states.tsx:11 [DERIVED]
+- CopyField and Secret arm bare `setTimeout` with no unmount cleanup, while CopyButton stores the timer in a ref and clears it — `setState` after unmount possible. frontend-v2/src/ui/CopyField.tsx:21, frontend-v2/src/ui/Secret.tsx:10, frontend-v2/src/ui/CopyButton.tsx:11-12 [INFERRED: same 2000 ms pattern, cleanup present in only one of three]
+- `size={15}` repeated at three copy call sites vs Icon default `size = 16` (PasswordInput eye uses 16). frontend-v2/src/ui/CopyButton.tsx:25, frontend-v2/src/ui/CopyField.tsx:29, frontend-v2/src/ui/Secret.tsx:17, frontend-v2/src/ui/icons.tsx:58, frontend-v2/src/ui/PasswordInput.tsx:21 [DERIVED]
+- `2000` ms literal duplicated three times. frontend-v2/src/ui/CopyButton.tsx:22, frontend-v2/src/ui/CopyField.tsx:21, frontend-v2/src/ui/Secret.tsx:10 [DERIVED]
+- `useConfirm` doc says "Cancel, Esc and the backdrop answer false" but no backdrop/click handler exists — only `onCancel` (Esc) is wired. frontend-v2/src/ui/Dialog.tsx:63,18 [INFERRED: no click handler in SOURCE]
+- CopyField visible text: inline shows `"Copy"`, block shows `` `Copy ${what}` ``, while `aria-label` is always `` `Copy ${what}` ``. frontend-v2/src/ui/CopyField.tsx:25,30 [DERIVED]
+- Skeleton width magic numbers `92` and `14`. frontend-v2/src/ui/states.tsx:11 [DERIVED]
 
 ## refactor notes
-- `IconName = keyof typeof PATHS`: removing/renaming any of the 38 keys (icons.tsx:15-52) is a compile-time break for every `Icon`/`IconButton` user — App.tsx plus CopyField.tsx:3, PasswordInput.tsx:2, Secret.tsx:3, states.tsx:2 [DERIVED]
-- `ConfirmByName.name` mirrors a backend token ("the backend requires the same token"); loosening `typed === name` desyncs the client check from the server's — Dialog.tsx:26,36 [DERIVED]
-- `copyText` lives in `frontend-v2/src/lib/auth.ts`; moving it breaks CopyField.tsx:2 and Secret.tsx:2 [DERIVED]
-- `useConfirm` returns a positional `[confirm, element]` pair and the doc mandates rendering `element` before awaiting — Dialog.tsx:63,79 [DERIVED]
-- CSS class strings (`copyfield*`, `dialog*`, `field`, `banner--bad`, `btn--danger-solid`, `btn--primary`, `pw*`, `secret*`, `icon-btn`, `skeleton*`, `state*`) are the stylesheet contract; renaming them needs CSS edits outside this material — CopyField.tsx:26-45, Dialog.tsx:18-56, PasswordInput.tsx:15-20, Secret.tsx:13-18, states.tsx:8-31 [DERIVED]
-- Blast radius cap: only `frontend-v2/src/App.tsx` imports this unit — FACTS.importers [DERIVED]
+- Renaming/deleting any export here requires updating `frontend-v2/src/App.tsx`, the sole importer. material-6110425088-1194001861777541.md:89-101 [DERIVED]
+- `IconName` is a closed union over `PATHS`; call-site literals in this unit: `"check"`, `"copy"` (frontend-v2/src/ui/CopyButton.tsx:25, frontend-v2/src/ui/CopyField.tsx:29, frontend-v2/src/ui/Secret.tsx:17), `"eye"`/`"eyeOff"` (frontend-v2/src/ui/PasswordInput.tsx:21), `"alert"` (frontend-v2/src/ui/states.tsx:29). [DERIVED]
+- ConfirmByName comment: "the backend requires the same token" — the exact-match rule `typed === name` must track that backend check. frontend-v2/src/ui/Dialog.tsx:26,36 [DERIVED]
+- Stylesheet coupling: `.copy-btn--hover` is hidden until pointer hover per CSS (comment), plus `copyfield__*`, `secret__copy`, `dialog*`, `state*`, `skeleton*`, `icon-btn` class names — renaming any breaks styling. frontend-v2/src/ui/CopyButton.tsx:6-7,15, frontend-v2/src/ui/CopyField.tsx:27,36 [DERIVED]
+- Lucide ISC license header must be preserved when copying/modifying icons.tsx. frontend-v2/src/ui/icons.tsx:3-12 [DERIVED]
+- Unmount-on-close (`if (!open) return null`) is Dialog's state-reset mechanism; replacing it needs explicit reset, since ConfirmByName relies on the `open` effect. frontend-v2/src/ui/Dialog.tsx:16,35 [DERIVED]
 
 ## VERIFY
 ```verify
-grep -Fq 'const match = typed === name' frontend-v2/src/ui/Dialog.tsx
-grep -Fq 'setTimeout(() => setCopied(false), 2000)' frontend-v2/src/ui/CopyField.tsx
-grep -Fq 'setTimeout(() => setCopied(false), 2000)' frontend-v2/src/ui/Secret.tsx
-grep -Fq 'autoComplete: "current-password" | "new-password"' frontend-v2/src/ui/PasswordInput.tsx
+grep -Fq 'window.setTimeout(() => setCopied(false), 2000)' frontend-v2/src/ui/CopyButton.tsx
+grep -Fq 'The browser blocked copying: select the text and press ⌘C.' frontend-v2/src/ui/CopyField.tsx
+grep -Fq 'const match = typed === name;' frontend-v2/src/ui/Dialog.tsx
+grep -Fq 'if (!open) return null;' frontend-v2/src/ui/Dialog.tsx
+grep -Fq 'satisfies Record<string, ReactNode>' frontend-v2/src/ui/icons.tsx
 grep -Fq 'rows = 10' frontend-v2/src/ui/Secret.tsx
-grep -Fq 'width: `${92 - (i % 3) * 14}%`' frontend-v2/src/ui/states.tsx
-grep -Fq 'size = 16' frontend-v2/src/ui/icons.tsx
-! grep -Fq 'useState' frontend-v2/src/ui/icons.tsx
+! grep -Fq 'useState' frontend-v2/src/ui/states.tsx
+test "$(grep -c -F 'size={15}' frontend-v2/src/ui/CopyButton.tsx)" -ge 1
 ```

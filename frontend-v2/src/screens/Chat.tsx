@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "../ui/icons";
-import { copyText } from "../lib/auth";
+import { CopyButton } from "../ui/CopyButton";
 import { api, ApiError, deepResearchStream } from "../lib/api";
 import { useAsync } from "../lib/useAsync";
 import type { Synthesizer } from "../lib/contracts";
@@ -291,6 +291,7 @@ function TurnView({ t, models, research }: { t: Turn; models: Synthesizer[]; res
     <>
       <div className="msg-user">
         <div className="msg-user__bubble">{t.question}</div>
+        <CopyButton text={t.question} label="Copy question" />
       </div>
       <div className="msg-assistant">
         <ProcessRail phases={t.phases} live={!t.done} reasoning={t.reasoningText} />
@@ -311,15 +312,11 @@ function TurnView({ t, models, research }: { t: Turn; models: Synthesizer[]; res
   );
 }
 
-/** Copy the answer (Markdown as written). The confirmation fades after two seconds. */
+/** Copy the answer (Markdown as written); it appears when the pointer is over the answer (COPY-ON-HOVER-V1). */
 function AnswerActions({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
   return (
     <div className="answer-actions">
-      <button type="button" className="icon-btn icon-btn--sm" aria-label={copied ? "Copied" : "Copy answer"} title={copied ? "Copied" : "Copy answer"}
-              onClick={() => { void copyText(text).then((ok) => { if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); } }); }}>
-        <Icon name={copied ? "check" : "copy"} size={15} />
-      </button>
+      <CopyButton text={text} label="Copy answer" />
     </div>
   );
 }

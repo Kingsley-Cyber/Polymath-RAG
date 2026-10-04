@@ -2171,6 +2171,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("frontend-v2/src/ui/icons.tsx", "tsx", None),
     ("frontend-v2/src/ui/Secret.tsx", "tsx", None),
     ("frontend-v2/src/ui/CopyField.tsx", "tsx", None),              # ONE-PROFILE: copy with a visible button (11.553)
+    ("frontend-v2/src/ui/CopyButton.tsx", "tsx", None),              # COPY-ON-HOVER-V1: copy a question / an answer (11.573)
     ("frontend-v2/src/ui/PasswordInput.tsx", "tsx", None),          # ONE-PROFILE: a password with Show (11.553)
     ("frontend-v2/src/ui/states.tsx", "tsx", None),
     ("frontend-v2/src/lib/contracts.ts", "ts", None),
@@ -2298,6 +2299,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("frontend-v2/src/components/Citations.tsx", "tsx", None),
     ("frontend-v2/src/components/ProcessRail.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/chat-surface.test.tsx", "tsx", None),
+    ("frontend-v2/src/__tests__/chat-copy.test.tsx", "tsx", None),
     ("frontend-v2/src/__tests__/chat-synthesis.test.tsx", "tsx", None),   # FACET-RETRIEVAL-V1 F5
     ("frontend-v2/src/__tests__/live-contract.test.ts", "ts", None),
     # DEEP-RESEARCH-MODE-V1 slices DR7c-e (frontend): plan card, live research view, report view, reports list
@@ -2582,6 +2584,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-10-02-files-status-truth.md", "md", None),
     ("docs/wiki/work-log/2026-10-02-object-projection-redrive.md", "md", None),
     ("docs/wiki/work-log/2026-10-02-multi-hop-failover.md", "md", None),
+    ("docs/wiki/work-log/2026-10-04-copy-on-hover.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),

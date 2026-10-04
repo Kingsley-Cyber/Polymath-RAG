@@ -18775,7 +18775,7 @@
     "frontend-v2/src/components/deep/ResearchTurn.tsx",
     "frontend-v2/src/components/deep/remarkUncited.ts"
    ],
-   "hash": "bbc354a6c4ad9807",
+   "hash": "7875a35439333323",
    "importers": [
     "frontend-v2/src/components/deep/DeepReport.tsx"
    ],
@@ -18791,12 +18791,13 @@
     "frontend-v2/src/components/deep/../../lib/contracts.ts",
     "frontend-v2/src/components/deep/../../lib/deep.ts",
     "frontend-v2/src/components/deep/../AnswerBody.tsx",
+    "frontend-v2/src/components/deep/../../ui/CopyButton.tsx",
     "frontend-v2/src/components/deep/DeepReport.tsx",
     "frontend-v2/src/components/deep/LiveResearch.tsx",
     "frontend-v2/src/components/deep/PlanCard.tsx",
     "frontend-v2/src/components/deep/../../lib/deep.ts"
    ],
-   "lines": 379,
+   "lines": 381,
    "page": "units/frontend-v2/src/components/deep/_small-modules.md",
    "symbols": [
     {
@@ -18838,13 +18839,13 @@
     {
      "file": "frontend-v2/src/components/deep/ResearchTurn.tsx",
      "kind": "interface",
-     "line": 13,
+     "line": 14,
      "name": "ResearchHandlers"
     },
     {
      "file": "frontend-v2/src/components/deep/ResearchTurn.tsx",
      "kind": "function",
-     "line": 21,
+     "line": 22,
      "name": "ResearchTurnView"
     },
     {
@@ -20192,13 +20193,13 @@
    "files": [
     "frontend-v2/src/screens/Chat.tsx"
    ],
-   "hash": "1ab0390180126519",
+   "hash": "aaafc0da79236721",
    "importers": [
     "frontend-v2/src/App.tsx"
    ],
    "imports": [
     "frontend-v2/src/screens/../ui/icons.tsx",
-    "frontend-v2/src/screens/../lib/auth.ts",
+    "frontend-v2/src/screens/../ui/CopyButton.tsx",
     "frontend-v2/src/screens/../lib/api.ts",
     "frontend-v2/src/screens/../lib/useAsync.ts",
     "frontend-v2/src/screens/../lib/contracts.ts",
@@ -20210,7 +20211,7 @@
     "frontend-v2/src/screens/../lib/deep.ts",
     "frontend-v2/src/screens/../components/deep/ResearchTurn.tsx"
    ],
-   "lines": 326,
+   "lines": 323,
    "page": "units/frontend-v2/src/screens/Chat.tsx.md",
    "symbols": [
     {
@@ -20446,8 +20447,9 @@
   },
   "frontend-v2/src/ui/_small-modules": {
    "api_calls": [],
-   "doc": "     ",
+   "doc": "      ",
    "files": [
+    "frontend-v2/src/ui/CopyButton.tsx",
     "frontend-v2/src/ui/CopyField.tsx",
     "frontend-v2/src/ui/Dialog.tsx",
     "frontend-v2/src/ui/PasswordInput.tsx",
@@ -20455,11 +20457,13 @@
     "frontend-v2/src/ui/icons.tsx",
     "frontend-v2/src/ui/states.tsx"
    ],
-   "hash": "1d8d99fbf15ba346",
+   "hash": "6c118f1a4dcda416",
    "importers": [
     "frontend-v2/src/App.tsx"
    ],
    "imports": [
+    "frontend-v2/src/ui/../lib/auth.ts",
+    "frontend-v2/src/ui/icons.tsx",
     "frontend-v2/src/ui/../lib/auth.ts",
     "frontend-v2/src/ui/icons.tsx",
     "frontend-v2/src/ui/icons.tsx",
@@ -20467,9 +20471,15 @@
     "frontend-v2/src/ui/icons.tsx",
     "frontend-v2/src/ui/icons.tsx"
    ],
-   "lines": 291,
+   "lines": 320,
    "page": "units/frontend-v2/src/ui/_small-modules.md",
    "symbols": [
+    {
+     "file": "frontend-v2/src/ui/CopyButton.tsx",
+     "kind": "function",
+     "line": 9,
+     "name": "CopyButton"
+    },
     {
      "file": "frontend-v2/src/ui/CopyField.tsx",
      "kind": "function",

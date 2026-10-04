@@ -167,6 +167,10 @@ historical, never an instruction.
    - CODE WIKI (11.557): `docs/codewiki/index.md` is how the code works NOW (338 checkable pages; AGENTS.md §0 item 8). After a code
      change: `.venv/bin/python scripts/codewiki/pages.py refresh` (spine + only the stale pages, GLM on the coding plan), then
      `scripts/codewiki/verify.py` (CI runs it).
+   - BUILT (11.573, `feat/fix-it-all`): COPY-ON-HOVER-V1 — copy buttons on the chat's question and answer, shown on hover. UI only: ships
+     with `npm run build` (no bounce), so it can go live while an ingest runs. The mythos ingest (25 files, started 2026-10-04
+     07:41 UTC) is running on production `620c13dd`: do NOT merge or bounce until it settles; then the 11.572 failover fix
+     (its extraction hits Gemini 503s) and this deploy together.
    - BUILT (11.572, `feat/fix-it-all`): MULTI-HOP-FAILOVER-V1 — extraction batches walk on to every untried provider (the
      reissue too); a provider 503 does not spend attempts; pMAP column covered/eligible; stall lanes from the lane table.
      Owner: deploy, then `scripts/retry_failed_stage.py commerce-v1 extract --execute` for "The Innovator's Dilemma".

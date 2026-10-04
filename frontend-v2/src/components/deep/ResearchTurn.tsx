@@ -2,6 +2,7 @@ import type { Turn } from "../../lib/chat";
 import type { Synthesizer } from "../../lib/contracts";
 import { errorWords, reportModelOf, type DeepGoal, type DeepRunState } from "../../lib/deep";
 import { AnswerBody } from "../AnswerBody";
+import { CopyButton } from "../../ui/CopyButton";
 import { DeepReport, ReportActions } from "./DeepReport";
 import { LiveResearch } from "./LiveResearch";
 import { PlanCard } from "./PlanCard";
@@ -28,6 +29,7 @@ export function ResearchTurnView({ t, models, onStart, onCancel, onStop, onRunPa
     <>
       <div className="msg-user">
         <div className="msg-user__bubble">{t.question}</div>
+        <CopyButton text={t.question} label="Copy question" />
       </div>
       <div className="msg-assistant">
         {planning && run ? <PlanCard run={run} onStart={onStart} onCancel={onCancel} onRunPatch={onRunPatch} />

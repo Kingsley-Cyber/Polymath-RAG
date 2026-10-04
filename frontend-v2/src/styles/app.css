@@ -276,7 +276,7 @@ button.btn:disabled { opacity: .55; cursor: not-allowed; }
   font-size: var(--fs-xs); color: var(--text-3);
 }
 
-.msg-user { display: flex; justify-content: flex-end; }
+.msg-user { display: flex; flex-direction: row-reverse; justify-content: flex-start; align-items: center; gap: 4px; }   /* bubble at the right edge, its copy button beside it on the left */
 .msg-user__bubble {
   background: var(--surface-2); color: var(--text); border-radius: 16px 16px 4px 16px;
   padding: 9px 14px; max-width: 80%; white-space: pre-wrap;
@@ -673,6 +673,13 @@ button.btn--danger-solid:hover:not(:disabled) { background: var(--bad); border-c
 .starter:hover { color: var(--text); border-color: var(--border-strong); background: var(--surface-2); }
 
 .answer-actions { display: flex; gap: 4px; margin-top: 6px; }
+/* COPY-ON-HOVER-V1 (the owner, 2026-10-04): the copy buttons of a question and an answer appear when the pointer is over
+   the message; keyboard focus, the "Copied" moment and touch screens (no hover) always show them. A question's button
+   follows its bubble in the markup, so only the bubble and the button themselves reveal it. */
+.copy-btn--hover { opacity: 0; transition: opacity .12s ease; }
+.msg-user__bubble:hover + .copy-btn--hover, .msg-assistant:hover .copy-btn--hover,
+.copy-btn--hover:hover, .copy-btn--hover:focus-visible, .copy-btn--hover.copy-btn--done { opacity: 1; }
+@media (hover: none) { .copy-btn--hover { opacity: 1; } }
 .icon-btn--sm { width: 28px; height: 28px; font-size: 14px; }
 
 @media (max-width: 759px) {
