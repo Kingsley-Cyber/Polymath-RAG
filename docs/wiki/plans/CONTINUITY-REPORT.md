@@ -74,6 +74,7 @@ historical, never an instruction.
 - **Polymath database authority (owner, 2026-10-29; register 11.574): v4 is the sole current Polymath database system.**
   Its checkout is `/Users/king/Documents/polymath-rebuild/polymath-v4`; Postgres is authority, with v4 Neo4j, Qdrant and Redis.
   All five detached `polymath_v33_*` database/log volumes were permanently deleted on the owner's explicit instruction.
+  The unused legacy MongoDB, Neo4j data/logs and Redis bind-store folders under `/Users/king/PolymathRuntime/volumes` were also removed.
   B6 salvage is closed; do not reconnect to, recreate or treat v3.3 databases as a fallback. Archived code and original
   source documents remain historical/source material. The existing v4 container identities, mounts, health and Postgres
   corpus/document counts were preserved; no restart, migration or re-ingest was performed.

@@ -12,9 +12,9 @@ last_reviewed: 2026-10-29
 ## Contract
 
 The owner instructed: "delete all of v3.3 database and reference the new one is the only one".
-Remove only the detached Docker volumes owned by Compose project `polymath_v33`, and record Polymath v4 as the sole current Polymath database system. This instruction supersedes the B6 salvage hold.
+Remove the detached Docker volumes owned by Compose project `polymath_v33` and its unused legacy bind-store databases, and record Polymath v4 as the sole current Polymath database system. This instruction supersedes the B6 salvage hold.
 
-Acceptance: all five identified v3.3 volumes are absent; the existing v4 database containers retain their identities and mounts, remain running, and Postgres answers a read-only query. Measure actual host free space rather than adding Docker logical sizes.
+Acceptance: all five identified v3.3 volumes and its legacy bind-store database paths are absent; the existing v4 database containers retain their identities and mounts, remain running, and Postgres answers a read-only query. Measure actual host free space rather than adding Docker logical sizes.
 
 ## Changes
 
@@ -35,6 +35,14 @@ Host free space measured by `df -k /System/Volumes/Data` increased from 45,109,8
 The isolated slice passed agent preflight, repository guard and wiki checking. Existing open work-log listings (`2026-09-26-deep-research-dr4.md` and `2026-09-26-deep-research-dr6d.md`) are unrelated and unchanged. No tests, frozen evaluation inputs, active store data or runtime code were edited.
 
 The main checkout has a pre-existing untracked `docs/wiki/experiments/friends-access-2026-09-26/live_check.json`; its preflight and repo guard reject that undeclared file. It is untouched. This documentation slice is isolated at base `194b82c52dc556ba792a5f3fb425e3a2c9912ad9` on `codex/retire-polymath-v33`.
+
+### Final storage-scope reconciliation
+
+The post-volume scan found additional native bind-store data under `/Users/king/PolymathRuntime/volumes`: `mongodb`, `neo4j/data`, `neo4j/logs`, and `redis`. These are identified by the archived v3.3 `docker-compose.yml` lines 36, 105-107 and 130; the old Compose override switched the databases to the now-removed named volumes. All four native paths have no container mount overlap and no open files. They are included in the owner's "all of v3.3 database" deletion instruction. Original `ingest-files` / `ingest-drop-off` documents and `neo4j/plugins` are excluded.
+
+EXECUTED: removed `mongodb` (400,003,072 allocated bytes), `neo4j/data` (541,376,512), `neo4j/logs` (31,744,000), and `redis` (4,096). All four paths were verified absent afterward; `ingest-files`, `ingest-drop-off` and `neo4j/plugins` remain. The running v4 container identities and healthy states remain unchanged, and its read-only counts remain 7 corpora and 425 documents. The earlier five-volume deletion and its evidence above remain valid.
+
+The documentation-only commit hook reported an advisory because Xcode's system Python has no `ruff` module. No security-check pass is claimed; no runtime implementation or tests changed.
 
 ## Rejected claims
 
