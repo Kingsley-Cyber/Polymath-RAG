@@ -2585,6 +2585,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-10-02-object-projection-redrive.md", "md", None),
     ("docs/wiki/work-log/2026-10-02-multi-hop-failover.md", "md", None),
     ("docs/wiki/work-log/2026-10-04-copy-on-hover.md", "md", None),
+    ("docs/wiki/work-log/2026-10-29-retire-polymath-v33-databases.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
     ("shared/polymath_shared/deep_research/engine.py", "py", None),

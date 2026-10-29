@@ -71,6 +71,12 @@ historical, never an instruction.
 - **11.494 R6:** merged + bounced (the owner's Run button); the Hermes skill copy; live check 14/14.
 
 ### Current Contract State
+- **Polymath database authority (owner, 2026-10-29; register 11.574): v4 is the sole current Polymath database system.**
+  Its checkout is `/Users/king/Documents/polymath-rebuild/polymath-v4`; Postgres is authority, with v4 Neo4j, Qdrant and Redis.
+  All five detached `polymath_v33_*` database/log volumes were permanently deleted on the owner's explicit instruction.
+  B6 salvage is closed; do not reconnect to, recreate or treat v3.3 databases as a fallback. Archived code and original
+  source documents remain historical/source material. The existing v4 container identities, mounts, health and Postgres
+  corpus/document counts were preserved; no restart, migration or re-ingest was performed.
 - **Knowledge scope (K1):** a new search function, or a new call of a scoped search, must thread the request's scope
   (`**scope_kwargs(scope)`); the caller pin in `tests/determinism/test_knowledge_scope.py` fails otherwise (it walks
   orchestrator / shared / workers / control / mcp_server). The scope comes from the request only: never from a plan or an
