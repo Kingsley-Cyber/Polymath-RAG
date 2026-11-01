@@ -293,3 +293,105 @@ def release_lease(conn, run_id: str, owner: str) -> None:
 def delete_run(conn, run_id: str) -> None:
     """Test cleanup only (cascades to steps/results)."""
     conn.execute("DELETE FROM adapter_runs WHERE run_id=%s", (run_id,))
+
+
+# ─────────────────────────────────────────────────────────── run activity (F8: idle runs; rejected submissions are activity)
+def touch_run(conn, run_id: str) -> None:
+    """The agent acted on the run without changing its state (a refused submission): the run is not idle."""
+    conn.execute("UPDATE adapter_runs SET updated_at=now() WHERE run_id=%s", (run_id,))
+
+
+def idle_runs(conn, idle_s: int, limit: int = 20) -> list[str]:
+    """Runs waiting on the connected agent (awaiting_agent / awaiting_harness) with no activity for `idle_s` seconds, oldest first.
+    Locked FOR UPDATE SKIP LOCKED: a run another transaction holds (a submit in flight) is never expired under it."""
+    rows = conn.execute(
+        """SELECT run_id FROM adapter_runs
+            WHERE status IN ('awaiting_agent','awaiting_harness') AND updated_at < now() - make_interval(secs => %s)
+            ORDER BY updated_at LIMIT %s FOR UPDATE SKIP LOCKED""", (int(idle_s), max(1, int(limit)))).fetchall()
+    return [r[0] for r in rows]
+
+
+# ─────────────────────────────────────────────────────────── corpus readers (PRODUCT-SEARCH-E2E: corpus scope + corpus seed + cache key)
+#: ALL_AUTHORIZED ("all libraries") membership: the platform's ONE rule is `polymath_shared.query_scope.ALL_LIBRARIES_SQL`; this copy is
+#: used only while that module does not carry it
+_ALL_LIBRARIES_SQL = ("c.purpose = 'production' AND c.query_enabled AND EXISTS ("
+                      "SELECT 1 FROM runs r WHERE r.corpus_id = c.corpus_id AND r.status = 'query_ready')")
+MAX_PROFILE_DOCS = 2000
+
+
+def _all_libraries_sql() -> str:
+    try:
+        from polymath_shared.query_scope import ALL_LIBRARIES_SQL
+        return str(ALL_LIBRARIES_SQL)
+    except Exception:  # noqa: BLE001 — an older platform module: the same rule, local form
+        return _ALL_LIBRARIES_SQL
+
+
+def _strings(value: Any) -> list[str]:
+    if isinstance(value, str):
+        value = [value]
+    return [" ".join(str(v).split()) for v in value or [] if isinstance(v, str) and str(v).strip()]
+
+
+def corpora(conn, corpus_ids: list[str] | None = None) -> list[dict[str, Any]]:
+    """Corpora (all, or the named ones), each with purpose, query_enabled, documents (query-ready document runs), query_ready and
+    in_all_libraries (the platform's ALL_AUTHORIZED membership). Read-only, ordered by id."""
+    where, args = ("WHERE c.corpus_id = ANY(%s)", [list(corpus_ids)]) if corpus_ids is not None else ("", [])
+    rows = conn.execute(
+        f"""SELECT c.corpus_id, c.purpose, c.query_enabled, COALESCE(r.ready, 0), ({_all_libraries_sql()})
+              FROM corpora c
+              LEFT JOIN (SELECT corpus_id, COUNT(*) AS ready FROM runs WHERE status = 'query_ready' GROUP BY corpus_id) r
+                     ON r.corpus_id = c.corpus_id
+             {where}
+             ORDER BY c.corpus_id""", args).fetchall()
+    return [{"corpus_id": r[0], "purpose": r[1], "query_enabled": bool(r[2]), "documents": int(r[3] or 0), "query_ready": int(r[3] or 0) > 0,
+             "in_all_libraries": bool(r[4])} for r in rows]
+
+
+def profiles(conn, corpus_ids: list[str]) -> list[dict[str, Any]]:
+    """The newest compiled document profile per query-ready document (artifacts stage `doc_profile`): topics, questions, terms."""
+    out: list[dict[str, Any]] = []
+    for cid in sorted(set(corpus_ids)):
+        rows = conn.execute(
+            """SELECT DISTINCT ON (a.payload->'doc_profile'->>'doc_id')
+                      a.payload->'doc_profile'->>'doc_id', a.payload->'doc_profile'->'compiled'->'topics',
+                      a.payload->'doc_profile'->'compiled'->'questions', a.payload->'doc_profile'->'compiled'->'terms'
+                 FROM artifacts a JOIN runs r ON r.run_id = a.run_id
+                WHERE a.stage = 'doc_profile' AND r.corpus_id = %s AND r.status = 'query_ready'
+                ORDER BY a.payload->'doc_profile'->>'doc_id', a.created_at DESC, a.artifact_id
+                LIMIT %s""", (cid, MAX_PROFILE_DOCS)).fetchall()
+        out += [{"corpus_id": cid, "doc_id": str(d), "topics": _strings(_load(t)), "questions": _strings(_load(q)), "terms": _strings(_load(tm))}
+                for d, t, q, tm in rows if d]
+    return out
+
+
+def atoms(conn, corpus_ids: list[str], kinds: tuple[str, ...] = ("TENSION", "LATENT_PATTERN")) -> list[dict[str, Any]]:
+    """Active document-profile atoms of the given kinds (migration 0055), in a total order."""
+    rows = conn.execute(
+        """SELECT corpus_id, doc_id, atom_kind, atom_text FROM document_profile_atoms
+            WHERE active AND corpus_id = ANY(%s) AND atom_kind = ANY(%s)
+            ORDER BY corpus_id, doc_id, atom_kind, ordinal, atom_id LIMIT 5000""", (sorted(set(corpus_ids)), list(kinds))).fetchall()
+    return [{"corpus_id": r[0], "doc_id": r[1], "kind": r[2], "text": str(r[3] or "")} for r in rows if str(r[3] or "").strip()]
+
+
+def summaries(conn, corpus_ids: list[str]) -> list[dict[str, Any]]:
+    """The newest corpus summary per corpus (migration 0024): research topics (curated) and dominant concepts."""
+    rows = conn.execute(
+        """SELECT DISTINCT ON (corpus_id) corpus_id, research_topics, dominant_concepts FROM corpus_summaries
+            WHERE corpus_id = ANY(%s) ORDER BY corpus_id, created_at DESC, summary_id""", (sorted(set(corpus_ids)),)).fetchall()
+    return [{"corpus_id": r[0], "research_topics": _strings(r[1]), "dominant_concepts": _strings(r[2])} for r in rows]
+
+
+def corpus_generation(conn, corpus_id: str) -> str:
+    """A fingerprint of what a corpus serves now (its query-ready document runs): it moves when a document is added, re-ingested or
+    removed. Keys the per-run evidence cache (F3), so a corpus that changed mid-run is asked again, never answered from the cache."""
+    import hashlib
+    row = conn.execute("SELECT COUNT(*), MAX(updated_at) FROM runs WHERE corpus_id = %s AND status = 'query_ready'", (corpus_id,)).fetchone()
+    return hashlib.sha256(f"{corpus_id}|{row[0] if row else 0}|{row[1] if row else None}".encode()).hexdigest()[:16]
+
+
+def admitted_evidence_groups(conn, run_id: str) -> dict[str, str]:
+    """admitted evidence id -> the admission that admitted it (one admission per research action): the display shares field evidence
+    across admissions (gap A-12)."""
+    rows = conn.execute("SELECT evidence_id, admission_id FROM adapter_admitted_evidence WHERE run_id=%s", (run_id,)).fetchall()
+    return {r[0]: r[1] for r in rows}

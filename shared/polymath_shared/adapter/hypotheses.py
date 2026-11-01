@@ -25,6 +25,10 @@ PHI_KINDS = frozenset({"KILL", "MERGE", "WEAKEN", "STRENGTHEN", "CONTRADICT", "P
 RESULTING_STATUS = {"GENERATE": "proposed", "REVISE": "revised", "SPLIT": "split", "MERGE": "merged", "WEAKEN": "weakened",
                     "STRENGTHEN": "strengthened", "CONTRADICT": "contradicted", "KILL": "killed", "PROMOTE": "promoted"}
 ABSORBED_STATUSES = frozenset({"killed", "merged"})     # no further transitions
+#: gap A-09: statuses only selective pressure (φ: TrailSignal's verdict or a closed rule) sets. A θ REVISE changes what a hypothesis
+#: SAYS, never the judge's verdict on it: revising a `weakened` hypothesis leaves it `weakened` (not the eligible `revised`) until φ
+#: judges it again. GENERATE / REVISE / SPLIT results (`proposed`, `revised`, `split`) stay θ's to move.
+PHI_VERDICT_STATUSES = frozenset({"filtered", "retained", "weakened", "strengthened", "contradicted", "promoted"})
 KNOWLEDGE_ID_FIELD = {"chunk": "chunk_id", "document": "document_id", "parent_map": "document_id", "graph_fact": "graph_fact_id",
                       "graph_hop": "graph_fact_id", "query_receipt": "retrieval_trace_id"}
 CAUSE_KINDS = frozenset({"chunk", "document", "graph_fact", "graph_hop", "parent_map", "trail_prior", "field_evidence",
@@ -317,6 +321,8 @@ def apply(run_id: str, step: dict[str, Any], current: dict[str, dict[str, Any]],
                                            from_rev=from_rev, to_rev=st["revision"], status="merged", reason=reason, recorded_at=recorded_at)); ordinal += 1
             continue
         changes: dict[str, Any] = {"status": RESULTING_STATUS[kind]}
+        if kind == "REVISE" and actor == "theta" and prev["status"] in PHI_VERDICT_STATUSES:
+            changes["status"] = prev["status"]                  # gap A-09: θ never erases φ's verdict
         if kind == "REVISE":
             asked = req.get("changes") or {}
             if not isinstance(asked, dict):

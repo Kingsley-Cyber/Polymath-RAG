@@ -110,7 +110,7 @@ def test_the_owner_runs_the_friend_admin_and_friends_cannot(world):
     made = owner.post("/admin/friends", json={"username": "Ann", "display_name": "Ann"})
     assert made.status_code == 201
     ann, first = made.json()["friend"], made.json()["first_password"]
-    assert ann["corpus_ids"] == ["cinema", "commerce-v1", "fr-ann"] and "fr-someone" not in ann["corpus_ids"]
+    assert ann["corpus_ids"] == ["*", "fr-ann"] and "fr-someone" not in ann["corpus_ids"]   # F3: "every library" = the wildcard
     assert ann["adapter_ids"] == ["ecommerce.product_research", "trail.product_discovery"] and ann["must_change_password"]
     assert first not in reg.read_text()
     friend = _signed_in(app, "ann", first)
@@ -165,7 +165,8 @@ def test_only_the_owner_gets_the_main_key_with_a_prompt_for_another_computer(wor
         prompt = body["prompt"]
         for needle in ("Authorization: Bearer main-key-for-copy-0123456789", "https://mcp.example.test/mcp", "claude mcp add -s user",
                        'http_headers = { Authorization = "Bearer main-key-for-copy-0123456789" }', "cinema, commerce-v1",
-                       "whoever holds it has my full access", "use my CJ account and quota."):
+                       "whoever holds it has my full access", "CJ calls run on my CJ account",
+                       "https://mcp.example.test/k/main-key-for-copy-0123456789/mcp"):
             assert needle in prompt, needle
         assert "<YOUR_KEY>" not in prompt and "fr-someone" not in prompt and "I can revoke it in Settings" not in prompt
     fred = _signed_in(app, "fred")
@@ -181,3 +182,44 @@ def test_no_main_key_on_the_server_says_so(world, monkeypatch):
     _, app = world
     r = _signed_in(app, "king").get("/keys/owner")
     assert r.status_code == 404 and r.json()["detail"]["error_code"] == "OWNER_KEY_NOT_SET"
+
+
+# ---------------------------------------------------------------- PRODUCT-SEARCH-E2E (2026-11-01): friends connect like the owner
+def test_a_friends_key_comes_with_the_connector_link_and_claude_ai_is_never_told_to_send_a_header(world):
+    """FRIEND-JOURNEY F7: claude.ai's custom connector takes only a URL; before, only the owner's key came with the key-in-URL link
+    and the prompt told claude.ai users to add a header they cannot send."""
+    _, app = world
+    c = _signed_in(app, "fred")
+    made = c.post("/keys", json={"label": "claude.ai"}).json()
+    link = f"https://mcp.example.test/k/{made['key']}/mcp"
+    assert made["connector_url"] == link and link in made["prompt"]
+    claude_ai = next(ln for ln in made["prompt"].splitlines() if ln.startswith("- Claude.ai"))
+    assert "connector link" in claude_ai and "cannot send a header" in claude_ai
+    assert "Authorization" not in claude_ai and "Bearer" not in claude_ai and "-H " not in claude_ai
+    template = c.get("/keys/prompt").json()
+    assert template["connector_url"] == "https://mcp.example.test/k/<YOUR_KEY>/mcp" and template["connector_url"] in template["prompt"]
+
+
+def test_every_library_is_the_wildcard_and_the_prompt_says_it_in_words(world):
+    """F3: the owner's "every library" (and a sign-up's default) is stored as the wildcard, resolved per request, never a snapshot."""
+    from orchestrator.api import web_settings
+    from polymath_shared import query_scope as QS
+    assert web_settings.ALL_LIBRARIES == QS.ALL_LIBRARIES and web_settings.friend_defaults()[0] == [QS.ALL_LIBRARIES]
+    _, app = world
+    made = _signed_in(app, "king").post("/admin/friends", json={"username": "Ann"})
+    assert made.status_code == 201 and made.json()["friend"]["corpus_ids"] == ["*", "fr-ann"]
+    text = web_settings.connect_prompt("pmk_abc", ["*", "fr-ann"], "fr-ann", url="https://mcp.example.test/mcp")
+    assert "every library I share (list_corpora names them), plus fr-ann" in text and "open to me: *" not in text
+
+
+def test_every_prompt_gives_the_rules_the_mcp_servers_give():
+    from orchestrator.api.web_settings import connect_prompt, owner_prompt
+    for text in (owner_prompt(["cinema"]), connect_prompt("pmk_abc", ["cinema"], "fr-fred", url="https://mcp.example.test/mcp"),
+                 connect_prompt("k" * 24, ["cinema"], None, url="https://mcp.example.test/mcp", owner=True)):
+        for needle in ("any library with query_ready true works", "product_search", "never start it unasked",
+                       "never use your built-in web search, web fetch or browser", "https://github.com/Panniantong/Agent-Reach",
+                       "agent-reach doctor --json", "`run`", "`for_each`", "`then`", "supplier_parse", "no terminal (claude.ai, the web link)",
+                       "CJ results only", "You answer every reasoning step yourself", "supplier_parse) are read-only"):
+            assert needle in text, needle
+        assert text.index("4. Product questions") < text.index("5. Web") < text.index("6. Full product research") < text.index("7. The supplier")
+        assert "owner-only" not in text and "Research steps need your" not in text

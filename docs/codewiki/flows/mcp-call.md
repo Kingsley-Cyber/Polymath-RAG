@@ -1,83 +1,79 @@
 # flow: mcp-call
-
-An MCP tool call to Server A, the ONE public door (streamable-http on `POLYMATH_MCP_PORT`, default 8930). Every tool is a thin, trimmed call to the orchestrator API on `127.0.0.1:7200`, so MCP can never bypass the pipeline's own gates — orchestrator/orchestrator/mcp_server.py:4-9 [DERIVED]. Server A also serves the loopback listener for Hermes and the public hostname through the tunnel — orchestrator/orchestrator/mcp_server.py:84-86 [DERIVED].
+An MCP tool call to Server A (HTTP :8930): the key check (principals), scope, the tool, the call into the orchestrator, the answer.
 
 ## hops
-
 | # | what happens | where (anchor) | data in -> data out | can fail how |
 |---|---|---|---|---|
-| 1 | Request reaches `/mcp`; transport-security allowlist: `Host` must be in `_ALLOWED_HOSTS` (loopback + `PUBLIC_HOST`), `Origin` in `allowed_origins` — the DNS-rebinding gate ("the v33 gotcha") | orchestrator/orchestrator/mcp_server.py:66,71-82 [DERIVED] | HTTP request (Host, Origin) -> admitted request | non-allowlisted Host/Origin refused |
-| 2 | Key in path: `/k/<key>/mcp` -> KeyInPath turns the URL key into the `Authorization: Bearer` header (claude.ai's connector cannot send a header) | orchestrator/orchestrator/mcp_server.py:24-28 [DERIVED] | URL path key -> Bearer header | — |
-| 3 | Fail-closed key gate: with no key configured the server answers 503 on `/mcp` instead of running open (V2) | orchestrator/orchestrator/mcp_server.py:28-30,67 [DERIVED] | empty `POLYMATH_MCP_API_KEY` -> 503 | 503 on every call until a key exists |
-| 4 | Bearer authenticated to ONE principal per request, before the MCP layer sees the tools/call: `POLYMATH_MCP_API_KEY` = built-in OWNER (admin, `prn_owner`); any other bearer `pmk_<key_id>_<secret>` is matched in `_STORE = P.store_from_env(API_KEY)`, backed by the `POLYMATH_MCP_PRINCIPALS_FILE` JSON (re-read when it changes) | orchestrator/orchestrator/mcp_server.py:97-103; orchestrator/orchestrator/mcp_principals.py:5-13,37-38 [DERIVED] | raw bearer -> `P.Principal` | 401 unknown or revoked key |
-| 5 | Rate limit: `_LIMITER = P.RateLimiter()` enforces the principal's requests-per-minute | orchestrator/orchestrator/mcp_server.py:104 [DERIVED] | principal -> allowed / throttled | 429 over its rate |
-| 6 | tools/call authorized against `TOOL_POLICY` (tool -> any-of action scopes + resource kind: `corpus`, `corpus_filter`, `adapter_filter`, `start`, `run`, `write_corpus`, `none`); a tool NOT in the policy is admin-only | orchestrator/orchestrator/mcp_server.py:29-30; orchestrator/orchestrator/mcp_principals.py:57-71 [DERIVED] | (tool, principal) -> permit / deny | 403 not permitted |
-| 7 | Per-request context set: `_PRINCIPAL` (default `NOBODY`), `_CALLER_AGENT` (caller's User-Agent), `_CALLER_IS_LOCAL` = Host in `_LOOPBACK_HOSTS` AND none of `_EDGE_HEADERS` present; default is NOT local, so a lost context refuses | orchestrator/orchestrator/mcp_server.py:88-105,108-110 [DERIVED] | request headers -> contextvars | fail closed on missing context |
-| 8 | MCP dispatch; `_ListedMCPServer.list_tools` filters out `MR.HIDDEN_TOOLS_A`, so deprecated tools stay callable but are never listed | orchestrator/orchestrator/mcp_server.py:113-118 [DERIVED] | tools/call -> Python tool fn | — |
-| 9 | Tool argument validation: `MR.normalize_mode` (query tools; modes FAST \| HYBRID \| GRAPH \| WILDCARD \| GNN), `MR.normalize_reasoning` (`polymath_answer`), `MR.normalize_depth` (`polymath_deep_research`) | orchestrator/orchestrator/mcp_server.py:443-445,477-479,516-518 [DERIVED] | mode/reasoning/depth string -> canonical value | `MR.mode_error(mode)`; 422 with `styles`; 422 with `depths` |
-| 10 | Ingest gates: `upload_document` requires `_CALLER_IS_LOCAL` AND admin BEFORE any filesystem access ("no existence oracle either"); both upload tools check the extension against `UPLOAD_EXTENSIONS` | orchestrator/orchestrator/mcp_server.py:69,240-250,270-272 [DERIVED] | path / `source_name` -> checked | 403 `REMOTE_PATH_UPLOAD_DISABLED`; 404 file not found; 422 unsupported extension |
-| 11 | Orchestrator call prep in `_orch` / `_orch_events`: `NOBODY` -> `{"error": "NO_PRINCIPAL: ...", "status": 401}`; headers carry `User-Agent` = caller agent; a non-admin gets `P.PRINCIPAL_HEADER` (`x-polymath-principal`) | orchestrator/orchestrator/mcp_server.py:142-150,163-171; orchestrator/orchestrator/mcp_principals.py:39 [DERIVED] | contextvars -> trusted loopback headers | 401 `NO_PRINCIPAL` (fail closed) |
-| 12 | Loopback HTTP to `ORCH` (default `http://127.0.0.1:7200`): `_orch` timeout 180; `polymath_compare` 600; uploads 600; `_orch_events` 1800 with `connect=10.0` | orchestrator/orchestrator/mcp_server.py:65,142-152,166,173-174,248-251,501 [DERIVED] | route path + JSON body -> orchestrator JSON | network error, timeout, status >= 400 |
-| 13 | Error mapping: status >= 400 -> `{"error": detail, "status": N}`; `detail` from the JSON `detail` field else first 400 chars of the body | orchestrator/orchestrator/mcp_server.py:153-159,176-182 [DERIVED] | 4xx/5xx response -> error dict | every orchestrator refusal surfaces here (e.g. 409 `CROSS_CORPUS_CONTENT_COLLISION`) |
-| 14 | Orchestrator-side stamps: the forwarded principal context becomes `adapter_runs.owner_principal_id` on `adapter_start`; query receipts (QUERY-RECEIPTS-V1) record the principal and `client` (the User-Agent) | orchestrator/orchestrator/mcp_server.py:97-99,144-145,544,571-572; orchestrator/orchestrator/mcp_principals.py:16-18 [DERIVED] | principal context -> persisted owner + receipt | — |
-| 15 | In-tool result filtering for non-admins: `list_corpora` keeps only `who.corpus_ids`; `adapter_list` only `who.adapter_ids` | orchestrator/orchestrator/mcp_server.py:215-217,556-558 [DERIVED] | full list -> principal-scoped list | silent: out-of-scope items just disappear |
-| 16 | `polymath_deep_research` only: POST `/research/deep` as SSE, frames collected by `_orch_events`; a refusal before the stream starts comes back as one `("error", {...})` frame; shaped by `MR.shape_deep` | orchestrator/orchestrator/mcp_server.py:163-165,176-185,519-520 [DERIVED] | `MR.deep_body(...)` -> frames -> result | single error frame instead of a stream |
-| 17 | Answer shaping/trimming: `MR.shape_search` / `shape_explore` / `shape_compare` / `shape_models`; `_trim_hit` cuts text at 1400 chars (`truncated: true` + `full_length`); `MR.trim_rows` cuts `text`/`text_clean` at 1200 (D-02); `ask`/`polymath_answer` trim `evidence`/`chunks`/`bundle` to the first 12 items at 600 chars | orchestrator/orchestrator/mcp_server.py:188-204,369-371,425-431,483-487 [DERIVED] | orchestrator JSON -> slim tools/call result | silent data loss past the caps |
+| 1 | Client POSTs a tools/call to `/mcp`; auth is `Authorization: Bearer <key>`, or the key in the URL `/k/<key>/mcp` (KeyInPath turns it into the same header — claude.ai's connector cannot send a header) | orchestrator/orchestrator/mcp_server.py:30-31,41-42,71-74 [DERIVED] | HTTP request -> MCP transport | missing/invalid bearer (hop 4) |
+| 2 | Transport allowlist (DNS-rebinding guard, "the v33 gotcha"): Host must be `127.0.0.1:8930` / `localhost:8930` / PUBLIC_HOST / `PUBLIC_HOST:443`; Origin limited to `https://{PUBLIC_HOST}`, loopback http, `https://claude.ai`, `https://claude.com` | orchestrator/orchestrator/mcp_server.py:80-88 [DERIVED] | Host/Origin headers -> admission | other Host/Origin rejected |
+| 3 | Fail-closed boot: with no key configured (`POLYMATH_MCP_API_KEY` = "") the server answers 503 on /mcp instead of running open (V1 measured 2026-09-02 booted keyless and answered tools/call to anyone) | orchestrator/orchestrator/mcp_server.py:34-36,73 [DERIVED] | boot config -> 503 | the 503 IS the failure mode |
+| 4 | Gate authenticates the bearer to ONE principal per request, before the MCP layer sees it: raw bearer `pmk_<key_id>_<secret>` resolved via `_STORE = P.store_from_env(API_KEY)`; `POLYMATH_MCP_API_KEY` = built-in OWNER principal (`prn_owner`, admin); all other principals from the JSON file; keys stored as sha256 of the bearer, secret never stored | orchestrator/orchestrator/mcp_server.py:103-109; orchestrator/orchestrator/mcp_principals.py:5-13,51-52 [DERIVED] | bearer -> P.Principal | 401 unknown/revoked key |
+| 5 | Rate limit: `_LIMITER = P.RateLimiter()` against the principal's optional requests-per-minute | orchestrator/orchestrator/mcp_server.py:33,110; orchestrator/orchestrator/mcp_principals.py:7-8 [DERIVED] | principal -> allow/deny | 429 over its rate |
+| 6 | Tool authorization via `TOOL_POLICY`: tool -> (any-of action scopes, resource kind); a tool with NO policy row is admin-only (DEFAULT DENY) | orchestrator/orchestrator/mcp_principals.py:78-98,9-10 [DERIVED] | tool name + scopes -> permit | 403 not permitted |
+| 7 | Resource check: CORPUS tools need a corpus_id the principal may use; `*` wildcard = every library existing at request time, never another person's private library (`query_scope.grant_allows`); `corpus_optional` (product_search) may omit corpus_id, a named one is still checked; adapter.cancel only ever reaches a run the principal owns; every query tool REQUIRES corpus_id (V2) | orchestrator/orchestrator/mcp_server.py:37-39; orchestrator/orchestrator/mcp_principals.py:21-26,66-67,79-82 [DERIVED] | corpus_id/adapter_id/run_id -> permit | 403 outside grant |
+| 8 | Per-request contextvars set: `_PRINCIPAL` (default NOBODY, `prn_nobody`), `_CALLER_AGENT` (caller User-Agent, default `polymath-mcp`), `_CALLER_IS_LOCAL` from `_is_local_caller` = loopback Host AND none of `cf-connecting-ip`, `cf-ray`, `cdn-loop`, `x-forwarded-for`, `forwarded`; default is NOT local (fail closed) | orchestrator/orchestrator/mcp_server.py:90-116 [DERIVED] | headers -> contextvars | lost context refuses host tools |
+| 9 | Discovery: `list_tools` filters out `MR.HIDDEN_TOOLS_A` — deprecated `retrieve` / `retrieve_evidence` / `compile_plan` / `ask` stay callable but are never listed | orchestrator/orchestrator/mcp_server.py:26,119-124 [DERIVED] | tools/list -> filtered list | old callers still reach deprecated tools |
+| 10 | Tool body runs. `polymath_search`: `MR.normalize_mode(mode)`; None -> `MR.mode_error`; else `_orch("POST", "/chat/evidence", json=MR.search_body(query, corpus_id, m))` | orchestrator/orchestrator/mcp_server.py:452-462 [DERIVED] | query, corpus_id, mode -> /chat/evidence body | 422 unknown mode |
+| 11 | Ingest example `upload_document`: caller must be local AND admin, else `REMOTE_PATH_UPLOAD_DISABLED` 403 returned BEFORE any filesystem access (no existence oracle); extension must be in `{.md, .txt, .html, .pdf, .epub, .docx}`; file streamed to POST /upload; run_id is content-addressed (same bytes -> existing run, `already_exists` true) | orchestrator/orchestrator/mcp_server.py:75,243-273 [DERIVED] | path, corpus_id -> run_id | 404 not found; 422 extension; 409 CROSS_CORPUS_CONTENT_COLLISION |
+| 12 | `upload_text` stamps the principal (F15: it used to send no trusted headers, so a friend's upload ran as the owner) | orchestrator/orchestrator/mcp_server.py:276-301 [DERIVED] | text, corpus_id, source_name -> run_id | 422 bad source_name extension |
+| 13 | `_trusted_headers` builds the trusted loopback context: returns None when principal is NOBODY; non-admin gets `x-polymath-principal`; User-Agent = caller agent (becomes receipt.client) | orchestrator/orchestrator/mcp_server.py:138,141-152 [DERIVED] | principal -> headers or None | NO_PRINCIPAL `{"status": 401}` |
+| 14 | `_orch` sends the httpx request to ORCH (default `http://127.0.0.1:7200`), timeout default 180; response >= 400 -> `{"error": detail, "status": code}` (detail from JSON `detail` or `r.text[:400]`) | orchestrator/orchestrator/mcp_server.py:155-168 [DERIVED] | method/path/json -> orchestrator JSON | orchestrator error passthrough |
+| 15 | Streaming variant (`polymath_deep_research`): `_orch_events` POSTs `/research/deep` with `Accept: text/event-stream`, timeout 1800.0, collects frames via `MR.parse_sse`; refusal before the stream -> one `("error", {...})` frame | orchestrator/orchestrator/mcp_server.py:171-190,526-541 [DERIVED] | `MR.deep_body` -> SSE frames | error_code from detail or `HTTP_<status>` |
+| 16 | Model default (`polymath_answer` / `product_search` with model=None): `_app_default_model` reads GET `/synthesizers` for the row marked `default`, cached at most `MR.DEFAULT_MODEL_TTL_S`; None = nothing sent | orchestrator/orchestrator/mcp_server.py:480-487,500,557 [DERIVED] | /synthesizers -> model id | catalog unavailable: model omitted |
+| 17 | Answer shaping: `MR.shape_search(out, max_evidence)`; `_trim_hit` cuts text at 1400 chars and stamps `truncated: true` + `full_length`; `_trim_rows` cuts at 1200 (D-02); `polymath_answer` slims evidence/chunks/bundle to 12 hits at 600 chars | orchestrator/orchestrator/mcp_server.py:193-209,384-386,457,504-508 [DERIVED] | orchestrator JSON -> slim MCP result | — |
+| 18 | Return; `adapter_start` stamps the forwarded principal as `adapter_runs.owner_principal_id` — ownership persisted and enforced by the adapter runtime, not by the gate | orchestrator/orchestrator/mcp_server.py:599-602; orchestrator/orchestrator/mcp_principals.py:28-29 [DERIVED] | principal context -> run owner column | — |
 
 ## state written
-
-- `adapter_runs.owner_principal_id` — persisted and enforced by the adapter runtime from the trusted principal context the gate forwards (run ownership is the runtime's, not the tool's) — orchestrator/orchestrator/mcp_server.py:571-572; orchestrator/orchestrator/mcp_principals.py:16-18 [DERIVED]
-- Query receipts (QUERY-RECEIPTS-V1) — the principal stamps what it creates; receipt `client` = the caller's User-Agent; read back via `recent_queries` (GET `/queries`), where a principal's context narrows results to its OWN receipts — orchestrator/orchestrator/mcp_server.py:97-99,144-145,532-544 [DERIVED]
-- Ingestion runs — POST `/upload` returns a content-addressed `run_id`; the same bytes return the existing run with `already_exists` true — orchestrator/orchestrator/mcp_server.py:235-251,265-286 [DERIVED]
-- `POLYMATH_MCP_PRINCIPALS_FILE` — one JSON file outside the repository; READ and re-read when it changes (revocation needs no fleet bounce); this flow never writes it — orchestrator/orchestrator/mcp_principals.py:12-13 [DERIVED]
-- No direct Postgres/Qdrant writes on this path — every tool is "a thin, trimmed call to the orchestrator API", so persistence stays behind the pipeline's gates — orchestrator/orchestrator/mcp_server.py:5-6 [INFERRED: stated design; no store clients appear in this file]
+- `POLYMATH_MCP_PRINCIPALS_FILE`: ONE JSON file outside the repository, machine-local; re-read when it changes, so a revocation needs no fleet bounce. orchestrator/orchestrator/mcp_principals.py:12-13 [DERIVED]
+- Principal KEYS: sha256 of the raw bearer per key (key_id, created/revoked); the secret is never stored, logged or printed. orchestrator/orchestrator/mcp_principals.py:5-8 [DERIVED]
+- `adapter_runs.owner_principal_id`: persisted and enforced by the adapter runtime from the trusted principal context the gate forwards. orchestrator/orchestrator/mcp_principals.py:28-29; orchestrator/orchestrator/mcp_server.py:601 [DERIVED]
+- Query receipts: `receipt.client` = the caller's own User-Agent; a principal's context narrows `recent_queries` (GET /queries) to its OWN receipts. orchestrator/orchestrator/mcp_server.py:143-145,584 [DERIVED]
+- In-process default-model cache refreshed at most every `MR.DEFAULT_MODEL_TTL_S`. orchestrator/orchestrator/mcp_server.py:484-487 [DERIVED]
+- No Postgres/Qdrant write occurs inside Server A in the shown SOURCE; the only named durable column written downstream is `adapter_runs.owner_principal_id`. [INFERRED] (no DB write appears in the shown Server A code)
 
 ## flags that change this flow
-
 | flag | default | effect | read at |
 |---|---|---|---|
-| `POLYMATH_MCP_PORT` | `8930` | listener port; also composed into `_ALLOWED_HOSTS` and `_LOOPBACK_HOSTS` | orchestrator/orchestrator/mcp_server.py:66,71-72,88 |
-| `POLYMATH_MCP_API_KEY` | `""` | OWNER/admin bearer; empty -> 503 fail-closed on `/mcp`; seeds `_STORE` | orchestrator/orchestrator/mcp_server.py:67,28-30,103 |
-| `POLYMATH_ORCH_URL` | `http://127.0.0.1:7200` | base URL of every orchestrator call | orchestrator/orchestrator/mcp_server.py:65 |
-| `POLYMATH_MCP_PUBLIC_HOST` | `mcp.kingsleylab.xyz` | public Host entries in the allowlist and `allowed_origins` | orchestrator/orchestrator/mcp_server.py:68,71-82 |
-| `POLYMATH_MCP_PRINCIPALS_FILE` | not shown | the JSON principal store, re-read on change | orchestrator/orchestrator/mcp_server.py:26; orchestrator/orchestrator/mcp_principals.py:12-13 |
+| `POLYMATH_MCP_PORT` | `8930` | listener port; builds `_ALLOWED_HOSTS` and `_LOOPBACK_HOSTS` | orchestrator/orchestrator/mcp_server.py:41,72,77-78,94 [DERIVED] |
+| `POLYMATH_MCP_API_KEY` | `""` | OWNER (admin) bearer; seeds `P.store_from_env(API_KEY)`; unset -> 503 fail-closed | orchestrator/orchestrator/mcp_server.py:41,73,109,34-36 [DERIVED] |
+| `POLYMATH_ORCH_URL` | `http://127.0.0.1:7200` | base URL of every `_orch` / `_orch_events` call | orchestrator/orchestrator/mcp_server.py:42,71 [DERIVED] |
+| `POLYMATH_MCP_PUBLIC_HOST` | `mcp.kingsleylab.xyz` | public host allowlisted bare, with `:443`, and as https origin | orchestrator/orchestrator/mcp_server.py:43,74,77-88 [DERIVED] |
+| `POLYMATH_MCP_PRINCIPALS_FILE` | not shown in SOURCE | location of the principals JSON file; file re-read on change | orchestrator/orchestrator/mcp_principals.py:12 [DERIVED] |
 
 ## failure modes
-
-1. Every `/mcp` call returns 503 -> no `POLYMATH_MCP_API_KEY` configured; V2 fails closed instead of running open -> orchestrator/orchestrator/mcp_server.py:28-30,67.
-2. 401 -> bearer unknown or revoked (matches no principal key) -> orchestrator/orchestrator/mcp_server.py:30; orchestrator/orchestrator/mcp_principals.py:5-8.
-3. 403 not permitted -> tool denied: no matching action scope, resource (corpus/adapter/run) not allowed, or an admin-only tool called by a principal -> orchestrator/orchestrator/mcp_server.py:30; orchestrator/orchestrator/mcp_principals.py:9-10,57-58.
-4. 429 -> principal over its requests-per-minute (`_LIMITER = P.RateLimiter()`) -> orchestrator/orchestrator/mcp_server.py:30,104.
-5. `{"error": "NO_PRINCIPAL: ...", "status": 401}` -> `_orch`/`_orch_events` ran under the `NOBODY` sentinel: no gate ran for the call (lost context) -> orchestrator/orchestrator/mcp_server.py:100-101,146-147,167-168.
-6. 403 `REMOTE_PATH_UPLOAD_DISABLED` -> `upload_document` from a caller that is not loopback+admin; refused before ANY filesystem access -> orchestrator/orchestrator/mcp_server.py:91-94,240-241.
-7. 404 `file not found` / 422 `unsupported extension` / 422 `source_name needs one of ...` -> local pre-checks in `upload_document` / `upload_text` -> orchestrator/orchestrator/mcp_server.py:242-247,270-272.
-8. 409 `CROSS_CORPUS_CONTENT_COLLISION` -> same content bytes already ingested into ANOTHER corpus (content belongs to one corpus) -> orchestrator/orchestrator/mcp_server.py:236-238.
-9. `MR.mode_error(mode)` / 422 `unknown reasoning style` (with `styles`) / 422 `unknown depth` (with `depths`) -> normalization rejected the argument -> orchestrator/orchestrator/mcp_server.py:443-445,477-479,516-518.
-10. Error dict `{"error": detail, "status": N}` -> any orchestrator route answered >= 400; `detail` is the JSON `detail` or the first 400 chars of the body -> orchestrator/orchestrator/mcp_server.py:153-159.
-11. Deep research returns a single error frame -> refusal arrived before the SSE stream started -> orchestrator/orchestrator/mcp_server.py:181-185.
-12. `research_acquire` / `supplier_*` called with a principal key -> owner-only by design (not in `TOOL_POLICY` on purpose; the orchestrator refuses a principal too) -> orchestrator/orchestrator/mcp_server.py:626-627,649-651; orchestrator/orchestrator/mcp_principals.py:57-58.
-13. `corpus_status` 404 `corpus ... not found` -> `corpus_id` matched neither `corpus_id` nor `name` in `/corpora` -> orchestrator/orchestrator/mcp_server.py:313-322.
-14. SILENT trimming -> `_trim_hit` cuts at 1400 chars (marked `truncated: true` + `full_length`), `MR.trim_rows` at 1200, but `ask`/`polymath_answer` keep only the FIRST 12 items of `evidence`/`chunks`/`bundle` at 600 chars with no overflow marker -> orchestrator/orchestrator/mcp_server.py:188-204,369-371,425-431,483-487.
+1. 503 on /mcp -> no `POLYMATH_MCP_API_KEY` configured; V2 refuses to run open (V1 measured open 2026-09-02) -> orchestrator/orchestrator/mcp_server.py:34-36
+2. 401 -> bearer matches no enabled principal (unknown or revoked key) -> orchestrator/orchestrator/mcp_server.py:32-33
+3. Tool answers NO_PRINCIPAL (401) with no orchestrator call made -> gate never set a principal; `_trusted_headers` returned None (fail closed) -> orchestrator/orchestrator/mcp_server.py:138,146-148,158-159
+4. 403 not permitted -> tool outside the principal's scopes or resource outside its grant; a tool absent from TOOL_POLICY is admin-only -> orchestrator/orchestrator/mcp_principals.py:9-10,78-79; orchestrator/orchestrator/mcp_server.py:33
+5. 403 REMOTE_PATH_UPLOAD_DISABLED -> upload_document from a non-local or non-admin caller; returned before ANY filesystem access, so the caller gets no file-existence oracle -> orchestrator/orchestrator/mcp_server.py:97-100,252-253
+6. 429 -> principal over its optional requests-per-minute -> orchestrator/orchestrator/mcp_server.py:33; orchestrator/orchestrator/mcp_principals.py:7-8
+7. Silent owner-context fallback (FIXED, FRIEND-JOURNEY F15): upload_text used to send no trusted headers so a friend's upload ran as the owner; now every orchestrator call from a tool carries them -> orchestrator/orchestrator/mcp_server.py:143-148,285-287
+8. 409 CROSS_CORPUS_CONTENT_COLLISION on upload -> same content bytes already live in ANOTHER corpus (content belongs to one corpus) -> orchestrator/orchestrator/mcp_server.py:248-250
+9. 422 unknown mode / depth / reasoning style -> `MR.normalize_mode` / `MR.normalize_depth` / `MR.normalize_reasoning` returned None; the tool answers with the allowed lists -> orchestrator/orchestrator/mcp_server.py:458-460,495-499,536-539
+10. Every orchestrator error comes back as `{"error": detail, "status": code}` -> any response >= 400; a non-JSON body degrades to `r.text[:400]` -> orchestrator/orchestrator/mcp_server.py:163-167
+11. Deep research returns a single error frame -> refusal before the SSE stream starts; error_code taken from the detail or `HTTP_<status>` -> orchestrator/orchestrator/mcp_server.py:182-190
+12. adapter_result 409 -> run still running or awaiting the caller -> orchestrator/orchestrator/mcp_server.py:637-638
+13. Deprecated tools silently reachable -> retrieve / retrieve_evidence / compile_plan / ask are hidden from listing only, still callable; polymath_search used to reach the frozen LEGACY route through them -> orchestrator/orchestrator/mcp_server.py:26,119-124
+14. research_acquire refused for principals -> deliberately owner-only: the host browser holds the owner's sign-ins and the orchestrator refuses any principal too -> orchestrator/orchestrator/mcp_server.py:647-648
 
 ## invariants
-
-- INVARIANT fail-closed: with no key configured, `/mcp` answers 503 — never open — orchestrator/orchestrator/mcp_server.py:28-30.
-- INVARIANT no principal, no call: `_orch` refuses under `NOBODY` before any request leaves — orchestrator/orchestrator/mcp_server.py:100-101,146-147.
-- INVARIANT `x-polymath-principal` is trusted loopback-only context (Server A -> orchestrator), sent only for non-admin principals; the owner key stays the legacy/trusted-local caller — orchestrator/orchestrator/mcp_server.py:149-150; orchestrator/orchestrator/mcp_principals.py:11,39.
-- INVARIANT default deny: a tool absent from `TOOL_POLICY` is admin-only — orchestrator/orchestrator/mcp_principals.py:57-58.
-- INVARIANT a non-admin principal sees only its `corpus_ids` (corpora) and `adapter_ids` (adapters) — orchestrator/orchestrator/mcp_server.py:215-217,556-558.
-- INVARIANT `agent_identity` and a receipt's `client` name the SOFTWARE acting and never carry authorization — orchestrator/orchestrator/mcp_principals.py:16-18.
-- INVARIANT a cut hit always says so: `truncated: true` + `full_length`; a hit that fits keeps exactly its old keys — orchestrator/orchestrator/mcp_server.py:188-204.
-- INVARIANT every query tool REQUIRES `corpus_id` (V2 scope fix; the unscoped path took 20 s and abstained where the scoped path answered in 3 s with 16 citations) — orchestrator/orchestrator/mcp_server.py:31-33.
+- INVARIANT: every orchestrator call carries `_trusted_headers` output or refuses with NO_PRINCIPAL; nothing is sent under NOBODY. orchestrator/orchestrator/mcp_server.py:141-168 [DERIVED]
+- INVARIANT: the bearer secret is never stored, logged or printed; only sha256 of the raw bearer is kept. orchestrator/orchestrator/mcp_principals.py:5-8 [DERIVED]
+- INVARIANT: default deny — a tool with no TOOL_POLICY row is admin-only. orchestrator/orchestrator/mcp_principals.py:9-10,78-79 [DERIVED]
+- INVARIANT: every query tool REQUIRES corpus_id (V2). orchestrator/orchestrator/mcp_server.py:37-39 [DERIVED]
+- INVARIANT: MCP tools are thin, trimmed proxies to the orchestrator API; MCP can never bypass the pipeline's own gates. orchestrator/orchestrator/mcp_server.py:5-9 [DERIVED]
+- INVARIANT: a wildcard `*` corpus grant never returns another person's private library. orchestrator/orchestrator/mcp_principals.py:21-23 [DERIVED]
+- INVARIANT: `agent_identity` and a receipt's client name the SOFTWARE acting and never carry authorization. orchestrator/orchestrator/mcp_principals.py:29-30 [DERIVED]
+- INVARIANT: `_CALLER_IS_LOCAL` defaults False — a lost context is refused, never served as owner-local. orchestrator/orchestrator/mcp_server.py:92-96 [DERIVED]
+- INVARIANT: a trimmed hit declares itself (`truncated: true` + `full_length`); a hit that fits keeps exactly its old keys. orchestrator/orchestrator/mcp_server.py:194-195,210-212 [DERIVED]
 
 ## VERIFY
-
 ```verify
-grep -Fq 'NO_PRINCIPAL: this call carries no authenticated principal (fail closed)' orchestrator/orchestrator/mcp_server.py
-grep -Fq 'REMOTE_PATH_UPLOAD_DISABLED' orchestrator/orchestrator/mcp_server.py
-grep -Fq 'http://127.0.0.1:7200' orchestrator/orchestrator/mcp_server.py
-grep -Fq 'cf-connecting-ip' orchestrator/orchestrator/mcp_server.py
-grep -Fq 'x-polymath-principal' orchestrator/orchestrator/mcp_principals.py
-grep -Fq 'polymath_mcp_principals.v1' orchestrator/orchestrator/mcp_principals.py
-test "$(grep -c -F 'KNOWLEDGE_SEARCH' orchestrator/orchestrator/mcp_principals.py)" -ge 4
+grep -Fq 'os.environ.get("POLYMATH_MCP_PORT", "8930")' orchestrator/orchestrator/mcp_server.py
+grep -Fq 'PRINCIPAL_HEADER = "x-polymath-principal"' orchestrator/orchestrator/mcp_principals.py
+grep -Fq 'MAX_GATED_BODY = 2 * 1024 * 1024' orchestrator/orchestrator/mcp_server.py
+grep -Fq 'default=NOBODY' orchestrator/orchestrator/mcp_server.py
+grep -Fq 'FRIEND_SCOPES = tuple(sorted({*FRIEND_PROFILE, UPLOAD_TEXT, HISTORY_READ, ADAPTER_CANCEL, KNOWLEDGE_RESEARCH}))' orchestrator/orchestrator/mcp_principals.py
+grep -Fq 'pmk_' orchestrator/orchestrator/mcp_principals.py
+test "$(grep -c -F 'NO_PRINCIPAL' orchestrator/orchestrator/mcp_server.py)" -ge 2
 ```

@@ -9,13 +9,18 @@ import { EvidenceInspector } from "./EvidenceInspector";
 import { QueryTrace } from "./QueryTrace";
 import { AnswerReview } from "./AnswerReview";
 import { SynthesisPanel } from "./SynthesisPanel";
+import { ProductResearch, type ProductHandlers } from "./ProductResearch";
 
 /** The synthesis surface (ported from the original Polymath UI): the answer as
  *  real Markdown (GFM tables, emphasis, lists, code), then a quiet meta row
  *  (mode · intent · verdict · model · evidence · latency). The evidence chip
  *  opens the retrieved sources; the query trace and the reviewer stay one
  *  collapsed line each — the machinery, kept out of the reading path. */
-export function AnswerBody({ t, models }: { t: Turn; models: Synthesizer[] }) {
+export function AnswerBody({ t, models, product }: {
+  t: Turn; models: Synthesizer[];
+  /** PRODUCT-SEARCH-E2E: keep a run started from a product answer on its turn, and open the Research screen at it. */
+  product?: ProductHandlers;
+}) {
   const [showEvidence, setShowEvidence] = useState(false);
   const r = t.receipt;
   const intent = r?.chat_plan?.intent;
@@ -35,6 +40,11 @@ export function AnswerBody({ t, models }: { t: Turn; models: Synthesizer[] }) {
       {t.deep && <DeepSources deep={t.deep} />}
       {/* FACET-RETRIEVAL-V1 F5: a synthesis answer's facet badges and sources by document (absent on QA and older turns) */}
       {!t.deep && t.synthesis && <SynthesisPanel synthesis={t.synthesis} gap={t.gapCheck ?? null} cites={cites} />}
+      {/* PRODUCT-SEARCH-E2E: a product question's hypotheses, their CJ finds and the full-research offer (absent on other answers) */}
+      {!t.deep && t.productResearch && (
+        <ProductResearch data={t.productResearch} cites={cites} run={t.productRun ?? null}
+                         onRunStarted={product?.onRunStarted} onOpenResearch={product?.onOpenResearch} />
+      )}
       {t.abstained && t.uncovered.length > 0 && (
         <div className="uncovered-note">nothing in this corpus covers: {t.uncovered.join(", ")}</div>
       )}

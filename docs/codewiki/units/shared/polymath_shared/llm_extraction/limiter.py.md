@@ -1,135 +1,121 @@
 # unit: shared/polymath_shared/llm_extraction/limiter.py
-anchor: shared/polymath_shared/llm_extraction/limiter.py:1-1158
+anchor: shared/polymath_shared/llm_extraction/limiter.py:1-1168
 
 ## purpose
-Adaptive per-(provider, api_key) rate limiting for the LLM extraction fleet — limiter.py:1-4 [DERIVED].
-Local providers (MLX/Ollama) are limited by CONCURRENCY (dynamic semaphore, seeded low); cloud providers by RATE (RPM+TPM token buckets with a concurrency safety cap) — limiter.py:6-9 [DERIVED].
-Both kinds adapt AIMD-style (+1 per K clean successes, ×0.5 on 429/503/timeout), honor Retry-After, sync from rate-limit headers, and guard each lane with a circuit breaker plus a cross-process family damp gate — limiter.py:11-18, 417-422 [DERIVED].
-Threading-only, no third-party dependencies; static config values are seeds and ceilings, `adaptive` moves the effective limit inside [min, max] at runtime — limiter.py:24-27 [DERIVED].
+Adaptive per-(provider, api_key) admission control for the LLM extraction fleet: local providers (MLX/Ollama) get an AIMD dynamic semaphore (GPU/VRAM bottleneck), cloud providers get RPM/TPM token buckets plus daily budgets (RPD, rolling TPD) — limiter.py:1-17 [DERIVED]. Each lane also honors Retry-After, runs a closed→open→half-open circuit breaker, and shares a per-family damp gate persisted through the controller store — limiter.py:14-18, 425-430 [DERIVED]. Threading-only, no third-party dependencies; static config values are seeds and ceilings, `adaptive` moves the effective limit at runtime — limiter.py:24-27 [DERIVED].
 
 ## public surface
-File-level importers (FACTS.importers): `shared/polymath_shared/document_profile/groq_routing.py`, `shared/polymath_shared/llm_extraction/client.py`, `workers/workers/llm_provider.py`. Per-symbol callers not distinguishable from FACTS.
+Module-level importers (FACTS.importers): `shared/polymath_shared/document_profile/groq_routing.py`, `shared/polymath_shared/llm_extraction/client.py`, `workers/workers/llm_provider.py`. Per-symbol users unknown beyond that.
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| ControllerStore | Protocol | load(key: str) -> dict \| None; save(key: str, state: dict) -> None | limiter.py:55-60 | implemented by state_store.PostgresControllerStore (FACTS.imports) |
-| ProviderLimit | dataclass | kind/init=2/min=1/max=6/rpm/tpm/conc_cap/adaptive=True/use_headers=False/rpd/family/tpd/otpm; from_config(base, cfg: dict \| None) -> ProviderLimit | limiter.py:63-97 | — |
+| ControllerStore | Protocol | load(key: str) -> dict \| None; save(key: str, state: dict) -> None | limiter.py:55-60 | state_store.PostgresControllerStore implements it |
+| ProviderLimit | dataclass | kind, init=2, min=1, max=6, rpm/tpm/conc_cap=None, adaptive=True, use_headers=False, rpd/family/tpd/otpm=None; from_config(base, cfg) -> ProviderLimit | limiter.py:63-97 | — |
 | parse_retry_after | function | (value) -> float \| None | limiter.py:110-119 | — |
 | parse_reset_seconds | function | (value) -> float \| None | limiter.py:156-169 | — |
-| LimiterDecision | dataclass (frozen) | admitted / reason / retry_after / reserved_tokens=0.0 / reserved_output=0.0 / tpd_slot=None | limiter.py:139-149 | — |
-| AdaptiveLimiter | class | (name: str, spec: ProviderLimit); admit/acquire/settle/restore/state/capacity_snapshot/spec_fingerprint/record_success/record_failure/release/flush_rpd/park_provider_day | limiter.py:484-973 | client.py, llm_provider.py (file-level) |
-| AdaptiveLimiter.capacity_snapshot | method | (*, now: float \| None = None) -> dict | limiter.py:560-588 | groq_routing.py (docstring names groq_router.choose) [INFERRED] |
-| AdaptiveBudget | class | AIMD over a scalar budget; effective/ceiling/record_success/record_oom/state/restore | limiter.py:976-1056 | — |
-| LimiterRegistry | class | lane/get_lane/budget/attach_store/ensure_store/store_attached | limiter.py:1059-1154 | — |
-| FAMILY_GATE | module singleton | _FamilyGate() | limiter.py:471 | — |
+| LimiterDecision | frozen dataclass | admitted, reason=None, retry_after=None, reserved_tokens=0.0, reserved_output=0.0, tpd_slot=None | limiter.py:139-149 | — |
+| AdaptiveLimiter | class | (name: str, spec: ProviderLimit); acquire, admit, settle, state, capacity_snapshot, restore, spec_fingerprint, release, record_success, record_failure, flush_rpd, park_provider_day, _sync_headers, effective, breaker_open, not_before, … | limiter.py:492-983 | module importers above |
+| AdaptiveBudget | class | AIMD scalar budget; effective, ceiling, record_success, record_oom, state, restore | limiter.py:986-1066 | — |
+| LimiterRegistry | class | lane, get_lane, budget, attach_store, ensure_store; (provider, api_key) -> AdaptiveLimiter | limiter.py:1069-1164 | module importers above |
+| FAMILY_GATE | module singleton | _FamilyGate(); note_failure(family, store), allowed(family, store) | limiter.py:479, 425-476 | — |
 
 ## contracts
 
-**ProviderLimit.from_config(base, cfg)** — limiter.py:89-97 [DERIVED]
-- in: code-level seed `base` + config mapping `cfg` (may be None).
-- post: unknown keys ignored — "a typo in limiter.yaml must not crash the first extraction call" (limiter.py:91-93).
+**AdaptiveLimiter.admit** — limiter.py:687-781
+- in: `est_tokens: float = 0.0, block: bool = True, *, reserved_output: float = 0.0` — limiter.py:687-688
+- gate order: retry-after (695) → family (699-701) → breaker (702-712) → concurrency (713-717) → RPM (721) → TPM (723-727) → OTPM (728-735) → PROVIDER_RPD (739-744) → TPD (747-754) → local RPD (755-771) — limiter.py:695-771
+- out: `LimiterDecision`; `admitted=False` ALWAYS means zero HTTP dispatch and zero provider consumption — limiter.py:141-142, 690-691
+- post: every rate refusal refunds what it took — `self._rpm.refund(1.0)` (726, 733), `self._tpm.refund(est_tokens)` (734), `_refund_rate(...)` (744, 754, 768), `self._tpd.remove(tpd_slot)` (769-770), `self._sem.release()` + `self._breaker.release_probe()` (772-774)
+- post: on admitted RPD admission, `_day_count += 1`, `_last_dispatch_at = _utc_iso()`, `_rpd_dirty = True` — limiter.py:763-766
 
-**parse_retry_after(value)** — limiter.py:110-119 [DERIVED]
-- out: `max(0.0, float(value))`; None when absent, unparseable, or HTTP-date form (not honored by the fleet).
+**AdaptiveLimiter.acquire** — limiter.py:681-685
+- in: `est_tokens: float = 0.0, block: bool = True` → bool; thin wrapper over `admit(...).admitted`; False return never leaves anything held.
 
-**parse_reset_seconds(value)** — limiter.py:156-169 [DERIVED]
-- out: plain seconds ("60", "60.5") or duration form ("2m59.56s", "1h2m3s" via `_DURATION_RE`, limiter.py:152-153); None when unparseable.
+**AdaptiveLimiter.settle** — limiter.py:783-791 (body beyond excerpt)
+- in: `(decision, tokens_in=None, tokens_out=None, *, failed=False)`; returns immediately when `not decision.admitted` — limiter.py:788-789
+- post: "Never raises"; unused reserved tokens go back to TPM/OTPM, deficit charged, rolling daily window trued up, failed call removes its daily reservation — limiter.py:786-788
 
-**AdaptiveLimiter.acquire(est_tokens=0.0, block=True) -> bool** — limiter.py:673-677 [DERIVED]
-- post: True iff admitted; a False return never leaves anything held (slot, tokens, probe).
+**AdaptiveLimiter.state / restore** — limiter.py:544-566, 607-646
+- state() returns keys `effective, streak, floor, ceiling, increases, decreases, day, day_count, last_dispatch_at, adopted_rpm, adopted_tpm, spec_fingerprint, tpd_hours, provider_rpd_limit, provider_rpd_remaining` — limiter.py:546-566
+- restore clamps `effective` into `[floor, ceil]`; restores `day_count` only when persisted `day == today`; restores `adopted_rpm/adopted_tpm` and `tpd_hours` only when `spec_fingerprint` matches — limiter.py:617-618, 622-625, 636-644
 
-**AdaptiveLimiter.admit(est_tokens=0.0, block=True, *, reserved_output=0.0) -> LimiterDecision** — limiter.py:679-771 [DERIVED]
-- gate order (actual code): retry-after (687) → family (691) → breaker (694) → concurrency (703) → RPM (711) → TPM (713) → OTPM (718) → provider-RPD (729) → TPD rolling window (737) → local RPD (745).
-- post: `admitted=False` ALWAYS means zero HTTP dispatch and zero provider consumption — limiter.py:141-142, 683-684; every refusal path releases what it briefly held (limiter.py:716, 722-724, 734, 758-761, 762-765).
-- post: `admitted=True` returns `reserved_tokens=max(est_tokens, 0.0)`, `reserved_output=max(reserved_output, 0.0)`, `tpd_slot` set when a TPD budget exists — limiter.py:770-771, 742.
-- provider-declared daily exhaustion refuses BEFORE the local cap is charged (limiter.py:729-734).
+**AdaptiveLimiter.capacity_snapshot** — limiter.py:568-596
+- read-only report for the selection layer (`groq_router.choose`); the limiter remains the enforcement authority — limiter.py:569-572
 
-**AdaptiveLimiter.settle(decision, tokens_in=None, tokens_out=None, *, failed=False) -> None** — limiter.py:773-792 [DERIVED]
-- pre: no-op when `decision.admitted` is False (limiter.py:781-782).
-- post: TPM refund of unused reservation / debit of deficit (limiter.py:783-787); OTPM refunds surplus output (limiter.py:788-790); TPD entry trued up / removed on failure (limiter.py:791-792).
-- post: never raises (limiter.py:777).
+**ProviderLimit.from_config** — limiter.py:89-97
+- unknown config keys are ignored — "a typo in limiter.yaml must not crash the first extraction call" — limiter.py:91-93
 
-**AdaptiveLimiter.restore(state) -> bool** — limiter.py:599-638 [DERIVED]
-- out: False when state empty or missing "effective" (limiter.py:606-607).
-- post: effective clamped into [floor, ceil], streak reset to 0 (limiter.py:610-611); day_count restored only when persisted day == today (limiter.py:614-617); adopted ceilings + tpd_hours restored only when `spec_fingerprint` matches (limiter.py:628-636).
-
-**AdaptiveLimiter.capacity_snapshot(\*, now=None) -> dict** — limiter.py:560-588 [DERIVED]
-- read-only REPORT for the selection layer; limiter stays the enforcement authority (limiter.py:561-564). Keys: remaining_rpd, rolling_rpm, tpm_used, in_flight, locked_until, breaker_open, day_count, rpd_budget, provider_rpd_limit, provider_rpd_remaining (limiter.py:576-588).
-
-**AdaptiveLimiter.state() -> dict** — limiter.py:536-558 [DERIVED]
-- durable row: effective, streak, floor, ceiling, increases, decreases, day, day_count, last_dispatch_at, adopted_rpm, adopted_tpm, spec_fingerprint, tpd_hours, provider_rpd_limit, provider_rpd_remaining; provider values are re-observed live, never restored (limiter.py:555-556).
+**parse_retry_after** — limiter.py:110-119: None when absent or HTTP-date form; else `max(0.0, seconds)`.
+**parse_reset_seconds** — limiter.py:156-169: plain seconds or Groq duration (`"2m59.56s"`, `"1h2m3s"`); None when unparseable.
 
 ## effect surface
-- Postgres: no direct tables (`tables_read: []`, `tables_written: []`, FACTS). Durability delegated to the ControllerStore protocol (limiter.py:55-60) via state_store.PostgresControllerStore (FACTS.imports).
-- Store keys written/read: `f"family:{family}"` — save at limiter.py:443-445, load at limiter.py:459; lane rows via the `_on_change` callback (limiter.py:649-651) and RPD persist (`_persist_rpd_if_due`, limiter.py:769).
-- env: `POLYMATH_PG_DSN` default `''` at limiter.py:1104 (FACTS.env).
-- Network: none in this unit — imports are stdlib + `polymath_shared.llm_extraction.state_store` only (limiter.py:31-40; FACTS.imports).
-- Files / Qdrant / subprocesses: none visible.
+- Postgres tables: none read/written directly (FACTS.tables_read/tables_written empty); durable state flows through the `ControllerStore` Protocol — limiter.py:55-60 — and `state_store.PostgresControllerStore` is imported (FACTS.imports).
+- Env: `POLYMATH_PG_DSN` (default `''`), read at limiter.py:1114 (FACTS.env).
+- Store row keys written/read by `_FamilyGate`: `family:{family}` — limiter.py:451, 467.
+- Network: none in this unit; HTTP dispatch lives in callers, `admitted=False` guarantees no dispatch — limiter.py:141-142.
+- Concurrency: `threading.Lock`/`Condition` at limiter.py:187, 249, 306, 361, 433, 517.
 
 ## invariants
-INVARIANT: breaker opens iff len(outcomes) >= 10 and sum(outcomes)/len(outcomes) < 0.5 — limiter.py:47-48, 399-401 [DERIVED]
-  fails-if: down provider gets hammered (never opens) or healthy lane parked (opens early)
-INVARIANT: honored Retry-After sleep = min(delay, 60.0) s (RETRY_AFTER_MAX_S) — limiter.py:50, 662 [DERIVED]
-  fails-if: a bogus header stalls the lane indefinitely
-INVARIANT: blocking breaker wait <= 75.0 s (BREAKER_WAIT_MAX_S) — limiter.py:51, 666-671 [DERIVED]
-  fails-if: blocking caller wedges on a permanently open breaker
-INVARIANT: family gate opens at >= 8 failures within 30.0 s, closed 45.0 s, cross-process re-read every 10.0 s — limiter.py:410-413, 437-439, 454-455 [DERIVED]
-  fails-if: correlated 429 storm across one family's keys keeps dispatching
-INVARIANT: bucket tokens ∈ [-capacity, capacity]; oversized acquire clamps n = min(n, capacity) — limiter.py:253-254, 261, 284 [DERIVED]
-  fails-if: oversized request blocks forever, or deficit drives tokens unbounded negative
-INVARIANT: bucket refill rate = capacity / 60.0 tokens per second — limiter.py:247 [DERIVED]
-  fails-if: RPM/TPM throttle diverges from the configured per-minute budget
-INVARIANT: rolling TPD window WINDOW_S = 86400.0; entries pruned when ts <= now - 86400.0; wall-clock timestamps so the window survives restart — limiter.py:180-183, 189-191 [DERIVED]
-  fails-if: TPD refusals computed from stale usage after restart
-INVARIANT: concurrency seed = max(spec.min, min(seed, ceil)), ceil = max(conc_cap or spec.max, spec.min) for kind "rate"; AIMD seeds LOW and climbs — limiter.py:491-497 [DERIVED]
-  fails-if: lane starts above provider ceiling or below floor
-INVARIANT: exactly one half-open probe at a time (probe_in_flight) — limiter.py:368-373 [DERIVED]
-  fails-if: probe thundering herd when breaker half-opens
-INVARIANT: AIMD move is +1 per 4 clean successes (SUCCESS_STREAK_FOR_INCREASE=4), ×0.5 on throttle/timeout (DECREASE_FACTOR=0.5) — limiter.py:11-12, 45-46 [DERIVED]
-  fails-if: effective limit diverges from provider tolerance
-INVARIANT: ceiling adoption is grow-only (adopt_capacity), clamped by caller to seed × CEILING_ADOPT_MAX_MULTIPLE = 4 — limiter.py:286-294, 414 [DERIVED]
-  fails-if: a bogus large header lifts the ceiling unbounded
-INVARIANT: day_count restored only when persisted day == today; adopted ceilings/tpd_hours restored only when spec_fingerprint matches — limiter.py:614-617, 628-636 [DERIVED]
-  fails-if: ceilings from a retired config bind live lanes (measured 2026-09-24, comment limiter.py:624-627)
-INVARIANT: no lock held while sleeping — bucket sleep outside its lock (limiter.py:271-273), on_change callback outside the lane lock (limiter.py:649-651), contract at limiter.py:20-22 [DERIVED]
-  fails-if: header sync and other acquirers convoy behind a sleeper
+INVARIANT: `_TokenBucket.rate == capacity / 60.0` (refill per second for a per-minute window) — limiter.py:247 [DERIVED]
+  fails-if: RPM/TPM gates refill at the wrong rate and over-/under-throttle.
+INVARIANT: bucket request `n = min(float(n), self.capacity)` on every acquire — limiter.py:261 [DERIVED]
+  fails-if: a blocking acquire for an oversized request waits forever.
+INVARIANT: `tokens >= -capacity` after `debit` — limiter.py:284 [DERIVED]
+  fails-if: unbounded deficit never refills and the lane stalls.
+INVARIANT: breaker opens only when `len(outcomes) >= 10` and success rate `< 0.5` — limiter.py:407-408 [DERIVED]
+  fails-if: opens early/late on noise, hammering or idling a down provider.
+INVARIANT: honored Retry-After sleep `<= RETRY_AFTER_MAX_S` (60.0) — limiter.py:50, 670 [DERIVED]
+  fails-if: a hostile header parks the lane indefinitely.
+INVARIANT: bucket acquire sleeps `<= 1.0` s per iteration and outside the lock — limiter.py:273-277 [DERIVED]
+  fails-if: header sync and other acquirers convoy behind a sleeper.
+INVARIANT: restore clamps `effective` into `[floor, ceil]` — limiter.py:617-618 [DERIVED]
+  fails-if: a stale persisted value escapes the configured range.
+INVARIANT: `adopted_rpm/adopted_tpm` restored only when persisted `spec_fingerprint` equals the current one — limiter.py:636-644 [DERIVED]
+  fails-if: measured case at limiter.py:632-635 — `adopted_tpm: 70000` from retired models restored onto lanes now configured at 8,000 TPM.
+INVARIANT: family gate opens at `>= 8` failures within `30.0` s, cooldown `45.0` s — limiter.py:418-420, 445-447 [DERIVED]
+  fails-if: correlated 429 storm across keys of one family goes undamped.
+INVARIANT: `_RollingTokens.WINDOW_S == 86400.0`; entries with `ts <= now - 86400.0` pruned — limiter.py:183, 189-192 [DERIVED]
+  fails-if: TPD budget counts expired usage or lets stale usage expire early.
+INVARIANT: `admitted=False` ⇒ no HTTP request dispatched and no provider quota consumed — limiter.py:141-142, 690-691 [DERIVED]
+  fails-if: callers double-charge or dispatch on refusal.
+INVARIANT: `capacity_snapshot.remaining_rpd == 1_000_000_000` when `spec.rpd` is None — limiter.py:577 [DERIVED]
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (clocks: time.monotonic limiter.py:107; time.time limiter.py:195, 201, 218, 228, 445, 462; concurrency: threading locks/conditions throughout, e.g. limiter.py:249, 306, 361; db: controller-store writes limiter.py:443-445, 649-651; env: POLYMATH_PG_DSN limiter.py:1104) [DERIVED]
-idempotency: UNSAFE (admission is consumption: a semaphore slot until release, bucket tokens until settle/refund, `day_count += 1` at limiter.py:753; the reclaim path is settle(decision, failed=True) limiter.py:773-792 — refused admits leak nothing by contract limiter.py:762-765) [DERIVED]
+determinism: NONDETERMINISTIC (clock `time.monotonic` limiter.py:107; wall clock `time.time` limiter.py:195, 201, 218, 228, 453, 470; threading locks/conditions limiter.py:187, 249, 306, 361, 517; controller-store I/O limiter.py:55-60)
+idempotency: SAFE for `restore()`/`load_hours()` (clamped value limiter.py:617-618; hour buckets merged limiter.py:637-638, 230-238); UNSAFE for `admit()` — each admitted call increments `_day_count` and stamps `_last_dispatch_at` — limiter.py:763-766 [INFERRED: re-calling admit double-charges the daily budget by design]
 
 ## failure behaviour
-- Exception → `return None` in `_registry_store` (store access before attach) — limiter.py:479-481; family gate then fails open [DERIVED].
-- Exception → `pass` on `store.save(f"family:{family}")` in note_failure — limiter.py:446-447; the cross-process family signal is lost, local gate still works [DERIVED].
-- Exception → `pass` on `store.load` in allowed — limiter.py:466-467; gate fails open ("fail-open on any store trouble", limiter.py:423-424) [DERIVED].
-- Exception → log at limiter.py:822 (FACTS.fallbacks; RPD-persist region — `_persist_rpd_if_due` called at limiter.py:769); day counter stays memory-only until next persist [DERIVED].
-- Exception → log at limiter.py:1112 (FACTS.fallbacks; inside LimiterRegistry limiter.py:1059-1154, the store-setup region around POLYMATH_PG_DSN limiter.py:1104) [DERIVED].
-- settle() never raises — limiter.py:777 [DERIVED].
-- No custom exceptions; parse helpers return None on bad input (limiter.py:117-119, 163-169) [DERIVED].
+- `_registry_store`: any `Exception` → return None; the family gate then runs without cross-process persistence — limiter.py:486-489 (FACTS.fallbacks "SWALLOWED: return None").
+- `_FamilyGate.note_failure`: `store.save` failure swallowed (`pass`) — limiter.py:450-455; the in-process gate still opens.
+- `_FamilyGate.allowed`: `store.load` failure swallowed (`pass`) → gate fails OPEN — limiter.py:466-475.
+- Two broader `Exception` handlers swallow-with-log at limiter.py:832 and limiter.py:1122 (bodies beyond the excerpt; FACTS.fallbacks).
+- `settle` "Never raises" — limiter.py:786-788.
+- No error codes raised in the visible range; refusals are values (`LimiterDecision.reason`), not exceptions.
 
 ## dumb-code flags
-- Day-string literal `time.strftime("%Y-%m-%d", time.gmtime())` duplicated at 4 sites: limiter.py:515, 567, 614, 747 [DERIVED].
-- Magic numbers: `1e-6` timestamp nudge (limiter.py:204); `0.5` s condition wait (limiter.py:311); `1.0` s bucket sleep cap (limiter.py:273); `0.05` and `/10` breaker poll (limiter.py:668); `1_000_000_000` placeholder remaining_rpd (limiter.py:569); `3600` hour-bucket size (limiter.py:223) [DERIVED].
-- capacity_snapshot reads `self._rpm.tokens` / `self._tpm.tokens` without refill or the bucket lock (limiter.py:572-573) — snapshot can understate headroom until the next acquire [INFERRED: no `_refill_locked` call on that path].
-- BREAKER_ERROR_RATE = 0.5 is named "error rate" but the test compares the SUCCESS fraction (`sum/len < error_rate`) — limiter.py:47, 400-401 [DERIVED].
-- Provider RPD fields are persisted in state() but explicitly never restored (limiter.py:555-556, 540-541) — write-only fields by design [DERIVED].
+- `1_000_000_000` sentinel for "no RPD" in `capacity_snapshot` vs `None` in `spec.rpd` — two representations of "unlimited" — limiter.py:577 vs 78.
+- Docstring gate order omits the OTPM and TPD gates the code actually checks — limiter.py:692-694 vs 728-735, 747-754 (doc drift).
+- Hardcoded poll/sleep literals not tied to constants: `1.0` — limiter.py:273; `0.5` — limiter.py:328; `0.05`/`1.0` — limiter.py:676.
+- `ts += 1e-6` same-tick collision bump in `_RollingTokens.add` — limiter.py:203-204.
+- `BREAKER_WAIT_MAX_S = 75.0` vs `RETRY_AFTER_MAX_S = 60.0`: two separately maintained wait caps — limiter.py:50-51.
+- `ProviderLimit.use_headers` (limiter.py:74) and `adaptive` (limiter.py:73): no read of either in the visible range (lines 1-791) [INFERRED — likely consumed in `_sync_headers`/registry beyond the excerpt; verify before removal].
 
 ## refactor notes
-- REFUSE_* string taxonomy (limiter.py:127-136) is the cross-unit refusal contract; importers groq_routing.py / client.py / llm_provider.py (FACTS.importers) — renaming a value breaks their refusal handling.
-- LimiterDecision + settle() are a paired reservation/true-up protocol (limiter.py:143-149, 773-792) — changing reserved_tokens/reserved_output/tpd_slot semantics requires updating every settle caller.
-- state() dict keys (limiter.py:538-558) are the durable row schema consumed by restore() (limiter.py:599-638) — key changes orphan existing controller-store rows.
-- spec_fingerprint basis list (limiter.py:595) must track ProviderLimit fields exactly, else adopted ceilings silently stop restoring (limiter.py:628).
-- Store key namespace `family:{family}` (limiter.py:443, 459) is shared cross-process — renaming it orphans open-gate rows mid-incident.
-- admit() gate order is load-bearing: provider-RPD must refuse BEFORE local RPD charges day_count (limiter.py:729-734 vs 745-756); reordering double-charges or dispatches into a spent day.
-- POLYMATH_PG_DSN default `''` at limiter.py:1104 is consumed by LimiterRegistry store setup — moving it changes fail-open behavior.
+- Importers (FACTS.importers): `document_profile/groq_routing.py`, `llm_extraction/client.py`, `workers/llm_provider.py` — signature changes to `admit`/`acquire`/`capacity_snapshot` ripple to all three; `capacity_snapshot` is explicitly consumed by `groq_router.choose` — limiter.py:569-570.
+- `REFUSE_*` string values are caller-facing API (refusal receipts name the gate) — limiter.py:127-136, 709-712; renaming breaks callers' reason handling.
+- `state()` keys are the durable row schema; `spec_fingerprint` hashes every ProviderLimit field `[kind, init, min, max, rpm, tpm, conc_cap, rpd, family, tpd, otpm]` — adding/removing a field invalidates every persisted adopted ceiling — limiter.py:603-605, 636-644.
+- `LimiterDecision` is `frozen=True` — limiter.py:139; making it mutable changes caller assumptions.
+- `FAMILY_GATE` singleton (limiter.py:479) plus store keys `family:{family}` (limiter.py:451, 467) form a cross-process contract with the controller store.
+- Store-key prefix `family:` and `state()` key names must stay stable across worker versions — limiter.py:451, 546-566.
 
 ## VERIFY
 ```verify
 grep -Fq 'SUCCESS_STREAK_FOR_INCREASE = 4' shared/polymath_shared/llm_extraction/limiter.py
-grep -Fq 'DECREASE_FACTOR = 0.5' shared/polymath_shared/llm_extraction/limiter.py
-grep -Fq 'RETRY_AFTER_MAX_S = 60.0' shared/polymath_shared/llm_extraction/limiter.py
+grep -Fq 'REFUSE_PROVIDER_RPD = "PROVIDER_RPD"' shared/polymath_shared/llm_extraction/limiter.py
+grep -Fq 'n = min(float(n), self.capacity)' shared/polymath_shared/llm_extraction/limiter.py
+grep -Fq 'self.tokens = max(-self.capacity, self.tokens - float(n))' shared/polymath_shared/llm_extraction/limiter.py
+grep -Fq 'WINDOW_S = 86400.0' shared/polymath_shared/llm_extraction/limiter.py
 grep -Fq 'FAMILY_FAILURE_THRESHOLD = 8' shared/polymath_shared/llm_extraction/limiter.py
-grep -Fq 'admitted=False' shared/polymath_shared/llm_extraction/limiter.py
-! grep -Fq 'import requests' shared/polymath_shared/llm_extraction/limiter.py
-test "$(grep -c -F 'time.strftime' shared/polymath_shared/llm_extraction/limiter.py)" -ge 4
+grep -Fq 'def admit(self, est_tokens: float = 0.0, block: bool = True, *' shared/polymath_shared/llm_extraction/limiter.py
+! grep -Fq 'import asyncio' shared/polymath_shared/llm_extraction/limiter.py
 ```

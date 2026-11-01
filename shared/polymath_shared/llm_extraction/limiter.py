@@ -373,6 +373,14 @@ class _Breaker:
                 return True
             return False
 
+    def remaining_s(self) -> float | None:
+        """Seconds until the open breaker admits its half-open probe (0.0 once due or while the probe is out);
+        None while closed. Receipt-only (INTERACTIVE-ADMISSION-V1): an interactive caller's skip names it."""
+        with self.lock:
+            if self.opened_at is None:
+                return None
+            return max(0.0, self.cooldown_s - (_now() - self.opened_at))
+
     def release_probe(self) -> None:
         """The admitted probe never reached the provider (rate refusal or
         non-blocking saturation): hand the probe slot back."""
@@ -698,8 +706,10 @@ class AdaptiveLimiter:
             # A BLOCKING caller waits for the cooldown and takes the
             # half-open probe itself; only a non-blocking caller (or a
             # breaker that stays open past BREAKER_WAIT_MAX_S) is refused.
+            # INTERACTIVE-ADMISSION-V1: the refusal carries the time left to the
+            # half-open probe so the caller's skip receipt can say it (no gate reads it).
             if not block or not self._wait_for_breaker():
-                return LimiterDecision(False, REFUSE_BREAKER)
+                return LimiterDecision(False, REFUSE_BREAKER, retry_after=self._breaker.remaining_s())
         if block:
             self._sem.acquire()
         elif not self._sem.try_acquire():

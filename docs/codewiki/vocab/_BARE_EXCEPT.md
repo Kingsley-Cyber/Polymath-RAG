@@ -12,7 +12,8 @@ AUTHORITY: `shared/polymath_shared/knowledge_objects/procedure.py:234` :: `_BARE
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:258` | 4/44 | `add`, `assemble`, `attend`, `bind`, `build`, `call`, `cancel`, `compile`, `disable`, `download`, `email`, `embed` |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:30` | 5/44 | `add`, `append`, `assemble`, `attend`, `bind`, `build`, `call`, `cancel`, `detail`, `disable`, `download`, `email` |
+| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:259` | 4/44 | `add`, `assemble`, `attend`, `bind`, `build`, `call`, `cancel`, `compile`, `disable`, `download`, `email`, `embed` |
 | `adapters/ecommerce/python/registry.py` | `adapters/ecommerce/python/registry.py:55` | 3/44 | `add`, `append`, `assemble`, `attend`, `bind`, `call`, `cancel`, `detail`, `disable`, `download`, `email`, `embed` |
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:142` | 6/44 | `add`, `append`, `assemble`, `attend`, `bind`, `call`, `cancel`, `compile`, `disable`, `download`, `email`, `embed` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:127` | 6/44 | `add`, `append`, `attend`, `bind`, `build`, `call`, `cancel`, `disable`, `download`, `email`, `enable`, `end` |
@@ -20,6 +21,7 @@ AUTHORITY: `shared/polymath_shared/knowledge_objects/procedure.py:234` :: `_BARE
 | `shared/polymath_shared/llm_extraction/gate.py` | `shared/polymath_shared/llm_extraction/gate.py:656` | 3/44 | `add`, `append`, `assemble`, `attend`, `bind`, `build`, `call`, `cancel`, `compile`, `disable`, `download`, `email` |
 | `shared/polymath_shared/span_repair.py` | `shared/polymath_shared/span_repair.py:47` | 3/44 | `add`, `append`, `assemble`, `attend`, `bind`, `build`, `call`, `cancel`, `compile`, `detail`, `disable`, `download` |
 | `shared/polymath_shared/verb_inventory.py` | `shared/polymath_shared/verb_inventory.py:34` | 7/44 | `add`, `append`, `assemble`, `attend`, `bind`, `call`, `cancel`, `detail`, `disable`, `download`, `email`, `embed` |
+| `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:329` | 4/44 | `add`, `append`, `assemble`, `attend`, `bind`, `cancel`, `compile`, `detail`, `disable`, `download`, `email`, `embed` |
 
 ## VERIFY
 

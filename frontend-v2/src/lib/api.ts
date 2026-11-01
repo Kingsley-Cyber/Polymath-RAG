@@ -7,7 +7,7 @@ import type {
   CompareResponse, ControlPlane, Corpus, DocSummary, DocumentsResponse, GraphEntities,
   GraphRelationships, LlmProvider, LlmTestResult, PoolLanes, ProviderUpsertBody,
   ReasoningMode, RetrieveResponse, ReviewResponse, SemanticReadiness, Synthesizer,
-  UploadResult, RunSummary, RunView, DeepResearchPlan } from "./contracts";
+  UploadResult, RunSummary, RunView, DeepResearchPlan, AdapterRunRef } from "./contracts";
 
 export class ApiError extends Error {
   constructor(readonly status: number, readonly path: string, readonly body: string) {
@@ -108,6 +108,10 @@ export const api = {
   adapterView: (runId: string, s?: AbortSignal) => get<RunView>(`/adapter/${encodeURIComponent(runId)}/view`, s),
   adapterCancel: (runId: string, s?: AbortSignal) =>
     post<Record<string, unknown>>(`/adapter/${encodeURIComponent(runId)}/cancel`, {}, s),
+  // TRAIL-INTERFACE-V1 T6 (PRODUCT-SEARCH-E2E): start a governed run from the web. The server stamps the signed-in person as
+  // its owner and checks a friend's adapters and libraries; their own agent then drives it (adapter_next / adapter_submit).
+  adapterStart: (body: { adapter_id: string; input: Record<string, unknown>; request_options?: Record<string, unknown> }, s?: AbortSignal) =>
+    post<AdapterRunRef>("/adapter/start", body, s),
   corpora: (s?: AbortSignal) => get<{ corpora: Corpus[] }>("/corpora", s).then((d) => d.corpora),
   // DELETE /corpora/{id} — OWNER-DESTRUCTIVE: wipes the corpus and everything derived
   // (PG rows, Qdrant collection, Neo4j substrate). The backend requires confirm==corpus_id,

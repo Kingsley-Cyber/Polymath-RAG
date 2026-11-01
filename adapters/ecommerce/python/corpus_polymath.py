@@ -178,7 +178,8 @@ def explore_corpus(url: str, corpus: str, need: str, bearer: str | None, timeout
     """docs/22 (v2.2.0): the EVIDENCE BOUNDARY. Polymath runs its FULL retrieval planning (compiler, grounded expansion,
     Corpus Explore, rerank, C4/C5 seating, CA4 grading) and returns an EvidencePacket — evidence with roles, grades and
     provenance, and NO answer (`synthesis_performed: false`). Submit the ORIGINAL need: Polymath owns retrieval planning,
-    θ owns the reasoning. The body is exactly these four fields."""
+    θ owns the reasoning. The body is exactly these five fields: `product: false` (PRODUCT-SEARCH-E2E) keeps the route's product mode
+    off inside a run — the run's supplier research is the agent's, never a search Polymath starts from a corpus question."""
     body = {"message": need, "corpus_id": corpus, "mode": mode, "corpus_explorer": bool(corpus_explorer)}
     return _post(url, EVIDENCE_PATH, body, bearer, timeout)
 

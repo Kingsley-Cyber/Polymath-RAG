@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from . import json_logging  # noqa: F401 — O-07: JSON runtime logs with the AGENTS.md §8 fields (configures on import)
 from .api.ask import router as ask_router
 from .api.queries import router as queries_router
 from .api.capabilities import router as capabilities_router
@@ -83,7 +84,7 @@ app.add_middleware(
 @app.middleware("http")
 async def _query_activity_signal(request, call_next):
     if request.url.path in ("/chat", "/chat/stream", "/retrieve", "/ask",
-                            "/fast", "/hybrid", "/graph"):
+                            "/fast", "/hybrid", "/graph", "/product/search"):
         try:
             from polymath_shared.db import tx
             with tx() as conn:
@@ -129,6 +130,9 @@ app.include_router(web_settings_router)
 from orchestrator.api.deep_research import router as deep_research_router
 
 app.include_router(deep_research_router)          # DEEP-RESEARCH-MODE-V1 DR2: POST /research/deep
+from orchestrator.api.product import router as product_router  # noqa: E402
+
+app.include_router(product_router)                # PRODUCT-SEARCH-E2E: POST /product/search (product-search-v1)
 
 # Serve the built web UI at /ui when a build exists (single-port product).
 from pathlib import Path  # noqa: E402

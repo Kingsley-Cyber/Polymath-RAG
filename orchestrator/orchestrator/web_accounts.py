@@ -13,6 +13,14 @@ web boundary that uses it lives in web_boundary.py.
   * the invite code (INVITE-SIGNUP, the owner 2026-09-27): ONE code on the registry document lets a friend create their own
     account; the owner reads it in Settings to share it, and rotates it. Plain at rest by the owner's choice for this secret
     (it only opens a limited friend account, it is rotatable, and the owner must be able to read it again); never logged.
+
+CORPUS-ACCESS-PARITY (the owner, 2026-11-01: "users of the connector and link works seamlessly as me"):
+  * a friend's read grant may be the wildcard ["*"] (QS.ALL_LIBRARIES): every library that exists at request time, a library
+    added later included, never another friend's private one (web_scope resolves it per request). `_grant` normalises it to
+    ["*", "fr-<username>"]; `set_friend_all_libraries` is the owner's path to put an existing friend on it;
+  * F6: the friend's private library `fr-<username>` is a real corpus from the moment the friend exists (production +
+    query-enabled, `ensure_private_library`), not a name that 404s until the first upload. POLYMATH_PRIVATE_LIBRARY_AUTOCREATE=0
+    turns the Postgres write off (the test session does, so a test registry never writes a library into the live database).
 """
 from __future__ import annotations
 
@@ -23,6 +31,7 @@ import fcntl
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import secrets
@@ -34,7 +43,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from polymath_shared import query_scope as QS
+
 from orchestrator import mcp_principals as P
+
+log = logging.getLogger(__name__)
 
 USERNAME_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{1,31}$")          # 2-32 characters (one rule for sign-up and the owner's Add friend)
 USERNAME_RULE = "a username is 2-32 characters: lowercase letters, digits, '-' or '_'"
@@ -42,7 +55,7 @@ MIN_PASSWORD = 1                      # the owner, 2026-09-27: "it should be any
 INVITE_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"                # no 0/o, 1/l/i: a code that reads aloud without doubt
 INVITE_GROUPS, INVITE_GROUP_LEN = 3, 4                             # k7mp-4xwq-9nfr: 31^12 ≈ 2^59 codes
 OWNER_USERNAME = "king"
-FRIEND_SCOPES = tuple(sorted({*P.FRIEND_PROFILE, P.UPLOAD_TEXT, P.HISTORY_READ, P.ADAPTER_CANCEL}))   # "everything" but admin
+FRIEND_SCOPES = P.FRIEND_SCOPES   # "everything" but admin — one list for web friends and script-made friends
 MAX_ACTIVE_KEYS = 3
 SESSION_COOKIE, CSRF_COOKIE, CSRF_HEADER = "polymath_session", "polymath_csrf", "x-polymath-csrf"
 SESSION_TTL_S = 7 * 24 * 3600
@@ -129,7 +142,19 @@ def principal_id_for(username: str) -> str:
 
 
 def private_corpus_for(username: str) -> str:
-    return "fr-" + normalize_username(username)
+    return QS.PRIVATE_LIBRARY_PREFIX + normalize_username(username)
+
+
+def _grant(corpus_ids, private: str) -> list[str]:
+    """A friend's read grant: the libraries named plus its own private one. The wildcard subsumes every other shared name
+    (["*", private]); another friend's private library is never grantable."""
+    ids = {str(c).strip() for c in corpus_ids or () if str(c).strip()}
+    foreign = sorted(c for c in ids if QS.is_private_library(c) and c != private)
+    if foreign:
+        raise AccountError("PRIVATE_LIBRARY", "another friend's private library cannot be shared")
+    if QS.ALL_LIBRARIES in ids:
+        return [QS.ALL_LIBRARIES, private]
+    return sorted({*ids, private})
 
 
 def _friend(doc: dict[str, Any], username: str) -> dict[str, Any] | None:
@@ -169,8 +194,9 @@ def set_owner_password(path: Path, password: str, display_name: str = "King") ->
 
 def add_friend(path: Path, username: str, password: str, *, display_name: str = "", corpus_ids: list[str] | tuple[str, ...] = (),
                adapter_ids: list[str] | tuple[str, ...] = (), must_change: bool = True) -> dict[str, Any]:
-    """A friend = a principal with the friend scopes ("everything" but admin), read access to `corpus_ids` plus a private
-    writable library `fr-<username>`, and a web login. Returns the record WITHOUT the password hash."""
+    """A friend = a principal with the friend scopes ("everything" but admin), read access to `corpus_ids` (["*"] = every
+    library, resolved per request) plus a private writable library `fr-<username>` that exists from now on (F6), and a web
+    login. Returns the record WITHOUT the password hash."""
     name = normalize_username(username)
     if name == OWNER_USERNAME:
         raise AccountError("BAD_USERNAME", "that username is the owner's")
@@ -183,7 +209,9 @@ def add_friend(path: Path, username: str, password: str, *, display_name: str = 
                              must_change=must_change)
         doc["principals"].append(rec)
         return public_record(rec)
-    return update_registry(path, change)
+    rec = update_registry(path, change)
+    _create_private_library(private_corpus_for(name))
+    return rec
 
 
 def _taken(doc: dict[str, Any], name: str, pid: str) -> bool:
@@ -195,7 +223,7 @@ def _friend_record(name: str, password: str, *, display_name: str, corpus_ids, a
     private = private_corpus_for(name)
     return {"principal_id": principal_id_for(name), "name": display_name or name, "profile": "friend", "enabled": True,
             "revoked_at": None, "created_at": _now_iso(), "scopes": list(FRIEND_SCOPES),
-            "corpus_ids": sorted({*map(str, corpus_ids), private}), "writable_corpus_ids": [private],
+            "corpus_ids": _grant(corpus_ids, private), "writable_corpus_ids": [private],
             "adapter_ids": sorted(set(map(str, adapter_ids))), "keys": [], "web": _new_web(name, password, must_change)}
 
 
@@ -220,24 +248,78 @@ def reset_friend_password(path: Path, username: str, password: str) -> None:
 
 
 def set_friend_corpora(path: Path, username: str, corpus_ids: list[str] | tuple[str, ...]) -> dict[str, Any]:
+    """The owner sets a friend's libraries: an explicit list, or ["*"] for every library (resolved per request). The friend's
+    private library always stays in the grant."""
     def change(doc):
         rec = _friend(doc, username)
         if rec is None:
             raise AccountError("NOT_FOUND", "no such friend")
         private = private_corpus_for(rec["web"]["username"])
-        rec["corpus_ids"] = sorted({*map(str, corpus_ids), private})
+        rec["corpus_ids"] = _grant(corpus_ids, private)
         return public_record(rec)
     return update_registry(path, change)
 
 
+def set_friend_all_libraries(path: Path, username: str) -> dict[str, Any]:
+    """The owner's path to put an EXISTING friend on every library (the wildcard): a library added later reaches them too."""
+    return set_friend_corpora(path, username, [QS.ALL_LIBRARIES])
+
+
 def public_record(rec: dict[str, Any]) -> dict[str, Any]:
-    """A friend record fit to show (owner admin, the friend's own Settings): never a hash."""
+    """A friend record fit to show (owner admin, the friend's own Settings): never a hash. `all_libraries` = the grant is the
+    wildcard (every library, resolved per request)."""
     web = rec.get("web") or {}
+    corpus_ids = list(rec.get("corpus_ids") or [])
     return {"principal_id": rec.get("principal_id"), "username": web.get("username"), "name": rec.get("name"),
-            "enabled": rec.get("enabled") is True and not rec.get("revoked_at"), "corpus_ids": list(rec.get("corpus_ids") or []),
+            "enabled": rec.get("enabled") is True and not rec.get("revoked_at"), "corpus_ids": corpus_ids,
+            "all_libraries": QS.ALL_LIBRARIES in corpus_ids,
             "writable_corpus_ids": list(rec.get("writable_corpus_ids") or []), "adapter_ids": list(rec.get("adapter_ids") or []),
             "must_change_password": bool(web.get("must_change_password")), "created_at": rec.get("created_at"),
             "active_keys": sum(1 for k in rec.get("keys") or [] if not k.get("revoked_at"))}
+
+
+# ---- F6: the private library is a real corpus from the moment its friend exists
+PRIVATE_LIBRARY_CONFIG_HASH = "web-private-library-v1"      # corpora.config_hash is NOT NULL; nothing reads it (the intake
+                                                            # worker keeps this row on the first upload: ON CONFLICT DO NOTHING)
+
+
+def private_library_autocreate() -> bool:
+    """POLYMATH_PRIVATE_LIBRARY_AUTOCREATE: on unless set to 0 (tests/conftest.py sets 0 for the whole test session)."""
+    return os.environ.get("POLYMATH_PRIVATE_LIBRARY_AUTOCREATE", "1").strip() != "0"
+
+
+def ensure_private_library(corpus_id: str) -> bool:
+    """Create the private library row `fr-<username>` if it does not exist — idempotent (ON CONFLICT DO NOTHING keeps an
+    existing row, its classification included). New rows get the user-material defaults (production + query-enabled) and the
+    active embedding contract, exactly like a first upload. True = the row exists now; False = autocreate is switched off.
+    Raises on a database failure (callers decide whether that is fatal)."""
+    if not (QS.is_private_library(corpus_id)
+            and USERNAME_RE.match(corpus_id[len(QS.PRIVATE_LIBRARY_PREFIX):])):
+        raise AccountError("BAD_LIBRARY", f"{corpus_id!r} is not a private library id (fr-<username>)")
+    if not private_library_autocreate():
+        return False
+    from polymath_shared.db import tx
+    from polymath_shared.settings import get_settings
+
+    purpose, enabled = QS.new_corpus_classification()
+    with tx() as conn:
+        conn.execute(
+            """INSERT INTO corpora (corpus_id, name, config_hash, embedding_contract_id, purpose, query_enabled)
+               VALUES (%s, %s, %s, %s, %s, %s)
+               ON CONFLICT (corpus_id) DO NOTHING""",
+            (corpus_id, corpus_id, PRIVATE_LIBRARY_CONFIG_HASH, get_settings().stores.embedding_contract_id, purpose, enabled))
+    return True
+
+
+def _create_private_library(corpus_id: str) -> None:
+    """At friend creation: best effort. The account already exists, so a database failure is logged (no secret, no name) and
+    left to the next listing of the friend's libraries (web_scope.ensure_own_private_library) or the owner's
+    `scripts/web_accounts.py ensure-libraries`."""
+    try:
+        ensure_private_library(corpus_id)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("private library not created at friend creation",
+                    extra={"event": "web_accounts.private_library_failed", "error_code": type(exc).__name__})
 
 
 def list_friends(doc: dict[str, Any]) -> list[dict[str, Any]]:
@@ -305,7 +387,9 @@ def register_friend(path: Path, username: str, password: str, code: str, *, corp
         rec = _friend_record(name, password, display_name="", corpus_ids=corpus_ids, adapter_ids=adapter_ids, must_change=False)
         doc["principals"].append(rec)
         return public_record(rec)
-    return update_registry(path, change)
+    rec = update_registry(path, change)              # only a sign-up that passed every check creates a library (F6)
+    _create_private_library(private_corpus_for(rec["username"]))
+    return rec
 
 
 # ---- who is signing in / who holds a session

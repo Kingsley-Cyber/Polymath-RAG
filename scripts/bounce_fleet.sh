@@ -8,9 +8,15 @@ ROOT="${POLYMATH_FLEET_ROOT:-/Users/king/Documents/polymath-rebuild/polymath-v4}
 EXPECT_WORKERS="${POLYMATH_EXPECT_WORKERS:-26}"
 EXPECT_TYPES="${POLYMATH_EXPECT_TYPES:-13}"
 cd "$ROOT" || { echo "fleet checkout not found: $ROOT"; exit 1; }
+# FLEET-LOG-DURABLE-V1: the lock and boot.log live in the supervisor's durable log dir, resolved as the supervisor will
+# (.env, then POLYMATH_FLEET_LOG_DIR > POLYMATH_FLEET_DIR > ~/PolymathRuntime/logs/fleet). macOS's periodic /tmp cleaner
+# unlinked live fleet logs (2026-11-01); /private/tmp/polymath_fleet is linked to this dir BY THE SUPERVISOR at boot,
+# so it is deliberately not pre-created here (a real directory there would stop the link).
+FLEET_LOG_DIR="$( (set -a; [ -f .env ] && . ./.env >/dev/null 2>&1; echo "${POLYMATH_FLEET_LOG_DIR:-${POLYMATH_FLEET_DIR:-}}") )"
+FLEET_LOG_DIR="${FLEET_LOG_DIR:-$HOME/PolymathRuntime/logs/fleet}"
+mkdir -p "$FLEET_LOG_DIR"
 # One bounce at a time: a second click while one runs would find the fleet already stopped and boot a second copy.
-mkdir -p /private/tmp/polymath_fleet
-LOCK=/private/tmp/polymath_fleet/bounce.lock
+LOCK="$FLEET_LOG_DIR/bounce.lock"
 if [ -d "$LOCK" ] && [ -n "$(find "$LOCK" -maxdepth 0 -mmin +10 2>/dev/null)" ]; then
   rmdir "$LOCK" 2>/dev/null        # a restart takes ~1 minute; a lock older than 10 minutes is left over from a killed run
 fi
@@ -35,7 +41,7 @@ if [ "$(count)" != "0" ] || [ "$(listeners)" != "0" ]; then
   lsof -nP -iTCP:7200 -iTCP:8742 -iTCP:8743 -iTCP:8930 -sTCP:LISTEN 2>/dev/null
   exit 1
 fi
-nohup bash scripts/boot_polymath.sh > /private/tmp/polymath_fleet/boot.log 2>&1 &
+nohup bash scripts/boot_polymath.sh > "$FLEET_LOG_DIR/boot.log" 2>&1 &
 disown
 set -a; . ./.env; set +a
 r=""; s=""
@@ -54,5 +60,5 @@ print(*c.fetchone())" 2>/dev/null)
   fi
 done
 echo "NOT READY after 360s: ready=$r | healthy/types/bundles=$s"
-tail -25 /private/tmp/polymath_fleet/boot.log
+tail -25 "$FLEET_LOG_DIR/boot.log"
 exit 2

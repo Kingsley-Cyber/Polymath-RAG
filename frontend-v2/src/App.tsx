@@ -114,9 +114,20 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
   const [drawerOpen, setDrawerOpen] = useState(false);                 // phones: the sidebar is a drawer
   const phone = useMediaQuery("(max-width: 759px)");                   // the drawer never shows the icon-only rail
 
+  /** PRODUCT-SEARCH-E2E: a run started from a product answer, to open when the Research screen mounts (nav clears it). */
+  const [researchRun, setResearchRun] = useState<string | null>(null);
+
   /** Navigate and close the phone drawer. */
   function go(id: ScreenId) {
     setScreen(id);
+    setResearchRun(null);
+    setDrawerOpen(false);
+  }
+
+  /** "Open it in Research" under a product answer: the Research screen, at that run. */
+  function openResearchRun(runId: string) {
+    setResearchRun(runId);
+    setScreen("research");
     setDrawerOpen(false);
   }
 
@@ -363,6 +374,7 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
                   corpusExploreAvailable={corpusExploreAvailable}
                   focusTurn={focusTurn?.chatId === activeChat.id ? focusTurn.index : null}
                   onFocusDone={() => setFocusTurn(null)}
+                  onOpenResearch={openResearchRun}
                 />
               )}
               {screen === "compare" && <Compare corpusId={corpusId} />}
@@ -370,7 +382,7 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
               {screen === "control" && owner && <ControlPlane corpusId={corpusId} />}
               {screen === "graph" && <Graph corpusId={corpusId} />}
               {screen === "models" && owner && <Models />}
-              {screen === "research" && <Research sessions={sessions} onOpenReport={openReport} />}
+              {screen === "research" && <Research sessions={sessions} onOpenReport={openReport} openRunId={researchRun} />}
               {screen === "settings" && <Settings me={me} onMeChanged={onMeChanged} onSignOut={onSignOut} />}
             </>
           )}

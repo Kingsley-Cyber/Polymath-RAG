@@ -10,10 +10,17 @@ login is not the MCP gate that keeps the host browser, which holds the owner's s
 (127.0.0.1:7200 by default), so a request whose Host names anything else is refused too: a web page that re-bound its own name to
 this machine (DNS rebinding) arrives direct and without proxy headers, but it still sends ITS name (TRAIL-EXT-BUGHUNT-V1 B-28).
 
-SUPPLIER-APIS (owner-approved 2026-09-27): the READ-ONLY supplier routes behind the MCP tools supplier_search / supplier_product /
-supplier_freight / supplier_warehouses live here too, under the same rules: the MCP servers on this host only (no proxy, a
-loopback Host), the owner only (they spend the owner's CJ account and quota: a principal gets 403). The policy is
-polymath_shared.acquisition.supplier; nothing here orders, pays, lists or disputes."""
+SUPPLIER-APIS (owner-approved 2026-09-27; PRODUCT-SEARCH-E2E, the owner's decisions of 2026-11-01): the READ-ONLY supplier routes
+behind the MCP tools supplier_search / supplier_product / supplier_freight / supplier_warehouses / supplier_parse live here too, and
+they answer EVERY Polymath user (the owner: "so im ensuring users of the connector and link works seamlessly as me"):
+  * the MCP servers on this host, called directly (no proxy header) at a loopback Host (B-28 stays): the owner key, or a friend's
+    key that Server A's gate let through (TOOL_POLICY) and forwards as X-Polymath-Principal;
+  * the public web app, relayed by the proxy: only a request that PASSED the web boundary (a valid session, its CSRF header, a
+    USER route; `WebBoundaryMiddleware` leaves `web_identity` in the request state) is served; any other proxied request is
+    refused, PROXIED_CALLER, as before. Its Host is the public name, so the loopback check applies to direct callers only.
+research_acquire's /adapter/{run_id}/acquire is untouched: direct loopback callers only, the owner only (the host browser holds the
+owner's sign-ins). The supplier policy, fair use included, is polymath_shared.acquisition.supplier; nothing here orders, pays,
+lists or disputes."""
 from __future__ import annotations
 
 import asyncio
@@ -119,16 +126,38 @@ class SupplierFreightRequest(BaseModel):
     from_country: str = "CN"
 
 
+class SupplierParseRequest(BaseModel):
+    site: str
+    raw_text: str
+
+
 _SUPPLIER_WHAT, _SUPPLIER_TOOLS = "supplier lookup", "tools " + ", ".join(supplier.TOOLS)
 
 
+def refuse_unless_mcp_or_web(request: Request, what: str = _SUPPLIER_WHAT, tools: str = _SUPPLIER_TOOLS) -> None:
+    """403 unless the MCP servers on this host called directly at a loopback Host (B-28), or the request came through the proxy AND
+    passed the web boundary (it leaves `web_identity` in the request state only after a valid session and CSRF header)."""
+    if any(request.headers.get(h) for h in PROXY_HEADERS):
+        if getattr(request.state, "web_identity", None) is None:
+            raise HTTPException(status_code=403, detail={"code": "PROXIED_CALLER", "message": f"{what} answers a relayed request only "
+                                                         "after the web sign-in (the web boundary); a request relayed any other way is refused"})
+        return
+    if not loopback_host(request.headers.get("host")):
+        raise HTTPException(status_code=403, detail={"code": "NON_LOOPBACK_HOST", "message": f"{what} answers the MCP servers on this "
+                                                     f"host (their {tools}), which call it at 127.0.0.1 or localhost, and the signed-in web "
+                                                     "app; a request naming another host (such as a web page that re-bound its own name to "
+                                                     "this machine) is refused"})
+
+
 async def _supplier(request: Request, tool: str, fn, **kw: Any) -> dict:
-    refuse_unless_direct(request, _SUPPLIER_WHAT, _SUPPLIER_TOOLS)
+    refuse_unless_mcp_or_web(request)
     try:
         out = await asyncio.to_thread(fn, principal_id=principal_context.current(), **kw)
     except acquisition.AcquisitionRefused as exc:
-        raise HTTPException(status_code=exc.status, detail={"code": exc.code, "message": exc.message})
-    log.info("supplier %s source=%s status=%s rows=%s", tool, out.get("source"), out.get("status"),
+        retry = getattr(exc, "retry_after_s", None)
+        raise HTTPException(status_code=exc.status, detail={"code": exc.code, "message": exc.message},
+                            headers={"Retry-After": str(retry)} if retry else None)
+    log.info("supplier %s source=%s status=%s reason=%s rows=%s", tool, out.get("source"), out.get("status"), out.get("reason_code"),
              len(out.get("items") or out.get("variants") or out.get("options") or out.get("warehouses") or []))
     return out
 
@@ -152,3 +181,8 @@ async def supplier_freight(req: SupplierFreightRequest, request: Request) -> dic
 @router.get("/supplier/warehouses")
 async def supplier_warehouses(request: Request) -> dict:
     return await _supplier(request, "supplier_warehouses", supplier.warehouses)
+
+
+@router.post("/supplier/parse")
+async def supplier_parse(req: SupplierParseRequest, request: Request) -> dict:
+    return await _supplier(request, "supplier_parse", supplier.parse, site=req.site, raw_text=req.raw_text)

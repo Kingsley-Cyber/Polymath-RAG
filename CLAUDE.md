@@ -89,7 +89,7 @@ handoff it points to — currently `docs/wiki/reports/2026-09-07/README.md`
   roll back. Guards: `scripts/repo_guard.py`, `scripts/agent_preflight.py`,
   `scripts/wiki_worm.py --check` must pass before a commit.
 - UI validation: the owner drives `http://127.0.0.1:7200/ui/`; observe via
-  `/private/tmp/polymath_fleet/orchestrator.log` and the DB, confirm the
+  `~/PolymathRuntime/logs/fleet/orchestrator.log` and the DB, confirm the
   backend code path for each action.
 
 ## Priorities the owner has set (2026-08-30)

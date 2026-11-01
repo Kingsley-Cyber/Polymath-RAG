@@ -413,7 +413,7 @@ STRICT ISOLATION RULES:
 Field meanings (per item, identical to the single-section task): summary = 1-2 sentences; children = one gist per numbered passage; abstraction = the section's domain-independent principle; mechanisms = how it works; affordances = where else it applies; questions = questions this section answers.
 ~~~
 
-## `SYSTEM_PROMPT_TEMPLATE` — `shared/polymath_shared/llm_extraction/client.py:120`
+## `SYSTEM_PROMPT_TEMPLATE` — `shared/polymath_shared/llm_extraction/client.py:123`
 
 ~~~text
 You are an information extraction engine. You read source text and reply with ONE JSON object and nothing else — no prose, no markdown fences.
@@ -439,7 +439,7 @@ this kills exact-repeat degeneration while preserving the JSON-structural
 repetition the contract requires.
 ~~~
 
-## `LEAN_SYSTEM_PROMPT` — `shared/polymath_shared/llm_extraction/client.py:142`
+## `LEAN_SYSTEM_PROMPT` — `shared/polymath_shared/llm_extraction/client.py:145`
 
 ~~~text
 You are an information extraction engine. You read source text and reply with ONE JSON object and nothing else — no prose, no markdown fences.

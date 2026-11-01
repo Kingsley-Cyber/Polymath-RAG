@@ -1,90 +1,109 @@
 # flow: fleet-boot
 How the system starts and restarts: scripts/bounce_fleet.sh, scripts/boot_polymath.sh, the process supervisor, the sidecars, the bundle fence, readiness.
 
+Chain: owner click → `bounce_fleet.sh` (stop old fleet, single-run lock) → `boot_polymath.sh` (stores, bundle fence, budget preflight) → `control.process_supervisor` (spawns+supervises every slot) → bounce polls `/ready` + DB until READY. Exit codes of the bounce: `0` READY · `1` old fleet would not stop · `2` not ready within 6 minutes · `3` another bounce is already running (scripts/bounce_fleet.sh:5 [DERIVED]).
+
 ## hops
+
 | # | what happens | where (anchor) | data in -> data out | can fail how |
 |---|---|---|---|---|
-| 1 | bounce resolves `ROOT="${POLYMATH_FLEET_ROOT:-/Users/king/Documents/polymath-rebuild/polymath-v4}"`, `EXPECT_WORKERS=26`, `EXPECT_TYPES=13`; `cd "$ROOT"` else exit 1 | scripts/bounce_fleet.sh:7-10 [DERIVED] | env -> cwd | checkout missing -> exit 1 |
-| 2 | takes lock dir `/private/tmp/polymath_fleet/bounce.lock`; lock older than 10 min is rmdir'd as leftover; `mkdir` failure -> exit 3; trap rmdir on EXIT | scripts/bounce_fleet.sh:12-21 [DERIVED] | none -> lock dir | second click while one runs -> exit 3 |
-| 3 | TERMs every supervisor: `pgrep -f "control\.process_supervisor" \| xargs kill -TERM` | scripts/bounce_fleet.sh:25 [DERIVED] | process names -> SIGTERM | supervisor ignores TERM (orchestrator limbo, process_supervisor.py:62-64) |
-| 4 | waits ≤90 × 2s until 0 processes (`count()` ps grep) and 0 listeners (`listeners()` lsof on 7200/8742/8743/8930); else `ABORT: still alive` exit 1 | scripts/bounce_fleet.sh:22-23,27-37 [DERIVED] | ps/lsof -> counts | survivors -> exit 1 |
-| 5 | `nohup bash scripts/boot_polymath.sh > /private/tmp/polymath_fleet/boot.log 2>&1 &` + disown | scripts/bounce_fleet.sh:38-39 [DERIVED] | none -> background boot, boot.log | boot.log is the only boot trace |
-| 6 | boot `cd "$(dirname "$0")/.."`, exports `POLYMATH_PG_DSN` default, sources `.env` with `set -a` (the ONLY execution contract; no knob defaults beyond it) | scripts/boot_polymath.sh:5-15 [DERIVED] | .env -> exported env | a non-.env contract would silently pin old knobs |
-| 7 | `docker compose up -d postgres redis qdrant neo4j \|\| true`; waits ≤60 × 2s for psycopg connect | scripts/boot_polymath.sh:18-24 [DERIVED] | none -> stores up | compose failure ignored by `\|\| true` |
-| 8 | bundle fence: `bundle_integrity.py --strict`; violation -> `boot: FATAL — semantic runtime integrity violated`, refuses to start, exit 1 (re-freeze deliberately with `--freeze`) | scripts/boot_polymath.sh:46-52 [DERIVED] | frozen bundle vs runtime -> pass/exit 1 | semantic drift blocks boot by design |
-| 9 | budget: `POLYMATH_AUTOPILOT=1` -> static preflight skipped (per-tick gating); else `runtime_budget.preflight`, over-commit -> exit 1 | scripts/boot_polymath.sh:57-67 [DERIVED] | config/runtime_budget.yaml -> committed/ceiling GB | over-committed working set refuses to start |
-| 10 | `exec .venv/bin/python -m control.process_supervisor` (boot PID replaced by supervisor) | scripts/boot_polymath.sh:71-72 [DERIVED] | env -> supervisor process | — |
-| 11 | `_fleet_filter`: `POLYMATH_FLEET_ONLY` allowlist, else `POLYMATH_PROFILE` -> `profile_slots`; unknown slot names -> `ValueError` | control/control/process_supervisor.py:253-275,290 [DERIVED] | env -> slot list | typo'd slot name aborts with ValueError |
-| 12 | autopilot on: every slot starts `parked` except `control`, `orchestrator`, `intake` | control/control/process_supervisor.py:331-337 [DERIVED] | POLYMATH_AUTOPILOT -> parked flags | — |
-| 13 | `run_forever`: budget preflight again (skipped under autopilot); `BudgetExceeded` -> `REFUSING TO START` raise; SIGTERM/SIGINT -> `_on_term` | control/control/process_supervisor.py:681-698 [DERIVED] | budget plan -> start/refuse | refuses rather than thrashing the workstation |
-| 14 | `tick` loop (`poll_s=2.0`): spawns unstarted slots; `_spawn` rewrites `{python}` to `repo/.venv/bin/python`, logs to `/tmp/polymath_fleet/{name}.log`, `start_new_session=True` | control/control/process_supervisor.py:340-347,384-388,699-700 [DERIVED] | slot spec -> child Popen | — |
-| 15 | child env per spawn: `os.environ.copy()` + `_dotenv_overlay(.env)` (rotated keys visible per respawn) + `export_env(slot.name)` memory caps; `extract`->`POLYMATH_EXTRACT_AFFINITY=local`, `extractN`->cloud; `lane_offset_env` sets e.g. `POLYMATH_DOC_PARENT_MAP_LANE_OFFSET=3` | control/control/process_supervisor.py:356-383 [DERIVED] | .env + budget + slot name -> child env | no budget found -> "starting uncapped" warning |
-| 16 | service slots: embedder `127.0.0.1:8742/ready`, reranker `8743/ready`, orchestrator `7200/health` (`readiness_interval_s: 20.0`, `readiness_failures_before_restart: 3`), mcp `8930/health`; `local_extractor`, `sidecar_gliner`, `sidecar_spacy` slots are retired/removed | control/control/process_supervisor.py:54-75 [DERIVED] | argv slots -> HTTP services | GLiNER/spaCy/local_extractor absent by design |
-| 17 | `verify_health` at spawn: HTTP 200 AND body `ready is not False`; worker slots need fresh `worker_registrations` heartbeat `>= slot.started_at`; control slot = `poll() is None` | control/control/process_supervisor.py:410-450 [DERIVED] | health_url / DB -> bool | alive process without fresh heartbeat = unhealthy |
-| 18 | live-loop `_check_readiness`: control on fast 30s cadence via `control_owners` `last_seen_at` (stale > `control_stall_threshold_s`, default 180 -> restart); services on slow cadence (default 120s, 5 strikes, probe timeout 60s) -> wedge restart | control/control/process_supervisor.py:312-319,486-519,521-535 [DERIVED] | DB age / HTTP -> keep/restart | wedged-but-alive slot restarted like a dead one |
-| 19 | worker exit: append exit time, backoff `backoff_s * len(slot.exits)`, respawn; more than `max_restarts=5` inside `window_s=300.0` -> `_quarantine` (`worker_registrations SET status='quarantined'`) | control/control/process_supervisor.py:391-394,462-482,396-408 [DERIVED] | exit code -> restart/quarantine | crash-loop quarantined, CRITICAL logged |
-| 20 | fence autoheal: slot's pid `status='quarantined'` in `worker_registrations` with heartbeat <30s old -> `_release_leases_of_pid` (leases -> `ready`, no attempt consumed) + respawn onto current code | control/control/process_supervisor.py:221-244,543-589 [DERIVED] | pid -> released leases + respawn | budget still applies (quarantine law) |
-| 21 | `_autopilot_reconcile` every 15s: `desired_slots(conn, slot_names)` decides wake/park; parking TERMINATES the process (only reliable way to return MPS/Metal memory) | control/control/process_supervisor.py:629-664 [DERIVED] | Postgres backlog/query recency -> slot set | observe failure -> keep fleet |
-| 22 | every tick writes slot state to `/tmp/polymath_fleet/supervisor_state.json` | control/control/process_supervisor.py:302-303,483,674-679 [DERIVED] | slot fields -> json file | write errors swallowed (pass) |
-| 23 | bounce polls 72 × 5s: `curl 127.0.0.1:7200/ready` needs `'"ready":true'` AND healthy=`26` AND distinct `worker_type`=`13` AND distinct `left(execution_bundle_hash,12)`=`1` -> `READY` exit 0; else `NOT READY after 360s`, `tail -25 boot.log`, exit 2 | scripts/bounce_fleet.sh:41-58 [DERIVED] | /ready + worker_registrations -> exit 0/2 | split-bundle fleet never reports READY |
+| 1 | Owner runs bounce; `ROOT="${POLYMATH_FLEET_ROOT:-/Users/king/Documents/polymath-rebuild/polymath-v4}"`; `cd "$ROOT"` fails → exit 1. Always boots the fleet checkout, never the worktree the script was copied into | scripts/bounce_fleet.sh:7-10 [DERIVED] | env `POLYMATH_FLEET_ROOT` -> cwd | bad ROOT → "fleet checkout not found", exit 1 |
+| 2 | Resolve durable `FLEET_LOG_DIR` by sourcing `.env`: `POLYMATH_FLEET_LOG_DIR` > `POLYMATH_FLEET_DIR` > `~/PolymathRuntime/logs/fleet`; `mkdir -p`. `/private/tmp/polymath_fleet` is deliberately NOT pre-created (a real dir would stop the supervisor's link) | scripts/bounce_fleet.sh:11-17 [DERIVED] | `.env` -> `FLEET_LOG_DIR` path | unset env silently falls to default (intended) |
+| 3 | Single-bounce lock: `LOCK="$FLEET_LOG_DIR/bounce.lock"`; a lock dir older than 10 min is `rmdir`'d (leftover from a killed run); `mkdir` fails → print "A restart is already running", exit 3; `trap 'rmdir ...' EXIT` | scripts/bounce_fleet.sh:18-27 [DERIVED] | none -> lock dir | second click while one runs → exit 3 instead of a second fleet |
+| 4 | `count()` = ps matching `control\.process_supervisor\|workers.\|uvicorn orchestrator`; `listeners()` = lsof LISTEN on ports 7200, 8742, 8743, 8930 | scripts/bounce_fleet.sh:28-29 [DERIVED] | ps/lsof -> two integers | grep patterns are the definition of "fleet alive" |
+| 5 | TERM the supervisor: `pgrep -f "control\.process_supervisor" \| xargs kill -TERM`; wait ≤ 90 × `sleep 2` (180 s) for 0 processes AND 0 listeners | scripts/bounce_fleet.sh:31-36 [DERIVED] | pgrep -> SIGTERM | children that ignore TERM hold listeners |
+| 6 | Still alive → "ABORT: still alive", dump ps + lsof, exit 1 | scripts/bounce_fleet.sh:37-43 [DERIVED] | ps/lsof -> stdout | exit 1 = old fleet would not stop |
+| 7 | `nohup bash scripts/boot_polymath.sh > "$FLEET_LOG_DIR/boot.log" 2>&1 &` + `disown`; bounce sources `.env` itself | scripts/bounce_fleet.sh:44-46 [DERIVED] | none -> boot.log | boot output visible only in boot.log |
+| 8 | boot: `cd "$(dirname "$0")/.."`; `export POLYMATH_PG_DSN` default `postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath`; `set -a; . ./.env; set +a` — "`.env` is the ONLY execution contract", no knob defaults beyond it | scripts/boot_polymath.sh:5-15 [DERIVED] | `.env` -> exported fleet env | a manual start without `.env` pins a different contract |
+| 9 | `docker compose up -d postgres redis qdrant neo4j \|\|/ true`; poll psycopg connect ≤ 60 × 2 s | scripts/boot_polymath.sh:18-23 [DERIVED] | docker -> reachable Postgres | compose failure swallowed (`2>/dev/null \||\| true`), only the connect loop waits |
+| 10 | Bundle fence: `.venv/bin/python shared/polymath_shared/bundle_integrity.py --strict`; failure → "FATAL — semantic runtime integrity violated", "refusing to start", exit 1; deliberate change re-freezes with `--freeze` | scripts/boot_polymath.sh:38-51 [DERIVED] | declared semantic contract vs runtime -> pass/exit 1 | runtime surface drift blocks boot until fixed or re-frozen |
+| 11 | Unless `POLYMATH_AUTOPILOT=1` (per-tick budget gating, static preflight skipped): run `polymath_shared.runtime_budget.preflight()`; prints "committed_gb GB committed of ceiling_gb GB ceiling"; failure → exit 1 | scripts/boot_polymath.sh:57-67 [DERIVED] | config/runtime_budget.yaml -> committed/ceiling print | over-committed working set refuses to start |
+| 12 | `mkdir -p` fleet log dir; `exec .venv/bin/python -m control.process_supervisor` — everything else lives under ONE supervisor | scripts/boot_polymath.sh:69-76 [DERIVED] | none -> supervisor process (replaces boot shell) | supervisor exit = fleet exit |
+| 13 | Supervisor init `_fleet_filter`: `POLYMATH_FLEET_ONLY` allowlist; else `POLYMATH_PROFILE` → `profile_slots(prof)`; unknown slot names → `ValueError` | control/control/process_supervisor.py:380-401 [DERIVED] | env -> slot subset | misnamed slot aborts the supervisor |
+| 14 | Slots built from `FLEET`: argv slots with `health_url` — `sidecar_embedder` :8742, `sidecar_reranker` :8743, `orchestrator` :7200 (`readiness_interval_s: 20.0`, `readiness_failures_before_restart: 3`), `mcp` :8930 — plus module tuples (control, intake, profile, extract/extract2/extract3, canonicalize, project_canonical, neo4j, qdrant, verify, compile_objects, summaries/summaries2, doc_profile1-6, doc_parent_map1-6, adapter_step) | control/control/process_supervisor.py:40-140, 417-427 [DERIVED] | FLEET list -> `Slot` objects | retired slots (gliner/spacy sidecars, local_extractor) only exist as comments |
+| 15 | Durable log dirs `resolve_fleet_dirs`: explicit `log_dir` > `POLYMATH_FLEET_LOG_DIR` > `POLYMATH_FLEET_DIR` > `~/PolymathRuntime/logs/fleet`; run dir = `POLYMATH_FLEET_DIR` else `/private/tmp/polymath_fleet`; mkdir failure → slot logs fall back to the run dir (receipted `mode: "fallback"`) | control/control/process_supervisor.py:187-206, 429-444 [DERIVED] | env -> `(log_dir, run_dir)` | silent fallback to /tmp if durable dir unusable |
+| 16 | `link_run_dir`: keep `/private/tmp/polymath_fleet` resolving to the log dir — modes `created_link\|linked\|relinked\|per_entry\|blocked\|error`, atomic `os.replace`, never deletes; `per_entry` → `link_run_entry` adopts/links the state file and each slot log (outcomes `linked\|created\|adopted\|kept_aside\|relinked\|blocked\|error:<type>`) | control/control/process_supervisor.py:209-249, 252-284, 445-451 [DERIVED] | run_dir+log_dir -> symlink + receipt dict | `blocked`/`error` only warned (log.warning), boot continues |
+| 17 | Autopilot init: `POLYMATH_AUTOPILOT == "1"` → every slot except `control`, `orchestrator`, `intake` starts `parked`; tick calls `_autopilot_reconcile()` | control/control/process_supervisor.py:479-486, 605-607 [DERIVED] | env -> parked flags | parked slots spawn nothing until demand |
+| 18 | `tick()`: spawn slots with `proc is None`. `_spawn`: append-open `<slot>.log`; argv `{python}` → `repo/.venv/bin/python`; `child_env = os.environ.copy()` + `_dotenv_overlay(.env)` (ENV-OVERLAY-ON-SPAWN-V1) + `export_env(slot.name)` memory caps; `extract` → `POLYMATH_EXTRACT_AFFINITY=local`, `extractN` → `cloud` (setdefault); `lane_offset_env` slot index; `Popen(..., start_new_session=True)` | control/control/process_supervisor.py:488-541, 608-613 [DERIVED] | slot spec -> child process + slot log | `export_env` failure → warning "no runtime budget for slot %s; starting uncapped" |
+| 19 | Live slot → `_check_readiness` on cadence: control 30.0 s, else per-slot `readiness_interval_s` or 120.0 s. Rationale: probe is a real forward pass; alive-but-wedged answered liveness for 16 h (HANG-DEATH P0-B) | control/control/process_supervisor.py:460-461, 616-622, 673-688 [DERIVED] | probe -> wedged verdict | probe hangs bounded by `probe_timeout_s=60.0` |
+| 20 | control slot → `_check_control_heartbeat`: `SELECT EXTRACT(EPOCH FROM now() - MAX(last_seen_at)) FROM control_owners`; `control_heartbeat_stale` = no successful tick for `control_stall_threshold_s` (default 180, settings `control.stall_threshold_s`) after boot grace → terminate (kill fallback) + respawn under the same restart budget | control/control/process_supervisor.py:331-344, 461-467, 638-671 [DERIVED] | control_owners -> control restart | DB probe failure swallowed (`return`) — never kills the loop |
+| 21 | Exited slot: record exit code + timestamp; `_restart_allowed` = exits within `window_s=300.0` ≤ `max_restarts=5`; sleep `backoff_s * len(slot.exits)`; respawn; over budget → `_quarantine` (log CRITICAL + `UPDATE worker_registrations SET status='quarantined'`) | control/control/process_supervisor.py:624-634, 543-546, 548-560 [DERIVED] | exit code -> respawn/quarantine | crash-looping slot stops being restarted (defect surfaced, not hammered) |
+| 22 | `verify_health`: `health_url` → HTTP 200 AND JSON body `ready` is not `False`; control → `poll() is None`; worker → `MAX(heartbeat_at) >= slot.started_at` (fresh registration after spawn) | control/control/process_supervisor.py:562-602 [DERIVED] | child -> healthy bool | 200-with-`{"ready": false}` correctly fails |
+| 23 | Bounce polls 72 × `sleep 5` (360 s): `curl -s -m 3 127.0.0.1:7200/ready` must contain `"ready":true` AND psycopg over `worker_registrations` (`heartbeat_at > now()-interval '60 seconds'`, `status='healthy'`) must return `EXPECT_WORKERS`=26, `EXPECT_TYPES`=13 distinct types, 1 distinct `left(execution_bundle_hash,12)` → "READY", exit 0 | scripts/bounce_fleet.sh:8-9, 47-61 [DERIVED] | /ready + SQL counts -> exit 0 | any gate unmet keeps looping |
+| 24 | Timeout → "NOT READY after 360s: ready=$r \| healthy/types/bundles=$s"; `tail -25 boot.log`; exit 2 | scripts/bounce_fleet.sh:62-64 [DERIVED] | boot.log -> stdout | exit 2 = not ready within 6 minutes |
 
 ## state written
-| store | what | anchor |
-|---|---|---|
-| `/private/tmp/polymath_fleet/bounce.lock` | lock dir; rmdir'd on EXIT | scripts/bounce_fleet.sh:13,17-21 [DERIVED] |
-| `/private/tmp/polymath_fleet/boot.log` | boot script stdout/stderr | scripts/bounce_fleet.sh:38 [DERIVED] |
-| `/tmp/polymath_fleet/{slot.name}.log` | per-slot child stdout+stderr (append) | control/control/process_supervisor.py:341-342 [DERIVED] |
-| `/tmp/polymath_fleet/supervisor_state.json` | per-tick slot state (name, pid, alive, restarts, quarantined, last_exit_code) | control/control/process_supervisor.py:302-303,667-679 [DERIVED] |
-| `worker_registrations` | `status='quarantined'`, `last_error` on quarantine; fresh heartbeat rows written by the workers themselves via the `run_worker` registration path | control/control/process_supervisor.py:399-405,9-14 [DERIVED] |
-| `stage_tickets` | supervisor-stopped worker's leases -> `status='ready'`, `lease_owner=NULL`, `lease_expires_at=NULL`, note set, no attempt consumed | control/control/process_supervisor.py:231-239 [DERIVED] |
-| docker containers `postgres redis qdrant neo4j` | stores brought up detached | scripts/boot_polymath.sh:18 [DERIVED] |
+
+- `FLEET_LOG_DIR/bounce.lock` — lock dir, removed by EXIT trap; stale >10 min auto-`rmdir`'d. scripts/bounce_fleet.sh:19-27 [DERIVED]
+- `FLEET_LOG_DIR/boot.log` — boot script stdout/stderr. scripts/bounce_fleet.sh:44 [DERIVED]
+- `<slot>.log` per slot, opened append-binary at each spawn; `per_entry` mode first links/adopts the old-path log. control/control/process_supervisor.py:489-494, 252-284 [DERIVED]
+- `supervisor_state.json` (`STATE_FILE`) in the log dir, written by `_write_state()` each tick. control/control/process_supervisor.py:168, 445, 635 [DERIVED]
+- `/private/tmp/polymath_fleet` symlink → durable log dir (atomic `os.replace`); per-entry links inside a legacy real dir. control/control/process_supervisor.py:226-231, 239-241 [DERIVED]
+- Link receipts: `self.log_compat` dict (`mode`, `previous`, `error`, per-entry `state` outcome) logged at init. control/control/process_supervisor.py:218-247, 441-451 [DERIVED]
+- Postgres `worker_registrations.status='quarantined'` + `last_error` on quarantine. control/control/process_supervisor.py:552-557 [DERIVED]
+- Postgres `stage_tickets`: `_release_leases_of_pid` sets `status='ready'`, `lease_owner=NULL`, `lease_expires_at=NULL` when the supervisor itself stops a worker — no attempt consumed. control/control/process_supervisor.py:347-370 [DERIVED]
+- Docker containers `postgres redis qdrant neo4j` via `docker compose up -d`. scripts/boot_polymath.sh:18 [DERIVED]
 
 ## flags that change this flow
+
 | flag | default | effect | read at |
 |---|---|---|---|
-| `POLYMATH_FLEET_ROOT` | `/Users/king/Documents/polymath-rebuild/polymath-v4` | checkout bounce boots from (never the copied worktree) | scripts/bounce_fleet.sh:4,7 [DERIVED] |
-| `POLYMATH_EXPECT_WORKERS` | `26` | required healthy worker count for READY | scripts/bounce_fleet.sh:8,51 [DERIVED] |
-| `POLYMATH_EXPECT_TYPES` | `13` | required distinct `worker_type` count | scripts/bounce_fleet.sh:9,51 [DERIVED] |
-| `POLYMATH_PG_DSN` | `postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath` | Postgres DSN for boot, supervisor, bounce health query | scripts/boot_polymath.sh:6; control/control/process_supervisor.py:323-325 [DERIVED] |
-| `POLYMATH_PROFILE` | unset (full fleet) | slot set via `profile_slots`; `serve` = ceiling-checked standing state; never leave a build profile after a build | control/control/process_supervisor.py:256-260; scripts/boot_polymath.sh:29-36 [DERIVED] |
-| `POLYMATH_FLEET_ONLY` | `""` | explicit slot allowlist; unknown names -> `ValueError` | control/control/process_supervisor.py:255,270-274 [DERIVED] |
-| `POLYMATH_AUTOPILOT` | unset | `"1"` parks all but control/orchestrator/intake, moves budget gating to per-tick, skips static preflight | scripts/boot_polymath.sh:57-59; control/control/process_supervisor.py:331-337,469 [DERIVED] |
-| `POLYMATH_EXTRACT_AFFINITY` | setdefault: `local` for `extract`, `cloud` for `extractN` | lane affinity; both steal the other lane when dry | control/control/process_supervisor.py:371-378 [DERIVED] |
-| `POLYMATH_DOC_PROFILE_LANE_OFFSET` / `POLYMATH_DOC_PARENT_MAP_LANE_OFFSET` | 1-based slot index | slot N owns its account's lanes (`slots.<stage>.owners`) | control/control/process_supervisor.py:143-158,379-383 [DERIVED] |
-| `POLYMATH_DOC_PARENT_MAP_ENABLED` | off | flag off => no pMAP work, slot just parks | control/control/process_supervisor.py:110-113 [DERIVED] |
+| `POLYMATH_FLEET_ROOT` | `/Users/king/Documents/polymath-rebuild/polymath-v4` | fleet checkout the bounce boots from | scripts/bounce_fleet.sh:7 [DERIVED] |
+| `POLYMATH_EXPECT_WORKERS` | `26` | READY gate: healthy worker count | scripts/bounce_fleet.sh:8, 57 [DERIVED] |
+| `POLYMATH_EXPECT_TYPES` | `13` | READY gate: distinct `worker_type` count | scripts/bounce_fleet.sh:9, 57 [DERIVED] |
+| `POLYMATH_PG_DSN` | `postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath` | Postgres DSN for boot, supervisor, bounce poll | scripts/boot_polymath.sh:6; control/control/process_supervisor.py:471-474; scripts/bounce_fleet.sh:46,53 [DERIVED] |
+| `.env` file | — | "the ONLY execution contract"; sourced by boot and overlaid on every child spawn | scripts/boot_polymath.sh:15; control/control/process_supervisor.py:508-516 [DERIVED] |
+| `POLYMATH_PROFILE` | unset | echoes profile at boot; selects slot subset via `profile_slots` when no `POLYMATH_FLEET_ONLY` | scripts/boot_polymath.sh:35-37; control/control/process_supervisor.py:382-386 [DERIVED] |
+| `POLYMATH_AUTOPILOT` | unset (`"1"` enables) | `"1"` skips the static budget preflight; supervisor parks all slots except control/orchestrator/intake | scripts/boot_polymath.sh:57-59; control/control/process_supervisor.py:479-486 [DERIVED] |
+| `POLYMATH_FLEET_ONLY` | `""` | slot allowlist; unknown names raise `ValueError` | control/control/process_supervisor.py:381, 396-401 [DERIVED] |
+| `POLYMATH_FLEET_LOG_DIR` | unset → `~/PolymathRuntime/logs/fleet` | durable slot-log/state dir (bounce and supervisor resolve identically) | scripts/bounce_fleet.sh:15-16; control/control/process_supervisor.py:191-203, 171-173 [DERIVED] |
+| `POLYMATH_FLEET_DIR` | unset | second instance's own dir; else the legacy run-dir path readers know | control/control/process_supervisor.py:191-203 [DERIVED] |
+| `POLYMATH_EXTRACT_AFFINITY` | set per slot: `extract`→`local`, `extractN`→`cloud` (setdefault; both steal the other lane when dry) | lane affinity of extract slots | control/control/process_supervisor.py:523-530 [DERIVED] |
+| `POLYMATH_DOC_PROFILE_LANE_OFFSET` / `POLYMATH_DOC_PARENT_MAP_LANE_OFFSET` | slot 1-based index (`"1"`, `"2"`, …) via setdefault | owning slot calls its own account's lanes; without it, run-hash rotation | control/control/process_supervisor.py:143-158, 531-535 [DERIVED] |
+| `POLYMATH_DOC_PARENT_MAP_ENABLED` | off | flag off ⇒ no `doc_parent_map.v1` events, the slot simply parks (per FLEET comment; reader is outside SOURCE) | control/control/process_supervisor.py:110-113 [DERIVED] |
+| settings `control.stall_threshold_s` | `180` | control-heartbeat staleness threshold (owner law: 3 min) | control/control/process_supervisor.py:461-467 [DERIVED] |
 
 ## failure modes
-1. `A restart is already running` exit 3 -> lock dir exists from a live bounce -> scripts/bounce_fleet.sh:17-20; a lock older than 10 minutes is auto-removed as a killed-run leftover (scripts/bounce_fleet.sh:14-16).
-2. `ABORT: still alive` exit 1 -> TERM'd fleet left processes or listeners after ~180s; SIGTERM could leave uvicorn alive with the port closed for minutes (measured ORCHESTRATOR-LIMBO-V1) -> scripts/bounce_fleet.sh:31-37; control/control/process_supervisor.py:62-64.
-3. `NOT READY after 360s` exit 2 -> fleet never reached `"ready":true` + 26/13/1 within 72 × 5s; `tail -25 /private/tmp/polymath_fleet/boot.log` is the diagnostic -> scripts/bounce_fleet.sh:41-58.
-4. `boot: FATAL — semantic runtime integrity violated` -> runtime semantic surface differs from the frozen bundle contract; boot refuses to start (fix the invariant or re-freeze with `--freeze`) -> scripts/boot_polymath.sh:46-52.
-5. Refuses to start on budget -> committed GB over ceiling at boot preflight (exit 1) or in `run_forever` (`REFUSING TO START`, `BudgetExceeded` raised) -> scripts/boot_polymath.sh:60-67; control/control/process_supervisor.py:684-694.
-6. Slot `QUARANTINED` (CRITICAL log) -> more than `max_restarts=5` exits inside `window_s=300.0` (crash loop, readiness failures, or control-heartbeat restarts) -> control/control/process_supervisor.py:391-394,476-479,644-648,396-408.
-7. Silent wedge: fence-quarantined worker keeps heartbeating while refusing every claim — looks alive to every check, never exits -> autoheal detects pid-quarantined registration, hands leases back ready (no retry consumed), respawns onto current code -> control/control/process_supervisor.py:543-589,221-244.
-8. Restart storms on busy sidecars: readiness probe queues behind real inference (embedder ~0.3s idle vs ~7s loaded) -> mitigated by `probe_timeout_s=60.0`, 120s cadence, 5 strikes -> control/control/process_supervisor.py:280-287.
-9. Silent fallback: autopilot observe exception -> `log.warning("autopilot observe failed (keeping fleet)")`, fleet unchanged -> control/control/process_supervisor.py:647-649.
-10. Silent fallbacks that swallow errors so the loop never dies: `_release_leases_of_pid` returns 0 on exception; quarantine DB record failure only logs; readiness probes `except Exception: pass`; non-JSON 200 body counted ready; `_write_state` pass -> control/control/process_supervisor.py:243-244,407-408,563-566,590-591,598-601,675-679.
-11. Stale secrets: children inherit env at spawn; a rotated `.env` key was invisible until respawn — every spawn/respawn re-overlays `.env` -> control/control/process_supervisor.py:357-364.
-12. `docker compose up ... || true` -> store startup failure ignored; the psycopg wait then spins 60 × 2s before bundle checks -> scripts/boot_polymath.sh:18-24.
+
+1. Bounce exits 3, "A restart is already running" → a live bounce holds `bounce.lock` (only locks >10 min old are auto-removed) → scripts/bounce_fleet.sh:20-26.
+2. Bounce exits 1, "ABORT: still alive" → TERM'd fleet still has processes/listeners after ~180 s; SIGTERM limbo measured on uvicorn orchestrator (alive with port closed for minutes, a 10-minute outage under the old 5×120 s policy) → scripts/bounce_fleet.sh:37-43; control/control/process_supervisor.py:62-68.
+3. Bounce exits 2, "NOT READY after 360s" → `/ready` or the 26/13/1 DB gate unmet for 72×5 s; `tail -25 boot.log` is the evidence → scripts/bounce_fleet.sh:47-64.
+4. Boot exits 1, "semantic runtime integrity violated" → `bundle_integrity.py --strict` failed (contract drift, or admission boundaries with no production caller); fix the invariant or re-freeze deliberately with `--freeze` → scripts/boot_polymath.sh:38-51.
+5. Boot exits 1 at budget preflight → static preflight refuses an over-committed working set rather than thrashing (skipped when `POLYMATH_AUTOPILOT=1`) → scripts/boot_polymath.sh:60-67.
+6. Silent log fallback → durable log dir `mkdir` fails → slot logs land in the run dir (`/private/tmp/polymath_fleet`); only a `log.error` and `log_compat` mode `"fallback"` record it → control/control/process_supervisor.py:434-444.
+7. Silent uncapped spawn → `export_env(slot.name)` raises → warning "no runtime budget for slot %s; starting uncapped"; child runs without memory caps (the embedder once held 41.58 GiB of Metal pool uncapped) → control/control/process_supervisor.py:504-522.
+8. Slot quarantined, work stops → >`max_restarts=5` exits within `window_s=300.0` (or control-heartbeat restarts over budget) → CRITICAL log + `worker_registrations.status='quarantined'`; supervisor stops restarting → control/control/process_supervisor.py:543-560, 628-631, 656-660.
+9. Alive-but-wedged sidecar/orchestrator → readiness probe is a real forward pass; needs consecutive failures before restart (default 5 at 120 s; orchestrator 3 at 20 s); probe timeout 60 s. Single slow response under load must not restart (a 10 s/3-strike policy restarted healthy-but-loaded sidecars 11 times) → control/control/process_supervisor.py:57-68, 406-415, 673-687.
+10. Control alive but not ticking → `control_owners.last_seen_at` older than 180 s after grace (record_heartbeat runs only on tick_ok; measured 1,864 consecutive failed ticks) → terminate/kill + respawn → control/control/process_supervisor.py:331-344, 638-671.
+11. Quarantine invisible to liveness → a fence-quarantined worker keeps heartbeating while refusing every claim and never exits (WORKER-QUARANTINE-AUTOHEAL-V1; handling is in `_check_readiness` past the visible SOURCE) → control/control/process_supervisor.py:694-700.
+12. Rotated key invisible to children → children used to inherit the supervisor's boot snapshot (measured: openrouter lanes 401'd on a replaced key and struck a document); every spawn now overlays current `.env` → control/control/process_supervisor.py:508-516.
+13. Live logs unlinked under /tmp → macOS periodic cleaner deleted 26 live worker logs (2026-11-01, lsof link count 0); durable dir + `link_run_dir`/`link_run_entry` (adopt or keep aside, never delete) are the mitigation → control/control/process_supervisor.py:161-164, 252-257.
 
 ## invariants
-- INVARIANT: one bounce at a time — the lock is a directory, rmdir'd on EXIT, leftovers older than 10 minutes removed — scripts/bounce_fleet.sh:11-21 [DERIVED]
-- INVARIANT: bounce always boots from the fleet checkout (`POLYMATH_FLEET_ROOT`), never from the worktree the script was copied into — scripts/bounce_fleet.sh:4,7 [DERIVED]
-- INVARIANT: `.env` is the ONLY execution contract; boot exports it and every spawn/respawn re-overlays it onto children — scripts/boot_polymath.sh:8-15; control/control/process_supervisor.py:357-364 [DERIVED]
-- INVARIANT: health = fresh registration heartbeat after spawn (or HTTP 200 with body `ready` not false), never mere process existence — control/control/process_supervisor.py:410-450 [DERIVED]
-- INVARIANT: more than `max_restarts=5` exits inside `window_s=300.0` quarantines the slot and records it in `worker_registrations` — control/control/process_supervisor.py:279-287,391-394,399-405 [DERIVED]
-- INVARIANT: a supervisor-initiated stop returns the worker's leases to `ready` without consuming an attempt — control/control/process_supervisor.py:221-239 [DERIVED]
-- INVARIANT: READY requires `'"ready":true'` AND 26 healthy AND 13 types AND exactly 1 distinct `left(execution_bundle_hash,12)` — the whole fleet on ONE bundle — scripts/bounce_fleet.sh:44-54 [DERIVED]
-- INVARIANT: parking terminates the process — exit is the only reliable way to return MPS/Metal memory — control/control/process_supervisor.py:632-635 [DERIVED]
-- INVARIANT: service probes run on a slow cadence because they are real forward passes; the control probe is one cheap SQL read on a 30s cadence — control/control/process_supervisor.py:523-535 [DERIVED]
+
+- INVARIANT: one bounce at a time — a second click finds `bounce.lock` and exits 3 rather than booting a second fleet. scripts/bounce_fleet.sh:18-27 [DERIVED]
+- INVARIANT: the bounce always boots from the fleet checkout (`POLYMATH_FLEET_ROOT`), never from the worktree the script was copied into. scripts/bounce_fleet.sh:3-7 [DERIVED]
+- INVARIANT: READY means `"ready":true` from `127.0.0.1:7200/ready` AND `EXPECT_WORKERS` AND `EXPECT_TYPES` AND exactly 1 distinct `left(execution_bundle_hash,12)`, over healthy registrations heartbeating within 60 s. scripts/bounce_fleet.sh:50-60 [DERIVED]
+- INVARIANT: `.env` is the ONLY execution contract; boot adds no knob defaults beyond it. scripts/boot_polymath.sh:7-15 [DERIVED]
+- INVARIANT: boot refuses to start a runtime whose semantic surface differs from the declared contract (`bundle_integrity.py --strict`); re-freeze only deliberately with `--freeze`. scripts/boot_polymath.sh:38-51 [DERIVED]
+- INVARIANT: every long-lived runtime component (sidecars, orchestrator, MCP, control, workers) lives under ONE supervisor with bounded restart + quarantine + health checks. scripts/boot_polymath.sh:69-70; control/control/process_supervisor.py:36-40 [DERIVED]
+- INVARIANT: slot logs and the state file live in a durable dir; the legacy `/private/tmp/polymath_fleet` path keeps resolving to it at every boot; nothing is deleted. control/control/process_supervisor.py:161-164, 209-217 [DERIVED]
+- INVARIANT: `/private/tmp/polymath_fleet` is not pre-created by the scripts — a real directory there would stop the supervisor's link. scripts/bounce_fleet.sh:11-14; scripts/boot_polymath.sh:71-74 [DERIVED]
+- INVARIANT: a restarted slot is healthy only on proof — HTTP 200 with body `ready` not `false`, or a fresh DB heartbeat at/after `started_at`. control/control/process_supervisor.py:562-602 [DERIVED]
+- INVARIANT: more than `max_restarts=5` exits inside `window_s=300.0` quarantines the slot — a tight crash loop is a defect to surface, not a process to hammer. control/control/process_supervisor.py:16-20, 543-546 [DERIVED]
+- INVARIANT: every spawn/respawn overlays the current `.env` onto the child environment. control/control/process_supervisor.py:509-516 [DERIVED]
+- INVARIANT: nothing sits stuck >3 min unnoticed — control liveness is a successful tick, judged stale after `control.stall_threshold_s` (default 180) with a boot grace. control/control/process_supervisor.py:331-344, 460-467 [DERIVED]
+- INVARIANT: supervisor-stopped workers get their leases returned to `ready` without consuming an attempt. control/control/process_supervisor.py:347-365 [DERIVED]
 
 ## VERIFY
+
 ```verify
 grep -Fq 'bounce.lock' scripts/bounce_fleet.sh
-grep -Fq 'execution_bundle_hash' scripts/bounce_fleet.sh
+grep -Fq '127.0.0.1:7200/ready' scripts/bounce_fleet.sh
 grep -Fq 'bundle_integrity.py --strict' scripts/boot_polymath.sh
-grep -Fq 'POLYMATH_AUTOPILOT' scripts/boot_polymath.sh
-grep -Fq 'readiness_failures_before_restart": 3' control/control/process_supervisor.py
-grep -Fq 'POLYMATH_DOC_PARENT_MAP_LANE_OFFSET' control/control/process_supervisor.py
+grep -Fq 'exec .venv/bin/python -m control.process_supervisor' scripts/boot_polymath.sh
+grep -Fq 'start_new_session=True' control/control/process_supervisor.py
+grep -Fq 'supervisor_state.json' control/control/process_supervisor.py
 test "$(grep -c -F 'doc_parent_map' control/control/process_supervisor.py)" -ge 8
+grep -Eq 'POLYMATH_AUTOPILOT.*== "1"' control/control/process_supervisor.py
 ```

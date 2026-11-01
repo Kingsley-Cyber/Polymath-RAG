@@ -12,7 +12,8 @@ AUTHORITY: `adapters/ecommerce/python/provenance.py:19` :: `_STOP` (count: 33) [
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:299` | 14/33 | `about`, `being`, `class`, `could`, `have`, `kit`, `lite`, `mini`, `more`, `most`, `only`, `pack` |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:82` | 4/33 | `about`, `being`, `could`, `does`, `from`, `have`, `into`, `kit`, `lite`, `mini`, `most`, `only` |
+| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:300` | 14/33 | `about`, `being`, `class`, `could`, `have`, `kit`, `lite`, `mini`, `more`, `most`, `only`, `pack` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:128` | 23/33 | `being`, `kit`, `lite`, `mini`, `more`, `most`, `only`, `pack`, `pro`, `set` |
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:32` | 27/33 | `kit`, `lite`, `mini`, `pack`, `pro`, `set` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:32` | 27/33 | `kit`, `lite`, `mini`, `pack`, `pro`, `set` |

@@ -112,6 +112,7 @@ def graph_integrity_errors(raw: dict[str, Any]) -> list[str]:
                 errs.append(f"{sid}: config.show is only valid on AGENT_REASON / HARNESS_ACTION")
             elif not isinstance(show, dict) or not show or not all(isinstance(k, str) and isinstance(v, str) and v.startswith(("outputs.", "input.", "semantics.")) for k, v in show.items()):
                 errs.append(f"{sid}: config.show maps a name to a dotted path under outputs., input. or semantics. (the derived OpportunitySemanticViewV1)")
+        errs += _runtime_config_errors(s, by_id, entry)
         if typ == "BRANCH" and not (s.get("branches") or nxt):
             errs.append(f"{sid}: BRANCH needs branches or a default next")
         # ADR-0019: HARNESS_ACTION is a typed hand-off to the host harness; theta ops belong to AGENT_REASON only; and
@@ -139,6 +140,63 @@ def graph_integrity_errors(raw: dict[str, Any]) -> list[str]:
             todo += [x for x in ([s.get("next")] + [b.get("next") for b in s.get("branches") or []]) if x]
         if terminal not in seen:
             errs.append("terminal step is unreachable from the entry step")
+    return errs
+
+
+_NAME_RE = re.compile(r"^[a-z][a-z0-9_]{1,40}$")
+#: the adapter_next reply's own keys (service.RESERVED_BESIDE): a sibling key never shadows one
+_RESERVED_BESIDE = frozenset({"kind", "step", "status", "evidence", "materials", "last_rejection"})
+_CONTEXT_CLASSES = ("field_evidence", "chunk", "graph_fact", "other")
+
+
+def _runtime_config_errors(s: dict[str, Any], by_id: dict[str, Any], entry: Any) -> list[str]:
+    """PRODUCT-SEARCH-E2E step-config keys the runtime reads (manifest DATA; the runtime names no domain or source):
+    `beside` (sibling keys beside an agent-answered step), `host_prefetch` (host lookups before a HARNESS_ACTION is issued),
+    `law_at_submit` (the following law runs at submit, F2), `max_live_hypotheses` (a generation step's cap on the live ledger),
+    `context_budget` (a step's citation display, A-12) and, on the ENTRY step only, `seed_check` / `corpus_scope` / `corpus_seed`."""
+    sid, typ, cfg = s.get("step_id"), s.get("type"), s.get("config") or {}
+    errs: list[str] = []
+    beside = cfg.get("beside")
+    if beside is not None:
+        paths_ok = lambda v: isinstance(v, str) and v.startswith(("outputs.", "input.", "prefetch."))  # noqa: E731
+        if typ not in ("AGENT_REASON", "HARNESS_ACTION"):
+            errs.append(f"{sid}: config.beside is only valid on AGENT_REASON / HARNESS_ACTION")
+        elif not isinstance(beside, dict) or not beside or not all(
+                isinstance(k, str) and _NAME_RE.match(k) and k not in _RESERVED_BESIDE
+                and (paths_ok(v) or (isinstance(v, list) and v and all(paths_ok(x) for x in v))) for k, v in beside.items()):
+            errs.append(f"{sid}: config.beside maps a sibling-key name (not one of {sorted(_RESERVED_BESIDE)}) to a dotted path, or a list of "
+                        "paths, under outputs., input. or prefetch.")
+    pre = cfg.get("host_prefetch")
+    if pre is not None:
+        build = (pre or {}).get("build") if isinstance(pre, dict) else None
+        if typ != "HARNESS_ACTION":
+            errs.append(f"{sid}: config.host_prefetch is only valid on HARNESS_ACTION")
+        elif not (isinstance(pre, dict) and isinstance(pre.get("lookups"), str) and pre["lookups"].startswith("outputs.")
+                  and isinstance(build, dict) and _DOMAIN_RE.match(str(build.get("domain") or "")) and _DOMAIN_OP_RE.match(str(build.get("operation") or ""))):
+            errs.append(f"{sid}: config.host_prefetch needs lookups (a dotted path under outputs.) and build {{domain, operation}}")
+    if cfg.get("law_at_submit") is not None:
+        law = by_id.get(s.get("next")) or {}
+        if typ != "AGENT_REASON" or cfg.get("law_at_submit") is not True:
+            errs.append(f"{sid}: config.law_at_submit (true) is only valid on AGENT_REASON")
+        elif law.get("type") != "DOMAIN_OPERATION" or (by_id.get(law.get("next")) or {}).get("type") != "BRANCH":
+            errs.append(f"{sid}: config.law_at_submit needs next = a DOMAIN_OPERATION law whose next is a BRANCH")
+    cap = cfg.get("max_live_hypotheses")
+    if cap is not None and (typ != "AGENT_REASON" or not isinstance(cap, int) or isinstance(cap, bool) or cap < 1):
+        errs.append(f"{sid}: config.max_live_hypotheses is a whole number >= 1 on an AGENT_REASON step")
+    budget = cfg.get("context_budget")
+    if budget is not None and not (isinstance(budget, dict) and budget and all(k in _CONTEXT_CLASSES and isinstance(v, int) and not isinstance(v, bool) and v >= 0
+                                                                              for k, v in budget.items()) and sum(budget.values()) <= 500):
+        errs.append(f"{sid}: config.context_budget maps classes {list(_CONTEXT_CLASSES)} to whole numbers (sum <= 500, the step contract's bound)")
+    for key in ("seed_check", "corpus_scope", "corpus_seed"):
+        if cfg.get(key) is None:
+            continue
+        if sid != entry:
+            errs.append(f"{sid}: config.{key} is only valid on the entry step")
+        elif not isinstance(cfg[key], dict):
+            errs.append(f"{sid}: config.{key} is an object")
+    chk = cfg.get("seed_check")
+    if isinstance(chk, dict) and not (_DOMAIN_RE.match(str(chk.get("domain") or "")) and _DOMAIN_OP_RE.match(str(chk.get("operation") or ""))):
+        errs.append(f"{sid}: config.seed_check names a domain and an operation")
     return errs
 
 

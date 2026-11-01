@@ -12,7 +12,7 @@ AUTHORITY: `shared/polymath_shared/frontmatter.py:14` :: `FRONTMATTER_KEYS` (cou
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:234` | 5/18 | `title`, `upload_date`, `video_id`, `author`, `source_file`, `source_type`, `date`, `duration`, `source_url`, `source_family`, `exported_at`, `run_ids` |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:239` | 6/18 | `upload_date`, `video_id`, `author`, `source_file`, `source_type`, `date`, `duration`, `source_url`, `source_family`, `exported_at`, `run_ids`, `field_evidence` |
 | `adapters/ecommerce/python/adapter_receipt.py` | `adapters/ecommerce/python/adapter_receipt.py:72` | 5/18 | `title`, `upload_date`, `video_id`, `author`, `source_file`, `source_type`, `date`, `duration`, `thread_key`, `source_url`, `exported_at`, `run_ids` |
 | `adapters/ecommerce/python/candidates.py` | `adapters/ecommerce/python/candidates.py:51` | 4/18 | `title`, `upload_date`, `video_id`, `url`, `author`, `source_file`, `source_type`, `date`, `duration`, `thread_key`, `source_url`, `exported_at` |
 | `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:136` | 3/18 | `channel`, `upload_date`, `video_id`, `author`, `source_file`, `source_type`, `date`, `duration`, `platform`, `thread_key`, `community`, `source_url` |
@@ -27,9 +27,9 @@ AUTHORITY: `shared/polymath_shared/frontmatter.py:14` :: `FRONTMATTER_KEYS` (cou
 | `adapters/ecommerce/python/utilization.py` | `adapters/ecommerce/python/utilization.py:32` | 5/18 | `title`, `upload_date`, `video_id`, `url`, `author`, `source_file`, `source_type`, `date`, `duration`, `community`, `source_url`, `exported_at` |
 | `adapters/ecommerce/python/verifiers.py` | `adapters/ecommerce/python/verifiers.py:31` | 4/18 | `title`, `channel`, `upload_date`, `video_id`, `url`, `source_file`, `source_type`, `date`, `duration`, `community`, `source_url`, `exported_at` |
 | `orchestrator/orchestrator/api/evidence_rows.py` | `orchestrator/orchestrator/api/evidence_rows.py:76` | 5/18 | `author`, `source_file`, `source_type`, `date`, `duration`, `platform`, `thread_key`, `community`, `source_url`, `source_family`, `exported_at`, `run_ids` |
-| `shared/polymath_shared/acquisition/opencli.py` | `shared/polymath_shared/acquisition/opencli.py:70` | 3/18 | `channel`, `upload_date`, `video_id`, `source_file`, `source_type`, `date`, `duration`, `platform`, `thread_key`, `community`, `source_url`, `source_family` |
-| `shared/polymath_shared/acquisition/service.py` | `shared/polymath_shared/acquisition/service.py:254` | 3/18 | `channel`, `upload_date`, `video_id`, `source_file`, `source_type`, `date`, `duration`, `platform`, `thread_key`, `community`, `source_url`, `source_family` |
-| `shared/polymath_shared/adapter/evidence_boundary.py` | `shared/polymath_shared/adapter/evidence_boundary.py:65` | 3/18 | `channel`, `upload_date`, `video_id`, `author`, `source_file`, `source_type`, `date`, `duration`, `platform`, `thread_key`, `community`, `source_url` |
+| `shared/polymath_shared/acquisition/opencli.py` | `shared/polymath_shared/acquisition/opencli.py:72` | 3/18 | `channel`, `upload_date`, `video_id`, `source_file`, `source_type`, `date`, `duration`, `platform`, `thread_key`, `community`, `source_url`, `source_family` |
+| `shared/polymath_shared/acquisition/service.py` | `shared/polymath_shared/acquisition/service.py:263` | 3/18 | `channel`, `upload_date`, `video_id`, `source_file`, `source_type`, `date`, `duration`, `platform`, `thread_key`, `community`, `source_url`, `source_family` |
+| `shared/polymath_shared/adapter/evidence_boundary.py` | `shared/polymath_shared/adapter/evidence_boundary.py:68` | 3/18 | `channel`, `upload_date`, `video_id`, `author`, `source_file`, `source_type`, `date`, `duration`, `platform`, `thread_key`, `community`, `source_url` |
 
 ## VERIFY
 

@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 import json
+import os
 
 import datetime as _dt
 import hashlib
 import uuid
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable
 
 from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, PRIOR_EVIDENCE_KINDS, ContractViolation, assert_valid, bounded_text, stable_hash, validate
 from .manifest import ADAPTER_DIR, Manifest, ManifestError, ManifestInvalid, list_manifests
-from . import evidence_boundary as EB, hypotheses as H, research_gaps as RG, semantic_view as SV, store, trail_client, transitions as T
+from . import corpus_seed as CS, domain as DOMAIN, evidence_boundary as EB, hypotheses as H, research_gaps as RG, semantic_view as SV, store, trail_client, transitions as T
 from .hypotheses import HypothesisRejected
 from .transitions import BudgetExhausted, RunState, SubmissionRejected
 
@@ -97,9 +99,21 @@ def assert_owner(conn, run_id: str, principal_id: str | None) -> None:
         raise NotRunOwner(run_id)
 
 
+START_RECEIPT_VERSION = "adapter_start_receipt.v1"
+
+
 def start(conn, *, adapter_id: str, input_payload: dict[str, Any], request_options: dict[str, Any] | None = None,
-          directory: Path | None = None, owner_principal_id: str | None = None) -> dict[str, Any]:
-    """Create a durable run (status running — the worker picks it up). Idempotent on request_options.idempotency_key."""
+          directory: Path | None = None, owner_principal_id: str | None = None,
+          corpus_view: Callable[[list[str]], Any] | None = None, catalog: Any = None) -> dict[str, Any]:
+    """Create a durable run (status running — the worker picks it up). Idempotent on request_options.idempotency_key.
+
+    PRODUCT-SEARCH-E2E: an entry step may opt into start-time scope work through its `config` (manifest data, no domain named here):
+    `seed_check` (a domain operation that tells a seed that can generate nothing, early and plainly — SEED_NOT_GENERATIVE with a hint),
+    `corpus_scope` (named corpora validated now; none named = the caller's share of "all libraries", `corpus_view` narrowing it for a
+    principal) and `corpus_seed` (no seed = one derived from the corpora, `<field>_origin: corpus`). The corpus readers are the store's
+    (`catalog` = the store unless a caller hands another). What was decided travels as the
+    START RECEIPT: beside the run ref in the response, kept in the run's request options, and recorded by the entry step's output.
+    A refusal raises CS.StartRefused (a SubmissionRejected-compatible typed error: code, message, hint)."""
     m = manifest_for(adapter_id, directory)
     opts = dict(request_options or {})
     assert_valid("adapter_run_request", {"adapter_id": adapter_id, "input": input_payload, "request_options": opts})
@@ -109,16 +123,80 @@ def start(conn, *, adapter_id: str, input_payload: dict[str, Any], request_optio
     if key:
         existing = store.find_run_by_idempotency(conn, f"{adapter_id}:{key}")
         if existing:
-            return run_ref(conn, existing)
+            return _with_start_receipt(conn, existing)
     seed = f"{adapter_id}:{key}" if key else f"{adapter_id}:{uuid.uuid4()}"
     run_id = "adr_" + hashlib.sha256(seed.encode()).hexdigest()[:32]
-    state = T.start_run(m, run_id, input_payload, opts)
+    T.start_run(m, run_id, input_payload, opts)                       # the REQUESTER's input is valid before anything is derived
+    inp, receipt = dict(input_payload), None
+    entry_cfg = m.step(m.entry_step_id).get("config") or {}
+    if any(entry_cfg.get(k) is not None for k in ("seed_check", "corpus_scope", "corpus_seed")):
+        inp, opts, receipt = _start_scope(conn, m, run_id, inp, opts, entry_cfg, corpus_view=corpus_view, catalog=catalog or store)
+    state = T.start_run(m, run_id, inp, opts)
     state = T.replace(state, status="running")
     store.insert_run(conn, state, m, idempotency_key=(f"{adapter_id}:{key}" if key else None),
                      agent_identity=opts.get("agent_identity"))
     if owner_principal_id:
         store.set_run_owner(conn, run_id, owner_principal_id)
-    return run_ref(conn, run_id)
+    return _with_start_receipt(conn, run_id)
+
+
+def _with_start_receipt(conn, run_id: str) -> dict[str, Any]:
+    """The AdapterRunRefV1 (validated, unchanged) plus — beside it, never inside it — the run's start receipt when it has one."""
+    ref = run_ref(conn, run_id)
+    loaded = store.load_run(conn, run_id)
+    receipt = (loaded[0].options or {}).get("start_receipt") if loaded else None
+    return {**ref, "start_receipt": receipt} if isinstance(receipt, dict) else ref
+
+
+def _start_scope(conn, m: Manifest, run_id: str, inp: dict[str, Any], opts: dict[str, Any], cfg: dict[str, Any], *,
+                 corpus_view, catalog) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    seed_cfg = cfg.get("corpus_seed") if isinstance(cfg.get("corpus_seed"), dict) else {}
+    check_cfg = cfg.get("seed_check") if isinstance(cfg.get("seed_check"), dict) else None
+    field = str(seed_cfg.get("field") or (check_cfg or {}).get("field") or "seed")
+    given = inp.get(field).strip() if isinstance(inp.get(field), str) and inp.get(field).strip() else None
+    inp.pop(f"{field}_origin", None)                                   # the runtime says where the seed came from, never the requester
+    receipt: dict[str, Any] = {"schema_version": START_RECEIPT_VERSION}
+    if given and check_cfg:
+        receipt["seed_check"] = _seed_check(m, run_id, inp, field, check_cfg)
+    if cfg.get("corpus_scope") is not None:
+        scope = CS.resolve_scope(conn, catalog, inp, opts, config=cfg.get("corpus_scope") if isinstance(cfg.get("corpus_scope"), dict) else {},
+                                 corpus_view=corpus_view, seed=given)
+        if scope["origin"] == "default":
+            opts["corpus_ids"] = list(scope["corpus_ids"])
+        receipt["corpus_scope"] = scope
+    if cfg.get("corpus_seed") is not None:
+        if given:
+            receipt["seed"] = {"field": field, "origin": "user", "text": given}      # the requester's input stays exactly as sent
+        else:
+            corpora = list(opts.get("corpus_ids") or inp.get("corpus_ids") or [])
+            if not corpora:
+                raise CS.StartRefused("SEED_UNAVAILABLE", "no seed was given and no corpus is in scope to derive one from",
+                                      "give a seed (a problem, an audience or a situation) or name the corpora to research")
+            derived = CS.corpus_seed(conn, catalog, corpora)
+            inp[field], inp[f"{field}_origin"] = derived["seed"], "corpus"
+            receipt["seed"] = {"field": field, "origin": "corpus", "text": derived["seed"], "lineage": derived["lineage"]}
+    opts["start_receipt"] = receipt
+    return inp, opts, receipt
+
+
+def _seed_check(m: Manifest, run_id: str, inp: dict[str, Any], field: str, check: dict[str, Any]) -> dict[str, Any]:
+    """The entry step's start-time domain check of a requester's seed. A non-generative verdict refuses the start (typed, with the
+    domain's plain hint); a domain refusal refuses it with the domain's code; a broken check never blocks a start — it is recorded."""
+    cfg = {**check, "inputs": dict(check.get("inputs") or {field: f"input.{field}"})}
+    req = DOMAIN.request(domain=str(cfg.get("domain") or ""), operation=str(cfg.get("operation") or ""), run_id=run_id,
+                         step_id=f"{m.entry_step_id}:seed_check", run_input=inp, scope={"input": inp}, config=cfg)
+    try:
+        out = DOMAIN.run(str(cfg.get("domain") or ""), str(cfg.get("operation") or ""), req)
+    except DOMAIN.DomainCrash as exc:
+        return {"ran": False, "error": str(exc)[:500]}
+    if out.get("gap"):
+        raise CS.StartRefused(out["gap"]["code"], out["gap"]["message"])
+    verdict = {k: v for k, v in (out.get("output") or {}).items() if not str(k).startswith("_")}
+    if verdict.get("generative") is False:
+        raise CS.StartRefused(str(verdict.get("reason_code") or "SEED_NOT_GENERATIVE"),
+                              str(verdict.get("message") or "this seed names no problem, audience or situation the research can start from"),
+                              str(verdict.get("hint") or "") or None)
+    return {"ran": True, **{k: verdict[k] for k in ("generative", "reason_code", "signals") if k in verdict}}
 
 
 def run_ref(conn, run_id: str) -> dict[str, Any]:
@@ -163,8 +241,58 @@ def next_step(conn, run_id: str, directory: Path | None = None) -> dict[str, Any
             materials = _materials(conn, run_id, row["step"], directory)
             if materials is not None:
                 out["materials"] = materials
+            out.update(_beside(conn, run_id, row, directory))
+            rej = row.get("receipt") if isinstance(row.get("receipt"), dict) else None
+            if rej and rej.get("status") == "rejected":
+                # F2: the open step's last refusal (a schema, citation or LAW verdict) stays readable beside it — an agent that lost the 422
+                # still sees exactly what to fix
+                out["last_rejection"] = {"errors": list((rej.get("validation") or {}).get("errors") or [])[:40], "at": rej.get("ended_at")}
             return out
     return {"kind": "status", "status": st}
+
+
+#: the reply's own keys: a manifest's `config.beside` may never name one
+RESERVED_BESIDE = frozenset({"kind", "step", "status", "evidence", "materials", "last_rejection"})
+BESIDE_MAX_BYTES = 800_000
+
+
+def _beside(conn, run_id: str, row: dict[str, Any], directory: Path | None) -> dict[str, Any]:
+    """PRODUCT-SEARCH-E2E: SIBLING keys beside an issued step, named by its manifest (`config.beside`: name -> a dotted path, or a list
+    of paths of which the first present wins, over `outputs.` / `input.` / `prefetch.` — the host prefetch stored on the issued row).
+    How a research step is run on the user's machine (`agent_reach`, computed by the adapter's DOMAIN from its own data) or a draft the
+    host built (`supplier_draft`) travels here — never inside the AdapterStepV1, which stays source-neutral and unchanged. Nothing here
+    is evidence. Reads stored state only; a failure is SAID, never raised."""
+    try:
+        state = store.load_run(conn, run_id)[0]
+        beside = (manifest_for(state.adapter_id, directory).step(row["step"]["step_id"]).get("config") or {}).get("beside")
+    except Exception:  # noqa: BLE001
+        return {}
+    if not isinstance(beside, dict) or not beside:
+        return {}
+    try:
+        prefetch = (row.get("output") or {}).get(PREFETCH_KEY) if isinstance(row.get("output"), dict) else None
+        scope = {"outputs": state.outputs, "input": state.input, "prefetch": prefetch if isinstance(prefetch, dict) else {}}
+        out: dict[str, Any] = {}
+        room, too_large = BESIDE_MAX_BYTES, []
+        for name, paths in beside.items():
+            if name in RESERVED_BESIDE:
+                continue
+            for path in (paths if isinstance(paths, list) else [paths]):
+                val = T._lookup(str(path), scope)
+                if val is None:
+                    continue
+                size = len(json.dumps(val, ensure_ascii=False, default=str).encode())
+                if size > room:
+                    too_large.append(name)
+                else:
+                    room -= size
+                    out[name] = val
+                break
+        if too_large:
+            out["beside_too_large"] = too_large
+        return out
+    except Exception as exc:  # noqa: BLE001 — never let a sibling key take adapter_next down
+        return {"beside_error": f"{type(exc).__name__}: {exc}"[:500]}
 
 
 #: the most a step's `materials` may weigh on the wire (the agent still gets its step when a value does not fit — and is told which)
@@ -280,8 +408,19 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
                            validation={"ok": False, "errors": exc.errors})
         # the step stays ISSUED (the agent may retry); the rejection is receipted on the row
         store.finish_step(conn, run_id, row["sequence"], status="issued", receipt=receipt)
+        _touch(conn, run_id)
         raise
     who = sub.get("submitted_by", {}).get("model") or sub.get("submitted_by", {}).get("agent_identity")
+    if step["step_type"] == "AGENT_REASON":
+        # F2: the law that follows this reasoning step runs NOW, on the submitted payload, so the agent gets the law's verdict in the
+        # submit response (a K_situations shape error waited 1024 s for the worker to re-issue the step). Same law, same inputs, same
+        # repair budget: a verdict the branch would route back to this very step is refused here and counts one repair loop
+        law_errors = _law_at_submit(conn, run_id, m, state, new_state, step)
+        if law_errors:
+            receipt = _receipt(step, "rejected", started, evidence_ids=[], model=who, validation={"ok": False, "errors": law_errors})
+            store.finish_step(conn, run_id, row["sequence"], status="issued", receipt=receipt)
+            store.save_state(conn, T.replace(state, branch_loops=state.branch_loops + 1))
+            raise SubmissionRejected(law_errors)
     if step["step_type"] == "HARNESS_ACTION":
         # a HarnessResearchReceiptV1: provenance recorded, nothing admitted yet (TrailSignal admission is the next automatic step)
         rec = dict(sub["payload"])
@@ -289,10 +428,14 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
         if too_large:
             receipt = _receipt(step, "rejected", started, evidence_ids=[], model=rec.get("harness_id") or who, validation={"ok": False, "errors": too_large})
             store.finish_step(conn, run_id, row["sequence"], status="issued", receipt=receipt)      # the step stays open for a smaller receipt
+            _touch(conn, run_id)
             raise SubmissionRejected(too_large)
         rhash = stable_hash(rec)
         store.record_receipt(conn, step["harness_action"]["action_id"], rec, rhash)
         output = {**rec, "_harness_action_id": step["harness_action"]["action_id"], "_receipt_hash": rhash}
+        pre = (row.get("output") or {}).get(PREFETCH_KEY) if isinstance(row.get("output"), dict) else None
+        if isinstance(pre, dict) and pre.get("summary") is not None:
+            output["_host_prefetch"] = pre["summary"]            # what the host looked up before the step (lineage; never sent to Trail)
         new_state = T.replace(new_state, outputs={**new_state.outputs, step["step_id"]: output})   # later steps see the bound receipt
         receipt = _receipt(step, "accepted", started, evidence_ids=[], model=rec.get("harness_id") or who, validation={"ok": True, "errors": []})
         receipt["harness_receipt_hash"] = rhash
@@ -307,6 +450,7 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
     if gap_errors:
         receipt = _receipt(step, "rejected", started, evidence_ids=[], model=who, validation={"ok": False, "errors": gap_errors})
         store.finish_step(conn, run_id, row["sequence"], status="issued", receipt=receipt)
+        _touch(conn, run_id)
         raise SubmissionRejected(gap_errors)
     # θ ledger: generated hypotheses and/or proposed transitions inside a reasoning payload become durable state in the SAME unit
     output = dict(sub["payload"])
@@ -317,6 +461,7 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
         errors = ["hypotheses: " + e for e in exc.errors]
         receipt = _receipt(step, "rejected", started, evidence_ids=[], model=who, validation={"ok": False, "errors": errors})
         store.finish_step(conn, run_id, row["sequence"], status="issued", receipt=receipt)
+        _touch(conn, run_id)
         raise SubmissionRejected(errors) from None
     new_state = T.replace(new_state, outputs={**new_state.outputs, step["step_id"]: output})       # payload + ledger ids
     receipt = _receipt(step, "accepted", started, evidence_ids=sorted(_cited(sub["payload"])), model=who, validation={"ok": True, "errors": []})
@@ -326,6 +471,59 @@ def submit(conn, run_id: str, submission: dict[str, Any], directory: Path | None
     store.finish_step(conn, run_id, row["sequence"], status="accepted", receipt=receipt, output=output, submission=sub)
     store.save_state(conn, new_state)
     return status(conn, run_id, directory)
+
+
+def _touch(conn, run_id: str) -> None:
+    """A refused submission is agent activity: the run is not idle (F8). A store without the call (an older double) is left alone."""
+    fn = getattr(store, "touch_run", None)
+    if callable(fn):
+        fn(conn, run_id)
+
+
+#: a law verdict's error lists, in the order the agent should read them (the domain laws' own output keys)
+LAW_ERROR_KEYS = ("errors", "bridge_errors", "portfolio_errors", "anchor_errors")
+
+
+def _law_at_submit(conn, run_id: str, m: Manifest, state: RunState, accepted: RunState, step: dict[str, Any]) -> list[str] | None:
+    """F2 (opt-in per reasoning step: `config.law_at_submit`). The step's `next` must be a DOMAIN_OPERATION law and the law's `next` a
+    BRANCH. The law runs on the run as it WOULD stand with this payload accepted (the same issued step, the same selected inputs, the
+    same domain code the worker runs) and the branch is resolved on the result. If the branch would return the run to THIS step (a
+    failed law with repair budget left), the errors are returned: the submission is refused now and the step stays open. Anything else
+    — the law passes, routes elsewhere (a spent budget -> the honest refusal; too few hypotheses -> generation), refuses typed, or cannot
+    run — is accepted and the worker runs the law exactly as before."""
+    spec = m.step(step["step_id"])
+    if not (spec.get("config") or {}).get("law_at_submit"):
+        return None
+    law_id = spec.get("next")
+    law = m.steps.get(law_id) if law_id else None
+    route_id = (law or {}).get("next")
+    route = m.steps.get(route_id) if route_id else None
+    if not law or law.get("type") != "DOMAIN_OPERATION" or not route or route.get("type") != "BRANCH":
+        return None
+    hyps = store.current_hypotheses(conn, run_id)
+    try:
+        st_law, law_step = T.issue_step(m, accepted, issued_at=now_iso(), evidence_refs=[], inputs=accepted.input, admitted_evidence_ids=[],
+                                        hypotheses=H.context_view(hyps), registry_snapshot=_registry_snapshot(accepted))
+    except (BudgetExhausted, ContractViolation, RuntimeError):
+        return None
+    if _wants_semantics(law):
+        law_step = {**law_step, "context": {**(law_step.get("context") or {}), "semantics": _semantics(conn, run_id, st_law, m)}}
+    cfg = law.get("config") or {}
+    scope = {"input": st_law.input, "options": st_law.options, "outputs": st_law.outputs, "context": law_step.get("context") or {}}
+    req = DOMAIN.request(domain=str(cfg.get("domain") or ""), operation=str(cfg.get("operation") or ""), run_id=run_id, step_id=law_id,
+                         run_input=st_law.input, scope=scope, config=cfg)
+    try:
+        out = DOMAIN.run(str(cfg.get("domain") or ""), str(cfg.get("operation") or ""), req)
+    except DOMAIN.DomainCrash:
+        return None
+    if out.get("gap") or not isinstance(out.get("output"), dict):
+        return None
+    st_route = T.replace(T.record_automatic_output(st_law, law_id, out["output"]), current_step_id=route_id)
+    if T.next_step_id(m, st_route) != step["step_id"] or state.branch_loops + 1 > int(m.budgets.get("max_branch_loops", 10**9)):
+        return None
+    errors = [str(e) for k in LAW_ERROR_KEYS for e in (out["output"].get(k) or []) if isinstance(out["output"].get(k), list)]
+    head = f"LAW_UNSATISFIED ({law_id}): the domain law refused this answer (repair loop {state.branch_loops + 1}); fix exactly these and resubmit"
+    return [head] + (errors or ["the law returned no error text"])[:40]
 
 
 def _receipt_too_large(conn, run_id: str, state: RunState, m: Manifest, step: dict[str, Any], receipt: dict[str, Any]) -> list[str]:
@@ -369,8 +567,18 @@ def _apply_theta(conn, run_id: str, step: dict[str, Any], m: Manifest, state: Ru
     if isinstance(payload.get("hypotheses"), list) and step.get("theta_op") in (None, "generate_hypotheses", "split_hypotheses", "derive_mechanisms",
                                                                                 "cross_map_frictions", "derive_physical_jobs", "derive_analogies", "generate_product_mechanisms") \
             and (step.get("cognitive_op") == "theta" or step.get("theta_op")):
+        live_n = len([h for h in current.values() if h["status"] not in H.ABSORBED_STATUSES])
+        limit = max(0, max_h - live_n) or 1
+        step_cap = (m.step(step["step_id"]).get("config") or {}).get("max_live_hypotheses")
+        if isinstance(step_cap, int) and not isinstance(step_cap, bool):
+            # F2: a generation step may cap the LIVE ledger it leaves (the bridge portfolio's own bound): never a generation the next law
+            # can only refuse as unreachable
+            if step_cap - live_n < 1:
+                raise HypothesisRejected([f"the ledger already holds {live_n} live hypotheses and this step allows at most {step_cap}: "
+                                          "generate none"])
+            limit = min(limit, step_cap - live_n)
         states, trs = H.generate(run_id, step, payload["hypotheses"], registry_snapshot_id=(snapshot or {}).get("snapshot_id"), recorded_at=now,
-                                 max_hypotheses=max(0, max_h - len([h for h in current.values() if h["status"] not in H.ABSORBED_STATUSES])) or 1,
+                                 max_hypotheses=limit,
                                  ordinal_base=len(current), known_origin_ids=SV.known_origin_ids(state.outputs, state.output_order))
         writes.append((states, trs))
         out["hypothesis_ids"] = [s_["hypothesis_id"] for s_ in states]
@@ -468,8 +676,44 @@ def cancel(conn, run_id: str, directory: Path | None = None,
         except Exception as exc:  # noqa: BLE001 — best effort; the run still cancels
             ext2 = {**ext, "failure": {"code": "EXTERNAL_CANCEL_FAILED", "message": f"{type(exc).__name__}: {exc}"[:2000]}}
             store.finish_step(conn, run_id, row["sequence"], status=row["status"], receipt=None, external=ext2)
+    _close_open_step(conn, run_id, row, "RUN_CANCELLED: the run was cancelled while this step was open")
     store.save_state(conn, T.cancel_run(state))
     return status(conn, run_id, directory)
+
+
+def _close_open_step(conn, run_id: str, row: dict[str, Any] | None, reason: str) -> None:
+    """F8: a run that ends while a step is open (cancel, idle expiry) closes that step `skipped` with a receipt saying why — never a
+    terminal run with an `issued` step left behind (5 such rows were found)."""
+    if row and row.get("status") == "issued":
+        store.finish_step(conn, run_id, row["sequence"], status="skipped",
+                          receipt=_receipt(row["step"], "skipped", now_iso(), evidence_ids=[], model=None, validation={"ok": False, "errors": [reason]}))
+
+
+#: F8: a run waiting on the connected agent with no activity this long ends with a typed gap (configurable; default 24 h)
+IDLE_EXPIRY_S = int(os.environ.get("POLYMATH_ADAPTER_IDLE_EXPIRY_S", str(24 * 3600)))
+
+
+def expire_idle(conn, *, idle_s: int | None = None, limit: int = 20) -> list[str]:
+    """F8: every run waiting on the agent (awaiting_agent / awaiting_harness) with no activity for `idle_s` seconds ends typed —
+    AGENT_IDLE_EXPIRED, naming the step it waited at — and its open step is closed. A run whose row another transaction holds is skipped
+    (SKIP LOCKED) and seen again next time. Returns the run ids expired. Runs inside the caller's transaction."""
+    bound = int(idle_s if idle_s is not None else IDLE_EXPIRY_S)
+    finder = getattr(store, "idle_runs", None)
+    if bound <= 0 or not callable(finder):
+        return []
+    expired = []
+    for run_id in finder(conn, bound, limit):
+        loaded = store.load_run(conn, run_id, for_update=True)
+        if not loaded or loaded[0].status not in ("awaiting_agent", "awaiting_harness"):
+            continue
+        state = loaded[0]
+        row = store.current_step(conn, run_id)
+        message = (f"no answer from the connected agent for {bound} s while the run was {state.status} at {state.current_step_id}: the run "
+                   "ended; start a new run to continue (an idle run never holds its place forever)")
+        _close_open_step(conn, run_id, row, f"AGENT_IDLE_EXPIRED: {message}")
+        store.save_state(conn, T.terminal_gap(state, "AGENT_IDLE_EXPIRED", message, step_id=state.current_step_id))
+        expired.append(run_id)
+    return expired
 
 
 def result(conn, run_id: str) -> dict[str, Any]:
@@ -490,21 +734,84 @@ def result(conn, run_id: str) -> dict[str, Any]:
 # ─────────────────────────────────────────────────────────── the step engine (worker)
 def advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int | None = None,
             directory: Path | None = None) -> RunState:
-    """Drive a RUNNING run forward: issue the next step; execute automatic steps through `executors`; stop at an
-    AGENT_REASON step (awaiting_agent), at COMPILE_RESULT (completed + result), at a typed gap, or after `max_steps`.
-    Each step commits as one unit through the caller's transaction discipline (the worker wraps each call in tx()).
-    A record that would break its OWN contract (the step to issue, a receipt, a result) never leaves this function: the unit ends
-    with a durable typed failure naming the contract, the fields and the rules (external review M1-04; bug hunt B-02)."""
+    """Drive a RUNNING run forward on ONE connection: issue the next step; execute automatic steps through `executors`; stop at an
+    AGENT_REASON step (awaiting_agent), at COMPILE_RESULT (completed + result), at a typed gap, or after `max_steps`. Every step is the
+    same three phases the worker runs in SEPARATE transactions (F7): `prepare` (issue / find the step, under the run's row lock) →
+    `execute` (the executor; here inline) → `apply` (record the outcome). A record that would break its OWN contract (the step to issue,
+    a receipt, a result) never leaves this function: the unit ends with a durable typed failure naming the contract, the fields and the
+    rules (external review M1-04; bug hunt B-02)."""
+    done = 0
+    while True:
+        unit = prepare(conn, run_id, executors, directory=directory)
+        if unit.kind == "done":
+            return unit.state
+        if unit.kind == "prefetch":
+            return apply_prefetch(conn, run_id, unit, run_prefetch(executors, unit), directory=directory)
+        outcome = execute(executors, unit)
+        state = apply(conn, run_id, unit, outcome, directory=directory)
+        ok = outcome.get("ok") or {}
+        if "raised" in outcome or ok.get("pending") or ok.get("gap") or state.status != "running":
+            return state
+        done += 1
+        if max_steps is not None and done >= max_steps:
+            return state
+
+
+class LeaseLost(RuntimeError):
+    """The worker no longer holds the run's lease (it expired while a step executed outside any transaction, and another worker may
+    have claimed the run): the outcome is never applied."""
+
+
+@dataclass
+class Unit:
+    """One step unit between its phases (F7). `kind`: `done` (nothing to execute: the run waits, completed, ended or could not go on),
+    `execute` (an issued automatic step and its executor's inputs) or `prefetch` (a HARNESS_ACTION about to be issued whose manifest
+    asks the host for lookups first). Never stored; the database row is the authority — `apply` re-checks it."""
+    kind: str
+    state: RunState
+    step: dict[str, Any] | None = None
+    started: str = ""
+    manifest: Manifest | None = None
+    spec: dict[str, Any] | None = None
+    action: dict[str, Any] | None = None
+    owner_principal_id: str | None = None
+
+
+def prepare(conn, run_id: str, executors: dict[str, Any], *, directory: Path | None = None) -> Unit:
+    """Phase 1, under the run's row lock: issue the next step (or find the issued one) and say what must run outside the transaction.
+    Contract violations and manifest drift end the run typed, exactly as `advance` always did."""
     try:
-        return _advance(conn, run_id, executors, max_steps=max_steps, directory=directory)
+        return _prepare(conn, run_id, executors, directory)
     except ContractViolation as exc:
-        # a pure validation error: the transaction is healthy, so the reason is recorded in the SAME unit (never left `running`)
+        return Unit("done", fail_run(conn, run_id, code="STEP_CONTRACT_VIOLATION", message=_violation_reason(exc), directory=directory))
+    except ManifestInvalid:
+        raise
+    except (ManifestError, UnknownAdapter) as exc:
+        return Unit("done", _manifest_gap(conn, run_id, exc, directory))
+
+
+def execute(executors: dict[str, Any], unit: Unit) -> dict[str, Any]:
+    """Phase 2, OUTSIDE any transaction: the step's executor. -> {"ok": outcome} or {"raised": "Type: message"} (a step failure the
+    `apply` phase records typed). LeaseLost propagates: the caller drops the unit."""
+    executor = executors.get(unit.step["step_type"])
+    try:
+        return {"ok": executor(unit.step, unit.state, unit.manifest or manifest_for(unit.state.adapter_id))}
+    except LeaseLost:
+        raise
+    except Exception as exc:  # noqa: BLE001 — a step failure is a typed run failure, never a silent skip
+        return {"raised": f"{type(exc).__name__}: {exc}"[:2000]}
+
+
+def apply(conn, run_id: str, unit: Unit, outcome: dict[str, Any], *, directory: Path | None = None) -> RunState:
+    """Phase 3, under the run's row lock again: record the outcome — only if the run still stands at THIS issued step (a cancel, an
+    idle expiry or another worker may have moved it meanwhile: the outcome is then discarded, never applied to a different state)."""
+    try:
+        return _apply(conn, run_id, unit, outcome, directory)
+    except ContractViolation as exc:
         return fail_run(conn, run_id, code="STEP_CONTRACT_VIOLATION", message=_violation_reason(exc), directory=directory)
     except ManifestInvalid:
-        raise                              # the manifest SET does not load: a deploy error, never a reason to end this run
+        raise
     except (ManifestError, UnknownAdapter) as exc:
-        # bug hunt B-57: a redeploy renamed or removed the step this run stands at (or its adapter): it cannot go on under the loaded
-        # manifest — a typed gap naming both versions, never an exception out of the unit
         return _manifest_gap(conn, run_id, exc, directory)
 
 
@@ -568,133 +875,238 @@ def fail_run(conn, run_id: str, *, code: str, message: str, directory: Path | No
     return state
 
 
-def _advance(conn, run_id: str, executors: dict[str, Executor], *, max_steps: int | None = None,
-             directory: Path | None = None) -> RunState:
+def _prepare(conn, run_id: str, executors: dict[str, Any], directory: Path | None) -> Unit:
     loaded = store.load_run(conn, run_id, for_update=True)
     if not loaded:
         raise UnknownRun(run_id)
     state, _ = loaded
     m = manifest_for(state.adapter_id, directory)
-    done = 0
-    while state.status == "running" and (max_steps is None or done < max_steps):
-        row = store.current_step(conn, run_id)
-        if row and row["status"] == "issued":
-            # an automatic step issued by a crashed worker, or a PENDING external operation: re-execute it
-            # (idempotent) — a prior ExternalOperationReceiptV1 travels with the step so the executor polls, not resubmits
-            step = dict(row["step"])
-            if row.get("external_operation"):
-                step["_external_receipt"] = row["external_operation"]
-            if row.get("output"):
-                step["_partial_output"] = row["output"]
-        else:
-            hyps = store.current_hypotheses(conn, run_id)
-            snapshot = _registry_snapshot(state)
-            sid = T.next_step_id(m, state)
-            harness_action = None
-            if sid and m.step(sid)["type"] == "HARNESS_ACTION":
-                harness_action = _compile_harness_action(state, m.step(sid), sid, state.sequence + 1, hyps, snapshot, now_iso())
-                if harness_action is None:
-                    state = T.terminal_gap(state, "HARNESS_DIRECTIVE_MISSING",
-                                           f"{sid}: no compiled research directive, registry snapshot or live hypothesis to hand to the harness", step_id=sid)
-                    store.save_state(conn, state)
-                    break
-            try:
-                state, step = T.issue_step(m, state, issued_at=now_iso(), evidence_refs=_context_refs(conn, state), inputs=state.input,
-                    admitted_evidence_ids=[r["id"] for r in store.admitted_evidence_refs(conn, state.run_id)],
-                                           hypotheses=H.context_view(hyps), registry_snapshot=snapshot, harness_action=harness_action)
-            except BudgetExhausted as exc:
-                state = T.terminal_gap(state, "BUDGET_EXHAUSTED", str(exc), step_id=state.current_step_id)
+    if state.status != "running":
+        return Unit("done", state)
+    row = store.current_step(conn, run_id)
+    if row and row["status"] == "issued":
+        # an automatic step issued by a crashed worker (or before the executor ran outside the transaction), or a PENDING external
+        # operation: re-execute it (idempotent) — a prior ExternalOperationReceiptV1 travels with the step so the executor polls
+        step = dict(row["step"])
+        if row.get("external_operation"):
+            step["_external_receipt"] = row["external_operation"]
+        if row.get("output"):
+            step["_partial_output"] = row["output"]
+    else:
+        hyps = store.current_hypotheses(conn, run_id)
+        snapshot = _registry_snapshot(state)
+        sid = T.next_step_id(m, state)
+        harness_action = None
+        if sid and m.step(sid)["type"] == "HARNESS_ACTION":
+            harness_action = _compile_harness_action(state, m.step(sid), sid, state.sequence + 1, hyps, snapshot, now_iso())
+            if harness_action is None:
+                state = T.terminal_gap(state, "HARNESS_DIRECTIVE_MISSING",
+                                       f"{sid}: no compiled research directive, registry snapshot or live hypothesis to hand to the harness", step_id=sid)
                 store.save_state(conn, state)
-                break
-            store.insert_step(conn, step)
-            if harness_action:
-                store.insert_harness_action(conn, harness_action, step["sequence"])
-            store.save_state(conn, state)
-            if step["step_type"] in AGENT_ANSWERED_STEP_TYPES:
-                break                                        # the agent / harness answers through adapter_submit
-        started = now_iso()
-        if step["step_type"] == "COMPILE_RESULT":
-            out = _compile_result(conn, run_id, state, m, output=None, persist=True, step=step)
-            receipt = _receipt(step, "executed", started, evidence_ids=out["lineage"]["polymath_evidence_ids"], model=None,
-                               validation={"ok": True, "errors": []})
-            store.finish_step(conn, run_id, step["sequence"], status="executed", receipt=receipt, output={"result_hash": stable_hash(out)})
-            state = T.record_automatic_output(state, step["step_id"], {"result_hash": stable_hash(out)})
-            state = T.complete_run(state)
-            store.save_state(conn, state)
-            done += 1
-            break
-        executor = executors.get(step["step_type"])
-        if executor is None:
-            state = T.terminal_gap(state, "STEP_TYPE_UNSUPPORTED", f"no executor for {step['step_type']}", step_id=step["step_id"])
-            store.finish_step(conn, run_id, step["sequence"], status="skipped",
-                              receipt=_receipt(step, "skipped", started, evidence_ids=[], model=None, validation={"ok": False, "errors": ["unsupported"]}))
-            store.save_state(conn, state)
-            break
-        compiled_need = EB.domain_compiled_need(m.step(step["step_id"]).get("config"), state.outputs,
-                                                [sid_ for sid_, spec_ in m.steps.items() if spec_.get("type") == "DOMAIN_OPERATION"])
-        if compiled_need:
-            step = {**step, "_compiled_need": compiled_need}       # in memory only; honoured by the boundary executor, from domain code only
-        if _wants_semantics(m.step(step["step_id"])):
-            # IN MEMORY ONLY: the stored AdapterStepV1 (schema-closed context, four-field hypotheses) is untouched, and so is every
-            # Trail payload — `_payload_for` reads `context.hypotheses`. The executor's copy of the step gains the derived view.
-            step = {**step, "context": {**(step.get("context") or {}), "semantics": _semantics(conn, run_id, state, m)}}
-        try:
-            outcome = executor(step, state, m)
-        except Exception as exc:  # noqa: BLE001 — a step failure is a typed run failure, never a silent skip
-            failure = {"code": "STEP_EXECUTOR_ERROR", "message": f"{type(exc).__name__}: {exc}"[:2000], "step_id": step["step_id"]}
-            store.finish_step(conn, run_id, step["sequence"], status="failed",
-                              receipt=_receipt(step, "failed", started, evidence_ids=[], model=None, validation={"ok": False, "errors": [failure["message"]]}, failure=failure))
-            state = T.replace(state, status="failed", failure=failure)
-            store.save_state(conn, state)
-            break
-        if outcome.get("pending"):
-            # EXTERNAL_OPERATION two-phase: the operation is submitted/polled but not terminal. Record its
-            # ExternalOperationReceiptV1 on the ISSUED step and stop; the next claim re-executes this step, which
-            # finds the receipt and polls again (idempotent by operation_id — never a second submit).
-            ext = outcome.get("external")
-            if ext:
-                assert_valid("external_operation_receipt", ext)
-            store.finish_step(conn, run_id, step["sequence"], status="issued", receipt=None, external=ext,
-                              output=outcome.get("output"))          # composite progress survives the pause
-            state = T.replace(state, status="running")
-            store.save_state(conn, state)
-            break
-        gap = outcome.get("gap")
-        if gap:
-            store.finish_step(conn, run_id, step["sequence"], status="skipped",
-                              receipt=_receipt(step, "skipped", started, evidence_ids=[], model=None, validation={"ok": False, "errors": [gap["message"]]}, failure=None),
-                              external=outcome.get("external"))
-            state = T.terminal_gap(state, gap["code"], gap["message"], step_id=step["step_id"])
-            store.save_state(conn, state)
-            break
-        output = dict(outcome.get("output") or {})
-        refs = list(outcome.get("evidence_refs") or [])
-        if refs:
-            output["_evidence_refs"] = refs
-        # ADR-0019: an automatic step may carry TrailSignal's admission projection and/or φ verdicts; both become durable state
-        # in this same unit, or the run ends with a typed gap — a verdict is never silently dropped
-        gap = _apply_phi_outputs(conn, run_id, step, m, state, output, started)
-        if gap:
-            store.finish_step(conn, run_id, step["sequence"], status="skipped",
-                              receipt=_receipt(step, "skipped", started, evidence_ids=[], model=None, validation={"ok": False, "errors": [gap["message"]]}),
-                              external=outcome.get("external"), output=output)
-            state = T.terminal_gap(state, gap["code"], gap["message"], step_id=step["step_id"])
-            store.save_state(conn, state)
-            break
-        receipt = _receipt(step, "executed", started, evidence_ids=[r["id"] for r in refs], model=None,
-                           validation={"ok": True, "errors": []},
-                           external_ids=[outcome["external"]["operation_id"]] if outcome.get("external") else [])
-        if output.get("hypothesis_transition_ids"):
-            receipt["hypothesis_transition_ids"] = list(output["hypothesis_transition_ids"])
-            receipt["receipt_hash"] = stable_hash({k: v for k, v in receipt.items() if k != "receipt_hash"})
-        if output.get("evidence_admission"):
-            receipt["admission_id"] = output["evidence_admission"]["admission_id"]
-            receipt["receipt_hash"] = stable_hash({k: v for k, v in receipt.items() if k != "receipt_hash"})
-        store.finish_step(conn, run_id, step["sequence"], status="executed", receipt=receipt, output=output, external=outcome.get("external"))
-        state = T.record_automatic_output(state, step["step_id"], output)
+                return Unit("done", state)
+            if _host_prefetch(m.step(sid)) and callable(executors.get(HOST_PREFETCH)):
+                # PRODUCT-SEARCH-E2E: the host's own lookups run BEFORE the step is issued (outside the transaction), so the agent never
+                # sees the step without what they produced (`apply_prefetch` issues it with the result beside it)
+                return Unit("prefetch", state, spec=m.step(sid), action=harness_action, manifest=m,
+                            owner_principal_id=store.run_owner(conn, run_id)[1])
+        issued = _issue(conn, state, m, hyps, snapshot, harness_action)
+        if isinstance(issued, RunState):
+            return Unit("done", issued)
+        state, step = issued
+        if step["step_type"] in AGENT_ANSWERED_STEP_TYPES:
+            return Unit("done", state)                       # the agent / harness answers through adapter_submit
+    started = now_iso()
+    if step["step_type"] == "COMPILE_RESULT":
+        out = _compile_result(conn, run_id, state, m, output=None, persist=True, step=step)
+        receipt = _receipt(step, "executed", started, evidence_ids=out["lineage"]["polymath_evidence_ids"], model=None,
+                           validation={"ok": True, "errors": []})
+        store.finish_step(conn, run_id, step["sequence"], status="executed", receipt=receipt, output={"result_hash": stable_hash(out)})
+        state = T.record_automatic_output(state, step["step_id"], {"result_hash": stable_hash(out)})
+        state = T.complete_run(state)
         store.save_state(conn, state)
-        done += 1
+        return Unit("done", state)
+    if not callable(executors.get(step["step_type"])):
+        state = T.terminal_gap(state, "STEP_TYPE_UNSUPPORTED", f"no executor for {step['step_type']}", step_id=step["step_id"])
+        store.finish_step(conn, run_id, step["sequence"], status="skipped",
+                          receipt=_receipt(step, "skipped", started, evidence_ids=[], model=None, validation={"ok": False, "errors": ["unsupported"]}))
+        store.save_state(conn, state)
+        return Unit("done", state)
+    compiled_need = EB.domain_compiled_need(m.step(step["step_id"]).get("config"), state.outputs,
+                                            [sid_ for sid_, spec_ in m.steps.items() if spec_.get("type") == "DOMAIN_OPERATION"])
+    if compiled_need:
+        step = {**step, "_compiled_need": compiled_need}       # in memory only; honoured by the boundary executor, from domain code only
+    if _wants_semantics(m.step(step["step_id"])):
+        # IN MEMORY ONLY: the stored AdapterStepV1 (schema-closed context, four-field hypotheses) is untouched, and so is every
+        # Trail payload — `_payload_for` reads `context.hypotheses`. The executor's copy of the step gains the derived view.
+        step = {**step, "context": {**(step.get("context") or {}), "semantics": _semantics(conn, run_id, state, m)}}
+    if step["step_type"] in KNOWLEDGE_STEP_TYPES:
+        gens = _corpus_generations(conn, state)
+        if gens:
+            step = {**step, "_corpus_generations": gens}         # in memory only: keys the run's evidence cache (F3)
+    return Unit("execute", state, step=step, started=started, manifest=m)
+
+
+#: the step types that ask Polymath's knowledge surface (F3: their calls are cached per run, keyed by the corpus generation)
+KNOWLEDGE_STEP_TYPES = frozenset({"POLYMATH_RETRIEVE", "POLYMATH_GRAPH_EXPAND", "POLYMATH_COMPILE_PLAN"})
+
+
+def _corpus_generations(conn, state: RunState) -> dict[str, str]:
+    """corpus id -> what it serves now (store.corpus_generation). A corpus whose generation cannot be read is left out: its calls are
+    never answered from the cache."""
+    fn = getattr(store, "corpus_generation", None)
+    ids = state.input.get("corpus_ids") or state.options.get("corpus_ids") or []
+    out: dict[str, str] = {}
+    for cid in [c for c in ids if isinstance(c, str) and c.strip()] if callable(fn) else []:
+        try:
+            gen = fn(conn, cid)
+        except Exception:  # noqa: BLE001
+            continue
+        if gen:
+            out[cid] = str(gen)
+    return out
+
+
+def _issue(conn, state: RunState, m: Manifest, hyps: dict[str, dict[str, Any]], snapshot: dict[str, Any] | None,
+           harness_action: dict[str, Any] | None) -> tuple[RunState, dict[str, Any]] | RunState:
+    """Issue the next step and persist it (step row, harness action, run state). A spent budget ends the run typed (-> the state)."""
+    try:
+        state2, step = T.issue_step(m, state, issued_at=now_iso(), evidence_refs=_context_refs(conn, state, m), inputs=state.input,
+                                    admitted_evidence_ids=[r["id"] for r in store.admitted_evidence_refs(conn, state.run_id)],
+                                    hypotheses=H.context_view(hyps), registry_snapshot=snapshot, harness_action=harness_action)
+    except BudgetExhausted as exc:
+        state = T.terminal_gap(state, "BUDGET_EXHAUSTED", str(exc), step_id=state.current_step_id)
+        store.save_state(conn, state)
+        return state
+    store.insert_step(conn, step)
+    if harness_action:
+        store.insert_harness_action(conn, harness_action, step["sequence"])
+    store.save_state(conn, state2)
+    return state2, step
+
+
+def _apply(conn, run_id: str, unit: Unit, result: dict[str, Any], directory: Path | None) -> RunState:
+    loaded = store.load_run(conn, run_id, for_update=True)
+    if not loaded:
+        raise UnknownRun(run_id)
+    state, _ = loaded
+    step, started = unit.step, unit.started
+    row = store.current_step(conn, run_id)
+    if state.status != "running" or not row or int(row["sequence"]) != int(step["sequence"]) or row["status"] != "issued":
+        return state                                      # the run moved on meanwhile (cancelled, expired, re-claimed): discard
+    m = manifest_for(state.adapter_id, directory)
+    if "raised" in result:
+        failure = {"code": "STEP_EXECUTOR_ERROR", "message": str(result["raised"])[:2000], "step_id": step["step_id"]}
+        store.finish_step(conn, run_id, step["sequence"], status="failed",
+                          receipt=_receipt(step, "failed", started, evidence_ids=[], model=None, validation={"ok": False, "errors": [failure["message"]]}, failure=failure))
+        state = T.replace(state, status="failed", failure=failure)
+        store.save_state(conn, state)
+        return state
+    outcome = result.get("ok") or {}
+    if outcome.get("pending"):
+        # EXTERNAL_OPERATION two-phase: the operation is submitted/polled but not terminal. Record its
+        # ExternalOperationReceiptV1 on the ISSUED step and stop; the next claim re-executes this step, which
+        # finds the receipt and polls again (idempotent by operation_id — never a second submit).
+        ext = outcome.get("external")
+        if ext:
+            assert_valid("external_operation_receipt", ext)
+        store.finish_step(conn, run_id, step["sequence"], status="issued", receipt=None, external=ext,
+                          output=outcome.get("output"))          # composite progress survives the pause
+        state = T.replace(state, status="running")
+        store.save_state(conn, state)
+        return state
+    gap = outcome.get("gap")
+    if gap:
+        store.finish_step(conn, run_id, step["sequence"], status="skipped",
+                          receipt=_receipt(step, "skipped", started, evidence_ids=[], model=None, validation={"ok": False, "errors": [gap["message"]]}, failure=None),
+                          external=outcome.get("external"))
+        state = T.terminal_gap(state, gap["code"], gap["message"], step_id=step["step_id"])
+        store.save_state(conn, state)
+        return state
+    output = dict(outcome.get("output") or {})
+    refs = list(outcome.get("evidence_refs") or [])
+    if refs:
+        output["_evidence_refs"] = refs
+    # ADR-0019: an automatic step may carry TrailSignal's admission projection and/or φ verdicts; both become durable state
+    # in this same unit, or the run ends with a typed gap — a verdict is never silently dropped
+    gap = _apply_phi_outputs(conn, run_id, step, m, state, output, started)
+    if gap:
+        store.finish_step(conn, run_id, step["sequence"], status="skipped",
+                          receipt=_receipt(step, "skipped", started, evidence_ids=[], model=None, validation={"ok": False, "errors": [gap["message"]]}),
+                          external=outcome.get("external"), output=output)
+        state = T.terminal_gap(state, gap["code"], gap["message"], step_id=step["step_id"])
+        store.save_state(conn, state)
+        return state
+    receipt = _receipt(step, "executed", started, evidence_ids=[r["id"] for r in refs], model=None,
+                       validation={"ok": True, "errors": []},
+                       external_ids=[outcome["external"]["operation_id"]] if outcome.get("external") else [])
+    if output.get("hypothesis_transition_ids"):
+        receipt["hypothesis_transition_ids"] = list(output["hypothesis_transition_ids"])
+        receipt["receipt_hash"] = stable_hash({k: v for k, v in receipt.items() if k != "receipt_hash"})
+    if output.get("evidence_admission"):
+        receipt["admission_id"] = output["evidence_admission"]["admission_id"]
+        receipt["receipt_hash"] = stable_hash({k: v for k, v in receipt.items() if k != "receipt_hash"})
+    store.finish_step(conn, run_id, step["sequence"], status="executed", receipt=receipt, output=output, external=outcome.get("external"))
+    state = T.record_automatic_output(state, step["step_id"], output)
+    store.save_state(conn, state)
     return state
+
+
+# ─────────────────────────────────────────────────────────── host prefetch (PRODUCT-SEARCH-E2E: a supply step's host lookups)
+#: the executors-dict key of the HOST PREFETCH hook (the worker supplies it; a caller without it issues research steps plainly)
+HOST_PREFETCH = "HOST_PREFETCH"
+#: where a prefetch result lives on the ISSUED step row's output (never an AdapterStepV1 field; `config.beside` reads it as `prefetch.`)
+PREFETCH_KEY = "_prefetch"
+
+
+def _host_prefetch(spec: dict[str, Any]) -> dict[str, Any] | None:
+    cfg = (spec.get("config") or {}).get("host_prefetch")
+    return cfg if isinstance(cfg, dict) and cfg.get("lookups") else None
+
+
+def run_prefetch(executors: dict[str, Any], unit: Unit) -> dict[str, Any]:
+    """Phase 2 of a prefetch unit, OUTSIDE any transaction: the manifest's lookups (`config.host_prefetch.lookups`, a dotted path to a
+    list the domain compiled) through the caller's HOST_PREFETCH hook, which runs them with the run OWNER's principal and hands the
+    results to the manifest's domain builder. A failure is SAID in the result, never raised: the step is issued either way."""
+    cfg = _host_prefetch(unit.spec or {}) or {}
+    lookups = T._lookup(str(cfg.get("lookups")), {"outputs": unit.state.outputs, "input": unit.state.input})
+    lookups = [x for x in lookups if isinstance(x, dict)] if isinstance(lookups, list) else []
+    try:
+        return dict(executors[HOST_PREFETCH](unit, lookups, cfg) or {})
+    except LeaseLost:
+        raise
+    except Exception as exc:  # noqa: BLE001 — the agent still gets its step; what failed is recorded beside it
+        return {"error": f"{type(exc).__name__}: {exc}"[:1000], "lookups": len(lookups)}
+
+
+def apply_prefetch(conn, run_id: str, unit: Unit, result: dict[str, Any], *, directory: Path | None = None) -> RunState:
+    """Phase 3 of a prefetch unit: issue the HARNESS_ACTION exactly as `prepare` would have — only if the run still stands where the
+    prefetch was planned (same sequence, still running, same compiled action) — with the result on the issued row."""
+    try:
+        loaded = store.load_run(conn, run_id, for_update=True)
+        if not loaded:
+            raise UnknownRun(run_id)
+        state, _ = loaded
+        if state.status != "running" or state.sequence != unit.state.sequence or state.current_step_id != unit.state.current_step_id:
+            return state
+        m = manifest_for(state.adapter_id, directory)
+        hyps = store.current_hypotheses(conn, run_id)
+        snapshot = _registry_snapshot(state)
+        sid = T.next_step_id(m, state)
+        action = _compile_harness_action(state, m.step(sid), sid, state.sequence + 1, hyps, snapshot, now_iso()) if sid else None
+        if action is None or action["action_id"] != (unit.action or {}).get("action_id"):
+            return state                                   # the next prepare compiles and issues it afresh
+        issued = _issue(conn, state, m, hyps, snapshot, action)
+        if isinstance(issued, RunState):
+            return issued
+        state, step = issued
+        store.finish_step(conn, run_id, step["sequence"], status="issued", receipt=None, output={PREFETCH_KEY: result})
+        return state
+    except ContractViolation as exc:
+        return fail_run(conn, run_id, code="STEP_CONTRACT_VIOLATION", message=_violation_reason(exc), directory=directory)
+    except ManifestInvalid:
+        raise
+    except (ManifestError, UnknownAdapter) as exc:
+        return _manifest_gap(conn, run_id, exc, directory)
 
 
 # ─────────────────────────────────────────────────────────── helpers
@@ -702,12 +1114,60 @@ def _cited(payload: Any) -> set[str]:
     return T._cited_ids(payload)
 
 
-def _context_refs(conn, state: RunState) -> list[dict[str, Any]]:
-    """The DISPLAY context an issued step carries FOR CITATION, capped at MAX_CONTEXT_REFS: admitted field evidence and knowledge
-    refs, balanced per class (reserved floors + deterministic spillover + stable order) so no class starves another. This is NOT the
-    gate-facing admitted set — the complete admitted_evidence_ids the qualify/score gates count over travel as their own context field
-    (advance → issue_step), sourced from the store accumulator and never capped."""
-    buckets: dict[str, list[dict[str, Any]]] = {c: [] for c in CONTEXT_BUDGET}
+#: the step contract's own bound on `context.evidence_refs` (adapter_step.schema.json maxItems)
+STEP_CONTEXT_MAX_REFS = 500
+
+
+def _step_budget(state: RunState, m: Manifest | None) -> tuple[dict[str, int], int]:
+    """(per-class display floors, cap) for the step about to be issued. Gap A-12: a step whose job is to cite across the WHOLE run (the
+    final interpretation cites field evidence from three research stages) may widen its display (`config.context_budget`, manifest data:
+    class -> floor), within the step contract's 500 refs. Every other step keeps the default floors."""
+    budget, cap = dict(CONTEXT_BUDGET), MAX_CONTEXT_REFS
+    if m is None:
+        return budget, cap
+    try:
+        sid = T.next_step_id(m, state)
+        asked = (m.step(sid).get("config") or {}).get("context_budget") if sid else None
+    except Exception:  # noqa: BLE001 — a step that cannot be resolved keeps the default display
+        asked = None
+    if isinstance(asked, dict):
+        budget = {c: max(0, int(asked.get(c, budget[c]))) for c in budget}
+        cap = min(sum(budget.values()), STEP_CONTEXT_MAX_REFS)
+    return budget, cap
+
+
+def _fair_by_group(refs: list[dict[str, Any]], take: int, group_of: dict[str, str]) -> list[dict[str, Any]]:
+    """`take` refs of `refs` (admitted order) shared EVENLY across admission groups — round-robin, newest admission first for the spare —
+    so a later stage's admitted evidence (product reality, supply) is never crowded out of the display by the first stage's (gap A-12).
+    Within the cap nothing changes; the result keeps admitted order."""
+    if take >= len(refs):
+        return list(refs)
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for r in refs:
+        groups.setdefault(group_of.get(str(r["id"]), ""), []).append(r)
+    order = list(reversed(list(groups)))                                # newest admission first
+    chosen: set[str] = set()
+    depth = 0
+    while len(chosen) < take:
+        progressed = False
+        for g in order:
+            if depth < len(groups[g]) and len(chosen) < take:
+                chosen.add(str(groups[g][depth]["id"]))
+                progressed = True
+        if not progressed:
+            break
+        depth += 1
+    return [r for r in refs if str(r["id"]) in chosen]
+
+
+def _context_refs(conn, state: RunState, m: Manifest | None = None) -> list[dict[str, Any]]:
+    """The DISPLAY context an issued step carries FOR CITATION, capped (MAX_CONTEXT_REFS, or the step's own `config.context_budget`):
+    admitted field evidence and knowledge refs, balanced per class (reserved floors + deterministic spillover + stable order) so no class
+    starves another, and field evidence shared across the run's admissions (A-12). This is NOT the gate-facing admitted set — the complete
+    admitted_evidence_ids the qualify/score gates count over travel as their own context field (advance → issue_step), sourced from the
+    store accumulator and never capped."""
+    budget, cap = _step_budget(state, m)
+    buckets: dict[str, list[dict[str, Any]]] = {c: [] for c in budget}
     seen: set[str] = set()
 
     def _add(ref: dict[str, Any]) -> None:
@@ -723,8 +1183,8 @@ def _context_refs(conn, state: RunState) -> list[dict[str, Any]]:
         for ref in (state.outputs.get(sid) or {}).get("_evidence_refs") or []:
             _add(ref)
 
-    take = {c: min(len(buckets[c]), CONTEXT_BUDGET[c]) for c in CONTEXT_BUDGET}
-    spare = MAX_CONTEXT_REFS - sum(take.values())
+    take = {c: min(len(buckets[c]), budget[c]) for c in budget}
+    spare = cap - sum(take.values())
     for c in CONTEXT_CLASS_ORDER:
         if spare <= 0:
             break
@@ -734,10 +1194,17 @@ def _context_refs(conn, state: RunState) -> list[dict[str, Any]]:
     # a LATER retrieval pass keeps a bounded share of each knowledge class (EB.reserve_recent): what a targeted retrieval returned
     # must stay CITABLE, or `hydrate` — which reads exactly these ids — can never make it readable
     passes = EB.knowledge_passes(state.outputs.get(sid) for sid in (state.output_order or tuple(state.outputs)))
+    group_of: dict[str, str] = {}
+    groups_of = getattr(store, "admitted_evidence_groups", None)
+    if callable(groups_of) and len(buckets["field_evidence"]) > take["field_evidence"]:
+        try:
+            group_of = dict(groups_of(conn, state.run_id) or {})
+        except Exception:  # noqa: BLE001 — no grouping known: the display keeps admitted order, as before A-12
+            group_of = {}
     out: list[dict[str, Any]] = []
     for c in CONTEXT_CLASS_ORDER:
-        out.extend(buckets[c][: take[c]] if c == "field_evidence" else EB.reserve_recent(buckets[c], take[c], passes))
-    return out[:MAX_CONTEXT_REFS]
+        out.extend(_fair_by_group(buckets[c], take[c], group_of) if c == "field_evidence" else EB.reserve_recent(buckets[c], take[c], passes))
+    return out[:cap]
 
 
 def _apply_phi_outputs(conn, run_id: str, step: dict[str, Any], m: Manifest, state: RunState, output: dict[str, Any], now: str) -> dict[str, Any] | None:

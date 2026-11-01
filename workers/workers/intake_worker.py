@@ -25,6 +25,7 @@ from polymath_shared import dedup as _dedup
 from polymath_shared.db import tx
 from polymath_shared.identity import document_id, normalize_document_bytes
 from polymath_shared.logging import configure_logging
+from polymath_shared.query_scope import new_corpus_classification
 from polymath_shared.settings import get_settings
 from polymath_shared.frontmatter import parse_frontmatter as _parse_frontmatter
 from polymath_shared.receipts import (
@@ -294,15 +295,18 @@ def process_event(conn: Connection, event: dict) -> None:
             if _nd_flag else []
         )
 
+        # CORPUS-ACCESS-PARITY: an upload into a NEW corpus_id makes user material — production + query-enabled — unless the
+        # submitting harness classifies it (config.purpose = probe / evaluation / fixture). An existing row keeps its own.
+        _purpose, _query_enabled = new_corpus_classification(payload.get("config"))
         conn.execute(
             """
             INSERT INTO corpora (corpus_id, name, config_hash, profile,
-                                 embedding_contract_id)
-            VALUES (%s, %s, %s, %s, %s)
+                                 embedding_contract_id, purpose, query_enabled)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (corpus_id) DO NOTHING
             """,
             (corpus_id, corpus_id, contract(), json.dumps(profile.model_dump()),
-             get_settings().stores.embedding_contract_id),
+             get_settings().stores.embedding_contract_id, _purpose, _query_enabled),
         )
         conn.execute(
             """

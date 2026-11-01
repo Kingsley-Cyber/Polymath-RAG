@@ -12,7 +12,7 @@ AUTHORITY: `adapters/ecommerce/python/query_semantics.py:33` :: `GOVERNANCE_TERM
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:147` | 5/20 | `admission`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `record`, `records`, `second`, `thread`, `threads` |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:152` | 5/20 | `admission`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `record`, `records`, `second`, `thread`, `threads` |
 | `adapters/ecommerce/python/adapter_receipt.py` | `adapters/ecommerce/python/adapter_receipt.py:43` | 4/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `evidence`, `far`, `independence`, `independent`, `record`, `records`, `second`, `thread` |
 | `adapters/ecommerce/python/controller.py` | `adapters/ecommerce/python/controller.py:37` | 3/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `record`, `records`, `second`, `source`, `sources` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:162` | 4/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `far`, `independence`, `observation`, `record`, `records`, `second`, `sources`, `thread` |
@@ -24,11 +24,12 @@ AUTHORITY: `adapters/ecommerce/python/query_semantics.py:33` :: `GOVERNANCE_TERM
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:54` | 7/20 | `admission`, `corroborate`, `corroboration`, `far`, `independent`, `record`, `records`, `second`, `thread`, `threads`, `voice`, `voices` |
 | `adapters/ecommerce/python/run_triage.py` | `adapters/ecommerce/python/run_triage.py:109` | 3/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `record`, `records`, `second`, `sources` |
 | `orchestrator/orchestrator/api/deep_research.py` | `orchestrator/orchestrator/api/deep_research.py:156` | 3/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `observations`, `record`, `records`, `second` |
+| `shared/polymath_shared/acquisition/supplier.py` | `shared/polymath_shared/acquisition/supplier.py:177` | 3/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `evidence`, `far`, `independence`, `independent`, `observation`, `observations`, `record`, `second` |
 | `shared/polymath_shared/adapter/evidence_boundary.py` | `shared/polymath_shared/adapter/evidence_boundary.py:31` | 5/20 | `admission`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `record`, `records`, `second`, `thread`, `threads` |
-| `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:162` | 3/20 | `admission`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `record`, `records`, `second`, `source`, `sources` |
+| `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:240` | 3/20 | `admission`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `record`, `records`, `second`, `source`, `sources` |
 | `shared/polymath_shared/gap_check.py` | `shared/polymath_shared/gap_check.py:72` | 5/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `observations`, `record`, `records`, `thread` |
-| `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:85` | 3/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `observations`, `record`, `records`, `second` |
-| `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:68` | 4/20 | `admission`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `record`, `records`, `second`, `sources`, `thread` |
+| `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:106` | 3/20 | `admission`, `admitted`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `observations`, `record`, `records`, `second` |
+| `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:96` | 5/20 | `admission`, `corroborate`, `corroboration`, `far`, `independence`, `independent`, `observation`, `records`, `second`, `sources`, `thread`, `threads` |
 
 ## VERIFY
 

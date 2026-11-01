@@ -12,7 +12,7 @@ AUTHORITY: `shared/polymath_shared/compiler_context.py:50` :: `_STOP` (count: 24
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:299` | 7/24 | `about`, `and`, `are`, `book`, `books`, `but`, `for`, `has`, `have`, `how`, `not`, `say` |
+| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:300` | 7/24 | `about`, `and`, `are`, `book`, `books`, `but`, `for`, `has`, `have`, `how`, `not`, `say` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:128` | 17/24 | `book`, `books`, `but`, `not`, `was`, `you`, `your` |
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:32` | 9/24 | `and`, `are`, `book`, `books`, `but`, `for`, `has`, `how`, `not`, `say`, `the`, `was` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:32` | 9/24 | `and`, `are`, `book`, `books`, `but`, `for`, `has`, `how`, `not`, `say`, `the`, `was` |

@@ -1,158 +1,142 @@
 # unit: shared/polymath_shared/mcp_retrieval.py
-anchor: shared/polymath_shared/mcp_retrieval.py:1-324
+anchor: shared/polymath_shared/mcp_retrieval.py:1-639
 
 ## purpose
-MCP-RETRIEVAL-MODES-V1: the single description of Polymath's five public retrieval modes, the request body each tool sends, and how each answer is cut down for an agent — shared by both MCP surfaces, Server A (`orchestrator/orchestrator/mcp_server.py`, streamable-http, bearer key) and Server B (`mcp_server/polymath_mcp.py`, stdio), so the two cannot drift — shared/polymath_shared/mcp_retrieval.py:1-5 [DERIVED].
-Fixes the stale behavior where `polymath_search` sent no mode and `/retrieve` served it from the frozen LEGACY lane route (`retrieval_modes.DEFAULT_MODE`) the app no longer uses — shared/polymath_shared/mcp_retrieval.py:6-9 [DERIVED].
-Pure module: no I/O, no orchestrator import (Server B runs outside the orchestrator package) — shared/polymath_shared/mcp_retrieval.py:10-11 [DERIVED].
+Single shared description of Polymath's five public retrieval modes, the request body each MCP tool sends, and how each answer is cut down for an agent — used by BOTH MCP surfaces (Server A `orchestrator/orchestrator/mcp_server.py` streamable-http bearer; Server B `mcp_server/polymath_mcp.py` stdio) so they cannot drift — shared/polymath_shared/mcp_retrieval.py:1-17 [DERIVED].
+Also holds the agent-facing instruction text both servers emit: the ordered playbook and the product_search / supplier_* / adapter / research_acquire descriptions — shared/polymath_shared/mcp_retrieval.py:11-15, shared/polymath_shared/mcp_retrieval.py:440-443 [DERIVED].
+Pure module: no I/O, no orchestrator import (Server B runs outside the orchestrator package) — shared/polymath_shared/mcp_retrieval.py:17 [DERIVED].
 
 ## public surface
+Module imported by `mcp_server/polymath_mcp.py`, `orchestrator/orchestrator/mcp_server.py`, `orchestrator/orchestrator/api/_small-modules` (FACTS.importers). Per-symbol callers unknown beyond that.
+
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| RETRIEVAL_MODES | const | tuple ("FAST","HYBRID","GRAPH","WILDCARD","GNN") | shared/polymath_shared/mcp_retrieval.py:19 [DERIVED] | — |
-| DEFAULT_MODE | const | "HYBRID" | shared/polymath_shared/mcp_retrieval.py:20 [DERIVED] | — |
-| REASONING_STYLES | const | 13-tuple of style names | shared/polymath_shared/mcp_retrieval.py:33-34 [DERIVED] | — |
-| DEPTHS / DEFAULT_DEPTH | const | {"quick","standard","thorough"} / "quick" | shared/polymath_shared/mcp_retrieval.py:37-39 [DERIVED] | — |
-| HIDDEN_TOOLS_A / _B | const | frozensets of legacy tool names | shared/polymath_shared/mcp_retrieval.py:42-43 [DERIVED] | — |
-| mode_lines | def | () -> str | shared/polymath_shared/mcp_retrieval.py:53-54 [DERIVED] | — |
-| normalize_mode | def | (mode: Any) -> str \| None | shared/polymath_shared/mcp_retrieval.py:57-61 [DERIVED] | — |
-| mode_error | def | (mode: Any) -> dict | shared/polymath_shared/mcp_retrieval.py:64-66 [DERIVED] | — |
-| normalize_reasoning | def | (style: Any) -> str \| None | shared/polymath_shared/mcp_retrieval.py:69-71 [DERIVED] | — |
-| normalize_depth | def | (depth: Any) -> str \| None | shared/polymath_shared/mcp_retrieval.py:74-76 [DERIVED] | — |
-| search_body | def | (query: str, corpus_id: str, mode: str) -> dict | shared/polymath_shared/mcp_retrieval.py:81-85 [DERIVED] | — |
-| explore_body | def | (query, corpus_id, mode, corpus_explorer: bool) -> dict | shared/polymath_shared/mcp_retrieval.py:88-89 [DERIVED] | — |
-| answer_body | def | (question, corpus_id, mode, *, reasoning=None, model=None, latent=None) -> dict | shared/polymath_shared/mcp_retrieval.py:92-101 [DERIVED] | — |
-| compare_body | def | (question, corpus_id, modes: Iterable[str]) -> dict | shared/polymath_shared/mcp_retrieval.py:104-105 [DERIVED] | — |
-| deep_body | def | (question, corpus_id, depth, mode, model=None) -> dict | shared/polymath_shared/mcp_retrieval.py:108-112 [DERIVED] | — |
-| trim_rows | def | (rows, max_chars=MAX_TEXT) -> list[dict] | shared/polymath_shared/mcp_retrieval.py:117-130 [DERIVED] | shape_search :178-179 |
-| shape_wildcard | def | (items: Any) -> list[dict] | shared/polymath_shared/mcp_retrieval.py:138-156 [DERIVED] | shape_search :182, shape_explore :206 |
-| shape_search | def | (out: dict, max_evidence: int) -> dict | shared/polymath_shared/mcp_retrieval.py:170-191 [DERIVED] | polymath_search tool :171 |
-| shape_explore | def | (out: dict) -> dict | shared/polymath_shared/mcp_retrieval.py:194-215 [DERIVED] | polymath_explore tool :195 |
-| shape_compare | def | (out: dict, max_rows=COMPARE_ROWS) -> dict | shared/polymath_shared/mcp_retrieval.py:218-244 [DERIVED] | polymath_compare tool :219 |
-| shape_models | def | (out: dict) -> dict | shared/polymath_shared/mcp_retrieval.py:247-253 [DERIVED] | — |
-| parse_sse | def | (lines: Iterable[str]) -> Iterator[tuple[str, dict]] | shared/polymath_shared/mcp_retrieval.py:258-280 [DERIVED] | shape_deep :283 |
-| shape_deep | def | (events, *, depth: str, mode: str) -> dict | shared/polymath_shared/mcp_retrieval.py:283-323 [DERIVED] | polymath_deep_research tool :284 |
-
-Module imported by (FACTS.importers): `mcp_server/polymath_mcp.py`, `orchestrator/orchestrator/api/_small-modules`, `orchestrator/orchestrator/mcp_server.py` [DERIVED].
+| RETRIEVAL_MODES / DEFAULT_MODE / MODE_GUIDE | const | — | mcp_retrieval.py:26-36 | — |
+| REASONING_STYLES / DEPTHS / DEFAULT_DEPTH | const | — | mcp_retrieval.py:40-46 | — |
+| HIDDEN_TOOLS_A / HIDDEN_TOOLS_B | const | frozenset | mcp_retrieval.py:49-50 | — |
+| normalize_mode | def | (mode) -> str \| None | mcp_retrieval.py:78-82 | — |
+| normalize_reasoning / normalize_depth | def | (style/depth) -> str \| None | mcp_retrieval.py:90-97 | — |
+| search_body | def | (query, corpus_id, mode) -> dict | mcp_retrieval.py:102-106 | — |
+| explore_body | def | (query, corpus_id, mode, corpus_explorer) -> dict | mcp_retrieval.py:109-110 | — |
+| answer_body | def | (question, corpus_id, mode, *, reasoning, model, latent) -> dict | mcp_retrieval.py:113-122 | — |
+| compare_body | def | (question, corpus_id, modes) -> dict | mcp_retrieval.py:125-126 | — |
+| deep_body | def | (question, corpus_id, depth, mode, model) -> dict | mcp_retrieval.py:129-133 | — |
+| product_body | def | (message, corpus_id=None, *, geography, model, hypotheses, limit_per_hypothesis) -> dict | mcp_retrieval.py:136-158 | — |
+| parse_body | def | (site, raw_text) -> dict | mcp_retrieval.py:161-163 | — |
+| default_model | def | (catalog) -> str \| None | mcp_retrieval.py:168-178 | — |
+| DefaultModel | class | __init__(ttl_s=DEFAULT_MODEL_TTL_S, clock=time.monotonic); cached(); remember(catalog) | mcp_retrieval.py:181-197 | — |
+| trim_rows | def | (rows, max_chars=MAX_TEXT) -> list[dict] | mcp_retrieval.py:202-215 | — |
+| shape_wildcard | def | (items) -> list[dict] | mcp_retrieval.py:223-241 | — |
+| shape_search | def | (out, max_evidence) -> dict | mcp_retrieval.py:264-285 | — |
+| shape_explore | def | (out) -> dict | mcp_retrieval.py:288-309 | — |
+| trim_hits | def | (items, max_items=ANSWER_HITS, max_chars=ANSWER_HIT_TEXT) -> Any | mcp_retrieval.py:312-317 | — |
+| shape_product | def | (out) -> dict | mcp_retrieval.py:320-329 | — |
+| shape_compare | def | (out, max_rows=COMPARE_ROWS) -> dict | mcp_retrieval.py:332-358 | — |
+| shape_models | def | (out) -> dict | mcp_retrieval.py:361-367 | — |
+| parse_sse | def | (lines) -> Iterator[(event, data)] | mcp_retrieval.py:372-394 | — |
+| shape_deep | def | (events, *, depth, mode) -> dict | mcp_retrieval.py:397-437 | — |
+| playbook | def | (*, list_tool, add_documents) -> str | mcp_retrieval.py:465-493 | both servers (docstring 465-467) |
+| list_corpora_description | def | (lead) -> str | mcp_retrieval.py:496-497 | — |
+| ANSWER / PRODUCT_SEARCH / SUPPLIER_ANSWER | const (description strings) | — | mcp_retrieval.py:500-543 | both servers (440-443) |
 
 ## contracts
-**normalize_mode** — shared/polymath_shared/mcp_retrieval.py:57-61
-- in: any value; empty/None falls back to `DEFAULT_MODE` ("HYBRID"), uppercased, then `_ALIASES` applied — :59-60 [DERIVED]
-- out: the canonical mode name iff it is one of RETRIEVAL_MODES, else `None` — :61 [DERIVED]
-- post: `"VECTOR"` in → `"FAST"` out — :30, :60 [DERIVED]
 
-**mode_error** — shared/polymath_shared/mcp_retrieval.py:64-66
-- out: `{"error": "unknown retrieval mode {mode!r}; use one of [...]", "status": 422, "modes": dict(MODE_GUIDE)}` — :64-66 [DERIVED]
+**normalize_mode(mode)** — mcp_retrieval.py:78-82
+- in: any value; `None`/empty falls back to `DEFAULT_MODE` ("HYBRID") — mcp_retrieval.py:80 [DERIVED]
+- out: uppercased name mapped through `_ALIASES` (`"VECTOR"` -> `"FAST"`), returned only if in `RETRIEVAL_MODES`, else `None` — mcp_retrieval.py:80-82 [DERIVED]
+- post: never raises; `mode_error` companion returns `{"error", "status": 422, "modes": dict(MODE_GUIDE)}` — mcp_retrieval.py:85-87 [DERIVED]
 
-**search_body** — shared/polymath_shared/mcp_retrieval.py:81-85
-- out keys exactly: `message`, `corpus_id`, `mode`, `compiler="off"`, `corpus_explorer=False`, `evidence=True` — :84-85 [DERIVED]
-- post: per docstring, the answer carries RETRIEVE-EVIDENCE-ROWS-V1 rows — :82-83 [DERIVED]
+**default_model(catalog)** — mcp_retrieval.py:168-178
+- in: `/synthesizers` response dict
+- out: id of the offered entry with `default is True`, else the first offered entry, else `None`; `None` when catalog is not a dict or contains `"error"` — mcp_retrieval.py:173-177 [DERIVED]
 
-**answer_body** — shared/polymath_shared/mcp_retrieval.py:92-101
-- base keys: `message`, `corpus_id`, `mode` — :94 [DERIVED]
-- `reasoning` added only when truthy and `!= "none"` — :95-96 [DERIVED]
-- `model` maps to key `"synthesizer"` — :97-98 [DERIVED]; `latent` added as bool only when not None — :99-100 [DERIVED]
+**DefaultModel** — mcp_retrieval.py:181-197
+- `cached()` returns the remembered id only while `clock() - _at < ttl_s` (default 300.0 s) — mcp_retrieval.py:185-191 [DERIVED]
+- `remember(catalog)` stores id + timestamp only when `default_model` picks something (a failed ask is not remembered) — mcp_retrieval.py:193-196 [DERIVED]
 
-**deep_body** — shared/polymath_shared/mcp_retrieval.py:108-112
-- out keys: `question`, `corpus_id`, `preset=depth`, `mode`, optional `synthesizer` — :109-111 [DERIVED]
+**trim_rows(rows, max_chars=1200)** — mcp_retrieval.py:202-215
+- post: any row whose `text` or `text_clean` exceeds `max_chars` is cut and stamped `truncated: True` + `full_length` (untrimmed `text` length, else `text_clean`); rows that fit are unchanged; `None` rows -> `[]` — mcp_retrieval.py:206-214 [DERIVED]
 
-**trim_rows** — shared/polymath_shared/mcp_retrieval.py:117-130
-- in: rows iterable or None — :121 [DERIVED]
-- out: row copies with `text`/`text_clean` cut at `max_chars` (default `MAX_TEXT = 1200`) — :122-125, :45 [DERIVED]
-- post: cut row carries `truncated: true` + `full_length` (untrimmed `text` length, else `text_clean`); a fitting row is unchanged — :118-119, :126-129 [DERIVED]
+**shape_search(out, max_evidence)** — mcp_retrieval.py:264-285
+- post: `evidence_rows` = non-graph rows `[:max(1, int(max_evidence))]` + graph_fact rows `[:GRAPH_FACTS_MAX]`; `graph_facts` = count of kept facts; wildcard lane shaped (≤ 8 items); passes through `evidence_rows_error`, `latency_ms`, `scope`, `degraded`, and `PRODUCT_KEYS` — mcp_retrieval.py:270-284 [DERIVED]
+- pre: an `out` containing `"error"` is returned unchanged — mcp_retrieval.py:267-268 [DERIVED]
 
-**shape_search** — shared/polymath_shared/mcp_retrieval.py:170-191
-- passthrough: `"error" in out` → returned untouched — :173-174 [DERIVED]
-- chunk rows (`kind != "graph_fact"`) capped at `max(1, int(max_evidence))`; graph facts capped at `GRAPH_FACTS_MAX = 20` — :176-177, :48 [DERIVED]
-- out: `mode` (alias-mapped), `evidence_rows = trim_rows(chunks + facts)` (chunks before facts), `evidence_contract`, `graph_facts = len(facts)` (the count) — :178-181 [DERIVED]
-- `wildcard` lane added only when non-empty — :182-184 [DERIVED]; `evidence_rows_error`/`latency_ms`/`scope` copied only when not None, `degraded` when truthy — :185-190 [DERIVED]
+**shape_compare(out, max_rows=6)** — mcp_retrieval.py:332-358
+- post: per-mode arm keeps `latency_ms`, `evidence_count`, `documents[:12]`, `top_rows[:max(1, max_rows)]` (keys `chunk_id, doc_id, source_name, score, arrival`); `found_by_every_mode` = intersection of chunk-id sets; `only_this_mode[m]` = count of ids no other mode found — mcp_retrieval.py:349-357 [DERIVED]
 
-**shape_explore** — shared/polymath_shared/mcp_retrieval.py:194-215
-- passthrough `"error"` — :197-198 [DERIVED]
-- out: `mode`, `evidence_packet` (as-is), `synthesis_performed` default `False` — :200-202 [DERIVED]
-- `graph_facts` here is the capped list (≤ 20), not a count — :203-205 [DERIVED]; wildcard, optional `latency_ms`/`scope`, `degraded` — :206-214 [DERIVED]
+**parse_sse(lines)** — mcp_retrieval.py:372-394
+- out: yields `(event, data)` tuples; lines starting `:` (keep-alive) skipped; frames whose `data` fails `json.loads` are silently dropped — mcp_retrieval.py:380-393 [DERIVED]
 
-**shape_compare** — shared/polymath_shared/mcp_retrieval.py:218-244
-- failed arm: `{mode, ok: False, latency_ms, error}` — :229-231 [DERIVED]
-- ok arm: `{mode, ok: True, latency_ms, evidence_count, documents[:12], top_rows[:max(1, int(max_rows))]}` with row keys `chunk_id, doc_id, source_name, score, arrival`, optional `degraded` — :235-239 [DERIVED]
-- `found_by_every_mode` = sorted intersection of per-mode chunk_id sets — :240-242 [DERIVED]; `only_this_mode[m]` = count of chunk_ids no other mode found — :243 [DERIVED]
+**shape_deep(events, *, depth, mode)** — mcp_retrieval.py:397-437
+- post: report text, model, verdict, citations (text clipped at `REPORT_CITATION_TEXT` = 400, cut ones stamped `truncated: True`), counts (goals/findings/sources/open_questions/confidence tallies), stop_reason, coverage, latency_ms — mcp_retrieval.py:427-437 [DERIVED]
+- no `answer` frame: typed error -> `{"error", "status"}` with status `409` when `error_code == "DEEP_RESEARCH_BUSY"` else `502`; bare ended stream -> `{"error": "the deep research stream ended without a report", "status": 502, "stages": stages[-6:]}` — mcp_retrieval.py:410-415 [DERIVED]
 
-**shape_models** — shared/polymath_shared/mcp_retrieval.py:247-253
-- entries from `out["synthesizers"]` or `out["models"]` — :250 [DERIVED]
-- only entries with `offered != False` (default True) — :251 [DERIVED]
-- out: `{"default": models[0]["id"] if models else None, "models": [...]}` with keys `id, label, provider_label, description` — :252-253 [DERIVED]
+**product_body(...)** — mcp_retrieval.py:136-158
+- post: hypotheses reduced to exactly `{title, search_terms[]}` keys (stripped, empty titles dropped) so agent-invented keys never reach the route; `corpus_id` omitted when empty/None = search every authorized library — mcp_retrieval.py:139-155 [DERIVED]
 
-**parse_sse** — shared/polymath_shared/mcp_retrieval.py:258-280
-- in: lines, str or bytes (decoded utf-8, errors replaced) — :261-262 [DERIVED]
-- yields `(event, dict)` per frame; `":"` comment lines skipped; blank line flushes a frame — :263-271 [DERIVED]
-- event name = `line[6:].strip()` after `event:`; data lines stripped at `line[5:]` — :272-275 [DERIVED]
-- frames whose `data` fails `json.loads` are dropped silently — :265-268, :276-280 [DERIVED]
-
-**shape_deep** — shared/polymath_shared/mcp_retrieval.py:283-323
-- event handling: `answer` last wins, `error` first wins, `coverage` last wins, `phase` appends `label` when truthy — :287-295 [DERIVED]
-- no answer + error frame: `{"error": "CODE: message", "status": 409 iff code == "DEEP_RESEARCH_BUSY" else 502, "error_code", optional "summary"}`; code defaults `"DEEP_RESEARCH_FAILED"` — :296-300 [DERIVED]
-- no answer, no error: `{"error": "the deep research stream ended without a report", "status": 502, "stages": stages[-6:]}` — :301 [DERIVED]
-- success: `depth, mode, report, model, verdict, citations` (each text clipped at `REPORT_CITATION_TEXT = 400`, `truncated` flag), `unknown_citations, counts` (goals/findings/sources/open_questions + confidence histogram over `strong/single_source/contested`), `stop_reason, coverage, latency_ms` — :302-323, :50 [DERIVED]
+**playbook(list_tool, add_documents)** — mcp_retrieval.py:465-493
+- post: ordered 6-step instruction string embedding `mode_lines()` and `PRODUCT_REASON_STEPS`; `list_tool`/`add_documents` name each server's own corpus tools — mcp_retrieval.py:466-493 [DERIVED]
 
 ## effect surface
-- Postgres tables read/written: none — FACTS `tables_read`/`tables_written` empty; module is "Pure: no I/O" — shared/polymath_shared/mcp_retrieval.py:11 [DERIVED]
-- Qdrant collections / files / network / subprocess: none — imports are only `json`, `collections.abc`, `typing` — shared/polymath_shared/mcp_retrieval.py:13-16 [DERIVED]
-- Env flags read: none — shared/polymath_shared/mcp_retrieval.py:13-16 [DERIVED]
+- Postgres tables read/written: none (FACTS.tables_read / tables_written empty).
+- Qdrant collections: none — the tool-name strings at mcp_retrieval.py:50, 469, 501, 506, 518 are description text, not collection access [INFERRED: FACTS "collections" entries point at lines inside frozenset/description strings].
+- Files / network / subprocess: none; only stdlib imports `json`, `time` — mcp_retrieval.py:20-21 [DERIVED]. Endpoints `/retrieve`, `/product/search`, `/supplier/parse`, `/synthesizers`, `/research/deep` appear in docstrings/description text only — mcp_retrieval.py:7, 138, 162, 169, 370 [DERIVED].
+- Clock: `DefaultModel.__init__` defaults `clock=time.monotonic` — mcp_retrieval.py:185 [DERIVED].
+- Env flags read: none visible.
 
 ## invariants
-INVARIANT: DEFAULT_MODE == "HYBRID" and "HYBRID" in RETRIEVAL_MODES — shared/polymath_shared/mcp_retrieval.py:19-20 [DERIVED]
-  fails-if: the empty-mode fallback would normalize to None and every tool would need mode_error.
-INVARIANT: every _ALIASES value ("FAST") is in RETRIEVAL_MODES — shared/polymath_shared/mcp_retrieval.py:19,:30 [DERIVED]
-  fails-if: "VECTOR" would map to a mode the app rejects.
-INVARIANT: len(shape_wildcard(items)) <= WILDCARD_MAX (8) — shared/polymath_shared/mcp_retrieval.py:141,:46 [DERIVED]
-  fails-if: the wildcard lane could displace/drown the main evidence in the agent context.
-INVARIANT: wildcard text length <= WILDCARD_TEXT (600) chars — shared/polymath_shared/mcp_retrieval.py:146-150,:47 [DERIVED]
-  fails-if: silent context blow-up per wildcard item.
-INVARIANT: graph-fact rows kept <= GRAPH_FACTS_MAX (20) in both shape_search and shape_explore — shared/polymath_shared/mcp_retrieval.py:177,:203,:48 [DERIVED]
-  fails-if: GRAPH mode answers grow unbounded.
-INVARIANT: a trim_rows row with len(text) > max_chars has truncated == True and full_length == original length — shared/polymath_shared/mcp_retrieval.py:123-128 [DERIVED]
-  fails-if: agents cannot tell a cut row from a complete one (D-02 contract, :117-119).
-INVARIANT: chunks kept >= 1 in shape_search and top_rows >= 1 in shape_compare (max(1, int(...))) — shared/polymath_shared/mcp_retrieval.py:176,:238 [DERIVED]
-  fails-if: a max_evidence/max_rows of 0 or negative would return empty evidence silently.
-INVARIANT: shape_deep status == 409 iff error_code == "DEEP_RESEARCH_BUSY", else 502 — shared/polymath_shared/mcp_retrieval.py:299 [DERIVED]
-  fails-if: busy retries would be treated as hard failures (or vice versa).
+INVARIANT: RETRIEVAL_MODES == ("FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN") and DEFAULT_MODE == "HYBRID" — mcp_retrieval.py:26-27 [DERIVED]
+  fails-if: normalize_mode rejects a valid mode; mode_error 422s a working call.
+INVARIANT: `_ALIASES` contains exactly one mapping, `"VECTOR"` -> `"FAST"` — mcp_retrieval.py:37 [DERIVED]
+  fails-if: `_executed_mode` leaks the runtime's internal name VECTOR to agents (runtime stamps FAST as VECTOR, seen live 2026-10-01) — mcp_retrieval.py:244-247 [DERIVED].
+INVARIANT: wildcard lane ≤ WILDCARD_MAX = 8 items, each text ≤ WILDCARD_TEXT = 600 chars, sources ≤ 4 — mcp_retrieval.py:226-239 [DERIVED]
+  fails-if: tool-result payload bloat on both servers.
+INVARIANT: graph facts kept in shaped answers ≤ GRAPH_FACTS_MAX = 20 — mcp_retrieval.py:270-271, 297 [DERIVED]
+  fails-if: same as above.
+INVARIANT: every cut row carries `truncated: True` + `full_length` (rule D-02) — mcp_retrieval.py:208-213 [DERIVED]
+  fails-if: agent cannot distinguish a cut excerpt from a full passage.
+INVARIANT: DefaultModel cached id honoured only for < ttl_s = 300.0 s; a failed `/synthesizers` ask is not remembered — mcp_retrieval.py:63, 185-196 [DERIVED]
+  fails-if: a key added in Settings never shows up, or a stale id is pinned forever.
+INVARIANT: `product_body` hypotheses carry only the keys `title` and `search_terms` — mcp_retrieval.py:150-153 [DERIVED]
+  fails-if: an extra agent-invented key reaches `/product/search`.
+INVARIANT: HIDDEN_TOOLS_A = {"retrieve", "retrieve_evidence", "compile_plan", "ask"}, HIDDEN_TOOLS_B = {"polymath_query", "polymath_retrieve"} — kept for old callers, hidden from tools/list — mcp_retrieval.py:48-50 [DERIVED]
+  fails-if: agents are offered stale tools the app no longer documents.
+INVARIANT: shape_search keeps at least 1 chunk row (`max(1, int(max_evidence))`) — mcp_retrieval.py:270 [DERIVED]
+  fails-if: max_evidence ≤ 0 silently empties the evidence.
 
 ## determinism & idempotency
-determinism: DETERMINISTIC — pure functions; only imports json/collections.abc/typing, no clock/random/uuid/network/db/env — shared/polymath_shared/mcp_retrieval.py:11,:13-16 [DERIVED]
-idempotency: SAFE — no writes; every shaper builds fresh dicts/lists (e.g. trim_rows copies each row) — shared/polymath_shared/mcp_retrieval.py:121-122 [DERIVED]
+determinism: NONDETERMINISTIC only in `DefaultModel` via its clock (default `time.monotonic`, injectable) — mcp_retrieval.py:185 [DERIVED]; all other functions are pure data shaping on their inputs.
+idempotency: SAFE — no I/O or writes; `DefaultModel.remember` only mutates an in-process memo — mcp_retrieval.py:193-196 [DERIVED].
 
 ## failure behaviour
-- No exceptions raised in-module for bad input: invalid mode/reasoning/depth become `None` — shared/polymath_shared/mcp_retrieval.py:57-76 [DERIVED]; unknown mode becomes a `{"error": ..., "status": 422, "modes": ...}` payload via mode_error — :64-66 [DERIVED]
-- All four shapers pass through any `out` containing `"error"` unchanged (search/explore/compare/models) — shared/polymath_shared/mcp_retrieval.py:173-174,:197-198,:222-223,:248-249 [DERIVED]
-- parse_sse swallows frames whose data fails `json.loads` (`except ValueError: pass`) — a malformed frame is indistinguishable from a missing one to the caller — shared/polymath_shared/mcp_retrieval.py:265-268,:276-280 [DERIVED]
-- shape_deep error codes: `DEEP_RESEARCH_BUSY` → 409, anything else → 502, default code `DEEP_RESEARCH_FAILED`; a stream with no report at all → 502 plus the last 6 phase labels — shared/polymath_shared/mcp_retrieval.py:296-301 [DERIVED]
+- `parse_sse` swallows `ValueError` from `json.loads` (malformed frames dropped, both mid-stream and at end) and skips keep-alive `:` lines — caller just sees fewer events — mcp_retrieval.py:380-393 [DERIVED].
+- `shape_deep` never raises on a bad stream: typed error -> `{"error": "<code>: <message>", "status": 409|502}` (409 only for `DEEP_RESEARCH_BUSY`); report-less stream -> status 502 with the last 6 phase labels — mcp_retrieval.py:410-415 [DERIVED].
+- Every `shape_*` returns an `out` containing `"error"` unchanged (search 267-268, explore 291-292, product 323-324, compare 335-336, models 362-363) — the caller sees the upstream error dict — mcp_retrieval.py:267, 291, 323, 335, 362 [DERIVED].
+- Bad mode/reasoning/depth never raise: `normalize_*` return `None`, `mode_error` returns status 422 with the full `MODE_GUIDE` — mcp_retrieval.py:78-97, 85-87 [DERIVED].
+- `default_model` on an unavailable/errored catalog returns `None` instead of raising — mcp_retrieval.py:173-174 [DERIVED].
 
 ## dumb-code flags
-- Magic `documents[:12]` — no named constant — shared/polymath_shared/mcp_retrieval.py:236 [DERIVED]
-- Magic `sources[:4]` in shape_wildcard — shared/polymath_shared/mcp_retrieval.py:153 [DERIVED]
-- Magic `stages[-6:]` — shared/polymath_shared/mcp_retrieval.py:301 [DERIVED]
-- Same key `"graph_facts"` is `len(facts)` (int) in shape_search but the capped list in shape_explore — shared/polymath_shared/mcp_retrieval.py:181,:204 [DERIVED]
-- Two body dialects: deep_body uses `"question"`/`"preset"` while search/explore/answer/compare use `"message"` — shared/polymath_shared/mcp_retrieval.py:84,:89,:94,:105,:109 [INFERRED] same-module inconsistency, easy to copy wrong when adding a tool.
-- `model` param silently renamed to `"synthesizer"` on the wire in answer_body and deep_body — shared/polymath_shared/mcp_retrieval.py:97-98,:110-111 [DERIVED]
-- `"none"` is both a REASONING_STYLES member and the sentinel meaning "omit the key" — shared/polymath_shared/mcp_retrieval.py:33-34,:95-96 [DERIVED]
-- shape_models accepts two input keys, `"synthesizers"` or `"models"` — shared/polymath_shared/mcp_retrieval.py:250 [DERIVED]
-- DEPTHS and REASONING_STYLES duplicate values owned elsewhere (orchestrator `api/deep_research.py` presets, `api/reasoning.py` CURATED_MODES; comments claim test-pinned) — shared/polymath_shared/mcp_retrieval.py:32,:36-38 [INFERRED] comments name foreign owners, so the copies can drift from the source of truth.
+- `_ALIASES` is a band-aid with one entry: any new internal runtime mode name would pass through `_executed_mode` unaliased — mcp_retrieval.py:37, 244-247 [DERIVED].
+- Duplicated catalog logic: the `"synthesizers" or "models"` key fallback and the `offered` default-True filter appear twice, in `default_model` and in `shape_models` — mcp_retrieval.py:175-176 vs mcp_retrieval.py:364-365 [DERIVED].
+- Same value under two names: `WILDCARD_TEXT = 600` and `ANSWER_HIT_TEXT = 600` — mcp_retrieval.py:54, 59 [DERIVED].
+- `trim_hits` reuses `trim_rows` by wrapping each hit in a one-element list (`trim_rows([h], max_chars)[0]`) — mcp_retrieval.py:317 [DERIVED].
+- Dead-by-design tool names kept in `HIDDEN_TOOLS_A`/`HIDDEN_TOOLS_B` for old callers — mcp_retrieval.py:48-50 [DERIVED].
+- Magic agent-facing bounds all inline at module top (MAX_TEXT 1200, WILDCARD_MAX 8, GRAPH_FACTS_MAX 20, COMPARE_ROWS 6, REPORT_CITATION_TEXT 400, ANSWER_HITS 12) — mcp_retrieval.py:52-59 [DERIVED].
+- `shape_compare.documents` hard-codes `[:12]` instead of a named constant (contrast `COMPARE_ROWS = 6` one line up in use) — mcp_retrieval.py:350 vs mcp_retrieval.py:56 [DERIVED].
 
 ## refactor notes
-- Blast radius: three importers — `mcp_server/polymath_mcp.py`, `orchestrator/orchestrator/api/_small-modules`, `orchestrator/orchestrator/mcp_server.py` (FACTS.importers); any signature change hits both MCP servers at once [DERIVED].
-- Body key names are the wire contract to the app endpoints: `compiler="off"`, `evidence=True`, `corpus_explorer`, `preset`, `synthesizer`, `latent`, `message` vs `question` — shared/polymath_shared/mcp_retrieval.py:84-85,:89,:94-100,:109-111 [DERIVED]
-- Keep orchestrator imports out: Server B (stdio) runs outside the orchestrator package — shared/polymath_shared/mcp_retrieval.py:3-4,:10-11 [DERIVED]
-- RETRIEVAL_MODES mirrors frontend-v2 `PUBLIC_MODES` = `retrieval_modes.EXPOSED_MODES` minus LEGACY and is pinned by tests; REASONING_STYLES is pinned by a test — shared/polymath_shared/mcp_retrieval.py:18,:32-33 [DERIVED]
-- Do not drop `_ALIASES = {"VECTOR": "FAST"}`: the runtime still stamps FAST as VECTOR internally (seen live 2026-10-01), and `_executed_mode` relies on the reverse mapping — shared/polymath_shared/mcp_retrieval.py:30,:159-162 [DERIVED]
-- trim_rows implements the D-02 truncation contract (`truncated`/`full_length`); downstream consumers read those fields — shared/polymath_shared/mcp_retrieval.py:117-119,:45 [DERIVED]
+- This module is the ONE copy for both MCP servers; any change to `playbook()` or the description strings (`ANSWER`, `PRODUCT_SEARCH`, `SUPPLIER_*`, `ADAPTER_START`, `RESEARCH_ACQUIRE`) changes agent instructions on both surfaces at once — mcp_retrieval.py:1-5, 440-449, 500-639; importers `mcp_server/polymath_mcp.py` and `orchestrator/orchestrator/mcp_server.py` (FACTS.importers) [DERIVED].
+- Must stay pure: Server B (`mcp_server/polymath_mcp.py`) runs outside the orchestrator package — adding an orchestrator import breaks it — mcp_retrieval.py:17 [DERIVED].
+- Values pinned to other modules by tests — changing one side breaks the pin: `RETRIEVAL_MODES` = frontend-v2 `PUBLIC_MODES` = `retrieval_modes.EXPOSED_MODES` minus LEGACY (mcp_retrieval.py:25); `REASONING_STYLES` = `api/reasoning.py` `CURATED_MODES` (mcp_retrieval.py:39); `DEPTHS` = `api/deep_research.py` presets (mcp_retrieval.py:43); `PRODUCT_REASON_STEPS = 9` = `config/adapters/ecommerce.product_research.json` (mcp_retrieval.py:70-71); `GUIDE_PROMPT`/`GUIDE_RESOURCE` = `harness_guide.PROMPT_NAME`/`GUIDE_URI` (mcp_retrieval.py:444-445) [DERIVED].
+- The trim constants (mcp_retrieval.py:52-59) bound every tool result an agent receives on both servers; resizing them is an agent-visible payload change, not a local tweak [INFERRED: they are the only bounds applied in every `shape_*`].
+- `_executed_mode`'s VECTOR->FAST alias exists because the runtime stamps the internal name; if the runtime is ever fixed to emit public names, `_ALIASES` at mcp_retrieval.py:37 becomes dead but must stay for old responses — mcp_retrieval.py:244-247 [INFERRED from the live-observation comment].
 
 ## VERIFY
 ```verify
-grep -Fq 'RETRIEVAL_MODES = ("FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN")' shared/polymath_shared/mcp_retrieval.py
 grep -Fq 'DEFAULT_MODE = "HYBRID"' shared/polymath_shared/mcp_retrieval.py
-grep -Fq '_ALIASES = {"VECTOR": "FAST"}' shared/polymath_shared/mcp_retrieval.py
-grep -Fq '"compiler": "off"' shared/polymath_shared/mcp_retrieval.py
-grep -Fq 'GRAPH_FACTS_MAX = 20' shared/polymath_shared/mcp_retrieval.py
-test "$(grep -c -F 'shape_wildcard' shared/polymath_shared/mcp_retrieval.py)" -ge 3
+grep -Fq '"VECTOR": "FAST"' shared/polymath_shared/mcp_retrieval.py
+grep -Fq 'DEFAULT_MODEL_TTL_S = 300.0' shared/polymath_shared/mcp_retrieval.py
+grep -Fq 'MAX_TEXT = 1200' shared/polymath_shared/mcp_retrieval.py
 ! grep -Fq 'import orchestrator' shared/polymath_shared/mcp_retrieval.py
+test "$(grep -c -F 'polymath_search' shared/polymath_shared/mcp_retrieval.py)" -ge 2
 ```

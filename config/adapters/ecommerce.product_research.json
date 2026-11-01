@@ -1,11 +1,11 @@
 {
  "adapter_id": "ecommerce.product_research",
- "adapter_version": "0.7.3",
- "workflow_version": "0.1.0",
+ "adapter_version": "0.8.0",
+ "workflow_version": "0.2.0",
  "retrieval_policy_version": "2.0.0",
- "input_schema_version": "1.0.0",
+ "input_schema_version": "1.1.0",
  "output_schema_version": "0.1.0",
- "description": "PREFERRED entry for governed product research. Niche-informed product research for ecommerce. Polymath supplies corpus knowledge and owns durable run and hypothesis state; the connected agent reasons (θ); the ecommerce domain (adapters/ecommerce, through DOMAIN_OPERATION) supplies the seller's craft as deterministic law and planning — interpretation lineage, population discovery, bridge and portfolio admissibility, research planning, evidence cards and lived situations from ADMITTED evidence, the product-set law, sourcing plans, price / MOQ normalization and the lead join; the host harness investigates customers, products and supply with its own tools; TrailSignal alone admits evidence, judges hypotheses, qualifies and computes the only score or refusal (LAW 1). The domain computes and never owns state; no source, search engine, browser or harness is named here.",
+ "description": "PREFERRED entry for governed product research. Corpus-informed product research for ecommerce: a niche is optional — without a seed the run derives one from its corpora (seed_origin corpus, lineage in the start receipt), and it runs on any query-ready corpus (default: every one the caller may use). Polymath supplies corpus knowledge and owns durable run and hypothesis state; the connected agent reasons (θ); the ecommerce domain (adapters/ecommerce, through DOMAIN_OPERATION) supplies the seller's craft as deterministic law and planning — interpretation lineage, population discovery, bridge and portfolio admissibility, research planning, evidence cards and lived situations from ADMITTED evidence, the product-set law, sourcing plans, price / MOQ normalization and the lead join; the connected agent drives the run: it answers every AGENT_REASON step itself (Polymath never reasons for it) and investigates customers, products and supply on the user's own machine with the local Agent Reach commands each research step carries, never with an agent's built-in web search, web fetch or browser; TrailSignal alone admits evidence, judges hypotheses, qualifies and computes the only score or refusal (LAW 1). The domain computes and never owns state; no source, search engine, browser or harness is named here.",
  "evidence_roles": [
   "friction",
   "workaround",
@@ -21,15 +21,14 @@
  ],
  "input_schema": {
   "type": "object",
-  "required": [
-   "seed"
-  ],
+  "required": [],
   "additionalProperties": false,
   "properties": {
    "seed": {
     "type": "string",
     "minLength": 3,
-    "maxLength": 2000
+    "maxLength": 2000,
+    "description": "Optional: a problem, an audience or a situation to research. Left out, the run derives a seed from its corpora (seed_origin corpus; the lineage is in the start receipt)."
    },
    "constraints": {
     "type": "array",
@@ -47,7 +46,8 @@
     "type": "array",
     "items": {
      "type": "string"
-    }
+    },
+    "description": "Optional: the corpora to research. Left out, every searchable library the caller may use (ranked, at most the adapter's limit) — the same default for the owner and a friend."
    },
    "freshness_days": {
     "type": "integer",
@@ -63,6 +63,13 @@
    "language": {
     "type": "string",
     "maxLength": 50
+   },
+   "seed_origin": {
+    "enum": [
+     "user",
+     "corpus"
+    ],
+    "description": "Set by the runtime at start (never by the requester): where the seed came from."
    }
   }
  },
@@ -153,11 +160,25 @@
   {
    "step_id": "A_understand",
    "type": "VALIDATE",
-   "title": "Understand seed: validate input and corpus scope",
+   "title": "Understand seed: validate input, resolve the corpus scope, check or derive the seed",
    "next": "B_plan",
    "config": {
     "validate": "input_schema",
-    "require_corpus": true
+    "require_corpus": true,
+    "seed_check": {
+     "domain": "ecommerce",
+     "operation": "understanding.seed_check",
+     "field": "seed",
+     "inputs": {
+      "seed": "input.seed"
+     }
+    },
+    "corpus_scope": {
+     "max_corpora": 3
+    },
+    "corpus_seed": {
+     "field": "seed"
+    }
    }
   },
   {
@@ -268,7 +289,8 @@
     "show": {
      "lenses": "outputs.B_lenses.lenses",
      "previous_lineage_errors": "outputs.C_lineage.errors"
-    }
+    },
+    "law_at_submit": true
    }
   },
   {
@@ -352,7 +374,7 @@
    "title": "θ generate hypotheses",
    "theta_op": "generate_hypotheses",
    "next": "C_bridge",
-   "objective": "From the retrieved Polymath evidence only, generate up to 8 latent hypotheses: a population doing a repeated activity meets a recurring friction with a plausible mechanism. State assumptions, falsifiers and the knowledge gaps that only the live world can close. Cite evidence ids for every hypothesis; list unknowns instead of inventing. Materials show `primitives` (drivers, behaviors, adaptations, constraints, workarounds, frictions, latent_values, physical_jobs, transferable_invariants), `latent_structures` and the ranked `population_leads` / `community_leads`: build hypotheses FROM them, not from the seed alone. For every hypothesis name its ORIGIN by id: `lead_ids` (ids of the leads it is about) and `latent_structure_ids` (ids of the structures it was abstracted from), copied exactly as shown; an empty list means it truly came from neither. An id this run did not produce rejects the submission.",
+   "objective": "From the retrieved Polymath evidence only, generate three to six latent hypotheses (the bridge portfolio's own bound: the ledger may hold at most six live ones): a population doing a repeated activity meets a recurring friction with a plausible mechanism. State assumptions, falsifiers and the knowledge gaps that only the live world can close. Cite evidence ids for every hypothesis; list unknowns instead of inventing. Materials show `primitives` (drivers, behaviors, adaptations, constraints, workarounds, frictions, latent_values, physical_jobs, transferable_invariants), `latent_structures` and the ranked `population_leads` / `community_leads`: build hypotheses FROM them, not from the seed alone. For every hypothesis name its ORIGIN by id: `lead_ids` (ids of the leads it is about) and `latent_structure_ids` (ids of the structures it was abstracted from), copied exactly as shown; an empty list means it truly came from neither. An id this run did not produce rejects the submission.",
    "constraints": [
     "Cite only evidence_refs supplied in context; registry priors (trail_prior) are coordinates, never evidence",
     "No opportunity score, rank or weight of any kind (LAW 1)",
@@ -368,7 +390,7 @@
      "hypotheses": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 8,
+      "maxItems": 6,
       "items": {
        "type": "object",
        "required": [
@@ -532,8 +554,10 @@
      "community_leads": "outputs.C_population.community_leads",
      "ranked_lead_ids": "outputs.C_population.ranked_lead_ids",
      "latent_structures": "outputs.C_lineage.latent_structures",
-     "primitives": "outputs.C_primitives.primitives"
-    }
+     "primitives": "outputs.C_primitives.primitives",
+     "previous_portfolio_errors": "outputs.C_bridge_law.portfolio_errors"
+    },
+    "max_live_hypotheses": 6
    }
   },
   {
@@ -660,7 +684,8 @@
      "previous_bridge_errors": "outputs.C_bridge_law.bridge_errors",
      "previous_portfolio_errors": "outputs.C_bridge_law.portfolio_errors",
      "hypothesis_semantics": "semantics.hypotheses"
-    }
+    },
+    "law_at_submit": true
    }
   },
   {
@@ -684,6 +709,34 @@
    "title": "An inadmissible bridge portfolio returns through reasoning",
    "next": "D_project",
    "branches": [
+    {
+     "label": "the ledger holds too few live hypotheses for the portfolio and repair budget is left: generate more (no bridge can fix it)",
+     "when": {
+      "op": "all_of",
+      "of": [
+       {
+        "op": "equals",
+        "path": "steps.C_bridge_law.output.portfolio_needs",
+        "value": "more"
+       },
+       {
+        "op": "count_lt",
+        "path": "run.branch_loops",
+        "n": 10
+       }
+      ]
+     },
+     "next": "C_hypotheses"
+    },
+    {
+     "label": "the ledger holds too many live hypotheses for the portfolio: no reasoning step can reduce it (only TrailSignal merges or kills)",
+     "when": {
+      "op": "equals",
+      "path": "steps.C_bridge_law.output.portfolio_needs",
+      "value": "fewer"
+     },
+     "next": "Z_refuse_bridge"
+    },
     {
      "label": "the law failed and repair budget is left",
      "when": {
@@ -771,7 +824,9 @@
     "legacy_mode": "EXPLORE",
     "evidence": true,
     "top_k": 16,
-    "query_from": "hypotheses"
+    "query_from": "hypotheses",
+    "min_rows_per_need": 6,
+    "parallel_calls": 2
    }
   },
   {
@@ -789,7 +844,9 @@
     "on_unavailable": "gap",
     "max_seeds": 8,
     "max_facts": 16,
-    "query_from": "hypotheses"
+    "query_from": "hypotheses",
+    "min_rows_per_need": 6,
+    "parallel_calls": 2
    }
   },
   {
@@ -1212,7 +1269,7 @@
    "type": "HARNESS_ACTION",
    "title": "Harness: field research",
    "next": "J_admit",
-   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations. Materials show `intent_index`: for every compiled intent the hypothesis it serves, the gap it answers and the query text — link each observation to the hypothesis whose intent found it. For every observation also record `intent: <the search intent id that found it>` in the observation context, so the evidence stays linked to the gap and the hypothesis it was sought for. Comment threads under short-form and long-form videos are field evidence: quote the comment, cite the page it is on (the video's canonical permalink, never a short link) and date it by the comment.",
+   "objective": "Find first-person field evidence for the live hypotheses: recurring friction complaints, workarounds, behaviour, demand signals; record sources, observations, tool trace and limitations. Materials show `intent_index`: for every compiled intent the hypothesis it serves, the gap it answers and the query text — link each observation to the hypothesis whose intent found it. For every observation also record `intent: <the search intent id that found it>` in the observation context, so the evidence stays linked to the gap and the hypothesis it was sought for. Comment threads under short-form and long-form videos are field evidence: quote the comment, cite the page it is on (the video's canonical permalink, never a short link) and date it by the comment. Run the research on the user's own machine with the exact local Agent Reach commands beside this step (`agent_reach.per_intent`: for each search intent its channel, commands, tool_class and receipt_tags) — never an agent's built-in web search, web fetch or browser; write each intent's tool_trace row with its tool_class and carry its receipt_tags into the observation context.",
    "harness": {
     "action_kind": "AGENT_RESEARCH",
     "minimum_independent_sources": 3,
@@ -1232,6 +1289,9 @@
      "community_leads": "outputs.C_population.community_leads",
      "research_plan": "outputs.H_plan.planned",
      "intent_index": "outputs.H_plan.intent_index"
+    },
+    "beside": {
+     "agent_reach": "outputs.H_plan.agent_reach"
     }
    }
   },
@@ -1310,7 +1370,8 @@
      "lived_clusters": "outputs.J_cards.lived_clusters",
      "field_records": "outputs.J_cards.field_records",
      "previous_situation_errors": "outputs.K_situations_law.errors"
-    }
+    },
+    "law_at_submit": true
    }
   },
   {
@@ -2329,7 +2390,8 @@
      "previous_concept_errors": "outputs.N_concepts_law.errors",
      "mechanism_notes": "outputs.N_concepts_law.mechanism_notes",
      "hypothesis_semantics": "semantics.hypotheses"
-    }
+    },
+    "law_at_submit": true
    }
   },
   {
@@ -2421,7 +2483,7 @@
    "type": "HARNESS_ACTION",
    "title": "Harness: product reality check",
    "next": "Q_admit",
-   "objective": "Investigate current products, alternatives, reviews, pricing, complaints and saturation for the candidate mechanisms; record sources, observations, tool trace and limitations. Every search intent is a JOB for ONE concept (materials: `reality_plan` — concept_id, variation_id, hypothesis_id, job_class, query). For every product you observe record in the observation context: `concept: <concept_id>` (and `variation: <variation_id>` when the job names one) · `relation: competitor | substitute | current_solution | validates | solves` — `solves` means an existing product ALREADY does what that concept would · `product: <name as listed>` · `price as listed: <text>`. An observation without a `concept:` tag is never attached to a concept. Also record `intent: <the job's intent id>`.",
+   "objective": "Investigate current products, alternatives, reviews, pricing, complaints and saturation for the candidate mechanisms; record sources, observations, tool trace and limitations. Every search intent is a JOB for ONE concept (materials: `reality_plan` — concept_id, variation_id, hypothesis_id, job_class, query). For every product you observe record in the observation context: `concept: <concept_id>` (and `variation: <variation_id>` when the job names one) · `relation: competitor | substitute | current_solution | validates | solves` — `solves` means an existing product ALREADY does what that concept would · `product: <name as listed>` · `price as listed: <text>`. An observation without a `concept:` tag is never attached to a concept. Also record `intent: <the job's intent id>`. Run the research on the user's own machine with the exact local Agent Reach commands beside this step (`agent_reach.per_intent`: for each search intent its channel, commands, tool_class and receipt_tags) — never an agent's built-in web search, web fetch or browser; write each intent's tool_trace row with its tool_class and carry its receipt_tags into the observation context.",
    "harness": {
     "action_kind": "PRODUCT_REALITY_CHECK",
     "minimum_independent_sources": 3,
@@ -2442,6 +2504,9 @@
      "mechanisms": "outputs.N_concepts.mechanisms",
      "reality_plan": "outputs.O_plan.reality_plan",
      "planned": "outputs.O_plan.planned"
+    },
+    "beside": {
+     "agent_reach": "outputs.O_plan.agent_reach"
     }
    }
   },
@@ -2538,7 +2603,7 @@
    "type": "HARNESS_ACTION",
    "title": "Harness: supplier research",
    "next": "T_admit",
-   "objective": "Investigate supply feasibility: supplier URL and identity, platform, unit price, MOQ, variants, lead time, customization, shipping, limitations, retrieval date. Supply evidence never counts as demand. Every search intent is a job for ONE concept (materials: `sourcing_plan` — concept_id, channel, where, search_terms, rule). For every listing record in the observation context: `listing: <product title as listed>` · `supplier: <supplier name as shown, or none>` · `price as listed: <text>` · `MOQ as listed: <text>` · `channel: <the job's channel>` · `concept: <concept_id>` · `intent: <the search intent id>`. A supply observation without a `listing:` tag is never turned into a supplier lead.",
+   "objective": "Investigate supply feasibility: supplier URL and identity, platform, unit price, MOQ, variants, lead time, customization, shipping, limitations, retrieval date. Supply evidence never counts as demand. Every search intent is a job for ONE concept (materials: `sourcing_plan` — concept_id, channel, where, search_terms, rule). For every listing record in the observation context: `listing: <product title as listed>` · `supplier: <supplier name as shown, or none>` · `price as listed: <text>` · `MOQ as listed: <text>` · `channel: <the job's channel>` · `concept: <concept_id>` · `intent: <the search intent id>`. A supply observation without a `listing:` tag is never turned into a supplier lead. The host has already read the supplier API for every concept: `supplier_draft.receipt` beside this step is a draft receipt for that part (check it and keep it); a read that failed carries a `fallback` with the commands to run instead. A channel the host has no API for is read only with the user's local Agent Reach: run each intent's commands from `agent_reach.per_intent` on the user's machine, send each command's raw output to supplier_parse, and add the parsed listings; never an agent's built-in web search, web fetch or browser. Submit ONE receipt (the draft's observations plus yours) under your own harness_id.",
    "harness": {
     "action_kind": "SUPPLIER_RESEARCH",
     "minimum_independent_sources": 2,
@@ -2555,6 +2620,24 @@
     "show": {
      "sourcing_plan": "outputs.S_plan.sourcing_plan",
      "product_concepts": "outputs.N_concepts.product_concepts"
+    },
+    "beside": {
+     "agent_reach": [
+      "prefetch.agent_reach",
+      "outputs.S_plan.agent_reach"
+     ],
+     "supplier_draft": "prefetch.supplier_draft"
+    },
+    "host_prefetch": {
+     "lookups": "outputs.S_plan.host_lookups",
+     "build": {
+      "domain": "ecommerce",
+      "operation": "supply.draft_receipt",
+      "inputs": {
+       "agent_reach": "outputs.S_plan.agent_reach",
+       "product_concepts": "outputs.N_concepts.product_concepts"
+      }
+     }
     }
    }
   },
@@ -2757,6 +2840,12 @@
       "trail_scores",
       "score_refusals"
      ]
+    },
+    "context_budget": {
+     "field_evidence": 240,
+     "chunk": 40,
+     "graph_fact": 20,
+     "other": 20
     }
    }
   },
@@ -2769,7 +2858,8 @@
     "domain": "ecommerce",
     "operation": "understanding.no_signal",
     "inputs": {
-     "primitives": "outputs.C_primitives.primitives"
+     "primitives": "outputs.C_primitives.primitives",
+     "seed_origin": "input.seed_origin"
     }
    }
   },

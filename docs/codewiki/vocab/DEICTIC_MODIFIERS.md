@@ -12,7 +12,7 @@ AUTHORITY: `shared/polymath_shared/entity_admission.py:101` :: `DEICTIC_MODIFIER
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:299` | 3/9 | `its`, `my`, `our`, `these`, `those`, `your` |
+| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:300` | 3/9 | `its`, `my`, `our`, `these`, `those`, `your` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:128` | 5/9 | `its`, `my`, `our`, `your` |
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:32` | 5/9 | `its`, `my`, `our`, `your` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:32` | 5/9 | `its`, `my`, `our`, `your` |

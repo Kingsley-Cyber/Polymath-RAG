@@ -12,7 +12,7 @@ AUTHORITY: `shared/polymath_shared/adapter/semantic_view.py:30` :: `SEMANTIC_FIE
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:234` | 6/6 | — |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:239` | 6/6 | — |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:111` | 3/6 | `population`, `context`, `suspected_friction` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:159` | 3/6 | `population`, `task`, `suspected_friction` |
 | `adapters/ecommerce/python/maintenance.py` | `adapters/ecommerce/python/maintenance.py:35` | 3/6 | `population`, `mechanism`, `suspected_friction` |
@@ -20,7 +20,7 @@ AUTHORITY: `shared/polymath_shared/adapter/semantic_view.py:30` :: `SEMANTIC_FIE
 | `adapters/ecommerce/python/query_semantics.py` | `adapters/ecommerce/python/query_semantics.py:22` | 6/6 | — |
 | `adapters/ecommerce/python/registry.py` | `adapters/ecommerce/python/registry.py:47` | 3/6 | `population`, `mechanism`, `suspected_friction` |
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:67` | 6/6 | — |
-| `shared/polymath_shared/adapter/hypotheses.py` | `shared/polymath_shared/adapter/hypotheses.py:32` | 6/6 | — |
+| `shared/polymath_shared/adapter/hypotheses.py` | `shared/polymath_shared/adapter/hypotheses.py:36` | 6/6 | — |
 
 ## VERIFY
 

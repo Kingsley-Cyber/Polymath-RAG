@@ -81,7 +81,7 @@ git merge --no-ff restoration/provenance-hooks         # the NEWEST restoration/
 .venv/bin/python scripts/wiki_worm.py --check; echo "wiki_worm=$?"
 .venv/bin/python shared/polymath_shared/bundle_integrity.py
 pgrep -f control.process_supervisor | xargs kill -TERM  # then WAIT: 0 supervisors, 0 children, nothing on :7200
-mkdir -p /private/tmp/polymath_fleet && nohup bash scripts/boot_polymath.sh > /private/tmp/polymath_fleet/boot.log 2>&1 &
+mkdir -p ~/PolymathRuntime/logs/fleet && nohup bash scripts/boot_polymath.sh > ~/PolymathRuntime/logs/fleet/boot.log 2>&1 &
 curl -s 127.0.0.1:7200/ready                           # expect ready:true, embedder + reranker true, ONE bundle hash among healthy registrations
 .venv/bin/python scripts/deploy_ecommerce_skill.py --help   # engine files changed in slices 2–3: redeploy the Hermes skill copy the way this script documents, keep the parity receipt
 ```

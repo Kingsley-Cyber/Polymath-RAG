@@ -158,6 +158,132 @@ def lane_offset_env(slot_name: str) -> dict[str, str]:
     return {}
 
 
+# FLEET-LOG-DURABLE-V1 (measured 2026-11-01): 26 worker logs under /private/tmp/polymath_fleet were unlinked while
+# their processes still wrote to them (lsof link count 0) — macOS's periodic /tmp cleaner deletes files whose access
+# time is over 3 days old, and a log opened once in append mode is written, never read. Slot logs (and the state file)
+# now live in a durable directory; the old path stays readable through a link (`link_run_dir`).
+LEGACY_FLEET_DIR = Path("/private/tmp/polymath_fleet")
+FLEET_LOG_DIR_ENV = "POLYMATH_FLEET_LOG_DIR"
+FLEET_DIR_ENV = "POLYMATH_FLEET_DIR"
+STATE_FILE = "supervisor_state.json"
+
+
+def default_fleet_log_dir() -> Path:
+    """~/PolymathRuntime/logs/fleet — the durable default (scripts/boot_polymath.sh and bounce_fleet.sh use the same)."""
+    return Path.home() / "PolymathRuntime" / "logs" / "fleet"
+
+
+def _same_dir(a: Path, b: Path) -> bool:
+    """Both resolve to one directory (symlinks followed all the way)."""
+    return os.path.realpath(a) == os.path.realpath(b)
+
+
+def _same_path(a: Path, b: Path) -> bool:
+    """The same path (parents resolved, e.g. /tmp -> /private/tmp; the last component NOT followed): a run dir that is
+    already our link stays distinct from the log dir, so every boot re-checks and receipts it."""
+    return (Path(os.path.realpath(a.parent)) / a.name) == (Path(os.path.realpath(b.parent)) / b.name)
+
+
+def resolve_fleet_dirs(log_dir: str | None = None, run_dir: str | None = None,
+                       env=None) -> tuple[Path, Path | None]:
+    """(slot-log dir, run dir to keep linked to it — or None).
+
+    Log dir: an explicit `log_dir` (tests, tools) > POLYMATH_FLEET_LOG_DIR > POLYMATH_FLEET_DIR (a second instance's own
+    dir, SERVE-SUPERVISOR-V1, unchanged) > ~/PolymathRuntime/logs/fleet. Run dir: the path existing readers know
+    (POLYMATH_FLEET_DIR, else /private/tmp/polymath_fleet — the Metal lease, rerank wake, stall tracer and conformance
+    readers all resolve it); None when it IS the log dir, and None for an explicit `log_dir` unless `run_dir` is given."""
+    env = os.environ if env is None else env
+    instance = (env.get(FLEET_DIR_ENV) or "").strip()
+    if log_dir:
+        log_path = Path(log_dir).expanduser()
+        run = Path(run_dir).expanduser() if run_dir else None
+    else:
+        chosen = (env.get(FLEET_LOG_DIR_ENV) or "").strip() or instance
+        log_path = Path(chosen).expanduser() if chosen else default_fleet_log_dir()
+        run = Path(run_dir).expanduser() if run_dir else (Path(instance).expanduser() if instance else LEGACY_FLEET_DIR)
+    if run is not None and _same_path(run, log_path):
+        run = None
+    return log_path, run
+
+
+def link_run_dir(run_dir: Path, log_dir: Path) -> dict:
+    """Keep `run_dir` resolving to `log_dir`, at every boot. Receipt `mode`:
+      created_link  the path was absent (a reboot clears /private/tmp): it is now a symlink to the log dir — every
+                    old-path reader AND writer (Metal lease files, receipts, tick phases) lands in the durable dir;
+      linked        already that symlink;  relinked  a symlink to another dir, repointed (`previous` names it);
+      per_entry     a real directory from before: left in place (another component may hold files in it), and the
+                    supervisor links ITS entries inside it instead (`link_run_entry`: the state file, each slot log);
+      blocked       a non-directory sits at the path — left alone;  error  the link could not be made.
+    Never deletes anything."""
+    rec: dict = {"run_dir": str(run_dir), "log_dir": str(log_dir)}
+    for _ in range(2):                         # one retry: a creator racing us turns "absent" into "exists"
+        try:
+            if run_dir.is_symlink():
+                if _same_dir(run_dir, log_dir):
+                    rec["mode"] = "linked"
+                    return rec
+                rec["previous"] = os.path.realpath(run_dir)
+                tmp = run_dir.with_name(f".{run_dir.name}.link.{os.getpid()}")
+                if tmp.is_symlink() or tmp.exists():
+                    tmp.unlink()
+                os.symlink(log_dir, tmp, target_is_directory=True)
+                os.replace(tmp, run_dir)       # atomic: a reader never finds the path missing
+                rec["mode"] = "relinked"
+                return rec
+            if run_dir.is_dir():
+                rec["mode"] = "per_entry"
+                return rec
+            if run_dir.exists():
+                rec["mode"] = "blocked"
+                return rec
+            run_dir.parent.mkdir(parents=True, exist_ok=True)
+            os.symlink(log_dir, run_dir, target_is_directory=True)
+            rec["mode"] = "created_link"
+            return rec
+        except FileExistsError:
+            continue
+        except OSError as exc:
+            rec.update(mode="error", error=f"{type(exc).__name__}: {exc}")
+            return rec
+    rec.update(mode="error", error="raced")
+    return rec
+
+
+def link_run_entry(run_dir: Path, log_dir: Path, name: str) -> str:
+    """per_entry mode: `run_dir/name` becomes a symlink to `log_dir/name`, so an old-path reader follows the live file.
+    A regular file already there (the previous process's log, the stale state file) is ADOPTED into the durable dir when
+    that has no such file — one rename on the same volume, so the inode and any writer still holding it move along —
+    else kept beside it as `<name>.pre-durable-<epoch>`. Nothing is deleted. Returns the outcome (receipt-only):
+    linked | created | adopted | kept_aside | relinked | blocked | error:<type>."""
+    legacy, durable = run_dir / name, log_dir / name
+    try:
+        outcome = "created"
+        if legacy.is_symlink():
+            if _same_dir(legacy, durable):
+                return "linked"
+            outcome = "relinked"
+        elif legacy.exists():
+            if not legacy.is_file():
+                return "blocked"
+            outcome = "kept_aside"
+            if not durable.exists():
+                try:
+                    os.rename(legacy, durable)
+                    outcome = "adopted"
+                except OSError:                # another volume: keep it beside the link instead
+                    pass
+            if outcome == "kept_aside":
+                os.rename(legacy, legacy.with_name(f"{name}.pre-durable-{int(time.time())}"))
+        tmp = legacy.with_name(f".{name}.link.{os.getpid()}")
+        if tmp.is_symlink() or tmp.exists():
+            tmp.unlink()
+        os.symlink(durable, tmp)
+        os.replace(tmp, legacy)
+        return outcome
+    except OSError as exc:
+        return f"error:{type(exc).__name__}"
+
+
 @dataclass
 class Slot:
     name: str
@@ -276,6 +402,7 @@ class Supervisor:
 
     def __init__(self, fleet=FLEET, *, python: str | None = None,
                  log_dir: str | None = None, state_path: str | None = None,
+                 run_dir: str | None = None,
                  max_restarts: int = 5, window_s: float = 300.0,
                  # A BUSY sidecar queues the readiness probe behind real
                  # inference: the embedder answers in ~0.3s idle but ~7s
@@ -299,8 +426,29 @@ class Supervisor:
             else:
                 self.slots.append(Slot(entry[0], entry[1]))
         self.python = python or sys.executable
-        self.log_dir = Path(log_dir or "/tmp/polymath_fleet")
-        self.state_path = Path(state_path or (self.log_dir / "supervisor_state.json"))
+        # FLEET-LOG-DURABLE-V1: slot logs + state in a durable dir (created here), and the run dir existing readers
+        # know (/private/tmp/polymath_fleet by default) kept resolving to it — see resolve_fleet_dirs / link_run_dir
+        self.log_dir, self.run_dir = resolve_fleet_dirs(log_dir, run_dir)
+        self.log_compat: dict | None = None
+        try:
+            self.log_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            if self.run_dir is None:
+                raise
+            # never block the fleet on its log directory: write where the readers look, and say so (state + log)
+            log.error("fleet log dir %s unusable (%s: %s); slot logs fall back to %s",
+                      self.log_dir, type(exc).__name__, exc, self.run_dir)
+            self.log_compat = {"mode": "fallback", "log_dir": str(self.log_dir), "run_dir": str(self.run_dir),
+                               "error": f"{type(exc).__name__}: {exc}"}
+            self.log_dir, self.run_dir = self.run_dir, None
+            self.log_dir.mkdir(parents=True, exist_ok=True)
+        self.state_path = Path(state_path or (self.log_dir / STATE_FILE))
+        if self.run_dir is not None:
+            self.log_compat = link_run_dir(self.run_dir, self.log_dir)
+            if self.log_compat["mode"] == "per_entry" and state_path is None:
+                self.log_compat["state"] = link_run_entry(self.run_dir, self.log_dir, STATE_FILE)
+            (log.warning if self.log_compat["mode"] in ("blocked", "error") else log.info)(
+                "fleet logs: %s (old path %s: %s)", self.log_dir, self.run_dir, self.log_compat["mode"])
         self.max_restarts = max_restarts
         # Bounds a wedged inference probe: the forward pass in /ready hangs
         # when the model is stuck, and the timeout is what turns that hang
@@ -339,6 +487,10 @@ class Supervisor:
     # ------------------------------------------------------------------ ops
     def _spawn(self, slot: Slot) -> None:
         self.log_dir.mkdir(parents=True, exist_ok=True)
+        # FLEET-LOG-DURABLE-V1: the old path is a real directory from before → link this slot's log inside it first
+        # (adopting the previous process's log into the durable dir), so `<old path>/<slot>.log` follows the live file
+        if (getattr(self, "log_compat", None) or {}).get("mode") == "per_entry" and self.run_dir is not None:
+            link_run_entry(self.run_dir, self.log_dir, f"{slot.name}.log")
         out = open(self.log_dir / f"{slot.name}.log", "ab")
         if slot.argv is not None:
             repo = Path(__file__).resolve().parents[2]
@@ -665,11 +817,15 @@ class Supervisor:
                     slot.proc = None
 
     def state(self) -> dict:
+        log_dir = getattr(self, "log_dir", None)
         return {"slots": [{
             "name": s.name, "pid": s.proc.pid if s.proc else None,
             "alive": bool(s.proc and s.proc.poll() is None),
             "restarts": s.restarts, "quarantined": s.quarantined,
-            "last_exit_code": s.last_exit_code} for s in self.slots]}
+            "last_exit_code": s.last_exit_code} for s in self.slots],
+            # FLEET-LOG-DURABLE-V1: where the slot logs are, and what the old path does
+            "log_dir": str(log_dir) if log_dir is not None else None,
+            "log_compat": getattr(self, "log_compat", None)}
 
     def _write_state(self) -> None:
         try:
@@ -715,8 +871,10 @@ def main() -> None:
     # the query-serving slots (POLYMATH_FLEET_ONLY=orchestrator,
     # sidecar_reranker); POLYMATH_FLEET_DIR gives it its own state file
     # and slot logs so the two instances never clobber each other.
-    fleet_dir = os.environ.get("POLYMATH_FLEET_DIR")
-    Supervisor(log_dir=fleet_dir).run_forever()
+    # FLEET-LOG-DURABLE-V1: resolve_fleet_dirs reads POLYMATH_FLEET_DIR
+    # (unchanged meaning) and POLYMATH_FLEET_LOG_DIR; with neither set the
+    # logs go to ~/PolymathRuntime/logs/fleet, linked from the old path.
+    Supervisor().run_forever()
 
 
 if __name__ == "__main__":

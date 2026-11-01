@@ -1,7 +1,7 @@
 ---
 owner: governance
-last_reviewed: 2026-09-13
-last_touched: 2026-09-13
+last_reviewed: 2026-11-01
+last_touched: 2026-11-01
 status: accepted
 ---
 # ADR-0019 — Harness-executed hypothesis research (HARNESS-RESEARCH-MIGRATION-V1)
@@ -56,6 +56,28 @@ One hypothesis ledger with total lineage across revisions; one research authorit
 harness works; a receipt validator that is deliberately weaker than the citation validator (provenance shape, not truth) because
 truth is decided by Trail admission. Harder: two governance tracks must converge; the live loop needs the Trail stack and a
 `polymath` principal (owner actions); the score authority between Trail's rubric and its five-axis engine is an owner decision (plan §10).
+
+## Amendment 2026-11-01 — the harness's web channel is the user's local Agent Reach (owner)
+The owner, 2026-11-01: "it should never use a users claude native web search due to bot detections and it should work";
+"cj dropshipping is api and agent reach cli, and alibaba is strictly agent reach"; "i say prompt users to install it on their
+end and user their agent reach setup if api fails"; "this will only work locally on their devices"; "so im ensuring users of the
+connector and link works seamlessly as me"; on who answers the reasoning steps: "Always the agent".
+
+- **Decision 2 amended.** For live web research the harness uses the user's own Agent Reach setup
+  (https://github.com/Panniantong/Agent-Reach, verified with `agent-reach doctor --json`) running on the user's device. The
+  agent's built-in web search, web fetch or browser is never used. Polymath hands the agent the exact commands per search intent
+  beside each HARNESS_ACTION step (a sibling key of `adapter_next`, outside `HarnessActionV1`), and in the supplier tools'
+  `fallback` object; the commands never appear in the operating guide, receipt rules or search intents. A user without a
+  terminal (the web link, claude.ai) cannot run Agent Reach and gets host-side CJ results only.
+- **Decision 6 stands, made concrete.** The commands come from a data table in the ecommerce domain (channel → command
+  templates); no code branches on a source name; adding a channel is a table change.
+- **Decision 1 and ADR-0018 D2 stand** (owner reaffirmed: "Always the agent"): the connected agent answers every AGENT_REASON
+  step; Polymath runs no server-side reasoning autopilot.
+- **Host-side supply.** CJ's official API is the one host-side supply source and serves every user, principals included.
+  Alibaba runs only through the user's Agent Reach. `research_acquire`'s host-browser reads stay owner-only (they use the owner's
+  Chrome sign-ins).
+- **No niche required.** When a run has no `seed`, its starting signal is derived at start from the run's corpora (profile
+  topics, tension atoms, research topics) as a routing signal only (DOCUMENT-SKELETON-V1), receipted with its lineage.
 
 ## Triggered refactors
 - `docs/wiki/refactors/0013-harness-research-migration.md`

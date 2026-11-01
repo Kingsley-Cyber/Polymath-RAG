@@ -12,7 +12,7 @@ AUTHORITY: `shared/polymath_shared/dedup.py:46` :: `DUPLICATE_STOP_WORDS` (count
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:299` | 9/26 | `about`, `and`, `are`, `but`, `could`, `for`, `have`, `not`, `should`, `the`, `then`, `was` |
+| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:300` | 9/26 | `about`, `and`, `are`, `but`, `could`, `for`, `have`, `not`, `should`, `the`, `then`, `was` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:128` | 21/26 | `but`, `not`, `was`, `you`, `your` |
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:32` | 14/26 | `and`, `are`, `but`, `for`, `not`, `should`, `the`, `was`, `were`, `will`, `you`, `your` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:32` | 14/26 | `and`, `are`, `but`, `for`, `not`, `should`, `the`, `was`, `were`, `will`, `you`, `your` |

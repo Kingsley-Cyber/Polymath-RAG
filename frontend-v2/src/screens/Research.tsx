@@ -47,11 +47,13 @@ function tone(status: string, outcome = ""): "ready" | "degraded" | "blocked" | 
 }
 
 /** DR7e: two tabs — the governed runs, and this browser's deep research reports (read from the chat history). */
-export function Research({ sessions, onOpenReport }: {
+export function Research({ sessions, onOpenReport, openRunId = null }: {
   sessions?: ChatSession[];
   onOpenReport?: (chatId: string, turnIndex: number) => void;
+  /** PRODUCT-SEARCH-E2E: open at this run (one started from a product answer in Chat); "All runs" goes back to the list. */
+  openRunId?: string | null;
 }) {
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(openRunId);
   const [tab, setTab] = useState<ResearchTab>("runs");
   const tabs = <ResearchTabs tab={tab} onTab={setTab} />;
   if (open) return <RunPage runId={open} onBack={() => setOpen(null)} />;

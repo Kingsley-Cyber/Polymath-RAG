@@ -12,6 +12,7 @@ AUTHORITY: `adapters/ecommerce/python/query_semantics.py:31` :: `_FUNCTION_WORDS
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
+| `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:129` | 3/29 | `across`, `already`, `because`, `being`, `between`, `during`, `inside`, `its`, `more`, `most`, `not`, `one` |
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:33` | 3/29 | `across`, `already`, `because`, `between`, `during`, `inside`, `its`, `never`, `not`, `one`, `onto`, `our` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:33` | 3/29 | `across`, `already`, `because`, `between`, `during`, `inside`, `its`, `never`, `not`, `one`, `onto`, `our` |
 | `adapters/ecommerce/python/provenance.py` | `adapters/ecommerce/python/provenance.py:20` | 10/29 | `across`, `already`, `because`, `between`, `during`, `inside`, `never`, `onto`, `out`, `outside`, `over`, `some` |

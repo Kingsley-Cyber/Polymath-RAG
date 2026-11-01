@@ -30,6 +30,7 @@ import test_adapter_ecommerce_product_research_e2e as SCRIPT  # noqa: E402  (the
 @pytest.fixture
 def embedded(monkeypatch, tmp_path):
     store = MemoryStore()
+    SCRIPT.offline_host_reads(monkeypatch)
     monkeypatch.setattr(service, "store", store)
     monkeypatch.setenv("POLYMATH_TRAIL_MODE", "embedded")
     monkeypatch.setenv("POLYMATH_TRAIL_STORE", str(tmp_path / "trail_audit.sqlite3"))

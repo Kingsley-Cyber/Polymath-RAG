@@ -253,9 +253,10 @@ def test_documents_are_judged_by_their_library(as_fred):
 def test_adapter_starts_are_narrowed_like_server_a(as_fred):
     S.require_adapter_start("ecommerce.product_research", {"seed": "x"}, {"corpus_ids": ["cinema"]})
     S.require_adapter_start("ecommerce.product_research", {"corpus_ids": ["cinema"]}, None)
+    S.require_adapter_start("ecommerce.product_research", {}, {})        # CORPUS-ACCESS-PARITY: none named = the runtime's default
     for adapter, payload, opts, code in (
             ("trail.product_discovery", {}, {"corpus_ids": ["cinema"]}, "ADAPTER_NOT_ALLOWED"),
-            ("ecommerce.product_research", {}, {}, "CORPUS_IDS_REQUIRED"),
+            ("trail.product_discovery", {}, {}, "ADAPTER_NOT_ALLOWED"),
             ("ecommerce.product_research", {"corpus_ids": ["commerce-v1"]}, {"corpus_ids": ["cinema"]}, "CORPUS_NOT_ALLOWED"),
             ("ecommerce.product_research", {}, {"corpus_ids": ["commerce-v1"]}, "CORPUS_NOT_ALLOWED")):
         with pytest.raises(HTTPException) as err:

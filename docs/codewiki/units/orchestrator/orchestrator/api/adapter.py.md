@@ -1,123 +1,108 @@
 # unit: orchestrator/orchestrator/api/adapter.py
-anchor: orchestrator/orchestrator/api/adapter.py:1-228
+anchor: orchestrator/orchestrator/api/adapter.py:1-246
 
 ## purpose
-Thin FastAPI router exposing the ADAPTER RUN API (COGNITIVE-ADAPTER-V1, ADR-0018, plan §3): the HTTP entrypoints behind the MCP tools — orchestrator/orchestrator/api/adapter.py:1 [DERIVED]. All authority lives in `polymath_shared.adapter.service`; this module only maps HTTP ↔ service and errors ↔ status codes — orchestrator/orchestrator/api/adapter.py:2 [DERIVED]. Router is mounted by `orchestrator/orchestrator/main.py` (FACTS.importers) — orchestrator/orchestrator/api/adapter.py:19 [DERIVED]. Also carries TRAIL-INTERFACE-V1 routes for the Research screens (`/adapter/runs`, `/view`, `/report`) — orchestrator/orchestrator/api/adapter.py:76-78, 145-147, 178-180 [DERIVED].
+Thin HTTP boundary for adapter runs (COGNITIVE-ADAPTER-V1, ADR-0018): 10 FastAPI routes behind the MCP adapter tools; maps HTTP ↔ `polymath_shared.adapter.service` and exceptions ↔ status codes. All authority lives in `polymath_shared.adapter.service`; this module only maps. — orchestrator/orchestrator/api/adapter.py:1-2 [DERIVED]
+Router included by the orchestrator app; principals (signed-in friends) are forwarded by the web boundary. — orchestrator/orchestrator/api/adapter.py:21, orchestrator/orchestrator/main.py (FACTS.importers) [DERIVED]
 
 ## public surface
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `router` | APIRouter instance | `router = APIRouter()` | orchestrator/orchestrator/api/adapter.py:19 [DERIVED] | orchestrator/orchestrator/main.py |
-| `REPORT_HEADERS` | dict constant | 4 security headers (CSP, nosniff, no-referrer, no-store) | orchestrator/orchestrator/api/adapter.py:24-26 [DERIVED] | adapter_report |
-| `StartRequest` | pydantic model | (adapter_id: str, input: dict[str, Any], request_options: Optional[dict] = None) | orchestrator/orchestrator/api/adapter.py:29-32 [DERIVED] | adapter_start |
-| `SubmitRequest` | pydantic model | (step_id: str, payload: dict[str, Any], agent_identity: str = "connected-agent", model: Optional[str] = None, kind: Optional[str] = None) | orchestrator/orchestrator/api/adapter.py:35-40 [DERIVED] | adapter_submit |
-| `adapter_list` | GET `/adapter/list` | () -> dict | orchestrator/orchestrator/api/adapter.py:70-71 [DERIVED] | HTTP |
-| `adapter_runs` | GET `/adapter/runs` | (status=None, adapter_id=None, limit: int = 50, before=None) -> dict | orchestrator/orchestrator/api/adapter.py:75-81 [DERIVED] | HTTP |
-| `adapter_start` | POST `/adapter/start` | (req: StartRequest) -> dict | orchestrator/orchestrator/api/adapter.py:85-95 [DERIVED] | HTTP |
-| `adapter_next` | GET `/adapter/{run_id}/next` | (run_id: str) -> dict | orchestrator/orchestrator/api/adapter.py:99-105 [DERIVED] | HTTP |
-| `adapter_submit` | POST `/adapter/{run_id}/submit` | (run_id: str, req: SubmitRequest) -> dict | orchestrator/orchestrator/api/adapter.py:109-130 [DERIVED] | HTTP |
-| `adapter_status` | GET `/adapter/{run_id}/status` | (run_id: str) -> dict | orchestrator/orchestrator/api/adapter.py:134-140 [DERIVED] | HTTP |
-| `adapter_view` | GET `/adapter/{run_id}/view` | (run_id: str) -> dict | orchestrator/orchestrator/api/adapter.py:144-153 [DERIVED] | HTTP |
-| `adapter_report` | GET `/adapter/{run_id}/report` | (run_id: str, layout: str = "FULL_RESEARCH", download: bool = False) -> HTMLResponse | orchestrator/orchestrator/api/adapter.py:177-187 [DERIVED] | HTTP |
-| `adapter_result` | GET `/adapter/{run_id}/result` | (run_id: str) -> dict | orchestrator/orchestrator/api/adapter.py:191-199 [DERIVED] | HTTP |
-| `adapter_cancel` | POST `/adapter/{run_id}/cancel` | (run_id: str) -> dict | orchestrator/orchestrator/api/adapter.py:219-227 [DERIVED] | HTTP |
+| router | APIRouter | module-level, 10 routes below | orchestrator/orchestrator/api/adapter.py:21 | orchestrator/orchestrator/main.py |
+| adapter_list | async route | GET /adapter/list () -> dict | orchestrator/orchestrator/api/adapter.py:70-79 | main.py |
+| adapter_runs | async route | GET /adapter/runs (status=None, adapter_id=None, limit=50, before=None) -> dict | orchestrator/orchestrator/api/adapter.py:82-89 | main.py |
+| adapter_start | async route | POST /adapter/start (req: StartRequest) -> dict | orchestrator/orchestrator/api/adapter.py:92-113 | main.py |
+| adapter_next | async route | GET /adapter/{run_id}/next (run_id) -> dict | orchestrator/orchestrator/api/adapter.py:116-123 | main.py |
+| adapter_submit | async route | POST /adapter/{run_id}/submit (run_id, req: SubmitRequest) -> dict | orchestrator/orchestrator/api/adapter.py:126-148 | main.py |
+| adapter_status | async route | GET /adapter/{run_id}/status (run_id) -> dict | orchestrator/orchestrator/api/adapter.py:151-158 | main.py |
+| adapter_view | async route | GET /adapter/{run_id}/view (run_id) -> dict | orchestrator/orchestrator/api/adapter.py:161-171 | main.py |
+| adapter_report | async route | GET /adapter/{run_id}/report (run_id, layout="FULL_RESEARCH", download=False) -> HTMLResponse | orchestrator/orchestrator/api/adapter.py:194-205 | main.py |
+| adapter_result | async route | GET /adapter/{run_id}/result (run_id) -> dict | orchestrator/orchestrator/api/adapter.py:208-217 | main.py |
+| adapter_cancel | async route | POST /adapter/{run_id}/cancel (run_id) -> dict | orchestrator/orchestrator/api/adapter.py:236-245 | main.py |
+| StartRequest | pydantic model | {adapter_id: str, input: dict[str, Any], request_options: Optional[dict]=None} | orchestrator/orchestrator/api/adapter.py:30-34 | request body of /adapter/start |
+| SubmitRequest | pydantic model | {step_id: str, payload: dict, agent_identity="connected-agent", model=None, kind=None} | orchestrator/orchestrator/api/adapter.py:36-41 | request body of /submit |
 
-Private helpers (in-unit only): `_404` :43-44, `_own` :47-53, `_off_the_event_loop` :56-66, `_report_html` :156-173, `_external_cancel` :202-215 — orchestrator/orchestrator/api/adapter.py:43-215 [DERIVED].
+Private helpers: `_404` (44-45), `_own` (48-54), `_off_the_event_loop` (57-67), `_report_html` (174-191), `_external_cancel` (220-233).
 
 ## contracts
 
-**`_own(conn, run_id)` — the ownership gate every run route passes** — orchestrator/orchestrator/api/adapter.py:47-53 [DERIVED]
-- pre: `service.assert_owner(conn, run_id, principal_context.current())` — orchestrator/orchestrator/api/adapter.py:51 [DERIVED]
-- out: `service.NotRunOwner` → 403 `detail="no such run for this principal"`; no principal context = legacy/trusted-local caller, unchanged — orchestrator/orchestrator/api/adapter.py:48-53 [DERIVED]
+**adapter_start** — orchestrator/orchestrator/api/adapter.py:92-113
+- pre: `require_adapter_start(req.adapter_id, req.input, req.request_options)` runs before anything else (FRIENDS-ACCESS-V1 D5) — :98-99
+- in: corpus scope fixed at start; no `corpus_ids` named → caller's `all_libraries_view` share; no seed → run derives one — :94-97, :102
+- effect: `service.start(conn, adapter_id=..., input_payload=req.input, request_options=..., owner_principal_id=owner, corpus_view=lambda ids: all_libraries_view(ids))` inside `tx()`, off the event loop — :103-105, :107
+- post: `UnknownAdapter`→404 `f"unknown adapter {exc.args[0]!r}"`; `StartRefused`→422 `exc.detail()`; `ContractViolation|SubmissionRejected`→422 `getattr(exc, "errors", [str(exc)])` — :108-113
 
-**`adapter_start`** — orchestrator/orchestrator/api/adapter.py:85-95 [DERIVED]
-- pre: `require_adapter_start(req.adapter_id, req.input, req.request_options)` runs before anything else (FRIENDS-ACCESS-V1 D5), lazy import from `orchestrator.web_scope` — orchestrator/orchestrator/api/adapter.py:86-87 [DERIVED]
-- out: `service.start(conn, adapter_id=..., input_payload=req.input, request_options=..., owner_principal_id=principal_context.current())` — orchestrator/orchestrator/api/adapter.py:90-91 [DERIVED]
-- errors: `UnknownAdapter` → 404; `(ContractViolation, SubmissionRejected)` → 422 with `detail=getattr(exc, "errors", [str(exc)])` — orchestrator/orchestrator/api/adapter.py:92-95 [DERIVED]
+**adapter_submit** — orchestrator/orchestrator/api/adapter.py:126-148
+- in: submission dict = `{run_id, step_id, payload, submitted_by: {agent_identity, model?}, kind?}`; `model`/`kind` keys omitted when None — :128-130
+- pre: `_own(conn, run_id)` ownership check before `service.submit` — :133-135
+- post: refusal path — `SubmissionRejected` caught inside the tx so the step-row receipt COMMITS, then re-raised (bug hunt B-48) — :136-140
+- out: `SubmissionRejected`/`ContractViolation` → 422 `{"rejected": exc.errors}`; `UnknownRun` → 404 — :143-148
 
-**`adapter_submit`** — orchestrator/orchestrator/api/adapter.py:109-130 [DERIVED]
-- in: builds `submission` dict with keys `run_id`, `step_id`, `payload`, `submitted_by: {agent_identity, optional model}`, optional `kind` — orchestrator/orchestrator/api/adapter.py:110-112 [DERIVED]
-- pre: runs inside `_off_the_event_loop` (B-25); `_own` before `service.submit` — orchestrator/orchestrator/api/adapter.py:114-124 [DERIVED]
-- post: on refusal the transaction COMMITS the receipt written on the step row (`service.submit` writes nothing else before a refusal), then re-raises — orchestrator/orchestrator/api/adapter.py:118-122 [DERIVED]
-- errors: `UnknownRun` → 404; `SubmissionRejected` / `ContractViolation` → 422 `detail={"rejected": exc.errors}` — orchestrator/orchestrator/api/adapter.py:125-130 [DERIVED]
+**adapter_report** — orchestrator/orchestrator/api/adapter.py:194-205
+- pre: `layout not in dossier.LAYOUTS` → 422 `{"error_code": "UNKNOWN_LAYOUT", ...}` — :199-200
+- effect: `_report_html` in threadpool under the request's principal; rows read in one short tx, render happens after the tx closes — :174-176, :201
+- out: HTMLResponse + `REPORT_HEADERS`; `download=1` adds `Content-Disposition: attachment; filename="dossier-{sanitized run_id}.html"` with `re.sub(r"[^A-Za-z0-9_.-]", "_", run_id)` — :202-205
 
-**`adapter_report`** — orchestrator/orchestrator/api/adapter.py:177-187 [DERIVED]
-- pre: `layout not in dossier.LAYOUTS` → 422 `{"error_code": "UNKNOWN_LAYOUT", ...}` — orchestrator/orchestrator/api/adapter.py:181-182 [DERIVED]
-- out: `HTMLResponse(page, headers=dict(REPORT_HEADERS))`; `download` adds `Content-Disposition: attachment; filename="dossier-{re.sub(r"[^A-Za-z0-9_.-]", "_", run_id)}.html"` — orchestrator/orchestrator/api/adapter.py:183-187 [DERIVED]
-- `_report_html` reads the journal in one short tx under the request principal, then `dossier.render_dossier(journal, layout, ...)` runs in a subprocess after the tx closed — orchestrator/orchestrator/api/adapter.py:157-169 [DERIVED]
+**adapter_result** — orchestrator/orchestrator/api/adapter.py:208-217
+- post: `service.NotTerminal` → 409 `f"run is not terminal (status {exc.args[0]})"` — :216-217
 
-**`adapter_result`** — orchestrator/orchestrator/api/adapter.py:191-199 [DERIVED]
-- out: `service.result(conn, run_id)`; `NotTerminal` → 409 `detail=f"run is not terminal (status {exc.args[0]})"` — orchestrator/orchestrator/api/adapter.py:195, 198-199 [DERIVED]
+**adapter_view** — read-only; `run_view.build_view(conn, run_id, owner=principal_context.current() is None)` (registry block only for owner) — :163-165, :169
 
-**`adapter_cancel`** — orchestrator/orchestrator/api/adapter.py:219-227 [DERIVED]
-- in: `service.cancel(conn, run_id, external_cancel=_external_cancel)` executed via `_off_the_event_loop` — orchestrator/orchestrator/api/adapter.py:220-225 [DERIVED]
-- `_external_cancel(ext)` → Trail status; phase `"TERMINAL"` → `TC.receipt_after_poll(ext, status)`; else `TC.cancel_command(..., expected_revision=int(status.get("revision") or 0), key=TC.identifier(ext["run_id"], ext["step_id"], "cancel"))` — orchestrator/orchestrator/api/adapter.py:210-215 [DERIVED]
+**adapter_list / adapter_runs** — principal present → filtered to `p.adapter_ids` / own runs only; no principal → owner/trusted-local, all — :72-79, :84-89
 
 ## effect surface
-- Postgres: all DB access via `polymath_shared.db.tx()` transactions (import at :17; usage at :79, :89, :101, :114, :136, :149, :161, :193, :221). FACTS static analysis records `tables_read=[]` and `tables_written=[]` — table names live behind `polymath_shared.adapter.service`/`run_view` — orchestrator/orchestrator/api/adapter.py:17 [DERIVED]
-- Network: `_external_cancel` → `TrailMCPClient.from_env()`, `client.status(ref)`, `client.cancel(cmd)` — Trail public boundary (E4) — orchestrator/orchestrator/api/adapter.py:205, 210, 215 [DERIVED]
-- Subprocess: `dossier.render_dossier` — "the engine's own renderer, run out of process on the journal rebuilt from the stored run" — orchestrator/orchestrator/api/adapter.py:178, 169 [DERIVED]
-- Env: `TrailMCPClient.from_env()` reads Trail config from env — flag names/defaults not visible in this unit — orchestrator/orchestrator/api/adapter.py:205 [DERIVED]
-- No Qdrant collections and no file writes visible; `download` is a `Content-Disposition` header, not a file — orchestrator/orchestrator/api/adapter.py:185-186 [DERIVED]
+- Postgres: via `polymath_shared.db.tx()` at :87, :103, :119, :132, :154, :167, :179, :239. `tables_read: []`, `tables_written: []` per FACTS — all table access delegated to `polymath_shared.adapter.service`/`run_view`. [DERIVED]
+- Network: Trail MCP public boundary (E4) — `TC.TrailMCPClient.from_env()`, `client.status(ref)`, `client.cancel(cmd)` in `_external_cancel` — :222-233
+- Subprocess: `dossier.render_dossier` — "the engine renders them in a subprocess after the transaction has closed" — :175-176, :187
+- Env: read inside `TrailMCPClient.from_env()` (:223); flag names/defaults not visible in this file. Gated by `client.configured` (:224).
+- Threadpool: `run_in_threadpool` for start, submit, cancel, report — :67, :107, :142, :201, :243
+- No files, no Qdrant collections visible.
 
 ## invariants
-INVARIANT: `_own(conn, run_id)` call count in run routes == 7 (next/submit/status/view/report-via-`_report_html`/result/cancel) — orchestrator/orchestrator/api/adapter.py:102, 115, 137, 150, 162, 194, 222 [DERIVED]
-  fails-if: a run route added without `_own` lets one principal read or steer another principal's run (migration 0066) — orchestrator/orchestrator/api/adapter.py:47-49 [DERIVED]
-INVARIANT: not-owner → 403 `"no such run for this principal"` while unknown-run → 404 — one answer covers "not yours" and "no such run" — orchestrator/orchestrator/api/adapter.py:48-53, 43-44 [DERIVED]
-  fails-if: distinct answers let a caller probe which run_ids exist.
-INVARIANT: `adapter_submit` and `adapter_cancel` execute only via `_off_the_event_loop` (threadpool), never on the event loop — orchestrator/orchestrator/api/adapter.py:124, 225, 66 [DERIVED]
-  fails-if: waiting on the `FOR UPDATE` row lock the step worker holds froze every other request (incl. the worker's own `/chat/evidence` callback) until health probes failed and the orchestrator restarted (B-25) — orchestrator/orchestrator/api/adapter.py:57-59 [DERIVED]
-INVARIANT: dossier response headers always include `REPORT_HEADERS` with CSP `default-src 'none'` and `Cache-Control: no-store` — orchestrator/orchestrator/api/adapter.py:24-26, 184 [DERIVED]
-  fails-if: script execution on the dossier page, or a cached dossier crossing principals.
-INVARIANT: dossier render starts only after the read transaction closed — tx at :161-163, render at :169 — orchestrator/orchestrator/api/adapter.py:157-169 [DERIVED]
-  fails-if: renderer subprocess competes with held row locks.
-INVARIANT: a refused submission commits its receipt, then re-raises — `rejected = exc` assigned inside `with tx()`, raised after it — orchestrator/orchestrator/api/adapter.py:118-122 [DERIVED]
-  fails-if: raising inside the block rolls back the refusal receipt on the step row (B-48) — orchestrator/orchestrator/api/adapter.py:119-120 [DERIVED]
-INVARIANT: `/adapter/list` returns contract string `"adapter-v1"` — orchestrator/orchestrator/api/adapter.py:71 [DERIVED]
+INVARIANT: run-scoped routes with `_own` check = 6 (next :120, submit :133, status :155, view :168, report :180, cancel :240) — orchestrator/orchestrator/api/adapter.py:120-240 [DERIVED]
+  fails-if: a run-scoped route skips `_own` → another principal's run becomes readable/writable.
+INVARIANT: `_own` 403 detail "no such run for this principal" = same answer for not-yours and no-such-run — orchestrator/orchestrator/api/adapter.py:49-54 [DERIVED]
+  fails-if: divergent messages leak run-id existence across principals.
+INVARIANT: blocking routes off event loop = 4 (start :107, submit :142, cancel :243, report :201) — orchestrator/orchestrator/api/adapter.py:57-67 [DERIVED]
+  fails-if: row-lock wait (FOR UPDATE held a whole step) freezes the event loop; health probes fail, restart (bug hunt B-25).
+INVARIANT: principal captured at :62 equals principal re-entered via `acting_as` at :65 inside the thread — orchestrator/orchestrator/api/adapter.py:62-66 [DERIVED]
+  fails-if: context variable does not cross threads by itself → `_own` sees no principal in worker thread.
+INVARIANT: DossierError with code "DOSSIER_TIMEOUT" → 504; every other DossierError → 500 — orchestrator/orchestrator/api/adapter.py:190 [DERIVED]
+  fails-if: timeout misclassified as 500 breaks client retry semantics.
+INVARIANT: report response header set = REPORT_HEADERS (`default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'`, `nosniff`, `no-referrer`, `no-store`) — orchestrator/orchestrator/api/adapter.py:25-27, :202 [DERIVED]
+  fails-if: dropping headers re-enables script/framing on the dossier page.
+INVARIANT: default layout "FULL_RESEARCH" ∈ dossier.LAYOUTS — orchestrator/orchestrator/api/adapter.py:195, :199 [INFERRED] (otherwise the default request would 422)
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (network: Trail status/cancel — orchestrator/orchestrator/api/adapter.py:210, 215; subprocess render — orchestrator/orchestrator/api/adapter.py:169; db row locks/transactions — orchestrator/orchestrator/api/adapter.py:57, 79; env: `from_env()` — orchestrator/orchestrator/api/adapter.py:205; threadpool concurrency — orchestrator/orchestrator/api/adapter.py:66, 183 [all DERIVED])
-idempotency: UNSAFE (POST `/adapter/start` creates a run — orchestrator/orchestrator/api/adapter.py:89-91; POST submit mutates step state — orchestrator/orchestrator/api/adapter.py:117; POST cancel mutates run state — orchestrator/orchestrator/api/adapter.py:223; `_external_cancel` is "Best-effort" and returns `None` when Trail is not configured — orchestrator/orchestrator/api/adapter.py:203, 205-207 [all DERIVED])
+determinism: NONDETERMINISTIC (network: Trail status/cancel :228-233; subprocess dossier render :187; db tx :87-239; env: `from_env()` :223; concurrency: row locks documented at :58-61)
+idempotency: UNSAFE — POST /submit writes receipted refusals that must COMMIT (:136-140); POST /cancel issues an external Trail CANCEL (:231-233). GET routes are read-only as written here (:88, :121, :156, :169).
 
 ## failure behaviour
-| condition | caller sees | anchor |
-|---|---|---|
-| `service.NotRunOwner` (via `_own`) | 403 `detail="no such run for this principal"` | orchestrator/orchestrator/api/adapter.py:52-53 [DERIVED] |
-| `service.UnknownRun` | 404 `detail=f"unknown adapter run {run_id!r}"` (caught at 7 sites) | orchestrator/orchestrator/api/adapter.py:43-44, 104-105, 125-126, 139-140, 152-153, 164-165, 196-197, 226-227 [DERIVED] |
-| `service.UnknownAdapter` (start) | 404 `detail=f"unknown adapter {exc.args[0]!r}"` | orchestrator/orchestrator/api/adapter.py:92-93 [DERIVED] |
-| `ContractViolation`/`SubmissionRejected` (start) | 422 `detail=getattr(exc, "errors", [str(exc)])` | orchestrator/orchestrator/api/adapter.py:94-95 [DERIVED] |
-| `SubmissionRejected`/`ContractViolation` (submit) | 422 `detail={"rejected": exc.errors}` | orchestrator/orchestrator/api/adapter.py:127-130 [DERIVED] |
-| `dossier.NoDossier` | 404 `{"error_code": "NO_DOSSIER", "message": ...}` | orchestrator/orchestrator/api/adapter.py:166-167 [DERIVED] |
-| `dossier.DossierError` | 504 if `exc.code == "DOSSIER_TIMEOUT"` else 500, `{"error_code": ..., "message": "the dossier could not be rendered"}`; also `log.warning` | orchestrator/orchestrator/api/adapter.py:170-173 [DERIVED] |
-| `service.NotTerminal` (result) | 409 `detail=f"run is not terminal (status {exc.args[0]})"` | orchestrator/orchestrator/api/adapter.py:198-199 [DERIVED] |
-| `layout not in dossier.LAYOUTS` | 422 `{"error_code": "UNKNOWN_LAYOUT", ...}` | orchestrator/orchestrator/api/adapter.py:181-182 [DERIVED] |
-| Trail client not configured | swallowed: `_external_cancel` returns `None`, cancel proceeds | orchestrator/orchestrator/api/adapter.py:205-207 [DERIVED] |
+- `_own`: `service.NotRunOwner` swallowed → 403 "no such run for this principal"; caller cannot distinguish ownership denial from missing run — :52-54
+- `adapter_submit`: `SubmissionRejected` caught inside tx (receipt commits), re-raised → 422 `{"rejected": exc.errors}` — :136-140, :145-146
+- `_external_cancel`: unconfigured Trail client → returns `None` (best-effort cancel silently skipped); phase "TERMINAL" → receipt without issuing cancel — :224-225, :229-230
+- `_report_html`: `dossier.NoDossier` → 404 `{"error_code": "NO_DOSSIER", ...}`; `DossierError` logged via `log.warning` then 504/500 — :184-185, :188-191
+- `service.UnknownRun` → 404 via `_404` on every run route — :45, :122-123, :143-144, :157-158, :170-171, :182-183, :214-215, :244-245
 
 ## dumb-code flags
-- `adapter_submit` has two identical 422 bodies for `SubmissionRejected` and `ContractViolation` (`{"rejected": exc.errors}`) — duplicated literal — orchestrator/orchestrator/api/adapter.py:127-130 [DERIVED]
-- 422 detail shape diverges between routes: start returns bare `getattr(exc, "errors", [str(exc)])`, submit wraps in `{"rejected": ...}` — a client parsing one breaks on the other — orchestrator/orchestrator/api/adapter.py:95 vs 128-130 [DERIVED]
-- `rejected = exc` … `raise rejected` exists only to exit `with tx()` so the receipt commits; a "simplification" that inlines the raise reintroduces B-48 — orchestrator/orchestrator/api/adapter.py:121-122 [DERIVED]
-- Inline sanitizing regex inside the filename f-string: `re.sub(r"[^A-Za-z0-9_.-]", "_", run_id)` — orchestrator/orchestrator/api/adapter.py:186 [DERIVED]
-- `int(status.get("revision") or 0)` silently maps missing/zero revision to `0` in the cancel command — orchestrator/orchestrator/api/adapter.py:213 [DERIVED]
-- Module docstring says "seven MCP tools" while 10 routes are registered; the extras cite TRAIL-INTERFACE-V1 (runs/view/report) — orchestrator/orchestrator/api/adapter.py:1, 69-218, 76-78, 145-147, 178-180 [INFERRED: count mismatch maps to the trail-interface routes]
+- 422 payload shapes disagree for the same exception types: start returns bare `getattr(exc, "errors", [str(exc)])` (:113) vs submit's wrapped `{"rejected": exc.errors}` (:146, :148). [DERIVED]
+- Magic literals: `"adapter-v1"` (:79), `"connected-agent"` default (:39), `limit: int = 50` (:83), `"FULL_RESEARCH"` (:195), `"cancel"` key suffix in `TC.identifier` (:232), `int(status.get("revision") or 0)` fallback (:231). [DERIVED]
+- Filename-sanitize regex `[^A-Za-z0-9_.-]` inlined at :204, not shared. [DERIVED]
+- `kind` value domain only in a comment: `# reasoning | receipt` (:41). [DERIVED]
 
 ## refactor notes
-- Route paths + methods are the wire contract behind the MCP tools and the web boundary; router mounted by `orchestrator/orchestrator/main.py` — renaming any `/adapter/...` path breaks both — orchestrator/orchestrator/api/adapter.py:69-218 [DERIVED]
-- `"adapter-v1"` is a versioned contract literal returned to clients — orchestrator/orchestrator/api/adapter.py:71 [DERIVED]
-- Unifying the two 422 payload shapes (:95 vs :128-130) requires updating clients that match `{"rejected": ...}` — orchestrator/orchestrator/api/adapter.py:95, 127-130 [DERIVED]
-- B-48 commit-on-reject structure: the raise must stay outside `with tx()` or refusal receipts roll back — orchestrator/orchestrator/api/adapter.py:113-122 [DERIVED]
-- `_off_the_event_loop` must keep `principal_context.acting_as(principal)` — a context variable does not cross threads by itself; without it `_own` inside worker threads sees no/wrong principal — orchestrator/orchestrator/api/adapter.py:59-66 [DERIVED]
-- `service.cancel`'s hook signature is `_external_cancel(ext: dict) -> dict | None` — changing it changes `polymath_shared.adapter.service.cancel` callers — orchestrator/orchestrator/api/adapter.py:202-215, 223 [DERIVED]
-- `REPORT_HEADERS` CSP constrains the dossier renderer to inline styles + `data:` images; any renderer change emitting script/fetch/form is blocked by design — orchestrator/orchestrator/api/adapter.py:23-26 [DERIVED]
-- `require_adapter_start` is imported lazily and must stay before `service.start` (FRIENDS-ACCESS-V1 D5) — orchestrator/orchestrator/api/adapter.py:86-91 [DERIVED]
+- 10 route paths/methods (FACTS.routes) are the external contract, included via main.py and backing "the seven MCP tools" (:1-2) — path or method changes break MCP callers. [DERIVED]
+- Authority layering: logic must stay in `polymath_shared.adapter.service` (:2); pulling it into this module breaks ADR-0018 layering for every importer. [DERIVED]
+- `principal_context.acting_as` wrap (:65, :177) is required for `_own` inside worker threads — removing it breaks ownership checks in submit/cancel/report. [DERIVED]
+- `REPORT_HEADERS` CSP (:25-27) backs the no-script dossier guarantee (:197) — any change is a security contract change. [DERIVED]
 
 ## VERIFY
 ```verify
-grep -Fq 'adapter-v1' orchestrator/orchestrator/api/adapter.py
-grep -Fq 'no such run for this principal' orchestrator/orchestrator/api/adapter.py
-grep -Fq 'connected-agent' orchestrator/orchestrator/api/adapter.py
-grep -Fq 'DOSSIER_TIMEOUT' orchestrator/orchestrator/api/adapter.py
-grep -Eq 'status_code=409' orchestrator/orchestrator/api/adapter.py
-grep -Fq 'FULL_RESEARCH' orchestrator/orchestrator/api/adapter.py
+grep -Fq '"contract": "adapter-v1"' orchestrator/orchestrator/api/adapter.py
+grep -Fq 'agent_identity: str = "connected-agent"' orchestrator/orchestrator/api/adapter.py
+grep -Fq 'layout: str = "FULL_RESEARCH", download: bool = False' orchestrator/orchestrator/api/adapter.py
+grep -Fq 'status_code=504 if exc.code == "DOSSIER_TIMEOUT" else 500' orchestrator/orchestrator/api/adapter.py
+grep -Fq 'service.cancel(conn, run_id, external_cancel=_external_cancel)' orchestrator/orchestrator/api/adapter.py
+test "$(grep -c -F 'status_code=422' orchestrator/orchestrator/api/adapter.py)" -ge 5
 ```

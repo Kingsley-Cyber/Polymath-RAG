@@ -1,5 +1,6 @@
 """SUPPLIER-APIS (the owner's decision of 2026-09-27): the listings the new backends return are the listings the supply join already
-reads. A cjdropshipping.com listing from CJ's official API and an alibaba.com listing from SearXNG's search-engine results go through
+reads. A cjdropshipping.com listing from CJ's official API and an alibaba.com listing from the USER's own Agent Reach (PRODUCT-SEARCH-E2E,
+2026-11-01: a real Exa result from the owner's probe, parsed by `agent_reach.parse` as supplier_parse parses it) go through
 `research_acquire`'s shaping (`service.shape`), the harness writes each one as the supply step's intent asks (`listing:`, `supplier:`,
 `price as listed:`, `MOQ as listed:`, `channel:`, `concept:`, and the source copied as returned), TrailSignal's admission is
 stubbed as in the supply-join tests, and the REAL `supply.leads` executor joins them: prices and minimum orders parse, CJ's missing
@@ -20,17 +21,17 @@ for _sub in ("workers", "shared"):
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import test_adapter_ecommerce_supply_join as SJ
+from polymath_shared.acquisition import agent_reach as AR
 from polymath_shared.acquisition import cj_api as CJ
-from polymath_shared.acquisition import searxng as SX
 from polymath_shared.acquisition import service as S
 
 _SEQ = itertools.count()
 CJ_PRODUCT = {"id": "04A22450-67F0-4617-A132-E7AE7F8963B0", "nameEn": "Heated Glove Liner Touchscreen", "sellPrice": "11.85", "nowPrice": "9.50",
               "threeCategoryName": "Gloves", "supplierName": "", "listedNum": 12, "warehouseInventoryNum": 340}
-ALI_RESULT = {"url": "https://www.alibaba.com/product-detail/Heated-Glove-Liner_1600123456789.html?spm=x",
-              "title": "Heated Glove Liner - Buy Glove Liner Product on Alibaba.com",
-              "content": "Heated glove liner for winter photography. US$2.06-3.49. Min. order: 200 pieces. Find Complete Details about Heated "
-                         "Glove Liner from Gloves Supplier or Manufacturer-Shenzhen Example Textile Co., Ltd."}
+#: the owner's Agent Reach probe (2026-11-01): an Exa search restricted to alibaba.com; its third result states a price, a minimum order
+#: and the supplier ("FREE shipping capped at $30" stands before the price: the old snippet parser took that cap for the price)
+ALI_EXA = ROOT / "tests" / "fixtures" / "agent_reach" / "alibaba_exa_pet_hair_remover.txt"
+ALI_URL = "https://www.alibaba.com/product-detail/Factory-Wholesale-Pet-Grooming-Products-Two_1601569422319.html"
 
 
 def _cj_raw(target):
@@ -45,8 +46,10 @@ def _cj_raw(target):
 
 
 def _ali_raw(target):
-    transport = httpx.MockTransport(lambda req: httpx.Response(200, json={"results": [ALI_RESULT], "unresponsive_engines": []}))
-    return SX.SearXNGListings("http://127.0.0.1:8888", transport=transport).read(target, 20)
+    got = AR.parse(target.site, ALI_EXA.read_text(encoding="utf-8").split("\n---\n")[2])
+    assert got["tool_class"] == "agent_reach.exa" and got["refused"] == []
+    return {"state": "ok", "retrieved_at": "2026-11-01T10:33:00Z", "records": got["records"], "total": None, "complete": None,
+            "backend_notes": got["notes"]}
 
 
 def _read(site: str, raw_of, tag: str) -> dict:
@@ -71,7 +74,7 @@ def _written(out: dict, channel: str, concept: str, prefix: str) -> tuple[list[d
 
 
 def test_the_code_under_test_is_this_checkout():
-    for mod in (CJ, SX, S, SJ.W):
+    for mod in (CJ, AR, S, SJ.W):
         assert pathlib.Path(mod.__file__).resolve().is_relative_to(ROOT), mod.__file__
 
 
@@ -90,7 +93,7 @@ def test_api_and_search_listings_join_as_supply_with_their_price_and_minimum_ord
     cj, ali = by["cjdropshipping"], by["alibaba"]
     assert (cj["price_usd_low"], cj["moq_units"], cj["concept_id"]) == (11.85, 1, "pc_1") and "default MOQ" in cj["moq_note"]
     assert cj["url"] == "https://cjdropshipping.com/product/heated-glove-liner-touchscreen-p-04A22450-67F0-4617-A132-E7AE7F8963B0.html"
-    assert (ali["price_usd_low"], ali["price_usd_high"], ali["moq_units"], ali["concept_id"]) == (2.06, 3.49, 200, "pc_1")
-    assert ali["supplier_name"] == "Shenzhen Example Textile Co., Ltd." and ali["url"] == ALI_RESULT["url"].split("?")[0]
+    assert (ali["price_usd_low"], ali["price_usd_high"], ali["moq_units"], ali["concept_id"]) == (1.25, 1.25, 10, "pc_1")
+    assert ali["supplier_name"] == "Huizhou Shengfeng Feather Craft Factory" and ali["url"] == ALI_URL
     assert cj["supplier_name"] is None and out["joined"]["without_supplier_name"] == 1     # CJ's API named no supplier: never invented
     assert {c["concept_id"]: c["status"] for c in out["sourcing_coverage"]}["pc_1"] == "sourced"

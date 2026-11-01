@@ -34,7 +34,8 @@ CONTRACTS = {
 ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/chat/evidence", "/compare", "/research/deep",
              "/synthesizers", "/ask", "/adapter/list", "/adapter/start",
              "/adapter/{run_id}/next", "/adapter/{run_id}/submit", "/adapter/{run_id}/status", "/adapter/{run_id}/result",
-             "/adapter/{run_id}/cancel"]
+             "/adapter/{run_id}/cancel", "/product/search", "/supplier/search", "/supplier/product", "/supplier/freight",
+             "/supplier/warehouses", "/supplier/parse"]
 # The seven adapter_* tools are served by BOTH MCP surfaces with identical names and parameters: Server A
 # (orchestrator/orchestrator/mcp_server.py, streamable-http :8930, bearer key — Hermes) and Server B
 # (mcp_server/polymath_mcp.py, stdio, no credential — Claude Code / Codex). Parity is pinned by
@@ -42,8 +43,11 @@ ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/chat/evi
 ADAPTER_MCP_TOOLS = ["adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status", "adapter_result", "adapter_cancel"]
 # MCP-RETRIEVAL-MODES-V1: the LISTED retrieval tools. compile_plan / retrieve_evidence / retrieve / ask still answer old
 # callers but are no longer listed (MCP_HIDDEN_TOOLS); every retrieval tool takes one of RETRIEVAL_MODES.
+# PRODUCT-SEARCH-E2E (2026-11-01): product_search (the one entry point for product questions) and supplier_parse (raw local Agent
+# Reach output -> supplier listings), served by both MCP surfaces (pinned by tests/contracts/test_mcp_agent_playbook.py)
 MCP_TOOLS = ["capabilities", "polymath_search", "polymath_explore", "polymath_answer", "polymath_compare",
-             "polymath_deep_research", "polymath_models", "list_corpora", "corpus_status"] + ADAPTER_MCP_TOOLS
+             "polymath_deep_research", "polymath_models", "list_corpora", "corpus_status", "product_search",
+             "supplier_parse"] + ADAPTER_MCP_TOOLS
 MCP_HIDDEN_TOOLS = ["compile_plan", "retrieve_evidence", "retrieve", "ask"]
 
 

@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import hashlib
 import re
+import time
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from polymath_shared.code.scope import echo_scope
@@ -141,7 +142,34 @@ class PlanRequest(BaseModel):
 
 
 @router.post("/retrieve/plan")
-async def retrieve_plan(req: PlanRequest) -> dict:
+async def retrieve_plan(req: PlanRequest, request: Request = None) -> dict:  # type: ignore[assignment]
+    """QUERY-RECEIPTS-V1 on the plan lane: one receipt per HTTP call (kind `retrieve`, `meta.route` `retrieve/plan`),
+    like /retrieve. An in-process call has no transport and writes none."""
+    if request is None:
+        return echo_scope(await _retrieve_plan_impl(req), req.scope)
+    from polymath_shared.db import tx
+    from polymath_shared.query_receipts import Timer, record_query_receipt
+
+    corpus_ids = list(req.corpus_ids or ([req.corpus_id] if req.corpus_id else []))
+    scope_kind = "corpus" if req.corpus_id else "corpora" if req.corpus_ids else None
+    client = request.headers.get("user-agent", "")
+    with Timer() as t:
+        try:
+            out = await _retrieve_plan_impl(req)
+        except Exception as exc:  # noqa: BLE001 — record, then re-raise unchanged
+            detail = getattr(exc, "detail", None)
+            record_query_receipt(tx, kind="retrieve", question=req.signal or "", req=req, scope_corpora=corpus_ids,
+                                 scope_kind=scope_kind, wall_ms=(time.perf_counter() - t.t0) * 1000.0,
+                                 error=f"{type(exc).__name__}: {detail if detail is not None else exc}", client=client)
+            raise
+    view = {"evidence": out.get("evidence_rows") or [],
+            "meta": {"route": "retrieve/plan", "plan": [q.get("id") for q in out.get("plan") or []]}}
+    record_query_receipt(tx, kind="retrieve", question=req.signal, req=req, scope_corpora=corpus_ids,
+                         scope_kind=scope_kind, wall_ms=t.ms, out=view, client=client)
+    return echo_scope(out, req.scope)
+
+
+async def _retrieve_plan_impl(req: PlanRequest) -> dict:
     from orchestrator.api.retrieve import RetrieveRequest, _retrieve_impl
 
     signal = (req.signal or "").strip()

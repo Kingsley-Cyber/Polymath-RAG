@@ -248,3 +248,30 @@ calibration:                     # docs/26 §6: the nine canaries — bridge beh
   source_agnostic_mandatory: [heterogeneous_source_reasoning, latent_population_resolution]   # --calibration-mode SOURCE_AGNOSTIC_CALIBRATION
   min_independent_voices: 3
 
+seed_check:                      # PRODUCT-SEARCH-E2E F12: a seed that can generate nothing is told so at start, plainly (binding understanding.seed_check)
+  # a seed is NOT generative when it carries merchandising markers and none of: a problem, an audience, a situation, an activity.
+  # Vocabulary is DATA (lowercase words / phrases, matched on word boundaries); the corpus seed (no seed at all) is always allowed.
+  merchandising: [under, "$", dollar, dollars, cheap, budget, affordable, bargain, deal, deals, discount, price, priced, holiday, holidays,
+                  christmas, xmas, gift, gifts, birthday, "black friday", "cyber monday", valentine, valentines, "mother's day", "father's day",
+                  "stocking stuffer", "stocking stuffers", halloween, easter, best, top, trending, viral, popular, hot, bestseller, bestsellers,
+                  "best selling", "best-selling", winning, ideas, products, product, items, item, things, stuff, niche, niches, dropshipping,
+                  dropship, sell, selling, resell, profitable, margin, "high margin", "high-margin"]
+  problem: [problem, problems, pain, painful, struggle, struggles, struggling, hard, difficult, annoying, annoyed, frustrating, frustrated, hate,
+            "can't", cannot, "won't", keeps, keep, lose, loses, losing, lost, forget, forgets, forgetting, spill, spills, break, breaks, broken,
+            mess, messy, tired, tire, tires, sore, hurt, hurts, uncomfortable, slip, slips, slipping, fall, falls, falling, leak, leaks, tangle,
+            tangled, noise, noisy, smell, smells, wet, dirty, clean, cleaning, fix, repair, workaround, workarounds, hack, hacks, without, trouble,
+            issue, issues, friction, waste, wasting, overwhelmed, stress, stressful, worry, worried, afraid, fear, risk, unsafe, bounce, bounces,
+            drop, drops, dropping, carry, carrying, access, reach, store, storing, organize, organizing, save, saving]
+  audience: [people, person, parents, parent, moms, mothers, dads, fathers, kids, children, toddlers, babies, teens, teenagers, students,
+             seniors, elderly, nurses, doctors, teachers, runners, cyclists, hikers, campers, gardeners, cooks, chefs, bakers, drivers, commuters,
+             travelers, travellers, gamers, musicians, photographers, owners, workers, freelancers, renters, homeowners, athletes, climbers,
+             swimmers, surfers, skiers, anglers, hunters, crafters, knitters, makers, mechanics, electricians, plumbers, carpenters, veterans,
+             patients, caregivers, women, men, couples, families, beginners, crew, crews, team, teams, retirees, nomads, creators]
+  situation: [when, while, during, after, before, night, morning, "on the go", commute, commuting, travel, traveling, travelling, trip, trips,
+              outdoors, outdoor, home, work, car, kitchen, rain, winter, summer, workout, gym, office, shift, school, college, dorm, apartment,
+              "small space", "small spaces", moving, long, daily, every day, routine, routines, recovery]
+  activity_suffix: ing             # a word ending in this (5+ letters) is an activity unless the merchandising list holds it
+  hint: >-
+    Rewrite the seed as a problem, an audience or a situation — who struggles with what, and when (for example "commuters' coffee
+    spills in the car" or "parents juggling bags and a toddler at the store") — or leave the seed out and the run proposes one from
+    its corpora.

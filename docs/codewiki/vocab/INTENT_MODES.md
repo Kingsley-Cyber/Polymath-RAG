@@ -14,9 +14,9 @@ AUTHORITY: `orchestrator/orchestrator/api/retrieve.py:123` :: `INTENT_MODES` (co
 |---|---|---|---|
 | `frontend-v2/src/lib/contracts.ts` | `frontend-v2/src/lib/contracts.ts:196` | 3/3 | — |
 | `orchestrator/orchestrator/api/compare_review.py` | `orchestrator/orchestrator/api/compare_review.py:37` | 3/3 | — |
-| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1308` | 3/3 | — |
+| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1356` | 3/3 | — |
 | `shared/polymath_shared/adapter/evidence_boundary.py` | `shared/polymath_shared/adapter/evidence_boundary.py:44` | 3/3 | — |
-| `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:19` | 3/3 | — |
+| `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:26` | 3/3 | — |
 | `shared/polymath_shared/retrieval_modes.py` | `shared/polymath_shared/retrieval_modes.py:20` | 3/3 | — |
 | `shared/polymath_shared/skeleton_routes.py` | `shared/polymath_shared/skeleton_routes.py:57` | 3/3 | — |
 

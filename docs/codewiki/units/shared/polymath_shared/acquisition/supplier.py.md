@@ -1,104 +1,110 @@
 # unit: shared/polymath_shared/acquisition/supplier.py
-anchor: shared/polymath_shared/acquisition/supplier.py:1-164
+anchor: shared/polymath_shared/acquisition/supplier.py:1-373
 
 ## purpose
-Read-only supplier lookup tools (`supplier_search`, `supplier_product`, `supplier_freight`, `supplier_warehouses`) for any harness connected to Polymath's MCP servers, owner-approved 2026-09-27 — owner only, because they spend the owner's CJ account and quota; a principal key is refused. shared/polymath_shared/acquisition/supplier.py:1-3 [DERIVED]
-Search covers CJ's catalogue (source "cj") or alibaba.com pages via local SearXNG (source "alibaba"); product/freight/warehouses are CJ-only. Built on `cj_api` and `searxng`, never CJ's own MCP server; nothing creates, confirms, pays, deletes, lists or disputes; no host-browser fallback; keys come from the environment only and never reach a result, error or log. shared/polymath_shared/acquisition/supplier.py:5-14 [DERIVED]
+Read-only supplier lookup tools (`supplier_search`, `supplier_product`, `supplier_freight`, `supplier_warehouses`, `supplier_parse`) for every Polymath user — the owner, an MCP principal, or a web-signed-in user — against CJ Dropshipping's official REST API, with an Agent Reach handoff when the host cannot answer. shared/polymath_shared/acquisition/supplier.py:1-28 [DERIVED]
+Nothing here creates, confirms, pays, deletes or disputes; the host never calls Exa/Jina and never uses the host browser; CJ keys come from the environment only and never reach a result, error or log. shared/polymath_shared/acquisition/supplier.py:25-28 [DERIVED]
 
 ## public surface
-
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| authorize | def | (principal_id: str \| None) -> None | shared/polymath_shared/acquisition/supplier.py:43-46 | internal: search:79, product:113, freight:134, warehouses:155 |
-| search | def | keyword-only (principal_id, query, source="cj", limit=SEARCH_LIMIT_DEFAULT, env=None, cj=None, alibaba=None) -> dict | shared/polymath_shared/acquisition/supplier.py:75-77 | orchestrator/orchestrator/api/acquisition.py (module importer, FACTS) |
-| product | def | keyword-only (principal_id, product_id, env=None, cj=None) -> dict | shared/polymath_shared/acquisition/supplier.py:110-111 | orchestrator/orchestrator/api/acquisition.py (module importer, FACTS) |
-| freight | def | keyword-only (principal_id, variant_id, country, quantity=1, from_country="CN", env=None, cj=None) -> dict | shared/polymath_shared/acquisition/supplier.py:131-132 | orchestrator/orchestrator/api/acquisition.py (module importer, FACTS) |
-| warehouses | def | keyword-only (principal_id, env=None, cj=None) -> dict | shared/polymath_shared/acquisition/supplier.py:153 | orchestrator/orchestrator/api/acquisition.py (module importer, FACTS) |
-| CONTRACT | const | "supplier-tools-v1" | shared/polymath_shared/acquisition/supplier.py:32 | — |
-| SOURCES | const | {"cj": (cj_api.SITE, "cj_listings"), "alibaba": (searxng.SITE, "alibaba_listings")} | shared/polymath_shared/acquisition/supplier.py:34 | search:87 |
-| TOOLS | const | ("supplier_search", "supplier_product", "supplier_freight", "supplier_warehouses") | shared/polymath_shared/acquisition/supplier.py:35 | no use in this file |
+| authorize | def | (principal_id: str \| None) -> None | shared/polymath_shared/acquisition/supplier.py:88-93 | — |
+| FairUseRefused | class | (code, message, retry_after_s: int) -> 429 refusal | shared/polymath_shared/acquisition/supplier.py:97-102 | — |
+| rate_per_minute | def | (env: Mapping \| None) -> int | shared/polymath_shared/acquisition/supplier.py:105-108 | — |
+| FairUse | class | (clock: Callable[[], float] = time.monotonic); .admit(principal_id, env) -> None; .cj_call(principal_id) -> ctx manager | shared/polymath_shared/acquisition/supplier.py:111-151 | — |
+| search | def | (principal_id, query, source="cj", limit=10, env, cj, fair_use) -> dict | shared/polymath_shared/acquisition/supplier.py:206-257 | — |
+| product | def | (principal_id, product_id, env, cj, fair_use) -> dict | shared/polymath_shared/acquisition/supplier.py:261-283 | — |
+| freight | def | (principal_id, variant_id, country, quantity=1, from_country="CN", env, cj, fair_use) -> dict | shared/polymath_shared/acquisition/supplier.py:286-309 | — |
+| warehouses | def | (principal_id, env, cj, fair_use) -> dict | shared/polymath_shared/acquisition/supplier.py:312-327 | — |
+| parse | def | (principal_id, site, raw_text, env, fair_use) -> dict | shared/polymath_shared/acquisition/supplier.py:331-373 | — |
+
+Module imported by (file level, per FACTS.importers): `orchestrator/orchestrator/api/acquisition.py`, `workers/workers/adapter_step_worker.py`. Per-symbol call sites unknown.
 
 ## contracts
 
-**authorize(principal_id)** — shared/polymath_shared/acquisition/supplier.py:43-46
-- in: `principal_id: str | None`.
-- post: returns None when `principal_id is None`; otherwise raises `AcquisitionRefused(403, "OWNER_ONLY", "the supplier tools use the owner's CJ account and quota; a principal key may not use them")`. shared/polymath_shared/acquisition/supplier.py:45-46 [DERIVED]
+**search** — shared/polymath_shared/acquisition/supplier.py:206-257
+- in: `query` (validated by `service._query`), `source` in `{"cj", "alibaba"}` (default `"cj"`), `limit` default `10` clamped to `[1, 50]`. [DERIVED] :212-216
+- pre: `authorize(principal_id)`; `UNKNOWN_SOURCE` (422) if source not in `SOURCES`; `BAD_LIMIT` (422) on non-numeric limit; `fair_use.admit` before any CJ work. [DERIVED] :211-220
+- out: `{contract, tool, source, site, query, retrieved_at, status, sources, items, completeness, limitations, reason_code, fallback}`; status `OK/PARTIAL/EMPTY/UNAVAILABLE` (cj) or `AGENT_REACH_REQUIRED` (alibaba). [DERIVED] :202-210, :227-230
+- post: `fallback` is set whenever the host could not give CJ listings (every CJ failure and `EMPTY`) and always for alibaba, else `None`. [DERIVED] :249-253, :222-230
+- alibaba path: nothing is read on this host; `reason_code = "ALIBABA_AGENT_REACH_ONLY"`, `fallback` from `agent_reach.fallback`. [DERIVED] :223-230
 
-**search(...)** — shared/polymath_shared/acquisition/supplier.py:75-107
-- pre: authorize (79); `source` must be in `SOURCES` else 422 `UNKNOWN_SOURCE` (80-81); query normalized via `service._query` (82); `n = max(1, min(int(limit if limit is not None else SEARCH_LIMIT_DEFAULT), SEARCH_LIMIT_MAX))`, TypeError/ValueError → 422 `BAD_LIMIT` (83-86). [DERIVED]
-- in: `Target(operation="listings", reader="cj_listings"|"alibaba_listings", site, query=q, source_class="supplier_listing")` (87-88); cj → `cj_api.CJListings(cj or cj_api.client_from_env(env))` (89-92); alibaba → `alibaba or searxng.SearXNGListings(searxng.base_url(env))` (93-96). [DERIVED]
-- out: `{contract, tool: "supplier_search", source, site, query, retrieved_at, status, sources, items, completeness, limitations}` — body from `service.shape(t, raw, action={}, search_intent_id=None, retrieved_at=..., used=0, cap=0, limit=n)` (104-107). [DERIVED]
-- post: reader is None → `raw = {"state": "unavailable", "note": NO_CJ_KEY|NO_SEARXNG}` (97-98); `ApiFailed` → note `"the {reader.label} could not answer ({exc.reason}: {exc.detail})"` (102-103). [DERIVED]
+**product** — shared/polymath_shared/acquisition/supplier.py:261-283
+- in: `product_id` validated by `_id` via `cj_api.valid_id` (6–64 letters/digits/hyphens) else 422 `BAD_ID`. [DERIVED] :162-166, :265
+- out: `{contract, tool, source, product_id, retrieved_at, status, reason_code, product, variants, limitations}`; status `OK/NOT_FOUND/UNAVAILABLE`. [DERIVED] :263, :278-281
+- post: `UNAVAILABLE` carries `_product_fallback(pid, code)` (find the product page on cjdropshipping.com with the user's own Agent Reach); `NOT_FOUND` and `OK` carry `fallback: None`. [DERIVED] :270-276, :278-281
 
-**product(...)** — shared/polymath_shared/acquisition/supplier.py:110-128
-- pre: authorize (113); `product_id` validated by `cj_api.valid_id` else 422 `BAD_ID` ("6 to 64 letters, digits and hyphens") (114, 53-57). [DERIVED]
-- post: no client → `UNAVAILABLE` + `NO_CJ_KEY` (116-117); `ApiFailed` → `UNAVAILABLE` with reason (120-121); `client.product(pid)` returns None → `status: "NOT_FOUND"`, `product: None`, `variants: []` (122-124). [DERIVED]
-- out: OK → `{**head, product_id, retrieved_at: now_iso(), status: "OK", **cj_api.product_view(data), limitations: [CJ-api note, UNTRUSTED]}` (125-128). [DERIVED]
+**freight** — shared/polymath_shared/acquisition/supplier.py:286-309
+- in: `variant_id` (`_id`), `country` and `from_country` (default `"CN"`) two-letter ISO via `_COUNTRY.fullmatch`, `quantity` int in `[1, 10000]` (bool rejected). [DERIVED] :284-294
+- out: `{contract, tool, source, request, retrieved_at, status, reason_code, options, limitations}`; status `OK/EMPTY/UNAVAILABLE`; `fallback` always null (no user-side equivalent). [DERIVED] :288, :299-308
 
-**freight(...)** — shared/polymath_shared/acquisition/supplier.py:131-150
-- pre: authorize (134); `variant_id` via `_id` else `BAD_ID` (135); `country`/`from_country` via `_country` else 422 `BAD_COUNTRY` (136); `quantity` must be int, not bool, `1 <= quantity <= QUANTITY_MAX` else 422 `BAD_QUANTITY` (137-138). [DERIVED]
-- in: `request = {"variant_id", "from_country", "to_country", "quantity"}` (139); `client.freight(vid, to, quantity, start)` (144). [DERIVED]
-- post: no client → `UNAVAILABLE` + `NO_CJ_KEY` (141-142); `ApiFailed` → `UNAVAILABLE` (145-146); empty options → `status: "EMPTY"` plus limitation `"CJ offers no shipping option for this variant from {start} to {to}"` (147, 150). [DERIVED]
-- out: `{**head, request, retrieved_at, status "OK"|"EMPTY", options: [cj_api.freight_view(o)...], limitations}` (147-150). [DERIVED]
+**warehouses** — shared/polymath_shared/acquisition/supplier.py:312-327
+- out: `{contract, tool, source, retrieved_at, status, reason_code, warehouses, limitations}`; status `OK/EMPTY/UNAVAILABLE`; `fallback` null. [DERIVED] :314, :320-321
 
-**warehouses(...)** — shared/polymath_shared/acquisition/supplier.py:153-164
-- pre: authorize (155). [DERIVED]
-- post: no client → `UNAVAILABLE` + `NO_CJ_KEY` (157-158); `ApiFailed` → `UNAVAILABLE` (161-162). [DERIVED]
-- out: `{**head, retrieved_at, status "OK"|"EMPTY", warehouses: [cj_api.warehouse_view(w)...], limitations: ["CJ's warehouse list from the CJ Dropshipping API"]}` (163-164). [DERIVED]
+**parse** — shared/polymath_shared/acquisition/supplier.py:331-373
+- in: `site` resolved by `agent_reach.site_of` (alibaba.com / cjdropshipping.com or source name) else 422 `UNKNOWN_SITE`; `raw_text` cleaned by `agent_reach.clean_text`. [DERIVED] :339-345
+- out: the `supplier_search` shape plus `tool_class`, `tool_trace`, `refused` (codes `HUMAN_CHECK, OFF_SITE, NOT_A_PRODUCT_PAGE, DUPLICATE, OVER_LIMIT`), `next` (Jina commands per product after an Exa search). [DERIVED] :333-337, :369-373
+- post: status `HUMAN_CHECK` when every page was a verification page and no items resulted; Polymath opens no page. [DERIVED] :357-358, :337
 
 ## effect surface
-- Network (CJ REST API via `cj_api.CJClient`): `client.product(pid)` shared/polymath_shared/acquisition/supplier.py:119, `client.freight(...)` :144, `client.warehouses()` :160, `reader.read(t, n)` :101 [DERIVED]
-- Network (SearXNG): `searxng.SearXNGListings(url)` :95, read at :101 [DERIVED]
-- Env: `CJ_API_KEY` via `cj_api.client_from_env` :90 (absence → `NO_CJ_KEY` :37); `SEARXNG_URL` via `searxng.base_url` :94 (off → `NO_SEARXNG` :38); `env=None` falls back to `os.environ` :49-50 [DERIVED]
-- Postgres: none (`tables_read: []`, `tables_written: []` in FACTS); Qdrant, files, subprocess: none visible in SOURCE [DERIVED]
+- Network: CJ REST API via `cj_api.CJClient` — `CJListings(client).read` :239, `client.product` :273, `client.freight` :302, `client.warehouses` :323. No Exa/Jina/host-browser calls from this host. [DERIVED] :17-18, :305-313
+- Env: `POLYMATH_SUPPLIER_RATE_PER_MINUTE` = 30 default :59, :105-108; `CJ_API_KEY` read via `cj_api.client_from_env` :202 (missing key → `NO_CJ_KEY` :60).
+- In-process state: module singleton `FAIR_USE = FairUse()` :154; guarded by `threading.Lock` :119.
+- Postgres/Qdrant: none (FACTS.tables_read and tables_written empty). Files, subprocesses: none.
 
 ## invariants
-INVARIANT: authorize calls per public tool = 1 — search:79, product:113, freight:134, warehouses:155; `principal_id is not None` → 403 `OWNER_ONLY` :46 — shared/polymath_shared/acquisition/supplier.py:79-155 [DERIVED]
-  fails-if: a friend's principal key spends the owner's CJ account and quota.
-INVARIANT: n = max(1, min(int(limit), 50)); SEARCH_LIMIT_MAX = 50, SEARCH_LIMIT_DEFAULT = 10 — shared/polymath_shared/acquisition/supplier.py:36,84 [DERIVED]
-  fails-if: limit=0 silently becomes 1; non-numeric limit raises 422 `BAD_LIMIT` :86.
-INVARIANT: 1 <= quantity <= 10000 and isinstance(quantity, int) and not isinstance(quantity, bool) — QUANTITY_MAX = 10000 — shared/polymath_shared/acquisition/supplier.py:36,137 [DERIVED]
-  fails-if: 422 `BAD_QUANTITY` :138 (bool check needed because bool subclasses int).
-INVARIANT: country and from_country match `[A-Za-z]{2}` fullmatch and return uppercased — shared/polymath_shared/acquisition/supplier.py:40,62-64 [DERIVED]
-  fails-if: 422 `BAD_COUNTRY` :63.
-INVARIANT: every returned dict has contract == "supplier-tools-v1" — shared/polymath_shared/acquisition/supplier.py:32,68,105 [DERIVED]
-  fails-if: MCP consumers that version-dispatch on `contract` break.
-INVARIANT: product status ∈ {"OK", "NOT_FOUND", "UNAVAILABLE"}; freight/warehouses status ∈ {"OK", "EMPTY", "UNAVAILABLE"} — shared/polymath_shared/acquisition/supplier.py:123,126,147,163 [DERIVED]
-  fails-if: callers switching on `status` hit an unhandled value.
+INVARIANT: supplier calls per principal in any 60.0 s sliding window <= `rate_per_minute` (default 30) — shared/polymath_shared/acquisition/supplier.py:121-134 [DERIVED]
+  fails-if: `FairUseRefused("SUPPLIER_RATE_LIMITED", ..., wait)` with `Retry-After` = `ceil(60.0 - (now - calls[0]))`
+INVARIANT: CJ calls in flight per principal <= 1 — shared/polymath_shared/acquisition/supplier.py:136-151 [DERIVED]
+  fails-if: `FairUseRefused("SUPPLIER_BUSY", ..., 1)`; never queued
+INVARIANT: owner (principal_id None) passes `admit` and `cj_call` untouched — shared/polymath_shared/acquisition/supplier.py:123-124, :139-141 [DERIVED]
+  fails-if: owner would be rate-limited like a principal
+INVARIANT: search result count n = `max(1, min(limit, 50))` — shared/polymath_shared/acquisition/supplier.py:216 [DERIVED]
+  fails-if: CJ asked for more than its page allows or limit 0 slips through
+INVARIANT: freight quantity in `[1, 10000]`, booleans rejected — shared/polymath_shared/acquisition/supplier.py:292-293 [DERIVED]
+  fails-if: 422 `BAD_QUANTITY`
+INVARIANT: `FairUseRefused.retry_after_s >= 1` — shared/polymath_shared/acquisition/supplier.py:102 [DERIVED]
+  fails-if: route would send `Retry-After: 0`
+INVARIANT: every search result where `reason_code is not None` also sets `fallback` — shared/polymath_shared/acquisition/supplier.py:249-253 [DERIVED]
+  fails-if: user gets a typed failure with no handoff commands
+INVARIANT: every tool result carries both `reason_code` and `fallback` keys (null when not needed) — shared/polymath_shared/acquisition/supplier.py:20-21, :270, :299, :320, :369-373 [DERIVED]
+  fails-if: consumers switch on missing keys
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (network: reader.read :101, client.product :119, client.freight :144, client.warehouses :160; clock: `now_iso()` :72,104,126,147,163; env: `client_from_env` :90,115,140,156, `searxng.base_url` :94)
-idempotency: SAFE (read-only lookups; "Nothing here creates, confirms, pays, deletes, lists or disputes" shared/polymath_shared/acquisition/supplier.py:12)
+determinism: NONDETERMINISTIC (network: CJ API :239/:273/:302/:323; clock: `time.monotonic` default in `FairUse` :115; env: rate :107 and CJ_API_KEY :202; concurrency: `threading.Lock` :119)
+idempotency: SAFE (read-only; no writes, files or subprocesses — but each call, including `parse`, consumes fair-use budget via `admit` :220, :267, :296, :317, :346)
 
 ## failure behaviour
-- `ApiFailed` from any reader/client is swallowed and converted to a normal dict with `status: "UNAVAILABLE"` and the reason in `limitations` — the caller never sees the exception. shared/polymath_shared/acquisition/supplier.py:102-103,120-121,145-146,161-162 [DERIVED]
-- Missing config returns UNAVAILABLE, not an error: no `CJ_API_KEY` → `NO_CJ_KEY` (:37, :117, :142, :158); SearXNG off → `NO_SEARXNG` (:38, :98). [DERIVED]
-- CJ returns no product → `NOT_FOUND` dict with `product: None`, `variants: []`. shared/polymath_shared/acquisition/supplier.py:122-124 [DERIVED]
-- Raised error codes: 403 `OWNER_ONLY` :46; 422 `BAD_ID` :56; 422 `BAD_COUNTRY` :63; 422 `UNKNOWN_SOURCE` :81; 422 `BAD_LIMIT` :86; 422 `BAD_QUANTITY` :138. [DERIVED]
+- Broad `except Exception` (FACTS.fallbacks, line 243): only around the CJ listings read in `search` — logged via `log.exception("supplier search: the CJ reader raised")`, converted to `reason_code = "CJ_ERROR"`; caller sees status `UNAVAILABLE`, never the exception. shared/polymath_shared/acquisition/supplier.py:243-245 [DERIVED]
+- `ApiFailed` → `_failed` maps `exc.reason` through `REASON_CODES` (default `"CJ_ERROR"`) into `reason_code` + limitation. shared/polymath_shared/acquisition/supplier.py:65-67, :180-182 [DERIVED]
+- `FairUseRefused` subclasses `AcquisitionRefused` with HTTP 429 plus `retry_after_s`; codes `SUPPLIER_RATE_LIMITED` :132, `SUPPLIER_BUSY` :144. [DERIVED]
+- Refusals raised: 403 `BAD_PRINCIPAL` :93, 422 `UNKNOWN_SOURCE` :213, `BAD_LIMIT` :218, `BAD_ID` :165, `BAD_COUNTRY` :172, `BAD_QUANTITY` :293, `UNKNOWN_SITE` :341. [DERIVED]
+- `agent_reach.BadOutput` in `parse` is re-raised as `AcquisitionRefused(exc.status, exc.code, exc.message)`. shared/polymath_shared/acquisition/supplier.py:344-345, :349-350 [DERIVED]
+- `product`/`freight`/`warehouses` catch only `ApiFailed`; any other exception from `client.product`/`client.freight`/`client.warehouses` propagates to the caller. shared/polymath_shared/acquisition/supplier.py:272-276, :301-304, :322-325 [DERIVED]
 
 ## dumb-code flags
-- `TOOLS` (:35) is defined but never referenced in this file — dead here unless an importer reads it. shared/polymath_shared/acquisition/supplier.py:35 [DERIVED]
-- `_head` hardcodes `"source": "cj"` (:68) while `search` builds its own header dict (:105) — two places construct the contract header. shared/polymath_shared/acquisition/supplier.py:68,105 [DERIVED]
-- `UNTRUSTED` (:39) is appended only by `product` (:128); search/freight/warehouses limitations (:107, :148-150, :164) carry no untrusted-text note despite the blanket claim at :39. shared/polymath_shared/acquisition/supplier.py:39,128 [DERIVED]
-- `_COUNTRY` is just `[A-Za-z]{2}` (:40) but the error text claims "ISO 3166-1 alpha-2" (:63) — any 2-letter pair (e.g. "ZZ") passes. shared/polymath_shared/acquisition/supplier.py:40,63 [INFERRED] (regex cannot check ISO membership)
-- `BAD_ID` message hardcodes the rule prose "6 to 64 letters, digits and hyphens" (:56) while enforcement lives in `cj_api.valid_id` (:54) — the rule can drift from its description. shared/polymath_shared/acquisition/supplier.py:54-56 [DERIVED]
-- Magic default `from_country: str = "CN"` (:131); `quantity: int = 1`. shared/polymath_shared/acquisition/supplier.py:131 [DERIVED]
+- Asymmetric error handling: the "reader's own bug is a failure like any other" handler exists only in `search` (:243-245); `product`, `freight`, `warehouses` lack it. [DERIVED]
+- `_head` hardcodes `"source": "cj"` (:177); safe today because only CJ tools use it, but any new non-CJ tool built on `_head` would be mislabelled. [INFERRED: no non-CJ caller exists in this file]
+- `CJ_RATE_LIMITED` text hardcodes CJ's wait schedule "after waiting 2 s and 4 s" (:73) — that behaviour lives in `cj_api`, duplicated here as prose. [INFERRED: the waits are not implemented in this file]
+- Magic numbers inline: `60.0` window (:128, :131), `1` as busy retry (:145).
+- Default `30` stated in constant (:59) and repeated in `rate_per_minute` docstring (:106) — consistent, but two places to update.
+- FACTS reports `TOOLS` as a list while SOURCE shows the tuple `("supplier_search", "supplier_product", "supplier_freight", "supplier_warehouses", "supplier_parse")` (:57) — static-analysis rendering artifact, not a code defect. [DERIVED]
 
 ## refactor notes
-- The dict keys in each docstring (:78, :112, :133, :154) plus `CONTRACT = "supplier-tools-v1"` (:32) are the wire format for MCP harnesses; renaming any key or the contract string breaks consumers. shared/polymath_shared/acquisition/supplier.py:32,78,112,133,154 [DERIVED]
-- `SOURCES` reader names `"cj_listings"` / `"alibaba_listings"` (:34) must stay valid for `service.shape`'s reader registry (used via `Target` at :87-88, shaped at :104). [DERIVED]
-- Private cross-module import `_query` from `polymath_shared.acquisition.service` (:24-30) — renaming it in service breaks this file. shared/polymath_shared/acquisition/supplier.py:24-30 [DERIVED]
-- Sole known importer: orchestrator/orchestrator/api/acquisition.py (FACTS.importers) — the likely MCP exposure layer; any signature change (all params are keyword-only) ripples there. [DERIVED]
-- `shape(t, raw, action={}, search_intent_id=None, used=0, cap=0, limit=n)` (:104) couples to `service.shape`'s signature. shared/polymath_shared/acquisition/supplier.py:104 [DERIVED]
-- Keys-never-logged / no-browser-fallback (:12-14) is a stated property; refactors that log env or raw errors violate it. shared/polymath_shared/acquisition/supplier.py:12-14 [DERIVED]
+- `CONTRACT = "supplier-tools-v1"` is stamped into every result (:54, :177, :227, :369); `orchestrator/orchestrator/api/acquisition.py` and `workers/workers/adapter_step_worker.py` import this module (FACTS.importers) — changing the contract string or result keys breaks both.
+- `search` reuses `service.shape`/`Target` so its record shape matches `research_acquire`'s listings (:5-7, :540); reshaping `items`/`sources`/`completeness` crosses that contract.
+- `FAIR_USE` is a module-level singleton (:154); counts live in-process only and reset on a bounce (:22-24) — replacing it with shared storage changes the fair-use guarantees callers rely on.
+- `SOURCES` (:56) drives both validation and reader selection; adding a source requires a matching reader plus `agent_reach` support, or `UNKNOWN_SOURCE` stays.
+- `freight`/`warehouses` returning `fallback: None` is deliberate (:20-21); `_unavailable` changes its limitation text when a fallback appears (:187-190), so adding one alters user-visible strings.
+- Keys never reach results, errors or logs (:27-28) — any refactor adding CJ client details to output violates a stated guarantee.
 
 ## VERIFY
 ```verify
 grep -Fq 'CONTRACT = "supplier-tools-v1"' shared/polymath_shared/acquisition/supplier.py
+grep -Fq 'RATE_ENV, RATE_DEFAULT = "POLYMATH_SUPPLIER_RATE_PER_MINUTE", 30' shared/polymath_shared/acquisition/supplier.py
 grep -Fq 'SEARCH_LIMIT_DEFAULT, SEARCH_LIMIT_MAX, QUANTITY_MAX = 10, 50, 10000' shared/polymath_shared/acquisition/supplier.py
-grep -Fq 'raise AcquisitionRefused(403, "OWNER_ONLY"' shared/polymath_shared/acquisition/supplier.py
-grep -Fq 'from_country: str = "CN"' shared/polymath_shared/acquisition/supplier.py
-grep -Fq '"status": "OK" if options else "EMPTY"' shared/polymath_shared/acquisition/supplier.py
-test "$(grep -c -F 'AcquisitionRefused(422' shared/polymath_shared/acquisition/supplier.py)" -ge 5
-! grep -Fq 'subprocess' shared/polymath_shared/acquisition/supplier.py
+grep -Eq 'raise FairUseRefused\("SUPPLIER_(RATE_LIMITED|BUSY)"' shared/polymath_shared/acquisition/supplier.py
+test "$(grep -c -F 'FairUseRefused' shared/polymath_shared/acquisition/supplier.py)" -ge 3
+test "$(grep -c -F 'except Exception' shared/polymath_shared/acquisition/supplier.py)" -ge 1
+test "$(grep -c -F 'except ApiFailed' shared/polymath_shared/acquisition/supplier.py)" -ge 4
 ```

@@ -11,6 +11,7 @@ import { AnswerBody } from "../components/AnswerBody";
 import type { ChatSession } from "../lib/chatStore";
 import { isResearchTurn, loadSkipPlan, olderPlanBackend, presetSeconds, type DeepGoal, type DeepRunRequest, type DeepRunState } from "../lib/deep";
 import { ResearchTurnView, type ResearchHandlers } from "../components/deep/ResearchTurn";
+import type { ProductHandlers } from "../components/ProductResearch";
 
 /**
  * F2 + F3 — Chat with corpus, retrieval mode, model, reasoning and streaming.
@@ -45,6 +46,7 @@ export function Chat({
   corpusExploreAvailable,
   focusTurn = null,
   onFocusDone,
+  onOpenResearch,
 }: {
   corpusId: string;
   /** CHAT-HISTORY-V1: the session being viewed. App creates it before this screen mounts. */
@@ -58,6 +60,8 @@ export function Chat({
   /** DR7e: a turn to bring into view (a report opened from Research → Reports), then `onFocusDone`. */
   focusTurn?: number | null;
   onFocusDone?: () => void;
+  /** PRODUCT-SEARCH-E2E: open the Research screen at a run started from a product answer. */
+  onOpenResearch?: (runId: string) => void;
 }) {
   const [{ mode, model, corpusExplore }] = useComposerSettings();   // HEADER-CONTROLS: chosen in the top bar
   const [reasoning, setReasoning] = useState<string>("");
@@ -191,6 +195,13 @@ export function Chat({
     onResearchNext: researchNext,
   });
 
+  /** PRODUCT-SEARCH-E2E: the run started from turn i's product answer is kept on that turn (it persists with the chat, and it
+   *  lands in THIS chat even when another one is open by the time the server answers). */
+  const product = (i: number): ProductHandlers => ({
+    onRunStarted: (run) => onUpdateTurns((ts) => ts.map((x, j) => (j === i ? { ...x, productRun: run } : x))),
+    onOpenResearch,
+  });
+
   return (
     <div className="screen screen--wide screen--chat chat">
       <h1 className="sr-only">Chat with {corpusId}</h1>
@@ -210,7 +221,7 @@ export function Chat({
         ) : (
           <div className="chat__thread">
             {turns.map((t, i) => (
-              <TurnView key={i} t={t} models={models} research={research(i, t)} />
+              <TurnView key={i} t={t} models={models} research={research(i, t)} product={product(i)} />
             ))}
           </div>
         )}
@@ -285,7 +296,9 @@ export function Chat({
   );
 }
 
-function TurnView({ t, models, research }: { t: Turn; models: Synthesizer[]; research?: ResearchHandlers }) {
+function TurnView({ t, models, research, product }: {
+  t: Turn; models: Synthesizer[]; research?: ResearchHandlers; product?: ProductHandlers;
+}) {
   if (research && isResearchTurn(t)) return <ResearchTurnView t={t} models={models} {...research} />;   // DR7
   return (
     <>
@@ -296,10 +309,11 @@ function TurnView({ t, models, research }: { t: Turn; models: Synthesizer[]; res
       <div className="msg-assistant">
         <ProcessRail phases={t.phases} live={!t.done} reasoning={t.reasoningText} />
         {t.error && <div className="answer answer-error">{t.error}</div>}
-        {t.answerText ? (
+        {/* a product answer's hypotheses still show if the model wrote no prose around them */}
+        {t.answerText || t.productResearch ? (
           <>
-            <AnswerBody t={t} models={models} />
-            {t.done && <AnswerActions text={t.answerText} />}
+            <AnswerBody t={t} models={models} product={product} />
+            {t.done && t.answerText && <AnswerActions text={t.answerText} />}
           </>
         ) : t.done && !t.error ? (
           <div className="answer empty-answer">

@@ -42,7 +42,8 @@ def test_the_journal_rebuilt_from_the_store_is_the_one_the_host_kept(runtime, mo
     assert sum(1 for s in _events(ours, "step") if s["evidence"]["rows"]) > 0
     # every accepted submission, with adapter_submit's status answer
     keys = ("step_id", "kind", "payload", "payload_hash", "accepted", "response")
-    assert [tuple(s[k] for k in keys) for s in _events(ours, "submission")] == [tuple(s[k] for k in keys) for s in _events(host, "submission")]
+    assert [tuple(s[k] for k in keys) for s in _events(ours, "submission")] == [tuple(s[k] for k in keys) for s in _events(host, "submission") if s["accepted"]]
+    assert any(not s["accepted"] for s in _events(host, "submission"))       # F2: the host also kept the refusals a law gave AT SUBMIT
 
     # the result: the one the host received, plus the gates of every qualify step (the compiled result keeps the newest step's only)
     theirs, mine = _events(host, "result")[0]["result"], _events(ours, "result")[0]["result"]

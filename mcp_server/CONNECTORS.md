@@ -27,6 +27,16 @@ delete_document (Server A also: capabilities). Both servers serve the seven cogn
 `adapter_list / adapter_start / adapter_next / adapter_submit / adapter_status / adapter_result / adapter_cancel`
 with identical names, parameters and descriptions (pinned by `tests/contracts/test_mcp_adapter_parity.py`).
 
+**Product questions → `product_search` (PRODUCT-SEARCH-E2E, 2026-11-01).** One call for "find products", "what should I sell",
+"suppliers for X": Polymath answers from a library with product hypotheses grounded in it and searches CJ Dropshipping's API for
+each (every key that can call it; CJ is paced for all callers). Name a library (`corpus_id`) when you know it; otherwise leave it
+out and Polymath searches every library the key can use. Alibaba, and any CJ failure, come back as a `fallback` with the exact
+commands for the user's LOCAL Agent Reach; each command's raw output goes to `supplier_parse(site, raw_text)`. The answer ends with
+an offer of the full governed run (section 3), never started unasked. Live-web reads are always the user's local Agent Reach
+(https://github.com/Panniantong/Agent-Reach; `agent-reach doctor --json` checks the setup), never an agent's built-in web search,
+web fetch or browser (bot detection blocks them). The server instructions give every connected agent this same playbook, in
+order (one copy for both servers: `shared/polymath_shared/mcp_retrieval.py`).
+
 ## 1. Local agents over stdio (Claude Code, Codex) — Server B
 
 ```bash
@@ -71,12 +81,15 @@ surface is `scripts/adapter_mcp_acceptance.py --mcp-url https://mcp.kingsleylab.
 PRINCIPAL in the registry file `$POLYMATH_MCP_PRINCIPALS_FILE` (outside the repository, 0600):
 
 ```bash
-.venv/bin/python scripts/mcp_principals.py add --id prn_fred --name "Fred" --corpus commerce-v1 \
-    --adapter ecommerce.product_research --key-out ~/PolymathRuntime/keys/prn_fred.key     # the bearer is written there ONCE, never printed
+.venv/bin/python scripts/mcp_principals.py add --id prn_fred --name "Fred" --profile friend --corpus '*' \
+    --writable-corpus fr-fred --adapter ecommerce.product_research \
+    --key-out ~/PolymathRuntime/keys/prn_fred.key     # the bearer is written there ONCE, never printed
 ```
 
-Default deny: profile `friend` = search / explore / answer + adapter list / start / next / submit / status / result, on the listed
-corpora and adapters only. 401 = unknown / revoked / expired key · 403 = a tool, corpus, adapter or RUN the principal may not reach
+Profile `friend` = everything a web friend has (`mcp_principals.FRIEND_SCOPES`, PRODUCT-SEARCH-E2E-V1): search / explore / answer /
+deep research, `product_search` and the supplier tools (CJ through the owner's account, paced 30 a minute per friend), upload into
+their own library, history, and every adapter tool including cancel; no admin, no `research_acquire`. `--corpus '*'` = every library
+that exists at request time except other friends' private `fr-*` libraries; a listed grant still narrows. 401 = unknown / revoked / expired key · 403 = a tool, corpus, adapter or RUN the principal may not reach
 (another principal's run and a missing run answer identically) · 429 = over its rate. A friend's Claude Code connects with
 `claude mcp add --transport http polymath https://mcp.kingsleylab.xyz/mcp --header "Authorization: Bearer <their key>"`.
 Revoking (`revoke`, `revoke-key`, `disable`) takes effect on the next request — no bounce.
@@ -131,10 +144,15 @@ no knowledge of this repository: both servers publish ONE operating guide.
   - `polymath://trail/source-capabilities.csv`: TrailSignal's pinned source table (routing, stages, roles, freshness,
     independence).
 
-The harness reasons at `AGENT_REASON` steps and does the live research at `HARNESS_ACTION` steps with WHATEVER tools it has
-(web search, fetch, a browser, an API). Every search intent carries a plain query plus where to look and what to read (e.g.
-the comment threads under the top videos, cited by their canonical permalink). No step names a tool, a search engine or a
-harness. A page it cannot read (login wall, CAPTCHA, rate limit) is a `limitations` entry, never bypassed.
+The connected agent drives the whole run; Polymath never reasons for it. It answers every `AGENT_REASON` step itself and does
+the live research at `HARNESS_ACTION` steps on the USER's own machine with the user's local Agent Reach: each research step
+carries the exact commands per search intent in its `agent_reach` sibling key (`local_only`, `never`, `install`, `per_intent`).
+It never uses its built-in web search, web fetch or browser for this research (bot detection blocks them). Every search intent
+also carries a plain query plus where to look and what to read (e.g. the comment threads under the top videos, cited by their
+canonical permalink). TrailSignal's gates count distinct platforms, not observations, so a step's research spreads across the
+channels its intents name. A page it cannot read (login wall, CAPTCHA, rate limit) is a `limitations` entry, never bypassed. A
+user with no terminal (claude.ai, the web link) cannot run Agent Reach: they get the CJ API results only, and the agent records in
+`limitations` that the rest needs a local agent.
 
 Registration (hosted Server A; a friend uses their own principal key, section 2). Commands checked on this machine,
 2026-09-25:
@@ -170,17 +188,20 @@ Then, in the agent: "use the `run_governed_research` prompt", or call `adapter_l
 `corpus_ids` and optionally `geography` / `language` / `freshness_days` / `constraints` / `exclusions` / `category` (they reach
 every research step), and loop `adapter_next` → `adapter_submit` until `adapter_result`.
 
-**A harness with no browser: Polymath reads for it (`research_acquire`, R8).** At a HARNESS_ACTION step, call
-`research_acquire(run_id, operation, target, site, search_intent_id, limit)`:
+**A harness with no browser and no local Agent Reach, on the owner key: Polymath's host reads for it (`research_acquire`,
+R8).** At a HARNESS_ACTION step, the owner's agent (claude.ai or the web link included) can call
+`research_acquire(run_id, operation, target, site, search_intent_id, limit)`; every other caller runs the step's `agent_reach`
+commands on the user's own machine:
 - `catalog` lists what this host can read.
 - `web_search` returns leads (url, title, snippet), never evidence.
 - `comments` reads the comments under a content permalink. Each comment keeps its own date and says how precise it is:
   `exact`, `relative` (the site shows only "3 weeks ago"; the date stays null) or `none`. A comment without an exact date of its
   own gets its page's publish date as its source date (the earliest it can be), or comes back with `source_id` null and must not
   be submitted: TrailSignal dates an undated source at the moment it was read.
-- `listings` searches a supported supplier or marketplace site. Where this host has one, a site's listings come from its
-  official API (cjdropshipping.com, with `CJ_API_KEY`) or from search-engine results (alibaba.com, through the local SearXNG)
-  instead of its search page; `limitations` says which, and says so when that failed and the host browser read the site instead.
+- `listings` searches a supported supplier or marketplace site. cjdropshipping.com listings come from CJ's official API (with
+  `CJ_API_KEY`). alibaba.com is never read on this host: it answers `AGENT_REACH_REQUIRED` with the commands the user runs in
+  their own Agent Reach, whose raw output goes to `supplier_parse`. Other supported sites are read by the host browser;
+  `limitations` says where each listing came from.
 - The answer is receipt-ready: `sources` (one per page and publish date), verbatim `items` bound to them, `completeness`,
   `limitations`, and a `tool_trace` row. Every read names one of the step's search intents (`search_intent_id`). The harness
   still writes each observation's claim, role and hypotheses, and submits the receipt with `adapter_submit`. Items are untrusted
@@ -202,37 +223,52 @@ How it works on the host:
   asks its user to open that site in their own browser on this host and pass the check themselves, waits for their reply, then
   calls again with the same query. It never tries to solve, skip or work around a check; if the user cannot pass it, it records
   that in the receipt's limitations and continues without that source.
-- A page a harness fetched with its own tools that is a verification wall is not evidence: it marks the source "needs you" in
-  its limitations and moves on. A receipt that quotes one is refused (`CHALLENGE_PAGE_AS_EVIDENCE`).
+- A page the user's local Agent Reach fetched that is a verification wall is not evidence: the agent marks the source "needs
+  you" in its limitations and moves on. A receipt that quotes one is refused (`CHALLENGE_PAGE_AS_EVIDENCE`).
 - Settings (in `.env`, live after a bounce):
   - `POLYMATH_ACQUISITION=0` switches it off;
   - `POLYMATH_ACQUISITION_OPENCLI` names the binary;
   - `POLYMATH_ACQUISITION_CONCURRENCY` (default 2) bounds parallel reads;
   - `CJ_API_KEY`: CJ Dropshipping's API 2.0 key (My CJ > Authorization > API); cjdropshipping.com listings then come from CJ's
     API, and the supplier tools below work;
-  - `SEARXNG_URL` (empty = `http://127.0.0.1:8888`, `off` = never): the local SearXNG that finds alibaba.com listings;
-    `SEARXNG_SECRET` is its own secret (any long random value, e.g. `openssl rand -hex 32`). Start it once with
-    `docker compose up -d searxng` (a compose service on loopback only; `deployment/searxng/settings.yml`).
+  - alibaba.com needs nothing here: this host never reads it (the user's own Agent Reach does). `SEARXNG_URL`, `SEARXNG_SECRET`
+    and the compose service `searxng` are no longer used by the code; removing them is a separate owner decision.
 
-**Supplier tools (owner key only, read-only).** Any harness connected with the owner key also gets:
-- `supplier_search(query, source="cj", limit=10)`: `source="cj"` searches CJ's catalogue through CJ's official API;
-  `source="alibaba"` finds alibaba.com product pages through the local SearXNG (snippet-level data). The answer has the same
-  shape as `research_acquire`'s listings.
+**Supplier tools (read-only, every key).** Any connected harness, a friend's key included, gets:
+- `supplier_search(query, source="cj", limit=10)`: `source="cj"` searches CJ Dropshipping's catalogue through CJ's official API
+  on this host's CJ account; `source="alibaba"` is never searched on this host: it answers `AGENT_REACH_REQUIRED` with a
+  `fallback`. The answer has the same shape as `research_acquire`'s listings.
 - `supplier_product(product_id)`: CJ's product details and every variant (SKU, options, weight, price, stock by country).
 - `supplier_freight(variant_id, country, quantity=1, from_country="CN")`: CJ's freight quote (carrier, cost, delivery days).
 - `supplier_warehouses()`: CJ's warehouses (the countries a freight quote can start from).
+- `supplier_parse(site, raw_text)`: the raw output of ONE local Agent Reach command per call (unedited, at most 200000 bytes)
+  turned into listings in `supplier_search`'s shape (`site` = the fallback's `submit.arguments.site`). Status `OK`, `EMPTY` or
+  `HUMAN_CHECK` (every page was a verification page); `refused` lists each page left out ({url, code, why}: `HUMAN_CHECK`,
+  `OFF_SITE`, `NOT_A_PRODUCT_PAGE`, `DUPLICATE`, `OVER_LIMIT`), and `next` gives, after a search-result output, the exact
+  page-read command for each product found.
 
-They spend the owner's CJ account and quota, so a friend's key is refused (403), and nothing in them orders, pays, lists or
-disputes: they call CJ's product, freight and warehouse reads only. CJ's own MCP server is not used, because its token also
-reaches orders, payments and disputes.
+Every CJ call runs on the owner's CJ account, paced for all callers (one call at a time, about one a second). A non-owner key is
+held to fair use: 30 supplier calls a minute (the default) and one CJ call at a time, else 429 `SUPPLIER_RATE_LIMITED` or
+`SUPPLIER_BUSY` with `Retry-After`. Every supplier answer carries `status`, `reason_code` (null when all went well, else
+`CJ_NO_KEY`, `CJ_API_DISABLED`, `CJ_AUTH`, `CJ_REFUSED`, `CJ_RATE_LIMITED`, `CJ_NETWORK`, `CJ_QUOTA`, `CJ_SERVER_ERROR`,
+`CJ_BAD_REPLY`, `CJ_BAD_REQUEST`, `CJ_ERROR`, `CJ_EMPTY`, `ALIBABA_AGENT_REACH_ONLY` or `HUMAN_CHECK`) and `fallback`. A failed
+`supplier_search` or `supplier_product` (and Alibaba, always) answers with a `fallback` {kind `AGENT_REACH`, reason_code, why,
+run_on, never, install{repo, verify}, commands, submit, walls}: its `commands` are steps {run, what, for_each, then}; the agent
+executes each `run` on the user's own machine in their local Agent Reach (once per `for_each` item), then does its `then` (sends
+the raw output to `supplier_parse`). `supplier_freight` and `supplier_warehouses` answer a failure with `fallback: null`: nothing
+on the user's side can get CJ's freight quotes or warehouse list. The agent never uses its built-in web search, web fetch or
+browser instead. A user with no terminal (claude.ai, the web link) gets the CJ API results only. Nothing in these tools orders,
+pays, lists or disputes: they call CJ's product, freight and warehouse reads only. CJ's own MCP server is not used, because its
+token also reaches orders, payments and disputes.
 
 ## 4. Product connectors (Claude.ai / Grok / ChatGPT)
 
 **Friends (FRIENDS-ACCESS-V1, 2026-09-26).** A friend signs in at `https://rag.kingsleylab.xyz` with the username and password the
 owner created for them, opens **Settings → API keys → Create key**, and copies the prompt shown (their key is already in it) into
-their agent. Each friend holds up to 3 active keys and can revoke them there; the owner manages friends (and can revoke any friend
-key) in the same Settings screen. A friend's key reaches the friend's libraries only, never `upload_document`, `research_acquire`
-or the `supplier_*` tools.
+their agent; claude.ai takes the connector link shown with it (`https://mcp.kingsleylab.xyz/k/<key>/mcp`, below). Each friend
+holds up to 3 active keys and can revoke them there; the owner manages friends (and can revoke any friend key) in the same Settings
+screen. A friend's key reaches the friend's libraries (every library, when the owner chose that), `product_search` and the
+read-only `supplier_*` tools, never `upload_document` or `research_acquire`.
 
 
 All three ingest the same remote MCP URL:
@@ -245,7 +281,8 @@ All three ingest the same remote MCP URL:
    key rides in the path: Server A's outermost layer (`KeyInPath`) moves it into `Authorization: Bearer <key>` and rewrites the
    path to `/mcp` before anything logs it, so the gate judges it exactly like a header key (the owner key = full access; a
    friend's key = that friend's scopes). The owner copies the finished URL from **Settings → API key for another computer →
-   Copy Claude connector URL**; a friend builds it from their own key. The URL IS the key: whoever holds it has that key's
+   Copy Claude connector URL**; a friend gets it with each new key (`connector_url`, also in the prompt). The URL IS the key:
+   whoever holds it has that key's
    access. `/.well-known/*` answers 404 (no OAuth here), so the connector does not go looking for an OAuth login.
    (Messages-API alternative: the MCP connector feature calls `https://<host>/mcp` server-side with the header and allow/deny
    tool lists.)
@@ -260,4 +297,5 @@ keyless `--http` server answers only `127.0.0.1:<port>` and
 The OWNER key is `.env` `POLYMATH_MCP_API_KEY` (admin; never hand it to anyone). The file `~/PolymathRuntime/polymath-v4-mcp.key` is STALE: the server answers it 401. A friend gets a key of their own, scoped to their corpora: `scripts/mcp_principals.py add … --profile friend --key-out …` (see that script).
 
 Abstention semantics carry through every shape: `insufficient_evidence`
-is an honest verdict the agent must relay, not an error to retry.
+is an honest verdict the agent must relay, not an error to retry (a
+product question goes to `product_search` instead).

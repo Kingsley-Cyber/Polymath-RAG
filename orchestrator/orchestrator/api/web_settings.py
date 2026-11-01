@@ -10,6 +10,12 @@ ONE-PROFILE (the owner, 2026-09-28: "just keep it 1 profile ... copy and paste s
 should be good enough"): the owner's Settings offer ONE command, `scripts/connect_agents.sh`, that connects the Mac's Claude Code and
 Codex with the admin key read from `.env` on the Mac itself (the key never reaches a browser), and a key-free prompt to paste into
 the agent. Nothing is created.
+
+PRODUCT-SEARCH-E2E (the owner, 2026-11-01: "users of the connector and link works seamlessly as me"): every connect prompt tells the
+agent the same rules the MCP servers do — product questions go to product_search, live-web reads are the user's LOCAL Agent Reach
+(never the agent's built-in web search), the agent drives every governed step — and every key, a friend's too, comes with the
+key-in-URL connector link claude.ai needs (it cannot send a header; FRIEND-JOURNEY F7). "Every library" for a friend is stored as
+the wildcard `*` and resolved per request, so a library added later reaches them (F3).
 """
 from __future__ import annotations
 
@@ -28,6 +34,11 @@ from orchestrator import web_accounts as W
 
 router = APIRouter()
 KEY_PLACEHOLDER = "<YOUR_KEY>"
+#: F3: "every library" — stored as this wildcard and resolved per request (a library the owner adds later reaches the friend);
+#: the same token as polymath_shared.query_scope.ALL_LIBRARIES, which web_scope / web_accounts resolve (pinned by a test)
+ALL_LIBRARIES = "*"
+AGENT_REACH_REPO = "https://github.com/Panniantong/Agent-Reach"
+AGENT_REACH_VERIFY = "agent-reach doctor --json"
 
 
 class KeyBody(BaseModel):
@@ -37,7 +48,7 @@ class KeyBody(BaseModel):
 class FriendBody(BaseModel):
     username: str = Field(min_length=2, max_length=32)
     display_name: str = Field(default="", max_length=80)
-    corpus_ids: list[str] | None = None            # None = every shared library (the owner's "everything")
+    corpus_ids: list[str] | None = None            # None = every library: stored as ["*"] (ALL_LIBRARIES), resolved per request
     adapter_ids: list[str] | None = None           # None = every adapter
 
 
@@ -70,10 +81,11 @@ def mcp_url() -> str:
     return os.environ.get("POLYMATH_PUBLIC_MCP_URL", "https://mcp.kingsleylab.xyz/mcp")
 
 
-def connector_url(key: str) -> str:
+def connector_url(key: str, url: str | None = None) -> str:
     """CLAUDE-CONNECTOR-URL: claude.ai's custom connector takes only a URL, so the key rides in the path (`/k/<key>/mcp`);
-    MCP Server A moves it into the Authorization header before anything else sees the request (`mcp_server.KeyInPath`)."""
-    base = mcp_url().rstrip("/")
+    MCP Server A moves it into the Authorization header before anything else sees the request (`mcp_server.KeyInPath`).
+    `url` = the MCP URL to build it from (default: this server's public one)."""
+    base = (url or mcp_url()).rstrip("/")
     return f"{base[:-len('/mcp')] if base.endswith('/mcp') else base}/k/{key}/mcp"
 
 
@@ -86,25 +98,34 @@ def connect_command() -> str:
     return f"bash {shlex.quote(str(CONNECT_SCRIPT))}"
 
 
+def library_list(libraries: list[str]) -> str:
+    """How a prompt names the libraries open to the agent; the wildcard (every library, F3) is said in words."""
+    named = [c for c in libraries if c != ALL_LIBRARIES]
+    if ALL_LIBRARIES in libraries:
+        return "every library I share (list_corpora names them)" + (f", plus {', '.join(named)}" if named else "")
+    return ", ".join(named) if named else "(none yet)"
+
+
 def usage_lines(libraries: list[str], private: str | None, *, owner: bool) -> str:
-    """The "How to use it" steps, the same for the owner's key-free prompt and a friend's connect prompt."""
-    libs = ", ".join(libraries) if libraries else "(none yet)"
+    """The "How to use it" steps, the same for the owner's key-free prompt and a friend's connect prompt. PRODUCT-SEARCH-E2E:
+    the same rules the MCP servers' playbook gives (polymath_shared.mcp_retrieval.playbook)."""
+    libs = library_list(libraries)
     own = f"Add documents to your own library ({private}) with upload_text." if private else "Add documents with upload_text or upload_document."
-    web = ("Research steps need your own web tools (search, browse)." if owner
-           else "Research steps need your OWN web tools (search, browse); Polymath's web reader is not shared.")
-    supplier = ("The supplier tools (supplier_search, supplier_product, supplier_freight, supplier_warehouses) are read-only: they "
-                "use my CJ account and quota." if owner else
-                "The supplier tools (supplier_search, supplier_product, supplier_freight, supplier_warehouses) are read-only and "
-                "owner-only: they use my CJ account and quota, so another key is refused (403).")
+    reader = "" if owner else " Polymath's web reader is not shared, so research always runs on my machine."
+    account = "my CJ account" if owner else "Polymath's CJ account"
+    supplier = (f"The supplier tools (supplier_search, supplier_product, supplier_freight, supplier_warehouses, supplier_parse) are "
+                f"read-only: CJ calls run on {account}, paced one at a time for everyone, so ask once with a good query.")
     research = ("; polymath_deep_research = a cited research report (it takes minutes)" if owner else
                 "; polymath_deep_research = a cited research report (minutes; only when my key allows it)")
     return f"""How to use it
-1. Call list_corpora to see the libraries open to me: {libs}. Always pass one of them as corpus_id.
+1. Call list_corpora to see the libraries open to me: {libs}. Pass one of them as corpus_id (product_search may leave it out); any library with query_ready true works, for product questions too (no niche library needed).
 2. Questions: polymath_search = one direct search; polymath_explore = planned evidence to reason over yourself; polymath_answer = a written, cited answer; polymath_compare = one question through several modes{research}. Each takes a mode: FAST, HYBRID (default), GRAPH, WILDCARD or GNN (the tool descriptions say what each does).
 3. {own}
-4. Product research: first read the prompt run_governed_research (or the resource polymath://adapter/guide). Then adapter_list, adapter_start (put the libraries in request_options.corpus_ids), loop adapter_next / adapter_submit, then adapter_result. {web}
-5. {supplier}
-6. "insufficient_evidence" is an honest answer: report it, do not retry blindly."""
+4. Product questions (find products, what to sell, suppliers for X): call product_search; name a library when you know it, otherwise leave corpus_id out and every library open to me is searched. It returns Polymath's answer with product ideas from the library and CJ Dropshipping finds for each. Show me those, then offer the full research run (step 6); never start it unasked.
+5. Web: never use your built-in web search, web fetch or browser for this (bot detection blocks them). When a result carries a `fallback` (CJ failed or found nothing; Alibaba always), use Agent Reach on my own machine (install: {AGENT_REACH_REPO}; check: {AGENT_REACH_VERIFY}): execute each command's `run` (once per `for_each` item when it has one), then do its `then` (send the raw output to supplier_parse). If you have no terminal (claude.ai, the web link), give me the CJ results only and tell me the rest needs a local agent.{reader}
+6. Full product research: first read the prompt run_governed_research (or the resource polymath://adapter/guide). Then adapter_list, adapter_start (put the libraries in request_options.corpus_ids), loop adapter_next / adapter_submit, then adapter_result. You answer every reasoning step yourself; each research step carries the exact Agent Reach commands to run on my machine.
+7. {supplier}
+8. "insufficient_evidence" on a library question is an honest answer: report it, do not retry blindly."""
 
 
 def owner_prompt(libraries: list[str]) -> str:
@@ -120,6 +141,7 @@ def connect_prompt(key: str, libraries: list[str], private: str | None, url: str
     main key for another computer. Harness-neutral; the setup lines follow mcp_server/CONNECTORS.md (each command is safe to run
     again: the old entry is replaced; Codex keeps the key as a fixed header, so the Codex app sends it too)."""
     url = url or mcp_url()
+    link = connector_url(key, url)                  # F7: every key, a friend's too, gets the link claude.ai needs
     care = ("Keep the key private: whoever holds it has my full access (Settings on the Mac shows it; changing it means a new key "
             "in the server's .env)." if owner else "Keep the key private: whoever holds it acts as me. I can revoke it in Settings.")
     return f"""You can use my Polymath research library through MCP. Connect to it, then use its tools for my questions.
@@ -128,13 +150,15 @@ Connect
 - MCP server URL: {url}
 - Transport: Streamable HTTP
 - Header: Authorization: Bearer {key}
+- Connector link (the key is inside it; for a client that takes only a URL): {link}
 
 Setup (pick your harness; each command is safe to run again)
 - Claude Code: claude mcp remove polymath -s user; claude mcp add -s user -t http polymath {url} -H "Authorization: Bearer {key}"
 - Codex: codex mcp remove polymath; then add to ~/.codex/config.toml:  [mcp_servers.polymath]  url = "{url}"  http_headers = {{ Authorization = "Bearer {key}" }}
 - Gemini CLI: gemini mcp add --transport http --scope user --header "Authorization: Bearer {key}" polymath {url}
 - OpenCode: opencode mcp add polymath --url {url} --header "Authorization=Bearer {key}"
-- Hermes, Claude.ai, ChatGPT or any other MCP client: add a remote MCP server with the URL and header above.
+- Claude.ai (web, desktop or phone): Settings > Connectors > Add custom connector, paste the connector link as its URL and add nothing else. Claude.ai cannot send a header; the link already carries the key.
+- Hermes, ChatGPT or any other MCP client: add a remote MCP server with the URL and header above (or the connector link, if it takes only a URL).
 - After adding it, restart the agent (Claude Code: /mcp shows it connected) so the tools load.
 - If you get HTTP 403 before any login, your client's User-Agent looks like a bot to Cloudflare: use a normal client or set a User-Agent.
 
@@ -170,7 +194,7 @@ def create_my_key(body: KeyBody, request: Request) -> JSONResponse:
         raise _refuse(409 if exc.code == "KEY_LIMIT" else 400, exc.code, str(exc)) from None
     rec = _record(REGISTRY.get() or {}, ident.principal_id) or {}
     private = W.private_corpus_for(ident.username)
-    return _no_store({"key": raw, **key, "shown_once": True,
+    return _no_store({"key": raw, **key, "shown_once": True, "connector_url": connector_url(raw),
                       "prompt": connect_prompt(raw, sorted(rec.get("corpus_ids") or []), private)}, status=201)
 
 
@@ -200,7 +224,8 @@ def prompt_template(request: Request) -> JSONResponse:
     else:
         rec = _record(REGISTRY.get() or {}, ident.principal_id) or {}
         text = connect_prompt(KEY_PLACEHOLDER, sorted(rec.get("corpus_ids") or []), W.private_corpus_for(ident.username))
-    return _no_store({"prompt": text, "placeholder": KEY_PLACEHOLDER, "mcp_url": mcp_url()})
+    return _no_store({"prompt": text, "placeholder": KEY_PLACEHOLDER, "mcp_url": mcp_url(),
+                      "connector_url": connector_url(KEY_PLACEHOLDER)})
 
 
 @router.get("/keys/owner")
@@ -237,9 +262,10 @@ def _adapters() -> list[str]:
 
 
 def friend_defaults() -> tuple[list[str], list[str]]:
-    """What a friend gets unless the owner narrows it: (every shared library, every adapter). The owner's Add friend and a
-    friend's own sign-up (web_auth /auth/register) start from the same two lists."""
-    return _shared_libraries(), _adapters()
+    """What a friend gets unless the owner narrows it: (every library, every adapter). The owner's Add friend and a friend's own
+    sign-up (web_auth /auth/register) start from the same two lists. F3: "every library" is the wildcard [ALL_LIBRARIES],
+    resolved per request (never another friend's private library), not a snapshot of today's list."""
+    return [ALL_LIBRARIES], _adapters()
 
 
 def _require_owner(request: Request) -> None:
@@ -258,7 +284,7 @@ def list_friends(request: Request) -> JSONResponse:
 @router.post("/admin/friends")
 def add_friend(body: FriendBody, request: Request) -> JSONResponse:
     _require_owner(request)
-    libraries = body.corpus_ids if body.corpus_ids is not None else _shared_libraries()
+    libraries = body.corpus_ids if body.corpus_ids is not None else [ALL_LIBRARIES]      # F3: the same default as friend_defaults
     foreign = [c for c in libraries if str(c).startswith("fr-")]
     if foreign:
         raise _refuse(400, "PRIVATE_LIBRARY", "another friend's private library cannot be shared")

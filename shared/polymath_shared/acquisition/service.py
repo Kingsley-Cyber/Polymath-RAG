@@ -26,10 +26,14 @@ What a call may do, and nothing else:
 The result is receipt-ready: `sources` holds one row per (page, publish date), verbatim `items` point at them, and `tool_trace` holds
 one row. It is NOT evidence. The harness still states each observation's claim, role and hypotheses and submits a
 HarnessResearchReceiptV1 with adapter_submit. TrailSignal decides what is admitted.
-SUPPLIER-APIS (2026-09-27): a supplier site's listings may come from its official API or from search-engine results instead of its
-own search page (`listing_apis`): the backend says how it read (`backend_notes`, kept in `limitations` in every state) and a failed
-API falls back to the host browser, said and counted. A verification wall's text is never a listing or a search row
-(`challenge.looks_like_challenge`)."""
+SUPPLIER-APIS (2026-09-27): a supplier site's listings may come from its official API instead of its own search page
+(`listing_apis`): the backend says how it read (`backend_notes`, kept in `limitations` in every state) and a failed API falls back
+to the host browser, said and counted. A verification wall's text is never a listing or a search row
+(`challenge.looks_like_challenge`).
+PRODUCT-SEARCH-E2E (the owner, 2026-11-01: "alibaba is strictly agent reach"): a listing search on alibaba.com reads NOTHING on this
+host (no search engine, no host browser): it answers AGENT_REACH_REQUIRED with a `fallback` (`agent_reach.fallback`: the commands
+the user's agent runs on the user's own machine, and supplier_parse to send their output back), spends no query of the budget, and
+stays inside the open research step like any read."""
 from __future__ import annotations
 
 import hashlib
@@ -70,6 +74,8 @@ COMMENT_PAGES = (
 #: listings: search pages on these sites only; the page URL is built HERE from the query, never taken from the caller
 LISTING_SITES = {"alibaba.com": ("supplier_listing", "alibaba_listings"), "cjdropshipping.com": ("supplier_listing", "cj_listings"),
                  "amazon.com": ("marketplace_listing", "amazon_listings")}
+#: listing sites this host never reads: the user's own Agent Reach does (PRODUCT-SEARCH-E2E, the owner 2026-11-01)
+AGENT_REACH_SITES = frozenset({"alibaba.com"})
 _HOST = re.compile(r"^(?:www\.)?([a-z0-9-]+(?:\.[a-z0-9-]+)+)$")
 
 
@@ -222,7 +228,10 @@ def catalog(host: dict[str, Any] | None = None) -> dict[str, Any]:
                              "yields": "one source per (page, publish date) + verbatim comments, each with its own date and its precision"},
                 "listings": {"target": "a search query", "site": sorted(LISTING_SITES),
                              "yields": "one source per listing + the listing as shown (title, price as listed; a supplier site adds the "
-                                       "minimum order and the supplier, a marketplace adds the rating and the ratings count as shown)"}},
+                                       "minimum order and the supplier, a marketplace adds the rating and the ratings count as shown)",
+                             "agent_reach_only": sorted(AGENT_REACH_SITES),
+                             "agent_reach_only_yields": ("nothing read on this host: status AGENT_REACH_REQUIRED and a `fallback` with the "
+                                                         "commands to run on the user's own machine, whose output supplier_parse reads")}},
             "host": host or {}}
 
 
@@ -344,17 +353,47 @@ def shape(t: Target, raw: dict[str, Any], *, action: dict[str, Any], search_inte
 # ------------------------------------------------------------------------------------------------------------------ entry --
 def default_backend() -> Backend:
     """The host browser (OpenCLI), with the listing APIs this host is configured for in front of it (SUPPLIER-APIS: CJ's API with
-    `CJ_API_KEY`, SearXNG unless `SEARXNG_URL=off`); none configured = the browser backend itself, as before."""
+    `CJ_API_KEY`); none configured = the browser backend itself, as before."""
     from polymath_shared.acquisition import listing_apis, opencli
     if os.environ.get("POLYMATH_ACQUISITION", "1").strip() in ("0", "false", "off"):
         return opencli.Disabled("research acquisition is switched off on this host (POLYMATH_ACQUISITION=0)")
     return listing_apis.wrap(opencli.OpenCLIBackend(), os.environ)
 
 
+def agent_reach_handoff(t: Target, action: dict[str, Any], search_intent_id: str | None) -> dict[str, Any]:
+    """A listing search on a site this host never reads (AGENT_REACH_SITES): the acquisition result's shape with nothing read,
+    status AGENT_REACH_REQUIRED and the `fallback` the user's agent runs on the user's machine. No query of the budget is spent."""
+    from polymath_shared.acquisition import agent_reach
+    retrieved = now_iso()
+    key = str(action.get("action_id"))
+    with _USED_LOCK:
+        used = _USED.get(key, 0)
+    why = (f"{t.site} is read only by the user's own Agent Reach, never by this host (the owner's decision, 2026-11-01: no search "
+           "engine, no host browser, and never an agent's built-in web search or fetch, which meet bot checks)")
+    out: dict[str, Any] = {
+        "contract": CONTRACT, "run_id": action.get("run_id"), "action_id": action.get("action_id"), "operation": t.operation,
+        "site": t.site, "target": t.query, "retrieved_at": retrieved, "status": "AGENT_REACH_REQUIRED", "sources": [], "items": [],
+        "completeness": {"read": 0, "available": None, "complete": None},
+        "limitations": [f"{t.site}: nothing was read on this host; {why}",
+                        ("run fallback.commands on the user's machine and send each output to supplier_parse: its sources and items are "
+                         "receipt-ready (source_class supplier_listing; tool_class agent_reach.exa or agent_reach.jina for the tool trace)"),
+                        "nothing was read, so this call spent no query of the step's budget"],
+        "human_action": None,
+        "tool_trace": {"search_intent_id": search_intent_id, "tool_class": f"polymath.acquire/{t.operation}", "query_count": 0},
+        "budget": {"queries_used_here": used, "max_queries": int((action.get("budget") or {}).get("max_queries") or 20)},
+        "fallback": agent_reach.fallback(t.site or "", t.query, "ALIBABA_AGENT_REACH_ONLY", why)}
+    out["acquisition_id"] = "acq_" + _sha(f"{action.get('action_id')}|{t.operation}|{t.query}|{t.site}|{retrieved}")[:24]
+    return out
+
+
 def acquire(*, principal_id: str | None, action: dict[str, Any] | None, operation: str, target: str, site: str | None = None,
             search_intent_id: str | None = None, limit: int | None = None, backend: Backend | None = None) -> dict[str, Any]:
     authorize(principal_id)
     t = resolve(operation, target, site)
+    if t.operation == "listings" and t.site in AGENT_REACH_SITES:
+        bind(action, t, search_intent_id)
+        _limit(limit)
+        return agent_reach_handoff(t, action or {}, search_intent_id)
     backend = backend or default_backend()
     if t.operation == "catalog":
         return catalog(backend.status())

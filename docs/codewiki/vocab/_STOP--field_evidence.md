@@ -12,7 +12,7 @@ AUTHORITY: `adapters/ecommerce/python/field_evidence.py:32` :: `_STOP` (count: 3
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:154` | 4/33 | `about`, `being`, `could`, `describe`, `does`, `from`, `have`, `intermediate`, `into`, `mention`, `more`, `most` |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:82` | 7/33 | `about`, `being`, `could`, `describe`, `does`, `from`, `have`, `intermediate`, `into`, `mention`, `most`, `only` |
 | `adapters/ecommerce/python/controller.py` | `adapters/ecommerce/python/controller.py:165` | 4/33 | `about`, `being`, `communities`, `could`, `describe`, `does`, `have`, `intermediate`, `into`, `mention`, `more`, `most` |
 | `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:114` | 16/33 | `about`, `being`, `could`, `describe`, `have`, `intermediate`, `mention`, `missing`, `more`, `most`, `only`, `report` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:128` | 29/33 | `being`, `more`, `most`, `only` |
@@ -24,7 +24,7 @@ AUTHORITY: `adapters/ecommerce/python/field_evidence.py:32` :: `_STOP` (count: 3
 | `adapters/ecommerce/python/run_triage.py` | `adapters/ecommerce/python/run_triage.py:58` | 4/33 | `about`, `being`, `communities`, `could`, `describe`, `does`, `from`, `have`, `intermediate`, `into`, `mention`, `missing` |
 | `frontend-v2/src/components/deep/DeepReport.tsx` | `frontend-v2/src/components/deep/DeepReport.tsx:21` | 3/33 | `about`, `being`, `communities`, `could`, `describe`, `does`, `from`, `intermediate`, `into`, `mention`, `missing`, `more` |
 | `orchestrator/orchestrator/api/ask.py` | `orchestrator/orchestrator/api/ask.py:58` | 6/33 | `about`, `being`, `communities`, `could`, `describe`, `evidence`, `from`, `have`, `intermediate`, `into`, `mention`, `missing` |
-| `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:162` | 3/33 | `being`, `communities`, `could`, `describe`, `does`, `from`, `have`, `intermediate`, `into`, `mention`, `more`, `most` |
+| `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:240` | 3/33 | `being`, `communities`, `could`, `describe`, `does`, `from`, `have`, `intermediate`, `into`, `mention`, `more`, `most` |
 | `shared/polymath_shared/candidate_engine.py` | `shared/polymath_shared/candidate_engine.py:1619` | 16/33 | `about`, `being`, `communities`, `could`, `describe`, `does`, `evidence`, `have`, `intermediate`, `mention`, `missing`, `more` |
 | `shared/polymath_shared/chat_plan.py` | `shared/polymath_shared/chat_plan.py:393` | 5/33 | `being`, `communities`, `could`, `describe`, `does`, `evidence`, `have`, `intermediate`, `into`, `mention`, `missing`, `more` |
 | `shared/polymath_shared/compiler_context.py` | `shared/polymath_shared/compiler_context.py:50` | 9/33 | `being`, `communities`, `could`, `describe`, `evidence`, `intermediate`, `mention`, `missing`, `more`, `most`, `only`, `people` |

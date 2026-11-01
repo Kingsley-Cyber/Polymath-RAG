@@ -81,6 +81,18 @@ function ConnectCard() {
   );
 }
 
+/** CLAUDE-CONNECTOR-URL: claude.ai's "Add custom connector" takes only a URL (it cannot send a header), so a key's connector link
+ *  carries the key in its path. The owner's main key and a friend's new key offer it the same way: this button and this line. */
+const CONNECTOR_HELP = "Claude app or claude.ai: Settings → Connectors → Add custom connector, paste the connector URL. It contains the key, so treat it like the key.";
+
+function ConnectorButton({ copied, onCopy }: { copied: boolean; onCopy: () => void }) {
+  return (
+    <button type="button" className="btn" aria-label={copied ? "Copied" : "Copy Claude connector URL"} onClick={onCopy}>
+      <Icon name={copied ? "check" : "plug"} size={15} />{copied ? "Copied" : "Copy Claude connector URL"}
+    </button>
+  );
+}
+
 /** OWNER-KEY-VISIBLE (the owner, 2026-09-30: "i need them to have access to main key. so in the settings have a api key
  *  visibility settings, to copy and paste to get key") — the main key for an agent on another computer: hidden until Show, a Copy
  *  button, and the ready prompt with the key in it. The key is fetched only on the first Show or Copy, never on page load. */
@@ -141,26 +153,49 @@ function OwnerKeyCard() {
         <button type="button" className="btn" aria-label={copied === "url" ? "Copied" : "Copy server address"} onClick={() => void copy("url")}>
           <Icon name={copied === "url" ? "check" : "copy"} size={15} />{copied === "url" ? "Copied" : "Copy server address"}
         </button>
-        <button type="button" className="btn" aria-label={copied === "connector" ? "Copied" : "Copy Claude connector URL"} onClick={() => void copy("connector")}>
-          <Icon name={copied === "connector" ? "check" : "plug"} size={15} />{copied === "connector" ? "Copied" : "Copy Claude connector URL"}
-        </button>
+        <ConnectorButton copied={copied === "connector"} onCopy={() => void copy("connector")} />
       </div>
-      <p className="settings__lead">Claude app or claude.ai: Settings → Connectors → Add custom connector, paste the connector URL. It contains the key, so treat it like the key.</p>
+      <p className="settings__lead">{CONNECTOR_HELP}</p>
     </section>
   );
 }
 
-/** A friend's key, shown ONCE with the prompt filled in (their own account; the owner's page has no keys). */
+/** A friend's key, shown ONCE with the prompt filled in (their own account; the owner's page has no keys). PRODUCT-SEARCH-E2E
+ *  (FRIEND-JOURNEY F7): with the key's claude.ai connector link and its copy button, as the owner's key has them; the prompt is
+ *  the server's own text, copied as written (its claude.ai line says to paste that link, never to add a header). */
 function ShownOnce({ created, onDone }: { created: CreatedKey; onDone: () => void }) {
+  const link = created.connector_url ?? "";
+  const [copied, setCopied] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  async function copyLink() {
+    const ok = await copyText(link);
+    setFailed(!ok);
+    if (!ok) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
     <div className="card stack settings__once">
       <div className="banner banner--info">
-        This key is shown only now. Copy it (or the prompt, which contains it) before closing this box.
+        This key is shown only now. Copy it (or the prompt{link ? " or the connector URL, which contain it" : ", which contains it"}) before closing this box.
       </div>
       <div className="field">
         <span className="label">Your new key{created.label ? ` — ${created.label}` : ""}</span>
         <Secret value={created.key} what="key" />
       </div>
+      {link && (
+        <div className="field">
+          <span className="label">Claude connector URL (key included)</span>
+          <div className="keyrow">
+            <code className="keyrow__value" aria-label="Claude connector URL">{link}</code>
+            <ConnectorButton copied={copied} onCopy={() => void copyLink()} />
+          </div>
+          <p className="settings__lead">{CONNECTOR_HELP}</p>
+          {failed && <p className="copyfield__fail" role="alert">The browser blocked copying: select the URL and press ⌘C.</p>}
+        </div>
+      )}
       <div className="field">
         <span className="label">Prompt for your agent (key included)</span>
         <Secret value={created.prompt} what="prompt" block rows={12} />

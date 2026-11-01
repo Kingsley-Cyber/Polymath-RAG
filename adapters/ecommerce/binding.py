@@ -68,7 +68,7 @@ def _op_validate_bridge(req: dict[str, Any]) -> dict[str, Any]:
     named = [str(h.get("hypothesis_id") or "") for h in hyps]
     bridge_errors += [f"{hid}: {n} bridges name this hypothesis — write ONE bridge per live hypothesis"
                       for hid, n in collections.Counter(named).items() if hid and n > 1]
-    unreachable = False
+    unreachable, needs = False, None
     if isinstance(ins.get("live_hypotheses"), list):
         live = [str(h["hypothesis_id"]) for h in ins["live_hypotheses"] if isinstance(h, dict) and h.get("hypothesis_id") and h.get("status") not in ("killed", "merged")]
         bridge_errors += [f"{hid}: not a live hypothesis in the ledger — bridge only the hypotheses in context.hypotheses" for hid in dict.fromkeys(named) if hid and hid not in live]
@@ -77,7 +77,11 @@ def _op_validate_bridge(req: dict[str, Any]) -> dict[str, Any]:
         lo, hi = pp.get("min_hypotheses", 3), pp.get("max_hypotheses", 6)
         if not lo <= len(live) <= hi:
             unreachable = True
-            portfolio_errors.append(f"portfolio: the ledger holds {len(live)} live hypotheses — need {lo}-{hi}; no bridge can change that (generate or merge hypotheses)")
+            # F2: WHICH way the ledger is out of bounds, as data a manifest branches on — too few returns the run to generation (θ can add
+            # hypotheses); too many cannot be repaired by θ at all (only φ merges or kills) and is never looped back to the bridges
+            needs = "more" if len(live) < lo else "fewer"
+            portfolio_errors.append(f"portfolio: the ledger holds {len(live)} live hypotheses — need {lo}-{hi}; no bridge can change that "
+                                    + ("(generate more hypotheses)" if needs == "more" else "(only TrailSignal's judgement can merge or kill hypotheses)"))
     anchor_errors: list[str] = []
     clusters = (req.get("inputs") or {}).get("lived_clusters")
     if isinstance(clusters, list):                 # after admission: a hypothesis names ANCHOR clusters or declares CORPUS_ONLY
@@ -85,7 +89,8 @@ def _op_validate_bridge(req: dict[str, Any]) -> dict[str, Any]:
         state = _engine_state(lived_clusters=clusters)
         anchor_errors = lived_world.validate_hypothesis_anchors(hyps, state, policies) + lived_world.validate_portfolio_anchors(hyps, state, policies)
     return {"admissible": not bridge_errors and not portfolio_errors and not anchor_errors, "bridge_errors": bridge_errors,
-            "portfolio_errors": portfolio_errors, "anchor_errors": anchor_errors, "hypotheses_checked": len(hyps), "portfolio_unreachable": unreachable}
+            "portfolio_errors": portfolio_errors, "anchor_errors": anchor_errors, "hypotheses_checked": len(hyps), "portfolio_unreachable": unreachable,
+            "portfolio_needs": needs}
 
 
 def _inputs(req: dict[str, Any]) -> dict[str, Any]:
@@ -515,7 +520,17 @@ def _op_research_plan(req: dict[str, Any]) -> dict[str, Any]:
     return {"research_directive": out, "planned": {"trail_intents": len(trail_intents), "channel_intents": len(added), "subjects": len(subjects),
                                                    "lead_batches": len(compiled) - len(subjects), "dropped_over_budget": dropped,
                                                    "channel_cannot_serve_roles": unserved, "roles_asked": asked, "intent_cap": cap},
+            "agent_reach": _agent_reach(out["search_intents"], "AGENT_RESEARCH", policies, added),
             "governance_unchanged": all(out.get(k) == directive.get(k) for k in _DIRECTIVE_GOVERNANCE)}
+
+
+def _agent_reach(intents: list[dict[str, Any]], stage: str, policies: dict[str, Any], channel_intents: list[dict[str, Any]] | None = None,
+                 assigned: dict[str, str] | None = None, context: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+    """The `agent_reach` block beside a research step: every intent's channel and its exact local Agent Reach commands (executors'
+    channel table — data). A compiled channel intent keeps the channel it was compiled for; every other intent is mapped by roles."""
+    import executors
+    pinned = {i["intent_id"]: _channel_of(i) for i in channel_intents or [] if _channel_of(i)}
+    return executors.agent_reach_plan(intents, stage=stage, assigned={**pinned, **(assigned or {})}, context=context, policies=policies)
 
 
 def _semantic_research_plan(ins, directive, out, trail_intents, asked, cap, state, policies, views) -> dict[str, Any]:
@@ -581,8 +596,14 @@ def _semantic_research_plan(ins, directive, out, trail_intents, asked, cap, stat
                 return _neutral_intent(ti, q, served)
         return None
 
+    # gap S-17: TrailSignal's templates bound per hypothesis could fill the whole budget, and the live plan then carried NO channel intent —
+    # the harness got no place to search. Every channel that can serve the asked roles keeps one slot (the channel floor), on top of the
+    # bound templates when they already fill the budget; the floor is counted in `planned`, never silent
+    servable = {_channel_of(i) for qs in compiled for i in (_host(q) for q in qs) if i is not None}
+    floor = min(len(servable), 8)
     cap = max(len(bound), cap)
-    added, dropped, unserved = _round_robin([[_host(q) for q in qs] for qs in compiled], {i.get("intent_id") for i in bound}, cap - len(bound),
+    room = max(cap - len(bound), floor)
+    added, dropped, unserved = _round_robin([[_host(q) for q in qs] for qs in compiled], {i.get("intent_id") for i in bound}, room,
                                             channel_floor=True)
     for a in added:
         gid = a["intent_id"].rsplit(":", 1)[-1]
@@ -597,9 +618,10 @@ def _semantic_research_plan(ins, directive, out, trail_intents, asked, cap, stat
     return {"research_directive": out,
             "planned": {"trail_intents": len(trail_intents), "bound_trail_intents": len(bound), "channel_intents": len(added), "subjects": n_subjects,
                         "lead_batches": len(compiled) - n_subjects, "dropped_over_budget": dropped, "channel_cannot_serve_roles": unserved,
-                        "roles_asked": asked, "intent_cap": cap, "unresolved_slots": unresolved[:100], "compiler": "semantic.v1",
+                        "roles_asked": asked, "intent_cap": cap, "channel_floor": floor, "unresolved_slots": unresolved[:100], "compiler": "semantic.v1",
                         "refused_gaps": list((ins.get("research_gaps") or {}).get("refused") or [])[:50]},
             "intent_index": index[:200],
+            "agent_reach": _agent_reach(out["search_intents"], "AGENT_RESEARCH", policies, added),
             "governance_unchanged": all(out.get(k) == directive.get(k) for k in _DIRECTIVE_GOVERNANCE)}
 
 
@@ -724,7 +746,141 @@ def _op_supply_plan(req: dict[str, Any]) -> dict[str, Any]:
         out.update(research_directive=enriched, governance_unchanged=all(enriched.get(k) == directive.get(k) for k in _DIRECTIVE_GOVERNANCE),
                    planned={"trail_intents": len(trail_intents), "trail_templates_bound": bound_templates, "sourcing_intents": len(added), "jobs": len(plan), "dropped_over_budget": dropped,
                             "no_supply_intent_to_host": unserved, "unresolved": unresolved[:100], "intent_cap": cap})
+        # every intent's channel and commands (a sourcing intent keeps its job's channel; a bound Trail template is mapped by roles) — and
+        # the concept each one is for, so the receipt tags read `concept: pc_1`
+        concept_of = {i["intent_id"]: i["intent_id"].rsplit(":", 1)[-1] for i in added}
+        concept_of.update({i["intent_id"]: i["intent_id"].split(":")[1] for i in added if i["intent_id"].count(":") == 1})
+        context = {iid: {"concept_id": cid} for iid, cid in concept_of.items() if cid in {str(c.get("id")) for c in concepts}}
+        jobs_by_intent = {f"{host['intent_id']}:{job['channel']}:{job['concept_id']}"[:200]: job for job in plan} if host else {}
+        out["agent_reach"] = _agent_reach(enriched["search_intents"], "SUPPLIER_RESEARCH", policies, [i for i in added if i["intent_id"] in jobs_by_intent],
+                                          context=context)
+        mech_hyp = {m.get("id"): m.get("hypothesis_id") for m in mechs if isinstance(m, dict)}
+        out["host_lookups"] = _host_lookups(enriched["search_intents"], jobs_by_intent,
+                                            {str(c.get("id")): mech_hyp.get(c.get("mechanism_id")) or c.get("hypothesis_id") for c in concepts})
     return out
+
+
+def _host_lookups(intents: list[dict[str, Any]], jobs_by_intent: dict[str, dict[str, Any]], hyp_of: dict[str, Any]) -> list[dict[str, Any]]:
+    """PRODUCT-SEARCH-E2E (the owner: "cj dropshipping is api and agent reach cli"): the supplier reads the Polymath HOST makes before the
+    supply step reaches the agent — one per sourcing intent whose channel row names a `host_lookup` (data: the channel table), with the
+    concept's search terms. The runtime executes them through its allow-listed host tools and hands the results back to
+    `supply.draft_receipt`; a channel without a host lookup is the user's local Agent Reach only."""
+    import executors
+    rows = executors.channel_table()["channels"]
+    out = []
+    for it in intents:
+        job = jobs_by_intent.get(it.get("intent_id"))
+        spec = (rows.get(job["channel"]) or {}).get("host_lookup") if job else None
+        if not spec:
+            continue
+        query = " ".join(str(t) for t in job["search_terms"][:3]).strip()
+        if not query:
+            continue
+        out.append({"lookup_id": f"hl_{job['concept_id']}_{job['channel']}"[:120], "tool": spec["tool"],
+                    "args": {"source": spec.get("source"), "query": query[:300], "limit": int(spec.get("limit") or 10)},
+                    "tool_class": spec.get("tool_class") or "api", "intent_id": it["intent_id"], "channel": job["channel"],
+                    "concept_id": job["concept_id"], "hypothesis_id": hyp_of.get(str(job["concept_id"]))})
+    return out[:24]
+
+
+DRAFT_VERSION = "supplier_draft.v1"
+#: who drafted the receipt (the agent submits it under its OWN harness_id, after adding what its local Agent Reach found)
+DRAFT_HARNESS_ID = "polymath-host/supplier-api-draft"
+_API_OK = ("OK", "PARTIAL", "EMPTY")
+
+
+def _fallback_for(lookup: dict[str, Any], reason_code: str, why: str) -> dict[str, Any]:
+    """The hand-off to the user's own Agent Reach for one failed host read — the acquisition slice's shape ({kind: AGENT_REACH,
+    reason_code, why, commands[], install{...}}), built from the channel table when the host's result carried none."""
+    import executors
+    table = executors.channel_table()
+    row = (table.get("channels") or {}).get(str(lookup.get("channel") or "")) or {}
+    query = str((lookup.get("args") or {}).get("query") or "")
+    ar = table.get("agent_reach") or {}
+    cmds = [executors.render_command(c, {"query": executors._clean_query(query)}) for c in row.get("commands") or []]
+    parse = row.get("parse") or {}
+    return {"kind": "AGENT_REACH", "reason_code": reason_code, "why": why, "site": row.get("where"), "query": query or None,
+            "run_on": ar.get("run_on") or "the user's own machine", "never": list(ar.get("never") or [])[:1],
+            "install": {"repo": ar.get("repo"), "verify": ar.get("verify"), "command": ar.get("install"), "guide": ar.get("guide")},
+            "commands": [{"step": n + 1, "run": c, **({"then": parse.get("then")} if parse.get("then") else {})} for n, c in enumerate(cmds)],
+            "fill": dict(row.get("fill") or {}),
+            **({"submit": {"tool": parse.get("tool"), "arguments": {"site": parse.get("site"), "raw_text": "<one command's whole output, unedited>"}}}
+               if parse.get("tool") else {})}
+
+
+def _op_supply_draft_receipt(req: dict[str, Any]) -> dict[str, Any]:
+    """PRODUCT-SEARCH-E2E (the owner: "cj dropshipping is api and agent reach cli, and alibaba is strictly agent reach"; "prompt users to
+    install it on their end and use their agent reach setup if api fails"): the HOST's supplier reads for a supply step -> a DRAFT
+    HarnessResearchReceiptV1 for that part, built by the engine's own deterministic builder (`adapter_receipt.build_receipt`, the
+    supplier lane: price / MOQ through the engine's parsers, every listing tagged `listing:` · `supplier:` · `price as listed:` · `MOQ as
+    listed:` · `channel:` · `concept:` · `intent:`), plus, for every read that FAILED, the fallback to the user's local Agent Reach. The
+    draft is advice beside the step: the agent checks it, adds what Agent Reach found (Alibaba always comes that way), submits ONE
+    receipt — and TrailSignal alone admits. Nothing here decides or scores."""
+    import adapter_receipt
+
+    ins = _inputs(req)
+    action = ins.get("action") if isinstance(ins.get("action"), dict) else {}
+    lookups = [x for x in ins.get("lookups") or [] if isinstance(x, dict)]
+    started, completed = str(ins.get("started_at") or ""), str(ins.get("completed_at") or "")
+    hyp_live = set(action.get("hypothesis_ids") or [])
+    cands, trace, limitations, summary, fallbacks = [], [], [], [], {}
+    for lk in lookups:
+        res = lk.get("result") if isinstance(lk.get("result"), dict) else {}
+        status = str(res.get("status") or "UNAVAILABLE")
+        entry = {k: lk.get(k) for k in ("lookup_id", "intent_id", "concept_id", "channel")} | {"query": (lk.get("args") or {}).get("query"),
+                                                                                                "status": status, "items": 0}
+        if status in _API_OK:
+            trace.append({"search_intent_id": lk.get("intent_id"), "tool_class": lk.get("tool_class") or "api", "query_count": 1})
+            sources = {x.get("source_id"): x for x in res.get("sources") or [] if isinstance(x, dict)}
+            for it in res.get("items") or []:
+                if not isinstance(it, dict) or not isinstance(it.get("listing"), dict) or it.get("source_id") not in sources:
+                    continue
+                L, src = it["listing"], sources[it["source_id"]]
+                hyp = lk.get("hypothesis_id")
+                cands.append({"id": f"{lk.get('lookup_id')}:{L.get('product_id') or it.get('item_id')}", "url": src.get("url"),
+                              "retrieved_at": src.get("retrieved_at"), "published_at_if_known": src.get("published_at_if_known"),
+                              "hypothesis_ids": [hyp] if hyp in hyp_live else [], "supplier_name": L.get("supplier") or "none",
+                              "channel": lk.get("channel"), "product_name": L.get("title"), "price_raw": L.get("price_as_listed") or "",
+                              "moq_raw": L.get("minimum_order_as_listed") or "", "concept_id": lk.get("concept_id"), "intent_id": lk.get("intent_id")})
+                entry["items"] += 1
+            limitations += [str(x) for x in res.get("limitations") or [] if str(x).strip()]
+            if isinstance(res.get("fallback"), dict):          # the host's own hand-off for a read it could not complete (an empty answer too)
+                fallbacks[str(lk.get("intent_id"))] = res["fallback"]
+                entry["fallback"] = res["fallback"]
+        else:
+            why = "; ".join(str(x) for x in res.get("limitations") or [])[:500] or str((res.get("error") or {}).get("message") or "the host read failed")
+            code = str((res.get("error") or {}).get("code") or "") or ("SUPPLIER_API_" + status)
+            fb = res.get("fallback") if isinstance(res.get("fallback"), dict) else _fallback_for(lk, code, why)
+            fallbacks[str(lk.get("intent_id"))] = fb
+            entry["fallback"] = fb
+        summary.append(entry)
+    receipt, report = (None, None)
+    if cands:
+        lim = list(dict.fromkeys(limitations))[:20] + [
+            "drafted by the Polymath host from the supplier API's own catalogue data: check it, add what your local Agent Reach found, and "
+            "submit ONE receipt under your own harness_id"]
+        receipt, report = adapter_receipt.build_receipt(action, supplier_candidates=cands, harness_id=DRAFT_HARNESS_ID,
+                                                        started_at=started, completed_at=completed, tool_trace=trace, limitations=lim)
+    plan = ins.get("agent_reach") if isinstance(ins.get("agent_reach"), dict) else None
+    if plan:
+        plan = json.loads(json.dumps(plan))
+        api = {str(e.get("intent_id")): e for e in summary}
+        for entry in plan.get("per_intent") or []:
+            hit = api.get(str(entry.get("intent_id")))
+            if hit:
+                entry["host_api"] = {"status": hit["status"], "items": hit["items"],
+                                     "note": ("the host's API read is in the draft receipt (supplier_draft); these commands add what it missed"
+                                              if hit["status"] in _API_OK else "the host's API read FAILED: run these commands (see `fallback`)")}
+                if hit.get("fallback"):
+                    entry["fallback"] = hit["fallback"]
+    return {"supplier_draft": {"schema_version": DRAFT_VERSION, "receipt": receipt,
+                               "report": ({k: report[k] for k in ("observations", "sources", "omitted_by_reason", "errors", "roles")} if report else None),
+                               "lookups": summary, "fallbacks": fallbacks,
+                               "how_to_use": ("`receipt` is a valid HarnessResearchReceiptV1 for the host's supplier-API reads (null when they found "
+                                              "nothing). Keep its sources, observations and tool_trace rows, add the observations your local Agent "
+                                              "Reach commands produced (each with the receipt tags of its intent), set harness_id to yours, and submit "
+                                              "it as this step's ONE receipt. A lookup with a `fallback` failed: run its commands on the user's machine.")},
+            **({"agent_reach": plan} if plan else {})}
 
 
 def _concept_ref(tag: str | None, ids: dict[str, str]) -> str | None:
@@ -862,7 +1018,18 @@ def _op_product_reality_plan(req: dict[str, Any]) -> dict[str, Any]:
     out["search_intents"] = unslotted + added
     if not out["search_intents"]:
         raise Refusal("REALITY_PLAN_UNBOUND", "no product-reality job could be compiled: " + json.dumps(unresolved)[:600])
-    return {"research_directive": out, "reality_plan": jobs, "mechanism_notes": notes,
+    import executors
+    table = executors.channel_table()
+    stage_rows = [c for c in table["stages"]["PRODUCT_REALITY_CHECK"] if c in table["channels"]]
+    assigned, spread = {}, collections.Counter()
+    for j in jobs:                                   # a job's channel by its class (data: each row's `job_classes`), spread in job order
+        eligible = [c for c in stage_rows if j["job_class"] in (table["channels"][c].get("job_classes") or [])]
+        if eligible:
+            assigned[j["job_id"]] = eligible[spread[j["job_class"]] % len(eligible)]
+            spread[j["job_class"]] += 1
+    context = {j["job_id"]: {"concept_id": j["concept_id"], "variation_id": j.get("variation_id")} for j in jobs}
+    agent_reach = executors.agent_reach_plan(out["search_intents"], stage="PRODUCT_REALITY_CHECK", assigned=assigned, context=context, table=table)
+    return {"research_directive": out, "reality_plan": jobs, "mechanism_notes": notes, "agent_reach": agent_reach,
             "planned": {"trail_intents": len(trail_intents), "concepts": len(concepts), "jobs": len(jobs), "dropped_over_budget": dropped,
                         "concepts_without_a_job": sorted(set(names) - {j["concept_id"] for j in jobs}), "unresolved": unresolved[:100], "intent_cap": cap},
             "governance_unchanged": all(out.get(k) == directive.get(k) for k in _DIRECTIVE_GOVERNANCE)}
@@ -904,11 +1071,64 @@ def _op_refuse(req: dict[str, Any]) -> dict[str, Any]:
 def _op_no_signal(req: dict[str, Any]) -> dict[str, Any]:
     """NO_GENERATIVE_SIGNAL is a SUCCESS outcome (the engine's `signal_gate`, docs/07): most knowledge should produce zero products.
     A lawful interpretation that declares `generative_signal: false` ends the run HONESTLY here — a typed outcome saying why, before
-    any population, hypothesis, research or supply step; the interpretation itself stays in the run's records (gap A-03)."""
-    prim = _inputs(req).get("primitives") or {}
+    any population, hypothesis, research or supply step; the interpretation itself stays in the run's records (gap A-03). The genuine
+    refusal stays; it now also says, plainly, what to do next (F12): a requester's seed can be rewritten or left out, a corpus seed
+    means the corpora themselves carry nothing a product can come from."""
+    ins = _inputs(req)
+    prim = ins.get("primitives") or {}
     kept = [k for k in ("physical_jobs", "frictions", "latent_structures", "transferable_invariants") if isinstance(prim, dict) and prim.get(k)]
+    if ins.get("seed_origin") == "corpus":
+        nxt = ("Next: the seed was derived from the corpora, so these corpora hold no behavioural or physical signal for products — give a "
+               "seed naming a problem, an audience or a situation, or research other corpora.")
+    else:
+        import graph as graphmod
+        nxt = "Next: " + str(((graphmod.load_policies().get("seed_check") or {}).get("hint") or "")).strip()
     raise Refusal("NO_GENERATIVE_SIGNAL", "no behaviorally or physically useful signal in the source: the interpretation is retained as knowledge only"
-                  + (f" ({', '.join(kept)} recorded)" if kept else "") + "; no population, hypothesis, research or supply step ran")
+                  + (f" ({', '.join(kept)} recorded)" if kept else "") + "; no population, hypothesis, research or supply step ran. " + nxt)
+
+
+def _phrase_hits(text: str, vocabulary: list[str]) -> list[str]:
+    """The vocabulary entries `text` carries, matched on word boundaries (a phrase as a whole; `$` anywhere)."""
+    low = " " + re.sub(r"\s+", " ", str(text or "").lower()) + " "
+    hits = []
+    for v in vocabulary or []:
+        w = str(v).lower().strip()
+        if not w:
+            continue
+        if not re.search(r"[a-z0-9]", w):
+            hit = w in low
+        else:
+            hit = re.search(r"(?<![a-z0-9'])" + re.escape(w) + r"(?![a-z0-9])", low) is not None
+        if hit:
+            hits.append(w)
+    return hits
+
+
+def _op_seed_check(req: dict[str, Any]) -> dict[str, Any]:
+    """F12 (run adr_77b2b30e…: "Holiday gifts under $50…" ended NO_GENERATIVE_SIGNAL after retrieval, with no research step run): a seed
+    that is ONLY merchandising — a price, an occasion, a listicle word — and names no problem, audience, situation or activity cannot
+    generate a lived situation, so the start says so at once with a plain hint (rewrite as a problem / audience / situation, or leave the
+    seed out so the corpus proposes one). Deterministic over the policy vocabulary (`policies.seed_check`, data). Anything with a
+    problem, audience, situation or activity word passes: the genuine NO_GENERATIVE_SIGNAL refusal stays the judge of the rest."""
+    import graph as graphmod
+
+    seed = str(_inputs(req).get("seed") or "").strip()
+    if not seed:
+        raise Refusal("SEED_MISSING", "inputs.seed must be the requester's seed text")
+    pol = graphmod.load_policies().get("seed_check") or {}
+    merch = _phrase_hits(seed, list(pol.get("merchandising") or []))
+    signals = {k: _phrase_hits(seed, list(pol.get(k) or [])) for k in ("problem", "audience", "situation")}
+    suffix = str(pol.get("activity_suffix") or "ing")
+    merch_words = {str(w).lower() for w in pol.get("merchandising") or []}
+    signals["activity"] = sorted({w for w in re.findall(r"[a-z]+", seed.lower()) if len(w) >= 5 and w.endswith(suffix) and w not in merch_words})
+    generative = not merch or any(signals.values())
+    out: dict[str, Any] = {"generative": generative, "signals": {"merchandising": merch, **signals}}
+    if not generative:
+        out.update(reason_code="SEED_NOT_GENERATIVE",
+                   message=(f"the seed {seed[:120]!r} names only merchandising ({', '.join(merch[:6])}): no problem, audience, situation or "
+                            "activity the research could start from"),
+                   hint=" ".join(str(pol.get("hint") or "").split()) or None)
+    return out
 
 
 def _op_unresolved_gaps(req: dict[str, Any]) -> dict[str, Any]:
@@ -938,8 +1158,10 @@ OPERATIONS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "product_reality.join": _op_product_reality_join,
     "supply.plan": _op_supply_plan,
     "supply.leads": _op_supply_leads,
+    "supply.draft_receipt": _op_supply_draft_receipt,
     "law.refuse": _op_refuse,
     "understanding.no_signal": _op_no_signal,
+    "understanding.seed_check": _op_seed_check,
     "research.unresolved_gaps": _op_unresolved_gaps,
 }
 
@@ -950,7 +1172,8 @@ OPERATIONS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
 LAW_VERDICTS: dict[str, dict[str, Any]] = {
     "understanding.validate_primitives": {"valid": False, "errors": []},
     "population.validate_situations": {"valid": False, "errors": []},
-    "hypotheses.validate_bridge": {"admissible": False, "bridge_errors": [], "portfolio_errors": [], "anchor_errors": [], "portfolio_unreachable": False},
+    "hypotheses.validate_bridge": {"admissible": False, "bridge_errors": [], "portfolio_errors": [], "anchor_errors": [], "portfolio_unreachable": False,
+                                   "portfolio_needs": None},
     "products.validate_concepts": {"valid": False, "errors": [], "mechanism_notes": []},
 }
 

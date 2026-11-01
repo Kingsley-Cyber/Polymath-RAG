@@ -58,7 +58,21 @@ FIXTURES = {  # kind → (questions, frozen plans)
     "L": (ROOT / "eval" / "fixtures" / "chat_lexical_L.json", ROOT / "eval" / "fixtures" / "chat_lexical_L_plans.json"),
 }
 OUT_DIR = ROOT / "docs" / "wiki" / "experiments"
-FLEET_LOGS = Path("/private/tmp/polymath_fleet")
+
+
+def _fleet_log_dir() -> Path:
+    """FLEET-LOG-DURABLE-V1: the supervisor's slot-log dir (POLYMATH_FLEET_LOG_DIR > POLYMATH_FLEET_DIR >
+    ~/PolymathRuntime/logs/fleet, as control/control/process_supervisor.resolve_fleet_dirs), else the pre-durable
+    /private/tmp/polymath_fleet a fleet booted before the change still writes."""
+    import os
+    for cand in (os.environ.get("POLYMATH_FLEET_LOG_DIR"), os.environ.get("POLYMATH_FLEET_DIR"),
+                 str(Path.home() / "PolymathRuntime" / "logs" / "fleet")):
+        if cand and Path(cand).expanduser().is_dir():
+            return Path(cand).expanduser()
+    return Path("/private/tmp/polymath_fleet")
+
+
+FLEET_LOGS = _fleet_log_dir()
 _TS = re.compile(r'"timestamp":"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?)')
 
 

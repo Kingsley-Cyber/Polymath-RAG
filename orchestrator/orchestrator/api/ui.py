@@ -138,8 +138,28 @@ def _ollama_models() -> list[dict]:
     return out
 
 
+#: CORPUS-ACCESS-PARITY (the owner, 2026-11-01: "idk why we have corpus false error"): what each flag of a /corpora row means,
+#: one line each, in the answer itself — an agent reads this, not the source. `query_ready` is the usable flag.
+CORPORA_NOTES = {
+    "query_ready": "true = searchable now (it has a converged run): name this corpus_id in any query, product questions included",
+    "in_all_libraries": ("true = also searched when a request names no library ('all libraries'); false never blocks a query "
+                         "that names this corpus_id"),
+    "query_enabled": ("the stored switch behind in_all_libraries (which also needs purpose 'production' and query_ready); "
+                      "kept for older clients"),
+    "purpose": "production = real material; probe / evaluation / fixture = test material, never in an all-library search",
+    "private": "a friend's own library (fr-<username>): in that friend's all-library searches, never in anyone else's",
+}
+
+
 @router.get("/corpora")
 def corpora(all: bool = False) -> dict:
+    from orchestrator.web_scope import (
+        all_libraries_view,
+        allowed_corpora,
+        ensure_own_private_library,
+    )
+    from polymath_shared.query_scope import in_all_libraries, is_private_library
+    ensure_own_private_library()          # F6: a friend's private library exists before its first upload (once per process)
     with tx() as conn:
         # independent aggregates: joining documents AND runs onto
         # corpora cross-multiplies (measured: 60s+ on 12k runs)
@@ -164,13 +184,25 @@ def corpora(all: bool = False) -> dict:
     # the chat picker, but the corpus MANAGER must see every row or
     # empty husks become invisible and undeletable (found as 8
     # stragglers the 2026-08-26 purge could not see). all=true lifts
-    # the filter.
+    # the filter. CORPUS-ACCESS-PARITY: a friend's EMPTY private library
+    # is not the owner's picker material either (its friend sees it).
+    owner_view = allowed_corpora() is None
+    visible = [r for r in rows if can_see(r[0])]  # FRIENDS-ACCESS-V1 D5
+    # the caller's "all libraries" — the SAME narrowing every no-corpus query gets (web_scope.narrow_scope)
+    members = set(all_libraries_view([r[0] for r in visible if in_all_libraries(r[1], r[2], r[4])]))
+
+    def listed(r) -> bool:
+        if all or r[3] > 0:
+            return True
+        return r[1] == "production" and not (owner_view and is_private_library(r[0]))
+
     return {"corpora": [
         {"corpus_id": r[0], "purpose": r[1], "query_enabled": r[2],
          "documents": r[3], "query_ready": r[4],
+         "in_all_libraries": r[0] in members, "private": is_private_library(r[0]),
          "name": r[5] or r[0]}
-        for r in rows if (all or r[3] > 0 or r[1] == "production") and can_see(r[0])  # FRIENDS-ACCESS-V1 D5
-    ]}
+        for r in visible if listed(r)
+    ], "notes": CORPORA_NOTES}
 
 
 class RenameCorpusRequest(BaseModel):
@@ -211,22 +243,38 @@ class QueryEnableRequest(BaseModel):
 
 @router.patch("/corpora/{corpus_id}/query_enabled")
 def set_query_enabled(corpus_id: str, req: QueryEnableRequest) -> dict:
-    """UI-V3 F13: the retrieval-visibility toggle, surfaced. Upload
-    defaults hide new corpora (purpose='probe', query_enabled=false —
-    QUERY-SCOPE-V1 by design); the owner hit that as "retrieval
-    constantly fails". This flips ONLY query_enabled; purpose remains a
-    separate governance decision."""
+    """UI-V3 F13: the switch that puts a library in all-library searches
+    (ALL_AUTHORIZED) or leaves it out. It never limits a query that
+    NAMES the corpus. CORPUS-ACCESS-PARITY: corpora a user creates start
+    production + query-enabled (query_scope.new_corpus_classification;
+    the old upload default hid every new corpus — the owner hit that as
+    "retrieval constantly fails" and "corpus false"). This flips ONLY
+    query_enabled; purpose remains a separate governance decision, and
+    the answer says when purpose or readiness still keeps the library
+    out of all-library searches."""
+    from orchestrator.web_scope import all_libraries_view
+    from polymath_shared.query_scope import in_all_libraries
     with tx() as conn:
         row = conn.execute(
             """UPDATE corpora SET query_enabled = %s, updated_at = now()
                 WHERE corpus_id = %s
-            RETURNING corpus_id, query_enabled""",
+            RETURNING corpus_id, query_enabled, purpose,
+                      EXISTS (SELECT 1 FROM runs r
+                               WHERE r.corpus_id = corpora.corpus_id
+                                 AND r.status = 'query_ready')""",
             (req.query_enabled, corpus_id)).fetchone()
         if not row:
             raise HTTPException(404, {
                 "error_code": "QUERY_SCOPE_UNKNOWN",
                 "message": f"corpus {corpus_id!r} not found"})
-    return {"corpus_id": row[0], "query_enabled": row[1]}
+    member = in_all_libraries(row[2], row[1], row[3]) and bool(all_libraries_view([row[0]]))
+    out = {"corpus_id": row[0], "query_enabled": row[1], "purpose": row[2],
+           "query_ready": row[3], "in_all_libraries": member}
+    if row[1] and not member:
+        out["note"] = (f"still out of all-library searches: its purpose is {row[2]!r} (test material)" if row[2] != "production"
+                       else "still out of all-library searches until it is query_ready" if not row[3]
+                       else "a friend's private library is in its own friend's all-library searches only")
+    return out
 
 
 def _mint_enrichment(conn, corpus_id: str, doc_id: str | None) -> dict:
@@ -1346,6 +1394,12 @@ class StreamChatRequest(BaseModel):
     # K1 (register 11.485): the knowledge-role scope {"roles": ["reference"]} (Trail ideation) — omitted = both roles,
     # today's behaviour; an explicit scope is always enforced and a malformed one is refused (422)
     scope: Optional[dict] = None
+    # PRODUCT-SEARCH-E2E (product-search-v1): None = PRODUCT-INTENT-V1 decides from the message (+ the last user turn); True =
+    # product mode forced (POST /product/search); False = never (a governed run's own evidence calls). Product mode keeps the
+    # turn's scope and retrieval, steers it toward hypothesis material and adds `product_research` to the answer.
+    product: Optional[bool] = None
+    # product mode's options: {"geography": "US", "limit_per_hypothesis": 6}; ignored outside product mode
+    product_options: Optional[dict] = None
 
 
 def _sse(event: str, data: dict) -> str:
@@ -1720,26 +1774,43 @@ def _compiler_attempt_order(endpoints: list, key: str, *, failed_at: dict | None
     return order[:max_attempts]
 
 
-def _run_compiler_lanes(attempts: list, compile_one, *, failed_at: dict | None = None, now_fn=time.time):
+def _run_compiler_lanes(attempts: list, compile_one, *, failed_at: dict | None = None, now_fn=time.time,
+                        max_dispatched: int = 3):
     """COMPILER-WORKS-WITHOUT-OLLAMA: try the attempts in order and return the first REAL plan. A transport failure or a
     late answer (`budget_exceeded`) cools that lane for later turns; an invalid plan moves on without cooling (the lane is
     reachable, and another model may plan the question). If every attempt fails, the last fallback plan is returned with
-    the first failure recorded: the turn still retrieves on the raw question. Pure over its inputs."""
+    the first failure recorded: the turn still retrieves on the raw question. Pure over its inputs.
+    INTERACTIVE-ADMISSION-V1: a lane its limiter refused at once (`compiler.limiter_refusal`: breaker open, Retry-After
+    hold, saturated — zero HTTP) is SKIPPED: receipted under `compiler.lanes_skipped`, never cooled (the limiter owns that
+    state and re-checks it in microseconds next turn) and not counted against `max_dispatched`. When no lane admitted the
+    call, the fallback plan carries the typed `compiler.degraded` receipt (ALL_LANES_REFUSED) and returns at once."""
     failed_at = _COMPILER_LANE_FAILED_AT if failed_at is None else failed_at
-    plan, first_failure = None, None
+    plan, first_failure, skipped, dispatched = None, None, [], 0
     for attempt_no, ep in enumerate(attempts, start=1):
+        if dispatched >= max_dispatched:
+            break
         plan = compile_one(ep)
         plan.compiler["lane"] = ep.name
         plan.compiler["attempt"] = attempt_no
         if first_failure is not None:
             plan.compiler["first_failure"] = first_failure
+        refusal = plan.compiler.get("limiter_refusal") if plan.fallback else None
+        if refusal:
+            skipped.append(refusal)
+        else:
+            dispatched += 1
+        if skipped:
+            plan.compiler["lanes_skipped"] = list(skipped)
         if not plan.fallback:
             return plan
         reason = str(plan.compiler.get("reason") or "")
-        if reason.startswith(("transport:", "budget_exceeded:")):
+        if not refusal and reason.startswith(("transport:", "budget_exceeded:")):
             failed_at[ep.name] = now_fn()
         if first_failure is None:
             first_failure = f"{ep.name}:{reason}"
+    if plan is not None and skipped and not dispatched:
+        from polymath_shared.llm_extraction.client import degraded_receipt
+        plan.compiler["degraded"] = degraded_receipt(skipped)
     return plan
 
 
@@ -2421,7 +2492,10 @@ def _start_facet_step(message: str, history, key: str):
     """FACET-RETRIEVAL-V1 F1: the blind facet call on its own thread — the go-to compiler lane (the same attempt order the
     wording call uses), one attempt, fail-open. Returns a future (its result is `facets.compile_facets`' receipt) or None
     when the step is off or no lane is pinned. The call's prompt is built by `facet_user_prompt`, which has no parameter
-    for a corpus, a title list or a profile match: the facets come from the question alone."""
+    for a corpus, a title list or a profile match: the facets come from the question alone.
+    INTERACTIVE-ADMISSION-V1: a lane whose limiter refuses at once (breaker open, Retry-After hold, saturated — zero HTTP)
+    is skipped for the next lane in the order (receipted under `lanes_skipped`), so the one attempt goes to an admissible
+    lane instead of waiting out a cooldown; no admissible lane = `facets: None` with the typed `degraded` receipt."""
     from polymath_shared.facets import facets_enabled
     if not facets_enabled():
         return None
@@ -2431,24 +2505,36 @@ def _start_facet_step(message: str, history, key: str):
         from polymath_shared.chat_plan import COMPILER_STAGE
         from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
         endpoints = [e for e in cloud_endpoints() if e.name in (stage_pin(COMPILER_STAGE) or [])]
-        order = _compiler_attempt_order(endpoints, key)
+        order = _compiler_attempt_order(endpoints, key, max_attempts=len(endpoints))
         if not order:
             return None
-        ep = order[0]
 
         def _run() -> dict:
             from polymath_shared.facets import compile_facets
-            from polymath_shared.llm_extraction.client import LLMExtractionClient
-            client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
-                                         api_key=ep.api_key, cloud_opts=ep.cloud_opts,
-                                         timeout_s=_COMPILER_HTTP_TIMEOUT_S, max_attempts=1)
-            client.endpoint_name = ep.name
-            client.attempt_stage, client.attempt_function = "chat_compiler", "FACETS"
-            client.reasoning_role = "STRUCTURED_COMPILER"
+            from polymath_shared.llm_extraction.client import LLMExtractionClient, degraded_receipt
+            rec: dict = {}
+            skipped: list = []
+            for ep in order:
+                client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key,
+                                             api_key=ep.api_key, cloud_opts=ep.cloud_opts,
+                                             timeout_s=_COMPILER_HTTP_TIMEOUT_S, max_attempts=1)
+                client.endpoint_name = ep.name
+                client.attempt_stage, client.attempt_function = "chat_compiler", "FACETS"
+                client.reasoning_role = "STRUCTURED_COMPILER"
+                client.interactive = True            # INTERACTIVE-ADMISSION-V1: never wait on a lane limiter
 
-            def _complete(system_prompt: str, user_prompt: str, max_tokens: int, _c=client):
-                return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
-            return compile_facets(message, history, _complete, model=f"{ep.name}:{ep.model}")
+                def _complete(system_prompt: str, user_prompt: str, max_tokens: int, _c=client):
+                    return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
+                rec = compile_facets(message, history, _complete, model=f"{ep.name}:{ep.model}")
+                refusal = getattr(client, "last_refusal", None)
+                if refusal is None or not rec.get("fallback"):
+                    break                            # the step's one attempt reached a provider (or failed otherwise)
+                skipped.append(refusal.as_dict())
+            if skipped:
+                rec["lanes_skipped"] = skipped
+                if len(skipped) == len(order):
+                    rec["degraded"] = degraded_receipt(skipped)
+            return rec
         return ThreadPoolExecutor(max_workers=1, thread_name_prefix="chat-facets").submit(_run)
     except Exception:  # noqa: BLE001 — the facet step is additive; the plan derives its facets without it
         return None
@@ -2569,6 +2655,7 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
             # compiler's dedicated client carries this attribute; document-extraction clients never do, so
             # extraction is byte-identical and its contract hash is untouched.
             client.reasoning_role = "STRUCTURED_COMPILER"
+            client.interactive = True      # INTERACTIVE-ADMISSION-V1: a refused lane is skipped at once, never waited on
 
             def _complete(system_prompt: str, user_prompt: str, max_tokens: int, _c=client):
                 return _c.complete_one(user_prompt, system_prompt=system_prompt, max_tokens=max_tokens)
@@ -2576,9 +2663,14 @@ def _compile_chat_plan(message: str, history, corpus_ids, *, session_key: str | 
                                matches=matches, facets=facets)
             one.compiler["scout"] = scout_rec
             one.compiler["reasoning"] = getattr(client, "last_reasoning", None) or None   # S1b: what this attempt sent
+            refusal = getattr(client, "last_refusal", None)
+            if refusal is not None and one.fallback:
+                one.compiler["limiter_refusal"] = refusal.as_dict()          # the walk receipts it as a skip
             return one
 
-        plan = _timed("lanes", _run_compiler_lanes, _compiler_attempt_order(endpoints, key), _compile_one)
+        # INTERACTIVE-ADMISSION-V1: every pinned lane is in the order; a skipped lane does not spend one of the 3 attempts
+        plan = _timed("lanes", _run_compiler_lanes, _compiler_attempt_order(endpoints, key, max_attempts=len(endpoints)),
+                      _compile_one)
         return _finish(plan)
     except Exception as exc:  # noqa: BLE001 — a missing pin / dark lane is a receipted fallback
         plan = fallback_plan(message, reason=f"compiler_unavailable:{type(exc).__name__}")
@@ -2591,14 +2683,16 @@ RUNTIME_CONTRACT = "chat-runtime-v1"          # CHAT-RUNTIME-V1 (plan §3.7 / §
 
 def _receipt_payload(req, *, question: str, scope, wall_ms: float, ui_mode: str, route: str,
                      answer: str | None, meta: dict, error: str | None = None,
-                     result: dict | None = None) -> dict:
+                     result: dict | None = None, evidence: list | None = None) -> dict:
     """QUERY-RECEIPTS on the chat runtime (plan §3.6): ONE payload per turn,
     built by the runtime for every transport — `record_query_receipt`'s
     keyword arguments minus the transport's own tags (`kind`, `client`).
     `meta.route` ("chat" | "chat/stream") is the transport tag the plan asks
     for (§4 P1.f); citations / claims ride along when the synthesizer
     produced them (deterministic answers), so /chat's receipt keeps its
-    citation count. Pure."""
+    citation count. `evidence` (the evidence-only route): the packet's rows as
+    ids only ({chunk_id, doc_id}) — the receipt's evidence count and source
+    documents; no text. Pure."""
     corpora = list(getattr(scope, "corpus_ids", None) or [])
     kind_scope = getattr(scope, "mode", None)
     out = None
@@ -2607,6 +2701,8 @@ def _receipt_payload(req, *, question: str, scope, wall_ms: float, ui_mode: str,
         for key in ("citations", "claims"):
             if isinstance(result, dict) and isinstance(result.get(key), list):
                 out[key] = result[key]
+        if evidence is not None:
+            out["evidence"] = [{"chunk_id": e.get("chunk_id"), "doc_id": e.get("doc_id")} for e in evidence if isinstance(e, dict)]
     return {"question": question, "req": req, "scope_corpora": corpora,
             "scope_kind": (str(kind_scope).lower() if kind_scope else None),
             "wall_ms": wall_ms, "out": out, "error": error}
@@ -3104,6 +3200,9 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
     # ELITE-MODE D/F: ORIENTATION → EVIDENCE (DIRECT) → RELATIONS [G#] → DERIVED [A#].
     context_block = "\n\n".join(p for p in (orient, context_block, relations, derived) if p)
     messages = [{"role": "system", "content": _llm_system_prompt(style, learning=_contract)}]
+    if isinstance(bundle, dict) and bundle.get("product_contract"):
+        # PRODUCT-SEARCH-E2E: a product turn's PRODUCT HYPOTHESIS contract closes the system prompt (absent = byte-identical)
+        messages[0]["content"] += "\n\n" + str(bundle["product_contract"])
     for turn in (history or [])[-12:]:
         if turn.role in ("user", "assistant") and turn.content:
             messages.append({"role": turn.role,
@@ -3933,6 +4032,54 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             _mark("scope")                      # S1b (E5): the compile mark includes this; now it can be subtracted
             yield _phase("scope_ok", "Scope resolved",
                          mode=scope.mode, corpora=list(scope.corpus_ids))
+            # PRODUCT-SEARCH-E2E (product-search-v1): a product request runs this turn in PRODUCT MODE — the same scope and
+            # retrieval, steered toward hypothesis material; the answer carries `product_research` (hypotheses + CJ finds + the
+            # offer of the full research run). PRODUCT-INTENT-V1 decides (`req.product` True forces it, False turns it off).
+            _product = None
+            if ui_mode != "ASK" and getattr(req, "product", None) is not False:
+                from polymath_shared import principal_context as _pctx
+                from polymath_shared.product_search import ProductTurn
+                from polymath_shared.product_search import detect as _detect_product
+                _pi = _detect_product(query, req.history, force=bool(getattr(req, "product", None)))
+                if _pi is not None:
+                    _product = ProductTurn(_pi, message=query, corpus_ids=list(scope.corpus_ids), principal_id=_pctx.current(),
+                                           options=getattr(req, "product_options", None))
+                    yield _phase("product_intent", "Product search: hypotheses from the library, then CJ Dropshipping finds",
+                                 kind=_pi.kind, rule=_pi.rule, seed=_pi.seed, audience=_pi.audience,
+                                 geography=_product.intent.geography, source=_pi.source)
+                    if len(scope.corpus_ids) > 1:
+                        # product-library-routing-v1: several libraries in scope → the best one for THIS request (one embedding,
+                        # one profile query; the skeleton routes, its text is never hydrated) instead of mode_requires_single_corpus
+                        from dataclasses import replace as _scope_replace
+
+                        from orchestrator.api.fast import _embed_queries as _route_embed
+                        yield _phase("product_route", f"Choosing the library among {len(scope.corpus_ids)}…",
+                                     candidates=list(scope.corpus_ids))
+                        _chosen = _product.route(scope.corpus_ids, embed=_route_embed, role_scope=_role_scope)
+                        if _chosen:
+                            scope = _scope_replace(scope, corpus_ids=(_chosen,))
+                        yield _phase("product_route_done", f"Library chosen: {_chosen}", chosen=_chosen,
+                                     runner_up=(_product.routing or {}).get("runner_up"),
+                                     method=(_product.routing or {}).get("method"))
+
+            def _product_step(finish, *args, **kw):
+                """A product-mode finish (the CJ lookups, one after another) between two phase frames. A failure is a typed
+                degradation of this answer (`retrieval.degraded`, the receipt), never a failed turn."""
+                n = _product.planned_lookups()
+                yield _phase("product_search", f"Searching CJ Dropshipping ({n} search{'' if n == 1 else 'es'})…", lookups=n)
+                try:
+                    out = finish(*args, **kw)
+                except Exception as exc:  # noqa: BLE001 — the answer stands without its product block, and says so
+                    retrieval.setdefault("degraded", []).append(
+                        {"component": "product_search", "state": "failed", "reason": type(exc).__name__,
+                         "effect": "the product block (hypotheses and CJ finds) is missing from this answer",
+                         "detail": str(exc)[:160]})
+                    out = None
+                _mark("product_search")
+                rec = _product.receipt() or {}
+                yield _phase("product_search_done", "CJ Dropshipping searched" if out is not None else "Product search failed",
+                             lookups=rec.get("lookups"), items=rec.get("items"), statuses=(rec.get("statuses") or {}).get("cj"))
+                return out
             # CHAT-INTENT-PLAN-V1 (plan P0.b): compile the turn. In `shadow`
             # the plan is receipted and shown but changes nothing downstream.
             _plan = None
@@ -3973,6 +4120,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     _plan_future = None
                     _mark("compile")
                     from polymath_shared.chat_plan import plan_for_evidence_route, plan_receipt, retrieval_text_for
+                    if _product is not None:
+                        _plan = _product.steer_plan(_plan)   # product mode: hypothesis-material aspects inside the compiler's cap
                     if getattr(req, "evidence_only", False):
                         # the evidence route never answers a NEED with an empty packet because the need reads as conversation
                         _plan = plan_for_evidence_route(_plan)
@@ -3991,6 +4140,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                                  mode=_flag, wall_ms=_plan.compiler.get("wall_ms"),
                                  scout=(_plan.compiler.get("scout") or {}).get("n_injected"),
                                  retrieval_query=(None if _skip_retrieval else _retrieval_text[:160]))
+            if _product is not None and _flag != "on":
+                _retrieval_text = _product.steer_text(query)   # product mode, no compiled plan to steer: one deterministic addition
 
             def _join_plan():
                 nonlocal _plan, _plan_receipt, _plan_future
@@ -4034,6 +4185,19 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 yield _sse("done", {})
                 return
 
+            if not scope.corpus_ids:
+                # an empty resolved scope is a typed refusal, never an IndexError: the length is checked before any corpus is read
+                # from it. Same code, status (404) and detail as the scope resolver's own QUERY_SCOPE_EMPTY.
+                try:
+                    from polymath_shared.query_scope import QueryScopeEmpty as _ScopeEmpty
+                    _empty = _ScopeEmpty().detail()
+                except Exception:  # noqa: BLE001 — the resolver predates the typed class: the same detail, written here
+                    _empty = {"error_code": "QUERY_SCOPE_EMPTY", "message": "There is no library to search for this caller.",
+                              "next_step": "Name one library with corpus_id: list_corpora (GET /corpora) shows them."}
+                yield _sse("error", dict(_empty))
+                _receipt(wall_ms=(time.perf_counter() - t0) * 1000, ui_mode=ui_mode, answer=None, meta={},
+                         error=f"QUERY_SCOPE_EMPTY: {str(_empty.get('message'))[:200]}")
+                return
             corpus_id = scope.corpus_ids[0]
             if len(scope.corpus_ids) != 1:
                 _msg = f"{ui_mode} retrieves over exactly one corpus; scope has {len(scope.corpus_ids)}"
@@ -4549,24 +4713,38 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                     corpus_explorer_requested=bool(getattr(req, "corpus_explorer", False)),
                     corpus_explorer_used=bool((_ce or {}).get("added")),
                 ).to_dict()
+                # MCP-RETRIEVAL-MODES-V1: the turn's graph facts ride beside the packet (GRAPH, or a HYBRID graph assist),
+                # so an agent's search / explore sees what GRAPH found and /chat/evidence can attest them as rows
+                _ev_result = {"evidence_packet": _packet, "synthesis_performed": False, "graph_facts": graph_facts[:40]}
+                if _product is not None:
+                    # PRODUCT-SEARCH-E2E: evidence, not an answer — no hypotheses here; CJ for the request's own terms and the
+                    # agent's steps (form hypotheses from this packet, then product_search with them)
+                    _ev_product = yield from _product_step(_product.finish_evidence)
+                    if _ev_product is not None:
+                        _ev_result["product_research"], _ev_result["agent_steps"] = _ev_product
                 _phase_ms["total"] = round((time.perf_counter() - t0) * 1000, 1)
                 yield _sse("answer", {
                     "kind": "evidence",
-                    # MCP-RETRIEVAL-MODES-V1: the turn's graph facts ride beside the packet (GRAPH, or a HYBRID graph assist),
-                    # so an agent's search / explore sees what GRAPH found and /chat/evidence can attest them as rows
-                    "result": {"evidence_packet": _packet, "synthesis_performed": False, "graph_facts": graph_facts[:40]},
+                    "result": _ev_result,
                     "retrieval": retrieval,
                     "latency_ms": _phase_ms["total"],
                 })
                 yield _sse("done", {})
+                # the receipt keeps what the agent was handed: the evidence count and the packet's chunk ids (ids only, no text)
+                _ev_rows = [e for e in (_packet.get("evidence") or []) if isinstance(e, dict)]
                 _receipt(wall_ms=_phase_ms["total"], ui_mode=retrieval.get("mode") or ui_mode,
                          answer=None,
+                         evidence=[{"chunk_id": e.get("chunk_id"), "doc_id": e.get("document_id")} for e in _ev_rows],
                          meta={"verdict": "evidence_only", "evidence_only": True,
-                               "n_evidence": len(_packet.get("evidence") or []),
-                               "phase_ms": dict(_phase_ms), "chat_plan": _plan_receipt or None})
+                               "n_evidence": len(_ev_rows),
+                               "used_evidence": list(dict.fromkeys(str(e["chunk_id"]) for e in _ev_rows if e.get("chunk_id"))),
+                               "phase_ms": dict(_phase_ms), "chat_plan": _plan_receipt or None,
+                               **({"product_search": _product.receipt()} if _product is not None and _product.block else {})})
                 return
 
             if llm_model is not None:
+                if _product is not None:
+                    bundle["product_contract"] = _product.contract()   # PRODUCT-SEARCH-E2E: closes the system prompt
                 yield _phase("generate",
                              f"Generating with {llm_model}…",
                              model=llm_model,
@@ -4619,6 +4797,8 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 _join_plan()
                 _prompt_meta.update({"carry_in": _carry_meta.get("in", 0), "carry_in_prompt": _carry_meta.get("admitted", 0)})
                 answer_text = "".join(full)
+                if _product is not None:
+                    answer_text = _product.read_answer(answer_text, _legend)   # the machine-readable hypothesis block leaves the prose
                 # FACET-RETRIEVAL-V1 F6 (plan §3.6): the gap check — the answer's "doesn't cover / no source" sentences and the
                 # uncovered facets each become one targeted retrieval on this turn's mode; found → a cited "More on this"
                 # addition (the found passages join the legend and the inventory), not found → the honest wording. Only on a
@@ -4645,6 +4825,15 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                                      found=sum(1 for c in (_gap or {}).get("claims") or [] if c.get("found")),
                                      searches=len((_gap or {}).get("searches") or []),
                                      section_added=bool((_gap or {}).get("section_added")), error=(_gap or {}).get("error"))
+                # PRODUCT-SEARCH-E2E: CJ per hypothesis (or the request's own terms when the block could not be read); the finds
+                # are appended to the answer text; the verdict is product_hypotheses / _thin, never a bare insufficient_evidence
+                _llm_verdict, _product_block = "generated", None
+                if _product is not None:
+                    _llm_product = yield from _product_step(_product.finish_llm, legend=_legend)
+                    if _llm_product is not None:
+                        _product_block, _llm_verdict, _finds_md = _llm_product
+                        answer_text = f"{answer_text.rstrip()}\n\n{_finds_md}"
+                _product_meta = ({"product_search": _product.receipt()} if _product_block is not None else {})
                 from polymath_shared.funnel import funnel_from_trace
                 used = _cited_chunk_ids(answer_text, _legend)
                 funnel = funnel_from_trace(
@@ -4678,7 +4867,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         "answer": answer_text,
                         "model": llm_model,
                         "meta": {
-                            "verdict": "generated",
+                            "verdict": _llm_verdict,
                             "abstained": False,
                             "synthesis_version": f"{llm_backend}:{llm_model}",
                             "phase_ms": dict(_phase_ms),
@@ -4688,7 +4877,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                             "carry": {k: v for k, v in _carry_meta.items() if k != "scores"},
                             **({"synthesis": _synth} if _synth else {}),
                             **({"gap_check": _gap} if _gap else {}),
+                            **_product_meta,
                         },
+                        **({"product_research": _product_block} if _product_block is not None else {}),
                     },
                     "retrieval": retrieval,
                     "latency_ms": round(
@@ -4698,7 +4889,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                 _receipt(
                     wall_ms=_phase_ms["total"], ui_mode=retrieval.get("mode") or ui_mode,
                     answer=answer_text,
-                    meta={"verdict": "generated", "synthesis_version": f"{llm_backend}:{llm_model}",
+                    meta={"verdict": _llm_verdict, "synthesis_version": f"{llm_backend}:{llm_model}",
                           "model": llm_model, "latent": req.latent, "phase_ms": dict(_phase_ms),
                           "funnel": funnel, "used_evidence": used, "legend": retrieval["legend"],
                           "degraded": retrieval.get("degraded"), "plan": (_trace or {}).get("plan"),
@@ -4706,6 +4897,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                           "generation": _gen_meta or None, "composition": retrieval.get("composition"),
                           **({"synthesis": _synth} if _synth else {}),
                           **({"gap_check": _gap} if _gap else {}),
+                          **_product_meta,
                           **_turn_receipt_extras(_trace, _latent_receipt, retrieval.get("wildcard_diagnostics"))})
                 return
 
@@ -4716,6 +4908,13 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
             _join_plan()
             if isinstance(answer, dict) and isinstance(answer.get("meta"), dict):
                 answer["meta"].update(_plan_meta(_plan if _flag == "on" else None))
+            _product_det = False
+            if _product is not None and isinstance(answer, dict):
+                # PRODUCT-SEARCH-E2E: the deterministic synthesizer cannot hypothesise — its claims and citations stand; CJ is
+                # searched with the request's own terms and `next` says how to get hypotheses (a model, or product_search)
+                _det_answer = yield from _product_step(_product.finish_deterministic, answer)
+                if _det_answer is not None:
+                    answer, _product_det = _det_answer, True
             from polymath_shared.funnel import funnel_from_trace
             used = []
             for c in (answer.get("citations") or []):
@@ -4758,6 +4957,7 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                       "used_evidence": used, "degraded": retrieval.get("degraded"),
                       "plan": (_trace or {}).get("plan"), "chat_plan": _plan_receipt or None, "carry": _carry_meta,
                       "composition": retrieval.get("composition"),
+                      **({"product_search": _product.receipt()} if _product_det else {}),
                       **_turn_receipt_extras(_trace, _latent_receipt, retrieval.get("wildcard_diagnostics"))})
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {
@@ -4786,7 +4986,7 @@ async def chat_stream(req: StreamChatRequest) -> StreamingResponse:
 #: HTTP status for the runtime's in-band error frames (frames without a `status`
 #: — i.e. not an HTTPException inside the runtime): the typed codes the runtime
 #: emits itself; an assembly failure is a 502 (as /chat always answered one).
-_ERROR_STATUS = {"mode_requires_single_corpus": 422,
+_ERROR_STATUS = {"mode_requires_single_corpus": 422, "QUERY_SCOPE_EMPTY": 404,
                  "ollama_unavailable": 502, "ollama_error": 502, "litellm_error": 502}
 
 

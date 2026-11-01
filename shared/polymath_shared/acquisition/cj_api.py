@@ -16,6 +16,12 @@ What CJ's own documentation (developers.cjdropshipping.com, read 2026-09-27) say
     route can be added. CJ's own MCP server is not used: its token reaches orders, payments and disputes too.
   * no product page URL comes back: a listing's URL is built from the site's own pattern
     (`https://cjdropshipping.com/product/<slug>-p-<pid>.html`, as CJ's product pages are indexed).
+  * PRODUCT-SEARCH-E2E (measured 2026-11-01: CJ answers 1600014 "Your API access has been disabled" on every call): 1600014 is its
+    own reason, `disabled` (the owner re-enables API access at My CJ > Authorization > API); it is never retried.
+  * a CIRCUIT BREAKER per account, in this process (a bounce resets it): after `disabled` or `auth` CJ is not called again for
+    `breaker_s` (POLYMATH_CJ_BREAKER_S, default 600 s), after `rate_limit` for `rate_breaker_s` (POLYMATH_CJ_RATE_BREAKER_S, default
+    60 s); meanwhile every call raises the same ApiFailed at once, with no network call and no pacing wait, and says how long it
+    holds (`ApiFailed.retry_after_s`).
 Neither the key nor the token ever reaches a log, a result or an error text (`_scrub`)."""
 from __future__ import annotations
 
@@ -45,6 +51,9 @@ RATE_LIMIT_WAITS_S = (2.0, 4.0)
 TIMEOUT_S = 20.0
 TOKEN_MARGIN_S = 600
 TOKEN_FALLBACK_TTL_S = 3600            # an expiry date CJ did not give or that does not parse: sign in again within the hour
+#: the circuit breaker's windows: after `disabled` / `auth`, and after `rate_limit` (env-overridable through `client_from_env`)
+BREAKER_S, RATE_BREAKER_S = 600.0, 60.0
+BREAKER_ENV, RATE_BREAKER_ENV = "POLYMATH_CJ_BREAKER_S", "POLYMATH_CJ_RATE_BREAKER_S"
 SEARCH_SIZE_MAX = 100
 #: SUPPLIER-RANK (live, 2026-09-27): CJ's "best match" for "touchscreen winter gloves" led with keyboard and welder's gloves, so a
 #: search asks CJ for a larger page (at least SEARCH_PAGE_MIN, the route's maximum) and keeps first the products whose names
@@ -73,6 +82,8 @@ def rank_by_query(products: list[dict[str, Any]], query: str, name_of) -> list[d
     order = sorted(range(len(products)), key=lambda i: (-scores[i], i))
     return [products[i] for i in order]
 AUTH_CODES = frozenset({1600001, 1600002, 1600003, 1601000})
+#: "Your API access has been disabled" (live, 2026-11-01): the account's API access is off; only the owner can turn it back on
+DISABLED_CODES = frozenset({1600014})
 RATE_CODES = frozenset({1600200})
 QUOTA_CODES = frozenset({1600201, 16900500})
 PARAM_CODES = frozenset({1600300, 16900403, 16900205})
@@ -84,11 +95,13 @@ _ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z-]{5,63}")
 
 @dataclass
 class _Account:
-    """Per key, in this process: the cached token and the time of the last call (CJ's one-request-a-second limit)."""
+    """Per key, in this process: the cached token, the time of the last call (CJ's one-request-a-second limit) and the open
+    circuit breaker, if any: (until, on the monotonic clock; the reason; the detail CJ's answer gave)."""
     token: str | None = None
     expires_at: float = 0.0
     last_call: float = float("-inf")
     pace: threading.Lock = field(default_factory=threading.Lock)
+    breaker: tuple[float, str, str] | None = None
 
 
 _ACCOUNTS: dict[str, _Account] = {}
@@ -118,12 +131,13 @@ class CJClient:
 
     def __init__(self, api_key: str, *, base_url: str = BASE_URL, transport: httpx.BaseTransport | None = None,
                  sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic,
-                 wall: Callable[[], float] = time.time):
+                 wall: Callable[[], float] = time.time, breaker_s: float = BREAKER_S, rate_breaker_s: float = RATE_BREAKER_S):
         if not str(api_key or "").strip():
             raise ValueError("a CJ API key is required")
         self._key = str(api_key).strip()
         self._base = base_url.rstrip("/")
         self._transport, self._sleep, self._clock, self._wall = transport, sleep, clock, wall
+        self._breaker_s, self._rate_breaker_s = max(0.0, float(breaker_s)), max(0.0, float(rate_breaker_s))
         self._acct = _account(self._key)
 
     # ------------------------------------------------------------------------------------------------------------ plumbing --
@@ -160,8 +174,38 @@ class CJClient:
         acct.expires_at = _epoch(data.get("accessTokenExpiryDate")) or (self._wall() + TOKEN_FALLBACK_TTL_S)
         return acct.token
 
+    # ------------------------------------------------------------------------------------------------------ circuit breaker --
+    def breaker(self) -> dict[str, Any] | None:
+        """The open circuit breaker of this account ({reason, detail, retry_after_s}), or None when CJ may be called."""
+        held = self._acct.breaker
+        if held is None:
+            return None
+        left = held[0] - self._clock()
+        return {"reason": held[1], "detail": held[2], "retry_after_s": round(left, 1)} if left > 0 else None
+
+    def _trip(self, exc: ApiFailed) -> None:
+        """Open the breaker after an answer that will not change on the next call: `disabled` / `auth` for `breaker_s`,
+        `rate_limit` for `rate_breaker_s`. A refusal raised BY the breaker never extends it."""
+        if exc.retry_after_s is not None:
+            return
+        window = self._breaker_s if exc.reason in ("disabled", "auth") else self._rate_breaker_s if exc.reason == "rate_limit" else 0.0
+        if window > 0:
+            self._acct.breaker = (self._clock() + window, exc.reason, exc.detail)
+
     def _call(self, method: str, path: str, *, params: Mapping[str, Any] | None = None, body: Any = None, signed: bool = True) -> Any:
-        """One CJ call -> its `data`, or ApiFailed. Waits out CJ's rate limit; renews a refused token once."""
+        """One CJ call -> its `data`, or ApiFailed. An open circuit breaker answers at once, with no network call."""
+        held = self.breaker()
+        if held is not None:
+            raise ApiFailed(held["reason"], f"{held['detail']} (CJ was not called again: this answer holds for another "
+                                            f"{int(held['retry_after_s']) + 1} s)", retry_after_s=held["retry_after_s"])
+        try:
+            return self._request(method, path, params=params, body=body, signed=signed)
+        except ApiFailed as exc:
+            self._trip(exc)
+            raise
+
+    def _request(self, method: str, path: str, *, params: Mapping[str, Any] | None, body: Any, signed: bool) -> Any:
+        """One CJ call over the network -> its `data`, or ApiFailed. Waits out CJ's rate limit; renews a refused token once."""
         waits, renewed = list(RATE_LIMIT_WAITS_S), False
         while True:
             token = self._token() if signed else None
@@ -177,6 +221,8 @@ class CJClient:
                 payload = None
             code = payload.get("code") if isinstance(payload, dict) else None
             said = self._scrub(_clip(payload.get("message") if isinstance(payload, dict) else ""))
+            if code in DISABLED_CODES:                            # whatever the HTTP status: never retried, never "renewed"
+                raise ApiFailed("disabled", f"CJ has disabled API access for this CJ account ({code}: {said or 'no message'})")
             if r.status_code == 429 or code in RATE_CODES:
                 if waits:
                     self._sleep(waits.pop(0))
@@ -236,10 +282,24 @@ class CJClient:
         return [w for w in data if isinstance(w, dict)]
 
 
+def _seconds(value: Any, default: float) -> float:
+    """A breaker window from the environment: a number of seconds >= 0, else the default."""
+    try:
+        n = float(str(value).strip())
+    except (TypeError, ValueError):
+        return default
+    return n if n >= 0 and math.isfinite(n) else default
+
+
 def client_from_env(env: Mapping[str, str], **kw: Any) -> CJClient | None:
-    """The owner's CJ client when `CJ_API_KEY` is set, else None (the key is read from the environment only)."""
+    """The owner's CJ client when `CJ_API_KEY` is set, else None (the key is read from the environment only). The breaker's
+    windows come from POLYMATH_CJ_BREAKER_S / POLYMATH_CJ_RATE_BREAKER_S when set."""
     key = str(env.get("CJ_API_KEY") or "").strip()
-    return CJClient(key, **kw) if key else None
+    if not key:
+        return None
+    kw.setdefault("breaker_s", _seconds(env.get(BREAKER_ENV), BREAKER_S))
+    kw.setdefault("rate_breaker_s", _seconds(env.get(RATE_BREAKER_ENV), RATE_BREAKER_S))
+    return CJClient(key, **kw)
 
 
 # ------------------------------------------------------------------------------------------------------------------ mapping --

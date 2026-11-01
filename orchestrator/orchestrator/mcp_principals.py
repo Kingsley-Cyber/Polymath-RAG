@@ -12,6 +12,18 @@ The smallest durable per-principal authorization layer for the ONE public door (
   * principals live in ONE JSON file outside the repository (POLYMATH_MCP_PRINCIPALS_FILE), re-read when it changes, so
     a revocation needs no fleet bounce. Machine-local state, like `.env` and the owner key file.
 
+PRODUCT-SEARCH-E2E (the owner's decisions of 2026-11-01):
+  * the supplier tools, `supplier_parse` and `product_search` are open to principals under SUPPLIER_SCOPES (any of the knowledge
+    scopes or adapter.start: every friend key already holds them, so no registry rewrite);
+  * FRIEND_SCOPES ("everything" but admin, deep research included) is the friend profile for keys made by script AND for web friends:
+    a record tagged `"profile": "friend"` gets the profile's CURRENT scopes when it is read, so an existing friend gains a scope the
+    profile gained without rewriting the registry;
+  * a principal's `corpus_ids` holding "*" (WILDCARD) means every library that exists when a request is made, never another
+    person's private library: the ONE rule `query_scope.grant_allows`, which the web scope applies too (`CorpusGrant`); a
+    friend's own `fr-<self>` is reached because its grant names it (web_accounts always does);
+  * a library may be left unnamed where the orchestrator resolves "every library this principal may use" within its grant:
+    adapter_start (the runtime defaults a run to the caller's searchable libraries) and CORPUS_OPTIONAL tools (product_search);
+    a library that IS named is always checked.
 Pure policy + a file store: no network, no database, no MCP import — unit-testable on its own. The gate that calls it
 lives in mcp_server.py. WHO OWNS A RUN is not decided here: it is `adapter_runs.owner_principal_id`, persisted and
 enforced by the adapter runtime from the trusted principal context the gate forwards. `agent_identity` and a query
@@ -31,6 +43,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from polymath_shared import query_scope as QS
+
 SCHEMA = "polymath_mcp_principals.v1"
 PRINCIPAL_ID_RE = re.compile(r"^prn_[a-z0-9][a-z0-9_-]{1,58}$")
 KEY_ID_RE = re.compile(r"^[a-f0-9]{8,32}$")
@@ -49,13 +63,23 @@ KNOWLEDGE_RESEARCH = "knowledge.research"
 ANY_KNOWLEDGE = (KNOWLEDGE_SEARCH, KNOWLEDGE_EXPLORE, KNOWLEDGE_ANSWER)
 SCOPES = (*ANY_KNOWLEDGE, ADAPTER_LIST, ADAPTER_START, ADAPTER_NEXT, ADAPTER_SUBMIT, ADAPTER_STATUS, ADAPTER_RESULT,
           ADAPTER_CANCEL, HISTORY_READ, UPLOAD_TEXT, ADMIN, KNOWLEDGE_RESEARCH)
-# owner decision §8: the conservative friend profile — no upload, no history, no admin. `adapter.cancel` exists and is
+# owner decision §8: the conservative base profile — no upload, no history, no admin. `adapter.cancel` exists and is
 # grantable; it only ever reaches a run the calling principal owns.
 FRIEND_PROFILE = (*ANY_KNOWLEDGE, ADAPTER_LIST, ADAPTER_START, ADAPTER_NEXT, ADAPTER_SUBMIT, ADAPTER_STATUS, ADAPTER_RESULT)
-PROFILES = {"friend": FRIEND_PROFILE}
+# PRODUCT-SEARCH-E2E (F2 / F9, the owner 2026-11-01): what a friend gets, by script or on the web: "everything" but admin —
+# the base profile, upload into its writable libraries, its query history, cancelling its runs, and deep research
+FRIEND_SCOPES = tuple(sorted({*FRIEND_PROFILE, UPLOAD_TEXT, HISTORY_READ, ADAPTER_CANCEL, KNOWLEDGE_RESEARCH}))
+PROFILES = {"friend": FRIEND_SCOPES}
+# PRODUCT-SEARCH-E2E: the supplier tools and product search are open to any principal holding one of these (every friend key holds
+# all of them: FRIEND_PROFILE, FRIEND_SCOPES and web_accounts.FRIEND_SCOPES include them), so no registry needs rewriting
+SUPPLIER_SCOPES = (*ANY_KNOWLEDGE, ADAPTER_START)
+WILDCARD = QS.ALL_LIBRARIES
 
 # ---- tool policy: tool -> (any-of action scopes, resource kind). A tool that is NOT here is admin-only (default deny).
 CORPUS, CORPUS_FILTER, ADAPTER_FILTER, START, RUN, WRITE_CORPUS, NONE = "corpus", "corpus_filter", "adapter_filter", "start", "run", "write_corpus", "none"
+#: PRODUCT-SEARCH-E2E: `corpus_id` may be absent (the orchestrator resolves every library the principal may use, within its grant,
+#: from the trusted context); a corpus_id that IS given must be one the principal may use
+CORPUS_OPTIONAL = "corpus_optional"
 TOOL_POLICY: dict[str, tuple[tuple[str, ...], str]] = {
     "polymath_search": ((KNOWLEDGE_SEARCH,), CORPUS), "retrieve": ((KNOWLEDGE_SEARCH,), CORPUS), "retrieve_evidence": ((KNOWLEDGE_SEARCH,), CORPUS),
     "polymath_explore": ((KNOWLEDGE_EXPLORE,), CORPUS), "compile_plan": ((KNOWLEDGE_EXPLORE,), CORPUS),
@@ -69,8 +93,33 @@ TOOL_POLICY: dict[str, tuple[tuple[str, ...], str]] = {
     "adapter_next": ((ADAPTER_NEXT,), RUN), "adapter_submit": ((ADAPTER_SUBMIT,), RUN), "adapter_status": ((ADAPTER_STATUS,), RUN),
     "adapter_result": ((ADAPTER_RESULT,), RUN), "adapter_cancel": ((ADAPTER_CANCEL,), RUN),
     "upload_text": ((UPLOAD_TEXT,), WRITE_CORPUS),
+    # PRODUCT-SEARCH-E2E (the owner, 2026-11-01): READ-ONLY supplier lookups and product search for every friend key; the
+    # orchestrator adds fair use per principal (one CJ call in flight, a per-minute rate). product_search reads a library: CORPUS.
+    "supplier_search": (SUPPLIER_SCOPES, NONE), "supplier_product": (SUPPLIER_SCOPES, NONE), "supplier_freight": (SUPPLIER_SCOPES, NONE),
+    "supplier_warehouses": (SUPPLIER_SCOPES, NONE), "supplier_parse": (SUPPLIER_SCOPES, NONE), "product_search": (SUPPLIER_SCOPES, CORPUS_OPTIONAL),
     # upload_document reads a HOST path: never for a non-admin principal, whatever its scopes (owner decision §6)
+    # research_acquire drives the HOST browser, which holds the owner's sign-ins: never for a non-admin principal (AUTORESEARCH R8)
 }
+
+
+class CorpusGrant(frozenset):
+    """A principal's readable libraries (F3). Holding WILDCARD ("*") it grants every library that exists when a request is made,
+    never another person's private library (`fr-…`): `corpus_id in grant` applies `query_scope.grant_allows`, the one rule the web
+    scope applies, so the gate's corpus check (`authorize`) and every filter that asks `corpus_id in principal.corpus_ids` (Server
+    A's list_corpora over the corpora that exist now) resolve it per request. `"*" in grant` answers the literal question "is this
+    a wildcard grant". Iterating it shows what is stored; set algebra (`&`, `<=`) sees the stored ids only. Writable libraries
+    never take it (`writable_corpus_ids` stays a plain set)."""
+
+    __slots__ = ()
+
+    @property
+    def every(self) -> bool:
+        return frozenset.__contains__(self, WILDCARD)
+
+    def __contains__(self, corpus_id: object) -> bool:
+        if frozenset.__contains__(self, corpus_id):
+            return True
+        return isinstance(corpus_id, str) and QS.grant_allows(corpus_id, frozenset(self))
 
 
 @dataclass(frozen=True)
@@ -83,6 +132,10 @@ class Principal:
     writable_corpus_ids: frozenset[str] = frozenset()
     rate_per_minute: int | None = None
     is_admin: bool = False
+
+    def __post_init__(self) -> None:          # every Principal's libraries honour the wildcard, however it was built
+        if not isinstance(self.corpus_ids, CorpusGrant):
+            object.__setattr__(self, "corpus_ids", CorpusGrant(self.corpus_ids))
 
 
 
@@ -121,6 +174,11 @@ def authorize(p: Principal, tool: str, arguments: dict[str, Any] | None) -> Deci
         return _deny("insufficient_scope", "this principal lacks the scope for this tool")
     if kind == CORPUS:
         return ALLOW if _allowed(args.get("corpus_id"), p.corpus_ids) else _deny("corpus_not_allowed", "this principal may not use this corpus")
+    if kind == CORPUS_OPTIONAL:
+        named = args.get("corpus_id")
+        if named is None or (isinstance(named, str) and not named.strip()):
+            return ALLOW                            # no library named: resolved within the principal's grant by the orchestrator
+        return ALLOW if _allowed(named, p.corpus_ids) else _deny("corpus_not_allowed", "this principal may not use this corpus")
     if kind == WRITE_CORPUS:
         return ALLOW if _allowed(args.get("corpus_id"), p.writable_corpus_ids) else _deny("corpus_not_writable", "this principal may not write to this corpus")
     if kind == START:
@@ -129,15 +187,16 @@ def authorize(p: Principal, tool: str, arguments: dict[str, Any] | None) -> Deci
         inp, opts = args.get("input"), args.get("request_options")
         named = [*_ids((inp or {}).get("corpus_ids") if isinstance(inp, dict) else None),
                  *_ids((opts or {}).get("corpus_ids") if isinstance(opts, dict) else None)]
-        if not named:                                # no corpus named must never mean "whatever the server defaults to"
-            return _deny("corpus_required", "name the corpus ids this run may use (request_options.corpus_ids)")
+        # CORPUS-ACCESS-PARITY (the owner, 2026-11-01): naming NO library is allowed through — the adapter runtime defaults the run
+        # to the caller's searchable libraries WITHIN its grant (web_scope.require_adapter_start, the same rule), so "no corpus"
+        # never reaches beyond the grant; every library that IS named must be one the principal may use
         if not all(_allowed(c, p.corpus_ids) for c in named):
             return _deny("corpus_not_allowed", "this principal may not use this corpus")
     return ALLOW
 
 
 def _allowed(value: Any, allowed: frozenset[str]) -> bool:
-    return isinstance(value, str) and bool(value) and value in allowed
+    return isinstance(value, str) and bool(value) and value != WILDCARD and value in allowed      # "*" names no library
 
 
 def _ids(value: Any) -> list[Any]:
@@ -154,11 +213,14 @@ def principal_from_record(rec: dict[str, Any]) -> Principal:
         raise ValueError(f"{pid}: unknown scopes {sorted(unknown)}")
     if ADMIN in scopes:
         raise ValueError(f"{pid}: the admin scope belongs to the owner key only")
+    # a profile-tagged record (web friends: "profile": "friend") holds the profile's CURRENT scopes too (F9: an existing friend gains
+    # deep research without a registry rewrite); the stored list is a floor, never a ceiling. A profile never grants admin.
+    scopes = scopes | frozenset(PROFILES.get(str(rec.get("profile") or ""), ()))
     rate = rec.get("rate_per_minute")
     if rate is not None and (not isinstance(rate, int) or isinstance(rate, bool) or rate < 1):
         raise ValueError(f"{pid}: rate_per_minute must be a positive integer")
     return Principal(principal_id=pid, name=str(rec.get("name") or ""), scopes=scopes,
-                     corpus_ids=frozenset(rec.get("corpus_ids") or ()), adapter_ids=frozenset(rec.get("adapter_ids") or ()),
+                     corpus_ids=CorpusGrant(rec.get("corpus_ids") or ()), adapter_ids=frozenset(rec.get("adapter_ids") or ()),
                      writable_corpus_ids=frozenset(rec.get("writable_corpus_ids") or ()), rate_per_minute=rate)
 
 

@@ -12,7 +12,7 @@ from typing import Any
 
 import jsonschema
 
-from polymath_shared.acquisition.challenge import looks_like_challenge
+from polymath_shared.acquisition.challenge import looks_like_challenge, wall_route
 
 from .contracts import AGENT_ANSWERED_STEP_TYPES, AUTOMATIC_STEP_TYPES, ORIGIN_ID_FIELDS, PRIOR_EVIDENCE_KINDS, TERMINAL_RUN_STATUSES, assert_valid, bounded_text, schema, stable_hash, validate
 from .harness_guide import FILES as _GUIDE_FILES, SOURCES_URI as _SOURCES_URI
@@ -132,7 +132,8 @@ def start_run(manifest: Manifest, run_id: str, input_payload: dict[str, Any], op
 #: adapter — source- and harness-neutral (the source table is TrailSignal's pinned data, served by both MCP servers as a resource)
 HARNESS_RECEIPT_RULES = (
     'Answer with adapter_submit(kind="receipt"): ONE HarnessResearchReceiptV1 that validates against output_schema; action_id = harness_action.action_id.',
-    "Research with any tools you have; never invent a source, a quote, a date or a number. A page you could not read (login wall, CAPTCHA, rate "
+    "Research on the user's own machine with the step's local Agent Reach commands, never an agent's built-in web search, web fetch or browser; "
+    "never invent a source, a quote, a date or a number. A page you could not read (login wall, CAPTCHA, rate "
     "limit, region block) is a limitation to report, never to bypass.",
     "sources[].url is the page the evidence is on, as its canonical permalink (routing is by URL: a short link can route to the wrong source); "
     "published_at_if_known is that page's own date (a comment's own date), else null; every timestamp is a full date-time in UTC ending in Z "
@@ -362,12 +363,20 @@ def validate_receipt(step: dict[str, Any], payload: Any) -> list[str]:
                     errors.append(f"observation {o.get('observation_id')} states a relation to a hypothesis it does not link: " + ", ".join(unlinked[:5]))
         # SUPPLIER-APIS (2026-09-27): a fetched page that is a verification wall is not evidence; the harness drops the observation,
         # or hands the source to its user to pass the check, and reads it again
+        urls = {s.get("source_id"): str(s.get("url") or "") for s in payload.get("sources") or [] if isinstance(s, dict)}
         for o in payload.get("observations") or []:
             wall = looks_like_challenge(o.get("paraphrase_or_excerpt")) if isinstance(o, dict) and isinstance(o.get("paraphrase_or_excerpt"), str) else None
             if wall:
                 errors.append(f"CHALLENGE_PAGE_AS_EVIDENCE: observation {o.get('observation_id')} (source {o.get('source_id')}) quotes a "
                               f"verification page ({wall}), not evidence: leave it out and record the source in limitations as needing "
                               "your user, who can pass the check in their own browser before it is read again")
+            # PRODUCT-SEARCH-E2E: the CITED PAGE itself may be the check (a site's verification route, a `/captcha` page) whatever the
+            # quote says — the acquisition slice's own route detector decides (never a copy of it here)
+            elif isinstance(o, dict) and wall_route(urls.get(o.get("source_id"))):
+                errors.append(f"CHALLENGE_PAGE_AS_EVIDENCE: observation {o.get('observation_id')} cites source {o.get('source_id')} whose URL "
+                              f"{urls.get(o.get('source_id'))[:200]!r} is a verification page, not the page the evidence is on: leave it out and "
+                              "record the source in limitations as needing your user, who can pass the check in their own browser and read the "
+                              "real page")
         started, completed = _instant(payload.get("started_at")), _instant(payload.get("completed_at"))
         if started and completed and completed < started:
             errors.append("completed_at precedes started_at")

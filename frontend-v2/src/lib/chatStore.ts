@@ -13,6 +13,10 @@
  *  is kept (the Query Trace / Evidence panels read it) but nothing derived is
  *  cached, so a schema change in the receipt degrades a stored turn's panels
  *  rather than corrupting the thread.
+ *
+ *  PRODUCT-SEARCH-E2E: a product answer's `productResearch` and the governed run
+ *  started from it (`productRun`) are turn fields like the rest, so they persist
+ *  with the thread; a turn saved before them simply has neither.
  */
 import type { Turn } from "./chat";
 

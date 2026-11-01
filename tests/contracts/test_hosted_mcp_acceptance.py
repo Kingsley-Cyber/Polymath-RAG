@@ -38,8 +38,9 @@ def _server(monkeypatch, key=KEY):
     assert pathlib.Path(mod.__file__).is_relative_to(ROOT), mod.__file__     # this checkout's Server A, not MAIN's
 
     async def fake_orch(method, path, **kw):
-        if path == "/corpora":
-            return {"corpora": [{"corpus_id": "cinema", "query_ready": True}]}
+        if path == "/corpora":                     # CORPUS-ACCESS-PARITY: the self-explanatory list shape (api/ui.py)
+            return {"corpora": [{"corpus_id": "cinema", "query_ready": True, "in_all_libraries": True}],
+                    "notes": {"query_ready": "searchable now", "in_all_libraries": "also searched when no library is named"}}
         if path == "/chat/evidence":               # MCP-RETRIEVAL-MODES-V1: polymath_search rides the app's evidence route
             if kw["json"]["corpus_id"] != "cinema":
                 return {"error": "unknown corpus", "status": 404}
@@ -82,8 +83,8 @@ def test_the_real_server_addressed_as_the_public_host_passes(monkeypatch):
     assert receipt["read_only"] is True
     assert set(got.values()) == {"PASS"}, got
     assert {"edge.health", "auth.missing_bearer", "auth.wrong_bearer", "mcp.initialize", "mcp.tools_list", "knowledge.list_corpora",
-            "knowledge.search", "adapter.list", "errors.unknown_run", "errors.unknown_adapter", "errors.unknown_corpus",
-            "errors.unknown_tool", "isolation.host_path_upload"} <= set(got)
+            "knowledge.corpora_explained", "knowledge.search", "adapter.list", "errors.unknown_run", "errors.unknown_adapter",
+            "errors.unknown_corpus", "errors.unknown_tool", "isolation.host_path_upload"} <= set(got)
     assert KEY not in json.dumps(receipt)
 
 

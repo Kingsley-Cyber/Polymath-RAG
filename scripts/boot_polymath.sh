@@ -68,5 +68,9 @@ fi
 
 # 2. everything else lives under ONE supervisor (sidecars, orchestrator,
 #    control, workers) with bounded restart + quarantine + health checks.
-mkdir -p /tmp/polymath_fleet
+# FLEET-LOG-DURABLE-V1: slot logs + state live outside /tmp (macOS's periodic
+# cleaner unlinked 26 live worker logs, 2026-11-01). Do NOT pre-create
+# /private/tmp/polymath_fleet: the supervisor links that old path to this
+# directory at boot (control/control/process_supervisor.py link_run_dir).
+mkdir -p "${POLYMATH_FLEET_LOG_DIR:-${POLYMATH_FLEET_DIR:-$HOME/PolymathRuntime/logs/fleet}}"
 exec .venv/bin/python -m control.process_supervisor

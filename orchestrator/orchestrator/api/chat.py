@@ -72,6 +72,14 @@ class ChatRequest(BaseModel):
     evidence_only: bool = False
     # K1 (register 11.485): the knowledge-role scope {"roles": ["reference"]} (Trail ideation); omitted = both roles.
     scope: dict | None = None
+    # PRODUCT-SEARCH-E2E (product-search-v1): None = PRODUCT-INTENT-V1 decides from the message; True forces product mode;
+    # False turns it off (e.g. a governed run's own evidence calls).
+    product: bool | None = None
+
+
+#: a governed run's own evidence calls (the adapter step worker, the ecommerce adapter's corpus client) never run product mode:
+#: the run is driven by the user's agent, and supplier research inside it is the agent's HARNESS_ACTION, never Polymath's
+ADAPTER_CLIENTS = ("polymath-adapter-step/", "opportunity-research/")
 
 
 def stream_request(req: ChatRequest) -> StreamChatRequest:
@@ -94,6 +102,7 @@ def stream_request(req: ChatRequest) -> StreamChatRequest:
         compiler           → compiler (off | shadow | on)
         reasoning, reasoning_blend → the same
         scope              → scope (K1: the knowledge-role scope; the runtime validates and enforces it)
+        product            → product (PRODUCT-SEARCH-E2E: None = detect, True = force, False = off)
         evidence           → NOT a runtime input: a /chat response add-on applied
                              after the turn (`attach_evidence_rows`, built from
                              the answer's own citations — never a second retrieval)
@@ -111,6 +120,7 @@ def stream_request(req: ChatRequest) -> StreamChatRequest:
         corpus_explorer=bool(getattr(req, "corpus_explorer", False)),
         evidence_only=bool(getattr(req, "evidence_only", False)),
         scope=getattr(req, "scope", None),
+        product=getattr(req, "product", None),
     )
 
 
@@ -210,11 +220,14 @@ async def chat(req: ChatRequest, request: Request) -> dict:
             raise
 
 
-def _evidence_impl(req: ChatRequest, *, receipt=None) -> dict:
+def _evidence_impl(req: ChatRequest, *, receipt=None, client: str = "") -> dict:
     """/chat/evidence body: the SAME runtime turn, forced evidence-only — the pipeline short-circuits
-    before synthesis and returns the EvidencePacket (`run_chat` surfaces the answer frame's result)."""
+    before synthesis and returns the EvidencePacket (`run_chat` surfaces the answer frame's result).
+    A governed run's own call (`ADAPTER_CLIENTS` user agent) that names no `product` never runs product mode."""
     sreq = stream_request(req)
     sreq.evidence_only = True
+    if sreq.product is None and str(client or "").startswith(ADAPTER_CLIENTS):
+        sreq.product = False
     out = run_chat(sreq, route="chat/evidence", receipt=receipt)
     if req.evidence:
         attach_packet_rows(out, req)
@@ -264,7 +277,7 @@ async def chat_evidence(req: ChatRequest, request: Request) -> dict:
 
     with Timer() as t:
         try:
-            return await run_in_threadpool(_evidence_impl, req, receipt=_sink)
+            return await run_in_threadpool(_evidence_impl, req, receipt=_sink, client=client)
         except Exception as exc:  # noqa: BLE001 — record, then re-raise unchanged
             if not receipted:
                 detail = getattr(exc, "detail", None)

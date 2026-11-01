@@ -1,112 +1,131 @@
 # unit: orchestrator/orchestrator/api/deep_research.py
-anchor: orchestrator/orchestrator/api/deep_research.py:1-510
+anchor: orchestrator/orchestrator/api/deep_research.py:1-527
 
 ## purpose
-FastAPI router for deep research (DEEP-RESEARCH-MODE-V1 DR2/DR6/DR7): `POST /research/deep` runs the shared breadth × depth loop (`polymath_shared.deep_research`) over the request's libraries and streams chat-style SSE frames (`phase`, `token`, `answer`, `error`, `done`) plus keep-alive comments; `POST /research/deep/plan` builds the level-1 plan card; `POST /research/deep/finish` ends the caller's run early. Libraries are resolved and read-checked once, and every search runs under the caller's principal so no step widens scope (K1); one run per person, a disconnect cancels it. — orchestrator/orchestrator/api/deep_research.py:1-18 [DERIVED]
+
+FastAPI router exposing the deep-research loop (engine in `polymath_shared.deep_research`) as three endpoints: `POST /research/deep` streams the breadth × depth run as SSE (`phase`/`token`/`answer`/`error`/`done` plus keep-alive comments), `POST /research/deep/plan` makes the level-1 plan card in one planner call, `POST /research/deep/finish` ends the caller's run early — orchestrator/orchestrator/api/deep_research.py:1-18 [DERIVED]. Scope is fixed once: every search names exactly the confirmed libraries and runs under the caller's principal; planning/extraction use the chat compiler's governed lanes; the report is written by the composer's model — orchestrator/orchestrator/api/deep_research.py:6-9 [DERIVED]. Router mounted by `orchestrator/orchestrator/main.py` (FACTS.importers).
 
 ## public surface
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `deep_research` | route `POST /research/deep` | `(req: DeepResearchRequest) -> StreamingResponse` | orchestrator/orchestrator/api/deep_research.py:387-452 | orchestrator/orchestrator/main.py |
-| `deep_research_plan` | route `POST /research/deep/plan` | `(req: DeepPlanRequest) -> dict[str, Any]` | orchestrator/orchestrator/api/deep_research.py:471-495 | orchestrator/orchestrator/main.py |
-| `deep_research_finish` | route `POST /research/deep/finish` (202) | `() -> dict[str, Any]` | orchestrator/orchestrator/api/deep_research.py:498-509 | orchestrator/orchestrator/main.py |
-| `moves_enabled` | def | `(req: DeepResearchRequest \| DeepPlanRequest) -> bool` | orchestrator/orchestrator/api/deep_research.py:83-84 | — |
-| `confirmed_plan` | def | `(req: DeepResearchRequest, breadth: int) -> tuple[tuple[str, str, str], ...] \| None` | orchestrator/orchestrator/api/deep_research.py:87-108 | — |
-| `evidence_rows_of` | def | `(out: dict, corpus_ids: list[str], limit: int, *, explore: bool = False) -> list[dict]` | orchestrator/orchestrator/api/deep_research.py:149-160 | — |
-| `move_request` | def | `(query, libraries, mode, move=None, anchor_docs=()) -> tuple[Any, bool]` | orchestrator/orchestrator/api/deep_research.py:163-182 | — |
-| `research_lane_names` | def | `(stage_pin_fn, compiler_stage: str) -> list[str]` | orchestrator/orchestrator/api/deep_research.py:225-227 | — |
-| `receipt_block` | def | `(answer: dict[str, Any] \| None) -> dict[str, Any] \| None` | orchestrator/orchestrator/api/deep_research.py:455-468 | — |
-
-Sole importer: `orchestrator/orchestrator/main.py` (FACTS.importers).
+| `deep_research` | route def | (req: DeepResearchRequest) -> StreamingResponse | deep_research.py:406 | orchestrator/orchestrator/main.py |
+| `deep_research_plan` | route def | (req: DeepPlanRequest) -> dict[str, Any] | deep_research.py:490 | orchestrator/orchestrator/main.py |
+| `deep_research_finish` | route def | () -> dict[str, Any] | deep_research.py:517 | orchestrator/orchestrator/main.py |
+| `DeepPlanGoal` | model class | goal: str = "", query: str, move: str = "broad" | deep_research.py:55-59 | — |
+| `DeepResearchRequest` | model class | question 3-2000, corpus_id(s), preset="standard", mode="HYBRID", synthesizer, moves=True, plan | deep_research.py:62-70 | — |
+| `DeepPlanRequest` | model class | question 3-2000, corpus_id(s), preset="standard", mode="HYBRID", moves=True | deep_research.py:73-80 | — |
+| `confirmed_plan` | def | (req, breadth: int) -> tuple[tuple[str, str, str], ...] \| None | deep_research.py:87 | — |
+| `moves_enabled` | def | (req) -> bool | deep_research.py:83 | — |
+| `evidence_rows_of` | def | (out, corpus_ids, limit, *, explore=False) -> list[dict] | deep_research.py:149 | — |
+| `move_request` | def | (query, libraries, mode, move=None, anchor_docs=()) -> tuple[Any, bool] | deep_research.py:163 | — |
+| `research_lane_names` | def | (stage_pin_fn, compiler_stage) -> list[str] | deep_research.py:225 | — |
+| `receipt_block` | def | (answer: dict \| None) -> dict \| None | deep_research.py:473 | — |
+| `_Aliases` | class | alias(row) -> str ("c1", "c2", …) | deep_research.py:115-129 | — |
 
 ## contracts
 
-**deep_research** (orchestrator/orchestrator/api/deep_research.py:387-452)
-- in: `question` 3–2000 chars, `preset="standard"`, `mode="HYBRID"`, `synthesizer=None`, `moves=True`, `plan: list[DeepPlanGoal] | None` (62-70).
-- pre: ≥1 library after dedupe else 422 `LIBRARY_REQUIRED` (134-137); `require_corpora(ids)` read check (138); synthesizer (request or `_default_synthesizer()`) must start with `"litellm:"`/`"ollama:"` else 422 `UNKNOWN_SYNTHESIZER` (392-394); preset must parse else 422 `UNKNOWN_PRESET` (395-398); plan passes `confirmed_plan` else 422 `PLAN_INVALID` (399, 107); caller must not already run else 409 `DEEP_RESEARCH_BUSY` (402-404).
-- out: `StreamingResponse` `media_type="text/event-stream"`, headers `Cache-Control: no-cache`, `X-Accel-Buffering: no` (451-452); SSE events `phase`/`token`/`answer`/`error`/`done` (111-112, 433) and `": keep-alive\n\n"` comments on idle (422-424).
-- post: receipt recorded `kind="deep_research"`, route `"research/deep"`, meta carries `receipt_block(answer)` (441-447); `_RUNNING`/`_FINISH` entries removed and `cancel.set()` on any exit, including disconnect (434-440).
+**deep_research** (POST /research/deep)
+- pre: ≥1 corpus id after dedupe else 422 `LIBRARY_REQUIRED` — deep_research.py:136; `require_corpora(ids)` enforces read permission — deep_research.py:138; synthesizer must start `litellm:` or `ollama:` else 422 `UNKNOWN_SYNTHESIZER` — deep_research.py:410-412; preset must parse else 422 `UNKNOWN_PRESET` — deep_research.py:413-416; request `plan` validated by `confirmed_plan` — deep_research.py:417; no other run for same `who = principal or "owner"` else 409 `DEEP_RESEARCH_BUSY` — deep_research.py:418-422.
+- out: `StreamingResponse(media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})` — deep_research.py:469-470.
+- post: any stream exit sets `cancel` and removes `_RUNNING[who]`/`_FINISH[who]` — deep_research.py:452-458; a query receipt is recorded with `kind="deep_research"`, `route="research/deep"` — deep_research.py:462-465.
 
-**deep_research_plan** (orchestrator/orchestrator/api/deep_research.py:471-495)
-- in: `DeepPlanRequest` — same question/corpus/preset/mode/moves shape; `mode` accepted but planning searches nothing (73-80).
-- pre: library + preset checks as above (477-481); ≥1 research lane else 503 `NO_RESEARCH_LANE` via `_complete_port` (236-239).
-- out: dict `{"intent", "evaluative", "preset", "goals": [{id, goal, query, move}], "estimate", "libraries", "moves"}` (491-495); planner exception → 502 `PLAN_FAILED` (485-488); no usable goals → 502 `PLAN_EMPTY` (489-490).
-- post: none; explicitly not under the one-run lock (475).
+**deep_research_plan** (POST /research/deep/plan)
+- pre: same library and preset checks as a run — deep_research.py:495-499; lanes must exist else 503 `NO_RESEARCH_LANE` — deep_research.py:246-247.
+- out: dict `{intent, evaluative, preset, goals[{id,goal,query,move}], estimate, libraries, moves}` — deep_research.py:509-513.
+- post: planner exception → 502 `PLAN_FAILED`; no usable goal → 502 `PLAN_EMPTY` — deep_research.py:503-507. Not under the one-run lock — deep_research.py:492-493.
 
-**deep_research_finish** (orchestrator/orchestrator/api/deep_research.py:498-509)
-- in: no body ("the page posts `{}`", 500).
-- pre: caller has a run else 404 `NO_DEEP_RESEARCH_RUN` (503-507).
-- out: 202 `{"finishing": True}` (498, 509).
-- post: finish event set — run starts nothing new, lets in-flight calls finish, writes the report with stop reason `finished_early` (500-502).
+**deep_research_finish** (POST /research/deep/finish)
+- pre: caller has a run else 404 `NO_DEEP_RESEARCH_RUN` — deep_research.py:521-525.
+- out: 202 `{"finishing": True}`; sets the run's finish event — deep_research.py:516, 526-527.
 
-**confirmed_plan** (orchestrator/orchestrator/api/deep_research.py:87-108)
-- `plan is None` → `None` (92-93); empty list → problem `"the plan has no goals"` (94); `len(plan) > 2 * breadth` rejected (95-96); each query 3–300 chars after strip, move in `DR.MOVES`, goal ≤ 2000 chars (97-105); any problem → single 422 `PLAN_INVALID` joining all with `"; "` (106-107); returns `tuple((goal.strip(), query.strip(), move))` (108).
+**confirmed_plan**
+- in: req + `breadth` from the preset shape — deep_research.py:417.
+- pre: ≤ `2 * breadth` goals; query 3-300 chars after strip; move in `DR.MOVES`; goal ≤ 2000 chars; empty plan refused; all problems in one 422 `PLAN_INVALID` — deep_research.py:94-107.
+- out: tuple of stripped `(goal, query, move)` or None when `req.plan is None`; repeated queries allowed — deep_research.py:92-93, 108, 90-91.
 
-**move_request** (orchestrator/orchestrator/api/deep_research.py:163-182)
-- base request fields: `query`, `corpus_ids`, `limit=ROWS_PER_SEARCH`, `evidence=True` (176).
-- `deep` with anchors → `document_ids=list(anchor_docs)`, explore False (177-178); `adjacent`/`inverse` → intent `RELATIONSHIP`/`COMPARISON` only when `mode in INTENT_MODES` and `retrieve_engine_flag() == "v2"` (179-181, 46); otherwise base mode; explore True only when `move == "broad"` (182).
+**move_request**
+- out per move: `deep` + anchors → `document_ids=anchor_docs`, explore False; `adjacent`/`inverse` → intent `RELATIONSHIP`/`COMPARISON` only when `mode in INTENT_MODES and retrieve_engine_flag() == "v2"`; else base mode with explore = `(move == "broad")` — deep_research.py:46, 177-182.
+- every request: `limit=ROWS_PER_SEARCH`, `evidence=True` — deep_research.py:176.
 
-**evidence_rows_of** (orchestrator/orchestrator/api/deep_research.py:149-160)
-- returns copy of `out["evidence_rows"]` when present (154-155); else dedupes `chunk_id` from the flat `evidence` list, preserving order (156-160); `explore=True` = EXPLORE cap, 2 rows per document, interleaved (150-153).
+**evidence_rows_of**
+- out: copies existing `evidence_rows`; else rebuilds from order-preserving deduped `chunk_id` list with synthetic descending `rerank_score` (`float(len(ids) - i)`); `[]` when no ids — deep_research.py:154-160.
 
-**receipt_block** (orchestrator/orchestrator/api/deep_research.py:455-468)
-- returns `answer.result.meta.deep_research` (or None); when it holds `report_model`, swaps the model for `report_model_counts` (goals/findings/confidence buckets/counter/open_questions/sources) to stay under the 64 KB receipt meta cap (456-468).
+**receipt_block**
+- post: replaces `report_model` with `report_model_counts` (goals, findings, confidence `{strong, single_source, contested}`, counter, open_questions, sources) so receipt meta stays under its 64 KB cap — deep_research.py:473-486.
 
 ## effect surface
-- env: `POLYMATH_DEEP_RESEARCH_HEARTBEAT_S` = `"15"` (41); `POLYMATH_DEEP_RESEARCH_MOVES` = `"1"`, any of `"0"/"false"/"off"/"no"` disables moves (44, 84).
-- network: `litellm.completion(..., stream=True, timeout=300)` for `litellm:` synthesizers (259-270); `httpx.stream("POST", f"{OLLAMA_URL}/api/chat", timeout=300)` for `ollama:` (277-281); relevance gate via `gate_probes` + `chat_retrieval._rerank_children`, origin `"DEEP_RESEARCH"` (207-218); retrieval via `asyncio.run_coroutine_threadsafe(_retrieve_impl(req))` under the caller's principal (188-194).
-- Postgres: via `polymath_shared.db.tx()` in `_build_rows` (142-146) and `record_query_receipt(tx, kind="deep_research", ...)` (441-447); no specific tables listed in FACTS (tables_read/tables_written empty).
-- process state: module dicts `_RUNNING`/`_FINISH` keyed by principal, guarded by `_LOCK` (49-51); daemon worker thread name `"deep-research"` (414); `_Aliases` per-run lock (121).
-- files/Qdrant/subprocesses: none visible.
+
+- env read: `POLYMATH_DEEP_RESEARCH_HEARTBEAT_S` = "15" — deep_research.py:41; `POLYMATH_DEEP_RESEARCH_MOVES` = "1" — deep_research.py:84.
+- network: `litellm.completion(stream=True, timeout=300)` — deep_research.py:281-288; `httpx.stream("POST", f"{OLLAMA_URL}/api/chat", timeout=300)` — deep_research.py:298-299; retrieval via `asyncio.run_coroutine_threadsafe(... _retrieve_impl(req))` — deep_research.py:186, 193; gate cross-encoder via `gate_probes(..., chat_retrieval._rerank_children, ...)` — deep_research.py:213-218; per-lane `LLMExtractionClient.complete_one` — deep_research.py:254-259.
+- DB: `tx()` connection inside `_build_rows` — deep_research.py:144-146; `record_query_receipt(tx, kind="deep_research", ...)` — deep_research.py:460-465. FACTS.tables_read/tables_written: none named.
+- in-process state: `_RUNNING`/`_FINISH` dicts guarded by `_LOCK` — deep_research.py:49-51; daemon thread `name="deep-research"` — deep_research.py:432-433.
+- no files, no subprocess (FACTS + SOURCE).
 
 ## invariants
-INVARIANT: len(req.plan) <= 2 * shape.breadth — 95-96 [DERIVED]; fails-if: 422 PLAN_INVALID, plan rejected.
-INVARIANT: 3 <= len(query.strip()) <= 300 (PLAN_QUERY_CHARS) — 48, 97-101 [DERIVED]; fails-if: 422 PLAN_INVALID.
-INVARIANT: len(item.goal) <= 2000 == question max_length (PLAN_GOAL_CHARS) — 48, 63, 104-105 [DERIVED]; fails-if: 422 PLAN_INVALID.
-INVARIANT: rows per search <= ROWS_PER_SEARCH = 10 — 43, 203 [DERIVED]; fails-if: oversized evidence feeds the model per search.
-INVARIANT: retrieve port timeout == LLM client timeout_s == PORT_TIMEOUT_S == 60.0 — 42, 194, 245 [DERIVED]; fails-if: port raises into the worker's catch-all error frame.
-INVARIANT: one _RUNNING entry per principal (who = principal or "owner") — 49, 400-405 [DERIVED]; fails-if: 409 DEEP_RESEARCH_BUSY on second start.
-INVARIANT: idle gap between SSE yields <= HEARTBEAT_S (default 15 s) — 41, 422-424 [DERIVED]; fails-if: proxy may close a silent stream.
-INVARIANT: error message length <= 300 chars; citation text <= 600; phase query <= 120 — 382, 375, 307/321 [DERIVED]; fails-if: oversized frames leak source text into the stream.
-INVARIANT: alias ids are "c<N>" assigned in first-seen order of row id, unique per run — 123-128 [DERIVED]; fails-if: report citations cannot map back to evidence rows.
+
+INVARIANT: rows per search ≤ ROWS_PER_SEARCH = 10 — deep_research.py:43, 202 [DERIVED]
+  fails-if: a search floods the report prompt / alias table beyond the cap the engine expects.
+INVARIANT: retrieve port wall timeout = PORT_TIMEOUT_S = 60.0 — deep_research.py:42, 193 [DERIVED]
+  fails-if: a hung retrieval blocks the worker thread forever instead of raising.
+INVARIANT: alias ids are unique per run, one alias per unique row id (`c{len(self._by_id) + 1}`) — deep_research.py:123-128 [DERIVED]
+  fails-if: two rows share a cid and `validate_report_citations` mis-credits evidence.
+INVARIANT: confirmed plan goals ≤ 2 × breadth — deep_research.py:95 [DERIVED]
+  fails-if: 422 PLAN_INVALID instead of a run.
+INVARIANT: confirmed query length ∈ [3, 300], goal length ≤ 2000 — deep_research.py:48, 100, 104 [DERIVED]
+  fails-if: 422 PLAN_INVALID listing the goal number.
+INVARIANT: per-caller run count ≤ 1, key = `principal or "owner"` — deep_research.py:418-424 [DERIVED]
+  fails-if: two streams share one cancel event, or 409 DEEP_RESEARCH_BUSY never fires.
+INVARIANT: failed lane attempts per complete call ≤ RESEARCH_DISPATCH_ATTEMPTS = 2 — deep_research.py:231, 251-252 [DERIVED]
+  fails-if: research burns attempts on lanes a limiter already failed.
+INVARIANT: citation text ≤ 600 chars, worker error message ≤ 300 chars, phase query label ≤ 120 chars — deep_research.py:393, 399, 324/339 [DERIVED]
+  fails-if: oversized SSE frames / leaked source text in error frames.
+INVARIANT: stream silent gap ≤ HEARTBEAT_S = 15 s (`": keep-alive\n\n"` on queue timeout) — deep_research.py:41, 440-442 [DERIVED]
+  fails-if: a proxy closes the idle SSE connection mid-run.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (clock `time.monotonic` at 318, 330, 356, 377, 411, 446; concurrency `threading.Thread` at 414 plus locks 51/121; network `httpx.stream` 280 and `litellm.completion` 270; env flags 41, 84) — orchestrator/orchestrator/api/deep_research.py:270-446 [DERIVED]
-idempotency: UNSAFE (each `POST /research/deep` spawns a worker thread and writes a query receipt, 414, 441-447; repeats while running are refused with 409, 403-404)
+
+determinism: NONDETERMINISTIC (clock `time.monotonic` at deep_research.py:336, 348, 374, 395, 429, 464; network litellm/httpx streams deep_research.py:288, 298; concurrency `threading.Thread` deep_research.py:432; env deep_research.py:41, 84) [DERIVED]
+idempotency: UNSAFE — `/research/deep` starts retrieval+LLM work and writes a receipt per stream (deep_research.py:463-465); `/research/deep/plan` mutates nothing but is LLM-nondeterministic; `/research/deep/finish` is idempotent (event set) — deep_research.py:526 [INFERRED: from event semantics]
 
 ## failure behaviour
-- Worker catch-all: any `Exception` → SSE `error` frame with `error_code = type(exc).__name__`, message truncated to 300 chars, then `_END` → `done` (381-384, 426-433).
-- Stream error codes: `CANCELLED` (348, 363), `RESEARCH_FAILED` vs `NOTHING_FOUND` chosen by `retrieval_errors or llm_errors` (350-354), `REPORT_EMPTY` (365-367).
-- Plan endpoint: `Exception` → `log.warning` + 502 `PLAN_FAILED` (class name only, never the message) (485-488); no goals → 502 `PLAN_EMPTY` (489-490).
-- SWALLOWED: reasoning-policy overlay failure in `_report_tokens` → `log.warning`, stream continues without the overlay (266-269).
-- SWALLOWED: receipt write failure → `log.warning("deep research receipt not written: ...")`, stream unaffected (448-449).
-- Relevance gate: judge error/timeout raises `RuntimeError` into the engine, which fails open and counts the searches (207-220).
-- Disconnect: `finally` in `events()` sets cancel and still attempts the receipt (434-447).
+
+- `_worker` catches every `Exception` → SSE `error` frame with `error_code = type(exc).__name__`, message truncated to 300; stream still ends with `done` — deep_research.py:398-401, 450-451 [DERIVED].
+- plan endpoint catches planner `Exception` → logs class name only, raises 502 `PLAN_FAILED`; empty draft → 502 `PLAN_EMPTY` — deep_research.py:503-507 [DERIVED].
+- SWALLOWED: reasoning-policy overlay failure in `_report_tokens` → warning log, report streams without the thinking rule — deep_research.py:286-287 [DERIVED].
+- SWALLOWED: receipt write failure → warning `"deep research receipt not written"`, stream unaffected — deep_research.py:466-467 [DERIVED].
+- gate receipt error → `RuntimeError` raised to the engine (docstring: engine keeps the searches, fail-open) — deep_research.py:219-220, 209-211 [DERIVED].
+- stream error codes: `CANCELLED` — deep_research.py:366, 381; `RESEARCH_FAILED` / `NOTHING_FOUND` — deep_research.py:369-372; `REPORT_EMPTY` — deep_research.py:383-385.
+- HTTP codes: 422 `LIBRARY_REQUIRED`/`PLAN_INVALID`/`UNKNOWN_SYNTHESIZER`/`UNKNOWN_PRESET` — deep_research.py:136, 107, 412, 416; 409 `DEEP_RESEARCH_BUSY` — deep_research.py:422; 503 `NO_RESEARCH_LANE` — deep_research.py:247; 502 `PLAN_FAILED`/`PLAN_EMPTY` — deep_research.py:505, 507; 404 `NO_DEEP_RESEARCH_RUN` — deep_research.py:525.
 
 ## dumb-code flags
-- Fallback principal literal `"owner"` duplicated at 400 and 503.
-- Model timeout literal `300` duplicated: litellm kwargs (263) and ollama `httpx.stream` (280).
-- Truncation literals scattered with no named constant: `120` (307, 321), `300` (382), `600` (375).
-- Comment says `POLYMATH_DEEP_RESEARCH_MOVES=0` forces moves off (44), but `moves_enabled` also treats `"false"`, `"off"`, `"no"` (84).
-- `DeepPlanRequest.mode` accepted and never used by the handler (73-80, docstring 74).
-- Preset shapes live only in a comment (`# quick 3×1 · standard 3×2 · thorough 4×2`, 66); real values are in `DR.Config.preset` (396, 479).
-- `_STAGE_LABEL`/`_PHASE_FIELDS` duplicate the engine's event vocabulary (294-300).
+
+- Magic 300 duplicated as two unrelated caps: report stream timeout (litellm kwargs `"timeout": 300`, httpx `timeout=300`) — deep_research.py:281, 298 [DERIVED].
+- Magic truncations 120 / 600 / 300 inline, not constants — deep_research.py:324, 339, 393, 399 [DERIVED].
+- 64 KB receipt meta cap exists only in `receipt_block` docstring, not enforced here — deep_research.py:474 [DERIVED].
+- `Config.preset` called with `score_floor=float("-inf")` in `_worker` — deep_research.py:352 — but without it in the plan endpoint — deep_research.py:497; the two call sites get different default behavior [DERIVED].
+- Defaults duplicated across both request models: `preset: str = "standard"` and `mode: str = "HYBRID"` — deep_research.py:66-67, 78-79 [DERIVED].
+- `req.preset.strip().lower()` computed twice on the answer path — deep_research.py:390, 510 [DERIVED].
+- Preset names only in a comment (`quick 3×1 · standard 3×2 · thorough 4×2`); real shapes live in `DR.Config.preset` — deep_research.py:66 [DERIVED].
 
 ## refactor notes
-- `orchestrator/orchestrator/main.py` is the sole importer (FACTS.importers); the three route paths are the HTTP contract (275-289 in FACTS routes; 387, 471, 498).
-- Private cross-module imports that break on rename: `orchestrator.api.retrieve._retrieve_impl` (186), `INTENT_MODES`/`retrieve_engine_flag` (171-174, 180); `orchestrator.api.ui._compiler_attempt_order` (232), `_chat_max_tokens`/`_litellm_credentials` (261), `OLLAMA_URL` (279), `_default_synthesizer` (373); `orchestrator.api.chat_retrieval._rerank_children` (218).
-- Client-facing SSE contract: event names `phase`/`token`/`answer`/`error`/`done`, keep-alive comments, answer `kind: "deep"` with `meta.verdict` `"supported"`/`"unsupported"` (2-4, 377-380, 424, 433).
-- `receipt_block` hardcodes the evidence-model keys (`goals`, `findings`, `counter`, `open_questions`, `sources`, confidence buckets `"strong"`/`"single_source"`/`"contested"`) — any `DR.evidence_model` shape change must update 462-468.
-- `_RUNNING`/`_FINISH` are in-process dicts keyed by principal (49-50); running multiple orchestrator processes would break the one-run lock and `/finish` routing [INFERRED — no shared store is visible].
+
+- Private cross-module imports — renaming any breaks this unit: `orchestrator.api.retrieve._retrieve_impl`, `INTENT_MODES`, `retrieve_engine_flag` — deep_research.py:171-175, 186; `chat_retrieval._rerank_children` — deep_research.py:218; `orchestrator.api.ui._compiler_attempt_order`/`_chat_max_tokens`/`_litellm_credentials`/`_default_synthesizer`/`OLLAMA_URL` — deep_research.py:240, 279, 409, 297.
+- Route paths and verbs are the mounted contract (importer: `orchestrator/orchestrator/main.py`) — deep_research.py:405, 489, 516 [DERIVED].
+- SSE frame contract is client-facing: event names `phase`/`token`/`answer`/`error`/`done`, `coverage` frames, keep-alive comments, and `_STAGE_LABEL`/`_PHASE_FIELDS` shapes — deep_research.py:2-3, 312-318, 354-357, 441-442 [DERIVED].
+- `_RUNNING`/`_FINISH` key scheme (`principal or "owner"`) is shared by run and finish endpoints; changing it breaks `/research/deep/finish` lookup — deep_research.py:418-424, 521-523 [DERIVED].
+- Error-code strings (`PLAN_INVALID`, `DEEP_RESEARCH_BUSY`, `NO_DEEP_RESEARCH_RUN`, `PLAN_FAILED`, `PLAN_EMPTY`, `NO_RESEARCH_LANE`, `LIBRARY_REQUIRED`, `UNKNOWN_PRESET`, `UNKNOWN_SYNTHESIZER`, `CANCELLED`, `RESEARCH_FAILED`, `NOTHING_FOUND`, `REPORT_EMPTY`) are API contract for the page — deep_research.py:107, 136, 247, 412, 416, 422, 366/381, 369-372, 384, 505-507, 525 [DERIVED].
+- Move semantics (`MOVE_INTENT` mapping and the `v2`-engine gating) change search behaviour for every planned search — deep_research.py:46, 179-181 [DERIVED].
 
 ## VERIFY
+
 ```verify
 grep -Fq 'ROWS_PER_SEARCH = 10' orchestrator/orchestrator/api/deep_research.py
-grep -Fq 'MOVE_INTENT = {"adjacent": "RELATIONSHIP", "inverse": "COMPARISON"}' orchestrator/orchestrator/api/deep_research.py
-grep -Fq 'raise HTTPException(409, {"error_code": "DEEP_RESEARCH_BUSY"' orchestrator/orchestrator/api/deep_research.py
-grep -Eq '"error_code": "(PLAN_INVALID|PLAN_FAILED|PLAN_EMPTY|CANCELLED|RESEARCH_FAILED|NOTHING_FOUND|REPORT_EMPTY)"' orchestrator/orchestrator/api/deep_research.py
-grep -Fq 'rows[:ROWS_PER_SEARCH]' orchestrator/orchestrator/api/deep_research.py
-! grep -Fq '@router.get' orchestrator/orchestrator/api/deep_research.py
+grep -Fq 'PORT_TIMEOUT_S = 60.0' orchestrator/orchestrator/api/deep_research.py
+grep -Fq 'RESEARCH_DISPATCH_ATTEMPTS = 2' orchestrator/orchestrator/api/deep_research.py
+grep -Fq 'POLYMATH_DEEP_RESEARCH_HEARTBEAT_S' orchestrator/orchestrator/api/deep_research.py
+grep -Fq 'DEEP_RESEARCH_BUSY' orchestrator/orchestrator/api/deep_research.py
+grep -Eq 'PLAN_(INVALID|FAILED|EMPTY)' orchestrator/orchestrator/api/deep_research.py
+grep -Fq '{"finishing": True}' orchestrator/orchestrator/api/deep_research.py
 test "$(grep -c -F 'time.monotonic' orchestrator/orchestrator/api/deep_research.py)" -ge 6
 ```

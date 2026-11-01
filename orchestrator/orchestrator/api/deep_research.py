@@ -227,11 +227,19 @@ def research_lane_names(stage_pin_fn, compiler_stage: str) -> list[str]:
     return list(stage_pin_fn("deep_research") or stage_pin_fn(compiler_stage) or [])
 
 
+#: dispatched attempts per research call (a lane its limiter refuses at once does not spend one)
+RESEARCH_DISPATCH_ATTEMPTS = 2
+
+
 def _complete_port(key: str):
-    """Planning and extraction on the chat compiler's governed lanes (limiter-admitted), two attempts across lanes."""
+    """Planning and extraction on the chat compiler's governed lanes (limiter-admitted), two attempts across lanes.
+    INTERACTIVE-ADMISSION-V1: the `deep_research` pin is the compiler's lanes, so the same rule holds — a lane whose
+    limiter refuses at once (breaker open, Retry-After hold, saturated: zero HTTP) is skipped for the next lane without
+    spending an attempt, and a call no lane admits fails fast with the typed `AllLanesRefused` (the engine counts it and
+    ends that branch) instead of waiting out a breaker cooldown."""
     from orchestrator.api.ui import _compiler_attempt_order
     from polymath_shared.chat_plan import COMPILER_STAGE
-    from polymath_shared.llm_extraction.client import LLMExtractionClient
+    from polymath_shared.llm_extraction.client import AllLanesRefused, LLMExtractionClient
     from polymath_shared.llm_extraction.pool import cloud_endpoints, stage_pin
     names = research_lane_names(stage_pin, COMPILER_STAGE)
     endpoints = [e for e in cloud_endpoints() if e.name in names]
@@ -239,17 +247,27 @@ def _complete_port(key: str):
         raise HTTPException(503, {"error_code": "NO_RESEARCH_LANE", "message": "no model lane is configured for research"})
 
     def complete(prompt: str, *, system: str, max_tokens: int) -> str:
-        failures = []
-        for ep in _compiler_attempt_order(endpoints, key, max_attempts=2):
+        failures, skipped = [], []
+        for ep in _compiler_attempt_order(endpoints, key, max_attempts=len(endpoints)):
+            if len(failures) >= RESEARCH_DISPATCH_ATTEMPTS:
+                break
             client = LLMExtractionClient("cloud", url=ep.url, model=ep.model, limiter_key=ep.limiter_key, api_key=ep.api_key,
                                          cloud_opts=ep.cloud_opts, timeout_s=PORT_TIMEOUT_S, max_attempts=1)
             client.endpoint_name = ep.name
             client.attempt_stage, client.attempt_function = "deep_research", "DEEP_RESEARCH"
+            client.interactive = True          # INTERACTIVE-ADMISSION-V1: never wait on a lane limiter
             text, error = client.complete_one(prompt, system_prompt=system, max_tokens=max_tokens)
             if not error and text and text.strip():
                 return text
+            refusal = getattr(client, "last_refusal", None)
+            if refusal is not None:
+                skipped.append(refusal)         # zero HTTP: receipted, and the next lane is tried
+                continue
             failures.append(error or "empty")
-        raise RuntimeError("research lanes failed: " + ",".join(failures))
+        if skipped and not failures:
+            raise AllLanesRefused(skipped)
+        raise RuntimeError("research lanes failed: " + ",".join(
+            failures + [f"skipped:{s.lane}={s.reason}" for s in skipped]))
     return complete
 
 

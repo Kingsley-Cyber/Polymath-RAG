@@ -12,13 +12,14 @@ AUTHORITY: `shared/polymath_shared/adapter/contracts.py:35` :: `CITABLE_EVIDENCE
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:228` | 5/6 | `parent_map` |
+| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:229` | 5/6 | `parent_map` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:145` | 3/6 | `chunk`, `document`, `parent_map` |
 | `orchestrator/orchestrator/api/evidence_rows.py` | `orchestrator/orchestrator/api/evidence_rows.py:276` | 4/6 | `field_evidence`, `parent_map` |
-| `shared/polymath_shared/adapter/evidence_boundary.py` | `shared/polymath_shared/adapter/evidence_boundary.py:53` | 5/6 | `parent_map` |
-| `shared/polymath_shared/adapter/hypotheses.py` | `shared/polymath_shared/adapter/hypotheses.py:28` | 6/6 | — |
-| `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:24` | 6/6 | — |
-| `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:93` | 4/6 | `field_evidence`, `parent_map` |
+| `shared/polymath_shared/adapter/evidence_boundary.py` | `shared/polymath_shared/adapter/evidence_boundary.py:56` | 5/6 | `parent_map` |
+| `shared/polymath_shared/adapter/hypotheses.py` | `shared/polymath_shared/adapter/hypotheses.py:32` | 6/6 | — |
+| `shared/polymath_shared/adapter/manifest.py` | `shared/polymath_shared/adapter/manifest.py:149` | 3/6 | `document`, `graph_hop`, `parent_map` |
+| `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:26` | 6/6 | — |
+| `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:123` | 4/6 | `field_evidence`, `parent_map` |
 
 ## VERIFY
 

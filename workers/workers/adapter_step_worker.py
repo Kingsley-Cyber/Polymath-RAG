@@ -19,22 +19,22 @@ executed here — the host harness answers them through adapter_submit.
 from __future__ import annotations
 
 import argparse
-import hashlib
-import json
+import collections
+import concurrent.futures
 import logging
 import os
 import pathlib
-import re
 import socket
-import subprocess
+import subprocess  # noqa: F401 — the domain binding's runner (polymath_shared.adapter.domain) spawns through this module; tests patch it here
 import sys
+import threading
 import time
 from typing import Any
 
 import httpx
 import psycopg
 
-from polymath_shared.adapter import evidence_boundary as EB, research_gaps as RG, service
+from polymath_shared.adapter import domain as DOMAIN, evidence_boundary as EB, research_gaps as RG, service
 from polymath_shared.adapter.manifest import Manifest, ManifestInvalid
 from polymath_shared.adapter.transitions import RunState
 from polymath_shared.db import tx
@@ -42,9 +42,33 @@ from polymath_shared.execution import heartbeat, register_worker, worker_identit
 from polymath_shared.logging import configure_logging
 
 ORCH = os.environ.get("POLYMATH_ORCH_URL", "http://127.0.0.1:7200")
-HTTP_TIMEOUT_S = float(os.environ.get("POLYMATH_ADAPTER_HTTP_TIMEOUT_S", "120"))
+#: F7: one evidence call measured up to 74 s plus up to 75 s waiting on the orchestrator's provider breaker — 149 s worst case, over the
+#: old 120 s HTTP timeout. The timeout covers that; the LEASE covers one call and its transient backoff, because the lease is renewed
+#: before every call (`_renew_lease`) — never once per step while a step's calls run for minutes.
+HTTP_TIMEOUT_S = float(os.environ.get("POLYMATH_ADAPTER_HTTP_TIMEOUT_S", "180"))
+LEASE_S_DEFAULT = int(os.environ.get("POLYMATH_ADAPTER_LEASE_S", "300"))
+LEASE_MARGIN_S = 60                   # >= the longest transient backoff (TRANSIENT_BACKOFF_S) plus a renewal's own round trip
+#: F8: how often the loop looks for runs idle on the agent (service.expire_idle; the bound is POLYMATH_ADAPTER_IDLE_EXPIRY_S, default 24 h)
+IDLE_SWEEP_S = float(os.environ.get("POLYMATH_ADAPTER_IDLE_SWEEP_S", "60"))
 log = logging.getLogger("worker-adapter-step")
 WORKER_TYPE = "adapter_step"          # == the supervisor slot name
+
+
+# ─────────────────────────────────────────────────────────── lease (F7): renewed before every outbound call of a step
+#: the lease this process holds while a step executes OUTSIDE the run's transaction: (run_id, owner, lease_s), or None between steps
+_LEASE: dict[str, Any] = {}
+
+
+def _renew_lease() -> None:
+    """F7: a step's executor runs outside the run's transaction (the row lock is free for submit / cancel) and may make several slow
+    calls; the lease is renewed before each one, so a run is never claimed by a second worker mid-step. A lost lease raises LeaseLost
+    and the unit is dropped (never applied). Outside a held lease (tests, `--once` drivers without a lease) this is a no-op."""
+    held = dict(_LEASE)
+    if not held:
+        return
+    with tx() as conn:
+        if not service.store.renew_lease(conn, held["run_id"], held["owner"], int(held["lease_s"])):
+            raise service.LeaseLost(f"lease on {held['run_id']} lost while its step executed")
 
 
 # ─────────────────────────────────────────────────────────── executors
@@ -58,26 +82,32 @@ def _path(obj: dict[str, Any], dotted: str, default: Any = None) -> Any:
     return cur
 
 
-def _query_text(step: dict[str, Any], state: RunState, m: Manifest) -> str:
+def _need(step: dict[str, Any], state: RunState, m: Manifest) -> tuple[str, str]:
+    """(the step's information need, where it came from). PRODUCT-SEARCH-E2E: the need is the live hypotheses (`query_from`), the
+    path the step names (`config.source`), or the run's own NEED field (EB.NEED_FIELDS: the given seed or the corpus seed) — never
+    another input field: a category, a language or a geography is a LIMIT on the research, and it no longer silently becomes the
+    search query (W:77-79 removed). Nothing usable raises (STEP_EXECUTOR_ERROR), typed and named."""
     cfg = m.step(step["step_id"]).get("config") or {}
     if cfg.get("query_from") == "hypotheses":                 # generic engine state: the live hypotheses' statements
         stmts = [str(h.get("statement", "")).strip() for h in step.get("context", {}).get("hypotheses") or []]
         stmts = [x for x in stmts if x]
         if stmts:
-            return "; ".join(stmts)[:2000]
+            return "; ".join(stmts)[:2000], "context.hypotheses"
     src = cfg.get("source")
     if src:
         v = _path({"input": state.input, "options": state.options, "outputs": state.outputs}, src)      # a prior step may have compiled the need
         if isinstance(v, str) and v.strip():
-            return v.strip()
-    for k in ("question", "seed", "seed_idea", "query", "signal", "topic", "problem"):
+            return v.strip(), str(src)
+    for k in EB.NEED_FIELDS:
         v = state.input.get(k)
         if isinstance(v, str) and v.strip():
-            return v.strip()
-    for v in state.input.values():                      # last resort: the first non-empty string field of the domain input
-        if isinstance(v, str) and v.strip():
-            return v.strip()
-    raise ValueError("no query text in input (set config.source on the step, e.g. input.seed_idea)")
+            return v.strip(), f"input.{k}"
+    raise ValueError("NEED_MISSING: no information need in the run input (no seed and no need field; set config.source on the step, "
+                     "e.g. input.seed) — a limit such as category, language or geography is never searched in its place")
+
+
+def _query_text(step: dict[str, Any], state: RunState, m: Manifest) -> str:
+    return _need(step, state, m)[0]
 
 
 def _corpus_ids(state: RunState) -> list[str]:
@@ -162,6 +192,7 @@ def _orch_post(path: str, body: dict[str, Any], *, user_agent: str | None = None
     EB.assert_allowed_path(path)
     attempt = 0
     while True:
+        _renew_lease()                                                   # F7: every attempt starts with a fresh lease
         try:
             with httpx.Client(timeout=HTTP_TIMEOUT_S) as c:
                 r = c.post(f"{ORCH}{path}", json=body, headers=({"User-Agent": user_agent} if user_agent else None))
@@ -206,7 +237,8 @@ def _with_degraded(outcome: service.ExecOutcome, reasons: list[str]) -> service.
 def _retrieve_legacy(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids: list[str]) -> service.ExecOutcome:
     cfg = m.step(step["step_id"]).get("config") or {}
     mode = _legacy_mode(cfg)
-    body = {"query": _query_text(step, state, m), "corpus_ids": corpus_ids, "limit": int(cfg.get("top_k", state.input.get("top_k") or 16)),
+    need, need_source = _need(step, state, m)
+    body = {"query": need, "corpus_ids": corpus_ids, "limit": int(cfg.get("top_k", state.input.get("top_k") or 16)),
             "scope": dict(EB.TRAIL_SCOPE)}          # K1: Trail ideation reads reference material only
     if mode == "EXPLORE":
         body["explore"] = True                 # contract rows (retrieve-evidence-rows-v1): the view an agent consumes
@@ -214,8 +246,16 @@ def _retrieve_legacy(step: dict[str, Any], state: RunState, m: Manifest, corpus_
         body["mode"] = mode                    # FAST/HYBRID/GRAPH answer with hits; normalised below
     out = _orch_post("/retrieve", body, user_agent=_ua(step, state))
     rows = _rows(out, corpus_ids)
-    return {"output": {"surface": EB.SURFACE_LEGACY, "query": body["query"], "mode": mode, "corpus_ids": corpus_ids, "rows": _trim_rows(rows),
+    return {"output": {"surface": EB.SURFACE_LEGACY, "query": body["query"], "need_source": need_source, **_seed_origin(state, need_source),
+                       "mode": mode, "corpus_ids": corpus_ids, "rows": _trim_rows(rows),
                        "evidence_contract": out.get("evidence_contract")}, "evidence_refs": _refs_from_rows(rows)}
+
+
+def _seed_origin(state: RunState, need_source: str) -> dict[str, Any]:
+    """PRODUCT-SEARCH-E2E receipt: when a step searched the run's seed, whether the requester gave it or the corpus proposed it."""
+    field = need_source.split(".", 1)[1] if need_source.startswith("input.") else None
+    origin = state.input.get(f"{field}_origin") if field else None
+    return {"seed_origin": origin} if origin else {}
 
 
 def exec_retrieve(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:
@@ -229,6 +269,37 @@ def exec_retrieve(step: dict[str, Any], state: RunState, m: Manifest) -> service
     return _with_degraded(_retrieve_legacy(step, state, m, corpus_ids), forced)
 
 
+#: F3: per-run evidence cache in this process — run_id -> {cache key: (rows, call record)}; bounded (oldest run evicted first). Rebuilt
+#: from the run's own stored outputs after a restart (`_cached_from_outputs`), so a question asked again is answered the same way.
+_EVIDENCE_CACHE: "collections.OrderedDict[str, dict[str, tuple[list[dict[str, Any]], dict[str, Any]]]]" = collections.OrderedDict()
+EVIDENCE_CACHE_RUNS = 32
+EVIDENCE_CACHE_ENTRIES = 64
+_CACHE_LOCK = threading.Lock()
+
+
+def _cache_for(run_id: str) -> dict[str, tuple[list[dict[str, Any]], dict[str, Any]]]:
+    with _CACHE_LOCK:
+        bucket = _EVIDENCE_CACHE.pop(run_id, None) or {}
+        _EVIDENCE_CACHE[run_id] = bucket
+        while len(_EVIDENCE_CACHE) > EVIDENCE_CACHE_RUNS:
+            _EVIDENCE_CACHE.popitem(last=False)
+        return bucket
+
+
+def _cached_from_outputs(state: RunState, key: str) -> tuple[list[dict[str, Any]], dict[str, Any]] | None:
+    """A call this run already made (its record carries the key) whose every row is still on that step's stored output."""
+    for sid in reversed(state.output_order or tuple(state.outputs)):
+        out = state.outputs.get(sid)
+        if not isinstance(out, dict) or not isinstance(out.get("calls"), list):
+            continue
+        rows = {str(r.get("id")): r for r in out.get("rows") or [] if isinstance(r, dict) and r.get("id")}
+        for rec in out["calls"]:
+            if isinstance(rec, dict) and rec.get("cache_key") == key and rec.get("row_ids") is not None \
+                    and all(str(i) in rows for i in rec["row_ids"]):
+                return [rows[str(i)] for i in rec["row_ids"]], rec
+    return None
+
+
 def exec_evidence(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids: list[str], *, legacy,
                   union_legacy: bool = False) -> service.ExecOutcome:
     """The evidence-boundary surface (GOVERNED-CONVERGENCE-V1 TG2b). The ORIGINAL need — the run's seed, or one need per live
@@ -238,30 +309,57 @@ def exec_evidence(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids
       * an unreachable surface falls back to the legacy lane when `config.fallback == "retrieve"` (recorded `degraded`), else
         follows `config.on_unavailable` (gap | continue);
       * empty evidence is a SUCCESS (`retrieval_completed: true`) — the corpus not supporting a need is a finding.
+    PRODUCT-SEARCH-E2E: F4 — the calls run `config.parallel_calls` (default 2) at a time and no more are asked than the row limit keeps a
+    fair share of (`config.min_rows_per_need`), merged fair-share per call; F3 — a call this run already made against the same corpus
+    generation, mode and explorer switch is answered from the run's cache (said: `cache: hit`); F7 — every call renews the lease.
     `union_legacy` (graph steps): the packet carries chunks, not graph facts, so the legacy graph rows are unioned in."""
     sid = step["step_id"]
     cfg = m.step(sid).get("config") or {}
     # `_compiled_need`: resolved by the RUNTIME (service.advance -> EB.domain_compiled_need) from a DOMAIN_OPERATION step only; this
     # executor still never reads a step output
     needs = EB.original_needs(cfg, state.input, state.options, (step.get("context") or {}).get("hypotheses"), compiled_need=step.get("_compiled_need"))
-    plan = EB.plan_calls(needs, corpus_ids, max_calls=int(cfg.get("max_calls", EB.DEFAULT_MAX_CALLS)))
+    max_rows = int(cfg.get("max_rows", EB.DEFAULT_MAX_ROWS))
+    plan = EB.plan_calls(needs, corpus_ids, max_calls=int(cfg.get("max_calls", EB.DEFAULT_MAX_CALLS)),
+                         row_budget=EB.row_budget_calls(max_rows, cfg.get("min_rows_per_need")))
     mode, explorer = str(cfg.get("mode") or "WILDCARD").upper(), bool(cfg.get("corpus_explorer", True))
-    calls: list[dict[str, Any]] = []
-    row_lists: list[list[dict[str, Any]]] = []
-    failures: list[dict[str, Any]] = []
-    for call in plan["calls"]:
+    generations = step.get("_corpus_generations") if isinstance(step.get("_corpus_generations"), dict) else {}
+    cache = _cache_for(state.run_id)
+
+    def one(call: dict[str, Any]) -> dict[str, Any]:
+        key = EB.cache_key(call["need"], call["corpus_id"], mode, explorer, generations.get(call["corpus_id"]))
+        with _CACHE_LOCK:
+            hit = (cache.get(key) or _cached_from_outputs(state, key)) if key else None
+        if hit:
+            return {"call": call, "key": key, "rows": [dict(r) for r in hit[0]], "record": {**hit[1], "cache": "hit"}}
         try:
             resp = _orch_post(EB.EVIDENCE_PATH, EB.request_body(call["need"], call["corpus_id"], mode=mode, corpus_explorer=explorer),
                               user_agent=_ua(step, state))
         except OrchUnavailable as exc:
-            failures.append({"need_index": call["need_index"], "corpus_id": call["corpus_id"], "error": str(exc)[:300]})
-            continue
+            return {"call": call, "failure": {"need_index": call["need_index"], "corpus_id": call["corpus_id"], "error": str(exc)[:300]}}
         errs = EB.check_response(resp)
         if errs:
-            return {"gap": {"code": EB.GAP_CONTRACT_MISMATCH, "message": f"{sid}: " + "; ".join(errs[:5])}}
+            return {"call": call, "mismatch": errs}
         rows = EB.rows_from_packet(resp["evidence_packet"], call["corpus_id"])
-        calls.append(EB.call_record(call, resp["evidence_packet"], rows))
-        row_lists.append(rows)
+        rec = {**EB.call_record(call, resp["evidence_packet"], rows), **({"cache_key": key} if key else {})}
+        if key:
+            with _CACHE_LOCK:                                              # two calls of one step finish on two threads
+                cache[key] = (rows, rec)
+                while len(cache) > EVIDENCE_CACHE_ENTRIES:                 # bounded per run: the oldest answer goes first
+                    cache.pop(next(iter(cache)))
+        return {"call": call, "key": key, "rows": rows, "record": rec}
+
+    width = max(1, min(int(cfg.get("parallel_calls", EB.DEFAULT_PARALLEL_CALLS)), len(plan["calls"]) or 1))
+    if width > 1:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=width) as pool:
+            results = list(pool.map(one, plan["calls"]))            # plan order, whatever finishes first
+    else:
+        results = [one(c) for c in plan["calls"]]
+    mismatch = next((r for r in results if r.get("mismatch")), None)
+    if mismatch:
+        return {"gap": {"code": EB.GAP_CONTRACT_MISMATCH, "message": f"{sid}: " + "; ".join(mismatch["mismatch"][:5])}}
+    calls = [r["record"] for r in results if "record" in r]
+    row_lists = [r["rows"] for r in results if "record" in r]
+    failures = [r["failure"] for r in results if r.get("failure")]
     if failures and not calls:
         reason = failures[0]["error"]
         if cfg.get("fallback") == EB.SURFACE_LEGACY:
@@ -272,10 +370,16 @@ def exec_evidence(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids
             out["output"].update({"fallback": EB.SURFACE_LEGACY, "boundary_failures": failures[:6]})
             return out
         return EB.unavailable_outcome(str(cfg.get("on_unavailable") or "gap"), sid, reason)
-    rows, dropped = EB.merge_rows(row_lists, max_rows=int(cfg.get("max_rows", EB.DEFAULT_MAX_ROWS)))
+    rows, dropped = EB.merge_rows_fair(row_lists, max_rows=max_rows)
     truncated = list(plan["truncated"]) + ([{"reason": "max_rows", "dropped": dropped}] if dropped else [])
+    need_source = "context.hypotheses" if cfg.get("query_from") == "hypotheses" and (step.get("context") or {}).get("hypotheses") else \
+        (str(cfg.get("source")) if step.get("_compiled_need") or cfg.get("source") else next((f"input.{k}" for k in EB.NEED_FIELDS if state.input.get(k)), None))
     output: dict[str, Any] = {"surface": EB.SURFACE_BOUNDARY, "mode": mode, "corpus_explorer": explorer, "needs": needs, "corpus_ids": corpus_ids,
-                              "rows": rows, "calls": calls, "retrieval_completed": not failures, "evidence_contract": EB.PACKET_SCHEMA_VERSION}
+                              "rows": rows, "calls": calls, "retrieval_completed": not failures, "evidence_contract": EB.PACKET_SCHEMA_VERSION,
+                              "parallel_calls": width, "cache_hits": sum(1 for c in calls if c.get("cache") == "hit")}
+    if need_source:
+        output["need_source"] = need_source
+        output.update(_seed_origin(state, need_source))
     refs = EB.refs_from_rows(rows)
     reasons: list[str] = []
     if truncated:
@@ -300,11 +404,13 @@ def exec_compile_plan(step: dict[str, Any], state: RunState, m: Manifest) -> ser
     corpus_ids = _corpus_ids(state)
     if not corpus_ids:
         return {"gap": {"code": "INPUT_SCOPE_MISSING", "message": "no corpus_ids in input or request_options"}}
-    out = _orch_post("/retrieve/plan", {"signal": _query_text(step, state, m), "corpus_ids": corpus_ids, "limit": 24, "explore": True,
+    need, need_source = _need(step, state, m)
+    out = _orch_post("/retrieve/plan", {"signal": need, "corpus_ids": corpus_ids, "limit": 24, "explore": True,
                                         "scope": dict(EB.TRAIL_SCOPE)},      # K1: reference material only
                      user_agent=_ua(step, state))
     rows = out.get("evidence_rows") or out.get("rows") or _rows(out, corpus_ids)
-    return {"output": {"queries": out.get("queries") or out.get("plan") or [], "rows": _trim_rows(rows)}, "evidence_refs": _refs_from_rows(rows)}
+    return {"output": {"queries": out.get("queries") or out.get("plan") or [], "rows": _trim_rows(rows), "need_source": need_source,
+                       **_seed_origin(state, need_source)}, "evidence_refs": _refs_from_rows(rows)}
 
 
 def _graph_legacy(step: dict[str, Any], state: RunState, m: Manifest, corpus_ids: list[str]) -> service.ExecOutcome:
@@ -356,6 +462,8 @@ def exec_validate(step: dict[str, Any], state: RunState, m: Manifest) -> service
     if missing:
         return {"gap": {"code": "VALIDATION_FAILED", "message": "required outputs missing: " + ", ".join(missing)}}
     out: dict[str, Any] = {"ok": True, "checked": checked}
+    if step["step_id"] == m.entry_step_id and isinstance(state.options.get("start_receipt"), dict):
+        out["start_receipt"] = state.options["start_receipt"]        # PRODUCT-SEARCH-E2E: the start's scope + seed decisions, on the record
     if cfg.get("phi") == "deduplicate":
         # closed φ rule (ADR-0019 §3): identical normalised statements merge into the earliest-generated hypothesis (the context lists
         # live hypotheses in generation order, never hash order); later duplicates merge into it and the engine records the MERGE
@@ -535,6 +643,7 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
     req = TC.bounded_request(kind, payload, key=key, run_ref=state.run_id, registry_snapshot_id=snap.get("snapshot_id"))
     retries: list[str] = []
     while True:
+        _renew_lease()                                                   # F7: a slow or retried Trail call never outlives the lease
         try:
             resp = client.operate(kind, req)
             break
@@ -629,70 +738,84 @@ def exec_external(step: dict[str, Any], state: RunState, m: Manifest) -> service
 # ─────────────────────────────────────────────────────────── DOMAIN_OPERATION (ADR-0020): manifest-named domain code, out of process
 #: where domain bindings live: <repo>/adapters/<domain>/binding.py. The manifest names the domain and the operation; this file never does.
 _DOMAINS_DIR = pathlib.Path(__file__).resolve().parents[2] / "adapters"
-_DOMAIN_RE = re.compile(r"^[a-z][a-z0-9_]{1,40}$")
-DOMAIN_REQUEST_VERSION = "domain_operation_request.v1"
-DOMAIN_TIMEOUT_S = float(os.environ.get("POLYMATH_DOMAIN_OPERATION_TIMEOUT_S", "120"))
-DOMAIN_OUTPUT_MAX_BYTES = 1_000_000
-#: bug hunt B-69 (ADR-0020: the domain computes, it never decides): output keys the runtime reads as TrailSignal's — its result fields,
-#: the admission it records, the φ verdicts it applies, its operation kind — or as its own (`_…`, `trail_…`, the transition ids). A
-#: domain enriches Trail's `research_directive` with HOW (governance fields untouched) by design, so that one key stays allowed.
-RESERVED_DOMAIN_KEYS = (frozenset(TC.RESULT_FIELDS) - {"research_directive"}) | {"hypothesis_verdicts", "hypothesis_transition_ids",
-                                                                                 "operation_kind", "qualification"}
+_DOMAIN_RE = DOMAIN.DOMAIN_RE
+DOMAIN_REQUEST_VERSION = DOMAIN.REQUEST_VERSION
+DOMAIN_TIMEOUT_S = DOMAIN.TIMEOUT_S
+DOMAIN_OUTPUT_MAX_BYTES = DOMAIN.OUTPUT_MAX_BYTES
+RESERVED_DOMAIN_KEYS = DOMAIN.RESERVED_KEYS
 
 
 def exec_domain(step: dict[str, Any], state: RunState, m: Manifest) -> service.ExecOutcome:
-    """DOMAIN_OPERATION = one bounded, stateless computation by a domain's own code. The binding runs OUT OF PROCESS (its module
-    names never enter this worker; a crash is a typed step failure) with a MINIMAL environment (no DSN, no tokens). The domain
-    computes; it never reads or writes run state, the ledger or a store. `{"ok": false, code, message}` is a typed gap carrying the
-    domain's code; a crash, a timeout or a malformed response raises and the runtime records STEP_EXECUTOR_ERROR."""
+    """DOMAIN_OPERATION = one bounded, stateless computation by a domain's own code, through the shared runner
+    (`polymath_shared.adapter.domain`: out of process, minimal environment, typed refusals, reserved keys). `{"ok": false, code,
+    message}` is a typed gap carrying the domain's code; a crash, a timeout or a malformed response raises (DomainCrash, a
+    RuntimeError) and the runtime records STEP_EXECUTOR_ERROR."""
     cfg = m.step(step["step_id"]).get("config") or {}
     domain, operation = str(cfg.get("domain") or ""), str(cfg.get("operation") or "")
-    if not _DOMAIN_RE.match(domain):
-        return {"gap": {"code": "DOMAIN_BINDING_INVALID", "message": f"{step['step_id']}: config.domain {domain!r} is not a domain name"}}
-    root = _DOMAINS_DIR.resolve()
-    binding = (root / domain / "binding.py").resolve()
-    if root not in binding.parents or not binding.is_file():
-        return {"gap": {"code": "DOMAIN_BINDING_MISSING", "message": f"{step['step_id']}: no binding for domain {domain!r}"}}
     scope = {"input": state.input, "options": state.options, "outputs": state.outputs, "context": step.get("context") or {}}
-    request = {"schema_version": DOMAIN_REQUEST_VERSION, "domain": domain, "operation": operation, "run_id": state.run_id,
-               "step_id": step["step_id"], "input": state.input,
-               "inputs": {name: ([_path(scope, d) for d in sel] if isinstance(sel, list) else _path(scope, sel))
-                          for name, sel in (cfg.get("inputs") or {}).items()},
-               "config": {k: v for k, v in cfg.items() if k not in ("domain", "operation", "inputs")}}
-    env = {"PATH": os.environ.get("PATH", ""), "LANG": os.environ.get("LANG", "en_US.UTF-8"), "PYTHONDONTWRITEBYTECODE": "1"}
-    try:
-        proc = subprocess.run([sys.executable, str(binding)], input=json.dumps(request), capture_output=True, text=True,
-                              timeout=DOMAIN_TIMEOUT_S, cwd=str(binding.parent), env=env)
-    except subprocess.TimeoutExpired as exc:
-        raise RuntimeError(f"domain operation {operation} timed out after {DOMAIN_TIMEOUT_S:g}s") from exc
-    if proc.returncode != 0:
-        raise RuntimeError(f"domain operation {operation} exited {proc.returncode}: {proc.stderr.strip()[-600:]}")
-    if len(proc.stdout.encode()) > DOMAIN_OUTPUT_MAX_BYTES:
-        raise RuntimeError(f"domain operation {operation} returned more than {DOMAIN_OUTPUT_MAX_BYTES} bytes")
-    try:
-        resp = json.loads(proc.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"domain operation {operation} did not return one JSON object: {exc}") from exc
-    if not isinstance(resp, dict) or not isinstance(resp.get("ok"), bool):
-        raise RuntimeError(f"domain operation {operation} returned no boolean `ok`")
-    if not resp["ok"]:
-        code, message = str(resp.get("code") or ""), str(resp.get("message") or "")
-        if not re.match(r"^[A-Z][A-Z0-9_]{2,60}$", code):
-            raise RuntimeError(f"domain operation {operation} refused without a typed code: {code!r}")
-        return {"gap": {"code": code, "message": f"{operation}: {message}"[:2000]}}
-    if not isinstance(resp.get("output"), dict):
-        raise RuntimeError(f"domain operation {operation} returned ok without an output object")
-    output = dict(resp["output"])
-    reserved = sorted(k for k in output if k.startswith(("_", "trail_")) or k in RESERVED_DOMAIN_KEYS)
-    if reserved:
-        raise RuntimeError(f"domain operation {operation} wrote keys only TrailSignal or the runtime may write: {', '.join(reserved[:10])}")
-    output["_domain"] = {"domain": domain, "operation": operation, "binding_sha256": hashlib.sha256(binding.read_bytes()).hexdigest()}
-    return {"output": output}
+    req = DOMAIN.request(domain=domain, operation=operation, run_id=state.run_id, step_id=step["step_id"], run_input=state.input,
+                         scope=scope, config=cfg)
+    _renew_lease()                                                       # F7: a slow domain computation never outlives the lease
+    return DOMAIN.run(domain, operation, req, domains_dir=_DOMAINS_DIR, timeout_s=DOMAIN_TIMEOUT_S)
 
 
-EXECUTORS: dict[str, service.Executor] = {
+# ─────────────────────────────────────────────────────────── host prefetch (PRODUCT-SEARCH-E2E: a supply step's host lookups)
+def _host_supplier_search(principal_id: str | None, args: dict[str, Any]) -> dict[str, Any]:
+    """The supplier API read the host makes for a research step, as the run OWNER's principal (the owner: None)."""
+    from polymath_shared.acquisition import supplier
+    return supplier.search(principal_id=principal_id, query=str(args.get("query") or ""), source=str(args.get("source") or ""),
+                           limit=args.get("limit"))
+
+
+#: the HOST tools a manifest's prefetch lookups may name (an allow-list; a lookup's `args` are the domain's data, passed through)
+HOST_TOOLS: dict[str, Any] = {"supplier_search": _host_supplier_search}
+PREFETCH_MAX_LOOKUPS = 24
+
+
+def _lookup_summary(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{k: r.get(k) for k in ("lookup_id", "intent_id", "concept_id", "channel", "tool")}
+            | {"status": (r.get("result") or {}).get("status"), "items": len((r.get("result") or {}).get("items") or []),
+               "fallback": bool((r.get("result") or {}).get("fallback"))} for r in results]
+
+
+def exec_prefetch(unit: service.Unit, lookups: list[dict[str, Any]], cfg: dict[str, Any]) -> dict[str, Any]:
+    """HOST_PREFETCH: run the step's lookups through HOST_TOOLS with the run owner's principal, OUTSIDE any transaction (the lease renewed
+    per lookup), then hand the results to the manifest's domain builder (`config.host_prefetch.build`), which turns them into what the
+    step carries beside it (a draft receipt, the fallback commands). A failed lookup is a result, never an exception."""
+    started = service.now_iso()
+    results = []
+    for lk in lookups[:PREFETCH_MAX_LOOKUPS]:
+        _renew_lease()
+        tool = HOST_TOOLS.get(str(lk.get("tool") or ""))
+        if tool is None:
+            res: dict[str, Any] = {"status": "UNAVAILABLE", "limitations": [f"no host tool {lk.get('tool')!r} on this worker"]}
+        else:
+            try:
+                res = dict(tool(unit.owner_principal_id, dict(lk.get("args") or {})) or {})
+            except Exception as exc:  # noqa: BLE001 — a refused or failed read is the domain's to turn into a fallback
+                res = {"status": "UNAVAILABLE", "error": {"type": type(exc).__name__, "code": getattr(exc, "code", None),
+                                                          "message": str(getattr(exc, "message", None) or exc)[:500]},
+                       "limitations": [f"the host read failed: {type(exc).__name__}"]}
+        results.append({**lk, "result": res})
+    completed = service.now_iso()
+    build = dict(cfg.get("build") or {})
+    domain, operation = str(build.get("domain") or ""), str(build.get("operation") or "")
+    scope = {"input": unit.state.input, "options": unit.state.options, "outputs": unit.state.outputs, "context": {}}
+    req = DOMAIN.request(domain=domain, operation=operation, run_id=unit.state.run_id, step_id=f"{(unit.spec or {}).get('step_id')}:prefetch",
+                         run_input=unit.state.input, scope=scope, config=build)
+    req["inputs"].update({"action": unit.action, "lookups": results, "started_at": started, "completed_at": completed})
+    _renew_lease()
+    out = DOMAIN.run(domain, operation, req, domains_dir=_DOMAINS_DIR, timeout_s=DOMAIN_TIMEOUT_S)
+    if out.get("gap"):
+        return {"error": f"{out['gap']['code']}: {out['gap']['message']}"[:1000], "summary": _lookup_summary(results)}
+    produced = {k: v for k, v in (out.get("output") or {}).items() if not str(k).startswith("_")}
+    return {**produced, "summary": _lookup_summary(results)}
+
+
+EXECUTORS: dict[str, Any] = {
     "POLYMATH_RETRIEVE": exec_retrieve, "POLYMATH_COMPILE_PLAN": exec_compile_plan, "POLYMATH_GRAPH_EXPAND": exec_graph_expand,
     "VALIDATE": exec_validate, "BRANCH": exec_branch, "EXTERNAL_OPERATION": exec_external, "DOMAIN_OPERATION": exec_domain,
+    service.HOST_PREFETCH: exec_prefetch,
 }
 
 
@@ -709,10 +832,23 @@ def _transient(exc: BaseException) -> bool:
     return isinstance(exc, (psycopg.OperationalError, psycopg.InterfaceError, ManifestInvalid))
 
 
+def lease_seconds(lease_s: int | None) -> int:
+    """F7: the lease must outlast the longest wait between two renewals — one HTTP call (HTTP_TIMEOUT_S) plus its backoff margin. A
+    configured lease below that is raised to it (and said), never left to expire under a call that is still running."""
+    want = int(lease_s if lease_s is not None else LEASE_S_DEFAULT)
+    floor = int(HTTP_TIMEOUT_S) + LEASE_MARGIN_S
+    if want < floor:
+        log.warning("lease %ss is shorter than one call (%ss) plus margin (%ss): using %ss", want, int(HTTP_TIMEOUT_S), LEASE_MARGIN_S, floor)
+    return max(want, floor)
+
+
 def process_one(owner: str, lease_s: int, *, max_steps: int | None = None, crash_after: int | None = None) -> str | None:
-    """Claim + drive one run. Returns the run_id worked on (None = nothing claimable). A step unit that raises is rolled back and,
-    unless the database itself failed, its run ends `failed` with a typed STEP_RUNTIME_ERROR in a fresh transaction — a
-    deterministic error is never re-claimed forever ahead of every healthy run (bug hunt B-06)."""
+    """Claim + drive one run. Returns the run_id worked on (None = nothing claimable). F7: each step unit is THREE short phases —
+    `prepare` (issue / find the step, one transaction), the executor (OUTSIDE any transaction: the run's row lock is free, the lease is
+    renewed before every call), `apply` (record the outcome, one transaction, only while this worker still holds the lease). A unit that
+    raises is rolled back and, unless the database itself failed, its run ends `failed` with a typed STEP_RUNTIME_ERROR in a fresh
+    transaction — a deterministic error is never re-claimed forever ahead of every healthy run (bug hunt B-06)."""
+    lease_s = lease_seconds(lease_s)
     with tx() as conn:
         run_id = service.store.claim_run(conn, owner, lease_s)
     if not run_id:
@@ -727,8 +863,25 @@ def process_one(owner: str, lease_s: int, *, max_steps: int | None = None, crash
                         return run_id
                     before_state = service.store.load_run(conn, run_id)[0]
                     before_row = service.store.current_step(conn, run_id)
-                    state = service.advance(conn, run_id, EXECUTORS, max_steps=1)
+                    unit = service.prepare(conn, run_id, EXECUTORS)
                     after_row = service.store.current_step(conn, run_id)
+                state = unit.state
+                if unit.kind != "done":
+                    _LEASE.update(run_id=run_id, owner=owner, lease_s=lease_s)
+                    try:
+                        result = service.run_prefetch(EXECUTORS, unit) if unit.kind == "prefetch" else service.execute(EXECUTORS, unit)
+                    finally:
+                        _LEASE.clear()
+                    with tx() as conn:
+                        if not service.store.renew_lease(conn, run_id, owner, lease_s):
+                            log.warning("lease lost on %s while its step executed; the outcome is dropped", run_id)
+                            return run_id
+                        state = (service.apply_prefetch(conn, run_id, unit, result) if unit.kind == "prefetch"
+                                 else service.apply(conn, run_id, unit, result))
+                        after_row = service.store.current_step(conn, run_id)
+            except service.LeaseLost as exc:
+                log.warning("run %s: %s; the outcome is dropped", run_id, exc)
+                return run_id
             except Exception as exc:
                 if _transient(exc):
                     raise
@@ -753,11 +906,28 @@ def process_one(owner: str, lease_s: int, *, max_steps: int | None = None, crash
             service.store.release_lease(conn, run_id, owner)
 
 
+def sweep_idle(last: list[float]) -> list[str]:
+    """F8: at most every IDLE_SWEEP_S, end the runs idle on the agent past the bound (service.expire_idle). Never raises."""
+    now = time.monotonic()
+    if last and now - last[0] < IDLE_SWEEP_S:
+        return []
+    last[:] = [now]
+    try:
+        with tx() as conn:
+            expired = service.expire_idle(conn)
+        if expired:
+            log.info("expired %d run(s) idle on the agent: %s", len(expired), ", ".join(r[:16] for r in expired))
+        return expired
+    except Exception:  # noqa: BLE001 — a sweep that failed is retried next time; it never takes the slot down
+        log.exception("idle sweep failed")
+        return []
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true", help="drain claimable runs once, then exit")
     ap.add_argument("--max-steps", type=int, default=None, help="steps per claim before releasing (default: until the run waits/ends)")
-    ap.add_argument("--lease-s", type=int, default=int(os.environ.get("POLYMATH_ADAPTER_LEASE_S", "120")))
+    ap.add_argument("--lease-s", type=int, default=LEASE_S_DEFAULT)
     ap.add_argument("--poll-s", type=float, default=2.0)
     ap.add_argument("--owner", default=f"adapter-step@{socket.gethostname()}:{os.getpid()}")
     ap.add_argument("--crash-after", type=int, default=None, help="TEST HOOK: os._exit after N steps without releasing the lease")
@@ -769,8 +939,10 @@ def main(argv: list[str] | None = None) -> int:
     with tx() as conn:
         register_worker(conn, identity)
     log.info("registered %s (bundle %s)", identity["worker_id"], identity.get("execution_bundle_id"))
+    swept: list[float] = []
     while True:
         try:
+            sweep_idle(swept)
             worked = process_one(args.owner, args.lease_s, max_steps=args.max_steps, crash_after=args.crash_after)
             with tx() as conn:
                 heartbeat(conn, identity["worker_id"], processed_count=1 if worked else None)

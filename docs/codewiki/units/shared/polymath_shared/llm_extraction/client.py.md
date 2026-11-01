@@ -1,131 +1,136 @@
 # unit: shared/polymath_shared/llm_extraction/client.py
-anchor: shared/polymath_shared/llm_extraction/client.py:1-1154
+anchor: shared/polymath_shared/llm_extraction/client.py:1-1215
+
+Note: SOURCE shows file lines 1–600; anchors above 600 come from FACTS (static analysis), tagged [DERIVED] where used.
 
 ## purpose
-Direct OpenAI-compatible HTTP transport for contract `polymath-extraction-v1`, bypassing an Instructor dependency by design — the contract, gate, and admission pipeline are the real seams; this file is swappable. [DERIVED] shared/polymath_shared/llm_extraction/client.py:1-17
-Two lanes: `local` (MLX extraction sidecar, loopback, no API key) and `cloud` (Ollama daemon proxying the account's cloud model tag; auth is the daemon's signed-in account). [DERIVED] shared/polymath_shared/llm_extraction/client.py:8-14
+Direct OpenAI-compatible HTTP transport for the `polymath-extraction-v1` contract; deliberately the plan's documented fallback shape (direct calls behind the Pydantic contract) — the contract, gate, and admission pipeline are the load-bearing parts, this file is swappable — shared/polymath_shared/llm_extraction/client.py:1-6 [DERIVED].
+Two lanes: `local` (MLX extraction sidecar, loopback, no API key) and `cloud` (Ollama daemon proxying the account's cloud model; auth is the daemon's signed-in account; `require_cloud_eligible` runs immediately before every dispatch) — shared/polymath_shared/llm_extraction/client.py:8-14 [DERIVED].
 
 ## public surface
-Module imported by: orchestrator/orchestrator/api/deep_research.py, orchestrator/orchestrator/api/ui.py, shared/polymath_shared/latent/compiler.py, shared/polymath_shared/worker_runtime.py, workers/workers/doc_parent_map_stage_worker.py, workers/workers/doc_profile_worker.py, workers/workers/llm_provider.py, workers/workers/summary_worker_impl.py [DERIVED] FACTS.importers
 
-| symbol | kind | signature (params -> return) | anchor | used by |
+| symbol | kind | signature | anchor | used by |
 |---|---|---|---|---|
-| `LLMExtractionClient` | class | (lane, *, url, model, timeout_s=180.0, max_attempts=2, limiter_key="default", api_key=None, cloud_opts=None); methods: probe, complete_one, extract_batched, extract, complete_batched, extract_from_raw, _infer_batch, _chat, … | shared/polymath_shared/llm_extraction/client.py:315-1153 | module importers above |
-| `LLMCallResult` | dataclass | fields lane, model, raw_text, packet, sanitize, wall_ms, tokens_in=0, tokens_out=0, attempts=1, error_class=None, raw_head, lane_decision, limiter_effective, batch_tokens_cap, finish_reason, neighborhood_ids, reissue=False | shared/polymath_shared/llm_extraction/client.py:199-222 | — |
-| `ExtractionTransportError` | class | RuntimeError subclass, no extra args | shared/polymath_shared/llm_extraction/client.py:245-246 | — |
-| `local_batch_budget` | def | () -> REGISTRY.budget("llm_local:batch_tokens", …) | shared/polymath_shared/llm_extraction/client.py:235-242 | — |
-| `output_budget_for` | def | (input_tokens: float, neighborhoods=1) -> int | shared/polymath_shared/llm_extraction/client.py:249-262 | — |
-| `estimate_input_tokens` | def | (user_prompt: str) -> int | shared/polymath_shared/llm_extraction/client.py:265-266 | — |
-| `admission_tokens` | def | (*texts: str \| None) -> int | shared/polymath_shared/llm_extraction/client.py:275-277 | — |
-| `alias_neighborhoods` | def | (neighborhoods) -> (aliased_neighborhoods, aliases dict) | shared/polymath_shared/llm_extraction/client.py:280-288 | — |
-| `restore_neighborhood_ids` | def | (packet, aliases) -> packet (in place) | shared/polymath_shared/llm_extraction/client.py:291-296 | — |
-| `build_user_prompt` | def | (neighborhoods) -> str | shared/polymath_shared/llm_extraction/client.py:299-306 | — |
-| `_lean_expand` | def | (obj: dict) -> dict (LEAN index form -> flat packet) | shared/polymath_shared/llm_extraction/client.py:156-192 | — |
-| `_lane_limit` | def | (lane, provider=None) -> ProviderLimit | shared/polymath_shared/llm_extraction/client.py:66-83 | — |
-| `SYSTEM_PROMPT` / `SYSTEM_PROMPT_TEMPLATE` / `LEAN_SYSTEM_PROMPT` | const | module-level strings; SYSTEM_PROMPT built at import time | shared/polymath_shared/llm_extraction/client.py:120,142,195 | — |
+| LLMExtractionClient | class | (lane, *, url, model, timeout_s=180.0, max_attempts=2, limiter_key="default", api_key=None, cloud_opts=None) | shared/polymath_shared/llm_extraction/client.py:359-1214 | module importers (list below) |
+| LLMCallResult | dataclass | fields: lane, model, raw_text, packet, sanitize, wall_ms, tokens_in=0, tokens_out=0, attempts=1, error_class=None, raw_head="", lane_decision, limiter_effective, batch_tokens_cap, finish_reason, neighborhood_ids=[], reissue=False | shared/polymath_shared/llm_extraction/client.py:202-225 | — |
+| ExtractionTransportError | class | RuntimeError subclass | shared/polymath_shared/llm_extraction/client.py:248-249 | — |
+| LaneSkip | frozen dataclass | (lane, reason, retry_after_s=None); .as_dict() | shared/polymath_shared/llm_extraction/client.py:260-272 | — |
+| AllLanesRefused | class | RuntimeError(skips); .skips, .receipt | shared/polymath_shared/llm_extraction/client.py:282-290 | — |
+| degraded_receipt | def | (skips) -> dict | shared/polymath_shared/llm_extraction/client.py:275-279 | — |
+| local_batch_budget | def | () -> REGISTRY budget | shared/polymath_shared/llm_extraction/client.py:238-245 | — |
+| output_budget_for | def | (input_tokens: float, neighborhoods: int = 1) -> int | shared/polymath_shared/llm_extraction/client.py:293-306 | — |
+| estimate_input_tokens | def | (user_prompt: str) -> int | shared/polymath_shared/llm_extraction/client.py:309-310 | — |
+| admission_tokens | def | (*texts: str \| None) -> int | shared/polymath_shared/llm_extraction/client.py:319-321 | — |
+| alias_neighborhoods | def | (neighborhoods) -> (aliased list, aliases dict) | shared/polymath_shared/llm_extraction/client.py:324-332 | — |
+| restore_neighborhood_ids | def | (packet, aliases) -> packet (in place) | shared/polymath_shared/llm_extraction/client.py:335-340 | — |
+| build_user_prompt | def | (neighborhoods) -> str | shared/polymath_shared/llm_extraction/client.py:343-350 | — |
+| GENERATION_CONFIG | const | dict | shared/polymath_shared/llm_extraction/client.py:48-56 | — |
+| SYSTEM_PROMPT / SYSTEM_PROMPT_TEMPLATE / LEAN_SYSTEM_PROMPT | const | str | shared/polymath_shared/llm_extraction/client.py:123-156,198 | — |
+
+Module importers (file-level, FACTS.importers): orchestrator/orchestrator/api/deep_research.py, orchestrator/orchestrator/api/ui.py, shared/polymath_shared/latent/compiler.py, shared/polymath_shared/worker_runtime.py, workers/workers/doc_parent_map_stage_worker.py, workers/workers/doc_profile_worker.py, workers/workers/llm_provider.py, workers/workers/summary_worker_impl.py — shared/polymath_shared/llm_extraction/client.py:1-1215 [DERIVED].
+LLMExtractionClient methods (FACTS): _record_attempt, __init__, _headers, _chat, probe, complete_one, _account_env, _provider, _response_hash, _lane_limiter, extract_batched, _infer_batch, extract, complete_batched, _extract_prompt, extract_from_raw — shared/polymath_shared/llm_extraction/client.py:208-225 [DERIVED]; bodies after line 600 not shown in SOURCE.
 
 ## contracts
 
-**`output_budget_for(input_tokens, neighborhoods=1)`** shared/polymath_shared/llm_extraction/client.py:249-262
-- out: `int(GENERATION_CONFIG["max_tokens"] + 700 * max(0, neighborhoods - 1))` = 2500 for 1 neighborhood [DERIVED] shared/polymath_shared/llm_extraction/client.py:261-262
-- post: `input_tokens` is kept for the signature only; it no longer lowers the cap [DERIVED] shared/polymath_shared/llm_extraction/client.py:259-260
+**LLMExtractionClient.\_\_init\_\_**
+- pre: `lane in ("local", "cloud")` else `ValueError(f"unknown lane: {lane!r}")` — shared/polymath_shared/llm_extraction/client.py:388-389
+- post: calls `REGISTRY.ensure_store()` (idempotent, fail-soft; explicit attach_store() still wins) — shared/polymath_shared/llm_extraction/client.py:390-397
+- default `cloud_opts = {"reasoning_effort": "none", "json_mode": True}` — shared/polymath_shared/llm_extraction/client.py:414-417
 
-**`admission_tokens(*texts)`** shared/polymath_shared/llm_extraction/client.py:275-277
-- in: every message the provider counts (system + user); None/empty skipped [DERIVED] shared/polymath_shared/llm_extraction/client.py:276
-- out: sum of ceil(chars / 3) using `ADMISSION_CHARS_PER_TOKEN = 3.0` [DERIVED] shared/polymath_shared/llm_extraction/client.py:272,277
+**complete_one(user_prompt, \*, system_prompt, max_tokens) -> (raw_text, error_class|None)**
+- never interprets content; caller's gate parses; cloud lanes only (local goes through complete_batched) — shared/polymath_shared/llm_extraction/client.py:582-586
+- admission: `limiter.admit(est_tokens=admission_tokens(system_prompt, user_prompt) + max_tokens, reserved_output=max_tokens, block=not self.interactive)` — shared/polymath_shared/llm_extraction/client.py:591-592
+- post: `self._last_refusal_reason = decision.reason`; bare "LIMITER_REFUSED" return kept for exact-match consumers — shared/polymath_shared/llm_extraction/client.py:593-598
+- on exception: returns `('', type(exc).__name__)` — shared/polymath_shared/llm_extraction/client.py:655 [DERIVED]
 
-**`alias_neighborhoods(neighborhoods)` / `restore_neighborhood_ids(packet, aliases)`** shared/polymath_shared/llm_extraction/client.py:280-296
-- out: prompts carry `n1`, `n2`, … aliases; restore maps back in place before the gate; unknown ids pass through unchanged (`aliases.get(item.neighborhood_id, item.neighborhood_id)`) [DERIVED] shared/polymath_shared/llm_extraction/client.py:287-288,294-295
+**_chat(user_prompt, max_tokens, system_prompt=None) -> (content, prompt_tokens, completion_tokens, hdrs)**
+- POST `{base_url}/v1/chat/completions` — shared/polymath_shared/llm_extraction/client.py:509-511
+- local payload: `repetition_penalty=1.15`, `repetition_context_size=400`, `chat_template_kwargs={"enable_thinking": False}` — shared/polymath_shared/llm_extraction/client.py:452-461
+- cloud: `response_format` json_schema only when `cloud_opts["structured"] == "schema"` AND `system_prompt is None`; else json_object when json_mode (default True) — shared/polymath_shared/llm_extraction/client.py:480-491
+- out: non-mapping header object degrades to `{}` — shared/polymath_shared/llm_extraction/client.py:530-533
 
-**`build_user_prompt(neighborhoods)`** shared/polymath_shared/llm_extraction/client.py:299-306
-- out: blocks `[neighborhood:{nid}]\n[chunk:{cid}]\n{text}` joined by `"\n\n"` [DERIVED] shared/polymath_shared/llm_extraction/client.py:303-306
+**probe() -> dict**
+- no document content; one-token ping: messages=[{"role":"user","content":"ping"}], `max_tokens: 1` — shared/polymath_shared/llm_extraction/client.py:536-537,551-552
+- timeout `min(self.timeout_s, 30.0)`; recorded with `limiter_admitted=False, limiter_bypassed=True, http_dispatched=True` — shared/polymath_shared/llm_extraction/client.py:553-558
 
-**`LLMExtractionClient.__init__`** shared/polymath_shared/llm_extraction/client.py:332-373
-- pre: `lane in ("local", "cloud")` else `ValueError(f"unknown lane: {lane!r}")` [DERIVED] shared/polymath_shared/llm_extraction/client.py:337-338
-- post: `REGISTRY.ensure_store()` called (idempotent, fail-soft) [DERIVED] shared/polymath_shared/llm_extraction/client.py:345-346
-- post: `cloud_opts` default = `{"reasoning_effort": "none", "json_mode": True}` [DERIVED] shared/polymath_shared/llm_extraction/client.py:363-366
+**output_budget_for(input_tokens, neighborhoods=1) -> int**
+- out: `int(GENERATION_CONFIG["max_tokens"] + GENERATION_CONFIG["extra_tokens_per_neighborhood"] * max(0, neighborhoods - 1))` = 2500 + 700×(n−1) — shared/polymath_shared/llm_extraction/client.py:305-306
+- `input_tokens` kept for signature; no longer lowers the cap — shared/polymath_shared/llm_extraction/client.py:297-304
 
-**`probe()`** shared/polymath_shared/llm_extraction/client.py:487-526
-- in: no document content; one-token ping (`"max_tokens": 1`) [DERIVED] shared/polymath_shared/llm_extraction/client.py:17,500-501
-- out: `{"ok": True, "lane", "model", "wall_ms", "served_model"}`; raises on transport error after recording the attempt [DERIVED] shared/polymath_shared/llm_extraction/client.py:508-511,525-526
-- post: recorded with `limiter_admitted=False, limiter_bypassed=True, http_dispatched=True`; timeout = `min(self.timeout_s, 30.0)` [DERIVED] shared/polymath_shared/llm_extraction/client.py:502-503,506-507
+**estimate_input_tokens / admission_tokens**
+- estimate: `max(1, int(len(user_prompt) / 4.0))` — shared/polymath_shared/llm_extraction/client.py:310
+- admission: Σ ceil(len(t)/3.0) over non-empty texts — shared/polymath_shared/llm_extraction/client.py:316,319-321
 
-**`complete_one(user_prompt, *, system_prompt, max_tokens)`** shared/polymath_shared/llm_extraction/client.py:528-606
-- in: cloud lanes only; local batched path uses `complete_batched` [DERIVED] shared/polymath_shared/llm_extraction/client.py:533-535
-- out: `(raw_text, error_class|None)`; bare `"LIMITER_REFUSED"` on limiter refusal (existing consumers exact-match it); never interprets content [DERIVED] shared/polymath_shared/llm_extraction/client.py:531-533,541-544,561
-- pre: reserves `admission_tokens(system_prompt, user_prompt) + max_tokens`; `settle()` trues up from real usage [DERIVED] shared/polymath_shared/llm_extraction/client.py:537-539,565
-- post: `finally: limiter.release()` — the concurrency slot must be released [DERIVED] shared/polymath_shared/llm_extraction/client.py:601-606
+**alias_neighborhoods / restore_neighborhood_ids**
+- aliases `f"n{i + 1}"` → real neighborhood ids; restore maps back in place before the gate — shared/polymath_shared/llm_extraction/client.py:324-339
 
-**`_chat(user_prompt, max_tokens, system_prompt=None)`** shared/polymath_shared/llm_extraction/client.py:382-483
-- out: `(content, prompt_tokens, completion_tokens, headers_dict)`; headers degrade to `{}` if not a plain mapping [DERIVED] shared/polymath_shared/llm_extraction/client.py:478-483
-- post: local lane payload adds `repetition_penalty=1.15`, `repetition_context_size=400`, `chat_template_kwargs={"enable_thinking": False}`; cloud lane conditionally adds `reasoning_effort`, top-level `enable_thinking`, and `response_format` json_schema (only when `structured == "schema"` and `system_prompt is None`) else json_object [DERIVED] shared/polymath_shared/llm_extraction/client.py:400-409,416-439
+**_lean_expand(obj) -> dict**
+- entity surface `[:200]`, type `[:80]`, quote = surface `[:2000]`; relation predicate `[:120]`, quote `[:2000]`; relations with si/oi outside `[0, len(entities))` dropped — shared/polymath_shared/llm_extraction/client.py:173-190
+- out: `{"contract": "polymath-extraction-v1", "profile": "volume", items}` — shared/polymath_shared/llm_extraction/client.py:194-195
+
+**_quarantine_class(s_res)**: returns `"QUARANTINED_UNPARSEABLE"` when s_res None or error_class in (None, "SANITIZE_UNPARSEABLE"); else the sanitize disposition — shared/polymath_shared/llm_extraction/client.py:93-95
+**_retry_nudge(s_res)**: SANITIZE_UNKNOWN_NEIGHBORHOOD gets the id-specific nudge; everything else the generic JSON nudge — shared/polymath_shared/llm_extraction/client.py:99-104
 
 ## effect surface
-- network: `httpx.post` to `{base_url}/v1/chat/completions` at shared/polymath_shared/llm_extraction/client.py:457 (_chat), :505 (probe); two more `httpx.post` sites at :766 and :932 (methods `_infer_batch` and one further site, beyond the shown excerpt) [DERIVED] FACTS.nondeterminism
-- file read: `config/extraction_models/limiter.yaml` via `Path(__file__).resolve().parents[3]` shared/polymath_shared/llm_extraction/client.py:104-106
-- store: `REGISTRY.ensure_store()` attaches the controller store at construction; a comment names `llm_controller_state` as the affected table [DERIVED] shared/polymath_shared/llm_extraction/client.py:345-346,344
-- env: `POLYMATH_LLM_LOCAL_BATCH_TOKENS` = "28000" shared/polymath_shared/llm_extraction/client.py:238; `POLYMATH_LLM_LOCAL_BATCH_TOKENS_MAX` = "72000" shared/polymath_shared/llm_extraction/client.py:239; `POLYMATH_LEAN_LOCAL` = "on" shared/polymath_shared/llm_extraction/client.py:690 [DERIVED] FACTS.env
-- env (comment-mentioned gate): `POLYMATH_REASONING_POLICY=1` gates the reasoning-policy overlay [DERIVED] shared/polymath_shared/llm_extraction/client.py:1040-1041
-- Postgres tables read/written, Qdrant collections, subprocesses: none in this material [DERIVED] FACTS.tables_read/tables_written
+- network: `httpx.post` to `/v1/chat/completions` — shared/polymath_shared/llm_extraction/client.py:509 (_chat), 557 (probe), 827, 993 (extract paths; FACTS.nondeterminism) [DERIVED]
+- file read: `config/extraction_models/limiter.yaml` at `Path(__file__).resolve().parents[3]` — shared/polymath_shared/llm_extraction/client.py:76-78,107-109
+- env: POLYMATH_LLM_LOCAL_BATCH_TOKENS = '28000' — shared/polymath_shared/llm_extraction/client.py:241; POLYMATH_LLM_LOCAL_BATCH_TOKENS_MAX = '72000' — shared/polymath_shared/llm_extraction/client.py:242; POLYMATH_LEAN_LOCAL = 'on' — shared/polymath_shared/llm_extraction/client.py:751 [DERIVED]
+- store attach: `REGISTRY.ensure_store()` in \_\_init\_\_ (limiter/controller-store persistence; the one seam every provider-calling path goes through) — shared/polymath_shared/llm_extraction/client.py:390-397
+- Postgres tables read/written: none (FACTS.tables_read and tables_written empty)
 
 ## invariants
-INVARIANT: output_budget_for(n neighborhoods) = 2500 + 700·(n−1), independent of input_tokens — shared/polymath_shared/llm_extraction/client.py:261-262 [DERIVED]
-  fails-if: cap re-coupled to input size → finish=length truncation returns (measured: cap 484 → 3 relations; cap 2500 → 9 relations) shared/polymath_shared/llm_extraction/client.py:253-257
-INVARIANT: local batch ceiling = max(seed, ceiling_env) ≥ seed 28000; floor 4000 < seed; step 2000 — shared/polymath_shared/llm_extraction/client.py:238-242 [DERIVED]
-  fails-if: ceiling below seed → AdaptiveBudget cannot climb; comment: 45K OOMed with the fleet resident shared/polymath_shared/llm_extraction/client.py:226-228
-INVARIANT: admission reserve chars/token (3.0) < estimate_input_tokens chars/token (4.0) — shared/polymath_shared/llm_extraction/client.py:266,272 [DERIVED]
-  fails-if: reserve drops to 4.0 → under-reservation → the 429s the comment says this was built to stop shared/polymath_shared/llm_extraction/client.py:269-271
-INVARIANT: temperature == 0.0 on every dispatched payload, both lanes — shared/polymath_shared/llm_extraction/client.py:46,397 [DERIVED]
-  fails-if: nonzero temperature breaks the LOCKED decision-18 contract hash shared/polymath_shared/llm_extraction/client.py:42-45
-INVARIANT: probe sends max_tokens=1 with no document content and bypasses the limiter — shared/polymath_shared/llm_extraction/client.py:17,500-503 [DERIVED]
-  fails-if: probe queues behind a rate hold → liveness probe measures the limiter, not the endpoint shared/polymath_shared/llm_extraction/client.py:490-492
-INVARIANT: every dispatched complete_one releases its limiter slot via `finally` — shared/polymath_shared/llm_extraction/client.py:601-606 [DERIVED]
-  fails-if: slot leak deadlocked enrichment at 2 calls (threads parked in acquire forever) shared/polymath_shared/llm_extraction/client.py:602-605
-INVARIANT: lane limiter seeds — local `kind="concurrency", init=2, min=1, max=4`; cloud `kind="rate", rpm=120, tpm=200000, conc_cap=18, min=2, max=18, use_headers=True` — shared/polymath_shared/llm_extraction/client.py:57-62 [DERIVED]
-  fails-if: shared pool limiter lets one slow provider drag the pool's AIMD budget shared/polymath_shared/llm_extraction/client.py:348-350
-INVARIANT: LEAN relation tuples with indices outside the entity array or non-int indices are silently dropped — shared/polymath_shared/llm_extraction/client.py:174-181 [DERIVED]
-  fails-if: out-of-range indices reach the gate → SANITIZE quarantine of the whole packet
+INVARIANT: output cap == 2500 + 700 × max(0, neighborhoods−1) — shared/polymath_shared/llm_extraction/client.py:305-306 [DERIVED]
+  fails-if: truncation as measured: cap 484 → finish=length, salvaged JSON, 3 relations vs cap 2500 → 841 tokens, 9 relations — shared/polymath_shared/llm_extraction/client.py:298-301 [DERIVED]
+INVARIANT: GENERATION_CONFIG temperature == 0.0 and max_tokens == 2500 (LOCKED, decision 18) — shared/polymath_shared/llm_extraction/client.py:49-50 [DERIVED]
+  fails-if: hash feeds workers.llm_provider.contract_identity → every document re-extracts — shared/polymath_shared/llm_extraction/client.py:45-47 [DERIVED]
+INVARIANT: estimate rate 4.0 chars/token > admission reserve rate 3.0 chars/token — shared/polymath_shared/llm_extraction/client.py:310,316 [DERIVED]
+  fails-if: under-reservation is what produced 429s; over-reservation is refunded by settle() — shared/polymath_shared/llm_extraction/client.py:313-315 [DERIVED]
+INVARIANT: batch budget floor 4000 ≤ effective ≤ max(seed, ceiling), seed 28000, ceiling env 72000, step 2000 — shared/polymath_shared/llm_extraction/client.py:234-235,241-245 [DERIVED]
+  fails-if: 45K OOMed with the fleet resident; ceiling below seed collapses the climb — shared/polymath_shared/llm_extraction/client.py:230-231,245 [DERIVED]
+INVARIANT: degraded_receipt http_dispatched == False always (nothing was dispatched) — shared/polymath_shared/llm_extraction/client.py:277-279 [DERIVED]
+  fails-if: receipt would misreport quota spend for an all-skipped walk
+INVARIANT: AllLanesRefused.receipt == degraded_receipt(self.skips) — shared/polymath_shared/llm_extraction/client.py:287-288 [DERIVED]
+INVARIANT: _lean_expand drops relations whose si/oi not in [0, len(entities)) — shared/polymath_shared/llm_extraction/client.py:183-184 [DERIVED]
+  fails-if: out-of-range indices would emit wrong surfaces in the flat packet
+INVARIANT: probe payload max_tokens == 1 and content == "ping" (no document content) — shared/polymath_shared/llm_extraction/client.py:536-537,551-552 [DERIVED]
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (network `httpx.post` :457,:505,:766,:932; clocks `time.perf_counter`/`time.monotonic` e.g. :498,:552,:592; env reads :238-239; shared limiter/REGISTRY concurrency :345-346) [DERIVED] FACTS.nondeterminism
-idempotency: UNSAFE for transport methods (probe/complete_one/extract* consume provider quota and park AIMD state on failure); SAFE for pure helpers (build_user_prompt, alias_neighborhoods, restore_neighborhood_ids, admission_tokens, estimate_input_tokens, _lean_expand) [INFERRED — network side effects vs. pure string/dict functions in SOURCE]
+determinism: NONDETERMINISTIC (network: httpx.post — shared/polymath_shared/llm_extraction/client.py:509,557,827,993 [DERIVED]; clocks: time.perf_counter / time.monotonic — shared/polymath_shared/llm_extraction/client.py:550,562,564,605,613,631,653,660,812,847,865,875,903,982,987,1009,1019,1026,1071,1081,1085,1093,1112,1143,1152,1161,1176,1185 [DERIVED]; env reads — shared/polymath_shared/llm_extraction/client.py:241-242,751 [DERIVED]; limiter.yaml file read — shared/polymath_shared/llm_extraction/client.py:76-78 [DERIVED])
+idempotency: UNSAFE (each dispatch spends provider quota; probe deliberately bypasses the limiter — shared/polymath_shared/llm_extraction/client.py:553-555 [DERIVED]; `_LIMITER_CONFIG` memoized globally after first load, a failed load caches `{}` — shared/polymath_shared/llm_extraction/client.py:73-81 [DERIVED])
 
 ## failure behaviour
-- `_ontology_text` swallows all exceptions → returns `""`; SYSTEM_PROMPT then ships with an empty `{{ONTOLOGY}}` slot — shared/polymath_shared/llm_extraction/client.py:109-113 [DERIVED]
-- `_lane_limit` swallows yaml load failure → `_LIMITER_CONFIG = {}` → lane default seeds from `_LANE_LIMITS` — shared/polymath_shared/llm_extraction/client.py:71-77 [DERIVED]
-- `_chat` header observability: non-mapping headers degrade to `{}`; transport never breaks — shared/polymath_shared/llm_extraction/client.py:478-481 [DERIVED]
-- `_chat` reasoning overlay: any exception swallowed (`pass`) — additive feature, must never break the compiler — shared/polymath_shared/llm_extraction/client.py:447-456 [DERIVED]
-- `complete_one`: `httpx.HTTPStatusError` → Cloudflare 3036-class daily quota parks the provider for the day (`park_provider_day`); 3040/429 → `record_failure` AIMD backoff; generic `Exception` → returns `("", type(exc).__name__)`, does not raise — shared/polymath_shared/llm_extraction/client.py:572-600 [DERIVED]
-- `probe`: exception recorded then re-raised (caller sees it); HTTP ≥400 recorded as `HTTP_{status}` with parsed `retry-after` — shared/polymath_shared/llm_extraction/client.py:508-524 [DERIVED]
-- `/infer_batch` statuses `(400, 404, 405)` mean "no batch endpoint" → fall back to per-neighborhood `/v1/chat/completions` — shared/polymath_shared/llm_extraction/client.py:309-312 [DERIVED]
-- `ExtractionTransportError` raised when the endpoint is unreachable or repeatedly returns garbage; raised at :1086 (handled: expr, expr, raise) — shared/polymath_shared/llm_extraction/client.py:245-246 [DERIVED] FACTS.fallbacks
-- Additional swallowed handlers beyond the shown excerpt: `pass` at :616 and :1149; `return None` at :629 and :646; handled-assign at :849 — shared/polymath_shared/llm_extraction/client.py:616,629,646,849,1149 [DERIVED] FACTS.fallbacks
-- Quarantine mapping: sanitize failure → `_quarantine_class` = the sanitize disposition, except generic unparseable → `"QUARANTINED_UNPARSEABLE"` (so `SANITIZE_UNKNOWN_NEIGHBORHOOD` is never masked) — shared/polymath_shared/llm_extraction/client.py:86-92 [DERIVED]
+- _ontology_text: SWALLOWED → `return ""`; system prompt ships without the ontology block — shared/polymath_shared/llm_extraction/client.py:115
+- limiter.yaml load: handled → `_LIMITER_CONFIG = {}`; falls back to `_LANE_LIMITS` code seeds — shared/polymath_shared/llm_extraction/client.py:79-80,60-65
+- _chat header read: handled → `hdrs = {}` — shared/polymath_shared/llm_extraction/client.py:532
+- reasoning-policy overlay: SWALLOWED pass; never breaks the compiler — shared/polymath_shared/llm_extraction/client.py:507
+- probe transport error: records the Attempt, then re-raises — shared/polymath_shared/llm_extraction/client.py:560-563
+- complete_one exception: returns `('', type(exc).__name__)` — shared/polymath_shared/llm_extraction/client.py:655 [DERIVED]
+- further SWALLOWED pass / return None at shared/polymath_shared/llm_extraction/client.py:677,690,707,1210 and handled raise paths at shared/polymath_shared/llm_extraction/client.py:910,1147 — dispositions per FACTS.fallbacks; bodies beyond shown SOURCE [DERIVED]
+- raised types: ValueError (unknown lane) — shared/polymath_shared/llm_extraction/client.py:388-389; ExtractionTransportError (endpoint unreachable or repeated garbage) — shared/polymath_shared/llm_extraction/client.py:248-249; AllLanesRefused (every lane refused; fail fast, never a wait) — shared/polymath_shared/llm_extraction/client.py:282-284
 
 ## dumb-code flags
-- Two chars-per-token ratios in one file: `len(user_prompt) / 4.0` vs `ADMISSION_CHARS_PER_TOKEN = 3.0`; comment admits English ~4, code/JSON ~3 — shared/polymath_shared/llm_extraction/client.py:266,269-272 [DERIVED]
-- Dead parameter: `input_tokens` in `output_budget_for` kept "for the signature" only — shared/polymath_shared/llm_extraction/client.py:249,259-260 [DERIVED]
-- Module-level side effect at import: `SYSTEM_PROMPT = _system_prompt()` runs ontology loading once at import time — shared/polymath_shared/llm_extraction/client.py:195 [DERIVED]
-- Magic truncation lengths in `_lean_expand`: surface `[:200]`, type `[:80]`, quote `[:2000]`, predicate `[:120]` — shared/polymath_shared/llm_extraction/client.py:170-187 [DERIVED]
-- Magic probe timeout `30.0` combined with per-client `timeout_s` — shared/polymath_shared/llm_extraction/client.py:506-507 [DERIVED]
-- FACTS reports `_NO_INFER_BATCH_STATUSES` as `[400, 404, 405]` while SOURCE shows a tuple `(400, 404, 405)` — shared/polymath_shared/llm_extraction/client.py:312 [DERIVED]
-- `"expected_output_tokens": 900` in GENERATION_CONFIG used "for batch-budget accounting only", not generation — shared/polymath_shared/llm_extraction/client.py:49 [DERIVED]
+- dead parameter: `input_tokens` in output_budget_for ignored for the cap (kept for signature) — shared/polymath_shared/llm_extraction/client.py:297-304
+- two chars-per-token literals: `/4.0` (estimate) vs `ADMISSION_CHARS_PER_TOKEN = 3.0` (admission reserve); intentional (conservative) but must move together — shared/polymath_shared/llm_extraction/client.py:310,313-316
+- truncation magic numbers in _lean_expand: 200 (surface), 80 (type), 2000 (quote), 120 (predicate) — shared/polymath_shared/llm_extraction/client.py:173-190; raw_head first 200 chars — shared/polymath_shared/llm_extraction/client.py:213-214
+- `ALL_LANES_REFUSED = "ALL_LANES_REFUSED"` used both as receipt "type" and exception-message prefix — shared/polymath_shared/llm_extraction/client.py:256,289-290
+- `_NO_INFER_BATCH_STATUSES = (400, 404, 405)` — statuses meaning "no batch endpoint", fall back to per-neighborhood calls — shared/polymath_shared/llm_extraction/client.py:353-356
+- `expected_output_tokens: 900` used "for batch-budget accounting only" — shared/polymath_shared/llm_extraction/client.py:52
 
 ## refactor notes
-- `GENERATION_CONFIG` is LOCKED (plan decision 18) and hashed into the extract stage contract via `workers.llm_provider.contract_identity`; changing it requires a new A/B record and re-extracts every document — shared/polymath_shared/llm_extraction/client.py:42-45
-- `"LIMITER_REFUSED"` is an exact-match API for existing consumers; `_last_refusal_reason`/`_last_http_dispatched` were added precisely so the string itself need not change — shared/polymath_shared/llm_extraction/client.py:540-544
-- `config/extraction_models/limiter.yaml` is the editable source of truth for limiter seeds; `_LANE_LIMITS` is only the code-level fallback — shared/polymath_shared/llm_extraction/client.py:55-56
-- Local-lane payload keys `repetition_penalty` / `repetition_context_size` / `chat_template_kwargs.enable_thinking` are LOCKED (decision 18); Qwen3.5 thinking measured at 1600 tokens vs 38-token direct JSON when off — shared/polymath_shared/llm_extraction/client.py:402-409
-- Constructor is the single seam all provider-calling paths go through (`ensure_store`); pMAP-stage dispatches previously escaped store attachment — shared/polymath_shared/llm_extraction/client.py:339-346
-- Blast radius: 8 importer files listed in FACTS.importers; extraction contract hash also covers `GENERATION_CONFIG` / `pool_fingerprint` — shared/polymath_shared/llm_extraction/client.py:442-444
+- GENERATION_CONFIG is LOCKED (decision 18), hashed into the extract-stage contract via workers.llm_provider.contract_identity — change only with a new A/B record; expect every document to re-extract — shared/polymath_shared/llm_extraction/client.py:45-47
+- complete_one's bare "LIMITER_REFUSED" return string is exact-matched by existing consumers — shared/polymath_shared/llm_extraction/client.py:593-595
+- 8 file-level importers (FACTS.importers) depend on this module: orchestrator deep_research/ui, latent compiler, worker_runtime, doc_parent_map_stage_worker, doc_profile_worker, llm_provider, summary_worker_impl — shared/polymath_shared/llm_extraction/client.py:1-1215 [DERIVED]
+- SHORT-ID CONTRACT (measured 2026-08-30): never ask the model to echo 70-char hash ids — 5/25 calls dropped the ':0' suffix and were quarantined SANITIZE_UNKNOWN_NEIGHBORHOOD — shared/polymath_shared/llm_extraction/client.py:326-330
+- extraction clients must never set `reasoning_role`: extraction stays byte-identical so its contract hash (GENERATION_CONFIG / pool_fingerprint) is untouched — shared/polymath_shared/llm_extraction/client.py:492-495
+- file is the documented swappable fallback; preserve the contract/gate/admission pipeline — shared/polymath_shared/llm_extraction/client.py:2-6
 
 ## VERIFY
 ```verify
 grep -Fq '"max_tokens": 2500' shared/polymath_shared/llm_extraction/client.py
 grep -Fq 'ADMISSION_CHARS_PER_TOKEN = 3.0' shared/polymath_shared/llm_extraction/client.py
 grep -Fq 'return max(1, int(len(user_prompt) / 4.0))' shared/polymath_shared/llm_extraction/client.py
-grep -Fq 'rpm=120, tpm=200000, conc_cap=18' shared/polymath_shared/llm_extraction/client.py
-grep -Fq '(400, 404, 405)' shared/polymath_shared/llm_extraction/client.py
+grep -Fq '_NO_INFER_BATCH_STATUSES = (400, 404, 405)' shared/polymath_shared/llm_extraction/client.py
+grep -Fq 'os.environ.get(LOCAL_BATCH_TOKENS_MAX_ENV, "72000")' shared/polymath_shared/llm_extraction/client.py
+grep -Fq 'class AllLanesRefused(RuntimeError):' shared/polymath_shared/llm_extraction/client.py
 test "$(grep -c -F 'httpx.post' shared/polymath_shared/llm_extraction/client.py)" -ge 4
-! grep -Fq 'import instructor' shared/polymath_shared/llm_extraction/client.py
 ```

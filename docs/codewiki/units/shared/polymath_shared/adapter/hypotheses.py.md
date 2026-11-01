@@ -1,104 +1,111 @@
 # unit: shared/polymath_shared/adapter/hypotheses.py
-anchor: shared/polymath_shared/adapter/hypotheses.py:1-397
+anchor: shared/polymath_shared/adapter/hypotheses.py:1-403
 
 ## purpose
-Generic hypothesis ledger (ADR-0019 §3/§4): pure, deterministic functions over `HypothesisStateV1` / `HypothesisTransitionV1` dicts — persistence is the store's job. θ (connected agent) may GENERATE/REVISE/SPLIT; φ (TrailSignal verdict or closed VALIDATE rule) applies selective pressure (KILL, MERGE, WEAKEN, STRENGTHEN, CONTRADICT, PROMOTE). Every transition names ≥1 cause; every revision keeps its parents. — shared/polymath_shared/adapter/hypotheses.py:1-6 [DERIVED]
+Generic hypothesis ledger (ADR-0019 §3/§4): pure, deterministic functions over `HypothesisStateV1` / `HypothesisTransitionV1` dicts; persistence is the store's job. θ (the connected agent) may GENERATE/REVISE/SPLIT; φ (a TrailSignal deterministic verdict or a closed VALIDATE rule) applies selective pressure (KILL, MERGE, WEAKEN, STRENGTHEN, CONTRADICT, PROMOTE). Every transition names ≥1 cause; every revision keeps its parents. — shared/polymath_shared/adapter/hypotheses.py:1-6 [DERIVED]
 
 ## public surface
+
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| HypothesisRejected | class(ValueError) | (errors: list[str]) -> exc, `.errors` holds full list | shared/polymath_shared/adapter/hypotheses.py:17-20 | — |
-| hypothesis_id | def | (run_id: str, step_id: str, ordinal: int\|str) -> str | shared/polymath_shared/adapter/hypotheses.py:55-56 | — |
-| transition_id | def | (run_id: str, hid: str, sequence: int, ordinal: int) -> str | shared/polymath_shared/adapter/hypotheses.py:59-60 | — |
-| generate | def | (run_id, step, proposals, *, registry_snapshot_id, recorded_at, max_hypotheses=8, parents=None, ordinal_base=0, known_origin_ids=None) -> (states, transitions) | shared/polymath_shared/adapter/hypotheses.py:192-221 | — |
-| apply | def | (run_id, step, current, requests, *, actor, allowed_causes, recorded_at, registry_snapshot_id=None, max_hypotheses=8, known_origin_ids=None) -> (new_states, transitions) | shared/polymath_shared/adapter/hypotheses.py:225-369 | — |
-| context_view | def | (current: hid -> latest state) -> list[{hypothesis_id, revision, status, statement}] | shared/polymath_shared/adapter/hypotheses.py:372-376 | — |
-| lineage_intact | def | (states, transitions) -> list[str] (errors) | shared/polymath_shared/adapter/hypotheses.py:379-397 | — |
-
-Module-level importers (per-symbol split not in FACTS): shared/polymath_shared/adapter/research_gaps.py, shared/polymath_shared/adapter/semantic_view.py, shared/polymath_shared/adapter/service.py — shared/polymath_shared/adapter/hypotheses.py (FACTS.importers) [DERIVED]
+| `HypothesisRejected` | class (ValueError) | `(errors: list[str])` | hypotheses.py:17-20 | importers below (module-level) |
+| `hypothesis_id` | def | `(run_id: str, step_id: str, ordinal: int \| str) -> str` | hypotheses.py:59-60 | research_gaps.py, semantic_view.py, service.py (FACTS.importers) |
+| `transition_id` | def | `(run_id: str, hid: str, sequence: int, ordinal: int) -> str` | hypotheses.py:63-64 | same importers |
+| `generate` | def | `(run_id, step, proposals, *, registry_snapshot_id, recorded_at, max_hypotheses=8, parents=None, ordinal_base=0, known_origin_ids=None) -> (states, transitions)` | hypotheses.py:196-225 | same importers |
+| `apply` | def | `(run_id, step, current, requests, *, actor, allowed_causes, recorded_at, registry_snapshot_id=None, max_hypotheses=8, known_origin_ids=None) -> (states, transitions)` | hypotheses.py:229-375 | same importers |
+| `context_view` | def | `(current: dict[str, dict]) -> list[dict]` | hypotheses.py:378-382 | same importers |
+| `lineage_intact` | def | `(states, transitions) -> list[str]` | hypotheses.py:385-403 | same importers |
 
 ## contracts
 
-**generate** — shared/polymath_shared/adapter/hypotheses.py:192-221
-- in: proposals list of dicts (`statement`, `supporting_evidence_ids`, optional `trail_priors`, `knowledge_gaps`, origin fields).
-- pre: `1 <= len(proposals) <= max_hypotheses` (199-200); non-empty `statement` per proposal (203-204); ≥1 citable cause — ids must be in `step.context.evidence_refs`, not `PRIOR_EVIDENCE_KINDS`, kind in `CITABLE_EVIDENCE_KINDS` (206, 82-91); priors must be `trail_prior` in context AND run records a `registry_snapshot_id` (207, 94-100); gap ids must match `TRAIL_IDENTIFIER` (213, 41-48); origin ids must exist in `known_origin_ids` when provided (212, 117-121).
-- out: states all `revision: 0`, `status: "proposed"` (172, 175); GENERATE transitions, actor `"theta"`, reason `"THETA_GENERATED"` (217-218); ids = `hypothesis_id(run_id, step_id, ordinal_base + n)` (211).
-- post: all-or-nothing — any accumulated error raises `HypothesisRejected`; output returned only when errors list is empty (219-221).
+### generate — hypotheses.py:196-225
+- in: `proposals` list of dicts; `step["context"]["evidence_refs"]` is the citable universe. — :202, :210 [DERIVED]
+- pre: `1 <= len(proposals) <= max_hypotheses` (default 8) else error `between 1 and {max_hypotheses} hypotheses are required (got {n})`. — :203-204 [DERIVED]
+- pre: every proposal has non-empty `statement` else `hypothesis {n}: statement is required`. — :207-208 [DERIVED]
+- pre: every `supporting_evidence_ids` entry must be in `evidence_refs`, not a `PRIOR_EVIDENCE_KINDS` kind, and of a `CITABLE_EVIDENCE_KINDS` kind; ≥1 citable cause required. — :210-214, :71-92 [DERIVED]
+- pre: `trail_priors` entries need a `registry_record_id` that is a prior in context AND a non-null `registry_snapshot_id`. — :95-107 [DERIVED]
+- pre: knowledge-gap ids must match `TRAIL_IDENTIFIER` (`^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$`). — :45, :217 [DERIVED]
+- out: states at `revision: 0`, `status: "proposed"`, ids `"hyp_" + sha256(run_id:step_id:ordinal)[:24]`; GENERATE transitions with hardcoded `actor="theta"`, `reason_code="THETA_GENERATED"`. — :176, :215, :221-222, :59-60 [DERIVED]
+- post: any accumulated error → `HypothesisRejected(errors)`; nothing returned (all-or-nothing). — :223-224 [DERIVED]
 
-**apply** — shared/polymath_shared/adapter/hypotheses.py:225-369
-- in: `current` = hypothesis_id → latest state; `requests` typed by `kind`; `allowed_causes` = id → kind.
-- pre: `kind` in `TRANSITION_KINDS` and ≠ `GENERATE` (245-246); `hid` known (247-248); current status not in `ABSORBED_STATUSES` (249-250); actor `"theta"` limited to `THETA_KINDS` (251-252); actor ∈ `("theta", "phi", "runtime")` (253-254); ≥1 cause ref whose kind matches `allowed_causes` (256-262); `field_evidence_ids` must be admitted `field_evidence` (265-268); SPLIT: children required and `alive + len(children) <= max_hypotheses` (271-278); MERGE: target known, distinct, not absorbed (301-304); REVISE `changes` keys limited to `REVISABLE_FIELDS + REVISABLE_LIST_FIELDS`, else whole request refused (324-328); CONTRADICT needs contradictions with `evidence_ids` (355-359); REVISE contradictions must cite ids this step may cite (345-349).
-- out: new status = `RESULTING_STATUS[kind]` (319); SPLIT mints children at revision 0 inheriting parent support/priors/field/origin (283-294), parent → `"split"` (297); MERGE: target takes union of support/field/contradictions + REVISE transition with reason `"MERGED_IN"` (306-313), source → `"merged"` (315-316); SPLIT child id ordinal = `f"{int(step['sequence'])}:{100 * (n + 1) + k}"` (283).
-- post: all-or-nothing; `HypothesisRejected` on any error (367-368); returns `(list(new_states.values()), transitions)` (369).
+### apply — hypotheses.py:229-375
+- in: `current` = hypothesis_id → latest state; `requests` dicts with `kind`, `hypothesis_id`. — :229-233 [DERIVED]
+- pre: `kind` in `TRANSITION_KINDS` and `!= "GENERATE"`; `hid` in `live`; status not in `ABSORBED_STATUSES` (`{"killed", "merged"}`); `actor` in `("theta", "phi", "runtime")`; θ only `THETA_KINDS`. — :249-258 [DERIVED]
+- pre: every `cause_refs` entry: kind in `CAUSE_KINDS` AND `allowed_causes[id] == kind`; ≥1 cause required. `field_evidence_ids` must map to `"field_evidence"` in `allowed_causes`. — :260-271 [DERIVED]
+- SPLIT: needs `children`; `alive + len(children) <= max_hypotheses` (alive = non-absorbed, B-49); child id = `hypothesis_id(run_id, step_id, f"{int(step['sequence'])}:{100 * (n + 1) + k}")` (B-20); refuses if child id already in ledger (`a SPLIT is applied once per issuance`); children inherit parent origin fields, support falls back to `prev["knowledge_support"]`, priors and field ids carry over; parent status → `"split"`. — :276-304 [DERIVED]
+- MERGE: target must be live, non-absorbed, ≠ self; support/field/contradictions unioned into target; target gets a `"REVISE"` transition with `reason_code="MERGED_IN"` and status `"revised"` if it was `"proposed"`; source status → `"merged"`. — :306-322 [DERIVED]
+- REVISE: unknown `changes` keys refused wholesale (`cannot be revised (revisable: ...); nothing of this revision was applied`); `assumptions`/`falsifiers` = list of non-empty strings (replace); `knowledge_gaps` UPSERT via `_merge_gaps`; `contradictions` only append with citable `evidence_ids`; origin fields via `_origin`. — :326-360 [DERIVED]
+- gap A-09: a θ REVISE on a status in `PHI_VERDICT_STATUSES` keeps `prev["status"]` — θ never erases φ's verdict. — :324-325 [DERIVED]
+- CONTRADICT: requires `contradictions` entries with `evidence_ids`. — :361-366 [DERIVED]
+- out: `(list(new_states.values()), transitions)`; revision bumps once per hid per call; errors → `HypothesisRejected`. — :240-244, :373-375 [DERIVED]
 
-**context_view** — shared/polymath_shared/adapter/hypotheses.py:372-376
-- out: only hypotheses whose status ∉ `ABSORBED_STATUSES`, projected to `{hypothesis_id, revision, status, statement}`, in store/generation order — never id-hash order (373-376).
+### context_view — hypotheses.py:378-382
+- in: hypothesis_id → latest state; out: `{hypothesis_id, revision, status, statement}` for non-absorbed hypotheses, in the store's iteration order. — :378-382 [DERIVED]
 
-**lineage_intact** — shared/polymath_shared/adapter/hypotheses.py:379-397
-- out: error strings for: transition with empty `cause_refs` (386-387); state revision no transition's `to_revision` reaches (390-392); GENERATE transition parent absent from state's `parent_hypothesis_ids` (393-396).
+### lineage_intact — hypotheses.py:385-403
+- in: states + transitions; out: list of error strings. Checks: every transition has ≥1 cause_ref; every state revision has a producing transition; GENERATE-transition parents appear in the state's `parent_hypothesis_ids`. — :388-401 [DERIVED]
 
 ## effect surface
-- Postgres tables read/written: none — persistence is the store's job — shared/polymath_shared/adapter/hypotheses.py:3 [DERIVED]; FACTS `tables_read`/`tables_written` = `[]` [DERIVED]
-- Files / network / subprocess / env flags: none — only imports are `hashlib`, `re`, `typing.Any` and `.contracts` — shared/polymath_shared/adapter/hypotheses.py:9-14 [DERIVED]
+- Postgres tables: none (FACTS `tables_read: []`, `tables_written: []`). — FACTS [DERIVED]
+- Qdrant / files / network / subprocess / env flags: none; only imports `hashlib`, `re`, `typing.Any`. — hypotheses.py:9-11 [DERIVED]
+- Persistence is explicitly the store's job. — hypotheses.py:2 [DERIVED]
 
 ## invariants
-INVARIANT: len(hypothesis_id) = len("hyp_") + 24 hex = 28 — shared/polymath_shared/adapter/hypotheses.py:56 [DERIVED]
-  fails-if: stored ids or cross-references of a different length break id matching in the store.
-INVARIANT: len(transition_id) = len("hxt_") + 24 = 28 — shared/polymath_shared/adapter/hypotheses.py:60 [DERIVED]
-  fails-if: same as above for transition records.
-INVARIANT: keys(RESULTING_STATUS) = THETA_KINDS ∪ PHI_KINDS = 9 kinds (GENERATE, REVISE, SPLIT, MERGE, WEAKEN, STRENGTHEN, CONTRADICT, KILL, PROMOTE) — shared/polymath_shared/adapter/hypotheses.py:23-26 [DERIVED]
-  fails-if: a kind without a resulting status raises KeyError at line 319.
-INVARIANT: ABSORBED_STATUSES = {"killed", "merged"} ⊆ values(RESULTING_STATUS) — shared/polymath_shared/adapter/hypotheses.py:25-27 [DERIVED]
-  fails-if: absorbed hypotheses could transition again (guard 249-250 would pass wrongly).
-INVARIANT: 1 ≤ len(proposals) ≤ max_hypotheses in generate — shared/polymath_shared/adapter/hypotheses.py:199-200 [DERIVED]
-  fails-if: empty batch or over-cap batch rejected.
-INVARIANT: alive + len(children) ≤ max_hypotheses for SPLIT (B-49: counts only non-absorbed) — shared/polymath_shared/adapter/hypotheses.py:275-278 [DERIVED]
-  fails-if: ledger could grow past the cap via splits.
-INVARIANT: every emitted transition has ≥1 `cause_refs` entry — shared/polymath_shared/adapter/hypotheses.py:261-262, 386-387 [DERIVED]
-  fails-if: lineage_intact reports "no cause".
-INVARIANT: every cited gap_id matches `^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$` (B-22: refuse what Trail's wire refuses) — shared/polymath_shared/adapter/hypotheses.py:40-48 [DERIVED]
-  fails-if: gap id stored verbatim is rejected later at gaps.compile on the Trail wire.
-INVARIANT: trail_priors entries exist only when registry_snapshot_id is set — shared/polymath_shared/adapter/hypotheses.py:98-100 [DERIVED]
-  fails-if: prior coordinate dangles without a snapshot reference.
-INVARIANT: revision increments by 1 only on the first touch of a hid per apply call (`0 if hid in new_states else 1`) — shared/polymath_shared/adapter/hypotheses.py:238 [DERIVED]
-  fails-if: multiple transitions on one hid in a single apply share one revision number; lineage_intact still passes (membership check only, 390-392).
+- INVARIANT: hypothesis_id length = `"hyp_" + 24 hex chars` — hypotheses.py:59-60 [DERIVED]
+  fails-if: stored ids or ledger lookups keyed on the 24-char hash break.
+- INVARIANT: transition_id = `"hxt_" + 24 hex chars` — hypotheses.py:63-64 [DERIVED]
+  fails-if: transition dedup/collision checks in the store stop matching.
+- INVARIANT: actor ∈ `{"theta", "phi", "runtime"}` — hypotheses.py:258 [DERIVED]
+  fails-if: unknown actor requests are rejected, so a new actor name must be added here first.
+- INVARIANT: statuses `"killed"`/`"merged"` accept no further transitions — hypotheses.py:27, :253 [DERIVED]
+  fails-if: absorbed hypotheses re-entering the ledger would break `context_view` liveness assumptions (:381).
+- INVARIANT: every transition carries ≥1 `cause_refs` — hypotheses.py:265-266, :392-393 [DERIVED]
+  fails-if: `lineage_intact` reports `no cause`; ancestry evidence guarantee (:5) violated.
+- INVARIANT: `alive + len(children) <= max_hypotheses` (default 8) for SPLIT — hypotheses.py:280-282 [DERIVED]
+  fails-if: ledger exceeds the bounded context issued to steps.
+- INVARIANT: `contradictions` list only grows (append + dedup, never replace) — hypotheses.py:358, :366 [DERIVED]
+  fails-if: dropped contradictions lose the record of what changed a hypothesis (:4-5).
+- INVARIANT: gap identity preserved across REVISE (UPSERT by `gap_id` or normalised question; nothing deleted) — hypotheses.py:130-162 [DERIVED]
+  fails-if: gap ids churn and downstream Trail gap compilation loses continuity.
+- INVARIANT: θ REVISE leaves any status in `PHI_VERDICT_STATUSES` unchanged — hypotheses.py:28-31, :324-325 [DERIVED]
+  fails-if: θ overwrites φ's verdict, reopening gap A-09.
+- INVARIANT: priors (`PRIOR_EVIDENCE_KINDS`) are attachable but never citable as evidence — hypotheses.py:79-81, :99-100 [DERIVED]
+  fails-if: registry coordinates pollute the evidence chain.
 
 ## determinism & idempotency
-determinism: DETERMINISTIC — ids are sha256 over inputs (`_h`, 51-52); `recorded_at` is injected by the caller (192, 225); no clock/random/uuid/db/env reads (imports 9-14) — shared/polymath_shared/adapter/hypotheses.py:9-14, 51-56 [DERIVED]
-idempotency: generate SAFE (same run_id/step_id/ordinal → same hypothesis_id, 55-56); apply UNSAFE for blind replay — `bump` re-increments revisions (236-239) and a replayed SPLIT is explicitly refused via child-id collision ("a SPLIT is applied once per issuance", 283-285) — shared/polymath_shared/adapter/hypotheses.py:236-239, 283-285 [DERIVED]
+determinism: DETERMINISTIC — pure dict functions; ids are sha256 of caller-supplied parts (:55-64); `recorded_at` is a parameter, no clock/random/uuid/db/env read anywhere in the module. [DERIVED]
+idempotency: SAFE — identical inputs return identical outputs (pure, caller dicts not mutated — `live = dict(current)` :237, `gaps = [dict(g) ...]` :133). Re-applying a SPLIT against an updated ledger is explicitly refused by the existing-child-id check (:288-289). [INFERRED: purity implies output stability; the SPLIT guard is the visible re-entry defense]
 
 ## failure behaviour
-- generate and apply accumulate all validation errors, then raise `HypothesisRejected(errors)` — batch is all-or-nothing, no partial state escapes — shared/polymath_shared/adapter/hypotheses.py:219-220, 367-368 [DERIVED]
-- Exception message joins only the first 5 errors (`"; ".join(errors[:5])`); full list on `.errors` — shared/polymath_shared/adapter/hypotheses.py:19-20 [DERIVED]
-- `assert_valid("hypothesis_state" / "hypothesis_transition")` raises on schema violation (behaviour defined in contracts) — shared/polymath_shared/adapter/hypotheses.py:187, 215, 293, 310, 364 [DERIVED]
-- No try/except, no fallbacks — nothing is swallowed — shared/polymath_shared/adapter/hypotheses.py:1-397 [DERIVED]
+- `HypothesisRejected(ValueError)`: raised by `generate` (:223-224) and `apply` (:373-375) with the full accumulated `errors` list on `.errors`; message is `"; ".join(errors[:5])` — only the first 5 errors surface in `str(exc)`. — :17-20 [DERIVED]
+- Batches are all-or-nothing: any error rejects the whole call, no partial states/transitions returned. — :223-224, :373-374 [DERIVED]
+- `assert_valid("hypothesis_state", st)` at :219, :297, :314, :370 and `assert_valid("hypothesis_transition", t)` at :191 delegate schema validation to `contracts` (its exception type is not visible here). [DERIVED]
 
 ## dumb-code flags
-- `HYPOTHESIS_STATUSES` imported but never referenced in the body — shared/polymath_shared/adapter/hypotheses.py:13-14 [DERIVED]
-- `[:24]` hash truncation duplicated at id minters — shared/polymath_shared/adapter/hypotheses.py:56, 60 [DERIVED]
-- gap-id slice `hid[4:12]` duplicated in three minters — shared/polymath_shared/adapter/hypotheses.py:154, 156, 170 [DERIVED]
-- Child ordinal formula `100 * (n + 1) + k` silently caps at 100 children per request slot n — shared/polymath_shared/adapter/hypotheses.py:283 [DERIVED]
-- Default `max_hypotheses: int = 8` duplicated in generate and apply; B-49 comment says the SPLIT cap must count alive "as generate's headroom does", so the two defaults must stay equal — shared/polymath_shared/adapter/hypotheses.py:193, 227, 275-278 [DERIVED]
-- Differing defaults: knowledge_support `evidence_role` = `"background"` vs gap `evidence_role` = `"behavior"` — shared/polymath_shared/adapter/hypotheses.py:85, 157, 171 [DERIVED]
-- MERGE target status expression written twice (once in the transition record, once mutating `t2` after) — shared/polymath_shared/adapter/hypotheses.py:313-314 [DERIVED]
-- `norm` lambda with `# noqa: E731` — shared/polymath_shared/adapter/hypotheses.py:133 [DERIVED]
+- Unused import: `HYPOTHESIS_STATUSES` imported from `.contracts` but never referenced in the module body. — hypotheses.py:13 [DERIVED]
+- Dead map entries: `RESULTING_STATUS` keys `"GENERATE"`, `"SPLIT"`, `"MERGE"` are never read — `apply` refuses `GENERATE` (:249) and the SPLIT/MERGE branches hardcode `"split"` (:301) / `"merged"` (:319); `generate` hardcodes `"proposed"` (:222). Only the `RESULTING_STATUS[kind]` lookup at :323 runs, for REVISE/KILL/WEAKEN/STRENGTHEN/CONTRADICT/PROMOTE. [INFERRED: from the control-flow branches]
+- Doc/body mismatch: `lineage_intact` docstring promises "every child names its parent" and "a split/merge parent appears in its children's parent lists" (:386-387) but the body implements only the no-cause, revision-produced and GENERATE-parent checks (:388-401). — hypotheses.py:385-403 [DERIVED]
+- Magic numbers: hash truncation `[:24]` (:60, :64); SPLIT ordinal `100 * (n + 1) + k` (:287); gap id slice `hid[4:12]` (:158, :160, :174); error message truncation `errors[:5]` (:19).
+- Duplicated default: `max_hypotheses: int = 8` appears in both `generate` (:197) and `apply` (:231) — change one without the other and the cap disagrees between creation and SPLIT.
+- `norm = lambda q: ...` with `# noqa: E731` inline. — :137 [DERIVED]
+- MERGE emits kind `"REVISE"` + `reason_code="MERGED_IN"` for the surviving target (:315-317) — kind does not match operation name; consumers filtering transitions on kind will not see MERGE on the target.
+- `generate` hardcodes `actor="theta"` (:221) regardless of caller.
 
 ## refactor notes
-- Ids are content-addressed: `hypothesis_id` = `"hyp_" + sha256(run_id, step_id, ordinal)[:24]`, `transition_id` = `"hxt_" + sha256(run_id, hid, sequence, ordinal)[:24]` — changing prefix/hash length breaks every stored id — shared/polymath_shared/adapter/hypotheses.py:55-60 [DERIVED]
-- `TRANSITION_KINDS`, `CITABLE_EVIDENCE_KINDS`, `PRIOR_EVIDENCE_KINDS`, `ORIGIN_ID_FIELDS` (aliased `ORIGIN_FIELDS`) come from `.contracts`; renaming here desyncs from the wire schemas — shared/polymath_shared/adapter/hypotheses.py:13-14, 38 [DERIVED]
-- `TRAIL_IDENTIFIER` mirrors TrailSignal's `ResearchKnowledgeGapV1.gap_id` wire rules — loosening it re-opens B-22 — shared/polymath_shared/adapter/hypotheses.py:40-48 [DERIVED]
-- SPLIT child ids embed `step["sequence"]` (B-20) and the store relies on the `cid in live` collision refusal for once-per-issuance semantics — shared/polymath_shared/adapter/hypotheses.py:281-285 [DERIVED]
-- `context_view` ordering is the store's dict order (generation order, "never the run-id-dependent hash order"); callers depend on it — shared/polymath_shared/adapter/hypotheses.py:373-376 [DERIVED]
-- Blast radius: research_gaps.py, semantic_view.py, service.py import this module (FACTS.importers); `lineage_intact` is used by tests + store as the invariant check — shared/polymath_shared/adapter/hypotheses.py:380-381 [DERIVED]
+- Importers `shared/polymath_shared/adapter/research_gaps.py`, `semantic_view.py`, `service.py` (FACTS.importers) break on any rename of `generate`, `apply`, `context_view`, `lineage_intact`, `HypothesisRejected`. — FACTS [DERIVED]
+- ID formats are persistence/wire-visible: `"hyp_"` ids (:60), `"hxt_"` ids (:64), `gap_{hid[4:12]}_{n}` (:160). Gap ids cross TrailSignal's closed wire (`ResearchKnowledgeGapV1.gap_id`); `TRAIL_IDENTIFIER` (:44-45) must keep matching Trail's rules or B-22 returns.
+- SPLIT child ordinal scheme `f"{int(step['sequence'])}:{100 * (n + 1) + k}"` (:287) is the issuance-uniqueness contract (B-20); changing it re-mints child ids and reopens the dropped-second-revision bug.
+- φ-only statuses list `PHI_VERDICT_STATUSES` (:31) and `RESULTING_STATUS` (:25-26) encode the A-09 actor split; touching them changes who may move which status.
+- `max_hypotheses` default 8 is duplicated (:197, :231); a change must update both (or their callers override).
 
 ## VERIFY
 ```verify
 grep -Fq 'THETA_KINDS = frozenset({"GENERATE", "REVISE", "SPLIT"})' shared/polymath_shared/adapter/hypotheses.py
 grep -Fq 'ABSORBED_STATUSES = frozenset({"killed", "merged"})' shared/polymath_shared/adapter/hypotheses.py
-grep -Fq 'return "hyp_" + _h(run_id, step_id, ordinal)[:24]' shared/polymath_shared/adapter/hypotheses.py
-grep -Fq 'raise HypothesisRejected(errors)' shared/polymath_shared/adapter/hypotheses.py
+grep -Fq 'TRAIL_IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")' shared/polymath_shared/adapter/hypotheses.py
 test "$(grep -c -F 'max_hypotheses: int = 8' shared/polymath_shared/adapter/hypotheses.py)" -ge 2
-grep -Eq '100 \* \(n \+ 1\) \+ k' shared/polymath_shared/adapter/hypotheses.py
-grep -Fq 'TRAIL_IDENTIFIER = re.compile' shared/polymath_shared/adapter/hypotheses.py
-! grep -Fq 'import random' shared/polymath_shared/adapter/hypotheses.py
+test "$(grep -c -F 'raise HypothesisRejected' shared/polymath_shared/adapter/hypotheses.py)" -ge 2
+grep -Fq 'changes["status"] = prev["status"]' shared/polymath_shared/adapter/hypotheses.py
+grep -Fq 'return "hyp_" + _h(run_id, step_id, ordinal)[:24]' shared/polymath_shared/adapter/hypotheses.py
+test "$(grep -c -F 'HYPOTHESIS_STATUSES' shared/polymath_shared/adapter/hypotheses.py)" -ge 1
 ```

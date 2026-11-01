@@ -4,7 +4,7 @@ owner: governance
 date: 2026-08-30
 status: living
 architecture_impact: none (the single session bootstrap — updated in place, never forked into dated copies)
-last_reviewed: 2026-09-26
+last_reviewed: 2026-11-01
 ---
 
 
@@ -23,7 +23,36 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-09-26 (FRIENDS-ACCESS-V1 admitted; AUTORESEARCH complete) — **ACTIVE MISSION: FRIENDS-ACCESS-V1 (register 11.497; the owner's live instruction 2026-09-26): friends use rag.kingsleylab.xyz, its tools and its MCP with their OWN logins (King = admin), a Settings tab to generate up to 3 API keys each and copy a connect prompt for their agent harness; friends may do everything; no daily cap; the three locks stay. Slices F0 ✔ → F1 ✔ accounts + sessions → F2 ✔ the web boundary → F3 ✔ keys + admin → F4 ✔ the Settings UI → F5 ✔ go-live kit (all on `feat/friends-access`, registers 11.498–11.502) → **F6 live = the owner's ONE Run button** (`scripts/friends_access_go_live.sh`). Then the ideation worker pack.**
+## CURRENT — 2026-11-01 (PRODUCT-SEARCH-E2E-V1 built on a branch; the owner's Run button next) — **ACTIVE MISSION: PRODUCT-SEARCH-E2E-V1 (register 11.575; the owner, 2026-11-01: "i want one massive patch and fix any thing else"): product search that works for any agent, any library and every user — product requests answered with hypotheses from the library plus CJ finds; CJ's API for everyone with the user's LOCAL Agent Reach as the fallback and the only Alibaba path; the governed run needs no niche; "all libraries" and friend access fixed. Work-log `docs/wiki/work-log/2026-11-01-product-search-e2e.md` (coverage of R1–R14 and the 56 audited defects; 7 deviations await the owner).**
+
+### Repository State
+- `production` = `1403f3ac` (2 commits ahead of `origin/production`, the 11.574 records; pushes are the owner's word).
+- **`feat/product-search-e2e` (worktree `../pmv4-product-search`)** = the patch on top of `1403f3ac`, NOT merged: fast-forward only, by the owner's
+  Run button. `../pmv4-baseline-1101` is a detached copy of `1403f3ac` used for the sealed baseline (removable).
+- Fleet: untouched this session (no restart, no live code edit). CJ: the owner unfroze API access ~19:40Z on 2026-11-01; a fresh-process sign-in
+  with the configured key succeeds. The other session's run `adr_185402…` completed at 17:31Z with 0 scores (5 HARD_GATE_UNMET).
+
+### Proof Status
+- Worktree-proven: sealed CI 4,517 tests — 4,480 passed, 20 skipped, 17 failed = the identical 17 of untouched `production`; engine 612/612; UI 213
+  passed; code wiki 2,266/2,266. LIVE proof owed after deploy (patched routes via the connector as owner and as a friend, migration 0067, a
+  seed-less governed run on a non-commerce library to X_compile, a TrailSignal score = TR-09).
+
+### Next Action
+1. The owner reviews the work-log's "Deviations not yet approved" (7) and the owner decisions (CF-06 friend onboarding, the gemma compiler lane,
+   `chmod 600 .env`, SearXNG removal, commerce-v1 sources).
+2. The owner's Run button, in the main checkout, at a quiet moment (no ingest running):
+   `git merge --ff-only feat/product-search-e2e && docker compose exec -T postgres psql -U polymath -d polymath -v ON_ERROR_STOP=1 -f - < stores/postgres/migrations/0067_real_libraries_production.sql && (cd frontend-v2 && npm run build) && bash scripts/bounce_fleet.sh`
+   (0067 is data-only and safe under the old code; the bounce boots the supervisor with the durable log dir). Push only on the owner's word.
+3. Live qualification after the bounce: `product_search` (no library named) as the owner and as a friend key through `/k/<key>/mcp`; a CJ failure
+   path shows `fallback`; `list_corpora` shows `query_ready` / `in_all_libraries`; "all libraries" resolves to the seven; a governed run with no
+   seed on cinema reaches the first HARNESS_ACTION with `agent_reach`; update register 11.575 IMPLEMENTED → DONE only on that evidence.
+
+### Do Not Do
+- Everything in the 2026-09-26 block's "Do Not Do" below still applies.
+- Never run Postgres-backed tests against the fleet's database: use a throwaway `postgres:16-alpine` (the CI steps; two test incidents touched the
+  live database on 2026-11-01 and were cleaned). Never paste or echo provider keys; the owner edits `.env`.
+
+## PRIOR — 2026-09-26 (FRIENDS-ACCESS-V1 admitted; AUTORESEARCH complete; superseded by the block above, its Do Not Do list still applies) — **ACTIVE MISSION: FRIENDS-ACCESS-V1 (register 11.497; the owner's live instruction 2026-09-26): friends use rag.kingsleylab.xyz, its tools and its MCP with their OWN logins (King = admin), a Settings tab to generate up to 3 API keys each and copy a connect prompt for their agent harness; friends may do everything; no daily cap; the three locks stay. Slices F0 ✔ → F1 ✔ accounts + sessions → F2 ✔ the web boundary → F3 ✔ keys + admin → F4 ✔ the Settings UI → F5 ✔ go-live kit (all on `feat/friends-access`, registers 11.498–11.502) → **F6 live = the owner's ONE Run button** (`scripts/friends_access_go_live.sh`). Then the ideation worker pack.**
 
 ### Repository State
 - Branch `production` = the close-out commit on top of `b3daddd0` (R1 + R8 + the audit fixes, merged by the owner's Run button at

@@ -21,12 +21,24 @@ and the REAL ecommerce workflow through the hosted surface is run by a real agen
 PER-FRIEND PRINCIPALS (owner decision 2026-09-21, acceptance list §9): give two friend keys and what friend A may use, and
 the harness proves — through the same hosted surface — that A and B authenticate independently, A reaches its allowed
 corpus and gets HTTP 403 on another, listings are filtered, A starts and continues an allowed adapter run, B gets 403 on
-A's run (the same answer as for a run that does not exist), A has no upload / history / admin, and the owner key still
-reaches everything. This part STARTS ONE RUN as friend A and cancels it with the owner key.
+A's run (the same answer as for a run that does not exist), and the owner key still reaches everything. This part STARTS
+ONE RUN as friend A and cancels it with the owner key.
+
+FRIEND PARITY (F14, the owner 2026-11-01: "users of the connector and link works seamlessly as me"): a web friend meets the
+owner's surface minus the owner-only tools. Checked for friend A: its tools/list carries upload_text, recent_queries,
+product_search, supplier_parse, the supplier_* tools and polymath_deep_research; upload_text passes the gate for its private
+library and is refused for a shared one (the probe's .exe name is refused INSIDE the tool, so nothing is ingested);
+recent_queries answers; deep research on a library A may not use is refused before any run; its private library `fr-<name>`
+exists; it sees every library the owner shares (a wildcard grant: a library added after the grant included —
+`--new-corpus` names one to prove it); upload_document (a HOST path) and research_acquire stay owner-only. With wildcard
+grants the natural `--denied-corpus` is friend B's private library.
 
     scripts/hosted_mcp_acceptance.py --url https://mcp.kingsleylab.xyz --key-file owner.key --vantage external:laptop \
-        --friend-a-key-file a.key --friend-b-key-file b.key --friend-corpus commerce-v1 --denied-corpus cinema \
-        --friend-start friend_start.json          # {"adapter_id": ..., "input": {...}, "request_options": {"corpus_ids": [...]}}
+        --friend-a-key-file a.key --friend-b-key-file b.key --friend-corpus commerce-v1 --denied-corpus fr-bob \
+        --friend-start friend_start.json --new-corpus <a library created after friend A's grant>
+
+    friend_start.json = {"adapter_id": ..., "input": {...}, "request_options": {"corpus_ids": [...]}}; --new-corpus is optional
+    (without it that check is a SKIP); --friend-private names A's private library when its listing holds several fr-*.
 
 The key is read from `--key-file` or POLYMATH_MCP_API_KEY, sent only as the Authorization header to `--url`, and is
 never printed or written to the receipt. Without a key the unauthenticated checks still run; the rest are SKIP.
@@ -58,6 +70,12 @@ USER_AGENTS = ("python-httpx/0.28.1", "node", "claude-code/2.0.0", "Python-urlli
 NO_SUCH_RUN = "adr_00000000000000000000000000000000"
 NO_SUCH_CORPUS = "acceptance_no_such_corpus"
 PROBE_PATH = "/nonexistent/polymath-hosted-acceptance-probe.md"      # never exists: the probe can not ingest anything
+# F14 FRIEND PARITY: what a web friend's agent must find in tools/list, and what stays the owner's
+FRIEND_PARITY_TOOLS = ("upload_text", "recent_queries", "product_search", "supplier_parse", "supplier_search", "supplier_product",
+                       "supplier_freight", "supplier_warehouses", "polymath_deep_research")
+OWNER_ONLY_TOOLS = ("upload_document", "research_acquire")
+PROBE_SOURCE_NAME = "polymath-acceptance-probe.exe"   # upload_text refuses the extension AFTER the gate: proves the gate, ingests nothing
+PRIVATE_PREFIX = "fr-"
 
 
 class Report:
@@ -142,7 +160,7 @@ async def run(base_url: str, key: str | None, *, corpus: str = "cinema", query: 
     try:
         await _edge(rep, c, user_agents)
         if not key:
-            for cid in ("mcp.initialize", "mcp.tools_list", "knowledge.list_corpora", "knowledge.search", "adapter.list",
+            for cid in ("mcp.initialize", "mcp.tools_list", "knowledge.list_corpora", "knowledge.corpora_explained", "knowledge.search", "adapter.list",
                         "errors.unknown_run", "errors.unknown_adapter", "errors.unknown_corpus", "errors.unknown_tool",
                         "isolation.host_path_upload"):
                 rep.add(cid, "SKIP", "no bearer key supplied (--key-file or POLYMATH_MCP_API_KEY)")
@@ -202,6 +220,7 @@ async def _principals(rep: Report, base_url: str, owner_key: str | None, friends
         rep.add("principal.a_listings_filtered", "PASS" if ok else "FAIL",
                 f"friend A is shown corpora {seen_c} and adapters {seen_a}: what it may use, not {denied!r}" if ok else
                 f"listings not filtered as expected: corpora {seen_c}, adapters {seen_a}", corpora=seen_c, adapters=seen_a)
+        await _friend_parity(rep, a, owner, friends, seen_c)          # F14: independent of the adapter run below
 
         status, body, ref = await a.tool("adapter_start", {"adapter_id": start["adapter_id"], "input": start["input"],
                                                            "request_options": start.get("request_options") or {}})
@@ -235,15 +254,6 @@ async def _principals(rep: Report, base_url: str, owner_key: str | None, friends
                 f"friend B on A's run: { {k: v[0] for k, v in answers.items()} }; unknown run: {nothing[0]}; identical answers: {answers['adapter_status'] == nothing}",
                 http_status={k: v[0] for k, v in answers.items()})
 
-        denied_ops = {}
-        for tool, args in (("upload_text", {"text": "acceptance probe", "corpus_id": corpus}), ("upload_document", {"path": PROBE_PATH, "corpus_id": corpus}),
-                           ("recent_queries", {"corpus_id": corpus})):
-            status, body, _ = await a.tool(tool, args)
-            denied_ops[tool] = status if _forbidden(status, body) else f"{status}!"
-        ok = all(v == 403 for v in denied_ops.values())
-        rep.add("principal.a_no_upload_admin", "PASS" if ok else "FAIL",
-                "friend A gets HTTP 403 on upload_text, upload_document and recent_queries" if ok else f"expected 403 on each: {denied_ops}", http_status=denied_ops)
-
         if owner is None:
             rep.add("principal.owner_retains_access", "SKIP", "no owner key supplied")
         else:
@@ -259,6 +269,102 @@ async def _principals(rep: Report, base_url: str, owner_key: str | None, friends
         for c in (a, b, owner):
             if c is not None:
                 await c.close()
+
+
+def _corpus_refused(status: int, body: dict[str, Any], payload: Any) -> bool:
+    """Refused for the LIBRARY: by the gate (403 corpus_not_allowed) or, past it, by the orchestrator's own library check (a
+    typed CORPUS_NOT_ALLOWED the tool hands back) — either way before anything ran."""
+    if _forbidden(status, body, "corpus_not_allowed"):
+        return True
+    return isinstance(payload, dict) and "error" in payload and (
+        payload.get("error_code") == "CORPUS_NOT_ALLOWED" or "CORPUS_NOT_ALLOWED" in str(payload.get("error")))
+
+
+def _corpus_ids(listing: Any) -> list[str]:
+    return [x.get("corpus_id") for x in (listing.get("corpora") if isinstance(listing, dict) else None) or [] if isinstance(x, dict)]
+
+
+async def _friend_parity(rep: Report, a: Client, owner: Client | None, friends: dict[str, Any], seen_c: list[Any]) -> None:
+    """F14 FRIEND PARITY (the owner, 2026-11-01: "users of the connector and link works seamlessly as me"). Nothing here
+    ingests, starts a run or calls a model: every write probe is refused before it could (see PROBE_SOURCE_NAME), and the
+    deep-research probe names a library friend A may not use."""
+    corpus, denied = friends["corpus"], friends["denied_corpus"]
+
+    _, body = await a.rpc("tools/list")
+    tools = sorted(t.get("name") for t in (body.get("result") or {}).get("tools") or [] if isinstance(t, dict) and t.get("name"))
+    missing = [t for t in FRIEND_PARITY_TOOLS if t not in tools]
+    rep.add("principal.a_tool_parity", "FAIL" if missing else "PASS",
+            f"friend A's tools/list lacks {missing}: a web friend must meet the owner's surface minus the owner-only tools" if missing
+            else f"friend A discovers {', '.join(FRIEND_PARITY_TOOLS)}", tools=tools)
+
+    own = [c for c in seen_c if isinstance(c, str) and c.startswith(PRIVATE_PREFIX)]
+    private = friends.get("private") or (own[0] if len(own) == 1 else None)
+    if not private:
+        rep.add("principal.a_private_library", "FAIL",
+                f"friend A's list_corpora shows no single private library ({own}); give --friend-private when it holds several",
+                corpora=seen_c)
+        rep.add("principal.a_upload_text", "FAIL", "no private library for friend A to upload to")
+    else:
+        status, body, cs = await a.tool("corpus_status", {"corpus_id": private})
+        ok = private in seen_c and not _forbidden(status, body) and isinstance(cs, dict) and "error" not in cs
+        rep.add("principal.a_private_library", "PASS" if ok else "FAIL",
+                f"friend A's private library {private!r} exists before any upload (listed, and corpus_status answers)" if ok else
+                f"{private!r}: listed={private in seen_c}, corpus_status ({status}) {str(cs or body)[:200]}", corpus=private)
+        probe = {"text": "polymath acceptance probe", "source_name": PROBE_SOURCE_NAME}
+        s1, b1, p1 = await a.tool("upload_text", {**probe, "corpus_id": private})
+        s2, b2, _ = await a.tool("upload_text", {**probe, "corpus_id": corpus})
+        passes = not _forbidden(s1, b1) and _typed_client_error(p1) and int(p1.get("status") or 0) == 422
+        refused = _forbidden(s2, b2)
+        rep.add("principal.a_upload_text", "PASS" if (passes and refused) else "FAIL",
+                f"upload_text passes the gate for {private!r} (the probe's name is then refused inside the tool: nothing ingested) "
+                f"and is refused (403) for the shared {corpus!r}" if (passes and refused) else
+                f"upload_text: private {private!r} -> ({s1}) {str(p1 or b1)[:160]}; shared {corpus!r} -> {s2} (expected 403)",
+                http_status={"private": s1, "shared": s2})
+
+    status, body, rq = await a.tool("recent_queries", {"corpus_id": corpus, "limit": 1})
+    ok = not _forbidden(status, body) and isinstance(rq, dict) and "error" not in rq and isinstance(rq.get("queries"), list)
+    rep.add("principal.a_recent_queries", "PASS" if ok else "FAIL",
+            f"recent_queries answers friend A on {corpus!r}" if ok else f"recent_queries ({status}) {str(rq or body)[:200]}",
+            http_status=status)
+
+    status, body, dr = await a.tool("polymath_deep_research", {"question": friends["query"], "corpus_id": denied})
+    ok = _corpus_refused(status, body, dr)
+    rep.add("principal.a_deep_research_scoped", "PASS" if ok else "FAIL",
+            f"polymath_deep_research on {denied!r} is refused for the library before any run starts" if ok else
+            f"deep research on a library friend A may not use was not refused for it: ({status}) {str(dr or body)[:200]}",
+            http_status=status)
+
+    if owner is None:
+        rep.add("principal.a_every_library", "SKIP", "no owner key supplied: nothing to compare friend A's libraries with")
+    else:
+        _, _, oc = await owner.tool("list_corpora", {})
+        shared = [c for c in _corpus_ids(oc) if isinstance(c, str) and not c.startswith(PRIVATE_PREFIX)]
+        absent = [c for c in shared if c not in seen_c]
+        ok = bool(shared) and not absent
+        rep.add("principal.a_every_library", "PASS" if ok else "FAIL",
+                f"friend A sees every library the owner shares ({len(shared)})" if ok else
+                f"friend A does not see {absent} of the owner's {shared}: a wildcard grant reaches every library", missing=absent)
+
+    new = friends.get("new_corpus")
+    if not new:
+        rep.add("principal.a_new_library", "SKIP", "give --new-corpus <a library created after friend A's grant> to prove the "
+                                                   "wildcard reaches it")
+    else:
+        status, body, found = await a.tool("polymath_search", {"query": friends["query"], "corpus_id": new, "max_evidence": 3})
+        ok = new in seen_c and not _forbidden(status, body) and not _corpus_refused(status, body, found)
+        rep.add("principal.a_new_library", "PASS" if ok else "FAIL",
+                f"a library added after friend A's grant ({new!r}) is listed for A and searchable by it" if ok else
+                f"{new!r}: listed={new in seen_c}, search ({status}) {str(found or body)[:200]}", corpus=new, http_status=status)
+
+    answers = {}
+    for tool, args in (("upload_document", {"path": PROBE_PATH, "corpus_id": private or corpus}),
+                       ("research_acquire", {"run_id": NO_SUCH_RUN, "operation": "catalog"})):
+        status, body, _ = await a.tool(tool, args)
+        answers[tool] = status if _forbidden(status, body) else f"{status}!"
+    ok = all(v == 403 for v in answers.values())
+    rep.add("principal.a_owner_only_refused", "PASS" if ok else "FAIL",
+            f"friend A gets HTTP 403 on the owner-only {', '.join(OWNER_ONLY_TOOLS)}" if ok else f"expected 403 on each: {answers}",
+            http_status=answers)
 
 
 async def _edge(rep: Report, c: Client, user_agents: tuple[str, ...]) -> None:
@@ -322,6 +428,14 @@ async def _authenticated(rep: Report, c: Client, *, corpus: str, query: str, exp
     names = [x.get("corpus_id") or x.get("id") or x for x in (corpora.get("corpora") if isinstance(corpora, dict) else None) or []]
     rep.add("knowledge.list_corpora", "PASS" if names else "FAIL",
             f"{len(names)} corpora visible" if names else f"no corpora returned ({status}): {str(corpora)[:200]}", corpora=names)
+    # CORPUS-ACCESS-PARITY (F4): "query_enabled: false" read as "cannot query" — each row must say what is usable
+    rows = [x for x in (corpora.get("corpora") if isinstance(corpora, dict) else None) or [] if isinstance(x, dict)]
+    explained = bool(rows) and all("query_ready" in x and "in_all_libraries" in x for x in rows) and \
+        isinstance(corpora.get("notes"), dict)
+    rep.add("knowledge.corpora_explained", "PASS" if explained else "WARN",
+            "every corpus row carries query_ready (searchable now) and in_all_libraries, and the answer's notes explain them"
+            if explained else "the corpus list does not explain its flags (query_ready / in_all_libraries / notes): an agent may "
+                              "read query_enabled false as 'cannot query'", rows=len(rows))
 
     status, _, found = await c.tool("polymath_search", {"query": query, "corpus_id": corpus, "max_evidence": 5})
     rows = found.get("evidence_rows") if isinstance(found, dict) else None
@@ -424,6 +538,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--friend-corpus", default=None, help="a corpus friend A is allowed to use")
     ap.add_argument("--denied-corpus", default=None, help="a corpus that EXISTS and friend A is NOT allowed to use")
     ap.add_argument("--friend-start", default=None, help="JSON file {adapter_id, input, request_options}: a run friend A may start")
+    ap.add_argument("--friend-private", default=None, help="friend A's private library (default: the only fr-* in A's listing)")
+    ap.add_argument("--new-corpus", default=None, help="a library created AFTER friend A's grant: the wildcard must reach it")
     ap.add_argument("--out", default=None, help="write the JSON receipt here as well")
     args = ap.parse_args(argv)
 
@@ -439,7 +555,8 @@ def main(argv: list[str] | None = None) -> int:
         friends = {"a_key": pathlib.Path(args.friend_a_key_file).expanduser().read_text().strip(),
                    "b_key": pathlib.Path(args.friend_b_key_file).expanduser().read_text().strip(),
                    "corpus": args.friend_corpus, "denied_corpus": args.denied_corpus, "query": args.query,
-                   "start": json.loads(pathlib.Path(args.friend_start).expanduser().read_text())}
+                   "start": json.loads(pathlib.Path(args.friend_start).expanduser().read_text()),
+                   "private": args.friend_private, "new_corpus": args.new_corpus}
     url = args.url.rstrip("/")
     url = url[:-4] if url.endswith("/mcp") else url
     receipt = asyncio.run(run(url, key, corpus=args.corpus, query=args.query, expect_adapters=tuple(args.expect_adapter),

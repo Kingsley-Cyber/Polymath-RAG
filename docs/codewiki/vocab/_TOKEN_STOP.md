@@ -12,7 +12,7 @@ AUTHORITY: `shared/polymath_shared/llm_extraction/gate.py:455` :: `_TOKEN_STOP` 
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:299` | 7/38 | `all`, `also`, `and`, `any`, `are`, `been`, `being`, `but`, `each`, `etc`, `for`, `had` |
+| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:300` | 7/38 | `all`, `also`, `and`, `any`, `are`, `been`, `being`, `but`, `each`, `etc`, `for`, `had` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:128` | 20/38 | `all`, `being`, `but`, `each`, `etc`, `had`, `her`, `his`, `its`, `not`, `onto`, `our` |
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:32` | 10/38 | `all`, `also`, `and`, `any`, `are`, `been`, `but`, `each`, `etc`, `for`, `had`, `has` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:32` | 11/38 | `all`, `and`, `any`, `are`, `been`, `but`, `each`, `etc`, `for`, `had`, `has`, `her` |

@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from polymath_shared import principal_context
 from polymath_shared.adapter import dossier, run_view, service
 from polymath_shared.adapter.contracts import ContractViolation
+from polymath_shared.adapter.corpus_seed import StartRefused
 from polymath_shared.adapter.transitions import SubmissionRejected
 from polymath_shared.db import tx
 
@@ -68,7 +69,14 @@ async def _off_the_event_loop(fn):
 
 @router.get("/adapter/list")
 async def adapter_list() -> dict:
-    return {"adapters": service.list_adapters(), "contract": "adapter-v1"}
+    """F15: a principal (a signed-in friend, forwarded by the web boundary) sees only the adapters its grant opens — the SAME rule
+    the MCP `adapter_list` applies and `require_adapter_start` enforces. No principal = the owner / trusted-local caller: all."""
+    from orchestrator.web_scope import current_principal
+    adapters = service.list_adapters()
+    p = current_principal()                       # an unknown or inactive principal is refused (403), never shown the list
+    if p is not None:
+        adapters = [a for a in adapters if a.get("adapter_id") in p.adapter_ids]
+    return {"adapters": adapters, "contract": "adapter-v1"}
 
 
 @router.get("/adapter/runs")
@@ -83,14 +91,24 @@ async def adapter_runs(status: str | None = None, adapter_id: str | None = None,
 
 @router.post("/adapter/start")
 async def adapter_start(req: StartRequest) -> dict:
-    from orchestrator.web_scope import require_adapter_start
-    require_adapter_start(req.adapter_id, req.input, req.request_options)  # FRIENDS-ACCESS-V1 D5
-    try:
+    """PRODUCT-SEARCH-E2E: the corpus scope is decided at start. `corpus_ids` named = validated now (they exist and are searchable);
+    none named = the caller's share of "all libraries" (`web_scope.all_libraries_view`: the owner gets every library but a friend's
+    private one, a friend what its grant reaches) — the SAME default for the owner and a friend. No seed = the run derives one from its
+    corpora. Refusals are typed 422s: {error_code, message, hint}. Runs in a worker thread: a start may run a domain check."""
+    from orchestrator.web_scope import all_libraries_view, require_adapter_start
+    require_adapter_start(req.adapter_id, req.input, req.request_options)  # FRIENDS-ACCESS-V1 D5 (naming none is allowed through)
+    owner = principal_context.current()
+
+    def _start() -> dict:
         with tx() as conn:
             return service.start(conn, adapter_id=req.adapter_id, input_payload=req.input, request_options=req.request_options,
-                                 owner_principal_id=principal_context.current())
+                                 owner_principal_id=owner, corpus_view=lambda ids: all_libraries_view(ids))
+    try:
+        return await _off_the_event_loop(_start)
     except service.UnknownAdapter as exc:
         raise HTTPException(status_code=404, detail=f"unknown adapter {exc.args[0]!r}")
+    except StartRefused as exc:
+        raise HTTPException(status_code=422, detail=exc.detail())
     except (ContractViolation, SubmissionRejected) as exc:
         raise HTTPException(status_code=422, detail=getattr(exc, "errors", [str(exc)]))
 

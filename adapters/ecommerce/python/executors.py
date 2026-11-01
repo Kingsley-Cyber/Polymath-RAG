@@ -190,69 +190,63 @@ def triage(state: dict, policies: dict) -> str:
 
 
 # ------------------------------------------------------ gaps + query compile --
-# channel -> (template, source_family, why, expected roles). Every query
-# declares WHY its source was chosen and what it CANNOT satisfy (docs/04 §8).
-# docs/24 §1 — evidence CHANNELS. Each carries the exact tool chain an agent runs
-# (OpenCLI / agent-reach verbs verified 2026-09-03), the source family (docs/04
-# authority decides what it may establish), and how independence is keyed.
-# Enabled/ordered by policies.evidence_channels; the query form is SHORT keywords.
-# `where` / `collect` are the HARNESS-NEUTRAL description (AUTORESEARCH-SOURCES-AND-HARNESS-V1, gap H-03): the governed
-# binding sends only these plus the query — any harness picks its own tools (ADR-063); `tools` stay for the standalone engine.
-_CHANNEL_TEMPLATES = [
-    ("reddit", "{q}", "community",
-     "first-person complaint, workaround, and comparison language",
-     ["FRICTION_EVIDENCE", "WORKAROUND_EVIDENCE", "PRODUCT_COMPARISON", "PURCHASE_INTENT"],
-     {"tools": ['opencli reddit search "{q}" --subreddit <hint> --sort relevance --time year --limit 10 -f json',
-                "opencli reddit read <post-id> -f json"],
-      "identity": "platform=reddit author_key=u/<author> thread_key=<post-id>", "freshness": "post date → LIVE ≤90d / FAST ≤2y",
-      "where": "reddit.com", "collect": "posts and their comment threads"}),
-    ("amazon_reviews", "{q}", "review",
-     "post-purchase language: what broke, what they did instead, what they compared it to",
-     ["PRODUCT_COMPLAINT", "WORKAROUND_EVIDENCE", "PRODUCT_COMPARISON", "PRODUCT_REQUEST", "CURRENT_PRODUCT_REFERENCE"],
-     {"tools": ['opencli amazon search "{q}" -f json', "opencli amazon discussion <asin-or-url> -f json"],
-      "identity": "platform=amazon author_key=<reviewer> thread_key=<ASIN>", "freshness": "review date",
-      "where": "amazon.com", "collect": "product reviews and customer questions",
-      "law": "a review is a product complaint or request, never FRICTION_EVIDENCE about life without the product (docs/04)"}),
-    ("youtube", "{q}", "community",
-     "creator-audience discussion under demonstration videos",
-     ["FRICTION_EVIDENCE", "BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE"],
-     {"tools": ['opencli youtube search "{q}" -f json', "opencli youtube comments <video-url> -f json"],
-      "identity": "platform=youtube author_key=<channel/handle> thread_key=<video-id>", "freshness": "comment date",
-      "where": "youtube.com", "collect": "the comment threads under the top demonstration videos (cite the video's youtube.com/watch URL; date = the comment's date)"}),
-    ("tiktok", "{q}", "community",
-     "short-video comment threads, captions and on-screen text where people show and discuss the workaround",
-     ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE"],
-     {"tools": ['opencli tiktok search "{q}" -f json'],
-      "identity": "platform=tiktok author_key=@<creator> thread_key=<video-id>", "freshness": "comment date (else video date)",
-      "limits": "OpenCLI reads videos, not their comment threads — quote the caption/on-screen text, or read comments through the browser lane",
-      "where": "tiktok.com", "collect": "the comment threads under the top videos (cite each video as tiktok.com/@creator/video/<id>, never a short link; date = the comment's date)"}),
-    ("instagram", "{q}", "community",
-     "comment threads under public Reels and posts where people show and discuss the workaround",
-     ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE"],
-     {"tools": ['mcporter call exa.web_search_exa query="{q} site:instagram.com/reel" numResults=10',
-                '~/camoufox-env/bin/python3 ~/.hermes/skills/social-media/instagram-leads/extract_comments.py "<reel-or-post-url>" --top 50 --json <file>'],
-      "identity": "platform=instagram author_key=@<account> thread_key=<reel-or-post-id>", "freshness": "comment date (else post date)",
-      "limits": "OpenCLI searches Instagram users only: find Reels by web search, then read their comments with the logged-in session extractor; public posts only, read occasionally (never in bulk), never quote a username",
-      "where": "instagram.com", "collect": "the comment threads under public Reels and posts (cite instagram.com/reel/<id> or instagram.com/p/<id>; date = the comment's date)"}),
-    ("xiaohongshu", "{q}", "community",
-     "consumer notes + threaded comments (Chinese; translate the quote, keep the original)",
-     ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE", "PRODUCT_COMPARISON"],
-     {"tools": ['opencli xiaohongshu search "{q}" -f json', "opencli xiaohongshu comments <note-id> -f json"],
-      "identity": "platform=xiaohongshu author_key=<user> thread_key=<note-id>", "freshness": "note date",
-      "where": "xiaohongshu.com", "collect": "consumer notes and their comment threads"}),
-    ("twitter", "{q}", "community",
-     "public complaint and comparison language in threads",
-     ["FRICTION_EVIDENCE", "PRODUCT_COMPARISON", "PURCHASE_INTENT"],
-     {"tools": ['opencli twitter search "{q}" -f json', "opencli twitter thread <tweet-id> -f json"],
-      "identity": "platform=twitter author_key=@<handle> thread_key=<tweet-id>", "freshness": "tweet date",
-      "where": "x.com", "collect": "public posts and their reply threads"}),
-    ("forum", "{q} forum", "community",
-     "niche practitioners describing real behavior and adaptations",
-     ["BEHAVIOR_SUPPORT", "WORKAROUND_EVIDENCE", "FRICTION_EVIDENCE"],
-     {"tools": ['mcporter call exa.web_search_exa query="{q} forum" numResults=10', 'curl -s "https://r.jina.ai/<url>"'],
-      "identity": "platform=<forum host> author_key=<handle> thread_key=<thread url>", "freshness": "post date",
-      "where": "specialist forums", "collect": "threads where practitioners describe real behavior and adaptations"}),
-]
+# docs/24 §1 — evidence CHANNELS are DATA (ADR-0019 decision 6: "adding a source is a data change"): `docs/24_agent_reach_channels.json`
+# holds, per channel, where it lives, what to read there, the evidence roles it can yield, the identity / freshness keys and the EXACT local
+# Agent Reach commands (H-08: the verb hints that lived here as never-executed text are now those commands, rendered from the same rows).
+# Enabled/ordered by policies.evidence_channels; the query form is SHORT keywords. `where` / `collect` are the HARNESS-NEUTRAL description
+# the governed binding puts in a search intent (gap H-03); the commands travel only BESIDE a research step (`agent_reach`), never in it.
+CHANNEL_TABLE_PATH = os.path.join(ROOT, "docs", "24_agent_reach_channels.json")
+_PLACEHOLDER = re.compile(r"^<[A-Za-z_]+>$")
+_SLOT = re.compile(r"\{([a-z_]+)\}")
+
+
+def channel_table(path: str | None = None) -> dict:
+    """The channel table (a fresh copy every call: callers may not mutate the shared one)."""
+    import json
+    with open(path or CHANNEL_TABLE_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _table_templates(table: dict) -> list[tuple]:
+    """(channel, template, family, why, expected roles, how) for every EVIDENCE row — the shape `channel_queries` has always read."""
+    out = []
+    for ch, row in (table.get("channels") or {}).items():
+        if row.get("kind") != "evidence":
+            continue
+        how = {k: row[k] for k in ("identity", "freshness", "where", "collect", "law", "limits") if row.get(k)}
+        how["tools"] = tool_chain(row, "{q}")
+        out.append((ch, row.get("query") or "{q}", row.get("family"), row.get("why"), list(row.get("expected_roles") or []), how))
+    return out
+
+
+def _fill(text: str, values: dict) -> str:
+    return _SLOT.sub(lambda m: str(values[m.group(1)]) if m.group(1) in values else m.group(0), str(text))
+
+
+def render_command(argv: list, values: dict) -> str:
+    """One command, exact and shell-safe: every `{slot}` filled in ONE pass (a value can never inject another slot), every token quoted
+    (`shlex.quote`) except a bare `<placeholder>` the agent fills from the previous output. A query never starts with "@" (mcporter
+    reads a FILE for `key=@path`)."""
+    import shlex
+    toks = []
+    for tok in argv:
+        text = _fill(tok, values)
+        toks.append(text if _PLACEHOLDER.match(text) else shlex.quote(text))
+    return " ".join(toks)
+
+
+def _clean_query(query: str) -> str:
+    return " ".join(str(query or "").split()).lstrip("@ ").strip()
+
+
+def tool_chain(row: dict, query: str) -> list[str]:
+    """Every command of a channel row (its chain, then its alternative chains), rendered for `query` — the standalone engine's `tools`."""
+    q = _clean_query(query) if query != "{q}" else query
+    chains = [row.get("commands") or []] + list(row.get("alternatives") or [])
+    return [render_command(cmd, {"query": q}) for chain in chains for cmd in chain]
+
+
+_CHANNEL_TEMPLATES = _table_templates(channel_table())
 # not compiled (honest): facebook — groups need membership
 _GAP_DEFAULT_ROLES = ["FRICTION_EVIDENCE", "WORKAROUND_EVIDENCE",
                       "BEHAVIOR_SUPPORT", "PURCHASE_INTENT"]
@@ -300,14 +294,17 @@ def channel_queries(gid: str, question: str, state: dict, policies: dict, id_pre
     kw = _gap_keywords(question)
     short = short or " ".join(kw[:6])
     hints = list(state["data"].get("communities") or [])
-    enabled = list(policies.get("evidence_channels") or [t[0] for t in _CHANNEL_TEMPLATES])
+    templates = _table_templates(policies["_channel_table"]) if isinstance(policies.get("_channel_table"), dict) else _CHANNEL_TEMPLATES
+    rows = (policies["_channel_table"] if isinstance(policies.get("_channel_table"), dict) else {}).get("channels") or {}
+    enabled = list(policies.get("evidence_channels") or [t[0] for t in templates])
     out = []
-    for channel, tpl, family, why, expected, how in sorted((t for t in _CHANNEL_TEMPLATES if t[0] in enabled), key=lambda t: enabled.index(t[0])):
+    for channel, tpl, family, why, expected, how in sorted((t for t in templates if t[0] in enabled), key=lambda t: enabled.index(t[0])):
+        scoped = (rows.get(channel) or _channel_row(channel)).get("scope_hints") == "communities"     # data, never a channel name
         out.append({
             "id": stable_id(id_prefix, gid, channel), "gap_id": gid,
             # docs/19: the question is NOT the search string
             "query": tpl.format(q=short), "question": question, "keywords": kw,
-            "subreddit_hints": hints[:6] if channel == "reddit" else [],
+            "subreddit_hints": hints[:6] if scoped else [],
             "tools": [t.replace("{q}", short) for t in how.get("tools") or []],
             "identity": how.get("identity"), "freshness_hint": how.get("freshness"),
             "where": how.get("where"), "collect": how.get("collect"),
@@ -481,15 +478,14 @@ def _num(s: str) -> float | None:
         return None
 
 
-#: harness-neutral: where each supply channel lists its catalogue (the governed binding sends this, never `_SOURCING_TOOLS`)
-SOURCING_SITES = {"alibaba": "alibaba.com", "cjdropshipping": "cjdropshipping.com", "1688": "1688.com"}
+#: harness-neutral: where each supply channel lists its catalogue (the governed binding sends this, never `_SOURCING_TOOLS`) — from the table
+SOURCING_SITES = {ch: row["where"] for ch, row in channel_table()["channels"].items() if row.get("kind") == "supply" and row.get("where")}
+#: the standalone engine's tool chain per supply channel: the table's Agent Reach commands for a `<term>` (H-08 reconciled)
+_SOURCING_TOOLS = {ch: tool_chain(row, "<term>") for ch, row in channel_table()["channels"].items() if row.get("kind") == "supply"}
 
-_SOURCING_TOOLS = {
-    "alibaba": ['python3 python/sourcing_exa.py --state run.json --out cands.json --channels alibaba',
-                'mcporter call exa.web_search_exa query="<term> site:alibaba.com wholesale MOQ price" numResults=6'],
-    "cjdropshipping": ['python3 python/sourcing_exa.py --state run.json --out cands.json --channels cjdropshipping',
-                       'mcporter call exa.web_search_exa query="<term> site:cjdropshipping.com" numResults=6'],
-}
+
+def _channel_row(channel: str) -> dict:
+    return (channel_table().get("channels") or {}).get(channel) or {}
 
 
 def sourcing_plan_compiler(state: dict, policies: dict) -> str:
@@ -513,7 +509,7 @@ def sourcing_plan_compiler(state: dict, policies: dict) -> str:
                          "search_terms": terms[:8], "min_candidates": int(pol.get("min_candidates_per_concept", 1)),
                          "tools": _SOURCING_TOOLS.get(ch, []),
                          "rule": f"search {ch} for THIS concept; every candidate carries concept_id + channel; price_raw / moq_raw verbatim "
-                                 f"({'CJ: per-unit price incl. processing, MOQ is usually 1 — record ship-from warehouse' if ch == 'cjdropshipping' else 'Alibaba: tier price + MOQ text as shown'}); "
+                                 f"({_channel_row(ch).get('rule') or 'price and MOQ text as shown'}); "
                                  "if nothing fits, submit nothing for it — an unsourced concept is a finding"})
     d["sourcing_plan"] = plan
     return f"sourcing plan: {len(plan)} jobs = {len(plan)//max(1,len(channels))} concepts × {channels} — no borrowing across concepts"
@@ -876,3 +872,80 @@ EXECUTORS.update(_md.EXECUTORS)
 EXECUTORS.update(_pa.EXECUTORS)
 import lived_world as _lw  # noqa: E402  LIVED-WORLD-V2 (docs/25)
 EXECUTORS.update(_lw.EXECUTORS)
+
+
+# ------------------------------------------------------- agent reach plan --
+AGENT_REACH_PLAN_VERSION = "agent_reach_plan.v1"
+
+
+def _trail_roles(row: dict) -> set:
+    """The TrailSignal evidence roles a channel can yield: its expected skill roles through the ONE static role table."""
+    import adapter_receipt
+    return {adapter_receipt.ROLE_MAP.get(r) for r in row.get("expected_roles") or []} - {None}
+
+
+def _plain(text: str) -> str:
+    """A search string from an intent sentence when it carries no template: its words, no punctuation, bounded."""
+    return " ".join(re.findall(r"[^\W_]+(?:['-][^\W_]+)*", str(text or ""), re.UNICODE)[:12])
+
+
+def agent_reach_plan(intents: list, *, stage: str, assigned: dict | None = None, context: dict | None = None,
+                     policies: dict | None = None, table: dict | None = None) -> dict:
+    """PRODUCT-SEARCH-E2E: for EVERY search intent of a research step, the channel it is searched on and the EXACT local Agent Reach
+    commands the connected agent runs for it on the user's own machine — computed from the channel table, never typed in code.
+
+    * `assigned` {intent_id: channel}: the planner's own channel (a compiled channel intent, a sourcing job). Every other intent (a
+      TrailSignal intent, a bound template) gets a channel of this stage whose evidence roles overlap the intent's — spread round-robin in
+      intent order, so the stage's platforms are all used (TrailSignal's gates count distinct platforms). No intent is left unmapped (S-17).
+    * `context` {intent_id: {concept_id, variation_id, ...}}: fills the receipt tags (`concept: pc_1`); a tag whose slot stays unknown is
+      dropped, never sent with a `{slot}`.
+    Deterministic: same intents + table = same plan. The plan travels BESIDE the step (`agent_reach`); intents stay harness-neutral."""
+    import hashlib
+    import json
+    t = table or (policies or {}).get("_channel_table") or channel_table()
+    rows = t.get("channels") or {}
+    pol = policies or {}
+    order = list(t.get("stages", {}).get(stage) or [])
+    if stage == "AGENT_RESEARCH" and pol.get("evidence_channels"):
+        order = [c for c in pol["evidence_channels"]]
+    if stage == "SUPPLIER_RESEARCH" and (pol.get("sourcing") or {}).get("channels"):
+        order = [c for c in pol["sourcing"]["channels"]]
+    order = [c for c in order if c in rows]
+    tags_for_stage = list((t.get("stage_tags") or {}).get(stage) or [])
+    per, spread, used = [], 0, {}
+    for it in intents or []:
+        if not isinstance(it, dict) or not it.get("intent_id"):
+            continue
+        iid = str(it["intent_id"])
+        ch = (assigned or {}).get(iid)
+        how = "planner"
+        if ch not in rows:
+            wanted = set(it.get("evidence_roles") or [])
+            eligible = [c for c in order if _trail_roles(rows[c]) & wanted] or order
+            if not eligible:
+                continue
+            ch, how = eligible[spread % len(eligible)], "roles"
+            spread += 1
+        row = rows[ch]
+        query = _clean_query(it.get("template") or "") or _plain(it.get("intent"))
+        values = {"query": query, "intent_id": iid, "channel": ch, **{k: v for k, v in ((context or {}).get(iid) or {}).items() if v not in (None, "")}}
+        tags = [_fill(tag, values) for tag in tags_for_stage + list(row.get("receipt_tags") or [])]
+        entry = {"intent_id": iid, "channel": ch, "assigned_by": how, "query": query,
+                 "commands": [render_command(cmd, values) for cmd in row.get("commands") or []],
+                 "alternatives": [[render_command(cmd, values) for cmd in chain] for chain in row.get("alternatives") or []],
+                 "tool_class": row.get("tool_class") or "web_search", "receipt_tags": [x for x in tags if not _SLOT.search(x)]}
+        if row.get("parse"):
+            entry["parse"] = dict(row["parse"])
+        per.append(entry)
+        used.setdefault(ch, {k: row[k] for k in ("where", "fill", "requires", "doctor_platform", "source_class") if row.get(k) is not None})
+    ar = t.get("agent_reach") or {}
+    raw = json.dumps(t, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    return {"schema_version": AGENT_REACH_PLAN_VERSION, "local_only": True, "run_on": ar.get("run_on") or "the user's own machine",
+            "never": list(ar.get("never") or []),
+            "install": {k: ar.get(k) for k in ("repo", "install", "guide", "verify", "update") if ar.get(k)},
+            "stage": stage, "per_intent": per, "channels": used,
+            "how_to_use": ("Run each intent's `commands` in order on the user's machine (an `alternatives` chain when the first does not work "
+                           "there; `agent-reach doctor --json` says which backend is active), fill every <placeholder> from the previous output as "
+                           "`channels.<channel>.fill` says, write that intent's tool_trace row with its `tool_class` and carry its `receipt_tags` into each "
+                           "observation's context."),
+            "table": {"path": "adapters/ecommerce/docs/24_agent_reach_channels.json", "sha256": hashlib.sha256(raw).hexdigest()}}

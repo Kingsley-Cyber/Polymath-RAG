@@ -162,7 +162,7 @@ def test_a_valid_code_creates_the_friend_with_todays_defaults_and_signs_the_pers
     assert c.post("/keys", json={"label": "laptop"}).status_code == 201                # signed in: a state change works
     listing = _signed_in(app, "king").get("/admin/friends").json()["friends"]
     ann = next(f for f in listing if f["username"] == "ann")
-    assert ann["corpus_ids"] == ["cinema", "commerce-v1", "fr-ann"] and ann["adapter_ids"] == ADAPTERS
+    assert ann["corpus_ids"] == ["*", "fr-ann"] and ann["adapter_ids"] == ADAPTERS        # F3: every library = the wildcard
     assert ann["enabled"] and not ann["must_change_password"] and "fr-someone" not in ann["corpus_ids"]
     assert "her own password" not in reg.read_text()
 

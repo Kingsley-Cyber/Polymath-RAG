@@ -1,11 +1,14 @@
-"""SUPPLIER-APIS (owner-approved 2026-09-27): READ-ONLY supplier tools on BOTH of Polymath's MCP servers, so every connected harness
-(Claude Code, Codex, Hermes, Gemini CLI, OpenCode) gets them and no write tool ever exists. CJ's own MCP server is not used: its token
-cannot be scoped and also reaches orders, payments, payment links, disputes and store listings.
+"""SUPPLIER-APIS (owner-approved 2026-09-27; PRODUCT-SEARCH-E2E, the owner's decisions of 2026-11-01): READ-ONLY supplier tools on
+BOTH of Polymath's MCP servers, so every connected harness (Claude Code, Codex, Hermes, Gemini CLI, OpenCode) gets them and no write
+tool ever exists. CJ's own MCP server is not used: its token cannot be scoped and also reaches orders, payments, payment links,
+disputes and store listings.
   * the tools: supplier_search(query, source="cj"|"alibaba", limit=10), supplier_product(product_id),
-    supplier_freight(variant_id, country, quantity=1, from_country="CN"), supplier_warehouses(): the same names, parameters and
-    descriptions on Server A and Server B, owner-only (not in the principals' TOOL_POLICY: a friend's key is refused at the gate);
-  * the routes behind them (`/supplier/*`, next to `/adapter/{id}/acquire`): the MCP servers on this host only (no proxy, a loopback
-    Host, B-28), the owner only (a principal gets 403), an OWNER line at the web boundary;
+    supplier_freight(variant_id, country, quantity=1, from_country="CN"), supplier_warehouses(), plus supplier_parse(site, raw_text):
+    the same names, parameters and descriptions on Server A and Server B, open to every friend key (the owner: "so im ensuring
+    users of the connector and link works seamlessly as me"; TOOL_POLICY under scopes every friend already holds);
+  * the routes behind them (`/supplier/*`, next to `/adapter/{id}/acquire`): the MCP servers on this host called directly (no proxy,
+    a loopback Host, B-28) or a signed-in web user that passed the web boundary (USER class); a principal is served, with fair use;
+    research_acquire stays the owner's;
   * the shapes: search = research_acquire's listing shape (sources + items + completeness + limitations), product = the product and
     its variants, freight = CJ's options, warehouses = CJ's list;
   * nothing writes: the CJ client's routes are the sign-in and four reads, and no supplier tool or route names an order, a cart, a
@@ -30,8 +33,8 @@ for _sub in ("shared", "orchestrator"):
     sys.path.insert(0, str(ROOT / _sub))
 sys.path.insert(0, str(ROOT / "tests" / "determinism"))
 
+from polymath_shared.acquisition import agent_reach as AR
 from polymath_shared.acquisition import cj_api as CJ
-from polymath_shared.acquisition import searxng as SX
 from polymath_shared.acquisition import supplier as SUP
 
 TOOLS = {"supplier_search": {"query", "source", "limit"}, "supplier_product": {"product_id"},
@@ -107,8 +110,14 @@ def _servers():
     return a, b
 
 
+@pytest.fixture(autouse=True)
+def _fresh_fair_use(monkeypatch):
+    """Fair use is counted per principal in this process: every test starts with its own counts."""
+    monkeypatch.setattr(SUP, "FAIR_USE", SUP.FairUse())
+
+
 def test_the_code_under_test_is_this_checkout():
-    for mod in (CJ, SX, SUP):
+    for mod in (CJ, AR, SUP):
         assert pathlib.Path(mod.__file__).resolve().is_relative_to(ROOT), mod.__file__
 
 
@@ -116,24 +125,33 @@ def test_the_code_under_test_is_this_checkout():
 def test_both_servers_publish_the_four_supplier_tools_identically():
     a, b = _servers()
     for label, tools in (("A", a), ("B", b)):
-        assert {n for n in tools if n.startswith("supplier_")} == set(TOOLS), label
+        assert {n for n in tools if n.startswith("supplier_")} == set(TOOLS) | {"supplier_parse"}, label   # PRODUCT-SEARCH-E2E
     for name, params in TOOLS.items():
         sa, sb = a[name].input_schema, b[name].input_schema
         assert set(sa.get("properties") or {}) == params and sa.get("properties") == sb.get("properties"), name   # names, types, defaults
         assert sorted(sa.get("required") or []) == sorted(sb.get("required") or []), name
         assert " ".join(a[name].description.split()) == " ".join(b[name].description.split()), name
-        assert "READ-ONLY" in a[name].description and "owner key only" in a[name].description, name
+        # PRODUCT-SEARCH-E2E: principals may call them (mcp_principals.TOOL_POLICY); a failure answers with an Agent Reach fallback
+        assert "READ-ONLY" in a[name].description and "owner key only" not in a[name].description and "fallback" in a[name].description, name
     assert a["supplier_search"].input_schema["properties"]["source"]["default"] == "cj"
     assert a["supplier_search"].input_schema["properties"]["limit"]["default"] == 10
     assert a["supplier_freight"].input_schema["properties"]["quantity"]["default"] == 1
     assert sorted(a["supplier_freight"].input_schema.get("required") or []) == ["country", "variant_id"]
 
 
-def test_the_tools_are_owner_only_by_default_deny():
+def test_the_tools_are_open_to_every_friend_key_under_scopes_it_already_holds():
+    """PRODUCT-SEARCH-E2E: the supplier tools are in TOOL_POLICY under SUPPLIER_SCOPES, which every friend key already holds (the
+    CLI profile, the web friends' scopes), so no registry needs rewriting; research_acquire stays out (the owner's browser)."""
     from orchestrator import mcp_principals as P
+    from orchestrator import web_accounts as W
     mod = _load("supplier_mcp_a_names", "orchestrator/orchestrator/mcp_server.py")
-    assert set(TOOLS) <= set(mod._TOOL_NAMES)
-    assert not set(TOOLS) & set(P.TOOL_POLICY)                               # no scope reaches them: a principal is refused at the gate
+    tools = {*TOOLS, "supplier_parse"}
+    assert tools <= set(mod._TOOL_NAMES)
+    assert {t: P.TOOL_POLICY[t] for t in tools} == {t: (P.SUPPLIER_SCOPES, P.NONE) for t in tools}
+    assert P.TOOL_POLICY["product_search"] == (P.SUPPLIER_SCOPES, P.CORPUS_OPTIONAL)  # a library is optional; a named one is checked
+    for held in (P.FRIEND_PROFILE, P.FRIEND_SCOPES, W.FRIEND_SCOPES):
+        assert set(P.SUPPLIER_SCOPES) & set(held), held
+    assert "research_acquire" not in P.TOOL_POLICY and "upload_document" not in P.TOOL_POLICY
 
 
 def test_nothing_in_the_supplier_client_or_tools_can_write():
@@ -147,21 +165,25 @@ def test_nothing_in_the_supplier_client_or_tools_can_write():
     assert not [r for r in CJ.ENDPOINTS if WRITE.search(r)]
     a, b = _servers()
     assert not [n for n in (*a, *b) if n.startswith("supplier_") and WRITE.search(n)]
-    assert SUP.TOOLS == tuple(TOOLS)
+    assert SUP.TOOLS == (*TOOLS, "supplier_parse")
     fake = FakeCJ()
     client = _cj(fake)
     client.search("toy trailer", 5), client.product(PID), client.freight(VID, "US", 1, "CN"), client.warehouses()
     assert {(m, p) for m, p, _ in fake.calls} == {("POST", CJ.TOKEN), ("GET", CJ.SEARCH), ("GET", CJ.PRODUCT), ("POST", CJ.FREIGHT),
                                                   ("GET", CJ.WAREHOUSES)}
     src = (ROOT / "orchestrator/orchestrator/api/acquisition.py").read_text()
-    assert set(re.findall(r'"(/supplier/[a-z]+)"', src)) == {"/supplier/search", "/supplier/product", "/supplier/freight", "/supplier/warehouses"}
+    assert set(re.findall(r'"(/supplier/[a-z]+)"', src)) == {"/supplier/search", "/supplier/product", "/supplier/freight", "/supplier/warehouses",
+                                                            "/supplier/parse"}
 
 
-def test_the_web_boundary_keeps_the_routes_for_the_owner():
+def test_the_web_boundary_opens_the_routes_to_every_signed_in_user():
     from orchestrator import web_boundary as B
-    for method, path in (("POST", "/supplier/search"), ("POST", "/supplier/product"), ("POST", "/supplier/freight"), ("GET", "/supplier/warehouses")):
-        assert B.classify(method, path) == B.OWNER, path
+    for method, path in (("POST", "/supplier/search"), ("POST", "/supplier/product"), ("POST", "/supplier/freight"), ("GET", "/supplier/warehouses"),
+                         ("POST", "/supplier/parse"), ("POST", "/product/search")):
+        assert B.classify(method, path) == B.USER, path
     assert B.classify("POST", "/supplier/order") is None and B.classify("POST", "/supplier") is None
+    assert B.classify("GET", "/supplier/search") is None and B.classify("DELETE", "/supplier/warehouses") is None    # only their own methods
+    assert B.classify("POST", "/adapter/r1/acquire") == B.OWNER                        # research_acquire: the owner's browser
 
 
 # ─────────────────────────────────────────────────────────── the routes
@@ -199,24 +221,28 @@ def test_the_owner_searches_cj_and_gets_research_acquires_listing_shape(monkeypa
     assert {"title", "price_as_listed", "minimum_order_as_listed", "supplier", "product_id"} <= set(item["listing"])
     assert item["listing"]["price_as_listed"] == "US$58.09" and item["listing"]["product_id"] == PID
     assert any("CJ Dropshipping API" in x for x in out["limitations"]) and out["completeness"]["read"] == 1
+    assert out["reason_code"] is None and out["fallback"] is None                    # CJ answered: no handoff
 
 
-def test_the_owner_searches_alibaba_through_searxng(monkeypatch):
-    results = [{"url": "https://www.alibaba.com/product-detail/Toy-Trailer_1600123456789.html", "title": "Toy Trailer - Buy Toy Product on Alibaba.com",
-                "content": "US$1.10-1.60. Min. order: 100 pieces"}]
-    seen = []
+def test_alibaba_is_strictly_the_users_agent_reach_and_no_search_engine_is_called(monkeypatch):
+    """PRODUCT-SEARCH-E2E ("alibaba is strictly agent reach"): no SearXNG, no CJ, no HTTP call of any kind from the host."""
+    fake = FakeCJ()
+    c = _client(_app(monkeypatch, fake))
 
-    def searx(req: httpx.Request) -> httpx.Response:
-        seen.append((str(req.url.copy_with(query=None)), req.url.params["q"], req.url.params["format"]))
-        return httpx.Response(200, json={"results": results, "unresponsive_engines": []})
-    real = SX.SearXNGListings
-    monkeypatch.setattr(SX, "SearXNGListings", lambda base, **kw: real(base, transport=httpx.MockTransport(searx)))
-    out = _client(_app(monkeypatch)).post("/supplier/search", json={"query": "toy trailer", "source": "alibaba", "limit": 5}).json()
-    assert seen == [("http://127.0.0.1:8888/search", "site:alibaba.com toy trailer", "json")]      # SEARXNG_URL unset: the local default
-    assert out["status"] == "OK" and out["site"] == "alibaba.com"
-    (item,) = out["items"]
-    assert (item["listing"]["price_as_listed"], item["listing"]["minimum_order_as_listed"]) == ("US$1.10-1.60", "100 pieces")
-    assert "found through search-engine results (SearXNG); snippet-level data" in out["limitations"]
+    def no_network(*a, **k):
+        raise AssertionError("supplier_search(source=alibaba) made an HTTP call on the host")
+    monkeypatch.setattr(httpx, "Client", no_network)
+    from polymath_shared import principal_context
+    for headers in ({}, {principal_context.HEADER: "prn_fred"}):                      # the owner and a friend alike
+        r = c.post("/supplier/search", json={"query": "toy trailer", "source": "alibaba", "limit": 5}, headers=headers)
+        assert r.status_code == 200, r.text
+        out = r.json()
+        assert (out["status"], out["site"], out["items"], out["sources"]) == ("AGENT_REACH_REQUIRED", "alibaba.com", [], [])
+        assert out["reason_code"] == out["fallback"]["reason_code"] == "ALIBABA_AGENT_REACH_ONLY"
+        runs = [cmd["run"] for cmd in out["fallback"]["commands"]]
+        assert runs[0].startswith("mcporter call exa.web_search_exa query='site:alibaba.com toy trailer' numResults=10 objective=")
+        assert runs[1] == "curl -s 'https://r.jina.ai/<PRODUCT_URL>'"
+    assert fake.calls == []
 
 
 def test_product_freight_and_warehouses_read_cj_and_say_so(monkeypatch):
@@ -241,7 +267,9 @@ def test_product_freight_and_warehouses_read_cj_and_say_so(monkeypatch):
     assert all(any("CJ" in x for x in r["limitations"]) for r in (prod, quote, houses))
 
 
-def test_a_principal_is_refused_and_so_is_anything_but_a_direct_loopback_call(monkeypatch):
+def test_a_principal_reaches_cj_and_anything_but_a_direct_loopback_or_signed_in_web_call_is_refused(monkeypatch):
+    """PRODUCT-SEARCH-E2E: a friend's principal is served (it reaches CJ); a relayed request that did not pass the web boundary and
+    a request naming a non-loopback host (B-28) are still refused before anything reaches CJ."""
     from fastapi.testclient import TestClient
     from polymath_shared import principal_context
     fake = FakeCJ()
@@ -250,13 +278,15 @@ def test_a_principal_is_refused_and_so_is_anything_but_a_direct_loopback_call(mo
     calls = [("post", "/supplier/search", {"query": "toy trailer"}), ("post", "/supplier/product", {"product_id": PID}),
              ("post", "/supplier/freight", {"variant_id": VID, "country": "US"}), ("get", "/supplier/warehouses", None)]
     for method, path, body in calls:
-        r = getattr(c, method)(path, headers={principal_context.HEADER: "prn_fred"}, **({"json": body} if body else {}))
-        assert r.status_code == 403 and r.json()["detail"]["code"] == "OWNER_ONLY", (path, r.text)
         r = getattr(c, method)(path, headers={"X-Forwarded-For": "203.0.113.9"}, **({"json": body} if body else {}))
         assert r.status_code == 403 and r.json()["detail"]["code"] == "PROXIED_CALLER", path
         r = getattr(TestClient(app, base_url="http://rebind.attacker.example:7200"), method)(path, **({"json": body} if body else {}))
         assert r.status_code == 403 and r.json()["detail"]["code"] == "NON_LOOPBACK_HOST", path
-    assert fake.calls == []                                                   # nothing reached CJ
+    assert fake.calls == []                                                   # nothing refused reached CJ
+    for method, path, body in calls:
+        r = getattr(c, method)(path, headers={principal_context.HEADER: "prn_fred"}, **({"json": body} if body else {}))
+        assert r.status_code == 200 and r.json()["status"] == "OK", (path, r.text)
+    assert {p for _, p, _ in fake.calls} == {CJ.TOKEN, CJ.SEARCH, CJ.PRODUCT, CJ.FREIGHT, CJ.WAREHOUSES}   # the friend's calls reached CJ
 
 
 @pytest.mark.parametrize("path,body,code", [
@@ -270,18 +300,24 @@ def test_bad_arguments_are_refused_before_cj_is_called(monkeypatch, path, body, 
     assert r.status_code == 422 and r.json()["detail"]["code"] == code and fake.calls == []
 
 
-def test_without_a_key_the_cj_tools_answer_unavailable_and_say_why(monkeypatch):
+def test_without_a_key_the_cj_tools_answer_unavailable_say_why_and_hand_off(monkeypatch):
     c = _client(_app(monkeypatch))
     for r in (c.post("/supplier/search", json={"query": "toy trailer"}), c.post("/supplier/product", json={"product_id": PID}),
               c.post("/supplier/freight", json={"variant_id": VID, "country": "US"}), c.get("/supplier/warehouses")):
         out = r.json()
         assert r.status_code == 200 and out["status"] == "UNAVAILABLE" and any("CJ_API_KEY is not set" in x for x in out["limitations"]), out
+        assert out["reason_code"] == "CJ_NO_KEY"
+        if out["tool"] in ("supplier_search", "supplier_product"):                     # a user-side equivalent exists: the handoff
+            assert out["fallback"]["kind"] == "AGENT_REACH" and out["fallback"]["reason_code"] == "CJ_NO_KEY"
+            assert out["fallback"]["commands"][0]["run"].startswith("mcporter call exa.web_search_exa query='site:cjdropshipping.com ")
+        else:                                                                          # CJ's freight calculator / warehouse list: none
+            assert out["fallback"] is None
     off = _client(_app(monkeypatch, env={"SEARXNG_URL": "off"})).post("/supplier/search", json={"query": "toy trailer", "source": "alibaba"}).json()
-    assert off["status"] == "UNAVAILABLE" and any("SEARXNG_URL=off" in x for x in off["limitations"])
+    assert off["status"] == "AGENT_REACH_REQUIRED" and off["fallback"]["site"] == "alibaba.com"       # SEARXNG_URL selects nothing now
 
 
 # ─────────────────────────────────────────────────────────── the whole chain through Server A's gate
-def test_through_server_a_the_owner_key_reaches_cj_and_a_friends_key_is_refused(monkeypatch, tmp_path):
+def test_through_server_a_the_owner_key_and_a_friends_key_both_reach_cj(monkeypatch, tmp_path):
     import test_mcp_principals_gate as GATE
     from fastapi.testclient import TestClient
     w = GATE._build(monkeypatch, tmp_path)
@@ -294,21 +330,22 @@ def test_through_server_a_the_owner_key_reaches_cj_and_a_friends_key_is_refused(
         w.c = c
         out = GATE._payload(GATE._call(w, GATE.OWNER_KEY, "supplier_search", {"query": "toy trailer"}, host=GATE.LOOPBACK))
         assert out["status"] == "OK" and out["items"][0]["listing"]["product_id"] == PID
-        for tool, args in (("supplier_search", {"query": "toy trailer"}), ("supplier_product", {"product_id": PID}),
-                           ("supplier_freight", {"variant_id": VID, "country": "US"}), ("supplier_warehouses", {})):
-            GATE._denied(GATE._call(w, w.keys["prn_alice"], tool, args), "tool_not_permitted")
+        friend = GATE._payload(GATE._call(w, w.keys["prn_alice"], "supplier_search", {"query": "toy trailer"}))
+        assert friend["status"] == "OK" and friend["items"][0]["listing"]["product_id"] == PID      # "works seamlessly as me"
         listed = {t["name"] for t in json.loads(GATE._post(w, w.keys["prn_alice"], {"jsonrpc": "2.0", "id": 1, "method": "tools/list",
                                                                                      "params": {}}).text)["result"]["tools"]}
-        assert not listed & set(TOOLS)                                        # a friend never even sees them
-    assert [p for _, p, _ in fake.calls] == [CJ.TOKEN, CJ.SEARCH]             # only the owner's one search reached CJ
+        assert {*TOOLS, "supplier_parse", "product_search"} <= listed          # a friend sees every supplier tool and product search
+    assert [p for _, p, _ in fake.calls] == [CJ.TOKEN, CJ.SEARCH, CJ.TOKEN, CJ.SEARCH]          # the owner's search and the friend's
 
 
 # ─────────────────────────────────────────────────────────── what a harness is told
-def test_the_connect_prompt_and_connectors_name_the_tools_as_owner_only():
+def test_the_connect_prompt_and_connectors_name_the_tools():
     from orchestrator.api.web_settings import connect_prompt
     text = connect_prompt("pmk_abc", ["cinema"], "fr-fred", url="https://mcp.example.test/mcp")
     line = next(ln for ln in text.splitlines() if "supplier_search" in ln)
-    assert all(t in line for t in TOOLS) and "owner-only" in line and "read-only" in line
+    # PRODUCT-SEARCH-E2E: a friend's key may call them now; the prompt says read-only and paced, never owner-only
+    assert all(t in line for t in TOOLS) and "read-only" in line and "paced" in line and "owner-only" not in line
     doc = (ROOT / "mcp_server/CONNECTORS.md").read_text(encoding="utf-8")
-    section = doc[doc.index("**Supplier tools (owner key only, read-only).**"):]
-    assert all(f"`{t}(" in section for t in TOOLS) and "friend's key is refused (403)" in section
+    section = doc[doc.index("**Supplier tools (read-only, every key).**"):doc.index("## 4.")]
+    assert all(f"`{t}(" in section for t in (*TOOLS, "supplier_parse")) and "a friend's key included" in section
+    assert "AGENT_REACH_REQUIRED" in section and "owner key only" not in section and "SearXNG" not in section

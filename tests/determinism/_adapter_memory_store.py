@@ -154,3 +154,44 @@ class MemoryStore:
         ids |= {a["admission"]["admission_id"] for a in self.actions.values()            # an admission that admitted nothing is still an admission (D1)
                 if a.get("run_id") == run_id and isinstance(a.get("admission"), dict) and a["admission"].get("admission_id")}
         return sorted(ids)
+
+    # ── run activity (F8)
+    def touch_run(self, conn, run_id: str) -> None:
+        if run_id in self.runs:
+            self.runs[run_id]["meta"]["updated_at"] = _NOW
+            self.runs[run_id]["touched"] = self.runs[run_id].get("touched", 0) + 1
+
+    def idle_runs(self, conn, idle_s: int, limit: int = 20) -> list[str]:
+        """A test marks a run idle with `idle=True` on its row (there is no clock here)."""
+        return [rid for rid, r in self.runs.items() if r.get("idle") and r["state"]["status"] in ("awaiting_agent", "awaiting_harness")][:limit]
+
+    # ── corpus readers (PRODUCT-SEARCH-E2E). PERMISSIVE by default so runs that NAME a corpus start as before: every named corpus
+    # exists and is query-ready. `catalog` (corpora / profiles / atoms / summaries / generation) makes a test's corpus world explicit.
+    catalog: dict[str, Any] | None = None
+
+    def _cat(self) -> dict[str, Any]:
+        return self.catalog or {}
+
+    def corpora(self, conn, corpus_ids=None) -> list[dict[str, Any]]:
+        known = {c["corpus_id"]: c for c in self._cat().get("corpora") or []}
+        if corpus_ids is None:
+            return [dict(known[k]) for k in sorted(known)]
+        if self.catalog is None:
+            return [{"corpus_id": c, "purpose": "production", "query_enabled": True, "documents": 1, "query_ready": True, "in_all_libraries": True}
+                    for c in sorted(set(corpus_ids))]
+        return [dict(known[c]) for c in sorted(set(corpus_ids)) if c in known]
+
+    def profiles(self, conn, corpus_ids) -> list[dict[str, Any]]:
+        return [dict(p) for p in self._cat().get("profiles") or [] if p["corpus_id"] in set(corpus_ids)]
+
+    def atoms(self, conn, corpus_ids, kinds=("TENSION", "LATENT_PATTERN")) -> list[dict[str, Any]]:
+        return [dict(a) for a in self._cat().get("atoms") or [] if a["corpus_id"] in set(corpus_ids) and a["kind"] in kinds]
+
+    def summaries(self, conn, corpus_ids) -> list[dict[str, Any]]:
+        return [dict(s) for s in self._cat().get("summaries") or [] if s["corpus_id"] in set(corpus_ids)]
+
+    def corpus_generation(self, conn, corpus_id: str) -> str:
+        return str((self._cat().get("generation") or {}).get(corpus_id, "g0"))
+
+    def admitted_evidence_groups(self, conn, run_id: str) -> dict[str, str]:
+        return {r["evidence_id"]: r["admission_id"] for r in self.admitted if r["run_id"] == run_id}

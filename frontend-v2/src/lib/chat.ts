@@ -1,7 +1,8 @@
 /** Chat turn state machine over the `/chat/stream` SSE frames. */
 import { chatStream, type SseFrame } from "./api";
-import type { AnswerFrame, ChatGapCheck, ChatSynthesis, DeepCoverage, RetrievalReceipt } from "./contracts";
+import type { AnswerFrame, ChatGapCheck, ChatSynthesis, DeepCoverage, ProductResearchResult, RetrievalReceipt } from "./contracts";
 import type { DeepRunState } from "./deep";
+import type { ProductRunRef } from "./productResearch";
 
 /** One pipeline step from a `phase` frame. `data` keeps the raw fields so the
  *  process rail can show per-step detail (chunks, items, corpora, model…). */
@@ -38,6 +39,12 @@ export interface Turn {
   synthesis?: ChatSynthesis | null;
   /** F6: `meta.gap_check` — the "not covered" claims searched again. */
   gapCheck?: ChatGapCheck | null;
+  /** PRODUCT-SEARCH-E2E: `result.product_research` (contract product-search-v1) of an answer to a product question — the
+   *  hypotheses from the library with their CJ Dropshipping finds, and the offer to start the full governed research. Absent on
+   *  every other answer and on turns saved before it, which render as before. Persisted with the chat like every turn field. */
+  productResearch?: ProductResearchResult | null;
+  /** The governed run started from that offer (POST /adapter/start): the run id and the agent prompt survive a reload. */
+  productRun?: ProductRunRef | null;
 }
 
 export interface DeepCitation { cid: string; id?: string; title?: string; source?: string; text?: string; corpus_id?: string }
@@ -141,6 +148,9 @@ export async function runTurn(
           // FACET-RETRIEVAL-V1 F5 / F6: the graded evidence of a synthesis answer and the gap check, when the turn ran them
           synthesis: (typeof meta.synthesis === "object" && meta.synthesis ? meta.synthesis : null) as ChatSynthesis | null,
           gapCheck: (typeof meta.gap_check === "object" && meta.gap_check ? meta.gap_check : null) as ChatGapCheck | null,
+          // PRODUCT-SEARCH-E2E: a product question's hypotheses + CJ finds + the full-research offer (an object, or nothing)
+          productResearch: (result && typeof result.product_research === "object" && result.product_research
+            && !Array.isArray(result.product_research) ? result.product_research : null) as ProductResearchResult | null,
         });
       } else if (frame.event === "coverage") {
         // DR7c: after each research level, each goal's findings and books so far (the live view's checklist)

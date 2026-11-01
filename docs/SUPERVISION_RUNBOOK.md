@@ -42,14 +42,14 @@ long stages survive and genuine death still expires within one claim TTL.
 
 ## Observability
 
-`/tmp/polymath_fleet/supervisor_state.json` (pids, restarts, quarantine,
-last exit codes) · per-slot logs in `/tmp/polymath_fleet/*.log` ·
+`~/PolymathRuntime/logs/fleet/supervisor_state.json` (pids, restarts, quarantine,
+last exit codes) · per-slot logs in `~/PolymathRuntime/logs/fleet/*.log` ·
 `worker_registrations` table for capability/heartbeat/quarantine.
 
 ## Manual emergency recovery
 
 1. `launchctl unload …` (stop auto-restart) → 2. inspect slot log →
-3. fix cause → 4. `rm /tmp/polymath_fleet/supervisor_state.json` →
+3. fix cause → 4. `rm ~/PolymathRuntime/logs/fleet/supervisor_state.json` →
 5. `launchctl load -w …` (or run boot script by hand). Budget-exhausted
 tickets: per-ticket re-drive SQL in docs/RUNBOOK.md.
 

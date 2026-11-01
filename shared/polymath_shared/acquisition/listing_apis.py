@@ -3,7 +3,9 @@
 The host browser reads a supplier's own search page, and those pages put a human check in front of an automated reader (the R7 run:
 Alibaba on every call, CJ a verification redirect). The fix is to stop needing those pages, never to get past a check:
   * cjdropshipping.com: CJ's OFFICIAL API (`cj_api`), when `CJ_API_KEY` is set;
-  * alibaba.com: search-engine RESULT SNIPPETS from the local SearXNG (`searxng`), unless `SEARXNG_URL=off`.
+  * alibaba.com: nothing on this host (PRODUCT-SEARCH-E2E, the owner 2026-11-01: "alibaba is strictly agent reach"): a listing
+    search on alibaba.com answers AGENT_REACH_REQUIRED with the commands the user runs on their own machine (`agent_reach`,
+    `service.acquire`); the SearXNG reader that used to serve it is gone.
 A site with such an API is read through it FIRST. When the API cannot answer (unreachable, network, auth, quota, rate limit, a reply
 it cannot read), the host browser reads the site exactly as before, the result SAYS so (a `backend_notes` line that reaches
 `limitations` in every state) and the fallback is COUNTED (`catalog` shows it under `host.listing_apis`; a warning log line). No
@@ -22,12 +24,13 @@ log = logging.getLogger("polymath.acquisition")
 
 
 class ApiFailed(Exception):
-    """A listing API could not answer. `reason` is one stable word (unreachable, network, auth, quota, rate_limit, bad_request,
-    refused, bad_reply, server, error); `detail` says why in plain words and never holds a key or a token."""
+    """A listing API could not answer. `reason` is one stable word (unreachable, network, auth, disabled, quota, rate_limit,
+    bad_request, refused, bad_reply, server, error); `detail` says why in plain words and never holds a key or a token.
+    `retry_after_s` is set when the API was NOT called at all because its circuit breaker is open (`cj_api`): the seconds left."""
 
-    def __init__(self, reason: str, detail: str):
+    def __init__(self, reason: str, detail: str, *, retry_after_s: float | None = None):
         super().__init__(f"{reason}: {detail}")
-        self.reason, self.detail = reason, detail
+        self.reason, self.detail, self.retry_after_s = reason, detail, retry_after_s
 
 
 _COUNTS: dict[str, dict[str, Any]] = {}
@@ -91,15 +94,13 @@ class ListingAPIs:
 
 
 def configured(env: Mapping[str, str]) -> dict[str, Any]:
-    """reader -> the listing API this host is configured for, read from the environment only."""
-    from polymath_shared.acquisition import cj_api, searxng
+    """reader -> the listing API this host is configured for, read from the environment only (CJ's API with `CJ_API_KEY`;
+    alibaba.com has none: it is the user's own Agent Reach, never this host)."""
+    from polymath_shared.acquisition import cj_api
     apis: dict[str, Any] = {}
     client = cj_api.client_from_env(env)
     if client is not None:
         apis["cj_listings"] = cj_api.CJListings(client)
-    url = searxng.base_url(env)
-    if url:
-        apis["alibaba_listings"] = searxng.SearXNGListings(url)
     return apis
 
 

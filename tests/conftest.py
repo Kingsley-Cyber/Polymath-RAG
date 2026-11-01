@@ -31,3 +31,9 @@ import os as _os
 
 _os.environ.setdefault("POLYMATH_ATTEMPT_LEDGER", "0")
 _os.environ["POLYMATH_ATTEMPT_LEDGER"] = "0"
+
+# CORPUS-ACCESS-PARITY F6 test isolation: creating a friend creates its private library row in Postgres
+# (orchestrator/web_accounts.py). Tests create friends in throwaway registries all the time; with the dev database behind
+# POLYMATH_PG_DSN each would leave an `fr-<name>` corpus in the live fleet. The session opts out; a test that proves the
+# creation turns it back on for itself and deletes what it made.
+_os.environ["POLYMATH_PRIVATE_LIBRARY_AUTOCREATE"] = "0"

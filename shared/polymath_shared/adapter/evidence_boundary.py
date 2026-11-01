@@ -45,6 +45,9 @@ BOUNDARY_MODES = ("FAST", "HYBRID", "GRAPH", "WILDCARD")
 
 DEFAULT_MAX_CALLS = 3
 MAX_NEED_CHARS = 2000
+#: the run-input fields that ARE an information need (a seed, a question): the only fields a knowledge step falls back to when its
+#: `config.source` resolves nothing. Limits (category, language, geography, constraints) are never on this list.
+NEED_FIELDS = ("question", "seed", "seed_idea", "query", "signal", "topic", "problem")
 DEFAULT_MAX_ROWS = 40
 ROW_TEXT_CHARS = 700
 UTILITY_ROLES = ("DIRECT", "COMPLEMENTARY", "DIVERGENT", "RELATED")
@@ -140,10 +143,9 @@ def original_needs(config: Mapping[str, Any] | None, inputs: Mapping[str, Any] |
     if not any(needs):
         seed = _path({"input": inp, "options": dict(options or {})}, str(cfg["source"])) if cfg.get("source") else None
         if not (isinstance(seed, str) and seed.strip()):
-            seed = next((inp[k] for k in ("question", "seed", "seed_idea", "query", "signal", "topic", "problem")
-                         if isinstance(inp.get(k), str) and inp[k].strip()), None)
-        if not (isinstance(seed, str) and seed.strip()):
-            seed = next((v for v in inp.values() if isinstance(v, str) and v.strip()), None)
+            seed = next((inp[k] for k in NEED_FIELDS if isinstance(inp.get(k), str) and inp[k].strip()), None)
+        # PRODUCT-SEARCH-E2E: no "first non-empty string field" fallback — a category / language / geography is a limit on the research,
+        # never silently its search need; the need is the given seed or the corpus seed (`service.start`), receipted by the step
         needs = [seed] if isinstance(seed, str) else []
     out, seen = [], set()
     for need in needs:
@@ -156,15 +158,42 @@ def original_needs(config: Mapping[str, Any] | None, inputs: Mapping[str, Any] |
     return out
 
 
-def plan_calls(needs: list[str], corpus_ids: list[str], *, max_calls: int = DEFAULT_MAX_CALLS) -> dict[str, Any]:
+#: F4: a question is asked only when the step's row limit can keep a fair share of its answer (`config.min_rows_per_need`, default 8):
+#: the call cap is max_rows // min_rows_per_need — never a call whose every row the merge would drop
+DEFAULT_MIN_ROWS_PER_NEED = 8
+#: F4: boundary calls of one step run this many at a time (calls are independent; results are merged in plan order)
+DEFAULT_PARALLEL_CALLS = 2
+
+
+def row_budget_calls(max_rows: int, min_rows_per_need: int | None = None) -> int:
+    """How many calls a step's row limit can keep a fair share of (>= 1)."""
+    per = max(1, int(min_rows_per_need or DEFAULT_MIN_ROWS_PER_NEED))
+    return max(1, int(max_rows) // per)
+
+
+def plan_calls(needs: list[str], corpus_ids: list[str], *, max_calls: int = DEFAULT_MAX_CALLS, row_budget: int | None = None) -> dict[str, Any]:
     """One corpus per call (every chat mode is single-corpus), bounded. Order is deterministic: every need against the first
     corpus, then the next corpus — so a tight budget drops the later CORPORA first, and a budget below the number of needs drops the
     later NEEDS of the first corpus too (a `query_from: hypotheses` step therefore sets `max_calls` to cover its live hypotheses; bug
-    hunt B-23). What was skipped is recorded."""
+    hunt B-23). `row_budget` (F4, `row_budget_calls`): no more calls than the row limit can keep a fair share of. What was skipped is
+    recorded, with the cap that skipped it."""
     cap = max(1, int(max_calls))
+    rows_cap = max(1, int(row_budget)) if row_budget is not None else cap
+    keep = min(cap, rows_cap)
     pairs = [{"need_index": i, "need": need, "corpus_id": cid} for cid in corpus_ids for i, need in enumerate(needs)]
-    return {"calls": pairs[:cap],
-            "truncated": [{"corpus_id": p["corpus_id"], "need_index": p["need_index"], "reason": "max_calls"} for p in pairs[cap:]]}
+    return {"calls": pairs[:keep],
+            "truncated": [{"corpus_id": p["corpus_id"], "need_index": p["need_index"], "reason": "row_budget" if n < cap else "max_calls"}
+                          for n, p in enumerate(pairs[keep:], start=keep)]}
+
+
+def cache_key(need: str, corpus_id: str, mode: str, corpus_explorer: bool, generation: str | None) -> str | None:
+    """F3: the per-run evidence cache key — the need (normalised), the corpus AND its generation, the mode and the explorer switch. No
+    generation known = no key: a call that cannot prove the corpus is unchanged is never answered from the cache."""
+    if not generation:
+        return None
+    import hashlib
+    norm = " ".join(str(need or "").lower().split())
+    return hashlib.sha256(f"{norm}|{corpus_id}|{str(mode).upper()}|{bool(corpus_explorer)}|{generation}".encode("utf-8")).hexdigest()[:32]
 
 
 #: K1 (R8, register 11.485): Trail ideation reads REFERENCE material only — every evidence request an adapter makes says so,
@@ -173,8 +202,10 @@ TRAIL_SCOPE: dict[str, list[str]] = {"roles": ["reference"]}
 
 
 def request_body(need: str, corpus_id: str, *, mode: str = "WILDCARD", corpus_explorer: bool = True) -> dict[str, Any]:
-    """EXACTLY the five fields the evidence route needs: the need, one corpus, the mode, the explorer toggle and the
-    reference-only scope (K1). No synthesizer, no history, no pre-decomposed subqueries."""
+    """EXACTLY the six fields the evidence route needs: the need, one corpus, the mode, the explorer toggle, the reference-only scope
+    (K1) and `product: false` (PRODUCT-SEARCH-E2E: a governed run's own evidence call never runs the route's product mode — the
+    connected agent drives the run's supplier research; Polymath never searches a supplier inside it). No synthesizer, no history,
+    no pre-decomposed subqueries."""
     m = str(mode or "").upper()
     if m not in BOUNDARY_MODES:
         raise ValueError(f"unknown evidence-boundary mode {mode!r} (expected one of {', '.join(BOUNDARY_MODES)})")
@@ -279,6 +310,28 @@ def merge_rows(row_lists: Iterable[list[dict[str, Any]]], *, max_rows: int = DEF
     return merged[:cap], max(0, len(merged) - cap)
 
 
+def merge_rows_fair(row_lists: Iterable[list[dict[str, Any]]], *, max_rows: int = DEFAULT_MAX_ROWS) -> tuple[list[dict[str, Any]], int]:
+    """F4: union across calls with a FAIR SHARE per call — round-robin over the calls, each call's rows graded-first (stable) — so the
+    cap keeps every asked question's best rows instead of the first calls' rows only; first occurrence of an id wins; the kept rows are
+    returned graded-first (stable). Returns (rows, distinct rows dropped by the cap)."""
+    lists = [sorted([r for r in rows or [] if isinstance(r, Mapping)], key=_grade_rank) for rows in row_lists]
+    cap = max(0, int(max_rows))
+    distinct = {str(r.get("id") or "") for rows in lists for r in rows} - {""}
+    kept: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    depth = 0
+    while len(kept) < cap and any(depth < len(rows) for rows in lists):
+        for rows in lists:
+            if depth < len(rows) and len(kept) < cap:
+                rid = str(rows[depth].get("id") or "")
+                if rid and rid not in seen:
+                    seen.add(rid)
+                    kept.append(rows[depth])
+        depth += 1
+    kept.sort(key=_grade_rank)
+    return kept, max(0, len(distinct) - len(kept))
+
+
 def refs_from_rows(rows: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
     """AdapterStepV1 evidence refs. The four boundary properties are OPTIONAL on the wire and closed-vocabulary: a value
     outside the vocabulary stays on the stored row and is simply not projected onto the ref."""
@@ -314,7 +367,7 @@ def call_record(call: Mapping[str, Any], packet: Mapping[str, Any], rows: list[d
     for r in rows:
         g = str(r.get("ca4_grade") or "UNGRADED")
         grades[g] = grades.get(g, 0) + 1
-    rec = {"need_index": call.get("need_index"), "corpus_id": call.get("corpus_id"),
+    rec = {"need_index": call.get("need_index"), "corpus_id": call.get("corpus_id"), "row_ids": [str(r.get("id")) for r in rows if r.get("id")][:60],
            "contract": {"schema_version": packet.get("schema_version"), "synthesis_performed": packet.get("synthesis_performed"), "valid": True},
            "retrieval_mode": packet.get("retrieval_mode"), "n_evidence": len(rows), "grades": grades,
            "compiled_queries": len(plan.get("compiled_queries") or []),

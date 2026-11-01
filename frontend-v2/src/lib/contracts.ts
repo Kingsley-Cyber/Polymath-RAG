@@ -409,3 +409,54 @@ export interface ChatGapClaim {
   text?: string; source?: string; query?: string; found?: number; cited_added?: string[]; refuted?: boolean; edited?: string | null;
 }
 export interface ChatGapCheck { contract?: string; claims?: ChatGapClaim[]; searches?: unknown[]; section_added?: boolean; error?: string }
+
+/* ── PRODUCT-SEARCH-E2E: a product question in chat (contract product-search-v1) and a governed run started from the web ── */
+
+/** `result.product_research` on the answer frame of a product question: product hypotheses built from the person's library,
+ *  each with what CJ Dropshipping lists for it, and the offer to start the full governed research. Every field may be missing
+ *  (an older or newer backend): the UI shows what is there and never derives a substitute. Absent on every other answer. */
+export interface ProductResearchResult {
+  contract?: string;
+  intent?: { kind?: string; seed?: string; audience?: string | null; geography?: string | null } | null;
+  corpus_ids?: string[];
+  hypotheses?: ProductHypothesis[];
+  /** e.g. "a listing proves supply, not demand" */
+  limitations?: string[];
+  next?: { full_research?: FullResearchOffer | null } | null;
+  agent_reach?: { local_only?: boolean; install?: AgentReachInstall | null; no_terminal_note?: string | null } | null;
+}
+export interface ProductHypothesis {
+  id?: string; title?: string; problem?: string; audience?: string;
+  /** the answer's own citation tags ("S3"), resolved through the chat receipt like the answer's [S#] markers */
+  evidence_tags?: string[];
+  search_terms?: string[];
+  /** status: OK | PARTIAL | EMPTY | UNAVAILABLE | AGENT_REACH_REQUIRED */
+  cj?: { status?: string; items?: CjItem[]; fallback?: AgentReachFallback | null } | null;
+  /** Alibaba runs only through Agent Reach on the person's own device */
+  alibaba?: { status?: string; fallback?: AgentReachFallback | null } | null;
+}
+/** One CJ listing as the backend formats it (prices as listed, e.g. "US$11.85"; counts as listed). */
+export interface CjItem {
+  title?: string; price?: string | number | null; discount_price?: string | number | null; moq?: string | number | null;
+  image?: string | null; url?: string | null; product_id?: string | null; sku?: string | null; category?: string | null;
+  stores_listing?: string | number | null; warehouse_stock?: string | number | null; supplier?: string | null;
+}
+export interface AgentReachInstall { repo?: string | null; verify?: string | null; how?: string | null }
+/** One command of a fallback: a plain command line, or (shared/polymath_shared/acquisition/agent_reach.py) the line to run
+ *  with what it does, what to run it for, and where its output goes next. */
+export interface AgentReachCommand { step?: number; run?: string; what?: string; for_each?: string; then?: string }
+/** What to run on one's own device when the server could not search a source itself. */
+export interface AgentReachFallback {
+  kind?: string; reason_code?: string; why?: string; run_on?: string; never?: string;
+  install?: AgentReachInstall | null; commands?: (string | AgentReachCommand)[]; submit?: Record<string, unknown> | null;
+  /** what to do when the site answers an automated reader with a human check */
+  walls?: string | null;
+}
+/** `next.full_research`: the governed run this answer offers (adapter_id "ecommerce.product_research"). */
+export interface FullResearchOffer {
+  tool?: string; adapter_id?: string; input?: Record<string, unknown> | null; who_drives?: string; note?: string;
+}
+/** `POST /adapter/start` → AdapterRunRefV1 (the server stamps the signed-in person as the run's owner). */
+export interface AdapterRunRef {
+  run_id: string; adapter_id: string; adapter_version?: string; workflow_version?: string; created_at?: string | null; status: string;
+}

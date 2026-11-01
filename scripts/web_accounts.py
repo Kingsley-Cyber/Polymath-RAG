@@ -11,7 +11,14 @@ typed at a hidden prompt; a friend's first password is generated and written to 
         --adapter ecommerce.product_research --password-out ~/PolymathRuntime/keys/fred.password
     scripts/web_accounts.py reset-password --username fred --password-out ~/PolymathRuntime/keys/fred.2.password
     scripts/web_accounts.py disable --username fred | enable --username fred
+    scripts/web_accounts.py set-libraries --username fred --all        # every library, a library added later included
+    scripts/web_accounts.py set-libraries --username fred --corpus cinema --corpus commerce-v1
+    scripts/web_accounts.py ensure-libraries                           # every friend's private fr-<username> library exists
     scripts/web_accounts.py list
+
+CORPUS-ACCESS-PARITY (2026-11-01): `set-libraries --all` stores the wildcard ["*"] (resolved per request: every library that
+exists then, never another friend's private one); `ensure-libraries` creates any missing private library in Postgres
+(production + query-enabled, idempotent) for friends made before their library was created at sign-up.
 """
 from __future__ import annotations
 
@@ -24,7 +31,10 @@ import secrets
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "orchestrator"))
+for _sub in ("shared", "orchestrator"):
+    sys.path.insert(0, str(ROOT / _sub))
+
+from polymath_shared import query_scope as QS
 
 from orchestrator import mcp_principals as P
 from orchestrator import web_accounts as W
@@ -77,6 +87,24 @@ def cmd_list(args) -> dict:
             "friends": W.list_friends(doc)}
 
 
+def cmd_set_libraries(args) -> dict:
+    if args.all == bool(args.corpus):
+        raise SystemExit("give --all (every library, resolved per request) or one or more --corpus, not both")
+    rec = (W.set_friend_all_libraries(_path(args), args.username) if args.all
+           else W.set_friend_corpora(_path(args), args.username, args.corpus))
+    return {"libraries_set": rec}
+
+
+def cmd_ensure_libraries(args) -> dict:
+    """F6 backfill: every web friend's private library is a corpus row (idempotent; an existing row is left as it is)."""
+    out = {}
+    for friend in W.list_friends(W.read_registry(_path(args))):
+        for cid in friend["writable_corpus_ids"]:
+            if QS.is_private_library(cid):
+                out[cid] = "exists" if W.ensure_private_library(cid) else "skipped: POLYMATH_PRIVATE_LIBRARY_AUTOCREATE=0"
+    return {"private_libraries": out}
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--file", default=None, help=f"the registry (else $POLYMATH_MCP_PRINCIPALS_FILE, else {DEFAULT_FILE})")
@@ -94,11 +122,17 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--print-password", action="store_true", help="also print it (off by default)")
     for name in ("enable", "disable"):
         sub.add_parser(name).add_argument("--username", required=True)
+    s = sub.add_parser("set-libraries", help="the libraries an EXISTING friend may read (fr-<username> always stays)")
+    s.add_argument("--username", required=True)
+    s.add_argument("--all", action="store_true", help="every library, resolved per request (a library added later included)")
+    s.add_argument("--corpus", action="append", default=[], help="a library the friend may read (repeatable)")
+    sub.add_parser("ensure-libraries", help="create any missing private fr-<username> library in Postgres")
     sub.add_parser("list")
     args = ap.parse_args(argv)
     try:
         out = {"set-owner-password": cmd_set_owner_password, "add-friend": cmd_add_friend, "reset-password": cmd_reset_password,
-               "enable": cmd_state, "disable": cmd_state, "list": cmd_list}[args.cmd](args)
+               "enable": cmd_state, "disable": cmd_state, "set-libraries": cmd_set_libraries,
+               "ensure-libraries": cmd_ensure_libraries, "list": cmd_list}[args.cmd](args)
     except W.AccountError as exc:
         raise SystemExit(f"{exc.code}: {exc}")
     print(json.dumps(out, indent=1))

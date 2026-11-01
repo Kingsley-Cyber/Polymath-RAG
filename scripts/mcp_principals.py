@@ -17,8 +17,9 @@ is given explicitly. Hand that file's content to the friend over a channel you t
     scripts/mcp_principals.py revoke-key --key-id 3fa9c2d1e07b
     scripts/mcp_principals.py disable --id prn_fred | enable --id prn_fred
 
-Profile `friend` = knowledge search / explore / answer + adapter list / start / next / submit / status / result. No upload,
-no history, no admin. Extra scopes are explicit (`--scope adapter.cancel`); `upload.text` also needs `--writable-corpus`.
+Profile `friend` = everything a web friend has (mcp_principals.FRIEND_SCOPES): knowledge search / explore / answer / deep
+research, product search and the supplier tools, upload, history, the adapter tools including cancel. No admin. Because the
+profile includes upload, `add --profile friend` needs `--writable-corpus` (the friend's own library).
 The admin scope cannot be granted: the owner key ($POLYMATH_MCP_API_KEY) is the only admin.
 """
 from __future__ import annotations

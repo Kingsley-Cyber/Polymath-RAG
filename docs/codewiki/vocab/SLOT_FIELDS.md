@@ -12,7 +12,7 @@ AUTHORITY: `adapters/ecommerce/python/query_semantics.py:22` :: `SLOT_FIELDS` (c
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:234` | 5/6 | `friction` |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:239` | 5/6 | `friction` |
 | `adapters/ecommerce/python/adapter_receipt.py` | `adapters/ecommerce/python/adapter_receipt.py:49` | 3/6 | `task`, `friction_family`, `population` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:106` | 4/6 | `population`, `context` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:154` | 4/6 | `task`, `population` |
@@ -20,7 +20,7 @@ AUTHORITY: `adapters/ecommerce/python/query_semantics.py:22` :: `SLOT_FIELDS` (c
 | `adapters/ecommerce/python/product_reality.py` | `adapters/ecommerce/python/product_reality.py:84` | 3/6 | `activity`, `friction_family`, `friction` |
 | `adapters/ecommerce/python/registry.py` | `adapters/ecommerce/python/registry.py:47` | 4/6 | `friction`, `population` |
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:215` | 5/6 | `friction` |
-| `shared/polymath_shared/adapter/hypotheses.py` | `shared/polymath_shared/adapter/hypotheses.py:32` | 4/6 | `friction_family`, `friction` |
+| `shared/polymath_shared/adapter/hypotheses.py` | `shared/polymath_shared/adapter/hypotheses.py:36` | 4/6 | `friction_family`, `friction` |
 | `shared/polymath_shared/adapter/semantic_view.py` | `shared/polymath_shared/adapter/semantic_view.py:30` | 4/6 | `friction_family`, `friction` |
 
 ## VERIFY

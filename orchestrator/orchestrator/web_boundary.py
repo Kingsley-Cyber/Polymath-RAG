@@ -45,6 +45,10 @@ RULES: tuple[tuple[frozenset[str] | None, re.Pattern[str], str], ...] = tuple((m
     # governed runs (ownership is enforced by the adapter runtime from the principal context)
     (_GET, r"^/adapter/(list|runs)$", USER), (_POST, r"^/adapter/start$", USER),
     (_GET, rf"^/adapter/{_SEG}/(next|status|result|view|report)$", USER), (_POST, rf"^/adapter/{_SEG}/(submit|cancel)$", USER),
+    # PRODUCT-SEARCH-E2E (the owner, 2026-11-01: "so im ensuring users of the connector and link works seamlessly as me"): product
+    # search and the READ-ONLY supplier tools for every signed-in user (fair use per principal lives in supplier.py)
+    (_POST, r"^/product/search$", USER),
+    (_POST, r"^/supplier/(search|product|freight|parse)$", USER), (_GET, r"^/supplier/warehouses$", USER),
     # writes into the principal's writable libraries
     (_POST, r"^/upload$", WRITE), (_DELETE, rf"^/documents/{_SEG}$", WRITE),
     # the owner's
@@ -54,8 +58,7 @@ RULES: tuple[tuple[frozenset[str] | None, re.Pattern[str], str], ...] = tuple((m
     (_ANY, r"^/admin(/.*)?$", OWNER), (_ANY, r"^/llm/.*$", OWNER), (_ANY, r"^/control_plane(/.*)?$", OWNER),
     (_ANY, r"^/(fleet|sidecars|health/semantic|health/pipeline|intake|status|generated)(/.*)?$", OWNER), (_ANY, rf"^/runs/{_SEG}$", OWNER),
     (_ANY, rf"^/corpora/{_SEG}(/.*)?$", OWNER), (_POST, rf"^/documents/{_SEG}/enrich$", OWNER),
-    (_POST, rf"^/adapter/{_SEG}/acquire$", OWNER), (_ANY, r"^/ui(/.*)?$", OWNER),
-    (_ANY, r"^/supplier/(search|product|freight|warehouses)$", OWNER),     # SUPPLIER-APIS: the owner's CJ account and quota
+    (_POST, rf"^/adapter/{_SEG}/acquire$", OWNER), (_ANY, r"^/ui(/.*)?$", OWNER),     # research_acquire: the owner's browser
     (_ANY, r"^/(docs|redoc|openapi\.json)(/.*)?$", OWNER),
 ))
 

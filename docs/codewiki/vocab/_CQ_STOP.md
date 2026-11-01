@@ -12,7 +12,7 @@ AUTHORITY: `adapters/ecommerce/python/executors.py:128` :: `_CQ_STOP` (count: 25
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:299` | 10/25 | `about`, `after`, `been`, `before`, `could`, `have`, `over`, `should`, `them`, `then`, `under`, `were` |
+| `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:300` | 10/25 | `about`, `after`, `been`, `before`, `could`, `have`, `over`, `should`, `them`, `then`, `under`, `were` |
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:32` | 16/25 | `after`, `been`, `before`, `over`, `should`, `them`, `under`, `were`, `will` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:32` | 16/25 | `after`, `been`, `before`, `over`, `should`, `them`, `under`, `were`, `will` |
 | `adapters/ecommerce/python/provenance.py` | `adapters/ecommerce/python/provenance.py:19` | 16/25 | `after`, `been`, `before`, `over`, `should`, `them`, `under`, `were`, `will` |

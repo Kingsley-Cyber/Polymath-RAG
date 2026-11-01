@@ -12,7 +12,7 @@ AUTHORITY: `adapters/ecommerce/python/registry.py:43` :: `EVIDENCE_GOAL_MAP` (co
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:234` | 4/9 | `complaint`, `behavior`, `competition`, `falsification`, `seasonality` |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:239` | 4/9 | `complaint`, `behavior`, `competition`, `falsification`, `seasonality` |
 | `adapters/ecommerce/python/adapter_receipt.py` | `adapters/ecommerce/python/adapter_receipt.py:49` | 7/9 | `complaint`, `falsification` |
 | `adapters/ecommerce/python/evaluator.py` | `adapters/ecommerce/python/evaluator.py:38` | 4/9 | `complaint`, `competition`, `price`, `falsification`, `seasonality` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:34` | 4/9 | `complaint`, `competition`, `price`, `falsification`, `seasonality` |

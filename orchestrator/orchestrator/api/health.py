@@ -3,12 +3,26 @@
 The liveness/readiness split is the ISSUES_REPORT §3.3 fix: autoheal
 acts only on /live failures; /ready reports "can I serve traffic now"
 including sidecar readiness, without punishing startup.
+
+O-06 (2026-11-01): /ready answered `ready: true` with Postgres down — the
+workflow authority every query, upload and listing needs. It now probes
+Postgres (one `SELECT 1` through the shared pool, bounded) and `ready` is
+that verdict. Sidecars stay informational: a parked model is woken on
+demand and must not make the app look down. The answer stays HTTP 200 with
+the verdict in the body (scripts/bounce_fleet.sh greps `"ready":true`);
+the supervisor's liveness check is /health, so a database outage never
+triggers a restart loop.
 """
 from __future__ import annotations
+
+import time
 
 from fastapi import APIRouter, Request
 
 router = APIRouter()
+
+#: How long /ready waits for a pooled Postgres connection before it answers "not ready" (a probe must not hang a poller).
+POSTGRES_READY_TIMEOUT_S = 2.0
 
 
 @router.get("/health")
@@ -16,14 +30,32 @@ async def health() -> dict:
     return {"status": "ok"}
 
 
+def postgres_ready(timeout_s: float = POSTGRES_READY_TIMEOUT_S) -> dict:
+    """One bounded round trip to the workflow authority. Never raises; never carries the DSN or a server message (only the
+    exception's type name)."""
+    t0 = time.perf_counter()
+    try:
+        from polymath_shared.db import get_pool
+
+        with get_pool().connection(timeout=timeout_s) as conn:
+            conn.execute("SELECT 1").fetchone()
+        return {"ok": True, "latency_ms": round((time.perf_counter() - t0) * 1000, 1)}
+    except Exception as exc:  # noqa: BLE001 — readiness reports a failure, it never raises one
+        return {"ok": False, "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
+                "error_code": "POSTGRES_UNAVAILABLE", "error": type(exc).__name__}
+
+
 @router.get("/ready")
 async def ready(request: Request) -> dict:
+    from starlette.concurrency import run_in_threadpool
+
     try:
         sidecars = request.app.state.sidecars
     except AttributeError:
         sidecars = {}
     statuses = {name: s.is_ready() for name, s in sidecars.items()}
-    return {"ready": True, "sidecars": statuses}
+    postgres = await run_in_threadpool(postgres_ready)
+    return {"ready": bool(postgres.get("ok")), "postgres": postgres, "sidecars": statuses}
 
 
 @router.get("/semantic_readiness")

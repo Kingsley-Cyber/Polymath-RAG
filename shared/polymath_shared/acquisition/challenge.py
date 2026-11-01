@@ -15,11 +15,23 @@ text is a wall only when
   * the wall's lines, not content, make up the text: what is neither a wall line nor wall furniture (a host name, a "Ray ID", "this
     may take a few seconds") stays within a small budget.
 One line that content also uses ("Captcha", "Security check", "I'm not a robot") is not enough on its own; "Access denied" counts
-only beside a bot notice. Pure: no I/O."""
+only beside a bot notice.
+
+PRODUCT-SEARCH-E2E (2026-11-01, measured on the owner's Agent Reach probes): a page READER's output carries its own framing
+(Exa: `Title:` / `URL:` / `Published:` / `Author:` / `Highlights:`; Jina Reader: `Title:` / `URL Source:` / `Final URL:` /
+`Markdown Content:`) and markdown (image lines, links, bold). That framing made CJ's "Human verification" page read as content
+(8 content segments), so a check page could pass as evidence. Now:
+  * the reader framing is furniture, and a framing line that names the page's OWN URL (`URL:`, `URL Source:`, `Final URL:`) whose
+    path is a wall route (`WALL_ROUTE`: CJ's `/egg/cj/validation.html`, a `/captcha` page) names the wall by itself;
+  * the page's own title (`Title:`) that IS a check page's title ("Human verification", "Captcha Interception") is a strong line;
+  * a markdown image is no text (its alt text stays, Jina's "Image N" label does not), a link is its text, bold is plain;
+  * a captcha form's own furniture ("Submit", "Note: Not case sensitive") is not content.
+A URL merely MENTIONED in content (a link, an image) never names a wall: only the framing's own URL does. Pure: no I/O."""
 from __future__ import annotations
 
 import re
 import unicodedata
+from urllib.parse import urlsplit
 
 #: what may stand beside a wall's own lines and still be the wall (a title, a line of chrome): at most this many segments and characters
 CONTENT_SEGMENTS_MAX, CONTENT_CHARS_MAX = 3, 200
@@ -79,7 +91,48 @@ _FURNITURE: tuple[re.Pattern[str], ...] = tuple(_rx(p) for p in (
     r"waiting\s+for\s+\S+\s+to\s+respond", r"why\s+have\s+i\s+been\s+blocked", r"what\s+can\s+i\s+do\s+to\s+resolve\s+this",
     r"reference\s*#?\s*[0-9a-f.]{6,}", r"privacy\s*-\s*terms", r"hcaptcha", r"(?:request|event|incident)\s+id:?\s*[\w.-]+", r"(?:error|code):?\s*[\w.-]{3,}",
     r"feedback", r"loading", r"retry", r"try\s+again", r"refresh",
+    # a captcha form's button and its input hint (CJ's check page: "Note: Not case sensitive" / "Submit")
+    r"submit", r"(?:note\s*:?\s*)?not\s+case[\s-]+sensitive",
 ))
+#: wall ROUTES, matched on the PATH of a page's own URL (anchored at its start, as `opencli.blocked` matches it): a captcha page,
+#: CJ's human-verification page. A slug or a search word that merely contains the word ("/r/x/comments/abc/captcha/") is content.
+WALL_ROUTE = re.compile(r"/captcha(?:[/.]|$)|/egg/cj/validation\.html$")
+#: a check page's own TITLE (CJ: "Human verification"; Alibaba: "Captcha Interception"): strong when it is the page's `Title:` line
+_WALL_TITLE = _rx(r"human\s+verification|captcha\s+interception")
+#: a page reader's framing lines (Exa, Jina Reader): (the label, its value)
+_FRAMING = re.compile(r"^\s*(title|url\s+source|final\s+url|url|published(?:\s+time)?|author|highlights|markdown\s+content|warning)\s*:\s*(.*?)\s*$",
+                      re.IGNORECASE)
+_URL_LABELS = frozenset({"url", "url source", "final url"})
+_MD_IMAGE = re.compile(r"!\[([^\]]*)\]\([^)]*\)")
+_MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_JINA_IMAGE_LABEL = re.compile(r"^\s*image\s+\d+\s*(?::\s*)?", re.IGNORECASE)
+
+
+def wall_route(url: str | None) -> bool:
+    """True when `url` (a page's own URL) is a verification page by its route: CJ's `/egg/cj/validation.html`, a `/captcha` page."""
+    try:
+        path = urlsplit(str(url or "").strip()).path.lower()
+    except ValueError:
+        return False
+    return bool(path) and WALL_ROUTE.match(path) is not None
+
+
+def _unframe(text: str) -> tuple[str, list[str], list[str]]:
+    """(the text without a reader's framing and markdown, the page titles it named, the page URLs it named)."""
+    lines, titles, urls = [], [], []
+    for raw in str(text or "").splitlines():
+        m = _FRAMING.match(raw)
+        if m:
+            label = " ".join(m.group(1).lower().split())
+            if label == "title" and m.group(2):
+                titles.append(m.group(2))
+            elif label in _URL_LABELS and m.group(2):
+                urls.append(m.group(2))
+            continue                                             # framing is furniture, never content
+        line = _MD_IMAGE.sub(lambda i: _JINA_IMAGE_LABEL.sub("", i.group(1)), raw)
+        line = _MD_LINK.sub(lambda k: k.group(1), line).replace("**", "").replace("__", "")
+        lines.append(line)
+    return "\n".join(lines), titles, urls
 #: "Access denied" is a wall only beside a bot notice on the same page (a plain 403 is not a human check)
 _ACCESS_DENIED = _rx(r"access\s+(?:denied|blocked)(?:\s+\S+){0,3}|访问被拒绝|訪問被拒絕")
 _BOT_NOTICE = _rx(r"\b(?:bots?|robots?|automated|crawlers?|scrapers?)\b|unusual\s+(?:traffic|activity)|suspicious\s+(?:traffic|activity)"
@@ -117,13 +170,23 @@ def _wall_line(seg: str) -> tuple[str, str] | None:
 
 def looks_like_challenge(text: str | None) -> str | None:
     """What kind of verification wall `text` is ("slider check", "unusual-traffic notice", "human check", "robot check", "browser
-    check", "block page", "security check", "captcha", "access denied beside a bot notice", or the CJK "security verification"), or
-    None when it is content (or empty). See the module docstring for the rule."""
-    segs = segments(text)
+    check", "block page", "security check", "captcha", "access denied beside a bot notice", the CJK "security verification", or
+    "verification page route" when a reader's framing names a wall route as the page's own URL), or None when it is content (or
+    empty). See the module docstring for the rule."""
+    body, titles, urls = _unframe(str(text or ""))
+    if any(wall_route(u) for u in urls):
+        return "verification page route"
+    segs = segments(body)
     strong: list[str] = []
     weak: list[str] = []
     content: list[str] = []
     denied = False
+    for title in titles:                                         # the page's own title: a check page's title is a strong line
+        seg = " ".join(unicodedata.normalize("NFKC", title).split()).strip(_TRIM).strip()
+        if _WALL_TITLE.fullmatch(seg):
+            strong.append("human check")
+        elif seg:
+            segs.insert(0, seg)
     for seg in segs:
         hit = _wall_line(seg)
         if hit is not None:

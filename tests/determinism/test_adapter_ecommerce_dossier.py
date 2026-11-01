@@ -25,6 +25,7 @@ from polymath_shared.adapter import service  # noqa: E402
 from polymath_shared.adapter import trail_client as TC  # noqa: E402
 import workers.adapter_step_worker as W  # noqa: E402
 from _adapter_memory_store import MemoryStore  # noqa: E402
+from polymath_shared.adapter.transitions import SubmissionRejected  # noqa: E402
 import governed_run as JOURNAL  # noqa: E402  (stdlib-only module of the engine: the journal a host keeps)
 import test_adapter_ecommerce_product_research_e2e as SCRIPT  # noqa: E402
 
@@ -51,7 +52,10 @@ def _journaled_run(agent) -> dict:
             kind = "reasoning" if st.status == "awaiting_agent" else "receipt"
             payload = agent.answer(nxt) if kind == "reasoning" else SCRIPT._harness(step, rid)
             sub = {"step_id": step["step_id"], "payload": payload, "submitted_by": {"agent_identity": "test-agent" if kind == "reasoning" else "test-harness"}}
-            response = service.submit(None, rid, {**sub, "kind": "receipt"} if kind == "receipt" else sub)
+            try:
+                response = service.submit(None, rid, {**sub, "kind": "receipt"} if kind == "receipt" else sub)
+            except SubmissionRejected as exc:          # F2: a law refuses at submit; the journal keeps the refusal, the step stays open
+                response = {"error": "SUBMISSION_REJECTED", "rejected": list(exc.errors)}
             JOURNAL.record_submission(journal, step["step_id"], kind, payload, response, at="2026-09-20T12:00:02Z")
     try:
         JOURNAL.record_result(journal, service.result(None, rid), at="2026-09-20T12:00:03Z")
@@ -76,6 +80,7 @@ def _dossier(journal: dict, tmp_path: pathlib.Path) -> tuple[str, dict]:
 @pytest.fixture
 def runtime(monkeypatch):
     store, trail = MemoryStore(), SCRIPT.StubTrail()
+    SCRIPT.offline_host_reads(monkeypatch)
     monkeypatch.setattr(service, "store", store)
     monkeypatch.setattr(W, "_TRAIL", TC.TrailMCPClient("http://trail.stub/mcp", "stub-token", transport=httpx.MockTransport(trail.handle)))
     service.reset_registry()

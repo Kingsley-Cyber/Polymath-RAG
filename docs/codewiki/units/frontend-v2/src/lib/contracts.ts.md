@@ -1,90 +1,99 @@
 # unit: frontend-v2/src/lib/contracts.ts
-anchor: frontend-v2/src/lib/contracts.ts:1-412
+anchor: frontend-v2/src/lib/contracts.ts:1-462
 
 ## purpose
-Typed mirrors of the backend contracts the V2 frontend consumes (header, "FRONTEND-V2-PLAN §0.2"). The backend is the authority: every type describes a response shape the backend already owns (verified live 2026-09-10, F0 / register 11.195); nothing here computes policy — an absent field is shown as unknown, never derived. — frontend-v2/src/lib/contracts.ts:2-8 [DERIVED]
+Typed mirrors of the backend contracts the V2 frontend consumes; the backend is the authority (FRONTEND-V2-PLAN §0.2) — frontend-v2/src/lib/contracts.ts:2-4 [DERIVED]. Declaration-only module: 65 `export interface` + 1 `export type` + 1 `export const`, no function has a body here — frontend-v2/src/lib/contracts.ts:1-462 [DERIVED]. Nothing computes policy: an absent field is shown as unknown, never substituted — frontend-v2/src/lib/contracts.ts:6-7 [DERIVED].
 
 ## public surface
-File-level importers (FACTS.importers): `frontend-v2/src/App.tsx`, `frontend-v2/src/lib/_small-modules`, `frontend-v2/src/lib/api.ts`, `frontend-v2/src/lib/chat.ts`, `frontend-v2/src/lib/deep.ts`, `frontend-v2/src/lib/readiness.ts`. No finer-grained usage data exists, so "used by" is "—" per row.
+Importers (FACTS, per-file not per-symbol): frontend-v2/src/App.tsx, frontend-v2/src/lib/_small-modules, frontend-v2/src/lib/api.ts, frontend-v2/src/lib/chat.ts, frontend-v2/src/lib/deep.ts, frontend-v2/src/lib/readiness.ts — materials/material-6161838080-550323405364583.md:407-414 [DERIVED].
 
-| symbol | kind | signature (params -> return) | anchor | used by |
+| symbol (name:line) | kind | mirrors / signature | anchor | used by |
 |---|---|---|---|---|
-| SemanticReadiness | interface | mirror of `/semantic_readiness?corpus_id=` (contract `semantic-readiness-v1`) | contracts.ts:13-34 | — |
-| DocSummary | interface | row of `/documents/summary?corpus_id=` (per-document vNext truth) | contracts.ts:37-61 | — |
-| DocumentRow, DocumentRun, DocumentsResponse | interface | `GET /documents?corpus_id=` identity + runs | contracts.ts:67-91 | — |
-| UploadResult | interface | `POST /upload` reply fields | contracts.ts:94-100 | — |
-| LlmProvider, ProviderUpsertBody, LlmTestResult | interface | `/llm/providers`, upsert body, `/llm/test` | contracts.ts:106-133 | — |
-| ControlPlane, ControlPlanePool | interface | `/control_plane` (CONTROL-PLANE-STATUS-V1) | contracts.ts:141-161 | — |
-| PoolLanes, PoolLane | interface | `/control_plane/pool/{function}` | contracts.ts:164-178 | — |
-| Corpus | interface | `/corpora` | contracts.ts:181-188 | — |
-| PUBLIC_MODES | const | `["FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN"] as const` | contracts.ts:196 | — |
-| PublicMode | type | `(typeof PUBLIC_MODES)[number]` | contracts.ts:197 | — |
-| Synthesizer, ReasoningMode | interface | `/synthesizers` catalog row; reasoning mode | contracts.ts:202-207 | — |
-| RetrievalReceipt, AnswerFrame | interface | `answer.retrieval` on `/chat/stream` answer frame + frame | contracts.ts:213-247 | — |
-| RetrieveResponse | interface | `/retrieve` | contracts.ts:251-258 | — |
-| GraphEntity, GraphEntities, GraphSource, GraphRelationship, GraphRelationships | interface | GRAPH-BROWSE-V1 | contracts.ts:262-284 | — |
-| CompareArm, CompareResponse, ReviewScores, ReviewResponse | interface | COMPARE-REVIEW-V1 | contracts.ts:288-315 | — |
-| RunSummary, RunProgressRow, GateResult, OpenGap, Qualification, ScoreRefusal, Admission, LivedCluster, ProductConcept, ConceptReality, HypothesisView, RegistryPrior, RegistryTerritory, RunRegistry, RunView | interface | TRAIL-INTERFACE-V1 (`GET /adapter/runs`, `GET /adapter/{id}/view`) | contracts.ts:318-364 | — |
-| DeepResearchPlan, DeepPlanGoal, DeepCoverage, DeepCoverageGoal, DeepReportModel, DeepReportGoal, DeepFinding, DeepCounterFinding, DeepReportSource, DeepAudit | interface | DEEP-RESEARCH-MODE-V1 §11.3 (DR7) | contracts.ts:368-389 | — |
-| ChatSynthesisFacet, ChatSynthesis, ChatGapClaim, ChatGapCheck | interface | FACET-RETRIEVAL-V1 F5 / F6 | contracts.ts:397-411 | — |
-
-58 interfaces + 1 const + 1 type = 60 exported symbols; zero runtime functions. — FACTS symbols (material lines 3-358) [DERIVED]
+| SemanticReadiness:13, DocSummary:37, DocumentRow:67, DocumentRun:80, DocumentsResponse:87, UploadResult:94, LlmProvider:106, ProviderUpsertBody:119, LlmTestResult:128, ControlPlane:141, ControlPlanePool:153, PoolLanes:164, PoolLane:169, Corpus:181 | interface | `/semantic_readiness?corpus_id=` (`semantic-readiness-v1`), `/documents/summary?corpus_id=`, `GET /documents?corpus_id=`, `POST /upload`, `GET /llm/providers`, `POST /llm/providers`, `POST /llm/test`, `/control_plane?corpus_id=` (`CONTROL-PLANE-STATUS-V1`), `/control_plane/pool/{function}`, `/corpora` | frontend-v2/src/lib/contracts.ts:13-188 | — (file-level) |
+| PUBLIC_MODES:196, PublicMode:197, Synthesizer:202, ReasoningMode:207, RetrievalReceipt:213, AnswerFrame:242 | const + type + interface | `["FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN"] as const`; `/synthesizers` row; `answer.retrieval` on the `/chat/stream` answer frame (plan §3) | frontend-v2/src/lib/contracts.ts:196-247 | — (file-level) |
+| RetrieveResponse:251 | interface | `/retrieve` | frontend-v2/src/lib/contracts.ts:251-258 | — (file-level) |
+| GraphEntity:262, GraphEntities:266, GraphSource:269, GraphRelationship:272, GraphRelationships:279 | interface | GRAPH-BROWSE-V1 | frontend-v2/src/lib/contracts.ts:262-284 | — (file-level) |
+| CompareArm:288, CompareResponse:303, ReviewScores:307, ReviewResponse:312 | interface | COMPARE-REVIEW-V1 | frontend-v2/src/lib/contracts.ts:288-315 | — (file-level) |
+| RunSummary:318, RunProgressRow:324, GateResult:325, OpenGap:326, Qualification:327, ScoreRefusal:330, Admission:331, LivedCluster:335, ProductConcept:339, ConceptReality:340, HypothesisView:341, RegistryPrior:343, RegistryTerritory:344, RunRegistry:345, RunView:349 | interface | TRAIL-INTERFACE-V1 (`GET /adapter/runs`, `GET /adapter/{id}/view`) | frontend-v2/src/lib/contracts.ts:318-364 | — (file-level) |
+| DeepResearchPlan:368, DeepPlanGoal:373, DeepCoverage:375, DeepCoverageGoal:376, DeepReportModel:378, DeepReportGoal:383, DeepFinding:385, DeepCounterFinding:386, DeepReportSource:387, DeepAudit:389 | interface | DEEP-RESEARCH-MODE-V1 §11.3 (DR7); `POST /research/deep/plan`; `event: coverage`; `result.meta.deep_research.report_model` / `.audit` | frontend-v2/src/lib/contracts.ts:368-389 | — (file-level) |
+| ChatSynthesisFacet:397, ChatSynthesis:400, ChatGapClaim:408, ChatGapCheck:411 | interface | FACET-RETRIEVAL-V1 F5/F6: `result.meta.synthesis`, `result.meta.gap_check` | frontend-v2/src/lib/contracts.ts:397-411 | — (file-level) |
+| ProductResearchResult:418, ProductHypothesis:428, CjItem:439, AgentReachInstall:444, AgentReachCommand:447, AgentReachFallback:449, FullResearchOffer:456, AdapterRunRef:460 | interface | PRODUCT-SEARCH-E2E (`product-search-v1`); `POST /adapter/start` → `AdapterRunRefV1` | frontend-v2/src/lib/contracts.ts:418-462 | — (file-level) |
 
 ## contracts
-- `SemanticReadiness` — in: `/semantic_readiness?corpus_id=` response; `contract` literal `"semantic-readiness-v1"`; `verdict` ∈ `SEMANTIC_COMPLETE | SEMANTIC_INCOMPLETE`; `vnext.verdict` ∈ `VNEXT_COMPLETE | VNEXT_INCOMPLETE`; `vnext.parents` = `{ eligible, mapped, excluded, unresolved }`; `vnext.profiled` / `vnext_served` optional (absent on older backend / unreadable profile index). — contracts.ts:12-31 [DERIVED]
-- `DocSummary` — per-document written vs served distinction: `profile_vnext` = latest card written by vNext writer; `profile_served` ∈ `"vnext" | "basic" | null` = writer of the card SEARCH serves; `run_status` (FILES-STATUS-TRUTH-V1, `query_ready` = every required step done) optional; `work_open` (ready/leased/pending) and `work_failed` (stage + note) optional. — contracts.ts:45-60 [DERIVED]
-- `ControlPlane` — `control_ready.state` ∈ `"ready" | "blocked" | "degraded"` (composed server-side, UI does not re-derive from `/ready` + `/health/pipeline`); `summary` counts `documents/semantic_ready/vnext_served?/basic_profile?/processing/processing_active/processing_stalled/blocked`; `pools` is a map keyed by function name with queue counters at the TOP level of each pool. — contracts.ts:135-151 [DERIVED]
-- `RetrievalReceipt` — `answer.retrieval` on the `/chat/stream` answer frame, the Query Inspector's whole source of truth; `latency_ms` is `number | Record<string, number | null>` (v1 one number; v2 per-stage map) — "Render `total`, never the map itself (it rendered as 'NaNs')". — contracts.ts:209-239 [DERIVED]
-- `GraphRelationship` — `direction` ∈ `"in" | "out"`; `sources: GraphSource[]` is the attestation "the reason this relationship may be shown at all"; `GraphRelationships.dropped_unattested` counts relationships withheld because nothing in this corpus attests them. — contracts.ts:272-284 [DERIVED]
-- `RunView` — TRAIL-INTERFACE-V1; `registry` is the owner's view only ("a friend's view has no `registry` key"); `report.available` marks whether `GET /adapter/{id}/report` exists. — contracts.ts:317-364 [DERIVED]
-- `DeepReportModel` / `DeepFinding` — `confidence` ∈ `strong | single_source | contested` (§11.4); `DeepAudit.uncited` = indices of prose sentences without a valid `[cN]`. — contracts.ts:377-389 [DERIVED]
-- `ChatSynthesis` / `ChatGapCheck` — present only on GROUNDED_SYNTHESIS / CREATE_FROM_KNOWLEDGE turns; "Absent on a QA / lookup turn and on every turn saved before F5"; `ChatGapCheck` records refuted "not covered" claims and wording edits. — contracts.ts:391-411 [DERIVED]
+### PUBLIC_MODES / PublicMode — frontend-v2/src/lib/contracts.ts:196-197
+- in: none (const, no params).
+- out: `["FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN"] as const`; `PublicMode = (typeof PUBLIC_MODES)[number]`.
+- pre: —
+- post: exactly 5 public modes; `VECTOR` is a backend primitive, not a public mode (plan §2) — frontend-v2/src/lib/contracts.ts:192 [DERIVED]; GNN is sent as `mode: "GNN"` through the same `/chat` path as every other mode — frontend-v2/src/lib/contracts.ts:195 [DERIVED].
+
+### module policy — frontend-v2/src/lib/contracts.ts:1-8
+- in: backend response JSON.
+- out: TypeScript shapes only.
+- pre: every type describes a backend-owned response shape (verified live 2026-09-10, F0 / register 11.195) — frontend-v2/src/lib/contracts.ts:4-6 [DERIVED].
+- post: absent field ⇒ UI shows unknown, never derives a substitute — frontend-v2/src/lib/contracts.ts:6-7 [DERIVED].
+
+### RetrievalReceipt.latency_ms — frontend-v2/src/lib/contracts.ts:237-239
+- in: v2 = per-stage map (embed, lanes, rerank, compose, total — ms; absent stage is `null`); v1 = one number.
+- out: consumer must render `total`, never the map itself.
+- post: the comment records that rendering the map "rendered as 'NaNs'" — frontend-v2/src/lib/contracts.ts:238-239 [DERIVED].
 
 ## effect surface
-None. Type declarations plus one const; no functions executed, no I/O. FACTS: `tables_read: []`, `tables_written: []`, `constants: []`. — FACTS (material lines 367-369) [DERIVED]
+- Postgres: none — `tables_read: []`, `tables_written: []` — materials/material-6161838080-550323405364583.md:415-417 [DERIVED].
+- Qdrant / files / network / subprocess / env flags: none — the unit is declaration-only, no call expressions — frontend-v2/src/lib/contracts.ts:1-462 [DERIVED].
+- Runtime values emitted: `PUBLIC_MODES` (frontend-v2/src/lib/contracts.ts:196) and derived type `PublicMode` (frontend-v2/src/lib/contracts.ts:197).
 
 ## invariants
-INVARIANT: `PUBLIC_MODES.length` = 5, members exactly `"FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN"` — contracts.ts:196 [DERIVED]
-  fails-if: a backend mode not in the const is invisible to the mode picker and rejected by `PublicMode`.
-INVARIANT: `PublicMode` = elementwise union of `PUBLIC_MODES` — contracts.ts:197 [DERIVED]
-  fails-if: hand-editing the union lets a value through that the const (and picker UI) does not carry.
-INVARIANT: `SemanticReadiness.vnext.parents` keys = `{ eligible, mapped, excluded, unresolved }` — contracts.ts:23 [DERIVED]
-  fails-if: backend renames a counter; readiness UI reads `undefined`.
-INVARIANT: `DocSummary.profile_served` ∈ `{"vnext", "basic", null}` — contracts.ts:54 [DERIVED]
-  fails-if: a third writer label renders as an unknown state; UI must keep showing the written state when the field is absent.
-INVARIANT: `ControlPlane.control_ready.state` ∈ `{"ready", "blocked", "degraded"}` — contracts.ts:144 [DERIVED]
-  fails-if: new server state string falls through exhaustive switch in the control-plane panel.
-INVARIANT: `RetrievalReceipt.latency_ms` is `number` OR `Record<string, number | null>`, never both — contracts.ts:237-239 [DERIVED]
-  fails-if: rendering the v2 map directly reproduces the "NaNs" display bug the comment records.
-INVARIANT: exported runtime values = 1 (`PUBLIC_MODES`); everything else is type-only — FACTS symbols [DERIVED]
-  fails-if: adding runtime code here silently changes this module from an effect-free types module.
+INVARIANT: `PUBLIC_MODES` length = 5 = {FAST, HYBRID, GRAPH, WILDCARD, GNN}; `VECTOR` ∉ PUBLIC_MODES — frontend-v2/src/lib/contracts.ts:192,196 [DERIVED]
+  fails-if: adding VECTOR contradicts the plan §2 exclusion; removing GNN drops the experimental fifth mode.
+INVARIANT: `PublicMode` ≡ `(typeof PUBLIC_MODES)[number]` — frontend-v2/src/lib/contracts.ts:197 [DERIVED]
+  fails-if: a string outside the tuple passes as a mode.
+INVARIANT: `LlmProvider.api_key` ∈ {masked `…last4`, `env:NAME`} — never the real key — frontend-v2/src/lib/contracts.ts:102-109 [DERIVED]
+  fails-if: raw key reaches the UI.
+INVARIANT: `RetrievalReceipt.latency_ms` is v1 `number` XOR v2 `Record<string, number | null>`; rendered value = `total` — frontend-v2/src/lib/contracts.ts:237-239 [DERIVED]
+  fails-if: rendering the map yields "NaNs" (recorded in the comment).
+INVARIANT: `ControlPlane.pools` is a map keyed by function name; queue counters (`queued`, `processing`, `retry`, `failed`) sit at the TOP level of each pool, not nested — frontend-v2/src/lib/contracts.ts:136-137,150,153-158 [DERIVED]
+  fails-if: UI reading nested counters gets `undefined`.
+INVARIANT: a `GraphRelationship` is shown ⇒ `sources` attest it; unattested ones are counted in `dropped_unattested` — frontend-v2/src/lib/contracts.ts:276-283 [DERIVED]
+  fails-if: unattested relationship displayed without corpus evidence.
+INVARIANT: `ProductHypothesis.cj.status` ∈ {OK, PARTIAL, EMPTY, UNAVAILABLE, AGENT_REACH_REQUIRED} — frontend-v2/src/lib/contracts.ts:433 [DERIVED]
+  fails-if: unhandled status string in the CJ panel.
+INVARIANT: `DeepFinding.confidence` and `ChatSynthesisFacet.confidence` ∈ {strong, single_source, contested} (§11.4) — frontend-v2/src/lib/contracts.ts:384,393-395 [DERIVED]
+  fails-if: two different confidence vocabularies drift apart across report and chat synthesis.
+INVARIANT: `SemanticReadiness.verdict` ∈ {SEMANTIC_COMPLETE, SEMANTIC_INCOMPLETE}; `vnext.verdict` ∈ {VNEXT_COMPLETE, VNEXT_INCOMPLETE} — frontend-v2/src/lib/contracts.ts:16-17,20 [DERIVED]
+  fails-if: readiness label rendered from an unrecognized verdict.
 
 ## determinism & idempotency
-determinism: DETERMINISTIC — pure declarations plus one const literal; no clock/random/uuid/network/db/env access anywhere in 1-412. [INFERRED: no statement in SOURCE performs work.]
-idempotency: SAFE — importing has no side effects; see effect surface.
+determinism: DETERMINISTIC — declarations plus one literal const; no clock/random/uuid/network/db/env reads anywhere in frontend-v2/src/lib/contracts.ts:1-462 [DERIVED]
+idempotency: SAFE — importing has no effects; `PUBLIC_MODES` is an immutable `as const` tuple — frontend-v2/src/lib/contracts.ts:196 [DERIVED]
+
+## failure behaviour
+No handlers and no raised error codes: the module is declaration-only — frontend-v2/src/lib/contracts.ts:1-462 [DERIVED].
+Failures travel as payload fields: `DocumentRun.error: string | null` — frontend-v2/src/lib/contracts.ts:84; `ReviewResponse.parse_error` with `review: ReviewScores | null` — frontend-v2/src/lib/contracts.ts:312-315; `ChatGapCheck.error` — frontend-v2/src/lib/contracts.ts:411; `RetrievalReceipt.degraded?: string[]` — frontend-v2/src/lib/contracts.ts:236.
+Older-backend absence protocol: `DocSummary.run_status` "absent on an older backend" — frontend-v2/src/lib/contracts.ts:55; `profile_served` absent when the profile index could not be read — frontend-v2/src/lib/contracts.ts:52-54; `SemanticReadiness.vnext.profiled`/`vnext_served` absent — frontend-v2/src/lib/contracts.ts:25-29; `ProductResearchResult` "Every field may be missing (an older or newer backend)" — frontend-v2/src/lib/contracts.ts:415-417; `ChatSynthesis` absent on QA/lookup turns and every turn saved before F5 — frontend-v2/src/lib/contracts.ts:396. Caller then sees `undefined` and must render unknown — frontend-v2/src/lib/contracts.ts:6-7 [DERIVED].
 
 ## dumb-code flags
-- `RetrievalReceipt` carries ~14 `unknown`-typed fields (`funnel`, `composition`, `aspects`, `weak_aspects`, `legend`, `chunks`, `used_evidence`, `final_detail`, `graph_seeds`, `graph_bounds`, `graph_degraded`, `wildcard`, `wildcard_diagnostics`, `latent`) — untyped passthrough. — contracts.ts:218-234 [DERIVED]
-- `latency_ms` v1/v2 dual shape with a known "NaNs" rendering failure documented in-code. — contracts.ts:237-239 [DERIVED]
-- `DeepCoverageGoal.documents` / `DeepReportGoal.documents` typed `number | string[]` — "a count, or the doc ids", ambiguous per consumer. — contracts.ts:374-376, 383 [DERIVED]
-- Version-drift optional fields documented as "absent on an older backend": `vnext.profiled`, `vnext.vnext_served`, `DocSummary.run_status`. — contracts.ts:25-30, 55 [DERIVED]
-- Confidence vocabulary `strong | single_source | contested` (§11.4) duplicated in two comment sites, not a shared type. — contracts.ts:384, 393-396 [DERIVED]
-- `AnswerFrame.result` typed `unknown`. — contracts.ts:245 [DERIVED]
-- `Corpus.query_ready` is carried ONLY so the UI can refuse to use it (plan §7) — a field whose contract is to be distrusted. — contracts.ts:180 [DERIVED]
+- Dual-shape `latency_ms?: number | Record<string, number | null>` compat wart, with the "NaNs" admission — frontend-v2/src/lib/contracts.ts:237-239; a second, different latency typing `Record<string, unknown> | null` on `CompareArm.retrieval.latency_ms` — frontend-v2/src/lib/contracts.ts:297-298 [DERIVED].
+- `unknown` escape hatches: `RetrievalReceipt` fields `funnel`, `composition`, `aspects`, `weak_aspects`, `legend`, `chunks`, `used_evidence`, `final_detail`, `graph_seeds`, `graph_bounds`, `graph_degraded`, `wildcard`, `wildcard_diagnostics`, `latent` — frontend-v2/src/lib/contracts.ts:219-235; `SemanticReadiness.warnings`/`extraction` — frontend-v2/src/lib/contracts.ts:32-33; `RunView.contradictions`/`unknowns` — frontend-v2/src/lib/contracts.ts:361 [DERIVED].
+- `documents?: number | string[]` count-or-ids union duplicated in `DeepCoverageGoal` and `DeepReportGoal` — frontend-v2/src/lib/contracts.ts:376,383 [DERIVED].
+- `CjItem.price?: string | number | null` — prices arrive as listed strings, e.g. "US$11.85" — frontend-v2/src/lib/contracts.ts:438-441 [DERIVED].
+- Hardcoded verification dates in comments that this unit cannot re-verify: 2026-09-10 — frontend-v2/src/lib/contracts.ts:5,136; 2026-09-12 — frontend-v2/src/lib/contracts.ts:66,105,138-140 [DERIVED].
+- Stub `report?: { available: boolean }` for `GET /adapter/{id}/report` — frontend-v2/src/lib/contracts.ts:362 [DERIVED].
 
 ## refactor notes
-- Blast radius: all six importers (`App.tsx`, `lib/_small-modules`, `lib/api.ts`, `lib/chat.ts`, `lib/deep.ts`, `lib/readiness.ts`) consume this module file-level; renaming/removing any exported member breaks all of them at once. — FACTS.importers (material lines 359-366) [DERIVED]
-- Backend is the authority: field changes must match live backend shapes, not frontend convenience; several shapes cite live-verification dates (2026-09-10, 2026-09-12) against `orchestrator/api/ui.py` routes (`documents`, `llm_providers`, control plane). — contracts.ts:2-8, 63-66, 102-105, 135-140 [DERIVED]
-- Never add derivation logic here: the header contract forbids computing substitutes for absent fields. — contracts.ts:6-8 [DERIVED]
-- GNN is "sent as `mode: \"GNN\"` through the very same /chat path as every other mode" — keep it inside `PUBLIC_MODES`, not a parallel path. — contracts.ts:192-195 [DERIVED]
-- `profile_vnext` (written) vs `profile_served` (served) is a deliberate two-label distinction scripts depend on; do not collapse into one field. — contracts.ts:45-54 [DERIVED]
+- Blast radius: 6 importers — frontend-v2/src/App.tsx, frontend-v2/src/lib/_small-modules, frontend-v2/src/lib/api.ts, frontend-v2/src/lib/chat.ts, frontend-v2/src/lib/deep.ts, frontend-v2/src/lib/readiness.ts — materials/material-6161838080-550323405364583.md:407-414 [DERIVED]. Renaming any of the 67 exports touches all of them.
+- Adding/removing a `PUBLIC_MODES` entry changes the `PublicMode` union and every exhaustive mode switch in the importers — frontend-v2/src/lib/contracts.ts:196-197 [DERIVED].
+- Making older-backend optional fields required (`run_status`, `profile_served`, `control_ready`, `summary.processing_active`/`processing_stalled` — GAP-1/GAP-4 additions, composed server-side, UI only renders) breaks the absence path — frontend-v2/src/lib/contracts.ts:52-56,138-140 [DERIVED].
+- Collapsing `latency_ms` to one shape breaks either v1 or v2 backends; consumers read `total` — frontend-v2/src/lib/contracts.ts:237-239 [DERIVED].
+- `Corpus.query_ready` is carried ONLY so the UI can refuse to use it (plan §7) — do not start branching on it — frontend-v2/src/lib/contracts.ts:180 [DERIVED].
+- Any new field must mirror an already-owned backend response shape; no client-side derivation of substitutes — frontend-v2/src/lib/contracts.ts:4-7 [DERIVED].
 
 ## VERIFY
 ```verify
-grep -Fq 'export interface SemanticReadiness' frontend-v2/src/lib/contracts.ts
-grep -Fq 'PUBLIC_MODES = ["FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN"] as const' frontend-v2/src/lib/contracts.ts
-grep -Fq 'SEMANTIC_COMPLETE | SEMANTIC_INCOMPLETE' frontend-v2/src/lib/contracts.ts
-grep -Fq 'latency_ms?: number | Record<string, number | null>' frontend-v2/src/lib/contracts.ts
+grep -Fq 'export const PUBLIC_MODES = ["FAST", "HYBRID", "GRAPH", "WILDCARD", "GNN"] as const' frontend-v2/src/lib/contracts.ts
 grep -Fq 'export type PublicMode = (typeof PUBLIC_MODES)[number]' frontend-v2/src/lib/contracts.ts
-test "$(grep -c -F 'export interface' frontend-v2/src/lib/contracts.ts)" -ge 55
+grep -Fq 'latency_ms?: number | Record<string, number | null>' frontend-v2/src/lib/contracts.ts
+grep -Fq 'dropped_unattested: number' frontend-v2/src/lib/contracts.ts
+grep -Fq 'mode: "GNN"' frontend-v2/src/lib/contracts.ts
+test "$(grep -c -F 'export interface' frontend-v2/src/lib/contracts.ts)" -ge 65
+! grep -Fq 'export function' frontend-v2/src/lib/contracts.ts
 ```

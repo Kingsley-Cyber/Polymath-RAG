@@ -18,6 +18,7 @@ Probes carry no document content: `probe()` sends a one-token ping only.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from dataclasses import dataclass, field
@@ -38,6 +39,8 @@ from polymath_shared.llm_extraction.policy import (
     LaneDecision,
     require_cloud_eligible,
 )
+
+log = logging.getLogger("polymath.llm_client")
 
 # LOCKED generation config (plan decision 18). Hashed into the extract
 # stage contract via workers.llm_provider.contract_identity — change it
@@ -246,6 +249,47 @@ class ExtractionTransportError(RuntimeError):
     """The endpoint was unreachable or repeatedly returned garbage."""
 
 
+#: INTERACTIVE-ADMISSION-V1 (measured 2026-11-01: lane compiler_ollama_gemma failed 27/27 with HTTP_429, and each compiler
+#: call left 30.1–31.0 s after the previous 429 — the breaker cooldown, waited out by a BLOCKING admission; 291 s over 9 of
+#: 41 chat turns). A chat-turn call never waits on a lane limiter: a lane the limiter refuses at once is SKIPPED and the
+#: next lane is tried. These are the typed receipts of that walk.
+ALL_LANES_REFUSED = "ALL_LANES_REFUSED"
+
+
+@dataclass(frozen=True)
+class LaneSkip:
+    """One lane an interactive call skipped: its limiter refused admission at once — no request left the process, no
+    provider quota was spent. `reason` is the limiter's REFUSE_* class (BREAKER, RETRY_AFTER, CONCURRENCY, RPM, TPM, …);
+    `retry_after_s` is the hold the limiter reported (for BREAKER: the time left to the half-open probe)."""
+    lane: str
+    reason: str
+    retry_after_s: float | None = None
+
+    def as_dict(self) -> dict:
+        out: dict = {"lane": self.lane, "reason": self.reason}
+        if self.retry_after_s is not None:
+            out["retry_after_s"] = round(float(self.retry_after_s), 1)
+        return out
+
+
+def degraded_receipt(skips) -> dict:
+    """The typed receipt of an interactive call that found NO admissible lane: every lane was skipped, nothing was
+    dispatched, and the caller's fallback runs at once instead of after a breaker cooldown."""
+    rows = [s.as_dict() if isinstance(s, LaneSkip) else dict(s) for s in skips]
+    return {"type": ALL_LANES_REFUSED, "http_dispatched": False, "lanes_skipped": rows}
+
+
+class AllLanesRefused(RuntimeError):
+    """Every lane of an interactive walk was refused by its limiter: fail fast and typed (the caller's fallback runs),
+    never a wait. `receipt` is `degraded_receipt(skips)`."""
+
+    def __init__(self, skips) -> None:
+        self.skips = list(skips)
+        self.receipt = degraded_receipt(self.skips)
+        super().__init__(f"{ALL_LANES_REFUSED}: " + ", ".join(
+            f"{r['lane']}={r['reason']}" for r in self.receipt["lanes_skipped"]))
+
+
 def output_budget_for(input_tokens: float, neighborhoods: int = 1) -> int:
     """Output cap per call = the LOCKED max_tokens (decision 18) per
     neighborhood, plus room for each additional neighborhood in the call.
@@ -320,6 +364,13 @@ class LLMExtractionClient:
     # and every attempt row it records carries those tags when the calling context has none.
     attempt_stage: str | None = None
     attempt_function: str | None = None
+    # INTERACTIVE-ADMISSION-V1: chat-turn callers (compiler, facet step, deep-research planning / extraction) set
+    # `interactive = True`; `complete_one` then admits NON-blocking, so a lane whose breaker is open (or that sits under a
+    # Retry-After hold, is saturated, or is out of rate tokens) is refused at once (zero HTTP, zero quota) and the caller
+    # walks to its next lane. Every other client keeps the blocking admission (extraction / enrichment unchanged).
+    interactive: bool = False
+    # the last `complete_one` refusal as a LaneSkip (None when that call was admitted) — the caller's skip receipt
+    last_refusal: LaneSkip | None = None
 
     def _record_attempt(self, attempt) -> None:
         from polymath_shared.conformance import attempts
@@ -371,6 +422,7 @@ class LLMExtractionClient:
         # network (a refusal never does).
         self._last_refusal_reason: str | None = None
         self._last_http_dispatched: bool = False
+        self.last_refusal = None
 
     def _headers(self) -> dict:
         if self.api_key:
@@ -535,8 +587,9 @@ class LLMExtractionClient:
         limiter = self._lane_limiter()
         # LLM-BACKEND L2 (gap L-04): reserve what the provider will count — the system prompt, the user prompt
         # and the requested output — not the user prompt / 4; settle() trues it up from the response's usage.
+        # INTERACTIVE-ADMISSION-V1: an interactive client never blocks here (see `interactive`).
         decision = limiter.admit(est_tokens=admission_tokens(system_prompt, user_prompt) + max_tokens,
-                                 reserved_output=max_tokens)
+                                 reserved_output=max_tokens, block=not self.interactive)
         # GROQ-MAP-CONTROL-PLANE-REPAIR-V1: keep the bare "LIMITER_REFUSED"
         # return (existing consumers exact-match it) but expose WHICH gate
         # refused and whether the request reached the network, so the MAP
@@ -552,11 +605,19 @@ class LLMExtractionClient:
         _t0 = time.monotonic()
         _base = dict(lane=self.limiter_key, model=self.model, account_env=self._account_env(), provider=self._provider())
 
+        self.last_refusal = None
         if not decision.admitted:
             self._last_http_dispatched = False       # no request left the process
             _rec(Attempt(limiter_admitted=False, http_dispatched=False, success=False,
                          error_class="LIMITER_REFUSED",
                          latency_ms=int((time.monotonic() - _t0) * 1000), **_base))
+            # INTERACTIVE-ADMISSION-V1: name the lane and the gate that refused it, so the caller's walk receipts the
+            # skip (the ledger row above keeps the bare LIMITER_REFUSED class its readers exact-match)
+            self.last_refusal = LaneSkip(lane=getattr(self, "endpoint_name", None) or self.limiter_key,
+                                         reason=decision.reason or "UNKNOWN", retry_after_s=decision.retry_after)
+            if self.interactive:
+                log.info("interactive call skipped lane %s: limiter refused (%s, retry_after_s=%s)",
+                         self.last_refusal.lane, self.last_refusal.reason, self.last_refusal.as_dict().get("retry_after_s"))
             return "", "LIMITER_REFUSED"
         self._last_http_dispatched = True            # about to dispatch
         try:

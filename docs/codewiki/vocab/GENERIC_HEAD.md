@@ -12,7 +12,7 @@ AUTHORITY: `shared/polymath_shared/entity_admission.py:86` :: `GENERIC_HEAD` (co
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:97` | 3/32 | `application`, `component`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface`, `job` |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:102` | 4/32 | `application`, `component`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface`, `job` |
 | `adapters/ecommerce/python/context.py` | `adapters/ecommerce/python/context.py:26` | 3/32 | `application`, `component`, `database`, `device`, `engine`, `file`, `framework`, `function`, `index`, `interface`, `job`, `layer` |
 | `adapters/ecommerce/python/controller.py` | `adapters/ecommerce/python/controller.py:111` | 3/32 | `application`, `component`, `database`, `device`, `engine`, `file`, `framework`, `function`, `index`, `interface`, `job`, `layer` |
 | `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:78` | 4/32 | `application`, `component`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface`, `job` |
@@ -26,16 +26,18 @@ AUTHORITY: `shared/polymath_shared/entity_admission.py:86` :: `GENERIC_HEAD` (co
 | `adapters/ecommerce/python/utilization.py` | `adapters/ecommerce/python/utilization.py:23` | 3/32 | `application`, `component`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface`, `job` |
 | `orchestrator/orchestrator/api/chat_retrieval.py` | `orchestrator/orchestrator/api/chat_retrieval.py:576` | 3/32 | `application`, `data`, `database`, `device`, `event`, `file`, `framework`, `function`, `index`, `interface`, `job`, `layer` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:136` | 6/32 | `application`, `data`, `database`, `device`, `event`, `framework`, `function`, `index`, `interface`, `job`, `layer`, `loop` |
-| `orchestrator/orchestrator/mcp_server.py` | `orchestrator/orchestrator/mcp_server.py:251` | 4/32 | `application`, `component`, `database`, `device`, `engine`, `event`, `framework`, `function`, `index`, `interface`, `job`, `layer` |
-| `shared/polymath_shared/acquisition/cj_api.py` | `shared/polymath_shared/acquisition/cj_api.py:171` | 3/32 | `application`, `component`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface`, `job` |
+| `orchestrator/orchestrator/mcp_server.py` | `orchestrator/orchestrator/mcp_server.py:263` | 4/32 | `application`, `component`, `database`, `device`, `engine`, `event`, `framework`, `function`, `index`, `interface`, `job`, `layer` |
+| `shared/polymath_shared/acquisition/cj_api.py` | `shared/polymath_shared/acquisition/cj_api.py:215` | 3/32 | `application`, `component`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface`, `job` |
+| `shared/polymath_shared/acquisition/supplier.py` | `shared/polymath_shared/acquisition/supplier.py:66` | 3/32 | `application`, `component`, `data`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface` |
 | `shared/polymath_shared/conformance/assess.py` | `shared/polymath_shared/conformance/assess.py:49` | 3/32 | `application`, `component`, `data`, `database`, `device`, `engine`, `event`, `file`, `framework`, `index`, `interface`, `job` |
 | `shared/polymath_shared/generic_classification.py` | `shared/polymath_shared/generic_classification.py:114` | 3/32 | `application`, `component`, `data`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface` |
-| `shared/polymath_shared/llm_extraction/client.py` | `shared/polymath_shared/llm_extraction/client.py:123` | 3/32 | `application`, `component`, `data`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface` |
+| `shared/polymath_shared/llm_extraction/client.py` | `shared/polymath_shared/llm_extraction/client.py:126` | 3/32 | `application`, `component`, `data`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface` |
 | `shared/polymath_shared/llm_extraction/gate.py` | `shared/polymath_shared/llm_extraction/gate.py:191` | 7/32 | `application`, `component`, `data`, `database`, `device`, `engine`, `file`, `function`, `index`, `interface`, `job`, `layer` |
 | `shared/polymath_shared/logging.py` | `shared/polymath_shared/logging.py:18` | 3/32 | `application`, `component`, `data`, `database`, `engine`, `file`, `framework`, `function`, `index`, `interface`, `job`, `layer` |
 | `shared/polymath_shared/scientific_concept.py` | `shared/polymath_shared/scientific_concept.py:17` | 8/32 | `application`, `data`, `database`, `device`, `engine`, `event`, `file`, `function`, `index`, `interface`, `job`, `layer` |
 | `shared/polymath_shared/verb_inventory.py` | `shared/polymath_shared/verb_inventory.py:25` | 3/32 | `data`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface`, `job`, `layer` |
 | `sidecars/local_extractor/batched_server.py` | `sidecars/local_extractor/batched_server.py:9` | 5/32 | `application`, `component`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `interface`, `job`, `layer` |
+| `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:333` | 3/32 | `application`, `component`, `data`, `database`, `device`, `engine`, `event`, `file`, `framework`, `function`, `index`, `interface` |
 
 ## VERIFY
 

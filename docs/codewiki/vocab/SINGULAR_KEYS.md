@@ -12,7 +12,7 @@ AUTHORITY: `adapters/ecommerce/python/controller.py:58` :: `SINGULAR_KEYS` (coun
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:172` | 3/11 | `corpus_backend`, `market_seed`, `product_identity`, `product_seed`, `promotion_summary`, `registry_patch`, `scope_request`, `world_model` |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:177` | 3/11 | `corpus_backend`, `market_seed`, `product_identity`, `product_seed`, `promotion_summary`, `registry_patch`, `scope_request`, `world_model` |
 | `adapters/ecommerce/python/context.py` | `adapters/ecommerce/python/context.py:33` | 8/11 | `corpus_backend`, `promotion_summary`, `registry_patch` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:55` | 5/11 | `corpus_backend`, `market_seed`, `product_identity`, `product_seed`, `promotion_summary`, `registry_patch` |
 | `adapters/ecommerce/python/intelligence.py` | `adapters/ecommerce/python/intelligence.py:278` | 3/11 | `corpus_backend`, `market_seed`, `primitives`, `product_identity`, `product_seed`, `promotion_summary`, `registry_patch`, `row_relevance` |

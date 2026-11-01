@@ -27,7 +27,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from polymath_shared.adapter import contracts as C  # noqa: E402
 from polymath_shared.adapter import service  # noqa: E402
 from polymath_shared.adapter import trail_client as TC  # noqa: E402
-import workers.adapter_step_worker as W  # noqa: E402
+import workers.adapter_step_worker as W
+from polymath_shared.adapter.transitions import SubmissionRejected  # noqa: E402
 from _adapter_memory_store import MemoryStore  # noqa: E402
 
 ADAPTER_ID = "ecommerce.product_research"
@@ -122,9 +123,12 @@ def _concept(i, form, fev):
 
 
 class Agent:
-    """θ, scripted. It answers from what the runtime SHOWS it: the step context and the `materials` sibling."""
+    """θ, scripted. It answers from what the runtime SHOWS it: the step context and the `materials` sibling. A law's refusal arrives in
+    the submit response (F2: the law runs at submit) and again beside the re-fetched step (`last_rejection`)."""
     def __init__(self):
         self.seen: dict[str, list[dict]] = {}
+        self.rejections: dict[str, list[list[str]]] = {}
+        self.shown_rejection: dict[str, list[dict]] = {}
 
     def answer(self, nxt: dict) -> dict:
         step, mats = nxt["step"], (nxt.get("materials") or {}).get("values") or {}
@@ -132,6 +136,8 @@ class Agent:
         self.keys = getattr(self, "keys", {})
         self.keys[sid] = set(nxt)
         n = len(self.seen.setdefault(sid, [])); self.seen[sid].append(mats)
+        if nxt.get("last_rejection"):
+            self.shown_rejection.setdefault(sid, []).append(nxt["last_rejection"])
         live = [h["hypothesis_id"] for h in ctx.get("hypotheses") or []]
         fev = [r["id"] for r in ctx["evidence_refs"] if r["kind"] == "field_evidence"]
         if sid == "C_primitives":
@@ -199,9 +205,22 @@ def _harness(step, rid):
     return _receipt(action, rid, rows)
 
 
+def offline_host_reads(monkeypatch) -> list:
+    """PRODUCT-SEARCH-E2E: the supply step's host prefetch calls the supplier API through W.HOST_TOOLS — never the real one in a test
+    (a runner with the fleet's CJ_API_KEY would spend the owner's quota). The double answers like a host with no key; calls are kept."""
+    calls: list = []
+
+    def unavailable(principal_id, args):
+        calls.append((principal_id, dict(args)))
+        return {"status": "UNAVAILABLE", "items": [], "sources": [], "limitations": ["no supplier API on this test host"]}
+    monkeypatch.setitem(W.HOST_TOOLS, "supplier_search", unavailable)
+    return calls
+
+
 @pytest.fixture
 def runtime(monkeypatch):
     store, trail = MemoryStore(), StubTrail()
+    offline_host_reads(monkeypatch)
     monkeypatch.setattr(service, "store", store)
     monkeypatch.setattr(W, "_TRAIL", TC.TrailMCPClient("http://trail.stub/mcp", "stub-token", transport=httpx.MockTransport(trail.handle)))
     service.reset_registry()
@@ -227,7 +246,10 @@ def _run(agent):
             nxt = service.next_step(None, rid)
             step = nxt["step"]
             if st.status == "awaiting_agent":
-                service.submit(None, rid, {"step_id": step["step_id"], "payload": agent.answer(nxt), "submitted_by": {"agent_identity": "test-agent"}})
+                try:
+                    service.submit(None, rid, {"step_id": step["step_id"], "payload": agent.answer(nxt), "submitted_by": {"agent_identity": "test-agent"}})
+                except SubmissionRejected as exc:            # F2: a law refuses AT SUBMIT; the step stays open and the agent answers again
+                    agent.rejections.setdefault(step["step_id"], []).append(list(exc.errors))
             else:
                 assert C.validate("harness_action", step["harness_action"]) == []
                 actions[step["step_id"]] = (step["harness_action"], (nxt.get("materials") or {}).get("values") or {})
@@ -245,8 +267,9 @@ def test_one_complete_ecommerce_product_research_run(runtime):
     order = [r["step_id"] for r in rows]
     domain = [r for r in rows if r["step_type"] == "DOMAIN_OPERATION"]
     assert all(r["status"] == "executed" for r in domain) and not [s for s in order if s.startswith("Z_refuse")]
-    assert [r["step_id"] for r in domain] == ["B_intake", "B_lenses", "C_lineage", "C_lineage", "C_population", "C_bridge_law", "C_bridge_law", "H_plan", "J_cards", "K_situations_law", "K_questions",
-                                              "M_unresolved", "N_concepts_law", "N_concepts_law", "O_plan", "Q_join", "S_plan", "T_leads"]   # Slice 3 added the product-reality plan + join; AUTORESEARCH (A-05) the loop-exit record; no stage moved
+    # F2 (PRODUCT-SEARCH-E2E): the three refused drafts were refused AT SUBMIT by their laws — each law step then runs once, on the lawful draft
+    assert [r["step_id"] for r in domain] == ["B_intake", "B_lenses", "C_lineage", "C_population", "C_bridge_law", "H_plan", "J_cards", "K_situations_law", "K_questions",
+                                              "M_unresolved", "N_concepts_law", "O_plan", "Q_join", "S_plan", "T_leads"]   # Slice 3 added the product-reality plan + join; AUTORESEARCH (A-05) the loop-exit record; no stage moved
     unresolved = next(r["output"] for r in rows if r["step_id"] == "M_unresolved")                           # gap A-05: the questions the loop leaves open are RECORDED
     assert isinstance(unresolved["unresolved_research_gaps"], list) and all(g["origin"] in ("ledger", "step", "agent_open", "bridge")
                                                                             and g["hypothesis_id"] and g["question"] for g in unresolved["unresolved_research_gaps"])
@@ -258,15 +281,18 @@ def test_one_complete_ecommerce_product_research_run(runtime):
     # `materials` is strictly opt-in (the no-`config.show` case is proven on the fixture manifests of test_adapter_semantic_view and
     # test_adapter_domain_operation). Restoration Slice 1 (manifest 0.2.0): G_mechanisms opts in to the DERIVED semantic view, so the
     # step that revises a mechanism reads the ledger's state instead of re-deriving it from the four-field statement view.
-    assert agent.keys["G_mechanisms"] == agent.keys["C_primitives"] == {"kind", "step", "status", "evidence", "materials"}
+    assert agent.keys["G_mechanisms"] == {"kind", "step", "status", "evidence", "materials"}
+    assert agent.keys["C_primitives"] == {"kind", "step", "status", "evidence", "materials", "last_rejection"}         # F2: the refusal, beside the open step
     shown = agent.seen["G_mechanisms"][0]["hypothesis_semantics"]
     assert shown and all(v["semantics"]["population"] == "runners" and v["semantics"]["suspected_friction"] == "access_interruption" for v in shown)
     assert all(v["knowledge"]["knowledge_support_count"] == 1 and v["bridge"] is not None for v in shown)
-    # the agent was SHOWN what it needed — the previous law's errors, the lived clusters, TrailSignal's own records (external-review finding M1-08)
-    assert any("UNCLASSIFIED" in e for e in agent.seen["C_primitives"][1]["previous_lineage_errors"])
-    assert any("duplicate mechanism families" in e for e in agent.seen["C_bridge"][1]["previous_portfolio_errors"])
+    # the agent was SHOWN what it needed — the law's errors (F2: in the submit response AND beside the open step), the lived clusters,
+    # TrailSignal's own records (external-review finding M1-08)
+    assert any("UNCLASSIFIED" in e for e in agent.rejections["C_primitives"][0]) and agent.rejections["C_primitives"][0][0].startswith("LAW_UNSATISFIED (C_lineage)")
+    assert any("UNCLASSIFIED" in e for e in agent.shown_rejection["C_primitives"][0]["errors"])
+    assert any("duplicate mechanism families" in e for e in agent.rejections["C_bridge"][0])
     assert agent.seen["K_situations"][0]["lived_clusters"][0]["authority"] == "ANCHOR"                       # 5 admitted records, 5 sources, 5 of TrailSignal's independence groups
-    assert any("3–6 distinct product concepts" in e for e in agent.seen["N_concepts"][1]["previous_concept_errors"])
+    assert any("3–6 distinct product concepts" in e for e in agent.rejections["N_concepts"][0])
     assert agent.seen["W_interpret"][0]["trail_scores"][0]["record_id"] == "score-1" and agent.seen["W_interpret"][0]["score_refusals"]
 
     # product reality is researched PER CONCEPT in market language, and what it finds is joined back to that concept (restoration Slice 3)
@@ -331,7 +357,7 @@ def test_no_generative_signal_ends_as_retained_knowledge_before_any_population_r
     assert st.status == "terminal_gap" and st.gap["code"] == "NO_GENERATIVE_SIGNAL" and st.gap["step_id"] == "Z_no_signal"
     assert "retained as knowledge" in st.gap["message"] and "no population, hypothesis, research or supply step ran" in st.gap["message"]
     steps = [r["step_id"] for r in store.list_steps(None, rid)]
-    assert steps.count("C_primitives") == 2 and steps[-1] == "Z_no_signal"                                  # the lineage law was repaired FIRST, then the honest end
+    assert steps.count("C_primitives") == 1 and steps[-1] == "Z_no_signal"                                  # the lineage law was repaired FIRST (at submit, F2), then the honest end
     assert "C_population" not in steps and "C_hypotheses" not in steps and actions == {}                  # no population, no hypothesis, no research or supply action
     assert not [c for c in trail.calls if c.startswith(("evidence.admit", "opportunity."))]
 

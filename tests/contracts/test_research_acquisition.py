@@ -201,10 +201,12 @@ def test_a_person_can_act_and_the_caller_can_call_again_without_spending_the_bud
 
 
 def test_listings_are_one_source_each_and_search_results_are_never_sources():
-    listing = O.OpenCLIBackend._listing("https://www.alibaba.com/product-detail/x_1.html", "Rain cover",
+    # PRODUCT-SEARCH-E2E: alibaba.com listings are never read on the host now (an Agent Reach handoff), so a supplier site the host
+    # still reads (cjdropshipping.com, its browser fallback) carries this check
+    listing = O.OpenCLIBackend._listing("https://cjdropshipping.com/product/rain-cover-p-1A2B3C4D5E.html", "Rain cover",
                                         "Rain cover\n$3.20 - $4.10\nMin. order: 500 pieces\nNingbo Example Trading Co., Ltd.\n5 yrs")
-    out = S.acquire(principal_id=None, action=_action(tag=3), operation="listings", target="rain cover", site="alibaba.com",
-                    search_intent_id="si_comments", backend=Recorded({"state": "ok", "records": [listing, dict(listing, url="https://www.alibaba.com/product-detail/x_2.html", ref="x2")]}))
+    out = S.acquire(principal_id=None, action=_action(tag=3), operation="listings", target="rain cover", site="cjdropshipping.com",
+                    search_intent_id="si_comments", backend=Recorded({"state": "ok", "records": [listing, dict(listing, url="https://cjdropshipping.com/product/rain-cover-p-1A2B3C4D5F.html", ref="x2")]}))
     assert [s["source_class"] for s in out["sources"]] == ["supplier_listing"] * 2 and all(s["published_at_if_known"] is None for s in out["sources"])
     assert "source_date" not in out["items"][0]                        # a listing is observed as it is when read: it keeps its source
     assert out["items"][0]["listing"]["price_as_listed"] == "$3.20 - $4.10" and out["items"][0]["date_precision"] == "none"
@@ -411,15 +413,17 @@ def test_a_wall_route_or_a_sign_in_prompt_still_stops_the_reader_before_it_runs(
 
 
 def test_a_wall_word_still_names_the_wall_when_the_page_gave_nothing():
-    """A human check that keeps the page's own URL shows its words, and the reader finds nothing on it."""
-    page = {"url": "https://www.alibaba.com/trade/search?SearchText=rain+cover", "title": "Captcha Interception", "text": "slide to verify"}
+    """A human check that keeps the page's own URL shows its words, and the reader finds nothing on it. (PRODUCT-SEARCH-E2E: the
+    alibaba.com search-page reader is gone, so CJ's search-page reader, the one the browser still has, carries this check.)"""
+    page = {"url": "https://cjdropshipping.com/search/rain+cover.html", "title": "Captcha Interception", "text": "slide to verify"}
     b, calls = _browser(page, [])
-    raw = b._alibaba_listings(S.resolve("listings", "rain cover", "alibaba.com"), 20)
+    raw = b._cj_listings(S.resolve("listings", "rain cover", "cjdropshipping.com"), 20)
     assert raw["state"] == "human_check" and calls == ["open", "reader", "close"]
     b, _ = _browser(dict(page, url=THREAD, title="Captcha"), {"status": 403})
     assert b._reddit_comments(S.resolve("comments", THREAD), 20)["state"] == "human_check"
     b, _ = _browser(dict(page, title="Rain covers", text="no results"), [])
-    assert b._alibaba_listings(S.resolve("listings", "rain cover", "alibaba.com"), 20)["state"] == "unavailable"
+    assert b._cj_listings(S.resolve("listings", "rain cover", "cjdropshipping.com"), 20)["state"] == "unavailable"
+    assert not hasattr(O.OpenCLIBackend, "_alibaba_listings")                      # alibaba.com is never read by the host browser
 
 
 PROMPT_LINES = [("Log in to TikTok\nUse QR code\nUse phone / email / username", True),          # the modal's own heading

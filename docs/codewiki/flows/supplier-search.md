@@ -1,93 +1,81 @@
 # flow: supplier-search
-Supplier research: /supplier/search through the CJ API and the Alibaba reader over SearXNG, pacing, the challenge detector, what the caller gets.
+POST /supplier/search: the caller gate (MCP loopback or web boundary), fair-use pacing, the CJ REST client (token cache, 1.1 s pacing, circuit breaker), the Alibaba Agent-Reach handoff, and the one-shape answer the caller always gets.
 
 ## hops
-
 | # | what happens | where (anchor) | data in -> data out | can fail how |
 |---|---|---|---|---|
-| 1 | POST /supplier/search hits `supplier_search` | orchestrator/orchestrator/api/acquisition.py:137-138 | `SupplierSearchRequest{query, source, limit}` -> delegates to `_supplier` with `supplier.search` | — |
-| 2 | `_supplier` wraps the call | orchestrator/orchestrator/api/acquisition.py:125-133 | request + fn -> result dict | `AcquisitionRefused` re-raised as `HTTPException(status_code=exc.status, detail={"code","message"})` |
-| 3 | direct-caller gate `refuse_unless_direct` | orchestrator/orchestrator/api/acquisition.py:126, 70-78 | request headers -> None | 403 `PROXIED_CALLER` if any proxy header set; 403 `NON_LOOPBACK_HOST` otherwise |
-| 4 | `loopback_host` parses the Host header | orchestrator/orchestrator/api/acquisition.py:62-67 | Host header -> bool via `urlsplit("//"+host).hostname in LOOPBACK_HOSTS` | `ValueError` -> False (refused) |
-| 5 | call moved off the event loop | orchestrator/orchestrator/api/acquisition.py:128 | `asyncio.to_thread(fn, principal_id=principal_context.current(), **kw)` | worker exception propagates |
-| 6 | `principal_context.current()` | shared/polymath_shared/principal_context.py:23-25 | -> principal id or None (None = owner / trusted local) | — |
-| 7 | `authorize`: owner only | shared/polymath_shared/acquisition/supplier.py:43-46, 79 | principal_id -> None | `AcquisitionRefused(403, "OWNER_ONLY", ...)` when principal_id is not None |
-| 8 | source validated | shared/polymath_shared/acquisition/supplier.py:80-81, 34 | source -> `(site, reader_name)` from `SOURCES = {"cj": ..., "alibaba": ...}` | 422 `UNKNOWN_SOURCE` |
-| 9 | limit clamped | shared/polymath_shared/acquisition/supplier.py:83-86, 36 | limit -> n in 1..`SEARCH_LIMIT_MAX`=50, default `SEARCH_LIMIT_DEFAULT`=10 | 422 `BAD_LIMIT` on non-number |
-| 10 | `Target` built | shared/polymath_shared/acquisition/supplier.py:88 | -> `Target(operation="listings", reader=reader_name, site=site, query=q, source_class="supplier_listing")` | — |
-| 11 | CJ branch: client from env | shared/polymath_shared/acquisition/supplier.py:89-92; shared/polymath_shared/acquisition/cj_api.py:239-242 | `CJ_API_KEY` -> `CJClient` or None | None -> UNAVAILABLE with `NO_CJ_KEY` |
-| 12 | Alibaba branch: SearXNG base URL | shared/polymath_shared/acquisition/supplier.py:93-96; shared/polymath_shared/acquisition/searxng.py:58-68 | `SEARXNG_URL` -> url (`DEFAULT_URL = "http://127.0.0.1:8888"` when unset) or None | `off`/non-http -> UNAVAILABLE with `NO_SEARXNG` |
-| 13 | reader absent -> unavailable raw | shared/polymath_shared/acquisition/supplier.py:97-98 | -> `{"state": "unavailable", "note": missing}` | silent fallback: HTTP 200, status `UNAVAILABLE` |
-| 14 | CJ token cache / sign-in | shared/polymath_shared/acquisition/cj_api.py:150-161 | cached token reused until `TOKEN_MARGIN_S`=600 s before expiry; else `POST /authentication/getAccessToken` `{"apiKey": ...}` -> token | no token in reply -> `ApiFailed("bad_reply", ...)`; unparseable expiry -> fallback TTL `TOKEN_FALLBACK_TTL_S`=3600 |
-| 15 | CJ paced send | shared/polymath_shared/acquisition/cj_api.py:136-148, 43 | one call at a time per key, spaced `MIN_INTERVAL_S`=1.1 s; header `CJ-Access-Token` | timeout/transport -> `ApiFailed("network", ...)` |
-| 16 | CJ `_call` error mapping | shared/polymath_shared/acquisition/cj_api.py:163-199 | response -> `payload["data"]` | 429/`1600200`: wait 2.0 s then 4.0 s, then `rate_limit`; 401/403/auth codes: renew token once, then `auth`; quota `1600201`/`16900500`: no retry; >=500 `server`; non-JSON `bad_reply`; else `bad_request`/`refused` |
-| 17 | CJ product search | shared/polymath_shared/acquisition/cj_api.py:202-215, 204 | `GET /product/listV2` params `keyWord`, `page`=1, size, `features=enable_category` -> (products, totalRecords) | non-dict data -> `ApiFailed("bad_reply", ...)` |
-| 18 | CJ re-rank by rarest query words | shared/polymath_shared/acquisition/cj_api.py:61-74, 318-319 | page size `max(limit*5, SEARCH_PAGE_MIN=100)`; score = sum of `log((N+1)/(df+1))` weights; ties keep CJ order | — |
-| 19 | CJ record mapping + dedup | shared/polymath_shared/acquisition/cj_api.py:285-306, 322-334 | product -> listing record (title, `price_as_listed` via `usd`, MOQ, supplier, pid, sku, image); dedup by `ref` | no usable id/name -> counted `unusable`, dropped |
-| 20 | Alibaba paged read | shared/polymath_shared/acquisition/searxng.py:146-179 | pages 1..`MAX_PAGES`=3 while short of limit; `< FULL_PAGE`=10 results = last page | page>1 `ApiFailed` -> keep earlier pages, note `"result page N was not read"` |
-| 21 | Alibaba pace + one page fetch | shared/polymath_shared/acquisition/searxng.py:108-144, 37-39 | `GET {base}/search?q=site:alibaba.com <query>&format=json`, paced `MIN_INTERVAL_S`=2.0 process-wide | `unreachable` (SearXNG down; hint `docker compose up -d searxng`), 403 `refused` (formats must list json), `bad_reply`, empty + all engines failed -> `unreachable` |
-| 22 | Alibaba URL filter | shared/polymath_shared/acquisition/searxng.py:71-81, 47 | result URL -> `(https://host/path, product number)` only for `/product-detail/<name>_<number>.html` on alibaba.com | non-product URLs counted `other`, skipped |
-| 23 | Alibaba challenge detector | shared/polymath_shared/acquisition/searxng.py:170-173 | `looks_like_challenge(f"{title}\n{snippet}")` | verification-page result counted `walls`, skipped |
-| 24 | Alibaba snippet parse | shared/polymath_shared/acquisition/searxng.py:84-97 | title (site tail cut), price = last before MOQ else first, MOQ, supplier (`_MAKER`/`_COMPANY`); raw snippet kept as `card` | fields not shown stay None — nothing guessed |
-| 25 | `shape()` + return + log | shared/polymath_shared/acquisition/supplier.py:104-107, 32; orchestrator/orchestrator/api/acquisition.py:131-133 | raw -> `{contract: "supplier-tools-v1", tool, source, site, query, retrieved_at, status, sources, items, completeness, limitations}`; `log.info("supplier %s source=%s status=%s rows=%s", ...)` | — |
+| 1 | Route `supplier_search` takes `SupplierSearchRequest` and calls `_supplier(request, "supplier_search", supplier.search, query, source, limit)` | orchestrator/orchestrator/api/acquisition.py:166-167 [DERIVED] | req.query/source/limit -> thread call | bad request body (FastAPI, not shown) |
+| 2 | Caller gate `refuse_unless_mcp_or_web`: any PROXY_HEADERS header set -> `web_identity` on request state must exist; else Host header must be loopback | orchestrator/orchestrator/api/acquisition.py:137-149 [DERIVED] | request headers/state -> void | 403 `PROXIED_CALLER` or 403 `NON_LOOPBACK_HOST` |
+| 3 | Loopback test: `urlsplit("//"+host).hostname in LOOPBACK_HOSTS` | orchestrator/orchestrator/api/acquisition.py:69-74 [DERIVED] | Host header -> bool | ValueError -> False [DERIVED] |
+| 4 | Principal resolved: `principal_context.current()` (None = owner / trusted-local) and passed into the worker thread via `asyncio.to_thread` | orchestrator/orchestrator/api/acquisition.py:155; shared/polymath_shared/principal_context.py:23-25 [DERIVED] | contextvar -> principal_id or None | - |
+| 5 | `supplier.search` -> `authorize(principal_id)`: every user allowed; a non-principal-id string refused (defence in depth) | shared/polymath_shared/acquisition/supplier.py:88-93, 211 [DERIVED] | principal_id -> void | 403 `BAD_PRINCIPAL` |
+| 6 | Source checked against `SOURCES = {"cj": (cj_api.SITE, "cj_listings"), "alibaba": (agent_reach.ALIBABA, "alibaba_listings")}` | shared/polymath_shared/acquisition/supplier.py:56, 212-213 [DERIVED] | source string -> (site, reader) | 422 `UNKNOWN_SOURCE` |
+| 7 | Query normalized by `_query` (service module), limit clamped to `max(1, min(limit, 50))`, default 10 (`SEARCH_LIMIT_DEFAULT, SEARCH_LIMIT_MAX = 10, 50`) | shared/polymath_shared/acquisition/supplier.py:58, 214-218 [DERIVED] | query/limit -> q, n | 422 `BAD_LIMIT` on non-numeric |
+| 8 | Fair-use admit: per-principal sliding 60 s deque; cap = `POLYMATH_SUPPLIER_RATE_PER_MINUTE` (default 30); owner (None) passes untouched | shared/polymath_shared/acquisition/supplier.py:105-108, 121-134 [DERIVED] | principal_id, env -> void | 429 `SUPPLIER_RATE_LIMITED` with `retry_after_s` |
+| 9 | alibaba branch: nothing is read on this host; answer is status `AGENT_REACH_REQUIRED`, `reason_code` `ALIBABA_AGENT_REACH_ONLY`, `fallback` = Agent-Reach commands | shared/polymath_shared/acquisition/supplier.py:223-230 [DERIVED] | q -> handoff answer | never a local read; HUMAN_CHECK appears later on the parse leg |
+| 10 | cj branch: client built from env — `client_from_env` returns a `CJClient` only when `CJ_API_KEY` is set, else None -> `code = "CJ_NO_KEY"` | shared/polymath_shared/acquisition/supplier.py:60, 231-235; shared/polymath_shared/acquisition/cj_api.py:294-302 [DERIVED] | env -> CJClient or None | UNAVAILABLE `CJ_NO_KEY` with fallback |
+| 11 | `gate.cj_call(principal_id)`: one CJ call in flight per principal, second is refused, never queued | shared/polymath_shared/acquisition/supplier.py:136-151, 237 [DERIVED] | principal_id -> context manager | 429 `SUPPLIER_BUSY` (retry_after 1 s) |
+| 12 | `CJListings(client).read(t, n)` runs the CJ read; `ApiFailed` -> typed code via `REASON_CODES`; any other exception -> `CJ_ERROR` + `log.exception` | shared/polymath_shared/acquisition/supplier.py:239-245, 65-67, 180-182 [DERIVED] | Target, n -> raw dict | every failure typed, none raised to the route (except fair use) |
+| 13 | Circuit breaker first: an open breaker raises the same `ApiFailed` at once, no network call, reporting `retry_after_s` | shared/polymath_shared/acquisition/cj_api.py:178-184, 195-205 [DERIVED] | _Account.breaker -> ApiFailed | instant `disabled`/`auth`/`rate_limit` failure while held |
+| 14 | Token: cached per key until `TOKEN_MARGIN_S = 600` s before expiry; else `POST /authentication/getAccessToken` with `{"apiKey": ...}`; unparsable expiry -> 1 h TTL (`TOKEN_FALLBACK_TTL_S = 3600`) | shared/polymath_shared/acquisition/cj_api.py:52-53, 164-175 [DERIVED] | apiKey -> accessToken | `bad_reply` if answer holds no token |
+| 15 | Paced send under per-account `pace` lock: wait `MIN_INTERVAL_S = 1.1` s since last call, timeout `TIMEOUT_S = 20.0`, header `CJ-Access-Token` | shared/polymath_shared/acquisition/cj_api.py:49, 51, 150-162 [DERIVED] | method/path/params -> httpx.Response | `network` on Timeout/TransportError |
+| 16 | Answer classified: `1600014` -> `disabled` (never retried, breaker `POLYMATH_CJ_BREAKER_S`); 429/`1600200` -> sleep 2 s then 4 s, else `rate_limit` (breaker 60 s); 401/403/auth codes -> renew token once, else `auth`; quota/`server`/`bad_reply`/`bad_request`/`refused` | shared/polymath_shared/acquisition/cj_api.py:84-89, 186-193, 224-245 [DERIVED] | response -> data or ApiFailed | every class of CJ refusal, each typed |
+| 17 | Route read: `GET /product/listV2` with `keyWord`, `page: 1`, size clamped to `SEARCH_SIZE_MAX = 100`, `features: enable_category`; products from `content[].productList` (or flat blocks), total from `totalRecords` | shared/polymath_shared/acquisition/cj_api.py:12-13, 57, 248-261 [DERIVED] | query, size -> (products, total) | `bad_reply` if data is not a dict |
+| 18 | Result re-ranked: the search asks for a larger page (at least `SEARCH_PAGE_MIN = 100`) and `rank_by_query` orders by the query's rarest words, log(N/df) weights; ties keep CJ order | shared/polymath_shared/acquisition/cj_api.py:58-61, 70-83 [DERIVED] (that CJListings applies it: [INFERRED] from the SEARCH_PAGE_MIN comment) | products, query -> ordered products | - |
+| 19 | `shape(t, raw, ...)` builds the listing view; `status` EMPTY -> `code = "CJ_EMPTY"` | shared/polymath_shared/acquisition/supplier.py:246-248 [DERIVED] | raw -> status/items/sources/completeness | - |
+| 20 | Any `code` -> `WHY[code]` text + `HANDOFF` + `agent_reach.fallback(site, q, code, why)`; `CJ_EMPTY` hints Exa may still find CJ pages | shared/polymath_shared/acquisition/supplier.py:68-84, 249-254 [DERIVED] | code, q -> fallback dict | - |
+| 21 | Answer returned: `{contract, tool, source, site, query, retrieved_at, status, sources, items, completeness, limitations, reason_code, fallback}` | shared/polymath_shared/acquisition/supplier.py:255-257 [DERIVED] | - -> dict | - |
+| 22 | Back in the route: `AcquisitionRefused` -> `HTTPException(status, {code, message})` + `Retry-After` when `retry_after_s` exists | orchestrator/orchestrator/api/acquisition.py:156-159 [DERIVED] | exception -> HTTP error | 429s carry Retry-After |
+| 23 | `log.info("supplier %s source=%s status=%s reason_code=%s rows=%s")`, answer returned | orchestrator/orchestrator/api/acquisition.py:160-162 [DERIVED] | out -> log line + dict | - |
+| 24 | Fallback loop: the user runs `fallback.commands` on their own machine and sends output to `supplier_parse`, which re-shapes it via `agent_reach.parse`; pages that became no item are listed in `refused` (`HUMAN_CHECK`, `OFF_SITE`, ...); all-verification-page input -> status `HUMAN_CHECK` | shared/polymath_shared/acquisition/supplier.py:82-84, 331-341, 357-358, 421 [DERIVED] | raw Agent-Reach output -> supplier_search shape | 422 `UNKNOWN_SITE`/bad output; HUMAN_CHECK pages |
 
 ## state written
-Nothing durable: the tools are read-only, nothing creates, confirms, pays, deletes, lists or disputes (shared/polymath_shared/acquisition/supplier.py:12-13). [DERIVED]
-
-- In-process CJ token cache: `_ACCOUNTS` keyed by `hashlib.sha256(key)[:16]`, holding token, expiry, last-call time (shared/polymath_shared/acquisition/cj_api.py:85-101). [DERIVED]
-- In-process SearXNG pace timestamp `_last_call` behind `_pace_lock` (shared/polymath_shared/acquisition/searxng.py:40-41, 108-115). [DERIVED]
-- One log line per call: source, status, row count (orchestrator/orchestrator/api/acquisition.py:131-132). [DERIVED]
+- No database, vector store or file is written on this path; all state is in-process. [INFERRED] — no Postgres/Qdrant write appears anywhere in SOURCE for this chain.
+- `FAIR_USE = FairUse()`: per-principal deque of call timestamps (`_calls`) and the `_busy` set, under a `threading.Lock` — shared/polymath_shared/acquisition/supplier.py:111-119, 154 [DERIVED].
+- `_ACCOUNTS: dict[str, _Account]` keyed by `sha256(key)[:16]`: cached token, `expires_at`, `last_call`, `pace` lock, open `breaker` — shared/polymath_shared/acquisition/cj_api.py:97-114 [DERIVED].
+- One log record per call (`supplier supplier_search source=... status=... reason_code=... rows=...`) — orchestrator/orchestrator/api/acquisition.py:160-161 [DERIVED].
+- Both stores are process-local: a bounce resets them — shared/polymath_shared/acquisition/supplier.py:24; shared/polymath_shared/acquisition/cj_api.py:21-22 [DERIVED].
 
 ## flags that change this flow
-
 | flag | default | effect | read at |
 |---|---|---|---|
-| `CJ_API_KEY` | unset -> None | owner CJ client or `NO_CJ_KEY` UNAVAILABLE | shared/polymath_shared/acquisition/cj_api.py:239-242; shared/polymath_shared/acquisition/supplier.py:90-92 |
-| `SEARXNG_URL` | unset/empty -> `http://127.0.0.1:8888` | `off`/`0`/`false`/`no`/`none` -> alibaba off (`NO_SEARXNG`) | shared/polymath_shared/acquisition/searxng.py:46, 58-68 |
-| `source` request field | `"cj"` | picks `cj_listings` or `alibaba_listings` reader | shared/polymath_shared/acquisition/supplier.py:34, 77-81 |
-| `limit` request field | 10 | clamped to 1..50 | shared/polymath_shared/acquisition/supplier.py:36, 83-86 |
-| principal context | None | any principal -> 403 `OWNER_ONLY` | shared/polymath_shared/acquisition/supplier.py:43-46 |
-| proxy headers | absent | any present -> 403 `PROXIED_CALLER` | orchestrator/orchestrator/api/acquisition.py:71-74 |
-| Host header | loopback expected | non-loopback -> 403 `NON_LOOPBACK_HOST` | orchestrator/orchestrator/api/acquisition.py:62-67, 75-77 |
-| `MAX_PAGES` / `FULL_PAGE` | 3 / 10 | alibaba pages fetched while short of limit; <10 results = engines' last | shared/polymath_shared/acquisition/searxng.py:33-35 |
-| `MIN_INTERVAL_S` (CJ / SearXNG) | 1.1 / 2.0 | per-key / process-wide pacing | shared/polymath_shared/acquisition/cj_api.py:43; shared/polymath_shared/acquisition/searxng.py:39 |
-| `TOKEN_MARGIN_S` / `TOKEN_FALLBACK_TTL_S` | 600 / 3600 | re-sign-in window and fallback TTL | shared/polymath_shared/acquisition/cj_api.py:46-47 |
+| `CJ_API_KEY` | unset | no key -> client None -> `CJ_NO_KEY` UNAVAILABLE with fallback | shared/polymath_shared/acquisition/cj_api.py:297-302 (via supplier.py:201-202, 231-235) [DERIVED] |
+| `POLYMATH_SUPPLIER_RATE_PER_MINUTE` | 30 | per-principal supplier calls per minute; whole number >= 1, else default | shared/polymath_shared/acquisition/supplier.py:59, 105-108, 125 [DERIVED] |
+| `POLYMATH_CJ_BREAKER_S` | 600.0 | breaker window (s) after `disabled`/`auth` | shared/polymath_shared/acquisition/cj_api.py:55, 300 [DERIVED] |
+| `POLYMATH_CJ_RATE_BREAKER_S` | 60.0 | breaker window (s) after `rate_limit` | shared/polymath_shared/acquisition/cj_api.py:56, 301 [DERIVED] |
 
 ## failure modes
-1. HTTP 403 `code=PROXIED_CALLER` -> request carried a proxy header -> the gate reads every `PROXY_HEADERS` entry (orchestrator/orchestrator/api/acquisition.py:71-74).
-2. HTTP 403 `code=NON_LOOPBACK_HOST` -> Host header names a non-loopback host (e.g. a web page re-bound to this machine) -> `loopback_host` (orchestrator/orchestrator/api/acquisition.py:62-67, 75-77).
-3. HTTP 403 `code=OWNER_ONLY` -> `principal_context.current()` returned a friend key's principal -> `authorize` (shared/polymath_shared/acquisition/supplier.py:43-46) mapped by `_supplier` (orchestrator/orchestrator/api/acquisition.py:129-130).
-4. HTTP 422 `UNKNOWN_SOURCE` / `BAD_LIMIT` -> request validation (shared/polymath_shared/acquisition/supplier.py:80-86).
-5. Silent UNAVAILABLE: HTTP 200 with `status: "UNAVAILABLE"` -> no key / SearXNG off / `ApiFailed` caught and folded into `raw` -> check `limitations` for the note (shared/polymath_shared/acquisition/supplier.py:97-103, 71-72).
-6. CJ rate limit held -> waited out twice (2 s, 4 s) then gives up as `rate_limit` -> UNAVAILABLE (shared/polymath_shared/acquisition/cj_api.py:180-184).
-7. CJ token refused -> renewed once, second refusal -> `auth` -> UNAVAILABLE (shared/polymath_shared/acquisition/cj_api.py:185-189).
-8. CJ quota spent (`1600201`, `16900500`) -> never retried -> UNAVAILABLE (shared/polymath_shared/acquisition/cj_api.py:190-191).
-9. SearXNG HTTP 403 -> JSON format not enabled in `search.formats` -> `refused` (shared/polymath_shared/acquisition/searxng.py:130-131).
-10. Every engine failed -> empty results plus `unresponsive_engines` -> `unreachable` (shared/polymath_shared/acquisition/searxng.py:141-142).
-11. Partial Alibaba results -> result page >1 failed; earlier pages kept, note `"result page N was not read"` recorded (shared/polymath_shared/acquisition/searxng.py:155-158).
-12. Indexed verification pages silently skipped -> `looks_like_challenge` true -> counted in `walls` (shared/polymath_shared/acquisition/searxng.py:170-173).
-13. CJ products silently dropped -> no usable id or name -> counted `unusable` and left out (shared/polymath_shared/acquisition/cj_api.py:289-292, 326-327, 336-337).
-14. Order differs from CJ's own -> re-rank weights rare query words; not a regression (shared/polymath_shared/acquisition/cj_api.py:61-74, 318-319).
+1. 403 with code `PROXIED_CALLER` -> request carried a proxy header but `request.state.web_identity` is None (no web sign-in/CSRF) -> orchestrator/orchestrator/api/acquisition.py:140-143 [DERIVED].
+2. 403 with code `NON_LOOPBACK_HOST` -> direct call whose Host header is not 127.0.0.1/localhost (e.g. a re-bound name) -> orchestrator/orchestrator/api/acquisition.py:145-149, 69-74 [DERIVED].
+3. 429 `SUPPLIER_RATE_LIMITED` -> principal hit the per-minute cap; `Retry-After` = seconds until the oldest call ages out of the 60 s window -> shared/polymath_shared/acquisition/supplier.py:129-133; header set at orchestrator/orchestrator/api/acquisition.py:157-159 [DERIVED].
+4. 429 `SUPPLIER_BUSY` -> same principal already holds the one in-flight CJ call; never queued -> shared/polymath_shared/acquisition/supplier.py:143-145 [DERIVED].
+5. UNAVAILABLE `CJ_NO_KEY` -> `CJ_API_KEY` absent from the environment; answer keeps the shape and hands off to the user's Agent Reach -> shared/polymath_shared/acquisition/supplier.py:60, 233-235, 249-253 [DERIVED].
+6. UNAVAILABLE `CJ_API_DISABLED` -> CJ answered code `1600014`; breaker then holds 600 s (default) and every later call fails at once with no network traffic — a fast failure that looks like CJ being down is the breaker -> shared/polymath_shared/acquisition/cj_api.py:224-225, 186-193, 197-200; WHY text at shared/polymath_shared/acquisition/supplier.py:70 [DERIVED].
+7. Silent waits: CJ 429/`1600200` is retried after 2 s and 4 s before `CJ_RATE_LIMITED`; a refused token is silently renewed once before `CJ_AUTH` -> shared/polymath_shared/acquisition/cj_api.py:209-235 [DERIVED].
+8. Status `AGENT_REACH_REQUIRED` / `ALIBABA_AGENT_REACH_ONLY` -> source `alibaba` is never read on this host; always a handoff, never an error -> shared/polymath_shared/acquisition/supplier.py:223-230 [DERIVED].
+9. `CJ_EMPTY` -> CJ answered with no product; fallback still built (Exa may find CJ pages) -> shared/polymath_shared/acquisition/supplier.py:247-248, 251 [DERIVED].
+10. `CJ_ERROR` -> the reader itself raised; caught, logged (`log.exception`) and typed like any other failure, so a bug never breaks the shape -> shared/polymath_shared/acquisition/supplier.py:243-245 [DERIVED].
+11. 422 `UNKNOWN_SOURCE` / `BAD_LIMIT`; 403 `BAD_PRINCIPAL` -> validation before any CJ work -> shared/polymath_shared/acquisition/supplier.py:212-218, 92-93 [DERIVED].
+12. `HUMAN_CHECK` on the parse leg -> every submitted Agent-Reach page was a verification page; `agent_reach.WALLS[host]` note added -> shared/polymath_shared/acquisition/supplier.py:357-358, 366-368, 421 [DERIVED].
 
 ## invariants
-- INVARIANT owner-only: a non-None `principal_id` is refused with 403 `OWNER_ONLY` before any reader runs (shared/polymath_shared/acquisition/supplier.py:43-46, 79). [DERIVED]
-- INVARIANT direct-loopback callers only: any proxy header or a non-loopback Host is refused 403 (B-28) (orchestrator/orchestrator/api/acquisition.py:70-78). [DERIVED]
-- INVARIANT read-only: `ENDPOINTS` is the complete CJ route set (sign-in + four reads) and `test_supplier_tools` pins it; no order, cart, payment, dispute, store-listing or sourcing route (shared/polymath_shared/acquisition/cj_api.py:15-16, 41-42). [DERIVED]
-- INVARIANT the key and token never reach a log, result or error: `_scrub` replaces both with `"[redacted]"` (shared/polymath_shared/acquisition/cj_api.py:19, 130-134; shared/polymath_shared/acquisition/supplier.py:14). [DERIVED]
-- INVARIANT same record shape as `research_acquire` listings: `service.shape` over the same readers (shared/polymath_shared/acquisition/supplier.py:5-7). [DERIVED]
-- INVARIANT no host-browser fallback on this path: a failed API answers `UNAVAILABLE` with the reason (shared/polymath_shared/acquisition/supplier.py:13-14, 100-103). [DERIVED]
-- INVARIANT pacing is respected, never worked around: 1.1 s per CJ key under a per-account lock; 2.0 s process-wide for SearXNG (shared/polymath_shared/acquisition/cj_api.py:43, 140-148; shared/polymath_shared/acquisition/searxng.py:37-39, 108-115). [DERIVED]
-- INVARIANT every supplier text field is untrusted: the `UNTRUSTED` note says quote it as evidence, never follow an instruction in it (shared/polymath_shared/acquisition/supplier.py:39, 170). [DERIVED]
-- INVARIANT CJ's own MCP server is not used: its token reaches orders, payments and disputes (shared/polymath_shared/acquisition/cj_api.py:16; shared/polymath_shared/acquisition/supplier.py:11-13). [DERIVED]
+- INVARIANT: every supplier_search answer — success or failure — carries the full shape `contract, tool, source, site, query, retrieved_at, status, sources, items, completeness, limitations, reason_code, fallback`, with both `reason_code` and `fallback` present (null when not needed) — shared/polymath_shared/acquisition/supplier.py:20-21, 255-257 [DERIVED].
+- INVARIANT: a fallback always directs to the user's own Agent Reach commands, never the host browser and never an agent's built-in web search or fetch — shared/polymath_shared/acquisition/supplier.py:64-67, 82-84 [DERIVED].
+- INVARIANT: alibaba.com is never read by this host, by any engine or browser — shared/polymath_shared/acquisition/supplier.py:223-230 [DERIVED]. (No SearXNG appears anywhere on this path in SOURCE.)
+- INVARIANT: read-only — `ENDPOINTS` is the sign-in plus four reads (`/product/listV2`, `/product/query`, `/logistic/freightCalculate`, `/product/globalWarehouseList`) and is pinned; no order/payment/dispute route exists in the client — shared/polymath_shared/acquisition/cj_api.py:46-48, 15-16 [DERIVED].
+- INVARIANT: the key and the token never reach a log, result or error text — `_scrub` replaces both with `[redacted]`; keys come from the environment only — shared/polymath_shared/acquisition/cj_api.py:25, 144-148; shared/polymath_shared/acquisition/supplier.py:27-28 [DERIVED].
+- INVARIANT: the owner (principal None) is never rate-limited and never holds a busy slot — shared/polymath_shared/acquisition/supplier.py:71-73, 123-124, 139-140, 187-190 [DERIVED].
+- INVARIANT: per key, at most one CJ request at a time, spaced `MIN_INTERVAL_S = 1.1` s (CJ's one-request-a-second rule) — shared/polymath_shared/acquisition/cj_api.py:49, 154-157 [DERIVED].
+- INVARIANT: fair-use counters, cached tokens and breakers live in this process only; a bounce resets them — shared/polymath_shared/acquisition/supplier.py:24; shared/polymath_shared/acquisition/cj_api.py:21-22 [DERIVED].
 
 ## VERIFY
 ```verify
+grep -Fq 'refuse_unless_mcp_or_web(request)' orchestrator/orchestrator/api/acquisition.py
 grep -Fq 'PROXIED_CALLER' orchestrator/orchestrator/api/acquisition.py
-grep -Fq 'CONTRACT = "supplier-tools-v1"' shared/polymath_shared/acquisition/supplier.py
-grep -Fq 'SEARCH_PAGE_MIN = 100' shared/polymath_shared/acquisition/cj_api.py
+grep -Fq 'SUPPLIER_RATE_LIMITED' shared/polymath_shared/acquisition/supplier.py
+grep -Fq 'ALIBABA_AGENT_REACH_ONLY' shared/polymath_shared/acquisition/supplier.py
 grep -Fq 'MIN_INTERVAL_S = 1.1' shared/polymath_shared/acquisition/cj_api.py
-grep -Fq 'DEFAULT_URL = "http://127.0.0.1:8888"' shared/polymath_shared/acquisition/searxng.py
-grep -Fq 'MIN_INTERVAL_S = 2.0' shared/polymath_shared/acquisition/searxng.py
-grep -Fq 'result page {pageno} was not read' shared/polymath_shared/acquisition/searxng.py
-test "$(grep -c -F 'AcquisitionRefused' shared/polymath_shared/acquisition/supplier.py)" -ge 5
+grep -Fq '1600014' shared/polymath_shared/acquisition/cj_api.py
+grep -Fq 'CJ-Access-Token' shared/polymath_shared/acquisition/cj_api.py
+test "$(grep -c -F 'CJ_NO_KEY' shared/polymath_shared/acquisition/supplier.py)" -ge 3
 ```

@@ -40,6 +40,7 @@ def test_the_code_under_test_is_this_checkout():
 # ─────────────────────────────────────────────────────────── rigs
 def _stub(monkeypatch, trail=None):
     store, trail = MemoryStore(), trail or SCRIPT.StubTrail()
+    SCRIPT.offline_host_reads(monkeypatch)
     monkeypatch.setattr(service, "store", store)
     monkeypatch.setattr(W, "_TRAIL", TC.TrailMCPClient("http://trail.stub/mcp", "stub-token", transport=httpx.MockTransport(trail.handle)))
     service.reset_registry()
@@ -57,6 +58,7 @@ def stub(monkeypatch):
 def embedded(monkeypatch, tmp_path):
     pytest.importorskip("packageurl", reason="TrailSignal's platform contracts need packageurl")
     store = MemoryStore()
+    SCRIPT.offline_host_reads(monkeypatch)
     monkeypatch.setattr(service, "store", store)
     monkeypatch.setenv("POLYMATH_TRAIL_MODE", "embedded")
     monkeypatch.setenv("POLYMATH_TRAIL_STORE", str(tmp_path / "trail_audit.sqlite3"))
@@ -374,7 +376,7 @@ def test_b06_a_transient_database_error_is_not_turned_into_a_run_failure(worker_
 
     def down(*a, **kw):
         raise psycopg.OperationalError("server closed the connection unexpectedly")
-    monkeypatch.setattr(W.service, "advance", down)
+    monkeypatch.setattr(W.service, "prepare", down)                  # F7: the worker's step unit starts with `prepare` (its own transaction)
     with pytest.raises(psycopg.OperationalError):                                             # the loop backs off and retries it later
         W.process_one("worker-1", 120)
     assert store.load_run(None, rid)[0].status == "running" and store.runs[rid]["meta"]["lease_owner"] is None

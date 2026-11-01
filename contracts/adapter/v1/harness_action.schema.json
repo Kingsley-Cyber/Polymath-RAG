@@ -2,7 +2,7 @@
  "$schema": "https://json-schema.org/draft/2020-12/schema",
  "$id": "polymath/contracts/adapter/v1/harness_action.schema.json",
  "title": "HarnessActionV1",
- "description": "A typed research action the runtime hands to the host harness (Claude Code / Hermes / Codex) for a HARNESS_ACTION step. It states intent (gaps, search intents, source roles, freshness, independence, success/falsification conditions, budget) and the Trail registry snapshot it was compiled against. It never names a search engine, browser engine, acquisition tool or source SDK; the harness decides which native tools to use and answers with a HarnessResearchReceiptV1.",
+ "description": "A typed research action the runtime hands to the connected agent for a HARNESS_ACTION step. It states intent (gaps, search intents, source roles, freshness, independence, success/falsification conditions, budget) and the Trail registry snapshot it was compiled against. It never names a search engine, browser engine, acquisition tool or source SDK. The connected agent runs it on the user's own machine with the local Agent Reach commands carried beside the step (`agent_reach`), never with an agent's built-in web search, web fetch or browser, and answers with a HarnessResearchReceiptV1.",
  "type": "object",
  "required": [
   "action_id",

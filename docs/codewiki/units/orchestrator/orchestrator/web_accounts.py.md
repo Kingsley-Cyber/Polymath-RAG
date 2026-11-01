@@ -1,123 +1,154 @@
 # unit: orchestrator/orchestrator/web_accounts.py
-anchor: orchestrator/orchestrator/web_accounts.py:1-502
+anchor: orchestrator/orchestrator/web_accounts.py:1-586
 
 ## purpose
-Accounts and sessions for the public web UI (rag.kingsleylab.xyz), FRIENDS-ACCESS-V1, owner decision 2026-09-26 — orchestrator/orchestrator/web_accounts.py:1-6 [DERIVED]. One identity store: the per-friend principal registry of `mcp_principals.py`; a friend login is a `web` credential on the friend's principal, the owner's is `owner_web` — web_accounts.py:3-4,37 [DERIVED]. Hashes/verifies passwords (scrypt), signs/reads session cookies (HMAC-SHA256), throttles guesses; the request boundary lives in `web_boundary.py` — web_accounts.py:5-6,8-12 [DERIVED].
-Importers (FACTS): `orchestrator/orchestrator/_small-modules`, `orchestrator/orchestrator/api/web_auth.py`, `orchestrator/orchestrator/api/web_settings.py`.
+Logins for the public web UI `rag.kingsleylab.xyz` (FRIENDS-ACCESS-V1, owner 2026-09-26): one identity store — the per-friend principal registry of `mcp_principals.py` — plus scrypt password hashing, HMAC-signed session cookies, login throttling, invite-code sign-up, and friend corpus grants (wildcard `["*"]` + private library `fr-<username>`, F6) — orchestrator/orchestrator/web_accounts.py:1-23 [DERIVED]. Nothing here trusts a request; the web boundary that uses it lives in `web_boundary.py` — orchestrator/orchestrator/web_accounts.py:5-6 [DERIVED].
 
 ## public surface
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| AccountError | class | (code: str, message: str) -> ValueError subclass | web_accounts.py:52-57 | — |
-| password_problem | def | (password) -> str \| None | web_accounts.py:61-65 | — |
-| hash_password | def | (password) -> str | web_accounts.py:68-72 | — |
-| verify_password | def | (password, stored) -> bool | web_accounts.py:75-84 | — |
-| registry_path | def | () -> Path \| None | web_accounts.py:88-90 | — |
-| update_registry | def | (path, change: Callable) -> Any | web_accounts.py:105-110 | — |
-| read_registry | def | (path) -> dict | web_accounts.py:113-114 | — |
-| normalize_username | def | (username) -> str | web_accounts.py:117-121 | — |
-| principal_id_for | def | (username) -> str | web_accounts.py:124-128 | — |
-| private_corpus_for | def | (username) -> str | web_accounts.py:131-132 | — |
-| set_owner_password | def | (path, password, display_name="King") -> None | web_accounts.py:160-167 | — |
-| add_friend | def | (path, username, password, *, display_name="", corpus_ids=(), adapter_ids=(), must_change=True) -> dict | web_accounts.py:170-186 | — |
-| set_friend_enabled | def | (path, username, enabled) -> None | web_accounts.py:202-209 | — |
-| reset_friend_password | def | (path, username, password) -> None | web_accounts.py:212-219 | — |
-| set_friend_corpora | def | (path, username, corpus_ids) -> dict | web_accounts.py:222-230 | — |
-| public_record | def | (rec) -> dict | web_accounts.py:233-240 | — |
-| list_friends | def | (doc) -> list[dict] | web_accounts.py:243-244 | — |
-| new_invite_code | def | () -> str | web_accounts.py:248-250 | — |
-| invite_record / invite_code | def | (doc) -> dict \| None / str \| None | web_accounts.py:253-255,258-260 | — |
-| rotate_invite | def | (path) -> str | web_accounts.py:263-270 | — |
-| register_friend | def | (path, username, password, code, *, corpus_ids=(), adapter_ids=()) -> dict | web_accounts.py:288-308 | — |
-| WebIdentity | dataclass | frozen; principal_id, username, display_name, is_owner, session_version, must_change_password=False | web_accounts.py:312-319 | — |
-| identity_for | def | (doc, username) -> WebIdentity \| None | web_accounts.py:340-344 | — |
-| authenticate_password | def | (doc, username, password) -> WebIdentity \| None | web_accounts.py:347-353 | — |
-| change_password | def | (path, principal_id, old, new) -> None | web_accounts.py:356-370 | — |
-| session_secret | def | () -> bytes \| None | web_accounts.py:374-376 | — |
-| make_session | def | (secret, ident, now=None, ttl_s=SESSION_TTL_S) -> (cookie, csrf) | web_accounts.py:379-384 | — |
-| read_session | def | (secret, cookie, now=None) -> dict \| None | web_accounts.py:387-397 | — |
-| resolve_session | def | (doc, payload) -> WebIdentity \| None | web_accounts.py:400-411 | — |
-| csrf_ok | def | (payload, header_value) -> bool | web_accounts.py:414-416 | — |
-| LoginThrottle | class | (limit=5, window_s=900); allowed/failed/succeeded | web_accounts.py:420-448 | — |
-| create_key | def | (path, principal_id, label="") -> (raw bearer, public record) | web_accounts.py:452-466 | — |
-| revoke_key | def | (path, principal_id, key_id) -> None | web_accounts.py:469-476 | — |
-| list_keys | def | (doc, principal_id) -> list[dict] | web_accounts.py:479-481 | — |
-| public_key | def | (key) -> dict | web_accounts.py:484-486 | — |
+| AccountError | class | (code: str, message: str) -> ValueError with `.code` | orchestrator/orchestrator/web_accounts.py:65-70 | — |
+| password_problem | def | (password: str) -> str \| None | orchestrator/orchestrator/web_accounts.py:74-78 | — |
+| hash_password | def | (password: str) -> str `scrypt$...` | orchestrator/orchestrator/web_accounts.py:81-86 | — |
+| verify_password | def | (password: str, stored: str \| None) -> bool | orchestrator/orchestrator/web_accounts.py:88-97 | — |
+| registry_path | def | () -> Path \| None | orchestrator/orchestrator/web_accounts.py:101-103 | — |
+| update_registry | def | (path: Path, change: Callable) -> Any | orchestrator/orchestrator/web_accounts.py:118-123 | — |
+| read_registry | def | (path: Path) -> dict | orchestrator/orchestrator/web_accounts.py:126-127 | — |
+| normalize_username | def | (username: str) -> str | orchestrator/orchestrator/web_accounts.py:130-134 | — |
+| principal_id_for | def | (username: str) -> str `prn_<name>` | orchestrator/orchestrator/web_accounts.py:137-141 | — |
+| private_corpus_for | def | (username: str) -> str `fr-<name>` | orchestrator/orchestrator/web_accounts.py:144-145 | — |
+| set_owner_password | def | (path, password, display_name="King") -> None | orchestrator/orchestrator/web_accounts.py:185-192 | — |
+| add_friend | def | (path, username, password, *, display_name="", corpus_ids=(), adapter_ids=(), must_change=True) -> dict | orchestrator/orchestrator/web_accounts.py:195-214 | — |
+| set_friend_enabled | def | (path, username, enabled) -> None | orchestrator/orchestrator/web_accounts.py:230-237 | — |
+| reset_friend_password | def | (path, username, password) -> None | orchestrator/orchestrator/web_accounts.py:240-247 | — |
+| set_friend_corpora | def | (path, username, corpus_ids) -> dict | orchestrator/orchestrator/web_accounts.py:250-260 | — |
+| set_friend_all_libraries | def | (path, username) -> dict | orchestrator/orchestrator/web_accounts.py:263-265 | — |
+| public_record | def | (rec) -> dict (never a hash) | orchestrator/orchestrator/web_accounts.py:268-278 | — |
+| private_library_autocreate | def | () -> bool | orchestrator/orchestrator/web_accounts.py:286-288 | — |
+| ensure_private_library | def | (corpus_id: str) -> bool | orchestrator/orchestrator/web_accounts.py:291-311 | — |
+| list_friends | def | (doc) -> list[dict] | orchestrator/orchestrator/web_accounts.py:325-326 | — |
+| new_invite_code | def | () -> str | orchestrator/orchestrator/web_accounts.py:330-332 | — |
+| invite_code | def | (doc) -> str \| None | orchestrator/orchestrator/web_accounts.py:340-342 | — |
+| rotate_invite | def | (path) -> str | orchestrator/orchestrator/web_accounts.py:345-352 | — |
+| register_friend | def | (path, username, password, code, *, corpus_ids=(), adapter_ids=()) -> dict | orchestrator/orchestrator/web_accounts.py:370-392 | — |
+| WebIdentity | dataclass | principal_id, username, display_name, is_owner, session_version, must_change_password=False | orchestrator/orchestrator/web_accounts.py:396-403 | — |
+| identity_for | def | (doc, username) -> WebIdentity \| None | orchestrator/orchestrator/web_accounts.py:424-428 | — |
+| authenticate_password | def | (doc, username, password) -> WebIdentity \| None | orchestrator/orchestrator/web_accounts.py:431-437 | — |
+| change_password | def | (path, principal_id, old, new) -> None | orchestrator/orchestrator/web_accounts.py:440-454 | — |
+| session_secret | def | () -> bytes \| None | orchestrator/orchestrator/web_accounts.py:458-460 | — |
+| make_session | def | (secret, ident, now=None, ttl_s=SESSION_TTL_S) -> (cookie, csrf) | orchestrator/orchestrator/web_accounts.py:463-468 | — |
+| read_session | def | (secret, cookie, now=None) -> dict \| None | orchestrator/orchestrator/web_accounts.py:471-481 | — |
+| resolve_session | def | (doc, payload) -> WebIdentity \| None | orchestrator/orchestrator/web_accounts.py:484-495 | — |
+| csrf_ok | def | (payload, header_value) -> bool | orchestrator/orchestrator/web_accounts.py:498-500 | — |
+| LoginThrottle | class | (limit=5, window_s=900); allowed/failed/succeeded | orchestrator/orchestrator/web_accounts.py:504-532 | — |
+| create_key | def | (path, principal_id, label="") -> (raw bearer, public key) | orchestrator/orchestrator/web_accounts.py:536-550 | — |
+| revoke_key | def | (path, principal_id, key_id) -> None | orchestrator/orchestrator/web_accounts.py:553-560 | — |
+| list_keys | def | (doc, principal_id) -> list[dict] | orchestrator/orchestrator/web_accounts.py:563-565 | — |
+| public_key | def | (key) -> dict | orchestrator/orchestrator/web_accounts.py:568-570 | — |
+
+Module imported by (FACTS.importers, symbol-level mapping not in FACTS): `orchestrator/orchestrator/_small-modules`, `orchestrator/orchestrator/api/web_auth.py`, `orchestrator/orchestrator/api/web_settings.py`, `orchestrator/orchestrator/web_scope.py`.
 
 ## contracts
-- `add_friend` — pre: username matches `USERNAME_RE = ^[a-z0-9][a-z0-9_-]{1,31}$` (web_accounts.py:39) and != `OWNER_USERNAME` else `BAD_USERNAME` (web_accounts.py:174-176); not already taken else `EXISTS` with `f"{name} already has an account"` (web_accounts.py:180-181). post: appends `_friend_record` — profile `"friend"`, `enabled: True`, `scopes: list(FRIEND_SCOPES)`, `corpus_ids` sorted union of arg + `fr-<name>`, `writable_corpus_ids: [fr-<name>]`, `keys: []`, `web = _new_web(...)`; returns `public_record(rec)` (no hash) — web_accounts.py:193-199,184-185 [DERIVED].
-- `register_friend` — check order under the registry lock: code exists (`INVITES_OFF`), constant-time code match via `secrets.compare_digest` (`INVITE_INVALID`, checked before username so a stranger learns nothing about names), username (`USERNAME_INVALID`/`USERNAME_TAKEN`), password (`WEAK_PASSWORD`); builds the same record as `add_friend` with `must_change=False`; returns record without hash — web_accounts.py:288-308,294-307 [DERIVED].
-- `authenticate_password` — in: `(doc, username, password)`. Unknown/inactive user: runs `verify_password(str(password), _DUMMY_HASH)` (same work, no timing oracle) and returns None; known: returns `WebIdentity` iff `verify_password` passes — web_accounts.py:347-353,350 [DERIVED].
-- `make_session`/`read_session` — cookie = `_b64(json).` + `_b64(HMAC-SHA256(secret, body))`, payload keys `"p"` (principal id), `"v"` (session version), `"e"` (unix expiry), `"c"` (csrf); read rejects bad signature and `e <= now` — web_accounts.py:379-384,387-397 [DERIVED]. pre: `session_secret()` returns None when env value is < 32 chars — web_accounts.py:374-376 [DERIVED].
-- `resolve_session` — post: identity only if account still active AND `found[0].session_version != payload.get("v")` fails — web_accounts.py:400-411,409 [DERIVED].
-- `change_password` — pre: old password verifies else `BAD_PASSWORD`; `old == new` else `WEAK_PASSWORD` "the new password must differ from the current one"; post: new scrypt hash, `session_version` + 1, `must_change_password=False` — web_accounts.py:356-370,363-369 [DERIVED].
-- `create_key` — pre: account exists (`NOT_FOUND`), active keys < `MAX_ACTIVE_KEYS` else `KEY_LIMIT` `f"at most {MAX_ACTIVE_KEYS} active keys: revoke one first"`; post: returns raw bearer once, stores only the record from `P.new_bearer()` — web_accounts.py:452-466,457-465 [DERIVED].
-- `rotate_invite` — first code or replacement; old code refused afterwards; `created_at` preserved, `rotated_at` set; returns new code — web_accounts.py:263-270 [DERIVED].
+**add_friend** — orchestrator/orchestrator/web_accounts.py:195-214
+- in: username normalized by `USERNAME_RE`; name `king` refused `BAD_USERNAME` — orchestrator/orchestrator/web_accounts.py:199-202.
+- out: `public_record(rec)` — no password hash — orchestrator/orchestrator/web_accounts.py:210.
+- post: `_create_private_library(private_corpus_for(name))` runs after the registry write, best effort — orchestrator/orchestrator/web_accounts.py:213.
+- pre/error: raises `EXISTS` when `_taken(doc, name, pid)` — orchestrator/orchestrator/web_accounts.py:206-207.
+
+**register_friend** — orchestrator/orchestrator/web_accounts.py:370-392
+- under the registry lock, in order: `INVITES_OFF` (no code) — orchestrator/orchestrator/web_accounts.py:380-381; `INVITE_INVALID` via `secrets.compare_digest`, checked before the username — orchestrator/orchestrator/web_accounts.py:382-383; `USERNAME_INVALID` / `USERNAME_TAKEN` — orchestrator/orchestrator/web_accounts.py:384-385; `WEAK_PASSWORD` via `_new_web` — orchestrator/orchestrator/web_accounts.py:387,177-180.
+- out: same record as `add_friend` but `must_change=False`; private library created only for a sign-up that passed every check — orchestrator/orchestrator/web_accounts.py:387,390-391.
+
+**_grant(corpus_ids, private)** — orchestrator/orchestrator/web_accounts.py:148-157
+- a foreign private library raises `PRIVATE_LIBRARY` — orchestrator/orchestrator/web_accounts.py:152-154.
+- `QS.ALL_LIBRARIES` present -> exactly `["*", private]`; else sorted union always including `private` — orchestrator/orchestrator/web_accounts.py:155-157.
+
+**authenticate_password** — orchestrator/orchestrator/web_accounts.py:431-437
+- unknown user: `verify_password(str(password), _DUMMY_HASH)` then `None` (no timing oracle) — orchestrator/orchestrator/web_accounts.py:434.
+- compare is constant time: `hmac.compare_digest(got, want)` — orchestrator/orchestrator/web_accounts.py:97.
+
+**make_session / read_session** — orchestrator/orchestrator/web_accounts.py:463-481
+- payload keys `{"p": principal_id, "v": session_version, "e": expiry, "c": csrf}`; cookie = `f"{body}.{sig}"` — orchestrator/orchestrator/web_accounts.py:465-467.
+- read: signature checked with `hmac.compare_digest`; `int(payload.get("e") or 0) <= now` -> None — orchestrator/orchestrator/web_accounts.py:473-479.
+
+**resolve_session** — orchestrator/orchestrator/web_accounts.py:484-495
+- post: returns identity only if `found[0].session_version != payload.get("v")` is false — orchestrator/orchestrator/web_accounts.py:493.
+
+**change_password** — orchestrator/orchestrator/web_accounts.py:440-454
+- `BAD_PASSWORD` when the old password fails; `WEAK_PASSWORD` when `old == new`; bumps `session_version` by 1 — orchestrator/orchestrator/web_accounts.py:447-453.
+
+**ensure_private_library** — orchestrator/orchestrator/web_accounts.py:291-311
+- pre: id must be `fr-<username>` else `BAD_LIBRARY` — orchestrator/orchestrator/web_accounts.py:296-298.
+- out: `False` when autocreate off; `True` = row exists — orchestrator/orchestrator/web_accounts.py:299-300,310.
+- post: `INSERT INTO corpora ... ON CONFLICT (corpus_id) DO NOTHING`; raises on DB failure — orchestrator/orchestrator/web_accounts.py:307-310,294-295.
+
+**create_key** — orchestrator/orchestrator/web_accounts.py:536-550
+- `KEY_LIMIT` when active keys >= `MAX_ACTIVE_KEYS` (3); raw bearer from `P.new_bearer()`; label truncated `[:60]`; raw shown once, never stored — orchestrator/orchestrator/web_accounts.py:543-549.
+
+**LoginThrottle** — orchestrator/orchestrator/web_accounts.py:504-532
+- `allowed(keys)` true while every key's live failure deque is `< limit` (5) in `window_s` (900); `succeeded` drops the keys — orchestrator/orchestrator/web_accounts.py:507,521,529-532.
 
 ## effect surface
-- env: `POLYMATH_WEB_SESSION_SECRET` = `''` (web_accounts.py:374-376); `POLYMATH_MCP_PRINCIPALS_FILE` = `''` (web_accounts.py:88-90).
-- files: registry JSON read/written via `P.read_registry`/`P.write_registry` under exclusive `fcntl.flock` (web_accounts.py:98,105-110); sidecar lock file `.{name}.lock` created `0o600` next to the registry (web_accounts.py:95-101).
-- cookie/header names: `polymath_session`, `polymath_csrf`, `x-polymath-csrf` (web_accounts.py:47) — set/read by the boundary, not here.
-- tables read/written: none (FACTS `tables_read`/`tables_written` empty). Network/subprocess: none visible in SOURCE.
-- imports: `orchestrator`, `orchestrator.mcp_principals` (FACTS.imports; web_accounts.py:37).
+- Postgres: writes `corpora` via `INSERT INTO corpora (corpus_id, name, config_hash, embedding_contract_id, purpose, query_enabled)` — orchestrator/orchestrator/web_accounts.py:307-310 (FACTS `tables_written: ["corpora"]`, `tables_read: []`).
+- Files: the principals registry via `POLYMATH_MCP_PRINCIPALS_FILE` — orchestrator/orchestrator/web_accounts.py:102-103; sidecar lock file `.{path.name}.lock` under `fcntl.flock(LOCK_EX)` — orchestrator/orchestrator/web_accounts.py:109-111.
+- Cookies / header names: `"polymath_session"`, `"polymath_csrf"`, `"x-polymath-csrf"` — orchestrator/orchestrator/web_accounts.py:60.
+- Env flags: `POLYMATH_MCP_PRINCIPALS_FILE` = `''` — orchestrator/orchestrator/web_accounts.py:102; `POLYMATH_WEB_SESSION_SECRET` = `''` — orchestrator/orchestrator/web_accounts.py:459; `POLYMATH_PRIVATE_LIBRARY_AUTOCREATE` = `'1'` — orchestrator/orchestrator/web_accounts.py:288.
+- Qdrant / network / subprocess: none appear in FACTS or SOURCE.
 
 ## invariants
-INVARIANT: MIN_PASSWORD = 1 and `password_problem` refuses only a non-str/empty password — web_accounts.py:41,63-64 [DERIVED]
-  fails-if: empty passwords become storable; owner rule of 2026-09-27 violated.
-INVARIANT: every password mutation or disable bumps `session_version` by 1 (set_owner_password 165, set_friend_enabled 208, reset_friend_password 217, change_password 369) and `resolve_session` requires version equality — web_accounts.py:409 [DERIVED]
-  fails-if: old cookies keep working after a reset/disable.
-INVARIANT: scrypt params fixed `_SCRYPT = {"n": 2 ** 14, "r": 8, "p": 1, "dklen": 32}`, salt 16 bytes, stored format `scrypt${n}${r}${p}${s}${d}` — web_accounts.py:49,69-71 [DERIVED]
-  fails-if: stored hashes unparseable by `verify_password` (returns False, all logins dead).
-INVARIANT: MAX_ACTIVE_KEYS = 3 and `create_key` refuses when active keys >= 3 — web_accounts.py:46,458-460 [DERIVED]
-  fails-if: unbounded bearer keys per friend.
-INVARIANT: private corpus `"fr-" + username` is always in `corpus_ids` and the sole `writable_corpus_ids` entry — web_accounts.py:197-198,227-228 [DERIVED]
-  fails-if: friend loses their private library or gains write to shared corpora.
-INVARIANT: `public_record` output keys are exactly principal_id, username, name, enabled, corpus_ids, writable_corpus_ids, adapter_ids, must_change_password, created_at, active_keys — never `password_hash` — web_accounts.py:233-240 [DERIVED]
-  fails-if: hash leaks to owner admin UI / friend Settings.
-INVARIANT: throttle = 5 failures per key (username, address) per 900 s — web_accounts.py:12,423 [DERIVED]
-  fails-if: online guessing becomes feasible (MIN_PASSWORD is 1, throttle is the guard).
-INVARIANT: SESSION_TTL_S = 7 * 24 * 3600 and `read_session` rejects `e <= now` — web_accounts.py:48,395 [DERIVED]
-  fails-if: expired cookies accepted.
-INVARIANT: invite space = 3 groups x 4 chars from 31-char alphabet (31^12 ≈ 2^59 codes) — web_accounts.py:42-43 [DERIVED]
-  fails-if: codes brute-forceable within the (absent) invite-specific throttle.
-INVARIANT: `_DUMMY_HASH` verified for unknown users so unknown/known timing matches — web_accounts.py:350,502 [DERIVED]
-  fails-if: username enumeration via response timing.
-INVARIANT: `session_secret()` returns None iff env secret length < 32 — web_accounts.py:374-376 [DERIVED]
-  fails-if: short secret silently disables session signing at the boundary. [INFERRED: make_session needs a `secret: bytes`, None is never a valid key]
+INVARIANT: SESSION_TTL_S = 7 * 24 * 3600 (604800 s) — orchestrator/orchestrator/web_accounts.py:61 [DERIVED]
+  fails-if: session lifetime silently stops being one week.
+INVARIANT: scrypt n=2**14, r=8, p=1, dklen=32 with a 16-byte random salt; params re-read from the stored string on verify — orchestrator/orchestrator/web_accounts.py:62,82,90-94 [DERIVED]
+  fails-if: hashes written with other params fail verification or weaken.
+INVARIANT: session_secret() -> None when secret length < 32 — orchestrator/orchestrator/web_accounts.py:459-460 [DERIVED]
+  fails-if: short secret silently disables signed sessions at the boundary.
+INVARIANT: allowed() == (live failures per key < 5 within 900 s) — orchestrator/orchestrator/web_accounts.py:507,521 [DERIVED]
+  fails-if: brute-force lockout regresses (docstring promise: 5 per username/address in 15 min — orchestrator/orchestrator/web_accounts.py:12).
+INVARIANT: active keys per principal <= MAX_ACTIVE_KEYS = 3 — orchestrator/orchestrator/web_accounts.py:59,543-544 [DERIVED]
+  fails-if: KEY_LIMIT never fires.
+INVARIANT: invite code = INVITE_GROUPS(3) x INVITE_GROUP_LEN(4) over the 31-char INVITE_ALPHABET — orchestrator/orchestrator/web_accounts.py:55-56 [DERIVED]
+  fails-if: codes become guessable or unreadable aloud.
+INVARIANT: USERNAME_RE = `^[a-z0-9][a-z0-9_-]{1,31}$` governs both sign-up and the owner's Add friend — orchestrator/orchestrator/web_accounts.py:52 [DERIVED]
+  fails-if: the two paths accept different names.
+INVARIANT: payload["v"] == the account's current session_version or resolve_session -> None — orchestrator/orchestrator/web_accounts.py:493 [DERIVED]
+  fails-if: a password change / reset / disable no longer kills earlier cookies (docstring promise — orchestrator/orchestrator/web_accounts.py:9-11).
+INVARIANT: `_grant` output always contains the friend's own private library, never another friend's — orchestrator/orchestrator/web_accounts.py:152-157 [DERIVED]
+  fails-if: friend loses their write target, or cross-friend leakage.
+INVARIANT: private corpus id = `QS.PRIVATE_LIBRARY_PREFIX + username` (i.e. `fr-<username>`); principal id = `"prn_" + username`, != P.OWNER_ID — orchestrator/orchestrator/web_accounts.py:138-145,296-298 [DERIVED]
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC — random: `secrets.token_bytes` web_accounts.py:69, `secrets.token_urlsafe` web_accounts.py:381,502, `secrets.choice` web_accounts.py:250; clock: `datetime.now` web_accounts.py:149,333, `time.time` web_accounts.py:382,395,435,440; concurrency: `fcntl.flock` web_accounts.py:98, `threading.Lock` web_accounts.py:426.
-idempotency: UNSAFE — `rotate_invite` invalidates the previous code on every call (web_accounts.py:263-270); `add_friend`/`register_friend` append a principal (second call hits `EXISTS`/`USERNAME_TAKEN`); `create_key` adds a new key each call; registry is read-modify-write under the file lock (web_accounts.py:105-110).
+determinism: NONDETERMINISTIC (random: `secrets.token_bytes` orchestrator/orchestrator/web_accounts.py:82 salt, `secrets.token_urlsafe` :465 CSRF and :586 dummy hash at import; clock: `datetime.now` :174,:417, `time.time` :466,:479,:519,:524; db INSERT :307) [DERIVED]
+idempotency: SAFE (registry writes are read-modify-write under an exclusive flock orchestrator/orchestrator/web_accounts.py:111,:118-123; `ensure_private_library` is `ON CONFLICT (corpus_id) DO NOTHING` :308) — `rotate_invite` deliberately issues a fresh code each call :345-352 [DERIVED]
 
 ## failure behaviour
-- `AccountError(code, message)`: `code` stable, message safe to show, never carries a secret — web_accounts.py:52-58 [DERIVED]. Codes raised: `BAD_USERNAME` (120,127,176), `WEAK_PASSWORD` (155,371), `EXISTS` (181), `NOT_FOUND` (206,221,462,474), `USERNAME_INVALID` (279), `USERNAME_TAKEN` (281,285,304), `INVITES_OFF` (299), `INVITE_INVALID` (301), `BAD_PASSWORD` (369), `KEY_LIMIT` (465).
-- `verify_password` swallows `ValueError`/`TypeError` from a malformed stored hash and returns False — web_accounts.py:82-83 [DERIVED].
-- `read_session` returns None on split/signature/expiry failure — web_accounts.py:393-396 [DERIVED]; `_identity` returns None for inactive friends (`P._active` check) — web_accounts.py:333-334 [DERIVED].
-- `authenticate_password` returns None (after dummy verify) rather than raising — web_accounts.py:349-351 [DERIVED].
+- `Exception` swallowed -> `log.warning("private library not created at friend creation", extra={"event": "web_accounts.private_library_failed", "error_code": type(exc).__name__})` — no secret, no name; the caller still sees a created account, repair left to `web_scope.ensure_own_private_library` or `scripts/web_accounts.py ensure-libraries` — orchestrator/orchestrator/web_accounts.py:314-322 [DERIVED].
+- `verify_password` returns `False` on malformed/missing stored hash (`ValueError`, `TypeError`) — orchestrator/orchestrator/web_accounts.py:88-96.
+- `read_session` returns `None` on bad signature, malformed cookie, or expiry — orchestrator/orchestrator/web_accounts.py:472-479.
+- AccountError codes raised: `BAD_USERNAME` :133,:140,:201, `WEAK_PASSWORD` :179,:449, `PRIVATE_LIBRARY` :154, `EXISTS` :206, `NOT_FOUND` :233,:243,:530,:547, `USERNAME_INVALID`/`USERNAME_TAKEN` :356-367, `INVITES_OFF`/`INVITE_INVALID` :380-383, `BAD_PASSWORD` :448, `BAD_LIBRARY` :298, `KEY_LIMIT` :544 [DERIVED].
 
 ## dumb-code flags
-- `OWNER_USERNAME = "king"` (web_accounts.py:44) duplicated as default `display_name: str = "King"` (web_accounts.py:160) — two literals for one person.
-- `MIN_PASSWORD = 1` makes `len(password) < MIN_PASSWORD` an empty-string check dressed as a policy constant — web_accounts.py:41,63 [DERIVED].
-- `_DUMMY_HASH = hash_password(secrets.token_urlsafe(18))` runs scrypt at import time: import cost + module-level nondeterminism even if never used — web_accounts.py:502 [DERIVED].
-- `CSRF_COOKIE = "polymath_csrf"` defined at web_accounts.py:47 but never referenced elsewhere in this file — only `CSRF_HEADER` is checked via `csrf_ok` (web_accounts.py:414-416). [DERIVED]
-- `register_friend` lowercases/strips the typed code (web_accounts.py:294) though `INVITE_ALPHABET` cannot produce uppercase — harmless double normalization. [INFERRED: normalization for hand-typed codes]
+- `MIN_PASSWORD = 1` — "any non-empty password" is the only rule; the throttle is the guard — orchestrator/orchestrator/web_accounts.py:54,76-77 [DERIVED].
+- `INVITE_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"` (31 chars, no 0/o/1/l/i); comment claims `31^12 ≈ 2^59` — orchestrator/orchestrator/web_accounts.py:55-56 [DERIVED].
+- `PRIVATE_LIBRARY_CONFIG_HASH = "web-private-library-v1"` — placeholder: `corpora.config_hash is NOT NULL; nothing reads it` — orchestrator/orchestrator/web_accounts.py:282-283 [DERIVED].
+- `_DUMMY_HASH = hash_password(secrets.token_urlsafe(18))` at module import — importing the module runs one scrypt — orchestrator/orchestrator/web_accounts.py:586,82 [DERIVED].
+- `CSRF_COOKIE = "polymath_csrf"` is defined while the CSRF token also rides inside the signed session — orchestrator/orchestrator/web_accounts.py:60,463-465 [DERIVED].
+- Username lowercasing duplicated: `str(username or "").strip().lower()` in `_identity` vs `normalize_username` — a bad shape returns `None` here instead of `AccountError` — orchestrator/orchestrator/web_accounts.py:407-408,130-131,413-416 [INFERRED: two normalization paths can drift].
+- Display-name default `"King"` hard-coded in `set_owner_password` — orchestrator/orchestrator/web_accounts.py:185 [DERIVED].
 
 ## refactor notes
-- Error-code strings are a UI contract (`code` is stable — web_accounts.py:53); renaming any of the 10 codes breaks `api/web_auth.py` / `api/web_settings.py` and `_small-modules` (FACTS.importers).
-- `_friend_record` is "the one shape of a friend" shared by owner Add-friend and self sign-up (web_accounts.py:193-194,305) — any field change must touch both paths plus `mcp_principals` consumers of the registry.
-- Stored-hash format `scrypt$n$r$p$s$d` (web_accounts.py:71) is the parse contract of `verify_password` (web_accounts.py:76-81); changing it orphans existing hashes.
-- Session payload keys `"p"`,`"v"`,`"e"`,`"c"` and cookie names `polymath_session`/`polymath_csrf`/header `x-polymath-csrf` (web_accounts.py:47,387) are consumed by `web_boundary.py` (web_accounts.py:5-6) — format change logs everyone out.
-- Hard dependency on `mcp_principals` symbols: `P.OWNER_ID`, `P.PRINCIPAL_ID_RE`, `P.read_registry`/`write_registry`, `P._active`, `P.new_bearer`, `P.FRIEND_PROFILE`, `P.UPLOAD_TEXT`, `P.HISTORY_READ`, `P.ADAPTER_CANCEL` (web_accounts.py:37,45,126,333,461) — drift there breaks validation here.
-- Password policy line cites the owner's 2026-09-27 decision (web_accounts.py:41); raising `MIN_PASSWORD` contradicts a dated owner rule, not just a default.
-- `P._active` is a private-name cross-module call (web_accounts.py:333) — rename in `mcp_principals` breaks this file silently.
+- Blast radius: imported by `api/web_auth.py`, `api/web_settings.py`, `web_scope.py`, `_small-modules` (FACTS.importers); the web boundary itself is `web_boundary.py` — orchestrator/orchestrator/web_accounts.py:5-6 [DERIVED]. Signature changes hit all of them.
+- The friend record shape is the single shape for owner-add and self-signup; it is coupled to `mcp_principals` (`P.read_registry`/`P.write_registry`, `P.OWNER_ID`, `P.PRINCIPAL_ID_RE`, `P._active`, `P.new_bearer`, `FRIEND_SCOPES`) — orchestrator/orchestrator/web_accounts.py:47-48,58,119-122,138-140,417,545 and :221-227 [DERIVED].
+- Wildcard `["*"]` (QS.ALL_LIBRARIES) is resolved per request by `web_scope`; `set_friend_all_libraries` depends on the token — orchestrator/orchestrator/web_accounts.py:18-20,263-265 [DERIVED].
+- `POLYMATH_PRIVATE_LIBRARY_AUTOCREATE=0` is the test-session fence (`tests/conftest.py`); removing it makes a test registry write libraries into the live database — orchestrator/orchestrator/web_accounts.py:22-23,286-288 [DERIVED].
+- Session payload keys `p/v/e/c` and the `body.sig` cookie format: changing them invalidates every existing cookie (version bump already does per account) — orchestrator/orchestrator/web_accounts.py:465-467,493 [DERIVED].
+- `ensure_private_library` reads `get_settings().stores.embedding_contract_id` at insert time — settings schema is part of the contract — orchestrator/orchestrator/web_accounts.py:309 [DERIVED].
 
 ## VERIFY
 ```verify
-grep -Fq 'MAX_ACTIVE_KEYS = 3' orchestrator/orchestrator/web_accounts.py
 grep -Fq 'OWNER_USERNAME = "king"' orchestrator/orchestrator/web_accounts.py
-grep -Fq 'INVITE_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"' orchestrator/orchestrator/web_accounts.py
 grep -Fq 'SESSION_TTL_S = 7 * 24 * 3600' orchestrator/orchestrator/web_accounts.py
-grep -Eq '\^\[a-z0-9\]\[a-z0-9_-\]\{1,31\}\$' orchestrator/orchestrator/web_accounts.py
-test "$(grep -c -F 'AccountError(' orchestrator/orchestrator/web_accounts.py)" -ge 10
-! grep -Fq 'print(' orchestrator/orchestrator/web_accounts.py
+grep -Fq 'ON CONFLICT (corpus_id) DO NOTHING' orchestrator/orchestrator/web_accounts.py
+grep -Fq 'def __init__(self, limit: int = 5, window_s: int = 900) -> None:' orchestrator/orchestrator/web_accounts.py
+test "$(grep -c -F 'session_version' orchestrator/orchestrator/web_accounts.py)" -ge 8
+! grep -Fq 'md5' orchestrator/orchestrator/web_accounts.py
 ```

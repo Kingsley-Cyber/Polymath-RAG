@@ -2,13 +2,12 @@
   * cjdropshipping.com: CJ's OFFICIAL API 2.0 when `CJ_API_KEY` is set: the sign-in (`apiKey` only) and its token cached until it
     expires, the product search mapped onto the browser backend's listing shape, CJ's rate limit waited out, a refused token renewed
     once; an API that cannot answer (auth, quota, network) falls back to the host browser, SAID in `limitations` and COUNTED.
-  * alibaba.com: the local SearXNG's search-engine results (`site:alibaba.com <query>`, format=json): only product-detail URLs,
-    title / price / minimum order from the snippet as indexed, a verification page's text never a listing; SearXNG unreachable (or
-    every engine failing) falls back the same way. `SEARXNG_URL=off` = not used.
-  * no key (and SearXNG off) = today's backend itself; with SearXNG on, a CJ read without a key is still the browser's read, byte
-    for byte.
+  * alibaba.com (PRODUCT-SEARCH-E2E, the owner 2026-11-01: "alibaba is strictly agent reach"): nothing on this host reads it; a
+    listing search answers AGENT_REACH_REQUIRED with the user-side commands (the SearXNG reader, its paging, pacing and snippet
+    parser are gone; tests/contracts/test_agent_reach_handoff.py pins the parser that replaced it). The product-page URL check stays.
+  * no key = today's backend itself: a CJ read without a key is the browser's read, byte for byte.
   * keys never reach a result, an error or a log.
-Fake HTTP only (httpx.MockTransport): no call reaches CJ, a search engine or a SearXNG. No browser, no database.
+Fake HTTP only (httpx.MockTransport): no call reaches CJ. No browser, no database.
 """
 import hashlib
 import itertools
@@ -260,15 +259,14 @@ def test_a_fallback_that_meets_a_human_check_still_says_the_api_failed():
 
 def test_no_key_is_todays_backend_and_a_cj_read_is_the_browsers_byte_for_byte(monkeypatch):
     monkeypatch.delenv("CJ_API_KEY", raising=False)
-    monkeypatch.setenv("SEARXNG_URL", "off")
     monkeypatch.delenv("POLYMATH_ACQUISITION", raising=False)
-    assert type(S.default_backend()) is O.OpenCLIBackend                                  # nothing configured: the backend itself
+    for searxng_url in ("off", ""):                                                       # SEARXNG_URL no longer selects anything
+        monkeypatch.setenv("SEARXNG_URL", searxng_url)
+        assert type(S.default_backend()) is O.OpenCLIBackend                              # nothing configured: the backend itself
     browser = Browser({"state": "ok", "records": [BROWSER_LISTING]})
-    assert LA.wrap(browser, {"SEARXNG_URL": "off"}) is browser
-    monkeypatch.delenv("SEARXNG_URL")
-    assert isinstance(S.default_backend(), LA.ListingAPIs)                                # SearXNG is on by default (alibaba only)
-    routed = LA.wrap(browser, {})
-    assert set(routed.apis) == {"alibaba_listings"}
+    assert LA.wrap(browser, {"SEARXNG_URL": "off"}) is browser and LA.wrap(browser, {}) is browser
+    assert set(LA.configured({"CJ_API_KEY": _key()})) == {"cj_listings"}                 # CJ is the only listing API left
+    routed = LA.ListingAPIs(browser, {})
     t = S.resolve("listings", "camera rain cover", "cjdropshipping.com")
     assert routed.read(t, 20) == browser.read(t, 20)                                      # no CJ key: the browser's own read
     shaped = [S.shape(t, b.read(t, 20), action=_action("same"), search_intent_id="si_supply", retrieved_at="2026-09-27T10:00:00Z", used=1,
@@ -283,57 +281,8 @@ def test_the_key_is_read_from_the_environment_only():
     assert "print(" not in src and "log." not in src                                     # the client never logs or prints
 
 
-# ─────────────────────────────────────────────────────────── alibaba.com through SearXNG
+# ─────────────────────────────────────────────────────────── alibaba.com: the user's own Agent Reach, never this host
 ALI = "https://www.alibaba.com/product-detail/Waterproof-Camera-Rain-Cover_1600123456789.html"
-SNIPPET = ("Waterproof camera rain cover for DSLR. US$2.06-3.49. Min. order: 200 pieces. Find Complete Details about Waterproof Camera "
-           "Rain Cover from Camera Bags Supplier or Manufacturer-Shenzhen Wjm Silicone & Plastic Electronic Co., Ltd.")
-RESULTS = [
-    {"url": ALI + "?spm=a2700.galleryofferlist", "title": "Waterproof Camera Rain Cover - Buy Rain Cover,Camera Cover Product on Alibaba.com",
-     "content": SNIPPET, "engine": "bing"},
-    {"url": ALI, "title": "Waterproof Camera Rain Cover", "content": "a duplicate of the first", "engine": "duckduckgo"},
-    {"url": "https://www.alibaba.com/showroom/camera-rain-cover.html", "title": "Camera Rain Cover - Alibaba", "content": "a showroom"},
-    {"url": "https://m.alibaba.com/product/1600123456789/Waterproof-Camera-Rain-Cover.html", "title": "mobile", "content": "mobile page"},
-    {"url": "https://evil.example/www.alibaba.com/product-detail/Rain-Cover_1600999999999.html", "title": "spoof", "content": "x"},
-    {"url": "https://www.aliexpress.com/item/1005001234567890.html", "title": "another site", "content": "US$1.00"},
-    {"url": "https://www.alibaba.com/product-detail/Rain-Sleeve_1600555555555.html", "title": "Captcha Interception",
-     "content": "Sorry, we have detected unusual traffic from your network. Please slide to verify."},
-    {"url": "https://spanish.alibaba.com/product-detail/Lens-Hood_1600777777777.html", "title": "Lens Hood | Alibaba.com",
-     "content": "MOQ: 50 pcs, $0.80 / piece"},
-]
-
-
-def _searx(results=RESULTS, unresponsive=(), status=200, seen=None, body=None):
-    def handler(request: httpx.Request) -> httpx.Response:
-        if seen is not None:
-            seen.append(request)
-        if isinstance(body, Exception):
-            raise body
-        if body is not None:
-            return httpx.Response(status, text=body)
-        return httpx.Response(status, json={"query": request.url.params.get("q"), "results": list(results),
-                                            "answers": [], "corrections": [], "infoboxes": [], "suggestions": [],
-                                            "unresponsive_engines": [list(u) for u in unresponsive]})
-    return httpx.MockTransport(handler)
-
-
-def test_only_alibaba_product_pages_are_kept_and_read_from_the_snippet():
-    seen = []
-    raw = SX.SearXNGListings("http://127.0.0.1:8888", transport=_searx(seen=seen)).read(S.resolve("listings", "camera rain cover", "alibaba.com"), 20)
-    (req,) = seen
-    assert (req.url.path, req.url.params["q"], req.url.params["format"]) == ("/search", "site:alibaba.com camera rain cover", "json")
-    assert [r["url"] for r in raw["records"]] == [ALI, "https://spanish.alibaba.com/product-detail/Lens-Hood_1600777777777.html"]
-    first = raw["records"][0]["listing"]
-    assert (first["title"], first["price_as_listed"], first["minimum_order_as_listed"], first["supplier"]) == \
-        ("Waterproof Camera Rain Cover", "US$2.06-3.49", "200 pieces", "Shenzhen Wjm Silicone & Plastic Electronic Co., Ltd.")
-    assert first["card"].startswith("Waterproof camera rain cover for DSLR")                         # the snippet, to check against
-    second = raw["records"][1]["listing"]
-    assert (second["title"], second["price_as_listed"], second["minimum_order_as_listed"], second["supplier"]) == ("Lens Hood", "$0.80", "50 pcs", None)
-    notes = raw["backend_notes"]
-    assert notes[0] == "found through search-engine results (SearXNG); snippet-level data" and any("as indexed" in n for n in notes)
-    assert any(n.startswith("4 search result(s) were not alibaba.com product pages") for n in notes)
-    assert any(n.startswith("1 search result(s) carried a verification page's text") for n in notes)
-
-
 @pytest.mark.parametrize("url,expected", [
     (ALI, (ALI, "1600123456789")), (ALI + "#reviews", (ALI, "1600123456789")),
     ("http://alibaba.com/product-detail/x_12345678.html", ("https://alibaba.com/product-detail/x_12345678.html", "12345678")),
@@ -342,109 +291,6 @@ def test_only_alibaba_product_pages_are_kept_and_read_from_the_snippet():
     ("javascript:alert(1)", None), ("", None), (None, None)])
 def test_a_listing_url_is_an_alibaba_product_page_parsed_in_full(url, expected):
     assert SX.listing_url(url) == expected
-
-
-@pytest.mark.parametrize("snippet,expected", [
-    ("5% off $2,000 US$2.06-3.49 Min. order: 200 pieces", ("US$2.06-3.49", "200 pieces")),     # the price before the minimum order
-    ("Price: $1.20 - $1.50 / piece; MOQ: 1,000 pcs", ("$1.20 - $1.50", "1,000 pcs")),
-    ("Minimum order quantity: 2 sets. USD 35.50", ("USD 35.50", "2 sets")),
-    ("High quality rain cover for travel cameras", (None, None)),                              # nothing shown, nothing guessed
-    ("¥18.50 per piece, 1-10 pieces", (None, None))])
-def test_price_and_minimum_order_come_from_the_snippet_verbatim(snippet, expected):
-    got = SX.parse_snippet("Rain Cover | Alibaba.com", snippet, "Rain-Cover")
-    assert (got["price_as_listed"], got["minimum_order_as_listed"]) == expected and got["title"] == "Rain Cover"
-
-
-def _sx_backend(transport, browser_raw=None):
-    browser = Browser(browser_raw or {"state": "ok", "records": [O.OpenCLIBackend._listing(ALI, "Rain cover", "Rain cover\n$3.20\nMin. order: 10 pieces")]})
-    return LA.ListingAPIs(browser, {"alibaba_listings": SX.SearXNGListings("http://127.0.0.1:8888", transport=transport)}), browser
-
-
-# ── SUPPLIER-PAGES (the owner, 2026-09-27: "with alibaba it should be multiple products"): the engines answer mostly with category
-# pages, so a search reads more result pages while the listings are short of the limit
-@pytest.fixture(autouse=True)
-def _no_real_pacing(monkeypatch):
-    """SUPPLIER-PACING: every test runs unpaced (a fake or zero pace); the pacing test sets its own interval."""
-    monkeypatch.setattr(SX, "MIN_INTERVAL_S", 0.0)
-    monkeypatch.setattr(SX, "_last_call", 0.0)
-
-
-def _product(n: int, title: str = "Gloves") -> dict:
-    return {"url": f"https://www.alibaba.com/product-detail/{title}_16000000000{n:02d}.html", "title": f"{title} {n} | Alibaba.com",
-            "content": "US$1.00 MOQ: 10 pcs"}
-
-
-def _category(n: int) -> dict:
-    return {"url": f"https://www.alibaba.com/showroom/thing-{n}.html", "title": "showroom", "content": "many suppliers"}
-
-
-def _pages(pages: dict[int, list[dict]], seen: list, fail_at: int | None = None):
-    def handler(request: httpx.Request) -> httpx.Response:
-        seen.append(request)
-        pageno = int(request.url.params.get("pageno") or 1)
-        if fail_at == pageno:
-            raise httpx.ConnectError("gone")
-        return httpx.Response(200, json={"results": pages.get(pageno, []), "unresponsive_engines": []})
-    return httpx.MockTransport(handler)
-
-
-def _read(pages, limit, seen, **kw):
-    return SX.SearXNGListings("http://127.0.0.1:8888", transport=_pages(pages, seen, **kw)).read(S.resolve("listings", "gloves", "alibaba.com"), limit)
-
-
-def test_more_result_pages_are_read_until_the_limit_with_no_product_twice():
-    seen: list = []
-    pages = {1: [_category(i) for i in range(9)] + [_product(1)],
-             2: [_category(i) for i in range(5)] + [_product(n) for n in (1, 2, 3, 4, 5)],          # product 1 again
-             3: [_category(i) for i in range(5)] + [_product(n) for n in (6, 7, 8, 9, 10)]}
-    raw = _read(pages, 8, seen)
-    assert [r.url.params.get("pageno") for r in seen] == [None, "2", "3"]                   # page 1 is asked exactly as before
-    refs = [r["ref"] for r in raw["records"]]
-    assert len(refs) == 8 and len(set(refs)) == 8 and refs[:5] == [f"16000000000{n:02d}" for n in (1, 2, 3, 4, 5)]
-    assert "3 result pages read" in raw["backend_notes"]
-
-
-def test_a_short_page_is_the_engines_last_and_a_page_of_nothing_new_ends_the_search():
-    seen: list = []
-    raw = _read({1: [_category(i) for i in range(7)] + [_product(1)]}, 20, seen)                # 8 results: not a full page
-    assert len(seen) == 1 and [r["ref"] for r in raw["records"]] == ["1600000000001"]
-    seen = []
-    raw = _read({1: [_category(i) for i in range(9)] + [_product(1)], 2: [_category(i) for i in range(9)] + [_product(1)]}, 20, seen)
-    assert len(seen) == 2 and len(raw["records"]) == 1                                          # page 2 repeated page 1: stop
-
-
-def test_a_later_page_that_fails_keeps_what_the_earlier_pages_gave():
-    seen: list = []
-    raw = _read({1: [_category(i) for i in range(7)] + [_product(n) for n in (1, 2, 3)]}, 20, seen, fail_at=2)
-    assert len(seen) == 2 and [r["ref"] for r in raw["records"]] == [f"16000000000{n:02d}" for n in (1, 2, 3)]
-    assert any(n.startswith("result page 2 was not read") for n in raw["backend_notes"])
-
-
-def test_searches_are_paced_two_seconds_apart_across_pages_and_calls(monkeypatch):
-    """SUPPLIER-PACING: the engines are asked no faster than one search every 2 s from this process."""
-    monkeypatch.setattr(SX, "MIN_INTERVAL_S", 2.0)
-    now, slept = [1000.0], []
-
-    def clock():
-        return now[0]
-
-    def sleep(s):
-        slept.append(round(s, 3))
-        now[0] += s
-    pages = {p: [_product(p * 10 + i) for i in range(10)] for p in range(1, 4)}
-    backend = SX.SearXNGListings("http://127.0.0.1:8888", transport=_pages(pages, []), sleep=sleep, clock=clock)
-    backend.read(S.resolve("listings", "gloves", "alibaba.com"), 100)
-    assert slept == [2.0, 2.0]                                              # page 1 at once (the last call was long ago), then 2 s gaps
-    now[0] += 0.5
-    backend.read(S.resolve("listings", "hats", "alibaba.com"), 5)          # a new search 0.5 s later waits the rest of the 2 s
-    assert slept[2] == 1.5
-
-
-def test_at_most_three_result_pages_are_read():
-    seen: list = []
-    pages = {p: [_product(p * 10 + i) for i in range(10)] for p in range(1, 6)}
-    raw = _read(pages, 100, seen)
-    assert len(seen) == 3 and len(raw["records"]) == 30
 
 
 def test_cj_results_are_ranked_by_the_querys_words_and_cjs_order_breaks_ties():
@@ -460,43 +306,32 @@ def test_cj_results_are_ranked_by_the_querys_words_and_cjs_order_breaks_ties():
     assert CJ.query_words("Touch-screen WINTER gloves, a 2nd time") == ("touch", "screen", "winter", "gloves", "2nd", "time")
 
 
-def test_alibaba_listings_through_searxng_say_so_and_never_open_the_site():
-    backend, browser = _sx_backend(_searx())
-    out = _acquire(backend, "alibaba.com", "searx-ok")
-    assert out["status"] == "OK" and browser.reads == [] and len(out["items"]) == 2
-    assert {s["source_class"] for s in out["sources"]} == {"supplier_listing"}
-    assert "found through search-engine results (SearXNG); snippet-level data" in out["limitations"]
-
-
-@pytest.mark.parametrize("transport,reason", [
-    (_searx(body=httpx.ConnectError("connection refused")), "unreachable"),
-    (_searx(results=[], unresponsive=[("bing", "timeout"), ("duckduckgo", "CAPTCHA"), ("brave", "too many requests")]), "unreachable"),
-    (_searx(status=403, body="<html>forbidden</html>"), "refused"),
-    (_searx(body="<html>not searxng</html>"), "bad_reply")])
-def test_searxng_that_cannot_answer_falls_back_to_the_browser_said_and_counted(transport, reason):
-    backend, browser = _sx_backend(transport)
-    before = LA.counts().get("alibaba_listings", {}).get("fallbacks", 0)
-    out = _acquire(backend, "alibaba.com", ["searx-fallback", reason, id(transport)])
-    assert browser.reads == [("alibaba_listings", 20)] and out["status"] == "OK"
-    said = [x for x in out["limitations"] if x.startswith("the SearXNG search could not answer")]
-    assert len(said) == 1 and f"({reason}:" in said[0] and "the host browser read alibaba.com instead" in said[0]
-    assert backend.status()["listing_apis"]["alibaba_listings"]["fallbacks"] == before + 1
-
-
-def test_every_engine_failing_is_named_and_a_partial_answer_is_kept():
-    raw = SX.SearXNGListings("http://127.0.0.1:8888", transport=_searx(results=RESULTS[:1], unresponsive=[("brave", "too many requests")])).read(
-        S.resolve("listings", "rain cover", "alibaba.com"), 20)
-    assert len(raw["records"]) == 1 and any("search engines that did not answer: brave (too many requests)" in n for n in raw["backend_notes"])
-
-
-@pytest.mark.parametrize("env,expected", [({}, "http://127.0.0.1:8888"), ({"SEARXNG_URL": ""}, "http://127.0.0.1:8888"),
-                                          ({"SEARXNG_URL": "http://127.0.0.1:9999/"}, "http://127.0.0.1:9999"), ({"SEARXNG_URL": "off"}, None),
-                                          ({"SEARXNG_URL": "OFF"}, None), ({"SEARXNG_URL": "ftp://127.0.0.1"}, None), ({"SEARXNG_URL": "not a url"}, None)])
-def test_searxng_is_on_by_default_and_off_says_off(env, expected):
-    assert SX.base_url(env) == expected
+def test_alibaba_listings_are_handed_to_the_users_agent_reach_and_never_read_here(monkeypatch):
+    """PRODUCT-SEARCH-E2E: research_acquire's alibaba.com listing search reads nothing on this host (no search engine, no host
+    browser): AGENT_REACH_REQUIRED with the user-side commands, inside the open research step, and no query of the budget spent."""
+    def no_network(*a, **k):
+        raise AssertionError("an alibaba.com listing search made an HTTP call on the host")
+    monkeypatch.setattr(httpx, "Client", no_network)
+    browser = Browser({"state": "ok", "records": [BROWSER_LISTING]})
+    step = _action("ali-handoff")
+    out = _acquire(browser, "alibaba.com", "ali-handoff")
+    assert out["status"] == "AGENT_REACH_REQUIRED" and out["items"] == [] and out["sources"] == [] and browser.reads == []
+    assert out["tool_trace"]["query_count"] == 0 and out["budget"]["queries_used_here"] == 0 and S._USED.get(step["action_id"], 0) == 0
+    fb = out["fallback"]
+    assert (fb["kind"], fb["reason_code"], fb["site"], fb["run_on"]) == ("AGENT_REACH", "ALIBABA_AGENT_REACH_ONLY", "alibaba.com", "your machine")
+    assert fb["commands"][0]["run"].startswith("mcporter call exa.web_search_exa query='site:alibaba.com camera rain cover'")
+    assert fb["submit"]["tool"] == "supplier_parse" and any("nothing was read on this host" in x for x in out["limitations"])
+    with pytest.raises(S.AcquisitionRefused) as exc:                                     # still inside the open research step
+        S.acquire(principal_id=None, action=None, operation="listings", target="rain cover", site="alibaba.com", backend=browser)
+    assert exc.value.code == "NO_OPEN_RESEARCH_STEP"
+    with pytest.raises(S.AcquisitionRefused) as exc:                                     # and still the owner's tool
+        S.acquire(principal_id="prn_fred", action=_action("ali-friend"), operation="listings", target="rain cover", site="alibaba.com",
+                  search_intent_id="si_supply", backend=browser)
+    assert exc.value.code == "OWNER_ONLY"
 
 
 # ─────────────────────────────────────────────────────────── the compose service and its settings
+# (PRODUCT-SEARCH-E2E: no code uses them any more; removing them is a separate owner decision, so they stay pinned as they are)
 def test_the_searxng_service_is_local_capped_pinned_and_opt_in():
     services = yaml.safe_load((ROOT / "compose.yaml").read_text())["services"]
     assert set(services) == {"postgres", "qdrant", "neo4j", "redis", "searxng"}

@@ -16,7 +16,7 @@ cd sidecars/spacy_runtime  && nohup .venv/bin/python -m uvicorn server:app --hos
 
 # supervised worker fleet (CP2.1: bounded auto-restart, quarantine, state file)
 ./scripts/run_fleet_supervised.sh legacy_v1 on 1.3.0 legacy_v1
-# state: /tmp/polymath_fleet/supervisor_state.json · logs: /tmp/polymath_fleet/*.log
+# state: ~/PolymathRuntime/logs/fleet/supervisor_state.json · logs: ~/PolymathRuntime/logs/fleet/*.log
 
 # orchestrator (retrieval API, :7200)
 cd orchestrator && nohup ../.venv/bin/python -m uvicorn orchestrator.main:app \
@@ -35,7 +35,7 @@ settings — running them without the env yields pool timeouts, not errors.**
 curl -s localhost:7200/health            # orchestrator
 curl -s localhost:8740/manifest          # gliner pin
 curl -s localhost:8744/manifest          # spacy pin
-python3 -c "import json;print(json.load(open('/tmp/polymath_fleet/supervisor_state.json')))"
+python3 -c "import json;print(json.load(open(__import__('os').path.expanduser('~/PolymathRuntime/logs/fleet/supervisor_state.json'))))"
 # DB: SELECT worker_type,status,COUNT(*) FROM worker_registrations GROUP BY 1,2;
 ```
 
@@ -55,7 +55,7 @@ Convergence: `runs.status='query_ready'` per document. Stage progress:
 | symptom | action |
 |---|---|
 | worker process dies | none — supervisor restarts (bounded), control re-leases |
-| worker crash-loops | slot QUARANTINED; read `/tmp/polymath_fleet/<name>.log`, fix, delete state file, restart fleet |
+| worker crash-loops | slot QUARANTINED; read `~/PolymathRuntime/logs/fleet/<name>.log`, fix, delete state file, restart fleet |
 | worker alive but stale binary | semantic-bundle fence refuses claims; restart fleet after deploys — **plumbing changes don't move the fence hash by design** |
 | ticket `failed`, attempt=3 | bounded retry exhausted (deterministic failure). Fix cause, then re-drive: wipe corpus + resubmit (content-addressed ids make it idempotent) |
 | Neo4j lost/suspect | `eval/v5/reconstruct.py --corpora <...>` — full wipe + exact rebuild from Postgres |

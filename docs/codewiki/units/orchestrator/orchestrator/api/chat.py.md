@@ -1,108 +1,106 @@
 # unit: orchestrator/orchestrator/api/chat.py
-anchor: orchestrator/orchestrator/api/chat.py:1-279
+anchor: orchestrator/orchestrator/api/chat.py:1-293
 
 ## purpose
-One-shot JSON transport for the chat runtime: `POST /chat` runs one runtime turn (`run_chat`, the same generator `/chat/stream` streams) and returns the answer frame as one JSON object; `POST /chat/evidence` runs the same turn forced evidence-only. [DERIVED] — orchestrator/orchestrator/api/chat.py:1-21, 122, 218
-No retrieval, compiler or synthesis logic of its own — it maps `ChatRequest` onto `StreamChatRequest` and defers to the runtime. MCP `ask` posts here and inherits everything (compiler, CHAT-RETRIEVAL-V2, CARRY-V2, SYNTHESIS-V2). [DERIVED] — orchestrator/orchestrator/api/chat.py:3-9
+One-shot JSON transport for the chat runtime: `POST /chat` maps a `ChatRequest` onto the runtime's `StreamChatRequest`, runs one `run_chat` turn (the same generator `/chat/stream` streams) and returns the answer frame as a single JSON object; MCP `ask` posts here and inherits the whole pipeline (orchestrator/orchestrator/api/chat.py:1-14 [DERIVED]). `POST /chat/evidence` runs the same turn forced evidence-only and returns a versioned `EvidencePacket` with `synthesis_performed=false` — no synthesis LLM, no reviewer — for external agents that do their own final reasoning (orchestrator/orchestrator/api/chat.py:267-271 [DERIVED]).
 
 ## public surface
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `router` | module var | `APIRouter()` | orchestrator/orchestrator/api/chat.py:36 | orchestrator/orchestrator/main.py (FACTS.importers) |
-| `ChatRequest` | class | BaseModel: `message`, `corpus_id`, `corpus_ids`, `workspace`, `all_authorized`, `mode`, `latent`, `utility`, `retrieval`, `evidence=False`, `synthesizer`, `history`, `carry_context`, `compiler`, `reasoning`, `reasoning_blend`, `corpus_explorer=False`, `evidence_only=False`, `scope` | orchestrator/orchestrator/api/chat.py:44-74 | `chat`, `chat_evidence` |
-| `stream_request` | def | `(req: ChatRequest) -> StreamChatRequest` | orchestrator/orchestrator/api/chat.py:77-114 | `_chat_impl`:122, `_evidence_impl`:216 |
-| `resolve_chat_mode` | def | `(requested: str | None) -> str` | orchestrator/orchestrator/api/chat.py:131-140 | `stream_request`:105 |
-| `attach_evidence_rows` | def | `(out: dict, req: ChatRequest) -> dict` | orchestrator/orchestrator/api/chat.py:143-178 | `_chat_impl`:124 |
-| `chat` | route | `POST /chat (req, request) -> dict` | orchestrator/orchestrator/api/chat.py:181-210 | main.py |
-| `_evidence_impl` | def | `(req: ChatRequest, *, receipt=None) -> dict` | orchestrator/orchestrator/api/chat.py:213-221 | `chat_evidence`:267 |
-| `attach_packet_rows` | def | `(out: dict, req: ChatRequest) -> dict` | orchestrator/orchestrator/api/chat.py:224-250 | `_evidence_impl`:220 |
-| `chat_evidence` | route | `POST /chat/evidence (req, request) -> dict` | orchestrator/orchestrator/api/chat.py:253-279 | main.py |
-| `CHAT_DEFAULT_SYNTHESIZER` | const | `= "deterministic-template-v3"` | orchestrator/orchestrator/api/chat.py:41 | `stream_request`:107 |
+| `ChatRequest` | class | pydantic `BaseModel`, 19 request fields | chat.py:44-77 | request body of both routes |
+| `chat` | route handler | `(req: ChatRequest, request: Request) -> dict` — POST `/chat` | chat.py:191-220 | orchestrator/orchestrator/main.py (FACTS.importers); MCP `ask` (chat.py:7) |
+| `chat_evidence` | route handler | `(req: ChatRequest, request: Request) -> dict` — POST `/chat/evidence` | chat.py:266-293 | orchestrator/orchestrator/main.py (FACTS.importers); external agents (chat.py:270-271) |
+| `stream_request` | function | `(req: ChatRequest) -> StreamChatRequest` | chat.py:85-124 | `_chat_impl:132`, `_evidence_impl:227` |
+| `resolve_chat_mode` | function | `(requested: str \| None) -> str` | chat.py:141-150 | `stream_request:114` |
+| `attach_evidence_rows` | function | `(out: dict, req: ChatRequest) -> dict` | chat.py:153-188 | `_chat_impl:134` |
+| `attach_packet_rows` | function | `(out: dict, req: ChatRequest) -> dict` | chat.py:237-263 | `_evidence_impl:233` |
+| `_chat_impl` | function | `(req, *, receipt=None) -> dict` (sync, threadpool) | chat.py:127-135 | `chat:208` |
+| `_evidence_impl` | function | `(req, *, receipt=None, client: str = "") -> dict` (sync, threadpool) | chat.py:223-234 | `chat_evidence:280` |
 
 ## contracts
 
-**stream_request** — orchestrator/orchestrator/api/chat.py:77-114
-- in: full `ChatRequest`; out: `StreamChatRequest` field-by-field (CHAT-REQUEST-MAP-V1). [DERIVED] — :78-99
-- `mode=(req.mode or resolve_chat_mode(None))` — None/"" becomes HYBRID; explicit modes pass through, runtime is the sole validator (FAST/VECTOR, HYBRID, GRAPH, WILDCARD, ASK valid; anything else → 422 `unknown_mode`; LEGACY has no runtime path). [DERIVED] — :105, 85-87
-- `synthesizer=(req.synthesizer or CHAT_DEFAULT_SYNTHESIZER)`. [DERIVED] — :107
-- post: `evidence` is NOT mapped — response-only add-on applied after the turn, never a second retrieval. [DERIVED] — :97-99, 123-124
+**`chat` (POST /chat)** — chat.py:191-220
+- in: `ChatRequest` body; `client` = `request.headers.get("user-agent", "")` (chat.py:200).
+- out: the answer frame as one dict — answer / citations / claims / meta, `contracts/answer/v2`; `meta.mode` is the EXECUTED mode (chat.py:16-19).
+- pre: rejected-before-runtime requests (empty message, unknown mode or synthesizer) never reach the runtime writer (chat.py:196-198); explicit unknown mode → 422 `unknown_mode` (chat.py:94); LEGACY has no runtime path (chat.py:95, 151).
+- post: every `/chat` call leaves exactly one receipt row, kind `chat`, with the caller's user agent; best effort, off the critical path (chat.py:193-199, 203-204).
+- failure: assembly failures stay loud (502) (chat.py:20).
 
-**resolve_chat_mode** — orchestrator/orchestrator/api/chat.py:131-140
-- out: `validate_mode(requested or MODE_HYBRID)`; `/retrieve` keeps `retrieval_modes.DEFAULT_MODE` for itself. [DERIVED] — :140, 135-136
+**`stream_request`** — chat.py:85-124
+- maps field by field per CHAT-REQUEST-MAP-V1 (docstring table chat.py:88-108); `mode` None/"" → `resolve_chat_mode(None)` = HYBRID (chat.py:114); `synthesizer` None → `CHAT_DEFAULT_SYNTHESIZER` (chat.py:116); `evidence` is NOT mapped — it is a response add-on applied after the turn (chat.py:106-108, 133-134).
+- comment warning: `corpus_explorer` / `evidence_only` "miss the mapping below and they drop" (chat.py:69-70, 120-121).
 
-**chat (POST /chat)** — orchestrator/orchestrator/api/chat.py:181-210
-- in: `ChatRequest` body + `user-agent` header. [DERIVED] — :190
-- effect: body runs `run_chat(stream_request(req), route="chat", receipt=_sink)` in a worker thread; `evidence: true` appends rows after. [DERIVED] — :122-124, 198
-- post: exactly one receipt row per call — runtime `_sink` (kind `chat`, client = user agent) or the fallback receipt; pre-runtime rejections (empty message, unknown mode/synthesizer) are receipted by the handler. [DERIVED] — :193-194, 199-209, 186-189
+**`resolve_chat_mode`** — chat.py:141-150
+- returns `validate_mode(requested or MODE_HYBRID)`; `/retrieve` keeps `retrieval_modes.DEFAULT_MODE` for its own frozen evaluations; the runtime is the one mode validator for both routes (chat.py:145-151).
 
-**attach_evidence_rows** — orchestrator/orchestrator/api/chat.py:143-178
-- pre: chunk ids from `citations[].locators` matching `^chunk:([A-Za-z0-9_]+)`, deduped in citation_id order; doc ids from `source_document_ids`. [DERIVED] — :128, 150-159
-- out: `evidence_rows` via `build_evidence_rows(conn, ..., limit=max(12, len(chunk_ids)), explore=False)`, `evidence_contract = "retrieve-evidence-rows-v1"`, `meta.setdefault("mode", "UNKNOWN")`, `meta["requested_mode"] = req.mode`. [DERIVED] — :162-169, 176-177
-- post: rows built only from ids the answer already cites — identical on FAST/HYBRID/GRAPH, never a second retrieval. [DERIVED] — :144-147
+**`attach_evidence_rows`** — chat.py:153-188
+- in: `out` dict + `req`; builds rows from `citations[].locators` chunk ids (regex `^chunk:([A-Za-z0-9_]+)`, chat.py:138, 164-166) and `source_document_ids` (chat.py:167-169), deduped, citations sorted by `citation_id`.
+- post: identical on every answer path (FAST/HYBRID/GRAPH), never a second retrieval (chat.py:156-157); sets `evidence_contract = "retrieve-evidence-rows-v1"` (chat.py:179); `meta.setdefault("mode", "UNKNOWN")` and `meta["requested_mode"] = req.mode` (chat.py:186-187).
 
-**_evidence_impl / chat_evidence (POST /chat/evidence)** — orchestrator/orchestrator/api/chat.py:213-221, 253-279
-- pre: same `stream_request` mapping, then `sreq.evidence_only = True`, `run_chat(sreq, route="chat/evidence", ...)`. [DERIVED] — :216-218
-- out: full retrieval/planning pipeline (compiler → Corpus Explore → retrieval → C4/C5 → CA4), versioned EvidencePacket with `synthesis_performed=false` — no synthesis LLM, no reviewer; Polymath owns retrieval planning, caller owns the answer. [DERIVED] — :255-258
+**`_evidence_impl` / `chat_evidence`** — chat.py:223-234, 266-293
+- forces `sreq.evidence_only = True` (chat.py:228); pipeline short-circuits before synthesis and returns the EvidencePacket (chat.py:224-225).
+- a governed run's own call (user agent startswith `ADAPTER_CLIENTS`) that names no `product` gets `product = False` (chat.py:229-230, 82-85).
+- post: same one-receipt guarantee via `_sink`, kind `chat` (chat.py:275-276, 196-199).
 
-**attach_packet_rows** — orchestrator/orchestrator/api/chat.py:224-250
-- pre: `evidence_packet.evidence[].chunk_id` (+ `utility_role`, `ca4_grade`) and `graph_facts[].fact_id`. [DERIVED] — :231-234
-- out: rows in packet order with graded fields re-attached per chunk id; `evidence_contract = "retrieve-evidence-rows-v1"`. [DERIVED] — :237-246
+**`attach_packet_rows`** — chat.py:237-263
+- rows from the packet's own `evidence_packet.evidence` chunk_ids in packet order, each re-tagged with its `utility_role` and `ca4_grade`; then the turn's graph facts with attesting chunks; built from ids the turn already chose, never a second retrieval (chat.py:238-244, 256-257).
 
 ## effect surface
-- DB via `tx()`: read conn for `build_evidence_rows` — orchestrator/orchestrator/api/chat.py:162, 237; receipt writes via `record_query_receipt(tx, kind="chat", ...)` — :194, 205, 263, 274. FACTS records `tables_read: []`, `tables_written: []` (no table-level access tracked).
-- Threads: `run_in_threadpool` for both bodies. [DERIVED] — :198, 267
-- Env: none read in this file; `compiler=None` defers to `POLYMATH_CHAT_COMPILER` in the runtime (comment only). — :65
-- Network/Qdrant/subprocess/files: none in this file.
+- Postgres: no tables named in this file (FACTS.tables_read/tables_written empty). `tx()` connections opened at chat.py:172 and chat.py:250 and handed to `build_evidence_rows`; receipt rows written via `record_query_receipt(tx, kind="chat", ...)` at chat.py:204, 215-218, 276, 287-290.
+- Env flag: `POLYMATH_CHAT_COMPILER` — default when `ChatRequest.compiler` is None (per comment, chat.py:65; enforcement lives in the runtime, not this file).
+- Qdrant / files / subprocess / direct network: none visible in this file.
+- Constants written: `CHAT_DEFAULT_SYNTHESIZER = "deterministic-template-v3"` (chat.py:41); `ADAPTER_CLIENTS = ("polymath-adapter-step/", "opportunity-research/")` (chat.py:82).
 
 ## invariants
-INVARIANT: default /chat synthesizer == `"deterministic-template-v3"` — orchestrator/orchestrator/api/chat.py:41, 107 [DERIVED]
-  fails-if: MCP `ask` / TRAIL consumers of `claims` and `citations` (comment :38-40) get LLM output instead of the grounded deterministic contract.
-INVARIANT: mode when `req.mode` is None/"" == `MODE_HYBRID` — orchestrator/orchestrator/api/chat.py:105, 140 [DERIVED]
-  fails-if: modeless /chat reruns the frozen LEGACY path (12,732 claims, 437 KB triple dump, 30–50 s) mislabeled HYBRID (:133-135).
-INVARIANT: evidence-rows limit == `max(12, len(chunk_ids))` with `explore=False` — orchestrator/orchestrator/api/chat.py:168, 242 [DERIVED]
-  fails-if: sparse citations return fewer than 12 rows, or explore-mode rows leak into the chat add-on.
-INVARIANT: child_evidence rerank_score at position i == `float(len(chunk_ids) - i)` — orchestrator/orchestrator/api/chat.py:165, 240 [DERIVED]
-  fails-if: citation/packet order stops being reflected in descending synthetic scores.
-INVARIANT: `len(evidence_rows_error)` <= 200 — orchestrator/orchestrator/api/chat.py:172, 249 [DERIVED]
-  fails-if: unbounded exception text leaks into the JSON response.
-INVARIANT: chunk ids deduped preserving first-occurrence order — orchestrator/orchestrator/api/chat.py:155-156, 232 [DERIVED]
-  fails-if: duplicate rows or reordered evidence in the add-on.
-INVARIANT: exactly one receipt row per /chat-family call (runtime sink XOR fallback) — orchestrator/orchestrator/api/chat.py:194+200, 263+269 [DERIVED]
-  fails-if: pre-runtime rejections leave zero receipts, or double-write on retry.
+INVARIANT: default /chat synthesizer == `"deterministic-template-v3"` (`req.synthesizer or CHAT_DEFAULT_SYNTHESIZER`) — chat.py:41,116 [DERIVED]
+  fails-if: MCP `ask` / TRAIL silently lose the deterministic claims/citations contract they read (chat.py:38-39).
+INVARIANT: default /chat mode == HYBRID (`validate_mode(requested or MODE_HYBRID)`) — chat.py:114,149-150 [DERIVED]
+  fails-if: no-mode requests fall back to the frozen LEGACY path (12,732 claims, 437 KB triple dump, 30–50 s) mislabeled HYBRID (chat.py:143-146).
+INVARIANT: evidence-rows limit == `max(12, len(chunk_ids))` on both attach paths — chat.py:178,255 [DERIVED]
+  fails-if: fewer than 12 rows returned even when the answer cites fewer chunks; the two paths disagree if only one changes.
+INVARIANT: every `/chat` and `/chat/evidence` POST writes exactly one receipt row — chat.py:197-199,210,282 [DERIVED]
+  fails-if: runtime-rejected requests leave no trace (`if not receipted` fallback covers them, chat.py:210,282).
+INVARIANT: `/chat/evidence` always sets `evidence_only = True` before `run_chat` — chat.py:228 [DERIVED]
+  fails-if: a synthesis LLM runs on the evidence-boundary route, breaking `synthesis_performed=false`.
+INVARIANT: user agent prefix in `ADAPTER_CLIENTS` + `product is None` → `product = False` — chat.py:82,229-230 [DERIVED]
+  fails-if: a governed run's internal evidence call triggers product mode (PRODUCT-SEARCH-E2E) against the rule at chat.py:80-85.
+INVARIANT: evidence add-on failure leaves the answer/packet standing (`evidence_rows = []` + `evidence_rows_error`, error string truncated to 200 chars) — chat.py:180-182,260-262 [DERIVED]
+  fails-if: a rows-build error would 5xx an otherwise valid answer if the swallow were removed.
+INVARIANT: identical request → identical compiled plan, retrieval decision, evidence ids, carry admission, executed mode, degraded list and synthesis contract on both transports — chat.py:10-14 [DERIVED, docstring contract]
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (clock: `time.perf_counter()` at :207, :276 — receipt `wall_ms` only; db: receipt writes and evidence-row reads :162, :237, :194). The turn itself is documented deterministic: identical request → identical plan, retrieval decision, evidence ids, carry admission, executed mode, degraded list, synthesis contract on both routes (:10-14). [DERIVED]
-idempotency: UNSAFE (every call appends a query-receipt row via `_sink` :194/:263 or the fallback :205/:274; retries add rows though answers repeat)
+determinism: NONDETERMINISTIC — `time.perf_counter` for `wall_ms` at chat.py:217 and chat.py:289 (FACTS.nondeterminism); user-agent header is an input (chat.py:200,272); DB reads via `tx()` at chat.py:172,250. Answer body itself is contractually identical across the two transports for the same request (chat.py:10-14 [DERIVED]).
+idempotency: UNSAFE — each POST writes a receipt row (`record_query_receipt`, chat.py:204,215,276,287); retries duplicate receipts even though the answer repeats.
 
 ## failure behaviour
-- `attach_evidence_rows`: any `Exception` swallowed → `evidence_rows=[]` + `evidence_rows_error`; the answer already stands. [DERIVED] — orchestrator/orchestrator/api/chat.py:170-172
-- `attach_packet_rows`: same swallow pattern; the packet already stands. [DERIVED] — orchestrator/orchestrator/api/chat.py:247-249
-- `chat` / `chat_evidence`: any `Exception` from the impl → fallback receipt written only `if not receipted`, then re-raised unchanged; caller sees the original error (runtime 422 `unknown_mode` per :86-87; assembly failures stay loud, 502, per :20). [DERIVED] — :199-210, 268-279
+- `attach_evidence_rows` / `attach_packet_rows`: broad `except Exception` swallows the rows-build error; caller sees the answer/packet with `evidence_rows = []` and `evidence_rows_error = f"{type(exc).__name__}: {exc}"[:200]` — chat.py:180-182, 260-262 [DERIVED].
+- `chat` / `chat_evidence`: broad `except Exception` — if the runtime wrote no receipt yet, record an error receipt (`error=f"{type(exc).__name__}: {detail ...}"`), then **re-raise unchanged** — chat.py:209-220, 281-292 [DERIVED].
+- Error codes: 422 `unknown_mode` for an explicit bad mode (chat.py:94); 502 on assembly failures, kept loud (chat.py:20) [DERIVED, docstring].
 
 ## dumb-code flags
-- Magic `12` duplicated in `limit=max(12, len(chunk_ids))` — orchestrator/orchestrator/api/chat.py:168, 242
-- Duplicated literal `"retrieve-evidence-rows-v1"` written at :169 and :246 — must move together.
-- Rerank scores are fabricated positions (`float(len(chunk_ids) - i)`, `0.0` for docs), not real rerank values — :165-166, 240-241
-- Defensive `getattr(req, "corpus_explorer", False)` / `evidence_only` / `scope` on a Pydantic model that defines those fields at :71-74 — the defaults are dead branches. [INFERRED: ChatRequest always has the fields, so getattr never falls back] — :111-113
-- Receipt-fallback block copy-pasted verbatim between `chat` (:199-210) and `chat_evidence` (:268-279), differing only in the impl call.
-- Truncation magic `[:200]` on error strings — :172, 249
+- Magic floor `12` in `limit=max(12, len(chunk_ids))`, duplicated on both attach paths — chat.py:178,255.
+- Fabricated `rerank_score`: `float(len(chunk_ids) - i)` (position-as-score), identical expression twice; `selected_documents` rerank_score hardcoded `0.0` — chat.py:175-176,253-254.
+- Duplicated literals: `"retrieve-evidence-rows-v1"` (chat.py:179,259); the `[:200]` error-string pattern (chat.py:182,262); the whole fallback-receipt block and `_sink` closure copy-pasted between `chat` and `chat_evidence` (chat.py:203-219 vs 275-291).
+- Defensive `getattr(req, "corpus_explorer", False)` / `getattr(req, "scope", None)` / `getattr(req, "product", None)` on a pydantic model whose fields exist at chat.py:71-77 — dead defensiveness at chat.py:120-122.
+- `"UNKNOWN"` fallback literal for `meta.mode` — chat.py:186.
+- Comment/`FACTS` mismatch: FACTS.constants records `ADAPTER_CLIENTS` as a list; source line 82 is a tuple `("polymath-adapter-step/", "opportunity-research/")` — chat.py:82.
 
 ## refactor notes
-- `stream_request` is the CHAT-REQUEST-MAP-V1 field table: any new `StreamChatRequest` field must be mirrored here or it silently drops ("miss the mapping below and they drop") — blast radius is every /chat and MCP `ask` caller. — orchestrator/orchestrator/api/chat.py:66, 101-114
-- Do not unify the default mode with `/retrieve`: `/chat` uses `MODE_HYBRID`, `/retrieve` keeps `retrieval_modes.DEFAULT_MODE` for frozen evaluations — changing the /chat default resurrects the LEGACY regression. — :133-136
-- Route paths `/chat` and `/chat/evidence` are the MCP `ask` and `polymath_search` entries (:7-8, :227); renaming breaks external agents (Claude Code/Hermes per :257).
-- LEGACY has no runtime path (:87, :137-138) — any mode-list change must keep `validate_mode` and this docstring in sync.
-- `evidence` stays a response add-on, not a runtime input (:97-99) — moving it into `StreamChatRequest` changes the never-a-second-retrieval guarantee.
+- `CHAT_DEFAULT_SYNTHESIZER` and the HYBRID default change behaviour for every MCP `ask` and `/chat` caller that omits `synthesizer`/`mode` (chat.py:41,116,149-150); MCP `ask` / TRAIL consume `claims` and `citations` from this contract (chat.py:38-39).
+- `stream_request` is the CHAT-REQUEST-MAP-V1 contract; renaming or dropping a mapping silently changes runtime turns for API/MCP callers (chat.py:85-124, 59-61, 69-70).
+- `ADAPTER_CLIENTS` prefixes and the `startswith` guard suppress product mode for governed runs; renaming those user agents breaks the guard (chat.py:80-85,229-230).
+- Route paths `/chat` and `/chat/evidence` are public API (router imported by orchestrator/orchestrator/main.py per FACTS.importers; MCP `ask` at chat.py:7; external agents at chat.py:270-271).
+- `evidence_contract = "retrieve-evidence-rows-v1"` and the `contracts/answer/v2` shape are consumed by external callers; changing either breaks them (chat.py:16-19,179,259).
 
 ## VERIFY
 ```verify
 grep -Fq 'CHAT_DEFAULT_SYNTHESIZER = "deterministic-template-v3"' orchestrator/orchestrator/api/chat.py
-grep -Fq 'return validate_mode(requested or MODE_HYBRID)' orchestrator/orchestrator/api/chat.py
-grep -Fq 'mode=(req.mode or resolve_chat_mode(None)),' orchestrator/orchestrator/api/chat.py
+grep -Fq 'ADAPTER_CLIENTS = ("polymath-adapter-step/", "opportunity-research/")' orchestrator/orchestrator/api/chat.py
+grep -Fq 'validate_mode(requested or MODE_HYBRID)' orchestrator/orchestrator/api/chat.py
 grep -Fq 'sreq.evidence_only = True' orchestrator/orchestrator/api/chat.py
-grep -Fq 'meta.setdefault("mode", "UNKNOWN")' orchestrator/orchestrator/api/chat.py
-test "$(grep -c -F 'explore=False' orchestrator/orchestrator/api/chat.py)" -ge 2
-test "$(grep -c -F 'out["evidence_contract"] = "retrieve-evidence-rows-v1"' orchestrator/orchestrator/api/chat.py)" -ge 2
-test "$(grep -c -F 't.t0' orchestrator/orchestrator/api/chat.py)" -ge 2
+grep -Fq '@router.post("/chat/evidence")' orchestrator/orchestrator/api/chat.py
+grep -Fq 'limit=max(12, len(chunk_ids))' orchestrator/orchestrator/api/chat.py
+grep -Fq 'record_query_receipt(tx, kind="chat"' orchestrator/orchestrator/api/chat.py
+! grep -Fq 'def build_evidence_rows' orchestrator/orchestrator/api/chat.py
 ```

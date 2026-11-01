@@ -8,8 +8,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 if [ -f .env ]; then set -a; . ./.env; set +a; fi
 export POLYMATH_PG_DSN="${POLYMATH_PG_DSN:-postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath}"
-RUNDIR="${POLYMATH_FLEET_DIR:-/tmp/polymath_fleet}"
-mkdir -p "$RUNDIR"
+# FLEET-LOG-DURABLE-V1: the supervisor's log dir (same precedence as
+# process_supervisor.resolve_fleet_dirs); it links /private/tmp/polymath_fleet
+# to it at boot, so that old path is deliberately not pre-created here.
+LOGDIR="${POLYMATH_FLEET_LOG_DIR:-${POLYMATH_FLEET_DIR:-$HOME/PolymathRuntime/logs/fleet}}"
+mkdir -p "$LOGDIR"
 # stop any nohup-managed fleet first
 for f in /tmp/i4_arm_*/*.pid; do
   [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null || true

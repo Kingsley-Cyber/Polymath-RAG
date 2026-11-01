@@ -17,7 +17,8 @@ AUTHORITY: `shared/polymath_shared/adapter/contracts.py:22` :: `RUN_STATUSES` (c
 | `frontend-v2/src/screens/Research.tsx` | `frontend-v2/src/screens/Research.tsx:43` | 8/8 | — |
 | `shared/polymath_shared/adapter/dossier.py` | `shared/polymath_shared/adapter/dossier.py:36` | 3/8 | `created`, `completed`, `terminal_gap`, `cancelled`, `failed` |
 | `shared/polymath_shared/adapter/run_view.py` | `shared/polymath_shared/adapter/run_view.py:20` | 7/8 | `completed` |
-| `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:116` | 7/8 | `created` |
+| `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:135` | 7/8 | `created` |
+| `shared/polymath_shared/adapter/store.py` | `shared/polymath_shared/adapter/store.py:165` | 4/8 | `created`, `completed`, `terminal_gap`, `cancelled` |
 | `shared/polymath_shared/adapter/transitions.py` | `shared/polymath_shared/adapter/transitions.py:37` | 7/8 | `failed` |
 
 ## VERIFY

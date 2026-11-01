@@ -34,9 +34,9 @@ ACCEPT = {"Accept": "application/json, text/event-stream", "Content-Type": "appl
 LOOPBACK, PUBLIC = "127.0.0.1:8930", "mcp.kingsleylab.xyz"
 ADAPTER = "polymath.knowledge_brief"
 ADMIN_ONLY_TOOLS = {"upload_document",           # deliberately NOT in TOOL_POLICY: a host path is never a principal's
-                    "research_acquire",          # AUTORESEARCH R8: the host browser holds the OWNER's sign-ins, never a principal's
-                    # SUPPLIER-APIS (owner-approved 2026-09-27): the owner's CJ account and quota, never a principal's
-                    "supplier_search", "supplier_product", "supplier_freight", "supplier_warehouses"}
+                    "research_acquire"}          # AUTORESEARCH R8: the host browser holds the OWNER's sign-ins, never a principal's
+# PRODUCT-SEARCH-E2E (the owner, 2026-11-01): the supplier tools, supplier_parse and product_search left this set; they are in
+# TOOL_POLICY under mcp_principals.SUPPLIER_SCOPES ("so im ensuring users of the connector and link works seamlessly as me")
 
 
 def _build(monkeypatch, tmp_path):
@@ -248,7 +248,10 @@ def test_every_registered_tool_is_classified(world):
 def test_adapter_authorization_and_run_ownership(world):
     w, alice, bob = world, world.keys["prn_alice"], world.keys["prn_bob"]
     _denied(_call(w, alice, "adapter_start", {**START, "adapter_id": "trail.product_discovery"}), "adapter_not_allowed")
-    _denied(_call(w, alice, "adapter_start", {**START, "request_options": {}}), "corpus_required")
+    # CORPUS-ACCESS-PARITY (the owner, 2026-11-01): naming no library passes the gate (the runtime defaults the run to the caller's
+    # searchable libraries within its grant, web_scope.require_adapter_start); a NAMED library outside the grant is still refused
+    unnamed = _call(w, alice, "adapter_start", {**START, "request_options": {}})
+    assert unnamed.status_code == 200 and w.seen[-1]["path"] == "/adapter/start" and w.seen[-1]["principal"] == "prn_alice", unnamed.text[:300]
     _denied(_call(w, alice, "adapter_start", {**START, "request_options": {"corpus_ids": ["owner-private"]}}), "corpus_not_allowed")
     _denied(_call(w, alice, "adapter_start", {**START, "input": {**START["input"], "corpus_ids": ["owner-private"]}}), "corpus_not_allowed")
 
@@ -354,9 +357,13 @@ def test_the_hosted_harness_proves_the_owners_per_friend_acceptance_list(monkeyp
                                      vantage="test", user_agents=("node",), friends=f)
     receipt = asyncio.run(go(friends))
     got = {c["id"]: c["status"] for c in receipt["checks"] if c["id"].startswith("principal.")}
-    assert got == {k: "PASS" for k in ("principal.a_authenticates", "principal.b_authenticates", "principal.a_allowed_corpus", "principal.a_denied_corpus",
-                                       "principal.a_listings_filtered", "principal.a_starts_adapter", "principal.a_continues_run",
-                                       "principal.b_cannot_reach_a_run", "principal.a_no_upload_admin", "principal.owner_retains_access")}, receipt["checks"]
+    # the §9 list (gate + adapter API). CORPUS-ACCESS-PARITY F14: the harness now also judges WEB-FRIEND parity (upload_text,
+    # recent_queries, supplier / product / deep-research tools, the private library, every library); this alice is an MCP-only
+    # friend profile, so those are judged in tests/contracts/test_corpus_access_parity.py — only the owner-only refusal is here.
+    nine = ("principal.a_authenticates", "principal.b_authenticates", "principal.a_allowed_corpus", "principal.a_denied_corpus",
+            "principal.a_listings_filtered", "principal.a_starts_adapter", "principal.a_continues_run",
+            "principal.b_cannot_reach_a_run", "principal.owner_retains_access", "principal.a_owner_only_refused")
+    assert {k: got.get(k) for k in nine} == {k: "PASS" for k in nine}, receipt["checks"]
     assert receipt["read_only"] is False
     text = json.dumps(receipt)
     assert OWNER_KEY not in text and w.keys["prn_alice"] not in text and w.keys["prn_bob"] not in text

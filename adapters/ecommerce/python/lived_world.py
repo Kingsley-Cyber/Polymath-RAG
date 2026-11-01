@@ -395,6 +395,28 @@ def _ident(rec: dict) -> tuple:
             ident.get("thread_key") or rec.get("source") or rec.get("id"))
 
 
+_FRICTION_STOP = frozenset("""a an the and or of to in on at for with without while during when after before their his her its they them
+it is are be being get gets getting keep keeps kept out up down off from into onto by as so too very""".split())
+
+
+def _stem(word: str) -> str:
+    for suffix in ("ing", "ed", "es", "s"):
+        if len(word) > len(suffix) + 2 and word.endswith(suffix):
+            word = word[: -len(suffix)]
+            break
+    if len(word) > 3 and word[-1] == word[-2]:                                  # "runn" -> "run", "access" -> "acces"
+        word = word[:-1]
+    return word[:-1] if len(word) > 4 and word.endswith("e") else word           # "bounce" / "bouncing" -> "bounc"
+
+
+def friction_key(wording) -> str:
+    """Gap A-10: the canonical key of a friction wording — lowercase words (underscores are spaces), stop words dropped, light
+    inflection stripped, sorted. Two wordings of one friction share a key; different frictions keep different keys. Deterministic."""
+    text = str(wording or "").replace("_", " ").lower()
+    words = sorted({_stem(w) for w in re.findall(r"[a-z0-9]+", text) if w not in _FRICTION_STOP})
+    return " ".join(words) or "unassigned"
+
+
 def cards(state: dict, policies: dict) -> str:
     """Executor python.evidence_cards — deterministic recompute from records."""
     d = state["data"]
@@ -421,12 +443,21 @@ def cards(state: dict, policies: dict) -> str:
                           "products_named": sorted({str(x) for r in items for x in (r.get("products_named") or [])}),
                           "unknowns": unknown})
     card_by_author = {(c["platform"], c["author_key"]): c["id"] for c in cards_out}
-    # clusters: community × friction family
+    # clusters: community × friction family. Gap A-10: the family is the WORDING a hypothesis gave its friction, so "keys bounce while
+    # running" and "keys bouncing during runs" split one lived friction into two THIN clusters. Records group by the wording's
+    # canonical key (`friction_key`: case, punctuation, stop words and inflection dropped); the cluster keeps the wording most of its
+    # records carry (ties: the first in order), so a group of one wording keeps its old label and its old id.
     groups: dict[tuple, list] = collections.defaultdict(list)
     for r in recs:
-        groups[(_norm_community(r.get("community")), str(r.get("friction_family") or "unassigned"))].append(r)
+        groups[(_norm_community(r.get("community")), friction_key(r.get("friction_family")))].append(r)
     clusters_out = []
-    for (comm, fam), items in sorted(groups.items()):
+    labelled = []
+    for (comm, key), items in groups.items():
+        words = collections.Counter(str(r.get("friction_family") or "unassigned") for r in items)
+        first = {w: n for n, w in reversed(list(enumerate(str(r.get("friction_family") or "unassigned") for r in items)))}
+        fam = sorted(words, key=lambda w: (-words[w], first[w]))[0]
+        labelled.append(((comm, fam), items))
+    for (comm, fam), items in sorted(labelled, key=lambda kv: kv[0]):
         # governed mode: when EVERY record carries the independence group the governance authority assigned, count those as
         # given; the skill's own arithmetic stays the rule for standalone records that carry none
         ind = (len({r["independence_group"] for r in items}) if all(r.get("independence_group") for r in items)

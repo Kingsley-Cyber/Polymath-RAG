@@ -15,6 +15,26 @@ let host: HTMLDivElement;
 let root: Root;
 let me: Me | 401 | 404;
 let calls: { path: string; method: string; headers: Record<string, string>; body: unknown }[];
+/** a backend older than FRIEND-JOURNEY F7: a friend's new key comes without its connector link */
+let oldKeyShape = false;
+
+/** PRODUCT-SEARCH-E2E (FRIEND-JOURNEY F7): a friend's new key, its claude.ai connector link, and the server's connect prompt for it
+ *  (orchestrator/orchestrator/api/web_settings.py `connect_prompt`, cut down to the Connect section and two harness lines). */
+const FRIEND_KEY = "pmk_abcdef123456_SECRET";
+const FRIEND_LINK = `https://mcp.example.test/k/${FRIEND_KEY}/mcp`;
+const FRIEND_PROMPT = [
+  "You can use my Polymath research library through MCP. Connect to it, then use its tools for my questions.",
+  "",
+  "Connect",
+  "- MCP server URL: https://mcp.example.test/mcp",
+  "- Transport: Streamable HTTP",
+  `- Header: Authorization: Bearer ${FRIEND_KEY}`,
+  `- Connector link (the key is inside it; for a client that takes only a URL): ${FRIEND_LINK}`,
+  "",
+  "Setup (pick your harness; each command is safe to run again)",
+  `- Claude Code: claude mcp remove polymath -s user; claude mcp add -s user -t http polymath https://mcp.example.test/mcp -H "Authorization: Bearer ${FRIEND_KEY}"`,
+  "- Claude.ai (web, desktop or phone): Settings > Connectors > Add custom connector, paste the connector link as its URL and add nothing else. Claude.ai cannot send a header; the link already carries the key.",
+].join("\n");
 
 function route(path: string, init?: RequestInit): Response {
   const method = init?.method ?? "GET";
@@ -28,8 +48,9 @@ function route(path: string, init?: RequestInit): Response {
   if (path === "/corpora") return Response.json({ corpora: [{ corpus_id: "cinema", documents: 3, query_ready: true, query_enabled: true }] });
   if (path === "/keys" && method === "GET") return Response.json({ is_owner: false, keys: [], max_active: 3, mcp_url: "https://mcp.example.test/mcp" });
   if (path === "/keys" && method === "POST") {
-    return Response.json({ key: "pmk_abcdef123456_SECRET", key_id: "abcdef123456", label: "laptop", created_at: "2026-09-26T00:00:00Z",
-                           revoked_at: null, shown_once: true, prompt: "Connect with Authorization: Bearer pmk_abcdef123456_SECRET" }, { status: 201 });
+    return Response.json({ key: FRIEND_KEY, key_id: "abcdef123456", label: "laptop", created_at: "2026-09-26T00:00:00Z",
+                           revoked_at: null, shown_once: true, prompt: FRIEND_PROMPT,
+                           ...(oldKeyShape ? {} : { connector_url: FRIEND_LINK }) }, { status: 201 });
   }
   if (path === "/keys/owner") {
     return Response.json({ key: "main-key-XYZ-0123456789", mcp_url: "https://mcp.example.test/mcp",
@@ -55,6 +76,7 @@ beforeEach(() => {
   localStorage.clear();
   document.cookie = "polymath_csrf=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   calls = [];
+  oldKeyShape = false;
   vi.stubGlobal("fetch", vi.fn(async (path: string, init?: RequestInit) => {
     calls.push({ path, method: init?.method ?? "GET", headers: (init?.headers ?? {}) as Record<string, string>,
                  body: typeof init?.body === "string" ? JSON.parse(init.body) : init?.body ?? null });
@@ -216,4 +238,76 @@ it("OWNER-KEY-VISIBLE: a friend never sees the main-key card and never asks for 
   await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
   expect(host.textContent).not.toContain("API key for another computer");
   expect(calls.some((c) => c.path === "/keys/owner")).toBe(false);
+});
+
+/* ── PRODUCT-SEARCH-E2E (FRIEND-JOURNEY F7): a friend's key gets the claude.ai connector link, as the owner's key does ─────────── */
+
+async function openSettings() {
+  await render();
+  await act(async () => { button("Settings").click(); });
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+}
+
+async function createKey() {
+  await act(async () => { button("Create key").click(); });
+  await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+}
+
+const connectorButton = () => host.querySelector('button[aria-label="Copy Claude connector URL"]') as HTMLButtonElement | null;
+
+it("a friend's new key shows its claude.ai connector link with the owner's copy button and help line, and copies exactly the link", async () => {
+  const writeText = vi.fn(async () => undefined);
+  vi.stubGlobal("navigator", { clipboard: { writeText } });
+  me = OWNER;                                                    // the owner's card first: the reference for "exactly as the owner's"
+  await openSettings();
+  const owner = connectorButton()!;
+  const ownerButton = owner.outerHTML;
+  const ownerHelp = owner.closest("section")!.querySelector(".row + .settings__lead")!.textContent;
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  me = FRIEND;
+  await openSettings();
+  expect(connectorButton()).toBeNull();                          // nothing before a key exists
+  await createKey();
+  const once = host.querySelector(".settings__once")!;
+  expect(once.querySelector('[aria-label="Claude connector URL"]')!.textContent).toBe(FRIEND_LINK);
+  const b = connectorButton()!;
+  expect(once.contains(b)).toBe(true);
+  expect(b.outerHTML).toBe(ownerButton);                          // the same button: label, icon, class
+  expect(b.textContent).toBe("Copy Claude connector URL");
+  expect(once.querySelector(".keyrow + .settings__lead")!.textContent).toBe(ownerHelp);
+  expect(ownerHelp).toContain("Add custom connector, paste the connector URL");
+  await act(async () => { b.click(); await Promise.resolve(); });
+  expect(writeText).toHaveBeenLastCalledWith(FRIEND_LINK);
+  expect(b.textContent).toBe("Copied");
+  expect(b.getAttribute("aria-label")).toBe("Copied");
+  expect(once.querySelector(".banner")!.textContent).toContain("or the connector URL, which contain it");
+});
+
+it("the friend's copied connect prompt is the server's text as written: its claude.ai line uses the link, never a header", async () => {
+  const writeText = vi.fn(async (_text: string) => undefined);
+  vi.stubGlobal("navigator", { clipboard: { writeText } });
+  me = FRIEND;
+  await openSettings();
+  await createKey();
+  const copyPrompt = host.querySelector('.settings__once button[aria-label="Copy prompt"]') as HTMLButtonElement;
+  await act(async () => { copyPrompt.click(); await Promise.resolve(); });
+  const copied = writeText.mock.lastCall?.[0] ?? "";
+  expect(copied).toBe(FRIEND_PROMPT);                             // nothing rewritten, nothing dropped
+  expect(copied).toContain(FRIEND_LINK);
+  const claudeAi = copied.split("\n").find((l) => l.startsWith("- Claude.ai"))!;
+  expect(claudeAi).toContain("paste the connector link as its URL and add nothing else");
+  expect(claudeAi).not.toMatch(/Authorization|Bearer|header above/);
+});
+
+it("a backend older than the friend connector link shows the key and prompt as before, with no link and no button", async () => {
+  oldKeyShape = true;
+  me = FRIEND;
+  await openSettings();
+  await createKey();
+  const once = host.querySelector(".settings__once")!;
+  expect(once.textContent).toContain(FRIEND_KEY);
+  expect(once.querySelector('[aria-label="Claude connector URL"]')).toBeNull();
+  expect(connectorButton()).toBeNull();
+  expect(once.querySelector(".banner")!.textContent).toContain("Copy it (or the prompt, which contains it) before closing this box.");
 });

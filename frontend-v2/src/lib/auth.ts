@@ -29,6 +29,9 @@ export interface CreatedKey extends ApiKey {
   key: string;
   prompt: string;
   shown_once: boolean;
+  /** PRODUCT-SEARCH-E2E (FRIEND-JOURNEY F7): the claude.ai connector link for THIS key (`…/k/<key>/mcp`: claude.ai cannot send
+   *  a header, so the key rides in the path), as the owner's key has. Absent from a backend older than it. */
+  connector_url?: string;
 }
 
 export interface MyKeys {
@@ -47,6 +50,8 @@ export interface ConnectPrompt {
   mcp_url: string;
   key_included?: boolean;
   connect_command?: string;
+  /** a friend's template: the connector link with `placeholder` where their key goes (never the owner's) */
+  connector_url?: string;
 }
 
 /** OWNER-KEY-VISIBLE — GET /keys/owner (the owner only): the main key, the public MCP URL, a prompt with the key in it. */

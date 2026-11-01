@@ -28,14 +28,15 @@ def _mode(path):
 def test_add_writes_an_owner_only_registry_and_key_file_and_prints_no_secret(tmp_path, capsys):
     assert pathlib.Path(P.__file__).is_relative_to(ROOT)
     cli, reg, key_out = _cli(), tmp_path / "state" / "principals.json", tmp_path / "keys" / "fred.key"
-    assert cli.main(["--file", str(reg), "add", "--id", "prn_fred", "--name", "Fred", "--corpus", "commerce-v1",
+    # PRODUCT-SEARCH-E2E (F2): a script friend gets the web friends' scopes (upload included), so it names its writable library
+    assert cli.main(["--file", str(reg), "add", "--id", "prn_fred", "--name", "Fred", "--corpus", "commerce-v1", "--writable-corpus", "fr-fred",
                      "--adapter", "ecommerce.product_research", "--rate", "60", "--key-out", str(key_out)]) == 0
     printed = capsys.readouterr().out
     raw = key_out.read_text().strip()
     assert P.BEARER_RE.match(raw) and raw not in printed and raw not in reg.read_text()
     assert _mode(reg) == 0o600 and _mode(key_out) == 0o600
     rec = json.loads(reg.read_text())["principals"][0]
-    assert rec["scopes"] == sorted(P.FRIEND_PROFILE) and rec["writable_corpus_ids"] == [] and rec["rate_per_minute"] == 60
+    assert rec["scopes"] == sorted(P.FRIEND_SCOPES) and rec["writable_corpus_ids"] == ["fr-fred"] and rec["rate_per_minute"] == 60
     assert rec["keys"][0]["secret_sha256"] == P.hash_key(raw) and set(rec["keys"][0]) == {"key_id", "secret_sha256", "created_at", "revoked_at"}
     who = P.PrincipalStore(path=reg).authenticate(raw)
     assert who.principal_id == "prn_fred" and not who.is_admin and who.corpus_ids == {"commerce-v1"}
@@ -47,7 +48,7 @@ def test_add_writes_an_owner_only_registry_and_key_file_and_prints_no_secret(tmp
 def test_a_bearer_is_never_shown_by_default_and_admin_is_never_grantable(tmp_path):
     cli, reg = _cli(), tmp_path / "principals.json"
     with pytest.raises(SystemExit, match="never shown by default"):
-        cli.main(["--file", str(reg), "add", "--id", "prn_gina", "--corpus", "c"])
+        cli.main(["--file", str(reg), "add", "--id", "prn_gina", "--corpus", "c", "--writable-corpus", "fr-gina"])
     assert not reg.exists()
     with pytest.raises(SystemExit):                                               # argparse: admin is not a choice
         cli.main(["--file", str(reg), "add", "--id", "prn_gina", "--scope", "admin", "--key-out", str(tmp_path / "g.key")])
@@ -63,7 +64,7 @@ def test_a_bearer_is_never_shown_by_default_and_admin_is_never_grantable(tmp_pat
 def test_rotate_revoke_disable_take_effect_through_the_store(tmp_path):
     cli, reg = _cli(), tmp_path / "principals.json"
     k1, k2 = tmp_path / "1.key", tmp_path / "2.key"
-    cli.main(["--file", str(reg), "add", "--id", "prn_hana", "--corpus", "c", "--key-out", str(k1)])
+    cli.main(["--file", str(reg), "add", "--id", "prn_hana", "--corpus", "c", "--writable-corpus", "fr-hana", "--key-out", str(k1)])
     store = P.PrincipalStore(path=reg)
     first = k1.read_text().strip()
     assert store.authenticate(first)

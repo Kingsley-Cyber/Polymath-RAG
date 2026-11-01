@@ -11,7 +11,9 @@ Homebrew's path. What this module does with it, and nothing else:
     by it (the earliest it can be), never by the moment it was read;
   * at most POLYMATH_ACQUISITION_CONCURRENCY reads at a time (default 2), so the owner's browser is never flooded.
 A sign-in wall or a human-verification page is DETECTED and reported (`state`), never worked around. The comment, like, follow,
-post and purchase commands OpenCLI also has are never called."""
+post and purchase commands OpenCLI also has are never called. PRODUCT-SEARCH-E2E (the owner, 2026-11-01: "alibaba is strictly agent
+reach"): alibaba.com is never read here; its search-page reader is gone (`service.acquire` hands an alibaba.com listing search to the
+user's own Agent Reach before any backend is asked)."""
 from __future__ import annotations
 
 import json
@@ -28,7 +30,7 @@ from urllib.parse import quote_plus, urlsplit
 
 import yaml
 
-from polymath_shared.acquisition.challenge import looks_like_challenge
+from polymath_shared.acquisition.challenge import WALL_ROUTE, looks_like_challenge
 from polymath_shared.acquisition.service import Target, now_iso
 
 READ_TIMEOUT_S = 75
@@ -55,7 +57,7 @@ def _int(v: Any) -> int | None:
 #: wall ROUTES, matched on the path of the page's own URL (a sign-in page, a captcha page, CJ's human-verification page). A slug, a
 #: community or a search word that merely contains the word ("/r/loginhelp/", ".../validation_would_you_buy_this/") is content.
 _SIGN_IN_ROUTE = re.compile(r"/(?:accounts/)?login(?:[/.]|$)")
-_HUMAN_CHECK_ROUTE = re.compile(r"/captcha(?:[/.]|$)|/egg/cj/validation\.html$")
+_HUMAN_CHECK_ROUTE = WALL_ROUTE                      # one definition (challenge.py) for the browser, the parser and the receipt check
 #: what a human-check page says. On a page that reads, these words are CONTENT (a thread about captchas), so they name a wall only
 #: when the reader got nothing from the page.
 WALL_WORDS = ("human verification", "not a robot", "captcha")
@@ -386,22 +388,6 @@ class OpenCLIBackend:
         text = f"{title} · price as listed: {listing['price_as_listed'] or 'not shown'} · minimum order as listed: {listing['minimum_order_as_listed'] or 'not shown'}" \
                f" · supplier: {supplier or 'unresolved'}"
         return {"kind": "listing", "ref": href, "url": href, "text": text, "published_at": None, "precision": "none", "listing": listing}
-
-    def _alibaba_listings(self, t: Target, limit: int) -> dict[str, Any]:
-        url = f"https://www.alibaba.com/trade/search?SearchText={quote_plus(t.query or '')}"
-        page, rows, retrieved = self._listing_cards(url, 5.0, 'a[href*=\\"/product-detail/\\"]', "/Min\\.? ?order/")
-        if (why := blocked(page)):
-            return {"state": why, "page_url": url, "retrieved_at": retrieved}
-        seen, records = set(), []
-        for r in rows if isinstance(rows, list) else []:
-            if r.get("href") in seen or not r.get("href", "").startswith("https://"):
-                continue
-            seen.add(r["href"])
-            records.append(self._listing(r["href"], r.get("title") or "", r.get("card") or ""))
-            if len(records) >= limit:
-                break
-        return {"state": "ok" if records else _nothing(page), "page_url": url, "retrieved_at": retrieved, "records": records, "total": None,
-                "complete": None, **({} if records else {"note": "no listing card was read on the search page"})}
 
     def _cj_listings(self, t: Target, limit: int) -> dict[str, Any]:
         url = f"https://cjdropshipping.com/search/{quote_plus(t.query or '')}.html"

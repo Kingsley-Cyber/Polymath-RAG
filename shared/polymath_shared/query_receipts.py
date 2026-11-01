@@ -57,7 +57,10 @@ def summarize_response(kind: str, out: Any) -> dict:
                           "retrieval_trace", "latent_selection", "wildcard", "trace_ms",
                           # FACET-RETRIEVAL-V1 F5 / F6: the graded evidence of a synthesis answer and the gap check's
                           # claims / searches — both small; absent on every turn that did not run them
-                          "synthesis", "gap_check")}
+                          "synthesis", "gap_check",
+                          # PRODUCT-SEARCH-E2E (product-search-v1): a product turn's counts and statuses (hypotheses, CJ
+                          # lookups, items, parse, verdict) — never item text; absent on every other turn
+                          "product_search")}
     cits = out.get("citations")
     if isinstance(cits, list):
         d["citations"] = len(cits)

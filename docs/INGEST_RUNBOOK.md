@@ -5,7 +5,7 @@
 One command from cold: `scripts/boot_polymath.sh` (installed as LaunchAgent
 `com.polymath.v5`). Stores via docker; sidecars, orchestrator, control and
 workers under the single supervisor. Verify:
-`/tmp/polymath_fleet/supervisor_state.json` shows 14/14 alive, ports
+`~/PolymathRuntime/logs/fleet/supervisor_state.json` shows 14/14 alive, ports
 8740/8742/8743/8744 answer /manifest (reranker: /ready), 7200 /health.
 
 ## Bulk corpus ingestion

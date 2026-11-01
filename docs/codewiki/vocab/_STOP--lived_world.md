@@ -12,7 +12,7 @@ AUTHORITY: `adapters/ecommerce/python/lived_world.py:32` :: `_STOP` (count: 35) 
 
 | consumer | first use | values present | values missing (first 12) |
 |---|---|---|---|
-| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:215` | 3/35 | `about`, `also`, `anyone`, `being`, `could`, `does`, `every`, `from`, `have`, `into`, `members`, `more` |
+| `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:82` | 5/35 | `about`, `also`, `anyone`, `being`, `could`, `does`, `every`, `from`, `have`, `into`, `members`, `most` |
 | `adapters/ecommerce/python/corpus_polymath.py` | `adapters/ecommerce/python/corpus_polymath.py:147` | 15/35 | `about`, `also`, `anyone`, `being`, `community`, `could`, `every`, `have`, `members`, `more`, `most`, `only` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:128` | 27/35 | `being`, `every`, `members`, `more`, `most`, `only`, `other`, `someone` |
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:32` | 28/35 | `also`, `anyone`, `every`, `members`, `other`, `someone`, `users` |
