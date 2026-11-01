@@ -186,6 +186,12 @@ Inspection" (https://claude.ai/artifact/RrRnhxEiv85XzupF3kzqfi): 10 critical, 24
   sign-in with the configured key succeeded (no cached token).
 - NOT yet proven (needs the owner's deploy): the patched routes through the public connector as owner and as a friend, migration 0067 on the
   live database, a seed-less governed run on a non-commerce library reaching X_compile, and a TrailSignal score (TR-09).
+- Security lint (ruff `S` on the 58 changed source files, the pre-commit hook's advisory check run with the venv's ruff): 52 findings vs 48
+  on the same files at `1403f3ac`; the 6 new: 4 false positives (the domain subprocess moved from `adapter_step_worker.py:664` — fixed
+  interpreter, a binding path validated inside the domains dir, no shell, minimal env, timeout and output cap; two SQL f-strings that splice
+  constant fragments with bound values; an unreadable corpus generation only disables that corpus's cache), 1 benign (closing a client), 1
+  real: a failed Agent Reach handoff build returned an empty placeholder silently — it now carries `build_error` (tested,
+  `test_product_service.py`).
 - `tests/integration/test_cross_domain_routing.py` (named by the impact check) fails to collect (`No module named
   'orchestrator.orchestrator'`) on untouched `production` too: pre-existing, not run.
 

@@ -68,17 +68,19 @@ def _default_search() -> Callable[..., dict]:
 def fallback_for(site: str, query: str | None, reason_code: str, why: str) -> dict[str, Any]:
     """The user-side Agent Reach handoff, built by the acquisition layer's own `agent_reach.fallback` (its `commands` are objects
     {step, run, what, then, for_each?}); a typed placeholder with the same keys when that module cannot build one here."""
+    build_error = "agent_reach.fallback returned no handoff"
     try:
         from polymath_shared.acquisition import agent_reach
         built = agent_reach.fallback(site, query, reason_code, why)
         if isinstance(built, dict):
             return built
-    except Exception:  # noqa: BLE001 — the handoff is advice; a build failure must never fail the turn
-        pass
+    except Exception as exc:  # noqa: BLE001 — the handoff is advice; a build failure must never fail the turn
+        build_error = f"{type(exc).__name__}: {str(exc)[:160]}"
     return {"kind": "AGENT_REACH", "reason_code": reason_code, "why": why, "site": site, "query": query, "run_on": "your machine",
             "never": "do not use your agent's built-in web search or web fetch for this",
             "install": {"repo": AGENT_REACH_REPO, "verify": AGENT_REACH_VERIFY}, "commands": [],
-            "submit": {"tool": "supplier_parse", "route": "POST /supplier/parse"}, "placeholder": True}
+            "submit": {"tool": "supplier_parse", "route": "POST /supplier/parse"}, "placeholder": True,
+            "build_error": build_error}
 
 
 def item_view(raw: Mapping[str, Any], sources_by_id: Mapping[str, Any]) -> dict[str, Any]:

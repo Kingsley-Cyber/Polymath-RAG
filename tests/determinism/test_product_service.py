@@ -286,3 +286,16 @@ def test_compact_evidence_is_tag_source_and_at_most_400_characters():
                               text_of=lambda cid: ("x " * 400) if cid == "c1" else None, previews={"chunk:c2@0:9": "preview two"})
     assert rows[0]["tag"] == "S1" and rows[0]["source"] == "Book › Ch 1" and len(rows[0]["text"]) == S.EVIDENCE_TEXT
     assert rows[1] == {"tag": "S2", "chunk_id": "c2", "source": "d2", "text": "preview two"}
+
+
+def test_a_handoff_that_cannot_be_built_says_why_instead_of_going_silent(monkeypatch):
+    from polymath_shared.acquisition import agent_reach
+
+    def boom(*a, **k):
+        raise RuntimeError("channel table unreadable")
+    monkeypatch.setattr(agent_reach, "fallback", boom)
+    fb = S.fallback_for("cjdropshipping.com", "pet hair remover", "CJ_API_DISABLED", "CJ refused")
+    assert fb["placeholder"] is True and fb["commands"] == [] and fb["kind"] == "AGENT_REACH"
+    assert fb["build_error"] == "RuntimeError: channel table unreadable"
+    monkeypatch.setattr(agent_reach, "fallback", lambda *a, **k: None)
+    assert S.fallback_for("alibaba.com", "x", "ALIBABA_AGENT_REACH_ONLY", "local only")["build_error"] == "agent_reach.fallback returned no handoff"
