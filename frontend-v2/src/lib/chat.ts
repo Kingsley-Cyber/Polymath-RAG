@@ -3,6 +3,7 @@ import { chatStream, type SseFrame } from "./api";
 import type { AnswerFrame, ChatGapCheck, ChatSynthesis, DeepCoverage, ProductResearchResult, RetrievalReceipt } from "./contracts";
 import type { DeepRunState } from "./deep";
 import type { ProductRunRef } from "./productResearch";
+import type { ProductReportRef } from "./productReport";
 
 /** One pipeline step from a `phase` frame. `data` keeps the raw fields so the
  *  process rail can show per-step detail (chunks, items, corpora, model…). */
@@ -45,6 +46,10 @@ export interface Turn {
   productResearch?: ProductResearchResult | null;
   /** The governed run started from that offer (POST /adapter/start): the run id and the agent prompt survive a reload. */
   productRun?: ProductRunRef | null;
+  /** PRODUCT-DECISION-REPORT-V1 B6: the decision report built from this answer's hypotheses (POST /product/report/start): its
+   *  id only. The upload token stays in the page's memory (ADR-0023); after a reload the panel asks the server for the
+   *  report's status again. */
+  productReport?: ProductReportRef | null;
 }
 
 export interface DeepCitation { cid: string; id?: string; title?: string; source?: string; text?: string; corpus_id?: string }

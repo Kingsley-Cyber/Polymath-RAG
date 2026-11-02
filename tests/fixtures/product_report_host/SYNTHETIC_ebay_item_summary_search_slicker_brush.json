@@ -1,0 +1,456 @@
+{
+ "_synthetic": "SYNTHETIC: hand-built on 2026-11-02 to follow eBay's documented Browse API item_summary/search response (SearchPagedCollection > itemSummaries[] ItemSummary: itemId, title, price{value,currency}, condition, conditionId, itemLocation{postalCode,country}, shippingOptions[] ShippingOptionSummary{shippingCostType, shippingCost{value,currency}, minEstimatedDeliveryDate, maxEstimatedDeliveryDate}, itemWebUrl, buyingOptions, seller, image; developer.ebay.com, read 2026-11-02). No eBay call was made: no item, seller, price or URL here is a real listing. eBay's pages and API were not reachable for recording (Jina 0/5, HTTP 403; no keyset on the host yet).",
+ "href": "https://api.ebay.com/buy/browse/v1/item_summary/search?q=self+cleaning+slicker+brush&limit=30&filter=buyingOptions%3A%7BFIXED_PRICE%7D%2Cconditions%3A%7BNEW%7D%2CdeliveryCountry%3AUS&offset=0",
+ "total": 412,
+ "next": "https://api.ebay.com/buy/browse/v1/item_summary/search?q=self+cleaning+slicker+brush&limit=30&filter=buyingOptions%3A%7BFIXED_PRICE%7D%2Cconditions%3A%7BNEW%7D%2CdeliveryCountry%3AUS&offset=30",
+ "limit": 30,
+ "offset": 0,
+ "itemSummaries": [
+  {
+   "itemId": "v1|100000000001|0",
+   "title": "Self Cleaning Slicker Brush for Dogs and Cats, Pet Grooming Brush",
+   "leafCategoryIds": [
+    "20742"
+   ],
+   "categories": [
+    {
+     "categoryId": "20742",
+     "categoryName": "Grooming Brushes & Combs"
+    }
+   ],
+   "image": {
+    "imageUrl": "https://i.ebayimg.com/images/g/SYNTHETIC01/s-l225.jpg"
+   },
+   "price": {
+    "value": "12.99",
+    "currency": "USD"
+   },
+   "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C100000000001%7C0",
+   "seller": {
+    "username": "synthetic_seller_1",
+    "feedbackPercentage": "99.1",
+    "feedbackScore": 1001
+   },
+   "condition": "New",
+   "conditionId": "1000",
+   "shippingOptions": [
+    {
+     "shippingCostType": "FIXED",
+     "shippingCost": {
+      "value": "0.00",
+      "currency": "USD"
+     },
+     "minEstimatedDeliveryDate": "2026-11-05T08:00:00.000Z",
+     "maxEstimatedDeliveryDate": "2026-11-08T08:00:00.000Z",
+     "guaranteedDelivery": false
+    }
+   ],
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "itemWebUrl": "https://www.ebay.com/itm/100000000001?hash=item1747e09e01:g:SYNTHETICAAAA&amdata=enc%3ASYNTHETIC01",
+   "itemLocation": {
+    "postalCode": "917**",
+    "country": "US"
+   },
+   "adultOnly": false,
+   "legacyItemId": "100000000001",
+   "availableCoupons": false,
+   "itemCreationDate": "2026-08-14T17:21:05.000Z",
+   "topRatedBuyingExperience": false,
+   "priorityListing": false,
+   "listingMarketplaceId": "EBAY_US"
+  },
+  {
+   "itemId": "v1|100000000002|0",
+   "title": "Pet Slicker Brush Self-Cleaning Dog Cat Hair Remover Grooming Tool",
+   "leafCategoryIds": [
+    "20742"
+   ],
+   "categories": [
+    {
+     "categoryId": "20742",
+     "categoryName": "Grooming Brushes & Combs"
+    }
+   ],
+   "image": {
+    "imageUrl": "https://i.ebayimg.com/images/g/SYNTHETIC02/s-l225.jpg"
+   },
+   "price": {
+    "value": "6.49",
+    "currency": "USD"
+   },
+   "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C100000000002%7C0",
+   "seller": {
+    "username": "synthetic_seller_2",
+    "feedbackPercentage": "99.1",
+    "feedbackScore": 1002
+   },
+   "condition": "New",
+   "conditionId": "1000",
+   "shippingOptions": [
+    {
+     "shippingCostType": "FIXED",
+     "shippingCost": {
+      "value": "1.99",
+      "currency": "USD"
+     },
+     "minEstimatedDeliveryDate": "2026-11-12T08:00:00.000Z",
+     "maxEstimatedDeliveryDate": "2026-11-26T08:00:00.000Z",
+     "guaranteedDelivery": false
+    }
+   ],
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "itemWebUrl": "https://www.ebay.com/itm/100000000002?hash=item1747e09e02:g:SYNTHETICAAAA&amdata=enc%3ASYNTHETIC02",
+   "itemLocation": {
+    "postalCode": "518***",
+    "country": "CN"
+   },
+   "adultOnly": false,
+   "legacyItemId": "100000000002",
+   "availableCoupons": false,
+   "itemCreationDate": "2026-08-14T17:21:05.000Z",
+   "topRatedBuyingExperience": false,
+   "priorityListing": false,
+   "listingMarketplaceId": "EBAY_US"
+  },
+  {
+   "itemId": "v1|100000000003|0",
+   "title": "Self-Cleaning Slicker Brush Large Size Retractable Bristles",
+   "leafCategoryIds": [
+    "20742"
+   ],
+   "categories": [
+    {
+     "categoryId": "20742",
+     "categoryName": "Grooming Brushes & Combs"
+    }
+   ],
+   "image": {
+    "imageUrl": "https://i.ebayimg.com/images/g/SYNTHETIC03/s-l225.jpg"
+   },
+   "price": {
+    "value": "15.95",
+    "currency": "USD"
+   },
+   "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C100000000003%7C0",
+   "seller": {
+    "username": "synthetic_seller_3",
+    "feedbackPercentage": "99.1",
+    "feedbackScore": 1003
+   },
+   "condition": "New",
+   "conditionId": "1000",
+   "shippingOptions": [
+    {
+     "shippingCostType": "FIXED",
+     "shippingCost": {
+      "value": "5.99",
+      "currency": "USD"
+     },
+     "minEstimatedDeliveryDate": "2026-11-04T08:00:00.000Z",
+     "maxEstimatedDeliveryDate": "2026-11-06T08:00:00.000Z",
+     "guaranteedDelivery": false
+    },
+    {
+     "shippingCostType": "FIXED",
+     "shippingCost": {
+      "value": "3.49",
+      "currency": "USD"
+     },
+     "minEstimatedDeliveryDate": "2026-11-06T08:00:00.000Z",
+     "maxEstimatedDeliveryDate": "2026-11-10T08:00:00.000Z",
+     "guaranteedDelivery": false
+    }
+   ],
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "itemWebUrl": "https://www.ebay.com/itm/100000000003?hash=item1747e09e03:g:SYNTHETICAAAA&amdata=enc%3ASYNTHETIC03",
+   "itemLocation": {
+    "postalCode": "078**",
+    "country": "US"
+   },
+   "adultOnly": false,
+   "legacyItemId": "100000000003",
+   "availableCoupons": false,
+   "itemCreationDate": "2026-08-14T17:21:05.000Z",
+   "topRatedBuyingExperience": false,
+   "priorityListing": false,
+   "listingMarketplaceId": "EBAY_US"
+  },
+  {
+   "itemId": "v1|100000000004|0",
+   "title": "Self Cleaning Slicker Brush\u200b for Shedding \u202eDogs",
+   "leafCategoryIds": [
+    "20742"
+   ],
+   "categories": [
+    {
+     "categoryId": "20742",
+     "categoryName": "Grooming Brushes & Combs"
+    }
+   ],
+   "image": {
+    "imageUrl": "https://i.ebayimg.com/images/g/SYNTHETIC04/s-l225.jpg"
+   },
+   "price": {
+    "value": "9.99",
+    "currency": "USD"
+   },
+   "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C100000000004%7C0",
+   "seller": {
+    "username": "synthetic_seller_4",
+    "feedbackPercentage": "99.1",
+    "feedbackScore": 1004
+   },
+   "condition": "New",
+   "conditionId": "1000",
+   "shippingOptions": [
+    {
+     "shippingCostType": "CALCULATED",
+     "minEstimatedDeliveryDate": "2026-11-06T08:00:00.000Z",
+     "maxEstimatedDeliveryDate": "2026-11-11T08:00:00.000Z",
+     "guaranteedDelivery": false
+    }
+   ],
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "itemWebUrl": "https://www.ebay.com/itm/100000000004?hash=item1747e09e04:g:SYNTHETICAAAA&amdata=enc%3ASYNTHETIC04",
+   "itemLocation": {
+    "postalCode": "331**",
+    "country": "US"
+   },
+   "adultOnly": false,
+   "legacyItemId": "100000000004",
+   "availableCoupons": false,
+   "itemCreationDate": "2026-08-14T17:21:05.000Z",
+   "topRatedBuyingExperience": false,
+   "priorityListing": false,
+   "listingMarketplaceId": "EBAY_US"
+  },
+  {
+   "itemId": "v1|100000000005|0",
+   "title": "Dog Grooming Glove Pet Hair Remover Mitt",
+   "leafCategoryIds": [
+    "20742"
+   ],
+   "categories": [
+    {
+     "categoryId": "20742",
+     "categoryName": "Grooming Brushes & Combs"
+    }
+   ],
+   "image": {
+    "imageUrl": "https://i.ebayimg.com/images/g/SYNTHETIC05/s-l225.jpg"
+   },
+   "price": {
+    "value": "7.99",
+    "currency": "USD"
+   },
+   "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C100000000005%7C0",
+   "seller": {
+    "username": "synthetic_seller_5",
+    "feedbackPercentage": "99.1",
+    "feedbackScore": 1005
+   },
+   "condition": "New",
+   "conditionId": "1000",
+   "shippingOptions": [
+    {
+     "shippingCostType": "FIXED",
+     "shippingCost": {
+      "value": "0.00",
+      "currency": "USD"
+     },
+     "minEstimatedDeliveryDate": "2026-11-05T08:00:00.000Z",
+     "maxEstimatedDeliveryDate": "2026-11-09T08:00:00.000Z",
+     "guaranteedDelivery": false
+    }
+   ],
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "itemWebUrl": "https://www.ebay.com/itm/100000000005?hash=item1747e09e05:g:SYNTHETICAAAA&amdata=enc%3ASYNTHETIC05",
+   "itemLocation": {
+    "postalCode": "750**",
+    "country": "US"
+   },
+   "adultOnly": false,
+   "legacyItemId": "100000000005",
+   "availableCoupons": false,
+   "itemCreationDate": "2026-08-14T17:21:05.000Z",
+   "topRatedBuyingExperience": false,
+   "priorityListing": false,
+   "listingMarketplaceId": "EBAY_US"
+  },
+  {
+   "itemId": "v1|100000000006|0",
+   "title": "Slicker Brush for Dogs",
+   "leafCategoryIds": [
+    "20742"
+   ],
+   "categories": [
+    {
+     "categoryId": "20742",
+     "categoryName": "Grooming Brushes & Combs"
+    }
+   ],
+   "image": {
+    "imageUrl": "https://i.ebayimg.com/images/g/SYNTHETIC06/s-l225.jpg"
+   },
+   "price": {
+    "value": "8.99",
+    "currency": "USD"
+   },
+   "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C100000000006%7C0",
+   "seller": {
+    "username": "synthetic_seller_6",
+    "feedbackPercentage": "99.1",
+    "feedbackScore": 1006
+   },
+   "condition": "New",
+   "conditionId": "1000",
+   "shippingOptions": [
+    {
+     "shippingCostType": "FIXED",
+     "shippingCost": {
+      "value": "4.25",
+      "currency": "USD"
+     },
+     "minEstimatedDeliveryDate": "2026-11-05T08:00:00.000Z",
+     "maxEstimatedDeliveryDate": "2026-11-08T08:00:00.000Z",
+     "guaranteedDelivery": false
+    }
+   ],
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "itemWebUrl": "https://www.ebay.com/itm/100000000006?hash=item1747e09e06:g:SYNTHETICAAAA&amdata=enc%3ASYNTHETIC06",
+   "itemLocation": {
+    "postalCode": "606**",
+    "country": "US"
+   },
+   "adultOnly": false,
+   "legacyItemId": "100000000006",
+   "availableCoupons": false,
+   "itemCreationDate": "2026-08-14T17:21:05.000Z",
+   "topRatedBuyingExperience": false,
+   "priorityListing": false,
+   "listingMarketplaceId": "EBAY_US"
+  },
+  {
+   "itemId": "v1|100000000007|0",
+   "title": "Self Cleaning Slicker Brush Bulk Lot",
+   "leafCategoryIds": [
+    "20742"
+   ],
+   "categories": [
+    {
+     "categoryId": "20742",
+     "categoryName": "Grooming Brushes & Combs"
+    }
+   ],
+   "image": {
+    "imageUrl": "https://i.ebayimg.com/images/g/SYNTHETIC07/s-l225.jpg"
+   },
+   "price": {
+    "value": "4.99",
+    "currency": "USD"
+   },
+   "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C100000000007%7C0",
+   "seller": {
+    "username": "synthetic_seller_7",
+    "feedbackPercentage": "99.1",
+    "feedbackScore": 1007
+   },
+   "condition": "New",
+   "conditionId": "1000",
+   "shippingOptions": [
+    {
+     "shippingCostType": "FIXED",
+     "shippingCost": {
+      "value": "0.00",
+      "currency": "USD"
+     },
+     "minEstimatedDeliveryDate": "2026-11-05T08:00:00.000Z",
+     "maxEstimatedDeliveryDate": "2026-11-08T08:00:00.000Z",
+     "guaranteedDelivery": false
+    }
+   ],
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "itemWebUrl": "https://ebay.com.example.net/itm/100000000007",
+   "itemLocation": {
+    "postalCode": "100**",
+    "country": "US"
+   },
+   "adultOnly": false,
+   "legacyItemId": "100000000007",
+   "availableCoupons": false,
+   "itemCreationDate": "2026-08-14T17:21:05.000Z",
+   "topRatedBuyingExperience": false,
+   "priorityListing": false,
+   "listingMarketplaceId": "EBAY_US"
+  },
+  {
+   "itemId": "v1|100000000008|0",
+   "title": "Self Cleaning Slicker Brush UK Seller",
+   "leafCategoryIds": [
+    "20742"
+   ],
+   "categories": [
+    {
+     "categoryId": "20742",
+     "categoryName": "Grooming Brushes & Combs"
+    }
+   ],
+   "image": {
+    "imageUrl": "https://i.ebayimg.com/images/g/SYNTHETIC08/s-l225.jpg"
+   },
+   "price": {
+    "value": "10.00",
+    "currency": "GBP"
+   },
+   "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C100000000008%7C0",
+   "seller": {
+    "username": "synthetic_seller_8",
+    "feedbackPercentage": "99.1",
+    "feedbackScore": 1008
+   },
+   "condition": "New",
+   "conditionId": "1000",
+   "shippingOptions": [
+    {
+     "shippingCostType": "FIXED",
+     "shippingCost": {
+      "value": "8.50",
+      "currency": "USD"
+     },
+     "minEstimatedDeliveryDate": "2026-11-13T08:00:00.000Z",
+     "maxEstimatedDeliveryDate": "2026-11-24T08:00:00.000Z",
+     "guaranteedDelivery": false
+    }
+   ],
+   "buyingOptions": [
+    "FIXED_PRICE"
+   ],
+   "itemWebUrl": "https://www.ebay.com/itm/100000000008?hash=item1747e09e08:g:SYNTHETICAAAA&amdata=enc%3ASYNTHETIC08",
+   "itemLocation": {
+    "postalCode": "SW1A ***",
+    "country": "GB"
+   },
+   "adultOnly": false,
+   "legacyItemId": "100000000008",
+   "availableCoupons": false,
+   "itemCreationDate": "2026-08-14T17:21:05.000Z",
+   "topRatedBuyingExperience": false,
+   "priorityListing": false,
+   "listingMarketplaceId": "EBAY_US"
+  }
+ ]
+}

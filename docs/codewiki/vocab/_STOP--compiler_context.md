@@ -17,8 +17,10 @@ AUTHORITY: `shared/polymath_shared/compiler_context.py:50` :: `_STOP` (count: 24
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:32` | 9/24 | `and`, `are`, `book`, `books`, `but`, `for`, `has`, `how`, `not`, `say`, `the`, `was` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:32` | 9/24 | `and`, `are`, `book`, `books`, `but`, `for`, `has`, `how`, `not`, `say`, `the`, `was` |
 | `adapters/ecommerce/python/provenance.py` | `adapters/ecommerce/python/provenance.py:19` | 20/24 | `book`, `books`, `say`, `were` |
+| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:333` | 3/24 | `and`, `are`, `book`, `books`, `but`, `does`, `for`, `has`, `have`, `how`, `into`, `not` |
 | `frontend-v2/src/components/deep/DeepReport.tsx` | `frontend-v2/src/components/deep/DeepReport.tsx:100` | 3/24 | `about`, `and`, `are`, `books`, `but`, `does`, `for`, `from`, `how`, `into`, `not`, `say` |
 | `orchestrator/orchestrator/api/ask.py` | `orchestrator/orchestrator/api/ask.py:58` | 12/24 | `about`, `book`, `books`, `but`, `from`, `has`, `have`, `into`, `not`, `say`, `you`, `your` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:125` | 12/24 | `about`, `book`, `books`, `but`, `does`, `has`, `have`, `not`, `say`, `was`, `were`, `you` |
 | `shared/polymath_shared/candidate_engine.py` | `shared/polymath_shared/candidate_engine.py:1619` | 15/24 | `about`, `book`, `books`, `does`, `has`, `have`, `say`, `you`, `your` |
 | `shared/polymath_shared/chat_plan.py` | `shared/polymath_shared/chat_plan.py:393` | 7/24 | `are`, `book`, `books`, `but`, `does`, `has`, `have`, `how`, `into`, `not`, `say`, `this` |
 | `shared/polymath_shared/dedup.py` | `shared/polymath_shared/dedup.py:47` | 17/24 | `book`, `books`, `does`, `has`, `how`, `say`, `what` |
@@ -28,6 +30,7 @@ AUTHORITY: `shared/polymath_shared/compiler_context.py:50` :: `_STOP` (count: 24
 | `shared/polymath_shared/entity_admission.py` | `shared/polymath_shared/entity_admission.py:34` | 6/24 | `about`, `and`, `are`, `book`, `books`, `but`, `does`, `for`, `from`, `has`, `have`, `how` |
 | `shared/polymath_shared/gap_check.py` | `shared/polymath_shared/gap_check.py:72` | 24/24 | — |
 | `shared/polymath_shared/llm_extraction/gate.py` | `shared/polymath_shared/llm_extraction/gate.py:456` | 18/24 | `about`, `book`, `books`, `how`, `say`, `what` |
+| `shared/polymath_shared/product_search/host_data.py` | `shared/polymath_shared/product_search/host_data.py:9` | 3/24 | `about`, `and`, `are`, `book`, `books`, `but`, `does`, `has`, `have`, `how`, `into`, `not` |
 | `shared/polymath_shared/referential_span.py` | `shared/polymath_shared/referential_span.py:31` | 4/24 | `about`, `and`, `are`, `book`, `books`, `but`, `does`, `for`, `from`, `has`, `have`, `how` |
 | `shared/polymath_shared/span_repair.py` | `shared/polymath_shared/span_repair.py:39` | 17/24 | `about`, `book`, `books`, `how`, `say`, `what`, `you` |
 | `shared/polymath_shared/wildcard_mapped.py` | `shared/polymath_shared/wildcard_mapped.py:57` | 10/24 | `about`, `book`, `books`, `does`, `has`, `have`, `how`, `into`, `not`, `say`, `were`, `what` |

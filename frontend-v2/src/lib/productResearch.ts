@@ -103,6 +103,8 @@ export interface HypothesisView {
 export interface OfferView { adapterId: string; input: Obj; note: string; whoDrives: string }
 export interface ProductView {
   contract: string; seed: string; audience: string; geography: string;
+  /** the libraries the answer searched (PRODUCT-DECISION-REPORT-V1 B6: a report built from it uses the same ones) */
+  corpusIds: string[];
   hypotheses: HypothesisView[]; limitations: string[]; noTerminalNote: string;
   /** Agent Reach's install source and check command (the answer's, else the first source fallback's) */
   repo: string; verify: string;
@@ -180,7 +182,7 @@ export function productView(data: unknown): ProductView | null {
   const firstReach = hypotheses.flatMap((h) => [h.cj?.reach, h.alibaba?.reach]).find((r) => r && (r.repo || r.verify));
   const view: ProductView = {
     contract: text(d.contract), seed: text(intent?.seed), audience: text(intent?.audience), geography: text(intent?.geography),
-    hypotheses, limitations: texts(d.limitations), noTerminalNote: text(reach?.no_terminal_note),
+    corpusIds: texts(d.corpus_ids, true), hypotheses, limitations: texts(d.limitations), noTerminalNote: text(reach?.no_terminal_note),
     repo: text(install?.repo) || firstReach?.repo || "", verify: text(install?.verify) || firstReach?.verify || "",
     offer: offerOf(obj(d.next)?.full_research),
   };

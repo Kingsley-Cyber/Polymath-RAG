@@ -1,161 +1,118 @@
 # unit: frontend-v2/src/lib/api.ts
-anchor: frontend-v2/src/lib/api.ts:1-257
+anchor: frontend-v2/src/lib/api.ts:1-259
 
 ## purpose
-The single backend client for frontend-v2 screens (FRONTEND-V2-PLAN §0.2): screens call `api` / `http` / the stream generators and never fetch directly or recompute a backend number — api.ts:1-5 [DERIVED]. Wraps `fetch` with one shared error path (`ApiError` + 401 auth event), a CSRF echo on every state-changing request, and two SSE readers. All response types are imported from `./contracts` — api.ts:6-10 [DERIVED].
+The single backend client for frontend-v2 (FRONTEND-V2-PLAN §0.2): screens call these functions and render what comes back; no screen fetches directly and no screen recomputes a backend number — api.ts:1-5 [DERIVED]. Wraps JSON verbs with CSRF echo and 401 broadcast, one multipart upload, and two SSE readers (`/chat/stream`, `/research/deep`). Types are type-only imports from `./contracts` — api.ts:6-10 [DERIVED]. Module importers (FACTS.importers): `App.tsx`, `lib/_small-modules`, `lib/chat.ts`, `lib/deep.ts`, `lib/productReport.ts`, `lib/productResearch.ts`.
 
 ## public surface
-File importers (FACTS): `App.tsx`, `lib/_small-modules`, `lib/chat.ts`, `lib/deep.ts`.
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| ApiError | class | (status: number, path: string, body: string) -> Error; getters `code: string \| null`, `detailMessage: string` | api.ts:12-37 [DERIVED] | App.tsx, _small-modules, chat.ts, deep.ts (file-level, FACTS.importers) |
-| csrfToken | function | () -> string (`""` when no cookie or no `document`) | api.ts:41-45 [DERIVED] | same file importers |
-| AUTH_REQUIRED_EVENT | const | `"polymath:auth-required"` | api.ts:53 [DERIVED] | app shell listens and shows sign-in (comment api.ts:52) [DERIVED] |
-| http | const | `{ get, post, put, del }` — raw verbs | api.ts:102 [DERIVED] | `lib/auth.ts` per comment api.ts:101 [DERIVED] |
-| api | const | 32 typed endpoint methods (table below) | api.ts:104-196 [DERIVED] | App.tsx, _small-modules, chat.ts, deep.ts (FACTS.importers) |
-| SseFrame | interface | `{ event: string; data: unknown }` | api.ts:200 [DERIVED] | chat.ts, deep.ts [INFERRED: stream consumers by name] |
-| chatStream | function | (body: Record<string, unknown>, signal?) -> AsyncGenerator\<SseFrame\> | api.ts:209-211 [DERIVED] | lib/chat.ts [INFERRED: name match] |
-| deepResearchStream | function | (body: Record<string, unknown>, signal?) -> AsyncGenerator\<SseFrame\> | api.ts:214-216 [DERIVED] | lib/deep.ts [INFERRED: name match] |
+| ApiError | class | new (readonly status: number, readonly path: string, readonly body: string); get code: string \| null; get detailMessage: string | api.ts:12-37 | module importers (FACTS.importers) |
+| csrfToken | function | () -> string | api.ts:41-45 | — (used in-file at api.ts:48) |
+| AUTH_REQUIRED_EVENT | const | string = "polymath:auth-required" | api.ts:53 | app shell listener [INFERRED: comment api.ts:52] |
+| http | const | { get, post, put, del } | api.ts:103 | lib/productReport.ts (importer); comment also names lib/auth.ts (api.ts:101-102) |
+| api | const | object of endpoint methods (see contracts) | api.ts:105-197 | module importers (FACTS.importers) |
+| SseFrame | interface | { event: string; data: unknown } | api.ts:201 | consumers of the two stream functions |
+| chatStream | function | (body: Record<string, unknown>, signal?: AbortSignal) -> AsyncGenerator\<SseFrame\> | api.ts:210-212 | lib/chat.ts [INFERRED: name match] |
+| deepResearchStream | function | (body: Record<string, unknown>, signal?: AbortSignal) -> AsyncGenerator\<SseFrame\> | api.ts:215-217 | lib/deep.ts [INFERRED: name match] |
 
 ## contracts
-`api` endpoints — all rows [DERIVED]; anchor column is api.ts line range:
 
-| method | verb + path | returns | anchor |
-|---|---|---|---|
-| adapterRuns | GET `/adapter/runs?limit=${limit}` | `RunSummary[]` (unwrapped from `{runs}`) | 106-107 |
-| adapterView | GET `/adapter/${runId}/view` | `RunView` | 108 |
-| adapterCancel | POST `/adapter/${runId}/cancel` | `Record<string, unknown>` | 109-110 |
-| adapterStart | POST `/adapter/start` | `AdapterRunRef` | 113-114 |
-| corpora | GET `/corpora` | `Corpus[]` (unwrapped) | 115 |
-| deleteCorpus | DELETE `/corpora/${corpusId}?confirm=${confirm}` | `Record<string, unknown>` | 119-121 |
-| semanticReadiness | GET `/semantic_readiness?corpus_id=${corpusId}` | `SemanticReadiness` | 122-123 |
-| documentSummaries | GET `/documents/summary?corpus_id=${corpusId}` | `{corpus_id, summaries}` (wrapped) | 124-126 |
-| documents | GET `/documents?corpus_id=${corpusId}` | `DocumentsResponse` (wrapped) | 128-129 |
-| upload | POST `/upload` (multipart) | `UploadResult` | 132-138 |
-| deleteDocument | DELETE `/documents/${docId}?confirm=${confirm}` | `Record<string, unknown>` | 141-143 |
-| enrichCorpus | POST `/corpora/${corpusId}/enrich` | `{status: string}` | 147-148 |
-| enrichDocument | POST `/documents/${docId}/enrich` | `{status: string}` | 149-150 |
-| controlPlane | GET `/control_plane?corpus_id=${corpusId}` | `ControlPlane` | 151-152 |
-| poolLanes | GET `/control_plane/pool/${fn}` | `PoolLanes` | 153-154 |
-| synthesizers | GET `/synthesizers` | `Synthesizer[]` (unwrapped) | 155-156 |
-| reasoningModes | GET `/reasoning_modes` | `{modes: ReasoningMode[], default: string}` (wrapped) | 157-158 |
-| ready | GET `/ready` | `{ready: boolean, sidecars}` (wrapped) | 159-160 |
-| pipelineHealth | GET `/health/pipeline` | `Record<string, unknown>` | 161 |
-| retrieve | POST `/retrieve` | `RetrieveResponse` | 162-163 |
-| predicates | GET `/control_plane/predicates?corpus_id=…&limit=${limit}` | `Record<string, unknown>` | 164-166 |
-| capabilities | GET `/capabilities` | `Record<string, unknown>` | 167 |
-| graphEntities | GET `/graph/entities?corpus_id=…&q=…&limit=…` | `GraphEntities` | 168-170 |
-| graphRelationships | GET `/graph/entity/${entityId}/relationships?corpus_id=…&limit=…` | `GraphRelationships` | 171-173 |
-| llmProviders | GET `/llm/providers` | `LlmProvider[]` (unwrapped) | 176-177 |
-| saveProvider | POST `/llm/providers` | `{saved: string}` | 178-179 |
-| deleteProvider | DELETE `/llm/providers/${providerId}` | `{deleted: string, existed: boolean}` | 180-182 |
-| testModel | POST `/llm/test` body `{model}` | `LlmTestResult` | 183-184 |
-| compare | POST `/compare` | `CompareResponse` | 185-186 |
-| review | POST `/review` | `ReviewResponse` | 187-190 |
-| deepResearchPlan | POST `/research/deep/plan` | `DeepResearchPlan` | 192-193 |
-| deepResearchFinish | POST `/research/deep/finish` | `{status?: string}` | 195 |
+**http.get / http.post / http.put / http.del** (defs api.ts:62-99, exported api.ts:103)
+- in: `path: string`; `signal?: AbortSignal`; `body: unknown` (post/put); `headers: Record<string, string> = {}` (get)
+- out: `Promise<T>` — JSON-decoded body
+- pre: response must be `r.ok` (checked, api.ts:56); mutating verbs set `"content-type": "application/json"` + csrf header (api.ts:69-70)
+- post: non-ok → throws `ApiError(r.status, path, body)`; 401 → AUTH_REQUIRED_EVENT (api.ts:58)
 
-Detailed contracts:
+**api.upload(corpusId, file, allowNearDuplicate = false, signal?)** — api.ts:133-139
+- in: FormData fields `"corpus_id"`, `"file"` (with `file.name`), optional `"allow_near_duplicate"` = `"1"` (api.ts:134-137)
+- out: `Promise<UploadResult>` via POST `/upload`
+- pre: NO content-type header (api.ts:88-89) — browser sets the multipart boundary
+- post: server refuses byte-identical files with 409 regardless; `allow_near_duplicate` is the "keep both" override (comment api.ts:131-132)
 
-**ApiError** — api.ts:12-37 [DERIVED]
-- in: `status: number`, `path: string`, `body: string`; message = `` `${path} -> ${status}: ${body}` ``
-- post: `.code` = backend `detail.error_code` (FRIENDS-ACCESS-V1 routes) or `null`; `.detailMessage` = `detail.message`, string `detail`, or raw body
+**api.deleteCorpus(corpusId, confirm, signal?)** — api.ts:120-122
+- in: DELETE `/corpora/{corpusId}?confirm={confirm}`
+- pre: backend requires `confirm==corpus_id`; UI makes the user type the corpus name (comment api.ts:117-119)
+- out: `Promise<Record<string, unknown>>`
 
-**csrfToken()** — api.ts:41-45 [DERIVED]
-- in: none; reads `document.cookie`
-- out: `decodeURIComponent` of cookie `polymath_csrf`, else `""`
-- pre: server set the cookie at sign-in (comment api.ts:39-40); empty for the owner on 127.0.0.1
+**api.deleteDocument(docId, confirm, signal?)** — api.ts:142-144
+- pre: confirm token is the doc_id OR the source_name (64-char hash is not human-typable) (comment api.ts:140-141)
 
-**http.get / send / postForm / del** — api.ts:62-99 [DERIVED]
-- get: headers `{ accept: "application/json" }` only, no CSRF — api.ts:63
-- send (POST/PUT): adds `content-type: application/json` + `csrfHeader()` — api.ts:70
-- postForm (multipart): `accept` + `csrfHeader()`, deliberately NO content-type (browser sets the boundary) — api.ts:87-90
-- del: `accept` + `csrfHeader()`, no body — api.ts:94-99
+**api.adapterRuns(limit = 50, signal?)** — api.ts:107-108
+- out: `RunSummary[]` — unwraps the `{ runs }` envelope; GET `/adapter/runs?limit={limit}`; a friend sees only their own runs (comment api.ts:106)
 
-**api.upload(corpusId, file, allowNearDuplicate = false, signal?)** — api.ts:132-138 [DERIVED]
-- in: FormData fields `corpus_id`, `file` (with `file.name`), and `allow_near_duplicate` = `"1"` only when the flag is true
-- pre: byte-identical files are refused server-side (409) regardless of the flag (comment api.ts:130-131)
+**chatStream / deepResearchStream(body, signal?)** — api.ts:210-212, 215-217 → sseStream api.ts:219-246
+- in: `body: Record<string, unknown>`; POST with `accept: "text/event-stream"` + csrf (api.ts:222-225)
+- out: `AsyncGenerator<SseFrame>` in arrival order; chat emits `phase` frames, then one `answer`, then `done` (comment api.ts:203-207)
+- pre: `r.body` must exist (api.ts:227)
+- post: frames split on `"\n\n"` (api.ts:237-242); leftover buffer parsed after stream end (api.ts:244-245)
 
-**api.deleteCorpus(corpusId, confirm, signal?)** — api.ts:116-121 [DERIVED]
-- pre: backend requires `confirm == corpus_id`; server wipes PG rows, Qdrant collection, Neo4j substrate (comment api.ts:116-118)
-- UI consequence: user must type the corpus name (comment api.ts:118)
+**ApiError** — api.ts:12-37
+- message: `` `${path} -> ${status}: ${body}` `` (api.ts:14); `name = "ApiError"` (api.ts:15)
+- `get code`: JSON body → `detail.error_code`, else `null` (api.ts:19-26)
+- `get detailMessage`: string `detail` → itself; else `detail.message` ?? raw body; parse failure → raw body (api.ts:28-36)
 
-**api.deleteDocument(docId, confirm, signal?)** — api.ts:139-143 [DERIVED]
-- pre: `confirm` is the doc_id OR the source_name (64-char hash not human-typable, comment api.ts:139-140)
-
-**api.adapterStart(body, signal?)** — api.ts:111-114 [DERIVED]
-- in: `{ adapter_id: string; input: Record<string, unknown>; request_options?: Record<string, unknown> }`
-- post: server stamps the signed-in person as owner; a friend's own agent drives it via adapter_next / adapter_submit (comment api.ts:111-112)
-
-**api.deepResearchFinish(signal?)** — api.ts:194-195 [DERIVED]
-- post: 202 on success; 404 when no run is live (comment api.ts:194) — caller must treat a 404 `ApiError` as a normal case
-
-**chatStream / deepResearchStream(body, signal?)** — api.ts:209-216, 218-245 [DERIVED]
-- in: POST JSON, `accept: text/event-stream`, CSRF header — api.ts:221-224
-- out: yields `SseFrame`s in arrival order; chat emits `phase` frames, one `answer`, then `done` (comment api.ts:203-206)
-- pre: response must have a body, else `ApiError(status, path, "no response body")` — api.ts:226
-- post: frames split on `"\n\n"`, partial tail kept for next chunk and parsed once at stream end — api.ts:236-244; `data` JSON-parsed, raw text on parse failure — api.ts:256; default event name `"message"` — api.ts:248
+**csrfToken()** — api.ts:41-45
+- out: decoded `polymath_csrf` cookie value or `""` (SSR guard `typeof document === "undefined"`)
 
 ## effect surface
-- Network: all 32 REST endpoints in the contracts table via `fetch` — api.ts:63, 68, 88, 95, 221 [DERIVED]; plus SSE streams `/chat/stream` and `/research/deep` — api.ts:210, 215 [DERIVED]
-- Cookie read: `polymath_csrf` from `document.cookie` — api.ts:42 [DERIVED]
-- DOM side effect: `window.dispatchEvent(new CustomEvent(AUTH_REQUIRED_EVENT))` on 401 in a browser — api.ts:58 [DERIVED]
-- Postgres tables: none read/written directly (FACTS.tables_read = [], tables_written = []) [DERIVED]; `deleteCorpus` causes a server-side wipe of PG rows / Qdrant collection / Neo4j substrate per comment api.ts:116-118 [DERIVED]
-- Env flags: none read [DERIVED]
-- Files / subprocesses: none [DERIVED]
+- Network (fetch, relative paths, no base URL): `/adapter/runs`, `/adapter/{id}/view`, `/adapter/{id}/cancel`, `/adapter/start` (api.ts:107-115); `/corpora` GET, `/corpora/{id}` DELETE, `/corpora/{id}/enrich` (api.ts:116, 120-122, 148-149); `/semantic_readiness` (api.ts:123-124); `/documents/summary`, `/documents`, `/upload`, `/documents/{id}` DELETE, `/documents/{id}/enrich` (api.ts:125-144, 150-151); `/control_plane`, `/control_plane/pool/{fn}`, `/control_plane/predicates` (api.ts:152-155, 165-167); `/synthesizers`, `/reasoning_modes`, `/ready`, `/health/pipeline`, `/capabilities` (api.ts:156-162, 168); `/retrieve` (api.ts:163-164); `/graph/entities`, `/graph/entity/{id}/relationships` (api.ts:169-174); `/llm/providers` GET/POST, `/llm/providers/{id}` DELETE, `/llm/test` (api.ts:177-185); `/compare` (api.ts:186-187); `/review` (api.ts:188-191); `/research/deep/plan`, `/research/deep/finish` (api.ts:193-196); SSE `/chat/stream`, `/research/deep` (api.ts:211, 216). [DERIVED]
+- Browser state: reads `document.cookie` (api.ts:42); `window.dispatchEvent(new CustomEvent(AUTH_REQUIRED_EVENT))` on 401 (api.ts:58); `FormData` (api.ts:134); `TextDecoder` (api.ts:229).
+- No Postgres tables, Qdrant collections, files, subprocesses, env flags — FACTS.tables_read=[] / tables_written=[]; no `process.env` / `import.meta.env` in SOURCE.
 
 ## invariants
-INVARIANT: error-body snapshot length ≤ 600 chars (`(await r.text()).slice(0, 600)`) — api.ts:57 [DERIVED]
-  fails-if: truncated JSON makes `ApiError.code` return `null` and `detailMessage` return the truncated raw string.
-INVARIANT: cookie name `polymath_csrf` maps 1:1 to header name `x-polymath-csrf` — api.ts:42, 47-49 [DERIVED]
-  fails-if: web boundary refuses the state-changing request (comment api.ts:39-40).
-INVARIANT: CSRF header attached on exactly the non-GET paths — send api.ts:70, postForm api.ts:89, del api.ts:96, sseStream api.ts:223; absent on get api.ts:63 [DERIVED]
-  fails-if: a mutation without the header is rejected by the backend.
-INVARIANT: adapterRuns default limit == 50 — api.ts:106 [DERIVED]
-  fails-if: trail list silently pages at a different size than the UI assumes.
-INVARIANT: upload sends `allow_near_duplicate` with value exactly `"1"` iff `allowNearDuplicate` is true (default false) — api.ts:132, 136 [DERIVED]
-  fails-if: the "keep both" near-duplicate override is always or never applied.
-INVARIANT: SSE separator string `"\n\n"` length == buffer advance `sep + 2` — api.ts:236-238 [DERIVED]
-  fails-if: a CRLF-translated stream (`\r\n\r\n`) never matches, so all frames arrive only as the single post-close tail parse — api.ts:243-244 [INFERRED: separator is LF-only].
-INVARIANT: parseFrame returns null iff `dataLines.length == 0`; event defaults to `"message"` — api.ts:248, 254 [DERIVED]
-  fails-if: comment/keep-alive lines would surface as empty frames.
+INVARIANT: ApiError body retained ≤ 600 chars == `slice(0, 600)` cap in checked — api.ts:57 [DERIVED]
+  fails-if: error body > 600 chars can truncate the JSON `detail`, so `ApiError.code` returns null and `detailMessage` falls back to raw text (api.ts:21, 31-35).
+INVARIANT: mutating fetches spreading `...csrfHeader()` == 4 call sites (send, postForm, del, sseStream) — api.ts:70, 89, 96, 224 [DERIVED]
+  fails-if: a new mutating fetch without it is refused by the web boundary (comment api.ts:39-40).
+INVARIANT: postForm == the only fetch that omits "content-type" — api.ts:88-89 vs api.ts:69 [DERIVED]
+  fails-if: setting content-type drops the multipart boundary and the server rejects the body (comment api.ts:84-86).
+INVARIANT: adapterRuns default limit == 50 — api.ts:107 [DERIVED]
+  fails-if: screens calling `adapterRuns()` silently see a different run-history window.
+INVARIANT: SSE frame separator == "\n\n" and buffer advance == `sep + 2` — api.ts:237-239 [DERIVED]
+  fails-if: frames split mid-payload or the tail frame (api.ts:244-245) is lost/misparsed.
+INVARIANT: len("event:") == 6 == `slice(6)` and len("data:") == 5 == `slice(5)` — api.ts:252-253 [DERIVED]
+  fails-if: changing either prefix without its offset corrupts every frame's event name or data.
+INVARIANT: 401 dispatch == 1 per failed request, only when `typeof window !== "undefined"` — api.ts:58 [DERIVED]
+  fails-if: SSR crashes on `window` access, or the shell never shows the sign-in screen.
+INVARIANT: upload appends "allow_near_duplicate" = "1" only when allowNearDuplicate (default `false`) — api.ts:133-137 [DERIVED]
+  fails-if: always sending it defeats the near-duplicate guard; never sending it breaks the "keep both" override.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (network — every method wraps `fetch`, api.ts:63/68/88/95/221; environment — `document.cookie`, api.ts:42; DOM — `window.dispatchEvent`, api.ts:58; concurrency — caller-supplied `AbortSignal` throughout) [DERIVED]
-idempotency: UNSAFE — mutating methods: upload (132-138), deleteCorpus (119-121), deleteDocument (141-143), enrichCorpus/enrichDocument (147-150), saveProvider/deleteProvider (178-182), adapterStart (113-114), deepResearchFinish (195); GET wrappers are read-only — api.ts:104-196 [DERIVED]
+determinism: NONDETERMINISTIC (network fetch api.ts:63/68/89/96/222; env `document.cookie` api.ts:42 and `window` api.ts:58; streamed arrival order api.ts:231-242). `parseFrame` (api.ts:248-258) and the ApiError getters (api.ts:19-36) are pure. [DERIVED]
+idempotency: SAFE for the GET wrappers (api.ts:62-65 and GET methods api.ts:107-187); UNSAFE for post/put/del/postForm/sseStream — no retry or de-dup exists in this layer, so a re-call re-issues the mutation (api.ts:67-99, 219-246).
 
 ## failure behaviour
-- Every response passes `checked`: ok → returned as-is; otherwise throws `ApiError(status, path, first-600-chars body)` — api.ts:55-60 [DERIVED]
-- 401 in a browser: dispatches `AUTH_REQUIRED_EVENT` before throwing; app shell then shows the sign-in screen — api.ts:58, 52 [DERIVED]
-- Swallowed parse errors: `ApiError.code` → `null` on bad JSON — api.ts:21-25 [DERIVED]; `detailMessage` → raw body — api.ts:29-35 [DERIVED]; `parseFrame` → `data` stays raw text — api.ts:256 [DERIVED]
-- `sseStream` with no body: `ApiError(r.status, path, "no response body")` — api.ts:226 [DERIVED]
-- `csrfToken` under SSR (`document` undefined) or missing cookie: returns `""`, request goes out without the header — api.ts:42-45, 47-50 [DERIVED]
-- Upload of a byte-identical file: server refuses with 409 regardless of `allowNearDuplicate` (comment) — api.ts:130-131 [DERIVED]
+- checked (api.ts:55-60): `!r.ok` → body text sliced to 600 chars; 401 → AUTH_REQUIRED_EVENT (browser only); then `throw new ApiError(r.status, path, body)`. Nothing swallowed at this layer.
+- ApiError.code (api.ts:19-26): JSON.parse throw caught → `null`; caller cannot distinguish "no code" from "unparseable body".
+- ApiError.detailMessage (api.ts:28-36): parse failure → raw body; string `detail` → the string; else `detail.message ?? this.body`.
+- sseStream (api.ts:227): `!r.body` → `throw new ApiError(r.status, path, "no response body")`.
+- parseFrame (api.ts:255-257): zero `data:` lines → `null` (frame silently dropped); JSON.parse failure → `{ event, data: text }` with data as raw string.
+- No retries or timeouts; `AbortSignal` is passed straight through to every fetch (api.ts:63, 68, 89, 96, 222).
+- No FACTS.fallbacks entries exist for this unit.
 
 ## dumb-code flags
-- Magic number `600` capping the error body, no named constant — api.ts:57 [DERIVED]
-- Header casing mismatch: comment says `X-Polymath-CSRF` (api.ts:40) while code sends `"x-polymath-csrf"` (api.ts:48) — grep/readability trap [DERIVED]
-- Literal `"application/json"` duplicated across four helpers — api.ts:63, 70, 89, 96 [DERIVED]
-- Unwrap inconsistency: `adapterRuns`/`corpora`/`synthesizers`/`llmProviders` unwrap `.then((d) => d.X)` (107, 115, 156, 177) but `reasoningModes`/`ready`/`documents` return the wrapper object (157-160, 128-129) — callers must remember which — [DERIVED]
-- Stacked duplicate doc comments on `chatStream` — api.ts:202-208 [DERIVED]
+- Header-case mismatch: comment says `X-Polymath-CSRF` (api.ts:40) but code sends `"x-polymath-csrf"` (api.ts:49). Benign over HTTP; a grep for one literal misses the other.
+- Stale consumer claim: comment says `http` is for `lib/auth.ts` (api.ts:101-102), but FACTS.importers does not list lib/auth.ts.
+- Magic numbers: `600` body cap (api.ts:57); `slice(6)`/`slice(5)` coupled to the `"event:"`/`"data:"` prefix lengths (api.ts:252-253); `sep + 2` tied to `"\n\n"` (api.ts:239); `limit = 50` default (api.ts:107).
+- Stacked duplicate JSDoc on chatStream: two comment blocks, api.ts:203-208 and api.ts:209.
+- `http` (api.ts:103) exports get/post/put/del but not postForm — multipart upload is not reachable through the raw-verb export (deliberate per comment api.ts:84-86).
 
 ## refactor notes
-- All 32 `api` method names are the screens' only backend vocabulary; App.tsx, _small-modules, chat.ts, deep.ts all break on renames (FACTS.importers) — api.ts:104-196 [DERIVED]
-- Every response type comes from `./contracts` — api.ts:6-10 [DERIVED]; contract type changes ripple through all signatures here.
-- Wire literals that must not drift (each is enforced server-side): cookie `polymath_csrf` (42), header `x-polymath-csrf` (48), event `"polymath:auth-required"` (53), form field `allow_near_duplicate` = `"1"` (136), query param `confirm` (121, 143), form field `corpus_id` (134) [DERIVED]
-- `postForm` must never set a content-type header — doing so drops the multipart boundary and the server rejects the body (comment api.ts:84-86) [DERIVED]
-- `AUTH_REQUIRED_EVENT` is the app shell's 401 signal (comment api.ts:52); renaming the literal requires updating the shell listener [DERIVED]
-- `http` is reserved for `lib/auth.ts`; screens must call `api` or `auth` (comments api.ts:101, 2-4) [DERIVED]
-- SSE parsing contract (`"\n\n"` split, `event:`/`data:` prefixes, `"message"` default) mirrors the backend's frame emitter — api.ts:236-256 [DERIVED]
+- Six importers re-touch on any export move/rename: App.tsx, lib/_small-modules, lib/chat.ts, lib/deep.ts, lib/productReport.ts, lib/productResearch.ts (FACTS.importers).
+- `"polymath:auth-required"` (api.ts:53) is a string wire contract with the app shell — a rename silently breaks the sign-in redirect.
+- Cookie name `polymath_csrf` (api.ts:42) must match the server's sign-in cookie (comment api.ts:39-40).
+- Backend wire fields this file hard-depends on: `detail.error_code` (api.ts:21), `detail.message` (api.ts:31), `confirm==corpus_id` (api.ts:118-119), confirm = doc_id OR source_name (api.ts:140-141), 409 on byte-identical upload (api.ts:131-132), 202/404 finish semantics (api.ts:195).
+- Import from `./contracts` is type-only (api.ts:6-10): renaming contract types changes only signatures here, no runtime effect.
 
 ## VERIFY
 ```verify
-grep -Fq 'AUTH_REQUIRED_EVENT = "polymath:auth-required"' frontend-v2/src/lib/api.ts
-grep -Fq '"x-polymath-csrf": t' frontend-v2/src/lib/api.ts
-grep -Fq 'polymath_csrf=([^;]+)' frontend-v2/src/lib/api.ts
-grep -Fq '.slice(0, 600)' frontend-v2/src/lib/api.ts
-grep -Fq 'limit = 50' frontend-v2/src/lib/api.ts
-grep -Fq 'buf.indexOf("\n\n")' frontend-v2/src/lib/api.ts
-test "$(grep -c -F 'encodeURIComponent' frontend-v2/src/lib/api.ts)" -ge 15
+grep -Fq 'polymath_csrf' frontend-v2/src/lib/api.ts
+grep -Fq 'x-polymath-csrf' frontend-v2/src/lib/api.ts
+grep -Fq 'polymath:auth-required' frontend-v2/src/lib/api.ts
+grep -Fq 'allow_near_duplicate' frontend-v2/src/lib/api.ts
+grep -Fq 'no response body' frontend-v2/src/lib/api.ts
+grep -Eq 'slice\(0, 600\)' frontend-v2/src/lib/api.ts
+grep -Fq 'text/event-stream' frontend-v2/src/lib/api.ts
 ```

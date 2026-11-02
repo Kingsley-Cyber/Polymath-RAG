@@ -16,6 +16,7 @@ AUTHORITY: `adapters/ecommerce/python/query_semantics.py:31` :: `_FUNCTION_WORDS
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:33` | 3/29 | `across`, `already`, `because`, `between`, `during`, `inside`, `its`, `never`, `not`, `one`, `onto`, `our` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:33` | 3/29 | `across`, `already`, `because`, `between`, `during`, `inside`, `its`, `never`, `not`, `one`, `onto`, `our` |
 | `adapters/ecommerce/python/provenance.py` | `adapters/ecommerce/python/provenance.py:20` | 10/29 | `across`, `already`, `because`, `between`, `during`, `inside`, `never`, `onto`, `out`, `outside`, `over`, `some` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:123` | 6/29 | `across`, `already`, `because`, `being`, `between`, `during`, `inside`, `more`, `most`, `not`, `one`, `out` |
 | `shared/polymath_shared/concept_inventory.py` | `shared/polymath_shared/concept_inventory.py:106` | 3/29 | `across`, `already`, `because`, `being`, `between`, `during`, `inside`, `its`, `never`, `not`, `one`, `onto` |
 | `shared/polymath_shared/entity_admission.py` | `shared/polymath_shared/entity_admission.py:54` | 5/29 | `across`, `already`, `because`, `being`, `between`, `during`, `inside`, `more`, `most`, `never`, `not`, `onto` |
 | `shared/polymath_shared/gap_check.py` | `shared/polymath_shared/gap_check.py:73` | 24/29 | `already`, `inside`, `use`, `using`, `within` |

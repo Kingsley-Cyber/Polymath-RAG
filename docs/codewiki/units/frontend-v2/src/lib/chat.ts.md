@@ -1,115 +1,108 @@
 # unit: frontend-v2/src/lib/chat.ts
-anchor: frontend-v2/src/lib/chat.ts:1-174
+anchor: frontend-v2/src/lib/chat.ts:1-178
 
 ## purpose
-Frontend chat turn state machine over the `/chat/stream` SSE frames — frontend-v2/src/lib/chat.ts:1, frontend-v2/src/lib/chat.ts:2. Accumulates phases, live token/reasoning text, final answer metadata (model, verdict, receipt, citations, coverage) into a `Turn` and reports patches via `onUpdate` — frontend-v2/src/lib/chat.ts:95-173. Also keeps a module-scope registry of live streams so Stop can cancel a stream from whichever screen shows the chat — frontend-v2/src/lib/chat.ts:61-64.
+Chat turn state machine over the `/chat/stream` SSE frames — frontend-v2/src/lib/chat.ts:1 [DERIVED]. Consumes an `AsyncGenerator<SseFrame>` and folds each frame into `Partial<Turn>` patches via `onUpdate` — frontend-v2/src/lib/chat.ts:100-111 [DERIVED]. Also tracks live streams per chat session id so Stop works from any screen — frontend-v2/src/lib/chat.ts:66-69 [DERIVED].
 
 ## public surface
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `Phase` | interface | `{ stage, label, at, data }` | frontend-v2/src/lib/chat.ts:9-14 | module importers* |
-| `Turn` | interface | 20+ fields incl. `deep?`, `deepRun?`, `deepCoverage?`, `synthesis?`, `gapCheck?`, `productResearch?`, `productRun?` | frontend-v2/src/lib/chat.ts:16-48 | module importers* |
-| `DeepCitation` | interface | `{ cid, id?, title?, source?, text?, corpus_id? }` | frontend-v2/src/lib/chat.ts:50 | module importers* |
-| `DeepAnswer` | interface | `{ citations, unknown, summary }` | frontend-v2/src/lib/chat.ts:51 | module importers* |
-| `newTurn` | function | `(question: string, mode: string) -> Turn` | frontend-v2/src/lib/chat.ts:53-59 | module importers* |
-| `beginStream` | function | `(sessionId: string) -> AbortController` | frontend-v2/src/lib/chat.ts:67-71 | module importers* |
-| `endStream` | function | `(sessionId: string, ac: AbortController) -> void` | frontend-v2/src/lib/chat.ts:73-75 | module importers* |
-| `stopStream` | function | `(sessionId: string) -> void` | frontend-v2/src/lib/chat.ts:78-80 | module importers* |
-| `runTurn` | function | `(body, onUpdate, signal?, stream = chatStream) -> Promise<void>` | frontend-v2/src/lib/chat.ts:95-173 | module importers* |
+| `Phase` | interface | `{ stage: string; label: string; at: number; data: Record<string, unknown> }` | frontend-v2/src/lib/chat.ts:10-15 | — |
+| `Turn` | interface | 13 required + 8 optional fields (`deep?`, `deepRun?`, `deepCoverage?`, `synthesis?`, `gapCheck?`, `productResearch?`, `productRun?`, `productReport?`) | frontend-v2/src/lib/chat.ts:17-53 | — |
+| `DeepCitation` | interface | `{ cid: string; id?; title?; source?; text?; corpus_id? }` | frontend-v2/src/lib/chat.ts:55 | — |
+| `DeepAnswer` | interface | `{ citations: DeepCitation[]; unknown: string[]; summary: Record<string, unknown> \| null }` | frontend-v2/src/lib/chat.ts:56 | — |
+| `newTurn` | function | `(question: string, mode: string) -> Turn` | frontend-v2/src/lib/chat.ts:58-64 | — |
+| `beginStream` | function | `(sessionId: string) -> AbortController` | frontend-v2/src/lib/chat.ts:72-76 | — |
+| `endStream` | function | `(sessionId: string, ac: AbortController) -> void` | frontend-v2/src/lib/chat.ts:78-80 | — |
+| `stopStream` | function | `(sessionId: string) -> void` | frontend-v2/src/lib/chat.ts:83-85 | — |
+| `runTurn` | async function | `(body: Record<string, unknown>, onUpdate: (patch: Partial<Turn>) => void, signal?: AbortSignal, stream = chatStream) -> Promise<void>` | frontend-v2/src/lib/chat.ts:100-178 | — |
 
-*FACTS.importers (module-level): `frontend-v2/src/App.tsx`, `frontend-v2/src/lib/_small-modules`, `frontend-v2/src/lib/deep.ts`; per-symbol use not in FACTS.
-Non-exported: `pickAnswer` (frontend-v2/src/lib/chat.ts:83-93), module map `inflight` (frontend-v2/src/lib/chat.ts:64).
+Module imported by: `frontend-v2/src/App.tsx`, `frontend-v2/src/lib/_small-modules`, `frontend-v2/src/lib/deep.ts` (FACTS.importers); per-symbol attribution not in FACTS. Private helper: `pickAnswer(result: unknown) -> string` — frontend-v2/src/lib/chat.ts:88-98 [DERIVED].
 
 ## contracts
 
-**newTurn** — frontend-v2/src/lib/chat.ts:53-59
-- in: `question: string`, `mode: string`.
-- out: fresh `Turn` with `phases: []`, `reasoningText: ""`, `answerText: ""`, `model: null`, `verdict: null`, `abstained: false`, `uncovered: []`, `receipt: null`, `latencyMs: null`, `error: null`, `done: false`, `deep: null` — frontend-v2/src/lib/chat.ts:54-58.
-- post: does NOT set `deepRun`, `deepCoverage`, `synthesis`, `gapCheck`, `productResearch`, `productRun` — frontend-v2/src/lib/chat.ts:53-59 vs 33-47.
+**runTurn** — frontend-v2/src/lib/chat.ts:100-178
+- in: `body` passed verbatim to `stream(body, signal)` — frontend-v2/src/lib/chat.ts:111 [DERIVED]; `stream` defaults to `chatStream` from `./api` — frontend-v2/src/lib/chat.ts:104 [DERIVED].
+- out: `Promise<void>`; all results delivered as `onUpdate` patches, never as return values or throws — frontend-v2/src/lib/chat.ts:173-177 [DERIVED].
+- pre: none enforced; caller pairs `beginStream`/`endStream` if cancellation is wanted — frontend-v2/src/lib/chat.ts:69-85 [DERIVED].
+- post: exactly one terminal patch with `done: true` (normal end, cancelled, or error) — frontend-v2/src/lib/chat.ts:173,175-176 [DERIVED].
 
-**beginStream / endStream / stopStream** — frontend-v2/src/lib/chat.ts:67-80
-- `beginStream` post: new `AbortController` stored at `inflight.set(sessionId, ac)`; returned to caller — frontend-v2/src/lib/chat.ts:68-70.
-- `endStream` post: deletes only when `inflight.get(sessionId) === ac` (identity check) — frontend-v2/src/lib/chat.ts:74.
-- `stopStream` post: `inflight.get(sessionId)?.abort()`; entry not deleted — frontend-v2/src/lib/chat.ts:79.
+Frame → patch mapping:
 
-**runTurn** — frontend-v2/src/lib/chat.ts:95-173
-- in: `body: Record<string, unknown>`, `onUpdate: (patch: Partial<Turn>) => void`, `signal?: AbortSignal`, `stream` defaulting to `chatStream` — frontend-v2/src/lib/chat.ts:96-99.
-- out: `Promise<void>`; never resolves with a value.
-- pre: none checked in code.
-- post: terminal patch always sets `done: true` — happy path frontend-v2/src/lib/chat.ts:168, abort frontend-v2/src/lib/chat.ts:170, error frontend-v2/src/lib/chat.ts:171.
-- frame dispatch:
+| `frame.event` | condition | patch fields | anchor |
+|---|---|---|---|
+| `phase` | — | `phases: [...phases]` with `{ stage, label, at: Math.round(performance.now() - t0), data }`; stage falls back `d.stage ?? d.phase ?? d.name ?? "phase"` | frontend-v2/src/lib/chat.ts:112-117 |
+| `token` | `d.token` or `d.text` non-empty string | `answerText: streamed + tok` | frontend-v2/src/lib/chat.ts:118-122 |
+| `answer` | `(frame.data).kind === "deep"` | `answerText`, `model`, `verdict`, `receipt: null`, `latencyMs`, `deep: { citations, unknown, summary }` | frontend-v2/src/lib/chat.ts:123-138 |
+| `answer` | other | `answerText`, `model`, `verdict`, `abstained: !!meta.abstained`, `uncovered` (from `meta.uncovered_query_terms`), `receipt: a.retrieval`, `latencyMs`, `synthesis`, `gapCheck`, `productResearch` | frontend-v2/src/lib/chat.ts:139-159 |
+| `coverage` | `Array.isArray(d.goals)` | `deepCoverage: d` | frontend-v2/src/lib/chat.ts:160-163 |
+| `error` | — | `error: JSON.stringify(frame.data).slice(0, 400)`; loop continues (no break) | frontend-v2/src/lib/chat.ts:164-165 |
+| `reasoning` | `d.text` or `d.token` non-empty | `reasoningText: reasoning + r` | frontend-v2/src/lib/chat.ts:166-171 |
 
-| `frame.event` | effect | anchor |
-|---|---|---|
-| `phase` | push `{stage, label, at, data}`; `at = Math.round(performance.now() - t0)` | frontend-v2/src/lib/chat.ts:107-112 |
-| `token` | append `d.token` ?? `d.text` to `streamed` → `answerText` | frontend-v2/src/lib/chat.ts:113-117 |
-| `answer` + `kind === "deep"` | deep patch: `receipt: null`, `deep` = citations/`unknown_citations`/`meta.deep_research` | frontend-v2/src/lib/chat.ts:118-133 |
-| `answer` (other) | full patch: model, `meta.verdict`, `!!meta.abstained`, `meta.uncovered_query_terms`, `a.retrieval`, `a.latency_ms`, `meta.synthesis`, `meta.gap_check`, `result.product_research` | frontend-v2/src/lib/chat.ts:134-153 |
-| `coverage` | set `deepCoverage` only if `Array.isArray(d.goals)` | frontend-v2/src/lib/chat.ts:155-158 |
-| `error` | `error: JSON.stringify(frame.data).slice(0, 400)` | frontend-v2/src/lib/chat.ts:159-160 |
-| `reasoning` | append `d.text` ?? `d.token` to `reasoning` → `reasoningText` | frontend-v2/src/lib/chat.ts:161-165 |
+**newTurn** — frontend-v2/src/lib/chat.ts:58-64: returns a `Turn` with `phases: []`, empty texts, `model/verdict/receipt/latencyMs/error: null`, `abstained: false`, `uncovered: []`, `done: false`, `deep: null`; the 8 newer optional fields are left absent, not `null` [DERIVED].
+
+**beginStream / endStream / stopStream** — frontend-v2/src/lib/chat.ts:72-85: register/lookup/drop one `AbortController` per `sessionId` in the module-scope `inflight` map; `endStream` deletes only when identity matches (`inflight.get(sessionId) === ac`) — frontend-v2/src/lib/chat.ts:79 [DERIVED].
+
+**pickAnswer** — frontend-v2/src/lib/chat.ts:88-98: strings pass through; objects probed in order `["answer", "text", "content", "message"]`, first non-empty trimmed string wins; otherwise `""` [DERIVED].
 
 ## effect surface
-- Network: SSE stream via `chatStream` from `./api` (default `stream` param) — frontend-v2/src/lib/chat.ts:2, frontend-v2/src/lib/chat.ts:99; endpoint `/chat/stream` per module docstring — frontend-v2/src/lib/chat.ts:1.
-- In-memory module state: `const inflight = new Map<string, AbortController>();` — frontend-v2/src/lib/chat.ts:64.
-- Postgres tables: none (FACTS `tables_read`/`tables_written` empty). Qdrant/files/subprocesses/env flags: none.
+- Network: no direct request; consumes `AsyncGenerator<SseFrame>` from injected `stream`, default `chatStream` (frontend-v2/src/lib/api.ts) — frontend-v2/src/lib/chat.ts:2, frontend-v2/src/lib/chat.ts:104 [DERIVED]; endpoint named `/chat/stream` in header comment — frontend-v2/src/lib/chat.ts:1 [DERIVED].
+- In-memory module state: `const inflight = new Map<string, AbortController>()` — frontend-v2/src/lib/chat.ts:69 [DERIVED].
+- Browser APIs: `performance.now()` — frontend-v2/src/lib/chat.ts:106,116,132,152; `AbortController` — frontend-v2/src/lib/chat.ts:73 [DERIVED].
+- Postgres: none (FACTS `tables_read: []`, `tables_written: []`). Qdrant: none. Files: none. Env flags: none read.
+- Type-only imports from `./contracts`, `./deep`, `./productResearch`, `./productReport` — frontend-v2/src/lib/chat.ts:3-6 [DERIVED].
 
 ## invariants
-INVARIANT: emitted `error` text length ≤ 400 chars — `JSON.stringify(frame.data).slice(0, 400)` — frontend-v2/src/lib/chat.ts:160 [DERIVED]
-  fails-if: long backend error payloads are silently truncated; tail of the JSON is lost.
-INVARIANT: exactly one `done: true` patch per `runTurn` call — frontend-v2/src/lib/chat.ts:168, frontend-v2/src/lib/chat.ts:170, frontend-v2/src/lib/chat.ts:171 are mutually exclusive exits [DERIVED]
-  fails-if: zero or multiple `done` patches leave the UI spinner hung or double-finalized.
-INVARIANT: final `answer` frame beats streamed tokens — `pickAnswer(result) || streamed` — frontend-v2/src/lib/chat.ts:120, frontend-v2/src/lib/chat.ts:141 [DERIVED]
-  fails-if: partial streamed text would override the clean authoritative answer.
-INVARIANT: deep answers carry `receipt: null` — frontend-v2/src/lib/chat.ts:126 [DERIVED]
-  fails-if: a deep report renders a stale chat retrieval receipt.
-INVARIANT: `token` prefers `d.token` then `d.text` (frontend-v2/src/lib/chat.ts:116); `reasoning` prefers `d.text` then `d.token` (frontend-v2/src/lib/chat.ts (line out of range)) [DERIVED]
-  fails-if: a frame carrying both fields yields different text per channel.
-INVARIANT: `endStream` deletes only on controller identity match — frontend-v2/src/lib/chat.ts:74 [DERIVED]
-  fails-if: a late `endStream` from an old controller unregisters a newer live stream, making `stopStream` a no-op.
-INVARIANT: `coverage`/`productResearch` applied only under shape guards `Array.isArray(d.goals)` / object-and-not-array — frontend-v2/src/lib/chat.ts:157-158, frontend-v2/src/lib/chat.ts:152-153 [DERIVED]
-  fails-if: malformed frames put garbage into the live checklist / product panel.
-INVARIANT: `latencyMs = a.latency_ms ?? Math.round(performance.now() - t0)` (chat) and same fallback off `frame.data.latency_ms` (deep) — frontend-v2/src/lib/chat.ts:146, frontend-v2/src/lib/chat.ts:127 [DERIVED]
-  fails-if: missing backend latency silently becomes client wall-clock, changing what latency numbers mean.
+INVARIANT: `endStream` deletes `inflight[sessionId]` only when `inflight.get(sessionId) === ac` — frontend-v2/src/lib/chat.ts:79 [DERIVED]
+  fails-if: a stale `endStream` from an older stream would drop the newer stream's controller, so `stopStream` could no longer cancel it.
+INVARIANT: every `runTurn` exit path emits exactly one patch containing `done: true` (3 call sites) — frontend-v2/src/lib/chat.ts:173,175,176 [DERIVED]
+  fails-if: caller's loading state never clears (0 sites) or flickers (2+ sites).
+INVARIANT: aborted signal ⇒ `error: "cancelled"` and plain return, no rethrow — frontend-v2/src/lib/chat.ts:175 [DERIVED]
+  fails-if: a user-initiated Stop would surface as a failure bubble.
+INVARIANT: error patch length ≤ 400 chars (`slice(0, 400)`) — frontend-v2/src/lib/chat.ts:165 [DERIVED]
+  fails-if: unbounded error payloads bloat the turn object persisted with the chat.
+INVARIANT: final `answer` frame text wins over accumulated tokens — `pickAnswer(result) || streamed` — frontend-v2/src/lib/chat.ts:128,146 [DERIVED]
+  fails-if: partially streamed text would replace the authoritative answer.
+INVARIANT: deep answer patch sets `receipt: null` and never sets `abstained`/`uncovered`/`synthesis`/`gapCheck`/`productResearch`; chat answer patch never sets `deep` — frontend-v2/src/lib/chat.ts:123-159 [DERIVED]
+  fails-if: a deep report would render with chat provenance UI or vice versa.
+INVARIANT: `coverage` frames applied only when `Array.isArray(d.goals)` — frontend-v2/src/lib/chat.ts:163 [DERIVED]
+  fails-if: a malformed frame would wipe the goals checklist shape.
+INVARIANT: `latencyMs` falls back to wall clock `Math.round(performance.now() - t0)` when the frame lacks `latency_ms` — frontend-v2/src/lib/chat.ts:132,152 [DERIVED]
+  fails-if: turns without server latency would show `null` despite a measurable wait.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (network SSE via `chatStream` — frontend-v2/src/lib/chat.ts:99, frontend-v2/src/lib/chat.ts:106; clock `performance.now()`/`t0` — frontend-v2/src/lib/chat.ts:101, frontend-v2/src/lib/chat.ts:111, frontend-v2/src/lib/chat.ts:122, frontend-v2/src/lib/chat.ts:127; concurrency on the shared `inflight` map — frontend-v2/src/lib/chat.ts:64).
-idempotency: SAFE — `runTurn` keeps per-call accumulators `streamed`/`reasoning` and touches no persistent store — frontend-v2/src/lib/chat.ts:103-104. UNSAFE — `beginStream` overwrites an existing controller for the same `sessionId` without aborting it — frontend-v2/src/lib/chat.ts:69 [INFERRED: the replaced stream keeps running but can no longer be stopped via `stopStream`].
+determinism: NONDETERMINISTIC (clock: `performance.now()` at frontend-v2/src/lib/chat.ts:106,116,132,152; network: SSE frame sequence/timing from `stream`, frontend-v2/src/lib/chat.ts:111; concurrency: abort timing via `inflight`, frontend-v2/src/lib/chat.ts:69-85). Frame→patch mapping itself is a pure fold of the frame sequence [DERIVED].
+idempotency: UNSAFE — `runTurn` re-invocation re-issues the chat request through `stream` (frontend-v2/src/lib/chat.ts:111) [DERIVED]. `newTurn`/`pickAnswer` are pure [INFERRED: no reads of anything outside their args — frontend-v2/src/lib/chat.ts:58-64,88-98].
 
 ## failure behaviour
-- `runTurn` never throws to its caller: the whole loop sits in `try`/`catch` — frontend-v2/src/lib/chat.ts:105-172.
-- Abort: `onUpdate({ done: true, error: "cancelled" })` then return — frontend-v2/src/lib/chat.ts:170.
-- Any other exception: `error: e instanceof Error ? e.message : String(e)`, `done: true` — frontend-v2/src/lib/chat.ts:171.
-- SSE `error` frames become a truncated string in `Turn.error`; stream continues — frontend-v2/src/lib/chat.ts:159-160.
-- `pickAnswer` returns `""` on unrecognized shapes, so `answerText` falls back to accumulated streamed text — frontend-v2/src/lib/chat.ts:83-93, frontend-v2/src/lib/chat.ts:120, frontend-v2/src/lib/chat.ts:141.
-- Unmatched `frame.event` values are silently dropped (no default branch) — frontend-v2/src/lib/chat.ts:106-166 [INFERRED: no else clause exists].
-- No error codes raised; `stopStream`/`endStream` no-op on missing entries — frontend-v2/src/lib/chat.ts:74, frontend-v2/src/lib/chat.ts:79.
+- Whole frame loop wrapped in try/catch; catch maps abort to `"cancelled"`, any other throw to `e.message` or `String(e)`, both with `done: true` — nothing propagates to the caller — frontend-v2/src/lib/chat.ts:174-177 [DERIVED].
+- SSE `error` frames are recorded as a capped string and the loop keeps consuming frames — frontend-v2/src/lib/chat.ts:164-165 [DERIVED].
+- Unknown frame events fall through silently (no else branch) — frontend-v2/src/lib/chat.ts:111-171 [DERIVED].
+- `pickAnswer` never throws; unknown shapes yield `""`, which the answer branches replace with `streamed` — frontend-v2/src/lib/chat.ts:98,128,146 [DERIVED].
 
 ## dumb-code flags
-- Magic number `400` in error truncation, unexplained — frontend-v2/src/lib/chat.ts:160.
-- Duplicated latency-fallback expression `?? Math.round(performance.now() - t0)` at frontend-v2/src/lib/chat.ts:122 and frontend-v2/src/lib/chat.ts:127; deep branch reads `frame.data.latency_ms`, chat branch reads `a.latency_ms`.
-- Duplicated meta-extraction ternary (`typeof x === "object" && x ? x : {}`) at frontend-v2/src/lib/chat.ts:121 and frontend-v2/src/lib/chat.ts:138-139.
-- Schema-guessing fallback chain `d.stage ?? d.phase ?? d.name ?? "phase"` — frontend-v2/src/lib/chat.ts:109; likewise dual-field guesses at frontend-v2/src/lib/chat.ts:116 and frontend-v2/src/lib/chat.ts (line out of range) with reversed precedence (see invariants).
-- `stopStream` aborts but never removes the `inflight` entry; cleanup depends entirely on `endStream` — frontend-v2/src/lib/chat.ts:78-80 vs frontend-v2/src/lib/chat.ts:73-75 [INFERRED: stale controllers can linger after a stop].
-- `newTurn` omits the six later optional `Turn` fields (`deepRun`, `deepCoverage`, `synthesis`, `gapCheck`, `productResearch`, `productRun`) — frontend-v2/src/lib/chat.ts:53-59 vs frontend-v2/src/lib/chat.ts:33-47.
-- Deep `answer` branch never sets `abstained`/`uncovered` — frontend-v2/src/lib/chat.ts:118-133 vs frontend-v2/src/lib/chat.ts:143-144 [INFERRED: they keep whatever the `Turn` already held].
+- Magic number `400` in the error cap — frontend-v2/src/lib/chat.ts:165 [DERIVED].
+- Latency fallback expression duplicated in both answer branches — frontend-v2/src/lib/chat.ts:132,152 [DERIVED].
+- `model`/`verdict` extraction duplicated between deep and chat answer branches — frontend-v2/src/lib/chat.ts:129-130,147-148 [DERIVED].
+- Schema-key probing is spread over four places despite the comment "without guessing a schema": `["answer", "text", "content", "message"]` (frontend-v2/src/lib/chat.ts:92), `d.stage ?? d.phase ?? d.name` (frontend-v2/src/lib/chat.ts:114), `d.token`/`d.text` (frontend-v2/src/lib/chat.ts:121), `d.text`/`d.token` (frontend-v2/src/lib/chat.ts:169) [DERIVED].
+- `newTurn` initializes `deep: null` but leaves the 8 newer optional fields absent rather than `null` — persisted "older turns" rely on absence — frontend-v2/src/lib/chat.ts:58-64,34-52 [DERIVED].
+- Deep-vs-chat discrimination rests solely on `(frame.data).kind === "deep"` checked before the generic branch; a deep report without that `kind` would be folded as a chat answer — frontend-v2/src/lib/chat.ts:123,139 [INFERRED: branch order makes kind the only discriminator].
 
 ## refactor notes
-- Blast radius of any `Turn`/`Phase`/`DeepAnswer` shape change: `frontend-v2/src/App.tsx`, `frontend-v2/src/lib/_small-modules`, `frontend-v2/src/lib/deep.ts` (FACTS.importers).
-- `Turn` fields are persisted with the chat; new fields must stay optional because older saved turns lack them ("Absent on older turns", "render as before") — frontend-v2/src/lib/chat.ts:33, frontend-v2/src/lib/chat.ts:38, frontend-v2/src/lib/chat.ts:44-45.
-- `inflight` must stay module scope: a stream outlives the Chat screen that started it, so Stop has to find it from whichever screen shows the chat now — frontend-v2/src/lib/chat.ts:61-64. Moving it into component state breaks cross-screen Stop.
-- The `stream` parameter of `runTurn` (default `chatStream`) is an injection seam — frontend-v2/src/lib/chat.ts:99; keep the default or every caller breaks.
-- `endStream`'s identity check pairs with `beginStream`'s replace semantics — frontend-v2/src/lib/chat.ts:69, frontend-v2/src/lib/chat.ts:74; changing one without the other either leaks registrations or kills live streams.
-- Frame names handled (`phase`, `token`, `answer`, `coverage`, `error`, `reasoning`) and the deep discriminator `kind === "deep"` are a wire contract with the backend — frontend-v2/src/lib/chat.ts:107, frontend-v2/src/lib/chat.ts:113, frontend-v2/src/lib/chat.ts:118, frontend-v2/src/lib/chat.ts:155, frontend-v2/src/lib/chat.ts:159, frontend-v2/src/lib/chat.ts:161.
+- `inflight` must stay module scope: a stream outlives the Chat screen that started it, so `stopStream` has to find it from whichever screen shows the chat now — frontend-v2/src/lib/chat.ts:66-69 [DERIVED]. Moving it into component state breaks cross-screen Stop.
+- `Turn` is a persisted format ("Persisted with the chat like every turn field" — frontend-v2/src/lib/chat.ts:45) with absence-based versioning ("Absent on older turns… render as before" — frontend-v2/src/lib/chat.ts:34-40,49-51): renaming or making fields required breaks saved chats [DERIVED].
+- The 4th `runTurn` param is the injection seam defaulting to `chatStream`; its signature must stay compatible with `chatStream` in frontend-v2/src/lib/api.ts — frontend-v2/src/lib/chat.ts:2,104 [DERIVED].
+- Branch order in the frame loop is semantic: the deep-answer test must precede the generic `answer` branch — frontend-v2/src/lib/chat.ts:123,139 [INFERRED: same `frame.event` value, disambiguated only by order].
+- Blast radius: importers `frontend-v2/src/App.tsx`, `frontend-v2/src/lib/_small-modules`, `frontend-v2/src/lib/deep.ts` (FACTS.importers); type dependencies `./api`, `./contracts`, `./deep`, `./productResearch`, `./productReport` (FACTS.imports) — frontend-v2/src/lib/chat.ts:2-6 [DERIVED].
 
 ## VERIFY
 ```verify
-grep -Fq 'export async function runTurn' frontend-v2/src/lib/chat.ts
 grep -Fq 'const inflight = new Map<string, AbortController>();' frontend-v2/src/lib/chat.ts
-grep -Fq 'onUpdate({ done: true, error: "cancelled" })' frontend-v2/src/lib/chat.ts
-grep -Fq 'JSON.stringify(frame.data).slice(0, 400)' frontend-v2/src/lib/chat.ts
 grep -Fq 'd.stage ?? d.phase ?? d.name ?? "phase"' frontend-v2/src/lib/chat.ts
-grep -Fq 'Math.round(performance.now() - t0)' frontend-v2/src/lib/chat.ts
-! grep -Fq 'export function pickAnswer' frontend-v2/src/lib/chat.ts
+grep -Fq '["answer", "text", "content", "message"]' frontend-v2/src/lib/chat.ts
+grep -Fq 'JSON.stringify(frame.data).slice(0, 400)' frontend-v2/src/lib/chat.ts
+grep -Fq 'if (signal?.aborted) { onUpdate({ done: true, error: "cancelled" }); return; }' frontend-v2/src/lib/chat.ts
+test "$(grep -c -F 'onUpdate({ done: true' frontend-v2/src/lib/chat.ts)" -ge 3
+! grep -Fq 'fetch(' frontend-v2/src/lib/chat.ts
 ```

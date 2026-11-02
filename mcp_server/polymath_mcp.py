@@ -32,6 +32,11 @@ supplier_parse (POST /supplier/parse) as Server A; the playbook (instructions)
 and every product / supplier / adapter description come from ONE shared copy
 (polymath_shared/mcp_retrieval.py), pinned by tests/contracts/test_mcp_agent_playbook.py.
 
+PRODUCT-DECISION-REPORT-V1 — the same four report tools as Server A:
+  product_report_start / product_report_status / product_report_compile /
+  product_report_list (POST /product/report/start, GET /product/report/{id}/status,
+  POST /product/report/{id}/compile, GET /product/reports), same shared texts.
+
 Transports:
   stdio (default)  — Claude Code / Claude Desktop / local agents:
       claude mcp add polymath -- <repo>/.venv/bin/python \
@@ -222,6 +227,54 @@ def supplier_parse(site: str, raw_text: str) -> dict:
     return _adapter("POST", "/supplier/parse", MR.parse_body(site, raw_text))
 
 
+# PRODUCT-DECISION-REPORT-V1 (B5): the same four report tools, names, parameters, descriptions and timeouts as Server A (plain
+# proxies onto /product/report/*; the routes decide everything, a report's privacy included)
+#: stdio: the agent, and so the fetch script it runs, are on the Polymath host: the upload URL is the local one (Server A decides
+#: per request instead; this server's --http mode for a remote agent still gets the local URL: use Server A for other machines)
+UPLOAD_BASE = "local"
+#: each report's upload token (contract C1; one user per stdio process, so keyed by report): sent back as X-Upload-Token on every
+#: status call; memory only, at most MR.REPORT_TOKEN_CACHE_MAX reports
+_REPORT_TOKENS = MR.ReportTokens()
+
+
+@server.tool(description=MR.PRODUCT_REPORT_START)
+def product_report_start(message: Optional[str] = None, corpus_id: Optional[str] = None,
+                         products: Optional[list[dict]] = None, channels: Optional[list[str]] = None,
+                         ship_to: str = "US", max_products: int = MR.REPORT_DEFAULT_PRODUCTS) -> dict:
+    body = MR.report_start_body(message, corpus_id, products=products, channels=channels, ship_to=ship_to,
+                                max_products=max_products, upload_base=UPLOAD_BASE)
+    out = _adapter("POST", MR.REPORT_START_PATH, body, timeout=MR.REPORT_TIMEOUT_S["start"])
+    rid = MR.normalize_report_id(out.get("report_id")) if isinstance(out, dict) else None
+    if rid:
+        _REPORT_TOKENS.remember(rid, out, rid)
+    return MR.shape_report(out)
+
+
+@server.tool(description=MR.PRODUCT_REPORT_STATUS)
+def product_report_status(report_id: str) -> dict:
+    rid = MR.normalize_report_id(report_id)
+    if rid is None:
+        return MR.report_id_error(report_id)
+    out = _adapter("GET", MR.report_status_path(rid, UPLOAD_BASE), timeout=MR.REPORT_TIMEOUT_S["status"],
+                   headers=_REPORT_TOKENS.headers(rid))
+    _REPORT_TOKENS.remember(rid, out, rid)
+    return MR.shape_report(out)
+
+
+@server.tool(description=MR.PRODUCT_REPORT_COMPILE)
+def product_report_compile(report_id: str, verdicts: Optional[dict[str, str]] = None) -> dict:
+    rid = MR.normalize_report_id(report_id)
+    if rid is None:
+        return MR.report_id_error(report_id)
+    return _adapter("POST", MR.report_path(rid, "compile"), MR.report_compile_body(verdicts),
+                    timeout=MR.REPORT_TIMEOUT_S["compile"])
+
+
+@server.tool(description=MR.PRODUCT_REPORT_LIST)
+def product_report_list() -> dict:
+    return _adapter("GET", MR.REPORT_LIST_PATH, timeout=MR.REPORT_TIMEOUT_S["list"])
+
+
 @server.tool()
 def polymath_query(
     question: str,
@@ -345,10 +398,10 @@ def polymath_delete_document(doc_id: str, confirm: str) -> dict:
 # parameters and semantics as MCP Server A (orchestrator/orchestrator/mcp_server.py), so a stdio agent
 # (Claude Code / Codex) drives the same governed run Hermes drives over HTTP. Nothing is decided here.
 
-def _adapter(method: str, path: str, payload: dict | None = None) -> Any:
+def _adapter(method: str, path: str, payload: dict | None = None, timeout: float = 180, headers: dict | None = None) -> Any:
     """Server A's `_orch` error mapping: a 4xx/5xx becomes {"error": detail, "status": code} so the agent
     sees a rejected submission's errors (422) or a not-yet-terminal run (409) instead of a transport error."""
-    r = httpx.request(method, f"{BASE}{path}", json=payload, timeout=180)
+    r = httpx.request(method, f"{BASE}{path}", json=payload, timeout=timeout, headers=headers or None)
     if r.status_code >= 400:
         try:
             detail = r.json().get("detail")

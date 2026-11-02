@@ -22,6 +22,10 @@ Tools
                                        with corpus product hypotheses + CJ finds + the local Agent Reach fallback + the offer of
                                        the full governed run (POST /product/search)
   supplier_parse(site, raw_text)       raw local Agent Reach output -> supplier listings (POST /supplier/parse)
+  product_report_start(message, …)     PRODUCT-DECISION-REPORT-V1: start a private HTML decision report (POST /product/report/start)
+  product_report_status(report_id)     its progress and the round's fetch script (GET /product/report/{id}/status)
+  product_report_compile(report_id, …) the decision model + HTML -> the report link (POST /product/report/{id}/compile)
+  product_report_list()                the caller's own reports (GET /product/reports)
   Modes (MCP-RETRIEVAL-MODES-V1, polymath_shared/mcp_retrieval.py): FAST | HYBRID | GRAPH | WILDCARD | GNN.
   retrieve / retrieve_evidence / compile_plan / ask: DEPRECATED, still callable, no longer listed.
   What an agent is told (the playbook in `instructions`, the product / supplier / adapter descriptions) lives ONCE in
@@ -566,6 +570,66 @@ async def supplier_parse(site: str, raw_text: str) -> dict:
     return await _orch("POST", "/supplier/parse", json=MR.parse_body(site, raw_text))
 
 
+# PRODUCT-DECISION-REPORT-V1 (B5): one private HTML decision report per product search, for any agent. Plain proxies onto
+# /product/report/* (the routes decide everything, a report's privacy included); the same names, parameters, descriptions and
+# timeouts on Server B. The loop and the subagent recipe live once, in MR.
+def _upload_base() -> str:
+    """Where the agent's fetch script will run, so the route's upload URL works there: `local` for a caller that addressed the
+    loopback listener with no edge headers (an agent on this host: `_is_local_caller`, decided by the gate per request),
+    `public` for every other caller (another machine: the public web door). A lost context says public, which works anywhere."""
+    return "local" if _CALLER_IS_LOCAL.get() else "public"
+
+
+#: each report's upload token, per principal and report (contract C1): sent back as X-Upload-Token on every status call, so a
+#: report keeps one live upload link instead of one per status call; memory only, at most MR.REPORT_TOKEN_CACHE_MAX reports.
+#: C1-C10 are the review-fix contracts recorded in docs/wiki/work-log/2026-11-02-product-decision-report.md (the capability is
+#: ADR-0023, docs/wiki/decisions/0023-report-upload-capability.md).
+_REPORT_TOKENS = MR.ReportTokens()
+
+
+def _token_key(report_id: str) -> tuple[str, str]:
+    return (_PRINCIPAL.get().principal_id, report_id)
+
+
+@mcp.tool(description=MR.PRODUCT_REPORT_START)
+async def product_report_start(message: Optional[str] = None, corpus_id: Optional[str] = None,
+                               products: Optional[list[dict]] = None, channels: Optional[list[str]] = None,
+                               ship_to: str = "US", max_products: int = MR.REPORT_DEFAULT_PRODUCTS) -> dict:
+    body = MR.report_start_body(message, corpus_id, products=products, channels=channels, ship_to=ship_to,
+                                max_products=max_products, upload_base=_upload_base())
+    out = await _orch("POST", MR.REPORT_START_PATH, json=body, timeout=MR.REPORT_TIMEOUT_S["start"])
+    rid = MR.normalize_report_id(out.get("report_id")) if isinstance(out, dict) else None
+    if rid:
+        _REPORT_TOKENS.remember(_token_key(rid), out, rid)
+    return MR.shape_report(out)
+
+
+@mcp.tool(description=MR.PRODUCT_REPORT_STATUS)
+async def product_report_status(report_id: str) -> dict:
+    rid = MR.normalize_report_id(report_id)
+    if rid is None:
+        return MR.report_id_error(report_id)
+    key = _token_key(rid)
+    out = await _orch("GET", MR.report_status_path(rid, _upload_base()), headers=_REPORT_TOKENS.headers(key),
+                      timeout=MR.REPORT_TIMEOUT_S["status"])
+    _REPORT_TOKENS.remember(key, out, rid)
+    return MR.shape_report(out)
+
+
+@mcp.tool(description=MR.PRODUCT_REPORT_COMPILE)
+async def product_report_compile(report_id: str, verdicts: Optional[dict[str, str]] = None) -> dict:
+    rid = MR.normalize_report_id(report_id)
+    if rid is None:
+        return MR.report_id_error(report_id)
+    return await _orch("POST", MR.report_path(rid, "compile"), json=MR.report_compile_body(verdicts),
+                       timeout=MR.REPORT_TIMEOUT_S["compile"])
+
+
+@mcp.tool(description=MR.PRODUCT_REPORT_LIST)
+async def product_report_list() -> dict:
+    return await _orch("GET", MR.REPORT_LIST_PATH, timeout=MR.REPORT_TIMEOUT_S["list"])
+
+
 # -------------------------------------------------------------------- app
 
 @mcp.tool()
@@ -901,6 +965,7 @@ _TOOL_NAMES = ("polymath_compare", "polymath_deep_research", "polymath_models",
                "adapter_result", "adapter_cancel", "research_acquire",
                "supplier_search", "supplier_product", "supplier_freight", "supplier_warehouses",
                "product_search", "supplier_parse",
+               "product_report_start", "product_report_status", "product_report_compile", "product_report_list",
                "list_corpora", "list_documents", "upload_document", "upload_text",
                "document_status", "corpus_status", "retrieve", "ask",
                "recent_queries",

@@ -19,7 +19,7 @@ AUTHORITY: `adapters/ecommerce/python/query_semantics.py:22` :: `SLOT_FIELDS` (c
 | `adapters/ecommerce/python/maintenance.py` | `adapters/ecommerce/python/maintenance.py:35` | 4/6 | `friction`, `population` |
 | `adapters/ecommerce/python/product_reality.py` | `adapters/ecommerce/python/product_reality.py:84` | 3/6 | `activity`, `friction_family`, `friction` |
 | `adapters/ecommerce/python/registry.py` | `adapters/ecommerce/python/registry.py:47` | 4/6 | `friction`, `population` |
-| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:215` | 5/6 | `friction` |
+| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:223` | 5/6 | `friction` |
 | `shared/polymath_shared/adapter/hypotheses.py` | `shared/polymath_shared/adapter/hypotheses.py:36` | 4/6 | `friction_family`, `friction` |
 | `shared/polymath_shared/adapter/semantic_view.py` | `shared/polymath_shared/adapter/semantic_view.py:30` | 4/6 | `friction_family`, `friction` |
 

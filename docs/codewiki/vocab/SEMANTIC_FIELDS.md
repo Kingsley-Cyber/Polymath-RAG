@@ -19,7 +19,7 @@ AUTHORITY: `shared/polymath_shared/adapter/semantic_view.py:30` :: `SEMANTIC_FIE
 | `adapters/ecommerce/python/product_reality.py` | `adapters/ecommerce/python/product_reality.py:84` | 3/6 | `activity`, `mechanism`, `suspected_friction` |
 | `adapters/ecommerce/python/query_semantics.py` | `adapters/ecommerce/python/query_semantics.py:22` | 6/6 | — |
 | `adapters/ecommerce/python/registry.py` | `adapters/ecommerce/python/registry.py:47` | 3/6 | `population`, `mechanism`, `suspected_friction` |
-| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:67` | 6/6 | — |
+| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:75` | 6/6 | — |
 | `shared/polymath_shared/adapter/hypotheses.py` | `shared/polymath_shared/adapter/hypotheses.py:36` | 6/6 | — |
 
 ## VERIFY

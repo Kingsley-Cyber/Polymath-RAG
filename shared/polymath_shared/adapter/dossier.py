@@ -5,25 +5,32 @@ one input is the governed run JOURNAL a host keeps beside a run. The server neve
 every issued step with its accepted submission, and the terminal result. `journal_from_store` rebuilds the journal from them in the exact
 shape `governed_run.py` writes, so the renderer runs unchanged. `render_dossier` runs it OUT OF PROCESS (the engine's top-level module
 names `models`, `graph`, `report` never enter this process), keeps only the renderer's own tags and attributes from what comes back, and
-wraps it in a document the route sends under a CSP that allows no script. Nothing here writes, scores or decides."""
+wraps it in a document the route sends under a CSP that allows no script. Nothing here writes, scores or decides.
+
+PRODUCT-DECISION-REPORT-V1 §4.5 (B4a): `render_decision(bundle)` is the same pattern for a product decision report — ONE engine process
+(`report.py decision`) loads the policy, calls `unit_economics.compute(bundle, policy)`, builds the ReportModel and draws the DECISION
+page; the page comes back through the same sanitizer, which keeps an anchor only for an http(s) URL (`safe_href`)."""
 from __future__ import annotations
 
 import hashlib
 import html
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from . import evidence_boundary as EB
 from .contracts import _REPO
 
 ENGINE = _REPO / "adapters" / "ecommerce"
 RENDERER = ENGINE / "python" / "governed_run.py"
+DECISION_RENDERER = ENGINE / "python" / "report.py"                        # report.py decision --bundle --out --decision-out
 #: the adapters whose results the engine's governed renderer draws (report.build_model_from_governed): the legacy
 #: `trail.product_discovery` it was written for, and `ecommerce.product_research`, which replaced it. No other adapter has a dossier.
 DOSSIER_ADAPTERS = frozenset({"ecommerce.product_research", "trail.product_discovery"})
@@ -32,6 +39,12 @@ JOURNAL_VERSION = "governed-run-journal-v1"                                # gov
 MAX_EVIDENCE_ROWS = 60                                                     # governed_run.MAX_EVIDENCE_ROWS
 RENDER_TIMEOUT_S = 30.0
 MAX_HTML_BYTES = 5_000_000
+MAX_DECISION_BYTES = 5_000_000                                             # the decision model render_decision hands back
+MAX_BUNDLE_BYTES = 20_000_000                                              # what render_decision hands the engine
+#: render_decision's typed failures: the engine's own (report.DECISION_CLI_ERRORS), then the process's
+DECISION_ERRORS = ("DECISION_BUNDLE_UNREADABLE", "DECISION_BUNDLE_INVALID", "UNIT_ECONOMICS_UNAVAILABLE", "POLICY_UNAVAILABLE",
+                   "UNIT_ECONOMICS_FAILED", "DECISION_BUNDLE_TOO_LARGE", "DECISION_TIMEOUT", "DECISION_RENDER_FAILED", "DECISION_TOO_LARGE",
+                   "DECISION_OUTPUT_INVALID")
 #: an agent-answered step: the run status adapter_next showed beside it, and the submission kind that answers it
 _AWAITING = {"AGENT_REASON": ("awaiting_agent", "reasoning"), "HARNESS_ACTION": ("awaiting_harness", "receipt")}
 
@@ -126,12 +139,32 @@ def journal_from_store(run: dict[str, Any], steps: list[dict[str, Any]], result:
 
 
 # ─────────────────────────────────────────────────────────── the page
-#: report.render's own markup — every other tag is dropped (its text kept, escaped), every other attribute too
+#: report.render's own markup — every other tag is dropped (its text kept, escaped), every other attribute too. `section`, `thead`,
+#: `tbody`, `details` and `summary` are the DECISION layout's (inert; `details` opens without a script).
 ALLOWED_TAGS = frozenset({"style", "header", "footer", "div", "p", "span", "strong", "em", "b", "br", "h1", "h2", "h3", "ul", "ol", "li",
-                          "table", "tr", "th", "td", "blockquote"})
+                          "table", "tr", "th", "td", "blockquote", "section", "thead", "tbody", "details", "summary"})
 ALLOWED_ATTRIBUTES = frozenset({"class", "style", "title", "colspan"})
+#: an anchor is kept ONLY with an http(s) href (safe_href); it is re-written with exactly these attributes — never the renderer's own
+LINK_ATTRIBUTES = 'rel="noopener noreferrer" target="_blank"'
 #: never in the renderer's output; if one ever appears, its content goes with it
 _DROPPED_WITH_CONTENT = frozenset({"script", "noscript", "template", "iframe", "object", "embed", "svg", "math"})
+#: report.safe_url's rule, written again here (the engine never imports `shared`; a contract test holds the two equal): an http(s) URL
+#: with a host and no whitespace, control, quote, angle bracket, backslash or the other characters a URL never needs unescaped
+_HTTP_URL = re.compile(r"https?://[^\s\"'<>\\^`{|}\x00-\x1f\x7f]+", re.IGNORECASE)
+MAX_URL_CHARS = 2048
+
+
+def safe_href(value: Any) -> str | None:
+    """`value` when it may stay an anchor's href — an http(s) URL with a host — else None: a `javascript:`, `data:` or any other
+    scheme, a relative or protocol-relative URL, and anything carrying whitespace or a control character are never a link. Checked on
+    the DECODED attribute value (the parser has already resolved character references), so `&#106;avascript:` is `javascript:`."""
+    if not isinstance(value, str) or len(value) > MAX_URL_CHARS or not _HTTP_URL.fullmatch(value):
+        return None
+    try:
+        host = urlsplit(value).hostname
+    except ValueError:
+        return None
+    return value if host else None
 
 
 class _Sanitizer(HTMLParser):
@@ -140,15 +173,27 @@ class _Sanitizer(HTMLParser):
         self.out: list[str] = []
         self.dropping = 0
         self.in_style = 0
+        self.links: list[bool] = []                       # one entry per open <a>: whether it was kept
 
     def _open(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         kept = "".join(f' {k}="{html.escape(v or "", quote=True)}"' for k, v in attrs if k in ALLOWED_ATTRIBUTES)
         self.out.append(f"<{tag}{kept}>")
 
+    def _anchor(self, attrs: list[tuple[str, str | None]]) -> None:
+        hrefs = [v for k, v in attrs if k == "href"]
+        href = safe_href(hrefs[0]) if len(hrefs) == 1 else None            # two hrefs are one too many: no link
+        self.links.append(href is not None)
+        if href is not None:
+            self.out.append(f'<a href="{html.escape(href, quote=True)}" {LINK_ATTRIBUTES}>')
+
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag in _DROPPED_WITH_CONTENT:
             self.dropping += 1
-        elif not self.dropping and tag in ALLOWED_TAGS:
+        elif self.dropping:
+            return
+        elif tag == "a":
+            self._anchor(attrs)
+        elif tag in ALLOWED_TAGS:
             self.in_style += tag == "style"
             self._open(tag, attrs)
 
@@ -159,7 +204,12 @@ class _Sanitizer(HTMLParser):
     def handle_endtag(self, tag: str) -> None:
         if tag in _DROPPED_WITH_CONTENT:
             self.dropping = max(0, self.dropping - 1)
-        elif not self.dropping and tag in ALLOWED_TAGS and tag != "br":
+        elif self.dropping:
+            return
+        elif tag == "a":
+            if self.links and self.links.pop():
+                self.out.append("</a>")
+        elif tag in ALLOWED_TAGS and tag != "br":
             self.in_style = max(0, self.in_style - (tag == "style"))
             self.out.append(f"</{tag}>")
 
@@ -170,12 +220,14 @@ class _Sanitizer(HTMLParser):
 
 
 def sanitize(fragment: str) -> str:
-    """Re-serialize the renderer's HTML through a fixed allowlist of tags and attributes: text is escaped again, comments, doctypes,
-    links, images, event handlers and scripts are gone. Defence in depth behind report.py's own escaping and the route's CSP."""
+    """Re-serialize the renderer's HTML through a fixed allowlist of tags and attributes: text is escaped again; comments, doctypes,
+    images, event handlers and scripts are gone; an anchor survives only with an http(s) href (`safe_href`), re-written to open in a
+    new tab with no opener and no referrer — any other link keeps its text and loses the anchor. Defence in depth behind report.py's
+    own escaping and the route's CSP."""
     p = _Sanitizer()
     p.feed(fragment)
     p.close()
-    return "".join(p.out)
+    return "".join(p.out) + "</a>" * sum(p.links)        # an anchor the fragment left open is closed where the fragment ends
 
 
 def document(body: str, title: str) -> str:
@@ -206,3 +258,60 @@ def render_dossier(journal: dict[str, Any], layout: str = "FULL_RESEARCH", *, ti
             raise DossierError("DOSSIER_TOO_LARGE", f"the dossier is larger than {MAX_HTML_BYTES} bytes")
         raw = out.read_text(encoding="utf-8")
     return document(sanitize(raw), title or f"Dossier · {journal.get('run_id')}")
+
+
+# ─────────────────────────────────────────────────────────── the decision report (PRODUCT-DECISION-REPORT-V1 §4.5)
+def _engine_failure(stdout: str) -> tuple[str, str] | None:
+    """The typed failure `report.py decision` printed as its last line ({ok: false, code, message}), when it printed one."""
+    last = next((line for line in reversed((stdout or "").strip().splitlines()) if line.strip()), "")
+    try:
+        said = json.loads(last)
+    except ValueError:
+        return None
+    if isinstance(said, dict) and said.get("ok") is False and said.get("code") in DECISION_ERRORS[:5]:
+        return str(said["code"]), str(said.get("message") or "")[-600:]
+    return None
+
+
+def render_decision(bundle: dict[str, Any], *, title: str | None = None, timeout_s: float = RENDER_TIMEOUT_S) -> dict[str, Any]:
+    """The product decision report for `bundle` — {candidates, host, parsed, settings} (plan §4.4), plus what only the page reads:
+    `verdicts` ({candidate_id: the connected agent's verdict text}), `report_id`, `title`. ONE engine process, as `render_dossier` runs
+    its own (this interpreter, a private temporary directory, a minimal environment, a timeout): `report.py decision` loads the policy,
+    calls `unit_economics.compute(bundle, policy)`, builds the ReportModel and draws the DECISION page. The page comes back through the
+    same sanitizer (an http(s) link stays an anchor, every other scheme stays text) inside a document.
+
+    Returns {"html": the page, "decision": the decision model compute returned}. Raises DossierError, its code one of DECISION_ERRORS —
+    the engine's own typed failures (an unreadable or invalid bundle, unit economics or the policy unavailable, compute failing) or the
+    process's (timeout, failed render, too large, unreadable output)."""
+    if not isinstance(bundle, dict):
+        raise DossierError("DECISION_BUNDLE_INVALID", "the bundle is a mapping: {candidates, host, parsed, settings}")
+    body = json.dumps(bundle, ensure_ascii=False, default=str)
+    if len(body.encode("utf-8")) > MAX_BUNDLE_BYTES:
+        raise DossierError("DECISION_BUNDLE_TOO_LARGE", f"the bundle is larger than {MAX_BUNDLE_BYTES} bytes")
+    with tempfile.TemporaryDirectory(prefix="polymath-decision-") as tmp:
+        bpath, out, dpath = Path(tmp) / "bundle.json", Path(tmp) / "decision.html", Path(tmp) / "decision.json"
+        bpath.write_text(body, encoding="utf-8")
+        # no DSN, no token, no key: compute reads the bundle and the engine's policy file, nothing else
+        env = {"PATH": os.environ.get("PATH", ""), "LANG": os.environ.get("LANG", "en_US.UTF-8"), "PYTHONDONTWRITEBYTECODE": "1",
+               "OPPORTUNITY_RESEARCH_DB": str(Path(tmp) / "loop.sqlite3")}
+        try:
+            proc = subprocess.run([sys.executable, str(DECISION_RENDERER), "decision", "--bundle", str(bpath), "--out", str(out), "--decision-out", str(dpath)],
+                                  capture_output=True, text=True, timeout=timeout_s, cwd=tmp, env=env, check=False)
+        except subprocess.TimeoutExpired as exc:
+            raise DossierError("DECISION_TIMEOUT", f"the decision renderer took longer than {timeout_s:g}s") from exc
+        if proc.returncode != 0 or not out.is_file() or not dpath.is_file():
+            typed = _engine_failure(proc.stdout)
+            if typed:
+                raise DossierError(*typed)
+            raise DossierError("DECISION_RENDER_FAILED", f"the decision renderer exited {proc.returncode}: {proc.stderr.strip()[-600:]}")
+        if out.stat().st_size > MAX_HTML_BYTES or dpath.stat().st_size > MAX_DECISION_BYTES:
+            raise DossierError("DECISION_TOO_LARGE", f"the decision page or model is larger than {MAX_HTML_BYTES} bytes")
+        raw = out.read_text(encoding="utf-8")
+        try:
+            decision = json.loads(dpath.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            raise DossierError("DECISION_OUTPUT_INVALID", f"the decision model is not JSON: {exc}") from exc
+    if not isinstance(decision, dict):
+        raise DossierError("DECISION_OUTPUT_INVALID", f"the decision model is a {type(decision).__name__}, not an object")
+    name = title or f"Decision report · {bundle.get('title') or bundle.get('report_id') or 'products'}"
+    return {"html": document(sanitize(raw), str(name)), "decision": decision}

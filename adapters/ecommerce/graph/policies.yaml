@@ -275,3 +275,200 @@ seed_check:                      # PRODUCT-SEARCH-E2E F12: a seed that can gener
     Rewrite the seed as a problem, an audience or a situation — who struggles with what, and when (for example "commuters' coffee
     spills in the car" or "parents juggling bags and a toddler at the store") — or leave the seed out and the run proposes one from
     its corpora.
+
+# ── PRODUCT-DECISION-REPORT-V1 §2 / §4.4 (B3): the decision report's sales channels — fees, delivery rules, sources ──
+# unit_economics.py holds no rate or threshold of its own: it reads every number below, and every report prints each rule with the
+# URL of the page behind it and the date that page was read (the planning session read them on 2026-11-02). A rule the plan set
+# itself (Amazon's 10-day WARN line) says so in `basis`.
+sales_channels:
+  read_on: "2026-11-02"
+  order: [tiktok_us, tiktok_cross_border, shopify, ebay, amazon_fbm]
+  fee_base: >-
+    every fee formula is charged on price + shipping the buyer pays; the report prices each sale at the market's delivered price
+    with free shipping to the buyer, so that base is the sell price and the seller's own shipping is a cost
+  channels:
+    tiktok_us:
+      label: TikTok Shop US (local seller account)
+      fee: {kind: percent, rate_pct: 6.0}
+      sensitivity: {id: tiktok_8pct, rate_pct: 8.0, status: UNCONFIRMED, sources: [tiktok_8pct_fbatactics, tiktok_8pct_delzonic, tiktok_8pct_unconfirmed]}
+      delivery:
+        kind: us_local_only
+        origins: [US]                          # US local seller shipping is domestic only: shipped from China = FAIL
+        max_handling_business_days: 2          # first carrier scan ("In Transit") within 2 business days of Awaiting Shipment
+        max_delivery_business_days: 6          # Delivered within 6 business days of Awaiting Shipment
+        custom_handling_business_days: [3, 7]  # custom handling time: delivered within handling + 5 business days
+        custom_handling_extra_delivery_business_days: 5
+      sources: [tiktok_fulfillment_policy, tiktok_seller_shipping, tiktok_referral_fees]
+    tiktok_cross_border:
+      label: TikTok Shop US (cross-border seller account)
+      fee: {kind: percent, rate_pct: 6.0}
+      sensitivity: {id: tiktok_8pct, rate_pct: 8.0, status: UNCONFIRMED, sources: [tiktok_8pct_fbatactics, tiktok_8pct_delzonic, tiktok_8pct_unconfirmed]}
+      delivery:
+        kind: max_days
+        days: calendar
+        max_in_transit_calendar_days: 3        # cross-border direct mail: In Transit within 3 calendar days
+        max_delivery_days: 15                  # Delivered within 15 calendar days
+        over: FAIL
+        overseas_warehouse: {max_handling_business_days: 2, max_delivery_business_days: 6}   # the same page's rule for stock in a US warehouse
+      sources: [tiktok_cross_border_fulfillment, tiktok_referral_fees]
+    shopify:
+      label: Shopify (own store, Basic plan)
+      fee: {kind: percent_fixed_plan, rate_pct: 2.9, fixed_usd: 0.30, plan: Basic, plan_monthly_usd: 39.00}   # plan ÷ report_settings shopify_monthly_orders
+      delivery:
+        kind: max_days
+        days: calendar
+        max_delivery_days: 7                   # above 7 days = WARN (McKinsey: most shoppers still buy at 4-7 days when delivery is free)
+        over: WARN
+        ftc_ship_within_days: 30               # FTC Mail, Internet, or Telephone Order Merchandise Rule: the stated time, else 30 days
+      sources: [shopify_pricing, ftc_mail_order_rule, mckinsey_delivery]
+    ebay:
+      label: eBay US
+      fee: {kind: percent_per_order, rate_pct: 13.6, per_order: [{max_order_usd: 10.00, fee_usd: 0.30}, {fee_usd: 0.40}]}
+      delivery:
+        kind: honest_handling                  # allowed with an honest handling time; the report adds free-shipping badge eligibility
+        badge_max_handling_business_days: 1    # same-day or 1-day handling
+        badge_max_delivery_business_days: 4    # estimated delivery 4 business days or less
+      sources: [ebay_selling_fees, ebay_delivery_dates, ebay_dropshipping, ebay_item_location]
+    amazon_fbm:
+      label: Amazon (seller-fulfilled, Individual plan)
+      fee: {kind: referral_min_per_item, rate_pct: 15.0, min_referral_usd: 0.30, per_item_usd: 0.99}
+      delivery:
+        kind: max_days
+        days: calendar
+        max_delivery_days: 10                  # above 10 days = WARN
+        basis: "plan threshold (PRODUCT-DECISION-REPORT-V1 §2, owner-approved 2026-11-02): Amazon publishes no day limit for seller-fulfilled offers, only an accurate promise"
+        over: WARN
+        prime_fail_origins: [CN]               # Seller Fulfilled Prime cannot be met from China
+      sources: [amazon_pricing, amazon_fee_schedule, amazon_handling_time, amazon_vtr, amazon_sfp, amazon_dropshipping]
+  sources:
+    tiktok_fulfillment_policy:
+      url: "https://seller-us.tiktok.com/university/essay?knowledge_id=3995852763301633&lang=en"
+      title: "TikTok Shop Academy (US): Fulfillment Policy"
+      read: "2026-11-02"
+      backs: "regular orders: In Transit within 2 business days and Delivered within 6 business days of Awaiting Shipment; custom handling (3-7 business days): Delivered within handling + 5 business days; business days exclude weekends and US federal holidays"
+    tiktok_seller_shipping:
+      url: "https://seller-us.tiktok.com/university/essay?knowledge_id=8308896260065025&lang=en"
+      title: "TikTok Shop Academy (US): Seller Shipping: Overview and Services"
+      published: "2026-08-12"
+      read: "2026-11-02"
+      backs: "US seller shipping is local to local (domestic) only; cross-border orders are not permitted on the US platform"
+    tiktok_cross_border_fulfillment:
+      url: "https://seller.tiktokglobalshop.com/university/essay?anchor_link=EBA300CF&from=policy&identity=1&knowledge_id=7089769777235729&role=1"
+      title: "TikTok Shop Global Seller University: 履约规则(美国跨境) (fulfillment rules, US cross-border)"
+      read: "2026-11-02"
+      backs: "cross-border direct mail: In Transit within 3 calendar days, Delivered within 15 calendar days of Awaiting Shipment; stock in an overseas (US) warehouse: In Transit within 2, Delivered within 6 business days"
+    tiktok_referral_fees:
+      url: "https://seller-us.tiktok.com/university/essay?knowledge_id=5988482086864682&lang=en"
+      title: "TikTok Shop Academy (US): Referral Fees by Category"
+      read: "2026-11-02"
+      backs: "6 % referral fee for most categories (5 % for some jewelry and pre-owned)"
+    tiktok_8pct_fbatactics:
+      url: "https://fbatactics.com/guides/tiktok-shop-fee-increase-2026/"
+      title: "FBA Tactics: TikTok Shop US Referral Fee Now 8% (trade blog)"
+      published: "2026-08-25"
+      read: "2026-11-02"
+      backs: "reports 8 % for most US non-food categories from 2026-08-04; cites no TikTok notice (UNCONFIRMED)"
+    tiktok_8pct_delzonic:
+      url: "https://delzonic.com/blogs/tiktok-shop-fee-increase-2026/"
+      title: "Delzonic: TikTok Shop Fee Increase 2026: The New 8% Rate (trade blog)"
+      published: "2026-08-28"
+      read: "2026-11-02"
+      backs: "reports the same 8 % rate; cites no TikTok notice (UNCONFIRMED)"
+    tiktok_8pct_unconfirmed:
+      url: "https://marketplacebeta.com/fees/tiktok-shop/fee-change-2026"
+      title: "MarketplaceBeta: TikTok Shop 8% Fee Increase (2026): What's Confirmed, What Isn't"
+      published: "2026-10-21"
+      read: "2026-11-02"
+      backs: "TikTok's own US table dated 2026-10-08 still lists 6 %; no TikTok notice of 8 % found; check your settlement report"
+    shopify_pricing:
+      url: "https://www.shopify.com/pricing"
+      title: "Shopify Pricing"
+      read: "2026-11-02"
+      backs: "Basic plan $39 USD/month paid monthly ($29/month billed yearly); online card rate 2.9 % + 30¢ on Basic"
+    ftc_mail_order_rule:
+      url: "https://www.ftc.gov/business-guidance/resources/business-guide-ftcs-mail-internet-or-telephone-order-merchandise-rule"
+      title: "FTC: Business Guide to the Mail, Internet, or Telephone Order Merchandise Rule"
+      published: "2011-09-09"
+      read: "2026-11-02"
+      backs: "ship within the time you state; with no stated time, within 30 days; otherwise get the buyer's consent to the delay or refund"
+    mckinsey_delivery:
+      url: "https://www.mckinsey.com/industries/logistics/our-insights/what-do-us-consumers-want-from-e-commerce-deliveries"
+      title: "McKinsey: What do US consumers want from e-commerce deliveries?"
+      published: "2025-02-13"
+      read: "2026-11-02"
+      backs: "more than 80 % of US shoppers still buy when delivery takes four to seven days, as long as it is free"
+    ebay_selling_fees:
+      url: "https://www.ebay.com/help/selling/fees-credits-invoices/selling-fees?id=4822"
+      title: "eBay Help: Selling fees"
+      published: "2026-10-24"
+      read: "2026-11-02"
+      backs: "most categories: final value fee 13.6 % of the total amount of the sale, plus a per-order fee of $0.30 for orders of $10.00 or less and $0.40 above $10.00"
+    ebay_delivery_dates:
+      url: "https://www.ebay.com/help/ship-track/ship-track-selling/estimated-delivery-dates?id=4086"
+      title: "eBay Help: Delivery date options for sellers"
+      read: "2026-11-02"
+      backs: "handling time is set in business days and must be realistic; the Free shipping message needs an estimated delivery of 4 business days or less, same-day or 1-day handling and free shipping as the first option"
+    ebay_dropshipping:
+      url: "https://www.ebay.com/help/policies/selling-policies/drop-shipping-policy?id=4176"
+      title: "eBay Help: Dropshipping"
+      read: "2026-11-02"
+      backs: "dropshipping from a wholesale supplier is allowed; buying from another retailer that ships to your buyer is not; you stay responsible for delivery within the stated time"
+    ebay_item_location:
+      url: "https://www.ebay.com/help/policies/listing-policies/item-location-misrepresentation-policy?id=4244"
+      title: "eBay Help: Item location policy"
+      read: "2026-11-02"
+      backs: "the item location must accurately state where the item ships from (country, city, postal code)"
+    amazon_pricing:
+      url: "https://sell.amazon.com/pricing"
+      title: "Sell on Amazon: How much does it cost to sell on Amazon?"
+      read: "2026-11-02"
+      backs: "Individual plan: $0.99 for each item sold; referral fee = the category percentage of the total price or the minimum, whichever is greater"
+    amazon_fee_schedule:
+      url: "https://sellercentral.amazon.com/help/hub/reference/external/G200336920?locale=en-US"
+      title: "Amazon Seller Central: Selling on Amazon fee schedule"
+      read: "2026-11-02"
+      backs: "referral fee on the total sales price (item + delivery charges); 15 % with a $0.30 per-item minimum for most categories (e.g. Everything Else, Home and Kitchen)"
+    amazon_handling_time:
+      url: "https://sellercentral.amazon.com/gp/help/external/GD559HDD5ZUZ8LNM?locale=en-US"
+      title: "Amazon Seller Central: Handling time requirement"
+      read: "2026-11-02"
+      backs: "handling time (order to carrier hand-over, business days) is part of the promised delivery date shown to buyers"
+    amazon_vtr:
+      url: "https://sellercentral.amazon.com/help/hub/reference/external/G201817070?locale=en-US"
+      title: "Amazon Seller Central: Valid tracking rate (VTR)"
+      read: "2026-11-02"
+      backs: "seller-fulfilled shipments must carry valid tracking"
+    amazon_sfp:
+      url: "https://sellercentral.amazon.com/help/hub/reference/external/202072550?locale=en-US"
+      title: "Amazon Seller Central: Seller Fulfilled Prime performance requirements"
+      read: "2026-11-02"
+      backs: "Seller Fulfilled Prime is measured on two-day and five-day delivery promises, which shipping from China cannot meet"
+    amazon_dropshipping:
+      url: "https://sellercentral.amazon.com/help/hub/reference/external/G201808410"
+      title: "Amazon Seller Central: Drop Shipping Policy"
+      published: "2026-10-28"
+      read: "2026-11-02"
+      backs: "drop shipping only when you are the seller of record on every packing slip, invoice and package"
+    nrf_returns_2025:
+      url: "https://nrf.com/media-center/press-releases/consumers-expected-to-return-nearly-850-billion-in-merchandise-in-2025"
+      title: "NRF: Consumers Expected to Return Nearly $850 Billion in Merchandise in 2025 (2025 Retail Returns Landscape, with Happy Returns)"
+      published: "2025-10-15"
+      read: "2026-11-02"
+      backs: "an estimated 19.3 % of online sales will be returned in 2025 (15.8 % of all retail sales)"
+
+# ── PRODUCT-DECISION-REPORT-V1 §0 / §4.4 (B3): the decision report's settings ──
+report_settings:
+  defaults:                          # a report's `settings` may override these (the owner's decisions of 2026-11-02)
+    shopify_monthly_orders: 100      # the Shopify plan fee per order = plan_monthly_usd ÷ this
+    returns_rate: 0.193              # share of sales returned; allowance per sale = rate × (unit cost + shipping)
+    ship_to: US                      # the only market the channel rules above describe
+    last_mile_usd: null              # the owner's own cost to ship ONE order from US stock — used for inventory (Alibaba) offers only when
+    last_mile_days: null             # the candidate has no CJ US→US quote; null = UNKNOWN, never guessed
+    handling_business_days: 1        # business days from the order to the first carrier scan; every delivery rule whose clock starts at the order counts it
+  returns_rate_source: nrf_returns_2025
+  min_comps_for_reference: 3         # reference price = Amazon median at n ≥ this, else the pooled Amazon + eBay median at n ≥ this, else UNKNOWN
+  supplier_days_read_as: calendar    # a quote's "4-9 days" is read as calendar days; a rule in business days is checked on the worst week (fewest weekend days)
+  alibaba_origin_default: CN         # an alibaba.com listing ships from China unless it states another origin
+  last_mile_weight_tolerance: 0.25   # a CJ US→US quote stands in for an inventory offer's last mile only when the offer is at most 25 % heavier
+  reddit_comments_max: 5             # demand.reddit.comments: at most this many, by points then date
+  reddit_comment_chars: 300

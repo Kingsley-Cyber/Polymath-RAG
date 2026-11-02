@@ -37,6 +37,11 @@ an offer of the full governed run (section 3), never started unasked. Live-web r
 web fetch or browser (bot detection blocks them). The server instructions give every connected agent this same playbook, in
 order (one copy for both servers: `shared/polymath_shared/mcp_retrieval.py`).
 
+**Decision reports → `product_report_start` / `product_report_status` / `product_report_compile` / `product_report_list`
+(PRODUCT-DECISION-REPORT-V1, 2026-11-02).** One private HTML report per product search for a dropshipping decision (demand
+signals, marketplace prices, supplier cost, MOQ, delivery time and margin per sales channel), for any agent on any model. The agent
+runs one fetch script per round on the user's machine and never reads the pages itself; Polymath computes every number. Section 5.
+
 ## 1. Local agents over stdio (Claude Code, Codex) — Server B
 
 ```bash
@@ -87,8 +92,9 @@ PRINCIPAL in the registry file `$POLYMATH_MCP_PRINCIPALS_FILE` (outside the repo
 ```
 
 Profile `friend` = everything a web friend has (`mcp_principals.FRIEND_SCOPES`, PRODUCT-SEARCH-E2E-V1): search / explore / answer /
-deep research, `product_search` and the supplier tools (CJ through the owner's account, paced 30 a minute per friend), upload into
-their own library, history, and every adapter tool including cancel; no admin, no `research_acquire`. `--corpus '*'` = every library
+deep research, `product_search`, the decision report tools (section 5), and the supplier tools (CJ through the owner's account,
+paced 30 a minute per friend), upload into their own library, history, and every adapter tool including cancel; no admin, no
+`research_acquire`. `--corpus '*'` = every library
 that exists at request time except other friends' private `fr-*` libraries; a listed grant still narrows. 401 = unknown / revoked / expired key · 403 = a tool, corpus, adapter or RUN the principal may not reach
 (another principal's run and a missing run answer identically) · 429 = over its rate. A friend's Claude Code connects with
 `claude mcp add --transport http polymath https://mcp.kingsleylab.xyz/mcp --header "Authorization: Bearer <their key>"`.
@@ -267,8 +273,9 @@ token also reaches orders, payments and disputes.
 owner created for them, opens **Settings → API keys → Create key**, and copies the prompt shown (their key is already in it) into
 their agent; claude.ai takes the connector link shown with it (`https://mcp.kingsleylab.xyz/k/<key>/mcp`, below). Each friend
 holds up to 3 active keys and can revoke them there; the owner manages friends (and can revoke any friend key) in the same Settings
-screen. A friend's key reaches the friend's libraries (every library, when the owner chose that), `product_search` and the
-read-only `supplier_*` tools, never `upload_document` or `research_acquire`.
+screen. A friend's key reaches the friend's libraries (every library, when the owner chose that), `product_search`, the
+`product_report_*` tools (their own reports only) and the read-only `supplier_*` tools, never `upload_document` or
+`research_acquire`.
 
 
 All three ingest the same remote MCP URL:
@@ -299,3 +306,89 @@ The OWNER key is `.env` `POLYMATH_MCP_API_KEY` (admin; never hand it to anyone).
 Abstention semantics carry through every shape: `insufficient_evidence`
 is an honest verdict the agent must relay, not an error to retry (a
 product question goes to `product_search` instead).
+
+## 5. Product decision reports (PRODUCT-DECISION-REPORT-V1)
+
+One private HTML report per product search, compiled by Polymath for a dropshipping decision, for any agent on any model: Reddit
+threads that signal demand, Amazon and eBay prices of similar products, Alibaba and CJ Dropshipping unit cost, MOQ and delivery
+time, and per sales channel (`tiktok_us`, `tiktok_cross_border`, `shopify`, `ebay`, `amazon_fbm`) the delivery verdict, fees,
+returns allowance, margin and break-even ad cost. Polymath's deterministic code computes every number; the connected agent writes
+only the optional verdicts. Both servers serve the same four tools with the same names, parameters and descriptions (one copy:
+`shared/polymath_shared/mcp_retrieval.py`):
+
+| Tool | Route | The server waits up to |
+|---|---|---|
+| `product_report_start(message=None, corpus_id=None, products=None, channels=None, ship_to="US", max_products=5)` | `POST /product/report/start` | 60 s (it answers at once; CJ, eBay and the product picking run in the background) |
+| `product_report_status(report_id)` | `GET /product/report/{id}/status` | 30 s |
+| `product_report_compile(report_id, verdicts=None)` | `POST /product/report/{id}/compile` | 120 s |
+| `product_report_list()` | `GET /product/reports` | 30 s |
+
+Every friend key may call them (the same scope as `product_search`); `corpus_id` is optional for `product_report_start` exactly as
+for `product_search`, and a library that is named is still checked. A report is private: only the principal that started it,
+and the owner, can read it. `max_products` defaults to 5 (at most 8); `ship_to` is US (the only market the channel rules cover);
+`verdicts` = {candidate_id: a short verdict of at most 1200 characters}. The answers' field names are the contract's
+(`contracts/product/v1/product_report.schema.json`: the start / status view and the compile view).
+
+**Where the upload link points.** The fetch script uploads to `upload.url`, which must work where the script runs. Server A sends
+`upload_base` with every start and status call: `local` when the MCP request came to its loopback listener with no edge headers
+(an agent on the Polymath host, Hermes included: `http://127.0.0.1:7200/...`), `public` for every other caller (another
+machine: the public web door, `POLYMATH_PUBLIC_URL`). Server B (stdio, on the host) always sends `local`; its `--http` mode
+serving an agent on another machine still gets the local link, so such an agent uses Server A.
+
+**One upload link per report (contract C1).** Each MCP server keeps a report's upload token in its own memory (Server A per
+principal and report, Server B per report; at most 256 reports, the least recently used dropped first; never written anywhere),
+takes it from start's `upload_token` or from a status whose `upload.token` is `minted`, and sends it back as `X-Upload-Token` on
+every status call. The report then keeps one live upload link, its script stays the same from call to call, and the agent never
+handles a token. `upload.token` in an answer says what its links carry:
+- `minted`: a new link, now held by the server; the script runs as given.
+- `reused`: the held link; the script runs as given.
+- `required`: the answer has no script to run (`fetch_plan.script` is null, and the answer says why): the report handed out a
+  link less than a minute ago, not to this connection (e.g. after a server restart). The tool adds `upload_note` in plain words:
+  call `product_report_status` again after `upload.mint_after`, and never run an older or placeholder script in its place.
+- `expired`: the report's upload time ran out; the server forgets the token, and the agent compiles with what arrived.
+- `none`: no fetch plan yet.
+
+**Busy and stalled.** A start while the same principal already has a report being prepared answers 429 `REPORT_JOB_RUNNING`;
+the tool turns it into one sentence: "a report is still being prepared; check product_report_status <id> or wait <retry_after_s>
+s, then start again". A report stuck in `compiling` (a compile that stalled) says so in `next` ("compile again"), and the tools
+pass `next` through unchanged.
+
+The loop the agent follows (the `product_report_start` description and step 7 of the server instructions say the same; every
+answer's `next` says, in one sentence, what to do now):
+1. `product_report_start` with the user's words (`message`) or its own `products` ([{title, search_terms[]}], e.g. the hypotheses
+   `product_search` returned) → `report_id`; with `products`, the round-1 `fetch_plan` comes at once.
+2. While `fetch_plan` is null (`candidates.status` collecting while Polymath forms the products from the library), it calls
+   `product_report_status(report_id)` again as `next` says.
+3. It saves `fetch_plan.script` unchanged to a file (`fetch_plan.how` says how; its sha256 is `fetch_plan.script_sha256`) and
+   runs it ONCE with bash in the user's terminal, always the script of the latest answer that carries one, and lets it finish
+   before calling status. The script needs the user's local Agent Reach (`agent-reach doctor --json` checks it), does every Agent Reach read of
+   the round in parallel, paced to the free limits (`EXA_API_KEY` / `JINA_API_KEY` in the user's environment make it faster),
+   and uploads each raw output to `upload.url` itself. The agent does not read the pages into the conversation, and it
+   never fetches them with its built-in web search, web fetch or browser.
+4. It calls `product_report_status`: `rounds[].complete` shows whether every packet of a round arrived (`uploads` counts them);
+   when a finished run left its round incomplete (`rounds[].received` below `rounds[].packets`), it runs the latest
+   `fetch_plan.script` once more, never more. A new round (`fetch_plan.round` 2: product pages picked from round 1) comes with its
+   own `fetch_plan.script`, which it runs ONCE the same way. When an answer's `fetch_plan.script` is null (`upload.token`
+   `required`), it calls status again after `upload.mint_after` and never runs an older or placeholder script in its place.
+5. When every `rounds[].complete` is true and `host.status` is done or failed, `product_report_compile(report_id)` returns
+   `report_url` and `summary` (per candidate: the reference price, the offers, and per sales channel the margin, break-even ad
+   cost and delivery verdict).
+6. Optionally it writes a short verdict per product from `summary` and compiles again with `verdicts` (the report labels them
+   as the agent's).
+7. It shares `report_url` with the user: it opens in a browser signed in to Polymath.
+
+A user with no terminal (claude.ai, the web link) compiles anyway once `host.status` is done or failed: CJ (and eBay, when the
+host has `EBAY_CLIENT_ID` / `EBAY_CLIENT_SECRET`) still fill the report, and the report marks the sections that need a local
+agent and shows the script for anyone with a terminal.
+
+**Subagents, in any harness.** Fetching is the script's job, never a subagent's: one script run replaces a fan-out of fetching
+workers. Subagents are for judgment only (e.g. one per product writing its verdict from Polymath's computed numbers), each on a
+cheap model at low effort. Inherited defaults are the expensive trap: a worker inherits the parent's top model and effort unless
+both are set.
+
+| Harness | Workers | The verdict / orchestrator | Also |
+|---|---|---|---|
+| Claude Code | Haiku 5.5 at effort low, with WebSearch and WebFetch disallowed | Sonnet 5.5 or Opus 5.5 at effort high | |
+| Codex | GPT-6 Luna at low reasoning effort | GPT-6.1 Sol at high | raise `tool_timeout_sec` for the polymath server above 120 (compile takes up to 2 minutes) |
+| Hermes | deepseek-v4.1-flash with thinking off, 5 children at most | | a child that needs the web runs Agent Reach in the terminal, never its own web tool (that is not Agent Reach) |
+| OpenCode | the shell only: `opencode run --auto` (no Polymath MCP server is configured there by default) | | if the Polymath MCP server is added, raise its MCP timeout |

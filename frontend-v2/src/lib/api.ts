@@ -59,8 +59,8 @@ async function checked(r: Response, path: string): Promise<Response> {
   throw new ApiError(r.status, path, body);
 }
 
-async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const r = await checked(await fetch(path, { signal, headers: { accept: "application/json" } }), path);
+async function get<T>(path: string, signal?: AbortSignal, headers: Record<string, string> = {}): Promise<T> {
+  const r = await checked(await fetch(path, { signal, headers: { accept: "application/json", ...headers } }), path);
   return (await r.json()) as T;
 }
 
@@ -98,7 +98,8 @@ async function del<T>(path: string, signal?: AbortSignal): Promise<T> {
   return (await r.json()) as T;
 }
 
-/** The raw verbs, for the account / settings client (lib/auth.ts). Screens still call `api` or `auth`. */
+/** The raw verbs, for the account / settings client (lib/auth.ts) and the decision report client (lib/productReport.ts
+ *  `reportApi`, outside `api` until its routes are live: see that file). Screens still call `api`, `auth` or `reportApi`. */
 export const http = { get, post, put, del };
 
 export const api = {

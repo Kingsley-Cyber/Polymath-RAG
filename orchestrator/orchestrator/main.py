@@ -81,10 +81,14 @@ app.add_middleware(
 # same request was the wake trigger. Writing first lets the autopilot
 # start the sidecar while the query's embed path waits for it (see
 # fast._await_embedder).
+# PRODUCT-DECISION-REPORT-V1: /product/report/start runs a product turn
+# (retrieval: the embedder) when no products are sent; compile, status,
+# upload and the report page never embed, so they are not wake triggers.
 @app.middleware("http")
 async def _query_activity_signal(request, call_next):
     if request.url.path in ("/chat", "/chat/stream", "/retrieve", "/ask",
-                            "/fast", "/hybrid", "/graph", "/product/search"):
+                            "/fast", "/hybrid", "/graph", "/product/search",
+                            "/product/report/start"):
         try:
             from polymath_shared.db import tx
             with tx() as conn:
@@ -133,6 +137,9 @@ app.include_router(deep_research_router)          # DEEP-RESEARCH-MODE-V1 DR2: P
 from orchestrator.api.product import router as product_router  # noqa: E402
 
 app.include_router(product_router)                # PRODUCT-SEARCH-E2E: POST /product/search (product-search-v1)
+from orchestrator.api.product_report import router as product_report_router  # noqa: E402
+
+app.include_router(product_report_router)         # PRODUCT-DECISION-REPORT-V1: /product/report/* and /product/reports
 
 # Serve the built web UI at /ui when a build exists (single-port product).
 from pathlib import Path  # noqa: E402

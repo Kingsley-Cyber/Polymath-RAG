@@ -23,6 +23,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from polymath_shared.acquisition.agent_reach import head_terms
 from polymath_shared.chat_plan import (
     MAX_FACETS,
     MAX_QUERIES,
@@ -275,7 +276,9 @@ def _terms(value: Any, title: str) -> list[str]:
     raw = value if isinstance(value, (list, tuple)) else (_TERM_SPLIT.split(str(value)) if value else [])
     terms = list(dict.fromkeys(t for t in (_term(r) for r in raw) if t))[:MAX_TERMS]
     if not terms:
-        words = [w for w in re.findall(r"[\w'&+-]+", title.lower()) if w not in _STOPWORDS][:5]
+        # the title's own product name (its head words, up to the first "for" / "with" / ...): "Candle warmer lamp with timer
+        # for jar candles" -> "candle warmer lamp", which listings name in full (PRODUCT-DECISION-REPORT-V1 review R2)
+        words = head_terms(title)[:5] or [w for w in re.findall(r"[\w'&+-]+", title.lower()) if w not in _STOPWORDS][:5]
         terms = [t for t in [_term(" ".join(words))] if t]
     return terms
 

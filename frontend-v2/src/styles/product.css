@@ -1,5 +1,5 @@
 /* PRODUCT-SEARCH-E2E — under a product answer: the hypotheses, their CJ Dropshipping finds as a card grid, the Agent Reach
-   panel and the full-research offer. Colors, type and spacing come only from tokens.css, so both themes follow; keyboard focus
+   panel, the decision report (PRODUCT-DECISION-REPORT-V1 B6, also the Reports screen) and the full-research offer. Colors, type and spacing come only from tokens.css, so both themes follow; keyboard focus
    is the app's own ring (:focus-visible in app.css). At phone width the cards become rows and nothing scrolls the page
    sideways. */
 
@@ -101,8 +101,60 @@
 .pr-offer__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .pr-offer__started { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
 
+/* ── PRODUCT-DECISION-REPORT-V1 B6: build the decision report, feed it, compile it, open it ───────────────────────── */
+.pr-report {
+  display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border); border-radius: var(--radius-2); background: var(--surface);
+}
+.pr-report__title { margin: 0; font-size: var(--fs-md); font-weight: 600; }
+.pr-report__note { margin: 0; color: var(--text-2); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.pr-report__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.pr-report__panel { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.pr-report__status { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: var(--fs-sm); }
+.pr-report__status code { overflow-wrap: anywhere; }
+.pr-report__why { margin: 0; color: var(--bad); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.pr-report__block { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pr-report__products { margin: 2px 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-sm); }
+.pr-report__products li { overflow-wrap: anywhere; }
+.pr-report__counts { margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: var(--fs-sm); }
+.pr-report__counts div { display: flex; align-items: baseline; gap: 6px; }
+.pr-report__counts dt { color: var(--text-2); }
+.pr-report__counts dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pr-report__missing { margin: 0; display: flex; align-items: flex-start; gap: 6px; color: var(--text-2); font-size: var(--fs-sm); }
+.pr-report__missing .icon, .pr-report__run .icon { flex: none; margin-top: 3px; }
+
+/* the round's fetch script, for people whose terminal is outside the app */
+.pr-report__script { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.pr-report__run { margin: 0; display: flex; align-items: flex-start; gap: 6px; font-size: var(--fs-sm); font-weight: 500; }
+.pr-report__line { margin: 0; min-width: 0; font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.pr-report__field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pr-report__fine { margin: 0; font-size: var(--fs-xs); overflow-wrap: anywhere; }
+.pr-report__script .copyfield--block { width: 100%; }
+.pr-report__field .copyfield__btn { padding: 4px 10px; font-size: var(--fs-xs); }
+.pr-report__more { border: 1px solid var(--border-soft); border-radius: var(--radius-2); min-width: 0; }
+.pr-report__more > summary {
+  display: flex; align-items: center; gap: 6px; padding: 8px 12px; cursor: pointer; list-style: none;
+  border-radius: var(--radius-2); font-size: var(--fs-sm); font-weight: 500;
+}
+.pr-report__more > summary::-webkit-details-marker { display: none; }
+.pr-report__more > summary::before { content: "▸"; color: var(--text-3); transition: transform var(--dur); }
+.pr-report__more[open] > summary::before { transform: rotate(90deg); }
+.pr-report__more > summary:hover { background: var(--surface-2); }
+.pr-report__more > .pr-report__script { padding: 4px 12px 12px; }
+
+/* the Reports screen */
+.pr-reports { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.pr-reports__row { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.pr-reports__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; }
+.pr-reports__title { margin: 0; min-width: 0; font-size: var(--fs-md); font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.pr-reports__meta { margin: 0; font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.pr-reports__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.pr-reports__toggle .icon { transition: transform var(--dur); }
+.pr-reports__toggle[aria-expanded="true"] .icon { transform: rotate(180deg); }
+.pr-reports__id { overflow-wrap: anywhere; }
+
 @media (max-width: 560px) {
-  .pr-hyp, .pr-offer { padding: var(--space-3); }
+  .pr-hyp, .pr-offer, .pr-report { padding: var(--space-3); }
   .pr-grid { grid-template-columns: minmax(0, 1fr); }
   .pr-card { flex-direction: row; }
   .pr-card__img { width: 96px; flex: none; align-self: flex-start; }

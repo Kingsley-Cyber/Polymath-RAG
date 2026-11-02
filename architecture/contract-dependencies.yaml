@@ -291,7 +291,7 @@ contracts:
       - orchestrator/orchestrator/mcp_server.py
       - mcp_server/polymath_mcp.py
       - orchestrator/orchestrator/api/capabilities.py
-    depends_on: [ADAPTER_RUNTIME, EVIDENCE_BOUNDARY_API, RESEARCH_ACQUISITION]
+    depends_on: [ADAPTER_RUNTIME, EVIDENCE_BOUNDARY_API, RESEARCH_ACQUISITION, PRODUCT_SEARCH, PRODUCT_REPORT]
     consumed_by: []
     tests: [tests/contracts/test_mcp_adapter_parity.py, tests/determinism/test_mcp_server_v2.py, tests/contracts/test_hosted_mcp_acceptance.py, tests/determinism/test_mcp_principals_gate.py, tests/contracts/test_mcp_principals_registry.py]
     migration: null
@@ -317,3 +317,39 @@ contracts:
             tests/contracts/test_harness_guide_human_check_handoff.py, tests/determinism/test_adapter_ecommerce_supply_join_api_records.py]
     migration: null
     status: live                   # AUTORESEARCH R8: `research_acquire` (both servers) — owner-only reads for the run's OPEN HARNESS_ACTION; OpenCLI on the browser host. SUPPLIER-APIS (2026-09-27): listings via CJ's API / SearXNG first (browser fallback, said and counted), the challenge detector, the owner-only read-only supplier_* tools
+
+  PRODUCT_SEARCH:
+    owner: orchestrator
+    spec: shared/polymath_shared/product_search/service.py
+    paths:
+      - shared/polymath_shared/product_search/intent.py
+      - shared/polymath_shared/product_search/hypotheses.py
+      - shared/polymath_shared/product_search/routing.py
+      - shared/polymath_shared/product_search/service.py
+      - orchestrator/orchestrator/api/product.py
+    depends_on: [RESEARCH_ACQUISITION, EVIDENCE_BOUNDARY_API]
+    consumed_by: [MCP_SURFACE, PRODUCT_REPORT]
+    tests: [tests/determinism/test_product_intent.py, tests/determinism/test_product_hypotheses.py, tests/determinism/test_product_service.py,
+            tests/determinism/test_product_routing.py, tests/determinism/test_product_runtime.py, tests/contracts/test_product_search_route.py]
+    migration: null
+    status: live                   # PRODUCT-SEARCH-E2E-V1 (register 11.575): product requests answered with corpus hypotheses + CJ finds (product-search-v1 block)
+
+  PRODUCT_REPORT:
+    owner: orchestrator
+    spec: contracts/product/v1/product_report.schema.json
+    paths:
+      - contracts/product/v1/product_report.schema.json
+      - orchestrator/orchestrator/api/product_report.py
+      - shared/polymath_shared/product_search/report_store.py
+      - shared/polymath_shared/product_search/fetch_plan.py
+      - shared/polymath_shared/product_search/host_data.py
+      - shared/polymath_shared/acquisition/ebay_api.py
+      - adapters/ecommerce/python/unit_economics.py
+      - stores/postgres/migrations/0068_product_reports.sql
+    depends_on: [RESEARCH_ACQUISITION, PRODUCT_SEARCH]
+    consumed_by: [MCP_SURFACE]
+    tests: [tests/contracts/test_product_report_routes.py, tests/determinism/test_report_store.py, tests/contracts/test_report_parsers.py,
+            tests/determinism/test_fetch_plan.py, tests/contracts/test_report_host_data.py, tests/contracts/test_ebay_api.py,
+            tests/determinism/test_unit_economics.py, tests/contracts/test_decision_report_render.py]
+    migration: stores/postgres/migrations/0068_product_reports.sql
+    status: live                   # PRODUCT-DECISION-REPORT-V1: one HTML decision report per product search (user-side fetch script → capability upload → deterministic parse + unit economics → stored private report)

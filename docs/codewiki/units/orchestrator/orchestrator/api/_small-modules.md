@@ -1,117 +1,131 @@
 # unit: orchestrator/orchestrator/api/_small-modules
-anchor: orchestrator/orchestrator/api/capabilities.py:1-97
+anchor: orchestrator/orchestrator/api/capabilities.py:1-102
+
+Files: `orchestrator/orchestrator/api/capabilities.py` (:1-101), `orchestrator/orchestrator/api/fleet.py` (:1-79), `orchestrator/orchestrator/api/queries.py` (:1-32), `orchestrator/orchestrator/api/wildcard.py` (:1-100).
 
 ## purpose
-Four small API modules: `capabilities.py` publishes what this Polymath instance is (contracts, endpoints, MCP tool lists) at `GET /capabilities` for agents/skills; `fleet.py` serves read-only fleet state at `GET /fleet`; `queries.py` serves the query-receipts read surface at `GET /queries`; `wildcard.py` implements the WILDCARD retrieval mode on top of FAST evidence plus frontier bridges. — capabilities.py:1-6 [DERIVED], fleet.py:1-7 [DERIVED], queries.py:1-4 [DERIVED], wildcard.py:1-6 [DERIVED]
+- capabilities.py serves `GET /capabilities`: a self-describing payload (backend, version, CONTRACTS, ENDPOINTS, MCP tools, retrieval modes) that agents probe once and then switch on CONTRACTS keys, never on the name — orchestrator/orchestrator/api/capabilities.py:1-7, :99-101 [DERIVED]
+- fleet.py serves `GET /fleet`: read-only "who is doing what, how many jobs" over the provider roster, AIMD limiter state, worker heartbeats, ticket queue, enrichment coverage — no new state, no scheduling authority — orchestrator/orchestrator/api/fleet.py:1-8, :39-40 [DERIVED]
+- queries.py serves `GET /queries`: the last N served queries plus per-mode p50/p95 and abstention/error counts, backed by the `query_receipts` table — orchestrator/orchestrator/api/queries.py:1-4, :17-18 [DERIVED]
+- wildcard.py implements the WILDCARD retrieval mode: answer evidence comes untouched from FAST, plus at most three source-grounded frontier bridges from the latent surfaces — orchestrator/orchestrator/api/wildcard.py:1-6 [DERIVED]
 
 ## public surface
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `capabilities` | route handler | GET `/capabilities` () -> dict | capabilities.py:94-96 | unit importers: retrieve.py, ui.py, main.py (FACTS.importers) [DERIVED] |
-| `capabilities_payload` | def | () -> dict | capabilities.py:86-91 | retrieve.py / ui.py / main.py (unit importers; exact per-module split unknown) [DERIVED] |
-| `fleet` | route handler | GET `/fleet` () -> dict | fleet.py:39-40 | ui.py / main.py (unit importers) [DERIVED] |
-| `queries` | route handler | GET `/queries` (corpus_id, kind, limit, since_h) -> dict | queries.py:17-20 | main.py (router mount, unit importers) [DERIVED] |
-| `wildcard_retrieve` | def | (query: str, corpus_id: str, scope=None) -> dict | wildcard.py:18 | retrieve.py — wildcard.py registers no route, so a sibling module must call it [INFERRED: no router in this file, and retrieve.py imports the unit] |
-| `_version` | def (private) | () -> str | capabilities.py:54-55 | — |
-| `_live_contracts` | def (private) | () -> dict | capabilities.py:63 | — |
-| `_lane_rows` | def (private) | () -> list[dict] | fleet.py:20 | — |
+| `capabilities_payload` | def | () -> dict | orchestrator/orchestrator/api/capabilities.py:91-96 | `capabilities` route (same file) |
+| `capabilities` | route GET /capabilities | () -> dict | orchestrator/orchestrator/api/capabilities.py:99-101 | router mount |
+| `fleet` | route GET /fleet | () -> dict | orchestrator/orchestrator/api/fleet.py:39-79 | router mount |
+| `queries` | route GET /queries | (corpus_id=None, kind=None, limit=Query(20, ge=1, le=200), since_h=Query(24.0, gt=0, le=24 * 30)) -> dict | orchestrator/orchestrator/api/queries.py:17-32 | router mount |
+| `wildcard_retrieve` | def | (query: str, corpus_id: str, scope=None) -> dict | orchestrator/orchestrator/api/wildcard.py:18-100 | unit importers |
+| `router` (×3) | APIRouter | — | orchestrator/orchestrator/api/capabilities.py:17, orchestrator/orchestrator/api/fleet.py:17, orchestrator/orchestrator/api/queries.py:15 | unit importers |
+
+Unit imported by: `orchestrator/orchestrator/api/retrieve.py`, `orchestrator/orchestrator/api/ui.py`, `orchestrator/orchestrator/main.py` [DERIVED — FACTS.importers]; per-symbol attribution not in FACTS.
+Private helpers: `_version` orchestrator/orchestrator/api/capabilities.py:60-65, `_live_contracts` :68-88, `_lane_rows` orchestrator/orchestrator/api/fleet.py:20-36.
 
 ## contracts
 
-**capabilities_payload** (capabilities.py:86-91)
-- in: no args.
-- out: dict with keys exactly `"backend": "polymath"`, `"version"`, `"api"`, `"contracts"`, `"endpoints"`, `"mcp_tools"`, `"mcp_hidden_tools"`, `"retrieval_modes"` — capabilities.py:88-91 [DERIVED]
-- post: `retrieval_modes = {m: MODE_GUIDE[m] for m in RETRIEVAL_MODES}` — capabilities.py:91 [DERIVED]
-- post: `contracts["corpus-explorer"] == "v1"` iff `POLYMATH_CORPUS_EXPLORER == "1"`, else `False` — capabilities.py:82 [DERIVED]
-- post: `contracts["field-evidence-corpus"]` = latest `runs.corpus_id` matching `LIKE 'field-evidence%'` with `status = 'query_ready'`, else stays `None` — capabilities.py:72-76, 31 [DERIVED]
+**capabilities_payload** — orchestrator/orchestrator/api/capabilities.py:91-96
+- out: keys `"backend": "polymath"`, `"version"` (`_version()`), `"api"` (= `API_DATE`), `"contracts"` (`_live_contracts()`), `"endpoints"`, `"mcp_tools"`, `"mcp_hidden_tools"`, `"retrieval_modes"` — :93-96 [DERIVED]
+- post: `"version"` resolved once per process (`@lru_cache(maxsize=1)` on `_version`, :59) — :59-63 [DERIVED]
+- post: `retrieval_modes` = `{m: MODE_GUIDE[m] for m in RETRIEVAL_MODES}` — :96 [DERIVED]
 
-**fleet** (fleet.py:40-79)
-- in: no args.
-- out: keys `"lanes"`, `"workers"`, `"queue"`, `"enrichment"` — fleet.py:78-79 [DERIVED]
-- out: each lane has `role` = `"enrichment"` if name in `stage_pin("parent_enrichment")`, else `"extraction"` if not `dedicated`, else `"dedicated"` — fleet.py:31-33 [DERIVED]
-- out: `workers` ≤ 40 rows, ordered `heartbeat_at DESC NULLS LAST` — fleet.py:59 [DERIVED]
-- out: `enrichment = {"parents": <count of chunks tier='parent'>, **<status:count from parent_enrichments JOIN chunks ON chunk_id = parent_id>}` — fleet.py:66-71, 79 [DERIVED]
+**_live_contracts** — orchestrator/orchestrator/api/capabilities.py:68-88
+- out: copy of `CONTRACTS` (defaults incl. `"field-evidence-corpus": None` :31) with `field-evidence-corpus` set to newest `runs.corpus_id` where `corpus_id LIKE 'field-evidence%%'` and `status = 'query_ready'` (`ORDER BY r.updated_at DESC LIMIT 1`) — :72-81 [DERIVED]
+- out: `"corpus-explorer"` = `"v1"` iff `POLYMATH_CORPUS_EXPLORER == "1"`, else `False` — :87 [DERIVED]
+- post: "Best effort; never raises" — :69-71 [DERIVED]
 
-**queries** (queries.py:18-32)
-- in: `corpus_id: Optional[str] = None`, `kind: Optional[str] = None`, `limit: int = Query(20, ge=1, le=200)`, `since_h: float = Query(24.0, gt=0, le=24 * 30)` — queries.py:18-20 [DERIVED]
-- pre: if `corpus_id` given → `require_corpus(corpus_id)` — queries.py:24-25 [DERIVED]
-- pre: if `corpus_id` absent and `allowed_corpora() is not None` → HTTP 422 `{"error_code": "CORPUS_ID_REQUIRED", ...}` — queries.py:26-27 [DERIVED]
-- out: keys `corpus_id`, `kind`, `since_h`, `count = len(rows)`, `summary`, `queries` — queries.py:31-32 [DERIVED]
+**fleet** — orchestrator/orchestrator/api/fleet.py:39-79
+- out: `{"lanes", "workers", "queue", "enrichment"}`; `enrichment` = `{"parents": <count(chunks tier='parent')>, **<parent_enrichments status counts>}` — :78-79, :66-72 [DERIVED]
+- lane rows: `name`, `model`, `role` ∈ {"enrichment" (name in `stage_pin("parent_enrichment")` :25), "extraction", "dedicated"}, `structured`; `lane["limiter"]` attached when `f"[{lane['name']}]"` occurs in an `llm_controller_state.key` (key shape `'llm_cloud[groq1]'`, comment :43) — :28-35, :73-77 [DERIVED]
+- worker rows: `worker_id`, `worker_type`, `status`, `processed`, `current_ticket`, `last_error`, `heartbeat_age_s` = `int(time.time() - heartbeat_at.timestamp())`; capped by SQL `LIMIT 40`, `ORDER BY heartbeat_at DESC NULLS LAST` — :49-59 [DERIVED]
+- queue rows: stage/status/count for `status IN ('pending','ready','leased','failed')` — :60-65 [DERIVED]
 
-**wildcard_retrieve** (wildcard.py:18-100)
-- pre: `corpus_id is None` → HTTP 422 `{"error_code": "corpus_required", "message": "WILDCARD requires an explicit corpus_id"}` — wildcard.py:29-32 [DERIVED]
-- post: answer evidence is plain FAST output (`fast_retrieve`), wildcard never displaces it — wildcard.py:34-35, 4-5 [DERIVED]
-- post: result = `{**fast, "meta": meta, "wildcard": out["wildcard"]}` with `meta["mode"] == "WILDCARD"`, `meta["wildcard"]` = diagnostics, `meta["wildcard_plan"]` = plan — wildcard.py:96-100 [DERIVED]
-- post: rerank scores squashed via sigmoid `1.0 / (1.0 + math.exp(-s))` — wildcard.py:83 [DERIVED]
+**queries** — orchestrator/orchestrator/api/queries.py:17-32
+- in: `corpus_id: Optional[str] = None`, `kind: Optional[str] = None`, `limit: int = Query(20, ge=1, le=200)`, `since_h: float = Query(24.0, gt=0, le=24 * 30)` — :18-20 [DERIVED]
+- pre: corpus_id given → `require_corpus(corpus_id)` (FRIENDS-ACCESS-V1 D5) — :24-25; omitted while `allowed_corpora() is not None` → HTTP 422 — :26-27 [DERIVED]
+- out: `{"corpus_id", "kind", "since_h", "count": len(rows), "summary", "queries"}` from `recent_queries` + `query_summary` — :28-32 [DERIVED]
+
+**wildcard_retrieve** — orchestrator/orchestrator/api/wildcard.py:18-100
+- pre: `corpus_id is None` → HTTPException 422 `{"error_code": "corpus_required", "message": "WILDCARD requires an explicit corpus_id"}` — :29-32 [DERIVED]
+- in: FAST baseline via `fast_retrieve(query, [corpus_id], **scope_kwargs(scope))`; baseline `doc_ids`/`parent_ids`/`chunk_ids` sets built from `fast["evidence"]` — :34-43 [DERIVED]
+- effect: `QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)`; latent search filters on `representation_kind` + `corpus_id`; child search adds `representation_kind: "routing_child"` + `parent_id` — :48, :52-61 [DERIVED]
+- post: rerank logits squashed via `1.0 / (1.0 + math.exp(-float(s)))`; any missing score → `_rerank_pairs` returns `None` — :76-83 [DERIVED]
+- out: `{**fast, "meta": meta, "wildcard": out["wildcard"]}` with `meta["mode"] = "WILDCARD"`, `meta["wildcard"] = out["diagnostics"]`, `meta["wildcard_plan"] = out["plan"]`; engine called with `DIVERGENT_DEFAULT_PLAN` — :85-100 [DERIVED]
+- post: `finally: client.close()` — :93-94 [DERIVED]
 
 ## effect surface
 
-| kind | item | anchor |
+Postgres — read-only; FACTS.tables_written = `[]`.
+
+| table | use | anchor |
 |---|---|---|
-| Postgres read | `runs` (field-evidence corpus lookup) | capabilities.py:72-74 [DERIVED] |
-| Postgres read | `llm_controller_state` | fleet.py:45-46 [DERIVED] |
-| Postgres read | `worker_registrations` | fleet.py:55-59 [DERIVED] |
-| Postgres read | `stage_tickets` (statuses pending/ready/leased/failed) | fleet.py:60-64 [DERIVED] |
-| Postgres read | `parent_enrichments` JOIN `chunks` | fleet.py:66-68 [DERIVED] |
-| Postgres read | `chunks` (tier='parent' count) | fleet.py:70-71 [DERIVED] |
-| Postgres read | `query_receipts` via shared `recent_queries`/`query_summary` | queries.py:3, 29-30 [DERIVED] |
-| Postgres write | none (FACTS tables_written: []) | FACTS.tables_written [DERIVED] |
-| Qdrant | `QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)`, closed in `finally`; filtered searches on `representation_kind` incl. `"routing_child"` | wildcard.py:48, 53-61, 93-94 [DERIVED] |
-| subprocess | `git rev-parse --short HEAD`, `timeout=5`, `cwd=Path(__file__).resolve().parents[3]` | capabilities.py:57-58 [DERIVED] |
-| env flag | `POLYMATH_CORPUS_EXPLORER = '0'` (default) | capabilities.py:82 [DERIVED] |
-| clock | `time.time()` for `heartbeat_age_s` | fleet.py:53 [DERIVED] |
+| `runs` | field-evidence corpus lookup | orchestrator/orchestrator/api/capabilities.py:75-81 |
+| `llm_controller_state` | per-lane AIMD limiter | orchestrator/orchestrator/api/fleet.py:45-48 |
+| `worker_registrations` | worker heartbeat rows | orchestrator/orchestrator/api/fleet.py:55-59 |
+| `stage_tickets` | queue counts | orchestrator/orchestrator/api/fleet.py:60-65 |
+| `parent_enrichments` ⋈ `chunks` | enrichment coverage | orchestrator/orchestrator/api/fleet.py:66-69 |
+| `chunks` (tier='parent') | parents_total | orchestrator/orchestrator/api/fleet.py:70-72 |
+| `query_receipts` (via `recent_queries`/`query_summary`) | /queries; written by /chat, /ask, /retrieve per docstring | orchestrator/orchestrator/api/queries.py:4, :28-30 |
+
+- Qdrant: `QdrantClient(url=get_settings().stores.qdrant_url, timeout=60)` — orchestrator/orchestrator/api/wildcard.py:48; collections resolved via `_corpus_collections` imported from `orchestrator.api.hybrid` — :46 [DERIVED]. FACTS.collections names `polymath_search`, `polymath_explore`, `polymath_answer`, `polymath_compare`, `polymath_deep_research`, `polymath_models`; in SOURCE those literals are members of `MCP_TOOLS` — orchestrator/orchestrator/api/capabilities.py:53-54 [DERIVED — FACTS/SOURCE classification mismatch].
+- Subprocess: `git rev-parse --short HEAD`, `cwd=Path(__file__).resolve().parents[3]`, `timeout=5` — orchestrator/orchestrator/api/capabilities.py:62-63 [DERIVED]
+- Env: `POLYMATH_CORPUS_EXPLORER` = `'0'` — orchestrator/orchestrator/api/capabilities.py:87 [DERIVED]
+- Clock: `time.time()` — orchestrator/orchestrator/api/fleet.py:53 [DERIVED]
+- Network: Qdrant client — orchestrator/orchestrator/api/wildcard.py:48; cross-encoder reached through `_rerank_children`, comment calls it "the sidecar" — :69-79 [INFERRED: "sidecar" implies a separate service]
 
 ## invariants
-INVARIANT: `len(MCP_HIDDEN_TOOLS) == 4` (`compile_plan`, `retrieve_evidence`, `retrieve`, `ask`) — capabilities.py:51 [DERIVED]
-  fails-if: hidden-but-still-answering tools silently vanish from the capabilities payload agents switch on.
-INVARIANT: `len(ADAPTER_MCP_TOOLS) == 7` and all seven appear in `MCP_TOOLS` — capabilities.py:43, 50 [DERIVED]
-  fails-if: adapter parity between the two MCP surfaces breaks (comment cites tests/contracts/test_mcp_adapter_parity.py, capabilities.py:41).
-INVARIANT: `len(ENDPOINTS) == 22` — capabilities.py:34-38 [DERIVED]
-  fails-if: advertised endpoint list disagrees with actually mounted routes.
-INVARIANT: `workers` row count ≤ 40 — fleet.py:59 [DERIVED]
-  fails-if: UI board pagination assumptions change.
-INVARIANT: `1 <= limit <= 200` and `0 < since_h <= 720` — queries.py:19-20 [DERIVED]
-  fails-if: receipt window queries return unbounded results.
-INVARIANT: `_version()` is constant per process (`@lru_cache(maxsize=1)`) — capabilities.py:54 [DERIVED]
-  fails-if: long-running server keeps reporting a stale git sha after deploy.
-INVARIANT: wildcard output `meta["mode"] == "WILDCARD"` and FAST evidence keys survive the merge `{**fast, ...}` — wildcard.py:97, 100 [DERIVED]
-  fails-if: consumers keying on FAST evidence fields lose them.
+INVARIANT: len(ADAPTER_MCP_TOOLS) == 7 == comment "The seven adapter_* tools" — orchestrator/orchestrator/api/capabilities.py:46, :42-45 [DERIVED]
+  fails-if: the two MCP surfaces (:42-45) stop mirroring tool names/parameters.
+INVARIANT: "/capabilities" ∈ ENDPOINTS but "/fleet" ∉ ENDPOINTS and "/queries" ∉ ENDPOINTS — orchestrator/orchestrator/api/capabilities.py:34-41 vs orchestrator/orchestrator/api/fleet.py:39, orchestrator/orchestrator/api/queries.py:17 [DERIVED]
+  fails-if: runtime still works, but CONTRACTS-driven agents never discover the fleet board or receipts surface.
+INVARIANT: 1 ≤ queries limit ≤ 200 (default 20); 0 < since_h ≤ 24 * 30 — orchestrator/orchestrator/api/queries.py:19-20 [DERIVED]
+  fails-if: unbounded scans of query_receipts.
+INVARIANT: fleet workers list length ≤ 40 — orchestrator/orchestrator/api/fleet.py:59 [DERIVED]
+  fails-if: board silently hides every worker beyond the 40 freshest heartbeats.
+INVARIANT: wildcard bridges ≤ 3 and FAST evidence never displaced — orchestrator/orchestrator/api/wildcard.py:3-4, :35, :100 [DERIVED]
+  fails-if: WILDCARD mode alters answer evidence, violating DIVERGENT-RETRIEVAL-V1.
+INVARIANT: rerank scores ∈ (0,1) after `1.0 / (1.0 + math.exp(-float(s)))` — orchestrator/orchestrator/api/wildcard.py:79-83 [DERIVED]
+  fails-if: raw logits compared against the support floor / multiplicative WildcardValue scale (:79-81).
+INVARIANT: `_version()` constant per process (`lru_cache(maxsize=1)`) — orchestrator/orchestrator/api/capabilities.py:59 [DERIVED]
+  fails-if: long-lived process reports a stale commit after a redeploy.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (subprocess git call capabilities.py:58; env `POLYMATH_CORPUS_EXPLORER` capabilities.py:82; `time.time` fleet.py:53; Postgres reads capabilities.py:70-74, fleet.py:42-71, queries.py:29-30; Qdrant network wildcard.py:48)
-idempotency: SAFE (all four modules are read-only; FACTS tables_written is empty)
+determinism: NONDETERMINISTIC (subprocess git orchestrator/orchestrator/api/capabilities.py:63; env POLYMATH_CORPUS_EXPLORER :87; db reads :75-81, orchestrator/orchestrator/api/fleet.py:42-72, orchestrator/orchestrator/api/queries.py:28-30; clock time.time orchestrator/orchestrator/api/fleet.py:53; Qdrant network + cross-encoder orchestrator/orchestrator/api/wildcard.py:48, :73)
+idempotency: SAFE (all handlers read-only, FACTS.tables_written = `[]`; wildcard opens and closes its own Qdrant client per call — orchestrator/orchestrator/api/wildcard.py:48, :93-94)
 
 ## failure behaviour
-- capabilities.py:59 — any `Exception` in the git subprocess → swallowed, `_version()` returns `"unknown"`; `/capabilities` still serves with `version: "unknown"` — capabilities.py:59-60 [DERIVED]
-- capabilities.py:77 — any `Exception` in the field-evidence DB lookup → swallowed (`pass`); `contracts["field-evidence-corpus"]` stays `None` — capabilities.py:77-78, 31 [DERIVED]
-- queries.py:27 — raises HTTP 422 `error_code "CORPUS_ID_REQUIRED"` when corpus_id omitted under a restricted scope — queries.py:26-27 [DERIVED]
-- wildcard.py:30-32 — raises HTTP 422 `error_code "corpus_required"` when `corpus_id is None` — wildcard.py:29-32 [DERIVED]
-- wildcard.py:93-94 — Qdrant client is closed in `finally`; rerank returning missing scores yields `None` from `_rerank_pairs` (no exception) — wildcard.py:75-78, 93 [DERIVED]
+- `except Exception: return "unknown"` in `_version` — git failure swallowed; payload reports `version: "unknown"` — orchestrator/orchestrator/api/capabilities.py:64-65 [DERIVED]
+- `except Exception: pass` in `_live_contracts` — DB failure swallowed; `field-evidence-corpus` stays `None` — orchestrator/orchestrator/api/capabilities.py:82-83 [DERIVED]
+- HTTPException 422, `error_code` `"corpus_required"` — orchestrator/orchestrator/api/wildcard.py:30-32 [DERIVED]
+- HTTPException 422, `{"error_code": "CORPUS_ID_REQUIRED", "message": "name one of your libraries"}` — orchestrator/orchestrator/api/queries.py:26-27 [DERIVED]
+- `_rerank_pairs` returns `None` when any candidate lacks a `rerank_score` — orchestrator/orchestrator/api/wildcard.py:76-78 [DERIVED]
+- `finally: client.close()` releases Qdrant even if `divergent_retrieve` raises — orchestrator/orchestrator/api/wildcard.py:93-94 [DERIVED]
 
 ## dumb-code flags
-- Date mismatch: module docstring says `CAPABILITIES-V1 (2026-09-03)` but `API_DATE = "2026-09-04"` — capabilities.py:1 vs 19 [DERIVED]
-- Hidden side-channel: `_embed` stashes the query vector on `_children_of._qvec`; `_children_of` reads it, and the attribute is never initialized in this file — calling `_children_of` before `_embed` raises `AttributeError` — wildcard.py:57-66 [DERIVED]
-- Substring limiter matching: `f"[{lane['name']}]" in key` — a lane name that is a substring of another lane's key suffix can bind the wrong limiter state — fleet.py:73-77 [DERIVED, collision risk INFERRED]
-- Function-level `import math` inside `_rerank_pairs` — wildcard.py:82 [DERIVED]
-- Inconsistent error-code casing across sibling modules: `"CORPUS_ID_REQUIRED"` (queries.py:27) vs `"corpus_required"` (wildcard.py:31) [DERIVED]
-- Analyzer artifact: FACTS.collections lists `polymath_search`, `polymath_explore`, `polymath_answer`, `polymath_compare`, `polymath_deep_research`, `polymath_models` anchored at capabilities.py:48-49 — those lines are the `MCP_TOOLS` literal, not Qdrant collection reads — capabilities.py:48-49 [DERIVED]
+- Module docstring dated "2026-09-03" but `API_DATE = "2026-09-04"` — orchestrator/orchestrator/api/capabilities.py:1 vs :19 [DERIVED]
+- `LIKE 'field-evidence%%'` in a no-params `conn.execute` — doubled `%%` redundant — orchestrator/orchestrator/api/capabilities.py:76-79 [INFERRED: LIKE folds `%%` to `%`; looks pasted from a parametrized query]
+- `corpus-explorer` value mixes types: `"v1"` (str) or `False` (bool) — orchestrator/orchestrator/api/capabilities.py:87 [DERIVED]
+- Error-code casing inconsistent: `"corpus_required"` vs `"CORPUS_ID_REQUIRED"` — orchestrator/orchestrator/api/wildcard.py:31, orchestrator/orchestrator/api/queries.py:27 [DERIVED]
+- `corpus_id: str` annotation yet `if corpus_id is None` guard — orchestrator/orchestrator/api/wildcard.py:18 vs :29 [DERIVED]
+- `_children_of._qvec` function attribute assigned only inside `_embed`; calling `_children_of` before `_embed` reads an unset attribute — orchestrator/orchestrator/api/wildcard.py:58, :63-66 [INFERRED: sole assignment visible at :65]
+- `import math` inside `_rerank_pairs` body — orchestrator/orchestrator/api/wildcard.py:82 [DERIVED]
 
 ## refactor notes
-- `CONTRACTS`, `ENDPOINTS`, `MCP_TOOLS`, `MCP_HIDDEN_TOOLS`, `ADAPTER_MCP_TOOLS` are agent-facing literals served by `GET /capabilities`; consumers switch on keys, never names — any rename/change breaks external agents and the parity tests named at capabilities.py:41, 47 [DERIVED]
-- wildcard.py imports private helpers `_corpus_collections`, `_embed_query`, `_rerank_children` from `orchestrator.api.hybrid` — renaming those in hybrid.py breaks wildcard at import time — wildcard.py:23-27 [DERIVED]
-- wildcard.py also depends on `FastSearcher`, `fast_retrieve` from `orchestrator.api.fast` and on `scope_kwargs` semantics ("pass a role scope only when it narrows") — wildcard.py:22, 15 [DERIVED]
-- fleet response keys (`lanes`, `workers`, `queue`, `enrichment`, `heartbeat_age_s`) are consumed by the UI importer ui.py — key renames break the board — fleet.py:49-53, 78-79 [DERIVED]
-- The error strings `"CORPUS_ID_REQUIRED"` and `"corpus_required"` are API-visible literals; unify only together with client updates — queries.py:27, wildcard.py:31 [DERIVED]
-- `_version` is `lru_cache`d per process; a deploy strategy that expects fresh shas from a running server must account for that — capabilities.py:54 [DERIVED]
+- wildcard imports three private helpers from `orchestrator.api.hybrid` (`_corpus_collections`, `_embed_query`, `_rerank_children`); renaming/moving any of them breaks wildcard — orchestrator/orchestrator/api/wildcard.py:22-27 [DERIVED]
+- CONTRACTS is additive-by-design ("a key is only ever added or versioned up") and consumers switch on keys, never the backend name — removing/renaming a key breaks external agents — orchestrator/orchestrator/api/capabilities.py:4-6, :20-33 [DERIVED]
+- `/capabilities` payload keys are the agent-facing contract (backend/version/api/contracts/endpoints/mcp_tools/mcp_hidden_tools/retrieval_modes) — orchestrator/orchestrator/api/capabilities.py:93-96 [DERIVED]
+- Unit imported by `orchestrator/orchestrator/api/retrieve.py`, `orchestrator/orchestrator/api/ui.py`, `orchestrator/orchestrator/main.py` — router mounting and WILDCARD dispatch live outside this unit [DERIVED — FACTS.importers]
+- Ticket status literal set `('pending','ready','leased','failed')` embedded in fleet SQL; must track the ticket state machine — orchestrator/orchestrator/api/fleet.py:62-64 [DERIVED]
+- `_version` is lru_cached: reporting a new commit requires a process restart — orchestrator/orchestrator/api/capabilities.py:59-60 [DERIVED]
 
 ## VERIFY
 ```verify
 grep -Fq 'API_DATE = "2026-09-04"' orchestrator/orchestrator/api/capabilities.py
-grep -Fq 'POLYMATH_CORPUS_EXPLORER' orchestrator/orchestrator/api/capabilities.py
-grep -Fq '["adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status", "adapter_result", "adapter_cancel"]' orchestrator/orchestrator/api/capabilities.py
-grep -Fq 'heartbeat_at DESC NULLS LAST LIMIT 40' orchestrator/orchestrator/api/fleet.py
-grep -Fq 'CORPUS_ID_REQUIRED' orchestrator/orchestrator/api/queries.py
-grep -Fq 'WILDCARD requires an explicit corpus_id' orchestrator/orchestrator/api/wildcard.py
-! grep -Fq 'INSERT INTO' orchestrator/orchestrator/api/queries.py
+test "$(grep -c -F 'capabilities_payload' orchestrator/orchestrator/api/capabilities.py)" -ge 2
+grep -Fq 'ORDER BY heartbeat_at DESC NULLS LAST LIMIT 40' orchestrator/orchestrator/api/fleet.py
+grep -Eq 'Query\(20, ge=1, le=200\)' orchestrator/orchestrator/api/queries.py
+grep -Fq 'meta["mode"] = "WILDCARD"' orchestrator/orchestrator/api/wildcard.py
+grep -Eq 'math\.exp\(-float\(s\)\)' orchestrator/orchestrator/api/wildcard.py
+! grep -Fq '/fleet' orchestrator/orchestrator/api/capabilities.py
 ```

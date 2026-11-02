@@ -47,7 +47,7 @@ def rig(monkeypatch):
         app = FastAPI()
         app.add_middleware(PrincipalContextMiddleware)
         app.include_router(product_mod.router)
-        p.client = TestClient(app)
+        p.client = TestClient(app, base_url="http://127.0.0.1:7200")      # how Server A calls it (the B-28 / R1 #1 Host rule)
         return p
     return make
 

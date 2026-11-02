@@ -1,0 +1,1091 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "polymath/contracts/product/v1/product_report.schema.json",
+ "title": "ProductReportV1",
+ "description": "PRODUCT-DECISION-REPORT-V1 (plan docs/wiki/plans/PRODUCT-DECISION-REPORT-V1.md §4.6): the responses of POST /product/report/start (view `start`: the status view plus the report's first upload token, `upload_token`, shown once), GET /product/report/{id}/status (view `status`) and POST /product/report/{id}/compile (view `compile`). `fetch_plan` is B1's `fetch_plan.build` output, checked here only for the keys this service reads. Upload tokens follow contract C1 (`upload.token`: minted | reused | required | expired | none); the report holds up to 30 token hashes (a deviation from plan §4.6's single `upload_token_sha256`, reported to the owner). product_report.example.json holds one status and one compile response under the keys `status` and `compile`.",
+ "oneOf": [
+  {
+   "$ref": "#/$defs/status_view"
+  },
+  {
+   "$ref": "#/$defs/compile_view"
+  }
+ ],
+ "$defs": {
+  "report_id": {
+   "type": "string",
+   "pattern": "^rpt_[0-9a-f]{24}$"
+  },
+  "error": {
+   "type": "object",
+   "required": [
+    "error_code",
+    "message"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "error_code": {
+     "type": "string",
+     "pattern": "^[A-Za-z][A-Za-z0-9_]{1,80}$"
+    },
+    "message": {
+     "type": "string",
+     "maxLength": 2000
+    }
+   }
+  },
+  "channels": {
+   "type": "array",
+   "minItems": 1,
+   "uniqueItems": true,
+   "items": {
+    "enum": [
+     "tiktok_us",
+     "tiktok_cross_border",
+     "shopify",
+     "ebay",
+     "amazon_fbm"
+    ]
+   }
+  },
+  "candidate": {
+   "type": "object",
+   "required": [
+    "candidate_id",
+    "title",
+    "search_terms"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "candidate_id": {
+     "type": "string",
+     "pattern": "^c[1-8]$"
+    },
+    "title": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 120
+    },
+    "search_terms": {
+     "type": "array",
+     "minItems": 1,
+     "maxItems": 3,
+     "items": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60
+     }
+    },
+    "problem": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "audience": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "source": {
+     "enum": [
+      "caller",
+      "product_route",
+      "product_route_terms"
+     ]
+    }
+   }
+  },
+  "fetch_plan": {
+   "type": "object",
+   "required": [
+    "round",
+    "packets",
+    "script",
+    "script_sha256",
+    "limits",
+    "how"
+   ],
+   "properties": {
+    "round": {
+     "enum": [
+      1,
+      2
+     ]
+    },
+    "packets": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "packet_id",
+       "candidate_id",
+       "source",
+       "kind",
+       "commands"
+      ],
+      "properties": {
+       "packet_id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "candidate_id": {
+        "type": "string",
+        "pattern": "^c[1-8]$"
+       },
+       "source": {
+        "type": "string"
+       },
+       "kind": {
+        "type": "string"
+       },
+       "commands": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    },
+    "script": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "description": "the round's bash script; null when it could not upload (`script_withheld` says why)"
+    },
+    "script_sha256": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "limits": {
+     "type": "object"
+    },
+    "script_withheld": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 300,
+     "description": "NEW-2: why `script` is null (`upload.token` required: no upload link yet; expired)"
+    }
+   }
+  },
+  "host_counts": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "object",
+    "required": [
+     "status",
+     "reason_code"
+    ],
+    "additionalProperties": false,
+    "properties": {
+     "status": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "reason_code": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "products": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "listings": {
+      "type": "integer",
+      "minimum": 0
+     }
+    }
+   }
+  },
+  "status_view": {
+   "type": "object",
+   "required": [
+    "contract",
+    "view",
+    "report_id",
+    "status",
+    "created_at",
+    "updated_at",
+    "request",
+    "candidates",
+    "host",
+    "round",
+    "rounds",
+    "fetch_plan",
+    "upload",
+    "uploads",
+    "compiled",
+    "next",
+    "compile_started_at"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "contract": {
+     "const": "product-report-v1"
+    },
+    "view": {
+     "enum": [
+      "status",
+      "start"
+     ]
+    },
+    "report_id": {
+     "$ref": "#/$defs/report_id"
+    },
+    "status": {
+     "enum": [
+      "collecting",
+      "compiling",
+      "compiled",
+      "failed"
+     ]
+    },
+    "created_at": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "updated_at": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "request": {
+     "type": "object",
+     "required": [
+      "products_from",
+      "ship_to",
+      "channels",
+      "max_products",
+      "ebay_api"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "products_from": {
+       "enum": [
+        "caller",
+        "product_route"
+       ]
+      },
+      "message": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "corpus_id": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "corpus_ids": {
+       "type": [
+        "array",
+        "null"
+       ],
+       "items": {
+        "type": "string"
+       }
+      },
+      "ship_to": {
+       "type": "string",
+       "pattern": "^[A-Z]{2}$"
+      },
+      "channels": {
+       "$ref": "#/$defs/channels"
+      },
+      "max_products": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 8
+      },
+      "ebay_api": {
+       "type": "boolean"
+      }
+     }
+    },
+    "candidates": {
+     "type": "object",
+     "required": [
+      "status",
+      "source",
+      "items",
+      "error",
+      "product_turn_receipt_id"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "status": {
+       "enum": [
+        "collecting",
+        "ready",
+        "failed"
+       ]
+      },
+      "source": {
+       "enum": [
+        "caller",
+        "product_route",
+        null
+       ]
+      },
+      "items": {
+       "type": "array",
+       "maxItems": 8,
+       "items": {
+        "$ref": "#/$defs/candidate"
+       }
+      },
+      "error": {
+       "oneOf": [
+        {
+         "type": "null"
+        },
+        {
+         "$ref": "#/$defs/error"
+        }
+       ]
+      },
+      "product_turn_receipt_id": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "description": "C6: the query receipt of the product turn that formed the candidates (null when the caller sent products)"
+      }
+     }
+    },
+    "host": {
+     "type": "object",
+     "required": [
+      "status",
+      "started_at",
+      "finished_at",
+      "error",
+      "degraded",
+      "reasons",
+      "cj",
+      "ebay"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "status": {
+       "enum": [
+        "pending",
+        "collecting",
+        "done",
+        "failed"
+       ]
+      },
+      "started_at": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+      },
+      "finished_at": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+      },
+      "error": {
+       "oneOf": [
+        {
+         "type": "null"
+        },
+        {
+         "$ref": "#/$defs/error"
+        }
+       ]
+      },
+      "cj": {
+       "$ref": "#/$defs/host_counts"
+      },
+      "ebay": {
+       "$ref": "#/$defs/host_counts"
+      },
+      "degraded": {
+       "type": "boolean",
+       "description": "C6: some CJ / eBay data could not be read in full (status stays `done`)"
+      },
+      "reasons": {
+       "type": "array",
+       "uniqueItems": true,
+       "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9_]{1,80}$"
+       },
+       "description": "C6: the reason codes (CJ_UNAVAILABLE, EBAY_NOT_CONFIGURED, EBAY_RATE_LIMITED, FAIR_USE_LIMITED, ...)"
+      }
+     }
+    },
+    "round": {
+     "enum": [
+      1,
+      2
+     ]
+    },
+    "rounds": {
+     "type": "array",
+     "maxItems": 2,
+     "items": {
+      "type": "object",
+      "required": [
+       "round",
+       "packets",
+       "received",
+       "complete"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "round": {
+        "enum": [
+         1,
+         2
+        ]
+       },
+       "packets": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "received": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "complete": {
+        "type": "boolean"
+       }
+      }
+     }
+    },
+    "fetch_plan": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "$ref": "#/$defs/fetch_plan"
+      }
+     ]
+    },
+    "fetch_plan_error": {
+     "$ref": "#/$defs/error"
+    },
+    "upload": {
+     "type": "object",
+     "required": [
+      "url",
+      "expires_at",
+      "expired",
+      "via",
+      "token",
+      "max_bytes",
+      "max_uploads"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "url": {
+       "type": "string",
+       "pattern": "^https?://[^/?#]+(/[^?#]*)?/product/report/rpt_[0-9a-f]{24}/upload/[A-Za-z0-9_-]+$"
+      },
+      "expires_at": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+      },
+      "expired": {
+       "type": "boolean"
+      },
+      "via": {
+       "enum": [
+        "local",
+        "public"
+       ]
+      },
+      "token": {
+       "enum": [
+        "minted",
+        "reused",
+        "required",
+        "expired",
+        "none"
+       ],
+       "description": "contract C1 — minted: this response minted a token and every URL carries it (start always mints); reused: the caller sent a live token of this report as X-Upload-Token, the URLs carry it, nothing minted, its last use touched; required: no valid token was sent and this report minted one less than 60 s ago — the URLs carry the placeholder UPLOAD_TOKEN, `mint_after` says when a mint is allowed; expired: the report's upload capability has lapsed (placeholder); none: no fetch plan yet (placeholder). A wrong or unknown X-Upload-Token is treated as absent. Upload tokens are not one-time: any token the report holds (at most 30) uploads until the report expires."
+      },
+      "max_bytes": {
+       "const": 2097152
+      },
+      "max_uploads": {
+       "const": 300
+      },
+      "note": {
+       "type": "string"
+      },
+      "mint_after": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+       "description": "C1 `required`: when a status call without a token may mint again"
+      }
+     }
+    },
+    "uploads": {
+     "type": "object",
+     "required": [
+      "total",
+      "by_round",
+      "by_source"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "total": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 300
+      },
+      "by_round": {
+       "type": "object",
+       "propertyNames": {
+        "enum": [
+         "1",
+         "2"
+        ]
+       },
+       "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+       }
+      },
+      "by_source": {
+       "type": "object",
+       "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+         "type": "integer",
+         "minimum": 1
+        }
+       }
+      }
+     }
+    },
+    "compiled": {
+     "oneOf": [
+      {
+       "type": "null"
+      },
+      {
+       "type": "object",
+       "required": [
+        "at",
+        "report_url",
+        "stale",
+        "error"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "at": {
+         "type": [
+          "string",
+          "null"
+         ],
+         "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+        },
+        "report_url": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "stale": {
+         "type": "boolean"
+        },
+        "error": {
+         "oneOf": [
+          {
+           "type": "null"
+          },
+          {
+           "$ref": "#/$defs/error"
+          }
+         ]
+        }
+       }
+      }
+     ]
+    },
+    "next": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 600
+    },
+    "upload_token": {
+     "type": "string",
+     "pattern": "^[A-Za-z0-9_-]{43}$"
+    },
+    "compile_started_at": {
+     "type": [
+      "string",
+      "null"
+     ],
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+     "description": "when the last compile started (C9: a `compiling` report older than 300 s by it may compile again)"
+    }
+   },
+   "if": {
+    "properties": {
+     "view": {
+      "const": "start"
+     }
+    }
+   },
+   "then": {
+    "required": [
+     "upload_token"
+    ],
+    "properties": {
+     "upload": {
+      "properties": {
+       "token": {
+        "const": "minted"
+       }
+      }
+     }
+    }
+   },
+   "else": {
+    "not": {
+     "required": [
+      "upload_token"
+     ]
+    }
+   },
+   "allOf": [
+    {
+     "if": {
+      "properties": {
+       "upload": {
+        "properties": {
+         "token": {
+          "enum": [
+           "minted",
+           "reused"
+          ]
+         }
+        }
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "upload": {
+        "properties": {
+         "url": {
+          "pattern": "/upload/[A-Za-z0-9_-]{43}$"
+         }
+        }
+       }
+      }
+     },
+     "else": {
+      "properties": {
+       "upload": {
+        "properties": {
+         "url": {
+          "pattern": "/upload/UPLOAD_TOKEN$"
+         }
+        }
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "upload": {
+        "properties": {
+         "token": {
+          "const": "required"
+         }
+        }
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "upload": {
+        "required": [
+         "mint_after"
+        ]
+       }
+      }
+     },
+     "else": {
+      "properties": {
+       "upload": {
+        "not": {
+         "required": [
+          "mint_after"
+         ]
+        }
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "upload": {
+        "properties": {
+         "token": {
+          "enum": [
+           "required",
+           "expired"
+          ]
+         }
+        }
+       }
+      },
+      "required": [
+       "fetch_plan"
+      ]
+     },
+     "then": {
+      "properties": {
+       "fetch_plan": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "type": "object",
+          "required": [
+           "script_withheld"
+          ],
+          "properties": {
+           "script": {
+            "type": "null"
+           },
+           "script_sha256": {
+            "type": "null"
+           }
+          }
+         }
+        ]
+       }
+      }
+     },
+     "else": {
+      "properties": {
+       "fetch_plan": {
+        "oneOf": [
+         {
+          "type": "null"
+         },
+         {
+          "type": "object",
+          "not": {
+           "required": [
+            "script_withheld"
+           ]
+          },
+          "properties": {
+           "script": {
+            "type": "string"
+           },
+           "script_sha256": {
+            "type": "string"
+           }
+          }
+         }
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  "compile_view": {
+   "type": "object",
+   "required": [
+    "contract",
+    "view",
+    "report_id",
+    "status",
+    "compiled_at",
+    "report_url",
+    "report_path",
+    "html_bytes",
+    "html_sha256",
+    "settings",
+    "inputs",
+    "verdicts",
+    "summary",
+    "next"
+   ],
+   "additionalProperties": false,
+   "properties": {
+    "contract": {
+     "const": "product-report-v1"
+    },
+    "view": {
+     "const": "compile"
+    },
+    "report_id": {
+     "$ref": "#/$defs/report_id"
+    },
+    "status": {
+     "const": "compiled"
+    },
+    "compiled_at": {
+     "type": "string",
+     "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "report_url": {
+     "type": "string",
+     "pattern": "^https?://[^/?#]+(/[^?#]*)?/product/report/rpt_[0-9a-f]{24}$"
+    },
+    "report_path": {
+     "type": "string",
+     "pattern": "^/product/report/rpt_[0-9a-f]{24}$"
+    },
+    "html_bytes": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "html_sha256": {
+     "type": "string",
+     "pattern": "^[0-9a-f]{64}$"
+    },
+    "settings": {
+     "type": "object",
+     "required": [
+      "returns_rate",
+      "shopify_monthly_orders",
+      "as_of",
+      "ship_to",
+      "channels"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "returns_rate": {
+       "const": 0.193
+      },
+      "shopify_monthly_orders": {
+       "const": 100
+      },
+      "as_of": {
+       "type": "string",
+       "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+      },
+      "ship_to": {
+       "type": "string",
+       "pattern": "^[A-Z]{2}$"
+      },
+      "channels": {
+       "$ref": "#/$defs/channels"
+      }
+     }
+    },
+    "inputs": {
+     "type": "object",
+     "required": [
+      "candidates",
+      "uploads",
+      "host",
+      "records"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "candidates": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 8
+      },
+      "uploads": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 300
+      },
+      "host": {
+       "enum": [
+        "done",
+        "failed"
+       ]
+      },
+      "records": {
+       "type": "object",
+       "required": [
+        "reddit",
+        "amazon",
+        "ebay",
+        "alibaba"
+       ],
+       "additionalProperties": false,
+       "properties": {
+        "reddit": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "amazon": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "ebay": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "alibaba": {
+         "type": "integer",
+         "minimum": 0
+        }
+       }
+      }
+     }
+    },
+    "verdicts": {
+     "type": "object",
+     "propertyNames": {
+      "pattern": "^c[1-8]$"
+     },
+     "additionalProperties": {
+      "type": "object",
+      "required": [
+       "by",
+       "chars"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "by": {
+        "const": "agent"
+       },
+       "chars": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1200
+       }
+      }
+     }
+    },
+    "summary": {
+     "type": "array",
+     "maxItems": 8,
+     "items": {
+      "type": "object",
+      "required": [
+       "candidate_id",
+       "title",
+       "offers",
+       "reference_price_usd",
+       "channels"
+      ],
+      "additionalProperties": false,
+      "properties": {
+       "candidate_id": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "title": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "offers": {
+        "type": "integer",
+        "minimum": 0
+       },
+       "reference_price_usd": {
+        "type": [
+         "number",
+         "null"
+        ]
+       },
+       "channels": {
+        "type": "object",
+        "propertyNames": {
+         "enum": [
+          "tiktok_us",
+          "tiktok_cross_border",
+          "shopify",
+          "ebay",
+          "amazon_fbm"
+         ]
+        },
+        "additionalProperties": {
+         "type": "object",
+         "required": [
+          "sell_price_usd",
+          "margin_before_ads_usd",
+          "margin_pct",
+          "break_even_ad_cost_usd",
+          "delivery",
+          "delivery_reason"
+         ],
+         "additionalProperties": false,
+         "properties": {
+          "sell_price_usd": {
+           "type": [
+            "number",
+            "null"
+           ]
+          },
+          "margin_before_ads_usd": {
+           "type": [
+            "number",
+            "null"
+           ]
+          },
+          "margin_pct": {
+           "type": [
+            "number",
+            "null"
+           ]
+          },
+          "break_even_ad_cost_usd": {
+           "type": [
+            "number",
+            "null"
+           ]
+          },
+          "delivery": {
+           "enum": [
+            "PASS",
+            "WARN",
+            "FAIL",
+            "UNKNOWN",
+            null
+           ]
+          },
+          "delivery_reason": {
+           "type": [
+            "string",
+            "null"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "next": {
+     "type": "string",
+     "minLength": 10,
+     "maxLength": 600
+    }
+   }
+  }
+ }
+}

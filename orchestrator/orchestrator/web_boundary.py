@@ -7,11 +7,20 @@ refuses owner-only routes to friends, checks the CSRF header on state-changing r
 `X-Polymath-Principal` so the routes narrow to the friend's libraries (web_scope.py). An incoming principal header is always
 dropped: a browser can never claim one. A route the policy does not classify is refused (fail closed). A DIRECT loopback caller
 (Server A with its own header, Hermes, the workers, the owner on 127.0.0.1) is unchanged.
+
+DNS REBINDING (B-28 for the whole app, review R1 N1, 2026-11-02): a request with NO proxy header reached this listener directly,
+so it must name this machine's loopback in its Host (127.0.0.1, localhost or ::1, any port — `acquisition.loopback_host`, the
+supplier routes' own rule). A web page that re-bound its own name to 127.0.0.1 arrives direct but sends ITS name: it is refused
+here, 403 NON_LOOPBACK_HOST, before any route runs — it used to read the main key (GET /keys/owner) and set the owner's web
+password (POST /auth/owner-password). Every in-repo caller uses http://127.0.0.1:7200; Caddy relays with X-Forwarded-For (the
+proxied rules below, unchanged); the per-route guards (`refuse_unless_mcp_or_web`, `product.refuse_rebinding`) stay as a second
+layer.
 """
 from __future__ import annotations
 
 import json
 import re
+from urllib.parse import quote
 
 from polymath_shared import principal_context
 
@@ -21,6 +30,15 @@ from orchestrator.web_scope import REGISTRY
 PROXY_HEADERS = frozenset({b"x-forwarded-for", b"forwarded", b"x-forwarded-host"})
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 PUBLIC, USER, WRITE, OWNER = "public", "user", "write", "owner"
+#: PRODUCT-DECISION-REPORT-V1: a route a CAPABILITY in its own path opens (no session, no CSRF: a script on the user's machine calls
+#: it with no cookie). The boundary lets it through without a session and never forwards a principal for it; the ROUTE checks the
+#: capability itself (orchestrator/api/product_report.py: an upload token the report holds — not one-time: any held token uploads
+#: until the report's 6 h expiry — the packet of the current round, the size).
+CAPABILITY = "capability"
+#: C7: a browser that opens a report page without a session is sent to the web app's sign-in (the /v2 app shows it when
+#: /auth/me answers 401) instead of a JSON 401; `next` names the page it asked for. Every other client keeps the JSON 401.
+REPORT_PAGE = re.compile(r"^/product/report/[^/]+$")
+SIGN_IN = "/v2/"
 PASSWORD_CHANGE_OK = frozenset({"/auth/me", "/auth/password", "/auth/logout"})
 
 _ANY = None
@@ -49,6 +67,12 @@ RULES: tuple[tuple[frozenset[str] | None, re.Pattern[str], str], ...] = tuple((m
     # search and the READ-ONLY supplier tools for every signed-in user (fair use per principal lives in supplier.py)
     (_POST, r"^/product/search$", USER),
     (_POST, r"^/supplier/(search|product|freight|parse)$", USER), (_GET, r"^/supplier/warehouses$", USER),
+    # PRODUCT-DECISION-REPORT-V1: decision reports for every signed-in user, each private to its owner (the routes narrow a
+    # principal to its own reports); the fetch script's upload is opened by an upload token in its path (any token the report
+    # holds, until the report's 6 h expiry; the route checks it), not by a session
+    (_POST, r"^/product/report/start$", USER), (_GET, r"^/product/reports$", USER),
+    (_GET, rf"^/product/report/{_SEG}(/status)?$", USER), (_POST, rf"^/product/report/{_SEG}/compile$", USER),
+    (_POST, rf"^/product/report/{_SEG}/upload/{_SEG}$", CAPABILITY),
     # writes into the principal's writable libraries
     (_POST, r"^/upload$", WRITE), (_DELETE, rf"^/documents/{_SEG}$", WRITE),
     # the owner's
@@ -90,8 +114,27 @@ def cookie(headers, name: str) -> str | None:
     return None
 
 
-async def _deny(send, status: int, code: str, message: str) -> None:
-    body = json.dumps({"detail": {"error_code": code, "message": message}}).encode()
+def wants_html(headers) -> bool:
+    return "text/html" in (_header(headers, b"accept") or "").lower()
+
+
+async def _sign_in(send, path: str) -> None:
+    """302 to the web app's sign-in, naming the page that was asked for (a path of this site: never another site)."""
+    location = f"{SIGN_IN}?next={quote(path, safe='')}".encode("latin-1")
+    await send({"type": "http.response.start", "status": 302,
+                "headers": [(b"location", location), (b"content-length", b"0"), (b"cache-control", b"no-store")]})
+    await send({"type": "http.response.body", "body": b""})
+
+
+def _loopback(headers) -> bool:
+    """Does a DIRECT request name this machine's loopback in its Host? The supplier routes' rule (B-28), imported when first asked
+    so the boundary loads nothing at import time; no Host, or a malformed one, is not loopback."""
+    from orchestrator.api.acquisition import loopback_host
+    return loopback_host(_header(headers, b"host"))
+
+
+async def _deny(send, status: int, error_code: str, message: str, **extra: str) -> None:
+    body = json.dumps({"detail": {"error_code": error_code, **extra, "message": message}}).encode()
     await send({"type": "http.response.start", "status": status,
                 "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode()),
                             (b"cache-control", b"no-store")]})
@@ -105,7 +148,18 @@ class WebBoundaryMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] not in ("http", "websocket") or not proxied(scope.get("headers") or []):
+        if scope["type"] not in ("http", "websocket"):
+            await self.app(scope, receive, send)
+            return
+        if not proxied(scope.get("headers") or []):
+            if not _loopback(scope.get("headers") or []):                         # DNS rebinding: refused before any route
+                if scope["type"] == "websocket":
+                    await send({"type": "websocket.close", "code": 1008})
+                else:
+                    await _deny(send, 403, "NON_LOOPBACK_HOST", "this server answers a direct request only at 127.0.0.1 or "
+                                "localhost; a request naming another host (such as a web page that re-bound its own name to this "
+                                "machine) is refused", code="NON_LOOPBACK_HOST")
+                return
             await self.app(scope, receive, send)
             return
         if scope["type"] == "websocket":                                          # no proxied websocket route exists
@@ -117,7 +171,7 @@ class WebBoundaryMiddleware:
         if cls is None:
             await _deny(send, 403, "ROUTE_NOT_ALLOWED", "this route is not open through the web")
             return
-        if cls != PUBLIC:
+        if cls not in (PUBLIC, CAPABILITY):          # a CAPABILITY route checks its own capability; it is never a principal's
             secret, doc = W.session_secret(), REGISTRY.get()
             if secret is None or doc is None:
                 await _deny(send, 503, "LOGIN_NOT_CONFIGURED", "web logins are not configured on this server")
@@ -125,6 +179,9 @@ class WebBoundaryMiddleware:
             payload = W.read_session(secret, cookie(headers, W.SESSION_COOKIE))
             ident = W.resolve_session(doc, payload) if payload else None
             if ident is None:
+                if method in _GET and REPORT_PAGE.match(path) and wants_html(headers):     # C7: a browser opening a report
+                    await _sign_in(send, path)
+                    return
                 await _deny(send, 401, "LOGIN_REQUIRED", "please sign in")
                 return
             if method not in SAFE_METHODS and not W.csrf_ok(payload, _header(headers, W.CSRF_HEADER.encode())):

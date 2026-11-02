@@ -18,8 +18,9 @@ AUTHORITY: `adapters/ecommerce/python/lived_world.py:32` :: `_STOP` (count: 35) 
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:32` | 28/35 | `also`, `anyone`, `every`, `members`, `other`, `someone`, `users` |
 | `adapters/ecommerce/python/provenance.py` | `adapters/ecommerce/python/provenance.py:19` | 28/35 | `also`, `anyone`, `every`, `members`, `other`, `someone`, `users` |
 | `adapters/ecommerce/python/query_semantics.py` | `adapters/ecommerce/python/query_semantics.py:31` | 3/35 | `about`, `also`, `anyone`, `communities`, `community`, `could`, `does`, `every`, `from`, `have`, `into`, `members` |
-| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:73` | 4/35 | `also`, `anyone`, `being`, `could`, `does`, `every`, `have`, `into`, `members`, `more`, `most`, `only` |
+| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:81` | 6/35 | `also`, `anyone`, `being`, `could`, `does`, `every`, `have`, `into`, `members`, `more`, `most`, `only` |
 | `orchestrator/orchestrator/api/ask.py` | `orchestrator/orchestrator/api/ask.py:58` | 6/35 | `about`, `also`, `anyone`, `being`, `communities`, `community`, `could`, `every`, `from`, `have`, `into`, `members` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:128` | 10/35 | `about`, `also`, `anyone`, `being`, `communities`, `community`, `could`, `does`, `every`, `have`, `members`, `more` |
 | `shared/polymath_shared/candidate_engine.py` | `shared/polymath_shared/candidate_engine.py:1619` | 17/35 | `about`, `anyone`, `being`, `communities`, `community`, `could`, `does`, `every`, `have`, `members`, `more`, `most` |
 | `shared/polymath_shared/chat_plan.py` | `shared/polymath_shared/chat_plan.py:393` | 5/35 | `also`, `anyone`, `being`, `communities`, `community`, `could`, `does`, `every`, `have`, `into`, `members`, `more` |
 | `shared/polymath_shared/compiler_context.py` | `shared/polymath_shared/compiler_context.py:50` | 9/35 | `also`, `anyone`, `being`, `communities`, `community`, `could`, `every`, `members`, `more`, `most`, `only`, `other` |

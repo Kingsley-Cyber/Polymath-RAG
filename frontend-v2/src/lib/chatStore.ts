@@ -16,7 +16,10 @@
  *
  *  PRODUCT-SEARCH-E2E: a product answer's `productResearch` and the governed run
  *  started from it (`productRun`) are turn fields like the rest, so they persist
- *  with the thread; a turn saved before them simply has neither.
+ *  with the thread; a turn saved before them simply has neither. The decision
+ *  report built from it (`productReport`, PRODUCT-DECISION-REPORT-V1 B6) is kept
+ *  the same way: its id only. Its upload token stays in the page's memory
+ *  (ADR-0023), and the report itself stays on the server.
  */
 import type { Turn } from "./chat";
 

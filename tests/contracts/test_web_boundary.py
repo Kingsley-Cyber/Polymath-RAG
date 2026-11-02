@@ -121,7 +121,8 @@ def world(tmp_path, monkeypatch):
 
 
 def _client(app, proxied=True):
-    return TestClient(app, base_url="https://testserver", headers=PROXY if proxied else {})
+    # a direct caller is on the server itself: a loopback Host (the boundary refuses any other, DNS-rebinding fix 2026-11-02)
+    return TestClient(app, base_url="https://testserver" if proxied else "https://127.0.0.1", headers=PROXY if proxied else {})
 
 
 def _login(c, user, pw=GOOD):
@@ -298,3 +299,147 @@ def test_every_library_guard_is_still_in_its_route(rel, needles):
     text = (ROOT / "orchestrator" / "orchestrator" / rel).read_text()
     for needle in set(needles):
         assert text.count(needle) >= needles.count(needle), (rel, needle)
+
+
+# ---------------------------------------------------------------- PRODUCT-DECISION-REPORT-V1 (review-fix round)
+def test_a_browser_opening_a_report_without_a_session_is_sent_to_the_sign_in(world):
+    """C7: a remote browser that opens a report link with no session gets a 302 to the web app's sign-in (the /v2 app shows it),
+    naming the page it asked for; every other client, and every other route, keeps the JSON 401."""
+    _, app = world
+    c = _client(app)
+    page = "/product/report/rpt_0123456789abcdef01234567"
+    r = c.get(page, headers={"accept": "text/html,application/xhtml+xml,*/*;q=0.8"}, follow_redirects=False)
+    assert r.status_code == 302 and r.headers["location"] == "/v2/?next=%2Fproduct%2Freport%2Frpt_0123456789abcdef01234567"
+    assert r.headers["cache-control"] == "no-store" and r.content == b""
+    assert c.get(page, headers={"accept": "application/json"}).json()["detail"]["error_code"] == "LOGIN_REQUIRED"
+    assert c.get(page).status_code == 401                                                     # no Accept: an API client
+    status = c.get(page + "/status", headers={"accept": "text/html"})                         # not a page: JSON 401
+    assert status.status_code == 401 and status.json()["detail"]["error_code"] == "LOGIN_REQUIRED"
+    assert c.get("/v2/", follow_redirects=False).status_code == 200                          # the sign-in it points at is public
+
+
+def test_the_report_upload_needs_no_session_and_no_other_report_route_is_open_without_one(world):
+    """The CAPABILITY class: the boundary passes the upload without a session (the route checks its token); start, status,
+    compile, the page and the list need a signed-in user."""
+    _, app = world
+
+    @app.post("/product/report/{rid}/upload/{token}")
+    def upload(rid: str, token: str):
+        return {"reached": True, "principal": principal_context.current()}
+
+    c = _client(app)
+    r = c.post("/product/report/rpt_x/upload/tok", headers={principal_context.HEADER: "prn_mallory"})
+    assert r.status_code == 200 and r.json() == {"reached": True, "principal": None}         # a claimed principal is dropped
+    for method, path in (("post", "/product/report/start"), ("get", "/product/reports"), ("get", "/product/report/rpt_x/status"),
+                         ("post", "/product/report/rpt_x/compile")):
+        assert getattr(c, method)(path).json()["detail"]["error_code"] == "LOGIN_REQUIRED", path
+
+
+# ---------------------------------------------------------------- R1 N1: DNS rebinding — a DIRECT request must name loopback
+REBOUND = "rebind.attacker.example"
+MAIN_KEY = "main-key-for-the-owner-" + "m" * 24
+
+
+@pytest.fixture
+def owner_world(world, monkeypatch):
+    """The small app plus the real owner routes a re-bound page went for: GET /keys/owner (the main MCP key) beside
+    POST /auth/owner-password (web_auth's, already mounted)."""
+    reg, app = world
+    from orchestrator.api import web_settings
+    monkeypatch.setenv("POLYMATH_MCP_API_KEY", MAIN_KEY)
+    monkeypatch.setattr(web_settings, "_shared_libraries", lambda: ["cinema"])
+    app.include_router(web_settings.router)
+    return reg, app
+
+
+def _direct(app, host):
+    """A DIRECT caller (no proxy header) whose request names `host`: what a page re-bound to 127.0.0.1 sends is its own name."""
+    return TestClient(app, base_url="http://127.0.0.1", headers={"host": host})
+
+
+@pytest.mark.parametrize("host", [f"{REBOUND}:7200", REBOUND, "127.0.0.1.rebind.example", "0.0.0.0:7200", "testserver", ""])
+@pytest.mark.parametrize("method,path,body", [
+    ("GET", "/keys/owner", None), ("POST", "/auth/owner-password", {"password": "chosen-by-the-page"}),
+    ("GET", "/corpora", None), ("POST", "/chat", None), ("GET", "/health", None)])
+def test_a_rebound_host_without_proxy_headers_is_refused_before_any_route(owner_world, host, method, path, body):
+    """The page used to read the main key and set the owner's web password; now every direct request that names another host
+    gets 403 NON_LOOPBACK_HOST (the per-route guards' own shape: error_code and code), and nothing is read or written."""
+    reg, app = owner_world
+    before = reg.read_text()
+    r = _direct(app, host).request(method, path, **({"json": body} if body is not None else {}))
+    assert r.status_code == 403, (host, path, r.status_code, r.text[:200])
+    detail = r.json()["detail"]
+    assert detail["error_code"] == detail["code"] == "NON_LOOPBACK_HOST" and detail["message"]
+    assert MAIN_KEY not in r.text and reg.read_text() == before
+
+
+@pytest.mark.parametrize("host", ["127.0.0.1", "127.0.0.1:7200", "localhost", "localhost:7200", "LOCALHOST:7200", "[::1]",
+                                  "[::1]:7200"])
+def test_a_loopback_host_passes_with_or_without_a_port(owner_world, host):
+    """Server A, Server B, Hermes, the workers and the supervisor's health check call http://127.0.0.1:7200; the vite dev proxy
+    keeps the browser's Host (127.0.0.1:5273): every one names loopback, so each is unchanged — the owner, one GET and one write."""
+    _, app = owner_world
+    c = _direct(app, host)
+    assert c.get("/corpora").json() == {"principal": None, "cinema": True, "commerce": True}
+    assert c.post("/chat").json() == {"principal": None}
+    assert c.get("/keys/owner").json()["key"] == MAIN_KEY                       # the owner on the server itself, as before
+
+
+def test_the_boundary_and_the_supplier_routes_judge_a_host_alike(owner_world):
+    """One rule: the boundary refuses exactly the Hosts `acquisition.loopback_host` (B-28) does not call loopback."""
+    from orchestrator.api.acquisition import loopback_host
+    _, app = owner_world
+    for host in ("127.0.0.1", "localhost:7200", "[::1]:7200", "LocalHost", REBOUND, "127.1:7200", "2130706433:7200",
+                 "[::ffff:127.0.0.1]:7200", "localhost.:7200", "127.0.0.1.nip.io", "", "[::1"):
+        refused = _direct(app, host).get("/health").status_code == 403
+        assert refused is (not loopback_host(host)), host
+
+
+def test_a_proxied_request_keeps_the_session_rules_whatever_its_host(owner_world):
+    """Caddy relays the public name with X-Forwarded-For: the Host never decides a proxied request; the session does."""
+    _, app = owner_world
+    c = TestClient(app, base_url="https://rag.kingsleylab.xyz", headers=PROXY)
+    assert c.get("/health").status_code == 200 and c.get("/v2/files").status_code == 200
+    for path in ("/corpora", "/keys/owner"):
+        assert c.get(path).json()["detail"]["error_code"] == "LOGIN_REQUIRED", path
+    r, csrf = _login(c, "fred")
+    assert r.status_code == 200 and c.get("/corpora").json()["principal"] == "prn_fred"
+    assert c.get("/keys/owner").json()["detail"]["error_code"] == "OWNER_ONLY"
+    assert c.post("/auth/owner-password", json={"password": "x"}, headers={W.CSRF_HEADER: csrf}).json()["detail"]["error_code"] == "OWNER_ONLY"
+    king = TestClient(app, base_url="https://rag.kingsleylab.xyz", headers=PROXY)
+    _login(king, "king")
+    assert king.get("/keys/owner").json()["key"] == MAIN_KEY                  # the signed-in owner, as before
+
+
+def test_a_rebound_page_that_fakes_a_proxy_header_meets_the_public_door_only(owner_world):
+    """A page may add X-Forwarded-For / Forwarded itself (neither is a forbidden header in a browser): it is then a proxied request
+    with no session of its own — the public door's rules (401), never the direct owner's."""
+    reg, app = owner_world
+    before = reg.read_text()
+    for fake in ({"x-forwarded-for": "198.51.100.9"}, {"forwarded": "for=198.51.100.9"}, {"x-forwarded-host": "rag.kingsleylab.xyz"}):
+        page = TestClient(app, base_url="http://127.0.0.1", headers={"host": f"{REBOUND}:7200", **fake})
+        key = page.get("/keys/owner")
+        assert key.status_code == 401 and MAIN_KEY not in key.text, fake
+        assert page.post("/auth/owner-password", json={"password": "chosen-by-the-page"}).status_code == 401, fake
+    assert reg.read_text() == before
+
+
+def test_a_rebound_websocket_is_closed_before_it_opens(world):
+    """No orchestrator route is a websocket today; one added later is covered the same way (closed 1008 before accept)."""
+    from starlette.websockets import WebSocket, WebSocketDisconnect
+    _, app = world
+    reached: list[str] = []
+
+    @app.websocket("/ws-probe")
+    async def probe(ws: WebSocket):
+        reached.append(ws.headers.get("host", ""))
+        await ws.accept()
+        await ws.send_text("open")
+        await ws.close()
+
+    with pytest.raises(WebSocketDisconnect) as closed, _direct(app, f"{REBOUND}:7200").websocket_connect("/ws-probe"):
+        pass
+    assert closed.value.code == 1008 and reached == []                         # closed by the boundary: the route never ran
+    with _direct(app, "127.0.0.1:7200").websocket_connect("/ws-probe") as ws:
+        assert ws.receive_text() == "open"
+    assert reached == ["127.0.0.1:7200"]

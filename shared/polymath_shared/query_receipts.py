@@ -60,7 +60,10 @@ def summarize_response(kind: str, out: Any) -> dict:
                           "synthesis", "gap_check",
                           # PRODUCT-SEARCH-E2E (product-search-v1): a product turn's counts and statuses (hypotheses, CJ
                           # lookups, items, parse, verdict) — never item text; absent on every other turn
-                          "product_search")}
+                          "product_search",
+                          # PRODUCT-DECISION-REPORT-V1: a decision report's start / compile — counts and statuses only
+                          # (report id, candidates, uploads, records per source, host status); never page or product text
+                          "product_report")}
     cits = out.get("citations")
     if isinstance(cits, list):
         d["citations"] = len(cits)

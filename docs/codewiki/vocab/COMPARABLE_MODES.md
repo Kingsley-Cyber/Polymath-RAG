@@ -16,7 +16,7 @@ AUTHORITY: `orchestrator/orchestrator/api/compare_review.py:37` :: `COMPARABLE_M
 | `orchestrator/orchestrator/api/retrieve.py` | `orchestrator/orchestrator/api/retrieve.py:123` | 4/5 | `FAST` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1356` | 5/5 | — |
 | `shared/polymath_shared/adapter/evidence_boundary.py` | `shared/polymath_shared/adapter/evidence_boundary.py:44` | 4/5 | `GNN` |
-| `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:26` | 5/5 | — |
+| `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:34` | 5/5 | — |
 | `shared/polymath_shared/retrieval_modes.py` | `shared/polymath_shared/retrieval_modes.py:19` | 5/5 | — |
 | `shared/polymath_shared/skeleton_routes.py` | `shared/polymath_shared/skeleton_routes.py:57` | 5/5 | — |
 

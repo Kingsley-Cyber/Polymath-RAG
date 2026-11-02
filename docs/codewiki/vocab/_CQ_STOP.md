@@ -17,6 +17,7 @@ AUTHORITY: `adapters/ecommerce/python/executors.py:128` :: `_CQ_STOP` (count: 25
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:32` | 16/25 | `after`, `been`, `before`, `over`, `should`, `them`, `under`, `were`, `will` |
 | `adapters/ecommerce/python/provenance.py` | `adapters/ecommerce/python/provenance.py:19` | 16/25 | `after`, `been`, `before`, `over`, `should`, `them`, `under`, `were`, `will` |
 | `orchestrator/orchestrator/api/ask.py` | `orchestrator/orchestrator/api/ask.py:58` | 5/25 | `about`, `after`, `been`, `before`, `could`, `from`, `have`, `into`, `over`, `should`, `than`, `their` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:129` | 7/25 | `about`, `after`, `been`, `before`, `could`, `have`, `over`, `should`, `than`, `them`, `they`, `under` |
 | `shared/polymath_shared/candidate_engine.py` | `shared/polymath_shared/candidate_engine.py:1234` | 18/25 | `about`, `could`, `have`, `over`, `should`, `under`, `where` |
 | `shared/polymath_shared/chat_plan.py` | `shared/polymath_shared/chat_plan.py:393` | 4/25 | `after`, `been`, `before`, `could`, `have`, `into`, `over`, `should`, `than`, `their`, `them`, `then` |
 | `shared/polymath_shared/compiler_context.py` | `shared/polymath_shared/compiler_context.py:50` | 8/25 | `after`, `been`, `before`, `could`, `over`, `should`, `than`, `their`, `them`, `then`, `they`, `under` |

@@ -3600,6 +3600,470 @@ _skill24 = open(os.path.join(ROOT, "SKILL.md"), encoding="utf-8").read()
 ok("Governed entrypoint" in _skill24 and "adapter_receipt.py build" in _skill24 and "governed_run.py report" in _skill24 and "NEVER in governed mode" in _skill24 and "evidence.rows" in _skill24,
    "SKILL.md teaches the governed entrypoint: reason over evidence.rows, research with the skill's own tools, build the receipt, never score")
 
+# ---- PRODUCT-DECISION-REPORT-V1 §4.4 (B3): unit economics + delivery verdicts (python/unit_economics.py) --------------------------
+# Hand-checked: every expected number below was worked out by hand from the plan's formulas (comments show the arithmetic).
+import unit_economics as ue  # noqa: E402
+from decimal import Decimal as _UeD  # noqa: E402
+
+_uepol = graphmod.load_policies()
+
+
+def _ue_cj(pid, prices, freight, stock=False, weight=120, retail=None):
+    return {"product_id": pid, "title": f"CJ {pid}", "url": f"https://cjdropshipping.com/product/x-p-{pid}.html", "sell_price_usd": None,
+            "suggested_retail_usd": retail, "weight_g": weight, "variants": [{"variant_id": f"{pid}-v{i}", "price_usd": p} for i, p in enumerate(prices)],
+            "freight": freight, "us_stock_confirmed": stock}
+
+
+def _ue_amz(asin, price, **kw):
+    return {"kind": "listing", "asin": asin, "title": f"Amazon {asin}", "url": f"https://www.amazon.com/dp/{asin}", "price_usd": price, **kw}
+
+
+def _ue_leaves(node, path=""):
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if not (path == "" and k == "receipts"):
+                yield from _ue_leaves(v, f"{path}.{k}" if path else k)
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            yield from _ue_leaves(v, f"{path}[{i}]")
+    else:
+        yield path, node
+
+
+def _ue_receipt_gaps(product):
+    """(numbers without a receipt, receipts whose id / result does not match the product, duplicate ids)."""
+    leaves = dict(_ue_leaves(product))
+    ids = [r["id"] for r in product["receipts"]]
+    by_id = {r["id"]: r for r in product["receipts"]}
+    need = {k: v for k, v in leaves.items() if (isinstance(v, (int, float)) and not isinstance(v, bool))
+            or (v == "UNKNOWN" and k.rsplit(".", 1)[-1] not in ("verdict", "basis", "status", "origin", "rule"))}
+    missing = [k for k in need if k not in by_id or by_id[k]["result"] != need[k]]
+    stale = [i for i in by_id if i not in leaves or leaves[i] != by_id[i]["result"]]
+    bad = [r["id"] for r in product["receipts"] if not ({"id", "formula", "inputs", "result"} <= set(r))]
+    return missing, stale, sorted({i for i in ids if ids.count(i) > 1}), bad
+
+
+_UE_A1 = {"kind": "listing", "ref": "1601132652199", "url": "https://www.alibaba.com/product-detail/x_1601132652199.html", "relevant": True,
+          "listing": {"title": "Silicone lint remover", "product_id": "1601132652199", "supplier": "Suzhou Example Trade Co., Ltd.",
+                      "price_as_listed": "$0.18 (55-99 pieces), $0.17 (100-499 pieces), $0.16 (≥500 pieces)", "minimum_order_as_listed": "100 pieces",
+                      "shipping_per_kg_usd": 0.84, "shipping_min_kg": 50.0, "gross_weight_kg": 0.17,
+                      "shipping_fee_text": "Shipping fee: Starts at US$0.84/kg with a 50kg minimum. Final cost varies by destination.",
+                      "transit_days_min": 17, "transit_days_max": 24, "lead_time_days_min": 7, "lead_time_days_max": 15}}
+_UE_LONG = "x" * 400
+_UEB = {
+    "candidates": [{"candidate_id": c, "title": t} for c, t in (("c1", "Pet hair remover"), ("c2", "Lint shaver"), ("c3", "Dog brush"),
+                                                                ("c4", "Cat comb"), ("c5", "Slicker brush"))],
+    "host": {"cj": {"c1": {"status": "OK", "products": [_ue_cj("P1", [3.27, 3.10], {"US": [{"carrier": "USPS", "cost_usd": 5.20, "days_min": 3, "days_max": 7}],
+                                                                                    "CN": [{"carrier": "CJPacket Ordinary", "cost_usd": 4.10, "days_min": 4, "days_max": 9}]},
+                                                               retail=12.99, weight=150)]},
+                    "c2": {"status": "OK", "products": [_ue_cj("P2", [2.00], {"CN": [{"carrier": "YunExpress", "cost_usd": 3.00, "days_min": 4, "days_max": 9}], "US": []})]},
+                    "c3": {"status": "OK", "products": [_ue_cj("P3", [4.00], {"CN": [], "US": [{"carrier": "USPS", "cost_usd": 5.00, "days_min": 3, "days_max": 7}]})]}},
+             "ebay": {"c1": {"status": "OK", "listings": [{"title": "E1", "url": "https://www.ebay.com/itm/123456789012", "price_usd": 14.50, "shipping_usd": 0.0},
+                                                          {"title": "E2", "url": "https://www.ebay.com/itm/223456789012", "price_usd": 17.00, "shipping_usd": 3.99}]},
+                      "c4": {"status": "OK", "listings": [{"title": "E3", "url": "https://www.ebay.com/itm/111111111", "price_usd": 18.00, "shipping_usd": 0.0},
+                                                          {"title": "E4", "url": "https://www.ebay.com/itm/222222222", "price_usd": 22.00, "shipping_usd": 2.00}]}}},
+    "parsed": {
+        "c1": {"amazon": [_ue_amz("B0A", 15.99, ratings_count=1234, bsr={"rank": 5120, "category": "Pet Supplies"}, bought_past_month=2000),
+                          _ue_amz("B0B", 19.99),
+                          {"status": "OK", "records": [_ue_amz("B0B", 19.99, ratings_count="8,765", bsr={"rank": 812, "category": "Pet Supplies"},
+                                                               bought_past_month="1K+ bought in past month")]},
+                          _ue_amz("B0C", 22.49, bsr="#20,145 in Pet Supplies")],
+               "alibaba": [_UE_A1],
+               "reddit": [{"kind": "thread", "subreddit": "CatAdvice", "url": "https://www.reddit.com/r/CatAdvice/comments/aa1/hair/", "published_at": "2026-09-30T12:00:00Z",
+                           "comments": [{"points": 81, "date": "2026-10-01", "text": "The silicone one works on couches."},
+                                        {"points": 12, "date": "2026-10-12", "text": "Lint rollers waste money."},
+                                        {"points": 5, "date": "2026-10-02", "text": _UE_LONG}]},
+                          {"kind": "thread", "subreddit": "CatAdvice", "url": "https://old.reddit.com/r/CatAdvice/comments/aa1/hair",
+                           "comments": [{"points": 81, "date": "2026-10-01", "text": "The silicone one works on couches."}]},
+                          {"kind": "thread", "subreddit": "r/dogs", "url": "https://www.reddit.com/r/dogs/comments/bb2/shedding/", "published_at": "2026-08-15",
+                           "comments": [{"points": 81, "date": "2026-10-05T09:30:00Z", "text": "Rubber gloves help too."},
+                                        {"points": 40, "date": "December 4,", "text": "Bought two, both work."},
+                                        {"points": None, "date": "2026-10-20", "text": "no points shown here"}]},
+                          {"kind": "thread", "url": "https://www.reddit.com/r/CatAdvice/comments/cc3/fur/", "comments": [{"points": 2, "date": "2026-07-01", "text": "meh"}]},
+                          {"kind": "thread", "subreddit": "candles", "url": "https://www.reddit.com/r/candles/comments/dd4/warmer/", "relevant": False,
+                           "comments": [{"points": 900, "date": "2026-10-30", "text": "off topic"}]}]},
+        "c2": {"amazon": [_ue_amz("B2A", 9.00), _ue_amz("B2B", 9.50), _ue_amz("B2C", 9.99)]},
+        "c4": {"amazon": [_ue_amz("B4A", 20.00)],
+               "ebay": [{"kind": "listing", "url": "https://www.ebay.co.uk/itm/333333333", "price": 15.0, "currency": "GBP", "us_listing": False},
+                        {"kind": "listing", "url": "https://www.ebay.com/itm/444444444", "price": 25.0, "currency": "GBP", "us_listing": True},
+                        {"kind": "listing", "url": "https://www.ebay.com/itm/111111111?hash=x", "price": 18.0, "currency": "USD", "us_listing": True},
+                        {"kind": "listing", "url": "https://www.ebay.com/itm/555555555", "title": "a lamp", "price": 99.0, "currency": "USD", "us_listing": True,
+                         "relevant": False}]},
+        "c5": {"amazon": [_ue_amz("B5A", 10.00), _ue_amz("B5B", 12.00), _ue_amz("B5C", 14.00)],
+               "alibaba": [{"kind": "listing", "url": "https://www.alibaba.com/product-detail/x_1600000000005.html", "product_id": "1600000000005",
+                            "title": "Brush", "price_as_listed": "$2.10 - $3.50", "moq": 500, "transit_days_min": 10, "transit_days_max": 14, "relevant": True},
+                           {"kind": "listing", "url": "https://www.alibaba.com/product-detail/x_1600000000006.html", "product_id": "1600000000006",
+                            "title": "Brush EU", "price_as_listed": "€2,50", "currency": "EUR", "moq": 10},
+                           {"kind": "listing", "url": "https://www.alibaba.com/product-detail/lamp_1600000000007.html", "product_id": "1600000000007",
+                            "title": "Candle lamp", "price_tiers": [{"qty_min": 2, "qty_max": None, "unit_price": 4.0}], "relevant": False}]}},
+    "settings": {"as_of": "2026-11-02"}}
+_UEB["candidates"].append({"candidate_id": "c6", "title": "Shipping rules"})
+_UEB["parsed"]["c6"] = {"alibaba": [
+    {"kind": "listing", "url": "https://www.alibaba.com/product-detail/q_1600000000061.html", "product_id": "1600000000061", "title": "quoted",
+     "price_tiers": [{"qty_min": 100, "qty_max": None, "unit_price": 0.50}], "moq": 100, "shipping_per_kg_usd": 9.5, "gross_weight_kg": 0.12,
+     "shipping_quote_usd": 83.15, "shipping_quote_qty": 55, "shipping_fee_text": "Shipping fee: $83.15 for 55 pieces"},
+    {"kind": "listing", "url": "https://www.alibaba.com/product-detail/q_1600000000062.html", "product_id": "1600000000062", "title": "minimum charge",
+     "price_tiers": [{"qty_min": 10, "qty_max": None, "unit_price": 2.00}], "moq": 10, "shipping_per_kg_usd": 5.00, "gross_weight_kg": 0.10,
+     "shipping_min_charge_usd": 30.00},
+    {"kind": "listing", "url": "https://www.alibaba.com/product-detail/q_1600000000063.html", "product_id": "1600000000063", "title": "no moq",
+     "price_as_listed": "$1.00", "shipping_per_kg_usd": 0.84, "shipping_min_kg": 50.0, "gross_weight_kg": 0.17},
+    {"kind": "listing", "url": "https://www.alibaba.com/product-detail/q_1600000000064.html", "product_id": "1600000000064", "title": "minimum cleared",
+     "price_tiers": [{"qty_min": 100, "qty_max": None, "unit_price": 1.00}], "moq": 100, "shipping_per_kg_usd": 2.00, "shipping_min_kg": 5.0,
+     "gross_weight_kg": 0.20}]}
+_ued = ue.compute(_UEB, _uepol)
+_uep = {p["candidate_id"]: p for p in _ued["products"]}
+_u1, _u2, _u3, _u4, _u5 = (_uep[c] for c in ("c1", "c2", "c3", "c4", "c5"))
+_ch1 = _u1["channels"]
+
+
+def _ue_line(ch, *keys):
+    return tuple(ch[k] for k in keys)
+
+
+_UE_MONEY = ("offer_id", "sell_price_usd", "unit_cost_usd", "inbound_usd", "shipping_usd", "fees_usd", "returns_usd", "margin_before_ads_usd",
+             "margin_pct", "break_even_ad_cost_usd")
+ok([p["candidate_id"] for p in _ued["products"]] == ["c1", "c2", "c3", "c4", "c5", "c6"] and _ued["channels"] == ["tiktok_us", "tiktok_cross_border", "shopify", "ebay", "amazon_fbm"]
+   and all(set(p["channels"]) == set(_ued["channels"]) for p in _ued["products"]) and _ued["as_of"] == "2026-11-02" and _ued["model"] == "unit_economics.v1",
+   "unit economics: one product per candidate in order, all five channels (TikTok US local AND cross-border), as_of echoed")
+# offers: CJ = DROPSHIP (cheapest variant, MOQ 1, CJ ships each order); Alibaba = INVENTORY: MOQ 100 sits in the 100-499 tier ($0.17), MOQ capital
+# 100 × 0.17 = 17.00; inbound on the recorded page A's terms: max(100 × 0.17 kg = 17 kg, the 50 kg minimum) × 0.84 $/kg = 42.00 for the MOQ order,
+# ÷ 100 = 0.42 a unit (0.14 without the minimum); first stock in lead 15 + transit 24 = 39 days; then every order ships from US stock — the last
+# mile is the candidate's cheapest CJ US->US quote (CJ P1's USPS 3-7 days, $5.20)
+_o1 = {o["offer_id"]: o for o in _u1["offers"]}
+ok(_o1["cj:P1"]["model"] == "dropship" and _o1["cj:P1"]["unit_cost_usd"] == 3.10 and _o1["cj:P1"]["moq"] == 1 and _o1["cj:P1"]["moq_capital_usd"] == 3.10
+   and _o1["cj:P1"]["suggested_retail_usd"] == 12.99 and "inbound" not in _o1["cj:P1"]
+   and [(s["origin"], s["cost_usd"], s["days_min"], s["days_max"]) for s in _o1["cj:P1"]["shipping"]] == [("CN", 4.10, 4, 9), ("US", 5.20, 3, 7)],
+   "unit economics: a CJ offer is DROPSHIP — the cheapest variant ($3.10 of 3.27 / 3.10), MOQ 1, its freight from CN and from a US warehouse")
+_a1 = _o1["alibaba:1601132652199"]
+ok(_a1["model"] == "inventory" and _a1["unit_cost_usd"] == 0.17 and _a1["moq"] == 100 and _a1["moq_capital_usd"] == 17.00 and _a1["lead_time_days"] == 15
+   and _a1["time_to_stock_days"] == 39
+   and _a1["inbound"] == {"origin": "CN", "carrier": "the listing's stated shipping", "cost_usd": 0.42, "days_min": 17, "days_max": 24, "rule": "MIN_KG",
+                          "destination": "destination not stated; read as US"}
+   and (_a1["moq_inbound_usd"], _a1["cash_to_first_stock_usd"]) == (42.00, 59.00)
+   and _a1["shipping"] == [{"origin": "US", "carrier": "USPS", "cost_usd": 5.20, "days_min": 3, "days_max": 7, "source": "CJ US→US quote for CJ P1, 150 g"}],
+   "unit economics: an Alibaba offer is INVENTORY — MOQ capital $17.00, inbound max(17 kg, 50 kg minimum) × $0.84 ÷ 100 = $0.42 a unit ($42.00 for the "
+   "MOQ order: cash $59.00 before first stock, C5), first stock in 15 + 24 = 39 days, and a last mile from US stock (a CJ US→US quote, labelled)")
+_a1rc = next(r for r in _u1["receipts"] if r["id"] == "offers[1].inbound.cost_usd")
+_a1lm = next(r for r in _u1["receipts"] if r["id"] == "offers[1].shipping[0].cost_usd")
+ok(_a1rc["rule"] == "MIN_KG" and _a1rc["result"] == 0.42 and _a1rc["inputs"]["order_kg"] == 17.0 and _a1rc["inputs"]["chargeable_kg"] == 50.0
+   and _a1rc["inputs"]["moq_order_total_usd"] == 42.0 and _a1rc["inputs"]["shipping_per_kg_usd"] == 0.84 and _a1rc["inputs"]["unit_weight_kg"] == 0.17
+   and _a1rc["inputs"]["weight_from"].startswith("stated by the listing") and "50 kg minimum applies" in _a1rc["formula"]
+   and _a1lm["rule"] == "LAST_MILE_CJ_US_QUOTE" and _a1lm["inputs"]["ref_offer_id"] == "cj:P1" and _a1lm["result"] == 5.20,
+   "unit economics: the recorded page A's '0.84/kg with a 50kg minimum' — the inbound receipt names its rule (MIN_KG: 17 kg ordered, 50 kg charged, $42.00); "
+   "the last-mile receipt names its source (LAST_MILE_CJ_US_QUOTE, cj:P1)")
+# market: Amazon n 3 (the round-2 page of B0B merges with its search result), median 19.99; eBay 14.50 and 17.00 + 3.99: median 17.745 -> 17.75
+_m1 = _u1["market"]
+ok(_ue_line(_m1["amazon"], "n", "median", "min", "max") == (3, 19.99, 15.99, 22.49) and _ue_line(_m1["ebay"], "n", "median", "min", "max") == (2, 17.75, 14.50, 20.99)
+   and _m1["reference_price_usd"] == 19.99 and _m1["basis"] == "AMAZON_MEDIAN",
+   "unit economics: market n / median / min / max of price + shipping where stated; reference = the Amazon median at n ≥ 3 (CJ's $12.99 retail never used)")
+# the INVENTORY line at $19.99: landed 0.17 + 0.42 + 5.20 = 5.79; returns 19.3 % × 5.79 = 1.11747 -> 1.12 (unit + inbound + last mile).
+# tiktok_us: fees 6 % = 1.1994 -> 1.20, margin 19.99 - 5.79 - 1.20 - 1.12 = 11.88 (59.4 %): US stock, last mile 3-7 days (≤ 5 business days) PASSES.
+# The DROPSHIP line stays: landed 3.10 + 5.20 = 8.30, returns 1.6019 -> 1.60, margin 19.99 - 8.30 - 1.20 - 1.60 = 8.89 (44.5 %), US stock unconfirmed.
+_t1 = _ch1["tiktok_us"]
+ok(_ue_line(_t1, *_UE_MONEY) == ("alibaba:1601132652199", 19.99, 0.17, 0.42, 5.20, 1.20, 1.12, 11.88, 59.4, 11.88) and _t1["landed_cost_usd"] == 5.79
+   and _t1["model"] == "inventory" and _t1["delivery"]["verdict"] == "PASS" and _t1["delivery"]["origin"] == "US" and _t1["delivery"]["days_max"] == 7
+   and _t1["delivery"]["business_days_max"] == 5 and _t1["delivery"]["cautions"] == ["REQUIRES_US_STOCK"]
+   and "requires holding US stock: first stock in 39 days, cash $59.00 before first stock (goods $17.00 + inbound $42.00)" in _t1["delivery"]["reason"]
+   and "ships from your US stock" in _t1["delivery"]["reason"] and "with 1 business day of handling" in _t1["delivery"]["reason"]
+   and _ue_line(_t1["alternatives"][0], *_UE_MONEY) == ("cj:P1", 19.99, 3.10, 0.0, 5.20, 1.20, 1.60, 8.89, 44.5, 8.89)
+   and _t1["alternatives"][0]["model"] == "dropship" and _t1["alternatives"][0]["delivery"]["verdict"] == "PASS"
+   and _t1["alternatives"][0]["delivery"]["cautions"] == ["US_STOCK_UNCONFIRMED"] and "CAUTION" in _t1["alternatives"][0]["delivery"]["reason"],
+   "unit economics: tiktok_us — the inventory offer ships from US stock (last mile 3-7 days: 5 + 1 handling = 6 ≤ 6 business days) and PASSES, its "
+   "reason saying it requires holding US stock (first stock in 39 days, cash $59.00); the dropship offer (US stock unconfirmed: a caution) is kept")
+# cross-border: the inventory line 11.88 again (7 ≤ 15 days); the dropship line takes the cheaper passing China 4-9: 19.99 - 7.20 - 1.20 - 1.39 = 10.20
+ok(_ue_line(_ch1["tiktok_cross_border"], *_UE_MONEY) == ("alibaba:1601132652199", 19.99, 0.17, 0.42, 5.20, 1.20, 1.12, 11.88, 59.4, 11.88)
+   and _ch1["tiktok_cross_border"]["delivery"]["verdict"] == "PASS"
+   and _ue_line(_ch1["tiktok_cross_border"]["alternatives"][0], "offer_id", "shipping_usd", "returns_usd", "margin_before_ads_usd") == ("cj:P1", 4.10, 1.39, 10.20)
+   and _ch1["tiktok_cross_border"]["alternatives"][0]["delivery"]["origin"] == "CN",
+   "unit economics: tiktok_cross_border — inventory from US stock PASSES; the dropship offer takes its cheapest passing option (China 4-9 ≤ 15 days)")
+# shopify fees 2.9 % × 19.99 + 0.30 + 39 / 100 = 1.26971 -> 1.27: inventory 19.99 - 5.79 - 1.27 - 1.12 = 11.81 (59.1 %): 3-7 days + 1 business day of
+# handling = 8 > 7: WARN. The dropship line has no option within 7 days once handling counts (4-9 + 1, 3-7 + 1), so it takes the cheapest, China, WARN:
+# 19.99 - 7.20 - 1.27 - 1.39 = 10.13
+ok(_ue_line(_ch1["shopify"], *_UE_MONEY) == ("alibaba:1601132652199", 19.99, 0.17, 0.42, 5.20, 1.27, 1.12, 11.81, 59.1, 11.81)
+   and _ch1["shopify"]["delivery"]["verdict"] == "WARN" and _ue_line(_ch1["shopify"]["alternatives"][0], "offer_id", "shipping_usd", "margin_before_ads_usd") == ("cj:P1", 4.10, 10.13)
+   and _ch1["shopify"]["alternatives"][0]["delivery"]["verdict"] == "WARN",
+   "unit economics: shopify — fees 2.9 % + $0.30 + $39 ÷ 100 orders = 1.27; handling counts toward the 7-day norm (3-7 + 1 = 8: WARN); the inventory line "
+   "(margin 11.81, not 85-90 %) is the highest non-FAIL margin")
+# ebay 13.6 % × 19.99 + 0.40 (order > $10) = 3.11864 -> 3.12: inventory 19.99 - 5.79 - 3.12 - 1.12 = 9.96 (badge: 7 calendar days hold 5 business > 4);
+# amazon max(15 % × 19.99, 0.30) + 0.99 = 3.9885 -> 3.99: inventory 19.99 - 5.79 - 3.99 - 1.12 = 9.09 (7 ≤ 10 days, from the US: no Prime FAIL);
+# the dropship lines: ebay takes China 4-9: 19.99 - 7.20 - 3.12 - 1.39 = 8.28; amazon: China 9 + 3 (1 business day of handling can be 3 calendar
+# days) = 12 > 10 WARNS, so the US 3-7 (7 + 3 = 10) passes: 19.99 - 8.30 - 3.99 - 1.60 = 6.10
+ok(_ue_line(_ch1["ebay"], *_UE_MONEY) == ("alibaba:1601132652199", 19.99, 0.17, 0.42, 5.20, 3.12, 1.12, 9.96, 49.8, 9.96) and _ch1["ebay"]["delivery"]["verdict"] == "PASS"
+   and _ch1["ebay"]["delivery"]["badge_eligible"] is False and _ue_line(_ch1["ebay"]["alternatives"][0], "shipping_usd", "margin_before_ads_usd") == (4.10, 8.28)
+   and _ch1["ebay"]["alternatives"][0]["delivery"]["badge_eligible"] is False
+   and _ue_line(_ch1["amazon_fbm"], *_UE_MONEY) == ("alibaba:1601132652199", 19.99, 0.17, 0.42, 5.20, 3.99, 1.12, 9.09, 45.5, 9.09)
+   and _ch1["amazon_fbm"]["delivery"]["verdict"] == "PASS" and "prime" not in _ch1["amazon_fbm"]["delivery"]
+   and _ue_line(_ch1["amazon_fbm"]["alternatives"][0], "shipping_usd", "margin_before_ads_usd") == (5.20, 6.10)
+   and _ch1["amazon_fbm"]["alternatives"][0]["delivery"]["verdict"] == "PASS" and "prime" not in _ch1["amazon_fbm"]["alternatives"][0]["delivery"],
+   "unit economics: ebay 13.6 % + $0.40 = 3.12 (no free-shipping badge at 3-7 days); amazon_fbm max(15 %, $0.30) + $0.99 = 3.99 — inventory from US stock "
+   "PASSES both; the dropship Amazon line takes its US option (China 9 + 3 > 10 days)")
+_s1 = _u1["sensitivity"]["tiktok_8pct"]
+ok(_s1["rate_pct"] == 8.0 and _s1["status"] == "UNCONFIRMED"
+   and _ue_line(_s1["channels"]["tiktok_us"], "offer_id", "fees_usd", "margin_before_ads_usd", "margin_pct", "break_even_ad_cost_usd")
+   == ("alibaba:1601132652199", 1.60, 11.48, 57.4, 11.48)
+   and _ue_line(_s1["channels"]["tiktok_cross_border"], "fees_usd", "margin_before_ads_usd", "margin_pct") == (1.60, 11.48, 57.4),
+   "unit economics: TikTok at 8 % is a sensitivity (UNCONFIRMED): 8 % × 19.99 = 1.5992 -> 1.60, the best line's margin 19.99 - 5.79 - 1.60 - 1.12 = 11.48")
+# the brief's case: a CJ offer shipping only CN->US 4-9 days, sold at the $9.50 median (9.00 / 9.50 / 9.99)
+_ch2 = _u2["channels"]
+ok({c: _ch2[c]["delivery"]["verdict"] for c in _ch2} == {"tiktok_us": "FAIL", "tiktok_cross_border": "PASS", "shopify": "WARN", "ebay": "PASS", "amazon_fbm": "WARN"}
+   and _ch2["ebay"]["delivery"]["badge_eligible"] is False and "China" in _ch2["tiktok_us"]["delivery"]["reason"] and _ch2["amazon_fbm"]["delivery"]["prime"] == "FAIL"
+   and _ch2["tiktok_us"]["offer_id"] == "cj:P2" and _ch2["tiktok_us"]["alternatives"] == [],
+   "unit economics: CN->US 4-9 days — tiktok_us FAIL (China), cross-border PASS (9 + 3 ≤ 15), shopify WARN (9 + 3 > 7), ebay PASS without the badge, "
+   "amazon_fbm WARN (9 + 3 > 10: 1 business day of handling can be 3 calendar days)")
+# at $9.50: tiktok 0.57; shopify 0.2755 + 0.30 + 0.39 = 0.9655 -> 0.97; ebay 1.292 + 0.30 (order ≤ $10) = 1.592 -> 1.59; amazon 1.425 + 0.99 = 2.415 -> 2.42;
+# returns 19.3 % × 5.00 = 0.965 -> 0.97 (half up); margins 9.50 - 5.00 - fees - 0.97
+ok([(_ch2[c]["fees_usd"], _ch2[c]["returns_usd"], _ch2[c]["margin_before_ads_usd"], _ch2[c]["margin_pct"]) for c in ("tiktok_us", "shopify", "ebay", "amazon_fbm")]
+   == [(0.57, 0.97, 2.96, 31.2), (0.97, 0.97, 2.56, 26.9), (1.59, 0.97, 1.94, 20.4), (2.42, 0.97, 1.11, 11.7)],
+   "unit economics: fee formulas hand-checked at $9.50 — eBay's $0.30 per-order fee at ≤ $10, Amazon's $0.99 per item, half-up rounding to cents")
+_eb, _amz = _uepol["sales_channels"]["channels"]["ebay"], _uepol["sales_channels"]["channels"]["amazon_fbm"]
+_set = {"shopify_monthly_orders": 100}
+ok(ue._fees(_eb, _UeD("10.00"), _set)[0] == _UeD("1.66") and ue._fees(_eb, _UeD("10.01"), _set)[0] == _UeD("1.76") and ue._fees(_amz, _UeD("1.50"), _set)[0] == _UeD("1.29")
+   and ue._fees(_amz, _UeD("2.00"), _set)[0] == _UeD("1.29") and ue._fees(_amz, _UeD("2.01"), _set)[0] == _UeD("1.29"),
+   "unit economics: eBay $10.00 -> 1.36 + 0.30 = 1.66, $10.01 -> 1.36136 + 0.40 -> 1.76; Amazon's $0.30 referral minimum (15 % × 1.50 = 0.225 -> 0.30 + 0.99)")
+ok([ue._business_days_max(n, "calendar") for n in (4, 5, 6, 7, 8, 9, 13, 14, 15)] == [4, 5, 5, 5, 6, 7, 10, 10, 11] and ue._business_days_max(7, "business") == 7,
+   "unit economics: calendar days -> the most business days they can hold (the run with the fewest weekend days): 7 -> 5, 8 -> 6, 9 -> 7")
+# missing comps -> reference UNKNOWN -> every price-dependent number UNKNOWN; returns still known (19.3 % × (4.00 + 5.00) = 1.737 -> 1.74)
+_t3 = _u3["channels"]["tiktok_us"]
+ok(_u3["market"]["reference_price_usd"] == "UNKNOWN" and _u3["market"]["basis"] == "UNKNOWN" and _u3["market"]["amazon"]["n"] == 0
+   and _ue_line(_t3, "sell_price_usd", "fees_usd", "margin_before_ads_usd", "margin_pct", "break_even_ad_cost_usd") == ("UNKNOWN",) * 5
+   and _ue_line(_t3, "unit_cost_usd", "shipping_usd", "landed_cost_usd", "returns_usd") == (4.00, 5.00, 9.00, 1.74)
+   and _t3["delivery"]["verdict"] == "PASS" and _t3["delivery"]["cautions"] == ["US_STOCK_UNCONFIRMED"]
+   and all(_u3["channels"][c]["margin_before_ads_usd"] == "UNKNOWN" for c in _u3["channels"])
+   and _u3["sensitivity"]["tiktok_8pct"]["channels"]["tiktok_us"]["margin_before_ads_usd"] == "UNKNOWN"
+   and any(r["id"] == "market.reference_price_usd" and r.get("missing") for r in _u3["receipts"]),
+   "unit economics: no comps -> reference UNKNOWN and every margin UNKNOWN (never a guess, the receipt names what is missing); the delivery verdict still stands")
+# pooled median: Amazon n 1 < 3; eBay API 18.00 and 22.00 + 2.00; the Agent Reach eBay rows: GBP x2 left out, the API item again (dedup), a lamp (not relevant)
+_m4 = _u4["market"]
+ok(_m4["basis"] == "POOLED_MEDIAN" and _m4["reference_price_usd"] == 20.00 and _m4["amazon"]["n"] == 1 and _m4["ebay"]["n"] == 2
+   and sorted(e["why"][:10] for e in _m4["excluded"]) == ["not a US e", "not about ", "priced in "]
+   and _u4["channels"]["tiktok_us"]["offer_id"] is None and _u4["channels"]["tiktok_us"]["fees_usd"] == 1.20
+   and _u4["channels"]["tiktok_us"]["delivery"]["verdict"] == "UNKNOWN" and "no supplier offer" in _u4["channels"]["tiktok_us"]["delivery"]["reason"],
+   "unit economics: Amazon n < 3 -> the pooled Amazon + eBay median (20.00 of 18 / 20 / 24); non-US, non-USD, duplicate and off-topic listings left out with why")
+# Alibaba listings with no inbound terms, for a candidate with no CJ product and no owner last mile: a price range's high end, a euro price never
+# converted, an off-topic listing left out; inbound, last mile, delivery and margins all UNKNOWN (the receipts say what is missing)
+_o5 = {o["offer_id"]: o for o in _u5["offers"]}
+_c5 = _u5["channels"]
+ok(_ue_line(_o5["alibaba:1600000000005"], "model", "unit_cost_usd", "moq", "moq_capital_usd", "lead_time_days", "time_to_stock_days")
+   == ("inventory", 3.50, 500, 1750.00, "UNKNOWN", "UNKNOWN")
+   and _o5["alibaba:1600000000005"]["inbound"]["cost_usd"] == "UNKNOWN" and _o5["alibaba:1600000000005"]["inbound"]["days_max"] == 14
+   and _o5["alibaba:1600000000005"]["shipping"] == [] and _o5["alibaba:1600000000006"]["unit_cost_usd"] == "UNKNOWN"
+   and _o5["alibaba:1600000000006"]["moq_capital_usd"] == "UNKNOWN" and [e["ref"] for e in _u5["offers_excluded"]] == ["https://www.alibaba.com/product-detail/lamp_1600000000007.html"]
+   and all(_c5[c]["offer_id"] == "alibaba:1600000000005" and _c5[c]["delivery"]["verdict"] == "UNKNOWN" and _c5[c]["margin_before_ads_usd"] == "UNKNOWN"
+           and _c5[c]["delivery"]["origin"] == "US" and _c5[c]["alternatives"][0]["offer_id"] == "alibaba:1600000000006" for c in _c5)
+   and _c5["tiktok_cross_border"]["fees_usd"] == 0.72 and "no last mile" in _c5["tiktok_us"]["delivery"]["reason"]
+   and "requires holding US stock: first stock time UNKNOWN, cash UNKNOWN before first stock (goods $1,750.00 + inbound UNKNOWN)" in _c5["tiktok_us"]["delivery"]["reason"],
+   "unit economics: no CJ US→US quote and no owner last mile -> the inventory offers' last mile, delivery and margins stay UNKNOWN (never guessed); "
+   "a range is priced at its high end (MOQ capital 500 × 3.50 = 1,750.00); a euro price stays UNKNOWN; an off-topic listing is left out")
+# the recorded page A (0.84 $/kg, 50 kg minimum, 0.17 kg, MOQ 100 at $0.88, lead 31, transit 17-24) ALONE: no CJ product, so no last mile -> UNKNOWN;
+# with the owner's own last mile (settings last_mile_usd 4.50, last_mile_days 5): landed 0.88 + 0.42 + 4.50 = 5.80, returns 19.3 % × 5.80 = 1.1194
+# -> 1.12, tiktok_us 19.99 - 5.80 - 1.20 - 1.12 = 11.87 (59.4 %) and 5 days ≤ 6 business days from US stock: PASS
+_UE_PAGE_A = {"kind": "listing", "url": "https://www.alibaba.com/product-detail/Pet-Grooming-Brush_1600824724683.html", "product_id": "1600824724683",
+              "title": "Pet Grooming Brush Self Cleaning Slicker Brush", "currency": "USD", "relevant": True, "moq": 100, "moq_basis": "first_tier",
+              "price_tiers": [{"qty_min": 100, "qty_max": 999, "unit_price": 0.88}, {"qty_min": 1000, "qty_max": 2999, "unit_price": 0.8},
+                              {"qty_min": 3000, "qty_max": None, "unit_price": 0.75}],
+              "shipping_per_kg_usd": 0.84, "shipping_min_kg": 50.0, "gross_weight_kg": 0.17, "transit_days_min": 17, "transit_days_max": 24,
+              "lead_time_days_min": 31, "lead_time_days_max": 31,
+              "shipping_fee_text": "Shipping fee: Starts at US$0.84/kg with a 50kg minimum. Final cost varies by destination."}
+_ue7 = {"candidates": [{"candidate_id": "c7", "title": "Self-cleaning slicker brush"}], "host": {}, "settings": {"as_of": "2026-11-02"},
+        "parsed": {"c7": {"alibaba": [_UE_PAGE_A], "amazon": [_ue_amz("B7A", 15.99), _ue_amz("B7B", 19.99), _ue_amz("B7C", 22.49)]}}}
+_u7 = ue.compute(_ue7, _uepol)["products"][0]
+_u7s = ue.compute({**_ue7, "settings": {"as_of": "2026-11-02", "last_mile_usd": 4.50, "last_mile_days": 5}}, _uepol)["products"][0]
+_t7, _t7s = _u7["channels"]["tiktok_us"], _u7s["channels"]["tiktok_us"]
+ok(_ue_line(_u7["offers"][0], "unit_cost_usd", "moq", "moq_capital_usd", "time_to_stock_days") == (0.88, 100, 88.00, 55) and _u7["offers"][0]["inbound"]["cost_usd"] == 0.42
+   and _u7["offers"][0]["shipping"] == [] and _ue_line(_t7, "inbound_usd", "shipping_usd", "landed_cost_usd", "returns_usd", "margin_before_ads_usd")
+   == (0.42, "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN") and _t7["fees_usd"] == 1.20 and _t7["delivery"]["verdict"] == "UNKNOWN"
+   and "requires holding US stock: first stock in 55 days, cash $130.00 before first stock (goods $88.00 + inbound $42.00)" in _t7["delivery"]["reason"]
+   and next(r for r in _u7["receipts"] if r["id"] == "channels.tiktok_us.shipping_usd")["rule"] == "UNKNOWN"
+   and all(_u7["channels"][c]["margin_before_ads_usd"] == "UNKNOWN" for c in _u7["channels"]),
+   "unit economics: the recorded page A with no last-mile reference — inbound $0.42 a unit (50 kg minimum) but no CJ US→US quote and no owner setting: "
+   "the last mile, every margin and every delivery verdict stay UNKNOWN")
+ok(_ue_line(_t7s, *_UE_MONEY) == ("alibaba:1600824724683", 19.99, 0.88, 0.42, 4.50, 1.20, 1.12, 11.87, 59.4, 11.87)
+   and _t7s["delivery"]["verdict"] == "PASS" and _t7s["delivery"]["origin"] == "US" and _t7s["delivery"]["days_max"] == 5
+   and "requires holding US stock: first stock in 55 days, cash $130.00 before first stock (goods $88.00 + inbound $42.00)" in _t7s["delivery"]["reason"]
+   and _u7s["offers"][0]["shipping"] == [{"origin": "US", "carrier": "your own shipping", "cost_usd": 4.50, "days_min": 5, "days_max": 5,
+                                          "source": "the owner's settings last_mile_usd / last_mile_days"}]
+   and next(r for r in _u7s["receipts"] if r["id"] == "channels.tiktok_us.shipping_usd")["rule"] == "LAST_MILE_OWNER_SETTING"
+   and _u7s["channels"]["shopify"]["delivery"]["verdict"] == "WARN" and _u7s["channels"]["shopify"]["margin_before_ads_usd"] == 11.80,
+   "unit economics: TikTok US PASSES an inventory offer whose last mile from US stock is ≤ 6 days (the owner's $4.50 / 5 days): margin 11.87 at $19.99")
+# the last mile PER CHANNEL among the candidate's CJ US->US quotes (the recorded pair: UniUni+ 3-8 days $7.22, USPS+VIP 3-7 days $7.78), exactly like
+# a dropship offer's options, with 1 business day of handling first (R2 #1): tiktok_us can no longer take UniUni+ (6 + 1 = 7 > 6 business days) and takes
+# USPS+VIP (5 + 1 = 6): 19.99 - (0.88 + 0.42 + 7.78) - 1.20 - 1.75 = 7.96 (39.8 %); no option meets Shopify's 7 days (3-8 + 1, 3-7 + 1), so it takes the
+# cheapest, UniUni+, at WARN: landed 8.52, returns 1.64436 -> 1.64, 19.99 - 8.52 - 1.27 - 1.64 = 8.56 (42.8 %)
+_UE_REF = {"status": "OK", "products": [_ue_cj("AEF754AF", [3.83], {"CN": [], "US": [{"carrier": "UniUni+", "cost_usd": 7.22, "days_min": 3, "days_max": 8},
+                                                                                   {"carrier": "USPS+VIP", "cost_usd": 7.78, "days_min": 3, "days_max": 7}]},
+                                                 weight=250)]}
+_u8 = ue.compute({**_ue7, "host": {"cj": {"c7": _UE_REF}}}, _uepol)["products"][0]
+_r8 = {r["id"]: r for r in _u8["receipts"]}
+_ue_slow = {"status": "OK", "products": [_ue_cj("SLOW", [3.83], {"CN": [], "US": [{"carrier": "Ground", "cost_usd": 6.00, "days_min": 4, "days_max": 12}]},
+                                                 weight=250)]}
+_u9 = ue.compute({**_ue7, "host": {"cj": {"c7": _ue_slow}}}, _uepol)["products"][0]
+_r9 = next(r for r in _u9["receipts"] if r["id"] == "channels.tiktok_us.shipping_usd")
+ok(_ue_line(_u8["channels"]["tiktok_us"], *_UE_MONEY) == ("alibaba:1600824724683", 19.99, 0.88, 0.42, 7.78, 1.20, 1.75, 7.96, 39.8, 7.96)
+   and _u8["channels"]["tiktok_us"]["delivery"]["verdict"] == "PASS" and _u8["channels"]["tiktok_us"]["delivery"]["carrier"] == "USPS+VIP"
+   and _ue_line(_u8["channels"]["shopify"], *_UE_MONEY) == ("alibaba:1600824724683", 19.99, 0.88, 0.42, 7.22, 1.27, 1.64, 8.56, 42.8, 8.56)
+   and _u8["channels"]["shopify"]["delivery"]["verdict"] == "WARN" and _u8["channels"]["shopify"]["delivery"]["carrier"] == "UniUni+"
+   and [s["carrier"] for s in _u8["offers"][1]["shipping"]] == ["UniUni+", "USPS+VIP"]
+   and _r8["channels.tiktok_us.shipping_usd"]["inputs"]["chosen"] == {"carrier": "USPS+VIP", "cost_usd": 7.78, "days_min": 3, "days_max": 7,
+                                                                     "source": "CJ US→US quote for CJ AEF754AF, 250 g", "ref_offer_id": "cj:AEF754AF"}
+   and _r8["channels.tiktok_us.shipping_usd"]["inputs"]["why"] == "the cheapest last-mile option whose days pass this channel's delivery rule"
+   and [(o["carrier"], o["verdict"]) for o in _r8["channels.tiktok_us.shipping_usd"]["inputs"]["options"]] == [("UniUni+", "FAIL"), ("USPS+VIP", "PASS")]
+   and _r8["channels.shopify.shipping_usd"]["inputs"]["why"] == "no last-mile option passes this channel's delivery rule: the cheapest overall (WARN)"
+   and "USPS+VIP $7.78 3-7 days" in _r8["channels.tiktok_us.shipping_usd"]["formula"]
+   and _u9["channels"]["tiktok_us"]["delivery"]["verdict"] == "FAIL" and _r9["inputs"]["why"].startswith("no last-mile option passes this channel's delivery rule"),
+   "unit economics: an inventory offer's last mile is chosen PER CHANNEL like a dropship offer's options, handling counted — TikTok US takes the 3-7 day "
+   "USPS+VIP ($7.78) and PASSES (UniUni+ 3-8 + 1 > 6); nothing meets Shopify's 7 days, so the cheapest at WARN; the receipt names the option and why")
+# Reddit (owner update 2026-11-02): counts-only summary, at most 5 comments by points then date (newest first), text ≤ 300 chars
+_r1 = _u1["demand"]["reddit"]
+ok(_r1["threads"] == 3 and _r1["subreddits"] == ["r/CatAdvice", "r/dogs"] and _r1["newest"] == "2026-10-20" and _r1["comments_total"] == 7
+   and [(c["points"], c["date"], c["subreddit"]) for c in _r1["comments"]] == [(81, "2026-10-05", "r/dogs"), (81, "2026-10-01", "r/CatAdvice"), (40, None, "r/dogs"),
+                                                                               (12, "2026-10-12", "r/CatAdvice"), (5, "2026-10-02", "r/CatAdvice")]
+   and len(_r1["comments"][4]["text"]) == 300 and _r1["comments"][4]["text"].endswith("…") and _r1["comments"][0]["url"] == "https://www.reddit.com/r/dogs/comments/bb2/shedding/"
+   and _r1["summary"] == "3 threads in 2 subreddits, 7 comments read, newest 2026-10-20; the most-upvoted comment has 81 points."
+   and [(t["ref"], t["subreddit"]) for t in _r1["threads_excluded"]] == [("https://www.reddit.com/r/candles/comments/dd4/warmer/", "r/candles")],
+   "unit economics: reddit — counts-only summary, the same thread via old.reddit is one thread, at most 5 comments by points then date, text ≤ 300 chars, off-topic thread left out")
+_a1d = _u1["demand"]["amazon"]
+ok(_ue_line(_a1d, "bsr_best", "bsr_best_category", "bsr_best_ref", "bought_past_month_max", "ratings_count_max") == (812, "Pet Supplies", "B0B", 2000, 8765)
+   and _u2["demand"]["amazon"]["bsr_best"] == "UNKNOWN",
+   "unit economics: Amazon demand — best (lowest) BSR with its category, highest 'bought in past month' and ratings count; none stated -> UNKNOWN")
+_gaps = {p["candidate_id"]: _ue_receipt_gaps(p) for p in _ued["products"]}
+ok(all(g == ([], [], [], []) for g in _gaps.values()) and sum(len(p["receipts"]) for p in _ued["products"]) > 300,
+   f"unit economics: EVERY number (and UNKNOWN) in every product has exactly one receipt {{id = its path, formula, inputs, result = the value}} {_gaps if any(g != ([], [], [], []) for g in _gaps.values()) else ''}")
+_fees_rc = next(r for r in _u1["receipts"] if r["id"] == "channels.ebay.fees_usd")
+ok(_fees_rc["inputs"]["rate_pct"] == 13.6 and _fees_rc["inputs"]["per_order_fee_usd"] == 0.40 and _fees_rc["policy"] == "sales_channels.channels.ebay.fee"
+   and "13.6%" in _fees_rc["formula"] and next(r for r in _u1["receipts"] if r["id"] == "channels.tiktok_us.returns_usd")["inputs"] == {"returns_rate": 0.193, "landed_cost_usd": 5.79},
+   "unit economics: a receipt carries the formula, the inputs it used and the policy entry behind the rate")
+
+
+def _ue_reversed(node):
+    return {k: _ue_reversed(node[k]) for k in reversed(list(node))} if isinstance(node, dict) else [_ue_reversed(x) for x in node] if isinstance(node, list) else node
+
+
+_uej = json.dumps(_ued, sort_keys=True)
+ok(json.dumps(ue.compute(_UEB, _uepol), sort_keys=True) == _uej and json.dumps(ue.compute(_ue_reversed(_UEB), _uepol), sort_keys=True) == _uej,
+   "unit economics: deterministic — the same bundle (in any key order) gives byte-identical output")
+_uebp, _ueop = os.path.join(tmp, "ue_bundle.json"), os.path.join(tmp, "ue_decision.json")
+json.dump(_UEB, open(_uebp, "w"))
+_uecli = subprocess.run([PY, os.path.join(ROOT, "python", "unit_economics.py"), "--bundle", _uebp, "--out", _ueop], capture_output=True, text=True, cwd=tmp,
+                        env={"PATH": os.environ.get("PATH", ""), "PYTHONDONTWRITEBYTECODE": "1", "OPPORTUNITY_RESEARCH_DB": os.path.join(tmp, "ue.sqlite3")})
+ok(_uecli.returncode == 0 and json.dumps(json.load(open(_ueop)), sort_keys=True) == _uej,
+   "unit economics: out of process (`python unit_economics.py --bundle b.json --out d.json`, from any directory) gives the same decision")
+_uesrc = open(os.path.join(ROOT, "python", "unit_economics.py"), encoding="utf-8").read()
+ok(not re.search(r"^\s*(?:import|from)\s+(?:polymath_shared|urllib|requests|httpx|socket|subprocess|random|datetime|time)\b", _uesrc, re.M)
+   and "polymath_shared" not in _uesrc.replace("never imports `polymath_shared`", ""),
+   "unit economics: pure — no polymath_shared, no network, no subprocess, no randomness, no clock (settings.as_of is the only date)")
+
+
+def _ue_raises(bundle, policy=_uepol):
+    try:
+        ue.compute(bundle, policy)
+    except ue.DecisionInputError:
+        return True
+    return False
+
+
+_ue_base = {"candidates": [{"candidate_id": "x"}], "host": {}, "parsed": {}}
+_ue_nosrc = copy.deepcopy(_uepol)
+del _ue_nosrc["sales_channels"]["sources"]["nrf_returns_2025"]
+ok(all(_ue_raises({**_ue_base, "settings": s}) for s in ({"returns_rate": 1.0}, {"returns_rate": "0.193"}, {"shopify_monthly_orders": 0}, {"last_mile_usd": "4.50"},
+                                                       {"last_mile_usd": -1}, {"last_mile_days": 2.5}, {"handling_business_days": "1"},
+                                                       {"handling_business_days": -1}, {"handling_business_days": 1.5}, {"handling_business_days": True},
+                                                       {"shopify_monthly_orders": True}, {"ship_to": "GB"}, {"channels": ["myspace"]}, {"channels": []}))
+   and _ue_raises(_ue_base, _ue_nosrc) and _ue_raises({"candidates": [{"title": "no id"}]}) and _ue_raises(_ue_base, {"sales_channels": {}})
+   and not _ue_raises({**_ue_base, "settings": {"returns_rate": 0, "shopify_monthly_orders": 1}}),
+   "unit economics: fail closed — an out-of-range setting, an unknown channel, a non-US market, a candidate without an id or a policy citing a missing source is refused")
+_ue_set = ue.compute({**_UEB, "settings": {"channels": ["shopify"], "shopify_monthly_orders": 50, "returns_rate": 0.10}}, _uepol)
+_ue_s1 = next(p for p in _ue_set["products"] if p["candidate_id"] == "c1")
+# shopify at 50 orders: 0.57971 + 0.30 + 0.78 = 1.65971 -> 1.66; CJ via China (no option meets 7 days once handling counts: the cheapest) at 10 %
+# returns: 0.10 × 7.20 = 0.72 -> margin 19.99 - 7.20 - 1.66 - 0.72 = 10.41
+ok(list(_ue_s1["channels"]) == ["shopify"] and _ue_s1["sensitivity"] == {} and _ue_s1["channels"]["shopify"]["fees_usd"] == 1.66
+   and _ue_line(_ue_s1["channels"]["shopify"]["alternatives"][0], "returns_usd", "margin_before_ads_usd") == (0.72, 10.41)
+   and _ue_set["assumptions"]["shopify_plan"]["per_order_usd"] == 0.78 and _ue_set["settings"]["returns_rate"] == 0.10,
+   "unit economics: the owner's settings — Shopify monthly orders (50 -> $0.78 of the $39 plan per order), the returns rate, a channel subset")
+_sc = _uepol["sales_channels"]
+_u6 = _uep["c6"]
+_r6 = {r["id"]: r for r in _u6["receipts"]}
+_ship6 = [(o["offer_id"][-2:], o["inbound"]["cost_usd"], _r6[f"offers[{i}].inbound.cost_usd"]["rule"]) for i, o in enumerate(_u6["offers"])]
+# 83.15 × 100 ÷ 55 = 151.18 for the MOQ order, ÷ 100 = 1.5118 a unit (the quote wins over 9.50/kg); 1 kg × 5.00 = 5.00 < the $30 minimum charge: 30 ÷ 10 = 3.00;
+# a 50 kg minimum without an MOQ cannot be spread: UNKNOWN; 100 × 0.20 kg = 20 kg ≥ the 5 kg minimum: 20 × 2.00 = 40 ÷ 100 = 0.40
+ok(_ship6 == [("61", 1.5118, "QUOTE"), ("62", 3.00, "MIN_CHARGE"), ("63", "UNKNOWN", "UNKNOWN"), ("64", 0.40, "PER_KG")]
+   and _r6["offers[0].inbound.cost_usd"]["inputs"]["shipping_quote_qty"] == 55 and _r6["offers[0].inbound.cost_usd"]["inputs"]["moq"] == 100
+   and _r6["offers[0].inbound.cost_usd"]["inputs"]["moq_order_total_usd"] == 151.18 and "scaled to the MOQ order" in _r6["offers[0].inbound.cost_usd"]["formula"]
+   and _r6["offers[1].inbound.cost_usd"]["inputs"]["moq_order_total_usd"] == 30.0 and _r6["offers[2].inbound.cost_usd"]["missing"] == ["MOQ"]
+   and all(r["rule"] == "CJ_QUOTE" for r in _u1["receipts"] if r["id"].startswith("offers[0].shipping[") and r["id"].endswith("cost_usd")),
+   "unit economics: Alibaba shipping rules, each named in its receipt — a quote for a stated quantity first (scaled per unit, the quantity kept), "
+   "a minimum charge, a minimum that cannot be spread without an MOQ (UNKNOWN), a minimum the MOQ order clears")
+_ue_rf_host = {"status": "OK", "products": [_ue_cj("RF", [4.00], {"CN": [], "US": [{"carrier": "Ground", "cost_usd": 5.00, "days_min": 3, "days_max": 10},
+                                                                                {"carrier": "Biz", "cost_usd": 6.00, "days_min": 2, "days_max": 6, "days_unit": "business"}]},
+                                               stock=True, weight=250)]}
+_ue_rf_ali = {"kind": "listing", "title": "slicker brush", "relevant": True, "moq": 100, "shipping_quote_usd": 50.0, "shipping_quote_qty": 100,
+              "transit_days_min": 10, "transit_days_max": 14, "lead_time_days_max": 7,
+              "price_tiers": [{"qty_min": 100, "qty_max": None, "unit_price": 1.50, "unit_price_low": 1.20}]}
+_ue_rf = ue.compute({"candidates": [{"candidate_id": "rf", "title": "x"}], "host": {"cj": {"rf": _ue_rf_host}}, "settings": {"as_of": "2026-11-02"},
+                     "parsed": {"rf": {"amazon": [_ue_amz("RA", 15.99), _ue_amz("RB", 19.99), _ue_amz("RC", 22.49)],
+                                       "alibaba": [dict(_ue_rf_ali, url="https://www.alibaba.com/product-detail/x_1600000000071.html", product_id="1600000000071",
+                                                        ships_to="Germany", gross_weight_kg=0.30),
+                                                   dict(_ue_rf_ali, url="https://www.alibaba.com/product-detail/x_1600000000072.html", product_id="1600000000072",
+                                                        gross_weight_kg=0.50)]}}}, _uepol)["products"][0]
+_rf_off = {o["offer_id"]: o for o in _ue_rf["offers"]}
+_rf_cj = next(r for r in _ue_rf["channels"]["tiktok_cross_border"]["alternatives"] + [_ue_rf["channels"]["tiktok_cross_border"]] if r["offer_id"] == "cj:RF")
+ok(_rf_off["alibaba:1600000000071"]["inbound"]["cost_usd"] == "UNKNOWN" and _rf_off["alibaba:1600000000071"]["inbound"]["destination"] == "Germany — not the US: not used"
+   and _rf_off["alibaba:1600000000071"]["unit_cost_usd"] == 1.50 and len(_rf_off["alibaba:1600000000071"]["shipping"]) == 2      # 300 g ≤ 250 g × 1.25
+   and _rf_off["alibaba:1600000000072"]["shipping"] == [] and _rf_off["alibaba:1600000000072"]["last_mile_note"].startswith("the offer weighs 500 g a unit")
+   and _rf_off["alibaba:1600000000072"]["moq_inbound_usd"] == 50.0 and _rf_off["alibaba:1600000000072"]["cash_to_first_stock_usd"] == 200.0
+   and _rf_cj["delivery"]["verdict"] == "FAIL" and _rf_cj["shipping_usd"] == 5.00 and "stock in a US (overseas) warehouse" in _rf_cj["delivery"]["reason"],
+   "unit economics review fix: a non-US inbound estimate is not used (R2 #9b); a CJ last mile stands in only within 25 % of its product's weight (#9c); "
+   "cross-border US stock is judged by the US clock (#9a: 3-10 days -> ≤ 8 business + 1 > 6, and 2-6 business + 1 > 6: no option passes, the cheapest "
+   "FAILS); a tier range costs its high end (C3)")
+_rf_tus = ue.compute({"candidates": [{"candidate_id": "rf", "title": "x"}], "host": {"cj": {"rf": {"status": "OK", "products": [_ue_cj("RB", [4.00], {"CN": [], "US": [
+    {"carrier": "Biz", "cost_usd": 6.00, "days_min": 2, "days_max": 6, "days_unit": "business"}]}, stock=True)]}}},
+    "parsed": {"rf": {"amazon": [_ue_amz("RA", 15.99), _ue_amz("RB", 19.99), _ue_amz("RC", 22.49)]}}, "settings": {"as_of": "2026-11-02"}}, _uepol)["products"][0]["channels"]
+ok(_rf_tus["tiktok_us"]["delivery"]["verdict"] == "FAIL" and _rf_tus["tiktok_us"]["delivery"]["business_days_max"] == 6 and _rf_tus["shopify"]["delivery"]["verdict"] == "WARN"
+   and "2-6 business days" in _rf_tus["tiktok_us"]["delivery"]["reason"] and "6 + 1 = up to 7 business days > 6" in _rf_tus["tiktok_us"]["delivery"]["reason"],
+   "unit economics review fix: a quote in business days (C2 days_unit) is read as business days — 6 + 1 handling = 7 > 6 for TikTok US, up to 10 calendar "
+   "days + 1 > 7 for Shopify")
+_n2 = ue.compute({"candidates": [{"candidate_id": "n2", "title": "x"}], "settings": {"as_of": "2026-11-02"},
+                  "host": {"cj": {"n2": {"status": "OK", "products": [_ue_cj("N2", [4.00], {
+                      "CN": [{"carrier": "Pure Electricity", "cost_usd": 3.00, "days_min": 7, "days_max": 14}, {"carrier": "Ordinary", "cost_usd": 3.50, "days_min": 5, "days_max": 11}],
+                      "US": [{"carrier": "Eight", "cost_usd": 7.22, "days_min": 3, "days_max": 8}, {"carrier": "Seven", "cost_usd": 7.78, "days_min": 3, "days_max": 7}]},
+                      stock=True)]}}},
+                  "parsed": {"n2": {"amazon": [_ue_amz("NA", 15.99), _ue_amz("NB", 19.99), _ue_amz("NC", 22.49)]}}}, _uepol)["products"][0]["channels"]
+ok((_n2["tiktok_cross_border"]["delivery"]["carrier"], _n2["tiktok_cross_border"]["delivery"]["verdict"]) == ("Ordinary", "PASS")
+   and (_n2["amazon_fbm"]["delivery"]["carrier"], _n2["amazon_fbm"]["delivery"]["verdict"]) == ("Seven", "PASS")
+   and "an order on a Friday is scanned on Monday" in _n2["amazon_fbm"]["delivery"]["reason"],
+   "unit economics round 2 (N2): on a calendar-day rule 1 business day of handling counts as up to 3 calendar days — cross-border China 7-14 is 17 > 15 "
+   "(the 5-11 option passes at 14), Amazon 8 days is 11 > 10 (the 7-day option passes at 10)")
+_pol10 = copy.deepcopy(_uepol)
+_pol10["report_settings"]["last_mile_weight_tolerance"] = 0.10
+_tol = {"kind": "listing", "url": "https://www.alibaba.com/product-detail/x_1600000000091.html", "product_id": "1600000000091", "title": "x", "relevant": True,
+        "moq": 100, "price_tiers": [{"qty_min": 100, "qty_max": None, "unit_price": 1.00}], "gross_weight_kg": 0.28}
+_tolb = {"candidates": [{"candidate_id": "t", "title": "x"}], "settings": {"as_of": "2026-11-02"}, "parsed": {"t": {"alibaba": [_tol]}},
+         "host": {"cj": {"t": {"status": "OK", "products": [_ue_cj("T", [4.00], {"CN": [], "US": [{"carrier": "U", "cost_usd": 7.00, "days_min": 2, "days_max": 4}]},
+                                                                   weight=250)]}}}}
+_t25, _t10 = ue.compute(_tolb, _uepol), ue.compute(_tolb, _pol10)
+_o25 = next(o for o in _t25["products"][0]["offers"] if o["model"] == "inventory")
+_o10 = next(o for o in _t10["products"][0]["offers"] if o["model"] == "inventory")
+ok(len(_o25["shipping"]) == 1 and _o10["shipping"] == [] and "more than 10 % above" in _o10["last_mile_note"]
+   and _t10["assumptions"]["last_mile"]["weight_tolerance"] == 0.10 and "more than 10 % heavier" in _t10["assumptions"]["last_mile"]["text"]
+   and "at most 10 % above" in _t10["assumptions"]["alibaba"] and "more than 25 % heavier" in _t25["assumptions"]["last_mile"]["text"],
+   "unit economics round 2 (N4b/N4c): the last-mile weight tolerance is the policy's (a 280 g offer keeps a 250 g CJ quote at 25 %, loses it at 10 %), "
+   "and the words say so — including that the owner's last mile also stands in when every CJ quote fails the weight rule")
+_ue_srcs = [s for c in _sc["order"] for s in _sc["channels"][c]["sources"] + (_sc["channels"][c].get("sensitivity") or {}).get("sources", [])]
+ok(_sc["order"] == ["tiktok_us", "tiktok_cross_border", "shopify", "ebay", "amazon_fbm"]
+   and all(_sc["sources"][s]["url"].startswith("https://") and _sc["sources"][s]["read"] == "2026-11-02" for s in _ue_srcs)
+   and {s for s in _ue_srcs} >= {"tiktok_fulfillment_policy", "tiktok_seller_shipping", "tiktok_cross_border_fulfillment", "tiktok_referral_fees", "shopify_pricing",
+                                  "ebay_selling_fees", "ebay_delivery_dates", "ebay_dropshipping", "amazon_pricing", "amazon_vtr", "amazon_dropshipping"}
+   and _sc["sources"]["nrf_returns_2025"]["published"] == "2025-10-15" and _sc["sources"]["mckinsey_delivery"]["published"] == "2025-02-13"
+   and [_sc["channels"][c]["fee"]["rate_pct"] for c in _sc["order"]] == [6.0, 6.0, 2.9, 13.6, 15.0] and _sc["channels"]["tiktok_us"]["sensitivity"]["rate_pct"] == 8.0
+   and _uepol["report_settings"]["defaults"] == {"shopify_monthly_orders": 100, "returns_rate": 0.193, "ship_to": "US", "last_mile_usd": None, "last_mile_days": None,
+                                                 "handling_business_days": 1} and _uepol["report_settings"]["last_mile_weight_tolerance"] == 0.25,
+   "unit economics: policies.yaml sales_channels — every rule cites its page (https URL, read 2026-11-02); NRF 2025-10-15 and McKinsey 2025-02-13 dated; plan §2 rates")
+_ua = _ued["assumptions"]
+ok(_ua["returns"]["source"]["url"].startswith("https://nrf.com/") and _ua["returns"]["rate"] == 0.193 and "break-even" in _ua["ad_cost"]
+   and all(_ua["channels"][c]["sources"] and all(s["url"] and s["read"] for s in _ua["channels"][c]["sources"]) and _ua["channels"][c]["fee"]["text"]
+           and _ua["channels"][c]["delivery"]["text"] for c in _ued["channels"])
+   and _ua["channels"]["tiktok_us"]["sensitivity"]["status"] == "UNCONFIRMED" and _ua["channels"]["tiktok_us"]["sensitivity"]["sources"],
+   "unit economics: the decision's assumptions print every fee and delivery rule with its source URL and read date; the 8 % rate is UNCONFIRMED with its sources")
+
 if FAILS:
     print(f"\n{len(FAILS)} CHECKS FAILED: " + "; ".join(FAILS[:8]))
     sys.exit(1)

@@ -21,6 +21,8 @@ import { Models } from "./screens/Models";
 import { ChangePassword, Login } from "./screens/Login";
 import { Settings } from "./screens/Settings";
 import { Research } from "./screens/Research";
+import { Reports } from "./screens/Reports";
+import { returnToReport } from "./lib/productReport";
 import {
   emptySession, loadSessions, saveSessions, titleFor, type ChatSession,
 } from "./lib/chatStore";
@@ -34,13 +36,14 @@ const NAV: readonly { id: string; label: string; icon: IconName | null }[] = [
   { id: "files", label: "Files", icon: "files" },
   { id: "graph", label: "Graph", icon: "graph" },
   { id: "research", label: "Research", icon: "research" },
+  { id: "reports", label: "Reports", icon: "report" },            // PRODUCT-DECISION-REPORT-V1 B6: the decision reports
   { id: "rule", label: "", icon: null },
   { id: "control", label: "Control Plane", icon: "control" },
   { id: "models", label: "Models", icon: "models" },
   { id: "settings", label: "Settings", icon: "settings" },
 ] as const;
 
-type ScreenId = "overview" | "chat" | "compare" | "files" | "graph" | "research" | "rule" | "control" | "models" | "settings";
+type ScreenId = "overview" | "chat" | "compare" | "files" | "graph" | "research" | "reports" | "rule" | "control" | "models" | "settings";
 
 /** FRIENDS-ACCESS-V1: screens whose data is owner-only on the server (control plane, LLM providers) — hidden from friends. */
 const OWNER_SCREENS = new Set<ScreenId>(["overview", "control", "models"]);
@@ -81,6 +84,11 @@ export function App() {
     window.addEventListener(AUTH_REQUIRED_EVENT, onAuth);
     return () => window.removeEventListener(AUTH_REQUIRED_EVENT, onAuth);
   }, []);
+
+  // PRODUCT-DECISION-REPORT-V1: a report page opened without a session was sent here as /v2/?next=<its path> (web_boundary.py;
+  // ADR-0023). Once the person is signed in (already, or after signing in and any forced password change), go back to it.
+  const signedIn = state === "ready" && me !== null && !me.must_change_password;
+  useEffect(() => { if (signedIn) returnToReport(); }, [signedIn]);
 
   async function signOut() {
     try { await auth.logout(); } catch { /* the cookies are cleared either way */ }
@@ -383,6 +391,7 @@ function Workspace({ me, onMeChanged, onSignOut }: { me: Me; onMeChanged: (me: M
               {screen === "graph" && <Graph corpusId={corpusId} />}
               {screen === "models" && owner && <Models />}
               {screen === "research" && <Research sessions={sessions} onOpenReport={openReport} openRunId={researchRun} />}
+              {screen === "reports" && <Reports />}
               {screen === "settings" && <Settings me={me} onMeChanged={onMeChanged} onSignOut={onSignOut} />}
             </>
           )}

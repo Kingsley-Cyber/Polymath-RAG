@@ -5,101 +5,104 @@ A governed Trail adapter run: start, next / submit loop, result and report.
 
 | # | what happens | where (anchor) | data in -> data out | can fail how |
 |---|---|---|---|---|
-| 1 | POST /adapter/start: `require_adapter_start`, then `owner = principal_context.current()` | orchestrator/orchestrator/api/adapter.py:93-100 [DERIVED] | `StartRequest` -> pre-checks or typed refusal | 403 `ADAPTER_NOT_ALLOWED` / `CORPUS_NOT_ALLOWED` / `PRINCIPAL_UNKNOWN` raised before any run exists |
-| 2 | Grant gate: `adapter_id` must be in `p.adapter_ids`; every corpus named in `input.corpus_ids` AND `request_options.corpus_ids` must be reachable (naming NONE is allowed through — CORPUS-ACCESS-PARITY) | orchestrator/orchestrator/web_scope.py:168-181 [DERIVED] | principal + named corpus ids -> None | `_refuse("ADAPTER_NOT_ALLOWED", ...)`, `require_corpora` -> `require_corpus` -> `can_see` -> `_refuse("CORPUS_NOT_ALLOWED", ...)` (web_scope.py:103-105, 70-71) |
-| 3 | Principal resolved against the registry: mtime+ino+size-cached read, `chmod 600` enforced, unreadable expiry fails closed, profile scopes are a floor never a ceiling, admin scope rejected | orchestrator/orchestrator/web_scope.py:74-82, 46-64; orchestrator/orchestrator/mcp_principals.py:227-239, 206-224 [DERIVED] | principal_id -> `Principal` (or None = trusted local) | `PRINCIPAL_UNKNOWN` "this account is not active" (web_scope.py:80-81) |
-| 4 | DB wait moved off the event loop: `run_in_threadpool` + `acting_as(principal)` (B-25: submit/cancel take the run row lock `FOR UPDATE`, which the worker holds for a whole step) | orchestrator/orchestrator/api/adapter.py:57-67; shared/polymath_shared/principal_context.py:29-37 [DERIVED] | closure -> result | without this, every request froze until health probes failed (fixed bug, adapter.py:58-60) |
-| 5 | One transaction: pooled connection (`min_size=1`, `max_size=8`, `autocommit=False`), commit on clean exit, rollback on exception | shared/polymath_shared/db.py:44-54, 34-40, 23-31 [DERIVED] | — | exception -> rollback |
-| 6 | `service.start`: `manifest_for` (KeyError -> `UnknownAdapter`), `assert_valid("adapter_run_request", ...)`, idempotency replay — key namespaced `f"{key}@{owner_principal_id}"`, lookup `f"{adapter_id}:{key}"` | shared/polymath_shared/adapter/service.py:117-126, 67-71 [DERIVED] | adapter_id + input + options -> existing run's receipt (no new run) | unknown adapter -> 404 (adapter.py:108-109); idempotency key is per owner, never another principal's run (service.py:122) |
-| 7 | run_id derived: `"adr_" + hashlib.sha256(seed).hexdigest()[:32]`, seed = `f"{adapter_id}:{key}"` or `f"{adapter_id}:{uuid.uuid4()}"`; `T.start_run` validates the REQUESTER's input before anything is derived | shared/polymath_shared/adapter/service.py:127-129 [DERIVED] | seed string -> run_id | — |
-| 8 | Start scope, opt-in via entry step `config` keys `seed_check` / `corpus_scope` / `corpus_seed`; receipt `{"schema_version": START_RECEIPT_VERSION}`; requester's `{field}_origin` popped (only the runtime sets origin) | shared/polymath_shared/adapter/service.py:131-133, 151-179 [DERIVED] | input + opts -> mutated input, opts, receipt | `StartRefused` from seed check or seed derivation |
-| 9 | Seed check domain op: verdict `generative` False -> typed refusal with hint; `out["gap"]` -> domain's code; `DomainCrash` recorded `{"ran": False, "error": str(exc)[:500]}` and never blocks the start | shared/polymath_shared/adapter/service.py:182-199 [DERIVED] | seed -> receipt["seed_check"] | `SEED_NOT_GENERATIVE` (or the verdict's `reason_code`) at service.py:196-198 |
-| 10 | Corpus default + seed derivation: `scope["origin"] == "default"` -> `opts["corpus_ids"] = list(scope["corpus_ids"])`; no seed and no corpora -> `SEED_UNAVAILABLE`; derived seed sets `inp[field]` and `inp[f"{field}_origin"] = "corpus"` | shared/polymath_shared/adapter/service.py:161-177 [DERIVED] | corpus_ids / seed -> defaulted scope + derived seed | `SEED_UNAVAILABLE` "no seed was given and no corpus is in scope to derive one from" (service.py:173-174) |
-| 11 | Run persisted: status `"running"`, `store.insert_run` (idempotency_key, `agent_identity`), `store.set_run_owner` when a principal owns it; reply = run ref + SIBLING `start_receipt` from run options | shared/polymath_shared/adapter/service.py:134-140, 143-148 [DERIVED] | state -> `AdapterRunRefV1` + start_receipt | `assert_valid("adapter_run_ref", ref)` (service.py:209) |
-| 12 | GET /adapter/{run_id}/next: `_own` ownership assert, then `next_step` — this path runs on the event loop (no threadpool in its body) | orchestrator/orchestrator/api/adapter.py:117-123, 48-54 [DERIVED]; no-threadpool [INFERRED: body shows a direct `tx()` call] | run_id -> step or status | `NotRunOwner` -> 403 "no such run for this principal" (adapter.py:53-54); `UnknownRun` -> 404 |
-| 13 | Ownership rule: no principal = legacy trusted-local unchanged; with a principal only a run whose `owner_principal_id` equals it; NULL owner is legacy state, never "public" | shared/polymath_shared/adapter/service.py:92-99 [DERIVED] | run_id + principal -> None | `NotRunOwner` (service.py:98-99) |
-| 14 | `next_step`: status view carries the versions the RUN started under (B-57); if status in `("awaiting_agent", "awaiting_harness")` and the current row `status == "issued"` -> step payload, else `{"kind": "status", ...}` | shared/polymath_shared/adapter/service.py:232-251, 221-229 [DERIVED] | run_id -> step + siblings or status | unknown run -> 404 |
-| 15 | Sibling evidence: `EB.hydrate` over `step.context.evidence_refs` joined to stored step outputs; failure returns `{"rows": [], "receipts": [], "error": ...[:500]}` — said, not hidden | shared/polymath_shared/adapter/service.py:373-379 [DERIVED] | evidence_refs + stored outputs -> readable rows | hydration failure never takes adapter_next down (service.py:374, 378) |
-| 16 | Sibling materials (ADR-0020): manifest `config.show` name -> dotted path over `outputs` / `input` / `semantics`; `MATERIALS_MAX_BYTES` budget; `missing` / `too_large` listed; authority string `"PRIOR_STEP_OUTPUT — context for reasoning, never citable evidence"` | shared/polymath_shared/adapter/service.py:302-336 [DERIVED] | stored state -> materials or no key | no `config.show` -> NO key at all (service.py:309-316); failure -> error dict (service.py:335-336) |
-| 17 | `semantics` built on demand: `OpportunitySemanticViewV1` via `SV.build` + `RG.harvest` research gaps; read-only, never stored | shared/polymath_shared/adapter/service.py:339-348, 319-320 [DERIVED] | hypotheses + outputs -> semantic view | — |
-| 18 | Sibling beside (PRODUCT-SEARCH-E2E): `config.beside` name -> path or first-present of a list over `outputs.` / `input.` / `prefetch.`; `BESIDE_MAX_BYTES`; oversize -> `beside_too_large`; failure -> `beside_error` | shared/polymath_shared/adapter/service.py:259-295 [DERIVED] | stored state + row prefetch -> beside keys | no `config.beside` -> `{}` (service.py:270-271); never takes adapter_next down (service.py:293-295) |
-| 19 | Last rejection replayed: rejected receipt on the issued row -> `out["last_rejection"] = {"errors": [...][:40], "at": ...}` (F2 — an agent that lost the 422 still sees what to fix) | shared/polymath_shared/adapter/service.py:245-249 [DERIVED] | step row receipt -> last_rejection | — |
-| 20 | POST /adapter/{run_id}/submit: submission `{run_id, step_id, payload, submitted_by: {agent_identity, model?}, kind?}`; `_own`; rejection receipts COMMITTED then re-raised (B-48); off-loop via `_off_the_event_loop` | orchestrator/orchestrator/api/adapter.py:127-148, 131-140 [DERIVED] | `SubmitRequest` -> status view | `SubmissionRejected` / `ContractViolation` -> 422 `{"rejected": exc.errors}`; `UnknownRun` -> 404 |
-| 21 | `service.submit`: `store.load_run(..., for_update=True)` row lock; no issued row -> `SubmissionRejected(["no step has been issued"])`; `T.accept_submission`; non-invalid `ManifestError` -> `MANIFEST_VERSION_UNAVAILABLE`, run stays parked (B-57) | shared/polymath_shared/adapter/service.py:384-405 [DERIVED] | submission -> new state | 422 "no step has been issued" (service.py:391); 422 `MANIFEST_VERSION_UNAVAILABLE: {_drift(...)}` (service.py:405) |
-| 22 | AGENT_REASON: the law that follows the step runs NOW on the submitted payload (F2); a verdict routed back to this step is refused here and counts one repair loop (`branch_loops + 1`); step stays `"issued"` | shared/polymath_shared/adapter/service.py:414-423, 407-411 [DERIVED] | payload -> law verdict or rejection | 422 law errors; step stays issued so the agent may retry (service.py:409) |
-| 23 | HARNESS_ACTION: `_receipt_too_large` -> rejected, step stays issued for a smaller receipt; else `store.record_receipt` + `stable_hash`; output gains `_harness_action_id`, `_receipt_hash`, `_host_prefetch` (lineage; never sent to Trail) | shared/polymath_shared/adapter/service.py:424-445 [DERIVED] | `HarnessResearchReceiptV1` -> bound output | 422 too-large errors (service.py:427-432) |
-| 24 | Gap + θ ledger: `RG.unowned_gap_errors` (a gap belongs to exactly one LIVE hypothesis, §9.2) + `RG.gap_wire_errors` (B-22 role the gap compiler accepts); `_apply_theta` makes hypotheses/transitions durable in the SAME unit; accepted receipt cites `sorted(_cited(payload))` | shared/polymath_shared/adapter/service.py:446-473 [DERIVED] | payload -> outputs (payload + ledger ids) | 422 gap errors; 422 `"hypotheses: "` errors from `HypothesisRejected` (service.py:460-465) |
-| 25 | Loop / finish: submit returns the status view and the run is `"running"` again for the worker; GET /adapter/{run_id}/result (`adapter_result`) is the result entry — its body is past this source excerpt, no behaviour claimed | shared/polymath_shared/adapter/service.py:135, 382-383, 445, 473; orchestrator/orchestrator/api/adapter.py:209 [DERIVED] | — | — |
+| 1 | POST /adapter/start: adapter gate — `adapter_id` must be in the principal's `adapter_ids`; naming no corpus is allowed through | orchestrator/orchestrator/api/adapter.py:93-99; orchestrator/orchestrator/web_scope.py:168-181 | adapter_id, input, request_options -> None | 403 `ADAPTER_NOT_ALLOWED` |
+| 2 | Principal resolved from registry (stat-cached, owner-only file mode enforced) and active-checked; record -> `Principal` | orchestrator/orchestrator/web_scope.py:46-64, 74-82; orchestrator/orchestrator/mcp_principals.py:238-250, 217-235, 360-366 | principal_id -> Principal or None | 403 `PRINCIPAL_UNKNOWN`; unreadable expiry = expired (fail closed) |
+| 3 | Named corpora authorized: ids gathered from `input.corpus_ids` and `request_options.corpus_ids`, each checked against the grant (wildcard honored, private libraries excluded) | orchestrator/orchestrator/web_scope.py:108-110, 103-105, 94-100; shared/polymath_shared/query_scope.py:96-103; orchestrator/orchestrator/mcp_principals.py:213-214 | corpus id lists -> None | 403 `CORPUS_NOT_ALLOWED` |
+| 4 | Start offloaded to a worker thread; the request's principal re-attached via `acting_as` (B-25 row-lock fix) | orchestrator/orchestrator/api/adapter.py:57-67, 102-107; shared/polymath_shared/principal_context.py:29-37 | `_start` closure -> dict | event-loop freeze if run on the loop (historical) |
+| 5 | One transaction on the workflow authority (pool min 1 / max 8, commit on clean exit, rollback on exception) | shared/polymath_shared/db.py:44-54, 34-40, 23-31 | — -> Connection | any exception rolls back |
+| 6 | Manifest resolved by `adapter_id` from the registry | shared/polymath_shared/adapter/service.py:67-71, 59-60 | adapter_id -> Manifest | `UnknownAdapter` -> 404 |
+| 7 | Idempotency: key scoped per owner (`f"{key}@{owner_principal_id}"`); an existing run is replayed with its start receipt | shared/polymath_shared/adapter/service.py:120-126, 143-148 | idempotency_key -> prior run dict | none |
+| 8 | `run_id` derived (`"adr_" + sha256[:32]`); the requester's raw input validated by `T.start_run` before anything is derived | shared/polymath_shared/adapter/service.py:127-133 | seed -> run_id | `ContractViolation` -> 422 |
+| 9 | Start-time scope, only when the entry step config names `seed_check` / `corpus_scope` / `corpus_seed` | shared/polymath_shared/adapter/service.py:131-133, 151-179 | input, opts -> input, opts, receipt | `StartRefused` 422 typed |
+| 10 | Seed domain check on a given seed; requester-supplied `{field}_origin` popped first | shared/polymath_shared/adapter/service.py:154-160, 182-199 | seed -> verdict | `SEED_NOT_GENERATIVE` / domain gap code; a `DomainCrash` is only recorded |
+| 11 | Corpus scope resolved; `origin == "default"` writes `opts["corpus_ids"]`; "all libraries" narrowed by `all_libraries_view` (owner: all but friends' private; friend: its grant incl. wildcard) | shared/polymath_shared/adapter/service.py:161-166; orchestrator/orchestrator/web_scope.py:113-119, 85-91 | corpus_view -> scope | none |
+| 12 | Corpus-derived seed when none given; runtime stamps `inp[f"{field}_origin"] = "corpus"` with lineage | shared/polymath_shared/adapter/service.py:167-177 | corpora -> seed + lineage | `SEED_UNAVAILABLE` when no corpora in scope |
+| 13 | Run persisted: status `running`, `store.insert_run` (+ `idempotency_key`, `agent_identity`), `store.set_run_owner` | shared/polymath_shared/adapter/service.py:134-139 | state -> run row | none |
+| 14 | Response = validated AdapterRunRefV1 plus sibling `start_receipt`; refusals mapped (404 / 422 typed / 422 errors) | shared/polymath_shared/adapter/service.py:143-148, 202-210; orchestrator/orchestrator/api/adapter.py:107-113 | run_id -> {ref, start_receipt} | 404 unknown adapter; 422 `StartRefused` |
+| 15 | GET /adapter/{id}/next: run ownership asserted — one answer for "not yours" and "no such run"; NULL owner = legacy caller, unchanged | orchestrator/orchestrator/api/adapter.py:48-54, 117-123; shared/polymath_shared/adapter/service.py:92-99 | run_id -> None | 403 "no such run for this principal"; 404 unknown run |
+| 16 | Status view built under the versions the run started with (B-57), not the current manifest | shared/polymath_shared/adapter/service.py:221-229 | run_id -> status dict | `UnknownRun` -> 404 |
+| 17 | Issued step returned (`awaiting_agent` / `awaiting_harness` + row status `issued`) with hydrated `evidence` sibling (TG2a: `evidence_refs` ids stay the citation contract) | shared/polymath_shared/adapter/service.py:232-244, 373-379 | evidence_refs -> readable rows | hydration failure -> `{"rows": [], "receipts": [], "error": ...}`; step still returned |
+| 18 | Optional siblings added: `materials` (manifest `config.show` over outputs/input/semantics, byte-budgeted) and `beside` keys (`config.beside` over outputs/input/prefetch) — opt-in first, no config = no key | shared/polymath_shared/adapter/service.py:302-348, 259-295 | scope paths -> values, missing, too_large | failure SAID (`error` / `beside_error` dicts), never raised |
+| 19 | Last rejection surfaced beside an open step (F2): errors capped at 40 | shared/polymath_shared/adapter/service.py:245-249 | row receipt -> `last_rejection` | none |
+| 20 | POST /adapter/{id}/submit: ownership + `FOR UPDATE` row lock, wait off the event loop; a `SubmissionRejected` is caught inside the tx so the refusal receipt COMMITS (B-48) | orchestrator/orchestrator/api/adapter.py:127-148; shared/polymath_shared/adapter/service.py:384-390 | submission -> state | 404; 403 ownership; 422 `{"rejected": [...]}` |
+| 21 | Submission judged: manifest drift (B-57), law-at-submit for AGENT_REASON (F2, `branch_loops + 1`), harness receipt size, gap ownership + wire (§9.2, B-22), θ ledger apply | shared/polymath_shared/adapter/service.py:392-465 | payload -> output (+ ledger ids) | each refusal receipts the row, step stays `issued`, raises `SubmissionRejected` |
+| 22 | Accept path: receipt (hashes, `hypothesis_transition_ids`) written, state saved, run status returned to the worker | shared/polymath_shared/adapter/service.py:466-473, 406-410 | output -> status dict | none |
+
+`GET /adapter/{run_id}/result` (orchestrator/orchestrator/api/adapter.py:209) is named as an entry but is not present in the captured chain; no hop is claimed for it.
 
 ## state written
 
-- Run row: `store.insert_run(conn, state, m, idempotency_key=..., agent_identity=opts.get("agent_identity"))` — shared/polymath_shared/adapter/service.py:136-137 [DERIVED]
-- Run owner: `store.set_run_owner(conn, run_id, owner_principal_id)` (migration 0066 RUN OWNERSHIP) — shared/polymath_shared/adapter/service.py:138-139; orchestrator/orchestrator/api/adapter.py:48-50 [DERIVED]
-- Start receipt stored in run request options: `opts["start_receipt"] = receipt` — shared/polymath_shared/adapter/service.py:178 [DERIVED]
-- Step rows: `store.finish_step(..., status="issued"|"accepted", receipt=...)` on every submit outcome — shared/polymath_shared/adapter/service.py:411, 421, 430, 443, 452, 463, 471 [DERIVED]
-- Run state: `store.save_state` (outputs, `branch_loops`) and `_touch(conn, run_id)` — shared/polymath_shared/adapter/service.py:422, 444, 472; 412, 431, 454, 464 [DERIVED]
-- Harness receipts: `store.record_receipt(conn, step["harness_action"]["action_id"], rec, rhash)` — shared/polymath_shared/adapter/service.py:434 [DERIVED]
-- θ ledger: hypotheses and transitions become durable state in the same unit — shared/polymath_shared/adapter/service.py:455-459 [DERIVED]
-- File (read-only on this path): principals registry at `POLYMATH_MCP_PRINCIPALS_FILE`, owner-only (`chmod 600`) — orchestrator/orchestrator/web_accounts.py:101-103; orchestrator/orchestrator/web_scope.py:58-59 [DERIVED]
-- No Qdrant collection appears anywhere on this path [DERIVED: no such call in SOURCE]
+| what | where (anchor) |
+|---|---|
+| Run row: `store.insert_run(conn, state, m, idempotency_key=(f"{adapter_id}:{key}" ...), agent_identity=opts.get("agent_identity"))` | shared/polymath_shared/adapter/service.py:136-137 |
+| Run owner: `store.set_run_owner(conn, run_id, owner_principal_id)` | shared/polymath_shared/adapter/service.py:138-139 |
+| Run request options mutated at start: `opts["corpus_ids"]`, `opts["start_receipt"]` (receipt kept beside the ref, in run options, and in the entry step output) | shared/polymath_shared/adapter/service.py:165, 223, 114-115 |
+| Step rows + receipts: `store.finish_step(..., status="issued"/"accepted", receipt=receipt, output=..., submission=...)`; a rejected receipt survives the raised exception (B-48 commit) | shared/polymath_shared/adapter/service.py:410, 443, 471; orchestrator/orchestrator/api/adapter.py:135-140 |
+| Run state: `store.save_state` (outputs incl. harness receipt bindings and θ ledger ids; `branch_loops` incremented on law refusal) | shared/polymath_shared/adapter/service.py:421-422, 439-444, 466-472 |
+| Harness receipts: `store.record_receipt(conn, step["harness_action"]["action_id"], rec, rhash)` | shared/polymath_shared/adapter/service.py:434 |
+| Run liveness: `_touch(conn, run_id)` after each refusal | shared/polymath_shared/adapter/service.py:411, 431, 453, 464 |
+| Backing store: Postgres "workflow authority" via pooled `tx()` (min_size=1, max_size=8, autocommit False) | shared/polymath_shared/db.py:44-54, 23-31 |
+| No Qdrant or file write on this path [INFERRED — no such call appears anywhere in the chain] | shared/polymath_shared/db.py:44-54 |
 
 ## flags that change this flow
 
 | flag | default | effect | read at |
 |---|---|---|---|
-| entry `config.seed_check` | None (absent) | start-time domain check of the seed; absent -> no check | shared/polymath_shared/adapter/service.py:132, 154-160 [DERIVED] |
-| entry `config.corpus_scope` | None | named corpora validated now; none named -> caller's share of all libraries via `corpus_view` | shared/polymath_shared/adapter/service.py:132, 161-166; orchestrator/orchestrator/api/adapter.py:104-105 [DERIVED] |
-| entry `config.corpus_seed` | None | no seed -> one derived from the corpora (`<field>_origin: corpus`) | shared/polymath_shared/adapter/service.py:133, 167-177 [DERIVED] |
-| seed `field` | `"seed"` | which input key holds the seed | shared/polymath_shared/adapter/service.py:155 [DERIVED] |
-| `request_options.idempotency_key` | absent | present -> replay of the existing run; absent -> run_id from `uuid.uuid4()` | shared/polymath_shared/adapter/service.py:120-128 [DERIVED] |
-| named `corpus_ids` (input + request_options) | none named | allowed through; scope narrowed to the grant (wildcard joins libraries added later) | orchestrator/orchestrator/web_scope.py:169-181, 113-119; shared/polymath_shared/query_scope.py:96-103 [DERIVED] |
-| manifest `config.show` | absent | no `materials` sibling key at all | shared/polymath_shared/adapter/service.py:312, 315-316 [DERIVED] |
-| manifest `config.beside` | absent | no beside keys | shared/polymath_shared/adapter/service.py:267, 270-271 [DERIVED] |
-| `request_options.agent_identity` | absent | recorded on the run row | shared/polymath_shared/adapter/service.py:137 [DERIVED] |
-| `POLYMATH_MCP_PRINCIPALS_FILE` | unset -> `registry_path()` None | any non-None principal then fails `PRINCIPAL_UNKNOWN`; no principal reads as trusted-local | orchestrator/orchestrator/web_accounts.py:101-103; orchestrator/orchestrator/web_scope.py:47-49, 79-81 [DERIVED] |
+| entry config `seed_check` | None | a given seed runs a domain check at start; non-generative refuses with hint | shared/polymath_shared/adapter/service.py:154, 159-160, 182-199 |
+| entry config `corpus_scope` | None | named corpora validated now; none named = caller's share of all libraries | shared/polymath_shared/adapter/service.py:161-166 |
+| entry config `corpus_seed` | None | no seed -> one derived from the corpora, `<field>_origin: corpus` | shared/polymath_shared/adapter/service.py:167-177 |
+| request_options `idempotency_key` | None | per-owner dedupe (`key@owner`); replay returns the existing run + receipt | shared/polymath_shared/adapter/service.py:120-126 |
+| `corpus_ids` in input / request_options | none named | allowed through; runtime defaults to the caller's searchable libraries within its grant | orchestrator/orchestrator/web_scope.py:168-181 |
+| request_options `agent_identity` | absent | stored on the run row | shared/polymath_shared/adapter/service.py:136-137 |
+| submission `submitted_by.model` / `agent_identity` | absent | receipt `model` falls back to agent_identity | orchestrator/orchestrator/api/adapter.py:128-129; shared/polymath_shared/adapter/service.py:413 |
+| submission `kind` | absent | included in the submission only if given | orchestrator/orchestrator/api/adapter.py:130 |
+| principal context | None = owner / trusted-local caller | None: every library, no ownership filter; a principal: grant-filtered corpora + owned runs only | shared/polymath_shared/principal_context.py:23-25; orchestrator/orchestrator/web_scope.py:85-91; shared/polymath_shared/adapter/service.py:92-99 |
+| env `POLYMATH_MCP_PRINCIPALS_FILE` | unset -> None | location of the principal registry; unset disables it | orchestrator/orchestrator/web_accounts.py:101-103 |
+| manifest `config.show` | absent | no `materials` sibling key at all | shared/polymath_shared/adapter/service.py:312-316 |
+| manifest `config.beside` | absent | no beside sibling keys | shared/polymath_shared/adapter/service.py:266-271 |
 
 ## failure modes
 
-1. Start refused 422 with `{error_code, message, hint}` -> seed judged non-generative, a domain gap, or nothing to derive from -> shared/polymath_shared/adapter/service.py:192-198, 173-174 [DERIVED]
-2. 403 at start before any run exists -> adapter not in grant, corpus outside grant, or inactive/unknown principal -> orchestrator/orchestrator/web_scope.py:177, 105, 81 [DERIVED]
-3. 404 "unknown adapter ..." -> `manifest_for` KeyError -> shared/polymath_shared/adapter/service.py:67-71; orchestrator/orchestrator/api/adapter.py:108-109 [DERIVED]
-4. 404 "unknown adapter run ..." on next/submit -> `store.load_run` empty -> orchestrator/orchestrator/api/adapter.py:122-123, 143-144; shared/polymath_shared/adapter/service.py:385-386 [DERIVED]
-5. 403 "no such run for this principal" -> owner mismatch; NULL owner never public -> orchestrator/orchestrator/api/adapter.py:53-54; shared/polymath_shared/adapter/service.py:97-99 [DERIVED]
-6. 422 `MANIFEST_VERSION_UNAVAILABLE` -> redeploy renamed/removed the awaited step; run parked until deploy rollback or cancel -> shared/polymath_shared/adapter/service.py:403-405 [DERIVED]
-7. 422 law errors at submit (not 1024 s later) -> F2 law runs on the submitted payload; counts one repair loop -> shared/polymath_shared/adapter/service.py:415-423 [DERIVED]
-8. 422 "no step has been issued" -> no current step row -> shared/polymath_shared/adapter/service.py:390-391 [DERIVED]
-9. 422 harness receipt too large -> `_receipt_too_large`; step stays issued for a smaller receipt -> shared/polymath_shared/adapter/service.py:427-432 [DERIVED]
-10. 422 gap / hypotheses errors -> unowned gap (§9.2), bad gap wire role (B-22), or `HypothesisRejected` -> shared/polymath_shared/adapter/service.py:448-454, 460-465 [DERIVED]
-11. Silent fallback: seed-check crash -> start proceeds, `{"ran": False, "error": ...[:500]}` recorded -> shared/polymath_shared/adapter/service.py:190-191 [DERIVED]
-12. Silent fallback: evidence hydration failure -> `{"rows": [], "receipts": [], "error": ...}` beside the step -> shared/polymath_shared/adapter/service.py:373-379 [DERIVED]
-13. Silent fallback: materials/beside failure -> `error` / `beside_error` dicts; step still returned -> shared/polymath_shared/adapter/service.py:335-336, 293-295 [DERIVED]
-14. Replay instead of new run -> idempotency key hit returns the existing run's receipt -> shared/polymath_shared/adapter/service.py:124-126 [DERIVED]
-15. Rejection receipt survives -> B-48: the refusal is receipted on the step row and the transaction commits it before the 422 -> orchestrator/orchestrator/api/adapter.py:136-140 [DERIVED]
+1. 403 `{"error_code": "ADAPTER_NOT_ALLOWED"}` -> adapter_id not in the principal's `adapter_ids` -> orchestrator/orchestrator/web_scope.py:176-178
+2. 403 `{"error_code": "CORPUS_NOT_ALLOWED"}` -> named library outside the grant; wildcard never reaches a private library; a write grant is explicit membership only -> orchestrator/orchestrator/web_scope.py:103-105, 94-100; shared/polymath_shared/query_scope.py:96-103
+3. 403 `PRINCIPAL_UNKNOWN` -> record missing, `enabled` not True, `revoked_at` set, or expired; an unreadable expiry is an expired one (fail closed) -> orchestrator/orchestrator/web_scope.py:79-81; orchestrator/orchestrator/mcp_principals.py:238-250
+4. Registry silently unusable -> file mode has 0o077 bits ("must be owner-only (chmod 600)") or schema mismatch; cache holds None with `last_error` -> orchestrator/orchestrator/web_scope.py:58-62; orchestrator/orchestrator/mcp_principals.py:360-366
+5. 404 unknown adapter -> manifest registry KeyError -> shared/polymath_shared/adapter/service.py:67-71; orchestrator/orchestrator/api/adapter.py:108-109
+6. 422 typed refusal `{error_code, message, hint}` -> `SEED_NOT_GENERATIVE`, a domain gap code, or `SEED_UNAVAILABLE` (no seed, no corpus in scope to derive one) -> shared/polymath_shared/adapter/service.py:173-174, 192-198; orchestrator/orchestrator/api/adapter.py:110-111
+7. Seed check silently skipped -> `DomainCrash` recorded as `{"ran": False, "error": ...}`; a broken check never blocks a start -> shared/polymath_shared/adapter/service.py:189-191
+8. Whole-server freeze on start/submit/cancel (B-25) -> `FOR UPDATE` row lock held by the step worker for a whole step; waiting on the event loop froze every request until health probes failed; now a threadpool wait with the principal carried explicitly -> orchestrator/orchestrator/api/adapter.py:57-67
+9. 403 "no such run for this principal" -> owner mismatch or nonexistent run — deliberately one answer -> orchestrator/orchestrator/api/adapter.py:48-54; shared/polymath_shared/adapter/service.py:92-99
+10. 422 rejected "no step has been issued" -> no issued current step at submit time -> shared/polymath_shared/adapter/service.py:389-390
+11. 422 `MANIFEST_VERSION_UNAVAILABLE`, run parked -> a redeploy renamed or removed the awaited step (B-57); rollback of the deploy resumes it, cancel ends it -> shared/polymath_shared/adapter/service.py:400-405
+12. 422 law errors at submit (F2) -> the law now runs on the submitted payload; a verdict routing back to this step refuses inline and counts one repair loop (previously a 1024 s wait for the worker) -> shared/polymath_shared/adapter/service.py:414-423
+13. 422 harness receipt too large -> receipt over budget; the step stays open for a smaller receipt -> shared/polymath_shared/adapter/service.py:427-432
+14. 422 gap errors -> a research gap not owned by exactly one LIVE hypothesis, or a role Trail's gap compiler rejects (B-22) -> shared/polymath_shared/adapter/service.py:446-454
+15. 422 `"hypotheses: ..."` -> θ ledger rejects generated hypotheses/transitions -> shared/polymath_shared/adapter/service.py:459-465
+16. Silent fallbacks on GET next -> evidence hydration, materials and beside failures return error dicts; the agent still gets its step — failures are SAID, never raised -> shared/polymath_shared/adapter/service.py:373-379, 309-316, 335-336, 268-271, 293-295
+17. Rejection receipt believed lost -> it is not: B-48 catches `SubmissionRejected` inside the transaction so the receipt commits before the re-raise -> orchestrator/orchestrator/api/adapter.py:135-140
 
 ## invariants
 
-- INVARIANT naming no corpus never means a server default outside the caller's grant — orchestrator/orchestrator/web_scope.py:170-173 [DERIVED]
-- INVARIANT an idempotency key is per owner: `f"{key}@{owner_principal_id}"`, never another principal's run — shared/polymath_shared/adapter/service.py:121-122 [DERIVED]
-- INVARIANT the requester's input is validated before anything is derived — shared/polymath_shared/adapter/service.py:119, 129 [DERIVED]
-- INVARIANT `{field}_origin` is set only by the runtime; a requester-supplied one is popped — shared/polymath_shared/adapter/service.py:157, 176 [DERIVED]
-- INVARIANT a principal reaches only its own runs; a NULL owner is legacy state, never "public" — shared/polymath_shared/adapter/service.py:93-99 [DERIVED]
-- INVARIANT evidence / materials / beside travel as SIBLING keys; the AdapterStepV1 contract and its ids stay the citation contract — shared/polymath_shared/adapter/service.py:234-235, 303-305, 518-519 [DERIVED]
-- INVARIANT materials are context for reasoning, never citable evidence — shared/polymath_shared/adapter/service.py:334 [DERIVED]
-- INVARIANT a broken readable view never takes adapter_next down; the failure is SAID, not hidden — shared/polymath_shared/adapter/service.py:373-379, 335-336, 293-295 [DERIVED]
-- INVARIANT a rejected submission leaves the step `"issued"` so the agent may retry — shared/polymath_shared/adapter/service.py:409, 411, 421, 430, 452, 463 [DERIVED]
-- INVARIANT a read wildcard reaches every non-private library; a write grant is explicit — the wildcard never opens a library for writing — shared/polymath_shared/query_scope.py:96-103; orchestrator/orchestrator/web_scope.py:98-99 [DERIVED]
-- INVARIANT an unreadable principal expiry is an expired one (fail closed) — orchestrator/orchestrator/mcp_principals.py:233-235 [DERIVED]
-- INVARIANT the status view reports the versions the RUN started under, not the current manifest — shared/polymath_shared/adapter/service.py:229 [DERIVED]
+- INVARIANT naming no corpus never resolves outside the caller's grant — "no corpus" defaults to the caller's searchable libraries within its grant, the same default for the owner and a friend (orchestrator/orchestrator/web_scope.py:168-173; orchestrator/orchestrator/api/adapter.py:94-97) [DERIVED]
+- INVARIANT an idempotency key is per owner — `f"{key}@{owner_principal_id}"` — a replay can never return another principal's run (shared/polymath_shared/adapter/service.py:121-122) [DERIVED]
+- INVARIANT the requester's input is schema-valid before anything is derived from it — `T.start_run` precedes `_start_scope` (shared/polymath_shared/adapter/service.py:129-133) [DERIVED]
+- INVARIANT the runtime says where the seed came from — `{field}_origin` is popped from requester input and stamped only by derivation (shared/polymath_shared/adapter/service.py:157, 176) [DERIVED]
+- INVARIANT the AdapterStepV1 is unchanged on this path: `evidence`, `materials` and `beside` travel as SIBLING keys, `evidence_refs` ids stay the citation contract, and materials are `PRIOR_STEP_OUTPUT — context for reasoning, never citable evidence` (shared/polymath_shared/adapter/service.py:233-235, 304-307, 334) [DERIVED]
+- INVARIANT a refused submission leaves the step `issued` so the agent may retry, with the refusal receipted on the step row (shared/polymath_shared/adapter/service.py:406-410) [DERIVED]
+- INVARIANT no readable view can take adapter_next down — evidence, materials and beside failures are SAID, not hidden or raised (shared/polymath_shared/adapter/service.py:374, 307-308, 263-264) [DERIVED]
+- INVARIANT `acting_as` carries only the request's own principal and never widens anything; without it a missing principal would read as the trusted-local caller (shared/polymath_shared/principal_context.py:29-37) [DERIVED]
+- INVARIANT with a principal, only a run whose `owner_principal_id` equals it is reachable; a NULL owner is legacy state, never "public" (shared/polymath_shared/adapter/service.py:92-99) [DERIVED]
+- INVARIANT the read wildcard never opens a library for writing and never reaches a private library (orchestrator/orchestrator/web_scope.py:98-99; shared/polymath_shared/query_scope.py:100-103) [DERIVED]
+- INVARIANT status and run_ref report the versions the run started under, not the current manifest (B-57) (shared/polymath_shared/adapter/service.py:226-229, 207-208) [DERIVED]
 
 ## VERIFY
 
 ```verify
-grep -Fq 'def adapter_start' orchestrator/orchestrator/api/adapter.py
-grep -Fq 'SEED_NOT_GENERATIVE' shared/polymath_shared/adapter/service.py
-grep -Fq 'MANIFEST_VERSION_UNAVAILABLE' shared/polymath_shared/adapter/service.py
-grep -Fq 'CORPUS_NOT_ALLOWED' orchestrator/orchestrator/web_scope.py
-grep -Eq 'awaiting_(agent|harness)' shared/polymath_shared/adapter/service.py
+grep -Fq 'async def adapter_start' orchestrator/orchestrator/api/adapter.py
+grep -Fq 'run_id = "adr_" + hashlib.sha256(seed.encode()).hexdigest()[:32]' shared/polymath_shared/adapter/service.py
+grep -Fq 'key = f"{key}@{owner_principal_id}"' shared/polymath_shared/adapter/service.py
+grep -Fq 'SEED_UNAVAILABLE' shared/polymath_shared/adapter/service.py
+grep -Fq 'the wildcard never opens a library for writing' orchestrator/orchestrator/web_scope.py
 grep -Fq 'no such run for this principal' orchestrator/orchestrator/api/adapter.py
-grep -Fq 'start_receipt' shared/polymath_shared/adapter/service.py
-test "$(grep -c -F 'store.finish_step' shared/polymath_shared/adapter/service.py)" -ge 6
+test "$(grep -c -F 'raise SubmissionRejected' shared/polymath_shared/adapter/service.py)" -ge 5
 ```

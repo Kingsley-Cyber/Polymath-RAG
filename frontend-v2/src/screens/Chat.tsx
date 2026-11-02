@@ -196,9 +196,11 @@ export function Chat({
   });
 
   /** PRODUCT-SEARCH-E2E: the run started from turn i's product answer is kept on that turn (it persists with the chat, and it
-   *  lands in THIS chat even when another one is open by the time the server answers). */
+   *  lands in THIS chat even when another one is open by the time the server answers). PRODUCT-DECISION-REPORT-V1 B6: so is
+   *  the decision report built from it, so a reload keeps its panel. */
   const product = (i: number): ProductHandlers => ({
     onRunStarted: (run) => onUpdateTurns((ts) => ts.map((x, j) => (j === i ? { ...x, productRun: run } : x))),
+    onReportStarted: (report) => onUpdateTurns((ts) => ts.map((x, j) => (j === i ? { ...x, productReport: report } : x))),
     onOpenResearch,
   });
 

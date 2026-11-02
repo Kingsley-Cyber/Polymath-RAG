@@ -19,7 +19,7 @@ AUTHORITY: `shared/polymath_shared/adapter/hypotheses.py:36` :: `REVISABLE_FIELD
 | `adapters/ecommerce/python/product_reality.py` | `adapters/ecommerce/python/product_reality.py:84` | 3/7 | `statement`, `mechanism`, `activity`, `suspected_friction` |
 | `adapters/ecommerce/python/query_semantics.py` | `adapters/ecommerce/python/query_semantics.py:22` | 6/7 | `statement` |
 | `adapters/ecommerce/python/registry.py` | `adapters/ecommerce/python/registry.py:47` | 3/7 | `statement`, `mechanism`, `population`, `suspected_friction` |
-| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:67` | 7/7 | — |
+| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:75` | 7/7 | — |
 | `shared/polymath_shared/adapter/semantic_view.py` | `shared/polymath_shared/adapter/semantic_view.py:29` | 7/7 | — |
 | `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:92` | 3/7 | `population`, `activity`, `task`, `suspected_friction` |
 

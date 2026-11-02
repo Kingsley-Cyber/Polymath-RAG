@@ -16,6 +16,9 @@ agent the same rules the MCP servers do — product questions go to product_sear
 (never the agent's built-in web search), the agent drives every governed step — and every key, a friend's too, comes with the
 key-in-URL connector link claude.ai needs (it cannot send a header; FRIEND-JOURNEY F7). "Every library" for a friend is stored as
 the wildcard `*` and resolved per request, so a library added later reaches them (F3).
+
+PRODUCT-DECISION-REPORT-V1 (B5): every connect prompt gains one step on the decision report tools (product_report_*), the loop the
+MCP servers' playbook gives in its step 7 (polymath_shared.mcp_retrieval.playbook).
 """
 from __future__ import annotations
 
@@ -125,7 +128,8 @@ def usage_lines(libraries: list[str], private: str | None, *, owner: bool) -> st
 5. Web: never use your built-in web search, web fetch or browser for this (bot detection blocks them). When a result carries a `fallback` (CJ failed or found nothing; Alibaba always), use Agent Reach on my own machine (install: {AGENT_REACH_REPO}; check: {AGENT_REACH_VERIFY}): execute each command's `run` (once per `for_each` item when it has one), then do its `then` (send the raw output to supplier_parse). If you have no terminal (claude.ai, the web link), give me the CJ results only and tell me the rest needs a local agent.{reader}
 6. Full product research: first read the prompt run_governed_research (or the resource polymath://adapter/guide). Then adapter_list, adapter_start (put the libraries in request_options.corpus_ids), loop adapter_next / adapter_submit, then adapter_result. You answer every reasoning step yourself; each research step carries the exact Agent Reach commands to run on my machine.
 7. {supplier}
-8. "insufficient_evidence" on a library question is an honest answer: report it, do not retry blindly."""
+8. Decision reports (when I ask for a report, margins or delivery times on products): product_report_start (my words as message, or the product ideas as products) gives a report_id, and every answer's `next` says what to do now. Save its fetch_plan.script to a file and run it ONCE with bash on my machine, always the latest answer's script (it does every Agent Reach read and uploads the raw output itself; never read the pages into the chat); when an answer's fetch_plan.script is null it has no script, so call product_report_status again after its upload.mint_after and never run an older script with a placeholder link instead. Call product_report_status after it finishes, and run a new round's script (fetch_plan.round 2) once the same way. When every rounds[].complete is true, product_report_compile returns report_url and a per-product summary: add a short verdict per candidate_id if useful and compile again, then give me report_url (it opens in a browser signed in to Polymath). With no terminal, compile anyway.
+9. "insufficient_evidence" on a library question is an honest answer: report it, do not retry blindly."""
 
 
 def owner_prompt(libraries: list[str]) -> str:

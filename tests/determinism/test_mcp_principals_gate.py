@@ -392,3 +392,29 @@ def test_a_friend_compares_only_its_own_libraries_and_deep_research_is_granted_p
     _denied(_call(w, rita, "polymath_deep_research", {"question": "carts", "corpus_id": "owner-private"}), "corpus_not_allowed")
     nosy = w.add("prn_nosy", scopes=(w.P.KNOWLEDGE_SEARCH,))
     _denied(_call(w, nosy, "polymath_models", {}), "insufficient_scope")
+
+
+# ---------------------------------------------------------------- review R1 #5: the library judged is the library forwarded
+def test_a_padded_library_name_is_judged_as_the_library_it_names(world):
+    """mcp_retrieval strips a corpus_id before it travels (product_body, report_start_body), so the gate judges the stripped value.
+    Before the fix, " fr-bob" did not look private (no `fr-` at its start), passed the gate under a wildcard grant as a shared
+    library, and reached the orchestrator as fr-bob — another friend's private library."""
+    w, P = world, world.P
+    wild = w.add("prn_wild", corpora=("*", "fr-wild"), scopes=(*P.FRIEND_PROFILE, P.UPLOAD_TEXT), writable_corpus_ids=["fr-wild"])
+    before = len(w.seen)
+    for tool, args in (("product_search", {"message": "x", "corpus_id": " fr-bob"}),
+                       ("product_report_start", {"message": "x", "corpus_id": " fr-bob"}),
+                       ("product_report_start", {"message": "x", "corpus_id": "fr-bob\t"}),
+                       ("polymath_search", {"query": "x", "corpus_id": " fr-bob "}),
+                       ("adapter_start", {**START, "request_options": {"corpus_ids": [" fr-bob"]}}),
+                       ("adapter_start", {**START, "input": {**START["input"], "corpus_ids": ["\nfr-bob"]}, "request_options": {}})):
+        _denied(_call(w, wild, tool, args), "corpus_not_allowed")
+    _denied(_call(w, wild, "upload_text", {"text": "x", "corpus_id": " fr-bob", "source_name": "a.md"}), "corpus_not_writable")
+    assert len(w.seen) == before                                                                # nothing refused reached the orchestrator
+    ok = _call(w, w.keys["prn_alice"], "polymath_search", {"query": "carts", "corpus_id": " commerce-v1 "})   # a library she may use
+    assert ok.status_code == 200 and w.seen[-1]["path"] == "/chat/evidence" and w.seen[-1]["principal"] == "prn_alice"
+    fred = P.principal_from_record({"principal_id": "prn_fred", "scopes": sorted(P.FRIEND_PROFILE), "corpus_ids": ["*", "fr-fred"]})
+    for tool in ("product_search", "product_report_start"):
+        assert P.authorize(fred, tool, {"corpus_id": " fr-bob"}).reason == "corpus_not_allowed", tool
+        assert P.authorize(fred, tool, {"corpus_id": " fr-fred "}).allowed and P.authorize(fred, tool, {"corpus_id": " cinema"}).allowed
+        assert P.authorize(fred, tool, {"corpus_id": "   "}).allowed                               # blank = no library named

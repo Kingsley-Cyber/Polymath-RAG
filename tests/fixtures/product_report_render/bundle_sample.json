@@ -1,0 +1,611 @@
+{
+ "report_id": "rpt_0a0a0a0a0a0a0a0a0a0a0a0a",
+ "title": "Pet grooming and walking — decision report",
+ "candidates": [
+  {
+   "candidate_id": "cand_slicker",
+   "title": "Self-cleaning slicker brush for dogs and cats",
+   "search_terms": [
+    "self cleaning slicker brush"
+   ]
+  },
+  {
+   "candidate_id": "cand_bowl",
+   "title": "Collapsible silicone travel water bowl <script>alert('title')</script>",
+   "search_terms": [
+    "collapsible dog bowl"
+   ]
+  },
+  {
+   "candidate_id": "cand_harness",
+   "title": "Reflective no-pull dog harness",
+   "search_terms": [
+    "reflective no pull dog harness"
+   ]
+  }
+ ],
+ "host": {
+  "cj": {
+   "cand_slicker": {
+    "status": "OK",
+    "reason_code": null,
+    "relevance": {
+     "kept": [
+      "2501163412000000001"
+     ],
+     "dropped": []
+    },
+    "products": [
+     {
+      "product_id": "2501163412000000001",
+      "title": "Self-cleaning slicker brush pet grooming comb",
+      "url": "https://cjdropshipping.com/product/self-cleaning-slicker-brush-p-2501163412000000001.html",
+      "image": null,
+      "sell_price_usd": "3.42-3.88",
+      "suggested_retail_usd": 13.68,
+      "weight_g": 120,
+      "variants": [
+       {
+        "variant_id": "v-blue",
+        "price_usd": 3.42,
+        "weight_g": 120
+       },
+       {
+        "variant_id": "v-pink",
+        "price_usd": 3.88,
+        "weight_g": 120
+       }
+      ],
+      "freight": {
+       "CN": [
+        {
+         "carrier": "CJPacket Ordinary",
+         "cost_usd": 4.18,
+         "days_min": 8,
+         "days_max": 15
+        }
+       ],
+       "US": [
+        {
+         "carrier": "USPS Ground Advantage",
+         "cost_usd": 5.95,
+         "days_min": 2,
+         "days_max": 5
+        }
+       ]
+      },
+      "us_stock_confirmed": false
+     }
+    ]
+   },
+   "cand_bowl": {
+    "status": "NO_MATCH",
+    "reason_code": "CJ_NO_RELEVANT_PRODUCT",
+    "relevance": {
+     "kept": [],
+     "dropped": []
+    },
+    "products": []
+   },
+   "cand_harness": {
+    "status": "OK",
+    "reason_code": null,
+    "relevance": {
+     "kept": [
+      "2502229900000000003"
+     ],
+     "dropped": []
+    },
+    "products": [
+     {
+      "product_id": "2502229900000000003",
+      "title": "Reflective no-pull dog harness vest",
+      "url": "https://cjdropshipping.com/product/reflective-no-pull-dog-harness-p-2502229900000000003.html",
+      "image": null,
+      "sell_price_usd": 6.8,
+      "suggested_retail_usd": 27.2,
+      "weight_g": 210,
+      "variants": [
+       {
+        "variant_id": "v-m",
+        "price_usd": 6.8,
+        "weight_g": 210
+       }
+      ],
+      "freight": {
+       "CN": [
+        {
+         "carrier": "CJPacket Sensitive",
+         "cost_usd": 5.6,
+         "days_min": 9,
+         "days_max": 16
+        }
+       ],
+       "US": [
+        {
+         "carrier": "USPS (CJ US warehouse)",
+         "cost_usd": 4.75,
+         "days_min": 2,
+         "days_max": 4
+        }
+       ]
+      },
+      "us_stock_confirmed": true
+     }
+    ]
+   }
+  },
+  "ebay": {
+   "cand_slicker": {
+    "status": "OK",
+    "reason_code": null,
+    "listings": [
+     {
+      "title": "Self Cleaning Slicker Brush Dog Cat Hair Remover",
+      "url": "https://www.ebay.com/itm/100000000001",
+      "price_usd": 12.49,
+      "shipping_usd": 0.0,
+      "delivery_min": 3,
+      "delivery_max": 6,
+      "location": "US",
+      "condition": "New"
+     },
+     {
+      "title": "Dog Grooming Brush Self-Cleaning NEW",
+      "url": "https://www.ebay.com/itm/100000000002",
+      "price_usd": 8.99,
+      "shipping_usd": 3.5,
+      "delivery_min": 4,
+      "delivery_max": 8,
+      "location": "US",
+      "condition": "New"
+     },
+     {
+      "title": "Pet Slicker Brush One-Click Clean",
+      "url": "https://www.ebay.com/itm/100000000005",
+      "price_usd": 10.99,
+      "shipping_usd": 0.0,
+      "delivery_min": 3,
+      "delivery_max": 5,
+      "location": "US",
+      "condition": "New"
+     },
+     {
+      "title": "Slicker Brush Large Breed Self Cleaning",
+      "url": "https://www.ebay.com/itm/100000000006",
+      "price_usd": 16.5,
+      "shipping_usd": 0.0,
+      "delivery_min": 2,
+      "delivery_max": 4,
+      "location": "US",
+      "condition": "New"
+     }
+    ]
+   },
+   "cand_bowl": {
+    "status": "NOT_CONFIGURED",
+    "reason_code": "EBAY_NOT_CONFIGURED",
+    "listings": []
+   },
+   "cand_harness": {
+    "status": "OK",
+    "reason_code": null,
+    "listings": [
+     {
+      "title": "No Pull Dog Harness Reflective Vest",
+      "url": "https://www.ebay.com/itm/100000000003",
+      "price_usd": 19.95,
+      "shipping_usd": 0.0,
+      "delivery_min": 2,
+      "delivery_max": 5,
+      "location": "US",
+      "condition": "New"
+     },
+     {
+      "title": "Reflective Dog Harness No Pull Medium",
+      "url": "https://www.ebay.com/itm/100000000004",
+      "price_usd": 14.0,
+      "shipping_usd": 4.25,
+      "delivery_min": 3,
+      "delivery_max": 7,
+      "location": "US",
+      "condition": "New"
+     }
+    ]
+   }
+  },
+  "receipts": []
+ },
+ "parsed": {
+  "cand_slicker": {
+   "amazon": [
+    {
+     "kind": "listing",
+     "asin": "B0SAMPLE001",
+     "title": "Self Cleaning Slicker Brush for Dogs & Cats, Grooming Comb",
+     "url": "https://www.amazon.com/dp/B0SAMPLE001",
+     "price_usd": 15.99,
+     "list_price_usd": 19.99,
+     "rating": 4.6,
+     "ratings_count": 18452,
+     "bsr": {
+      "rank": 1243,
+      "category": "Pet Supplies"
+     },
+     "bought_past_month": 2000,
+     "delivery_text": "FREE delivery Thu, Nov 6",
+     "fulfilled_by": "Amazon",
+     "prime": true
+    },
+    {
+     "kind": "listing",
+     "asin": "B0SAMPLE002",
+     "title": "Pet Grooming Brush with Release Button",
+     "url": "https://www.amazon.com/dp/B0SAMPLE002",
+     "price_usd": 9.99,
+     "rating": 4.4,
+     "ratings_count": 3120,
+     "bsr": {
+      "rank": 5410,
+      "category": "Pet Supplies"
+     },
+     "bought_past_month": 500
+    },
+    {
+     "kind": "listing",
+     "asin": "B0SAMPLE003",
+     "title": "Premium Slicker Brush, Long Hair",
+     "url": "https://www.amazon.com/dp/B0SAMPLE003",
+     "price_usd": 24.95,
+     "rating": 4.7,
+     "ratings_count": 911
+    },
+    {
+     "kind": "listing",
+     "asin": "B0SAMPLE007",
+     "title": "Self-Cleaning Dog Brush for Shedding",
+     "url": "https://www.amazon.com/dp/B0SAMPLE007",
+     "price_usd": 13.49,
+     "rating": 4.5,
+     "ratings_count": 7702,
+     "bought_past_month": 1000
+    }
+   ],
+   "alibaba": [
+    {
+     "kind": "listing",
+     "ref": "1601087654321",
+     "url": "https://www.alibaba.com/product-detail/Self-Cleaning-Slicker-Brush-Pet_1601087654321.html",
+     "published_at": null,
+     "precision": "none",
+     "text": "Self Cleaning Slicker Brush Pet Grooming",
+     "listing": {
+      "title": "Self Cleaning Slicker Brush Pet Grooming",
+      "price_as_listed": "$1.45 (200-499 pieces), $1.35 (500-999 pieces), $1.25 (≥1000 pieces)",
+      "minimum_order_as_listed": "200 pieces",
+      "supplier": "Ningbo Example Pet Products Co., Ltd.",
+      "product_id": "1601087654321"
+     },
+     "lead_time_text": "1 - 500 pieces: 15 days; > 500 pieces: to be negotiated",
+     "lead_time_days_min": 15,
+     "lead_time_days_max": 15,
+     "delivery_estimate_text": "Est. 17-24 days",
+     "transit_days_min": 17,
+     "transit_days_max": 24,
+     "shipping_per_kg_usd": 9.8,
+     "on_time_dispatch_rate": 0.97,
+     "ships_to": "US"
+    }
+   ],
+   "ebay": [],
+   "reddit": [
+    {
+     "kind": "thread",
+     "title": "Best brush for a double coat?",
+     "subreddit": "r/doggrooming",
+     "url": "https://www.reddit.com/r/doggrooming/comments/sample1/best_brush_for_double_coat/",
+     "published_at": "2026-09-14",
+     "score": null,
+     "comments_count": 2,
+     "links": [],
+     "comments": [
+      {
+       "author": "user0",
+       "points": 214,
+       "date": "2026-09-14",
+       "text": "The self-cleaning one is the only brush I actually use on my husky. One click and the fur comes off."
+      },
+      {
+       "author": "user1",
+       "points": 33,
+       "date": "2026-09-15",
+       "text": "Worth it for shedding season, not for matts."
+      }
+     ]
+    },
+    {
+     "kind": "thread",
+     "title": "Slicker brush recommendations",
+     "subreddit": "r/dogs",
+     "url": "https://www.reddit.com/r/dogs/comments/sample2/slicker_brush_recommendations/",
+     "published_at": "2026-08-30",
+     "score": null,
+     "comments_count": 5,
+     "links": [],
+     "comments": [
+      {
+       "author": "user0",
+       "points": 96,
+       "date": "2026-08-30",
+       "text": "Cheap ones scratch. Get the kind with the little balls on the pins."
+      },
+      {
+       "author": "user1",
+       "points": 51,
+       "date": "2026-08-31",
+       "text": "Bought two, the button broke on one after a month."
+      },
+      {
+       "author": "user2",
+       "points": 12,
+       "date": "2026-09-01",
+       "text": "My cat hates it but the dog loves it."
+      },
+      {
+       "author": "user3",
+       "points": 7,
+       "date": "2026-09-02",
+       "text": "SIXTH-COMMENT-NEVER-SHOWN"
+      },
+      {
+       "author": "user4",
+       "points": 3,
+       "date": "2026-09-03",
+       "text": "SEVENTH-COMMENT-NEVER-SHOWN"
+      }
+     ]
+    },
+    {
+     "kind": "thread",
+     "title": "Candle warmer recommendations?",
+     "subreddit": "r/Candles",
+     "url": "https://www.reddit.com/r/Candles/comments/off1/off1_thread/",
+     "published_at": "2026-10-20",
+     "score": null,
+     "comments_count": 1,
+     "links": [],
+     "relevant": false,
+     "term_hits": [],
+     "comments": [
+      {
+       "author": "someone",
+       "points": 900,
+       "date": "2026-10-20",
+       "text": "OFF-TOPIC-COMMENT-NEVER-COUNTED"
+      }
+     ]
+    },
+    {
+     "kind": "thread",
+     "title": "Off-topic <b>bold</b> lamp thread",
+     "subreddit": "r/lamps",
+     "url": "https://www.reddit.com/r/lamps/comments/off2/off2_thread/",
+     "published_at": "2026-10-18",
+     "score": null,
+     "comments_count": 1,
+     "links": [],
+     "relevant": false,
+     "term_hits": [],
+     "comments": [
+      {
+       "author": "someone",
+       "points": 900,
+       "date": "2026-10-18",
+       "text": "OFF-TOPIC-COMMENT-NEVER-COUNTED"
+      }
+     ]
+    },
+    {
+     "kind": "thread",
+     "title": "Garden hose reel that does not kink",
+     "subreddit": "r/gardening",
+     "url": "https://www.reddit.com/r/gardening/comments/off3/off3_thread/",
+     "published_at": "2026-09-30",
+     "score": null,
+     "comments_count": 1,
+     "links": [],
+     "relevant": false,
+     "term_hits": [],
+     "comments": [
+      {
+       "author": "someone",
+       "points": 900,
+       "date": "2026-09-30",
+       "text": "OFF-TOPIC-COMMENT-NEVER-COUNTED"
+      }
+     ]
+    },
+    {
+     "kind": "thread",
+     "title": "Phone case that survives a drop",
+     "subreddit": "r/phones",
+     "url": "https://www.reddit.com/r/phones/comments/off4/off4_thread/",
+     "published_at": "2026-08-01",
+     "score": null,
+     "comments_count": 1,
+     "links": [],
+     "relevant": false,
+     "term_hits": [],
+     "comments": [
+      {
+       "author": "someone",
+       "points": 900,
+       "date": "2026-08-01",
+       "text": "OFF-TOPIC-COMMENT-NEVER-COUNTED"
+      }
+     ]
+    },
+    {
+     "kind": "thread",
+     "title": "Desk lamp tips",
+     "subreddit": "r/lamps",
+     "url": "https://www.reddit.com/r/lamps/comments/off5/off5_thread/",
+     "published_at": null,
+     "score": null,
+     "comments_count": 1,
+     "links": [],
+     "relevant": false,
+     "term_hits": [],
+     "comments": [
+      {
+       "author": "someone",
+       "points": 900,
+       "date": null,
+       "text": "OFF-TOPIC-COMMENT-NEVER-COUNTED"
+      }
+     ]
+    },
+    {
+     "kind": "thread",
+     "title": "Another off-topic thread",
+     "subreddit": "r/misc",
+     "url": "https://www.reddit.com/r/misc/comments/off6/off6_thread/",
+     "published_at": "2026-07-15",
+     "score": null,
+     "comments_count": 1,
+     "links": [],
+     "relevant": false,
+     "term_hits": [],
+     "comments": [
+      {
+       "author": "someone",
+       "points": 900,
+       "date": "2026-07-15",
+       "text": "OFF-TOPIC-COMMENT-NEVER-COUNTED"
+      }
+     ]
+    },
+    {
+     "kind": "thread",
+     "title": "Candle warmer recommendations?",
+     "subreddit": "r/Candles",
+     "url": "https://old.reddit.com/r/Candles/comments/off1/off1_thread",
+     "published_at": "2026-10-20",
+     "score": null,
+     "comments_count": 1,
+     "links": [],
+     "relevant": false,
+     "term_hits": [],
+     "comments": [
+      {
+       "author": "someone",
+       "points": 900,
+       "date": "2026-10-20",
+       "text": "OFF-TOPIC-COMMENT-NEVER-COUNTED"
+      }
+     ]
+    }
+   ]
+  },
+  "cand_bowl": {
+   "amazon": [
+    {
+     "kind": "listing",
+     "asin": "B0SAMPLE004",
+     "title": "Collapsible Dog Bowl 2-pack",
+     "url": "https://www.amazon.com/dp/B0SAMPLE004",
+     "price_usd": 9.99,
+     "ratings_count": 312
+    },
+    {
+     "kind": "listing",
+     "asin": "B0SAMPLE006",
+     "title": "<script>alert(1)</script> Silicone travel bowl",
+     "url": "javascript:alert(1)",
+     "price_usd": 8.99
+    }
+   ],
+   "alibaba": [
+    {
+     "kind": "listing",
+     "ref": "1600555000111",
+     "url": "https://www.alibaba.com/product-detail/Collapsible-Silicone-Bowl_1600555000111.html",
+     "published_at": null,
+     "precision": "none",
+     "text": "Collapsible Silicone Pet Bowl",
+     "listing": {
+      "title": "Collapsible Silicone Pet Bowl",
+      "price_as_listed": "US$0.55-0.62",
+      "minimum_order_as_listed": "500 pieces",
+      "supplier": null,
+      "product_id": "1600555000111"
+     }
+    }
+   ],
+   "ebay": [],
+   "reddit": [
+    {
+     "kind": "thread",
+     "title": "Water for the dog on long hikes",
+     "subreddit": "r/hiking",
+     "url": "data:text/html,<b>not a link</b>",
+     "published_at": "2025-06-02",
+     "score": null,
+     "comments_count": 1,
+     "links": [],
+     "comments": [
+      {
+       "author": "u",
+       "points": 18,
+       "date": "2025-06-02",
+       "text": "The collapsible bowl clips on the pack <img src=x onerror=alert(2)>"
+      }
+     ]
+    }
+   ]
+  },
+  "cand_harness": {
+   "amazon": [
+    {
+     "kind": "listing",
+     "asin": "B0SAMPLE005",
+     "title": "Reflective No Pull Dog Harness, Adjustable",
+     "url": "https://www.amazon.com/dp/B0SAMPLE005",
+     "price_usd": 24.99,
+     "rating": 4.5,
+     "ratings_count": 40211,
+     "bsr": {
+      "rank": 212,
+      "category": "Pet Supplies"
+     },
+     "bought_past_month": 5000
+    },
+    {
+     "kind": "listing",
+     "asin": "B0SAMPLE008",
+     "title": "No Pull Harness with Handle",
+     "url": "https://www.amazon.com/dp/B0SAMPLE008",
+     "price_usd": 29.99,
+     "ratings_count": 8800
+    },
+    {
+     "kind": "listing",
+     "asin": "B0SAMPLE009",
+     "title": "Reflective Vest Harness Small Dogs",
+     "url": "https://www.amazon.com/dp/B0SAMPLE009",
+     "price_usd": 16.99
+    }
+   ],
+   "alibaba": [],
+   "ebay": [],
+   "reddit": []
+  }
+ },
+ "settings": {
+  "as_of": "2026-11-02"
+ },
+ "verdicts": {
+  "cand_slicker": "Go on Shopify first <b>now</b>: the margin survives returns; skip TikTok US until CJ confirms US stock.",
+  "cand_harness": "Strong: every US channel but cross-border passes delivery from CJ's US warehouse."
+ }
+}

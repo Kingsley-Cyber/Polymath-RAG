@@ -14,11 +14,14 @@ AUTHORITY: `adapters/ecommerce/python/governed_run.py:34` :: `KINDS` (count: 6) 
 |---|---|---|---|
 | `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:73` | 4/6 | `start`, `submission` |
 | `adapters/ecommerce/python/controller.py` | `adapters/ecommerce/python/controller.py:171` | 3/6 | `start`, `submission`, `result` |
-| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:52` | 4/6 | `start`, `note` |
+| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:60` | 5/6 | `start` |
+| `orchestrator/orchestrator/api/product_report.py` | `orchestrator/orchestrator/api/product_report.py:297` | 3/6 | `step`, `submission`, `result` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:274` | 4/6 | `start`, `submission` |
+| `orchestrator/orchestrator/mcp_server.py` | `orchestrator/orchestrator/mcp_server.py:104` | 3/6 | `step`, `submission`, `note` |
 | `shared/polymath_shared/acquisition/service.py` | `shared/polymath_shared/acquisition/service.py:250` | 3/6 | `start`, `step`, `submission` |
-| `shared/polymath_shared/adapter/dossier.py` | `shared/polymath_shared/adapter/dossier.py:94` | 5/6 | `note` |
+| `shared/polymath_shared/adapter/dossier.py` | `shared/polymath_shared/adapter/dossier.py:107` | 5/6 | `note` |
 | `shared/polymath_shared/adapter/store.py` | `shared/polymath_shared/adapter/store.py:13` | 4/6 | `start`, `result` |
+| `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:94` | 3/6 | `step`, `submission`, `note` |
 | `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:673` | 3/6 | `start`, `step`, `submission` |
 
 ## VERIFY

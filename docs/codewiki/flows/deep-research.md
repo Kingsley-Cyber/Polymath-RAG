@@ -1,94 +1,94 @@
 # flow: deep-research
-Deep research: plan, the research loop (moves: broad / deep / adjacent / inverse), evidence rows, the cited report, finish-now.
+Deep research: plan, the research loop (moves live in `DR.MOVES`), evidence rows, the cited report, finish-now. Two streaming endpoints plus a plan card; the run engine (`_worker`) is the depth boundary of this capture.
 
 ## hops
 
 | # | what happens | where (anchor) | data in -> data out | can fail how |
 |---|---|---|---|---|
-| 1 | Plan entry: `POST /research/deep/plan` -> `deep_research_plan`; the level-1 plan card, ONE planner call, after the same library and preset checks as a run; **not** part of the one-run lock — a person may plan while a run streams | orchestrator/orchestrator/api/deep_research.py:490-494 [DERIVED] | `DeepPlanRequest` -> plan-card dict | see rows 2-11 |
-| 2 | Library scope: `_libraries` merges `[corpus_id]` + `corpus_ids`, dedupes order-preserving | deep_research.py:132-139 [DERIVED] | req -> `list[str]` corpus ids | empty -> 422 `LIBRARY_REQUIRED` (137) |
-| 3 | Read permission: `require_corpora` -> `require_corpus` -> `can_see` | orchestrator/orchestrator/web_scope.py:103-110 [DERIVED] | corpus ids -> None | `_refuse("CORPUS_NOT_ALLOWED", "that library is not open to this account")` (104-105) |
-| 4 | Moves gate: `moves_enabled` = `req.moves` AND env `MOVES_ENV` (default `"1"`) not in `("0", "false", "off", "no")` | deep_research.py:83-84 [DERIVED] | req + env -> bool | env set to an off-value disables moves |
-| 5 | Preset: `DR.Config.preset(req.preset, moves=moves_enabled(req))` | deep_research.py:497-499 [DERIVED] | preset name -> `DR.Config` | `ValueError` -> 422 `UNKNOWN_PRESET` (499) |
-| 6 | Planner port: `_complete_port` closes over `complete()`; lanes = `research_lane_names` = `stage_pin("deep_research")` or `stage_pin(COMPILER_STAGE)` (config/llm_accounts.yaml, else the chat compiler's lanes) | deep_research.py:234-247, 225-227 [DERIVED] | question key -> `complete(prompt, system, max_tokens)` | no endpoint matches the pin -> 503 `NO_RESEARCH_LANE` (246-247) |
-| 7 | Roster: `cloud_endpoints` = settings primary (parkable) + `config/cloud_providers.json` via `_configured_providers` (AUTO-GATE: `enabled` not false AND key resolves; `url_template`+`account_id_env` supported) + `POLYMATH_LLM_CLOUD_EXTRA_ENDPOINTS`; sorted by name; keys via `_resolve_key` (process env, then repo `.env`) | shared/polymath_shared/llm_extraction/pool.py:217-262, 152-208, 117-133 [DERIVED] | settings + files -> `CloudEndpoint` list | loud `ValueError`: bad extras JSON (234-235), non-list (237-238), missing name+url+model (244-245), duplicate names (258-259); keyless provider parked, logged once (172-176) |
-| 8 | Lane order: `_compiler_attempt_order` — home lane = `blake2b(key)` mod roster length (or `_COMPILER_PREFERRED_LANE`), then first lane of a different family (`_lane_family` = urlparse netloc), then ring neighbours; lanes whose last transport failure is inside `_COMPILER_LANE_COOLDOWN_S` move to the back, never dropped; capped at `max_attempts` | orchestrator/orchestrator/api/ui.py:1741-1774, 1733-1738 [DERIVED] | endpoints + key -> attempt list | every lane cold -> still tried, just reordered (1772-1773) |
-| 9 | Lane call loop: `complete()` — per lane an `LLMExtractionClient("cloud", ..., timeout_s=PORT_TIMEOUT_S, max_attempts=1)`, `attempt_stage="deep_research"`, `attempt_function="DEEP_RESEARCH"`, `interactive=True` (never wait on a limiter); a limiter refusal (`last_refusal`) skips the lane at zero HTTP | deep_research.py:249-266 [DERIVED] | prompt/system/max_tokens -> text | `len(failures) >= RESEARCH_DISPATCH_ATTEMPTS` stops the loop (252); skipped-only -> `AllLanesRefused(skipped)` (267-268); else `RuntimeError("research lanes failed: " + ...)` (269-270) |
-| 10 | Planner: `DR.plan_goals` off-thread via `asyncio.to_thread` | deep_research.py:500-508 [DERIVED] | question + complete + config -> `draft.goals` | any exception -> 502 `PLAN_FAILED`, logged as `type(exc).__name__` only, never the message (503-506); `not draft.goals` -> 502 `PLAN_EMPTY` (507-508) |
-| 11 | Plan card returned: `intent`, `evaluative`, `preset`, `goals` [{id, goal, query, move}], `estimate(replace(config, first_width=len(draft.goals)), planned=True)`, `libraries`, `moves` | deep_research.py:509-513 [DERIVED] | draft -> JSON | — |
-| 12 | Run entry: `POST /research/deep` -> `deep_research`; `_libraries` again; principal from `principal_context.current()` (None = legacy / trusted-local caller) | deep_research.py:406-409; shared/polymath_shared/principal_context.py:23-25 [DERIVED] | `DeepResearchRequest` + principal -> run | rows 2-3 repeat |
-| 13 | Synthesizer: `req.synthesizer` or `_default_synthesizer()` — first `_PREFERRED_DEFAULTS` entry present in offered (`_litellm_models` from `llm_providers` rows with `_provider_ready` hiding unresolvable `env:` keys, plus `_ollama_models` from `POLYMATH_OLLAMA_MODELS`/`OLLAMA_FREE_CLOUD_MODELS` with daemon `/api/tags` check, 3 s), else `offered[0]`, else `_PREFERRED_DEFAULT` | deep_research.py:410-412; ui.py:83-92, 648-668, 641-645, 606-624, 117-138, 106-114, 100-103 [DERIVED] | req -> synth id | not `startswith(("litellm:", "ollama:"))` -> 422 `UNKNOWN_SYNTHESIZER` (421-422) |
-| 14 | Run preset + confirmed plan: `DR.Config.preset(req.preset)`; `confirmed_plan` — plan None allowed, else at most `2 * breadth` goals, query length inside `PLAN_QUERY_CHARS` (3-300 per docstring), move in `DR.MOVES`, goal <= `PLAN_GOAL_CHARS`; repeated query allowed | deep_research.py:413-417, 87-108 [DERIVED] | `req.plan` + `shape.breadth` -> `(goal, query, move)` tuples or None | any problem -> 422 `PLAN_INVALID` listing every problem (106-107) |
-| 15 | One-run lock: `who = principal or "owner"`; under `_LOCK`, register `cancel`/`finish` Events in `_RUNNING`/`_FINISH` | deep_research.py:418-424 [DERIVED] | principal -> slots | `who in _RUNNING` -> 409 `DEEP_RESEARCH_BUSY` "one deep research run at a time; stop the other first" (420-423) |
-| 16 | SSE stream: daemon thread `_worker` (name `"deep-research"`) posts to a queue; `events()` opens with a `phase` frame `{"stage": "deep_start", ...}`, relays `_sse` frames, waits `HEARTBEAT_S` -> `": keep-alive\n\n"` on empty, captures `answer` and failure `error_code`, ends with a `done` frame; `StreamingResponse(media_type="text/event-stream")` | deep_research.py:426-451, 111-112, 469-470 [DERIVED] | queue items -> event stream | heartbeat is only a comment frame; `error` events set `failure` (448-449) |
-| 17 | Teardown: `finally` — `cancel.set()` (a disconnect or any exit stops the run), `_RUNNING`/`_FINISH` entries removed when identity matches | deep_research.py:452-458 [DERIVED] | — | — |
-| 18 | Run receipt: `record_query_receipt(kind="deep_research", ...)` with `meta = {"route": "research/deep", "model": synth, "deep_research": receipt_block(answer)}`; `receipt_block` keeps the run counts and swaps `report_model` for `report_model_counts` (goals, findings, confidence strong/single_source/contested, counter, open_questions, sources) — the evidence model's texts stay out (receipt meta cap 64 KB); a block without `report_model` passes through unchanged | deep_research.py:459-467, 473-486 [DERIVED] | answer -> receipt row | receipt failure only warned: "deep research receipt not written: %s" (466-467) |
-| 19 | Receipt row: `qid = "q_" + uuid.uuid4().hex[:24]`; `summarize_response` whitelists meta keys; `knowledge_scope_of` reads `req.scope` via `parse_scope` (anything not exactly `{"roles": [...]}` raises `ScopeError`; malformed recorded as `{"invalid": true}`); INSERT INTO `query_receipts` (…, meta jsonb, error); `principal_id` backfilled when set (migration 0066) | shared/polymath_shared/query_receipts.py:181-221, 32-110, 113-123; shared/polymath_shared/code/scope.py:99-111 [DERIVED] | summary -> Postgres row | any exception -> returns None + warning `QUERY_RECEIPT_FAILED` (218-220) |
-| 20 | Meta sizing: `_meta_json` shrinks structurally — `funnel.compact`, then list shrinks (`SHRINK_LISTS_IN`), then `DROP_ORDER` keys (funnel id lists go, counts stay) — never slices a JSON string; last resort `{"truncated": True, "keys": ...}` | query_receipts.py:149-178; shared/polymath_shared/funnel.py:111-127 [DERIVED] | meta -> JSON text | oversized meta is truncated, never invalid JSON |
-| 21 | Finish entry: `POST /research/deep/finish` -> `deep_research_finish` declared at deep_research.py:517; the run's `finish` Event is registered in `_FINISH[who]` (424) and cleared on exit (457-458). Body not in this material | deep_research.py:517, 424, 457-458 [INFERRED — the :517 anchor comes from the route table; only the Event plumbing is in SOURCE] | — | — |
+| 1 | `POST /research/deep/plan` enters `deep_research_plan`; `_libraries` merges `[req.corpus_id]` + `req.corpus_ids`, dedupes via `dict.fromkeys` | orchestrator/orchestrator/api/deep_research.py:490-495, 132-139 | `DeepPlanRequest` -> `list[str]` corpus ids | 422 `LIBRARY_REQUIRED` when no id survives |
+| 2 | Read-scope gate: `require_corpora` loops `require_corpus`; `can_see` per corpus | orchestrator/orchestrator/web_scope.py:108-110, 103-105 | corpus ids -> pass/refuse | `CORPUS_NOT_ALLOWED` "that library is not open to this account" |
+| 3 | Preset + moves toggle: `DR.Config.preset(req.preset, moves=moves_enabled(req))`; `moves_enabled` = request flag AND env `MOVES_ENV` (default `"1"`) not in `("0","false","off","no")` | orchestrator/orchestrator/api/deep_research.py:496-499, 83-84 | preset string -> `DR.Config` | 422 `UNKNOWN_PRESET` on `ValueError` |
+| 4 | Lane names: `research_lane_names` = `stage_pin_fn("deep_research") or stage_pin_fn(compiler_stage) or []` (DR0: deep_research pin else the chat compiler's lanes) | orchestrator/orchestrator/api/deep_research.py:225-227, 244-245 | `config/llm_accounts.yaml` pins -> lane names | — |
+| 5 | Roster built: `cloud_endpoints` = settings primary (kept unless parked while other providers exist) + `_configured_providers` (config/cloud_providers.json, AUTO-GATE: enabled AND key resolves) + `POLYMATH_LLM_CLOUD_EXTRA_ENDPOINTS`; sorted by name; roster composition logged once | shared/polymath_shared/llm_extraction/pool.py:217-262, 152-208, 117-133 | env + .env + json files -> `list[CloudEndpoint]` | loud `ValueError`: malformed JSON, reserved/duplicate names, missing url+model; parked lanes logged, skipped |
+| 6 | Endpoints filtered to lane names; empty -> 503 `NO_RESEARCH_LANE` | orchestrator/orchestrator/api/deep_research.py:245-247 | roster + lane names -> research endpoints | 503, run cannot plan |
+| 7 | `_compiler_attempt_order`: deterministic order — preferred lane, else blake2b(key)%len home lane; then first lane of a different family (URL netloc); then ring neighbours; lanes cold within `_COMPILER_LANE_COOLDOWN_S` moved to back, never dropped; pure over inputs | orchestrator/orchestrator/api/ui.py:1741-1774, 1733-1738 | endpoints + session key -> attempt list | — |
+| 8 | `complete` port loop: per lane an `LLMExtractionClient("cloud", ..., max_attempts=1)` with `interactive = True` (INTERACTIVE-ADMISSION-V1: never wait on a lane limiter); success returns non-empty text; `last_refusal` (zero HTTP) appends to `skipped` without spending an attempt; real failures count toward `RESEARCH_DISPATCH_ATTEMPTS`; only-refused -> `AllLanesRefused(skipped)`, else `RuntimeError("research lanes failed: ...")` | orchestrator/orchestrator/api/deep_research.py:249-270 | prompt/system/max_tokens -> completion text | typed `AllLanesRefused` (engine counts it, ends branch) vs RuntimeError |
+| 9 | Plan made: `DR.plan_goals(req.question, complete=..., config=...)` in `asyncio.to_thread`; not under the one-run lock ("a person may plan while a run streams") | orchestrator/orchestrator/api/deep_research.py:500-502, 491-494 | question + port + config -> draft goals | any exception -> 502 `PLAN_FAILED` (class name only, message never leaked); `not draft.goals` -> 502 `PLAN_EMPTY` |
+| 10 | Plan card returned: `intent`, `evaluative`, lowercased `preset`, goals (`id`, `goal`, `query`, `move`), `DR.estimate(replace(config, first_width=len(draft.goals)), planned=True)`, `libraries`, `config.moves` | orchestrator/orchestrator/api/deep_research.py:509-513 | draft -> JSON card | — |
+| 11 | `POST /research/deep` enters `deep_research`; hops 1-2 repeat (`_libraries` -> `require_corpora`) | orchestrator/orchestrator/api/deep_research.py:406-407 | `DeepResearchRequest` -> libraries | as hops 1-2 |
+| 12 | Synthesizer resolved: `req.synthesizer or _default_synthesizer()` — first offered preference among `_litellm_models()` + `_ollama_models()`; providers whose env-indirected key is unset are hidden; must start `litellm:` or `ollama:` | orchestrator/orchestrator/api/deep_research.py:409-412; orchestrator/orchestrator/api/ui.py:83-92, 648-668, 117-138 | optional synth -> synth id | 422 `UNKNOWN_SYNTHESIZER`; silent-history: empty synth once fell to `litellm:openai/glm-5-free` with key unset -> LiteLLM "Missing credentials" (ui.py:84-87) |
+| 13 | Preset for the run: `DR.Config.preset(req.preset)` | orchestrator/orchestrator/api/deep_research.py:413-416 | preset -> `shape` | 422 `UNKNOWN_PRESET` |
+| 14 | Confirmed plan validated: `confirmed_plan(req, shape.breadth)` — `None` -> run without plan; empty list -> "the plan has no goals"; ≤ `2 * breadth` goals; query length in `PLAN_QUERY_CHARS` (3-300); `item.move not in DR.MOVES` refused; goal ≤ `PLAN_GOAL_CHARS`; repeated queries allowed | orchestrator/orchestrator/api/deep_research.py:87-108 | `req.plan` -> `(goal, query, move)` tuples | one 422 `PLAN_INVALID` joining every problem |
+| 15 | One-run lock: `who = principal or "owner"` (from `principal_context.current()`); if `who in _RUNNING` -> 409; else register `_RUNNING[who] = cancel`, `_FINISH[who] = finish` (`threading.Event` pair) | orchestrator/orchestrator/api/deep_research.py:408, 417-424; shared/polymath_shared/principal_context.py:23-25 | principal -> run slot | 409 `DEEP_RESEARCH_BUSY` "one deep research run at a time; stop the other first" |
+| 16 | SSE opens: first frame `_sse("phase", {"stage": "deep_start", ...})` with libraries and preset; `_worker` thread started (daemon, name `"deep-research"`) carrying `(req, libraries, synth, principal, loop, out, cancel, finish, plan)` — the research loop itself is past this capture's depth | orchestrator/orchestrator/api/deep_research.py:426-437, 111-112 | queue `out` -> SSE text | — |
+| 17 | Event pump: `await asyncio.to_thread(out.get, True, HEARTBEAT_S)`; timeout -> `": keep-alive\n\n"` comment frame; `kind is _END` breaks; `"answer"` and `"error"` captured for the receipt; every frame re-emitted via `_sse` | orchestrator/orchestrator/api/deep_research.py:438-451 | queue items -> SSE stream | silent keep-alives mask a slow worker |
+| 18 | Terminal `"done"` frame; finally: `cancel.set()` (a disconnect or any exit stops the run); `_RUNNING`/`_FINISH` entries deleted only if identity matches the registered events | orchestrator/orchestrator/api/deep_research.py:451-458 | exit -> cleanup | — |
+| 19 | Receipt meta: `receipt_block(answer)` reads `result.meta.deep_research`; if `report_model` present it is replaced by `report_model_counts` (goals, findings, confidence tallies `strong`/`single_source`/`contested`, counter, open_questions, sources) — texts stay out because meta is capped at 64 KB | orchestrator/orchestrator/api/deep_research.py:462, 473-486 | answer dict -> counts-only block | oversized meta would lose the whole block, hence counts only |
+| 20 | Receipt written: `record_query_receipt(tx, kind="deep_research", ...)` INSERT INTO `query_receipts` (question sha256 + head, corpora, wall_ms, summarized meta, error); `principal_id` stamped (migration 0066); entire write wrapped — failure logs a warning, never raises | orchestrator/orchestrator/api/deep_research.py:459-467; shared/polymath_shared/query_receipts.py:184-224 | run result -> `query_receipts` row | silent fallback: "deep research receipt not written: %s" (class name) |
+| 21 | Meta serialization: `summarize_response` allowlists meta keys (incl. `deep_research`); `_meta_json` shrinks structurally — funnel `compact`, then long lists, then `DROP_ORDER` keys (funnel ids dropped, counts kept) — never slices a JSON string; last resort `{"truncated": True, "keys": ...}` | shared/polymath_shared/query_receipts.py:32-113, 152-181; shared/polymath_shared/funnel.py:111-127 | meta -> jsonb ≤ cap | progressive truncation, forensic core kept last |
+| 22 | Stream returned: `StreamingResponse(..., media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})` | orchestrator/orchestrator/api/deep_research.py:469-470 | generator -> HTTP stream | — |
+| 23 | `POST /research/deep/finish` -> `deep_research_finish` (entry per routing; handler body not in this capture) [INFERRED: it signals the run through `_FINISH`, the per-principal `finish` event registered at hop 15 and handed to `_worker`] | orchestrator/orchestrator/api/deep_research.py:517, 419, 424, 432 | finish request -> `finish` event set | unknown in this capture |
 
 ## state written
 
-- Postgres `query_receipts`: one row per run (`kind="deep_research"`, `question_sha256`, `wall_ms`, `meta` jsonb incl. `deep_research` counts, `error`) — query_receipts.py:202-213; `principal_id` update — query_receipts.py:214-216.
-- Postgres `llm_providers`: `CREATE TABLE IF NOT EXISTS` on read; source of the synthesizer dropdown — ui.py:610-617.
-- In-memory `_RUNNING[who] = cancel` and `_FINISH[who] = finish`, per principal, removed on stream exit — deep_research.py:420-424, 454-458.
-- Files read only: `config/cloud_providers.json` — pool.py:158; repo `.env` (gitignored) — pool.py:125.
-- The plan endpoint (`/research/deep/plan`) writes nothing — no receipt call in deep_research.py:490-513 [DERIVED].
-- No Qdrant collection appears on this path in SOURCE.
+| store | what | anchor |
+|---|---|---|
+| Postgres `query_receipts` | one row per run: `query_id` (`"q_" + uuid hex[:24]`), `kind="deep_research"`, question sha256 + head, corpus_ids, `wall_ms`, status/verdict/citations/claims/evidence/source_docs (capped `[:32]`), `meta` jsonb, `error`, `principal_id` | shared/polymath_shared/query_receipts.py:191-216, 217-219 |
+| Postgres `llm_providers` | `CREATE TABLE IF NOT EXISTS` ensured on the synthesizer-default read path (rows read, not written here) | orchestrator/orchestrator/api/ui.py:610-617 |
+| process memory | `_RUNNING[who] = cancel`, `_FINISH[who] = finish`; deleted on stream exit when identity matches | orchestrator/orchestrator/api/deep_research.py:420-424, 454-458 |
+| process memory | `_ROSTER_LOGGED` set dedupes roster/parked log lines per process | shared/polymath_shared/llm_extraction/pool.py:211-214 |
+| Qdrant / files | none written on this path in SOURCE | — |
 
 ## flags that change this flow
 
 | flag | default | effect | read at |
 |---|---|---|---|
-| `req.moves` | not shown in SOURCE | with the env gate, sets `moves=` on the preset | deep_research.py:83-84, 497 |
-| `MOVES_ENV` (constant; literal env name not in SOURCE) | `"1"` | `"0"`, `"false"`, `"off"`, `"no"` disable moves | deep_research.py:84 |
-| `POLYMATH_LLM_CLOUD_PRIMARY` | `llm_cloud_primary` getattr default `True` | parks the primary endpoint unless no configured providers remain (roster never empty) | pool.py:226 |
-| `POLYMATH_LLM_CLOUD_EXTRA_ENDPOINTS` | `""` / unset | adds extra endpoints (JSON list of `{name,url,model}`); malformed fails loudly | pool.py:229-245 |
-| `POLYMATH_OLLAMA_MODELS` | `OLLAMA_FREE_CLOUD_MODELS` | ollama name allowlist behind the default synthesizer | ui.py:100-103 |
-| `_COMPILER_PREFERRED_LANE` | not shown in SOURCE | overrides the hash home lane for every session | ui.py:1754-1757 |
-| `_COMPILER_LANE_COOLDOWN_S` | not shown in SOURCE | lanes failing inside the cooldown are demoted to the back | ui.py:1742, 1772 |
-| `req.preset` | — | selects the `DR.Config` shape (`breadth` etc.); unknown -> 422 | deep_research.py:497-499, 413-416 |
-| `req.synthesizer` | `_default_synthesizer()` | must start with `"litellm:"` or `"ollama:"` | deep_research.py:410-412 |
-| `req.plan` | `None` | `None` = no confirmed plan; else validated against `2 * breadth` | deep_research.py:87-108 |
+| `MOVES_ENV` env var | `"1"` | with a falsy `req.moves`, or env in `("0","false","off","no")`, moves are disabled for plan and run | orchestrator/orchestrator/api/deep_research.py:83-84 |
+| `POLYMATH_LLM_CLOUD_PRIMARY` | truthy `llm_cloud_primary` | `0` parks the settings primary, but only while other providers exist — roster never empty | shared/polymath_shared/llm_extraction/pool.py:218-227 |
+| `POLYMATH_LLM_CLOUD_EXTRA_ENDPOINTS` | `""` | JSON list of `{name, url, model}` extra lanes; malformed JSON or a `primary` name fails loudly | shared/polymath_shared/llm_extraction/pool.py:229-247 |
+| provider `enabled` / `api_key_env` / `url_template`+`account_id_env` in config/cloud_providers.json | — | AUTO-GATE membership: unset key or account id parks the lane, logged once, never silent | shared/polymath_shared/llm_extraction/pool.py:152-208 |
+| `POLYMATH_OLLAMA_MODELS` | `""` -> `OLLAMA_FREE_CLOUD_MODELS` | allowlist of ollama synthesizer names offered | orchestrator/orchestrator/api/ui.py:100-103 |
+| `_COMPILER_PREFERRED_LANE`, `_COMPILER_LANE_COOLDOWN_S` | values not in capture | preferred first lane; cooldown that demotes recently-failed lanes to the back | orchestrator/orchestrator/api/ui.py:1742, 1754 |
 
 ## failure modes
 
-1. 502 `PLAN_FAILED` -> any planner exception -> only `type(exc).__name__` logged, never the message; the page can still start the run without a plan -> deep_research.py:503-506, 493-494.
-2. 502 `PLAN_EMPTY` -> planner wrote no usable search -> deep_research.py:507-508.
-3. 503 `NO_RESEARCH_LANE` -> the `deep_research` stage pin (else `COMPILER_STAGE`) names no configured endpoint -> deep_research.py:246-247, 225-227; check the pin in config/llm_accounts.yaml (docstring at 226).
-4. `AllLanesRefused` -> every lane's limiter refused at zero HTTP (breaker open, Retry-After hold, saturated); the engine counts it and ends that branch instead of waiting out a cooldown -> deep_research.py:237-239, 267-268.
-5. `RuntimeError("research lanes failed: ...")` -> mixed failures/skips once `RESEARCH_DISPATCH_ATTEMPTS` is reached -> deep_research.py:252, 269-270.
-6. 422 `UNKNOWN_PRESET` -> `ValueError` from `DR.Config.preset` -> deep_research.py:497-499 (plan), 413-416 (run).
-7. 422 `PLAN_INVALID` -> plan over `2 * breadth` goals, query outside `PLAN_QUERY_CHARS`, move outside `DR.MOVES`, goal over `PLAN_GOAL_CHARS`, or an empty plan; every problem listed at once -> deep_research.py:94-107.
-8. 422 `UNKNOWN_SYNTHESIZER` -> synth id without a `litellm:`/`ollama:` prefix -> deep_research.py:421-422.
-9. 409 `DEEP_RESEARCH_BUSY` -> same principal already has a run registered -> deep_research.py:420-423.
-10. 422 `LIBRARY_REQUIRED` / `CORPUS_NOT_ALLOWED` -> no corpus named / `can_see` false -> deep_research.py:137; web_scope.py:104-105.
-11. Silent: run receipt lost -> any receipt-layer exception is swallowed and warned (`QUERY_RECEIPT_FAILED`) -> deep_research.py:466-467; query_receipts.py:218-220.
-12. Silent: provider parked (key or Cloudflare `account_id_env` unset) -> absent from the roster, logged once; a silently-dropped provider looks like a half-speed pool -> pool.py:172-176, 189-193, 218-220.
-13. Silent: empty synthesizer historically fell to a keyless provider (measured 2026-09-06: `litellm:openai/glm-5-free` -> LiteLLM "Missing credentials"); `_default_synthesizer` now only offers ready providers -> ui.py:84-87.
-14. Oversized receipt meta -> structural shrink, worst case `{"truncated": True}`; the old `json.dumps(meta)[:8000]` slice produced invalid JSON and silently dropped the receipt -> query_receipts.py:150-153, 178.
+1. 422 `LIBRARY_REQUIRED` -> no corpus named after merge/dedupe -> orchestrator/orchestrator/api/deep_research.py:136-137
+2. `CORPUS_NOT_ALLOWED` -> `can_see(corpus_id)` false for at least one library -> orchestrator/orchestrator/web_scope.py:103-105
+3. 422 `UNKNOWN_PRESET` -> `DR.Config.preset` raised `ValueError`, on both endpoints -> orchestrator/orchestrator/api/deep_research.py:498-499, 415-416
+4. 503 `NO_RESEARCH_LANE` -> lane pin names match no configured endpoint -> orchestrator/orchestrator/api/deep_research.py:246-247
+5. 502 `PLAN_FAILED` / `PLAN_EMPTY` -> planner raised (class surfaced, message never) / wrote no usable goals; the page can still start the run without a plan -> orchestrator/orchestrator/api/deep_research.py:503-508
+6. `AllLanesRefused` vs `RuntimeError("research lanes failed: ...")` -> every lane's limiter refused at once (zero HTTP, engine ends the branch) vs real failures hit `RESEARCH_DISPATCH_ATTEMPTS` -> orchestrator/orchestrator/api/deep_research.py:251-270
+7. 422 `PLAN_INVALID` -> plan over `2 * breadth` goals, query outside 3-300 chars, move not in `DR.MOVES`, goal over `PLAN_GOAL_CHARS`, or empty plan list; all problems in one message -> orchestrator/orchestrator/api/deep_research.py:94-107
+8. 409 `DEEP_RESEARCH_BUSY` -> same principal already has a live run; note the plan card is outside this lock -> orchestrator/orchestrator/api/deep_research.py:420-422, 491-494
+9. 422 `UNKNOWN_SYNTHESIZER` -> synth id not prefixed `litellm:` / `ollama:`; silent fallback nearby: an empty synthesizer defaults to the first OFFERED model, key-missing providers hidden -> orchestrator/orchestrator/api/deep_research.py:410-412; orchestrator/orchestrator/api/ui.py:83-92
+10. Client disconnect silently ends the run -> `cancel.set()` in the `finally` of any stream exit -> orchestrator/orchestrator/api/deep_research.py:453
+11. Receipt lost without failing the request -> any receipt exception swallowed ("deep research receipt not written: %s", class name; "query receipt not written") -> orchestrator/orchestrator/api/deep_research.py:466-467; shared/polymath_shared/query_receipts.py:221-223
+12. Meta truncation cascade -> oversized meta shrinks structurally (funnel ids, lists, `DROP_ORDER`), worst case `{"truncated": True, "keys": ...}`; funnel counts survive ids -> shared/polymath_shared/query_receipts.py:173-181
+13. Half-speed pool looks normal -> provider parked for unset key/account id is logged exactly once via `_log_once`, then simply absent -> shared/polymath_shared/llm_extraction/pool.py:173-176, 189-193, 211-214
+14. Keep-alive frames hide a stalled worker -> `": keep-alive\n\n"` on every `HEARTBEAT_S` timeout while `_worker` produces nothing -> orchestrator/orchestrator/api/deep_research.py:440-452
 
 ## invariants
 
-- INVARIANT one deep-research run per principal (`_RUNNING`, 409 `DEEP_RESEARCH_BUSY`); the plan endpoint is outside the lock — deep_research.py:420-423, 492-493.
-- INVARIANT any exit from the run stream — disconnect included — sets `cancel` and unregisters the run — deep_research.py:452-458.
-- INVARIANT a receipt failure can never fail the request, at either layer — deep_research.py:466-467; query_receipts.py:185-187, 218-220.
-- INVARIANT receipt meta is shrunk structurally and never text-sliced; the funnel's counts outlive its ids — query_receipts.py:150-153, 171-173.
-- INVARIANT the receipt's `deep_research` block carries counts, never the evidence model's texts (64 KB meta cap) — deep_research.py:474-475, 481-486.
-- INVARIANT planner failures log the exception class only, never the message — deep_research.py:503-504.
-- INVARIANT interactive lanes never wait on a limiter; a refusal is a zero-HTTP skip to the next lane — deep_research.py:258, 262-265.
-- INVARIANT lane attempt order is a pure function of its inputs; cold lanes are demoted, never dropped — ui.py:1744, 1747-1749.
-- INVARIANT a malformed knowledge scope fails closed, never read as both roles — scope.py:100-101.
-- INVARIANT a friend may only research libraries they can read — deep_research.py:138.
+- INVARIANT: one deep research run per principal (`who = principal or "owner"`); the plan card is not part of the one-run lock. orchestrator/orchestrator/api/deep_research.py:417-424, 491-494 [DERIVED]
+- INVARIANT: any stream exit (including disconnect) sets `cancel` and removes `_RUNNING`/`_FINISH` entries only when they are this run's own events. orchestrator/orchestrator/api/deep_research.py:453-458 [DERIVED]
+- INVARIANT: a limiter refusal costs zero HTTP and does not spend a dispatch attempt; only transport failures count toward `RESEARCH_DISPATCH_ATTEMPTS`. orchestrator/orchestrator/api/deep_research.py:251-265 [DERIVED]
+- INVARIANT: research clients run with `interactive = True` — they never wait on a lane limiter. orchestrator/orchestrator/api/deep_research.py:258 [DERIVED]
+- INVARIANT: `_compiler_attempt_order` is pure over its inputs; cold lanes are demoted to the back, never dropped. orchestrator/orchestrator/api/ui.py:1744-1749, 1770-1774 [DERIVED]
+- INVARIANT: the roster never goes empty (primary kept unless parked while other providers exist); duplicate names and malformed extras raise, never silently drop. shared/polymath_shared/llm_extraction/pool.py:218-226, 256-259 [DERIVED]
+- INVARIANT: planner failures surface only `type(exc).__name__`, never the message. orchestrator/orchestrator/api/deep_research.py:503-506 [DERIVED]
+- INVARIANT: the receipt's `deep_research` meta carries counts (`report_model_counts`), never the evidence model's texts. orchestrator/orchestrator/api/deep_research.py:473-486 [DERIVED]
+- INVARIANT: a receipt failure can never turn into a request failure. shared/polymath_shared/query_receipts.py:188-190, 221-223 [DERIVED]
+- INVARIANT: a request naming no synthesizer is never routed to a provider whose key is missing. orchestrator/orchestrator/api/ui.py:83-92 [DERIVED]
+- INVARIANT: a repeated query in a confirmed plan is allowed — every confirmed goal is searched. orchestrator/orchestrator/api/deep_research.py:90-91 [DERIVED]
 
 ## VERIFY
 
 ```verify
 grep -Fq 'one deep research run at a time; stop the other first' orchestrator/orchestrator/api/deep_research.py
+grep -Fq 'client.interactive = True' orchestrator/orchestrator/api/deep_research.py
 grep -Fq 'raise AllLanesRefused(skipped)' orchestrator/orchestrator/api/deep_research.py
-grep -Fq ': keep-alive' orchestrator/orchestrator/api/deep_research.py
-grep -Fq '"0", "false", "off", "no"' orchestrator/orchestrator/api/deep_research.py
+grep -Eq 'stage_pin_fn\("deep_research"\) or stage_pin_fn\(compiler_stage\) or \[\]' orchestrator/orchestrator/api/deep_research.py
 grep -Fq 'POLYMATH_LLM_CLOUD_EXTRA_ENDPOINTS is not valid JSON' shared/polymath_shared/llm_extraction/pool.py
-grep -Fq 'CREATE TABLE IF NOT EXISTS llm_providers' orchestrator/orchestrator/api/ui.py
-test "$(grep -c -F 'LIBRARY_REQUIRED' orchestrator/orchestrator/api/deep_research.py)" -ge 1
+grep -Fq 'X-Accel-Buffering' orchestrator/orchestrator/api/deep_research.py
+grep -Fq 'query receipt not written' shared/polymath_shared/query_receipts.py
 ```

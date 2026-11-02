@@ -97,6 +97,10 @@ TOOL_POLICY: dict[str, tuple[tuple[str, ...], str]] = {
     # orchestrator adds fair use per principal (one CJ call in flight, a per-minute rate). product_search reads a library: CORPUS.
     "supplier_search": (SUPPLIER_SCOPES, NONE), "supplier_product": (SUPPLIER_SCOPES, NONE), "supplier_freight": (SUPPLIER_SCOPES, NONE),
     "supplier_warehouses": (SUPPLIER_SCOPES, NONE), "supplier_parse": (SUPPLIER_SCOPES, NONE), "product_search": (SUPPLIER_SCOPES, CORPUS_OPTIONAL),
+    # PRODUCT-DECISION-REPORT-V1 (B5): the decision report tools for every friend key, the same scope as product_search; start reads
+    # a library like product_search (CORPUS_OPTIONAL); a report's privacy (only its owner principal reads it) is the routes'
+    "product_report_start": (SUPPLIER_SCOPES, CORPUS_OPTIONAL), "product_report_status": (SUPPLIER_SCOPES, NONE),
+    "product_report_compile": (SUPPLIER_SCOPES, NONE), "product_report_list": (SUPPLIER_SCOPES, NONE),
     # upload_document reads a HOST path: never for a non-admin principal, whatever its scopes (owner decision §6)
     # research_acquire drives the HOST browser, which holds the owner's sign-ins: never for a non-admin principal (AUTORESEARCH R8)
 }
@@ -173,20 +177,20 @@ def authorize(p: Principal, tool: str, arguments: dict[str, Any] | None) -> Deci
     if not (set(any_of) & p.scopes):
         return _deny("insufficient_scope", "this principal lacks the scope for this tool")
     if kind == CORPUS:
-        return ALLOW if _allowed(args.get("corpus_id"), p.corpus_ids) else _deny("corpus_not_allowed", "this principal may not use this corpus")
+        return ALLOW if _allowed(_named(args.get("corpus_id")), p.corpus_ids) else _deny("corpus_not_allowed", "this principal may not use this corpus")
     if kind == CORPUS_OPTIONAL:
-        named = args.get("corpus_id")
-        if named is None or (isinstance(named, str) and not named.strip()):
+        named = _named(args.get("corpus_id"))
+        if named is None or named == "":
             return ALLOW                            # no library named: resolved within the principal's grant by the orchestrator
         return ALLOW if _allowed(named, p.corpus_ids) else _deny("corpus_not_allowed", "this principal may not use this corpus")
     if kind == WRITE_CORPUS:
-        return ALLOW if _allowed(args.get("corpus_id"), p.writable_corpus_ids) else _deny("corpus_not_writable", "this principal may not write to this corpus")
+        return ALLOW if _allowed(_named(args.get("corpus_id")), p.writable_corpus_ids) else _deny("corpus_not_writable", "this principal may not write to this corpus")
     if kind == START:
         if not _allowed(args.get("adapter_id"), p.adapter_ids):
             return _deny("adapter_not_allowed", "this principal may not start this adapter")
         inp, opts = args.get("input"), args.get("request_options")
-        named = [*_ids((inp or {}).get("corpus_ids") if isinstance(inp, dict) else None),
-                 *_ids((opts or {}).get("corpus_ids") if isinstance(opts, dict) else None)]
+        named = [_named(c) for c in (*_ids((inp or {}).get("corpus_ids") if isinstance(inp, dict) else None),
+                                     *_ids((opts or {}).get("corpus_ids") if isinstance(opts, dict) else None))]
         # CORPUS-ACCESS-PARITY (the owner, 2026-11-01): naming NO library is allowed through — the adapter runtime defaults the run
         # to the caller's searchable libraries WITHIN its grant (web_scope.require_adapter_start, the same rule), so "no corpus"
         # never reaches beyond the grant; every library that IS named must be one the principal may use
@@ -197,6 +201,13 @@ def authorize(p: Principal, tool: str, arguments: dict[str, Any] | None) -> Deci
 
 def _allowed(value: Any, allowed: frozenset[str]) -> bool:
     return isinstance(value, str) and bool(value) and value != WILDCARD and value in allowed      # "*" names no library
+
+
+def _named(value: Any) -> Any:
+    """A library as it is FORWARDED (review R1 #5): the MCP request builders strip a corpus_id before it travels
+    (mcp_retrieval.product_body, report_start_body), so the gate judges the stripped value too. " fr-bob" is fr-bob, a private
+    library, never a shared one the wildcard reaches. Anything that is not a string stays as it is (and is refused)."""
+    return value.strip() if isinstance(value, str) else value
 
 
 def _ids(value: Any) -> list[Any]:

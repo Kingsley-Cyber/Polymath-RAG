@@ -33,6 +33,20 @@ ROUTE = "product/search"
 KIND = "product"
 
 
+def refuse_rebinding(request: Request, what: str = "product search") -> None:
+    """R1 #1 (DNS rebinding, the supplier routes' B-28 rule): these routes spend the owner's CJ / eBay / model accounts, so they
+    answer only the MCP servers on this host (called directly at a loopback Host) and a relayed request that passed the web
+    boundary (a session and its CSRF header). A page that re-bound its own name to this machine arrives direct, with ITS name:
+    403 NON_LOOPBACK_HOST; a relayed request without the web sign-in: 403 PROXIED_CALLER. The refusal carries `error_code`
+    beside the supplier routes' `code`."""
+    from orchestrator.api.acquisition import refuse_unless_mcp_or_web
+    try:
+        refuse_unless_mcp_or_web(request, what=what, tools="tools")
+    except HTTPException as exc:
+        detail = dict(exc.detail) if isinstance(exc.detail, dict) else {"message": str(exc.detail)}
+        raise HTTPException(status_code=exc.status_code, detail={"error_code": detail.get("code"), **detail}) from None
+
+
 class ProductHypothesisIn(BaseModel):
     title: str
     search_terms: list[str] = []
@@ -97,7 +111,7 @@ def _with_agent_hypotheses(req: ProductSearchRequest, message: str, principal: s
             {"verdict": verdict, "product_search": turn.receipt(), "route": ROUTE})
 
 
-def _forced_turn(req: ProductSearchRequest, message: str, receipt) -> dict[str, Any]:
+def _forced_turn(req: ProductSearchRequest, message: str, receipt, *, route: str = ROUTE) -> dict[str, Any]:
     """One chat-runtime turn in forced product mode; the answer reshaped for an agent."""
     from orchestrator.api import evidence as evidence_mod
     from orchestrator.api.ui import StreamChatRequest, run_chat
@@ -105,7 +119,7 @@ def _forced_turn(req: ProductSearchRequest, message: str, receipt) -> dict[str, 
     sreq = StreamChatRequest(message=message, corpus_id=req.corpus_id, corpus_ids=req.corpus_ids, all_authorized=not _named(req),
                              mode="HYBRID", synthesizer=req.model or None, product=True, product_options=_options(req))
     # several libraries in scope are routed to one inside the runtime (product-library-routing-v1); its errors pass through typed
-    out = run_chat(sreq, route=ROUTE, receipt=receipt)
+    out = run_chat(sreq, route=route, receipt=receipt)
     retrieval = out.get("retrieval") or {}
     previews = {str(c.get("locator")): c.get("preview") for c in retrieval.get("chunks") or [] if c.get("locator")}
 
@@ -128,6 +142,7 @@ def _forced_turn(req: ProductSearchRequest, message: str, receipt) -> dict[str, 
 async def product_search(req: ProductSearchRequest, request: Request) -> dict:
     """product-search-v1 — see the module docstring. 422 `message_required` for an empty message, `bad_hypotheses` when every
     supplied hypothesis lacks a title; every other refusal is the runtime's or the scope resolver's own typed error."""
+    refuse_rebinding(request)                       # before anything: no receipt, no lookup, no model for a re-bound page
     message = " ".join(str(req.message or "").split())
     client = request.headers.get("user-agent", "")
     principal = principal_context.current()

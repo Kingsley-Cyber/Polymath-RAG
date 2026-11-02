@@ -23,6 +23,8 @@ const apiPaths = [
   "/auth", "/keys", "/admin", "/friends",
   // DEEP-RESEARCH-MODE-V1: the research stream
   "/research",
+  // PRODUCT-SEARCH-E2E + PRODUCT-DECISION-REPORT-V1: /product/search, /product/report/…, /product/reports
+  "/product",
 ];
 
 // A backend path missing from the list above does NOT fail loudly — vite answers it

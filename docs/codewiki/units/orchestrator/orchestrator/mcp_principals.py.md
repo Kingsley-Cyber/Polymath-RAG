@@ -1,116 +1,113 @@
 # unit: orchestrator/orchestrator/mcp_principals.py
-anchor: orchestrator/orchestrator/mcp_principals.py:1-383
+anchor: orchestrator/orchestrator/mcp_principals.py:1-394
 
 ## purpose
-Smallest durable per-principal authorization layer for the ONE public door (Server A): principals with hashed bearer keys, action scopes, allowed corpora/adapters, default deny; the pre-existing `POLYMATH_MCP_API_KEY` stays the built-in OWNER principal (orchestrator/orchestrator/mcp_principals.py:1-14 [DERIVED]). Pure policy + a JSON file store, no network, no database, no MCP import; the gate that calls it lives in `mcp_server.py`, run ownership lives in `adapter_runs.owner_principal_id` (orchestrator/orchestrator/mcp_principals.py:27-30 [DERIVED]).
+Pure policy + file-store layer for per-principal authorization on the one public door (Server A): principals with bearer keys (`pmk_<key_id>_<secret>`), action scopes, corpus/adapter grants, default-deny tool policy, an mtime-reloaded JSON registry, and a fixed-window rate limiter. The MCP gate that calls it lives in mcp_server.py. No network, no database, no MCP import. — orchestrator/orchestrator/mcp_principals.py:1-31 [DERIVED]
 
 ## public surface
-
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| CorpusGrant | class (frozenset) | `every -> bool`, `__contains__(corpus_id) -> bool` | orchestrator/orchestrator/mcp_principals.py:105-122 | web_scope.py (docstring 108) |
-| Principal | dataclass(frozen) | fields: `principal_id, name, scopes, corpus_ids, adapter_ids, writable_corpus_ids, rate_per_minute, is_admin` | orchestrator/orchestrator/mcp_principals.py:126-134 | all four importers |
-| Decision | dataclass(frozen) | `allowed, reason="ok", message=""` | orchestrator/orchestrator/mcp_principals.py:146-149 | gate consumers |
-| hash_key | def | `(raw: str) -> str` (sha256 hex) | orchestrator/orchestrator/mcp_principals.py:159-160 | — |
-| authorize | def | `(p: Principal, tool: str, arguments: dict\|None) -> Decision` | orchestrator/orchestrator/mcp_principals.py:163-195 | mcp_server.py (docstring 27) |
-| principal_from_record | def | `(rec: dict) -> Principal` (raises ValueError) | orchestrator/orchestrator/mcp_principals.py:206-224 | store, web_accounts |
-| PrincipalStore | dataclass | `authenticate(bearer: str\|None, now: datetime\|None) -> Principal\|None` | orchestrator/orchestrator/mcp_principals.py:243-307 | mcp_server.py, api/web_auth.py |
-| RateLimiter | class | `allow(p: Principal, now: float\|None) -> tuple[bool, int]` | orchestrator/orchestrator/mcp_principals.py:310-329 | mcp_server.py |
-| store_from_env | def | `(owner_key: str) -> PrincipalStore` | orchestrator/orchestrator/mcp_principals.py:332-334 | mcp_server.py |
-| new_bearer | def | `() -> tuple[str, dict]` | orchestrator/orchestrator/mcp_principals.py:338-342 | scripts/mcp_principals.py (comment 337) |
-| read_registry | def | `(path: Path) -> dict` | orchestrator/orchestrator/mcp_principals.py:349-355 | scripts/mcp_principals.py |
-| write_registry | def | `(path: Path, doc: dict) -> None` | orchestrator/orchestrator/mcp_principals.py:358-375 | scripts/mcp_principals.py |
-| write_secret_file | def | `(path: Path, raw: str) -> None` | orchestrator/orchestrator/mcp_principals.py:378-383 | scripts/mcp_principals.py |
+| CorpusGrant | class (frozenset subclass) | `__contains__(corpus_id) -> bool`, `.every -> bool` | 109-126 | web_scope (per docstring 22-23) |
+| Principal | dataclass(frozen=True) | fields: principal_id, name, scopes, corpus_ids, adapter_ids, writable_corpus_ids, rate_per_minute, is_admin | 130-142 | importers below |
+| Decision | dataclass(frozen=True) | fields: allowed, reason="ok", message | 150-153 | importers below |
+| OWNER | constant | `Principal(principal_id="prn_owner", ..., is_admin=True)` | 146 | — |
+| TOOL_POLICY | dict | tool -> ((any-of scopes, resource kind)) | 84-106 | gate in mcp_server.py (docstring 29) |
+| authorize | def | (p: Principal, tool: str, arguments: dict) -> Decision | 167-199 | mcp_server.py |
+| hash_key | def | (raw: str) -> sha256 hexdigest | 163-164 | — |
+| principal_from_record | def | (rec: dict) -> Principal (raises ValueError) | 217-235 | importers below |
+| PrincipalStore | class | `authenticate(bearer, now=None) -> Principal \| None` | 254-318 | web_auth.py, mcp_server.py |
+| RateLimiter | class | `allow(p, now=None) -> (bool, int)` | 321-340 | — |
+| store_from_env | def | (owner_key: str) -> PrincipalStore | 343-345 | — |
+| new_bearer | def | () -> (raw, {"key_id", "secret_sha256", "created_at", "revoked_at"}) | 349-353 | scripts/mcp_principals.py (comment 348) |
+| read_registry | def | (path: Path) -> dict | 360-366 | scripts |
+| write_registry | def | (path: Path, doc: dict) -> None | 369-386 | scripts |
+| write_secret_file | def | (path: Path, raw: str) -> None | 389-394 | scripts |
 
-Module importers: `orchestrator/orchestrator/api/web_auth.py`, `orchestrator/orchestrator/mcp_server.py`, `orchestrator/orchestrator/web_accounts.py`, `orchestrator/orchestrator/web_scope.py` (FACTS.importers).
+Importers (FACTS): orchestrator/orchestrator/api/web_auth.py, orchestrator/orchestrator/mcp_server.py, orchestrator/orchestrator/web_accounts.py, orchestrator/orchestrator/web_scope.py.
 
 ## contracts
+**authorize(p, tool, arguments) -> Decision** — 167-199
+- in: any Principal, tool name, arguments dict or None.
+- pre: `p.is_admin` short-circuits to `ALLOW` (170-171); non-dict arguments treated as `{}` (172).
+- out: `Decision(False, reason, message)` with reason one of `"tool_not_permitted"`, `"insufficient_scope"`, `"corpus_not_allowed"`, `"corpus_not_writable"`, `"adapter_not_allowed"`; else `ALLOW` (175-199).
+- post: run ownership (kind RUN) is NOT decided here — gate asks the adapter runtime (168-169, docstring 29-30).
 
-**authorize(p, tool, arguments) -> Decision** — orchestrator/orchestrator/mcp_principals.py:163-195
-- in: an authenticated `Principal`, a wire tool name, raw tool arguments (non-dict treated as `{}`, line 168).
-- pre: bearer authentication already happened; this is static authorization only (docstring 164-165).
-- logic: admin -> `ALLOW` unconditionally (166-167); tool not in `TOOL_POLICY` -> `tool_not_permitted` (170-171); scope sets disjoint -> `insufficient_scope` (173-174); kind `CORPUS`/`CORPUS_OPTIONAL`/`WRITE_CORPUS`/`START` each check grants (175-194).
-- post: `Decision.reason` is a stable machine code, never carries resource details (148); run ownership (kind `RUN`) is left to the gate (164-165).
+**PrincipalStore.authenticate(bearer, now=None) -> Principal | None** — 301-318
+- in: raw bearer or None; owner key matched first via `hmac.compare_digest` (306-307).
+- out: Principal for a live key whose `key_id` matches `BEARER_RE` group 1 and sha256 matches and `not key.get("revoked_at")` and `_active(rec, now)` (316); else None.
+- pre: registry re-read only when `(st_mtime_ns, st_ino, st_size)` changes (273-275).
 
-**PrincipalStore.authenticate(bearer, now=None) -> Principal|None** — orchestrator/orchestrator/mcp_principals.py:290-307
-- in: raw bearer or None; optional injected clock.
-- out: `OWNER` if `hmac.compare_digest` matches `owner_key` (295-296); else the record whose key has `key_id == BEARER_RE` group(1), sha256 constant-time match, no `revoked_at`, `_active` record (303-306); else None.
-- pre: store re-reads the registry when `(st_mtime_ns, st_ino, st_size)` changes (262-263).
+**principal_from_record(rec) -> Principal** — 217-235
+- raises `ValueError` on: bad/owner-colliding principal_id (219-220), unknown scopes (223-224), `ADMIN` in scopes (225-227), non-positive `rate_per_minute` (231-232).
+- post: profile-tagged records union the profile's CURRENT scopes: `scopes | frozenset(PROFILES.get(...))` (229).
 
-**principal_from_record(rec) -> Principal** — orchestrator/orchestrator/mcp_principals.py:206-224
-- out: `Principal` with `corpus_ids` coerced to `CorpusGrant` (223, also 136-138).
-- raises `ValueError` for: bad `principal_id` or `pid == OWNER_ID` (208-209), unknown scopes (211-213), `ADMIN` in scopes (214-215), non-positive-int `rate_per_minute` (219-221).
-- post: `scopes = scopes | PROFILES[rec["profile"]]` — stored list is a floor, never a ceiling (218).
+**write_registry(path, doc)** — 369-386
+- pre: every record validated via `principal_from_record` (371-372).
+- post: temp file mode `0o600`, `os.fsync`, `os.replace`, then `os.chmod(path, 0o600)` (375-387).
 
-**RateLimiter.allow(p, now=None) -> (bool, int)** — orchestrator/orchestrator/mcp_principals.py:317-329
-- admin or no `rate_per_minute` -> `(True, 0)` (318-319); window = `int(t // 60)` (321); over limit -> `(False, max(1, int(60 - (t % 60))))` (327).
-
-**write_registry(path, doc)** — orchestrator/orchestrator/mcp_principals.py:358-375
-- pre: every record validated via `principal_from_record` before any write (360-361).
-- post: temp file `.{name}.{pid}.tmp` mode `0o600`, fsync, `os.replace`, final `chmod 0o600` (363-375) — reader sees old or new, never half (docstring 359).
-
-**write_secret_file(path, raw)** — opens `O_WRONLY|O_CREAT|O_EXCL` mode `0o600`; refuses to overwrite (378-383).
+**RateLimiter.allow(p, now=None) -> (bool, int)** — 328-340
+- admin or no `rate_per_minute` -> `(True, 0)` (329-330).
+- deny returns retry seconds `max(1, int(60 - (t % 60)))` (338).
 
 ## effect surface
-- Postgres tables: none read, none written (FACTS.tables_read/tables_written empty).
-- Qdrant collections: none. The FACTS "collections" strings (`polymath_search`, `polymath_explore`, `polymath_answer`, `polymath_compare`, `polymath_deep_research`, `polymath_models`) are `TOOL_POLICY` keys / tool names at orchestrator/orchestrator/mcp_principals.py:84-88; `polymath_mcp_principals` is the schema tag string `"polymath_mcp_principals.v1"` at :48. [DERIVED]
-- Files: principals JSON registry re-read on mtime change (258-263); atomic registry writes (363-371); new owner-only secret file (378-383).
-- Network / subprocess: none — "no network, no database, no MCP import" (27).
-- Env: `POLYMATH_MCP_PRINCIPALS_FILE` = `''` default; empty -> `path=None` -> no principals, owner key still works (332-334, 244).
-- Nondeterminism: `secrets.token_hex` :340, `secrets.token_urlsafe` :341 (random); `time.time` :320, `datetime.now` :301 and :346 (clock) (FACTS.nondeterminism).
+- env: `POLYMATH_MCP_PRINCIPALS_FILE` = `''` (missing = no principals file) — 343-345.
+- files: principals JSON read (`read_text`, 280) and written atomically (369-386); raw bearer written once to a new owner-only file (389-394).
+- network / Postgres / Qdrant: none — "no network, no database" (28); FACTS `tables_read`/`tables_written` empty. The FACTS "collections" strings (`polymath_search`, etc.) are TOOL_POLICY keys / the SCHEMA literal, not vector stores — 48, 84-88.
+- imports: `polymath_shared`, `polymath_shared.query_scope` (46).
 
 ## invariants
-INVARIANT: `len(SCOPES)` = 14 scope strings; `FRIEND_SCOPES` = `SCOPES` minus `ADMIN` (13 = 9 FRIEND_PROFILE + 4 added) — orchestrator/orchestrator/mcp_principals.py:56-71 [DERIVED]
-  fails-if: a friend record would silently gain or lose "everything but admin" behaviour vs its advertised profile.
-INVARIANT: `new_bearer` key_id = `secrets.token_hex(6)` = 12 hex chars, inside `KEY_ID_RE` `{8,32}`; secret = `token_urlsafe(32)` = 43 chars, inside `{32,128}` — orchestrator/orchestrator/mcp_principals.py:50-51,340-341 [INFERRED: hex/urlsafe length arithmetic]
-  fails-if: a generated bearer would not parse against `BEARER_RE` and could never authenticate.
-INVARIANT: `_allowed` returns False for `value == WILDCARD` — `"*"` names no library — and for empty/non-str — orchestrator/orchestrator/mcp_principals.py:198-199 [DERIVED]
-  fails-if: a caller could name `"*"` as a corpus_id and bypass the explicit grant list.
-INVARIANT: `principal_from_record` rejects `pid == OWNER_ID` and any record containing `ADMIN` — orchestrator/orchestrator/mcp_principals.py:208-215 [DERIVED]
-  fails-if: a registry file could mint a second owner/admin principal.
-INVARIANT: unreadable `expires_at` => `_active` False (fail closed) — orchestrator/orchestrator/mcp_principals.py:232-235 [DERIVED]
-  fails-if: a corrupt expiry string would keep a revoked-temporarily principal alive forever.
-INVARIANT: invalid, unreadable, or group/world-readable registry => `_records == []` + `last_error` set, never the previous possibly-revoked set — orchestrator/orchestrator/mcp_principals.py:266-267,286-287 [DERIVED]
-  fails-if: a half-written or chmod-changed file would keep serving stale principals.
-INVARIANT: registry file mode has no `0o077` bits (owner-only) — orchestrator/orchestrator/mcp_principals.py:266 [DERIVED]
-  fails-if: the list of who may enter becomes readable by group/others.
-INVARIANT: authenticate requires `key_id` match AND sha256 constant-time match AND no `revoked_at` AND `_active` — orchestrator/orchestrator/mcp_principals.py:303-306 [DERIVED]
-  fails-if: a revoked key or disabled principal would still pass the gate.
+INVARIANT: SCHEMA == `"polymath_mcp_principals.v1"` and both loader and reader reject any other schema — 48, 280-281, 364-365 [DERIVED]
+  fails-if: registry silently ignored (loader) or `read_registry` raises ValueError.
+INVARIANT: stored records with `ADMIN` in scopes == 0 — 226-227 [DERIVED]
+  fails-if: ValueError at load; `_load` fail-closes to `_records = []` (297-299).
+INVARIANT: `pid == OWNER_ID` ("prn_owner") never accepted from a record — 52, 219-220 [DERIVED]
+  fails-if: a file record could impersonate the env-key owner principal.
+INVARIANT: `secret_sha256` matches `[0-9a-f]{64}`; `key_id` matches `^[a-f0-9]{8,32}$`; bearer matches `^pmk_([a-f0-9]{8,32})_([A-Za-z0-9_-]{32,128})$` — 50-51, 289-293 [DERIVED]
+  fails-if: invalid registry rejected at load; malformed bearer never authenticates (308).
+INVARIANT: registry key objects containing `"secret"`, `"key"`, or `"bearer"` == 0 — 294-295 [DERIVED]
+  fails-if: ValueError — a raw secret can never live in the registry.
+INVARIANT: `st.st_mode & 0o077 == 0` for the principals file — 277-278 [DERIVED]
+  fails-if: load treated as invalid → no principals (fail closed).
+INVARIANT: `_allowed(value, ...)` is False when `value == WILDCARD` ("*" names no library) — 76, 203 [DERIVED]
+  fails-if: a caller could name `"*"` as a corpus_id and bypass the explicit-id check.
+INVARIANT: RateLimiter denies iff `count >= p.rate_per_minute` in window `int(t // 60)` — 332-338 [DERIVED]
+  fails-if: per-principal rate cap stops being enforced.
+INVARIANT: unreadable `expires_at` ⇒ `_active` returns False — 244-246 [DERIVED]
+  fails-if: fail-closed expiry would become fail-open.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (random `secrets.token_hex` :340, `secrets.token_urlsafe` :341; clock `time.time` :320, `datetime.now` :301, :346; env `POLYMATH_MCP_PRINCIPALS_FILE` :333). `authorize`/`principal_from_record`/`CorpusGrant` are pure functions of inputs. [DERIVED]
-idempotency: SAFE — `authorize`, `authenticate`, `read_registry` are reads; `write_registry` is atomic-replace with pre-validation (:358-375). UNSAFE — `write_secret_file` on an existing path (O_EXCL refuses, :381) and `RateLimiter.allow` (each call increments the window count, :328).
+determinism: NONDETERMINISTIC (random: `secrets.token_hex` 351, `secrets.token_urlsafe` 352; clock: `time.time` 331, `datetime.now` 312, `datetime.now` 357) [DERIVED]
+idempotency: SAFE for `authenticate`/`read_registry` (read-only) and `write_registry` (atomic `os.replace`); UNSAFE for `RateLimiter.allow` (each call increments the window counter, 339) and `write_secret_file` (`os.O_EXCL` refuses a second write to the same path, 393) [DERIVED]
 
 ## failure behaviour
-- `PrincipalStore._load` swallows `(OSError, ValueError, AttributeError, TypeError)` into `_records=[], last_error=f"{type(exc).__name__}: {exc}"` — caller then sees zero principals, owner key still works (286-287, 244-245). [DERIVED]
-- `authenticate` returns `None` for missing bearer, unknown key, revoked key/principal — the gate treats it as unauthenticated (290-307). [DERIVED]
-- `authorize` deny codes (stable machine strings): `tool_not_permitted` :171, `insufficient_scope` :174, `corpus_not_allowed` :176/181/194, `corpus_not_writable` :183, `adapter_not_allowed` :186; success reason is `"ok"` :148. [DERIVED]
-- `ValueError` escapes to callers from `principal_from_record` (invalid id :209, unknown scopes :213, admin scope :215, bad rate :221) and `read_registry` schema mismatch (353-354). [DERIVED]
+- `_load` catches `(OSError, ValueError, AttributeError, TypeError)` → `_records = []`, `last_error = "<ExcType>: msg"`; callers see zero principals, never the previous possibly-revoked set — 297-299 [DERIVED].
+- Missing file → no principals, owner key still works — 270-272, docstring 12-13 [DERIVED].
+- `authenticate` returns None (no exception) for unknown/disabled/revoked/expired — 301-318 [DERIVED].
+- `principal_from_record`, `read_registry` raise `ValueError` with messages naming the principal_id — 220-232, 365 [DERIVED].
+- `os.open(..., os.O_EXCL)` in `write_registry`/`write_secret_file` raises if the tmp/secret path exists — 375, 393 [DERIVED].
 
 ## dumb-code flags
-- `authenticate` loops all records with no `break`; `found` keeps the LAST match — harmless only because `_load` dedupes `key_id` globally (302-306 vs 277-280). [INFERRED]
-- `RateLimiter._windows` is only ever written, never pruned — grows with distinct `principal_id`s for the process lifetime (314, 328). [INFERRED]
-- `import secrets` is local inside `new_bearer` (339), unlike the top-level import style of the rest.
-- Manual `"Z"` -> `"+00:00"` splice before `datetime.fromisoformat` (233).
-- `upload_document` and `research_acquire` are denied only by ABSENCE from `TOOL_POLICY`, documented in trailing comments — nothing structural stops someone adding entries (100-101, 78).
-- Supplied FACTS label TOOL_POLICY keys as "collections" — mislabel risk when grepping for Qdrant usage (FACTS.collections vs :84-88).
+- Kinds `CORPUS_FILTER` and `ADAPTER_FILTER` are declared (79) and used by TOOL_POLICY (`list_corpora` 89, `adapter_list` 92) but `authorize` has no branch for them — they pass on scope check alone and fall through to `return ALLOW` (199). Same fall-through for `NONE`. [DERIVED]
+- Double permission-setting in `write_registry`: `os.open(..., 0o600)` (375) plus `os.chmod(path, 0o600)` after replace (387). [DERIVED]
+- `WILDCARD = QS.ALL_LIBRARIES` — two names for one value across modules (76). [DERIVED]
+- `SUPPLIER_SCOPES = (*ANY_KNOWLEDGE, ADAPTER_START)` duplicates the scope union already embedded in FRIEND_PROFILE/FRIEND_SCOPES (68-75). [DERIVED]
+- One physical line 84 packs three tool entries (`polymath_search`, `retrieve`, `retrieve_evidence`) — grep-per-line tool lookups will miss two of three. [DERIVED]
 
 ## refactor notes
-- Four importers depend on this module: `api/web_auth.py`, `mcp_server.py`, `web_accounts.py`, `web_scope.py` (FACTS.importers) — signature changes to `Principal`, `authorize`, `PrincipalStore.authenticate` hit all four. [DERIVED]
-- `WILDCARD = QS.ALL_LIBRARIES` and `CorpusGrant.__contains__` delegate to `QS.grant_allows` (46, 76, 122) — the corpus rule is shared with the web scope; changing `polymath_shared.query_scope` silently changes this gate. [DERIVED]
-- `SCHEMA = "polymath_mcp_principals.v1"` is pinned in on-disk registries and checked at load and read (:48, :269, :353) — bumping it orphans every existing principals file. [DERIVED]
-- `TOOL_POLICY` keys are wire tool names consumed by the `mcp_server.py` gate; `SUPPLIER_SCOPES` ties six supplier/product tools to `ANY_KNOWLEDGE + ADAPTER_START` (92-99). [DERIVED]
-- `PRINCIPAL_HEADER = "x-polymath-principal"` is a trusted loopback-only contract Server A -> orchestrator (53). [DERIVED]
-- Profile semantics: stored scopes are a floor unioned with `PROFILES` on read (218) — removing a scope from `FRIEND_SCOPES` does NOT revoke it from records that list it explicitly. [DERIVED]
+- Four importers (api/web_auth.py, mcp_server.py, web_accounts.py, web_scope.py) compile against `Principal`, `PrincipalStore`, `authorize` — signature changes hit all four (FACTS.importers). [DERIVED]
+- `CorpusGrant.__contains__` delegates to `QS.grant_allows` (46, 126): any change to `polymath_shared.query_scope` semantics changes every corpus check here and in the web scope (docstring 22-23). [DERIVED]
+- Deny reasons (`"corpus_not_allowed"`, `"insufficient_scope"`, ...) are stable machine codes; clients may match them — renaming breaks consumers (152, 175-198). [DERIVED]
+- `PRINCIPAL_HEADER = "x-polymath-principal"` is trusted loopback-only (Server A → orchestrator); must never be accepted off-loopback (53). [DERIVED]
+- A tool absent from TOOL_POLICY is admin-only (78, 173-175): adding a tool without a policy entry silently restricts it to the owner key. [DERIVED]
+- `Decision.reason` default is `"ok"`, and `ALLOW = Decision(True)` relies on that default (152, 156). [DERIVED]
 
 ## VERIFY
 ```verify
-grep -Fq 'SCHEMA = "polymath_mcp_principals.v1"' orchestrator/orchestrator/mcp_principals.py
-grep -Fq 'BEARER_RE = re.compile(r"^pmk_([a-f0-9]{8,32})_([A-Za-z0-9_-]{32,128})$")' orchestrator/orchestrator/mcp_principals.py
-grep -Fq 'value != WILDCARD and value in allowed' orchestrator/orchestrator/mcp_principals.py
-grep -Fq 'FRIEND_SCOPES = tuple(sorted({*FRIEND_PROFILE, UPLOAD_TEXT, HISTORY_READ, ADAPTER_CANCEL, KNOWLEDGE_RESEARCH}))' orchestrator/orchestrator/mcp_principals.py
-grep -Fq 'mtime = (st.st_mtime_ns, st.st_ino, st.st_size)' orchestrator/orchestrator/mcp_principals.py
-grep -Fq 'if st.st_mode & 0o077:' orchestrator/orchestrator/mcp_principals.py
-! grep -Fq 'import requests' orchestrator/orchestrator/mcp_principals.py
-test "$(grep -c -F 'return _deny(' orchestrator/orchestrator/mcp_principals.py)" -ge 4
+grep -Fq 'POLYMATH_MCP_PRINCIPALS_FILE' orchestrator/orchestrator/mcp_principals.py
+grep -Fq '"polymath_mcp_principals.v1"' orchestrator/orchestrator/mcp_principals.py
+grep -Fq 'x-polymath-principal' orchestrator/orchestrator/mcp_principals.py
+grep -Eq 'def authorize\(p: Principal, tool: str' orchestrator/orchestrator/mcp_principals.py
+grep -Fq 'hmac.compare_digest' orchestrator/orchestrator/mcp_principals.py
+test "$(grep -c -F 'corpus_not_allowed' orchestrator/orchestrator/mcp_principals.py)" -ge 2
+! grep -Fq 'print(' orchestrator/orchestrator/mcp_principals.py
 ```

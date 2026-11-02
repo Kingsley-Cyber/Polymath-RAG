@@ -5,30 +5,39 @@ import {
   agentPrompt, cjEmptyWords, cjStatus, httpUrl, productView, startErrorWords,
   type HypothesisView, type ItemView, type OfferView, type ProductRunRef, type ProductView, type ReachView,
 } from "../lib/productResearch";
+import type { ProductReportRef } from "../lib/productReport";
 import { CopyField } from "../ui/CopyField";
 import { Icon } from "../ui/icons";
 import { CiteRef, type CiteInfo } from "./Citations";
+import { BuildReport } from "./ProductReport";
 import "../styles/product.css";
 
 /** PRODUCT-SEARCH-E2E — under the answer to a product question: one section per product hypothesis built from the person's
  *  library (its evidence tags resolve through the chat receipt like the answer's [S#] chips), what CJ Dropshipping lists for
  *  it, and Alibaba, which runs only through Agent Reach on the person's own device. When the server could not search a source
- *  the section says why and offers the Agent Reach commands to run locally. Last, the offer (TRAIL-INTERFACE-V1 T6): start
- *  the full governed research from here, then hand the run to the person's own agent with a ready prompt. Every field may
- *  be missing; field text renders as text, and only http(s) URLs become links or images. */
+ *  the section says why and offers the Agent Reach commands to run locally. Then the decision report (PRODUCT-DECISION-REPORT-V1
+ *  B6, components/ProductReport): build one from these hypotheses, feed it, compile it, open it. Last, the offer
+ *  (TRAIL-INTERFACE-V1 T6): start the full governed research from here, then hand the run to the person's own agent with a
+ *  ready prompt. Every field may be missing; field text renders as text, and only http(s) URLs become links or images. */
 
 export interface ProductHandlers {
   /** The run started from the offer: Chat keeps it on the turn, so it persists with the chat. */
   onRunStarted?: (run: ProductRunRef) => void;
   /** Open the Research screen at that run. */
   onOpenResearch?: (runId: string) => void;
+  /** PRODUCT-DECISION-REPORT-V1 B6: the decision report built from this answer — Chat keeps its id on the turn. */
+  onReportStarted?: (report: ProductReportRef) => void;
 }
 
-export function ProductResearch({ data, cites, run = null, onRunStarted, onOpenResearch }: {
+export function ProductResearch({ data, cites, run = null, report = null, question = "", onRunStarted, onOpenResearch, onReportStarted }: {
   data: ProductResearchResult | null | undefined;
   cites: Map<string, CiteInfo>;
   /** the run already started from this answer (kept on the turn) */
   run?: ProductRunRef | null;
+  /** the decision report already built from this answer (kept on the turn) */
+  report?: ProductReportRef | null;
+  /** the person's question, sent as the report's message */
+  question?: string;
 } & ProductHandlers) {
   const v = useMemo(() => productView(data), [data]);
   const headId = useId();
@@ -48,6 +57,7 @@ export function ProductResearch({ data, cites, run = null, onRunStarted, onOpenR
           <ul>{v.limitations.map((l, i) => <li key={i}>{l}</li>)}</ul>
         </div>
       )}
+      <BuildReport view={v} question={question} report={report} onReportStarted={onReportStarted} />
       {v.offer && <Offer offer={v.offer} view={v} run={run} onRunStarted={onRunStarted} onOpenResearch={onOpenResearch} />}
     </section>
   );

@@ -608,6 +608,8 @@ class FakeServerA:
     KNOWLEDGE = ("list_corpora", "polymath_search", "polymath_explore", "polymath_answer", "polymath_compare", "corpus_status",
                  "list_documents", "document_status", "capabilities")
     ADAPTER = ("adapter_list", "adapter_start", "adapter_next", "adapter_submit", "adapter_status", "adapter_result", "adapter_cancel")
+    #: PRODUCT-DECISION-REPORT-V1: the decision report tools, in a friend's surface since B5
+    REPORT = ("product_report_start", "product_report_status", "product_report_compile", "product_report_list")
     LIBS = ("cinema", "commerce-v1", "mythos", "added-after-grant")
 
     def __init__(self, parity: bool):
@@ -617,10 +619,10 @@ class FakeServerA:
         if who == "owner":
             return [*self.KNOWLEDGE, *self.ADAPTER, "upload_text", "upload_document", "recent_queries", "research_acquire",
                     "product_search", "supplier_parse", "supplier_search", "supplier_product", "supplier_freight",
-                    "supplier_warehouses", "polymath_deep_research"]
+                    "supplier_warehouses", "polymath_deep_research", *self.REPORT]
         base = [*self.KNOWLEDGE, *self.ADAPTER]
         return base + (["upload_text", "recent_queries", "product_search", "supplier_parse", "supplier_search", "supplier_product",
-                        "supplier_freight", "supplier_warehouses", "polymath_deep_research"] if self.parity else [])
+                        "supplier_freight", "supplier_warehouses", "polymath_deep_research", *self.REPORT] if self.parity else [])
 
     def libs(self, who):
         if who == "owner":
@@ -686,8 +688,8 @@ class FakeServerA:
                                                                                "data": {"status": 403, "reason": reason}}})
 
 
-def _parity_run(parity: bool, new_corpus: str | None = "added-after-grant"):
-    harness, server = _harness(), FakeServerA(parity)
+def _parity_run(parity: bool, new_corpus: str | None = "added-after-grant", server_cls: type | None = None):
+    harness, server = _harness(), (server_cls or FakeServerA)(parity)
     friends = {"a_key": "a-key", "b_key": "b-key", "corpus": "commerce-v1", "denied_corpus": "fr-bob", "query": "what sells",
                "start": {"adapter_id": "polymath.knowledge_brief", "input": {}, "request_options": {}}, "polls": 1, "poll_s": 0,
                "private": None, "new_corpus": new_corpus}
@@ -708,7 +710,8 @@ def test_the_harness_passes_a_friend_parity_surface_and_ingests_nothing():
     sent = [(w, n, a) for w, n, a in server.calls if w == "a"]
     assert all(a.get("source_name") == _harness().PROBE_SOURCE_NAME for _, n, a in sent if n == "upload_text")   # nothing ingested
     assert not any(n == "polymath_deep_research" and a.get("corpus_id") != "fr-bob" for _, n, a in sent)     # no report run
-    assert not any(n.startswith("supplier_") or n == "product_search" for _, n, _ in sent)                  # no CJ / model spend
+    assert not any(n.startswith(("supplier_", "product_report_")) or n == "product_search" for _, n, _ in sent)   # no CJ / model spend
+    assert set(FakeServerA.REPORT) <= set(_harness().FRIEND_PARITY_TOOLS)                   # the report tools are judged, never called
 
 
 def test_the_harness_fails_the_pre_parity_friend_profile():
@@ -717,6 +720,19 @@ def test_the_harness_fails_the_pre_parity_friend_profile():
                   "principal.a_deep_research_scoped", "principal.a_every_library", "principal.a_new_library"):
         assert got[check] == "FAIL", (check, got)
     assert got["principal.a_owner_only_refused"] == "PASS"
+
+
+def test_a_friend_without_the_report_tools_fails_tool_parity():
+    """PRODUCT-DECISION-REPORT-V1 (B5): the four decision report tools are part of a web friend's surface; a Server A that hides
+    them from a friend fails the parity check (and only that check)."""
+    class NoReports(FakeServerA):
+        def tools(self, who):
+            return [t for t in super().tools(who) if t not in self.REPORT]
+    got, server, rep = _parity_run(parity=True, server_cls=NoReports)
+    assert got["principal.a_tool_parity"] == "FAIL", rep.checks
+    detail = next(c["detail"] for c in rep.checks if c["id"] == "principal.a_tool_parity")
+    assert all(t in detail for t in FakeServerA.REPORT), detail
+    assert {k: v for k, v in got.items() if k != "principal.a_tool_parity"} == {k: "PASS" for k in got if k != "principal.a_tool_parity"}
 
 
 def test_a_new_library_is_skipped_not_passed_without_one_named():

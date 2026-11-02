@@ -1,0 +1,509 @@
+{
+ "status": {
+  "contract": "product-report-v1",
+  "view": "status",
+  "report_id": "rpt_be1656eaf71e6ff20e36af0f",
+  "status": "collecting",
+  "created_at": "2026-11-02T18:03:57Z",
+  "updated_at": "2026-11-02T18:03:57Z",
+  "compile_started_at": null,
+  "request": {
+   "products_from": "caller",
+   "message": null,
+   "corpus_id": null,
+   "corpus_ids": null,
+   "ship_to": "US",
+   "channels": [
+    "tiktok_us",
+    "tiktok_cross_border",
+    "shopify",
+    "ebay",
+    "amazon_fbm"
+   ],
+   "max_products": 5,
+   "ebay_api": false
+  },
+  "candidates": {
+   "status": "ready",
+   "source": "caller",
+   "items": [
+    {
+     "candidate_id": "c1",
+     "title": "Candle warmer lamp",
+     "search_terms": [
+      "candle warmer"
+     ],
+     "problem": null,
+     "audience": null,
+     "source": "caller"
+    },
+    {
+     "candidate_id": "c2",
+     "title": "Self-cleaning slicker brush",
+     "search_terms": [
+      "self cleaning slicker brush"
+     ],
+     "problem": null,
+     "audience": null,
+     "source": "caller"
+    }
+   ],
+   "error": null,
+   "product_turn_receipt_id": null
+  },
+  "host": {
+   "status": "done",
+   "started_at": "2026-11-02T18:03:57Z",
+   "finished_at": "2026-11-02T18:03:57Z",
+   "error": null,
+   "degraded": true,
+   "reasons": [
+    "EBAY_NOT_CONFIGURED"
+   ],
+   "cj": {
+    "c1": {
+     "status": "NO_MATCH",
+     "reason_code": "CJ_NO_RELEVANT",
+     "products": 0
+    },
+    "c2": {
+     "status": "OK",
+     "reason_code": null,
+     "products": 3
+    }
+   },
+   "ebay": {
+    "c1": {
+     "status": "NOT_CONFIGURED",
+     "reason_code": "EBAY_NOT_CONFIGURED",
+     "listings": 0
+    },
+    "c2": {
+     "status": "NOT_CONFIGURED",
+     "reason_code": "EBAY_NOT_CONFIGURED",
+     "listings": 0
+    }
+   }
+  },
+  "round": 2,
+  "rounds": [
+   {
+    "round": 1,
+    "packets": 12,
+    "received": 12,
+    "complete": true
+   },
+   {
+    "round": 2,
+    "packets": 8,
+    "received": 0,
+    "complete": false
+   }
+  ],
+  "fetch_plan": {
+   "contract": "product-report-fetch-plan-v1",
+   "round": 2,
+   "packets": [
+    {
+     "packet_id": "r2-c1-alibaba-1",
+     "candidate_id": "c1",
+     "source": "alibaba",
+     "kind": "page",
+     "commands": [
+      "curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.alibaba.com/product-detail/Wholesale-Electric-Wax-Candle-Melting-Warmer_1601723721615.html"
+     ],
+     "reads": "https://www.alibaba.com/product-detail/Wholesale-Electric-Wax-Candle-Melting-Warmer_1601723721615.html",
+     "expect": {
+      "tool_class": "agent_reach.jina",
+      "parse": {
+       "source": "alibaba",
+       "kind": "page"
+      },
+      "max_bytes": 2097152
+     }
+    },
+    {
+     "packet_id": "r2-c1-alibaba-2",
+     "candidate_id": "c1",
+     "source": "alibaba",
+     "kind": "page",
+     "commands": [
+      "curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.alibaba.com/product-detail/Modern-Creative-White-Candle-Warmer-Lamps_1600715897476.html"
+     ],
+     "reads": "https://www.alibaba.com/product-detail/Modern-Creative-White-Candle-Warmer-Lamps_1600715897476.html",
+     "expect": {
+      "tool_class": "agent_reach.jina",
+      "parse": {
+       "source": "alibaba",
+       "kind": "page"
+      },
+      "max_bytes": 2097152
+     }
+    },
+    {
+     "packet_id": "r2-c2-alibaba-1",
+     "candidate_id": "c2",
+     "source": "alibaba",
+     "kind": "page",
+     "commands": [
+      "curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.alibaba.com/product-detail/Pet-Grooming-Brush-Self-Cleaning-Automatically_1600824724683.html"
+     ],
+     "reads": "https://www.alibaba.com/product-detail/Pet-Grooming-Brush-Self-Cleaning-Automatically_1600824724683.html",
+     "expect": {
+      "tool_class": "agent_reach.jina",
+      "parse": {
+       "source": "alibaba",
+       "kind": "page"
+      },
+      "max_bytes": 2097152
+     }
+    },
+    {
+     "packet_id": "r2-c2-alibaba-2",
+     "candidate_id": "c2",
+     "source": "alibaba",
+     "kind": "page",
+     "commands": [
+      "curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.alibaba.com/product-detail/Self-Cleaning-Slicker-Remove-Shedding-Hair_1600901187399.html"
+     ],
+     "reads": "https://www.alibaba.com/product-detail/Self-Cleaning-Slicker-Remove-Shedding-Hair_1600901187399.html",
+     "expect": {
+      "tool_class": "agent_reach.jina",
+      "parse": {
+       "source": "alibaba",
+       "kind": "page"
+      },
+      "max_bytes": 2097152
+     }
+    },
+    {
+     "packet_id": "r2-c2-alibaba-3",
+     "candidate_id": "c2",
+     "source": "alibaba",
+     "kind": "page",
+     "commands": [
+      "curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.alibaba.com/product-detail/Self-Cleaning-Soft-Slicker-Pet-Grooming_1600832798675.html"
+     ],
+     "reads": "https://www.alibaba.com/product-detail/Self-Cleaning-Soft-Slicker-Pet-Grooming_1600832798675.html",
+     "expect": {
+      "tool_class": "agent_reach.jina",
+      "parse": {
+       "source": "alibaba",
+       "kind": "page"
+      },
+      "max_bytes": 2097152
+     }
+    },
+    {
+     "packet_id": "r2-c2-amazon-1",
+     "candidate_id": "c2",
+     "source": "amazon",
+     "kind": "page",
+     "commands": [
+      "curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.amazon.com/dp/B0CLLPVZRV"
+     ],
+     "reads": "https://www.amazon.com/dp/B0CLLPVZRV",
+     "expect": {
+      "tool_class": "agent_reach.jina",
+      "parse": {
+       "source": "amazon",
+       "kind": "page"
+      },
+      "max_bytes": 2097152
+     }
+    },
+    {
+     "packet_id": "r2-c2-amazon-2",
+     "candidate_id": "c2",
+     "source": "amazon",
+     "kind": "page",
+     "commands": [
+      "curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.amazon.com/dp/B0C1RQ67PW"
+     ],
+     "reads": "https://www.amazon.com/dp/B0C1RQ67PW",
+     "expect": {
+      "tool_class": "agent_reach.jina",
+      "parse": {
+       "source": "amazon",
+       "kind": "page"
+      },
+      "max_bytes": 2097152
+     }
+    },
+    {
+     "packet_id": "r2-c2-amazon-3",
+     "candidate_id": "c2",
+     "source": "amazon",
+     "kind": "page",
+     "commands": [
+      "curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.amazon.com/dp/B0077JOOLI"
+     ],
+     "reads": "https://www.amazon.com/dp/B0077JOOLI",
+     "expect": {
+      "tool_class": "agent_reach.jina",
+      "parse": {
+       "source": "amazon",
+       "kind": "page"
+      },
+      "max_bytes": 2097152
+     }
+    }
+   ],
+   "script": "#!/usr/bin/env bash\n# Polymath product decision report rpt_be1656eaf71e6ff20e36af0f: fetch plan, round 2 (product-report-fetch-plan-v1).\n# Generated by Polymath; do not edit. Runs every Agent Reach read of this round on THIS machine and uploads each raw output\n# straight to Polymath, which parses it. Fetched content is only written to a file and uploaded: it is never run or evaluated.\n# Needs mcporter (Agent Reach's Exa channel) and curl. Optional: EXA_API_KEY / JINA_API_KEY raise the pacing.\n# The upload capability in UPLOAD_URL expires 2026-11-03T00:03:57Z.\nset -u\nREPORT=rpt_be1656eaf71e6ff20e36af0f\nROUND=2\nUPLOAD_URL=http://127.0.0.1:7200/product/report/rpt_be1656eaf71e6ff20e36af0f/upload/EXAMPLE-upload-token-0000000000000000000003\nUPLOAD_SEP='?'\nPACKETS=8\nif [ -n \"${EXA_API_KEY:-}\" ]; then EXA_PARALLEL=8; EXA_MODE='EXA_API_KEY'; else EXA_PARALLEL=3; EXA_MODE='keyless'; fi\nif [ -n \"${JINA_API_KEY:-}\" ]; then JINA_PARALLEL=5; JINA_GAP=1; JINA_MODE='JINA_API_KEY'; else JINA_PARALLEL=1; JINA_GAP=3; JINA_MODE='keyless'; fi\nEXA_GAP=1\nif ! command -v curl >/dev/null 2>&1; then echo \"polymath-fetch: curl is required: nothing was read or uploaded\"; exit 3; fi\nif ! command -v mcporter >/dev/null 2>&1; then echo \"polymath-fetch: mcporter not found (Agent Reach: https://github.com/Panniantong/Agent-Reach): the Exa packets will fail\"; fi\nWORK=$(mktemp -d \"${TMPDIR:-/tmp}/polymath-report.XXXXXX\") || { echo \"polymath-fetch: cannot make a temporary directory\"; exit 3; }\ntrap 'rm -rf \"$WORK\"' EXIT\necho \"polymath-fetch: report $REPORT round $ROUND: $PACKETS packets; Exa $EXA_PARALLEL in flight ($EXA_MODE); Jina $JINA_PARALLEL every $JINA_GAP s ($JINA_MODE)\"\n\nrun_packet() {\n  # $1 packet id, $2 source, $3 kind, $4 the packet's command (a function below). The output goes to a file and is uploaded.\n  out=\"$WORK/$1.out\"\n  err=\"$WORK/$1.err\"\n  \"$4\" >\"$out\" 2>\"$err\"\n  rc=$?\n  if [ \"$rc\" -ne 0 ] && [ ! -s \"$out\" ] && grep -q '429' \"$err\" 2>/dev/null; then\n    sleep 5\n    \"$4\" >\"$out\" 2>\"$err\"\n    rc=$?\n  fi\n  bytes=$(wc -c <\"$out\" | tr -d ' ')\n  note=''\n  if grep -q '^Warning: Target URL returned error' \"$out\" 2>/dev/null; then note=' (the site refused the reader: the upload records it)'; fi\n  if [ \"$bytes\" -eq 0 ]; then\n    # an empty output is uploaded too (an empty body: the host records the packet as EMPTY), so the round can complete\n    note=' (no output: recorded as EMPTY)'\n    if grep -q '429' \"$err\" 2>/dev/null; then note=' (no output: recorded as EMPTY; rate limited (HTTP 429): set EXA_API_KEY to read faster)'; fi\n  fi\n  code=$(curl -s -o /dev/null -w '%{http_code}' -m 120 --data-binary \"@$out\" -H 'content-type: text/plain' \"${UPLOAD_URL}${UPLOAD_SEP}packet=$1\")\n  case \"$code\" in 2??) echo \"$1\" >>\"$WORK/uploaded\" ;; esac\n  echo \"polymath-fetch: $1 $2/$3: exit $rc, $bytes bytes, upload http $code$note\"\n}\n\nEXA_N=0\nexa() {\n  run_packet \"$1\" \"$2\" \"$3\" \"$4\" &\n  EXA_N=$((EXA_N + 1))\n  if [ \"$EXA_N\" -ge \"$EXA_PARALLEL\" ]; then wait; EXA_N=0; sleep \"$EXA_GAP\"; fi\n}\n\nJINA_N=0\njina() {\n  run_packet \"$1\" \"$2\" \"$3\" \"$4\" &\n  JINA_N=$((JINA_N + 1))\n  if [ \"$JINA_N\" -ge \"$JINA_PARALLEL\" ]; then wait; JINA_N=0; sleep \"$JINA_GAP\"; fi\n}\n\n# the packets: one exact command each (the same text as the plan's commands)\np001() { curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.alibaba.com/product-detail/Wholesale-Electric-Wax-Candle-Melting-Warmer_1601723721615.html; }\np002() { curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.alibaba.com/product-detail/Modern-Creative-White-Candle-Warmer-Lamps_1600715897476.html; }\np003() { curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.alibaba.com/product-detail/Pet-Grooming-Brush-Self-Cleaning-Automatically_1600824724683.html; }\np004() { curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.alibaba.com/product-detail/Self-Cleaning-Slicker-Remove-Shedding-Hair_1600901187399.html; }\np005() { curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.alibaba.com/product-detail/Self-Cleaning-Soft-Slicker-Pet-Grooming_1600832798675.html; }\np006() { curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.amazon.com/dp/B0CLLPVZRV; }\np007() { curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.amazon.com/dp/B0C1RQ67PW; }\np008() { curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} https://r.jina.ai/https://www.amazon.com/dp/B0077JOOLI; }\n\nexa_queue() {\n  :\n  wait\n}\n\njina_queue() {\n  jina r2-c1-alibaba-1 alibaba page p001\n  jina r2-c1-alibaba-2 alibaba page p002\n  jina r2-c2-alibaba-1 alibaba page p003\n  jina r2-c2-alibaba-2 alibaba page p004\n  jina r2-c2-alibaba-3 alibaba page p005\n  jina r2-c2-amazon-1 amazon page p006\n  jina r2-c2-amazon-2 amazon page p007\n  jina r2-c2-amazon-3 amazon page p008\n  wait\n}\n\nexa_queue &\njina_queue &\nwait\nuploaded=$(grep -c . \"$WORK/uploaded\" 2>/dev/null || true)\necho \"polymath-fetch: done: ${uploaded:-0} of $PACKETS packets uploaded for report $REPORT round $ROUND; next: product_report_status\"\nexit 0\n",
+   "script_sha256": "6c923a5d4d19195a19f4e72e70fbe6face7637c914499dcf60ac3bcbe47cb9be",
+   "limits": {
+    "exa_parallel": 3,
+    "jina_per_minute": 20,
+    "with_keys": {
+     "exa_parallel": 8,
+     "jina_per_minute": 300
+    }
+   },
+   "how": {
+    "run": "save `script` as polymath-report-rpt_be1656eaf71e6ff20e36af0f-r2.sh on the user's machine and run: bash polymath-report-rpt_be1656eaf71e6ff20e36af0f-r2.sh",
+    "needs": "Agent Reach on the user's machine (mcporter for Exa, curl for Jina Reader): https://github.com/Panniantong/Agent-Reach; check it with: agent-reach doctor --json",
+    "keys": "optional: with EXA_API_KEY and/or JINA_API_KEY in the environment the script runs faster (Exa 8 in flight, Jina 300 a minute); without them it paces itself to the keyless limits (Exa 3 in flight, Jina 20 a minute)",
+    "never": "do not open, read, paste or summarise the fetched pages, and do not use your agent's built-in web search or web fetch: the script uploads every raw output straight to Polymath, which parses it",
+    "output": "one line per packet (exit code, bytes, upload status) and a final done line; every packet is uploaded, an empty output too (recorded as EMPTY, so the round can complete); it exits 0 even when a site blocks the reader (the upload records it), 3 only when it cannot run (no curl)",
+    "then": "call product_report_status for this report: it shows what was parsed",
+    "expires": "the upload capability expires at 2026-11-03T00:03:57Z: run the script before then",
+    "verify": "sha256 of the script: 6c923a5d4d19195a19f4e72e70fbe6face7637c914499dcf60ac3bcbe47cb9be"
+   },
+   "skipped": [
+    {
+     "target": "https://www.alibaba.com/product-detail/Pet-Grooming-Brush-Removes-Loose-Undercoat_1601707877823.html",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 alibaba pages per candidate"
+    },
+    {
+     "target": "https://www.alibaba.com/product-detail/Wholesale-Custom-Logo-Self-Cleaning-Slicker_1601292437894.html",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 alibaba pages per candidate"
+    },
+    {
+     "target": "https://www.alibaba.com/product-detail/Factory-Wholesale-Eco-Friendly-Dog-Cat_1601434656058.html",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 alibaba pages per candidate"
+    },
+    {
+     "target": "https://www.alibaba.com/product-detail/Factory-Wholesale-Self-Cleaning-Pet-Pin_1600540542421.html",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 alibaba pages per candidate"
+    },
+    {
+     "target": "https://www.alibaba.com/product-detail/Free-Sample-Pet-Grooming-Cleaning-Product_1600978228274.html",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 alibaba pages per candidate"
+    },
+    {
+     "target": "https://www.amazon.com/dp/B09MVNBBWK",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 amazon pages per candidate"
+    },
+    {
+     "target": "https://www.amazon.com/dp/B08FJ655HL",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 amazon pages per candidate"
+    },
+    {
+     "target": "https://www.amazon.com/dp/B0GZW5Z9TN",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 amazon pages per candidate"
+    },
+    {
+     "target": "https://www.amazon.com/dp/B000YJ0SR2",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 amazon pages per candidate"
+    },
+    {
+     "target": "https://www.amazon.com/dp/B0CLLRBHQL",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 amazon pages per candidate"
+    },
+    {
+     "target": "https://www.amazon.com/dp/B0CLLQRQS1",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 amazon pages per candidate"
+    },
+    {
+     "target": "https://www.amazon.com/dp/B000YIWUXI",
+     "code": "OVER_LIMIT",
+     "why": "at most 3 amazon pages per candidate"
+    }
+   ]
+  },
+  "upload": {
+   "url": "http://127.0.0.1:7200/product/report/rpt_be1656eaf71e6ff20e36af0f/upload/EXAMPLE-upload-token-0000000000000000000003",
+   "expires_at": "2026-11-03T00:03:57Z",
+   "expired": false,
+   "via": "local",
+   "token": "minted",
+   "max_bytes": 2097152,
+   "max_uploads": 300
+  },
+  "uploads": {
+   "total": 12,
+   "by_round": {
+    "1": 12
+   },
+   "by_source": {
+    "alibaba": {
+     "OK": 2
+    },
+    "amazon": {
+     "EMPTY": 1,
+     "OK": 3
+    },
+    "ebay": {
+     "OK": 2
+    },
+    "reddit": {
+     "EMPTY": 1,
+     "OK": 3
+    }
+   }
+  },
+  "compiled": null,
+  "next": "Run round 2's fetch script (fetch_plan.script, one shell command) on the user's machine with their local Agent Reach, then call product_report_status (0 of 8 packets uploaded so far)."
+ },
+ "compile": {
+  "contract": "product-report-v1",
+  "view": "compile",
+  "report_id": "rpt_be1656eaf71e6ff20e36af0f",
+  "status": "compiled",
+  "compiled_at": "2026-11-02T18:04:58Z",
+  "report_url": "http://127.0.0.1:7200/product/report/rpt_be1656eaf71e6ff20e36af0f",
+  "report_path": "/product/report/rpt_be1656eaf71e6ff20e36af0f",
+  "html_bytes": 409771,
+  "html_sha256": "7967be42a14a0bea1e078819fc1748508c7f0cc1ed61ca6d55d01febb95c8108",
+  "settings": {
+   "returns_rate": 0.193,
+   "shopify_monthly_orders": 100,
+   "as_of": "2026-11-02",
+   "ship_to": "US",
+   "channels": [
+    "tiktok_us",
+    "tiktok_cross_border",
+    "shopify",
+    "ebay",
+    "amazon_fbm"
+   ]
+  },
+  "inputs": {
+   "candidates": 2,
+   "uploads": 20,
+   "host": "done",
+   "records": {
+    "reddit": 24,
+    "amazon": 66,
+    "ebay": 3,
+    "alibaba": 18
+   }
+  },
+  "verdicts": {
+   "c2": {
+    "by": "agent",
+    "chars": 68
+   }
+  },
+  "summary": [
+   {
+    "candidate_id": "c1",
+    "title": "Candle warmer lamp",
+    "offers": 5,
+    "reference_price_usd": 20.99,
+    "channels": {
+     "tiktok_us": {
+      "sell_price_usd": 20.99,
+      "margin_before_ads_usd": null,
+      "margin_pct": null,
+      "break_even_ad_cost_usd": null,
+      "delivery": "UNKNOWN",
+      "delivery_reason": "UNKNOWN: no last mile for shipping from your US stock — no CJ US→US quote for this product and no owner setting (settings last_mile_usd / last_mile_days): cannot check the delivery rule; requires holding US stock: first stock time UNKNOWN, cash UNKNOWN before first stock (goods $39.50 + inbound UNKNOWN) — MOQ 5 × $7.90; lead time not stated + transit not stated from China, once."
+     },
+     "tiktok_cross_border": {
+      "sell_price_usd": 20.99,
+      "margin_before_ads_usd": null,
+      "margin_pct": null,
+      "break_even_ad_cost_usd": null,
+      "delivery": "UNKNOWN",
+      "delivery_reason": "UNKNOWN: no last mile for shipping from your US stock — no CJ US→US quote for this product and no owner setting (settings last_mile_usd / last_mile_days): cannot check the delivery rule; requires holding US stock: first stock time UNKNOWN, cash UNKNOWN before first stock (goods $39.50 + inbound UNKNOWN) — MOQ 5 × $7.90; lead time not stated + transit not stated from China, once."
+     },
+     "shopify": {
+      "sell_price_usd": 20.99,
+      "margin_before_ads_usd": null,
+      "margin_pct": null,
+      "break_even_ad_cost_usd": null,
+      "delivery": "UNKNOWN",
+      "delivery_reason": "UNKNOWN: no last mile for shipping from your US stock — no CJ US→US quote for this product and no owner setting (settings last_mile_usd / last_mile_days): cannot check the delivery rule; requires holding US stock: first stock time UNKNOWN, cash UNKNOWN before first stock (goods $39.50 + inbound UNKNOWN) — MOQ 5 × $7.90; lead time not stated + transit not stated from China, once."
+     },
+     "ebay": {
+      "sell_price_usd": 20.99,
+      "margin_before_ads_usd": null,
+      "margin_pct": null,
+      "break_even_ad_cost_usd": null,
+      "delivery": "UNKNOWN",
+      "delivery_reason": "UNKNOWN: no last mile for shipping from your US stock — no CJ US→US quote for this product and no owner setting (settings last_mile_usd / last_mile_days): cannot check the delivery rule; requires holding US stock: first stock time UNKNOWN, cash UNKNOWN before first stock (goods $39.50 + inbound UNKNOWN) — MOQ 5 × $7.90; lead time not stated + transit not stated from China, once."
+     },
+     "amazon_fbm": {
+      "sell_price_usd": 20.99,
+      "margin_before_ads_usd": null,
+      "margin_pct": null,
+      "break_even_ad_cost_usd": null,
+      "delivery": "UNKNOWN",
+      "delivery_reason": "UNKNOWN: no last mile for shipping from your US stock — no CJ US→US quote for this product and no owner setting (settings last_mile_usd / last_mile_days): cannot check the delivery rule; requires holding US stock: first stock time UNKNOWN, cash UNKNOWN before first stock (goods $39.50 + inbound UNKNOWN) — MOQ 5 × $7.90; lead time not stated + transit not stated from China, once."
+     }
+    }
+   },
+   {
+    "candidate_id": "c2",
+    "title": "Self-cleaning slicker brush",
+    "offers": 11,
+    "reference_price_usd": 12.59,
+    "channels": {
+     "tiktok_us": {
+      "sell_price_usd": 12.59,
+      "margin_before_ads_usd": 1.0,
+      "margin_pct": 7.9,
+      "break_even_ad_cost_usd": 1.0,
+      "delivery": "PASS",
+      "delivery_reason": "PASS: ships from your US stock: the last mile is 3-7 days by USPS+VIP (CJ US→US quote for Pet Self Cleaning Slicker Brush, 250 g); with 1 business day of handling (setting handling_business_days): read as calendar days 7 days hold at most 5 business days: 5 + 1 = up to 6 ≤ 6 (if the supplier means business days, 7 + 1 = 8 > 6 fails); first carrier scan after 1 business day ≤ 2; custom handling (3-7 business days) would instead allow delivered ≤ handling + 5; requires holding US stock: first stock in 55 days, cash $130.00 before first stock (goods $88.00 + inbound $42.00) — MOQ 100 × $0.88; lead time 31 days + transit 24 days from China, once."
+     },
+     "tiktok_cross_border": {
+      "sell_price_usd": 12.59,
+      "margin_before_ads_usd": 1.0,
+      "margin_pct": 7.9,
+      "break_even_ad_cost_usd": 1.0,
+      "delivery": "PASS",
+      "delivery_reason": "PASS: ships from your US stock: the last mile is 3-7 days by USPS+VIP (CJ US→US quote for Pet Self Cleaning Slicker Brush, 250 g); stock in a US (overseas) warehouse: TikTok's cross-border rules ask first carrier scan ≤ 2 and delivered ≤ 6 business days; with 1 business day of handling (setting handling_business_days): read as calendar days 7 days hold at most 5 business days: 5 + 1 = up to 6 ≤ 6 (if the supplier means business days, 7 + 1 = 8 > 6 fails); first scan after 1 business day ≤ 2; requires holding US stock: first stock in 55 days, cash $130.00 before first stock (goods $88.00 + inbound $42.00) — MOQ 100 × $0.88; lead time 31 days + transit 24 days from China, once."
+     },
+     "shopify": {
+      "sell_price_usd": 12.59,
+      "margin_before_ads_usd": 1.37,
+      "margin_pct": 10.9,
+      "break_even_ad_cost_usd": 1.37,
+      "delivery": "WARN",
+      "delivery_reason": "WARN: ships from your US stock: the last mile is 3-8 days by UniUni+ (CJ US→US quote for Pet Self Cleaning Slicker Brush, 250 g); with 1 business day of handling (setting handling_business_days): 8 calendar days + 1 = up to 9 days > 7; state the delivery window honestly (FTC: ship within the stated time, or within 30 days when none is stated); requires holding US stock: first stock in 55 days, cash $130.00 before first stock (goods $88.00 + inbound $42.00) — MOQ 100 × $0.88; lead time 31 days + transit 24 days from China, once."
+     },
+     "ebay": {
+      "sell_price_usd": 12.59,
+      "margin_before_ads_usd": 0.32,
+      "margin_pct": 2.5,
+      "break_even_ad_cost_usd": 0.32,
+      "delivery": "PASS",
+      "delivery_reason": "PASS: allowed with an honest handling time (1 business day, setting handling_business_days); ships from your US stock: the last mile is 3-8 days by UniUni+ (CJ US→US quote for Pet Self Cleaning Slicker Brush, 250 g); free-shipping badge not eligible: it needs handling ≤ 1 (1 ≤ 1) and delivered ≤ 4 business days (6 + 1 = 7 > 4); requires holding US stock: first stock in 55 days, cash $130.00 before first stock (goods $88.00 + inbound $42.00) — MOQ 100 × $0.88; lead time 31 days + transit 24 days from China, once."
+     },
+     "amazon_fbm": {
+      "sell_price_usd": 12.59,
+      "margin_before_ads_usd": -0.45,
+      "margin_pct": -3.6,
+      "break_even_ad_cost_usd": -0.45,
+      "delivery": "PASS",
+      "delivery_reason": "PASS: ships from your US stock: the last mile is 3-8 days by UniUni+ (CJ US→US quote for Pet Self Cleaning Slicker Brush, 250 g); with 1 business day of handling (setting handling_business_days): 8 calendar days + 1 = up to 9 days ≤ 10; threshold: plan threshold (PRODUCT-DECISION-REPORT-V1 §2, owner-approved 2026-11-02): Amazon publishes no day limit for seller-fulfilled offers, only an accurate promise; requires holding US stock: first stock in 55 days, cash $130.00 before first stock (goods $88.00 + inbound $42.00) — MOQ 100 × $0.88; lead time 31 days + transit 24 days from China, once."
+     }
+    }
+   }
+  ],
+  "next": "Open http://127.0.0.1:7200/product/report/rpt_be1656eaf71e6ff20e36af0f (the user's own report; it opens in a browser signed in to Polymath); call product_report_compile again with verdicts (at most 1200 characters per candidate_id) to add your own reading."
+ }
+}

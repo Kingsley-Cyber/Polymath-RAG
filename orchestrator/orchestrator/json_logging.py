@@ -8,8 +8,9 @@ provider, model_release, device, duration_ms, error_code` (null when a field doe
 
   * no secrets: before a line is written, the literal values of secret-named environment variables (…KEY, …TOKEN, …SECRET,
     …PASSWORD, …DSN) and the shapes of a bearer (`pmk_…`, `Bearer …`), a provider key (`sk-…`), credentials in a URL, a
-    key-in-path connector link (`/k/<key>/mcp`) and `password= / token= / invite_code= / polymath_session=` values are
-    replaced with `<redacted>`;
+    key-in-path connector link (`/k/<key>/mcp`), a decision report's upload token in its upload path
+    (`/product/report/<id>/upload/<token>`: the access log line of every upload would otherwise carry a token that uploads
+    for 6 hours) and `password= / token= / invite_code= / polymath_session=` values are replaced with `<redacted>`;
   * no source text: a message is cut at MAX_MESSAGE_CHARS and a traceback at MAX_EXCEPTION_CHARS — a log line is not a
     channel for document text (Postgres receipts, not log lines, prove committed state);
   * basicConfig manners: nothing is taken over when the root logger already has a handler (pytest, an operator's own
@@ -42,6 +43,7 @@ _PATTERNS: tuple[tuple[re.Pattern, str], ...] = (
     (re.compile(r"(?i)\b([a-z][a-z0-9+.-]*://)([^:/@\s]+):([^@/\s]+)@"), r"\1\2:" + REDACTED + "@"),  # credentials in a URL
     (re.compile(r"\bsk-[A-Za-z0-9_-]{16,}"), "sk-" + REDACTED),                                    # a provider API key
     (re.compile(r"/k/[^/\s]+/mcp"), "/k/" + REDACTED + "/mcp"),                                    # a key-in-path connector link
+    (re.compile(r"(/product/report/[^/\s]+/upload/)[A-Za-z0-9_-]{20,}"), r"\1" + REDACTED),          # a report's upload token
     (re.compile(r"(?i)\b(password|passwd|secret|token|api[_-]?key|access[_-]?key|invite[_-]?code|polymath_session|polymath_csrf)"
                 r"([\"']?\s*[:=]\s*[\"']?)([^\s&\"',;}]+)"), r"\1\2" + REDACTED),
     (re.compile(r"([?&](?:key|code|token)=)[^&\s\"']+"), r"\1" + REDACTED),                         # a secret query parameter

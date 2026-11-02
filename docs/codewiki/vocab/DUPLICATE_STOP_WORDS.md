@@ -18,6 +18,7 @@ AUTHORITY: `shared/polymath_shared/dedup.py:46` :: `DUPLICATE_STOP_WORDS` (count
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:32` | 14/26 | `and`, `are`, `but`, `for`, `not`, `should`, `the`, `was`, `were`, `will`, `you`, `your` |
 | `adapters/ecommerce/python/provenance.py` | `adapters/ecommerce/python/provenance.py:19` | 23/26 | `should`, `were`, `will` |
 | `orchestrator/orchestrator/api/ask.py` | `orchestrator/orchestrator/api/ask.py:58` | 10/26 | `about`, `but`, `could`, `from`, `have`, `into`, `not`, `should`, `than`, `their`, `then`, `there` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:129` | 12/26 | `about`, `but`, `could`, `have`, `not`, `should`, `than`, `there`, `was`, `were`, `which`, `will` |
 | `shared/polymath_shared/candidate_engine.py` | `shared/polymath_shared/candidate_engine.py:1619` | 20/26 | `about`, `could`, `have`, `should`, `you`, `your` |
 | `shared/polymath_shared/chat_plan.py` | `shared/polymath_shared/chat_plan.py:393` | 7/26 | `are`, `but`, `could`, `have`, `into`, `not`, `should`, `than`, `their`, `then`, `there`, `this` |
 | `shared/polymath_shared/compiler_context.py` | `shared/polymath_shared/compiler_context.py:50` | 17/26 | `could`, `should`, `than`, `their`, `then`, `there`, `which`, `will`, `would` |
@@ -27,6 +28,7 @@ AUTHORITY: `shared/polymath_shared/dedup.py:46` :: `DUPLICATE_STOP_WORDS` (count
 | `shared/polymath_shared/entity_admission.py` | `shared/polymath_shared/entity_admission.py:34` | 7/26 | `about`, `and`, `are`, `but`, `could`, `for`, `from`, `have`, `into`, `not`, `should`, `than` |
 | `shared/polymath_shared/gap_check.py` | `shared/polymath_shared/gap_check.py:72` | 26/26 | — |
 | `shared/polymath_shared/llm_extraction/gate.py` | `shared/polymath_shared/llm_extraction/gate.py:456` | 24/26 | `about`, `which` |
+| `shared/polymath_shared/product_search/host_data.py` | `shared/polymath_shared/product_search/host_data.py:9` | 3/26 | `about`, `and`, `are`, `but`, `could`, `have`, `into`, `not`, `should`, `than`, `that`, `the` |
 | `shared/polymath_shared/referential_span.py` | `shared/polymath_shared/referential_span.py:31` | 5/26 | `about`, `and`, `are`, `but`, `could`, `for`, `from`, `have`, `into`, `not`, `should`, `than` |
 | `shared/polymath_shared/span_repair.py` | `shared/polymath_shared/span_repair.py:39` | 21/26 | `about`, `than`, `then`, `there`, `you` |
 | `shared/polymath_shared/wildcard_mapped.py` | `shared/polymath_shared/wildcard_mapped.py:57` | 11/26 | `about`, `could`, `have`, `into`, `not`, `should`, `than`, `their`, `then`, `there`, `were`, `will` |

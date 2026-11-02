@@ -35,7 +35,10 @@ ENDPOINTS = ["/retrieve", "/retrieve/plan", "/capabilities", "/chat", "/chat/evi
              "/synthesizers", "/ask", "/adapter/list", "/adapter/start",
              "/adapter/{run_id}/next", "/adapter/{run_id}/submit", "/adapter/{run_id}/status", "/adapter/{run_id}/result",
              "/adapter/{run_id}/cancel", "/product/search", "/supplier/search", "/supplier/product", "/supplier/freight",
-             "/supplier/warehouses", "/supplier/parse"]
+             "/supplier/warehouses", "/supplier/parse",
+             # PRODUCT-DECISION-REPORT-V1 §4.6: the decision report routes (the upload route is a capability URL the fetch script holds)
+             "/product/report/start", "/product/report/{report_id}/status", "/product/report/{report_id}/upload/{token}",
+             "/product/report/{report_id}/compile", "/product/report/{report_id}", "/product/reports"]
 # The seven adapter_* tools are served by BOTH MCP surfaces with identical names and parameters: Server A
 # (orchestrator/orchestrator/mcp_server.py, streamable-http :8930, bearer key — Hermes) and Server B
 # (mcp_server/polymath_mcp.py, stdio, no credential — Claude Code / Codex). Parity is pinned by
@@ -45,9 +48,11 @@ ADAPTER_MCP_TOOLS = ["adapter_list", "adapter_start", "adapter_next", "adapter_s
 # callers but are no longer listed (MCP_HIDDEN_TOOLS); every retrieval tool takes one of RETRIEVAL_MODES.
 # PRODUCT-SEARCH-E2E (2026-11-01): product_search (the one entry point for product questions) and supplier_parse (raw local Agent
 # Reach output -> supplier listings), served by both MCP surfaces (pinned by tests/contracts/test_mcp_agent_playbook.py)
+# PRODUCT-DECISION-REPORT-V1 (2026-11-02): the four decision report tools, served by both MCP surfaces (pinned by the same test)
+REPORT_MCP_TOOLS = ["product_report_start", "product_report_status", "product_report_compile", "product_report_list"]
 MCP_TOOLS = ["capabilities", "polymath_search", "polymath_explore", "polymath_answer", "polymath_compare",
              "polymath_deep_research", "polymath_models", "list_corpora", "corpus_status", "product_search",
-             "supplier_parse"] + ADAPTER_MCP_TOOLS
+             "supplier_parse"] + REPORT_MCP_TOOLS + ADAPTER_MCP_TOOLS
 MCP_HIDDEN_TOOLS = ["compile_plan", "retrieve_evidence", "retrieve", "ask"]
 
 

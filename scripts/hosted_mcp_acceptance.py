@@ -26,7 +26,9 @@ ONE RUN as friend A and cancels it with the owner key.
 
 FRIEND PARITY (F14, the owner 2026-11-01: "users of the connector and link works seamlessly as me"): a web friend meets the
 owner's surface minus the owner-only tools. Checked for friend A: its tools/list carries upload_text, recent_queries,
-product_search, supplier_parse, the supplier_* tools and polymath_deep_research; upload_text passes the gate for its private
+product_search, supplier_parse, the supplier_* tools, polymath_deep_research and the four decision report tools
+(product_report_start / _status / _compile / _list, PRODUCT-DECISION-REPORT-V1; listed, never called here: no report is started);
+upload_text passes the gate for its private
 library and is refused for a shared one (the probe's .exe name is refused INSIDE the tool, so nothing is ingested);
 recent_queries answers; deep research on a library A may not use is refused before any run; its private library `fr-<name>`
 exists; it sees every library the owner shares (a wildcard grant: a library added after the grant included —
@@ -72,7 +74,9 @@ NO_SUCH_CORPUS = "acceptance_no_such_corpus"
 PROBE_PATH = "/nonexistent/polymath-hosted-acceptance-probe.md"      # never exists: the probe can not ingest anything
 # F14 FRIEND PARITY: what a web friend's agent must find in tools/list, and what stays the owner's
 FRIEND_PARITY_TOOLS = ("upload_text", "recent_queries", "product_search", "supplier_parse", "supplier_search", "supplier_product",
-                       "supplier_freight", "supplier_warehouses", "polymath_deep_research")
+                       "supplier_freight", "supplier_warehouses", "polymath_deep_research",
+                       # PRODUCT-DECISION-REPORT-V1: the decision report tools (a friend's own reports only; the routes decide)
+                       "product_report_start", "product_report_status", "product_report_compile", "product_report_list")
 OWNER_ONLY_TOOLS = ("upload_document", "research_acquire")
 PROBE_SOURCE_NAME = "polymath-acceptance-probe.exe"   # upload_text refuses the extension AFTER the gate: proves the gate, ingests nothing
 PRIVATE_PREFIX = "fr-"

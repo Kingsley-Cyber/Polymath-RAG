@@ -18,7 +18,7 @@ AUTHORITY: `adapters/ecommerce/python/controller.py:58` :: `SINGULAR_KEYS` (coun
 | `adapters/ecommerce/python/intelligence.py` | `adapters/ecommerce/python/intelligence.py:278` | 3/11 | `corpus_backend`, `market_seed`, `primitives`, `product_identity`, `product_seed`, `promotion_summary`, `registry_patch`, `row_relevance` |
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:103` | 3/11 | `corpus_backend`, `market_seed`, `product_identity`, `product_seed`, `promotion_summary`, `registry_patch`, `scope_request`, `world_model` |
 | `adapters/ecommerce/python/models.py` | `adapters/ecommerce/python/models.py:120` | 6/11 | `market_seed`, `product_identity`, `product_seed`, `scope_request`, `world_model` |
-| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:58` | 3/11 | `corpus_backend`, `market_seed`, `product_seed`, `promotion_summary`, `registry_patch`, `row_relevance`, `scope_request`, `world_model` |
+| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:66` | 3/11 | `corpus_backend`, `market_seed`, `product_seed`, `promotion_summary`, `registry_patch`, `row_relevance`, `scope_request`, `world_model` |
 | `adapters/ecommerce/python/utilization.py` | `adapters/ecommerce/python/utilization.py:26` | 3/11 | `market_seed`, `product_identity`, `product_seed`, `promotion_summary`, `registry_patch`, `scope_request`, `signal`, `world_model` |
 
 ## VERIFY

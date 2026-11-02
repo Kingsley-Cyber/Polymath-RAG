@@ -89,7 +89,7 @@ def test_the_owner_gets_one_connect_command_and_a_key_free_prompt_never_the_key(
     body = c.get("/keys").json()
     assert body["is_owner"] and body["keys"] == [] and "POLYMATH_MCP_API_KEY" in body["note"]
     assert c.post("/keys", json={}).json()["detail"]["error_code"] == "OWNER_USES_ENV_KEY"
-    local = TestClient(app, base_url="http://testserver")                     # the owner on the server itself
+    local = TestClient(app, base_url="http://127.0.0.1")                      # the owner on the server itself
     for r in (c.get("/keys/prompt"), local.get("/keys/prompt")):
         assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
         assert "admin-key-that-must-never-leave-the-mac" not in r.text
@@ -155,7 +155,7 @@ def test_only_the_owner_gets_the_main_key_with_a_prompt_for_another_computer(wor
     monkeypatch.setenv("POLYMATH_MCP_API_KEY", "main-key-for-copy-0123456789")
     _, app = world
     king = _signed_in(app, "King")
-    local = TestClient(app, base_url="http://testserver")
+    local = TestClient(app, base_url="http://127.0.0.1")                      # the owner on the server itself
     for r in (king.get("/keys/owner"), local.get("/keys/owner")):
         assert r.status_code == 200, r.text
         assert r.headers["cache-control"] == "no-store"

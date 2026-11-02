@@ -18,6 +18,7 @@ AUTHORITY: `shared/polymath_shared/entity_admission.py:101` :: `DEICTIC_MODIFIER
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:32` | 5/9 | `its`, `my`, `our`, `your` |
 | `adapters/ecommerce/python/provenance.py` | `adapters/ecommerce/python/provenance.py:19` | 8/9 | `my` |
 | `adapters/ecommerce/python/query_semantics.py` | `adapters/ecommerce/python/query_semantics.py:32` | 3/9 | `my`, `that`, `their`, `these`, `this`, `those` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:663` | 9/9 | — |
 | `shared/polymath_shared/candidate_engine.py` | `shared/polymath_shared/candidate_engine.py:1620` | 6/9 | `my`, `our`, `your` |
 | `shared/polymath_shared/compiler_context.py` | `shared/polymath_shared/compiler_context.py:51` | 3/9 | `its`, `my`, `our`, `their`, `these`, `those` |
 | `shared/polymath_shared/dedup.py` | `shared/polymath_shared/dedup.py:47` | 4/9 | `its`, `my`, `our`, `these`, `those` |

@@ -42,8 +42,9 @@ export function AnswerBody({ t, models, product }: {
       {!t.deep && t.synthesis && <SynthesisPanel synthesis={t.synthesis} gap={t.gapCheck ?? null} cites={cites} />}
       {/* PRODUCT-SEARCH-E2E: a product question's hypotheses, their CJ finds and the full-research offer (absent on other answers) */}
       {!t.deep && t.productResearch && (
-        <ProductResearch data={t.productResearch} cites={cites} run={t.productRun ?? null}
-                         onRunStarted={product?.onRunStarted} onOpenResearch={product?.onOpenResearch} />
+        <ProductResearch data={t.productResearch} cites={cites} run={t.productRun ?? null} report={t.productReport ?? null}
+                         question={t.question} onRunStarted={product?.onRunStarted} onOpenResearch={product?.onOpenResearch}
+                         onReportStarted={product?.onReportStarted} />
       )}
       {t.abstained && t.uncovered.length > 0 && (
         <div className="uncovered-note">nothing in this corpus covers: {t.uncovered.join(", ")}</div>

@@ -14,12 +14,20 @@ an agent — the ordered playbook (the server instructions), the product_search 
 descriptions — so the two surfaces say the same thing. Live-web reads are the user's LOCAL Agent Reach, never an agent's built-in
 web search, fetch or browser; a user with no terminal gets the CJ API results only.
 
+PRODUCT-DECISION-REPORT-V1 (B5, the owner 2026-11-02: "regardless of claude, deepseek, or codex ... create a html compiled report of
+products"): the four product_report_* tools (start / status / compile / list over /product/report/*), their request bodies, their
+timeouts, and the report loop every model is told — run each round's fetch script ONCE on the user's machine, never read pages into
+the conversation — plus the subagent recipe per harness (workers on a cheap model at low effort, judgment only, never fetching).
+
 Pure: no I/O and no orchestrator import (Server B runs outside the orchestrator package)."""
 from __future__ import annotations
 
 import json
+import re
+import threading
 import time
-from collections.abc import Callable, Iterable, Iterator
+from collections import OrderedDict
+from collections.abc import Callable, Hashable, Iterable, Iterator
 from typing import Any
 
 #: the app's public modes: frontend-v2 `PUBLIC_MODES` = retrieval_modes.EXPOSED_MODES minus LEGACY (pinned by tests)
@@ -161,6 +169,193 @@ def product_body(message: str, corpus_id: str | None = None, *, geography: str |
 def parse_body(site: str, raw_text: str) -> dict:
     """POST /supplier/parse: what the user's local Agent Reach printed, unchanged, and the site it read."""
     return {"site": str(site or "").strip(), "raw_text": str(raw_text or "")}
+
+
+# ---------------------------------------------------------------- product decision reports (PRODUCT-DECISION-REPORT-V1 §3, §4.6)
+#: the sales channels a report judges (plan §2; adapters/ecommerce/graph/policies.yaml `sales_channels`)
+REPORT_CHANNELS = ("tiktok_us", "tiktok_cross_border", "shopify", "ebay", "amazon_fbm")
+REPORT_DEFAULT_PRODUCTS = 5
+REPORT_MAX_PRODUCTS = 8                 # the route's cap
+REPORT_VERDICT_MAX = 1200               # characters per product verdict (the route's bound)
+#: seconds each server waits for a report route: start answers at once (CJ / eBay and the product picking run in the background),
+#: status and list are reads, compile runs the decision model and renders the HTML (at most two minutes)
+REPORT_TIMEOUT_S = {"start": 60.0, "status": 30.0, "compile": 120.0, "list": 30.0}
+#: a report id (product_reports.report_id = 'rpt_' + 24 hex, plan §4.6; report_store.REPORT_ID_RE): checked before it becomes
+#: part of a route path
+REPORT_ID = re.compile(r"rpt_[0-9a-f]{24}")
+REPORT_START_PATH = "/product/report/start"
+REPORT_LIST_PATH = "/product/reports"
+#: where the fetch script will run, so the route hands it an upload URL that works there (B4b `upload_target`): `local` = the
+#: Polymath host (http://127.0.0.1:7200/...), `public` = any other machine (the public web door). Server A decides per request
+#: (`_is_local_caller`: the loopback listener, no edge headers); Server B (stdio, on the host) always says local.
+REPORT_UPLOAD_BASES = ("local", "public")
+
+
+def report_path(report_id: str, action: str) -> str:
+    """/product/report/{id}/{action} for a report id that passed `normalize_report_id`."""
+    return f"/product/report/{report_id}/{action}"
+
+
+def report_status_path(report_id: str, upload_base: str | None = None) -> str:
+    """GET /product/report/{id}/status, with `?upload_base=` when it is one of REPORT_UPLOAD_BASES (a fixed word: nothing else
+    reaches the query)."""
+    path = report_path(report_id, "status")
+    return f"{path}?upload_base={upload_base}" if upload_base in REPORT_UPLOAD_BASES else path
+
+
+def normalize_report_id(value: Any) -> str | None:
+    """The report id, or None when `value` is not one (nothing else ever reaches a route path)."""
+    s = str(value or "").strip()
+    return s if REPORT_ID.fullmatch(s) else None
+
+
+def report_id_error(value: Any) -> dict:
+    return {"error": f"REPORT_ID_INVALID: {str(value)[:80]!r} is not a report id; use the report_id that product_report_start or "
+                     "product_report_list returned (rpt_ followed by 24 hex digits)", "status": 422}
+
+
+def _terms(value: Any) -> list[str]:
+    items = [value] if isinstance(value, str) else (value if isinstance(value, (list, tuple)) else [])
+    return [str(t).strip() for t in items if str(t).strip()]
+
+
+def report_start_body(message: str | None = None, corpus_id: str | None = None, *, products: Iterable[Any] | None = None,
+                      channels: Iterable[Any] | None = None, ship_to: str | None = "US",
+                      max_products: int | None = REPORT_DEFAULT_PRODUCTS, upload_base: str | None = None) -> dict:
+    """POST /product/report/start. Only the route's keys travel: `products` keep {title, search_terms[]} (a key an agent invents
+    never reaches the route), `channels` are trimmed lower-case ids, `ship_to` an upper-case market code (default US),
+    `upload_base` only as one of REPORT_UPLOAD_BASES (the server's own decision, never the agent's). No `corpus_id` = every
+    library the caller may use (resolved within its grant, as product_search); the route caps `max_products` and decides
+    everything else."""
+    body: dict[str, Any] = {}
+    text = str(message or "").strip()
+    if text:
+        body["message"] = text
+    library = str(corpus_id or "").strip()
+    if library:
+        body["corpus_id"] = library
+    picked = [{"title": str(p.get("title") or "").strip(), "search_terms": _terms(p.get("search_terms"))}
+              for p in (products or []) if isinstance(p, dict)]
+    picked = [p for p in picked if p["title"]]
+    if picked:
+        body["products"] = picked
+    wanted = list(dict.fromkeys(str(c).strip().lower() for c in (channels or []) if str(c).strip()))
+    if wanted:
+        body["channels"] = wanted
+    body["ship_to"] = str(ship_to or "").strip().upper() or "US"
+    if max_products is not None:
+        body["max_products"] = int(max_products)
+    if upload_base in REPORT_UPLOAD_BASES:
+        body["upload_base"] = upload_base
+    return body
+
+
+def report_compile_body(verdicts: Any = None) -> dict:
+    """POST /product/report/{id}/compile: `verdicts` = {candidate_id: the agent's short verdict}; blank entries are dropped and
+    nothing else travels (the route bounds each verdict at REPORT_VERDICT_MAX characters)."""
+    kept: dict[str, str] = {}
+    if isinstance(verdicts, dict):
+        for key, text in verdicts.items():
+            k, v = str(key or "").strip(), str(text or "").strip()
+            if k and v:
+                kept[k] = v
+    return {"verdicts": kept} if kept else {}
+
+
+# ---------------------------------------------------------------- a report's upload token (review fix, contract C1)
+# C1-C10 are the review-fix contracts recorded in docs/wiki/work-log/2026-11-02-product-decision-report.md (the capability is
+# ADR-0023, docs/wiki/decisions/0023-report-upload-capability.md).
+#: what `upload.token` says about the links a start / status answer carries (contract C1)
+REPORT_TOKEN_STATES = ("minted", "reused", "required", "expired", "none")
+REPORT_TOKEN_HEADER = "X-Upload-Token"
+REPORT_TOKEN_CACHE_MAX = 256
+_UPLOAD_TOKEN = re.compile(r"[A-Za-z0-9_-]{43}")                          # secrets.token_urlsafe(32): report_store.TOKEN_RE
+_UPLOAD_URL = re.compile(r"/product/report/(rpt_[0-9a-f]{24})/upload/([A-Za-z0-9_-]{43})$")
+
+
+def report_token_from(answer: Any, report_id: str | None = None) -> str | None:
+    """The upload token a start / status answer hands out (C1): start's `upload_token`, or the token in `upload.url` when
+    `upload.token` is "minted" (and the URL names this report). None for every other answer: reused / required / expired / none
+    bring nothing new, and a placeholder or a malformed URL is never kept."""
+    if not isinstance(answer, dict) or "error" in answer:
+        return None
+    token = answer.get("upload_token")
+    if isinstance(token, str) and _UPLOAD_TOKEN.fullmatch(token):
+        return token
+    upload = answer.get("upload") if isinstance(answer.get("upload"), dict) else {}
+    if upload.get("token") != "minted":
+        return None
+    m = _UPLOAD_URL.search(str(upload.get("url") or ""))
+    if m is None or (report_id is not None and m.group(1) != report_id):
+        return None
+    return m.group(2)
+
+
+class ReportTokens:
+    """Each report's upload token, held in this server's memory only (C1): taken from start's `upload_token` or a status whose
+    `upload.token` is "minted", sent back as X-Upload-Token on every status call, so a report keeps ONE live upload link
+    instead of one new link per status call (review R3 #2: a status loop minted tokens until it broke the running script).
+    At most REPORT_TOKEN_CACHE_MAX reports; the least recently used is dropped first. A token is forgotten when its answer
+    says `expired`. Never written to disk, never logged."""
+
+    def __init__(self, cap: int = REPORT_TOKEN_CACHE_MAX):
+        self.cap = int(cap)
+        self._held: OrderedDict[Hashable, str] = OrderedDict()
+        self._lock = threading.Lock()
+
+    def __len__(self) -> int:
+        return len(self._held)
+
+    def get(self, key: Hashable) -> str | None:
+        with self._lock:
+            token = self._held.get(key)
+            if token is not None:
+                self._held.move_to_end(key)
+            return token
+
+    def headers(self, key: Hashable) -> dict[str, str]:
+        token = self.get(key)
+        return {REPORT_TOKEN_HEADER: token} if token else {}
+
+    def remember(self, key: Hashable, answer: Any, report_id: str | None = None) -> None:
+        """Keep what a start / status answer hands out; forget a token its answer calls expired; anything else changes nothing."""
+        token = report_token_from(answer, report_id)
+        with self._lock:
+            if token:
+                self._held[key] = token
+                self._held.move_to_end(key)
+                while len(self._held) > self.cap:
+                    self._held.popitem(last=False)
+            elif isinstance(answer, dict) and isinstance(answer.get("upload"), dict) and answer["upload"].get("token") == "expired":
+                self._held.pop(key, None)
+
+
+def shape_report(out: Any) -> Any:
+    """A report route's answer for an agent. Everything passes through, `next` included (the route's sentence is the
+    instruction: a stale `compiling` report's "compile again" reaches the agent as it is, C9). Added in plain words: a 429
+    REPORT_JOB_RUNNING (C8) becomes one sentence naming the report to check and the wait; `upload.token` required (C1) adds
+    `upload_note`: no runnable script in this answer, call status again after `upload.mint_after`."""
+    if not isinstance(out, dict):
+        return out
+    detail = out.get("error")
+    code = (detail.get("error_code") or detail.get("code")) if isinstance(detail, dict) else None
+    if out.get("status") == 429 and code == "REPORT_JOB_RUNNING":
+        rid = normalize_report_id(detail.get("report_id"))
+        wait = detail.get("retry_after_s")
+        wait = int(wait) if isinstance(wait, (int, float)) and not isinstance(wait, bool) and wait >= 0 else None
+        check = f"check product_report_status {rid}" if rid else "check product_report_list"
+        pause = f"{wait} s" if wait is not None else "a minute"
+        return {"error": f"a report is still being prepared; {check} or wait {pause}, then start again",
+                "error_code": "REPORT_JOB_RUNNING", "status": 429, "report_id": rid, "retry_after_s": wait}
+    upload = out.get("upload") if isinstance(out.get("upload"), dict) else {}
+    if upload.get("token") == "required":
+        when = upload.get("mint_after")
+        rid = normalize_report_id(out.get("report_id"))
+        out = {**out, "upload_note": (
+            "No fetch script to run in this answer: this report handed out an upload link less than a minute ago and this "
+            f"connection does not hold it. Call product_report_status{f' {rid}' if rid else ''} again after "
+            f"{when or 'a minute'} and run that answer's script; never run an older or placeholder script in its place.")}
+    return out
 
 
 # ---------------------------------------------------------------- the app's default model (what the web UI writes with)
@@ -478,7 +673,8 @@ def playbook(*, list_tool: str, add_documents: str) -> str:
         "3. Product questions (find products, what to sell, suppliers for X): call product_search with the user's words; name a "
         "library (corpus_id) when you know it, otherwise leave it out and Polymath searches every library you can use. Polymath "
         "answers from the library with product hypotheses and searches the CJ Dropshipping API for each. "
-        "Relay the answer and the finds, then OFFER the full governed run (step 6); never start it unasked.\n"
+        "Relay the answer and the finds, then OFFER the full governed run (step 6) or a decision report (step 7); never start it "
+        "unasked.\n"
         f"4. Live web = {LOCAL_AGENT_REACH}, {NO_BUILT_IN_WEB} (bot detection blocks them). A tool result with a `fallback` "
         f"(CJ failed or found nothing; Alibaba always) gives the reason, and {RUN_FALLBACK}. "
         f"{NO_TERMINAL[0].upper() + NO_TERMINAL[1:]}.\n"
@@ -490,7 +686,22 @@ def playbook(*, list_tool: str, add_documents: str) -> str:
         f"compile itself; you answer each AGENT_REASON step ({PRODUCT_REASON_STEPS} in product research; some repeat when the "
         "run loops back) and each HARNESS_ACTION research step, which carries `agent_reach`: the exact local Agent Reach commands "
         "per search intent. Run them on the user's machine, then submit ONE receipt with adapter_submit. Full guide: the prompt "
-        f"{GUIDE_PROMPT} and the resource {GUIDE_RESOURCE}.")
+        f"{GUIDE_PROMPT} and the resource {GUIDE_RESOURCE}.\n"
+        "7. Decision reports, when the user asks for a report, margins or delivery times on products (one private HTML report: "
+        "Reddit signals, Amazon and eBay prices, Alibaba and CJ cost, MOQ and delivery time, the margin per sales channel): "
+        "product_report_start(message or products; corpus_id optional) -> while `fetch_plan` is null, call "
+        "product_report_status(report_id) as `next` says -> save `fetch_plan.script` to a file and run it ONCE with bash in the "
+        "user's terminal, always the latest answer's script when it carries one (it does every Agent Reach read of the round and "
+        f"uploads the raw output to `upload.url` itself; never read the pages into the conversation, {NO_BUILT_IN_WEB}) -> "
+        "product_report_status (a round left incomplete: its latest script once more, never more; `fetch_plan.script` null, "
+        "`upload.token` required: that answer has no script, so call status again after `upload.mint_after` and never run an "
+        "older or placeholder script) -> a new `fetch_plan.round` (2): run its script once the same way -> when every "
+        "`rounds[].complete` is true, product_report_compile(report_id) -> optionally a short verdict per product from its "
+        "`summary`, then product_report_compile(report_id, verdicts) -> share `report_url` (it opens in a browser signed in to "
+        "Polymath). Every answer's `next` says what to do "
+        "now. No terminal: compile anyway (the report says which sections need a local agent). Subagents never fetch (the script "
+        "does): use them only for judgment, on a cheap model at low effort; product_report_start's description has the recipe "
+        "per harness.")
 
 
 def list_corpora_description(lead: str) -> str:
@@ -636,3 +847,106 @@ RESEARCH_ACQUIRE = (
     "then call again with the same query. Never try to solve, skip or work around a check; if your user cannot pass it, record "
     "that in the receipt's limitations and continue without that source. Read-only: it never posts, likes, follows or buys. Each "
     "read spends one query of the step's budget; a read that returned nothing spends none.")
+
+# ---------------------------------------------------------------- product decision reports (PRODUCT-DECISION-REPORT-V1, B5)
+# The fetch script's own commands travel in the tool RESULTS (the status answer's `fetch` plan), never in these texts.
+
+#: the loop, in plain steps any model can follow end to end (plan §3), in the field names of the route's answers
+#: (contracts/product/v1/product_report.schema.json: the start / status view and the compile view)
+REPORT_LOOP = (
+    "Every answer carries `next`: one sentence saying what to do now; follow it. Steps, in order: "
+    "(1) product_report_start -> `report_id` (with `products`, the round-1 `fetch_plan` comes at once). "
+    "(2) While `fetch_plan` is null (`candidates.status` collecting: Polymath is forming the products from the library), call "
+    "product_report_status(report_id) again as `next` says. "
+    "(3) Save `fetch_plan.script` unchanged to a file (`fetch_plan.how` says how; its sha256 is `fetch_plan.script_sha256`) and "
+    "run it ONCE with bash in the user's terminal (your shell on the user's own machine), always the script of the latest "
+    f"answer that carries one; it needs {LOCAL_AGENT_REACH}. The script does every Agent Reach read of the round in parallel, "
+    "paced to the free limits (minutes, not seconds: let it finish before you call status), and uploads each raw output to "
+    "`upload.url` itself. "
+    "Do not read the pages into the conversation and do not fetch them another way "
+    f"({NO_BUILT_IN_WEB}). "
+    "(4) Call product_report_status: `rounds[].complete` says whether every packet of a round arrived; if a finished run left "
+    "its round incomplete (`rounds[].received` below `rounds[].packets`), run the latest `fetch_plan.script` once more, never "
+    "more. A NEW round (`fetch_plan.round` 2: product pages picked from round 1) comes with its own `fetch_plan.script`: run it "
+    "ONCE the same way, then call status again. If an answer's `fetch_plan.script` is null (`upload.token` required), it has "
+    "no script: call status again after `upload.mint_after`, and never run an older or placeholder script in its place. "
+    "(5) When every `rounds[].complete` is true and `host.status` is done or failed (`next` says so), call "
+    "product_report_compile(report_id) -> `report_url` and `summary` (per candidate_id: the reference price, the offers, and "
+    "per sales channel the margin, break-even ad cost and delivery verdict). "
+    f"(6) Optional: write a short verdict per product from `summary` (keyed by candidate_id, at most {REPORT_VERDICT_MAX} "
+    "characters; Polymath computes every number, the judgment is yours) and call product_report_compile(report_id, verdicts) "
+    "again. "
+    "(7) Share `report_url` with the user: it opens in a browser signed in to Polymath. "
+    "No terminal on the user's side (claude.ai, the web link): leave the script out and compile once `host.status` is done or "
+    "failed; CJ (and eBay when the host has its API) still fill the report, and it says which sections need a local agent, "
+    "with the script for anyone who has a terminal.")
+
+#: who may help and on what model (the owner-approved plan §4.7): judgment only, cheap and low effort, set explicitly
+REPORT_SUBAGENTS = (
+    "Subagents, only when they speed you up: fetching is the script's job, never a subagent's. Use them only for judgment (e.g. "
+    "one per product writing its verdict from Polymath's computed numbers), each on a cheap model at low effort, and set both "
+    "explicitly: inherited defaults are the expensive trap (a worker inherits the parent's top model and effort unless you set "
+    "them). Claude Code: workers on Haiku 5.5 at effort low with WebSearch and WebFetch disallowed; the verdict on Sonnet 5.5 or "
+    "Opus 5.5 at effort high. Codex: workers on GPT-6 Luna at low reasoning effort, the orchestrator on GPT-6.1 Sol at high; "
+    "raise `tool_timeout_sec` for this MCP server above 120 (compile takes up to 2 minutes). Hermes: workers on "
+    "deepseek-v4.1-flash with thinking off, 5 children at most; a child that needs the web runs Agent Reach in the terminal, "
+    "never its own web tool (that is not Agent Reach). OpenCode: no Polymath MCP server is configured there by default, so an "
+    "OpenCode worker uses the shell only (`opencode run --auto`); if you add the MCP server, raise its MCP timeout.")
+
+PRODUCT_REPORT_START = (
+    "Starts a product DECISION REPORT (one private HTML report per product search, compiled by Polymath for a dropshipping "
+    "decision: Reddit threads that signal demand, Amazon and eBay prices of similar products, Alibaba and CJ Dropshipping unit "
+    "cost, MOQ and delivery time, and per sales channel the delivery verdict, fees, returns allowance, margin and break-even ad "
+    "cost). Use it when the user asks for a report, margins or delivery times on products (product_search only finds them). "
+    + REPORT_LOOP + " "
+    "Arguments: `message` = the user's words (Polymath then forms the products from the library) or `products` = your own "
+    "[{title, search_terms[]}] (e.g. product_search's hypotheses); corpus_id: name a library when you know it, otherwise leave "
+    "it out and Polymath searches every library you can use; channels = any of " + ", ".join(REPORT_CHANNELS) + " (default: "
+    f"all); ship_to = US (the only market the channel rules cover); max_products default {REPORT_DEFAULT_PRODUCTS}, at most "
+    f"{REPORT_MAX_PRODUCTS}. It answers at once with the status view (`status` collecting); CJ (and eBay when the host has its "
+    "API) are read on the host in the background. A refusal is typed (MESSAGE_REQUIRED: send `message` or `products`; "
+    "BAD_PRODUCTS, BAD_SHIP_TO, UNKNOWN_CHANNEL; 429 REPORT_JOB_RUNNING: a report of yours is still being prepared, so check "
+    "product_report_status for the report it names or wait the seconds it gives, then start again). Reports are private: you "
+    "see only your own (the Polymath owner sees all). "
+    + REPORT_SUBAGENTS)
+
+PRODUCT_REPORT_STATUS = (
+    "Where a decision report stands: `status` (collecting | compiling | compiled | failed), `candidates` {status collecting | "
+    "ready | failed, items [{candidate_id, title, search_terms}]}, `host` {status pending | collecting | done | failed, cj, "
+    "ebay}, `round` and `rounds` [{round, packets, received, complete}], the current round's `fetch_plan` {round, packets, "
+    "script, script_sha256, limits, how} (null until the candidates are ready), `upload` {url, expires_at, via: local = the "
+    "Polymath host only, public = any machine, token, mint_after}, `uploads` {total, by_round, by_source}, `compiled` {at, "
+    "report_url, stale} once compiled, and `next`: one sentence saying what to do now; follow it. This server keeps each "
+    "report's upload token and sends it back on every status call, so the report keeps one upload link and its script stays "
+    "the same; you never handle a token. `upload.token` says what this answer's links carry: minted = a new link, now held here "
+    "(run this script); reused = the held link (the script runs as given); required = this answer has no script to run "
+    "(`fetch_plan.script` is null: the report handed out a link less than a minute ago, not to this connection): call "
+    "product_report_status again after `upload.mint_after`, and never run an older or placeholder script in its place; expired "
+    "= the upload time ran out: compile with what arrived; none = no fetch plan yet. Run each "
+    "round's `fetch_plan.script` ONCE (once more "
+    "only if a finished run left its round incomplete), saved unchanged to a file, with bash in the user's terminal, always the "
+    "script of the latest answer that carries one (a null `fetch_plan.script`: call status again after `upload.mint_after`), "
+    "and let it finish before you call status again: it does every Agent Reach read of the round "
+    "and uploads each raw output to `upload.url` itself. Never "
+    f"read those pages into the conversation and never fetch them another way ({NO_BUILT_IN_WEB}). A NEW `fetch_plan.round` "
+    "(2) is the next round, run the same way; when every `rounds[].complete` is true and `host.status` is done or failed, call "
+    "product_report_compile. Reports are private: you see only your own (the Polymath owner sees all).")
+
+PRODUCT_REPORT_COMPILE = (
+    "Compiles a decision report: Polymath's decision model computes every number (unit economics per offer and sales channel, "
+    "delivery verdicts PASS | WARN | FAIL | UNKNOWN, a receipt for each number; a missing input stays UNKNOWN, never a guess) "
+    "and renders the private HTML report. Returns `report_url` (share it with the user: it opens in a browser signed in to "
+    "Polymath), `summary` [{candidate_id, title, "
+    "offers, reference_price_usd, channels {<channel id>: {sell_price_usd, margin_before_ads_usd, margin_pct, "
+    "break_even_ad_cost_usd, delivery, delivery_reason}}}], `inputs` (what it was built from) and `next`. It can take up to 2 "
+    "minutes. Call it when product_report_status shows every `rounds[].complete` true, or, with no terminal on the user's side, "
+    "once `host.status` is done or failed: compile anyway, the report then says which sections need a local agent and shows "
+    "the script for anyone with a terminal. A 409 (CANDIDATES_PENDING, HOST_DATA_PENDING, COMPILE_IN_PROGRESS) = call status "
+    "first and do what its `next` says (a compile that stalled says compile again). verdicts = "
+    f"optional {{candidate_id: your short verdict, at most {REPORT_VERDICT_MAX} characters}}, written from `summary` (the "
+    "judgment is yours, the numbers are Polymath's): compile again with them and the report shows them as the agent's.")
+
+PRODUCT_REPORT_LIST = (
+    "Your decision reports, newest first: each with `report_id`, `status`, `round`, `candidates` [{candidate_id, title}], "
+    "`uploads`, `compiled`, `compiled_at` and `report_path`. Reports are private: you see only your own (the Polymath owner "
+    "sees all). Continue one with product_report_status, or product_report_compile (which returns its `report_url`).")

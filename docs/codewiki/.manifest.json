@@ -3750,8 +3750,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "6f51793389baa60e",
+  "generated": "2026-11-02",
+  "input_hash": "86aa16df133a1eb6",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3768,8 +3768,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "6ad5f315072fd298",
+  "generated": "2026-11-02",
+  "input_hash": "c83221e8d5119d32",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3783,11 +3783,11 @@
   "status": "ok"
  },
  "flows/mcp-call.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "27ca84dd6b7134b1",
+  "generated": "2026-11-02",
+  "input_hash": "f7482a8ae8ee431a",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3813,8 +3813,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "812b0aa85184b861",
+  "generated": "2026-11-02",
+  "input_hash": "b9edcd1834f41792",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3893,8 +3893,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "6325566c772ad796",
+  "generated": "2026-11-02",
+  "input_hash": "d6d6a94c11e8a8fa",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4037,8 +4037,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "78f6c19e4b82de5a",
+  "generated": "2026-11-02",
+  "input_hash": "a62324351d3aefb3",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4066,6 +4066,15 @@
   "dropped_verify": 0,
   "generated": "2026-09-30",
   "input_hash": "57a2cfa60a0614f7",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/adapters/ecommerce/python/unit_economics.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "216b298c06d98bb1",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4181,8 +4190,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "f75ad9190bff143e",
+  "generated": "2026-11-02",
+  "input_hash": "15e0b235df87d6a0",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4213,12 +4222,30 @@
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
+ "units/frontend-v2/src/components/ProductReport.tsx.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "81bbe687cba0c1f3",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/frontend-v2/src/components/ProductResearch.tsx.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "c863c55cf3c884f6",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
  "units/frontend-v2/src/components/_small-modules.md": {
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "98fef6bd11173b5f",
+  "generated": "2026-11-02",
+  "input_hash": "b1822a3bccbd6375",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4253,26 +4280,26 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "e6dbffaeeaaba165",
+  "generated": "2026-11-02",
+  "input_hash": "8a8c6fc748e121ae",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
  "units/frontend-v2/src/lib/api.ts.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "784ef35d57e467bf",
+  "generated": "2026-11-02",
+  "input_hash": "4f9fc14532b4efc6",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
  "units/frontend-v2/src/lib/chat.ts.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "da22adb0f62b215f",
+  "generated": "2026-11-02",
+  "input_hash": "5073e104973c46e4",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4294,6 +4321,24 @@
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
+ "units/frontend-v2/src/lib/productReport.ts.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "ae82db4581fdcd0e",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/frontend-v2/src/lib/productResearch.ts.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "5ddabb233b525170",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
  "units/frontend-v2/src/lib/readiness.ts.md": {
   "attempts": 1,
   "dropped_anchors": 0,
@@ -4304,11 +4349,11 @@
   "status": "ok"
  },
  "units/frontend-v2/src/screens/Chat.tsx.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "79586db1a5661041",
+  "generated": "2026-11-02",
+  "input_hash": "2f4c4f70f0bfc1b2",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4358,11 +4403,11 @@
   "status": "ok"
  },
  "units/frontend-v2/src/screens/_small-modules.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "5f52d14cae4f8492",
+  "generated": "2026-11-02",
+  "input_hash": "9eaffca526758e6e",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4370,8 +4415,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-10-04",
-  "input_hash": "901996c110a10402",
+  "generated": "2026-11-02",
+  "input_hash": "40936c5dc0275841",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4379,8 +4424,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "76023addd860a9be",
+  "generated": "2026-11-02",
+  "input_hash": "770d8df7601ac68b",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4388,17 +4433,17 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "56a2e45880d6bbd8",
+  "generated": "2026-11-02",
+  "input_hash": "332f20e7d9946312",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
  "units/orchestrator/orchestrator/api/_small-modules.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "b50d18bd4d84f808",
+  "generated": "2026-11-02",
+  "input_hash": "9c42f66216317b2d",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4555,6 +4600,24 @@
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
+ "units/orchestrator/orchestrator/api/product.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "386e95b508bf1f02",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/orchestrator/orchestrator/api/product_report.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "024d5ea2bc2e6294",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
  "units/orchestrator/orchestrator/api/reasoning.py.md": {
   "attempts": 1,
   "dropped_anchors": 0,
@@ -4595,8 +4658,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "2f4c49f9ef6c9e32",
+  "generated": "2026-11-02",
+  "input_hash": "bf524a8e0800475f",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4604,17 +4667,17 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "d2e828b8b1c18303",
+  "generated": "2026-11-02",
+  "input_hash": "fa10ad3c6e501e1d",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
  "units/orchestrator/orchestrator/mcp_principals.py.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "8af01bcb53481a8e",
+  "generated": "2026-11-02",
+  "input_hash": "d8f8a66c99414ff8",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4622,8 +4685,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "54b29f88cd0221d9",
+  "generated": "2026-11-02",
+  "input_hash": "24d15ff54929bbc4",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4633,6 +4696,15 @@
   "dropped_verify": 0,
   "generated": "2026-11-01",
   "input_hash": "9336880e34788eea",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/orchestrator/orchestrator/web_boundary.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "060f8d17f1eec899",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4681,6 +4753,15 @@
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
+ "units/shared/polymath_shared/acquisition/agent_reach.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "5614af302187148f",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
  "units/shared/polymath_shared/acquisition/challenge.py.md": {
   "attempts": 1,
   "dropped_anchors": 0,
@@ -4696,6 +4777,15 @@
   "dropped_verify": 0,
   "generated": "2026-11-01",
   "input_hash": "25ffae8622092de1",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/shared/polymath_shared/acquisition/ebay_api.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "478b645b33fc80a3",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4736,11 +4826,20 @@
   "status": "ok"
  },
  "units/shared/polymath_shared/adapter/_small-modules.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "5f3100937eb427f6",
+  "generated": "2026-11-02",
+  "input_hash": "f089a7a00553df66",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/shared/polymath_shared/adapter/corpus_seed.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "dbd16ef51db36c72",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4748,8 +4847,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "c208ca48b0f305a5",
+  "generated": "2026-11-02",
+  "input_hash": "f41c754d6ec99ae8",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4757,8 +4856,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "d91409340094bf10",
+  "generated": "2026-11-02",
+  "input_hash": "5216eb527acd1599",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5645,11 +5744,11 @@
   "status": "ok"
  },
  "units/shared/polymath_shared/mcp_retrieval.py.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "3026a5e6dde03914",
+  "generated": "2026-11-02",
+  "input_hash": "ba9315ad3d9949c8",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5698,6 +5797,69 @@
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
+ "units/shared/polymath_shared/product_search/_small-modules.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "3e4a9b5eff7e20fb",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/shared/polymath_shared/product_search/fetch_plan.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "dfed1893945d5c98",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/shared/polymath_shared/product_search/host_data.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "b13f95e32b70e2ca",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/shared/polymath_shared/product_search/hypotheses.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "d4aa2699a6ca6fb4",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/shared/polymath_shared/product_search/intent.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "22846e8bb316b7c8",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/shared/polymath_shared/product_search/report_store.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "1095cdc1d1b42097",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
+ "units/shared/polymath_shared/product_search/service.py.md": {
+  "attempts": 1,
+  "dropped_anchors": 0,
+  "dropped_verify": 0,
+  "generated": "2026-11-02",
+  "input_hash": "aa4483bf498a4b74",
+  "model": "zai-coding-plan/glm-5.3",
+  "status": "ok"
+ },
  "units/shared/polymath_shared/query_constraints.py.md": {
   "attempts": 1,
   "dropped_anchors": 0,
@@ -5729,8 +5891,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "bd4ed62a0c2b53b5",
+  "generated": "2026-11-02",
+  "input_hash": "841deabdb2d70f58",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

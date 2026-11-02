@@ -1,108 +1,120 @@
 # unit: frontend-v2/src/screens/_small-modules
-anchor: frontend-v2/src/screens/Compare.tsx:1-134 · frontend-v2/src/screens/Graph.tsx:1-118 · frontend-v2/src/screens/Login.tsx:1-141 · frontend-v2/src/screens/Overview.tsx:1-79
+anchor: frontend-v2/src/screens/Compare.tsx:1-134; frontend-v2/src/screens/Graph.tsx:1-118; frontend-v2/src/screens/Login.tsx:1-141; frontend-v2/src/screens/Overview.tsx:1-79; frontend-v2/src/screens/Reports.tsx:1-86
 
 ## purpose
-Four UI screens for the Polymath web shell: Compare (one question across retrieval modes, F6), Graph (source-attested entity/relationship browse, F9), Login/ChangePassword (single-profile auth, ONE-PROFILE), Overview (readiness triad landing, F1) — frontend-v2/src/screens/Compare.tsx:6-13, Graph.tsx:8-13, Login.tsx:20-21, Overview.tsx:7-9 [DERIVED]. Consumers: `frontend-v2/src/App.tsx` and `frontend-v2/src/screens/Settings.tsx` (FACTS.importers) [DERIVED].
+Five React screen components for the frontend-v2 shell. Compare: one question run across retrieval modes, retrieval only, no synthesis (Compare.tsx:7-12). Graph: browse entities and source-attested relationships per corpus (Graph.tsx:8-13). Login/ChangePassword: single-profile sign-in and password change (Login.tsx:20-21, 71). Overview: readiness triad read from backend authority (Overview.tsx:7-9). Reports: list of product decision reports with a per-report detail panel (Reports.tsx:9-13). [DERIVED]
 
 ## public surface
-
 | symbol | kind | signature (params -> return) | anchor | used by |
-|---|---|---|---|---|
-| `Compare` | function component | `({ corpusId }: { corpusId: string })` -> JSX | Compare.tsx:14 | App.tsx, Settings.tsx (unit importers) |
-| `Graph` | function component | `({ corpusId }: { corpusId: string })` -> JSX | Graph.tsx:15 | App.tsx, Settings.tsx (unit importers) |
-| `signInProblem` | function | `(err: unknown)` -> string | Login.tsx:8 | Login (internal) |
-| `Login` | function component | `({ onSignedIn }: { onSignedIn: (me: Me) => void })` -> JSX | Login.tsx:22 | App.tsx, Settings.tsx (unit importers) |
-| `ChangePassword` | function component | `({ me, forced?, onChanged, onSignOut }: { me: Me; forced?: boolean; onChanged: (me: Me) => void; onSignOut?: () => void })` -> JSX | Login.tsx:72-77 | App.tsx, Settings.tsx (unit importers) |
-| `Overview` | function component | `({ corpusId }: { corpusId: string })` -> JSX | Overview.tsx:11 | App.tsx, Settings.tsx (unit importers) |
+| Compare | function component | ({ corpusId: string }) -> JSX | frontend-v2/src/screens/Compare.tsx:14 | App.tsx / Settings.tsx (unit-level FACTS.importers; per-file split unknown) |
+| Graph | function component | ({ corpusId: string }) -> JSX | frontend-v2/src/screens/Graph.tsx:15 | App.tsx / Settings.tsx (unit-level FACTS.importers) |
+| signInProblem | function | (err: unknown) -> string | frontend-v2/src/screens/Login.tsx:8 | Login.tsx:36 (same module) |
+| Login | function component | ({ onSignedIn: (me: Me) => void }) -> JSX | frontend-v2/src/screens/Login.tsx:22 | App.tsx / Settings.tsx (unit-level FACTS.importers) |
+| ChangePassword | function component | ({ me: Me; forced?: boolean; onChanged: (me: Me) => void; onSignOut?: () => void }) -> JSX | frontend-v2/src/screens/Login.tsx:72-77 | App.tsx / Settings.tsx (unit-level FACTS.importers) |
+| Overview | function component | ({ corpusId: string }) -> JSX | frontend-v2/src/screens/Overview.tsx:11 | App.tsx / Settings.tsx (unit-level FACTS.importers) |
+| Reports | function component | () -> JSX | frontend-v2/src/screens/Reports.tsx:14 | App.tsx / Settings.tsx (unit-level FACTS.importers) |
 
-FACTS lists importers per unit only; per-symbol attribution is not available.
+`ReportItem` (Reports.tsx:56) is module-private, not exported. [DERIVED]
 
 ## contracts
 
-**Compare** (COMPARE-RETRIEVAL-V1)
-- in: `corpusId: string`; state `q`, `modes` initialized to `[...PUBLIC_MODES]` — Compare.tsx:15-16 [DERIVED]
-- out: one `api.compare({ message: q.trim(), corpus_id: corpusId, modes })` call; all arms run inside that single request, retrieval only, no synthesis — Compare.tsx:25, 9-11 [DERIVED]
-- pre: `run()` returns early if `!q.trim() || !modes.length` — Compare.tsx:22 [DERIVED]
-- post: on success `res: CompareResponse | null` set; on failure `err` set; `busy` cleared in `finally` — Compare.tsx:23-28 [DERIVED]
+**Compare({ corpusId })** — Compare.tsx
+- in: `corpusId: string`; user state `q` (question), `modes: string[]` default `[...PUBLIC_MODES]` (Compare.tsx:14-16).
+- pre: `run()` returns early when `!q.trim() || !modes.length` (Compare.tsx:22).
+- out: `api.compare({ message: q.trim(), corpus_id: corpusId, modes })` (Compare.tsx:25).
+- post: per-arm table shows `latency_ms`, `union_size`, `evidence_count`, `selected_documents`, `selected_sections`, `degraded`, and "lanes fired" = `lane_sizes` entries with `v > 0` excluding `union` and `union_uncapped` (Compare.tsx:86-97).
+- post: `shared` = documents present in every arm's `retrieval.documents` set (Compare.tsx:31-35).
 
-**Graph** (GRAPH-BROWSE-V1)
-- in: `corpusId: string`; search term applied only on Enter/Search — Graph.tsx:16-17, 41-45 [DERIVED]
-- out: entities via `api.graphEntities(corpusId, term, 25, s)`; relationships via `api.graphRelationships(picked.entity_id, corpusId, 25, s)` — Graph.tsx:20, 23 [DERIVED]
-- pre: relationship fetch only when `picked?.entity_id` truthy, else `Promise.resolve(null)` — Graph.tsx:22-25 [DERIVED]
-- post: a relationship is rendered only when backend Postgres `evidence` ties its fact to a chunk in this corpus; unattested ones are withheld and surfaced as `dropped_unattested` count — Graph.tsx:10-13, 87-92 [DERIVED]
+**Graph({ corpusId })** — Graph.tsx
+- in: `corpusId: string`; user `term` search, `picked: GraphEntity | null` (Graph.tsx:15-18).
+- out: `api.graphEntities(corpusId, term, 25, s)`; relationships fetched only when `picked?.entity_id` via `api.graphRelationships(picked.entity_id, corpusId, 25, s)`, else `Promise.resolve(null)` (Graph.tsx:20-25).
+- post: `dropped_unattested > 0` renders a count banner; each relationship renders `subject` / `predicate` / `object` / `direction` plus `sources` (chunk text sliced to 260 chars) (Graph.tsx:87-105).
 
-**signInProblem**
-- in: `err: unknown`; code read via `err instanceof ApiError ? err.code : null` — Login.tsx:9 [DERIVED]
-- out: mapped strings for `"BAD_LOGIN"`, `"TOO_MANY_ATTEMPTS"` ("Wait 15 minutes"), `"OWNER_PASSWORD_NOT_SET"`, `"LOGIN_NOT_CONFIGURED"`; default `` `Couldn't sign in: ${...}` `` — Login.tsx:11-16 [DERIVED]
+**signInProblem(err)** — Login.tsx
+- in: any thrown value; reads `err.code` when `err instanceof ApiError` (Login.tsx:9).
+- out: mapped strings for codes `BAD_LOGIN`, `TOO_MANY_ATTEMPTS` ("Too many tries. Wait 15 minutes, then try again."), `OWNER_PASSWORD_NOT_SET`, `LOGIN_NOT_CONFIGURED`; default `Couldn't sign in: ${...detailMessage | String(err)}` (Login.tsx:10-17).
 
-**Login**
-- in: `onSignedIn: (me: Me) => void` — Login.tsx:22 [DERIVED]
-- pre: submit disabled while `busy || !username.trim() || !password` — Login.tsx:61 [DERIVED]
-- post: success → `onSignedIn(await auth.login(username.trim(), password))` (username trimmed, password not); failure → `signInProblem` message + password field cleared — Login.tsx:33-36 [DERIVED]
+**Login({ onSignedIn })** — Login.tsx
+- pre: submit button disabled while `busy || !username.trim() || !password` (Login.tsx:61).
+- out: `auth.login(username.trim(), password)` then `onSignedIn(me)` (Login.tsx:33).
+- post on failure: error text from `signInProblem(err)` and `setPassword("")` (Login.tsx:34-37).
 
-**ChangePassword**
-- in: `me`, `forced?`, `onChanged`, `onSignOut?` — Login.tsx:72-77 [DERIVED]
-- pre: submit disabled while `busy || !current || next.length === 0` — Login.tsx:121 [DERIVED]
-- post: success → done banner "Password changed. Other devices are signed out." + `onChanged(updated)`; `"BAD_PASSWORD"` → "The current password is wrong." — Login.tsx:90-97, 111 [DERIVED]
+**ChangePassword({ me, forced, onChanged, onSignOut })** — Login.tsx
+- pre: submit disabled while `busy || !current || next.length === 0` (Login.tsx:121).
+- out: `auth.changePassword(current, next)` then `onChanged(updated)` (Login.tsx:90-93).
+- post: non-forced success banner "Password changed. Other devices are signed out."; `forced` renders the standalone `auth` layout with a Sign out button when `onSignOut` given (Login.tsx:111, 124-140).
 
-**Overview**
-- in: `corpusId: string` — Overview.tsx:11 [DERIVED]
-- out: three parallel fetches `api.controlPlane`, `api.semanticReadiness`, `api.corpora`; triad verdicts via `settled(cp, (d) => controlReady(d?.control_ready))`, `settled(sr, semanticReady)`, `settled(sr, vnextReady)` — Overview.tsx:12-14, 30-34 [DERIVED]
-- post: legacy `query_ready`/`query_enabled`/`documents` shown only inside a collapsible counter-example `<details>`; never used as a readiness signal — Overview.tsx:37-53 [DERIVED]
+**Overview({ corpusId })** — Overview.tsx
+- out: `api.controlPlane(corpusId)`, `api.semanticReadiness(corpusId)`, `api.corpora()` (Overview.tsx:12-14).
+- post: `ReadinessTriad` verdicts built only from `settled(cp, controlReady)`, `settled(sr, semanticReady)`, `settled(sr, vnextReady)`; `query_ready` appears only inside a `<details>` counter-example (Overview.tsx:30-34, 37-55).
+
+**Reports()** — Reports.tsx
+- out: `reportApi.list(s)` mapped through `reportRows`; rejection rethrown as `new Error(errorWords(e))` (Reports.tsx:16-19).
+- post: `refresh` clears the `seen` map before bumping `nonce` (Reports.tsx:23); "Open report" link rendered only when `row.hasPage || status === "compiled"` (Reports.tsx:72); `ReportPanel` mounted only when the row is open (Reports.tsx:83).
 
 ## effect surface
-- Network (via `../lib/api`, `../lib/auth`): `api.compare` Compare.tsx:25; `api.graphEntities` Graph.tsx:20; `api.graphRelationships` Graph.tsx:23; `auth.login` Login.tsx:33; `auth.changePassword` Login.tsx:90; `api.controlPlane`/`api.semanticReadiness`/`api.corpora` Overview.tsx:12-14 [DERIVED]
-- Postgres: none read/written directly (FACTS `tables_read: []`, `tables_written: []`); Graph.tsx:11 documents that attestation happens server-side against Postgres `evidence` [DERIVED]
-- No files, subprocesses, or env flags in these files [DERIVED]
+- HTTP via `../lib/api`: `api.compare` (Compare.tsx:25); `api.graphEntities`, `api.graphRelationships` (Graph.tsx:20, 23); `api.controlPlane`, `api.semanticReadiness`, `api.corpora` (Overview.tsx:12-14); `reportApi.list` — GET `/product/reports` per comment (Reports.tsx:9, 17).
+- Auth session via `../lib/auth`: `auth.login` (Login.tsx:33), `auth.changePassword` (Login.tsx:90).
+- CSS side-effect import `"../styles/product.css"` (Reports.tsx:7).
+- Postgres tables read/written: none (FACTS `tables_read: []`, `tables_written: []`); Qdrant, files, subprocesses, env flags: none in SOURCE.
 
 ## invariants
-
-INVARIANT: modes initial value == `[...PUBLIC_MODES]` (all public modes pre-checked) — Compare.tsx:16 [DERIVED]
-  fails-if: compare silently starts with a partial/empty arm set, changing the benchmark baseline.
-INVARIANT: "Lanes fired" counts only `lane_sizes` entries with `v > 0` and `k` not in `{"union", "union_uncapped"}` — Compare.tsx:86-87 [DERIVED]
-  fails-if: union rows pollute the per-lane display with double-counted sizes.
-INVARIANT: entity page size == relationship page size == `25` — Graph.tsx:20, 23 [DERIVED]
-  fails-if: lists paginate differently than the backend default callers expect.
-INVARIANT: entity row is clickable iff `e.entity_id` truthy — Graph.tsx:61-66 [DERIVED]
-  fails-if: picking an entity without `entity_id` fires a relationship fetch keyed on `undefined`.
-INVARIANT: username is sent as `username.trim()`, password untrimmed — Login.tsx:33 [DERIVED]
-  fails-if: usernames with stray spaces authenticate differently across screens.
-INVARIANT: overlap banner fires iff `shared.length === (arms[0]?.retrieval?.documents?.length ?? -1) && arms.length > 1` — Compare.tsx:123 [DERIVED]
-  fails-if: banner claims "same documents" without full-set equality across all arms (see dumb-code flags).
+INVARIANT: default `modes` length == `PUBLIC_MODES` length (`[...PUBLIC_MODES]`) — Compare.tsx:16 [DERIVED]
+  fails-if: comparison silently drops an arm mode the contract expects.
+INVARIANT: `run()` fires only when `q.trim() != ""` and `modes.length > 0` — Compare.tsx:22 [DERIVED]
+  fails-if: empty request sent to `api.compare`.
+INVARIANT: lanes-fired display = `lane_sizes` entries with `v > 0` minus keys `union`, `union_uncapped` — Compare.tsx:86-87 [DERIVED]
+  fails-if: aggregate lanes shown as if they were real retrieval lanes.
+INVARIANT: entities page size == relationships page size == 25 — Graph.tsx:20, 23 [DERIVED]
+  fails-if: paging contract with backend drifts per list.
+INVARIANT: relationships rendered == source-attested only; withheld count == `dropped_unattested` — Graph.tsx:87-92 [DERIVED]
+  fails-if: unattested facts displayed as canonical truth (violates the stated rule, Graph.tsx:10-13).
+INVARIANT: Login submit disabled while `busy || !username.trim() || !password` — Login.tsx:61 [DERIVED]
+  fails-if: empty credentials submitted to `/auth/login`.
+INVARIANT: Overview readiness verdicts derive only from `controlPlane` + `semanticReadiness`, never `query_ready` — Overview.tsx:30-34, 47-53 [DERIVED]
+  fails-if: a `true` `query_ready` masks semantic incompleteness (stated counter-example, Overview.tsx:50-52).
+INVARIANT: Reports `refresh` order is `setSeen({})` then `setNonce(n + 1)` — Reports.tsx:23 [DERIVED]
+  fails-if: stale panel status survives a list reload.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (network — Compare.tsx:25, Graph.tsx:20/23, Login.tsx:33/90, Overview.tsx:12-14; async settle order drives loading/error state). No clock/random/uuid/env reads in these files [DERIVED].
-idempotency: SAFE — Compare/Graph/Overview only fetch; Login/ChangePassword submits are user-triggered and re-runnable, but each successful `auth.changePassword` signs out other devices (Login.tsx:111) [DERIVED].
+determinism: NONDETERMINISTIC (network: Compare.tsx:25, Graph.tsx:20-25, Login.tsx:33/90, Overview.tsx:12-14, Reports.tsx:17; rendering itself is pure given state) [INFERRED — React components, only I/O is the api/auth calls]
+idempotency: SAFE for all reads (Compare/Graph/Overview/Reports fetch only). `auth.changePassword` has server-side effect — success banner states other devices are signed out (Login.tsx:111). [DERIVED]
 
 ## failure behaviour
-- Compare: whole-request failure → `err` banner with `e instanceof Error ? e.message : String(e)`, `busy` reset in `finally` — Compare.tsx:26-28 [DERIVED]. Per-arm failure: arms with `!a.ok` listed with `a.error` under the table; other arms still rendered — Compare.tsx:103-107 [DERIVED]. Missing numeric fields render as `"—"` via `??` fallbacks — Compare.tsx:92-96 [DERIVED].
-- Graph: `ents.error`/`rels.error` rendered as `banner--bad`; no picked entity → no relationship fetch (`Promise.resolve(null)`) — Graph.tsx:22-25, 52, 83 [DERIVED].
-- Login/ChangePassword: consume codes `BAD_LOGIN`, `TOO_MANY_ATTEMPTS`, `OWNER_PASSWORD_NOT_SET`, `LOGIN_NOT_CONFIGURED`, `BAD_PASSWORD`; unknown `ApiError` → `detailMessage`, else `String(err)` — Login.tsx:11-16, 95-97 [DERIVED]. No error codes raised by these files.
-- Overview: `err = cp.error ?? sr.error` shown as one banner; `corpora` error is never surfaced — Overview.tsx:17, 28 [DERIVED].
+- Compare: `catch (e)` sets `err` to `e instanceof Error ? e.message : String(e)`; per-arm failures shown when `!arms.every((a) => a.ok)` as `{a.mode}: {a.error}` (Compare.tsx:26-27, 103-106).
+- Graph: `ents.error` / `rels.error` rendered as `banner--bad`; no pick → relationships resolve `null` (Graph.tsx:52, 83, 22-24).
+- Login: failure → `signInProblem(err)` message, password field cleared (Login.tsx:34-37).
+- ChangePassword: `BAD_PASSWORD` → "The current password is wrong."; other `ApiError` → `detailMessage`; else `String(err)` (Login.tsx:94-97).
+- Overview: single banner from `cp.error ?? sr.error` (Overview.tsx:17, 28).
+- Reports: list rejection → `ErrorState` with `onRetry={refresh}` (Reports.tsx:17, 35-36).
+- Error codes consumed: `BAD_LOGIN`, `TOO_MANY_ATTEMPTS`, `OWNER_PASSWORD_NOT_SET`, `LOGIN_NOT_CONFIGURED` (Login.tsx:11-15), `BAD_PASSWORD` (Login.tsx:96).
 
 ## dumb-code flags
-- Magic truncations: `d.slice(0, 14)` Compare.tsx:118, `doc_id.slice(0, 16)` Graph.tsx:103, `s.text.slice(0, 260)` Graph.tsx:104 — unexplained, and `…` is appended even when text is shorter than 260 — Graph.tsx:104 [DERIVED].
-- Duplicated literal `25` (page size) — Graph.tsx:20, 23 [DERIVED].
-- Empty-string checks styled inconsistently: `!password` (Login.tsx:61) vs `next.length === 0` (Login.tsx:121) — same semantics, two forms [DERIVED].
-- Predicate pill is always `pill pill--unknown` regardless of predicate type — Graph.tsx:98 [DERIVED].
-- Overlap banner compares only against `arms[0]` document count; an arm with extra unique documents beyond arm 0 still triggers "Every arm selected the same documents" — Compare.tsx:123 [INFERRED: `shared` is the intersection, so equality with arm 0's count only proves arm 0 ⊆ every arm, not set equality of all arms].
-- `Overview` swallows `corpora` failure silently: `err` covers only `cp.error ?? sr.error`, so the details card just disappears — Overview.tsx:14, 17 [INFERRED: no render path shows `corpora.error`].
+- Magic slice lengths: `d.slice(0, 14)` (Compare.tsx:118), `s.doc_id.slice(0, 16)` (Graph.tsx:103), `s.text.slice(0, 260)` (Graph.tsx:104).
+- Page-size literal `25` duplicated (Graph.tsx:20, 23).
+- `.replace(/\s+/g, " ")` repeated 5× (Graph.tsx:64, 66, 80, 96, 98).
+- Sentinel `-1` in `shared.length === (arms[0]?.retrieval?.documents?.length ?? -1)` (Compare.tsx:123).
+- Lane-name literals `"union"` / `"union_uncapped"` hardcoded in the display filter (Compare.tsx:87).
+- Pluralization ternary `` `${row.uploads.toLocaleString()} upload${row.uploads === 1 ? "" : "s"}` `` (Reports.tsx:62).
+- Style inconsistency: `!password` (Login.tsx:61) vs `next.length === 0` (Login.tsx:121) — same check, two spellings.
+- `sr.data.vnext?.pending?.length > 0` compares a possibly-`undefined` length; `undefined > 0` is `false`, so pending-absent falls through (Overview.tsx:70).
 
 ## refactor notes
-- Error-code strings are the wire contract with `/auth/login` and change-password: changing the switch/default in `signInProblem` or the `BAD_PASSWORD` branch desynchronizes UI messages from server codes — Login.tsx:10-17, 95-97 [DERIVED].
-- `PUBLIC_MODES` (from `../lib/contracts`) controls both the default arm set and the checkbox list; renaming/removing modes changes Compare's initial state and UI at once — Compare.tsx:3, 16, 57 [DERIVED].
-- Readiness helper names (`settled`, `controlReady`, `semanticReady`, `vnextReady` from `../lib/readiness`) and `ReadinessTriad` props are wired positionally in Overview; signature changes break the triad — Overview.tsx:3-4, 30-34 [DERIVED].
-- Component prop shapes (`corpusId`, `onSignedIn`, `forced`, `onChanged`, `onSignOut`) are the blast radius for App.tsx and Settings.tsx — Login.tsx:22, 72-77; FACTS.importers [DERIVED].
-- Backend field drift (`lane_sizes` keys `union`/`union_uncapped`, `dropped_unattested`, `latency_ms`, `ok`, `error`, `vnext.pending`) degrades to `"—"`/hidden banners rather than errors — Compare.tsx:86-96, Graph.tsx:87-92, Overview.tsx:70-73 [INFERRED: `??` fallbacks hide missing fields].
+- Exported prop shapes are the routing contract: `corpusId` (Compare/Graph/Overview), `onSignedIn` (Login), `me`/`forced`/`onChanged`/`onSignOut` (ChangePassword); importers are `frontend-v2/src/App.tsx` and `frontend-v2/src/screens/Settings.tsx` (FACTS.importers) — renaming breaks both.
+- `signInProblem` code strings must stay in sync with backend `/auth/login` codes (Login.tsx:7-17).
+- Compare consumes `CompareResponse` fields `arms[].mode`, `latency_ms`, `ok`, `error` and `retrieval.{documents, union_size, evidence_count, selected_documents, selected_sections, degraded, lane_sizes}` (Compare.tsx:31-35, 84-97) — contract change ripples into the table.
+- Graph consumes `GraphEntity.{entity_id, normalized_surface, surface, core_type, mentions, documents}` (Graph.tsx:57-70) and relationship `{fact_id, subject, predicate, object, direction, sources[{chunk_id, source_name, doc_id, text}]}` (Graph.tsx:93-105).
+- Overview depends on `controlReady`, `semanticReady`, `vnextReady`, `settled` from `../lib/readiness` (Overview.tsx:3, 30-34).
+- Reports depends on `reportApi`, `reportRows`, `reportHref`, `reportStatus`, `errorWords`, `when`, `ReportRow` from `../lib/productReport` and `ReportPanel` (Reports.tsx:1-3); upload token lives in page memory only per ADR-0023 comment (Reports.tsx:12-13).
+- No DB/env access in this unit (FACTS `tables_read: []`, `tables_written: []`) — refactors stay inside the React/api-client boundary.
 
 ## VERIFY
 ```verify
-grep -Fq 'api.compare({ message: q.trim(), corpus_id: corpusId, modes })' frontend-v2/src/screens/Compare.tsx
-grep -Fq 'k !== "union" && k !== "union_uncapped"' frontend-v2/src/screens/Compare.tsx
-grep -Fq 'api.graphRelationships(picked.entity_id, corpusId, 25, s)' frontend-v2/src/screens/Graph.tsx
-grep -Fq 'dropped_unattested' frontend-v2/src/screens/Graph.tsx
+grep -Fq 'export function Compare({ corpusId }: { corpusId: string })' frontend-v2/src/screens/Compare.tsx
+grep -Fq 'api.graphEntities(corpusId, term, 25, s)' frontend-v2/src/screens/Graph.tsx
 grep -Fq 'case "OWNER_PASSWORD_NOT_SET":' frontend-v2/src/screens/Login.tsx
-grep -Fq 'V2 never uses it as a readiness signal' frontend-v2/src/screens/Overview.tsx
-! grep -Fq 'queryReady' frontend-v2/src/screens/Overview.tsx
-test "$(grep -c -F 'PasswordInput' frontend-v2/src/screens/Login.tsx)" -ge 4
+grep -Fq 'const err = cp.error ?? sr.error;' frontend-v2/src/screens/Overview.tsx
+grep -Fq 'reportApi.list(s).then(reportRows, (e: unknown) => { throw new Error(errorWords(e)); })' frontend-v2/src/screens/Reports.tsx
+grep -Fq 'function ReportItem({ row, status, open, onToggle, onStatus }:' frontend-v2/src/screens/Reports.tsx
+! grep -Fq 'api.chat' frontend-v2/src/screens/Compare.tsx
 ```

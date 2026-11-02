@@ -17,17 +17,18 @@ AUTHORITY: `shared/polymath_shared/adapter/service.py:255` :: `RESERVED_BESIDE` 
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:144` | 3/6 | `last_rejection`, `materials`, `step` |
 | `adapters/ecommerce/python/governed_run.py` | `adapters/ecommerce/python/governed_run.py:34` | 5/6 | `last_rejection` |
 | `adapters/ecommerce/python/intelligence.py` | `adapters/ecommerce/python/intelligence.py:200` | 3/6 | `last_rejection`, `materials`, `step` |
-| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:52` | 5/6 | `last_rejection` |
+| `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:60` | 5/6 | `last_rejection` |
 | `orchestrator/orchestrator/api/corpus_plan.py` | `orchestrator/orchestrator/api/corpus_plan.py:75` | 3/6 | `last_rejection`, `materials`, `step` |
 | `orchestrator/orchestrator/api/deep_research.py` | `orchestrator/orchestrator/api/deep_research.py:156` | 3/6 | `last_rejection`, `materials`, `step` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:132` | 4/6 | `last_rejection`, `materials` |
-| `orchestrator/orchestrator/mcp_server.py` | `orchestrator/orchestrator/mcp_server.py:100` | 3/6 | `last_rejection`, `materials`, `step` |
-| `shared/polymath_shared/adapter/dossier.py` | `shared/polymath_shared/adapter/dossier.py:68` | 4/6 | `last_rejection`, `materials` |
+| `orchestrator/orchestrator/mcp_server.py` | `orchestrator/orchestrator/mcp_server.py:104` | 3/6 | `last_rejection`, `materials`, `step` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:123` | 3/6 | `evidence`, `last_rejection`, `materials` |
+| `shared/polymath_shared/adapter/dossier.py` | `shared/polymath_shared/adapter/dossier.py:81` | 4/6 | `last_rejection`, `materials` |
 | `shared/polymath_shared/adapter/manifest.py` | `shared/polymath_shared/adapter/manifest.py:148` | 6/6 | — |
 | `shared/polymath_shared/adapter/store.py` | `shared/polymath_shared/adapter/store.py:13` | 3/6 | `evidence`, `last_rejection`, `materials` |
 | `shared/polymath_shared/answer_synthesis.py` | `shared/polymath_shared/answer_synthesis.py:189` | 4/6 | `last_rejection`, `materials` |
 | `shared/polymath_shared/conformance/assess.py` | `shared/polymath_shared/conformance/assess.py:23` | 3/6 | `last_rejection`, `materials`, `step` |
-| `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:86` | 3/6 | `last_rejection`, `materials`, `step` |
+| `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:94` | 3/6 | `last_rejection`, `materials`, `step` |
 | `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:122` | 3/6 | `last_rejection`, `materials`, `step` |
 
 ## VERIFY
