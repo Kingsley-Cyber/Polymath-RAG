@@ -303,6 +303,14 @@ for TikTok Shop versus my own Shopify store, and how eBay and Amazon prices comp
   "costed variant: $11.94 / 1016 g; 12 lighter or part variants left out" (the variant rule); "from $4.39 (CJ search price: the lowest
   variant, not checked)"; every margin UNKNOWN without market data, as designed.
 
+
+## Live run 4 (final code `18392469`, ~21:25Z)
+Owner report `rpt_64ad6f4a34dc…` (the three products of run 1): round 1 18/18 in 22 s, round 2 15/15 in 122 s; uploads Reddit 6 OK,
+Amazon 11 OK + 1 EMPTY, eBay (Exa) 3 OK, Alibaba 7 OK + 4 BLOCKED + 1 HUMAN_CHECK (Akamai, as measured before the build); compile 592 KB.
+Brush: reference $13.99, TikTok US $1.15 PASS, Shopify $1.56 WARN, eBay $0.36, Amazon FBM −$1.10. Fountain: reference $41.74, TikTok US
+$3.46 PASS, Shopify $9.13 WARN, eBay $4.95, Amazon FBM −$1.29 (run 2 had printed a part-variant $32.43). Feeder: every margin UNKNOWN —
+its Jina Amazon search read returned 252 bytes (a failed read, stored EMPTY), so it had too few comparables; the round still counted
+complete, so nothing asked for a re-read.
 ## Proof
 - **Sealed CI reproduction** (a throwaway `postgres:16-alpine` with all 68 migrations applied in order, a clean environment, the CI
   workflow's suites `tests/contracts` + `tests/determinism`), final tree before the C11 change: **4,871 tests: 4,834 passed, 20 skipped,
@@ -415,6 +423,8 @@ for TikTok Shop versus my own Shopify store, and how eBay and Amazon prices comp
 
 ## Open contract gaps
 - N13 for Claude Code: run `claude -p` with the same request once the owner signs the `claude` CLI in again.
+- A failed read inside a complete round (live: a 252-byte Amazon search read) is not offered for a re-read: `next` could say "N
+  packets came back EMPTY or BLOCKED; running the round's script once more may fill them" (OK packets are kept since R3 NEW-1). Not built.
 - The library's product ideas depend on the library: commerce-v1 holds business books, no pet-market evidence.
 - Hermes copies a finished report into its own public hub (`~/.hermes/public-hub/`, which it linked at hub.kingsleylab.xyz): a Hermes
   setting outside Polymath; Polymath's copy stays private.
