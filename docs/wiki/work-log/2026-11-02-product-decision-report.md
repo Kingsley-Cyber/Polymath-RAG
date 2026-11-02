@@ -311,6 +311,24 @@ Brush: reference $13.99, TikTok US $1.15 PASS, Shopify $1.56 WARN, eBay $0.36, A
 $3.46 PASS, Shopify $9.13 WARN, eBay $4.95, Amazon FBM −$1.29 (run 2 had printed a part-variant $32.43). Feeder: every margin UNKNOWN —
 its Jina Amazon search read returned 252 bytes (a failed read, stored EMPTY), so it had too few comparables; the round still counted
 complete, so nothing asked for a re-read.
+
+## PRODUCT-SEARCH-E2E-V1 (11.575) live checks run here (2026-11-02, ~21:55Z, on `ba4ff3fa`)
+- `list_corpora` (owner, through Server A): all seven libraries `production`, `query_enabled`, `query_ready` and `in_all_libraries`
+  true, with the field notes (the "corpus false" fix, 0067 applied).
+- `product_search` answered a fresh Codex agent live (Fresh agents above).
+- A governed run with NO seed on cinema (`adr_f3c734d14cf1…`, adapter 0.8.0): the start receipt's seed came from the library's own
+  profiles with lineage (corpus-seed-v1: topics Cinematography, Digital Compositing, Facial Action Coding System; 77 profiles, 318
+  atoms read); Polymath ran its own retrieval and graph steps (6 accepted) and issued the first AGENT_REASON step (`C_primitives`,
+  60 evidence rows of 156 refs). Cancelled there (accepted work kept): the first HARNESS_ACTION with `agent_reach`, X_compile and a
+  TrailSignal score (TR-09) need an agent to answer the reasoning steps and stay owed under 11.575.
+
+## The failed-read fix (after Live run 4)
+The feeder's 252-byte Amazon read (curl exit 0) had been stored EMPTY with the misleading NO_PRODUCT_LINKS header hint, and nothing
+re-read it. Now the generated script reads a packet once more, after a 4 s (Jina) or 5 s (Exa) pause inside the pacing, when its
+command exits non-zero, prints under 512 bytes, or prints Jina's own error JSON; the summary line says "(retried once: ...)"; every
+packet is still uploaded exactly once and the script still exits 0. The parser stores a Jina error JSON or a page-less read as EMPTY
+with code READER_FAILED ("a failed read, not a page; run the round's script once more"); block and check pages keep their status (all
+58 recorded fixture results unchanged). Sealed: 12 affected suites 494 passed; engine 648 / 648.
 ## Proof
 - **Sealed CI reproduction** (a throwaway `postgres:16-alpine` with all 68 migrations applied in order, a clean environment, the CI
   workflow's suites `tests/contracts` + `tests/determinism`), final tree before the C11 change: **4,871 tests: 4,834 passed, 20 skipped,
@@ -423,8 +441,8 @@ complete, so nothing asked for a re-read.
 
 ## Open contract gaps
 - N13 for Claude Code: run `claude -p` with the same request once the owner signs the `claude` CLI in again.
-- A failed read inside a complete round (live: a 252-byte Amazon search read) is not offered for a re-read: `next` could say "N
-  packets came back EMPTY or BLOCKED; running the round's script once more may fill them" (OK packets are kept since R3 NEW-1). Not built.
+- A read that still fails after the script's one retry stays EMPTY (`READER_FAILED`); the round counts complete and the product
+  may lack comparables (said on the page). Re-running the whole round script is safe (OK packets are kept) but not prompted.
 - The library's product ideas depend on the library: commerce-v1 holds business books, no pet-market evidence.
 - Hermes copies a finished report into its own public hub (`~/.hermes/public-hub/`, which it linked at hub.kingsleylab.xyz): a Hermes
   setting outside Polymath; Polymath's copy stays private.

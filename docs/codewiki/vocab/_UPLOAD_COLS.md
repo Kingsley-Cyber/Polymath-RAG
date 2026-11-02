@@ -26,7 +26,7 @@ AUTHORITY: `shared/polymath_shared/product_search/report_store.py:69` :: `_UPLOA
 | `orchestrator/orchestrator/api/product_report.py` | `orchestrator/orchestrator/api/product_report.py:199` | 10/11 | `received_at` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:132` | 4/11 | `report_id`, `packet_id`, `round`, `source`, `received_at`, `parsed`, `refused` |
 | `orchestrator/orchestrator/mcp_server.py` | `orchestrator/orchestrator/mcp_server.py:104` | 4/11 | `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
-| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:123` | 4/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:124` | 4/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed` |
 | `shared/polymath_shared/acquisition/opencli.py` | `shared/polymath_shared/acquisition/opencli.py:246` | 3/11 | `report_id`, `packet_id`, `round`, `source`, `received_at`, `bytes`, `sha256`, `refused` |
 | `shared/polymath_shared/acquisition/supplier.py` | `shared/polymath_shared/acquisition/supplier.py:65` | 3/11 | `report_id`, `packet_id`, `round`, `kind`, `received_at`, `bytes`, `sha256`, `parsed` |
 | `shared/polymath_shared/adapter/dossier.py` | `shared/polymath_shared/adapter/dossier.py:81` | 3/11 | `packet_id`, `round`, `source`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
@@ -34,7 +34,7 @@ AUTHORITY: `shared/polymath_shared/product_search/report_store.py:69` :: `_UPLOA
 | `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:208` | 3/11 | `report_id`, `packet_id`, `round`, `source`, `received_at`, `sha256`, `parsed`, `refused` |
 | `shared/polymath_shared/conformance/assess.py` | `shared/polymath_shared/conformance/assess.py:23` | 3/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
 | `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:94` | 4/11 | `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
-| `shared/polymath_shared/product_search/fetch_plan.py` | `shared/polymath_shared/product_search/fetch_plan.py:124` | 4/11 | `report_id`, `received_at`, `bytes`, `sha256`, `status`, `parsed`, `refused` |
+| `shared/polymath_shared/product_search/fetch_plan.py` | `shared/polymath_shared/product_search/fetch_plan.py:131` | 4/11 | `report_id`, `received_at`, `bytes`, `sha256`, `status`, `parsed`, `refused` |
 | `shared/polymath_shared/product_search/service.py` | `shared/polymath_shared/product_search/service.py:79` | 4/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed` |
 | `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:96` | 4/11 | `report_id`, `packet_id`, `round`, `received_at`, `sha256`, `parsed`, `refused` |
 

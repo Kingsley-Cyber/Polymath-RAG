@@ -20,7 +20,7 @@ AUTHORITY: `adapters/ecommerce/python/provenance.py:19` :: `_STOP` (count: 33) [
 | `adapters/ecommerce/python/query_semantics.py` | `adapters/ecommerce/python/query_semantics.py:31` | 3/33 | `about`, `class`, `could`, `does`, `from`, `have`, `into`, `kit`, `lite`, `mini`, `only`, `pack` |
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:333` | 3/33 | `being`, `class`, `could`, `does`, `have`, `into`, `kit`, `lite`, `mini`, `more`, `most`, `only` |
 | `orchestrator/orchestrator/api/ask.py` | `orchestrator/orchestrator/api/ask.py:58` | 6/33 | `about`, `being`, `class`, `could`, `from`, `have`, `into`, `kit`, `lite`, `mini`, `more`, `most` |
-| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:128` | 12/33 | `about`, `being`, `class`, `could`, `does`, `have`, `kit`, `lite`, `mini`, `more`, `most`, `only` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:129` | 12/33 | `about`, `being`, `class`, `could`, `does`, `have`, `kit`, `lite`, `mini`, `more`, `most`, `only` |
 | `shared/polymath_shared/candidate_engine.py` | `shared/polymath_shared/candidate_engine.py:1619` | 16/33 | `about`, `being`, `class`, `could`, `does`, `have`, `kit`, `lite`, `mini`, `more`, `most`, `only` |
 | `shared/polymath_shared/chat_plan.py` | `shared/polymath_shared/chat_plan.py:393` | 5/33 | `being`, `class`, `could`, `does`, `have`, `into`, `kit`, `lite`, `mini`, `more`, `most`, `only` |
 | `shared/polymath_shared/compiler_context.py` | `shared/polymath_shared/compiler_context.py:50` | 9/33 | `being`, `class`, `could`, `kit`, `lite`, `mini`, `more`, `most`, `only`, `pack`, `people`, `pro` |

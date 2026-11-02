@@ -19,7 +19,7 @@ AUTHORITY: `shared/polymath_shared/llm_extraction/gate.py:455` :: `_TOKEN_STOP` 
 | `adapters/ecommerce/python/provenance.py` | `adapters/ecommerce/python/provenance.py:19` | 26/38 | `also`, `been`, `each`, `etc`, `her`, `his`, `onto`, `over`, `some`, `such`, `under`, `were` |
 | `adapters/ecommerce/python/query_semantics.py` | `adapters/ecommerce/python/query_semantics.py:31` | 9/38 | `all`, `also`, `and`, `any`, `are`, `been`, `but`, `each`, `etc`, `for`, `from`, `had` |
 | `orchestrator/orchestrator/api/ask.py` | `orchestrator/orchestrator/api/ask.py:58` | 9/38 | `all`, `also`, `any`, `been`, `being`, `but`, `each`, `etc`, `from`, `had`, `has`, `have` |
-| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:129` | 17/38 | `all`, `also`, `any`, `been`, `being`, `but`, `each`, `etc`, `had`, `has`, `have`, `her` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:130` | 17/38 | `all`, `also`, `any`, `been`, `being`, `but`, `each`, `etc`, `had`, `has`, `have`, `her` |
 | `shared/polymath_shared/candidate_engine.py` | `shared/polymath_shared/candidate_engine.py:1619` | 19/38 | `all`, `any`, `being`, `each`, `etc`, `had`, `has`, `have`, `her`, `his`, `onto`, `our` |
 | `shared/polymath_shared/chat_plan.py` | `shared/polymath_shared/chat_plan.py:393` | 6/38 | `all`, `also`, `any`, `are`, `been`, `being`, `but`, `each`, `etc`, `had`, `has`, `have` |
 | `shared/polymath_shared/compiler_context.py` | `shared/polymath_shared/compiler_context.py:50` | 16/38 | `all`, `also`, `any`, `been`, `being`, `each`, `etc`, `had`, `her`, `his`, `its`, `onto` |

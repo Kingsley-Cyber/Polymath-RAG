@@ -24,7 +24,10 @@ The script (POSIX shell syntax run by bash; bash 3.2 on macOS is enough) needs `
     written to a file and sent (no eval, no source, no command substitution of it); one summary line per packet; the script
     exits 0 even when a site blocks the reader (the upload records it) and 3 only when it cannot run at all (no curl);
   * an EMPTY output is uploaded too (an empty body, which the host records as EMPTY), so every packet of a round arrives and the
-    round can complete (round 2 is minted when round 1 is complete); its summary line says so, and why when it was rate limited.
+    round can complete (round 2 is minted when round 1 is complete); its summary line says so, and why when it was rate limited;
+  * a FAILED READ is read once more before its one upload: the command exited non-zero, or printed under AR.READER_MIN_BYTES
+    (512) bytes, or printed Jina's own error JSON ("code": 4xx/5xx with "name" / "readableMessage"); after RETRY_AFTER_S (Exa 5 s,
+    Jina 4 s), within the pacing; its summary line says "retried once" and why. The check only counts bytes and greps the file.
 Pure and deterministic: the same arguments give the same plan, byte for byte (no clock, no randomness, no environment)."""
 from __future__ import annotations
 
@@ -47,7 +50,11 @@ LIMITS = {"exa_parallel": 3, "jina_per_minute": 20}
 LIMITS_WITH_KEYS = {"exa_parallel": 8, "jina_per_minute": 300}
 JINA_PARALLEL = {"keyless": 1, "with_keys": 5}         # Jina reads started together; the gap between starts keeps jina_per_minute
 EXA_GAP_S = 1                                          # pause between Exa batches
-JINA_TIMEOUT_S, UPLOAD_TIMEOUT_S, RETRY_AFTER_S = 90, 120, 5
+JINA_TIMEOUT_S, UPLOAD_TIMEOUT_S = 90, 120
+#: a failed read (a non-zero exit, under AR.READER_MIN_BYTES, or Jina's own error JSON) is read ONCE more after this pause, inside
+#: the pacing (the queue waits for the packet before its next start): live 2026-11-02, a 252-byte Jina read cost a product its
+#: Amazon comparables and nothing asked for it again
+RETRY_AFTER_S = {"exa": 5, "jina": 4}
 EXA_KEYED_URL = "https://mcp.exa.ai/mcp?exaApiKey="    # Exa's own keyed endpoint (its 429 message names it)
 #: the keys enter a command only through the shell's optional-argument form: expanded to nothing when unset
 _EXA_KEY_ARG = '${EXA_API_KEY:+--http-url "' + EXA_KEYED_URL + '$EXA_API_KEY"}'
@@ -207,16 +214,32 @@ WORK=$(mktemp -d "${{TMPDIR:-/tmp}}/polymath-report.XXXXXX") || {{ echo "polymat
 trap 'rm -rf "$WORK"' EXIT
 echo "polymath-fetch: report $REPORT round $ROUND: $PACKETS packets; Exa $EXA_PARALLEL in flight ($EXA_MODE); Jina $JINA_PARALLEL every $JINA_GAP s ($JINA_MODE)"
 
+failed_read() {{
+  # $1 an output file, $2 its exit code: why the read looks failed, or nothing. It only counts the bytes and greps the file:
+  # fetched content is never run or evaluated.
+  if [ "$2" -ne 0 ]; then echo "exit $2"; return 0; fi
+  size=$(wc -c <"$1" | tr -d ' ')
+  if [ "$size" -lt {min_bytes} ]; then echo "only $size bytes"; return 0; fi
+  if head -n 1 "$1" | grep -q -E '^[[:space:]]*[{{].*"code"[[:space:]]*:[[:space:]]*[45][0-9][0-9]' && grep -q -E '"(name|readableMessage)"[[:space:]]*:' "$1"; then
+    echo "the reader's own error reply"
+  fi
+  return 0
+}}
+
 run_packet() {{
-  # $1 packet id, $2 source, $3 kind, $4 the packet's command (a function below). The output goes to a file and is uploaded.
+  # $1 packet id, $2 source, $3 kind, $4 the packet's command (a function below), $5 the pause before its one retry.
+  # The output goes to a file and is uploaded once; a failed read is read once more first.
   out="$WORK/$1.out"
   err="$WORK/$1.err"
   "$4" >"$out" 2>"$err"
   rc=$?
-  if [ "$rc" -ne 0 ] && [ ! -s "$out" ] && grep -q '429' "$err" 2>/dev/null; then
-    sleep {retry}
+  retried=''
+  why=$(failed_read "$out" "$rc")
+  if [ -n "$why" ]; then
+    sleep "$5"
     "$4" >"$out" 2>"$err"
     rc=$?
+    retried=" (retried once: $why)"
   fi
   bytes=$(wc -c <"$out" | tr -d ' ')
   note=''
@@ -228,19 +251,19 @@ run_packet() {{
   fi
   code=$(curl -s -o /dev/null -w '%{{http_code}}' -m {upload_timeout} --data-binary "@$out" -H 'content-type: text/plain' "${{UPLOAD_URL}}${{UPLOAD_SEP}}packet=$1")
   case "$code" in 2??) echo "$1" >>"$WORK/uploaded" ;; esac
-  echo "polymath-fetch: $1 $2/$3: exit $rc, $bytes bytes, upload http $code$note"
+  echo "polymath-fetch: $1 $2/$3: exit $rc, $bytes bytes, upload http $code$retried$note"
 }}
 
 EXA_N=0
 exa() {{
-  run_packet "$1" "$2" "$3" "$4" &
+  run_packet "$1" "$2" "$3" "$4" {exa_retry} &
   EXA_N=$((EXA_N + 1))
   if [ "$EXA_N" -ge "$EXA_PARALLEL" ]; then wait; EXA_N=0; sleep "$EXA_GAP"; fi
 }}
 
 JINA_N=0
 jina() {{
-  run_packet "$1" "$2" "$3" "$4" &
+  run_packet "$1" "$2" "$3" "$4" {jina_retry} &
   JINA_N=$((JINA_N + 1))
   if [ "$JINA_N" -ge "$JINA_PARALLEL" ]; then wait; JINA_N=0; sleep "$JINA_GAP"; fi
 }}
@@ -279,7 +302,8 @@ def _script(report_id: str, round_: int, upload_url: str, expires_at: str, packe
                         jina_par_keyed=JINA_PARALLEL["with_keys"], jina_par_keyless=JINA_PARALLEL["keyless"],
                         jina_gap_keyed=_jina_gap(LIMITS_WITH_KEYS, JINA_PARALLEL["with_keys"]),
                         jina_gap_keyless=_jina_gap(LIMITS, JINA_PARALLEL["keyless"]), exa_gap=EXA_GAP_S, repo=AR.REPO,
-                        retry=RETRY_AFTER_S, upload_timeout=UPLOAD_TIMEOUT_S)
+                        exa_retry=RETRY_AFTER_S["exa"], jina_retry=RETRY_AFTER_S["jina"], min_bytes=AR.READER_MIN_BYTES,
+                        upload_timeout=UPLOAD_TIMEOUT_S)
     functions, exa_calls, jina_calls = [], [], []
     for n, p in enumerate(packets, 1):
         name = f"p{n:03d}"

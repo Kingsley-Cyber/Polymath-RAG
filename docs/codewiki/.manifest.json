@@ -4758,7 +4758,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-11-02",
-  "input_hash": "90fa022346b12c36",
+  "input_hash": "6b26eb59b6ba426f",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5807,11 +5807,11 @@
   "status": "ok"
  },
  "units/shared/polymath_shared/product_search/fetch_plan.py.md": {
-  "attempts": 1,
+  "attempts": 3,
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-11-02",
-  "input_hash": "dfed1893945d5c98",
+  "input_hash": "a421fb11a106ba66",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

@@ -18,7 +18,7 @@ AUTHORITY: `adapters/ecommerce/python/governed_run.py:34` :: `KINDS` (count: 6) 
 | `orchestrator/orchestrator/api/product_report.py` | `orchestrator/orchestrator/api/product_report.py:302` | 3/6 | `step`, `submission`, `result` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:274` | 4/6 | `start`, `submission` |
 | `orchestrator/orchestrator/mcp_server.py` | `orchestrator/orchestrator/mcp_server.py:104` | 3/6 | `step`, `submission`, `note` |
-| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:128` | 3/6 | `submission`, `result`, `note` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:129` | 3/6 | `submission`, `result`, `note` |
 | `shared/polymath_shared/acquisition/service.py` | `shared/polymath_shared/acquisition/service.py:250` | 3/6 | `start`, `step`, `submission` |
 | `shared/polymath_shared/adapter/dossier.py` | `shared/polymath_shared/adapter/dossier.py:107` | 5/6 | `note` |
 | `shared/polymath_shared/adapter/store.py` | `shared/polymath_shared/adapter/store.py:13` | 4/6 | `start`, `result` |

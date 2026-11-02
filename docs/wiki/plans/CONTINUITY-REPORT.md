@@ -26,8 +26,8 @@ historical, never an instruction.
 ## CURRENT — 2026-11-02 (PRODUCT-DECISION-REPORT-V1 merged, deployed and live-proven; the owner's review next) — **ACTIVE MISSION: PRODUCT-DECISION-REPORT-V1 (register 11.576, DONE; the owner, 2026-11-02: one HTML decision report per product search for any agent — links, Reddit findings with dates, dropshipping margins, MOQ and delivery per channel (TikTok US and cross-border side by side, Shopify), eBay and Amazon comparables; "this ends when commitedd and merged properly no bugs ... run the flow one time and analzye the output ... how well a new session agent that just connected grasps the tools/mcps"). Plan `docs/wiki/plans/PRODUCT-DECISION-REPORT-V1.md`; work-log `docs/wiki/work-log/2026-11-02-product-decision-report.md` (coverage, live runs, fresh agents, 10 deviation groups); ADR-0023 (proposed).**
 
 ### Repository State
-- `production` = the 11.576 records commit on top of `af7c8417` (fast-forward merges of `feat/product-report`: `07a80e4f`, `94f3d58b`,
-  `af7c8417`, then the records); it carries PRODUCT-SEARCH-E2E-V1 (11.575) too. NOT pushed: `origin/production` is behind by these
+- `production` = `feat/product-report` fast-forwarded (`07a80e4f`, `94f3d58b`, `af7c8417`, the records `18392469` / `ba4ff3fa`, and the
+  failed-read fix after them); it carries PRODUCT-SEARCH-E2E-V1 (11.575) too. NOT pushed: `origin/production` is behind by these
   commits plus the 11.574 records (pushes are the owner's word).
 - Live: migrations 0067 (the seven libraries production + query-enabled) and 0068 (product reports) applied; the fleet bounced on each
   merge (READY, 26 healthy, one bundle). The live stack runs in Docker Desktop (`DOCKER_CONTEXT=desktop-linux docker compose ...`; the

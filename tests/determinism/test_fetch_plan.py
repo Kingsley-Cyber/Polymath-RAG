@@ -39,7 +39,12 @@ UPLOAD = {"url": f"http://127.0.0.1:7200/product/report/{REPORT}/upload/tok_Q7xw
 BRUSH = {"candidate_id": "c1", "title": "Self-cleaning slicker brush", "search_terms": ["self-cleaning slicker brush", "self cleaning pet brush"]}
 LAMP = {"candidate_id": "c2", "title": "Candle warmer lamp"}
 BASH = shutil.which("bash") or "/bin/bash"
-REAL = {name: shutil.which(name) for name in ("sleep", "rm", "ls", "wc", "tr", "cp")}
+REAL = {name: shutil.which(name) for name in ("sleep", "rm", "ls", "wc", "tr", "cp", "cksum", "cut")}
+#: a real read is never this short: the stand-ins print more than AR.READER_MIN_BYTES unless a test asks for a failed read
+PAD = "x" * 600
+#: Jina's own error reply (live 2026-11-02: a 252-byte read of an Amazon search page)
+JINA_ERROR = ('{"data":null,"code":422,"name":"AssertionFailureError","status":42206,"message":"Failed to goto https://www.amazon.com/s'
+              '?k=x: net::ERR_ABORTED","readableMessage":"AssertionFailureError: Failed to goto"}')
 
 
 def _argv(command: str) -> list[str]:
@@ -216,9 +221,13 @@ printf '%s\0' "$@" > "$L/mcporter.$$.argv"
 {ls} "$L/running_exa" | {wc} -l | {tr} -d ' ' >> "$L/exa_concurrency"
 {sleep} 0.4
 {rm} -f "$L/running_exa/$$"
+key=$(printf '%s' "$*" | {cksum} | {cut} -d ' ' -f 1)
 if [ "${STUB_MCPORTER:-}" = fail429 ]; then echo "[mcporter] exa.web_search_exa responded with HTTP 429" >&2; exit 1; fi
 if [ "${STUB_MCPORTER:-}" = empty ]; then exit 0; fi
-printf 'Title: Thread : r/test\nURL: https://www.reddit.com/r/test/comments/abc123/thread/\nPublished: N/A\nAuthor: N/A\nHighlights:\nhello\n'
+if [ "${STUB_MCPORTER:-}" = fail_once ] && [ ! -e "$L/once.$key" ]; then
+  : > "$L/once.$key"; echo "[mcporter] exa.web_search_exa responded with HTTP 429" >&2; exit 1
+fi
+printf 'Title: Thread : r/test\nURL: https://www.reddit.com/r/test/comments/abc123/thread/\nPublished: N/A\nAuthor: N/A\nHighlights:\nhello %s\n' "$STUB_PAD"
 """,
     "curl": r"""#!/bin/sh
 L="$STUB_LOG"
@@ -234,10 +243,15 @@ fi
 {ls} "$L/running_jina" | {wc} -l | {tr} -d ' ' >> "$L/jina_concurrency"
 {sleep} 0.4
 {rm} -f "$L/running_jina/$$"
+key=$(printf '%s' "$*" | {cksum} | {cut} -d ' ' -f 1)
 if [ "${STUB_CURL:-}" = blocked ]; then
   printf 'Title: Blocked\n\nURL Source: https://www.amazon.com/s?k=x\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\n## whoa there, pardner!\n'
+elif [ "${STUB_CURL:-}" = error_json ]; then
+  printf '%s' "$STUB_JINA_ERROR"
+elif [ "${STUB_CURL:-}" = error_once ] && [ ! -e "$L/once.$key" ]; then
+  : > "$L/once.$key"; printf '%s' "$STUB_JINA_ERROR"
 else
-  printf 'Title: Amazon.com : x\n\nURL Source: https://www.amazon.com/s?k=x\n\nMarkdown Content:\nhello\n'
+  printf 'Title: Amazon.com : x\n\nURL Source: https://www.amazon.com/s?k=x\n\nMarkdown Content:\nhello %s\n' "$STUB_PAD"
 fi
 """,
     "rm": "#!/bin/sh\nprintf '%s\\0' \"$@\" > \"$STUB_LOG/rm.$$.argv\"\n",
@@ -260,11 +274,13 @@ def _run(tmp_path: pathlib.Path, plan: dict, **env_extra: str) -> tuple[subproce
     for name, body in STUBS.items():
         stub = stubs / name
         stub.write_text(body.replace("{ls}", REAL["ls"]).replace("{wc}", REAL["wc"]).replace("{tr}", REAL["tr"])
-                        .replace("{sleep}", REAL["sleep"]).replace("{rm}", REAL["rm"]).replace("{cp}", REAL["cp"]))
+                        .replace("{sleep}", REAL["sleep"]).replace("{rm}", REAL["rm"]).replace("{cp}", REAL["cp"])
+                        .replace("{cksum}", REAL["cksum"]).replace("{cut}", REAL["cut"]))
         stub.chmod(0o755)
     script = box / "plan.sh"
     script.write_text(plan["script"])
-    env = {"PATH": f"{stubs}:/usr/bin:/bin", "HOME": str(home), "TMPDIR": str(tmp), "STUB_LOG": str(log), "LC_ALL": "C", **env_extra}
+    env = {"PATH": f"{stubs}:/usr/bin:/bin", "HOME": str(home), "TMPDIR": str(tmp), "STUB_LOG": str(log), "LC_ALL": "C",
+           "STUB_PAD": PAD, "STUB_JINA_ERROR": JINA_ERROR, **env_extra}
     done = subprocess.run([BASH, str(script)], cwd=box, env=env, capture_output=True, text=True, timeout=120, check=False)
     return done, log, {"home": home, "tmp": tmp, "box": box}
 
@@ -357,11 +373,12 @@ def test_blocked_and_rate_limited_sources_still_exit_zero_and_the_upload_records
     assert done.returncode == 0, done.stderr
     lines = done.stdout.strip().splitlines()
     exa_lines = [line for line in lines if "/search: exit 1" in line]
-    assert len(exa_lines) == 10 and all(line.endswith(", 0 bytes, upload http 200 (no output: recorded as EMPTY; rate limited (HTTP "
-                                                      "429): set EXA_API_KEY to read faster)") for line in exa_lines)
+    assert len(exa_lines) == 10 and all(line.endswith(", 0 bytes, upload http 200 (retried once: exit 1) (no output: recorded as EMPTY; "
+                                                      "rate limited (HTTP 429): set EXA_API_KEY to read faster)") for line in exa_lines)
     assert len(_argvs(log, "mcporter")) == 20                                        # each rate-limited search is tried once more
-    blocked = [line for line in lines if "amazon/search: exit 0" in line]
-    assert len(blocked) == 2 and all(line.endswith("upload http 200 (the site refused the reader: the upload records it)") for line in blocked)
+    blocked = [line for line in lines if "amazon/search: exit 0" in line]              # a short block page is read once more too
+    assert len(blocked) == 2 and all(re.search(r"upload http 200 \(retried once: only \d+ bytes\) \(the site refused the reader: the "
+                                               r"upload records it\)$", line) for line in blocked)
     # every packet arrives, the empty ones too: the round can complete
     assert lines[-1] == f"polymath-fetch: done: 12 of 12 packets uploaded for report {REPORT} round 1; next: product_report_status"
     bodies = [p.read_text() for p in log.glob("upload.*.body")]
@@ -379,10 +396,41 @@ def test_an_empty_output_is_uploaded_as_an_empty_body_so_the_round_can_complete(
     uploads = [a for a in _argvs(log, "curl") if "--data-binary" in a]
     assert sorted(a[11].split("?packet=", 1)[1] for a in uploads) == sorted(p["packet_id"] for p in plan["packets"])
     lines = done.stdout.strip().splitlines()
-    empty = [line for line in lines if line.endswith("upload http 200 (no output: recorded as EMPTY)")]
-    assert len(empty) == 4 and all(": exit 0, 0 bytes, " in line for line in empty)   # the reader ran and found nothing
+    empty = [line for line in lines if line.endswith("upload http 200 (retried once: only 0 bytes) (no output: recorded as EMPTY)")]
+    assert len(empty) == 4 and all(": exit 0, 0 bytes, " in line for line in empty)   # the reader ran twice and found nothing
+    assert len(_argvs(log, "mcporter")) == 8
     assert sorted(p.read_text() for p in log.glob("upload.*.body")).count("") == 4
     assert lines[-1] == f"polymath-fetch: done: 5 of 5 packets uploaded for report {REPORT} round 1; next: product_report_status"
+
+
+def test_a_failed_read_is_read_once_more_before_its_one_upload(tmp_path):
+    """Live 2026-11-02 (rpt_64ad6f4a34dccc5d915547ab, r1-c3-amazon-2): a 252-byte Jina read was uploaded, stored as "no product
+    links", and the round counted complete. A read that exits non-zero, prints under 512 bytes, or prints Jina's own error JSON is
+    read ONCE more (Exa after 5 s, Jina after 4 s, inside the pacing) and uploaded exactly once; the line says so."""
+    plan = _plan(candidates=(LAMP,), ebay_api=True)                                   # 4 Exa packets, 1 Jina packet
+    done, log, _ = _run(tmp_path / "once", plan, STUB_MCPORTER="fail_once", STUB_CURL="error_once")
+    assert done.returncode == 0, done.stderr
+    lines = done.stdout.strip().splitlines()
+    exa_lines = [line for line in lines if "/search: " in line and "amazon-2" not in line]
+    assert len(exa_lines) == 4 and all(": exit 0, " in line and line.endswith(" upload http 200 (retried once: exit 1)") for line in exa_lines)
+    (jina_line,) = [line for line in lines if "r1-c1-amazon-2 " in line]
+    assert jina_line.endswith(f"upload http 200 (retried once: only {len(JINA_ERROR)} bytes)") and ": exit 0, " in jina_line
+    assert len(_argvs(log, "mcporter")) == 8 and len([a for a in _argvs(log, "curl") if "--data-binary" not in a]) == 2
+    uploads = [a[11].split("?packet=", 1)[1] for a in _argvs(log, "curl") if "--data-binary" in a]
+    assert sorted(uploads) == sorted(p["packet_id"] for p in plan["packets"])         # every packet uploaded exactly once
+    bodies = [p.read_text() for p in log.glob("upload.*.body")]
+    assert JINA_ERROR not in bodies and all(len(b) > AR.READER_MIN_BYTES for b in bodies)   # the second, real read went up
+    assert Counter((log / "sleep.log").read_text().split()) == Counter({"5": 4, "4": 1, "1": 1, "3": 1})   # retries inside the pacing
+    assert lines[-1] == f"polymath-fetch: done: 5 of 5 packets uploaded for report {REPORT} round 1; next: product_report_status"
+    # Jina's error JSON every time, over 512 bytes: still a failed read (by its shape), read once more, uploaded once, never eval'd
+    long_error = JINA_ERROR.replace("net::ERR_ABORTED", "net::ERR_ABORTED " + "z" * 600)
+    done, log, _ = _run(tmp_path / "json", plan, STUB_CURL="error_json", STUB_JINA_ERROR=long_error)
+    (jina_line,) = [line for line in done.stdout.splitlines() if "r1-c1-amazon-2 " in line]
+    assert jina_line.endswith("upload http 200 (retried once: the reader's own error reply)") and done.returncode == 0
+    assert len([a for a in _argvs(log, "curl") if "--data-binary" not in a]) == 2
+    (body,) = {b for b in (p.read_text() for p in log.glob("upload.*.body")) if b.startswith("{")}
+    parsed = AR.parse_report_source("amazon", body, kind="search")
+    assert (parsed["status"], [r["code"] for r in parsed["refused"]]) == ("EMPTY", ["READER_FAILED"])
 
 
 def test_an_upload_the_host_refuses_is_reported_and_no_curl_means_exit_three(tmp_path):

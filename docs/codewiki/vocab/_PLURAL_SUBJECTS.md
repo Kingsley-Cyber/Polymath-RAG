@@ -16,7 +16,7 @@ AUTHORITY: `shared/polymath_shared/gap_check.py:217` :: `_PLURAL_SUBJECTS` (coun
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:84` | 3/11 | `libraries`, `corpora`, `documents`, `books`, `passages`, `texts`, `readings`, `chapters` |
 | `orchestrator/orchestrator/api/deep_research.py` | `orchestrator/orchestrator/api/deep_research.py:356` | 4/11 | `corpora`, `materials`, `books`, `texts`, `readings`, `chapters`, `notes` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:199` | 3/11 | `libraries`, `sources`, `materials`, `books`, `passages`, `texts`, `readings`, `chapters` |
-| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:524` | 3/11 | `libraries`, `corpora`, `sources`, `materials`, `books`, `passages`, `readings`, `chapters` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:525` | 3/11 | `libraries`, `corpora`, `sources`, `materials`, `books`, `passages`, `readings`, `chapters` |
 | `shared/polymath_shared/acquisition/supplier.py` | `shared/polymath_shared/acquisition/supplier.py:228` | 3/11 | `libraries`, `corpora`, `materials`, `books`, `passages`, `texts`, `readings`, `chapters` |
 | `shared/polymath_shared/deep_research/evidence.py` | `shared/polymath_shared/deep_research/evidence.py:40` | 3/11 | `libraries`, `corpora`, `materials`, `books`, `texts`, `readings`, `chapters`, `notes` |
 | `shared/polymath_shared/product_search/service.py` | `shared/polymath_shared/product_search/service.py:123` | 3/11 | `libraries`, `documents`, `materials`, `books`, `passages`, `texts`, `readings`, `chapters` |

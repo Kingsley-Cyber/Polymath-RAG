@@ -18,7 +18,7 @@ AUTHORITY: `adapters/ecommerce/python/report.py:929` :: `_ASSUMPTION_META` (coun
 | `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:232` | 8/12 | `source_url`, `read_at`, `unconfirmed`, `confirmed` |
 | `orchestrator/orchestrator/api/deep_research.py` | `orchestrator/orchestrator/api/deep_research.py:200` | 3/12 | `url`, `urls`, `source_url`, `date`, `as_of`, `read`, `read_at`, `published`, `unconfirmed` |
 | `orchestrator/orchestrator/api/product_report.py` | `orchestrator/orchestrator/api/product_report.py:302` | 4/12 | `urls`, `source_url`, `date`, `read`, `read_at`, `published`, `unconfirmed`, `confirmed` |
-| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:461` | 4/12 | `urls`, `source_url`, `as_of`, `read`, `read_at`, `published`, `unconfirmed`, `confirmed` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:462` | 4/12 | `urls`, `source_url`, `as_of`, `read`, `read_at`, `published`, `unconfirmed`, `confirmed` |
 | `shared/polymath_shared/acquisition/opencli.py` | `shared/polymath_shared/acquisition/opencli.py:72` | 4/12 | `urls`, `source_url`, `source`, `date`, `as_of`, `read_at`, `unconfirmed`, `confirmed` |
 | `shared/polymath_shared/acquisition/service.py` | `shared/polymath_shared/acquisition/service.py:250` | 3/12 | `urls`, `source_url`, `source`, `date`, `as_of`, `read_at`, `published`, `unconfirmed`, `confirmed` |
 | `shared/polymath_shared/acquisition/supplier.py` | `shared/polymath_shared/acquisition/supplier.py:177` | 4/12 | `urls`, `source_url`, `date`, `as_of`, `read_at`, `published`, `unconfirmed`, `confirmed` |

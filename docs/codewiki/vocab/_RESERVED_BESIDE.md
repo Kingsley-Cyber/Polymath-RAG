@@ -22,7 +22,7 @@ AUTHORITY: `shared/polymath_shared/adapter/manifest.py:148` :: `_RESERVED_BESIDE
 | `orchestrator/orchestrator/api/deep_research.py` | `orchestrator/orchestrator/api/deep_research.py:156` | 3/6 | `last_rejection`, `materials`, `step` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:132` | 4/6 | `last_rejection`, `materials` |
 | `orchestrator/orchestrator/mcp_server.py` | `orchestrator/orchestrator/mcp_server.py:104` | 3/6 | `last_rejection`, `materials`, `step` |
-| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:123` | 3/6 | `evidence`, `last_rejection`, `materials` |
+| `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:124` | 3/6 | `evidence`, `last_rejection`, `materials` |
 | `shared/polymath_shared/adapter/dossier.py` | `shared/polymath_shared/adapter/dossier.py:81` | 4/6 | `last_rejection`, `materials` |
 | `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:208` | 6/6 | — |
 | `shared/polymath_shared/adapter/store.py` | `shared/polymath_shared/adapter/store.py:13` | 3/6 | `evidence`, `last_rejection`, `materials` |

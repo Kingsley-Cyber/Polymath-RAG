@@ -41,6 +41,9 @@ from polymath_shared.acquisition import challenge as CH
 FIX = ROOT / "tests" / "fixtures" / "product_report"
 BRUSH, CANDLE = ["self-cleaning slicker brush"], ["candle warmer lamp"]
 ISO_MINUTE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00Z")
+#: a supplier's own description: a synthetic product page is a real page's size (a Jina read under AR.READER_MIN_BYTES with no
+#: block or check page in it is a failed read, never a page)
+SUPPLIER_TEXT = "\n## Product descriptions from the supplier\n\n" + "A sturdy product for everyday use, packed with care. " * 10 + "\n"
 
 
 def _fx(name: str) -> str:
@@ -319,7 +322,7 @@ def test_alibaba_shipping_quote_and_minimum_as_the_pages_state_them():
                             ("Shipping fee: US$2.10/kg, minimum charge US$35", None, 35.0),
                             ("Shipping fee: $3/kg", None, None)):
         raw = ("Title: Lamp - Buy  Product on Alibaba.com\n\nURL Source: https://www.alibaba.com/product-detail/Lamp_1600000000001.html\n\n"
-               f"Markdown Content:\n# Lamp\n\n**$5.00**\n\n10-99 pieces\n\n{line}\n\nMOQ: 10 pieces\n")
+               f"Markdown Content:\n# Lamp\n\n**$5.00**\n\n10-99 pieces\n\n{line}\n\nMOQ: 10 pieces\n{SUPPLIER_TEXT}")
         (one,) = AR.parse_report_source("alibaba", raw, kind="page")["records"]
         assert (one["shipping_min_kg"], one["shipping_min_charge_usd"], one["moq"]) == (kg, money, 10), line
 
@@ -400,7 +403,7 @@ def test_r2_3_a_sponsored_ads_numbers_never_attach_to_the_result_above_it():
 def test_r2_4_the_lead_time_is_the_row_that_holds_the_moq_and_words_there_are_unknown():
     def page(table: str, moq: str = "MOQ: 200 pieces") -> dict:
         raw = ("Title: Lamp - Buy  Product on Alibaba.com\n\nURL Source: https://www.alibaba.com/product-detail/Lamp_1600000000001.html\n\n"
-               f"Markdown Content:\n# Lamp\n\n**$5.00**\n\n{moq}\n\nDelivery Time\n\n7-15 Days\n\n## Lead time\n\n{table}\n")
+               f"Markdown Content:\n# Lamp\n\n**$5.00**\n\n{moq}\n\nDelivery Time\n\n7-15 Days\n\n## Lead time\n\n{table}\n{SUPPLIER_TEXT}")
         (rec,) = AR.parse_report_source("alibaba", raw, kind="page")["records"]
         return rec
     rec = page("Quantity (pieces)1 - 100 101 - 500> 500\nLead time (days)7 To be negotiated 30")
@@ -560,7 +563,7 @@ def test_live_alibaba_captcha_interception_pages_are_a_human_check():
     assert AR.parse_report_source("alibaba", behind, kind="page")["status"] == "HUMAN_CHECK"
     listing = ("Title: Captcha Interception Practice Kit - Buy  Product on Alibaba.com\n\nURL Source: https://www.alibaba.com/product-detail/"
                "Kit_1600000000009.html\n\nMarkdown Content:\n# Captcha Interception Practice Kit\n\n**$5.00**\n\n10-99 pieces\n\n"
-               "Our kit teaches how a captcha interception page works.\n")
+               "Our kit teaches how a captcha interception page works.\n" + SUPPLIER_TEXT)
     kit = AR.parse_report_source("alibaba", listing, kind="page")   # a listing that merely mentions it is content
     assert (kit["status"], kit["records"][0]["unit_price_at_moq"]) == ("OK", 5.0)
 
@@ -576,6 +579,36 @@ def test_audience_words_are_held_by_their_group_and_nothing_else():
     (thread,) = AR.parse_report_source("reddit", _thread("Best cat water fountain?"), kind="search",
                                        candidate_terms=["pet water fountain"])["records"]
     assert thread["relevant"] is True                              # the Reddit title rule reads "pet" the same way
+
+
+def test_a_failed_reader_read_is_empty_reader_failed_never_no_product_links():
+    """Live 2026-11-02 (rpt_64ad6f4a34dccc5d915547ab, r1-c3-amazon-2): a 252-byte Jina read of an Amazon search page was stored
+    EMPTY / NO_PRODUCT_LINKS with the hint to add the links header the fetch plan already sends. Jina's own error JSON, or a Jina
+    read with no page in it (under READER_MIN_BYTES, or no content), is EMPTY / READER_FAILED with a plain reason."""
+    error = ('{"data":null,"code":422,"name":"AssertionFailureError","status":42206,"message":"Failed to goto https://www.amazon.com/s'
+             '?k=automatic+pet+feeder: net::ERR_ABORTED","readableMessage":"AssertionFailureError: Failed to goto"}')
+    bare = "Title: Amazon.com : automatic pet feeder\n\nURL Source: https://www.amazon.com/s?k=automatic+pet+feeder\n\nMarkdown Content:\n"
+    tiny = bare + "Loading...\n"
+    for raw, detail in ((error, "its own error 422 AssertionFailureError"), (bare, "a title and a URL, no page"),
+                        (tiny, "a title and a URL, no page")):
+        got = AR.parse_report_source("amazon", raw, kind="search")
+        assert (got["status"], got["records"], [r["code"] for r in got["refused"]]) == ("EMPTY", [], ["READER_FAILED"])
+        assert got["refused"][0]["why"] == (f"the reader returned only {len(raw.encode())} bytes ({detail}): a failed read, not a page; "
+                                            "run the round's script once more")
+        assert "X-With-Links-Summary" not in got["refused"][0]["why"]
+    page = AR.parse_report_source("alibaba", tiny.replace("amazon.com/s?k=automatic+pet+feeder",
+                                                          "alibaba.com/product-detail/Feeder_1600000000001.html"), kind="page")
+    assert [r["code"] for r in page["refused"]] == ["READER_FAILED"]                    # any source's Jina page read
+    assert AR.parse_report_source("amazon", error.replace('"code":422', '"code":200'), kind="search")["status"] == "UNRECOGNISED"
+    # the recorded pages are unaffected: block and check pages keep their codes, real pages their records, an empty Exa upload EMPTY_OUTPUT
+    for path in FIX.iterdir():
+        source = next(s for s in AR.REPORT_SOURCES if s in path.name)
+        for kind in AR.REPORT_KINDS:
+            got = AR.parse_report_source(source, path.read_text(encoding="utf-8"), kind=kind)
+            assert "READER_FAILED" not in {r["code"] for r in got["refused"]}, (path.name, kind)
+    assert [r["code"] for r in _parse("reddit", "exa_reddit_candle.out")["refused"]] == ["EMPTY_OUTPUT"]
+    assert [r["code"] for r in _parse("ebay", "jina_ebay_item_A.out", kind="page")["refused"]] == ["BLOCKED"]   # 261 bytes, still BLOCKED
+    assert _parse("amazon", "jina_amazon_search.out")["refused"][0]["code"] == "NO_PRODUCT_LINKS"                # a real page without links
 
 
 def test_relevance_is_judged_only_against_the_candidates_terms():
