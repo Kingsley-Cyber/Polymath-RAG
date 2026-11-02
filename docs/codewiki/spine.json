@@ -2058,7 +2058,7 @@
    "class": "user",
    "file": "orchestrator/orchestrator/api/product_report.py",
    "handler": "product_report_page",
-   "line": 1225,
+   "line": 1227,
    "method": "GET",
    "path": "/product/report/{report_id}",
    "ui": []
@@ -2067,7 +2067,7 @@
    "class": "user",
    "file": "orchestrator/orchestrator/api/product_report.py",
    "handler": "product_report_compile",
-   "line": 1111,
+   "line": 1113,
    "method": "POST",
    "path": "/product/report/{report_id}/compile",
    "ui": []
@@ -2094,7 +2094,7 @@
    "class": "user",
    "file": "orchestrator/orchestrator/api/product_report.py",
    "handler": "product_reports",
-   "line": 1248,
+   "line": 1250,
    "method": "GET",
    "path": "/product/reports",
    "ui": [
@@ -13110,7 +13110,19 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 612,
+     "line": 613,
+     "name": "SUPPLIER_TIER",
+     "value": "SUPPLIER_TIER_BELOW_MARKET"
+    },
+    {
+     "file": "adapters/ecommerce/python/report.py",
+     "line": 614,
+     "name": "SUPPLIER_TIER_WORDS",
+     "value": "check: price tier"
+    },
+    {
+     "file": "adapters/ecommerce/python/report.py",
+     "line": 616,
      "name": "LINK_SOURCES",
      "value": [
       [
@@ -13137,7 +13149,7 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 613,
+     "line": 617,
      "name": "MARKETS",
      "value": [
       [
@@ -13152,7 +13164,7 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 617,
+     "line": 621,
      "name": "AGENT_REACH_SOURCES",
      "value": [
       [
@@ -13175,19 +13187,19 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 618,
+     "line": 622,
      "name": "NEEDS_LOCAL_AGENT",
      "value": "Needs a local agent: nothing from {source} was uploaded for this report. Run the report's fetch script on a computer with Agent Reach (product_report_status gives it), then compile again."
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 620,
+     "line": 624,
      "name": "NOT_READ",
      "value": "{source} could not be read ({counts}): no data admitted."
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 621,
+     "line": 625,
      "name": "NOT_READ_ORDER",
      "value": [
       "BLOCKED",
@@ -13197,7 +13209,7 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 622,
+     "line": 626,
      "name": "MONEY_FIELDS",
      "value": [
       "sell_price_usd",
@@ -13212,7 +13224,7 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 626,
+     "line": 630,
      "name": "OFFER_MODELS",
      "value": {
       "dropship": "Dropship",
@@ -13221,13 +13233,13 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 627,
+     "line": 631,
      "name": "REQUIRES_US_STOCK",
      "value": "REQUIRES_US_STOCK"
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 629,
+     "line": 633,
      "name": "INBOUND_RULES",
      "value": {
       "MIN_CHARGE": "the stated minimum charge, \u00f7 MOQ",
@@ -13239,19 +13251,19 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 632,
+     "line": 636,
      "name": "BEST_CHANNEL_RULE",
      "value": "best channel = the highest margin before ads among the channels whose delivery verdict is PASS or WARN; a channel that FAILS delivery, or whose delivery or margin is UNKNOWN, is never the best"
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 638,
+     "line": 642,
      "name": "MAX_URL_CHARS",
      "value": 2048
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 870,
+     "line": 878,
      "name": "ASSUMPTION_RULES",
      "value": [
       [
@@ -13287,6 +13299,10 @@
        "CJ offers"
       ],
       [
+       "supplier_tier",
+       "Supplier price tier"
+      ],
+      [
        "alibaba",
        "Alibaba offers"
       ],
@@ -13302,7 +13318,7 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 929,
+     "line": 937,
      "name": "_ASSUMPTION_META",
      "value": [
       "url",
@@ -13321,13 +13337,13 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 1044,
+     "line": 1052,
      "name": "_CSS",
      "value": "\n:root{--bg:#f4f0e9;--surface:#fbf8f3;--ink:#2b2724;--muted:#7a716a;\n--accent:#c15f3c;--ok:#4a7a54;--bad:#a4432e;--hair:#d8d0c3}\n@media (prefers-color-scheme: dark){:root:not([data-theme=\"light\"]){\n--bg:#211e1b;--surface:#2a2622;--ink:#ece5db;--muted:#9a8f85;\n--accent:#d47a55;--ok:#7fae88;--bad:#c76a52;--hair:#3d3831}}\n:root[data-theme=\"dark\"]{--bg:#211e1b;--surface:#2a2622;--ink:#ece5db;\n--muted:#9a8f85;--accent:#d47a55;--ok:#7fae88;--bad:#c76a52;--hair:#3d3831}\nbody{background:var(--bg);color:var(--ink);margin:0;\nfont:17px/1.65 \"Iowan Old Style\",Palatino,Georgia,serif}\n.page{max-width:720px;margin:0 auto;padding:56px 24px 96px}\nheader{border-bottom:1px solid var(--hair);padding-bottom:32px;margin-bottom:40px}\n.eyebrow{font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;\ntext-transform:uppercase;color:var(--accent)}\nh1{font-size:34px;line-height:1.15;margin:14px 0 10px;text-wrap:balance;font-weight:600}\n.meta{color:var(--muted);font-size:14px}\n.verdict{display:inline-block;margin-top:16px;padding:6px 14px;border:1px solid;\nborder-radius:2px;font:600 13px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em}\n.v-ok{color:var(--ok);border-color:var(--ok)} .v-bad{color:var(--bad);border-color:var(--bad)}\nh2{font-size:15px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;\ncolor:var(--muted);border-bottom:1px solid var(--hair);padding-bottom:8px;margin:44px 0 18px}\n.bridge{list-style:none;padding:0;margin:0}\n.bridge li{padding:5px 0 5px 18px;border-left:2px solid var(--ok);position:relative}\n.bridge li.inferred{border-left-style:dashed;border-left-color:var(--accent)}\n.bridge li .tag{font:500 10px/1 ui-monospace,monospace;letter-spacing:.08em;\ntext-transform:uppercase;color:var(--muted);margin-left:8px}\ntable{width:100%;border-collapse:collapse;font-size:15px}\ntd,th{padding:8px 10px;border-bottom:1px solid var(--hair);text-align:left;vertical-align:top}\nth{font:600 11px/1.4 ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}\n.num{font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}\n.sat{color:var(--ok);font-weight:600}.unsat{color:var(--bad);font-weight:600}\nblockquote{margin:0 0 14px;padding:10px 16px;background:var(--surface);\nborder-left:3px solid var(--accent);font-style:italic}\nblockquote .src{display:block;margin-top:6px;font:12px/1.4 ui-monospace,monospace;\nfont-style:normal;color:var(--muted);word-break:break-all}\n.card{background:var(--surface);border:1px solid var(--hair);padding:18px 20px;margin:0 0 16px}\n.card h3{margin:0 0 4px;font-size:18px;font-weight:600}\n.card .econ{font:600 16px/1.4 ui-monospace,Menlo,monospace;color:var(--accent);margin:6px 0}\n.card .why{font-size:14px;color:var(--muted)}\n.pill{font:600 10px/1 ui-monospace,monospace;letter-spacing:.08em;padding:3px 8px;\nborder:1px solid var(--hair);border-radius:2px;color:var(--muted);text-transform:uppercase}\n.summary{background:var(--surface);border:1px solid var(--hair);padding:20px 24px;margin:0 0 8px}\n.mk{font-family:ui-monospace,Menlo,monospace;margin-right:6px}\n.mk-ok{color:var(--ok)}.mk-mid{color:var(--accent)}.mk-lo{color:var(--muted)}.mk-x{color:var(--bad)}\n.claims{list-style:none;padding:0;margin:0 0 10px}\n.claims li{padding:4px 0;border-bottom:1px dotted var(--hair)}\n.subhead{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);\nfont-weight:600;margin:18px 0 8px}\n.slides{margin:8px 0 0;padding-left:22px;font-size:14px}\nfooter{margin-top:56px;border-top:1px solid var(--hair);padding-top:16px;\ncolor:var(--muted);font-size:13px}\ndiv.scroll{overflow-x:auto}\n"
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 1106,
+     "line": 1114,
      "name": "_MARKS",
      "value": {
       "CONFIRMED": "\u25cf",
@@ -13352,7 +13368,7 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 1209,
+     "line": 1217,
      "name": "AUTHORITY",
      "value": {
       "AGENT": "AGENT INFERENCE",
@@ -13364,19 +13380,19 @@
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 1430,
+     "line": 1438,
      "name": "_DECISION_CSS",
-     "value": "\n.page.decision{max-width:980px}\n.dec table.dt{font-size:14px}\n.dec .dt td,.dec .dt th{padding:7px 9px}\n.dec td.n,.dec th.n{text-align:right;font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}\n.dec .chip{display:inline-block;font:600 10.5px/1.25 ui-monospace,Menlo,monospace;letter-spacing:.05em;padding:3px 6px;margin:1px 4px 3px 0;\nborder:1px solid currentColor;border-radius:3px;white-space:nowrap}\n.dec .chip-pass{color:var(--ok)}.dec .chip-warn{color:var(--accent)}.dec .chip-fail{color:var(--bad)}\n.dec .chip-unknown{color:var(--muted);border-style:dashed}\n.dec .chip-req{color:var(--ink);background:var(--surface);border-style:double;border-width:3px}\n.dec .req{font-size:13px;font-weight:600;color:var(--ink)}\n.dec th.op{white-space:nowrap}\n.dec .unk{font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:var(--muted)}\n.dec a{color:var(--accent);text-underline-offset:2px;overflow-wrap:anywhere}\n.dec .url{font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--muted);overflow-wrap:anywhere}\n.dec h2.ptitle{font-size:22px;line-height:1.25;letter-spacing:0;text-transform:none;color:var(--ink);border-bottom:2px solid var(--ink);margin-top:60px}\n.dec .minihead{font:600 12px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}\n.dec .caution{border-left:3px solid var(--bad);background:var(--surface);padding:8px 12px;font-size:14px;margin:10px 0}\n.dec .agent{border:1px dashed var(--accent);background:var(--surface);padding:12px 16px;margin:18px 0}\n.dec .agent .label{font:600 11px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}\n.dec ul.links{list-style:none;padding:0;margin:0}\n.dec ul.links li{padding:4px 0;border-bottom:1px dotted var(--hair);font-size:15px}\n.dec details{margin:14px 0}\n.dec summary{cursor:pointer;color:var(--muted);font-size:14px}\n.dec .sticky{position:sticky;left:0;background:var(--bg);z-index:1}\n.dec .best{color:var(--ok);font-weight:600;white-space:nowrap}\n@media (max-width:640px){.page{padding:28px 16px 64px}h1{font-size:26px}.dec table.dt{font-size:13px}\n.dec .dt td,.dec .dt th{padding:6px 6px}blockquote{padding:8px 12px}}\n"
+     "value": "\n.page.decision{max-width:980px}\n.dec table.dt{font-size:14px}\n.dec .dt td,.dec .dt th{padding:7px 9px}\n.dec td.n,.dec th.n{text-align:right;font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}\n.dec .chip{display:inline-block;font:600 10.5px/1.25 ui-monospace,Menlo,monospace;letter-spacing:.05em;padding:3px 6px;margin:1px 4px 3px 0;\nborder:1px solid currentColor;border-radius:3px;white-space:nowrap}\n.dec .chip-pass{color:var(--ok)}.dec .chip-warn{color:var(--accent)}.dec .chip-fail{color:var(--bad)}\n.dec .chip-unknown{color:var(--muted);border-style:dashed}\n.dec .chip-req{color:var(--ink);background:var(--surface);border-style:double;border-width:3px}\n.dec .req{font-size:13px;font-weight:600;color:var(--ink)}\n.dec .tier{font:600 11.5px/1.3 ui-monospace,Menlo,monospace;color:var(--bad);white-space:nowrap}\n.dec th.op{white-space:nowrap}\n.dec .unk{font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:var(--muted)}\n.dec a{color:var(--accent);text-underline-offset:2px;overflow-wrap:anywhere}\n.dec .url{font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--muted);overflow-wrap:anywhere}\n.dec h2.ptitle{font-size:22px;line-height:1.25;letter-spacing:0;text-transform:none;color:var(--ink);border-bottom:2px solid var(--ink);margin-top:60px}\n.dec .minihead{font:600 12px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}\n.dec .caution{border-left:3px solid var(--bad);background:var(--surface);padding:8px 12px;font-size:14px;margin:10px 0}\n.dec .agent{border:1px dashed var(--accent);background:var(--surface);padding:12px 16px;margin:18px 0}\n.dec .agent .label{font:600 11px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}\n.dec ul.links{list-style:none;padding:0;margin:0}\n.dec ul.links li{padding:4px 0;border-bottom:1px dotted var(--hair);font-size:15px}\n.dec details{margin:14px 0}\n.dec summary{cursor:pointer;color:var(--muted);font-size:14px}\n.dec .sticky{position:sticky;left:0;background:var(--bg);z-index:1}\n.dec .best{color:var(--ok);font-weight:600;white-space:nowrap}\n@media (max-width:640px){.page{padding:28px 16px 64px}h1{font-size:26px}.dec table.dt{font-size:13px}\n.dec .dt td,.dec .dt th{padding:6px 6px}blockquote{padding:8px 12px}}\n"
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 1459,
+     "line": 1468,
      "name": "_UNK",
      "value": "<span class='unk'>UNKNOWN</span>"
     },
     {
      "file": "adapters/ecommerce/python/report.py",
-     "line": 2209,
+     "line": 2237,
      "name": "DECISION_CLI_ERRORS",
      "value": [
       "DECISION_BUNDLE_UNREADABLE",
@@ -13405,23 +13421,23 @@
     {
      "does": "SWALLOWED: return fail('POLICY_UNAVAILABLE', exc)",
      "file": "adapters/ecommerce/python/report.py",
-     "line": 2241,
+     "line": 2269,
      "type": "Exception"
     },
     {
      "does": "SWALLOWED: return fail('UNIT_ECONOMICS_FAILED', exc)",
      "file": "adapters/ecommerce/python/report.py",
-     "line": 2245,
+     "line": 2273,
      "type": "Exception"
     }
    ],
    "files": [
     "adapters/ecommerce/python/report.py"
    ],
-   "hash": "ba86d1f12a3781dc",
+   "hash": "8798b1df5eee849a",
    "importers": [],
    "imports": [],
-   "lines": 2303,
+   "lines": 2331,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/adapters/ecommerce/python/report.py.md",
@@ -13660,10 +13676,10 @@
       "value"
      ],
      "doc": "`value` when it may be an anchor's href (an http(s) URL with a host), else None \u2014 it is then shown as text.",
-     "end": 649,
+     "end": 653,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 641,
+     "line": 645,
      "name": "safe_url"
     },
     {
@@ -13671,10 +13687,10 @@
       "v"
      ],
      "doc": "None, NaN, an empty string or the word UNKNOWN: a value the engine could not compute (shown as UNKNOWN, never blank).",
-     "end": 654,
+     "end": 658,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 652,
+     "line": 656,
      "name": "_unknown"
     },
     {
@@ -13682,22 +13698,11 @@
       "v"
      ],
      "doc": "A finite int / float, else None. A bool is not a number.",
-     "end": 659,
-     "file": "adapters/ecommerce/python/report.py",
-     "kind": "def",
-     "line": 657,
-     "name": "_number"
-    },
-    {
-     "args": [
-      "v"
-     ],
-     "doc": "",
      "end": 663,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 662,
-     "name": "_dict"
+     "line": 661,
+     "name": "_number"
     },
     {
      "args": [
@@ -13708,6 +13713,17 @@
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
      "line": 666,
+     "name": "_dict"
+    },
+    {
+     "args": [
+      "v"
+     ],
+     "doc": "",
+     "end": 671,
+     "file": "adapters/ecommerce/python/report.py",
+     "kind": "def",
+     "line": 670,
      "name": "_dicts"
     },
     {
@@ -13715,10 +13731,10 @@
       "v"
      ],
      "doc": "The delivery verdict as the engine wrote it (upper-cased); a missing one is UNKNOWN.",
-     "end": 672,
+     "end": 676,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 670,
+     "line": 674,
      "name": "_verdict"
     },
     {
@@ -13730,10 +13746,10 @@
       "path"
      ],
      "doc": "One channel line as the model wrote it (unit_economics `_line`): the offer it prices and its supply model, the money fields",
-     "end": 692,
+     "end": 697,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 675,
+     "line": 679,
      "name": "_line_row"
     },
     {
@@ -13743,10 +13759,10 @@
       "receipts"
      ],
      "doc": "One row per channel \u2014 its best offer's line, the other offers' lines under `alternatives` \u2014 the plan's channels first in their",
-     "end": 705,
+     "end": 710,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 695,
+     "line": 700,
      "name": "_channel_rows"
     },
     {
@@ -13755,10 +13771,10 @@
       "rows"
      ],
      "doc": "The model's own `best_channel` when it names one; else BEST_CHANNEL_RULE over the rows (the first in channel order on a tie).",
-     "end": 722,
+     "end": 729,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 708,
+     "line": 713,
      "name": "_best_channel"
     },
     {
@@ -13767,10 +13783,10 @@
       "admission"
      ],
      "doc": "",
-     "end": 729,
+     "end": 736,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 725,
+     "line": 732,
      "name": "_market_row"
     },
     {
@@ -13779,10 +13795,10 @@
       "text"
      ],
      "doc": "",
-     "end": 735,
+     "end": 742,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 732,
+     "line": 739,
      "name": "_link_entry"
     },
     {
@@ -13793,10 +13809,10 @@
       "comments"
      ],
      "doc": "Links per source (CJ, Alibaba, Amazon, eBay, Reddit): the model's own `links` when it carries them, else the offers' and",
-     "end": 760,
+     "end": 767,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 738,
+     "line": 745,
      "name": "_product_links"
     },
     {
@@ -13804,10 +13820,10 @@
       "url"
      ],
      "doc": "One page once: the scheme, a `www.` and a trailing slash do not make another link.",
-     "end": 766,
+     "end": 773,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 763,
+     "line": 770,
      "name": "_link_key"
     },
     {
@@ -13815,10 +13831,10 @@
       "req"
      ],
      "doc": "unit_economics' own words for an inventory offer's precondition (contract C5): \"requires holding US stock: first stock in N days,",
-     "end": 780,
+     "end": 787,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 769,
+     "line": 776,
      "name": "_stock_words"
     },
     {
@@ -13826,10 +13842,10 @@
       "offers"
      ],
      "doc": "The US-stock caution (plan \u00a71: a US\u2192US freight quote does NOT prove US stock), per offer that quotes a US origin.",
-     "end": 798,
+     "end": 805,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 783,
+     "line": 790,
      "name": "_us_stock_notes"
     },
     {
@@ -13839,10 +13855,10 @@
       "what_if"
      ],
      "doc": "The parts a what-if keeps from the channel's line for the same offer (unit_economics `_sensitivity`: same offer, same price, same",
-     "end": 808,
+     "end": 816,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 801,
+     "line": 808,
      "name": "_base_line"
     },
     {
@@ -13851,10 +13867,10 @@
       "lines"
      ],
      "doc": "Each what-if the model carries (the TikTok 8 % fee first) \u2014 unit_economics writes {rate_pct, status, channels: {channel: line}} \u2014",
-     "end": 825,
+     "end": 833,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 811,
+     "line": 819,
      "name": "_sensitivity_blocks"
     },
     {
@@ -13863,10 +13879,10 @@
       "rid"
      ],
      "doc": "The formula of the receipt whose id is `rid` (unit_economics: a receipt's id is the number's path in the product).",
-     "end": 830,
+     "end": 838,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 828,
+     "line": 836,
      "name": "_receipt_formula"
     },
     {
@@ -13876,10 +13892,10 @@
       "admission"
      ],
      "doc": "",
-     "end": 866,
+     "end": 874,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 833,
+     "line": 841,
      "name": "_decision_product"
     },
     {
@@ -13887,10 +13903,10 @@
       "s"
      ],
      "doc": "One source of a rule: its title, URL, the date it was read and (when known) published, and what it backs.",
-     "end": 884,
+     "end": 892,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 877,
+     "line": 885,
      "name": "_source"
     },
     {
@@ -13898,10 +13914,10 @@
       "a"
      ],
      "doc": "The appendix: the model's rules (each with its source), every channel's fee and delivery rule with the pages they were read from,",
-     "end": 926,
+     "end": 934,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 887,
+     "line": 895,
      "name": "_assumptions_block"
     },
     {
@@ -13909,10 +13925,10 @@
       "path"
      ],
      "doc": "",
-     "end": 933,
+     "end": 941,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 932,
+     "line": 940,
      "name": "_assumption_label"
     },
     {
@@ -13922,10 +13938,10 @@
       "unconfirmed"
      ],
      "doc": "One fee / rule / setting: what it says, its source, the URL(s) it was read from, the date, and whether it is UNCONFIRMED.",
-     "end": 948,
+     "end": 956,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 936,
+     "line": 944,
      "name": "_assumption_row"
     },
     {
@@ -13935,10 +13951,10 @@
       "unconfirmed"
      ],
      "doc": "Every assumption the model lists, flattened: a mapping whose values are all plain (no nested mapping) is ONE item; a list under",
-     "end": 964,
+     "end": 972,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 951,
+     "line": 959,
      "name": "_assumption_rows"
     },
     {
@@ -13946,10 +13962,10 @@
       "v"
      ],
      "doc": "A count from the bundle: a whole number \u2265 0, anything else 0.",
-     "end": 969,
+     "end": 977,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 967,
+     "line": 975,
      "name": "_whole"
     },
     {
@@ -13957,10 +13973,10 @@
       "sources"
      ],
      "doc": "Contract C11: the bundle's `sources` ({source: {planned, received, statuses: {STATUS: n}}}, product_report.build_bundle) as rows",
-     "end": 1001,
+     "end": 1009,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 972,
+     "line": 980,
      "name": "_agent_reach"
     },
     {
@@ -13972,10 +13988,10 @@
       "sources"
      ],
      "doc": "The decision section of a ReportModel: the products in the model's order, then the assumptions appendix \u2014 and, when the bundle",
-     "end": 1017,
+     "end": 1025,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1004,
+     "line": 1012,
      "name": "_decision_block"
     },
     {
@@ -13986,10 +14002,10 @@
       "meta"
      ],
      "doc": "ReportModel for the DECISION layout from the decision model `unit_economics.compute(bundle, policy)` returns (plan \u00a74.4).",
-     "end": 1040,
+     "end": 1048,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1020,
+     "line": 1028,
      "name": "build_model_from_bundle"
     },
     {
@@ -13997,10 +14013,10 @@
       "x"
      ],
      "doc": "",
-     "end": 1100,
+     "end": 1108,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1099,
+     "line": 1107,
      "name": "_e"
     },
     {
@@ -14008,10 +14024,10 @@
       "st"
      ],
      "doc": "",
-     "end": 1117,
+     "end": 1125,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1116,
+     "line": 1124,
      "name": "_state_mark"
     },
     {
@@ -14020,10 +14036,10 @@
       "contradicted"
      ],
      "doc": "",
-     "end": 1125,
+     "end": 1133,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1120,
+     "line": 1128,
      "name": "_mark"
     },
     {
@@ -14032,19 +14048,19 @@
       "layout"
      ],
      "doc": "",
-     "end": 1204,
+     "end": 1212,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1128,
+     "line": 1136,
      "name": "_render_intelligence"
     },
     {
      "args": [],
      "doc": "",
-     "end": 1213,
+     "end": 1221,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1212,
+     "line": 1220,
      "name": "_auth"
     },
     {
@@ -14054,10 +14070,10 @@
       "what"
      ],
      "doc": "A list cut for the page says so (gap B-16); the ReportModel keeps every item.",
-     "end": 1222,
+     "end": 1230,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1220,
+     "line": 1228,
      "name": "_showing"
     },
     {
@@ -14066,10 +14082,10 @@
       "boundary"
      ],
      "doc": "Index of the first INFERRED hop: the hop `first_inference_at` names, compared stripped as the bridge law compares it. A",
-     "end": 1229,
+     "end": 1237,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1225,
+     "line": 1233,
      "name": "_first_inferred_hop"
     },
     {
@@ -14077,10 +14093,10 @@
       "g"
      ],
      "doc": "Population leads, lived clusters and lived situations \u2014 the engine's lived world, computed in governed mode from what TrailSignal ADMITTED.",
-     "end": 1257,
+     "end": 1265,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1232,
+     "line": 1240,
      "name": "_render_lived_world"
     },
     {
@@ -14088,10 +14104,10 @@
       "t"
      ],
      "doc": "\u00a713.2: what was abstracted, what each hypothesis declares as its origin, the bridge it earned \u2014 authorities kept apart.",
-     "end": 1296,
+     "end": 1304,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1260,
+     "line": 1268,
      "name": "_render_transduction"
     },
     {
@@ -14099,10 +14115,10 @@
       "pr"
      ],
      "doc": "\u00a713.3: GENERATED concepts on the left of every row, EXISTING products under them \u2014 never one list.",
-     "end": 1323,
+     "end": 1331,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1299,
+     "line": 1307,
      "name": "_render_product_reality"
     },
     {
@@ -14110,10 +14126,10 @@
       "r"
      ],
      "doc": "The record's global polarity and, for every hypothesis where TrailSignal's stated relation differs from it (ADR-069), what the",
-     "end": 1331,
+     "end": 1339,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1326,
+     "line": 1334,
      "name": "_polarity_cell"
     },
     {
@@ -14121,10 +14137,10 @@
       "g"
      ],
      "doc": "The governed block (docs/27): TrailSignal's record VERBATIM, the hypotheses as the adapter's ledger holds them, and",
-     "end": 1423,
+     "end": 1431,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1334,
+     "line": 1342,
      "name": "_render_governed"
     },
     {
@@ -14132,10 +14148,10 @@
       "v"
      ],
      "doc": "Dollars to the cent \u2014 or to the precision the engine kept (a stated Alibaba tier of $0.035 stays $0.035), so that a margin row",
-     "end": 1469,
+     "end": 1478,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1462,
+     "line": 1471,
      "name": "_usd"
     },
     {
@@ -14143,10 +14159,10 @@
       "v"
      ],
      "doc": "A percentage as the engine wrote it (margin_pct is in percent: 24.1 is 24.1 %).",
-     "end": 1477,
+     "end": 1486,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1472,
+     "line": 1481,
      "name": "_pct"
     },
     {
@@ -14154,10 +14170,10 @@
       "v"
      ],
      "doc": "A fee rate as unit_economics writes it: in percent (rate_pct 8.0 is 8 %).",
-     "end": 1483,
+     "end": 1492,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1480,
+     "line": 1489,
      "name": "_rate"
     },
     {
@@ -14165,10 +14181,10 @@
       "v"
      ],
      "doc": "",
-     "end": 1490,
+     "end": 1499,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1486,
+     "line": 1495,
      "name": "_count"
     },
     {
@@ -14177,10 +14193,10 @@
       "hi"
      ],
      "doc": "",
-     "end": 1499,
+     "end": 1508,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1493,
+     "line": 1502,
      "name": "_days"
     },
     {
@@ -14189,10 +14205,10 @@
       "empty"
      ],
      "doc": "",
-     "end": 1503,
+     "end": 1512,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1502,
+     "line": 1511,
      "name": "_text"
     },
     {
@@ -14200,10 +14216,10 @@
       "v"
      ],
      "doc": "A receipt's or an assumption's value as text (escaped): numbers as the engine wrote them, structures flattened.",
-     "end": 1518,
+     "end": 1527,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1506,
+     "line": 1515,
      "name": "_plain"
     },
     {
@@ -14212,10 +14228,10 @@
       "prefix"
      ],
      "doc": "",
-     "end": 1524,
+     "end": 1533,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1521,
+     "line": 1530,
      "name": "_chip"
     },
     {
@@ -14224,10 +14240,10 @@
       "cap"
      ],
      "doc": "",
-     "end": 1530,
+     "end": 1539,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1527,
+     "line": 1536,
      "name": "_short_url"
     },
     {
@@ -14236,10 +14252,10 @@
       "text"
      ],
      "doc": "An http(s) URL becomes a real anchor (a new tab, no opener, no referrer); any other scheme stays text, shown so a reader sees it.",
-     "end": 1541,
+     "end": 1550,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1533,
+     "line": 1542,
      "name": "_link"
     },
     {
@@ -14247,10 +14263,10 @@
       "admission"
      ],
      "doc": "",
-     "end": 1545,
+     "end": 1554,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1544,
+     "line": 1553,
      "name": "_pill"
     },
     {
@@ -14258,10 +14274,10 @@
       "model"
      ],
      "doc": "",
-     "end": 1549,
+     "end": 1558,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1548,
+     "line": 1557,
      "name": "_model_label"
     },
     {
@@ -14269,10 +14285,10 @@
       "req"
      ],
      "doc": "The US stock an inventory line requires, beside its verdict chip: unit_economics' REQUIRES_US_STOCK and its words.",
-     "end": 1557,
+     "end": 1566,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1552,
+     "line": 1561,
      "name": "_requirement"
     },
     {
@@ -14280,11 +14296,33 @@
       "delivery"
      ],
      "doc": "",
-     "end": 1566,
+     "end": 1575,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1564,
+     "line": 1573,
      "name": "_cautions"
+    },
+    {
+     "args": [
+      "x"
+     ],
+     "doc": "Contract C12: the SUPPLIER_TIER_BELOW_MARKET caution an offer or a line carries ({code, text}), or None.",
+     "end": 1580,
+     "file": "adapters/ecommerce/python/report.py",
+     "kind": "def",
+     "line": 1578,
+     "name": "_tier"
+    },
+    {
+     "args": [
+      "x"
+     ],
+     "doc": "Beside a margin: the C12 caution in words, when the line (or the what-if's base line) carries it.",
+     "end": 1585,
+     "file": "adapters/ecommerce/python/report.py",
+     "kind": "def",
+     "line": 1583,
+     "name": "_tier_tag"
     },
     {
      "args": [
@@ -14292,10 +14330,10 @@
       "governed"
      ],
      "doc": "The decision section (plan \u00a74.5): the summary table, then per product links \u00b7 demand \u00b7 supply \u00b7 market \u00b7 margin per channel",
-     "end": 1617,
+     "end": 1637,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1569,
+     "line": 1588,
      "name": "_render_decision"
     },
     {
@@ -14303,10 +14341,10 @@
       "sources"
      ],
      "doc": "Each source as its link (or its title when it has no http(s) URL) with the date it was read and, when known, published.",
-     "end": 1626,
+     "end": 1646,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1620,
+     "line": 1640,
      "name": "_source_links"
     },
     {
@@ -14314,10 +14352,10 @@
       "o"
      ],
      "doc": "",
-     "end": 1630,
+     "end": 1650,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1629,
+     "line": 1649,
      "name": "_offer_name"
     },
     {
@@ -14325,10 +14363,10 @@
       "o"
      ],
      "doc": "An offer's unit cost \u2014 or, for a CJ product whose details were not read (unit_economics: unit cost UNKNOWN, `from_price_usd`",
-     "end": 1638,
+     "end": 1658,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1633,
+     "line": 1653,
      "name": "_unit_cell"
     },
     {
@@ -14338,10 +14376,10 @@
       "reach"
      ],
      "doc": "One product's sections. `reach` (contract C11, `_agent_reach`): an Agent Reach source with a note says it plainly in its own",
-     "end": 1847,
+     "end": 1874,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1641,
+     "line": 1661,
      "name": "_render_decision_product"
     },
     {
@@ -14349,10 +14387,10 @@
       "c"
      ],
      "doc": "One channel line's cells: its supply model (and where its shipping figure comes from), the offer it prices, the money as the",
-     "end": 1871,
+     "end": 1899,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1850,
+     "line": 1877,
      "name": "_line_cells"
     },
     {
@@ -14360,10 +14398,10 @@
       "dec"
      ],
      "doc": "",
-     "end": 1912,
+     "end": 1940,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1874,
+     "line": 1902,
      "name": "_render_assumptions"
     },
     {
@@ -14372,10 +14410,10 @@
       "summary_md"
      ],
      "doc": "The DECISION layout: the report header, the decision section, the footer.",
-     "end": 1933,
+     "end": 1961,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1915,
+     "line": 1943,
      "name": "_render_decision_page"
     },
     {
@@ -14385,10 +14423,10 @@
       "summary_md"
      ],
      "doc": "",
-     "end": 2205,
+     "end": 2233,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 1936,
+     "line": 1964,
      "name": "render"
     },
     {
@@ -14396,10 +14434,10 @@
       "bundle"
      ],
      "doc": "What the page shows from the bundle itself \u2014 compute never reads these: report_id, title, ship_to, the as-of date, and `sources`",
-     "end": 2218,
+     "end": 2246,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 2213,
+     "line": 2241,
      "name": "_bundle_meta"
     },
     {
@@ -14409,19 +14447,19 @@
       "decision_out"
      ],
      "doc": "`report.py decision`: ONE engine process loads the policy, calls `unit_economics.compute(bundle, policy)` (plan \u00a74.4), builds the",
-     "end": 2256,
+     "end": 2284,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 2221,
+     "line": 2249,
      "name": "decision_page"
     },
     {
      "args": [],
      "doc": "",
-     "end": 2298,
+     "end": 2326,
      "file": "adapters/ecommerce/python/report.py",
      "kind": "def",
-     "line": 2259,
+     "line": 2287,
      "name": "main"
     }
    ]
@@ -15237,7 +15275,13 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 62,
+     "line": 59,
+     "name": "SUPPLIER_TIER_BELOW_MARKET",
+     "value": "SUPPLIER_TIER_BELOW_MARKET"
+    },
+    {
+     "file": "adapters/ecommerce/python/unit_economics.py",
+     "line": 66,
      "name": "_ORIGIN_NAMES",
      "value": {
       "CN": "China",
@@ -15246,7 +15290,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 63,
+     "line": 67,
      "name": "_ORIGIN_CODES",
      "value": {
       "china": "CN",
@@ -15265,10 +15309,10 @@
    "files": [
     "adapters/ecommerce/python/unit_economics.py"
    ],
-   "hash": "8a679931e93d73e5",
+   "hash": "35809ee36278a305",
    "importers": [],
    "imports": [],
-   "lines": 1720,
+   "lines": 1774,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/adapters/ecommerce/python/unit_economics.py.md",
@@ -15279,10 +15323,10 @@
    "symbols": [
     {
      "doc": "The bundle, a setting or the policy cannot be modelled as given: nothing is computed (fail closed, never a guess).",
-     "end": 59,
+     "end": 63,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "class",
-     "line": 58,
+     "line": 62,
      "methods": [],
      "name": "DecisionInputError"
     },
@@ -15291,10 +15335,10 @@
       "value"
      ],
      "doc": "A finite, non-negative number (int, float, Decimal or a bare numeric string such as \"3.27\" / \"1,234\") -> Decimal, else None.",
-     "end": 96,
+     "end": 100,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 80,
+     "line": 84,
      "name": "_dec"
     },
     {
@@ -15302,10 +15346,10 @@
       "value"
      ],
      "doc": "A US-dollar amount: a number, or text the engine's own price parser reads as dollars (executors._parse_price: a currency other",
-     "end": 104,
+     "end": 108,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 99,
+     "line": 103,
      "name": "_usd"
     },
     {
@@ -15313,10 +15357,10 @@
       "value"
      ],
      "doc": "",
-     "end": 115,
+     "end": 119,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 107,
+     "line": 111,
      "name": "_usd_range"
     },
     {
@@ -15324,10 +15368,10 @@
       "d"
      ],
      "doc": "",
-     "end": 119,
+     "end": 123,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 118,
+     "line": 122,
      "name": "_cents"
     },
     {
@@ -15335,10 +15379,10 @@
       "d"
      ],
      "doc": "A per-unit share of a total (inbound freight \u00f7 MOQ): half-up to 4 decimals, so the share \u00d7 MOQ gives the total back to the cent.",
-     "end": 124,
+     "end": 128,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 122,
+     "line": 126,
      "name": "_unit4"
     },
     {
@@ -15346,10 +15390,10 @@
       "value"
      ],
      "doc": "The JSON form of a number: Decimal -> float (shortest repr), int stays int, None -> \"UNKNOWN\".",
-     "end": 133,
+     "end": 137,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 127,
+     "line": 131,
      "name": "_out"
     },
     {
@@ -15357,10 +15401,10 @@
       "value"
      ],
      "doc": "A non-negative whole number (int, integral float, \"12\", \"1,234\") -> int, else None.",
-     "end": 139,
+     "end": 143,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 136,
+     "line": 140,
      "name": "_int"
     },
     {
@@ -15368,10 +15412,10 @@
       "value"
      ],
      "doc": "A count as a listing shows it: 2000, \"2,000\", \"2K+ bought in past month\", \"1.5K\" -> int; anything else -> None.",
-     "end": 153,
+     "end": 157,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 142,
+     "line": 146,
      "name": "_count"
     },
     {
@@ -15379,10 +15423,10 @@
       "value"
      ],
      "doc": "Reddit points (may be negative): 81, \"81\", \"81 points\", \"-3\" -> int.",
-     "end": 165,
+     "end": 169,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 156,
+     "line": 160,
      "name": "_points"
     },
     {
@@ -15392,10 +15436,10 @@
       "text"
      ],
      "doc": "(days_min, days_max) from numbers, or from text such as \"4-9\", \"7 to 15 days\", \"12\".",
-     "end": 180,
+     "end": 184,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 168,
+     "line": 172,
      "name": "_days"
     },
     {
@@ -15403,10 +15447,10 @@
       "value"
      ],
      "doc": "\"2026-10-12\", \"2026-10-12T08:00:00Z\" -> \"2026-10-12\"; anything else (relative text such as \"3 weeks ago\") -> None.",
-     "end": 190,
+     "end": 194,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 183,
+     "line": 187,
      "name": "_iso_date"
     },
     {
@@ -15415,10 +15459,10 @@
       "read_as"
      ],
      "doc": "The most business days `days` supplier days can be. Read as calendar days, the worst case is the run of days holding the",
-     "end": 199,
+     "end": 203,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 193,
+     "line": 197,
      "name": "_business_days_max"
     },
     {
@@ -15427,10 +15471,10 @@
       "n"
      ],
      "doc": "",
-     "end": 204,
+     "end": 208,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 202,
+     "line": 206,
      "name": "_clip"
     },
     {
@@ -15438,10 +15482,10 @@
       "d"
      ],
      "doc": "A quantity as people write it: Decimal(\"50.0\") -> \"50\", Decimal(\"17.00\") -> \"17\", Decimal(\"0.170\") -> \"0.17\".",
-     "end": 209,
+     "end": 213,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 207,
+     "line": 211,
      "name": "_plain"
     },
     {
@@ -15450,18 +15494,18 @@
       "word"
      ],
      "doc": "",
-     "end": 213,
+     "end": 217,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 212,
+     "line": 216,
      "name": "_plural"
     },
     {
      "doc": "The receipts of one product. Every row: {id: the value's path in the product, formula, inputs, result: the value}.",
-     "end": 233,
+     "end": 237,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "class",
-     "line": 217,
+     "line": 221,
      "methods": [
       "__init__",
       "add",
@@ -15471,10 +15515,10 @@
     },
     {
      "doc": "Receipts whose final path is known only later (a channel line's position is decided after every offer is priced).",
-     "end": 248,
+     "end": 252,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "class",
-     "line": 236,
+     "line": 240,
      "methods": [
       "__init__",
       "add",
@@ -15487,10 +15531,10 @@
       "policy"
      ],
      "doc": "`sales_channels` and `report_settings`, checked: fail closed on a missing section, an unknown formula kind or a source id",
-     "end": 280,
+     "end": 284,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 252,
+     "line": 256,
      "name": "_policy"
     },
     {
@@ -15500,10 +15544,10 @@
       "rs"
      ],
      "doc": "The report's settings over `report_settings.defaults`: shopify_monthly_orders (a whole number \u2265 1), returns_rate (0 \u2264 r < 1),",
-     "end": 323,
+     "end": 327,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 283,
+     "line": 287,
      "name": "_settings"
     },
     {
@@ -15512,10 +15556,10 @@
       "rs"
      ],
      "doc": "",
-     "end": 328,
+     "end": 332,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 326,
+     "line": 330,
      "name": "_policy_hash"
     },
     {
@@ -15523,10 +15567,10 @@
       "items"
      ],
      "doc": "Records as handed over: a list of records, or of parse results ({status, records: [...]}) whose records are taken.",
-     "end": 340,
+     "end": 344,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 332,
+     "line": 336,
      "name": "_records"
     },
     {
@@ -15534,10 +15578,10 @@
       "record"
      ],
      "doc": "The listing parse nests its fields under `listing`; the report parse may not. Either way: one flat dict.",
-     "end": 346,
+     "end": 350,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 343,
+     "line": 347,
      "name": "_flat"
     },
     {
@@ -15545,10 +15589,10 @@
       "record"
      ],
      "doc": "",
-     "end": 350,
+     "end": 354,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 349,
+     "line": 353,
      "name": "_filled"
     },
     {
@@ -15557,10 +15601,10 @@
       "key"
      ],
      "doc": "Records that name the same thing (an Exa result in round 1 and its product page in round 2) become one: field by field, the",
-     "end": 373,
+     "end": 377,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 353,
+     "line": 357,
      "name": "_merge"
     },
     {
@@ -15568,10 +15612,10 @@
       "url"
      ],
      "doc": "",
-     "end": 383,
+     "end": 387,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 376,
+     "line": 380,
      "name": "_norm_url"
     },
     {
@@ -15579,10 +15623,10 @@
       "value"
      ],
      "doc": "",
-     "end": 390,
+     "end": 394,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 386,
+     "line": 390,
      "name": "_origin"
     },
     {
@@ -15590,10 +15634,10 @@
       "p"
      ],
      "doc": "CJ's details were not read for this product (the host reads only the best match, or the detail call failed): its price is",
-     "end": 397,
+     "end": 401,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 394,
+     "line": 398,
      "name": "_search_price_only"
     },
     {
@@ -15601,10 +15645,10 @@
       "v"
      ],
      "doc": "A weight in grams as CJ states it: a number, or text whose numbers are read as a range \u2014 its heavier end.",
-     "end": 407,
+     "end": 411,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 400,
+     "line": 404,
      "name": "_grams"
     },
     {
@@ -15612,10 +15656,10 @@
       "p"
      ],
      "doc": "What the host's variant rule left out (host_data `choose_variant`, B2): (how many \u2014 the rule's own count, else the length of",
-     "end": 421,
+     "end": 425,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 410,
+     "line": 414,
      "name": "_dropped"
     },
     {
@@ -15623,10 +15667,10 @@
       "rule"
      ],
      "doc": "The host's `variant_rule` in words: its text, or the words a structured rule carries (host_data: {\"rule\": VARIANT_RULE, ...}).",
-     "end": 432,
+     "end": 436,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 424,
+     "line": 428,
      "name": "_rule_text"
     },
     {
@@ -15635,10 +15679,10 @@
       "pool"
      ],
      "doc": "The variant the host's variant rule costs (B2: the cheapest variant can be a part \u2014 live, a pet fountain's cheapest variants were",
-     "end": 446,
+     "end": 450,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 435,
+     "line": 439,
      "name": "_host_variant"
     },
     {
@@ -15647,10 +15691,10 @@
       "cj_moq"
      ],
      "doc": "",
-     "end": 520,
+     "end": 524,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 449,
+     "line": 453,
      "name": "_cj_offers"
     },
     {
@@ -15658,10 +15702,10 @@
       "p"
      ],
      "doc": "The CJ product's weight in grams (a range such as \"120-150\" reads as its heavier end); the cheapest variant's weight when the",
-     "end": 537,
+     "end": 541,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 523,
+     "line": 527,
      "name": "_cj_weight"
     },
     {
@@ -15669,10 +15713,10 @@
       "rec"
      ],
      "doc": "[(price, min qty, max qty, price was a range)] from structured tiers, or from the listing parse's `price_as_listed`",
-     "end": 572,
+     "end": 576,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 540,
+     "line": 544,
      "name": "_tiers"
     },
     {
@@ -15680,10 +15724,10 @@
       "text"
      ],
      "doc": "",
-     "end": 583,
+     "end": 587,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 575,
+     "line": 579,
      "name": "_qty_range"
     },
     {
@@ -15692,10 +15736,10 @@
       "tiers"
      ],
      "doc": "",
-     "end": 600,
+     "end": 604,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 586,
+     "line": 590,
      "name": "_alibaba_moq"
     },
     {
@@ -15703,10 +15747,10 @@
       "rec"
      ],
      "doc": "",
-     "end": 614,
+     "end": 618,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 603,
+     "line": 607,
      "name": "_alibaba_weight_g"
     },
     {
@@ -15714,10 +15758,10 @@
       "terms"
      ],
      "doc": "Why a record the parser judged off-topic is left out \u2014 in words that hold for whatever relevance rule the parser applies.",
-     "end": 620,
+     "end": 624,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 617,
+     "line": 621,
      "name": "_off_topic"
     },
     {
@@ -15729,10 +15773,10 @@
       "terms"
      ],
      "doc": "A record the parser judged NOT to be about the candidate (`relevant: false`) is left out and listed with why \u2014 the host side",
-     "end": 629,
+     "end": 633,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 623,
+     "line": 627,
      "name": "_relevant"
     },
     {
@@ -15747,10 +15791,10 @@
       "quote_qty"
      ],
      "doc": "Per-unit shipping of an Alibaba offer and the rule that set it -> {cost, rule, formula, inputs, missing}.",
-     "end": 679,
+     "end": 683,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 632,
+     "line": 636,
      "name": "_alibaba_shipping"
     },
     {
@@ -15763,10 +15807,10 @@
       "terms"
      ],
      "doc": "",
-     "end": 758,
+     "end": 762,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 682,
+     "line": 686,
      "name": "_alibaba_offers"
     },
     {
@@ -15775,10 +15819,10 @@
       "settings"
      ],
      "doc": "The ways to ship ONE order from the seller's own US stock: (every CJ US\u2192US quote of the candidate's CJ products \u2014 a proxy, each",
-     "end": 779,
+     "end": 783,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 761,
+     "line": 765,
      "name": "_last_miles"
     },
     {
@@ -15789,10 +15833,10 @@
       "tolerance"
      ],
      "doc": "An inventory offer's last-mile options and, when it has none, why. A CJ US\u2192US quote stands in for shipping THIS item only when the",
-     "end": 798,
+     "end": 802,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 782,
+     "line": 786,
      "name": "_last_mile_for"
     },
     {
@@ -15807,10 +15851,10 @@
       "terms"
      ],
      "doc": "(internal offers, their JSON form) \u2014 receipts for every number of the JSON form.",
-     "end": 904,
+     "end": 908,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 801,
+     "line": 805,
      "name": "_offers"
     },
     {
@@ -15818,10 +15862,10 @@
       "values"
      ],
      "doc": "",
-     "end": 915,
+     "end": 919,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 908,
+     "line": 912,
      "name": "_stats"
     },
     {
@@ -15829,10 +15873,10 @@
       "text"
      ],
      "doc": "A listing's shipping line: \"Free shipping\" / \"Free delivery\" = 0, \"+$4.99 shipping\" = 4.99, anything else = not stated.",
-     "end": 924,
+     "end": 928,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 918,
+     "line": 922,
      "name": "_shipping_text"
     },
     {
@@ -15843,10 +15887,10 @@
       "terms"
      ],
      "doc": "(amazon comps, ebay comps, excluded): each comp {title, url, price, shipping (None = not stated), total, source}.",
-     "end": 987,
+     "end": 991,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 927,
+     "line": 931,
      "name": "_comps"
     },
     {
@@ -15859,10 +15903,10 @@
       "terms"
      ],
      "doc": "",
-     "end": 1033,
+     "end": 1037,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 990,
+     "line": 994,
      "name": "_market"
     },
     {
@@ -15870,10 +15914,10 @@
       "rec"
      ],
      "doc": "",
-     "end": 1043,
+     "end": 1047,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1037,
+     "line": 1041,
      "name": "_subreddit"
     },
     {
@@ -15884,10 +15928,10 @@
       "terms"
      ],
      "doc": "",
-     "end": 1131,
+     "end": 1135,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1046,
+     "line": 1050,
      "name": "_reddit"
     },
     {
@@ -15896,10 +15940,10 @@
       "book"
      ],
      "doc": "",
-     "end": 1165,
+     "end": 1169,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1134,
+     "line": 1138,
      "name": "_amazon_demand"
     },
     {
@@ -15907,10 +15951,10 @@
       "opt"
      ],
      "doc": "(the quote's max days \u2014 the carrier's days, handling comes on top \u2014, how they read).",
-     "end": 1177,
+     "end": 1181,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1169,
+     "line": 1173,
      "name": "_option_days"
     },
     {
@@ -15918,10 +15962,10 @@
       "days"
      ],
      "doc": "The most calendar days `days` business days can span: a run that starts on a weekend (5 -> 7, 6 -> 10).",
-     "end": 1182,
+     "end": 1186,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1180,
+     "line": 1184,
      "name": "_calendar_days_max"
     },
     {
@@ -15931,10 +15975,10 @@
       "read_as"
      ],
      "doc": "(the most business days, the most calendar days) the quote's `n` days can be, and the unit they were read in: a quote that says",
-     "end": 1192,
+     "end": 1196,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1185,
+     "line": 1189,
      "name": "_day_counts"
     },
     {
@@ -15942,10 +15986,10 @@
       "offer"
      ],
      "doc": "An inventory offer's precondition (contract C5), in the words the report prints: \"requires holding US stock: first stock in N days,",
-     "end": 1201,
+     "end": 1205,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1195,
+     "line": 1199,
      "name": "_stock_note"
     },
     {
@@ -15953,10 +15997,10 @@
       "d"
      ],
      "doc": "A stated price as people write it: cents when it has no more ($11.00, $0.17), its own precision when it has ($0.035).",
-     "end": 1206,
+     "end": 1210,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1204,
+     "line": 1208,
      "name": "_price_text"
     },
     {
@@ -15964,10 +16008,10 @@
       "offer"
      ],
      "doc": "",
-     "end": 1215,
+     "end": 1219,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1209,
+     "line": 1213,
      "name": "_stock_detail"
     },
     {
@@ -15975,10 +16019,10 @@
       "n"
      ],
      "doc": "",
-     "end": 1219,
+     "end": 1223,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1218,
+     "line": 1222,
      "name": "_days_word"
     },
     {
@@ -15991,10 +16035,10 @@
       "settings"
      ],
      "doc": "One shipping option against one channel's delivery rule. Every clock that starts at the order counts the seller's handling",
-     "end": 1309,
+     "end": 1313,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1222,
+     "line": 1226,
      "name": "_evaluate"
     },
     {
@@ -16006,10 +16050,10 @@
       "unit"
      ],
      "doc": "The business-day sum a rule checks, said plainly: handling + the carrier's days (read as calendar days: the most business days",
-     "end": 1320,
+     "end": 1324,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1312,
+     "line": 1316,
      "name": "_business_sum"
     },
     {
@@ -16020,10 +16064,10 @@
       "rate_pct"
      ],
      "doc": "",
-     "end": 1353,
+     "end": 1357,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1324,
+     "line": 1328,
      "name": "_fees"
     },
     {
@@ -16031,11 +16075,46 @@
       "evals"
      ],
      "doc": "The cheapest option that PASSES the channel's rule; when none passes, the cheapest overall (its verdict says why).",
-     "end": 1363,
+     "end": 1367,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1356,
+     "line": 1360,
      "name": "_choose"
+    },
+    {
+     "args": [
+      "rs"
+     ],
+     "doc": "Contract C12's two thresholds (policies report_settings): (supplier_tier_retail_share, supplier_tier_cost_share), defaults 0.5, 0.15.",
+     "end": 1373,
+     "file": "adapters/ecommerce/python/unit_economics.py",
+     "kind": "def",
+     "line": 1370,
+     "name": "_tier_shares"
+    },
+    {
+     "args": [
+      "share"
+     ],
+     "doc": "",
+     "end": 1377,
+     "file": "adapters/ecommerce/python/unit_economics.py",
+     "kind": "def",
+     "line": 1376,
+     "name": "_share_words"
+    },
+    {
+     "args": [
+      "offer",
+      "price",
+      "rs"
+     ],
+     "doc": "Contract C12: a CJ offer whose own suggested retail S is under supplier_tier_retail_share \u00d7 the market reference price R and",
+     "end": 1401,
+     "file": "adapters/ecommerce/python/unit_economics.py",
+     "kind": "def",
+     "line": 1380,
+     "name": "_tier_caution"
     },
     {
      "args": [
@@ -16048,10 +16127,10 @@
       "none_why"
      ],
      "doc": "One offer on one channel -> (line, its pending receipts, internal numbers). No offer: `none_why` says why (default: there is",
-     "end": 1467,
+     "end": 1509,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1366,
+     "line": 1404,
      "name": "_line"
     },
     {
@@ -16064,10 +16143,10 @@
       "book"
      ],
      "doc": "",
-     "end": 1498,
+     "end": 1540,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1470,
+     "line": 1512,
      "name": "_channels"
     },
     {
@@ -16081,10 +16160,10 @@
       "settings"
      ],
      "doc": "The channel's best line again at the sensitivity rate (TikTok's unconfirmed 8 %): same offer, same price, same returns.",
-     "end": 1531,
+     "end": 1573,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1501,
+     "line": 1543,
      "name": "_sensitivity"
     },
     {
@@ -16093,10 +16172,10 @@
       "settings"
      ],
      "doc": "",
-     "end": 1547,
+     "end": 1589,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1535,
+     "line": 1577,
      "name": "_fee_text"
     },
     {
@@ -16105,10 +16184,10 @@
       "rule"
      ],
      "doc": "",
-     "end": 1570,
+     "end": 1612,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1550,
+     "line": 1592,
      "name": "_delivery_text"
     },
     {
@@ -16118,10 +16197,10 @@
       "settings"
      ],
      "doc": "",
-     "end": 1642,
+     "end": 1690,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1573,
+     "line": 1615,
      "name": "_assumptions"
     },
     {
@@ -16130,10 +16209,10 @@
       "policy"
      ],
      "doc": "The decision model for every candidate (plan \u00a74.4). Raises DecisionInputError (a ValueError) on a malformed bundle, setting or",
-     "end": 1668,
+     "end": 1716,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1646,
+     "line": 1694,
      "name": "compute"
     },
     {
@@ -16148,10 +16227,10 @@
       "cj_moq"
      ],
      "doc": "",
-     "end": 1687,
+     "end": 1741,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1671,
+     "line": 1719,
      "name": "_product"
     },
     {
@@ -16159,10 +16238,10 @@
       "argv"
      ],
      "doc": "",
-     "end": 1715,
+     "end": 1769,
      "file": "adapters/ecommerce/python/unit_economics.py",
      "kind": "def",
-     "line": 1690,
+     "line": 1744,
      "name": "main"
     }
    ]
@@ -29957,7 +30036,7 @@
     {
      "does": "handled: expr, raise",
      "file": "orchestrator/orchestrator/api/product_report.py",
-     "line": 1217,
+     "line": 1219,
      "type": "Exception"
     },
     {
@@ -30005,26 +30084,26 @@
     {
      "does": "handled: assign, log, expr, raise",
      "file": "orchestrator/orchestrator/api/product_report.py",
-     "line": 1165,
+     "line": 1167,
      "type": "Exception"
     },
     {
      "does": "handled: log, try, raise",
      "file": "orchestrator/orchestrator/api/product_report.py",
-     "line": 1186,
+     "line": 1188,
      "type": "Exception"
     },
     {
      "does": "handled: log, expr",
      "file": "orchestrator/orchestrator/api/product_report.py",
-     "line": 1190,
+     "line": 1192,
      "type": "Exception"
     }
    ],
    "files": [
     "orchestrator/orchestrator/api/product_report.py"
    ],
-   "hash": "0f633ebd7a645935",
+   "hash": "c2459b110bb2f8e7",
    "importers": [
     "orchestrator/orchestrator/main.py"
    ],
@@ -30053,7 +30132,7 @@
     "polymath_shared.query_receipts",
     "polymath_shared.query_receipts.record_query_receipt"
    ],
-   "lines": 1271,
+   "lines": 1273,
    "mcp_tools": [],
    "nondeterminism": [
     {
@@ -30066,7 +30145,7 @@
      "call": "time.perf_counter",
      "file": "orchestrator/orchestrator/api/product_report.py",
      "kind": "clock",
-     "line": 1121
+     "line": 1123
     },
     {
      "call": "time.monotonic",
@@ -30120,7 +30199,7 @@
      "call": "time.perf_counter",
      "file": "orchestrator/orchestrator/api/product_report.py",
      "kind": "clock",
-     "line": 1209
+     "line": 1211
     },
     {
      "call": "time.perf_counter",
@@ -30162,21 +30241,21 @@
     {
      "file": "orchestrator/orchestrator/api/product_report.py",
      "handler": "product_report_compile",
-     "line": 1111,
+     "line": 1113,
      "method": "POST",
      "path": "/product/report/{report_id}/compile"
     },
     {
      "file": "orchestrator/orchestrator/api/product_report.py",
      "handler": "product_report_page",
-     "line": 1225,
+     "line": 1227,
      "method": "GET",
      "path": "/product/report/{report_id}"
     },
     {
      "file": "orchestrator/orchestrator/api/product_report.py",
      "handler": "product_reports",
-     "line": 1248,
+     "line": 1250,
      "method": "GET",
      "path": "/product/reports"
     }
@@ -30893,7 +30972,7 @@
       "decision"
      ],
      "doc": "Per candidate: the reference price, the offers, and per channel the margin, the break-even ad cost and the delivery verdict",
-     "end": 1107,
+     "end": 1109,
      "file": "orchestrator/orchestrator/api/product_report.py",
      "kind": "def",
      "line": 1090,
@@ -30906,10 +30985,10 @@
       "req"
      ],
      "doc": "Plan \u00a73 step 5 \u2014 see the module docstring. 409 CANDIDATES_PENDING / NO_CANDIDATES / HOST_DATA_PENDING /",
-     "end": 1221,
+     "end": 1223,
      "file": "orchestrator/orchestrator/api/product_report.py",
      "kind": "def",
-     "line": 1111,
+     "line": 1113,
      "name": "product_report_compile"
     },
     {
@@ -30919,10 +30998,10 @@
       "download"
      ],
      "doc": "The compiled report (the caller's own) under the dossier's CSP: no script, no fetch, no form, no framing by another site;",
-     "end": 1244,
+     "end": 1246,
      "file": "orchestrator/orchestrator/api/product_report.py",
      "kind": "def",
-     "line": 1225,
+     "line": 1227,
      "name": "product_report_page"
     },
     {
@@ -30932,10 +31011,10 @@
       "before"
      ],
      "doc": "The caller's reports, newest first (a principal: its own; the owner: every report, with its owner).",
-     "end": 1270,
+     "end": 1272,
      "file": "orchestrator/orchestrator/api/product_report.py",
      "kind": "def",
-     "line": 1248,
+     "line": 1250,
      "name": "product_reports"
     }
    ]
@@ -75650,7 +75729,7 @@
     },
     {
      "file": "shared/polymath_shared/mcp_retrieval.py",
-     "line": 969,
+     "line": 971,
      "name": "PRODUCT_REPORT_LIST",
      "value": "Your decision reports, newest first: each with `report_id`, `status`, `round`, `candidates` [{candidate_id, title}], `uploads`, `compiled`, `compiled_at` and `report_path`. Reports are private: you see only your own (the Polymath owner sees all). Continue one with product_report_status, or product_report_compile (which returns its `report_url`)."
     }
@@ -75661,14 +75740,14 @@
    "files": [
     "shared/polymath_shared/mcp_retrieval.py"
    ],
-   "hash": "829078f4ebd6bdbf",
+   "hash": "a6fba150b27e3a49",
    "importers": [
     "mcp_server/polymath_mcp.py",
     "orchestrator/orchestrator/api/_small-modules",
     "orchestrator/orchestrator/mcp_server.py"
    ],
    "imports": [],
-   "lines": 973,
+   "lines": 975,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/shared/polymath_shared/mcp_retrieval.py.md",
@@ -96198,7 +96277,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 224,
+     "line": 228,
      "missing": [
       "doc_id",
       "corpus_id",
@@ -98248,7 +98327,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 224,
+     "line": 228,
      "missing": [
       "absorb",
       "according",
@@ -98263,7 +98342,7 @@
       "allow",
       "allows"
      ],
-     "present": 5
+     "present": 6
     },
     {
      "file": "adapters/ecommerce/python/utilization.py",
@@ -99656,7 +99735,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 224,
+     "line": 228,
      "missing": [
       "path",
       "target_mechanism",
@@ -103479,7 +103558,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 232,
+     "line": 236,
      "missing": [
       "report_id",
       "packet_id",
@@ -106980,7 +107059,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 232,
+     "line": 236,
      "missing": [
       "admission",
       "admitted",
@@ -107286,7 +107365,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 512,
+     "line": 516,
      "missing": [
       "report_id",
       "owner_principal_id",
@@ -108558,7 +108637,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 512,
+     "line": 516,
      "missing": [
       "channel",
       "upload_date",
@@ -110036,7 +110115,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 232,
+     "line": 236,
      "missing": [
       "source_url",
       "read_at",
@@ -110219,7 +110298,7 @@
     }
    ],
    "file": "adapters/ecommerce/python/report.py",
-   "line": 929,
+   "line": 937,
    "name": "_ASSUMPTION_META",
    "slug": "_ASSUMPTION_META",
    "values": [
@@ -110317,7 +110396,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 1580,
+     "line": 1623,
      "missing": [
       "add",
       "append",
@@ -111101,7 +111180,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 511,
+     "line": 515,
      "missing": [
       "discount_price",
       "sku",
@@ -111277,7 +111356,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 511,
+     "line": 515,
      "missing": [
       "discount_price",
       "sku",
@@ -113061,7 +113140,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 418,
+     "line": 422,
      "missing": [
       "depth",
       "completed",
@@ -113513,7 +113592,7 @@
     },
     {
      "file": "adapters/ecommerce/python/unit_economics.py",
-     "line": 511,
+     "line": 515,
      "missing": [
       "discount_price",
       "sku",

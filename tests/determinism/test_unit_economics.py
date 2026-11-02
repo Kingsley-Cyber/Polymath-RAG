@@ -741,3 +741,72 @@ def test_every_number_has_a_receipt_with_search_prices_and_the_costed_variant(tm
                 weight_g=None, product_id="1651788214971146999")
     for name, products in (("live", LIVE_CJ["products"]), ("rule", [top, *LIVE_CJ["products"][1:], none])):
         test_every_number_has_a_receipt(_decide(_fountain(products), tmp_path, f"receipts-{name}"))
+
+
+# ───────────────────────────────────────── contract C12 (live report rpt_786cd43801c27f86efa84aad): a CJ offer below the market's price tier
+LIVE_FEEDER = json.loads((ROOT / "tests" / "fixtures" / "product_report_render" / "cj_live_pet_feeder.json").read_text(encoding="utf-8"))
+TIER_TEXT = ("CJ's own suggested retail ($17.16) is under half the market price ($47.49) and its cost is under 15 % of it: the CJ listing may "
+             "be a simpler or different product than the comparables; compare them before trusting this margin")
+
+
+def _market_at(median: float, term: str) -> list[dict]:
+    """Three matched Amazon listings whose median is `median` (the report's reference price R)."""
+    return [_amazon(a, p, title=f"{term} {a}") for a, p in (("B0M1", round(median * 0.8, 2)), ("B0M2", median), ("B0M3", round(median * 1.3, 2)))]
+
+
+def _feeder(products: list | None = None) -> dict:
+    return {"candidates": [{"candidate_id": "c1", "title": "Automatic pet feeder", "search_terms": ["automatic pet feeder"]}],
+            "host": {"cj": {"c1": {"status": "OK", "products": products if products is not None else LIVE_FEEDER["products"]}}, "ebay": {}},
+            "parsed": {"c1": {"amazon": _market_at(47.49, "Automatic pet feeder")}}, "settings": {"as_of": "2026-11-02"}}
+
+
+def _uncautioned(line: dict) -> dict:
+    return {k: v for k, v in line.items() if k != "cautions"}
+
+
+def test_a_cj_offer_far_below_the_markets_price_tier_is_marked_and_nothing_else_changes(tmp_path):
+    """C12 on the live feeder: CJ's $2.53 feeder (its own suggested retail $17.16) against $47.49 timer feeders — S/R 0.3613 < 0.5 and
+    U/R 0.0533 < 0.15 — is marked SUPPLIER_TIER_BELOW_MARKET on the offer and on every line costed from it, with its receipt. No number
+    changes and the best line stays the same: the decision without CJ's suggested retail (no S, no caution) is the same but for the mark."""
+    p = _decide(_feeder(), tmp_path, "feeder")["products"][0]
+    assert p["market"]["reference_price_usd"] == 47.49
+    o = p["offers"][0]
+    assert (o["offer_id"], o["unit_cost_usd"], o["suggested_retail_usd"]) == ("cj:1436889243589939200", 2.53, 17.16)
+    assert o["cautions"] == [{"code": "SUPPLIER_TIER_BELOW_MARKET", "text": TIER_TEXT}]
+    assert [ch["margin_before_ads_usd"] for ch in p["channels"].values()] == [20.79, 24.93, 29.72, 26.05, 26.05]   # the live page's numbers
+    lines = _lines(p)
+    assert lines and all(line["offer_id"] == o["offer_id"] and line["cautions"] == o["cautions"] for line in lines)
+    receipts = {r["id"]: r for r in p["receipts"] if r["id"].endswith("cautions[0].code")}
+    assert set(receipts) == {"offers[0].cautions[0].code", *(f"channels.{c}.cautions[0].code" for c in CHANNELS)}
+    r = receipts["offers[0].cautions[0].code"]
+    assert r["result"] == "SUPPLIER_TIER_BELOW_MARKET" and r["policy"] == "report_settings.supplier_tier_retail_share, report_settings.supplier_tier_cost_share"
+    assert {k: r["inputs"][k] for k in ("suggested_retail_usd", "reference_price_usd", "unit_cost_usd", "retail_share", "cost_share",
+                                        "retail_share_below", "cost_share_below")} == {
+        "suggested_retail_usd": 17.16, "reference_price_usd": 47.49, "unit_cost_usd": 2.53, "retail_share": 0.3613, "cost_share": 0.0533,
+        "retail_share_below": 0.5, "cost_share_below": 0.15}
+    no_s = json.loads(json.dumps(LIVE_FEEDER["products"]))
+    no_s[0]["suggested_retail_usd"] = None                                            # a missing S: no caution
+    q = _decide(_feeder(no_s), tmp_path, "feeder-no-s")["products"][0]
+    assert "cautions" not in q["offers"][0] and not [line for line in _lines(q) if "cautions" in line]
+    assert {c: _uncautioned(ch) | {"alternatives": [_uncautioned(a) for a in ch["alternatives"]]} for c, ch in p["channels"].items()} == q["channels"]
+    assert p["sensitivity"] == q["sensitivity"]
+    test_every_number_has_a_receipt({"products": [p, q]})
+
+
+def test_the_fountain_and_the_brush_are_not_marked_and_the_tests_are_strict(tmp_path):
+    """Today's other two reports: the fountain (S $17.06 under half its R $41.74, but U $11.94 is 29 % of it) and the slicker brush (S $34.13
+    above its R $13.99) are not marked. Both tests are strict: S exactly half R is not under half."""
+    def one(name: str, unit: float, retail: float | None, r: float) -> dict:
+        cj = dict(_cj(name, [unit], {"CN": [], "US": [dict(US_3_7)]}), suggested_retail_usd=retail)
+        bundle = {"candidates": [{"candidate_id": "c1", "title": name}], "host": {"cj": {"c1": {"status": "OK", "products": [cj]}}, "ebay": {}},
+                  "parsed": {"c1": {"amazon": _market_at(r, name)}}, "settings": {"as_of": "2026-11-02"}}
+        p = _decide(bundle, tmp_path, name)["products"][0]
+        assert p["market"]["reference_price_usd"] == r and p["offers"][0]["unit_cost_usd"] == unit, name
+        return p
+    for name, unit, retail, r in (("fountain", 11.94, 17.06, 41.74), ("brush", 3.83, 34.13, 13.99), ("half", 2.00, 20.00, 40.00),
+                                  ("no-retail", 2.53, None, 47.49)):
+        p = one(name, unit, retail, r)
+        assert "cautions" not in p["offers"][0] and not [line for line in _lines(p) if "cautions" in line], name
+    marked = one("just-under", 2.00, 19.99, 40.00)                                    # 19.99 < 20.00 and 2.00 < 6.00: marked
+    assert marked["offers"][0]["cautions"][0]["text"].startswith("CJ's own suggested retail ($19.99) is under half the market price ($40.00)")
+    assert "no number changes" in _decide(_feeder(), tmp_path, "assumptions")["assumptions"]["supplier_tier"]

@@ -4038,7 +4038,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-11-02",
-  "input_hash": "fef5870b26955eef",
+  "input_hash": "0731376385cb8e7a",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4074,7 +4074,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-11-02",
-  "input_hash": "67f6e590a2858b1e",
+  "input_hash": "711460a6ca2e9308",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4614,7 +4614,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-11-02",
-  "input_hash": "1bcfb0f60686efc7",
+  "input_hash": "8086702323571ecd",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5748,7 +5748,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-11-02",
-  "input_hash": "ec69ac873d4dc468",
+  "input_hash": "0c5ea7ffdb6d6c23",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

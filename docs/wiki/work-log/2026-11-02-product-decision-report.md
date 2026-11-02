@@ -214,6 +214,8 @@ The owner, 2026-11-02 (verbatim):
   `127.0.0.1`; `tests/conftest.py` gives a TestClient built without a base_url or Host the Host `127.0.0.1` (no assertion changes).
 - On `production`, by the owner-approved plan (§4.8 a Reports screen): `frontend-v2/src/__tests__/ui-pieces.test.tsx` nav list gains
   "Reports".
+- `tests/contracts/test_mcp_agent_playbook.py` `CHANNEL_FIELDS` gains `cautions` (C12 adds the field to the compile summary; the test
+  pins that agent texts name exactly the schema's fields).
 - Added only: `tests/contracts/test_web_boundary.py` (+8 tests), `tests/determinism/test_mcp_principals_gate.py` (+1),
   `adapters/ecommerce/tests/run_all.py` (+36 engine checks).
 - New on the PRODUCT-SEARCH-E2E-V1 commits of this branch (not on `production`), updated where a fix changed what they pin:
@@ -338,6 +340,17 @@ bytes, 41 product links). Now the one retry of a Jina packet sends those two hea
 and fast; Exa retries unchanged), and that snapshot shape is a failed read in the script and READER_FAILED in the parser at any size
 (new recorded fixture `jina_amazon_search_snapshot.out`). Not covered: an empty Markdown Content carrying only one of the two
 warnings, or none, over 512 bytes. Sealed: 12 affected suites 496 passed; engine 648 / 648.
+
+## Live run 6 (`af63770f`) and the price-tier caution (C12)
+The feeder now read its Amazon search page (40 records; reference price $47.49), but its TikTok US line printed $26.05 (54.9 %): CJ
+product 1436889243589939200 "Automatic Pet Feeder Removable And Washable" is a $2.53 / 620 g feeder in four colours (CJ suggested
+retail $17.16) while the Amazon comparables are $30–80 programmable feeders: the words match, the products do not. **C12:** a CJ offer
+whose own suggested retail is under 0.5 × the market price AND whose unit cost is under 0.15 × it (policy `report_settings`) is marked
+SUPPLIER_TIER_BELOW_MARKET on the offer and every line costed from it, in words beside each margin ("check: price tier") and in the
+compile `summary` (`channels.<id>.cautions`, schema and agent text updated); no number and no best-channel rule changes. On today's
+data it marks the feeder only (fountain S/R 0.41 but U/R 0.29; brush S above R). The recorded Amazon pages say "Delivering to Council
+B… 51502": Council Bluffs, Iowa, where Jina's reader fetches from (a Google Cloud region), not the owner. Sealed: 10 affected suites 343
+passed; engine 649 / 649.
 ## Proof
 - **Sealed CI reproduction** (a throwaway `postgres:16-alpine` with all 68 migrations applied in order, a clean environment, the CI
   workflow's suites `tests/contracts` + `tests/determinism`), final tree before the C11 change: **4,871 tests: 4,834 passed, 20 skipped,

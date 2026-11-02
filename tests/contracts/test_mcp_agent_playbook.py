@@ -712,7 +712,8 @@ STATUS_FIELDS = ("report_id", "status", "next", "round", "rounds[].round", "roun
                  "uploads.total", "uploads.by_round", "uploads.by_source", "compiled.at", "compiled.report_url", "compiled.stale")
 COMPILE_FIELDS = ("report_id", "status", "report_url", "inputs", "next", "summary[].candidate_id", "summary[].title", "summary[].offers",
                   "summary[].reference_price_usd", "summary[].channels")
-CHANNEL_FIELDS = ("sell_price_usd", "margin_before_ads_usd", "margin_pct", "break_even_ad_cost_usd", "delivery", "delivery_reason")
+CHANNEL_FIELDS = ("sell_price_usd", "margin_before_ads_usd", "margin_pct", "break_even_ad_cost_usd", "delivery", "delivery_reason",
+                  "cautions")      # C12 (2026-11-02): each line's caution codes reach the agent
 #: the list fields PRODUCT_REPORT_LIST names (the list view is the route's own, not in the schema: checked against the route)
 LIST_FIELDS = ("report_id", "status", "round", "candidates", "uploads", "compiled", "compiled_at", "report_path")
 

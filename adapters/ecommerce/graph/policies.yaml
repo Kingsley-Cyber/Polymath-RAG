@@ -470,5 +470,7 @@ report_settings:
   supplier_days_read_as: calendar    # a quote's "4-9 days" is read as calendar days; a rule in business days is checked on the worst week (fewest weekend days)
   alibaba_origin_default: CN         # an alibaba.com listing ships from China unless it states another origin
   last_mile_weight_tolerance: 0.25   # a CJ US→US quote stands in for an inventory offer's last mile only when the offer is at most 25 % heavier
+  supplier_tier_retail_share: 0.5    # contract C12: a CJ offer whose own suggested retail is under this share of the market reference price
+  supplier_tier_cost_share: 0.15     # and whose unit cost is under this share of it is marked SUPPLIER_TIER_BELOW_MARKET (a caution: no number changes)
   reddit_comments_max: 5             # demand.reddit.comments: at most this many, by points then date
   reddit_comment_chars: 300

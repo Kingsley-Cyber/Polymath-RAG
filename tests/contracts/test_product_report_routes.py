@@ -1830,3 +1830,21 @@ def test_a_turn_with_product_ideas_runs_once(rig, monkeypatch):
     mine = _start(g, {"products": PRODUCTS})
     assert len(calls) == 1 and mine["candidates"]["source"] == "caller" and mine["candidates"]["note"] is None
     assert not mine["next"].startswith("The candidates are the request's own search words")
+
+
+def test_the_compile_summary_carries_each_lines_caution_codes():
+    """C12 (live 2026-11-02, the pet feeder): a line costed from a CJ offer below the market's price tier carries
+    SUPPLIER_TIER_BELOW_MARKET on the page; an agent that reads only the compile `summary` sees the same code, and a line
+    without a caution says so with an empty list."""
+    decision = {"products": [{"candidate_id": "c1", "title": "Automatic pet feeder", "channels": {
+        "tiktok_us": {"sell_price_usd": 47.49, "margin_before_ads_usd": 26.05, "margin_pct": 54.9, "break_even_ad_cost_usd": 26.05,
+                      "delivery": {"verdict": "PASS", "reason": "PASS: ..."},
+                      "cautions": [{"code": "SUPPLIER_TIER_BELOW_MARKET", "text": "CJ's own suggested retail ..."}]},
+        "shopify": {"sell_price_usd": 47.49, "margin_before_ads_usd": 29.72, "margin_pct": 62.6, "break_even_ad_cost_usd": 29.72,
+                    "delivery": {"verdict": "WARN", "reason": "WARN: ..."}}}}]}
+    summary = R.decision_summary(decision)
+    assert summary[0]["channels"]["tiktok_us"]["cautions"] == ["SUPPLIER_TIER_BELOW_MARKET"]
+    assert summary[0]["channels"]["shopify"]["cautions"] == []
+    channel_schema = SCHEMA["$defs"]["compile_view"]["properties"]["summary"]["items"]["properties"]["channels"]["additionalProperties"]
+    for ch in summary[0]["channels"].values():
+        jsonschema.validate(ch, channel_schema)

@@ -1100,7 +1100,9 @@ def decision_summary(decision: Mapping[str, Any] | None) -> list[dict[str, Any]]
             delivery = ch.get("delivery") if isinstance(ch.get("delivery"), Mapping) else {}
             channels[str(cid)] = {"sell_price_usd": _num(ch.get("sell_price_usd")), "margin_before_ads_usd": _num(ch.get("margin_before_ads_usd")),
                                   "margin_pct": _num(ch.get("margin_pct")), "break_even_ad_cost_usd": _num(ch.get("break_even_ad_cost_usd")),
-                                  "delivery": delivery.get("verdict"), "delivery_reason": delivery.get("reason")}
+                                  "delivery": delivery.get("verdict"), "delivery_reason": delivery.get("reason"),
+                                  # C12: an agent reading only this summary sees the page's caution codes too (SUPPLIER_TIER_BELOW_MARKET)
+                                  "cautions": [str(c.get("code")) for c in ch.get("cautions") or [] if isinstance(c, Mapping) and c.get("code")]}
         market = p.get("market") if isinstance(p.get("market"), Mapping) else {}
         out.append({"candidate_id": p.get("candidate_id"), "title": p.get("title"), "offers": len(p.get("offers") or []),
                     "reference_price_usd": _num(market.get("reference_price_usd")), "channels": channels})

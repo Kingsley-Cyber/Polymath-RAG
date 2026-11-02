@@ -26,7 +26,7 @@ AUTHORITY: `adapters/ecommerce/python/evaluator.py:21` :: `DOSSIER_HYP_FIELDS` (
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:60` | 11/12 | `hop_refs` |
 | `adapters/ecommerce/python/run_triage.py` | `adapters/ecommerce/python/run_triage.py:94` | 4/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `alternatives`, `falsifiers`, `exploratory` |
 | `adapters/ecommerce/python/transitions.py` | `adapters/ecommerce/python/transitions.py:7` | 3/12 | `source`, `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `alternatives`, `falsifiers`, `exploratory` |
-| `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:224` | 4/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `falsifiers`, `exploratory` |
+| `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:228` | 4/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `falsifiers`, `exploratory` |
 | `adapters/ecommerce/python/utilization.py` | `adapters/ecommerce/python/utilization.py:25` | 4/12 | `source`, `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `alternatives`, `falsifiers`, `exploratory` |
 | `adapters/ecommerce/python/verifiers.py` | `adapters/ecommerce/python/verifiers.py:14` | 3/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `alternatives`, `falsifiers`, `exploratory` |
 | `orchestrator/orchestrator/api/corpus_plan.py` | `orchestrator/orchestrator/api/corpus_plan.py:75` | 3/12 | `source`, `path`, `target_mechanism`, `evidence_boundary`, `hop_refs`, `gaps`, `alternatives`, `falsifiers`, `exploratory` |

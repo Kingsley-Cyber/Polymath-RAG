@@ -53,6 +53,10 @@ DROPSHIP, INVENTORY = "dropship", "inventory"
 CJ_SEARCH_PRICE = "search_from_price"
 CJ_NOT_COSTED = ("not in the margin lines: CJ's details for this product (its variants, weight and freight) were not read, so only its "
                  "search \"from\" price is known")
+#: contract C12 (live report rpt_786cd43801c27f86efa84aad: a $2.53 CJ feeder, CJ's own suggested retail $17.16, costed against $47.49
+#: programmable-timer feeders): a CJ offer priced far below the market it is compared with may be a simpler or different product.
+#: A caution on the offer and on every line costed from it — no number changes, the best channel is chosen as before.
+SUPPLIER_TIER_BELOW_MARKET = "SUPPLIER_TIER_BELOW_MARKET"
 
 
 class DecisionInputError(ValueError):
@@ -1363,6 +1367,40 @@ def _choose(evals: list[tuple[dict[str, Any], dict[str, Any]]]) -> tuple[dict[st
                                     str(e[0]["origin"]), str(e[0]["carrier"] or "")))
 
 
+def _tier_shares(rs: dict[str, Any]) -> tuple[Decimal, Decimal]:
+    """Contract C12's two thresholds (policies report_settings): (supplier_tier_retail_share, supplier_tier_cost_share), defaults 0.5, 0.15."""
+    r, c = _dec(rs.get("supplier_tier_retail_share")), _dec(rs.get("supplier_tier_cost_share"))
+    return (r if r is not None and r > 0 else Decimal("0.5")), (c if c is not None and c > 0 else Decimal("0.15"))
+
+
+def _share_words(share: Decimal) -> str:
+    return "half" if share == Decimal("0.5") else f"{_plain(share * HUNDRED)} % of"
+
+
+def _tier_caution(offer: dict[str, Any], price: Decimal | None, rs: dict[str, Any]) -> dict[str, Any] | None:
+    """Contract C12: a CJ offer whose own suggested retail S is under supplier_tier_retail_share × the market reference price R and
+    whose costed unit cost U is under supplier_tier_cost_share × R may be a simpler or different product than the comparables (live: a
+    $2.53 feeder, S $17.16, against $47.49 timer feeders). The caution — code, words, its receipt — or None when R, S or U is unknown or
+    either test fails. It changes no number."""
+    s, u = offer.get("suggested_retail"), offer.get("unit_cost")
+    if offer.get("source") != "cj" or price is None or price <= 0 or s is None or u is None:
+        return None
+    retail_share, cost_share = _tier_shares(rs)
+    if not (s < retail_share * price and u < cost_share * price):
+        return None
+    text = (f"CJ's own suggested retail ({_price_text(s)}) is under {_share_words(retail_share)} the market price ({_price_text(price)}) and its "
+            f"cost is under {_plain(cost_share * HUNDRED)} % of it: the CJ listing may be a simpler or different product than the comparables; "
+            "compare them before trusting this margin")
+    formula = (f"{SUPPLIER_TIER_BELOW_MARKET} when CJ's suggested retail < {_plain(retail_share)} × the market reference price and the unit cost "
+               f"< {_plain(cost_share)} × it: a caution on the offer and every line costed from it — no number changes")
+    inputs = {"suggested_retail_usd": float(s), "reference_price_usd": float(price), "unit_cost_usd": float(u),
+              "retail_share": float((s / price).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)),
+              "cost_share": float((u / price).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)),
+              "retail_share_below": float(retail_share), "cost_share_below": float(cost_share)}
+    return {"code": SUPPLIER_TIER_BELOW_MARKET, "text": text, "formula": formula, "inputs": inputs,
+            "policy": "report_settings.supplier_tier_retail_share, report_settings.supplier_tier_cost_share"}
+
+
 def _line(cid: str, ch: dict[str, Any], offer: dict[str, Any] | None, price: Decimal | None, settings: dict[str, Any],
           rs: dict[str, Any], none_why: str | None = None) -> tuple[dict[str, Any], _Pending, dict[str, Any]]:
     """One offer on one channel -> (line, its pending receipts, internal numbers). No offer: `none_why` says why (default: there is
@@ -1464,6 +1502,10 @@ def _line(cid: str, ch: dict[str, Any], offer: dict[str, Any] | None, price: Dec
             "unit_cost_usd": _out(unit), "inbound_usd": _out(inbound), "shipping_usd": _out(ship), "landed_cost_usd": _out(landed),
             "fees_usd": _out(fees), "returns_usd": _out(returns),
             "margin_before_ads_usd": _out(margin), "margin_pct": _out(pct), "break_even_ad_cost_usd": _out(margin), "delivery": delivery}
+    tier = offer.get("tier_caution") if offer else None
+    if tier:                                # C12: a line costed from an offer below the market's price tier carries its caution
+        line["cautions"] = [{"code": tier["code"], "text": tier["text"]}]
+        rec.add("cautions[0].code", tier["formula"], {"offer_id": oid, **tier["inputs"]}, tier["code"], policy=tier["policy"])
     return line, rec, {"margin": margin, "landed": landed, "verdict": dv["verdict"], "price": price, "unit": unit, "ship": ship}
 
 
@@ -1574,6 +1616,7 @@ def _assumptions(sc: dict[str, Any], rs: dict[str, Any], settings: dict[str, Any
     sources = sc["sources"]
     tol = _dec(rs.get("last_mile_weight_tolerance"))
     tol = tol if tol is not None else Decimal("0.25")
+    tier_r, tier_c = _tier_shares(rs)
 
     def src(sid: str) -> dict[str, Any]:
         s = sources[sid]
@@ -1616,6 +1659,11 @@ def _assumptions(sc: dict[str, Any], rs: dict[str, Any], settings: dict[str, Any
                "from China (CN) and from a US warehouse (US); a US quote does not prove US stock. A CJ product whose details were not read "
                "(the host reads only the best match) shows CJ's search \"from\" price — its lowest variant, often a part, not checked — "
                "and has no margin line"),
+        "supplier_tier": (f"a CJ offer whose own suggested retail is under {_share_words(tier_r)} the market reference price and whose unit cost "
+                          f"is under {_plain(tier_c * HUNDRED)} % of it is marked {SUPPLIER_TIER_BELOW_MARKET}, on the offer and on every line "
+                          "costed from it: the CJ listing may be a simpler or different product than the comparables (policies report_settings "
+                          "supplier_tier_retail_share / supplier_tier_cost_share) — a caution only: no number changes and the best channel is "
+                          "chosen as before"),
         "alibaba": ("inventory model — buy the MOQ in bulk and hold US stock: unit cost = the price of the tier that holds the MOQ (a price range: "
                     "its high end); MOQ capital = MOQ × unit cost; inbound freight per unit = the listing's own quote for a stated quantity "
                     "(quote ÷ quantity), else max(MOQ × unit weight, the stated minimum kg) × the per-kg rate, never below a stated minimum charge, "
@@ -1680,6 +1728,12 @@ def _product(cand: dict[str, Any], cid: str, host: dict[str, Any], parsed: dict[
     internal, offers = _offers(cj_block, _records(parsed.get("alibaba")), rs, cj_moq, book, offers_excluded, settings, terms)
     market, price = _market(_records(parsed.get("amazon")), ebay_block, _records(parsed.get("ebay")), rs, book, terms)
     demand = {"reddit": _reddit(_records(parsed.get("reddit")), rs, book, terms), "amazon": _amazon_demand(_records(parsed.get("amazon")), book)}
+    for i, (o, item) in enumerate(zip(internal, offers)):     # C12: the offer's price tier against the market it is compared with
+        caution = _tier_caution(o, price, rs)
+        if caution is not None:
+            o["tier_caution"] = caution                      # every line costed from this offer carries it too (`_line`)
+            item["cautions"] = [{"code": caution["code"], "text": caution["text"]}]
+            book.add(f"offers[{i}].cautions[0].code", caution["formula"], caution["inputs"], caution["code"], policy=caution["policy"])
     channels, sensitivity = _channels(internal, price, settings, sc, rs, book)
     status = {"cj": {"status": cj_block.get("status") or UNKNOWN, "reason_code": cj_block.get("reason_code")},
               "ebay_api": {"status": ebay_block.get("status") or UNKNOWN, "reason_code": ebay_block.get("reason_code")}}

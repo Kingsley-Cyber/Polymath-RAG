@@ -14,7 +14,7 @@ AUTHORITY: `shared/polymath_shared/product_search/service.py:51` :: `LISTING_FIE
 |---|---|---|---|
 | `adapters/ecommerce/binding.py` | `adapters/ecommerce/binding.py:239` | 4/11 | `discount_price`, `moq`, `image`, `sku`, `category`, `stores_listing`, `warehouse_stock` |
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:223` | 6/11 | `price`, `discount_price`, `sku`, `stores_listing`, `warehouse_stock` |
-| `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:511` | 7/11 | `discount_price`, `sku`, `stores_listing`, `warehouse_stock` |
+| `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:515` | 7/11 | `discount_price`, `sku`, `stores_listing`, `warehouse_stock` |
 | `frontend-v2/src/lib/productResearch.ts` | `frontend-v2/src/lib/productResearch.ts:143` | 9/11 | `sku`, `category` |
 | `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:457` | 7/11 | `discount_price`, `image`, `stores_listing`, `warehouse_stock` |
 | `shared/polymath_shared/acquisition/cj_api.py` | `shared/polymath_shared/acquisition/cj_api.py:358` | 6/11 | `price`, `discount_price`, `moq`, `stores_listing`, `warehouse_stock` |

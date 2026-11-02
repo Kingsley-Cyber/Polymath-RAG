@@ -608,6 +608,10 @@ REDDIT_EXCLUDED_SHOWN = 5                           # contract C4: the threads t
 STOCK_FIELDS = ("time_to_stock_days", "moq_capital_usd", "moq_inbound_usd", "cash_to_first_stock_usd")
 #: a CJ product the host did not read in full: unit_economics leaves its unit cost UNKNOWN and hands CJ's search "from" price beside it
 CJ_SEARCH_PRICE_LABEL = "CJ search price: the lowest variant, not checked"
+#: contract C12: unit_economics marks a CJ offer — and every line costed from it — whose own suggested retail and cost sit far below the
+#: market it is compared with; the page says so in words beside each such margin and once in the summary row, never changing a number
+SUPPLIER_TIER = "SUPPLIER_TIER_BELOW_MARKET"
+SUPPLIER_TIER_WORDS = "check: price tier"
 COMMENT_MAX_CHARS, COMPS_SHOWN, LINKS_SHOWN, RECEIPTS_SHOWN = 700, 8, 5, 400
 LINK_SOURCES = (("cj", "CJ"), ("alibaba", "Alibaba"), ("amazon", "Amazon"), ("ebay", "eBay"), ("reddit", "Reddit"))
 MARKETS = (("amazon", "Amazon"), ("ebay", "eBay"))
@@ -689,6 +693,7 @@ def _line_row(cid: str, c: dict, offers: dict, receipts: dict, path: str) -> dic
             **{k: c.get(k) for k in MONEY_FIELDS + ("landed_cost_usd",)}, "margin_pct": c.get("margin_pct"),
             "shipping_source": source, "shipping_rule": c.get("last_mile_rule") or last_mile.get("rule") or shipping.get("rule"),
             "requires_us_stock": ({k: offer.get(k) for k in STOCK_FIELDS} if REQUIRES_US_STOCK in cautions else None),
+            "cautions": _dicts(c.get("cautions")),          # C12: the margin's own cautions (the delivery's stay under `delivery`)
             "delivery": {**d, "verdict": _verdict(d.get("verdict"))}}
 
 
@@ -712,14 +717,16 @@ def _best_channel(product: dict, rows: list[dict]) -> dict | None:
     if isinstance(named, str) and named:
         row = next((r for r in rows if r["channel_id"] == named), None)
         return {"channel_id": named, "label": CHANNEL_LABEL.get(named, named), "from": "MODEL",
-                **({k: row.get(k) for k in ("margin_before_ads_usd", "break_even_ad_cost_usd", "margin_pct", "model", "offer_id", "requires_us_stock")}
+                **({k: row.get(k) for k in ("margin_before_ads_usd", "break_even_ad_cost_usd", "margin_pct", "model", "offer_id", "requires_us_stock",
+                                            "cautions")}
                    if row else {})}
     ok = [r for r in rows if r["delivery"]["verdict"] in ("PASS", "WARN") and _number(r.get("margin_before_ads_usd")) is not None]
     if not ok:
         return None
     best = max(ok, key=lambda r: r["margin_before_ads_usd"])
     return {"channel_id": best["channel_id"], "label": best["label"], "from": "RULE",
-            **{k: best.get(k) for k in ("margin_before_ads_usd", "break_even_ad_cost_usd", "margin_pct", "model", "offer_id", "requires_us_stock")}}
+            **{k: best.get(k) for k in ("margin_before_ads_usd", "break_even_ad_cost_usd", "margin_pct", "model", "offer_id", "requires_us_stock",
+                                        "cautions")}}
 
 
 def _market_row(m, admission: str) -> dict:
@@ -804,7 +811,8 @@ def _base_line(lines: list[dict], cid: str, what_if: dict) -> dict:
     row = next((r for r in lines if r["channel_id"] == cid), None)
     for line in ([row] + list(row.get("alternatives") or [])) if row else []:
         if line.get("offer_id") == what_if.get("offer_id"):
-            return {"base": {k: line.get(k) for k in ("model", "sell_price_usd", "unit_cost_usd", "inbound_usd", "shipping_usd", "returns_usd")}}
+            return {"base": {k: line.get(k) for k in ("model", "sell_price_usd", "unit_cost_usd", "inbound_usd", "shipping_usd", "returns_usd",
+                                                      "cautions")}}
     return {"base": None}
 
 
@@ -869,7 +877,7 @@ def _decision_product(p: dict, verdicts: dict, admission: str) -> dict:
 #: unit_economics `_assumptions`: the model's own rules, in the order the appendix lists them
 ASSUMPTION_RULES = (("sell_price", "Sell price"), ("fee_base", "Fee base"), ("returns", "Returns allowance"), ("ad_cost", "Ad cost"),
                     ("chargebacks", "Chargebacks"), ("handling", "Handling time"), ("delivery_days", "Delivery days"), ("cj", "CJ offers"),
-                    ("alibaba", "Alibaba offers"),
+                    ("supplier_tier", "Supplier price tier"), ("alibaba", "Alibaba offers"),
                     ("best_offer", "Best offer per channel"), ("shopify_plan", "Shopify plan"))
 _ASSUMPTION_KNOWN = {k for k, _ in ASSUMPTION_RULES} | {"as_of", "rules_read_on", "ship_to", "channels"}
 
@@ -1438,6 +1446,7 @@ border:1px solid currentColor;border-radius:3px;white-space:nowrap}
 .dec .chip-unknown{color:var(--muted);border-style:dashed}
 .dec .chip-req{color:var(--ink);background:var(--surface);border-style:double;border-width:3px}
 .dec .req{font-size:13px;font-weight:600;color:var(--ink)}
+.dec .tier{font:600 11.5px/1.3 ui-monospace,Menlo,monospace;color:var(--bad);white-space:nowrap}
 .dec th.op{white-space:nowrap}
 .dec .unk{font:600 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:var(--muted)}
 .dec a{color:var(--accent);text-underline-offset:2px;overflow-wrap:anywhere}
@@ -1566,6 +1575,16 @@ def _cautions(delivery: dict) -> str:
     return "".join(f"<span class='why'>({_e(CAUTION_TEXT.get(c, c))})</span> " for c in codes)
 
 
+def _tier(x) -> dict | None:
+    """Contract C12: the SUPPLIER_TIER_BELOW_MARKET caution an offer or a line carries ({code, text}), or None."""
+    return next((c for c in _dicts(_dict(x).get("cautions")) if c.get("code") == SUPPLIER_TIER), None)
+
+
+def _tier_tag(x) -> str:
+    """Beside a margin: the C12 caution in words, when the line (or the what-if's base line) carries it."""
+    return f"<br><span class='tier'>{_e(SUPPLIER_TIER_WORDS)}</span>" if _tier(x) else ""
+
+
 def _render_decision(dec: dict, *, governed: bool = False) -> list[str]:
     """The decision section (plan §4.5): the summary table, then per product links · demand · supply · market · margin per channel
     (+ the what-ifs) · the agent's verdict · receipts, then the assumptions and their sources. Drawn the same way in a DECISION page
@@ -1600,7 +1619,8 @@ def _render_decision(dec: dict, *, governed: bool = False) -> list[str]:
                     if b else "<span class='unk'>NONE</span> <span class='why'>no channel passes delivery with a known margin</span>")
             chips = "".join(_chip(c["delivery"]["verdict"], CHANNEL_SHORT.get(c["channel_id"], c["channel_id"])) + _cautions(c["delivery"])
                             for c in p["channels"]) or _UNK
-            out.append(f"<tr><td class='sticky'>{i}. {_e(p['title'])}</td><td>{best}</td><td class='n'>{_usd((b or {}).get('margin_before_ads_usd'))}</td>"
+            out.append(f"<tr><td class='sticky'>{i}. {_e(p['title'])}</td><td>{best}</td><td class='n'>{_usd((b or {}).get('margin_before_ads_usd'))}"
+                       f"{_tier_tag(b)}</td>"
                        f"<td class='n'>{_usd((b or {}).get('break_even_ad_cost_usd'))}</td><td>{chips}</td></tr>")
         out.append(f"</tbody></table></div><p class='why'>{_e(dec.get('best_channel_rule') or BEST_CHANNEL_RULE)}.</p>")
     for i, p in enumerate(products, 1):
@@ -1711,7 +1731,8 @@ def _render_decision_product(i: int, p: dict, reach: list[dict] | None = None) -
                                            f"shipping as listed: {_e(o['shipping_fee_text'])}" if o.get("shipping_fee_text") else "",
                                            f"CJ suggested retail {_usd(o['suggested_retail_usd'])} (reference only, never used as a price)"
                                            if _number(o.get("suggested_retail_usd")) is not None else "",
-                                           _e(o["not_costed"]) if o.get("not_costed") else "") if x)
+                                           _e(o["not_costed"]) if o.get("not_costed") else "",
+                                           f"<span class='tier'>{_e(SUPPLIER_TIER_WORDS)}</span> (see the margin lines)" if _tier(o) else "") if x)
             note = f"<br><span class='why'>{notes}</span>" if notes else ""
             inventory = o.get("model") == "inventory"
             ib = _dict(o.get("inbound"))
@@ -1804,6 +1825,12 @@ def _render_decision_product(i: int, p: dict, reach: list[dict] | None = None) -
     if not p["channels"]:
         out.append(f"<tr><td colspan='13'>{_UNK} — the model carries no channel</td></tr>")
     out.append("</tbody></table></div>")
+    for o in p.get("offers") or []:                     # C12: the margins marked "check: price tier", said in full once per offer
+        tier = _tier(o)
+        if tier:
+            out.append(f"<p class='caution'><strong>{_e(SUPPLIER_TIER_WORDS.capitalize())}</strong> — "
+                       f"{_e(str(o.get('source') or 'offer').upper())} offer {_e(o.get('offer_id') or '')} (every line costed from it): "
+                       f"{_e(tier.get('text'))}.</p>")
     alts = [(c, a) for c in p["channels"] for a in c.get("alternatives") or []]
     if alts:
         out.append(f"<details><summary>The other offers on each channel — {len(alts)} line(s)</summary><div class='scroll'><table class='dt'><thead><tr>"
@@ -1824,7 +1851,7 @@ def _render_decision_product(i: int, p: dict, reach: list[dict] | None = None) -
                        f"<td class='n'>{_rate(r.get('rate_pct', s.get('rate_pct')))}</td>"
                        + "".join(f"<td class='n'>{_usd(base.get(k))}</td>" for k in ("sell_price_usd", "unit_cost_usd", "inbound_usd", "shipping_usd"))
                        + f"<td class='n'>{_usd(r.get('fees_usd'))}</td><td class='n'>{_usd(base.get('returns_usd'))}</td>"
-                       f"<td class='n'>{_usd(r.get('margin_before_ads_usd'))}</td><td class='n'>{_pct(r.get('margin_pct'))}</td>"
+                       f"<td class='n'>{_usd(r.get('margin_before_ads_usd'))}{_tier_tag(base)}</td><td class='n'>{_pct(r.get('margin_pct'))}</td>"
                        f"<td class='n'>{_usd(r.get('break_even_ad_cost_usd'))}</td></tr>")
         if not s["rows"]:
             out.append(f"<tr><td colspan='12'>{_UNK} — no sell price, so no what-if line</td></tr>")
@@ -1865,7 +1892,8 @@ def _line_cells(c: dict) -> str:
     how_html = f"<br><span class='why'>{how}</span>" if how else ""
     return (f"<td>{_model_label(c.get('model'))}{how_html}</td><td>{offer}</td>"
             + "".join(f"<td class='n'>{_usd(c.get(k))}</td>" for k in ("sell_price_usd", "unit_cost_usd", "inbound_usd", "shipping_usd", "fees_usd",
-                                                                    "returns_usd", "margin_before_ads_usd"))
+                                                                    "returns_usd"))
+            + f"<td class='n'>{_usd(c.get('margin_before_ads_usd'))}{_tier_tag(c)}</td>"
             + f"<td class='n'>{_pct(c.get('margin_pct'))}</td><td class='n'>{_usd(c.get('break_even_ad_cost_usd'))}</td>"
             f"<td>{_chip(d['verdict'])}{_requirement(c.get('requires_us_stock'))}<br>"
             f"<span class='why'>{_text(d.get('reason'), empty='no reason recorded')}{(' · ' + where) if where else ''}</span></td>")

@@ -1,0 +1,478 @@
+{
+ "_about": "RECORDED LIVE host data: host_data.collect's CJ products for candidate c1 ('automatic pet feeder') of live report rpt_786cd43801c27f86efa84aad, owner run of 2026-11-02, after the host's variant rule. The first product was read in full: its costed variant is $2.53 / 620 g and CJ's own suggested retail $17.16, while the report's Amazon comparables (programmable timer feeders) had a median of $47.49 — contract C12. The other two were never detail-fetched (search 'from' prices).",
+ "reference_price_usd_live": 47.49,
+ "products": [
+  {
+   "url": "https://cjdropshipping.com/product/automatic-pet-feeder-removable-and-washable-p-1436889243589939200.html",
+   "image": "https://cf.cjdropshipping.com/397de9f7-45ae-48bf-86e1-dd06d259272c.jpg",
+   "title": "Automatic Pet Feeder Removable And Washable",
+   "freight": {
+    "CN": [
+     {
+      "carrier": "LuWei Ordinary US",
+      "cost_usd": 13.15,
+      "days_max": 11,
+      "days_min": 5,
+      "days_text": "5-11",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Ordinary",
+      "cost_usd": 14.07,
+      "days_max": 9,
+      "days_min": 4,
+      "days_text": "4-9",
+      "days_unit": null
+     },
+     {
+      "carrier": "YunExpress Ordinary",
+      "cost_usd": 14.39,
+      "days_max": 7,
+      "days_min": 4,
+      "days_text": "4-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sensitive",
+      "cost_usd": 15.22,
+      "days_max": 9,
+      "days_min": 4,
+      "days_text": "4-9",
+      "days_unit": null
+     },
+     {
+      "carrier": "YunExpress Sensitive",
+      "cost_usd": 16.04,
+      "days_max": 7,
+      "days_min": 4,
+      "days_text": "4-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Eub",
+      "cost_usd": 16.82,
+      "days_max": 50,
+      "days_min": 12,
+      "days_text": "12-50",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Super Pure Electricity",
+      "cost_usd": 17.13,
+      "days_max": 11,
+      "days_min": 5,
+      "days_text": "5-11",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Pure Electricity",
+      "cost_usd": 17.13,
+      "days_max": 14,
+      "days_min": 7,
+      "days_text": "7-14",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Eub Special Line",
+      "cost_usd": 17.37,
+      "days_max": 23,
+      "days_min": 10,
+      "days_text": "10-23",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Liquid US",
+      "cost_usd": 18.06,
+      "days_max": 11,
+      "days_min": 5,
+      "days_text": "5-11",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket FJTY Eub Special Line",
+      "cost_usd": 18.86,
+      "days_max": 25,
+      "days_min": 15,
+      "days_text": "15-25",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Fast Ordinary",
+      "cost_usd": 19.07,
+      "days_max": 6,
+      "days_min": 4,
+      "days_text": "4-6",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sensitive Pro+",
+      "cost_usd": 19.19,
+      "days_max": 11,
+      "days_min": 6,
+      "days_text": "6-11",
+      "days_unit": null
+     },
+     {
+      "carrier": "USPS Ordinary",
+      "cost_usd": 19.31,
+      "days_max": 11,
+      "days_min": 5,
+      "days_text": "5-11",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sensitive Pro",
+      "cost_usd": 19.34,
+      "days_max": 11,
+      "days_min": 5,
+      "days_text": "5-11",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Fast US",
+      "cost_usd": 21.12,
+      "days_max": 12,
+      "days_min": 7,
+      "days_text": "7-12",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket LX Sensitive Plant",
+      "cost_usd": 21.38,
+      "days_max": 20,
+      "days_min": 8,
+      "days_text": "8-20",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Liquid Line",
+      "cost_usd": 22.38,
+      "days_max": 60,
+      "days_min": 20,
+      "days_text": "20-60",
+      "days_unit": null
+     },
+     {
+      "carrier": "USPS",
+      "cost_usd": 22.6,
+      "days_max": 9,
+      "days_min": 4,
+      "days_text": "4-9",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Ordinary Over Length",
+      "cost_usd": 22.63,
+      "days_max": 11,
+      "days_min": 7,
+      "days_text": "7-11",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Fast Line",
+      "cost_usd": 23.58,
+      "days_max": 9,
+      "days_min": 4,
+      "days_text": "4-9",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sensitive Over Length",
+      "cost_usd": 24.01,
+      "days_max": 12,
+      "days_min": 7,
+      "days_text": "7-12",
+      "days_unit": null
+     },
+     {
+      "carrier": "Qfulfillment A line",
+      "cost_usd": 24.21,
+      "days_max": 25,
+      "days_min": 10,
+      "days_text": "10-25",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket USPS Remote",
+      "cost_usd": 24.39,
+      "days_max": 10,
+      "days_min": 5,
+      "days_text": "5-10",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Postal",
+      "cost_usd": 26.29,
+      "days_max": 9,
+      "days_min": 5,
+      "days_text": "5-9",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Ordinary Oversize Line",
+      "cost_usd": 27.72,
+      "days_max": 15,
+      "days_min": 7,
+      "days_text": "7-15",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sensitive Oversize Line",
+      "cost_usd": 27.72,
+      "days_max": 16,
+      "days_min": 8,
+      "days_text": "8-16",
+      "days_unit": null
+     },
+     {
+      "carrier": "DHL Official",
+      "cost_usd": 39.6,
+      "days_max": 7,
+      "days_min": 3,
+      "days_text": "3-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sea",
+      "cost_usd": 82.98,
+      "days_max": 30,
+      "days_min": 25,
+      "days_text": "25-30",
+      "days_unit": null
+     }
+    ],
+    "US": [
+     {
+      "carrier": "UniUni+",
+      "cost_usd": 10.63,
+      "days_max": 8,
+      "days_min": 3,
+      "days_text": "3-8",
+      "days_unit": null
+     },
+     {
+      "carrier": "GOFO GC parcel+",
+      "cost_usd": 10.93,
+      "days_max": 8,
+      "days_min": 3,
+      "days_text": "3-8",
+      "days_unit": null
+     },
+     {
+      "carrier": "GOFO+",
+      "cost_usd": 11.03,
+      "days_max": 8,
+      "days_min": 3,
+      "days_text": "3-8",
+      "days_unit": null
+     },
+     {
+      "carrier": "USPS+VIP",
+      "cost_usd": 13.05,
+      "days_max": 7,
+      "days_min": 3,
+      "days_text": "3-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "USPS+",
+      "cost_usd": 14.44,
+      "days_max": 7,
+      "days_min": 3,
+      "days_text": "3-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "USPS+WSC For VIP",
+      "cost_usd": 14.44,
+      "days_max": 7,
+      "days_min": 3,
+      "days_text": "3-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "FedEx Ground+",
+      "cost_usd": 25.62,
+      "days_max": 7,
+      "days_min": 3,
+      "days_text": "3-7",
+      "days_unit": null
+     }
+    ]
+   },
+   "variants": [
+    {
+     "name": "Automatic Pet Feeder Removable And Washable White Feeder",
+     "options": "White-Feeder",
+     "weight_g": 620.0,
+     "price_usd": 2.53,
+     "variant_id": "1436889243661242368",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable Pink Feeder",
+     "options": "Pink-Feeder",
+     "weight_g": 620.0,
+     "price_usd": 2.53,
+     "variant_id": "1436889243690602496",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable Blue Feeder",
+     "options": "Blue-Feeder",
+     "weight_g": 620.0,
+     "price_usd": 2.53,
+     "variant_id": "1436889243711574016",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable Grey Feeder",
+     "options": "Grey-Feeder",
+     "weight_g": 620.0,
+     "price_usd": 2.53,
+     "variant_id": "1436889243736739840",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable White Feeder free single bowl",
+     "options": "White-Feeder free single bowl",
+     "weight_g": 640.0,
+     "price_usd": 3.34,
+     "variant_id": "1436889243673825280",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable Pink Feeder free single bowl",
+     "options": "Pink-Feeder free single bowl",
+     "weight_g": 640.0,
+     "price_usd": 3.34,
+     "variant_id": "1436889243698991104",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable Blue Feeder free single bowl",
+     "options": "Blue-Feeder free single bowl",
+     "weight_g": 640.0,
+     "price_usd": 3.34,
+     "variant_id": "1436889243719962624",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable Grey Feeder free single bowl",
+     "options": "Grey-Feeder free single bowl",
+     "weight_g": 640.0,
+     "price_usd": 3.34,
+     "variant_id": "1436889243745128448",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable White Feeder send double bowl",
+     "options": "White-Feeder send double bowl",
+     "weight_g": 660.0,
+     "price_usd": 4.0,
+     "variant_id": "1436889243682213888",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable Pink Feeder send double bowl",
+     "options": "Pink-Feeder send double bowl",
+     "weight_g": 660.0,
+     "price_usd": 4.0,
+     "variant_id": "1436889243703185408",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable Blue Feeder send double bowl",
+     "options": "Blue-Feeder send double bowl",
+     "weight_g": 660.0,
+     "price_usd": 4.0,
+     "variant_id": "1436889243728351232",
+     "us_stock_units": null
+    },
+    {
+     "name": "Automatic Pet Feeder Removable And Washable Grey Feeder send double bowl",
+     "options": "Grey-Feeder send double bowl",
+     "weight_g": 660.0,
+     "price_usd": 4.0,
+     "variant_id": "1436889243753517056",
+     "us_stock_units": null
+    }
+   ],
+   "weight_g": 620.0,
+   "product_id": "1436889243589939200",
+   "price_basis": "cheapest_variant",
+   "variant_rule": {
+    "kept": 12,
+    "rule": "the costed variant is the cheapest left after dropping (1) variants whose own name (CJ's variant name after the product's title, and its variant key) holds a part or accessory word (filter, replacement, cartridge, refill, spare, pump, sponge, part, accessory, or a plural) the search term does not hold, and (2) when the heaviest variant left weighs at least 2.5 x the lightest, variants under 40 % of the heaviest's weight (parts and samples ship light); ties: the lower variant id",
+    "dropped": 0,
+    "variants": 12,
+    "heaviest_g": 660.0,
+    "lightest_g": 620.0,
+    "light_cutoff_g": null,
+    "exempt_by_search": [],
+    "chosen_variant_id": "1436889243661242368"
+   },
+   "detail_status": "OK",
+   "freight_status": {
+    "CN": "OK",
+    "US": "OK"
+   },
+   "sell_price_usd": 2.53,
+   "price_as_listed": "US$2.53-4.00",
+   "variants_dropped": [],
+   "us_stock_confirmed": false,
+   "cheapest_variant_id": "1436889243661242368",
+   "suggested_retail_usd": 17.16
+  },
+  {
+   "url": "https://cjdropshipping.com/product/household-high-capacity-pet-automatic-feeder-p-2406120633211627300.html",
+   "image": "https://cf.cjdropshipping.com/quick/product/4c6e4b92-69d8-44a4-96aa-17beb5bc777d.jpg",
+   "title": "Household High-capacity Pet Automatic Feeder",
+   "freight": {
+    "CN": [],
+    "US": []
+   },
+   "variants": [],
+   "weight_g": null,
+   "product_id": "2406120633211627300",
+   "price_basis": "search_from_price",
+   "variant_rule": null,
+   "detail_status": "NOT_FETCHED",
+   "freight_status": {
+    "CN": "NOT_FETCHED",
+    "US": "NOT_FETCHED"
+   },
+   "sell_price_usd": 4.21,
+   "price_as_listed": "US$4.21-4.57",
+   "variants_dropped": [],
+   "us_stock_confirmed": false,
+   "cheapest_variant_id": null,
+   "suggested_retail_usd": null
+  },
+  {
+   "url": "https://cjdropshipping.com/product/pet-dog-automatic-feeder-microphone-dog-automatic-drinking-fountain-p-0AF6C94F-6AF9-4330-BA71-E16003D8B673.html",
+   "image": "https://cf.cjdropshipping.com/20190629/1775056478417.png",
+   "title": "Pet dog automatic feeder microphone dog automatic drinking fountain",
+   "freight": {
+    "CN": [],
+    "US": []
+   },
+   "variants": [],
+   "weight_g": null,
+   "product_id": "0AF6C94F-6AF9-4330-BA71-E16003D8B673",
+   "price_basis": "search_from_price",
+   "variant_rule": null,
+   "detail_status": "NOT_FETCHED",
+   "freight_status": {
+    "CN": "NOT_FETCHED",
+    "US": "NOT_FETCHED"
+   },
+   "sell_price_usd": 2.9,
+   "price_as_listed": "US$2.90-5.47",
+   "variants_dropped": [],
+   "us_stock_confirmed": false,
+   "cheapest_variant_id": null,
+   "suggested_retail_usd": null
+  }
+ ]
+}

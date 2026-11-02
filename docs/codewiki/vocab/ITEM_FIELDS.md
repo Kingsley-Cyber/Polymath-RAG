@@ -16,7 +16,7 @@ AUTHORITY: `shared/polymath_shared/product_search/service.py:49` :: `ITEM_FIELDS
 | `adapters/ecommerce/python/adapter_receipt.py` | `adapters/ecommerce/python/adapter_receipt.py:52` | 3/12 | `title`, `discount_price`, `moq`, `image`, `product_id`, `sku`, `category`, `stores_listing`, `warehouse_stock` |
 | `adapters/ecommerce/python/executors.py` | `adapters/ecommerce/python/executors.py:153` | 3/12 | `price`, `discount_price`, `moq`, `image`, `product_id`, `sku`, `category`, `stores_listing`, `warehouse_stock` |
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:211` | 7/12 | `price`, `discount_price`, `sku`, `stores_listing`, `warehouse_stock` |
-| `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:511` | 8/12 | `discount_price`, `sku`, `stores_listing`, `warehouse_stock` |
+| `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:515` | 8/12 | `discount_price`, `sku`, `stores_listing`, `warehouse_stock` |
 | `frontend-v2/src/lib/productResearch.ts` | `frontend-v2/src/lib/productResearch.ts:143` | 10/12 | `sku`, `category` |
 | `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:457` | 8/12 | `discount_price`, `image`, `stores_listing`, `warehouse_stock` |
 | `shared/polymath_shared/acquisition/cj_api.py` | `shared/polymath_shared/acquisition/cj_api.py:358` | 7/12 | `price`, `discount_price`, `moq`, `stores_listing`, `warehouse_stock` |

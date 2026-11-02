@@ -3600,6 +3600,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/fixtures/product_report_host/cj6_warehouses.json", "json", None),
     ("tests/fixtures/product_report_host/cj7_freight_us_us.json", "json", None),
     ("tests/fixtures/product_report_render/bundle_sample.json", "json", None),
+    ("tests/fixtures/product_report_render/cj_live_pet_feeder.json", "json", None),
     ("tests/fixtures/product_report_render/cj_live_pet_fountain.json", "json", None),
     ("tests/fixtures/product_report_render/decision_sample.json", "json", None),
     ("docs/wiki/work-log/2026-11-02-product-decision-report.md", "md", None),

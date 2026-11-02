@@ -20,7 +20,7 @@ AUTHORITY: `shared/polymath_shared/product_search/report_store.py:69` :: `_UPLOA
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:123` | 4/11 | `report_id`, `packet_id`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
 | `adapters/ecommerce/python/registry.py` | `adapters/ecommerce/python/registry.py:209` | 3/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:60` | 5/11 | `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `refused` |
-| `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:232` | 4/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `refused` |
+| `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:236` | 4/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `refused` |
 | `mcp_server/polymath_mcp.py` | `mcp_server/polymath_mcp.py:161` | 4/11 | `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
 | `orchestrator/orchestrator/api/deep_research.py` | `orchestrator/orchestrator/api/deep_research.py:200` | 3/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
 | `orchestrator/orchestrator/api/product_report.py` | `orchestrator/orchestrator/api/product_report.py:199` | 10/11 | `received_at` |

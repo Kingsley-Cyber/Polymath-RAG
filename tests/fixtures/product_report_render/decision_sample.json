@@ -358,7 +358,8 @@
    "monthly_usd": 39.0,
    "per_order_usd": 0.39,
    "plan": "Basic"
-  }
+  },
+  "supplier_tier": "a CJ offer whose own suggested retail is under half the market reference price and whose unit cost is under 15 % of it is marked SUPPLIER_TIER_BELOW_MARKET, on the offer and on every line costed from it: the CJ listing may be a simpler or different product than the comparables (policies report_settings supplier_tier_retail_share / supplier_tier_cost_share) — a caution only: no number changes and the best channel is chosen as before"
  },
  "channels": [
   "tiktok_us",
@@ -368,7 +369,7 @@
   "amazon_fbm"
  ],
  "model": "unit_economics.v1",
- "policy_hash": "7cffeafd73b2",
+ "policy_hash": "1e8ba4b1441f",
  "products": [
   {
    "candidate_id": "cand_slicker",

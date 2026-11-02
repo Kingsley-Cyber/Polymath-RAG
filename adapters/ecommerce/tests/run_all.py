@@ -4063,6 +4063,23 @@ ok(_ua["returns"]["source"]["url"].startswith("https://nrf.com/") and _ua["retur
            and _ua["channels"][c]["delivery"]["text"] for c in _ued["channels"])
    and _ua["channels"]["tiktok_us"]["sensitivity"]["status"] == "UNCONFIRMED" and _ua["channels"]["tiktok_us"]["sensitivity"]["sources"],
    "unit economics: the decision's assumptions print every fee and delivery rule with its source URL and read date; the 8 % rate is UNCONFIRMED with its sources")
+# contract C12: a CJ offer far below the market's price tier is marked SUPPLIER_TIER_BELOW_MARKET; the two thresholds are the policy's
+_c12b = {"candidates": [{"candidate_id": "f", "title": "Automatic pet feeder"}], "settings": {"as_of": "2026-11-02"},
+         "parsed": {"f": {"amazon": [_ue_amz("FA", 37.99), _ue_amz("FB", 47.49), _ue_amz("FC", 61.74)]}},
+         "host": {"cj": {"f": {"status": "OK", "products": [_ue_cj("F", [2.53], {"CN": [], "US": [{"carrier": "U", "cost_usd": 13.05, "days_min": 3,
+                                                                                                    "days_max": 7}]}, weight=620, retail=17.16)]}}}}
+_c12pc, _c12pr = copy.deepcopy(_uepol), copy.deepcopy(_uepol)
+_c12pc["report_settings"]["supplier_tier_cost_share"] = 0.05            # U/R 0.0533 is not under 5 %
+_c12pr["report_settings"]["supplier_tier_retail_share"] = 0.3           # S/R 0.3613 is not under 30 %
+_c12, _c12c, _c12r = (ue.compute(_c12b, pol)["products"][0] for pol in (_uepol, _c12pc, _c12pr))
+ok(_c12["offers"][0]["cautions"][0]["code"] == "SUPPLIER_TIER_BELOW_MARKET" and all(ch.get("cautions") for ch in _c12["channels"].values())
+   and "cautions" not in _c12c["offers"][0] and "cautions" not in _c12r["offers"][0]
+   and not any(ch.get("cautions") for ch in list(_c12c["channels"].values()) + list(_c12r["channels"].values()))
+   and [ch["margin_before_ads_usd"] for ch in _c12["channels"].values()] == [ch["margin_before_ads_usd"] for ch in _c12c["channels"].values()]
+   and _uepol["report_settings"]["supplier_tier_retail_share"] == 0.5 and _uepol["report_settings"]["supplier_tier_cost_share"] == 0.15
+   and "under 30 % of the market reference price" in ue.compute(_c12b, _c12pr)["assumptions"]["supplier_tier"],
+   "unit economics C12: a $2.53 CJ offer (suggested retail $17.16) against a $47.49 market is marked SUPPLIER_TIER_BELOW_MARKET on the offer and every "
+   "line, with no number changed; the thresholds are policies.yaml report_settings (0.5 / 0.15): at a 5 % cost share or a 30 % retail share it is not")
 
 if FAILS:
     print(f"\n{len(FAILS)} CHECKS FAILED: " + "; ".join(FAILS[:8]))

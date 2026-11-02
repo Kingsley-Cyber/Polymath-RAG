@@ -612,6 +612,64 @@ def test_the_costed_variant_is_said_in_one_line_on_its_offer():
     assert unit["formula"] == "the variant the host's variant rule costs: the cheapest variant left after dropping parts and light samples"
 
 
+# ─────────────────────────────────────────────────────────── contract C12: a CJ offer below the market's price tier
+LIVE_FEEDER = json.loads((FIXTURES / "cj_live_pet_feeder.json").read_text(encoding="utf-8"))
+FEEDER_OFFER = "cj:1436889243589939200"
+C12_TEXT = ("CJ's own suggested retail ($17.16) is under half the market price ($47.49) and its cost is under 15 % of it: the CJ listing may "
+            "be a simpler or different product than the comparables; compare them before trusting this margin")
+
+
+def _tier_bundle(cj_products: list, median: float, term: str) -> dict:
+    """One candidate: its CJ products and three matched Amazon listings whose median — the reference price R — is `median`."""
+    amazon = [{"kind": "listing", "asin": a, "title": f"{term} {a}", "url": f"https://www.amazon.com/dp/{a}", "price_usd": p, "relevant": True}
+              for a, p in (("B0T1", round(median * 0.8, 2)), ("B0T2", median), ("B0T3", round(median * 1.3, 2)))]
+    return {"report_id": "rpt_tier", "title": term, "candidates": [{"candidate_id": "c1", "title": term, "search_terms": [term.lower()]}],
+            "host": {"cj": {"c1": {"status": "OK", "products": cj_products}}, "ebay": {}}, "parsed": {"c1": {"amazon": amazon}},
+            "settings": {"as_of": "2026-11-02"}, "verdicts": {}}
+
+
+def _cj_one(pid: str, unit: float, retail: float | None) -> dict:
+    return {"product_id": pid, "title": f"CJ {pid}", "url": f"https://cjdropshipping.com/product/x-p-{pid}.html", "sell_price_usd": unit,
+            "suggested_retail_usd": retail, "weight_g": 500, "variants": [{"variant_id": f"{pid}-v1", "price_usd": unit, "weight_g": 500}],
+            "freight": {"CN": [], "US": [{"carrier": "USPS", "cost_usd": 6.50, "days_min": 3, "days_max": 7}]}, "us_stock_confirmed": False}
+
+
+@pytest.mark.skipif(not HAS_COMPUTE, reason="unit_economics.py (B3) is not in this checkout")
+def test_a_cj_offer_below_the_markets_price_tier_says_check_price_tier_beside_each_margin_and_once_in_the_summary():
+    """C12 on the live feeder (rpt_786cd43801c27f86efa84aad): CJ's $2.53 feeder, its own suggested retail $17.16, against $47.49 timer
+    feeders. Every margin costed from it reads "check: price tier" beside it, the summary row says it once, the full words stand once
+    under the margin table, the Supply row marks the offer and the receipts keep it — the numbers are the live page's."""
+    page = dossier.render_decision(_tier_bundle(LIVE_FEEDER["products"], 47.49, "Automatic pet feeder"))["html"]
+    summary = _section(page, "Decision Summary", "</tbody>").split("<tr>")[-1]
+    assert _plain_text(summary).count("check: price tier") == 1
+    assert _cells(summary)[0] == '$29.72<br><span class="tier">check: price tier</span>'          # the best line's margin (Shopify)
+    p1 = _product(page, 1)
+    margins = _section(p1, "Margin per channel", "What if TikTok Shop charges 8 %")
+    rows = [r for r in margins.split("<tr>") if FEEDER_OFFER in r]
+    assert [_cells(r)[6] for r in rows] == [f'{m}<br><span class="tier">check: price tier</span>' for m in ("$26.05", "$26.05", "$29.72", "$24.93", "$20.79")]
+    assert _plain_text(margins).count(C12_TEXT) == 1 and f"Check: price tier — CJ offer {FEEDER_OFFER} (every line costed from it): " in _plain_text(margins)
+    what_if = _section(p1, "What if TikTok Shop charges 8 %", "</tbody>")
+    assert [_cells(r)[7] for r in what_if.split("<tr>")[2:]] == ['$25.10<br><span class="tier">check: price tier</span>'] * 2   # 8 %: its base line's caution
+    assert "check: price tier (see the margin lines)" in _plain_text(_supply_row(page, 1, "1436889243589939200"))
+    receipts = _section(p1, "How these numbers were computed", "</details>")
+    assert receipts.count("SUPPLIER_TIER_BELOW_MARKET when CJ") == 6                             # the offer and its five lines
+    assert "Supplier price tier" in _section(page, "Assumptions and Sources", "</footer>")
+
+
+@pytest.mark.skipif(not HAS_COMPUTE, reason="unit_economics.py (B3) is not in this checkout")
+def test_the_fountain_the_brush_and_a_missing_suggested_retail_say_nothing_about_the_price_tier():
+    """Today's fountain (S $17.06 under half its R $41.74, but U $11.94 is 29 % of it), the slicker brush (S $34.13 above its R $13.99) and
+    the live feeder without CJ's suggested retail draw no price-tier caution."""
+    feeder = json.loads(json.dumps(LIVE_FEEDER["products"]))
+    feeder[0]["suggested_retail_usd"] = None
+    for bundle in (_tier_bundle([_cj_one("FTN", 11.94, 17.06)], 41.74, "Pet water fountain"),
+                   _tier_bundle([_cj_one("BRS", 3.83, 34.13)], 13.99, "Self-cleaning slicker brush"),
+                   _tier_bundle(feeder, 47.49, "Automatic pet feeder")):
+        out = dossier.render_decision(bundle)
+        assert "check: price tier" not in out["html"] and 'class="tier"' not in out["html"], bundle["title"]
+        assert not [o for o in out["decision"]["products"][0]["offers"] if "cautions" in o], bundle["title"]
+
+
 # ─────────────────────────────────────────────────────────── render_decision: ONE engine process
 @pytest.mark.skipif(not HAS_COMPUTE, reason="unit_economics.py (B3) is not in this checkout")
 def test_render_decision_runs_the_real_unit_economics_and_draws_its_answer(tmp_path):
