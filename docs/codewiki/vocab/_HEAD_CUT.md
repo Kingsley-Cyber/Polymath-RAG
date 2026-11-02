@@ -20,7 +20,7 @@ AUTHORITY: `shared/polymath_shared/acquisition/agent_reach.py:666` :: `_HEAD_CUT
 | `adapters/ecommerce/python/provenance.py` | `adapters/ecommerce/python/provenance.py:19` | 6/13 | `at`, `by`, `in`, `on`, `onto`, `to`, `without` |
 | `adapters/ecommerce/python/settings.py` | `adapters/ecommerce/python/settings.py:224` | 3/13 | `by`, `for`, `in`, `into`, `on`, `onto`, `per`, `via`, `with`, `without` |
 | `orchestrator/orchestrator/api/ask.py` | `orchestrator/orchestrator/api/ask.py:59` | 6/13 | `at`, `from`, `into`, `onto`, `per`, `via`, `without` |
-| `orchestrator/orchestrator/api/product_report.py` | `orchestrator/orchestrator/api/product_report.py:546` | 3/13 | `for`, `from`, `in`, `into`, `on`, `onto`, `per`, `to`, `with`, `without` |
+| `orchestrator/orchestrator/api/product_report.py` | `orchestrator/orchestrator/api/product_report.py:578` | 3/13 | `for`, `from`, `in`, `into`, `on`, `onto`, `per`, `to`, `with`, `without` |
 | `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:591` | 3/13 | `at`, `by`, `for`, `from`, `into`, `onto`, `per`, `to`, `with`, `without` |
 | `shared/polymath_shared/candidate_engine.py` | `shared/polymath_shared/candidate_engine.py:1619` | 9/13 | `onto`, `per`, `via`, `without` |
 | `shared/polymath_shared/chat_plan.py` | `shared/polymath_shared/chat_plan.py:393` | 8/13 | `into`, `onto`, `per`, `via`, `without` |

@@ -15,6 +15,8 @@ printed was checked against the body that remains):
   jina_amazon_product.out                           `curl -s https://r.jina.ai/https://www.amazon.com/dp/B00ZGPI3OY`
   jina_amazon_search_links.out                      the search page read with `X-With-Links-Summary: true` (449 KB)
   jina_amazon_search.out                            the search page read without it (no product links)
+  jina_amazon_search_plain.out                      live 2026-11-02: a search page in Jina's PLAIN-TEXT layout, its links only in
+                                                    the "Links/Buttons:" summary (unedited: the fetch script's own output)
   exa_ebay_brush.out / exa_ebay_candle.out          Exa restricted to ebay.com (it dropped the restriction: mostly other sites)
   exa_alibaba_brush.out / exa_alibaba_candle.out    Exa restricted to alibaba.com
   jina_alibaba_A.out / jina_alibaba_B_retry.out     Jina on two alibaba.com product pages
@@ -509,6 +511,71 @@ def test_r2v_n1_the_robot_check_wording_counts_only_as_a_whole_line_of_a_jina_pa
     short = ("Title: Amazon.com\n\nURL Source: https://www.amazon.com/dp/B00ZGPI3OY\n\nMarkdown Content:\nEnter the characters you see "
              "below\n\nContinue shopping\n")
     assert AR.parse_report_source("amazon", short, kind="page")["status"] == "HUMAN_CHECK"
+
+
+# ─────────────────────────────────────────────────────────── live run 2026-11-02 (rpt_00c434852e89c27f80de987e)
+def test_live_amazon_search_page_in_the_plain_text_layout_lists_its_products():
+    """jina_amazon_search_plain.out: a fresh read of packet r1-c2-amazon-2's URL with the fetch script's exact command (143 KB).
+    Jina printed the PLAIN-TEXT layout: plain lines per result, the products' links only in the "Links/Buttons:" summary, whose
+    text is each result's ratings count ("(44.5K)"). The markdown layout (jina_amazon_search_links.out) keeps its 48 listings."""
+    raw = _fx("jina_amazon_search_plain.out")
+    got = AR.parse_report_source("amazon", raw, kind="search", candidate_terms=["pet water fountain"])
+    recs = got["records"]
+    assert (got["status"], len(recs), got["refused"]) == ("OK", 43, [])                # was EMPTY / NO_PRODUCT_LINKS
+    by = _by(recs, "asin")
+    veken = by["B0G34DKXPL"]                                       # "- [(6K)](https://www.amazon.com/Veken-Innovation-…/dp/B0G34DKXPL/ref=sr_1_40…)"
+    assert {k: veken[k] for k in ("url", "price_usd", "list_price_usd", "rating", "ratings_count", "bought_past_month", "prime")} == {
+        "url": "https://www.amazon.com/dp/B0G34DKXPL", "price_usd": 27.99, "list_price_usd": 29.99, "rating": 4.3, "ratings_count": 6000,
+        "bought_past_month": 30000, "prime": True}
+    assert veken["title"].startswith("Veken Innovation Award Winner Stainless Steel Cat Water Fountain, 108oz, C1 Automatic Pet Fountain")
+    twin = by["B0F9FC7JYD"]                                        # two results show "(1.6K)": its URL's name words pick its own
+    assert "Wastewater Separation" in twin["title"] and (twin["price_usd"], twin["ratings_count"]) == (49.99, 1600)
+    assert {"B0GX5X4BNF", "B0H9GVML2X", "B0F2T6CXKT", "B0GHQBCFVN", "B0H38KJ35D"} <= set(by)  # sponsored /sspa/click: url= names the ASIN
+    assert "B0DVBL912R" not in by and "B0GY91BQCP" not in by       # the footer's store card and a click-tracking link are no results
+    filled = {k: sum(r[k] is not None for r in recs) for k in ("price_usd", "rating", "ratings_count", "bought_past_month", "delivery_text")}
+    assert filled == {"price_usd": 42, "rating": 43, "ratings_count": 43, "bought_past_month": 41, "delivery_text": 42}
+    assert sum(r["relevant"] for r in recs) == 41                  # "pet" is held by "Cat" / "Dog" (AUDIENCE); live: n = 1
+    assert [t["url"] for t in got["next_targets"]] == [r["url"] for r in recs if r["relevant"]][:AR.MAX_NEXT_TARGETS]
+    assert all(t["kind"] == "page" and t["source"] == "amazon" for t in got["next_targets"])
+    lines = raw.split("\n")                                         # the Sponsored / next-title boundary: without its own lines the
+    k = lines.index("Veken Innovation Award Winner Stainless Steel Cat Water Fountain, 108oz, C1")    # result keeps no number of
+    cut = lines[:k + 5] + lines[k + 8:]                             # the next result's (drops "30K+ bought…", "Price, product page", "$27.99")
+    assert [x.strip() for x in lines[k + 5:k + 8]] == ["30K+ bought in past month", "Price, product page", "$27.99"]
+    alone = _by(AR.parse_report_source("amazon", "\n".join(cut), kind="search")["records"], "asin")["B0G34DKXPL"]
+    assert (alone["price_usd"], alone["bought_past_month"], alone["rating"]) == (None, None, 4.3)
+
+
+def test_live_alibaba_captcha_interception_pages_are_a_human_check():
+    """Five 1 KB round-2 reads titled "Captcha Interception" were stored as listings: the challenge detector alone lets such a
+    page through once its other lines outweigh its budget. A short Jina page with that whole title is HUMAN_CHECK."""
+    page = ("Title: Captcha Interception\n\nURL Source: https://www.alibaba.com/product-detail/Wholesale-Custom-Logo-Self-Cleaning-Slicker_"
+            "1601292437894.html\n\nMarkdown Content:\nAlibaba.com\n\nWe could not show this page to you right now because of the way your "
+            "request reached us.\n\nIf you keep seeing this page, contact customer service with the reference below.\n\n"
+            "Reference: 0b1c2d3e4f5a6b7c8d9e\n\nHelp Center | Privacy Policy | Terms of Use\n")
+    assert CH.looks_like_challenge(page) is None                   # the live bug: the detector alone admits it
+    got = AR.parse_report_source("alibaba", page, kind="page")
+    assert (got["status"], got["records"], [r["code"] for r in got["refused"]]) == ("HUMAN_CHECK", [], ["HUMAN_CHECK"])
+    assert "Captcha Interception" in got["refused"][0]["why"]
+    behind = page.replace("\n\nMarkdown Content:", "\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:")
+    assert AR.parse_report_source("alibaba", behind, kind="page")["status"] == "HUMAN_CHECK"
+    listing = ("Title: Captcha Interception Practice Kit - Buy  Product on Alibaba.com\n\nURL Source: https://www.alibaba.com/product-detail/"
+               "Kit_1600000000009.html\n\nMarkdown Content:\n# Captcha Interception Practice Kit\n\n**$5.00**\n\n10-99 pieces\n\n"
+               "Our kit teaches how a captcha interception page works.\n")
+    kit = AR.parse_report_source("alibaba", listing, kind="page")   # a listing that merely mentions it is content
+    assert (kit["status"], kit["records"][0]["unit_price_at_moq"]) == ("OK", 5.0)
+
+
+def test_audience_words_are_held_by_their_group_and_nothing_else():
+    assert AR.AUDIENCE == {"pet": ("pet", "cat", "kitten", "dog", "puppy")}
+    assert AR.missing_terms("Automatic Cat Feeder", AR.head_terms("automatic pet feeder")) == []
+    assert AR.missing_terms("Puppies Slow Feeder Bowl", AR.head_terms("pets slow feeder bowl")) == []
+    assert AR.missing_terms("Desk Clamp Phone Holder", AR.head_terms("desk lamp")) == ["lamp"]
+    assert AR.missing_terms("Pet Hair Remover", AR.head_terms("dog bed")) == ["dog", "bed"]
+    assert AR.missing_terms("Dog Water Fountain", AR.head_terms("cat water fountain")) == ["cat"]   # one direction only
+    assert AR.missing_terms("Petal Desk Lamp", AR.head_terms("pet lamp")) == ["pet"]               # whole words: "Petal" is no pet
+    (thread,) = AR.parse_report_source("reddit", _thread("Best cat water fountain?"), kind="search",
+                                       candidate_terms=["pet water fountain"])["records"]
+    assert thread["relevant"] is True                              # the Reddit title rule reads "pet" the same way
 
 
 def test_relevance_is_judged_only_against_the_candidates_terms():

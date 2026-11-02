@@ -671,6 +671,11 @@ JOIN_MAX = 3
 #: a term that STARTS with "self" / "auto" and another word names a feature first ("self cleaning slicker brush"): a Reddit title
 #: may name the product without it (`_thread_relevance`)
 _FEATURE_PREFIX = frozenset({"self", "auto"})
+#: AUDIENCE words a title may name by any word of their group, as whole words and plurals (live 2026-11-02: "pet water
+#: fountain" and "automatic pet feeder" matched one Amazon listing each, the titles say "Cat Water Fountain", "Automatic Cat
+#: Feeder", "Dog Water Dispenser"). Short and closed on purpose: one direction (a "cat" term is never held by "dog" or "pet"),
+#: and every other word is held only by itself.
+AUDIENCE = {"pet": ("pet", "cat", "kitten", "dog", "puppy")}
 
 
 def head_terms(term: Any) -> list[str]:
@@ -701,6 +706,17 @@ def _forms(word: str) -> set[str]:
     return forms
 
 
+def _held_forms(word: str) -> set[str]:
+    """What holds a head term in a title: its own forms, and for an AUDIENCE word ("pet", "pets") every form of every word of
+    its group ("cat", "cats", "kitten", "dogs", "puppies", ...)."""
+    forms = _forms(word)
+    for key, group in AUDIENCE.items():
+        if key in forms:
+            for member in group:
+                forms |= _forms(member)
+    return forms
+
+
 def _joined(words: list[str]) -> list[tuple[str, list[str]]]:
     """Every run of two to JOIN_MAX adjacent words, joined: ("touchscreen", ["touch", "screen"])."""
     return [("".join(words[i:i + n]), words[i:i + n]) for n in range(2, JOIN_MAX + 1) for i in range(len(words) - n + 1)]
@@ -710,10 +726,11 @@ def missing_terms(title: Any, head: list[str]) -> list[str]:
     """The head terms `title` does not hold (empty = relevant). A head term is held only as a WHOLE word of the title (or its
     plural / singular), never inside another word (R2 #6: "Desk Clamp Phone Holder" does not hold "lamp", "Office Chair Brush"
     does not hold "hair"); a joined spelling counts both ways: two or three adjacent title words joined ("Touch Screen" holds
-    "touchscreen"), or two or three adjacent head terms joined ("touch screen" is held by "Touchscreen")."""
+    "touchscreen"), or two or three adjacent head terms joined ("touch screen" is held by "Touchscreen"); an AUDIENCE word is
+    also held by any word of its group ("pet" by "Cat Water Fountain": `AUDIENCE`)."""
     tokens = _WORD.findall(str(title or "").lower())
     units = set(tokens) | {joined for joined, _ in _joined(tokens)}
-    held = {t for t in head if _forms(t) & units}
+    held = {t for t in head if _held_forms(t) & units}
     for joined, run in _joined(head):
         if _forms(joined) & units:
             held.update(run)
@@ -751,7 +768,7 @@ def _pair_held(tokens: list[str], first: str, second: str) -> bool:
     """`first` then `second` as ADJACENT words of a title (plural or singular counts), or joined as one word ("selfcleaning")."""
     if _forms(first + second) & set(tokens):
         return True
-    return any(a in _forms(first) and b in _forms(second) for a, b in pairwise(tokens))
+    return any(a in _held_forms(first) and b in _held_forms(second) for a, b in pairwise(tokens))
 
 
 def _thread_relevance(terms: Terms, title: Any) -> tuple[bool | None, list[str]]:
@@ -794,18 +811,25 @@ _BLOCK_WORDS = re.compile(r"whoa there,? pardner|you've been blocked by network 
 #: you see in this image twice" in a comment is content)
 _CHECK_LINE = re.compile(r"(?:please\s+)?(?:enter|type)\s+the\s+characters\s+you\s+see\s+(?:below|in\s+this\s+image)"
                          r"|(?:sorry,?\s+)?we\s+just\s+need\s+to\s+make\s+sure\s+you're\s+not\s+a\s+robot", re.IGNORECASE)
+#: a check page's own TITLE, the whole title (live 2026-11-02: five 1 KB Alibaba round-2 reads titled "Captcha Interception" were
+#: stored as listings): a short Jina page so titled is HUMAN_CHECK; a listing that merely mentions a captcha is content
+_CHECK_TITLE = re.compile(r"(?:captcha\s+interception|human\s+verification)(?:\s*[-|–]\s*[\w. ]{1,40})?", re.IGNORECASE)
 _BLOCK_PAGE_CHARS = 3000                                 # a block or check page is short: longer text that quotes one is content
 
 
 def _check_words(rec: _Record) -> str | None:
-    """ "robot check" when ONE Jina page read is a short page that holds a check page's own line as a whole line or one
-    sentence of a line (Amazon's robot check: plan §4.1, HUMAN_CHECK), else None. An Exa result is never judged this way (its
-    text is excerpts and comments); every other check page is the challenge detector's (`looks_like_challenge`)."""
+    """What check page ONE short Jina page read is (plan §4.1, HUMAN_CHECK): its whole title is a check page's title (Alibaba's
+    "Captcha Interception"), or it holds a check page's own line as a whole line or one sentence of a line (Amazon's robot
+    check); else None. An Exa result is never judged this way (its text is excerpts and comments); every other check page is
+    the challenge detector's (`looks_like_challenge`)."""
     if rec.tool != TOOL_JINA:
         return None
     text = "\n".join(ln.text for ln in _lines(rec.body))
     if len(text) > _BLOCK_PAGE_CHARS:
         return None
+    title = " ".join(rec.title.split())
+    if _CHECK_TITLE.fullmatch(title):
+        return f"check page title \"{_clip(title, 60)}\""
     return "robot check" if any(_CHECK_LINE.fullmatch(seg) for seg in segments(text)) else None
 
 
@@ -1046,9 +1070,12 @@ def _amazon_page(rec: _Record, url: str, asin: str, terms: Terms) -> dict[str, A
 
 
 def _amazon_search(rec: _Record, terms: Terms) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
-    """ONE Jina read of an amazon.com search page WITH its links (`X-With-Links-Summary: true`): every result block that starts
-    with a `## [title](…/dp/<ASIN>/…)` heading is a listing (price, list price, rating, ratings count, bought in past month,
-    delivery, Prime). Without links a search page names no product: nothing is kept (NO_PRODUCT_LINKS)."""
+    """ONE Jina read of an amazon.com search page WITH its links (`X-With-Links-Summary: true`), in either of Jina's layouts:
+      * markdown: every result block that starts with a `## [title](…/dp/<ASIN>/…)` heading is a listing (price, list price,
+        rating, ratings count, bought in past month, delivery, Prime);
+      * plain text (live 2026-11-02, 143 KB): plain lines per result and the products' links only in the "Links/Buttons:"
+        summary (`_amazon_plain_search`).
+    Without links a search page names no product: nothing is kept (NO_PRODUCT_LINKS)."""
     raw = rec.body
     end = next((k for k, line in enumerate(raw) if line.strip() == "Links/Buttons:"), len(raw))   # Jina's links summary follows
     heads = []
@@ -1057,7 +1084,10 @@ def _amazon_search(rec: _Record, terms: Terms) -> tuple[list[dict[str, Any]], li
         found = amazon_product_url(m.group(2)) if m else None
         if found:
             heads.append((k, " ".join(ln.text for ln in _lines([m.group(1)])), found))
-    if not heads:
+    if not heads:                                        # the plain-text layout: the products' links are only in the summary
+        records = _amazon_plain_search(raw[:end], raw[end + 1:], terms)
+        if records:
+            return records, []
         return [], [_refusal(rec.url, "NO_PRODUCT_LINKS", "this Amazon search page lists no product links: read it with the header "
                                                           "`X-With-Links-Summary: true` (the fetch plan does)")]
     records: list[dict[str, Any]] = []
@@ -1078,6 +1108,137 @@ def _amazon_search(rec: _Record, terms: Terms) -> tuple[list[dict[str, Any]], li
                                       ratings_count=count, delivery_text=_clip(" / ".join(delivery), 300) or None,
                                       **_amazon_common(texts)))
     return records, []
+
+
+#: the plain-text layout: a result's rating line, its bare rating, its ratings count ("(44.5K)", "977"), a summary link
+_STARS_LINE = re.compile(r"(\d(?:\.\d)?)\s*out of 5 stars\.?", re.IGNORECASE)
+_RATING_ONLY = re.compile(r"\d(?:\.\d)?")
+_COUNT_ONLY = re.compile(r"\(?\s*\d[\d.,]*[KkMm]?\+?\s*\)?")
+_SUMMARY_LINK = re.compile(r"-\s+\[(.*)\]\((https?://\S+)\)")
+_PRICE_ALONE = re.compile(r"(?:US\s?\$|\$)\s?(\d[\d,]*\.\d{2})")
+#: a line that is never a result's title: the result tails and badges around it
+_NOT_TITLE_START = re.compile(r"[$(]|add to cart|more buying choices|join prime|or non-members|or fastest delivery|recycled materials"
+                              r"|see options|see all|more results|overall pick|best seller|amazon's choice|sponsored|limited time deal"
+                              r"|today's deals|shop\s|check each product|next page|results\b|\d[\d,]*-\d[\d,]* of", re.IGNORECASE)
+_NOT_TITLE_ANY = re.compile(r"\bdelivery\b|used & new offers|out of 5 stars|bought in past month|price, product page", re.IGNORECASE)
+
+
+def _title_line(text: str) -> bool:
+    t = text.strip()
+    return (len(t) >= 15 and len(re.findall(r"[A-Za-z]{2,}", t)) >= 3 and not _NOT_TITLE_START.match(t)
+            and not _NOT_TITLE_ANY.search(t))
+
+
+def _plain_blocks(lines: list[str]) -> list[dict[str, Any]]:
+    """The result blocks of the plain-text layout, in page order: each anchored at its "4.3 out of 5 stars" line, titled by the
+    one or two title lines above its bare rating ("4.3"; a truncated repeat of the line above is dropped), counted by the line
+    under it ("(6K)", "977"); its own lines run to the next block's first title line or a line that starts with "Sponsored"
+    (the markdown layout's rule: an ad's numbers never belong to the result above it)."""
+    blocks: list[dict[str, Any]] = []
+    for i, line in enumerate(lines):
+        star = _STARS_LINE.fullmatch(line.strip())
+        if not star:
+            continue
+        top = i
+        r = i - 1
+        while r >= 0 and not lines[r].strip():
+            r -= 1
+        if r >= 0 and _RATING_ONLY.fullmatch(lines[r].strip()):
+            top = r
+        titles: list[str] = []
+        start, j = top, top - 1
+        while j >= 0 and len(titles) < 2:
+            t = lines[j].strip()
+            if t:
+                if not _title_line(t):
+                    break
+                titles.insert(0, t)
+                start = j
+            j -= 1
+        if len(titles) == 2 and re.search(r"(?:…|\.\.\.)$", titles[1]) and titles[0].startswith(titles[1].rstrip(".…").rstrip(" ,")):
+            titles = titles[:1]
+        count = next((lines[k].strip() for k in range(i + 1, min(len(lines), i + 4)) if lines[k].strip()), "")
+        blocks.append({"start": start, "anchor": i, "rating": float(star.group(1)), "title": " ".join(titles),
+                       "count": count if _COUNT_ONLY.fullmatch(count) else None})
+    for n, b in enumerate(blocks):
+        end = blocks[n + 1]["start"] if n + 1 < len(blocks) else len(lines)
+        own: list[str] = []
+        for line in lines[b["anchor"] + 1: end]:
+            if line.lstrip().startswith("Sponsored"):
+                break
+            own.append(line)
+        b["texts"] = [ln.text for ln in _lines(own) if ln.text]
+    return blocks
+
+
+def _summary_products(summary: list[str]) -> list[tuple[str, str, str, list[str]]]:
+    """The search results in Jina's links summary, in its order: (link text, canonical URL, ASIN, the URL's name words). A
+    result is a `/dp/<ASIN>` link Amazon marks as a search result (`/ref=sr_…`), or a sponsored `/sspa/click` whose own `url=`
+    holds a `/dp/<ASIN>` (else skipped); a footer link (a store card's /dp/ page) is no result."""
+    out = []
+    for line in summary:
+        m = _SUMMARY_LINK.fullmatch(line.strip())
+        if not m:
+            continue
+        text, url = " ".join(m.group(1).split()), m.group(2)
+        found = amazon_product_url(url)
+        try:
+            parts = urlsplit(url)
+        except ValueError:
+            continue
+        path = parts.path
+        if found and "/ref=sr_" not in path:
+            continue
+        if not found and (parts.hostname or "").lower() in AMAZON_HOSTS and path.startswith("/sspa/click"):
+            path = (parse_qs(parts.query).get("url") or [""])[0]
+            inner = _ASIN_PATH.search(path)
+            found = (f"https://www.amazon.com/dp/{inner.group(1)}", inner.group(1)) if inner else None
+        if found:
+            name = path.split("/dp/", 1)[0].strip("/").split("/")[-1]
+            out.append((text, found[0], found[1], _WORD.findall(name.lower())))
+    return out
+
+
+def _amazon_plain_search(body: list[str], summary: list[str], terms: Terms) -> list[dict[str, Any]]:
+    """An Amazon search page in Jina's PLAIN-TEXT layout (live 2026-11-02): plain lines per result (title, "4.3 out of 5
+    stars", " (6K)", "30K+ bought in past month", "Price, product page", "$27.99", "List: $29.99", ...) and the products' links
+    only in the "Links/Buttons:" summary, whose text is the result's ratings count ("(44.5K)") or its title. One listing per
+    ASIN of the summary's search results (`_summary_products`), its numbers read from ITS block (`_plain_blocks`): the block
+    whose ratings count is the link's text (two blocks with the same count: the one whose title holds more of the link's URL
+    name words), or whose title starts with the link's title. Title: the link's text when it is a title, else the block's own
+    title lines, else the URL's name; a link no block matches keeps only its title (its numbers stay None)."""
+    blocks = _plain_blocks(body)
+    claimed: set[int] = set()
+    records: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for text, url, asin, name in _summary_products(summary):
+        if asin in seen:
+            continue
+        if _COUNT_ONLY.fullmatch(text):
+            pick = [n for n, b in enumerate(blocks) if n not in claimed and b["count"] == text]
+            pick = pick or [n for n, b in enumerate(blocks) if n not in claimed and b["count"] and b["count"].lower() == text.lower()]
+        elif _title_line(text):
+            key = " ".join(text.lower().rstrip(".… ").split())
+            pick = [n for n, b in enumerate(blocks) if n not in claimed and " ".join(b["title"].lower().split()).startswith(key)]
+        else:
+            continue                                   # "See options", "Debug info copied.": neither a count nor a title
+        named = {w for w in name if len(w) > 2}            # the URL's name words decide between blocks with the same count
+        best = max(pick, key=lambda n: (len(named & set(_WORD.findall(blocks[n]["title"].lower()))), -n), default=None)
+        seen.add(asin)
+        if best is None:
+            title = text if _title_line(text) else " ".join(name)
+            records.append(_amazon_record(asin, url, title, terms))
+            continue
+        claimed.add(best)
+        b = blocks[best]
+        texts = b["texts"]
+        after = next((k for k, t in enumerate(texts) if t.lower().startswith("price, product page")), None)
+        price = next((_money(m.group(1)) for t in texts[after + 1:] for m in [_PRICE_ALONE.fullmatch(t)] if m), None) if after is not None else None
+        delivery = [t for t in texts if "delivery" in t.lower()][:2]
+        title = text if _title_line(text) else (b["title"] or " ".join(name))
+        records.append(_amazon_record(asin, url, title, terms, price_usd=price, rating=b["rating"], ratings_count=_count(b["count"]),
+                                      delivery_text=_clip(" / ".join(delivery), 300) or None, **_amazon_common(texts)))
+    return records
 
 
 # ------------------------------------------------------------------------------------------------------------ ebay --

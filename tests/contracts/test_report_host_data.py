@@ -652,6 +652,9 @@ def test_one_term_reading_for_cj_ebay_and_the_report_parsers():
     assert HD.head_terms is AR.head_terms and HD.missing_terms is AR.missing_terms
     assert HD.head_terms("candle warmer lamp with timer") == ["candle", "warmer", "lamp"]
     assert HD.missing_terms("Desk Clamp Phone Holder", HD.head_terms("desk lamp")) == ["lamp"]
+    # live 2026-11-02: an AUDIENCE word is held by its group on CJ and eBay too ("pet" by "Cat" / "Dog"), nothing else is
+    assert HD.missing_terms("Automatic Cat Feeder", HD.head_terms("automatic pet feeder")) == []
+    assert HD.missing_terms("Pet Hair Remover", HD.head_terms("dog bed")) == ["dog", "bed"]
 
 
 class FixedNow:

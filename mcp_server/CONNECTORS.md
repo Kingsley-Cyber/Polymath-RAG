@@ -356,7 +356,12 @@ pass `next` through unchanged.
 The loop the agent follows (the `product_report_start` description and step 7 of the server instructions say the same; every
 answer's `next` says, in one sentence, what to do now):
 1. `product_report_start` with the user's words (`message`) or its own `products` ([{title, search_terms[]}], e.g. the hypotheses
-   `product_search` returned) → `report_id`; with `products`, the round-1 `fetch_plan` comes at once.
+   `product_search` returned) → `report_id`; with `products`, the round-1 `fetch_plan` comes at once. It sends `products` when the
+   user named products or it already has concrete ones (`product_search`'s hypotheses, products the library names); otherwise it
+   sends `message` and Polymath forms them from the library. A product turn that reads no product idea is run once more; still
+   none, and the request's own search words become the candidates, with `candidates.source` = `request_terms` and a plain
+   `candidates.note`. When those words are categories rather than products (e.g. "pet products"), the agent starts a new report
+   with `products` it chooses (2-4 word catalogue terms each); when they already name products, it carries on.
 2. While `fetch_plan` is null (`candidates.status` collecting while Polymath forms the products from the library), it calls
    `product_report_status(report_id)` again as `next` says.
 3. It saves `fetch_plan.script` unchanged to a file (`fetch_plan.how` says how; its sha256 is `fetch_plan.script_sha256`) and

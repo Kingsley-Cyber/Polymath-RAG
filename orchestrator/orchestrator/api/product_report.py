@@ -103,6 +103,11 @@ JOB_RETRY_AFTER_S = 30
 #: candidates x 4 CJ calls x 20 s plus fair-use waits) — so a stage stuck past it never locks its caller out.
 OWNER_JOB_SLOTS, PRINCIPAL_JOB_SLOTS = 2, 1
 JOB_SLOT_S = 15 * 60
+#: LIVE-RUN FIX (rpt_30887faa…, 2026-11-02): a product turn whose model block cannot be read gives 0 hypotheses on some runs and 5
+#: on the next; such a turn is run once more before the request's own search words become the candidates, and then they are
+#: labelled for what they are (`candidates.source` request_terms, `candidates.note`).
+PRODUCT_TURN_TRIES = 2
+REQUEST_TERMS_NOTE = "the library gave no product ideas; these are the request's own search words"
 #: C6: the host-data statuses that mean a source could not be read in full (NO_MATCH / EMPTY / NOT_SEARCHED are answers)
 DEGRADED_HOST_STATUSES = frozenset({"PARTIAL", "UNAVAILABLE", "NOT_CONFIGURED", "NOT_FETCHED"})
 
@@ -328,31 +333,48 @@ def candidates_from_block(block: Mapping[str, Any] | None, max_products: int) ->
             term = H._text((t or {}).get("search_term"), H.TERM_MAX) if isinstance(t, Mapping) else None
             if term:
                 out.append({"candidate_id": f"c{len(out) + 1}", "title": term, "search_terms": H._terms([term], term),
-                            "problem": None, "audience": None, "source": "product_route_terms"})
+                            "problem": None, "audience": None, "source": "request_terms"})
     return out[:max_products]
 
 
+def _hypotheses(out: Any, key: str = "hypotheses") -> int:
+    """How many hypotheses (or, with key="term_finds", search-word finds) a product turn's block holds."""
+    block = (out or {}).get("product_research") if isinstance(out, Mapping) else None
+    return len((block or {}).get(key) or []) if isinstance(block, Mapping) else 0
+
+
 def _form_candidates(report_id: str, principal: str | None, request: dict[str, Any], client: str) -> None:
-    """The start without products: ONE product turn (the product route's machinery) as the caller's principal, its hypotheses
-    become the candidates, then the host data. Every failure is typed on the report (status `failed`); the turn's receipt id is
-    kept on the report either way (C6)."""
+    """The start without products: the product turn (the product route's machinery) as the caller's principal; its hypotheses
+    become the candidates, then the host data. A turn with NO hypothesis (its model block could not be read: it varies run to run)
+    is run ONCE more with the same request; still none, and the request's own search words (the turn's term finds) become the
+    candidates, labelled `request_terms` with a plain note. Every failure is typed on the report (status `failed`); every turn's
+    receipt id is kept on the report (C6)."""
     with principal_context.acting_as(principal):
         receipt_ids: list[str] = []
+
+        def record(out: Any, tries: int) -> dict[str, Any]:
+            block = (out or {}).get("product_research") if isinstance(out, Mapping) else None
+            return {"verdict": (out or {}).get("verdict") if isinstance(out, Mapping) else None,
+                    "model": (out or {}).get("model") if isinstance(out, Mapping) else None,
+                    "corpus_ids": list((block or {}).get("corpus_ids") or []), "hypotheses": _hypotheses(out), "tries": tries,
+                    "receipt_id": receipt_ids[-1] if receipt_ids else None, "receipt_ids": list(receipt_ids)}
 
         def fail(code: str, message: str, turn: dict | None = None) -> None:
             def write(conn) -> None:
                 store.save_candidates(conn, report_id, {"status": "failed", "source": "product_route", "items": [],
-                                                        "error": _err(code, message),
-                                                        "product_turn": turn or {"receipt_id": receipt_ids[-1] if receipt_ids else None}})
+                                                        "error": _err(code, message), "note": None,
+                                                        "product_turn": turn or record(None, 0)})
                 row = store.get(conn, report_id, principal_id=None, for_update=True)
                 if row["status"] == "collecting":
                     store.transition(conn, report_id, "failed", current="collecting")
             _save(report_id, write)
 
+        def turn_once() -> Any:
+            return DEPS.product_turn(message=request["message"], corpus_id=request.get("corpus_id"),
+                                     corpus_ids=request.get("corpus_ids"), geography=request.get("ship_to"),
+                                     model=request.get("model"), client=client, receipt_ids=receipt_ids)
         try:
-            out = DEPS.product_turn(message=request["message"], corpus_id=request.get("corpus_id"),
-                                    corpus_ids=request.get("corpus_ids"), geography=request.get("ship_to"),
-                                    model=request.get("model"), client=client, receipt_ids=receipt_ids)
+            out = turn_once()
         except HTTPException as exc:
             d = exc.detail if isinstance(exc.detail, dict) else {}
             fail(str(d.get("error_code") or d.get("code") or f"HTTP_{exc.status_code}"),
@@ -362,16 +384,26 @@ def _form_candidates(report_id: str, principal: str | None, request: dict[str, A
             log.warning("product report %s product turn failed: %s", report_id, f"{type(exc).__name__}: {exc}"[:300])
             fail("PRODUCT_TURN_FAILED", f"the product turn failed on this server ({type(exc).__name__})")
             return
+        tries = 1
+        while _hypotheses(out) == 0 and tries < PRODUCT_TURN_TRIES:   # no product idea read from the model: once more
+            tries += 1
+            try:
+                again = turn_once()
+            except Exception as exc:  # noqa: BLE001 — the first turn's answer stands
+                log.warning("product report %s product turn retry failed: %s", report_id, f"{type(exc).__name__}: {exc}"[:300])
+                break
+            if _hypotheses(again) or _hypotheses(again, "term_finds") or not _hypotheses(out, "term_finds"):
+                out = again                                       # the retry's ideas; else its own search words, else the first's
         block = (out or {}).get("product_research") if isinstance(out, Mapping) else None
         items = candidates_from_block(block, int(request.get("max_products") or DEFAULT_MAX_PRODUCTS))
-        turn = {"verdict": (out or {}).get("verdict"), "model": (out or {}).get("model"),
-                "corpus_ids": list((block or {}).get("corpus_ids") or []), "hypotheses": len((block or {}).get("hypotheses") or []),
-                "receipt_id": receipt_ids[-1] if receipt_ids else None}
+        turn = record(out, tries)
         if not items:
             fail("NO_CANDIDATES", "the product turn formed no product hypothesis and no search term from the library", turn)
             return
-        _save(report_id, lambda c: store.save_candidates(c, report_id, {"status": "ready", "source": "product_route", "items": items,
-                                                                         "error": None, "product_turn": turn}))
+        from_terms = _hypotheses(out) == 0
+        _save(report_id, lambda c: store.save_candidates(c, report_id, {
+            "status": "ready", "source": "request_terms" if from_terms else "product_route", "items": items, "error": None,
+            "note": REQUEST_TERMS_NOTE if from_terms else None, "product_turn": turn}))
         _collect_host(report_id, principal, items, request.get("ship_to") or "US")
 
 
@@ -547,10 +579,29 @@ def _compiled_view(row: Mapping[str, Any], ups: list[dict], base: str) -> dict[s
             "stale": bool(at and read is not None and read != store.uploads_digest(ups)), "error": model.get("error")}
 
 
+REQUEST_TERMS_NEXT = ("The candidates are the request's own search words, not product ideas from the library: if they are "
+                      "categories rather than products, start a new report with products: [{title, search_terms}] that you choose "
+                      "(2-4 word catalogue terms each); if they already name products, carry on: ")
+
+
 def next_step(*, status: str, cand: Mapping[str, Any], host: Mapping[str, Any], rounds: list[dict], current: int,
               upload: Mapping[str, Any], compiled: Mapping[str, Any] | None, plan_error: Mapping[str, Any] | None,
               compile_stale: bool = False) -> str:
-    """What the agent should do now, in one sentence."""
+    """What the agent should do now, in one sentence. Candidates that are the request's own search words (`request_terms`) are
+    said so while round 1 has received nothing yet: the agent decides then whether to go on with them or start over with its
+    own `products`."""
+    said = _next_step(status=status, cand=cand, host=host, rounds=rounds, current=current, upload=upload, compiled=compiled,
+                      plan_error=plan_error, compile_stale=compile_stale)
+    first = next((r for r in rounds if r["round"] == 1), None)
+    if (cand.get("source") == "request_terms" and cand.get("status") == "ready" and status == "collecting" and current == 1
+            and first is not None and first["received"] == 0):
+        return REQUEST_TERMS_NEXT + said[0].lower() + said[1:]
+    return said
+
+
+def _next_step(*, status: str, cand: Mapping[str, Any], host: Mapping[str, Any], rounds: list[dict], current: int,
+               upload: Mapping[str, Any], compiled: Mapping[str, Any] | None, plan_error: Mapping[str, Any] | None,
+               compile_stale: bool = False) -> str:
     if cand.get("status") == "failed":
         code = (cand.get("error") or {}).get("error_code") or "NO_CANDIDATES"
         return (f"No product candidates could be formed ({code}): start a new report with products: [{{title, search_terms}}] "
@@ -631,7 +682,8 @@ def build_view(row: Mapping[str, Any], ups: list[dict], *, via: str, base: str, 
         "candidates": {"status": cand.get("status") or "collecting", "source": cand.get("source"),
                        "items": [{k: c.get(k) for k in ("candidate_id", "title", "search_terms", "problem", "audience", "source")}
                                  for c in _items(row)],
-                       "error": cand.get("error"), "product_turn_receipt_id": turn.get("receipt_id")},
+                       "error": cand.get("error"), "note": cand.get("note"), "product_turn_receipt_id": turn.get("receipt_id"),
+                       "product_turn_receipt_ids": list(turn.get("receipt_ids") or ([turn["receipt_id"]] if turn.get("receipt_id") else []))},
         "host": host, "round": current, "rounds": rounds, "fetch_plan": shown,
         "upload": upload_out, "uploads": store.upload_counts(ups), "compiled": compiled,
     }
@@ -779,9 +831,10 @@ async def product_report_start(req: ReportStartRequest, request: Request) -> dic
                                   "corpus_id": _clean(req.corpus_id), "corpus_ids": _clean(req.corpus_ids), "ship_to": ship_to,
                                   "channels": channels, "max_products": max_products, "model": _clean(req.model),
                                   "upload_base": req.upload_base, "ebay_api": _ebay_api(), "client": _clean(client[:120])}
-                candidates = ({"status": "ready", "source": "caller", "items": items, "error": None, "product_turn": None}
+                candidates = ({"status": "ready", "source": "caller", "items": items, "error": None, "note": None, "product_turn": None}
                               if from_products else
-                              {"status": "collecting", "source": "product_route", "items": [], "error": None, "product_turn": None})
+                              {"status": "collecting", "source": "product_route", "items": [], "error": None, "note": None,
+                               "product_turn": None})
                 with tx() as conn:
                     row, token = store.create(conn, owner_principal_id=principal, request=stored_request, candidates=candidates,
                                               host={"status": "pending", "started_at": None, "finished_at": None, "error": None,

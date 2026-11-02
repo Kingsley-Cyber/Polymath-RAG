@@ -233,6 +233,29 @@ The owner, 2026-11-02 (verbatim):
 - graft wrote `graft/.cache/telemetry-repo-id.json` into the worktree despite `--dir`; removed; never committed.
 - The fleet was not restarted and the live checkout's code was not edited during the build.
 
+## Live run 1 (after the merge of `07a80e4f`, migrations 0067 + 0068 and the bounce, 2026-11-02 ~20:07Z) and its fixes
+The deploy: `git merge --ff-only` (production `1403f3ac` → `07a80e4f`), 0067 (`UPDATE 7`: the seven libraries production and
+query-enabled), 0068 (two tables), web build, `bounce_fleet.sh` READY after ~55 s (26 healthy workers, 13 types, one bundle).
+`/product/reports` answered; a rebound Host got 403 on `/health`, loopback 200. Two owner reports through the routes the MCP tools
+proxy:
+- `rpt_30887faa…` ("Find me products I could dropship to pet owners in the US", commerce-v1, no products): the product turn (receipt
+  `q_765918915c7f…`, deepseek-v4-flash) gave 0 hypotheses (`parse: fallback`), so the candidates became the request's own words "pet
+  products" and "pet accessories". The same turn rerun a minute later gave 5 hypotheses: the model's block parses on some runs only.
+- `rpt_00c434852e89…` (three named products: self-cleaning slicker brush, pet water fountain, automatic pet feeder): round 1, 18
+  packets in 43 s, all uploaded; round 2, 12 packets in 1 min 49 s; host data CJ OK for all three (eBay `EBAY_NOT_CONFIGURED`);
+  compile in ~1 s, a 602 KB page with 106 http(s) links and no script. The brush: reference price $13.29 (Amazon median), TikTok US
+  $1.66 (12.5 %) PASS on US stock, Shopify $2.05 WARN, eBay $0.92, Amazon FBM −$0.52, cash before first stock $130.00. The fountain and
+  the feeder: every margin UNKNOWN ("fewer than 3 matched listings, Amazon n = 1").
+
+| Live finding | Cause | Fix |
+|---|---|---|
+| request words used as products | an empty product turn fell back to the request's term finds silently | the turn runs once more; still empty → `candidates.source` request_terms, a note, and `next` / agent texts say to pass `products` |
+| two Amazon search pages EMPTY (143 KB each, 40 product links) | Jina returned its plain-text layout; the parser read only the markdown layout | the plain layout is parsed (43 listings from the recorded page, new fixture `jina_amazon_search_plain.out`) |
+| fountain / feeder comparables n = 1 | "pet" required in titles that say "Cat Water Fountain" | an AUDIENCE group in the shared matcher: pet = pet / cat / kitten / dog / puppy (41 of 43 listings now relevant) |
+| five Alibaba pages titled "Captcha Interception" stored OK | the check-page detector missed Alibaba's captcha title | HUMAN_CHECK, nothing admitted |
+
+After these: the 27 affected suites in the sealed harness **865 passed**; engine 648 / 648; code wiki 2,412 / 2,412 on 378 pages.
+
 ## Proof
 - **Sealed CI reproduction** (a throwaway `postgres:16-alpine` with all 68 migrations applied in order, a clean environment, the CI
   workflow's suites `tests/contracts` + `tests/determinism`), final tree before the C11 change: **4,871 tests: 4,834 passed, 20 skipped,

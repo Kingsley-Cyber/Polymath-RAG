@@ -17,7 +17,7 @@ AUTHORITY: `adapters/ecommerce/python/report.py:927` :: `_ASSUMPTION_META` (coun
 | `adapters/ecommerce/python/field_evidence.py` | `adapters/ecommerce/python/field_evidence.py:67` | 3/12 | `url`, `urls`, `date`, `as_of`, `read`, `read_at`, `published`, `unconfirmed`, `confirmed` |
 | `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:226` | 8/12 | `source_url`, `read_at`, `unconfirmed`, `confirmed` |
 | `orchestrator/orchestrator/api/deep_research.py` | `orchestrator/orchestrator/api/deep_research.py:200` | 3/12 | `url`, `urls`, `source_url`, `date`, `as_of`, `read`, `read_at`, `published`, `unconfirmed` |
-| `orchestrator/orchestrator/api/product_report.py` | `orchestrator/orchestrator/api/product_report.py:297` | 4/12 | `urls`, `source_url`, `date`, `read`, `read_at`, `published`, `unconfirmed`, `confirmed` |
+| `orchestrator/orchestrator/api/product_report.py` | `orchestrator/orchestrator/api/product_report.py:302` | 4/12 | `urls`, `source_url`, `date`, `read`, `read_at`, `published`, `unconfirmed`, `confirmed` |
 | `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:461` | 4/12 | `urls`, `source_url`, `as_of`, `read`, `read_at`, `published`, `unconfirmed`, `confirmed` |
 | `shared/polymath_shared/acquisition/opencli.py` | `shared/polymath_shared/acquisition/opencli.py:72` | 4/12 | `urls`, `source_url`, `source`, `date`, `as_of`, `read_at`, `unconfirmed`, `confirmed` |
 | `shared/polymath_shared/acquisition/service.py` | `shared/polymath_shared/acquisition/service.py:250` | 3/12 | `urls`, `source_url`, `source`, `date`, `as_of`, `read_at`, `published`, `unconfirmed`, `confirmed` |

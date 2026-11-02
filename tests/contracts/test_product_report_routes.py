@@ -886,7 +886,8 @@ def test_start_without_products_returns_at_once_and_the_product_turn_runs_in_the
     _valid(out, "status_view")
     rid = out["report_id"]
     assert out["status"] == "collecting" and out["candidates"] == {"status": "collecting", "source": "product_route", "items": [],
-                                                                    "error": None, "product_turn_receipt_id": None}
+                                                                    "error": None, "note": None, "product_turn_receipt_id": None,
+                                                                    "product_turn_receipt_ids": []}
     assert out["fetch_plan"] is None and out["rounds"] == [] and "forming the product candidates" in out["next"]
     assert out["host"]["status"] == "pending" and out["request"]["products_from"] == "product_route"
     gate.set()
@@ -907,7 +908,8 @@ def test_start_without_products_returns_at_once_and_the_product_turn_runs_in_the
 def test_a_product_turn_that_forms_nothing_or_fails_leaves_a_typed_failed_report(rig, monkeypatch):
     g = rig
     monkeypatch.setattr(R.DEPS, "resolve_scope", lambda **kw: ["cinema"])
-    outcomes = iter([_turn([]), HTTPException(404, {"error_code": "QUERY_SCOPE_EMPTY", "message": "nothing to search"}),
+    outcomes = iter([_turn([]), _turn([]),                     # no idea and no search word, twice (a turn with none is retried)
+                     HTTPException(404, {"error_code": "QUERY_SCOPE_EMPTY", "message": "nothing to search"}),
                      RuntimeError("model down")])
 
     def turn(**kw):
@@ -1749,3 +1751,82 @@ def test_a_compile_with_no_uploads_says_needs_a_local_agent_for_reddit_amazon_an
     assert f"Read through your Agent Reach: {head}" in text and text.count("Read through your Agent Reach") == 1
     demand = text[text.index("Demand"): text.index("Supply")]
     assert "No Reddit threads were collected." not in demand
+
+
+# ───────────────────────────────────────────────────────────────── live-run fix: a product turn with no product idea
+def _turn_terms(terms):
+    """What the live turn of rpt_30887faa… returned: verdict thin, the model's block unreadable, 0 hypotheses, the request's own
+    search words as term finds."""
+    return {"verdict": "product_hypotheses_thin", "model": "deepseek-v4-flash", "product_research": {
+        "corpus_ids": ["commerce-v1"], "hypotheses": [],
+        "term_finds": [{"search_term": t, "cj": {"status": "OK", "items": []}} for t in terms]}}
+
+
+def _turn_rig(monkeypatch, answers):
+    """The product turn answering `answers` in order; every call recorded with the receipt id it writes."""
+    calls = []
+
+    def turn(**kw):
+        calls.append(kw["message"])
+        kw["receipt_ids"].append(f"q_turn_{len(calls)}")
+        return answers[len(calls) - 1]
+    monkeypatch.setattr(R.DEPS, "product_turn", turn)
+    monkeypatch.setattr(R.DEPS, "resolve_scope", lambda **kw: ["commerce-v1"])
+    return calls
+
+
+ASK = "Find me products I could dropship to pet owners in the US"
+
+
+def test_a_turn_with_no_product_idea_is_run_once_more_then_the_request_words_are_labelled(rig, monkeypatch):
+    """0 hypotheses, then 0 again: two turns (both receipts kept), and the request's own search words become the candidates —
+    `source` request_terms, a plain `note`, and `next` tells the agent to start over with its own `products` when they are
+    categories rather than products."""
+    g = rig
+    calls = _turn_rig(monkeypatch, [_turn_terms(["pet products", "pet accessories"]), _turn_terms(["pet products", "pet accessories"])])
+    out = _start(g, {"message": ASK, "corpus_id": "commerce-v1"})
+    assert calls == [ASK, ASK]                                                # the same request, twice
+    st = _status(g, out["report_id"], token=out["upload_token"]).json()
+    _valid(st, "status_view")
+    cand = st["candidates"]
+    assert (cand["status"], cand["source"]) == ("ready", "request_terms")
+    assert cand["note"] == "the library gave no product ideas; these are the request's own search words"
+    assert [c["title"] for c in cand["items"]] == ["pet products", "pet accessories"]
+    assert {c["source"] for c in cand["items"]} == {"request_terms"}
+    assert cand["product_turn_receipt_ids"] == ["q_turn_1", "q_turn_2"] and cand["product_turn_receipt_id"] == "q_turn_2"
+    assert st["next"].startswith("The candidates are the request's own search words, not product ideas from the library")
+    assert "start a new report with products: [{title, search_terms}]" in st["next"] and "(2-4 word catalogue terms each)" in st["next"]
+    assert "if they already name products, carry on: run round 1's fetch script" in st["next"]
+    turn = g.store.row(out["report_id"])["candidates"]["product_turn"]
+    assert (turn["tries"], turn["hypotheses"], turn["receipt_ids"]) == (2, 0, ["q_turn_1", "q_turn_2"])
+    _upload(g, out["report_id"], out["upload_token"], st["fetch_plan"]["packets"][0]["packet_id"], "a page")
+    later = _status(g, out["report_id"], token=out["upload_token"]).json()      # the agent went on: no more of the warning
+    assert later["candidates"]["source"] == "request_terms" and later["next"].startswith("Run round 1's fetch script")
+
+
+def test_a_turn_with_no_product_idea_then_three_uses_the_retry(rig, monkeypatch):
+    """0 hypotheses, then 3: two turns, and the second turn's hypotheses are the candidates (source product_route, no note)."""
+    g = rig
+    calls = _turn_rig(monkeypatch, [_turn_terms(["pet products"]), _turn(["Smart pet feeder", "Calming dog bed", "Cat water fountain"])])
+    out = _start(g, {"message": ASK})
+    assert len(calls) == 2
+    st = _status(g, out["report_id"], token=out["upload_token"]).json()
+    _valid(st, "status_view")
+    cand = st["candidates"]
+    assert (cand["source"], cand["note"]) == ("product_route", None)
+    assert [c["title"] for c in cand["items"]] == ["Smart pet feeder", "Calming dog bed", "Cat water fountain"]
+    assert cand["product_turn_receipt_ids"] == ["q_turn_1", "q_turn_2"] and st["next"].startswith("Run round 1's fetch script")
+    assert g.store.row(out["report_id"])["candidates"]["product_turn"]["tries"] == 2
+
+
+def test_a_turn_with_product_ideas_runs_once(rig, monkeypatch):
+    """3 hypotheses at once: one turn; and a report started with `products` never runs one (its source stays caller)."""
+    g = rig
+    calls = _turn_rig(monkeypatch, [_turn(["Smart pet feeder", "Calming dog bed", "Cat water fountain"])])
+    out = _start(g, {"message": ASK})
+    st = _status(g, out["report_id"], token=out["upload_token"]).json()
+    assert len(calls) == 1 and st["candidates"]["source"] == "product_route" and st["candidates"]["product_turn_receipt_ids"] == ["q_turn_1"]
+    assert len(st["candidates"]["items"]) == 3 and st["candidates"]["note"] is None
+    mine = _start(g, {"products": PRODUCTS})
+    assert len(calls) == 1 and mine["candidates"]["source"] == "caller" and mine["candidates"]["note"] is None
+    assert not mine["next"].startswith("The candidates are the request's own search words")

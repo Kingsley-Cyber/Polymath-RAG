@@ -92,8 +92,10 @@
      "enum": [
       "caller",
       "product_route",
+      "request_terms",
       "product_route_terms"
-     ]
+     ],
+     "description": "product_route_terms: the earlier name of request_terms (reports made before the live-run fix)"
     }
    }
   },
@@ -320,7 +322,9 @@
       "source",
       "items",
       "error",
-      "product_turn_receipt_id"
+      "note",
+      "product_turn_receipt_id",
+      "product_turn_receipt_ids"
      ],
      "additionalProperties": false,
      "properties": {
@@ -335,8 +339,10 @@
        "enum": [
         "caller",
         "product_route",
+        "request_terms",
         null
-       ]
+       ],
+       "description": "where the candidates came from: caller = the `products` the start sent; product_route = the product ideas a product turn formed from the library; request_terms = the library gave no product ideas (two product turns), so the candidates are the request's own search words — categories, maybe, rather than products"
       },
       "items": {
        "type": "array",
@@ -361,6 +367,21 @@
         "null"
        ],
        "description": "C6: the query receipt of the product turn that formed the candidates (null when the caller sent products)"
+      },
+      "note": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "maxLength": 300,
+       "description": "one plain sentence when `source` is request_terms; null otherwise"
+      },
+      "product_turn_receipt_ids": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       },
+       "description": "every product turn's query receipt, in order (a turn with no idea is run once more)"
       }
      }
     },

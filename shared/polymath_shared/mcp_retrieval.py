@@ -689,7 +689,10 @@ def playbook(*, list_tool: str, add_documents: str) -> str:
         f"{GUIDE_PROMPT} and the resource {GUIDE_RESOURCE}.\n"
         "7. Decision reports, when the user asks for a report, margins or delivery times on products (one private HTML report: "
         "Reddit signals, Amazon and eBay prices, Alibaba and CJ cost, MOQ and delivery time, the margin per sales channel): "
-        "product_report_start(message or products; corpus_id optional) -> while `fetch_plan` is null, call "
+        "product_report_start(message or products; corpus_id optional) (send `products` when the user named products or you "
+        "have concrete ones, e.g. product_search's hypotheses; `candidates.source` request_terms = the request's own search words, "
+        "the library having given no product ideas, so when they are categories start a new report with your own `products`) "
+        "-> while `fetch_plan` is null, call "
         "product_report_status(report_id) as `next` says -> save `fetch_plan.script` to a file and run it ONCE with bash in the "
         "user's terminal, always the latest answer's script when it carries one (it does every Agent Reach read of the round and "
         f"uploads the raw output to `upload.url` itself; never read the pages into the conversation, {NO_BUILT_IN_WEB}) -> "
@@ -851,13 +854,25 @@ RESEARCH_ACQUIRE = (
 # ---------------------------------------------------------------- product decision reports (PRODUCT-DECISION-REPORT-V1, B5)
 # The fetch script's own commands travel in the tool RESULTS (the status answer's `fetch` plan), never in these texts.
 
+#: LIVE-RUN FIX (2026-11-02, rpt_30887faa…): when to send `products` and what `candidates.source` request_terms means. A product turn
+#: that reads no product idea from the library is run once more; still none, and the request's own search words (often category
+#: words such as "pet products") become the candidates, labelled request_terms.
+REPORT_PRODUCTS_RULE = (
+    "Send `products` when the user named products or you already have concrete ones (product_search's hypotheses, products the "
+    "library names); otherwise send the user's words as `message` and Polymath forms them from the library. When "
+    "`candidates.source` is request_terms, the library gave no product ideas and the candidates are the request's own search "
+    "words: if those are categories rather than products, start a new report with `products` you choose ({title, search_terms}, "
+    "2-4 word catalogue terms each); if they already name products, carry on.")
+
 #: the loop, in plain steps any model can follow end to end (plan §3), in the field names of the route's answers
 #: (contracts/product/v1/product_report.schema.json: the start / status view and the compile view)
 REPORT_LOOP = (
     "Every answer carries `next`: one sentence saying what to do now; follow it. Steps, in order: "
     "(1) product_report_start -> `report_id` (with `products`, the round-1 `fetch_plan` comes at once). "
     "(2) While `fetch_plan` is null (`candidates.status` collecting: Polymath is forming the products from the library), call "
-    "product_report_status(report_id) again as `next` says. "
+    "product_report_status(report_id) again as `next` says. When the candidates are ready, look at `candidates.source`: "
+    "request_terms means the library gave no product ideas and they are the request's own search words; if those are "
+    "categories rather than products, start a new report with your own `products` instead. "
     "(3) Save `fetch_plan.script` unchanged to a file (`fetch_plan.how` says how; its sha256 is `fetch_plan.script_sha256`) and "
     "run it ONCE with bash in the user's terminal (your shell on the user's own machine), always the script of the latest "
     f"answer that carries one; it needs {LOCAL_AGENT_REACH}. The script does every Agent Reach read of the round in parallel, "
@@ -899,6 +914,7 @@ PRODUCT_REPORT_START = (
     "cost, MOQ and delivery time, and per sales channel the delivery verdict, fees, returns allowance, margin and break-even ad "
     "cost). Use it when the user asks for a report, margins or delivery times on products (product_search only finds them). "
     + REPORT_LOOP + " "
+    + REPORT_PRODUCTS_RULE + " "
     "Arguments: `message` = the user's words (Polymath then forms the products from the library) or `products` = your own "
     "[{title, search_terms[]}] (e.g. product_search's hypotheses); corpus_id: name a library when you know it, otherwise leave "
     "it out and Polymath searches every library you can use; channels = any of " + ", ".join(REPORT_CHANNELS) + " (default: "
@@ -912,7 +928,9 @@ PRODUCT_REPORT_START = (
 
 PRODUCT_REPORT_STATUS = (
     "Where a decision report stands: `status` (collecting | compiling | compiled | failed), `candidates` {status collecting | "
-    "ready | failed, items [{candidate_id, title, search_terms}]}, `host` {status pending | collecting | done | failed, cj, "
+    "ready | failed, source caller | product_route | request_terms, note, items [{candidate_id, title, search_terms}]; "
+    "request_terms = the request's own search words, the library having given no product ideas: when those are categories, "
+    "start a new report with your own `products`}, `host` {status pending | collecting | done | failed, cj, "
     "ebay}, `round` and `rounds` [{round, packets, received, complete}], the current round's `fetch_plan` {round, packets, "
     "script, script_sha256, limits, how} (null until the candidates are ready), `upload` {url, expires_at, via: local = the "
     "Polymath host only, public = any machine, token, mint_after}, `uploads` {total, by_round, by_source}, `compiled` {at, "

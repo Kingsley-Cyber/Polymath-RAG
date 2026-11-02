@@ -127,6 +127,17 @@ def test_round_two_reads_at_most_three_pages_per_source_per_candidate_from_the_p
     assert _plan(round=2)["packets"] == [] and "round-2" not in _plan(round=2)["how"]["then"]
 
 
+def test_round_two_reads_the_plain_text_search_pages_products_too():
+    """Live 2026-11-02: the plain-text layout of an Amazon search page names its products for round 2 like the markdown one."""
+    plain = AR.parse_report_source("amazon", (FIX / "jina_amazon_search_plain.out").read_text(), kind="search",
+                                   candidate_terms=["pet water fountain"])
+    plan = _plan(candidates=({"candidate_id": "c2", "title": "Pet water fountain"},), round=2,
+                 targets=[{**t, "candidate_id": "c2"} for t in plain["next_targets"]])
+    assert [(p["packet_id"], p["kind"], _argv(p["commands"][0])[-1]) for p in plan["packets"]] == [
+        (f"r2-c1-amazon-{n}", "page", f"https://r.jina.ai/{t['url']}") for n, t in enumerate(plain["next_targets"][:3], 1)]
+    assert [s["code"] for s in plan["skipped"]] == ["OVER_LIMIT"] * (len(plain["next_targets"]) - 3)
+
+
 @pytest.mark.parametrize("args,needle", [
     (("rpt x", [BRUSH]), "report_id"), (("rpt_1", [BRUSH], {"round": 3}), "round"),
     (("rpt_1", [BRUSH], {"upload": {"url": "http://127.0.0.1:7200/u/t'; touch x; '", "expires_at": "2026-11-02T21:00:00Z"}}), "upload.url"),

@@ -1428,3 +1428,41 @@ def test_the_review_fix_contracts_are_cited_where_the_token_code_lives():
     worklog = (ROOT / "docs/wiki/work-log/2026-11-02-product-decision-report.md").read_text(encoding="utf-8")
     assert "Review-fix contracts C1" in worklog and "**C1 upload tokens.**" in worklog
     assert "# ADR-0023" in (ROOT / adr).read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------- live-run fix (2026-11-02): when to send `products`; request_terms
+def test_the_texts_say_when_to_send_products_and_what_request_terms_means():
+    """rpt_30887faa…: a product turn that read no product idea left the request's own category words as the candidates. The
+    route now retries the turn once and labels the fallback (`candidates.source` request_terms); every agent-facing text says
+    when to send `products` and what request_terms means, with the schema's own values."""
+    rule = _flat(MR.REPORT_PRODUCTS_RULE)
+    for needle in ("Send `products` when the user named products or you already have concrete ones",
+                   "product_search's hypotheses", "otherwise send the user's words as `message`",
+                   "`candidates.source` is request_terms", "the library gave no product ideas",
+                   "the candidates are the request's own search words", "categories rather than products",
+                   "start a new report with `products` you choose", "2-4 word catalogue terms each", "if they already name products, carry on"):
+        assert needle in rule, needle
+    start = _flat(MR.PRODUCT_REPORT_START)
+    assert rule in start and start.index(rule) < start.index("Arguments:")
+    loop = _flat(MR.REPORT_LOOP)
+    assert loop.index("(2) While `fetch_plan` is null") < loop.index("look at `candidates.source`") < loop.index("(3) Save")
+    assert "request_terms means the library gave no product ideas" in loop and "start a new report with your own `products`" in loop
+    schema = json.loads((ROOT / "contracts/product/v1/product_report.schema.json").read_text())
+    sources = [v for v in schema["$defs"]["status_view"]["properties"]["candidates"]["properties"]["source"]["enum"] if v]
+    status = _flat(MR.PRODUCT_REPORT_STATUS)
+    assert f"source {' | '.join(sources)}, note, items" in status and "request_terms = the request's own search words" in status
+    assert "note" in schema["$defs"]["status_view"]["properties"]["candidates"]["required"]
+    for label, server in _servers().items():
+        step = _flat(server.instructions[server.instructions.index("7. Decision reports"):])
+        assert "send `products` when the user named products or you have concrete ones" in step, label
+        assert "`candidates.source` request_terms = the request's own search words" in step, label
+        assert "start a new report with your own `products`" in step, label
+    doc = (ROOT / "mcp_server/CONNECTORS.md").read_text(encoding="utf-8")
+    five = _flat(doc[doc.index("## 5. Product decision reports"):])
+    for needle in ("It sends `products` when the user named products or it already has concrete ones",
+                   "A product turn that reads no product idea is run once more",
+                   "`candidates.source` = `request_terms` and a plain `candidates.note`",
+                   "the agent starts a new report with `products` it chooses (2-4 word catalogue terms each)"):
+        assert needle in five, needle
+    for where, text in _report_texts().items():                         # the guards stay green on every report text
+        assert not offenders(text), (where, offenders(text))
