@@ -4754,11 +4754,11 @@
   "status": "ok"
  },
  "units/shared/polymath_shared/acquisition/agent_reach.py.md": {
-  "attempts": 1,
+  "attempts": 3,
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-11-02",
-  "input_hash": "6b26eb59b6ba426f",
+  "input_hash": "048f83abb663b263",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5807,11 +5807,11 @@
   "status": "ok"
  },
  "units/shared/polymath_shared/product_search/fetch_plan.py.md": {
-  "attempts": 3,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-11-02",
-  "input_hash": "a421fb11a106ba66",
+  "input_hash": "d6c6c122ebc4449e",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

@@ -3578,6 +3578,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/fixtures/product_report/jina_amazon_search.out", "out", None),
     ("tests/fixtures/product_report/jina_amazon_search_links.out", "out", None),
     ("tests/fixtures/product_report/jina_amazon_search_plain.out", "out", None),
+    ("tests/fixtures/product_report/jina_amazon_search_snapshot.out", "out", None),
     ("tests/fixtures/product_report/jina_ebay_item_A.out", "out", None),
     ("tests/fixtures/product_report/jina_ebay_item_B.out", "out", None),
     ("tests/fixtures/product_report/jina_ebay_search.out", "out", None),

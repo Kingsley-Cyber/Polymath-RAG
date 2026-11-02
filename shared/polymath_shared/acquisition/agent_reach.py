@@ -543,6 +543,10 @@ REPORT_UNTRUSTED = "every text field is the page's own untrusted text: quote it 
 #: ({"data": null, "code": 422, "name": "AssertionFailureError", ...}). The fetch script retries such a read once (the same rule).
 READER_MIN_BYTES = 512
 READER_FAILED = "READER_FAILED"
+#: Jina's CACHED SNAPSHOT of a page that had not loaded (live 2026-11-02: a 346-byte read of an Amazon search page): both warnings
+#: in the page's framing over an empty Markdown Content (nothing before the "Links/Buttons:" summary) is a failed read at ANY
+#: size. The fetch script tests the same lines and reads it once more without Jina's cache (`X-No-Cache: true`, `X-Timeout: 30`)
+_SNAPSHOT_WARNINGS = (re.compile(r"Warning: This is a cached snapshot\b"), re.compile(r"Warning: This page maybe not yet fully loaded\b"))
 
 
 def _reader_error(text: str) -> str | None:
@@ -563,6 +567,22 @@ def _reader_error(text: str) -> str | None:
 
 def _failed_read(size: int, detail: str) -> str:
     return f"the reader returned only {size} bytes ({detail}): a failed read, not a page; run the round's script once more"
+
+
+def _snapshot_only(rec: _Record) -> bool:
+    """True when ONE Jina page read is Jina's cached snapshot of a page that had not loaded, whatever its size: both snapshot
+    warnings and the "Markdown Content:" line in its framing, and no non-blank line before its "Links/Buttons:" summary."""
+    if rec.tool != TOOL_JINA or not any(_MARKDOWN.match(line) for line in rec.head):
+        return False
+    if not all(any(w.match(line.strip()) for line in rec.head) for w in _SNAPSHOT_WARNINGS):
+        return False
+    end = next((k for k, line in enumerate(rec.body) if line.strip() == "Links/Buttons:"), len(rec.body))
+    return not any(line.strip() for line in rec.body[:end])
+
+
+def _snapshot_read(size: int) -> str:
+    return (f"the reader returned its cached snapshot of a page that had not loaded ({size} bytes, an empty Markdown Content): a "
+            "failed read, not a page; run the round's script once more")
 
 
 def _refusal(url: Any, code: str, why: str) -> dict[str, str]:
@@ -1679,7 +1699,8 @@ def parse_report_source(source: str, raw_text: str, *, kind: str, candidate_term
     (`_thread_relevance`). A field the page does not show is None. `next_targets` ([{url, source, kind: "page",
     why}], relevant first) are the product pages worth reading next: an Amazon search page's products, an Alibaba Exa search's
     product-detail pages. Status: OK (a record or a target), HUMAN_CHECK / BLOCKED (only walls), UNRECOGNISED (not one reader's
-    output), EMPTY (READER_FAILED when the page reader failed: its own error JSON, or a Jina read with no page in it, under
+    output), EMPTY (READER_FAILED when the page reader failed: its own error JSON, Jina's cached snapshot of a page that had not
+    loaded (its two warnings over an empty Markdown Content, at any size), or a Jina read with no page in it, under
     READER_MIN_BYTES or with no content). Content problems never raise; a `source` or `kind` outside the vocabulary raises
     ValueError."""
     src, knd = str(source or "").strip().lower(), str(kind or "").strip().lower()
@@ -1724,6 +1745,9 @@ def parse_report_source(source: str, raw_text: str, *, kind: str, candidate_term
         if wall:
             refused.append(_refusal(rec.final_url or rec.url, "HUMAN_CHECK", f"the page is a verification page ({wall}), not content: nothing was "
                                                                              "read from it. Never solve, skip or work around it"))
+            continue
+        if _snapshot_only(rec):                        # Jina's cached snapshot of a page that had not loaded: at any size
+            refused.append(_refusal(rec.url, READER_FAILED, _snapshot_read(size)))
             continue
         if tool == TOOL_JINA and (size < READER_MIN_BYTES or not any(ln.text for ln in _lines(rec.body))):
             refused.append(_refusal(rec.url, READER_FAILED, _failed_read(size, "a title and a URL, no page")))

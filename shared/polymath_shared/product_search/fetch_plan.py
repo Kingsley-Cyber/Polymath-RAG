@@ -14,9 +14,9 @@ The script (POSIX shell syntax run by bash; bash 3.2 on macOS is enough) needs `
   * pacing: keyless Exa answered 429 at 4 parallel calls and keyless Jina allows 20 reads a minute per IP, so without keys the
     script keeps at most 3 Exa calls in flight and starts at most one Jina read every 3 seconds; with EXA_API_KEY (10 QPS) it
     keeps 8 Exa calls in flight and with JINA_API_KEY (500 RPM) it starts 5 Jina reads a second at most (300 a minute);
-  * one exact command per packet, the same text as the packet's `commands`; the keys enter only through the shell's own
-    optional-argument form (`${EXA_API_KEY:+…}`): unset, the command is exactly the keyless one; the keys are never written into
-    the script or the plan;
+  * one exact command per packet, the same text as the packet's `commands` (a Jina packet's one retry is that read with
+    JINA_RETRY_HEADERS and a longer curl limit, below); the keys enter only through the shell's own optional-argument form
+    (`${EXA_API_KEY:+…}`): unset, the command is exactly the keyless one; the keys are never written into the script or the plan;
   * every value that comes from a candidate (the title, the search terms) or from a page (a round-2 URL, validated and rebuilt
     to its canonical form first) is single-quoted (`shlex.quote`) into the command: a term like `"; rm -rf ~; echo "` or
     `$(touch /tmp/x)` is a search word, never a command; curl runs with URL globbing off (`-g`) and a time limit;
@@ -25,9 +25,12 @@ The script (POSIX shell syntax run by bash; bash 3.2 on macOS is enough) needs `
     exits 0 even when a site blocks the reader (the upload records it) and 3 only when it cannot run at all (no curl);
   * an EMPTY output is uploaded too (an empty body, which the host records as EMPTY), so every packet of a round arrives and the
     round can complete (round 2 is minted when round 1 is complete); its summary line says so, and why when it was rate limited;
-  * a FAILED READ is read once more before its one upload: the command exited non-zero, or printed under AR.READER_MIN_BYTES
-    (512) bytes, or printed Jina's own error JSON ("code": 4xx/5xx with "name" / "readableMessage"); after RETRY_AFTER_S (Exa 5 s,
-    Jina 4 s), within the pacing; its summary line says "retried once" and why. The check only counts bytes and greps the file.
+  * a FAILED READ is read once more before its one upload: the command exited non-zero, or printed Jina's cached snapshot of a
+    page that had not loaded (its "cached snapshot" and "not yet fully loaded" warnings over an empty Markdown Content, at any
+    size), or under AR.READER_MIN_BYTES (512) bytes, or Jina's own error JSON ("code": 4xx/5xx with "name" / "readableMessage");
+    after RETRY_AFTER_S (Exa 5 s, Jina 4 s), inside the packet's own slot of the pacing (it counts once); an Exa search runs again
+    as it was, a Jina read again without Jina's cache and with 30 s to render (`X-No-Cache: true`, `X-Timeout: 30`, curl limit
+    120 s); its summary line says "retried once" and why. The check only counts bytes and greps the file.
 Pure and deterministic: the same arguments give the same plan, byte for byte (no clock, no randomness, no environment)."""
 from __future__ import annotations
 
@@ -51,10 +54,16 @@ LIMITS_WITH_KEYS = {"exa_parallel": 8, "jina_per_minute": 300}
 JINA_PARALLEL = {"keyless": 1, "with_keys": 5}         # Jina reads started together; the gap between starts keeps jina_per_minute
 EXA_GAP_S = 1                                          # pause between Exa batches
 JINA_TIMEOUT_S, UPLOAD_TIMEOUT_S = 90, 120
-#: a failed read (a non-zero exit, under AR.READER_MIN_BYTES, or Jina's own error JSON) is read ONCE more after this pause, inside
-#: the pacing (the queue waits for the packet before its next start): live 2026-11-02, a 252-byte Jina read cost a product its
-#: Amazon comparables and nothing asked for it again
+#: a failed read (a non-zero exit, Jina's cached snapshot with no content, under AR.READER_MIN_BYTES, or Jina's own error JSON) is
+#: read ONCE more after this pause, inside the packet's own slot of the pacing (the queue waits for the packet, its retry
+#: included, before its next start): live 2026-11-02, a 252-byte Jina read cost a product its Amazon comparables and nothing asked
+#: for it again. Jina's pause is at least the keyless gap between Jina starts (3 s), so the retry is paced like one more read
 RETRY_AFTER_S = {"exa": 5, "jina": 4}
+#: a Jina packet's ONE retry reads the page fresh, never from Jina's cache, and lets it render for 30 s (live 2026-11-02: a 346-byte
+#: read of an Amazon search page was Jina's cached snapshot of a page that had not loaded, with an empty Markdown Content); its
+#: curl limit covers that render. The first read stays cached (fast); an Exa search is retried as it was
+JINA_RETRY_HEADERS = ("X-No-Cache: true", "X-Timeout: 30")
+JINA_RETRY_TIMEOUT_S = 120
 EXA_KEYED_URL = "https://mcp.exa.ai/mcp?exaApiKey="    # Exa's own keyed endpoint (its 429 message names it)
 #: the keys enter a command only through the shell's optional-argument form: expanded to nothing when unset
 _EXA_KEY_ARG = '${EXA_API_KEY:+--http-url "' + EXA_KEYED_URL + '$EXA_API_KEY"}'
@@ -104,13 +113,21 @@ def exa_command(source: str, words: str, *, objective: str | None = None, suffix
                      f"numResults={EXA_RESULTS}", shlex.quote(f"objective={goal}")])
 
 
-def jina_command(url: str, *, links: bool = False) -> str:
+def jina_command(url: str, *, links: bool = False, retry: bool = False) -> str:
     """The exact Jina Reader read of `url`: `curl -s "https://r.jina.ai/<url>"` (with JINA_API_KEY set, its Authorization header;
-    for an Amazon search page, `X-With-Links-Summary: true`), URL globbing off and a time limit."""
-    parts = ["curl", "-s", "-g", "-m", str(JINA_TIMEOUT_S), _JINA_KEY_ARG]
-    if links:
-        parts += ["-H", shlex.quote(_LINKS_HEADER)]
+    for an Amazon search page, `X-With-Links-Summary: true`), URL globbing off and a time limit. `retry`: the packet's one retry,
+    without Jina's cache and with time to render (JINA_RETRY_HEADERS, curl limit JINA_RETRY_TIMEOUT_S)."""
+    parts = ["curl", "-s", "-g", "-m", str(JINA_RETRY_TIMEOUT_S if retry else JINA_TIMEOUT_S), _JINA_KEY_ARG]
+    headers = ([_LINKS_HEADER] if links else []) + (list(JINA_RETRY_HEADERS) if retry else [])
+    for header in headers:
+        parts += ["-H", shlex.quote(header)]
     return " ".join([*parts, shlex.quote(f"https://r.jina.ai/{url}")])
+
+
+def _jina_read(url: str, kind: str, *, retry: bool = False) -> str:
+    """A Jina packet's read of `url`: a search packet reads an Amazon search page, with the links summary (the only way that page
+    lists its products' links); a page packet reads a product page."""
+    return jina_command(url, links=kind == "search", retry=retry)
 
 
 def amazon_search_url(words: str) -> str:
@@ -142,7 +159,7 @@ def _round1(index: int, cid: str, candidate: dict[str, Any], ebay_api: bool) -> 
                 exa_command("reddit", second, objective=_OBJECTIVE["reddit_2"], suffix="recommendations"), AR.TOOL_EXA,
                 f"site:reddit.com {second} recommendations"),
         _packet(f"{p}-amazon-1", cid, "amazon", "search", exa_command("amazon", first), AR.TOOL_EXA, f"site:amazon.com {first}"),
-        _packet(f"{p}-amazon-2", cid, "amazon", "search", jina_command(amazon_search_url(first), links=True), AR.TOOL_JINA,
+        _packet(f"{p}-amazon-2", cid, "amazon", "search", _jina_read(amazon_search_url(first), "search"), AR.TOOL_JINA,
                 amazon_search_url(first)),
         _packet(f"{p}-alibaba-1", cid, "alibaba", "search", exa_command("alibaba", first), AR.TOOL_EXA, f"site:alibaba.com {first}"),
     ]
@@ -188,7 +205,7 @@ def _round2(targets: list[dict[str, Any]], index_of: dict[str, int], skipped: li
             continue
         seen.add((cid, url))
         taken[(cid, source)] = n = taken.get((cid, source), 0) + 1
-        packets.append(_packet(f"r2-c{index_of[cid]}-{source}-{n}", cid, source, "page", jina_command(url), AR.TOOL_JINA, url))
+        packets.append(_packet(f"r2-c{index_of[cid]}-{source}-{n}", cid, source, "page", _jina_read(url, "page"), AR.TOOL_JINA, url))
     return packets
 
 
@@ -214,10 +231,24 @@ WORK=$(mktemp -d "${{TMPDIR:-/tmp}}/polymath-report.XXXXXX") || {{ echo "polymat
 trap 'rm -rf "$WORK"' EXIT
 echo "polymath-fetch: report $REPORT round $ROUND: $PACKETS packets; Exa $EXA_PARALLEL in flight ($EXA_MODE); Jina $JINA_PARALLEL every $JINA_GAP s ($JINA_MODE)"
 
+snapshot_only() {{
+  # $1 an output file: true when it is Jina's cached snapshot of a page that had not loaded, whatever its size: the "cached
+  # snapshot" and "not yet fully loaded" warnings over an empty Markdown Content (up to the links summary). awk only reads it.
+  awk '
+    /^Markdown Content:/ && !m {{ m = 1; next }}
+    !m && /^Warning: This is a cached snapshot/ {{ c = 1 }}
+    !m && /^Warning: This page maybe not yet fully loaded/ {{ l = 1 }}
+    m && /^Links\\/Buttons:/ {{ exit }}
+    m && NF {{ t = 1; exit }}
+    END {{ exit !(m && c && l && !t) }}
+  ' "$1"
+}}
+
 failed_read() {{
   # $1 an output file, $2 its exit code: why the read looks failed, or nothing. It only counts the bytes and greps the file:
   # fetched content is never run or evaluated.
   if [ "$2" -ne 0 ]; then echo "exit $2"; return 0; fi
+  if snapshot_only "$1"; then echo "a cached snapshot of a page that had not loaded"; return 0; fi
   size=$(wc -c <"$1" | tr -d ' ')
   if [ "$size" -lt {min_bytes} ]; then echo "only $size bytes"; return 0; fi
   if head -n 1 "$1" | grep -q -E '^[[:space:]]*[{{].*"code"[[:space:]]*:[[:space:]]*[45][0-9][0-9]' && grep -q -E '"(name|readableMessage)"[[:space:]]*:' "$1"; then
@@ -227,8 +258,8 @@ failed_read() {{
 }}
 
 run_packet() {{
-  # $1 packet id, $2 source, $3 kind, $4 the packet's command (a function below), $5 the pause before its one retry.
-  # The output goes to a file and is uploaded once; a failed read is read once more first.
+  # $1 packet id, $2 source, $3 kind, $4 the packet's command and $5 its one retry (functions below), $6 the pause before that
+  # retry. The output goes to a file and is uploaded once; a failed read is read once more first.
   out="$WORK/$1.out"
   err="$WORK/$1.err"
   "$4" >"$out" 2>"$err"
@@ -236,8 +267,8 @@ run_packet() {{
   retried=''
   why=$(failed_read "$out" "$rc")
   if [ -n "$why" ]; then
-    sleep "$5"
-    "$4" >"$out" 2>"$err"
+    sleep "$6"
+    "$5" >"$out" 2>"$err"
     rc=$?
     retried=" (retried once: $why)"
   fi
@@ -256,14 +287,17 @@ run_packet() {{
 
 EXA_N=0
 exa() {{
-  run_packet "$1" "$2" "$3" "$4" {exa_retry} &
+  # an Exa search is retried as it was ($4 twice)
+  run_packet "$1" "$2" "$3" "$4" "$4" {exa_retry} &
   EXA_N=$((EXA_N + 1))
   if [ "$EXA_N" -ge "$EXA_PARALLEL" ]; then wait; EXA_N=0; sleep "$EXA_GAP"; fi
 }}
 
 JINA_N=0
 jina() {{
-  run_packet "$1" "$2" "$3" "$4" {jina_retry} &
+  # $5: the read again without Jina's cache and with time to render. A retry stays inside its packet's slot, so it counts once:
+  # the queue waits for the packet, its retry included, before the next start
+  run_packet "$1" "$2" "$3" "$4" "$5" {jina_retry} &
   JINA_N=$((JINA_N + 1))
   if [ "$JINA_N" -ge "$JINA_PARALLEL" ]; then wait; JINA_N=0; sleep "$JINA_GAP"; fi
 }}
@@ -309,8 +343,13 @@ def _script(report_id: str, round_: int, upload_url: str, expires_at: str, packe
         name = f"p{n:03d}"
         functions.append(f"{name}() {{ {p['commands'][0]}; }}")
         call = f"  {'exa' if p['expect']['tool_class'] == AR.TOOL_EXA else 'jina'} {shlex.quote(p['packet_id'])} {p['source']} {p['kind']} {name}"
-        (exa_calls if p["expect"]["tool_class"] == AR.TOOL_EXA else jina_calls).append(call)
-    body = "\n# the packets: one exact command each (the same text as the plan's commands)\n" + "\n".join(functions) + "\n"
+        if p["expect"]["tool_class"] == AR.TOOL_EXA:
+            exa_calls.append(call)
+        else:                                          # the same URL (`reads`) read again, fresh: its own function
+            functions.append(f"{name}r() {{ {_jina_read(p['reads'], p['kind'], retry=True)}; }}")
+            jina_calls.append(f"{call} {name}r")
+    body = ("\n# the packets: one exact command each (the same text as the plan's commands); pNNNr is a Jina packet's one retry:\n"
+            "# the same read without Jina's cache and with time to render\n" + "\n".join(functions) + "\n")
     return head + body + _TAIL.format(exa_calls="\n".join(exa_calls) or "  :", jina_calls="\n".join(jina_calls) or "  :")
 
 

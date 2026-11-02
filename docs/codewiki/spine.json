@@ -43336,7 +43336,7 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 642,
+     "line": 662,
      "name": "_MONTHS",
      "value": {
       "apr": 4,
@@ -43355,7 +43355,7 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 689,
+     "line": 709,
      "name": "_HEAD_STOP",
      "value": [
       "a",
@@ -43380,7 +43380,7 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 692,
+     "line": 712,
      "name": "_HEAD_CUT",
      "value": [
       "at",
@@ -43400,7 +43400,7 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 694,
+     "line": 714,
      "name": "_HEAD_GENERIC",
      "value": [
       "best",
@@ -43420,13 +43420,13 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 696,
+     "line": 716,
      "name": "JOIN_MAX",
      "value": 3
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 699,
+     "line": 719,
      "name": "_FEATURE_PREFIX",
      "value": [
       "auto",
@@ -43435,7 +43435,7 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 704,
+     "line": 724,
      "name": "AUDIENCE",
      "value": {
       "pet": [
@@ -43449,7 +43449,7 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 830,
+     "line": 850,
      "name": "_BLOCK_HTTP",
      "value": [
       401,
@@ -43463,13 +43463,13 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 843,
+     "line": 863,
      "name": "_BLOCK_PAGE_CHARS",
      "value": 3000
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 1279,
+     "line": 1299,
      "name": "_CURRENCY",
      "value": {
       "AU": "AUD",
@@ -43487,7 +43487,7 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 1601,
+     "line": 1621,
      "name": "_SHAPE",
      "value": {
       "alibaba": "an alibaba.com product page (/product-detail/<name>_<number>.html)",
@@ -43498,7 +43498,7 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 1604,
+     "line": 1624,
      "name": "_NEXT_WHY",
      "value": {
       "alibaba": "an Alibaba product-detail page from the Exa results: its supplier card, lead time, shipping and on-time dispatch",
@@ -43507,7 +43507,7 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 1625,
+     "line": 1645,
      "name": "_NOT_PARSED",
      "value": {
       "ebay": "a Jina read of an eBay page is not parsed (eBay answers page readers with an error page, measured 2026-11-02)",
@@ -43521,7 +43521,7 @@
    "files": [
     "shared/polymath_shared/acquisition/agent_reach.py"
    ],
-   "hash": "6b48e671ca723a78",
+   "hash": "2e5b4ce78d383857",
    "importers": [
     "orchestrator/orchestrator/api/product_report.py",
     "shared/polymath_shared/acquisition/service.py",
@@ -43539,7 +43539,7 @@
     "polymath_shared.acquisition.cj_api",
     "polymath_shared.acquisition.searxng"
    ],
-   "lines": 1762,
+   "lines": 1786,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/shared/polymath_shared/acquisition/agent_reach.py.md",
@@ -43874,10 +43874,10 @@
       "text"
      ],
      "doc": "\"its own error <code> <name>\" when the whole output is the page reader's error JSON (a \"code\" of 400-599 with a \"name\"",
-     "end": 561,
+     "end": 565,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 548,
+     "line": 552,
      "name": "_reader_error"
     },
     {
@@ -43886,11 +43886,33 @@
       "detail"
      ],
      "doc": "",
-     "end": 565,
+     "end": 569,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 564,
+     "line": 568,
      "name": "_failed_read"
+    },
+    {
+     "args": [
+      "rec"
+     ],
+     "doc": "True when ONE Jina page read is Jina's cached snapshot of a page that had not loaded, whatever its size: both snapshot",
+     "end": 580,
+     "file": "shared/polymath_shared/acquisition/agent_reach.py",
+     "kind": "def",
+     "line": 572,
+     "name": "_snapshot_only"
+    },
+    {
+     "args": [
+      "size"
+     ],
+     "doc": "",
+     "end": 585,
+     "file": "shared/polymath_shared/acquisition/agent_reach.py",
+     "kind": "def",
+     "line": 583,
+     "name": "_snapshot_read"
     },
     {
      "args": [
@@ -43899,10 +43921,10 @@
       "why"
      ],
      "doc": "",
-     "end": 569,
+     "end": 589,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 568,
+     "line": 588,
      "name": "_refusal"
     },
     {
@@ -43911,10 +43933,10 @@
       "n"
      ],
      "doc": "At most `n` characters on one line, cut at a word with \"\u2026\" when longer.",
-     "end": 579,
+     "end": 599,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 572,
+     "line": 592,
      "name": "_trim"
     },
     {
@@ -43922,10 +43944,10 @@
       "value"
      ],
      "doc": "A shown count as a whole number: \"91,899\" -> 91899, \"3.1K\" -> 3100, \"1.1k\" -> 1100, \"50K+\" -> 50000 (a lower bound).",
-     "end": 595,
+     "end": 615,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 587,
+     "line": 607,
      "name": "_count"
     },
     {
@@ -43933,10 +43955,10 @@
       "value"
      ],
      "doc": "A shown score that can be negative (\"-3\", \"1.2k\").",
-     "end": 601,
+     "end": 621,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 598,
+     "line": 618,
      "name": "_signed"
     },
     {
@@ -43944,10 +43966,10 @@
       "value"
      ],
      "doc": "\"16.95\" -> 16.95, \"1,234.50\" -> 1234.5, \"5,537\" -> 5537.0; anything else None.",
-     "end": 607,
+     "end": 627,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 604,
+     "line": 624,
      "name": "_money"
     },
     {
@@ -43955,10 +43977,10 @@
       "value"
      ],
      "doc": "\"4-9 days\" -> (4, 9), \"Est. 17-24 days\" -> (17, 24), \"7-15 Days\" -> (7, 15), \"10 days\" -> (10, 10); else (None, None).",
-     "end": 620,
+     "end": 640,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 614,
+     "line": 634,
      "name": "_days"
     },
     {
@@ -43966,10 +43988,10 @@
       "digits"
      ],
      "doc": "",
-     "end": 627,
+     "end": 647,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 626,
+     "line": 646,
      "name": "_whole"
     },
     {
@@ -43977,10 +43999,10 @@
       "value"
      ],
      "doc": "\"100-999 pieces\" -> (100, 999), \"1,000 - 4,999\" -> (1000, 4999), \"\u22653,000\" -> (3000, None), \"> 100\" -> (101, None).",
-     "end": 639,
+     "end": 659,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 630,
+     "line": 650,
      "name": "_qty_span"
     },
     {
@@ -43988,10 +44010,10 @@
       "value"
      ],
      "doc": "(date, precision) of a date as a page shows it: \"March 5, 2021 at 4:29 PM UTC\" -> (\"2021-03-05T16:29:00Z\", \"minute\"),",
-     "end": 666,
+     "end": 686,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 648,
+     "line": 668,
      "name": "_shown_date"
     },
     {
@@ -43999,10 +44021,10 @@
       "head"
      ],
      "doc": "The reader's `Published:` date as ISO 8601 (UTC \"Z\" kept), else None (\"N/A\").",
-     "end": 682,
+     "end": 702,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 672,
+     "line": 692,
      "name": "_published"
     },
     {
@@ -44010,10 +44032,10 @@
       "term"
      ],
      "doc": "The search term's HEAD TERMS: its own words, lower-case, up to the first word that starts a use / audience / feature",
-     "end": 718,
+     "end": 738,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 707,
+     "line": 727,
      "name": "head_terms"
     },
     {
@@ -44021,10 +44043,10 @@
       "word"
      ],
      "doc": "A word with its plural and its singular (plain English endings): \"brush\" / \"brushes\", \"battery\" / \"batteries\".",
-     "end": 732,
+     "end": 752,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 721,
+     "line": 741,
      "name": "_forms"
     },
     {
@@ -44032,10 +44054,10 @@
       "word"
      ],
      "doc": "What holds a head term in a title: its own forms, and for an AUDIENCE word (\"pet\", \"pets\") every form of every word of",
-     "end": 743,
+     "end": 763,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 735,
+     "line": 755,
      "name": "_held_forms"
     },
     {
@@ -44043,10 +44065,10 @@
       "words"
      ],
      "doc": "Every run of two to JOIN_MAX adjacent words, joined: (\"touchscreen\", [\"touch\", \"screen\"]).",
-     "end": 748,
+     "end": 768,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 746,
+     "line": 766,
      "name": "_joined"
     },
     {
@@ -44055,10 +44077,10 @@
       "head"
      ],
      "doc": "The head terms `title` does not hold (empty = relevant). A head term is held only as a WHOLE word of the title (or its",
-     "end": 763,
+     "end": 783,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 751,
+     "line": 771,
      "name": "missing_terms"
     },
     {
@@ -44066,10 +44088,10 @@
       "candidate_terms"
      ],
      "doc": "The candidate's terms: (the term as given, its head terms); a term with no head term is left out.",
-     "end": 780,
+     "end": 800,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 769,
+     "line": 789,
      "name": "_terms"
     },
     {
@@ -44078,10 +44100,10 @@
       "title"
      ],
      "doc": "A LISTING (Amazon, eBay, Alibaba): relevant to a candidate term when its title holds EVERY head term of it",
-     "end": 790,
+     "end": 810,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 783,
+     "line": 803,
      "name": "_relevance"
     },
     {
@@ -44091,10 +44113,10 @@
       "second"
      ],
      "doc": "`first` then `second` as ADJACENT words of a title (plural or singular counts), or joined as one word (\"selfcleaning\").",
-     "end": 797,
+     "end": 817,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 793,
+     "line": 813,
      "name": "_pair_held"
     },
     {
@@ -44103,10 +44125,10 @@
       "title"
      ],
      "doc": "A REDDIT THREAD (R2 #7, verify round): judged by its TITLE (what the thread is about) on the term's head terms.",
-     "end": 825,
+     "end": 845,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 800,
+     "line": 820,
      "name": "_thread_relevance"
     },
     {
@@ -44114,10 +44136,10 @@
       "rec"
      ],
      "doc": "What check page ONE short Jina page read is (plan \u00a74.1, HUMAN_CHECK): its whole title is a check page's title (Alibaba's",
-     "end": 859,
+     "end": 879,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 846,
+     "line": 866,
      "name": "_check_words"
     },
     {
@@ -44125,10 +44147,10 @@
       "rec"
      ],
      "doc": "(BLOCKED or TARGET_ERROR, why) when the reader's output is the site refusing it (Jina still answers 200), else None.",
-     "end": 873,
+     "end": 893,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 862,
+     "line": 882,
      "name": "_blocked"
     },
     {
@@ -44136,10 +44158,10 @@
       "url"
      ],
      "doc": "(https://www.reddit.com/r/<sub>/comments/<id>/<slug>/, <sub>) for a reddit.com thread URL (any of its hosts), else None.",
-     "end": 896,
+     "end": 916,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 887,
+     "line": 907,
      "name": "reddit_thread_url"
     },
     {
@@ -44147,10 +44169,10 @@
       "raw"
      ],
      "doc": "",
-     "end": 908,
+     "end": 928,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 899,
+     "line": 919,
      "name": "_page_links"
     },
     {
@@ -44161,10 +44183,10 @@
       "terms"
      ],
      "doc": "One Exa result of a reddit thread: its title, the post's score and comment count when Exa shows its \"Posted by\" line,",
-     "end": 962,
+     "end": 982,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 911,
+     "line": 931,
      "name": "_reddit"
     },
     {
@@ -44172,10 +44194,10 @@
       "url"
      ],
      "doc": "(https://www.amazon.com/dp/<ASIN>, <ASIN>) for an amazon.com (the US store) product page URL, else None.",
-     "end": 1002,
+     "end": 1022,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 996,
+     "line": 1016,
      "name": "amazon_product_url"
     },
     {
@@ -44183,10 +44205,10 @@
       "url"
      ],
      "doc": "",
-     "end": 1010,
+     "end": 1030,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1005,
+     "line": 1025,
      "name": "_amazon_search_page"
     },
     {
@@ -44194,10 +44216,10 @@
       "title"
      ],
      "doc": "Amazon's page title without its frame: \"Amazon.com : <title> : Pet Supplies\" -> \"<title>\".",
-     "end": 1020,
+     "end": 1040,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1013,
+     "line": 1033,
      "name": "_amazon_title"
     },
     {
@@ -44205,10 +44227,10 @@
       "texts"
      ],
      "doc": "The fields Amazon prints the same way in every reader's output: best sellers rank, bought in past month, list price",
-     "end": 1032,
+     "end": 1052,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1023,
+     "line": 1043,
      "name": "_amazon_common"
     },
     {
@@ -44219,10 +44241,10 @@
       "terms"
      ],
      "doc": "",
-     "end": 1042,
+     "end": 1062,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1035,
+     "line": 1055,
      "name": "_amazon_record"
     },
     {
@@ -44233,10 +44255,10 @@
       "terms"
      ],
      "doc": "One Exa result of an amazon.com product page: Exa's own summary (\"Price: 16.95 USD.\", \"Rated 4.5 from 91897 reviews.\",",
-     "end": 1062,
+     "end": 1082,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1045,
+     "line": 1065,
      "name": "_amazon_exa"
     },
     {
@@ -44247,10 +44269,10 @@
       "terms"
      ],
      "doc": "ONE Jina read of an amazon.com product page. The price is the buy box's own (`\"priceAmount\"` of desktop_buybox_group_1),",
-     "end": 1095,
+     "end": 1115,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1065,
+     "line": 1085,
      "name": "_amazon_page"
     },
     {
@@ -44259,10 +44281,10 @@
       "terms"
      ],
      "doc": "ONE Jina read of an amazon.com search page WITH its links (`X-With-Links-Summary: true`), in either of Jina's layouts:",
-     "end": 1136,
+     "end": 1156,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1098,
+     "line": 1118,
      "name": "_amazon_search"
     },
     {
@@ -44270,10 +44292,10 @@
       "text"
      ],
      "doc": "",
-     "end": 1155,
+     "end": 1175,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1152,
+     "line": 1172,
      "name": "_title_line"
     },
     {
@@ -44281,10 +44303,10 @@
       "lines"
      ],
      "doc": "The result blocks of the plain-text layout, in page order: each anchored at its \"4.3 out of 5 stars\" line, titled by the",
-     "end": 1197,
+     "end": 1217,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1158,
+     "line": 1178,
      "name": "_plain_blocks"
     },
     {
@@ -44292,10 +44314,10 @@
       "summary"
      ],
      "doc": "The search results in Jina's links summary, in its order: (link text, canonical URL, ASIN, the URL's name words). A",
-     "end": 1225,
+     "end": 1245,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1200,
+     "line": 1220,
      "name": "_summary_products"
     },
     {
@@ -44305,10 +44327,10 @@
       "terms"
      ],
      "doc": "An Amazon search page in Jina's PLAIN-TEXT layout (live 2026-11-02): plain lines per result (title, \"4.3 out of 5",
-     "end": 1267,
+     "end": 1287,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1228,
+     "line": 1248,
      "name": "_amazon_plain_search"
     },
     {
@@ -44316,10 +44338,10 @@
       "url"
      ],
      "doc": "(https://www.<domain>/itm/<id>, <id>, <domain>) for an eBay item page on any eBay site, else None.",
-     "end": 1292,
+     "end": 1312,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1283,
+     "line": 1303,
      "name": "ebay_item_url"
     },
     {
@@ -44327,10 +44349,10 @@
       "text"
      ],
      "doc": "eBay prints some values twice (\"Brand New Brand New\"): once.",
-     "end": 1299,
+     "end": 1319,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1295,
+     "line": 1315,
      "name": "_once"
     },
     {
@@ -44342,10 +44364,10 @@
       "terms"
      ],
      "doc": "One Exa result of an eBay item page (the fallback when the host has no eBay API): the listing's own lines, from its title",
-     "end": 1333,
+     "end": 1353,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1302,
+     "line": 1322,
      "name": "_ebay"
     },
     {
@@ -44353,10 +44375,10 @@
       "url"
      ],
      "doc": "(the page's URL without query or fragment, the product id, \"detail\" | \"introduction\") for an alibaba.com product-detail",
-     "end": 1393,
+     "end": 1413,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1383,
+     "line": 1403,
      "name": "alibaba_page_url"
     },
     {
@@ -44364,10 +44386,10 @@
       "body"
      ],
      "doc": "Alibaba's price lines as `_listing` reads them: a split price joined (\"$ 9 69\" -> \"$9.69\"; \"$\" / \"2\" / \"59\" -> \"$2.59\";",
-     "end": 1439,
+     "end": 1459,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1396,
+     "line": 1416,
      "name": "_alibaba_body"
     },
     {
@@ -44375,10 +44397,10 @@
       "text"
      ],
      "doc": "",
-     "end": 1443,
+     "end": 1463,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1442,
+     "line": 1462,
      "name": "_price_numbers"
     },
     {
@@ -44386,10 +44408,10 @@
       "texts"
      ],
      "doc": "The page's lead-time table (Exa: a markdown table; Jina: \"Quantity (pieces)1 - 100> 100\" / \"Lead time (days)31 To be",
-     "end": 1470,
+     "end": 1490,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1446,
+     "line": 1466,
      "name": "_lead_time"
     },
     {
@@ -44400,10 +44422,10 @@
       "span"
      ],
      "doc": "`value` on one of the `span` lines right after a line that is `label` (an attribute name, then its value).",
-     "end": 1481,
+     "end": 1501,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1473,
+     "line": 1493,
      "name": "_after"
     },
     {
@@ -44412,10 +44434,10 @@
       "k"
      ],
      "doc": "The value of the supplier-card label at `k`. Alibaba's supplier card prints value first (\"\u226585%\" / \"On-time dispatch rate\"",
-     "end": 1495,
+     "end": 1515,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1484,
+     "line": 1504,
      "name": "_card_value"
     },
     {
@@ -44427,10 +44449,10 @@
       "terms"
      ],
      "doc": "The existing listing parse (title, price as listed with its tiers, minimum order, supplier, years, sold, reviews) on the",
-     "end": 1596,
+     "end": 1616,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1498,
+     "line": 1518,
      "name": "_alibaba"
     },
     {
@@ -44439,10 +44461,10 @@
       "url"
      ],
      "doc": "",
-     "end": 1614,
+     "end": 1634,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1608,
+     "line": 1628,
      "name": "_on_source"
     },
     {
@@ -44452,10 +44474,10 @@
       "refused"
      ],
      "doc": "OK when anything was kept; else HUMAN_CHECK / BLOCKED when a wall stood in the way; else EMPTY.",
-     "end": 1622,
+     "end": 1642,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1617,
+     "line": 1637,
      "name": "_status"
     },
     {
@@ -44466,10 +44488,10 @@
       "terms"
      ],
      "doc": "ONE reader record (an Exa result, a Jina page) of `src` -> (its records, its refusals), by the page's own URL shape.",
-     "end": 1655,
+     "end": 1675,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1630,
+     "line": 1650,
      "name": "_read"
     },
     {
@@ -44480,10 +44502,10 @@
       "candidate_terms"
      ],
      "doc": "ONE upload of the report's fetch script -> {status, source, kind, records, next_targets, refused} (+ tool_class, notes).",
-     "end": 1761,
+     "end": 1785,
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
      "kind": "def",
-     "line": 1658,
+     "line": 1678,
      "name": "parse_report_source"
     }
    ]
@@ -77623,13 +77645,13 @@
    "constants": [
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 43,
+     "line": 46,
      "name": "CONTRACT",
      "value": "product-report-fetch-plan-v1"
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 44,
+     "line": 47,
      "name": "ROUNDS",
      "value": [
       1,
@@ -77638,19 +77660,19 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 45,
+     "line": 48,
      "name": "MAX_CANDIDATES",
      "value": 8
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 46,
+     "line": 49,
      "name": "EXA_RESULTS",
      "value": 8
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 47,
+     "line": 50,
      "name": "ROUND2_PAGES",
      "value": {
       "alibaba": 3,
@@ -77659,7 +77681,7 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 49,
+     "line": 52,
      "name": "LIMITS",
      "value": {
       "exa_parallel": 3,
@@ -77668,7 +77690,7 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 50,
+     "line": 53,
      "name": "LIMITS_WITH_KEYS",
      "value": {
       "exa_parallel": 8,
@@ -77677,7 +77699,7 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 51,
+     "line": 54,
      "name": "JINA_PARALLEL",
      "value": {
       "keyless": 1,
@@ -77686,13 +77708,13 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 52,
+     "line": 55,
      "name": "EXA_GAP_S",
      "value": 1
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 57,
+     "line": 61,
      "name": "RETRY_AFTER_S",
      "value": {
       "exa": 5,
@@ -77701,31 +77723,46 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 58,
+     "line": 65,
+     "name": "JINA_RETRY_HEADERS",
+     "value": [
+      "X-No-Cache: true",
+      "X-Timeout: 30"
+     ]
+    },
+    {
+     "file": "shared/polymath_shared/product_search/fetch_plan.py",
+     "line": 66,
+     "name": "JINA_RETRY_TIMEOUT_S",
+     "value": 120
+    },
+    {
+     "file": "shared/polymath_shared/product_search/fetch_plan.py",
+     "line": 67,
      "name": "EXA_KEYED_URL",
      "value": "https://mcp.exa.ai/mcp?exaApiKey="
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 61,
+     "line": 70,
      "name": "_JINA_KEY_ARG",
      "value": "${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"}"
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 62,
+     "line": 71,
      "name": "_LINKS_HEADER",
      "value": "X-With-Links-Summary: true"
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 71,
+     "line": 80,
      "name": "_TERM_CHARS",
      "value": 120
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 74,
+     "line": 83,
      "name": "_OBJECTIVE",
      "value": {
       "alibaba": "Alibaba.com product detail pages (alibaba.com/product-detail/...) for {terms}; rank product detail pages first; pull price tiers, minimum order quantity, lead time, estimated delivery, supplier name, ships from",
@@ -77737,7 +77774,7 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 86,
+     "line": 95,
      "name": "_SITE",
      "value": {
       "alibaba": "alibaba.com",
@@ -77748,13 +77785,13 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 196,
+     "line": 213,
      "name": "_HEAD",
-     "value": "#!/usr/bin/env bash\n# Polymath product decision report {report_id}: fetch plan, round {round} ({contract}).\n# Generated by Polymath; do not edit. Runs every Agent Reach read of this round on THIS machine and uploads each raw output\n# straight to Polymath, which parses it. Fetched content is only written to a file and uploaded: it is never run or evaluated.\n# Needs mcporter (Agent Reach's Exa channel) and curl. Optional: EXA_API_KEY / JINA_API_KEY raise the pacing.\n# The upload capability in UPLOAD_URL expires {expires_at}.\nset -u\nREPORT={report_q}\nROUND={round}\nUPLOAD_URL={upload_q}\nUPLOAD_SEP={sep_q}\nPACKETS={count}\nif [ -n \"${{EXA_API_KEY:-}}\" ]; then EXA_PARALLEL={exa_keyed}; EXA_MODE='EXA_API_KEY'; else EXA_PARALLEL={exa_keyless}; EXA_MODE='keyless'; fi\nif [ -n \"${{JINA_API_KEY:-}}\" ]; then JINA_PARALLEL={jina_par_keyed}; JINA_GAP={jina_gap_keyed}; JINA_MODE='JINA_API_KEY'; else JINA_PARALLEL={jina_par_keyless}; JINA_GAP={jina_gap_keyless}; JINA_MODE='keyless'; fi\nEXA_GAP={exa_gap}\nif ! command -v curl >/dev/null 2>&1; then echo \"polymath-fetch: curl is required: nothing was read or uploaded\"; exit 3; fi\nif ! command -v mcporter >/dev/null 2>&1; then echo \"polymath-fetch: mcporter not found (Agent Reach: {repo}): the Exa packets will fail\"; fi\nWORK=$(mktemp -d \"${{TMPDIR:-/tmp}}/polymath-report.XXXXXX\") || {{ echo \"polymath-fetch: cannot make a temporary directory\"; exit 3; }}\ntrap 'rm -rf \"$WORK\"' EXIT\necho \"polymath-fetch: report $REPORT round $ROUND: $PACKETS packets; Exa $EXA_PARALLEL in flight ($EXA_MODE); Jina $JINA_PARALLEL every $JINA_GAP s ($JINA_MODE)\"\n\nfailed_read() {{\n  # $1 an output file, $2 its exit code: why the read looks failed, or nothing. It only counts the bytes and greps the file:\n  # fetched content is never run or evaluated.\n  if [ \"$2\" -ne 0 ]; then echo \"exit $2\"; return 0; fi\n  size=$(wc -c <\"$1\" | tr -d ' ')\n  if [ \"$size\" -lt {min_bytes} ]; then echo \"only $size bytes\"; return 0; fi\n  if head -n 1 \"$1\" | grep -q -E '^[[:space:]]*[{{].*\"code\"[[:space:]]*:[[:space:]]*[45][0-9][0-9]' && grep -q -E '\"(name|readableMessage)\"[[:space:]]*:' \"$1\"; then\n    echo \"the reader's own error reply\"\n  fi\n  return 0\n}}\n\nrun_packet() {{\n  # $1 packet id, $2 source, $3 kind, $4 the packet's command (a function below), $5 the pause before its one retry.\n  # The output goes to a file and is uploaded once; a failed read is read once more first.\n  out=\"$WORK/$1.out\"\n  err=\"$WORK/$1.err\"\n  \"$4\" >\"$out\" 2>\"$err\"\n  rc=$?\n  retried=''\n  why=$(failed_read \"$out\" \"$rc\")\n  if [ -n \"$why\" ]; then\n    sleep \"$5\"\n    \"$4\" >\"$out\" 2>\"$err\"\n    rc=$?\n    retried=\" (retried once: $why)\"\n  fi\n  bytes=$(wc -c <\"$out\" | tr -d ' ')\n  note=''\n  if grep -q '^Warning: Target URL returned error' \"$out\" 2>/dev/null; then note=' (the site refused the reader: the upload records it)'; fi\n  if [ \"$bytes\" -eq 0 ]; then\n    # an empty output is uploaded too (an empty body: the host records the packet as EMPTY), so the round can complete\n    note=' (no output: recorded as EMPTY)'\n    if grep -q '429' \"$err\" 2>/dev/null; then note=' (no output: recorded as EMPTY; rate limited (HTTP 429): set EXA_API_KEY to read faster)'; fi\n  fi\n  code=$(curl -s -o /dev/null -w '%{{http_code}}' -m {upload_timeout} --data-binary \"@$out\" -H 'content-type: text/plain' \"${{UPLOAD_URL}}${{UPLOAD_SEP}}packet=$1\")\n  case \"$code\" in 2??) echo \"$1\" >>\"$WORK/uploaded\" ;; esac\n  echo \"polymath-fetch: $1 $2/$3: exit $rc, $bytes bytes, upload http $code$retried$note\"\n}}\n\nEXA_N=0\nexa() {{\n  run_packet \"$1\" \"$2\" \"$3\" \"$4\" {exa_retry} &\n  EXA_N=$((EXA_N + 1))\n  if [ \"$EXA_N\" -ge \"$EXA_PARALLEL\" ]; then wait; EXA_N=0; sleep \"$EXA_GAP\"; fi\n}}\n\nJINA_N=0\njina() {{\n  run_packet \"$1\" \"$2\" \"$3\" \"$4\" {jina_retry} &\n  JINA_N=$((JINA_N + 1))\n  if [ \"$JINA_N\" -ge \"$JINA_PARALLEL\" ]; then wait; JINA_N=0; sleep \"$JINA_GAP\"; fi\n}}\n"
+     "value": "#!/usr/bin/env bash\n# Polymath product decision report {report_id}: fetch plan, round {round} ({contract}).\n# Generated by Polymath; do not edit. Runs every Agent Reach read of this round on THIS machine and uploads each raw output\n# straight to Polymath, which parses it. Fetched content is only written to a file and uploaded: it is never run or evaluated.\n# Needs mcporter (Agent Reach's Exa channel) and curl. Optional: EXA_API_KEY / JINA_API_KEY raise the pacing.\n# The upload capability in UPLOAD_URL expires {expires_at}.\nset -u\nREPORT={report_q}\nROUND={round}\nUPLOAD_URL={upload_q}\nUPLOAD_SEP={sep_q}\nPACKETS={count}\nif [ -n \"${{EXA_API_KEY:-}}\" ]; then EXA_PARALLEL={exa_keyed}; EXA_MODE='EXA_API_KEY'; else EXA_PARALLEL={exa_keyless}; EXA_MODE='keyless'; fi\nif [ -n \"${{JINA_API_KEY:-}}\" ]; then JINA_PARALLEL={jina_par_keyed}; JINA_GAP={jina_gap_keyed}; JINA_MODE='JINA_API_KEY'; else JINA_PARALLEL={jina_par_keyless}; JINA_GAP={jina_gap_keyless}; JINA_MODE='keyless'; fi\nEXA_GAP={exa_gap}\nif ! command -v curl >/dev/null 2>&1; then echo \"polymath-fetch: curl is required: nothing was read or uploaded\"; exit 3; fi\nif ! command -v mcporter >/dev/null 2>&1; then echo \"polymath-fetch: mcporter not found (Agent Reach: {repo}): the Exa packets will fail\"; fi\nWORK=$(mktemp -d \"${{TMPDIR:-/tmp}}/polymath-report.XXXXXX\") || {{ echo \"polymath-fetch: cannot make a temporary directory\"; exit 3; }}\ntrap 'rm -rf \"$WORK\"' EXIT\necho \"polymath-fetch: report $REPORT round $ROUND: $PACKETS packets; Exa $EXA_PARALLEL in flight ($EXA_MODE); Jina $JINA_PARALLEL every $JINA_GAP s ($JINA_MODE)\"\n\nsnapshot_only() {{\n  # $1 an output file: true when it is Jina's cached snapshot of a page that had not loaded, whatever its size: the \"cached\n  # snapshot\" and \"not yet fully loaded\" warnings over an empty Markdown Content (up to the links summary). awk only reads it.\n  awk '\n    /^Markdown Content:/ && !m {{ m = 1; next }}\n    !m && /^Warning: This is a cached snapshot/ {{ c = 1 }}\n    !m && /^Warning: This page maybe not yet fully loaded/ {{ l = 1 }}\n    m && /^Links\\/Buttons:/ {{ exit }}\n    m && NF {{ t = 1; exit }}\n    END {{ exit !(m && c && l && !t) }}\n  ' \"$1\"\n}}\n\nfailed_read() {{\n  # $1 an output file, $2 its exit code: why the read looks failed, or nothing. It only counts the bytes and greps the file:\n  # fetched content is never run or evaluated.\n  if [ \"$2\" -ne 0 ]; then echo \"exit $2\"; return 0; fi\n  if snapshot_only \"$1\"; then echo \"a cached snapshot of a page that had not loaded\"; return 0; fi\n  size=$(wc -c <\"$1\" | tr -d ' ')\n  if [ \"$size\" -lt {min_bytes} ]; then echo \"only $size bytes\"; return 0; fi\n  if head -n 1 \"$1\" | grep -q -E '^[[:space:]]*[{{].*\"code\"[[:space:]]*:[[:space:]]*[45][0-9][0-9]' && grep -q -E '\"(name|readableMessage)\"[[:space:]]*:' \"$1\"; then\n    echo \"the reader's own error reply\"\n  fi\n  return 0\n}}\n\nrun_packet() {{\n  # $1 packet id, $2 source, $3 kind, $4 the packet's command and $5 its one retry (functions below), $6 the pause before that\n  # retry. The output goes to a file and is uploaded once; a failed read is read once more first.\n  out=\"$WORK/$1.out\"\n  err=\"$WORK/$1.err\"\n  \"$4\" >\"$out\" 2>\"$err\"\n  rc=$?\n  retried=''\n  why=$(failed_read \"$out\" \"$rc\")\n  if [ -n \"$why\" ]; then\n    sleep \"$6\"\n    \"$5\" >\"$out\" 2>\"$err\"\n    rc=$?\n    retried=\" (retried once: $why)\"\n  fi\n  bytes=$(wc -c <\"$out\" | tr -d ' ')\n  note=''\n  if grep -q '^Warning: Target URL returned error' \"$out\" 2>/dev/null; then note=' (the site refused the reader: the upload records it)'; fi\n  if [ \"$bytes\" -eq 0 ]; then\n    # an empty output is uploaded too (an empty body: the host records the packet as EMPTY), so the round can complete\n    note=' (no output: recorded as EMPTY)'\n    if grep -q '429' \"$err\" 2>/dev/null; then note=' (no output: recorded as EMPTY; rate limited (HTTP 429): set EXA_API_KEY to read faster)'; fi\n  fi\n  code=$(curl -s -o /dev/null -w '%{{http_code}}' -m {upload_timeout} --data-binary \"@$out\" -H 'content-type: text/plain' \"${{UPLOAD_URL}}${{UPLOAD_SEP}}packet=$1\")\n  case \"$code\" in 2??) echo \"$1\" >>\"$WORK/uploaded\" ;; esac\n  echo \"polymath-fetch: $1 $2/$3: exit $rc, $bytes bytes, upload http $code$retried$note\"\n}}\n\nEXA_N=0\nexa() {{\n  # an Exa search is retried as it was ($4 twice)\n  run_packet \"$1\" \"$2\" \"$3\" \"$4\" \"$4\" {exa_retry} &\n  EXA_N=$((EXA_N + 1))\n  if [ \"$EXA_N\" -ge \"$EXA_PARALLEL\" ]; then wait; EXA_N=0; sleep \"$EXA_GAP\"; fi\n}}\n\nJINA_N=0\njina() {{\n  # $5: the read again without Jina's cache and with time to render. A retry stays inside its packet's slot, so it counts once:\n  # the queue waits for the packet, its retry included, before the next start\n  run_packet \"$1\" \"$2\" \"$3\" \"$4\" \"$5\" {jina_retry} &\n  JINA_N=$((JINA_N + 1))\n  if [ \"$JINA_N\" -ge \"$JINA_PARALLEL\" ]; then wait; JINA_N=0; sleep \"$JINA_GAP\"; fi\n}}\n"
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 272,
+     "line": 306,
      "name": "_TAIL",
      "value": "\nexa_queue() {{\n{exa_calls}\n  wait\n}}\n\njina_queue() {{\n{jina_calls}\n  wait\n}}\n\nexa_queue &\njina_queue &\nwait\nuploaded=$(grep -c . \"$WORK/uploaded\" 2>/dev/null || true)\necho \"polymath-fetch: done: ${{uploaded:-0}} of $PACKETS packets uploaded for report $REPORT round $ROUND; next: product_report_status\"\nexit 0\n"
     }
@@ -77765,7 +77802,7 @@
    "files": [
     "shared/polymath_shared/product_search/fetch_plan.py"
    ],
-   "hash": "3730f624fb69d5b5",
+   "hash": "056f9cd76bcb8edc",
    "importers": [
     "orchestrator/orchestrator/api/product_report.py"
    ],
@@ -77773,7 +77810,7 @@
     "polymath_shared.acquisition",
     "polymath_shared.acquisition.agent_reach"
    ],
-   "lines": 382,
+   "lines": 421,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/shared/polymath_shared/product_search/fetch_plan.py.md",
@@ -77787,10 +77824,10 @@
       "value"
      ],
      "doc": "A candidate's text as one line of search words: NFKC, no control or bidi characters, no `site:` operator of its own,",
-     "end": 94,
+     "end": 103,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 90,
+     "line": 99,
      "name": "_words"
     },
     {
@@ -77801,33 +77838,47 @@
       "suffix"
      ],
      "doc": "The exact Exa search for `source` through mcporter: `mcporter call exa.web_search_exa query=\u2026 numResults=8 objective=\u2026`",
-     "end": 104,
+     "end": 113,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 97,
+     "line": 106,
      "name": "exa_command"
     },
     {
      "args": [
       "url",
-      "links"
+      "links",
+      "retry"
      ],
      "doc": "The exact Jina Reader read of `url`: `curl -s \"https://r.jina.ai/<url>\"` (with JINA_API_KEY set, its Authorization header;",
-     "end": 113,
+     "end": 124,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 107,
+     "line": 116,
      "name": "jina_command"
+    },
+    {
+     "args": [
+      "url",
+      "kind",
+      "retry"
+     ],
+     "doc": "A Jina packet's read of `url`: a search packet reads an Amazon search page, with the links summary (the only way that page",
+     "end": 130,
+     "file": "shared/polymath_shared/product_search/fetch_plan.py",
+     "kind": "def",
+     "line": 127,
+     "name": "_jina_read"
     },
     {
      "args": [
       "words"
      ],
      "doc": "",
-     "end": 117,
+     "end": 134,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 116,
+     "line": 133,
      "name": "amazon_search_url"
     },
     {
@@ -77835,10 +77886,10 @@
       "candidate"
      ],
      "doc": "(the first search phrase, a second one for the second Reddit search): the candidate's search terms, else its title.",
-     "end": 127,
+     "end": 144,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 121,
+     "line": 138,
      "name": "_phrases"
     },
     {
@@ -77852,10 +77903,10 @@
       "reads"
      ],
      "doc": "",
-     "end": 132,
+     "end": 149,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 130,
+     "line": 147,
      "name": "_packet"
     },
     {
@@ -77866,10 +77917,10 @@
       "ebay_api"
      ],
      "doc": "",
-     "end": 151,
+     "end": 168,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 135,
+     "line": 152,
      "name": "_round1"
     },
     {
@@ -77878,10 +77929,10 @@
       "url"
      ],
      "doc": "A round-2 target's canonical page URL (an amazon.com /dp/<ASIN> page, an alibaba.com product-detail page), else None.",
-     "end": 162,
+     "end": 179,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 154,
+     "line": 171,
      "name": "_target_url"
     },
     {
@@ -77891,10 +77942,10 @@
       "skipped"
      ],
      "doc": "",
-     "end": 192,
+     "end": 209,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 165,
+     "line": 182,
      "name": "_round2"
     },
     {
@@ -77903,10 +77954,10 @@
       "parallel"
      ],
      "doc": "Whole seconds between Jina batch starts so `parallel` reads per batch stay within `jina_per_minute` (rounded up).",
-     "end": 294,
+     "end": 328,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 292,
+     "line": 326,
      "name": "_jina_gap"
     },
     {
@@ -77918,10 +77969,10 @@
       "packets"
      ],
      "doc": "",
-     "end": 314,
+     "end": 353,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 297,
+     "line": 331,
      "name": "_script"
     },
     {
@@ -77934,10 +77985,10 @@
       "ebay_api"
      ],
      "doc": "The fetch plan of one round -> {round, packets: [{packet_id, candidate_id, source, kind, commands: [str], expect, reads}],",
-     "end": 381,
+     "end": 420,
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
      "kind": "def",
-     "line": 318,
+     "line": 357,
      "name": "build"
     }
    ]
@@ -97325,7 +97376,7 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 124,
+     "line": 141,
      "missing": [
       "id",
       "doc_id",
@@ -98957,7 +99008,7 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 29,
+     "line": 30,
      "missing": [
       "absorb",
       "according",
@@ -103625,7 +103676,7 @@
     },
     {
      "file": "shared/polymath_shared/product_search/fetch_plan.py",
-     "line": 131,
+     "line": 148,
      "missing": [
       "report_id",
       "received_at",
@@ -104508,7 +104559,7 @@
     }
    ],
    "file": "shared/polymath_shared/acquisition/agent_reach.py",
-   "line": 692,
+   "line": 712,
    "name": "_HEAD_CUT",
    "slug": "_HEAD_CUT",
    "values": [
@@ -109828,7 +109879,7 @@
     },
     {
      "file": "shared/polymath_shared/acquisition/agent_reach.py",
-     "line": 689,
+     "line": 709,
      "missing": [],
      "present": 9
     },

@@ -329,6 +329,15 @@ command exits non-zero, prints under 512 bytes, or prints Jina's own error JSON;
 packet is still uploaded exactly once and the script still exits 0. The parser stores a Jina error JSON or a page-less read as EMPTY
 with code READER_FAILED ("a failed read, not a page; run the round's script once more"); block and check pages keep their status (all
 58 recorded fixture results unchanged). Sealed: 12 affected suites 494 passed; engine 648 / 648.
+
+## Live run 5 (`3c3efbda`) and the cache opt-out
+The retry was live, yet the feeder's Amazon search read failed twice (346 bytes, `rpt_25c51150d82d…`). A manual read with the
+script's exact command returned the same bytes: Jina served "a cached snapshot of the original page" that was "maybe not yet fully
+loaded", with empty Markdown Content. The same command with `X-No-Cache: true` and `X-Timeout: 30` returned the full page (139,740
+bytes, 41 product links). Now the one retry of a Jina packet sends those two headers with `curl -m 120` (the first read stays cached
+and fast; Exa retries unchanged), and that snapshot shape is a failed read in the script and READER_FAILED in the parser at any size
+(new recorded fixture `jina_amazon_search_snapshot.out`). Not covered: an empty Markdown Content carrying only one of the two
+warnings, or none, over 512 bytes. Sealed: 12 affected suites 496 passed; engine 648 / 648.
 ## Proof
 - **Sealed CI reproduction** (a throwaway `postgres:16-alpine` with all 68 migrations applied in order, a clean environment, the CI
   workflow's suites `tests/contracts` + `tests/determinism`), final tree before the C11 change: **4,871 tests: 4,834 passed, 20 skipped,

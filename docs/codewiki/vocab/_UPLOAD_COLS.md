@@ -34,7 +34,7 @@ AUTHORITY: `shared/polymath_shared/product_search/report_store.py:69` :: `_UPLOA
 | `shared/polymath_shared/adapter/service.py` | `shared/polymath_shared/adapter/service.py:208` | 3/11 | `report_id`, `packet_id`, `round`, `source`, `received_at`, `sha256`, `parsed`, `refused` |
 | `shared/polymath_shared/conformance/assess.py` | `shared/polymath_shared/conformance/assess.py:23` | 3/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
 | `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:94` | 4/11 | `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
-| `shared/polymath_shared/product_search/fetch_plan.py` | `shared/polymath_shared/product_search/fetch_plan.py:131` | 4/11 | `report_id`, `received_at`, `bytes`, `sha256`, `status`, `parsed`, `refused` |
+| `shared/polymath_shared/product_search/fetch_plan.py` | `shared/polymath_shared/product_search/fetch_plan.py:148` | 4/11 | `report_id`, `received_at`, `bytes`, `sha256`, `status`, `parsed`, `refused` |
 | `shared/polymath_shared/product_search/service.py` | `shared/polymath_shared/product_search/service.py:79` | 4/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed` |
 | `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:96` | 4/11 | `report_id`, `packet_id`, `round`, `received_at`, `sha256`, `parsed`, `refused` |
 

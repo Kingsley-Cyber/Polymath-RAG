@@ -17,6 +17,9 @@ printed was checked against the body that remains):
   jina_amazon_search.out                            the search page read without it (no product links)
   jina_amazon_search_plain.out                      live 2026-11-02: a search page in Jina's PLAIN-TEXT layout, its links only in
                                                     the "Links/Buttons:" summary (unedited: the fetch script's own output)
+  jina_amazon_search_snapshot.out                   live 2026-11-02 (amz_feeder): Jina's cached snapshot of a search page that
+                                                    had not loaded, 346 bytes, both warnings over an empty Markdown Content
+                                                    (unedited: the fetch script's own output)
   exa_ebay_brush.out / exa_ebay_candle.out          Exa restricted to ebay.com (it dropped the restriction: mostly other sites)
   exa_alibaba_brush.out / exa_alibaba_candle.out    Exa restricted to alibaba.com
   jina_alibaba_A.out / jina_alibaba_B_retry.out     Jina on two alibaba.com product pages
@@ -600,15 +603,49 @@ def test_a_failed_reader_read_is_empty_reader_failed_never_no_product_links():
                                                           "alibaba.com/product-detail/Feeder_1600000000001.html"), kind="page")
     assert [r["code"] for r in page["refused"]] == ["READER_FAILED"]                    # any source's Jina page read
     assert AR.parse_report_source("amazon", error.replace('"code":422', '"code":200'), kind="search")["status"] == "UNRECOGNISED"
-    # the recorded pages are unaffected: block and check pages keep their codes, real pages their records, an empty Exa upload EMPTY_OUTPUT
+    # the recorded pages are unaffected: block and check pages keep their codes, real pages their records, an empty Exa upload
+    # EMPTY_OUTPUT; the one recorded failed read is Jina's cached snapshot (test below)
+    failed = set()
     for path in FIX.iterdir():
         source = next(s for s in AR.REPORT_SOURCES if s in path.name)
         for kind in AR.REPORT_KINDS:
             got = AR.parse_report_source(source, path.read_text(encoding="utf-8"), kind=kind)
-            assert "READER_FAILED" not in {r["code"] for r in got["refused"]}, (path.name, kind)
+            if "READER_FAILED" in {r["code"] for r in got["refused"]}:
+                failed.add((path.name, kind))
+    assert failed == {("jina_amazon_search_snapshot.out", "search"), ("jina_amazon_search_snapshot.out", "page")}
     assert [r["code"] for r in _parse("reddit", "exa_reddit_candle.out")["refused"]] == ["EMPTY_OUTPUT"]
     assert [r["code"] for r in _parse("ebay", "jina_ebay_item_A.out", kind="page")["refused"]] == ["BLOCKED"]   # 261 bytes, still BLOCKED
     assert _parse("amazon", "jina_amazon_search.out")["refused"][0]["code"] == "NO_PRODUCT_LINKS"                # a real page without links
+
+
+def test_jinas_cached_snapshot_of_a_page_that_had_not_loaded_is_reader_failed_at_any_size():
+    """Live 2026-11-02 (amz_feeder): Jina answered an Amazon search read with its cached snapshot of a page that had not loaded,
+    "This page maybe not yet fully loaded" and "This is a cached snapshot" over an empty Markdown Content. That is a failed read
+    whatever its byte count (READER_FAILED, never NO_PRODUCT_LINKS and its links-header hint); the same two warnings over a real
+    page change nothing."""
+    raw = _fx("jina_amazon_search_snapshot.out")
+    warnings = [line for line in raw.splitlines() if line.startswith("Warning: ")]
+    assert len(raw.encode()) == 346 and [w.split(",")[0] for w in warnings] == [
+        "Warning: This page maybe not yet fully loaded", "Warning: This is a cached snapshot of the original page"]
+    padded = raw.replace("This page does not seem to contain any buttons/links.\n",
+                         "".join(f"- [Sign in](https://www.amazon.com/ap/signin?n={n})\n" for n in range(12)))
+    assert len(padded.encode()) > AR.READER_MIN_BYTES
+    for text, kind in ((raw, "search"), (padded, "search"), (raw, "page")):
+        got = AR.parse_report_source("amazon", text, kind=kind, candidate_terms=["automatic pet feeder"])
+        assert (got["status"], got["records"], got["next_targets"]) == ("EMPTY", [], [])
+        assert got["refused"] == [{"url": "https://www.amazon.com/s?k=automatic+pet+feeder", "code": "READER_FAILED", "why": (
+            f"the reader returned its cached snapshot of a page that had not loaded ({len(text.encode())} bytes, an empty Markdown "
+            "Content): a failed read, not a page; run the round's script once more")}]
+    page = padded.replace("https://www.amazon.com/s?k=automatic+pet+feeder", "https://www.alibaba.com/product-detail/Feeder_1600000000001.html")
+    assert [r["code"] for r in AR.parse_report_source("alibaba", page, kind="page")["refused"]] == ["READER_FAILED"]   # any Jina page
+    # the same two warnings over a real page (the plain-text search page): parsed exactly as without them
+    plain = _fx("jina_amazon_search_plain.out")
+    head, rest = plain.split("\nMarkdown Content:\n", 1)
+    warned = head + "\n" + "\n".join(warnings) + "\n\nMarkdown Content:\n" + rest
+    before = AR.parse_report_source("amazon", plain, kind="search", candidate_terms=["pet water fountain"])
+    after = AR.parse_report_source("amazon", warned, kind="search", candidate_terms=["pet water fountain"])
+    assert after["status"] == "OK" and len(after["records"]) > 10 and "READER_FAILED" not in {r["code"] for r in after["refused"]}
+    assert (after["records"], after["next_targets"], after["refused"]) == (before["records"], before["next_targets"], before["refused"])
 
 
 def test_relevance_is_judged_only_against_the_candidates_terms():

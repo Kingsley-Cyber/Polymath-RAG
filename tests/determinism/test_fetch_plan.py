@@ -10,7 +10,10 @@ that runs them on the user's machine, paced, and uploads each raw output straigh
     5 Jina reads a second; the keys reach only the commands' own arguments at run time, never the plan or the script;
   * every output is POSTed as text/plain to `<upload.url>?packet=<packet_id>`, an EMPTY output too (an empty body the host
     records as EMPTY, so a round can complete); the script exits 0 when sources are blocked or rate limited (the uploads record
-    it).
+    it);
+  * a failed read (a non-zero exit, Jina's cached snapshot of a page that had not loaded at any size, under 512 bytes, Jina's
+    error JSON) is read once more inside its packet's slot: an Exa search as it was, a Jina read without Jina's cache and with
+    time to render (`X-No-Cache: true`, `X-Timeout: 30`, curl -m 120 instead of 90); the stand-in curl records every argv.
 Real outputs for round 2 come from tests/fixtures/product_report/ (see tests/contracts/test_report_parsers.py). No network:
 nothing here reaches Exa, Jina or Polymath."""
 from __future__ import annotations
@@ -45,6 +48,11 @@ PAD = "x" * 600
 #: Jina's own error reply (live 2026-11-02: a 252-byte read of an Amazon search page)
 JINA_ERROR = ('{"data":null,"code":422,"name":"AssertionFailureError","status":42206,"message":"Failed to goto https://www.amazon.com/s'
               '?k=x: net::ERR_ABORTED","readableMessage":"AssertionFailureError: Failed to goto"}')
+#: Jina's cached snapshot of an Amazon search page that had not loaded (live 2026-11-02, 346 bytes: both warnings, an empty
+#: Markdown Content); padded with a longer links summary it is over 512 bytes and still no page
+SNAPSHOT = (FIX / "jina_amazon_search_snapshot.out").read_text(encoding="utf-8")
+SNAPSHOT_PADDED = SNAPSHOT.replace("This page does not seem to contain any buttons/links.\n",
+                                   "".join(f"- [Sign in](https://www.amazon.com/ap/signin?n={n})\n" for n in range(12)))
 
 
 def _argv(command: str) -> list[str]:
@@ -125,6 +133,9 @@ def test_round_two_reads_at_most_three_pages_per_source_per_candidate_from_the_p
     assert plan["packets"][0]["commands"][0] == ("curl -s -g -m 90 ${JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"} "
                                                  "https://r.jina.ai/https://www.amazon.com/dp/B0CLLPVZRV")   # nothing to quote in it
     assert _argv(plan["packets"][3]["commands"][0])[-1].startswith("https://r.jina.ai/https://www.alibaba.com/product-detail/")
+    for n, p in enumerate(plan["packets"], 1):                 # each page's one retry: fresh, with time to render, no links summary
+        assert (f"\np{n:03d}r() {{ curl -s -g -m 120 ${{JINA_API_KEY:+-H \"Authorization: Bearer $JINA_API_KEY\"}} -H 'X-No-Cache: true' "
+                f"-H 'X-Timeout: 30' {shlex.quote('https://r.jina.ai/' + p['reads'])}; }}\n") in plan["script"]
     assert all(p["expect"] == {"tool_class": AR.TOOL_JINA, "parse": {"source": p["source"], "kind": "page"}, "max_bytes": AR.MAX_REPORT_BYTES}
                for p in plan["packets"])
     assert Counter(s["code"] for s in plan["skipped"]) == Counter({"OVER_LIMIT": 7 + 5, "SOURCE_NOT_READ": 1, "UNKNOWN_CANDIDATE": 1,
@@ -208,8 +219,17 @@ def test_the_script_passes_bash_n_quotes_every_variable_and_never_evaluates_cont
     assert not command_word.search(script) and "`" not in script and "bash -c" not in script and "sh -c" not in script
     for unquoted in _unquoted_dollars(script):                  # only assignments, arithmetic and the keys' optional arguments
         assert (unquoted[0] == "=" or unquoted[1:].startswith(("${EXA_API_KEY:+", "${JINA_API_KEY:+"))), unquoted
-    for p in plan["packets"]:                                   # the script runs exactly the packet's command
+    for n, p in enumerate(plan["packets"], 1):                  # the script runs exactly the packet's command
         assert script.count(p["commands"][0]) == 1
+        retry = [line for line in script.splitlines() if line.startswith(f"p{n:03d}r() {{ ")]
+        if p["expect"]["tool_class"] == AR.TOOL_EXA:            # an Exa search is retried as it was: no retry command of its own
+            assert retry == [] and f"  exa {p['packet_id']} {p['source']} {p['kind']} p{n:03d}\n" in script
+            continue
+        first = _argv(p["commands"][0])                         # a Jina read's one retry: the same read, fresh, with time to render
+        assert first[3:5] == ["-m", "90"] and len(retry) == 1 and retry[0].endswith("; }")
+        assert _argv(retry[0][len(f"p{n:03d}r() {{ "):-3]) == [*first[:3], "-m", "120", *first[5:-1], "-H", "X-No-Cache: true",
+                                                                 "-H", "X-Timeout: 30", first[-1]]
+        assert f"  jina {p['packet_id']} {p['source']} {p['kind']} p{n:03d} p{n:03d}r\n" in script
 
 
 # ─────────────────────────────────────────────────────────── the script, run in a sandbox with recording stubs
@@ -243,13 +263,18 @@ fi
 {ls} "$L/running_jina" | {wc} -l | {tr} -d ' ' >> "$L/jina_concurrency"
 {sleep} 0.4
 {rm} -f "$L/running_jina/$$"
-key=$(printf '%s' "$*" | {cksum} | {cut} -d ' ' -f 1)
+for a in "$@"; do url=$a; done
+key=$(printf '%s' "$url" | {cksum} | {cut} -d ' ' -f 1)
 if [ "${STUB_CURL:-}" = blocked ]; then
   printf 'Title: Blocked\n\nURL Source: https://www.amazon.com/s?k=x\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\n## whoa there, pardner!\n'
 elif [ "${STUB_CURL:-}" = error_json ]; then
   printf '%s' "$STUB_JINA_ERROR"
 elif [ "${STUB_CURL:-}" = error_once ] && [ ! -e "$L/once.$key" ]; then
   : > "$L/once.$key"; printf '%s' "$STUB_JINA_ERROR"
+elif [ "${STUB_CURL:-}" = snapshot ]; then
+  printf '%s' "$STUB_SNAPSHOT"
+elif [ "${STUB_CURL:-}" = snapshot_once ] && [ ! -e "$L/once.$key" ]; then
+  : > "$L/once.$key"; printf '%s' "$STUB_SNAPSHOT"
 else
   printf 'Title: Amazon.com : x\n\nURL Source: https://www.amazon.com/s?k=x\n\nMarkdown Content:\nhello %s\n' "$STUB_PAD"
 fi
@@ -280,7 +305,7 @@ def _run(tmp_path: pathlib.Path, plan: dict, **env_extra: str) -> tuple[subproce
     script = box / "plan.sh"
     script.write_text(plan["script"])
     env = {"PATH": f"{stubs}:/usr/bin:/bin", "HOME": str(home), "TMPDIR": str(tmp), "STUB_LOG": str(log), "LC_ALL": "C",
-           "STUB_PAD": PAD, "STUB_JINA_ERROR": JINA_ERROR, **env_extra}
+           "STUB_PAD": PAD, "STUB_JINA_ERROR": JINA_ERROR, "STUB_SNAPSHOT": SNAPSHOT_PADDED, **env_extra}
     done = subprocess.run([BASH, str(script)], cwd=box, env=env, capture_output=True, text=True, timeout=120, check=False)
     return done, log, {"home": home, "tmp": tmp, "box": box}
 
@@ -431,6 +456,47 @@ def test_a_failed_read_is_read_once_more_before_its_one_upload(tmp_path):
     (body,) = {b for b in (p.read_text() for p in log.glob("upload.*.body")) if b.startswith("{")}
     parsed = AR.parse_report_source("amazon", body, kind="search")
     assert (parsed["status"], [r["code"] for r in parsed["refused"]]) == ("EMPTY", ["READER_FAILED"])
+
+
+def test_a_jina_retry_reads_fresh_with_time_to_render_and_counts_once_in_the_pacing(tmp_path):
+    """Live 2026-11-02 (amz_feeder.txt, now jina_amazon_search_snapshot.out): Jina answered an Amazon search read with its cached
+    snapshot of a page that had not loaded, its two warnings over an empty Markdown Content. That is a failed read at any size
+    (here padded over 512 bytes). The one retry of a Jina packet sends `X-No-Cache: true` and `X-Timeout: 30` with curl's limit
+    raised from 90 to 120 s, the first read stays cached; an Exa retry runs its command as it was; the retry stays inside its
+    packet's slot: one pause, no extra start, never two Jina reads at once keyless."""
+    assert len(SNAPSHOT.encode()) == 346 and len(SNAPSHOT_PADDED.encode()) > AR.READER_MIN_BYTES
+    plan = _plan(candidates=(LAMP,), ebay_api=True)                                   # 4 Exa packets, 1 Jina packet
+    url = "https://r.jina.ai/https://www.amazon.com/s?k=Candle+warmer+lamp"
+    for keyed in (False, True):
+        env = {"JINA_API_KEY": "test-jina-key-2"} if keyed else {}
+        auth = ["-H", "Authorization: Bearer test-jina-key-2"] if keyed else []
+        done, log, _ = _run(tmp_path / f"keyed{int(keyed)}", plan, STUB_CURL="snapshot_once", STUB_MCPORTER="fail_once", **env)
+        assert done.returncode == 0, done.stderr
+        lines = done.stdout.strip().splitlines()
+        (jina_line,) = [line for line in lines if "r1-c1-amazon-2 " in line]
+        assert jina_line.endswith("upload http 200 (retried once: a cached snapshot of a page that had not loaded)")
+        fetches = sorted((a for a in _argvs(log, "curl") if "--data-binary" not in a), key=lambda a: a[3] != "90")
+        assert fetches == [                                                           # the stand-in curl's own record of each read
+            ["-s", "-g", "-m", "90", *auth, "-H", "X-With-Links-Summary: true", url],
+            ["-s", "-g", "-m", "120", *auth, "-H", "X-With-Links-Summary: true", "-H", "X-No-Cache: true", "-H", "X-Timeout: 30", url]]
+        exa = Counter(tuple(a) for a in _argvs(log, "mcporter"))                      # each Exa search twice, as it was
+        assert len(exa) == 4 and set(exa.values()) == {2} and not any("X-No-Cache: true" in a for a in exa)
+        uploads = [a[11].split("?packet=", 1)[1] for a in _argvs(log, "curl") if "--data-binary" in a]
+        assert sorted(uploads) == sorted(p["packet_id"] for p in plan["packets"])     # one upload per packet
+        bodies = [p.read_text() for p in log.glob("upload.*.body")]
+        assert SNAPSHOT_PADDED not in bodies and all(len(b) > AR.READER_MIN_BYTES for b in bodies)   # the fresh read went up
+        # one retry pause each and no extra start: keyless the Jina queue still sleeps its 3 s gap once (keyed: no full batch)
+        jina_gap = {"3": 1} if not keyed else {}
+        assert Counter((log / "sleep.log").read_text().split()) == Counter({"5": 4, "4": 1, "1": 1, **jina_gap})
+        assert max(_ints(log / "jina_concurrency")) == 1
+    # the snapshot every time: read once more, uploaded once, and the host's parser names it a failed read
+    done, log, _ = _run(tmp_path / "always", plan, STUB_CURL="snapshot")
+    (jina_line,) = [line for line in done.stdout.splitlines() if "r1-c1-amazon-2 " in line]
+    assert jina_line.endswith("upload http 200 (retried once: a cached snapshot of a page that had not loaded)") and done.returncode == 0
+    assert len([a for a in _argvs(log, "curl") if "--data-binary" not in a]) == 2
+    (body,) = [b for b in (p.read_text() for p in log.glob("upload.*.body")) if "cached snapshot" in b]
+    parsed = AR.parse_report_source("amazon", body, kind="search")
+    assert body == SNAPSHOT_PADDED and (parsed["status"], [r["code"] for r in parsed["refused"]]) == ("EMPTY", ["READER_FAILED"])
 
 
 def test_an_upload_the_host_refuses_is_reported_and_no_curl_means_exit_three(tmp_path):
