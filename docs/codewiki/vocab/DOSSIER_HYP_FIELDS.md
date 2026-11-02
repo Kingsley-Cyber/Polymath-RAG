@@ -26,7 +26,7 @@ AUTHORITY: `adapters/ecommerce/python/evaluator.py:21` :: `DOSSIER_HYP_FIELDS` (
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:60` | 11/12 | `hop_refs` |
 | `adapters/ecommerce/python/run_triage.py` | `adapters/ecommerce/python/run_triage.py:94` | 4/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `alternatives`, `falsifiers`, `exploratory` |
 | `adapters/ecommerce/python/transitions.py` | `adapters/ecommerce/python/transitions.py:7` | 3/12 | `source`, `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `alternatives`, `falsifiers`, `exploratory` |
-| `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:218` | 4/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `falsifiers`, `exploratory` |
+| `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:224` | 4/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `falsifiers`, `exploratory` |
 | `adapters/ecommerce/python/utilization.py` | `adapters/ecommerce/python/utilization.py:25` | 4/12 | `source`, `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `alternatives`, `falsifiers`, `exploratory` |
 | `adapters/ecommerce/python/verifiers.py` | `adapters/ecommerce/python/verifiers.py:14` | 3/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `alternatives`, `falsifiers`, `exploratory` |
 | `orchestrator/orchestrator/api/corpus_plan.py` | `orchestrator/orchestrator/api/corpus_plan.py:75` | 3/12 | `source`, `path`, `target_mechanism`, `evidence_boundary`, `hop_refs`, `gaps`, `alternatives`, `falsifiers`, `exploratory` |
@@ -41,7 +41,7 @@ AUTHORITY: `adapters/ecommerce/python/evaluator.py:21` :: `DOSSIER_HYP_FIELDS` (
 | `shared/polymath_shared/conformance/discovery.py` | `shared/polymath_shared/conformance/discovery.py:120` | 3/12 | `id`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `alternatives`, `falsifiers`, `exploratory` |
 | `shared/polymath_shared/gap_check.py` | `shared/polymath_shared/gap_check.py:87` | 3/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `alternatives`, `falsifiers`, `status`, `exploratory` |
 | `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:94` | 3/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `alternatives`, `falsifiers`, `exploratory` |
-| `shared/polymath_shared/product_search/host_data.py` | `shared/polymath_shared/product_search/host_data.py:227` | 3/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `alternatives`, `falsifiers`, `exploratory` |
+| `shared/polymath_shared/product_search/host_data.py` | `shared/polymath_shared/product_search/host_data.py:246` | 3/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `alternatives`, `falsifiers`, `exploratory` |
 | `shared/polymath_shared/product_search/service.py` | `shared/polymath_shared/product_search/service.py:103` | 3/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `alternatives`, `falsifiers`, `exploratory` |
 | `workers/workers/adapter_step_worker.py` | `workers/workers/adapter_step_worker.py:96` | 3/12 | `path`, `target_mechanism`, `invariant`, `evidence_boundary`, `hop_refs`, `gaps`, `alternatives`, `falsifiers`, `exploratory` |
 

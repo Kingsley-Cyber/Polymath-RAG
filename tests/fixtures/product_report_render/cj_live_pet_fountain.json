@@ -1,0 +1,503 @@
+{
+ "_about": "RECORDED LIVE host data: host_data.collect's CJ products for candidate c1 ('pet water fountain') of live report rpt_164ed807ad94e63ef002458e, owner run of 2026-11-02, before the host's variant rule (B2). The first product was read in full (detail_status OK; its cheapest variant is a $2.94 'Filter cotton set' at 120 g); the other two were never detail-fetched (detail_status NOT_FETCHED, price_basis search_from_price): $4.39 and $1.74 are CJ's search 'from' prices.",
+ "products": [
+  {
+   "url": "https://cjdropshipping.com/product/pet-cat-dog-stainless-steel-automatic-circulation-water-dispenser-intelligent-fountain-pets-accessories-p-1651788214971146240.html",
+   "image": "https://cf.cjdropshipping.com/9b08b13c-ba80-4f33-ba4d-f300e2df2fda.jpg",
+   "title": "Pet Cat Dog Stainless Steel Automatic Circulation Water Dispenser Intelligent Fountain Pets Accessories",
+   "freight": {
+    "CN": [
+     {
+      "carrier": "CJPacket Pure Electricity",
+      "cost_usd": 6.3,
+      "days_max": 14,
+      "days_min": 7,
+      "days_text": "7-14",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sensitive",
+      "cost_usd": 6.49,
+      "days_max": 9,
+      "days_min": 4,
+      "days_text": "4-9",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sensitive Pro",
+      "cost_usd": 6.71,
+      "days_max": 11,
+      "days_min": 5,
+      "days_text": "5-11",
+      "days_unit": null
+     },
+     {
+      "carrier": "YunExpress Sensitive",
+      "cost_usd": 6.84,
+      "days_max": 7,
+      "days_min": 4,
+      "days_text": "4-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Liquid US",
+      "cost_usd": 7.35,
+      "days_max": 11,
+      "days_min": 5,
+      "days_text": "5-11",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Eub Special Line",
+      "cost_usd": 7.63,
+      "days_max": 23,
+      "days_min": 10,
+      "days_text": "10-23",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket LX Sensitive Plant",
+      "cost_usd": 8.13,
+      "days_max": 20,
+      "days_min": 8,
+      "days_text": "8-20",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket FJTY Eub Special Line",
+      "cost_usd": 8.3,
+      "days_max": 25,
+      "days_min": 15,
+      "days_text": "15-25",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Postal",
+      "cost_usd": 8.32,
+      "days_max": 9,
+      "days_min": 5,
+      "days_text": "5-9",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sensitive Pro+",
+      "cost_usd": 8.77,
+      "days_max": 11,
+      "days_min": 6,
+      "days_text": "6-11",
+      "days_unit": null
+     },
+     {
+      "carrier": "USPS",
+      "cost_usd": 8.94,
+      "days_max": 9,
+      "days_min": 4,
+      "days_text": "4-9",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket USPS Remote",
+      "cost_usd": 9.01,
+      "days_max": 10,
+      "days_min": 5,
+      "days_text": "5-10",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Fast US",
+      "cost_usd": 9.5,
+      "days_max": 12,
+      "days_min": 7,
+      "days_text": "7-12",
+      "days_unit": null
+     },
+     {
+      "carrier": "Qfulfillment A line",
+      "cost_usd": 9.73,
+      "days_max": 25,
+      "days_min": 10,
+      "days_text": "10-25",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Fast Line",
+      "cost_usd": 10.22,
+      "days_max": 9,
+      "days_min": 4,
+      "days_text": "4-9",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Liquid Line",
+      "cost_usd": 11.07,
+      "days_max": 60,
+      "days_min": 20,
+      "days_text": "20-60",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sensitive Over Length",
+      "cost_usd": 12.14,
+      "days_max": 12,
+      "days_min": 7,
+      "days_text": "7-12",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sensitive Oversize Line",
+      "cost_usd": 15.84,
+      "days_max": 16,
+      "days_min": 8,
+      "days_text": "8-16",
+      "days_unit": null
+     },
+     {
+      "carrier": "DHL Official",
+      "cost_usd": 30.92,
+      "days_max": 7,
+      "days_min": 3,
+      "days_text": "3-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "CJPacket Sea",
+      "cost_usd": 82.98,
+      "days_max": 30,
+      "days_min": 25,
+      "days_text": "25-30",
+      "days_unit": null
+     }
+    ],
+    "US": [
+     {
+      "carrier": "GOFO GC parcel+",
+      "cost_usd": 6.07,
+      "days_max": 8,
+      "days_min": 3,
+      "days_text": "3-8",
+      "days_unit": null
+     },
+     {
+      "carrier": "USPS+VIP",
+      "cost_usd": 6.11,
+      "days_max": 7,
+      "days_min": 3,
+      "days_text": "3-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "GOFO+",
+      "cost_usd": 6.15,
+      "days_max": 8,
+      "days_min": 3,
+      "days_text": "3-8",
+      "days_unit": null
+     },
+     {
+      "carrier": "UniUni+",
+      "cost_usd": 6.22,
+      "days_max": 8,
+      "days_min": 3,
+      "days_text": "3-8",
+      "days_unit": null
+     },
+     {
+      "carrier": "USPS+",
+      "cost_usd": 6.32,
+      "days_max": 7,
+      "days_min": 3,
+      "days_text": "3-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "USPS+WSC For VIP",
+      "cost_usd": 6.32,
+      "days_max": 7,
+      "days_min": 3,
+      "days_text": "3-7",
+      "days_unit": null
+     },
+     {
+      "carrier": "FedEx Ground+",
+      "cost_usd": 20.78,
+      "days_max": 7,
+      "days_min": 3,
+      "days_text": "3-7",
+      "days_unit": null
+     }
+    ]
+   },
+   "variants": [
+    {
+     "options": "Filter cotton set-220V US",
+     "weight_g": 120.0,
+     "price_usd": 2.94,
+     "variant_id": "1651788215663206400",
+     "us_stock_units": null
+    },
+    {
+     "options": "Filter cotton set-US",
+     "weight_g": 120.0,
+     "price_usd": 2.94,
+     "variant_id": "1651788215734509568",
+     "us_stock_units": null
+    },
+    {
+     "options": "Filter cotton set-EU",
+     "weight_g": 120.0,
+     "price_usd": 2.94,
+     "variant_id": "1651788215801618432",
+     "us_stock_units": null
+    },
+    {
+     "options": "Filter cotton set-UK",
+     "weight_g": 120.0,
+     "price_usd": 2.94,
+     "variant_id": "1651788215898087424",
+     "us_stock_units": null
+    },
+    {
+     "options": "Filter cotton set-AU",
+     "weight_g": 120.0,
+     "price_usd": 2.94,
+     "variant_id": "1651788215956807680",
+     "us_stock_units": null
+    },
+    {
+     "options": "set3-US",
+     "weight_g": 228.0,
+     "price_usd": 5.38,
+     "variant_id": "2610250634591617902",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment-220V US",
+     "weight_g": 770.0,
+     "price_usd": 10.22,
+     "variant_id": "1651788215046643712",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment-US",
+     "weight_g": 770.0,
+     "price_usd": 10.22,
+     "variant_id": "1651788215109558272",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment-EU",
+     "weight_g": 770.0,
+     "price_usd": 10.22,
+     "variant_id": "1651788215172472832",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment-AU",
+     "weight_g": 770.0,
+     "price_usd": 10.22,
+     "variant_id": "1651788215294107648",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment-UK",
+     "weight_g": 770.0,
+     "price_usd": 10.75,
+     "variant_id": "1651788215235387392",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment set1-AU",
+     "weight_g": 1016.0,
+     "price_usd": 11.94,
+     "variant_id": "2609291149111606800",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment set-220V US",
+     "weight_g": 878.0,
+     "price_usd": 13.16,
+     "variant_id": "2409201237351623200",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment set-AU",
+     "weight_g": 878.0,
+     "price_usd": 13.16,
+     "variant_id": "2409201237351623400",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment set-EU",
+     "weight_g": 871.0,
+     "price_usd": 13.16,
+     "variant_id": "2409201237351623500",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment set-US",
+     "weight_g": 878.0,
+     "price_usd": 13.16,
+     "variant_id": "2409201237351623800",
+     "us_stock_units": null
+    },
+    {
+     "options": "Basic payment set-UK",
+     "weight_g": 878.0,
+     "price_usd": 13.69,
+     "variant_id": "2409201237351623700",
+     "us_stock_units": null
+    },
+    {
+     "options": "Induction style-220V US",
+     "weight_g": 820.0,
+     "price_usd": 13.98,
+     "variant_id": "1651788215357022208",
+     "us_stock_units": null
+    },
+    {
+     "options": "Induction style-US",
+     "weight_g": 820.0,
+     "price_usd": 13.98,
+     "variant_id": "1651788215411548160",
+     "us_stock_units": null
+    },
+    {
+     "options": "Induction style-EU",
+     "weight_g": 820.0,
+     "price_usd": 13.98,
+     "variant_id": "1651788215470268416",
+     "us_stock_units": null
+    },
+    {
+     "options": "Induction style-AU",
+     "weight_g": 820.0,
+     "price_usd": 13.98,
+     "variant_id": "1651788215591903232",
+     "us_stock_units": null
+    },
+    {
+     "options": "Induction style-UK",
+     "weight_g": 820.0,
+     "price_usd": 14.34,
+     "variant_id": "1651788215528988672",
+     "us_stock_units": null
+    },
+    {
+     "options": "Induction style set-220V US",
+     "weight_g": 928.0,
+     "price_usd": 16.92,
+     "variant_id": "2409201237351624000",
+     "us_stock_units": null
+    },
+    {
+     "options": "Induction style set-AU",
+     "weight_g": 928.0,
+     "price_usd": 16.92,
+     "variant_id": "2409201237351624100",
+     "us_stock_units": null
+    },
+    {
+     "options": "Induction style set-EU",
+     "weight_g": 921.0,
+     "price_usd": 16.92,
+     "variant_id": "2409201237351624300",
+     "us_stock_units": null
+    },
+    {
+     "options": "Induction style set-US",
+     "weight_g": 922.0,
+     "price_usd": 16.92,
+     "variant_id": "2409201237351624600",
+     "us_stock_units": null
+    },
+    {
+     "options": "Induction style set-UK",
+     "weight_g": 925.0,
+     "price_usd": 17.28,
+     "variant_id": "2409201237351624500",
+     "us_stock_units": null
+    },
+    {
+     "options": "Filter cotton set 6PC-AU",
+     "weight_g": 684.0,
+     "price_usd": 17.64,
+     "variant_id": "2610260733261600500",
+     "us_stock_units": null
+    },
+    {
+     "options": "set1-US",
+     "weight_g": 1106.0,
+     "price_usd": 19.16,
+     "variant_id": "2610250634591617900",
+     "us_stock_units": null
+    },
+    {
+     "options": "set2-US",
+     "weight_g": 1984.0,
+     "price_usd": 32.93,
+     "variant_id": "2610250634591617901",
+     "us_stock_units": null
+    }
+   ],
+   "weight_g": 120.0,
+   "product_id": "1651788214971146240",
+   "price_basis": "cheapest_variant",
+   "detail_status": "OK",
+   "freight_status": {
+    "CN": "OK",
+    "US": "OK"
+   },
+   "sell_price_usd": 2.94,
+   "price_as_listed": "US$2.94-32.93",
+   "us_stock_confirmed": false,
+   "cheapest_variant_id": "1651788215663206400",
+   "suggested_retail_usd": 17.06
+  },
+  {
+   "url": "https://cjdropshipping.com/product/1-5l-cat-dog-water-bowl-carried-floating-bowl-anti-overflow-slow-water-feeder-dispenser-pet-fountain-abs-pp-dog-supplies-p-1366573785234411520.html",
+   "image": "https://cf.cjdropshipping.com/83639716-b526-4a95-b703-d3ea0bae0c4c.jpg",
+   "title": "1.5L Cat Dog Water Bowl Carried Floating Bowl Anti-Overflow Slow Water Feeder Dispenser Pet Fountain ABS&PP Dog Supplies",
+   "freight": {
+    "CN": [],
+    "US": []
+   },
+   "variants": [],
+   "weight_g": null,
+   "product_id": "1366573785234411520",
+   "price_basis": "search_from_price",
+   "detail_status": "NOT_FETCHED",
+   "freight_status": {
+    "CN": "NOT_FETCHED",
+    "US": "NOT_FETCHED"
+   },
+   "sell_price_usd": 4.39,
+   "price_as_listed": "US$4.39-32.21",
+   "us_stock_confirmed": false,
+   "cheapest_variant_id": null,
+   "suggested_retail_usd": null
+  },
+  {
+   "url": "https://cjdropshipping.com/product/cat-water-fountain-automatic-circulation-flow-water-fountain-kitten-drinking-water-apparatus-p-2501260812541627900.html",
+   "image": "https://oss-cf.cjdropshipping.com/product/2025/01/26/08/28a34849-a39a-40cf-ace2-a5cb6ca5f787_trans.jpeg",
+   "title": "Cat Water Fountain Automatic Circulation Flow Water Fountain Kitten Drinking Water Apparatus",
+   "freight": {
+    "CN": [],
+    "US": []
+   },
+   "variants": [],
+   "weight_g": null,
+   "product_id": "2501260812541627900",
+   "price_basis": "search_from_price",
+   "detail_status": "NOT_FETCHED",
+   "freight_status": {
+    "CN": "NOT_FETCHED",
+    "US": "NOT_FETCHED"
+   },
+   "sell_price_usd": 1.74,
+   "price_as_listed": "US$1.74-3.42",
+   "us_stock_confirmed": false,
+   "cheapest_variant_id": null,
+   "suggested_retail_usd": null
+  }
+ ]
+}

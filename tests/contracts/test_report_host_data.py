@@ -135,8 +135,14 @@ def test_the_cj_path_on_the_recorded_answers():
         "image": "https://cf.cjdropshipping.com/20200220/1540523199930.png", "sell_price_usd": 3.83, "suggested_retail_usd": 34.13,
         "weight_g": 250.0, "us_stock_confirmed": False, "cheapest_variant_id": GREEN, "price_basis": "cheapest_variant",
         "detail_status": "OK", "freight_status": {"CN": "OK", "US": "OK"}}
-    assert top["variants"] == [{"variant_id": GREEN, "price_usd": 3.83, "weight_g": 250.0, "options": "Green", "us_stock_units": None},
-                               {"variant_id": YELLOW, "price_usd": 3.83, "weight_g": 250.0, "options": "Yellow", "us_stock_units": None}]
+    assert top["variants"] == [{"variant_id": GREEN, "name": "Pet Self Cleaning Slicker Brush Green", "price_usd": 3.83, "weight_g": 250.0,
+                                "options": "Green", "us_stock_units": None},
+                               {"variant_id": YELLOW, "name": "Pet Self Cleaning Slicker Brush Yellow", "price_usd": 3.83, "weight_g": 250.0,
+                                "options": "Yellow", "us_stock_units": None}]
+    # a colour-only product (live answer: two colours, equal weight, equal price): nothing dropped, its cheapest is costed
+    assert top["variants_dropped"] == [] and (top["variant_rule"]["dropped"], top["variant_rule"]["light_cutoff_g"]) == (0, None)
+    assert out["receipts"][2]["call"] == "supplier_product" and out["receipts"][2]["chosen_variant_id"] == GREEN
+    assert out["receipts"][2]["variants_dropped"] == [] and out["receipts"][2]["variant_rule"]["rule"] == HD.VARIANT_RULE
     cn, us = top["freight"]["CN"], top["freight"]["US"]
     assert (len(cn), len(us)) == (29, 7)                                    # measured: 29 options CN->US, 7 options US->US
     assert cn[0] == {"carrier": "LuWei Ordinary US", "cost_usd": 7.53, "days_min": 5, "days_max": 11, "days_text": "5-11", "days_unit": None}
@@ -707,3 +713,121 @@ def test_a_friends_ebay_searches_stop_at_the_daily_budget_before_reaching_ebay_o
     first = _collect(Recorded(), principal_id="prn_lee", ebay=_ebay(FakeEbay(), clock), fair_use=RecordingFairUse(clock.clock))
     assert [first["ebay"][c]["reason_code"] for c in ("c1", "c2", "c3")] == ["EBAY_NO_RELEVANT", "EBAY_DAILY_LIMIT", "EBAY_DAILY_LIMIT"]
 
+
+
+# ─────────────────────────────────────────────────────────── the costed variant (live 2026-11-02, rpt_164ed807ad94e63ef002458e)
+#: RECORDED live: CJ product 1651788214971146240 for "pet water fountain", its variants as the report stored them (variant key,
+#: price, weight; CJ's 30 cheapest, the store's cap). The report costed the $2.94 / 120 g "Filter cotton set" and printed a TikTok
+#: US margin of $32.43 (70.5 %). Source: scratchpad live/owner2/cj_c1.json (the stored host data of that report).
+FOUNTAIN_PID = "1651788214971146240"
+FOUNTAIN_TITLE = "Pet Cat Dog Stainless Steel Automatic Circulation Water Dispenser Intelligent Fountain Pets Accessories"
+FOUNTAIN_VARIANTS = [
+    ('1651788215663206400', 'Filter cotton set-220V US', 2.94, 120.0), ('1651788215734509568', 'Filter cotton set-US', 2.94, 120.0),
+    ('1651788215801618432', 'Filter cotton set-EU', 2.94, 120.0), ('1651788215898087424', 'Filter cotton set-UK', 2.94, 120.0),
+    ('1651788215956807680', 'Filter cotton set-AU', 2.94, 120.0), ('2610250634591617902', 'set3-US', 5.38, 228.0),
+    ('1651788215046643712', 'Basic payment-220V US', 10.22, 770.0), ('1651788215109558272', 'Basic payment-US', 10.22, 770.0),
+    ('1651788215172472832', 'Basic payment-EU', 10.22, 770.0), ('1651788215294107648', 'Basic payment-AU', 10.22, 770.0),
+    ('1651788215235387392', 'Basic payment-UK', 10.75, 770.0), ('2609291149111606800', 'Basic payment set1-AU', 11.94, 1016.0),
+    ('2409201237351623200', 'Basic payment set-220V US', 13.16, 878.0), ('2409201237351623400', 'Basic payment set-AU', 13.16, 878.0),
+    ('2409201237351623500', 'Basic payment set-EU', 13.16, 871.0), ('2409201237351623800', 'Basic payment set-US', 13.16, 878.0),
+    ('2409201237351623700', 'Basic payment set-UK', 13.69, 878.0), ('1651788215357022208', 'Induction style-220V US', 13.98, 820.0),
+    ('1651788215411548160', 'Induction style-US', 13.98, 820.0), ('1651788215470268416', 'Induction style-EU', 13.98, 820.0),
+    ('1651788215591903232', 'Induction style-AU', 13.98, 820.0), ('1651788215528988672', 'Induction style-UK', 14.34, 820.0),
+    ('2409201237351624000', 'Induction style set-220V US', 16.92, 928.0),
+    ('2409201237351624100', 'Induction style set-AU', 16.92, 928.0), ('2409201237351624300', 'Induction style set-EU', 16.92, 921.0),
+    ('2409201237351624600', 'Induction style set-US', 16.92, 922.0), ('2409201237351624500', 'Induction style set-UK', 17.28, 925.0),
+    ('2610260733261600500', 'Filter cotton set 6PC-AU', 17.64, 684.0), ('2610250634591617900', 'set1-US', 19.16, 1106.0),
+    ('2610250634591617901', 'set2-US', 32.93, 1984.0),
+]
+FOUNTAIN = [{"candidate_id": "c1", "title": "Pet water fountain", "search_terms": ["pet water fountain"]}]
+
+
+def _fountain_answer(rows=FOUNTAIN_VARIANTS, *, cj_names: bool) -> dict:
+    """supplier_product's answer for the recorded variants: with CJ's own variant names ("<product title> <variant key>", as the
+    live answer gives them) or without (as the report stored them: the key only)."""
+    return {"status": "OK", "retrieved_at": "2026-11-02T20:33:00Z", "product": {"product_id": FOUNTAIN_PID, "title": FOUNTAIN_TITLE,
+                                                                                 "price_as_listed": "US$2.94-32.93"},
+            "variants": [{"variant_id": vid, "name": f"{FOUNTAIN_TITLE} {key}" if cj_names else None, "options": key,
+                          "price_as_listed": f"US${price:.2f}", "weight_g": f"{weight:.1f}", "stock": []}
+                         for vid, key, price, weight in rows]}
+
+
+def _fountain_search() -> dict:
+    item, source = _cj_item(1, FOUNTAIN_PID, FOUNTAIN_TITLE, "US$2.94-32.93")
+    return {"status": "PARTIAL", "retrieved_at": "2026-11-02T20:32:59Z", "items": [item], "sources": [source], "fallback": None}
+
+
+def test_the_live_fountain_is_never_costed_at_its_filter_set():
+    """The fix for rpt_164ed807ad94e63ef002458e on the RECORDED variants: the "Filter cotton set" variants are dropped by name, the
+    light ones by weight, the rule and what it dropped are on the product and its receipt, and the freight is quoted for the costed
+    variant. With all 30 recorded variants the rule AS WRITTEN costs "Basic payment set1-AU" $11.94 / 1016 g: the set2-US bundle
+    (1984 g) puts the 40 % cutoff at 793.6 g, above the 770 g basic fountain. With the 12 cheapest (as the brief listed them) it
+    costs "Basic payment-220V US" $10.22 / 770 g."""
+    for cj_names in (True, False):                                         # CJ's own variant names, or the stored keys only
+        fns = Recorded({("search", "pet water fountain"): _fountain_search(),
+                        ("product", FOUNTAIN_PID): _fountain_answer(cj_names=cj_names)})
+        out = _collect(fns, candidates=FOUNTAIN)
+        entry, top = out["cj"]["c1"], out["cj"]["c1"]["products"][0]
+        assert (entry["status"], entry["reason_code"], top["detail_status"]) == ("OK", None, "OK"), cj_names
+        assert (top["cheapest_variant_id"], top["sell_price_usd"], top["weight_g"], top["price_basis"]) == (
+            "2609291149111606800", 11.94, 1016.0, "cheapest_variant")
+        by_why = {}
+        for d in top["variants_dropped"]:
+            by_why.setdefault(d["why"], []).append((d["price_usd"], d["weight_g"]))
+        assert by_why["ACCESSORY_NAME"] == [(2.94, 120.0)] * 5 + [(17.64, 684.0)]          # every "Filter cotton set", even the heavy one
+        assert sorted(by_why["LIGHT_WEIGHT"]) == [(5.38, 228.0)] + [(10.22, 770.0)] * 4 + [(10.75, 770.0)]
+        assert all(d["words"] == ["filter"] for d in top["variants_dropped"] if d["why"] == "ACCESSORY_NAME")
+        assert all(d["cutoff_g"] == 793.6 for d in top["variants_dropped"] if d["why"] == "LIGHT_WEIGHT")
+        rule = top["variant_rule"]
+        assert {k: rule[k] for k in ("heaviest_g", "lightest_g", "light_cutoff_g", "variants", "kept", "dropped", "chosen_variant_id",
+                                     "exempt_by_search")} == {"heaviest_g": 1984.0, "lightest_g": 228.0, "light_cutoff_g": 793.6,
+                                                              "variants": 30, "kept": 18, "dropped": 12,
+                                                              "chosen_variant_id": "2609291149111606800", "exempt_by_search": []}
+        kept_ids = {v["variant_id"] for v in top["variants"]}
+        assert not kept_ids & {d["variant_id"] for d in top["variants_dropped"]} and len(top["variants"]) == 18
+        assert min(v["price_usd"] for v in top["variants"]) == 11.94       # what the engine costs: the cheapest variant listed
+        assert top["variants"][0]["name"] == (f"{FOUNTAIN_TITLE} Basic payment set1-AU" if cj_names else "Basic payment set1-AU")
+        assert [kw["variant_id"] for t, kw in fns.calls if t == "freight"] == ["2609291149111606800"] * 2   # quoted for the costed one
+        receipt = next(r for r in out["receipts"] if r["call"] == "supplier_product")
+        assert receipt["chosen_variant_id"] == "2609291149111606800" and receipt["variant_rule"] == rule
+        assert sorted(d["why"] for d in receipt["variants_dropped"]) == ["ACCESSORY_NAME"] * 6 + ["LIGHT_WEIGHT"] * 6
+    brief = sorted(FOUNTAIN_VARIANTS, key=lambda r: r[2])[:12]              # the 12 cheapest, as the brief listed them
+    top = _collect(Recorded({("search", "pet water fountain"): _fountain_search(),
+                             ("product", FOUNTAIN_PID): _fountain_answer(brief, cj_names=True)}), candidates=FOUNTAIN)["cj"]["c1"]["products"][0]
+    assert (top["cheapest_variant_id"], top["sell_price_usd"], top["weight_g"]) == ("1651788215046643712", 10.22, 770.0)
+    assert (top["variant_rule"]["light_cutoff_g"], [d["why"] for d in top["variants_dropped"]]) == (406.4, ["ACCESSORY_NAME"] * 5 + ["LIGHT_WEIGHT"])
+
+
+def test_the_variant_rule_keeps_colours_drops_named_parts_even_at_equal_weight_and_says_when_nothing_is_left():
+    def v(vid, name, price, weight, options=None):
+        return {"variant_id": vid, "name": name, "options": options, "price_usd": price, "weight_g": weight}
+    colours = [v("C3", "Blue", 4.10, 250.0), v("C1", "Green", 3.83, 250.0), v("C2", "Yellow", 3.83, 250.0)]
+    chosen, kept, dropped, rule = HD.choose_variant(colours, title="Pet Self Cleaning Slicker Brush", term="self cleaning slicker brush")
+    assert (chosen["variant_id"], [x["variant_id"] for x in kept], dropped, rule["light_cutoff_g"]) == ("C1", ["C1", "C2", "C3"], [], None)
+    with_filter = colours + [v("F1", "Filter", 1.10, 250.0)]                 # a part named as such, at the SAME weight
+    chosen, kept, dropped, _ = HD.choose_variant(with_filter, title="Pet Self Cleaning Slicker Brush", term="self cleaning slicker brush")
+    assert chosen["variant_id"] == "C1" and dropped == [{"variant_id": "F1", "name": "Filter", "price_usd": 1.10, "weight_g": 250.0,
+                                                         "why": "ACCESSORY_NAME", "words": ["filter"]}]
+    asked = HD.choose_variant(with_filter, title="Fountain", term="fountain filter")       # the search asks for the part: kept
+    assert asked[0]["variant_id"] == "F1" and asked[2] == [] and asked[3]["exempt_by_search"] == ["filter"]
+    parts = [v("P1", "Spare Parts Kit", 0.80, 250.0), v("P2", "x", 1.0, 250.0, options="Replacement Cartridges-2"),
+             v("P3", "Sponges 3pcs", 0.5, 250.0), v("OK", "Black", 6.0, 250.0)]
+    chosen, _, dropped, _ = HD.choose_variant(parts, title="Aquarium Pump Kit", term="aquarium kit")
+    assert chosen["variant_id"] == "OK" and [(d["variant_id"], d["words"]) for d in dropped] == [
+        ("P1", ["parts", "spare"]), ("P2", ["cartridges", "replacement"]), ("P3", ["sponges"])]
+    pump = [v("W", "Foaming Pump Soap Dispenser White", 3.0, 300.0, options="White")]     # CJ's name repeats the product's title
+    assert HD.choose_variant(pump, title="Foaming Pump Soap Dispenser", term="soap dispenser")[0]["variant_id"] == "W"
+    # every variant dropped: the product says so and carries no price; nothing is quoted
+    only_parts = {"status": "OK", "product": {"product_id": BRUSH_PID, "title": "Pet Self Cleaning Slicker Brush", "price_as_listed": "US$1.10-2.00"},
+                  "variants": [{"variant_id": "FILTER-0001", "name": "Filter Pack", "price_as_listed": "US$1.10", "weight_g": "40.0", "stock": []},
+                               {"variant_id": "FILTER-0002", "name": "Replacement Head", "price_as_listed": "US$2.00", "weight_g": "60.0", "stock": []}]}
+    fns = Recorded({("product", BRUSH_PID): only_parts})
+    entry = _collect(fns, candidates=CANDIDATES[1:2])["cj"]["c2"]
+    top = entry["products"][0]
+    assert (entry["status"], entry["reason_code"], top["detail_status"], top["cheapest_variant_id"], top["sell_price_usd"],
+            top["price_basis"], top["variants"]) == ("PARTIAL", "CJ_NO_COSTED_VARIANT", "NO_COSTED_VARIANT", None, None, None, [])
+    assert [d["variant_id"] for d in top["variants_dropped"]] == ["FILTER-0001", "FILTER-0002"]
+    assert top["freight_status"] == {"CN": "NOT_FETCHED", "US": "NOT_FETCHED"} and [t for t, _ in fns.calls] == ["search", "product"]
+    others = entry["products"][1:]                                          # never read in full: the search's price, labelled as such
+    assert all((p["price_basis"], p["detail_status"], p["variant_rule"], p["variants_dropped"]) == ("search_from_price", "NOT_FETCHED", None, [])
+               for p in others)

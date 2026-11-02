@@ -606,6 +606,8 @@ REDDIT_COMMENTS_SHOWN = 5                           # owner, 2026-11-02: the sum
 REDDIT_EXCLUDED_SHOWN = 5                           # contract C4: the threads the parser judged off-topic — their count, then at most five titles with dates
 #: an inventory offer's precondition (contract C5): unit_economics carries these four numbers on the offer and on every inventory line
 STOCK_FIELDS = ("time_to_stock_days", "moq_capital_usd", "moq_inbound_usd", "cash_to_first_stock_usd")
+#: a CJ product the host did not read in full: unit_economics leaves its unit cost UNKNOWN and hands CJ's search "from" price beside it
+CJ_SEARCH_PRICE_LABEL = "CJ search price: the lowest variant, not checked"
 COMMENT_MAX_CHARS, COMPS_SHOWN, LINKS_SHOWN, RECEIPTS_SHOWN = 700, 8, 5, 400
 LINK_SOURCES = (("cj", "CJ"), ("alibaba", "Alibaba"), ("amazon", "Amazon"), ("ebay", "eBay"), ("reddit", "Reddit"))
 MARKETS = (("amazon", "Amazon"), ("ebay", "eBay"))
@@ -1628,6 +1630,14 @@ def _offer_name(o: dict) -> str:
     return f"{_e(str(o.get('source') or 'offer').upper())} <span class='url'>{_e(o.get('offer_id') or '')}</span>"
 
 
+def _unit_cell(o: dict) -> str:
+    """An offer's unit cost — or, for a CJ product whose details were not read (unit_economics: unit cost UNKNOWN, `from_price_usd`
+    beside it), CJ's search "from" price, said for what it is: "from $1.74 (CJ search price: the lowest variant, not checked)"."""
+    if _number(o.get("unit_cost_usd")) is None and _number(o.get("from_price_usd")) is not None:
+        return f"from {_usd(o['from_price_usd'])} <span class='why'>({_e(CJ_SEARCH_PRICE_LABEL)})</span>"
+    return _usd(o.get("unit_cost_usd"))
+
+
 def _render_decision_product(i: int, p: dict, reach: list[dict] | None = None) -> list[str]:
     """One product's sections. `reach` (contract C11, `_agent_reach`): an Agent Reach source with a note says it plainly in its own
     section — Reddit and Amazon under Demand, Alibaba under Supply, eBay under Market — in place of a finding read from nothing; its
@@ -1696,17 +1706,19 @@ def _render_decision_product(i: int, p: dict, reach: list[dict] | None = None) -
         none = "<td class='n'><span class='why'>none · dropship</span></td>"
         for o in offers:
             notes = " · ".join(x for x in (f"supplier {_e(o['supplier'])}" if o.get("supplier") else "",
+                                           _e(o["variant_note"]) if o.get("variant_note") else "",       # B2's variant rule, in one line
                                            f"lead time as listed: {_e(o['lead_time_text'])}" if o.get("lead_time_text") else "",
                                            f"shipping as listed: {_e(o['shipping_fee_text'])}" if o.get("shipping_fee_text") else "",
                                            f"CJ suggested retail {_usd(o['suggested_retail_usd'])} (reference only, never used as a price)"
-                                           if _number(o.get("suggested_retail_usd")) is not None else "") if x)
+                                           if _number(o.get("suggested_retail_usd")) is not None else "",
+                                           _e(o["not_costed"]) if o.get("not_costed") else "") if x)
             note = f"<br><span class='why'>{notes}</span>" if notes else ""
             inventory = o.get("model") == "inventory"
             ib = _dict(o.get("inbound"))
             rule = ib.get("rule") or ("UNKNOWN" if inventory else None)
             out.append(f"<tr><td class='sticky'><strong>{_e(str(o.get('source') or 'offer').upper())}</strong> {_link(o.get('url'), o.get('title') or o.get('offer_id'))}"
                        f"{_pill(o.get('admission'))}{note}</td><td>{_model_label(o.get('model'))}</td>"
-                       f"<td class='n'>{_usd(o.get('unit_cost_usd'))}</td><td class='n'>{_count(o.get('moq'))}</td><td class='n'>{_usd(o.get('moq_capital_usd'))}</td>"
+                       f"<td class='n'>{_unit_cell(o)}</td><td class='n'>{_count(o.get('moq'))}</td><td class='n'>{_usd(o.get('moq_capital_usd'))}</td>"
                        + (f"<td class='n'>{_usd(ib.get('cost_usd'))}</td><td>{_e(rule)}<br><span class='why'>{_e(INBOUND_RULES.get(rule, ''))}</span></td>"
                           f"<td class='n'>{_usd(o.get('moq_inbound_usd'))}</td><td class='n'>{_usd(o.get('cash_to_first_stock_usd'))}</td>"
                           if inventory else none + "<td>—</td>" + none + none)

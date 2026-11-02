@@ -591,3 +591,153 @@ def test_policy_holds_plan_section_2_with_dated_sources(decision):
     assert a["returns"]["rate"] == 0.193 and a["returns"]["source"]["url"].startswith("https://nrf.com/")
     assert all(a["channels"][c]["fee"]["text"] and a["channels"][c]["delivery"]["text"] and a["channels"][c]["sources"]
                and all(s["url"] and s["read"] for s in a["channels"][c]["sources"]) for c in CHANNELS)
+
+
+# ───────────────────────────────────────── live run 2026-11-02 (rpt_164ed807ad94e63ef002458e): CJ search prices and the costed variant
+LIVE_CJ = json.loads((ROOT / "tests" / "fixtures" / "product_report_render" / "cj_live_pet_fountain.json").read_text(encoding="utf-8"))
+UNCHECKED = ("cj:1366573785234411520", "cj:2501260812541627900")          # never detail-fetched: $4.39 and $1.74 are CJ's search "from" prices
+
+
+def _fountain(products: list, amazon: list | None = None) -> dict:
+    """The live fountain candidate: its recorded CJ products, an Amazon market at $19.99 so that margins are known."""
+    return {"candidates": [{"candidate_id": "c1", "title": "Pet water fountain", "search_terms": ["pet water fountain"]}],
+            "host": {"cj": {"c1": {"status": "OK", "products": products}}, "ebay": {}},
+            "parsed": {"c1": {"amazon": amazon if amazon is not None else
+                              [_amazon(a, p, title=f"Pet water fountain {a}") for a, p in (("B1F", 17.99), ("B2F", 19.99), ("B3F", 24.99))]}},
+            "settings": {"as_of": "2026-11-02"}}
+
+
+def _lines(product: dict) -> list[dict]:
+    return [line for ch in product["channels"].values() for line in [ch, *ch["alternatives"]]]
+
+
+def _decide(bundle: dict, tmp_path: pathlib.Path, name: str) -> dict:
+    proc, raw = _run(bundle, tmp_path, name)
+    assert proc.returncode == 0, proc.stderr[-1500:]
+    return json.loads(raw)
+
+
+def test_a_cj_product_known_only_by_its_search_price_is_shown_never_costed(tmp_path):
+    """Live: two CJ products were never detail-fetched (detail_status NOT_FETCHED, price_basis search_from_price) and the page read
+    "Dropship $4.39" / "Dropship $1.74" — CJ's search "from" price, its lowest variant, often a part. The engine leaves their unit cost
+    UNKNOWN, hands the search price beside it (with its receipt) and keeps them out of every margin line: the channels are exactly
+    those of the read product alone."""
+    d = _decide(_fountain(LIVE_CJ["products"]), tmp_path, "live")
+    p = d["products"][0]
+    offers = {o["offer_id"]: o for o in p["offers"]}
+    for oid, price, listed in ((UNCHECKED[0], 4.39, "US$4.39-32.21"), (UNCHECKED[1], 1.74, "US$1.74-3.42")):
+        o = offers[oid]
+        assert (o["unit_cost_usd"], o["from_price_usd"], o["price_basis"], o["detail_status"], o["moq_capital_usd"]) == (
+            "UNKNOWN", price, "search_from_price", "NOT_FETCHED", "UNKNOWN"), oid
+        assert o["not_costed"].startswith("not in the margin lines: CJ's details for this product") and "variant_note" not in o
+        i = p["offers"].index(o)
+        unit = next(r for r in p["receipts"] if r["id"] == f"offers[{i}].unit_cost_usd")
+        assert unit["result"] == "UNKNOWN" and unit["missing"] == ["a checked unit cost (CJ's product details: its variants)"]
+        assert unit["formula"].startswith("not known: CJ's details for this product were not read") and unit["inputs"]["from_price_usd"] == price
+        assert next(r for r in p["receipts"] if r["id"] == f"offers[{i}].from_price_usd")["inputs"]["price_as_listed"] == listed
+    read = offers["cj:1651788214971146240"]
+    assert read["unit_cost_usd"] == 2.94 and "from_price_usd" not in read and "not_costed" not in read   # read in full: costed (no rule yet)
+    assert not [line for line in _lines(p) if line["offer_id"] in UNCHECKED]                                # no margin line carries them
+    alone = _decide(_fountain(LIVE_CJ["products"][:1]), tmp_path, "alone")
+    assert p["channels"] == alone["products"][0]["channels"]                                               # the lines are the read product's
+    assert "has no margin line" in d["assumptions"]["cj"] and "search \"from\" price" in d["assumptions"]["cj"]
+    leaves = dict(_leaves(p))
+    assert {r["id"]: r["result"] for r in p["receipts"] if r["id"].endswith("from_price_usd")} == {
+        k: v for k, v in leaves.items() if k.endswith("from_price_usd")} and len([k for k in leaves if k.endswith("from_price_usd")]) == 2
+
+
+def test_when_every_offer_is_known_only_by_its_search_price_no_channel_has_a_margin(tmp_path):
+    p = _decide(_fountain(LIVE_CJ["products"][1:]), tmp_path, "unchecked")["products"][0]
+    assert [o["unit_cost_usd"] for o in p["offers"]] == ["UNKNOWN", "UNKNOWN"]
+    for cid, ch in p["channels"].items():
+        assert (ch["offer_id"], ch["unit_cost_usd"], ch["margin_before_ads_usd"], ch["delivery"]["verdict"], ch["alternatives"]) == (
+            None, "UNKNOWN", "UNKNOWN", "UNKNOWN", []), cid
+        assert ch["delivery"]["reason"] == ("UNKNOWN: no offer with a known unit cost — CJ's details were not read (a search \"from\" price is "
+                                            "not a unit cost): cannot check the delivery rule."), cid
+
+
+B2_RULE = {"rule": "the costed variant is the cheapest left after dropping parts and accessories, and light variants when the weights spread",
+           "variants": 30, "kept": 24, "dropped": 6, "chosen_variant_id": "1651788215109558272"}
+
+
+def _with_rule(product: dict) -> dict:
+    """The live read product as the host's variant rule (B2, host_data `choose_variant`) hands it: `variants` = the kept ones, the six
+    lighter or part variants in `variants_dropped` with why, `variant_rule` the rule as applied, the costed variant's id, price and weight."""
+    top = json.loads(json.dumps(product))
+    light = [v for v in top["variants"] if v["weight_g"] < 300]
+    assert len(light) == 6 and {v["price_usd"] for v in light} == {2.94, 5.38}
+    top["variants"] = [v for v in top["variants"] if v["weight_g"] >= 300]
+    assert (len(top["variants"]), len(top["variants"]) + len(light)) == (B2_RULE["kept"], B2_RULE["variants"])
+    top["variants_dropped"] = [{"variant_id": v["variant_id"], "price_usd": v["price_usd"], "weight_g": v["weight_g"],
+                                "why": "ACCESSORY_NAME" if "Filter" in v["options"] else "LIGHT_WEIGHT"} for v in light]
+    top.update(variant_rule=dict(B2_RULE), cheapest_variant_id=B2_RULE["chosen_variant_id"], sell_price_usd=10.22, weight_g=770.0)
+    return top
+
+
+def test_the_offer_is_costed_at_the_variant_the_hosts_rule_names_and_says_so_in_one_line(tmp_path):
+    """Once the host chooses the costed variant (B2: `variant_rule`, `variants_dropped`), the engine costs THAT variant — $10.22 / 770 g, not
+    the $2.94 filter set — and the offer says so in one line; its unit-cost receipt carries the rule as applied."""
+    top = _with_rule(LIVE_CJ["products"][0])
+    p = _decide(_fountain([top, *LIVE_CJ["products"][1:]]), tmp_path, "rule")["products"][0]
+    o = p["offers"][0]
+    assert (o["offer_id"], o["unit_cost_usd"], o["variant_note"]) == (
+        "cj:1651788214971146240", 10.22, "costed variant: $10.22 / 770 g; 6 lighter or part variants left out")
+    unit = next(r for r in p["receipts"] if r["id"] == "offers[0].unit_cost_usd")
+    assert unit["formula"] == "the variant the host's variant rule costs: " + B2_RULE["rule"]
+    assert (unit["inputs"]["variant_id"], unit["inputs"]["variant_weight_g"], unit["inputs"]["variants_dropped"], unit["inputs"]["variant_rule"]) == (
+        "1651788215109558272", 770.0, 6, B2_RULE)
+    assert all(line["unit_cost_usd"] == 10.22 for line in _lines(p))                     # every margin line costs the named variant
+    # a dropped variant still listed among the variants is never costed, and with no variant named the cheapest variant kept is
+    kept_cheap = dict(top, variants=[*top["variants"], {"variant_id": "1651788215663206400", "price_usd": 2.94, "weight_g": 120.0}],
+                      variant_rule={k: v for k, v in B2_RULE.items() if k != "chosen_variant_id"}, cheapest_variant_id=None)
+    q = _decide(_fountain([kept_cheap]), tmp_path, "unnamed")["products"][0]
+    assert q["offers"][0]["unit_cost_usd"] == 10.22 and q["offers"][0]["variant_note"].startswith("costed variant: $10.22 / 770 g;")
+    # without a rule (the recorded data, before B2) nothing changes: the cheapest variant, no note
+    r = _decide(_fountain(LIVE_CJ["products"][:1]), tmp_path, "norule")["products"][0]
+    assert r["offers"][0]["unit_cost_usd"] == 2.94 and "variant_note" not in r["offers"][0]
+
+
+def test_a_product_whose_every_variant_the_rule_drops_is_never_costed(tmp_path):
+    """B2: when the rule drops every variant the host says so (detail_status NO_COSTED_VARIANT) and carries no price; the engine never
+    costs it and keeps it out of the margin lines, saying why."""
+    top = dict(_with_rule(LIVE_CJ["products"][0]), variants=[], detail_status="NO_COSTED_VARIANT", cheapest_variant_id=None,
+               sell_price_usd=None, price_basis=None, weight_g=None, variant_rule=dict(B2_RULE, kept=0, dropped=30, chosen_variant_id=None))
+    p = _decide(_fountain([top]), tmp_path, "nocost")["products"][0]
+    o = p["offers"][0]
+    assert (o["unit_cost_usd"], o["detail_status"], o["not_costed"]) == (
+        "UNKNOWN", "NO_COSTED_VARIANT", "not in the margin lines: the host's variant rule left no variant to cost (30 lighter or part variants left out)")
+    assert "from_price_usd" not in o and not [line for line in _lines(p) if line["offer_id"]]
+    assert p["channels"]["shopify"]["delivery"]["reason"].startswith("UNKNOWN: no offer with a known unit cost — the host's variant rule left no "
+                                                                     "variant to cost")
+    # a rule whose every priced variant is among those it dropped (the status not set) is read the same way: never a dropped variant's price
+    rule = _with_rule(LIVE_CJ["products"][0])
+    every = dict(rule, variants=rule["variants_dropped"], cheapest_variant_id=None)
+    q = _decide(_fountain([every]), tmp_path, "alldropped")["products"][0]
+    assert q["offers"][0]["unit_cost_usd"] == "UNKNOWN" and q["offers"][0]["not_costed"].startswith("not in the margin lines: the host's variant rule")
+
+
+def test_the_engine_costs_the_variant_b2s_own_rule_chose_on_the_recorded_live_variants(tmp_path):
+    """The engine and the host agree: B2's `choose_variant` run on the recorded live variants, the product shaped the way `_apply_details`
+    shapes it, and the engine costs exactly the variant it chose, counting what it dropped."""
+    from polymath_shared.product_search import host_data
+    if not hasattr(host_data, "choose_variant"):
+        pytest.skip("B2's variant rule (host_data.choose_variant) is not in this checkout")
+    top = json.loads(json.dumps(LIVE_CJ["products"][0]))
+    chosen, kept, dropped, rule = host_data.choose_variant([dict(v, name=None) for v in top["variants"]], title=top["title"], term="pet water fountain")
+    assert chosen is not None and chosen["price_usd"] > 2.94 and dropped
+    top.update(variants=[{k: v.get(k) for k in host_data.VARIANT_FIELDS} for v in kept], variants_dropped=dropped, variant_rule=rule,
+               cheapest_variant_id=chosen["variant_id"], sell_price_usd=chosen["price_usd"], weight_g=chosen["weight_g"])
+    o = _decide(_fountain([top]), tmp_path, "b2")["products"][0]["offers"][0]
+    w = int(chosen["weight_g"]) if float(chosen["weight_g"]).is_integer() else chosen["weight_g"]
+    assert o["unit_cost_usd"] == chosen["price_usd"] and o["variant_note"] == (
+        f"costed variant: ${chosen['price_usd']:,.2f} / {w} g; {rule['dropped']} lighter or part variant{'' if rule['dropped'] == 1 else 's'} left out")
+
+
+def test_every_number_has_a_receipt_with_search_prices_and_the_costed_variant(tmp_path):
+    """The receipt invariant (test_every_number_has_a_receipt) on the live fountain: search prices beside an UNKNOWN unit cost, the costed
+    variant, and a product the rule left with no variant."""
+    top = _with_rule(LIVE_CJ["products"][0])
+    none = dict(top, variants=[], detail_status="NO_COSTED_VARIANT", cheapest_variant_id=None, sell_price_usd=None, price_basis=None,
+                weight_g=None, product_id="1651788214971146999")
+    for name, products in (("live", LIVE_CJ["products"]), ("rule", [top, *LIVE_CJ["products"][1:], none])):
+        test_every_number_has_a_receipt(_decide(_fountain(products), tmp_path, f"receipts-{name}"))

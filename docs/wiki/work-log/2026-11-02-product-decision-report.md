@@ -256,6 +256,37 @@ proxy:
 
 After these: the 27 affected suites in the sealed harness **865 passed**; engine 648 / 648; code wiki 2,412 / 2,412 on 378 pages.
 
+## Live run 2 (after `94f3d58b`, ~20:24Z) and its fixes
+- Friend gate through Server A with a temporary friend key (`prn_report_gate`, created for the gate, revoked at 20:33:36Z, key file
+  deleted): handshake, 30 tools incl. the four report tools; `rpt_00810757…` round 1 6/6 and round 2 6/6 uploaded with the token
+  reused; compile 207 KB; the brush priced exactly as the owner's run; the friend's list held only its report; the owner's report
+  answered the friend 404 REPORT_NOT_FOUND; the owner's list showed all three reports.
+- Owner report `rpt_164ed807…` (pet water fountain, automatic pet feeder): round 1 12/12 in 19 s, round 2 11/11 in 93 s; Amazon 10 OK
+  (the plain layout now parsed), Alibaba 5 OK + 2 BLOCKED; reference prices $45.99 and $48.99 (were UNKNOWN). But the fountain's TikTok
+  US line read $32.43 (70.5 %): CJ product 1651788214971146240 was costed at its $2.94 / 120 g variant (a filter set) while its
+  fountain variants weigh 770–1,016 g, and two never-read CJ products showed their search "from" prices as unit costs.
+
+| Live finding | Fix |
+|---|---|
+| the cheapest CJ variant was a part | `host_data.choose_variant`: variant names kept; variants named as parts or accessories dropped; when the heaviest variant weighs ≥ 2.5× the lightest, variants under 40 % of the heaviest dropped; then the cheapest; `variant_rule` and `variants_dropped` recorded; nothing left → CJ_NO_COSTED_VARIANT. The fountain is now costed at $11.94 / 1,016 g (a 1,984 g bundle sets the cut-off, so the 770 g units go too: the rule errs toward a higher cost, never a part) |
+| search "from" prices shown as unit costs | the page says "from $1.74 (CJ search price: the lowest variant, not checked)" and such offers stay out of every margin line |
+
+After these: 15 affected suites in the sealed harness **455 passed**; engine 648 / 648.
+
+## Fresh agents (N13), one plain-English request, no tool names
+"I want to start dropshipping to pet owners in the US. Use my Polymath to pick a few products worth selling and build me the
+decision report I can open in a browser: product links, what people on Reddit say, profit margins, supplier MOQ and delivery times
+for TikTok Shop versus my own Shopify store, and how eBay and Amazon prices compare. Send me the link when it is done."
+- Hermes on DeepSeek v4.1 flash (bailian), started 20:37Z, done in 22 min, unaided: read the four tools' descriptions, ran
+  `agent-reach doctor`, started a report from the library (`rpt_268e9060…`), checked the script's sha256, ran round 1 (30 packets, 68 s)
+  and round 2 (29 packets, 4.5 min), compiled; judged the library's ideas ("Crate-Free Travel Anxiety Kit", …) too vague, started a
+  second report with five concrete products (`rpt_b36a9936…`), compiled it, and answered with a plain summary (hair-remover roller the
+  clean winner, eBay UNKNOWN because no eBay key). Friction: it guessed raw HTTP routes (two 404s) and met an ambiguous Hermes skill
+  name; it also copied the page into its own public hub (`~/.hermes/public-hub/`, a Hermes behaviour outside Polymath).
+- Claude Code (`claude -p`): did not start — "OAuth session expired and could not be refreshed" (the CLI's login; owner action).
+- Codex (`codex exec`): did not start on its configured `gpt-6.1-sol` ("not supported when using Codex with a ChatGPT account");
+  `gpt-6-luna` is the model this account can run (probed), rerun below.
+
 ## Proof
 - **Sealed CI reproduction** (a throwaway `postgres:16-alpine` with all 68 migrations applied in order, a clean environment, the CI
   workflow's suites `tests/contracts` + `tests/determinism`), final tree before the C11 change: **4,871 tests: 4,834 passed, 20 skipped,

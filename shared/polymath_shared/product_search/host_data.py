@@ -10,8 +10,12 @@ app), before any Agent Reach round runs on the user's machine.
     word, its plural or singular, or two or three adjacent words joined ("touch screen" = "touchscreen"); a word inside another
     word never counts (R2 #6: "Desk Clamp Phone Holder" is not a "desk lamp"). The near
     misses stay in `relevance.dropped` with the terms they miss; at most MAX_PRODUCTS are kept. The best-matching kept product (the
-    first in the search's order: CJ's best match, re-ranked by the query's rarest words) is read in full (its variants with price
-    and weight; the cheapest variant) and CJ's freight quote for that variant is asked from CN
+    first in the search's order: CJ's best match, re-ranked by the query's rarest words) is read in full (its variants with name,
+    price and weight) and costed at ONE variant (`choose_variant`, VARIANT_RULE; live 2026-11-02 a fountain was costed at its $2.94
+    filter set): parts and accessories named as such are dropped, light parts and samples are dropped when the weights spread, then
+    the cheapest of the rest; `variants` holds what the rule kept, `variants_dropped` the rest and why, `variant_rule` the rule as
+    applied (also on the product's receipt); none left = `detail_status` NO_COSTED_VARIANT, no price. CJ's freight quote for that
+    variant is asked from CN
     and from US to the ship-to country, CJ's "a-b" days parsed into ints with the unit its text names (`days_unit`: "business",
     "calendar" or None, contract C2). `us_stock_confirmed` is true only when CJ STATES stock in
     a US warehouse for that variant (measured: stock by country came back [] while a US->US quote answered: a quote is no proof).
@@ -74,7 +78,19 @@ TOOLS = {"search": "supplier_search", "product": "supplier_product", "freight": 
 EBAY_CALL = "ebay_browse_search"
 RULE = ("a title must hold every head term of the search as a whole word (its plural or singular counts, and so does a joined "
         "spelling of two or three adjacent words: \"touch screen\" = \"touchscreen\"); a word inside another word never counts")
-VARIANT_FIELDS = ("variant_id", "price_usd", "weight_g", "options", "us_stock_units")
+VARIANT_FIELDS = ("variant_id", "name", "price_usd", "weight_g", "options", "us_stock_units")
+#: THE COSTED VARIANT (live 2026-11-02, rpt_164ed807ad94e63ef002458e: a pet water fountain was costed at its "Filter cotton set"
+#: variant, $2.94 / 120 g, and the report printed a TikTok US margin of 70.5 %). A variant whose OWN name holds one of these words
+#: (or its plural) names a part or an accessory, not the product, unless the search term holds that word too:
+ACCESSORY_WORDS = ("filter", "replacement", "cartridge", "refill", "spare", "pump", "sponge", "part", "accessory")
+#: and when the heaviest variant left weighs at least VARIANT_SPREAD x the lightest, the ones under VARIANT_LIGHT_SHARE of the
+#: heaviest's weight are parts or samples (they ship light); then the cheapest of the rest (ties: the lower variant id)
+VARIANT_SPREAD, VARIANT_LIGHT_SHARE = 2.5, 0.40
+VARIANT_RULE = ("the costed variant is the cheapest left after dropping (1) variants whose own name (CJ's variant name after the "
+                "product's title, and its variant key) holds a part or accessory word (filter, replacement, cartridge, refill, spare, pump, "
+                "sponge, part, accessory, or a plural) the search term does not hold, and (2) when the heaviest variant left weighs at "
+                "least 2.5 x the lightest, variants under 40 % of the heaviest's weight (parts and samples ship light); ties: the lower "
+                "variant id")
 LISTING_FIELDS = ("title", "url", "price_usd", "shipping_usd", "delivery_min", "delivery_max", "location", "condition", "item_id",
                   "us_listing")
 NOTES = [
@@ -86,6 +102,9 @@ NOTES = [
      "(business / calendar; null: neither); no handling time is added"),
     ("us_stock_confirmed is true only when CJ states stock in a US warehouse for the quoted variant: a US-to-US freight quote alone "
      "does not prove US stock (measured 2026-11-02: stock by country came back empty while the US quote answered)"),
+    ("CJ variant: a product is costed at the cheapest variant left after dropping parts and accessories named as such and, when "
+     "the variants' weights spread 2.5 x or more, the ones under 40 % of the heaviest (variant_rule and variants_dropped say "
+     "what was dropped and why)"),
     supplier.UNTRUSTED,
 ]
 
@@ -472,11 +491,12 @@ def _search_rows(answer: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 
 def _product(row: Mapping[str, Any]) -> dict[str, Any]:
-    """A kept product with what CJ's search gave: its "from" price (the low end of CJ's range); details and freight not fetched."""
+    """A kept product with what CJ's search gave: its "from" price (the low end of CJ's range, `price_basis` search_from_price);
+    details, the variant rule and freight not fetched."""
     low, _ = number_range(row.get("price_as_listed"))
     return {"product_id": row["product_id"], "title": row["title"], "url": row.get("url"), "image": row.get("image"),
-            "sell_price_usd": low, "suggested_retail_usd": None, "weight_g": None, "variants": [],
-            "freight": {origin: [] for origin in ORIGINS}, "us_stock_confirmed": False,
+            "sell_price_usd": low, "suggested_retail_usd": None, "weight_g": None, "variants": [], "variants_dropped": [],
+            "variant_rule": None, "freight": {origin: [] for origin in ORIGINS}, "us_stock_confirmed": False,
             "cheapest_variant_id": None, "price_basis": "search_from_price" if low is not None else None,
             "price_as_listed": row.get("price_as_listed"), "detail_status": "NOT_FETCHED",
             "freight_status": {origin: "NOT_FETCHED" for origin in ORIGINS}}
@@ -494,10 +514,78 @@ def _us_units(stock: Any) -> int | None:
     return units
 
 
-def _apply_details(product: dict[str, Any], answer: Mapping[str, Any]) -> None:
-    """supplier_product's answer -> the product's variants (cheapest first; CJ's order within a price), its cheapest variant, and
-    the product's price, suggested retail and weight from that variant (CJ's product-level figures are often a range)."""
+_VARIANT_WORD = re.compile(r"[a-z0-9]+")
+
+
+def _stem(word: str) -> str:
+    """A word without its plain plural ending ("filters" -> "filter", "accessories" -> "accessory")."""
+    if word.endswith("ies") and len(word) > 4:
+        return word[:-3] + "y"
+    if word.endswith("s") and not word.endswith("ss") and len(word) > 3:
+        return word[:-1]
+    return word
+
+
+def _own_words(name: Any, options: Any, title_words: list[str]) -> set[str]:
+    """A variant's OWN words: its CJ variant name without the product's title in front (CJ names a variant "<product title>
+    <variant key>", so every variant of "... Pets Accessories" would otherwise hold "accessories"), plus its variant key."""
+    words = _VARIANT_WORD.findall(str(name or "").lower())
+    shared = 0
+    while shared < min(len(words), len(title_words)) and words[shared] == title_words[shared]:
+        shared += 1
+    if shared and shared >= min(3, len(title_words)):
+        words = words[shared:]
+    return set(words) | set(_VARIANT_WORD.findall(str(options or "").lower()))
+
+
+def _dropped_variant(v: Mapping[str, Any], why: str, **extra: Any) -> dict[str, Any]:
+    return {"variant_id": v.get("variant_id"), "name": v.get("name"), "price_usd": v.get("price_usd"), "weight_g": v.get("weight_g"),
+            "why": why, **extra}
+
+
+def choose_variant(variants: list[dict[str, Any]], *, title: Any, term: Any) -> tuple[dict[str, Any] | None, list[dict[str, Any]],
+                                                                                   list[dict[str, Any]], dict[str, Any]]:
+    """The variant a report costs (VARIANT_RULE) -> (that variant or None, the variants kept (cheapest first; ties: the lower id),
+    the variants dropped (each with why: ACCESSORY_NAME + the words, or LIGHT_WEIGHT + the cutoff), the rule as applied). Every
+    variant CJ gave is judged, before any display cap. Variants: [{variant_id, name, options, price_usd, weight_g, ...}]."""
+    term_stems = {_stem(w) for w in _VARIANT_WORD.findall(str(term or "").lower())}
+    title_words = _VARIANT_WORD.findall(str(title or "").lower())
+    kept: list[dict[str, Any]] = []
+    dropped: list[dict[str, Any]] = []
+    for v in variants:
+        hits = sorted(w for w in _own_words(v.get("name"), v.get("options"), title_words)
+                      if _stem(w) in ACCESSORY_WORDS and _stem(w) not in term_stems)
+        if hits:
+            dropped.append(_dropped_variant(v, "ACCESSORY_NAME", words=hits))
+        else:
+            kept.append(v)
+    weights = [v["weight_g"] for v in kept if isinstance(v.get("weight_g"), (int, float)) and v["weight_g"] > 0]
+    heaviest, lightest = (max(weights), min(weights)) if weights else (None, None)
+    cutoff = None
+    if heaviest is not None and lightest is not None and heaviest >= VARIANT_SPREAD * lightest:
+        cutoff = VARIANT_LIGHT_SHARE * heaviest
+        light = [v for v in kept if isinstance(v.get("weight_g"), (int, float)) and 0 < v["weight_g"] < cutoff]
+        dropped += [_dropped_variant(v, "LIGHT_WEIGHT", cutoff_g=round(cutoff, 1)) for v in light]
+        kept = [v for v in kept if not any(v is x for x in light)]
+    kept.sort(key=lambda v: (v.get("price_usd") is None, v.get("price_usd") or 0.0, str(v.get("variant_id") or "")))
+    chosen = next((v for v in kept if v.get("price_usd") is not None), None)
+    rule = {"rule": VARIANT_RULE, "exempt_by_search": [w for w in ACCESSORY_WORDS if w in term_stems],
+            "heaviest_g": heaviest, "lightest_g": lightest, "light_cutoff_g": round(cutoff, 1) if cutoff is not None else None,
+            "variants": len(variants), "kept": len(kept), "dropped": len(dropped),
+            "chosen_variant_id": chosen.get("variant_id") if chosen else None}
+    return chosen, kept, dropped, rule
+
+
+def _apply_details(product: dict[str, Any], answer: Mapping[str, Any], term: Any = None) -> None:
+    """supplier_product's answer -> the product's variants and the ONE it is costed at (`choose_variant`: never a part or an
+    accessory), with the product's price, suggested retail, weight and US stock from that variant (CJ's product-level figures are
+    often a range). `variants` lists the variants the rule kept (cheapest first), `variants_dropped` the others and why,
+    `variant_rule` the rule as applied. When the rule drops every variant the product says so (`detail_status`
+    NO_COSTED_VARIANT) and carries no price: it never falls back to a dropped variant's price."""
     view = answer.get("product") if isinstance(answer.get("product"), Mapping) else {}
+    product["title"] = _text(view.get("title"), TITLE_MAX) or product["title"]
+    product["url"] = _url(view.get("url")) or product["url"]
+    product["image"] = _url(view.get("image")) or product["image"]
     variants: list[dict[str, Any]] = []
     for v in answer.get("variants") or []:
         if not isinstance(v, Mapping):
@@ -508,29 +596,33 @@ def _apply_details(product: dict[str, Any], answer: Mapping[str, Any]) -> None:
         price, _ = number_range(v.get("price_as_listed"))
         weight, _ = number_range(v.get("weight_g"))
         retail, _ = number_range(v.get("suggested_retail_as_listed"))
-        variants.append({"variant_id": vid, "price_usd": price, "weight_g": weight, "options": _text(v.get("options"), 120) or None,
+        variants.append({"variant_id": vid, "name": _text(v.get("name"), 200) or _text(v.get("options"), 200) or None,
+                         "price_usd": price, "weight_g": weight, "options": _text(v.get("options"), 120) or None,
                          "us_stock_units": _us_units(v.get("stock")), "_retail": retail})
-    variants.sort(key=lambda v: (v["price_usd"] is None, v["price_usd"] or 0.0))
-    variants = variants[:MAX_VARIANTS]
-    cheapest = next((v for v in variants if v["price_usd"] is not None), None)
-    product["variants"] = [{k: v[k] for k in VARIANT_FIELDS} for v in variants]
+    chosen, kept, dropped, rule = choose_variant(variants, title=product["title"], term=term)
+    product["variants"] = [{k: v[k] for k in VARIANT_FIELDS} for v in kept[:MAX_VARIANTS]]
+    product["variants_dropped"] = dropped[:MAX_VARIANTS]
+    product["variant_rule"] = rule
     product["detail_status"] = "OK"
-    product["title"] = _text(view.get("title"), TITLE_MAX) or product["title"]
-    product["url"] = _url(view.get("url")) or product["url"]
-    product["image"] = _url(view.get("image")) or product["image"]
     p_lo, _ = number_range(view.get("price_as_listed"))
     r_lo, r_hi = number_range(view.get("suggested_retail_as_listed"))
     w_lo, w_hi = number_range(view.get("weight_g"))
     single_retail = r_lo if r_lo == r_hi else None
     single_weight = w_lo if w_lo == w_hi else None
-    if cheapest is not None:
-        product["cheapest_variant_id"] = cheapest["variant_id"]
-        product["sell_price_usd"], product["price_basis"] = cheapest["price_usd"], "cheapest_variant"
-        product["suggested_retail_usd"] = cheapest["_retail"] if cheapest["_retail"] is not None else single_retail
-        product["weight_g"] = cheapest["weight_g"] if cheapest["weight_g"] is not None else single_weight
-        product["us_stock_confirmed"] = (cheapest["us_stock_units"] or 0) > 0
-    else:
-        if p_lo is not None:
+    if chosen is not None:
+        product["cheapest_variant_id"] = chosen["variant_id"]
+        product["sell_price_usd"], product["price_basis"] = chosen["price_usd"], "cheapest_variant"
+        product["suggested_retail_usd"] = chosen["_retail"] if chosen["_retail"] is not None else single_retail
+        product["weight_g"] = chosen["weight_g"] if chosen["weight_g"] is not None else single_weight
+        product["us_stock_confirmed"] = (chosen["us_stock_units"] or 0) > 0
+    elif variants and not kept:                                   # every variant was a part, an accessory or a light sample
+        product["detail_status"] = "NO_COSTED_VARIANT"
+        product["cheapest_variant_id"], product["sell_price_usd"], product["price_basis"] = None, None, None
+        product["suggested_retail_usd"], product["weight_g"], product["us_stock_confirmed"] = single_retail, None, False
+    else:                                                         # no variant left states a price
+        if dropped:                                               # CJ's price range starts at its cheapest variant: maybe a dropped one
+            product["sell_price_usd"], product["price_basis"] = None, None
+        elif p_lo is not None:
             product["sell_price_usd"], product["price_basis"] = p_lo, "product_from_price"
         product["suggested_retail_usd"], product["weight_g"] = single_retail, single_weight
 
@@ -583,12 +675,19 @@ def _cj_entry(run: _Run, cand: Mapping[str, Any], ship_to: str) -> dict[str, Any
     entry["products"] = products
     failures: list[str] = []
     top = products[0]
+    receipts_before = len(run.receipts)
     detail = run.cj(cid, "product", {"product_id": top["product_id"]}, _rows("variants"))
     d_status = str(detail.get("status") or "UNAVAILABLE").upper()
     if d_status == "OK":
-        _apply_details(top, detail)
-        if top["cheapest_variant_id"] is None:
+        _apply_details(top, detail, term)
+        if top["detail_status"] == "NO_COSTED_VARIANT":
+            failures.append("CJ_NO_COSTED_VARIANT")
+        elif top["cheapest_variant_id"] is None:
             failures.append("CJ_NO_PRICED_VARIANT")
+        for row in run.receipts[receipts_before:]:                # the product's receipt carries the rule and what it dropped
+            if row["call"] == TOOLS["product"]:
+                row.update(chosen_variant_id=top["cheapest_variant_id"], variant_rule=top["variant_rule"],
+                           variants_dropped=[{"variant_id": d["variant_id"], "why": d["why"]} for d in top["variants_dropped"]])
     else:
         top["detail_status"] = d_status if d_status in ("NOT_FOUND", "NOT_FETCHED") else "UNAVAILABLE"
         failures.append(_failure_code(detail, d_status))

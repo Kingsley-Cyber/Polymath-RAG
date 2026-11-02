@@ -47,6 +47,12 @@ DELIVERY_KINDS = ("us_local_only", "max_days", "honest_handling")
 US_STOCK_UNCONFIRMED = "US_STOCK_UNCONFIRMED"
 REQUIRES_US_STOCK = "REQUIRES_US_STOCK"
 DROPSHIP, INVENTORY = "dropship", "inventory"
+#: a CJ product the host did not read in full (host_data reads only the best match; live report rpt_164ed807ad94e63ef002458e): CJ's
+#: search gave its "from" price — the low end of the product's price range, i.e. its lowest variant, often a part (a filter set) —
+#: which is never a unit cost. Such an offer is shown with that price and kept out of the margin lines.
+CJ_SEARCH_PRICE = "search_from_price"
+CJ_NOT_COSTED = ("not in the margin lines: CJ's details for this product (its variants, weight and freight) were not read, so only its "
+                 "search \"from\" price is known")
 
 
 class DecisionInputError(ValueError):
@@ -385,6 +391,61 @@ def _origin(value: Any) -> str | None:
 
 
 # -------------------------------------------------------------------------------------------------------------- offers --
+def _search_price_only(p: dict[str, Any]) -> bool:
+    """CJ's details were not read for this product (the host reads only the best match, or the detail call failed): its price is
+    CJ's search "from" price, never a unit cost."""
+    return p.get("price_basis") == CJ_SEARCH_PRICE or str(p.get("detail_status") or "").upper() == "NOT_FETCHED"
+
+
+def _grams(v: Any) -> Decimal | None:
+    """A weight in grams as CJ states it: a number, or text whose numbers are read as a range — its heavier end."""
+    d = _dec(v)
+    if d is not None:
+        return d if d > 0 else None
+    nums = re.findall(r"\d+(?:\.\d+)?", str(v or ""))
+    w = max(Decimal(n) for n in nums) if nums else None
+    return w if w is not None and w > 0 else None
+
+
+def _dropped(p: dict[str, Any]) -> tuple[int | None, set[str]]:
+    """What the host's variant rule left out (host_data `choose_variant`, B2): (how many — the rule's own count, else the length of
+    `variants_dropped`, which the host caps — and the variant ids `variants_dropped` names); (None, set()) when the product states none."""
+    raw, rule = p.get("variants_dropped"), p.get("variant_rule")
+    ids: set[str] = set()
+    if isinstance(raw, list):
+        ids = {str(d.get("variant_id")) for d in raw if isinstance(d, dict) and d.get("variant_id")}
+        ids |= {str(d) for d in raw if isinstance(d, (str, int)) and not isinstance(d, bool) and str(d).strip()}
+    n = _int(rule.get("dropped")) if isinstance(rule, dict) else None
+    if n is None:
+        n = len(raw) if isinstance(raw, list) else _int(raw)
+    return n, ids
+
+
+def _rule_text(rule: Any) -> str | None:
+    """The host's `variant_rule` in words: its text, or the words a structured rule carries (host_data: {"rule": VARIANT_RULE, ...})."""
+    if isinstance(rule, str):
+        return _clip(rule, 600) or None
+    if isinstance(rule, dict):
+        for k in ("rule", "text", "why", "name"):
+            if isinstance(rule.get(k), str) and rule[k].strip():
+                return _clip(rule[k], 600)
+    return None
+
+
+def _host_variant(p: dict[str, Any], pool: list[tuple[Decimal, str, dict[str, Any]]]) -> tuple[Decimal, str, dict[str, Any]] | None:
+    """The variant the host's variant rule costs (B2: the cheapest variant can be a part — live, a pet fountain's cheapest variants were
+    filter sets at 120 g), among the priced variants the rule did not leave out (`pool`): the one it names (the rule's own variant_id,
+    else the product's costed / chosen / cheapest variant id), else the cheapest. None when the pool is empty."""
+    rule = p.get("variant_rule")
+    named = [rule.get(k) for k in ("variant_id", "costed_variant_id", "chosen_variant_id")] if isinstance(rule, dict) else []
+    named += [p.get(k) for k in ("costed_variant_id", "chosen_variant_id", "cheapest_variant_id")]
+    for want in named:
+        hit = next((t for t in pool if want and t[1] == str(want)), None)
+        if hit:
+            return hit
+    return min(pool, key=lambda t: (t[0], t[1])) if pool else None
+
+
 def _cj_offers(block: dict[str, Any], cj_moq: int) -> list[dict[str, Any]]:
     offers = []
     for p in block.get("products") or []:
@@ -396,10 +457,41 @@ def _cj_offers(block: dict[str, Any], cj_moq: int) -> list[dict[str, Any]]:
                 price = _usd(v.get("price_usd"))
                 if price is not None and price > 0:
                     priced.append((price, str(v.get("variant_id") or ""), v))
-        if priced:
+        from_price, not_costed, variant_note, weight = None, None, None, _cj_weight(p)
+        n_dropped, dropped_ids = _dropped(p)
+        ruled = bool(p.get("variant_rule"))
+        pool = [t for t in priced if t[1] not in dropped_ids]
+        chosen = _host_variant(p, pool) if ruled else None
+        if str(p.get("detail_status") or "").upper() == "NO_COSTED_VARIANT" or (ruled and priced and chosen is None):
+            # B2: the rule left no variant to cost — a dropped variant's price is never used
+            unit = None
+            not_costed = ("not in the margin lines: the host's variant rule left no variant to cost"
+                          + (f" ({n_dropped} lighter or part variant{'' if n_dropped == 1 else 's'} left out)" if n_dropped else ""))
+            basis = {"formula": "not known: the host's variant rule left no variant to cost — every variant is a part, an accessory or a light "
+                                "sample — and a dropped variant's price is never used",
+                     "inputs": {"detail_status": p.get("detail_status"), "variants_dropped": n_dropped, "variant_rule": p.get("variant_rule")},
+                     "missing": ["a variant the host's variant rule keeps"]}
+        elif chosen is not None:                # B2: the host's variant rule names the variant to cost
+            price, vid, variant = chosen
+            weight = _grams(variant.get("weight_g")) or weight
+            rule = _rule_text(p.get("variant_rule"))
+            unit, basis = price, {"formula": "the variant the host's variant rule costs" + (f": {rule}" if rule else ""),
+                                  "inputs": {"variant_id": vid or None, "variant_price_usd": float(price), "variant_weight_g": _out(weight),
+                                             "variants_dropped": n_dropped, "variants_priced": len(priced), "variant_rule": p.get("variant_rule")}}
+            variant_note = (f"costed variant: {_price_text(price)}" + (f" / {_plain(weight)} g" if weight is not None else "")
+                            + (f"; {n_dropped} lighter or part variant{'' if n_dropped == 1 else 's'} left out" if n_dropped else ""))
+        elif priced:
             price, vid, _variant = min(priced, key=lambda t: (t[0], t[1]))
             unit, basis = price, {"formula": "the cheapest variant's price", "inputs": {"variant_id": vid or None, "variants_priced": len(priced),
                                                                                        "variant_prices": sorted(float(t[0]) for t in priced)}}
+        elif _search_price_only(p):             # the search "from" price: shown, never costed, kept out of the margin lines
+            lo, _ = _usd_range(p.get("sell_price_usd"))
+            from_price, unit, not_costed = (lo if lo is not None and lo > 0 else None), None, CJ_NOT_COSTED
+            basis = {"formula": "not known: CJ's details for this product were not read (the host reads only the best match); its search "
+                                "\"from\" price is its lowest variant — often a part — and is never used as a unit cost",
+                     "inputs": {"price_basis": p.get("price_basis"), "detail_status": p.get("detail_status"),
+                                "price_as_listed": p.get("price_as_listed"), "from_price_usd": _out(from_price)},
+                     "missing": ["a checked unit cost (CJ's product details: its variants)"]}
         else:
             lo, _ = _usd_range(p.get("sell_price_usd"))
             unit = lo if lo is not None and lo > 0 else None
@@ -421,7 +513,10 @@ def _cj_offers(block: dict[str, Any], cj_moq: int) -> list[dict[str, Any]]:
                        "url": p.get("url") or None, "image": p.get("image") or None, "supplier": "CJdropshipping",
                        "unit_cost": unit, "unit_basis": basis, "moq": cj_moq, "lead_time": None, "shipping": shipping,
                        "us_stock_confirmed": p.get("us_stock_confirmed") if isinstance(p.get("us_stock_confirmed"), bool) else None,
-                       "suggested_retail": _usd(p.get("suggested_retail_usd")), "weight_g": _cj_weight(p)})
+                       "suggested_retail": _usd(p.get("suggested_retail_usd")), "weight_g": weight,
+                       "from_price": from_price, "not_costed": not_costed, "variant_note": variant_note,
+                       "price_basis": p.get("price_basis"), "detail_status": p.get("detail_status"),
+                       "price_as_listed": _clip(p.get("price_as_listed"), 60) or None})
     return offers
 
 
@@ -794,6 +889,14 @@ def _offers(cj_block: dict[str, Any], alibaba: list[dict[str, Any]], rs: dict[st
             item["us_stock_confirmed"] = o["us_stock_confirmed"]
             item["suggested_retail_usd"] = book.observed(f"{p}.suggested_retail_usd", o["suggested_retail"], "CJ product (reference only, never used as a price)",
                                                           "suggested_retail_usd")
+            if o.get("not_costed"):             # shown with CJ's search price, never costed: no margin line carries it
+                item.update(price_basis=o["price_basis"], detail_status=o["detail_status"], not_costed=o["not_costed"])
+                if o["from_price"] is not None:
+                    item["from_price_usd"] = book.add(f"{p}.from_price_usd", "observed: CJ's search \"from\" price — the low end of the product's "
+                                                      "price range, i.e. its lowest variant (often a part); shown, never used as a unit cost",
+                                                      {"source": "CJ search", "price_as_listed": o["price_as_listed"]}, _out(o["from_price"]))
+            if o.get("variant_note"):
+                item["variant_note"] = o["variant_note"]
         else:
             item["lead_time_text"] = o["lead_time_text"]
             item["shipping_fee_text"] = o["shipping_fee_text"]
@@ -1261,8 +1364,10 @@ def _choose(evals: list[tuple[dict[str, Any], dict[str, Any]]]) -> tuple[dict[st
 
 
 def _line(cid: str, ch: dict[str, Any], offer: dict[str, Any] | None, price: Decimal | None, settings: dict[str, Any],
-          rs: dict[str, Any]) -> tuple[dict[str, Any], _Pending, dict[str, Any]]:
-    """One offer on one channel -> (line, its pending receipts, internal numbers)."""
+          rs: dict[str, Any], none_why: str | None = None) -> tuple[dict[str, Any], _Pending, dict[str, Any]]:
+    """One offer on one channel -> (line, its pending receipts, internal numbers). No offer: `none_why` says why (default: there is
+    no supplier offer)."""
+    none_why = none_why or "no supplier offer"
     rec = _Pending()
     evals = [(opt, _evaluate(cid, ch, opt, offer, rs, settings)) for opt in offer["shipping"]] if offer else []
     chosen = _choose(evals)
@@ -1277,7 +1382,7 @@ def _line(cid: str, ch: dict[str, Any], offer: dict[str, Any] | None, price: Dec
         options = [{"origin": o["origin"], "carrier": o["carrier"], "cost_usd": _out(o["cost"]), "verdict": e["verdict"]} for o, e in evals]
     else:
         if not offer:
-            why, origin, cautions = "no supplier offer: cannot check the delivery rule", UNKNOWN, []
+            why, origin, cautions = f"{none_why}: cannot check the delivery rule", UNKNOWN, []
         elif inventory:
             why = (f"no last mile for shipping from your US stock — {offer.get('last_mile_note') or 'no CJ US→US quote and no owner setting'}: "
                    f"cannot check the delivery rule; {_stock_note(offer)} — {_stock_detail(offer)}")
@@ -1311,7 +1416,7 @@ def _line(cid: str, ch: dict[str, Any], offer: dict[str, Any] | None, price: Dec
                 _out(ship), rule=last["source_rule"] if last else UNKNOWN,
                 missing=["last-mile cost (a CJ US→US quote or the owner's settings last_mile_usd)"] if ship is None else None)
     else:
-        rec.add("inbound_usd", "dropship: the supplier ships each order to the buyer — no inbound freight" if offer else "no supplier offer",
+        rec.add("inbound_usd", "dropship: the supplier ships each order to the buyer — no inbound freight" if offer else none_why,
                 {"offer_id": oid}, _out(inbound), missing=["supplier offer"] if inbound is None else None)
         rec.add("shipping_usd", "the cheapest shipping option that passes this channel's delivery rule, else the cheapest overall",
                 {"offer_id": oid, "options": options, "chosen": {"origin": dv["origin"], "carrier": dv.get("carrier")} if chosen else None},
@@ -1366,9 +1471,15 @@ def _channels(offers: list[dict[str, Any]], price: Decimal | None, settings: dic
               book: _Book) -> tuple[dict[str, Any], dict[str, Any]]:
     channels: dict[str, Any] = {}
     sens: dict[str, Any] = {}
+    costed = [o for o in offers if not o.get("not_costed")]          # an offer with no unit cost to check has no margin line
+    none_why = ("no offer with a known unit cost — "
+                + "; ".join(sorted({"CJ's details were not read (a search \"from\" price is not a unit cost)" if o.get("not_costed") == CJ_NOT_COSTED
+                                    else "the host's variant rule left no variant to cost" for o in offers}))
+                if offers and not costed else None)
     for cid in settings["channels"]:
         ch = sc["channels"][cid]
-        priced = [(i, *_line(cid, ch, o, price, settings, rs)) for i, o in enumerate(offers)] or [(0, *_line(cid, ch, None, price, settings, rs))]
+        priced = ([(i, *_line(cid, ch, o, price, settings, rs)) for i, o in enumerate(costed)]
+                  or [(0, *_line(cid, ch, None, price, settings, rs, none_why))])
         # best first: non-FAIL delivery, then the highest margin (at one sell price that is the lowest landed cost; with shipping
         # unknown, the lowest unit cost), then offer order
         priced.sort(key=lambda t: (t[3]["verdict"] == FAIL, t[3]["margin"] is None, -(t[3]["margin"] or 0), t[3]["landed"] is None,
@@ -1500,8 +1611,11 @@ def _assumptions(sc: dict[str, Any], rs: dict[str, Any], settings: dict[str, Any
                           f"{rs.get('supplier_days_read_as') or 'calendar'} days unless the quote says business or calendar days; a rule counted "
                           "in business days takes the most business days calendar days can hold, a rule counted in calendar days the most calendar "
                           "days business days can span; an inventory offer is checked on its last mile from US stock"),
-        "cj": ("dropship model: unit cost = the cheapest variant; MOQ 1; CJ ships each order — its freight quotes from China (CN) and from a "
-               "US warehouse (US); a US quote does not prove US stock"),
+        "cj": ("dropship model: unit cost = the cheapest variant — or, when the host's variant rule names one, the variant it costs (the "
+               "variants it leaves out, lighter ones or parts, are counted on the offer); MOQ 1; CJ ships each order — its freight quotes "
+               "from China (CN) and from a US warehouse (US); a US quote does not prove US stock. A CJ product whose details were not read "
+               "(the host reads only the best match) shows CJ's search \"from\" price — its lowest variant, often a part, not checked — "
+               "and has no margin line"),
         "alibaba": ("inventory model — buy the MOQ in bulk and hold US stock: unit cost = the price of the tier that holds the MOQ (a price range: "
                     "its high end); MOQ capital = MOQ × unit cost; inbound freight per unit = the listing's own quote for a stated quantity "
                     "(quote ÷ quantity), else max(MOQ × unit weight, the stated minimum kg) × the per-kg rate, never below a stated minimum charge, "

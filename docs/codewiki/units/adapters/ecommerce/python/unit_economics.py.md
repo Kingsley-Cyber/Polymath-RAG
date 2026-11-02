@@ -1,109 +1,87 @@
 # unit: adapters/ecommerce/python/unit_economics.py
-anchor: adapters/ecommerce/python/unit_economics.py:1-1606
+anchor: adapters/ecommerce/python/unit_economics.py:1-1715
 
 ## purpose
-The decision report's money and delivery model for PRODUCT-DECISION-REPORT-V1 §4.4 (B3): `compute(bundle, policy) -> decision` lays out, per candidate, supplier offers in two models (DROPSHIP per CJ product, INVENTORY per Alibaba listing), the market comps, demand counts, and per-channel lines — adapters/ecommerce/python/unit_economics.py:1-15 [DERIVED].
-Pure by law: no I/O, no network, no clock; the dossier runs it out of process with a JSON bundle, or by hand via `python unit_economics.py --bundle bundle.json [--out decision.json]` — adapters/ecommerce/python/unit_economics.py:1, adapters/ecommerce/python/unit_economics.py:29-30 [DERIVED].
+The decision report's money and delivery model (PRODUCT-DECISION-REPORT-V1 §4.4, B3): `compute(bundle, policy) -> decision` lays out supplier offers (DROPSHIP via CJ, INVENTORY via Alibaba), market comps, demand counts and per-channel margin lines for every candidate — adapters/ecommerce/python/unit_economics.py:1-15 [DERIVED]. Pure module: "no I/O, no network, no clock" — adapters/ecommerce/python/unit_economics.py:1 [DERIVED]. The dossier runs it out of process with a JSON bundle; `python unit_economics.py --bundle bundle.json [--out decision.json]` does the same by hand — adapters/ecommerce/python/unit_economics.py:29-30 [DERIVED].
 
 ## public surface
 | symbol | kind | signature (params -> return) | anchor | used by |
-|---|---|---|---|---|
-| compute | def | (bundle, policy) -> decision | adapters/ecommerce/python/unit_economics.py:1532-1554 | — |
-| main | def | (argv) -> — | adapters/ecommerce/python/unit_economics.py:1576-1601 | — |
-| DecisionInputError | class | subclasses ValueError | adapters/ecommerce/python/unit_economics.py:52-53 | — |
-| MODEL | const | `"unit_economics.v1"` | adapters/ecommerce/python/unit_economics.py:41 | — |
-| UNKNOWN | const | `"UNKNOWN"` | adapters/ecommerce/python/unit_economics.py:42 | — |
-| FEE_KINDS | const | `("percent", "percent_fixed_plan", "percent_per_order", "referral_min_per_item")` | adapters/ecommerce/python/unit_economics.py:45 | — |
-| DELIVERY_KINDS | const | `("us_local_only", "max_days", "honest_handling")` | adapters/ecommerce/python/unit_economics.py:46 | — |
-| US_STOCK_UNCONFIRMED, REQUIRES_US_STOCK | const | `"US_STOCK_UNCONFIRMED"`, `"REQUIRES_US_STOCK"` | adapters/ecommerce/python/unit_economics.py:47-48 | — |
+| compute | def | (bundle, policy) -> decision | adapters/ecommerce/python/unit_economics.py:1646-1668 | the dossier, out of process via JSON bundle (docstring :29) [DERIVED] |
+| main | def | (argv) -> exit | adapters/ecommerce/python/unit_economics.py:1690-1715 | CLI `--bundle bundle.json [--out decision.json]` (:30) [DERIVED] |
+| DecisionInputError | class | subclass of ValueError | adapters/ecommerce/python/unit_economics.py:58-59 | callers of compute [DERIVED] |
+| MODEL | constant | `"unit_economics.v1"` | adapters/ecommerce/python/unit_economics.py:41 | — |
+| UNKNOWN | constant | `"UNKNOWN"` | adapters/ecommerce/python/unit_economics.py:42 | — |
 
-All other symbols are underscore-private (`_dec`, `_Book`, `_policy`, `_offers`, …). No FACTS importers are given, so "used by" is "—". — adapters/ecommerce/python/unit_economics.py:74-1601 [DERIVED]
+No FACTS.importers list is present; every other symbol in FACTS is a private helper (`_dec` … `_product`).
 
 ## contracts
-
-### compute(bundle, policy) — adapters/ecommerce/python/unit_economics.py:1532-1554
-- in: `bundle = {candidates, host (plan §4.3), parsed: {candidate_id: {reddit, amazon, ebay, alibaba}}, settings}` — adapters/ecommerce/python/unit_economics.py:4 [DERIVED]
-- in: `policy` = the engine's policies (`graph.load_policies()`): `sales_channels` + `report_settings` from graph/policies.yaml — adapters/ecommerce/python/unit_economics.py:5 [DERIVED]
-- pre: policy must be a dict holding dict `sales_channels` and dict `report_settings`, else `DecisionInputError` — adapters/ecommerce/python/unit_economics.py:246-250 [DERIVED]
-- pre: each id in `sales_channels.order` must exist in `channels`; `fee.kind` ∈ FEE_KINDS; `delivery.kind` ∈ DELIVERY_KINDS; every cited source id must exist in `sales_channels.sources`; `percent_per_order` fee must end with a tier whose `max_order_usd` is None — adapters/ecommerce/python/unit_economics.py:253-269 [DERIVED]
-- pre: settings — `shopify_monthly_orders` whole number ≥ 1; `returns_rate` 0 ≤ r < 1; `ship_to` == `"US"`; `channels` a non-empty subset of `order`; `handling_business_days` whole ≥ 0; `last_mile_usd`/`last_mile_days` number/whole or null — adapters/ecommerce/python/unit_economics.py:277-317 [DERIVED]
-- out: per candidate — DROPSHIP and INVENTORY offers, MARKET (n/median/min/max of price + shipping, reference price), DEMAND counts, and per sales channel each offer's line (sell price, unit cost, shipping, fees, returns allowance, margin before ads, margin %, break-even ad cost, delivery verdict), best offer first, the rest kept — adapters/ecommerce/python/unit_economics.py:7-15 [DERIVED]
-- post: every number carries a receipt `{id, formula, inputs, result}` whose `id` is the number's path in the product (e.g. `channels.tiktok_us.fees_usd`, `offers[0].shipping[1].cost_usd`) — adapters/ecommerce/python/unit_economics.py:21-24 [DERIVED]
-- post: a missing input yields `"UNKNOWN"` (receipt names what is missing), never a guess; CJ's suggested retail is never a price — adapters/ecommerce/python/unit_economics.py:25 [DERIVED]
-- post: money is Decimal — computed amounts rounded half-up to cents, margin % to one decimal, stated prices keep their precision — adapters/ecommerce/python/unit_economics.py:26-27 [DERIVED]
-- raises: `DecisionInputError` (a ValueError) on a malformed bundle, setting or policy; nothing is computed — adapters/ecommerce/python/unit_economics.py:52-53, adapters/ecommerce/python/unit_economics.py:1532 [DERIVED]
-
-### DecisionInputError — adapters/ecommerce/python/unit_economics.py:52-53
-- subclass of `ValueError`; means "fail closed, never a guess" — adapters/ecommerce/python/unit_economics.py:52-53 [DERIVED]
-
-### main(argv) — adapters/ecommerce/python/unit_economics.py:1576-1601
-- CLI entry: `python unit_economics.py --bundle bundle.json [--out decision.json]` does the same as the dossier's out-of-process run — adapters/ecommerce/python/unit_economics.py:29-30 [DERIVED]
+**compute(bundle, policy)** — adapters/ecommerce/python/unit_economics.py:1646-1668 [DERIVED]
+- in: `bundle = {candidates, host (plan §4.3), parsed: {candidate_id: {reddit, amazon, ebay, alibaba}}, settings}` — :3-4 [DERIVED]
+- in: `policy` = engine policies (`sales_channels` + `report_settings`, graph/policies.yaml) — :4-5 [DERIVED]
+- pre: `_policy` gates — `sales_channels` and `report_settings` must be dicts (:255-256); every `order` cid defined in `channels` (:261); `fee.kind` in FEE_KINDS (:263); `percent_per_order` must end with a tier without `max_order_usd` (:266); `delivery.kind` in DELIVERY_KINDS (:268); sensitivity needs `id` + `rate_pct` (:271); every cited source id defined (:274); `defaults` present (:276); `returns_rate_source` names a source (:278) — adapters/ecommerce/python/unit_economics.py:252-280
+- pre: `_settings` gates — `shopify_monthly_orders` whole ≥ 1 (:295); `returns_rate` 0 ≤ r < 1 (:298); `ship_to` must be `"US"` (:300); `channels` non-empty subset of order (:307); `handling_business_days` whole ≥ 0 (:314); `last_mile_usd`/`last_mile_days` number or null (:317, :319) — adapters/ecommerce/python/unit_economics.py:283-323
+- out: decision with per-candidate offers, market, demand, channel lines; every number carries a receipt `{id, formula, inputs, result}` whose id is the number's path (e.g. `channels.tiktok_us.fees_usd`) — :21-24 [DERIVED]
+- post: a missing input yields `"UNKNOWN"` with a receipt naming what is missing, never a guess — :25 [DERIVED]
+- fail: raises DecisionInputError on a malformed bundle/setting/policy; nothing is computed — :58-59, :1646 docstring [DERIVED]
 
 ## effect surface
-- Postgres tables read/written: none (FACTS `tables_read: []`, `tables_written: []`) [DERIVED]
-- Network / clock / I/O: none, by the module's own law "Pure: no I/O, no network, no clock" — adapters/ecommerce/python/unit_economics.py:1 [DERIVED]
-- File writes: optional decision JSON via the CLI `--out decision.json` — adapters/ecommerce/python/unit_economics.py:30 [DERIVED]
-- In-process dependency: lazy `import executors as _ex` (twice), calling `executors._parse_price` and `executors._parse_moq` — adapters/ecommerce/python/unit_economics.py:107-108, adapters/ecommerce/python/unit_economics.py:498-499 [DERIVED]
-- Env flags read: none visible (imports are hashlib, json, math, re, decimal, typing only) — adapters/ecommerce/python/unit_economics.py:34-39 [DERIVED]
+- Postgres: none — FACTS `tables_read: []`, `tables_written: []` [DERIVED]
+- Network / clock / db: none — "Pure: no I/O, no network, no clock" — adapters/ecommerce/python/unit_economics.py:1 [DERIVED]
+- Files: CLI only — reads `bundle.json`, writes `decision.json` — adapters/ecommerce/python/unit_economics.py:29-30 [DERIVED]
+- Import: `import executors as _ex` (lazy, inside `_usd_range`) calling `_ex._parse_price(value)` — adapters/ecommerce/python/unit_economics.py:113-114 [DERIVED]
+- Never imports `polymath_shared` — adapters/ecommerce/python/unit_economics.py:29 [DERIVED]
+- sha256 hash of the policy JSON (sort_keys, 12 hex chars) via `_policy_hash` — adapters/ecommerce/python/unit_economics.py:326-328 [DERIVED]
 
 ## invariants
-INVARIANT: DecisionInputError is-a ValueError — adapters/ecommerce/python/unit_economics.py:52 [DERIVED]
-  fails-if: callers' `except ValueError` no longer catches the fail-closed signal.
 INVARIANT: FEE_KINDS == ("percent", "percent_fixed_plan", "percent_per_order", "referral_min_per_item") — adapters/ecommerce/python/unit_economics.py:45 [DERIVED]
-  fails-if: a policy fee kind outside the tuple raises at :257-258.
+  fails-if: `_policy` rejects the channel at :263 with DecisionInputError.
 INVARIANT: DELIVERY_KINDS == ("us_local_only", "max_days", "honest_handling") — adapters/ecommerce/python/unit_economics.py:46 [DERIVED]
-  fails-if: a policy delivery kind outside the tuple raises at :262-263.
-INVARIANT: computed money = quantize(Decimal("0.01"), ROUND_HALF_UP); margin % one decimal — adapters/ecommerce/python/unit_economics.py:26, adapters/ecommerce/python/unit_economics.py:44, adapters/ecommerce/python/unit_economics.py:112-113 [DERIVED]
-  fails-if: printed cents drift from the stated rounding law.
-INVARIANT: per-unit share = quantize(Decimal("0.0001"), ROUND_HALF_UP), so share × MOQ gives the total back to the cent — adapters/ecommerce/python/unit_economics.py:116-118 [DERIVED]
-  fails-if: inbound freight per unit no longer reconciles with the MOQ-order total.
-INVARIANT: missing input -> "UNKNOWN", never a guess; CJ suggested_retail never a price — adapters/ecommerce/python/unit_economics.py:25 [DERIVED]
-  fails-if: a fabricated number appears in the report without a receipt.
-INVARIANT: returns are 19.3 % of sales (NRF, 2025-10-15) costed at unit cost + shipping; owner decision dated 2026-11-02 — adapters/ecommerce/python/unit_economics.py:17-18 [DERIVED]
-  fails-if: base-case margins disagree with the owner's recorded decision (rate itself arrives via policy defaults, :284).
-INVARIANT: TikTok's 8 % rate is a sensitivity, never the base case — adapters/ecommerce/python/unit_economics.py:19 [DERIVED]
-  fails-if: base-case fees silently use the unconfirmed rate.
-INVARIANT: _policy_hash = sha256(json.dumps({sales_channels, report_settings}, sort_keys=True))[:12] — adapters/ecommerce/python/unit_economics.py:320-322 [DERIVED]
-  fails-if: dropping sort_keys makes the same policy hash differently per run.
-INVARIANT: _dec accepts only finite, non-negative numbers; bool -> None — adapters/ecommerce/python/unit_economics.py:77-80 [DERIVED]
-  fails-if: `True` would read as quantity 1.
-INVARIANT: CJ freight origins iterated in sorted key order — adapters/ecommerce/python/unit_economics.py:411 [DERIVED]
-  fails-if: offer shipping rows change order between identical runs.
+  fails-if: `_policy` rejects the channel at :268.
+INVARIANT: computed money is Decimal rounded half-up to cents (`CENT = Decimal("0.01")`, `_cents`), margin % one decimal (`TENTH`), stated prices keep their precision — adapters/ecommerce/python/unit_economics.py:44, :118-119, :26-27 [DERIVED]
+  fails-if: pennies drift against receipts; a $0.035 tier loses its precision.
+INVARIANT: per-unit shares quantize to 4 decimals (`Decimal("0.0001")`, `_unit4`) so share × MOQ reproduces the total to the cent — adapters/ecommerce/python/unit_economics.py:122-124 [DERIVED]
+  fails-if: inbound-freight-per-unit receipts no longer reconcile with the total.
+INVARIANT: settings.ship_to == "US" — adapters/ecommerce/python/unit_economics.py:299-300 [DERIVED]
+  fails-if: DecisionInputError; channel rules describe the US market only.
+INVARIANT: 0 ≤ returns_rate < 1 (example `0.193 = 19.3 %`) — adapters/ecommerce/python/unit_economics.py:297-298 [DERIVED]
+INVARIANT: CJ search "from" price (`CJ_SEARCH_PRICE = "search_from_price"`) is shown but never a unit cost; such offers carry `CJ_NOT_COSTED` and stay out of the margin lines — adapters/ecommerce/python/unit_economics.py:53-55, :394-397, :486-493 [DERIVED]
+  fails-if: a lowest-variant part price (e.g. a filter set) is costed as the unit.
+INVARIANT: `_out(None)` == "UNKNOWN" for every JSON number — adapters/ecommerce/python/unit_economics.py:127-133 [DERIVED]
+INVARIANT: no ad cost assumed; break-even ad cost per sale == margin before ads; TikTok 8 % is sensitivity only, never base case — adapters/ecommerce/python/unit_economics.py:17-19 [DERIVED]
 
 ## determinism & idempotency
-determinism: DETERMINISTIC (declared pure: no I/O, no network, no clock — adapters/ecommerce/python/unit_economics.py:1; sorted freight iteration :411; sort_keys hashing :321) [DERIVED]
-idempotency: SAFE (no writes, no state; FACTS tables_read/tables_written empty) — adapters/ecommerce/python/unit_economics.py:1 [DERIVED]
+determinism: DETERMINISTIC (module is pure — no I/O, no network, no clock — :1; imports are hashlib/json/math/re/decimal only, :34-39; `_policy_hash` hashes sorted-keys JSON, :326-328) [DERIVED]
+idempotency: SAFE (compute is a pure function of bundle + policy; the only write is the optional `--out` JSON file, :30) [DERIVED]
 
 ## failure behaviour
-- No try/except visible in SOURCE lines 1-555; nothing is swallowed — adapters/ecommerce/python/unit_economics.py:1-555 [DERIVED]
-- Fail-closed raises: `DecisionInputError` at :250, :256, :258, :261, :263, :266, :269, :271, :273 (policy) and :282, :290, :293, :295, :302, :306, :309, :312, :314 (settings); the caller sees a ValueError and no decision — adapters/ecommerce/python/unit_economics.py:250-314 [DERIVED]
-- Missing-data path: value None -> receipt `"observed: not stated"` plus `missing: [field]`, output `"UNKNOWN"` — adapters/ecommerce/python/unit_economics.py:226-227, adapters/ecommerce/python/unit_economics.py:25 [DERIVED]
-- Parser-flagged irrelevant records (`relevant: false`) are dropped and listed with why — adapters/ecommerce/python/unit_economics.py:528-534 [DERIVED]
+- `DecisionInputError(ValueError)`: "nothing is computed (fail closed, never a guess)" — adapters/ecommerce/python/unit_economics.py:58-59 [DERIVED]. Raised by `_policy` (:255, :261, :263, :266, :268, :271, :274, :276, :278) and `_settings` (:287, :295, :298, :300, :307, :311, :314, :317, :319) — 18 raise sites in the first 508 lines alone [DERIVED].
+- Missing inputs are not errors: `_Book.observed` records `"observed: not stated"` plus a `missing: [field]` list — adapters/ecommerce/python/unit_economics.py:229-233 [DERIVED].
+- Unparsable money/number text returns None (→ "UNKNOWN"), e.g. `_dec` fullmatch gate — adapters/ecommerce/python/unit_economics.py:90-96 [DERIVED]; `_usd_range` on non-string/non-numeric returns (None, None) — :107-112 [DERIVED].
 
 ## dumb-code flags
-- `PASS, WARN, FAIL = "PASS", "WARN", "FAIL"` defined at :43 with no use visible in SOURCE lines 1-555 (verdicts are produced past that range) — adapters/ecommerce/python/unit_economics.py:43 [DERIVED]
-- `TENTH` at :44 has no visible use in lines 1-555; margin %-to-one-decimal (:26) presumably consumes it — adapters/ecommerce/python/unit_economics.py:44 [INFERRED] (only plausible consumer visible)
-- The bool-guard `isinstance(value, bool)` is duplicated at :138, :152, :289, :308, :311, :313 — six hand-copied sites — adapters/ecommerce/python/unit_economics.py:138-313 [DERIVED]
-- Lazy `import executors as _ex` appears twice (:107, :498), each with its own justification comment — a hidden in-process dependency inside a "pure" module — adapters/ecommerce/python/unit_economics.py:107, adapters/ecommerce/python/unit_economics.py:498 [DERIVED]
-- Near-colliding names: regex `_DAYS` (:60) vs function `_days` (:162), differing only by case — adapters/ecommerce/python/unit_economics.py:60, adapters/ecommerce/python/unit_economics.py:162 [DERIVED]
-- Overlapping money regexes at module level (`_BARE_NUMBER` :59, `_TIER` :65-66, `_TIER_QTY` :67) encoding "$0.18 (55-99 pieces)" / "US $1.20 - 1.50 (≥500 pieces)" formats inline — adapters/ecommerce/python/unit_economics.py:59-67 [DERIVED]
-- Dates hardcoded in prose: owner decision "2026-11-02", NRF read date "2025-10-15" — adapters/ecommerce/python/unit_economics.py:17-18 [DERIVED]
+- Magic truncations: policy hash cut to 12 hex chars — adapters/ecommerce/python/unit_economics.py:328; `_clip` cut with "…" — :202-204; `_rule_text` clip at 600 — :426, :431 [DERIVED].
+- `_usd` reads a range's LOW end while conservative callers must remember `_usd_range` — adapters/ecommerce/python/unit_economics.py:99-104 [DERIVED]; easy to call the wrong one.
+- Lazy per-call-path `import executors as _ex` inside `_usd_range` — adapters/ecommerce/python/unit_economics.py:113 [DERIVED]; comment says "it is not small".
+- Rounding scale duplicated: `CENT`/`TENTH` constants at :44 vs inline `Decimal("0.0001")` in `_unit4` — :124 [DERIVED].
+- `_ORIGIN_CODES` hand-lists country spellings ("mainland china", "united states of america", …) — adapters/ecommerce/python/unit_economics.py:63 [DERIVED]; any new spelling falls through to `text.upper()[:40]` — :389-390 [DERIVED].
+- Owner decisions hardcoded in the docstring with dates (TikTok dual account, returns 19.3 % NRF 2025-10-15, TikTok 8 % unconfirmed) — adapters/ecommerce/python/unit_economics.py:17-19 [DERIVED]; values themselves live in graph/policies.yaml (:5).
 
 ## refactor notes
-- Receipt `id` strings are the report's public contract (`channels.tiktok_us.fees_usd`, `offers[0].shipping[1].cost_usd`); renaming product paths breaks every receipt consumer — adapters/ecommerce/python/unit_economics.py:22-24 [DERIVED]
-- The dossier invokes this module out of process via the CLI with a JSON bundle; changing `compute`'s bundle/policy keys or the `--bundle` / `--out` flags breaks the dossier — adapters/ecommerce/python/unit_economics.py:29-30 [DERIVED]
-- `executors._parse_price` and `executors._parse_moq` are relied on at :107-108 and :498-499; renaming those private names in executors breaks this file (the comment says adapter_receipt does the same) — adapters/ecommerce/python/unit_economics.py:94-97, adapters/ecommerce/python/unit_economics.py:498-499 [DERIVED]
-- FEE_KINDS and DELIVERY_KINDS must stay in sync with graph/policies.yaml channel kinds; the validator rejects anything else — adapters/ecommerce/python/unit_economics.py:5, adapters/ecommerce/python/unit_economics.py:45-46, adapters/ecommerce/python/unit_economics.py:257-263 [DERIVED]
-- The rounding laws (half-up cents at :26/:112-113, 4-decimal unit shares at :116-118) are stated as "Laws" in the docstring; changing them changes every printed cent and the share×MOQ reconciliation — adapters/ecommerce/python/unit_economics.py:21-27 [DERIVED]
-- `_policy_hash` emits a 12-hex-char digest of the policy; its format is the decision's provenance stamp — adapters/ecommerce/python/unit_economics.py:320-322 [DERIVED]
+- The bundle/policy key shape is a cross-process contract with the dossier — :3-5, :29-30 [DERIVED]; renaming any bundle key breaks the out-of-process caller.
+- Receipt ids are paths into the product JSON (`offers[0].shipping[1].cost_usd`) — :22-23 [DERIVED]; renaming output fields breaks the receipt-id contract consumers match on.
+- `executors._parse_price` is the single price parser; renaming it breaks `_usd`/`_usd_range` (and, per comment, adapter_receipt does the same) — adapters/ecommerce/python/unit_economics.py:100, :113-114 [DERIVED].
+- FEE_KINDS / DELIVERY_KINDS (:45-46) must stay in lockstep with `sales_channels` kinds in graph/policies.yaml; a new policy kind fails closed in `_policy` until the tuple grows — :263, :268 [INFERRED: gate compares tuple membership].
+- `"search_from_price"` must match host_data `price_basis` values, and `detail_status == "NOTFETCHED"` is a stringly-typed contract — :53, :394-397, :465 [DERIVED].
+- `percent_per_order` tiers must end with a tier whose `max_order_usd` is null — :266 [DERIVED]; changing tier encoding in policies.yaml breaks this gate.
 
 ## VERIFY
 ```verify
 grep -Fq 'MODEL = "unit_economics.v1"' adapters/ecommerce/python/unit_economics.py
 grep -Fq 'class DecisionInputError(ValueError):' adapters/ecommerce/python/unit_economics.py
+grep -Fq 'FEE_KINDS = ("percent", "percent_fixed_plan", "percent_per_order", "referral_min_per_item")' adapters/ecommerce/python/unit_economics.py
+grep -Fq 'DELIVERY_KINDS = ("us_local_only", "max_days", "honest_handling")' adapters/ecommerce/python/unit_economics.py
 grep -Fq 'import executors as _ex' adapters/ecommerce/python/unit_economics.py
-test "$(grep -c -F 'import executors as _ex' adapters/ecommerce/python/unit_economics.py)" -ge 2
-grep -Fq 'returns are 19.3 % of' adapters/ecommerce/python/unit_economics.py
-test "$(grep -c -F 'DecisionInputError(' adapters/ecommerce/python/unit_economics.py)" -ge 18
+grep -Fq 'returns_rate must be a number from 0 to below 1' adapters/ecommerce/python/unit_economics.py
 ! grep -Fq 'import polymath_shared' adapters/ecommerce/python/unit_economics.py
+test "$(grep -c -F 'raise DecisionInputError(' adapters/ecommerce/python/unit_economics.py)" -ge 15
 ```

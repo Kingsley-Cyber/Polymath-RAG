@@ -559,6 +559,59 @@ def test_a_bundle_without_sources_renders_exactly_as_before(tmp_path, sample):
         assert _decision_page(tmp_path, meta={**META, "sources": sources}) == (model, page), sources
 
 
+# ─────────────────────────────────────────────────────────── live run 2026-11-02: CJ search prices and the costed variant
+LIVE_CJ = json.loads((FIXTURES / "cj_live_pet_fountain.json").read_text(encoding="utf-8"))
+
+
+def _with_cj(cid: str, products: list) -> dict:
+    """BUNDLE with candidate `cid`'s CJ products replaced."""
+    bundle = json.loads(json.dumps(BUNDLE))
+    bundle["host"]["cj"][cid]["products"] = products
+    return bundle
+
+
+def _supply_row(page: str, n: int, offer_url_part: str) -> str:
+    supply = _section(_product(page, n), "Supply", "Shipping legs")
+    return next(row for row in supply.split("<tr>") if offer_url_part in row)
+
+
+@pytest.mark.skipif(not HAS_COMPUTE, reason="unit_economics.py (B3) is not in this checkout")
+def test_a_cj_offer_known_only_by_its_search_price_reads_from_and_has_no_margin_line():
+    """Live (rpt_164ed807ad94e63ef002458e): a CJ product the host never detail-fetched read "Dropship $1.74" — CJ's search "from" price,
+    its lowest variant, often a part. The page now says "from $1.74 (CJ search price: the lowest variant, not checked)" with why it has
+    no margin line, and no margin line carries it: the channels are those of the same bundle without it."""
+    unchecked = LIVE_CJ["products"][2]
+    assert (unchecked["detail_status"], unchecked["price_basis"], unchecked["sell_price_usd"]) == ("NOT_FETCHED", "search_from_price", 1.74)
+    slicker = BUNDLE["host"]["cj"]["cand_slicker"]["products"]
+    out = dossier.render_decision(_with_cj("cand_slicker", [*slicker, unchecked]))
+    page = out["html"]
+    raw = _supply_row(page, 1, unchecked["product_id"])
+    unit, moq, capital = (_plain_text(c) for c in _cells(raw)[:3])
+    assert (unit, moq, capital) == ("from $1.74 (CJ search price: the lowest variant, not checked)", "1", "UNKNOWN")
+    assert ("not in the margin lines: CJ's details for this product (its variants, weight and freight) were not read, so only its search "
+            "\"from\" price is known") in _plain_text(raw)
+    margins = _section(_product(page, 1), "Margin per channel", "How these numbers were computed")
+    assert f"cj:{unchecked['product_id']}" not in margins and "cj:2501163412000000001" in margins
+    assert out["decision"]["products"][0]["channels"] == dossier.render_decision(BUNDLE)["decision"]["products"][0]["channels"]
+    assert _cells(_supply_row(page, 1, "2501163412000000001"))[0] == "$3.42"                            # a read product: its unit cost
+
+
+@pytest.mark.skipif(not HAS_COMPUTE, reason="unit_economics.py (B3) is not in this checkout")
+def test_the_costed_variant_is_said_in_one_line_on_its_offer():
+    """B2's variant rule: the host names the variant it costs (`variant_rule`, `variants_dropped`); the offer's row says it in one line —
+    "costed variant: $3.88 / 120 g; 1 lighter or part variant left out" — and its unit cost is that variant's."""
+    cj = json.loads(json.dumps(BUNDLE["host"]["cj"]["cand_slicker"]["products"][0]))
+    blue = cj["variants"].pop(0)                                                          # the rule left the $3.42 variant out
+    cj.update(variants_dropped=[{**blue, "why": "LIGHT_WEIGHT"}], cheapest_variant_id="v-pink", sell_price_usd=3.88,
+              variant_rule={"rule": "the cheapest variant left after dropping parts and light samples", "dropped": 1, "chosen_variant_id": "v-pink"})
+    out = dossier.render_decision(_with_cj("cand_slicker", [cj]))
+    raw = _supply_row(out["html"], 1, cj["product_id"])
+    assert "supplier CJdropshipping · costed variant: $3.88 / 120 g; 1 lighter or part variant left out · CJ suggested retail" in _plain_text(raw)
+    assert _cells(raw)[:3] == ["$3.88", "1", "$3.88"]                                      # unit cost, MOQ, MOQ capital: the named variant's
+    unit = next(r for r in out["decision"]["products"][0]["receipts"] if r["id"] == "offers[0].unit_cost_usd")
+    assert unit["formula"] == "the variant the host's variant rule costs: the cheapest variant left after dropping parts and light samples"
+
+
 # ─────────────────────────────────────────────────────────── render_decision: ONE engine process
 @pytest.mark.skipif(not HAS_COMPUTE, reason="unit_economics.py (B3) is not in this checkout")
 def test_render_decision_runs_the_real_unit_economics_and_draws_its_answer(tmp_path):
