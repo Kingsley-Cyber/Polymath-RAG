@@ -23,31 +23,29 @@ names → `docs/wiki/plans/PLAN-AUTHORITY-REGISTER.md` (append-only; read the ne
 `polymath-bootstrap` skill. Blocks below CURRENT are compact history: a read order or "NEXT SESSION" inside an older block is
 historical, never an instruction.
 
-## CURRENT — 2026-11-02 (PRODUCT-DECISION-REPORT-V1 committed on `feat/product-report`, stacked on PRODUCT-SEARCH-E2E-V1; merge, deploy and live qualification next) — **ACTIVE MISSION: PRODUCT-DECISION-REPORT-V1 (register 11.576; the owner, 2026-11-02: one HTML decision report per product search for any agent — links, Reddit findings with dates, dropshipping margins, MOQ and delivery per channel (TikTok US and cross-border side by side, Shopify), eBay and Amazon comparables; "this ends when commitedd and merged properly no bugs ... run the flow one time and analzye the output ... how well a new session agent that just connected grasps the tools/mcps"). Plan `docs/wiki/plans/PRODUCT-DECISION-REPORT-V1.md`; work-log `docs/wiki/work-log/2026-11-02-product-decision-report.md` (coverage, 10 deviation groups); ADR-0023 (proposed).**
+## CURRENT — 2026-11-02 (PRODUCT-DECISION-REPORT-V1 merged, deployed and live-proven; the owner's review next) — **ACTIVE MISSION: PRODUCT-DECISION-REPORT-V1 (register 11.576, DONE; the owner, 2026-11-02: one HTML decision report per product search for any agent — links, Reddit findings with dates, dropshipping margins, MOQ and delivery per channel (TikTok US and cross-border side by side, Shopify), eBay and Amazon comparables; "this ends when commitedd and merged properly no bugs ... run the flow one time and analzye the output ... how well a new session agent that just connected grasps the tools/mcps"). Plan `docs/wiki/plans/PRODUCT-DECISION-REPORT-V1.md`; work-log `docs/wiki/work-log/2026-11-02-product-decision-report.md` (coverage, live runs, fresh agents, 10 deviation groups); ADR-0023 (proposed).**
 
 ### Repository State
-- `production` = `1403f3ac` before the merge. `feat/product-report` (worktree `../pmv4-product-report`) = `feat/product-search-e2e`
-  (`5bdec46d`, `37deaa90`, register 11.575) + the 11.576 commit; it merges fast-forward only and carries both changes.
-- The live stack runs in Docker Desktop: `DOCKER_CONTEXT=desktop-linux docker compose ...` from the main checkout (the CLI's default
-  context is OrbStack, where the sealed test databases run). Migrations owed at deploy: 0067 (data only) and 0068 (two new tables).
-- Fleet: untouched during the build (no restart, no live code edit). Quiet before the merge: no running work; 12 tickets pending behind a
-  failed intake from 2026-09-07; one adapter run awaiting its agent since 2026-11-01.
+- `production` = the 11.576 records commit on top of `af7c8417` (fast-forward merges of `feat/product-report`: `07a80e4f`, `94f3d58b`,
+  `af7c8417`, then the records); it carries PRODUCT-SEARCH-E2E-V1 (11.575) too. NOT pushed: `origin/production` is behind by these
+  commits plus the 11.574 records (pushes are the owner's word).
+- Live: migrations 0067 (the seven libraries production + query-enabled) and 0068 (product reports) applied; the fleet bounced on each
+  merge (READY, 26 healthy, one bundle). The live stack runs in Docker Desktop (`DOCKER_CONTEXT=desktop-linux docker compose ...`; the
+  CLI's default context is OrbStack, where the sealed test databases run).
+- Worktrees `../pmv4-product-search` and `../pmv4-product-report` hold the merged branches (removable).
+- A temporary friend principal `prn_report_gate` was created for the live gate and revoked (2026-11-02T20:33:36Z).
 
 ### Proof Status
-- Worktree-proven: sealed CI 4,871 tests = the 17 baseline failures only; the report suites 541 passed after the last change; engine
-  648/648; UI 245 passed; code wiki 2,413/2,413. LIVE proof owed: the merge, 0067 + 0068, the bounce, one report through the
-  connector as the owner and one as a friend key, and fresh Claude Code, Codex and Hermes sessions given one plain-English request.
+- Sealed CI 4,871 tests = the 17 baseline failures only; after the live-run fixes the affected suites passed (865, 455, 130); engine
+  648/648; UI 245 passed; code wiki 2,412/2,412. LIVE: owner and friend reports through the deployed routes and Server A; Hermes
+  (DeepSeek v4.1 flash) and Codex (GPT-6 Luna) each built a report from one plain-English request. Claude Code headless not run.
 
 ### Next Action
-1. Merge and deploy at a quiet moment, in the main checkout: `git merge --ff-only feat/product-report`, then
-   `DOCKER_CONTEXT=desktop-linux docker compose exec -T postgres psql -U polymath -d polymath -v ON_ERROR_STOP=1 -f - < stores/postgres/migrations/0067_real_libraries_production.sql`,
-   the same for `0068_product_reports.sql`, then `(cd frontend-v2 && npm run build) && bash scripts/bounce_fleet.sh`. Push only on the
-   owner's word.
-2. Live qualification: `product_report_start` → run the round's script → `product_report_status` → round 2 → `product_report_compile` as
-   the owner and as a friend key; read the page (sources line, margins, delivery verdicts, links); then the fresh-agent runs. Register
-   11.575 and 11.576 move IMPLEMENTED → DONE only on that evidence.
-3. The owner: the deviations in both work-logs and ADR-0023; eBay developer keys (`EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`) for eBay
-   comparables; the 11.575 owner items (CF-06 friend onboarding, the gemma compiler lane, `chmod 600 .env`, SearXNG removal).
+1. The owner: the deviations in both work-logs and ADR-0023 (several held upload tokens instead of the plan's one); eBay developer keys
+   (`EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`) for eBay comparables; sign the `claude` CLI in again, then run the Claude Code fresh-agent test
+   (`claude -p` with the work-log's request); push when ready.
+2. The 11.575 owner items still stand (CF-06 friend onboarding, the gemma compiler lane, `chmod 600 .env`, SearXNG removal) and its live
+   items not yet run (a seed-less governed run reaching X_compile, a TrailSignal score = TR-09).
 
 ### Do Not Do
 - Everything in the 2026-11-01 and 2026-09-26 blocks' "Do Not Do" lists still applies.
@@ -56,6 +54,7 @@ historical, never an instruction.
   `POLYMATH_BASE_URL` at a closed port when the live tier is not wanted.
 - Do not add a direct (un-proxied) caller of :7200 under any Host but 127.0.0.1, localhost or [::1]: the web boundary refuses it
   (DNS-rebinding fix, 11.576).
+- Do not bounce the fleet while an agent test or a fetch script is running: its MCP session breaks.
 
 ## PRIOR — 2026-11-01 (PRODUCT-SEARCH-E2E-V1 built on a branch; the owner's Run button next; superseded by the block above, its Do Not Do list still applies) — **ACTIVE MISSION: PRODUCT-SEARCH-E2E-V1 (register 11.575; the owner, 2026-11-01: "i want one massive patch and fix any thing else"): product search that works for any agent, any library and every user — product requests answered with hypotheses from the library plus CJ finds; CJ's API for everyone with the user's LOCAL Agent Reach as the fallback and the only Alibaba path; the governed run needs no niche; "all libraries" and friend access fixed. Work-log `docs/wiki/work-log/2026-11-01-product-search-e2e.md` (coverage of R1–R14 and the 56 audited defects; 7 deviations await the owner).**
 

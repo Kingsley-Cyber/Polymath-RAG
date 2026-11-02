@@ -184,6 +184,10 @@ hermes mcp add polymath --url http://127.0.0.1:8930/mcp --auth header
 ```
 
 - Codex reads the key from the environment variable named there.
+- Headless Codex (`codex exec`) refuses every MCP tool call that is not pre-approved: add `default_tools_approval_mode = "approve"`
+  under `[mcp_servers.polymath]` in `~/.codex/config.toml` (measured 2026-11-02 with codex-cli 0.157.1: without it each Polymath call
+  failed with "MCP tool call requires approval, but approval policy is never"). A Codex signed in with a ChatGPT account ran only
+  `gpt-6-luna` that day (`gpt-6.1-sol`, `gpt-6.1-terra`, `gpt-6.1` and `gpt-6` were refused): set `model` accordingly.
 - Hermes on this machine uses the loopback listener and asks for the header value.
 - **OpenClaw** (not installed here, so not verified) and any other MCP client: register the streamable-HTTP URL
   `https://mcp.kingsleylab.xyz/mcp` with the header `Authorization: Bearer <key>` in its MCP server settings.
@@ -394,6 +398,6 @@ both are set.
 | Harness | Workers | The verdict / orchestrator | Also |
 |---|---|---|---|
 | Claude Code | Haiku 5.5 at effort low, with WebSearch and WebFetch disallowed | Sonnet 5.5 or Opus 5.5 at effort high | |
-| Codex | GPT-6 Luna at low reasoning effort | GPT-6.1 Sol at high | raise `tool_timeout_sec` for the polymath server above 120 (compile takes up to 2 minutes) |
+| Codex | GPT-6 Luna at low reasoning effort | GPT-6.1 Sol at high where the account offers it (a ChatGPT login offered GPT-6 Luna only) | raise `tool_timeout_sec` for the polymath server above 120 (compile takes up to 2 minutes); headless `codex exec` also needs `default_tools_approval_mode = "approve"` on it |
 | Hermes | deepseek-v4.1-flash with thinking off, 5 children at most | | a child that needs the web runs Agent Reach in the terminal, never its own web tool (that is not Agent Reach) |
 | OpenCode | the shell only: `opencode run --auto` (no Polymath MCP server is configured there by default) | | if the Polymath MCP server is added, raise its MCP timeout |

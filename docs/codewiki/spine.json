@@ -35738,7 +35738,7 @@
    "files": [
     "orchestrator/orchestrator/api/web_settings.py"
    ],
-   "hash": "90621fb6ce7f440b",
+   "hash": "4bf35a299229d060",
    "importers": [
     "orchestrator/orchestrator/api/web_auth.py",
     "orchestrator/orchestrator/main.py"
@@ -75589,11 +75589,11 @@
      "file": "shared/polymath_shared/mcp_retrieval.py",
      "line": 900,
      "name": "REPORT_SUBAGENTS",
-     "value": "Subagents, only when they speed you up: fetching is the script's job, never a subagent's. Use them only for judgment (e.g. one per product writing its verdict from Polymath's computed numbers), each on a cheap model at low effort, and set both explicitly: inherited defaults are the expensive trap (a worker inherits the parent's top model and effort unless you set them). Claude Code: workers on Haiku 5.5 at effort low with WebSearch and WebFetch disallowed; the verdict on Sonnet 5.5 or Opus 5.5 at effort high. Codex: workers on GPT-6 Luna at low reasoning effort, the orchestrator on GPT-6.1 Sol at high; raise `tool_timeout_sec` for this MCP server above 120 (compile takes up to 2 minutes). Hermes: workers on deepseek-v4.1-flash with thinking off, 5 children at most; a child that needs the web runs Agent Reach in the terminal, never its own web tool (that is not Agent Reach). OpenCode: no Polymath MCP server is configured there by default, so an OpenCode worker uses the shell only (`opencode run --auto`); if you add the MCP server, raise its MCP timeout."
+     "value": "Subagents, only when they speed you up: fetching is the script's job, never a subagent's. Use them only for judgment (e.g. one per product writing its verdict from Polymath's computed numbers), each on a cheap model at low effort, and set both explicitly: inherited defaults are the expensive trap (a worker inherits the parent's top model and effort unless you set them). Claude Code: workers on Haiku 5.5 at effort low with WebSearch and WebFetch disallowed; the verdict on Sonnet 5.5 or Opus 5.5 at effort high. Codex: workers on GPT-6 Luna at low reasoning effort, the orchestrator on GPT-6.1 Sol at high where the account offers it (a ChatGPT login offers GPT-6 Luna only); raise `tool_timeout_sec` for this MCP server above 120 (compile takes up to 2 minutes), and headless `codex exec` needs `default_tools_approval_mode = \"approve\"` on it. Hermes: workers on deepseek-v4.1-flash with thinking off, 5 children at most; a child that needs the web runs Agent Reach in the terminal, never its own web tool (that is not Agent Reach). OpenCode: no Polymath MCP server is configured there by default, so an OpenCode worker uses the shell only (`opencode run --auto`); if you add the MCP server, raise its MCP timeout."
     },
     {
      "file": "shared/polymath_shared/mcp_retrieval.py",
-     "line": 967,
+     "line": 969,
      "name": "PRODUCT_REPORT_LIST",
      "value": "Your decision reports, newest first: each with `report_id`, `status`, `round`, `candidates` [{candidate_id, title}], `uploads`, `compiled`, `compiled_at` and `report_path`. Reports are private: you see only your own (the Polymath owner sees all). Continue one with product_report_status, or product_report_compile (which returns its `report_url`)."
     }
@@ -75604,14 +75604,14 @@
    "files": [
     "shared/polymath_shared/mcp_retrieval.py"
    ],
-   "hash": "8c005935a1c979c5",
+   "hash": "829078f4ebd6bdbf",
    "importers": [
     "mcp_server/polymath_mcp.py",
     "orchestrator/orchestrator/api/_small-modules",
     "orchestrator/orchestrator/mcp_server.py"
    ],
    "imports": [],
-   "lines": 971,
+   "lines": 973,
    "mcp_tools": [],
    "nondeterminism": [],
    "page": "units/shared/polymath_shared/mcp_retrieval.py.md",

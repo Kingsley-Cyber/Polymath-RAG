@@ -902,8 +902,10 @@ REPORT_SUBAGENTS = (
     "one per product writing its verdict from Polymath's computed numbers), each on a cheap model at low effort, and set both "
     "explicitly: inherited defaults are the expensive trap (a worker inherits the parent's top model and effort unless you set "
     "them). Claude Code: workers on Haiku 5.5 at effort low with WebSearch and WebFetch disallowed; the verdict on Sonnet 5.5 or "
-    "Opus 5.5 at effort high. Codex: workers on GPT-6 Luna at low reasoning effort, the orchestrator on GPT-6.1 Sol at high; "
-    "raise `tool_timeout_sec` for this MCP server above 120 (compile takes up to 2 minutes). Hermes: workers on "
+    "Opus 5.5 at effort high. Codex: workers on GPT-6 Luna at low reasoning effort, the orchestrator on GPT-6.1 Sol at high "
+    "where the account offers it (a ChatGPT login offers GPT-6 Luna only); raise `tool_timeout_sec` for this MCP server above "
+    "120 (compile takes up to 2 minutes), and headless `codex exec` needs `default_tools_approval_mode = \"approve\"` on it. "
+    "Hermes: workers on "
     "deepseek-v4.1-flash with thinking off, 5 children at most; a child that needs the web runs Agent Reach in the terminal, "
     "never its own web tool (that is not Agent Reach). OpenCode: no Polymath MCP server is configured there by default, so an "
     "OpenCode worker uses the shell only (`opencode run --auto`); if you add the MCP server, raise its MCP timeout.")

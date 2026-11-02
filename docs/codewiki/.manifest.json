@@ -4659,7 +4659,7 @@
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-11-02",
-  "input_hash": "bf524a8e0800475f",
+  "input_hash": "bcaa09f7e8c05249",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5744,11 +5744,11 @@
   "status": "ok"
  },
  "units/shared/polymath_shared/mcp_retrieval.py.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
   "generated": "2026-11-02",
-  "input_hash": "8584519e0db1759f",
+  "input_hash": "ec69ac873d4dc468",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

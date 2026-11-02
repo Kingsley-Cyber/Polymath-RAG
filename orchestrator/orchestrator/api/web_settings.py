@@ -158,7 +158,7 @@ Connect
 
 Setup (pick your harness; each command is safe to run again)
 - Claude Code: claude mcp remove polymath -s user; claude mcp add -s user -t http polymath {url} -H "Authorization: Bearer {key}"
-- Codex: codex mcp remove polymath; then add to ~/.codex/config.toml:  [mcp_servers.polymath]  url = "{url}"  http_headers = {{ Authorization = "Bearer {key}" }}
+- Codex: codex mcp remove polymath; then add to ~/.codex/config.toml:  [mcp_servers.polymath]  url = "{url}"  http_headers = {{ Authorization = "Bearer {key}" }}  default_tools_approval_mode = "approve"  (headless codex exec refuses MCP tools without it)
 - Gemini CLI: gemini mcp add --transport http --scope user --header "Authorization: Bearer {key}" polymath {url}
 - OpenCode: opencode mcp add polymath --url {url} --header "Authorization=Bearer {key}"
 - Claude.ai (web, desktop or phone): Settings > Connectors > Add custom connector, paste the connector link as its URL and add nothing else. Claude.ai cannot send a header; the link already carries the key.

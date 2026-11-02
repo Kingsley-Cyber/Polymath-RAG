@@ -284,8 +284,24 @@ for TikTok Shop versus my own Shopify store, and how eBay and Amazon prices comp
   clean winner, eBay UNKNOWN because no eBay key). Friction: it guessed raw HTTP routes (two 404s) and met an ambiguous Hermes skill
   name; it also copied the page into its own public hub (`~/.hermes/public-hub/`, a Hermes behaviour outside Polymath).
 - Claude Code (`claude -p`): did not start — "OAuth session expired and could not be refreshed" (the CLI's login; owner action).
-- Codex (`codex exec`): did not start on its configured `gpt-6.1-sol` ("not supported when using Codex with a ChatGPT account");
-  `gpt-6-luna` is the model this account can run (probed), rerun below.
+- Codex (`codex exec`, codex-cli 0.157.1): did not start on its configured `gpt-6.1-sol` ("not supported when using Codex with a
+  ChatGPT account"; `gpt-6.1-terra`, `gpt-6.1` and `gpt-6` refused too, `gpt-6-luna` answered). On `gpt-6-luna` at medium effort it
+  understood the task (checked Agent Reach, called `product_search`) but Codex itself refused the call: "MCP tool call requires approval,
+  but approval policy is never". With `mcp_servers.polymath.default_tools_approval_mode="approve"` (the only change) it ran end to end
+  in **5 min 3 s** on `af7c8417`: `product_search` for the library's guidance, `product_report_start` with three concrete products it
+  chose (washable senior-dog pads, a deshedding brush, a splash-proof bowl), status polls, round 1 (18/18) and round 2 (15/15) through
+  the script, compile, a verdict per product, compile again, and the private report link (`rpt_5c904db3…`; 1.32 M input tokens, 1.26 M
+  of them cached, 4.9 k output). The page: the pads CJ NO_MATCH (every margin UNKNOWN, said why), the brush −$4.76 on Shopify with its
+  costed variant named, the bowl UNKNOWN (too few comparables); CJ search prices shown as "from $X"; 105 links, no script.
+- The two Codex settings are now in the connector guide, the connect prompt and the agent recipe (`CONNECTORS.md` §2 and §5,
+  `web_settings.py`, `REPORT_SUBAGENTS`): headless `codex exec` needs `default_tools_approval_mode = "approve"` on the polymath server,
+  and a ChatGPT-login Codex runs GPT-6 Luna only.
+
+## Live run 3 (after `af7c8417`, ~21:05Z)
+- A one-product report (pet water fountain) compiled with no uploads: "Read through your Agent Reach: Reddit 0/2, Amazon 0/2, Alibaba
+  0/1, eBay 0/1" and "Needs a local agent: nothing from Reddit was uploaded for this report" in every Agent Reach section (C11);
+  "costed variant: $11.94 / 1016 g; 12 lighter or part variants left out" (the variant rule); "from $4.39 (CJ search price: the lowest
+  variant, not checked)"; every margin UNKNOWN without market data, as designed.
 
 ## Proof
 - **Sealed CI reproduction** (a throwaway `postgres:16-alpine` with all 68 migrations applied in order, a clean environment, the CI
@@ -328,8 +344,9 @@ for TikTok Shop versus my own Shopify store, and how eBay and Amazon prices comp
 - Live (read-only, before the merge): the fleet was quiet (no running work; 12 pending tickets wait behind a failed intake from
   2026-09-07; one adapter run awaiting its agent since 2026-11-01); 0067 and 0068 are not applied; the live stack runs in Docker
   Desktop (`DOCKER_CONTEXT=desktop-linux`), not the default OrbStack context.
-- NOT yet proven here (the merge, migrations 0067 + 0068, the bounce, one live report through the connector as the owner and one as a
-  friend key, and fresh agents in Claude Code, Codex and Hermes): recorded in the closing records after the deploy.
+- Live (Live runs 1–3 and Fresh agents above): merged and deployed three times (`07a80e4f`, `94f3d58b`, `af7c8417`), 0067 and
+  0068 applied, owner and friend reports through the deployed routes and Server A, Hermes and Codex end to end from one plain
+  request; the Claude Code headless run did not start (its CLI login had expired).
 
 ## Coverage — plan items
 | Plan item | Evidence | Verdict |
@@ -350,14 +367,14 @@ for TikTok Shop versus my own Shopify store, and how eBay and Amazon prices comp
 | §4.8 Build button, Reports list, open a report, script with copy button | `ProductReport.tsx`, `Reports.tsx` | MATCH (DEVIATION 9) |
 | §5 gate 1: unit + contract tests per slice on recorded real fixtures | the test files above | MATCH |
 | §5 gate 2: full sealed suite, no failure outside the 17 | sealed run above | MATCH |
-| §5 gate 3: a sample report compiled end to end from recorded fixtures, published for the owner | e2e above; publication in the closing report | MATCH once published |
-| §5 gate 4: one live report as the owner and one as a friend key | after the deploy | NOT YET (closing records) |
-| §5 gate 5: register row IMPLEMENTED until the live gate | register 11.576 | MATCH |
+| §5 gate 3: a sample report compiled end to end from recorded fixtures, published for the owner | e2e above; the live report page sent to the owner in the closing report | MATCH |
+| §5 gate 4: one live report as the owner and one as a friend key | owner `rpt_00c434852e89…`, `rpt_164ed807…`; friend `rpt_00810757…` through Server A (Live runs 1–2) | MATCH |
+| §5 gate 5: register row IMPLEMENTED until the live gate | register 11.576, DONE after gate 4 | MATCH |
 
 ## Coverage — requirements
 | # | Evidence | Verdict |
 |---|---|---|
-| N1 | MCP tools on both servers with the loop in plain words; the script does every web read through the user's local Agent Reach | MATCH in tests; fresh agents after the deploy |
+| N1 | MCP tools on both servers; Hermes on DeepSeek v4.1 flash and Codex on GPT-6 Luna each built a report from one plain request (Fresh agents) | MATCH for DeepSeek and Codex; Claude Code headless not run (its CLI login had expired) |
 | N2 | candidate, offer, comparable and thread links as http(s) anchors (`report.py`) | MATCH |
 | N3 | dated Reddit comments, ≤ 5 per thread, summary of counts; excluded threads listed | MATCH |
 | N4 | per channel: fees, returns 19.3 %, margin before ads, break-even ad cost; rows add up (test re-adds every row) | MATCH |
@@ -365,11 +382,11 @@ for TikTok Shop versus my own Shopify store, and how eBay and Amazon prices comp
 | N6 | delivery verdict per channel with handling time; TikTok US and cross-border side by side; Shopify loose (WARN only) | MATCH |
 | N7 | Amazon (Exa / Jina) and eBay (Browse API, else Exa) comparables, medians and demand signals | MATCH (eBay API needs the owner's keys) |
 | N8 | researched per harness and model; the recipe in `REPORT_SUBAGENTS` and `CONNECTORS.md` §5 | MATCH as research; speed-up not benchmarked |
-| N9 | branch, worktree, slices, reviews, guards, this work-log, one commit, fast-forward merge | MATCH (merge in the closing records) |
-| N10 | three reviews + a verify round, every confirmed finding fixed, sealed suite at the baseline | MATCH in the worktree; merge pending |
+| N9 | branch, worktree, slices, reviews, guards, this work-log, commits `07a80e4f` / `94f3d58b` / `af7c8417` + the records, fast-forward merges, migrations, bounces | MATCH |
+| N10 | three reviews + a verify round, every confirmed finding fixed, sealed suite at the baseline; six more faults found live and fixed | MATCH (merged and deployed) |
 | N11 | graft and graphify scans and the failure-pattern checklist before the reviews | MATCH |
-| N12 | one live run analysed | NOT YET (after the deploy) |
-| N13 | fresh Claude Code, Codex and Hermes sessions given one plain-English request | NOT YET (after the deploy) |
+| N12 | Live runs 1–3 analysed line by line (numbers, links, delivery verdicts, sources) | MATCH |
+| N13 | Hermes: unaided, 22 min; Codex: after one approval setting, 5 min; Claude Code headless: blocked by an expired CLI login | PARTIAL (Claude Code owed after the owner signs the CLI in) |
 | D1 | `product_reports.owner_principal_id`; "not yours" and "no such report" are the same 404 | MATCH |
 | D2 | `tiktok_us` and `tiktok_cross_border` columns side by side | MATCH |
 | D3 | `returns_rate` 0.193 and `break_even_ad_cost_usd` | MATCH |
@@ -382,7 +399,12 @@ for TikTok Shop versus my own Shopify store, and how eBay and Amazon prices comp
 - Transitive impact: none. Every test the check names ran in the sealed run or the C11 rerun.
 
 ## Rejected claims
-- "The report is live": not until the merge, migrations 0067 + 0068 and the bounce; proven in the worktree and the sealed harness only.
+- "Every report gives margins": no. Live, a product with no relevant CJ listing (washable senior-dog pads) or too few Amazon
+  comparables (a splash-proof bowl) stays UNKNOWN, and the page says why; the engine never guesses.
+- "Any agent works out of the box": not quite. Hermes did; Codex needed `default_tools_approval_mode = "approve"` (now in every
+  setup text) and, on a ChatGPT login, GPT-6 Luna; Claude Code headless was not run (CLI login expired).
+- "The library always names products": no. On commerce-v1 (business books) the product turn gave marketing ideas or nothing for
+  pet products; the report now says so and the agents chose concrete products themselves.
 - "Reddit relevance is solved": no. The head-word title rule keeps 5–7 of 8 recorded threads per term and misses titles that name the
   product in other words ("Brush recs for my doodle?"); the page lists every excluded thread so a reader can see them.
 - "A US→US CJ quote proves US stock": no. CJ's stock-by-country came back empty; the page says so on every dropship offer.
@@ -392,7 +414,10 @@ for TikTok Shop versus my own Shopify store, and how eBay and Amazon prices comp
   orchestrator by design (see Incidents).
 
 ## Open contract gaps
-- The live gate (plan §5 gate 4) and N12 / N13: after the deploy, in the closing records.
+- N13 for Claude Code: run `claude -p` with the same request once the owner signs the `claude` CLI in again.
+- The library's product ideas depend on the library: commerce-v1 holds business books, no pet-market evidence.
+- Hermes copies a finished report into its own public hub (`~/.hermes/public-hub/`, which it linked at hub.kingsleylab.xyz): a Hermes
+  setting outside Polymath; Polymath's copy stays private.
 - The deviations above await the owner's approval; ADR-0023 is `proposed` until then.
 - eBay comparables need the owner's free developer keys (`EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET` in `.env`); without them eBay comes
   from the user's Exa reads (mostly non-US).
