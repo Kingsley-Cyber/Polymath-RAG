@@ -3756,11 +3756,11 @@
   "status": "ok"
  },
  "flows/chat-turn.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "688151cac6e238f1",
+  "generated": "2026-11-19",
+  "input_hash": "d0a0fcdc194e96ba",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3768,8 +3768,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-02",
-  "input_hash": "c83221e8d5119d32",
+  "generated": "2026-11-19",
+  "input_hash": "0474d93fb3fc224f",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -3804,8 +3804,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "e34d4b5fa8be54ee",
+  "generated": "2026-11-19",
+  "input_hash": "e88ef103b989cb7d",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4478,17 +4478,17 @@
   "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "20cbacf62d8ff8e2",
+  "generated": "2026-11-19",
+  "input_hash": "a1af097170102163",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
  "units/orchestrator/orchestrator/api/chat_retrieval.py.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-10-01",
-  "input_hash": "1145ea4e6d5d4d4b",
+  "generated": "2026-11-19",
+  "input_hash": "e88bd03df98e842c",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4529,11 +4529,11 @@
   "status": "ok"
  },
  "units/orchestrator/orchestrator/api/evidence_rows.py.md": {
-  "attempts": 1,
+  "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "198cc86b101aa442",
+  "generated": "2026-11-19",
+  "input_hash": "ffe3c6d555509c5d",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4550,8 +4550,8 @@
   "attempts": 2,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "316155e63cf447d1",
+  "generated": "2026-11-19",
+  "input_hash": "ac268841a11f6361",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4631,8 +4631,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-09-30",
-  "input_hash": "635bfc0c4d11909c",
+  "generated": "2026-11-19",
+  "input_hash": "6b01a51cfc4ff8ef",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -4640,8 +4640,8 @@
   "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-01",
-  "input_hash": "7bc78ad098ab4c14",
+  "generated": "2026-11-19",
+  "input_hash": "6e9239da35b0cdb3",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },
@@ -5744,11 +5744,11 @@
   "status": "ok"
  },
  "units/shared/polymath_shared/mcp_retrieval.py.md": {
-  "attempts": 2,
+  "attempts": 1,
   "dropped_anchors": 0,
   "dropped_verify": 0,
-  "generated": "2026-11-02",
-  "input_hash": "0c5ea7ffdb6d6c23",
+  "generated": "2026-11-19",
+  "input_hash": "51f8bb2182128f69",
   "model": "zai-coding-plan/glm-5.3",
   "status": "ok"
  },

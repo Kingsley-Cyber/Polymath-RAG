@@ -11,6 +11,8 @@ generation outside retrieval scoring and graph policy).
 from __future__ import annotations
 
 import os
+import re
+import unicodedata
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
@@ -207,12 +209,15 @@ def graph_expand_or_502(
     seed_entity_ids: list[str] | None = None,
     document_ids: list[str] | None = None,
     max_seeds: int | None = None,
+    fact_cap: int | None = None,
 ) -> list[dict]:
     """FAILURE-TRANSPARENCY-V1: one translation point from the typed
     graph-store failure to the typed HTTP failure. GRAPH_SUCCESS with
     zero relationships stays an empty list; a backend failure is 502.
     `max_seeds` (P1.e) narrows the resolved-seed cap below the D2 default
-    of 8 (a definitional GRAPH turn expands ≤ 2 seeds); None = 8."""
+    of 8 (a definitional GRAPH turn expands ≤ 2 seeds); None = 8.
+    `fact_cap` (FACT-QUERY-SIM-V1) widens the ranked path's 20-fact cap for a
+    caller that orders the facts itself and then keeps 20; None = 20."""
     from polymath_shared.stores import GraphBackendUnavailable
 
     try:
@@ -223,6 +228,7 @@ def graph_expand_or_502(
             seed_entity_ids=seed_entity_ids,
             document_ids=document_ids,
             max_seeds=max_seeds,
+            **({} if fact_cap is None else {"fact_cap": fact_cap}),
         )
     except GraphBackendUnavailable as exc:
         raise HTTPException(status_code=502, detail={
@@ -623,23 +629,121 @@ def _qdrant_search(query: str, corpus_ids: list[str], limit: int,
         client.close()
 
 
-def _entity_surfaces(query: str, result) -> list[str]:
+#: SEED-WORD-MATCH-V1: resolve graph seeds by whole folded words instead of substrings. Default OFF ⇒ the legacy
+#: `_surface_matches` rule and the legacy `(preferred, entity_id)` order, unchanged.
+SEED_WORD_MATCH_FLAG = "POLYMATH_GRAPH_SEED_WORD_MATCH"
+#: comma-separated terms that never seed while SEED-WORD-MATCH-V1 is on (owner-tuned per deployment; empty by default)
+SEED_STOP_TERMS_ENV = "POLYMATH_GRAPH_SEED_STOP_TERMS"
+_SEED_TERM_CAP = 12
+_WORD_RE = re.compile(r"[^\W_]+")
+
+
+def seed_word_match_enabled() -> bool:
+    return os.environ.get(SEED_WORD_MATCH_FLAG, "0") == "1"
+
+
+def _fold(text) -> str:
+    """Lower case without diacritics: "Jizō", "jizö" and "JIZO" all fold to "jizo" (NFKD, combining marks dropped)."""
+    s = str(text or "")
+    if s.isascii():
+        return s.lower()
+    return "".join(ch for ch in unicodedata.normalize("NFKD", s) if not unicodedata.combining(ch)).lower()
+
+
+def _match_words(text) -> tuple[str, ...]:
+    """The folded words of a surface or a term; "-", "_", spaces and punctuation all separate words, and a plural "s" on
+    a word longer than three letters is dropped ("hells" and "hell" compare equal)."""
+    return tuple(w[:-1] if len(w) > 3 and w.endswith("s") else w for w in _WORD_RE.findall(_fold(text)))
+
+
+def _words_match(s: tuple[str, ...], t: tuple[str, ...]) -> int:
+    """SEED-WORD-MATCH-V1 on two word tuples: 2 = the same words, 1 = one is a run of whole words inside the other (and
+    is longer than three letters in all, the seed terms' own minimum), 0 = no match. Never a substring of a word:
+    "ai" does not match "sai-no-kawara", and "sai-no-kawara" matches "sai no kawara"."""
+    if not s or not t:
+        return 0
+    if len(s) == len(t):
+        return 2 if s == t else 0
+    short, long_ = (s, t) if len(s) < len(t) else (t, s)
+    if sum(len(w) for w in short) <= 3 or short[0] not in long_:
+        return 0
+    n = len(short)
+    return 1 if any(long_[i:i + n] == short for i in range(len(long_) - n + 1)) else 0
+
+
+def _seed_stop_terms() -> frozenset[tuple[str, ...]]:
+    raw = os.environ.get(SEED_STOP_TERMS_ENV, "")
+    return frozenset(w for w in (_match_words(part) for part in raw.split(",")) if w)
+
+
+def _ordered_terms(text: str) -> list[str]:
+    """`tokens(text)` in order of first appearance (ties by the term). `tokens` returns a set, whose iteration order
+    follows the process's string hash seed: cutting it at a fixed length kept different terms in different processes."""
     from polymath_shared.retrieval import tokens
 
+    low = str(text or "").lower()
+
+    def first(term: str) -> int:
+        i = low.find(term)
+        while i != -1:
+            before = low[i - 1] if i else " "
+            end = i + len(term)
+            after = low[end] if end < len(low) else " "
+            if not (before.isascii() and before.isalnum()) and not (after.isascii() and after.isalnum()):
+                return i
+            i = low.find(term, i + 1)
+        return len(low)
+
+    return sorted(tokens(str(text or "")), key=lambda term: (first(term), term))
+
+
+def seed_surfaces(query: str, texts: list[str]) -> list[str]:
+    """At most 12 candidate seed terms: the question's terms (longer than 3 letters) first, then the terms (longer than
+    5) of at most ten selected passages — each text's terms in order of first appearance, so the cut at 12 keeps the same
+    terms in every process. With SEED-WORD-MATCH-V1 on, each text is folded before it is tokenized, so a name written
+    with a diacritic ("Jizō") yields its whole term ("jizo") instead of the ASCII fragment the tokenizer would keep."""
+    fold = seed_word_match_enabled()
     surfaces: list[str] = []
-    for term in tokens(query):
+    for term in _ordered_terms(_fold(query) if fold else query):
         if len(term) > 3:
             surfaces.append(term)
-    for child in result.selected_children[:10]:
-        for term in tokens(child.get("text", "")):
+    for text in list(texts or [])[:10]:
+        for term in _ordered_terms(_fold(text) if fold else text):
             if len(term) > 5:
                 surfaces.append(term)
-    return list(dict.fromkeys(surfaces))[:12]
+    return list(dict.fromkeys(surfaces))[:_SEED_TERM_CAP]
+
+
+def _entity_surfaces(query: str, result) -> list[str]:
+    return seed_surfaces(query, [child.get("text", "") for child in result.selected_children[:10]])
 
 
 def _surface_matches(surface: str, term: str) -> bool:
     s, t = surface.lower(), term.lower()
     return bool(t) and (t in s or s in t)
+
+
+def _word_matched_seeds(rows, surfaces: list[str], card_set: set) -> list[str]:
+    """SEED-WORD-MATCH-V1: the surface lane's seeds, most specific first — an entity attached to the retrieved chunks
+    before any other (the D2 rule, unchanged), the same words before a run of words, the earliest matching term (the
+    question's terms come first) before a later one, `entity_id` for ties."""
+    stop = _seed_stop_terms()
+    terms = [w for w in (_match_words(term) for term in surfaces) if w and w not in stop]
+    matched = []
+    for eid, surf, pref in rows:
+        if eid in card_set:
+            continue
+        words = _match_words(surf)
+        best, at = 0, 0
+        for i, term in enumerate(terms):
+            kind = _words_match(words, term)
+            if kind > best:
+                best, at = kind, i
+                if kind == 2:
+                    break
+        if best:
+            matched.append((not pref, -best, at, eid))
+    return [eid for _pref, _kind, _at, eid in sorted(matched)]
 
 
 #: D2 seed cap (8 seeds / 20 facts); `max_seeds` may only narrow it.
@@ -703,13 +807,15 @@ def _corpus_seed_ids(
         card_seeds = [eid for eid in dict.fromkeys(seed_entity_ids or []) if eid in eligible]
     else:
         card_seeds = sorted(eid for eid, _surf, _pref in rows if eid in card_set)
+    cap = _GRAPH_SEED_CAP if max_seeds is None else max(0, min(_GRAPH_SEED_CAP, int(max_seeds)))
+    if seed_word_match_enabled():
+        return (card_seeds + _word_matched_seeds(rows, surfaces, card_set))[:cap]
     matched = [
         (bool(pref), eid) for eid, surf, pref in rows
         if eid not in card_set
         and any(_surface_matches(surf, term) for term in surfaces)
     ]
     matched.sort(key=lambda x: (not x[0], x[1]))
-    cap = _GRAPH_SEED_CAP if max_seeds is None else max(0, min(_GRAPH_SEED_CAP, int(max_seeds)))
     return (card_seeds + [eid for _, eid in matched])[:cap]
 
 
@@ -764,6 +870,7 @@ def _neo4j_expand(
     seed_entity_ids: Optional[list[str]] = None,
     document_ids: Optional[list[str]] = None,
     max_seeds: Optional[int] = None,
+    fact_cap: int | None = None,
 ) -> list[dict]:
     """One-hop graph expansion (production, canonical bidirectional,
     corpus-authorized; document_ids narrows seeds and authorization to
@@ -775,7 +882,9 @@ def _neo4j_expand(
     eligible, never reverses or invents a relation. HIGH_MEDIUM
     allowlist, 8-seed / 20-fact caps, dedupe by fact_id, stable
     ORDER BY fact_id — or, with POLYMATH_GRAPH_FACT_RANK=1 (D1), the
-    authorized pool ranked by `rank_graph_facts` before the 20-fact cap.
+    authorized pool ranked by `rank_graph_facts` before the 20-fact cap
+    (`fact_cap` widens that cap, up to the ranked pool, for a caller that
+    orders the ranked facts itself; the legacy query keeps its LIMIT 20).
     Seeds are resolved from entities attached to
     in-scope evidence (D2); facts supported exclusively by another
     corpus are never returned (D2).
@@ -843,7 +952,8 @@ def _neo4j_expand(
                 # belt and braces: the Cypher filter is the authority,
                 # this can only ever be a no-op now.
                 rows = [r for r in rows if r["fact_id"] in authorized]
-            return rank_graph_facts(rows, ids, selected)[:_GRAPH_FACT_CAP] if ranked else rows
+            cap = _GRAPH_FACT_CAP if fact_cap is None else max(_GRAPH_FACT_CAP, min(_FACT_RANK_POOL, int(fact_cap)))
+            return rank_graph_facts(rows, ids, selected)[:cap] if ranked else rows
     except Exception as exc:
         # FAILURE-TRANSPARENCY-V1: a graph-store failure is typed and
         # loud — it must never masquerade as a valid zero-relationship

@@ -333,7 +333,8 @@ def build_evidence_rows(conn, response: dict, corpus_ids: list[str], *, limit: i
                               "claim_kind": kinds.get(fid)},
                      "claim_kind": kinds.get(fid),          # TYPED-CLAIMS-V1: friction | behavior | workaround | purchase_language | None
                      "document": {"source_name": doc.get("source_name"), "frontmatter": doc.get("frontmatter") or {}},
-                     "evidence": p[:5], "lanes": ["graph"], "score": 0.0})
+                     # FACT-QUERY-SIM-V1: the fact's similarity to the question when the turn scored it; else 0.0, as before
+                     "evidence": p[:5], "lanes": ["graph"], "score": round(float(f.get("query_similarity") or 0.0), 4)})
 
     # 5. explore: one entity hop into other documents
     if explore and facts:

@@ -19,7 +19,7 @@ AUTHORITY: `shared/polymath_shared/adapter/evidence_boundary.py:50` :: `NEED_FIE
 | `adapters/ecommerce/python/lived_world.py` | `adapters/ecommerce/python/lived_world.py:103` | 3/7 | `seed`, `seed_idea`, `query`, `topic` |
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:66` | 6/7 | `query` |
 | `orchestrator/orchestrator/api/corpus_plan.py` | `orchestrator/orchestrator/api/corpus_plan.py:66` | 3/7 | `question`, `seed_idea`, `topic`, `problem` |
-| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1977` | 3/7 | `seed`, `seed_idea`, `signal`, `problem` |
+| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1978` | 3/7 | `seed`, `seed_idea`, `signal`, `problem` |
 | `shared/polymath_shared/adapter/run_view.py` | `shared/polymath_shared/adapter/run_view.py:15` | 4/7 | `query`, `signal`, `problem` |
 | `shared/polymath_shared/product_search/service.py` | `shared/polymath_shared/product_search/service.py:79` | 3/7 | `question`, `seed_idea`, `signal`, `topic` |
 

@@ -2586,6 +2586,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-10-02-object-projection-redrive.md", "md", None),
     ("docs/wiki/work-log/2026-10-02-multi-hop-failover.md", "md", None),
     ("docs/wiki/work-log/2026-10-04-copy-on-hover.md", "md", None),
+    ("docs/wiki/work-log/2026-11-19-graph-seeds-and-search-scores.md", "md", None),
     ("docs/wiki/work-log/2026-10-29-retire-polymath-v33-databases.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
@@ -2660,6 +2661,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-09-25-k1b-scope-echo.md", "md", None),
     ("docs/wiki/work-log/2026-09-24-doc-steer-replay.md", "md", None),
     ("tests/determinism/test_graph_fact_rank.py", "py", None),
+    ("tests/determinism/test_graph_seeds_and_search_scores.py", "py", None),
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay.py", "py", None),
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay.json", "json", None),
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay_strict_seed.json", "json", None),

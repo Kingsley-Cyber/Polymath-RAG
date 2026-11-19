@@ -55,7 +55,16 @@ from polymath_shared.code.scope import scope_kwargs  # K1: pass a role scope onl
 
 def _selected_surfaces(query: str, evidence: list[dict]) -> list[str]:
     """Query + selected-evidence terms for seed-surface matching
-    (the qualified seed-resolution input convention)."""
+    (the qualified seed-resolution input convention). The one implementation is `retrieve.seed_surfaces`: each text's
+    terms in order of first appearance, so the cut at 12 is the same in every process."""
+    try:
+        from orchestrator.api.retrieve import seed_surfaces
+    except ImportError:
+        # merge → bounce window (the D1 lesson, 2026-09-25): an orchestrator started before this change keeps its old
+        # retrieve module in memory while this file is loaded fresh from disk; it serves the legacy rule until the bounce
+        seed_surfaces = None
+    if seed_surfaces is not None:
+        return seed_surfaces(query, [c.get("text") or "" for c in evidence[:10]])
     from polymath_shared.retrieval import tokens
 
     surfaces: list[str] = []

@@ -471,7 +471,9 @@ def shape_search(out: dict, max_evidence: int) -> dict:
     wildcard = shape_wildcard((out.get("retrieval") or {}).get("wildcard"))
     if wildcard:
         shaped["wildcard"] = wildcard
-    for key in ("evidence_rows_error", "latency_ms", "scope"):
+    # SEARCH-RERANK-SCORES-V1: `evidence_relevance` (how many rows the judge found relevant, and the verdict) rides along
+    # when the runtime sent it; absent otherwise
+    for key in ("evidence_rows_error", "evidence_relevance", "latency_ms", "scope"):
         if out.get(key) is not None:
             shaped[key] = out[key]
     deg = _degraded(out)

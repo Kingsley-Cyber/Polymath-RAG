@@ -1,118 +1,129 @@
 # unit: orchestrator/orchestrator/api/retrieve.py
-anchor: orchestrator/orchestrator/api/retrieve.py:1-882
+anchor: orchestrator/orchestrator/api/retrieve.py:1-991
 
 ## purpose
-POST `/retrieve` — the three-lane cross-domain retrieval route; returns the routing TRACE (document ranking with reasons, parent hits, child evidence, graph expansion) so the caller judges the mapping. Document routing is parallel and never a recall gate: a child hit survives even when its document scores zero. Answer generation lives outside this endpoint. — orchestrator/orchestrator/api/retrieve.py:1-10 [DERIVED]
+POST /retrieve: the three-lane cross-domain retrieval route. It returns the routing TRACE (document ranking with reasons, parent hits, child evidence, graph expansion); the caller judges the mapping, not just the answer (orchestrator/orchestrator/api/retrieve.py:1-9) [DERIVED]. Answer generation stays outside this endpoint (orchestrator/orchestrator/api/retrieve.py:8-9) [DERIVED]. Consumers: HTTP callers of POST /retrieve plus ten importing modules (FACTS.importers) [DERIVED].
 
 ## public surface
 
 | symbol | kind | signature (params -> return) | anchor | used by |
 |---|---|---|---|---|
-| `retrieve` | def (route handler) | async (req, request) -> dict; POST `/retrieve` | retrieve.py:860-881 | mounted on router; module imported by ask.py, chat_retrieval.py, compare_review.py, corpus_plan.py, deep_research.py, evidence.py, graph.py, ui.py, main.py (FACTS.importers) |
-| `RetrieveRequest` | class (BaseModel) | fields: `query`, `corpus_id`, `corpus_ids`, `workspace`, `all_authorized=False`, `limit=10`, `mode`, `latent`, `utility`, `evidence=False`, `explore=False`, `document_ids`, `scope`, `intent` | retrieve.py:92-119 | — |
-| `resolve_http_scope` | def | (conn, req) -> QueryScope | retrieve.py:164-200 | — |
-| `graph_expand_or_502` | def | (surfaces, corpus_ids, preferred_chunk_ids, seed_entity_ids=None, document_ids=None, max_seeds=None) -> list[dict] | retrieve.py:203-231 | — |
-| `single_corpus_or_422` | def | (scope, mode) -> str | retrieve.py:234-246 | — |
-| `retrieve_engine_flag` | def | (override=None) -> str | retrieve.py:249-257 | — |
-| `rank_graph_facts` | def | (rows: list[dict], seed_ids: list[str], selected_fact_ids) -> list[dict] | retrieve.py:64-89 | — |
-| `fact_rank_enabled` | def | () -> bool | retrieve.py:54-55 | — |
-| `document_filter` | def | (req) -> Optional[list[str]] | retrieve.py:155-161 | — |
-| `intent_or_422` | def | (req) -> str \| None | retrieve.py:126-135 | — |
+| retrieve | def (route POST /retrieve) | (req, request) -> JSON response | retrieve.py:970-991 | HTTP route; module mounted by main.py (importer) [DERIVED] |
+| RetrieveRequest | class | pydantic model: query, corpus_id, corpus_ids, workspace, all_authorized, limit, mode, latent, utility, evidence, explore, document_ids, scope, intent | retrieve.py:94-121 | request body of POST /retrieve [DERIVED] |
+| resolve_http_scope | def | (conn, req) -> QueryScope | retrieve.py:166-202 | importers (ask.py, evidence.py, graph.py, …) [INFERRED: FACTS lists module importers only] |
+| graph_expand_or_502 | def | (surfaces, corpus_ids, preferred_chunk_ids, seed_entity_ids, document_ids, max_seeds, fact_cap) -> list[dict] | retrieve.py:205-237 | — |
+| single_corpus_or_422 | def | (scope, mode) -> str | retrieve.py:240-252 | — |
+| retrieve_engine_flag | def | (override: str or None) -> "v1" or "v2" | retrieve.py:255-263 | — |
+| intent_or_422 | def | (req) -> str or None | retrieve.py:128-137 | — |
+| document_filter | def | (req) -> Optional[list[str]] | retrieve.py:157-163 | — |
+| rank_graph_facts | def | (rows, seed_ids, selected_fact_ids) -> list[dict] | retrieve.py:66-91 | — |
+| fact_rank_enabled | def | () -> bool | retrieve.py:56-57 | — |
+| seed_word_match_enabled | def | () -> bool | retrieve.py:641-642 | — |
+| _retrieve_impl | def (private core) | async (req: RetrieveRequest) -> dict | retrieve.py:275-472 | retrieve wrapper only [DERIVED] |
 
-Per-symbol importers are not in FACTS; only module-level importers are known (9 files, listed above).
+Module importers (FACTS): ask.py, chat_retrieval.py, compare_review.py, corpus_plan.py, deep_research.py, evidence.py, graph.py, product.py, ui.py, main.py [DERIVED].
 
 ## contracts
 
-**POST /retrieve — `retrieve` (860-881, FACTS) wrapping `_retrieve_impl` (269-466)**
-- in: `RetrieveRequest` body; blank `query` → 422 `"query is required"` — retrieve.py:270-272 [DERIVED]
-- pre: exactly one explicit scope (corpus_id / corpus_ids / workspace / all_authorized), never implicit-all — retrieve.py:164-188; `mode=EXPLORE` is rewritten to `{"mode": None, "explore": True, "evidence": True, "limit": max(int(req.limit or 12), 24)}` — retrieve.py:286-288; `document_ids` only on the default lane, else 422 — retrieve.py:293-299; `intent` only when `mode in INTENT_MODES` AND engine `v2` AND not `utility`, else 422 — retrieve.py:301-307 [DERIVED]
-- dispatch: FAST → `fast_retrieve(query, list(scope.corpus_ids), **scope_kwargs(role_scope))` (multi-corpus) — retrieve.py:308-311; HYBRID/GRAPH/WILDCARD → single corpus (313/327/344), v2 core `chat_retrieve_mode` when `retrieve_engine_flag() == "v2" and not req.utility` (317-320, 335-338, 348-351), else v1 `hybrid_fast_retrieve`/`graph_retrieve`/`wildcard_retrieve` (321-325, 339-341, 352-354); GNN → v2-only, else 422 — retrieve.py:356-368; default lane → `run_lanes` — retrieve.py:392-398 [DERIVED]
-- out: keys `query`, `document_lane`, `parent_lane`, `child_dense_lane`, `child_lexical_lane`, `selected_documents`, `child_evidence_count`, `child_evidence`, `graph_facts` — retrieve.py:440-447; `graph_fact_order = "ranked"` iff `fact_rank_enabled()` — retrieve.py:455-456; `document_ids` echo — retrieve.py:457-458; `evidence_rows` + `evidence_contract = "retrieve-evidence-rows-v1"` when `req.evidence or req.explore` — retrieve.py:459-465 [DERIVED]
-- post: wrapper records one query receipt after serving (QUERY-RECEIPTS-V1) — retrieve.py:860-881 (FACTS doc) [DERIVED]
+**retrieve / _retrieve_impl (POST /retrieve)**
+- in: `RetrieveRequest`; query must be non-blank or 422 "query is required" (retrieve.py:276-278) [DERIVED].
+- pre: exactly one explicit scope resolved before dispatch; missing scope = 422 `QUERY_SCOPE_REQUIRED`, never search-everything (retrieve.py:166-190) [DERIVED].
+- out (default lane): keys `document_lane`, `parent_lane`, `child_dense_lane`, `child_lexical_lane`, `selected_documents`, `child_evidence_count`, `child_evidence`, `graph_facts`; optional `graph_fact_order`, `document_ids`, `evidence_rows`, `evidence_contract` (retrieve.py:446-472) [DERIVED].
+- post (v2 engine path): byte-shape-identical contract `evidence/meta/query/selected_documents/selected_sections/trace` (retrieve.py:258-260) [DERIVED].
+- dispatch: mode=EXPLORE rewrites to default lane with `explore=True, evidence=True, limit=max(int(req.limit or 12), 24)` (retrieve.py:292-294) [DERIVED]; FAST fans out per corpus (retrieve.py:314-317) [DERIVED]; HYBRID/GRAPH/WILDCARD need one corpus and use `chat_retrieve_mode` when engine is v2 and not `utility`, else the v1 engines (retrieve.py:318-360) [DERIVED]; GNN exists only on v2 without `utility`, else 422 `gnn_requires_v2` (retrieve.py:362-374) [DERIVED].
+- post: QUERY-RECEIPTS-V1 — serve exactly as before, then record one receipt (retrieve.py:970, docstring) [DERIVED].
 
-**`resolve_http_scope`**: missing scope → 422 `QUERY_SCOPE_REQUIRED` — retrieve.py:183-188; unknown → 404 `QUERY_SCOPE_UNKNOWN` — retrieve.py:189-192; ValueError → 422 `QUERY_SCOPE_AMBIGUOUS` — retrieve.py:193-196; friends principals narrowed via `narrow_scope(scope)` — retrieve.py:197-200 [DERIVED]
+**resolve_http_scope**
+- in: conn + req fields `corpus_id`, `corpus_ids`, `workspace`, `all_authorized` (retrieve.py:179-184) [DERIVED].
+- out: exactly one resolved scope, narrowed by `narrow_scope` for a principal (retrieve.py:199-202) [DERIVED].
+- errors: 422 `QUERY_SCOPE_REQUIRED`, 404 `QUERY_SCOPE_UNKNOWN`, 422 `QUERY_SCOPE_AMBIGUOUS` (retrieve.py:185-198) [DERIVED].
 
-**`graph_expand_or_502`**: `GraphBackendUnavailable` → 502 `graph_backend_unavailable`; GRAPH_SUCCESS with zero relationships stays `[]`; `max_seeds` narrows the D2 default of 8, `None = 8` — retrieve.py:211-215, 227-231 [DERIVED]
+**graph_expand_or_502**
+- in: surfaces, corpus_ids, preferred_chunk_ids; optional seed_entity_ids, document_ids, max_seeds (None = 8), fact_cap (None = 20) (retrieve.py:205-220) [DERIVED].
+- out: list of fact dicts; zero relationships stays `[]` (retrieve.py:214-216) [DERIVED].
+- errors: `GraphBackendUnavailable` -> 502 `graph_backend_unavailable` (retrieve.py:233-237) [DERIVED].
 
-**`retrieve_engine_flag`**: returns only `"v1"` or `"v2"`; any other value (incl. blank after strip/lower) → `"v2"`; default from env `"v2"` — retrieve.py:249-257 [DERIVED]
+**single_corpus_or_422**
+- pre: `len(scope.corpus_ids) == 1` else 422 `mode_requires_single_corpus`; fails closed, never silently narrowed (retrieve.py:246-252) [DERIVED].
 
-**`rank_graph_facts`**: deterministic, weight-free order — (1) facts with evidence in selected chunks first, (2) specific predicate before the ontology last resort (`RELATED_TO`), (3) seeds take turns, (4) `fact_id` ties — retrieve.py:64-72 [DERIVED]
+**retrieve_engine_flag**
+- out: `"v1"` or `"v2"`; anything else folds to `"v2"`; default `POLYMATH_RETRIEVE_ENGINE="v2"` (retrieve.py:262-263) [DERIVED].
 
-**`_corpus_seed_ids`**: seeds only from corpus-authorized eligible entities with evidence; card-resolved ids seed first; `MENTION_ONLY` never seeds; `matched.sort(key=lambda x: (not x[0], x[1]))` for determinism; cap = `_GRAPH_SEED_CAP` (8), `max_seeds` may only narrow — retrieve.py:651-669, 711-713 [DERIVED]
+**intent_or_422**
+- out: canonical upper-cased intent or None when blank; unknown = 422 `unknown_intent` (retrieve.py:129-137) [DERIVED].
+- honoured only when `mode in INTENT_MODES` AND engine v2 AND not `req.utility`; else 422 `intent_unsupported` (retrieve.py:308-313) [DERIVED].
 
-**`_authorized_fact_ids`**: a fact is authorized when supported by evidence in a scoped corpus; facts with no evidence anywhere are intentionally kept — retrieve.py:717-725, 740 [DERIVED]
+**document_filter**
+- out: None when absent/empty, else de-duplicated non-blank ids in request order; honoured only by default lane and EXPLORE, other modes 422 `document_filter_unsupported` (retrieve.py:157-163, 299-305) [DERIVED].
 
-**`_qdrant_search`**: queries only active-contract collections of the resolved corpora, filter `representation_kind="routing_child"` + `corpus_id` (+ optional `doc_id` payload filter applied before `limit`) — retrieve.py:545-560, 583-596 [DERIVED]
+**rank_graph_facts**
+- out order: (1) facts with evidence in selected chunks, (2) specific predicate before `RELATED_TO`, (3) seeds take turns, (4) `fact_id` ties; deterministic and weight-free (retrieve.py:67-74) [DERIVED].
 
 ## effect surface
 
 | effect | detail | anchor |
 |---|---|---|
-| Postgres read | `chunks`, `documents`, `entities`, `evidence`, `facts`, `retrieval_summaries` (FACTS.tables_read; SQL at 484-488, 502-514, 522-529, 676-689, 732-738) | retrieve.py:484-738 [DERIVED] |
-| Postgres write | none (FACTS.tables_written = []) | FACTS [DERIVED] |
-| Qdrant | `query_points` on collections with prefix `polymath_` + suffix `_{contract_id}` ∩ resolved corpora; client `timeout=30` | retrieve.py:544-560, 599-604 [DERIVED] |
-| Network | `EmbedderClient` embed of the query; Neo4j one-hop expand via `_neo4j_expand`; rerank service `apply_rerank` | retrieve.py:566-573, 759-856 (FACTS), 414-421 [DERIVED] |
-| Env | `POLYMATH_GRAPH_FACT_RANK` = `'0'`; `POLYMATH_RETRIEVE_ENGINE` = `'v2'` | retrieve.py:55, 256 (FACTS) [DERIVED] |
-| Env (comment only) | `POLYMATH_G3_RERANKER=1` — actual gate lives in `polymath_shared.rerank.apply_rerank`, not read here | retrieve.py:409-413 [DERIVED] |
+| Postgres read | chunks, documents, entities, evidence, facts, retrieval_summaries | FACTS.tables_read; SQL at retrieve.py:508-519, 528-535 |
+| Postgres write | none | FACTS.tables_written (empty) |
+| Qdrant | only collections named `polymath_*` ending `_{contract_id}` of the ACTIVE contract, restricted to resolved corpora; payload filter `representation_kind="routing_child"` + `corpus_id` MatchAny (+ `doc_id` when filtered); client timeout 30 | retrieve.py:551-600 |
+| Neo4j | one-hop expansion via `_neo4j_expand` (canonical bidirectional) | retrieve.py:865-966 (FACTS symbol doc); import `polymath_shared.stores.neo4j_driver` in FACTS.imports |
+| Network | embedder (EmbedderClient, wake-on-query), reranker (`apply_rerank`) | retrieve.py:570-579, 424-431 |
+| Env | `POLYMATH_GRAPH_FACT_RANK` = `'0'`; `POLYMATH_GRAPH_SEED_WORD_MATCH` = `'0'`; `POLYMATH_RETRIEVE_ENGINE` = `'v2'`; `POLYMATH_GRAPH_SEED_STOP_TERMS` = `''` | FACTS.env; retrieve.py:57, 642, 262, 675 |
+| Receipts | one query receipt per request via `record_query_receipt` | retrieve.py:970 (docstring); FACTS.imports |
 
 ## invariants
-
-INVARIANT: resolved seed count ≤ `_GRAPH_SEED_CAP` = 8; `max_seeds` only narrows (`max(0, min(_GRAPH_SEED_CAP, int(max_seeds)))`) — retrieve.py:646, 712-713 [DERIVED]
-  fails-if: widening past 8 changes the D2 expansion budget and hop-1 fact mix.
-INVARIANT: HYBRID/GRAPH/WILDCARD/GNN run on exactly 1 corpus (`len(scope.corpus_ids) != 1` → 422) — retrieve.py:240-245, 313, 327, 344, 358 [DERIVED]
-  fails-if: wider scope fails closed rather than silently narrowing.
-INVARIANT: Qdrant targets ⊆ `{qdrant_collection_name(cid, contract.contract_id) for cid in corpus_ids}` — retrieve.py:550-560 [DERIVED]
-  fails-if: other contracts' collections have different vector dimensions — retrieve.py:546-548.
-INVARIANT: child dense lane filters `representation_kind == "routing_child"` — retrieve.py:585-586 [DERIVED]
-  fails-if: unfiltered lane lets entity cards/procedures compete as empty-chunk_id junk rows — retrieve.py:577-582.
-INVARIANT: rerank only reorders; on `RerankUnavailable` the fusion-order candidates survive unchanged — retrieve.py:409-425 [DERIVED]
-  fails-if: failing the query on a cold reranker would destroy recall for no ranking gain.
-INVARIANT: unfiltered SQL is byte-identical to the pre-filter statement (empty clause when no filter) — retrieve.py:469-475 [DERIVED]
-  fails-if: default-path drift breaks DOCUMENT-SCOPED-RETRIEVE-V1 parity.
-INVARIANT: evidence-less facts stay authorized (kept in `in_scope` handling) — retrieve.py:740, 722-725 [DERIVED]
-  fails-if: silently hiding them removes the loud R3a assembly failure.
-INVARIANT: `"graph_fact_order": "ranked"` present iff `fact_rank_enabled()` — retrieve.py:455-456 [DERIVED]
-  fails-if: clients cannot distinguish ranked facts from the legacy `fact_id` window (45-46).
+INVARIANT: HYBRID/GRAPH/WILDCARD resolved corpus count == 1 (else 422); FAST exempt — retrieve.py:246-252, 314-317 [DERIVED]
+  fails-if: a wider scope either errors (HYBRID/GRAPH) or, if the gate were dropped, engines would scan cross-corpus in memory.
+INVARIANT: intent honoured ⇔ (mode ∈ INTENT_MODES) ∧ (engine == "v2") ∧ (not req.utility) — retrieve.py:308, 125 [DERIVED]
+  fails-if: an intent silently no-ops on a path that cannot apply its policy.
+INVARIANT: `_GRAPH_FACT_CAP` (20) == default `fact_cap` (None = 20) — retrieve.py:53, 219-220 [DERIVED]
+  fails-if: the two caps drift and the ranked path returns a different fact count than callers expect.
+INVARIANT: `max_seeds` None == `_GRAPH_SEED_CAP` == 8 — retrieve.py:217-218, 750 [DERIVED]
+  fails-if: seed cap drift changes graph expansion breadth between callers.
+INVARIANT: `_FACT_RANK_POOL` (500) > expected hop-1 facts per 8 seeds (~1 edge per entity) — retrieve.py:50-52 [DERIVED]
+  fails-if: the ranked window truncates before ranking, restoring the arbitrary `fact_id` pick.
+INVARIANT: `graph_fact_order` key present ⇔ `fact_rank_enabled()` — retrieve.py:461-462 [DERIVED]
+  fails-if: consumers cannot tell ranked from legacy fact order.
+INVARIANT: child dense lane filters `representation_kind == "routing_child"` — retrieve.py:590-592 [DERIVED]
+  fails-if: entity cards/procedures compete in the child lane and surface as empty-chunk_id junk rows.
+INVARIANT: unfiltered SQL is byte-identical to the pre-filter path (`_document_clause` returns `""` when no filter) — retrieve.py:479-481, 488-494 [DERIVED]
+  fails-if: a no-op change in plan or results breaks the DOCUMENT-SCOPED-RETRIEVE-V1 parity claim.
 
 ## determinism & idempotency
-determinism: NONDETERMINISTIC (db reads via `tx()`, Qdrant `query_points` — retrieve.py:599-604; embedder network call — retrieve.py:566-573; Neo4j expand — retrieve.py:759-856; env flags — retrieve.py:55, 256; reranker availability — retrieve.py:422-425). Internal orderings are deterministic: `rank_graph_facts` lexicographic — retrieve.py:65-72; seed ties by `entity_id` — retrieve.py:711. [DERIVED]
-idempotency: SAFE for retrieval output (no table writes; FACTS.tables_written = []); each call does record one query receipt (QUERY-RECEIPTS-V1 wrapper) — retrieve.py:860-881 (FACTS) [DERIVED]
+determinism: NONDETERMINISTIC (env flags retrieve.py:57, 262, 642, 675; db reads retrieve.py:484-541; Qdrant/Neo4j/embedder network retrieve.py:544-629, 865-966). `rank_graph_facts` itself is deterministic lexicographic (retrieve.py:67-74); `_ordered_terms` removes set-iteration nondeterminism from `tokens` (retrieve.py:680-681) [DERIVED].
+idempotency: SAFE — no tables written (FACTS.tables_written empty); each request only reads and records one receipt [DERIVED].
 
 ## failure behaviour
-
-| site | behaviour | anchor |
-|---|---|---|
-| `_qdrant_search` outer handler | SWALLOWED: `except Exception: return []` — any Qdrant/embedder failure yields an empty child dense lane, caller sees no error | retrieve.py:619-621 (FACTS line 620) [DERIVED] |
-| `_qdrant_search` per collection | SWALLOWED: `except Exception: continue` — one broken collection never kills the lane | retrieve.py:606-607 [DERIVED] |
-| `_neo4j_expand` | handled Exception (importfrom, raise) — tail not shown in excerpt | retrieve.py:847 (FACTS) [DERIVED] |
-| `retrieve` wrapper | handled Exception (assign, expr, raise) — tail not shown in excerpt | retrieve.py:870 (FACTS) [DERIVED] |
-| rerank | `RerankUnavailable` → degrade to fusion order; `_RERANK_DEGRADED.set(str(exc)[:300])` | retrieve.py:422-425 [DERIVED] |
-| graph backend | `GraphBackendUnavailable` → 502 `graph_backend_unavailable` | retrieve.py:227-231 [DERIVED] |
-
-Typed codes raised: 422 `"query is required"` (272), 422 `QUERY_SCOPE_REQUIRED` (185), 404 `QUERY_SCOPE_UNKNOWN` (191), 422 `QUERY_SCOPE_AMBIGUOUS` (195), 422 `invalid_scope` (265), 422 `unknown_intent` (134), 422 `intent_unsupported` (304), 422 `document_filter_unsupported` (296), 422 `mode_requires_single_corpus` (242), 422 `gnn_requires_v2` (364), 502 `graph_backend_unavailable` (229). [DERIVED]
+- `except Exception: return []` — the whole Qdrant child search swallows any failure; the caller sees an empty dense lane with no signal (retrieve.py:626-627, FACTS.fallbacks) [DERIVED].
+- `except Exception: continue` — one broken Qdrant collection never kills the lane; its hits are just missing (retrieve.py:612-613, FACTS.fallbacks) [DERIVED].
+- `GraphBackendUnavailable` — handled then raised for translation to 502 (retrieve.py:957 per FACTS.fallbacks; 233-237) [DERIVED].
+- receipt-recording failure — handled (assign, expr, raise) inside the wrapper (retrieve.py:980 per FACTS.fallbacks) [DERIVED].
+- `RerankUnavailable` — degrades to fusion order (same candidates, same recall, reorder only) and sets `_RERANK_DEGRADED`; never fails the query (retrieve.py:424-431) [DERIVED].
+- typed HTTP errors: 422 `QUERY_SCOPE_REQUIRED`, 404 `QUERY_SCOPE_UNKNOWN`, 422 `QUERY_SCOPE_AMBIGUOUS`, 422 `invalid_scope`, 422 "query is required", 422 `mode_requires_single_corpus`, 422 `document_filter_unsupported`, 422 `unknown_intent`, 422 `intent_unsupported`, 422 `gnn_requires_v2`, 502 `graph_backend_unavailable` (retrieve.py:135-371, 234-237) [DERIVED].
 
 ## dumb-code flags
-- `max(int(req.limit or 12), 24)`: the `12` fallback disagrees with the model default `limit: int = 10` and only fires when `limit` is falsy; `24` is the EXPLORE floor — retrieve.py:287-288 vs 98 [DERIVED]
-- `HIGH_MEDIUM_PREDICATES` stores both cases of the same predicate: `"causes"`/`"CAUSES"`, `"is_a"`/`"IS_A"`, `"part_of"`/`"PART_OF"`, `"located_in"`/`"LOCATED_IN"`, `"uses"`/`"USES"` — retrieve.py:31-43; no use visible in lines 1-747, so any consumer is in the invisible tail (`_neo4j_expand` 759-856) [INFERRED: constant defined but unreferenced in the shown half]
-- `_FACT_RANK_POOL = 500` and `_GRAPH_FACT_CAP = 20` are unreferenced in the visible source; presumably consumed by `_neo4j_expand` (759-856, not shown) — retrieve.py:50-51 [INFERRED: no visible reader in lines 1-747]
-- `POLYMATH_G3_RERANKER=1` named only in a comment; the gate is inside `polymath_shared.rerank.apply_rerank` — retrieve.py:411, 414 [DERIVED]
-- `_RERANK_DEGRADED` is `fast.py` module state mutated here — retrieve.py:416, 423 [DERIVED]
+- `HIGH_MEDIUM_PREDICATES` mixes lower-case and upper-case spellings of the same predicates: `"causes"`/`"CAUSES"`, `"is_a"`/`"IS_A"`, `"part_of"`/`"PART_OF"`, `"located_in"`/`"LOCATED_IN"` (retrieve.py:33-45) [DERIVED].
+- `"v2"` default stated three times: env default, `or "v2"`, and the final `else "v2"` (retrieve.py:262-263) [DERIVED].
+- cap 20 duplicated: constant `_GRAPH_FACT_CAP` and the docstring "20-fact cap"/"None = 20" in `graph_expand_or_502` (retrieve.py:53, 219-220) [DERIVED].
+- magic numbers in EXPLORE rewrite: `12` and `24` inline (retrieve.py:293-294) [DERIVED].
+- magic number `10` in `[c["chunk_id"] for c in result.selected_children[:10]]` (retrieve.py:410) [DERIVED].
+- plural-"s" strip only for words longer than three letters (`"hells"` -> `"hell"`), an asymmetric token rule (retrieve.py:654-656) [DERIVED].
+- legacy branch kept: default OFF `POLYMATH_GRAPH_FACT_RANK` preserves `ORDER BY fact_id LIMIT 20` (retrieve.py:47-48) [DERIVED].
 
 ## refactor notes
-- Blast radius: 9 modules import this file (ask.py, chat_retrieval.py, compare_review.py, corpus_plan.py, deep_research.py, evidence.py, graph.py, ui.py, main.py — FACTS.importers); renaming any public symbol or the response shape touches all of them.
-- Response keys (440-447) plus optional `graph_fact_order`/`document_ids`/`evidence_rows`/`evidence_contract` (455-465) are the external contract; v1/v2 output is claimed byte-shape-identical (parity-proven, same top-level keys evidence/meta/query/selected_documents/selected_sections/trace) and compare_review.py calls `chat_retrieve_mode` output "the /retrieve contract" — retrieve.py:250-255, 328-333, 440-465 [DERIVED]
-- Contract literals that must not drift: `"retrieve-evidence-rows-v1"` — retrieve.py:465; `"ranked"` — retrieve.py:456 [DERIVED]
-- Parent summary authority is `COALESCE(rs.summary_text, c.summary)` gated on `rs.active AND rs.kind = 'section_retrieval_summary'` (audit F5, ONE-SUMMARY-AUTHORITY) — retrieve.py:503-510; reordering this join changes which text scores.
-- `scope_kwargs(role_scope)` (K1) is threaded into every engine dispatch: FAST 311, HYBRID 320/325, GRAPH 338/341, WILDCARD 351/354, GNN 368 — dropping any silently broadens the role scope. [DERIVED]
-- The two swallowed handlers (606-607, 619-621) are deliberate resilience; converting them to raises changes lane-failure semantics for every caller. [DERIVED]
+- Ten modules import this file (ask.py, chat_retrieval.py, compare_review.py, corpus_plan.py, deep_research.py, evidence.py, graph.py, product.py, ui.py, main.py — FACTS.importers); changing public helper signatures ripples through all of them [DERIVED].
+- The v2 response contract (top-level keys `evidence/meta/query/selected_documents/selected_sections/trace`) is parity-proven; compare_review.py calls `chat_retrieve_mode`'s output "the /retrieve contract" (retrieve.py:258-260, 336-339) [DERIVED]. Renaming keys breaks /chat and /compare consumers.
+- LEGACY is the frozen lane route retained for G1/G2 golden contracts (retrieve.py:284-286) [DERIVED]. Do not fold it into the mode dispatch.
+- FAST no longer passes through `single_corpus_or_422` (multi-corpus fan-out, audit F8) (retrieve.py:242-245, 314-317) [DERIVED].
+- `_fetch_parents` authority: `retrieval_summaries` ACTIVE rows win, `chunks.summary` is the fallback (ONE-SUMMARY-AUTHORITY, audit F5) (retrieve.py:499-505, 508-515) [DERIVED]. Changing the COALESCE order reintroduces summary drift.
+- Any change to the default lane must keep unfiltered statements byte-identical (retrieve.py:479-481) [DERIVED].
 
 ## VERIFY
 ```verify
-grep -Fq 'POLYMATH_GRAPH_FACT_RANK' orchestrator/orchestrator/api/retrieve.py
-grep -Fq 'match=MatchValue(value="routing_child")' orchestrator/orchestrator/api/retrieve.py
-grep -Fq 'cap = _GRAPH_SEED_CAP if max_seeds is None else max(0, min(_GRAPH_SEED_CAP, int(max_seeds)))' orchestrator/orchestrator/api/retrieve.py
-grep -Fq '"error_code": "gnn_requires_v2",' orchestrator/orchestrator/api/retrieve.py
-grep -Fq 'COALESCE(rs.summary_text, c.summary) AS summary' orchestrator/orchestrator/api/retrieve.py
+grep -Fq 'FACT_RANK_FLAG = "POLYMATH_GRAPH_FACT_RANK"' orchestrator/orchestrator/api/retrieve.py
+grep -Fq 'POLYMATH_RETRIEVE_ENGINE' orchestrator/orchestrator/api/retrieve.py
+grep -Fq 'mode_requires_single_corpus' orchestrator/orchestrator/api/retrieve.py
+grep -Fq 'routing_child' orchestrator/orchestrator/api/retrieve.py
+test "$(grep -c -F 'HTTPException(status_code=422' orchestrator/orchestrator/api/retrieve.py)" -ge 8
 ! grep -Fq 'INSERT INTO' orchestrator/orchestrator/api/retrieve.py
-test "$(grep -c -F 'HTTPException' orchestrator/orchestrator/api/retrieve.py)" -ge 10
 ```

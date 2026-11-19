@@ -18,9 +18,10 @@ AUTHORITY: `shared/polymath_shared/adapter/service.py:255` :: `RESERVED_BESIDE` 
 | `adapters/ecommerce/python/governed_run.py` | `adapters/ecommerce/python/governed_run.py:34` | 5/6 | `last_rejection` |
 | `adapters/ecommerce/python/intelligence.py` | `adapters/ecommerce/python/intelligence.py:200` | 3/6 | `last_rejection`, `materials`, `step` |
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:60` | 5/6 | `last_rejection` |
+| `orchestrator/orchestrator/api/chat_retrieval.py` | `orchestrator/orchestrator/api/chat_retrieval.py:286` | 3/6 | `last_rejection`, `materials`, `step` |
 | `orchestrator/orchestrator/api/corpus_plan.py` | `orchestrator/orchestrator/api/corpus_plan.py:75` | 3/6 | `last_rejection`, `materials`, `step` |
 | `orchestrator/orchestrator/api/deep_research.py` | `orchestrator/orchestrator/api/deep_research.py:156` | 3/6 | `last_rejection`, `materials`, `step` |
-| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:132` | 4/6 | `last_rejection`, `materials` |
+| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:133` | 4/6 | `last_rejection`, `materials` |
 | `orchestrator/orchestrator/mcp_server.py` | `orchestrator/orchestrator/mcp_server.py:104` | 3/6 | `last_rejection`, `materials`, `step` |
 | `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:124` | 3/6 | `evidence`, `last_rejection`, `materials` |
 | `shared/polymath_shared/adapter/dossier.py` | `shared/polymath_shared/adapter/dossier.py:81` | 4/6 | `last_rejection`, `materials` |

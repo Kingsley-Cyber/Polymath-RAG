@@ -22,9 +22,10 @@ AUTHORITY: `shared/polymath_shared/product_search/report_store.py:69` :: `_UPLOA
 | `adapters/ecommerce/python/report.py` | `adapters/ecommerce/python/report.py:60` | 5/11 | `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `refused` |
 | `adapters/ecommerce/python/unit_economics.py` | `adapters/ecommerce/python/unit_economics.py:236` | 4/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `refused` |
 | `mcp_server/polymath_mcp.py` | `mcp_server/polymath_mcp.py:161` | 4/11 | `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
+| `orchestrator/orchestrator/api/chat_retrieval.py` | `orchestrator/orchestrator/api/chat_retrieval.py:286` | 3/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
 | `orchestrator/orchestrator/api/deep_research.py` | `orchestrator/orchestrator/api/deep_research.py:200` | 3/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
 | `orchestrator/orchestrator/api/product_report.py` | `orchestrator/orchestrator/api/product_report.py:199` | 10/11 | `received_at` |
-| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:132` | 4/11 | `report_id`, `packet_id`, `round`, `source`, `received_at`, `parsed`, `refused` |
+| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:133` | 4/11 | `report_id`, `packet_id`, `round`, `source`, `received_at`, `parsed`, `refused` |
 | `orchestrator/orchestrator/mcp_server.py` | `orchestrator/orchestrator/mcp_server.py:104` | 4/11 | `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed`, `refused` |
 | `shared/polymath_shared/acquisition/agent_reach.py` | `shared/polymath_shared/acquisition/agent_reach.py:124` | 4/11 | `report_id`, `packet_id`, `round`, `received_at`, `bytes`, `sha256`, `parsed` |
 | `shared/polymath_shared/acquisition/opencli.py` | `shared/polymath_shared/acquisition/opencli.py:246` | 3/11 | `report_id`, `packet_id`, `round`, `source`, `received_at`, `bytes`, `sha256`, `refused` |

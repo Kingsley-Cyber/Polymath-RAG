@@ -35,6 +35,11 @@ historical, never an instruction.
 - Worktrees `../pmv4-product-search` and `../pmv4-product-report` hold the merged branches (removable).
 - A temporary friend principal `prn_report_gate` was created for the live gate and revoked (2026-11-02T20:33:36Z).
 
+- 2026-11-19: GRAPH-SEEDS-AND-SEARCH-SCORES-V1 (register 11.577) merged on top: graph seed terms now keep the same 12 terms in
+  every process (always on); three new flags, all off — `POLYMATH_GRAPH_SEED_WORD_MATCH`, `POLYMATH_GRAPH_FACT_QUERY_SIM`,
+  `POLYMATH_SEARCH_RERANK_SCORES`. Each flag waits for a gold-set replay with the flag off and on before the owner sets it
+  (work-log `2026-11-19-graph-seeds-and-search-scores.md`, Open contract gaps).
+
 ### Proof Status
 - Sealed CI 4,871 tests = the 17 baseline failures only; after the live-run fixes the affected suites passed (865, 455, 130); engine
   648/648; UI 245 passed; code wiki 2,412/2,412. LIVE: owner and friend reports through the deployed routes and Server A; Hermes

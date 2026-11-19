@@ -14,8 +14,8 @@ AUTHORITY: `shared/polymath_shared/adapter/evidence_boundary.py:44` :: `BOUNDARY
 |---|---|---|---|
 | `frontend-v2/src/lib/contracts.ts` | `frontend-v2/src/lib/contracts.ts:196` | 4/4 | — |
 | `orchestrator/orchestrator/api/compare_review.py` | `orchestrator/orchestrator/api/compare_review.py:37` | 4/4 | — |
-| `orchestrator/orchestrator/api/retrieve.py` | `orchestrator/orchestrator/api/retrieve.py:123` | 3/4 | `FAST` |
-| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1356` | 4/4 | — |
+| `orchestrator/orchestrator/api/retrieve.py` | `orchestrator/orchestrator/api/retrieve.py:125` | 3/4 | `FAST` |
+| `orchestrator/orchestrator/api/ui.py` | `orchestrator/orchestrator/api/ui.py:1357` | 4/4 | — |
 | `shared/polymath_shared/mcp_retrieval.py` | `shared/polymath_shared/mcp_retrieval.py:34` | 4/4 | — |
 | `shared/polymath_shared/retrieval_modes.py` | `shared/polymath_shared/retrieval_modes.py:19` | 4/4 | — |
 | `shared/polymath_shared/skeleton_routes.py` | `shared/polymath_shared/skeleton_routes.py:57` | 4/4 | — |

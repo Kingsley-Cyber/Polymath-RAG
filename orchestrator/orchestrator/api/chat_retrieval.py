@@ -39,6 +39,7 @@ the turn's pool) — never through the result dict.
 """
 from __future__ import annotations
 
+import math
 import os
 import re
 import time
@@ -199,6 +200,7 @@ from polymath_shared.settings import get_settings
 from orchestrator.api.fast import (
     _RERANK_DEGRADED,
     FastSearcher,
+    _await_embedder,
     _begin_retrieval,
     _corpus_collections,
     _embed_queries,
@@ -222,6 +224,90 @@ except ImportError:
     # turns). Until the bounce the old process serves the legacy order, so the receipt says so.
     def fact_rank_enabled() -> bool:
         return False
+
+#: FACT-QUERY-SIM-V1: order the hop-1 facts by their similarity to the question — one embedder request per GRAPH turn, no
+#: LLM. Default OFF ⇒ the resolver's order and its 20 facts, unchanged, and no extra request.
+FACT_QUERY_SIM_FLAG = "POLYMATH_GRAPH_FACT_QUERY_SIM"
+#: optional cosine floor: a fact below it that this turn's evidence does not attest is dropped. Unset ⇒ nothing is dropped.
+#: No value has been measured for this embedder — calibrate on a gold set before setting one.
+FACT_SIM_FLOOR_ENV = "POLYMATH_GRAPH_FACT_SIM_FLOOR"
+#: the facts scored per turn: ONE embedder request (the sidecar's wire cap is 32 texts)
+_FACT_SIM_POOL = 32
+
+
+def fact_query_sim_enabled() -> bool:
+    return os.environ.get(FACT_QUERY_SIM_FLAG, "0") == "1"
+
+
+def _fact_sim_floor() -> float | None:
+    raw = os.environ.get(FACT_SIM_FLOOR_ENV, "").strip()
+    try:
+        value = float(raw) if raw else None
+    except ValueError:
+        return None
+    return value if value is not None and math.isfinite(value) else None
+
+
+def fact_sentence(fact: dict) -> str:
+    """The text a fact is scored on: "emma-ō located in buddhist hells"."""
+    predicate = str(fact.get("predicate") or "").replace("_", " ").lower()
+    return " ".join(part for part in (str(fact.get("subject") or ""), predicate, str(fact.get("object") or "")) if part)
+
+
+def _cosine(a, b) -> float | None:
+    if not a or not b or len(a) != len(b):
+        return None
+    dot = sum(x * y for x, y in zip(a, b))
+    norm = math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b))
+    value = dot / norm if norm else None
+    return value if value is not None and math.isfinite(value) else None
+
+
+def _embed_fact_sentences(texts: list[str]) -> list[list[float]]:
+    """ONE embedder request, document side (no query prefix): the question's vector is the query side of the pair."""
+    from polymath_shared.clients import EmbedderClient
+
+    client = EmbedderClient(priority="interactive")
+    try:
+        _await_embedder(client)
+        client.verify_pin()
+        return list(client.embed(list(texts), "child_chunk")["vectors"])
+    finally:
+        client.close()
+
+
+def order_facts_by_query_similarity(facts: list[dict], qvec, evidence_chunk_ids, *, embed: Callable,
+                                    floor: float | None = None, cap: int = GRAPH_MAX_FACTS) -> tuple[list[dict], dict]:
+    """FACT-QUERY-SIM-V1 (pure given `embed`): score the first `_FACT_SIM_POOL` facts against the question's vector and
+    return (the kept facts, a receipt). Order: a fact whose proving chunk is in this turn's evidence first (the answer can
+    cite it), then the higher similarity, then the resolver's order. With a `floor`, a fact below it that the evidence
+    does not attest is dropped; an attested fact is never dropped. Each scored fact gains `query_similarity`.
+    Fail-open: any failure to score returns the resolver's first `cap` facts untouched and says so in the receipt."""
+    receipt: dict = {"status": "ok", "pool": min(len(facts), _FACT_SIM_POOL), "floor": floor, "dropped": 0}
+    pool = [dict(f) for f in facts[:_FACT_SIM_POOL]]
+    if not pool:
+        return [], receipt
+    try:
+        vectors = list(embed([fact_sentence(f) for f in pool]))
+        scores = [_cosine(qvec, v) for v in vectors]
+        if len(scores) != len(pool) or any(s is None for s in scores):
+            raise ValueError("a fact vector is missing or does not match the question's vector")
+    except Exception as exc:  # noqa: BLE001 — ordering is an add-on; the resolver's facts already stand
+        receipt["status"] = f"degraded:{type(exc).__name__}"
+        return [dict(f) for f in facts[:cap]], receipt
+    attested = {str(c) for c in (evidence_chunk_ids or []) if c}
+    keyed = []
+    for i, (fact, score) in enumerate(zip(pool, scores)):
+        fact["query_similarity"] = round(float(score), 4)
+        on_page = str(fact.get("chunk_id") or "") in attested
+        if floor is not None and not on_page and score < floor:
+            receipt["dropped"] += 1
+            continue
+        keyed.append(((0 if on_page else 1, -score, i), fact))
+    kept = [fact for _key, fact in sorted(keyed, key=lambda kf: kf[0])][:cap]
+    receipt["kept"] = len(kept)
+    return kept, receipt
+
 
 _FLAG_ENV = "POLYMATH_CHAT_RETRIEVAL"        # v1 | v2 (default v2 after the P1.a gate)
 
@@ -1017,19 +1103,34 @@ def _attach_graph(out: dict, query: str, corpus_id: str, *, qvec, graph_useful: 
             card_seed_ids, card_probe = [], f"degraded:{type(exc).__name__}"
     facts: list[dict] = []
     degraded_reason: Optional[str] = None
+    # FACT-QUERY-SIM-V1: with the flag on (and a question vector) the resolver hands over its first 32 ranked facts and
+    # the similarity order keeps 20; flag off ⇒ the call and the cut are the pre-flag ones, byte for byte
+    by_similarity = fact_query_sim_enabled() and qvec is not None
+    fact_cut = _FACT_SIM_POOL if by_similarity else GRAPH_MAX_FACTS
     try:
         facts = list(graph_expand_or_502(surfaces, [corpus_id], [c["chunk_id"] for c in evidence],
-                                         seed_entity_ids=card_seed_ids, max_seeds=seeds_max) or [])[:GRAPH_MAX_FACTS]
+                                         seed_entity_ids=card_seed_ids, max_seeds=seeds_max,
+                                         **({"fact_cap": _FACT_SIM_POOL} if by_similarity else {})) or [])[:fact_cut]
     except HTTPException as exc:
         d = exc.detail if isinstance(exc.detail, dict) else {"message": str(exc.detail)}
         degraded_reason = f"{d.get('error_code') or 'http_' + str(exc.status_code)}: {str(d.get('message') or '')[:160]}"
     except Exception as exc:  # noqa: BLE001 — the graph is a bounded optional stage, never the answer
         degraded_reason = f"{type(exc).__name__}: {str(exc)[:160]}"
     graph_ms = round((time.perf_counter() - t0) * 1000, 1)
-    out["graph_relationships"] = bind_graph_fact_chunks([
+    evidence_ids = [c["chunk_id"] for c in evidence if c.get("chunk_id")]
+    relationships = bind_graph_fact_chunks([
         {"fact_id": f["fact_id"], "predicate": f["predicate"], "subject_id": f.get("subject_id"), "subject": f["subject"],
          "object_id": f.get("object_id"), "object": f["object"]}
-        for f in facts], [c["chunk_id"] for c in evidence if c.get("chunk_id")])
+        for f in facts], evidence_ids)
+    if by_similarity:
+        t_sim = time.perf_counter()
+        relationships, similarity_receipt = order_facts_by_query_similarity(
+            relationships, list(qvec), evidence_ids, embed=_embed_fact_sentences, floor=_fact_sim_floor())
+        similarity_receipt["ms"] = round((time.perf_counter() - t_sim) * 1000, 1)
+        kept = {r["fact_id"] for r in relationships}
+        facts = [f for f in facts if f["fact_id"] in kept]
+        meta["graph_fact_similarity"] = similarity_receipt
+    out["graph_relationships"] = relationships
     meta["graph_bounds"] = {"max_seeds": seeds_max, "max_facts": GRAPH_MAX_FACTS, "graph_useful": bool(graph_useful),
                             "hops": 1, "contract": MODE_COMPOSITION_CONTRACT,
                             # D1: which hop-1 order served this turn (absent = the legacy fact_id window)

@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 import time
 import uuid
@@ -3235,6 +3236,26 @@ def _grounded_messages(query: str, bundle: dict, graph_facts: list,
 
 
 
+#: SEARCH-RERANK-SCORES-V1: /chat/evidence also returns the judge's score of each packet row. Default OFF ⇒ no new key.
+SEARCH_RERANK_SCORES_FLAG = "POLYMATH_SEARCH_RERANK_SCORES"
+
+
+def search_rerank_scores_enabled() -> bool:
+    return os.environ.get(SEARCH_RERANK_SCORES_FLAG, "0") == "1"
+
+
+def judge_scores(evidence: list[dict], limit: int) -> dict[str, float]:
+    """{chunk_id: the cross-encoder's score} for the first `limit` evidence rows that carry a finite one. A row the judge
+    did not score (a degraded judge, a seat filled outside the judged prefix) is absent, never given a made-up value."""
+    out: dict[str, float] = {}
+    for row in list(evidence or [])[:max(0, int(limit))]:
+        cid, score = row.get("chunk_id"), row.get("rerank_score")
+        if not cid or isinstance(score, bool) or not isinstance(score, (int, float)) or not math.isfinite(score):
+            continue
+        out[str(cid)] = float(score)
+    return out
+
+
 # ---------------- CARRY-V2 (CHAT-QUERY-COMPILER-PLAN §3.5, P0.e) ----------------
 #: Measured 2026-09-05 (chat-carry-p0e-v1-baseline): the frontend carried
 #: every RETRIEVED chunk of every earlier answer (cap 30), so an off-topic
@@ -4373,7 +4394,9 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         graph_facts = [
                             {"fact_id": f["fact_id"], "predicate": f["predicate"],
                              "subject": f["subject"], "object": f["object"],
-                             "chunk_id": f.get("chunk_id")}
+                             "chunk_id": f.get("chunk_id"),
+                             # FACT-QUERY-SIM-V1: present only when the flag scored the fact this turn
+                             **({"query_similarity": f["query_similarity"]} if f.get("query_similarity") is not None else {})}
                             for f in (fast.get("graph_relationships") or [])
                         ]
                 elif ui_mode == "FAST":
@@ -4698,6 +4721,10 @@ def chat_events(req: StreamChatRequest, *, route: str = "chat/stream", receipt=N
                         _pch = None
                     if _pch and _pch.get("text"):
                         _full_texts[_pcid] = _pch["text"]
+                # SEARCH-RERANK-SCORES-V1: the judge's own score for the packet's rows (the same rows, nothing re-ranked), so
+                # /chat/evidence can put it on the evidence rows. A receipt only; flag off ⇒ the key is absent.
+                if search_rerank_scores_enabled():
+                    retrieval["rerank_scores"] = judge_scores(fast.get("evidence") or [], _PK_ROWS)
                 _packet = build_evidence_packet(
                     q0=req.message,
                     retrieval_mode=retrieval.get("mode") or ui_mode,

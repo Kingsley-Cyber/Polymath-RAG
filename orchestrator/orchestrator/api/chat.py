@@ -21,6 +21,7 @@ RETRIEVE-EVIDENCE-ROWS-V1 rows. Assembly failures stay loud (502).
 """
 from __future__ import annotations
 
+import math
 import re
 import time
 
@@ -234,6 +235,34 @@ def _evidence_impl(req: ChatRequest, *, receipt=None, client: str = "") -> dict:
     return out
 
 
+def attach_judge_scores(rows: list[dict], scores) -> dict | None:
+    """SEARCH-RERANK-SCORES-V1: put the judge's own score on the chunk rows and say whether any row is relevant.
+
+    A row's `score` is its place in the packet (the composer's order, which is not the score order), so it stays as it
+    is. A row the judge scored gains `rerank_score` (the cross-encoder's raw score) and `relevant` (`rerank_score > 0`,
+    the sign rule CA4's `grade_evidence` uses). Returns the turn's summary — `verdict` is `relevant_evidence`,
+    `no_relevant_evidence` (rows were judged and none is above 0: the library does not cover the question) or
+    `not_judged` (no row carries a score, e.g. a degraded judge) — or None when the turn sent no scores (the flag is off):
+    then nothing is added anywhere."""
+    if not isinstance(scores, dict):
+        return None
+    judged = relevant = 0
+    best = None
+    for r in rows:
+        score = scores.get(str(r.get("id"))) if r.get("kind") == "chunk" else None
+        if isinstance(score, bool) or not isinstance(score, (int, float)) or not math.isfinite(score):
+            continue                                  # not judged (or not a number): the row stays as it is
+        score = float(score)
+        r["rerank_score"] = round(score, 4)
+        r["relevant"] = score > 0
+        judged += 1
+        relevant += 1 if score > 0 else 0
+        best = score if best is None else max(best, score)
+    verdict = "not_judged" if not judged else ("relevant_evidence" if relevant else "no_relevant_evidence")
+    return {"rule": "rerank_score > 0", "judged": judged, "relevant": relevant,
+            "max_rerank_score": None if best is None else round(best, 4), "verdict": verdict}
+
+
 def attach_packet_rows(out: dict, req: "ChatRequest") -> dict:
     """MCP-RETRIEVAL-MODES-V1: `/chat/evidence` with `evidence: true` also returns the packet's evidence as RETRIEVE-
     EVIDENCE-ROWS-V1 rows — the packet's chunks in the packet's order (each with its `utility_role` and `ca4_grade`),
@@ -255,6 +284,9 @@ def attach_packet_rows(out: dict, req: "ChatRequest") -> dict:
                 corpus_ids, limit=max(12, len(chunk_ids)), explore=False)
         for r in rows:
             r.update({k: v for k, v in graded.get(str(r.get("id")), {}).items() if v})
+        relevance = attach_judge_scores(rows, (out.get("retrieval") or {}).get("rerank_scores"))
+        if relevance is not None:
+            out["evidence_relevance"] = relevance
         out["evidence_rows"] = rows
         out["evidence_contract"] = "retrieve-evidence-rows-v1"
     except Exception as exc:  # noqa: BLE001 — rows are an add-on; the packet already stands
