@@ -4,7 +4,8 @@ Durable state. Every store is bind-mounted, never in-app.
 
 - `postgres/`: runs, stage_attempts, outbox, control_heartbeats,
   users, settings, artifacts_index. Migrations in `migrations/`.
-- `qdrant/`: vectors. Per-corpus collections.
+- `qdrant/`: vectors. Per-corpus collections in `qdrant/storage/` (bind-mounted since 2026-11-19, QDRANT-PERSISTENT-STORAGE-V1;
+  before that they lived inside the container and a recreated container lost them), snapshots in `qdrant/snapshots/`.
 - `neo4j/`: graph. Constraints in `constraints/`.
 - `redis/`: queue + cache. Ephemeral. Allowed to die.
 

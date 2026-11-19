@@ -34,6 +34,9 @@ services:
   qdrant:
     image: ${QDRANT_IMAGE}
     volumes:
+      # QDRANT-PERSISTENT-STORAGE-V1 (2026-11-19): the collections live on the host, like Postgres and Neo4j; inside the
+      # container a `docker compose up -d` that recreates it lost every vector
+      - ./stores/qdrant/storage:/qdrant/storage
       - ./stores/qdrant/snapshots:/qdrant/snapshots
     ports:
       - "127.0.0.1:6334:6333"

@@ -13,6 +13,7 @@ __pycache__/
 # Stores (bind-mounted, never committed)
 stores/postgres/data/
 stores/qdrant/snapshots/*.snapshot
+stores/qdrant/storage/
 stores/neo4j/data/
 stores/redis/dump.rdb
 
