@@ -15,12 +15,12 @@ import pytest
 
 from workers.summary_worker_impl import _ensure_job
 
-DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 @pytest.fixture()
 def conn():
-    with psycopg.connect(DSN, autocommit=False) as c:
+    with psycopg.connect(sealed_dsn(), autocommit=False) as c:
         yield c
         c.rollback()
 

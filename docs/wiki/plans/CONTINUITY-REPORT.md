@@ -54,9 +54,11 @@ historical, never an instruction.
 
 ### Do Not Do
 - Everything in the 2026-11-01 and 2026-09-26 blocks' "Do Not Do" lists still applies.
-- Do not expect the repo's suites to be offline: six determinism files and the web suite's free tier call the running orchestrator
-  (`/chat`, `/chat/stream`, `/compare`, `/retrieve`) whenever it answers, spending model calls; point the web suite's
-  `POLYMATH_BASE_URL` at a closed port when the live tier is not wanted.
+- Do not expect the repo's suites to be offline on `production` yet: six determinism files and the web suite's free tier call the
+  running orchestrator (`/chat`, `/chat/stream`, `/compare`, `/retrieve`) whenever it answers, spending model calls, and ~30
+  determinism files hardcode the live Postgres. Fixed on branch `fix/sealed-test-isolation` (SEALED-TEST-ISOLATION-V1, register
+  11.580, not merged): after it merges, tests take the database from `POLYMATH_TEST_DSN` only (never 5432), a guard refuses every
+  live fleet port, and live probes run only with `POLYMATH_LIVE_PROBES=1` (`docs/RUNBOOK.md`, "Run the test suites").
 - Do not add a direct (un-proxied) caller of :7200 under any Host but 127.0.0.1, localhost or [::1]: the web boundary refuses it
   (DNS-rebinding fix, 11.576).
 - Do not bounce the fleet while an agent test or a fetch script is running: its MCP session breaks.

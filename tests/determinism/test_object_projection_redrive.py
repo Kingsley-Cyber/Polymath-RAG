@@ -16,14 +16,16 @@ for p in (ROOT / "shared", ROOT / "control", ROOT):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-DSN = os.environ.get("POLYMATH_PG_DSN", "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn, sealed_dsn_configured  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 def _pg_reachable() -> bool:
+    if not sealed_dsn_configured():          # called at import (a skip marker): no skip may be raised here
+        return False
     import psycopg
 
     try:
-        psycopg.connect(DSN, connect_timeout=3).close()
+        psycopg.connect(sealed_dsn(), connect_timeout=3).close()
         return True
     except Exception:
         return False
@@ -39,7 +41,7 @@ RUN, OTHER, DOC = "run_objredrive_1", "run_objredrive_2", "doc_objredrive_1"
 def conn():
     import psycopg
 
-    with psycopg.connect(DSN, autocommit=True) as c:
+    with psycopg.connect(sealed_dsn(), autocommit=True) as c:
         _cleanup(c)
         c.execute("INSERT INTO corpora (corpus_id, name, config_hash) VALUES (%s, 'r', 'c')", (CORPUS,))
         for rid in (RUN, OTHER):

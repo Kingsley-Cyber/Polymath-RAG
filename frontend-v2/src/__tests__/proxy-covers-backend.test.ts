@@ -11,9 +11,17 @@ import { apiPaths } from "../../vite.config";
  *
  * Skips when no backend is reachable, so it never blocks an offline build.
  */
-// import.meta.env keeps this free of @types/node in a browser-targeted tsconfig.
-const BASE = (import.meta as { env?: Record<string, string> }).env?.POLYMATH_BASE_URL
-  ?? "http://127.0.0.1:7200";
+// globalThis.process / import.meta.env keep this free of @types/node in a browser-targeted tsconfig. SEALED-TEST-ISOLATION-V1:
+// vitest does not copy POLYMATH_* variables into import.meta.env, so the process environment is read too (as live-contract does);
+// before, POLYMATH_BASE_URL never reached this file and it always called http://127.0.0.1:7200.
+type Env = Record<string, string | undefined>;
+const ENV: Env = {
+  ...((globalThis as { process?: { env?: Env } }).process?.env ?? {}),
+  ...((import.meta as { env?: Env }).env ?? {}),
+};
+const BASE = ENV.POLYMATH_BASE_URL ?? "http://127.0.0.1:7200";
+/** Reaches the running fleet only with POLYMATH_LIVE_PROBES=1. */
+const LIVE_PROBES = ENV.POLYMATH_LIVE_PROBES === "1";
 
 async function openapi(): Promise<Record<string, unknown> | null> {
   try {
@@ -25,7 +33,7 @@ async function openapi(): Promise<Record<string, unknown> | null> {
 }
 
 describe("dev proxy", () => {
-  it("covers every backend route prefix", async () => {
+  it.skipIf(!LIVE_PROBES)("covers every backend route prefix", async () => {
     const doc = await openapi();
     if (!doc) return;                       // no live backend — nothing to check
     const paths = Object.keys((doc.paths ?? {}) as Record<string, unknown>);

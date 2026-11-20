@@ -17,6 +17,8 @@ import urllib.request
 
 import pytest
 
+import sealed_env  # SEALED-TEST-ISOLATION-V1: the live probe below runs only with POLYMATH_LIVE_PROBES=1
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 for sub in ("shared", "orchestrator"):
     if str(ROOT / sub) not in sys.path:
@@ -87,21 +89,21 @@ def test_receipt_meta_is_never_sliced_into_invalid_json():
 
 
 def test_live_stream_turn_writes_a_receipt_with_all_six_stages():
-    """Law 3 — against the running orchestrator and dev Postgres; skips otherwise."""
+    """Law 3 — against the running orchestrator and the live Postgres it writes to; a live probe (POLYMATH_LIVE_PROBES=1)."""
+    sealed_env.live_fleet("a /chat/stream turn and its query receipt")
     try:
-        urllib.request.urlopen("http://127.0.0.1:7200/ready", timeout=3)
+        urllib.request.urlopen(f"{sealed_env.LIVE_ORCHESTRATOR}/ready", timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"orchestrator not reachable: {exc}")
     try:
         import psycopg
-        dsn = os.environ.get("POLYMATH_TEST_DSN", "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
-        conn = psycopg.connect(dsn, connect_timeout=3)
+        conn = psycopg.connect(sealed_env.LIVE_PG_DSN, connect_timeout=3)   # the receipt is where the live orchestrator writes it
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"dev postgres not reachable: {exc}")
     q = "funnel-probe: what is the 180-degree rule?"
     body = json.dumps({"message": q, "corpus_id": "cinema", "mode": "HYBRID",
                        "synthesizer": "deterministic-template-v3"}).encode()
-    req = urllib.request.Request("http://127.0.0.1:7200/chat/stream", data=body,
+    req = urllib.request.Request(f"{sealed_env.LIVE_ORCHESTRATOR}/chat/stream", data=body,
                                  headers={"content-type": "application/json", "accept": "text/event-stream"})
     saw_answer = False
     with urllib.request.urlopen(req, timeout=240) as r:

@@ -17,13 +17,15 @@ jobs:
           POSTGRES_USER: polymath
           POSTGRES_PASSWORD: polymath-dev
           POSTGRES_DB: polymath
-        ports: ["5432:5432"]
+        # SEALED-TEST-ISOLATION-V1: the suite refuses port 5432 (the live Postgres on a developer machine), so CI serves
+        # its throwaway database on 55432, as the sealed reproduction does (docs/RUNBOOK.md, "Run the test suites").
+        ports: ["55432:5432"]
         options: >-
           --health-cmd "pg_isready -U polymath -d polymath"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
-      POLYMATH_PG_DSN: postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath
-      POLYMATH_TEST_DSN: postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath
+      POLYMATH_PG_DSN: postgresql://polymath:polymath-dev@127.0.0.1:55432/polymath
+      POLYMATH_TEST_DSN: postgresql://polymath:polymath-dev@127.0.0.1:55432/polymath
       PGPASSWORD: polymath-dev
     steps:
       - uses: actions/checkout@v4
@@ -41,8 +43,8 @@ jobs:
         run: |
           for f in stores/postgres/migrations/*.sql; do
             echo "applying $f"
-            psql -h 127.0.0.1 -U polymath -d polymath -v ON_ERROR_STOP=1 -q -f "$f" || exit 1
+            psql -h 127.0.0.1 -p 55432 -U polymath -d polymath -v ON_ERROR_STOP=1 -q -f "$f" || exit 1
           done
-          psql -h 127.0.0.1 -U polymath -d polymath -Atc "select count(*) from information_schema.tables where table_schema='public'"
+          psql -h 127.0.0.1 -p 55432 -U polymath -d polymath -Atc "select count(*) from information_schema.tables where table_schema='public'"
       - name: determinism suite
         run: pytest tests/determinism/ -q -p no:cacheprovider

@@ -20,12 +20,12 @@ import pytest
 
 from control.tickets import _receipts_present
 
-DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 @pytest.fixture()
 def conn():
-    with psycopg.connect(DSN, autocommit=True) as c:
+    with psycopg.connect(sealed_dsn(), autocommit=True) as c:
         yield c
 
 

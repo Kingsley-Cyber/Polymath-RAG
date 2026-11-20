@@ -19,7 +19,7 @@ for p in (ROOT / "control", ROOT / "shared"):
 
 import control.tickets as T  # noqa: E402
 
-DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 class _NoDb:
@@ -47,7 +47,7 @@ def conn():
     """Real Postgres. `_eligible_all_stages` COMMITS when its keyset wraps, so a rollback cannot
     undo this test's rows — every probe row is deleted explicitly (by its unique prefix) instead."""
     try:
-        c = psycopg.connect(DSN, autocommit=False, connect_timeout=3)
+        c = psycopg.connect(sealed_dsn(), autocommit=False, connect_timeout=3)
     except Exception as exc:  # pragma: no cover - environment gate
         pytest.skip(f"postgres unavailable: {exc}")
     probes: list[str] = []

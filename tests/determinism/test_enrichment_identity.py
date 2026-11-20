@@ -18,7 +18,7 @@ import pytest
 from polymath_shared.latent.contract import PRODUCTION_BOUNDS, QUALIFICATION_BOUNDS
 from polymath_shared.latent.runtime import enrichment_contract_id, input_hash_for
 
-DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 def test_identity_ignores_the_lane_and_tracks_the_contract():
@@ -52,7 +52,7 @@ def test_migration_formula_matches_runtime():
 
 @pytest.fixture()
 def conn():
-    with psycopg.connect(DSN, autocommit=False) as c:
+    with psycopg.connect(sealed_dsn(), autocommit=False) as c:
         yield c
         c.rollback()
 

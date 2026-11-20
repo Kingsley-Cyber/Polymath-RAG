@@ -12,6 +12,8 @@ import urllib.request
 
 import pytest
 
+import sealed_env  # SEALED-TEST-ISOLATION-V1: the live probes here run only with POLYMATH_LIVE_PROBES=1
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 for sub in ("shared", "orchestrator"):
     p = str(ROOT / sub)
@@ -85,8 +87,9 @@ def test_reranker_outage_degrades_to_cap_and_is_counted():
 
 
 def test_live_three_turn_probe_carries_used_only_and_drops_off_topic_turn_one():
+    sealed_env.live_fleet("scripts/chat_carry_probe.py against the running orchestrator")
     try:
-        urllib.request.urlopen("http://127.0.0.1:7200/ready", timeout=3)
+        urllib.request.urlopen(f"{sealed_env.LIVE_ORCHESTRATOR}/ready", timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"orchestrator not reachable: {exc}")
     base = ROOT / "docs" / "wiki" / "experiments" / "chat-carry-p0e-v1-baseline.json"

@@ -17,7 +17,7 @@ import pytest
 from polymath_shared.query_receipts import (
     Timer, query_summary, recent_queries, record_query_receipt, summarize_response)
 
-DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 def test_summarize_chat_reads_verdict_citations_and_abstention():
@@ -54,7 +54,7 @@ def test_summarize_ask_reads_route_objects_and_cited_documents():
 
 @pytest.fixture()
 def conn():
-    with psycopg.connect(DSN, autocommit=False) as c:
+    with psycopg.connect(sealed_dsn(), autocommit=False) as c:
         yield c
         c.rollback()
 

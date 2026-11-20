@@ -12,6 +12,8 @@ import urllib.request
 
 import pytest
 
+import sealed_env  # SEALED-TEST-ISOLATION-V1: the live probes here run only with POLYMATH_LIVE_PROBES=1
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 for sub in ("shared", "orchestrator"):
     p = str(ROOT / sub)
@@ -113,14 +115,14 @@ def test_plan_meta_names_the_task_in_the_answer_event():
 
 def _ready() -> bool:
     try:
-        urllib.request.urlopen("http://127.0.0.1:7200/ready", timeout=3)
+        urllib.request.urlopen(f"{sealed_env.LIVE_ORCHESTRATOR}/ready", timeout=3)
         return True
     except Exception:  # noqa: BLE001
         return False
 
 
 def _stream(body: dict, timeout: int = 420) -> tuple[list[str], dict, str]:
-    req = urllib.request.Request("http://127.0.0.1:7200/chat/stream", data=json.dumps(body).encode(),
+    req = urllib.request.Request(f"{sealed_env.LIVE_ORCHESTRATOR}/chat/stream", data=json.dumps(body).encode(),
                                  headers={"content-type": "application/json", "accept": "text/event-stream"})
     phases, answer, cur, err = [], {}, None, None
     with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -151,6 +153,7 @@ def _stream(body: dict, timeout: int = 420) -> tuple[list[str], dict, str]:
 
 @pytest.mark.parametrize("fixture", ["video_prompt_final", "brainrot_transform"])
 def test_live_artifact_tasks_produce_the_artifact_without_asking_the_evidence_for_it(fixture):
+    sealed_env.live_fleet("/chat/stream turns on the running orchestrator")
     if not _ready():
         pytest.skip("orchestrator not reachable")
     fx = json.loads((ROOT / "eval" / "fixtures" / "chat_conversations" / f"{fixture}.json").read_text())
@@ -167,6 +170,7 @@ def test_live_artifact_tasks_produce_the_artifact_without_asking_the_evidence_fo
 
 
 def test_live_factual_question_without_evidence_still_abstains():
+    sealed_env.live_fleet("a /chat/stream turn on the running orchestrator")
     if not _ready():
         pytest.skip("orchestrator not reachable")
     phases, answer, text = _stream({"message": "What does the book say about the Zorblax-9 shutter protocol?", "corpus_id": "cinema",

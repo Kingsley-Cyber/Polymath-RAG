@@ -72,6 +72,40 @@ Convergence: `runs.status='query_ready'` per document. Stage progress:
 .venv/bin/python eval/sealed/report.py --corpus <id> [--set <sealed-set>]
 ```
 
+## Run the test suites
+
+SEALED-TEST-ISOLATION-V1 (2026-11-20): no test reaches a live store or the live fleet unless you opt in. The rules live in
+`tests/sealed_env.py`; `tests/conftest.py` enforces them.
+
+1. Start a throwaway Postgres on a port other than 5432 (the suite refuses 5432):
+
+   ```bash
+   docker run -d --rm --name pmv4-sealed-pg -e POSTGRES_USER=polymath -e POSTGRES_PASSWORD=polymath-dev -e POSTGRES_DB=polymath -p 127.0.0.1:55432:5432 postgres:16-alpine
+   ```
+
+2. Apply every migration in order:
+
+   ```bash
+   for f in stores/postgres/migrations/*.sql; do docker exec -i pmv4-sealed-pg psql -U polymath -d polymath -v ON_ERROR_STOP=1 -q < "$f" || break; done
+   ```
+
+3. Run the suites in a clean environment (`POLYMATH_PG_DSN` follows `POLYMATH_TEST_DSN` on its own). From a worktree that
+   uses the live checkout's `.venv`, `PYTHONPATH` must name the worktree's four packages, or the editable install loads `main`'s:
+
+   ```bash
+   env -i HOME="$HOME" PATH="$PATH" PYTHONPATH="$PWD/shared:$PWD/orchestrator:$PWD/workers:$PWD/control" POLYMATH_TEST_DSN=postgresql://polymath:polymath-dev@127.0.0.1:55432/polymath .venv/bin/python -m pytest tests/contracts tests/determinism -p no:cacheprovider
+   ```
+
+4. Read the `live-fleet guard` section at the end of the output: every line is code that tried to reach a live port and was
+   refused (no connection was made).
+5. Remove the database: `docker rm -f pmv4-sealed-pg`.
+
+| Variable | Effect |
+|---|---|
+| `POLYMATH_TEST_DSN` | the sealed database. Unset: database tests skip. Port 5432 or no port: the session stops before any test. |
+| `POLYMATH_LIVE_PROBES=1` | runs the declared live probes (`sealed_env.live_fleet(...)`) and the `frontend-v2` live tiers against the running fleet. They write live query receipts and may spend model calls. |
+| `POLYMATH_INTEGRATION=1` | lets `tests/integration/` reach the live stores (that bucket's own opt-in). |
+
 ## Sealed qualification
 
 `eval/sealed/README.md` — seal BEFORE ingestion; verify; run; stamp; replay.

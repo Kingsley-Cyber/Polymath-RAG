@@ -38,9 +38,7 @@ from polymath_shared.pipeline_health import (  # noqa: E402
     pipeline_health,
 )
 
-DSN = os.environ.get(
-    "POLYMATH_PG_DSN",
-    "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 class FakeConn:
@@ -160,7 +158,7 @@ def test_live_pipeline_health_is_answerable():
     not raise."""
     try:
         import psycopg
-        conn = psycopg.connect(DSN, connect_timeout=3)
+        conn = psycopg.connect(sealed_dsn(), connect_timeout=3)
     except Exception:
         pytest.skip("postgres unavailable")
     with conn:

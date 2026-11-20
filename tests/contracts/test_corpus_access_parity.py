@@ -510,7 +510,7 @@ def test_the_postgres_probe_never_raises_and_never_carries_the_dsn(monkeypatch):
 
     class Pool:
         def connection(self, timeout=None):
-            raise RuntimeError("connection to postgresql://polymath:hunter2-secret@127.0.0.1:5432/polymath failed")
+            raise RuntimeError("connection to postgresql://polymath:hunter2-secret@127.0.0.1:5432/polymath failed")  # not-a-connection: a fake error text
     monkeypatch.setattr(db, "get_pool", lambda: Pool())
     out = health.postgres_ready()
     assert out["ok"] is False and out["error"] == "RuntimeError" and "hunter2" not in json.dumps(out)

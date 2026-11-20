@@ -10,7 +10,7 @@ the drained `chat_events(req)` answer frame must then agree on every
 authority: task type, resolved request, the retrieval decision, the evidence
 ids in order, carry admission, the executed mode, the degraded list, the
 synthesis contract — and on the receipt payload (kind / client / route are the
-transport's tags). Live (skips when 127.0.0.1:7200 is unreachable): the same
+transport's tags). Live (POLYMATH_LIVE_PROBES=1; skips when 127.0.0.1:7200 is unreachable): the same
 request on both routes yields the same plan and the same evidence ids.
 """
 from __future__ import annotations
@@ -23,6 +23,8 @@ import sys
 import urllib.request
 
 import pytest
+
+import sealed_env  # SEALED-TEST-ISOLATION-V1: the live probes here run only with POLYMATH_LIVE_PROBES=1
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 for sub in ("shared", "orchestrator"):
@@ -574,7 +576,7 @@ def test_mcp_ask_posts_to_chat_and_therefore_runs_the_runtime():
 # ---------------------------------------------------------------- live (optional)
 
 def _post(path: str, body: dict):
-    req = urllib.request.Request(f"http://127.0.0.1:7200{path}", data=json.dumps(body).encode(),
+    req = urllib.request.Request(f"{sealed_env.LIVE_ORCHESTRATOR}{path}", data=json.dumps(body).encode(),
                                  headers={"content-type": "application/json", "accept": "text/event-stream"})
     with urllib.request.urlopen(req, timeout=420) as r:
         raw = r.read().decode("utf-8", "replace")
@@ -582,8 +584,9 @@ def _post(path: str, body: dict):
 
 
 def test_live_chat_and_stream_agree_on_plan_and_evidence_ids():
+    sealed_env.live_fleet("/chat and /chat/stream on the running orchestrator")
     try:
-        urllib.request.urlopen("http://127.0.0.1:7200/ready", timeout=3)
+        urllib.request.urlopen(f"{sealed_env.LIVE_ORCHESTRATOR}/ready", timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"orchestrator not reachable: {exc}")
     body = {"message": "What does the book say about making your own chroma keyer?", "corpus_id": "cinema", "mode": "HYBRID",

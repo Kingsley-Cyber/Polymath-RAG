@@ -30,9 +30,10 @@ for p in (ROOT / "shared", ROOT / "workers", ROOT):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-os.environ.setdefault(
-    "POLYMATH_PG_DSN",
-    "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn, sealed_dsn_configured  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
+
+if sealed_dsn_configured():
+    os.environ.setdefault("POLYMATH_PG_DSN", sealed_dsn())
 
 
 def _gliner_manifest_reachable() -> bool:

@@ -20,7 +20,7 @@ for sub in ("shared", "orchestrator", "control"):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-DSN = os.environ.get("POLYMATH_TEST_DSN", "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 OLD_SQL = """
 SELECT d.doc_id,
@@ -52,7 +52,7 @@ def test_endpoint_sql_has_no_cross_join():
 
 def test_subquery_form_matches_aggregate_and_is_fast():
     try:
-        conn = psycopg.connect(DSN, connect_timeout=3)
+        conn = psycopg.connect(sealed_dsn(), connect_timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"dev postgres not reachable: {exc}")
     with conn:

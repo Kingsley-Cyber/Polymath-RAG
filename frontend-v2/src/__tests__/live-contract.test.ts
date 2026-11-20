@@ -4,14 +4,14 @@
  * TypeScript compiler — the calls in api.ts, the request Chat.tsx builds, the response types in contracts.ts — so this
  * test cannot drift from what the UI actually does. Skips entirely when no backend answers (offline builds never block).
  *
- * FREE tier (read-only; runs whenever a backend is up — POLYMATH_BASE_URL, default http://127.0.0.1:7200):
+ * FREE tier (read-only; runs only with POLYMATH_LIVE_PROBES=1 and a backend up — POLYMATH_BASE_URL, default http://127.0.0.1:7200):
  *   1. every client call (26 in `api` + the /chat/stream reader) is a real backend route with that HTTP method;
  *   2. every body field and query parameter the frontend SENDS is declared by the backend (an undeclared one is silently dropped);
  *   3. every read-only endpoint answers through the real client, and its live JSON conforms to the TypeScript type the UI
  *      compiles against (required fields present, primitives / literals / nested shapes right);
  *   4. /compare runs all five public modes (retrieval only — no model call) and each arm runs its own mode;
  *   5. /retrieve with mode GNN reaches the GNN route (it used to fall through to the legacy lanes).
- * PAID tier (POLYMATH_LIVE_CHAT=1 — one synthesizer call per mode + one review + one model test):
+ * PAID tier (POLYMATH_LIVE_PROBES=1 and POLYMATH_LIVE_CHAT=1 — one synthesizer call per mode + one review + one model test):
  *   the Chat screen's exact request through runTurn for each of the five modes: steps stream, the answer arrives, the receipt
  *   conforms to RetrievalReceipt, retrieval ran (require_retrieval — the question is phrased like small talk on purpose), the
  *   executed mode is the requested one, GNN_ROUTE fires only for GNN, and the Evidence panel's rows resolve.
@@ -35,6 +35,8 @@ const ENV: Env = {
 const BASE = ENV.POLYMATH_BASE_URL ?? "http://127.0.0.1:7200";
 const CORPUS = ENV.POLYMATH_CONTRACT_CORPUS ?? "cinema";
 const LIVE_CHAT = ENV.POLYMATH_LIVE_CHAT === "1";
+/** SEALED-TEST-ISOLATION-V1: the live tiers reach the running fleet (and write query receipts) only on the operator's word. */
+const LIVE_PROBES = ENV.POLYMATH_LIVE_PROBES === "1";
 /** Phrased like small talk ON PURPOSE: the compiler once read it as conversation and skipped retrieval. */
 const QUESTION = "How does a lone landscape photographer keep spare batteries reachable on the trail?";
 
@@ -57,7 +59,7 @@ async function openapi(): Promise<OpenApi | null> {
     return null;
   }
 }
-const DOC = await openapi();
+const DOC = LIVE_PROBES ? await openapi() : null;
 const norm = (p: string) => p.replace(/\{[^}]+\}/g, "{}");
 
 function operation(method: string, path: string): OpenApiOp | undefined {

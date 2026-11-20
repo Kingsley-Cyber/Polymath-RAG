@@ -30,13 +30,13 @@ from polymath_shared.latent.runtime import persist_compiled_parent  # noqa: E402
 from polymath_shared.latent.compiler import CompiledParent  # noqa: E402
 from polymath_shared.latent.contract import ChildGist, EnrichmentOutput  # noqa: E402
 
-DSN = os.environ.get("POLYMATH_TEST_DSN", "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 @pytest.fixture
 def conn():
     try:
-        c = psycopg.connect(DSN, autocommit=False, connect_timeout=3)
+        c = psycopg.connect(sealed_dsn(), autocommit=False, connect_timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"dev postgres not reachable: {exc}")
     yield c

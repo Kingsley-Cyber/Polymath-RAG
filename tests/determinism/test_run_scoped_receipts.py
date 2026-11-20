@@ -18,12 +18,12 @@ import pytest
 import control.tickets as T
 from control.stall_tracer import diagnose_pending
 
-DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 @pytest.fixture()
 def conn():
-    with psycopg.connect(DSN, autocommit=False) as c:
+    with psycopg.connect(sealed_dsn(), autocommit=False) as c:
         yield c
         c.rollback()
 

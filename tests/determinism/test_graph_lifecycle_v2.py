@@ -54,18 +54,18 @@ ROOT = Path(__file__).resolve().parents[2]
 for p in (ROOT / "shared", ROOT):
     sys.path.insert(0, str(p))
 
-DSN = os.environ.get(
-    "POLYMATH_PG_DSN",
-    "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn, sealed_dsn_configured  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 RETRIEVE = ROOT / "orchestrator" / "orchestrator" / "api" / "retrieve.py"
 VERIFY = ROOT / "workers" / "workers" / "verify_worker.py"
 
 
 def _pg():
+    if not sealed_dsn_configured():          # called at import (a skip marker): no skip may be raised here
+        return None
     try:
         import psycopg
-        return psycopg.connect(DSN, connect_timeout=3)
+        return psycopg.connect(sealed_dsn(), connect_timeout=3)
     except Exception:
         return None
 
@@ -147,7 +147,7 @@ def test_no_derived_node_outlives_its_postgres_row():
     derived node kind. Postgres is authority; a node whose id has no PG
     row is permanent garbage."""
     import psycopg
-    conn = psycopg.connect(DSN, connect_timeout=5)
+    conn = psycopg.connect(sealed_dsn(), connect_timeout=5)
     with conn:
         live = {
             "Document": ({r[0] for r in conn.execute(
@@ -181,7 +181,7 @@ def test_qualified_edges_are_kept_not_deleted():
     plain-fact answers by authorization — deleting it would be data
     loss, so the reconciler must leave it alone."""
     import psycopg
-    conn = psycopg.connect(DSN, connect_timeout=5)
+    conn = psycopg.connect(sealed_dsn(), connect_timeout=5)
     with conn:
         # Only evidenced QUALIFY facts are projectable; an orphan (no
         # evidence row) is legitimately pruned by this same reconciler.

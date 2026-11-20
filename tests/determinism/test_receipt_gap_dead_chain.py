@@ -21,16 +21,16 @@ for p in (ROOT / "shared", ROOT / "control", ROOT / "workers", ROOT):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-DSN = os.environ.get(
-    "POLYMATH_PG_DSN",
-    "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn, sealed_dsn_configured  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 def _pg_reachable() -> bool:
+    if not sealed_dsn_configured():          # called at import (a skip marker): no skip may be raised here
+        return False
     import psycopg
 
     try:
-        psycopg.connect(DSN, connect_timeout=3).close()
+        psycopg.connect(sealed_dsn(), connect_timeout=3).close()
         return True
     except Exception:
         return False
@@ -87,7 +87,7 @@ def test_a_pending_ticket_behind_a_failed_intake_does_not_block_the_redrive():
 
     from control.scheduler import schedule_gaps
 
-    with psycopg.connect(DSN, autocommit=True) as conn:
+    with psycopg.connect(sealed_dsn(), autocommit=True) as conn:
         _setup(conn, DEAD, {"intake": "failed", "extract": "pending", "profile_document": "pending",
                             "project_qdrant": "pending"})
         try:
@@ -103,7 +103,7 @@ def test_a_pending_ticket_of_a_live_chain_still_holds_the_one_redrive():
 
     from control.scheduler import schedule_gaps
 
-    with psycopg.connect(DSN, autocommit=True) as conn:
+    with psycopg.connect(sealed_dsn(), autocommit=True) as conn:
         _setup(conn, LIVE, {"intake": "done", "extract": "ready", "profile_document": "pending",
                             "project_qdrant": "pending"})
         try:
@@ -126,7 +126,7 @@ def test_the_restore_switches_on_only_off_receipts_with_todays_hash():
             (ids["old"], "hash-of-an-older-contract", False, "STALE"),
             (ids["failed"], R.expected_hash(kind, ids["failed"]), False, "FAILED"),
             (ids["on"], R.expected_hash(kind, ids["on"]), True, "PROJECTED")]
-    with psycopg.connect(DSN, autocommit=True) as conn:
+    with psycopg.connect(sealed_dsn(), autocommit=True) as conn:
         conn.execute("DELETE FROM projection_receipts WHERE entity_id = ANY(%s)", (list(ids.values()),))
         try:
             for eid, h, active, state in rows:
@@ -155,7 +155,7 @@ def test_the_generation_barrier_ignores_a_dead_chain_but_not_a_live_one():
     from control.tickets import generation_barrier
 
     none_missing = {"qdrant": set(), "neo4j": set()}
-    with psycopg.connect(DSN, autocommit=True) as conn:
+    with psycopg.connect(sealed_dsn(), autocommit=True) as conn:
         _setup(conn, DEAD, {"intake": "failed", "extract": "pending", "profile_document": "pending",
                             "project_qdrant": "pending", "verify_projections": "pending"})
         try:

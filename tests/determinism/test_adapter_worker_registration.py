@@ -12,7 +12,7 @@ import psycopg
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-DSN = os.environ.get("POLYMATH_PG_DSN", "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 def test_supervisor_declares_the_adapter_step_slot():
@@ -22,13 +22,13 @@ def test_supervisor_declares_the_adapter_step_slot():
 
 def test_worker_registers_and_heartbeats_as_worker_type_adapter_step():
     try:
-        c = psycopg.connect(DSN, connect_timeout=3)
+        c = psycopg.connect(sealed_dsn(), connect_timeout=3)
     except Exception as exc:  # pragma: no cover
         pytest.skip(f"postgres unavailable: {exc}")
     if c.execute("SELECT to_regclass('public.adapter_runs')").fetchone()[0] is None:
         pytest.skip("migration 0061 not applied")
     t0 = time.time()
-    env = {**os.environ, "PYTHONPATH": f"{ROOT / 'shared'}{os.pathsep}{ROOT / 'workers'}", "POLYMATH_PG_DSN": DSN}
+    env = {**os.environ, "PYTHONPATH": f"{ROOT / 'shared'}{os.pathsep}{ROOT / 'workers'}", "POLYMATH_PG_DSN": sealed_dsn()}
     p = subprocess.run([sys.executable, "-m", "workers.adapter_step_worker", "--once", "--poll-s", "0.2"], cwd=ROOT / "workers", env=env,
                        capture_output=True, text=True, timeout=120)
     assert p.returncode == 0, p.stderr[-800:]

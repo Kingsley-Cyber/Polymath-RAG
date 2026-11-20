@@ -32,12 +32,12 @@ for sub in ("control", "shared"):
 from control import medic  # noqa: E402
 from polymath_shared import pipeline_health as ph  # noqa: E402
 
-DSN = os.environ.get("POLYMATH_TEST_DSN", "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 def _connect(autocommit=False):
     try:
-        return psycopg.connect(DSN, autocommit=autocommit, connect_timeout=3)
+        return psycopg.connect(sealed_dsn(), autocommit=autocommit, connect_timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"dev postgres not reachable: {exc}")
 

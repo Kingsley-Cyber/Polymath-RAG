@@ -44,6 +44,7 @@ from polymath_shared.startup_contract import (  # noqa: E402
     validate_postgres,
     validate_startup,
 )
+from sealed_env import sealed_dsn_with_password  # noqa: E402  SEALED-TEST-ISOLATION-V1: the sealed database, never 5432
 
 SETTINGS = ROOT / "shared" / "polymath_shared" / "settings.py"
 MAIN = ROOT / "orchestrator" / "orchestrator" / "main.py"
@@ -98,9 +99,7 @@ def test_missing_dsn_is_a_named_startup_failure():
 def test_wrong_credentials_fail_at_startup_with_a_code():
     """Not a 500 thirty seconds later — a named refusal to serve."""
     with pytest.raises(StartupContractError) as exc:
-        validate_postgres(
-            "postgresql://polymath:definitely-not-the-password"
-            "@127.0.0.1:5432/polymath", timeout=5)
+        validate_postgres(sealed_dsn_with_password("definitely-not-the-password"), timeout=5)
     assert exc.value.code == "POSTGRES_AUTH_FAILED"
     assert "Refusing to serve" in exc.value.detail
 
@@ -119,9 +118,7 @@ def test_startup_error_never_echoes_the_password():
     people paste logs into tickets."""
     secret = "sup3r-secret-value"
     try:
-        validate_postgres(
-            f"postgresql://polymath:{secret}@127.0.0.1:5432/polymath",
-            timeout=5)
+        validate_postgres(sealed_dsn_with_password(secret), timeout=5)
     except StartupContractError as exc:
         assert secret not in str(exc), "the password leaked into the error"
     else:

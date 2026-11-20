@@ -28,7 +28,7 @@ from control.census import (
     compute_census,
 )
 
-DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 CHAIN = ["intake", "extract", "profile_document", "project_qdrant",
          "project_neo4j", "canonicalize", "project_canonical",
          "verify_projections"]
@@ -76,7 +76,7 @@ def _purge_probe_rows(c) -> None:
 
 @pytest.fixture()
 def conn():
-    with psycopg.connect(DSN, autocommit=True) as c:
+    with psycopg.connect(sealed_dsn(), autocommit=True) as c:
         try:
             yield c
         finally:

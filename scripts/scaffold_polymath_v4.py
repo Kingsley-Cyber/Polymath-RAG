@@ -205,6 +205,9 @@ TREE: list[tuple[str, str, str | None]] = [
     # ── Tests ─────────────────────────────────────────────────────────────
     ("tests/README.md", "md", "_TESTS_README"),
     ("tests/conftest.py", "py", "_TESTS_CONFTEST"),
+    # SEALED-TEST-ISOLATION-V1: where a test may connect (the sealed database, the live fleet only on POLYMATH_LIVE_PROBES=1)
+    ("tests/sealed_env.py", "py", None),
+    ("tests/contracts/test_sealed_test_isolation.py", "py", None),
     ("tests/contracts/test_sidecar_manifest.py", "py", "_TEST_SIDECAR_MANIFEST"),
     ("tests/contracts/test_idempotency.py", "py", "_TEST_IDEMPOTENCY"),
     ("tests/determinism/test_canonical_hashing.py", "py", "_TEST_CANONICAL_HASHING"),
@@ -2590,6 +2593,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-11-19-graph-seeds-and-search-scores.md", "md", None),
     ("docs/wiki/work-log/2026-11-19-qdrant-persistent-storage.md", "md", None),
     ("docs/wiki/work-log/2026-11-20-true-corpus-delete.md", "md", None),
+    ("docs/wiki/work-log/2026-11-20-sealed-test-isolation.md", "md", None),
     ("docs/wiki/work-log/2026-10-29-retire-polymath-v33-databases.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),

@@ -50,9 +50,7 @@ from polymath_shared.knowledge_objects.procedure import (  # noqa: E402
 ASK = ROOT / "orchestrator" / "orchestrator" / "api" / "ask.py"
 PROC = ROOT / "shared" / "polymath_shared" / "knowledge_objects" / "procedure.py"
 
-DSN = os.environ.get(
-    "POLYMATH_PG_DSN",
-    "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 SHORT = """To rotate a key, open the console.
 Select the key.
@@ -155,7 +153,7 @@ def test_stored_confidence_cannot_discriminate():
     either it is constant, or nothing reads it."""
     try:
         import psycopg
-        conn = psycopg.connect(DSN, connect_timeout=3)
+        conn = psycopg.connect(sealed_dsn(), connect_timeout=3)
     except Exception:
         pytest.skip("postgres unavailable")
     with conn:

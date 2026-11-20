@@ -12,6 +12,8 @@ import urllib.request
 
 import pytest
 
+import sealed_env  # SEALED-TEST-ISOLATION-V1: the live probes here run only with POLYMATH_LIVE_PROBES=1
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 for sub in ("orchestrator", "shared"):
     if str(ROOT / sub) not in sys.path:
@@ -88,13 +90,14 @@ def test_reranker_batches_and_backs_off_on_oom():
 
 
 def test_live_reranker_scores_forty_documents():
+    sealed_env.live_fleet("the running reranker sidecar")
     try:
-        urllib.request.urlopen("http://127.0.0.1:8743/ready", timeout=3)
+        urllib.request.urlopen(f"{sealed_env.LIVE_RERANKER}/ready", timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"reranker sidecar not reachable: {exc}")
     docs = [("The 180-degree rule keeps screen direction consistent across shots. " * 12)[:900] for _ in range(40)]
     body = json.dumps({"query": "What is the 180-degree rule?", "documents": docs, "top_k": None}).encode()
-    r = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:8743/rerank", data=body,
+    r = urllib.request.urlopen(urllib.request.Request(f"{sealed_env.LIVE_RERANKER}/rerank", data=body,
                                                       headers={"content-type": "application/json"}), timeout=180)
     out = json.loads(r.read())
     assert r.status == 200 and len(out["scores"]) == 40 and len(out["order"]) == 40
@@ -127,14 +130,15 @@ def test_compiler_attempts_are_family_diverse_and_skip_cold_lanes():
 
 def test_live_transform_turn_skips_retrieval_when_the_compiler_is_on():
     """P0.c gate (TRANSFORM/CONTINUE: 0 retrievals fired) on the live orchestrator; skips when unreachable."""
+    sealed_env.live_fleet("a /chat/stream turn on the running orchestrator")
     try:
-        urllib.request.urlopen("http://127.0.0.1:7200/ready", timeout=3)
+        urllib.request.urlopen(f"{sealed_env.LIVE_ORCHESTRATOR}/ready", timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"orchestrator not reachable: {exc}")
     fx = json.loads((ROOT / "eval" / "fixtures" / "chat_conversations" / "brainrot_transform.json").read_text())
     body = json.dumps({"message": fx["message"], "corpus_id": fx["corpus_id"], "mode": "HYBRID", "compiler": "on",
                        "synthesizer": "deterministic-template-v3", "history": fx.get("history") or []}).encode()
-    req = urllib.request.Request("http://127.0.0.1:7200/chat/stream", data=body,
+    req = urllib.request.Request(f"{sealed_env.LIVE_ORCHESTRATOR}/chat/stream", data=body,
                                  headers={"content-type": "application/json", "accept": "text/event-stream"})
     phases, answer = [], {}
     with urllib.request.urlopen(req, timeout=300) as r:

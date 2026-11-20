@@ -21,6 +21,8 @@ polymath-control = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# SEALED-TEST-ISOLATION-V1: `import sealed_env` (tests/sealed_env.py) works in every test, with or without --noconftest
+pythonpath = ["tests"]
 addopts = "-q"
 markers = [
     "integration: requires live stores (make db-up) and POLYMATH_INTEGRATION=1",

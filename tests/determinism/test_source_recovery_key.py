@@ -36,16 +36,16 @@ from polymath_shared.blob_spool import (  # noqa: E402
     spool_read,
 )
 
-DSN = os.environ.get(
-    "POLYMATH_PG_DSN",
-    "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn, sealed_dsn_configured  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 REBUILD_CORPUS = "cysa-study-v1"
 
 
 def _pg():
+    if not sealed_dsn_configured():          # called at import (a skip marker): no skip may be raised here
+        return None
     try:
         import psycopg
-        return psycopg.connect(DSN, connect_timeout=3,
+        return psycopg.connect(sealed_dsn(), connect_timeout=3,
                                row_factory=psycopg.rows.dict_row)
     except Exception:
         return None

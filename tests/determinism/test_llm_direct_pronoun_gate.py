@@ -18,13 +18,13 @@ import pytest
 from polymath_shared.llm_extraction.gate import NormalizedExtraction
 from workers.llm_direct import materialize
 
-DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 TEXT = "Adam hired me in London. Adam is a British luxury designer who founded Seraph."
 
 
 @pytest.fixture()
 def conn():
-    with psycopg.connect(DSN, autocommit=False) as c:
+    with psycopg.connect(sealed_dsn(), autocommit=False) as c:
         yield c
         c.rollback()
 

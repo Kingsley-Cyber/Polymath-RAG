@@ -44,9 +44,7 @@ ROOT = Path(__file__).resolve().parents[2]
 for p in (ROOT / "shared", ROOT / "workers", ROOT):
     sys.path.insert(0, str(p))
 
-DSN = os.environ.get(
-    "POLYMATH_PG_DSN",
-    "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn, sealed_dsn_configured  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 WORKER = ROOT / "workers" / "workers" / "summary_worker_impl.py"
 RUNTIME = ROOT / "shared" / "polymath_shared" / "summary_runtime.py"
@@ -55,9 +53,11 @@ MIGRATION = (ROOT / "stores" / "postgres" / "migrations"
 
 
 def _pg():
+    if not sealed_dsn_configured():          # called at import (a skip marker): no skip may be raised here
+        return None
     try:
         import psycopg
-        return psycopg.connect(DSN, connect_timeout=3)
+        return psycopg.connect(sealed_dsn(), connect_timeout=3)
     except Exception:
         return None
 
@@ -197,7 +197,7 @@ def test_a_second_ticket_for_settled_work_is_refused_by_the_database():
 
     stage = "PARENT_SUMMARY"
     ih = "in_p23_" + uuid.uuid4().hex
-    conn = psycopg.connect(DSN, connect_timeout=5)
+    conn = psycopg.connect(sealed_dsn(), connect_timeout=5)
     try:
         # Everything inside a rolled-back transaction: test_incremental_census
         # keys on a GLOBAL watermark, so any committed write here can
@@ -219,7 +219,7 @@ def test_a_second_ticket_for_settled_work_is_refused_by_the_database():
         conn.close()
 
     # residue check: the probe must not exist after the test
-    check = psycopg.connect(DSN, connect_timeout=5)
+    check = psycopg.connect(sealed_dsn(), connect_timeout=5)
     with check:
         left = check.execute(
             "SELECT count(*) FROM summary_jobs WHERE input_hash=%s",

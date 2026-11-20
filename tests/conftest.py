@@ -79,3 +79,65 @@ def _test_client_init_on_loopback(self, *args, **kwargs):
 if not getattr(_TEST_CLIENT_INIT, "_polymath_loopback_default", False):
     _test_client_init_on_loopback._polymath_loopback_default = True
     _TEST_CLIENT.__init__ = _test_client_init_on_loopback
+
+
+# SEALED-TEST-ISOLATION-V1 (work-log docs/wiki/work-log/2026-11-20-sealed-test-isolation.md; rules in tests/sealed_env.py).
+# Measured 2026-11-20: a sealed run (throwaway Postgres on another port) still seeded probe rows into the LIVE database through a
+# hardcoded 127.0.0.1:5432 DSN and wrote live query receipts through probes of http://127.0.0.1:7200. For this whole session:
+# POLYMATH_TEST_DSN must not name a live port (else a usage error before any test), POLYMATH_PG_DSN follows it so code under
+# test reaches the sealed database too, and every connection to a live fleet port is refused unless the running test is a
+# declared live probe with POLYMATH_LIVE_PROBES=1 (or sits in tests/integration/ with POLYMATH_INTEGRATION=1). The refusals
+# are listed at the end of the run.
+import sealed_env as _sealed
+
+# litellm runs `dotenv.load_dotenv()` when it is first imported (litellm/__init__.py, unless LITELLM_MODE is not "DEV"). Under
+# pytest the search climbs from litellm's own folder: with the live checkout's .venv that reaches polymath-v4/.env, so one test
+# that imports litellm (measured: tests/contracts/test_deep_research_route.py) filled this process with the fleet's flags,
+# sidecar URLs and real provider keys, and 13 later tests failed only in a full run. The fleet sources .env itself; tests never
+# take configuration from it.
+_os.environ["LITELLM_MODE"] = "PRODUCTION"
+
+_INTEGRATION_DIR = Path(__file__).resolve().parent / "integration"
+
+
+def pytest_configure(config):
+    try:
+        _os.environ.update(_sealed.session_environment(_os.environ))
+    except _sealed.LiveStoreRefused as exc:
+        raise pytest.UsageError(str(exc)) from None
+    _sealed.install_guard()
+
+
+def _integration_opted_in(path) -> bool:
+    return _os.environ.get(_sealed.INTEGRATION_ENV) == "1" and _INTEGRATION_DIR in Path(path).resolve().parents
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_make_collect_report(collector):
+    module = isinstance(collector, pytest.Module)
+    if module:
+        _sealed.begin(f"collecting {collector.nodeid}", open_=_integration_opted_in(collector.path))
+    try:
+        yield
+    finally:
+        if module:
+            _sealed.end()
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_protocol(item, nextitem):
+    _sealed.begin(item.nodeid, open_=_integration_opted_in(item.path))
+    try:
+        yield
+    finally:
+        _sealed.end()
+
+
+def pytest_terminal_summary(terminalreporter):
+    total = sum(_sealed.refused.values())
+    database = "POLYMATH_TEST_DSN" if _sealed.sealed_dsn_configured() else "none (database tests skip)"
+    probes = "on" if _os.environ.get(_sealed.LIVE_PROBES_ENV) == "1" else "off"
+    terminalreporter.write_sep("-", "live-fleet guard")
+    terminalreporter.write_line(f"sealed database: {database}; live probes: {probes}; refused connections: {total}")
+    for (port, where), n in sorted(_sealed.refused.items(), key=lambda kv: (-kv[1], kv[0]))[:40]:
+        terminalreporter.write_line(f"  {n:4d} x port {port} ({_sealed.LIVE_PORTS[port]})  {where}")

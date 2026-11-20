@@ -26,7 +26,7 @@ for sub in ("shared", "workers", "control"):
 from polymath_shared import worker_runtime as rt  # noqa: E402
 from polymath_shared.llm_extraction.client import ExtractionTransportError  # noqa: E402
 
-DSN = os.environ.get("POLYMATH_TEST_DSN", "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 def test_provider_capacity_errors_are_transient():
@@ -65,8 +65,8 @@ def test_transient_hold_is_transient():
 def test_sweep_lock_yields_instead_of_blocking(monkeypatch):
     from workers import summary_worker_impl as impl
     try:
-        a = psycopg.connect(DSN, autocommit=False, connect_timeout=3)
-        b = psycopg.connect(DSN, autocommit=False, connect_timeout=3)
+        a = psycopg.connect(sealed_dsn(), autocommit=False, connect_timeout=3)
+        b = psycopg.connect(sealed_dsn(), autocommit=False, connect_timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"dev postgres not reachable: {exc}")
     monkeypatch.setenv("POLYMATH_SUMMARY_SWEEP_WAIT_S", "1")

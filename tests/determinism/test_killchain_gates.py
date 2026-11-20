@@ -20,15 +20,15 @@ ROOT = Path(__file__).resolve().parents[2]
 for p in (ROOT / "shared", ROOT / "workers", ROOT):
     sys.path.insert(0, str(p))
 
-DSN = os.environ.get(
-    "POLYMATH_PG_DSN",
-    "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn, sealed_dsn_configured  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 def _pg():
+    if not sealed_dsn_configured():          # called at import (a skip marker): no skip may be raised here
+        return None
     import psycopg
     try:
-        return psycopg.connect(DSN, connect_timeout=3)
+        return psycopg.connect(sealed_dsn(), connect_timeout=3)
     except Exception:
         return None
 

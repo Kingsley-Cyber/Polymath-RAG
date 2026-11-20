@@ -17,13 +17,13 @@ from control.stall_tracer import (Stall, _live_sibling_runs, collect_stalls,
                                   diagnose_leased, diagnose_pending, diagnose_ready,
                                   persist_traces)
 
-DSN = "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath"
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 CORPUS = "census-probe"
 
 
 @pytest.fixture()
 def conn():
-    with psycopg.connect(DSN, autocommit=False) as c:
+    with psycopg.connect(sealed_dsn(), autocommit=False) as c:
         c.execute(
             """INSERT INTO corpora (corpus_id, name, config_hash, purpose)
                VALUES (%s, %s, 'probe', 'probe') ON CONFLICT (corpus_id) DO NOTHING""",

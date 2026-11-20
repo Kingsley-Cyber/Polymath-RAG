@@ -23,7 +23,7 @@ from polymath_shared.adapter import service, store  # noqa: E402
 from polymath_shared.adapter.contracts import validate  # noqa: E402
 from polymath_shared.adapter.transitions import SubmissionRejected  # noqa: E402
 
-DSN = os.environ.get("POLYMATH_PG_DSN", "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 ADAPTER = "polymath.knowledge_brief"
 FAKE_ROWS = [{"kind": "chunk", "id": "chunk_fake_1", "doc_id": "doc_fake", "corpus_id": "probe", "score": 0.9, "text": "cold plunge lowers perceived soreness"},
              {"kind": "graph_fact", "id": "fact_fake_2", "corpus_id": "probe", "score": 0.7, "text": "immersion → vasoconstriction"}]
@@ -40,7 +40,7 @@ FAKE_EXECUTORS = {"POLYMATH_RETRIEVE": _fake_retrieve}
 @pytest.fixture()
 def conn():
     try:
-        c = psycopg.connect(DSN, autocommit=False, connect_timeout=3)
+        c = psycopg.connect(sealed_dsn(), autocommit=False, connect_timeout=3)
     except Exception as exc:  # pragma: no cover
         pytest.skip(f"postgres unavailable: {exc}")
     if c.execute("SELECT to_regclass('public.adapter_runs')").fetchone()[0] is None:
@@ -123,14 +123,14 @@ def test_worker_leases_claim_renew_release_and_expire(conn):
     rid = _start(conn)
     assert store.claim_run(conn, "w1", 2) == rid
     conn.commit()
-    with psycopg.connect(DSN) as other:
+    with psycopg.connect(sealed_dsn()) as other:
         assert store.claim_run(other, "w2", 2) is None                       # leased: no double claim
     assert store.renew_lease(conn, rid, "w1", 2) is True and store.renew_lease(conn, rid, "w2", 2) is False
     store.release_lease(conn, rid, "w1"); conn.commit()
-    with psycopg.connect(DSN) as other:
+    with psycopg.connect(sealed_dsn()) as other:
         assert store.claim_run(other, "w2", 1) == rid; other.commit()
     time.sleep(1.2)                                                            # lease expiry -> claimable again
-    with psycopg.connect(DSN) as third:
+    with psycopg.connect(sealed_dsn()) as third:
         assert store.claim_run(third, "w3", 5) == rid; third.rollback()
 
 

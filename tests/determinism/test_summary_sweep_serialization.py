@@ -33,12 +33,12 @@ for sub in ("shared", "workers", "control"):
 
 from workers import summary_worker_impl as impl  # noqa: E402
 
-DSN = os.environ.get("POLYMATH_TEST_DSN", "postgresql://polymath:polymath-dev@127.0.0.1:5432/polymath")
+from sealed_env import sealed_dsn  # SEALED-TEST-ISOLATION-V1: POLYMATH_TEST_DSN only
 
 
 def _connect():
     try:
-        return psycopg.connect(DSN, autocommit=False, connect_timeout=3)
+        return psycopg.connect(sealed_dsn(), autocommit=False, connect_timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"dev postgres not reachable: {exc}")
 

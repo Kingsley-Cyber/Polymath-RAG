@@ -12,6 +12,8 @@ import urllib.request
 
 import pytest
 
+import sealed_env  # SEALED-TEST-ISOLATION-V1: the live probes here run only with POLYMATH_LIVE_PROBES=1
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 for sub in ("shared", "orchestrator"):
     p = str(ROOT / sub)
@@ -86,7 +88,7 @@ def test_flag_defaults_to_v2_and_accepts_overrides(monkeypatch):
 # ---------------- live ----------------
 
 def _stream(body: dict) -> tuple[list[dict], dict]:
-    req = urllib.request.Request("http://127.0.0.1:7200/chat/stream", data=json.dumps(body).encode(),
+    req = urllib.request.Request(f"{sealed_env.LIVE_ORCHESTRATOR}/chat/stream", data=json.dumps(body).encode(),
                                  headers={"content-type": "application/json", "accept": "text/event-stream"})
     phases, answer, cur = [], {}, None
     with urllib.request.urlopen(req, timeout=420) as r:
@@ -103,8 +105,9 @@ def _stream(body: dict) -> tuple[list[dict], dict]:
 
 @pytest.mark.parametrize("retrieval", ["v2", "v1"])
 def test_live_chat_hybrid_retrieves_on_v2_with_provenance_and_v1_still_answers(retrieval):
+    sealed_env.live_fleet("/chat/stream turns on the running orchestrator")
     try:
-        urllib.request.urlopen("http://127.0.0.1:7200/ready", timeout=3)
+        urllib.request.urlopen(f"{sealed_env.LIVE_ORCHESTRATOR}/ready", timeout=3)
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"orchestrator not reachable: {exc}")
     phases, answer = _stream({"message": "What does the book say about making your own chroma keyer?", "corpus_id": "cinema",
