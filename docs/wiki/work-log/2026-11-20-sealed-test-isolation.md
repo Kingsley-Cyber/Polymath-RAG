@@ -2,8 +2,8 @@
 change_id: SEALED-TEST-ISOLATION-V1
 owner: governance
 date: 2026-11-20
-status: merged
-status_note: "Merged into local production 2026-11-20 (fast-forward from branch fix/sealed-test-isolation, rebased on 7390441b). Sealed run 4,944 passed / 31 skipped / 0 failed; 0 live rows written. Not pushed to GitHub: the push would also publish 16 earlier unpushed production commits to the public repo; waits for the owner."
+status: complete
+status_note: "Merged into production and pushed 2026-11-20 on the owner's word (origin/production = d7682b39; the push also carried TRUE-CORPUS-DELETE-V1 7390441b). GitHub CI green on d7682b39: agent-preflight, repo-governance, contracts, determinism (runs 44667151245/418/286/288). Sealed run 4,944 passed / 31 skipped / 0 failed; 0 live rows written."
 architecture_impact: "tests only (tests/sealed_env.py new, tests/conftest.py, 47 test files under tests/contracts + tests/determinism, two frontend-v2 live tests), pyproject.toml (pytest pythonpath), the two GitHub workflows that run a Postgres service (moved off port 5432). No runtime code, schema, contract or store changes."
 last_reviewed: 2026-11-20
 ---
@@ -160,7 +160,9 @@ DSNs pointing at it; the live checkout's `.venv` interpreter.
 - **`tests/contracts/test_deep_research_route.py` and the 13 tests it broke**: the cause (litellm loading the live `.env`) is
   fixed for test sessions; whether any production process relies on litellm's own `.env` loading is not examined (the fleet
   sources `.env` before it starts).
-- **GitHub CI is not run**: the workflow change (Postgres on 55432) is proven only by reading it; nothing is pushed.
+- ~~GitHub CI is not run~~ (closed 2026-11-20): after the owner's push, all four workflows passed on `d7682b39`; the determinism
+  job ran against its Postgres service on 55432 (`sealed database: POLYMATH_TEST_DSN`; 162 live-port refusals, the local run's
+  166 minus the 4 of the contract test's own guard checks, which run in the contracts job).
 - **No base-commit baseline**: running the untouched suites in the sealed harness would leak into the live fleet again (that
   is the defect), so each failure below is read on its own.
 
