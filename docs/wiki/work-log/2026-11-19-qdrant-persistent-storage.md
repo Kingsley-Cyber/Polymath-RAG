@@ -52,8 +52,20 @@ last_reviewed: 2026-11-19
   (the census re-drives the projector stage)", `workers/workers/verify_worker.py`).
 
 ## Open contract gaps
-- NOT applied to the live stack: applying re-creates the (empty) Qdrant container with the host folder; then the vectors are
-  rebuilt by re-opening verification so it clears the lost receipts, after which the scheduler re-drives projection one
-  corpus at a time. Both wait for the owner's go (production writes).
+- NOT applied to the live stack: applying re-creates the (empty) Qdrant container with the host folder. That and the rebuild
+  both wait for the owner's go (production writes).
+- The rebuild has FIVE collection families, not one (read from the code 2026-11-20; an earlier plan in this incident covered
+  only the first): passage vectors (`workers/workers/project_qdrant_worker.py`, re-driven when verification clears the lost
+  receipts; `control/control/scheduler.py:153` re-opens `project_qdrant` only), parent maps `polymath_document_parent_maps_*`
+  (16,900 active maps in Postgres; written by `workers/workers/doc_parent_map_stage_worker.py` or
+  `scripts/parent_map_backfill.py --project`), document profiles `polymath_document_profiles_*` and profile atoms
+  `polymath_document_profile_atoms_*` (written by `workers/workers/doc_profile_worker.py`), and the GNN index
+  `polymath_gnn_parent_*` (`scripts/gnn_route_build.py`; GNN is off). The maps and profiles are stored in Postgres, so their
+  vectors can be re-embedded without new LLM calls; the path that does this without re-running the LLM stages is not chosen.
+- Effect measured 2026-11-20 00:28Z: GRAPH mode answers 502 `routing_projection_not_ready`
+  (`orchestrator/orchestrator/api/graph.py:92` checks the vector store before it reaches the graph); the graph store itself
+  answers (`GET /graph/entities?corpus_id=mythos&q=izanagi`); section routing, the search side of pMAP, reads
+  `polymath_document_parent_maps_*` and has nothing to read. The last GRAPH queries that worked: 16:05Z and 16:09Z, 24 and
+  36 evidence rows (`query_receipts`).
 - `scripts/boot_polymath.sh` runs `docker compose up -d` in whatever the CLI's default Docker context is; with every store on a
   host folder a re-created container no longer loses data, but the context it targets is not pinned.
