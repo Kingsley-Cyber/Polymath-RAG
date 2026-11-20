@@ -1189,6 +1189,7 @@ TREE: list[tuple[str, str, str | None]] = [
     # shared: projection contracts (Phase F) + store drivers + retrieval
     ("shared/polymath_shared/projection_contracts.py", "py", None),
     ("shared/polymath_shared/stores.py", "py", None),
+    ("shared/polymath_shared/storage_reclaim.py", "py", None),
     ("shared/polymath_shared/retrieval.py", "py", None),
     ("shared/polymath_shared/evidence_assembly.py", "py", None),
     ("shared/polymath_shared/answer_synthesis.py", "py", None),
@@ -2588,6 +2589,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("docs/wiki/work-log/2026-10-04-copy-on-hover.md", "md", None),
     ("docs/wiki/work-log/2026-11-19-graph-seeds-and-search-scores.md", "md", None),
     ("docs/wiki/work-log/2026-11-19-qdrant-persistent-storage.md", "md", None),
+    ("docs/wiki/work-log/2026-11-20-true-corpus-delete.md", "md", None),
     ("docs/wiki/work-log/2026-10-29-retire-polymath-v33-databases.md", "md", None),
     # DEEP-RESEARCH-MODE-V1 slice DR1: the pure research engine (ports injected; the route is DR2)
     ("shared/polymath_shared/deep_research/__init__.py", "py", None),
@@ -2664,6 +2666,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_graph_fact_rank.py", "py", None),
     ("tests/determinism/test_graph_seeds_and_search_scores.py", "py", None),
     ("tests/contracts/test_store_persistence.py", "py", None),
+    ("tests/contracts/test_true_corpus_delete.py", "py", None),
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay.py", "py", None),
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay.json", "json", None),
     ("docs/wiki/experiments/graph-fact-rank-2026-09-24/replay_strict_seed.json", "json", None),
@@ -2935,6 +2938,7 @@ TREE: list[tuple[str, str, str | None]] = [
     ("tests/determinism/test_throughput_v2.py", "py", None),
     ("docs/wiki/work-log/2026-09-01-extraction-throughput-v2.md", "md", None),
     ("scripts/retry_failed_stage.py", "py", None),
+    ("scripts/delete_corpus.py", "py", None),
     ("scripts/restore_verified_receipts.py", "py", None),
     # EXTRACTION-FLEET-V3
     ("stores/postgres/migrations/0045_receipt_gate_status.sql", "sql", None),

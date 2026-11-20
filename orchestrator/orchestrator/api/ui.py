@@ -1132,7 +1132,7 @@ def _quiesce_corpus(conn, corpus_id: str) -> dict:
 
 
 @router.delete("/corpora/{corpus_id}")
-def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
+def delete_corpus(corpus_id: str, confirm: str = "", reclaim: bool = False) -> dict:
     """OWNER-DESTRUCTIVE: remove a corpus and everything derived from
     it — PG rows, the Qdrant collection, and its Neo4j substrate.
 
@@ -1140,7 +1140,12 @@ def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
     type it). Facts are content-addressed and can be evidenced from
     multiple corpora: fact rows are deleted ONLY when no evidence
     remains anywhere after this corpus's evidence is removed; shared
-    entities are never touched."""
+    entities are never touched.
+
+    TRUE-CORPUS-DELETE-V1 (2026-11-20): `reclaim=true` then compacts the
+    tables the delete emptied (VACUUM FULL), so the disk space comes
+    back; it locks those tables while it runs and skips a table the
+    disk has no room to copy (`polymath_shared.storage_reclaim`)."""
     if confirm != corpus_id:
         raise HTTPException(422, {
             "error_code": "confirmation_required",
@@ -1151,10 +1156,97 @@ def delete_corpus(corpus_id: str, confirm: str = "") -> dict:
         quiesce = _quiesce_corpus(_q, corpus_id)
     removed: dict[str, int] = {}
     try:
-        return _delete_corpus_tx(corpus_id, removed)
+        out = _delete_corpus_tx(corpus_id, removed)
     except Exception as exc:                      # noqa: BLE001
         _raise_if_lock_timeout(exc, f"delete corpus {corpus_id!r}")
         raise
+    if reclaim:
+        out["reclaim"] = _reclaim_after_delete(removed)
+    return out
+
+
+def _reclaim_after_delete(removed: dict) -> dict:
+    """TRUE-CORPUS-DELETE-V1: compact the tables the delete removed rows from (keys of `removed` that name a table)."""
+    import psycopg
+
+    from polymath_shared.settings import get_settings
+    from polymath_shared.storage_reclaim import reclaim
+    with psycopg.connect(get_settings().postgres.dsn, autocommit=True) as conn:
+        return reclaim(conn, {k: v for k, v in removed.items() if isinstance(v, int)})
+
+
+#: TRUE-CORPUS-DELETE-V1: the columns that tie a row to one library, most specific last; the sweep uses the first present
+LIBRARY_KEY_COLUMNS = ("corpus_id", "doc_id", "chunk_id", "run_id", "parent_id")
+#: tables that carry a library key but are not library content: the owner's query log (one receipt can name several
+#: libraries) and governed-research tables (their run_id is an adapter run, never an ingest run)
+DELETE_KEEP_TABLES = frozenset({"query_receipts"})
+DELETE_KEEP_PREFIXES = ("adapter_",)
+#: the anchors the corpus delete removes last, after everything that points at them
+_DELETE_ANCHORS = frozenset({"chunks", "documents", "runs", "corpora", "archived_corpora"})
+
+
+def library_linked_tables(conn) -> list[tuple[str, str]]:
+    """Every public base table with a library key, as (table, the key column the sweep deletes by), KEEP tables out."""
+    rows = conn.execute(
+        """SELECT c.table_name, array_agg(c.column_name::text)
+             FROM information_schema.columns c
+             JOIN information_schema.tables t
+               ON t.table_schema = c.table_schema AND t.table_name = c.table_name AND t.table_type = 'BASE TABLE'
+            WHERE c.table_schema = 'public' AND c.column_name = ANY(%s)
+              -- library ids are text; a numeric run_id is some other run (verification_runs.run_id is a BIGSERIAL)
+              AND c.data_type IN ('text', 'character varying')
+            GROUP BY c.table_name ORDER BY c.table_name""", (list(LIBRARY_KEY_COLUMNS),)).fetchall()
+    out = []
+    for table, cols in rows:
+        if table in DELETE_KEEP_TABLES or table.startswith(DELETE_KEEP_PREFIXES):
+            continue
+        out.append((table, next(k for k in LIBRARY_KEY_COLUMNS if k in cols)))
+    return out
+
+
+def _sweep_library_tables(conn, delete, keys: dict, *, done: set) -> list[str]:
+    """Delete this library's rows from every library-linked table not already handled. A table another table still points
+    at fails under its savepoint and goes again on the next pass (foreign-key order without a hand-kept list). Returns the
+    tables that could not be emptied."""
+    from psycopg import sql as _sql
+
+    pending = []
+    for table, col in library_linked_tables(conn):
+        if table in done or table in _DELETE_ANCHORS:
+            continue
+        value = keys[col]
+        if not value:
+            continue
+        template = "DELETE FROM {} WHERE {} = %s" if col == "corpus_id" else "DELETE FROM {} WHERE {} = ANY(%s)"
+        pending.append((table, _sql.SQL(template).format(_sql.Identifier(table), _sql.Identifier(col)), value))
+    for _ in range(5):
+        failed = [p for p in pending if not delete(p[1], (p[2],), p[0], optional=True)]
+        if not failed or len(failed) == len(pending):
+            pending = failed
+            break
+        pending = failed
+    return sorted(p[0] for p in pending)
+
+
+def _delete_shared_collection_points(client, corpus_id: str) -> int:
+    """TRUE-CORPUS-DELETE-V1: the parent-map, document-profile, profile-atom and GNN collections hold EVERY library's
+    points (their names carry the embedding contract, not the library), so dropping the library's own collections left its
+    points there. Delete them by the payload's corpus_id; returns how many points went."""
+    from qdrant_client import models as qm
+
+    from polymath_shared import gnn_route
+    from polymath_shared.document_profile import parent_map_projection, profile_atom_projection, projection
+    prefixes = tuple(f"{m.COLLECTION_PREFIX}_" for m in (parent_map_projection, projection, profile_atom_projection, gnn_route))
+    flt = qm.Filter(must=[qm.FieldCondition(key="corpus_id", match=qm.MatchValue(value=corpus_id))])
+    total = 0
+    for col in client.get_collections().collections:
+        if not col.name.startswith(prefixes):
+            continue
+        n = int(client.count(col.name, count_filter=flt, exact=True).count)
+        if n:
+            client.delete(col.name, points_selector=qm.FilterSelector(filter=flt))
+            total += n
+    return total
 
 
 def _delete_corpus_tx(corpus_id: str, removed: dict) -> dict:
@@ -1205,9 +1297,14 @@ def _delete_corpus_tx(corpus_id: str, removed: dict) -> dict:
                        WHERE e2.fact_id = ev.fact_id
                          AND NOT (e2.doc_id = ANY(%s)))""",
             (doc_ids, doc_ids)).fetchall()] if doc_ids else []
+        # TRUE-CORPUS-DELETE-V1: read the evidence ids BEFORE the evidence rows go. The receipt purge below used to read
+        # them with a sub-select that ran after `DELETE FROM evidence`, inside the same transaction, so it found nothing.
+        evidence_ids = [r[0] for r in conn.execute(
+            "SELECT evidence_id FROM evidence WHERE doc_id = ANY(%s)",
+            (doc_ids,)).fetchall()] if doc_ids else []
 
         def _del(sql: str, args: tuple, key: str,
-                 optional: bool = False) -> None:
+                 optional: bool = False) -> bool:
             # optional tables (schema drift) roll back to a savepoint so
             # one missing table cannot abort the whole transaction
             if optional:
@@ -1219,9 +1316,11 @@ def _delete_corpus_tx(corpus_id: str, removed: dict) -> dict:
                 except Exception:
                     conn.execute("ROLLBACK TO SAVEPOINT del_sp")
                     conn.execute("RELEASE SAVEPOINT del_sp")
+                    return False
             else:
                 removed[key] = removed.get(key, 0) + \
                     conn.execute(sql, args).rowcount
+            return True
 
         if doc_ids:
             _del("DELETE FROM evidence WHERE doc_id = ANY(%s)",
@@ -1244,9 +1343,9 @@ def _delete_corpus_tx(corpus_id: str, removed: dict) -> dict:
         if doc_ids:
             _del("DELETE FROM projection_receipts WHERE entity_id = ANY(%s)",
                  (doc_ids,), "projection_receipts")
-            _del("""DELETE FROM projection_receipts WHERE entity_id IN (
-                        SELECT ev.evidence_id FROM evidence ev WHERE ev.doc_id = ANY(%s))""",
-                 (doc_ids,), "projection_receipts", optional=True)
+        if evidence_ids:
+            _del("DELETE FROM projection_receipts WHERE entity_id = ANY(%s)",
+                 (evidence_ids,), "projection_receipts", optional=True)
         if projected_ids:
             _del("DELETE FROM projection_receipts WHERE entity_id = ANY(%s)",
                  (projected_ids,), "projection_receipts")
@@ -1269,10 +1368,23 @@ def _delete_corpus_tx(corpus_id: str, removed: dict) -> dict:
                  optional=True)
         if run_ids:
             for t in ("stage_tickets", "outbox_events", "artifacts",
-                      "receipts", "stage_attempts", "projection_attempts",
-                      "dead_letter_archive"):
+                      "receipts", "stage_attempts", "dead_letter_archive"):
                 _del(f"DELETE FROM {t} WHERE run_id = ANY(%s)",
                      (run_ids,), t, optional=True)
+        # TRUE-CORPUS-DELETE-V1: projection_attempts has no run_id column (0004_projection_claims.sql), so the run_id
+        # delete above always failed behind `optional=True` and the attempt history of a deleted library stayed (the
+        # table measured 12 GB, 2026-11-20). It is keyed by the projected id, like projection_receipts.
+        attempt_ids = sorted(set(chunk_ids) | set(doc_ids) | set(evidence_ids) | set(projected_ids) | set(orphan_facts))
+        if attempt_ids:
+            _del("DELETE FROM projection_attempts WHERE entity_id = ANY(%s)",
+                 (attempt_ids,), "projection_attempts")
+        # TRUE-CORPUS-DELETE-V1: every other table that carries a library key, read from the schema so a new table is
+        # covered without editing this function (measured 2026-11-20: 18 library-linked tables were never touched).
+        leftover = _sweep_library_tables(conn, _del, {
+            "corpus_id": corpus_id, "doc_id": doc_ids, "chunk_id": chunk_ids,
+            "run_id": run_ids, "parent_id": chunk_ids}, done=set(removed))
+        if leftover:
+            removed["tables_not_deleted"] = leftover  # type: ignore[assignment]
         if chunk_ids:
             _del("DELETE FROM chunks WHERE chunk_id = ANY(%s)",
                  (chunk_ids,), "chunks")
@@ -1305,6 +1417,9 @@ def _delete_corpus_tx(corpus_id: str, removed: dict) -> dict:
                     client.delete_collection(col.name)
                     removed["qdrant_collections"] = \
                         removed.get("qdrant_collections", 0) + 1
+            shared = _delete_shared_collection_points(client, corpus_id)
+            if shared:
+                removed["qdrant_shared_points"] = shared
         finally:
             client.close()
     except Exception as exc:
