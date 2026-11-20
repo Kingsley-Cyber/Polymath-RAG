@@ -2,8 +2,8 @@
 change_id: SEALED-TEST-ISOLATION-V1
 owner: governance
 date: 2026-11-20
-status: implemented
-status_note: "Branch fix/sealed-test-isolation (worktree ../pmv4-test-isolation), rebased on production @ 7390441b. Sealed run 4,944 passed / 31 skipped / 0 failed; 0 live rows written. Not pushed, not merged (the owner's word)."
+status: merged
+status_note: "Merged into local production 2026-11-20 (fast-forward from branch fix/sealed-test-isolation, rebased on 7390441b). Sealed run 4,944 passed / 31 skipped / 0 failed; 0 live rows written. Not pushed to GitHub: the push would also publish 16 earlier unpushed production commits to the public repo; waits for the owner."
 architecture_impact: "tests only (tests/sealed_env.py new, tests/conftest.py, 47 test files under tests/contracts + tests/determinism, two frontend-v2 live tests), pyproject.toml (pytest pythonpath), the two GitHub workflows that run a Postgres service (moved off port 5432). No runtime code, schema, contract or store changes."
 last_reviewed: 2026-11-20
 ---

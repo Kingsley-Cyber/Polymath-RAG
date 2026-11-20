@@ -39,6 +39,10 @@ historical, never an instruction.
   every process (always on); three new flags, all off — `POLYMATH_GRAPH_SEED_WORD_MATCH`, `POLYMATH_GRAPH_FACT_QUERY_SIM`,
   `POLYMATH_SEARCH_RERANK_SCORES`. Each flag waits for a gold-set replay with the flag off and on before the owner sets it
   (work-log `2026-11-19-graph-seeds-and-search-scores.md`, Open contract gaps).
+- 2026-11-20: SEALED-TEST-ISOLATION-V1 (register 11.580) merged on top (tests and docs only; no fleet restart needed): the
+  suites never reach a live store or the live fleet without `POLYMATH_LIVE_PROBES=1`; litellm no longer loads the live `.env`
+  into test runs. Sealed run 4,944 passed / 0 failed. Local `production` is 17 commits ahead of `origin/production` (the repo
+  is public); the push waits for the owner (work-log `2026-11-20-sealed-test-isolation.md`).
 
 ### Proof Status
 - Sealed CI 4,871 tests = the 17 baseline failures only; after the live-run fixes the affected suites passed (865, 455, 130); engine
@@ -54,11 +58,11 @@ historical, never an instruction.
 
 ### Do Not Do
 - Everything in the 2026-11-01 and 2026-09-26 blocks' "Do Not Do" lists still applies.
-- Do not expect the repo's suites to be offline on `production` yet: six determinism files and the web suite's free tier call the
-  running orchestrator (`/chat`, `/chat/stream`, `/compare`, `/retrieve`) whenever it answers, spending model calls, and ~30
-  determinism files hardcode the live Postgres. Fixed on branch `fix/sealed-test-isolation` (SEALED-TEST-ISOLATION-V1, register
-  11.580, not merged): after it merges, tests take the database from `POLYMATH_TEST_DSN` only (never 5432), a guard refuses every
-  live fleet port, and live probes run only with `POLYMATH_LIVE_PROBES=1` (`docs/RUNBOOK.md`, "Run the test suites").
+- The repo's suites are offline by default since SEALED-TEST-ISOLATION-V1 (register 11.580, merged into local `production`
+  2026-11-20): tests take the database from `POLYMATH_TEST_DSN` only (never 5432), a guard refuses every live fleet port, and
+  the live probes (six determinism files, the web suite's free tier) run only with `POLYMATH_LIVE_PROBES=1`. Do not point
+  `POLYMATH_TEST_DSN` at the live database, and do not add a test that reaches the fleet without `sealed_env.live_fleet(...)`.
+  How to run the suites: `docs/RUNBOOK.md`, "Run the test suites".
 - Do not add a direct (un-proxied) caller of :7200 under any Host but 127.0.0.1, localhost or [::1]: the web boundary refuses it
   (DNS-rebinding fix, 11.576).
 - Do not bounce the fleet while an agent test or a fetch script is running: its MCP session breaks.
